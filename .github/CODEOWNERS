@@ -1,0 +1,5 @@
+* @felipetbestkkj-ship-it
+/config/mp48-k-map-physical-axes.lock.json @felipetbestkkj-ship-it
+/app/src/main/java/com/omegas/prohub/calibration/KMapPhysicalAxes.kt @felipetbestkkj-ship-it
+/tests/test_mp48_k_map_axes_contract.py @felipetbestkkj-ship-it
+/app/src/main/assets/ui/** @felipetbestkkj-ship-it

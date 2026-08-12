@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "project": "OMEGAS-V7",
+  "domains": ["android", "automotive", "serial-protocol", "ecu-diagnostics"],
+  "critical_surfaces": ["ecu-write", "ack-readback", "checksum", "protocol", "firmware-update", "runtime-act"],
+  "artifact_roots": ["app/build/outputs/apk", "artifacts/apks", "artifacts/firmware", "captures"],
+  "original_corpora": ["app/src/test", "tests", "captures", "artifacts"],
+  "forbidden_automatic_actions": ["device-replay", "can-transmit", "ecu-write", "firmware-flash", "runtime-modify", "runtime-act"],
+  "max_parallel": 4,
+  "commands": {
+    "governance": "python -B tests/test_governance_contract.py",
+    "compile": "chmod +x gradlew && ./gradlew --no-daemon --stacktrace compileDebugKotlin",
+    "unit": "chmod +x gradlew && ./gradlew --no-daemon --stacktrace testDebugUnitTest",
+    "integration": "python -B tools/run_checks.py",
+    "property": "python -B tools/run_checks.py",
+    "android-lint": "chmod +x gradlew && ./gradlew --no-daemon --stacktrace lintDebug",
+    "build-apk": "chmod +x gradlew && ./gradlew --no-daemon --stacktrace assembleDebug",
+    "apk-analysis": "find app/build/outputs/apk -type f -name '*.apk' -print0 | xargs -0 -r sha256sum"
+  },
+  "risk_escalation": [
+    {"match": {"paths": ["checksum", "protocol", "parser", "serial", "usb"]}, "level": "DEEP", "reason": "integridade de protocolo e transporte"},
+    {"match": {"paths": ["ecu", "writer", "ack", "readback", "firmware"]}, "level": "LAB", "reason": "fronteira persistente ou física do OMEGAS"},
+    {"match": {"paths": ["app/src/main", "build.gradle", "gradle", ".github/workflows"]}, "level": "STANDARD", "reason": "código Android ou infraestrutura executável alterada"}
+  ]
+}

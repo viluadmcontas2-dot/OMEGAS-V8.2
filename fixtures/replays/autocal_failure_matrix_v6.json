@@ -1,0 +1,15 @@
+{
+  "schema": "omegas-autocal-replay-v6",
+  "automaticCalibration": false,
+  "manualOnly": true,
+  "cases": [
+    {"id": "snapshot_partial", "phase": "READ", "expectedState": "READY_PARTIAL", "preservePrevious": true},
+    {"id": "ack_no_change", "phase": "ACTION", "ack": true, "changed": false, "expectedState": "CONFIRMED_NO_CHANGE", "writerCalls": 0},
+    {"id": "failure_before_ack", "phase": "ACTION", "ack": false, "expectedState": "FAILED", "preservePrevious": true, "writerCalls": 0},
+    {"id": "failure_after_ack", "phase": "ACTION", "ack": true, "postRead": false, "expectedState": "FAILED_POST_ACK", "preservePrevious": true, "writerCalls": 0},
+    {"id": "disconnect_during_read", "phase": "READ", "disconnect": true, "expectedState": "DISCONNECTED", "preservePrevious": true},
+    {"id": "readback_failure", "phase": "WRITE_SIMULATION", "readback": false, "expectedState": "FAILED_READBACK", "manualConfirmation": true},
+    {"id": "resume_after_point_0", "phase": "WRITE_SIMULATION", "lastConfirmedPoint": 0, "resumeFrom": 1, "expectedState": "RESUMABLE"},
+    {"id": "resume_after_point_29", "phase": "WRITE_SIMULATION", "lastConfirmedPoint": 29, "resumeFrom": null, "expectedState": "COMPLETE"}
+  ]
+}

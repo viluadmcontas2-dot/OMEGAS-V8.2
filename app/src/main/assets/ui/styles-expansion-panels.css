@@ -1,0 +1,206 @@
+/* Extensão visual dos painéis didáticos. Mantém o shell clean-slate intacto. */
+
+.background-health-card,
+.learning-portability-card,
+.curve-native-explanation {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0a131d;
+  padding: 10px;
+}
+.background-health-card[data-healthy="true"] { border-color: #2c604c; background: #0b1817; }
+.background-health-card header,
+.learning-portability-card header,
+.curve-native-explanation header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.background-health-card h3,
+.learning-portability-card h3,
+.curve-native-explanation h3 { margin: 2px 0 0; font-size: 12px; }
+.background-health-card header > span,
+.learning-portability-card header > span,
+.curve-native-explanation header > span {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.background-health-card[data-healthy="true"] header > span { color: var(--good); border-color: #2c604c; }
+.background-health-grid,
+.learning-portability-grid,
+.curve-evidence-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 8px;
+}
+.background-health-grid span,
+.learning-portability-grid span {
+  min-width: 0;
+  padding: 6px 7px;
+  border-radius: 7px;
+  background: #0d1823;
+  color: var(--muted);
+  font-size: 8px;
+}
+.background-health-grid b,
+.learning-portability-grid b { color: var(--text); font-weight: 850; }
+.background-health-card > p,
+.learning-portability-card > p,
+.curve-native-explanation > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.background-validation-note,
+.learning-portability-card > small {
+  display: block;
+  margin-top: 7px;
+  color: var(--dim);
+  font-size: 7.5px;
+  line-height: 1.35;
+}
+.portability-policy {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  padding: 7px 8px;
+  border: 1px solid #31516d;
+  border-radius: 8px;
+  background: #0d1823;
+}
+.portability-policy b { color: var(--accent); font-size: 8px; }
+.portability-policy span { color: var(--muted); font-size: 8px; line-height: 1.35; }
+
+.curve-evidence-summary { margin: 0 0 8px; }
+.curve-evidence-summary .evidence-stat { min-width: 0; }
+.curve-native-explanation article {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 7px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0d1823;
+}
+.curve-native-explanation article > div { min-width: 0; }
+.curve-native-explanation article b,
+.curve-native-explanation article span { display: block; }
+.curve-native-explanation article b { font-size: 9px; font-variant-numeric: tabular-nums; }
+.curve-native-explanation article span { margin-top: 2px; color: var(--muted); font-size: 7px; }
+.curve-native-explanation article > small {
+  grid-column: 1 / -1;
+  color: var(--dim);
+  font-size: 7.5px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.curve-pending-reasons { display: grid; gap: 5px; margin-top: 7px; }
+.curve-pending-reasons > div {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 7px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: #0d1823;
+}
+.curve-pending-reasons b { font-size: 8px; }
+.curve-pending-reasons span { color: var(--muted); font-size: 8px; line-height: 1.35; }
+
+/* Histórico visual curto: não substitui o SessionRecorder persistente. */
+.learning-decision-history {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0a131d;
+  padding: 10px 11px;
+  margin-bottom: 8px;
+}
+.learning-decision-history header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.learning-decision-history h3 { margin: 2px 0 0; font-size: 12px; }
+.learning-decision-history header > span {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 900;
+}
+.decision-history-list { display: grid; gap: 4px; margin-top: 7px; }
+.decision-history-list > div {
+  display: grid;
+  grid-template-columns: 48px 92px minmax(0, 1fr);
+  gap: 5px 7px;
+  align-items: start;
+  padding: 6px 7px;
+  border-radius: 7px;
+  background: #0d1823;
+  border-left: 2px solid var(--line-strong);
+  font-size: 7.5px;
+}
+.decision-history-list > div[data-level="accepted"] { border-left-color: var(--good); }
+.decision-history-list > div[data-level="rejected"] { border-left-color: var(--warning); }
+.decision-history-list time { color: var(--dim); }
+.decision-history-list b { color: var(--text); font-size: 7.5px; }
+.decision-history-list span { color: var(--muted); line-height: 1.3; }
+.decision-history-list small {
+  grid-column: 2 / -1;
+  color: var(--dim);
+  font-size: 6.8px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.learning-decision-history > p { margin: 7px 0 0; color: var(--dim); font-size: 7.5px; line-height: 1.35; }
+
+/* Live Tracing temporal: no máximo 16 células, sem timer próprio. */
+.physical-cell.live-trail:not(.live-contributor) {
+  position: relative;
+  border-color: rgba(91, 184, 255, calc(.12 + var(--trace-fade, 0) * .24));
+}
+.physical-cell.live-trail:not(.live-contributor)::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  border-radius: 4px;
+  background: rgba(91, 184, 255, calc(var(--trace-fade, 0) * .09));
+  box-shadow: inset 0 -2px 0 rgba(91, 184, 255, calc(var(--trace-fade, 0) * .32));
+}
+
+@media (max-height: 660px) and (min-width: 850px) {
+  .background-health-card,
+  .learning-portability-card,
+  .curve-native-explanation { padding: 8px; }
+  .background-health-grid,
+  .learning-portability-grid { margin-top: 6px; }
+  .curve-native-explanation article { padding: 6px; gap: 4px; }
+  .learning-decision-history { padding: 8px 9px; margin-bottom: 6px; }
+}
+
+@media (max-width: 760px) {
+  .background-health-grid,
+  .learning-portability-grid,
+  .curve-evidence-summary { grid-template-columns: 1fr; }
+  .curve-native-explanation article { grid-template-columns: 1fr 1fr; }
+  .decision-history-list > div { grid-template-columns: 44px minmax(0, 1fr); }
+  .decision-history-list > div span { grid-column: 1 / -1; }
+  .decision-history-list small { grid-column: 1 / -1; }
+}

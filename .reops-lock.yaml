@@ -1,0 +1,87 @@
+schema_version: 1
+
+hub:
+  repository: vitoohugo333/reverse-engineering-skills2
+  commit: 12144c660439e4328df91fa1e69337a6b22cd729
+  bootstrap: BOOTSTRAP.md
+  registry: registry.yaml
+  registry_version: 1.1.0
+  status: official
+
+precedence:
+  - explicit_owner_instruction
+  - local_repository_governance
+  - codex_engineering_guardrails
+  - reops_governance_and_selected_skills
+  - evidence
+  - memory_context_only
+
+mandatory_core:
+  - guarded-skill-resolver
+  - evidence-verification
+  - adaptive-execution-orchestrator
+
+conditional_core:
+  - reverse-engineering-master
+  - evidence-graph
+
+available_skills:
+  - artifact-triage
+  - skill-supply-chain-audit
+  - audit-context-building
+  - static-analysis-orchestrator
+  - variant-analysis
+  - ghidra-headless-analysis
+  - android-apk-deep-analysis
+  - dex-deep-analysis
+  - android-privilege-authority
+  - android-binder-aidl-analysis
+  - android-jni-native-bridge
+  - android-obfuscation-analysis
+  - android-fleet-analysis
+  - protocol-reverse-engineering
+  - binary-parser-generator
+  - offline-device-simulator
+  - dynamic-observation
+  - runtime-trace-correlation
+  - firmware-embedded-analysis
+  - fuzzing-verification-orchestrator
+  - evidence-graph
+
+execution:
+  profile: .reops/project-profile.json
+  reusable_workflow: .github/workflows/adaptive-consumer.yml
+  levels: [FAST, STANDARD, DEEP, LAB]
+  real_project_inputs: REQUIRED
+  synthetic_apk_replacement: FORBIDDEN
+
+selection_policy:
+  load_all: FORBIDDEN
+  metadata_first: REQUIRED
+  smallest_sufficient_chain: REQUIRED
+  expansion_requires_new_evidence: REQUIRED
+  local_governance_overrides_skill_method: true
+  skill_cannot_expand_authority: true
+
+failure_policy:
+  inaccessible_hub: INCONCLUSIVE
+  missing_commit: FAIL
+  missing_mandatory_core: INCONCLUSIVE
+  registry_mismatch: FAIL
+  fallback_to_memory: FORBIDDEN
+  fallback_to_latest_main: FORBIDDEN
+
+project_policy:
+  local_governance:
+    - AGENTS.md
+    - START_HERE.md
+    - SKILLS.md
+    - TESTING_RULES.md
+    - LEARNING_RULES.md
+    - engineering/
+  ecu_write_requires_explicit_authorization: true
+  can_transmit_requires_explicit_authorization: true
+  firmware_flash_requires_explicit_authorization: true
+  runtime_act_requires_explicit_authorization: true
+  physical_validation_requires_explicit_authorization: true
+  publish_secrets_or_keystores: false

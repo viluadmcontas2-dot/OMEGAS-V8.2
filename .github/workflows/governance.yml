@@ -1,0 +1,57 @@
+name: OMEGAS V7 Governance
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-v7-governance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    name: Governança global
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Baixar fonte
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verificar arquivos e contratos globais
+        run: python -B tools/governance/verify_governance.py
+
+      - name: Verificar integridade textual
+        run: git diff --check
+
+      - name: Bloquear segredos versionados por extensão
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden="$(git ls-files '*.jks' '*.keystore' 'keystore.properties' '.env' 'secrets.properties')"
+          if [ -n "$forbidden" ]; then
+            echo "Arquivos sensíveis versionados:"
+            echo "$forbidden"
+            exit 1
+          fi
+
+      - name: Validar contratos de produto
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'nenhuma escrita automática na ECU' AGENTS.md
+          grep -Fq 'checkpoint, ACK e readback' AGENTS.md
+          grep -Fq 'multimídia/tablet 9"' AGENTS.md
+          grep -Fq 'toda branch futura' AGENTS.md
