@@ -1,0 +1,6 @@
+# Android Studio geralmente cria este arquivo automaticamente.
+# Linux/macOS:
+sdk.dir=/home/usuario/Android/Sdk
+# Windows (use barras duplas):
+# sdk.dir=C:\\Users\\usuario\\AppData\\Local\\Android\\Sdk
+
