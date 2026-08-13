@@ -35,17 +35,44 @@ class AutoCalNativeActionManager(
     private val onStateChanged: () -> Unit = {},
 ) {
     enum class Action(
-        val mode: Int,
+        val request: ByteArray,
         val label: String,
         val description: String,
         val mayChangeMulAct: Boolean,
+        val expectedEnableReadback: Int? = null,
     ) {
-        RESET_PETROL(0x01, "Resetar aquisição gasolina", "Apaga somente os dados AutoCal de gasolina.", false),
-        RESET_GAS(0x02, "Resetar aquisição GNV", "Apaga somente os dados AutoCal de GNV.", false),
-        RESET_ALL(0x04, "Resetar aquisições AutoCal", "Apaga as aquisições AutoCal de gasolina e GNV.", false),
-        NATIVE_AUTOMATCH(0x08, "Executar AutoMatch nativo", "Executa o modo 8 original dentro da ECU.", true);
-
-        val request: ByteArray get() = Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, mode.toByte()))
+        ENABLE_AUTO_CAL(
+            AutoCalProtocol.setEnabled(true),
+            "Habilitar Auto Calibration",
+            "Permite que a própria ECU continue a aquisição por zonas e execute AutoMatch quando seus critérios forem atendidos.",
+            true,
+            1,
+        ),
+        DISABLE_AUTO_CAL(
+            AutoCalProtocol.setEnabled(false),
+            "Pausar Auto Calibration",
+            "Pausa a aquisição nativa sem apagar os buffers já coletados.",
+            false,
+            0,
+        ),
+        RESET_PETROL(
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
+            "Resetar aquisição gasolina",
+            "Apaga somente os dados AutoCal de gasolina.",
+            false,
+        ),
+        RESET_GAS(
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
+            "Resetar aquisição GNV",
+            "Apaga somente os dados AutoCal de GNV.",
+            false,
+        ),
+        RESET_ALL(
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
+            "Começar nova aquisição AutoCal",
+            "Apaga as aquisições AutoCal de gasolina e GNV. Nunca é executado automaticamente.",
+            false,
+        );
     }
 
     private data class Preparation(
@@ -189,6 +216,7 @@ class AutoCalNativeActionManager(
             ensureSession(prepared)
             update("READING_AFTER", "Lendo snapshot posterior", 70, prepared)
             val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+            validateActionReadback(prepared.action, after)
             val receipt = receipt(prepared, reply, before, after, startedAt)
             appendReceipt(receipt)
             try { onConfirmed(receipt) } catch (_: Exception) {}
@@ -273,7 +301,19 @@ class AutoCalNativeActionManager(
             .put("humanConfirmed", true)
             .put("automatic", false)
             .put("manualOnly", true)
+            .put("readbackValid", true)
             .put("automaticRollback", false)
+    }
+
+    private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
+        val expected = action.expectedEnableReadback ?: return
+        val actual = after.field(AutoCalProtocol.AUTO_CAL_ENABLE)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawValues
+            ?.singleOrNull()
+        require(actual == expected) {
+            "Readback AUTO_CAL_ENABLE divergente: esperado $expected, ECU ${actual ?: "sem dado"}"
+        }
     }
 
     private fun ensureSession(prepared: Preparation) {
