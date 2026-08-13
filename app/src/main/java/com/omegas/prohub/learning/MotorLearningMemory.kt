@@ -63,7 +63,7 @@ class MotorLearningMemory(
     private val sessionPetrolRegions = linkedSetOf<String>()
     private val sessionCngRegions = linkedSetOf<String>()
     private val sessionComparisons = linkedSetOf<String>()
-    
+
     private val persistExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-learning-persist").apply { isDaemon = true }
     }
@@ -194,6 +194,19 @@ class MotorLearningMemory(
             .put("revalidation", JSONObject(lastCalibrationRevalidation.toString()))
             .put("sessions", JSONArray(sessions.map { it.toJson() }))
             .put("tolerancePolicy", LearningToleranceSettings.current.toJson())
+    }
+
+    /**
+     * Fotografia mínima para o Advisor. Não inclui grid derivada, sessões nem
+     * resumos de UI, evitando reconstruir payloads que a análise não consome.
+     */
+    fun advisorSnapshot(): JSONObject = synchronized(lock) {
+        JSONObject()
+            .put("format", FORMAT)
+            .put("epoch", epoch)
+            .put("mapHash", mapHash)
+            .put("regions", JSONArray(regions.map { it.toAdvisorJson() }))
+            .put("comparisons", JSONArray(comparisons.map { it.toJson() }))
     }
 
     fun merge(payload: JSONObject, localDeviceId: String = ""): JSONObject = synchronized(lock) {
@@ -562,8 +575,8 @@ class MotorLearningMemory(
         val desiredEpoch = regionEpoch(sample.fuel)
         val target = nearestRegion(sample.fuel, sample.rpm, sample.mapBar, desiredEpoch)
             ?.takeIf { regionEquivalent(it, sample.rpm, sample.mapBar) }
-            ?: LearningRegion.fromSample(sample, desiredEpoch).also { 
-                regions += it 
+            ?: LearningRegion.fromSample(sample, desiredEpoch).also {
+                regions += it
                 if (regions.size > MAX_REGIONS) regions.removeAt(0)
             }
         target.update(sample, visit.id, sessionId)
@@ -992,7 +1005,9 @@ class MotorLearningMemory(
         lastPersistFuture = persistExecutor.submit {
             try {
                 while (persistDirty.getAndSet(false)) {
-                    val newest = synchronized(lock) { persistedStateLocked() }
+                    // O lock protege somente a cópia imutável. JSON, digest e disco ficam fora dele.
+                    val snapshot = synchronized(lock) { persistenceSnapshotLocked() }
+                    val newest = buildPersistedState(snapshot)
                     writePersistedState(newest)
                 }
             } finally {
@@ -1002,16 +1017,67 @@ class MotorLearningMemory(
         }
     }
 
-    private fun persistedStateLocked(): JSONObject = JSONObject()
-        .put("format", FORMAT)
-        .put("savedAt", System.currentTimeMillis())
-        .put("epoch", epoch)
-        .put("mapHash", mapHash)
-        .put("revalidation", JSONObject(lastCalibrationRevalidation.toString()))
-        .put("tolerancePolicy", LearningToleranceSettings.current.toJson())
-        .put("regions", regionsJsonLocked())
-        .put("comparisons", JSONArray(comparisons.map { it.toJson() }))
-        .put("sessions", JSONArray(sessions.map { it.toJson() }))
+    private fun persistenceSnapshotLocked(): MotorLearningPersistenceSnapshot = MotorLearningPersistenceSnapshot(
+        savedAt = System.currentTimeMillis(),
+        epoch = epoch,
+        mapHash = mapHash,
+        revalidationJson = lastCalibrationRevalidation.toString(),
+        tolerancePolicyJson = LearningToleranceSettings.current.toJson().toString(),
+        regions = regions.map { it.persistenceCopy() },
+        comparisons = comparisons.toList(),
+        sessions = sessions.map { it.persistenceCopy() },
+    )
+
+    private fun buildPersistedState(snapshot: MotorLearningPersistenceSnapshot): JSONObject {
+        var selectedVisitLimit = LearningMemoryBudget.MAX_REGION_VISIT_IDS
+        var selectedSessionLimit = LearningMemoryBudget.MAX_REGION_SESSION_IDS
+        var selected = JSONObject()
+        var selectedBytes = Long.MAX_VALUE
+
+        for ((visitLimit, sessionLimit) in LearningMemoryBudget.provenanceLevels) {
+            val root = JSONObject()
+                .put("format", FORMAT)
+                .put("savedAt", snapshot.savedAt)
+                .put("epoch", snapshot.epoch)
+                .put("mapHash", snapshot.mapHash)
+                .put("revalidation", JSONObject(snapshot.revalidationJson))
+                .put("tolerancePolicy", JSONObject(snapshot.tolerancePolicyJson))
+                // Persistência guarda somente ciência primária; célula/grid são derivados recalculáveis.
+                .put("regions", JSONArray(snapshot.regions.map { it.toPersistedJson(visitLimit, sessionLimit) }))
+                .put("comparisons", JSONArray(snapshot.comparisons.map { it.toJson() }))
+                .put("sessions", JSONArray(snapshot.sessions.map { it.toJson() }))
+                .put("memoryBudget", JSONObject()
+                    .put("policy", LearningMemoryBudget.POLICY)
+                    .put("targetPersistedBytes", LearningMemoryBudget.TARGET_PERSISTED_BYTES)
+                    .put("maxRegionVisitIds", visitLimit)
+                    .put("maxRegionSessionIds", sessionLimit)
+                    .put("regionCount", snapshot.regions.size)
+                    .put("comparisonCount", snapshot.comparisons.size)
+                    .put("sessionCount", snapshot.sessions.size))
+            val bytes = root.toString().toByteArray(Charsets.UTF_8).size.toLong()
+            selected = root
+            selectedBytes = bytes
+            selectedVisitLimit = visitLimit
+            selectedSessionLimit = sessionLimit
+            if (bytes <= LearningMemoryBudget.TARGET_PERSISTED_BYTES) break
+        }
+
+        selected.optJSONObject("memoryBudget")
+            ?.put("payloadBytesBeforeDigest", selectedBytes)
+            ?.put("targetExceeded", selectedBytes > LearningMemoryBudget.TARGET_PERSISTED_BYTES)
+            ?.put("provenanceCompacted",
+                selectedVisitLimit < LearningMemoryBudget.MAX_REGION_VISIT_IDS ||
+                    selectedSessionLimit < LearningMemoryBudget.MAX_REGION_SESSION_IDS)
+
+        if (selectedBytes > LearningMemoryBudget.TARGET_PERSISTED_BYTES) {
+            log.add(
+                "WARN",
+                "LEARNING-BUDGET",
+                "Estado científico excedeu o alvo de bytes mesmo sem proveniência completa; ciência preservada (${selectedBytes} bytes)",
+            )
+        }
+        return selected
+    }
 
     private fun writePersistedState(root: JSONObject) {
         try {
@@ -1019,8 +1085,9 @@ class MotorLearningMemory(
             stateFile.parentFile?.mkdirs()
             val temp = File(stateFile.parentFile, stateFile.name + ".tmp")
             val backup = File(stateFile.parentFile, stateFile.name + ".bak")
+            val encoded = root.toString().toByteArray(Charsets.UTF_8)
             FileOutputStream(temp).use { output ->
-                output.write(root.toString(2).toByteArray(Charsets.UTF_8))
+                output.write(encoded)
                 output.flush()
                 output.fd.sync()
             }
@@ -1068,6 +1135,17 @@ class MotorLearningMemory(
         .joinToString("") { "%02x".format(it) }
 }
 
+private data class MotorLearningPersistenceSnapshot(
+    val savedAt: Long,
+    val epoch: Int,
+    val mapHash: String,
+    val revalidationJson: String,
+    val tolerancePolicyJson: String,
+    val regions: List<LearningRegion>,
+    val comparisons: List<FuelComparison>,
+    val sessions: List<PhysicalLearningSession>,
+)
+
 private data class PhysicalLearningSession(
     val id: String,
     val startedAt: Long,
@@ -1079,6 +1157,10 @@ private data class PhysicalLearningSession(
 ) {
     fun durationMs(now: Long = System.currentTimeMillis()): Long =
         ((if (endedAt > 0L) endedAt else now) - startedAt).coerceAtLeast(0L)
+
+    fun persistenceCopy(): PhysicalLearningSession = copy(
+        fuels = fuels.toCollection(linkedSetOf()),
+    )
 
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -1137,8 +1219,13 @@ private data class LearningRegion(
     var sampleCount: Int = 0,
     val visits: MutableSet<String> = linkedSetOf(),
     val sessions: MutableSet<String> = linkedSetOf(),
+    var visitCount: Int = visits.size,
+    var sessionCount: Int = sessions.size,
     var updatedAt: Long = 0L,
 ) {
+    private var lastVisitId: String? = visits.lastOrNull()
+    private var lastSessionId: String? = sessions.lastOrNull()
+
     fun update(sample: MotorSample, visitId: String, sessionId: String) {
         val durationWeight = ContinuousLearningMath.dwellWeight(
             sample.endedAtElapsedMs - sample.startedAtElapsedMs,
@@ -1157,8 +1244,19 @@ private data class LearningRegion(
         qualityMean = blend(qualityMean, sample.quality)
         weight = total
         sampleCount += 1
+
+        if (visitId != lastVisitId) {
+            visitCount = saturatingAdd(max(visitCount, visits.size), 1)
+            lastVisitId = visitId
+        }
+        if (sessionId != lastSessionId) {
+            sessionCount = saturatingAdd(max(sessionCount, sessions.size), 1)
+            lastSessionId = sessionId
+        }
         visits += visitId
         sessions += sessionId
+        LearningMemoryBudget.trimNewestIds(visits, LearningMemoryBudget.MAX_REGION_VISIT_IDS)
+        LearningMemoryBudget.trimNewestIds(sessions, LearningMemoryBudget.MAX_REGION_SESSION_IDS)
         updatedAt = System.currentTimeMillis()
     }
 
@@ -1176,9 +1274,24 @@ private data class LearningRegion(
         gasMean = blend(gasMean, other.gasMean)
         qualityMean = blend(qualityMean, other.qualityMean)
         weight = total
-        sampleCount += other.sampleCount
+        sampleCount = saturatingAdd(sampleCount, other.sampleCount)
+
+        val visitOverlap = visits.intersect(other.visits).size
+        val sessionOverlap = sessions.intersect(other.sessions).size
+        visitCount = saturatingAdd(
+            max(visitCount, visits.size),
+            (max(other.visitCount, other.visits.size) - visitOverlap).coerceAtLeast(0),
+        )
+        sessionCount = saturatingAdd(
+            max(sessionCount, sessions.size),
+            (max(other.sessionCount, other.sessions.size) - sessionOverlap).coerceAtLeast(0),
+        )
         visits += other.visits
         sessions += other.sessions
+        LearningMemoryBudget.trimNewestIds(visits, LearningMemoryBudget.MAX_REGION_VISIT_IDS)
+        LearningMemoryBudget.trimNewestIds(sessions, LearningMemoryBudget.MAX_REGION_SESSION_IDS)
+        lastVisitId = visits.lastOrNull()
+        lastSessionId = sessions.lastOrNull()
         updatedAt = max(updatedAt, other.updatedAt)
     }
 
@@ -1186,6 +1299,11 @@ private data class LearningRegion(
         id = "$source:$id",
         visits = visits.mapTo(linkedSetOf()) { "$source:$it" },
         sessions = sessions.mapTo(linkedSetOf()) { "$source:$it" },
+    )
+
+    fun persistenceCopy(): LearningRegion = copy(
+        visits = visits.toCollection(linkedSetOf()),
+        sessions = sessions.toCollection(linkedSetOf()),
     )
 
     fun stage(): String = confidenceStage(sampleCount.toDouble(), max(0.0, petrolSquaredMean - petrolMean * petrolMean))
@@ -1203,8 +1321,8 @@ private data class LearningRegion(
 
     fun progressJson(): JSONObject = LearningToleranceSettings.current.let { tolerance -> JSONObject()
         .put("stage", stage())
-        .put("visits", visits.size)
-        .put("sessions", sessions.size)
+        .put("visits", visitCount)
+        .put("sessions", sessionCount)
         .put("confidence", confidence())
         .put("confidence_samples", (sampleCount / tolerance.confidenceSampleTarget.toDouble()).coerceIn(0.0, 1.0))
         .put("next_visit_target", tolerance.confidenceSampleTarget)
@@ -1212,30 +1330,52 @@ private data class LearningRegion(
         .put("map_bar", mapMean)
     }
 
-    fun toJson(): JSONObject = LearningToleranceSettings.current.let { tolerance -> JSONObject()
-        .put("id", id)
-        .put("fuel", fuel.wireName)
-        .put("epoch", epoch)
-        .put("rpm", rpmMean)
-        .put("map_bar", mapMean)
-        .put("petrol_ms", petrolMean)
-        .put("petrol_squared_mean", petrolSquaredMean)
-        .put("petrol_spread_ms", sqrt(max(0.0, petrolSquaredMean - petrolMean * petrolMean)))
-        .put("pressure_diff_bar", pressureMean)
-        .put("water_c", waterMean)
-        .put("gas_c", gasMean)
-        .put("quality", qualityMean)
-        .put("weight", weight)
-        .put("samples", sampleCount)
-        .put("visits", JSONArray(visits.toList()))
-        .put("sessions", JSONArray(sessions.toList()))
-        .put("visit_count", visits.size)
-        .put("session_count", sessions.size)
-        .put("stage", stage())
-        .put("confidence", confidence())
-        .put("confidence_samples", (sampleCount / tolerance.confidenceSampleTarget.toDouble()).coerceIn(0.0, 1.0))
-        .put("updated_at", updatedAt)
-    }
+    fun toJson(): JSONObject = toJsonWithProvenance(
+        visitLimit = LearningMemoryBudget.MAX_REGION_VISIT_IDS,
+        sessionLimit = LearningMemoryBudget.MAX_REGION_SESSION_IDS,
+    )
+
+    fun toPersistedJson(visitLimit: Int, sessionLimit: Int): JSONObject =
+        toJsonWithProvenance(visitLimit, sessionLimit)
+
+    fun toAdvisorJson(): JSONObject = toJsonWithProvenance(
+        visitLimit = LearningMemoryBudget.MAX_REGION_VISIT_IDS,
+        sessionLimit = 0,
+    )
+
+    private fun toJsonWithProvenance(visitLimit: Int, sessionLimit: Int): JSONObject =
+        LearningToleranceSettings.current.let { tolerance ->
+            val retainedVisits = LearningMemoryBudget.retainNewestIds(visits, visitLimit)
+            val retainedSessions = LearningMemoryBudget.retainNewestIds(sessions, sessionLimit)
+            JSONObject()
+                .put("id", id)
+                .put("fuel", fuel.wireName)
+                .put("epoch", epoch)
+                .put("rpm", rpmMean)
+                .put("map_bar", mapMean)
+                .put("petrol_ms", petrolMean)
+                .put("petrol_squared_mean", petrolSquaredMean)
+                .put("petrol_spread_ms", sqrt(max(0.0, petrolSquaredMean - petrolMean * petrolMean)))
+                .put("pressure_diff_bar", pressureMean)
+                .put("water_c", waterMean)
+                .put("gas_c", gasMean)
+                .put("quality", qualityMean)
+                .put("weight", weight)
+                .put("samples", sampleCount)
+                .put("visits", JSONArray(retainedVisits.toList()))
+                .put("sessions", JSONArray(retainedSessions.toList()))
+                .put("visit_count", max(visitCount, retainedVisits.size))
+                .put("session_count", max(sessionCount, retainedSessions.size))
+                .put("visit_ids_retained", retainedVisits.size)
+                .put("session_ids_retained", retainedSessions.size)
+                .put("visit_ids_compacted", visitCount > retainedVisits.size)
+                .put("session_ids_compacted", sessionCount > retainedSessions.size)
+                .put("provenance_policy", LearningMemoryBudget.POLICY)
+                .put("stage", stage())
+                .put("confidence", confidence())
+                .put("confidence_samples", (sampleCount / tolerance.confidenceSampleTarget.toDouble()).coerceIn(0.0, 1.0))
+                .put("updated_at", updatedAt)
+        }
 
     companion object {
         fun fromSample(sample: MotorSample, epoch: Int) = LearningRegion(
@@ -1253,14 +1393,10 @@ private data class LearningRegion(
         )
 
         fun fromJson(raw: JSONObject): LearningRegion {
-            val visits = linkedSetOf<String>()
-            val sessions = linkedSetOf<String>()
-            raw.optJSONArray("visits")?.let { array ->
-                repeat(array.length()) { visits += array.optString(it) }
-            }
-            raw.optJSONArray("sessions")?.let { array ->
-                repeat(array.length()) { sessions += array.optString(it) }
-            }
+            val visitArray = raw.optJSONArray("visits")
+            val sessionArray = raw.optJSONArray("sessions")
+            val visits = retainedIds(visitArray, LearningMemoryBudget.MAX_REGION_VISIT_IDS)
+            val sessions = retainedIds(sessionArray, LearningMemoryBudget.MAX_REGION_SESSION_IDS)
             val fuel = if (raw.optString("fuel") == Mp48Fuel.CNG.wireName) {
                 Mp48Fuel.CNG
             } else {
@@ -1268,6 +1404,8 @@ private data class LearningRegion(
             }
             val petrolMean = raw.optDouble("petrol_ms", 0.0)
             val petrolSquaredMean = raw.optDouble("petrol_squared_mean", petrolMean * petrolMean)
+            val visitCount = max(raw.optInt("visit_count", visitArray?.length() ?: 0), visitArray?.length() ?: 0)
+            val sessionCount = max(raw.optInt("session_count", sessionArray?.length() ?: 0), sessionArray?.length() ?: 0)
             return LearningRegion(
                 id = raw.optString("id", UUID.randomUUID().toString()),
                 fuel = fuel,
@@ -1284,12 +1422,26 @@ private data class LearningRegion(
                 sampleCount = raw.optInt("samples", 0),
                 visits = visits,
                 sessions = sessions,
+                visitCount = visitCount,
+                sessionCount = sessionCount,
                 updatedAt = raw.optLong("updated_at", 0L),
             )
         }
+
+        private fun retainedIds(raw: JSONArray?, limit: Int): LinkedHashSet<String> {
+            if (raw == null || limit <= 0) return linkedSetOf()
+            val start = (raw.length() - limit).coerceAtLeast(0)
+            val result = linkedSetOf<String>()
+            for (index in start until raw.length()) {
+                raw.optString(index).takeIf { it.isNotBlank() }?.let(result::add)
+            }
+            return result
+        }
+
+        private fun saturatingAdd(a: Int, b: Int): Int =
+            (a.toLong() + b.toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 }
-
 
 private data class PetrolReferenceEstimate(
     val petrolTargetMs: Double,
