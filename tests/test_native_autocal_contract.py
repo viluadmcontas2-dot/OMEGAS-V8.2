@@ -11,6 +11,7 @@ ACTION = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeAction
 BRIDGE = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt'
 ACQ = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalAcquisition.kt'
 MONITOR = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt'
+MATURITY = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMaturityTracker.kt'
 SERVICE = ROOT / 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'
 LEARNING = ROOT / 'app/src/main/java/com/omegas/prohub/learning/LiveOnlyLearningStore.kt'
 
@@ -21,6 +22,7 @@ class NativeAutoCalContract(unittest.TestCase):
         self.bridge = BRIDGE.read_text('utf-8')
         self.acq = ACQ.read_text('utf-8')
         self.monitor = MONITOR.read_text('utf-8')
+        self.maturity = MATURITY.read_text('utf-8')
         self.service = SERVICE.read_text('utf-8')
         self.learning = LEARNING.read_text('utf-8')
 
@@ -47,7 +49,6 @@ class NativeAutoCalContract(unittest.TestCase):
         threshold_section = self.acq.split('val threshold = when {', 1)[1].split('val state = when {', 1)[0]
         self.assertNotIn('maxAutomatch', threshold_section)
 
-
     def test_monitor_uses_existing_health_tick_and_event_driven_snapshot(self):
         self.assertNotIn('Executors.', self.monitor)
         self.assertNotIn('ScheduledExecutor', self.monitor)
@@ -57,6 +58,19 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('snapshotRequested', self.monitor)
         self.assertIn('nativeAutoCal.tick()', self.service)
         self.assertIn('scheduleWithFixedDelay(::healthTick, 200L, 3000L', self.service)
+
+    def test_native_maturity_is_read_only_banded_monotonic_and_deduplicated(self):
+        self.assertIn('AutoCalProtocol.NUM_BUF_UPD_GAS', self.monitor)
+        self.assertIn('reason = "AutoCal maturidade GNV"', self.monitor)
+        self.assertIn('workClass = Mp48WorkClass.READ_ONLY', self.monitor)
+        self.assertIn('SystemClock.elapsedRealtime()', self.monitor)
+        self.assertIn('NATIVE_BAND_MATURED', self.monitor)
+        self.assertIn('nativeMaturityEvents', self.monitor)
+        self.assertIn('counterPayloadHex', self.monitor)
+        self.assertIn('before < threshold && after >= threshold', self.maturity)
+        self.assertIn('if (previous == null || !enabled) return emptyList()', self.maturity)
+        self.assertNotIn('Thread(', self.maturity)
+        self.assertNotIn('Executors.', self.maturity)
 
     def test_paused_snapshot_is_not_fresh_learning_and_native_epoch_requires_readback(self):
         self.assertIn('AUTOCAL_PAUSED_SNAPSHOT', self.learning)
