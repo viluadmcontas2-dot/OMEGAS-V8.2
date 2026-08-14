@@ -15,6 +15,7 @@ const initialState = Object.freeze({
   telemetry: Object.freeze({ valid: false, ageMs: -1 }),
   learning: Object.freeze({ state: UI_STATE.UNAVAILABLE }),
   cellContext: null,
+  contextualEditor: Object.freeze({ kind: null, open: false, originRoute: null }),
   mapK: Object.freeze({ state: UI_STATE.UNAVAILABLE, selection: [], proposal: null, sourceRevision: null }),
   curveK: Object.freeze({ state: UI_STATE.UNAVAILABLE, prepared: [], sourceRevision: null }),
   autocal: Object.freeze({ state: UI_STATE.UNAVAILABLE }),
@@ -63,6 +64,7 @@ export class NextStore {
       telemetry: state.telemetry,
       learning: state.learning,
       cellContext: state.cellContext,
+      contextualEditor: state.contextualEditor,
       visual: state.visual,
       globalError: state.globalError,
       mapK: { state: state.mapK.state, selectionCount: state.mapK.selection.length, hasProposal: !!state.mapK.proposal },
@@ -92,12 +94,15 @@ function reduce(state, event) {
       return { ...state, learning: Object.freeze({ ...event.payload }) };
     case 'CELL_CONTEXT_UPDATED':
       return { ...state, cellContext: event.payload ? Object.freeze({ ...event.payload }) : null };
+    case 'CONTEXT_EDITOR_CHANGED':
+      return { ...state, contextualEditor: Object.freeze({ ...state.contextualEditor, ...event.payload }) };
     case 'CALIBRATION_EPOCH_CHANGED':
       return {
         ...state,
         epoch: event.epoch,
         mapK: Object.freeze({ state: UI_STATE.STALE, selection: [], proposal: null, sourceRevision: null }),
         curveK: Object.freeze({ state: UI_STATE.STALE, prepared: [], sourceRevision: null }),
+        contextualEditor: Object.freeze({ kind: null, open: false, originRoute: null }),
         cellContext: null,
       };
     case 'MAP_K_STATE':
