@@ -1,12 +1,8 @@
 import { store, UI_STATE } from './core/store.js';
 import { router, MAIN_ROUTES } from './core/router.js';
 import { scheduler } from './core/scheduler.js';
-import { simulatedAdapter } from './adapters/simulated.js';
-import { simulatedMapKAdapter } from './adapters/simulated-map.js';
-import { simulatedPredictorAdapter } from './adapters/simulated-predictor.js';
-import { simulatedCurveAdapter } from './adapters/simulated-curve.js';
-import { simulatedObdAdapter } from './adapters/simulated-obd.js';
-import { simulatedSuggestionsAdapter } from './adapters/simulated-suggestions.js';
+import { nextAdapter } from './adapters/index.js';
+import { CAPABILITY } from './adapters/next-contract.js';
 import { agoraRoute } from './routes/agora.js';
 import { aprenderRoute } from './routes/aprender.js';
 import { mapaKRoute } from './routes/mapa-k.js';
@@ -19,14 +15,8 @@ const workspace = document.getElementById('workspace');
 const nav = document.getElementById('main-nav');
 const sheet = document.getElementById('context-sheet');
 const settingsButton = document.getElementById('settings-button');
-const adapters = Object.freeze({
-  live: simulatedAdapter,
-  mapK: simulatedMapKAdapter,
-  predictor: simulatedPredictorAdapter,
-  curve: simulatedCurveAdapter,
-  obd: simulatedObdAdapter,
-  suggestions: simulatedSuggestionsAdapter,
-});
+const adapterIdentity = nextAdapter.identity();
+const adapterCapabilities = nextAdapter.capabilities();
 const routes = new Map([
   ['agora', agoraRoute],
   ['aprender', aprenderRoute],
@@ -47,6 +37,8 @@ const ctx = Object.freeze({
   store,
   router,
   scheduler,
+  adapterIdentity,
+  adapterCapabilities,
   loadCellContext,
   loadPredictor,
   loadObd,
@@ -90,8 +82,8 @@ function renderState(state) {
 function mountPlanned(route) {
   const info = MAIN_ROUTES.find((item) => item.id === route);
   workspace.innerHTML = `<section class="route-page" data-route="${escapeText(route)}">
-    <div class="route-heading"><div><h1>${escapeText(info?.label || route)}</h1><p>Ligada ao mesmo Store, Router e Scheduler; nenhum subsistema próprio será criado.</p></div></div>
-    <div class="empty-state"><div><strong>Superfície NEXT em construção</strong>O motor permanece protegido enquanto esta vertical não tem contrato completo.</div></div>
+    <div class="route-heading"><div><h1>${escapeText(info?.label || route)}</h1><p>Ligada ao mesmo Store, Router, Scheduler e NextAdapter.</p></div></div>
+    <div class="empty-state"><div><strong>Superfície NEXT em construção</strong>Função ausente fica explícita; nenhuma ponte paralela é criada.</div></div>
   </section>`;
 }
 
@@ -101,9 +93,13 @@ function updateShell(state) {
   const stale = online && Number(telemetry.ageMs) > 1500;
   const dot = document.getElementById('ecu-dot');
   dot.dataset.status = stale ? 'stale' : online ? 'online' : 'offline';
-  document.getElementById('ecu-status').textContent = stale ? 'ECU com dado antigo' : online ? 'ECU online' : 'ECU offline';
+  document.getElementById('ecu-status').textContent = adapterIdentity.dataFictional
+    ? 'SIMULADO • sem ECU real'
+    : stale ? 'ECU com dado antigo' : online ? 'ECU online' : 'ECU offline';
   document.getElementById('fuel-status').textContent = online ? humanFuel(telemetry.fuel) : '—';
-  document.getElementById('freshness-status').textContent = freshnessLabel(telemetry);
+  document.getElementById('freshness-status').textContent = adapterIdentity.dataFictional
+    ? 'dados fictícios'
+    : freshnessLabel(telemetry);
 }
 
 function freshnessLabel(telemetry) {
@@ -116,24 +112,24 @@ function freshnessLabel(telemetry) {
 }
 
 async function pollFastTelemetry() {
-  if (fastPollBusy) return;
+  if (fastPollBusy || !available(CAPABILITY.FAST_TELEMETRY)) return;
   fastPollBusy = true;
   try {
-    store.dispatch({ type: 'TELEMETRY_UPDATED', payload: await adapters.live.fastTelemetry() });
+    store.dispatch({ type: 'TELEMETRY_UPDATED', payload: await nextAdapter.fastTelemetry() });
   } catch (error) {
-    store.dispatch({ type: 'TELEMETRY_INVALIDATED', reason: error?.message || 'Falha ao obter telemetria' });
+    store.dispatch({ type: 'TELEMETRY_INVALIDATED', reason: humanError(error, 'Falha ao obter telemetria') });
   } finally {
     fastPollBusy = false;
   }
 }
 
 async function pollLearning() {
-  if (learningPollBusy) return;
+  if (learningPollBusy || !available(CAPABILITY.LEARNING_STATUS)) return;
   learningPollBusy = true;
   try {
-    store.dispatch({ type: 'LEARNING_UPDATED', payload: await adapters.live.learningStatus() });
+    store.dispatch({ type: 'LEARNING_UPDATED', payload: await nextAdapter.learningStatus() });
   } catch (error) {
-    store.dispatch({ type: 'LEARNING_UPDATED', payload: { state: UI_STATE.UNAVAILABLE, reason: error?.message || 'Learning indisponível' } });
+    store.dispatch({ type: 'LEARNING_UPDATED', payload: { state: UI_STATE.UNAVAILABLE, reason: humanError(error, 'Learning indisponível') } });
   } finally {
     learningPollBusy = false;
   }
@@ -141,11 +137,15 @@ async function pollLearning() {
 
 async function loadObd() {
   if (obdPollBusy) return;
+  if (!available(CAPABILITY.OBD_WITNESS)) {
+    store.dispatch({ type: 'OBD_STATE', payload: unavailableState(CAPABILITY.OBD_WITNESS) });
+    return;
+  }
   obdPollBusy = true;
   try {
-    store.dispatch({ type: 'OBD_STATE', payload: await adapters.obd.snapshot() });
+    store.dispatch({ type: 'OBD_STATE', payload: await nextAdapter.obdSnapshot() });
   } catch (error) {
-    store.dispatch({ type: 'OBD_STATE', payload: { state: 'ERRO', observationalOnly: true, error: error?.message || 'OBD indisponível' } });
+    store.dispatch({ type: 'OBD_STATE', payload: { state: 'ERRO', observationalOnly: true, error: humanError(error, 'OBD indisponível') } });
   } finally {
     obdPollBusy = false;
   }
@@ -153,41 +153,57 @@ async function loadObd() {
 
 async function loadSuggestions() {
   if (suggestionPollBusy) return;
+  if (!available(CAPABILITY.SUGGESTIONS)) {
+    store.dispatch({ type: 'SUGGESTIONS_STATE', payload: unavailableState(CAPABILITY.SUGGESTIONS) });
+    return;
+  }
   suggestionPollBusy = true;
   try {
-    const payload = await adapters.suggestions.snapshot();
+    const payload = await nextAdapter.suggestionsSnapshot();
     store.dispatch({ type: 'SUGGESTIONS_STATE', payload: { ...payload, state: UI_STATE.READY } });
   } catch (error) {
-    store.dispatch({ type: 'SUGGESTIONS_STATE', payload: { state: UI_STATE.FAILURE, error: error?.message || 'Sugestões indisponíveis' } });
+    store.dispatch({ type: 'SUGGESTIONS_STATE', payload: { state: UI_STATE.FAILURE, error: humanError(error, 'Sugestões indisponíveis'), items: [] } });
   } finally {
     suggestionPollBusy = false;
   }
 }
 
 async function loadCellContext() {
+  if (!available(CAPABILITY.CELL_SEMANTICS)) {
+    store.dispatch({ type: 'CELL_CONTEXT_UPDATED', payload: null });
+    return;
+  }
   try {
-    store.dispatch({ type: 'CELL_CONTEXT_UPDATED', payload: await adapters.live.cellContext() });
+    store.dispatch({ type: 'CELL_CONTEXT_UPDATED', payload: await nextAdapter.cellContext() });
   } catch (_) {
     store.dispatch({ type: 'CELL_CONTEXT_UPDATED', payload: null });
   }
 }
 
 async function loadPredictor() {
+  if (!available(CAPABILITY.PREDICTOR)) {
+    store.dispatch({ type: 'PREDICTOR_STATE', payload: unavailableState(CAPABILITY.PREDICTOR) });
+    return;
+  }
   store.dispatch({ type: 'PREDICTOR_STATE', payload: { state: UI_STATE.BUSY } });
   try {
-    const payload = await adapters.predictor.snapshot();
+    const payload = await nextAdapter.predictorSnapshot();
     store.dispatch({ type: 'PREDICTOR_STATE', payload: { ...payload, state: UI_STATE.READY } });
   } catch (error) {
-    store.dispatch({ type: 'PREDICTOR_STATE', payload: { state: UI_STATE.FAILURE, error: error?.message || 'Predictor indisponível' } });
+    store.dispatch({ type: 'PREDICTOR_STATE', payload: { state: UI_STATE.FAILURE, error: humanError(error, 'Predictor indisponível') } });
   }
 }
 
 async function readMapK() {
-  store.dispatch({ type: 'MAP_K_STATE', payload: { state: UI_STATE.BUSY, selection: [], proposal: null } });
+  if (!available(CAPABILITY.MAP_READ)) {
+    store.dispatch({ type: 'MAP_K_STATE', payload: unavailableState(CAPABILITY.MAP_READ) });
+    return;
+  }
+  store.dispatch({ type: 'MAP_K_STATE', payload: { state: UI_STATE.BUSY } });
   try {
-    store.dispatch({ type: 'MAP_K_STATE', payload: await adapters.mapK.readMap() });
+    store.dispatch({ type: 'MAP_K_STATE', payload: await nextAdapter.readMapK() });
   } catch (error) {
-    store.dispatch({ type: 'MAP_K_STATE', payload: { state: UI_STATE.FAILURE, error: error?.message || 'Falha ao ler Mapa K', selection: [], proposal: null } });
+    store.dispatch({ type: 'MAP_K_STATE', payload: { state: UI_STATE.FAILURE, error: humanError(error, 'Falha ao ler Mapa K') } });
   }
 }
 
@@ -199,7 +215,12 @@ async function toggleLearningMapEditor() {
 }
 
 function mapEditorState(state) {
-  return { ...state.mapK, currentCell: state.cellContext?.cell || null };
+  return {
+    ...state.mapK,
+    currentCell: state.cellContext?.cell || null,
+    liveTrace: state.telemetry?.liveTrace || null,
+    liveTracingEnabled: state.visual?.liveTracing !== false,
+  };
 }
 
 function mapEditorActions() {
@@ -214,7 +235,7 @@ function mapEditorActions() {
 
 function toggleMapCell(cell) {
   const mapK = store.get().mapK;
-  if (mapK.state !== UI_STATE.READY) return;
+  if (mapK.state !== UI_STATE.READY || mapK.draftBlocked) return;
   const key = `${cell.row}:${cell.column}`;
   const current = mapK.selection || [];
   const exists = current.some((item) => `${item.row}:${item.column}` === key);
@@ -225,9 +246,13 @@ function toggleMapCell(cell) {
 
 async function previewMapDelta(delta) {
   const selection = store.get().mapK.selection || [];
-  if (!selection.length) return;
-  const proposal = await adapters.mapK.preview(selection, delta);
-  store.dispatch({ type: 'MAP_K_STATE', payload: { proposal } });
+  if (!selection.length || !available(CAPABILITY.MAP_PREVIEW)) return;
+  try {
+    const proposal = await nextAdapter.previewMapK(selection, delta);
+    store.dispatch({ type: 'MAP_K_STATE', payload: { proposal } });
+  } catch (error) {
+    store.dispatch({ type: 'GLOBAL_ERROR', payload: { message: humanError(error, 'Não foi possível preparar o Mapa K.'), recoverable: true } });
+  }
 }
 
 function reviewMapProposal() {
@@ -237,28 +262,38 @@ function reviewMapProposal() {
   const rows = (proposal.changes || []).slice(0, 24).map((change) =>
     `<tr><td>${change.row + 1}:${change.column + 1}</td><td>${change.before}</td><td>→</td><td>${change.after}</td></tr>`,
   ).join('');
-  sheet.innerHTML = `<div class="route-heading"><div><h1>Revisar Mapa K</h1><p>Nenhuma escrita foi enviada.</p></div><button class="icon-action" id="close-sheet" type="button">×</button></div>
+  const writeStatus = adapterCapabilities[CAPABILITY.MAP_WRITE];
+  sheet.innerHTML = `<div class="route-heading"><div><h1>Revisar Mapa K</h1><p>Antes/depois da mesma intenção humana. Revisar não grava.</p></div><button class="icon-action" id="close-sheet" type="button">×</button></div>
     <table class="review-table"><tbody>${rows}</tbody></table>
-    <p class="learning-reason">Simulador: confirmação física permanece indisponível até a fachada nativa comprovar checkpoint, ACK e readback.</p>
-    <button class="primary-action" type="button" disabled>Confirmar escrita — indisponível no simulador</button>`;
+    <p class="learning-reason">${escapeText(writeStatus?.available ? 'A escrita real exige confirmação crítica separada.' : writeStatus?.reason || 'Writer indisponível.')}</p>
+    <button class="primary-action" type="button" disabled title="${escapeText(writeStatus?.reason || 'Gate de writer não liberado')}">Gravar na ECU — bloqueado neste gate</button>`;
   document.getElementById('close-sheet')?.addEventListener('click', closeSheet);
 }
 
 async function readCurve() {
   const perspective = store.get().curveK.perspective || 'adjust';
-  store.dispatch({ type: 'CURVE_K_STATE', payload: { state: UI_STATE.BUSY, perspective, prepared: [] } });
-  try {
-    const [curve, autocal, comparison] = await Promise.all([
-      adapters.curve.readCurve(),
-      adapters.curve.autoCalStatus(),
-      adapters.curve.comparison(),
-    ]);
-    store.dispatch({ type: 'CURVE_K_STATE', payload: { ...curve, perspective, comparison, prepared: [] } });
-    store.dispatch({ type: 'AUTOCAL_STATE', payload: autocal });
-  } catch (error) {
-    store.dispatch({ type: 'CURVE_K_STATE', payload: { state: UI_STATE.FAILURE, perspective, prepared: [], error: error?.message || 'Curva K indisponível' } });
-    store.dispatch({ type: 'AUTOCAL_STATE', payload: { state: UI_STATE.FAILURE, error: error?.message || 'AutoCal indisponível' } });
+  if (!available(CAPABILITY.CURVE_READ)) {
+    store.dispatch({ type: 'CURVE_K_STATE', payload: { ...unavailableState(CAPABILITY.CURVE_READ), perspective } });
+    return;
   }
+  store.dispatch({ type: 'CURVE_K_STATE', payload: { state: UI_STATE.BUSY, perspective } });
+  const curveResult = await settled(() => nextAdapter.readCurveK());
+  if (!curveResult.ok) {
+    store.dispatch({ type: 'CURVE_K_STATE', payload: { state: UI_STATE.FAILURE, perspective, error: humanError(curveResult.error, 'Curva K indisponível') } });
+    return;
+  }
+  const [autocalResult, comparisonResult] = await Promise.all([
+    settled(() => available(CAPABILITY.AUTOCAL_STATUS) ? nextAdapter.autoCalStatus() : Promise.reject(unavailableState(CAPABILITY.AUTOCAL_STATUS))),
+    settled(() => typeof nextAdapter.curveComparison === 'function' ? nextAdapter.curveComparison() : Promise.resolve({ state: UI_STATE.UNAVAILABLE })),
+  ]);
+  store.dispatch({ type: 'CURVE_K_STATE', payload: {
+    ...curveResult.value,
+    perspective,
+    comparison: comparisonResult.ok ? comparisonResult.value : { state: UI_STATE.UNAVAILABLE, error: humanError(comparisonResult.error, 'Comparação indisponível') },
+  } });
+  store.dispatch({ type: 'AUTOCAL_STATE', payload: autocalResult.ok
+    ? autocalResult.value
+    : { state: UI_STATE.UNAVAILABLE, error: humanError(autocalResult.error, capabilityReason(CAPABILITY.AUTOCAL_STATUS)) } });
 }
 
 function setCurvePerspective(perspective) {
@@ -268,10 +303,14 @@ function setCurvePerspective(perspective) {
 
 async function prepareCurvePoint(index, delta) {
   const curve = store.get().curveK;
-  if (curve.state !== UI_STATE.READY) return;
-  const proposal = await adapters.curve.preview(index, delta);
-  const prepared = (curve.prepared || []).filter((item) => item.index !== index);
-  store.dispatch({ type: 'CURVE_K_STATE', payload: { prepared: [...prepared, proposal] } });
+  if (curve.state !== UI_STATE.READY || curve.draftBlocked || !available(CAPABILITY.CURVE_PREVIEW)) return;
+  try {
+    const proposal = await nextAdapter.previewCurveK(index, delta);
+    const prepared = (curve.prepared || []).filter((item) => item.index !== index);
+    store.dispatch({ type: 'CURVE_K_STATE', payload: { prepared: [...prepared, proposal] } });
+  } catch (error) {
+    store.dispatch({ type: 'GLOBAL_ERROR', payload: { message: humanError(error, 'Não foi possível preparar a Curva K.'), recoverable: true } });
+  }
 }
 
 function reviewCurve() {
@@ -279,12 +318,13 @@ function reviewCurve() {
   if (!prepared.length) return;
   sheet.hidden = false;
   const rows = prepared.map((point) =>
-    `<tr><td>${point.index + 1}</td><td>${point.petrolMs.toFixed(2)} ms</td><td>${point.before.toFixed(3)}</td><td>→</td><td>${point.after.toFixed(3)}</td></tr>`,
+    `<tr><td>${point.index + 1}</td><td>${Number(point.petrolMs).toFixed(2)} ms</td><td>${Number(point.before).toFixed(3)}</td><td>→</td><td>${Number(point.after).toFixed(3)}</td></tr>`,
   ).join('');
-  sheet.innerHTML = `<div class="route-heading"><div><h1>Revisar Curva K</h1><p>${prepared.length} ponto(s) preparados. Nenhuma escrita foi enviada.</p></div><button class="icon-action" id="close-sheet" type="button">×</button></div>
+  const writeStatus = adapterCapabilities[CAPABILITY.CURVE_WRITE];
+  sheet.innerHTML = `<div class="route-heading"><div><h1>Revisar Curva K</h1><p>${prepared.length} ponto(s) preparados. Revisar não grava.</p></div><button class="icon-action" id="close-sheet" type="button">×</button></div>
     <table class="review-table"><thead><tr><th>Ponto</th><th>Petrol Inj.</th><th>Atual</th><th></th><th>Proposta</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="learning-reason">A confirmação real só será habilitada quando a fachada nativa usar KFactorManager, checkpoint, ACK e readback dos 30 pontos.</p>
-    <button class="primary-action" type="button" disabled>Confirmar Curva K — indisponível no simulador</button>`;
+    <p class="learning-reason">${escapeText(writeStatus?.reason || 'Writer real ainda não liberado nesta fachada.')}</p>
+    <button class="primary-action" type="button" disabled title="${escapeText(writeStatus?.reason || 'Gate de writer não liberado')}">Gravar na ECU — bloqueado neste gate</button>`;
   document.getElementById('close-sheet')?.addEventListener('click', closeSheet);
 }
 
@@ -310,10 +350,7 @@ async function selectReadySuggestions(items) {
 
   if (global.length) {
     if (store.get().curveK.state !== UI_STATE.READY) await readCurve();
-    store.dispatch({ type: 'CURVE_K_STATE', payload: {
-      perspective: 'adjust',
-      prepared: curvePreparedFromChanges(global),
-    } });
+    store.dispatch({ type: 'CURVE_K_STATE', payload: { perspective: 'adjust', prepared: curvePreparedFromChanges(global) } });
   }
 }
 
@@ -337,10 +374,7 @@ async function openSuggestion(item) {
   }
   if (item.target === 'CURVE_K') {
     if (store.get().curveK.state !== UI_STATE.READY) await readCurve();
-    store.dispatch({ type: 'CURVE_K_STATE', payload: {
-      perspective: 'adjust',
-      prepared: curvePreparedFromChanges(item.curveChanges || []),
-    } });
+    store.dispatch({ type: 'CURVE_K_STATE', payload: { perspective: 'adjust', prepared: curvePreparedFromChanges(item.curveChanges || []) } });
     router.navigate('curva-k');
   }
 }
@@ -360,7 +394,13 @@ function curvePreparedFromChanges(changes) {
 
 function openSettings() {
   sheet.hidden = false;
-  sheet.innerHTML = `<div class="route-heading"><div><h1>Mais</h1><p>Preferências visuais e detalhes técnicos sob demanda.</p></div><button class="icon-action" id="close-sheet" type="button">×</button></div>
+  const unavailable = Object.entries(adapterCapabilities)
+    .filter(([, value]) => value.available !== true)
+    .map(([key, value]) => `<li><strong>${escapeText(key)}</strong> — ${escapeText(value.reason)}</li>`)
+    .join('');
+  sheet.innerHTML = `<div class="route-heading"><div><h1>Mais</h1><p>Preferências visuais e diagnóstico da superfície atual.</p></div><button class="icon-action" id="close-sheet" type="button">×</button></div>
+    <p class="learning-reason"><strong>Ambiente:</strong> ${escapeText(adapterIdentity.mode)} • fonte ${escapeText(adapterIdentity.source)}${adapterIdentity.dataFictional ? ' • DADOS FICTÍCIOS' : ''}</p>
+    ${unavailable ? `<details class="help-details"><summary>Funções ainda indisponíveis</summary><ul>${unavailable}</ul></details>` : ''}
     <p class="learning-reason">Flutuante, live tracing e detalhes avançados vivem aqui sem virar novos destinos principais e sem alterar a ciência.</p>`;
   document.getElementById('close-sheet')?.addEventListener('click', closeSheet);
 }
@@ -368,6 +408,30 @@ function openSettings() {
 function closeSheet() {
   sheet.hidden = true;
   sheet.innerHTML = '';
+}
+
+function available(capability) {
+  return adapterCapabilities?.[capability]?.available === true;
+}
+
+function capabilityReason(capability) {
+  return adapterCapabilities?.[capability]?.reason || 'Função indisponível neste ambiente.';
+}
+
+function unavailableState(capability) {
+  return Object.freeze({ state: UI_STATE.UNAVAILABLE, error: capabilityReason(capability), reason: capabilityReason(capability), capability });
+}
+
+function humanError(error, fallback) {
+  return String(error?.message || error?.error || error?.reason || fallback || 'Não foi possível concluir a operação.');
+}
+
+async function settled(factory) {
+  try {
+    return { ok: true, value: await factory() };
+  } catch (error) {
+    return { ok: false, error };
+  }
 }
 
 settingsButton.addEventListener('click', openSettings);
