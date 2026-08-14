@@ -30,7 +30,12 @@ class NativeLearningAnchorIntegrationTest {
             assertEquals(0, exported.getJSONArray("comparisons").length())
             val anchor = exported.getJSONArray("nativeLearningAnchors").getJSONObject(0)
             assertEquals(1, anchor.getInt("calibrationEpoch"))
+            assertEquals(9L, anchor.getLong("sessionId"))
+            assertEquals("GNV", anchor.getString("fuel"))
             assertEquals(2450, anchor.getInt("rpm"))
+            assertEquals(7.2, anchor.getDouble("gasMsDiagnostic"), 1e-9)
+            assertEquals(1500L, anchor.getLong("correlatedFrameElapsedMs"))
+            assertEquals(500L, anchor.getLong("lagMs"))
             assertTrue(anchor.getBoolean("nativeValidity"))
             assertFalse(anchor.getBoolean("comparisonVote"))
             assertFalse(anchor.getBoolean("automaticWrite"))
@@ -46,6 +51,27 @@ class NativeLearningAnchorIntegrationTest {
             assertTrue(exported.getJSONObject("evidenceBudget").getInt("nativeAnchors") <= LearningEvidenceBudget.MAX_NATIVE_ANCHORS)
         } finally {
             restored.close()
+        }
+    }
+
+    @Test
+    fun `unreliable native maturity stays context only and creates no anchor`() {
+        val state = temporary.root.resolve("native-anchor-unreliable-${System.nanoTime()}.json")
+        val store = SignalLearningStore(state, RingLog())
+        try {
+            val snapshot = snapshot().apply {
+                getJSONArray("nativeMaturityEvents").getJSONObject(0)
+                    .put("correlationState", "NO_RELIABLE_CORRELATION")
+            }
+            val result = store.importNativeSnapshot(snapshot)
+            val exported = store.export("test")
+
+            assertEquals(0, result.getInt("importedNativeAnchors"))
+            assertEquals(0, exported.getJSONArray("nativeLearningAnchors").length())
+            assertTrue(exported.getJSONArray("nativeEcuEvidence").length() > 0)
+            assertEquals(0, exported.getJSONArray("comparisons").length())
+        } finally {
+            store.close()
         }
     }
 
@@ -80,8 +106,10 @@ class NativeLearningAnchorIntegrationTest {
         val event = JSONObject()
             .put("eventType", "NATIVE_BAND_MATURED")
             .put("nativeValidity", true)
+            .put("sessionId", 9L)
             .put("snapshotId", "AUTOCAL-TEST")
             .put("snapshotHash", "snapshot-hash")
+            .put("fuel", "GNV")
             .put("bandIndex", 4)
             .put("zone", "NORMAL")
             .put("counter", 8)
@@ -93,7 +121,11 @@ class NativeLearningAnchorIntegrationTest {
             .put("rpmConfidence", 0.75)
             .put("rpm", 2450)
             .put("correlatedPetrolMs", 4.20)
+            .put("correlatedGasMs", 7.2)
             .put("correlatedMapBar", 0.55)
+            .put("correlatedFuel", "GNV")
+            .put("correlatedFrameElapsedMs", 1500L)
+            .put("correlationLagMs", 500L)
             .put("firstTelemetrySequence", 100L)
             .put("lastTelemetrySequence", 108L)
             .put("matchedTelemetryFrames", 9)
