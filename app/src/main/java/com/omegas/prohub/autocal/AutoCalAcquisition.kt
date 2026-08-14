@@ -29,7 +29,8 @@ object AutoCalAcquisition {
             }
         }
         val petrolLowThreshold = fields["VECT_AUTOCAL_U8_1"]?.rawValues()?.firstOrNull()
-        val maxAutomatch = fields["VECT_AUTOCAL_U8_2"]?.rawValues()?.firstOrNull()
+        val maxAutomatch = (fields["MAX_AUTOMATCH"] ?: fields["VECT_AUTOCAL_U8_2"])
+            ?.rawValues()?.firstOrNull()
         val calibration = fields["CALIBRATION_VAL_1"]?.rawValues() ?: intArrayOf()
         val petrolNormalThreshold = calibration.getOrNull(2)
         val gasLowThreshold = calibration.getOrNull(5)

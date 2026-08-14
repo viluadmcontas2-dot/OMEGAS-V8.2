@@ -74,24 +74,49 @@ class LiveOnlyLearningStore(
 
     /** Snapshot AutoCal continua sendo apenas diagnóstico e nunca vira amostra ativa. */
     @Synchronized
-    fun importNativeSnapshot(snapshot: JSONObject): JSONObject =
-        decorate(delegate.importNativeSnapshot(snapshot))
+    fun importNativeSnapshot(snapshot: JSONObject): JSONObject {
+        val enabled = nativeAutoCalEnabled(snapshot)
+        if (snapshot.optBoolean("frozen", false) || enabled == 0) {
+            return decorate(
+                JSONObject()
+                    .put("ok", true)
+                    .put("source", "ECU_NATIVE")
+                    .put("importedBands", 0)
+                    .put("frozen", true)
+                    .put("reasonCode", "AUTOCAL_PAUSED_SNAPSHOT")
+                    .put("reason", "AutoCal pausado: snapshot permanece diagnóstico e não vira evidência nova."),
+            )
+                .put("activeLearningMutation", false)
+                .put("retroactiveLearningAccepted", false)
+        }
+        return decorate(delegate.importNativeSnapshot(snapshot))
             .put("activeLearningMutation", false)
             .put("retroactiveLearningAccepted", false)
+    }
 
     /**
-     * Depois da confirmação humana, ACK e readback, preserva a referência de
+     * Depois de uma escrita manual confirmada por humano + ACK/readback, ou de
+     * uma mudança nativa da ECU observada e validada por readback, preserva a referência de
      * gasolina e zera toda evidência que depende da calibração GNV anterior.
      */
     @Synchronized
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject {
-        if (!payload.optBoolean("humanConfirmed", false) || !payload.optBoolean("readbackValid", false)) {
+        val readbackValid = payload.optBoolean("readbackValid", false)
+        val manualConfirmed = payload.optBoolean("humanConfirmed", false) && readbackValid
+        val nativeObserved = payload.optString("source") == "ECU_NATIVE_AUTOCAL" &&
+            payload.optBoolean("ecuNativeObserved", false) &&
+            !payload.optBoolean("appWritePerformed", true) &&
+            readbackValid
+        if (!manualConfirmed && !nativeObserved) {
             return decorate(
                 JSONObject()
                     .put("ok", false)
                     .put("resetPerformed", false)
                     .put("reasonCode", "UNCONFIRMED_CALIBRATION_UPDATE")
-                    .put("error", "A evidência GNV só é zerada após confirmação humana e readback válido."),
+                    .put(
+                        "error",
+                        "A evidência GNV só é invalidada por escrita humana confirmada/readback ou mudança nativa observada/readback.",
+                    ),
             )
         }
 
@@ -108,10 +133,14 @@ class LiveOnlyLearningStore(
 
         lastResetReceipt = JSONObject()
             .put("policy", RESET_POLICY)
-            .put("reasonCode", "CONFIRMED_CALIBRATION_DERIVED_RESET")
+            .put("reasonCode", if (nativeObserved) "ECU_NATIVE_AUTOCAL_EPOCH" else "CONFIRMED_CALIBRATION_DERIVED_RESET")
             .put(
                 "reason",
-                "Calibração confirmada; gasolina preservada e GNV, equivalências, comparações, sugestões e confiança zerados.",
+                if (nativeObserved) {
+                    "AutoCal nativo alterou a base global; gasolina preservada e evidência GNV anterior foi supersedida."
+                } else {
+                    "Calibração confirmada; gasolina preservada e GNV, equivalências, comparações, sugestões e confiança zerados."
+                },
             )
             .put("calibrationType", payload.optString("calibrationType", "UNKNOWN"))
             .put("adjustmentId", payload.optString("adjustmentId"))
@@ -129,7 +158,11 @@ class LiveOnlyLearningStore(
         log.add(
             "WARN",
             "LEARNING-RESET",
-            "Calibração confirmada: base gasolina preservada; aprendizado GNV e derivados zerados",
+            if (nativeObserved) {
+                "AutoCal nativo observado: base gasolina preservada; época GNV anterior supersedida"
+            } else {
+                "Calibração confirmada: base gasolina preservada; aprendizado GNV e derivados zerados"
+            },
         )
         return decorate(fresh)
             .put("ok", true)
@@ -152,6 +185,20 @@ class LiveOnlyLearningStore(
      * reconcilia GNV pendente contra a gasolina persistida; o resumo herda esse
      * total para não exibir “zero equivalências” enquanto já existem propostas.
      */
+    private fun nativeAutoCalEnabled(snapshot: JSONObject): Int? {
+        if (snapshot.has("autoCalEnabled") && !snapshot.isNull("autoCalEnabled")) {
+            return snapshot.optInt("autoCalEnabled")
+        }
+        val fields = snapshot.optJSONArray("fields") ?: return null
+        repeat(fields.length()) { index ->
+            val field = fields.optJSONObject(index) ?: return@repeat
+            if (field.optString("key") != "AUTO_CAL_ENABLE" || field.optString("status") != "VALID") return@repeat
+            val raw = field.optJSONArray("rawValues") ?: return@repeat
+            if (raw.length() == 1) return raw.optInt(0)
+        }
+        return null
+    }
+
     private fun decorateStatus(source: JSONObject): JSONObject {
         val root = decorate(source)
         val advice = root.optJSONObject("assisted_calibration") ?: JSONObject()

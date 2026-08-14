@@ -11,9 +11,10 @@ import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Autoridade única da sessão MP48.
@@ -28,7 +29,7 @@ class ResponseDrivenEcuEngine(
     private val log: RingLog,
     private val onTelemetry: (Mp48Telemetry, SampleDecision, EngineMetrics) -> Unit,
     private val onStateChanged: (JSONObject) -> Unit = {},
-) {
+) : Mp48SerialScheduler {
     companion object {
         private const val HANDSHAKE_BACKOFF_MS = 250L
         private const val HANDSHAKE_BACKOFF_MAX_MS = 5_000L
@@ -40,7 +41,10 @@ class ResponseDrivenEcuEngine(
     }
     private val running = AtomicBoolean(false)
     private val stopRequested = AtomicBoolean(false)
-    private val queue = LinkedBlockingDeque<QueuedTransaction>()
+    private val queueSequence = AtomicLong(0L)
+    private val queue = PriorityBlockingQueue<QueuedSerialWork>(11, compareBy<QueuedSerialWork>
+        { it.workClass.priority }
+        .thenBy { it.sequence })
     private val analyzer = MotorSampleAnalyzer()
     private val stateLock = Any()
 
@@ -74,12 +78,14 @@ class ResponseDrivenEcuEngine(
         lastTelemetryAtMs = 0L
         lastValidTelemetryAtMs = 0L
         analyzer.reset()
-        queue.forEach { it.future.completeExceptionally(IllegalStateException("Nova sessão USB")) }
+        queue.forEach { it.fail(IllegalStateException("Nova sessão USB")) }
         queue.clear()
     }
 
     @Synchronized
     fun endUsbSession() {
+        queue.forEach { it.fail(IllegalStateException("Sessão USB encerrada")) }
+        queue.clear()
         physicalSessionId = 0L
         sessionReady = false
         hadOnlineSession = false
@@ -107,7 +113,7 @@ class ResponseDrivenEcuEngine(
 
     fun close() {
         stop(graceful = false)
-        queue.forEach { it.future.completeExceptionally(IllegalStateException("Engine encerrada")) }
+        queue.forEach { it.fail(IllegalStateException("Engine encerrada")) }
         queue.clear()
         executor.shutdownNow()
     }
@@ -115,42 +121,100 @@ class ResponseDrivenEcuEngine(
     fun isRunning(): Boolean = running.get()
     fun isSessionReady(): Boolean = sessionReady
 
-    fun submit(
-        request: ByteArray,
-        reason: String,
-        timeoutMs: Int = 1_800,
-        purgeBefore: Boolean = false,
-        highPriority: Boolean = true,
-    ): CompletableFuture<UsbProtocolReply> {
-        val future = CompletableFuture<UsbProtocolReply>()
-        val transaction = QueuedTransaction(
-            request = request.copyOf(),
-            reason = reason,
-            timeoutMs = timeoutMs,
-            purgeBefore = purgeBefore,
-            future = future,
-        )
-        if (highPriority) queue.offerFirst(transaction) else queue.offerLast(transaction)
-        return future
-    }
+    override fun isConnected(): Boolean = usb.connected
 
-    fun execute(
+    override fun currentSessionId(): Long =
+        physicalSessionId.takeIf { usb.connected && it > 0L } ?: 0L
+
+    override fun transaction(
         request: ByteArray,
         reason: String,
-        timeoutMs: Int = 1_800,
-        purgeBefore: Boolean = false,
+        timeoutMs: Int,
+        purgeBefore: Boolean,
+        expectedSessionId: Long,
+        workClass: Mp48WorkClass,
+        telemetryAfter: Boolean,
     ): UsbProtocolReply {
+        val pinnedSession = expectedSessionId.takeIf { it > 0L } ?: physicalSessionId
         return try {
-            submit(request, reason, timeoutMs, purgeBefore)
-                .get((timeoutMs + 1_000).toLong(), TimeUnit.MILLISECONDS)
+            unit(
+                reason = reason,
+                expectedSessionId = pinnedSession,
+                workClass = workClass,
+                telemetryAfter = telemetryAfter,
+                waitTimeoutMs = timeoutMs.toLong() + 1_500L,
+            ) { serial ->
+                serial.transaction(request.copyOf(), reason, timeoutMs, purgeBefore)
+            }
         } catch (e: java.util.concurrent.TimeoutException) {
-            UsbProtocolReply(false, error = "Timeout síncrono no ECU engine: ${e.message}", request = request)
+            UsbProtocolReply(false, error = "Timeout no scheduler MP48: ${e.message}", request = request)
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
             UsbProtocolReply(false, error = "Thread interrompida", request = request)
         } catch (e: Exception) {
-            UsbProtocolReply(false, error = "Falha síncrona: ${e.message}", request = request)
+            UsbProtocolReply(false, error = "Falha no scheduler MP48: ${e.message}", request = request)
         }
+    }
+
+    override fun <T> unit(
+        reason: String,
+        expectedSessionId: Long,
+        workClass: Mp48WorkClass,
+        telemetryAfter: Boolean,
+        waitTimeoutMs: Long,
+        block: (Mp48SerialUnit) -> T,
+    ): T {
+        require(running.get()) { "Engine MP48 não está em execução" }
+        val pinnedSession = expectedSessionId.takeIf { it > 0L } ?: physicalSessionId
+        require(pinnedSession > 0L) { "Sessão USB inválida" }
+        val future = CompletableFuture<T>()
+        enqueue(
+            reason = reason,
+            expectedSessionId = pinnedSession,
+            workClass = workClass,
+            telemetryAfter = telemetryAfter,
+            future = future,
+            block = block,
+        )
+        return try {
+            if (workClass == Mp48WorkClass.READ_ONLY) {
+                future.get(waitTimeoutMs.coerceAtLeast(250L), TimeUnit.MILLISECONDS)
+            } else {
+                // Escrita/safety nunca retornam "timeout" enquanto a unidade ainda
+                // pode executar. As transações internas possuem timeouts próprios e
+                // precisam terminar em ACK/readback ou falha real da sessão.
+                future.get()
+            }
+        } catch (e: java.util.concurrent.ExecutionException) {
+            val cause = e.cause
+            if (cause is RuntimeException) throw cause
+            throw IllegalStateException(cause?.message ?: e.message ?: "Falha no scheduler MP48", cause ?: e)
+        }
+    }
+
+    private fun <T> enqueue(
+        reason: String,
+        expectedSessionId: Long,
+        workClass: Mp48WorkClass,
+        telemetryAfter: Boolean,
+        future: CompletableFuture<T>,
+        block: (Mp48SerialUnit) -> T,
+    ) {
+        if (!running.get()) {
+            future.completeExceptionally(IllegalStateException("Engine MP48 não está em execução"))
+            return
+        }
+        queue.offer(
+            QueuedSerialWork(
+                sequence = queueSequence.incrementAndGet(),
+                reason = reason,
+                expectedSessionId = expectedSessionId,
+                workClass = workClass,
+                telemetryAfter = telemetryAfter,
+                executeBlock = { unit -> future.complete(block(unit)) },
+                failureBlock = future::completeExceptionally,
+            ),
+        )
     }
 
     fun statusJson(): JSONObject = synchronized(stateLock) {
@@ -213,11 +277,14 @@ class ResponseDrivenEcuEngine(
                     }
                 }
 
-                val queued = queue.pollFirst()
+                val queued = queue.poll()
                 if (queued != null) {
                     analyzer.markPlannedOperation()
                     runQueued(queued)
                     plannedWorkSinceLastTelemetry = true
+                    if (queued.telemetryAfter && sessionReady && usb.connected && !stopRequested.get()) {
+                        pollTelemetry()
+                    }
                     continue
                 }
 
@@ -444,18 +511,38 @@ class ResponseDrivenEcuEngine(
         }
     }
 
-    private fun runQueued(transaction: QueuedTransaction) {
+    private fun runQueued(work: QueuedSerialWork) {
         try {
-            val reply = usb.protocolTransaction(
-                transaction.request,
-                transaction.reason,
-                transaction.timeoutMs,
-                transaction.purgeBefore,
-                physicalSessionId,
-            )
-            transaction.future.complete(reply)
+            if (!usb.connected || !sessionReady) {
+                throw IllegalStateException("Sessão MP48 indisponível para ${work.reason}")
+            }
+            if (work.expectedSessionId > 0L && physicalSessionId != work.expectedSessionId) {
+                throw IllegalStateException("Sessão USB mudou antes de ${work.reason}")
+            }
+            val unit = object : Mp48SerialUnit {
+                override val sessionId: Long = work.expectedSessionId
+
+                override fun transaction(
+                    request: ByteArray,
+                    reason: String,
+                    timeoutMs: Int,
+                    purgeBefore: Boolean,
+                ): UsbProtocolReply {
+                    if (sessionId > 0L && physicalSessionId != sessionId) {
+                        return UsbProtocolReply(false, error = "Sessão USB mudou durante $reason", request = request)
+                    }
+                    return usb.protocolTransaction(
+                        request = request,
+                        reason = reason,
+                        timeoutMs = timeoutMs,
+                        purgeBefore = purgeBefore,
+                        expectedSessionId = sessionId,
+                    )
+                }
+            }
+            work.run(unit)
         } catch (error: Throwable) {
-            transaction.future.completeExceptionally(error)
+            work.fail(error)
         }
     }
 
@@ -537,13 +624,18 @@ class ResponseDrivenEcuEngine(
         if (changed) onStateChanged(statusJson().put("message", message))
     }
 
-    private data class QueuedTransaction(
-        val request: ByteArray,
+    private data class QueuedSerialWork(
+        val sequence: Long,
         val reason: String,
-        val timeoutMs: Int,
-        val purgeBefore: Boolean,
-        val future: CompletableFuture<UsbProtocolReply>,
-    )
+        val expectedSessionId: Long,
+        val workClass: Mp48WorkClass,
+        val telemetryAfter: Boolean,
+        val executeBlock: (Mp48SerialUnit) -> Unit,
+        val failureBlock: (Throwable) -> Unit,
+    ) {
+        fun run(unit: Mp48SerialUnit) = executeBlock(unit)
+        fun fail(error: Throwable) = failureBlock(error)
+    }
 }
 
 enum class EngineState {

@@ -11,6 +11,10 @@ object AutoCalProtocol {
     const val READ_SCALAR = 0x09
     const val READ_VECTOR = 0x29
     const val READ_INDEXED = 0x0A
+    const val WRITE_U8 = 0x12
+
+    /** Probe leve observado no ProgBase; payload de 14 bytes. */
+    val CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)
 
     enum class Encoding(val bytesPerElement: Int) {
         U8(1),
@@ -62,7 +66,9 @@ object AutoCalProtocol {
     val NUM_BUF_UPD_PETR = Field("NUM_BUF_UPD_PETR", 0x015B, Encoding.U16_LE, Shape.VECTOR, 18)
     val NUM_BUF_UPD_GAS = Field("NUM_BUF_UPD_GAS", 0x015C, Encoding.U16_LE, Shape.VECTOR, 18)
     val VECT_AUTOCAL_U8_1 = Field("VECT_AUTOCAL_U8_1", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 1)
-    val VECT_AUTOCAL_U8_2 = Field("VECT_AUTOCAL_U8_2", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 2)
+    val MAX_AUTOMATCH = Field("MAX_AUTOMATCH", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 2)
+    /** Alias de compatibilidade para snapshots/testes antigos; 0x0165:2 é MaxAutomatch. */
+    val VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH
     val PETR_INJ_TBUF_GAS_PREV = Field("PETR_INJ_TBUF_GAS_PREV", 0x015D, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF_GAS_PREV = Field("MNFLD_PRESS_BUF_GAS_PREV", 0x015E, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
     val PETR_INJ_TBUF_GAS = Field("PETR_INJ_TBUF_GAS", 0x015F, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
@@ -101,7 +107,7 @@ object AutoCalProtocol {
         NUM_BUF_UPD_PETR,
         NUM_BUF_UPD_GAS,
         VECT_AUTOCAL_U8_1,
-        VECT_AUTOCAL_U8_2,
+        MAX_AUTOMATCH,
         PETR_INJ_TBUF_GAS_PREV,
         MNFLD_PRESS_BUF_GAS_PREV,
         PETR_INJ_TBUF_GAS,
@@ -127,6 +133,43 @@ object AutoCalProtocol {
         require(decoded.elementCount == expected) {
             "${decoded.field.key}: ${decoded.elementCount} elementos; esperado $expected para MODULE_VERSION ${moduleVersion ?: "desconhecida"}"
         }
+    }
+
+
+    data class NativeStatus(
+        val nativeFlag13: Int,
+        val autoMatchCount: Int,
+        val rawPayload: ByteArray,
+    )
+
+    /** Frames confirmados no PortmonLOGNOVO: 12 4A 01 01 5E / 12 4A 01 00 5D. */
+    fun setEnabled(enabled: Boolean): ByteArray = frameWriteU8(AUTO_CAL_ENABLE.address, if (enabled) 1 else 0)
+
+    fun decodeNativeStatus(status: Int, payload: ByteArray): NativeStatus {
+        require(status == Mp48Protocol.STATUS_ACK) {
+            "Status compacto AutoCal inesperado: 0x%02X".format(status)
+        }
+        require(payload.size == 14) {
+            "Status compacto AutoCal exige 14 bytes; recebidos ${payload.size}"
+        }
+        return NativeStatus(
+            nativeFlag13 = payload[12].toInt() and 0xFF,
+            autoMatchCount = payload[13].toInt() and 0xFF,
+            rawPayload = payload.copyOf(),
+        )
+    }
+
+    private fun frameWriteU8(address: Int, value: Int): ByteArray {
+        require(address in 0..0xFFFF)
+        require(value in 0..0xFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_U8.toByte(),
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+                value.toByte(),
+            ),
+        )
     }
 
     fun read(field: Field): ByteArray = when (field.shape) {

@@ -8,6 +8,7 @@ import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 private fun List<Double>.medianSafe(): Double {
     if (isEmpty()) return 0.0
@@ -17,6 +18,16 @@ private fun List<Double>.medianSafe(): Double {
         (sorted[middle - 1] + sorted[middle]) / 2.0
     } else sorted[middle]
 }
+
+private data class EvidenceStateSnapshot(
+    val frameSequence: Long,
+    val nativeEvidence: List<NativeEcuEvidence>,
+    val visitAccumulators: List<VisitComparisonAccumulator>,
+    val provenanceHistory: List<EvidenceProvenance>,
+    val performance: LearningPerformanceMetrics,
+    val nativeSnapshotsEvicted: Long,
+    val visitAccumulatorsEvicted: Long,
+)
 
 /**
  * Fachada única V6 sobre a memória persistida.
@@ -36,6 +47,7 @@ class SignalLearningStore(
         const val LEGACY_FORMAT_OLD = "omegas-learning-v5-mp48-v2"
         const val DATA_REVISION = 4
         const val LEGACY_DATA_REVISION = 3
+        const val EVIDENCE_STATE_SCHEMA = "omegas-learning-evidence-v6-v2"
     }
 
     private val delegate = MotorLearningMemory(stateFile, log)
@@ -58,16 +70,22 @@ class SignalLearningStore(
     private var lifetimeNewFramesAbsorbed = 0L
     private var lifetimeEligibleFramesEvaluated = 0L
     private var lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
+    private val evidenceLock = Any()
     private val nativeEvidence = linkedMapOf<String, NativeEcuEvidence>()
     private val visitAccumulators = linkedMapOf<String, VisitComparisonAccumulator>()
     private val provenanceHistory = ArrayDeque<EvidenceProvenance>()
     private var frameSequence = 0L
     private var performance = LearningPerformanceMetrics()
+    private var nativeSnapshotsEvicted = 0L
+    private var visitAccumulatorsEvicted = 0L
     private val advisorExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-learning-advisor").apply { isDaemon = true }
     }
     private val advisorRefreshPending = AtomicBoolean(false)
     private val advisorRefreshDirty = AtomicBoolean(false)
+    private val advisorRevisionGate = AdvisorRevisionGate()
+    private val advisorRequestedRevision = AtomicLong(0L)
+    private val advisorPublishedRevision = AtomicLong(0L)
     @Volatile private var advisor = analyzeCurrentMemory()
 
     init { loadEvidenceState() }
@@ -90,11 +108,14 @@ class SignalLearningStore(
     }
 
     fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject {
-        performance = performance.copy(framesReceived = performance.framesReceived + 1L)
         visibleDecision = decision
         val source = decision.sample
-        val sequenceBefore = frameSequence
-        if (source != null) frameSequence += source.frameCount.toLong().coerceAtLeast(0L)
+        val sequenceBefore = synchronized(evidenceLock) {
+            performance = performance.copy(framesReceived = performance.framesReceived + 1L)
+            val before = frameSequence
+            if (source != null) frameSequence += source.frameCount.toLong().coerceAtLeast(0L)
+            before
+        }
         val prepared = if (decision.learningEligible && source != null) {
             val fuelKey = source.fuel.wireName
             val novelty = ContinuousWindowNovelty.calculate(
@@ -104,27 +125,31 @@ class SignalLearningStore(
                 medianIntervalMs = source.diagnostics.medianIntervalMs,
                 previouslyRepresentedThroughElapsedMs = lastRepresentedWindowEndByFuel[fuelKey],
             )
-            performance = performance.copy(
-                validFrames = performance.validFrames + novelty.totalFrames,
-                windowsEvaluated = performance.windowsEvaluated + 1L,
-                earlySamplesAccepted = performance.earlySamplesAccepted + if (source.frameCount < 10) 1L else 0L,
-                newFrames = performance.newFrames + novelty.newFrames,
-                reusedFrames = performance.reusedFrames + (novelty.totalFrames - novelty.newFrames),
-                usefulWeight = performance.usefulWeight + novelty.fraction * source.quality,
-                firstEstimateAtMs = performance.firstEstimateAtMs ?: source.endedAtElapsedMs,
-            )
+            synchronized(evidenceLock) {
+                performance = performance.copy(
+                    validFrames = performance.validFrames + novelty.totalFrames,
+                    windowsEvaluated = performance.windowsEvaluated + 1L,
+                    earlySamplesAccepted = performance.earlySamplesAccepted + if (source.frameCount < 10) 1L else 0L,
+                    newFrames = performance.newFrames + novelty.newFrames,
+                    reusedFrames = performance.reusedFrames + (novelty.totalFrames - novelty.newFrames),
+                    usefulWeight = performance.usefulWeight + novelty.fraction * source.quality,
+                    firstEstimateAtMs = performance.firstEstimateAtMs ?: source.endedAtElapsedMs,
+                )
+                provenanceHistory.addLast(
+                    EvidenceProvenance(
+                        firstFrameSequence = sequenceBefore + 1L,
+                        lastFrameSequence = frameSequence,
+                        newFrameCount = novelty.newFrames,
+                        reusedFrameCount = (novelty.totalFrames - novelty.newFrames).coerceAtLeast(0),
+                        noveltyRatio = novelty.fraction,
+                    ),
+                )
+                while (provenanceHistory.size > LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES) {
+                    provenanceHistory.removeFirst()
+                }
+            }
             lastRepresentedWindowEndByFuel[fuelKey] = novelty.representedThroughElapsedMs
             lastNovelty = novelty
-            provenanceHistory.addLast(
-                EvidenceProvenance(
-                    firstFrameSequence = sequenceBefore + 1L,
-                    lastFrameSequence = frameSequence,
-                    newFrameCount = novelty.newFrames,
-                    reusedFrameCount = (novelty.totalFrames - novelty.newFrames).coerceAtLeast(0),
-                    noveltyRatio = novelty.fraction,
-                ),
-            )
-            while (provenanceHistory.size > 64) provenanceHistory.removeFirst()
             eligibleFramesEvaluated += novelty.totalFrames
             lifetimeEligibleFramesEvaluated += novelty.totalFrames
             newFramesAbsorbed += novelty.newFrames
@@ -177,16 +202,19 @@ class SignalLearningStore(
                 }
                 val weight = (comparison.optDouble("quality", 0.0) * noveltyFraction).coerceIn(0.0, 1.0)
                 val independent = noveltyFraction >= 0.999
-                val updated = (visitAccumulators[key] ?: VisitComparisonAccumulator(key = key)).add(
-                    error = comparison.optDouble("error_pct", 0.0),
-                    sampleWeight = weight,
-                    independent = independent,
-                    nowMs = comparison.optLong("captured_at", System.currentTimeMillis()),
-                )
-                visitAccumulators[key] = updated
+                synchronized(evidenceLock) {
+                    val updated = (visitAccumulators[key] ?: VisitComparisonAccumulator(key = key)).add(
+                        error = comparison.optDouble("error_pct", 0.0),
+                        sampleWeight = weight,
+                        independent = independent,
+                        nowMs = comparison.optLong("captured_at", System.currentTimeMillis()),
+                    )
+                    visitAccumulators[key] = updated
+                    trimVisitAccumulatorsLocked()
+                }
             }
         }
-        if (prepared.learningEligible && prepared.sample != null) scheduleAdvisorRefresh()
+        requestAdvisorRefresh(result)
         // O sidecar é uma fotografia substituível, não um log. Só solicita nova
         // fotografia quando o analisador realmente produziu uma amostra; decisões
         // intermediárias continuam ao vivo, mas não geram I/O de arquivo por quadro.
@@ -198,7 +226,7 @@ class SignalLearningStore(
 
     fun export(deviceId: String): JSONObject {
         val exported = delegate.export(deviceId)
-        advisor = AssistedCalibrationAdvisor.analyze(exported)
+        val evidence = evidenceSnapshot()
         return exported
             .put("format", FORMAT)
             .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
@@ -220,16 +248,20 @@ class SignalLearningStore(
             .put("sessionMetadataPolicy", "timestamp-organization-only-cumulative-memory")
             .put("equivalencePolicy", "continuous-petrol-reference-surface")
             .put("assistedCalibration", advisor)
+            .put("advisorRevision", advisorRequestedRevision.get())
+            .put("advisorPublishedRevision", advisorPublishedRevision.get())
+            .put("advisorFresh", advisorPublishedRevision.get() >= advisorRequestedRevision.get())
             .put("automaticCalibration", false)
             .put("realSampleTimePreserved", true)
             .put("gasConditionPreserved", true)
             .put("crossFuelGasTemperature", false)
-            .put("nativeEcuEvidence", JSONArray(nativeEvidence.values.map { it.toJson() }))
-            .put("visitAccumulators", JSONArray(visitAccumulators.values.map { it.toJson() }))
-            .put("evidenceProvenance", JSONArray(provenanceHistory.map { it.toJson() }))
-            .put("evidenceStateSchema", "omegas-learning-evidence-v6-v1")
+            .put("nativeEcuEvidence", JSONArray(evidence.nativeEvidence.map { it.toJson() }))
+            .put("visitAccumulators", JSONArray(evidence.visitAccumulators.map { it.toJson() }))
+            .put("evidenceProvenance", JSONArray(evidence.provenanceHistory.map { it.toJson() }))
+            .put("evidenceStateSchema", EVIDENCE_STATE_SCHEMA)
+            .put("evidenceBudget", evidenceBudgetJson(evidence))
             .put("adaptiveConfidence", adaptiveConfidenceJson())
-            .put("performanceMetrics", performance.toJson())
+            .put("performanceMetrics", evidence.performance.toJson())
             .put("evidencePersistence", evidenceStateWriter.metricsJson())
     }
 
@@ -250,7 +282,7 @@ class SignalLearningStore(
         val internalPayload = JSONObject(payload.toString())
             .put("format", MotorLearningMemory.FORMAT)
         val result = delegate.merge(internalPayload, localDeviceId)
-        scheduleAdvisorRefresh()
+        scheduleAdvisorRefresh(advisorRevisionGate.force())
         return decorate(result)
     }
 
@@ -260,22 +292,25 @@ class SignalLearningStore(
         if (snapshotId.isBlank()) return JSONObject().put("ok", false).put("error", "Snapshot nativo sem identificador")
         val fields = snapshot.optJSONArray("fields") ?: JSONArray()
         var imported = 0
-        repeat(fields.length()) { index ->
-            val field = fields.optJSONObject(index) ?: return@repeat
-            if (field.optString("status") != "VALID") return@repeat
-            val raw = field.optJSONArray("rawValues") ?: return@repeat
-            val bandCount = raw.length().coerceAtMost(18)
-            repeat(bandCount) { band ->
-                val key = "$snapshotId:$band"
-                nativeEvidence[key] = NativeEcuEvidence(
-                    snapshotId = snapshotId,
-                    bandIndex = band,
-                    count = field.optJSONArray("counts")?.optInt(band, 0) ?: 0,
-                    coverageQuality = if (bandCount == 0) 0.0 else 1.0,
-                    mapRaw = raw.optInt(band),
-                )
-                imported++
+        synchronized(evidenceLock) {
+            repeat(fields.length()) { index ->
+                val field = fields.optJSONObject(index) ?: return@repeat
+                if (field.optString("status") != "VALID") return@repeat
+                val raw = field.optJSONArray("rawValues") ?: return@repeat
+                val bandCount = raw.length().coerceAtMost(18)
+                repeat(bandCount) { band ->
+                    val key = "$snapshotId:$band"
+                    nativeEvidence[key] = NativeEcuEvidence(
+                        snapshotId = snapshotId,
+                        bandIndex = band,
+                        count = field.optJSONArray("counts")?.optInt(band, 0) ?: 0,
+                        coverageQuality = if (bandCount == 0) 0.0 else 1.0,
+                        mapRaw = raw.optInt(band),
+                    )
+                    imported++
+                }
             }
+            trimNativeEvidenceLocked()
         }
         return JSONObject()
             .put("ok", true)
@@ -289,7 +324,7 @@ class SignalLearningStore(
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject {
         resetConnectionCounters()
         val result = delegate.onCalibrationAdjustment(payload)
-        scheduleAdvisorRefresh()
+        scheduleAdvisorRefresh(advisorRevisionGate.force())
         persistEvidenceState()
         return decorate(result)
     }
@@ -307,39 +342,168 @@ class SignalLearningStore(
         lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
     }
 
+    private fun trimNativeEvidenceLocked() {
+        val beforeSnapshots = nativeEvidence.values.map { it.snapshotId }.distinct().size
+        val retained = LearningEvidenceBudget.retainNewestSnapshotGroups(
+            nativeEvidence.values.toList(),
+            snapshotId = { it.snapshotId },
+        )
+        if (retained.size == nativeEvidence.size) return
+        nativeEvidence.clear()
+        retained.forEach { item -> nativeEvidence["${item.snapshotId}:${item.bandIndex}"] = item }
+        val afterSnapshots = nativeEvidence.values.map { it.snapshotId }.distinct().size
+        nativeSnapshotsEvicted += (beforeSnapshots - afterSnapshots).coerceAtLeast(0)
+    }
+
+    private fun trimVisitAccumulatorsLocked() {
+        if (visitAccumulators.size <= LearningEvidenceBudget.MAX_VISIT_ACCUMULATORS) return
+        val before = visitAccumulators.size
+        val retained = LearningEvidenceBudget.retainNewestVisits(
+            visitAccumulators.values.toList(),
+            lastSeenAt = { it.lastSeenAt },
+        )
+        visitAccumulators.clear()
+        retained.forEach { item -> visitAccumulators[item.key] = item }
+        visitAccumulatorsEvicted += (before - visitAccumulators.size).coerceAtLeast(0)
+    }
+
+    private fun evidenceSnapshot(): EvidenceStateSnapshot = synchronized(evidenceLock) {
+        EvidenceStateSnapshot(
+            frameSequence = frameSequence,
+            nativeEvidence = nativeEvidence.values.toList(),
+            visitAccumulators = visitAccumulators.values.toList(),
+            provenanceHistory = provenanceHistory.toList(),
+            performance = performance,
+            nativeSnapshotsEvicted = nativeSnapshotsEvicted,
+            visitAccumulatorsEvicted = visitAccumulatorsEvicted,
+        )
+    }
+
+    private fun evidenceBudgetJson(snapshot: EvidenceStateSnapshot = evidenceSnapshot()): JSONObject = JSONObject()
+        .put("maxPersistedBytes", LearningEvidenceBudget.MAX_PERSISTED_BYTES)
+        .put("maxNativeSnapshots", LearningEvidenceBudget.MAX_NATIVE_SNAPSHOTS)
+        .put("maxVisitAccumulators", LearningEvidenceBudget.MAX_VISIT_ACCUMULATORS)
+        .put("maxProvenanceEntries", LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES)
+        .put("nativeSnapshots", snapshot.nativeEvidence.map { it.snapshotId }.distinct().size)
+        .put("nativeBands", snapshot.nativeEvidence.size)
+        .put("visitAccumulators", snapshot.visitAccumulators.size)
+        .put("provenanceEntries", snapshot.provenanceHistory.size)
+        .put("nativeSnapshotsEvicted", snapshot.nativeSnapshotsEvicted)
+        .put("visitAccumulatorsEvicted", snapshot.visitAccumulatorsEvicted)
+
+    private fun buildEvidencePayload(snapshot: EvidenceStateSnapshot): String {
+        var native = LearningEvidenceBudget.retainNewestSnapshotGroups(
+            snapshot.nativeEvidence,
+            snapshotId = { it.snapshotId },
+        )
+        var visits = LearningEvidenceBudget.retainNewestVisits(
+            snapshot.visitAccumulators,
+            lastSeenAt = { it.lastSeenAt },
+        )
+        var provenance = LearningEvidenceBudget.retainNewestEntries(snapshot.provenanceHistory)
+        var byteCompacted = false
+
+        fun build(): JSONObject = JSONObject()
+            .put("schema", EVIDENCE_STATE_SCHEMA)
+            .put("frameSequence", snapshot.frameSequence)
+            .put("nativeEcuEvidence", JSONArray(native.map { it.toJson() }))
+            .put("visitAccumulators", JSONArray(visits.map { it.toJson() }))
+            .put("evidenceProvenance", JSONArray(provenance.map { it.toJson() }))
+            .put("performanceMetrics", snapshot.performance.toJson())
+            .put(
+                "evidenceBudget",
+                evidenceBudgetJson(
+                    snapshot.copy(
+                        nativeEvidence = native,
+                        visitAccumulators = visits,
+                        provenanceHistory = provenance,
+                    ),
+                ).put("byteCompacted", byteCompacted),
+            )
+
+        var root = build()
+        var encoded = root.toString()
+        while (encoded.toByteArray(Charsets.UTF_8).size > LearningEvidenceBudget.MAX_PERSISTED_BYTES &&
+            (visits.isNotEmpty() || native.isNotEmpty() || provenance.isNotEmpty())
+        ) {
+            byteCompacted = true
+            when {
+                visits.size > 32 -> visits = LearningEvidenceBudget.retainNewestVisits(
+                    visits,
+                    lastSeenAt = { it.lastSeenAt },
+                    maxEntries = maxOf(32, visits.size - 16),
+                )
+                native.map { it.snapshotId }.distinct().size > 4 -> {
+                    val snapshotCount = native.map { it.snapshotId }.distinct().size
+                    native = LearningEvidenceBudget.retainNewestSnapshotGroups(
+                        native,
+                        snapshotId = { it.snapshotId },
+                        maxSnapshots = maxOf(4, snapshotCount - 1),
+                    )
+                }
+                provenance.size > 16 -> provenance = provenance.drop(1)
+                visits.isNotEmpty() -> visits = LearningEvidenceBudget.retainNewestVisits(
+                    visits,
+                    lastSeenAt = { it.lastSeenAt },
+                    maxEntries = visits.size - 1,
+                )
+                native.isNotEmpty() -> {
+                    val ids = native.map { it.snapshotId }.distinct()
+                    native = LearningEvidenceBudget.retainNewestSnapshotGroups(
+                        native,
+                        snapshotId = { it.snapshotId },
+                        maxSnapshots = (ids.size - 1).coerceAtLeast(0),
+                    )
+                }
+                provenance.isNotEmpty() -> provenance = provenance.drop(1)
+            }
+            root = build()
+            encoded = root.toString()
+        }
+        return encoded
+    }
+
     private fun loadEvidenceState() {
         if (!evidenceStateFile.isFile) return
         try {
             val root = JSONObject(evidenceStateFile.readText(Charsets.UTF_8))
-            frameSequence = root.optLong("frameSequence", 0L)
-            root.optJSONArray("nativeEcuEvidence")?.let { array ->
-                repeat(array.length()) { index ->
-                    val raw = array.optJSONObject(index) ?: return@repeat
-                    val id = raw.optString("snapshotId")
-                    val band = raw.optInt("bandIndex", -1)
-                    if (id.isNotBlank() && band >= 0) nativeEvidence["$id:$band"] = NativeEcuEvidence(
-                        snapshotId = id,
-                        bandIndex = band,
-                        count = raw.optInt("count", 0),
-                        coverageQuality = raw.optDouble("coverageQuality", 0.0).coerceIn(0.0, 1.0),
-                        petrolTimeRaw = raw.optInt("petrolTimeRaw", Int.MIN_VALUE).takeUnless { it == Int.MIN_VALUE },
-                        cngTimeRaw = raw.optInt("cngTimeRaw", Int.MIN_VALUE).takeUnless { it == Int.MIN_VALUE },
-                        mapRaw = raw.optInt("mapRaw", Int.MIN_VALUE).takeUnless { it == Int.MIN_VALUE },
-                        historicalConditionKnown = raw.optBoolean("historicalConditionKnown", false),
-                    )
+            synchronized(evidenceLock) {
+                frameSequence = root.optLong("frameSequence", 0L)
+                root.optJSONArray("nativeEcuEvidence")?.let { array ->
+                    repeat(array.length()) { index ->
+                        val raw = array.optJSONObject(index) ?: return@repeat
+                        val id = raw.optString("snapshotId")
+                        val band = raw.optInt("bandIndex", -1)
+                        if (id.isNotBlank() && band >= 0) nativeEvidence["$id:$band"] = NativeEcuEvidence(
+                            snapshotId = id,
+                            bandIndex = band,
+                            count = raw.optInt("count", 0),
+                            coverageQuality = raw.optDouble("coverageQuality", 0.0).coerceIn(0.0, 1.0),
+                            petrolTimeRaw = raw.optInt("petrolTimeRaw", Int.MIN_VALUE).takeUnless { it == Int.MIN_VALUE },
+                            cngTimeRaw = raw.optInt("cngTimeRaw", Int.MIN_VALUE).takeUnless { it == Int.MIN_VALUE },
+                            mapRaw = raw.optInt("mapRaw", Int.MIN_VALUE).takeUnless { it == Int.MIN_VALUE },
+                            historicalConditionKnown = raw.optBoolean("historicalConditionKnown", false),
+                        )
+                    }
                 }
-            }
-            root.optJSONArray("visitAccumulators")?.let { array ->
-                repeat(array.length()) { index ->
-                    val item = VisitComparisonAccumulator.fromJson(array.optJSONObject(index) ?: return@repeat)
-                    visitAccumulators[item.key] = item
+                root.optJSONArray("visitAccumulators")?.let { array ->
+                    repeat(array.length()) { index ->
+                        val item = VisitComparisonAccumulator.fromJson(array.optJSONObject(index) ?: return@repeat)
+                        visitAccumulators[item.key] = item
+                    }
                 }
+                root.optJSONArray("evidenceProvenance")?.let { array ->
+                    repeat(array.length()) { index -> provenanceHistory.addLast(EvidenceProvenance.fromJson(array.optJSONObject(index) ?: return@repeat)) }
+                    while (provenanceHistory.size > LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES) provenanceHistory.removeFirst()
+                }
+                root.optJSONObject("evidenceBudget")?.let { budget ->
+                    nativeSnapshotsEvicted = budget.optLong("nativeSnapshotsEvicted", 0L)
+                    visitAccumulatorsEvicted = budget.optLong("visitAccumulatorsEvicted", 0L)
+                }
+                performance = LearningPerformanceMetrics.fromJson(root.optJSONObject("performanceMetrics") ?: JSONObject())
+                trimNativeEvidenceLocked()
+                trimVisitAccumulatorsLocked()
             }
-            root.optJSONArray("evidenceProvenance")?.let { array ->
-                repeat(array.length()) { index -> provenanceHistory.addLast(EvidenceProvenance.fromJson(array.optJSONObject(index) ?: return@repeat)) }
-                while (provenanceHistory.size > 64) provenanceHistory.removeFirst()
-            }
-            performance = LearningPerformanceMetrics.fromJson(root.optJSONObject("performanceMetrics") ?: JSONObject())
         } catch (_: Exception) {
             evidenceStateFile.renameTo(File(evidenceStateFile.parentFile, "${evidenceStateFile.name}.invalid"))
         }
@@ -347,19 +511,13 @@ class SignalLearningStore(
 
     private fun persistEvidenceState() {
         try {
-            val payload = JSONObject()
-                .put("schema", "omegas-learning-evidence-v6-v1")
-                .put("frameSequence", frameSequence)
-                .put("nativeEcuEvidence", JSONArray(nativeEvidence.values.map { it.toJson() }))
-                .put("visitAccumulators", JSONArray(visitAccumulators.values.map { it.toJson() }))
-                .put("evidenceProvenance", JSONArray(provenanceHistory.map { it.toJson() }))
-                .put("performanceMetrics", performance.toJson())
-            evidenceStateWriter.submit(payload.toString())
+            val snapshot = evidenceSnapshot()
+            evidenceStateWriter.request { buildEvidencePayload(snapshot) }
         } catch (_: Exception) { /* aprendizado principal continua funcionando sem o sidecar */ }
     }
 
     private fun adaptiveConfidenceJson(): JSONObject {
-        val active = visitAccumulators.values.filter { it.weight > 0.0 }
+        val active = synchronized(evidenceLock) { visitAccumulators.values.filter { it.weight > 0.0 } }
         if (active.isEmpty()) return JSONObject()
             .put("stage", "OBSERVED")
             .put("targetVisits", 10)
@@ -396,19 +554,63 @@ class SignalLearningStore(
             .put("confidenceBandHigh", target.confidenceBandHigh)
     }
 
-    private fun refreshAdvisor() {
-        advisor = analyzeCurrentMemory()
+    private fun requestAdvisorRefresh(result: JSONObject) {
+        val token = advisorScientificToken(result) ?: return
+        advisorRevisionGate.revise(token)?.let(::scheduleAdvisorRefresh)
     }
 
-    private fun scheduleAdvisorRefresh() {
+    private fun advisorScientificToken(result: JSONObject): String? {
+        result.optJSONObject("comparison")?.let { comparison ->
+            val identity = comparison.optString("dedupe_key", comparison.optString("id"))
+            val observations = AdvisorRevisionGate.observationMilestone(
+                comparison.optInt("observation_count", 1),
+            )
+            val errorBucket = AdvisorRevisionGate.quantize(comparison.optDouble("error_pct", 0.0), 0.25)
+            val qualityBucket = AdvisorRevisionGate.quantize(comparison.optDouble("quality", 0.0), 0.05)
+            return listOf(
+                "CMP",
+                identity,
+                observations,
+                comparison.optString("direction"),
+                result.optString("comparison_stage"),
+                errorBucket,
+                qualityBucket,
+            ).joinToString(":")
+        }
+
+        result.optJSONObject("reference")?.let { reference ->
+            val petrolBucket = AdvisorRevisionGate.quantize(reference.optDouble("petrol_ms", 0.0), 0.02)
+            val confidenceBucket = AdvisorRevisionGate.quantize(reference.optDouble("confidence", 0.0), 0.05)
+            return listOf(
+                "PETROL",
+                reference.optString("id"),
+                reference.optInt("visit_count", 0),
+                reference.optString("stage"),
+                petrolBucket,
+                confidenceBucket,
+            ).joinToString(":")
+        }
+        return null
+    }
+
+    private fun refreshAdvisor(revision: Long) {
+        val refreshed = analyzeCurrentMemory()
+        advisor = refreshed
+        advisorPublishedRevision.set(revision)
+    }
+
+    private fun scheduleAdvisorRefresh(revision: Long) {
+        advisorRequestedRevision.accumulateAndGet(revision) { current, incoming -> maxOf(current, incoming) }
         advisorRefreshDirty.set(true)
         if (!advisorRefreshPending.compareAndSet(false, true)) return
         advisorExecutor.execute {
             try {
-                while (advisorRefreshDirty.getAndSet(false)) refreshAdvisor()
+                while (advisorRefreshDirty.getAndSet(false)) {
+                    refreshAdvisor(advisorRequestedRevision.get())
+                }
             } finally {
                 advisorRefreshPending.set(false)
-                if (advisorRefreshDirty.get()) scheduleAdvisorRefresh()
+                if (advisorRefreshDirty.get()) scheduleAdvisorRefresh(advisorRequestedRevision.get())
             }
         }
     }
@@ -422,7 +624,7 @@ class SignalLearningStore(
     }
 
     private fun analyzeCurrentMemory(): JSONObject = try {
-        AssistedCalibrationAdvisor.analyze(delegate.export("local-runtime"))
+        AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())
     } catch (error: Exception) {
         JSONObject()
             .put("ok", false)
@@ -431,6 +633,7 @@ class SignalLearningStore(
     }
 
     private fun decorate(source: JSONObject, includeAdvisor: Boolean = true): JSONObject {
+        val performanceSnapshot = synchronized(evidenceLock) { performance }
         val root = JSONObject(source.toString())
             .put("format", FORMAT)
             .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
@@ -458,11 +661,19 @@ class SignalLearningStore(
             .put("real_sample_time_preserved", true)
             .put("gas_condition_preserved", true)
             .put("cross_fuel_gas_temperature", false)
-            .put("native_ecu_evidence", JSONArray(nativeEvidence.values.map { it.toJson() }))
-            .put("performance_metrics", performance.toJson())
+            .put("performance_metrics", performanceSnapshot.toJson())
             .put("evidence_persistence", evidenceStateWriter.metricsJson())
 
-        if (includeAdvisor) root.put("assisted_calibration", advisor)
+        if (includeAdvisor) {
+            val evidence = evidenceSnapshot()
+            root
+                .put("assisted_calibration", advisor)
+                .put("advisor_revision", advisorRequestedRevision.get())
+                .put("advisor_published_revision", advisorPublishedRevision.get())
+                .put("advisor_fresh", advisorPublishedRevision.get() >= advisorRequestedRevision.get())
+                .put("native_ecu_evidence", JSONArray(evidence.nativeEvidence.map { it.toJson() }))
+                .put("evidence_budget", evidenceBudgetJson(evidence))
+        }
 
         memoryDecision?.let { stored ->
             root.put("memory_sample_accepted", stored.learningEligible && stored.sample != null)

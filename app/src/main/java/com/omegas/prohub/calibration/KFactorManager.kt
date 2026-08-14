@@ -2,9 +2,11 @@ package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
+import com.omegas.prohub.ecu.Mp48SerialScheduler
+import com.omegas.prohub.ecu.Mp48SerialUnit
+import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.usb.UsbProtocolReply
-import com.omegas.prohub.usb.UsbSerialManager
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class KFactorManager(
     private val paths: AppPaths,
-    private val usb: UsbSerialManager,
+    private val serial: Mp48SerialScheduler,
     private val log: RingLog,
     private val onBusyChanged: (Boolean) -> Unit,
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
@@ -190,11 +192,24 @@ class KFactorManager(
                     progress,
                     JSONObject().put("adjustmentId", adjustmentId).put("index", index),
                 )
-                requireAck(
-                    transaction(KFactorProtocol.writeFactor(index, targetRaw), "escrita K factor[$index]", 900, expectedSessionId),
-                    "escrita do ponto $index",
-                )
-                val readback = readRawPoints(KFactorProtocol.readFactors(), "readback K factor[$index]", expectedSessionId)
+                val readback = serial.unit(
+                    reason = "escrita + readback K factor[$index]",
+                    expectedSessionId = expectedSessionId,
+                    workClass = Mp48WorkClass.MANUAL_WRITE,
+                    telemetryAfter = true,
+                    waitTimeoutMs = 3_500L,
+                ) { unit ->
+                    requireAck(
+                        unit.transaction(
+                            KFactorProtocol.writeFactor(index, targetRaw),
+                            "escrita K factor[$index]",
+                            900,
+                            purgeBefore = false,
+                        ),
+                        "escrita do ponto $index",
+                    )
+                    readRawPoints(unit, KFactorProtocol.readFactors(), "readback K factor[$index]")
+                }
                 repeat(KFactorProtocol.POINT_COUNT) { other ->
                     val expected = if (other == index) targetRaw else working[other]
                     if (readback[other] != expected) {
@@ -279,6 +294,16 @@ class KFactorManager(
 
     private fun readRawPoints(request: ByteArray, reason: String, expectedSessionId: Long): IntArray {
         val reply = transaction(request, reason, 900, expectedSessionId)
+        return decodeRawPoints(reply, reason)
+    }
+
+    private fun readRawPoints(unit: Mp48SerialUnit, request: ByteArray, reason: String): IntArray =
+        decodeRawPoints(
+            unit.transaction(request, reason, 900, purgeBefore = false),
+            reason,
+        )
+
+    private fun decodeRawPoints(reply: UsbProtocolReply, reason: String): IntArray {
         if (!reply.ok) throw IllegalStateException(reply.error.ifBlank { "ECU não confirmou $reason" })
         if (reply.status != Mp48Protocol.STATUS_ACK) {
             throw IllegalStateException("Resposta inesperada 0x%02X em $reason".format(reply.status))
@@ -286,18 +311,27 @@ class KFactorManager(
         return KFactorProtocol.decodeRawPoints(reply.payload)
     }
 
-    private fun transaction(request: ByteArray, reason: String, timeoutMs: Int, expectedSessionId: Long): UsbProtocolReply {
-        if (!usb.connected) throw IllegalStateException("USB desconectado")
-        return usb.protocolTransaction(
-            request,
-            reason,
-            timeoutMs,
+    private fun transaction(
+        request: ByteArray,
+        reason: String,
+        timeoutMs: Int,
+        expectedSessionId: Long,
+        workClass: Mp48WorkClass = Mp48WorkClass.READ_ONLY,
+        telemetryAfter: Boolean = true,
+    ): UsbProtocolReply {
+        if (!serial.isConnected()) throw IllegalStateException("USB desconectado")
+        return serial.transaction(
+            request = request,
+            reason = reason,
+            timeoutMs = timeoutMs,
             purgeBefore = false,
             expectedSessionId = expectedSessionId,
+            workClass = workClass,
+            telemetryAfter = telemetryAfter,
         )
     }
 
-    private fun currentSessionId(): Long = usb.connectionSessionId.takeIf { usb.connected && it > 0L }
+    private fun currentSessionId(): Long = serial.currentSessionId().takeIf { serial.isConnected() && it > 0L }
         ?: throw IllegalStateException("USB desconectado")
 
     private fun requireAck(reply: UsbProtocolReply, action: String) {

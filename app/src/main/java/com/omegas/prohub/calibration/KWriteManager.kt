@@ -1,9 +1,11 @@
 package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.Mp48Protocol
+import com.omegas.prohub.ecu.Mp48SerialScheduler
+import com.omegas.prohub.ecu.Mp48SerialUnit
+import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.usb.UsbProtocolReply
-import com.omegas.prohub.usb.UsbSerialManager
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
@@ -17,14 +19,13 @@ import kotlin.math.min
 /**
  * Autoridade Android do mapa K.
  *
- * Toda operação usa a mesma trava justa de UsbSerialManager.protocolTransaction.
- * A telemetria não é parada: leitura e escrita entram naturalmente entre duas
- * transações completas. Não há purge no meio da sessão e não há reinício da
- * engine após uma ação de mapa.
+ * Toda operação serial passa pelo scheduler único da engine MP48. Leituras
+ * cedem a porta para telemetria entre unidades; escrita + readback imediato
+ * formam uma unidade indivisível. Nenhuma sugestão inicia este writer.
  */
 class KWriteManager(
     private val paths: AppPaths,
-    private val usb: UsbSerialManager,
+    private val serial: Mp48SerialScheduler,
     private val log: RingLog,
     @Suppress("UNUSED_PARAMETER") private val isEngineRunning: () -> Boolean,
     @Suppress("UNUSED_PARAMETER") private val stopEngine: () -> Boolean,
@@ -244,6 +245,8 @@ class KWriteManager(
                     "recuperação da saída K insertion",
                     1_200,
                     expectedSessionId,
+                    Mp48WorkClass.SAFETY,
+                    telemetryAfter = false,
                 ),
                 "recuperação da saída K insertion",
             )
@@ -365,7 +368,16 @@ class KWriteManager(
                 }
             }
 
-            requireAck(transaction(Mp48Protocol.kInsertionMode(true), "ativar K insertion", 800, expectedSessionId), "ativação K insertion")
+            requireAck(
+                transaction(
+                    Mp48Protocol.kInsertionMode(true),
+                    "ativar K insertion",
+                    800,
+                    expectedSessionId,
+                    Mp48WorkClass.MANUAL_WRITE,
+                ),
+                "ativação K insertion",
+            )
             insertionEnabled = true
             // A trava é persistida antes da primeira escrita. Se o processo ou a
             // alimentação cair, a próxima execução falha fechada até confirmar a saída.
@@ -393,16 +405,24 @@ class KWriteManager(
                         JSONObject().put("adjustmentId", adjustmentId)
                             .put("row", row).put("column", column).put("target", target),
                     )
-                    requireAck(
-                        transaction(
-                            Mp48Protocol.writeKCell(row, column, stepValue),
-                            "escrita MAP_K[$row,$column]=$stepValue",
-                            800,
-                            expectedSessionId,
-                        ),
-                        "escrita K",
-                    )
-                    val verifiedLine = readRow(row, "readback K[$row,$column]", expectedSessionId)
+                    val verifiedLine = serial.unit(
+                        reason = "escrita + readback MAP_K[$row,$column]",
+                        expectedSessionId = expectedSessionId,
+                        workClass = Mp48WorkClass.MANUAL_WRITE,
+                        telemetryAfter = true,
+                        waitTimeoutMs = 3_000L,
+                    ) { unit ->
+                        requireAck(
+                            unit.transaction(
+                                Mp48Protocol.writeKCell(row, column, stepValue),
+                                "escrita MAP_K[$row,$column]=$stepValue",
+                                800,
+                                purgeBefore = false,
+                            ),
+                            "escrita K",
+                        )
+                        readRow(unit, row, "readback K[$row,$column]")
+                    }
                     repeat(COLUMN_COUNT) { other ->
                         val verified = verifiedLine[other].toInt() and 0xFF
                         val expectedOther = if (other == column) stepValue else workingLine.getInt(other)
@@ -434,7 +454,17 @@ class KWriteManager(
                 confirmed.put(event)
             }
 
-            requireAck(transaction(Mp48Protocol.kInsertionMode(false), "desativar K insertion", 800, expectedSessionId), "saída K insertion")
+            requireAck(
+                transaction(
+                    Mp48Protocol.kInsertionMode(false),
+                    "desativar K insertion",
+                    800,
+                    expectedSessionId,
+                    Mp48WorkClass.SAFETY,
+                    telemetryAfter = false,
+                ),
+                "saída K insertion",
+            )
             insertionEnabled = false
             setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
 
@@ -501,7 +531,14 @@ class KWriteManager(
             if (insertionEnabled) {
                 try {
                     requireAck(
-                        transaction(Mp48Protocol.kInsertionMode(false), "saída K insertion após falha", 800, expectedSessionId),
+                        transaction(
+                            Mp48Protocol.kInsertionMode(false),
+                            "saída K insertion após falha",
+                            800,
+                            expectedSessionId,
+                            Mp48WorkClass.SAFETY,
+                            telemetryAfter = false,
+                        ),
                         "saída K insertion após falha",
                     )
                     insertionEnabled = false
@@ -534,7 +571,14 @@ class KWriteManager(
             if (insertionEnabled) {
                 try {
                     requireAck(
-                        transaction(Mp48Protocol.kInsertionMode(false), "saída segura K insertion", 800, expectedSessionId),
+                        transaction(
+                            Mp48Protocol.kInsertionMode(false),
+                            "saída segura K insertion",
+                            800,
+                            expectedSessionId,
+                            Mp48WorkClass.SAFETY,
+                            telemetryAfter = false,
+                        ),
                         "saída segura K insertion",
                     )
                     setInsertionSafetyLock(false, "Saída segura confirmada")
@@ -578,7 +622,29 @@ class KWriteManager(
 
     private fun readRow(row: Int, reason: String, expectedSessionId: Long): ByteArray {
         require(row in 0 until TOTAL_ROW_COUNT) { "Linha K inválida: $row" }
-        val reply = transaction(Mp48Protocol.readKRow(row), reason, 800, expectedSessionId)
+        val reply = transaction(
+            Mp48Protocol.readKRow(row),
+            reason,
+            800,
+            expectedSessionId,
+            Mp48WorkClass.READ_ONLY,
+        )
+        return decodeRow(reply)
+    }
+
+    private fun readRow(unit: Mp48SerialUnit, row: Int, reason: String): ByteArray {
+        require(row in 0 until TOTAL_ROW_COUNT) { "Linha K inválida: $row" }
+        return decodeRow(
+            unit.transaction(
+                Mp48Protocol.readKRow(row),
+                reason,
+                800,
+                purgeBefore = false,
+            ),
+        )
+    }
+
+    private fun decodeRow(reply: UsbProtocolReply): ByteArray {
         if (!reply.ok) throw IllegalStateException(reply.error.ifBlank { "ECU não confirmou a leitura" })
         if (reply.status != Mp48Protocol.STATUS_ACK) {
             throw IllegalStateException("Resposta inesperada 0x%02X".format(reply.status))
@@ -589,18 +655,27 @@ class KWriteManager(
         return reply.payload.copyOf(COLUMN_COUNT)
     }
 
-    private fun transaction(request: ByteArray, reason: String, timeoutMs: Int, expectedSessionId: Long): UsbProtocolReply {
-        if (!usb.connected) throw IllegalStateException("USB desconectado")
-        return usb.protocolTransaction(
-            request,
-            reason,
-            timeoutMs,
+    private fun transaction(
+        request: ByteArray,
+        reason: String,
+        timeoutMs: Int,
+        expectedSessionId: Long,
+        workClass: Mp48WorkClass = Mp48WorkClass.READ_ONLY,
+        telemetryAfter: Boolean = true,
+    ): UsbProtocolReply {
+        if (!serial.isConnected()) throw IllegalStateException("USB desconectado")
+        return serial.transaction(
+            request = request,
+            reason = reason,
+            timeoutMs = timeoutMs,
             purgeBefore = false,
             expectedSessionId = expectedSessionId,
+            workClass = workClass,
+            telemetryAfter = telemetryAfter,
         )
     }
 
-    private fun currentSessionId(): Long = usb.connectionSessionId.takeIf { usb.connected && it > 0L }
+    private fun currentSessionId(): Long = serial.currentSessionId().takeIf { serial.isConnected() && it > 0L }
         ?: throw IllegalStateException("USB desconectado")
 
     private fun safetyError(): JSONObject = error(

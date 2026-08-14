@@ -29,7 +29,7 @@ internal class CoalescedSnapshotWriter(
     private val writes = AtomicLong(0L)
     private val failures = AtomicLong(0L)
 
-    @Volatile private var latestPayload = ""
+    @Volatile private var latestPayloadProvider: (() -> String)? = null
     @Volatile private var lastError = ""
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
@@ -37,8 +37,16 @@ internal class CoalescedSnapshotWriter(
     }
 
     fun submit(payload: String): Boolean {
+        return request { payload }
+    }
+
+    /**
+     * Coalesce antes de construir o payload caro. O provider mais recente só é
+     * executado na thread de persistência quando ela realmente for gravar.
+     */
+    fun request(payloadProvider: () -> String): Boolean {
         if (!accepting.get()) return false
-        latestPayload = payload
+        latestPayloadProvider = payloadProvider
         requests.incrementAndGet()
         dirty.set(true)
         scheduleDrain()
@@ -57,8 +65,8 @@ internal class CoalescedSnapshotWriter(
     private fun drain() {
         try {
             while (dirty.getAndSet(false)) {
-                val payload = latestPayload
                 try {
+                    val payload = latestPayloadProvider?.invoke() ?: continue
                     beforeWrite()
                     writeAtomically(payload)
                     writes.incrementAndGet()

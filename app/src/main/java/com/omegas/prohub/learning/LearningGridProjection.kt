@@ -140,7 +140,7 @@ object LearningGridProjection {
                     val column = wObj.optInt("column")
                     val cellWeight = wObj.optDouble("weight", 0.0)
                     if (cellWeight <= 0.0) return@repeat
-                    
+
                     val key = "$fuel:$regionEpoch:$row:$column"
                     val weight = max(0.001, region.optDouble("weight", region.optDouble("samples", 1.0)) * cellWeight)
                     val target = grouped.getOrPut(key) {
@@ -308,15 +308,29 @@ object LearningGridProjection {
         val regionIds: JSONArray = JSONArray(),
         val visitIds: MutableSet<String> = linkedSetOf(),
         val sessionIds: MutableSet<String> = linkedSetOf(),
+        var visitCountFloor: Int = 0,
+        var sessionCountFloor: Int = 0,
     ) {
         fun addEvidenceIds(region: JSONObject, index: Int) {
-            val regionId = region.optString("id", "region-$index")
             val visits = region.optJSONArray("visits")
             val sessions = region.optJSONArray("sessions")
-            if (visits != null) repeat(visits.length()) { visitIds += visits.optString(it) }
-            else repeat(region.optInt("visit_count", 0)) { visitIds += "$regionId:legacy-visit:$it" }
-            if (sessions != null) repeat(sessions.length()) { sessionIds += sessions.optString(it) }
-            else repeat(region.optInt("session_count", 0)) { sessionIds += "$regionId:legacy-session:$it" }
+            if (visits != null) repeat(visits.length()) { index ->
+                visits.optString(index).takeIf { it.isNotBlank() }?.let(visitIds::add)
+            }
+            if (sessions != null) repeat(sessions.length()) { index ->
+                sessions.optString(index).takeIf { it.isNotBlank() }?.let(sessionIds::add)
+            }
+
+            // Quando a lista textual foi compactada, a contagem total permanece exata
+            // no nível da região. Usamos-a como piso conservador sem fabricar IDs.
+            visitCountFloor = max(
+                visitCountFloor,
+                max(region.optInt("visit_count", visits?.length() ?: 0), visits?.length() ?: 0),
+            )
+            sessionCountFloor = max(
+                sessionCountFloor,
+                max(region.optInt("session_count", sessions?.length() ?: 0), sessions?.length() ?: 0),
+            )
         }
 
         fun toJson(): JSONObject = JSONObject()
@@ -331,8 +345,8 @@ object LearningGridProjection {
             .put("petrol_ms", if (weight > 0) petrolWeighted / weight else 0.0)
             .put("map_bar", if (weight > 0) mapWeighted / weight else 0.0)
             .put("samples", samples)
-            .put("visit_count", visitIds.size)
-            .put("session_count", sessionIds.size)
+            .put("visit_count", max(visitIds.size, visitCountFloor))
+            .put("session_count", max(sessionIds.size, sessionCountFloor))
             .put("confidence", if (weight > 0) confidenceWeighted / weight else 0.0)
             .put("stage", stage)
             .put("updated_at", updatedAt)

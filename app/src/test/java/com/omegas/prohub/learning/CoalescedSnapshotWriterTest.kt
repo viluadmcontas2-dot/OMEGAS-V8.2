@@ -8,6 +8,7 @@ import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class CoalescedSnapshotWriterTest {
     @Test
@@ -60,6 +61,48 @@ class CoalescedSnapshotWriterTest {
             writer.close()
             assertEquals(2, JSONObject(target.readText()).getInt("sequence"))
         } finally {
+            writer.close()
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `payload construction is coalesced before expensive serialization`() {
+        val directory = Files.createTempDirectory("omegas-snapshot-provider").toFile()
+        val target = directory.resolve("evidence.json")
+        val firstWriteStarted = CountDownLatch(1)
+        val releaseFirstWrite = CountDownLatch(1)
+        val first = AtomicBoolean(true)
+        val providerCalls = AtomicInteger(0)
+        val writer = CoalescedSnapshotWriter(
+            target = target,
+            threadName = "snapshot-provider-test",
+            beforeWrite = {
+                if (first.compareAndSet(true, false)) {
+                    firstWriteStarted.countDown()
+                    releaseFirstWrite.await(2L, TimeUnit.SECONDS)
+                }
+            },
+        )
+        try {
+            assertTrue(writer.request {
+                providerCalls.incrementAndGet()
+                JSONObject().put("sequence", 1).toString()
+            })
+            assertTrue(firstWriteStarted.await(1L, TimeUnit.SECONDS))
+            (2..100).forEach { sequence ->
+                assertTrue(writer.request {
+                    providerCalls.incrementAndGet()
+                    JSONObject().put("sequence", sequence).toString()
+                })
+            }
+            releaseFirstWrite.countDown()
+            assertTrue(writer.flush(5_000L))
+
+            assertEquals(100, JSONObject(target.readText()).getInt("sequence"))
+            assertTrue("coalescing must also skip most payload factories", providerCalls.get() <= 3)
+        } finally {
+            releaseFirstWrite.countDown()
             writer.close()
             directory.deleteRecursively()
         }

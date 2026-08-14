@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * Coordena uma leitura AutoCal sem possuir API de ação ou escrita.
  *
- * A transação é injetada pela autoridade Android existente e deve usar a trava
- * exclusiva de `UsbSerialManager.protocolTransaction`.
+ * A transação é injetada pelo scheduler MP48 único. O manager nunca acessa
+ * `UsbSerialManager` diretamente nem cria uma segunda autoridade serial.
  */
 class AutoCalSnapshotManager(
     private val isConnected: () -> Boolean,

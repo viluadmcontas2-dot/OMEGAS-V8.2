@@ -5,6 +5,7 @@ import android.os.Build
 import android.webkit.JavascriptInterface
 import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
+import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.service.TelemetryForegroundService
 import org.json.JSONObject
 import java.io.File
@@ -30,6 +31,12 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface
     fun getSnapshot(): String = currentManager()?.latestSnapshotJson()?.toString() ?: unavailable()
+
+    @JavascriptInterface
+    fun getNativeMonitorStatus(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalStatusJson() ?: unavailable()
+
+    @JavascriptInterface
+    fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
 
     @JavascriptInterface
     fun importSnapshotIntoLearning(snapshotJson: String): String = try {
@@ -232,16 +239,18 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface
     fun getIdentity(): String = JSONObject()
-        .put("feature", "AutoMatch — Reconstrução V8")
+        .put("feature", "Auto Calibration nativa — V8.2")
         .put("nativeFirmwareExact", false)
-        .put("readOnly", true)
-        .put("readOnlyScope", "RECONSTRUCTION_ANALYSIS_AND_DRAFT")
+        .put("nativeProtocolEvidenceExact", true)
+        .put("readOnly", false)
+        .put("readOnlyScope", "STATUS_AND_SNAPSHOT_ONLY")
         .put("localDraft", true)
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
         .put("nativeAndroidConfirmation", true)
-        .put("automatic", false)
-        .put("manualOnly", true)
+        .put("appAutomaticWrite", false)
+        .put("nativeAutoMatchInsideEcu", true)
+        .put("manualAutoMatchExposed", false)
         .put("obdIndependent", true)
         .toString()
 
@@ -264,19 +273,21 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         synchronized(managerLock) {
             bindService(service)
             if (manager == null) {
+                val serial = service.runtime.serialScheduler()
                 manager = AutoCalSnapshotManager(
-                    isConnected = { service.usb.connected },
-                    currentSessionId = { service.usb.connectionSessionId },
+                    isConnected = serial::isConnected,
+                    currentSessionId = serial::currentSessionId,
                     otherCalibrationBusy = {
                         service.kWriter.isBusy() || service.kFactor.isBusy() || nativeActions?.isBusy() == true
                     },
                     transaction = { request, reason, timeoutMs, expectedSessionId ->
-                        service.usb.protocolTransaction(
+                        serial.transaction(
                             request = request,
                             reason = reason,
                             timeoutMs = timeoutMs,
                             purgeBefore = true,
                             expectedSessionId = expectedSessionId,
+                            workClass = Mp48WorkClass.READ_ONLY,
                         )
                     },
                     onStateChanged = activity::refreshWebUi,
@@ -296,10 +307,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         synchronized(managerLock) {
             bindService(service)
             if (nativeActions == null) {
+                val serial = service.runtime.serialScheduler()
                 nativeActions = AutoCalNativeActionManager(
                     receiptFile = File(service.paths.runtimeRoot, "autocal_native_receipts.json"),
-                    isConnected = { service.usb.connected },
-                    currentSessionId = { service.usb.connectionSessionId },
+                    isConnected = serial::isConnected,
+                    currentSessionId = serial::currentSessionId,
                     otherCalibrationBusy = {
                         service.kWriter.isBusy() || service.kFactor.isBusy() || manager?.isBusy() == true
                     },
@@ -307,22 +319,23 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         CalibrationWriteSafetyPolicy.unsafeReason(service.status())
                     },
                     transaction = { request, reason, timeoutMs, expectedSessionId ->
-                        service.usb.protocolTransaction(
+                        val workClass = when (request.firstOrNull()?.toInt()?.and(0xFF)) {
+                            0x09, 0x29, 0x0A -> Mp48WorkClass.READ_ONLY
+                            else -> Mp48WorkClass.MANUAL_WRITE
+                        }
+                        serial.transaction(
                             request = request,
                             reason = reason,
                             timeoutMs = timeoutMs,
                             purgeBefore = true,
                             expectedSessionId = expectedSessionId,
+                            workClass = workClass,
                         )
                     },
                     onConfirmed = { receipt ->
                         synchronized(managerLock) { draft = null }
                         service.sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
-                        if (receipt.optString("action") == AutoCalNativeActionManager.Action.NATIVE_AUTOMATCH.name) {
-                            service.kFactor.beginUsbSession(service.usb.connectionSessionId)
-                            service.runtime.notifyCalibrationAdjustment(receipt)
-                            service.learningArchive.saveInternalCheckpoint("Após AutoMatch nativo confirmado")
-                        }
+                        service.nativeAutoCal.onManualActionConfirmed(receipt)
                         try { service.link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
                     },
                     onStateChanged = activity::refreshWebUi,

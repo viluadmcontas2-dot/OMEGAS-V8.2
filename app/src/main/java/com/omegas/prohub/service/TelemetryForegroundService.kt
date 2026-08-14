@@ -13,6 +13,7 @@ import androidx.core.app.ServiceCompat
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.KFactorManager
 import com.omegas.prohub.calibration.KWriteManager
+import com.omegas.prohub.autocal.NativeAutoCalMonitor
 import com.omegas.prohub.diagnostics.SessionRecorder
 import com.omegas.prohub.ecu.NativeRuntimeManager
 import com.omegas.prohub.gps.GpsTelemetryManager
@@ -87,6 +88,8 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var kFactor: KFactorManager
         private set
+    lateinit var nativeAutoCal: NativeAutoCalMonitor
+        private set
     var obd: ObdAssistManager? = null
         private set
     lateinit var link: OmegasLinkManager
@@ -143,7 +146,7 @@ class TelemetryForegroundService : Service() {
         )
         kWriter = KWriteManager(
             paths = paths,
-            usb = usb,
+            serial = runtime.serialScheduler(),
             log = log,
             isEngineRunning = { runtime.running },
             stopEngine = { true },
@@ -167,7 +170,7 @@ class TelemetryForegroundService : Service() {
         )
         kFactor = KFactorManager(
             paths = paths,
-            usb = usb,
+            serial = runtime.serialScheduler(),
             log = log,
             onBusyChanged = { stateChanged() },
             onConfirmedBatch = { payload ->
@@ -177,6 +180,25 @@ class TelemetryForegroundService : Service() {
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
                 link.markDataChanged("escrita K factor confirmada")
             },
+        )
+        nativeAutoCal = NativeAutoCalMonitor(
+            serial = runtime.serialScheduler(),
+            calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
+            onFreshSnapshot = { snapshot ->
+                runtime.importNativeAutoCalSnapshot(snapshot)
+                sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
+            },
+            onNativeCalibrationObserved = { payload ->
+                val result = runtime.notifyCalibrationAdjustment(payload)
+                sessionRecorder.record(
+                    "autocal_native_calibration_epoch",
+                    "autocal",
+                    JSONObject(payload.toString()).put("learningResult", result),
+                    force = true,
+                )
+                if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
+            },
+            onStateChanged = { stateChanged() },
         )
         // OBD é somente observacional: registra STFT/LTFT e nunca altera o motor de aprendizado.
         obd = ObdAssistManager(
@@ -263,7 +285,6 @@ class TelemetryForegroundService : Service() {
         stopping = true
         healthTask?.cancel(true)
         scheduler.shutdownNow()
-        try { learningArchive.saveInternalCheckpoint("Serviço encerrado") } catch (_: Exception) {}
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
         try { usb.disconnect() } catch (_: Exception) {}
@@ -273,6 +294,7 @@ class TelemetryForegroundService : Service() {
         try { gps.stop() } catch (_: Exception) {}
         try { overlay.close() } catch (_: Exception) {}
         try { sessionRecorder.close() } catch (_: Exception) {}
+        try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
         try { kFactor.close() } catch (_: Exception) {}
         try { kWriter.close() } catch (_: Exception) {}
         try { runtime.close() } catch (_: Exception) {}
@@ -546,6 +568,12 @@ class TelemetryForegroundService : Service() {
         return result.toString()
     }
 
+    fun nativeAutoCalStatusJson(): String =
+        if (::nativeAutoCal.isInitialized) nativeAutoCal.statusJson().toString() else "{}"
+
+    fun nativeAutoCalSnapshotJson(): String =
+        if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson().toString() else "{}"
+
     fun linkStatusJson(): String {
         val raw = try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() }
         return raw.put("connected", raw.optBoolean("peerConnected", false))
@@ -593,6 +621,7 @@ class TelemetryForegroundService : Service() {
             runtime.beginUsbSession(sessionId)
             kWriter.beginUsbSession(sessionId)
             kFactor.beginUsbSession(sessionId)
+            nativeAutoCal.beginUsbSession(sessionId)
             enginePausedByUser = false
             if (settings.sessionRecorderEnabled && settings.sessionRecorderAutoStartOnUsb) {
                 sessionRecorder.start(
@@ -604,6 +633,7 @@ class TelemetryForegroundService : Service() {
         } else {
             runtime.stop(2)
             runtime.endUsbSession("USB_DISCONNECTED")
+            nativeAutoCal.endUsbSession()
             telemetryStore.invalidate("USB_DISCONNECTED")
             if (sessionRecorder.statusObject().optBoolean("recording")) {
                 sessionRecorder.stop("MP48 desconectado")
@@ -637,6 +667,9 @@ class TelemetryForegroundService : Service() {
                 startEngine("recuperação automática do núcleo")
             }
             if (!usb.connected && runtime.running) runtime.stop(2)
+            if (usb.connected && runtime.running && runtime.serialScheduler().currentSessionId() > 0L) {
+                nativeAutoCal.tick()
+            }
             if (sessionRecorder.statusObject().optBoolean("recording")) {
                 sessionRecorder.record(
                     "full_snapshot",
@@ -667,9 +700,6 @@ class TelemetryForegroundService : Service() {
 
         sessionRecorder.record("telemetry", "mp48", live)
         sessionRecorder.record("engine_event", "native", root, force = false)
-        if (accepted.optLong("sequence", 0L) == 1L) {
-            learningArchive.saveInternalCheckpoint("Primeira telemetria da sessão")
-        }
         stateChanged()
     }
 

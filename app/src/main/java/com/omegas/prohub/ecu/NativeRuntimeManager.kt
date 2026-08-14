@@ -1,16 +1,15 @@
 package com.omegas.prohub.ecu
 
 import android.os.SystemClock
-import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
+import com.omegas.prohub.learning.DeferredLiveOnlyLearningStore
 import com.omegas.prohub.learning.LiveOnlyLearningStore
 import com.omegas.prohub.learning.SampleDecision
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.usb.UsbSerialManager
-import com.omegas.prohub.util.OrderedBackgroundPipeline
+import com.omegas.prohub.util.LatestOnlyBackgroundPipeline
 import com.omegas.prohub.util.RealtimeLearningBuffer
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
-import java.io.File
 import java.security.MessageDigest
 
 /**
@@ -20,7 +19,8 @@ import java.security.MessageDigest
  * simples reinício do loop não cria outra sessão nem aumenta confiança.
  *
  * A thread da ECU publica somente o quadro leve e volta imediatamente ao ciclo
- * MP48. A entrega da telemetria segue em fila própria. O aprendizado usa um
+ * MP48. A entrega visual mantém somente o quadro mais recente enquanto o consumidor
+ * está ocupado. O aprendizado usa um
  * buffer quente limitado por geração USB: amostras são preservadas em FIFO curto
  * e quadros transitórios são coalescidos para a leitura mais recente. A sessão
  * gravada permanece como backlog frio/durável para auditoria/exportação.
@@ -35,12 +35,8 @@ class NativeRuntimeManager(
 ) {
     private val snapshotLock = Any()
     private val learningSessionLock = Any()
-    private val learningMigration = LearningTelemetrySchemaMigration.prepare(paths.runtimeRoot, log)
-    private val learning = LiveOnlyLearningStore(
-        File(paths.runtimeRoot, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE),
-        log,
-    )
-    private val telemetryDeliveryPipeline = OrderedBackgroundPipeline(
+    private val learning = DeferredLiveOnlyLearningStore(paths.runtimeRoot, log)
+    private val telemetryDeliveryPipeline = LatestOnlyBackgroundPipeline(
         threadName = "omegas-telemetry-delivery",
         threadPriority = Thread.NORM_PRIORITY,
         onFailure = { sequence, error ->
@@ -178,6 +174,9 @@ class NativeRuntimeManager(
         return start()
     }
 
+    /** Única autoridade serial disponibilizada aos managers Android. */
+    fun serialScheduler(): Mp48SerialScheduler = engine
+
     fun statusJson(): JSONObject = engine.statusJson()
         .put("native", true)
         .put("running", running)
@@ -185,7 +184,7 @@ class NativeRuntimeManager(
         .put("startedAt", startedAt)
         .put("last_error", lastError)
         .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
-        .put("learningScaleMigration", learningMigration)
+        .put("learningScaleMigration", learning.migrationStatus())
         .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
         .put("learningPipeline", learningPipeline.metricsJson())
 
@@ -236,6 +235,7 @@ class NativeRuntimeManager(
     fun exportLearning(deviceId: String): JSONObject {
         flushLearning("antes de exportar aprendizado")
         val exported = learning.export(deviceId)
+        if (!exported.optBoolean("ok", false)) return exported.put("componentRevision", 0L)
         val canonical = JSONObject(exported.toString()).apply {
             remove("exportedAt")
             remove("componentRevision")
@@ -267,12 +267,22 @@ class NativeRuntimeManager(
         return result
     }
 
-    fun learningStatus(): JSONObject = cachedLearningState()
-        .put("ok", true)
-        .put("format", LiveOnlyLearningStore.FORMAT)
-        .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
-        .put("scaleMigration", learningMigration)
-        .put("pipeline", learningPipeline.metricsJson())
+    fun learningStatus(): JSONObject {
+        val cached = cachedLearningState()
+        if (cached.optString("state") == DeferredLiveOnlyLearningStore.STATE_RESTORING) {
+            val refreshed = safeLearningStatus()
+            if (!refreshed.optBoolean("restoring", false)) {
+                publishLearningState(latestLearningSequence, refreshed)
+            }
+        }
+        val current = cachedLearningState()
+        return current
+            .put("ok", current.optBoolean("ok", true))
+            .put("format", LiveOnlyLearningStore.FORMAT)
+            .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
+            .put("scaleMigration", learning.migrationStatus())
+            .put("pipeline", learningPipeline.metricsJson())
+    }
 
     fun notifyCalibrationAdjustment(payload: JSONObject): JSONObject {
         flushLearning("antes de registrar ajuste confirmado")

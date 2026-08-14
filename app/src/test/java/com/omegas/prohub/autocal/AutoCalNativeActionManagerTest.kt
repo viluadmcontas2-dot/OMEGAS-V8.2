@@ -20,7 +20,8 @@ class AutoCalNativeActionManagerTest {
         assertArrayEquals(hex("02 24 04 01 2B"), AutoCalNativeActionManager.Action.RESET_PETROL.request)
         assertArrayEquals(hex("02 24 04 02 2C"), AutoCalNativeActionManager.Action.RESET_GAS.request)
         assertArrayEquals(hex("02 24 04 04 2E"), AutoCalNativeActionManager.Action.RESET_ALL.request)
-        assertArrayEquals(hex("02 24 04 08 32"), AutoCalNativeActionManager.Action.NATIVE_AUTOMATCH.request)
+        assertArrayEquals(hex("12 4A 01 01 5E"), AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL.request)
+        assertArrayEquals(hex("12 4A 01 00 5D"), AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL.request)
     }
 
     @Test
@@ -47,14 +48,14 @@ class AutoCalNativeActionManagerTest {
         val receiptFile = temporaryFile()
         val manager = manager(receiptFile = receiptFile, onConfirmed = { confirmed.set(true) }) { request, _, _, _ ->
             when (request[0].toInt() and 0xFF) {
-                0x09, 0x29 -> reply(request, byteArrayOf(if (actionSent.get()) 2 else 1))
+                0x09, 0x29 -> reply(request, byteArrayOf(if (actionSent.get()) 1 else 0))
                 else -> {
                     actionSent.set(true)
                     reply(request, byteArrayOf())
                 }
             }
         }
-        val prepared = manager.prepare("NATIVE_AUTOMATCH")
+        val prepared = manager.prepare("ENABLE_AUTO_CAL")
         val started = manager.execute(prepared.getString("preparationId"))
         assertTrue(started.getBoolean("humanConfirmed"))
         awaitIdle(manager)
@@ -63,12 +64,34 @@ class AutoCalNativeActionManagerTest {
         val receipts = manager.receiptsJson()
         assertEquals(1, receipts.length())
         val receipt = receipts.getJSONObject(0)
-        assertEquals("NATIVE_AUTOMATCH", receipt.getString("action"))
-        assertEquals("02 24 04 08 32", receipt.getString("commandHex"))
+        assertEquals("ENABLE_AUTO_CAL", receipt.getString("action"))
+        assertEquals("12 4A 01 01 5E", receipt.getString("commandHex"))
+        assertTrue(receipt.getBoolean("readbackValid"))
         assertEquals(1, receipt.getJSONArray("changedFields").length())
         assertFalse(receipt.getBoolean("automatic"))
         assertFalse(receipt.getBoolean("automaticRollback"))
         assertTrue(receiptFile.isFile)
+        manager.close()
+    }
+
+    @Test
+    fun `enable exige readback do AUTO_CAL_ENABLE`() {
+        val actionSent = AtomicBoolean(false)
+        val manager = manager { request, _, _, _ ->
+            when (request[0].toInt() and 0xFF) {
+                0x09, 0x29 -> reply(request, byteArrayOf(0))
+                else -> {
+                    actionSent.set(true)
+                    reply(request, byteArrayOf())
+                }
+            }
+        }
+        val prepared = manager.prepare("ENABLE_AUTO_CAL")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertTrue(actionSent.get())
+        assertEquals("FAILED", manager.statusJson().getString("state"))
+        assertTrue(manager.statusJson().getString("message").contains("Readback"))
         manager.close()
     }
 

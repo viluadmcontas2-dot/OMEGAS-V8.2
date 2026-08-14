@@ -252,6 +252,101 @@ class MotorLearningMemoryTest {
         assertEquals(0, after.getJSONArray("regions").getJSONObject(0).getInt("epoch"))
     }
 
+    @Test
+    fun `compacted provenance preserves exact visit and session counts after restore`() {
+        val file = temporary.newFile("compacted-restore.json")
+        val region = sampleRegionJson()
+            .put("visits", JSONArray((1..40).map { "visit-$it" }))
+            .put("sessions", JSONArray((1..20).map { "session-$it" }))
+            .put("visit_count", 40)
+            .put("session_count", 20)
+        file.writeText(
+            JSONObject()
+                .put("format", MotorLearningMemory.FORMAT)
+                .put("epoch", 1)
+                .put("mapHash", "")
+                .put("regions", JSONArray().put(region))
+                .put("comparisons", JSONArray())
+                .put("sessions", JSONArray())
+                .toString(),
+        )
+
+        val restored = MotorLearningMemory(file, RingLog()).export("test")
+        val restoredRegion = restored.getJSONArray("regions").getJSONObject(0)
+        assertEquals(40, restoredRegion.getInt("visit_count"))
+        assertEquals(20, restoredRegion.getInt("session_count"))
+        assertEquals(LearningMemoryBudget.MAX_REGION_VISIT_IDS, restoredRegion.getJSONArray("visits").length())
+        assertEquals(LearningMemoryBudget.MAX_REGION_SESSION_IDS, restoredRegion.getJSONArray("sessions").length())
+        assertTrue(restoredRegion.getBoolean("visit_ids_compacted"))
+        assertTrue(restoredRegion.getBoolean("session_ids_compacted"))
+    }
+
+    @Test
+    fun `persisted learning keeps primary science and omits derived cell projection`() {
+        val file = temporary.newFile("primary-science.json")
+        file.delete()
+        val memory = MotorLearningMemory(file, RingLog())
+        memory.startSession()
+        memory.ingest(telemetry(), accepted(sample("a", 100L)))
+        memory.awaitPersistence()
+
+        val persisted = JSONObject(file.readText())
+        val region = persisted.getJSONArray("regions").getJSONObject(0)
+        assertFalse(region.has("cell"))
+        assertTrue(persisted.has("memoryBudget"))
+        assertEquals(
+            LearningMemoryBudget.POLICY,
+            persisted.getJSONObject("memoryBudget").getString("policy"),
+        )
+    }
+
+    @Test
+    fun `advisor snapshot excludes ui projections and session history`() {
+        val memory = memory()
+        memory.startSession()
+        memory.ingest(telemetry(), accepted(sample("a", 100L)))
+
+        val advisor = memory.advisorSnapshot()
+        assertTrue(advisor.has("regions"))
+        assertTrue(advisor.has("comparisons"))
+        assertFalse(advisor.has("cells"))
+        assertFalse(advisor.has("grid"))
+        assertFalse(advisor.has("integrity"))
+        assertFalse(advisor.has("summary"))
+        assertFalse(advisor.has("sessions"))
+    }
+
+    @Test
+    fun `persisted size no longer scales with full legacy provenance arrays`() {
+        fun persistLegacy(visitTotal: Int): Long {
+            val file = temporary.newFile("legacy-$visitTotal.json")
+            val region = sampleRegionJson()
+                .put("visits", JSONArray((1..visitTotal).map { "visit-$it" }))
+                .put("sessions", JSONArray((1..20).map { "session-$it" }))
+                .put("visit_count", visitTotal)
+                .put("session_count", 20)
+            file.writeText(
+                JSONObject()
+                    .put("format", MotorLearningMemory.FORMAT)
+                    .put("epoch", 1)
+                    .put("mapHash", "")
+                    .put("regions", JSONArray().put(region))
+                    .put("comparisons", JSONArray())
+                    .put("sessions", JSONArray())
+                    .toString(),
+            )
+            val memory = MotorLearningMemory(file, RingLog())
+            memory.startSession()
+            memory.ingest(telemetry(), accepted(sample("refresh-$visitTotal", 1_000L)))
+            memory.awaitPersistence()
+            return file.length()
+        }
+
+        val twentyVisits = persistLegacy(20)
+        val hundredVisits = persistLegacy(100)
+        assertTrue(kotlin.math.abs(hundredVisits - twentyVisits) < 1_024L)
+    }
+
     private fun memory() = MotorLearningMemory(
         temporary.root.resolve("learning-${System.nanoTime()}.json"),
         RingLog(),
