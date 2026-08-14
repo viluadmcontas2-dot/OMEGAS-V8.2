@@ -25,6 +25,32 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `disable nao promete pausa inofensiva e declara efeito K`() {
+        val action = AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL
+        assertTrue(action.label.contains("Desabilitar Auto Calibration"))
+        assertTrue(action.label.contains("correção K"))
+        assertTrue(action.description.contains("retira o efeito da correção K"))
+        assertFalse(action.mayChangeMulAct)
+        assertTrue(action.changesEffectiveKCorrection)
+
+        val manager = manager { request, _, _, _ -> reply(request, byteArrayOf(0)) }
+        val prepared = manager.prepare("DISABLE_AUTO_CAL")
+        assertTrue(prepared.getBoolean("prepared"))
+        assertTrue(prepared.getBoolean("changesEffectiveKCorrection"))
+        assertFalse(prepared.getBoolean("mayChangeMulAct"))
+        manager.clearPreparation()
+        manager.close()
+    }
+
+    @Test
+    fun `reset total declara que MUL ACT pode mudar`() {
+        val action = AutoCalNativeActionManager.Action.RESET_ALL
+        assertTrue(action.mayChangeMulAct)
+        assertTrue(action.changesEffectiveKCorrection)
+        assertTrue(action.description.contains("MUL_ACT"))
+    }
+
+    @Test
     fun `preparar nao envia nenhum byte e exige confirmacao separada`() {
         val calls = AtomicInteger(0)
         val manager = manager { request, _, _, _ ->
