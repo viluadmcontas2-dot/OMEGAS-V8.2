@@ -22,10 +22,8 @@ import kotlin.math.abs
  * Flutuante estritamente observacional.
  * Não possui referência a writer, USB, KMap ou KFactor.
  *
- * A presença visual NEXT é deliberadamente maior que a versão histórica:
- * o compacto usa 105dp (2,5x os 42dp anteriores) e já mostra RPM sem exigir
- * expansão. O aumento visual não muda a cadência limitada nem cria fonte de
- * estado paralela.
+ * NEXT usa presença 2,5x maior que o legado e persiste apenas preferência
+ * visual/posição. Nenhum estado científico nasce aqui.
  */
 class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     private val main = Handler(Looper.getMainLooper())
@@ -37,9 +35,12 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     private var cellText: TextView? = null
     private var stftText: TextView? = null
     private var petrolText: TextView? = null
+    private var gasText: TextView? = null
     private var rpmText: TextView? = null
+    private var contextText: TextView? = null
+    private var freshnessText: TextView? = null
     private var params: WindowManager.LayoutParams? = null
-    private var expanded = false
+    private var expanded = prefs.getBoolean(KEY_EXPANDED, false)
     private var showPending = false
     private var lastDrawAt = 0L
     @Volatile private var lastSnapshot = Snapshot()
@@ -48,7 +49,11 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         val cell: String = "—",
         val stft: Double? = null,
         val petrolMs: Double? = null,
+        val gasMs: Double? = null,
         val rpm: Double? = null,
+        val fuel: String = "—",
+        val ecuState: String = "—",
+        val telemetryAgeMs: Long? = null,
     )
 
     fun permissionGranted(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(context)
@@ -61,6 +66,10 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         .put("requestedEnabled", requestedEnabled())
         .put("visible", visible())
         .put("showPending", showPending)
+        .put("expanded", expanded)
+        .put("positionXDp", prefs.getInt(KEY_X_DP, DEFAULT_X_DP))
+        .put("positionYDp", prefs.getInt(KEY_Y_DP, DEFAULT_Y_DP))
+        .put("positionBounded", true)
         .put("observationalOnly", true)
         .put("visualScaleVsLegacy", VISUAL_SCALE_VS_LEGACY)
         .put("compactSizeDp", COMPACT_SIZE_DP)
@@ -97,6 +106,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         main.post {
             try {
                 if (root != null || !permissionGranted() || !requestedEnabled()) return@post
+                expanded = prefs.getBoolean(KEY_EXPANDED, expanded)
                 val panel = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
                     gravity = Gravity.CENTER
@@ -105,26 +115,29 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                     elevation = dp(12).toFloat()
                 }
                 val button = TextView(context).apply {
-                    text = "Ω\n— rpm"
-                    textSize = 24f
+                    text = "Ω\n— rpm\n—"
+                    textSize = 20f
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
                     minWidth = dp(COMPACT_SIZE_DP)
                     minHeight = dp(COMPACT_SIZE_DP)
-                    setPadding(dp(10), dp(8), dp(10), dp(8))
+                    setPadding(dp(8), dp(7), dp(8), dp(7))
                     contentDescription = "OMEGAS telemetria flutuante ampliada"
                 }
                 compactText = button
                 val data = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    visibility = View.GONE
+                    visibility = if (expanded) View.VISIBLE else View.GONE
                     minimumWidth = dp(EXPANDED_MIN_WIDTH_DP)
                     setPadding(dp(8), dp(8), dp(8), dp(10))
                 }
-                cellText = metric("CÉLULA  —").also(data::addView)
-                stftText = metric("STFT  —").also(data::addView)
-                petrolText = metric("PETROL  —").also(data::addView)
                 rpmText = metric("RPM  —", emphasized = true).also(data::addView)
+                petrolText = metric("PETROL  —").also(data::addView)
+                gasText = metric("GAS  —").also(data::addView)
+                cellText = metric("CÉLULA  —").also(data::addView)
+                contextText = metric("ECU / COMBUSTÍVEL  —").also(data::addView)
+                freshnessText = metric("FRESCOR  —").also(data::addView)
+                stftText = metric("STFT  —").also(data::addView)
                 panel.addView(button)
                 panel.addView(data)
                 details = data
@@ -133,19 +146,23 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     overlayWindowType(),
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                     PixelFormat.TRANSLUCENT,
                 ).apply {
                     gravity = Gravity.TOP or Gravity.END
-                    x = dp(16)
-                    y = dp(140)
+                    x = dp(restoredXdp(expanded))
+                    y = dp(restoredYdp(expanded))
                 }
                 params = lp
                 installDrag(panel, button)
                 windowManager.addView(panel, lp)
                 root = panel
                 render(lastSnapshot)
+                panel.post {
+                    clampActualPosition(panel, lp)
+                    persistPosition(lp)
+                    try { windowManager.updateViewLayout(panel, lp) } catch (_: Exception) {}
+                }
             } catch (_: Exception) {
                 root = null
                 params = null
@@ -186,12 +203,15 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                     val dx = event.rawX - downRawX
                     val dy = event.rawY - downRawY
                     if (abs(dx) > dp(7) || abs(dy) > dp(7)) moved = true
-                    lp.x = (startX - dx.toInt()).coerceAtLeast(0)
-                    lp.y = (startY + dy.toInt()).coerceAtLeast(0)
+                    lp.x = startX - dx.toInt()
+                    lp.y = startY + dy.toInt()
+                    clampActualPosition(panel, lp)
                     try { windowManager.updateViewLayout(panel, lp) } catch (_: Exception) {}
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    clampActualPosition(panel, lp)
+                    persistPosition(lp)
                     if (event.actionMasked == MotionEvent.ACTION_UP && !moved) clickTarget.performClick()
                     true
                 }
@@ -200,19 +220,64 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         }
         clickTarget.setOnClickListener {
             expanded = !expanded
+            prefs.edit().putBoolean(KEY_EXPANDED, expanded).apply()
             details?.visibility = if (expanded) View.VISIBLE else View.GONE
-            params?.let { lp ->
-                try { root?.let { windowManager.updateViewLayout(it, lp) } } catch (_: Exception) {}
+            panel.post {
+                params?.let { lp ->
+                    clampActualPosition(panel, lp)
+                    persistPosition(lp)
+                    try { windowManager.updateViewLayout(panel, lp) } catch (_: Exception) {}
+                }
             }
         }
     }
 
     private fun render(snapshot: Snapshot) {
-        compactText?.text = "Ω\n${snapshot.rpm?.let { "%.0f rpm".format(it) } ?: "— rpm"}"
-        cellText?.text = "CÉLULA   ${snapshot.cell}"
-        stftText?.text = "STFT     ${snapshot.stft?.let { signed(it) } ?: "—"}"
+        val rpm = snapshot.rpm?.let { "%.0f".format(it) } ?: "—"
+        val fuel = snapshot.fuel.takeIf { it.isNotBlank() && it != "—" } ?: "—"
+        compactText?.text = "Ω\n$rpm rpm\n$fuel"
+        rpmText?.text = "RPM      $rpm"
         petrolText?.text = "PETROL   ${snapshot.petrolMs?.let { "%.2f ms".format(it) } ?: "—"}"
-        rpmText?.text = "RPM      ${snapshot.rpm?.let { "%.0f".format(it) } ?: "—"}"
+        gasText?.text = "GAS      ${snapshot.gasMs?.let { "%.2f ms".format(it) } ?: "—"}"
+        cellText?.text = "CÉLULA   ${snapshot.cell}"
+        contextText?.text = "ECU      ${snapshot.ecuState.ifBlank { "—" }}  •  ${fuel}"
+        freshnessText?.text = "FRESCOR  ${freshness(snapshot.telemetryAgeMs)}"
+        stftText?.text = "STFT     ${snapshot.stft?.let { signed(it) } ?: "—"}"
+    }
+
+    private fun freshness(ageMs: Long?): String = when {
+        ageMs == null || ageMs < 0L -> "—"
+        ageMs <= 500L -> "ao vivo"
+        ageMs <= 1_500L -> "$ageMs ms"
+        else -> "${"%.1f".format(ageMs / 1_000.0)} s"
+    }
+
+    private fun clampActualPosition(panel: View, lp: WindowManager.LayoutParams) {
+        val metrics = context.resources.displayMetrics
+        val panelWidth = panel.width.takeIf { it > 0 } ?: dp(if (expanded) EXPANDED_MIN_WIDTH_DP else COMPACT_SIZE_DP)
+        val panelHeight = panel.height.takeIf { it > 0 } ?: dp(if (expanded) EXPANDED_ESTIMATED_HEIGHT_DP else COMPACT_SIZE_DP)
+        lp.x = lp.x.coerceIn(0, (metrics.widthPixels - panelWidth).coerceAtLeast(0))
+        lp.y = lp.y.coerceIn(0, (metrics.heightPixels - panelHeight).coerceAtLeast(0))
+    }
+
+    private fun persistPosition(lp: WindowManager.LayoutParams) {
+        prefs.edit()
+            .putInt(KEY_X_DP, pxToDp(lp.x).coerceAtLeast(0))
+            .putInt(KEY_Y_DP, pxToDp(lp.y).coerceAtLeast(0))
+            .putBoolean(KEY_EXPANDED, expanded)
+            .apply()
+    }
+
+    private fun restoredXdp(expandedNow: Boolean): Int {
+        val widthDp = screenWidthDp()
+        val footprint = if (expandedNow) EXPANDED_MIN_WIDTH_DP else COMPACT_SIZE_DP
+        return prefs.getInt(KEY_X_DP, DEFAULT_X_DP).coerceIn(0, (widthDp - footprint).coerceAtLeast(0))
+    }
+
+    private fun restoredYdp(expandedNow: Boolean): Int {
+        val heightDp = screenHeightDp()
+        val footprint = if (expandedNow) EXPANDED_ESTIMATED_HEIGHT_DP else COMPACT_SIZE_DP
+        return prefs.getInt(KEY_Y_DP, DEFAULT_Y_DP).coerceIn(0, (heightDp - footprint).coerceAtLeast(0))
     }
 
     @Suppress("DEPRECATION")
@@ -232,6 +297,9 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
 
     private fun signed(value: Double): String = (if (value > 0) "+" else "") + "%.1f%%".format(value)
     private fun dp(value: Int): Int = (value * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+    private fun pxToDp(value: Int): Int = (value / context.resources.displayMetrics.density).toInt().coerceAtLeast(0)
+    private fun screenWidthDp(): Int = (context.resources.displayMetrics.widthPixels / context.resources.displayMetrics.density).toInt()
+    private fun screenHeightDp(): Int = (context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density).toInt()
     private fun rounded(fill: Int, radiusDp: Float, stroke: Int): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         setColor(fill)
@@ -245,7 +313,10 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         cellText = null
         stftText = null
         petrolText = null
+        gasText = null
         rpmText = null
+        contextText = null
+        freshnessText = null
         details = null
     }
 
@@ -253,7 +324,13 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         const val VISUAL_SCALE_VS_LEGACY = 2.5
         const val COMPACT_SIZE_DP = 105
         const val EXPANDED_MIN_WIDTH_DP = 260
+        const val EXPANDED_ESTIMATED_HEIGHT_DP = 410
         const val METRIC_TEXT_SP = 18
         const val REDRAW_MIN_INTERVAL_MS = 250L
+        private const val KEY_X_DP = "telemetry_overlay_x_dp"
+        private const val KEY_Y_DP = "telemetry_overlay_y_dp"
+        private const val KEY_EXPANDED = "telemetry_overlay_expanded"
+        private const val DEFAULT_X_DP = 16
+        private const val DEFAULT_Y_DP = 140
     }
 }
