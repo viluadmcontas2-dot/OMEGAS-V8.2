@@ -28,7 +28,9 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 
 ## Comunicação
 
-O proprietário opera em linguagem humana. O agente traduz a intenção para a execução técnica adequada sem exigir nomes de comandos, workflows ou sintaxe.
+- O proprietário opera em linguagem humana. O agente traduz a intenção para a execução técnica adequada sem exigir nomes de comandos, workflows ou sintaxe.
+- Em execução técnica longa ou multi-etapa, manter **heartbeats visíveis no chat por evento material** e registrar no Notion as descobertas, bloqueios, mudanças de direção e fechamentos relevantes no mesmo bloco de execução.
+- Heartbeat deve ser curto e imediato após mudança material de estado; não substituir execução por spam de progresso nem deixar longos trechos operacionais sem feedback quando houver resultado novo a comunicar.
 
 ## Regra de alteração deste arquivo
 
