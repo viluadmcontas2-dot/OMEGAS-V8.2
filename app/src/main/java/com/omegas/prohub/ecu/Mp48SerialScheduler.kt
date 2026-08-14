@@ -1,5 +1,6 @@
 package com.omegas.prohub.ecu
 
+import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.usb.UsbProtocolReply
 
 /**
@@ -30,7 +31,15 @@ interface Mp48SerialUnit {
     ): UsbProtocolReply
 }
 
-interface Mp48SerialScheduler {
+/** Visão somente leitura do microbuffer científico mantido pela autoridade MP48. */
+interface Mp48TelemetryWindowSource {
+    fun recentTelemetryFrames(
+        fromElapsedMs: Long,
+        toElapsedMs: Long,
+    ): List<NativeAnchorTelemetryWindow.Frame> = emptyList()
+}
+
+interface Mp48SerialScheduler : Mp48TelemetryWindowSource {
     fun isConnected(): Boolean
     fun currentSessionId(): Long
 
