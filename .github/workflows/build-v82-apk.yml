@@ -1,3 +1,4 @@
+# One-shot push trigger is restricted to this workflow file; ordinary source commits do not build.
 name: Build OMEGAS V8.2 APK
 
 on:
