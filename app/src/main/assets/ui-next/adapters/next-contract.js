@@ -1,6 +1,7 @@
 export const NEXT_SCHEMA = Object.freeze({
   adapter: 'omegas-next-adapter-v1',
   fastTelemetry: 'omegas-next-fast-v1',
+  revisionEvent: 'omegas-next-revision-event-v1',
   cellSemantics: 'omegas-next-cell-semantics-v1',
   predictor: 'omegas-next-predictor-v1',
   mapK: 'omegas-next-map-k-v1',
@@ -26,6 +27,7 @@ export const CAPABILITY = Object.freeze({
   AUTOCAL_ACTIONS: 'autocalActions',
   OBD_WITNESS: 'obdWitness',
   SUGGESTIONS: 'suggestions',
+  REVISION_EVENTS: 'revisionEvents',
 });
 
 export function makeError(code, message, technical = '', options = {}) {
@@ -55,7 +57,7 @@ export function capabilitySet(values = {}) {
 
 export function assertNextAdapter(adapter) {
   const required = [
-    'identity', 'capabilities', 'fastTelemetry', 'learningStatus', 'cellContext',
+    'identity', 'capabilities', 'subscribeRevisions', 'fastTelemetry', 'learningStatus', 'cellContext',
     'predictorSnapshot', 'readMapK', 'previewMapK', 'readCurveK', 'previewCurveK',
     'autoCalStatus', 'obdSnapshot', 'suggestionsSnapshot',
   ];
@@ -76,6 +78,18 @@ export function requireCapability(adapter, capability) {
     `capability=${capability}`,
     { recoverable: true, action: null, source: adapter.identity()?.mode || 'UNKNOWN' },
   );
+}
+
+export function revisionEvent(payload = {}) {
+  return Object.freeze({
+    schema: NEXT_SCHEMA.revisionEvent,
+    type: payload.type || 'NATIVE_REFRESH',
+    sequence: Number(payload.sequence ?? 0),
+    sessionId: Number(payload.sessionId ?? 0),
+    updatedAt: Number(payload.updatedAt ?? Date.now()),
+    structural: payload.structural === true,
+    reason: payload.reason || '',
+  });
 }
 
 export function parseBridgeJson(raw, fallbackMessage = 'Resposta nativa inválida.') {
