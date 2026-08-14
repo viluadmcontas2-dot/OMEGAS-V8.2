@@ -5,10 +5,13 @@ import {
   makeError,
   parseBridgeJson,
   requireCapability,
+  revisionEvent,
 } from './next-contract.js';
 
 const MAP_READ_TIMEOUT_MS = 180_000;
 const CURVE_READ_TIMEOUT_MS = 120_000;
+const nativeRevisionListeners = new Set();
+let nativeRefreshInstalled = false;
 
 function bridge(name) {
   return globalThis?.[name] || null;
@@ -29,6 +32,29 @@ function call(name, method, ...args) {
     );
   }
   return target[method](...args);
+}
+
+function installNativeRefreshMultiplexer() {
+  if (nativeRefreshInstalled) return;
+  nativeRefreshInstalled = true;
+  const previous = typeof globalThis.__OMEGAS_NATIVE_REFRESH__ === 'function'
+    ? globalThis.__OMEGAS_NATIVE_REFRESH__
+    : null;
+  globalThis.__OMEGAS_NATIVE_REFRESH__ = (snapshot) => {
+    try { previous?.(snapshot); } catch (_) {}
+    const root = snapshot && typeof snapshot === 'object' ? snapshot : {};
+    const event = revisionEvent({
+      type: 'NATIVE_REFRESH',
+      sequence: Number(root.sequence ?? 0),
+      sessionId: Number(root.nativeSessionId ?? root.sessionId ?? 0),
+      updatedAt: Number(root.updatedAt ?? Date.now()),
+      structural: false,
+      reason: 'TelemetryForegroundService.stateChanged',
+    });
+    for (const listener of [...nativeRevisionListeners]) {
+      try { listener(event); } catch (_) {}
+    }
+  };
 }
 
 function nextFrame() {
@@ -81,7 +107,7 @@ function normalizeFast(root) {
     capturedAtMs: Number(root?.updatedAt ?? 0),
     ageMs: Number(root?.ageMs ?? root?.telemetryAgeMs ?? -1),
     valid: root?.valid === true,
-    sessionId: Number(root?.sessionId ?? 0),
+    sessionId: Number(root?.sessionId ?? root?.nativeSessionId ?? 0),
     rpm: Number(live?.rpm ?? 0),
     petrolMs: Number(live?.petrol_ms ?? live?.petrolMs ?? 0),
     gasMsDiagnostic: live?.gas_ms_diagnostic == null ? null : Number(live.gas_ms_diagnostic),
@@ -162,7 +188,15 @@ export class NativeNextAdapter {
       [CAPABILITY.AUTOCAL_ACTIONS]: { available: false, reason: 'Ações AutoCal permanecem bloqueadas até a fachada NEXT com revisão crítica.' },
       [CAPABILITY.OBD_WITNESS]: { available: hasMethod('OmegasNative', 'getObdStatus') },
       [CAPABILITY.SUGGESTIONS]: { available: hasMethod('OmegasV7', 'getState') },
+      [CAPABILITY.REVISION_EVENTS]: { available: true },
     });
+  }
+
+  subscribeRevisions(listener) {
+    if (typeof listener !== 'function') return () => {};
+    installNativeRefreshMultiplexer();
+    nativeRevisionListeners.add(listener);
+    return () => nativeRevisionListeners.delete(listener);
   }
 
   async fastTelemetry() {
