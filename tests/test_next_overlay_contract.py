@@ -26,16 +26,18 @@ class NextOverlayContractTest(unittest.TestCase):
 
     def test_position_and_expanded_state_are_persisted_and_bounded(self):
         source = OVERLAY.read_text(encoding="utf-8")
-        for token in [
-            "KEY_X_DP",
-            "KEY_Y_DP",
-            "KEY_EXPANDED",
-            "clampActualPosition",
-            "persistPosition",
-            'put("positionBounded", true)',
-        ]:
+        for token in ["KEY_X_DP", "KEY_Y_DP", "KEY_EXPANDED", "clampActualPosition", "persistPosition", 'put("positionBounded", true)']:
             self.assertIn(token, source)
         self.assertIn("coerceIn", source)
+
+    def test_overlay_reuses_central_telemetry_store_instead_of_own_pipeline(self):
+        source = OVERLAY.read_text(encoding="utf-8")
+        self.assertIn("enrichFromCentralTelemetry", source)
+        self.assertIn("service.telemetryStore.telemetryCopy()", source)
+        self.assertIn("service.telemetryStore.ageMs()", source)
+        self.assertIn('.put("source", "TelemetryStateStore")', source)
+        self.assertNotIn("Executors.", source)
+        self.assertNotIn("scheduleAtFixedRate", source)
 
     def test_overlay_remains_observational_only(self):
         source = OVERLAY.read_text(encoding="utf-8")
