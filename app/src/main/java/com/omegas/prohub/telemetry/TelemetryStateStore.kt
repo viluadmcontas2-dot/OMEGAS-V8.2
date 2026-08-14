@@ -1,5 +1,6 @@
 package com.omegas.prohub.telemetry
 
+import com.omegas.prohub.learning.LearningGridProjection
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.ArrayDeque
@@ -105,8 +106,6 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             val now = System.currentTimeMillis()
             root.optJSONObject("live")?.let { live ->
                 merge(telemetry, live)
-                // A resposta HTTP pode repetir o mesmo quadro várias vezes. Use o
-                // relógio do último frame da engine, nunca o horário da consulta.
                 val frameAtMs = when {
                     live.optDouble("last_frame_at", 0.0) > 0.0 ->
                         (live.optDouble("last_frame_at") * 1000.0).toLong()
@@ -114,9 +113,7 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
                         now - live.optLong("last_frame_age_ms", Long.MAX_VALUE).coerceAtLeast(0L)
                     else -> 0L
                 }
-                if (frameAtMs in 1..now && frameAtMs > telemetryUpdatedAt) {
-                    telemetryUpdatedAt = frameAtMs
-                }
+                if (frameAtMs in 1..now && frameAtMs > telemetryUpdatedAt) telemetryUpdatedAt = frameAtMs
             }
             root.optJSONObject("runtime")?.let { merge(runtime, it) }
             stateUpdatedAt = now
@@ -139,7 +136,6 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             .toString()
     }
 
-    /** Snapshot mínimo legado para a WebView; não serializa o histórico. */
     fun liveJson(): String = synchronized(lock) {
         JSONObject()
             .put("sequence", sequence.get())
@@ -153,24 +149,61 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
     }
 
     /**
-     * Canal rápido NEXT: somente presente operacional. Não inclui histórico,
-     * runtime estrutural, Learning, Advisor, Predictor, regiões ou comparações.
-     * A célula/interpolação continua calculada em Kotlin na fachada NEXT.
+     * Canal rápido NEXT: presente operacional + pacote mínimo de tracing calculado
+     * no Kotlin. Não inclui histórico, regiões, comparações, Advisor ou Predictor.
      */
     fun fastLiveJson(): String = synchronized(lock) {
         val age = if (telemetryUpdatedAt == 0L) -1L else System.currentTimeMillis() - telemetryUpdatedAt
+        val rpm = telemetry.optDouble("rpm", 0.0)
+        val petrolMs = telemetry.optDouble("petrol_ms", 0.0)
+        val mapBar = telemetry.optDouble("load_bar", telemetry.optDouble("map_bar", 0.0))
+        val seq = sequence.get()
+        val nativeTrace = LearningGridProjection.liveInterpolationJson(
+            rpm = rpm,
+            petrolMs = petrolMs,
+            mapBar = mapBar,
+            sequence = seq,
+            updatedAt = telemetryUpdatedAt,
+            telemetryValid = valid,
+        )
+        val traceCell = nativeTrace.optJSONObject("cell") ?: JSONObject()
+        val weights = traceCell.optJSONArray("continuousWeights") ?: JSONArray()
+        val compactWeights = JSONArray()
+        repeat(minOf(weights.length(), 4)) { index ->
+            weights.optJSONObject(index)?.let { item ->
+                compactWeights.put(
+                    JSONObject()
+                        .put("row", item.optInt("row"))
+                        .put("column", item.optInt("column"))
+                        .put("weight", item.optDouble("weight", 0.0)),
+                )
+            }
+        }
+        val liveTrace = JSONObject()
+            .put("valid", nativeTrace.optBoolean("valid", false))
+            .put("sequence", seq)
+            .put("updatedAt", telemetryUpdatedAt)
+            .put("row", traceCell.optInt("row", -1))
+            .put("column", traceCell.optInt("column", -1))
+            .put("weights", compactWeights)
+            .put("method", "BILINEAR_RPM_X_PETROL_MS")
+            .put("educationalOnly", true)
+            .put("affectsLearning", false)
+            .put("affectsCalibration", false)
+
         JSONObject()
-            .put("sequence", sequence.get())
+            .put("sequence", seq)
             .put("capturedAtMs", telemetryUpdatedAt)
             .put("ageMs", age)
             .put("valid", valid)
             .put("sessionId", sessionId)
-            .put("rpm", telemetry.optInt("rpm", 0))
-            .put("petrolMs", telemetry.optDouble("petrol_ms", 0.0))
+            .put("rpm", rpm)
+            .put("petrolMs", petrolMs)
             .put("gasMsDiagnostic", telemetry.opt("gas_ms_diagnostic") ?: JSONObject.NULL)
-            .put("mapBar", telemetry.optDouble("load_bar", telemetry.optDouble("map_bar", 0.0)))
+            .put("mapBar", mapBar)
             .put("fuel", telemetry.optString("fuel", "DESCONHECIDO"))
             .put("engineState", telemetry.optString("state", "SEM_DADO"))
+            .put("liveTrace", liveTrace)
             .toString()
     }
 
