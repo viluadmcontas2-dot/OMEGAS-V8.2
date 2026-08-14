@@ -48,8 +48,8 @@ data class NativeLearningAnchor(
         require(threshold >= 0)
         require(nativeValidity)
         require(correlationState == "CORRELATED")
-        require(correlationConfidence in 0.0..1.0)
-        require(rpmConfidence in 0.0..1.0)
+        require(correlationConfidence > 0.0 && correlationConfidence <= 1.0)
+        require(rpmConfidence > 0.0 && rpmConfidence <= 1.0)
         require(rpm >= 0)
         require(petrolOnCngMs.isFinite())
         require(mapBar.isFinite())
@@ -111,8 +111,13 @@ data class NativeLearningAnchor(
             val lagMs = event.nullableLong("correlationLagMs") ?: return null
             val matchedFrames = event.optInt("matchedTelemetryFrames", 0)
             val fuel = event.optString("correlatedFuel", event.optString("fuel"))
+            val correlationConfidence = event.optDouble("correlationConfidence", 0.0)
+                .takeIf(Double::isFinite)?.coerceIn(0.0, 1.0) ?: return null
+            val rpmConfidence = event.optDouble("rpmConfidence", 0.0)
+                .takeIf(Double::isFinite)?.coerceIn(0.0, 1.0) ?: return null
             if (sessionId <= 0L || snapshotId.isBlank() || bandIndex < 0 ||
-                firstSequence < 0L || lastSequence < firstSequence || matchedFrames < 2 || fuel != "GNV"
+                firstSequence < 0L || lastSequence < firstSequence || matchedFrames < 2 || fuel != "GNV" ||
+                correlationConfidence <= 0.0 || rpmConfidence <= 0.0
             ) return null
 
             val identity = listOf(
@@ -138,8 +143,8 @@ data class NativeLearningAnchor(
                 threshold = event.optInt("threshold", 0).coerceAtLeast(0),
                 nativeValidity = true,
                 correlationState = "CORRELATED",
-                correlationConfidence = event.optDouble("correlationConfidence", 0.0).coerceIn(0.0, 1.0),
-                rpmConfidence = event.optDouble("rpmConfidence", 0.0).coerceIn(0.0, 1.0),
+                correlationConfidence = correlationConfidence,
+                rpmConfidence = rpmConfidence,
                 rpm = rpm,
                 petrolOnCngMs = petrolOnCngMs,
                 gasMsDiagnostic = event.nullableDouble("correlatedGasMs"),
@@ -216,47 +221,5 @@ data class NativeLearningAnchor(
 
         private fun JSONObject.nullableDouble(key: String): Double? =
             if (has(key) && !isNull(key)) optDouble(key).takeIf { it.isFinite() } else null
-    }
-}
-
-/**
- * Registro bounded/deduplicado. `scientificRevision` avança somente quando uma
- * passagem física inédita entra; releitura do mesmo evento não altera a revisão.
- * A revisão é por epoch: `(calibrationEpoch, scientificRevision)` é a identidade científica.
- */
-class NativeLearningAnchorRegistry(
-    private val maxEntries: Int = 256,
-) {
-    private val anchors = linkedMapOf<String, NativeLearningAnchor>()
-    private var nextRevision = 0L
-
-    fun upsert(anchor: NativeLearningAnchor): Boolean {
-        if (anchors.containsKey(anchor.fingerprint)) return false
-        nextRevision += 1L
-        anchors[anchor.fingerprint] = anchor.copy(scientificRevision = nextRevision)
-        while (anchors.size > maxEntries.coerceAtLeast(1)) {
-            anchors.remove(anchors.keys.first())
-        }
-        return true
-    }
-
-    fun replaceAll(items: List<NativeLearningAnchor>) {
-        anchors.clear()
-        nextRevision = 0L
-        items.takeLast(maxEntries.coerceAtLeast(1)).forEach { item ->
-            val revision = item.scientificRevision.takeIf { it > 0L } ?: (nextRevision + 1L)
-            nextRevision = maxOf(nextRevision, revision)
-            anchors[item.fingerprint] = item.copy(scientificRevision = revision)
-        }
-    }
-
-    fun snapshot(): List<NativeLearningAnchor> = anchors.values.toList()
-
-    fun currentRevision(): Long = nextRevision
-
-    /** Limpa a epoch antiga; a epoch nova reinicia sua própria sequência científica. */
-    fun clear() {
-        anchors.clear()
-        nextRevision = 0L
     }
 }
