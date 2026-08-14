@@ -12,11 +12,15 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.R
 import java.util.WeakHashMap
 
-/** Inicializador interno; não exporta dados nem cria outra Activity. */
+/**
+ * Inicializador interno do bridge AutoCal.
+ *
+ * A UI V8.2 limpa consome `OmegasAutoCal` pelos módulos em `assets/ui`.
+ * Não injeta mais assets `hub/*` legados/inexistentes e não cria outra Activity.
+ */
 class AutoCalBridgeProvider : ContentProvider() {
     private val bridges = WeakHashMap<MainActivity, AutoCalJavascriptBridge>()
     private val attached = WeakHashMap<MainActivity, Boolean>()
-    private val cachedScripts = linkedMapOf<String, String>()
 
     override fun onCreate(): Boolean {
         val application = context?.applicationContext as? Application ?: return false
@@ -55,40 +59,9 @@ class AutoCalBridgeProvider : ContentProvider() {
         val firstAttach = attached.put(main, true) != true
         webView.addJavascriptInterface(bridge, INTERFACE_NAME)
 
-        // addJavascriptInterface fica disponível ao JavaScript no próximo carregamento.
-        // A primeira retomada após a WebView existir força somente uma recarga local.
-        if (firstAttach && !webView.url.isNullOrBlank()) {
-            webView.reload()
-        }
-        listOf(250L, 700L, 1_400L).forEach { delayMs ->
-            webView.postDelayed({ injectLocalUi(webView) }, delayMs)
-        }
-    }
-
-    private fun injectLocalUi(webView: WebView) {
-        injectAsset(webView, "hub/autocal-ui.js", "__omegasAutoCalUi")
-        injectAsset(webView, "hub/autocal-draft.js", "__omegasAutoCalDraft")
-        injectAsset(webView, "hub/autocal-residual.js", "__omegasAutoCalResidual")
-        injectAsset(webView, "hub/autocal-actions.js", "__omegasAutoCalActions")
-        // Sempre por último: substitui os handlers anteriores da faixa K depois de
-        // qualquer módulo que tenha sido carregado ou reinjetado.
-        injectAsset(webView, "hub/kfactor-range.js", "__omegasKFactorQ14Range")
-    }
-
-    private fun injectAsset(webView: WebView, asset: String, marker: String) {
-        val source = synchronized(cachedScripts) {
-            cachedScripts[asset] ?: try {
-                context?.assets?.open(asset)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
-                    ?.also { cachedScripts[asset] = it }
-            } catch (_: Exception) {
-                null
-            }
-        } ?: return
-        val wrapped = "if(!window.$marker){$source}else{window.$marker.render();}"
-        try {
-            webView.evaluateJavascript(wrapped, null)
-        } catch (_: Exception) {
-        }
+        // addJavascriptInterface passa a existir para o JavaScript no próximo carregamento.
+        // Uma única recarga local no primeiro attach substitui as antigas reinjeções hub/*.
+        if (firstAttach && !webView.url.isNullOrBlank()) webView.reload()
     }
 
     override fun query(
