@@ -4,14 +4,16 @@ import org.json.JSONObject
 import java.security.MessageDigest
 
 /**
- * Âncora observacional criada quando a ECU confirma maturidade nativa de uma banda AutoCal.
+ * Âncora observacional criada somente quando uma maturidade AutoCal nativa
+ * possui correlação física confiável na mesma sessão MP48.
  *
  * Não é comparação gasolina×GNV, não possui writer e não aumenta confiança por si só.
- * A validade nativa e a confiança da posição física (RPM) permanecem separadas.
+ * Maturidade nativa sem correlação permanece apenas como NativeEcuEvidence.
  */
 data class NativeLearningAnchor(
     val fingerprint: String,
     val calibrationEpoch: Int,
+    val sessionId: Long,
     val snapshotId: String,
     val snapshotHash: String,
     val bandIndex: Int,
@@ -22,31 +24,47 @@ data class NativeLearningAnchor(
     val correlationState: String,
     val correlationConfidence: Double,
     val rpmConfidence: Double,
-    val rpm: Int?,
-    val petrolOnCngMs: Double?,
-    val mapBar: Double?,
-    val firstTelemetrySequence: Long?,
-    val lastTelemetrySequence: Long?,
+    val rpm: Int,
+    val petrolOnCngMs: Double,
+    val gasMsDiagnostic: Double?,
+    val mapBar: Double,
+    val fuel: String,
+    val firstTelemetrySequence: Long,
+    val lastTelemetrySequence: Long,
     val matchedTelemetryFrames: Int,
-    val observedAtElapsedMs: Long,
+    val eventElapsedMs: Long,
+    val correlatedFrameElapsedMs: Long,
+    val lagMs: Long,
 ) {
     init {
         require(fingerprint.isNotBlank())
         require(calibrationEpoch >= 1)
+        require(sessionId > 0L)
         require(snapshotId.isNotBlank())
         require(bandIndex >= 0)
         require(counter >= 0)
         require(threshold >= 0)
+        require(nativeValidity)
+        require(correlationState == "CORRELATED")
         require(correlationConfidence in 0.0..1.0)
         require(rpmConfidence in 0.0..1.0)
-        require(matchedTelemetryFrames >= 0)
-        if (rpm == null) require(rpmConfidence == 0.0)
+        require(rpm >= 0)
+        require(petrolOnCngMs.isFinite())
+        require(mapBar.isFinite())
+        require(fuel == "GNV")
+        require(firstTelemetrySequence >= 0L)
+        require(lastTelemetrySequence >= firstTelemetrySequence)
+        require(matchedTelemetryFrames >= 2)
+        require(eventElapsedMs >= 0L)
+        require(correlatedFrameElapsedMs >= 0L)
+        require(lagMs >= 0L)
     }
 
     fun toJson(): JSONObject = JSONObject()
         .put("source", "ECU_NATIVE_AUTOCAL")
         .put("fingerprint", fingerprint)
         .put("calibrationEpoch", calibrationEpoch)
+        .put("sessionId", sessionId)
         .put("snapshotId", snapshotId)
         .put("snapshotHash", snapshotHash)
         .put("bandIndex", bandIndex)
@@ -57,13 +75,17 @@ data class NativeLearningAnchor(
         .put("correlationState", correlationState)
         .put("correlationConfidence", correlationConfidence)
         .put("rpmConfidence", rpmConfidence)
-        .put("rpm", rpm ?: JSONObject.NULL)
-        .put("petrolOnCngMs", petrolOnCngMs ?: JSONObject.NULL)
-        .put("mapBar", mapBar ?: JSONObject.NULL)
-        .put("firstTelemetrySequence", firstTelemetrySequence ?: JSONObject.NULL)
-        .put("lastTelemetrySequence", lastTelemetrySequence ?: JSONObject.NULL)
+        .put("rpm", rpm)
+        .put("petrolOnCngMs", petrolOnCngMs)
+        .put("gasMsDiagnostic", gasMsDiagnostic ?: JSONObject.NULL)
+        .put("mapBar", mapBar)
+        .put("fuel", fuel)
+        .put("firstTelemetrySequence", firstTelemetrySequence)
+        .put("lastTelemetrySequence", lastTelemetrySequence)
         .put("matchedTelemetryFrames", matchedTelemetryFrames)
-        .put("observedAtElapsedMs", observedAtElapsedMs)
+        .put("eventElapsedMs", eventElapsedMs)
+        .put("correlatedFrameElapsedMs", correlatedFrameElapsedMs)
+        .put("lagMs", lagMs)
         .put("comparisonVote", false)
         .put("automaticWrite", false)
 
@@ -71,31 +93,40 @@ data class NativeLearningAnchor(
         fun fromMaturityEvent(event: JSONObject, calibrationEpoch: Int): NativeLearningAnchor? {
             if (event.optString("eventType") != "NATIVE_BAND_MATURED") return null
             if (!event.optBoolean("nativeValidity", false)) return null
+            if (event.optString("correlationState") != "CORRELATED") return null
+
+            val sessionId = event.optLong("sessionId", 0L)
             val snapshotId = event.optString("snapshotId")
             val bandIndex = event.optInt("bandIndex", -1)
-            if (snapshotId.isBlank() || bandIndex < 0) return null
-
-            val correlationState = event.optString("correlationState", "NO_RELIABLE_CORRELATION")
-            val correlated = correlationState == "CORRELATED"
-            val rpm = event.nullableInt("rpm").takeIf { correlated }
-            val rpmConfidence = if (rpm == null) 0.0 else event.optDouble("rpmConfidence", 0.0).coerceIn(0.0, 1.0)
-            val firstSequence = event.nullableLong("firstTelemetrySequence").takeIf { correlated }
-            val lastSequence = event.nullableLong("lastTelemetrySequence").takeIf { correlated }
-            val observedAt = event.optLong("observedAtElapsedMs", 0L).coerceAtLeast(0L)
+            val rpm = event.nullableInt("rpm") ?: return null
+            val petrolOnCngMs = event.nullableDouble("correlatedPetrolMs") ?: return null
+            val mapBar = event.nullableDouble("correlatedMapBar") ?: return null
+            val firstSequence = event.nullableLong("firstTelemetrySequence") ?: return null
+            val lastSequence = event.nullableLong("lastTelemetrySequence") ?: return null
+            val eventElapsedMs = event.nullableLong("observedAtElapsedMs") ?: return null
+            val correlatedFrameElapsedMs = event.nullableLong("correlatedFrameElapsedMs") ?: return null
+            val lagMs = event.nullableLong("correlationLagMs") ?: return null
+            val matchedFrames = event.optInt("matchedTelemetryFrames", 0)
+            val fuel = event.optString("correlatedFuel", event.optString("fuel"))
+            if (sessionId <= 0L || snapshotId.isBlank() || bandIndex < 0 ||
+                firstSequence < 0L || lastSequence < firstSequence || matchedFrames < 2 || fuel != "GNV"
+            ) return null
 
             val identity = listOf(
-                calibrationEpoch.toString(),
+                calibrationEpoch.coerceAtLeast(1).toString(),
+                sessionId.toString(),
                 bandIndex.toString(),
                 event.optInt("counter", 0).toString(),
                 event.optLong("previousObservedAtElapsedMs", 0L).toString(),
-                observedAt.toString(),
-                firstSequence?.toString().orEmpty(),
-                lastSequence?.toString().orEmpty(),
+                eventElapsedMs.toString(),
+                firstSequence.toString(),
+                lastSequence.toString(),
             ).joinToString("|")
 
             return NativeLearningAnchor(
                 fingerprint = sha256(identity),
                 calibrationEpoch = calibrationEpoch.coerceAtLeast(1),
+                sessionId = sessionId,
                 snapshotId = snapshotId,
                 snapshotHash = event.optString("snapshotHash"),
                 bandIndex = bandIndex,
@@ -103,46 +134,70 @@ data class NativeLearningAnchor(
                 counter = event.optInt("counter", 0).coerceAtLeast(0),
                 threshold = event.optInt("threshold", 0).coerceAtLeast(0),
                 nativeValidity = true,
-                correlationState = correlationState,
-                correlationConfidence = if (correlated) event.optDouble("correlationConfidence", 0.0).coerceIn(0.0, 1.0) else 0.0,
-                rpmConfidence = rpmConfidence,
+                correlationState = "CORRELATED",
+                correlationConfidence = event.optDouble("correlationConfidence", 0.0).coerceIn(0.0, 1.0),
+                rpmConfidence = event.optDouble("rpmConfidence", 0.0).coerceIn(0.0, 1.0),
                 rpm = rpm,
-                petrolOnCngMs = event.nullableDouble("correlatedPetrolMs").takeIf { correlated },
-                mapBar = event.nullableDouble("correlatedMapBar").takeIf { correlated },
+                petrolOnCngMs = petrolOnCngMs,
+                gasMsDiagnostic = event.nullableDouble("correlatedGasMs"),
+                mapBar = mapBar,
+                fuel = "GNV",
                 firstTelemetrySequence = firstSequence,
                 lastTelemetrySequence = lastSequence,
-                matchedTelemetryFrames = if (correlated) event.optInt("matchedTelemetryFrames", 0).coerceAtLeast(0) else 0,
-                observedAtElapsedMs = observedAt,
+                matchedTelemetryFrames = matchedFrames,
+                eventElapsedMs = eventElapsedMs.coerceAtLeast(0L),
+                correlatedFrameElapsedMs = correlatedFrameElapsedMs.coerceAtLeast(0L),
+                lagMs = lagMs.coerceAtLeast(0L),
             )
         }
 
         fun fromJson(raw: JSONObject): NativeLearningAnchor? {
             val fingerprint = raw.optString("fingerprint")
             val snapshotId = raw.optString("snapshotId")
+            val sessionId = raw.optLong("sessionId", 0L)
             val bandIndex = raw.optInt("bandIndex", -1)
-            if (fingerprint.isBlank() || snapshotId.isBlank() || bandIndex < 0) return null
-            val rpm = raw.nullableInt("rpm")
-            return NativeLearningAnchor(
-                fingerprint = fingerprint,
-                calibrationEpoch = raw.optInt("calibrationEpoch", 1).coerceAtLeast(1),
-                snapshotId = snapshotId,
-                snapshotHash = raw.optString("snapshotHash"),
-                bandIndex = bandIndex,
-                zone = raw.optString("zone", "UNKNOWN"),
-                counter = raw.optInt("counter", 0).coerceAtLeast(0),
-                threshold = raw.optInt("threshold", 0).coerceAtLeast(0),
-                nativeValidity = raw.optBoolean("nativeValidity", false),
-                correlationState = raw.optString("correlationState", "NO_RELIABLE_CORRELATION"),
-                correlationConfidence = raw.optDouble("correlationConfidence", 0.0).coerceIn(0.0, 1.0),
-                rpmConfidence = if (rpm == null) 0.0 else raw.optDouble("rpmConfidence", 0.0).coerceIn(0.0, 1.0),
-                rpm = rpm,
-                petrolOnCngMs = raw.nullableDouble("petrolOnCngMs"),
-                mapBar = raw.nullableDouble("mapBar"),
-                firstTelemetrySequence = raw.nullableLong("firstTelemetrySequence"),
-                lastTelemetrySequence = raw.nullableLong("lastTelemetrySequence"),
-                matchedTelemetryFrames = raw.optInt("matchedTelemetryFrames", 0).coerceAtLeast(0),
-                observedAtElapsedMs = raw.optLong("observedAtElapsedMs", 0L).coerceAtLeast(0L),
-            )
+            val rpm = raw.nullableInt("rpm") ?: return null
+            val petrolOnCngMs = raw.nullableDouble("petrolOnCngMs") ?: return null
+            val mapBar = raw.nullableDouble("mapBar") ?: return null
+            val firstSequence = raw.nullableLong("firstTelemetrySequence") ?: return null
+            val lastSequence = raw.nullableLong("lastTelemetrySequence") ?: return null
+            val eventElapsedMs = raw.nullableLong("eventElapsedMs") ?: return null
+            val correlatedFrameElapsedMs = raw.nullableLong("correlatedFrameElapsedMs") ?: return null
+            val lagMs = raw.nullableLong("lagMs") ?: return null
+            if (fingerprint.isBlank() || snapshotId.isBlank() || sessionId <= 0L || bandIndex < 0 ||
+                raw.optString("correlationState") != "CORRELATED" || !raw.optBoolean("nativeValidity", false)
+            ) return null
+
+            return try {
+                NativeLearningAnchor(
+                    fingerprint = fingerprint,
+                    calibrationEpoch = raw.optInt("calibrationEpoch", 1).coerceAtLeast(1),
+                    sessionId = sessionId,
+                    snapshotId = snapshotId,
+                    snapshotHash = raw.optString("snapshotHash"),
+                    bandIndex = bandIndex,
+                    zone = raw.optString("zone", "UNKNOWN"),
+                    counter = raw.optInt("counter", 0).coerceAtLeast(0),
+                    threshold = raw.optInt("threshold", 0).coerceAtLeast(0),
+                    nativeValidity = true,
+                    correlationState = "CORRELATED",
+                    correlationConfidence = raw.optDouble("correlationConfidence", 0.0).coerceIn(0.0, 1.0),
+                    rpmConfidence = raw.optDouble("rpmConfidence", 0.0).coerceIn(0.0, 1.0),
+                    rpm = rpm,
+                    petrolOnCngMs = petrolOnCngMs,
+                    gasMsDiagnostic = raw.nullableDouble("gasMsDiagnostic"),
+                    mapBar = mapBar,
+                    fuel = raw.optString("fuel"),
+                    firstTelemetrySequence = firstSequence,
+                    lastTelemetrySequence = lastSequence,
+                    matchedTelemetryFrames = raw.optInt("matchedTelemetryFrames", 0),
+                    eventElapsedMs = eventElapsedMs,
+                    correlatedFrameElapsedMs = correlatedFrameElapsedMs,
+                    lagMs = lagMs,
+                )
+            } catch (_: IllegalArgumentException) {
+                null
+            }
         }
 
         private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
