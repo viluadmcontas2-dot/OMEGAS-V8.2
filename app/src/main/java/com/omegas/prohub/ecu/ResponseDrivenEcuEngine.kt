@@ -3,6 +3,7 @@ package com.omegas.prohub.ecu
 import android.os.SystemClock
 import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.MotorSampleAnalyzer
+import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.learning.SampleDecision
 import com.omegas.prohub.usb.UsbProtocolReply
 import com.omegas.prohub.usb.UsbProtocolStatusClass
@@ -46,6 +47,7 @@ class ResponseDrivenEcuEngine(
         { it.workClass.priority }
         .thenBy { it.sequence })
     private val analyzer = MotorSampleAnalyzer()
+    private val nativeTelemetryWindow = NativeAnchorTelemetryWindow()
     private val stateLock = Any()
 
     @Volatile private var sessionReady = false
@@ -78,6 +80,7 @@ class ResponseDrivenEcuEngine(
         lastTelemetryAtMs = 0L
         lastValidTelemetryAtMs = 0L
         analyzer.reset()
+        nativeTelemetryWindow.reset()
         queue.forEach { it.fail(IllegalStateException("Nova sessão USB")) }
         queue.clear()
     }
@@ -92,6 +95,7 @@ class ResponseDrivenEcuEngine(
         recoveringExistingSession = false
         handshakeNonRetryable = false
         analyzer.reset()
+        nativeTelemetryWindow.reset()
     }
 
     fun start(): Boolean {
@@ -125,6 +129,11 @@ class ResponseDrivenEcuEngine(
 
     override fun currentSessionId(): Long =
         physicalSessionId.takeIf { usb.connected && it > 0L } ?: 0L
+
+    override fun recentTelemetryFrames(
+        fromElapsedMs: Long,
+        toElapsedMs: Long,
+    ): List<NativeAnchorTelemetryWindow.Frame> = nativeTelemetryWindow.between(fromElapsedMs, toElapsedMs)
 
     override fun transaction(
         request: ByteArray,
@@ -456,6 +465,13 @@ class ResponseDrivenEcuEngine(
         lastTelemetryAtMs = capturedAt
         lastValidTelemetryAtMs = capturedAt
         val decoded = Mp48Protocol.decodeTelemetry(reply.payload, capturedAt)
+        nativeTelemetryWindow.record(
+            elapsedMs = decoded.capturedAtElapsedMs,
+            rpm = decoded.rpm,
+            mapBar = decoded.mapBar,
+            petrolMs = decoded.petrolMs,
+            fuel = decoded.fuel.wireName,
+        )
         val decision = analyzer.add(
             decoded,
             plannedGap = plannedGap,
