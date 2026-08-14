@@ -117,6 +117,7 @@ class SignalLearningStoreTest {
                         "fields",
                         JSONArray().put(
                             JSONObject()
+                                .put("key", "NUM_BUF_UPD_GAS")
                                 .put("status", "VALID")
                                 .put("rawValues", raw)
                                 .put("counts", counts),
@@ -226,4 +227,3 @@ class SignalLearningStoreTest {
         plausible = true,
     )
 }
-
