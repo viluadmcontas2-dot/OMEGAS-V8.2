@@ -1,4 +1,6 @@
-import { escapeText, format } from './common.js';
+import { escapeText } from './common.js';
+
+let lastPredictorState = null;
 
 function tone(state) {
   if (state === 'VALIDADO') return 'validated';
@@ -9,6 +11,7 @@ function tone(state) {
 
 export const predictorRoute = {
   mount(ctx, state) {
+    lastPredictorState = null;
     ctx.workspace.innerHTML = `<section class="route-page" data-route="predictor">
       <div class="route-heading"><div><h1>Predictor</h1><p>K plausível a partir de evidência direta — com confiança, suporte e limites visíveis.</p></div>
       <button class="secondary-action" id="refresh-predictor" type="button">Atualizar ciência</button></div>
@@ -19,6 +22,8 @@ export const predictorRoute = {
   },
 
   update(ctx, state) {
+    if (lastPredictorState === state.predictor) return;
+    lastPredictorState = state.predictor;
     const root = document.getElementById('predictor-root');
     if (!root) return;
     const predictor = state.predictor || {};
