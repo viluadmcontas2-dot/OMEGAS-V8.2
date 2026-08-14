@@ -6,6 +6,7 @@ import { simulatedMapKAdapter } from './adapters/simulated-map.js';
 import { simulatedPredictorAdapter } from './adapters/simulated-predictor.js';
 import { simulatedCurveAdapter } from './adapters/simulated-curve.js';
 import { simulatedObdAdapter } from './adapters/simulated-obd.js';
+import { simulatedSuggestionsAdapter } from './adapters/simulated-suggestions.js';
 import { agoraRoute } from './routes/agora.js';
 import { aprenderRoute } from './routes/aprender.js';
 import { mapaKRoute } from './routes/mapa-k.js';
@@ -24,6 +25,7 @@ const adapters = Object.freeze({
   predictor: simulatedPredictorAdapter,
   curve: simulatedCurveAdapter,
   obd: simulatedObdAdapter,
+  suggestions: simulatedSuggestionsAdapter,
 });
 const routes = new Map([
   ['agora', agoraRoute],
@@ -37,6 +39,7 @@ let mountedRoute = null;
 let fastPollBusy = false;
 let learningPollBusy = false;
 let obdPollBusy = false;
+let suggestionPollBusy = false;
 
 const ctx = Object.freeze({
   workspace,
@@ -47,6 +50,9 @@ const ctx = Object.freeze({
   loadCellContext,
   loadPredictor,
   loadObd,
+  loadSuggestions,
+  selectReadySuggestions,
+  openSuggestion,
   readMapK,
   toggleLearningMapEditor,
   mapEditorState,
@@ -142,6 +148,19 @@ async function loadObd() {
     store.dispatch({ type: 'OBD_STATE', payload: { state: 'ERRO', observationalOnly: true, error: error?.message || 'OBD indisponível' } });
   } finally {
     obdPollBusy = false;
+  }
+}
+
+async function loadSuggestions() {
+  if (suggestionPollBusy) return;
+  suggestionPollBusy = true;
+  try {
+    const payload = await adapters.suggestions.snapshot();
+    store.dispatch({ type: 'SUGGESTIONS_STATE', payload: { ...payload, state: UI_STATE.READY } });
+  } catch (error) {
+    store.dispatch({ type: 'SUGGESTIONS_STATE', payload: { state: UI_STATE.FAILURE, error: error?.message || 'Sugestões indisponíveis' } });
+  } finally {
+    suggestionPollBusy = false;
   }
 }
 
@@ -269,6 +288,76 @@ function reviewCurve() {
   document.getElementById('close-sheet')?.addEventListener('click', closeSheet);
 }
 
+async function selectReadySuggestions(items) {
+  const ready = (items || []).filter((item) => item?.actionable);
+  const local = ready.filter((item) => item.target === 'MAP_K').flatMap((item) => item.mapChanges || []);
+  const global = ready.filter((item) => item.target === 'CURVE_K').flatMap((item) => item.curveChanges || []);
+
+  if (local.length) {
+    if (store.get().mapK.state !== UI_STATE.READY) await readMapK();
+    const unique = [...new Map(local.map((change) => [`${change.row}:${change.column}`, change])).values()];
+    store.dispatch({ type: 'MAP_K_STATE', payload: {
+      selection: unique.map((change) => ({ row: change.row, column: change.column })),
+      proposal: {
+        summary: `${unique.length} célula(s) selecionada(s) da fila • nenhuma escrita`,
+        changes: unique,
+        source: 'SUGGESTION_QUEUE',
+        automaticWrite: false,
+        humanConfirmationRequired: true,
+      },
+    } });
+  }
+
+  if (global.length) {
+    if (store.get().curveK.state !== UI_STATE.READY) await readCurve();
+    store.dispatch({ type: 'CURVE_K_STATE', payload: {
+      perspective: 'adjust',
+      prepared: curvePreparedFromChanges(global),
+    } });
+  }
+}
+
+async function openSuggestion(item) {
+  if (!item?.actionable) return;
+  if (item.target === 'MAP_K') {
+    if (store.get().mapK.state !== UI_STATE.READY) await readMapK();
+    const changes = item.mapChanges || [];
+    store.dispatch({ type: 'MAP_K_STATE', payload: {
+      selection: changes.map((change) => ({ row: change.row, column: change.column })),
+      proposal: {
+        summary: `Sugestão ${item.id} aberta para revisão • nenhuma escrita`,
+        changes,
+        source: item.id,
+        automaticWrite: false,
+        humanConfirmationRequired: true,
+      },
+    } });
+    router.navigate('mapa-k');
+    return;
+  }
+  if (item.target === 'CURVE_K') {
+    if (store.get().curveK.state !== UI_STATE.READY) await readCurve();
+    store.dispatch({ type: 'CURVE_K_STATE', payload: {
+      perspective: 'adjust',
+      prepared: curvePreparedFromChanges(item.curveChanges || []),
+    } });
+    router.navigate('curva-k');
+  }
+}
+
+function curvePreparedFromChanges(changes) {
+  const points = store.get().curveK.points || [];
+  return (changes || []).map((change) => ({
+    index: change.index,
+    petrolMs: points.find((point) => point.index === change.index)?.petrolMs ?? 0,
+    before: change.before,
+    after: change.after,
+    source: 'SUGGESTION_QUEUE',
+    automaticWrite: false,
+    humanConfirmationRequired: true,
+  }));
+}
+
 function openSettings() {
   sheet.hidden = false;
   sheet.innerHTML = `<div class="route-heading"><div><h1>Mais</h1><p>Preferências visuais e detalhes técnicos sob demanda.</p></div><button class="icon-action" id="close-sheet" type="button">×</button></div>
@@ -287,6 +376,8 @@ store.subscribe(renderState);
 scheduler.addHook('fast-telemetry', pollFastTelemetry, 100);
 scheduler.addHook('learning-status', pollLearning, 650);
 scheduler.addHook('obd-witness', loadObd, 1000);
+scheduler.addHook('suggestions', loadSuggestions, 2000);
 scheduler.start();
 loadCellContext();
 loadObd();
+loadSuggestions();
