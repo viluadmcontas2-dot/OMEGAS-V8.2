@@ -11,26 +11,18 @@
 <body>
   <div class="app-shell" id="app-shell">
     <header class="global-bar" aria-label="Estado do veículo">
-      <div class="brand-block">
-        <strong>OMEGAS</strong>
-        <span class="version">V8.2 NEXT</span>
-      </div>
+      <div class="brand-block"><strong>OMEGAS</strong><span class="version">V8.2 NEXT</span></div>
       <div class="global-status" id="global-status">
         <span class="status-dot" data-status="offline" id="ecu-dot" aria-hidden="true"></span>
-        <span id="ecu-status">ECU offline</span>
-        <span class="separator" aria-hidden="true">•</span>
-        <strong id="fuel-status">—</strong>
-        <span class="freshness" id="freshness-status">sem telemetria</span>
+        <span id="ecu-status">ECU offline</span><span class="separator" aria-hidden="true">•</span>
+        <strong id="fuel-status">—</strong><span class="freshness" id="freshness-status">sem telemetria</span>
       </div>
       <button class="icon-action" id="settings-button" type="button" aria-label="Mais e configurações">⋯</button>
     </header>
-
     <main class="workspace" id="workspace" aria-live="polite"></main>
-
     <nav class="main-nav" id="main-nav" aria-label="Navegação principal"></nav>
-
     <section class="context-sheet" id="context-sheet" hidden aria-modal="true" role="dialog"></section>
   </div>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./bootstrap.js"></script>
 </body>
 </html>
