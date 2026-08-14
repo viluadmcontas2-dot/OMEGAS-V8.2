@@ -10,7 +10,7 @@ class NativeAutoCalAnchorCorrelatorTest {
     fun `correlates only compatible real GNV frames and returns best physical frame`() {
         val frames = listOf(
             frame(1, 1_000, 2_400, 0.40, 4.00, "GASOLINA", sessionId = 9),
-            frame(2, 1_100, 2_480, 0.41, 4.05, "GNV", sessionId = 9, gasMs = 7.1),
+            frame(2, 1_100, 2_485, 0.41, 4.05, "GNV", sessionId = 9, gasMs = 7.1),
             frame(3, 1_200, 2_500, 0.405, 4.02, "GNV", sessionId = 9, gasMs = 7.2),
             frame(4, 1_300, 2_520, 0.41, 4.06, "GNV", sessionId = 9, gasMs = 7.3),
         )
@@ -73,6 +73,25 @@ class NativeAutoCalAnchorCorrelatorTest {
         )
         val result = NativeAutoCalAnchorCorrelator.correlate(
             frames, 4.04, 0.41, 1_500, LearningTolerancePolicy(),
+        )
+        assertEquals("NO_RELIABLE_CORRELATION", result.state)
+        assertEquals("RPM_AMBIGUITY", result.reason)
+        assertNull(result.rpm)
+        assertEquals(0.0, result.rpmConfidence, 0.0001)
+    }
+
+    @Test
+    fun `rpm exactly at tolerance boundary is rejected instead of correlated with zero confidence`() {
+        val frames = listOf(
+            frame(1, 1_100, 2_480, 0.41, 4.04, "GNV"),
+            frame(2, 1_200, 2_520, 0.41, 4.04, "GNV"),
+        )
+        val result = NativeAutoCalAnchorCorrelator.correlate(
+            frames,
+            4.04,
+            0.41,
+            1_500,
+            LearningTolerancePolicy(rpmOscillationMinimum = 40.0, rpmOscillationPercent = 1.0),
         )
         assertEquals("NO_RELIABLE_CORRELATION", result.state)
         assertEquals("RPM_AMBIGUITY", result.reason)
