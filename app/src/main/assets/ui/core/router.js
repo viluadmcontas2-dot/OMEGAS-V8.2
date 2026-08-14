@@ -45,4 +45,5 @@
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/vehicle-status-strip.js');
   loadOptionalScript('core/predictor-model.js', () => loadOptionalScript('screens/predictor.js'));
+  loadOptionalScript('core/autocal-api.js', () => loadOptionalScript('screens/autocal-cockpit.js'));
 })(typeof window !== 'undefined' ? window : globalThis);
