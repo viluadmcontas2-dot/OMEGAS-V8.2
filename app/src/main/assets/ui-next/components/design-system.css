@@ -1,0 +1,183 @@
+:root {
+  /* Cores semânticas: intenção fixa, nunca decoração aleatória. */
+  --status-success: var(--success);
+  --status-attention: var(--warning);
+  --status-danger: var(--danger);
+  --status-info: var(--info);
+
+  /* Tipografia para distância de braço. */
+  --type-value-hero: clamp(48px, 8vw, 96px);
+  --type-value: clamp(28px, 4.3vw, 58px);
+  --type-title: 22px;
+  --type-control: 14px;
+  --type-context: 13px;
+  --type-detail: 11px;
+  --weight-value: 800;
+  --weight-control: 700;
+  --weight-context: 500;
+
+  /* Grade/spacing compartilhado. */
+  --grid-gap: 14px;
+  --control-radius: 14px;
+  --sheet-radius: 18px;
+  --icon-critical-min: 24px;
+}
+
+/* Controles acionáveis nunca encolhem abaixo do target automotivo. */
+button,
+input,
+select,
+textarea,
+[role="button"] {
+  min-height: var(--target);
+}
+
+.primary-action {
+  min-height: var(--primary-target);
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
+  background: var(--accent);
+  color: var(--text);
+  font-size: var(--type-control);
+  font-weight: var(--weight-value);
+}
+
+.secondary-action {
+  min-height: var(--target);
+  border: 1px solid var(--stroke);
+  border-radius: var(--control-radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--type-control);
+  font-weight: var(--weight-control);
+}
+
+.quiet-action {
+  min-height: var(--target);
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
+  background: transparent;
+  color: var(--muted);
+  font-weight: var(--weight-control);
+}
+
+.danger-action {
+  min-height: var(--target);
+  border: 1px solid color-mix(in srgb, var(--status-danger) 55%, transparent);
+  background: color-mix(in srgb, var(--status-danger) 10%, var(--surface-2));
+  color: var(--status-danger);
+  font-weight: var(--weight-control);
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]) {
+  transform: translateY(1px);
+  filter: brightness(.94);
+}
+
+button[aria-pressed="true"],
+button[aria-current="page"],
+.control-selected {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 70%, white 8%);
+}
+
+button[aria-busy="true"],
+.control-busy {
+  cursor: progress;
+  opacity: .82;
+}
+
+.control-success {
+  border-color: var(--status-success);
+}
+
+.control-failure {
+  border-color: var(--status-danger);
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  opacity: .42;
+  filter: saturate(.45);
+  cursor: not-allowed;
+}
+
+/* Valores de calibração nunca viram microtexto operacional. */
+.k-cell {
+  font-size: clamp(12px, 1.25vw, 14px);
+}
+
+.curve-point small,
+.curve-point span,
+.metric-origin,
+.semantic-item p,
+.suggestion-copy p {
+  font-size: max(var(--type-detail), 11px);
+}
+
+.route-heading p,
+.learning-reason,
+.suggestion-copy strong,
+.metric-label {
+  font-size: var(--type-context);
+}
+
+.metric-value { font-size: var(--type-value); }
+.metric.primary .metric-value { font-size: var(--type-value-hero); font-weight: var(--weight-value); }
+.route-heading h1 { font-size: var(--type-title); }
+
+/* Segmented controls: uma intenção, múltiplas perspectivas. */
+.perspective-tabs {
+  padding: 3px;
+  border: 1px solid var(--stroke);
+  border-radius: calc(var(--control-radius) + 2px);
+  background: var(--surface);
+}
+.perspective-tab { border-color: transparent; }
+.perspective-tab[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* Nudge sempre grande, agrupado e separado de confirmar. */
+.nudge-group { min-height: var(--target); }
+.nudge-group > button { min-width: var(--target); min-height: var(--target); }
+
+/* Review sheet separa decisão destrutiva de voltar/cancelar. */
+.context-sheet .primary-action { margin-top: 12px; width: 100%; }
+.context-sheet .danger-action { margin-top: 12px; width: 100%; }
+
+/* Estado nunca depende somente de cor: classes coexistem com texto/labels. */
+.state-chip::before {
+  content: '•';
+  margin-right: 5px;
+  font-weight: 900;
+}
+.state-chip[data-tone="success"]::before { content: '✓'; }
+.state-chip[data-tone="warning"]::before { content: '!'; }
+.state-chip[data-tone="danger"]::before { content: '×'; }
+
+/* Ajuda técnica aparece sob demanda sem ocupar o primeiro nível. */
+.help-details {
+  border-top: 1px solid var(--stroke);
+  padding-top: 10px;
+  color: var(--muted);
+  font-size: var(--type-detail);
+}
+.help-details summary {
+  min-height: var(--target);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text);
+  font-size: var(--type-context);
+  font-weight: var(--weight-control);
+}
+
+/* Fonte escalada: controles crescem verticalmente em vez de cortar conteúdo. */
+@media (min-resolution: 1dppx) {
+  button,
+  input,
+  select,
+  textarea { line-height: 1.25; }
+}
