@@ -471,6 +471,9 @@ class ResponseDrivenEcuEngine(
             mapBar = decoded.mapBar,
             petrolMs = decoded.petrolMs,
             fuel = decoded.fuel.wireName,
+            sessionId = physicalSessionId,
+            gasMsDiagnostic = decoded.gasMsDiagnostic,
+            plausible = decoded.plausible,
         )
         val decision = analyzer.add(
             decoded,
