@@ -12,6 +12,9 @@ object NativeAutoCalAnchorCorrelator {
         val rpm: Int?,
         val mapBar: Double?,
         val petrolMs: Double?,
+        val gasMsDiagnostic: Double?,
+        val fuel: String?,
+        val correlatedFrameElapsedMs: Long?,
         val lagMs: Long?,
         val firstSequence: Long?,
         val lastSequence: Long?,
@@ -24,6 +27,7 @@ object NativeAutoCalAnchorCorrelator {
         nativeMapBar: Double?,
         observedAtElapsedMs: Long,
         policy: LearningTolerancePolicy,
+        sessionId: Long? = null,
     ): Result {
         if (nativePetrolMs == null || nativeMapBar == null || !nativePetrolMs.isFinite() || !nativeMapBar.isFinite()) {
             return unreliable("NO_NATIVE_CONTEXT")
@@ -32,7 +36,9 @@ object NativeAutoCalAnchorCorrelator {
         val petrolTolerance = max(active.petrolCenterMinimumMs, abs(nativePetrolMs) * active.petrolCenterPercent / 100.0)
         val mapTolerance = active.mapCenterBar
         val compatible = frames.filter { frame ->
-            frame.fuel == "CNG" &&
+            frame.plausible &&
+                (sessionId == null || frame.sessionId == sessionId) &&
+                frame.fuel in setOf("GNV", "CNG") &&
                 abs(frame.petrolMs - nativePetrolMs) <= petrolTolerance &&
                 abs(frame.mapBar - nativeMapBar) <= mapTolerance
         }
@@ -53,6 +59,7 @@ object NativeAutoCalAnchorCorrelator {
         val rpmConfidence = (1.0 - (rpmSpan / rpmTolerance).coerceIn(0.0, 1.0)) * support
         val confidence = (signalScore * 0.70 + rpmConfidence * 0.30).coerceIn(0.0, 1.0)
         val medianElapsed = medianLong(compatible.map { it.elapsedMs }.sorted())
+        val gasValues = compatible.mapNotNull { it.gasMsDiagnostic?.takeIf(Double::isFinite) }
 
         return Result(
             state = "CORRELATED",
@@ -61,6 +68,9 @@ object NativeAutoCalAnchorCorrelator {
             rpm = medianRpm,
             mapBar = compatible.map { it.mapBar }.average(),
             petrolMs = compatible.map { it.petrolMs }.average(),
+            gasMsDiagnostic = gasValues.takeIf { it.isNotEmpty() }?.average(),
+            fuel = "GNV",
+            correlatedFrameElapsedMs = medianElapsed,
             lagMs = (observedAtElapsedMs - medianElapsed).coerceAtLeast(0L),
             firstSequence = compatible.first().sequence,
             lastSequence = compatible.last().sequence,
@@ -75,6 +85,9 @@ object NativeAutoCalAnchorCorrelator {
         rpm = null,
         mapBar = null,
         petrolMs = null,
+        gasMsDiagnostic = null,
+        fuel = null,
+        correlatedFrameElapsedMs = null,
         lagMs = null,
         firstSequence = null,
         lastSequence = null,
