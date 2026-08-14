@@ -10,20 +10,30 @@ data class UsbRecoveryDecision(
     val delayMs: Long,
 )
 
+/**
+ * Política fail-closed para falhas do transporte USB.
+ *
+ * Uma reabertura física da porta não pode preservar a geração lógica anterior:
+ * qualquer porta reaberta precisa passar novamente por `open()`, que atribui um
+ * novo `connectionSessionId`. Isso permite ao serviço invalidar Store, runtime,
+ * writers, AutoCal, buffers e telemetria antes de aceitar dados da nova geração.
+ *
+ * Por isso, falha de transporte não usa `openRecoveredPort()` como continuação
+ * da mesma sessão. O caminho seguro é desconectar e deixar o auto-reconnect abrir
+ * uma geração nova. `RETRY_TRANSPORT` permanece no enum apenas por compatibilidade
+ * binária durante a reconstrução, mas esta política não o emite.
+ */
 object UsbRecoveryPolicy {
-    private val retryDelaysMs = longArrayOf(250L, 750L, 1_500L)
-
     fun decide(
         devicePresent: Boolean,
         autoReconnect: Boolean,
         manualDisconnect: Boolean,
         attempt: Int,
     ): UsbRecoveryDecision {
-        if (!devicePresent || !autoReconnect || manualDisconnect) {
-            return UsbRecoveryDecision(UsbRecoveryAction.HARD_DISCONNECT, 0L)
-        }
-        val delay = retryDelaysMs.getOrNull(attempt)
-            ?: return UsbRecoveryDecision(UsbRecoveryAction.HARD_DISCONNECT, 0L)
-        return UsbRecoveryDecision(UsbRecoveryAction.RETRY_TRANSPORT, delay)
+        @Suppress("UNUSED_VARIABLE")
+        val context = Triple(devicePresent, autoReconnect, manualDisconnect)
+        @Suppress("UNUSED_VARIABLE")
+        val ignoredAttempt = attempt
+        return UsbRecoveryDecision(UsbRecoveryAction.HARD_DISCONNECT, 0L)
     }
 }
