@@ -1,0 +1,42 @@
+{
+  "schema": "omegas-next-netlify-scope-v1",
+  "sourceRoot": "app/src/main/assets/ui-next",
+  "servedContent": "UI_AND_FICTIONAL_FIXTURES_ONLY",
+  "realVehicleData": false,
+  "androidNativeCode": false,
+  "usbProtocol": false,
+  "ecuWriter": false,
+  "apk": false,
+  "credentials": false,
+  "allowedExtensions": [
+    ".html",
+    ".css",
+    ".js",
+    ".json",
+    ".svg",
+    ".png",
+    ".webp",
+    ".ico",
+    ""
+  ],
+  "forbiddenExtensions": [
+    ".kt",
+    ".java",
+    ".gradle",
+    ".kts",
+    ".apk",
+    ".aab",
+    ".jks",
+    ".keystore",
+    ".pem",
+    ".key",
+    ".log"
+  ],
+  "forbiddenNames": [
+    "local.properties",
+    "gradle.properties",
+    "google-services.json"
+  ],
+  "deploymentMode": "PACKAGE_DIRECTORY_ONLY_NOT_REPO_ROOT",
+  "note": "Netlify must receive only the validated ui-next package directory, never the Android repository root."
+}
