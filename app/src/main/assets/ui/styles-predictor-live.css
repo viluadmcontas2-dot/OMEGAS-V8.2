@@ -1,3 +1,36 @@
+.predictor-live-toggle {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  color: #aab7c5;
+  background: rgba(255,255,255,.025);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.predictor-live-toggle[data-enabled="true"] {
+  color: #bdebd6;
+  border-color: rgba(46,191,130,.28);
+  background: rgba(46,191,130,.07);
+}
+
+.predictor-cell.trace-weight {
+  box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--state-accent) calc(var(--trace-weight, 0) * 12%), transparent);
+}
+
+.predictor-cell.trace-weight::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 6px;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, #dce8f5 calc(var(--trace-weight, 0) * 42%), transparent);
+  opacity: calc(.25 + var(--trace-weight, 0) * .75);
+}
+
 .predictor-cell.current {
   z-index: 3;
   border-color: #f1f5f9;
