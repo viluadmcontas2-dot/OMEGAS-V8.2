@@ -12,7 +12,8 @@ assert.match(css, /\.predictor-grid\s*\{[\s\S]*?repeat\(12,\s*minmax\(0,\s*1fr\)
 assert.match(css, /\.predictor-grid\s*\{[\s\S]*?min-width:\s*0;/);
 assert.match(css, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.predictor-grid\s*\{[\s\S]*?min-width:\s*620px;/);
 assert.equal(predictor.includes('setInterval'), false);
-assert.equal(predictor.includes('setTimeout'), false);
 assert.equal(predictor.includes('pointermove'), false);
+assert.equal((predictor.match(/setTimeout/g) || []).length, 1);
+assert.equal(predictor.includes('root.setTimeout(boot, 25)'), true);
 
 console.log('PREDICTOR_PAN_LAYOUT_CONTRACT=PASS');
