@@ -22,6 +22,7 @@ private fun List<Double>.medianSafe(): Double {
 private data class EvidenceStateSnapshot(
     val frameSequence: Long,
     val nativeEvidence: List<NativeEcuEvidence>,
+    val nativeAnchors: List<NativeLearningAnchor>,
     val visitAccumulators: List<VisitComparisonAccumulator>,
     val provenanceHistory: List<EvidenceProvenance>,
     val performance: LearningPerformanceMetrics,
@@ -47,7 +48,7 @@ class SignalLearningStore(
         const val LEGACY_FORMAT_OLD = "omegas-learning-v5-mp48-v2"
         const val DATA_REVISION = 4
         const val LEGACY_DATA_REVISION = 3
-        const val EVIDENCE_STATE_SCHEMA = "omegas-learning-evidence-v6-v2"
+        const val EVIDENCE_STATE_SCHEMA = "omegas-learning-evidence-v6-v3"
     }
 
     private val delegate = MotorLearningMemory(stateFile, log)
@@ -72,6 +73,7 @@ class SignalLearningStore(
     private var lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
     private val evidenceLock = Any()
     private val nativeEvidence = linkedMapOf<String, NativeEcuEvidence>()
+    private val nativeAnchors = NativeLearningAnchorRegistry(LearningEvidenceBudget.MAX_NATIVE_ANCHORS)
     private val visitAccumulators = linkedMapOf<String, VisitComparisonAccumulator>()
     private val provenanceHistory = ArrayDeque<EvidenceProvenance>()
     private var frameSequence = 0L
@@ -256,6 +258,7 @@ class SignalLearningStore(
             .put("gasConditionPreserved", true)
             .put("crossFuelGasTemperature", false)
             .put("nativeEcuEvidence", JSONArray(evidence.nativeEvidence.map { it.toJson() }))
+            .put("nativeLearningAnchors", JSONArray(evidence.nativeAnchors.map { it.toJson() }))
             .put("visitAccumulators", JSONArray(evidence.visitAccumulators.map { it.toJson() }))
             .put("evidenceProvenance", JSONArray(evidence.provenanceHistory.map { it.toJson() }))
             .put("evidenceStateSchema", EVIDENCE_STATE_SCHEMA)
@@ -286,11 +289,12 @@ class SignalLearningStore(
         return decorate(result)
     }
 
-    /** Importa somente contexto nativo tipado; não cria comparação nem dispara writer. */
+    /** Importa contexto nativo tipado e âncoras observacionais; nunca cria comparação nem dispara writer. */
     fun importNativeSnapshot(snapshot: JSONObject): JSONObject {
         val snapshotId = snapshot.optString("snapshotId", snapshot.optString("sessionId"))
         if (snapshotId.isBlank()) return JSONObject().put("ok", false).put("error", "Snapshot nativo sem identificador")
         val fields = snapshot.optJSONArray("fields") ?: JSONArray()
+        val calibrationEpoch = delegate.statusJson().optInt("epoch", 1).coerceAtLeast(1)
 
         fun validRaw(fieldKey: String): JSONArray? {
             repeat(fields.length()) { index ->
@@ -311,6 +315,7 @@ class SignalLearningStore(
             mapOnCngRaw?.length() ?: 0,
         ).coerceAtMost(18)
         var imported = 0
+        var anchorsImported = 0
 
         synchronized(evidenceLock) {
             repeat(bandCount) { band ->
@@ -332,11 +337,21 @@ class SignalLearningStore(
                 imported++
             }
             trimNativeEvidenceLocked()
+
+            val maturityEvents = snapshot.optJSONArray("nativeMaturityEvents") ?: JSONArray()
+            repeat(maturityEvents.length()) { index ->
+                val event = maturityEvents.optJSONObject(index) ?: return@repeat
+                val anchor = NativeLearningAnchor.fromMaturityEvent(event, calibrationEpoch) ?: return@repeat
+                if (nativeAnchors.upsert(anchor)) anchorsImported += 1
+            }
         }
         return JSONObject()
             .put("ok", true)
             .put("source", "ECU_NATIVE")
             .put("importedBands", imported)
+            .put("importedNativeAnchors", anchorsImported)
+            .put("nativeAnchorCount", synchronized(evidenceLock) { nativeAnchors.snapshot().size })
+            .put("calibrationEpoch", calibrationEpoch)
             .put("automaticCalibration", false)
             .put("manualOnly", true)
             .also { persistEvidenceState() }
@@ -344,6 +359,7 @@ class SignalLearningStore(
 
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject {
         resetConnectionCounters()
+        synchronized(evidenceLock) { nativeAnchors.clear() }
         val result = delegate.onCalibrationAdjustment(payload)
         scheduleAdvisorRefresh(advisorRevisionGate.force())
         persistEvidenceState()
@@ -384,7 +400,8 @@ class SignalLearningStore(
             lastSeenAt = { it.lastSeenAt },
         )
         visitAccumulators.clear()
-        retained.forEach { item -> visitAccumulators[item.key] = item }
+        retained.forEach { item -> visitAccumulators[item.key] = item
+        }
         visitAccumulatorsEvicted += (before - visitAccumulators.size).coerceAtLeast(0)
     }
 
@@ -392,6 +409,7 @@ class SignalLearningStore(
         EvidenceStateSnapshot(
             frameSequence = frameSequence,
             nativeEvidence = nativeEvidence.values.toList(),
+            nativeAnchors = nativeAnchors.snapshot(),
             visitAccumulators = visitAccumulators.values.toList(),
             provenanceHistory = provenanceHistory.toList(),
             performance = performance,
@@ -403,10 +421,12 @@ class SignalLearningStore(
     private fun evidenceBudgetJson(snapshot: EvidenceStateSnapshot = evidenceSnapshot()): JSONObject = JSONObject()
         .put("maxPersistedBytes", LearningEvidenceBudget.MAX_PERSISTED_BYTES)
         .put("maxNativeSnapshots", LearningEvidenceBudget.MAX_NATIVE_SNAPSHOTS)
+        .put("maxNativeAnchors", LearningEvidenceBudget.MAX_NATIVE_ANCHORS)
         .put("maxVisitAccumulators", LearningEvidenceBudget.MAX_VISIT_ACCUMULATORS)
         .put("maxProvenanceEntries", LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES)
         .put("nativeSnapshots", snapshot.nativeEvidence.map { it.snapshotId }.distinct().size)
         .put("nativeBands", snapshot.nativeEvidence.size)
+        .put("nativeAnchors", snapshot.nativeAnchors.size)
         .put("visitAccumulators", snapshot.visitAccumulators.size)
         .put("provenanceEntries", snapshot.provenanceHistory.size)
         .put("nativeSnapshotsEvicted", snapshot.nativeSnapshotsEvicted)
@@ -416,6 +436,10 @@ class SignalLearningStore(
         var native = LearningEvidenceBudget.retainNewestSnapshotGroups(
             snapshot.nativeEvidence,
             snapshotId = { it.snapshotId },
+        )
+        var anchors = LearningEvidenceBudget.retainNewestEntries(
+            snapshot.nativeAnchors,
+            LearningEvidenceBudget.MAX_NATIVE_ANCHORS,
         )
         var visits = LearningEvidenceBudget.retainNewestVisits(
             snapshot.visitAccumulators,
@@ -428,6 +452,7 @@ class SignalLearningStore(
             .put("schema", EVIDENCE_STATE_SCHEMA)
             .put("frameSequence", snapshot.frameSequence)
             .put("nativeEcuEvidence", JSONArray(native.map { it.toJson() }))
+            .put("nativeLearningAnchors", JSONArray(anchors.map { it.toJson() }))
             .put("visitAccumulators", JSONArray(visits.map { it.toJson() }))
             .put("evidenceProvenance", JSONArray(provenance.map { it.toJson() }))
             .put("performanceMetrics", snapshot.performance.toJson())
@@ -436,6 +461,7 @@ class SignalLearningStore(
                 evidenceBudgetJson(
                     snapshot.copy(
                         nativeEvidence = native,
+                        nativeAnchors = anchors,
                         visitAccumulators = visits,
                         provenanceHistory = provenance,
                     ),
@@ -445,7 +471,7 @@ class SignalLearningStore(
         var root = build()
         var encoded = root.toString()
         while (encoded.toByteArray(Charsets.UTF_8).size > LearningEvidenceBudget.MAX_PERSISTED_BYTES &&
-            (visits.isNotEmpty() || native.isNotEmpty() || provenance.isNotEmpty())
+            (visits.isNotEmpty() || native.isNotEmpty() || anchors.isNotEmpty() || provenance.isNotEmpty())
         ) {
             byteCompacted = true
             when {
@@ -462,6 +488,10 @@ class SignalLearningStore(
                         maxSnapshots = maxOf(4, snapshotCount - 1),
                     )
                 }
+                anchors.size > 32 -> anchors = LearningEvidenceBudget.retainNewestEntries(
+                    anchors,
+                    maxOf(32, anchors.size - 16),
+                )
                 provenance.size > 16 -> provenance = provenance.drop(1)
                 visits.isNotEmpty() -> visits = LearningEvidenceBudget.retainNewestVisits(
                     visits,
@@ -476,6 +506,7 @@ class SignalLearningStore(
                         maxSnapshots = (ids.size - 1).coerceAtLeast(0),
                     )
                 }
+                anchors.isNotEmpty() -> anchors = LearningEvidenceBudget.retainNewestEntries(anchors, anchors.size - 1)
                 provenance.isNotEmpty() -> provenance = provenance.drop(1)
             }
             root = build()
@@ -506,6 +537,13 @@ class SignalLearningStore(
                             historicalConditionKnown = raw.optBoolean("historicalConditionKnown", false),
                         )
                     }
+                }
+                root.optJSONArray("nativeLearningAnchors")?.let { array ->
+                    val loaded = mutableListOf<NativeLearningAnchor>()
+                    repeat(array.length()) { index ->
+                        NativeLearningAnchor.fromJson(array.optJSONObject(index) ?: return@repeat)?.let(loaded::add)
+                    }
+                    nativeAnchors.replaceAll(loaded)
                 }
                 root.optJSONArray("visitAccumulators")?.let { array ->
                     repeat(array.length()) { index ->
@@ -693,6 +731,7 @@ class SignalLearningStore(
                 .put("advisor_published_revision", advisorPublishedRevision.get())
                 .put("advisor_fresh", advisorPublishedRevision.get() >= advisorRequestedRevision.get())
                 .put("native_ecu_evidence", JSONArray(evidence.nativeEvidence.map { it.toJson() }))
+                .put("native_learning_anchors", JSONArray(evidence.nativeAnchors.map { it.toJson() }))
                 .put("evidence_budget", evidenceBudgetJson(evidence))
         }
 
