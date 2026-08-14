@@ -107,6 +107,7 @@ class TelemetryForegroundService : Service() {
     private val startedAt = System.currentTimeMillis()
     private var lastNotificationAt = 0L
     private var lastUsbConnected = false
+    private var lastUsbSessionId = 0L
     private var enginePausedByUser = false
     /**
      * Diferencia uma desconexão física/serial de uma parada solicitada pelo usuário.
@@ -612,24 +613,46 @@ class TelemetryForegroundService : Service() {
 
     private fun handleUsbTransition() {
         val connected = usb.connected
-        if (connected == lastUsbConnected) return
+        val sessionId = if (connected) usb.connectionSessionId else 0L
+        val transition = UsbSessionTransitionPolicy.classify(
+            lastConnected = lastUsbConnected,
+            lastSessionId = lastUsbSessionId,
+            connected = connected,
+            sessionId = sessionId,
+        )
+        if (transition == UsbSessionTransition.NONE) return
+
+        val previousSessionId = lastUsbSessionId
+        val wasConnected = lastUsbConnected
         lastUsbConnected = connected
+        lastUsbSessionId = sessionId
+
         if (connected) {
+            val generationChanged = transition == UsbSessionTransition.GENERATION_CHANGED
             monitoringPausedByUser = false
-            val sessionId = usb.connectionSessionId
+            if (generationChanged) {
+                runtime.endUsbSession("USB_SESSION_REPLACED")
+                nativeAutoCal.endUsbSession()
+                telemetryStore.invalidate("USB_SESSION_REPLACED")
+                log.add("INFO", "USB", "Nova geração USB detectada • $previousSessionId → $sessionId")
+            }
             telemetryStore.beginSession(sessionId)
             runtime.beginUsbSession(sessionId)
             kWriter.beginUsbSession(sessionId)
             kFactor.beginUsbSession(sessionId)
             nativeAutoCal.beginUsbSession(sessionId)
-            enginePausedByUser = false
-            if (settings.sessionRecorderEnabled && settings.sessionRecorderAutoStartOnUsb) {
+            if (!wasConnected) enginePausedByUser = false
+            if (settings.sessionRecorderEnabled && settings.sessionRecorderAutoStartOnUsb &&
+                !sessionRecorder.statusObject().optBoolean("recording")
+            ) {
                 sessionRecorder.start(
                     "MP48 conectado",
                     JSONObject().put("appVersion", BuildConfig.VERSION_NAME).put("usb", usb.deviceLabel),
                 )
             }
-            if (settings.autoStartEngine) startEngine("nova conexão física MP48")
+            if (settings.autoStartEngine && !enginePausedByUser) {
+                startEngine(if (generationChanged) "nova geração física MP48" else "nova conexão física MP48")
+            }
         } else {
             runtime.stop(2)
             runtime.endUsbSession("USB_DISCONNECTED")
@@ -667,7 +690,9 @@ class TelemetryForegroundService : Service() {
                 startEngine("recuperação automática do núcleo")
             }
             if (!usb.connected && runtime.running) runtime.stop(2)
-            if (usb.connected && runtime.running && runtime.serialScheduler().currentSessionId() > 0L) {
+            if (usb.connected && runtime.running && runtime.ready && telemetryStore.isValid() &&
+                runtime.serialScheduler().currentSessionId() > 0L
+            ) {
                 nativeAutoCal.tick()
             }
             if (sessionRecorder.statusObject().optBoolean("recording")) {
