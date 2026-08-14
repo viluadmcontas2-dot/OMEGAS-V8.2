@@ -45,6 +45,7 @@
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/vehicle-status-strip.js');
   loadOptionalScript('components/curve-prediction-state.js');
+  loadOptionalScript('components/split-layout.js');
   loadOptionalScript('core/predictor-model.js', () =>
     loadOptionalScript('screens/predictor.js', () => loadOptionalScript('components/predictor-current-cell.js')),
   );
