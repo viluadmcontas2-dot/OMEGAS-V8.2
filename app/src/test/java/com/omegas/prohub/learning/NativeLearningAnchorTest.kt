@@ -37,6 +37,12 @@ class NativeLearningAnchorTest {
     }
 
     @Test
+    fun `zero confidence correlation does not create native learning anchor`() {
+        assertNull(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("rpmConfidence", 0.0), 2))
+        assertNull(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("correlationConfidence", 0.0), 2))
+    }
+
+    @Test
     fun `same physical passage has stable fingerprint across snapshots`() {
         val first = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("snapshotId", "A"), 3)!!
         val second = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("snapshotId", "B"), 3)!!
