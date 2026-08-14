@@ -17,6 +17,9 @@ class NativeAnchorTelemetryWindow(
         val mapBar: Double,
         val petrolMs: Double,
         val fuel: String,
+        val sessionId: Long = 0L,
+        val gasMsDiagnostic: Double? = null,
+        val plausible: Boolean = true,
     )
 
     private val lock = Any()
@@ -39,6 +42,9 @@ class NativeAnchorTelemetryWindow(
         mapBar: Double,
         petrolMs: Double,
         fuel: String,
+        sessionId: Long = 0L,
+        gasMsDiagnostic: Double? = null,
+        plausible: Boolean = true,
     ): Frame = synchronized(lock) {
         sequence += 1L
         val frame = Frame(
@@ -48,6 +54,9 @@ class NativeAnchorTelemetryWindow(
             mapBar = mapBar,
             petrolMs = petrolMs,
             fuel = fuel,
+            sessionId = sessionId,
+            gasMsDiagnostic = gasMsDiagnostic,
+            plausible = plausible,
         )
         frames.addLast(frame)
         trimLocked(elapsedMs)
