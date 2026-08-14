@@ -288,6 +288,8 @@
     renderCollection(state) {
       if (!this.collectionPane) return;
       const decision = state.learningDecision || {};
+      const learningStatus = state.learningStatus || {};
+      const restoring = learningStatus.restoring === true || String(learningStatus.state || '').toUpperCase() === 'LEARNING_RESTORING';
       const tolerance = state.learningTolerance || {};
       const policy = tolerance.policy || tolerance.applied || {};
       const live = state.telemetry?.live || {};
@@ -299,7 +301,9 @@
       const progress = desired > 0 ? Math.min(100, count / desired * 100) : 0;
       const eligible = decision.learning_eligible === true;
       const fuel = fuelLabel(decision.fuel_confirmed || live.fuel);
-      const reason = decision.reason || live.sample_reason || 'Aguardando decisão do núcleo.';
+      const reason = restoring
+        ? (learningStatus.reason || 'Restaurando conhecimento persistido em segundo plano.')
+        : (decision.reason || live.sample_reason || 'Aguardando decisão do núcleo.');
       const quality = finite(decision.quality);
       const row = finite(decision.cell_row ?? cell.row);
       const column = finite(decision.cell_column ?? cell.column);
@@ -316,11 +320,11 @@
 
       this.collectionPane.innerHTML = `
         <section class="learning-decision-card" data-eligible="${eligible ? 'true' : 'false'}">
-          <div class="decision-top"><div><small>DECISÃO DO NÚCLEO</small><h3>${escapeHtml(stateLabel(decision))}</h3></div><span>${eligible ? 'CONTA' : 'NÃO CONTA AINDA'}</span></div>
+          <div class="decision-top"><div><small>DECISÃO DO NÚCLEO</small><h3>${restoring ? 'Learning restaurando' : escapeHtml(stateLabel(decision))}</h3></div><span>${restoring ? 'EM SEGUNDO PLANO' : (eligible ? 'CONTA' : 'NÃO CONTA AINDA')}</span></div>
           <p>${escapeHtml(reason)}</p>
           <div class="collection-progress"><i style="width:${progress.toFixed(1)}%"></i></div>
           <div class="collection-facts"><span><b>${count}/${desired || '—'}</b> leituras</span><span>mínimo ${minimum || '—'}</span><span>${fuel}</span><span>${quality === null ? 'qualidade —' : `qualidade ${Math.round(quality * 100)}%`}</span></div>
-          <small class="reason-code">${escapeHtml(decision.reason_code || decision.state || 'OBSERVING_ENGINE')}</small>
+          <small class="reason-code">${restoring ? 'LEARNING_RESTORE_PENDING' : escapeHtml(decision.reason_code || decision.state || 'OBSERVING_ENGINE')}</small>
         </section>
         <section class="learning-current-condition">
           <header><div><small>CONDIÇÃO AGORA</small><h3>O que o núcleo está observando</h3></div>${row !== null && column !== null && row >= 0 && column >= 0 ? `<span>Célula ${row + 1}×${column + 1}</span>` : ''}</header>
