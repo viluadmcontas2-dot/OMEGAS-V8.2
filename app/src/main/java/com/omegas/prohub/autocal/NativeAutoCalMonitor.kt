@@ -365,6 +365,7 @@ class NativeAutoCalMonitor(
                         .put("nativeState", point?.optString("state") ?: "VALIDO_POR_CONTADOR")
                         .put("nativeValidity", true)
                         .put("correlationState", correlation.state)
+                        .put("correlationReason", correlation.reason)
                         .put("correlationConfidence", correlation.confidence)
                         .put("rpmConfidence", correlation.rpmConfidence)
                         .put("rpm", correlation.rpm ?: JSONObject.NULL)
