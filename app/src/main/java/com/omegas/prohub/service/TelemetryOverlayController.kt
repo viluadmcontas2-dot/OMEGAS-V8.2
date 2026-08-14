@@ -23,7 +23,8 @@ import kotlin.math.abs
  * Não possui referência a writer, USB, KMap ou KFactor.
  *
  * NEXT usa presença 2,5x maior que o legado e persiste apenas preferência
- * visual/posição. Nenhum estado científico nasce aqui.
+ * visual/posição. Dados adicionais vêm da mesma TelemetryStateStore do serviço;
+ * nenhum pipeline, timer ou ciência nasce aqui.
  */
 class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     private val main = Handler(Looper.getMainLooper())
@@ -70,6 +71,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         .put("positionXDp", prefs.getInt(KEY_X_DP, DEFAULT_X_DP))
         .put("positionYDp", prefs.getInt(KEY_Y_DP, DEFAULT_Y_DP))
         .put("positionBounded", true)
+        .put("source", "TelemetryStateStore")
         .put("observationalOnly", true)
         .put("visualScaleVsLegacy", VISUAL_SCALE_VS_LEGACY)
         .put("compactSizeDp", COMPACT_SIZE_DP)
@@ -233,17 +235,42 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     }
 
     private fun render(snapshot: Snapshot) {
-        val rpm = snapshot.rpm?.let { "%.0f".format(it) } ?: "—"
-        val fuel = snapshot.fuel.takeIf { it.isNotBlank() && it != "—" } ?: "—"
+        val display = enrichFromCentralTelemetry(snapshot)
+        val rpm = display.rpm?.let { "%.0f".format(it) } ?: "—"
+        val fuel = display.fuel.takeIf { it.isNotBlank() && it != "—" } ?: "—"
         compactText?.text = "Ω\n$rpm rpm\n$fuel"
         rpmText?.text = "RPM      $rpm"
-        petrolText?.text = "PETROL   ${snapshot.petrolMs?.let { "%.2f ms".format(it) } ?: "—"}"
-        gasText?.text = "GAS      ${snapshot.gasMs?.let { "%.2f ms".format(it) } ?: "—"}"
-        cellText?.text = "CÉLULA   ${snapshot.cell}"
-        contextText?.text = "ECU      ${snapshot.ecuState.ifBlank { "—" }}  •  ${fuel}"
-        freshnessText?.text = "FRESCOR  ${freshness(snapshot.telemetryAgeMs)}"
-        stftText?.text = "STFT     ${snapshot.stft?.let { signed(it) } ?: "—"}"
+        petrolText?.text = "PETROL   ${display.petrolMs?.let { "%.2f ms".format(it) } ?: "—"}"
+        gasText?.text = "GAS      ${display.gasMs?.let { "%.2f ms".format(it) } ?: "—"}"
+        cellText?.text = "CÉLULA   ${display.cell}"
+        contextText?.text = "ECU      ${display.ecuState.ifBlank { "—" }}  •  $fuel"
+        freshnessText?.text = "FRESCOR  ${freshness(display.telemetryAgeMs)}"
+        stftText?.text = "STFT     ${display.stft?.let { signed(it) } ?: "—"}"
     }
+
+    /** Completa apenas campos ausentes usando a mesma Store central do serviço. */
+    private fun enrichFromCentralTelemetry(snapshot: Snapshot): Snapshot {
+        val service = context as? TelemetryForegroundService ?: return snapshot
+        val live = try { service.telemetryStore.telemetryCopy() } catch (_: Exception) { JSONObject() }
+        val age = try {
+            service.telemetryStore.ageMs().takeIf { it != Long.MAX_VALUE }
+        } catch (_: Exception) {
+            null
+        }
+        return snapshot.copy(
+            petrolMs = snapshot.petrolMs ?: live.nullableDouble("petrol_ms"),
+            gasMs = snapshot.gasMs ?: live.nullableDouble("gas_ms_diagnostic") ?: live.nullableDouble("gas_ms"),
+            rpm = snapshot.rpm ?: live.nullableDouble("rpm"),
+            fuel = snapshot.fuel.takeUnless { it.isBlank() || it == "—" }
+                ?: live.optString("fuel", live.optString("fuelState", "—")),
+            ecuState = snapshot.ecuState.takeUnless { it.isBlank() || it == "—" }
+                ?: live.optString("state", "—"),
+            telemetryAgeMs = snapshot.telemetryAgeMs ?: age,
+        )
+    }
+
+    private fun JSONObject.nullableDouble(key: String): Double? =
+        if (has(key) && !isNull(key) && opt(key) is Number) optDouble(key) else null
 
     private fun freshness(ageMs: Long?): String = when {
         ageMs == null || ageMs < 0L -> "—"
