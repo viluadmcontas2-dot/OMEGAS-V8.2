@@ -42,6 +42,7 @@
   ns.Router = Router;
   ns.ROUTES = ROUTES;
 
-  // Extensão visual desacoplada do bootstrap principal. Usa o mesmo Router/Store/Scheduler.
+  // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
+  loadOptionalScript('components/vehicle-status-strip.js');
   loadOptionalScript('core/predictor-model.js', () => loadOptionalScript('screens/predictor.js'));
 })(typeof window !== 'undefined' ? window : globalThis);
