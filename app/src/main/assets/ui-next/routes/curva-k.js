@@ -5,9 +5,13 @@ const PERSPECTIVES = Object.freeze([
   ['autocal', 'AutoCal'],
   ['compare', 'Comparar'],
 ]);
+let lastCurveState = null;
+let lastAutoCalState = null;
 
 export const curvaKRoute = {
   mount(ctx, state) {
+    lastCurveState = null;
+    lastAutoCalState = null;
     ctx.workspace.innerHTML = `<section class="route-page" data-route="curva-k">
       <div class="route-heading"><div><h1>Curva K</h1><p>Tendência global por Petrol Inj. — separada do Mapa K local.</p></div>
       <button class="secondary-action" id="curve-reread" type="button">Reler ECU</button></div>
@@ -18,6 +22,9 @@ export const curvaKRoute = {
   },
 
   update(ctx, state) {
+    if (lastCurveState === state.curveK && lastAutoCalState === state.autocal) return;
+    lastCurveState = state.curveK;
+    lastAutoCalState = state.autocal;
     const curve = state.curveK || {};
     const perspective = curve.perspective || 'adjust';
     const tabs = document.getElementById('curve-tabs');
@@ -25,8 +32,8 @@ export const curvaKRoute = {
       tabs.innerHTML = PERSPECTIVES.map(([id, label]) => `<button type="button" class="secondary-action perspective-tab" data-perspective="${id}" aria-pressed="${perspective === id}">${label}</button>`).join('');
       tabs.querySelectorAll('[data-perspective]').forEach((button) => button.addEventListener('click', () => ctx.setCurvePerspective(button.dataset.perspective)));
     }
-    if (perspective === 'autocal') renderAutoCal(ctx, state);
-    else if (perspective === 'compare') renderComparison(ctx, state);
+    if (perspective === 'autocal') renderAutoCal(state);
+    else if (perspective === 'compare') renderComparison(state);
     else renderCurve(ctx, state);
   },
 };
@@ -63,7 +70,7 @@ function renderPointDetail(ctx, curve, index) {
   document.getElementById('curve-review')?.addEventListener('click', ctx.reviewCurve);
 }
 
-function renderAutoCal(ctx, state) {
+function renderAutoCal(state) {
   const root = document.getElementById('curve-root');
   const ac = state.autocal || {};
   if (!root) return;
@@ -72,7 +79,7 @@ function renderAutoCal(ctx, state) {
     <section class="learning-now"><span class="section-kicker">Efeito global</span><strong class="learning-state">${escapeText(ac.mulActSummary || 'Sem leitura')}</strong><p class="learning-reason">${escapeText(ac.disableWarning || 'Enable/Disable podem mudar a participação efetiva da correção K.')}</p><button class="secondary-action danger-action" type="button" disabled>${ac.enabled ? 'Desabilitar AutoCal — revisão crítica' : 'Habilitar AutoCal — revisão crítica'}</button><small class="learning-reason">Ação real permanece bloqueada no simulador; Finish não é inventado.</small></section>`;
 }
 
-function renderComparison(ctx, state) {
+function renderComparison(state) {
   const root = document.getElementById('curve-root');
   const comparison = state.curveK?.comparison || {};
   if (!root) return;
