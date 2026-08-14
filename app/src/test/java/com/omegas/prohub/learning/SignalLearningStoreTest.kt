@@ -9,6 +9,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.json.JSONArray
+import org.json.JSONObject
 
 class SignalLearningStoreTest {
     @get:Rule val temporary = TemporaryFolder()
@@ -95,6 +97,48 @@ class SignalLearningStoreTest {
         assertEquals(2, region.getInt("session_count"))
         assertEquals(1L, exported.getLong("independentSamples"))
         assertFalse(region.has("confidence_sessions"))
+    }
+
+    @Test
+    fun `native sidecar remains bounded by complete recent snapshots`() {
+        val state = temporary.root.resolve("bounded-native-${System.nanoTime()}.json")
+        val store = SignalLearningStore(state, RingLog())
+        try {
+            repeat(32) { snapshotIndex ->
+                val raw = JSONArray()
+                val counts = JSONArray()
+                repeat(18) { band ->
+                    raw.put(100 + snapshotIndex + band)
+                    counts.put(1 + band)
+                }
+                val snapshot = JSONObject()
+                    .put("snapshotId", "snapshot-$snapshotIndex")
+                    .put(
+                        "fields",
+                        JSONArray().put(
+                            JSONObject()
+                                .put("status", "VALID")
+                                .put("rawValues", raw)
+                                .put("counts", counts),
+                        ),
+                    )
+                assertTrue(store.importNativeSnapshot(snapshot).getBoolean("ok"))
+            }
+            val exported = store.export("test")
+            val evidence = exported.getJSONArray("nativeEcuEvidence")
+            val snapshotIds = (0 until evidence.length())
+                .map { evidence.getJSONObject(it).getString("snapshotId") }
+                .distinct()
+
+            assertEquals(LearningEvidenceBudget.MAX_NATIVE_SNAPSHOTS, snapshotIds.size)
+            assertEquals("snapshot-16", snapshotIds.first())
+            assertEquals("snapshot-31", snapshotIds.last())
+            assertTrue(exported.getJSONObject("evidenceBudget").getLong("nativeSnapshotsEvicted") >= 16L)
+        } finally {
+            store.close()
+        }
+        val sidecar = state.parentFile.resolve("learning_v6_evidence.json")
+        assertTrue(sidecar.length() <= LearningEvidenceBudget.MAX_PERSISTED_BYTES)
     }
 
     private fun store() = SignalLearningStore(
