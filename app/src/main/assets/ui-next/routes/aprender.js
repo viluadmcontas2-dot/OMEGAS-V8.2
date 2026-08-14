@@ -2,8 +2,17 @@ import { renderMapKEditor } from '../components/map-k-editor.js';
 import { renderSuggestionQueue } from '../components/suggestion-queue.js';
 import { escapeText, format, humanDirection, semanticItem } from './common.js';
 
+let lastCellContext = null;
+let lastMapState = null;
+let lastSuggestions = null;
+let lastEditorState = null;
+
 export const aprenderRoute = {
   mount(ctx, state) {
+    lastCellContext = null;
+    lastMapState = null;
+    lastSuggestions = null;
+    lastEditorState = null;
     ctx.workspace.innerHTML = `<section class="route-page" data-route="aprender">
       <div class="route-heading"><div><h1>Aprender</h1><p>Medido, referência equivalente, diferença e revisão — sem misturar as origens.</p></div>
       <button class="secondary-action" id="refresh-cell-context" type="button">Atualizar contexto</button></div>
@@ -18,6 +27,17 @@ export const aprenderRoute = {
   },
 
   update(ctx, state) {
+    if (
+      lastCellContext === state.cellContext &&
+      lastMapState === state.mapK &&
+      lastSuggestions === state.suggestions &&
+      lastEditorState === state.contextualEditor
+    ) return;
+    lastCellContext = state.cellContext;
+    lastMapState = state.mapK;
+    lastSuggestions = state.suggestions;
+    lastEditorState = state.contextualEditor;
+
     const root = document.getElementById('learning-context-root');
     if (!root) return;
     const c = state.cellContext;
