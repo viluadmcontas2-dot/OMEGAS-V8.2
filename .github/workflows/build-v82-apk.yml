@@ -1,4 +1,5 @@
 # One-shot push trigger is restricted to this workflow file; ordinary source commits do not build.
+# Retry 4 validates the native-anchor boundary fix before the full gate.
 name: Build OMEGAS V8.2 APK
 
 on:
@@ -35,6 +36,12 @@ jobs:
           echo "BUILD_COMMIT=$(git rev-parse HEAD)"
           grep '^distributionUrl=' gradle/wrapper/gradle-wrapper.properties
           git status --short
+
+      - name: Focused native-anchor regressions
+        run: >-
+          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+          --tests com.omegas.prohub.learning.NativeAutoCalAnchorCorrelatorTest
+          --tests com.omegas.prohub.learning.NativeLearningAnchorTest
 
       - name: JVM unit tests
         run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
