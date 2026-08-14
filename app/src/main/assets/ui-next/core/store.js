@@ -34,9 +34,7 @@ export class NextStore {
   #state = initialState;
   #listeners = new Set();
 
-  get() {
-    return this.#state;
-  }
+  get() { return this.#state; }
 
   subscribe(listener) {
     if (typeof listener !== 'function') throw new TypeError('listener obrigatório');
@@ -81,7 +79,7 @@ export class NextStore {
 function reduce(state, event) {
   switch (event.type) {
     case 'TELEMETRY_UPDATED':
-      return { ...state, sessionId: event.payload?.sessionId ?? state.sessionId, telemetry: Object.freeze({ ...event.payload }) };
+      return reduceTelemetryUpdated(state, event.payload || {});
     case 'TELEMETRY_INVALIDATED': {
       const reason = event.reason || 'ECU sem telemetria válida';
       const mapHasContext = !!state.mapK.map || !!state.mapK.proposal || state.mapK.selection.length > 0;
@@ -142,6 +140,47 @@ function reduce(state, event) {
     default:
       return state;
   }
+}
+
+function reduceTelemetryUpdated(state, payload) {
+  const incomingSessionId = Number(payload?.sessionId || 0);
+  const previousSessionId = Number(state.sessionId || 0);
+  const sessionReplaced = incomingSessionId > 0 && previousSessionId > 0 && incomingSessionId !== previousSessionId;
+  if (!sessionReplaced) {
+    return { ...state, sessionId: incomingSessionId || previousSessionId, telemetry: Object.freeze({ ...payload }) };
+  }
+
+  const reason = `Nova sessão ECU/USB ${previousSessionId} → ${incomingSessionId}; releitura obrigatória.`;
+  return {
+    ...state,
+    sessionId: incomingSessionId,
+    telemetry: Object.freeze({ ...payload }),
+    cellContext: null,
+    contextualEditor: Object.freeze({ kind: null, open: false, originRoute: null }),
+    mapK: Object.freeze({
+      ...state.mapK,
+      state: UI_STATE.STALE,
+      selection: [],
+      proposal: null,
+      draftBlocked: false,
+      confirmationBlockedReason: reason,
+    }),
+    curveK: Object.freeze({
+      ...state.curveK,
+      state: UI_STATE.STALE,
+      prepared: [],
+      draftBlocked: false,
+      confirmationBlockedReason: reason,
+    }),
+    predictor: Object.freeze({ ...state.predictor, state: UI_STATE.STALE, staleReason: reason }),
+    suggestions: Object.freeze({ ...state.suggestions, state: UI_STATE.STALE, staleReason: reason }),
+    autocal: Object.freeze({ state: UI_STATE.STALE, staleReason: reason }),
+    globalError: Object.freeze({
+      code: 'NATIVE_SESSION_REPLACED',
+      message: 'A ECU reconectou em uma nova sessão. A interface foi preservada; dados estruturais precisam ser relidos.',
+      recoverable: true,
+    }),
+  };
 }
 
 function reduceMapKState(current, payload) {
