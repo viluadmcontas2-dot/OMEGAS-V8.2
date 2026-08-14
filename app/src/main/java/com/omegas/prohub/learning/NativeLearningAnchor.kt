@@ -13,6 +13,7 @@ import java.security.MessageDigest
 data class NativeLearningAnchor(
     val fingerprint: String,
     val calibrationEpoch: Int,
+    val scientificRevision: Long = 0L,
     val sessionId: Long,
     val snapshotId: String,
     val snapshotHash: String,
@@ -39,6 +40,7 @@ data class NativeLearningAnchor(
     init {
         require(fingerprint.isNotBlank())
         require(calibrationEpoch >= 1)
+        require(scientificRevision >= 0L)
         require(sessionId > 0L)
         require(snapshotId.isNotBlank())
         require(bandIndex >= 0)
@@ -64,8 +66,9 @@ data class NativeLearningAnchor(
         .put("source", "ECU_NATIVE_AUTOCAL")
         .put("fingerprint", fingerprint)
         .put("calibrationEpoch", calibrationEpoch)
-        .put("sessionId", sessionId)
+        .put("scientificRevision", scientificRevision)
         .put("snapshotId", snapshotId)
+        .put("sessionId", sessionId)
         .put("snapshotHash", snapshotHash)
         .put("bandIndex", bandIndex)
         .put("zone", zone)
@@ -172,6 +175,7 @@ data class NativeLearningAnchor(
                 NativeLearningAnchor(
                     fingerprint = fingerprint,
                     calibrationEpoch = raw.optInt("calibrationEpoch", 1).coerceAtLeast(1),
+                    scientificRevision = raw.optLong("scientificRevision", 0L).coerceAtLeast(0L),
                     sessionId = sessionId,
                     snapshotId = snapshotId,
                     snapshotHash = raw.optString("snapshotHash"),
@@ -215,15 +219,21 @@ data class NativeLearningAnchor(
     }
 }
 
-/** Registro bounded/deduplicado; a mesma passagem física nunca vira duas âncoras. */
+/**
+ * Registro bounded/deduplicado. `scientificRevision` avança somente quando uma
+ * passagem física inédita entra; releitura do mesmo evento não altera a revisão.
+ * A revisão é por epoch: `(calibrationEpoch, scientificRevision)` é a identidade científica.
+ */
 class NativeLearningAnchorRegistry(
     private val maxEntries: Int = 256,
 ) {
     private val anchors = linkedMapOf<String, NativeLearningAnchor>()
+    private var nextRevision = 0L
 
     fun upsert(anchor: NativeLearningAnchor): Boolean {
         if (anchors.containsKey(anchor.fingerprint)) return false
-        anchors[anchor.fingerprint] = anchor
+        nextRevision += 1L
+        anchors[anchor.fingerprint] = anchor.copy(scientificRevision = nextRevision)
         while (anchors.size > maxEntries.coerceAtLeast(1)) {
             anchors.remove(anchors.keys.first())
         }
@@ -232,10 +242,21 @@ class NativeLearningAnchorRegistry(
 
     fun replaceAll(items: List<NativeLearningAnchor>) {
         anchors.clear()
-        items.takeLast(maxEntries.coerceAtLeast(1)).forEach { anchors[it.fingerprint] = it }
+        nextRevision = 0L
+        items.takeLast(maxEntries.coerceAtLeast(1)).forEach { item ->
+            val revision = item.scientificRevision.takeIf { it > 0L } ?: (nextRevision + 1L)
+            nextRevision = maxOf(nextRevision, revision)
+            anchors[item.fingerprint] = item.copy(scientificRevision = revision)
+        }
     }
 
     fun snapshot(): List<NativeLearningAnchor> = anchors.values.toList()
 
-    fun clear() = anchors.clear()
+    fun currentRevision(): Long = nextRevision
+
+    /** Limpa a epoch antiga; a epoch nova reinicia sua própria sequência científica. */
+    fun clear() {
+        anchors.clear()
+        nextRevision = 0L
+    }
 }
