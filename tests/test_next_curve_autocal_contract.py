@@ -30,7 +30,8 @@ class NextCurveAutoCalContractTest(unittest.TestCase):
     def test_preparing_curve_point_does_not_write(self):
         boot = BOOT.read_text(encoding="utf-8")
         self.assertIn("prepareCurvePoint", boot)
-        self.assertIn("Confirmar Curva K — indisponível no simulador", boot)
+        self.assertIn("nextAdapter.previewCurveK", boot)
+        self.assertIn("Gravar na ECU — bloqueado neste gate", boot)
         for token in ["startKFactorWrite(", "protocolTransaction(", "OmegasNative"]:
             self.assertNotIn(token, boot)
 
