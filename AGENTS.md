@@ -8,12 +8,15 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 - Estado, prioridade, plano, decisão, autorização, branch ativa, exceção, aprendizado, roadmap e próximo passo ficam no **Notion**, não duplicados neste repositório.
 - Não criar commits apenas para espelhar mudanças de governança, memória ou planejamento do Notion.
 
-## Fonte do código
+## Fonte do código e escrita remota
 
 - **GitHub remoto é a verdade do estado atual do código.**
-- A cópia local é temporária: deve partir do remoto atual e nunca ser tratada como fonte independente.
-- Antes de começar, antes de publicar e antes de concluir, conferir branch e commit remotos e reconciliar qualquer discrepância.
-- Não deixar trabalho material preso apenas localmente por longos períodos; manter a branch autorizada tecnicamente atualizada com checkpoints coerentes.
+- A cópia local é bancada temporária e descartável: deve nascer do branch/commit remoto recém-validado e nunca ser tratada como fonte independente.
+- Antes de começar, antes de materializar qualquer mudança e antes de concluir, conferir branch e HEAD remotos; se o HEAD mudou, abortar a escrita e reconciliar antes de continuar.
+- Alterações autoritativas devem ser materializadas na branch autorizada pelo **GitHub remoto**. `git push` da bancada local não é o mecanismo normal de publicação.
+- Para uma mudança pequena de arquivo único, a Contents API remota é aceitável. Para um pacote coerente de vários arquivos, preferir uma única transação lógica pela Git Database API: criar/reutilizar blobs → montar tree/subtree → criar um commit com o HEAD validado como parent → revalidar o HEAD → mover a ref uma única vez, sem `force` → reler commit/tree e provar os hashes.
+- Nunca mover a ref antes de a árvore candidata estar pronta. Falha local, de ZIP, ferramenta ou teste deve deixar a branch remota no último estado válido; objetos Git órfãos não contam como publicação.
+- Trabalho local serve para editar, comparar, calcular hashes e testar. O recibo final vem sempre do estado remoto relido após a escrita.
 
 ## Testes e Actions
 
