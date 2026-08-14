@@ -11,22 +11,23 @@ function formatK(value) {
   return Number.isFinite(number) ? Math.round(number) : '—';
 }
 
-/**
- * Editor visual único do Mapa K NEXT.
- * Não toca bridge, writer, USB ou protocolo.
- */
+/** Editor visual único do Mapa K NEXT. Nunca toca writer/USB/protocolo. */
 export function renderMapKEditor(container, state, actions = {}) {
   if (!container) return;
   const map = state?.map || [];
   const selection = selectedSet(state?.selection);
-  const ready = state?.state === 'READY' && map.length === 12;
+  const hasMap = map.length === 12;
+  const draftBlocked = state?.draftBlocked === true;
+  const editable = state?.state === 'READY' && !draftBlocked;
 
-  if (!ready) {
+  if (!hasMap) {
+    const busy = state?.state === 'BUSY';
+    const failure = state?.state === 'FAILURE';
     container.innerHTML = `
       <section class="map-editor-shell" data-map-state="${state?.state || 'UNAVAILABLE'}">
         <div class="editor-header">
-          <div><span class="section-kicker">Mapa K local</span><h2>Mapa ainda não confirmado</h2><p>Leia a ECU antes de selecionar ou preparar qualquer alteração.</p></div>
-          <button class="primary-action" data-action="read-map" type="button">Ler Mapa K</button>
+          <div><span class="section-kicker">Mapa K local</span><h2>${busy ? 'Lendo Mapa K' : failure ? 'Não foi possível confirmar o Mapa K' : 'Mapa ainda não confirmado'}</h2><p>${failure ? escapeText(state?.error || 'A leitura falhou; nenhuma escrita foi iniciada.') : 'Leia a ECU antes de selecionar ou preparar qualquer alteração.'}</p></div>
+          <button class="primary-action" data-action="read-map" type="button" ${busy ? 'disabled title="Leitura em andamento"' : ''}>${busy ? 'Leitura em andamento' : failure ? 'Reler ECU' : 'Ler Mapa K'}</button>
         </div>
       </section>`;
     container.querySelector('[data-action="read-map"]')?.addEventListener('click', () => actions.onRead?.());
@@ -40,25 +41,28 @@ export function renderMapKEditor(container, state, actions = {}) {
       const value = map[row]?.[column];
       const isSelected = selection.has(key);
       const isCurrent = state.currentCell?.row === row && state.currentCell?.column === column;
-      cells.push(`<button class="k-cell${isSelected ? ' selected' : ''}${isCurrent ? ' current' : ''}" type="button" data-row="${row}" data-column="${column}" aria-pressed="${isSelected}"><span>${formatK(value)}</span></button>`);
+      cells.push(`<button class="k-cell${isSelected ? ' selected' : ''}${isCurrent ? ' current' : ''}" type="button" data-row="${row}" data-column="${column}" aria-pressed="${isSelected}" ${editable ? '' : 'disabled title="Reler ECU antes de alterar a seleção"'}><span>${formatK(value)}</span></button>`);
     }
   }
 
   const selectedCount = selection.size;
   const proposal = state?.proposal;
+  const blockedReason = state?.confirmationBlockedReason || 'O estado real da ECU precisa ser relido antes de confirmar.';
   container.innerHTML = `
-    <section class="map-editor-shell" data-map-state="READY">
+    <section class="map-editor-shell" data-map-state="${state?.state || 'READY'}" data-draft-blocked="${draftBlocked}">
       <div class="editor-header">
         <div>
           <span class="section-kicker">Mapa K local</span>
-          <h2>${selectedCount ? `${selectedCount} célula${selectedCount === 1 ? '' : 's'} selecionada${selectedCount === 1 ? '' : 's'}` : 'Toque numa célula para editar'}</h2>
-          <p>Célula atual tem halo próprio. Seleção de edição é preenchida; live tracing é apenas observacional.</p>
+          <h2>${draftBlocked ? 'Rascunho preservado • confirmação bloqueada' : selectedCount ? `${selectedCount} célula${selectedCount === 1 ? '' : 's'} selecionada${selectedCount === 1 ? '' : 's'}` : 'Toque numa célula para editar'}</h2>
+          <p>${draftBlocked ? escapeText(blockedReason) : 'Célula atual tem halo próprio. Seleção de edição é preenchida; live tracing é apenas observacional.'}</p>
         </div>
         <div class="editor-header-actions">
           <button class="secondary-action" data-action="read-map" type="button">Reler ECU</button>
-          <button class="secondary-action" data-action="clear-selection" type="button" ${selectedCount ? '' : 'disabled'}>Limpar</button>
+          <button class="secondary-action" data-action="clear-selection" type="button" ${selectedCount ? '' : 'disabled title="Nenhuma seleção para limpar"'}>Limpar</button>
         </div>
       </div>
+
+      ${draftBlocked ? `<div class="proposal-banner"><strong>Dado stale — rascunho mantido</strong><span>${escapeText(blockedReason)}</span></div>` : ''}
 
       <div class="map-editor-grid-wrap">
         <div class="map-axis-caption">RPM →</div>
@@ -78,15 +82,12 @@ export function renderMapKEditor(container, state, actions = {}) {
           <small>A linha técnica não pertence a esta grade gravável.</small>
         </div>
         <div class="nudge-group" aria-label="Ajustar proposta">
-          <button class="secondary-action nudge" data-delta="-5" type="button" ${selectedCount ? '' : 'disabled'}>−5</button>
-          <button class="secondary-action nudge" data-delta="-1" type="button" ${selectedCount ? '' : 'disabled'}>−1</button>
-          <button class="secondary-action nudge" data-delta="1" type="button" ${selectedCount ? '' : 'disabled'}>+1</button>
-          <button class="secondary-action nudge" data-delta="5" type="button" ${selectedCount ? '' : 'disabled'}>+5</button>
+          ${[-5, -1, 1, 5].map((delta) => `<button class="secondary-action nudge" data-delta="${delta}" type="button" ${editable && selectedCount ? '' : 'disabled title="Selecione em estado READY após leitura válida"'}>${delta > 0 ? '+' : '−'}${Math.abs(delta)}</button>`).join('')}
         </div>
-        <button class="primary-action" data-action="review" type="button" ${selectedCount && proposal ? '' : 'disabled'}>Revisar alterações</button>
+        <button class="primary-action" data-action="review" type="button" ${selectedCount && proposal ? '' : 'disabled title="Prepare uma alteração antes de revisar"'}>Revisar alterações</button>
       </div>
 
-      ${proposal ? `<div class="proposal-banner"><strong>Proposta pronta para revisão</strong><span>${proposal.summary || 'Antes/depois calculado pelo núcleo.'}</span></div>` : ''}
+      ${proposal ? `<div class="proposal-banner"><strong>${draftBlocked ? 'Rascunho aguardando releitura' : 'Proposta pronta para revisão'}</strong><span>${escapeText(proposal.summary || 'Antes/depois calculado pelo núcleo.')}</span></div>` : ''}
     </section>`;
 
   container.querySelectorAll('.k-cell').forEach((button) => {
@@ -124,4 +125,13 @@ export function updateMapKLiveTrace(container, trace, enabled = true) {
   });
   layer.dataset.traceSequence = String(trace?.sequence ?? '');
   layer.dataset.traceMode = enabled ? 'on' : 'off';
+}
+
+function escapeText(value) {
+  return String(value ?? '—')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
