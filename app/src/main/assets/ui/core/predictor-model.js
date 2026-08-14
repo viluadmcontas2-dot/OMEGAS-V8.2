@@ -34,15 +34,16 @@
       distinctTrajectories: Number(source.distinctTrajectories || 0),
       provenance,
       automaticWrite: false,
-      requiresHumanReview: targetK !== null,
+      requiresHumanReview: currentK !== null && targetK !== null,
     };
   }
 
   function openMapReview(router, cell) {
     const explanation = explainCell(cell);
     if (!router || typeof router.navigate !== 'function') return false;
-    if (explanation.row < 0 || explanation.column < 0 || explanation.targetK === null) return false;
+    if (explanation.row < 0 || explanation.column < 0 || explanation.currentK === null || explanation.targetK === null) return false;
     return router.navigate('map', {
+      origin: 'predictor',
       source: 'predictor',
       intent: 'review-only',
       row: explanation.row,
@@ -53,6 +54,16 @@
       state: explanation.state,
       automaticWrite: false,
       requiresHumanReview: true,
+      suggestion: {
+        target: 'MAP_K',
+        mapChanges: [{
+          row: explanation.row,
+          column: explanation.column,
+          before: explanation.currentK,
+          after: explanation.targetK,
+          source: 'PREDICTOR_REVIEW_ONLY',
+        }],
+      },
     });
   }
 
