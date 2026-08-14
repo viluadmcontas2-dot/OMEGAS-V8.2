@@ -16,7 +16,7 @@ import java.util.WeakHashMap
  * Inicializador interno do bridge AutoCal.
  *
  * A UI V8.2 limpa consome `OmegasAutoCal` pelos módulos em `assets/ui`.
- * Não injeta mais assets `hub/*` legados/inexistentes e não cria outra Activity.
+ * Não injeta mais os assets legados da pasta `hub` e não cria outra Activity.
  */
 class AutoCalBridgeProvider : ContentProvider() {
     private val bridges = WeakHashMap<MainActivity, AutoCalJavascriptBridge>()
