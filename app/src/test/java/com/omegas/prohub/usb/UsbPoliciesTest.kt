@@ -16,21 +16,18 @@ class UsbPoliciesTest {
     }
 
     @Test
-    fun `falha transitoria com Omegas ainda presente usa recuperacao rapida limitada`() {
+    fun `falha de transporte exige nova geracao USB`() {
         val first = UsbRecoveryPolicy.decide(true, true, false, 0)
-        val second = UsbRecoveryPolicy.decide(true, true, false, 1)
-        val third = UsbRecoveryPolicy.decide(true, true, false, 2)
-        val exhausted = UsbRecoveryPolicy.decide(true, true, false, 3)
+        val later = UsbRecoveryPolicy.decide(true, true, false, 3)
 
-        assertEquals(UsbRecoveryAction.RETRY_TRANSPORT, first.action)
-        assertEquals(250L, first.delayMs)
-        assertEquals(750L, second.delayMs)
-        assertEquals(1500L, third.delayMs)
-        assertEquals(UsbRecoveryAction.HARD_DISCONNECT, exhausted.action)
+        assertEquals(UsbRecoveryAction.HARD_DISCONNECT, first.action)
+        assertEquals(0L, first.delayMs)
+        assertEquals(UsbRecoveryAction.HARD_DISCONNECT, later.action)
+        assertEquals(0L, later.delayMs)
     }
 
     @Test
-    fun `detach manual ou ausencia do Omegas nunca entram em recuperacao`() {
+    fun `detach manual ausencia ou auto reconnect desligado permanecem fail closed`() {
         assertEquals(UsbRecoveryAction.HARD_DISCONNECT, UsbRecoveryPolicy.decide(false, true, false, 0).action)
         assertEquals(UsbRecoveryAction.HARD_DISCONNECT, UsbRecoveryPolicy.decide(true, false, false, 0).action)
         assertEquals(UsbRecoveryAction.HARD_DISCONNECT, UsbRecoveryPolicy.decide(true, true, true, 0).action)
