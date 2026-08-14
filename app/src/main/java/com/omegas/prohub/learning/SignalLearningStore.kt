@@ -286,29 +286,50 @@ class SignalLearningStore(
         return decorate(result)
     }
 
-    /** Importa somente contexto nativo; não cria comparação nem dispara writer. */
+    /** Importa somente contexto nativo tipado; não cria comparação nem dispara writer. */
     fun importNativeSnapshot(snapshot: JSONObject): JSONObject {
         val snapshotId = snapshot.optString("snapshotId", snapshot.optString("sessionId"))
         if (snapshotId.isBlank()) return JSONObject().put("ok", false).put("error", "Snapshot nativo sem identificador")
         val fields = snapshot.optJSONArray("fields") ?: JSONArray()
-        var imported = 0
-        synchronized(evidenceLock) {
+
+        fun validRaw(fieldKey: String): JSONArray? {
             repeat(fields.length()) { index ->
                 val field = fields.optJSONObject(index) ?: return@repeat
-                if (field.optString("status") != "VALID") return@repeat
-                val raw = field.optJSONArray("rawValues") ?: return@repeat
-                val bandCount = raw.length().coerceAtMost(18)
-                repeat(bandCount) { band ->
-                    val key = "$snapshotId:$band"
-                    nativeEvidence[key] = NativeEcuEvidence(
-                        snapshotId = snapshotId,
-                        bandIndex = band,
-                        count = field.optJSONArray("counts")?.optInt(band, 0) ?: 0,
-                        coverageQuality = if (bandCount == 0) 0.0 else 1.0,
-                        mapRaw = raw.optInt(band),
-                    )
-                    imported++
+                if (field.optString("status") == "VALID" && field.optString("key") == fieldKey) {
+                    return field.optJSONArray("rawValues")
                 }
+            }
+            return null
+        }
+
+        val countRaw = validRaw("NUM_BUF_UPD_GAS")
+        val petrolOnCngRaw = validRaw("PETR_INJ_TBUF_GAS")
+        val mapOnCngRaw = validRaw("MNFLD_PRESS_BUF_GAS")
+        val bandCount = maxOf(
+            countRaw?.length() ?: 0,
+            petrolOnCngRaw?.length() ?: 0,
+            mapOnCngRaw?.length() ?: 0,
+        ).coerceAtMost(18)
+        var imported = 0
+
+        synchronized(evidenceLock) {
+            repeat(bandCount) { band ->
+                val count = countRaw?.takeIf { band < it.length() }?.optInt(band, 0) ?: 0
+                val petrolOnCng = petrolOnCngRaw?.takeIf { band < it.length() }?.optInt(band)
+                val mapOnCng = mapOnCngRaw?.takeIf { band < it.length() }?.optInt(band)
+                val presentSignals = listOf(countRaw, petrolOnCngRaw, mapOnCngRaw).count { raw -> raw != null && band < raw.length() }
+                if (presentSignals == 0) return@repeat
+                val key = "$snapshotId:$band"
+                nativeEvidence[key] = NativeEcuEvidence(
+                    snapshotId = snapshotId,
+                    bandIndex = band,
+                    count = count,
+                    coverageQuality = presentSignals / 3.0,
+                    petrolTimeRaw = petrolOnCng,
+                    cngTimeRaw = null,
+                    mapRaw = mapOnCng,
+                )
+                imported++
             }
             trimNativeEvidenceLocked()
         }
