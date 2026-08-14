@@ -303,7 +303,7 @@ class LiveOnlyLearningStore(
      */
     private fun selectPetrolBaseline(active: JSONObject): BaselineSelection {
         if (countRegions(active, Mp48Fuel.PETROL.wireName) > 0) {
-            return BaselineSelection(active, null)
+            return BaselineSelection(normalizeForInternalPetrolMerge(active), null)
         }
         val quarantine = File(runtimeRoot, "learning_quarantine")
         val candidates = quarantine.listFiles()
@@ -327,21 +327,46 @@ class LiveOnlyLearningStore(
         return BaselineSelection(active, null)
     }
 
-    /** Normaliza um estado interno antigo para o contrato de merge validado. */
+    /**
+     * Normaliza a base local antes do merge interno. Isso torna a preservação
+     * idempotente: resets sucessivos não podem empilhar `reset-audit:` ou outros
+     * namespaces criados pelo próprio app em IDs, visitas e sessões.
+     */
     private fun normalizeForInternalPetrolMerge(raw: JSONObject): JSONObject {
-        val regions = raw.optJSONArray("regions")?.let { JSONArray(it.toString()) } ?: JSONArray()
+        val sourceRegions = raw.optJSONArray("regions") ?: JSONArray()
+        val regions = JSONArray()
+        repeat(sourceRegions.length()) { index ->
+            val source = sourceRegions.optJSONObject(index) ?: return@repeat
+            if (source.optString("fuel") != Mp48Fuel.PETROL.wireName) return@repeat
+            val region = JSONObject(source.toString())
+            region.put("id", InternalLearningNamespace.normalize(region.optString("id")))
+            region.put("visits", normalizeInternalIds(region.optJSONArray("visits")))
+            region.put("sessions", normalizeInternalIds(region.optJSONArray("sessions")))
+            regions.put(region)
+        }
         val epoch = raw.optInt("epoch", 1).coerceAtLeast(1)
         val mapHash = raw.optString("mapHash", raw.optString("map_hash"))
         return JSONObject()
             .put("format", SignalLearningStore.FORMAT)
             .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("learningDataRevision", SignalLearningStore.DATA_REVISION)
-            .put("deviceId", "local-petrol-quarantine-recovery")
+            .put("deviceId", InternalLearningNamespace.PRESERVED_PETROL_SOURCE)
             .put("epoch", epoch)
             .put("mapHash", mapHash)
             .put("regions", regions)
             .put("cells", LearningGridProjection.project(regions, epoch))
             .put("comparisons", JSONArray())
+    }
+
+    private fun normalizeInternalIds(raw: JSONArray?): JSONArray {
+        val normalized = JSONArray()
+        if (raw == null) return normalized
+        repeat(raw.length()) { index ->
+            raw.optString(index).takeIf { it.isNotBlank() }?.let {
+                normalized.put(InternalLearningNamespace.normalize(it))
+            }
+        }
+        return normalized
     }
 
     /**

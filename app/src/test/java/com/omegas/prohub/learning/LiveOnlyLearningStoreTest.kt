@@ -46,6 +46,36 @@ class LiveOnlyLearningStoreTest {
     }
 
     @Test
+    fun `repeated resets preserve petrol without growing internal namespaces`() {
+        val store = store()
+        store.startSession()
+        store.ingest(
+            telemetry(650L, Mp48Fuel.PETROL, 4.0),
+            accepted(sample("stable-p", 100L, 650L, Mp48Fuel.PETROL, 4.0)),
+        )
+
+        store.onCalibrationAdjustment(confirmedUpdate().put("adjustmentId", "reset-1"))
+        val afterFirst = store.export("test").getJSONArray("regions").getJSONObject(0)
+        val firstId = afterFirst.getString("id")
+        val firstVisits = afterFirst.getJSONArray("visits").toString()
+        val firstSessions = afterFirst.getJSONArray("sessions").toString()
+
+        repeat(4) { index ->
+            store.onCalibrationAdjustment(
+                confirmedUpdate().put("adjustmentId", "reset-${index + 2}"),
+            )
+        }
+
+        val afterRepeated = store.export("test").getJSONArray("regions").getJSONObject(0)
+        assertEquals(firstId, afterRepeated.getString("id"))
+        assertEquals(firstVisits, afterRepeated.getJSONArray("visits").toString())
+        assertEquals(firstSessions, afterRepeated.getJSONArray("sessions").toString())
+        assertTrue(firstId.startsWith("local-petrol-preserved:"))
+        assertFalse(firstId.removePrefix("local-petrol-preserved:").contains("local-petrol-preserved:"))
+        assertFalse(afterRepeated.getString("id").contains("reset-audit:reset-audit:"))
+    }
+
+    @Test
     fun `retroactive archive is rejected without mutating active memory`() {
         val store = store()
         val result = store.merge(
