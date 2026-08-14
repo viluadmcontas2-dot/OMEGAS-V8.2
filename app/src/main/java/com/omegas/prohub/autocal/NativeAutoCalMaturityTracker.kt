@@ -26,6 +26,11 @@ class NativeAutoCalMaturityTracker {
         previousObservedAtElapsedMs = 0L
     }
 
+    fun baseline(counters: IntArray, observedAtElapsedMs: Long) {
+        previousCounters = counters.copyOf(18)
+        previousObservedAtElapsedMs = observedAtElapsedMs
+    }
+
     fun observe(
         counters: IntArray,
         gasLowThreshold: Int?,
