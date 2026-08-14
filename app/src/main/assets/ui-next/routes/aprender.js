@@ -1,4 +1,5 @@
 import { renderMapKEditor } from '../components/map-k-editor.js';
+import { renderSuggestionQueue } from '../components/suggestion-queue.js';
 import { escapeText, format, humanDirection, semanticItem } from './common.js';
 
 export const aprenderRoute = {
@@ -6,9 +7,13 @@ export const aprenderRoute = {
     ctx.workspace.innerHTML = `<section class="route-page" data-route="aprender">
       <div class="route-heading"><div><h1>Aprender</h1><p>Medido, referência equivalente, diferença e revisão — sem misturar as origens.</p></div>
       <button class="secondary-action" id="refresh-cell-context" type="button">Atualizar contexto</button></div>
-      <div id="learning-context-root"></div><div id="learning-map-editor"></div></section>`;
+      <div id="learning-context-root"></div>
+      <div id="learning-map-editor"></div>
+      <div id="suggestion-queue-root"></div>
+    </section>`;
     document.getElementById('refresh-cell-context')?.addEventListener('click', ctx.loadCellContext);
     if (!state.cellContext) ctx.loadCellContext();
+    if (state.suggestions.state !== 'READY') ctx.loadSuggestions();
     this.update(ctx, state);
   },
 
@@ -18,8 +23,9 @@ export const aprenderRoute = {
     const c = state.cellContext;
     if (!c) {
       root.className = 'empty-state';
-      root.innerHTML = '<div><strong>Sem região comparável ainda</strong>Continue coletando normalmente. A tela não inventa referência, rico/pobre ou sugestão.</div>';
+      root.innerHTML = '<div><strong>Sem região comparável agora</strong>Continue coletando normalmente. A tela não inventa referência, rico/pobre ou sugestão.</div>';
       renderEditor(ctx, state);
+      renderSuggestions(ctx, state);
       return;
     }
     const comparison = c.comparison || {};
@@ -39,6 +45,7 @@ export const aprenderRoute = {
       <button class="primary-action" id="open-learning-map-editor" type="button" ${comparison.comparable ? '' : 'disabled'}>${state.contextualEditor?.open ? 'Fechar editor' : 'Editar Mapa K aqui'}</button></section>`;
     document.getElementById('open-learning-map-editor')?.addEventListener('click', ctx.toggleLearningMapEditor);
     renderEditor(ctx, state);
+    renderSuggestions(ctx, state);
   },
 };
 
@@ -49,4 +56,13 @@ function renderEditor(ctx, state) {
   target.hidden = !open;
   if (!open) { target.innerHTML = ''; return; }
   renderMapKEditor(target, ctx.mapEditorState(state), ctx.mapEditorActions());
+}
+
+function renderSuggestions(ctx, state) {
+  const target = document.getElementById('suggestion-queue-root');
+  if (!target) return;
+  renderSuggestionQueue(target, state.suggestions, {
+    onSelectReady: ctx.selectReadySuggestions,
+    onOpen: ctx.openSuggestion,
+  });
 }
