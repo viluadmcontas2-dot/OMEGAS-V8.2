@@ -74,7 +74,9 @@ object NativeAutoCalAnchorCorrelator {
             active.rpmOscillationMinimum,
             medianRpm * active.rpmOscillationPercent / 100.0,
         )
-        if (rpmSpan > rpmTolerance) return unreliable("RPM_AMBIGUITY", fresh.size)
+        // Na borda exata a fórmula de confiança abaixo seria zero. Zero confiança
+        // não pode produzir uma posição física CORRELATED/NativeLearningAnchor.
+        if (rpmSpan >= rpmTolerance) return unreliable("RPM_AMBIGUITY", fresh.size)
 
         val petrolValues = fresh.map { it.petrolMs }
         val petrolCenter = petrolValues.average()
