@@ -7,6 +7,7 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 - **Notion é o cérebro e a governança primária.** Antes de operar, o agente deve ler a governança atual do projeto no Notion e a regra global de economia/execução.
 - Estado, prioridade, plano, decisão, autorização, branch ativa, exceção, aprendizado, roadmap e próximo passo ficam no **Notion**, não duplicados neste repositório.
 - Não criar commits apenas para espelhar mudanças de governança, memória ou planejamento do Notion.
+- **Checkpoint ativo não pode se contradizer.** Título, propriedades, corpo, estado e próximo passo do handoff atual devem apontar para a mesma realidade. Quando uma pendência for resolvida ou um checkpoint for superado, a instrução operacional antiga deve ser marcada como histórica/superada ou atualizada antes do fechamento. Nenhum agente deve executar um próximo passo contradito por evidência ou checkpoint mais recente.
 
 ## Fonte do código e escrita remota
 
