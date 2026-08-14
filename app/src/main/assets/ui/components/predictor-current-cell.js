@@ -78,10 +78,10 @@
         this.clearTrace();
         return;
       }
-      this.setTrace(`${row}:${column}`, weights);
+      this.applyCurrentWeights(`${row}:${column}`, weights);
     }
 
-    setTrace(currentKey, weights) {
+    applyCurrentWeights(currentKey, weights) {
       this.traceKeys.forEach(key => {
         const node = document.querySelector(`[data-predictor-cell="${key}"]`);
         node?.classList.remove('trace-weight');
