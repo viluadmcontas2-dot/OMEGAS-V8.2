@@ -14,7 +14,7 @@ class NativeLearningAnchorIntegrationTest {
     @get:Rule val temporary = TemporaryFolder()
 
     @Test
-    fun `native maturity imports once persists and never creates comparison vote`() {
+    fun `native maturity imports once persists revision and never creates comparison vote`() {
         val state = temporary.root.resolve("native-anchor-${System.nanoTime()}.json")
         val first = SignalLearningStore(state, RingLog())
         try {
@@ -30,6 +30,7 @@ class NativeLearningAnchorIntegrationTest {
             assertEquals(0, exported.getJSONArray("comparisons").length())
             val anchor = exported.getJSONArray("nativeLearningAnchors").getJSONObject(0)
             assertEquals(1, anchor.getInt("calibrationEpoch"))
+            assertEquals(1L, anchor.getLong("scientificRevision"))
             assertEquals(9L, anchor.getLong("sessionId"))
             assertEquals("GNV", anchor.getString("fuel"))
             assertEquals(2450, anchor.getInt("rpm"))
@@ -47,7 +48,8 @@ class NativeLearningAnchorIntegrationTest {
         val restored = SignalLearningStore(state, RingLog())
         try {
             val exported = restored.export("test")
-            assertEquals(1, exported.getJSONArray("nativeLearningAnchors").length())
+            val restoredAnchor = exported.getJSONArray("nativeLearningAnchors").getJSONObject(0)
+            assertEquals(1L, restoredAnchor.getLong("scientificRevision"))
             assertTrue(exported.getJSONObject("evidenceBudget").getInt("nativeAnchors") <= LearningEvidenceBudget.MAX_NATIVE_ANCHORS)
         } finally {
             restored.close()
