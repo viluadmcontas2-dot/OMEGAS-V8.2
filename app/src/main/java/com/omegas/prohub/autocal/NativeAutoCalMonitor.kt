@@ -5,6 +5,8 @@ import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48WorkClass
+import com.omegas.prohub.learning.LearningToleranceSettings
+import com.omegas.prohub.learning.NativeAutoCalAnchorCorrelator
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -326,6 +328,19 @@ class NativeAutoCalMonitor(
             pending.forEach { pendingEvent ->
                 val transition = pendingEvent.transition
                 val point = acquisition.findCurrentGasPoint(transition.bandIndex)
+                val nativePetrolMs = point?.nullableDouble("timeMs")
+                val nativeMapBar = point?.nullableDouble("mapBar")
+                val frames = serial.recentTelemetryFrames(
+                    fromElapsedMs = transition.previousObservedAtElapsedMs,
+                    toElapsedMs = transition.observedAtElapsedMs,
+                )
+                val correlation = NativeAutoCalAnchorCorrelator.correlate(
+                    frames = frames,
+                    nativePetrolMs = nativePetrolMs,
+                    nativeMapBar = nativeMapBar,
+                    observedAtElapsedMs = transition.observedAtElapsedMs,
+                    policy = LearningToleranceSettings.current,
+                )
                 maturityEvents.put(
                     JSONObject()
                         .put("eventType", "NATIVE_BAND_MATURED")
@@ -343,12 +358,22 @@ class NativeAutoCalMonitor(
                         .put("observedAtElapsedMs", transition.observedAtElapsedMs)
                         .put("counterPayloadHex", pendingEvent.counterPayloadHex)
                         .put("timeRaw", point?.opt("timeRaw") ?: JSONObject.NULL)
-                        .put("timeMs", point?.opt("timeMs") ?: JSONObject.NULL)
+                        .put("timeMs", nativePetrolMs ?: JSONObject.NULL)
                         .put("mapRaw", point?.opt("mapRaw") ?: JSONObject.NULL)
-                        .put("mapBar", point?.opt("mapBar") ?: JSONObject.NULL)
+                        .put("mapBar", nativeMapBar ?: JSONObject.NULL)
                         .put("nativeState", point?.optString("state") ?: "VALIDO_POR_CONTADOR")
                         .put("nativeValidity", true)
-                        .put("rawOnly", true)
+                        .put("correlationState", correlation.state)
+                        .put("correlationConfidence", correlation.confidence)
+                        .put("rpmConfidence", correlation.rpmConfidence)
+                        .put("rpm", correlation.rpm ?: JSONObject.NULL)
+                        .put("correlatedMapBar", correlation.mapBar ?: JSONObject.NULL)
+                        .put("correlatedPetrolMs", correlation.petrolMs ?: JSONObject.NULL)
+                        .put("correlationLagMs", correlation.lagMs ?: JSONObject.NULL)
+                        .put("firstTelemetrySequence", correlation.firstSequence ?: JSONObject.NULL)
+                        .put("lastTelemetrySequence", correlation.lastSequence ?: JSONObject.NULL)
+                        .put("matchedTelemetryFrames", correlation.matchedFrames)
+                        .put("rawOnly", correlation.state != "CORRELATED")
                         .put("appWritePerformed", false)
                         .put("appAutomaticWrite", false),
                 )
@@ -435,6 +460,9 @@ class NativeAutoCalMonitor(
 
     private fun JSONObject.nullableInt(key: String): Int? =
         if (has(key) && !isNull(key)) optInt(key) else null
+
+    private fun JSONObject.nullableDouble(key: String): Double? =
+        if (has(key) && !isNull(key)) optDouble(key).takeIf { it.isFinite() } else null
 
     private fun ByteArray.toHex(): String = joinToString(separator = "") { byte ->
         "%02X".format(byte.toInt() and 0xFF)
