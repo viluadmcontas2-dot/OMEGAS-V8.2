@@ -43,6 +43,7 @@ class NativeAutoCalMonitor(
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
     @Volatile private var state = baseState("IDLE", "AutoCal nativo aguardando ECU")
 
+    private var sessionStartedAtElapsedMs = 0L
     private var lastProbe: AutoCalProtocol.NativeStatus? = null
     private var lastMulActHash = ""
     private var snapshotRequested = false
@@ -55,6 +56,7 @@ class NativeAutoCalMonitor(
     fun beginUsbSession(newSessionId: Long) {
         synchronized(lock) {
             sessionId = newSessionId
+            sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
             lastProbe = null
             lastMulActHash = ""
             gasLowThreshold = null
@@ -62,11 +64,14 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
-            snapshotRequested = newSessionId > 0L
-            snapshotReason = "USB_SESSION_STARTED"
+            // Nunca iniciar uma aquisição pesada só porque a porta acabou de abrir.
+            // Primeiro a telemetria precisa provar que a sessão está estável.
+            snapshotRequested = false
+            snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false).put("sessionId", newSessionId)
-            state = baseState("WAITING_PROBE", "Aguardando status AutoCal da sessão")
+            state = baseState("WAITING_TELEMETRY_SETTLE", "Aguardando telemetria estabilizar antes do AutoCal")
                 .put("sessionId", newSessionId)
+                .put("settleMs", SESSION_SETTLE_MS)
         }
         onStateChanged()
     }
@@ -74,6 +79,7 @@ class NativeAutoCalMonitor(
     fun endUsbSession() {
         synchronized(lock) {
             sessionId = 0L
+            sessionStartedAtElapsedMs = 0L
             lastProbe = null
             lastMulActHash = ""
             gasLowThreshold = null
@@ -130,21 +136,36 @@ class NativeAutoCalMonitor(
         if (currentSession != sessionId) beginUsbSession(currentSession)
         if (calibrationBusy()) return
 
+        val startedAt = synchronized(lock) { sessionStartedAtElapsedMs }
+        val ageMs = if (startedAt > 0L) (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L) else Long.MAX_VALUE
+        if (ageMs < SESSION_SETTLE_MS) {
+            synchronized(lock) {
+                state = baseState("WAITING_TELEMETRY_SETTLE", "Aguardando telemetria estabilizar antes do AutoCal")
+                    .put("sessionId", currentSession)
+                    .put("settleRemainingMs", (SESSION_SETTLE_MS - ageMs).coerceAtLeast(0L))
+            }
+            onStateChanged()
+            return
+        }
+
         val previousProbe = synchronized(lock) { lastProbe }
         val probe = probe(currentSession) ?: return
         val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
-        val probeChanged = previousProbe == null ||
+        // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
+        val probeChanged = previousProbe != null && (
             previousProbe.autoMatchCount != probe.autoMatchCount ||
-            previousProbe.nativeFlag13 != probe.nativeFlag13
+                previousProbe.nativeFlag13 != probe.nativeFlag13
+        )
 
-        val maturityProbe = probeMaturityCounters(currentSession)
+        val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
+        val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
+        val maturityProbe = if (thresholdsReady) probeMaturityCounters(currentSession) else null
         val maturityEvents = maturityProbe?.let { observed ->
-            val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
             maturityTracker.observe(
                 counters = observed.counters,
                 gasLowThreshold = thresholds.first,
                 gasNormalThreshold = thresholds.second,
-                enabled = thresholds.third == 1,
+                enabled = true,
                 observedAtElapsedMs = observed.observedAtElapsedMs,
             ).map { transition -> PendingMaturity(transition, observed.payloadHex) }
         }.orEmpty()
@@ -156,6 +177,7 @@ class NativeAutoCalMonitor(
                 .put("nativeFlag13", probe.nativeFlag13)
                 .put("autoMatchCount", probe.autoMatchCount)
                 .put("fallback", probe.nativeFlag13 < 0)
+                .put("thresholdsReady", thresholdsReady)
                 .put("maturityProbe", maturityProbe != null)
             if (maturityEvents.isNotEmpty()) {
                 pendingMaturity = maturityEvents
@@ -207,7 +229,7 @@ class NativeAutoCalMonitor(
             request = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
             reason = "AutoCal fallback contador 0x0174",
             timeoutMs = 900,
-            purgeBefore = true,
+            purgeBefore = false,
             expectedSessionId = expectedSessionId,
             workClass = Mp48WorkClass.READ_ONLY,
         )
@@ -245,7 +267,7 @@ class NativeAutoCalMonitor(
             request = AutoCalProtocol.read(AutoCalProtocol.NUM_BUF_UPD_GAS),
             reason = "AutoCal maturidade GNV",
             timeoutMs = 900,
-            purgeBefore = true,
+            purgeBefore = false,
             expectedSessionId = expectedSessionId,
             workClass = Mp48WorkClass.READ_ONLY,
         )
@@ -278,7 +300,7 @@ class NativeAutoCalMonitor(
                 request = AutoCalProtocol.read(field),
                 reason = "AutoCal snapshot ${field.key}",
                 timeoutMs = 1_200,
-                purgeBefore = true,
+                purgeBefore = false,
                 expectedSessionId = expectedSessionId,
                 workClass = Mp48WorkClass.READ_ONLY,
             )
@@ -493,5 +515,6 @@ class NativeAutoCalMonitor(
 
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
+        private const val SESSION_SETTLE_MS = 8_000L
     }
 }
