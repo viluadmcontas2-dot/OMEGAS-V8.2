@@ -1,11 +1,14 @@
 import { escapeText, format } from './common.js';
 
+let lastObdState = null;
+
 function valueOrDash(value, digits = 1, suffix = '') {
   return value == null || Number.isNaN(Number(value)) ? '—' : `${format(value, digits)}${suffix}`;
 }
 
 export const obdRoute = {
   mount(ctx, state) {
+    lastObdState = null;
     ctx.workspace.innerHTML = `<section class="route-page" data-route="obd">
       <div class="route-heading"><div><h1>OBD</h1><p>Segunda testemunha: observa trims e contexto. Nunca escreve K, ECU ou Learning.</p></div>
       <button class="secondary-action" id="obd-refresh" type="button">Atualizar estado</button></div>
@@ -16,6 +19,8 @@ export const obdRoute = {
   },
 
   update(_ctx, state) {
+    if (lastObdState === state.obd) return;
+    lastObdState = state.obd;
     const root = document.getElementById('obd-root');
     if (!root) return;
     const obd = state.obd || {};
