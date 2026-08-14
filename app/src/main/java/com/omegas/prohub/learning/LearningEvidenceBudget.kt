@@ -9,6 +9,7 @@ package com.omegas.prohub.learning
  */
 internal object LearningEvidenceBudget {
     const val MAX_NATIVE_SNAPSHOTS = 16
+    const val MAX_NATIVE_ANCHORS = 256
     const val MAX_VISIT_ACCUMULATORS = 256
     const val MAX_PROVENANCE_ENTRIES = 64
     const val MAX_PERSISTED_BYTES = 256 * 1024
