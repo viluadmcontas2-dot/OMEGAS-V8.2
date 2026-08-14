@@ -2,11 +2,11 @@
 
 ## Gate obrigatório do agente
 
-Antes de qualquer operação técnica, carregar **Operational Governance** (skill `$operational-governance`). Projeto técnico novo ou incompleto exige `$governed-project-bootstrap`, que cria/vincula Central, repositório e `AGENTS.md` remotamente antes do código, resolvendo a conta conectada ao vivo. Se o plugin não estiver disponível, usar `$project-governance-guard`; se nenhuma skill estiver acessível, abrir o [Project Governance Guard — Master Checkpoint](https://www.notion.so/3ba8ee52ac5481bfb69bc53a483aad53) e permanecer fail-closed.
+Antes de qualquer operação técnica, carregar `@governar-projeto` (referência interna: `$governar-projeto`). Projeto técnico novo ou incompleto exige `@preparar-projeto`; falha de escrita remota chama `@destravar-github`. Resolver skills pelo nome instalado, nunca por caminho `/root/...` ou diretório `skill-*`. Se a skill não estiver exposta, abrir o [Project Governance Guard — Master Checkpoint](https://www.notion.so/3ba8ee52ac5481bfb69bc53a483aad53) e permanecer fail-closed.
 
 A sequência de engenharia é obrigatória: `@Codex Engineering Guardrails` → skill oficial direta `code-work` ou `code-verification` → [fallback integral no Notion](https://www.notion.so/3ba8ee52ac548106ad70da67a2621ea5). Antes de repetir operação conhecida, consultar o [Runbook Técnico](https://www.notion.so/f5c5e3d2a12e42feb36d25ebf8b0b7f8).
 
-Contrato estável: `WORK_SURFACE=REMOTE`, `TEST_SURFACE=LOCAL`, `LOCAL_SOURCE_MUTATION=DENIED`, `SYNC_STEP=NONE`. Falha de escrita remota ativa recuperação remota; nunca autoriza acumular diff local.
+Contrato estável: `WORK_SURFACE=REMOTE`, `SOURCE_MUTATION_TARGET=GITHUB_REMOTE_API`, `TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|NOT_AVAILABLE`, `LOCAL_SOURCE_MUTATION=DENIED`, `SYNC_STEP=NONE`. Falha, urgência, conveniência ou autorização durante a tarefa nunca liberam edição local. Sem escrita remota segura, bloquear.
 
 Este arquivo deve permanecer **curto e quase imutável**. Governança viva não pertence ao GitHub.
 
@@ -18,11 +18,11 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 
 ## Fonte do código e execução remota
 
-- **GitHub remoto é a verdade do estado atual do código e a bancada principal de execução.**
-- O padrão é: ler remoto → editar remoto diretamente pelo mecanismo mais simples e seguro disponível → validar proporcionalmente ao risco → reler remoto → registrar checkpoint.
+- **GitHub remoto é a verdade do estado atual e a única superfície de mutação do código.**
+- A regra é: ler remoto → editar pelo GitHub Connector/API → reler o novo SHA → validar proporcionalmente ao risco → registrar checkpoint.
 - Não criar clone, ZIP, worktree nem usar Git Database de baixo nível (`blob/tree/ref`) por ritual. Esses caminhos só entram quando uma necessidade técnica real impedir a edição remota simples ou exigir atomicidade especial.
 - Para mudanças comuns de arquivo, preferir `fetch_file` + `update_file`/equivalente remoto e seguir.
-- Ambiente local é auxiliar para testes, build ou ferramentas que realmente precisem de runtime local; não é pedágio obrigatório nem fonte paralela de verdade.
+- Runtime efêmero serve somente para testar/buildar o SHA remoto e deve terminar sem alteração de fonte, configuração ou lockfiles. Sem runtime, usar CI remoto apenas quando necessário e autorizado; caso contrário registrar `TEST_NOT_AVAILABLE`.
 - **Tempo do proprietário é recurso crítico.** Entre rotas com segurança equivalente, escolher a que termina com menos passos, menos espera e menos revalidação redundante.
 
 ## Testes e Actions
