@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>OMEGAS NEXT — Catálogo de componentes</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./components/map-k-editor.css">
+  <link rel="stylesheet" href="./components/curve.css">
+  <link rel="stylesheet" href="./components/design-system.css">
+  <link rel="stylesheet" href="./components/adaptive.css">
+</head>
+<body>
+  <main class="workspace" style="height:100dvh;overflow:auto">
+    <section class="route-page">
+      <div class="route-heading"><div><h1>Catálogo NEXT</h1><p>Referência estática de escala, intenção e estados. Não contém bridge, telemetria ou writer.</p></div></div>
+
+      <section class="learning-now">
+        <span class="section-kicker">Tipografia</span>
+        <strong class="metric-value">1850 <span class="metric-unit">rpm</span></strong>
+        <p class="learning-reason">Valor principal → contexto humano → detalhe técnico sob demanda.</p>
+        <details class="help-details"><summary>O que significa “referência equivalente”?</summary>Valor de gasolina aprendido em condição física comparável; não é o número visual atual da célula.</details>
+      </section>
+
+      <section class="learning-now">
+        <span class="section-kicker">Botões por intenção</span>
+        <div class="learning-meta">
+          <button class="primary-action" type="button">Continuar para revisão</button>
+          <button class="secondary-action" type="button">Reler ECU</button>
+          <button class="quiet-action" type="button">Voltar</button>
+          <button class="danger-action" type="button">Descartar preparação</button>
+        </div>
+      </section>
+
+      <section class="learning-now">
+        <span class="section-kicker">Estados de controle</span>
+        <div class="learning-meta">
+          <button class="secondary-action" type="button">Default</button>
+          <button class="secondary-action" type="button" aria-pressed="true">Selecionado</button>
+          <button class="secondary-action" type="button" aria-busy="true">Atualizando…</button>
+          <button class="secondary-action control-success" type="button">Sucesso ✓</button>
+          <button class="secondary-action control-failure" type="button">Falha ×</button>
+          <button class="secondary-action" type="button" disabled title="Leia a ECU antes de preparar uma alteração">Desabilitado — leia a ECU</button>
+        </div>
+      </section>
+
+      <section class="learning-now">
+        <span class="section-kicker">Estados sem depender só de cor</span>
+        <div class="learning-meta">
+          <span class="state-chip" data-tone="success">Confirmado</span>
+          <span class="state-chip" data-tone="warning">Revalidando</span>
+          <span class="state-chip" data-tone="danger">Falha de readback</span>
+          <span class="state-chip">Observando</span>
+        </div>
+      </section>
+
+      <section class="learning-now">
+        <span class="section-kicker">Edição K</span>
+        <div class="nudge-group">
+          <button class="secondary-action" type="button">−5</button>
+          <button class="secondary-action" type="button">−1</button>
+          <button class="secondary-action" type="button">+1</button>
+          <button class="secondary-action" type="button">+5</button>
+        </div>
+        <p class="learning-reason">Nudge prepara intenção; confirmar permanece separado.</p>
+      </section>
+
+      <section class="context-sheet" style="position:static;display:block;width:min(520px,100%);max-height:none">
+        <div class="route-heading"><div><h1>Revisar alteração</h1><p>Antes/depois visível antes de qualquer writer.</p></div></div>
+        <table class="review-table"><thead><tr><th>Alvo</th><th>Atual</th><th></th><th>Proposta</th></tr></thead><tbody><tr><td>4:3</td><td>120</td><td>→</td><td>132</td></tr></tbody></table>
+        <button class="quiet-action" type="button">Voltar sem escrever</button>
+        <button class="primary-action" type="button">Confirmar intenção manual</button>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
