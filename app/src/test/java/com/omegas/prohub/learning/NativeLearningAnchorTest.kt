@@ -44,17 +44,36 @@ class NativeLearningAnchorTest {
     }
 
     @Test
-    fun `registry deduplicates and remains bounded`() {
+    fun `registry revises only new fingerprints and remains bounded`() {
         val registry = NativeLearningAnchorRegistry(maxEntries = 2)
         val a = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 1), 1)!!
         val b = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 2), 1)!!
         val c = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 3), 1)!!
 
         assertTrue(registry.upsert(a))
+        assertEquals(1L, registry.currentRevision())
         assertFalse(registry.upsert(a))
+        assertEquals(1L, registry.currentRevision())
         assertTrue(registry.upsert(b))
+        assertEquals(2L, registry.currentRevision())
         assertTrue(registry.upsert(c))
+        assertEquals(3L, registry.currentRevision())
         assertEquals(listOf(b.fingerprint, c.fingerprint), registry.snapshot().map { it.fingerprint })
+        assertEquals(listOf(2L, 3L), registry.snapshot().map { it.scientificRevision })
+    }
+
+    @Test
+    fun `restored registry continues persisted scientific revision`() {
+        val first = NativeLearningAnchorRegistry(maxEntries = 4)
+        first.upsert(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 1), 4)!!)
+        first.upsert(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 2), 4)!!)
+        val restored = NativeLearningAnchorRegistry(maxEntries = 4)
+        restored.replaceAll(first.snapshot().map { NativeLearningAnchor.fromJson(it.toJson())!! })
+
+        assertEquals(2L, restored.currentRevision())
+        restored.upsert(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 3), 4)!!)
+        assertEquals(3L, restored.currentRevision())
+        assertEquals(3L, restored.snapshot().last().scientificRevision)
     }
 
     private fun baseEvent(): JSONObject = JSONObject()
