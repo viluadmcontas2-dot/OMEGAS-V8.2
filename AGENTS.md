@@ -1,5 +1,13 @@
 # Contrato operacional estável
 
+## Gate obrigatório do agente
+
+Antes de qualquer operação técnica, carregar **Operational Governance** (skill `$operational-governance`). Se o plugin não estiver disponível, usar `$project-governance-guard`; se nenhuma skill estiver acessível, abrir o [Project Governance Guard — Master Checkpoint](https://www.notion.so/3ba8ee52ac5481bfb69bc53a483aad53) e permanecer fail-closed.
+
+A sequência de engenharia é obrigatória: `@Codex Engineering Guardrails` → skill oficial direta `code-work` ou `code-verification` → [fallback integral no Notion](https://www.notion.so/3ba8ee52ac548106ad70da67a2621ea5). Antes de repetir operação conhecida, consultar o [Runbook Técnico](https://www.notion.so/f5c5e3d2a12e42feb36d25ebf8b0b7f8).
+
+Contrato estável: `WORK_SURFACE=REMOTE`, `TEST_SURFACE=LOCAL`, `LOCAL_SOURCE_MUTATION=DENIED`, `SYNC_STEP=NONE`. Falha de escrita remota ativa recuperação remota; nunca autoriza acumular diff local.
+
 Este arquivo deve permanecer **curto e quase imutável**. Governança viva não pertence ao GitHub.
 
 ## Fonte de governança
