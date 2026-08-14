@@ -139,7 +139,7 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             .toString()
     }
 
-    /** Snapshot mínimo para a WebView; não serializa o histórico. */
+    /** Snapshot mínimo legado para a WebView; não serializa o histórico. */
     fun liveJson(): String = synchronized(lock) {
         JSONObject()
             .put("sequence", sequence.get())
@@ -149,6 +149,28 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             .put("sessionId", sessionId)
             .put("live", JSONObject(telemetry.toString()))
             .put("runtime", JSONObject(runtime.toString()))
+            .toString()
+    }
+
+    /**
+     * Canal rápido NEXT: somente presente operacional. Não inclui histórico,
+     * runtime estrutural, Learning, Advisor, Predictor, regiões ou comparações.
+     * A célula/interpolação continua calculada em Kotlin na fachada NEXT.
+     */
+    fun fastLiveJson(): String = synchronized(lock) {
+        val age = if (telemetryUpdatedAt == 0L) -1L else System.currentTimeMillis() - telemetryUpdatedAt
+        JSONObject()
+            .put("sequence", sequence.get())
+            .put("capturedAtMs", telemetryUpdatedAt)
+            .put("ageMs", age)
+            .put("valid", valid)
+            .put("sessionId", sessionId)
+            .put("rpm", telemetry.optInt("rpm", 0))
+            .put("petrolMs", telemetry.optDouble("petrol_ms", 0.0))
+            .put("gasMsDiagnostic", telemetry.opt("gas_ms_diagnostic") ?: JSONObject.NULL)
+            .put("mapBar", telemetry.optDouble("load_bar", telemetry.optDouble("map_bar", 0.0)))
+            .put("fuel", telemetry.optString("fuel", "DESCONHECIDO"))
+            .put("engineState", telemetry.optString("state", "SEM_DADO"))
             .toString()
     }
 
