@@ -44,14 +44,14 @@ class AutoCalNativeActionManager(
         ENABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(true),
             "Habilitar Auto Calibration",
-            "Permite que a própria ECU continue a aquisição por zonas e execute AutoMatch quando seus critérios forem atendidos.",
+            "Permite que a própria ECU continue a aquisição por zonas e execute AutoMatch quando seus critérios forem atendidos. Ao habilitar, o efeito da correção K/linha azul volta a participar conforme o estado nativo da ECU.",
             true,
             1,
         ),
         DISABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(false),
-            "Pausar Auto Calibration",
-            "Pausa a aquisição nativa sem apagar os buffers já coletados.",
+            "Desabilitar Auto Calibration — afeta correção K",
+            "Congela a aquisição nativa sem apagar os buffers já coletados. Atenção: a evidência do ProgBase indica que desabilitar também retira o efeito da correção K/linha azul enquanto a AutoCal estiver desabilitada; não tratar esta ação como pausa inofensiva.",
             false,
             0,
         ),
@@ -70,9 +70,17 @@ class AutoCalNativeActionManager(
         RESET_ALL(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
             "Começar nova aquisição AutoCal",
-            "Apaga as aquisições AutoCal de gasolina e GNV. Nunca é executado automaticamente.",
-            false,
+            "Apaga as aquisições AutoCal de gasolina e GNV. Na captura validada também redefiniu MUL_ACT para a base 1,0; confirme o recibo/readback. Nunca é executado automaticamente.",
+            true,
         );
+
+        /**
+         * Enable/Disable mudam se a correção K nativa participa do cálculo, mesmo
+         * quando os valores armazenados de MUL_ACT não mudam no mesmo instante.
+         * RESET_ALL pode ainda redefinir a curva observada.
+         */
+        val changesEffectiveKCorrection: Boolean
+            get() = this == ENABLE_AUTO_CAL || this == DISABLE_AUTO_CAL || this == RESET_ALL
     }
 
     private data class Preparation(
@@ -134,6 +142,7 @@ class AutoCalNativeActionManager(
             .put("expiresAtMs", prepared.expiresAtMs)
             .put("ecuMutation", true)
             .put("mayChangeMulAct", action.mayChangeMulAct)
+            .put("changesEffectiveKCorrection", action.changesEffectiveKCorrection)
             .put("requiresCriticalConfirmation", true)
             .put("automatic", false)
             .put("manualOnly", true)
@@ -298,6 +307,7 @@ class AutoCalNativeActionManager(
             .put("after", after.toJson())
             .put("ecuMutation", true)
             .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
+            .put("changesEffectiveKCorrection", prepared.action.changesEffectiveKCorrection)
             .put("humanConfirmed", true)
             .put("automatic", false)
             .put("manualOnly", true)
