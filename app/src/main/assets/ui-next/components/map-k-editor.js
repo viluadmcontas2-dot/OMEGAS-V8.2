@@ -13,9 +13,7 @@ function formatK(value) {
 
 /**
  * Editor visual único do Mapa K NEXT.
- *
- * Não toca bridge, writer, USB ou protocolo. Toda ação volta como intenção para
- * o controlador da rota, que usa a Store única e a futura fachada nativa.
+ * Não toca bridge, writer, USB ou protocolo.
  */
 export function renderMapKEditor(container, state, actions = {}) {
   if (!container) return;
@@ -42,9 +40,7 @@ export function renderMapKEditor(container, state, actions = {}) {
       const value = map[row]?.[column];
       const isSelected = selection.has(key);
       const isCurrent = state.currentCell?.row === row && state.currentCell?.column === column;
-      cells.push(`<button class="k-cell${isSelected ? ' selected' : ''}${isCurrent ? ' current' : ''}" type="button" data-row="${row}" data-column="${column}" aria-pressed="${isSelected}">
-        <span>${formatK(value)}</span>
-      </button>`);
+      cells.push(`<button class="k-cell${isSelected ? ' selected' : ''}${isCurrent ? ' current' : ''}" type="button" data-row="${row}" data-column="${column}" aria-pressed="${isSelected}"><span>${formatK(value)}</span></button>`);
     }
   }
 
@@ -56,7 +52,7 @@ export function renderMapKEditor(container, state, actions = {}) {
         <div>
           <span class="section-kicker">Mapa K local</span>
           <h2>${selectedCount ? `${selectedCount} célula${selectedCount === 1 ? '' : 's'} selecionada${selectedCount === 1 ? '' : 's'}` : 'Toque numa célula para editar'}</h2>
-          <p>Célula atual tem halo próprio. Seleção de edição é preenchida; uma nunca vira a outra automaticamente.</p>
+          <p>Célula atual tem halo próprio. Seleção de edição é preenchida; live tracing é apenas observacional.</p>
         </div>
         <div class="editor-header-actions">
           <button class="secondary-action" data-action="read-map" type="button">Reler ECU</button>
@@ -66,7 +62,12 @@ export function renderMapKEditor(container, state, actions = {}) {
 
       <div class="map-editor-grid-wrap">
         <div class="map-axis-caption">RPM →</div>
-        <div class="k-grid" role="grid" aria-label="Mapa K 12 por 12">${cells.join('')}</div>
+        <div class="k-grid-stage">
+          <div class="k-grid" role="grid" aria-label="Mapa K 12 por 12">${cells.join('')}</div>
+          <div class="live-trace-layer" data-live-trace-layer aria-hidden="true">
+            ${[0, 1, 2, 3].map((index) => `<span class="live-trace-weight" data-trace-index="${index}" hidden></span>`).join('')}
+          </div>
+        </div>
         <div class="map-axis-caption vertical">Petrol Inj. ↑</div>
       </div>
 
@@ -89,10 +90,7 @@ export function renderMapKEditor(container, state, actions = {}) {
     </section>`;
 
   container.querySelectorAll('.k-cell').forEach((button) => {
-    button.addEventListener('click', () => actions.onToggleCell?.({
-      row: Number(button.dataset.row),
-      column: Number(button.dataset.column),
-    }));
+    button.addEventListener('click', () => actions.onToggleCell?.({ row: Number(button.dataset.row), column: Number(button.dataset.column) }));
   });
   container.querySelectorAll('[data-delta]').forEach((button) => {
     button.addEventListener('click', () => actions.onNudge?.(Number(button.dataset.delta)));
@@ -100,4 +98,30 @@ export function renderMapKEditor(container, state, actions = {}) {
   container.querySelector('[data-action="read-map"]')?.addEventListener('click', () => actions.onRead?.());
   container.querySelector('[data-action="clear-selection"]')?.addEventListener('click', () => actions.onClearSelection?.());
   container.querySelector('[data-action="review"]')?.addEventListener('click', () => actions.onReview?.());
+  updateMapKLiveTrace(container, state?.liveTrace, state?.liveTracingEnabled !== false);
+}
+
+/** Atualiza somente quatro marcadores pequenos; nunca reconstrói a grade. */
+export function updateMapKLiveTrace(container, trace, enabled = true) {
+  const layer = container?.querySelector?.('[data-live-trace-layer]');
+  if (!layer) return;
+  const markers = [...layer.querySelectorAll('[data-trace-index]')];
+  const usable = enabled && trace?.valid === true ? (trace.weights || []).slice(0, 4) : [];
+  markers.forEach((marker, index) => {
+    const item = usable[index];
+    if (!item || item.row < 0 || item.row > 11 || item.column < 0 || item.column > 11) {
+      marker.hidden = true;
+      marker.textContent = '';
+      return;
+    }
+    const weight = Math.max(0, Math.min(1, Number(item.weight) || 0));
+    marker.hidden = false;
+    marker.style.left = `${((item.column + 0.5) / 12) * 100}%`;
+    marker.style.top = `${((item.row + 0.5) / 12) * 100}%`;
+    marker.style.opacity = String(0.28 + weight * 0.72);
+    marker.style.setProperty('--trace-scale', String(0.72 + weight * 0.65));
+    marker.textContent = weight >= 0.12 ? `${Math.round(weight * 100)}%` : '';
+  });
+  layer.dataset.traceSequence = String(trace?.sequence ?? '');
+  layer.dataset.traceMode = enabled ? 'on' : 'off';
 }
