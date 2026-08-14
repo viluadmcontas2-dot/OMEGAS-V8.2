@@ -1,8 +1,19 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const ROUTES = ['dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools'];
+  const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
+
+  function loadOptionalScript(src, onload) {
+    if (typeof document === 'undefined') return;
+    if (document.querySelector(`script[data-omegas-extension="${src}"]`)) return;
+    const script = document.createElement('script');
+    script.src = src;
+    script.dataset.omegasExtension = src;
+    script.onload = typeof onload === 'function' ? onload : null;
+    script.onerror = () => console.error('[OMEGAS router] extensão não carregada:', src);
+    document.head.appendChild(script);
+  }
 
   class Router {
     constructor(store) {
@@ -30,4 +41,7 @@
 
   ns.Router = Router;
   ns.ROUTES = ROUTES;
+
+  // Extensão visual desacoplada do bootstrap principal. Usa o mesmo Router/Store/Scheduler.
+  loadOptionalScript('core/predictor-model.js', () => loadOptionalScript('screens/predictor.js'));
 })(typeof window !== 'undefined' ? window : globalThis);
