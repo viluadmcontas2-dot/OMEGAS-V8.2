@@ -340,6 +340,7 @@ class NativeAutoCalMonitor(
                     nativeMapBar = nativeMapBar,
                     observedAtElapsedMs = transition.observedAtElapsedMs,
                     policy = LearningToleranceSettings.current,
+                    sessionId = expectedSessionId,
                 )
                 maturityEvents.put(
                     JSONObject()
@@ -369,6 +370,9 @@ class NativeAutoCalMonitor(
                         .put("rpm", correlation.rpm ?: JSONObject.NULL)
                         .put("correlatedMapBar", correlation.mapBar ?: JSONObject.NULL)
                         .put("correlatedPetrolMs", correlation.petrolMs ?: JSONObject.NULL)
+                        .put("correlatedGasMs", correlation.gasMsDiagnostic ?: JSONObject.NULL)
+                        .put("correlatedFuel", correlation.fuel ?: JSONObject.NULL)
+                        .put("correlatedFrameElapsedMs", correlation.correlatedFrameElapsedMs ?: JSONObject.NULL)
                         .put("correlationLagMs", correlation.lagMs ?: JSONObject.NULL)
                         .put("firstTelemetrySequence", correlation.firstSequence ?: JSONObject.NULL)
                         .put("lastTelemetrySequence", correlation.lastSequence ?: JSONObject.NULL)
