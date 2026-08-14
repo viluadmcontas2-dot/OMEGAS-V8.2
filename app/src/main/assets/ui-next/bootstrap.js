@@ -5,11 +5,13 @@ import { simulatedAdapter } from './adapters/simulated.js';
 import { simulatedMapKAdapter } from './adapters/simulated-map.js';
 import { simulatedPredictorAdapter } from './adapters/simulated-predictor.js';
 import { simulatedCurveAdapter } from './adapters/simulated-curve.js';
+import { simulatedObdAdapter } from './adapters/simulated-obd.js';
 import { agoraRoute } from './routes/agora.js';
 import { aprenderRoute } from './routes/aprender.js';
 import { mapaKRoute } from './routes/mapa-k.js';
 import { predictorRoute } from './routes/predictor.js';
 import { curvaKRoute } from './routes/curva-k.js';
+import { obdRoute } from './routes/obd.js';
 import { escapeText, humanFuel } from './routes/common.js';
 
 const workspace = document.getElementById('workspace');
@@ -21,6 +23,7 @@ const adapters = Object.freeze({
   mapK: simulatedMapKAdapter,
   predictor: simulatedPredictorAdapter,
   curve: simulatedCurveAdapter,
+  obd: simulatedObdAdapter,
 });
 const routes = new Map([
   ['agora', agoraRoute],
@@ -28,10 +31,12 @@ const routes = new Map([
   ['predictor', predictorRoute],
   ['mapa-k', mapaKRoute],
   ['curva-k', curvaKRoute],
+  ['obd', obdRoute],
 ]);
 let mountedRoute = null;
 let fastPollBusy = false;
 let learningPollBusy = false;
+let obdPollBusy = false;
 
 const ctx = Object.freeze({
   workspace,
@@ -41,6 +46,7 @@ const ctx = Object.freeze({
   scheduler,
   loadCellContext,
   loadPredictor,
+  loadObd,
   readMapK,
   toggleLearningMapEditor,
   mapEditorState,
@@ -124,6 +130,18 @@ async function pollLearning() {
     store.dispatch({ type: 'LEARNING_UPDATED', payload: { state: UI_STATE.UNAVAILABLE, reason: error?.message || 'Learning indisponível' } });
   } finally {
     learningPollBusy = false;
+  }
+}
+
+async function loadObd() {
+  if (obdPollBusy) return;
+  obdPollBusy = true;
+  try {
+    store.dispatch({ type: 'OBD_STATE', payload: await adapters.obd.snapshot() });
+  } catch (error) {
+    store.dispatch({ type: 'OBD_STATE', payload: { state: 'ERRO', observationalOnly: true, error: error?.message || 'OBD indisponível' } });
+  } finally {
+    obdPollBusy = false;
   }
 }
 
@@ -268,5 +286,7 @@ router.subscribe((snapshot) => renderNav(snapshot.route));
 store.subscribe(renderState);
 scheduler.addHook('fast-telemetry', pollFastTelemetry, 100);
 scheduler.addHook('learning-status', pollLearning, 650);
+scheduler.addHook('obd-witness', loadObd, 1000);
 scheduler.start();
 loadCellContext();
+loadObd();
