@@ -7,6 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt'
 SCALE = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/AutoCalScale.kt'
+SCHEDULER = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt'
+ENGINE = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt'
 ACTION = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt'
 BRIDGE = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt'
 ACQ = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalAcquisition.kt'
@@ -14,6 +16,10 @@ MONITOR = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonit
 MATURITY = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMaturityTracker.kt'
 SERVICE = ROOT / 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'
 LEARNING = ROOT / 'app/src/main/java/com/omegas/prohub/learning/LiveOnlyLearningStore.kt'
+SIGNAL = ROOT / 'app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt'
+WINDOW = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt'
+CORRELATOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeAutoCalAnchorCorrelator.kt'
+ANCHOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeLearningAnchor.kt'
 
 class NativeAutoCalContract(unittest.TestCase):
     def setUp(self):
@@ -25,6 +31,12 @@ class NativeAutoCalContract(unittest.TestCase):
         self.maturity = MATURITY.read_text('utf-8')
         self.service = SERVICE.read_text('utf-8')
         self.learning = LEARNING.read_text('utf-8')
+        self.scheduler = SCHEDULER.read_text('utf-8')
+        self.engine = ENGINE.read_text('utf-8')
+        self.signal = SIGNAL.read_text('utf-8')
+        self.window = WINDOW.read_text('utf-8')
+        self.correlator = CORRELATOR.read_text('utf-8')
+        self.anchor = ANCHOR.read_text('utf-8')
 
     def test_manual_automatch_route_is_removed(self):
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
@@ -71,6 +83,55 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('if (previous == null || !enabled) return emptyList()', self.maturity)
         self.assertNotIn('Thread(', self.maturity)
         self.assertNotIn('Executors.', self.maturity)
+
+    def test_anchor_window_is_bounded_session_aware_and_pre_visual(self):
+        self.assertIn('private val maxFrames: Int = 256', self.window)
+        self.assertIn('private val maxAgeMs: Long = 10_000L', self.window)
+        self.assertIn('val sessionId: Long = 0L', self.window)
+        self.assertIn('val gasMsDiagnostic: Double? = null', self.window)
+        self.assertIn('val plausible: Boolean = true', self.window)
+        self.assertIn('nativeTelemetryWindow.record(', self.engine)
+        self.assertIn('sessionId = physicalSessionId', self.engine)
+        self.assertIn('gasMsDiagnostic = decoded.gasMsDiagnostic', self.engine)
+        self.assertIn('plausible = decoded.plausible', self.engine)
+        self.assertIn('nativeTelemetryWindow.reset()', self.engine)
+        self.assertIn('recentTelemetryFrames(', self.scheduler)
+
+    def test_anchor_correlation_uses_real_gnv_same_session_and_never_invents_position(self):
+        self.assertIn('frame.fuel in setOf("GNV", "CNG")', self.correlator)
+        self.assertIn('frame.plausible', self.correlator)
+        self.assertIn('frame.sessionId == sessionId', self.correlator)
+        self.assertIn('NO_RELIABLE_CORRELATION', self.correlator)
+        self.assertIn('correlatedFrameElapsedMs', self.correlator)
+        self.assertIn('gasMsDiagnostic', self.correlator)
+        self.assertIn('sessionId = expectedSessionId', self.monitor)
+        self.assertIn('correlatedGasMs', self.monitor)
+        self.assertIn('correlatedFuel', self.monitor)
+        self.assertIn('correlatedFrameElapsedMs', self.monitor)
+
+    def test_native_learning_anchor_requires_reliable_correlation_and_has_no_writer(self):
+        self.assertIn('if (event.optString("correlationState") != "CORRELATED") return null', self.anchor)
+        self.assertIn('require(fuel == "GNV")', self.anchor)
+        self.assertIn('.put("comparisonVote", false)', self.anchor)
+        self.assertIn('.put("automaticWrite", false)', self.anchor)
+        self.assertIn('scientificRevision', self.anchor)
+        self.assertIn('if (anchors.containsKey(anchor.fingerprint)) return false', self.anchor)
+        self.assertIn('nextRevision += 1L', self.anchor)
+        self.assertNotIn('protocolTransaction(', self.anchor)
+        self.assertNotIn('Mp48WorkClass.MANUAL_WRITE', self.anchor)
+        self.assertNotIn('KWriteManager', self.anchor)
+        self.assertNotIn('KFactorManager', self.anchor)
+
+    def test_anchor_propagates_only_through_learning_sidecar_without_double_vote(self):
+        self.assertIn('nativeLearningAnchors', self.signal)
+        self.assertIn('NativeLearningAnchor.fromMaturityEvent', self.signal)
+        self.assertIn('nativeAnchors.upsert(anchor)', self.signal)
+        self.assertIn('nativeAnchors.clear()', self.signal)
+        import_section = self.signal.split('fun importNativeSnapshot', 1)[1].split('fun onCalibrationAdjustment', 1)[0]
+        self.assertNotIn('scheduleAdvisorRefresh', import_section)
+        self.assertNotIn('delegate.ingest', import_section)
+        self.assertNotIn('previewKWrite', import_section)
+        self.assertNotIn('MANUAL_WRITE', import_section)
 
     def test_paused_snapshot_is_not_fresh_learning_and_native_epoch_requires_readback(self):
         self.assertIn('AUTOCAL_PAUSED_SNAPSHOT', self.learning)
