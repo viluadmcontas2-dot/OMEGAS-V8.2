@@ -1,5 +1,7 @@
 .predictor-screen {
   min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .predictor-intro {
@@ -35,6 +37,8 @@
 }
 
 .predictor-workspace {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
   gap: 16px;
@@ -44,11 +48,18 @@
 .predictor-surface {
   position: relative;
   min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: calc(100vh - 180px);
   padding: 20px 14px 14px 48px;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
-  overflow: hidden;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  scrollbar-width: thin;
 }
 
 .predictor-axis-top,
@@ -74,25 +85,29 @@
   transform: rotate(180deg) translateY(50%);
 }
 
+/*
+ * Em espaço útil normal a superfície segue o princípio do Mapa K: toda a
+ * matriz 12x12 cabe no painel, em vez de impor uma largura gigante. Em telas
+ * realmente estreitas o @media abaixo fixa uma largura finita e quem rola é o
+ * painel externo, permitindo pan nativo com o dedo nos dois eixos.
+ */
 .predictor-grid {
   display: grid;
-  grid-template-columns: minmax(58px, .85fr) repeat(12, minmax(48px, 1fr));
-  gap: 4px;
-  min-width: 720px;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-width: thin;
+  grid-template-columns: minmax(42px, .8fr) repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
 }
 
 .predictor-corner,
 .predictor-axis-cell {
   display: grid;
   place-items: center;
-  min-height: 34px;
-  border-radius: 8px;
+  min-height: 30px;
+  border-radius: 6px;
   color: var(--muted, #8793a4);
   background: rgba(255,255,255,.025);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
@@ -109,11 +124,12 @@
   position: relative;
   display: grid;
   grid-template-rows: auto auto 2px;
-  gap: 3px;
-  min-height: 56px;
-  padding: 7px 5px 5px;
+  gap: 2px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 5px 3px 4px;
   border: 1px solid color-mix(in srgb, var(--state-accent) 38%, transparent);
-  border-radius: 9px;
+  border-radius: 6px;
   color: #eef4fb;
   background: color-mix(in srgb, var(--state-accent) 8%, #0a0e14);
   cursor: pointer;
@@ -138,14 +154,18 @@
 .predictor-cell.desconhecido { --state-accent: #56616f; }
 
 .predictor-cell b {
-  font-size: 14px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
   line-height: 1;
 }
 
 .predictor-cell span {
-  min-height: 18px;
+  min-width: 0;
+  min-height: 14px;
   color: color-mix(in srgb, var(--state-accent) 72%, #dce7f2);
-  font-size: 8px;
+  font-size: 7px;
   line-height: 1.05;
   text-transform: uppercase;
   overflow: hidden;
@@ -300,6 +320,7 @@
     left: 36px;
   }
   .predictor-grid {
-    min-width: 660px;
+    width: 620px;
+    min-width: 620px;
   }
 }
