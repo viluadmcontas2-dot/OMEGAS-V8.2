@@ -9,6 +9,7 @@ NEXT = ROOT / "app/src/main/assets/ui-next"
 ROUTE = NEXT / "routes/predictor.js"
 SIM = NEXT / "adapters/simulated-predictor.js"
 BOOT = NEXT / "bootstrap.js"
+ADAPTER_INDEX = NEXT / "adapters/index.js"
 KOTLIN = ROOT / "app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt"
 CONFIDENCE = ROOT / "app/src/main/java/com/omegas/prohub/learning/PredictorSpatialConfidence.kt"
 
@@ -43,9 +44,13 @@ class NextPredictorContractTest(unittest.TestCase):
         self.assertIn("automaticWrite: false", sim)
         self.assertIn("extrapolationAllowed: false", sim)
 
-    def test_bootstrap_uses_one_predictor_adapter(self):
+    def test_bootstrap_uses_one_product_adapter_not_predictor_specific_transport(self):
         boot = BOOT.read_text(encoding="utf-8")
-        self.assertIn("simulatedPredictorAdapter", boot)
+        index = ADAPTER_INDEX.read_text(encoding="utf-8")
+        self.assertIn("nextAdapter.predictorSnapshot()", boot)
+        self.assertIn("createNextAdapter", index)
+        self.assertNotIn("simulatedPredictorAdapter", boot)
+        self.assertNotIn("OmegasV7", route)
         self.assertIn("PREDICTOR_STATE", boot)
         self.assertNotIn("setInterval(", boot)
 
