@@ -39,16 +39,23 @@ const model = loadModel();
   assert.equal(opened, true);
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], 'map');
-  assert.equal(calls[0][1].intent, 'review-only');
-  assert.equal(calls[0][1].automaticWrite, false);
-  assert.equal(calls[0][1].requiresHumanReview, true);
+  const context = calls[0][1];
+  assert.equal(context.origin, 'predictor');
+  assert.equal(context.intent, 'review-only');
+  assert.equal(context.automaticWrite, false);
+  assert.equal(context.requiresHumanReview, true);
+  assert.equal(context.suggestion.target, 'MAP_K');
+  assert.equal(context.suggestion.mapChanges.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(context.suggestion.mapChanges[0])), {
+    row: 4, column: 3, before: 120, after: 128, source: 'PREDICTOR_REVIEW_ONLY',
+  });
 }
 
 {
   const calls = [];
   const router = { navigate: (...args) => { calls.push(args); return true; } };
-  const opened = model.openMapReview(router, { row: 4, column: 3, state: 'DESCONHECIDO', targetK: null });
-  assert.equal(opened, false);
+  assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'DESCONHECIDO', currentK: 120, targetK: null }), false);
+  assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'PREVISTO', currentK: null, targetK: 128 }), false);
   assert.equal(calls.length, 0);
 }
 
