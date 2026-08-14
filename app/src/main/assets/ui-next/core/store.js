@@ -14,6 +14,7 @@ const initialState = Object.freeze({
   epoch: 0,
   telemetry: Object.freeze({ valid: false, ageMs: -1 }),
   learning: Object.freeze({ state: UI_STATE.UNAVAILABLE }),
+  suggestions: Object.freeze({ state: UI_STATE.UNAVAILABLE, items: [], activeCount: 0, readyCount: 0 }),
   cellContext: null,
   contextualEditor: Object.freeze({ kind: null, open: false, originRoute: null }),
   mapK: Object.freeze({ state: UI_STATE.UNAVAILABLE, selection: [], proposal: null, sourceRevision: null }),
@@ -63,6 +64,7 @@ export class NextStore {
       epoch: state.epoch,
       telemetry: state.telemetry,
       learning: state.learning,
+      suggestions: { state: state.suggestions.state, activeCount: state.suggestions.activeCount, readyCount: state.suggestions.readyCount },
       cellContext: state.cellContext,
       contextualEditor: state.contextualEditor,
       visual: state.visual,
@@ -79,19 +81,13 @@ export class NextStore {
 function reduce(state, event) {
   switch (event.type) {
     case 'TELEMETRY_UPDATED':
-      return {
-        ...state,
-        sessionId: event.payload?.sessionId ?? state.sessionId,
-        telemetry: Object.freeze({ ...event.payload }),
-      };
+      return { ...state, sessionId: event.payload?.sessionId ?? state.sessionId, telemetry: Object.freeze({ ...event.payload }) };
     case 'TELEMETRY_INVALIDATED':
-      return {
-        ...state,
-        telemetry: Object.freeze({ valid: false, ageMs: -1, reason: event.reason || 'SEM_DADO' }),
-        cellContext: null,
-      };
+      return { ...state, telemetry: Object.freeze({ valid: false, ageMs: -1, reason: event.reason || 'SEM_DADO' }), cellContext: null };
     case 'LEARNING_UPDATED':
       return { ...state, learning: Object.freeze({ ...event.payload }) };
+    case 'SUGGESTIONS_STATE':
+      return { ...state, suggestions: Object.freeze({ ...state.suggestions, ...event.payload }) };
     case 'CELL_CONTEXT_UPDATED':
       return { ...state, cellContext: event.payload ? Object.freeze({ ...event.payload }) : null };
     case 'CONTEXT_EDITOR_CHANGED':
@@ -102,6 +98,7 @@ function reduce(state, event) {
         epoch: event.epoch,
         mapK: Object.freeze({ state: UI_STATE.STALE, selection: [], proposal: null, sourceRevision: null }),
         curveK: Object.freeze({ state: UI_STATE.STALE, prepared: [], sourceRevision: null }),
+        suggestions: Object.freeze({ ...state.suggestions, state: UI_STATE.STALE }),
         contextualEditor: Object.freeze({ kind: null, open: false, originRoute: null }),
         cellContext: null,
       };
