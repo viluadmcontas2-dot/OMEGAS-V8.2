@@ -78,6 +78,42 @@ test('histórico visual registra apenas decisões significativas, deduplica e li
   assert.equal(screen.decisionHistory[5].code, 'REJECT_3');
 });
 
+test('restore do Learning é explícito sem esconder a telemetria ao vivo', () => {
+  const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
+  const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
+  screen.collectionPane = {
+    innerHTML: '',
+    querySelector: () => null,
+  };
+  screen.decisionHistory = [];
+
+  screen.renderCollection({
+    learningStatus: {
+      state: 'LEARNING_RESTORING',
+      restoring: true,
+      learning: false,
+      reason: 'Restaurando conhecimento persistido.',
+    },
+    learningDecision: {
+      state: 'OBSERVING_ENGINE',
+      reason_code: 'OBSERVING_ENGINE',
+      reason: 'Aguardando decisão do núcleo.',
+      learning_eligible: false,
+    },
+    learningTolerance: {},
+    telemetry: {
+      live: { rpm: 2500, petrol_ms: 4.2, load_bar: 0.41, fuel: 'CNG' },
+      interpolation: { rpm: 2500, petrolMs: 4.2, mapBar: 0.41 },
+    },
+  });
+
+  assert.match(screen.collectionPane.innerHTML, /Learning restaurando/);
+  assert.match(screen.collectionPane.innerHTML, /EM SEGUNDO PLANO/);
+  assert.match(screen.collectionPane.innerHTML, /LEARNING_RESTORE_PENDING/);
+  assert.match(screen.collectionPane.innerHTML, /2\.500/);
+  assert.match(screen.collectionPane.innerHTML, /4,20 ms/);
+});
+
 test('Live Tracing temporal é limitado, reutiliza setTrace e não cria timer', () => {
   const { context, source } = loadScript('app/src/main/assets/ui/components/physical-grid.js');
   assert.equal(source.includes('setInterval'), false);
