@@ -11,43 +11,29 @@ import org.junit.Test
 class NativeLearningAnchorTest {
     @Test
     fun `correlated maturity creates positional anchor without comparison vote`() {
-        val event = baseEvent()
-            .put("correlationState", "CORRELATED")
-            .put("correlationConfidence", 0.82)
-            .put("rpmConfidence", 0.74)
-            .put("rpm", 2450)
-            .put("correlatedPetrolMs", 4.30)
-            .put("correlatedMapBar", 0.54)
-            .put("firstTelemetrySequence", 110L)
-            .put("lastTelemetrySequence", 118L)
-            .put("matchedTelemetryFrames", 9)
-
-        val anchor = NativeLearningAnchor.fromMaturityEvent(event, calibrationEpoch = 7)
+        val anchor = NativeLearningAnchor.fromMaturityEvent(baseEvent(), calibrationEpoch = 7)
         assertNotNull(anchor)
         anchor!!
         assertEquals(7, anchor.calibrationEpoch)
+        assertEquals(9L, anchor.sessionId)
         assertTrue(anchor.nativeValidity)
+        assertEquals("GNV", anchor.fuel)
         assertEquals(2450, anchor.rpm)
+        assertEquals(7.2, anchor.gasMsDiagnostic!!, 1e-9)
+        assertEquals(1500L, anchor.correlatedFrameElapsedMs)
+        assertEquals(500L, anchor.lagMs)
         assertEquals(0.74, anchor.rpmConfidence, 1e-9)
         assertFalse(anchor.toJson().getBoolean("comparisonVote"))
         assertFalse(anchor.toJson().getBoolean("automaticWrite"))
     }
 
     @Test
-    fun `native validity survives unreliable rpm without invented position`() {
+    fun `unreliable correlation does not create native learning anchor`() {
         val anchor = NativeLearningAnchor.fromMaturityEvent(
-            baseEvent()
-                .put("correlationState", "NO_RELIABLE_CORRELATION")
-                .put("correlationConfidence", 0.55)
-                .put("rpmConfidence", 0.90)
-                .put("rpm", 3300),
+            baseEvent().put("correlationState", "NO_RELIABLE_CORRELATION"),
             calibrationEpoch = 2,
-        )!!
-
-        assertTrue(anchor.nativeValidity)
-        assertNull(anchor.rpm)
-        assertEquals(0.0, anchor.rpmConfidence, 1e-9)
-        assertEquals(0.0, anchor.correlationConfidence, 1e-9)
+        )
+        assertNull(anchor)
     }
 
     @Test
@@ -74,6 +60,7 @@ class NativeLearningAnchorTest {
     private fun baseEvent(): JSONObject = JSONObject()
         .put("eventType", "NATIVE_BAND_MATURED")
         .put("nativeValidity", true)
+        .put("sessionId", 9L)
         .put("snapshotId", "AUTOCAL-1")
         .put("snapshotHash", "hash")
         .put("bandIndex", 4)
@@ -82,4 +69,17 @@ class NativeLearningAnchorTest {
         .put("threshold", 8)
         .put("previousObservedAtElapsedMs", 1000L)
         .put("observedAtElapsedMs", 2000L)
-        .put("correlationState", "NO_RELIABLE_CORRELATION")
+        .put("correlationState", "CORRELATED")
+        .put("correlationConfidence", 0.82)
+        .put("rpmConfidence", 0.74)
+        .put("rpm", 2450)
+        .put("correlatedPetrolMs", 4.30)
+        .put("correlatedGasMs", 7.2)
+        .put("correlatedMapBar", 0.54)
+        .put("correlatedFuel", "GNV")
+        .put("correlatedFrameElapsedMs", 1500L)
+        .put("correlationLagMs", 500L)
+        .put("firstTelemetrySequence", 110L)
+        .put("lastTelemetrySequence", 118L)
+        .put("matchedTelemetryFrames", 9)
+}
