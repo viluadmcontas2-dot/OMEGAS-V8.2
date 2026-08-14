@@ -1,0 +1,49 @@
+.app-shell[data-layout="split-compact"] {
+  --rail-width: 72px;
+}
+
+.app-shell[data-layout="split-compact"] .workspace {
+  min-width: 0;
+}
+
+.app-shell[data-layout="split-compact"] .workspace-head {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-shell[data-layout="split-compact"] .map-workspace,
+.app-shell[data-layout="split-compact"] .curve-workspace,
+.app-shell[data-layout="split-compact"] .predictor-workspace,
+.app-shell[data-layout="split-compact"] .autocal-layout,
+.app-shell[data-layout="split-compact"] .obd-observe-layout,
+.app-shell[data-layout="split-compact"] .obd-map-layout,
+.app-shell[data-layout="split-compact"] .obd-setup-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-shell[data-layout="split-compact"] .inspector-panel,
+.app-shell[data-layout="split-compact"] .predictor-inspector {
+  position: static;
+  max-height: none;
+}
+
+.app-shell[data-layout="split-compact"] .vehicle-status-strip {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.app-shell[data-layout="split-compact"] .page-intro,
+.app-shell[data-layout="split-compact"] .action-intro,
+.app-shell[data-layout="split-compact"] .autocal-head {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.app-shell[data-layout="split-compact"] .operation-card {
+  max-height: calc(var(--viewport-height, 720px) - 48px);
+  overflow: auto;
+}
+
+@media (max-width: 700px) {
+  .app-shell[data-layout="split-compact"] .vehicle-status-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
