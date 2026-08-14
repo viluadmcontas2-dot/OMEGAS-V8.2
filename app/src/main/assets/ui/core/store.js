@@ -47,6 +47,7 @@
       learningDecision: {},
       learningTolerance: {},
       learningLayer: 'comparison',
+      predictor: { state: 'idle', data: null, activeCell: null, inspector: null },
       obd: {},
       obdDevices: {},
       map: { state: 'idle', data: null, selection: 0, activeCell: null, review: null, operation: null },
