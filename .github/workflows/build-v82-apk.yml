@@ -1,5 +1,5 @@
 # One-shot push trigger is restricted to this workflow file; ordinary source commits do not build.
-# Retry 5 validates registry restoration plus native-anchor confidence guards before the full gate.
+# Physical telemetry hotfix build: USB generation + AutoCal startup isolation + Predictor pan.
 name: Build OMEGAS V8.2 APK
 
 on:
