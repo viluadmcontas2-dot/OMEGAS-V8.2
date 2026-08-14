@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 runtime = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt").read_text(encoding="utf-8")
 buffer = (ROOT / "app/src/main/java/com/omegas/prohub/util/RealtimeLearningBuffer.kt").read_text(encoding="utf-8")
-delivery = (ROOT / "app/src/main/java/com/omegas/prohub/util/OrderedBackgroundPipeline.kt").read_text(encoding="utf-8")
+delivery = (ROOT / "app/src/main/java/com/omegas/prohub/util/LatestOnlyBackgroundPipeline.kt").read_text(encoding="utf-8")
 learning = (ROOT / "app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt").read_text(encoding="utf-8")
 snapshot_writer = (ROOT / "app/src/main/java/com/omegas/prohub/learning/CoalescedSnapshotWriter.kt").read_text(encoding="utf-8")
 
@@ -65,10 +65,20 @@ for marker in (
 assert "Executors.newSingleThreadExecutor" not in buffer
 assert "Thread.MIN_PRIORITY" not in runtime
 
-# A entrega da telemetria ao serviço pode continuar em fila ordenada própria; ela
-# não é a memória de aprendizado e mantém métricas de backpressure.
-assert "Executors.newSingleThreadExecutor" in delivery
-assert '.put("pending"' in delivery
+# Estado visual é presente, não histórico: um consumidor lento mantém no máximo
+# um quadro pendente e substitui esse quadro pelo estado mais recente.
+for marker in (
+    'private var pending: Task? = null',
+    'pending?.let',
+    'coalesced.incrementAndGet()',
+    'pending = task',
+    '.put("mode", "LATEST_ONLY_LIVE_STATE")',
+    '.put("pending", if (pending == null) 0 else 1)',
+    '.put("coalesced", coalesced.get())',
+):
+    assert marker in delivery, f"contrato latest-only ausente: {marker}"
+assert "Executors.newSingleThreadExecutor" not in delivery
+assert "ArrayDeque" not in delivery
 
 # Persistência auxiliar continua coalescida e fora do ingest quente.
 ingest_start = learning.index("    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject")
@@ -78,9 +88,10 @@ assert "val result = delegate.ingest(telemetry, prepared)" in ingest_body
 assert "if (source != null) persistEvidenceState()" in ingest_body
 assert "writeText(" not in ingest_body
 assert "CoalescedSnapshotWriter" in learning
-assert "evidenceStateWriter.submit(payload.toString())" in learning
+assert "evidenceStateWriter.request { buildEvidencePayload(snapshot) }" in learning
 assert "temporary.writeText" not in learning
-assert "latestPayload = payload" in snapshot_writer
+assert "latestPayloadProvider = payloadProvider" in snapshot_writer
+assert "latestPayloadProvider?.invoke()" in snapshot_writer
 assert "while (dirty.getAndSet(false))" in snapshot_writer
 assert '.put("coalesced"' in snapshot_writer
 assert "writeAtomically(payload)" in snapshot_writer
