@@ -17,6 +17,24 @@ export class SimulatedNextAdapter {
       mapBar: 0.62 + Math.sin(t * 0.4) * 0.015,
       fuel: 'CNG',
       engineState: 'ONLINE',
+      // O simulador reproduz o formato Kotlin sem implementar bilinear no JS.
+      liveTrace: {
+        valid: true,
+        sequence: Math.floor(t * 10),
+        updatedAt: Date.now(),
+        row: 4,
+        column: 3,
+        weights: [
+          { row: 4, column: 3, weight: 0.52 },
+          { row: 4, column: 4, weight: 0.18 },
+          { row: 5, column: 3, weight: 0.22 },
+          { row: 5, column: 4, weight: 0.08 },
+        ],
+        method: 'BILINEAR_RPM_X_PETROL_MS',
+        educationalOnly: true,
+        affectsLearning: false,
+        affectsCalibration: false,
+      },
     };
   }
 
