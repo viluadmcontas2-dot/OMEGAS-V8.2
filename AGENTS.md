@@ -2,7 +2,7 @@
 
 ## Gate obrigatório do agente
 
-Antes de qualquer operação técnica, carregar **Operational Governance** (skill `$operational-governance`). Se o plugin não estiver disponível, usar `$project-governance-guard`; se nenhuma skill estiver acessível, abrir o [Project Governance Guard — Master Checkpoint](https://www.notion.so/3ba8ee52ac5481bfb69bc53a483aad53) e permanecer fail-closed.
+Antes de qualquer operação técnica, carregar **Operational Governance** (skill `$operational-governance`). Projeto técnico novo ou incompleto exige `$governed-project-bootstrap`, que cria/vincula Central, repositório e `AGENTS.md` remotamente antes do código, resolvendo a conta conectada ao vivo. Se o plugin não estiver disponível, usar `$project-governance-guard`; se nenhuma skill estiver acessível, abrir o [Project Governance Guard — Master Checkpoint](https://www.notion.so/3ba8ee52ac5481bfb69bc53a483aad53) e permanecer fail-closed.
 
 A sequência de engenharia é obrigatória: `@Codex Engineering Guardrails` → skill oficial direta `code-work` ou `code-verification` → [fallback integral no Notion](https://www.notion.so/3ba8ee52ac548106ad70da67a2621ea5). Antes de repetir operação conhecida, consultar o [Runbook Técnico](https://www.notion.so/f5c5e3d2a12e42feb36d25ebf8b0b7f8).
 
