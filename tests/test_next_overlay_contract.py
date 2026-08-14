@@ -18,9 +18,24 @@ class NextOverlayContractTest(unittest.TestCase):
 
     def test_collapsed_overlay_is_informative_not_just_an_icon(self):
         source = OVERLAY.read_text(encoding="utf-8")
-        self.assertIn('compactText?.text = "Ω\\n${snapshot.rpm?', source)
+        self.assertIn('compactText?.text = "Ω\\n$rpm rpm\\n$fuel"', source)
         self.assertIn("EXPANDED_MIN_WIDTH_DP = 260", source)
         self.assertIn("METRIC_TEXT_SP = 18", source)
+        for field in ["gasText", "cellText", "contextText", "freshnessText", "stftText"]:
+            self.assertIn(field, source)
+
+    def test_position_and_expanded_state_are_persisted_and_bounded(self):
+        source = OVERLAY.read_text(encoding="utf-8")
+        for token in [
+            "KEY_X_DP",
+            "KEY_Y_DP",
+            "KEY_EXPANDED",
+            "clampActualPosition",
+            "persistPosition",
+            'put("positionBounded", true)',
+        ]:
+            self.assertIn(token, source)
+        self.assertIn("coerceIn", source)
 
     def test_overlay_remains_observational_only(self):
         source = OVERLAY.read_text(encoding="utf-8")
