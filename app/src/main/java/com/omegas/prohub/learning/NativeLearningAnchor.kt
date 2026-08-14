@@ -223,3 +223,45 @@ data class NativeLearningAnchor(
             if (has(key) && !isNull(key)) optDouble(key).takeIf { it.isFinite() } else null
     }
 }
+
+/**
+ * Registro bounded/deduplicado. `scientificRevision` avança somente quando uma
+ * passagem física inédita entra; releitura do mesmo evento não altera a revisão.
+ * A revisão é por epoch: `(calibrationEpoch, scientificRevision)` é a identidade científica.
+ */
+class NativeLearningAnchorRegistry(
+    private val maxEntries: Int = 256,
+) {
+    private val anchors = linkedMapOf<String, NativeLearningAnchor>()
+    private var nextRevision = 0L
+
+    fun upsert(anchor: NativeLearningAnchor): Boolean {
+        if (anchors.containsKey(anchor.fingerprint)) return false
+        nextRevision += 1L
+        anchors[anchor.fingerprint] = anchor.copy(scientificRevision = nextRevision)
+        while (anchors.size > maxEntries.coerceAtLeast(1)) {
+            anchors.remove(anchors.keys.first())
+        }
+        return true
+    }
+
+    fun replaceAll(items: List<NativeLearningAnchor>) {
+        anchors.clear()
+        nextRevision = 0L
+        items.takeLast(maxEntries.coerceAtLeast(1)).forEach { item ->
+            val revision = item.scientificRevision.takeIf { it > 0L } ?: (nextRevision + 1L)
+            nextRevision = maxOf(nextRevision, revision)
+            anchors[item.fingerprint] = item.copy(scientificRevision = revision)
+        }
+    }
+
+    fun snapshot(): List<NativeLearningAnchor> = anchors.values.toList()
+
+    fun currentRevision(): Long = nextRevision
+
+    /** Limpa a epoch antiga; a epoch nova reinicia sua própria sequência científica. */
+    fun clear() {
+        anchors.clear()
+        nextRevision = 0L
+    }
+}
