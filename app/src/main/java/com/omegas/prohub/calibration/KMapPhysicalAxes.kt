@@ -4,16 +4,15 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * IMUTÁVEL — contrato físico do mapa K MP48 observado.
+ * Fixture histórica de uma geometria MP48 observada.
  *
- * A ordem destes valores é a ordem dos índices enviados ao protocolo 0x0054.
- * Interface, aprendizado, sugestões e histórico devem sempre obter os rótulos
- * daqui; manter uma segunda tabela visual pode associar uma intenção humana à
- * coluna errada mesmo quando o endereço row/column da ECU permanece válido.
+ * Estes valores continuam úteis para regressão, documentação e dados legados,
+ * mas NÃO são a autoridade física do mapa K em runtime. A ECU expõe os vetores
+ * configuráveis TEMPI_PER_K (0x0037) e GIRI_PER_K (0x003D); qualquer consumidor
+ * material deve usar uma leitura nativa confirmada da sessão atual.
  *
- * Qualquer alteração exige nova evidência física da ECU, atualização explícita
- * de config/mp48-k-map-physical-axes.lock.json e revisão do CODEOWNER. A CI
- * rejeita divergências entre esta autoridade, o lock e os consumidores.
+ * Manter esta fixture estável evita reescrever histórico. Alterá-la significa
+ * registrar outra observação histórica, não redefinir a geometria da ECU.
  */
 object KMapPhysicalAxes {
     const val SCHEMA = "mp48-k-map-physical-axes-v1"
@@ -22,6 +21,7 @@ object KMapPhysicalAxes {
     const val PROTOCOL_ROWS = 13
     const val COLUMNS = 12
     const val SPECIAL_ROW = "0C"
+    const val RUNTIME_AUTHORITY = false
 
     private val RPM = intArrayOf(
         850, 1350, 1850, 2500, 3000, 3500,
@@ -38,7 +38,9 @@ object KMapPhysicalAxes {
     fun json(): JSONObject = JSONObject()
         .put("schema", SCHEMA)
         .put("lockSha256", LOCK_SHA256)
-        .put("immutablePhysicalContract", true)
+        .put("immutablePhysicalContract", false)
+        .put("runtimeAuthority", false)
+        .put("historicalFixture", true)
         .put("writableRows", WRITABLE_ROWS)
         .put("protocolRows", PROTOCOL_ROWS)
         .put("columns", COLUMNS)
