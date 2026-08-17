@@ -2,6 +2,7 @@ package com.omegas.prohub.ecu
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -55,6 +56,26 @@ class Mp48GeometryCodecTest {
         expected.indices.forEach { index ->
             assertEquals(expected[index], ms[index], 0.0000001)
         }
+    }
+
+    @Test
+    fun `rpm preserva geometrias ECU distintas sem normalizacao historica`() {
+        val geometryA = intArrayOf(1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500)
+        val geometryB = intArrayOf(850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500)
+
+        fun encode(raw: IntArray): ByteArray = ByteArray(raw.size * 2).also { payload ->
+            raw.forEachIndexed { index, value ->
+                payload[index * 2] = (value and 0xFF).toByte()
+                payload[index * 2 + 1] = ((value ushr 8) and 0xFF).toByte()
+            }
+        }
+
+        val decodedA = Mp48GeometryCodec.decodeAxisRaw(encode(geometryA))
+        val decodedB = Mp48GeometryCodec.decodeAxisRaw(encode(geometryB))
+
+        assertArrayEquals(geometryA, decodedA)
+        assertArrayEquals(geometryB, decodedB)
+        assertFalse(decodedA.contentEquals(decodedB))
     }
 
     @Test
