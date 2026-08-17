@@ -2,6 +2,7 @@ package com.omegas.prohub.ecu
 
 import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.usb.UsbProtocolReply
+import org.json.JSONObject
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -97,6 +98,18 @@ class Mp48BackpressureScheduler(
         criticalAccepted = criticalAccepted.get(),
         criticalRejected = criticalRejected.get(),
     )
+
+    fun metricsJson(): JSONObject = metricsSnapshot().let { metrics ->
+        JSONObject()
+            .put("readOnlyCapacity", metrics.readOnlyCapacity)
+            .put("criticalCapacity", metrics.criticalCapacity)
+            .put("readOnlyInFlight", metrics.readOnlyInFlight)
+            .put("criticalInFlight", metrics.criticalInFlight)
+            .put("readOnlyAccepted", metrics.readOnlyAccepted)
+            .put("readOnlyRejected", metrics.readOnlyRejected)
+            .put("criticalAccepted", metrics.criticalAccepted)
+            .put("criticalRejected", metrics.criticalRejected)
+    }
 
     private fun <T> withAdmission(workClass: Mp48WorkClass, waitTimeoutMs: Long, block: () -> T): T {
         val critical = workClass == Mp48WorkClass.MANUAL_WRITE || workClass == Mp48WorkClass.SAFETY
