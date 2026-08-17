@@ -4,16 +4,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * IMUTÁVEL — contrato físico do mapa K MP48 observado.
+ * HISTORICAL_FIXTURE — geometria física observada em uma calibração MP48.
  *
- * A ordem destes valores é a ordem dos índices enviados ao protocolo 0x0054.
- * Interface, aprendizado, sugestões e histórico devem sempre obter os rótulos
- * daqui; manter uma segunda tabela visual pode associar uma intenção humana à
- * coluna errada mesmo quando o endereço row/column da ECU permanece válido.
- *
- * Qualquer alteração exige nova evidência física da ECU, atualização explícita
- * de config/mp48-k-map-physical-axes.lock.json e revisão do CODEOWNER. A CI
- * rejeita divergências entre esta autoridade, o lock e os consumidores.
+ * Estes valores preservam uma fotografia útil para testes, replay e comparação,
+ * mas NÃO são autoridade runtime e nunca podem substituir TEMPI_PER_K/GIRI_PER_K
+ * lidos da ECU da sessão corrente. Dimensões do protocolo 0x0054 continuam sendo
+ * constantes físicas; os bins abaixo são somente a fixture histórica observada.
  */
 object KMapPhysicalAxes {
     const val SCHEMA = "mp48-k-map-physical-axes-v1"
@@ -38,7 +34,8 @@ object KMapPhysicalAxes {
     fun json(): JSONObject = JSONObject()
         .put("schema", SCHEMA)
         .put("lockSha256", LOCK_SHA256)
-        .put("immutablePhysicalContract", true)
+        .put("status", "HISTORICAL_FIXTURE")
+        .put("runtimeAuthority", false)
         .put("writableRows", WRITABLE_ROWS)
         .put("protocolRows", PROTOCOL_ROWS)
         .put("columns", COLUMNS)
