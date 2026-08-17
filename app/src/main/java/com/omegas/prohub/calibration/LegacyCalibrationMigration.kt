@@ -23,6 +23,7 @@ object LegacyCalibrationMigration {
     )
 
     fun fromV7Session(text: String, capturedAtMs: Long): LegacyCalibrationMigrationResult {
+        require(capturedAtMs >= 0L) { "capturedAtMs inválido" }
         val values = linkedMapOf<String, String>()
         val lines = text.lineSequence().filter { it.isNotBlank() }.toList()
         if (lines.isEmpty() || lines.any { '=' !in it }) {
@@ -50,6 +51,7 @@ object LegacyCalibrationMigration {
     }
 
     fun fromLegacyCacheKeys(keys: Set<String>, capturedAtMs: Long): LegacyCalibrationMigrationResult {
+        require(capturedAtMs >= 0L) { "capturedAtMs inválido" }
         val looksLegacy = keys.any { it in setOf("rows", "extraRow", "allRows", "axes", "hash", "sessionId") }
         return if (looksLegacy) {
             result(
@@ -69,12 +71,13 @@ object LegacyCalibrationMigration {
         curveRevision: Long? = null,
         mapRevision: Long? = null,
     ): LegacyCalibrationMigrationResult {
+        val recognizedHistory = classification == LegacyCalibrationClassification.LEGACY_OBSERVATIONAL
         val identity = CalibrationIdentity.observational(
             usbSessionId = null,
             generation = null,
-            provenance = CalibrationProvenance.RESTORED_HISTORY,
-            freshness = CalibrationFreshness.STALE,
-            capturedAtMs = capturedAtMs.coerceAtLeast(0L),
+            provenance = if (recognizedHistory) CalibrationProvenance.RESTORED_HISTORY else CalibrationProvenance.UNKNOWN,
+            freshness = if (recognizedHistory) CalibrationFreshness.STALE else CalibrationFreshness.UNKNOWN,
+            capturedAtMs = capturedAtMs,
             mapRevision = mapRevision,
             curveRevision = curveRevision,
         )
