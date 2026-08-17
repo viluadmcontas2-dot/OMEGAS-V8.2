@@ -7,6 +7,7 @@ import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.usb.UsbProtocolReply
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class MapGeometryReaderTest {
@@ -30,6 +31,31 @@ class MapGeometryReaderTest {
         assertEquals(77L, result.unitSessionId)
     }
 
+    @Test
+    fun `sessao diferente no inicio bloqueia antes da unit`() {
+        val scheduler = FakeScheduler(78L, emptyList())
+
+        assertThrows(IllegalStateException::class.java) {
+            MapGeometryReader(scheduler).readRaw(expectedSessionId = 77L)
+        }
+        assertEquals(0, scheduler.unitCalls)
+    }
+
+    @Test
+    fun `reconnect depois da unit descarta o resultado`() {
+        val values = IntArray(12) { 1000 + it * 100 }
+        val scheduler = FakeScheduler(
+            session = 77L,
+            replies = listOf(reply(values), reply(values)),
+            sessionAfterUnit = 78L,
+        )
+
+        assertThrows(IllegalStateException::class.java) {
+            MapGeometryReader(scheduler).readRaw(expectedSessionId = 77L)
+        }
+        assertEquals(1, scheduler.unitCalls)
+    }
+
     private fun reply(raw: IntArray): UsbProtocolReply {
         val payload = ByteArray(raw.size * 2)
         raw.forEachIndexed { index, value ->
@@ -40,17 +66,19 @@ class MapGeometryReaderTest {
     }
 
     private class FakeScheduler(
-        private val session: Long,
+        session: Long,
         replies: List<UsbProtocolReply>,
+        private val sessionAfterUnit: Long? = null,
     ) : Mp48SerialScheduler {
         private val pending = ArrayDeque(replies)
+        private var session = session
         var unitCalls = 0
         var directTransactions = 0
         var observedExpectedSessionId = -1L
         var observedWorkClass: Mp48WorkClass? = null
         val unitRequests = mutableListOf<ByteArray>()
 
-        override fun isConnected(): Boolean = true
+        override fun isConnected(): Boolean = session > 0L
         override fun currentSessionId(): Long = session
 
         override fun transaction(
@@ -77,8 +105,9 @@ class MapGeometryReaderTest {
             unitCalls += 1
             observedExpectedSessionId = expectedSessionId
             observedWorkClass = workClass
-            return block(object : Mp48SerialUnit {
-                override val sessionId: Long = session
+            val unitSession = session
+            val result = block(object : Mp48SerialUnit {
+                override val sessionId: Long = unitSession
 
                 override fun transaction(
                     request: ByteArray,
@@ -90,6 +119,8 @@ class MapGeometryReaderTest {
                     return pending.removeFirst()
                 }
             })
+            sessionAfterUnit?.let { session = it }
+            return result
         }
     }
 }
