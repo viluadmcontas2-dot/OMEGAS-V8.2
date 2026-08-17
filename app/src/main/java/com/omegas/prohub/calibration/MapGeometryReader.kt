@@ -16,13 +16,19 @@ data class MapGeometryRawRead(
 class MapGeometryReader(
     private val serial: Mp48SerialScheduler,
 ) {
-    fun readRaw(expectedSessionId: Long): MapGeometryRawRead =
-        serial.unit(
+    fun readRaw(expectedSessionId: Long): MapGeometryRawRead {
+        requireCurrentSession(expectedSessionId, "antes da leitura de geometria")
+        val result = serial.unit(
             reason = "leitura dos eixos físicos do Mapa K",
             expectedSessionId = expectedSessionId,
             workClass = Mp48WorkClass.READ_ONLY,
             telemetryAfter = true,
         ) { unit ->
+            if (unit.sessionId != expectedSessionId) {
+                throw IllegalStateException(
+                    "Sessão USB mudou ao iniciar leitura de geometria: esperada $expectedSessionId, unit ${unit.sessionId}",
+                )
+            }
             val timeRaw = decodeAxis(
                 unit.transaction(
                     request = Mp48Protocol.readKPetrolAxis(),
@@ -45,6 +51,23 @@ class MapGeometryReader(
                 rpmAxisRaw = rpmRaw,
             )
         }
+        requireCurrentSession(expectedSessionId, "depois da leitura de geometria")
+        if (result.unitSessionId != expectedSessionId) {
+            throw IllegalStateException(
+                "Geometria pertence à sessão ${result.unitSessionId}, esperada $expectedSessionId",
+            )
+        }
+        return result
+    }
+
+    private fun requireCurrentSession(expectedSessionId: Long, phase: String) {
+        val current = serial.currentSessionId()
+        if (!serial.isConnected() || expectedSessionId <= 0L || current != expectedSessionId) {
+            throw IllegalStateException(
+                "Sessão USB inválida $phase: esperada $expectedSessionId, atual $current",
+            )
+        }
+    }
 
     private fun decodeAxis(reply: UsbProtocolReply): IntArray {
         if (!reply.ok) {
