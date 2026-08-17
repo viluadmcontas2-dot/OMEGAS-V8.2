@@ -52,7 +52,25 @@ class CalibrationIdentityStateTest {
     }
 
     @Test
-    fun `full current known e materialmente utilizavel`() {
+    fun `metadados completos observacionais nao fabricam payload material`() {
+        val identity = CalibrationIdentity.observational(
+            usbSessionId = 77L,
+            generation = 4,
+            provenance = CalibrationProvenance.FULL_ECU_READ,
+            freshness = CalibrationFreshness.CURRENT_SESSION,
+            capturedAtMs = 10L,
+            functionFingerprint = "f".repeat(64),
+            geometryFingerprint = "g".repeat(64),
+            mapHash = "m".repeat(64),
+            curveAxisFingerprint = "a".repeat(64),
+            curveFactorsFingerprint = "c".repeat(64),
+        )
+        assertEquals(CalibrationCompleteness.KNOWN, identity.completeness)
+        assertFalse(identity.materiallyUsable())
+    }
+
+    @Test
+    fun `full current known pode ser metadata ready mas identity exige payload real`() {
         val completeness = CalibrationIdentityStateResolver.completeness(
             usbSessionId = 77L,
             generation = 4,
