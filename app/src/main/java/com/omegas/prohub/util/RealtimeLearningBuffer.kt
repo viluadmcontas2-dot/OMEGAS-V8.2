@@ -2,6 +2,7 @@ package com.omegas.prohub.util
 
 import org.json.JSONObject
 import java.util.ArrayDeque
+import java.util.EnumMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -9,16 +10,11 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * Buffer quente do aprendizado para aparelhos lentos.
  *
- * O analisador produz janelas sobrepostas a cada quadro. Guardar milhares dessas
- * janelas na RAM não aumenta a verdade física: aumenta apenas a idade do cálculo.
- * Por isso:
- * - evidências usam uma fila minúscula e, sob saturação, a evidência pendente mais
- *   antiga é substituída pela mais nova;
- * - observações transitórias mantêm somente o estado mais recente;
- * - a sessão gravada continua sendo o backlog frio/durável integral para auditoria.
- *
- * O worker nunca altera critérios de RPM/MAP/temperatura. Ele só controla quanto
- * trabalho redundante pode ficar esperando na RAM.
+ * O frame MP48 já foi adquirido quando chega aqui. Este buffer controla somente
+ * trabalho científico downstream: evidências possuem valor semântico explícito,
+ * diagnóstico mantém apenas o estado mais recente e o backlog quente nunca cresce
+ * sem limite. Em saturação científica, uma tarefa nova só substitui uma pendente
+ * de valor menor ou igual; aquisição/telemetria nunca passa por esta decisão.
  */
 class RealtimeLearningBuffer(
     threadName: String,
@@ -34,10 +30,12 @@ class RealtimeLearningBuffer(
     private data class Task(
         val generation: Long,
         val sequence: Long,
-        val important: Boolean,
+        val workClass: EvidenceWorkClass,
         val enqueuedAtNanos: Long,
         val work: () -> Unit,
-    )
+    ) {
+        val important: Boolean get() = !workClass.diagnosticOnly
+    }
 
     private val capacityImportant = importantCapacity.coerceIn(1, MAX_HOT_EVIDENCE)
     private val monitor = Object()
@@ -58,6 +56,7 @@ class RealtimeLearningBuffer(
     private val failed = AtomicLong(0L)
     private val coalescedTransient = AtomicLong(0L)
     private val supersededImportant = AtomicLong(0L)
+    private val rejectedLowValue = AtomicLong(0L)
     private val rejectedStale = AtomicLong(0L)
     private val purgedImportant = AtomicLong(0L)
     private val purgedTransient = AtomicLong(0L)
@@ -70,6 +69,10 @@ class RealtimeLearningBuffer(
     private val lastImportantProcessingMs = AtomicLong(0L)
     private val maxImportantProcessingMs = AtomicLong(0L)
     private val lastCompletedSequence = AtomicLong(0L)
+    private val acceptedByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
+    private val executedByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
+    private val supersededByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
+    private val rejectedByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
 
     private val worker = Thread({ runLoop() }, threadName).apply {
         isDaemon = true
@@ -101,39 +104,50 @@ class RealtimeLearningBuffer(
         }
     }
 
+    /** Compatibilidade temporária para produtores ainda não migrados ao Router semântico. */
     fun submit(
         generation: Long,
         sequence: Long,
         important: Boolean,
+        work: () -> Unit,
+    ): Boolean = submit(
+        generation = generation,
+        sequence = sequence,
+        workClass = EvidenceBackpressurePolicy.fromLegacyImportant(important),
+        work = work,
+    )
+
+    fun submit(
+        generation: Long,
+        sequence: Long,
+        workClass: EvidenceWorkClass,
         work: () -> Unit,
     ): Boolean {
         submittedFrames.incrementAndGet()
         synchronized(monitor) {
             if (!accepting.get() || generation <= 0L || generation != currentGeneration) {
                 rejectedStale.incrementAndGet()
+                increment(rejectedByClass, workClass)
                 return false
             }
             val task = Task(
                 generation = generation,
                 sequence = sequence,
-                important = important,
+                workClass = workClass,
                 enqueuedAtNanos = System.nanoTime(),
                 work = work,
             )
-            if (important) {
-                if (importantQueue.size >= capacityImportant) {
-                    importantQueue.removeFirst()
-                    supersededImportant.incrementAndGet()
-                }
-                importantQueue.addLast(task)
-                acceptedImportant.incrementAndGet()
+            val accepted = if (task.important) {
+                admitImportantLocked(task)
             } else {
                 if (latestTransient != null) coalescedTransient.incrementAndGet()
                 latestTransient = task
                 acceptedTransient.incrementAndGet()
+                increment(acceptedByClass, workClass)
+                true
             }
-            monitor.notifyAll()
-            return true
+            if (accepted) monitor.notifyAll()
+            return accepted
         }
     }
 
@@ -159,9 +173,10 @@ class RealtimeLearningBuffer(
 
     fun metricsJson(): JSONObject = synchronized(monitor) {
         JSONObject()
-            .put("mode", "HOT_RECENT_BOUNDED_SESSION_DURABLE")
+            .put("mode", "SEMANTIC_EVIDENCE_ROUTER_BOUNDED_SESSION_DURABLE")
             .put("durableBacklog", "SESSION_RECORDER")
-            .put("overloadPolicy", "SUPERSEDE_OLDEST_OVERLAPPING_PENDING_EVIDENCE")
+            .put("overloadPolicy", "SUPERSEDE_LOWEST_VALUE_PENDING_OR_REJECT_INCOMING")
+            .put("acquisitionDropAllowed", false)
             .put("accepting", accepting.get())
             .put("generation", currentGeneration)
             .put("capacityImportant", capacityImportant)
@@ -178,6 +193,7 @@ class RealtimeLearningBuffer(
             .put("executedTransient", executedTransient.get())
             .put("coalescedTransient", coalescedTransient.get())
             .put("supersededImportant", supersededImportant.get())
+            .put("rejectedLowValue", rejectedLowValue.get())
             .put("rejectedStale", rejectedStale.get())
             .put("purgedImportant", purgedImportant.get())
             .put("purgedTransient", purgedTransient.get())
@@ -191,6 +207,11 @@ class RealtimeLearningBuffer(
             .put("maxProcessingMs", maxProcessingMs.get())
             .put("lastImportantProcessingMs", lastImportantProcessingMs.get())
             .put("maxImportantProcessingMs", maxImportantProcessingMs.get())
+            .put("pendingByClass", countPendingByClassLocked())
+            .put("acceptedByClass", enumMapJson(acceptedByClass))
+            .put("executedByClass", enumMapJson(executedByClass))
+            .put("supersededByClass", enumMapJson(supersededByClass))
+            .put("rejectedByClass", enumMapJson(rejectedByClass))
     }
 
     override fun close() {
@@ -206,6 +227,32 @@ class RealtimeLearningBuffer(
             purgeQueuedLocked()
             monitor.notifyAll()
         }
+    }
+
+    private fun admitImportantLocked(task: Task): Boolean {
+        if (importantQueue.size >= capacityImportant) {
+            val snapshot = importantQueue.toList()
+            val lowestIndex = snapshot.indices.minWithOrNull(
+                compareBy<Int> { snapshot[it].workClass.valueRank }
+                    .thenBy { snapshot[it].sequence },
+            ) ?: 0
+            val lowest = snapshot[lowestIndex]
+            if (!EvidenceBackpressurePolicy.incomingMaySupersede(task.workClass, lowest.workClass)) {
+                rejectedLowValue.incrementAndGet()
+                increment(rejectedByClass, task.workClass)
+                return false
+            }
+            importantQueue.clear()
+            snapshot.forEachIndexed { index, pending ->
+                if (index != lowestIndex) importantQueue.addLast(pending)
+            }
+            supersededImportant.incrementAndGet()
+            increment(supersededByClass, lowest.workClass)
+        }
+        importantQueue.addLast(task)
+        acceptedImportant.incrementAndGet()
+        increment(acceptedByClass, task.workClass)
+        return true
     }
 
     private fun runLoop() {
@@ -237,6 +284,7 @@ class RealtimeLearningBuffer(
                 if (generationStillCurrent) {
                     task.work()
                     executed.incrementAndGet()
+                    increment(executedByClass, task.workClass)
                     if (task.important) executedImportant.incrementAndGet() else executedTransient.incrementAndGet()
                     lastCompletedSequence.set(task.sequence)
                 } else {
@@ -271,7 +319,12 @@ class RealtimeLearningBuffer(
         }
         if (importantQueue.isNotEmpty()) {
             importantSinceTransient += 1
-            return importantQueue.removeFirst()
+            val best = importantQueue.maxWithOrNull(
+                compareBy<Task> { it.workClass.valueRank }
+                    .thenByDescending { it.sequence },
+            ) ?: return null
+            importantQueue.remove(best)
+            return best
         }
         if (transient != null) {
             latestTransient = null
@@ -290,6 +343,23 @@ class RealtimeLearningBuffer(
             purgedTransient.incrementAndGet()
             latestTransient = null
         }
+    }
+
+    private fun countPendingByClassLocked(): JSONObject = JSONObject().also { root ->
+        EvidenceWorkClass.entries.forEach { workClass ->
+            val pendingImportant = importantQueue.count { it.workClass == workClass }
+            val pendingTransient = if (latestTransient?.workClass == workClass) 1 else 0
+            val activeCount = if (active?.workClass == workClass) 1 else 0
+            root.put(workClass.name, pendingImportant + pendingTransient + activeCount)
+        }
+    }
+
+    private fun enumMapJson(source: EnumMap<EvidenceWorkClass, Long>): JSONObject = JSONObject().also { root ->
+        EvidenceWorkClass.entries.forEach { workClass -> root.put(workClass.name, source[workClass] ?: 0L) }
+    }
+
+    private fun increment(target: EnumMap<EvidenceWorkClass, Long>, workClass: EvidenceWorkClass) {
+        target[workClass] = (target[workClass] ?: 0L) + 1L
     }
 
     private fun hasPending(): Boolean = synchronized(monitor) {
