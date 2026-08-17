@@ -64,7 +64,7 @@
         this.setView('editor');
         this.renderSuggestionFocus(suggestion);
       }
-      if (!this.data && !this.reading) this.startRead(true);
+      if (!this.data && !this.reading) text('curveSourceStatus', 'Toque em Ler Curva K para consultar a ECU');
       if (this.data && suggestion) {
         this.focusSuggestion(suggestion);
         this.prepareSuggestion(suggestion, true);
