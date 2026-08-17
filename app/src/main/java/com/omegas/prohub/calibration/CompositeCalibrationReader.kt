@@ -20,6 +20,7 @@ data class CompositeCalibrationRawRead(
     val mapRpmAxisRaw: List<Int>,
     val mapRowsRaw: List<List<Int>>,
     val generationCheck: CalibrationGenerationCheck,
+    val elapsedMs: Long = 0L,
 )
 
 /** Aquisição física composta e somente leitura da calibração corrente. */
@@ -38,6 +39,7 @@ class CompositeCalibrationReader(
         require(expectedSessionId > 0L) { "Sessão USB inválida" }
         require(serial.isConnected()) { "USB desconectado" }
         require(serial.currentSessionId() == expectedSessionId) { "Sessão USB mudou antes da leitura composta" }
+        val startedNs = System.nanoTime()
 
         val result = serial.unit(
             reason = "snapshot físico composto da calibração",
@@ -79,7 +81,8 @@ class CompositeCalibrationReader(
             "Sessão USB mudou depois da leitura composta"
         }
         require(result.usbSessionId == expectedSessionId) { "Snapshot composto pertence a outra sessão" }
-        return result
+        val elapsedMs = ((System.nanoTime() - startedNs) / 1_000_000L).coerceAtLeast(0L)
+        return result.copy(elapsedMs = elapsedMs)
     }
 
     private fun readAutoMatchCount(unit: Mp48SerialUnit): Int {
