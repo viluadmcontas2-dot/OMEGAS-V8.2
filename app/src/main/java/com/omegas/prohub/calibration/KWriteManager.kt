@@ -1,5 +1,6 @@
 package com.omegas.prohub.calibration
 
+import com.omegas.prohub.ecu.Mp48GeometryCodec
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
@@ -35,13 +36,13 @@ class KWriteManager(
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
 ) {
     companion object {
-        const val MAP_K_ADDRESS = 0x0054
+        const val MAP_K_ADDRESS = Mp48Protocol.MAP_K_ADDRESS
+        const val TOTAL_ROW_COUNT = Mp48Protocol.MAP_ROWS
         /** Doze linhas visíveis e graváveis no mapa de calibração. */
-        const val ROW_COUNT = KMapPhysicalAxes.WRITABLE_ROWS
-        const val COLUMN_COUNT = KMapPhysicalAxes.COLUMNS
+        const val ROW_COUNT = TOTAL_ROW_COUNT - 1
+        const val COLUMN_COUNT = Mp48Protocol.MAP_COLUMNS
         /** A ECU oficial também expõe a linha 0C, preservada separadamente. */
-        const val EXTRA_ROW = KMapPhysicalAxes.WRITABLE_ROWS
-        const val TOTAL_ROW_COUNT = KMapPhysicalAxes.PROTOCOL_ROWS
+        const val EXTRA_ROW = ROW_COUNT
         const val MIN_SAFE_K = 100
         const val MAX_SAFE_STEP = 25
         const val MAX_SAFE_PAUSE_MS = 2_000
@@ -50,6 +51,7 @@ class KWriteManager(
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-k-writer").apply { isDaemon = true }
     }
+    private val geometryReader = MapGeometryReader(serial)
     private val busy = AtomicBoolean(false)
     private val historyFile = File(paths.runtimeRoot, "k_write_history.json")
     private val cacheFile = File(paths.runtimeRoot, "k_map_cache.json")
@@ -182,6 +184,16 @@ class KWriteManager(
             return error(error.message ?: "USB desconectado")
         }
         return runSynchronous("READING_MAP", "Lendo mapa K completo") {
+            val geometryRaw = geometryReader.readRaw(expectedSessionId)
+            val geometry = MapGeometrySnapshot.create(
+                timeAxisRaw = geometryRaw.timeAxisRaw,
+                timeAxisMs = Mp48GeometryCodec.timeAxisMs(geometryRaw.timeAxisRaw),
+                rpmAxisRaw = geometryRaw.rpmAxisRaw,
+                usbSessionId = expectedSessionId,
+                provenance = MapGeometryProvenance.FULL_ECU_READ,
+                completeness = MapGeometryCompleteness.KNOWN,
+            )
+            val axes = geometryAxesJson(geometry)
             val allRows = JSONArray()
             repeat(TOTAL_ROW_COUNT) { row ->
                 update(
@@ -192,12 +204,14 @@ class KWriteManager(
                 allRows.put(JSONArray(readRow(row, "mapa K linha ${row + 1}/$TOTAL_ROW_COUNT", expectedSessionId)
                     .map { it.toInt() and 0xFF }))
             }
+            if (currentSessionId() != expectedSessionId) {
+                throw IllegalStateException("Sessão USB mudou antes de publicar o mapa K")
+            }
             val visibleRows = JSONArray()
             repeat(ROW_COUNT) { visibleRows.put(JSONArray(allRows.getJSONArray(it).toString())) }
             val extraRow = JSONArray(allRows.getJSONArray(EXTRA_ROW).toString())
             val hash = canonicalFullMapHash(visibleRows, extraRow)
             val now = System.currentTimeMillis()
-            val axes = KMapPhysicalAxes.json()
             val cache = JSONObject()
                 .put("schema", 4)
                 .put("updatedAt", now)
@@ -341,9 +355,15 @@ class KWriteManager(
             val cache = loadCache()
             val cachedRows = cache.optJSONArray("rows") ?: JSONArray()
             val extraRow = cache.optJSONArray("extraRow") ?: JSONArray()
+            val axes = cache.optJSONObject("axes") ?: JSONObject()
+            val petrolBins = axes.optJSONArray("petrolBins") ?: JSONArray()
+            val rpmBins = axes.optJSONArray("rpmBins") ?: JSONArray()
             if (!cache.optBoolean("complete") || !cache.optBoolean("sessionConfirmed") ||
                 !isCompleteVisibleMap(cachedRows) || extraRow.length() != COLUMN_COUNT ||
-                cache.optLong("sessionId", -1L) != expectedSessionId
+                cache.optLong("sessionId", -1L) != expectedSessionId ||
+                axes.optLong("sessionId", -1L) != expectedSessionId ||
+                axes.optString("completeness") != MapGeometryCompleteness.KNOWN.name ||
+                petrolBins.length() != ROW_COUNT || rpmBins.length() != COLUMN_COUNT
             ) {
                 throw IllegalStateException("Leia o mapa K desta sessão antes de aplicar alterações")
             }
@@ -443,10 +463,10 @@ class KWriteManager(
                     .put("adjustmentId", adjustmentId)
                     .put("timestamp", System.currentTimeMillis())
                     .put("row", row).put("column", column)
-                    .put("axisSchema", KMapPhysicalAxes.SCHEMA)
-                    .put("axisLockSha256", KMapPhysicalAxes.LOCK_SHA256)
-                    .put("petrolMs", KMapPhysicalAxes.petrolBins()[row])
-                    .put("rpm", KMapPhysicalAxes.rpmBins()[column])
+                    .put("axisSchema", axes.getString("schema"))
+                    .put("axisFingerprint", axes.getString("fingerprint"))
+                    .put("petrolMs", petrolBins.getDouble(row))
+                    .put("rpm", rpmBins.getInt(column))
                     .put("before", expected).put("after", target)
                     .put("reason", reason).put("confirmed", true)
                     .put("readback", lastConfirmed).put("batchFinalized", false)
@@ -498,7 +518,7 @@ class KWriteManager(
                 .put("sessionConfirmed", true)
                 .put("sessionId", expectedSessionId)
                 .put("hash", finalHash)
-                .put("axes", KMapPhysicalAxes.json())
+                .put("axes", JSONObject(axes.toString()))
                 .put("rows", workingRows)
                 .put("extraRow", extraRow)
                 .put("allRows", allRows)
@@ -510,7 +530,7 @@ class KWriteManager(
                 .put("adjustmentId", adjustmentId)
                 .put("oldHash", initialHash)
                 .put("newHash", finalHash)
-                .put("axes", KMapPhysicalAxes.json())
+                .put("axes", JSONObject(axes.toString()))
                 .put("rows", workingRows)
                 .put("extraRow", extraRow)
                 .put("verifiedRows", JSONArray(affectedRows.toList()))
@@ -772,6 +792,19 @@ class KWriteManager(
         }
         atomicWrite(historyFile, history.toString(2))
     }
+
+    private fun geometryAxesJson(snapshot: MapGeometrySnapshot): JSONObject = JSONObject()
+        .put("schema", snapshot.schema)
+        .put("fingerprint", snapshot.fingerprint())
+        .put("sessionId", snapshot.usbSessionId)
+        .put("provenance", snapshot.provenance.name)
+        .put("completeness", snapshot.completeness.name)
+        .put("source", "ECU_CURRENT_SESSION")
+        .put("runtimeAuthority", true)
+        .put("timeAxisRaw", JSONArray(snapshot.timeAxisRaw))
+        .put("rpmAxisRaw", JSONArray(snapshot.rpmAxisRaw))
+        .put("petrolBins", JSONArray(snapshot.timeAxisMs))
+        .put("rpmBins", JSONArray(snapshot.rpmAxisRaw))
 
     private fun loadCache(): JSONObject = try {
         if (cacheFile.exists()) JSONObject(cacheFile.readText())
