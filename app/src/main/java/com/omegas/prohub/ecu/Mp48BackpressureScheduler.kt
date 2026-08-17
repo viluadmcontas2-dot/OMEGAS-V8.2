@@ -2,6 +2,7 @@ package com.omegas.prohub.ecu
 
 import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.usb.UsbProtocolReply
+import com.omegas.prohub.util.RuntimeBackpressurePolicy
 import org.json.JSONObject
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -28,8 +29,8 @@ data class Mp48BackpressureMetrics(
  */
 class Mp48BackpressureScheduler(
     private val delegate: Mp48SerialScheduler,
-    readOnlyCapacity: Int = 32,
-    criticalCapacity: Int = 8,
+    readOnlyCapacity: Int = RuntimeBackpressurePolicy.SECONDARY_READ_PENDING_CAPACITY,
+    criticalCapacity: Int = RuntimeBackpressurePolicy.CRITICAL_SERIAL_RESERVED_CAPACITY,
 ) : Mp48SerialScheduler {
     private val readOnlyCap = readOnlyCapacity.coerceAtLeast(1)
     private val criticalCap = criticalCapacity.coerceAtLeast(1)
