@@ -29,13 +29,26 @@ class Mp48KMapPhysicalAxesContract(unittest.TestCase):
         self.assertIsNotNone(match, f"Array Kotlin ausente: {name}")
         return [caster(value.strip()) for value in match.group(1).split(",") if value.strip()]
 
-    def test_lock_and_runtime_authority_match(self):
-        self.assertEqual("IMMUTABLE_PHYSICAL_CONTRACT", self.lock["status"])
+    def test_historical_fixture_integrity_without_runtime_authority(self):
+        self.assertEqual("HISTORICAL_FIXTURE", self.lock["status"])
+        self.assertIs(False, self.lock["runtimeAuthority"])
         digest = hashlib.sha256(self.canonical().encode("utf-8")).hexdigest()
         self.assertEqual(self.lock["sha256"], digest)
         self.assertEqual(self.lock["rpmBins"], self.kotlin_array("RPM", int))
         self.assertEqual(self.lock["petrolMsBins"], self.kotlin_array("PETROL_MS", float))
         self.assertIn(f'const val LOCK_SHA256 = "{digest}"', self.axes)
+        self.assertIn('.put("status", "HISTORICAL_FIXTURE")', self.axes)
+        self.assertIn('.put("runtimeAuthority", false)', self.axes)
+        self.assertNotIn('immutablePhysicalContract', self.axes)
+
+    def test_runtime_geometry_path_does_not_reference_historical_fixture(self):
+        runtime_files = [
+            ROOT / "app/src/main/java/com/omegas/prohub/calibration/MapGeometrySnapshot.kt",
+            ROOT / "app/src/main/java/com/omegas/prohub/calibration/MapGeometryReader.kt",
+            ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48GeometryCodec.kt",
+        ]
+        for path in runtime_files:
+            self.assertNotIn("KMapPhysicalAxes", path.read_text("utf-8"), path.as_posix())
 
     def test_ui_consumes_axes_returned_by_ecu_read(self):
         editor = (ROOT / "app/src/main/assets/ui/map-editor.js").read_text("utf-8")
