@@ -6,11 +6,14 @@
     constructor(initial) {
       this.state = Object.freeze({ ...(initial || {}) });
       this.listeners = new Set();
+      this._revision = 0;
     }
     get() { return this.state; }
+    revision() { return this._revision; }
     set(next) {
       const value = typeof next === 'function' ? next(this.state) : next;
       this.state = Object.freeze({ ...(value || {}) });
+      this._revision += 1;
       this.emit();
       return this.state;
     }
@@ -18,6 +21,7 @@
       const value = typeof partial === 'function' ? partial(this.state) : partial;
       if (!value || typeof value !== 'object') return this.state;
       this.state = Object.freeze({ ...this.state, ...value });
+      this._revision += 1;
       this.emit();
       return this.state;
     }
