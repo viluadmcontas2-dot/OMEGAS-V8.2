@@ -1,5 +1,8 @@
 package com.omegas.prohub.calibration
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+
 enum class MapGeometryProvenance {
     FULL_ECU_READ,
     UNKNOWN,
@@ -21,6 +24,21 @@ class MapGeometrySnapshot private constructor(
     val completeness: MapGeometryCompleteness,
     val schema: String,
 ) {
+    fun fingerprint(): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.update(schema.toByteArray(StandardCharsets.UTF_8))
+        digest.update(0.toByte())
+        fun updateRaws(values: List<Int>) {
+            values.forEach { raw ->
+                digest.update((raw and 0xFF).toByte())
+                digest.update(((raw ushr 8) and 0xFF).toByte())
+            }
+        }
+        updateRaws(timeAxisRaw)
+        updateRaws(rpmAxisRaw)
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     fun toSerializableMap(): Map<String, Any> = linkedMapOf(
         "schema" to schema,
         "usbSessionId" to usbSessionId,
