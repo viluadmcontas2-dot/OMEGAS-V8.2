@@ -1,6 +1,9 @@
 package com.omegas.prohub.autocal
 
 import android.os.SystemClock
+import com.omegas.prohub.calibration.CalibrationIdentity
+import com.omegas.prohub.calibration.CompositeCalibrationReader
+import com.omegas.prohub.calibration.CompositeCalibrationSnapshot
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
@@ -38,12 +41,15 @@ class NativeAutoCalMonitor(
 
     private val lock = Any()
     private val maturityTracker = NativeAutoCalMaturityTracker()
+    private val calibrationBootstrapReader = CompositeCalibrationReader(serial)
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
     @Volatile private var state = baseState("IDLE", "AutoCal nativo aguardando ECU")
+    @Volatile private var calibrationIdentity: CalibrationIdentity? = null
 
     private var sessionStartedAtElapsedMs = 0L
+    private var calibrationBootstrapAttempted = false
     private var lastProbe: AutoCalProtocol.NativeStatus? = null
     private var lastMulActHash = ""
     private var snapshotRequested = false
@@ -57,6 +63,8 @@ class NativeAutoCalMonitor(
         synchronized(lock) {
             sessionId = newSessionId
             sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
+            calibrationBootstrapAttempted = false
+            calibrationIdentity = null
             lastProbe = null
             lastMulActHash = ""
             gasLowThreshold = null
@@ -80,6 +88,8 @@ class NativeAutoCalMonitor(
         synchronized(lock) {
             sessionId = 0L
             sessionStartedAtElapsedMs = 0L
+            calibrationBootstrapAttempted = false
+            calibrationIdentity = null
             lastProbe = null
             lastMulActHash = ""
             gasLowThreshold = null
@@ -103,6 +113,11 @@ class NativeAutoCalMonitor(
     }
 
     fun onManualActionConfirmed(receipt: JSONObject) {
+        synchronized(lock) {
+            // ACK/readback da ação prova o writer, mas a identidade composta precisa
+            // ser reconciliada novamente antes de qualquer gate físico futuro.
+            calibrationIdentity = null
+        }
         requestSnapshot("ACTION_${receipt.optString("action", "UNKNOWN")}")
         val beforeMul = mulActRawFromSnapshot(receipt.optJSONObject("before"))
         val afterMul = mulActRawFromSnapshot(receipt.optJSONObject("after"))
@@ -148,6 +163,41 @@ class NativeAutoCalMonitor(
             return
         }
 
+        val shouldBootstrap = synchronized(lock) {
+            if (!calibrationBootstrapAttempted) {
+                calibrationBootstrapAttempted = true
+                true
+            } else false
+        }
+        if (shouldBootstrap) {
+            try {
+                val raw = calibrationBootstrapReader.readAtSessionStart(currentSession)
+                val composite = CompositeCalibrationSnapshot.promote(raw)
+                val identity = CalibrationIdentity.fromComposite(
+                    composite = composite,
+                    capturedAtMs = System.currentTimeMillis(),
+                    mapRevision = null,
+                    curveRevision = null,
+                )
+                synchronized(lock) {
+                    calibrationIdentity = identity
+                    state = baseState("CALIBRATION_READY", "Calibração física confirmada para esta sessão")
+                        .put("sessionId", currentSession)
+                        .put("calibrationFingerprint", identity.functionFingerprint)
+                        .put("calibrationCompleteness", identity.completeness.name)
+                        .put("calibrationFreshness", identity.freshness.name)
+                }
+            } catch (error: Exception) {
+                synchronized(lock) {
+                    calibrationIdentity = null
+                    state = baseState("CALIBRATION_BOOTSTRAP_FAILED", error.message ?: "Falha ao confirmar calibração física")
+                        .put("sessionId", currentSession)
+                }
+                onStateChanged()
+                return
+            }
+        }
+
         val previousProbe = synchronized(lock) { lastProbe }
         val probe = probe(currentSession) ?: return
         val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
@@ -179,6 +229,8 @@ class NativeAutoCalMonitor(
                 .put("fallback", probe.nativeFlag13 < 0)
                 .put("thresholdsReady", thresholdsReady)
                 .put("maturityProbe", maturityProbe != null)
+                .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
+                .put("calibrationFingerprint", calibrationIdentity?.functionFingerprint ?: JSONObject.NULL)
             if (maturityEvents.isNotEmpty()) {
                 pendingMaturity = maturityEvents
                 snapshotRequested = true
@@ -186,6 +238,8 @@ class NativeAutoCalMonitor(
             } else if (probeChanged) {
                 snapshotRequested = true
                 snapshotReason = if (countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
+                // Mudança nativa observada torna a identidade composta anterior obsoleta.
+                calibrationIdentity = null
             }
         }
 
@@ -202,6 +256,9 @@ class NativeAutoCalMonitor(
             .put("latestSnapshot", JSONObject(latestSnapshot.toString()))
             .put("snapshotRequested", snapshotRequested)
             .put("snapshotReason", snapshotReason)
+            .put("calibrationBootstrapAttempted", calibrationBootstrapAttempted)
+            .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
+            .put("calibrationFingerprint", calibrationIdentity?.functionFingerprint ?: JSONObject.NULL)
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
     }
