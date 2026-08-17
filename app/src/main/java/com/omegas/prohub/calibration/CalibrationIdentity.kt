@@ -21,6 +21,46 @@ enum class CalibrationFreshness {
     UNKNOWN,
 }
 
+object CalibrationIdentityStateResolver {
+    fun completeness(
+        usbSessionId: Long?,
+        generation: Int?,
+        functionFingerprint: String,
+        geometryFingerprint: String,
+        mapHash: String,
+        curveAxisFingerprint: String,
+        curveFactorsFingerprint: String,
+    ): CalibrationCompleteness {
+        val present = listOf(
+            usbSessionId != null && usbSessionId > 0L,
+            generation != null && generation >= 0,
+            functionFingerprint.isNotBlank(),
+            geometryFingerprint.isNotBlank(),
+            mapHash.isNotBlank(),
+            curveAxisFingerprint.isNotBlank(),
+            curveFactorsFingerprint.isNotBlank(),
+        )
+        return when {
+            present.all { it } -> CalibrationCompleteness.KNOWN
+            present.any { it } -> CalibrationCompleteness.PARTIAL
+            else -> CalibrationCompleteness.UNKNOWN
+        }
+    }
+
+    fun materiallyUsable(
+        completeness: CalibrationCompleteness,
+        freshness: CalibrationFreshness,
+        provenance: CalibrationProvenance,
+    ): Boolean = completeness == CalibrationCompleteness.KNOWN &&
+        freshness == CalibrationFreshness.CURRENT_SESSION &&
+        provenance in setOf(
+            CalibrationProvenance.FULL_ECU_READ,
+            CalibrationProvenance.POST_WRITE_READBACK,
+            CalibrationProvenance.AUTOCAL_RECONCILE,
+            CalibrationProvenance.RECOVERY_READ,
+        )
+}
+
 data class EffectiveCalibrationState(
     val mapRow: Int,
     val mapColumn: Int,
@@ -52,9 +92,14 @@ class CalibrationIdentity private constructor(
     private val curveFactorsRaw: List<Int>?,
     val schema: String,
 ) {
+    fun materiallyUsable(): Boolean = CalibrationIdentityStateResolver.materiallyUsable(
+        completeness = completeness,
+        freshness = freshness,
+        provenance = provenance,
+    )
+
     fun effectiveState(mapRow: Int, mapColumn: Int, curveIndex: Int): EffectiveCalibrationState {
-        require(completeness == CalibrationCompleteness.KNOWN) { "CalibrationIdentity não está KNOWN" }
-        require(freshness == CalibrationFreshness.CURRENT_SESSION) { "CalibrationIdentity não está CURRENT_SESSION" }
+        require(materiallyUsable()) { "CalibrationIdentity não está materialmente utilizável" }
         val map = requireNotNull(mapRowsRaw) { "Mapa K indisponível" }
         val curve = requireNotNull(curveFactorsRaw) { "MUL_ACT indisponível" }
         require(mapRow in 0 until 12) { "Linha editável Map K inválida: $mapRow" }
@@ -105,9 +150,12 @@ class CalibrationIdentity private constructor(
             provenance: CalibrationProvenance = CalibrationProvenance.FULL_ECU_READ,
         ): CalibrationIdentity {
             require(capturedAtMs >= 0L) { "capturedAtMs inválido" }
-            require(provenance != CalibrationProvenance.UNKNOWN && provenance != CalibrationProvenance.RESTORED_HISTORY) {
-                "Snapshot físico KNOWN exige provenance de leitura/reconciliação"
-            }
+            require(provenance in setOf(
+                CalibrationProvenance.FULL_ECU_READ,
+                CalibrationProvenance.POST_WRITE_READBACK,
+                CalibrationProvenance.AUTOCAL_RECONCILE,
+                CalibrationProvenance.RECOVERY_READ,
+            )) { "Snapshot físico KNOWN exige provenance de leitura/reconciliação" }
             return CalibrationIdentity(
                 functionFingerprint = CalibrationFunctionFingerprint.from(composite),
                 geometryFingerprint = composite.mapGeometry.fingerprint(),
@@ -128,10 +176,10 @@ class CalibrationIdentity private constructor(
             )
         }
 
-        fun nonMaterial(
-            usbSessionId: Long,
+        fun observational(
+            usbSessionId: Long?,
+            generation: Int?,
             provenance: CalibrationProvenance,
-            completeness: CalibrationCompleteness,
             freshness: CalibrationFreshness,
             capturedAtMs: Long,
             functionFingerprint: String = "",
@@ -139,16 +187,36 @@ class CalibrationIdentity private constructor(
             mapHash: String = "",
             curveAxisFingerprint: String = "",
             curveFactorsFingerprint: String = "",
-            generation: Int = -1,
             mapRevision: Long? = null,
             curveRevision: Long? = null,
         ): CalibrationIdentity {
-            require(completeness != CalibrationCompleteness.KNOWN) { "KNOWN só pode nascer de snapshot composto validado" }
-            require(capturedAtMs >= 0L)
+            require(capturedAtMs >= 0L) { "capturedAtMs inválido" }
+            val completeness = CalibrationIdentityStateResolver.completeness(
+                usbSessionId = usbSessionId,
+                generation = generation,
+                functionFingerprint = functionFingerprint,
+                geometryFingerprint = geometryFingerprint,
+                mapHash = mapHash,
+                curveAxisFingerprint = curveAxisFingerprint,
+                curveFactorsFingerprint = curveFactorsFingerprint,
+            )
             return CalibrationIdentity(
-                functionFingerprint, geometryFingerprint, mapHash, curveAxisFingerprint, curveFactorsFingerprint,
-                usbSessionId, generation, provenance, completeness, freshness, capturedAtMs,
-                mapRevision, curveRevision, null, null, SCHEMA,
+                functionFingerprint = functionFingerprint,
+                geometryFingerprint = geometryFingerprint,
+                mapHash = mapHash,
+                curveAxisFingerprint = curveAxisFingerprint,
+                curveFactorsFingerprint = curveFactorsFingerprint,
+                usbSessionId = usbSessionId ?: 0L,
+                generation = generation ?: -1,
+                provenance = provenance,
+                completeness = completeness,
+                freshness = freshness,
+                capturedAtMs = capturedAtMs,
+                mapRevision = mapRevision,
+                curveRevision = curveRevision,
+                mapRowsRaw = null,
+                curveFactorsRaw = null,
+                schema = SCHEMA,
             )
         }
     }
