@@ -80,7 +80,7 @@
       this.pendingContext = context || null;
       this.root?.classList.toggle('from-learning', context?.origin === 'learning');
       if (!this.editor.hasMap() && !this.reading) {
-        this.startRead(true);
+        text('mapSourceStatus', 'Toque em Ler mapa K para consultar a ECU');
         return;
       }
       if (this.editor.hasMap()) this.applyContext(this.pendingContext);
