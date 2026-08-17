@@ -27,7 +27,10 @@ class CompositeCalibrationReader(
     private val serial: Mp48SerialScheduler,
 ) {
     companion object {
-        const val WAIT_TIMEOUT_MS = 6_000L
+        // 20 transações × 1,2 s de timeout interno + margem de fila/overhead.
+        // Não adiciona espera artificial: é somente o teto para não abandonar
+        // o Future enquanto a unidade serial ainda pode estar executando.
+        const val WAIT_TIMEOUT_MS = 30_000L
         private const val TRANSACTION_TIMEOUT_MS = 1_200
     }
 
