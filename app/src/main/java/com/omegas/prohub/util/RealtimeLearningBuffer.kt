@@ -53,6 +53,8 @@ class RealtimeLearningBuffer(
     private val acceptedImportant = AtomicLong(0L)
     private val acceptedTransient = AtomicLong(0L)
     private val executed = AtomicLong(0L)
+    private val executedImportant = AtomicLong(0L)
+    private val executedTransient = AtomicLong(0L)
     private val failed = AtomicLong(0L)
     private val coalescedTransient = AtomicLong(0L)
     private val supersededImportant = AtomicLong(0L)
@@ -61,8 +63,12 @@ class RealtimeLearningBuffer(
     private val purgedTransient = AtomicLong(0L)
     private val lastQueueDelayMs = AtomicLong(0L)
     private val maxQueueDelayMs = AtomicLong(0L)
+    private val lastImportantQueueDelayMs = AtomicLong(0L)
+    private val maxImportantQueueDelayMs = AtomicLong(0L)
     private val lastProcessingMs = AtomicLong(0L)
     private val maxProcessingMs = AtomicLong(0L)
+    private val lastImportantProcessingMs = AtomicLong(0L)
+    private val maxImportantProcessingMs = AtomicLong(0L)
     private val lastCompletedSequence = AtomicLong(0L)
 
     private val worker = Thread({ runLoop() }, threadName).apply {
@@ -116,9 +122,6 @@ class RealtimeLearningBuffer(
             )
             if (important) {
                 if (importantQueue.size >= capacityImportant) {
-                    // As janelas são fortemente sobrepostas. Manter a mais antiga
-                    // faria o aprendizado olhar para o passado. A mais nova contém
-                    // a condição física recente; a sessão preserva o histórico bruto.
                     importantQueue.removeFirst()
                     supersededImportant.incrementAndGet()
                 }
@@ -171,6 +174,8 @@ class RealtimeLearningBuffer(
             .put("acceptedImportant", acceptedImportant.get())
             .put("acceptedTransient", acceptedTransient.get())
             .put("executed", executed.get())
+            .put("executedImportant", executedImportant.get())
+            .put("executedTransient", executedTransient.get())
             .put("coalescedTransient", coalescedTransient.get())
             .put("supersededImportant", supersededImportant.get())
             .put("rejectedStale", rejectedStale.get())
@@ -180,8 +185,12 @@ class RealtimeLearningBuffer(
             .put("lastCompletedSequence", lastCompletedSequence.get())
             .put("lastQueueDelayMs", lastQueueDelayMs.get())
             .put("maxQueueDelayMs", maxQueueDelayMs.get())
+            .put("lastImportantQueueDelayMs", lastImportantQueueDelayMs.get())
+            .put("maxImportantQueueDelayMs", maxImportantQueueDelayMs.get())
             .put("lastProcessingMs", lastProcessingMs.get())
             .put("maxProcessingMs", maxProcessingMs.get())
+            .put("lastImportantProcessingMs", lastImportantProcessingMs.get())
+            .put("maxImportantProcessingMs", maxImportantProcessingMs.get())
     }
 
     override fun close() {
@@ -219,11 +228,16 @@ class RealtimeLearningBuffer(
             val queueDelayMs = nanosToMillis(startedAt - task.enqueuedAtNanos)
             lastQueueDelayMs.set(queueDelayMs)
             updateMaximum(maxQueueDelayMs, queueDelayMs)
+            if (task.important) {
+                lastImportantQueueDelayMs.set(queueDelayMs)
+                updateMaximum(maxImportantQueueDelayMs, queueDelayMs)
+            }
             try {
                 val generationStillCurrent = synchronized(monitor) { task.generation == currentGeneration }
                 if (generationStillCurrent) {
                     task.work()
                     executed.incrementAndGet()
+                    if (task.important) executedImportant.incrementAndGet() else executedTransient.incrementAndGet()
                     lastCompletedSequence.set(task.sequence)
                 } else {
                     if (task.important) purgedImportant.incrementAndGet() else purgedTransient.incrementAndGet()
@@ -235,6 +249,10 @@ class RealtimeLearningBuffer(
                 val processingMs = nanosToMillis(System.nanoTime() - startedAt)
                 lastProcessingMs.set(processingMs)
                 updateMaximum(maxProcessingMs, processingMs)
+                if (task.important) {
+                    lastImportantProcessingMs.set(processingMs)
+                    updateMaximum(maxImportantProcessingMs, processingMs)
+                }
                 synchronized(monitor) {
                     active = null
                     activeGeneration = 0L
@@ -246,7 +264,6 @@ class RealtimeLearningBuffer(
 
     private fun chooseNextLocked(): Task? {
         val transient = latestTransient
-        // Evita que uma sequência de evidências impeça a observação de saída da região.
         if (transient != null && (importantQueue.isEmpty() || importantSinceTransient >= 2)) {
             latestTransient = null
             importantSinceTransient = 0
