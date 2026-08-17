@@ -1,6 +1,7 @@
 package com.omegas.prohub.calibration
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -29,6 +30,20 @@ class MapGeometrySnapshotTest {
         assertEquals(MapGeometryProvenance.FULL_ECU_READ, snapshot.provenance)
         assertEquals(MapGeometryCompleteness.KNOWN, snapshot.completeness)
         assertEquals(MapGeometrySnapshot.SCHEMA, snapshot.schema)
+    }
+
+    @Test
+    fun `fingerprint usa schema e raws em ordem canonica`() {
+        val geometryA = intArrayOf(1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500)
+        val geometryB = intArrayOf(850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500)
+        val a = MapGeometrySnapshot.create(timeRaw, timeMs, geometryA, 1L, MapGeometryProvenance.FULL_ECU_READ, MapGeometryCompleteness.KNOWN)
+        val b = MapGeometrySnapshot.create(timeRaw, timeMs, geometryB, 1L, MapGeometryProvenance.FULL_ECU_READ, MapGeometryCompleteness.KNOWN)
+        val reordered = MapGeometrySnapshot.create(timeRaw.reversedArray(), timeMs.reversedArray(), geometryA, 1L, MapGeometryProvenance.FULL_ECU_READ, MapGeometryCompleteness.KNOWN)
+
+        assertEquals("6ebc8a8916d7a77bac7875fd04114d67ca081d8fe5b9538c6d71a75c2777da21", a.fingerprint())
+        assertEquals("ae0eea55db0af2f475be8a1f639c859dc28dd8a91bc1c36a782468af00805f61", b.fingerprint())
+        assertNotEquals(a.fingerprint(), b.fingerprint())
+        assertNotEquals(a.fingerprint(), reordered.fingerprint())
     }
 
     @Test
