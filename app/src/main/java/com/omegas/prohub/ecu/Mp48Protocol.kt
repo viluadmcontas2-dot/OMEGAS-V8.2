@@ -24,6 +24,12 @@ object Mp48Protocol {
     const val MAP_K_ADDRESS = 0x0054
     const val MAP_ROWS = 13
     const val MAP_COLUMNS = 12
+    const val TEMPI_PER_K_ADDRESS = 0x0037
+    const val GIRI_PER_K_ADDRESS = 0x003D
+
+    fun readKPetrolAxis(): ByteArray = frame(byteArrayOf(0x29, 0x37, 0x00))
+
+    fun readKRpmAxis(): ByteArray = frame(byteArrayOf(0x29, 0x3D, 0x00))
 
     fun readKRow(row: Int): ByteArray {
         require(row in 0 until MAP_ROWS) { "Linha K inválida: $row" }
