@@ -90,9 +90,10 @@ class CalibrationIdentity private constructor(
     val curveRevision: Long?,
     private val mapRowsRaw: List<List<Int>>?,
     private val curveFactorsRaw: List<Int>?,
+    private val hasMaterialPayload: Boolean,
     val schema: String,
 ) {
-    fun materiallyUsable(): Boolean = CalibrationIdentityStateResolver.materiallyUsable(
+    fun materiallyUsable(): Boolean = hasMaterialPayload && CalibrationIdentityStateResolver.materiallyUsable(
         completeness = completeness,
         freshness = freshness,
         provenance = provenance,
@@ -172,6 +173,7 @@ class CalibrationIdentity private constructor(
                 curveRevision = curveRevision,
                 mapRowsRaw = composite.mapRowsRaw.map { it.toList() },
                 curveFactorsRaw = composite.curve.factorsRaw.toList(),
+                hasMaterialPayload = true,
                 schema = SCHEMA,
             )
         }
@@ -216,6 +218,7 @@ class CalibrationIdentity private constructor(
                 curveRevision = curveRevision,
                 mapRowsRaw = null,
                 curveFactorsRaw = null,
+                hasMaterialPayload = false,
                 schema = SCHEMA,
             )
         }
