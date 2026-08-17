@@ -93,12 +93,18 @@ class NativeRuntimeManager(
 
     /** Deve ser chamado somente quando uma nova conexão física USB é aberta. */
     fun beginUsbSession(sessionId: Long): JSONObject {
-        currentUsbSessionId = sessionId
+        require(sessionId > 0L) { "Sessão USB inválida" }
+        // O mesmo lock usado pelo ingest científico fecha a fronteira N → N+1.
+        // Se uma evidência N já entrou no bloco crítico, ela termina antes da troca;
+        // se ainda não entrou, verá a nova geração e será descartada antes do ingest.
+        val learningState = synchronized(learningSessionLock) {
+            currentUsbSessionId = sessionId
+            latestLearningSequence = 0L
+            learningPipeline.beginGeneration(sessionId)
+            learning.startSession()
+        }
         latestTelemetryState.beginGeneration(sessionId)
-        learningPipeline.beginGeneration(sessionId)
-        latestLearningSequence = 0L
         engine.beginUsbSession(sessionId)
-        val learningState = synchronized(learningSessionLock) { learning.startSession() }
         publishLearningState(0L, learningState)
         synchronized(snapshotLock) { latestSnapshot = emptySnapshot(sessionId, "INITIALIZING") }
         ready = false
