@@ -1,181 +1,151 @@
 package com.omegas.prohub.ecu
 
-import android.os.SystemClock
 import com.omegas.prohub.learning.DeferredLiveOnlyLearningStore
 import com.omegas.prohub.learning.LiveOnlyLearningStore
+import com.omegas.prohub.learning.LearningContext
 import com.omegas.prohub.learning.SampleDecision
-import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.usb.UsbSerialManager
 import com.omegas.prohub.util.LatestOnlyBackgroundPipeline
 import com.omegas.prohub.util.RealtimeLearningBuffer
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
+import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Runtime único do aplicativo.
- *
- * O ciclo de vida da conexão técnica acompanha a conexão física USB. Um
- * simples reinício do loop não cria outra sessão nem aumenta confiança.
- *
- * A thread da ECU publica somente o quadro leve e volta imediatamente ao ciclo
- * MP48. A entrega visual mantém somente o quadro mais recente enquanto o consumidor
- * está ocupado. O aprendizado usa um
- * buffer quente limitado por geração USB: amostras são preservadas em FIFO curto
- * e quadros transitórios são coalescidos para a leitura mais recente. A sessão
- * gravada permanece como backlog frio/durável para auditoria/exportação.
+ * Ponte operacional entre USB Android, engine MP48 e o contrato do WebView.
  */
 class NativeRuntimeManager(
-    paths: AppPaths,
     private val usb: UsbSerialManager,
+    private val learning: DeferredLiveOnlyLearningStore,
     private val log: RingLog,
-    private val onStateChanged: () -> Unit,
     private val onTelemetryEvent: (String) -> Unit,
+    private val onStateChanged: () -> Unit,
     private val onEngineExited: (Boolean) -> Unit,
 ) {
+    @Volatile private var running = false
+    @Volatile private var ready = false
+    @Volatile private var intentionalStop = false
+    @Volatile private var crashed = false
+    @Volatile private var exitReported = false
+    @Volatile private var startedAt = 0L
+    @Volatile private var lastError = ""
+    @Volatile private var exitCount = 0
+    @Volatile private var currentUsbSessionId = 0L
+    @Volatile private var latestLearningSequence = 0L
+    @Volatile private var latestLearningState = JSONObject()
+        .put("ok", true)
+        .put("state", "OBSERVING_ENGINE")
+        .put("learning", false)
+        .put("restoring", true)
     private val snapshotLock = Any()
     private val learningSessionLock = Any()
-    private val learning = DeferredLiveOnlyLearningStore(paths.runtimeRoot, log)
+    @Volatile private var latestSnapshot = emptySnapshot()
+
     private val telemetryDeliveryPipeline = LatestOnlyBackgroundPipeline(
         threadName = "omegas-telemetry-delivery",
-        threadPriority = Thread.NORM_PRIORITY,
-        onFailure = { sequence, error ->
-            log.add(
-                "ERROR",
-                "TELEMETRY-DELIVERY",
-                "Falha ao entregar quadro $sequence fora da thread ECU: ${error.message}",
-            )
+        onError = { error ->
+            log.add("ERROR", "TELEMETRY-DELIVERY", error.message ?: "Falha no pipeline visual")
         },
     )
     private val learningPipeline = RealtimeLearningBuffer(
         threadName = "omegas-learning-realtime",
         importantCapacity = 128,
-        threadPriority = Thread.NORM_PRIORITY - 1,
-        onFailure = { sequence, error ->
-            log.add(
-                "ERROR",
-                "LEARNING-PIPELINE",
-                "Falha ao processar quadro $sequence: ${error.message}",
-            )
+        onError = { error ->
+            log.add("ERROR", "LEARNING-PIPELINE", error.message ?: "Falha no buffer de aprendizado")
         },
     )
+
     private val engine = ResponseDrivenEcuEngine(
         usb = usb,
         log = log,
-        onTelemetry = ::consumeTelemetry,
-        onStateChanged = ::consumeState,
+        onTelemetry = { telemetry, decision, metrics ->
+            consumeTelemetry(telemetry, decision, metrics)
+        },
+        onState = { status -> consumeState(status) },
     )
+    private val serialAdmission = Mp48BackpressureScheduler(engine)
 
-    @Volatile private var latestLearningState = safeLearningStatus()
-    @Volatile private var latestLearningSequence = 0L
-    @Volatile private var latestSnapshot = emptySnapshot()
-    @Volatile private var intentionalStop = false
-    @Volatile private var crashed = false
-    @Volatile private var exitReported = false
-    @Volatile private var currentUsbSessionId = 0L
-
-    @Volatile var running = false
-        private set
-    @Volatile var ready = false
-        private set
-    @Volatile var stuck = false
-        private set
-    @Volatile var lastError = ""
-        private set
-    @Volatile var startedAt = 0L
-        private set
-    @Volatile var exitCount = 0
-        private set
-
-    /** Deve ser chamado somente quando uma nova conexão física USB é aberta. */
-    fun beginUsbSession(sessionId: Long): JSONObject {
-        // Entrega visual pode terminar em paralelo; o aprendizado não carrega fila
-        // da sessão anterior. A nova geração invalida imediatamente o buffer velho.
+    fun beginUsbSession(sessionId: Long) {
         currentUsbSessionId = sessionId
         learningPipeline.beginGeneration(sessionId)
-        latestLearningSequence = 0L
-        engine.beginUsbSession(sessionId)
-        val learningState = synchronized(learningSessionLock) { learning.startSession() }
-        publishLearningState(0L, learningState)
-        synchronized(snapshotLock) { latestSnapshot = emptySnapshot(sessionId, "INITIALIZING") }
-        ready = false
-        return JSONObject(learningState.toString())
+        synchronized(learningSessionLock) {
+            try { learning.beginUsbSession(sessionId) } catch (error: Exception) {
+                log.add("WARN", "LEARNING", "Falha ao invalidar aprendizado da sessão anterior: ${error.message}")
+            }
+        }
+        val restoring = try { learning.isRestoring() } catch (_: Exception) { false }
+        if (restoring) {
+            latestLearningState = JSONObject()
+                .put("ok", true)
+                .put("state", DeferredLiveOnlyLearningStore.STATE_RESTORING)
+                .put("learning", false)
+                .put("restoring", true)
+                .put("message", "Abrindo telemetria enquanto o aprendizado é restaurado")
+        } else {
+            publishLearningState(latestLearningSequence, safeLearningStatus())
+        }
+        synchronized(snapshotLock) { latestSnapshot = emptySnapshot(sessionId, "USB_SESSION_STARTED") }
+        onStateChanged()
     }
 
-    /** Fecha somente a conexão física; a memória confirmada e a sessão gravada permanecem. */
-    fun endUsbSession(reason: String): JSONObject {
-        val endingSession = currentUsbSessionId
-        // Dá uma janela curta para o buffer saudável terminar. Depois disso a RAM
-        // não segura trabalho antigo: a sessão gravada continua disponível como
-        // evidência durável, mas não invade a próxima conexão.
-        learningPipeline.flush(750L)
+    fun endUsbSession() {
+        flushLearning("fim da sessão USB", 1_500L)
+        learningPipeline.endGeneration(currentUsbSessionId)
+        synchronized(learningSessionLock) {
+            try { learning.endUsbSession() } catch (_: Exception) {}
+        }
         currentUsbSessionId = 0L
-        learningPipeline.endGeneration(endingSession, 1L)
-        engine.endUsbSession()
-        val learningState = synchronized(learningSessionLock) { learning.endSession(reason) }
-        publishLearningState(latestLearningSequence, learningState)
-        synchronized(snapshotLock) { latestSnapshot = emptySnapshot(0L, reason) }
-        ready = false
-        return JSONObject(learningState.toString())
+        synchronized(snapshotLock) { latestSnapshot = emptySnapshot() }
+        onStateChanged()
     }
 
-    @Synchronized
-    fun start(): Boolean {
-        if (running || stuck || !usb.connected) return false
+    fun isRunning(): Boolean = running || engine.isRunning()
+    fun isReady(): Boolean = ready || engine.isSessionReady()
+    fun isCrashed(): Boolean = crashed
+    fun exitCount(): Int = exitCount
+    fun serialScheduler(): Mp48SerialScheduler = serialAdmission
+
+    fun start(owner: String = "ForegroundService"): Boolean {
+        if (isRunning()) return true
         intentionalStop = false
         crashed = false
         exitReported = false
-        lastError = ""
-        ready = false
-        startedAt = System.currentTimeMillis()
         val ok = engine.start()
         running = ok
-        if (!ok) {
-            lastError = "A engine Android nativa não iniciou"
+        ready = false
+        if (ok) {
+            startedAt = System.currentTimeMillis()
+            lastError = ""
+            log.add("INFO", "NATIVE", "Engine MP48 iniciada por $owner")
         } else {
-            log.add("INFO", "ECU-NATIVE", "Runtime Android iniciado")
+            lastError = "Não foi possível iniciar a engine MP48"
         }
-        onStateChanged()
         return ok
     }
 
-    @Synchronized
-    fun stop(timeoutSeconds: Long = 8): Boolean {
-        if (!running && !engine.isRunning()) {
-            ready = false
-            flushPipelines("parada com engine já inativa", timeoutSeconds * 1_000L)
-            return true
-        }
+    fun stop(exitCode: Int = 0) {
         intentionalStop = true
-        engine.stop(graceful = true)
-        val deadline = SystemClock.elapsedRealtime() + timeoutSeconds.coerceAtLeast(1) * 1_000L
-        while (engine.isRunning() && SystemClock.elapsedRealtime() < deadline) {
-            SystemClock.sleep(20L)
+        flushPipelines("parada solicitada", 1_500L)
+        if (engine.isRunning()) engine.stop()
+        running = false
+        ready = false
+        if (exitCode != 0) {
+            crashed = true
+            reportExit(wasCrash = true)
         }
-        val stopped = !engine.isRunning()
-        if (!stopped) {
-            stuck = true
-            lastError = "O núcleo Android não encerrou em ${timeoutSeconds}s"
-            log.add("ERROR", "ECU-NATIVE", lastError)
-        } else {
-            flushPipelines("após parar engine", timeoutSeconds * 1_000L)
-            running = false
-            ready = false
-            stuck = false
-            reportExit(false)
-        }
-        onStateChanged()
-        return stopped
     }
 
-    @Synchronized
-    fun restart(): Boolean {
-        if (!stop()) return false
-        return start()
+    fun recover(): Boolean {
+        if (isRunning()) {
+            intentionalStop = true
+            engine.stop()
+        }
+        return start("recoverEngine")
     }
 
-    /** Única autoridade serial disponibilizada aos managers Android. */
-    fun serialScheduler(): Mp48SerialScheduler = engine
+    fun snapshotJson(): String = synchronized(snapshotLock) { JSONObject(latestSnapshot.toString()).toString() }
 
     fun statusJson(): JSONObject = engine.statusJson()
         .put("native", true)
@@ -187,6 +157,7 @@ class NativeRuntimeManager(
         .put("learningScaleMigration", learning.migrationStatus())
         .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
         .put("learningPipeline", learningPipeline.metricsJson())
+        .put("serialAdmission", serialAdmission.metricsJson())
 
     fun fullSnapshotJson(): String = snapshotJson()
 
