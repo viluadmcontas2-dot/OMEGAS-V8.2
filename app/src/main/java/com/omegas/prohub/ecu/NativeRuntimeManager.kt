@@ -1,151 +1,193 @@
 package com.omegas.prohub.ecu
 
+import android.os.SystemClock
 import com.omegas.prohub.learning.DeferredLiveOnlyLearningStore
 import com.omegas.prohub.learning.LiveOnlyLearningStore
-import com.omegas.prohub.learning.LearningContext
 import com.omegas.prohub.learning.SampleDecision
+import com.omegas.prohub.storage.AppPaths
+import com.omegas.prohub.telemetry.LatestOnlyState
+import com.omegas.prohub.telemetry.RuntimeTelemetryFrame
 import com.omegas.prohub.usb.UsbSerialManager
 import com.omegas.prohub.util.LatestOnlyBackgroundPipeline
 import com.omegas.prohub.util.RealtimeLearningBuffer
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
-import java.io.File
 import java.security.MessageDigest
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Ponte operacional entre USB Android, engine MP48 e o contrato do WebView.
+ * Runtime único do aplicativo.
+ *
+ * O ciclo de vida da conexão técnica acompanha a conexão física USB. Um
+ * simples reinício do loop não cria outra sessão nem aumenta confiança.
+ *
+ * A thread da ECU publica primeiro um quadro tipado latest-only e volta
+ * imediatamente ao ciclo MP48. JSON permanece somente como projeção de
+ * compatibilidade para consumidores ainda não migrados.
  */
 class NativeRuntimeManager(
+    paths: AppPaths,
     private val usb: UsbSerialManager,
-    private val learning: DeferredLiveOnlyLearningStore,
     private val log: RingLog,
-    private val onTelemetryEvent: (String) -> Unit,
     private val onStateChanged: () -> Unit,
+    private val onTelemetryEvent: (String) -> Unit,
     private val onEngineExited: (Boolean) -> Unit,
 ) {
-    @Volatile private var running = false
-    @Volatile private var ready = false
-    @Volatile private var intentionalStop = false
-    @Volatile private var crashed = false
-    @Volatile private var exitReported = false
-    @Volatile private var startedAt = 0L
-    @Volatile private var lastError = ""
-    @Volatile private var exitCount = 0
-    @Volatile private var currentUsbSessionId = 0L
-    @Volatile private var latestLearningSequence = 0L
-    @Volatile private var latestLearningState = JSONObject()
-        .put("ok", true)
-        .put("state", "OBSERVING_ENGINE")
-        .put("learning", false)
-        .put("restoring", true)
     private val snapshotLock = Any()
     private val learningSessionLock = Any()
-    @Volatile private var latestSnapshot = emptySnapshot()
-
+    private val learning = DeferredLiveOnlyLearningStore(paths.runtimeRoot, log)
     private val telemetryDeliveryPipeline = LatestOnlyBackgroundPipeline(
         threadName = "omegas-telemetry-delivery",
-        onError = { error ->
-            log.add("ERROR", "TELEMETRY-DELIVERY", error.message ?: "Falha no pipeline visual")
+        threadPriority = Thread.NORM_PRIORITY,
+        onFailure = { sequence, error ->
+            log.add(
+                "ERROR",
+                "TELEMETRY-DELIVERY",
+                "Falha ao entregar quadro $sequence fora da thread ECU: ${error.message}",
+            )
         },
     )
     private val learningPipeline = RealtimeLearningBuffer(
         threadName = "omegas-learning-realtime",
         importantCapacity = 128,
-        onError = { error ->
-            log.add("ERROR", "LEARNING-PIPELINE", error.message ?: "Falha no buffer de aprendizado")
+        threadPriority = Thread.NORM_PRIORITY - 1,
+        onFailure = { sequence, error ->
+            log.add(
+                "ERROR",
+                "LEARNING-PIPELINE",
+                "Falha ao processar quadro $sequence: ${error.message}",
+            )
         },
     )
-
     private val engine = ResponseDrivenEcuEngine(
         usb = usb,
         log = log,
-        onTelemetry = { telemetry, decision, metrics ->
-            consumeTelemetry(telemetry, decision, metrics)
-        },
-        onState = { status -> consumeState(status) },
+        onTelemetry = ::consumeTelemetry,
+        onStateChanged = ::consumeState,
     )
     private val serialAdmission = Mp48BackpressureScheduler(engine)
+    private val latestTelemetryState = LatestOnlyState<RuntimeTelemetryFrame>(
+        sequenceOf = { it.sequence },
+        generationOf = { it.usbSessionId },
+    )
 
-    fun beginUsbSession(sessionId: Long) {
+    @Volatile private var latestLearningState = safeLearningStatus()
+    @Volatile private var latestLearningSequence = 0L
+    @Volatile private var latestSnapshot = emptySnapshot()
+    @Volatile private var intentionalStop = false
+    @Volatile private var crashed = false
+    @Volatile private var exitReported = false
+    @Volatile private var currentUsbSessionId = 0L
+
+    @Volatile var running = false
+        private set
+    @Volatile var ready = false
+        private set
+    @Volatile var stuck = false
+        private set
+    @Volatile var lastError = ""
+        private set
+    @Volatile var startedAt = 0L
+        private set
+    @Volatile var exitCount = 0
+        private set
+
+    /** Deve ser chamado somente quando uma nova conexão física USB é aberta. */
+    fun beginUsbSession(sessionId: Long): JSONObject {
         currentUsbSessionId = sessionId
+        latestTelemetryState.beginGeneration(sessionId)
         learningPipeline.beginGeneration(sessionId)
-        synchronized(learningSessionLock) {
-            try { learning.beginUsbSession(sessionId) } catch (error: Exception) {
-                log.add("WARN", "LEARNING", "Falha ao invalidar aprendizado da sessão anterior: ${error.message}")
-            }
-        }
-        val restoring = try { learning.isRestoring() } catch (_: Exception) { false }
-        if (restoring) {
-            latestLearningState = JSONObject()
-                .put("ok", true)
-                .put("state", DeferredLiveOnlyLearningStore.STATE_RESTORING)
-                .put("learning", false)
-                .put("restoring", true)
-                .put("message", "Abrindo telemetria enquanto o aprendizado é restaurado")
-        } else {
-            publishLearningState(latestLearningSequence, safeLearningStatus())
-        }
-        synchronized(snapshotLock) { latestSnapshot = emptySnapshot(sessionId, "USB_SESSION_STARTED") }
-        onStateChanged()
+        latestLearningSequence = 0L
+        engine.beginUsbSession(sessionId)
+        val learningState = synchronized(learningSessionLock) { learning.startSession() }
+        publishLearningState(0L, learningState)
+        synchronized(snapshotLock) { latestSnapshot = emptySnapshot(sessionId, "INITIALIZING") }
+        ready = false
+        return JSONObject(learningState.toString())
     }
 
-    fun endUsbSession() {
-        flushLearning("fim da sessão USB", 1_500L)
-        learningPipeline.endGeneration(currentUsbSessionId)
-        synchronized(learningSessionLock) {
-            try { learning.endUsbSession() } catch (_: Exception) {}
-        }
+    /** Fecha somente a conexão física; a memória confirmada e a sessão gravada permanecem. */
+    fun endUsbSession(reason: String): JSONObject {
+        val endingSession = currentUsbSessionId
+        learningPipeline.flush(750L)
         currentUsbSessionId = 0L
-        synchronized(snapshotLock) { latestSnapshot = emptySnapshot() }
-        onStateChanged()
+        latestTelemetryState.clear()
+        learningPipeline.endGeneration(endingSession, 1L)
+        engine.endUsbSession()
+        val learningState = synchronized(learningSessionLock) { learning.endSession(reason) }
+        publishLearningState(latestLearningSequence, learningState)
+        synchronized(snapshotLock) { latestSnapshot = emptySnapshot(0L, reason) }
+        ready = false
+        return JSONObject(learningState.toString())
     }
 
-    fun isRunning(): Boolean = running || engine.isRunning()
-    fun isReady(): Boolean = ready || engine.isSessionReady()
-    fun isCrashed(): Boolean = crashed
-    fun exitCount(): Int = exitCount
-    fun serialScheduler(): Mp48SerialScheduler = serialAdmission
-
-    fun start(owner: String = "ForegroundService"): Boolean {
-        if (isRunning()) return true
+    @Synchronized
+    fun start(): Boolean {
+        if (running || stuck || !usb.connected) return false
         intentionalStop = false
         crashed = false
         exitReported = false
+        lastError = ""
+        ready = false
+        startedAt = System.currentTimeMillis()
         val ok = engine.start()
         running = ok
-        ready = false
-        if (ok) {
-            startedAt = System.currentTimeMillis()
-            lastError = ""
-            log.add("INFO", "NATIVE", "Engine MP48 iniciada por $owner")
+        if (!ok) {
+            lastError = "A engine Android nativa não iniciou"
         } else {
-            lastError = "Não foi possível iniciar a engine MP48"
+            log.add("INFO", "ECU-NATIVE", "Runtime Android iniciado")
         }
+        onStateChanged()
         return ok
     }
 
-    fun stop(exitCode: Int = 0) {
+    @Synchronized
+    fun stop(timeoutSeconds: Long = 8): Boolean {
+        if (!running && !engine.isRunning()) {
+            ready = false
+            flushPipelines("parada com engine já inativa", timeoutSeconds * 1_000L)
+            return true
+        }
         intentionalStop = true
-        flushPipelines("parada solicitada", 1_500L)
-        if (engine.isRunning()) engine.stop()
-        running = false
-        ready = false
-        if (exitCode != 0) {
-            crashed = true
-            reportExit(wasCrash = true)
+        engine.stop(graceful = true)
+        val deadline = SystemClock.elapsedRealtime() + timeoutSeconds.coerceAtLeast(1) * 1_000L
+        while (engine.isRunning() && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(20L)
         }
+        val stopped = !engine.isRunning()
+        if (!stopped) {
+            stuck = true
+            lastError = "O núcleo Android não encerrou em ${timeoutSeconds}s"
+            log.add("ERROR", "ECU-NATIVE", lastError)
+        } else {
+            flushPipelines("após parar engine", timeoutSeconds * 1_000L)
+            running = false
+            ready = false
+            stuck = false
+            reportExit(false)
+        }
+        onStateChanged()
+        return stopped
     }
 
-    fun recover(): Boolean {
-        if (isRunning()) {
-            intentionalStop = true
-            engine.stop()
-        }
-        return start("recoverEngine")
+    @Synchronized
+    fun restart(): Boolean {
+        if (!stop()) return false
+        return start()
     }
 
-    fun snapshotJson(): String = synchronized(snapshotLock) { JSONObject(latestSnapshot.toString()).toString() }
+    /** Única autoridade serial disponibilizada aos managers Android. */
+    fun serialScheduler(): Mp48SerialScheduler = serialAdmission
+
+    /** Estado vivo tipado. Nenhum consumidor deve reconstruí-lo a partir de JSON. */
+    fun currentTelemetryFrame(): RuntimeTelemetryFrame? = latestTelemetryState.current()
+
+    fun telemetryStateMetricsJson(): JSONObject = latestTelemetryState.metrics().let { metrics ->
+        JSONObject()
+            .put("generation", metrics.generation)
+            .put("published", metrics.published)
+            .put("replaced", metrics.replaced)
+            .put("rejected", metrics.rejected)
+    }
 
     fun statusJson(): JSONObject = engine.statusJson()
         .put("native", true)
@@ -158,6 +200,7 @@ class NativeRuntimeManager(
         .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
         .put("learningPipeline", learningPipeline.metricsJson())
         .put("serialAdmission", serialAdmission.metricsJson())
+        .put("typedTelemetryState", telemetryStateMetricsJson())
 
     fun fullSnapshotJson(): String = snapshotJson()
 
@@ -200,6 +243,8 @@ class NativeRuntimeManager(
             .put("writeCellFrame", hex(writeCell))
             .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learningPipeline", learningPipeline.metricsJson())
+            .put("serialAdmission", serialAdmission.metricsJson())
+            .put("typedTelemetryState", telemetryStateMetricsJson())
             .toString()
     }
 
@@ -283,6 +328,14 @@ class NativeRuntimeManager(
     ) {
         val sequence = metrics.telemetryFrames
         val generation = currentUsbSessionId
+        if (generation <= 0L) return
+        val typedFrame = RuntimeTelemetryFrame.from(
+            telemetry = telemetry,
+            sequence = sequence,
+            usbSessionId = generation,
+        )
+        if (!latestTelemetryState.publish(typedFrame)) return
+
         val learningState = learningLiveSummary()
         val live = telemetry.toJson()
             .put("session_id", generation)
@@ -317,6 +370,7 @@ class NativeRuntimeManager(
             .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learning_pipeline", learningPipeline.metricsJson())
+            .put("typed_telemetry_state", telemetryStateMetricsJson())
 
         val root = JSONObject()
             .put("event", "telemetry")
@@ -337,28 +391,26 @@ class NativeRuntimeManager(
             log.add("WARN", "TELEMETRY-DELIVERY", "Quadro $sequence não aceito porque a fila está encerrando")
         }
 
-        if (generation > 0L) {
-            val important = decision.sample != null
-            val accepted = learningPipeline.submit(
-                generation = generation,
-                sequence = sequence,
-                important = important,
-            ) {
-                if (generation != currentUsbSessionId) return@submit
-                synchronized(learningSessionLock) {
-                    if (generation != currentUsbSessionId) return@synchronized
-                    val processed = learning.ingest(telemetry, decision)
-                    if (generation == currentUsbSessionId) publishLearningState(sequence, processed)
-                }
+        val important = decision.sample != null
+        val accepted = learningPipeline.submit(
+            generation = generation,
+            sequence = sequence,
+            important = important,
+        ) {
+            if (generation != currentUsbSessionId) return@submit
+            synchronized(learningSessionLock) {
+                if (generation != currentUsbSessionId) return@synchronized
+                val processed = learning.ingest(telemetry, decision)
+                if (generation == currentUsbSessionId) publishLearningState(sequence, processed)
             }
-            if (!accepted && important && generation == currentUsbSessionId) {
-                val buffer = learningPipeline.metricsJson()
-                log.add(
-                    "WARN",
-                    "LEARNING-BUFFER",
-                    "Amostra $sequence não coube no buffer quente; sessão gravada preserva a evidência. pending=${buffer.optInt("pending")}",
-                )
-            }
+        }
+        if (!accepted && important && generation == currentUsbSessionId) {
+            val buffer = learningPipeline.metricsJson()
+            log.add(
+                "WARN",
+                "LEARNING-BUFFER",
+                "Amostra $sequence não coube no buffer quente; sessão gravada preserva a evidência. pending=${buffer.optInt("pending")}",
+            )
         }
     }
 
@@ -423,6 +475,7 @@ class NativeRuntimeManager(
             .put("learning_state", learningLiveSummary())
             .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learning_pipeline", learningPipeline.metricsJson())
+            .put("typed_telemetry_state", telemetryStateMetricsJson())
             .toString()
     }
 
@@ -459,8 +512,6 @@ class NativeRuntimeManager(
 
     private fun flushPipelines(boundary: String, timeoutMs: Long = 10_000L): Boolean {
         val deliveryOk = telemetryDeliveryPipeline.flush(timeoutMs)
-        // Nunca permita que uma fronteira genérica espere indefinidamente por
-        // histórico em RAM. O buffer quente tem janela curta por definição.
         val learningOk = learningPipeline.flush(timeoutMs.coerceAtMost(2_000L))
         if (!deliveryOk) {
             log.add("WARN", "TELEMETRY-DELIVERY", "Fila não drenou em $boundary dentro de ${timeoutMs}ms")
