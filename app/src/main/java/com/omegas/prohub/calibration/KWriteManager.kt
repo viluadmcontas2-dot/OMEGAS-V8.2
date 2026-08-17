@@ -872,15 +872,14 @@ class KWriteManager(
     private fun canonicalFullMapHash(rows: JSONArray, extraRow: JSONArray): String {
         require(isCompleteVisibleMap(rows)) { "Mapa K exige $ROW_COUNT linhas visíveis" }
         require(extraRow.length() == COLUMN_COUNT) { "Linha K 0C incompleta" }
-        val bytes = ByteArray(TOTAL_ROW_COUNT * COLUMN_COUNT)
-        var offset = 0
-        repeat(ROW_COUNT) { row ->
-            val line = rows.getJSONArray(row)
-            repeat(COLUMN_COUNT) { column -> bytes[offset++] = (line.getInt(column) and 0xFF).toByte() }
+        val allRows = buildList {
+            repeat(ROW_COUNT) { row ->
+                val line = rows.getJSONArray(row)
+                add(List(COLUMN_COUNT) { column -> line.getInt(column) })
+            }
+            add(List(COLUMN_COUNT) { column -> extraRow.getInt(column) })
         }
-        repeat(COLUMN_COUNT) { column -> bytes[offset++] = (extraRow.getInt(column) and 0xFF).toByte() }
-        return java.security.MessageDigest.getInstance("SHA-256")
-            .digest(bytes).joinToString("") { "%02x".format(it) }
+        return MapKPhysicalHash.hash(allRows)
     }
 
     private fun atomicWrite(file: File, text: String) {
