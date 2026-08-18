@@ -13,10 +13,12 @@ import kotlin.math.abs
  */
 internal class BoundedRobustPetrolSummary private constructor(
     private val retained: ArrayDeque<Double>,
-    var totalObserved: Long,
-        private set,
+    totalObserved: Long,
     private var seedPendingFirstObserve: Boolean = false,
 ) {
+    var totalObserved: Long = totalObserved
+        private set
+
     companion object {
         /** Resource budget; não é limiar físico nem número OEM. */
         const val MAX_RETAINED_SAMPLES = 31
