@@ -239,6 +239,7 @@ class MotorLearningMemory(
         repeat(incoming.length()) { index ->
             val raw = incoming.optJSONObject(index) ?: return@repeat
             val candidate = LearningRegion.fromJson(raw).namespace(sourceDevice)
+            // Somente gasolina é portátil. GNV depende do mapa K que o produziu.
             if (candidate.fuel != Mp48Fuel.PETROL) return@repeat
             val target = nearestRegion(
                 fuel = Mp48Fuel.PETROL,
@@ -374,11 +375,12 @@ class MotorLearningMemory(
                 .put("ok", false)
                 .put("error", "Ainda não existe evidência ligada a esta região contínua do mapa K")
         val evidence = comparisonEvidenceForCell(row, column)
+        // Modo de edição livre: sempre permite.
         val confidence = evidence.confidence()
         val proposed = (value * (1.0 + 0.35 * confidence * evidence.medianErrorRatio))
             .coerceIn(50.0, 255.0)
             .toInt()
-        return@synchronized JSONObject()
+        JSONObject()
             .put("ok", true)
             .put("row", row)
             .put("column", column)
@@ -412,7 +414,7 @@ class MotorLearningMemory(
 
     private fun statusLocked(): JSONObject {
         val live = JSONObject(lastStatus.toString())
-        return JSONObject(live.toString())
+        val root = JSONObject(live.toString())
             .put("live", live)
             .put("summary", summaryLocked())
             .put("session_summary", sessionSummaryLocked())
@@ -423,8 +425,10 @@ class MotorLearningMemory(
             .put("tolerance_policy", LearningToleranceSettings.current.toJson())
             .put("revalidation", JSONObject(lastCalibrationRevalidation.toString()))
             .put("has_persisted_learning", regions.isNotEmpty() || comparisons.isNotEmpty())
+        return root
     }
 
+    /** Estado constante em tamanho usado no caminho de cada quadro. */
     private fun compactStatusLocked(): JSONObject {
         val compact = JSONObject()
             .put("state", lastStatus.optString("state", "OBSERVING_ENGINE"))
@@ -435,6 +439,8 @@ class MotorLearningMemory(
             .put("registered_now", lastStatus.optBoolean("registered_now", false))
             .put("session_id", sessionId)
             .put("epoch", epoch)
+        // A resposta compacta alimenta a telemetria ao vivo: não pode perder a
+        // comparação já consolidada no mesmo ciclo físico.
         listOf(
             "comparison",
             "comparison_evidence",
@@ -446,14 +452,21 @@ class MotorLearningMemory(
             "actionable",
             "suggested_delta_k_percent",
             "suggested_delta_k",
-        ).forEach { key -> if (lastStatus.has(key)) compact.put(key, lastStatus.get(key)) }
+        ).forEach { key ->
+            if (lastStatus.has(key)) compact.put(key, lastStatus.get(key))
+        }
         return compact
     }
 
     private fun memoryLocked(): JSONObject {
-        val latestPetrol = regions.filter { it.fuel == Mp48Fuel.PETROL }.maxByOrNull { it.updatedAt }
-        val latestCng = regions.filter { it.fuel == Mp48Fuel.CNG && it.epoch == epoch }.maxByOrNull { it.updatedAt }
-        val latestComparison = comparisons.lastOrNull { it.epoch == epoch } ?: comparisons.lastOrNull()
+        val latestPetrol = regions
+            .filter { it.fuel == Mp48Fuel.PETROL }
+            .maxByOrNull { it.updatedAt }
+        val latestCng = regions
+            .filter { it.fuel == Mp48Fuel.CNG && it.epoch == epoch }
+            .maxByOrNull { it.updatedAt }
+        val latestComparison = comparisons.lastOrNull { it.epoch == epoch }
+            ?: comparisons.lastOrNull()
         val progress = when {
             latestComparison != null -> comparisonEvidence(latestComparison.rpm, latestComparison.mapBar).toJson()
                 .put("kind", "COMPARISON")
@@ -486,7 +499,12 @@ class MotorLearningMemory(
         if (!telemetry.plausible || telemetry.fuel !in setOf(Mp48Fuel.PETROL, Mp48Fuel.CNG)) return
         val stillInside = current.fuel == telemetry.fuel &&
             current.epoch == regionEpoch(telemetry.fuel) &&
-            visitEquivalent(current.rpmAnchor, current.mapAnchor, telemetry.rpm.toDouble(), telemetry.mapBar)
+            visitEquivalent(
+                current.rpmAnchor,
+                current.mapAnchor,
+                telemetry.rpm.toDouble(),
+                telemetry.mapBar,
+            )
         if (stillInside) {
             observedOutsideFrames = 0
         } else {
@@ -503,7 +521,12 @@ class MotorLearningMemory(
         val same = current != null &&
             current.fuel == sample.fuel &&
             current.epoch == regionEpoch(sample.fuel) &&
-            visitEquivalent(current.rpmAnchor, current.mapAnchor, sample.rpm, sample.mapBar)
+            visitEquivalent(
+                current.rpmAnchor,
+                current.mapAnchor,
+                sample.rpm,
+                sample.mapBar,
+            )
         if (same) {
             current!!.lastSeenAtMs = sample.endedAtElapsedMs
             current.samples += 1
@@ -564,12 +587,15 @@ class MotorLearningMemory(
         val stage = region.stage()
         return JSONObject()
             .put("state", "PETROL_REFERENCE_$stage")
-            .put("reason", when (stage) {
-                "OBSERVED" -> "Referência em gasolina observada e armazenada"
-                "PROVISIONAL" -> "Referência provisória confirmada por variância"
-                "ACCEPTED" -> "Referência aceita por densidade"
-                else -> "Referência confirmada por densidade"
-            })
+            .put(
+                "reason",
+                when (stage) {
+                    "OBSERVED" -> "Referência em gasolina observada e armazenada"
+                    "PROVISIONAL" -> "Referência provisória confirmada por variância"
+                    "ACCEPTED" -> "Referência aceita por densidade"
+                    else -> "Referência confirmada por densidade"
+                },
+            )
             .put("reference", region.toJson())
             .put("reference_confidence", region.confidence())
             .put("visit_samples", visit.samples)
@@ -584,7 +610,13 @@ class MotorLearningMemory(
             val diagnostic = JSONObject(lastReferenceDiagnostic.toString())
             return JSONObject()
                 .put("state", "NO_PETROL_REFERENCE")
-                .put("reason", diagnostic.optString("message", "Falta referência confiável de gasolina nesta condição de RPM, MAP e temperatura"))
+                .put(
+                    "reason",
+                    diagnostic.optString(
+                        "message",
+                        "Falta referência confiável de gasolina nesta condição de RPM, MAP e temperatura",
+                    ),
+                )
                 .put("reason_code", diagnostic.optString("reason_code", "NO_PETROL_REFERENCE"))
                 .put("reference_diagnostic", diagnostic)
                 .put("learning", true)
@@ -604,7 +636,11 @@ class MotorLearningMemory(
         val evidence = comparisonEvidence(sample.rpm, sample.mapBar)
         return comparisonStatus(
             comparison = stored.comparison,
-            reason = if (stored.created) "Petrol Inj no GNV comparado à referência local da gasolina" else "Comparação contínua consolidada; esta visita continua contabilizada uma única vez",
+            reason = if (stored.created) {
+                "Petrol Inj no GNV comparado à referência local da gasolina"
+            } else {
+                "Comparação contínua consolidada; esta visita continua contabilizada uma única vez"
+            },
             evidence = evidence,
             registeredNow = stored.created,
         ).put("reference_surface", reference.toJson())
@@ -658,32 +694,44 @@ class MotorLearningMemory(
         )
     }
 
-    private fun comparisonStatus(comparison: FuelComparison, reason: String, evidence: ComparisonEvidence, registeredNow: Boolean): JSONObject {
+    private fun comparisonStatus(
+        comparison: FuelComparison,
+        reason: String,
+        evidence: ComparisonEvidence,
+        registeredNow: Boolean,
+    ): JSONObject {
+        // A direção que libera uma proposta precisa ser a mesma direção usada
+        // para calcular a magnitude consolidada; nunca a última leitura isolada.
         val actionable = evidence.actionable(evidence.dominantDirection)
         return JSONObject()
-            .put("state", "CONTINUOUS_FUEL_EQUIVALENCE")
-            .put("reason", reason)
-            .put("learning", true)
-            .put("registered_now", registeredNow)
-            .put("comparison", comparison.toJson())
-            .put("petrol_target_ms", comparison.petrolTargetMs)
-            .put("petrol_on_cng_ms", comparison.petrolOnCngMs)
-            .put("error_pct", comparison.errorPct)
-            .put("direction", comparison.direction)
-            .put("quality", comparison.quality)
-            .put("comparison_evidence", evidence.toJson())
-            .put("comparison_stage", evidence.stage)
-            .put("evidence_direction", evidence.dominantDirection)
-            .put("actionable", actionable)
-            .put("suggested_delta_k_percent", if (actionable) (evidence.medianErrorRatio * 35.0 * evidence.confidence()).coerceIn(-5.0, 5.0) else JSONObject.NULL)
-            .put("suggested_delta_k", when {
-                !actionable -> JSONObject.NULL
-                evidence.dominantDirection == "INCREASE_CNG_DELIVERY" -> 1
-                evidence.dominantDirection == "DECREASE_CNG_DELIVERY" -> -1
-                else -> JSONObject.NULL
-            })
-            .put("automatic_write", false)
-            .put("human_confirmation_required", true)
+        .put(
+            "state",
+            "CONTINUOUS_FUEL_EQUIVALENCE",
+        )
+        .put("reason", reason)
+        .put("learning", true)
+        .put("registered_now", registeredNow)
+        .put("comparison", comparison.toJson())
+        .put("petrol_target_ms", comparison.petrolTargetMs)
+        .put("petrol_on_cng_ms", comparison.petrolOnCngMs)
+        .put("error_pct", comparison.errorPct)
+        .put("direction", comparison.direction)
+        .put("quality", comparison.quality)
+        .put("comparison_evidence", evidence.toJson())
+        .put("comparison_stage", evidence.stage)
+        .put("evidence_direction", evidence.dominantDirection)
+        .put("actionable", actionable)
+        .put("suggested_delta_k_percent", if (actionable) {
+            (evidence.medianErrorRatio * 35.0 * evidence.confidence()).coerceIn(-5.0, 5.0)
+        } else JSONObject.NULL)
+        .put("suggested_delta_k", when {
+            !actionable -> JSONObject.NULL
+            evidence.dominantDirection == "INCREASE_CNG_DELIVERY" -> 1
+            evidence.dominantDirection == "DECREASE_CNG_DELIVERY" -> -1
+            else -> JSONObject.NULL
+        })
+        .put("automatic_write", false)
+        .put("human_confirmation_required", true)
     }
 
     private fun addComparisonOnce(candidate: FuelComparison): StoredComparison {
@@ -701,7 +749,9 @@ class MotorLearningMemory(
     }
 
     private fun comparisonEvidence(rpm: Double, mapBar: Double): ComparisonEvidence {
-        val related = comparisons.filter { it.epoch == epoch && visitEquivalent(it.rpm, it.mapBar, rpm, mapBar) }
+        val related = comparisons.filter {
+            it.epoch == epoch && visitEquivalent(it.rpm, it.mapBar, rpm, mapBar)
+        }
         val directions = related.groupingBy { it.direction }.eachCount()
         val dominant = directions.maxByOrNull { it.value }?.key ?: "EQUIVALENT"
         val consensus = if (related.isEmpty()) 0.0 else (directions[dominant] ?: 0) / related.size.toDouble()
@@ -716,9 +766,20 @@ class MotorLearningMemory(
             gasTempSpan <= LearningToleranceSettings.current.comparisonMaximumGasTempSpanC &&
             pressureSpan <= LearningToleranceSettings.current.comparisonMaximumPressureSpanBar
         val stage = if (rawStage in setOf("ACCEPTED", "CONFIRMED") && !reliable) "PROVISIONAL" else rawStage
-        return ComparisonEvidence(stage, dominant, consensus, center, mad, gasTempSpan, pressureSpan, effectiveSamples, if (center == 0.0) 0.0 else related.map { it.errorPct / 100.0 }.median())
+        return ComparisonEvidence(
+            stage,
+            dominant,
+            consensus,
+            center,
+            mad,
+            gasTempSpan,
+            pressureSpan,
+            effectiveSamples = effectiveSamples,
+            medianErrorRatio = if (center == 0.0) 0.0 else related.map { it.errorPct / 100.0 }.median(),
+        )
     }
 
+    /** Evidência absorvida na superfície: uma comparação influencia quatro pontos K. */
     private fun comparisonEvidenceForCell(row: Int, column: Int): ComparisonEvidence {
         val related = comparisons.filter { it.epoch == epoch && it.affects(row, column) }
         if (related.isEmpty()) return ComparisonEvidence.empty()
@@ -732,25 +793,31 @@ class MotorLearningMemory(
         val differenceCenterMs = weighted.map { it.first.differenceMs to it.second }.weightedMedian()
         val madMs = weighted.map { abs(it.first.differenceMs - differenceCenterMs) to it.second }.weightedMedian()
         val dominant = errorRatioDirection(mean)
-        val consensus = weighted.filter { errorRatioDirection(it.first.errorPct / 100.0) == dominant }.sumOf { it.second } / total
+        val consensus = weighted.filter { errorRatioDirection(it.first.errorPct / 100.0) == dominant }
+            .sumOf { it.second } / total
         val effectiveSamples = ContinuousLearningMath.effectiveSampleSize(weighted.map { it.second })
         val stage = confidenceStage(effectiveSamples, madMs * madMs)
         return ComparisonEvidence(
-            stage,
-            dominant,
-            consensus,
-            differenceCenterMs,
-            madMs,
-            related.valueSpan { it.gasC },
-            related.valueSpan { it.pressureDiffBar },
-            effectiveSamples,
-            mean,
+            stage = stage,
+            dominantDirection = dominant,
+            directionConsensus = consensus,
+            medianDifferenceMs = differenceCenterMs,
+            madMs = madMs,
+            gasTemperatureSpanC = related.valueSpan { it.gasC },
+            pressureSpanBar = related.valueSpan { it.pressureDiffBar },
+            effectiveSamples = effectiveSamples,
+            medianErrorRatio = mean,
         )
     }
 
-    private fun nearestRegion(fuel: Mp48Fuel, rpm: Double, mapBar: Double, regionEpoch: Int): LearningRegion? =
-        regions.asSequence().filter { it.fuel == fuel && it.epoch == regionEpoch }
-            .minByOrNull { normalizedDistance(it.rpmMean, it.mapMean, rpm, mapBar) }
+    private fun nearestRegion(
+        fuel: Mp48Fuel,
+        rpm: Double,
+        mapBar: Double,
+        regionEpoch: Int,
+    ): LearningRegion? = regions.asSequence()
+        .filter { it.fuel == fuel && it.epoch == regionEpoch }
+        .minByOrNull { normalizedDistance(it.rpmMean, it.mapMean, rpm, mapBar) }
 
     private fun normalizedDistance(rpmA: Double, mapA: Double, rpmB: Double, mapB: Double): Double {
         val tolerance = LearningToleranceSettings.current
@@ -780,11 +847,6 @@ class MotorLearningMemory(
                         petrolMs = region.petrolMean,
                         confidence = region.confidence(),
                         sampleCount = region.sampleCount,
-                        environment = PetrolReferenceEnvironmentBridge.region(
-                            waterC = region.waterMean,
-                            gasTemperatureC = region.gasMean,
-                            pressureDiffBar = region.pressureMean,
-                        ),
                     )
                 }
                 .toList(),
@@ -792,17 +854,13 @@ class MotorLearningMemory(
                 rpm = sample.rpm,
                 mapBar = sample.mapBar,
                 waterC = sample.waterC,
-                environment = PetrolReferenceEnvironmentBridge.request(
-                    waterC = sample.waterC,
-                    gasTemperatureC = sample.gasC,
-                    pressureDiffBar = sample.pressureDiffBar,
-                ),
             ),
             policy = LearningToleranceSettings.current,
         )
         lastReferenceDiagnostic = result.toJson()
         if (!result.available) {
-            referenceRejectCounts[result.reasonCode] = (referenceRejectCounts[result.reasonCode] ?: 0L) + 1L
+            referenceRejectCounts[result.reasonCode] =
+                (referenceRejectCounts[result.reasonCode] ?: 0L) + 1L
             return null
         }
         referenceAccepted += 1L
@@ -869,11 +927,17 @@ class MotorLearningMemory(
         val latestComparison = comparisons.lastOrNull()
         if (latestComparison != null) {
             val evidence = comparisonEvidence(latestComparison.rpm, latestComparison.mapBar)
-            lastStatus = comparisonStatus(latestComparison, "Última comparação preservada na memória", evidence, false)
-                .put("restored_from_memory", true)
+            lastStatus = comparisonStatus(
+                comparison = latestComparison,
+                reason = "Última comparação preservada na memória",
+                evidence = evidence,
+                registeredNow = false,
+            ).put("restored_from_memory", true)
             return
         }
-        val latestReference = regions.filter { it.fuel == Mp48Fuel.PETROL }.maxByOrNull { it.updatedAt }
+        val latestReference = regions
+            .filter { it.fuel == Mp48Fuel.PETROL }
+            .maxByOrNull { it.updatedAt }
         if (latestReference != null) {
             lastStatus = JSONObject()
                 .put("state", "PETROL_REFERENCE_${latestReference.stage()}")
@@ -884,7 +948,10 @@ class MotorLearningMemory(
                 .put("restored_from_memory", true)
             return
         }
-        lastStatus = JSONObject().put("state", "OBSERVING_ENGINE").put("reason", "Memória ainda vazia").put("learning", false)
+        lastStatus = JSONObject()
+            .put("state", "OBSERVING_ENGINE")
+            .put("reason", "Memória ainda vazia")
+            .put("learning", false)
     }
 
     private fun load() = synchronized(lock) {
@@ -906,11 +973,17 @@ class MotorLearningMemory(
             mapHash = root.optString("mapHash", "")
             lastCalibrationRevalidation = root.optJSONObject("revalidation")?.let { JSONObject(it.toString()) } ?: JSONObject()
             val savedRegions = root.optJSONArray("regions") ?: JSONArray()
-            repeat(savedRegions.length()) { index -> savedRegions.optJSONObject(index)?.let { regions += LearningRegion.fromJson(it) } }
+            repeat(savedRegions.length()) { index ->
+                savedRegions.optJSONObject(index)?.let { regions += LearningRegion.fromJson(it) }
+            }
             val savedComparisons = root.optJSONArray("comparisons") ?: JSONArray()
-            repeat(savedComparisons.length()) { index -> savedComparisons.optJSONObject(index)?.let { comparisons += FuelComparison.fromJson(it) } }
+            repeat(savedComparisons.length()) { index ->
+                savedComparisons.optJSONObject(index)?.let { comparisons += FuelComparison.fromJson(it) }
+            }
             val savedSessions = root.optJSONArray("sessions") ?: JSONArray()
-            repeat(savedSessions.length()) { index -> savedSessions.optJSONObject(index)?.let { sessions += PhysicalLearningSession.fromJson(it) } }
+            repeat(savedSessions.length()) { index ->
+                savedSessions.optJSONObject(index)?.let { sessions += PhysicalLearningSession.fromJson(it) }
+            }
             sessions.filter { it.endedAt == 0L }.forEach {
                 it.endedAt = max(it.updatedAt, it.startedAt)
                 it.endReason = "PROCESS_INTERRUPTED"
@@ -921,6 +994,8 @@ class MotorLearningMemory(
     }
 
     private fun persist() {
+        // Apenas marca o estado como sujo no caminho da telemetria. A cópia
+        // consistente e toda serialização acontecem no executor dedicado.
         persistDirty.set(true)
         schedulePersistDrain()
     }
@@ -930,6 +1005,7 @@ class MotorLearningMemory(
         lastPersistFuture = persistExecutor.submit {
             try {
                 while (persistDirty.getAndSet(false)) {
+                    // O lock protege somente a cópia imutável. JSON, digest e disco ficam fora dele.
                     val snapshot = synchronized(lock) { persistenceSnapshotLocked() }
                     val newest = buildPersistedState(snapshot)
                     writePersistedState(newest)
@@ -942,8 +1018,14 @@ class MotorLearningMemory(
     }
 
     private fun persistenceSnapshotLocked(): MotorLearningPersistenceSnapshot = MotorLearningPersistenceSnapshot(
-        System.currentTimeMillis(), epoch, mapHash, lastCalibrationRevalidation.toString(),
-        LearningToleranceSettings.current.toJson().toString(), regions.map { it.persistenceCopy() }, comparisons.toList(), sessions.map { it.persistenceCopy() },
+        savedAt = System.currentTimeMillis(),
+        epoch = epoch,
+        mapHash = mapHash,
+        revalidationJson = lastCalibrationRevalidation.toString(),
+        tolerancePolicyJson = LearningToleranceSettings.current.toJson().toString(),
+        regions = regions.map { it.persistenceCopy() },
+        comparisons = comparisons.toList(),
+        sessions = sessions.map { it.persistenceCopy() },
     )
 
     private fun buildPersistedState(snapshot: MotorLearningPersistenceSnapshot): JSONObject {
@@ -951,6 +1033,7 @@ class MotorLearningMemory(
         var selectedSessionLimit = LearningMemoryBudget.MAX_REGION_SESSION_IDS
         var selected = JSONObject()
         var selectedBytes = Long.MAX_VALUE
+
         for ((visitLimit, sessionLimit) in LearningMemoryBudget.provenanceLevels) {
             val root = JSONObject()
                 .put("format", FORMAT)
@@ -959,6 +1042,7 @@ class MotorLearningMemory(
                 .put("mapHash", snapshot.mapHash)
                 .put("revalidation", JSONObject(snapshot.revalidationJson))
                 .put("tolerancePolicy", JSONObject(snapshot.tolerancePolicyJson))
+                // Persistência guarda somente ciência primária; célula/grid são derivados recalculáveis.
                 .put("regions", JSONArray(snapshot.regions.map { it.toPersistedJson(visitLimit, sessionLimit) }))
                 .put("comparisons", JSONArray(snapshot.comparisons.map { it.toJson() }))
                 .put("sessions", JSONArray(snapshot.sessions.map { it.toJson() }))
@@ -977,12 +1061,20 @@ class MotorLearningMemory(
             selectedSessionLimit = sessionLimit
             if (bytes <= LearningMemoryBudget.TARGET_PERSISTED_BYTES) break
         }
+
         selected.optJSONObject("memoryBudget")
             ?.put("payloadBytesBeforeDigest", selectedBytes)
             ?.put("targetExceeded", selectedBytes > LearningMemoryBudget.TARGET_PERSISTED_BYTES)
-            ?.put("provenanceCompacted", selectedVisitLimit < LearningMemoryBudget.MAX_REGION_VISIT_IDS || selectedSessionLimit < LearningMemoryBudget.MAX_REGION_SESSION_IDS)
+            ?.put("provenanceCompacted",
+                selectedVisitLimit < LearningMemoryBudget.MAX_REGION_VISIT_IDS ||
+                    selectedSessionLimit < LearningMemoryBudget.MAX_REGION_SESSION_IDS)
+
         if (selectedBytes > LearningMemoryBudget.TARGET_PERSISTED_BYTES) {
-            log.add("WARN", "LEARNING-BUDGET", "Estado científico excedeu o alvo de bytes mesmo sem proveniência completa; ciência preservada (${selectedBytes} bytes)")
+            log.add(
+                "WARN",
+                "LEARNING-BUDGET",
+                "Estado científico excedeu o alvo de bytes mesmo sem proveniência completa; ciência preservada (${selectedBytes} bytes)",
+            )
         }
         return selected
     }
@@ -1016,9 +1108,11 @@ class MotorLearningMemory(
         return try {
             val root = JSONObject(file.readText(Charsets.UTF_8))
             val expected = root.optString("stateDigest")
-            if (expected.isNotBlank() && canonicalDigest(root) != expected) {
-                log.add("ERROR", "LEARNING-INTEGRITY", "Divergência detectada em ${file.name}")
-                return null
+            if (expected.isNotBlank()) {
+                if (canonicalDigest(root) != expected) {
+                    log.add("ERROR", "LEARNING-INTEGRITY", "Divergência detectada em ${file.name}")
+                    return null
+                }
             }
             root
         } catch (error: Exception) {
@@ -1030,12 +1124,15 @@ class MotorLearningMemory(
     private fun canonicalDigest(json: JSONObject): String {
         val copy = JSONObject(json.toString()).apply { remove("stateDigest") }
         val sortedJson = JSONObject()
-        for (key in copy.keys().asSequence().sorted()) sortedJson.put(key, copy.get(key))
+        for (key in copy.keys().asSequence().sorted()) {
+            sortedJson.put(key, copy.get(key))
+        }
         return sha256(sortedJson.toString())
     }
 
     private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
-        .digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        .digest(value.toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
 }
 
 private data class MotorLearningPersistenceSnapshot(
@@ -1058,18 +1155,37 @@ private data class PhysicalLearningSession(
     val fuels: MutableSet<String> = linkedSetOf(),
     var endReason: String = "ACTIVE",
 ) {
-    fun durationMs(now: Long = System.currentTimeMillis()): Long = ((if (endedAt > 0L) endedAt else now) - startedAt).coerceAtLeast(0L)
-    fun persistenceCopy(): PhysicalLearningSession = copy(fuels = fuels.toCollection(linkedSetOf()))
+    fun durationMs(now: Long = System.currentTimeMillis()): Long =
+        ((if (endedAt > 0L) endedAt else now) - startedAt).coerceAtLeast(0L)
+
+    fun persistenceCopy(): PhysicalLearningSession = copy(
+        fuels = fuels.toCollection(linkedSetOf()),
+    )
+
     fun toJson(): JSONObject = JSONObject()
-        .put("id", id).put("started_at", startedAt).put("ended_at", endedAt).put("updated_at", updatedAt)
-        .put("duration_ms", durationMs()).put("samples", sampleCount).put("fuels", JSONArray(fuels.toList())).put("end_reason", endReason)
+        .put("id", id)
+        .put("started_at", startedAt)
+        .put("ended_at", endedAt)
+        .put("updated_at", updatedAt)
+        .put("duration_ms", durationMs())
+        .put("samples", sampleCount)
+        .put("fuels", JSONArray(fuels.toList()))
+        .put("end_reason", endReason)
+
     companion object {
         fun fromJson(raw: JSONObject): PhysicalLearningSession {
             val fuels = linkedSetOf<String>()
-            raw.optJSONArray("fuels")?.let { array -> repeat(array.length()) { fuels += array.optString(it) } }
+            raw.optJSONArray("fuels")?.let { array ->
+                repeat(array.length()) { fuels += array.optString(it) }
+            }
             return PhysicalLearningSession(
-                raw.optString("id", UUID.randomUUID().toString()), raw.optLong("started_at", 0L), raw.optLong("ended_at", 0L),
-                raw.optLong("updated_at", 0L), raw.optInt("samples", 0), fuels, raw.optString("end_reason", "RESTORED"),
+                id = raw.optString("id", UUID.randomUUID().toString()),
+                startedAt = raw.optLong("started_at", 0L),
+                endedAt = raw.optLong("ended_at", 0L),
+                updatedAt = raw.optLong("updated_at", 0L),
+                sampleCount = raw.optInt("samples", 0),
+                fuels = fuels,
+                endReason = raw.optString("end_reason", "RESTORED"),
             )
         }
     }
@@ -1111,10 +1227,13 @@ private data class LearningRegion(
     private var lastSessionId: String? = sessions.lastOrNull()
 
     fun update(sample: MotorSample, visitId: String, sessionId: String) {
-        val durationWeight = ContinuousLearningMath.dwellWeight(sample.endedAtElapsedMs - sample.startedAtElapsedMs)
+        val durationWeight = ContinuousLearningMath.dwellWeight(
+            sample.endedAtElapsedMs - sample.startedAtElapsedMs,
+        )
         val sampleWeight = max(0.10, sample.quality) * (0.25 + 0.75 * durationWeight)
         val total = weight + sampleWeight
-        fun blend(current: Double, incoming: Double): Double = current + (incoming - current) * sampleWeight / max(sampleWeight, total)
+        fun blend(current: Double, incoming: Double): Double =
+            current + (incoming - current) * sampleWeight / max(sampleWeight, total)
         rpmMean = blend(rpmMean, sample.rpm)
         mapMean = blend(mapMean, sample.mapBar)
         petrolMean = blend(petrolMean, sample.petrolMs)
@@ -1125,6 +1244,7 @@ private data class LearningRegion(
         qualityMean = blend(qualityMean, sample.quality)
         weight = total
         sampleCount += 1
+
         if (visitId != lastVisitId) {
             visitCount = saturatingAdd(max(visitCount, visits.size), 1)
             lastVisitId = visitId
@@ -1143,7 +1263,8 @@ private data class LearningRegion(
     fun merge(other: LearningRegion) {
         val incomingWeight = max(0.10, other.weight)
         val total = weight + incomingWeight
-        fun blend(current: Double, incoming: Double): Double = current + (incoming - current) * incomingWeight / max(incomingWeight, total)
+        fun blend(current: Double, incoming: Double): Double =
+            current + (incoming - current) * incomingWeight / max(incomingWeight, total)
         rpmMean = blend(rpmMean, other.rpmMean)
         mapMean = blend(mapMean, other.mapMean)
         petrolMean = blend(petrolMean, other.petrolMean)
@@ -1154,10 +1275,17 @@ private data class LearningRegion(
         qualityMean = blend(qualityMean, other.qualityMean)
         weight = total
         sampleCount = saturatingAdd(sampleCount, other.sampleCount)
+
         val visitOverlap = visits.intersect(other.visits).size
         val sessionOverlap = sessions.intersect(other.sessions).size
-        visitCount = saturatingAdd(max(visitCount, visits.size), (max(other.visitCount, other.visits.size) - visitOverlap).coerceAtLeast(0))
-        sessionCount = saturatingAdd(max(sessionCount, sessions.size), (max(other.sessionCount, other.sessions.size) - sessionOverlap).coerceAtLeast(0))
+        visitCount = saturatingAdd(
+            max(visitCount, visits.size),
+            (max(other.visitCount, other.visits.size) - visitOverlap).coerceAtLeast(0),
+        )
+        sessionCount = saturatingAdd(
+            max(sessionCount, sessions.size),
+            (max(other.sessionCount, other.sessions.size) - sessionOverlap).coerceAtLeast(0),
+        )
         visits += other.visits
         sessions += other.sessions
         LearningMemoryBudget.trimNewestIds(visits, LearningMemoryBudget.MAX_REGION_VISIT_IDS)
@@ -1173,7 +1301,10 @@ private data class LearningRegion(
         sessions = sessions.mapTo(linkedSetOf()) { "$source:$it" },
     )
 
-    fun persistenceCopy(): LearningRegion = copy(visits = visits.toCollection(linkedSetOf()), sessions = sessions.toCollection(linkedSetOf()))
+    fun persistenceCopy(): LearningRegion = copy(
+        visits = visits.toCollection(linkedSetOf()),
+        sessions = sessions.toCollection(linkedSetOf()),
+    )
 
     fun stage(): String = confidenceStage(sampleCount.toDouble(), max(0.0, petrolSquaredMean - petrolMean * petrolMean))
 
@@ -1181,40 +1312,84 @@ private data class LearningRegion(
         val tolerance = LearningToleranceSettings.current
         val samplePart = (sampleCount / tolerance.confidenceSampleTarget.toDouble()).coerceIn(0.0, 1.0)
         val variancePart = (1.0 - max(0.0, petrolSquaredMean - petrolMean * petrolMean) / (tolerance.referenceMaximumSpreadMs * tolerance.referenceMaximumSpreadMs)).coerceIn(0.1, 1.0)
-        return listOf(samplePart.coerceAtLeast(0.05), variancePart, qualityMean.coerceIn(0.10, 1.0)).geometricMean()
+        return listOf(
+            samplePart.coerceAtLeast(0.05),
+            variancePart,
+            qualityMean.coerceIn(0.10, 1.0),
+        ).geometricMean()
     }
 
     fun progressJson(): JSONObject = LearningToleranceSettings.current.let { tolerance -> JSONObject()
-        .put("stage", stage()).put("visits", visitCount).put("sessions", sessionCount).put("confidence", confidence())
+        .put("stage", stage())
+        .put("visits", visitCount)
+        .put("sessions", sessionCount)
+        .put("confidence", confidence())
         .put("confidence_samples", (sampleCount / tolerance.confidenceSampleTarget.toDouble()).coerceIn(0.0, 1.0))
-        .put("next_visit_target", tolerance.confidenceSampleTarget).put("rpm", rpmMean).put("map_bar", mapMean)
+        .put("next_visit_target", tolerance.confidenceSampleTarget)
+        .put("rpm", rpmMean)
+        .put("map_bar", mapMean)
     }
 
-    fun toJson(): JSONObject = toJsonWithProvenance(LearningMemoryBudget.MAX_REGION_VISIT_IDS, LearningMemoryBudget.MAX_REGION_SESSION_IDS)
-    fun toPersistedJson(visitLimit: Int, sessionLimit: Int): JSONObject = toJsonWithProvenance(visitLimit, sessionLimit)
-    fun toAdvisorJson(): JSONObject = toJsonWithProvenance(LearningMemoryBudget.MAX_REGION_VISIT_IDS, 0)
+    fun toJson(): JSONObject = toJsonWithProvenance(
+        visitLimit = LearningMemoryBudget.MAX_REGION_VISIT_IDS,
+        sessionLimit = LearningMemoryBudget.MAX_REGION_SESSION_IDS,
+    )
 
-    private fun toJsonWithProvenance(visitLimit: Int, sessionLimit: Int): JSONObject = LearningToleranceSettings.current.let { tolerance ->
-        val retainedVisits = LearningMemoryBudget.retainNewestIds(visits, visitLimit)
-        val retainedSessions = LearningMemoryBudget.retainNewestIds(sessions, sessionLimit)
-        JSONObject()
-            .put("id", id).put("fuel", fuel.wireName).put("epoch", epoch).put("rpm", rpmMean).put("map_bar", mapMean)
-            .put("petrol_ms", petrolMean).put("petrol_squared_mean", petrolSquaredMean)
-            .put("petrol_spread_ms", sqrt(max(0.0, petrolSquaredMean - petrolMean * petrolMean)))
-            .put("pressure_diff_bar", pressureMean).put("water_c", waterMean).put("gas_c", gasMean)
-            .put("quality", qualityMean).put("weight", weight).put("samples", sampleCount)
-            .put("visits", JSONArray(retainedVisits.toList())).put("sessions", JSONArray(retainedSessions.toList()))
-            .put("visit_count", max(visitCount, retainedVisits.size)).put("session_count", max(sessionCount, retainedSessions.size))
-            .put("visit_ids_retained", retainedVisits.size).put("session_ids_retained", retainedSessions.size)
-            .put("visit_ids_compacted", visitCount > retainedVisits.size).put("session_ids_compacted", sessionCount > retainedSessions.size)
-            .put("provenance_policy", LearningMemoryBudget.POLICY).put("stage", stage()).put("confidence", confidence())
-            .put("confidence_samples", (sampleCount / tolerance.confidenceSampleTarget.toDouble()).coerceIn(0.0, 1.0)).put("updated_at", updatedAt)
-    }
+    fun toPersistedJson(visitLimit: Int, sessionLimit: Int): JSONObject =
+        toJsonWithProvenance(visitLimit, sessionLimit)
+
+    fun toAdvisorJson(): JSONObject = toJsonWithProvenance(
+        visitLimit = LearningMemoryBudget.MAX_REGION_VISIT_IDS,
+        sessionLimit = 0,
+    )
+
+    private fun toJsonWithProvenance(visitLimit: Int, sessionLimit: Int): JSONObject =
+        LearningToleranceSettings.current.let { tolerance ->
+            val retainedVisits = LearningMemoryBudget.retainNewestIds(visits, visitLimit)
+            val retainedSessions = LearningMemoryBudget.retainNewestIds(sessions, sessionLimit)
+            JSONObject()
+                .put("id", id)
+                .put("fuel", fuel.wireName)
+                .put("epoch", epoch)
+                .put("rpm", rpmMean)
+                .put("map_bar", mapMean)
+                .put("petrol_ms", petrolMean)
+                .put("petrol_squared_mean", petrolSquaredMean)
+                .put("petrol_spread_ms", sqrt(max(0.0, petrolSquaredMean - petrolMean * petrolMean)))
+                .put("pressure_diff_bar", pressureMean)
+                .put("water_c", waterMean)
+                .put("gas_c", gasMean)
+                .put("quality", qualityMean)
+                .put("weight", weight)
+                .put("samples", sampleCount)
+                .put("visits", JSONArray(retainedVisits.toList()))
+                .put("sessions", JSONArray(retainedSessions.toList()))
+                .put("visit_count", max(visitCount, retainedVisits.size))
+                .put("session_count", max(sessionCount, retainedSessions.size))
+                .put("visit_ids_retained", retainedVisits.size)
+                .put("session_ids_retained", retainedSessions.size)
+                .put("visit_ids_compacted", visitCount > retainedVisits.size)
+                .put("session_ids_compacted", sessionCount > retainedSessions.size)
+                .put("provenance_policy", LearningMemoryBudget.POLICY)
+                .put("stage", stage())
+                .put("confidence", confidence())
+                .put("confidence_samples", (sampleCount / tolerance.confidenceSampleTarget.toDouble()).coerceIn(0.0, 1.0))
+                .put("updated_at", updatedAt)
+        }
 
     companion object {
         fun fromSample(sample: MotorSample, epoch: Int) = LearningRegion(
-            UUID.randomUUID().toString(), sample.fuel, epoch, sample.rpm, sample.mapBar, sample.petrolMs,
-            sample.petrolMs * sample.petrolMs, sample.pressureDiffBar, sample.waterC, sample.gasC, sample.quality,
+            id = UUID.randomUUID().toString(),
+            fuel = sample.fuel,
+            epoch = epoch,
+            rpmMean = sample.rpm,
+            mapMean = sample.mapBar,
+            petrolMean = sample.petrolMs,
+            petrolSquaredMean = sample.petrolMs * sample.petrolMs,
+            pressureMean = sample.pressureDiffBar,
+            waterMean = sample.waterC,
+            gasMean = sample.gasC,
+            qualityMean = sample.quality,
         )
 
         fun fromJson(raw: JSONObject): LearningRegion {
@@ -1222,8 +1397,15 @@ private data class LearningRegion(
             val sessionArray = raw.optJSONArray("sessions")
             val visits = retainedIds(visitArray, LearningMemoryBudget.MAX_REGION_VISIT_IDS)
             val sessions = retainedIds(sessionArray, LearningMemoryBudget.MAX_REGION_SESSION_IDS)
-            val fuel = if (raw.optString("fuel") == Mp48Fuel.CNG.wireName) Mp48Fuel.CNG else Mp48Fuel.PETROL
+            val fuel = if (raw.optString("fuel") == Mp48Fuel.CNG.wireName) {
+                Mp48Fuel.CNG
+            } else {
+                Mp48Fuel.PETROL
+            }
             val petrolMean = raw.optDouble("petrol_ms", 0.0)
+            val petrolSquaredMean = raw.optDouble("petrol_squared_mean", petrolMean * petrolMean)
+            val visitCount = max(raw.optInt("visit_count", visitArray?.length() ?: 0), visitArray?.length() ?: 0)
+            val sessionCount = max(raw.optInt("session_count", sessionArray?.length() ?: 0), sessionArray?.length() ?: 0)
             return LearningRegion(
                 id = raw.optString("id", UUID.randomUUID().toString()),
                 fuel = fuel,
@@ -1231,7 +1413,7 @@ private data class LearningRegion(
                 rpmMean = raw.optDouble("rpm", 0.0),
                 mapMean = raw.optDouble("map_bar", 0.0),
                 petrolMean = petrolMean,
-                petrolSquaredMean = raw.optDouble("petrol_squared_mean", petrolMean * petrolMean),
+                petrolSquaredMean = petrolSquaredMean,
                 pressureMean = raw.optDouble("pressure_diff_bar", 0.0),
                 waterMean = raw.optDouble("water_c", 0.0),
                 gasMean = raw.optDouble("gas_c", 0.0),
@@ -1240,8 +1422,8 @@ private data class LearningRegion(
                 sampleCount = raw.optInt("samples", 0),
                 visits = visits,
                 sessions = sessions,
-                visitCount = max(raw.optInt("visit_count", visitArray?.length() ?: 0), visitArray?.length() ?: 0),
-                sessionCount = max(raw.optInt("session_count", sessionArray?.length() ?: 0), sessionArray?.length() ?: 0),
+                visitCount = visitCount,
+                sessionCount = sessionCount,
                 updatedAt = raw.optLong("updated_at", 0L),
             )
         }
@@ -1250,11 +1432,14 @@ private data class LearningRegion(
             if (raw == null || limit <= 0) return linkedSetOf()
             val start = (raw.length() - limit).coerceAtLeast(0)
             val result = linkedSetOf<String>()
-            for (index in start until raw.length()) raw.optString(index).takeIf { it.isNotBlank() }?.let(result::add)
+            for (index in start until raw.length()) {
+                raw.optString(index).takeIf { it.isNotBlank() }?.let(result::add)
+            }
             return result
         }
 
-        private fun saturatingAdd(a: Int, b: Int): Int = (a.toLong() + b.toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        private fun saturatingAdd(a: Int, b: Int): Int =
+            (a.toLong() + b.toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 }
 
@@ -1267,9 +1452,15 @@ private data class PetrolReferenceEstimate(
     val extrapolated: Boolean = false,
 ) {
     fun toJson(): JSONObject = JSONObject()
-        .put("petrol_target_ms", petrolTargetMs).put("spread_ms", spreadMs).put("quality", quality)
-        .put("region_ids", JSONArray(regionIds)).put("region_count", regionIds.size).put("stage", stage)
-        .put("method", "RPM_MAP_WATER_WEIGHTED_SURFACE").put("extrapolated", extrapolated).put("extrapolation_weight", if (extrapolated) 0.35 else 1.0)
+        .put("petrol_target_ms", petrolTargetMs)
+        .put("spread_ms", spreadMs)
+        .put("quality", quality)
+        .put("region_ids", JSONArray(regionIds))
+        .put("region_count", regionIds.size)
+        .put("stage", stage)
+        .put("method", "RPM_MAP_WATER_WEIGHTED_SURFACE")
+        .put("extrapolated", extrapolated)
+        .put("extrapolation_weight", if (extrapolated) 0.35 else 1.0)
 }
 
 private data class FuelComparison(
@@ -1299,6 +1490,11 @@ private data class FuelComparison(
     val mapHash: String,
     val observationCount: Int = 1,
 ) {
+    /**
+     * Mantém uma única evidência independente por visita, mas deixa essa evidência amadurecer
+     * conforme novas janelas válidas chegam. A qualidade pondera as janelas sem aumentar o
+     * tamanho efetivo da amostra usado pela confiança entre visitas.
+     */
     fun consolidate(newer: FuelComparison): FuelComparison {
         require(dedupeKey == newer.dedupeKey)
         val oldCount = observationCount.coerceAtLeast(1)
@@ -1307,12 +1503,14 @@ private data class FuelComparison(
         val newWeight = (newer.quality * newCount).takeIf { it > 0.0 } ?: newCount.toDouble()
         val totalWeight = oldWeight + newWeight
         fun blended(old: Double, new: Double): Double = (old * oldWeight + new * newWeight) / totalWeight
+
         val targetMs = blended(petrolTargetMs, newer.petrolTargetMs)
         val observedMs = blended(petrolOnCngMs, newer.petrolOnCngMs)
         val differenceMs = observedMs - targetMs
         val errorPct = if (targetMs <= 0.05) 0.0 else differenceMs / targetMs * 100.0
         val direction = when {
-            abs(differenceMs) <= LearningToleranceSettings.current.equivalenceDeadbandMs || abs(errorPct) <= LearningToleranceSettings.current.equivalenceDeadbandPercent -> "EQUIVALENT"
+            abs(differenceMs) <= LearningToleranceSettings.current.equivalenceDeadbandMs ||
+                abs(errorPct) <= LearningToleranceSettings.current.equivalenceDeadbandPercent -> "EQUIVALENT"
             differenceMs > 0.0 -> "INCREASE_CNG_DELIVERY"
             else -> "DECREASE_CNG_DELIVERY"
         }
@@ -1327,30 +1525,62 @@ private data class FuelComparison(
             waterC = blended(waterC, newer.waterC),
             gasC = blended(gasC, newer.gasC),
             pressureDiffBar = blended(pressureDiffBar, newer.pressureDiffBar),
-            cngCellRow = cngCell.getInt("row"), cngCellColumn = cngCell.getInt("column"),
-            referenceCellRow = referenceCell.getInt("row"), referenceCellColumn = referenceCell.getInt("column"),
-            petrolTargetMs = targetMs, petrolOnCngMs = observedMs, differenceMs = differenceMs, errorPct = errorPct,
+            cngCellRow = cngCell.getInt("row"),
+            cngCellColumn = cngCell.getInt("column"),
+            referenceCellRow = referenceCell.getInt("row"),
+            referenceCellColumn = referenceCell.getInt("column"),
+            petrolTargetMs = targetMs,
+            petrolOnCngMs = observedMs,
+            differenceMs = differenceMs,
+            errorPct = errorPct,
             direction = direction,
-            quality = ((quality * oldCount + newer.quality * newCount) / (oldCount + newCount)).coerceIn(0.0, 1.0),
+            quality = ((quality * oldCount + newer.quality * newCount) / (oldCount + newCount))
+                .coerceIn(0.0, 1.0),
             observationCount = oldCount + newCount,
         )
     }
 
-    fun weightAt(row: Int, column: Int): Double = ContinuousLearningMath.bilinearWeights(rpm, petrolOnCngMs)
-        .firstOrNull { it.row == row && it.column == column }?.weight ?: 0.0
+    fun weightAt(row: Int, column: Int): Double =
+        ContinuousLearningMath.bilinearWeights(rpm, petrolOnCngMs)
+            .firstOrNull { it.row == row && it.column == column }
+            ?.weight ?: 0.0
+
     fun affects(row: Int, column: Int): Boolean = weightAt(row, column) > 0.0
 
     fun toJson(): JSONObject = JSONObject()
-        .put("id", id).put("dedupe_key", dedupeKey).put("visit_id", visitId).put("reference_region_id", referenceRegionId)
-        .put("session_id", sessionId).put("captured_at", capturedAt).put("origin", origin).put("rpm", rpm).put("map_bar", mapBar)
-        .put("water_c", waterC).put("gas_c", gasC).put("pressure_diff_bar", pressureDiffBar)
-        .put("cng_cell_row", cngCellRow).put("cng_cell_column", cngCellColumn).put("reference_cell_row", referenceCellRow).put("reference_cell_column", referenceCellColumn)
-        .put("continuous_cell_weights", JSONArray(ContinuousLearningMath.bilinearWeights(rpm, petrolOnCngMs).map {
-            JSONObject().put("row", it.row).put("column", it.column).put("weight", it.weight)
-        }))
+        .put("id", id)
+        .put("dedupe_key", dedupeKey)
+        .put("visit_id", visitId)
+        .put("reference_region_id", referenceRegionId)
+        .put("session_id", sessionId)
+        .put("captured_at", capturedAt)
+        .put("origin", origin)
+        .put("rpm", rpm)
+        .put("map_bar", mapBar)
+        .put("water_c", waterC)
+        .put("gas_c", gasC)
+        .put("pressure_diff_bar", pressureDiffBar)
+        .put("cng_cell_row", cngCellRow)
+        .put("cng_cell_column", cngCellColumn)
+        .put("reference_cell_row", referenceCellRow)
+        .put("reference_cell_column", referenceCellColumn)
+        .put("continuous_cell_weights", JSONArray(
+            ContinuousLearningMath.bilinearWeights(rpm, petrolOnCngMs).map {
+                JSONObject()
+                    .put("row", it.row)
+                    .put("column", it.column)
+                    .put("weight", it.weight)
+            },
+        ))
         .put("cross_cell_equivalence", cngCellRow != referenceCellRow || cngCellColumn != referenceCellColumn)
-        .put("petrol_target_ms", petrolTargetMs).put("petrol_on_cng_ms", petrolOnCngMs).put("difference_ms", differenceMs)
-        .put("error_pct", errorPct).put("direction", direction).put("quality", quality).put("epoch", epoch).put("map_hash", mapHash)
+        .put("petrol_target_ms", petrolTargetMs)
+        .put("petrol_on_cng_ms", petrolOnCngMs)
+        .put("difference_ms", differenceMs)
+        .put("error_pct", errorPct)
+        .put("direction", direction)
+        .put("quality", quality)
+        .put("epoch", epoch)
+        .put("map_hash", mapHash)
         .put("observation_count", observationCount)
 
     companion object {
@@ -1362,15 +1592,23 @@ private data class FuelComparison(
             sessionId = raw.optString("session_id", ""),
             capturedAt = raw.optLong("captured_at", 0L),
             origin = raw.optString("origin", "HISTORICAL"),
-            rpm = raw.optDouble("rpm", 0.0), mapBar = raw.optDouble("map_bar", 0.0), waterC = raw.optDouble("water_c", 0.0),
-            gasC = raw.optDouble("gas_c", 0.0), pressureDiffBar = raw.optDouble("pressure_diff_bar", 0.0),
+            rpm = raw.optDouble("rpm", 0.0),
+            mapBar = raw.optDouble("map_bar", 0.0),
+            waterC = raw.optDouble("water_c", 0.0),
+            gasC = raw.optDouble("gas_c", 0.0),
+            pressureDiffBar = raw.optDouble("pressure_diff_bar", 0.0),
             cngCellRow = raw.optInt("cng_cell_row", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_on_cng_ms", 0.0)).getInt("row")),
             cngCellColumn = raw.optInt("cng_cell_column", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_on_cng_ms", 0.0)).getInt("column")),
             referenceCellRow = raw.optInt("reference_cell_row", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_target_ms", 0.0)).getInt("row")),
             referenceCellColumn = raw.optInt("reference_cell_column", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_target_ms", 0.0)).getInt("column")),
-            petrolTargetMs = raw.optDouble("petrol_target_ms", 0.0), petrolOnCngMs = raw.optDouble("petrol_on_cng_ms", 0.0),
-            differenceMs = raw.optDouble("difference_ms", 0.0), errorPct = raw.optDouble("error_pct", 0.0), direction = raw.optString("direction", "EQUIVALENT"),
-            quality = raw.optDouble("quality", 0.0), epoch = raw.optInt("epoch", 1), mapHash = raw.optString("map_hash", ""),
+            petrolTargetMs = raw.optDouble("petrol_target_ms", 0.0),
+            petrolOnCngMs = raw.optDouble("petrol_on_cng_ms", 0.0),
+            differenceMs = raw.optDouble("difference_ms", 0.0),
+            errorPct = raw.optDouble("error_pct", 0.0),
+            direction = raw.optString("direction", "EQUIVALENT"),
+            quality = raw.optDouble("quality", 0.0),
+            epoch = raw.optInt("epoch", 1),
+            mapHash = raw.optString("map_hash", ""),
             observationCount = raw.optInt("observation_count", 1).coerceAtLeast(1),
         )
     }
@@ -1387,11 +1625,14 @@ private data class ComparisonEvidence(
     val effectiveSamples: Double = 0.0,
     val medianErrorRatio: Double = 0.0,
 ) {
-    fun actionable(direction: String): Boolean = direction != "EQUIVALENT" && direction == dominantDirection &&
-        directionConsensus >= LearningToleranceSettings.current.directionConsensusMinimum &&
-        madMs <= LearningToleranceSettings.current.comparisonMaximumMadMs &&
-        gasTemperatureSpanC <= LearningToleranceSettings.current.comparisonMaximumGasTempSpanC &&
-        pressureSpanBar <= LearningToleranceSettings.current.comparisonMaximumPressureSpanBar && effectiveSamples > 0.0
+    fun actionable(direction: String): Boolean =
+        direction != "EQUIVALENT" &&
+            direction == dominantDirection &&
+            directionConsensus >= LearningToleranceSettings.current.directionConsensusMinimum &&
+            madMs <= LearningToleranceSettings.current.comparisonMaximumMadMs &&
+            gasTemperatureSpanC <= LearningToleranceSettings.current.comparisonMaximumGasTempSpanC &&
+            pressureSpanBar <= LearningToleranceSettings.current.comparisonMaximumPressureSpanBar &&
+            effectiveSamples > 0.0
 
     fun confidence(): Double {
         val spread = (1.0 - madMs / LearningToleranceSettings.current.comparisonMaximumMadMs).coerceIn(0.0, 1.0)
@@ -1399,18 +1640,36 @@ private data class ComparisonEvidence(
     }
 
     fun toJson(): JSONObject = LearningToleranceSettings.current.let { tolerance -> JSONObject()
-        .put("stage", stage).put("dominant_direction", dominantDirection).put("direction_consensus", directionConsensus)
-        .put("median_difference_ms", medianDifferenceMs).put("mad_ms", madMs).put("gas_temperature_span_c", gasTemperatureSpanC)
-        .put("pressure_span_bar", pressureSpanBar).put("effective_samples", effectiveSamples).put("median_error_ratio", medianErrorRatio)
-        .put("stable", madMs <= tolerance.comparisonMaximumMadMs && gasTemperatureSpanC <= tolerance.comparisonMaximumGasTempSpanC && pressureSpanBar <= tolerance.comparisonMaximumPressureSpanBar)
-        .put("confidence", when (stage) { "CONFIRMED" -> 1.0; "ACCEPTED" -> 0.75; "PROVISIONAL" -> 0.50; else -> if (effectiveSamples > 0) 0.20 else 0.0 })
+        .put("stage", stage)
+        .put("dominant_direction", dominantDirection)
+        .put("direction_consensus", directionConsensus)
+        .put("median_difference_ms", medianDifferenceMs)
+        .put("mad_ms", madMs)
+        .put("gas_temperature_span_c", gasTemperatureSpanC)
+        .put("pressure_span_bar", pressureSpanBar)
+        .put("effective_samples", effectiveSamples)
+        .put("median_error_ratio", medianErrorRatio)
+        .put("stable", madMs <= tolerance.comparisonMaximumMadMs &&
+            gasTemperatureSpanC <= tolerance.comparisonMaximumGasTempSpanC &&
+            pressureSpanBar <= tolerance.comparisonMaximumPressureSpanBar)
+        .put("confidence", when (stage) {
+            "CONFIRMED" -> 1.0
+            "ACCEPTED" -> 0.75
+            "PROVISIONAL" -> 0.50
+            else -> if (effectiveSamples > 0) 0.20 else 0.0
+        })
         .put("next_visit_target", tolerance.confidenceSampleTarget)
     }
 
-    companion object { fun empty() = ComparisonEvidence("OBSERVED", "EQUIVALENT", 0.0, 0.0, 0.0, 0.0, 0.0) }
+    companion object {
+        fun empty() = ComparisonEvidence("OBSERVED", "EQUIVALENT", 0.0, 0.0, 0.0, 0.0, 0.0)
+    }
 }
 
-private data class StoredComparison(val comparison: FuelComparison, val created: Boolean)
+private data class StoredComparison(
+    val comparison: FuelComparison,
+    val created: Boolean,
+)
 
 private fun confidenceStage(density: Double, variance: Double): String = LearningToleranceSettings.current.let { tolerance -> when {
     density >= tolerance.confidenceSampleTarget * 0.8 && variance < tolerance.referenceMaximumSpreadMs * tolerance.referenceMaximumSpreadMs * 0.5 -> "CONFIRMED"
@@ -1421,7 +1680,9 @@ private fun confidenceStage(density: Double, variance: Double): String = Learnin
 
 private fun List<Double>.geometricMean(): Double {
     if (isEmpty()) return 0.0
-    return fold(1.0) { acc, value -> acc * value.coerceIn(0.0001, 1.0) }.pow(1.0 / size).coerceIn(0.0, 1.0)
+    return fold(1.0) { acc, value -> acc * value.coerceIn(0.0001, 1.0) }
+        .pow(1.0 / size)
+        .coerceIn(0.0, 1.0)
 }
 
 private fun List<Double>.median(): Double {
@@ -1431,8 +1692,10 @@ private fun List<Double>.median(): Double {
     return if (ordered.size % 2 == 1) ordered[middle] else (ordered[middle - 1] + ordered[middle]) / 2.0
 }
 
+/** A influência física na célula governa também o centro e a dispersão da evidência. */
 private fun List<Pair<Double, Double>>.weightedMedian(): Double {
-    val usable = filter { it.first.isFinite() && it.second.isFinite() && it.second > 0.0 }.sortedBy { it.first }
+    val usable = filter { it.first.isFinite() && it.second.isFinite() && it.second > 0.0 }
+        .sortedBy { it.first }
     if (usable.isEmpty()) return 0.0
     val half = usable.sumOf { it.second } / 2.0
     var cumulative = 0.0
