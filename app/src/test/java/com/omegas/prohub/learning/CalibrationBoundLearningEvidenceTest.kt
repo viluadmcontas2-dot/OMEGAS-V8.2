@@ -73,8 +73,8 @@ class CalibrationBoundLearningEvidenceTest {
         assertEquals("geo-B", cngRegion(exportedB).getString("geometry_fingerprint"))
         assertEquals(2, cngRegion(exportedB).getInt("calibration_generation"))
         assertEquals(1, exportedB.getJSONArray("comparisons").length())
-        assertTrue(exportedB.getJSONObject("lastReset").getString("reasonCode") == "CALIBRATION_IDENTITY_CHANGED")
-        assertFalse(exportedB.toString().contains("\"calibration_fingerprint\":\"cal-A\""))
+        assertEquals("cal-B", exportedB.getJSONArray("comparisons").getJSONObject(0).getString("calibration_fingerprint"))
+        assertEquals("CALIBRATION_IDENTITY_CHANGED", exportedB.getJSONObject("lastReset").getString("reasonCode"))
         store.close()
     }
 
