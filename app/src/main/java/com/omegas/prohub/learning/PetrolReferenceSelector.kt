@@ -143,9 +143,17 @@ internal object PetrolReferenceSelector {
         val selectedRegionContexts: List<SelectedRegionContext> = emptyList(),
         val referenceAvailability: ReferenceAvailabilityMetric = PetrolReferenceAvailability.record(available, reasonCode),
     ) {
+        fun selectionReason(): LearningSelectionReason = LearningSelectionReason.fromReference(
+            available = available,
+            detailReasonCode = reasonCode,
+            geometryKnown = LearningGridProjection.gridJson().optBoolean("geometryKnown", false),
+        )
+
         fun toJson(): JSONObject = JSONObject()
             .put("available", available)
             .put("reason_code", reasonCode)
+            .put("detail_reason_code", reasonCode)
+            .put("selection_reason_code", selectionReason().name)
             .put("message", message)
             .put("petrol_target_ms", petrolTargetMs ?: JSONObject.NULL)
             .put("spread_ms", spreadMs ?: JSONObject.NULL)
