@@ -10,6 +10,13 @@ package com.omegas.prohub.learning
  * transforma pressão em writer nem afirma fórmula física além do observado.
  */
 internal object PetrolReferenceEnvironmentBridge {
+    private val pressureRegionAuthority = ScientificAuthorityRegistry
+        .nativeAnchored("MP48_PRESSURE_DIFF_REGION", "E4")
+    private val pressureCurrentAuthority = ScientificAuthorityRegistry
+        .nativeAnchored("MP48_PRESSURE_DIFF_CURRENT", "E4")
+    private val mapAuthority = ScientificAuthorityRegistry
+        .nativeAnchored("MP48_RUNTIME_MAP", "E4")
+
     fun region(
         waterC: Double,
         gasTemperatureC: Double,
@@ -23,8 +30,8 @@ internal object PetrolReferenceEnvironmentBridge {
         gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_REGION"),
         pressureDiffBar = pressureDiffBar.takeIf(Double::isFinite),
         pressureFreshness = freshness(pressureDiffBar, PetrolReferenceSelector.ContextFreshness.OBSERVED),
-        pressureSource = source(pressureDiffBar, "NATIVE_ANCHORED:MP48_PRESSURE_DIFF_REGION:E4"),
-        mapSource = "NATIVE_ANCHORED:MP48_RUNTIME_MAP:E4",
+        pressureSource = source(pressureDiffBar, pressureRegionAuthority.token()),
+        mapSource = mapAuthority.token(),
     )
 
     fun request(
@@ -40,8 +47,8 @@ internal object PetrolReferenceEnvironmentBridge {
         gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_CURRENT"),
         pressureDiffBar = pressureDiffBar.takeIf(Double::isFinite),
         pressureFreshness = freshness(pressureDiffBar, PetrolReferenceSelector.ContextFreshness.CURRENT),
-        pressureSource = source(pressureDiffBar, "NATIVE_ANCHORED:MP48_PRESSURE_DIFF_CURRENT:E4"),
-        mapSource = "NATIVE_ANCHORED:MP48_RUNTIME_MAP:E4",
+        pressureSource = source(pressureDiffBar, pressureCurrentAuthority.token()),
+        mapSource = mapAuthority.token(),
     )
 
     private fun freshness(
