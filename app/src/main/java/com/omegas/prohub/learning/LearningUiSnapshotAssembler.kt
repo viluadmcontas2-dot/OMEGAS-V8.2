@@ -44,12 +44,10 @@ object LearningUiSnapshotAssembler {
             .put("cells", cells)
             .put("integrity", integrity)
         val advice = AssistedCalibrationAdvisor.analyze(adviceInput)
-            .put(
-                "residualSpatialStats",
-                ResidualSpatialStats.from(
-                    AssistedCalibrationAdvisor.analyze(adviceInput).optJSONArray("mapResidualSuggestions") ?: JSONArray(),
-                ),
-            )
+        advice.put(
+            "residualSpatialStats",
+            ResidualSpatialStats.from(advice.optJSONArray("mapResidualSuggestions") ?: JSONArray()),
+        )
         val result = adviceInput
             .put("cells", cells)
             .put("integrity", integrity)
