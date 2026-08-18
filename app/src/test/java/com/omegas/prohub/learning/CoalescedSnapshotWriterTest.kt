@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class CoalescedSnapshotWriterTest {
     @Test
-    fun `slow storage coalesces intermediate snapshots and persists the newest state`() {
+    fun `slow storage coalesces one thousand intermediate snapshots and persists newest state`() {
         val directory = Files.createTempDirectory("omegas-snapshot-writer").toFile()
         val target = directory.resolve("evidence.json")
         val firstWriteStarted = CountDownLatch(1)
@@ -31,18 +31,22 @@ class CoalescedSnapshotWriterTest {
         try {
             assertTrue(writer.submit(JSONObject().put("sequence", 1).toString()))
             assertTrue(firstWriteStarted.await(1L, TimeUnit.SECONDS))
-            (2..100).forEach { sequence ->
+            (2..1_001).forEach { sequence ->
                 assertTrue(writer.submit(JSONObject().put("sequence", sequence).toString()))
             }
             releaseFirstWrite.countDown()
             assertTrue(writer.flush(5_000L))
 
-            assertEquals(100, JSONObject(target.readText()).getInt("sequence"))
+            assertEquals(1_001, JSONObject(target.readText()).getInt("sequence"))
             val metrics = writer.metricsJson()
-            assertEquals(100L, metrics.getLong("requests"))
+            assertEquals(1_001L, metrics.getLong("requests"))
             assertTrue(metrics.getLong("writes") <= 3L)
-            assertTrue(metrics.getLong("coalesced") >= 97L)
+            assertTrue(metrics.getLong("coalesced") >= 998L)
             assertEquals(0L, metrics.getLong("failures"))
+            assertTrue(metrics.has("lastQueueDelayMs"))
+            assertTrue(metrics.has("maxQueueDelayMs"))
+            assertTrue(metrics.has("lastWriteDurationMs"))
+            assertTrue(metrics.has("maxWriteDurationMs"))
         } finally {
             releaseFirstWrite.countDown()
             writer.close()
