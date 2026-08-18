@@ -1,3 +1,5 @@
+# Verification trigger authorized by the owner's 2026-08-18 finalizing campaign.
+# This workflow never assembles or uploads an APK.
 name: Verify OMEGAS V8.2 pre-APK
 
 on:
