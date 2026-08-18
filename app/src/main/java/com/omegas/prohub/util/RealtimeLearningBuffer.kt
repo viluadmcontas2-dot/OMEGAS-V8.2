@@ -26,6 +26,8 @@ class RealtimeLearningBuffer(
     companion object {
         /** Limite duro: o backlog quente deve representar segundos, nunca minutos. */
         const val MAX_HOT_EVIDENCE = 3
+        /** Estimativa conservadora quando o producer ainda não fornece tamanho próprio. */
+        const val DEFAULT_RETAINED_TASK_BYTES = 768
     }
 
     private data class Task(
@@ -115,7 +117,7 @@ class RealtimeLearningBuffer(
         generation: Long,
         sequence: Long,
         important: Boolean,
-        estimatedBytes: Int = 0,
+        estimatedBytes: Int = DEFAULT_RETAINED_TASK_BYTES,
         work: () -> Unit,
     ): Boolean = submit(
         generation = generation,
@@ -129,7 +131,7 @@ class RealtimeLearningBuffer(
         generation: Long,
         sequence: Long,
         workClass: EvidenceWorkClass,
-        estimatedBytes: Int = 0,
+        estimatedBytes: Int = DEFAULT_RETAINED_TASK_BYTES,
         work: () -> Unit,
     ): Boolean {
         submittedFrames.incrementAndGet()
@@ -194,7 +196,8 @@ class RealtimeLearningBuffer(
             .put("queueBoundDiagnostic", 1)
             .put("overloadPolicy", "SUPERSEDE_LOWEST_VALUE_PENDING_OR_REJECT_INCOMING")
             .put("acquisitionDropAllowed", false)
-            .put("pendingBytesKind", "ESTIMATED_RETAINED_PAYLOAD")
+            .put("pendingBytesKind", "DECLARED_ESTIMATE_NOT_HEAP_MEASUREMENT")
+            .put("defaultRetainedTaskBytes", DEFAULT_RETAINED_TASK_BYTES)
             .put("cpuAccounting", "ANDROID_THREAD_CPU_TIME_WHEN_AVAILABLE")
             .put("accepting", accepting.get())
             .put("generation", currentGeneration)
