@@ -1,6 +1,7 @@
 package com.omegas.prohub.service
 
 import com.omegas.prohub.calibration.V7CalibrationCoordinator
+import com.omegas.prohub.learning.LearningMutationAuthority
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
 import com.omegas.prohub.learning.PredictorInterpolator
 import com.omegas.v7.runtime.SuggestionTargetV7
@@ -80,8 +81,54 @@ private object PredictorStateCache {
     }
 }
 
+/**
+ * Owner 096: a sessão V7 pode conservar sugestões históricas enquanto uma escrita
+ * parcial/recovery torna a calibração física desconhecida. Nesse intervalo elas
+ * continuam visíveis como contexto, mas nunca permanecem acionáveis nem PENDING
+ * na projeção consumida pela UI. O estado persistido não é apagado.
+ */
+private fun mutationSafeCalibrationProjection(source: JSONObject): JSONObject {
+    val mutation = LearningMutationAuthority.current()
+    val projected = JSONObject(source.toString())
+        .put("learningMutation", mutation.toJson())
+        .put("actionabilityBlocked", mutation.blocksActiveScience)
+    if (!mutation.blocksActiveScience) return projected
+
+    var blockedPending = 0
+    val items = projected.optJSONArray("suggestionItems")
+    if (items != null) {
+        repeat(items.length()) { index ->
+            val item = items.optJSONObject(index) ?: return@repeat
+            if (item.optString("lifecycle") == "PENDING") {
+                blockedPending += 1
+                item.put("storedLifecycle", "PENDING")
+                    .put("lifecycle", "OBSERVING")
+            }
+            item.put("actionable", false)
+                .put("actionabilityBlockedBy", mutation.state.name)
+        }
+    }
+    projected.put("suggestions", 0)
+        .put("suggestionPending", 0)
+        .put("suggestionObserving", projected.optInt("suggestionObserving", 0) + blockedPending)
+        .put("actionabilityBlockReason", mutation.state.name)
+    return projected
+}
+
+private fun mutationBlockedOperation(operation: String): JSONObject? {
+    val mutation = LearningMutationAuthority.current()
+    if (!mutation.blocksActiveScience) return null
+    return JSONObject()
+        .put("ok", false)
+        .put("operation", operation)
+        .put("reasonCode", mutation.state.name)
+        .put("error", "Calibração física ainda não reconciliada; releitura válida é obrigatória antes de usar sugestões")
+        .put("learningMutation", mutation.toJson())
+        .put("automaticWrite", false)
+}
+
 fun TelemetryForegroundService.v7CalibrationStateJson(): String =
-    JSONObject(V7CalibrationRegistry.get(this).stateJson().toString())
+    mutationSafeCalibrationProjection(V7CalibrationRegistry.get(this).stateJson())
         .put("predictor", try {
             PredictorStateCache.get(this)
         } catch (error: Exception) {
@@ -114,9 +161,10 @@ fun TelemetryForegroundService.v7ReconcileConfirmedManualWrite(target: String): 
 }
 
 fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String): String = try {
-    V7CalibrationRegistry.get(this)
-        .synchronizeAdvisorSuggestions(JSONObject(payload))
-        .toString()
+    mutationBlockedOperation("synchronize_advisor_suggestions")?.toString()
+        ?: V7CalibrationRegistry.get(this)
+            .synchronizeAdvisorSuggestions(JSONObject(payload))
+            .toString()
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
@@ -125,9 +173,10 @@ fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String):
 }
 
 fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String = try {
-    V7CalibrationRegistry.get(this)
-        .ingestLearningSnapshot(JSONObject(payload))
-        .toString()
+    mutationBlockedOperation("ingest_learning_snapshot")?.toString()
+        ?: V7CalibrationRegistry.get(this)
+            .ingestLearningSnapshot(JSONObject(payload))
+            .toString()
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
@@ -136,7 +185,8 @@ fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String
 }
 
 fun TelemetryForegroundService.v7ApplySuggestion(suggestionId: String): String = try {
-    V7CalibrationRegistry.get(this).applySuggestionToEcu(suggestionId).toString()
+    mutationBlockedOperation("apply_suggestion")?.toString()
+        ?: V7CalibrationRegistry.get(this).applySuggestionToEcu(suggestionId).toString()
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
