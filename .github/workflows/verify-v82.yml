@@ -1,7 +1,7 @@
 # Verification trigger authorized by the owner's 2026-08-18 finalizing campaign.
 # This workflow never assembles or uploads an APK.
 # Diagnostic broad gate: publishes first useful failure line in a readable legacy status context.
-# Diagnostic run marker: readable-status-v5.
+# Diagnostic run marker: readable-status-v6.
 name: Verify OMEGAS V8.2 pre-APK
 
 on:
