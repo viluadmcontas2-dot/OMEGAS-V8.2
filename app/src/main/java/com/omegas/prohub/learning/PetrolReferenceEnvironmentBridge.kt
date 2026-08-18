@@ -4,9 +4,10 @@ package com.omegas.prohub.learning
  * Único adaptador entre o contexto físico armazenado no Learning e o selector
  * de referência de gasolina.
  *
- * Owner 075: água + temperatura do gás atravessam o pipeline com knownness e
- * provenance explícitos. Pressão já chega a esta fronteira para evitar outro
- * rewiring do MotorLearningMemory, mas permanece UNKNOWN/inativa até o owner 076.
+ * Água e temperatura do gás atravessam como contexto OMEGAS. Pressão
+ * diferencial/MAP carregam provenance `NATIVE_ANCHORED` porque a aquisição
+ * nativa MP48 possui evidência E4 de zoneamento/limites de pressão. Isso não
+ * transforma pressão em writer nem afirma fórmula física além do observado.
  */
 internal object PetrolReferenceEnvironmentBridge {
     fun region(
@@ -21,9 +22,9 @@ internal object PetrolReferenceEnvironmentBridge {
         gasTemperatureFreshness = freshness(gasTemperatureC, PetrolReferenceSelector.ContextFreshness.OBSERVED),
         gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_REGION"),
         pressureDiffBar = pressureDiffBar.takeIf(Double::isFinite),
-        pressureFreshness = PetrolReferenceSelector.ContextFreshness.UNKNOWN,
-        pressureSource = "OWNER_076_PENDING",
-        mapSource = "MP48_RUNTIME_REGION",
+        pressureFreshness = freshness(pressureDiffBar, PetrolReferenceSelector.ContextFreshness.OBSERVED),
+        pressureSource = source(pressureDiffBar, "NATIVE_ANCHORED:MP48_PRESSURE_DIFF_REGION:E4"),
+        mapSource = "NATIVE_ANCHORED:MP48_RUNTIME_MAP:E4",
     )
 
     fun request(
@@ -38,9 +39,9 @@ internal object PetrolReferenceEnvironmentBridge {
         gasTemperatureFreshness = freshness(gasTemperatureC, PetrolReferenceSelector.ContextFreshness.CURRENT),
         gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_CURRENT"),
         pressureDiffBar = pressureDiffBar.takeIf(Double::isFinite),
-        pressureFreshness = PetrolReferenceSelector.ContextFreshness.UNKNOWN,
-        pressureSource = "OWNER_076_PENDING",
-        mapSource = "MP48_RUNTIME_CURRENT",
+        pressureFreshness = freshness(pressureDiffBar, PetrolReferenceSelector.ContextFreshness.CURRENT),
+        pressureSource = source(pressureDiffBar, "NATIVE_ANCHORED:MP48_PRESSURE_DIFF_CURRENT:E4"),
+        mapSource = "NATIVE_ANCHORED:MP48_RUNTIME_MAP:E4",
     )
 
     private fun freshness(
