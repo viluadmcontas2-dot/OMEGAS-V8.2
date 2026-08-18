@@ -45,10 +45,16 @@ def test_057a_router_has_all_semantic_classes_and_never_controls_acquisition():
     assert "MAX_HOT_EVIDENCE = 3" in buffer
 
 
-def test_063a_snapshot_persistence_is_deferred_and_coalesced_after_sample_formation():
+def test_063a_snapshot_persistence_starts_only_after_material_evidence_revision():
     store = read("app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt")
+    gate = read("app/src/main/java/com/omegas/prohub/learning/MaterialPersistenceGate.kt")
     writer = read("app/src/main/java/com/omegas/prohub/learning/CoalescedSnapshotWriter.kt")
-    assert "if (source != null) persistEvidenceState()" in store
+    assert "private val persistenceGate = MaterialPersistenceGate()" in store
+    assert "prepared.learningEligible && prepared.sample != null" in store
+    assert "persistenceGate.markMaterialChange()" in store
+    assert "if (!persistenceGate.shouldRequest(forceBoundary)) return" in store
+    assert "if (source != null) persistEvidenceState()" not in store
+    assert "PERSIST_AFTER_MATERIAL_EVIDENCE_REVISION" in gate
     assert "latestPayloadProvider" in writer
     assert "payloadProvider" in writer
     assert "executor.execute { drain() }" in writer
