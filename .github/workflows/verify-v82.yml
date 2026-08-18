@@ -39,36 +39,65 @@ jobs:
           git status --short
 
       - name: Structural Python contracts
+        id: pytest
+        continue-on-error: true
         run: python3 -m pytest -q tests
 
       - name: JVM unit tests
+        id: jvm
+        continue-on-error: true
         run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
 
       - name: Android lint
+        id: lint
+        continue-on-error: true
         run: ./gradlew --no-daemon --stacktrace :app:lintDebug
 
-      - name: Publish successful verification status
-        if: success()
+      - name: Publish verification statuses
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          PYTEST_OUTCOME: ${{ steps.pytest.outcome }}
+          JVM_OUTCOME: ${{ steps.jvm.outcome }}
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
         run: |
-          curl --fail-with-body -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d '{"state":"success","context":"v8.2/preapk-verify","description":"pytest + JVM unit tests + Android lint passed"}'
+          publish_status() {
+            context="$1"
+            outcome="$2"
+            description="$3"
+            if [ "$outcome" = "success" ]; then state="success"; else state="failure"; fi
+            curl --fail-with-body -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+              -d "{\"state\":\"${state}\",\"context\":\"${context}\",\"description\":\"${description}\"}"
+          }
+          publish_status "v8.2/pytest" "$PYTEST_OUTCOME" "structural Python contracts"
+          publish_status "v8.2/jvm" "$JVM_OUTCOME" "JVM unit tests"
+          publish_status "v8.2/lint" "$LINT_OUTCOME" "Android lint"
 
-      - name: Publish failed verification status
-        if: failure()
+      - name: Enforce aggregate verification result
+        if: always()
         env:
+          PYTEST_OUTCOME: ${{ steps.pytest.outcome }}
+          JVM_OUTCOME: ${{ steps.jvm.outcome }}
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          if [ "$PYTEST_OUTCOME" = "success" ] && [ "$JVM_OUTCOME" = "success" ] && [ "$LINT_OUTCOME" = "success" ]; then
+            state="success"
+            description="pytest + JVM unit tests + Android lint passed"
+          else
+            state="failure"
+            description="one or more pre-APK verification stages failed"
+          fi
           curl --fail-with-body -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d '{"state":"failure","context":"v8.2/preapk-verify","description":"pre-APK verification failed; inspect workflow logs"}'
+            -d "{\"state\":\"${state}\",\"context\":\"v8.2/preapk-verify\",\"description\":\"${description}\"}"
+          [ "$state" = "success" ]
