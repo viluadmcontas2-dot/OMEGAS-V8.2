@@ -144,6 +144,13 @@ object ScientificConstantRegistry {
             legacy("selector.CONFIDENCE_STAGE_CONFIRMED_DENSITY", 0.8, "ratio", "PetrolReferenceSelector", "density around confirmed boundary"),
             legacy("selector.CONFIDENCE_STAGE_ACCEPTED_DENSITY", 0.5, "ratio", "PetrolReferenceSelector", "density around accepted boundary"),
             legacy("selector.CONFIDENCE_STAGE_PROVISIONAL_DENSITY", 0.2, "ratio", "PetrolReferenceSelector", "density around provisional boundary"),
+            legacy(
+                "novelty.FULLY_NEW_FRACTION",
+                ContinuousWindowNovelty.FULLY_NEW_FRACTION,
+                "fraction",
+                "SignalLearningStore",
+                "8-frame boundary: 5 new remains correlated; 6 new is fully-new",
+            ),
             ScientificConstant(
                 "BoundedRobustPetrolSummary.MAX_RETAINED_SAMPLES",
                 BoundedRobustPetrolSummary.MAX_RETAINED_SAMPLES.toString(),
