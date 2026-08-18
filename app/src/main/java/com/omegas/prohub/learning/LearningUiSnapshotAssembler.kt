@@ -29,6 +29,7 @@ object LearningUiSnapshotAssembler {
         val regions = reconciled.optJSONArray("regions") ?: JSONArray()
         val epoch = reconciled.optInt("epoch", 1).coerceAtLeast(1)
         val comparisons = reconciled.optJSONArray("comparisons") ?: JSONArray()
+        decorateEvidenceProvenance(comparisons)
         val cells = LearningGridProjection.project(regions, epoch)
         val mapHash = reconciled.optString("mapHash", reconciled.optString("map_hash", ""))
         val integrity = LearningGridProjection.integrity(
@@ -39,6 +40,7 @@ object LearningUiSnapshotAssembler {
             mapHash = mapHash,
         )
         val adviceInput = JSONObject(reconciled.toString())
+            .put("comparisons", comparisons)
             .put("cells", cells)
             .put("integrity", integrity)
         val advice = AssistedCalibrationAdvisor.analyze(adviceInput)
@@ -57,6 +59,31 @@ object LearningUiSnapshotAssembler {
         cachedRevision = revision
         cachedPayload = result.toString()
         return JSONObject(cachedPayload)
+    }
+
+    /**
+     * Owner 090: deixa a proveniência científica explícita sem inventar um novo
+     * multiplicador de confiança. O peso `quality` já é produzido pelo selector
+     * com distância, dispersão e a penalização de extrapolação; o Advisor usa esse
+     * mesmo peso. Aqui apenas tornamos essa relação auditável na serialização.
+     */
+    private fun decorateEvidenceProvenance(comparisons: JSONArray) {
+        repeat(comparisons.length()) { index ->
+            val comparison = comparisons.optJSONObject(index) ?: return@repeat
+            val origin = comparison.optString("origin", "")
+            val referenceContexts = comparison.optJSONArray("reference_contexts") ?: JSONArray()
+            val explicitExtrapolated = comparison.optBoolean("extrapolated", false)
+            val referenceProvenance = when {
+                explicitExtrapolated || origin.contains("EXTRAPOL", ignoreCase = true) -> "EXTRAPOLATED"
+                referenceContexts.length() > 0 || origin.contains("SURFACE", ignoreCase = true) -> "AGGREGATED_INTERPOLATED"
+                else -> "OBSERVED"
+            }
+            comparison
+                .put("reference_provenance", referenceProvenance)
+                .put("cng_value_provenance", "OBSERVED")
+                .put("provenance_confidence_basis", "QUALITY_FROM_REFERENCE_SELECTOR")
+                .put("provenance_effective_weight", comparison.optDouble("quality", 0.0).coerceIn(0.0, 1.0))
+        }
     }
 
     private fun revisionKey(rawSnapshot: JSONObject): String {
