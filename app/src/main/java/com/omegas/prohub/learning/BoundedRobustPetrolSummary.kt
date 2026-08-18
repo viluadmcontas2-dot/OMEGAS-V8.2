@@ -42,20 +42,26 @@ internal class BoundedRobustPetrolSummary private constructor(
             if (retained.isEmpty() && fallback?.isFinite() == true) retained.addLast(fallback)
             return BoundedRobustPetrolSummary(retained, observed.coerceAtLeast(retained.size.toLong()))
         }
+
+        private fun saturatingAdd(left: Long, right: Long): Long = when {
+            right <= 0L -> left
+            left >= Long.MAX_VALUE - right -> Long.MAX_VALUE
+            else -> left + right
+        }
     }
 
     fun observe(value: Double) {
         if (!value.isFinite()) return
         retained.addLast(value)
         while (retained.size > MAX_RETAINED_SAMPLES) retained.removeFirst()
-        totalObserved = (totalObserved + 1L).coerceAtMost(Long.MAX_VALUE)
+        totalObserved = saturatingAdd(totalObserved, 1L)
     }
 
     fun merge(other: BoundedRobustPetrolSummary) {
         other.retained.forEach(::observe)
-        val combinedHistorical = (totalObserved + (other.totalObserved - other.retained.size).coerceAtLeast(0L))
-            .coerceAtMost(Long.MAX_VALUE)
-        totalObserved = combinedHistorical.coerceAtLeast(retained.size.toLong())
+        val historicalOnly = (other.totalObserved - other.retained.size).coerceAtLeast(0L)
+        totalObserved = saturatingAdd(totalObserved, historicalOnly)
+            .coerceAtLeast(retained.size.toLong())
     }
 
     fun retainedCount(): Int = retained.size
