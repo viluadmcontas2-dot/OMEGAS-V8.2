@@ -22,12 +22,12 @@ def test_material_calibration_key_excludes_usb_session_but_keeps_required_identi
     assert '.put("map_hash", mapHash)' in source
 
 
-def test_runtime_reconciles_identity_from_composite_read_and_clears_on_boundaries():
+def test_runtime_reconciles_identity_from_composite_read_and_current_geometry():
     source = read("app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt")
     assert "CompositeCalibrationReader(serialAdmission)" in source
     assert "CompositeCalibrationSnapshot.promote(raw)" in source
     assert "CalibrationIdentity.fromComposite(" in source
-    assert "LearningCalibrationBinding.fromIdentity(identity)" in source
+    assert "LearningCalibrationBinding.fromIdentity(identity, composite.mapGeometry)" in source
     assert "LearningCalibrationAuthority.publish(binding)" in source
     assert source.count("LearningCalibrationAuthority.clear()") >= 3
 
