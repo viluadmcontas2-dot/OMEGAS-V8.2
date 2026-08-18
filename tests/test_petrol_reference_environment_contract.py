@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SELECTOR = ROOT / "app/src/main/java/com/omegas/prohub/learning/PetrolReferenceSelector.kt"
 MEMORY = ROOT / "app/src/main/java/com/omegas/prohub/learning/MotorLearningMemory.kt"
 ANALYZER = ROOT / "app/src/main/java/com/omegas/prohub/learning/MotorSampleAnalyzer.kt"
+BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/learning/PetrolReferenceEnvironmentBridge.kt"
 
 
 class PetrolReferenceEnvironmentContract(unittest.TestCase):
@@ -46,14 +47,29 @@ class PetrolReferenceEnvironmentContract(unittest.TestCase):
         ):
             self.assertIn(token, memory)
 
-    def test_current_selector_call_is_explicitly_detectable_until_full_context_is_wired(self):
+    def test_real_selector_call_wires_region_and_current_gas_temperature(self):
         memory = MEMORY.read_text("utf-8")
-        self.assertIn("PetrolReferenceSelector.Region(", memory)
-        self.assertIn("PetrolReferenceSelector.Request(", memory)
-        # This test intentionally reports the integration seam. It does not declare
-        # it complete; the execution receipt must compare these fields before PASS.
-        self.assertIn("waterC = region.waterMean", memory)
-        self.assertIn("waterC = sample.waterC", memory)
+        for token in (
+            "environment = PetrolReferenceEnvironmentBridge.region(",
+            "gasTemperatureC = region.gasMean",
+            "environment = PetrolReferenceEnvironmentBridge.request(",
+            "gasTemperatureC = sample.gasC",
+        ):
+            self.assertIn(token, memory)
+
+        bridge = BRIDGE.read_text("utf-8")
+        self.assertIn("gasTemperatureC = gasTemperatureC.takeIf(Double::isFinite)", bridge)
+        self.assertIn("gasTemperatureFreshness = freshness(gasTemperatureC", bridge)
+        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_REGION")', bridge)
+        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_CURRENT")', bridge)
+
+    def test_owner_075_does_not_turn_gas_temperature_or_pressure_into_native_gate(self):
+        bridge = BRIDGE.read_text("utf-8")
+        selector = SELECTOR.read_text("utf-8")
+        self.assertIn('pressureSource = "OWNER_076_PENDING"', bridge)
+        self.assertIn("pressureFreshness = PetrolReferenceSelector.ContextFreshness.UNKNOWN", bridge)
+        self.assertIn('"gas_temperature_used_as_native_gate", false', selector)
+        self.assertIn('"pressure_used_as_native_gate", false', selector)
 
 
 if __name__ == "__main__":
