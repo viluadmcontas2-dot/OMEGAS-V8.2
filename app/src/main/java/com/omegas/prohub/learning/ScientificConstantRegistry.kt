@@ -145,6 +145,17 @@ object ScientificConstantRegistry {
             legacy("selector.CONFIDENCE_STAGE_ACCEPTED_DENSITY", 0.5, "ratio", "PetrolReferenceSelector", "density around accepted boundary"),
             legacy("selector.CONFIDENCE_STAGE_PROVISIONAL_DENSITY", 0.2, "ratio", "PetrolReferenceSelector", "density around provisional boundary"),
             ScientificConstant(
+                "BoundedRobustPetrolSummary.MAX_RETAINED_SAMPLES",
+                BoundedRobustPetrolSummary.MAX_RETAINED_SAMPLES.toString(),
+                "samples/region",
+                "Bounded recent robust-tail resource budget; not physical/native truth",
+                "BoundedRobustPetrolSummary",
+                "10k observations retain at most budget while totalObserved continues",
+                "F4 robust petrol memory",
+                REVISION,
+                ScientificConstantClass.RESOURCE_BUDGET,
+            ),
+            ScientificConstant(
                 "VisitComparisonAccumulator.MAX_VISIT_WEIGHT", VisitComparisonAccumulator.MAX_VISIT_WEIGHT.toString(), "weight",
                 "Bound repeated windows from one physical visit", "VisitComparisonAccumulator",
                 "10k correlated windows do not exceed visit cap", "F4 novelty/visit weighting", REVISION,
