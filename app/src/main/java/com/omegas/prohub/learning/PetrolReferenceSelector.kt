@@ -93,6 +93,7 @@ internal object PetrolReferenceSelector {
         val petrolMs: Double,
         val confidence: Double,
         val sampleCount: Int,
+        val updatedAtMs: Long = 0L,
         val environment: EnvironmentalContext = EnvironmentalContext(
             waterC = waterC,
             waterFreshness = if (knownTemperature(waterC)) ContextFreshness.OBSERVED else ContextFreshness.UNKNOWN,
@@ -113,10 +114,12 @@ internal object PetrolReferenceSelector {
 
     data class SelectedRegionContext(
         val regionId: String,
+        val updatedAtMs: Long,
         val environment: EnvironmentalContext,
     ) {
         fun toJson(): JSONObject = JSONObject()
             .put("region_id", regionId)
+            .put("updated_at_ms", updatedAtMs)
             .put("environment", environment.toJson())
     }
 
@@ -266,7 +269,7 @@ internal object PetrolReferenceSelector {
                 nearestWaterDelta = closest.waterDelta,
                 temperatureCompared = closest.temperatureCompared,
                 requestEnvironment = request.environment,
-                selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.environment) },
+                selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.updatedAtMs, it.region.environment) },
             )
         }
 
@@ -303,7 +306,7 @@ internal object PetrolReferenceSelector {
                     nearestWaterDelta = closest.waterDelta,
                     temperatureCompared = closest.temperatureCompared,
                     requestEnvironment = request.environment,
-                    selectedRegionContexts = listOf(SelectedRegionContext(closest.region.id, closest.region.environment)),
+                    selectedRegionContexts = listOf(SelectedRegionContext(closest.region.id, closest.region.updatedAtMs, closest.region.environment)),
                 )
             }
             return Result(
@@ -321,7 +324,7 @@ internal object PetrolReferenceSelector {
                 nearestWaterDelta = closest.waterDelta,
                 temperatureCompared = closest.temperatureCompared,
                 requestEnvironment = request.environment,
-                selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.environment) },
+                selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.updatedAtMs, it.region.environment) },
             )
         }
 
@@ -356,7 +359,7 @@ internal object PetrolReferenceSelector {
             nearestWaterDelta = closest.waterDelta,
             temperatureCompared = closest.temperatureCompared,
             requestEnvironment = request.environment,
-            selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.environment) },
+            selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.updatedAtMs, it.region.environment) },
         )
     }
 
