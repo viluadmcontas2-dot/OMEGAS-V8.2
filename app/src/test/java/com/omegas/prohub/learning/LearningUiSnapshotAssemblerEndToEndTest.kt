@@ -27,7 +27,7 @@ class LearningUiSnapshotAssemblerEndToEndTest {
         assertTrue(integrity.getBoolean("ok"))
         assertTrue(actionable(advice) > 0)
         assertEquals(comparisons.length(), second.getJSONArray("comparisons").length())
-        assertEquals("PERSISTED_REGIONS_RECONCILED_ADVISOR", first.getString("uiPipeline"))
+        assertEquals("PERSISTED_REVISION_CACHE", first.getString("uiPipeline"))
     }
 
     @Test
