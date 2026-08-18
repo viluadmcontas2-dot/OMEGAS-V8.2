@@ -118,9 +118,6 @@ class NativeRuntimeManager(
         calibrationIdentityGeometry = ""
         calibrationIdentityGeneration = -1
         calibrationIdentityError = ""
-        // O mesmo lock usado pelo ingest científico fecha a fronteira N → N+1.
-        // Se uma evidência N já entrou no bloco crítico, ela termina antes da troca;
-        // se ainda não entrou, verá a nova geração e será descartada antes do ingest.
         val learningState = synchronized(learningSessionLock) {
             currentUsbSessionId = sessionId
             latestLearningSequence = 0L
@@ -215,10 +212,8 @@ class NativeRuntimeManager(
         return start()
     }
 
-    /** Única autoridade serial disponibilizada aos managers Android. */
     fun serialScheduler(): Mp48SerialScheduler = serialAdmission
 
-    /** Estado vivo tipado. Nenhum consumidor deve reconstruí-lo a partir de JSON. */
     fun currentTelemetryFrame(): RuntimeTelemetryFrame? = latestTelemetryState.current()
 
     fun telemetryStateMetricsJson(): JSONObject = latestTelemetryState.metrics().let { metrics ->
@@ -321,10 +316,6 @@ class NativeRuntimeManager(
         return result
     }
 
-    /**
-     * Imports only contextual evidence from a read-only AutoCal snapshot.
-     * It never prepares or invokes any ECU writer.
-     */
     fun importNativeAutoCalSnapshot(snapshot: JSONObject): JSONObject {
         flushLearning("antes de importar contexto AutoCal")
         val result = learning.importNativeSnapshot(snapshot)
@@ -411,7 +402,7 @@ class NativeRuntimeManager(
                     provenance = provenance,
                 )
                 if (expectedSessionId != currentUsbSessionId || !usb.connected) return@execute
-                val binding = LearningCalibrationBinding.fromIdentity(identity)
+                val binding = LearningCalibrationBinding.fromIdentity(identity, composite.mapGeometry)
                 LearningCalibrationAuthority.publish(binding)
                 calibrationIdentityFingerprint = binding.calibrationFingerprint
                 calibrationIdentityGeometry = binding.geometryFingerprint
@@ -458,8 +449,6 @@ class NativeRuntimeManager(
         )
         if (!latestTelemetryState.publish(typedFrame)) return
 
-        // Somente estado primitivo/tipado na callback da ECU. Toda serialização
-        // JSON de compatibilidade acontece no worker latest-only abaixo.
         running = true
         ready = true
         lastError = ""
@@ -497,11 +486,6 @@ class NativeRuntimeManager(
         }
     }
 
-    /**
-     * Projeção legada/visual executada somente no worker de delivery. A geração é
-     * revalidada antes e dentro do lock de snapshot para callback atrasada de N
-     * nunca substituir N+1.
-     */
     private fun projectTelemetryCompatibility(
         telemetry: Mp48Telemetry,
         decision: SampleDecision,
