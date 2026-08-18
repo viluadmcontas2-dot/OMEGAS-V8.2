@@ -37,7 +37,7 @@ class NativeRuntimeManager(
     private val usb: UsbSerialManager,
     private val log: RingLog,
     private val onStateChanged: () -> Unit,
-    private val onTelemetryEvent: (String) -> Unit,
+    private val onTelemetryEvent: (JSONObject) -> Unit,
     private val onEngineExited: (Boolean) -> Unit,
 ) {
     private val snapshotLock = Any()
@@ -500,7 +500,8 @@ class NativeRuntimeManager(
     /**
      * Projeção legada/visual executada somente no worker de delivery. A geração é
      * revalidada antes e dentro do lock de snapshot para callback atrasada de N
-     * nunca substituir N+1.
+     * nunca substituir N+1. O mesmo objeto é entregue a State/UI/Recorder sem
+     * String intermediária e sem parse/reparse.
      */
     private fun projectTelemetryCompatibility(
         telemetry: Mp48Telemetry,
@@ -540,7 +541,7 @@ class NativeRuntimeManager(
             .put("typed_telemetry_state", telemetryStateMetricsJson())
             .put("calibration_identity", calibrationIdentityStatusJson())
 
-        val rawEvent = synchronized(snapshotLock) {
+        val event = synchronized(snapshotLock) {
             if (generation != currentUsbSessionId) return@synchronized null
             val learningState = learningLiveSummary()
             live.put("surface_cell", learningState.optString("state", "OBSERVING_ENGINE"))
@@ -557,9 +558,9 @@ class NativeRuntimeManager(
                 .put("learning_state", learningState)
                 .put("learning", learningState)
             latestSnapshot = root
-            root.toString()
+            root
         } ?: return
-        if (generation == currentUsbSessionId) onTelemetryEvent(rawEvent)
+        if (generation == currentUsbSessionId) onTelemetryEvent(event)
     }
 
     private fun publishLearningState(sequence: Long, source: JSONObject) {
