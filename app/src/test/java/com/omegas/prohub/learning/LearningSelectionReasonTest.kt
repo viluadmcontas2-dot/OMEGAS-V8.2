@@ -87,7 +87,7 @@ class LearningSelectionReasonTest {
                 "NUMERIC_INVALID",
                 "UNKNOWN",
             ),
-            LearningSelectionReason.entries.map { it.name }.toSet(),
+            LearningSelectionReason.values().map { it.name }.toSet(),
         )
     }
 }
