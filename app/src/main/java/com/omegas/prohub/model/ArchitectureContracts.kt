@@ -13,6 +13,26 @@ enum class AppStateDomain {
     VISUAL,
 }
 
+/**
+ * Produtores científicos que podem observar a mesma aquisição física.
+ * Nenhum deles recebe autoridade implícita sobre os demais.
+ */
+enum class ScientificAuthority {
+    OEM_NATIVE,
+    CLASSIC_ASSISTED,
+    ADAPTIVE_SHADOW,
+}
+
+/**
+ * Maturidade operacional permitida ao Adaptive antes da validação física.
+ * PROPOSAL pode produzir intenção revisável; nenhum modo concede writer.
+ */
+enum class AdaptiveMode {
+    OFFLINE_REPLAY,
+    LIVE_SHADOW,
+    PROPOSAL,
+}
+
 enum class SnapshotAvailability {
     AVAILABLE,
     STALE,
@@ -116,4 +136,21 @@ object UiBoundaryContract {
     const val MAY_PARSE_MP48_DIRECTLY = false
     const val MAY_WRITE_ECU_DIRECTLY = false
     const val MAY_OWN_SCIENTIFIC_MATH = false
+}
+
+/**
+ * Shadow/Replay/Proposal compartilham o backbone existente e permanecem fail-closed.
+ * Evoluir além desta fronteira exige owner/gate físico explícito; nunca ocorre por enum.
+ */
+object AdaptiveBoundaryContract {
+    const val MAY_CONSUME_CANONICAL_EVIDENCE = true
+    const val MAY_RECONSTRUCT_OFFLINE_EXPERIMENTS = true
+    const val MAY_PUBLISH_SHADOW_PREDICTION = true
+    const val MAY_PREPARE_REVIEWABLE_PROPOSAL = true
+    const val MAY_TOUCH_MP48_SERIAL = false
+    const val MAY_OWN_TELEMETRY_POLLING = false
+    const val MAY_OWN_WRITER = false
+    const val MAY_WRITE_ECU = false
+    const val MAY_TRIGGER_AUTOMATCH = false
+    const val MAY_START_CALIBRATION_AUTOMATICALLY = false
 }
