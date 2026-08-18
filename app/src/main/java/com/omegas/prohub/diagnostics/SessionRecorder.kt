@@ -147,15 +147,15 @@ class SessionRecorder(
             if (every <= 0L || now - lastSnapshotAt < every) return
             lastSnapshotAt = now
         }
-        val copy = try {
-            JSONObject(data.toString())
-        } catch (_: Exception) {
-            JSONObject().put("raw", data.toString())
-        }
+
+        // Captura ownership uma única vez. A String resultante é JSON estrutural
+        // válido e segue até o writer; não é parseada de volta só para criar cópia.
+        val dataJson = data.toString()
+        val summary = summarize(type, data)
         worker.execute {
             synchronized(this) {
                 if (!recording) return@synchronized
-                recordNow(type, source, copy)
+                recordEncodedNow(type, source, dataJson, summary)
             }
         }
     }
@@ -382,19 +382,24 @@ class SessionRecorder(
     }
 
     private fun recordNow(type: String, source: String, data: JSONObject) {
+        recordEncodedNow(type, source, data.toString(), summarize(type, data))
+    }
+
+    private fun recordEncodedNow(type: String, source: String, dataJson: String, summary: String) {
         if (!recording && type != "session_stopped") return
         try {
             if (writer == null) openNextSegment()
             val now = System.currentTimeMillis()
-            val item = JSONObject()
-                .put("format", FORMAT)
-                .put("sequence", sequence.incrementAndGet())
-                .put("recordedAtMs", now)
-                .put("recordedAtUtc", iso(now))
-                .put("type", type)
-                .put("source", source)
-                .put("data", data)
-            val line = item.toString() + "\n"
+            val nextSequence = sequence.incrementAndGet()
+            val line = SessionEventJsonLine.encode(
+                format = FORMAT,
+                sequence = nextSequence,
+                recordedAtMs = now,
+                recordedAtUtc = iso(now),
+                type = type,
+                source = source,
+                dataJson = dataJson,
+            )
             val bytes = line.toByteArray(StandardCharsets.UTF_8).size.toLong()
             val maxBytes = settings.sessionLogMaxMb.toLong() * 1024L * 1024L
             if (byteCount + bytes > maxBytes && type != "session_stopped") {
@@ -425,11 +430,11 @@ class SessionRecorder(
             synchronized(previewLock) {
                 preview.addLast(
                     JSONObject()
-                        .put("sequence", item.optLong("sequence"))
+                        .put("sequence", nextSequence)
                         .put("recordedAtMs", now)
                         .put("type", type)
                         .put("source", source)
-                        .put("summary", summarize(type, data)),
+                        .put("summary", summary),
                 )
                 while (preview.size > PREVIEW_LIMIT) preview.removeFirst()
             }
@@ -579,5 +584,3 @@ Unidades: RPM em rpm; tempos em ms; MAP/pressões em bar; temperaturas em °C.
         val immutableBoundary: Boolean,
     )
 }
-
-
