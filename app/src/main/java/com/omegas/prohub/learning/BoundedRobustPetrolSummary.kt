@@ -15,6 +15,7 @@ internal class BoundedRobustPetrolSummary private constructor(
     private val retained: ArrayDeque<Double>,
     var totalObserved: Long,
         private set,
+    private var seedPendingFirstObserve: Boolean = false,
 ) {
     companion object {
         /** Resource budget; não é limiar físico nem número OEM. */
@@ -23,11 +24,26 @@ internal class BoundedRobustPetrolSummary private constructor(
         fun empty(): BoundedRobustPetrolSummary =
             BoundedRobustPetrolSummary(ArrayDeque(), 0L)
 
+        /**
+         * Pré-carrega o valor usado por LearningRegion.fromSample. O mesmo sample
+         * é entregue em seguida a update(); a primeira observe confirma o seed
+         * sem duplicá-lo nem aumentar o suporte duas vezes.
+         */
         fun seed(value: Double): BoundedRobustPetrolSummary =
-            empty().also { if (value.isFinite()) it.observe(value) }
+            if (value.isFinite()) {
+                BoundedRobustPetrolSummary(ArrayDeque<Double>().apply { addLast(value) }, 1L, true)
+            } else {
+                empty()
+            }
 
         fun fromJson(raw: JSONObject?, fallback: Double? = null): BoundedRobustPetrolSummary {
-            if (raw == null) return fallback?.let(::seed) ?: empty()
+            if (raw == null) {
+                return if (fallback?.isFinite() == true) {
+                    BoundedRobustPetrolSummary(ArrayDeque<Double>().apply { addLast(fallback) }, 1L, false)
+                } else {
+                    empty()
+                }
+            }
             val values = raw.optJSONArray("retained") ?: JSONArray()
             val retained = ArrayDeque<Double>()
             repeat(values.length()) { index ->
@@ -52,12 +68,17 @@ internal class BoundedRobustPetrolSummary private constructor(
 
     fun observe(value: Double) {
         if (!value.isFinite()) return
+        if (seedPendingFirstObserve) {
+            seedPendingFirstObserve = false
+            if (retained.size == 1 && retained.last() == value) return
+        }
         retained.addLast(value)
         while (retained.size > MAX_RETAINED_SAMPLES) retained.removeFirst()
         totalObserved = saturatingAdd(totalObserved, 1L)
     }
 
     fun merge(other: BoundedRobustPetrolSummary) {
+        seedPendingFirstObserve = false
         other.retained.forEach(::observe)
         val historicalOnly = (other.totalObserved - other.retained.size).coerceAtLeast(0L)
         totalObserved = saturatingAdd(totalObserved, historicalOnly)
@@ -81,7 +102,7 @@ internal class BoundedRobustPetrolSummary private constructor(
     }
 
     fun copySummary(): BoundedRobustPetrolSummary =
-        BoundedRobustPetrolSummary(ArrayDeque(retained), totalObserved)
+        BoundedRobustPetrolSummary(ArrayDeque(retained), totalObserved, seedPendingFirstObserve)
 
     fun toJson(): JSONObject = JSONObject()
         .put("policy", "RECENT_ROBUST_BOUNDED")
