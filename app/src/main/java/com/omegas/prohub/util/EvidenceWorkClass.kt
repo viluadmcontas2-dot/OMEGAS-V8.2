@@ -13,7 +13,10 @@ enum class MarginalInformationClass {
     REUSABLE_REFERENCE,
     CONTEXT_COHERENT_OBSERVATION,
     FAST_OBJECTIVE_OBSERVATION,
-    CAUSAL_POST_INTERVENTION,
+    CAUSAL_POST_INTERVENTION;
+
+    /** Ordem qualitativa estável para diagnóstico; não é score científico. */
+    val rank: Int get() = ordinal
 }
 
 /**
