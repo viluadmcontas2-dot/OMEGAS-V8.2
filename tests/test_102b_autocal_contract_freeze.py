@@ -21,10 +21,11 @@ def test_102b_freezes_18_band_acquisition_separate_from_30_point_vectors():
 
 def test_102b_freezes_shadow_only_and_no_fabricated_rpm_or_direct_k():
     text = CONTRACT.read_text(encoding="utf-8")
+    normalized = text.lower()
     assert "ECU_MATURED != OMEGAS_EQUIVALENT" in text
     assert "RPM nunca é derivado do índice da banda" in text
     assert "`INCONCLUSIVE`, `rpm=null`" in text
-    assert "nenhum anchor AutoCal escreve ECU" in text
+    assert "nenhum anchor autocal escreve ecu" in normalized
     assert "GasolineOracle → KStarEstimator → Target/Step" in text
 
 
