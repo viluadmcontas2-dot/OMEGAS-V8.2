@@ -6,7 +6,7 @@ import com.omegas.prohub.calibration.MapGeometrySnapshot
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Identidade mínima e imutável que acompanha ciência GNV e sua geometria KNOWN. */
+/** Identidade mínima e imutável que acompanha ciência GNV e, quando conhecida, sua geometria. */
 data class LearningCalibrationBinding(
     val calibrationFingerprint: String,
     val calibrationGeneration: Int,
@@ -22,8 +22,11 @@ data class LearningCalibrationBinding(
         require(geometryFingerprint.isNotBlank())
         require(usbSessionId > 0L)
         require(mapHash.isNotBlank())
-        require(petrolAxisMs.size == 12 && petrolAxisMs.all { it.isFinite() })
-        require(rpmAxis.size == 12 && rpmAxis.all { it >= 0 })
+        val noAxes = petrolAxisMs.isEmpty() && rpmAxis.isEmpty()
+        val fullAxes = petrolAxisMs.size == 12 && rpmAxis.size == 12
+        require(noAxes || fullAxes) { "Geometria deve estar ausente por completo ou conter os 12×12 eixos" }
+        require(petrolAxisMs.all { it.isFinite() })
+        require(rpmAxis.all { it >= 0 })
     }
 
     /**
@@ -64,6 +67,11 @@ data class LearningCalibrationBinding(
             )
         }
 
+        /**
+         * Marcadores produzidos pelo owner 086 não continham os eixos. Eles continuam
+         * válidos para detectar mudança A→B, mas geometryKnown permanece false até a
+         * leitura composta da sessão atual fornecer os 12 eixos reais.
+         */
         fun fromJson(raw: JSONObject?): LearningCalibrationBinding? {
             if (raw == null) return null
             val fingerprint = raw.optString("calibration_fingerprint")
@@ -71,10 +79,22 @@ data class LearningCalibrationBinding(
             val geometry = raw.optString("geometry_fingerprint")
             val session = raw.optLong("usb_session_id", 0L)
             val mapHash = raw.optString("map_hash")
-            val petrol = raw.optJSONArray("petrol_axis_ms") ?: return null
-            val rpm = raw.optJSONArray("rpm_axis") ?: return null
             if (fingerprint.isBlank() || generation < 0 || geometry.isBlank() || session <= 0L || mapHash.isBlank()) return null
-            if (petrol.length() != 12 || rpm.length() != 12) return null
+
+            val petrol = raw.optJSONArray("petrol_axis_ms")
+            val rpm = raw.optJSONArray("rpm_axis")
+            if (petrol == null && rpm == null) {
+                return LearningCalibrationBinding(
+                    calibrationFingerprint = fingerprint,
+                    calibrationGeneration = generation,
+                    geometryFingerprint = geometry,
+                    usbSessionId = session,
+                    mapHash = mapHash,
+                    petrolAxisMs = emptyList(),
+                    rpmAxis = emptyList(),
+                )
+            }
+            if (petrol == null || rpm == null || petrol.length() != 12 || rpm.length() != 12) return null
             val petrolAxis = List(12) { petrol.optDouble(it, Double.NaN) }
             val rpmAxis = List(12) { rpm.optInt(it, -1) }
             if (petrolAxis.any { !it.isFinite() } || rpmAxis.any { it < 0 }) return null
