@@ -41,6 +41,39 @@ class DeferredLiveOnlyLearningStoreTest {
     }
 
     @Test
+    fun `small medium and large persisted payloads do not enter hot constructor path`() {
+        val sizes = listOf(
+            "small" to 4 * 1024,
+            "medium" to 512 * 1024,
+            "large" to 5 * 1024 * 1024,
+        )
+        sizes.forEach { (label, bytes) ->
+            val root = temporaryFolder.newFolder("runtime-benchmark-$label")
+            File(root, "historical-payload.bin").writeBytes(ByteArray(bytes) { 0x41 })
+            val releaseRestore = CountDownLatch(1)
+            val loaderEntered = CountDownLatch(1)
+
+            val startedAt = System.nanoTime()
+            val store = DeferredLiveOnlyLearningStore(root, RingLog()) { runtimeRoot, log ->
+                loaderEntered.countDown()
+                releaseRestore.await(3, TimeUnit.SECONDS)
+                restoreNormally(runtimeRoot, log)
+            }
+            val constructorMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt)
+
+            assertTrue("$label restore worker should start", loaderEntered.await(1, TimeUnit.SECONDS))
+            assertTrue("$label history must stay out of hot startup ($constructorMs ms)", constructorMs < 500L)
+            val status = store.startSession()
+            assertTrue("$label should expose a usable restoring state", status.getBoolean("restoring"))
+            assertTrue(status.getBoolean("ok"))
+
+            releaseRestore.countDown()
+            assertTrue(waitUntilReady(store))
+            store.close()
+        }
+    }
+
+    @Test
     fun confirmedCalibrationDuringRestoreIsDeferredBeforeReady() {
         val root = temporaryFolder.newFolder("runtime-write")
         val releaseRestore = CountDownLatch(1)
