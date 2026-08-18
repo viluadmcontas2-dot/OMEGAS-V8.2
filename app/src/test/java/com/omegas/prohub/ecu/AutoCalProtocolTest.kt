@@ -13,6 +13,7 @@ class AutoCalProtocolTest {
         assertArrayEquals(hex("29 4B 01 75"), AutoCalProtocol.read(AutoCalProtocol.PETR_INJ_TBP))
         assertArrayEquals(hex("29 4C 01 76"), AutoCalProtocol.read(AutoCalProtocol.MNFLD_PRESS_THD))
         assertArrayEquals(hex("29 61 01 8B"), AutoCalProtocol.read(AutoCalProtocol.MUL_ACT))
+        assertArrayEquals(hex("09 67 01 71"), AutoCalProtocol.read(AutoCalProtocol.RAW_AUTOCAL_0167))
         assertArrayEquals(hex("09 74 01 7E"), AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED))
     }
 
@@ -38,42 +39,53 @@ class AutoCalProtocolTest {
     }
 
     @Test
-    fun `module version quatro promove somente os quatro vetores dinamicos para trinta`() {
-        val dynamic = listOf(
+    fun `shape pertence ao field e moduleVersion cem preserva vetores de trinta`() {
+        val thirtyFamily = listOf(
             AutoCalProtocol.PETR_INJ_TBP,
             AutoCalProtocol.MUL_ACT,
             AutoCalProtocol.PETR_MNFLD_PRESS_RV,
             AutoCalProtocol.GAS_MNFLD_PRESS_RV,
         )
-        dynamic.forEach { field ->
+        thirtyFamily.forEach { field ->
             assertEquals(30, AutoCalProtocol.expectedElements(field, 4))
-            assertEquals(18, AutoCalProtocol.expectedElements(field, 3))
-            assertEquals(null, AutoCalProtocol.expectedElements(field, null))
+            assertEquals(30, AutoCalProtocol.expectedElements(field, 3))
+            assertEquals(30, AutoCalProtocol.expectedElements(field, 100))
+            assertEquals(30, AutoCalProtocol.expectedElements(field, null))
         }
         assertEquals(18, AutoCalProtocol.expectedElements(AutoCalProtocol.NUM_BUF_UPD_PETR, 4))
-        assertEquals(18, AutoCalProtocol.expectedElements(AutoCalProtocol.NUM_BUF_UPD_GAS, 3))
+        assertEquals(18, AutoCalProtocol.expectedElements(AutoCalProtocol.NUM_BUF_UPD_GAS, 100))
+        assertTrue(AutoCalProtocol.PETR_INJ_TBP.identity in AutoCalProtocol.REFERENCE_30_FIELDS)
+        assertTrue(AutoCalProtocol.NUM_BUF_UPD_GAS.identity in AutoCalProtocol.ACQUISITION_18_FIELDS)
     }
 
     @Test
-    fun `validacao de forma rejeita vetor dinamico incompatível com a versao`() {
-        val eighteen = AutoCalProtocol.decode(
-            AutoCalProtocol.MUL_ACT,
+    fun `shape invalido falha fechado por familia fisica`() {
+        val valid18 = AutoCalProtocol.decode(AutoCalProtocol.PETR_INJ_TBUF, Mp48Protocol.STATUS_ACK, ByteArray(36))
+        val invalid17 = AutoCalProtocol.decode(AutoCalProtocol.PETR_INJ_TBUF, Mp48Protocol.STATUS_ACK, ByteArray(34))
+        val invalid19 = AutoCalProtocol.decode(AutoCalProtocol.PETR_INJ_TBUF, Mp48Protocol.STATUS_ACK, ByteArray(38))
+        AutoCalProtocol.requireExpectedShape(valid18, 100)
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.requireExpectedShape(invalid17, 100) }
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.requireExpectedShape(invalid19, 4) }
+
+        val valid30 = AutoCalProtocol.decode(AutoCalProtocol.MUL_ACT, Mp48Protocol.STATUS_ACK, ByteArray(60))
+        val invalid29 = AutoCalProtocol.decode(AutoCalProtocol.MUL_ACT, Mp48Protocol.STATUS_ACK, ByteArray(58))
+        val invalid31 = AutoCalProtocol.decode(AutoCalProtocol.MUL_ACT, Mp48Protocol.STATUS_ACK, ByteArray(62))
+        AutoCalProtocol.requireExpectedShape(valid30, 100)
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.requireExpectedShape(invalid29, 100) }
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.requireExpectedShape(invalid31, 4) }
+    }
+
+    @Test
+    fun `0167 preserva u16 raw dividido por 1024 sem promover unidade fisica`() {
+        val decoded = AutoCalProtocol.decode(
+            AutoCalProtocol.RAW_AUTOCAL_0167,
             Mp48Protocol.STATUS_ACK,
-            ByteArray(36),
+            byteArrayOf(0x00, 0x04),
         )
-        val thirty = AutoCalProtocol.decode(
-            AutoCalProtocol.MUL_ACT,
-            Mp48Protocol.STATUS_ACK,
-            ByteArray(60),
-        )
-        AutoCalProtocol.requireExpectedShape(thirty, 4)
-        AutoCalProtocol.requireExpectedShape(eighteen, 3)
-        assertThrows(IllegalArgumentException::class.java) {
-            AutoCalProtocol.requireExpectedShape(eighteen, 4)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            AutoCalProtocol.requireExpectedShape(thirty, 3)
-        }
+        assertEquals(1024, decoded.rawValues.single())
+        assertEquals(1.0, decoded.physicalValues.single(), 0.0)
+        assertEquals("RAW_DIV_1024_UNKNOWN", decoded.field.physicalUnit)
+        AutoCalProtocol.requireExpectedShape(decoded, 100)
     }
 
     @Test
@@ -117,27 +129,19 @@ class AutoCalProtocolTest {
             it[35] = 0x12
         }
         listOf(AutoCalProtocol.NUM_BUF_UPD_PETR, AutoCalProtocol.NUM_BUF_UPD_GAS).forEach { field ->
-            val decoded = AutoCalProtocol.decode(
-                field,
-                Mp48Protocol.STATUS_ACK,
-                payload,
-            )
+            val decoded = AutoCalProtocol.decode(field, Mp48Protocol.STATUS_ACK, payload)
             assertEquals(18, decoded.elementCount)
             assertEquals(10, decoded.rawValues[0])
             assertEquals(0x0102, decoded.rawValues[1])
             assertEquals(0x1234, decoded.rawValues.last())
-            AutoCalProtocol.requireExpectedShape(decoded, 4)
+            AutoCalProtocol.requireExpectedShape(decoded, 100)
         }
     }
 
     @Test
     fun `contador u16 rejeita payload com largura quebrada`() {
         assertThrows(IllegalArgumentException::class.java) {
-            AutoCalProtocol.decode(
-                AutoCalProtocol.NUM_BUF_UPD_PETR,
-                Mp48Protocol.STATUS_ACK,
-                ByteArray(35),
-            )
+            AutoCalProtocol.decode(AutoCalProtocol.NUM_BUF_UPD_PETR, Mp48Protocol.STATUS_ACK, ByteArray(35))
         }
     }
 
