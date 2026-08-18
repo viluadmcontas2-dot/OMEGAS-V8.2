@@ -10,10 +10,9 @@ import kotlin.math.sqrt
 /**
  * Seleciona a referência de gasolina pela condição física do motor.
  *
- * RPM e MAP são sempre usados. Temperatura participa somente quando existe dos
- * dois lados; o sentinela -273,15 significa "não disponível" e nunca pode
- * eliminar uma equivalência fisicamente válida. O tempo de injeção é comparado
- * apenas depois que a vizinhança física foi escolhida.
+ * RPM e MAP são sempre usados. Água participa somente quando conhecida nos dois
+ * lados. Temperatura do gás e pressão são preservadas como contexto/proveniência,
+ * mas não viram gate nativo nem peso científico por este owner.
  */
 internal object PetrolReferenceSelector {
     private const val MAX_NEIGHBORS = 4
@@ -26,6 +25,50 @@ internal object PetrolReferenceSelector {
     private const val UNKNOWN_TEMPERATURE_C = -273.15
     private const val MIN_REALISTIC_WATER_C = -80.0
 
+    enum class ContextFreshness {
+        CURRENT,
+        OBSERVED,
+        UNKNOWN,
+    }
+
+    data class EnvironmentalContext(
+        val waterC: Double? = null,
+        val waterFreshness: ContextFreshness = ContextFreshness.UNKNOWN,
+        val waterSource: String = "UNKNOWN",
+        val gasTemperatureC: Double? = null,
+        val gasTemperatureFreshness: ContextFreshness = ContextFreshness.UNKNOWN,
+        val gasTemperatureSource: String = "UNKNOWN",
+        val pressureDiffBar: Double? = null,
+        val gasPressureAbsBar: Double? = null,
+        val pressureFreshness: ContextFreshness = ContextFreshness.UNKNOWN,
+        val pressureSource: String = "UNKNOWN",
+        val mapSource: String = "MP48_RUNTIME",
+    ) {
+        fun waterKnown(): Boolean = knownTemperature(waterC) && waterFreshness != ContextFreshness.UNKNOWN
+        fun gasTemperatureKnown(): Boolean = gasTemperatureC?.isFinite() == true && gasTemperatureFreshness != ContextFreshness.UNKNOWN
+        fun pressureKnown(): Boolean = pressureDiffBar?.isFinite() == true && pressureFreshness != ContextFreshness.UNKNOWN
+        fun gasPressureAbsoluteKnown(): Boolean = gasPressureAbsBar?.isFinite() == true && pressureFreshness != ContextFreshness.UNKNOWN
+
+        fun toJson(): JSONObject = JSONObject()
+            .put("water_c", waterC ?: JSONObject.NULL)
+            .put("water_known", waterKnown())
+            .put("water_freshness", waterFreshness.name)
+            .put("water_source", waterSource)
+            .put("gas_temperature_c", gasTemperatureC ?: JSONObject.NULL)
+            .put("gas_temperature_known", gasTemperatureKnown())
+            .put("gas_temperature_freshness", gasTemperatureFreshness.name)
+            .put("gas_temperature_source", gasTemperatureSource)
+            .put("gas_temperature_role", "OMEGAS_CONTEXT_ONLY")
+            .put("pressure_diff_bar", pressureDiffBar ?: JSONObject.NULL)
+            .put("gas_pressure_abs_bar", gasPressureAbsBar ?: JSONObject.NULL)
+            .put("pressure_known", pressureKnown())
+            .put("gas_pressure_abs_known", gasPressureAbsoluteKnown())
+            .put("pressure_freshness", pressureFreshness.name)
+            .put("pressure_source", pressureSource)
+            .put("pressure_role", "CONTEXT_WITH_NATIVE_PRESSURE_MAP_EVIDENCE")
+            .put("map_source", mapSource)
+    }
+
     data class Region(
         val id: String,
         val rpm: Double,
@@ -34,13 +77,32 @@ internal object PetrolReferenceSelector {
         val petrolMs: Double,
         val confidence: Double,
         val sampleCount: Int,
+        val environment: EnvironmentalContext = EnvironmentalContext(
+            waterC = waterC,
+            waterFreshness = if (knownTemperature(waterC)) ContextFreshness.OBSERVED else ContextFreshness.UNKNOWN,
+            waterSource = if (knownTemperature(waterC)) "LANDI_ECU_REGION" else "UNKNOWN",
+        ),
     )
 
     data class Request(
         val rpm: Double,
         val mapBar: Double,
         val waterC: Double,
+        val environment: EnvironmentalContext = EnvironmentalContext(
+            waterC = waterC,
+            waterFreshness = if (knownTemperature(waterC)) ContextFreshness.CURRENT else ContextFreshness.UNKNOWN,
+            waterSource = if (knownTemperature(waterC)) "LANDI_ECU_CURRENT" else "UNKNOWN",
+        ),
     )
+
+    data class SelectedRegionContext(
+        val regionId: String,
+        val environment: EnvironmentalContext,
+    ) {
+        fun toJson(): JSONObject = JSONObject()
+            .put("region_id", regionId)
+            .put("environment", environment.toJson())
+    }
 
     data class Result(
         val available: Boolean,
@@ -61,6 +123,8 @@ internal object PetrolReferenceSelector {
         val nearestMapDelta: Double? = null,
         val nearestWaterDelta: Double? = null,
         val temperatureCompared: Boolean = false,
+        val requestEnvironment: EnvironmentalContext? = null,
+        val selectedRegionContexts: List<SelectedRegionContext> = emptyList(),
     ) {
         fun toJson(): JSONObject = JSONObject()
             .put("available", available)
@@ -81,6 +145,10 @@ internal object PetrolReferenceSelector {
             .put("nearest_map_delta", nearestMapDelta ?: JSONObject.NULL)
             .put("nearest_water_delta", nearestWaterDelta ?: JSONObject.NULL)
             .put("temperature_compared", temperatureCompared)
+            .put("request_environment", requestEnvironment?.toJson() ?: JSONObject.NULL)
+            .put("selected_region_contexts", JSONArray(selectedRegionContexts.map { it.toJson() }))
+            .put("gas_temperature_used_as_native_gate", false)
+            .put("pressure_used_as_native_gate", false)
             .put("method", "LOCAL_RPM_MAP_OPTIONAL_WATER_NEIGHBORHOOD")
     }
 
@@ -94,7 +162,12 @@ internal object PetrolReferenceSelector {
                 it.petrolMs > 0.05 && it.rpm >= 0.0 && it.mapBar >= 0.0
         }
         if (validRegions.isEmpty()) {
-            return Result(false, "NO_PETROL_REGIONS", "Nenhuma referência física de gasolina foi armazenada.")
+            return Result(
+                false,
+                "NO_PETROL_REGIONS",
+                "Nenhuma referência física de gasolina foi armazenada.",
+                requestEnvironment = request.environment,
+            )
         }
         if (!request.rpm.isFinite() || !request.mapBar.isFinite() || request.rpm < 0.0 || request.mapBar < 0.0) {
             return Result(
@@ -102,6 +175,7 @@ internal object PetrolReferenceSelector {
                 reasonCode = "INVALID_CNG_CONDITION",
                 message = "A condição GNV atual não possui RPM e MAP válidos.",
                 totalPetrolRegions = validRegions.size,
+                requestEnvironment = request.environment,
             )
         }
 
@@ -123,6 +197,7 @@ internal object PetrolReferenceSelector {
                 nearestMapDelta = nearest?.mapDelta,
                 nearestWaterDelta = nearest?.waterDelta,
                 temperatureCompared = nearest?.temperatureCompared == true,
+                requestEnvironment = request.environment,
             )
         }
 
@@ -161,6 +236,8 @@ internal object PetrolReferenceSelector {
                 nearestMapDelta = closest.mapDelta,
                 nearestWaterDelta = closest.waterDelta,
                 temperatureCompared = closest.temperatureCompared,
+                requestEnvironment = request.environment,
+                selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.environment) },
             )
         }
 
@@ -196,6 +273,8 @@ internal object PetrolReferenceSelector {
                     nearestMapDelta = closest.mapDelta,
                     nearestWaterDelta = closest.waterDelta,
                     temperatureCompared = closest.temperatureCompared,
+                    requestEnvironment = request.environment,
+                    selectedRegionContexts = listOf(SelectedRegionContext(closest.region.id, closest.region.environment)),
                 )
             }
             return Result(
@@ -212,6 +291,8 @@ internal object PetrolReferenceSelector {
                 nearestMapDelta = closest.mapDelta,
                 nearestWaterDelta = closest.waterDelta,
                 temperatureCompared = closest.temperatureCompared,
+                requestEnvironment = request.environment,
+                selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.environment) },
             )
         }
 
@@ -245,6 +326,8 @@ internal object PetrolReferenceSelector {
             nearestMapDelta = closest.mapDelta,
             nearestWaterDelta = closest.waterDelta,
             temperatureCompared = closest.temperatureCompared,
+            requestEnvironment = request.environment,
+            selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.environment) },
         )
     }
 
@@ -258,8 +341,10 @@ internal object PetrolReferenceSelector {
         val mapDelta = abs(region.mapBar - request.mapBar)
         val rpmUnits = rpmDelta / rpmLimit
         val mapUnits = mapDelta / mapLimit
-        val compareTemperature = knownTemperature(region.waterC) && knownTemperature(request.waterC)
-        val waterDelta = if (compareTemperature) abs(region.waterC - request.waterC) else 0.0
+        val regionWater = region.environment.waterC.takeIf { region.environment.waterKnown() }
+        val requestWater = request.environment.waterC.takeIf { request.environment.waterKnown() }
+        val compareTemperature = regionWater != null && requestWater != null
+        val waterDelta = if (compareTemperature) abs(regionWater!! - requestWater!!) else 0.0
         val waterUnits = if (compareTemperature) {
             waterDelta / policy.historicalTemperatureC.coerceAtLeast(1.0)
         } else 0.0
@@ -277,8 +362,8 @@ internal object PetrolReferenceSelector {
         )
     }
 
-    private fun knownTemperature(value: Double): Boolean =
-        value.isFinite() && value != UNKNOWN_TEMPERATURE_C && value > MIN_REALISTIC_WATER_C
+    private fun knownTemperature(value: Double?): Boolean =
+        value != null && value.isFinite() && value != UNKNOWN_TEMPERATURE_C && value > MIN_REALISTIC_WATER_C
 
     private fun confidenceStage(density: Double, variance: Double, policy: LearningTolerancePolicy): String = when {
         density >= policy.confidenceSampleTarget * 0.8 && variance < policy.referenceMaximumSpreadMs * policy.referenceMaximumSpreadMs * 0.5 -> "CONFIRMED"
