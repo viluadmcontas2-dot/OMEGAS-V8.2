@@ -112,7 +112,7 @@ class NativeRuntimeManager(
     /** Deve ser chamado somente quando uma nova conexão física USB é aberta. */
     fun beginUsbSession(sessionId: Long): JSONObject {
         require(sessionId > 0L) { "Sessão USB inválida" }
-        LearningCalibrationAuthority.clear()
+        LearningCalibrationAuthority.beginPhysicalSession()
         calibrationIdentityState = "PENDING"
         calibrationIdentityFingerprint = ""
         calibrationIdentityGeometry = ""
@@ -140,7 +140,7 @@ class NativeRuntimeManager(
         val endingSession = currentUsbSessionId
         learningPipeline.flush(750L)
         currentUsbSessionId = 0L
-        LearningCalibrationAuthority.clear()
+        LearningCalibrationAuthority.endPhysicalSession()
         calibrationIdentityState = "UNKNOWN"
         calibrationIdentityFingerprint = ""
         calibrationIdentityGeometry = ""
@@ -378,7 +378,7 @@ class NativeRuntimeManager(
 
     fun close() {
         stop(3)
-        LearningCalibrationAuthority.clear()
+        LearningCalibrationAuthority.endPhysicalSession()
         flushPipelines("encerramento do runtime", 2_000L)
         try { telemetryDeliveryPipeline.close() } catch (_: Exception) {}
         try { learningPipeline.close() } catch (_: Exception) {}
