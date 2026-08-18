@@ -1,18 +1,16 @@
 package com.omegas.prohub.adaptive
 
-import com.omegas.prohub.telemetry.RuntimeTelemetryFrame
-
 /**
- * OMEGAS Adaptive não cria um segundo DTO de telemetria.
+ * Adaptive consome o envelope canônico do backbone de telemetria.
  *
- * CanonicalEvidence é exatamente o frame tipado já publicado pela aquisição
- * nativa. Assim Classic, Adaptive e projeções downstream podem referenciar a
- * mesma observação física/session/timestamp sem copiar, serializar ou relabelar.
+ * Este alias é somente conveniência de namespace: a autoridade real é
+ * com.omegas.prohub.telemetry.CanonicalEvidence. Não existe segundo DTO, Store,
+ * polling ou writer Adaptive.
  */
-typealias CanonicalEvidence = RuntimeTelemetryFrame
+typealias CanonicalEvidence = com.omegas.prohub.telemetry.CanonicalEvidence
 
 object CanonicalEvidenceContract {
-    const val SOURCE_TYPE = "RuntimeTelemetryFrame"
+    const val SOURCE_TYPE = "telemetry.CanonicalEvidence"
     const val ACQUISITION_OWNER = "ResponseDrivenEcuEngine/NativeRuntimeManager"
     const val SINGLE_PHYSICAL_ACQUISITION = true
     const val MAY_CREATE_SECOND_MP48_POLLING = false
