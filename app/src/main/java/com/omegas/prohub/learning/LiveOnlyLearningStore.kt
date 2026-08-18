@@ -24,32 +24,56 @@ class LiveOnlyLearningStore(
     companion object {
         const val FORMAT = "omegas-learning-v7-live-only-v1"
         const val DATA_REVISION = 5
-        const val POLICY_VERSION = 2
+        const val POLICY_VERSION = 3
         const val RESET_POLICY = "LIVE_ONLY_RESET_DERIVED_PRESERVE_PETROL"
         const val RETROACTIVE_REASON_CODE = "RETROACTIVE_LEARNING_DISABLED"
+        const val CALIBRATION_REQUIRED_REASON_CODE = "CALIBRATION_IDENTITY_REQUIRED"
     }
 
     private val runtimeRoot = stateFile.parentFile ?: stateFile.absoluteFile.parentFile
     private val evidenceStateFile = File(runtimeRoot, "learning_v6_evidence.json")
-    private val policyMarker = File(runtimeRoot, "learning_live_only_policy_v2.json")
+    private val policyMarker = File(runtimeRoot, "learning_live_only_policy_v3.json")
+    private val calibrationBindingMarker = File(runtimeRoot, "learning_calibration_binding_v1.json")
     private var delegate: SignalLearningStore
     private var lastResetReceipt = JSONObject()
+    private var storedCalibrationBinding: LearningCalibrationBinding? = null
+    private var activeCalibrationBinding: LearningCalibrationBinding? = null
 
     init {
         runtimeRoot.mkdirs()
         delegate = SignalLearningStore(stateFile, log)
         lastResetReceipt = enforcePolicyMigration()
+        storedCalibrationBinding = loadCalibrationBinding()
     }
 
     @Synchronized
-    fun startSession(): JSONObject = decorate(delegate.startSession())
+    fun startSession(): JSONObject {
+        activeCalibrationBinding = null
+        return decorate(delegate.startSession())
+    }
 
     @Synchronized
-    fun endSession(reason: String): JSONObject = decorate(delegate.endSession(reason))
+    fun endSession(reason: String): JSONObject {
+        activeCalibrationBinding = null
+        return decorate(delegate.endSession(reason))
+    }
 
     @Synchronized
-    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject =
-        decorate(delegate.ingest(telemetry, decision))
+    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject {
+        syncCalibrationAuthority()
+        val source = decision.sample
+        if (decision.learningEligible && source?.fuel == Mp48Fuel.CNG && activeCalibrationBinding == null) {
+            val blocked = decision.copy(
+                state = CALIBRATION_REQUIRED_REASON_CODE,
+                reason = "GNV observado, mas a calibração física ainda não foi reconciliada; telemetria continua e a amostra não entra na ciência ativa.",
+                sample = null,
+                learningEligible = false,
+                reasonCode = CALIBRATION_REQUIRED_REASON_CODE,
+            )
+            return decorate(delegate.ingest(telemetry, blocked))
+        }
+        return decorate(delegate.ingest(telemetry, decision))
+    }
 
     @Synchronized
     fun statusJson(): JSONObject = decorateStatus(delegate.statusJson())
@@ -120,6 +144,7 @@ class LiveOnlyLearningStore(
             )
         }
 
+        activeCalibrationBinding = null
         val before = delegate.export("reset-audit")
         val baseline = selectPetrolBaseline(before)
         val petrolRegionsBefore = countRegions(baseline.snapshot, Mp48Fuel.PETROL.wireName)
@@ -181,6 +206,99 @@ class LiveOnlyLearningStore(
     }
 
     /**
+     * Uma CalibrationIdentity fresca é a única fonte capaz de liberar ciência GNV.
+     * Se a identidade material mudou, qualquer GNV anterior é descartado antes
+     * de aceitar a primeira amostra da nova calibração; gasolina é preservada.
+     */
+    private fun syncCalibrationAuthority() {
+        val incoming = LearningCalibrationAuthority.snapshot() ?: return
+        if (activeCalibrationBinding?.key() == incoming.key() &&
+            activeCalibrationBinding?.usbSessionId == incoming.usbSessionId
+        ) return
+
+        val previous = storedCalibrationBinding
+        if (previous != null && previous.key() != incoming.key()) {
+            val before = delegate.export("identity-change-audit")
+            val discardedCngRegions = countRegions(before, Mp48Fuel.CNG.wireName)
+            val discardedComparisons = before.optJSONArray("comparisons")?.length() ?: 0
+            if (discardedCngRegions > 0 || discardedComparisons > 0) {
+                val baseline = selectPetrolBaseline(before)
+                val rebuild = rebuildPreservingPetrol(baseline.snapshot, "calibration_identity_changed")
+                delegate.onCalibrationAdjustment(
+                    JSONObject()
+                        .put("adjustmentId", "calibration-identity-changed")
+                        .put("newHash", incoming.mapHash),
+                )
+                lastResetReceipt = JSONObject()
+                    .put("policy", RESET_POLICY)
+                    .put("reasonCode", "CALIBRATION_IDENTITY_CHANGED")
+                    .put("reason", "Identidade física da calibração mudou; gasolina preservada e evidência GNV anterior foi isolada antes da nova coleta.")
+                    .put("previousCalibrationFingerprint", previous.calibrationFingerprint)
+                    .put("calibrationFingerprint", incoming.calibrationFingerprint)
+                    .put("discardedCngRegions", discardedCngRegions)
+                    .put("discardedComparisons", discardedComparisons)
+                    .put("preservedPetrolRegions", rebuild.preservedPetrolRegions)
+                    .put("quarantinedFiles", rebuild.archives)
+                    .put("resetAt", System.currentTimeMillis())
+            }
+        }
+        storedCalibrationBinding = incoming
+        activeCalibrationBinding = incoming
+        persistCalibrationBinding(incoming)
+    }
+
+    private fun loadCalibrationBinding(): LearningCalibrationBinding? = try {
+        if (!calibrationBindingMarker.isFile) null
+        else LearningCalibrationBinding.fromJson(JSONObject(calibrationBindingMarker.readText(Charsets.UTF_8)))
+    } catch (_: Exception) {
+        null
+    }
+
+    private fun persistCalibrationBinding(binding: LearningCalibrationBinding) {
+        try {
+            calibrationBindingMarker.parentFile?.mkdirs()
+            calibrationBindingMarker.writeText(
+                binding.toJson()
+                    .put("schema", "omegas-learning-calibration-binding-v1")
+                    .put("saved_at", System.currentTimeMillis())
+                    .toString(2),
+                Charsets.UTF_8,
+            )
+        } catch (error: Exception) {
+            log.add("WARN", "LEARNING-CALIBRATION", "Identidade da calibração não persistida: ${error.message}")
+        }
+    }
+
+    private fun decorateCalibrationEvidence(root: JSONObject): JSONObject {
+        val binding = storedCalibrationBinding
+        root.put("calibration_identity_ready", activeCalibrationBinding != null)
+            .put("calibration_binding", binding?.toJson() ?: JSONObject.NULL)
+        if (binding == null) return root
+
+        fun stamp(target: JSONObject?) {
+            if (target == null) return
+            binding.toJson().keys().forEach { key -> target.put(key, binding.toJson().get(key)) }
+        }
+        val regions = root.optJSONArray("regions")
+        if (regions != null) repeat(regions.length()) { index ->
+            val region = regions.optJSONObject(index) ?: return@repeat
+            if (region.optString("fuel") == Mp48Fuel.CNG.wireName) stamp(region)
+        }
+        val comparisons = root.optJSONArray("comparisons")
+        if (comparisons != null) repeat(comparisons.length()) { index -> stamp(comparisons.optJSONObject(index)) }
+        stamp(root.optJSONObject("comparison"))
+        stamp(root.optJSONObject("cng_region"))
+        root.optJSONObject("sample")?.takeIf { it.optString("fuel") == Mp48Fuel.CNG.wireName }?.let(::stamp)
+        root.optJSONObject("live")?.optJSONObject("sample")
+            ?.takeIf { it.optString("fuel") == Mp48Fuel.CNG.wireName }
+            ?.let(::stamp)
+        root.optJSONObject("signal_decision")?.optJSONObject("sample")
+            ?.takeIf { it.optString("fuel") == Mp48Fuel.CNG.wireName }
+            ?.let(::stamp)
+        return root
+    }
+
+    /**
      * O status ao vivo e o assessor precisam contar a mesma verdade. O assessor
      * reconcilia GNV pendente contra a gasolina persistida; o resumo herda esse
      * total para não exibir “zero equivalências” enquanto já existem propostas.
@@ -237,7 +355,7 @@ class LiveOnlyLearningStore(
             root.put("lastReset", JSONObject(lastResetReceipt.toString()))
             root.put("last_reset", JSONObject(lastResetReceipt.toString()))
         }
-        return root
+        return decorateCalibrationEvidence(root)
     }
 
     /**
@@ -276,7 +394,7 @@ class LiveOnlyLearningStore(
             .put("reasonCode", "POLICY_UPDATE_DERIVED_RESET")
             .put(
                 "reason",
-                "Política live-only atualizada; gasolina preservada e toda evidência GNV anterior foi zerada.",
+                "Política live-only atualizada; gasolina preservada e toda evidência GNV anterior sem identidade material foi zerada.",
             )
             .put("petrolRegionsBefore", petrolRegionsBefore)
             .put("preservedPetrolRegions", rebuild.preservedPetrolRegions)
