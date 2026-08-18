@@ -57,6 +57,7 @@ class SignalLearningStore(
         target = evidenceStateFile,
         threadName = "omegas-learning-evidence-persist",
     )
+    private val persistenceGate = MaterialPersistenceGate()
     private var visibleDecision: SampleDecision? = null
     private var memoryDecision: SampleDecision? = null
     private val lastRepresentedWindowEndByFuel = linkedMapOf<String, Long>()
@@ -104,7 +105,7 @@ class SignalLearningStore(
         memoryDecision = null
         lastRepresentedWindowEndByFuel.clear()
         val result = decorate(delegate.endSession(reason))
-        persistEvidenceState()
+        persistEvidenceState(forceBoundary = true)
         evidenceStateWriter.flush(2_000L)
         return result
     }
@@ -217,10 +218,12 @@ class SignalLearningStore(
             }
         }
         requestAdvisorRefresh(result)
-        // O sidecar é uma fotografia substituível, não um log. Só solicita nova
-        // fotografia quando o analisador realmente produziu uma amostra; decisões
-        // intermediárias continuam ao vivo, mas não geram I/O de arquivo por quadro.
-        if (source != null) persistEvidenceState()
+        // O sidecar representa ciência material. Janela duplicada/diagnóstica pode
+        // atualizar métricas em RAM, mas não serializa fotografia só porque chegou.
+        if (prepared.learningEligible && prepared.sample != null) {
+            persistenceGate.markMaterialChange()
+            persistEvidenceState()
+        }
         return decorate(result, includeAdvisor = false)
     }
 
@@ -265,7 +268,7 @@ class SignalLearningStore(
             .put("evidenceBudget", evidenceBudgetJson(evidence))
             .put("adaptiveConfidence", adaptiveConfidenceJson())
             .put("performanceMetrics", evidence.performance.toJson())
-            .put("evidencePersistence", evidenceStateWriter.metricsJson())
+            .put("evidencePersistence", evidenceStateWriter.metricsJson().put("materialGate", persistenceGate.metricsJson()))
     }
 
     fun merge(payload: JSONObject, localDeviceId: String = ""): JSONObject {
@@ -354,7 +357,12 @@ class SignalLearningStore(
             .put("calibrationEpoch", calibrationEpoch)
             .put("automaticCalibration", false)
             .put("manualOnly", true)
-            .also { persistEvidenceState() }
+            .also {
+                if (imported > 0 || anchorsImported > 0) {
+                    persistenceGate.markMaterialChange()
+                    persistEvidenceState()
+                }
+            }
     }
 
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject {
@@ -362,7 +370,8 @@ class SignalLearningStore(
         synchronized(evidenceLock) { nativeAnchors.clear() }
         val result = delegate.onCalibrationAdjustment(payload)
         scheduleAdvisorRefresh(advisorRevisionGate.force())
-        persistEvidenceState()
+        persistenceGate.markMaterialChange()
+        persistEvidenceState(forceBoundary = true)
         return decorate(result)
     }
 
@@ -568,7 +577,8 @@ class SignalLearningStore(
         }
     }
 
-    private fun persistEvidenceState() {
+    private fun persistEvidenceState(forceBoundary: Boolean = false) {
+        if (!persistenceGate.shouldRequest(forceBoundary)) return
         try {
             val snapshot = evidenceSnapshot()
             evidenceStateWriter.request { buildEvidencePayload(snapshot) }
@@ -675,7 +685,7 @@ class SignalLearningStore(
     }
 
     fun close() {
-        persistEvidenceState()
+        persistEvidenceState(forceBoundary = true)
         evidenceStateWriter.flush(5_000L)
         delegate.close()
         advisorExecutor.shutdownNow()
@@ -721,7 +731,7 @@ class SignalLearningStore(
             .put("gas_condition_preserved", true)
             .put("cross_fuel_gas_temperature", false)
             .put("performance_metrics", performanceSnapshot.toJson())
-            .put("evidence_persistence", evidenceStateWriter.metricsJson())
+            .put("evidence_persistence", evidenceStateWriter.metricsJson().put("materialGate", persistenceGate.metricsJson()))
 
         if (includeAdvisor) {
             val evidence = evidenceSnapshot()
