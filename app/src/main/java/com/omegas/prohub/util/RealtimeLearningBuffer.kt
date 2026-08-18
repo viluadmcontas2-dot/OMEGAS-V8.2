@@ -20,6 +20,7 @@ class RealtimeLearningBuffer(
     threadName: String,
     importantCapacity: Int = 3,
     threadPriority: Int = Thread.NORM_PRIORITY - 1,
+    private val consumerName: String = threadName,
     private val onFailure: (sequence: Long, error: Throwable) -> Unit = { _, _ -> },
 ) : AutoCloseable {
     companion object {
@@ -31,6 +32,7 @@ class RealtimeLearningBuffer(
         val generation: Long,
         val sequence: Long,
         val workClass: EvidenceWorkClass,
+        val estimatedBytes: Int,
         val enqueuedAtNanos: Long,
         val work: () -> Unit,
     ) {
@@ -68,6 +70,10 @@ class RealtimeLearningBuffer(
     private val maxProcessingMs = AtomicLong(0L)
     private val lastImportantProcessingMs = AtomicLong(0L)
     private val maxImportantProcessingMs = AtomicLong(0L)
+    private val lastThreadCpuMs = AtomicLong(-1L)
+    private val maxThreadCpuMs = AtomicLong(-1L)
+    private val lastImportantThreadCpuMs = AtomicLong(-1L)
+    private val maxImportantThreadCpuMs = AtomicLong(-1L)
     private val lastCompletedSequence = AtomicLong(0L)
     private val acceptedByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
     private val executedByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
@@ -109,11 +115,13 @@ class RealtimeLearningBuffer(
         generation: Long,
         sequence: Long,
         important: Boolean,
+        estimatedBytes: Int = 0,
         work: () -> Unit,
     ): Boolean = submit(
         generation = generation,
         sequence = sequence,
         workClass = EvidenceBackpressurePolicy.fromLegacyImportant(important),
+        estimatedBytes = estimatedBytes,
         work = work,
     )
 
@@ -121,6 +129,7 @@ class RealtimeLearningBuffer(
         generation: Long,
         sequence: Long,
         workClass: EvidenceWorkClass,
+        estimatedBytes: Int = 0,
         work: () -> Unit,
     ): Boolean {
         submittedFrames.incrementAndGet()
@@ -134,6 +143,7 @@ class RealtimeLearningBuffer(
                 generation = generation,
                 sequence = sequence,
                 workClass = workClass,
+                estimatedBytes = estimatedBytes.coerceAtLeast(0),
                 enqueuedAtNanos = System.nanoTime(),
                 work = work,
             )
@@ -172,11 +182,20 @@ class RealtimeLearningBuffer(
     }
 
     fun metricsJson(): JSONObject = synchronized(monitor) {
+        val queuedEstimatedBytes = importantQueue.sumOf { it.estimatedBytes.toLong() } +
+            (latestTransient?.estimatedBytes?.toLong() ?: 0L)
         JSONObject()
+            .put("consumer", consumerName)
+            .put("trigger", "EVENT_DRIVEN_SCIENCE_DECISION")
+            .put("cadence", "EVENT_DRIVEN_NO_TIMER")
             .put("mode", "SEMANTIC_EVIDENCE_ROUTER_BOUNDED_SESSION_DURABLE")
             .put("durableBacklog", "SESSION_RECORDER")
+            .put("queueBoundImportant", capacityImportant)
+            .put("queueBoundDiagnostic", 1)
             .put("overloadPolicy", "SUPERSEDE_LOWEST_VALUE_PENDING_OR_REJECT_INCOMING")
             .put("acquisitionDropAllowed", false)
+            .put("pendingBytesKind", "ESTIMATED_RETAINED_PAYLOAD")
+            .put("cpuAccounting", "ANDROID_THREAD_CPU_TIME_WHEN_AVAILABLE")
             .put("accepting", accepting.get())
             .put("generation", currentGeneration)
             .put("capacityImportant", capacityImportant)
@@ -184,6 +203,8 @@ class RealtimeLearningBuffer(
             .put("pendingTransient", if (latestTransient == null) 0 else 1)
             .put("active", if (active == null) 0 else 1)
             .put("activeGeneration", activeGeneration)
+            .put("queuedEstimatedBytes", queuedEstimatedBytes)
+            .put("activeEstimatedBytes", active?.estimatedBytes ?: 0)
             .put("pending", importantQueue.size + (if (latestTransient == null) 0 else 1) + (if (active == null) 0 else 1))
             .put("submittedFrames", submittedFrames.get())
             .put("acceptedImportant", acceptedImportant.get())
@@ -207,6 +228,10 @@ class RealtimeLearningBuffer(
             .put("maxProcessingMs", maxProcessingMs.get())
             .put("lastImportantProcessingMs", lastImportantProcessingMs.get())
             .put("maxImportantProcessingMs", maxImportantProcessingMs.get())
+            .put("lastThreadCpuMs", lastThreadCpuMs.get())
+            .put("maxThreadCpuMs", maxThreadCpuMs.get())
+            .put("lastImportantThreadCpuMs", lastImportantThreadCpuMs.get())
+            .put("maxImportantThreadCpuMs", maxImportantThreadCpuMs.get())
             .put("pendingByClass", countPendingByClassLocked())
             .put("acceptedByClass", enumMapJson(acceptedByClass))
             .put("executedByClass", enumMapJson(executedByClass))
@@ -272,6 +297,7 @@ class RealtimeLearningBuffer(
             } ?: continue
 
             val startedAt = System.nanoTime()
+            val cpuStartedAt = ThreadCpuClock.nowNanos()
             val queueDelayMs = nanosToMillis(startedAt - task.enqueuedAtNanos)
             lastQueueDelayMs.set(queueDelayMs)
             updateMaximum(maxQueueDelayMs, queueDelayMs)
@@ -300,6 +326,15 @@ class RealtimeLearningBuffer(
                 if (task.important) {
                     lastImportantProcessingMs.set(processingMs)
                     updateMaximum(maxImportantProcessingMs, processingMs)
+                }
+                val cpuMs = ThreadCpuClock.elapsedMillis(cpuStartedAt, ThreadCpuClock.nowNanos())
+                if (cpuMs >= 0L) {
+                    lastThreadCpuMs.set(cpuMs)
+                    updateMaximum(maxThreadCpuMs, cpuMs)
+                    if (task.important) {
+                        lastImportantThreadCpuMs.set(cpuMs)
+                        updateMaximum(maxImportantThreadCpuMs, cpuMs)
+                    }
                 }
                 synchronized(monitor) {
                     active = null
