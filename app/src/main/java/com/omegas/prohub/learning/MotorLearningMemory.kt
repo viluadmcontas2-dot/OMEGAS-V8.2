@@ -37,6 +37,7 @@ class MotorLearningMemory(
 ) {
     companion object {
         const val FORMAT = "omegas-learning-v5"
+        internal const val LEGACY_MIN_REFERENCE_MS = 0.05
         private const val MAX_COMPARISONS = 600
         private const val MAX_SESSIONS = 100
         private const val MAX_REGIONS = 2000
@@ -446,6 +447,8 @@ class MotorLearningMemory(
             "comparison_evidence",
             "direction",
             "error_pct",
+            "equivalence_valid",
+            "equivalence_reason_code",
             "comparison_stage",
             "reference_surface",
             "reference_diagnostic",
@@ -624,13 +627,25 @@ class MotorLearningMemory(
                 .put("cng_region", region.toJson())
         }
 
+        val equivalence = FuelEquivalenceObjective.evaluate(
+            referenceMs = reference.petrolTargetMs,
+            petrolOnCngMs = sample.petrolMs,
+            minimumReferenceMs = LEGACY_MIN_REFERENCE_MS,
+            policy = LearningToleranceSettings.current,
+        )
+        if (!equivalence.valid) {
+            return invalidEquivalenceStatus(reference, sample, equivalence)
+                .put("cng_region", region.toJson())
+                .put("reference_diagnostic", JSONObject(lastReferenceDiagnostic.toString()))
+        }
+
         val candidate = compare(
-            petrolTargetMs = reference.petrolTargetMs,
+            reference = reference,
             cngSample = sample,
             visitId = visit.id,
-            referenceRegionId = reference.regionIds.joinToString(","),
             origin = "CONTINUOUS_REFERENCE_SURFACE",
             pairQuality = sqrt(reference.quality * sample.quality).coerceIn(0.0, 1.0),
+            equivalence = equivalence,
         )
         val stored = addComparisonOnce(candidate)
         val evidence = comparisonEvidence(sample.rpm, sample.mapBar)
@@ -648,31 +663,69 @@ class MotorLearningMemory(
             .put("reference_stage", reference.stage)
     }
 
+    private fun invalidEquivalenceStatus(
+        reference: PetrolReferenceEstimate,
+        cngSample: MotorSample,
+        equivalence: FuelEquivalenceResult,
+    ): JSONObject = JSONObject()
+        .put("state", "FUEL_EQUIVALENCE_INVALID")
+        .put("reason", "A referência/observação não permite calcular erro de equivalência com segurança")
+        .put("reason_code", equivalence.reasonCode)
+        .put("equivalence_valid", false)
+        .put("equivalence_reason_code", equivalence.reasonCode)
+        .put("learning", true)
+        .put("registered_now", false)
+        .put("reference_surface", reference.toJson())
+        .put("reference_region_ids", JSONArray(reference.regionIds))
+        .put("reference_denominator_ms", reference.petrolTargetMs)
+        .put("petrol_target_ms", reference.petrolTargetMs)
+        .put("petrol_on_cng_ms", cngSample.petrolMs)
+        .put("difference_ms", JSONObject.NULL)
+        .put("error_ratio", JSONObject.NULL)
+        .put("error_pct", JSONObject.NULL)
+        .put("direction", JSONObject.NULL)
+        .put("reference_unit", "ms")
+        .put("observed_unit", "ms")
+        .put("difference_unit", "ms")
+        .put("error_ratio_unit", "ratio")
+        .put("error_percent_unit", "percent")
+        .put("cng_sample_started_at_elapsed_ms", cngSample.startedAtElapsedMs)
+        .put("cng_sample_ended_at_elapsed_ms", cngSample.endedAtElapsedMs)
+        .put("actionable", false)
+        .put("suggested_delta_k_percent", JSONObject.NULL)
+        .put("suggested_delta_k", JSONObject.NULL)
+        .put("automatic_write", false)
+        .put("human_confirmation_required", true)
+
     private fun compare(
-        petrolTargetMs: Double,
+        reference: PetrolReferenceEstimate,
         cngSample: MotorSample,
         visitId: String,
-        referenceRegionId: String,
         origin: String,
         pairQuality: Double,
+        equivalence: FuelEquivalenceResult,
     ): FuelComparison {
-        val difference = cngSample.petrolMs - petrolTargetMs
-        val errorPct = if (petrolTargetMs <= 0.05) 0.0 else difference / petrolTargetMs * 100.0
-        val direction = when {
-            abs(difference) <= LearningToleranceSettings.current.equivalenceDeadbandMs ||
-                abs(errorPct) <= LearningToleranceSettings.current.equivalenceDeadbandPercent -> "EQUIVALENT"
-            difference > 0.0 -> "INCREASE_CNG_DELIVERY"
-            else -> "DECREASE_CNG_DELIVERY"
-        }
+        require(equivalence.valid) { "Comparação científica exige FuelEquivalenceObjective válido" }
+        val difference = requireNotNull(equivalence.differenceMs)
+        val errorRatio = requireNotNull(equivalence.errorRatio)
+        val errorPct = requireNotNull(equivalence.errorPercent)
+        val direction = equivalenceDirection(equivalence.state)
         val cngCell = LearningGridProjection.cellFor(cngSample.rpm, cngSample.petrolMs)
-        val referenceCell = LearningGridProjection.cellFor(cngSample.rpm, petrolTargetMs)
+        val referenceCell = LearningGridProjection.cellFor(cngSample.rpm, reference.petrolTargetMs)
+        val referenceRegionId = reference.regionIds.joinToString(",")
         return FuelComparison(
             id = UUID.randomUUID().toString(),
             dedupeKey = "$epoch:$origin:$visitId:$referenceRegionId",
             visitId = visitId,
             referenceRegionId = referenceRegionId,
+            referenceRegionIds = reference.regionIds,
+            referenceUpdatedAtMs = reference.referenceUpdatedAtMs,
+            referenceContextsJson = reference.referenceContextsJson,
+            requestEnvironmentJson = reference.requestEnvironmentJson,
             sessionId = sessionId,
             capturedAt = System.currentTimeMillis(),
+            cngSampleStartedAtElapsedMs = cngSample.startedAtElapsedMs,
+            cngSampleEndedAtElapsedMs = cngSample.endedAtElapsedMs,
             origin = origin,
             rpm = cngSample.rpm,
             mapBar = cngSample.mapBar,
@@ -683,11 +736,14 @@ class MotorLearningMemory(
             cngCellColumn = cngCell.getInt("column"),
             referenceCellRow = referenceCell.getInt("row"),
             referenceCellColumn = referenceCell.getInt("column"),
-            petrolTargetMs = petrolTargetMs,
+            petrolTargetMs = reference.petrolTargetMs,
             petrolOnCngMs = cngSample.petrolMs,
             differenceMs = difference,
+            errorRatio = errorRatio,
             errorPct = errorPct,
             direction = direction,
+            equivalenceState = equivalence.state.name,
+            equivalenceReasonCode = equivalence.reasonCode,
             quality = pairQuality.coerceIn(0.0, 1.0),
             epoch = epoch,
             mapHash = mapHash,
@@ -711,9 +767,12 @@ class MotorLearningMemory(
         .put("reason", reason)
         .put("learning", true)
         .put("registered_now", registeredNow)
+        .put("equivalence_valid", true)
+        .put("equivalence_reason_code", comparison.equivalenceReasonCode)
         .put("comparison", comparison.toJson())
         .put("petrol_target_ms", comparison.petrolTargetMs)
         .put("petrol_on_cng_ms", comparison.petrolOnCngMs)
+        .put("error_ratio", comparison.errorRatio)
         .put("error_pct", comparison.errorPct)
         .put("direction", comparison.direction)
         .put("quality", comparison.quality)
@@ -775,7 +834,7 @@ class MotorLearningMemory(
             gasTempSpan,
             pressureSpan,
             effectiveSamples = effectiveSamples,
-            medianErrorRatio = if (center == 0.0) 0.0 else related.map { it.errorPct / 100.0 }.median(),
+            medianErrorRatio = if (center == 0.0) 0.0 else related.map { it.errorRatio }.median(),
         )
     }
 
@@ -789,11 +848,11 @@ class MotorLearningMemory(
         }
         val total = weighted.sumOf { it.second }
         if (total <= 0.0) return ComparisonEvidence.empty()
-        val mean = weighted.sumOf { it.first.errorPct / 100.0 * it.second } / total
+        val mean = weighted.sumOf { it.first.errorRatio * it.second } / total
         val differenceCenterMs = weighted.map { it.first.differenceMs to it.second }.weightedMedian()
         val madMs = weighted.map { abs(it.first.differenceMs - differenceCenterMs) to it.second }.weightedMedian()
         val dominant = errorRatioDirection(mean)
-        val consensus = weighted.filter { errorRatioDirection(it.first.errorPct / 100.0) == dominant }
+        val consensus = weighted.filter { errorRatioDirection(it.first.errorRatio) == dominant }
             .sumOf { it.second } / total
         val effectiveSamples = ContinuousLearningMath.effectiveSampleSize(weighted.map { it.second })
         val stage = confidenceStage(effectiveSamples, madMs * madMs)
@@ -847,6 +906,7 @@ class MotorLearningMemory(
                         petrolMs = region.petrolRobust.median(region.petrolMean),
                         confidence = region.confidence(),
                         sampleCount = region.sampleCount,
+                        updatedAtMs = region.updatedAt,
                         environment = PetrolReferenceEnvironmentBridge.region(
                             waterC = region.waterMean,
                             gasTemperatureC = region.gasMean,
@@ -881,6 +941,8 @@ class MotorLearningMemory(
             regionIds = result.regionIds,
             stage = result.stage,
             extrapolated = result.extrapolated,
+            selectedRegionContexts = result.selectedRegionContexts,
+            requestEnvironment = requireNotNull(result.requestEnvironment),
         )
     }
 
@@ -987,8 +1049,18 @@ class MotorLearningMemory(
                 savedRegions.optJSONObject(index)?.let { regions += LearningRegion.fromJson(it) }
             }
             val savedComparisons = root.optJSONArray("comparisons") ?: JSONArray()
+            var invalidComparisons = 0
             repeat(savedComparisons.length()) { index ->
-                savedComparisons.optJSONObject(index)?.let { comparisons += FuelComparison.fromJson(it) }
+                val raw = savedComparisons.optJSONObject(index) ?: return@repeat
+                val comparison = FuelComparison.fromJson(raw)
+                if (comparison == null) invalidComparisons += 1 else comparisons += comparison
+            }
+            if (invalidComparisons > 0) {
+                log.add(
+                    "WARN",
+                    "LEARNING-EQUIVALENCE",
+                    "$invalidComparisons comparação(ões) legada(s) sem denominador/erro válido foram rebaixadas e não entram na evidência ativa",
+                )
             }
             val savedSessions = root.optJSONArray("sessions") ?: JSONArray()
             repeat(savedSessions.length()) { index ->
@@ -1476,13 +1548,28 @@ private data class PetrolReferenceEstimate(
     val regionIds: List<String>,
     val stage: String,
     val extrapolated: Boolean = false,
+    val selectedRegionContexts: List<PetrolReferenceSelector.SelectedRegionContext>,
+    val requestEnvironment: PetrolReferenceSelector.EnvironmentalContext,
 ) {
+    val referenceUpdatedAtMs: Long
+        get() = selectedRegionContexts.maxOfOrNull { it.updatedAtMs } ?: 0L
+    val referenceContextsJson: String
+        get() = JSONArray(selectedRegionContexts.map { it.toJson() }).toString()
+    val requestEnvironmentJson: String
+        get() = requestEnvironment.toJson().toString()
+
     fun toJson(): JSONObject = JSONObject()
         .put("petrol_target_ms", petrolTargetMs)
+        .put("reference_denominator_ms", petrolTargetMs)
+        .put("reference_unit", "ms")
         .put("spread_ms", spreadMs)
         .put("quality", quality)
         .put("region_ids", JSONArray(regionIds))
+        .put("reference_region_ids", JSONArray(regionIds))
         .put("region_count", regionIds.size)
+        .put("reference_updated_at_wall_ms", if (referenceUpdatedAtMs > 0L) referenceUpdatedAtMs else JSONObject.NULL)
+        .put("reference_contexts", JSONArray(referenceContextsJson))
+        .put("request_environment", JSONObject(requestEnvironmentJson))
         .put("stage", stage)
         .put("method", "RPM_MAP_WATER_WEIGHTED_SURFACE")
         .put("extrapolated", extrapolated)
@@ -1494,8 +1581,14 @@ private data class FuelComparison(
     val dedupeKey: String,
     val visitId: String,
     val referenceRegionId: String,
+    val referenceRegionIds: List<String>,
+    val referenceUpdatedAtMs: Long,
+    val referenceContextsJson: String,
+    val requestEnvironmentJson: String,
     val sessionId: String,
     val capturedAt: Long,
+    val cngSampleStartedAtElapsedMs: Long,
+    val cngSampleEndedAtElapsedMs: Long,
     val origin: String,
     val rpm: Double,
     val mapBar: Double,
@@ -1509,8 +1602,11 @@ private data class FuelComparison(
     val petrolTargetMs: Double,
     val petrolOnCngMs: Double,
     val differenceMs: Double,
+    val errorRatio: Double,
     val errorPct: Double,
     val direction: String,
+    val equivalenceState: String,
+    val equivalenceReasonCode: String,
     val quality: Double,
     val epoch: Int,
     val mapHash: String,
@@ -1532,20 +1628,31 @@ private data class FuelComparison(
 
         val targetMs = blended(petrolTargetMs, newer.petrolTargetMs)
         val observedMs = blended(petrolOnCngMs, newer.petrolOnCngMs)
-        val differenceMs = observedMs - targetMs
-        val errorPct = if (targetMs <= 0.05) 0.0 else differenceMs / targetMs * 100.0
-        val direction = when {
-            abs(differenceMs) <= LearningToleranceSettings.current.equivalenceDeadbandMs ||
-                abs(errorPct) <= LearningToleranceSettings.current.equivalenceDeadbandPercent -> "EQUIVALENT"
-            differenceMs > 0.0 -> "INCREASE_CNG_DELIVERY"
-            else -> "DECREASE_CNG_DELIVERY"
-        }
+        val equivalence = FuelEquivalenceObjective.evaluate(
+            referenceMs = targetMs,
+            petrolOnCngMs = observedMs,
+            minimumReferenceMs = MotorLearningMemory.LEGACY_MIN_REFERENCE_MS,
+            policy = LearningToleranceSettings.current,
+        )
+        require(equivalence.valid) { "Consolidação só aceita comparações de equivalência válidas" }
+        val differenceMs = requireNotNull(equivalence.differenceMs)
+        val errorRatio = requireNotNull(equivalence.errorRatio)
+        val errorPct = requireNotNull(equivalence.errorPercent)
+        val direction = equivalenceDirection(equivalence.state)
         val consolidatedRpm = blended(rpm, newer.rpm)
         val consolidatedMapBar = blended(mapBar, newer.mapBar)
         val cngCell = LearningGridProjection.cellFor(consolidatedRpm, observedMs)
         val referenceCell = LearningGridProjection.cellFor(consolidatedRpm, targetMs)
+        val mergedReferenceIds = (referenceRegionIds + newer.referenceRegionIds).filter { it.isNotBlank() }.distinct()
         return copy(
+            referenceRegionId = mergedReferenceIds.joinToString(","),
+            referenceRegionIds = mergedReferenceIds,
+            referenceUpdatedAtMs = max(referenceUpdatedAtMs, newer.referenceUpdatedAtMs),
+            referenceContextsJson = mergeReferenceContexts(referenceContextsJson, newer.referenceContextsJson),
+            requestEnvironmentJson = newer.requestEnvironmentJson,
             capturedAt = max(capturedAt, newer.capturedAt),
+            cngSampleStartedAtElapsedMs = minimumPositive(cngSampleStartedAtElapsedMs, newer.cngSampleStartedAtElapsedMs),
+            cngSampleEndedAtElapsedMs = max(cngSampleEndedAtElapsedMs, newer.cngSampleEndedAtElapsedMs),
             rpm = consolidatedRpm,
             mapBar = consolidatedMapBar,
             waterC = blended(waterC, newer.waterC),
@@ -1558,8 +1665,11 @@ private data class FuelComparison(
             petrolTargetMs = targetMs,
             petrolOnCngMs = observedMs,
             differenceMs = differenceMs,
+            errorRatio = errorRatio,
             errorPct = errorPct,
             direction = direction,
+            equivalenceState = equivalence.state.name,
+            equivalenceReasonCode = equivalence.reasonCode,
             quality = ((quality * oldCount + newer.quality * newCount) / (oldCount + newCount))
                 .coerceIn(0.0, 1.0),
             observationCount = oldCount + newCount,
@@ -1578,8 +1688,20 @@ private data class FuelComparison(
         .put("dedupe_key", dedupeKey)
         .put("visit_id", visitId)
         .put("reference_region_id", referenceRegionId)
+        .put("reference_region_ids", JSONArray(referenceRegionIds))
+        .put("reference_updated_at_wall_ms", if (referenceUpdatedAtMs > 0L) referenceUpdatedAtMs else JSONObject.NULL)
+        .put("reference_contexts", JSONArray(referenceContextsJson))
+        .put("request_environment", JSONObject(requestEnvironmentJson))
         .put("session_id", sessionId)
         .put("captured_at", capturedAt)
+        .put("comparison_captured_at_wall_ms", capturedAt)
+        .put("cng_sample_started_at_elapsed_ms", cngSampleStartedAtElapsedMs)
+        .put("cng_sample_ended_at_elapsed_ms", cngSampleEndedAtElapsedMs)
+        .put("timestamp_domains", JSONObject()
+            .put("reference_updated_at_wall_ms", "wall_clock_ms")
+            .put("comparison_captured_at_wall_ms", "wall_clock_ms")
+            .put("cng_sample_started_at_elapsed_ms", "monotonic_elapsed_ms")
+            .put("cng_sample_ended_at_elapsed_ms", "monotonic_elapsed_ms"))
         .put("origin", origin)
         .put("rpm", rpm)
         .put("map_bar", mapBar)
@@ -1599,10 +1721,20 @@ private data class FuelComparison(
             },
         ))
         .put("cross_cell_equivalence", cngCellRow != referenceCellRow || cngCellColumn != referenceCellColumn)
+        .put("equivalence_valid", true)
+        .put("equivalence_state", equivalenceState)
+        .put("equivalence_reason_code", equivalenceReasonCode)
         .put("petrol_target_ms", petrolTargetMs)
+        .put("reference_denominator_ms", petrolTargetMs)
         .put("petrol_on_cng_ms", petrolOnCngMs)
         .put("difference_ms", differenceMs)
+        .put("error_ratio", errorRatio)
         .put("error_pct", errorPct)
+        .put("reference_unit", "ms")
+        .put("observed_unit", "ms")
+        .put("difference_unit", "ms")
+        .put("error_ratio_unit", "ratio")
+        .put("error_percent_unit", "percent")
         .put("direction", direction)
         .put("quality", quality)
         .put("epoch", epoch)
@@ -1610,33 +1742,66 @@ private data class FuelComparison(
         .put("observation_count", observationCount)
 
     companion object {
-        fun fromJson(raw: JSONObject) = FuelComparison(
-            id = raw.optString("id", UUID.randomUUID().toString()),
-            dedupeKey = raw.optString("dedupe_key", UUID.randomUUID().toString()),
-            visitId = raw.optString("visit_id", ""),
-            referenceRegionId = raw.optString("reference_region_id", ""),
-            sessionId = raw.optString("session_id", ""),
-            capturedAt = raw.optLong("captured_at", 0L),
-            origin = raw.optString("origin", "HISTORICAL"),
-            rpm = raw.optDouble("rpm", 0.0),
-            mapBar = raw.optDouble("map_bar", 0.0),
-            waterC = raw.optDouble("water_c", 0.0),
-            gasC = raw.optDouble("gas_c", 0.0),
-            pressureDiffBar = raw.optDouble("pressure_diff_bar", 0.0),
-            cngCellRow = raw.optInt("cng_cell_row", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_on_cng_ms", 0.0)).getInt("row")),
-            cngCellColumn = raw.optInt("cng_cell_column", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_on_cng_ms", 0.0)).getInt("column")),
-            referenceCellRow = raw.optInt("reference_cell_row", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_target_ms", 0.0)).getInt("row")),
-            referenceCellColumn = raw.optInt("reference_cell_column", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), raw.optDouble("petrol_target_ms", 0.0)).getInt("column")),
-            petrolTargetMs = raw.optDouble("petrol_target_ms", 0.0),
-            petrolOnCngMs = raw.optDouble("petrol_on_cng_ms", 0.0),
-            differenceMs = raw.optDouble("difference_ms", 0.0),
-            errorPct = raw.optDouble("error_pct", 0.0),
-            direction = raw.optString("direction", "EQUIVALENT"),
-            quality = raw.optDouble("quality", 0.0),
-            epoch = raw.optInt("epoch", 1),
-            mapHash = raw.optString("map_hash", ""),
-            observationCount = raw.optInt("observation_count", 1).coerceAtLeast(1),
-        )
+        fun fromJson(raw: JSONObject): FuelComparison? {
+            val targetMs = raw.optDouble("petrol_target_ms", Double.NaN)
+            val observedMs = raw.optDouble("petrol_on_cng_ms", Double.NaN)
+            val equivalence = FuelEquivalenceObjective.evaluate(
+                referenceMs = targetMs,
+                petrolOnCngMs = observedMs,
+                minimumReferenceMs = MotorLearningMemory.LEGACY_MIN_REFERENCE_MS,
+                policy = LearningToleranceSettings.current,
+            )
+            if (!equivalence.valid) return null
+            val legacyReferenceId = raw.optString("reference_region_id", "")
+            val structuredIds = raw.optJSONArray("reference_region_ids")?.let { array ->
+                buildList {
+                    repeat(array.length()) { index ->
+                        array.optString(index).takeIf { it.isNotBlank() }?.let(::add)
+                    }
+                }
+            }.orEmpty()
+            val referenceIds = if (structuredIds.isNotEmpty()) structuredIds.distinct()
+            else legacyReferenceId.split(',').map { it.trim() }.filter { it.isNotBlank() }.distinct()
+            val referenceContexts = raw.optJSONArray("reference_contexts")?.toString() ?: "[]"
+            val requestEnvironment = raw.optJSONObject("request_environment")?.toString() ?: "{}"
+            val referenceUpdated = raw.optLong("reference_updated_at_wall_ms", referenceContextMaxUpdatedAt(referenceContexts))
+            return FuelComparison(
+                id = raw.optString("id", UUID.randomUUID().toString()),
+                dedupeKey = raw.optString("dedupe_key", UUID.randomUUID().toString()),
+                visitId = raw.optString("visit_id", ""),
+                referenceRegionId = referenceIds.joinToString(",").ifBlank { legacyReferenceId },
+                referenceRegionIds = referenceIds,
+                referenceUpdatedAtMs = referenceUpdated,
+                referenceContextsJson = referenceContexts,
+                requestEnvironmentJson = requestEnvironment,
+                sessionId = raw.optString("session_id", ""),
+                capturedAt = raw.optLong("comparison_captured_at_wall_ms", raw.optLong("captured_at", 0L)),
+                cngSampleStartedAtElapsedMs = raw.optLong("cng_sample_started_at_elapsed_ms", 0L),
+                cngSampleEndedAtElapsedMs = raw.optLong("cng_sample_ended_at_elapsed_ms", 0L),
+                origin = raw.optString("origin", "HISTORICAL"),
+                rpm = raw.optDouble("rpm", 0.0),
+                mapBar = raw.optDouble("map_bar", 0.0),
+                waterC = raw.optDouble("water_c", 0.0),
+                gasC = raw.optDouble("gas_c", 0.0),
+                pressureDiffBar = raw.optDouble("pressure_diff_bar", 0.0),
+                cngCellRow = raw.optInt("cng_cell_row", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), observedMs).getInt("row")),
+                cngCellColumn = raw.optInt("cng_cell_column", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), observedMs).getInt("column")),
+                referenceCellRow = raw.optInt("reference_cell_row", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), targetMs).getInt("row")),
+                referenceCellColumn = raw.optInt("reference_cell_column", LearningGridProjection.cellFor(raw.optDouble("rpm", 0.0), targetMs).getInt("column")),
+                petrolTargetMs = targetMs,
+                petrolOnCngMs = observedMs,
+                differenceMs = requireNotNull(equivalence.differenceMs),
+                errorRatio = requireNotNull(equivalence.errorRatio),
+                errorPct = requireNotNull(equivalence.errorPercent),
+                direction = equivalenceDirection(equivalence.state),
+                equivalenceState = equivalence.state.name,
+                equivalenceReasonCode = equivalence.reasonCode,
+                quality = raw.optDouble("quality", 0.0),
+                epoch = raw.optInt("epoch", 1),
+                mapHash = raw.optString("map_hash", ""),
+                observationCount = raw.optInt("observation_count", 1).coerceAtLeast(1),
+            )
+        }
     }
 }
 
@@ -1696,6 +1861,43 @@ private data class StoredComparison(
     val comparison: FuelComparison,
     val created: Boolean,
 )
+
+private fun equivalenceDirection(state: FuelEquivalenceState): String = when (state) {
+    FuelEquivalenceState.WITHIN_POLICY_DEADBAND -> "EQUIVALENT"
+    FuelEquivalenceState.PETROL_ON_CNG_ABOVE_REFERENCE -> "INCREASE_CNG_DELIVERY"
+    FuelEquivalenceState.PETROL_ON_CNG_BELOW_REFERENCE -> "DECREASE_CNG_DELIVERY"
+    FuelEquivalenceState.INVALID -> "INVALID"
+}
+
+private fun mergeReferenceContexts(firstJson: String, secondJson: String): String {
+    val merged = linkedMapOf<String, JSONObject>()
+    fun absorb(encoded: String) {
+        val array = try { JSONArray(encoded) } catch (_: Exception) { JSONArray() }
+        repeat(array.length()) { index ->
+            val context = array.optJSONObject(index) ?: return@repeat
+            val key = "${context.optString("region_id")}:${context.optLong("updated_at_ms", 0L)}"
+            merged[key] = JSONObject(context.toString())
+        }
+    }
+    absorb(firstJson)
+    absorb(secondJson)
+    return JSONArray(merged.values.toList()).toString()
+}
+
+private fun referenceContextMaxUpdatedAt(encoded: String): Long {
+    val array = try { JSONArray(encoded) } catch (_: Exception) { return 0L }
+    var maximum = 0L
+    repeat(array.length()) { index ->
+        maximum = max(maximum, array.optJSONObject(index)?.optLong("updated_at_ms", 0L) ?: 0L)
+    }
+    return maximum
+}
+
+private fun minimumPositive(first: Long, second: Long): Long = when {
+    first <= 0L -> second
+    second <= 0L -> first
+    else -> minOf(first, second)
+}
 
 private fun confidenceStage(density: Double, variance: Double): String = LearningToleranceSettings.current.let { tolerance -> when {
     density >= tolerance.confidenceSampleTarget * 0.8 && variance < tolerance.referenceMaximumSpreadMs * tolerance.referenceMaximumSpreadMs * 0.5 -> "CONFIRMED"
