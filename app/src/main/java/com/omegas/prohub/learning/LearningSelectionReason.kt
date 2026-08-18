@@ -22,8 +22,7 @@ enum class LearningSelectionReason {
             detailReasonCode: String,
             geometryKnown: Boolean,
         ): LearningSelectionReason {
-            if (!geometryKnown) return GEOMETRY_UNKNOWN
-            return when (detailReasonCode) {
+            val referenceReason = when (detailReasonCode) {
                 "LOCAL_REFERENCE_AVAILABLE",
                 "NEAREST_LOCAL_REFERENCE",
                 "BOUNDED_EXTRAPOLATION" -> REFERENCE_FOUND
@@ -38,6 +37,13 @@ enum class LearningSelectionReason {
                 "STALE" -> STALE
                 "MAP_GEOMETRY_UNKNOWN", "GEOMETRY_UNKNOWN" -> GEOMETRY_UNKNOWN
                 else -> if (available) REFERENCE_FOUND else UNKNOWN
+            }
+            // Falha de referência continua sendo o motivo primário. Geometry só
+            // bloqueia a seleção física quando a referência em si já foi encontrada.
+            return if (available && referenceReason == REFERENCE_FOUND && !geometryKnown) {
+                GEOMETRY_UNKNOWN
+            } else {
+                referenceReason
             }
         }
     }
