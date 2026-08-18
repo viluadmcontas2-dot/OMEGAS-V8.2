@@ -4,6 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UsefulCoverageMetricTest {
@@ -19,6 +20,7 @@ class UsefulCoverageMetricTest {
         assertEquals(3, metric.getInt("raw_region_count"))
         assertEquals(2, metric.getInt("useful_region_count"))
         assertEquals(1, metric.getInt("ignored_region_count"))
+        assertEquals(2, metric.getInt("environment_context_complete_regions"))
         assertEquals(4.0, metric.getDouble("useful_regions_per_minute"), 1e-9)
         assertFalse(metric.getBoolean("raw_frame_count_used"))
     }
@@ -36,9 +38,28 @@ class UsefulCoverageMetricTest {
     }
 
     @Test
-    fun noSupportedContextReportsExplicitReasonInsteadOfSyntheticCoverage() {
-        val root = JSONObject().put("regions", JSONArray().put(region("bad", samples = 5).put("water_c", Double.NaN)))
-        val metric = UsefulCoverageMetric.fromLearningExport(root, 60_000L)
+    fun unavailableOptionalEnvironmentDoesNotEraseOtherwiseUsefulCoverage() {
+        val region = region("optional-env", samples = 5)
+            .put("water_c", JSONObject.NULL)
+            .put("pressure_diff_bar", JSONObject.NULL)
+        val metric = UsefulCoverageMetric.fromLearningExport(
+            JSONObject().put("regions", JSONArray().put(region)),
+            60_000L,
+        )
+
+        assertEquals(1, metric.getInt("useful_region_count"))
+        assertEquals(0, metric.getInt("environment_context_complete_regions"))
+        assertTrue(metric.getBoolean("environment_context_optional"))
+        assertEquals("USEFUL_COVERAGE_AVAILABLE", metric.getString("reason"))
+    }
+
+    @Test
+    fun missingRequiredOperatingContextReportsNoUsefulCoverage() {
+        val region = region("bad", samples = 5).put("map_bar", JSONObject.NULL)
+        val metric = UsefulCoverageMetric.fromLearningExport(
+            JSONObject().put("regions", JSONArray().put(region)),
+            60_000L,
+        )
         assertEquals(0, metric.getInt("useful_region_count"))
         assertEquals(0.0, metric.getDouble("useful_regions_per_minute"), 0.0)
         assertEquals("NO_VALID_SUPPORTED_REGION", metric.getString("reason"))
