@@ -141,6 +141,7 @@ internal object PetrolReferenceSelector {
         val temperatureCompared: Boolean = false,
         val requestEnvironment: EnvironmentalContext? = null,
         val selectedRegionContexts: List<SelectedRegionContext> = emptyList(),
+        val referenceAvailability: ReferenceAvailabilityMetric = PetrolReferenceAvailability.record(available, reasonCode),
     ) {
         fun toJson(): JSONObject = JSONObject()
             .put("available", available)
@@ -163,6 +164,10 @@ internal object PetrolReferenceSelector {
             .put("temperature_compared", temperatureCompared)
             .put("request_environment", requestEnvironment?.toJson() ?: JSONObject.NULL)
             .put("selected_region_contexts", JSONArray(selectedRegionContexts.map { it.toJson() }))
+            .put("reference_wait_state", referenceAvailability.state)
+            .put("time_to_reference_ms", referenceAvailability.timeToReferenceMs)
+            .put("reference_block_reason", referenceAvailability.blockReason ?: JSONObject.NULL)
+            .put("reference_timing_origin", referenceAvailability.measurementOrigin)
             .put("gas_temperature_used_as_native_gate", false)
             .put("pressure_used_as_native_gate", false)
             .put("method", "LOCAL_RPM_MAP_OPTIONAL_WATER_NEIGHBORHOOD")
