@@ -53,8 +53,6 @@ def test_063a_snapshot_persistence_is_deferred_and_coalesced_after_sample_format
     assert "payloadProvider" in writer
     assert "executor.execute { drain() }" in writer
     assert "while (dirty.getAndSet(false))" in writer
-    # Diagnostic SessionRecorder is deliberately a separate durable audit stream;
-    # this assertion is about replaceable scientific snapshots, not raw forensics.
 
 
 def test_068a_routes_do_not_start_map_or_curve_read_on_enter():
@@ -68,10 +66,14 @@ def test_068a_routes_do_not_start_map_or_curve_read_on_enter():
     assert "Toque em Ler Curva K" in curve_on_enter
 
 
-def test_068ab_adaptive_reuses_canonical_typed_frame_and_has_no_second_backbone():
-    contract = read("app/src/main/java/com/omegas/prohub/adaptive/AdaptiveEvidenceContracts.kt")
-    assert "typealias CanonicalEvidence = RuntimeTelemetryFrame" in contract
-    assert "SINGLE_PHYSICAL_ACQUISITION = true" in contract
-    assert "MAY_CREATE_SECOND_MP48_POLLING = false" in contract
-    assert "MAY_REPARSE_JSON_TO_FORM_SCIENCE = false" in contract
-    assert "MAY_WRITE_ECU = false" in contract
+def test_068ab_adaptive_alias_points_to_single_telemetry_canonical_authority():
+    adaptive = read("app/src/main/java/com/omegas/prohub/adaptive/AdaptiveEvidenceContracts.kt")
+    canonical = read("app/src/main/java/com/omegas/prohub/telemetry/CanonicalEvidence.kt")
+    assert "typealias CanonicalEvidence = com.omegas.prohub.telemetry.CanonicalEvidence" in adaptive
+    assert "data class CanonicalEvidence(" in canonical
+    assert "RuntimeTelemetryFrame" in canonical
+    assert "CanonicalEvidenceProvenance" in canonical
+    assert "SINGLE_PHYSICAL_ACQUISITION = true" in adaptive
+    assert "MAY_CREATE_SECOND_MP48_POLLING = false" in adaptive
+    assert "MAY_REPARSE_JSON_TO_FORM_SCIENCE = false" in adaptive
+    assert "MAY_WRITE_ECU = false" in adaptive
