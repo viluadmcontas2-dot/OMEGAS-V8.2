@@ -1,7 +1,13 @@
 package com.omegas.prohub.ecu
 
 import android.os.SystemClock
+import com.omegas.prohub.calibration.CalibrationIdentity
+import com.omegas.prohub.calibration.CalibrationProvenance
+import com.omegas.prohub.calibration.CompositeCalibrationReader
+import com.omegas.prohub.calibration.CompositeCalibrationSnapshot
 import com.omegas.prohub.learning.DeferredLiveOnlyLearningStore
+import com.omegas.prohub.learning.LearningCalibrationAuthority
+import com.omegas.prohub.learning.LearningCalibrationBinding
 import com.omegas.prohub.learning.LiveOnlyLearningStore
 import com.omegas.prohub.learning.SampleDecision
 import com.omegas.prohub.storage.AppPaths
@@ -13,6 +19,8 @@ import com.omegas.prohub.util.RealtimeLearningBuffer
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
 import java.security.MessageDigest
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Runtime único do aplicativo.
@@ -65,6 +73,11 @@ class NativeRuntimeManager(
         onStateChanged = ::consumeState,
     )
     private val serialAdmission = Mp48BackpressureScheduler(engine)
+    private val calibrationIdentityReader = CompositeCalibrationReader(serialAdmission)
+    private val calibrationIdentityExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "omegas-calibration-identity").apply { isDaemon = true }
+    }
+    private val calibrationIdentityRefreshPending = AtomicBoolean(false)
     private val latestTelemetryState = LatestOnlyState<RuntimeTelemetryFrame>(
         sequenceOf = { it.sequence },
         generationOf = { it.usbSessionId },
@@ -77,6 +90,11 @@ class NativeRuntimeManager(
     @Volatile private var crashed = false
     @Volatile private var exitReported = false
     @Volatile private var currentUsbSessionId = 0L
+    @Volatile private var calibrationIdentityState = "UNKNOWN"
+    @Volatile private var calibrationIdentityFingerprint = ""
+    @Volatile private var calibrationIdentityGeometry = ""
+    @Volatile private var calibrationIdentityGeneration = -1
+    @Volatile private var calibrationIdentityError = ""
 
     @Volatile var running = false
         private set
@@ -94,6 +112,12 @@ class NativeRuntimeManager(
     /** Deve ser chamado somente quando uma nova conexão física USB é aberta. */
     fun beginUsbSession(sessionId: Long): JSONObject {
         require(sessionId > 0L) { "Sessão USB inválida" }
+        LearningCalibrationAuthority.clear()
+        calibrationIdentityState = "PENDING"
+        calibrationIdentityFingerprint = ""
+        calibrationIdentityGeometry = ""
+        calibrationIdentityGeneration = -1
+        calibrationIdentityError = ""
         // O mesmo lock usado pelo ingest científico fecha a fronteira N → N+1.
         // Se uma evidência N já entrou no bloco crítico, ela termina antes da troca;
         // se ainda não entrou, verá a nova geração e será descartada antes do ingest.
@@ -116,6 +140,11 @@ class NativeRuntimeManager(
         val endingSession = currentUsbSessionId
         learningPipeline.flush(750L)
         currentUsbSessionId = 0L
+        LearningCalibrationAuthority.clear()
+        calibrationIdentityState = "UNKNOWN"
+        calibrationIdentityFingerprint = ""
+        calibrationIdentityGeometry = ""
+        calibrationIdentityGeneration = -1
         latestTelemetryState.clear()
         learningPipeline.endGeneration(endingSession, 1L)
         engine.endUsbSession()
@@ -141,6 +170,11 @@ class NativeRuntimeManager(
             lastError = "A engine Android nativa não iniciou"
         } else {
             log.add("INFO", "ECU-NATIVE", "Runtime Android iniciado")
+            scheduleCalibrationIdentityRefresh(
+                expectedSessionId = currentUsbSessionId,
+                provenance = CalibrationProvenance.FULL_ECU_READ,
+                force = false,
+            )
         }
         onStateChanged()
         return ok
@@ -195,6 +229,15 @@ class NativeRuntimeManager(
             .put("rejected", metrics.rejected)
     }
 
+    private fun calibrationIdentityStatusJson(): JSONObject = JSONObject()
+        .put("state", calibrationIdentityState)
+        .put("fingerprint", calibrationIdentityFingerprint.ifBlank { JSONObject.NULL })
+        .put("geometryFingerprint", calibrationIdentityGeometry.ifBlank { JSONObject.NULL })
+        .put("generation", if (calibrationIdentityGeneration >= 0) calibrationIdentityGeneration else JSONObject.NULL)
+        .put("usbSessionId", currentUsbSessionId)
+        .put("refreshPending", calibrationIdentityRefreshPending.get())
+        .apply { if (calibrationIdentityError.isNotBlank()) put("error", calibrationIdentityError) }
+
     fun statusJson(): JSONObject = engine.statusJson()
         .put("native", true)
         .put("running", running)
@@ -207,6 +250,7 @@ class NativeRuntimeManager(
         .put("learningPipeline", learningPipeline.metricsJson())
         .put("serialAdmission", serialAdmission.metricsJson())
         .put("typedTelemetryState", telemetryStateMetricsJson())
+        .put("calibrationIdentity", calibrationIdentityStatusJson())
 
     fun fullSnapshotJson(): String = snapshotJson()
 
@@ -251,6 +295,7 @@ class NativeRuntimeManager(
             .put("learningPipeline", learningPipeline.metricsJson())
             .put("serialAdmission", serialAdmission.metricsJson())
             .put("typedTelemetryState", telemetryStateMetricsJson())
+            .put("calibrationIdentity", calibrationIdentityStatusJson())
             .toString()
     }
 
@@ -304,12 +349,25 @@ class NativeRuntimeManager(
             .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("scaleMigration", learning.migrationStatus())
             .put("pipeline", learningPipeline.metricsJson())
+            .put("calibrationIdentity", calibrationIdentityStatusJson())
     }
 
     fun notifyCalibrationAdjustment(payload: JSONObject): JSONObject {
         flushLearning("antes de registrar ajuste confirmado")
+        LearningCalibrationAuthority.clear()
+        calibrationIdentityState = "PENDING"
+        calibrationIdentityFingerprint = ""
+        calibrationIdentityGeometry = ""
+        calibrationIdentityGeneration = -1
+        calibrationIdentityError = ""
         val result = learning.onCalibrationAdjustment(payload)
         publishLearningState(latestLearningSequence, safeLearningStatus())
+        val provenance = if (payload.optString("source") == "ECU_NATIVE_AUTOCAL") {
+            CalibrationProvenance.AUTOCAL_RECONCILE
+        } else {
+            CalibrationProvenance.POST_WRITE_READBACK
+        }
+        scheduleCalibrationIdentityRefresh(currentUsbSessionId, provenance, force = true)
         return result
     }
 
@@ -320,11 +378,69 @@ class NativeRuntimeManager(
 
     fun close() {
         stop(3)
+        LearningCalibrationAuthority.clear()
         flushPipelines("encerramento do runtime", 2_000L)
         try { telemetryDeliveryPipeline.close() } catch (_: Exception) {}
         try { learningPipeline.close() } catch (_: Exception) {}
         try { engine.close() } catch (_: Exception) {}
         try { learning.close() } catch (_: Exception) {}
+        calibrationIdentityExecutor.shutdownNow()
+    }
+
+    private fun scheduleCalibrationIdentityRefresh(
+        expectedSessionId: Long,
+        provenance: CalibrationProvenance,
+        force: Boolean,
+    ) {
+        if (expectedSessionId <= 0L || expectedSessionId != currentUsbSessionId || !usb.connected) return
+        val current = LearningCalibrationAuthority.snapshot()
+        if (!force && current != null && current.usbSessionId == expectedSessionId) return
+        if (!calibrationIdentityRefreshPending.compareAndSet(false, true)) return
+        calibrationIdentityState = "READING"
+        calibrationIdentityError = ""
+        calibrationIdentityExecutor.execute {
+            try {
+                if (expectedSessionId != currentUsbSessionId || !usb.connected) return@execute
+                val raw = calibrationIdentityReader.readAtSessionStart(expectedSessionId)
+                val composite = CompositeCalibrationSnapshot.promote(raw)
+                val identity = CalibrationIdentity.fromComposite(
+                    composite = composite,
+                    capturedAtMs = SystemClock.elapsedRealtime(),
+                    mapRevision = null,
+                    curveRevision = null,
+                    provenance = provenance,
+                )
+                if (expectedSessionId != currentUsbSessionId || !usb.connected) return@execute
+                val binding = LearningCalibrationBinding.fromIdentity(identity)
+                LearningCalibrationAuthority.publish(binding)
+                calibrationIdentityFingerprint = binding.calibrationFingerprint
+                calibrationIdentityGeometry = binding.geometryFingerprint
+                calibrationIdentityGeneration = binding.calibrationGeneration
+                calibrationIdentityState = "KNOWN"
+                calibrationIdentityError = ""
+                log.add(
+                    "INFO",
+                    "CALIBRATION-IDENTITY",
+                    "Identidade física reconciliada para ciência GNV • generation=${binding.calibrationGeneration}",
+                )
+            } catch (error: Exception) {
+                if (expectedSessionId == currentUsbSessionId) {
+                    LearningCalibrationAuthority.clear()
+                    calibrationIdentityState = "UNKNOWN"
+                    calibrationIdentityFingerprint = ""
+                    calibrationIdentityGeometry = ""
+                    calibrationIdentityGeneration = -1
+                    calibrationIdentityError = error.message ?: error.javaClass.simpleName
+                    log.add(
+                        "WARN",
+                        "CALIBRATION-IDENTITY",
+                        "GNV permanece fora da ciência ativa até nova identidade física válida: $calibrationIdentityError",
+                    )
+                }
+            } finally {
+                calibrationIdentityRefreshPending.set(false)
+            }
+        }
     }
 
     private fun consumeTelemetry(
@@ -422,6 +538,7 @@ class NativeRuntimeManager(
             .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learning_pipeline", learningPipeline.metricsJson())
             .put("typed_telemetry_state", telemetryStateMetricsJson())
+            .put("calibration_identity", calibrationIdentityStatusJson())
 
         val rawEvent = synchronized(snapshotLock) {
             if (generation != currentUsbSessionId) return@synchronized null
@@ -507,6 +624,7 @@ class NativeRuntimeManager(
             .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learning_pipeline", learningPipeline.metricsJson())
             .put("typed_telemetry_state", telemetryStateMetricsJson())
+            .put("calibration_identity", calibrationIdentityStatusJson())
             .toString()
     }
 
@@ -521,6 +639,7 @@ class NativeRuntimeManager(
             .put("reference_confidence", state.optDouble("reference_confidence", 0.0))
             .put("quality", state.optDouble("quality", 0.0))
             .put("epoch", state.optInt("epoch", 1))
+            .put("calibration_identity_ready", state.optBoolean("calibration_identity_ready", false))
             .put("pipeline_pending", learningPipeline.metricsJson().optLong("pending", 0L))
     }
 
