@@ -847,6 +847,11 @@ class MotorLearningMemory(
                         petrolMs = region.petrolMean,
                         confidence = region.confidence(),
                         sampleCount = region.sampleCount,
+                        environment = PetrolReferenceEnvironmentBridge.region(
+                            waterC = region.waterMean,
+                            gasTemperatureC = region.gasMean,
+                            pressureDiffBar = region.pressureMean,
+                        ),
                     )
                 }
                 .toList(),
@@ -854,6 +859,11 @@ class MotorLearningMemory(
                 rpm = sample.rpm,
                 mapBar = sample.mapBar,
                 waterC = sample.waterC,
+                environment = PetrolReferenceEnvironmentBridge.request(
+                    waterC = sample.waterC,
+                    gasTemperatureC = sample.gasC,
+                    pressureDiffBar = sample.pressureDiffBar,
+                ),
             ),
             policy = LearningToleranceSettings.current,
         )
