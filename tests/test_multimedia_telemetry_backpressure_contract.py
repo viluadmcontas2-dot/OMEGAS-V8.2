@@ -53,6 +53,7 @@ def test_science_backpressure_keeps_three_valuable_items_plus_latest_diagnostic(
         'put("pendingImportant", importantQueue.size)',
         'put("maxQueueDelayMs"',
         'put("maxProcessingMs"',
+        'put("marginalInformationModel", "QUALITATIVE_ORDER_ONLY_NOT_CONFIDENCE_OR_PROBABILITY")',
     ):
         assert marker in buffer, f"contrato realtime ausente: {marker}"
     assert "Executors.newSingleThreadExecutor" not in buffer
@@ -66,6 +67,7 @@ def test_visual_delivery_is_latest_only_not_a_history_queue():
         "coalesced.incrementAndGet()",
         "pending = task",
         'put("mode", "LATEST_ONLY_LIVE_STATE")',
+        'put("queueBound", 1)',
         'put("pending", if (pending == null) 0 else 1)',
         'put("coalesced", coalesced.get())',
     ):
@@ -73,15 +75,19 @@ def test_visual_delivery_is_latest_only_not_a_history_queue():
     assert "ArrayDeque" not in delivery
 
 
-def test_scientific_snapshot_persistence_is_deferred_and_coalesced():
+def test_scientific_snapshot_persistence_is_material_revision_driven_and_coalesced():
     learning = read("app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt")
     writer = read("app/src/main/java/com/omegas/prohub/learning/CoalescedSnapshotWriter.kt")
     ingest = learning.split(
         "    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject", 1
     )[1].split("\n    fun statusJson()", 1)[0]
     assert "val result = delegate.ingest(telemetry, prepared)" in ingest
-    assert "if (source != null) persistEvidenceState()" in ingest
+    assert "if (prepared.learningEligible && prepared.sample != null)" in ingest
+    assert "persistenceGate.markMaterialChange()" in ingest
+    assert "persistEvidenceState()" in ingest
+    assert "if (source != null) persistEvidenceState()" not in ingest
     assert "writeText(" not in ingest
+    assert "private val persistenceGate = MaterialPersistenceGate()" in learning
     assert "evidenceStateWriter.request { buildEvidencePayload(snapshot) }" in learning
     assert "latestPayloadProvider = payloadProvider" in writer
     assert "latestPayloadProvider?.invoke()" in writer
