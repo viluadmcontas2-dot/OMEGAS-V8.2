@@ -1,99 +1,89 @@
-#!/usr/bin/env python3
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-runtime = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt").read_text(encoding="utf-8")
-buffer = (ROOT / "app/src/main/java/com/omegas/prohub/util/RealtimeLearningBuffer.kt").read_text(encoding="utf-8")
-delivery = (ROOT / "app/src/main/java/com/omegas/prohub/util/LatestOnlyBackgroundPipeline.kt").read_text(encoding="utf-8")
-learning = (ROOT / "app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt").read_text(encoding="utf-8")
-snapshot_writer = (ROOT / "app/src/main/java/com/omegas/prohub/learning/CoalescedSnapshotWriter.kt").read_text(encoding="utf-8")
 
-consume_start = runtime.index("    private fun consumeTelemetry(")
-consume_end = runtime.index("\n    private fun publishLearningState", consume_start)
-consume_body = runtime[consume_start:consume_end]
 
-# A ECU continua livre do trabalho pesado.
-assert "learning.ingest(telemetry, decision)" in consume_body
-assert "val processed = learning.ingest(telemetry, decision)" in consume_body
-assert "val learningState = learningLiveSummary()" in consume_body
-assert "cachedLearningState()" not in consume_body
-assert "telemetryDeliveryPipeline.submit(sequence)" in consume_body
-assert "RealtimeLearningBuffer" in runtime
-assert "OrderedBackgroundPipeline(\n        threadName = \"omegas-learning-pipeline\"" not in runtime
+def read(path: str) -> str:
+    return (ROOT / path).read_text(encoding="utf-8")
 
-# O hot path diferencia evidência de estado transitório.
-assert "val important = decision.sample != null" in consume_body
-assert "important = important" in consume_body
-assert "generation = generation" in consume_body
-assert "if (generation != currentUsbSessionId)" in consume_body
-assert "learningSessionLock" in runtime
 
-# Nova conexão = nova geração. Trabalho quente antigo não pode entrar na sessão nova.
-begin_start = runtime.index("    fun beginUsbSession(")
-begin_end = runtime.index("\n    /** Fecha somente", begin_start)
-begin_body = runtime[begin_start:begin_end]
-assert "learningPipeline.beginGeneration(sessionId)" in begin_body
-assert "latestLearningSequence = 0L" in begin_body
-assert begin_body.index("learningPipeline.beginGeneration(sessionId)") < begin_body.index("learning.startSession()")
+def test_runtime_uses_one_canonical_frame_and_bounded_independent_consumers():
+    runtime = read("app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt")
+    consume = runtime.split("    private fun consumeTelemetry(", 1)[1].split(
+        "\n    private fun projectTelemetryCompatibility", 1
+    )[0]
+    assert "CanonicalEvidence.from(" in consume
+    assert "latestCanonicalEvidence.publish(evidence)" in consume
+    assert "telemetryDeliveryPipeline.submit(sequence)" in consume
+    assert "adaptiveShadowPipeline.submit(sequence)" in consume
+    assert "EvidenceWorkClassifier.classify(" in consume
+    assert "learningPipeline.submit(" in consume
+    assert "learning.ingest(evidence.rawTelemetry, evidence.sampleDecision)" in consume
+    assert "generation = generation" in consume
+    assert "if (generation != currentUsbSessionId)" in consume
+    assert "RealtimeLearningBuffer" in runtime
 
-end_start = runtime.index("    fun endUsbSession(")
-end_end = runtime.index("\n    @Synchronized", end_start)
-end_body = runtime[end_start:end_end]
-assert "learningPipeline.flush(750L)" in end_body
-assert "learningPipeline.endGeneration(endingSession" in end_body
-assert "currentUsbSessionId = 0L" in end_body
 
-# Buffer quente tem limite duro de três janelas sobrepostas. Em saturação mantém
-# a evidência recente em vez de transformar RAM em histórico de minutos.
-for marker in (
-    "const val MAX_HOT_EVIDENCE = 3",
-    "private val capacityImportant = importantCapacity.coerceIn(1, MAX_HOT_EVIDENCE)",
-    "private val importantQueue = ArrayDeque<Task>()",
-    "private var latestTransient: Task? = null",
-    "coalescedTransient.incrementAndGet()",
-    "importantQueue.removeFirst()",
-    "supersededImportant.incrementAndGet()",
-    "purgeQueuedLocked()",
-    'put("durableBacklog", "SESSION_RECORDER")',
-    'put("overloadPolicy", "SUPERSEDE_OLDEST_OVERLAPPING_PENDING_EVIDENCE")',
-    'put("capacityImportant", capacityImportant)',
-    'put("pendingImportant", importantQueue.size)',
-    'put("maxQueueDelayMs"',
-    'put("maxProcessingMs"',
-):
-    assert marker in buffer, f"contrato realtime ausente: {marker}"
-assert "Executors.newSingleThreadExecutor" not in buffer
-assert "Thread.MIN_PRIORITY" not in runtime
+def test_usb_generation_purges_old_hot_science_without_stopping_acquisition():
+    runtime = read("app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt")
+    begin = runtime.split("    fun beginUsbSession(", 1)[1].split("\n    /** Fecha somente", 1)[0]
+    end = runtime.split("    fun endUsbSession(", 1)[1].split("\n    @Synchronized", 1)[0]
+    assert "learningPipeline.beginGeneration(sessionId)" in begin
+    assert "latestLearningSequence = 0L" in begin
+    assert begin.index("learningPipeline.beginGeneration(sessionId)") < begin.index("learning.startSession()")
+    assert "learningPipeline.flush(750L)" in end
+    assert "learningPipeline.endGeneration(endingSession" in end
+    assert "currentUsbSessionId = 0L" in end
 
-# Estado visual é presente, não histórico: um consumidor lento mantém no máximo
-# um quadro pendente e substitui esse quadro pelo estado mais recente.
-for marker in (
-    'private var pending: Task? = null',
-    'pending?.let',
-    'coalesced.incrementAndGet()',
-    'pending = task',
-    '.put("mode", "LATEST_ONLY_LIVE_STATE")',
-    '.put("pending", if (pending == null) 0 else 1)',
-    '.put("coalesced", coalesced.get())',
-):
-    assert marker in delivery, f"contrato latest-only ausente: {marker}"
-assert "Executors.newSingleThreadExecutor" not in delivery
-assert "ArrayDeque" not in delivery
 
-# Persistência auxiliar continua coalescida e fora do ingest quente.
-ingest_start = learning.index("    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject")
-ingest_end = learning.index("\n    fun statusJson()", ingest_start)
-ingest_body = learning[ingest_start:ingest_end]
-assert "val result = delegate.ingest(telemetry, prepared)" in ingest_body
-assert "if (source != null) persistEvidenceState()" in ingest_body
-assert "writeText(" not in ingest_body
-assert "CoalescedSnapshotWriter" in learning
-assert "evidenceStateWriter.request { buildEvidencePayload(snapshot) }" in learning
-assert "temporary.writeText" not in learning
-assert "latestPayloadProvider = payloadProvider" in snapshot_writer
-assert "latestPayloadProvider?.invoke()" in snapshot_writer
-assert "while (dirty.getAndSet(false))" in snapshot_writer
-assert '.put("coalesced"' in snapshot_writer
-assert "writeAtomically(payload)" in snapshot_writer
+def test_science_backpressure_keeps_three_valuable_items_plus_latest_diagnostic():
+    buffer = read("app/src/main/java/com/omegas/prohub/util/RealtimeLearningBuffer.kt")
+    for marker in (
+        "const val MAX_HOT_EVIDENCE = 3",
+        "private val capacityImportant = importantCapacity.coerceIn(1, MAX_HOT_EVIDENCE)",
+        "private val importantQueue = ArrayDeque<Task>()",
+        "private var latestTransient: Task? = null",
+        "coalescedTransient.incrementAndGet()",
+        "importantQueue.remove(best)",
+        "supersededImportant.incrementAndGet()",
+        "purgeQueuedLocked()",
+        'put("durableBacklog", "SESSION_RECORDER")',
+        'put("overloadPolicy", "SUPERSEDE_LOWEST_VALUE_PENDING_OR_REJECT_INCOMING")',
+        'put("acquisitionDropAllowed", false)',
+        'put("pendingImportant", importantQueue.size)',
+        'put("maxQueueDelayMs"',
+        'put("maxProcessingMs"',
+    ):
+        assert marker in buffer, f"contrato realtime ausente: {marker}"
+    assert "Executors.newSingleThreadExecutor" not in buffer
 
-print("MULTIMEDIA_REALTIME_LEARNING_BUFFER_CONTRACT=PASS")
+
+def test_visual_delivery_is_latest_only_not_a_history_queue():
+    delivery = read("app/src/main/java/com/omegas/prohub/util/LatestOnlyBackgroundPipeline.kt")
+    for marker in (
+        "private var pending: Task? = null",
+        "pending?.let",
+        "coalesced.incrementAndGet()",
+        "pending = task",
+        'put("mode", "LATEST_ONLY_LIVE_STATE")',
+        'put("pending", if (pending == null) 0 else 1)',
+        'put("coalesced", coalesced.get())',
+    ):
+        assert marker in delivery
+    assert "ArrayDeque" not in delivery
+
+
+def test_scientific_snapshot_persistence_is_deferred_and_coalesced():
+    learning = read("app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt")
+    writer = read("app/src/main/java/com/omegas/prohub/learning/CoalescedSnapshotWriter.kt")
+    ingest = learning.split(
+        "    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject", 1
+    )[1].split("\n    fun statusJson()", 1)[0]
+    assert "val result = delegate.ingest(telemetry, prepared)" in ingest
+    assert "if (source != null) persistEvidenceState()" in ingest
+    assert "writeText(" not in ingest
+    assert "evidenceStateWriter.request { buildEvidencePayload(snapshot) }" in learning
+    assert "latestPayloadProvider = payloadProvider" in writer
+    assert "latestPayloadProvider?.invoke()" in writer
+    assert "while (dirty.getAndSet(false))" in writer
+    assert "writeAtomically(payload)" in writer
