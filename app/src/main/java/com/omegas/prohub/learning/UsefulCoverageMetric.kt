@@ -4,8 +4,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Cobertura científica por tempo: conta regiões físicas com suporte/contexto
- * utilizável. Nunca usa número bruto de frames como cobertura.
+ * Cobertura científica por tempo: conta regiões físicas com suporte e contexto
+ * mínimo utilizável. Contexto ambiental opcional permanece observável, mas não
+ * vira gate silencioso quando estiver indisponível.
  */
 internal object UsefulCoverageMetric {
     private const val MILLIS_PER_MINUTE = 60_000.0
@@ -16,9 +17,13 @@ internal object UsefulCoverageMetric {
     ): JSONObject {
         val regions = exported.optJSONArray("regions") ?: JSONArray()
         val useful = mutableListOf<String>()
+        var environmentComplete = 0
         repeat(regions.length()) { index ->
             val region = regions.optJSONObject(index) ?: return@repeat
-            if (isUseful(region)) useful += region.optString("id", "region-$index")
+            if (isUseful(region)) {
+                useful += region.optString("id", "region-$index")
+                if (hasCompleteEnvironmentalContext(region)) environmentComplete += 1
+            }
         }
 
         val elapsedMs = (elapsedMsOverride
@@ -26,11 +31,13 @@ internal object UsefulCoverageMetric {
             ?: 0L).coerceAtLeast(0L)
         val rate = if (elapsedMs <= 0L) 0.0 else useful.size * MILLIS_PER_MINUTE / elapsedMs.toDouble()
         return JSONObject()
-            .put("basis", "SUPPORTED_CONTEXT_VALID_REGIONS")
+            .put("basis", "SUPPORTED_RPM_MAP_PETROL_REGIONS")
             .put("raw_region_count", regions.length())
             .put("useful_region_count", useful.size)
             .put("useful_region_ids", JSONArray(useful))
             .put("ignored_region_count", regions.length() - useful.size)
+            .put("environment_context_complete_regions", environmentComplete)
+            .put("environment_context_optional", true)
             .put("elapsed_ms", elapsedMs)
             .put("useful_regions_per_minute", rate)
             .put("raw_frame_count_used", false)
@@ -43,15 +50,18 @@ internal object UsefulCoverageMetric {
         val rpm = region.optDouble("rpm", Double.NaN)
         val map = region.optDouble("map_bar", Double.NaN)
         val petrol = region.optDouble("petrol_ms", Double.NaN)
-        val water = region.optDouble("water_c", Double.NaN)
-        val pressure = region.optDouble("pressure_diff_bar", Double.NaN)
         val confidence = region.optDouble("confidence", Double.NaN)
         return samples > 0 && visits > 0 &&
             rpm.isFinite() && rpm >= 0.0 &&
             map.isFinite() && map >= 0.0 &&
             petrol.isFinite() && petrol > 0.05 &&
-            water.isFinite() && pressure.isFinite() &&
             confidence.isFinite() && confidence > 0.0
+    }
+
+    private fun hasCompleteEnvironmentalContext(region: JSONObject): Boolean {
+        val water = region.optDouble("water_c", Double.NaN)
+        val pressure = region.optDouble("pressure_diff_bar", Double.NaN)
+        return water.isFinite() && pressure.isFinite()
     }
 }
 
