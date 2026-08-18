@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -9,6 +10,12 @@ import java.util.concurrent.atomic.AtomicReference
  */
 object LearningCalibrationAuthority {
     private val current = AtomicReference<LearningCalibrationBinding?>(null)
+    private val physicalSessionManaged = AtomicBoolean(false)
+
+    fun beginPhysicalSession() {
+        physicalSessionManaged.set(true)
+        current.set(null)
+    }
 
     fun publish(binding: LearningCalibrationBinding) {
         current.set(binding)
@@ -17,6 +24,13 @@ object LearningCalibrationAuthority {
     fun clear() {
         current.set(null)
     }
+
+    fun endPhysicalSession() {
+        current.set(null)
+        physicalSessionManaged.set(false)
+    }
+
+    fun requiresKnownGeometry(): Boolean = physicalSessionManaged.get()
 
     fun snapshot(): LearningCalibrationBinding? = current.get()
 }
