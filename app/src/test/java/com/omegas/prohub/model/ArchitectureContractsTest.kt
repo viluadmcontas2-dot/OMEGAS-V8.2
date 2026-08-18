@@ -62,4 +62,34 @@ class ArchitectureContractsTest {
             AppStateDomain.entries.toSet(),
         )
     }
+
+    @Test
+    fun `adaptive is a parallel scientific authority without hidden dominance`() {
+        assertEquals(
+            setOf(
+                ScientificAuthority.OEM_NATIVE,
+                ScientificAuthority.CLASSIC_ASSISTED,
+                ScientificAuthority.ADAPTIVE_SHADOW,
+            ),
+            ScientificAuthority.entries.toSet(),
+        )
+        assertEquals(
+            setOf(AdaptiveMode.OFFLINE_REPLAY, AdaptiveMode.LIVE_SHADOW, AdaptiveMode.PROPOSAL),
+            AdaptiveMode.entries.toSet(),
+        )
+    }
+
+    @Test
+    fun `adaptive pre physical modes cannot own serial polling or ecu writer`() {
+        assertTrue(AdaptiveBoundaryContract.MAY_CONSUME_CANONICAL_EVIDENCE)
+        assertTrue(AdaptiveBoundaryContract.MAY_RECONSTRUCT_OFFLINE_EXPERIMENTS)
+        assertTrue(AdaptiveBoundaryContract.MAY_PUBLISH_SHADOW_PREDICTION)
+        assertTrue(AdaptiveBoundaryContract.MAY_PREPARE_REVIEWABLE_PROPOSAL)
+        assertFalse(AdaptiveBoundaryContract.MAY_TOUCH_MP48_SERIAL)
+        assertFalse(AdaptiveBoundaryContract.MAY_OWN_TELEMETRY_POLLING)
+        assertFalse(AdaptiveBoundaryContract.MAY_OWN_WRITER)
+        assertFalse(AdaptiveBoundaryContract.MAY_WRITE_ECU)
+        assertFalse(AdaptiveBoundaryContract.MAY_TRIGGER_AUTOMATCH)
+        assertFalse(AdaptiveBoundaryContract.MAY_START_CALIBRATION_AUTOMATICALLY)
+    }
 }
