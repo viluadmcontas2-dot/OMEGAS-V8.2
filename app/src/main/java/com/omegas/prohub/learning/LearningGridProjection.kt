@@ -48,9 +48,9 @@ object LearningGridProjection {
         val axis = axisContext()
         if (axis == null) {
             return JSONObject()
-                .put("rows", KMapPhysicalAxes.EDITABLE_ROWS)
+                .put("rows", KMapPhysicalAxes.WRITABLE_ROWS)
                 .put("columns", KMapPhysicalAxes.COLUMNS)
-                .put("physicalCells", KMapPhysicalAxes.EDITABLE_ROWS * KMapPhysicalAxes.COLUMNS)
+                .put("physicalCells", KMapPhysicalAxes.WRITABLE_ROWS * KMapPhysicalAxes.COLUMNS)
                 .put("geometryKnown", false)
                 .put("axisSource", "UNKNOWN_CURRENT_SESSION")
                 .put("reasonCode", "MAP_GEOMETRY_UNKNOWN")
