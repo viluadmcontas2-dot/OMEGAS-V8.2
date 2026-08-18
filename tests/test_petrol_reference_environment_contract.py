@@ -47,27 +47,28 @@ class PetrolReferenceEnvironmentContract(unittest.TestCase):
         ):
             self.assertIn(token, memory)
 
-    def test_real_selector_call_wires_region_and_current_gas_temperature(self):
+    def test_real_selector_call_wires_region_and_current_environment(self):
         memory = MEMORY.read_text("utf-8")
         for token in (
             "environment = PetrolReferenceEnvironmentBridge.region(",
             "gasTemperatureC = region.gasMean",
+            "pressureDiffBar = region.pressureMean",
             "environment = PetrolReferenceEnvironmentBridge.request(",
             "gasTemperatureC = sample.gasC",
+            "pressureDiffBar = sample.pressureDiffBar",
         ):
             self.assertIn(token, memory)
 
-        bridge = BRIDGE.read_text("utf-8")
-        self.assertIn("gasTemperatureC = gasTemperatureC.takeIf(Double::isFinite)", bridge)
-        self.assertIn("gasTemperatureFreshness = freshness(gasTemperatureC", bridge)
-        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_REGION")', bridge)
-        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_CURRENT")', bridge)
-
-    def test_owner_075_does_not_turn_gas_temperature_or_pressure_into_native_gate(self):
+    def test_gas_temperature_remains_app_context_and_pressure_map_are_native_anchored(self):
         bridge = BRIDGE.read_text("utf-8")
         selector = SELECTOR.read_text("utf-8")
-        self.assertIn('pressureSource = "OWNER_076_PENDING"', bridge)
-        self.assertIn("pressureFreshness = PetrolReferenceSelector.ContextFreshness.UNKNOWN", bridge)
+        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_REGION")', bridge)
+        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_CURRENT")', bridge)
+        self.assertIn('"NATIVE_ANCHORED:MP48_PRESSURE_DIFF_REGION:E4"', bridge)
+        self.assertIn('"NATIVE_ANCHORED:MP48_PRESSURE_DIFF_CURRENT:E4"', bridge)
+        self.assertIn('mapSource = "NATIVE_ANCHORED:MP48_RUNTIME_MAP:E4"', bridge)
+        self.assertIn("pressureFreshness = freshness(pressureDiffBar", bridge)
+        # Native-anchored acquisition/context does not mean pressure becomes a selector gate here.
         self.assertIn('"gas_temperature_used_as_native_gate", false', selector)
         self.assertIn('"pressure_used_as_native_gate", false', selector)
 
