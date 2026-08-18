@@ -1,6 +1,7 @@
 package com.omegas.prohub.telemetry
 
 import com.omegas.prohub.ecu.Mp48Telemetry
+import com.omegas.prohub.learning.LearningMutationAuthority
 import com.omegas.prohub.learning.SampleDecision
 import org.json.JSONObject
 
@@ -75,6 +76,7 @@ data class CanonicalEvidence(
         .put("learning_eligible", sampleDecision.learningEligible)
         .put("fuel_confirmed", sampleDecision.fuelConfirmed ?: JSONObject.NULL)
         .put("transition_target", sampleDecision.transitionTarget ?: JSONObject.NULL)
+        .put("learning_mutation", LearningMutationAuthority.current().toJson())
         .put("canonical_provenance", provenance.toJson())
 
     companion object {
@@ -98,7 +100,7 @@ data class CanonicalEvidence(
             return CanonicalEvidence(
                 frame = frame,
                 rawTelemetry = telemetry,
-                sampleDecision = decision,
+                sampleDecision = LearningMutationAuthority.gate(decision),
                 provenance = provenance,
             )
         }
