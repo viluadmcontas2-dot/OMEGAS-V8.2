@@ -10,14 +10,17 @@ import kotlin.math.max
  * própria amostra. Ele não altera qualidade física, tolerâncias ou visitas.
  */
 object ContinuousWindowNovelty {
+    /** Baseline legado explícito; não é verdade física/OEM. */
+    const val FULLY_NEW_FRACTION = 0.75
+
     data class Result(
         val newFrames: Int,
         val totalFrames: Int,
         val fraction: Double,
         val representedThroughElapsedMs: Long,
     ) {
-        /** Uma janela com pelo menos 80% de quadros novos é independente na prática. */
-        val fullyNew: Boolean get() = newFrames >= ceil(totalFrames * 0.75).toInt()
+        /** Pelo menos 75% de quadros novos preserva a classificação legada fully-new. */
+        val fullyNew: Boolean get() = newFrames >= ceil(totalFrames * FULLY_NEW_FRACTION).toInt()
         val duplicate: Boolean get() = newFrames == 0
     }
 
