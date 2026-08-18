@@ -4,8 +4,8 @@ package com.omegas.prohub.ecu
  * Contrato somente leitura dos objetos AutoCal já identificados.
  *
  * Não contém reset, ações, escrita ou acesso à porta USB.
- * O decoder interpreta bytes; a validação 18/30 usa MODULE_VERSION quando a
- * fotografia completa da ECU está disponível.
+ * Shape é validado pela identidade física de cada field. MODULE_VERSION é
+ * preservado como dado observado, mas não reescreve globalmente famílias 18/30.
  */
 object AutoCalProtocol {
     const val READ_SCALAR = 0x09
@@ -76,6 +76,20 @@ object AutoCalProtocol {
     val MUL_ACT = Field("MUL_ACT", 0x0161, Encoding.Q14_U16_LE, Shape.VECTOR, 30, "FACTOR")
     val PETR_INJ_TBUF = Field("PETR_INJ_TBUF", 0x0162, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF = Field("MNFLD_PRESS_BUF", 0x0163, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
+
+    /**
+     * CP161: TAebNumber, DataLength=2, DataMask=65535, SerialCode=0x0167,
+     * transformação raw/1024. Unidade/consumer/semântica física permanecem UNKNOWN.
+     */
+    val RAW_AUTOCAL_0167 = Field(
+        "RAW_AUTOCAL_0167",
+        0x0167,
+        Encoding.U16_LE,
+        Shape.SCALAR,
+        1,
+        "RAW_DIV_1024_UNKNOWN",
+    )
+
     val ACQUIRED_ZONES_PETROL = Field("ACQUIRED_ZONES_PETROL", 0x016F, Encoding.U8, Shape.VECTOR, 4)
     val ACQUIRED_ZONES_GAS = Field("ACQUIRED_ZONES_GAS", 0x0170, Encoding.U8, Shape.VECTOR, 4)
     val CALIBRATION_VAL_1 = Field("CALIBRATION_VAL_1", 0x0172, Encoding.U8, Shape.VECTOR, 10)
@@ -85,7 +99,19 @@ object AutoCalProtocol {
     val PETR_MNFLD_PRESS_RV = Field("PETR_MNFLD_PRESS_RV", 0x018D, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
     val GAS_MNFLD_PRESS_RV = Field("GAS_MNFLD_PRESS_RV", 0x018E, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
 
-    private val moduleSizedFields = setOf(
+    val ACQUISITION_18_FIELDS: Set<String> = setOf(
+        NUM_BUF_UPD_PETR.identity,
+        NUM_BUF_UPD_GAS.identity,
+        PETR_INJ_TBUF_GAS_PREV.identity,
+        MNFLD_PRESS_BUF_GAS_PREV.identity,
+        PETR_INJ_TBUF_GAS.identity,
+        MNFLD_PRESS_BUF_GAS.identity,
+        PETR_INJ_TBUF.identity,
+        MNFLD_PRESS_BUF.identity,
+        MNFLD_PRESS_THD.identity,
+    )
+
+    val REFERENCE_30_FIELDS: Set<String> = setOf(
         PETR_INJ_TBP.identity,
         MUL_ACT.identity,
         PETR_MNFLD_PRESS_RV.identity,
@@ -93,8 +119,8 @@ object AutoCalProtocol {
     )
 
     /**
-     * Leitura somente observacional. MODULE_VERSION vem primeiro para que o
-     * snapshot consiga validar a forma dos quatro vetores dinâmicos.
+     * Leitura somente observacional. MODULE_VERSION permanece primeiro apenas
+     * como provenance/version observada; shape é propriedade do field.
      */
     val READ_ONLY_FIELDS: List<Field> = listOf(
         MODULE_VERSION,
@@ -114,6 +140,7 @@ object AutoCalProtocol {
         MNFLD_PRESS_BUF_GAS,
         PETR_INJ_TBUF,
         MNFLD_PRESS_BUF,
+        RAW_AUTOCAL_0167,
         CALIBRATION_VAL_1,
         ACQUIRED_ZONES_PETROL,
         ACQUIRED_ZONES_GAS,
@@ -121,20 +148,22 @@ object AutoCalProtocol {
         MAX_RPM_FOR_AUTOCAL,
     )
 
-    fun expectedElements(field: Field, moduleVersion: Int?): Int? = when {
-        field.identity in moduleSizedFields && moduleVersion == null -> null
-        field.identity in moduleSizedFields && moduleVersion == 4 -> 30
-        field.identity in moduleSizedFields -> 18
-        else -> field.expectedElementsHint
+    /**
+     * Compatibilidade de assinatura: moduleVersion é deliberadamente ignorada
+     * para cardinalidade. O owner 103A fechou que 18/30 pertence à identidade
+     * física do field; o corpus real contém moduleVersion=100 com vetores 30 válidos.
+     */
+    fun expectedElements(field: Field, moduleVersion: Int?): Int? {
+        @Suppress("UNUSED_VARIABLE") val observedModuleVersion = moduleVersion
+        return field.expectedElementsHint
     }
 
     fun requireExpectedShape(decoded: Decoded, moduleVersion: Int?) {
         val expected = expectedElements(decoded.field, moduleVersion) ?: return
         require(decoded.elementCount == expected) {
-            "${decoded.field.key}: ${decoded.elementCount} elementos; esperado $expected para MODULE_VERSION ${moduleVersion ?: "desconhecida"}"
+            "${decoded.field.key}: ${decoded.elementCount} elementos; esperado $expected pela identidade física do field; MODULE_VERSION observado=${moduleVersion ?: "UNKNOWN"}"
         }
     }
-
 
     data class NativeStatus(
         val nativeFlag13: Int,
@@ -244,6 +273,7 @@ object AutoCalProtocol {
                 "MS" -> AutoCalScale.injectionMs(raw[index])
                 "BAR" -> AutoCalScale.mapBar(raw[index])
                 "FACTOR" -> AutoCalScale.multiplierFromRaw(raw[index])
+                "RAW_DIV_1024_UNKNOWN" -> raw[index] / 1024.0
                 else -> raw[index].toDouble()
             }
         }
