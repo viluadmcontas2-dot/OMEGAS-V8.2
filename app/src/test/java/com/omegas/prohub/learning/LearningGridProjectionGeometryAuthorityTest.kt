@@ -16,7 +16,7 @@ class LearningGridProjectionGeometryAuthorityTest {
     }
 
     @Test
-    fun managedPhysicalSessionWithoutGeometryNeverInventsCell() {
+    fun managedPhysicalSessionWithoutGeometryNeverInventsCellOrWeight() {
         LearningCalibrationAuthority.beginPhysicalSession()
 
         val cell = LearningGridProjection.cellFor(rpm = 2_500.0, petrolMs = 4.5, mapBar = 0.60)
@@ -27,6 +27,8 @@ class LearningGridProjectionGeometryAuthorityTest {
         assertEquals("UNKNOWN", cell.getString("key"))
         assertEquals(0, cell.getJSONArray("continuousWeights").length())
         assertEquals(0, cell.getJSONArray("trilinearWeights").length())
+        assertTrue(ContinuousLearningMath.bilinearWeights(2_500.0, 4.5).isEmpty())
+        assertTrue(ContinuousLearningMath.trilinearWeights(2_500.0, 4.5, 0.60).isEmpty())
 
         val rawRegion = JSONObject()
             .put("id", "petrol-raw")
@@ -44,7 +46,7 @@ class LearningGridProjectionGeometryAuthorityTest {
     }
 
     @Test
-    fun knownEcuGeometryControlsCellAndWeightsInsteadOfHistoricalFixture() {
+    fun knownEcuGeometryControlsCellAndAllWeightCallPathsInsteadOfHistoricalFixture() {
         LearningCalibrationAuthority.beginPhysicalSession()
         LearningCalibrationAuthority.publish(
             LearningCalibrationBinding(
@@ -73,6 +75,12 @@ class LearningGridProjectionGeometryAuthorityTest {
         assertEquals(0, weights.getJSONObject(0).getInt("column"))
         assertEquals(1.0, weights.getJSONObject(0).getDouble("weight"), 0.0)
 
+        val legacySignatureWeights = ContinuousLearningMath.bilinearWeights(1_000.0, 5.0)
+        assertEquals(1, legacySignatureWeights.size)
+        assertEquals(2, legacySignatureWeights.single().row)
+        assertEquals(0, legacySignatureWeights.single().column)
+        assertEquals(1.0, legacySignatureWeights.single().weight, 0.0)
+
         val grid = LearningGridProjection.gridJson()
         assertTrue(grid.getBoolean("geometryKnown"))
         assertEquals("ECU_CURRENT", grid.getString("axisSource"))
@@ -99,6 +107,7 @@ class LearningGridProjectionGeometryAuthorityTest {
         val cell = LearningGridProjection.cellFor(2_500.0, 4.5)
         assertFalse(cell.getBoolean("geometryKnown"))
         assertEquals("MAP_GEOMETRY_UNKNOWN", cell.getString("reasonCode"))
+        assertTrue(ContinuousLearningMath.bilinearWeights(2_500.0, 4.5).isEmpty())
     }
 
     @Test
