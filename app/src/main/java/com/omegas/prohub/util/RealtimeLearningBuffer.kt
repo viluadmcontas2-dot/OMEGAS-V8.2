@@ -41,6 +41,57 @@ class RealtimeLearningBuffer(
         val important: Boolean get() = !workClass.diagnosticOnly
     }
 
+    /**
+     * Custo observado por classe sem transformar tempo de CPU em confiança.
+     * MarginalInformationClass é somente ordem qualitativa de utilidade para
+     * backpressure; custo é telemetria operacional independente.
+     */
+    private data class CostStats(
+        var observations: Long = 0L,
+        var lastQueueDelayMs: Long = 0L,
+        var totalQueueDelayMs: Long = 0L,
+        var maxQueueDelayMs: Long = 0L,
+        var lastProcessingMs: Long = 0L,
+        var totalProcessingMs: Long = 0L,
+        var maxProcessingMs: Long = 0L,
+        var cpuObservations: Long = 0L,
+        var lastThreadCpuMs: Long = -1L,
+        var totalThreadCpuMs: Long = 0L,
+        var maxThreadCpuMs: Long = -1L,
+    ) {
+        fun observe(queueDelayMs: Long, processingMs: Long, threadCpuMs: Long) {
+            observations += 1L
+            lastQueueDelayMs = queueDelayMs
+            totalQueueDelayMs += queueDelayMs
+            maxQueueDelayMs = maxOf(maxQueueDelayMs, queueDelayMs)
+            lastProcessingMs = processingMs
+            totalProcessingMs += processingMs
+            maxProcessingMs = maxOf(maxProcessingMs, processingMs)
+            if (threadCpuMs >= 0L) {
+                cpuObservations += 1L
+                lastThreadCpuMs = threadCpuMs
+                totalThreadCpuMs += threadCpuMs
+                maxThreadCpuMs = maxOf(maxThreadCpuMs, threadCpuMs)
+            }
+        }
+
+        fun toJson(workClass: EvidenceWorkClass): JSONObject = JSONObject()
+            .put("marginalInformationClass", workClass.marginalInformationClass.name)
+            .put("marginalInformationRank", workClass.marginalInformationClass.rank)
+            .put("informationInterpretation", "QUALITATIVE_ORDER_NOT_CONFIDENCE_OR_PROBABILITY")
+            .put("observations", observations)
+            .put("lastQueueDelayMs", lastQueueDelayMs)
+            .put("avgQueueDelayMs", if (observations > 0L) totalQueueDelayMs.toDouble() / observations else 0.0)
+            .put("maxQueueDelayMs", maxQueueDelayMs)
+            .put("lastProcessingMs", lastProcessingMs)
+            .put("avgProcessingMs", if (observations > 0L) totalProcessingMs.toDouble() / observations else 0.0)
+            .put("maxProcessingMs", maxProcessingMs)
+            .put("cpuObservations", cpuObservations)
+            .put("lastThreadCpuMs", lastThreadCpuMs)
+            .put("avgThreadCpuMs", if (cpuObservations > 0L) totalThreadCpuMs.toDouble() / cpuObservations else JSONObject.NULL)
+            .put("maxThreadCpuMs", if (cpuObservations > 0L) maxThreadCpuMs else JSONObject.NULL)
+    }
+
     private val capacityImportant = importantCapacity.coerceIn(1, MAX_HOT_EVIDENCE)
     private val monitor = Object()
     private val accepting = AtomicBoolean(true)
@@ -81,6 +132,7 @@ class RealtimeLearningBuffer(
     private val executedByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
     private val supersededByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
     private val rejectedByClass = EnumMap<EvidenceWorkClass, Long>(EvidenceWorkClass::class.java)
+    private val costByClass = EnumMap<EvidenceWorkClass, CostStats>(EvidenceWorkClass::class.java)
 
     private val worker = Thread({ runLoop() }, threadName).apply {
         isDaemon = true
@@ -199,6 +251,7 @@ class RealtimeLearningBuffer(
             .put("pendingBytesKind", "DECLARED_ESTIMATE_NOT_HEAP_MEASUREMENT")
             .put("defaultRetainedTaskBytes", DEFAULT_RETAINED_TASK_BYTES)
             .put("cpuAccounting", "ANDROID_THREAD_CPU_TIME_WHEN_AVAILABLE")
+            .put("marginalInformationModel", "QUALITATIVE_ORDER_ONLY_NOT_CONFIDENCE_OR_PROBABILITY")
             .put("accepting", accepting.get())
             .put("generation", currentGeneration)
             .put("capacityImportant", capacityImportant)
@@ -240,6 +293,7 @@ class RealtimeLearningBuffer(
             .put("executedByClass", enumMapJson(executedByClass))
             .put("supersededByClass", enumMapJson(supersededByClass))
             .put("rejectedByClass", enumMapJson(rejectedByClass))
+            .put("costByClass", costByClassJsonLocked())
     }
 
     override fun close() {
@@ -313,7 +367,7 @@ class RealtimeLearningBuffer(
                 if (generationStillCurrent) {
                     task.work()
                     executed.incrementAndGet()
-                    increment(executedByClass, task.workClass)
+                    synchronized(monitor) { increment(executedByClass, task.workClass) }
                     if (task.important) executedImportant.incrementAndGet() else executedTransient.incrementAndGet()
                     lastCompletedSequence.set(task.sequence)
                 } else {
@@ -340,6 +394,8 @@ class RealtimeLearningBuffer(
                     }
                 }
                 synchronized(monitor) {
+                    costByClass.getOrPut(task.workClass) { CostStats() }
+                        .observe(queueDelayMs, processingMs, cpuMs)
                     active = null
                     activeGeneration = 0L
                     monitor.notifyAll()
@@ -389,6 +445,12 @@ class RealtimeLearningBuffer(
             val pendingTransient = if (latestTransient?.workClass == workClass) 1 else 0
             val activeCount = if (active?.workClass == workClass) 1 else 0
             root.put(workClass.name, pendingImportant + pendingTransient + activeCount)
+        }
+    }
+
+    private fun costByClassJsonLocked(): JSONObject = JSONObject().also { root ->
+        EvidenceWorkClass.entries.forEach { workClass ->
+            root.put(workClass.name, (costByClass[workClass] ?: CostStats()).toJson(workClass))
         }
     }
 
