@@ -844,7 +844,7 @@ class MotorLearningMemory(
                         rpm = region.rpmMean,
                         mapBar = region.mapMean,
                         waterC = region.waterMean,
-                        petrolMs = region.petrolMean,
+                        petrolMs = region.petrolRobust.median(region.petrolMean),
                         confidence = region.confidence(),
                         sampleCount = region.sampleCount,
                         environment = PetrolReferenceEnvironmentBridge.region(
@@ -1221,6 +1221,7 @@ private data class LearningRegion(
     var mapMean: Double,
     var petrolMean: Double,
     var petrolSquaredMean: Double,
+    val petrolRobust: BoundedRobustPetrolSummary = BoundedRobustPetrolSummary.seed(petrolMean),
     var pressureMean: Double,
     var waterMean: Double,
     var gasMean: Double,
@@ -1248,6 +1249,7 @@ private data class LearningRegion(
         mapMean = blend(mapMean, sample.mapBar)
         petrolMean = blend(petrolMean, sample.petrolMs)
         petrolSquaredMean = blend(petrolSquaredMean, sample.petrolMs * sample.petrolMs)
+        if (sample.fuel == Mp48Fuel.PETROL) petrolRobust.observe(sample.petrolMs)
         pressureMean = blend(pressureMean, sample.pressureDiffBar)
         waterMean = blend(waterMean, sample.waterC)
         gasMean = blend(gasMean, sample.gasC)
@@ -1279,6 +1281,7 @@ private data class LearningRegion(
         mapMean = blend(mapMean, other.mapMean)
         petrolMean = blend(petrolMean, other.petrolMean)
         petrolSquaredMean = blend(petrolSquaredMean, other.petrolSquaredMean)
+        if (fuel == Mp48Fuel.PETROL) petrolRobust.merge(other.petrolRobust)
         pressureMean = blend(pressureMean, other.pressureMean)
         waterMean = blend(waterMean, other.waterMean)
         gasMean = blend(gasMean, other.gasMean)
@@ -1307,11 +1310,13 @@ private data class LearningRegion(
 
     fun namespace(source: String): LearningRegion = copy(
         id = "$source:$id",
+        petrolRobust = petrolRobust.copySummary(),
         visits = visits.mapTo(linkedSetOf()) { "$source:$it" },
         sessions = sessions.mapTo(linkedSetOf()) { "$source:$it" },
     )
 
     fun persistenceCopy(): LearningRegion = copy(
+        petrolRobust = petrolRobust.copySummary(),
         visits = visits.toCollection(linkedSetOf()),
         sessions = sessions.toCollection(linkedSetOf()),
     )
@@ -1366,6 +1371,7 @@ private data class LearningRegion(
                 .put("petrol_ms", petrolMean)
                 .put("petrol_squared_mean", petrolSquaredMean)
                 .put("petrol_spread_ms", sqrt(max(0.0, petrolSquaredMean - petrolMean * petrolMean)))
+                .put("petrol_robust", if (fuel == Mp48Fuel.PETROL) petrolRobust.toJson() else JSONObject.NULL)
                 .put("pressure_diff_bar", pressureMean)
                 .put("water_c", waterMean)
                 .put("gas_c", gasMean)
@@ -1396,6 +1402,11 @@ private data class LearningRegion(
             mapMean = sample.mapBar,
             petrolMean = sample.petrolMs,
             petrolSquaredMean = sample.petrolMs * sample.petrolMs,
+            petrolRobust = if (sample.fuel == Mp48Fuel.PETROL) {
+                BoundedRobustPetrolSummary.seed(sample.petrolMs)
+            } else {
+                BoundedRobustPetrolSummary.empty()
+            },
             pressureMean = sample.pressureDiffBar,
             waterMean = sample.waterC,
             gasMean = sample.gasC,
@@ -1424,6 +1435,11 @@ private data class LearningRegion(
                 mapMean = raw.optDouble("map_bar", 0.0),
                 petrolMean = petrolMean,
                 petrolSquaredMean = petrolSquaredMean,
+                petrolRobust = if (fuel == Mp48Fuel.PETROL) {
+                    BoundedRobustPetrolSummary.fromJson(raw.optJSONObject("petrol_robust"), petrolMean)
+                } else {
+                    BoundedRobustPetrolSummary.empty()
+                },
                 pressureMean = raw.optDouble("pressure_diff_bar", 0.0),
                 waterMean = raw.optDouble("water_c", 0.0),
                 gasMean = raw.optDouble("gas_c", 0.0),
