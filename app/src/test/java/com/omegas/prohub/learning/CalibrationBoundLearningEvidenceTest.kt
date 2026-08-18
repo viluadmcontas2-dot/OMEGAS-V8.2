@@ -119,7 +119,15 @@ class CalibrationBoundLearningEvidenceTest {
         geometry: String,
         session: Long,
         mapHash: String,
-    ) = LearningCalibrationBinding(fingerprint, generation, geometry, session, mapHash)
+    ) = LearningCalibrationBinding(
+        calibrationFingerprint = fingerprint,
+        calibrationGeneration = generation,
+        geometryFingerprint = geometry,
+        usbSessionId = session,
+        mapHash = mapHash,
+        petrolAxisMs = List(12) { 2.0 + it * 0.5 },
+        rpmAxis = List(12) { 1_000 + it * 250 },
+    )
 
     private fun countFuel(root: org.json.JSONObject, fuel: String): Int {
         val regions = root.getJSONArray("regions")
