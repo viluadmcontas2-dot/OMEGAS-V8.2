@@ -18,6 +18,10 @@ class LatestOnlyBackgroundPipeline(
     private val consumerName: String = threadName,
     private val onFailure: (sequence: Long, error: Throwable) -> Unit = { _, _ -> },
 ) : AutoCloseable {
+    companion object {
+        const val DEFAULT_RETAINED_TASK_BYTES = 512
+    }
+
     private data class Task(
         val sequence: Long,
         val estimatedBytes: Int,
@@ -50,7 +54,11 @@ class LatestOnlyBackgroundPipeline(
         start()
     }
 
-    fun submit(sequence: Long, estimatedBytes: Int = 0, work: () -> Unit): Boolean {
+    fun submit(
+        sequence: Long,
+        estimatedBytes: Int = DEFAULT_RETAINED_TASK_BYTES,
+        work: () -> Unit,
+    ): Boolean {
         submitted.incrementAndGet()
         synchronized(monitor) {
             if (!accepting.get()) return false
@@ -93,7 +101,8 @@ class LatestOnlyBackgroundPipeline(
             .put("queueBound", 1)
             .put("overloadPolicy", "COALESCE_PENDING_TO_LATEST")
             .put("dropAffectsAcquisition", false)
-            .put("pendingBytesKind", "ESTIMATED_RETAINED_PAYLOAD")
+            .put("pendingBytesKind", "DECLARED_ESTIMATE_NOT_HEAP_MEASUREMENT")
+            .put("defaultRetainedTaskBytes", DEFAULT_RETAINED_TASK_BYTES)
             .put("cpuAccounting", "ANDROID_THREAD_CPU_TIME_WHEN_AVAILABLE")
             .put("accepting", accepting.get())
             .put("submitted", submitted.get())
