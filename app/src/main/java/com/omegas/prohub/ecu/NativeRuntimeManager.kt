@@ -16,6 +16,8 @@ import com.omegas.prohub.telemetry.CanonicalEvidence
 import com.omegas.prohub.telemetry.LatestOnlyState
 import com.omegas.prohub.telemetry.RuntimeTelemetryFrame
 import com.omegas.prohub.usb.UsbSerialManager
+import com.omegas.prohub.util.EvidenceWorkClass
+import com.omegas.prohub.util.EvidenceWorkClassifier
 import com.omegas.prohub.util.LatestOnlyBackgroundPipeline
 import com.omegas.prohub.util.RealtimeLearningBuffer
 import com.omegas.prohub.util.RingLog
@@ -95,6 +97,7 @@ class NativeRuntimeManager(
         Thread(runnable, "omegas-calibration-identity").apply { isDaemon = true }
     }
     private val calibrationIdentityRefreshPending = AtomicBoolean(false)
+    private val postWriteRevalidationPending = AtomicBoolean(false)
     private val latestCanonicalEvidence = LatestOnlyState<CanonicalEvidence>(
         sequenceOf = { it.sequence },
         generationOf = { it.usbSessionId },
@@ -135,6 +138,7 @@ class NativeRuntimeManager(
         calibrationIdentityGeometry = ""
         calibrationIdentityGeneration = -1
         calibrationIdentityError = ""
+        postWriteRevalidationPending.set(false)
         val learningState = synchronized(learningSessionLock) {
             currentUsbSessionId = sessionId
             latestLearningSequence = 0L
@@ -161,6 +165,7 @@ class NativeRuntimeManager(
         calibrationIdentityFingerprint = ""
         calibrationIdentityGeometry = ""
         calibrationIdentityGeneration = -1
+        postWriteRevalidationPending.set(false)
         latestCanonicalEvidence.clear()
         adaptiveShadow.endSession(endingSession)
         learningPipeline.endGeneration(endingSession, 1L)
@@ -254,6 +259,7 @@ class NativeRuntimeManager(
         .put("generation", if (calibrationIdentityGeneration >= 0) calibrationIdentityGeneration else JSONObject.NULL)
         .put("usbSessionId", currentUsbSessionId)
         .put("refreshPending", calibrationIdentityRefreshPending.get())
+        .put("postWriteRevalidationPending", postWriteRevalidationPending.get())
         .apply { if (calibrationIdentityError.isNotBlank()) put("error", calibrationIdentityError) }
 
     fun statusJson(): JSONObject = engine.statusJson()
@@ -382,6 +388,7 @@ class NativeRuntimeManager(
         calibrationIdentityGeometry = ""
         calibrationIdentityGeneration = -1
         calibrationIdentityError = ""
+        postWriteRevalidationPending.set(true)
         val result = learning.onCalibrationAdjustment(payload)
         publishLearningState(latestLearningSequence, safeLearningStatus())
         val provenance = if (payload.optString("source") == "ECU_NATIVE_AUTOCAL") {
@@ -500,11 +507,14 @@ class NativeRuntimeManager(
             if (generation == currentUsbSessionId) adaptiveShadow.observe(evidence)
         }
 
-        val important = evidence.sampleDecision.sample != null
+        val workClass = EvidenceWorkClassifier.classify(
+            evidence = evidence,
+            postWriteRevalidating = postWriteRevalidationPending.get(),
+        )
         val accepted = learningPipeline.submit(
             generation = generation,
             sequence = sequence,
-            important = important,
+            workClass = workClass,
         ) {
             if (generation != currentUsbSessionId) return@submit
             synchronized(learningSessionLock) {
@@ -513,11 +523,14 @@ class NativeRuntimeManager(
                 if (generation == currentUsbSessionId) publishLearningState(sequence, processed)
             }
         }
-        if (!accepted && important && generation == currentUsbSessionId) {
+        if (accepted && workClass == EvidenceWorkClass.POST_WRITE_REVALIDATION) {
+            postWriteRevalidationPending.compareAndSet(true, false)
+        }
+        if (!accepted && !workClass.diagnosticOnly && generation == currentUsbSessionId) {
             log.add(
                 "WARN",
                 "LEARNING-BUFFER",
-                "Amostra $sequence não coube no buffer científico bounded; sessão gravada preserva a evidência.",
+                "Evidence $sequence (${workClass.name}) não coube no buffer científico bounded; sessão gravada preserva o frame.",
             )
         }
     }
