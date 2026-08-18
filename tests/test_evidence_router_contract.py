@@ -32,11 +32,14 @@ class EvidenceRouterContract(unittest.TestCase):
         self.assertNotIn("UsbSerialManager", source)
         self.assertNotIn("Mp48SerialScheduler", source)
 
-    def test_runtime_still_acquires_and_publishes_before_science_router(self):
+    def test_runtime_publishes_canonical_evidence_before_science_router(self):
         source = RUNTIME.read_text("utf-8")
-        publish = source.index("if (!latestTelemetryState.publish(typedFrame)) return")
+        publish = source.index("if (!latestCanonicalEvidence.publish(evidence)) return")
+        classify = source.index("val workClass = EvidenceWorkClassifier.classify(")
         science = source.index("val accepted = learningPipeline.submit(")
+        self.assertLess(publish, classify)
         self.assertLess(publish, science)
+        self.assertIn("CanonicalEvidence.from(", source)
         self.assertIn("RealtimeLearningBuffer(", source)
 
 
