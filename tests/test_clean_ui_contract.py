@@ -46,7 +46,10 @@ class CleanUiContract(unittest.TestCase):
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("['dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools']", self.router)
+        # Predictor is a later optional visual extension. It may add one route,
+        # but it must reuse the same Router/Store/Scheduler instead of changing
+        # the seven static destinations baked into the base HTML shell.
+        self.assertIn("const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools']", self.router)
         for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'OBD', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
