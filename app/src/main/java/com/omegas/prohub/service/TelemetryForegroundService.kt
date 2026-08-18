@@ -711,9 +711,8 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    private fun consumeEngineEvent(raw: String) {
-        val accepted = telemetryStore.updateFromEngineEvent(raw) ?: return
-        val root = try { JSONObject(raw) } catch (_: Exception) { JSONObject() }
+    private fun consumeEngineEvent(root: JSONObject) {
+        val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
         val live = root.optJSONObject("live") ?: root.optJSONObject("data") ?: JSONObject()
         val cngActive = live.optString("fuel").uppercase() == "GNV"
         if (cngActive) {
@@ -723,8 +722,9 @@ class TelemetryForegroundService : Service() {
             )
         }
 
+        // Uma única trilha nativa de telemetria. O recorder faz a cópia na borda
+        // assíncrona; não recebe um segundo engine_event contendo o mesmo quadro.
         sessionRecorder.record("telemetry", "mp48", live)
-        sessionRecorder.record("engine_event", "native", root, force = false)
         stateChanged()
     }
 
