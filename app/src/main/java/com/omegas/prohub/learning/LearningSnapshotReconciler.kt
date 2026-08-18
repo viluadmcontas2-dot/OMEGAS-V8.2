@@ -5,7 +5,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
 import java.util.UUID
-import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
@@ -49,6 +48,12 @@ internal object LearningSnapshotReconciler {
                         petrolMs = petrolMs,
                         confidence = raw.optDouble("confidence", raw.optDouble("quality", 0.25)).coerceIn(0.0, 1.0),
                         sampleCount = raw.optInt("samples", 1).coerceAtLeast(1),
+                        updatedAtMs = raw.optLong("updated_at", 0L),
+                        environment = PetrolReferenceEnvironmentBridge.region(
+                            waterC = raw.optDouble("water_c", UNKNOWN_TEMPERATURE_C),
+                            gasTemperatureC = raw.optDouble("gas_c", UNKNOWN_TEMPERATURE_C),
+                            pressureDiffBar = raw.optDouble("pressure_diff_bar", Double.NaN),
+                        ),
                     ),
                 )
             }
@@ -61,12 +66,18 @@ internal object LearningSnapshotReconciler {
             val cng = regions.optJSONObject(index) ?: return@repeat
             if (!isFuel(cng, Mp48Fuel.CNG) || cng.optInt("epoch", epoch) != epoch) return@repeat
             val visits = visitIds(cng, index)
+            val requestEnvironment = PetrolReferenceEnvironmentBridge.request(
+                waterC = cng.optDouble("water_c", UNKNOWN_TEMPERATURE_C),
+                gasTemperatureC = cng.optDouble("gas_c", UNKNOWN_TEMPERATURE_C),
+                pressureDiffBar = cng.optDouble("pressure_diff_bar", Double.NaN),
+            )
             val result = PetrolReferenceSelector.estimate(
                 regions = petrol,
                 request = PetrolReferenceSelector.Request(
                     rpm = cng.optDouble("rpm", 0.0),
                     mapBar = cng.optDouble("map_bar", 0.0),
                     waterC = cng.optDouble("water_c", UNKNOWN_TEMPERATURE_C),
+                    environment = requestEnvironment,
                 ),
             )
             if (!result.available) {
@@ -79,22 +90,29 @@ internal object LearningSnapshotReconciler {
             val petrolOnCng = cng.optDouble("petrol_ms", 0.0)
             if (!petrolOnCng.isFinite() || petrolOnCng <= 0.05) return@repeat
             visits.forEach { visitId ->
-                val referenceIds = result.regionIds.sorted().joinToString(",")
-                val dedupe = "$epoch:RETROACTIVE_PERSISTED_SURFACE:$visitId:$referenceIds"
+                val referenceIds = result.regionIds.sorted()
+                val dedupe = "$epoch:RETROACTIVE_PERSISTED_SURFACE:$visitId:${referenceIds.joinToString(",")}" 
                 if (!seen.add(dedupe)) return@forEach
-                output.put(
-                    comparisonJson(
-                        cng = cng,
-                        epoch = epoch,
-                        visitId = visitId,
-                        referenceIds = referenceIds,
-                        dedupe = dedupe,
-                        petrolTarget = petrolTarget,
-                        petrolOnCng = petrolOnCng,
-                        referenceQuality = result.quality,
-                    ),
+                val comparison = comparisonJson(
+                    cng = cng,
+                    epoch = epoch,
+                    visitId = visitId,
+                    referenceIds = referenceIds,
+                    dedupe = dedupe,
+                    petrolTarget = petrolTarget,
+                    petrolOnCng = petrolOnCng,
+                    referenceQuality = result.quality,
+                    referenceContexts = result.selectedRegionContexts,
+                    requestEnvironment = result.requestEnvironment ?: requestEnvironment,
+                    extrapolated = result.extrapolated,
                 )
-                reconciled += 1
+                if (comparison == null) {
+                    pending += 1
+                    rejectionCounts["INVALID_EQUIVALENCE"] = (rejectionCounts["INVALID_EQUIVALENCE"] ?: 0) + 1
+                } else {
+                    output.put(comparison)
+                    reconciled += 1
+                }
             }
         }
 
@@ -143,19 +161,30 @@ internal object LearningSnapshotReconciler {
         cng: JSONObject,
         epoch: Int,
         visitId: String,
-        referenceIds: String,
+        referenceIds: List<String>,
         dedupe: String,
         petrolTarget: Double,
         petrolOnCng: Double,
         referenceQuality: Double,
-    ): JSONObject {
-        val difference = petrolOnCng - petrolTarget
-        val errorPct = if (petrolTarget <= 0.05) 0.0 else difference / petrolTarget * 100.0
-        val direction = when {
-            abs(difference) <= LearningToleranceSettings.current.equivalenceDeadbandMs ||
-                abs(errorPct) <= LearningToleranceSettings.current.equivalenceDeadbandPercent -> "EQUIVALENT"
-            difference > 0.0 -> "INCREASE_CNG_DELIVERY"
-            else -> "DECREASE_CNG_DELIVERY"
+        referenceContexts: List<PetrolReferenceSelector.SelectedRegionContext>,
+        requestEnvironment: PetrolReferenceSelector.EnvironmentalContext,
+        extrapolated: Boolean,
+    ): JSONObject? {
+        val equivalence = FuelEquivalenceObjective.evaluate(
+            referenceMs = petrolTarget,
+            petrolOnCngMs = petrolOnCng,
+            minimumReferenceMs = MotorLearningMemory.LEGACY_MIN_REFERENCE_MS,
+            policy = LearningToleranceSettings.current,
+        )
+        if (!equivalence.valid) return null
+        val difference = requireNotNull(equivalence.differenceMs)
+        val errorRatio = requireNotNull(equivalence.errorRatio)
+        val errorPct = requireNotNull(equivalence.errorPercent)
+        val direction = when (equivalence.state) {
+            FuelEquivalenceState.WITHIN_POLICY_DEADBAND -> "EQUIVALENT"
+            FuelEquivalenceState.PETROL_ON_CNG_ABOVE_REFERENCE -> "INCREASE_CNG_DELIVERY"
+            FuelEquivalenceState.PETROL_ON_CNG_BELOW_REFERENCE -> "DECREASE_CNG_DELIVERY"
+            FuelEquivalenceState.INVALID -> return null
         }
         val rpm = cng.optDouble("rpm", 0.0)
         val map = cng.optDouble("map_bar", 0.0)
@@ -163,13 +192,23 @@ internal object LearningSnapshotReconciler {
         val referenceCell = LearningGridProjection.cellFor(rpm, petrolTarget, map)
         val cngQuality = cng.optDouble("quality", cng.optDouble("confidence", 0.25)).coerceIn(0.0, 1.0)
         val quality = sqrt(referenceQuality.coerceIn(0.0, 1.0) * cngQuality).coerceIn(0.0, 1.0)
+        val capturedAt = cng.optLong("updated_at", System.currentTimeMillis())
+        val referenceUpdatedAt = referenceContexts.maxOfOrNull { it.updatedAtMs } ?: 0L
         return JSONObject()
             .put("id", UUID.randomUUID().toString())
             .put("dedupe_key", dedupe)
             .put("visit_id", visitId)
-            .put("reference_region_id", referenceIds)
+            .put("reference_region_id", referenceIds.joinToString(","))
+            .put("reference_region_ids", JSONArray(referenceIds))
+            .put("reference_updated_at_wall_ms", if (referenceUpdatedAt > 0L) referenceUpdatedAt else JSONObject.NULL)
+            .put("reference_contexts", JSONArray(referenceContexts.map { it.toJson() }))
+            .put("request_environment", requestEnvironment.toJson())
             .put("origin", "RETROACTIVE_PERSISTED_SURFACE")
-            .put("captured_at", cng.optLong("updated_at", System.currentTimeMillis()))
+            .put("captured_at", capturedAt)
+            .put("comparison_captured_at_wall_ms", capturedAt)
+            .put("timestamp_domains", JSONObject()
+                .put("reference_updated_at_wall_ms", "wall_clock_ms")
+                .put("comparison_captured_at_wall_ms", "wall_clock_ms"))
             .put("rpm", rpm)
             .put("map_bar", map)
             .put("water_c", cng.optDouble("water_c", UNKNOWN_TEMPERATURE_C))
@@ -180,12 +219,23 @@ internal object LearningSnapshotReconciler {
             .put("reference_cell_row", referenceCell.getInt("row"))
             .put("reference_cell_column", referenceCell.getInt("column"))
             .put("continuous_cell_weights", cngCell.optJSONArray("continuousWeights") ?: JSONArray())
+            .put("equivalence_valid", true)
+            .put("equivalence_state", equivalence.state.name)
+            .put("equivalence_reason_code", equivalence.reasonCode)
             .put("petrol_target_ms", petrolTarget)
+            .put("reference_denominator_ms", petrolTarget)
             .put("petrol_on_cng_ms", petrolOnCng)
             .put("difference_ms", difference)
+            .put("error_ratio", errorRatio)
             .put("error_pct", errorPct)
+            .put("reference_unit", "ms")
+            .put("observed_unit", "ms")
+            .put("difference_unit", "ms")
+            .put("error_ratio_unit", "ratio")
+            .put("error_percent_unit", "percent")
             .put("direction", direction)
             .put("quality", quality)
+            .put("reference_extrapolated", extrapolated)
             .put("epoch", epoch)
             .put("observation_count", 1)
     }
