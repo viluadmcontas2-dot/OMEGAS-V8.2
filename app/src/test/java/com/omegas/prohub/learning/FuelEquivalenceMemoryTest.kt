@@ -18,7 +18,9 @@ class FuelEquivalenceMemoryTest {
         val comparison = comparisonFor(petrolTarget = 4.0, petrolOnCng = 4.30)
         assertEquals("INCREASE_CNG_DELIVERY", comparison.getString("direction"))
         assertEquals(0.30, comparison.getDouble("difference_ms"), 0.0001)
+        assertEquals(0.075, comparison.getDouble("error_ratio"), 0.0001)
         assertEquals(7.5, comparison.getDouble("error_pct"), 0.0001)
+        assertTrue(comparison.getBoolean("equivalence_valid"))
     }
 
     @Test
@@ -26,22 +28,46 @@ class FuelEquivalenceMemoryTest {
         val comparison = comparisonFor(petrolTarget = 4.0, petrolOnCng = 3.70)
         assertEquals("DECREASE_CNG_DELIVERY", comparison.getString("direction"))
         assertEquals(-0.30, comparison.getDouble("difference_ms"), 0.0001)
+        assertEquals(-0.075, comparison.getDouble("error_ratio"), 0.0001)
         assertEquals(-7.5, comparison.getDouble("error_pct"), 0.0001)
     }
 
     @Test
-    fun `difference inside absolute deadband remains equivalent`() {
-        val comparison = comparisonFor(petrolTarget = 4.0, petrolOnCng = 4.05)
-        assertEquals("EQUIVALENT", comparison.getString("direction"))
+    fun `deadband requires both absolute and percentage conditions`() {
+        val comparison = comparisonFor(petrolTarget = 1.0, petrolOnCng = 1.08)
         assertTrue(kotlin.math.abs(comparison.getDouble("difference_ms")) <= LearningToleranceSettings.current.equivalenceDeadbandMs)
+        assertTrue(kotlin.math.abs(comparison.getDouble("error_pct")) > LearningToleranceSettings.current.equivalenceDeadbandPercent)
+        assertEquals("INCREASE_CNG_DELIVERY", comparison.getString("direction"))
     }
 
     @Test
-    fun `comparison preserves target and observed values without converting them to k`() {
+    fun `difference inside both deadbands remains equivalent`() {
+        val comparison = comparisonFor(petrolTarget = 4.0, petrolOnCng = 4.05)
+        assertEquals("EQUIVALENT", comparison.getString("direction"))
+        assertTrue(kotlin.math.abs(comparison.getDouble("difference_ms")) <= LearningToleranceSettings.current.equivalenceDeadbandMs)
+        assertTrue(kotlin.math.abs(comparison.getDouble("error_pct")) <= LearningToleranceSettings.current.equivalenceDeadbandPercent)
+    }
+
+    @Test
+    fun `comparison preserves denominator units ids timestamps and context`() {
         val comparison = comparisonFor(petrolTarget = 5.0, petrolOnCng = 5.50)
         assertEquals(5.0, comparison.getDouble("petrol_target_ms"), 0.0001)
+        assertEquals(5.0, comparison.getDouble("reference_denominator_ms"), 0.0001)
         assertEquals(5.5, comparison.getDouble("petrol_on_cng_ms"), 0.0001)
+        assertEquals("ms", comparison.getString("reference_unit"))
+        assertEquals("ms", comparison.getString("observed_unit"))
+        assertEquals("ms", comparison.getString("difference_unit"))
+        assertEquals("ratio", comparison.getString("error_ratio_unit"))
+        assertEquals("percent", comparison.getString("error_percent_unit"))
         assertEquals("CONTINUOUS_REFERENCE_SURFACE", comparison.getString("origin"))
+        assertEquals(1, comparison.getJSONArray("reference_region_ids").length())
+        assertTrue(comparison.getLong("reference_updated_at_wall_ms") > 0L)
+        assertTrue(comparison.getJSONArray("reference_contexts").getJSONObject(0).getLong("updated_at_ms") > 0L)
+        assertTrue(comparison.getJSONObject("request_environment").length() > 0)
+        assertEquals(800L, comparison.getLong("cng_sample_started_at_elapsed_ms"))
+        assertEquals(1_350L, comparison.getLong("cng_sample_ended_at_elapsed_ms"))
+        assertEquals("wall_clock_ms", comparison.getJSONObject("timestamp_domains").getString("reference_updated_at_wall_ms"))
+        assertEquals("monotonic_elapsed_ms", comparison.getJSONObject("timestamp_domains").getString("cng_sample_ended_at_elapsed_ms"))
     }
 
     private fun comparisonFor(petrolTarget: Double, petrolOnCng: Double): JSONObject {
@@ -143,4 +169,3 @@ class FuelEquivalenceMemoryTest {
         pressureOscillationLimit = 0.08,
     )
 }
-
