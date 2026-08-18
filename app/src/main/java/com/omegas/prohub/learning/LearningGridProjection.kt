@@ -9,59 +9,146 @@ import kotlin.math.max
 
 /**
  * Projeção única da memória física para a grade Landi usada pela tela e pelo .omegas.
- * A região continua sendo a evidência científica; a célula é a forma auditável de
- * localizar essa evidência no mesmo mapa K que o usuário lê e escreve.
+ * A região continua sendo a evidência científica; a célula só existe quando a
+ * geometria física que a define está KNOWN na sessão atual.
  */
 object LearningGridProjection {
+    /** Fixture histórica mantida apenas para testes/compatibilidade fora de sessão física gerenciada. */
     val rpmBins = KMapPhysicalAxes.rpmBins()
     val petrolBins = KMapPhysicalAxes.petrolBins()
     val mapBins = doubleArrayOf(0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00)
 
-    fun gridJson(): JSONObject = JSONObject()
-        .put("rows", petrolBins.size)
-        .put("columns", rpmBins.size)
-        .put("physicalCells", petrolBins.size * rpmBins.size)
-        .put("axisSchema", KMapPhysicalAxes.SCHEMA)
-        .put("lockSha256", KMapPhysicalAxes.LOCK_SHA256)
-        .put("immutablePhysicalContract", true)
-        .put("protocolRows", KMapPhysicalAxes.PROTOCOL_ROWS)
-        .put("protocolColumns", KMapPhysicalAxes.COLUMNS)
-        .put("specialRow", KMapPhysicalAxes.SPECIAL_ROW)
-        .put("rpmBins", JSONArray(rpmBins.toList()))
-        .put("petrolBins", JSONArray(petrolBins.toList()))
-        .put("mapBins", JSONArray(mapBins.toList()))
-        .put("learningModel", "CONTINUOUS_MULTIVARIATE_CONTROL_POINTS")
-        .put("validEvidencePolicy", "PONDERED_NOT_DISCARDED")
+    private data class AxisContext(
+        val rpm: IntArray,
+        val petrolMs: DoubleArray,
+        val source: String,
+        val geometryFingerprint: String,
+    )
+
+    private fun axisContext(): AxisContext? {
+        val binding = LearningCalibrationAuthority.snapshot()
+        if (binding != null && binding.geometryKnown()) {
+            return AxisContext(
+                rpm = binding.rpmAxis.toIntArray(),
+                petrolMs = binding.petrolAxisMs.toDoubleArray(),
+                source = "ECU_CURRENT",
+                geometryFingerprint = binding.geometryFingerprint,
+            )
+        }
+        if (LearningCalibrationAuthority.requiresKnownGeometry()) return null
+        return AxisContext(
+            rpm = rpmBins.copyOf(),
+            petrolMs = petrolBins.copyOf(),
+            source = "LEGACY_FIXTURE",
+            geometryFingerprint = KMapPhysicalAxes.LOCK_SHA256,
+        )
+    }
+
+    fun gridJson(): JSONObject {
+        val axis = axisContext()
+        if (axis == null) {
+            return JSONObject()
+                .put("rows", KMapPhysicalAxes.EDITABLE_ROWS)
+                .put("columns", KMapPhysicalAxes.COLUMNS)
+                .put("physicalCells", KMapPhysicalAxes.EDITABLE_ROWS * KMapPhysicalAxes.COLUMNS)
+                .put("geometryKnown", false)
+                .put("axisSource", "UNKNOWN_CURRENT_SESSION")
+                .put("reasonCode", "MAP_GEOMETRY_UNKNOWN")
+                .put("axisSchema", JSONObject.NULL)
+                .put("lockSha256", JSONObject.NULL)
+                .put("immutablePhysicalContract", false)
+                .put("protocolRows", KMapPhysicalAxes.PROTOCOL_ROWS)
+                .put("protocolColumns", KMapPhysicalAxes.COLUMNS)
+                .put("specialRow", KMapPhysicalAxes.SPECIAL_ROW)
+                .put("rpmBins", JSONArray())
+                .put("petrolBins", JSONArray())
+                .put("mapBins", JSONArray(mapBins.toList()))
+                .put("learningModel", "CONTINUOUS_MULTIVARIATE_CONTROL_POINTS")
+                .put("validEvidencePolicy", "RAW_ALLOWED_CELL_REQUIRES_KNOWN_GEOMETRY")
+        }
+        return JSONObject()
+            .put("rows", axis.petrolMs.size)
+            .put("columns", axis.rpm.size)
+            .put("physicalCells", axis.petrolMs.size * axis.rpm.size)
+            .put("geometryKnown", true)
+            .put("axisSource", axis.source)
+            .put("geometryFingerprint", axis.geometryFingerprint)
+            .put("axisSchema", if (axis.source == "ECU_CURRENT") "mp48-map-geometry-v1" else KMapPhysicalAxes.SCHEMA)
+            .put("lockSha256", if (axis.source == "LEGACY_FIXTURE") KMapPhysicalAxes.LOCK_SHA256 else JSONObject.NULL)
+            .put("immutablePhysicalContract", axis.source == "LEGACY_FIXTURE")
+            .put("protocolRows", KMapPhysicalAxes.PROTOCOL_ROWS)
+            .put("protocolColumns", KMapPhysicalAxes.COLUMNS)
+            .put("specialRow", KMapPhysicalAxes.SPECIAL_ROW)
+            .put("rpmBins", JSONArray(axis.rpm.toList()))
+            .put("petrolBins", JSONArray(axis.petrolMs.toList()))
+            .put("mapBins", JSONArray(mapBins.toList()))
+            .put("learningModel", "CONTINUOUS_MULTIVARIATE_CONTROL_POINTS")
+            .put("validEvidencePolicy", "PONDERED_NOT_DISCARDED")
+    }
 
     fun cellFor(rpm: Double, petrolMs: Double, mapBar: Double = 0.60): JSONObject {
-        val row = nearest(petrolBins, petrolMs)
-        val column = nearest(rpmBins.map { it.toDouble() }.toDoubleArray(), rpm)
+        val axis = axisContext() ?: return unknownCell()
+        val rpmAxis = axis.rpm.map(Int::toDouble).toDoubleArray()
+        val row = nearest(axis.petrolMs, petrolMs)
+        val column = nearest(rpmAxis, rpm)
         val mapIndex = nearest(mapBins, mapBar)
         return JSONObject()
+            .put("geometryKnown", true)
+            .put("axisSource", axis.source)
+            .put("geometryFingerprint", axis.geometryFingerprint)
             .put("row", row)
             .put("column", column)
             .put("key", "$row:$column")
-            .put("rpmBin", rpmBins[column])
-            .put("petrolBin", petrolBins[row])
+            .put("rpmBin", axis.rpm[column])
+            .put("petrolBin", axis.petrolMs[row])
             .put("mapBin", mapBins[mapIndex])
             .put("continuousWeights", JSONArray(
-                ContinuousLearningMath.bilinearWeights(rpm, petrolMs).map {
+                ContinuousLearningMath.bilinearWeights(
+                    rpm = rpm,
+                    petrolMs = petrolMs,
+                    rpmAxis = rpmAxis,
+                    petrolAxisMs = axis.petrolMs,
+                ).map {
                     JSONObject()
                         .put("row", it.row)
                         .put("column", it.column)
+                        .put("rpmBin", axis.rpm[it.column])
+                        .put("petrolBin", axis.petrolMs[it.row])
                         .put("weight", it.weight)
                 },
             ))
             .put("trilinearWeights", JSONArray(
-                ContinuousLearningMath.trilinearWeights(rpm, petrolMs, mapBar, mapBins).map {
+                ContinuousLearningMath.trilinearWeights(
+                    rpm = rpm,
+                    petrolMs = petrolMs,
+                    mapBar = mapBar,
+                    rpmAxis = rpmAxis,
+                    petrolAxisMs = axis.petrolMs,
+                    mapBins = mapBins,
+                ).map {
                     JSONObject()
                         .put("row", it.row)
                         .put("column", it.column)
                         .put("mapIndex", it.mapIndex)
+                        .put("rpmBin", axis.rpm[it.column])
+                        .put("petrolBin", axis.petrolMs[it.row])
                         .put("weight", it.weight)
                 },
             ))
     }
+
+    private fun unknownCell(): JSONObject = JSONObject()
+        .put("geometryKnown", false)
+        .put("axisSource", "UNKNOWN_CURRENT_SESSION")
+        .put("reasonCode", "MAP_GEOMETRY_UNKNOWN")
+        .put("row", -1)
+        .put("column", -1)
+        .put("key", "UNKNOWN")
+        .put("rpmBin", JSONObject.NULL)
+        .put("petrolBin", JSONObject.NULL)
+        .put("mapBin", JSONObject.NULL)
+        .put("continuousWeights", JSONArray())
+        .put("trilinearWeights", JSONArray())
 
     /**
      * Pacote leve para explicar, em tempo real, a mesma interpolação bilinear
@@ -82,18 +169,21 @@ object LearningGridProjection {
         val safePetrolMs = if (petrolMs.isFinite()) petrolMs.coerceAtLeast(0.0) else 0.0
         val safeMapBar = if (mapBar.isFinite()) mapBar.coerceAtLeast(0.0) else 0.0
         val cell = cellFor(safeRpm, safePetrolMs, safeMapBar)
+        val geometryKnown = cell.optBoolean("geometryKnown", false)
         val weights = cell.optJSONArray("continuousWeights") ?: JSONArray()
         val totalWeight = (0 until weights.length()).sumOf { index ->
             weights.optJSONObject(index)?.optDouble("weight", 0.0) ?: 0.0
         }
         return JSONObject()
-            .put("valid", physicallyValid)
+            .put("valid", physicallyValid && geometryKnown)
             .put("educationalOnly", true)
             .put("affectsLearning", false)
             .put("affectsCalibration", false)
             .put("method", "BILINEAR_RPM_X_PETROL_MS")
-            .put("axisSchema", KMapPhysicalAxes.SCHEMA)
-            .put("axisLockSha256", KMapPhysicalAxes.LOCK_SHA256)
+            .put("geometryKnown", geometryKnown)
+            .put("axisSource", cell.optString("axisSource", "UNKNOWN_CURRENT_SESSION"))
+            .put("geometryFingerprint", cell.optString("geometryFingerprint", ""))
+            .put("reasonCode", cell.optString("reasonCode", ""))
             .put("sequence", sequence)
             .put("updatedAt", updatedAt)
             .put("rpm", rpm)
@@ -106,7 +196,8 @@ object LearningGridProjection {
     fun sameCell(rpmA: Double, petrolA: Double, rpmB: Double, petrolB: Double): Boolean {
         val a = cellFor(rpmA, petrolA)
         val b = cellFor(rpmB, petrolB)
-        return a.optInt("row") == b.optInt("row") && a.optInt("column") == b.optInt("column")
+        if (!a.optBoolean("geometryKnown", false) || !b.optBoolean("geometryKnown", false)) return false
+        return a.optInt("row", -1) == b.optInt("row", -1) && a.optInt("column", -1) == b.optInt("column", -1)
     }
 
     fun enrichRegion(region: JSONObject): JSONObject {
@@ -118,9 +209,10 @@ object LearningGridProjection {
         )
         return copy
             .put("cell", cell)
-            .put("cell_row", cell.optInt("row"))
-            .put("cell_column", cell.optInt("column"))
-            .put("cell_key", cell.optString("key"))
+            .put("cell_known", cell.optBoolean("geometryKnown", false))
+            .put("cell_row", cell.optInt("row", -1))
+            .put("cell_column", cell.optInt("column", -1))
+            .put("cell_key", cell.optString("key", "UNKNOWN"))
     }
 
     fun project(regions: JSONArray, currentEpoch: Int): JSONArray {
@@ -132,14 +224,17 @@ object LearningGridProjection {
             if (fuel == "UNKNOWN") return@repeat
             val regionEpoch = region.optInt("epoch", if (fuel == "PETROL") 0 else currentEpoch)
             val cell = region.optJSONObject("cell") ?: return@repeat
+            if (!cell.optBoolean("geometryKnown", false)) return@repeat
+            val axisSource = cell.optString("axisSource", "UNKNOWN")
+            val geometryFingerprint = cell.optString("geometryFingerprint", "")
             val continuousWeights = cell.optJSONArray("continuousWeights")
             if (continuousWeights != null) {
                 repeat(continuousWeights.length()) { wIndex ->
                     val wObj = continuousWeights.optJSONObject(wIndex) ?: return@repeat
-                    val row = wObj.optInt("row")
-                    val column = wObj.optInt("column")
+                    val row = wObj.optInt("row", -1)
+                    val column = wObj.optInt("column", -1)
                     val cellWeight = wObj.optDouble("weight", 0.0)
-                    if (cellWeight <= 0.0) return@repeat
+                    if (row < 0 || column < 0 || cellWeight <= 0.0) return@repeat
 
                     val key = "$fuel:$regionEpoch:$row:$column"
                     val weight = max(0.001, region.optDouble("weight", region.optDouble("samples", 1.0)) * cellWeight)
@@ -149,6 +244,10 @@ object LearningGridProjection {
                             epoch = regionEpoch,
                             row = row,
                             column = column,
+                            rpmBin = wObj.optInt("rpmBin"),
+                            petrolBin = wObj.optDouble("petrolBin"),
+                            axisSource = axisSource,
+                            geometryFingerprint = geometryFingerprint,
                         )
                     }
                     target.weight += weight
@@ -163,8 +262,9 @@ object LearningGridProjection {
                     target.updatedAt = max(target.updatedAt, region.optLong("updated_at", region.optLong("updatedAt", 0L)))
                 }
             } else {
-                val row = cell.optInt("row")
-                val column = cell.optInt("column")
+                val row = cell.optInt("row", -1)
+                val column = cell.optInt("column", -1)
+                if (row < 0 || column < 0) return@repeat
                 val key = "$fuel:$regionEpoch:$row:$column"
                 val weight = max(0.001, region.optDouble("weight", region.optDouble("samples", 1.0)))
                 val target = grouped.getOrPut(key) {
@@ -173,6 +273,10 @@ object LearningGridProjection {
                         epoch = regionEpoch,
                         row = row,
                         column = column,
+                        rpmBin = cell.optInt("rpmBin"),
+                        petrolBin = cell.optDouble("petrolBin"),
+                        axisSource = axisSource,
+                        geometryFingerprint = geometryFingerprint,
                     )
                 }
                 target.weight += weight
@@ -228,6 +332,7 @@ object LearningGridProjection {
         return JSONObject()
             .put("ok", onlyInMemory.isEmpty() && onlyInProjection.isEmpty() && valueDivergences.isEmpty())
             .put("format", "omegas-learning-v5")
+            .put("geometryKnown", axisContext() != null)
             .put("regions", regions.length())
             .put("cells", cells.length())
             .put("petrolCells", petrolCells.size)
@@ -297,6 +402,10 @@ object LearningGridProjection {
         val epoch: Int,
         val row: Int,
         val column: Int,
+        val rpmBin: Int,
+        val petrolBin: Double,
+        val axisSource: String,
+        val geometryFingerprint: String,
         var weight: Double = 0.0,
         var petrolWeighted: Double = 0.0,
         var rpmWeighted: Double = 0.0,
@@ -314,11 +423,11 @@ object LearningGridProjection {
         fun addEvidenceIds(region: JSONObject, index: Int) {
             val visits = region.optJSONArray("visits")
             val sessions = region.optJSONArray("sessions")
-            if (visits != null) repeat(visits.length()) { index ->
-                visits.optString(index).takeIf { it.isNotBlank() }?.let(visitIds::add)
+            if (visits != null) repeat(visits.length()) { visitIndex ->
+                visits.optString(visitIndex).takeIf { it.isNotBlank() }?.let(visitIds::add)
             }
-            if (sessions != null) repeat(sessions.length()) { index ->
-                sessions.optString(index).takeIf { it.isNotBlank() }?.let(sessionIds::add)
+            if (sessions != null) repeat(sessions.length()) { sessionIndex ->
+                sessions.optString(sessionIndex).takeIf { it.isNotBlank() }?.let(sessionIds::add)
             }
 
             // Quando a lista textual foi compactada, a contagem total permanece exata
@@ -339,8 +448,11 @@ object LearningGridProjection {
             .put("row", row)
             .put("column", column)
             .put("key", "$row:$column")
-            .put("rpm_bin", rpmBins[column])
-            .put("petrol_bin", petrolBins[row])
+            .put("geometryKnown", true)
+            .put("axisSource", axisSource)
+            .put("geometryFingerprint", geometryFingerprint)
+            .put("rpm_bin", rpmBin)
+            .put("petrol_bin", petrolBin)
             .put("rpm", if (weight > 0) rpmWeighted / weight else 0.0)
             .put("petrol_ms", if (weight > 0) petrolWeighted / weight else 0.0)
             .put("map_bar", if (weight > 0) mapWeighted / weight else 0.0)
