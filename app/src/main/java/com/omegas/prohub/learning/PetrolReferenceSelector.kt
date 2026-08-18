@@ -28,41 +28,57 @@ internal object PetrolReferenceSelector {
     enum class ContextFreshness {
         CURRENT,
         OBSERVED,
+        STALE,
         UNKNOWN,
+    }
+
+    enum class ContextKnownness {
+        KNOWN,
+        UNAVAILABLE,
+        STALE,
+        IMPLAUSIBLE,
     }
 
     data class EnvironmentalContext(
         val waterC: Double? = null,
         val waterFreshness: ContextFreshness = ContextFreshness.UNKNOWN,
         val waterSource: String = "UNKNOWN",
+        val waterKnownness: ContextKnownness = temperatureKnownness(waterC, waterFreshness),
         val gasTemperatureC: Double? = null,
         val gasTemperatureFreshness: ContextFreshness = ContextFreshness.UNKNOWN,
         val gasTemperatureSource: String = "UNKNOWN",
+        val gasTemperatureKnownness: ContextKnownness = finiteKnownness(gasTemperatureC, gasTemperatureFreshness),
         val pressureDiffBar: Double? = null,
         val gasPressureAbsBar: Double? = null,
         val pressureFreshness: ContextFreshness = ContextFreshness.UNKNOWN,
         val pressureSource: String = "UNKNOWN",
+        val pressureKnownness: ContextKnownness = finiteKnownness(pressureDiffBar, pressureFreshness),
+        val gasPressureAbsKnownness: ContextKnownness = finiteKnownness(gasPressureAbsBar, pressureFreshness),
         val mapSource: String = "MP48_RUNTIME",
     ) {
-        fun waterKnown(): Boolean = knownTemperature(waterC) && waterFreshness != ContextFreshness.UNKNOWN
-        fun gasTemperatureKnown(): Boolean = gasTemperatureC?.isFinite() == true && gasTemperatureFreshness != ContextFreshness.UNKNOWN
-        fun pressureKnown(): Boolean = pressureDiffBar?.isFinite() == true && pressureFreshness != ContextFreshness.UNKNOWN
-        fun gasPressureAbsoluteKnown(): Boolean = gasPressureAbsBar?.isFinite() == true && pressureFreshness != ContextFreshness.UNKNOWN
+        fun waterKnown(): Boolean = waterKnownness == ContextKnownness.KNOWN
+        fun gasTemperatureKnown(): Boolean = gasTemperatureKnownness == ContextKnownness.KNOWN
+        fun pressureKnown(): Boolean = pressureKnownness == ContextKnownness.KNOWN
+        fun gasPressureAbsoluteKnown(): Boolean = gasPressureAbsKnownness == ContextKnownness.KNOWN
 
         fun toJson(): JSONObject = JSONObject()
             .put("water_c", waterC ?: JSONObject.NULL)
             .put("water_known", waterKnown())
+            .put("water_knownness", waterKnownness.name)
             .put("water_freshness", waterFreshness.name)
             .put("water_source", waterSource)
             .put("gas_temperature_c", gasTemperatureC ?: JSONObject.NULL)
             .put("gas_temperature_known", gasTemperatureKnown())
+            .put("gas_temperature_knownness", gasTemperatureKnownness.name)
             .put("gas_temperature_freshness", gasTemperatureFreshness.name)
             .put("gas_temperature_source", gasTemperatureSource)
             .put("gas_temperature_role", "OMEGAS_CONTEXT_ONLY")
             .put("pressure_diff_bar", pressureDiffBar ?: JSONObject.NULL)
             .put("gas_pressure_abs_bar", gasPressureAbsBar ?: JSONObject.NULL)
             .put("pressure_known", pressureKnown())
+            .put("pressure_knownness", pressureKnownness.name)
             .put("gas_pressure_abs_known", gasPressureAbsoluteKnown())
+            .put("gas_pressure_abs_knownness", gasPressureAbsKnownness.name)
             .put("pressure_freshness", pressureFreshness.name)
             .put("pressure_source", pressureSource)
             .put("pressure_role", "CONTEXT_WITH_NATIVE_PRESSURE_MAP_EVIDENCE")
@@ -360,6 +376,22 @@ internal object PetrolReferenceSelector {
             distance,
             compareTemperature,
         )
+    }
+
+    private fun temperatureKnownness(value: Double?, freshness: ContextFreshness): ContextKnownness = when {
+        value == null -> ContextKnownness.UNAVAILABLE
+        !knownTemperature(value) -> ContextKnownness.IMPLAUSIBLE
+        freshness == ContextFreshness.STALE -> ContextKnownness.STALE
+        freshness == ContextFreshness.CURRENT || freshness == ContextFreshness.OBSERVED -> ContextKnownness.KNOWN
+        else -> ContextKnownness.UNAVAILABLE
+    }
+
+    private fun finiteKnownness(value: Double?, freshness: ContextFreshness): ContextKnownness = when {
+        value == null -> ContextKnownness.UNAVAILABLE
+        !value.isFinite() -> ContextKnownness.IMPLAUSIBLE
+        freshness == ContextFreshness.STALE -> ContextKnownness.STALE
+        freshness == ContextFreshness.CURRENT || freshness == ContextFreshness.OBSERVED -> ContextKnownness.KNOWN
+        else -> ContextKnownness.UNAVAILABLE
     }
 
     private fun knownTemperature(value: Double?): Boolean =
