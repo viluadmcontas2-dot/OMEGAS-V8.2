@@ -6,6 +6,8 @@ SELECTOR = ROOT / "app/src/main/java/com/omegas/prohub/learning/PetrolReferenceS
 MEMORY = ROOT / "app/src/main/java/com/omegas/prohub/learning/MotorLearningMemory.kt"
 ANALYZER = ROOT / "app/src/main/java/com/omegas/prohub/learning/MotorSampleAnalyzer.kt"
 BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/learning/PetrolReferenceEnvironmentBridge.kt"
+AUTHORITY = ROOT / "app/src/main/java/com/omegas/prohub/learning/ScientificDecisionAuthority.kt"
+REGISTRY = ROOT / "app/src/main/java/com/omegas/prohub/learning/ScientificConstantRegistry.kt"
 
 
 class PetrolReferenceEnvironmentContract(unittest.TestCase):
@@ -13,14 +15,10 @@ class PetrolReferenceEnvironmentContract(unittest.TestCase):
         source = SELECTOR.read_text("utf-8")
         for token in (
             "EnvironmentalContext(",
-            "waterC: Double?",
-            "waterFreshness: ContextFreshness",
-            "gasTemperatureC: Double?",
-            "gasTemperatureFreshness: ContextFreshness",
-            "pressureDiffBar: Double?",
-            "gasPressureAbsBar: Double?",
-            "pressureFreshness: ContextFreshness",
-            "mapSource: String",
+            "ContextKnownness",
+            "water_knownness",
+            "gas_temperature_knownness",
+            "pressure_knownness",
             "selectedRegionContexts",
             '"OMEGAS_CONTEXT_ONLY"',
             '"gas_temperature_used_as_native_gate", false',
@@ -59,16 +57,22 @@ class PetrolReferenceEnvironmentContract(unittest.TestCase):
         ):
             self.assertIn(token, memory)
 
-    def test_gas_temperature_remains_app_context_and_pressure_map_are_native_anchored(self):
+    def test_native_signals_and_omegas_comparability_policy_have_distinct_authority(self):
         bridge = BRIDGE.read_text("utf-8")
+        authority = AUTHORITY.read_text("utf-8")
+        registry = REGISTRY.read_text("utf-8")
         selector = SELECTOR.read_text("utf-8")
-        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_REGION")', bridge)
-        self.assertIn('gasTemperatureSource = source(gasTemperatureC, "LANDI_ECU_CURRENT")', bridge)
-        self.assertIn('"NATIVE_ANCHORED:MP48_PRESSURE_DIFF_REGION:E4"', bridge)
-        self.assertIn('"NATIVE_ANCHORED:MP48_PRESSURE_DIFF_CURRENT:E4"', bridge)
-        self.assertIn('mapSource = "NATIVE_ANCHORED:MP48_RUNTIME_MAP:E4"', bridge)
-        self.assertIn("pressureFreshness = freshness(pressureDiffBar", bridge)
-        # Native-anchored acquisition/context does not mean pressure becomes a selector gate here.
+
+        self.assertIn("NATIVE_ANCHORED", authority)
+        self.assertIn("OMEGAS_COMPARABILITY_POLICY", authority)
+        self.assertIn('nativeAnchored("MP48_PRESSURE_DIFF_REGION", "E4")', bridge)
+        self.assertIn('nativeAnchored("MP48_PRESSURE_DIFF_CURRENT", "E4")', bridge)
+        self.assertIn('nativeAnchored("MP48_RUNTIME_MAP", "E4")', bridge)
+        self.assertIn("gasTemperatureSpanPolicy", authority)
+        self.assertIn("pressureSpanPolicy", authority)
+        self.assertIn('policy("comparisonMaximumGasTempSpanC"', registry)
+        self.assertIn('policy("comparisonMaximumPressureSpanBar"', registry)
+        # Native signal provenance does not silently promote OMEGAS comparison rules to protocol truth.
         self.assertIn('"gas_temperature_used_as_native_gate", false', selector)
         self.assertIn('"pressure_used_as_native_gate", false', selector)
 
