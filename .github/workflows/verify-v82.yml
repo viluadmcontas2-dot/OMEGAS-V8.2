@@ -1,7 +1,7 @@
 # Verification trigger authorized by the owner's 2026-08-18 finalizing campaign.
 # This workflow never assembles or uploads an APK.
-# Diagnostic broad gate: publishes first useful failure line in a readable legacy status context.
-# Diagnostic run marker: readable-status-v10-test-contract-reconcile.
+# Diagnostic broad gate: publishes the exact first failing test in readable legacy status contexts.
+# Diagnostic run marker: readable-status-v11-exact-failing-test.
 name: Verify OMEGAS V8.2 pre-APK
 
 on:
@@ -54,7 +54,8 @@ jobs:
           set +e
           python -m pytest -q tests 2>&1 | tee /tmp/pytest.log
           code=${PIPESTATUS[0]}
-          summary=$(grep -E -m1 '(^FAILED |^E +|AssertionError|SyntaxError|ImportError|ERROR )' /tmp/pytest.log | tr '\n\r\"' '   ' | cut -c1-72)
+          summary=$(grep -E -m1 '^FAILED ' /tmp/pytest.log | sed -E 's/^FAILED +//' | tr '\n\r\"' '   ' | cut -c1-72)
+          if [ -z "$summary" ]; then summary=$(grep -E -m1 '(^E +|AssertionError|SyntaxError|ImportError|ERROR )' /tmp/pytest.log | tr '\n\r\"' '   ' | cut -c1-72); fi
           if [ -z "$summary" ]; then summary=$(tail -n 1 /tmp/pytest.log | tr '\n\r\"' '   ' | cut -c1-72); fi
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           echo "summary=$summary" >> "$GITHUB_OUTPUT"
@@ -67,7 +68,30 @@ jobs:
           set +e
           ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest 2>&1 | tee /tmp/jvm.log
           code=${PIPESTATUS[0]}
-          summary=$(grep -E -m1 '^e: file:' /tmp/jvm.log | sed -E 's#^e: file://.*/([^/]+):#e: \1:#' | tr '\n\r\"' '   ' | cut -c1-72)
+          summary=""
+          if [ "$code" != "0" ]; then
+            summary=$(python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for path in sorted(Path('app/build/test-results/testDebugUnitTest').glob('TEST-*.xml')):
+              try:
+                  root = ET.parse(path).getroot()
+              except Exception:
+                  continue
+              for case in root.findall('.//testcase'):
+                  failure = case.find('failure')
+                  error = case.find('error')
+                  node = failure if failure is not None else error
+                  if node is not None:
+                      cls = case.attrib.get('classname', '').split('.')[-1]
+                      name = case.attrib.get('name', '')
+                      message = (node.attrib.get('message') or '').replace('\n', ' ').replace('\r', ' ')
+                      print(f'{cls}.{name}: {message}'[:72])
+                      raise SystemExit
+          PY
+          )
+          fi
+          if [ -z "$summary" ]; then summary=$(grep -E -m1 '^e: file:' /tmp/jvm.log | sed -E 's#^e: file://.*/([^/]+):#e: \1:#' | tr '\n\r\"' '   ' | cut -c1-72); fi
           if [ -z "$summary" ]; then summary=$(grep -E -m1 '(Compilation error|FAILED|FAILURE:|> Task .* FAILED|error:)' /tmp/jvm.log | tr '\n\r\"' '   ' | cut -c1-72); fi
           if [ -z "$summary" ]; then summary=$(tail -n 1 /tmp/jvm.log | tr '\n\r\"' '   ' | cut -c1-72); fi
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
