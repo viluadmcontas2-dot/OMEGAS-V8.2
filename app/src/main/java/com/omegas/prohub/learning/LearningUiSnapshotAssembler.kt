@@ -44,6 +44,12 @@ object LearningUiSnapshotAssembler {
             .put("cells", cells)
             .put("integrity", integrity)
         val advice = AssistedCalibrationAdvisor.analyze(adviceInput)
+            .put(
+                "residualSpatialStats",
+                ResidualSpatialStats.from(
+                    AssistedCalibrationAdvisor.analyze(adviceInput).optJSONArray("mapResidualSuggestions") ?: JSONArray(),
+                ),
+            )
         val result = adviceInput
             .put("cells", cells)
             .put("integrity", integrity)
@@ -72,7 +78,7 @@ object LearningUiSnapshotAssembler {
             val comparison = comparisons.optJSONObject(index) ?: return@repeat
             val origin = comparison.optString("origin", "")
             val referenceContexts = comparison.optJSONArray("reference_contexts") ?: JSONArray()
-            val explicitExtrapolated = comparison.optBoolean("extrapolated", false)
+            val explicitExtrapolated = comparison.optBoolean("reference_extrapolated", comparison.optBoolean("extrapolated", false))
             val referenceProvenance = when {
                 explicitExtrapolated || origin.contains("EXTRAPOL", ignoreCase = true) -> "EXTRAPOLATED"
                 referenceContexts.length() > 0 || origin.contains("SURFACE", ignoreCase = true) -> "AGGREGATED_INTERPOLATED"
