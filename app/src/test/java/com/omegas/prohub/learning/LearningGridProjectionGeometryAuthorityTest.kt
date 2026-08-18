@@ -5,6 +5,7 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -77,6 +78,27 @@ class LearningGridProjectionGeometryAuthorityTest {
         assertEquals("ECU_CURRENT", grid.getString("axisSource"))
         assertEquals(1_000, grid.getJSONArray("rpmBins").getInt(0))
         assertEquals(5.0, grid.getJSONArray("petrolBins").getDouble(2), 0.0)
+    }
+
+    @Test
+    fun legacyIdentityMarkerRemainsComparableButNeverGrantsCellGeometry() {
+        val legacy = LearningCalibrationBinding.fromJson(
+            JSONObject()
+                .put("calibration_fingerprint", "cal-old")
+                .put("calibration_generation", 4)
+                .put("geometry_fingerprint", "geo-old")
+                .put("usb_session_id", 9L)
+                .put("map_hash", "map-old"),
+        )
+        assertNotNull(legacy)
+        assertFalse(legacy!!.geometryKnown())
+        assertEquals("cal-old:4:geo-old", legacy.key())
+
+        LearningCalibrationAuthority.beginPhysicalSession()
+        LearningCalibrationAuthority.publish(legacy)
+        val cell = LearningGridProjection.cellFor(2_500.0, 4.5)
+        assertFalse(cell.getBoolean("geometryKnown"))
+        assertEquals("MAP_GEOMETRY_UNKNOWN", cell.getString("reasonCode"))
     }
 
     @Test
