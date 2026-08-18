@@ -1,5 +1,7 @@
 package com.omegas.prohub.ecu
 
+import com.omegas.prohub.learning.LearningMutationAuthority
+import com.omegas.prohub.learning.LearningMutationState
 import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.usb.UsbProtocolReply
 import com.omegas.prohub.util.RuntimeBackpressurePolicy
@@ -26,6 +28,10 @@ data class Mp48BackpressureMetrics(
  * Admission controller sobre a única authority serial MP48.
  * Não cria thread, fila ou transporte: apenas limita quantos callers externos
  * podem aguardar a engine simultaneamente.
+ *
+ * O mesmo ponto de admissão abre a quarentena científica antes de qualquer
+ * MANUAL_WRITE. Assim nenhum writer atual ou futuro pode esquecer a fronteira
+ * de mutação enquanto continuar obedecendo ao árbitro serial único.
  */
 class Mp48BackpressureScheduler(
     private val delegate: Mp48SerialScheduler,
@@ -55,15 +61,17 @@ class Mp48BackpressureScheduler(
         workClass: Mp48WorkClass,
         telemetryAfter: Boolean,
     ): UsbProtocolReply = withAdmission(workClass, timeoutMs.toLong().coerceAtLeast(1L)) {
-        delegate.transaction(
-            request = request,
-            reason = reason,
-            timeoutMs = timeoutMs,
-            purgeBefore = purgeBefore,
-            expectedSessionId = expectedSessionId,
-            workClass = workClass,
-            telemetryAfter = telemetryAfter,
-        )
+        mutationAware(workClass, expectedSessionId, reason) {
+            delegate.transaction(
+                request = request,
+                reason = reason,
+                timeoutMs = timeoutMs,
+                purgeBefore = purgeBefore,
+                expectedSessionId = expectedSessionId,
+                workClass = workClass,
+                telemetryAfter = telemetryAfter,
+            )
+        }
     }
 
     override fun <T> unit(
@@ -74,14 +82,16 @@ class Mp48BackpressureScheduler(
         waitTimeoutMs: Long,
         block: (Mp48SerialUnit) -> T,
     ): T = withAdmission(workClass, waitTimeoutMs.coerceAtLeast(1L)) {
-        delegate.unit(
-            reason = reason,
-            expectedSessionId = expectedSessionId,
-            workClass = workClass,
-            telemetryAfter = telemetryAfter,
-            waitTimeoutMs = waitTimeoutMs,
-            block = block,
-        )
+        mutationAware(workClass, expectedSessionId, reason) {
+            delegate.unit(
+                reason = reason,
+                expectedSessionId = expectedSessionId,
+                workClass = workClass,
+                telemetryAfter = telemetryAfter,
+                waitTimeoutMs = waitTimeoutMs,
+                block = block,
+            )
+        }
     }
 
     override fun recentTelemetryFrames(
@@ -110,6 +120,30 @@ class Mp48BackpressureScheduler(
             .put("readOnlyRejected", metrics.readOnlyRejected)
             .put("criticalAccepted", metrics.criticalAccepted)
             .put("criticalRejected", metrics.criticalRejected)
+            .put("learningMutation", LearningMutationAuthority.current().toJson())
+    }
+
+    private fun <T> mutationAware(
+        workClass: Mp48WorkClass,
+        expectedSessionId: Long,
+        reason: String,
+        block: () -> T,
+    ): T {
+        if (workClass == Mp48WorkClass.MANUAL_WRITE) {
+            LearningMutationAuthority.beginManualWrite(expectedSessionId, reason)
+        }
+        return try {
+            block()
+        } catch (error: Throwable) {
+            val mutation = LearningMutationAuthority.current()
+            if (mutation.usbSessionId == expectedSessionId && mutation.state != LearningMutationState.STABLE) {
+                LearningMutationAuthority.markUnknown(
+                    expectedSessionId,
+                    "${workClass.name} failed during mutation: ${error.message ?: error.javaClass.simpleName}",
+                )
+            }
+            throw error
+        }
     }
 
     private fun <T> withAdmission(workClass: Mp48WorkClass, waitTimeoutMs: Long, block: () -> T): T {
