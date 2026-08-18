@@ -19,7 +19,11 @@ data class LearningCalibrationBinding(
         require(mapHash.isNotBlank())
     }
 
-    fun key(): String = "$calibrationFingerprint:$calibrationGeneration:$geometryFingerprint:$usbSessionId"
+    /**
+     * A sessão USB é provenance de aquisição, não identidade material da calibração.
+     * Reabrir o mesmo MP48 não deve fabricar uma calibração nova.
+     */
+    fun key(): String = "$calibrationFingerprint:$calibrationGeneration:$geometryFingerprint"
 
     fun toJson(): JSONObject = JSONObject()
         .put("calibration_fingerprint", calibrationFingerprint)
