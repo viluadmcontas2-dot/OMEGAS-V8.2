@@ -11,6 +11,10 @@ class ContinuousWindowNoveltyBoundaryTest {
         assertEquals(0.75, ContinuousWindowNovelty.FULLY_NEW_FRACTION, 0.0)
         assertTrue(ContinuousWindowNovelty.Result(6, 8, 0.75, 100L).fullyNew)
         assertFalse(ContinuousWindowNovelty.Result(5, 8, 0.625, 100L).fullyNew)
+
+        val registered = ScientificConstantRegistry.bySymbol().getValue("novelty.FULLY_NEW_FRACTION")
+        assertEquals(ContinuousWindowNovelty.FULLY_NEW_FRACTION.toString(), registered.value)
+        assertEquals(ScientificConstantClass.LEGACY_BASELINE, registered.classification)
     }
 
     @Test
