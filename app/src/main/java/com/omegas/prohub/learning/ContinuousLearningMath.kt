@@ -42,9 +42,25 @@ object ContinuousLearningMath {
         return AxisBlend(lower, upper, fraction)
     }
 
-    fun bilinearWeights(rpm: Double, petrolMs: Double): List<BilinearContribution> {
-        val x = blend(LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(), rpm)
-        val y = blend(LearningGridProjection.petrolBins, petrolMs)
+    /** Compatibilidade fora de sessão física gerenciada; runtime usa o overload com eixos KNOWN. */
+    fun bilinearWeights(rpm: Double, petrolMs: Double): List<BilinearContribution> =
+        bilinearWeights(
+            rpm = rpm,
+            petrolMs = petrolMs,
+            rpmAxis = LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(),
+            petrolAxisMs = LearningGridProjection.petrolBins,
+        )
+
+    fun bilinearWeights(
+        rpm: Double,
+        petrolMs: Double,
+        rpmAxis: DoubleArray,
+        petrolAxisMs: DoubleArray,
+    ): List<BilinearContribution> {
+        require(rpmAxis.size == 12) { "Eixo RPM exige 12 pontos" }
+        require(petrolAxisMs.size == 12) { "Eixo Tpet exige 12 pontos" }
+        val x = blend(rpmAxis, rpm)
+        val y = blend(petrolAxisMs, petrolMs)
         val candidates = listOf(
             BilinearContribution(y.lower, x.lower, (1.0 - x.fraction) * (1.0 - y.fraction)),
             BilinearContribution(y.lower, x.upper, x.fraction * (1.0 - y.fraction)),
@@ -67,9 +83,27 @@ object ContinuousLearningMath {
         petrolMs: Double,
         mapBar: Double,
         mapBins: DoubleArray = defaultMapBins,
+    ): List<TrilinearContribution> = trilinearWeights(
+        rpm = rpm,
+        petrolMs = petrolMs,
+        mapBar = mapBar,
+        rpmAxis = LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(),
+        petrolAxisMs = LearningGridProjection.petrolBins,
+        mapBins = mapBins,
+    )
+
+    fun trilinearWeights(
+        rpm: Double,
+        petrolMs: Double,
+        mapBar: Double,
+        rpmAxis: DoubleArray,
+        petrolAxisMs: DoubleArray,
+        mapBins: DoubleArray = defaultMapBins,
     ): List<TrilinearContribution> {
-        val x = blend(LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(), rpm)
-        val y = blend(LearningGridProjection.petrolBins, petrolMs)
+        require(rpmAxis.size == 12) { "Eixo RPM exige 12 pontos" }
+        require(petrolAxisMs.size == 12) { "Eixo Tpet exige 12 pontos" }
+        val x = blend(rpmAxis, rpm)
+        val y = blend(petrolAxisMs, petrolMs)
         val z = blend(mapBins, mapBar)
         val candidates = listOf(
             TrilinearContribution(y.lower, x.lower, z.lower, (1.0 - x.fraction) * (1.0 - y.fraction) * (1.0 - z.fraction)),
@@ -124,4 +158,3 @@ object ContinuousLearningMath {
         return if (total <= 0.0) null else valid.sumOf { it.first * it.second } / total
     }
 }
-
