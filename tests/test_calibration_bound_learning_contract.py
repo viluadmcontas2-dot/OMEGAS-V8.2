@@ -22,14 +22,18 @@ def test_material_calibration_key_excludes_usb_session_but_keeps_required_identi
     assert '.put("map_hash", mapHash)' in source
 
 
-def test_runtime_reconciles_identity_from_composite_read_and_current_geometry():
+def test_runtime_reconciles_identity_from_composite_read_and_explicit_session_boundaries():
     source = read("app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt")
     assert "CompositeCalibrationReader(serialAdmission)" in source
     assert "CompositeCalibrationSnapshot.promote(raw)" in source
     assert "CalibrationIdentity.fromComposite(" in source
     assert "LearningCalibrationBinding.fromIdentity(identity, composite.mapGeometry)" in source
     assert "LearningCalibrationAuthority.publish(binding)" in source
-    assert source.count("LearningCalibrationAuthority.clear()") >= 3
+    # Sessao fisica possui fronteiras semanticamente nomeadas; clear() fica reservado
+    # para invalidacao dentro da mesma sessao (ajuste/reconcile falho).
+    assert "LearningCalibrationAuthority.beginPhysicalSession()" in source
+    assert "LearningCalibrationAuthority.endPhysicalSession()" in source
+    assert source.count("LearningCalibrationAuthority.clear()") >= 2
 
 
 def test_policy_v3_refuses_to_relabel_legacy_cng_and_stamps_active_evidence():
