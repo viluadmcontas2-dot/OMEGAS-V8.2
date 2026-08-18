@@ -65,6 +65,27 @@ class ContinuousWindowNoveltyTest {
     }
 
     @Test
+    fun `dez mil repeticoes da mesma janela continuam com ganho marginal zero`() {
+        var representedThrough = 250L
+        var accumulatedNewFrames = 0
+        repeat(10_000) {
+            val duplicate = ContinuousWindowNovelty.calculate(
+                startedAtElapsedMs = 0L,
+                endedAtElapsedMs = 250L,
+                frameCount = 6,
+                medianIntervalMs = 50L,
+                previouslyRepresentedThroughElapsedMs = representedThrough,
+            )
+            accumulatedNewFrames += duplicate.newFrames
+            representedThrough = duplicate.representedThroughElapsedMs
+            assertTrue(duplicate.duplicate)
+            assertEquals(0.0, duplicate.fraction, 0.0)
+        }
+        assertEquals(0, accumulatedNewFrames)
+        assertEquals(250L, representedThrough)
+    }
+
+    @Test
     fun `janela posterior sem sobreposicao volta a ter peso integral`() {
         val result = ContinuousWindowNovelty.calculate(
             startedAtElapsedMs = 400L,
