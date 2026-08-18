@@ -23,7 +23,11 @@ object LearningTelemetrySchemaMigration {
         runtimeRoot.mkdirs()
         val active = File(runtimeRoot, ACTIVE_STATE_FILE)
         val notice = File(runtimeRoot, NOTICE_FILE)
-        if (active.isFile) return readNotice(notice).put("activeState", active.name)
+        if (active.isFile) {
+            return readNotice(notice)
+                .put("activeState", active.name)
+                .put("restoreValidation", LearningRestoreValidator.validate(runtimeRoot, active))
+        }
 
         val legacyActive = listOf(
             File(runtimeRoot, LEGACY_ACTIVE_STATE_FILE),
@@ -40,6 +44,7 @@ object LearningTelemetrySchemaMigration {
                 .put("activeState", active.name)
                 .put("quarantinedFiles", org.json.JSONArray(listOf(target.name)))
                 .put("mapAndWriteHistoryPreserved", true)
+                .put("restoreValidation", LearningRestoreValidator.validate(runtimeRoot, active))
             notice.writeText(migrated.toString(2), Charsets.UTF_8)
             return migrated
         }
@@ -52,6 +57,7 @@ object LearningTelemetrySchemaMigration {
                 .put("reason", "Nenhuma memória antiga encontrada")
                 .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
                 .put("activeState", active.name)
+                .put("restoreValidation", LearningRestoreValidator.validate(runtimeRoot, active))
         }
 
         val quarantine = File(runtimeRoot, "learning_quarantine").apply { mkdirs() }
@@ -76,6 +82,7 @@ object LearningTelemetrySchemaMigration {
             .put("quarantinedFiles", org.json.JSONArray(moved))
             .put("createdAt", stamp)
             .put("mapAndWriteHistoryPreserved", true)
+            .put("restoreValidation", LearningRestoreValidator.validate(runtimeRoot, active))
         notice.writeText(result.toString(2), Charsets.UTF_8)
         log.add(
             "WARN",
@@ -85,9 +92,13 @@ object LearningTelemetrySchemaMigration {
         return result
     }
 
-    fun status(runtimeRoot: File): JSONObject = readNotice(File(runtimeRoot, NOTICE_FILE))
-        .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
-        .put("activeState", ACTIVE_STATE_FILE)
+    fun status(runtimeRoot: File): JSONObject {
+        val active = File(runtimeRoot, ACTIVE_STATE_FILE)
+        return readNotice(File(runtimeRoot, NOTICE_FILE))
+            .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
+            .put("activeState", ACTIVE_STATE_FILE)
+            .put("restoreValidation", LearningRestoreValidator.validate(runtimeRoot, active))
+    }
 
     private fun readNotice(file: File): JSONObject = try {
         if (file.isFile) JSONObject(file.readText(Charsets.UTF_8)) else JSONObject().put("migrated", false)
