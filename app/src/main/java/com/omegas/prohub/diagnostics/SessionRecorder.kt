@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.net.Uri
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
+import com.omegas.prohub.util.ThreadCpuClock
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedWriter
@@ -19,6 +20,7 @@ import java.util.TimeZone
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -38,17 +40,67 @@ class SessionRecorder(
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
+        private const val QUEUE_CAPACITY = 8192
     }
 
     private val droppedEvents = AtomicLong(0L)
+    private val pendingEvents = AtomicLong(0L)
+    private val pendingPayloadBytes = AtomicLong(0L)
+    private val lastQueueDelayMs = AtomicLong(0L)
+    private val maxQueueDelayMs = AtomicLong(0L)
+    private val lastProcessingMs = AtomicLong(0L)
+    private val maxProcessingMs = AtomicLong(0L)
+    private val lastThreadCpuMs = AtomicLong(-1L)
+    private val maxThreadCpuMs = AtomicLong(-1L)
+
+    private inner class RecorderTask(
+        private val estimatedBytes: Long,
+        private val enqueuedAtNanos: Long,
+        private val work: () -> Unit,
+    ) : Runnable {
+        private val completed = AtomicBoolean(false)
+
+        override fun run() {
+            if (!completed.compareAndSet(false, true)) return
+            val startedAtNanos = System.nanoTime()
+            val cpuStartedAt = ThreadCpuClock.nowNanos()
+            val queueDelayMs = nanosToMillis(startedAtNanos - enqueuedAtNanos)
+            lastQueueDelayMs.set(queueDelayMs)
+            updateMaximum(maxQueueDelayMs, queueDelayMs)
+            try {
+                work()
+            } finally {
+                val processingMs = nanosToMillis(System.nanoTime() - startedAtNanos)
+                lastProcessingMs.set(processingMs)
+                updateMaximum(maxProcessingMs, processingMs)
+                val cpuMs = ThreadCpuClock.elapsedMillis(cpuStartedAt, ThreadCpuClock.nowNanos())
+                if (cpuMs >= 0L) {
+                    lastThreadCpuMs.set(cpuMs)
+                    updateMaximum(maxThreadCpuMs, cpuMs)
+                }
+                pendingEvents.decrementAndGet()
+                pendingPayloadBytes.addAndGet(-estimatedBytes)
+            }
+        }
+
+        fun reject() {
+            if (!completed.compareAndSet(false, true)) return
+            pendingEvents.decrementAndGet()
+            pendingPayloadBytes.addAndGet(-estimatedBytes)
+        }
+    }
+
     private val worker = ThreadPoolExecutor(
         1,
         1,
         0L,
         TimeUnit.MILLISECONDS,
-        ArrayBlockingQueue(8192),
+        ArrayBlockingQueue(QUEUE_CAPACITY),
         { runnable -> Thread(runnable, "omegas-session-recorder").apply { isDaemon = true } },
-        { _, _ -> droppedEvents.incrementAndGet() },
+        { runnable, _ ->
+            (runnable as? RecorderTask)?.reject()
+            droppedEvents.incrementAndGet()
+        },
     )
     private val sequence = AtomicLong(0L)
     private val previewLock = Any()
@@ -97,6 +149,14 @@ class SessionRecorder(
             lastError = ""
             sequence.set(0L)
             droppedEvents.set(0L)
+            pendingEvents.set(0L)
+            pendingPayloadBytes.set(0L)
+            lastQueueDelayMs.set(0L)
+            maxQueueDelayMs.set(0L)
+            lastProcessingMs.set(0L)
+            maxProcessingMs.set(0L)
+            lastThreadCpuMs.set(-1L)
+            maxThreadCpuMs.set(-1L)
             synchronized(previewLock) { preview.clear() }
             openNextSegment()
             recording = true
@@ -152,7 +212,7 @@ class SessionRecorder(
         // válido e segue até o writer; não é parseada de volta só para criar cópia.
         val dataJson = data.toString()
         val summary = summarize(type, data)
-        worker.execute {
+        enqueuePayload(dataJson.toByteArray(StandardCharsets.UTF_8).size.toLong()) {
             synchronized(this) {
                 if (!recording) return@synchronized
                 recordEncodedNow(type, source, dataJson, summary)
@@ -163,7 +223,7 @@ class SessionRecorder(
     fun recordRawUsb(direction: String, bytes: ByteArray) {
         if (!recording || !settings.sessionCaptureRawUsb || bytes.isEmpty()) return
         val copy = bytes.copyOf()
-        worker.execute {
+        enqueuePayload(copy.size.toLong() * 2L + 128L) {
             val hex = copy.joinToString("") { "%02X".format(it.toInt() and 0xFF) }
             synchronized(this) {
                 if (!recording || !settings.sessionCaptureRawUsb) return@synchronized
@@ -200,6 +260,7 @@ class SessionRecorder(
             .put("stopReason", stopReason)
             .put("lastError", lastError)
             .put("directory", sessionDir?.absolutePath ?: "")
+            .put("consumerBudget", consumerBudgetJson())
             .put(
                 "settings",
                 JSONObject()
@@ -443,6 +504,33 @@ class SessionRecorder(
         }
     }
 
+    private fun enqueuePayload(estimatedBytes: Long, work: () -> Unit) {
+        val safeBytes = estimatedBytes.coerceAtLeast(0L)
+        pendingEvents.incrementAndGet()
+        pendingPayloadBytes.addAndGet(safeBytes)
+        worker.execute(RecorderTask(safeBytes, System.nanoTime(), work))
+    }
+
+    private fun consumerBudgetJson(): JSONObject = JSONObject()
+        .put("consumer", "SESSION_RECORDER")
+        .put("trigger", "EVENT_DRIVEN_SELECTED_DIAGNOSTIC_EVENT")
+        .put("cadence", "TELEMETRY_SETTING_OR_FORCE_EVENT")
+        .put("queueBound", QUEUE_CAPACITY)
+        .put("queueDepth", worker.queue.size)
+        .put("pendingEvents", pendingEvents.get())
+        .put("pendingPayloadBytes", pendingPayloadBytes.get())
+        .put("pendingBytesKind", "UTF8_PAYLOAD_BYTES_EXACT_OR_RAW_ESTIMATE")
+        .put("overloadPolicy", "DROP_INCOMING_RECORDER_EVENT_ON_FULL")
+        .put("dropAffectsAcquisition", false)
+        .put("droppedEvents", droppedEvents.get())
+        .put("lastQueueDelayMs", lastQueueDelayMs.get())
+        .put("maxQueueDelayMs", maxQueueDelayMs.get())
+        .put("lastProcessingMs", lastProcessingMs.get())
+        .put("maxProcessingMs", maxProcessingMs.get())
+        .put("cpuAccounting", "ANDROID_THREAD_CPU_TIME_WHEN_AVAILABLE")
+        .put("lastThreadCpuMs", lastThreadCpuMs.get())
+        .put("maxThreadCpuMs", maxThreadCpuMs.get())
+
     private fun openNextSegment() {
         closeWriter()
         currentSegment += 1
@@ -570,6 +658,16 @@ Unidades: RPM em rpm; tempos em ms; MAP/pressões em bar; temperaturas em °C.
 
     private fun iso(value: Long): String = synchronized(isoFormatter) {
         isoFormatter.format(Date(value))
+    }
+
+    private fun nanosToMillis(value: Long): Long =
+        TimeUnit.NANOSECONDS.toMillis(value.coerceAtLeast(0L))
+
+    private fun updateMaximum(target: AtomicLong, candidate: Long) {
+        var current = target.get()
+        while (candidate > current && !target.compareAndSet(current, candidate)) {
+            current = target.get()
+        }
     }
 
     private data class ExportEntry(
