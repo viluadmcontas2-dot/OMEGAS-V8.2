@@ -19,6 +19,7 @@ object LearningCalibrationAuthority {
 
     fun publish(binding: LearningCalibrationBinding) {
         current.set(binding)
+        LearningMutationAuthority.onCalibrationIdentityKnown(binding)
     }
 
     fun clear() {
@@ -28,6 +29,7 @@ object LearningCalibrationAuthority {
     fun endPhysicalSession() {
         current.set(null)
         physicalSessionManaged.set(false)
+        LearningMutationAuthority.endPhysicalSession()
     }
 
     fun requiresKnownGeometry(): Boolean = physicalSessionManaged.get()
