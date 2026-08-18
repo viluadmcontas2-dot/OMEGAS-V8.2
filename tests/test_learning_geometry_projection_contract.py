@@ -17,7 +17,7 @@ def test_runtime_marks_physical_session_as_geometry_managed():
 def test_managed_session_has_no_historical_axis_fallback_when_geometry_is_unknown():
     source = read("app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt")
     assert "if (LearningCalibrationAuthority.requiresKnownGeometry()) return null" in source
-    assert 'reasonCode\", \"MAP_GEOMETRY_UNKNOWN\"' in source
+    assert '.put("reasonCode", "MAP_GEOMETRY_UNKNOWN")' in source
     assert '.put("row", -1)' in source
     assert '.put("column", -1)' in source
     assert 'if (!cell.optBoolean("geometryKnown", false)) return@repeat' in source
