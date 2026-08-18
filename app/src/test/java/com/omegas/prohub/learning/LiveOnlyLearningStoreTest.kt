@@ -4,6 +4,7 @@ import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,8 +16,14 @@ import java.io.File
 class LiveOnlyLearningStoreTest {
     @get:Rule val temporary = TemporaryFolder()
 
+    @After
+    fun clearCalibrationAuthority() {
+        LearningCalibrationAuthority.clear()
+    }
+
     @Test
     fun `confirmed calibration preserves petrol and clears cng comparisons and suggestions`() {
+        activateCalibration("before-reset", 1)
         val store = store()
         store.startSession()
         store.ingest(
@@ -91,7 +98,8 @@ class LiveOnlyLearningStoreTest {
     }
 
     @Test
-    fun `after reset new live cng immediately uses preserved petrol baseline`() {
+    fun `after reset cng waits for reconciled calibration then uses preserved petrol baseline`() {
+        activateCalibration("before-reset", 1)
         val store = store()
         store.startSession()
         store.ingest(
@@ -102,15 +110,27 @@ class LiveOnlyLearningStoreTest {
             telemetry(1_350L, Mp48Fuel.CNG, 5.0),
             accepted(sample("old-g", 800L, 1_350L, Mp48Fuel.CNG, 5.0)),
         )
+
+        // O runtime retira a identidade antiga antes de avisar o store sobre a
+        // mudança física. Telemetria segue, mas ciência GNV espera o readback/reconcile.
+        LearningCalibrationAuthority.clear()
         store.onCalibrationAdjustment(confirmedUpdate())
 
         val afterReset = store.export("test")
         assertTrue(afterReset.getJSONObject("summary").getInt("petrol_regions") > 0)
         assertEquals(0, afterReset.getJSONArray("comparisons").length())
 
-        store.ingest(
+        val blocked = store.ingest(
             telemetry(2_050L, Mp48Fuel.CNG, 5.2),
-            accepted(sample("new-live-g", 1_500L, 2_050L, Mp48Fuel.CNG, 5.2)),
+            accepted(sample("pre-reconcile-g", 1_500L, 2_050L, Mp48Fuel.CNG, 5.2)),
+        )
+        assertEquals(LiveOnlyLearningStore.CALIBRATION_REQUIRED_REASON_CODE, blocked.getString("reasonCode"))
+        assertEquals(0, store.export("test").getJSONArray("comparisons").length())
+
+        activateCalibration("after-reset", 2)
+        store.ingest(
+            telemetry(2_750L, Mp48Fuel.CNG, 5.2),
+            accepted(sample("new-live-g", 2_200L, 2_750L, Mp48Fuel.CNG, 5.2)),
         )
         assertTrue(store.export("test").getJSONArray("comparisons").length() > 0)
     }
@@ -197,6 +217,20 @@ class LiveOnlyLearningStoreTest {
             )
             repaired.close()
         }
+    }
+
+    private fun activateCalibration(label: String, generation: Int) {
+        LearningCalibrationAuthority.publish(
+            LearningCalibrationBinding(
+                calibrationFingerprint = "calibration-$label",
+                calibrationGeneration = generation,
+                geometryFingerprint = "geometry-$label",
+                usbSessionId = 1L,
+                mapHash = "map-$label",
+                petrolAxisMs = emptyList(),
+                rpmAxis = emptyList(),
+            ),
+        )
     }
 
     private fun store() = LiveOnlyLearningStore(
