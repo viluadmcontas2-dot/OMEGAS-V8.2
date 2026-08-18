@@ -25,7 +25,27 @@ object ContinuousLearningMath {
         val weight: Double,
     )
 
+    private data class CurrentAxes(
+        val rpm: DoubleArray,
+        val petrolMs: DoubleArray,
+    )
+
     val defaultMapBins = doubleArrayOf(0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00)
+
+    private fun currentAxesOrFixture(): CurrentAxes? {
+        val binding = LearningCalibrationAuthority.snapshot()
+        if (binding != null && binding.geometryKnown()) {
+            return CurrentAxes(
+                rpm = binding.rpmAxis.map(Int::toDouble).toDoubleArray(),
+                petrolMs = binding.petrolAxisMs.toDoubleArray(),
+            )
+        }
+        if (LearningCalibrationAuthority.requiresKnownGeometry()) return null
+        return CurrentAxes(
+            rpm = LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(),
+            petrolMs = LearningGridProjection.petrolBins,
+        )
+    }
 
     fun blend(values: DoubleArray, value: Double): AxisBlend {
         require(values.isNotEmpty()) { "Eixo sem pontos de controle" }
@@ -42,14 +62,19 @@ object ContinuousLearningMath {
         return AxisBlend(lower, upper, fraction)
     }
 
-    /** Compatibilidade fora de sessão física gerenciada; runtime usa o overload com eixos KNOWN. */
-    fun bilinearWeights(rpm: Double, petrolMs: Double): List<BilinearContribution> =
-        bilinearWeights(
+    /**
+     * Todos os consumidores antigos deste overload também obedecem à geometria
+     * atual. Durante sessão física sem geometry KNOWN, não existe peso por célula.
+     */
+    fun bilinearWeights(rpm: Double, petrolMs: Double): List<BilinearContribution> {
+        val axes = currentAxesOrFixture() ?: return emptyList()
+        return bilinearWeights(
             rpm = rpm,
             petrolMs = petrolMs,
-            rpmAxis = LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(),
-            petrolAxisMs = LearningGridProjection.petrolBins,
+            rpmAxis = axes.rpm,
+            petrolAxisMs = axes.petrolMs,
         )
+    }
 
     fun bilinearWeights(
         rpm: Double,
@@ -83,14 +108,17 @@ object ContinuousLearningMath {
         petrolMs: Double,
         mapBar: Double,
         mapBins: DoubleArray = defaultMapBins,
-    ): List<TrilinearContribution> = trilinearWeights(
-        rpm = rpm,
-        petrolMs = petrolMs,
-        mapBar = mapBar,
-        rpmAxis = LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(),
-        petrolAxisMs = LearningGridProjection.petrolBins,
-        mapBins = mapBins,
-    )
+    ): List<TrilinearContribution> {
+        val axes = currentAxesOrFixture() ?: return emptyList()
+        return trilinearWeights(
+            rpm = rpm,
+            petrolMs = petrolMs,
+            mapBar = mapBar,
+            rpmAxis = axes.rpm,
+            petrolAxisMs = axes.petrolMs,
+            mapBins = mapBins,
+        )
+    }
 
     fun trilinearWeights(
         rpm: Double,
