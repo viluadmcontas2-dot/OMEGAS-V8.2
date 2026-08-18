@@ -11,8 +11,12 @@ import org.junit.Test
 class AutoCalSnapshotTest {
     @Test
     fun `snapshot parcial preserva campos validos e avisos`() {
+        val petrolAxis = ByteArray(60).apply {
+            this[0] = 0x00
+            this[1] = 0x02
+        }
         val observations = listOf(
-            observation(AutoCalProtocol.PETR_INJ_TBP, byteArrayOf(0x00, 0x02), 100L),
+            observation(AutoCalProtocol.PETR_INJ_TBP, petrolAxis, 100L),
             AutoCalReadObservation(
                 field = AutoCalProtocol.MUL_ACT,
                 capturedAtMs = 110L,
@@ -30,10 +34,11 @@ class AutoCalSnapshotTest {
         assertTrue(snapshot.partial)
         assertEquals(1, snapshot.validFieldCount)
         assertEquals(2, snapshot.fields.size)
-        assertEquals(1.0, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.physicalValues.single(), 0.0)
+        assertEquals(1.0, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.physicalValues.first(), 0.0)
+        assertEquals(30, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.elementCount)
         assertEquals(AutoCalFieldStatus.UNAVAILABLE, snapshot.field(AutoCalProtocol.MUL_ACT)!!.status)
         assertTrue(snapshot.warnings.any { it.contains("MUL_ACT") })
-        assertTrue(snapshot.warnings.any { it.contains("MODULE_VERSION") })
+        assertFalse(snapshot.warnings.any { it.contains("MODULE_VERSION indisponível") })
         assertEquals(30L, snapshot.durationMs)
         assertFalse(snapshot.toJson().getBoolean("automatic"))
     }
@@ -96,7 +101,7 @@ class AutoCalSnapshotTest {
     }
 
     @Test
-    fun `module version quatro valida trinta elementos nos vetores dinamicos`() {
+    fun `module version quatro nao altera shapes fisicos dos campos`() {
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = listOf(
                 observation(AutoCalProtocol.MODULE_VERSION, byteArrayOf(4), 90L),
@@ -117,7 +122,7 @@ class AutoCalSnapshotTest {
     }
 
     @Test
-    fun `versao anterior valida dezoito elementos nos vetores dinamicos`() {
+    fun `module version anterior tambem nao altera shapes fisicos dos campos`() {
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = listOf(
                 observation(AutoCalProtocol.MODULE_VERSION, byteArrayOf(3), 90L),
@@ -131,15 +136,15 @@ class AutoCalSnapshotTest {
             ),
         )
         assertEquals(3, snapshot.moduleVersion)
-        assertEquals(AutoCalFieldStatus.VALID, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.status)
-        assertEquals(AutoCalFieldStatus.INVALID, snapshot.field(AutoCalProtocol.MUL_ACT)!!.status)
-        assertTrue(snapshot.field(AutoCalProtocol.MUL_ACT)!!.error!!.contains("esperado 18"))
+        assertEquals(AutoCalFieldStatus.INVALID, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.status)
+        assertTrue(snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.error!!.contains("esperado 30"))
+        assertEquals(AutoCalFieldStatus.VALID, snapshot.field(AutoCalProtocol.MUL_ACT)!!.status)
     }
 
     @Test
     fun `hash e estavel independentemente da ordem`() {
         val first = observation(AutoCalProtocol.AUTO_CAL_ENABLE, byteArrayOf(1), 100L)
-        val second = observation(AutoCalProtocol.MUL_ACT, byteArrayOf(0x00, 0x40), 101L)
+        val second = observation(AutoCalProtocol.MUL_ACT, ByteArray(60), 101L)
         val expected = listOf(AutoCalProtocol.AUTO_CAL_ENABLE, AutoCalProtocol.MUL_ACT)
         val a = AutoCalSnapshotBuilder.build(listOf(first, second), expected, sessionId = "a")
         val b = AutoCalSnapshotBuilder.build(listOf(second, first), expected.reversed(), sessionId = "b")
@@ -149,12 +154,14 @@ class AutoCalSnapshotTest {
     @Test
     fun `hash muda quando bytes crus mudam`() {
         val expected = listOf(AutoCalProtocol.MUL_ACT)
+        val firstPayload = ByteArray(60)
+        val changedPayload = ByteArray(60).apply { this[0] = 0x01 }
         val one = AutoCalSnapshotBuilder.build(
-            listOf(observation(AutoCalProtocol.MUL_ACT, byteArrayOf(0x00, 0x40), 100L)),
+            listOf(observation(AutoCalProtocol.MUL_ACT, firstPayload, 100L)),
             expected,
         )
         val changed = AutoCalSnapshotBuilder.build(
-            listOf(observation(AutoCalProtocol.MUL_ACT, byteArrayOf(0x01, 0x40), 100L)),
+            listOf(observation(AutoCalProtocol.MUL_ACT, changedPayload, 100L)),
             expected,
         )
         assertNotEquals(one.snapshotHash, changed.snapshotHash)
