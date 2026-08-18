@@ -23,11 +23,21 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
     private var acceptingTelemetry = false
     private val history = ArrayDeque<JSONObject>()
 
+    /** Adapter legado. O caminho runtime atual deve entregar o objeto já projetado. */
     fun updateFromEngineEvent(raw: String): JSONObject? = try {
-        val root = JSONObject(raw)
+        updateFromEngineEvent(JSONObject(raw))
+    } catch (_: Exception) {
+        null
+    }
+
+    /**
+     * Consome a única projeção downstream do frame, sem serializar e parsear de
+     * novo entre NativeRuntimeManager e o serviço. O objeto é somente leitura.
+     */
+    fun updateFromEngineEvent(root: JSONObject): JSONObject? {
         val event = root.optString("event", "telemetry")
         val payload = root.optJSONObject("data") ?: root.optJSONObject("live") ?: root
-        synchronized(lock) {
+        return synchronized(lock) {
             val eventSessionId = root.optLong("session_id", payload.optLong("session_id", 0L))
             if (!acceptingTelemetry || (eventSessionId > 0L && eventSessionId != sessionId)) {
                 return@synchronized null
@@ -59,8 +69,6 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             }
             JSONObject().put("event", event).put("sequence", seq).put("timestamp", stateUpdatedAt)
         }
-    } catch (_: Exception) {
-        null
     }
 
     fun updateGps(value: JSONObject) {
