@@ -20,9 +20,9 @@ import java.security.MessageDigest
  * O ciclo de vida da conexão técnica acompanha a conexão física USB. Um
  * simples reinício do loop não cria outra sessão nem aumenta confiança.
  *
- * A thread da ECU publica primeiro um quadro tipado latest-only e volta
- * imediatamente ao ciclo MP48. JSON permanece somente como projeção de
- * compatibilidade para consumidores ainda não migrados.
+ * A thread da ECU publica somente o quadro tipado latest-only e enfileira
+ * consumidores bounded. JSON existe apenas na projeção de compatibilidade,
+ * construída no worker de delivery depois que a thread ECU já foi liberada.
  */
 class NativeRuntimeManager(
     paths: AppPaths,
@@ -342,58 +342,20 @@ class NativeRuntimeManager(
         )
         if (!latestTelemetryState.publish(typedFrame)) return
 
-        val learningState = learningLiveSummary()
-        val live = telemetry.toJson()
-            .put("session_id", generation)
-            .put("version", "OMEGAS-NATIVE-CORE-5")
-            .put("link", "ONLINE")
-            .put("transaction", "IDLE")
-            .put("sample_state", decision.state)
-            .put("sample_reason", decision.reason)
-            .put("sample_frame_count", decision.frameCount)
-            .put("sample_minimum_frames", decision.minimumFrames)
-            .put("sample_desired_frames", decision.desiredFrames)
-            .put("sample_duration_ms", decision.durationMs)
-            .put("sample", decision.toTelemetryJson())
-            .put("learning_quality", decision.sample?.quality ?: 0.0)
-            .put("stable_ms", decision.durationMs)
-            .put("surface_cell", learningState.optString("state", "OBSERVING_ENGINE"))
-            .put(
-                "current_cell_confidence",
-                learningState.optDouble("reference_confidence", learningState.optDouble("quality", 0.0)),
-            )
-            .put("k_interpolated", 0.0)
-            .put("k_suggested", JSONObject.NULL)
-            .put("delta_k", JSONObject.NULL)
-            .put("last_frame_at", System.currentTimeMillis() / 1000.0)
-            .put("last_frame_age_ms", 0)
-
-        val runtime = metrics.toJson()
-            .put("native", true)
-            .put("link", "ONLINE")
-            .put("serial_ready", true)
-            .put("last_error", "")
-            .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
-            .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
-            .put("learning_pipeline", learningPipeline.metricsJson())
-            .put("typed_telemetry_state", telemetryStateMetricsJson())
-
-        val root = JSONObject()
-            .put("event", "telemetry")
-            .put("session_id", generation)
-            .put("version", "OMEGAS-NATIVE-CORE-5")
-            .put("live", live)
-            .put("runtime", runtime)
-            .put("learning_state", learningState)
-            .put("learning", learningState)
-
-        val rawEvent = root.toString()
-        synchronized(snapshotLock) { latestSnapshot = root }
+        // Somente estado primitivo/tipado na callback da ECU. Toda serialização
+        // JSON de compatibilidade acontece no worker latest-only abaixo.
         running = true
         ready = true
         lastError = ""
-
-        if (!telemetryDeliveryPipeline.submit(sequence) { onTelemetryEvent(rawEvent) }) {
+        if (!telemetryDeliveryPipeline.submit(sequence) {
+                projectTelemetryCompatibility(
+                    telemetry = telemetry,
+                    decision = decision,
+                    metrics = metrics,
+                    generation = generation,
+                )
+            }
+        ) {
             log.add("WARN", "TELEMETRY-DELIVERY", "Quadro $sequence não aceito porque a fila está encerrando")
         }
 
@@ -411,13 +373,76 @@ class NativeRuntimeManager(
             }
         }
         if (!accepted && important && generation == currentUsbSessionId) {
-            val buffer = learningPipeline.metricsJson()
             log.add(
                 "WARN",
                 "LEARNING-BUFFER",
-                "Amostra $sequence não coube no buffer quente; sessão gravada preserva a evidência. pending=${buffer.optInt("pending")}",
+                "Amostra $sequence não coube no buffer científico bounded; sessão gravada preserva a evidência.",
             )
         }
+    }
+
+    /**
+     * Projeção legada/visual executada somente no worker de delivery. A geração é
+     * revalidada antes e dentro do lock de snapshot para callback atrasada de N
+     * nunca substituir N+1.
+     */
+    private fun projectTelemetryCompatibility(
+        telemetry: Mp48Telemetry,
+        decision: SampleDecision,
+        metrics: EngineMetrics,
+        generation: Long,
+    ) {
+        if (generation != currentUsbSessionId) return
+        val live = telemetry.toJson()
+            .put("session_id", generation)
+            .put("version", "OMEGAS-NATIVE-CORE-5")
+            .put("link", "ONLINE")
+            .put("transaction", "IDLE")
+            .put("sample_state", decision.state)
+            .put("sample_reason", decision.reason)
+            .put("sample_frame_count", decision.frameCount)
+            .put("sample_minimum_frames", decision.minimumFrames)
+            .put("sample_desired_frames", decision.desiredFrames)
+            .put("sample_duration_ms", decision.durationMs)
+            .put("sample", decision.toTelemetryJson())
+            .put("learning_quality", decision.sample?.quality ?: 0.0)
+            .put("stable_ms", decision.durationMs)
+            .put("k_interpolated", 0.0)
+            .put("k_suggested", JSONObject.NULL)
+            .put("delta_k", JSONObject.NULL)
+            .put("last_frame_at", System.currentTimeMillis() / 1000.0)
+            .put("last_frame_age_ms", 0)
+
+        val runtime = metrics.toJson()
+            .put("native", true)
+            .put("link", "ONLINE")
+            .put("serial_ready", true)
+            .put("last_error", "")
+            .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
+            .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
+            .put("learning_pipeline", learningPipeline.metricsJson())
+            .put("typed_telemetry_state", telemetryStateMetricsJson())
+
+        val rawEvent = synchronized(snapshotLock) {
+            if (generation != currentUsbSessionId) return@synchronized null
+            val learningState = learningLiveSummary()
+            live.put("surface_cell", learningState.optString("state", "OBSERVING_ENGINE"))
+                .put(
+                    "current_cell_confidence",
+                    learningState.optDouble("reference_confidence", learningState.optDouble("quality", 0.0)),
+                )
+            val root = JSONObject()
+                .put("event", "telemetry")
+                .put("session_id", generation)
+                .put("version", "OMEGAS-NATIVE-CORE-5")
+                .put("live", live)
+                .put("runtime", runtime)
+                .put("learning_state", learningState)
+                .put("learning", learningState)
+            latestSnapshot = root
+            root.toString()
+        } ?: return
+        if (generation == currentUsbSessionId) onTelemetryEvent(rawEvent)
     }
 
     private fun publishLearningState(sequence: Long, source: JSONObject) {
