@@ -43,7 +43,13 @@ class PetrolReferenceEnvironmentalContextTest {
     @Test
     fun knownWaterRemainsComparableContext() {
         val region = PetrolReferenceSelector.Region(
-            "petrol", 2_000.0, 0.50, 82.0, 4.0, 0.9, 10,
+            id = "petrol",
+            rpm = 2_000.0,
+            mapBar = 0.50,
+            waterC = 82.0,
+            petrolMs = 4.0,
+            confidence = 0.9,
+            sampleCount = 10,
         )
         val request = PetrolReferenceSelector.Request(2_010.0, 0.51, 84.0)
         val result = PetrolReferenceSelector.estimate(listOf(region), request, policy)
@@ -63,10 +69,24 @@ class PetrolReferenceEnvironmentalContextTest {
             gasTemperatureSource = "MP48_RUNTIME_GAS_TEMP",
         )
         val cold = PetrolReferenceSelector.Region(
-            "cold", 2_000.0, 0.50, 82.0, 4.0, 0.9, 10, environment(20.0),
+            id = "cold",
+            rpm = 2_000.0,
+            mapBar = 0.50,
+            waterC = 82.0,
+            petrolMs = 4.0,
+            confidence = 0.9,
+            sampleCount = 10,
+            environment = environment(20.0),
         )
         val hot = PetrolReferenceSelector.Region(
-            "hot", 2_000.0, 0.50, 82.0, 4.0, 0.9, 10, environment(60.0),
+            id = "hot",
+            rpm = 2_000.0,
+            mapBar = 0.50,
+            waterC = 82.0,
+            petrolMs = 4.0,
+            confidence = 0.9,
+            sampleCount = 10,
+            environment = environment(60.0),
         )
         val request = PetrolReferenceSelector.Request(
             rpm = 2_000.0,
@@ -103,7 +123,14 @@ class PetrolReferenceEnvironmentalContextTest {
             mapSource = "MP48_RUNTIME_MAP",
         )
         val region = PetrolReferenceSelector.Region(
-            "petrol", 2_000.0, 0.50, 82.0, 4.0, 0.9, 10, environment,
+            id = "petrol",
+            rpm = 2_000.0,
+            mapBar = 0.50,
+            waterC = 82.0,
+            petrolMs = 4.0,
+            confidence = 0.9,
+            sampleCount = 10,
+            environment = environment,
         )
         val request = PetrolReferenceSelector.Request(
             rpm = 2_000.0,
