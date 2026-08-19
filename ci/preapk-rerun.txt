@@ -1,2 +1,2 @@
-rerun: 2026-08-19-native-anchor-dual-fuel
-reason: verify native anchor science contract against current dual-fuel no-double-vote lineage
+rerun: 2026-08-19-g3b-session-continuity-red
+reason: prove mismatched native maturity session is rejected before production fix
