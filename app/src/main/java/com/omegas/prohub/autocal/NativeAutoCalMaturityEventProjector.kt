@@ -1,7 +1,7 @@
 package com.omegas.prohub.autocal
 
-import com.omegas.prohub.ecu.Mp48TelemetryWindowSource
 import com.omegas.prohub.learning.LearningTolerancePolicy
+import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.learning.NativeAutoCalEventCorrelator
 import org.json.JSONArray
 import org.json.JSONObject
@@ -14,7 +14,7 @@ object NativeAutoCalMaturityEventProjector {
     fun project(
         pending: List<NativeAutoCalDualFuelMaturityObserver.Event>,
         acquisition: JSONObject,
-        telemetry: Mp48TelemetryWindowSource,
+        telemetryFrames: (Long, Long) -> List<NativeAnchorTelemetryWindow.Frame>,
         policy: LearningTolerancePolicy,
         sessionId: Long,
         snapshotId: String,
@@ -30,9 +30,9 @@ object NativeAutoCalMaturityEventProjector {
             val point = acquisition.findPoint(fuelLabel, transition.bandIndex)
             val nativePetrolMs = point?.nullableDouble("timeMs")
             val nativeMapBar = point?.nullableDouble("mapBar")
-            val frames = telemetry.recentTelemetryFrames(
-                fromElapsedMs = transition.previousObservedAtElapsedMs,
-                toElapsedMs = transition.observedAtElapsedMs,
+            val frames = telemetryFrames(
+                transition.previousObservedAtElapsedMs,
+                transition.observedAtElapsedMs,
             )
             val correlation = NativeAutoCalEventCorrelator.correlate(
                 frames = frames,
