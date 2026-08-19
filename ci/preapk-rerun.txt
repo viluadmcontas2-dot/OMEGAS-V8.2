@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g3b-session-continuity-red-clean
-reason: verify governance baseline then expose mismatched native maturity session before production fix
+rerun: 2026-08-19-g3b-provenance-red-precise
+reason: prove physical calibration provenance and managed-session anchor admission before production fix
