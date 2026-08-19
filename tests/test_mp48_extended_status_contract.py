@@ -21,7 +21,6 @@ class Mp48ExtendedStatusContract(unittest.TestCase):
         for field in ("PETR_INJ_TBP", "MUL_ACT", "PETR_MNFLD_PRESS_RV", "GAS_MNFLD_PRESS_RV"):
             self.assertIn(field, self.protocol)
         self.assertIn("return field.expectedElementsHint", self.protocol)
-        self.assertIn("moduleVersion is deliberately ignored", self.protocol.replace("deliberadamente ignorada", "is deliberately ignored")) if False else None
         self.assertIn("requireExpectedShape(decoded, moduleVersion)", self.snapshot)
         self.assertIn('put("moduleVersion"', self.snapshot)
 
