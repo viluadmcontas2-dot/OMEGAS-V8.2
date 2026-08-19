@@ -33,7 +33,19 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getSnapshot(): String = currentManager()?.latestSnapshotJson()?.toString() ?: unavailable()
 
     @JavascriptInterface
-    fun getNativeMonitorStatus(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalStatusJson() ?: unavailable()
+    fun getNativeMonitorStatus(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
+        val monitor = JSONObject(service.nativeAutoCalStatusJson())
+        monitor.put(
+            "stationaryCalibration",
+            StationaryCalibrationProjection.project(
+                monitorStatus = monitor,
+                frame = service.runtime.currentTelemetryFrame(),
+            ),
+        ).toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Estado AutoCal nativo indisponível")
+    }
 
     @JavascriptInterface
     fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
