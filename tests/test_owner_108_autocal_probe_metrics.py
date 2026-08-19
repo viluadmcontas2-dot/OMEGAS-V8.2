@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 METRICS = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalProbeMetrics.kt"
+MONITOR = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt"
 
 
 class Owner108AutoCalProbeMetricsContract(unittest.TestCase):
@@ -92,6 +93,22 @@ class Owner108AutoCalProbeMetricsContract(unittest.TestCase):
                 timeout=10,
             )
             self.assertIn("OWNER_108_PROBE_METRICS=PASS", result.stdout)
+
+    def test_native_monitor_integrates_metrics_without_new_clock_or_writer(self):
+        monitor = MONITOR.read_text("utf-8")
+        self.assertIn("private val probeMetrics = AutoCalProbeMetrics()", monitor)
+        self.assertIn("resolvePendingTelemetryGap()", monitor)
+        self.assertIn("probeMetrics.recordCycle(", monitor)
+        self.assertIn("probeMetrics.markMaterialChange()", monitor)
+        self.assertIn('.put("probeMetrics", probeMetricsJson())', monitor)
+        self.assertIn('.put("measurementOnly", true)', monitor)
+        self.assertIn('.put("cadenceAuthority", "SERVICE_HEALTH_TICK")', monitor)
+        self.assertIn("reply.echo.size + reply.rawResponse.size", monitor)
+        self.assertIn("AutoCalProtocol.CMD_NATIVE_STATUS", monitor)
+        self.assertIn("timeoutMs = 700", monitor)
+        self.assertNotIn("ScheduledExecutor", monitor)
+        self.assertNotIn("Executors.", monitor)
+        self.assertNotIn("Mp48WorkClass.MANUAL_WRITE", monitor)
 
 
 if __name__ == "__main__":
