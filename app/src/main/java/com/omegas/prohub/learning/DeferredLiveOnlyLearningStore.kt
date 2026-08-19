@@ -13,10 +13,10 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * A telemetria pode iniciar imediatamente. Enquanto a memória persistida é
  * restaurada em uma thread dedicada, o Learning publica estado explícito de
- * RESTORING e não cria evidência nova. A sessão gravada continua preservando a
- * telemetria bruta para auditoria. Uma escrita K confirmada nesse intervalo não
- * é perdida: o reset derivado mais recente fica pendente e é aplicado antes de
- * a memória restaurada ser exposta como READY.
+ * RESTORING e não cria evidência de telemetria nova. Operações materiais que
+ * chegam nesse intervalo (snapshot AutoCal read-only e ajuste de calibração
+ * confirmado) ficam em uma fila curta, limitada e causalmente ordenada para
+ * replay antes de a memória restaurada ser exposta como READY.
  */
 class DeferredLiveOnlyLearningStore(
     private val runtimeRoot: File,
@@ -28,11 +28,17 @@ class DeferredLiveOnlyLearningStore(
         val store: LiveOnlyLearningStore,
     )
 
+    private sealed interface DeferredOperation {
+        data class NativeSnapshot(val key: String, val payload: JSONObject) : DeferredOperation
+        data class CalibrationAdjustment(val payload: JSONObject) : DeferredOperation
+    }
+
     companion object {
         const val STATE_RESTORING = "LEARNING_RESTORING"
         const val STATE_READY = "LEARNING_READY"
         const val STATE_FAILED = "LEARNING_RESTORE_FAILED"
         const val RESTORE_PENDING_REASON = "LEARNING_RESTORE_PENDING"
+        private const val MAX_DEFERRED_OPERATIONS = 64
 
         private fun restore(runtimeRoot: File, log: RingLog): RestoredLearning {
             val migration = LearningTelemetrySchemaMigration.prepare(runtimeRoot, log)
@@ -60,7 +66,13 @@ class DeferredLiveOnlyLearningStore(
 
     private var sessionRequested = false
     private var deferredCalibrationAdjustments = 0L
-    private var pendingCalibrationAdjustment: JSONObject? = null
+    private val deferredOperations = ArrayDeque<DeferredOperation>()
+    private val deferredSnapshotKeys = linkedSetOf<String>()
+    private var deferredNativeSnapshots = 0L
+    private var replayedNativeSnapshots = 0L
+    private var duplicateNativeSnapshots = 0L
+    private var rejectedNativeSnapshots = 0L
+    private var failedDeferredOperations = 0L
 
     init {
         restoreExecutor.execute {
@@ -73,8 +85,7 @@ class DeferredLiveOnlyLearningStore(
                     } else {
                         migration = JSONObject(restored.migration.toString())
                         if (sessionRequested) restored.store.startSession()
-                        pendingCalibrationAdjustment?.let { restored.store.onCalibrationAdjustment(it) }
-                        pendingCalibrationAdjustment = null
+                        replayDeferredOperationsLocked(restored.store)
                         delegate = restored.store
                         restoreState = STATE_READY
                         restoreFinishedAt = System.currentTimeMillis()
@@ -85,7 +96,7 @@ class DeferredLiveOnlyLearningStore(
                     log.add(
                         "INFO",
                         "LEARNING-RESTORE",
-                        "Learning restaurado fora do startup em ${restoreDurationMs()}ms",
+                        "Learning restaurado fora do startup em ${restoreDurationMs()}ms; operações AutoCal pendentes reconciliadas",
                     )
                 }
             } catch (error: Exception) {
@@ -139,28 +150,63 @@ class DeferredLiveOnlyLearningStore(
         decorateReady(it.merge(payload, localDeviceId))
     } ?: unavailable("merge", localDeviceId.ifBlank { payload.optString("deviceId") })
 
-    fun importNativeSnapshot(snapshot: JSONObject): JSONObject = delegate?.let {
-        decorateReady(it.importNativeSnapshot(snapshot))
-    } ?: unavailable("native_snapshot", snapshot.optString("snapshotId", snapshot.optString("sessionId")))
+    fun importNativeSnapshot(snapshot: JSONObject): JSONObject = synchronized(stateLock) {
+        delegate?.let { return@synchronized decorateReady(it.importNativeSnapshot(snapshot)) }
+
+        val copy = JSONObject(snapshot.toString())
+        val key = nativeSnapshotKey(copy)
+        if (!deferredSnapshotKeys.add(key)) {
+            duplicateNativeSnapshots += 1L
+            return@synchronized unavailable("native_snapshot", key)
+                .put("ok", true)
+                .put("deferred", true)
+                .put("duplicate", true)
+                .put("reasonCode", "AUTOCAL_SNAPSHOT_ALREADY_DEFERRED")
+        }
+        if (deferredOperations.size >= MAX_DEFERRED_OPERATIONS) {
+            deferredSnapshotKeys.remove(key)
+            rejectedNativeSnapshots += 1L
+            log.add(
+                "ERROR",
+                "LEARNING-RESTORE",
+                "Snapshot AutoCal não enfileirado: limite de $MAX_DEFERRED_OPERATIONS operações pendentes atingido; recorder continua como evidência bruta",
+            )
+            return@synchronized unavailable("native_snapshot", key)
+                .put("deferred", false)
+                .put("reasonCode", "AUTOCAL_DEFERRED_QUEUE_FULL")
+                .put("queueBound", MAX_DEFERRED_OPERATIONS)
+        }
+        deferredOperations.addLast(DeferredOperation.NativeSnapshot(key, copy))
+        deferredNativeSnapshots += 1L
+        unavailable("native_snapshot", key)
+            .put("ok", true)
+            .put("deferred", true)
+            .put("reasonCode", "AUTOCAL_SNAPSHOT_DEFERRED_UNTIL_RESTORE")
+            .put("pendingDeferredOperations", deferredOperations.size)
+    }
 
     /**
      * ACK/readback confirmado não pode reusar evidência GNV antiga. Se o
-     * Learning ainda restaura, preservamos o reset mais recente e o aplicamos
-     * antes de expor a memória como READY.
+     * Learning ainda restaura, a operação entra na mesma fila causal dos
+     * snapshots AutoCal. Assim snapshot→ajuste→snapshot mantém essa ordem ao
+     * restaurar, preservando gasolina e evitando ressuscitar GNV obsoleto.
      */
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject = synchronized(stateLock) {
         delegate?.let { return@synchronized decorateReady(it.onCalibrationAdjustment(payload)) }
-        pendingCalibrationAdjustment = JSONObject(payload.toString())
+
+        ensureCapacityForCalibrationAdjustmentLocked()
+        deferredOperations.addLast(DeferredOperation.CalibrationAdjustment(JSONObject(payload.toString())))
         deferredCalibrationAdjustments += 1L
         log.add(
             "WARN",
             "LEARNING-RESTORE",
-            "Ajuste confirmado aguardará restauração para invalidar evidência GNV anterior",
+            "Ajuste confirmado aguardará restauração na mesma ordem causal dos snapshots AutoCal",
         )
         unavailable("calibration_adjustment", payload.optString("adjustmentId"))
             .put("deferred", true)
             .put("resetPerformed", false)
             .put("pendingCalibrationAdjustments", deferredCalibrationAdjustments)
+            .put("pendingDeferredOperations", deferredOperations.size)
     }
 
     fun previewKWrite(row: Int, column: Int, value: Int): JSONObject = delegate?.let {
@@ -174,12 +220,80 @@ class DeferredLiveOnlyLearningStore(
         if (!closed.compareAndSet(false, true)) return
         val active = synchronized(stateLock) {
             sessionRequested = false
+            deferredOperations.clear()
+            deferredSnapshotKeys.clear()
             val current = delegate
             delegate = null
             current
         }
         try { active?.close() } catch (_: Exception) {}
         restoreExecutor.shutdownNow()
+    }
+
+    private fun replayDeferredOperationsLocked(store: LiveOnlyLearningStore) {
+        while (deferredOperations.isNotEmpty()) {
+            when (val operation = deferredOperations.removeFirst()) {
+                is DeferredOperation.NativeSnapshot -> {
+                    deferredSnapshotKeys.remove(operation.key)
+                    try {
+                        store.importNativeSnapshot(operation.payload)
+                        replayedNativeSnapshots += 1L
+                    } catch (error: Exception) {
+                        failedDeferredOperations += 1L
+                        log.add(
+                            "ERROR",
+                            "LEARNING-RESTORE",
+                            "Snapshot AutoCal pendente falhou no replay ${operation.key}: ${error.message}",
+                        )
+                    }
+                }
+                is DeferredOperation.CalibrationAdjustment -> {
+                    try {
+                        store.onCalibrationAdjustment(operation.payload)
+                    } catch (error: Exception) {
+                        failedDeferredOperations += 1L
+                        log.add(
+                            "ERROR",
+                            "LEARNING-RESTORE",
+                            "Ajuste de calibração pendente falhou no replay: ${error.message}",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun ensureCapacityForCalibrationAdjustmentLocked() {
+        if (deferredOperations.size < MAX_DEFERRED_OPERATIONS) return
+        val snapshotIndex = deferredOperations.indexOfFirst { it is DeferredOperation.NativeSnapshot }
+        if (snapshotIndex >= 0) {
+            val removed = deferredOperations.removeAt(snapshotIndex) as DeferredOperation.NativeSnapshot
+            deferredSnapshotKeys.remove(removed.key)
+            rejectedNativeSnapshots += 1L
+            log.add(
+                "ERROR",
+                "LEARNING-RESTORE",
+                "Snapshot AutoCal ${removed.key} removido da fila para preservar invalidação de calibração confirmada; recorder mantém evidência bruta",
+            )
+            return
+        }
+        deferredOperations.removeFirstOrNull()
+        failedDeferredOperations += 1L
+        log.add(
+            "ERROR",
+            "LEARNING-RESTORE",
+            "Fila de ajustes confirmados saturou; ajuste mais antigo foi substituído pelo mais recente para manter boundedness",
+        )
+    }
+
+    private fun nativeSnapshotKey(snapshot: JSONObject): String {
+        val session = snapshot.optString("sessionId", "UNKNOWN_SESSION")
+        val material = snapshot.optString("snapshotHash").ifBlank {
+            snapshot.optString("snapshotId").ifBlank {
+                snapshot.optString("id").ifBlank { snapshot.toString().hashCode().toString() }
+            }
+        }
+        return "$session:$material"
     }
 
     private fun restoringStatus(reason: String): JSONObject = JSONObject()
@@ -195,7 +309,7 @@ class DeferredLiveOnlyLearningStore(
         if (restoreState == STATE_FAILED) {
             "Learning indisponível; operação não executada"
         } else {
-            "Learning ainda restaurando; operação não executada"
+            "Learning ainda restaurando; operação aguardando restauração quando suportado"
         },
     )
         .put("ok", false)
@@ -214,6 +328,13 @@ class DeferredLiveOnlyLearningStore(
         .put("durationMs", restoreDurationMs())
         .put("skippedFramesWhileRestoring", skippedFrames.get())
         .put("pendingCalibrationAdjustments", deferredCalibrationAdjustments)
+        .put("pendingDeferredOperations", synchronized(stateLock) { deferredOperations.size })
+        .put("deferredNativeSnapshots", deferredNativeSnapshots)
+        .put("replayedNativeSnapshots", replayedNativeSnapshots)
+        .put("duplicateNativeSnapshots", duplicateNativeSnapshots)
+        .put("rejectedNativeSnapshots", rejectedNativeSnapshots)
+        .put("failedDeferredOperations", failedDeferredOperations)
+        .put("deferredQueueBound", MAX_DEFERRED_OPERATIONS)
         .apply { if (restoreError.isNotBlank()) put("error", restoreError) }
 
     private fun restoreDurationMs(): Long {
