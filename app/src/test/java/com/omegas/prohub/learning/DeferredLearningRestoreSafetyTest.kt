@@ -141,6 +141,58 @@ class DeferredLearningRestoreSafetyTest {
     }
 
     @Test
+    fun terminalRestoreFailureDrainsOperationsThatCanNoLongerReplay() {
+        val root = temporaryFolder.newFolder("restore-terminal-drain")
+        val loaderEntered = CountDownLatch(1)
+        val releaseRestore = CountDownLatch(1)
+        val store = DeferredLiveOnlyLearningStore(root, RingLog()) { _, _ ->
+            loaderEntered.countDown()
+            releaseRestore.await(3, TimeUnit.SECONDS)
+            throw IllegalStateException("forced failure after queueing")
+        }
+
+        try {
+            assertTrue(loaderEntered.await(1, TimeUnit.SECONDS))
+            assertTrue(
+                store.importNativeSnapshot(
+                    JSONObject()
+                        .put("sessionId", "terminal-session")
+                        .put("snapshotId", "queued-before-failure"),
+                ).getBoolean("deferred"),
+            )
+            assertTrue(
+                store.onCalibrationAdjustment(
+                    JSONObject()
+                        .put("adjustmentId", "confirmed-before-failure")
+                        .put("humanConfirmed", true)
+                        .put("readbackValid", true),
+                ).getBoolean("deferred"),
+            )
+
+            val pending = store.statusJson().getJSONObject("restore")
+            assertEquals(2, pending.getInt("pendingDeferredOperations"))
+            assertEquals(1L, pending.getLong("pendingCalibrationAdjustments"))
+
+            releaseRestore.countDown()
+            repeat(100) {
+                if (store.statusJson().optString("state") == DeferredLiveOnlyLearningStore.STATE_FAILED) return@repeat
+                Thread.sleep(10L)
+            }
+
+            val failed = store.statusJson()
+            assertEquals(DeferredLiveOnlyLearningStore.STATE_FAILED, failed.getString("state"))
+            val restore = failed.getJSONObject("restore")
+            assertEquals(0, restore.getInt("pendingDeferredOperations"))
+            assertEquals(0L, restore.getLong("pendingCalibrationAdjustments"))
+            assertEquals(1L, restore.getLong("rejectedNativeSnapshots"))
+            assertEquals(2L, restore.getLong("failedDeferredOperations"))
+        } finally {
+            releaseRestore.countDown()
+            store.close()
+        }
+    }
+
+    @Test
     fun closedStoreNeverAcceptsDeferredMaterialOperationsOrRegressesToFailed() {
         val root = temporaryFolder.newFolder("restore-closed")
         val loaderEntered = CountDownLatch(1)
