@@ -1,6 +1,7 @@
 package com.omegas.prohub.autocal
 
 import com.omegas.prohub.ecu.AutoCalProtocol
+import com.omegas.prohub.ecu.Mp48BackpressureScheduler
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.learning.NativeAutoCalEventCorrelator
@@ -96,6 +97,7 @@ class NativeAutoCalDualFuelMaturityObserver(
     fun ensureBootstrap(expectedSessionId: Long): Boolean {
         val now = elapsedRealtime()
         AutoCal122ATargetMetrics.ensureSession(expectedSessionId, now)
+        updateTargetSerialMetrics()
         AutoCal122ATargetMetrics.sampleProcess(now)
         synchronized(this) {
             if (bootstrapAttempted) return bootstrapComplete
@@ -135,6 +137,7 @@ class NativeAutoCalDualFuelMaturityObserver(
     }
 
     fun observe(expectedSessionId: Long): Observation {
+        updateTargetSerialMetrics()
         AutoCal122ATargetMetrics.sampleProcess(elapsedRealtime())
         val ready = readiness()
         val petrol = if (ready.petrol) {
@@ -238,6 +241,10 @@ class NativeAutoCalDualFuelMaturityObserver(
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun updateTargetSerialMetrics() {
+        (serial as? Mp48BackpressureScheduler)?.metricsSnapshot()?.let(AutoCal122ATargetMetrics::updateSerialMetrics)
     }
 
     private fun thresholdKnown(value: Int?): Boolean = value != null && value > 0
