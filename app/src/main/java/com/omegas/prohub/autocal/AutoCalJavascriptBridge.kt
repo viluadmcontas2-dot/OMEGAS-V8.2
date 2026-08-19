@@ -34,41 +34,45 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getSnapshot(): String = currentManager()?.latestSnapshotJson()?.toString() ?: unavailable()
 
     @JavascriptInterface
-    fun getNativeMonitorStatus(): String = try {
-        val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
-        val monitor = JSONObject(service.nativeAutoCalStatusJson())
-        monitor.put(
-            "stationaryCalibration",
-            StationaryCalibrationProjection.project(
-                monitorStatus = monitor,
-                frame = service.runtime.currentTelemetryFrame(),
-            ),
-        ).toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Estado AutoCal nativo indisponível")
+    fun getNativeMonitorStatus(): String {
+        return try {
+            val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
+            val monitor = JSONObject(service.nativeAutoCalStatusJson())
+            monitor.put(
+                "stationaryCalibration",
+                StationaryCalibrationProjection.project(
+                    monitorStatus = monitor,
+                    frame = service.runtime.currentTelemetryFrame(),
+                ),
+            ).toString()
+        } catch (error: Exception) {
+            localFailure(error.message ?: "Estado AutoCal nativo indisponível")
+        }
     }
 
     @JavascriptInterface
-    fun getNativeMonitorSnapshot(): String = try {
-        val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
-        val snapshot = JSONObject(service.nativeAutoCalSnapshotJson())
-        if (!snapshot.optBoolean("available", false)) return snapshot.toString()
-        val hash = snapshot.optString("snapshotHash")
-        val projection = synchronized(managerLock) {
-            projectionMemo.resolve(hash) {
-                NativeAutoCalSnapshotHumanProjector.project(
-                    snapshot = snapshot,
-                    autoMatchRevalidating = snapshot.optString("snapshotReason") == "AUTOMATCH_COUNT_CHANGED",
-                )
+    fun getNativeMonitorSnapshot(): String {
+        return try {
+            val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
+            val snapshot = JSONObject(service.nativeAutoCalSnapshotJson())
+            if (!snapshot.optBoolean("available", false)) return snapshot.toString()
+            val hash = snapshot.optString("snapshotHash")
+            val projection = synchronized(managerLock) {
+                projectionMemo.resolve(hash) {
+                    NativeAutoCalSnapshotHumanProjector.project(
+                        snapshot = snapshot,
+                        autoMatchRevalidating = snapshot.optString("snapshotReason") == "AUTOMATCH_COUNT_CHANGED",
+                    )
+                }
             }
+            snapshot
+                .put("humanProjection", projection)
+                .put("humanProjectionSnapshotHash", hash)
+                .put("humanProjectionRecomputeCount", projectionMemo.recomputeCount)
+                .toString()
+        } catch (error: Exception) {
+            localFailure(error.message ?: "Projeção AutoCal indisponível")
         }
-        snapshot
-            .put("humanProjection", projection)
-            .put("humanProjectionSnapshotHash", hash)
-            .put("humanProjectionRecomputeCount", projectionMemo.recomputeCount)
-            .toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Projeção AutoCal indisponível")
     }
 
     @JavascriptInterface
