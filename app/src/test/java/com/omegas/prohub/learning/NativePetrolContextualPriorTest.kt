@@ -20,11 +20,7 @@ class NativePetrolContextualPriorTest {
         val anchor = anchor(fingerprint = "petrol-a", fuel = "PETROL", overlap = "7:10-14:PETROL")
         assertTrue(registry.upsert(anchor))
 
-        val result = PetrolReferenceSelector.estimate(
-            regions = emptyList(),
-            request = request(),
-            policy = policy,
-        )
+        val result = estimate(registry = registry)
 
         assertTrue(result.available)
         assertTrue(result.nativePriorUsed)
@@ -52,7 +48,7 @@ class NativePetrolContextualPriorTest {
         val registry = NativeLearningAnchorRegistry()
         assertTrue(registry.upsert(anchor(fingerprint = "cng-a", fuel = "GNV", overlap = "7:20-24:GNV")))
 
-        val result = PetrolReferenceSelector.estimate(emptyList(), request(), policy)
+        val result = estimate(registry = registry)
 
         assertFalse(result.available)
         assertFalse(result.nativePriorUsed)
@@ -73,7 +69,7 @@ class NativePetrolContextualPriorTest {
             sampleCount = 12,
         )
 
-        val result = PetrolReferenceSelector.estimate(listOf(conventional), request(), policy)
+        val result = estimate(regions = listOf(conventional), registry = registry)
 
         assertTrue(result.available)
         assertFalse(result.nativePriorUsed)
@@ -93,7 +89,7 @@ class NativePetrolContextualPriorTest {
         assertEquals(1, registry.snapshot().size)
         assertEquals(1L, registry.currentRevision())
 
-        val result = PetrolReferenceSelector.estimate(emptyList(), request(), policy)
+        val result = estimate(registry = registry)
         assertTrue(result.available)
         assertEquals(1, result.nativePriorCount)
     }
@@ -102,10 +98,10 @@ class NativePetrolContextualPriorTest {
     fun clearingRegistryRemovesContextualPriorImmediately() {
         val registry = NativeLearningAnchorRegistry()
         assertTrue(registry.upsert(anchor(fingerprint = "petrol-clear", fuel = "PETROL", overlap = "7:50-54:PETROL")))
-        assertTrue(PetrolReferenceSelector.estimate(emptyList(), request(), policy).nativePriorUsed)
+        assertTrue(estimate(registry = registry).nativePriorUsed)
 
         registry.clear()
-        val after = PetrolReferenceSelector.estimate(emptyList(), request(), policy)
+        val after = estimate(registry = registry)
 
         assertFalse(after.available)
         assertFalse(after.nativePriorUsed)
@@ -127,10 +123,39 @@ class NativePetrolContextualPriorTest {
             ),
         )
 
-        val result = PetrolReferenceSelector.estimate(emptyList(), request(), policy)
+        val result = estimate(registry = registry)
         assertFalse(result.available)
         assertFalse(result.nativePriorUsed)
         assertEquals("NO_PETROL_REGIONS", result.reasonCode)
+    }
+
+    @Test
+    fun unrelatedRegistryCannotHijackScopedGasolineOracleAuthority() {
+        val owner = NativeLearningAnchorRegistry()
+        val unrelated = NativeLearningAnchorRegistry()
+        assertTrue(owner.upsert(anchor("owner-anchor", "PETROL", "7:70-74:PETROL", petrolMs = 4.15)))
+        assertTrue(unrelated.upsert(anchor("foreign-anchor", "PETROL", "8:80-84:PETROL", petrolMs = 7.90)))
+
+        val ownerResult = NativePetrolPriorScope.withAnchors(owner.snapshot()) {
+            // Criar/ler outro registry dentro do mesmo processo não pode mudar o input scoped.
+            assertEquals(1, unrelated.snapshot().size)
+            PetrolReferenceSelector.estimate(emptyList(), request(), policy)
+        }
+
+        assertTrue(ownerResult.nativePriorUsed)
+        assertEquals(4.15, ownerResult.petrolTargetMs!!, 0.0)
+        assertEquals(listOf("NATIVE_AUTOCAL:owner-anchor"), ownerResult.regionIds)
+
+        val outsideScope = PetrolReferenceSelector.estimate(emptyList(), request(), policy)
+        assertFalse(outsideScope.available)
+        assertFalse(outsideScope.nativePriorUsed)
+    }
+
+    private fun estimate(
+        regions: List<PetrolReferenceSelector.Region> = emptyList(),
+        registry: NativeLearningAnchorRegistry,
+    ): PetrolReferenceSelector.Result = NativePetrolPriorScope.withAnchors(registry.snapshot()) {
+        PetrolReferenceSelector.estimate(regions, request(), policy)
     }
 
     private fun request() = PetrolReferenceSelector.Request(
@@ -149,7 +174,7 @@ class NativePetrolContextualPriorTest {
     ) = NativeLearningAnchor(
         fingerprint = fingerprint,
         calibrationEpoch = 1,
-        sessionId = 7L,
+        sessionId = if (overlap.startsWith("8:")) 8L else 7L,
         snapshotId = "snapshot-$fingerprint",
         snapshotHash = "hash-$fingerprint",
         bandIndex = 4,
