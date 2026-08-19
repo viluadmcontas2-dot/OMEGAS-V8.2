@@ -44,6 +44,7 @@ class NativeAutoCalMonitor(
     private val maturityTracker = NativeAutoCalMaturityTracker()
     private val calibrationBootstrapReader = CompositeCalibrationReader(serial)
     private val probeMetrics = AutoCalProbeMetrics()
+    private val probeCadencePolicy = AutoCalProbeCadencePolicy()
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
@@ -53,6 +54,7 @@ class NativeAutoCalMonitor(
     private var sessionStartedAtElapsedMs = 0L
     private var calibrationBootstrapAttempted = false
     private var lastProbe: AutoCalProtocol.NativeStatus? = null
+    private var nextStatusProbeDueAtElapsedMs = 0L
     private var lastMulActHash = ""
     private var snapshotRequested = false
     private var snapshotReason = ""
@@ -69,6 +71,7 @@ class NativeAutoCalMonitor(
             calibrationBootstrapAttempted = false
             calibrationIdentity = null
             lastProbe = null
+            nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
             gasLowThreshold = null
             gasNormalThreshold = null
@@ -95,6 +98,7 @@ class NativeAutoCalMonitor(
             calibrationBootstrapAttempted = false
             calibrationIdentity = null
             lastProbe = null
+            nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
             gasLowThreshold = null
             gasNormalThreshold = null
@@ -205,17 +209,26 @@ class NativeAutoCalMonitor(
         }
 
         val previousProbe = synchronized(lock) { lastProbe }
-        val probe = probe(currentSession) ?: return
-        val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
+        val now = SystemClock.elapsedRealtime()
+        val statusProbeDue = previousProbe == null || synchronized(lock) {
+            nextStatusProbeDueAtElapsedMs <= 0L || now >= nextStatusProbeDueAtElapsedMs
+        }
+        val freshProbe = if (statusProbeDue) probe(currentSession) ?: return else null
+        val probe = freshProbe ?: previousProbe ?: return
+        val countIncreased = freshProbe != null && previousProbe != null &&
+            probe.autoMatchCount > previousProbe.autoMatchCount
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
-        val probeChanged = previousProbe != null && (
+        val probeChanged = freshProbe != null && previousProbe != null && (
             previousProbe.autoMatchCount != probe.autoMatchCount ||
                 previousProbe.nativeFlag13 != probe.nativeFlag13
         )
         if (probeChanged) probeMetrics.markMaterialChange()
+        if (freshProbe != null) scheduleNextStatusProbe(SystemClock.elapsedRealtime())
 
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
+        // A cadence adaptativa vale somente para o status compacto. Maturity continua
+        // no health tick existente para não esconder progressão física das bandas.
         val maturityProbe = if (thresholdsReady) probeMaturityCounters(currentSession) else null
         val maturityEvents = maturityProbe?.let { observed ->
             maturityTracker.observe(
@@ -228,12 +241,13 @@ class NativeAutoCalMonitor(
         }.orEmpty()
 
         synchronized(lock) {
-            lastProbe = probe
+            if (freshProbe != null) lastProbe = probe
             state = baseState("MONITORING", "AutoCal nativo monitorado")
                 .put("sessionId", currentSession)
                 .put("nativeFlag13", probe.nativeFlag13)
                 .put("autoMatchCount", probe.autoMatchCount)
                 .put("fallback", probe.nativeFlag13 < 0)
+                .put("freshStatusProbe", freshProbe != null)
                 .put("thresholdsReady", thresholdsReady)
                 .put("maturityProbe", maturityProbe != null)
                 .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
@@ -615,12 +629,24 @@ class NativeAutoCalMonitor(
         )
     }
 
+    private fun scheduleNextStatusProbe(observedAtElapsedMs: Long) {
+        val recommended = probeCadencePolicy.recommend(probeMetrics.snapshot()).recommendedCadenceMs.coerceAtLeast(1L)
+        synchronized(lock) {
+            val phaseBase = nextStatusProbeDueAtElapsedMs.takeIf { it > 0L } ?: observedAtElapsedMs
+            val overdue = (observedAtElapsedMs - phaseBase).coerceAtLeast(0L)
+            val steps = overdue / recommended + 1L
+            nextStatusProbeDueAtElapsedMs = phaseBase + steps * recommended
+        }
+    }
+
     private fun responseByteCount(reply: UsbProtocolReply): Int =
         reply.echo.size + reply.rawResponse.size
 
-    private fun probeMetricsJson(): JSONObject = probeMetrics.snapshot().let { metrics ->
-        JSONObject()
-            .put("schema", "autocal-probe-cost-v1")
+    private fun probeMetricsJson(): JSONObject {
+        val metrics = probeMetrics.snapshot()
+        val cadence = probeCadencePolicy.recommend(metrics)
+        return JSONObject()
+            .put("schema", "autocal-probe-cost-v2")
             .put("cycles", metrics.cycles)
             .put("successfulCycles", metrics.successfulCycles)
             .put("fallbackCycles", metrics.fallbackCycles)
@@ -631,14 +657,26 @@ class NativeAutoCalMonitor(
             .put("wallElapsedMs", metrics.wallElapsedMs)
             .put("lastWallElapsedMs", metrics.lastWallElapsedMs)
             .put("maxWallElapsedMs", metrics.maxWallElapsedMs)
+            .put("observationSpanMs", metrics.observationSpanMs)
+            .put("averageWallElapsedMs", metrics.averageWallElapsedMs ?: JSONObject.NULL)
             .put("lastCadenceMs", metrics.lastCadenceMs ?: JSONObject.NULL)
             .put("lastTelemetryGapMs", metrics.lastTelemetryGapMs ?: JSONObject.NULL)
             .put("maxTelemetryGapMs", metrics.maxTelemetryGapMs ?: JSONObject.NULL)
             .put("pendingTelemetryGap", metrics.pendingTelemetryGap)
             .put("informationYield", metrics.informationYield)
             .put("lastCostShare", metrics.lastCostShare ?: JSONObject.NULL)
-            .put("measurementOnly", true)
-            .put("cadenceAuthority", "SERVICE_HEALTH_TICK")
+            .put("recommendedCadenceMs", cadence.recommendedCadenceMs)
+            .put("averageProbeCostMs", cadence.averageProbeCostMs)
+            .put("posteriorEventRatePerSecond", cadence.posteriorEventRatePerSecond)
+            .put("costRatioToPrior", cadence.costRatioToPrior)
+            .put("eventRateRatioToPrior", cadence.eventRateRatioToPrior)
+            .put("priorMeanCadenceMs", cadence.priorMeanCadenceMs)
+            .put("priorProvenance", cadence.priorProvenance)
+            .put("nextStatusProbeDueAtElapsedMs", nextStatusProbeDueAtElapsedMs.takeIf { it > 0L } ?: JSONObject.NULL)
+            .put("measurementAvailable", metrics.cycles > 0L)
+            .put("policyApplied", true)
+            .put("cadenceAuthority", "COST_INFORMATION_POLICY")
+            .put("opportunityClock", "SERVICE_HEALTH_TICK")
     }
 
     private fun scalar(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): Int? =
