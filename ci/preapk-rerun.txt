@@ -1,2 +1,2 @@
-rerun: 2026-08-19-owner112-117-harness-batch
-reason: verify runner-neutral Kotlin harnesses and current Owner116/117 source bindings after removing stale environment/owner assumptions; no production source change
+rerun: 2026-08-19-owner120-runner-neutral-kotlinc
+reason: verify Owner120 stationary-state harness after removing hard-coded SDKMAN compiler path; no production source change
