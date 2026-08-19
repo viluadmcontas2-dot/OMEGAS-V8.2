@@ -1,9 +1,7 @@
 package com.omegas.prohub.learning
 
 import org.json.JSONObject
-import java.lang.ref.WeakReference
 import java.security.MessageDigest
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Âncora observacional criada somente quando uma maturidade AutoCal nativa
@@ -260,10 +258,6 @@ data class NativeLearningAnchor(
  * Registro bounded/deduplicado. `scientificRevision` avança somente quando uma
  * passagem física inédita entra; releitura do mesmo evento não altera a revisão.
  * A revisão é por epoch: `(calibrationEpoch, scientificRevision)` é a identidade científica.
- *
- * A visão process-wide abaixo é somente um ponteiro fraco para o registry vivo;
- * ela não copia nem persiste anchors e existe para permitir que o GasolineOracle
- * consulte a mesma autoridade sem criar uma segunda memória de evidência.
  */
 class NativeLearningAnchorRegistry(
     private val maxEntries: Int = 256,
@@ -272,12 +266,7 @@ class NativeLearningAnchorRegistry(
     private val overlaps = linkedSetOf<String>()
     private var nextRevision = 0L
 
-    init {
-        publishReadView()
-    }
-
     fun upsert(anchor: NativeLearningAnchor): Boolean {
-        publishReadView()
         if (anchors.containsKey(anchor.fingerprint) || anchor.overlapKey in overlaps) return false
         nextRevision += 1L
         anchors[anchor.fingerprint] = anchor.copy(scientificRevision = nextRevision)
@@ -291,7 +280,6 @@ class NativeLearningAnchorRegistry(
     }
 
     fun replaceAll(items: List<NativeLearningAnchor>) {
-        publishReadView()
         anchors.clear()
         overlaps.clear()
         nextRevision = 0L
@@ -304,34 +292,14 @@ class NativeLearningAnchorRegistry(
         }
     }
 
-    fun snapshot(): List<NativeLearningAnchor> {
-        publishReadView()
-        return anchors.values.toList()
-    }
+    fun snapshot(): List<NativeLearningAnchor> = anchors.values.toList()
 
     fun currentRevision(): Long = nextRevision
 
     /** Limpa a epoch antiga; a epoch nova reinicia sua própria sequência científica. */
     fun clear() {
-        publishReadView()
         anchors.clear()
         overlaps.clear()
         nextRevision = 0L
-    }
-
-    private fun publishReadView() {
-        currentReadView.set(WeakReference(this))
-    }
-
-    companion object {
-        private val currentReadView = AtomicReference<WeakReference<NativeLearningAnchorRegistry>?>(null)
-
-        /**
-         * Visão read-only da authority corrente. Não existe cópia de dados: se o
-         * registry for coletado ou limpo, a visão fica vazia. Produção possui um
-         * único SignalLearningStore/registry; múltiplas authorities continuam proibidas.
-         */
-        internal fun currentSnapshot(): List<NativeLearningAnchor> =
-            currentReadView.get()?.get()?.anchors?.values?.toList().orEmpty()
     }
 }
