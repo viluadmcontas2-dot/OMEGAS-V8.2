@@ -98,9 +98,9 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('recentTelemetryFrames(', self.scheduler)
 
     def test_anchor_correlation_uses_real_gnv_same_session_and_never_invents_position(self):
-        self.assertIn('frame.fuel in setOf("GNV", "CNG")', self.correlator)
-        self.assertIn('frame.plausible', self.correlator)
-        self.assertIn('frame.sessionId == sessionId', self.correlator)
+        self.assertIn('plausible.filter { it.fuel in setOf("GNV", "CNG") }', self.correlator)
+        self.assertIn('sameSession.filter { it.plausible }', self.correlator)
+        self.assertIn('frames.filter { it.sessionId == sessionId }', self.correlator)
         self.assertIn('NO_RELIABLE_CORRELATION', self.correlator)
         self.assertIn('correlatedFrameElapsedMs', self.correlator)
         self.assertIn('gasMsDiagnostic', self.correlator)
