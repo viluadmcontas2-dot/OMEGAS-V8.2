@@ -29,10 +29,15 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 
 ## Testes e Actions
 
-- Validar com a prova mínima suficiente para o risco da mudança; teste local entra quando realmente necessário para provar comportamento que leitura/contrato remoto não prova.
+- Validar com a prova mínima suficiente para o risco e a relevância da mudança. Começar pelo comportamento alterado e expandir somente para consumidores, dependências, invariantes e superfícies com interferência plausível.
+- Classificar a validação por impacto: mudança documental/diagnóstica → inspeção e contrato; lógica isolada → teste focado + consumidores diretos; estado/concurrency/persistência → regressão + componente + falhas; USB/ECU/writer/protocolo/segurança/migração → contratos amplos, integração e validação física quando aplicável; gate de fase/PREAPK/APK → auditoria ampla definida pelo Programa.
+- **Todo teste que concede avanço deve ter PASS CONTRACT explícito antes de ser tratado como gate.** O contrato deve registrar: alvo/SHA, risco coberto, critérios observáveis, testes necessários, resultado esperado, dependências cruzadas, limites do que não foi provado e eventos que invalidam a evidência.
+- Estados permitidos do gate: `PASS`, `PARTIAL`, `FAIL` ou `INCONCLUSIVE`. `PASS` exige evidência fresca suficiente para todos os critérios obrigatórios do contrato e ausência de achado material aberto. `PARTIAL`, `FAIL`, `INCONCLUSIVE` e `TEST_NOT_AVAILABLE` nunca liberam dependente material.
+- Resultado verde isolado não é PASS por si só. Teste estrutural/string/grep não substitui prova comportamental quando o comportamento é executável; teste antigo não prova SHA novo; CI verde prova somente o que efetivamente executou.
+- Evidência continua válida enquanto não houver mudança no código, contrato, dependência ou ambiente que possa afetar o risco coberto. Não repetir auditoria/teste ainda válido sem evidência nova que o invalide.
+- Teste local entra quando realmente necessário para provar comportamento que leitura/contrato remoto não prova. Runtime efêmero é read-only para fonte e deve testar o SHA remoto exato.
 - GitHub Actions só devem ser usadas quando houver dependência real de ambiente remoto, segredo protegido, publicação/deploy, assinatura ou outra prova que não possa ser obtida de forma mais simples com confiança suficiente.
 - **Edição/push remoto comum deve consumir zero Actions pesadas por padrão.** Se uma alteração comum acordar build/workflow caro sem necessidade, tratar o gatilho como defeito de automação e corrigi-lo em escopo próprio.
-- Não repetir auditoria, snapshot, hash, teste ou reconciliação já válidos sem evidência nova que os invalide.
 
 ## Comunicação
 
