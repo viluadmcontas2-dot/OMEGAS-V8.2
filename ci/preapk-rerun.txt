@@ -1,2 +1,2 @@
-rerun: 2026-08-19-owner108-current-metrics-owner
-reason: verify Owner108 harness after stubbing AutoCal122ATargetMetrics for isolated Kotlin compilation and rebinding maturity assertions to dualMaturityObserver; no production source change
+rerun: 2026-08-19-owner111-runner-neutral-kotlinc
+reason: verify Owner111 petrol-reference preservation after removing the hard-coded /root SDKMAN compiler path from the test harness; no production source change
