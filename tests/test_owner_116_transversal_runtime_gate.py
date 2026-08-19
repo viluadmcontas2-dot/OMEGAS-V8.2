@@ -92,9 +92,7 @@ class Owner116TransversalRuntimeGate(unittest.TestCase):
                 }}
             '''), encoding="utf-8")
             jar = tmp / "owner116.jar"
-            compiler = Path("/root/.sdkman/candidates/kotlin/current/bin/kotlinc")
-            self.assertTrue(compiler.is_file(), "kotlinc unavailable in ephemeral runtime")
-            subprocess.run(["bash", str(compiler), str(main), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
+            subprocess.run(["kotlinc", str(main), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
             result = subprocess.run(["java", "-jar", str(jar)], check=True, capture_output=True, text=True, timeout=10)
             self.assertIn("OWNER_116_TRANSVERSAL_RUNTIME=PASS", result.stdout)
 
