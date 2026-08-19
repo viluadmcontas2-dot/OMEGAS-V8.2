@@ -1,2 +1,2 @@
-rerun: 2026-08-19-backpressure-thread-constructor-matcher
-reason: verify pre-APK after distinguishing Kotlin Thread construction from Thread.currentThread interrupt restoration
+rerun: 2026-08-19-mp48-scheduler-behavior-harness-refresh
+reason: verify current engine scheduler behavior after refreshing NativeAnchorTelemetryWindow and Mp48Telemetry test surface
