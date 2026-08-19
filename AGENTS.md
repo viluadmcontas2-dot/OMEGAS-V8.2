@@ -39,6 +39,14 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 - GitHub Actions só devem ser usadas quando houver dependência real de ambiente remoto, segredo protegido, publicação/deploy, assinatura ou outra prova que não possa ser obtida de forma mais simples com confiança suficiente.
 - **Edição/push remoto comum deve consumir zero Actions pesadas por padrão.** Se uma alteração comum acordar build/workflow caro sem necessidade, tratar o gatilho como defeito de automação e corrigi-lo em escopo próprio.
 
+## TRANSVERSAL PASS/FAIL obrigatório
+
+- Antes de qualquer verdict que possa liberar dependente material, executor **e auditor independente** devem carregar `docs/contracts/transversal-pass-fail-gate.json` e `docs/contracts/TRANSVERSAL_PASS_FAIL_GATE.md`.
+- O receipt deve classificar, uma a uma, as fontes obrigatórias `Programa Mestre`, `MASTER TRACE MAP`, `AL-001`, `AL-002`, `AL-003`, `AL-004` e `HW-001` como `APPLIES` ou `NOT_APPLICABLE_WITH_REASON`, e anexar evidência para toda obrigação aplicável.
+- Falta de leitura, aplicabilidade não classificada, requirement aplicável sem evidência, helper sem consumidor real, teste apenas string/grep para comportamento executável, benchmark host apresentado como RK3326, Prediction usada como Observation, harness quebrado usado como prova ou **implementador concedendo PASS ao próprio owner** tornam o gate automaticamente não-PASS.
+- Estados adicionais obrigatórios: `STALE_BY_GOVERNANCE` e `STALE_BY_EVIDENCE`. Qualquer PASS histórico sem receipt transversal + auditor independente vira `STALE_BY_GOVERNANCE` até reauditoria no SHA remoto exato.
+- Só `PASS` fresco do **auditor independente**, após o gate transversal completo, libera owner/extensão/gate dependente. Nenhuma urgência, sequência numérica ou CI verde substitui essa regra.
+
 ## Comunicação
 
 - O proprietário opera em linguagem humana. O agente traduz a intenção para a execução técnica adequada sem exigir nomes de comandos, workflows ou sintaxe.
