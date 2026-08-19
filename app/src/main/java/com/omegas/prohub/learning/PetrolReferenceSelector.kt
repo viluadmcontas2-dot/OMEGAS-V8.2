@@ -13,6 +13,10 @@ import kotlin.math.sqrt
  * RPM e MAP são sempre usados. Água participa somente quando conhecida nos dois
  * lados. Temperatura do gás e pressão são preservadas como contexto/proveniência,
  * mas não viram gate nativo nem peso científico por este owner.
+ *
+ * Uma âncora PETROL nativa correlacionada pode servir como prior contextual
+ * quando não existe região convencional local. Ela nunca é convertida em região,
+ * nunca soma sampleCount/ESS e nunca substitui uma referência convencional local.
  */
 internal object PetrolReferenceSelector {
     private const val MAX_NEIGHBORS = 4
@@ -116,11 +120,15 @@ internal object PetrolReferenceSelector {
         val regionId: String,
         val updatedAtMs: Long,
         val environment: EnvironmentalContext,
+        val source: String = "LEARNING_REGION",
+        val provenance: JSONObject? = null,
     ) {
         fun toJson(): JSONObject = JSONObject()
             .put("region_id", regionId)
             .put("updated_at_ms", updatedAtMs)
             .put("environment", environment.toJson())
+            .put("source", source)
+            .apply { if (provenance != null) put("provenance", JSONObject(provenance.toString())) }
     }
 
     data class Result(
@@ -144,6 +152,10 @@ internal object PetrolReferenceSelector {
         val temperatureCompared: Boolean = false,
         val requestEnvironment: EnvironmentalContext? = null,
         val selectedRegionContexts: List<SelectedRegionContext> = emptyList(),
+        val referenceSource: String = "LEARNING_REGION",
+        val nativePriorUsed: Boolean = false,
+        val nativePriorCount: Int = 0,
+        val nativePriorOverlapKey: String? = null,
         val referenceAvailability: ReferenceAvailabilityMetric = PetrolReferenceAvailability.record(available, reasonCode),
     ) {
         fun selectionReason(): LearningSelectionReason = LearningSelectionReason.fromReference(
@@ -175,13 +187,20 @@ internal object PetrolReferenceSelector {
             .put("temperature_compared", temperatureCompared)
             .put("request_environment", requestEnvironment?.toJson() ?: JSONObject.NULL)
             .put("selected_region_contexts", JSONArray(selectedRegionContexts.map { it.toJson() }))
+            .put("reference_source", referenceSource)
+            .put("native_prior_used", nativePriorUsed)
+            .put("native_prior_count", nativePriorCount)
+            .put("native_prior_overlap_key", nativePriorOverlapKey ?: JSONObject.NULL)
             .put("reference_wait_state", referenceAvailability.state)
             .put("time_to_reference_ms", referenceAvailability.timeToReferenceMs)
             .put("reference_block_reason", referenceAvailability.blockReason ?: JSONObject.NULL)
             .put("reference_timing_origin", referenceAvailability.measurementOrigin)
             .put("gas_temperature_used_as_native_gate", false)
             .put("pressure_used_as_native_gate", false)
-            .put("method", "LOCAL_RPM_MAP_OPTIONAL_WATER_NEIGHBORHOOD")
+            .put(
+                "method",
+                if (nativePriorUsed) "NATIVE_AUTOCAL_CONTEXTUAL_PRIOR" else "LOCAL_RPM_MAP_OPTIONAL_WATER_NEIGHBORHOOD",
+            )
     }
 
     fun estimate(
@@ -194,12 +213,13 @@ internal object PetrolReferenceSelector {
                 it.petrolMs > 0.05 && it.rpm >= 0.0 && it.mapBar >= 0.0
         }
         if (validRegions.isEmpty()) {
-            return Result(
-                false,
-                "NO_PETROL_REGIONS",
-                "Nenhuma referência física de gasolina foi armazenada.",
-                requestEnvironment = request.environment,
-            )
+            return nativePetrolPriorResult(request, policy, totalPetrolRegions = 0)
+                ?: Result(
+                    false,
+                    "NO_PETROL_REGIONS",
+                    "Nenhuma referência física de gasolina foi armazenada.",
+                    requestEnvironment = request.environment,
+                )
         }
         if (!request.rpm.isFinite() || !request.mapBar.isFinite() || request.rpm < 0.0 || request.mapBar < 0.0) {
             return Result(
@@ -219,18 +239,19 @@ internal object PetrolReferenceSelector {
         }
         val nearest = candidates.minByOrNull { it.distance }
         if (bounded.isEmpty()) {
-            return Result(
-                available = false,
-                reasonCode = "NO_LOCAL_PETROL_REFERENCE",
-                message = "Há gasolina aprendida, mas nenhuma região está próxima desta condição de RPM e MAP.",
-                totalPetrolRegions = validRegions.size,
-                nearestDistance = nearest?.distance,
-                nearestRpmDelta = nearest?.rpmDelta,
-                nearestMapDelta = nearest?.mapDelta,
-                nearestWaterDelta = nearest?.waterDelta,
-                temperatureCompared = nearest?.temperatureCompared == true,
-                requestEnvironment = request.environment,
-            )
+            return nativePetrolPriorResult(request, policy, totalPetrolRegions = validRegions.size)
+                ?: Result(
+                    available = false,
+                    reasonCode = "NO_LOCAL_PETROL_REFERENCE",
+                    message = "Há gasolina aprendida, mas nenhuma região está próxima desta condição de RPM e MAP.",
+                    totalPetrolRegions = validRegions.size,
+                    nearestDistance = nearest?.distance,
+                    nearestRpmDelta = nearest?.rpmDelta,
+                    nearestMapDelta = nearest?.mapDelta,
+                    nearestWaterDelta = nearest?.waterDelta,
+                    temperatureCompared = nearest?.temperatureCompared == true,
+                    requestEnvironment = request.environment,
+                )
         }
 
         val direct = bounded.filter {
@@ -360,6 +381,134 @@ internal object PetrolReferenceSelector {
             temperatureCompared = closest.temperatureCompared,
             requestEnvironment = request.environment,
             selectedRegionContexts = selected.map { SelectedRegionContext(it.region.id, it.region.updatedAtMs, it.region.environment) },
+        )
+    }
+
+    /**
+     * Prior nativo é fallback contextual, não amostra. Um único anchor físico
+     * mais próximo é escolhido; vários anchors nunca são somados em densidade/ESS.
+     */
+    private fun nativePetrolPriorResult(
+        request: Request,
+        policy: LearningTolerancePolicy,
+        totalPetrolRegions: Int,
+    ): Result? {
+        if (!request.rpm.isFinite() || !request.mapBar.isFinite() || request.rpm < 0.0 || request.mapBar < 0.0) return null
+        val priors = NativeLearningAnchorRegistry.currentSnapshot().filter { anchor ->
+            anchor.sourceFuel == "PETROL" &&
+                anchor.nativeValidity &&
+                anchor.correlationState == "CORRELATED" &&
+                anchor.rpm >= 0 &&
+                anchor.mapBar.isFinite() && anchor.mapBar >= 0.0 &&
+                anchor.petrolOnCngMs.isFinite() && anchor.petrolOnCngMs > 0.05 &&
+                anchor.correlationConfidence > 0.0 && anchor.rpmConfidence > 0.0
+        }
+        if (priors.isEmpty()) return null
+
+        data class PriorCandidate(
+            val anchor: NativeLearningAnchor,
+            val rpmDelta: Double,
+            val mapDelta: Double,
+            val rpmUnits: Double,
+            val mapUnits: Double,
+            val distance: Double,
+        )
+
+        val candidates = priors.map { anchor ->
+            val rpmLimit = max(
+                policy.historicalRpmMinimum,
+                max(abs(anchor.rpm.toDouble()), abs(request.rpm)) * policy.historicalRpmPercent / 100.0,
+            ).coerceAtLeast(1.0)
+            val mapLimit = policy.historicalMapBar.coerceAtLeast(0.001)
+            val rpmDelta = abs(anchor.rpm - request.rpm)
+            val mapDelta = abs(anchor.mapBar - request.mapBar)
+            val rpmUnits = rpmDelta / rpmLimit
+            val mapUnits = mapDelta / mapLimit
+            PriorCandidate(
+                anchor = anchor,
+                rpmDelta = rpmDelta,
+                mapDelta = mapDelta,
+                rpmUnits = rpmUnits,
+                mapUnits = mapUnits,
+                distance = sqrt(rpmUnits * rpmUnits + mapUnits * mapUnits),
+            )
+        }.filter {
+            it.rpmUnits <= MAX_EXTRAPOLATION_RPM_UNITS &&
+                it.mapUnits <= MAX_EXTRAPOLATION_MAP_UNITS
+        }
+        val closest = candidates.minByOrNull { it.distance } ?: return null
+        val direct = closest.rpmUnits <= 1.0 && closest.mapUnits <= 1.0
+        val baseQuality = sqrt(
+            closest.anchor.correlationConfidence.coerceIn(0.0, 1.0) *
+                closest.anchor.rpmConfidence.coerceIn(0.0, 1.0),
+        )
+        val distanceQuality = exp(-0.35 * closest.distance).coerceIn(0.10, 1.0)
+        val extrapolationFactor = if (direct) 1.0 else 0.35
+        val quality = (baseQuality * distanceQuality * extrapolationFactor).coerceIn(0.0, 1.0)
+        val referenceId = "NATIVE_AUTOCAL:${closest.anchor.fingerprint}"
+        val priorEnvironment = EnvironmentalContext(
+            mapSource = "ECU_NATIVE_AUTOCAL_CORRELATED",
+        )
+        val provenance = JSONObject()
+            .put("source", "ECU_NATIVE_AUTOCAL")
+            .put("sourceFuel", "PETROL")
+            .put("fingerprint", closest.anchor.fingerprint)
+            .put("calibrationEpoch", closest.anchor.calibrationEpoch)
+            .put("scientificRevision", closest.anchor.scientificRevision)
+            .put("sessionId", closest.anchor.sessionId)
+            .put("snapshotId", closest.anchor.snapshotId)
+            .put("snapshotHash", closest.anchor.snapshotHash)
+            .put("bandIndex", closest.anchor.bandIndex)
+            .put("zone", closest.anchor.zone)
+            .put("counter", closest.anchor.counter)
+            .put("threshold", closest.anchor.threshold)
+            .put("correlationConfidence", closest.anchor.correlationConfidence)
+            .put("rpmConfidence", closest.anchor.rpmConfidence)
+            .put("firstTelemetrySequence", closest.anchor.firstTelemetrySequence)
+            .put("lastTelemetrySequence", closest.anchor.lastTelemetrySequence)
+            .put("matchedTelemetryFrames", closest.anchor.matchedTelemetryFrames)
+            .put("eventElapsedMs", closest.anchor.eventElapsedMs)
+            .put("correlatedFrameElapsedMs", closest.anchor.correlatedFrameElapsedMs)
+            .put("lagMs", closest.anchor.lagMs)
+            .put("overlapKey", closest.anchor.overlapKey)
+            .put("comparisonVote", false)
+            .put("effectiveComparisonWeight", 0.0)
+            .put("directKTarget", false)
+            .put("uncertaintyBasis", "POLICY_REFERENCE_MAXIMUM_SPREAD")
+
+        return Result(
+            available = true,
+            reasonCode = "NATIVE_PETROL_CONTEXTUAL_PRIOR",
+            message = "Referência gasolina provisória ancorada por AutoCal nativo correlacionado; aguarda referência convencional local para maior autoridade.",
+            petrolTargetMs = closest.anchor.petrolOnCngMs,
+            spreadMs = policy.referenceMaximumSpreadMs.coerceAtLeast(0.05),
+            quality = quality,
+            regionIds = listOf(referenceId),
+            stage = "CONTEXTUAL_PRIOR",
+            extrapolated = !direct,
+            totalPetrolRegions = totalPetrolRegions,
+            boundedCandidates = 0,
+            directCandidates = 0,
+            selectedCandidates = 1,
+            nearestDistance = closest.distance,
+            nearestRpmDelta = closest.rpmDelta,
+            nearestMapDelta = closest.mapDelta,
+            nearestWaterDelta = null,
+            temperatureCompared = false,
+            requestEnvironment = request.environment,
+            selectedRegionContexts = listOf(
+                SelectedRegionContext(
+                    regionId = referenceId,
+                    updatedAtMs = 0L,
+                    environment = priorEnvironment,
+                    source = "ECU_NATIVE_AUTOCAL_CONTEXTUAL_PRIOR",
+                    provenance = provenance,
+                ),
+            ),
+            referenceSource = "ECU_NATIVE_AUTOCAL_CONTEXTUAL_PRIOR",
+            nativePriorUsed = true,
+            nativePriorCount = 1,
+            nativePriorOverlapKey = closest.anchor.overlapKey,
         )
     }
 
