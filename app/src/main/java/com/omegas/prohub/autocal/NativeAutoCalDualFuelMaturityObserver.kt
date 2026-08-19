@@ -62,6 +62,7 @@ class NativeAutoCalDualFuelMaturityObserver(
         bootstrapComplete = false
         petrolTracker.reset()
         cngTracker.reset()
+        AutoCal122ATargetMetrics.reset()
     }
 
     @Synchronized
@@ -93,6 +94,9 @@ class NativeAutoCalDualFuelMaturityObserver(
      * até um snapshot material posterior fornecer configuração/baseline ou a sessão reiniciar.
      */
     fun ensureBootstrap(expectedSessionId: Long): Boolean {
+        val now = elapsedRealtime()
+        AutoCal122ATargetMetrics.ensureSession(expectedSessionId, now)
+        AutoCal122ATargetMetrics.sampleProcess(now)
         synchronized(this) {
             if (bootstrapAttempted) return bootstrapComplete
             bootstrapAttempted = true
@@ -131,6 +135,7 @@ class NativeAutoCalDualFuelMaturityObserver(
     }
 
     fun observe(expectedSessionId: Long): Observation {
+        AutoCal122ATargetMetrics.sampleProcess(elapsedRealtime())
         val ready = readiness()
         val petrol = if (ready.petrol) {
             probe(
