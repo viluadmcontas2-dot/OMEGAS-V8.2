@@ -124,7 +124,7 @@ class LiveOnlyLearningStoreTest {
             telemetry(2_050L, Mp48Fuel.CNG, 5.2),
             accepted(sample("pre-reconcile-g", 1_500L, 2_050L, Mp48Fuel.CNG, 5.2)),
         )
-        assertEquals(LiveOnlyLearningStore.CALIBRATION_REQUIRED_REASON_CODE, blocked.getString("reasonCode"))
+        assertEquals(LiveOnlyLearningStore.CALIBRATION_REQUIRED_REASON_CODE, blocked.getString("state"))
         assertEquals(0, store.export("test").getJSONArray("comparisons").length())
 
         activateCalibration("after-reset", 2)
