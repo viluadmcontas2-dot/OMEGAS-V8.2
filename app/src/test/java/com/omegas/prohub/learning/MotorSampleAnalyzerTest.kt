@@ -24,6 +24,27 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
+    fun `fresh usb reset keeps fast path available`() {
+        val analyzer = MotorSampleAnalyzer()
+        analyzer.reset()
+        repeat(5) { assertFalse(analyzer.add(frame(it * 50L)).learningEligible) }
+        val accepted = analyzer.add(frame(250L))
+        assertTrue(accepted.learningEligible)
+        assertEquals("SAMPLE_ACCEPTED_EARLY", accepted.reasonCode)
+        assertEquals(6, accepted.sample?.frameCount)
+    }
+
+    @Test
+    fun `four clean readings publish visual micro candidate without learning evidence`() {
+        val analyzer = MotorSampleAnalyzer()
+        repeat(3) { assertFalse(analyzer.add(frame(it * 50L)).learningEligible) }
+        val preview = analyzer.add(frame(150L))
+        assertFalse(preview.learningEligible)
+        assertEquals("MICRO_CANDIDATE", preview.reasonCode)
+        assertEquals(4, preview.frameCount)
+    }
+
+    @Test
     fun `planned operation discards the incomplete window and requires the full target`() {
         val analyzer = MotorSampleAnalyzer()
         repeat(defaultFrames / 2) { analyzer.add(frame(it * 50L)) }
