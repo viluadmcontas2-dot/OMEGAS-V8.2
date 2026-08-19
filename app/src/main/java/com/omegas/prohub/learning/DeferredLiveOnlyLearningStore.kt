@@ -109,6 +109,7 @@ class DeferredLiveOnlyLearningStore(
                         restoreState = STATE_CLOSED
                         if (restoreFinishedAt <= 0L) restoreFinishedAt = System.currentTimeMillis()
                     } else {
+                        discardUnreplayableDeferredOperationsLocked()
                         restoreError = error.message ?: error.javaClass.simpleName
                         restoreState = STATE_FAILED
                         restoreFinishedAt = System.currentTimeMillis()
@@ -255,6 +256,7 @@ class DeferredLiveOnlyLearningStore(
             sessionRequested = false
             deferredOperations.clear()
             deferredSnapshotKeys.clear()
+            deferredCalibrationAdjustments = 0L
             restoreState = STATE_CLOSED
             if (restoreFinishedAt <= 0L) restoreFinishedAt = System.currentTimeMillis()
             val current = delegate
@@ -292,6 +294,7 @@ class DeferredLiveOnlyLearningStore(
                     }
                 }
                 is DeferredOperation.CalibrationAdjustment -> {
+                    deferredCalibrationAdjustments = (deferredCalibrationAdjustments - 1L).coerceAtLeast(0L)
                     try {
                         val result = store.onCalibrationAdjustment(operation.payload)
                         if (!result.optBoolean("ok", false)) {
@@ -329,12 +332,41 @@ class DeferredLiveOnlyLearningStore(
             )
             return
         }
-        deferredOperations.removeFirstOrNull()
+        val removed = deferredOperations.removeFirstOrNull()
+        if (removed is DeferredOperation.CalibrationAdjustment) {
+            deferredCalibrationAdjustments = (deferredCalibrationAdjustments - 1L).coerceAtLeast(0L)
+        }
         failedDeferredOperations += 1L
         log.add(
             "ERROR",
             "LEARNING-RESTORE",
             "Fila de ajustes confirmados saturou; ajuste mais antigo foi substituído pelo mais recente para manter boundedness",
+        )
+    }
+
+    private fun discardUnreplayableDeferredOperationsLocked() {
+        if (deferredOperations.isEmpty()) {
+            deferredSnapshotKeys.clear()
+            deferredCalibrationAdjustments = 0L
+            return
+        }
+        var discardedSnapshots = 0L
+        var discardedAdjustments = 0L
+        deferredOperations.forEach { operation ->
+            when (operation) {
+                is DeferredOperation.NativeSnapshot -> discardedSnapshots += 1L
+                is DeferredOperation.CalibrationAdjustment -> discardedAdjustments += 1L
+            }
+        }
+        rejectedNativeSnapshots += discardedSnapshots
+        failedDeferredOperations += discardedSnapshots + discardedAdjustments
+        deferredOperations.clear()
+        deferredSnapshotKeys.clear()
+        deferredCalibrationAdjustments = 0L
+        log.add(
+            "ERROR",
+            "LEARNING-RESTORE",
+            "Restore terminal descartou ${discardedSnapshots + discardedAdjustments} operações sem possibilidade de replay ($discardedSnapshots snapshots, $discardedAdjustments ajustes)",
         )
     }
 
