@@ -1,2 +1,2 @@
-rerun: 2026-08-19-runtime-canonical-evidence-state
-reason: verify runtime/service typed-state contract after rebinding LatestOnlyState and telemetry callback assertions to CanonicalEvidence/JSONObject authorities; no production source change
+rerun: 2026-08-19-scientific-constant-equivalence-owner
+reason: verify ScientificConstantRegistry contract after rebinding legacy denominator assertion to FuelEquivalenceObjective and explicit LEGACY_MIN_REFERENCE_MS caller binding; no production source change
