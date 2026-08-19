@@ -62,13 +62,20 @@ class G2RuntimeArbiterGate(unittest.TestCase):
         latest = LATEST.read_text("utf-8")
         science = SCIENCE.read_text("utf-8")
         work = WORK.read_text("utf-8")
+        compact_work = "".join(work.split())
         self.assertIn("pending = task", latest)
         self.assertIn("coalesced.incrementAndGet()", latest)
         self.assertIn("MAX_HOT_EVIDENCE = 3", science)
         self.assertIn("importantCapacity.coerceIn(1, MAX_HOT_EVIDENCE)", science)
         self.assertIn("SUPERSEDE_LOWEST_VALUE_PENDING_OR_REJECT_INCOMING", science)
-        self.assertIn("POST_WRITE_REVALIDATION(100)", work)
-        self.assertIn("DIAGNOSTIC_ONLY(\n        10,", work)
+        self.assertIn(
+            "POST_WRITE_REVALIDATION(100,MarginalInformationClass.CAUSAL_POST_INTERVENTION)",
+            compact_work,
+        )
+        self.assertIn(
+            "DIAGNOSTIC_ONLY(10,MarginalInformationClass.DIAGNOSTIC_PRESENT_STATE,diagnosticOnly=true)",
+            compact_work,
+        )
 
     def test_engine_scheduler_recovers_to_telemetry_after_units(self):
         engine = ENGINE.read_text("utf-8")
