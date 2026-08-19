@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt"
 SCHEDULER = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt"
+ANCHOR_WINDOW = ROOT / "app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt"
+
 
 class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
     def test_real_engine_scheduler_interleaves_reads_but_not_atomic_write_readback(self):
@@ -107,9 +109,21 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                         val CMD_IDENTIFY = byteArrayOf(0x00, 0x25)
                         val CMD_TELEMETRY = byteArrayOf(0x48, 0x01)
                         val CMD_DISCONNECT = byteArrayOf(0x00, 0x01)
-                        fun decodeTelemetry(payload: ByteArray, capturedAt: Long) = Mp48Telemetry(capturedAt, true)
+                        fun decodeTelemetry(payload: ByteArray, capturedAt: Long) =
+                            Mp48Telemetry(capturedAtElapsedMs = capturedAt)
                     }
-                    data class Mp48Telemetry(val capturedAt: Long, val plausible: Boolean)
+                    enum class Mp48Fuel(val wireName: String) {
+                        PETROL("GASOLINA"),
+                    }
+                    data class Mp48Telemetry(
+                        val capturedAtElapsedMs: Long,
+                        val rpm: Int = 1_500,
+                        val mapBar: Double = 0.5,
+                        val petrolMs: Double = 3.0,
+                        val fuel: Mp48Fuel = Mp48Fuel.PETROL,
+                        val gasMsDiagnostic: Double? = null,
+                        val plausible: Boolean = true,
+                    )
                 ''',
                 "Harness.kt": r'''
                     import com.omegas.prohub.ecu.*
@@ -161,7 +175,7 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                     }
                 ''',
             }
-            files = [ENGINE, SCHEDULER]
+            files = [ENGINE, SCHEDULER, ANCHOR_WINDOW]
             for rel, body in stubs.items():
                 path = tmp / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
