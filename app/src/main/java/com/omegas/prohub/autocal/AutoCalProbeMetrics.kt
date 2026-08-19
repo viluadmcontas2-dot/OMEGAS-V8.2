@@ -19,6 +19,7 @@ class AutoCalProbeMetrics {
         val wallElapsedMs: Long,
         val lastWallElapsedMs: Long,
         val maxWallElapsedMs: Long,
+        val observationSpanMs: Long,
         val lastCadenceMs: Long?,
         val lastTelemetryGapMs: Long?,
         val maxTelemetryGapMs: Long?,
@@ -26,6 +27,9 @@ class AutoCalProbeMetrics {
     ) {
         val informationYield: Double
             get() = if (cycles <= 0L) 0.0 else materialChanges.toDouble() / cycles.toDouble()
+
+        val averageWallElapsedMs: Double?
+            get() = if (cycles <= 0L) null else wallElapsedMs.toDouble() / cycles.toDouble()
 
         val lastCostShare: Double?
             get() = lastCadenceMs
@@ -43,6 +47,7 @@ class AutoCalProbeMetrics {
     private var wallElapsedMs = 0L
     private var lastWallElapsedMs = 0L
     private var maxWallElapsedMs = 0L
+    private var firstProbeStartedAtElapsedMs = 0L
     private var lastProbeStartedAtElapsedMs = 0L
     private var lastCadenceMs: Long? = null
     private var lastTelemetryGapMs: Long? = null
@@ -62,6 +67,7 @@ class AutoCalProbeMetrics {
         wallElapsedMs = 0L
         lastWallElapsedMs = 0L
         maxWallElapsedMs = 0L
+        firstProbeStartedAtElapsedMs = 0L
         lastProbeStartedAtElapsedMs = 0L
         lastCadenceMs = null
         lastTelemetryGapMs = null
@@ -94,6 +100,7 @@ class AutoCalProbeMetrics {
         lastTelemetryBeforeMs: Long?,
     ) {
         val wall = (finishedAtElapsedMs - startedAtElapsedMs).coerceAtLeast(0L)
+        if (firstProbeStartedAtElapsedMs <= 0L) firstProbeStartedAtElapsedMs = startedAtElapsedMs
         if (lastProbeStartedAtElapsedMs > 0L && startedAtElapsedMs >= lastProbeStartedAtElapsedMs) {
             lastCadenceMs = startedAtElapsedMs - lastProbeStartedAtElapsedMs
         }
@@ -117,20 +124,26 @@ class AutoCalProbeMetrics {
     }
 
     @Synchronized
-    fun snapshot(): Snapshot = Snapshot(
-        cycles = cycles,
-        successfulCycles = successfulCycles,
-        fallbackCycles = fallbackCycles,
-        materialChanges = materialChanges,
-        requestBytes = requestBytes,
-        responseBytes = responseBytes,
-        serialElapsedMs = serialElapsedMs,
-        wallElapsedMs = wallElapsedMs,
-        lastWallElapsedMs = lastWallElapsedMs,
-        maxWallElapsedMs = maxWallElapsedMs,
-        lastCadenceMs = lastCadenceMs,
-        lastTelemetryGapMs = lastTelemetryGapMs,
-        maxTelemetryGapMs = maxTelemetryGapMs,
-        pendingTelemetryGap = pendingTelemetryBeforeMs != null,
-    )
+    fun snapshot(): Snapshot {
+        val observationSpan = if (firstProbeStartedAtElapsedMs > 0L && lastProbeStartedAtElapsedMs >= firstProbeStartedAtElapsedMs) {
+            lastProbeStartedAtElapsedMs - firstProbeStartedAtElapsedMs
+        } else 0L
+        return Snapshot(
+            cycles = cycles,
+            successfulCycles = successfulCycles,
+            fallbackCycles = fallbackCycles,
+            materialChanges = materialChanges,
+            requestBytes = requestBytes,
+            responseBytes = responseBytes,
+            serialElapsedMs = serialElapsedMs,
+            wallElapsedMs = wallElapsedMs,
+            lastWallElapsedMs = lastWallElapsedMs,
+            maxWallElapsedMs = maxWallElapsedMs,
+            observationSpanMs = observationSpan,
+            lastCadenceMs = lastCadenceMs,
+            lastTelemetryGapMs = lastTelemetryGapMs,
+            maxTelemetryGapMs = maxTelemetryGapMs,
+            pendingTelemetryGap = pendingTelemetryBeforeMs != null,
+        )
+    }
 }
