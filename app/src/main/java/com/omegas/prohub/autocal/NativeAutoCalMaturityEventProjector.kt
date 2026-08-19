@@ -1,7 +1,7 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.learning.LearningTolerancePolicy
-import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.learning.NativeAutoCalEventCorrelator
 import org.json.JSONArray
 import org.json.JSONObject
@@ -9,12 +9,13 @@ import org.json.JSONObject
 /**
  * Projeta transições nativas já observadas em eventos AutoCal correlacionados.
  * Não faz I/O de protocolo, não agenda trabalho e não produz target/write.
+ * O scheduler entra apenas como fonte read-only da microjanela de telemetria.
  */
 object NativeAutoCalMaturityEventProjector {
     fun project(
         pending: List<NativeAutoCalDualFuelMaturityObserver.Event>,
         acquisition: JSONObject,
-        telemetryFrames: (Long, Long) -> List<NativeAnchorTelemetryWindow.Frame>,
+        telemetry: Mp48SerialScheduler,
         policy: LearningTolerancePolicy,
         sessionId: Long,
         snapshotId: String,
@@ -30,9 +31,9 @@ object NativeAutoCalMaturityEventProjector {
             val point = acquisition.findPoint(fuelLabel, transition.bandIndex)
             val nativePetrolMs = point?.nullableDouble("timeMs")
             val nativeMapBar = point?.nullableDouble("mapBar")
-            val frames = telemetryFrames(
-                transition.previousObservedAtElapsedMs,
-                transition.observedAtElapsedMs,
+            val frames = telemetry.recentTelemetryFrames(
+                fromElapsedMs = transition.previousObservedAtElapsedMs,
+                toElapsedMs = transition.observedAtElapsedMs,
             )
             val correlation = NativeAutoCalEventCorrelator.correlate(
                 frames = frames,
