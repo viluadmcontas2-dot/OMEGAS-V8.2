@@ -73,7 +73,7 @@ class G2RuntimeArbiterGate(unittest.TestCase):
             compact_work,
         )
         self.assertIn(
-            "DIAGNOSTIC_ONLY(10,MarginalInformationClass.DIAGNOSTIC_PRESENT_STATE,diagnosticOnly=true)",
+            "DIAGNOSTIC_ONLY(10,MarginalInformationClass.DIAGNOSTIC_PRESENT_STATE,diagnosticOnly=true,)",
             compact_work,
         )
 
