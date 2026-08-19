@@ -42,6 +42,7 @@ class NativeAutoCalMonitor(
 
     private val lock = Any()
     private val maturityTracker = NativeAutoCalMaturityTracker()
+    private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
     private val calibrationBootstrapReader = CompositeCalibrationReader(serial)
     private val probeMetrics = AutoCalProbeMetrics()
     private val probeCadencePolicy = AutoCalProbeCadencePolicy()
@@ -50,6 +51,7 @@ class NativeAutoCalMonitor(
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
     @Volatile private var state = baseState("IDLE", "AutoCal nativo aguardando ECU")
     @Volatile private var calibrationIdentity: CalibrationIdentity? = null
+    @Volatile private var latestAutoMatchEvent: JSONObject? = null
 
     private var sessionStartedAtElapsedMs = 0L
     private var calibrationBootstrapAttempted = false
@@ -65,12 +67,14 @@ class NativeAutoCalMonitor(
 
     fun beginUsbSession(newSessionId: Long) {
         probeMetrics.reset()
+        autoMatchCounterTracker.reset()
         synchronized(lock) {
             sessionId = newSessionId
             sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
             calibrationBootstrapAttempted = false
             calibrationIdentity = null
             lastProbe = null
+            latestAutoMatchEvent = null
             nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
             gasLowThreshold = null
@@ -92,12 +96,14 @@ class NativeAutoCalMonitor(
 
     fun endUsbSession() {
         probeMetrics.reset()
+        autoMatchCounterTracker.reset()
         synchronized(lock) {
             sessionId = 0L
             sessionStartedAtElapsedMs = 0L
             calibrationBootstrapAttempted = false
             calibrationIdentity = null
             lastProbe = null
+            latestAutoMatchEvent = null
             nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
             gasLowThreshold = null
@@ -215,8 +221,14 @@ class NativeAutoCalMonitor(
         }
         val freshProbe = if (statusProbeDue) probe(currentSession) ?: return else null
         val probe = freshProbe ?: previousProbe ?: return
-        val countIncreased = freshProbe != null && previousProbe != null &&
-            probe.autoMatchCount > previousProbe.autoMatchCount
+        val autoMatchEvent = freshProbe?.let {
+            autoMatchCounterTracker.observe(
+                currentSessionId = currentSession,
+                count = it.autoMatchCount,
+                observedAtElapsedMs = now,
+            )
+        }
+        val countIncreased = autoMatchEvent != null
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
         val probeChanged = freshProbe != null && previousProbe != null && (
             previousProbe.autoMatchCount != probe.autoMatchCount ||
@@ -242,10 +254,12 @@ class NativeAutoCalMonitor(
 
         synchronized(lock) {
             if (freshProbe != null) lastProbe = probe
+            if (autoMatchEvent != null) latestAutoMatchEvent = autoMatchEventJson(autoMatchEvent)
             state = baseState("MONITORING", "AutoCal nativo monitorado")
                 .put("sessionId", currentSession)
                 .put("nativeFlag13", probe.nativeFlag13)
                 .put("autoMatchCount", probe.autoMatchCount)
+                .put("latestAutoMatchEvent", latestAutoMatchEvent?.let { JSONObject(it.toString()) } ?: JSONObject.NULL)
                 .put("fallback", probe.nativeFlag13 < 0)
                 .put("freshStatusProbe", freshProbe != null)
                 .put("thresholdsReady", thresholdsReady)
@@ -258,7 +272,7 @@ class NativeAutoCalMonitor(
                 snapshotReason = "NATIVE_BAND_MATURED"
             } else if (probeChanged) {
                 snapshotRequested = true
-                snapshotReason = if (countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
+                snapshotReason = if (autoMatchEvent != null) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
                 // Mudança nativa observada torna a identidade composta anterior obsoleta.
                 calibrationIdentity = null
             }
@@ -280,6 +294,7 @@ class NativeAutoCalMonitor(
             .put("calibrationBootstrapAttempted", calibrationBootstrapAttempted)
             .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
             .put("calibrationFingerprint", calibrationIdentity?.functionFingerprint ?: JSONObject.NULL)
+            .put("latestAutoMatchEvent", latestAutoMatchEvent?.let { JSONObject(it.toString()) } ?: JSONObject.NULL)
             .put("probeMetrics", probeMetricsJson())
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
@@ -560,6 +575,7 @@ class NativeAutoCalMonitor(
                 .put("sessionId", expectedSessionId)
                 .put("nativeFlag13", probe.nativeFlag13)
                 .put("autoMatchCount", probe.autoMatchCount)
+                .put("latestAutoMatchEvent", latestAutoMatchEvent?.let { JSONObject(it.toString()) } ?: JSONObject.NULL)
                 .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
                 .put("nativeMaturityEventCount", maturityEvents.length())
@@ -641,6 +657,17 @@ class NativeAutoCalMonitor(
 
     private fun responseByteCount(reply: UsbProtocolReply): Int =
         reply.echo.size + reply.rawResponse.size
+
+    private fun autoMatchEventJson(event: NativeAutoMatchCounterTracker.Event): JSONObject = JSONObject()
+        .put("eventType", event.eventType)
+        .put("sessionId", event.sessionId)
+        .put("observedAtElapsedMs", event.observedAtElapsedMs)
+        .put("beforeCount", event.beforeCount)
+        .put("afterCount", event.afterCount)
+        .put("delta", event.delta)
+        .put("mulActChangeConfirmed", event.mulActChangeConfirmed)
+        .put("appWritePerformed", false)
+        .put("appAutomaticWrite", false)
 
     private fun probeMetricsJson(): JSONObject {
         val metrics = probeMetrics.snapshot()
