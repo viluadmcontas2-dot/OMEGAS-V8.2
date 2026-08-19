@@ -20,10 +20,13 @@ object AutoCal122ATargetMetrics {
     data class Snapshot(
         val sessionId: Long,
         val startedAtElapsedMs: Long,
+        val lastSampleAtElapsedMs: Long,
+        val observationSpanMs: Long,
         val samples: Long,
         val cpuStartMs: Long?,
         val cpuLastMs: Long?,
         val cpuDeltaMs: Long?,
+        val cpuShareOfOneCore: Double?,
         val pssKb: Long?,
         val maxPssKb: Long?,
         val rssKb: Long?,
@@ -90,13 +93,20 @@ object AutoCal122ATargetMetrics {
         val cpuStart = cpuStartMs
         val cpuLast = cpuLastMs
         val anchor = firstAnchorAtElapsedMs
+        val span = if (startedAtElapsedMs > 0L && lastSampleAtElapsedMs >= startedAtElapsedMs) {
+            lastSampleAtElapsedMs - startedAtElapsedMs
+        } else 0L
+        val cpuDelta = if (cpuStart != null && cpuLast != null) (cpuLast - cpuStart).coerceAtLeast(0L) else null
         return Snapshot(
             sessionId = sessionId,
             startedAtElapsedMs = startedAtElapsedMs,
+            lastSampleAtElapsedMs = lastSampleAtElapsedMs,
+            observationSpanMs = span,
             samples = samples,
             cpuStartMs = cpuStart,
             cpuLastMs = cpuLast,
-            cpuDeltaMs = if (cpuStart != null && cpuLast != null) (cpuLast - cpuStart).coerceAtLeast(0L) else null,
+            cpuDeltaMs = cpuDelta,
+            cpuShareOfOneCore = if (cpuDelta != null && span > 0L) cpuDelta.toDouble() / span.toDouble() else null,
             pssKb = pssKb,
             maxPssKb = maxPssKb,
             rssKb = rssKb,
@@ -152,10 +162,13 @@ object AutoCal122ATargetMetrics {
         .put("schema", "autocal-target-performance-v1")
         .put("sessionId", sessionId)
         .put("startedAtElapsedMs", startedAtElapsedMs)
+        .put("lastSampleAtElapsedMs", lastSampleAtElapsedMs)
+        .put("observationSpanMs", observationSpanMs)
         .put("samples", samples)
         .put("cpuStartMs", cpuStartMs ?: JSONObject.NULL)
         .put("cpuLastMs", cpuLastMs ?: JSONObject.NULL)
         .put("cpuDeltaMs", cpuDeltaMs ?: JSONObject.NULL)
+        .put("cpuShareOfOneCore", cpuShareOfOneCore ?: JSONObject.NULL)
         .put("pssKb", pssKb ?: JSONObject.NULL)
         .put("maxPssKb", maxPssKb ?: JSONObject.NULL)
         .put("rssKb", rssKb ?: JSONObject.NULL)
