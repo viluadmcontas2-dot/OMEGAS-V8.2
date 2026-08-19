@@ -1,2 +1,2 @@
-rerun: 2026-08-19-native-anchor-owner-chain-contract
-reason: verify native anchor science against Monitor -> MaturityEventProjector -> NativeAutoCalEventCorrelator, preserving no-frame-count-confidence and fail-closed semantics
+rerun: 2026-08-19-native-autocal-current-owner-chain
+reason: verify test_native_autocal_contract against DualFuelMaturityObserver -> MaturityEventProjector -> NativeAutoCalEventCorrelator while preserving read-only, session, fail-closed, no-double-vote and no-writer invariants
