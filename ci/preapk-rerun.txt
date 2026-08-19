@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g3b-complete-mp48-shape-aligned
-reason: verify complete G3B harness and field-identity MP48 shape contract after stale matcher cleanup
+rerun: 2026-08-19-backpressure-thread-constructor-matcher
+reason: verify pre-APK after distinguishing Kotlin Thread construction from Thread.currentThread interrupt restoration
