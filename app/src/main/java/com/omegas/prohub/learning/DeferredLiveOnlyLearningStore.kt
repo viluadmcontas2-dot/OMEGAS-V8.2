@@ -37,6 +37,7 @@ class DeferredLiveOnlyLearningStore(
         const val STATE_RESTORING = "LEARNING_RESTORING"
         const val STATE_READY = "LEARNING_READY"
         const val STATE_FAILED = "LEARNING_RESTORE_FAILED"
+        const val STATE_CLOSED = "LEARNING_CLOSED"
         const val RESTORE_PENDING_REASON = "LEARNING_RESTORE_PENDING"
         private const val MAX_DEFERRED_OPERATIONS = 64
 
@@ -81,6 +82,8 @@ class DeferredLiveOnlyLearningStore(
                 var expose = false
                 synchronized(stateLock) {
                     if (closed.get()) {
+                        restoreState = STATE_CLOSED
+                        if (restoreFinishedAt <= 0L) restoreFinishedAt = System.currentTimeMillis()
                         try { restored.store.close() } catch (_: Exception) {}
                     } else {
                         migration = JSONObject(restored.migration.toString())
@@ -100,14 +103,25 @@ class DeferredLiveOnlyLearningStore(
                     )
                 }
             } catch (error: Exception) {
-                restoreError = error.message ?: error.javaClass.simpleName
-                restoreState = STATE_FAILED
-                restoreFinishedAt = System.currentTimeMillis()
-                log.add(
-                    "ERROR",
-                    "LEARNING-RESTORE",
-                    "Learning não restaurado; telemetria permanece disponível: $restoreError",
-                )
+                var reportFailure = false
+                synchronized(stateLock) {
+                    if (closed.get()) {
+                        restoreState = STATE_CLOSED
+                        if (restoreFinishedAt <= 0L) restoreFinishedAt = System.currentTimeMillis()
+                    } else {
+                        restoreError = error.message ?: error.javaClass.simpleName
+                        restoreState = STATE_FAILED
+                        restoreFinishedAt = System.currentTimeMillis()
+                        reportFailure = true
+                    }
+                }
+                if (reportFailure) {
+                    log.add(
+                        "ERROR",
+                        "LEARNING-RESTORE",
+                        "Learning não restaurado; telemetria permanece disponível: $restoreError",
+                    )
+                }
             }
         }
     }
@@ -136,10 +150,10 @@ class DeferredLiveOnlyLearningStore(
 
     fun statusJson(): JSONObject = delegate?.let { decorateReady(it.statusJson()) }
         ?: restoringStatus(
-            if (restoreState == STATE_FAILED) {
-                "Learning indisponível; telemetria continua independente"
-            } else {
-                "Restaurando Learning em segundo plano; telemetria continua independente"
+            when (restoreState) {
+                STATE_FAILED -> "Learning indisponível; telemetria continua independente"
+                STATE_CLOSED -> "Learning encerrado; nenhuma operação científica será enfileirada"
+                else -> "Restaurando Learning em segundo plano; telemetria continua independente"
             },
         )
 
@@ -152,11 +166,11 @@ class DeferredLiveOnlyLearningStore(
 
     fun importNativeSnapshot(snapshot: JSONObject): JSONObject = synchronized(stateLock) {
         delegate?.let { return@synchronized decorateReady(it.importNativeSnapshot(snapshot)) }
-        if (restoreState == STATE_FAILED) {
+        deferredAdmissionFailureLocked()?.let { reasonCode ->
             rejectedNativeSnapshots += 1L
             return@synchronized unavailable("native_snapshot", snapshot.optString("snapshotId", snapshot.optString("sessionId")))
                 .put("deferred", false)
-                .put("reasonCode", STATE_FAILED)
+                .put("reasonCode", reasonCode)
         }
 
         val copy = JSONObject(snapshot.toString())
@@ -199,10 +213,10 @@ class DeferredLiveOnlyLearningStore(
      */
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject = synchronized(stateLock) {
         delegate?.let { return@synchronized decorateReady(it.onCalibrationAdjustment(payload)) }
-        if (restoreState == STATE_FAILED) {
+        deferredAdmissionFailureLocked()?.let { reasonCode ->
             return@synchronized unavailable("calibration_adjustment", payload.optString("adjustmentId"))
                 .put("deferred", false)
-                .put("reasonCode", STATE_FAILED)
+                .put("reasonCode", reasonCode)
                 .put("resetPerformed", false)
         }
 
@@ -241,6 +255,8 @@ class DeferredLiveOnlyLearningStore(
             sessionRequested = false
             deferredOperations.clear()
             deferredSnapshotKeys.clear()
+            restoreState = STATE_CLOSED
+            if (restoreFinishedAt <= 0L) restoreFinishedAt = System.currentTimeMillis()
             val current = delegate
             delegate = null
             current
@@ -322,6 +338,12 @@ class DeferredLiveOnlyLearningStore(
         )
     }
 
+    private fun deferredAdmissionFailureLocked(): String? = when {
+        closed.get() || restoreState == STATE_CLOSED -> STATE_CLOSED
+        restoreState != STATE_RESTORING -> restoreState
+        else -> null
+    }
+
     private fun isConfirmedCalibrationAdjustment(payload: JSONObject): Boolean {
         val readbackValid = payload.optBoolean("readbackValid", false)
         val manualConfirmed = payload.optBoolean("humanConfirmed", false) && readbackValid
@@ -343,19 +365,26 @@ class DeferredLiveOnlyLearningStore(
     }
 
     private fun restoringStatus(reason: String): JSONObject = JSONObject()
-        .put("ok", restoreState != STATE_FAILED)
+        .put("ok", restoreState !in setOf(STATE_FAILED, STATE_CLOSED))
         .put("state", restoreState)
         .put("reason", reason)
-        .put("reasonCode", if (restoreState == STATE_FAILED) STATE_FAILED else RESTORE_PENDING_REASON)
+        .put(
+            "reasonCode",
+            when (restoreState) {
+                STATE_FAILED -> STATE_FAILED
+                STATE_CLOSED -> STATE_CLOSED
+                else -> RESTORE_PENDING_REASON
+            },
+        )
         .put("learning", false)
         .put("restoring", restoreState == STATE_RESTORING)
         .put("restore", restoreMetrics())
 
     private fun unavailable(operation: String, subject: String = ""): JSONObject = restoringStatus(
-        if (restoreState == STATE_FAILED) {
-            "Learning indisponível; operação não executada"
-        } else {
-            "Learning ainda restaurando; operação aguardando restauração quando suportado"
+        when (restoreState) {
+            STATE_FAILED -> "Learning indisponível; operação não executada"
+            STATE_CLOSED -> "Learning encerrado; operação não executada"
+            else -> "Learning ainda restaurando; operação aguardando restauração quando suportado"
         },
     )
         .put("ok", false)
