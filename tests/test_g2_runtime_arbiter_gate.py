@@ -23,8 +23,12 @@ class G2RuntimeArbiterGate(unittest.TestCase):
         app = APP.read_text("utf-8")
         self.assertEqual(1, runtime.count("ResponseDrivenEcuEngine("))
         self.assertEqual(1, runtime.count("Mp48BackpressureScheduler(engine)"))
-        self.assertEqual(1, runtime.count("LatestOnlyState<RuntimeTelemetryFrame>"))
-        self.assertEqual(1, runtime.count("LatestOnlyBackgroundPipeline("))
+        self.assertEqual(1, runtime.count("LatestOnlyState<CanonicalEvidence>"))
+        # Dois consumidores latest-only são permitidos: projeção visual e shadow
+        # Adaptive. Ambos recebem o mesmo CanonicalEvidence e nenhum adquire MP48.
+        self.assertEqual(2, runtime.count("LatestOnlyBackgroundPipeline("))
+        self.assertIn('consumerName = "UI_PROJECTION"', runtime)
+        self.assertIn('consumerName = "ADAPTIVE_SHADOW"', runtime)
         self.assertEqual(1, runtime.count("RealtimeLearningBuffer("))
         self.assertEqual(1, app.count("const store = new ui.Store("))
         self.assertEqual(1, app.count("const router = new ui.Router(store)"))
@@ -32,10 +36,11 @@ class G2RuntimeArbiterGate(unittest.TestCase):
 
     def test_ecu_callback_is_typed_and_json_free(self):
         runtime = RUNTIME.read_text("utf-8")
-        hot = between(runtime, "    private fun consumeTelemetry(", "    /**\n     * Projeção legada/visual")
-        self.assertIn("RuntimeTelemetryFrame.from(", hot)
-        self.assertIn("latestTelemetryState.publish(typedFrame)", hot)
+        hot = between(runtime, "    private fun consumeTelemetry(", "    /**\n     * Projeção visual")
+        self.assertIn("CanonicalEvidence.from(", hot)
+        self.assertIn("latestCanonicalEvidence.publish(evidence)", hot)
         self.assertIn("telemetryDeliveryPipeline.submit", hot)
+        self.assertIn("adaptiveShadowPipeline.submit", hot)
         self.assertIn("learningPipeline.submit", hot)
         for forbidden in ("JSONObject", ".toJson()", "metricsJson()", ".toString()"):
             self.assertNotIn(forbidden, hot)
@@ -43,13 +48,15 @@ class G2RuntimeArbiterGate(unittest.TestCase):
     def test_legacy_projection_is_worker_side_and_generation_guarded(self):
         runtime = RUNTIME.read_text("utf-8")
         projection = between(runtime, "    private fun projectTelemetryCompatibility(", "    private fun publishLearningState")
+        self.assertIn("val telemetry = evidence.rawTelemetry", projection)
         self.assertIn("telemetry.toJson()", projection)
         self.assertIn("metrics.toJson()", projection)
-        self.assertIn("if (generation != currentUsbSessionId) return", projection)
+        self.assertIn("if (generation != currentUsbSessionId || evidence.usbSessionId != generation) return", projection)
         self.assertIn("if (generation != currentUsbSessionId) return@synchronized null", projection)
-        hot = between(runtime, "    private fun consumeTelemetry(", "    /**\n     * Projeção legada/visual")
-        self.assertLess(hot.index("latestTelemetryState.publish(typedFrame)"), hot.index("telemetryDeliveryPipeline.submit"))
-        self.assertLess(hot.index("latestTelemetryState.publish(typedFrame)"), hot.index("learningPipeline.submit"))
+        hot = between(runtime, "    private fun consumeTelemetry(", "    /**\n     * Projeção visual")
+        self.assertLess(hot.index("latestCanonicalEvidence.publish(evidence)"), hot.index("telemetryDeliveryPipeline.submit"))
+        self.assertLess(hot.index("latestCanonicalEvidence.publish(evidence)"), hot.index("adaptiveShadowPipeline.submit"))
+        self.assertLess(hot.index("latestCanonicalEvidence.publish(evidence)"), hot.index("learningPipeline.submit"))
 
     def test_visual_and_science_backlogs_are_hard_bounded(self):
         latest = LATEST.read_text("utf-8")
@@ -81,9 +88,9 @@ class G2RuntimeArbiterGate(unittest.TestCase):
 
     def test_publish_path_has_constant_structural_work_before_queue_handoff(self):
         runtime = RUNTIME.read_text("utf-8")
-        hot = between(runtime, "    private fun consumeTelemetry(", "    /**\n     * Projeção legada/visual")
-        # One typed frame allocation and two bounded handoffs; no loops, disk, parse or JSON.
-        self.assertEqual(1, hot.count("RuntimeTelemetryFrame.from("))
+        hot = between(runtime, "    private fun consumeTelemetry(", "    /**\n     * Projeção visual")
+        # Um envelope tipado e três handoffs bounded; sem loops, disco, parse ou JSON.
+        self.assertEqual(1, hot.count("CanonicalEvidence.from("))
         self.assertNotIn("for (", hot)
         self.assertNotIn("repeat(", hot)
         self.assertNotIn("File(", hot)
