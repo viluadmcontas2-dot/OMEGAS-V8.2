@@ -1,2 +1,2 @@
-rerun: 2026-08-19-scientific-persistence-contract-matcher
-reason: verify persistence/backpressure contract after decoupling the ingest assertion from the NativePetrolPriorScope wrapper
+rerun: 2026-08-19-native-anchor-confidence-contract
+reason: verify frame-count independence using the confidence formula rather than the post-formula support variable name
