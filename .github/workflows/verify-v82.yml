@@ -1,7 +1,7 @@
 # Verification trigger authorized by the owner's 2026-08-18 finalizing campaign.
 # This workflow never assembles or uploads an APK.
 # Diagnostic broad gate: publishes the exact first failing test in readable legacy status contexts.
-# Diagnostic run marker: readable-status-v13-canonical-and-reconcile-tests.
+# Diagnostic run marker: readable-status-v14-small-rerun-marker.
 name: Verify OMEGAS V8.2 pre-APK
 
 on:
@@ -11,6 +11,7 @@ on:
       - rebuild/v8.2-final-implementation
     paths:
       - .github/workflows/verify-v82.yml
+      - ci/preapk-rerun.txt
 
 permissions:
   contents: read
