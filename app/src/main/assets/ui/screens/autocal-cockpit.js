@@ -9,14 +9,6 @@
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
-  function field(snapshot, key) {
-    const fields = Array.isArray(snapshot?.fields) ? snapshot.fields : [];
-    return fields.find(item => String(item?.key || '') === key && String(item?.status || '') === 'VALID') || null;
-  }
-  function vector(snapshot, key) {
-    const item = field(snapshot, key);
-    return Array.isArray(item?.rawValues) ? item.rawValues.map(value => finite(value) ?? 0) : [];
-  }
   function actionLabel(action) {
     return ({
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
@@ -25,6 +17,9 @@
       RESET_GAS: 'Resetar aquisição GNV',
       RESET_ALL: 'Começar nova aquisição AutoCal',
     })[action] || action;
+  }
+  function fuelLabel(fuel) {
+    return ({ PETROL: 'Gasolina', GAS: 'GNV atual', GAS_PREVIOUS: 'GNV anterior' })[String(fuel || '')] || String(fuel || '—');
   }
 
   class AutoCalCockpit {
@@ -85,9 +80,9 @@
             </div>
             <div class="autocal-layout">
               <section class="autocal-bands-card">
-                <div class="autocal-section-head"><div><small>18 BANDAS GNV</small><h4>Contadores nativos</h4></div><span>somente leitura</span></div>
+                <div class="autocal-section-head"><div><small>MAP × TPET · 18 BANDAS POR FAMÍLIA</small><h4>Gasolina · GNV atual · GNV anterior</h4></div><span>Kotlin é a autoridade</span></div>
                 <div id="autocalBands" class="autocal-bands"></div>
-                <p class="autocal-note">O OMEGAS não inventa RPM pela banda. Posição física só vira âncora quando a correlação monotônica é confiável.</p>
+                <p class="autocal-note">X = tempo de injeção gasolina (Tpet); Y = MAP. Ponto sem coordenada física permanece sem posição. Os 30 pontos de Curva K/referência não viram bolinhas de aquisição.</p>
               </section>
               <aside class="autocal-side">
                 <section class="autocal-events-card"><div class="autocal-section-head"><div><small>MATURIDADE</small><h4>Últimos eventos</h4></div></div><div id="autocalEvents" class="autocal-events"></div></section>
@@ -194,38 +189,47 @@
     render() {
       const state = this.state || {};
       const snapshot = this.snapshot || {};
+      const projection = snapshot.humanProjection || {};
       const nativeStatus = snapshot.nativeStatus || state.latestSnapshot?.nativeStatus || {};
       const enabled = finite(snapshot.autoCalEnabled ?? state.autoCalEnabled);
       const autoMatchCount = finite(nativeStatus.autoMatchCount ?? state.autoMatchCount);
       const maxAutoMatch = finite(snapshot.maxAutomatch ?? state.maxAutomatch);
       const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
-      this.text('autocalNativeState', state.state || (snapshot.available ? 'READY' : 'AGUARDANDO'));
-      this.text('autocalState', state.state || '—');
+      this.text('autocalNativeState', projection.message || state.state || (snapshot.available ? 'READY' : 'AGUARDANDO'));
+      this.text('autocalState', projection.message || projection.state || state.state || '—');
       this.text('autocalEnable', enabled === 1 ? 'ATIVA' : enabled === 0 ? 'PAUSADA' : '—');
       this.text('autocalMatchCount', autoMatchCount ?? '—');
       this.text('autocalMaxMatch', maxAutoMatch ?? '—');
       this.text('autocalMatureCount', events.length);
-      this.renderBands(snapshot, events);
+      this.renderBands(projection);
       this.renderEvents(events);
       this.renderActionState();
     }
 
-    renderBands(snapshot, events) {
+    renderBands(projection) {
       const host = document.getElementById('autocalBands');
       if (!host) return;
-      const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
-      const matured = new Map(events.map(event => [Number(event.bandIndex), event]));
-      if (!counters.length) {
-        host.innerHTML = '<div class="detail-empty"><b>Sem contador válido</b><span>A ECU ainda não publicou NUM_BUF_UPD_GAS neste snapshot.</span></div>';
+      const points = Array.isArray(projection?.acquisitionPoints) ? projection.acquisitionPoints : [];
+      if (!points.length) {
+        host.innerHTML = '<div class="detail-empty"><b>Estado nativo insuficiente</b><span>A projeção Kotlin ainda não possui as 18 bandas físicas de aquisição.</span></div>';
         return;
       }
-      host.innerHTML = counters.slice(0, 18).map((count, index) => {
-        const event = matured.get(index);
-        const threshold = finite(event?.threshold);
-        const ratio = threshold && threshold > 0 ? Math.min(100, count / threshold * 100) : 0;
-        const correlated = String(event?.correlationState || '') === 'CORRELATED';
-        const state = event ? (correlated ? 'anchored' : 'mature') : count > 0 ? 'collecting' : 'empty';
-        return `<div class="autocal-band" data-state="${state}"><header><span>B${String(index + 1).padStart(2, '0')}</span><b>${Math.round(count)}</b></header><i style="--progress:${ratio}%"></i><small>${event ? (correlated ? 'âncora correlacionada' : 'madura · sem posição confiável') : count > 0 ? 'coletando' : 'sem dados'}</small></div>`;
+      const families = ['PETROL', 'GAS', 'GAS_PREVIOUS'];
+      host.innerHTML = families.map(fuel => {
+        const family = points.filter(point => String(point.fuel || '') === fuel);
+        if (!family.length) return '';
+        const cards = family.map(point => {
+          const positioned = point.positioned === true;
+          const tpet = finite(point.tPetrolMs);
+          const map = finite(point.mapBar);
+          const anchor = point.correlatedAnchor === true;
+          const state = anchor ? 'anchored' : String(point.maturity || 'UNKNOWN').toLowerCase();
+          const coordinate = positioned && tpet !== null && map !== null
+            ? `${tpet.toFixed(2)} ms · MAP ${map.toFixed(3)} bar`
+            : 'sem coordenada física';
+          return `<div class="autocal-band" data-state="${escapeHtml(state)}"><header><span>B${String(Number(point.bandIndex) + 1).padStart(2, '0')}</span><b>Z${Number(point.zone) + 1}</b></header><small>${escapeHtml(coordinate)}</small><small>${escapeHtml(point.maturity || 'UNKNOWN')}${anchor ? ' · âncora correlacionada' : ''}</small></div>`;
+        }).join('');
+        return `<div class="autocal-family" data-fuel="${fuel}"><div class="autocal-family-title"><b>${escapeHtml(fuelLabel(fuel))}</b><span>18 bandas · ${escapeHtml(projection.xAxis || 'TPET_MS')} × ${escapeHtml(projection.yAxis || 'MAP_BAR')}</span></div>${cards}</div>`;
       }).join('');
     }
 
