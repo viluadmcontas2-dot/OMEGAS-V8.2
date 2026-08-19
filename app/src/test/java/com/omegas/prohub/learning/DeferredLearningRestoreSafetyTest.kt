@@ -101,6 +101,45 @@ class DeferredLearningRestoreSafetyTest {
         }
     }
 
+    @Test
+    fun failedRestoreNeverClaimsThatMaterialOperationsAreDeferred() {
+        val root = temporaryFolder.newFolder("restore-failed")
+        val store = DeferredLiveOnlyLearningStore(root, RingLog()) { _, _ ->
+            throw IllegalStateException("forced restore failure")
+        }
+
+        repeat(100) {
+            if (store.statusJson().optString("state") == DeferredLiveOnlyLearningStore.STATE_FAILED) return@repeat
+            Thread.sleep(10L)
+        }
+        assertEquals(DeferredLiveOnlyLearningStore.STATE_FAILED, store.statusJson().getString("state"))
+
+        val snapshot = store.importNativeSnapshot(
+            JSONObject()
+                .put("sessionId", "failed-session")
+                .put("snapshotId", "never-replayed"),
+        )
+        assertFalse(snapshot.getBoolean("ok"))
+        assertFalse(snapshot.getBoolean("deferred"))
+        assertEquals(DeferredLiveOnlyLearningStore.STATE_FAILED, snapshot.getString("reasonCode"))
+
+        val adjustment = store.onCalibrationAdjustment(
+            JSONObject()
+                .put("adjustmentId", "confirmed-after-failure")
+                .put("humanConfirmed", true)
+                .put("readbackValid", true),
+        )
+        assertFalse(adjustment.getBoolean("ok"))
+        assertFalse(adjustment.getBoolean("deferred"))
+        assertEquals(DeferredLiveOnlyLearningStore.STATE_FAILED, adjustment.getString("reasonCode"))
+
+        val restore = store.statusJson().getJSONObject("restore")
+        assertEquals(0, restore.getInt("pendingDeferredOperations"))
+        assertEquals(0L, restore.getLong("pendingCalibrationAdjustments"))
+        assertEquals(1L, restore.getLong("rejectedNativeSnapshots"))
+        store.close()
+    }
+
     private fun restoreNormally(root: File, log: RingLog): DeferredLiveOnlyLearningStore.RestoredLearning {
         val migration = LearningTelemetrySchemaMigration.prepare(root, log)
         val state = File(root, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
