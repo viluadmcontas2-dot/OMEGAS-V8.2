@@ -37,11 +37,11 @@
       if (hero && !hero.classList.contains('refined-now')) {
         hero.classList.add('refined-now');
         hero.innerHTML = `
-          <small>CONDIÇÃO DO MOTOR</small>
-          <div class="hero-rpm"><strong id="dashHeroRpm">0</strong><em>RPM</em></div>
+          <small>PETROL INJECTION</small>
+          <div class="hero-rpm"><strong id="dashHeroPetrol">—</strong><em>ms</em></div>
           <p id="dashHeroContext">Aguardando ECU</p>
           <div class="hero-context-grid">
-            <div><small>PETROL INJ.</small><b id="dashPetrol">—</b></div>
+            <div><small>RPM</small><b id="dashHeroRpm">0</b></div>
             <div><small>MAP</small><b id="dashMap">—</b></div>
             <div><small>COMBUSTÍVEL</small><b id="dashFuel">—</b></div>
             <div><small>CÉLULA</small><b id="dashCell">—</b></div>
@@ -80,8 +80,8 @@
       const row = Number.isFinite(Number(cell.row)) ? Number(cell.row) : null;
       const column = Number.isFinite(Number(cell.column)) ? Number(cell.column) : null;
 
+      text('dashHeroPetrol', fmt(petrol, 2));
       text('dashHeroRpm', Math.round(rpm).toLocaleString('pt-BR'));
-      text('dashPetrol', `${fmt(petrol, 2)} ms`);
       text('dashGas', fmt(gas, 2));
       text('dashMap', `${fmt(map, 2)} bar`);
       text('dashStft', stft === null ? '—' : `${stft > 0 ? '+' : ''}${fmt(stft, 1)}%`);
@@ -96,7 +96,7 @@
       text('dashAge', ageLabel);
       text('dashAgeMini', ageLabel);
       text('dashHeroContext', connected
-        ? `${fuel} · Petrol Inj. ${fmt(petrol, 2)} ms · MAP ${fmt(map, 2)} bar`
+        ? `${fuel} · ${Math.round(rpm).toLocaleString('pt-BR')} RPM · MAP ${fmt(map, 2)} bar`
         : 'Conecte a MP48 para iniciar a sessão');
 
       const health = document.getElementById('dashHealth');
