@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g3b-provenance-green
-reason: verify same-session native anchor admission and physical calibration provenance after minimal fix
+rerun: 2026-08-19-g3b-provenance-green-generation-aligned
+reason: verify G3B same-session provenance plus current learning/canonical generation ordering
