@@ -86,7 +86,10 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('nativeMaturityEvents', self.monitor)
         self.assertIn('counterPayloadHex', self.projector)
         self.assertIn('before < threshold && after >= threshold', self.maturity)
-        self.assertIn('if (previous == null || !enabled) return emptyList()', self.maturity)
+        disabled_guard = self.maturity.split(
+            'val transitions = if (previous == null || !enabled) {', 1
+        )[1].split('} else {', 1)[0]
+        self.assertIn('emptyList()', disabled_guard)
         for source in (self.dual_maturity, self.maturity):
             self.assertNotIn('Thread(', source)
             self.assertNotIn('Executors.', source)
