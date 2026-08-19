@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g3a-reason-code
-reason: verify G3A invalid-reference reason-code alignment against FuelEquivalenceObjective
+rerun: 2026-08-19-governance-remote-first
+reason: verify stable repository governance test against current remote-first AGENTS contract
