@@ -27,7 +27,7 @@ class Mp48RuntimeBackpressureIntegration(unittest.TestCase):
         self.assertIn("readOnlyRejected", source)
         self.assertIn("criticalRejected", source)
         self.assertNotIn("Executors", source)
-        self.assertNotIn("Thread(", source)
+        self.assertNotRegex(source, r"\bThread\s*\(")
         self.assertNotIn("UsbSerialManager", source)
 
     def test_one_policy_owns_resource_budgets(self):
