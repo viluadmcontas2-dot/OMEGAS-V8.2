@@ -50,11 +50,25 @@ class NativeLearningAnchorTest {
     }
 
     @Test
-    fun `registry revises only new fingerprints and remains bounded`() {
+    fun `registry rejects a different fingerprint for the same physical overlap`() {
+        val registry = NativeLearningAnchorRegistry(maxEntries = 4)
+        val first = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 1), 1)!!
+        val samePassage = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 2), 1)!!
+
+        assertTrue(first.fingerprint != samePassage.fingerprint)
+        assertEquals(first.overlapKey, samePassage.overlapKey)
+        assertTrue(registry.upsert(first))
+        assertFalse(registry.upsert(samePassage))
+        assertEquals(1L, registry.currentRevision())
+        assertEquals(listOf(first.fingerprint), registry.snapshot().map { it.fingerprint })
+    }
+
+    @Test
+    fun `registry revises only new physical passages and remains bounded`() {
         val registry = NativeLearningAnchorRegistry(maxEntries = 2)
-        val a = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 1), 1)!!
-        val b = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 2), 1)!!
-        val c = NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 3), 1)!!
+        val a = NativeLearningAnchor.fromMaturityEvent(passageEvent(1, 110L, 118L), 1)!!
+        val b = NativeLearningAnchor.fromMaturityEvent(passageEvent(2, 120L, 128L), 1)!!
+        val c = NativeLearningAnchor.fromMaturityEvent(passageEvent(3, 130L, 138L), 1)!!
 
         assertTrue(registry.upsert(a))
         assertEquals(1L, registry.currentRevision())
@@ -71,16 +85,24 @@ class NativeLearningAnchorTest {
     @Test
     fun `restored registry continues persisted scientific revision`() {
         val first = NativeLearningAnchorRegistry(maxEntries = 4)
-        first.upsert(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 1), 4)!!)
-        first.upsert(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 2), 4)!!)
+        first.upsert(NativeLearningAnchor.fromMaturityEvent(passageEvent(1, 110L, 118L), 4)!!)
+        first.upsert(NativeLearningAnchor.fromMaturityEvent(passageEvent(2, 120L, 128L), 4)!!)
         val restored = NativeLearningAnchorRegistry(maxEntries = 4)
         restored.replaceAll(first.snapshot().map { NativeLearningAnchor.fromJson(it.toJson())!! })
 
         assertEquals(2L, restored.currentRevision())
-        restored.upsert(NativeLearningAnchor.fromMaturityEvent(baseEvent().put("bandIndex", 3), 4)!!)
+        restored.upsert(NativeLearningAnchor.fromMaturityEvent(passageEvent(3, 130L, 138L), 4)!!)
         assertEquals(3L, restored.currentRevision())
         assertEquals(3L, restored.snapshot().last().scientificRevision)
     }
+
+    private fun passageEvent(bandIndex: Int, firstSequence: Long, lastSequence: Long): JSONObject =
+        baseEvent()
+            .put("bandIndex", bandIndex)
+            .put("firstTelemetrySequence", firstSequence)
+            .put("lastTelemetrySequence", lastSequence)
+            .put("observedAtElapsedMs", 2000L + firstSequence)
+            .put("correlatedFrameElapsedMs", 1500L + firstSequence)
 
     private fun baseEvent(): JSONObject = JSONObject()
         .put("eventType", "NATIVE_BAND_MATURED")
