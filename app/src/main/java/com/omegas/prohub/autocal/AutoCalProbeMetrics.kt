@@ -2,10 +2,7 @@ package com.omegas.prohub.autocal
 
 /**
  * Medição puramente observacional do probe leve AutoCal.
- *
  * Não agenda I/O, não altera cadência, prioridade ou timeout e não escreve ECU.
- * Apenas acumula custo já observado e resolve, no tick seguinte, o gap real
- * entre o último frame de telemetria antes do probe e o primeiro frame depois.
  */
 class AutoCalProbeMetrics {
     data class Snapshot(
@@ -25,16 +22,9 @@ class AutoCalProbeMetrics {
         val maxTelemetryGapMs: Long?,
         val pendingTelemetryGap: Boolean,
     ) {
-        val informationYield: Double
-            get() = if (cycles <= 0L) 0.0 else materialChanges.toDouble() / cycles.toDouble()
-
-        val averageWallElapsedMs: Double?
-            get() = if (cycles <= 0L) null else wallElapsedMs.toDouble() / cycles.toDouble()
-
-        val lastCostShare: Double?
-            get() = lastCadenceMs
-                ?.takeIf { it > 0L }
-                ?.let { cadence -> lastWallElapsedMs.toDouble() / cadence.toDouble() }
+        val informationYield: Double get() = if (cycles <= 0L) 0.0 else materialChanges.toDouble() / cycles.toDouble()
+        val averageWallElapsedMs: Double? get() = if (cycles <= 0L) null else wallElapsedMs.toDouble() / cycles.toDouble()
+        val lastCostShare: Double? get() = lastCadenceMs?.takeIf { it > 0L }?.let { lastWallElapsedMs.toDouble() / it.toDouble() }
     }
 
     private var cycles = 0L
@@ -74,6 +64,7 @@ class AutoCalProbeMetrics {
         maxTelemetryGapMs = null
         pendingTelemetryBeforeMs = null
         pendingProbeFinishedAtElapsedMs = null
+        AutoCal122ATargetMetrics.updateProbeMetrics(snapshot())
     }
 
     @Synchronized
@@ -86,6 +77,7 @@ class AutoCalProbeMetrics {
         maxTelemetryGapMs = maxOf(maxTelemetryGapMs ?: gap, gap)
         pendingTelemetryBeforeMs = null
         pendingProbeFinishedAtElapsedMs = null
+        AutoCal122ATargetMetrics.updateProbeMetrics(snapshot())
     }
 
     @Synchronized
@@ -101,9 +93,7 @@ class AutoCalProbeMetrics {
     ) {
         val wall = (finishedAtElapsedMs - startedAtElapsedMs).coerceAtLeast(0L)
         if (firstProbeStartedAtElapsedMs <= 0L) firstProbeStartedAtElapsedMs = startedAtElapsedMs
-        if (lastProbeStartedAtElapsedMs > 0L && startedAtElapsedMs >= lastProbeStartedAtElapsedMs) {
-            lastCadenceMs = startedAtElapsedMs - lastProbeStartedAtElapsedMs
-        }
+        if (lastProbeStartedAtElapsedMs > 0L && startedAtElapsedMs >= lastProbeStartedAtElapsedMs) lastCadenceMs = startedAtElapsedMs - lastProbeStartedAtElapsedMs
         lastProbeStartedAtElapsedMs = startedAtElapsedMs
         cycles += 1L
         if (success) successfulCycles += 1L
@@ -116,34 +106,18 @@ class AutoCalProbeMetrics {
         maxWallElapsedMs = maxOf(maxWallElapsedMs, wall)
         pendingTelemetryBeforeMs = lastTelemetryBeforeMs
         pendingProbeFinishedAtElapsedMs = lastTelemetryBeforeMs?.let { finishedAtElapsedMs }
+        AutoCal122ATargetMetrics.updateProbeMetrics(snapshot())
     }
 
-    @Synchronized
-    fun markMaterialChange() {
-        materialChanges += 1L
-    }
+    @Synchronized fun markMaterialChange() { materialChanges += 1L }
 
     @Synchronized
     fun snapshot(): Snapshot {
-        val observationSpan = if (firstProbeStartedAtElapsedMs > 0L && lastProbeStartedAtElapsedMs >= firstProbeStartedAtElapsedMs) {
-            lastProbeStartedAtElapsedMs - firstProbeStartedAtElapsedMs
-        } else 0L
+        val observationSpan = if (firstProbeStartedAtElapsedMs > 0L && lastProbeStartedAtElapsedMs >= firstProbeStartedAtElapsedMs) lastProbeStartedAtElapsedMs - firstProbeStartedAtElapsedMs else 0L
         return Snapshot(
-            cycles = cycles,
-            successfulCycles = successfulCycles,
-            fallbackCycles = fallbackCycles,
-            materialChanges = materialChanges,
-            requestBytes = requestBytes,
-            responseBytes = responseBytes,
-            serialElapsedMs = serialElapsedMs,
-            wallElapsedMs = wallElapsedMs,
-            lastWallElapsedMs = lastWallElapsedMs,
-            maxWallElapsedMs = maxWallElapsedMs,
-            observationSpanMs = observationSpan,
-            lastCadenceMs = lastCadenceMs,
-            lastTelemetryGapMs = lastTelemetryGapMs,
-            maxTelemetryGapMs = maxTelemetryGapMs,
-            pendingTelemetryGap = pendingTelemetryBeforeMs != null,
+            cycles, successfulCycles, fallbackCycles, materialChanges, requestBytes, responseBytes,
+            serialElapsedMs, wallElapsedMs, lastWallElapsedMs, maxWallElapsedMs, observationSpan,
+            lastCadenceMs, lastTelemetryGapMs, maxTelemetryGapMs, pendingTelemetryBeforeMs != null,
         )
     }
 }
