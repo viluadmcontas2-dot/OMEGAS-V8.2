@@ -74,8 +74,9 @@ class G2RuntimeArbiterGate(unittest.TestCase):
         engine = ENGINE.read_text("utf-8")
         self.assertIn("PriorityBlockingQueue<QueuedSerialWork>", engine)
         self.assertIn("plannedWorkSinceLastTelemetry = true", engine)
-        self.assertIn("if (queued.telemetryAfter || queue.none", engine)
-        self.assertIn("pollTelemetry()", engine)
+        queued_block = between(engine, "                val queued = queue.poll()", "        } catch (interrupted: InterruptedException)")
+        self.assertIn("if (queued.telemetryAfter && sessionReady && usb.connected && !stopRequested.get())", queued_block)
+        self.assertIn("continue\n                }\n\n                pollTelemetry()", queued_block)
 
     def test_navigation_and_predictor_are_not_scientific_clocks(self):
         app = APP.read_text("utf-8")
