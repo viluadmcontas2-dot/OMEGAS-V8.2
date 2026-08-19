@@ -19,9 +19,13 @@ Impacto: perda silenciosa de evidência contextual válida, maior tempo até inf
 
 A restauração assíncrona já possuía tratamento diferido para ajuste de calibração confirmado, porém snapshot AutoCal e ajuste não compartilhavam uma fronteira causal única. O lifecycle `RESTORING → READY` tratava telemetria como descartável para ciência durante restore, mas não distinguia eventos materiais raros que precisam sobreviver à janela de inicialização.
 
+A reauditoria posterior mostrou uma segunda causa estrutural: a decisão "esta operação ainda pode ser adiada?" estava espalhada entre caminhos de snapshot, ajuste e término do restore. Isso permitiu estados terminais diferentes receberem tratamentos inconsistentes. O Architecture Challenge classificou o caminho como `REDESIGN`: uma única autoridade de lifecycle deve governar a admissão de toda operação diferida.
+
 ## Por que os testes não detectaram
 
 `DeferredLiveOnlyLearningStoreTest` cobria startup não bloqueante e ajuste de calibração confirmado durante restore, mas não exercitava `importNativeSnapshot()` durante restore. Os testes de `NativeLearningAnchor` validavam importação/deduplicação quando o store científico já estava disponível. Faltava o cruzamento entre lifecycle assíncrono e evento AutoCal.
+
+Também faltavam falsificadores para os estados terminais `FAILED` e `CLOSED`, e para saturação com payload de ajuste não confirmado.
 
 ## Correção
 
@@ -46,6 +50,14 @@ A auditoria seguinte encontrou outra fronteira: após o loader entrar em `LEARNI
 
 A correção 117A.3 torna o estado terminal fail-closed: snapshot AutoCal ou calibration adjustment recebidos após `LEARNING_RESTORE_FAILED` retornam `ok=false`, `deferred=false` e `reasonCode=LEARNING_RESTORE_FAILED`. Nenhuma operação é adicionada à fila. A telemetria continua independente, conforme o contrato existente.
 
+### Follow-up 117A.4 — uma única autoridade de lifecycle para a fila
+
+O Architecture Challenge foi acionado porque o mesmo mecanismo exigiu correções sucessivas. A investigação mostrou uma classe comum de defeito: `FAILED` havia sido tratado, mas `close()` ainda podia deixar `restoreState` como `RESTORING`; chamadas posteriores poderiam voltar a enfileirar operações sem futuro replay e uma interrupção do loader causada pelo próprio fechamento poderia depois reclassificar o lifecycle como `FAILED`.
+
+A correção 117A.4 introduz estado terminal explícito `LEARNING_CLOSED` e centraliza a decisão de admissão em `deferredAdmissionFailureLocked()`. A regra passa a ser única: somente store aberto em `LEARNING_RESTORING` pode aceitar `deferred=true`. `FAILED`, `CLOSED` ou qualquer estado não-restoring recusam material diferido. `close()` limpa a fila, fixa `STATE_CLOSED` e a captura de exception do loader preserva `CLOSED` quando a interrupção foi causada pelo fechamento.
+
+Isso remove a classe de "fila órfã em estado terminal" em vez de adicionar mais uma exceção isolada.
+
 ## Teste de regressão
 
 `DeferredLiveOnlyLearningStoreTest` ganhou cenário concorrente controlado por latch:
@@ -64,7 +76,8 @@ A correção 117A.3 torna o estado terminal fail-closed: snapshot AutoCal ou cal
 
 1. 64 snapshots distintos + ajuste sem confirmação/readback => os 64 snapshots permanecem, adjustment não entra e não há eviction;
 2. 64 snapshots + ajuste manual confirmado/readback => o bound continua 64 e a retirada de um snapshot é explícita;
-3. loader forçado a falhar => snapshot e ajuste confirmado posteriores retornam `deferred=false`, fila permanece vazia e o snapshot rejeitado aparece nas métricas.
+3. loader forçado a falhar => snapshot e ajuste confirmado posteriores retornam `deferred=false`, fila permanece vazia e o snapshot rejeitado aparece nas métricas;
+4. `close()` durante restore => snapshot e ajuste posteriores retornam `LEARNING_CLOSED`, fila permanece vazia e o lifecycle não regressa para `FAILED` depois da interrupção do loader.
 
 A política de fila também foi exercitada em harness Kotlin efêmero com resultado `OWNER_117A_DEFERRED_QUEUE_MODEL=PASS`. Esse harness prova a política causal/bounded isolada; não substitui execução do teste Android/JVM completo.
 
@@ -77,6 +90,8 @@ A política de fila também foi exercitada em harness Kotlin efêmero com result
 - Falsificadores de saturação/confirmação: commit `cc7b202d5663aac954a825047c4b08355e4f802f`.
 - Follow-up 117A.3 fail-closed após restore failure: commit `e590d2aeb52c34b0159dc67e7bf64dd7eddd70d2`.
 - Falsificador de restore terminal: commit `b507686559b871fd574ce24ca74ca39bde1f64a7`.
+- Falsificador de lifecycle CLOSED: commit `7baaf597aad74cef0ca42cdcaecf7f5706b6fef1`.
+- Redesign de admissão/lifecycle: commit `709cde7666bc2d1d92e4f96a59d1bbcc31e2b310`.
 - Harness efêmero: `OWNER_117A_DEFERRED_QUEUE_MODEL=PASS`.
 
 ## Risco residual
