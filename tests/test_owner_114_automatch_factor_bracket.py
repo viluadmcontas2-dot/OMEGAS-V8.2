@@ -29,7 +29,7 @@ class Owner114AutoMatchFactorBracket(unittest.TestCase):
             """), encoding="utf-8")
             jar = tmp / "owner114.jar"
             subprocess.run(
-                ["/root/.sdkman/candidates/kotlin/current/bin/kotlinc", str(BRACKET), str(main), "-include-runtime", "-d", str(jar)],
+                ["kotlinc", str(BRACKET), str(main), "-include-runtime", "-d", str(jar)],
                 check=True, capture_output=True, text=True, timeout=30,
             )
             result = subprocess.run(["java", "-jar", str(jar)], check=True, capture_output=True, text=True, timeout=10)
