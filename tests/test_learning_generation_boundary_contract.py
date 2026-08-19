@@ -7,18 +7,20 @@ BUFFER = ROOT / "app/src/main/java/com/omegas/prohub/util/RealtimeLearningBuffer
 
 
 class LearningGenerationBoundaryContract(unittest.TestCase):
-    def test_new_session_generation_is_switched_inside_same_lock_used_by_ingest(self):
+    def test_new_session_generation_is_switched_before_learning_and_canonical_publish(self):
         source = RUNTIME.read_text("utf-8")
         begin = source.index("fun beginUsbSession(sessionId: Long)")
         block = source.index("val learningState = synchronized(learningSessionLock)", begin)
         session = source.index("currentUsbSessionId = sessionId", block)
         generation = source.index("learningPipeline.beginGeneration(sessionId)", block)
         start = source.index("learning.startSession()", block)
-        block_end = source.index("latestCanonicalEvidence.beginGeneration(sessionId)", start)
+        canonical = source.index("latestCanonicalEvidence.beginGeneration(sessionId)", start)
+        publish = source.index("publishLearningState(0L, learningState)", canonical)
         self.assertLess(block, session)
         self.assertLess(session, generation)
         self.assertLess(generation, start)
-        self.assertLess(start, block_end)
+        self.assertLess(start, canonical)
+        self.assertLess(canonical, publish)
 
     def test_old_task_checks_generation_before_and_inside_learning_lock(self):
         source = RUNTIME.read_text("utf-8")
