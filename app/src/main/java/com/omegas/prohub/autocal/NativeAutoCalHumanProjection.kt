@@ -1,6 +1,8 @@
 package com.omegas.prohub.autocal
 
 import com.omegas.prohub.ecu.AutoCalScale
+import org.json.JSONArray
+import org.json.JSONObject
 
 /** Projeção humana read-only do AutoCal; não contém matemática de calibração nem writer. */
 object NativeAutoCalHumanProjection {
@@ -21,7 +23,17 @@ object NativeAutoCalHumanProjection {
         val maturity: NativeAutoCalProgression.ZoneState,
         val positioned: Boolean,
         val correlatedAnchor: Boolean,
-    )
+    ) {
+        fun toJson(): JSONObject = JSONObject()
+            .put("fuel", fuel.name)
+            .put("bandIndex", bandIndex)
+            .put("zone", zone)
+            .put("tPetrolMs", tPetrolMs ?: JSONObject.NULL)
+            .put("mapBar", mapBar ?: JSONObject.NULL)
+            .put("maturity", maturity.name)
+            .put("positioned", positioned)
+            .put("correlatedAnchor", correlatedAnchor)
+    }
 
     data class Projection(
         val state: HumanState,
@@ -32,7 +44,23 @@ object NativeAutoCalHumanProjection {
         val reference30Keys: List<String>,
         val reference30Role: String = "SEPARATE_CURVE_REFERENCE_OVERLAY_ONLY",
         val curveKSeparateSurface: Boolean = true,
-    )
+    ) {
+        fun toJson(): JSONObject = JSONObject()
+            .put("state", state.name)
+            .put("message", message)
+            .put("xAxis", xAxis)
+            .put("yAxis", yAxis)
+            .put("acquisitionBandCount", NativeAutoCalProgression.ACQUISITION_BANDS)
+            .put("zoneCount", NativeAutoCalProgression.ZONES)
+            .put("referencePointCount", NativeAutoCalProgression.REFERENCE_POINTS)
+            .put("acquisitionPoints", JSONArray(acquisitionPoints.map { it.toJson() }))
+            .put("reference30Keys", JSONArray(reference30Keys))
+            .put("reference30Role", reference30Role)
+            .put("curveKSeparateSurface", curveKSeparateSurface)
+            .put("scientificAuthority", "KOTLIN_NATIVE_AUTOCAL_HUMAN_PROJECTION")
+            .put("uiMayDeriveMaturity", false)
+            .put("uiMayDerivePhysicalCoordinates", false)
+    }
 
     fun project(
         snapshot: NativeAutoCalProgression.Snapshot,
