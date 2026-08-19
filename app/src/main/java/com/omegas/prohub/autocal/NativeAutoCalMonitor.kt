@@ -10,6 +10,7 @@ import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.NativeAutoCalAnchorCorrelator
+import com.omegas.prohub.usb.UsbProtocolReply
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -42,6 +43,7 @@ class NativeAutoCalMonitor(
     private val lock = Any()
     private val maturityTracker = NativeAutoCalMaturityTracker()
     private val calibrationBootstrapReader = CompositeCalibrationReader(serial)
+    private val probeMetrics = AutoCalProbeMetrics()
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
@@ -60,6 +62,7 @@ class NativeAutoCalMonitor(
     private var pendingMaturity = emptyList<PendingMaturity>()
 
     fun beginUsbSession(newSessionId: Long) {
+        probeMetrics.reset()
         synchronized(lock) {
             sessionId = newSessionId
             sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
@@ -85,6 +88,7 @@ class NativeAutoCalMonitor(
     }
 
     fun endUsbSession() {
+        probeMetrics.reset()
         synchronized(lock) {
             sessionId = 0L
             sessionStartedAtElapsedMs = 0L
@@ -151,6 +155,8 @@ class NativeAutoCalMonitor(
         if (currentSession != sessionId) beginUsbSession(currentSession)
         if (calibrationBusy()) return
 
+        resolvePendingTelemetryGap()
+
         val startedAt = synchronized(lock) { sessionStartedAtElapsedMs }
         val ageMs = if (startedAt > 0L) (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L) else Long.MAX_VALUE
         if (ageMs < SESSION_SETTLE_MS) {
@@ -206,6 +212,7 @@ class NativeAutoCalMonitor(
             previousProbe.autoMatchCount != probe.autoMatchCount ||
                 previousProbe.nativeFlag13 != probe.nativeFlag13
         )
+        if (probeChanged) probeMetrics.markMaterialChange()
 
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
@@ -259,6 +266,7 @@ class NativeAutoCalMonitor(
             .put("calibrationBootstrapAttempted", calibrationBootstrapAttempted)
             .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
             .put("calibrationFingerprint", calibrationIdentity?.functionFingerprint ?: JSONObject.NULL)
+            .put("probeMetrics", probeMetricsJson())
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
     }
@@ -266,31 +274,64 @@ class NativeAutoCalMonitor(
     fun latestSnapshotJson(): JSONObject = synchronized(lock) { JSONObject(latestSnapshot.toString()) }
 
     private fun probe(expectedSessionId: Long): AutoCalProtocol.NativeStatus? {
+        val cycleStarted = SystemClock.elapsedRealtime()
+        val telemetryBefore = latestTelemetryElapsedMs(cycleStarted)
+        var requestBytes = 0
+        var responseBytes = 0
+        var serialElapsedMs = 0L
+
+        val compactRequest = AutoCalProtocol.CMD_NATIVE_STATUS
+        requestBytes += compactRequest.size
         val compact = serial.transaction(
-            request = AutoCalProtocol.CMD_NATIVE_STATUS,
+            request = compactRequest,
             reason = "AutoCal status leve",
             timeoutMs = 700,
             purgeBefore = false,
             expectedSessionId = expectedSessionId,
             workClass = Mp48WorkClass.READ_ONLY,
         )
+        responseBytes += responseByteCount(compact)
+        serialElapsedMs += compact.elapsedMs.coerceAtLeast(0L)
         if (compact.ok) {
             try {
-                return AutoCalProtocol.decodeNativeStatus(compact.status, compact.payload)
+                val decoded = AutoCalProtocol.decodeNativeStatus(compact.status, compact.payload)
+                recordProbeCycle(
+                    cycleStarted = cycleStarted,
+                    requestBytes = requestBytes,
+                    responseBytes = responseBytes,
+                    serialElapsedMs = serialElapsedMs,
+                    success = true,
+                    fallbackUsed = false,
+                    telemetryBefore = telemetryBefore,
+                )
+                return decoded
             } catch (_: Exception) {
                 // Fallback abaixo: não atribuir semântica a payload divergente.
             }
         }
 
+        val explicitRequest = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)
+        requestBytes += explicitRequest.size
         val explicit = serial.transaction(
-            request = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
+            request = explicitRequest,
             reason = "AutoCal fallback contador 0x0174",
             timeoutMs = 900,
             purgeBefore = false,
             expectedSessionId = expectedSessionId,
             workClass = Mp48WorkClass.READ_ONLY,
         )
+        responseBytes += responseByteCount(explicit)
+        serialElapsedMs += explicit.elapsedMs.coerceAtLeast(0L)
         if (!explicit.ok) {
+            recordProbeCycle(
+                cycleStarted = cycleStarted,
+                requestBytes = requestBytes,
+                responseBytes = responseBytes,
+                serialElapsedMs = serialElapsedMs,
+                success = false,
+                fallbackUsed = true,
+                telemetryBefore = telemetryBefore,
+            )
             synchronized(lock) {
                 state = baseState("PROBE_FAILED", explicit.error.ifBlank { "Status AutoCal indisponível" })
                     .put("sessionId", expectedSessionId)
@@ -304,12 +345,31 @@ class NativeAutoCalMonitor(
                 explicit.status,
                 explicit.payload,
             )
-            AutoCalProtocol.NativeStatus(
+            val status = AutoCalProtocol.NativeStatus(
                 nativeFlag13 = -1,
                 autoMatchCount = decoded.rawValues.single(),
                 rawPayload = explicit.payload.copyOf(),
             )
+            recordProbeCycle(
+                cycleStarted = cycleStarted,
+                requestBytes = requestBytes,
+                responseBytes = responseBytes,
+                serialElapsedMs = serialElapsedMs,
+                success = true,
+                fallbackUsed = true,
+                telemetryBefore = telemetryBefore,
+            )
+            status
         } catch (error: Exception) {
+            recordProbeCycle(
+                cycleStarted = cycleStarted,
+                requestBytes = requestBytes,
+                responseBytes = responseBytes,
+                serialElapsedMs = serialElapsedMs,
+                success = false,
+                fallbackUsed = true,
+                telemetryBefore = telemetryBefore,
+            )
             synchronized(lock) {
                 state = baseState("PROBE_FAILED", error.message ?: "Fallback AutoCal inválido")
                     .put("sessionId", expectedSessionId)
@@ -519,6 +579,68 @@ class NativeAutoCalMonitor(
         onStateChanged()
     }
 
+    private fun resolvePendingTelemetryGap() {
+        val now = SystemClock.elapsedRealtime()
+        val frames = serial.recentTelemetryFrames(
+            fromElapsedMs = (now - PROBE_METRICS_WINDOW_MS).coerceAtLeast(0L),
+            toElapsedMs = now,
+        )
+        probeMetrics.resolveTelemetryGap(frames.map { it.elapsedMs })
+    }
+
+    private fun latestTelemetryElapsedMs(now: Long): Long? =
+        serial.recentTelemetryFrames(
+            fromElapsedMs = (now - PROBE_METRICS_WINDOW_MS).coerceAtLeast(0L),
+            toElapsedMs = now,
+        ).lastOrNull()?.elapsedMs
+
+    private fun recordProbeCycle(
+        cycleStarted: Long,
+        requestBytes: Int,
+        responseBytes: Int,
+        serialElapsedMs: Long,
+        success: Boolean,
+        fallbackUsed: Boolean,
+        telemetryBefore: Long?,
+    ) {
+        probeMetrics.recordCycle(
+            startedAtElapsedMs = cycleStarted,
+            finishedAtElapsedMs = SystemClock.elapsedRealtime(),
+            requestBytes = requestBytes,
+            responseBytes = responseBytes,
+            serialElapsedMs = serialElapsedMs,
+            success = success,
+            fallbackUsed = fallbackUsed,
+            lastTelemetryBeforeMs = telemetryBefore,
+        )
+    }
+
+    private fun responseByteCount(reply: UsbProtocolReply): Int =
+        reply.echo.size + reply.rawResponse.size
+
+    private fun probeMetricsJson(): JSONObject = probeMetrics.snapshot().let { metrics ->
+        JSONObject()
+            .put("schema", "autocal-probe-cost-v1")
+            .put("cycles", metrics.cycles)
+            .put("successfulCycles", metrics.successfulCycles)
+            .put("fallbackCycles", metrics.fallbackCycles)
+            .put("materialChanges", metrics.materialChanges)
+            .put("requestBytes", metrics.requestBytes)
+            .put("responseBytes", metrics.responseBytes)
+            .put("serialElapsedMs", metrics.serialElapsedMs)
+            .put("wallElapsedMs", metrics.wallElapsedMs)
+            .put("lastWallElapsedMs", metrics.lastWallElapsedMs)
+            .put("maxWallElapsedMs", metrics.maxWallElapsedMs)
+            .put("lastCadenceMs", metrics.lastCadenceMs ?: JSONObject.NULL)
+            .put("lastTelemetryGapMs", metrics.lastTelemetryGapMs ?: JSONObject.NULL)
+            .put("maxTelemetryGapMs", metrics.maxTelemetryGapMs ?: JSONObject.NULL)
+            .put("pendingTelemetryGap", metrics.pendingTelemetryGap)
+            .put("informationYield", metrics.informationYield)
+            .put("lastCostShare", metrics.lastCostShare ?: JSONObject.NULL)
+            .put("measurementOnly", true)
+            .put("cadenceAuthority", "SERVICE_HEALTH_TICK")
+    }
+
     private fun scalar(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): Int? =
         snapshot.field(field)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
@@ -573,5 +695,6 @@ class NativeAutoCalMonitor(
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
         private const val SESSION_SETTLE_MS = 8_000L
+        private const val PROBE_METRICS_WINDOW_MS = 10_000L
     }
 }
