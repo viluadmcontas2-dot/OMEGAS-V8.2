@@ -9,6 +9,7 @@ REGISTRY = LEARNING / "ScientificConstantRegistry.kt"
 SELECTOR = LEARNING / "PetrolReferenceSelector.kt"
 VISIT_CONFIDENCE = LEARNING / "VisitConfidence.kt"
 MEMORY = LEARNING / "MotorLearningMemory.kt"
+OBJECTIVE = LEARNING / "FuelEquivalenceObjective.kt"
 ROBUST = LEARNING / "BoundedRobustPetrolSummary.kt"
 COVERAGE = LEARNING / "UsefulCoverageMetric.kt"
 EVIDENCE_BUDGET = LEARNING / "LearningEvidenceBudget.kt"
@@ -100,11 +101,12 @@ class ScientificConstantRegistryContract(unittest.TestCase):
 
     def test_memory_decision_literals_found_by_069_are_registered_without_changing_math(self):
         source = MEMORY.read_text("utf-8")
+        objective = OBJECTIVE.read_text("utf-8")
         cases = {
             "memory.PREVIEW_SUGGESTION_GAIN": "1.0 + 0.35 * confidence",
             "memory.PREVIEW_LEGACY_MIN_K": ".coerceIn(50.0, 255.0)",
             "memory.PREVIEW_LEGACY_MAX_K": ".coerceIn(50.0, 255.0)",
-            "memory.LEGACY_MIN_REFERENCE_MS": "petrolTargetMs <= 0.05",
+            "memory.LEGACY_MIN_REFERENCE_MS": "LEGACY_MIN_REFERENCE_MS = 0.05",
             "memory.SUGGESTED_DELTA_GAIN_PERCENT": "medianErrorRatio * 35.0",
             "memory.SUGGESTED_DELTA_LIMIT_PERCENT": ".coerceIn(-5.0, 5.0)",
             "memory.REGION_SAMPLE_QUALITY_FLOOR": "max(0.10, sample.quality)",
@@ -118,6 +120,8 @@ class ScientificConstantRegistryContract(unittest.TestCase):
         for symbol, snippet in cases.items():
             self.assertIn(snippet, source, f"audited memory decision path moved: {symbol}")
             self.assert_symbol(symbol)
+        self.assertIn("minimumReferenceMs = LEGACY_MIN_REFERENCE_MS", source)
+        self.assertIn("referenceMs < minimumReferenceMs", objective)
 
     def test_resource_budgets_that_can_change_retained_evidence_are_registered(self):
         evidence_budget = EVIDENCE_BUDGET.read_text("utf-8")
@@ -151,8 +155,6 @@ class ScientificConstantRegistryContract(unittest.TestCase):
         self.assert_symbol("robust.IQR_LOW_QUANTILE")
         self.assert_symbol("robust.IQR_HIGH_QUANTILE")
         self.assertIn("petrol.isFinite() && petrol > 0.05", coverage)
-        # Same legacy validity floor is explicitly catalogued in the reference selector;
-        # 070/089 own the future denominator/validity authority rather than inventing a second value.
         self.assert_symbol("selector.MIN_VALID_PETROL_MS")
 
     def test_registry_has_required_metadata_no_unknown_instance_and_unique_symbols_api(self):
@@ -165,7 +167,6 @@ class ScientificConstantRegistryContract(unittest.TestCase):
         self.assertIn("CALIBRATED_POLICY", self.registry)
         self.assertIn("LEGACY_BASELINE", self.registry)
         self.assertIn("UNKNOWN", self.registry)
-        # UNKNOWN remains a legal enum/filter state; V2 must not instantiate it as a constant.
         self.assertNotRegex(self.registry, r"classification\s*=\s*ScientificConstantClass\.UNKNOWN")
         self.assertIn("fun duplicateSymbols(): Set<String>", self.registry)
         self.assertIn("fun unknownEntries(): List<ScientificConstant>", self.registry)
