@@ -194,6 +194,13 @@ class DeferredLiveOnlyLearningStore(
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject = synchronized(stateLock) {
         delegate?.let { return@synchronized decorateReady(it.onCalibrationAdjustment(payload)) }
 
+        if (!isConfirmedCalibrationAdjustment(payload)) {
+            return@synchronized unavailable("calibration_adjustment", payload.optString("adjustmentId"))
+                .put("deferred", false)
+                .put("reasonCode", "UNCONFIRMED_CALIBRATION_UPDATE")
+                .put("resetPerformed", false)
+        }
+
         ensureCapacityForCalibrationAdjustmentLocked()
         deferredOperations.addLast(DeferredOperation.CalibrationAdjustment(JSONObject(payload.toString())))
         deferredCalibrationAdjustments += 1L
@@ -236,8 +243,17 @@ class DeferredLiveOnlyLearningStore(
                 is DeferredOperation.NativeSnapshot -> {
                     deferredSnapshotKeys.remove(operation.key)
                     try {
-                        store.importNativeSnapshot(operation.payload)
-                        replayedNativeSnapshots += 1L
+                        val result = store.importNativeSnapshot(operation.payload)
+                        if (result.optBoolean("ok", false)) {
+                            replayedNativeSnapshots += 1L
+                        } else {
+                            failedDeferredOperations += 1L
+                            log.add(
+                                "ERROR",
+                                "LEARNING-RESTORE",
+                                "Snapshot AutoCal pendente foi rejeitado no replay ${operation.key}: ${result.optString("reasonCode", "UNKNOWN_REASON")}",
+                            )
+                        }
                     } catch (error: Exception) {
                         failedDeferredOperations += 1L
                         log.add(
@@ -249,7 +265,15 @@ class DeferredLiveOnlyLearningStore(
                 }
                 is DeferredOperation.CalibrationAdjustment -> {
                     try {
-                        store.onCalibrationAdjustment(operation.payload)
+                        val result = store.onCalibrationAdjustment(operation.payload)
+                        if (!result.optBoolean("ok", false)) {
+                            failedDeferredOperations += 1L
+                            log.add(
+                                "ERROR",
+                                "LEARNING-RESTORE",
+                                "Ajuste de calibração pendente foi rejeitado no replay: ${result.optString("reasonCode", "UNKNOWN_REASON")}",
+                            )
+                        }
                     } catch (error: Exception) {
                         failedDeferredOperations += 1L
                         log.add(
@@ -284,6 +308,16 @@ class DeferredLiveOnlyLearningStore(
             "LEARNING-RESTORE",
             "Fila de ajustes confirmados saturou; ajuste mais antigo foi substituído pelo mais recente para manter boundedness",
         )
+    }
+
+    private fun isConfirmedCalibrationAdjustment(payload: JSONObject): Boolean {
+        val readbackValid = payload.optBoolean("readbackValid", false)
+        val manualConfirmed = payload.optBoolean("humanConfirmed", false) && readbackValid
+        val nativeObserved = payload.optString("source") == "ECU_NATIVE_AUTOCAL" &&
+            payload.optBoolean("ecuNativeObserved", false) &&
+            !payload.optBoolean("appWritePerformed", true) &&
+            readbackValid
+        return manualConfirmed || nativeObserved
     }
 
     private fun nativeSnapshotKey(snapshot: JSONObject): String {
