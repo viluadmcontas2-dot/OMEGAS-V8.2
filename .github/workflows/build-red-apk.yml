@@ -1,11 +1,11 @@
-# One-shot RED build. Ordinary source commits do not retrigger this workflow.
+# Final RED build checkpoint. Source changes after this commit require a new audit/build epoch.
 name: Build OMEGAS V8.0 RED APK
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
-      - hotfix/v8.0-red-performance
+      - work/v8.2-clean
     paths:
       - .github/workflows/build-red-apk.yml
 
@@ -18,8 +18,10 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - name: Checkout exact RED commit
+      - name: Checkout exact RED branch commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -31,6 +33,7 @@ jobs:
         run: |
           echo "RED_BUILD_COMMIT=$(git rev-parse HEAD)"
           echo "RED_BASE=work/v8.2-clean@9cd9a6ac9960b26a752a316667a325b1fe184c75"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
           git status --short
           grep '^distributionUrl=' gradle/wrapper/gradle-wrapper.properties
 
@@ -64,7 +67,7 @@ jobs:
       - name: Upload RED APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OMEGAS-V8.0-RED-debug-${{ github.sha }}
+          name: OMEGAS-V8.0-RED-debug-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             OMEGAS-V8.0-RED-APK-SHA256.txt
