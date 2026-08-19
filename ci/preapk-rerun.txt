@@ -1,2 +1,2 @@
-rerun: 2026-08-19-scientific-constant-equivalence-owner
-reason: verify ScientificConstantRegistry contract after rebinding legacy denominator assertion to FuelEquivalenceObjective and explicit LEGACY_MIN_REFERENCE_MS caller binding; no production source change
+rerun: 2026-08-19-cost-by-class-current-semantics
+reason: verify marginal-information versus confidence separation and per-class cost observability after rebinding stale documentation matcher; no production source change
