@@ -37,12 +37,17 @@ class Owner116EventDrivenSnapshotContract(unittest.TestCase):
     def test_full_snapshot_is_guarded_by_material_request(self):
         source = MONITOR.read_text("utf-8")
         tick = function_body(source, "fun tick()")
-        self.assertIn("val shouldSnapshot = synchronized(lock) { snapshotRequested }", tick)
         self.assertRegex(
             tick,
-            re.compile(r"if \(shouldSnapshot\) \{\s*readFullSnapshot\(currentSession, probe, countIncreased\)", re.S),
+            re.compile(
+                r"if \(synchronized\(lock\) \{ snapshotRequested \}\) \{\s*readFullSnapshot\(currentSession, probe, countIncreased\)",
+                re.S,
+            ),
         )
-        self.assertIn('snapshotReason = "NATIVE_BAND_MATURED"', tick)
+        self.assertIn("snapshotReason = when {", tick)
+        self.assertIn('"NATIVE_PETROL_BAND_MATURED"', tick)
+        self.assertIn('"NATIVE_CNG_BAND_MATURED"', tick)
+        self.assertIn('else -> "NATIVE_BAND_MATURED"', tick)
         self.assertIn('"AUTOMATCH_COUNT_CHANGED"', tick)
         self.assertIn('"NATIVE_STATUS_CHANGED"', tick)
 
