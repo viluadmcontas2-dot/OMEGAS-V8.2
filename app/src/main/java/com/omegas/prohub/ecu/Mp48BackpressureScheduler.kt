@@ -28,6 +28,12 @@ data class Mp48BackpressureMetrics(
     val criticalAdmissionSamples: Long,
     val criticalAdmissionWaitNanos: Long,
     val criticalMaxAdmissionWaitNanos: Long,
+    val readOnlySchedulerDelaySamples: Long,
+    val readOnlySchedulerDelayUpperBoundNanos: Long,
+    val readOnlyMaxSchedulerDelayUpperBoundNanos: Long,
+    val criticalSchedulerDelaySamples: Long,
+    val criticalSchedulerDelayUpperBoundNanos: Long,
+    val criticalMaxSchedulerDelayUpperBoundNanos: Long,
 ) {
     val readOnlyAverageAdmissionWaitMs: Double?
         get() = readOnlyAdmissionSamples.takeIf { it > 0L }
@@ -36,6 +42,14 @@ data class Mp48BackpressureMetrics(
     val criticalAverageAdmissionWaitMs: Double?
         get() = criticalAdmissionSamples.takeIf { it > 0L }
             ?.let { criticalAdmissionWaitNanos.toDouble() / it.toDouble() / 1_000_000.0 }
+
+    val readOnlyAverageSchedulerDelayUpperBoundMs: Double?
+        get() = readOnlySchedulerDelaySamples.takeIf { it > 0L }
+            ?.let { readOnlySchedulerDelayUpperBoundNanos.toDouble() / it.toDouble() / 1_000_000.0 }
+
+    val criticalAverageSchedulerDelayUpperBoundMs: Double?
+        get() = criticalSchedulerDelaySamples.takeIf { it > 0L }
+            ?.let { criticalSchedulerDelayUpperBoundNanos.toDouble() / it.toDouble() / 1_000_000.0 }
 }
 
 /**
@@ -68,6 +82,12 @@ class Mp48BackpressureScheduler(
     private val criticalAdmissionSamples = AtomicLong(0L)
     private val criticalAdmissionWaitNanos = AtomicLong(0L)
     private val criticalMaxAdmissionWaitNanos = AtomicLong(0L)
+    private val readOnlySchedulerDelaySamples = AtomicLong(0L)
+    private val readOnlySchedulerDelayUpperBoundNanos = AtomicLong(0L)
+    private val readOnlyMaxSchedulerDelayUpperBoundNanos = AtomicLong(0L)
+    private val criticalSchedulerDelaySamples = AtomicLong(0L)
+    private val criticalSchedulerDelayUpperBoundNanos = AtomicLong(0L)
+    private val criticalMaxSchedulerDelayUpperBoundNanos = AtomicLong(0L)
 
     override fun isConnected(): Boolean = delegate.isConnected()
     override fun currentSessionId(): Long = delegate.currentSessionId()
@@ -82,7 +102,8 @@ class Mp48BackpressureScheduler(
         telemetryAfter: Boolean,
     ): UsbProtocolReply = withAdmission(workClass, timeoutMs.toLong().coerceAtLeast(1L)) {
         mutationAware(workClass, expectedSessionId, reason) {
-            delegate.transaction(
+            val delegateStartedNs = System.nanoTime()
+            val reply = delegate.transaction(
                 request = request,
                 reason = reason,
                 timeoutMs = timeoutMs,
@@ -91,6 +112,12 @@ class Mp48BackpressureScheduler(
                 workClass = workClass,
                 telemetryAfter = telemetryAfter,
             )
+            recordSchedulerDelayUpperBound(
+                workClass = workClass,
+                delegateElapsedNanos = (System.nanoTime() - delegateStartedNs).coerceAtLeast(0L),
+                serialElapsedMs = reply.elapsedMs,
+            )
+            reply
         }
     }
 
@@ -134,6 +161,12 @@ class Mp48BackpressureScheduler(
         criticalAdmissionSamples = criticalAdmissionSamples.get(),
         criticalAdmissionWaitNanos = criticalAdmissionWaitNanos.get(),
         criticalMaxAdmissionWaitNanos = criticalMaxAdmissionWaitNanos.get(),
+        readOnlySchedulerDelaySamples = readOnlySchedulerDelaySamples.get(),
+        readOnlySchedulerDelayUpperBoundNanos = readOnlySchedulerDelayUpperBoundNanos.get(),
+        readOnlyMaxSchedulerDelayUpperBoundNanos = readOnlyMaxSchedulerDelayUpperBoundNanos.get(),
+        criticalSchedulerDelaySamples = criticalSchedulerDelaySamples.get(),
+        criticalSchedulerDelayUpperBoundNanos = criticalSchedulerDelayUpperBoundNanos.get(),
+        criticalMaxSchedulerDelayUpperBoundNanos = criticalMaxSchedulerDelayUpperBoundNanos.get(),
     )
 
     fun metricsJson(): JSONObject = metricsSnapshot().let { metrics ->
@@ -152,7 +185,30 @@ class Mp48BackpressureScheduler(
             .put("criticalAdmissionSamples", metrics.criticalAdmissionSamples)
             .put("criticalAverageAdmissionWaitMs", metrics.criticalAverageAdmissionWaitMs ?: JSONObject.NULL)
             .put("criticalMaxAdmissionWaitMs", metrics.criticalMaxAdmissionWaitNanos.toDouble() / 1_000_000.0)
+            .put("readOnlySchedulerDelaySamples", metrics.readOnlySchedulerDelaySamples)
+            .put("readOnlyAverageSchedulerDelayUpperBoundMs", metrics.readOnlyAverageSchedulerDelayUpperBoundMs ?: JSONObject.NULL)
+            .put("readOnlyMaxSchedulerDelayUpperBoundMs", metrics.readOnlyMaxSchedulerDelayUpperBoundNanos.toDouble() / 1_000_000.0)
+            .put("criticalSchedulerDelaySamples", metrics.criticalSchedulerDelaySamples)
+            .put("criticalAverageSchedulerDelayUpperBoundMs", metrics.criticalAverageSchedulerDelayUpperBoundMs ?: JSONObject.NULL)
+            .put("criticalMaxSchedulerDelayUpperBoundMs", metrics.criticalMaxSchedulerDelayUpperBoundNanos.toDouble() / 1_000_000.0)
+            .put("schedulerDelaySemantics", "UPPER_BOUND_QUEUE_PLUS_ENGINE_OVERHEAD")
             .put("learningMutation", LearningMutationAuthority.current().toJson())
+    }
+
+    private fun recordSchedulerDelayUpperBound(
+        workClass: Mp48WorkClass,
+        delegateElapsedNanos: Long,
+        serialElapsedMs: Long,
+    ) {
+        val critical = workClass == Mp48WorkClass.MANUAL_WRITE || workClass == Mp48WorkClass.SAFETY
+        val samples = if (critical) criticalSchedulerDelaySamples else readOnlySchedulerDelaySamples
+        val total = if (critical) criticalSchedulerDelayUpperBoundNanos else readOnlySchedulerDelayUpperBoundNanos
+        val maximum = if (critical) criticalMaxSchedulerDelayUpperBoundNanos else readOnlyMaxSchedulerDelayUpperBoundNanos
+        val serialNanos = serialElapsedMs.coerceAtLeast(0L) * 1_000_000L
+        val upperBoundNanos = (delegateElapsedNanos - serialNanos).coerceAtLeast(0L)
+        samples.incrementAndGet()
+        total.addAndGet(upperBoundNanos)
+        maximum.updateAndGet { previous -> maxOf(previous, upperBoundNanos) }
     }
 
     private fun <T> mutationAware(
