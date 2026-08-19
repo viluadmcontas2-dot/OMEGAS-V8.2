@@ -25,9 +25,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var nativeActions: AutoCalNativeActionManager? = null
     private var draft: AutoMatchKFactorDraft? = null
     private var nativeConfirmationPendingId: String? = null
-    private var projectedSnapshotHash = ""
-    private var cachedHumanProjection: JSONObject? = null
-    private var humanProjectionRecomputeCount = 0L
+    private val projectionMemo = AutoCalProjectionMemo()
 
     @JavascriptInterface
     fun getStatus(): String = currentManager()?.statusJson()?.toString() ?: unavailable()
@@ -57,20 +55,17 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         if (!snapshot.optBoolean("available", false)) return snapshot.toString()
         val hash = snapshot.optString("snapshotHash")
         val projection = synchronized(managerLock) {
-            if (hash.isBlank() || hash != projectedSnapshotHash || cachedHumanProjection == null) {
-                cachedHumanProjection = NativeAutoCalSnapshotHumanProjector.project(
+            projectionMemo.resolve(hash) {
+                NativeAutoCalSnapshotHumanProjector.project(
                     snapshot = snapshot,
                     autoMatchRevalidating = snapshot.optString("snapshotReason") == "AUTOMATCH_COUNT_CHANGED",
                 )
-                projectedSnapshotHash = hash
-                humanProjectionRecomputeCount += 1L
             }
-            JSONObject(requireNotNull(cachedHumanProjection).toString())
         }
         snapshot
             .put("humanProjection", projection)
             .put("humanProjectionSnapshotHash", hash)
-            .put("humanProjectionRecomputeCount", humanProjectionRecomputeCount)
+            .put("humanProjectionRecomputeCount", projectionMemo.recomputeCount)
             .toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Projeção AutoCal indisponível")
@@ -302,9 +297,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             managerService = null
             draft = null
             nativeConfirmationPendingId = null
-            projectedSnapshotHash = ""
-            cachedHumanProjection = null
-            humanProjectionRecomputeCount = 0L
+            projectionMemo.clear()
         }
     }
 
@@ -395,9 +388,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeActions = null
             draft = null
             nativeConfirmationPendingId = null
-            projectedSnapshotHash = ""
-            cachedHumanProjection = null
-            humanProjectionRecomputeCount = 0L
+            projectionMemo.clear()
             managerService = service
             return
         }
