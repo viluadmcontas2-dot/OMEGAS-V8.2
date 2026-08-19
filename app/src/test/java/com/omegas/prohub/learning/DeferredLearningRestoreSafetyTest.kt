@@ -140,6 +140,48 @@ class DeferredLearningRestoreSafetyTest {
         store.close()
     }
 
+    @Test
+    fun closedStoreNeverAcceptsDeferredMaterialOperationsOrRegressesToFailed() {
+        val root = temporaryFolder.newFolder("restore-closed")
+        val loaderEntered = CountDownLatch(1)
+        val releaseRestore = CountDownLatch(1)
+        val store = DeferredLiveOnlyLearningStore(root, RingLog()) { runtimeRoot, log ->
+            loaderEntered.countDown()
+            releaseRestore.await(3, TimeUnit.SECONDS)
+            restoreNormally(runtimeRoot, log)
+        }
+
+        assertTrue(loaderEntered.await(1, TimeUnit.SECONDS))
+        store.close()
+        releaseRestore.countDown()
+
+        val snapshot = store.importNativeSnapshot(
+            JSONObject()
+                .put("sessionId", "closed-session")
+                .put("snapshotId", "must-not-defer"),
+        )
+        assertFalse(snapshot.getBoolean("ok"))
+        assertFalse(snapshot.getBoolean("deferred"))
+        assertEquals(DeferredLiveOnlyLearningStore.STATE_CLOSED, snapshot.getString("reasonCode"))
+
+        val adjustment = store.onCalibrationAdjustment(
+            JSONObject()
+                .put("adjustmentId", "confirmed-after-close")
+                .put("humanConfirmed", true)
+                .put("readbackValid", true),
+        )
+        assertFalse(adjustment.getBoolean("ok"))
+        assertFalse(adjustment.getBoolean("deferred"))
+        assertEquals(DeferredLiveOnlyLearningStore.STATE_CLOSED, adjustment.getString("reasonCode"))
+
+        repeat(20) { Thread.sleep(5L) }
+        val status = store.statusJson()
+        assertEquals(DeferredLiveOnlyLearningStore.STATE_CLOSED, status.getString("state"))
+        val restore = status.getJSONObject("restore")
+        assertEquals(0, restore.getInt("pendingDeferredOperations"))
+        assertEquals(0L, restore.getLong("pendingCalibrationAdjustments"))
+    }
+
     private fun restoreNormally(root: File, log: RingLog): DeferredLiveOnlyLearningStore.RestoredLearning {
         val migration = LearningTelemetrySchemaMigration.prepare(root, log)
         val state = File(root, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
