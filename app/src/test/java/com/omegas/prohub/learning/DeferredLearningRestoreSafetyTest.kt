@@ -1,0 +1,112 @@
+package com.omegas.prohub.learning
+
+import com.omegas.prohub.util.RingLog
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+class DeferredLearningRestoreSafetyTest {
+    @get:Rule
+    val temporaryFolder = TemporaryFolder()
+
+    @Test
+    fun unconfirmedAdjustmentCannotEvictDeferredNativeEvidence() {
+        val root = temporaryFolder.newFolder("restore-safety")
+        val releaseRestore = CountDownLatch(1)
+        val loaderEntered = CountDownLatch(1)
+        val store = DeferredLiveOnlyLearningStore(root, RingLog()) { runtimeRoot, log ->
+            loaderEntered.countDown()
+            releaseRestore.await(3, TimeUnit.SECONDS)
+            restoreNormally(runtimeRoot, log)
+        }
+
+        try {
+            assertTrue(loaderEntered.await(1, TimeUnit.SECONDS))
+            repeat(64) { index ->
+                val result = store.importNativeSnapshot(
+                    JSONObject()
+                        .put("sessionId", "session-A")
+                        .put("snapshotId", "snapshot-$index"),
+                )
+                assertTrue(result.getBoolean("deferred"))
+                assertFalse(result.optBoolean("duplicate", false))
+            }
+
+            val rejected = store.onCalibrationAdjustment(
+                JSONObject()
+                    .put("adjustmentId", "not-confirmed")
+                    .put("humanConfirmed", false)
+                    .put("readbackValid", false),
+            )
+
+            assertFalse(rejected.getBoolean("deferred"))
+            assertEquals("UNCONFIRMED_CALIBRATION_UPDATE", rejected.getString("reasonCode"))
+
+            val restore = store.statusJson().getJSONObject("restore")
+            assertEquals(64, restore.getInt("pendingDeferredOperations"))
+            assertEquals(0L, restore.getLong("pendingCalibrationAdjustments"))
+            assertEquals(0L, restore.getLong("rejectedNativeSnapshots"))
+        } finally {
+            store.close()
+            releaseRestore.countDown()
+        }
+    }
+
+    @Test
+    fun confirmedManualAdjustmentStillReceivesSafetyPriorityWhenQueueIsFull() {
+        val root = temporaryFolder.newFolder("restore-confirmed-priority")
+        val releaseRestore = CountDownLatch(1)
+        val loaderEntered = CountDownLatch(1)
+        val store = DeferredLiveOnlyLearningStore(root, RingLog()) { runtimeRoot, log ->
+            loaderEntered.countDown()
+            releaseRestore.await(3, TimeUnit.SECONDS)
+            restoreNormally(runtimeRoot, log)
+        }
+
+        try {
+            assertTrue(loaderEntered.await(1, TimeUnit.SECONDS))
+            repeat(64) { index ->
+                assertTrue(
+                    store.importNativeSnapshot(
+                        JSONObject()
+                            .put("sessionId", "session-B")
+                            .put("snapshotId", "snapshot-$index"),
+                    ).getBoolean("deferred"),
+                )
+            }
+
+            val accepted = store.onCalibrationAdjustment(
+                JSONObject()
+                    .put("adjustmentId", "confirmed-write")
+                    .put("humanConfirmed", true)
+                    .put("readbackValid", true)
+                    .put("newHash", "map-after-write"),
+            )
+
+            assertTrue(accepted.getBoolean("deferred"))
+            val restore = store.statusJson().getJSONObject("restore")
+            assertEquals(64, restore.getInt("pendingDeferredOperations"))
+            assertEquals(1L, restore.getLong("pendingCalibrationAdjustments"))
+            assertEquals(1L, restore.getLong("rejectedNativeSnapshots"))
+        } finally {
+            store.close()
+            releaseRestore.countDown()
+        }
+    }
+
+    private fun restoreNormally(root: File, log: RingLog): DeferredLiveOnlyLearningStore.RestoredLearning {
+        val migration = LearningTelemetrySchemaMigration.prepare(root, log)
+        val state = File(root, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
+        return DeferredLiveOnlyLearningStore.RestoredLearning(
+            migration = migration,
+            store = LiveOnlyLearningStore(state, log),
+        )
+    }
+}
