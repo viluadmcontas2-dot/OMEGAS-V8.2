@@ -81,7 +81,7 @@ def test_scientific_snapshot_persistence_is_material_revision_driven_and_coalesc
     ingest = learning.split(
         "    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject", 1
     )[1].split("\n    fun statusJson()", 1)[0]
-    assert "val result = delegate.ingest(telemetry, prepared)" in ingest
+    assert "delegate.ingest(telemetry, prepared)" in ingest
     assert "if (prepared.learningEligible && prepared.sample != null)" in ingest
     assert "persistenceGate.markMaterialChange()" in ingest
     assert "persistEvidenceState()" in ingest
