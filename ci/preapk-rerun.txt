@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g3b-session-continuity-red
-reason: prove mismatched native maturity session is rejected before production fix
+rerun: 2026-08-19-g3b-session-continuity-red-clean
+reason: verify governance baseline then expose mismatched native maturity session before production fix
