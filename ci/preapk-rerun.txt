@@ -1,2 +1,2 @@
-rerun: 2026-08-19-native-autocal-current-owner-chain
-reason: verify test_native_autocal_contract against DualFuelMaturityObserver -> MaturityEventProjector -> NativeAutoCalEventCorrelator while preserving read-only, session, fail-closed, no-double-vote and no-writer invariants
+rerun: 2026-08-19-native-autocal-tristate-disabled-guard
+reason: verify current NativeAutoCal owner-chain after aligning the stale disabled/no-baseline maturity matcher with the tri-state transition guard; no production source change
