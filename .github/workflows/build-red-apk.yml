@@ -8,11 +8,6 @@ on:
       - hotfix/v8.0-red-performance
     paths:
       - .github/workflows/build-red-apk.yml
-  pull_request:
-    branches:
-      - work/v8.2-clean
-    paths:
-      - .github/workflows/build-red-apk.yml
 
 permissions:
   contents: read
