@@ -14,11 +14,23 @@ class Owner108AutoCalProbeMetricsContract(unittest.TestCase):
     def _compile_and_run(self, main_source: str) -> str:
         with tempfile.TemporaryDirectory(prefix="owner108-probe-") as tmp:
             tmp = Path(tmp)
+            target_metrics = tmp / "AutoCal122ATargetMetrics.kt"
+            target_metrics.write_text(
+                textwrap.dedent(
+                    """
+                    package com.omegas.prohub.autocal
+                    object AutoCal122ATargetMetrics {
+                        fun updateProbeMetrics(metrics: AutoCalProbeMetrics.Snapshot) = Unit
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
             main = tmp / "Main.kt"
             main.write_text(textwrap.dedent(main_source), encoding="utf-8")
             jar = tmp / "owner108.jar"
             subprocess.run(
-                ["kotlinc", str(METRICS), str(POLICY), str(main), "-include-runtime", "-d", str(jar)],
+                ["kotlinc", str(METRICS), str(POLICY), str(target_metrics), str(main), "-include-runtime", "-d", str(jar)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -167,7 +179,9 @@ class Owner108AutoCalProbeMetricsContract(unittest.TestCase):
         self.assertIn("val freshProbe = if (statusProbeDue) probe(currentSession) ?: return else null", monitor)
         self.assertIn("freshProbe != null && previousProbe != null", monitor)
         self.assertIn("if (freshProbe != null) scheduleNextStatusProbe", monitor)
-        self.assertIn("val maturityProbe = if (thresholdsReady) probeMaturityCounters(currentSession) else null", monitor)
+        self.assertIn("val readiness = dualMaturityObserver.readiness()", monitor)
+        self.assertIn("dualMaturityObserver.observe(currentSession)", monitor)
+        self.assertNotIn("probeMaturityCounters(", monitor)
         self.assertIn("probeMetrics.recordCycle(", monitor)
         self.assertIn("probeMetrics.markMaterialChange()", monitor)
         self.assertIn('.put("cadenceAuthority", "COST_INFORMATION_POLICY")', monitor)
