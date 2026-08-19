@@ -47,18 +47,20 @@ class NativeAnchorScienceContract(unittest.TestCase):
             self.assertIn(reason, self.correlator)
         self.assertIn('.put("correlationReason", correlation.reason)', self.monitor)
 
-    def test_anchor_requires_real_correlated_gnv_context(self):
+    def test_anchor_requires_real_correlated_dual_fuel_context_without_second_vote(self):
         self.assertIn('if (event.optString("correlationState") != "CORRELATED") return null', self.anchor)
         self.assertIn('sessionId <= 0L', self.anchor)
-        self.assertIn('fuel != "GNV"', self.anchor)
+        self.assertIn('"PETROL", "GASOLINA" -> "PETROL"', self.anchor)
+        self.assertIn('"GNV", "CNG" -> "GNV"', self.anchor)
         self.assertIn('matchedFrames < 2', self.anchor)
         self.assertIn('correlatedFrameElapsedMs', self.anchor)
         self.assertIn('lagMs', self.anchor)
         self.assertIn('.put("comparisonVote", false)', self.anchor)
+        self.assertIn('.put("effectiveComparisonWeight", effectiveComparisonWeight)', self.anchor)
         self.assertIn('.put("automaticWrite", false)', self.anchor)
 
     def test_new_physical_fingerprint_revises_once_and_persists_through_store(self):
-        self.assertIn('if (anchors.containsKey(anchor.fingerprint)) return false', self.anchor)
+        self.assertIn('if (anchors.containsKey(anchor.fingerprint) || anchor.overlapKey in overlaps) return false', self.anchor)
         self.assertIn('nextRevision += 1L', self.anchor)
         self.assertIn('scientificRevision', self.anchor)
         self.assertIn('nativeLearningAnchors', self.signal)
