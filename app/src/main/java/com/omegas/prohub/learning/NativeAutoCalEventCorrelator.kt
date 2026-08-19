@@ -12,9 +12,12 @@ object NativeAutoCalEventCorrelator {
         val reason: String,
         val sourceFuel: SourceFuel,
         val confidence: Double,
+        val rpmConfidence: Double,
         val rpm: Int?,
         val mapBar: Double?,
         val petrolMs: Double?,
+        val gasMsDiagnostic: Double?,
+        val correlatedFrameElapsedMs: Long?,
         val lagMs: Long?,
         val windowFromElapsedMs: Long,
         val windowToElapsedMs: Long,
@@ -93,14 +96,22 @@ object NativeAutoCalEventCorrelator {
         }.average()
         val confidence = ((petrolFit + mapFit + rpmFit + temporalFit) / 4.0).coerceIn(0.0, 1.0)
         val overlapKey = "$sessionId:${compatible.first().sequence}-${compatible.last().sequence}:${sourceFuel.name}"
+
+        // Early-close não usa N/confidence target arbitrário. Só fecha quando todos
+        // os frames elegíveis da janela pertencem ao mesmo suporte físico já validado.
+        val unambiguousObservedWindow = compatible.size == inWindow.size
+
         return Result(
             state = "CORRELATED",
             reason = "STABLE_NATIVE_EVENT_WINDOW",
             sourceFuel = sourceFuel,
             confidence = confidence,
+            rpmConfidence = rpmFit,
             rpm = best.rpm,
             mapBar = best.mapBar,
             petrolMs = best.petrolMs,
+            gasMsDiagnostic = best.gasMsDiagnostic?.takeIf(Double::isFinite),
+            correlatedFrameElapsedMs = best.elapsedMs,
             lagMs = (observedAtElapsedMs - best.elapsedMs).coerceAtLeast(0L),
             windowFromElapsedMs = windowFromElapsedMs,
             windowToElapsedMs = windowToElapsedMs,
@@ -108,7 +119,7 @@ object NativeAutoCalEventCorrelator {
             lastSequence = compatible.last().sequence,
             matchedFrames = compatible.size,
             overlapKey = overlapKey,
-            canCloseWindowEarly = compatible.size >= 3 && confidence >= 0.90,
+            canCloseWindowEarly = unambiguousObservedWindow,
         )
     }
 
@@ -123,9 +134,12 @@ object NativeAutoCalEventCorrelator {
         reason = reason,
         sourceFuel = sourceFuel,
         confidence = 0.0,
+        rpmConfidence = 0.0,
         rpm = null,
         mapBar = null,
         petrolMs = null,
+        gasMsDiagnostic = null,
+        correlatedFrameElapsedMs = null,
         lagMs = null,
         windowFromElapsedMs = from,
         windowToElapsedMs = to,
