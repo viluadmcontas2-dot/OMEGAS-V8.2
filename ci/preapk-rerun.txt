@@ -1,2 +1,2 @@
-rerun: 2026-08-19-governance-remote-first
-reason: verify stable repository governance test against current remote-first AGENTS contract
+rerun: 2026-08-19-native-anchor-dual-fuel
+reason: verify native anchor science contract against current dual-fuel no-double-vote lineage
