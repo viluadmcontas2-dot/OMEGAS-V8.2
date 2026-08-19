@@ -10,7 +10,7 @@ OBSERVER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalDual
 MONITOR = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt"
 PROJECTOR = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMaturityEventProjector.kt"
 
-KOTLINC = Path("/root/.sdkman/candidates/kotlin/current/bin/kotlinc")
+KOTLINC = "kotlinc"
 
 
 class Owner117TransversalDualFuelRuntime(unittest.TestCase):
@@ -63,7 +63,7 @@ class Owner117TransversalDualFuelRuntime(unittest.TestCase):
                 }
             '''), encoding="utf-8")
             jar = tmp / "correlator.jar"
-            subprocess.run([str(KOTLINC), str(tmp / "NativeAutoCalEventCorrelator.kt"), str(tmp / "Stubs.kt"), str(tmp / "Main.kt"), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
+            subprocess.run([KOTLINC, str(tmp / "NativeAutoCalEventCorrelator.kt"), str(tmp / "Stubs.kt"), str(tmp / "Main.kt"), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
             result = subprocess.run(["java", "-jar", str(jar)], check=True, capture_output=True, text=True, timeout=10)
             self.assertIn("OWNER_117_CORRELATOR_RUNTIME=PASS", result.stdout)
 
