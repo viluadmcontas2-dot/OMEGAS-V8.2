@@ -46,6 +46,12 @@ object NativeAutoCalMaturityEventProjector {
                 policy = policy,
                 sessionId = sessionId,
             )
+            if (correlation.state == "CORRELATED") {
+                AutoCal122ATargetMetrics.markFirstAnchor(
+                    currentSessionId = sessionId,
+                    observedAtElapsedMs = correlation.correlatedFrameElapsedMs ?: transition.observedAtElapsedMs,
+                )
+            }
             result.put(
                 JSONObject()
                     .put("eventType", "NATIVE_BAND_MATURED")
