@@ -16,7 +16,7 @@ class RuntimeTypedStateContract(unittest.TestCase):
             "private val usb: UsbSerialManager",
             "private val log: RingLog",
             "private val onStateChanged: () -> Unit",
-            "private val onTelemetryEvent: (String) -> Unit",
+            "private val onTelemetryEvent: (JSONObject) -> Unit",
             "private val onEngineExited: (Boolean) -> Unit",
         ):
             self.assertIn(token, runtime)
@@ -27,6 +27,7 @@ class RuntimeTypedStateContract(unittest.TestCase):
             "onStateChanged = ::stateChanged",
             "onTelemetryEvent = ::consumeEngineEvent",
             "onEngineExited = ::onEngineExited",
+            "private fun consumeEngineEvent(root: JSONObject)",
         ):
             self.assertIn(token, service)
         self.assertIn("@Volatile var running = false", runtime)
@@ -35,17 +36,23 @@ class RuntimeTypedStateContract(unittest.TestCase):
         self.assertIn("@Volatile var lastError", runtime)
         self.assertNotIn("onError =", runtime)
 
-    def test_typed_latest_state_precedes_legacy_json_projection(self):
+    def test_canonical_latest_state_precedes_all_legacy_json_projection(self):
         runtime = RUNTIME.read_text("utf-8")
-        self.assertIn("LatestOnlyState<RuntimeTelemetryFrame>", runtime)
-        self.assertIn("latestTelemetryState.beginGeneration(sessionId)", runtime)
-        self.assertIn("latestTelemetryState.clear()", runtime)
-        self.assertIn("fun currentTelemetryFrame(): RuntimeTelemetryFrame?", runtime)
-        publish = runtime.index("if (!latestTelemetryState.publish(typedFrame)) return")
-        legacy_json = runtime.index("val live = telemetry.toJson()")
-        science_submit = runtime.index("val accepted = learningPipeline.submit(")
-        self.assertLess(publish, legacy_json)
+        self.assertIn("LatestOnlyState<CanonicalEvidence>", runtime)
+        self.assertIn("latestCanonicalEvidence.beginGeneration(sessionId)", runtime)
+        self.assertIn("latestCanonicalEvidence.clear()", runtime)
+        self.assertIn("fun currentTelemetryFrame(): RuntimeTelemetryFrame? = latestCanonicalEvidence.current()?.frame", runtime)
+        publish = runtime.index("if (!latestCanonicalEvidence.publish(evidence)) return")
+        delivery_submit = runtime.index("telemetryDeliveryPipeline.submit(sequence)", publish)
+        adaptive_submit = runtime.index("adaptiveShadowPipeline.submit(sequence)", publish)
+        science_submit = runtime.index("val accepted = learningPipeline.submit(", publish)
+        compatibility = runtime.index("private fun projectTelemetryCompatibility(", publish)
+        legacy_json = runtime.index("val live = telemetry.toJson()", compatibility)
+        self.assertLess(publish, delivery_submit)
+        self.assertLess(publish, adaptive_submit)
         self.assertLess(publish, science_submit)
+        self.assertLess(science_submit, compatibility)
+        self.assertLess(compatibility, legacy_json)
 
     def test_scientific_pipeline_exposes_bounded_depth_and_evidence_cost(self):
         source = LEARNING.read_text("utf-8")
