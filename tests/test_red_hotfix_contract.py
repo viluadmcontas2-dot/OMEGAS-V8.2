@@ -32,8 +32,9 @@ class RedHotfixContractTest(unittest.TestCase):
             r"tryAcquire\(waitTimeoutMs,\s*TimeUnit\.MILLISECONDS\)",
             "lane crítica precisa bounded wait",
         )
-        for forbidden in ("Executors.", "Thread(", "ArrayDeque", "UsbSerialManager("):
+        for forbidden in ("Executors.", "ArrayDeque", "UsbSerialManager("):
             self.assertNotIn(forbidden, wrapper, f"wrapper não pode criar runtime/transporte: {forbidden}")
+        self.assertNotRegex(wrapper, r"\bThread\s*\(", "wrapper não pode construir thread própria")
 
         self.assertIn("SECONDARY_READ_PENDING_CAPACITY", policy)
         self.assertIn("CRITICAL_SERIAL_RESERVED_CAPACITY", policy)
