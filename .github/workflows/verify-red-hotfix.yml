@@ -1,0 +1,29 @@
+name: Verify OMEGAS V8.0 RED Hotfix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - hotfix/v8.0-red-performance
+    paths:
+      - .github/workflows/verify-red-hotfix.yml
+      - tests/test_red_hotfix_contract.py
+      - app/src/main/java/com/omegas/prohub/ecu/Mp48BackpressureScheduler.kt
+      - app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt
+      - app/src/main/java/com/omegas/prohub/util/RuntimeBackpressurePolicy.kt
+      - app/src/main/java/com/omegas/prohub/service/TelemetryOverlayController.kt
+      - app/src/main/assets/ui/index.html
+      - app/src/main/assets/ui/app.js
+      - app/src/main/assets/ui/screens/dashboard.js
+
+permissions:
+  contents: read
+
+jobs:
+  red-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: RED structural contracts
+        run: python -m unittest tests.test_red_hotfix_contract -v
