@@ -65,9 +65,8 @@ class Owner113AutoMatchCounterEvent(unittest.TestCase):
                 """
             ), encoding="utf-8")
             jar = tmp / "owner113.jar"
-            compiler = "/root/.sdkman/candidates/kotlin/current/bin/kotlinc"
             subprocess.run(
-                [compiler, str(TRACKER), str(main), "-include-runtime", "-d", str(jar)],
+                ["kotlinc", str(TRACKER), str(main), "-include-runtime", "-d", str(jar)],
                 check=True,
                 capture_output=True,
                 text=True,
