@@ -8,6 +8,7 @@ on:
     paths:
       - .github/workflows/verify-red-hotfix.yml
       - tests/test_red_hotfix_contract.py
+      - tests/test_red_backpressure_behavior.py
       - app/src/main/java/com/omegas/prohub/ecu/Mp48BackpressureScheduler.kt
       - app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt
       - app/src/main/java/com/omegas/prohub/util/RuntimeBackpressurePolicy.kt
@@ -21,6 +22,7 @@ on:
     paths:
       - .github/workflows/verify-red-hotfix.yml
       - tests/test_red_hotfix_contract.py
+      - tests/test_red_backpressure_behavior.py
       - app/src/main/java/com/omegas/prohub/ecu/Mp48BackpressureScheduler.kt
       - app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt
       - app/src/main/java/com/omegas/prohub/util/RuntimeBackpressurePolicy.kt
@@ -35,8 +37,20 @@ permissions:
 jobs:
   red-contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: RED structural contracts
         run: python -m unittest tests.test_red_hotfix_contract -v
+      - name: RED backpressure behavior
+        run: python -m unittest tests.test_red_backpressure_behavior -v
+      - name: Existing serial arbiter behavior
+        run: python -m unittest tests.test_mp48_serial_scheduler_behavior -v
+      - name: Checkpoint hot-path contract
+        run: python tests/test_checkpoint_hot_path_contract.py
+      - name: Learning memory budget contract
+        run: python tests/test_learning_memory_budget_contract.py
+      - name: Advisor revision budget contract
+        run: python tests/test_advisor_revision_budget_contract.py
+      - name: Persistent suggestion lifecycle contract
+        run: python -m unittest tests.test_block3_suggestion_ui_contract -v
