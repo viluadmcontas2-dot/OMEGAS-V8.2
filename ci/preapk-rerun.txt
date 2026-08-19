@@ -1,2 +1,2 @@
-rerun: 2026-08-19-mp48-scheduler-behavior-harness-refresh
-reason: verify current engine scheduler behavior after refreshing NativeAnchorTelemetryWindow and Mp48Telemetry test surface
+rerun: 2026-08-19-scientific-persistence-contract-matcher
+reason: verify persistence/backpressure contract after decoupling the ingest assertion from the NativePetrolPriorScope wrapper
