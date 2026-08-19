@@ -152,6 +152,12 @@ class DeferredLiveOnlyLearningStore(
 
     fun importNativeSnapshot(snapshot: JSONObject): JSONObject = synchronized(stateLock) {
         delegate?.let { return@synchronized decorateReady(it.importNativeSnapshot(snapshot)) }
+        if (restoreState == STATE_FAILED) {
+            rejectedNativeSnapshots += 1L
+            return@synchronized unavailable("native_snapshot", snapshot.optString("snapshotId", snapshot.optString("sessionId")))
+                .put("deferred", false)
+                .put("reasonCode", STATE_FAILED)
+        }
 
         val copy = JSONObject(snapshot.toString())
         val key = nativeSnapshotKey(copy)
@@ -193,6 +199,12 @@ class DeferredLiveOnlyLearningStore(
      */
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject = synchronized(stateLock) {
         delegate?.let { return@synchronized decorateReady(it.onCalibrationAdjustment(payload)) }
+        if (restoreState == STATE_FAILED) {
+            return@synchronized unavailable("calibration_adjustment", payload.optString("adjustmentId"))
+                .put("deferred", false)
+                .put("reasonCode", STATE_FAILED)
+                .put("resetPerformed", false)
+        }
 
         if (!isConfirmedCalibrationAdjustment(payload)) {
             return@synchronized unavailable("calibration_adjustment", payload.optString("adjustmentId"))
