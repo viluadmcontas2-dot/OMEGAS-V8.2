@@ -1,2 +1,2 @@
-rerun: 2026-08-19T13:58:00-03:00
-reason: reconciliation audit VIT-140 VIT-141 VIT-142 at current governed HEAD
+rerun: 2026-08-19T14:10:00-03:00
+reason: verify reconciliation fixes for bridge compile and AutoCal hotfix contract
