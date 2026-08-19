@@ -2,7 +2,7 @@
 
 ## Gate obrigatório do agente
 
-Antes de qualquer operação técnica, carregar `@governar-projeto` (referência interna: `$governar-projeto`). Projeto técnico novo ou incompleto exige `@preparar-projeto`; falha de escrita remota chama `@destravar-github`. Resolver skills pelo nome instalado, nunca por caminho `/root/...` ou diretório `skill-*`. Se a skill não estiver exposta, abrir o [Project Governance Guard — Master Checkpoint](https://www.notion.so/3ba8ee52ac5481bfb69bc53a483aad53) e permanecer fail-closed.
+Antes de qualquer operação técnica, carregar `@governar-projeto` (referência interna: `$governar-projeto`). Projeto técnico novo ou incompleto exige `@preparar-projeto`; falha de escrita remota chama `@destravar-github`. Resolver skills pelo nome instalado, nunca por caminho `/root/...` ou diretório `skill-*`. Se a skill não estiver exposta, abrir o [GOVERNANCE ENTRYPOINT — CANONICAL](https://app.notion.com/p/3c18ee52ac548182a850f533dfbc8e84) e permanecer fail-closed. O EntryPoint carrega o **GOVERNANCE KERNEL**, resolve `PROJECT_ID`, registries e authority; `Project Governance Guard` e `Operational Governance` antigos estão SUPERSEDED e nunca são bootstrap.
 
 A sequência de engenharia é obrigatória: `@Codex Engineering Guardrails` → skill oficial direta `code-work` ou `code-verification` → [fallback integral no Notion](https://www.notion.so/3ba8ee52ac548106ad70da67a2621ea5). Antes de repetir operação conhecida, consultar o [Runbook Técnico](https://www.notion.so/f5c5e3d2a12e42feb36d25ebf8b0b7f8).
 
@@ -12,7 +12,7 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 
 ## Fonte de governança, execução e código
 
-- **Notion é o cérebro durável e a governança primária.** Antes de operar, o agente deve ler a governança atual do projeto no Notion, resolver `PROJECT_ID`, Project Registry, Contract Registry, `GLOBAL-LEDGER-001` e a regra global de economia/execução.
+- **Notion é o cérebro durável e a governança primária.** Todo boot passa pelo `GOVERNANCE ENTRYPOINT`, que carrega o `GOVERNANCE KERNEL`, resolve `PROJECT_ID`, Project Registry, Contract Registry, Capability Registry e `GLOBAL-LEDGER-001`.
 - **A autoridade operacional mutável é resolvida pelo Project Registry.** Quando o Registry declarar `EXECUTION_AUTHORITY=LINEAR`, estado operacional, prioridade, fila, owner, blockers e próximo passo ficam no **Linear**; o Notion permanece conhecimento/governança/requisitos/arquitetura/contratos/decisões/evidência e não vira dual writer. Se o Registry declarar outra autoridade, seguir exatamente o binding vigente.
 - **GitHub remoto é a autoridade do source.** Branch ativa e SHA para qualquer claim técnico devem ser reabertos no remoto; nunca inferir `main` ou branch por nome.
 - Aprendizados, decisões duráveis, contratos e evidência consolidada permanecem no Notion; projeções operacionais ficam na autoridade de execução resolvida, sem duplicar authority.
@@ -44,7 +44,8 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 ## TRANSVERSAL PASS/FAIL obrigatório
 
 - Antes de qualquer verdict que possa liberar dependente material, executor **e auditor independente** devem bootar pelo Governance EntryPoint, resolver o `CONTRACT REGISTRY`, carregar `GLOBAL-LEDGER-001`, `docs/contracts/transversal-pass-fail-gate.json` e `docs/contracts/TRANSVERSAL_PASS_FAIL_GATE.md`.
-- O receipt deve conter `COVERAGE_MANIFEST` e classificar **todo contrato ACTIVE/retroativo aplicável** como `APPLIES` ou `NOT_APPLICABLE_WITH_REASON`; a lista mínima OMEGAS inclui Programa Mestre, MASTER TRACE MAP, GS-001, Evidence Lab/Execution Ledger provenance, AL-001, AL-002, AL-003, AL-004, ADP-001 e HW-001 quando aplicável. Lista mínima nunca limita contratos adicionais do Registry.
+- O receipt deve conter `COVERAGE_MANIFEST` e classificar **todo contrato ACTIVE/retroativo aplicável** como `APPLIES` ou `NOT_APPLICABLE_WITH_REASON`. A lista mínima OMEGAS inclui Programa Mestre, MASTER TRACE MAP, GS-001, OME-EVIDENCE-PROVENANCE/Evidence Lab+Execution Ledger, AL-001, AL-002, AL-003, **AL-003A**, AL-004, OME-ADP-001 e HW-001. Lista mínima nunca limita contratos adicionais do Registry.
+- Se o owner tocar superfície humana/visível/interativa, deve resolver e classificar explicitamente `OME-STATE-HUMAN-UI`, `UIUX-CUSTOMROM` e `UIUX-OMEGADEV` ou registrar `NOT_APPLICABLE_WITH_REASON`.
 - Falta de leitura, child/subpage/slice material não enumerado, aplicabilidade não classificada, requirement aplicável sem evidência, helper sem consumidor real, teste apenas string/grep para comportamento executável, benchmark host apresentado como RK3326, Prediction usada como Observation, harness quebrado usado como prova ou **implementador concedendo PASS ao próprio owner** tornam o gate automaticamente não-PASS.
 - Estados adicionais obrigatórios: `STALE_BY_GOVERNANCE` e `STALE_BY_EVIDENCE`. Qualquer PASS histórico sem receipt transversal + auditor independente vira `STALE_BY_GOVERNANCE` até reauditoria no SHA remoto exato.
 - Implementação/migração fecha no máximo em `IMPLEMENTED_AWAITING_AUDIT`; verdict final requer auditoria independente e `META_AUDIT=PASS` sobre a própria cobertura/auditoria. Só `PASS` fresco do **auditor independente**, após o gate transversal completo, libera owner/extensão/gate dependente. Nenhuma urgência, sequência numérica ou CI verde substitui essa regra.
