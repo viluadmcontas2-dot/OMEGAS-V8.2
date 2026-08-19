@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g3b-provenance-green-generation-aligned
-reason: verify G3B same-session provenance plus current learning/canonical generation ordering
+rerun: 2026-08-19-g3b-complete-same-story
+reason: verify provenance admission plus native AutoMatch stale-reconcile continuation in one product path
