@@ -40,6 +40,12 @@ A auditoria posterior encontrou uma segunda falha na primeira correção: o wrap
 
 A correção 117A.2 replica no boundary diferido o mesmo gate já usado pelo `LiveOnlyLearningStore`: somente escrita manual com `humanConfirmed=true` + `readbackValid=true`, ou mudança `ECU_NATIVE_AUTOCAL` observada, sem app-write e com readback válido, pode entrar como `CalibrationAdjustment` prioritário. Payload não confirmado é recusado antes da fila. Replay de snapshot/ajuste que devolva `ok=false` incrementa `failedDeferredOperations` e gera log de erro explícito.
 
+### Follow-up 117A.3 — falha terminal não pode fingir deferred
+
+A auditoria seguinte encontrou outra fronteira: após o loader entrar em `LEARNING_RESTORE_FAILED`, a thread de restore já terminou, mas `delegate` continua nulo. Sem um gate terminal, novas operações ainda podiam ser adicionadas à fila e responder `deferred=true`, embora não existisse mais executor capaz de reproduzi-las.
+
+A correção 117A.3 torna o estado terminal fail-closed: snapshot AutoCal ou calibration adjustment recebidos após `LEARNING_RESTORE_FAILED` retornam `ok=false`, `deferred=false` e `reasonCode=LEARNING_RESTORE_FAILED`. Nenhuma operação é adicionada à fila. A telemetria continua independente, conforme o contrato existente.
+
 ## Teste de regressão
 
 `DeferredLiveOnlyLearningStoreTest` ganhou cenário concorrente controlado por latch:
@@ -54,10 +60,11 @@ A correção 117A.2 replica no boundary diferido o mesmo gate já usado pelo `Li
 8. exige que A seja supersedido pelo ajuste e somente B permaneça como âncora;
 9. exige fila vazia, dois snapshots reproduzidos, uma duplicata e zero falhas de replay.
 
-`DeferredLearningRestoreSafetyTest` acrescenta dois falsificadores para o follow-up 117A.2:
+`DeferredLearningRestoreSafetyTest` acrescenta falsificadores adicionais:
 
-1. enche a fila com 64 snapshots distintos e prova que ajuste sem confirmação/readback é recusado sem expulsar nenhum snapshot;
-2. enche a fila com 64 snapshots e prova que um ajuste manual realmente confirmado recebe prioridade, mantendo o bound em 64 e tornando a retirada de um snapshot explícita nas métricas.
+1. 64 snapshots distintos + ajuste sem confirmação/readback => os 64 snapshots permanecem, adjustment não entra e não há eviction;
+2. 64 snapshots + ajuste manual confirmado/readback => o bound continua 64 e a retirada de um snapshot é explícita;
+3. loader forçado a falhar => snapshot e ajuste confirmado posteriores retornam `deferred=false`, fila permanece vazia e o snapshot rejeitado aparece nas métricas.
 
 A política de fila também foi exercitada em harness Kotlin efêmero com resultado `OWNER_117A_DEFERRED_QUEUE_MODEL=PASS`. Esse harness prova a política causal/bounded isolada; não substitui execução do teste Android/JVM completo.
 
@@ -68,6 +75,8 @@ A política de fila também foi exercitada em harness Kotlin efêmero com result
 - Regressão original versionada: commit `299f97a943650bf92298aa5de7657d66cbe50d50`.
 - Follow-up 117A.2 de produção: commit `fbd589a58ae885bc1c201cd2b41bb868d47630f0`.
 - Falsificadores de saturação/confirmação: commit `cc7b202d5663aac954a825047c4b08355e4f802f`.
+- Follow-up 117A.3 fail-closed após restore failure: commit `e590d2aeb52c34b0159dc67e7bf64dd7eddd70d2`.
+- Falsificador de restore terminal: commit `b507686559b871fd574ce24ca74ca39bde1f64a7`.
 - Harness efêmero: `OWNER_117A_DEFERRED_QUEUE_MODEL=PASS`.
 
 ## Risco residual
