@@ -5,21 +5,19 @@ import com.omegas.prohub.calibration.CalibrationIdentity
 import com.omegas.prohub.calibration.CompositeCalibrationReader
 import com.omegas.prohub.calibration.CompositeCalibrationSnapshot
 import com.omegas.prohub.ecu.AutoCalProtocol
-import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.learning.LearningToleranceSettings
-import com.omegas.prohub.learning.NativeAutoCalAnchorCorrelator
 import com.omegas.prohub.usb.UsbProtocolReply
-import org.json.JSONArray
 import org.json.JSONObject
 
 /**
  * Observa a Auto Calibration nativa sem possuir timer, thread serial ou writer.
  *
  * O serviço chama [tick] em seu health tick já existente. Toda I/O passa pelo
- * scheduler MP48 único. O probe 48 0B acompanha status global; NUM_BUF_UPD_GAS
- * detecta maturidade por banda; snapshot completo só é lido por evento.
+ * scheduler MP48 único. O probe 48 0B acompanha status global; maturidade das
+ * famílias gasolina e GNV é observada pelos contadores nativos de 18 bandas;
+ * snapshot completo só é lido por evento material.
  * AutoMatch continua sendo executado exclusivamente pela ECU.
  */
 class NativeAutoCalMonitor(
@@ -29,19 +27,8 @@ class NativeAutoCalMonitor(
     private val onNativeCalibrationObserved: (JSONObject) -> Unit = {},
     private val onStateChanged: () -> Unit = {},
 ) {
-    private data class PendingMaturity(
-        val transition: NativeAutoCalMaturityTracker.Transition,
-        val counterPayloadHex: String,
-    )
-
-    private data class MaturityProbe(
-        val counters: IntArray,
-        val payloadHex: String,
-        val observedAtElapsedMs: Long,
-    )
-
     private val lock = Any()
-    private val maturityTracker = NativeAutoCalMaturityTracker()
+    private val dualMaturityObserver = NativeAutoCalDualFuelMaturityObserver(serial, SystemClock::elapsedRealtime)
     private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
     private val calibrationBootstrapReader = CompositeCalibrationReader(serial)
     private val probeMetrics = AutoCalProbeMetrics()
@@ -60,14 +47,12 @@ class NativeAutoCalMonitor(
     private var lastMulActHash = ""
     private var snapshotRequested = false
     private var snapshotReason = ""
-    private var gasLowThreshold: Int? = null
-    private var gasNormalThreshold: Int? = null
-    private var autoCalEnabled: Int? = null
-    private var pendingMaturity = emptyList<PendingMaturity>()
+    private var pendingMaturity = emptyList<NativeAutoCalDualFuelMaturityObserver.Event>()
 
     fun beginUsbSession(newSessionId: Long) {
         probeMetrics.reset()
         autoMatchCounterTracker.reset()
+        dualMaturityObserver.reset()
         synchronized(lock) {
             sessionId = newSessionId
             sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
@@ -77,11 +62,7 @@ class NativeAutoCalMonitor(
             latestAutoMatchEvent = null
             nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
-            gasLowThreshold = null
-            gasNormalThreshold = null
-            autoCalEnabled = null
             pendingMaturity = emptyList()
-            maturityTracker.reset()
             // Nunca iniciar uma aquisição pesada só porque a porta acabou de abrir.
             // Primeiro a telemetria precisa provar que a sessão está estável.
             snapshotRequested = false
@@ -97,6 +78,7 @@ class NativeAutoCalMonitor(
     fun endUsbSession() {
         probeMetrics.reset()
         autoMatchCounterTracker.reset()
+        dualMaturityObserver.reset()
         synchronized(lock) {
             sessionId = 0L
             sessionStartedAtElapsedMs = 0L
@@ -106,11 +88,7 @@ class NativeAutoCalMonitor(
             latestAutoMatchEvent = null
             nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
-            gasLowThreshold = null
-            gasNormalThreshold = null
-            autoCalEnabled = null
             pendingMaturity = emptyList()
-            maturityTracker.reset()
             snapshotRequested = false
             snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false)
@@ -237,20 +215,13 @@ class NativeAutoCalMonitor(
         if (probeChanged) probeMetrics.markMaterialChange()
         if (freshProbe != null) scheduleNextStatusProbe(SystemClock.elapsedRealtime())
 
-        val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
-        val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
-        // A cadence adaptativa vale somente para o status compacto. Maturity continua
-        // no health tick existente para não esconder progressão física das bandas.
-        val maturityProbe = if (thresholdsReady) probeMaturityCounters(currentSession) else null
-        val maturityEvents = maturityProbe?.let { observed ->
-            maturityTracker.observe(
-                counters = observed.counters,
-                gasLowThreshold = thresholds.first,
-                gasNormalThreshold = thresholds.second,
-                enabled = true,
-                observedAtElapsedMs = observed.observedAtElapsedMs,
-            ).map { transition -> PendingMaturity(transition, observed.payloadHex) }
-        }.orEmpty()
+        // A cadence adaptativa vale somente para o status compacto. A progressão
+        // das duas famílias continua no health tick existente, pelo mesmo scheduler.
+        val readiness = dualMaturityObserver.readiness()
+        val maturityObservation = if (readiness.petrol || readiness.cng) {
+            dualMaturityObserver.observe(currentSession)
+        } else null
+        val maturityEvents = maturityObservation?.events.orEmpty()
 
         synchronized(lock) {
             if (freshProbe != null) lastProbe = probe
@@ -262,14 +233,20 @@ class NativeAutoCalMonitor(
                 .put("latestAutoMatchEvent", latestAutoMatchEvent?.let { JSONObject(it.toString()) } ?: JSONObject.NULL)
                 .put("fallback", probe.nativeFlag13 < 0)
                 .put("freshStatusProbe", freshProbe != null)
-                .put("thresholdsReady", thresholdsReady)
-                .put("maturityProbe", maturityProbe != null)
+                .put("petrolMaturityReady", readiness.petrol)
+                .put("cngMaturityReady", readiness.cng)
+                .put("petrolMaturityProbe", maturityObservation?.petrolRead == true)
+                .put("cngMaturityProbe", maturityObservation?.cngRead == true)
                 .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
                 .put("calibrationFingerprint", calibrationIdentity?.functionFingerprint ?: JSONObject.NULL)
             if (maturityEvents.isNotEmpty()) {
                 pendingMaturity = maturityEvents
                 snapshotRequested = true
-                snapshotReason = "NATIVE_BAND_MATURED"
+                snapshotReason = when {
+                    maturityEvents.all { it.sourceFuel.name == "PETROL" } -> "NATIVE_PETROL_BAND_MATURED"
+                    maturityEvents.all { it.sourceFuel.name == "CNG" } -> "NATIVE_CNG_BAND_MATURED"
+                    else -> "NATIVE_BAND_MATURED"
+                }
             } else if (probeChanged) {
                 snapshotRequested = true
                 snapshotReason = if (autoMatchEvent != null) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
@@ -408,32 +385,6 @@ class NativeAutoCalMonitor(
         }
     }
 
-    private fun probeMaturityCounters(expectedSessionId: Long): MaturityProbe? {
-        val reply = serial.transaction(
-            request = AutoCalProtocol.read(AutoCalProtocol.NUM_BUF_UPD_GAS),
-            reason = "AutoCal maturidade GNV",
-            timeoutMs = 900,
-            purgeBefore = false,
-            expectedSessionId = expectedSessionId,
-            workClass = Mp48WorkClass.READ_ONLY,
-        )
-        if (!reply.ok) return null
-        return try {
-            val decoded = AutoCalProtocol.decode(
-                AutoCalProtocol.NUM_BUF_UPD_GAS,
-                reply.status,
-                reply.payload,
-            )
-            MaturityProbe(
-                counters = decoded.rawValues.copyOf(),
-                payloadHex = reply.payload.toHex(),
-                observedAtElapsedMs = SystemClock.elapsedRealtime(),
-            )
-        } catch (_: Exception) {
-            null
-        }
-    }
-
     private fun readFullSnapshot(
         expectedSessionId: Long,
         probe: AutoCalProtocol.NativeStatus,
@@ -488,86 +439,44 @@ class NativeAutoCalMonitor(
 
         val acquisition = AutoCalAcquisition.fromSnapshot(decorated)
         val thresholds = acquisition.optJSONObject("thresholds") ?: JSONObject()
-        val newGasLowThreshold = thresholds.nullableInt("gasLow")
-        val newGasNormalThreshold = thresholds.nullableInt("gasNormal")
+        dualMaturityObserver.configure(
+            enabled = enabled == 1,
+            petrolLowThreshold = thresholds.nullableInt("petrolLow"),
+            petrolNormalThreshold = thresholds.nullableInt("petrolNormal"),
+            cngLowThreshold = thresholds.nullableInt("gasLow"),
+            cngNormalThreshold = thresholds.nullableInt("gasNormal"),
+        )
+
         val pending = synchronized(lock) { pendingMaturity.toList() }
-        val maturityEvents = JSONArray()
-        if (enabled == 1) {
-            pending.forEach { pendingEvent ->
-                val transition = pendingEvent.transition
-                val point = acquisition.findCurrentGasPoint(transition.bandIndex)
-                val nativePetrolMs = point?.nullableDouble("timeMs")
-                val nativeMapBar = point?.nullableDouble("mapBar")
-                val frames = serial.recentTelemetryFrames(
-                    fromElapsedMs = transition.previousObservedAtElapsedMs,
-                    toElapsedMs = transition.observedAtElapsedMs,
-                )
-                val correlation = NativeAutoCalAnchorCorrelator.correlate(
-                    frames = frames,
-                    nativePetrolMs = nativePetrolMs,
-                    nativeMapBar = nativeMapBar,
-                    observedAtElapsedMs = transition.observedAtElapsedMs,
-                    policy = LearningToleranceSettings.current,
-                    sessionId = expectedSessionId,
-                )
-                maturityEvents.put(
-                    JSONObject()
-                        .put("eventType", "NATIVE_BAND_MATURED")
-                        .put("source", SOURCE_NATIVE_AUTOCAL)
-                        .put("sessionId", expectedSessionId)
-                        .put("snapshotId", decorated.optString("sessionId"))
-                        .put("snapshotHash", snapshot.snapshotHash)
-                        .put("fuel", "GNV")
-                        .put("bandIndex", transition.bandIndex)
-                        .put("zone", transition.zone)
-                        .put("previousCounter", transition.previousCounter)
-                        .put("counter", transition.counter)
-                        .put("threshold", transition.threshold)
-                        .put("previousObservedAtElapsedMs", transition.previousObservedAtElapsedMs)
-                        .put("observedAtElapsedMs", transition.observedAtElapsedMs)
-                        .put("counterPayloadHex", pendingEvent.counterPayloadHex)
-                        .put("timeRaw", point?.opt("timeRaw") ?: JSONObject.NULL)
-                        .put("timeMs", nativePetrolMs ?: JSONObject.NULL)
-                        .put("mapRaw", point?.opt("mapRaw") ?: JSONObject.NULL)
-                        .put("mapBar", nativeMapBar ?: JSONObject.NULL)
-                        .put("nativeState", point?.optString("state") ?: "VALIDO_POR_CONTADOR")
-                        .put("nativeValidity", true)
-                        .put("correlationState", correlation.state)
-                        .put("correlationReason", correlation.reason)
-                        .put("correlationConfidence", correlation.confidence)
-                        .put("rpmConfidence", correlation.rpmConfidence)
-                        .put("rpm", correlation.rpm ?: JSONObject.NULL)
-                        .put("correlatedMapBar", correlation.mapBar ?: JSONObject.NULL)
-                        .put("correlatedPetrolMs", correlation.petrolMs ?: JSONObject.NULL)
-                        .put("correlatedGasMs", correlation.gasMsDiagnostic ?: JSONObject.NULL)
-                        .put("correlatedFuel", correlation.fuel ?: JSONObject.NULL)
-                        .put("correlatedFrameElapsedMs", correlation.correlatedFrameElapsedMs ?: JSONObject.NULL)
-                        .put("correlationLagMs", correlation.lagMs ?: JSONObject.NULL)
-                        .put("firstTelemetrySequence", correlation.firstSequence ?: JSONObject.NULL)
-                        .put("lastTelemetrySequence", correlation.lastSequence ?: JSONObject.NULL)
-                        .put("matchedTelemetryFrames", correlation.matchedFrames)
-                        .put("rawOnly", correlation.state != "CORRELATED")
-                        .put("appWritePerformed", false)
-                        .put("appAutomaticWrite", false),
-                )
-            }
+        val maturityEvents = if (enabled == 1) {
+            NativeAutoCalMaturityEventProjector.project(
+                pending = pending,
+                acquisition = acquisition,
+                telemetry = serial,
+                policy = LearningToleranceSettings.current,
+                sessionId = expectedSessionId,
+                snapshotId = decorated.optString("sessionId"),
+                snapshotHash = snapshot.snapshotHash,
+            )
+        } else {
+            org.json.JSONArray()
         }
         decorated
             .put("nativeMaturityEvents", maturityEvents)
             .put("nativeMaturityEventCount", maturityEvents.length())
 
-        val currentCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS)
         if (pending.isEmpty() || enabled != 1) {
-            currentCounters?.let { maturityTracker.baseline(it, SystemClock.elapsedRealtime()) }
+            dualMaturityObserver.baseline(
+                petrolCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR),
+                cngCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
+                observedAtElapsedMs = SystemClock.elapsedRealtime(),
+            )
         }
 
         val previousMul = synchronized(lock) { lastMulActHash }
         synchronized(lock) {
             latestSnapshot = decorated
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
-            gasLowThreshold = newGasLowThreshold
-            gasNormalThreshold = newGasNormalThreshold
-            autoCalEnabled = enabled
             pendingMaturity = emptyList()
             snapshotRequested = false
             snapshotReason = ""
@@ -718,26 +627,8 @@ class NativeAutoCalMonitor(
             ?.rawValues
             ?.copyOf()
 
-    private fun JSONObject.findCurrentGasPoint(bandIndex: Int): JSONObject? {
-        val points = optJSONArray("points") ?: return null
-        repeat(points.length()) { index ->
-            val point = points.optJSONObject(index) ?: return@repeat
-            if (point.optString("fuel") == "GNV" && !point.optBoolean("previous", false) &&
-                point.optInt("index", -1) == bandIndex
-            ) return point
-        }
-        return null
-    }
-
     private fun JSONObject.nullableInt(key: String): Int? =
         if (has(key) && !isNull(key)) optInt(key) else null
-
-    private fun JSONObject.nullableDouble(key: String): Double? =
-        if (has(key) && !isNull(key)) optDouble(key).takeIf { it.isFinite() } else null
-
-    private fun ByteArray.toHex(): String = joinToString(separator = "") { byte ->
-        "%02X".format(byte.toInt() and 0xFF)
-    }
 
     private fun mulActRawFromSnapshot(snapshot: JSONObject?): String {
         val fields = snapshot?.optJSONArray("fields") ?: return ""
