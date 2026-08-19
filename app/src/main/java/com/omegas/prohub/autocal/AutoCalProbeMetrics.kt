@@ -17,6 +17,7 @@ class AutoCalProbeMetrics {
         val responseBytes: Long,
         val serialElapsedMs: Long,
         val wallElapsedMs: Long,
+        val lastWallElapsedMs: Long,
         val maxWallElapsedMs: Long,
         val lastCadenceMs: Long?,
         val lastTelemetryGapMs: Long?,
@@ -29,7 +30,7 @@ class AutoCalProbeMetrics {
         val lastCostShare: Double?
             get() = lastCadenceMs
                 ?.takeIf { it > 0L }
-                ?.let { cadence -> wallElapsedMs.takeIf { cycles == 1L }?.toDouble()?.div(cadence.toDouble()) }
+                ?.let { cadence -> lastWallElapsedMs.toDouble() / cadence.toDouble() }
     }
 
     private var cycles = 0L
@@ -40,8 +41,8 @@ class AutoCalProbeMetrics {
     private var responseBytes = 0L
     private var serialElapsedMs = 0L
     private var wallElapsedMs = 0L
+    private var lastWallElapsedMs = 0L
     private var maxWallElapsedMs = 0L
-    private var lastCycleWallElapsedMs = 0L
     private var lastProbeStartedAtElapsedMs = 0L
     private var lastCadenceMs: Long? = null
     private var lastTelemetryGapMs: Long? = null
@@ -59,8 +60,8 @@ class AutoCalProbeMetrics {
         responseBytes = 0L
         serialElapsedMs = 0L
         wallElapsedMs = 0L
+        lastWallElapsedMs = 0L
         maxWallElapsedMs = 0L
-        lastCycleWallElapsedMs = 0L
         lastProbeStartedAtElapsedMs = 0L
         lastCadenceMs = null
         lastTelemetryGapMs = null
@@ -104,7 +105,7 @@ class AutoCalProbeMetrics {
         this.responseBytes += responseBytes.coerceAtLeast(0).toLong()
         this.serialElapsedMs += serialElapsedMs.coerceAtLeast(0L)
         wallElapsedMs += wall
-        lastCycleWallElapsedMs = wall
+        lastWallElapsedMs = wall
         maxWallElapsedMs = maxOf(maxWallElapsedMs, wall)
         pendingTelemetryBeforeMs = lastTelemetryBeforeMs
         pendingProbeFinishedAtElapsedMs = lastTelemetryBeforeMs?.let { finishedAtElapsedMs }
@@ -125,6 +126,7 @@ class AutoCalProbeMetrics {
         responseBytes = responseBytes,
         serialElapsedMs = serialElapsedMs,
         wallElapsedMs = wallElapsedMs,
+        lastWallElapsedMs = lastWallElapsedMs,
         maxWallElapsedMs = maxWallElapsedMs,
         lastCadenceMs = lastCadenceMs,
         lastTelemetryGapMs = lastTelemetryGapMs,
