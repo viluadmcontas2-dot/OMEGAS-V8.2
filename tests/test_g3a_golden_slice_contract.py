@@ -51,7 +51,7 @@ def test_g3a_has_one_equivalence_authority_and_no_invalid_numeric_fallback():
 
     assert "FuelEquivalenceObjective.evaluate(" in memory
     assert "FuelEquivalenceObjective.evaluate(" in reconciler
-    assert "INVALID_REFERENCE_DENOMINATOR" in objective
+    assert "REFERENCE_DENOMINATOR_TOO_SMALL" in objective
     assert "if (!equivalence.valid) return null" in reconciler
     assert "if (petrolTarget <= 0.05) 0.0" not in reconciler
 
