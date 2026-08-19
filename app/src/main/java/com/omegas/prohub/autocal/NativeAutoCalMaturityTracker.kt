@@ -4,8 +4,8 @@ package com.omegas.prohub.autocal
  * Avalia maturidade nativa GNV em três estados explícitos.
  *
  * UNKNOWN significa ausência de evidência suficiente (threshold/shape/counter),
- * nunca FALSE. A primeira leitura válida estabelece baseline sem fabricar
- * transição; leituras posteriores só emitem evento quando cruzam o threshold.
+ * nunca FALSE. A API histórica [observe] continua retornando apenas transições;
+ * o estado científico tri-state é obtido por [assess] ou [latestAssessment].
  */
 class NativeAutoCalMaturityTracker {
     enum class MaturityState {
@@ -54,23 +54,43 @@ class NativeAutoCalMaturityTracker {
 
     private var previousCounters: IntArray? = null
     private var previousObservedAtElapsedMs: Long = 0L
+    private var latest = Assessment.unknown("NO_OBSERVATION")
 
     fun reset() {
         previousCounters = null
         previousObservedAtElapsedMs = 0L
+        latest = Assessment.unknown("NO_OBSERVATION")
     }
+
+    fun latestAssessment(): Assessment = latest
 
     fun baseline(counters: IntArray, observedAtElapsedMs: Long) {
         if (counters.size != EXPECTED_BANDS) {
             previousCounters = null
             previousObservedAtElapsedMs = 0L
+            latest = Assessment.unknown("COUNTER_SHAPE_UNKNOWN")
             return
         }
         previousCounters = counters.copyOf()
         previousObservedAtElapsedMs = observedAtElapsedMs
     }
 
+    /** Compatibilidade: consumidores antigos recebem somente eventos de transição. */
     fun observe(
+        counters: IntArray,
+        gasLowThreshold: Int?,
+        gasNormalThreshold: Int?,
+        enabled: Boolean,
+        observedAtElapsedMs: Long,
+    ): List<Transition> = assess(
+        counters = counters,
+        gasLowThreshold = gasLowThreshold,
+        gasNormalThreshold = gasNormalThreshold,
+        enabled = enabled,
+        observedAtElapsedMs = observedAtElapsedMs,
+    ).transitions
+
+    fun assess(
         counters: IntArray,
         gasLowThreshold: Int?,
         gasNormalThreshold: Int?,
@@ -78,7 +98,7 @@ class NativeAutoCalMaturityTracker {
         observedAtElapsedMs: Long,
     ): Assessment {
         if (counters.size != EXPECTED_BANDS) {
-            return Assessment.unknown("COUNTER_SHAPE_UNKNOWN")
+            return Assessment.unknown("COUNTER_SHAPE_UNKNOWN").also { latest = it }
         }
 
         val normalized = counters.copyOf()
@@ -100,33 +120,34 @@ class NativeAutoCalMaturityTracker {
             "THRESHOLD_UNKNOWN"
         } else null
 
-        if (previous == null || !enabled) {
-            return Assessment(states, emptyList(), unknownReason)
-        }
-
-        val transitions = buildList {
-            repeat(EXPECTED_BANDS) { band ->
-                val threshold = thresholdForBand(band, gasLowThreshold, gasNormalThreshold)
-                    ?.takeIf { it > 0 }
-                    ?: return@repeat
-                val before = previous[band]
-                val after = normalized[band]
-                if (before < threshold && after >= threshold) {
-                    add(
-                        Transition(
-                            bandIndex = band,
-                            zone = zone(band),
-                            previousCounter = before,
-                            counter = after,
-                            threshold = threshold,
-                            previousObservedAtElapsedMs = previousAt,
-                            observedAtElapsedMs = observedAtElapsedMs,
-                        ),
-                    )
+        val transitions = if (previous == null || !enabled) {
+            emptyList()
+        } else {
+            buildList {
+                repeat(EXPECTED_BANDS) { band ->
+                    val threshold = thresholdForBand(band, gasLowThreshold, gasNormalThreshold)
+                        ?.takeIf { it > 0 }
+                        ?: return@repeat
+                    val before = previous[band]
+                    val after = normalized[band]
+                    if (before < threshold && after >= threshold) {
+                        add(
+                            Transition(
+                                bandIndex = band,
+                                zone = zone(band),
+                                previousCounter = before,
+                                counter = after,
+                                threshold = threshold,
+                                previousObservedAtElapsedMs = previousAt,
+                                observedAtElapsedMs = observedAtElapsedMs,
+                            ),
+                        )
+                    }
                 }
             }
         }
-        return Assessment(states, transitions, unknownReason)
+
+        return Assessment(states, transitions, unknownReason).also { latest = it }
     }
 
     private fun thresholdForBand(
