@@ -15,6 +15,19 @@ on:
       - app/src/main/assets/ui/index.html
       - app/src/main/assets/ui/app.js
       - app/src/main/assets/ui/screens/dashboard.js
+  pull_request:
+    branches:
+      - work/v8.2-clean
+    paths:
+      - .github/workflows/verify-red-hotfix.yml
+      - tests/test_red_hotfix_contract.py
+      - app/src/main/java/com/omegas/prohub/ecu/Mp48BackpressureScheduler.kt
+      - app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt
+      - app/src/main/java/com/omegas/prohub/util/RuntimeBackpressurePolicy.kt
+      - app/src/main/java/com/omegas/prohub/service/TelemetryOverlayController.kt
+      - app/src/main/assets/ui/index.html
+      - app/src/main/assets/ui/app.js
+      - app/src/main/assets/ui/screens/dashboard.js
 
 permissions:
   contents: read
