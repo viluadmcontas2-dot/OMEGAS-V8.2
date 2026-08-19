@@ -1,2 +1,2 @@
-rerun: 2026-08-19T14:10:00-03:00
-reason: verify reconciliation fixes for bridge compile and AutoCal hotfix contract
+rerun: 2026-08-19
+reason: verify G2 semantic work-class assertions and NativeLearningAnchor anti-double-count test alignment
