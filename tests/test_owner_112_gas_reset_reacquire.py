@@ -71,7 +71,7 @@ class Owner112GasResetReacquire(unittest.TestCase):
                 """
             ), encoding="utf-8")
             jar = tmp / "owner112.jar"
-            compiler = "/root/.sdkman/candidates/kotlin/current/bin/kotlinc"
+            compiler = "kotlinc"
             subprocess.run(
                 [compiler, str(PROGRESSION), str(PETROL_MEMORY), str(TRACKER), str(main), "-include-runtime", "-d", str(jar)],
                 check=True,
