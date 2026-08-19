@@ -45,7 +45,8 @@ class RedHotfixContractTest(unittest.TestCase):
     def test_internal_webview_float_cannot_boot(self):
         index = read("app/src/main/assets/ui/index.html")
         app = read("app/src/main/assets/ui/app.js")
-        shipped_boot = index + "\n" + app
+        router = read("app/src/main/assets/ui/core/router.js")
+        shipped_boot = index + "\n" + app + "\n" + router
         self.assertNotIn("floating-telemetry.js", shipped_boot)
         self.assertNotIn("FloatingTelemetry(", shipped_boot)
         self.assertNotRegex(shipped_boot, r"new\s+ui\.FloatingTelemetry")
