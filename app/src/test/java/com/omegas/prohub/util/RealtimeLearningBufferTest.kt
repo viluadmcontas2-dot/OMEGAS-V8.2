@@ -87,7 +87,7 @@ class RealtimeLearningBufferTest {
     }
 
     @Test
-    fun overloadKeepsNewestThreePendingEvidenceWindows() {
+    fun overloadKeepsNewestEqualValuePendingEvidenceWindows() {
         val started = CountDownLatch(1)
         val release = CountDownLatch(1)
         val seen = Collections.synchronizedList(mutableListOf<Long>())
@@ -107,7 +107,7 @@ class RealtimeLearningBufferTest {
             assertEquals(3, busy.getInt("pendingImportant"))
             assertTrue(busy.getLong("supersededImportant") >= 90L)
             assertEquals("SESSION_RECORDER", busy.getString("durableBacklog"))
-            assertEquals("SUPERSEDE_OLDEST_OVERLAPPING_PENDING_EVIDENCE", busy.getString("overloadPolicy"))
+            assertEquals("SUPERSEDE_LOWEST_VALUE_PENDING_OR_REJECT_INCOMING", busy.getString("overloadPolicy"))
 
             release.countDown()
             assertTrue(buffer.flush(2_000L))
