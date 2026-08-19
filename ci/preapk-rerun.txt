@@ -1,2 +1,2 @@
-rerun: 2026-08-19-persistence-current-owners
-reason: verify persistence ordering and bounded worker-side recorder contract after rebinding stale structural matchers to current owners; no production source change
+rerun: 2026-08-19-predictor-map-current-geometry
+reason: verify residual-map, protected-row, manual-review, and read-only predictor contract after rebinding geometry matcher to Mp48Protocol/KWriteManager current authority; no production source change
