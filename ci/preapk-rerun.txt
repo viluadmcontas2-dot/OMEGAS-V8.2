@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g2-exact
-reason: verify exact trailing-comma alignment in G2 diagnostic work-class assertion
+rerun: 2026-08-19-g3a-reason-code
+reason: verify G3A invalid-reference reason-code alignment against FuelEquivalenceObjective
