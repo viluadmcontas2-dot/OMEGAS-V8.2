@@ -3,6 +3,7 @@ package com.omegas.prohub.autocal
 import android.os.Debug
 import android.os.Process
 import android.util.Log
+import com.omegas.prohub.ecu.Mp48BackpressureMetrics
 import org.json.JSONObject
 import java.io.File
 
@@ -33,6 +34,14 @@ object AutoCal122ATargetMetrics {
         val maxRssKb: Long?,
         val firstAnchorAtElapsedMs: Long?,
         val timeToFirstAnchorMs: Long?,
+        val serialReadOnlyAccepted: Long?,
+        val serialReadOnlyRejected: Long?,
+        val serialReadOnlyAdmissionSamples: Long?,
+        val serialReadOnlyAverageAdmissionWaitMs: Double?,
+        val serialReadOnlyMaxAdmissionWaitMs: Double?,
+        val serialReadOnlySchedulerDelaySamples: Long?,
+        val serialReadOnlyAverageSchedulerDelayUpperBoundMs: Double?,
+        val serialReadOnlyMaxSchedulerDelayUpperBoundMs: Double?,
     )
 
     private var sessionId = 0L
@@ -46,6 +55,14 @@ object AutoCal122ATargetMetrics {
     private var rssKb: Long? = null
     private var maxRssKb: Long? = null
     private var firstAnchorAtElapsedMs: Long? = null
+    private var serialReadOnlyAccepted: Long? = null
+    private var serialReadOnlyRejected: Long? = null
+    private var serialReadOnlyAdmissionSamples: Long? = null
+    private var serialReadOnlyAverageAdmissionWaitMs: Double? = null
+    private var serialReadOnlyMaxAdmissionWaitMs: Double? = null
+    private var serialReadOnlySchedulerDelaySamples: Long? = null
+    private var serialReadOnlyAverageSchedulerDelayUpperBoundMs: Double? = null
+    private var serialReadOnlyMaxSchedulerDelayUpperBoundMs: Double? = null
 
     @Synchronized
     fun reset() {
@@ -60,6 +77,14 @@ object AutoCal122ATargetMetrics {
         rssKb = null
         maxRssKb = null
         firstAnchorAtElapsedMs = null
+        serialReadOnlyAccepted = null
+        serialReadOnlyRejected = null
+        serialReadOnlyAdmissionSamples = null
+        serialReadOnlyAverageAdmissionWaitMs = null
+        serialReadOnlyMaxAdmissionWaitMs = null
+        serialReadOnlySchedulerDelaySamples = null
+        serialReadOnlyAverageSchedulerDelayUpperBoundMs = null
+        serialReadOnlyMaxSchedulerDelayUpperBoundMs = null
     }
 
     @Synchronized
@@ -71,6 +96,18 @@ object AutoCal122ATargetMetrics {
         startedAtElapsedMs = nowElapsedMs
         sampleProcessLocked(nowElapsedMs, force = true)
         emitLocked("SESSION_START")
+    }
+
+    @Synchronized
+    fun updateSerialMetrics(metrics: Mp48BackpressureMetrics) {
+        serialReadOnlyAccepted = metrics.readOnlyAccepted
+        serialReadOnlyRejected = metrics.readOnlyRejected
+        serialReadOnlyAdmissionSamples = metrics.readOnlyAdmissionSamples
+        serialReadOnlyAverageAdmissionWaitMs = metrics.readOnlyAverageAdmissionWaitMs
+        serialReadOnlyMaxAdmissionWaitMs = metrics.readOnlyMaxAdmissionWaitNanos.toDouble() / 1_000_000.0
+        serialReadOnlySchedulerDelaySamples = metrics.readOnlySchedulerDelaySamples
+        serialReadOnlyAverageSchedulerDelayUpperBoundMs = metrics.readOnlyAverageSchedulerDelayUpperBoundMs
+        serialReadOnlyMaxSchedulerDelayUpperBoundMs = metrics.readOnlyMaxSchedulerDelayUpperBoundNanos.toDouble() / 1_000_000.0
     }
 
     @Synchronized
@@ -113,6 +150,14 @@ object AutoCal122ATargetMetrics {
             maxRssKb = maxRssKb,
             firstAnchorAtElapsedMs = anchor,
             timeToFirstAnchorMs = anchor?.let { (it - startedAtElapsedMs).coerceAtLeast(0L) },
+            serialReadOnlyAccepted = serialReadOnlyAccepted,
+            serialReadOnlyRejected = serialReadOnlyRejected,
+            serialReadOnlyAdmissionSamples = serialReadOnlyAdmissionSamples,
+            serialReadOnlyAverageAdmissionWaitMs = serialReadOnlyAverageAdmissionWaitMs,
+            serialReadOnlyMaxAdmissionWaitMs = serialReadOnlyMaxAdmissionWaitMs,
+            serialReadOnlySchedulerDelaySamples = serialReadOnlySchedulerDelaySamples,
+            serialReadOnlyAverageSchedulerDelayUpperBoundMs = serialReadOnlyAverageSchedulerDelayUpperBoundMs,
+            serialReadOnlyMaxSchedulerDelayUpperBoundMs = serialReadOnlyMaxSchedulerDelayUpperBoundMs,
         )
     }
 
@@ -175,6 +220,15 @@ object AutoCal122ATargetMetrics {
         .put("maxRssKb", maxRssKb ?: JSONObject.NULL)
         .put("firstAnchorAtElapsedMs", firstAnchorAtElapsedMs ?: JSONObject.NULL)
         .put("timeToFirstAnchorMs", timeToFirstAnchorMs ?: JSONObject.NULL)
+        .put("serialReadOnlyAccepted", serialReadOnlyAccepted ?: JSONObject.NULL)
+        .put("serialReadOnlyRejected", serialReadOnlyRejected ?: JSONObject.NULL)
+        .put("serialReadOnlyAdmissionSamples", serialReadOnlyAdmissionSamples ?: JSONObject.NULL)
+        .put("serialReadOnlyAverageAdmissionWaitMs", serialReadOnlyAverageAdmissionWaitMs ?: JSONObject.NULL)
+        .put("serialReadOnlyMaxAdmissionWaitMs", serialReadOnlyMaxAdmissionWaitMs ?: JSONObject.NULL)
+        .put("serialReadOnlySchedulerDelaySamples", serialReadOnlySchedulerDelaySamples ?: JSONObject.NULL)
+        .put("serialReadOnlyAverageSchedulerDelayUpperBoundMs", serialReadOnlyAverageSchedulerDelayUpperBoundMs ?: JSONObject.NULL)
+        .put("serialReadOnlyMaxSchedulerDelayUpperBoundMs", serialReadOnlyMaxSchedulerDelayUpperBoundMs ?: JSONObject.NULL)
+        .put("schedulerDelaySemantics", "UPPER_BOUND_QUEUE_PLUS_ENGINE_OVERHEAD")
         .put("sampleIntervalFloorMs", MIN_SAMPLE_INTERVAL_MS)
         .put("appAutomaticWrite", false)
 }
