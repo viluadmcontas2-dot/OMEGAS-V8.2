@@ -107,9 +107,8 @@ class Owner111PetrolReferencePreservation(unittest.TestCase):
                 """
             ), encoding="utf-8")
             jar = tmp / "owner111.jar"
-            compiler = "/root/.sdkman/candidates/kotlin/current/bin/kotlinc"
             subprocess.run(
-                [compiler, str(PROGRESSION), str(MEMORY), str(main), "-include-runtime", "-d", str(jar)],
+                ["kotlinc", str(PROGRESSION), str(MEMORY), str(main), "-include-runtime", "-d", str(jar)],
                 check=True,
                 capture_output=True,
                 text=True,
