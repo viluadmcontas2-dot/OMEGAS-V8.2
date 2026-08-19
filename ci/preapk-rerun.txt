@@ -1,0 +1,2 @@
+rerun: 2026-08-18T22:20:00-03:00
+reason: verify harness alignment for G2/G3A
