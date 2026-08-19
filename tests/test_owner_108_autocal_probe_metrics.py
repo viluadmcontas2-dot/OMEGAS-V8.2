@@ -38,6 +38,13 @@ class Owner108AutoCalProbeMetricsContract(unittest.TestCase):
                             lastTelemetryBeforeMs = 990L,
                         )
                         check(metrics.snapshot().pendingTelemetryGap)
+
+                        // Falsificador: sem frame posterior ao fim do probe, gap não existe ainda.
+                        metrics.resolveTelemetryGap(listOf(990L, 1_050L))
+                        val unresolved = metrics.snapshot()
+                        check(unresolved.pendingTelemetryGap)
+                        check(unresolved.lastTelemetryGapMs == null)
+
                         metrics.resolveTelemetryGap(listOf(990L, 1_095L, 1_120L))
 
                         metrics.recordCycle(
