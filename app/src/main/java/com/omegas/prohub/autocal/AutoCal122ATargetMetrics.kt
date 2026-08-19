@@ -7,13 +7,7 @@ import com.omegas.prohub.ecu.Mp48BackpressureMetrics
 import org.json.JSONObject
 import java.io.File
 
-/**
- * Receipt observacional do gate 122A para o hardware alvo.
- *
- * Não cria timer, thread, I/O ECU ou decisão científica. O caller apenas oferece
- * oportunidades de amostragem no health tick já existente. A leitura de /proc é
- * limitada por [MIN_SAMPLE_INTERVAL_MS] para não transformar a medição em carga.
- */
+/** Receipt observacional bounded do gate 122A no hardware alvo. */
 object AutoCal122ATargetMetrics {
     private const val TAG = "OMEGAS-122A"
     private const val MIN_SAMPLE_INTERVAL_MS = 10_000L
@@ -42,6 +36,12 @@ object AutoCal122ATargetMetrics {
         val serialReadOnlySchedulerDelaySamples: Long?,
         val serialReadOnlyAverageSchedulerDelayUpperBoundMs: Double?,
         val serialReadOnlyMaxSchedulerDelayUpperBoundMs: Double?,
+        val probeCycles: Long?,
+        val probeSerialElapsedMs: Long?,
+        val probeWallElapsedMs: Long?,
+        val probeLastTelemetryGapMs: Long?,
+        val probeMaxTelemetryGapMs: Long?,
+        val probePendingTelemetryGap: Boolean?,
     )
 
     private var sessionId = 0L
@@ -63,6 +63,12 @@ object AutoCal122ATargetMetrics {
     private var serialReadOnlySchedulerDelaySamples: Long? = null
     private var serialReadOnlyAverageSchedulerDelayUpperBoundMs: Double? = null
     private var serialReadOnlyMaxSchedulerDelayUpperBoundMs: Double? = null
+    private var probeCycles: Long? = null
+    private var probeSerialElapsedMs: Long? = null
+    private var probeWallElapsedMs: Long? = null
+    private var probeLastTelemetryGapMs: Long? = null
+    private var probeMaxTelemetryGapMs: Long? = null
+    private var probePendingTelemetryGap: Boolean? = null
 
     @Synchronized
     fun reset() {
@@ -85,6 +91,12 @@ object AutoCal122ATargetMetrics {
         serialReadOnlySchedulerDelaySamples = null
         serialReadOnlyAverageSchedulerDelayUpperBoundMs = null
         serialReadOnlyMaxSchedulerDelayUpperBoundMs = null
+        probeCycles = null
+        probeSerialElapsedMs = null
+        probeWallElapsedMs = null
+        probeLastTelemetryGapMs = null
+        probeMaxTelemetryGapMs = null
+        probePendingTelemetryGap = null
     }
 
     @Synchronized
@@ -111,6 +123,16 @@ object AutoCal122ATargetMetrics {
     }
 
     @Synchronized
+    fun updateProbeMetrics(metrics: AutoCalProbeMetrics.Snapshot) {
+        probeCycles = metrics.cycles
+        probeSerialElapsedMs = metrics.serialElapsedMs
+        probeWallElapsedMs = metrics.wallElapsedMs
+        probeLastTelemetryGapMs = metrics.lastTelemetryGapMs
+        probeMaxTelemetryGapMs = metrics.maxTelemetryGapMs
+        probePendingTelemetryGap = metrics.pendingTelemetryGap
+    }
+
+    @Synchronized
     fun sampleProcess(nowElapsedMs: Long) {
         if (sessionId <= 0L || startedAtElapsedMs <= 0L) return
         if (lastSampleAtElapsedMs > 0L && nowElapsedMs - lastSampleAtElapsedMs < MIN_SAMPLE_INTERVAL_MS) return
@@ -130,39 +152,24 @@ object AutoCal122ATargetMetrics {
         val cpuStart = cpuStartMs
         val cpuLast = cpuLastMs
         val anchor = firstAnchorAtElapsedMs
-        val span = if (startedAtElapsedMs > 0L && lastSampleAtElapsedMs >= startedAtElapsedMs) {
-            lastSampleAtElapsedMs - startedAtElapsedMs
-        } else 0L
+        val span = if (startedAtElapsedMs > 0L && lastSampleAtElapsedMs >= startedAtElapsedMs) lastSampleAtElapsedMs - startedAtElapsedMs else 0L
         val cpuDelta = if (cpuStart != null && cpuLast != null) (cpuLast - cpuStart).coerceAtLeast(0L) else null
         return Snapshot(
-            sessionId = sessionId,
-            startedAtElapsedMs = startedAtElapsedMs,
-            lastSampleAtElapsedMs = lastSampleAtElapsedMs,
-            observationSpanMs = span,
-            samples = samples,
-            cpuStartMs = cpuStart,
-            cpuLastMs = cpuLast,
-            cpuDeltaMs = cpuDelta,
-            cpuShareOfOneCore = if (cpuDelta != null && span > 0L) cpuDelta.toDouble() / span.toDouble() else null,
-            pssKb = pssKb,
-            maxPssKb = maxPssKb,
-            rssKb = rssKb,
-            maxRssKb = maxRssKb,
-            firstAnchorAtElapsedMs = anchor,
-            timeToFirstAnchorMs = anchor?.let { (it - startedAtElapsedMs).coerceAtLeast(0L) },
-            serialReadOnlyAccepted = serialReadOnlyAccepted,
-            serialReadOnlyRejected = serialReadOnlyRejected,
-            serialReadOnlyAdmissionSamples = serialReadOnlyAdmissionSamples,
-            serialReadOnlyAverageAdmissionWaitMs = serialReadOnlyAverageAdmissionWaitMs,
-            serialReadOnlyMaxAdmissionWaitMs = serialReadOnlyMaxAdmissionWaitMs,
-            serialReadOnlySchedulerDelaySamples = serialReadOnlySchedulerDelaySamples,
-            serialReadOnlyAverageSchedulerDelayUpperBoundMs = serialReadOnlyAverageSchedulerDelayUpperBoundMs,
-            serialReadOnlyMaxSchedulerDelayUpperBoundMs = serialReadOnlyMaxSchedulerDelayUpperBoundMs,
+            sessionId, startedAtElapsedMs, lastSampleAtElapsedMs, span, samples,
+            cpuStart, cpuLast, cpuDelta,
+            if (cpuDelta != null && span > 0L) cpuDelta.toDouble() / span.toDouble() else null,
+            pssKb, maxPssKb, rssKb, maxRssKb, anchor,
+            anchor?.let { (it - startedAtElapsedMs).coerceAtLeast(0L) },
+            serialReadOnlyAccepted, serialReadOnlyRejected, serialReadOnlyAdmissionSamples,
+            serialReadOnlyAverageAdmissionWaitMs, serialReadOnlyMaxAdmissionWaitMs,
+            serialReadOnlySchedulerDelaySamples, serialReadOnlyAverageSchedulerDelayUpperBoundMs,
+            serialReadOnlyMaxSchedulerDelayUpperBoundMs,
+            probeCycles, probeSerialElapsedMs, probeWallElapsedMs, probeLastTelemetryGapMs,
+            probeMaxTelemetryGapMs, probePendingTelemetryGap,
         )
     }
 
-    @Synchronized
-    fun snapshotJson(): JSONObject = snapshot().toJson()
+    @Synchronized fun snapshotJson(): JSONObject = snapshot().toJson()
 
     private fun sampleProcessLocked(nowElapsedMs: Long, force: Boolean) {
         if (!force && lastSampleAtElapsedMs > 0L && nowElapsedMs - lastSampleAtElapsedMs < MIN_SAMPLE_INTERVAL_MS) return
@@ -171,36 +178,20 @@ object AutoCal122ATargetMetrics {
         val rss = readRssKb()
         if (cpuStartMs == null) cpuStartMs = cpu
         cpuLastMs = cpu
-        if (pss != null) {
-            pssKb = pss
-            maxPssKb = maxOf(maxPssKb ?: pss, pss)
-        }
-        if (rss != null) {
-            rssKb = rss
-            maxRssKb = maxOf(maxRssKb ?: rss, rss)
-        }
+        if (pss != null) { pssKb = pss; maxPssKb = maxOf(maxPssKb ?: pss, pss) }
+        if (rss != null) { rssKb = rss; maxRssKb = maxOf(maxRssKb ?: rss, rss) }
         samples += 1L
         lastSampleAtElapsedMs = nowElapsedMs
     }
 
     private fun readRssKb(): Long? = try {
         File("/proc/self/status").useLines { lines ->
-            lines.firstOrNull { it.startsWith("VmRSS:") }
-                ?.trim()
-                ?.split(Regex("\\s+"))
-                ?.getOrNull(1)
-                ?.toLongOrNull()
+            lines.firstOrNull { it.startsWith("VmRSS:") }?.trim()?.split(Regex("\\s+"))?.getOrNull(1)?.toLongOrNull()
         }
-    } catch (_: Throwable) {
-        null
-    }
+    } catch (_: Throwable) { null }
 
     private fun emitLocked(event: String) {
-        try {
-            Log.i(TAG, JSONObject().put("event", event).put("metrics", snapshot().toJson()).toString())
-        } catch (_: Throwable) {
-            // Métrica nunca pode afetar o runtime AutoCal.
-        }
+        try { Log.i(TAG, JSONObject().put("event", event).put("metrics", snapshot().toJson()).toString()) } catch (_: Throwable) {}
     }
 
     private fun Snapshot.toJson(): JSONObject = JSONObject()
@@ -229,6 +220,12 @@ object AutoCal122ATargetMetrics {
         .put("serialReadOnlyAverageSchedulerDelayUpperBoundMs", serialReadOnlyAverageSchedulerDelayUpperBoundMs ?: JSONObject.NULL)
         .put("serialReadOnlyMaxSchedulerDelayUpperBoundMs", serialReadOnlyMaxSchedulerDelayUpperBoundMs ?: JSONObject.NULL)
         .put("schedulerDelaySemantics", "UPPER_BOUND_QUEUE_PLUS_ENGINE_OVERHEAD")
+        .put("probeCycles", probeCycles ?: JSONObject.NULL)
+        .put("probeSerialElapsedMs", probeSerialElapsedMs ?: JSONObject.NULL)
+        .put("probeWallElapsedMs", probeWallElapsedMs ?: JSONObject.NULL)
+        .put("probeLastTelemetryGapMs", probeLastTelemetryGapMs ?: JSONObject.NULL)
+        .put("probeMaxTelemetryGapMs", probeMaxTelemetryGapMs ?: JSONObject.NULL)
+        .put("probePendingTelemetryGap", probePendingTelemetryGap ?: JSONObject.NULL)
         .put("sampleIntervalFloorMs", MIN_SAMPLE_INTERVAL_MS)
         .put("appAutomaticWrite", false)
 }
