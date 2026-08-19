@@ -31,7 +31,7 @@ class Owner120StationaryStateMachine(unittest.TestCase):
                 }
             '''), encoding="utf-8")
             jar = tmp / "owner120.jar"
-            subprocess.run(["/root/.sdkman/candidates/kotlin/current/bin/kotlinc", str(TARGET), str(main), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
+            subprocess.run(["kotlinc", str(TARGET), str(main), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
             result = subprocess.run(["java", "-jar", str(jar)], check=True, capture_output=True, text=True, timeout=10)
             self.assertIn("OWNER_120_STATIONARY_STATE=PASS", result.stdout)
 
