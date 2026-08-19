@@ -9,11 +9,15 @@ on:
       - .github/workflows/verify-red-hotfix.yml
       - tests/test_red_hotfix_contract.py
       - tests/test_red_backpressure_behavior.py
+      - tests/test_red_single_data_pump_contract.py
+      - tests/test_red_learning_confidence_contract.py
       - tests/test_mp48_serial_scheduler_behavior.py
       - tests/test_checkpoint_hot_path_contract.py
       - tests/test_learning_memory_budget_contract.py
       - tests/test_advisor_revision_budget_contract.py
       - tests/test_block3_suggestion_ui_contract.py
+      - app/src/test/java/com/omegas/prohub/learning/**
+      - app/src/test/java/com/omegas/prohub/runtime/**
       - app/src/main/java/com/omegas/prohub/ecu/Mp48BackpressureScheduler.kt
       - app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt
       - app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt
@@ -21,9 +25,14 @@ on:
       - app/src/main/java/com/omegas/prohub/service/TelemetryOverlayController.kt
       - app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt
       - app/src/main/java/com/omegas/prohub/learning/**
+      - app/src/main/java/com/omegas/prohub/runtime/**
+      - app/src/main/java/com/omegas/prohub/web/**
       - app/src/main/java/com/omegas/v7/runtime/V7SessionRuntime.kt
       - app/src/main/assets/ui/index.html
       - app/src/main/assets/ui/app.js
+      - app/src/main/assets/ui/core/native-api.js
+      - app/src/main/assets/ui/screens/predictor.js
+      - app/src/main/assets/ui/components/predictor-current-cell.js
       - app/src/main/assets/ui/screens/dashboard.js
   pull_request:
     branches:
@@ -36,9 +45,14 @@ permissions:
 jobs:
   red-contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Set up JDK 17 for focused V2 regressions
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
       - name: RED structural contracts
         run: python -m unittest tests.test_red_hotfix_contract -v
       - name: RED backpressure behavior
@@ -55,3 +69,11 @@ jobs:
         run: python -m unittest tests.test_block3_suggestion_ui_contract -v
       - name: Broad Python contract suite
         run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Focused RED V2 JVM regressions
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest \
+            --tests 'com.omegas.prohub.learning.AdaptiveSampleWindowTest' \
+            --tests 'com.omegas.prohub.learning.MotorSampleAnalyzerTest' \
+            --tests 'com.omegas.prohub.learning.SciencePublicationGateTest' \
+            --tests 'com.omegas.prohub.runtime.RuntimeSnapshotBusTest'
