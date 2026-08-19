@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TRACKER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoMatchCounterTracker.kt"
+MONITOR = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt"
 
 
 class Owner113AutoMatchCounterEvent(unittest.TestCase):
@@ -80,6 +81,24 @@ class Owner113AutoMatchCounterEvent(unittest.TestCase):
                 timeout=10,
             )
             self.assertIn("OWNER_113_AUTOMATCH_COUNTER=PASS", result.stdout)
+
+    def test_monitor_uses_typed_event_without_extra_io_or_mul_promotion(self):
+        monitor = MONITOR.read_text("utf-8")
+        self.assertIn("private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()", monitor)
+        self.assertIn("autoMatchCounterTracker.reset()", monitor)
+        self.assertIn("val autoMatchEvent = freshProbe?.let", monitor)
+        self.assertIn("autoMatchCounterTracker.observe(", monitor)
+        self.assertIn('snapshotReason = if (autoMatchEvent != null) "AUTOMATCH_COUNT_CHANGED"', monitor)
+        self.assertIn('.put("latestAutoMatchEvent"', monitor)
+        self.assertIn('.put("beforeCount", event.beforeCount)', monitor)
+        self.assertIn('.put("afterCount", event.afterCount)', monitor)
+        self.assertIn('.put("delta", event.delta)', monitor)
+        self.assertIn('.put("mulActChangeConfirmed", event.mulActChangeConfirmed)', monitor)
+        # O owner 113 não adiciona nova leitura: usa o freshProbe que já existia.
+        self.assertEqual(monitor.count("AutoCal status leve"), 1)
+        self.assertEqual(monitor.count("AutoCal fallback contador 0x0174"), 1)
+        self.assertNotIn("MANUAL_WRITE", monitor)
+        self.assertNotIn("ScheduledExecutor", monitor)
 
 
 if __name__ == "__main__":
