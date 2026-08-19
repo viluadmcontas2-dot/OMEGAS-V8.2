@@ -25,6 +25,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var nativeActions: AutoCalNativeActionManager? = null
     private var draft: AutoMatchKFactorDraft? = null
     private var nativeConfirmationPendingId: String? = null
+    private var projectedSnapshotHash = ""
+    private var cachedHumanProjection: JSONObject? = null
+    private var humanProjectionRecomputeCount = 0L
 
     @JavascriptInterface
     fun getStatus(): String = currentManager()?.statusJson()?.toString() ?: unavailable()
@@ -48,7 +51,30 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
+    fun getNativeMonitorSnapshot(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
+        val snapshot = JSONObject(service.nativeAutoCalSnapshotJson())
+        if (!snapshot.optBoolean("available", false)) return snapshot.toString()
+        val hash = snapshot.optString("snapshotHash")
+        val projection = synchronized(managerLock) {
+            if (hash.isBlank() || hash != projectedSnapshotHash || cachedHumanProjection == null) {
+                cachedHumanProjection = NativeAutoCalSnapshotHumanProjector.project(
+                    snapshot = snapshot,
+                    autoMatchRevalidating = snapshot.optString("snapshotReason") == "AUTOMATCH_COUNT_CHANGED",
+                )
+                projectedSnapshotHash = hash
+                humanProjectionRecomputeCount += 1L
+            }
+            JSONObject(requireNotNull(cachedHumanProjection).toString())
+        }
+        snapshot
+            .put("humanProjection", projection)
+            .put("humanProjectionSnapshotHash", hash)
+            .put("humanProjectionRecomputeCount", humanProjectionRecomputeCount)
+            .toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Projeção AutoCal indisponível")
+    }
 
     @JavascriptInterface
     fun importSnapshotIntoLearning(snapshotJson: String): String = try {
@@ -125,7 +151,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 .toString()
         }
     } catch (error: Exception) {
-        localFailure(error.message ?: "Fator inválido")
+        localFailure(error.message ?: "Ponto inválido")
     }
 
     @JavascriptInterface
@@ -276,6 +302,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             managerService = null
             draft = null
             nativeConfirmationPendingId = null
+            projectedSnapshotHash = ""
+            cachedHumanProjection = null
+            humanProjectionRecomputeCount = 0L
         }
     }
 
@@ -366,6 +395,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeActions = null
             draft = null
             nativeConfirmationPendingId = null
+            projectedSnapshotHash = ""
+            cachedHumanProjection = null
+            humanProjectionRecomputeCount = 0L
             managerService = service
             return
         }
