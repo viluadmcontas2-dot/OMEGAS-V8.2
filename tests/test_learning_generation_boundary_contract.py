@@ -14,7 +14,7 @@ class LearningGenerationBoundaryContract(unittest.TestCase):
         session = source.index("currentUsbSessionId = sessionId", block)
         generation = source.index("learningPipeline.beginGeneration(sessionId)", block)
         start = source.index("learning.startSession()", block)
-        block_end = source.index("latestTelemetryState.beginGeneration(sessionId)", start)
+        block_end = source.index("latestCanonicalEvidence.beginGeneration(sessionId)", start)
         self.assertLess(block, session)
         self.assertLess(session, generation)
         self.assertLess(generation, start)
