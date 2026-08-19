@@ -22,12 +22,12 @@ class GoldenSliceG3bSessionContinuityTest {
     @get:Rule val temporary = TemporaryFolder()
 
     @After
-    fun clearCalibrationAuthority() {
-        LearningCalibrationAuthority.clear()
+    fun closePhysicalCalibrationAuthority() {
+        LearningCalibrationAuthority.endPhysicalSession()
     }
 
     @Test
-    fun `same store comparison and native anchor preserve one physical session and epoch`() {
+    fun `same store comparison and native anchor preserve physical identity and learning epoch`() {
         val sessionId = 41L
         activateCalibration(sessionId)
         val store = store()
@@ -46,7 +46,11 @@ class GoldenSliceG3bSessionContinuityTest {
 
             assertEquals(1, imported.getInt("importedNativeAnchors"))
             assertEquals(sessionId, anchor.getLong("sessionId"))
-            assertEquals(comparison.getInt("calibration_generation"), anchor.getInt("calibrationEpoch"))
+            assertEquals(afterNative.getInt("epoch"), anchor.getInt("calibrationEpoch"))
+            assertEquals(comparison.getInt("calibration_generation"), anchor.getInt("calibrationGeneration"))
+            assertEquals(comparison.getString("calibration_fingerprint"), anchor.getString("calibrationFingerprint"))
+            assertEquals(comparison.getString("geometry_fingerprint"), anchor.getString("geometryFingerprint"))
+            assertEquals(comparison.getString("map_hash"), anchor.getString("mapHash"))
             assertFalse(anchor.getBoolean("comparisonVote"))
             assertEquals(0.0, anchor.getDouble("effectiveComparisonWeight"), 0.0)
             assertFalse(anchor.getBoolean("automaticWrite"))
@@ -71,13 +75,31 @@ class GoldenSliceG3bSessionContinuityTest {
             assertEquals(0, imported.getInt("importedNativeAnchors"))
             assertEquals(0, exported.getJSONArray("nativeLearningAnchors").length())
             assertEquals(1, exported.getJSONArray("comparisons").length())
-            assertTrue(exported.getJSONArray("nativeEcuEvidence").length() >= 0)
+            assertTrue(exported.getJSONArray("nativeEcuEvidence").length() > 0)
+        } finally {
+            store.close()
+        }
+    }
+
+    @Test
+    fun `managed physical session without reconciled calibration keeps native maturity diagnostic only`() {
+        LearningCalibrationAuthority.beginPhysicalSession()
+        val store = store()
+        try {
+            store.startSession()
+            val imported = store.importNativeSnapshot(snapshot(41L))
+            val exported = store.export("g3b")
+
+            assertEquals(0, imported.getInt("importedNativeAnchors"))
+            assertEquals(0, exported.getJSONArray("nativeLearningAnchors").length())
+            assertTrue(exported.getJSONArray("nativeEcuEvidence").length() > 0)
         } finally {
             store.close()
         }
     }
 
     private fun activateCalibration(sessionId: Long) {
+        LearningCalibrationAuthority.beginPhysicalSession()
         LearningCalibrationAuthority.publish(
             LearningCalibrationBinding(
                 calibrationFingerprint = "g3b-calibration",
