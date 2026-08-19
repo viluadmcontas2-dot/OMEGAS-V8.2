@@ -25,7 +25,7 @@ A reauditoria posterior mostrou uma segunda causa estrutural: a decisão "esta o
 
 `DeferredLiveOnlyLearningStoreTest` cobria startup não bloqueante e ajuste de calibração confirmado durante restore, mas não exercitava `importNativeSnapshot()` durante restore. Os testes de `NativeLearningAnchor` validavam importação/deduplicação quando o store científico já estava disponível. Faltava o cruzamento entre lifecycle assíncrono e evento AutoCal.
 
-Também faltavam falsificadores para os estados terminais `FAILED` e `CLOSED`, e para saturação com payload de ajuste não confirmado.
+Também faltavam falsificadores para os estados terminais `FAILED` e `CLOSED`, saturação com payload de ajuste não confirmado e falha do restore depois de já haver operações materiais na fila.
 
 ## Correção
 
@@ -58,6 +58,12 @@ A correção 117A.4 introduz estado terminal explícito `LEARNING_CLOSED` e cent
 
 Isso remove a classe de "fila órfã em estado terminal" em vez de adicionar mais uma exceção isolada.
 
+### Follow-up 117A.5 — falha do restore precisa drenar fila já existente
+
+A reauditoria do lifecycle centralizado encontrou um caso diferente dos anteriores: o store podia estar legitimamente em `RESTORING`, aceitar snapshots/ajustes e somente depois o loader falhar. Nesse momento o estado passava a `FAILED`, mas as operações já acumuladas permaneciam na fila embora não existisse mais qualquer executor futuro capaz de reproduzi-las. Além de reter objetos JSON sem utilidade, `pendingCalibrationAdjustments` podia continuar descrevendo como pendente uma operação definitivamente impossível.
+
+A correção 117A.5 torna a transição para falha terminal responsável por `discardUnreplayableDeferredOperationsLocked()`: conta snapshots e ajustes que perderam possibilidade de replay, incrementa `rejectedNativeSnapshots`/`failedDeferredOperations`, limpa fila e chaves de deduplicação e zera `pendingCalibrationAdjustments`. O mesmo contador de ajustes agora diminui quando um ajuste é efetivamente removido para replay ou eviction e é zerado no `close()`, fazendo a métrica voltar a representar estado pendente real em vez de contagem histórica.
+
 ## Teste de regressão
 
 `DeferredLiveOnlyLearningStoreTest` ganhou cenário concorrente controlado por latch:
@@ -77,9 +83,10 @@ Isso remove a classe de "fila órfã em estado terminal" em vez de adicionar mai
 1. 64 snapshots distintos + ajuste sem confirmação/readback => os 64 snapshots permanecem, adjustment não entra e não há eviction;
 2. 64 snapshots + ajuste manual confirmado/readback => o bound continua 64 e a retirada de um snapshot é explícita;
 3. loader forçado a falhar => snapshot e ajuste confirmado posteriores retornam `deferred=false`, fila permanece vazia e o snapshot rejeitado aparece nas métricas;
-4. `close()` durante restore => snapshot e ajuste posteriores retornam `LEARNING_CLOSED`, fila permanece vazia e o lifecycle não regressa para `FAILED` depois da interrupção do loader.
+4. `close()` durante restore => snapshot e ajuste posteriores retornam `LEARNING_CLOSED`, fila permanece vazia e o lifecycle não regressa para `FAILED` depois da interrupção do loader;
+5. snapshot + ajuste confirmado entram durante `RESTORING`, o loader falha depois => `FAILED` deve terminar com zero operações e zero ajustes pendentes, um snapshot rejeitado e duas operações contabilizadas como falha de replay impossível.
 
-A política de fila também foi exercitada em harness Kotlin efêmero com resultado `OWNER_117A_DEFERRED_QUEUE_MODEL=PASS`. Esse harness prova a política causal/bounded isolada; não substitui execução do teste Android/JVM completo.
+A política de fila foi exercitada em harness Kotlin efêmero com resultado `OWNER_117A_DEFERRED_QUEUE_MODEL=PASS`. Em 117A.5 foi executada também uma bancada Kotlin do wrapper com colaboradores mínimos controlados, cobrindo replay causal, deduplicação, drenagem em falha terminal e CLOSED, com resultado `OWNER_117A_REAL_WRAPPER_RUNTIME=PASS`. Essa bancada executa a lógica do wrapper contra fakes e não substitui a suíte Android/JVM completa nem receipt independente.
 
 ## Evidência
 
@@ -92,8 +99,11 @@ A política de fila também foi exercitada em harness Kotlin efêmero com result
 - Falsificador de restore terminal: commit `b507686559b871fd574ce24ca74ca39bde1f64a7`.
 - Falsificador de lifecycle CLOSED: commit `7baaf597aad74cef0ca42cdcaecf7f5706b6fef1`.
 - Redesign de admissão/lifecycle: commit `709cde7666bc2d1d92e4f96a59d1bbcc31e2b310`.
+- Drenagem de fila impossível após falha terminal: commit `ea43e4b8d50107431b8f41dc832bdb834db905a1`.
+- Falsificador concorrente da drenagem: commit `ba6f2b964137cd7617c184c40d4147de8a7ff128`.
 - Harness efêmero: `OWNER_117A_DEFERRED_QUEUE_MODEL=PASS`.
+- Bancada de wrapper: `OWNER_117A_REAL_WRAPPER_RUNTIME=PASS`.
 
 ## Risco residual
 
-O teste completo do componente no SHA remoto ainda precisa ser executado antes de um auditor independente poder conceder PASS transversal ao owner 117/117A. A fila é bounded; em saturação extrema um snapshot pode ser rejeitado, mas a perda fica explícita e o recorder continua preservando a evidência bruta. Se a fila for composta apenas por ajustes confirmados, o mais antigo pode ser substituído pelo mais novo para manter boundedness; como nenhuma nova telemetria científica é aceita durante restore, isso preserva a invalidação final, mas o cenário extremo ainda merece teste específico antes do gate transversal. Performance física e comportamento no TayTech/RK3326 continuam pertencendo ao gate 122A.
+O teste completo do componente no SHA remoto ainda precisa ser executado antes de um auditor independente poder conceder PASS transversal ao owner 117/117A. A fila é bounded; em saturação extrema um snapshot pode ser rejeitado, mas a perda fica explícita e o recorder continua preservando a evidência bruta. Se a fila for composta apenas por ajustes confirmados, o mais antigo pode ser substituído pelo mais novo para manter boundedness; a métrica pendente agora acompanha essa remoção, mas o cenário extremo ainda merece execução na suíte real. Performance física e comportamento no TayTech/RK3326 continuam pertencendo ao gate 122A.
