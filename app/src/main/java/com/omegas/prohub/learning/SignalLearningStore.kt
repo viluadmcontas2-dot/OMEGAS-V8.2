@@ -178,9 +178,6 @@ class SignalLearningStore(
                             quality = (source.quality * novelty.fraction).coerceIn(0.0, 1.0),
                         ),
                         learningEligible = true,
-                        // Mantém o código de compatibilidade; a novidade detalhada
-                        // fica disponível nas métricas e na proveniência exportada.
-                        // Compatibilidade documental: OVERLAPPING_WINDOW_NOVELTY_WEIGHTED
                         reasonCode = "OVERLAPPING_WINDOW_WEIGHTED",
                     )
                 }
@@ -194,7 +191,14 @@ class SignalLearningStore(
             decision
         }
         memoryDecision = prepared
-        val result = delegate.ingest(telemetry, prepared)
+        val nativePetrolPriors = if (prepared.learningEligible && prepared.sample?.fuel?.wireName in setOf("GNV", "CNG")) {
+            synchronized(evidenceLock) { nativeAnchors.snapshot().filter { it.sourceFuel == "PETROL" } }
+        } else {
+            emptyList()
+        }
+        val result = NativePetrolPriorScope.withAnchors(nativePetrolPriors) {
+            delegate.ingest(telemetry, prepared)
+        }
         result.optJSONObject("comparison")?.let { comparison ->
             val visitId = comparison.optString("visit_id")
             val regionId = comparison.optString("reference_region_id")
@@ -218,8 +222,6 @@ class SignalLearningStore(
             }
         }
         requestAdvisorRefresh(result)
-        // O sidecar representa ciência material. Janela duplicada/diagnóstica pode
-        // atualizar métricas em RAM, mas não serializa fotografia só porque chegou.
         if (prepared.learningEligible && prepared.sample != null) {
             persistenceGate.markMaterialChange()
             persistEvidenceState()
@@ -409,8 +411,7 @@ class SignalLearningStore(
             lastSeenAt = { it.lastSeenAt },
         )
         visitAccumulators.clear()
-        retained.forEach { item -> visitAccumulators[item.key] = item
-        }
+        retained.forEach { item -> visitAccumulators[item.key] = item }
         visitAccumulatorsEvicted += (before - visitAccumulators.size).coerceAtLeast(0)
     }
 
@@ -582,7 +583,7 @@ class SignalLearningStore(
         try {
             val snapshot = evidenceSnapshot()
             evidenceStateWriter.request { buildEvidencePayload(snapshot) }
-        } catch (_: Exception) { /* aprendizado principal continua funcionando sem o sidecar */ }
+        } catch (_: Exception) { }
     }
 
     private fun adaptiveConfidenceJson(): JSONObject {
