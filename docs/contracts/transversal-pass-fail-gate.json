@@ -1,13 +1,29 @@
 {
   "schema": "omegas-v8.2-transversal-gate-v1",
+  "governance_authorities": {
+    "contract_registry_notion_id": "6e104f112a43445aaae49db92daa35b0",
+    "dynamic_contract_registry_resolution_required": true,
+    "global_ledger_notion_id": "3c18ee52ac54817db2f8ed88448470c8",
+    "global_ledger_required": true,
+    "rule": "The Notion Contract Registry is canonical. This file is enforcement/minimum coverage and must not fork or replace the live registry."
+  },
   "mandatory_sources": [
     {"id":"PROGRAM_MASTER","notion_id":"3bd8ee52ac548148aae0f0f80132a5fa"},
     {"id":"MASTER_TRACE_MAP","notion_id":"3bd8ee52ac54816fac65e2c5324fe56f"},
+    {"id":"GS_001","notion_id":"3c08ee52ac54816e8c94d9ab631190a8"},
+    {"id":"EVIDENCE_PROVENANCE","notion_id":"3c18ee52ac5481ce87b4d9a6e4fb8bdb"},
     {"id":"AL_001","notion_id":"3bf8ee52ac548158a1ecded03b42744b"},
     {"id":"AL_002","notion_id":"3bf8ee52ac54816581c7c76d809aa0c4"},
     {"id":"AL_003","notion_id":"3bf8ee52ac54813abde0c72fe2b29320"},
+    {"id":"AL_003A","notion_id":"3bf8ee52ac5481b48827d6b433cb5658"},
     {"id":"AL_004","notion_id":"3bf8ee52ac54812b9a2bc293da13a446"},
+    {"id":"ADP_001","notion_id":"3c08ee52ac548155a3e8da79e2e6206c"},
     {"id":"HW_001","notion_id":"3bf8ee52ac54816796ccc4cad509a5a8"}
+  ],
+  "conditional_bindings": [
+    {"contract_id":"OME-STATE-HUMAN-UI","when":"owner touches UI state, CTA, human projection, enabled/disabled reasons, or state-to-human mapping"},
+    {"contract_id":"UIUX-CUSTOMROM","when":"owner touches interface, UX, navigation, interaction, information architecture, or human-facing error/recovery"},
+    {"contract_id":"UIUX-OMEGADEV","when":"owner touches mobile/product interaction, execution status, technical-to-human translation, or project/tooling UX"}
   ],
   "required_pass_fields": [
     "TARGET_SHA",
@@ -23,8 +39,12 @@
   ],
   "allowed_gate_states": ["PASS","PARTIAL","FAIL","INCONCLUSIVE","TEST_NOT_AVAILABLE","STALE_BY_EVIDENCE","STALE_BY_GOVERNANCE"],
   "pass_requires": {
+    "contract_registry_resolved": true,
+    "global_ledger_loaded": true,
     "all_mandatory_sources_read": true,
     "every_source_classified": ["APPLIES","NOT_APPLICABLE_WITH_REASON"],
+    "all_active_applicable_contracts_classified": true,
+    "uiux_bindings_classified_when_human_facing": true,
     "all_applicable_requirements_evidenced": true,
     "independent_auditor": true,
     "consumer_call_path_for_new_helpers": true,
@@ -32,8 +52,12 @@
     "hardware_claims_require_target_device": true
   },
   "automatic_non_pass_conditions": [
+    "CONTRACT_REGISTRY_NOT_RESOLVED",
+    "GLOBAL_LEDGER_NOT_LOADED",
     "MANDATORY_SOURCE_NOT_READ",
     "APPLICABILITY_NOT_CLASSIFIED",
+    "ACTIVE_CONTRACT_NOT_CLASSIFIED",
+    "UIUX_BINDING_NOT_CLASSIFIED",
     "APPLICABLE_REQUIREMENT_WITHOUT_EVIDENCE",
     "IMPLEMENTER_SELF_PASS",
     "HELPER_WITHOUT_CONSUMER",
