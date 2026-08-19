@@ -21,7 +21,7 @@ class StableRepositoryContract(unittest.TestCase):
         self.assertIn("governance entrypoint", agents)
         self.assertIn("governance kernel", agents)
         self.assertIn("project governance guard", agents)
-        self.assertIn("superseeded", agents)
+        self.assertIn("superseded", agents)
 
     def test_core_product_surfaces_are_present(self):
         required = [
