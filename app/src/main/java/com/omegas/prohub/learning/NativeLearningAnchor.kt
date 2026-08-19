@@ -5,10 +5,11 @@ import java.security.MessageDigest
 
 /**
  * Âncora observacional criada somente quando uma maturidade AutoCal nativa
- * possui correlação física confiável na mesma sessão MP48.
+ * possui correlação física confiável na mesma sessão MP48 e uma identidade de
+ * calibração reconciliada para essa sessão.
  *
  * Não é comparação gasolina×GNV, não possui writer e não aumenta confiança por si só.
- * Maturidade nativa sem correlação permanece apenas como NativeEcuEvidence.
+ * Maturidade nativa sem correlação/proveniência permanece apenas como NativeEcuEvidence.
  */
 data class NativeLearningAnchor(
     val fingerprint: String,
@@ -36,6 +37,10 @@ data class NativeLearningAnchor(
     val eventElapsedMs: Long,
     val correlatedFrameElapsedMs: Long,
     val lagMs: Long,
+    val calibrationGeneration: Int? = null,
+    val calibrationFingerprint: String? = null,
+    val geometryFingerprint: String? = null,
+    val mapHash: String? = null,
     val overlapKey: String = "$sessionId:$firstTelemetrySequence-$lastTelemetrySequence:${fuel.uppercase()}",
 ) {
     init {
@@ -61,6 +66,7 @@ data class NativeLearningAnchor(
         require(eventElapsedMs >= 0L)
         require(correlatedFrameElapsedMs >= 0L)
         require(lagMs >= 0L)
+        require(calibrationGeneration == null || calibrationGeneration >= 0)
         require(overlapKey.isNotBlank())
     }
 
@@ -100,6 +106,10 @@ data class NativeLearningAnchor(
         .put("eventElapsedMs", eventElapsedMs)
         .put("correlatedFrameElapsedMs", correlatedFrameElapsedMs)
         .put("lagMs", lagMs)
+        .put("calibrationGeneration", calibrationGeneration ?: JSONObject.NULL)
+        .put("calibrationFingerprint", calibrationFingerprint ?: JSONObject.NULL)
+        .put("geometryFingerprint", geometryFingerprint ?: JSONObject.NULL)
+        .put("mapHash", mapHash ?: JSONObject.NULL)
         .put("overlapKey", overlapKey)
         .put("comparisonVote", false)
         .put("effectiveComparisonWeight", effectiveComparisonWeight)
@@ -109,12 +119,17 @@ data class NativeLearningAnchor(
         .put("automaticWrite", false)
 
     companion object {
-        fun fromMaturityEvent(event: JSONObject, calibrationEpoch: Int): NativeLearningAnchor? {
+        fun fromMaturityEvent(
+            event: JSONObject,
+            calibrationEpoch: Int,
+            calibrationBinding: LearningCalibrationBinding? = null,
+        ): NativeLearningAnchor? {
             if (event.optString("eventType") != "NATIVE_BAND_MATURED") return null
             if (!event.optBoolean("nativeValidity", false)) return null
             if (event.optString("correlationState") != "CORRELATED") return null
 
             val sessionId = event.optLong("sessionId", 0L)
+            if (calibrationBinding != null && calibrationBinding.usbSessionId != sessionId) return null
             val snapshotId = event.optString("snapshotId")
             val bandIndex = event.optInt("bandIndex", -1)
             val rpm = event.nullableInt("rpm") ?: return null
@@ -152,6 +167,7 @@ data class NativeLearningAnchor(
                 event.optInt("counter", 0).toString(),
                 eventElapsedMs.toString(),
                 overlapKey,
+                calibrationBinding?.key().orEmpty(),
             ).joinToString("|")
 
             return NativeLearningAnchor(
@@ -179,6 +195,10 @@ data class NativeLearningAnchor(
                 eventElapsedMs = eventElapsedMs.coerceAtLeast(0L),
                 correlatedFrameElapsedMs = correlatedFrameElapsedMs.coerceAtLeast(0L),
                 lagMs = lagMs.coerceAtLeast(0L),
+                calibrationGeneration = calibrationBinding?.calibrationGeneration,
+                calibrationFingerprint = calibrationBinding?.calibrationFingerprint,
+                geometryFingerprint = calibrationBinding?.geometryFingerprint,
+                mapHash = calibrationBinding?.mapHash,
                 overlapKey = overlapKey,
             )
         }
@@ -232,6 +252,10 @@ data class NativeLearningAnchor(
                     eventElapsedMs = eventElapsedMs,
                     correlatedFrameElapsedMs = correlatedFrameElapsedMs,
                     lagMs = lagMs,
+                    calibrationGeneration = raw.nullableInt("calibrationGeneration"),
+                    calibrationFingerprint = raw.nullableString("calibrationFingerprint"),
+                    geometryFingerprint = raw.nullableString("geometryFingerprint"),
+                    mapHash = raw.nullableString("mapHash"),
                     overlapKey = raw.optString("overlapKey").ifBlank { "$sessionId:$firstSequence-$lastSequence:$fuel" },
                 )
             } catch (_: IllegalArgumentException) {
@@ -251,6 +275,9 @@ data class NativeLearningAnchor(
 
         private fun JSONObject.nullableDouble(key: String): Double? =
             if (has(key) && !isNull(key)) optDouble(key).takeIf { it.isFinite() } else null
+
+        private fun JSONObject.nullableString(key: String): String? =
+            if (has(key) && !isNull(key)) optString(key).takeIf { it.isNotBlank() } else null
     }
 }
 
