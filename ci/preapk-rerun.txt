@@ -1,2 +1,2 @@
-rerun: 2026-08-19-predictor-map-current-geometry
-reason: verify residual-map, protected-row, manual-review, and read-only predictor contract after rebinding geometry matcher to Mp48Protocol/KWriteManager current authority; no production source change
+rerun: 2026-08-19-runtime-canonical-evidence-state
+reason: verify runtime/service typed-state contract after rebinding LatestOnlyState and telemetry callback assertions to CanonicalEvidence/JSONObject authorities; no production source change
