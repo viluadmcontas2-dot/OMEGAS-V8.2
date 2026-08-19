@@ -22,7 +22,21 @@ data class Mp48BackpressureMetrics(
     val readOnlyRejected: Long,
     val criticalAccepted: Long,
     val criticalRejected: Long,
-)
+    val readOnlyAdmissionSamples: Long,
+    val readOnlyAdmissionWaitNanos: Long,
+    val readOnlyMaxAdmissionWaitNanos: Long,
+    val criticalAdmissionSamples: Long,
+    val criticalAdmissionWaitNanos: Long,
+    val criticalMaxAdmissionWaitNanos: Long,
+) {
+    val readOnlyAverageAdmissionWaitMs: Double?
+        get() = readOnlyAdmissionSamples.takeIf { it > 0L }
+            ?.let { readOnlyAdmissionWaitNanos.toDouble() / it.toDouble() / 1_000_000.0 }
+
+    val criticalAverageAdmissionWaitMs: Double?
+        get() = criticalAdmissionSamples.takeIf { it > 0L }
+            ?.let { criticalAdmissionWaitNanos.toDouble() / it.toDouble() / 1_000_000.0 }
+}
 
 /**
  * Admission controller sobre a única authority serial MP48.
@@ -48,6 +62,12 @@ class Mp48BackpressureScheduler(
     private val readOnlyRejected = AtomicLong(0L)
     private val criticalAccepted = AtomicLong(0L)
     private val criticalRejected = AtomicLong(0L)
+    private val readOnlyAdmissionSamples = AtomicLong(0L)
+    private val readOnlyAdmissionWaitNanos = AtomicLong(0L)
+    private val readOnlyMaxAdmissionWaitNanos = AtomicLong(0L)
+    private val criticalAdmissionSamples = AtomicLong(0L)
+    private val criticalAdmissionWaitNanos = AtomicLong(0L)
+    private val criticalMaxAdmissionWaitNanos = AtomicLong(0L)
 
     override fun isConnected(): Boolean = delegate.isConnected()
     override fun currentSessionId(): Long = delegate.currentSessionId()
@@ -108,6 +128,12 @@ class Mp48BackpressureScheduler(
         readOnlyRejected = readOnlyRejected.get(),
         criticalAccepted = criticalAccepted.get(),
         criticalRejected = criticalRejected.get(),
+        readOnlyAdmissionSamples = readOnlyAdmissionSamples.get(),
+        readOnlyAdmissionWaitNanos = readOnlyAdmissionWaitNanos.get(),
+        readOnlyMaxAdmissionWaitNanos = readOnlyMaxAdmissionWaitNanos.get(),
+        criticalAdmissionSamples = criticalAdmissionSamples.get(),
+        criticalAdmissionWaitNanos = criticalAdmissionWaitNanos.get(),
+        criticalMaxAdmissionWaitNanos = criticalMaxAdmissionWaitNanos.get(),
     )
 
     fun metricsJson(): JSONObject = metricsSnapshot().let { metrics ->
@@ -120,6 +146,12 @@ class Mp48BackpressureScheduler(
             .put("readOnlyRejected", metrics.readOnlyRejected)
             .put("criticalAccepted", metrics.criticalAccepted)
             .put("criticalRejected", metrics.criticalRejected)
+            .put("readOnlyAdmissionSamples", metrics.readOnlyAdmissionSamples)
+            .put("readOnlyAverageAdmissionWaitMs", metrics.readOnlyAverageAdmissionWaitMs ?: JSONObject.NULL)
+            .put("readOnlyMaxAdmissionWaitMs", metrics.readOnlyMaxAdmissionWaitNanos.toDouble() / 1_000_000.0)
+            .put("criticalAdmissionSamples", metrics.criticalAdmissionSamples)
+            .put("criticalAverageAdmissionWaitMs", metrics.criticalAverageAdmissionWaitMs ?: JSONObject.NULL)
+            .put("criticalMaxAdmissionWaitMs", metrics.criticalMaxAdmissionWaitNanos.toDouble() / 1_000_000.0)
             .put("learningMutation", LearningMutationAuthority.current().toJson())
     }
 
@@ -152,6 +184,10 @@ class Mp48BackpressureScheduler(
         val inFlight = if (critical) criticalInFlight else readOnlyInFlight
         val accepted = if (critical) criticalAccepted else readOnlyAccepted
         val rejected = if (critical) criticalRejected else readOnlyRejected
+        val admissionSamples = if (critical) criticalAdmissionSamples else readOnlyAdmissionSamples
+        val admissionWaitNanos = if (critical) criticalAdmissionWaitNanos else readOnlyAdmissionWaitNanos
+        val maxAdmissionWaitNanos = if (critical) criticalMaxAdmissionWaitNanos else readOnlyMaxAdmissionWaitNanos
+        val admissionStartedNs = System.nanoTime()
         val acquired = if (critical) {
             try {
                 semaphore.tryAcquire(waitTimeoutMs, TimeUnit.MILLISECONDS)
@@ -162,6 +198,10 @@ class Mp48BackpressureScheduler(
         } else {
             semaphore.tryAcquire()
         }
+        val admissionElapsedNs = (System.nanoTime() - admissionStartedNs).coerceAtLeast(0L)
+        admissionSamples.incrementAndGet()
+        admissionWaitNanos.addAndGet(admissionElapsedNs)
+        maxAdmissionWaitNanos.updateAndGet { previous -> maxOf(previous, admissionElapsedNs) }
         if (!acquired) {
             rejected.incrementAndGet()
             val lane = if (critical) "MANUAL_WRITE/SAFETY" else "READ_ONLY"
