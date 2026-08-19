@@ -1,2 +1,2 @@
-rerun: 2026-08-19-native-anchor-confidence-contract
-reason: verify frame-count independence using the confidence formula rather than the post-formula support variable name
+rerun: 2026-08-19-native-anchor-owner-chain-contract
+reason: verify native anchor science against Monitor -> MaturityEventProjector -> NativeAutoCalEventCorrelator, preserving no-frame-count-confidence and fail-closed semantics
