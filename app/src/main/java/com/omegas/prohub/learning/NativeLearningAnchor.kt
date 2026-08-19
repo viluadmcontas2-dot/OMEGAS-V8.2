@@ -302,4 +302,12 @@ class NativeLearningAnchorRegistry(
         overlaps.clear()
         nextRevision = 0L
     }
+
+    companion object {
+        /**
+         * Compatibilidade interna do selector: a fonte é o escopo transitório
+         * aberto explicitamente pelo SignalLearningStore, nunca um registry global.
+         */
+        internal fun currentSnapshot(): List<NativeLearningAnchor> = NativePetrolPriorScope.snapshot()
+    }
 }
