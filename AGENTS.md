@@ -10,12 +10,14 @@ Contrato estável: `WORK_SURFACE=REMOTE`, `SOURCE_MUTATION_TARGET=GITHUB_REMOTE_
 
 Este arquivo deve permanecer **curto e quase imutável**. Governança viva não pertence ao GitHub.
 
-## Fonte de governança
+## Fonte de governança, execução e código
 
-- **Notion é o cérebro e a governança primária.** Antes de operar, o agente deve ler a governança atual do projeto no Notion e a regra global de economia/execução.
-- Estado, prioridade, plano, decisão, autorização, branch ativa, exceção, aprendizado, roadmap e próximo passo ficam no **Notion**, não duplicados neste repositório.
-- Não criar commits apenas para espelhar mudanças cotidianas de governança, memória ou planejamento do Notion.
-- **Checkpoint ativo não pode se contradizer.** Título, propriedades, corpo, estado e próximo passo do handoff atual devem apontar para a mesma realidade.
+- **Notion é o cérebro durável e a governança primária.** Antes de operar, o agente deve ler a governança atual do projeto no Notion, resolver `PROJECT_ID`, Project Registry, Contract Registry, `GLOBAL-LEDGER-001` e a regra global de economia/execução.
+- **A autoridade operacional mutável é resolvida pelo Project Registry.** Quando o Registry declarar `EXECUTION_AUTHORITY=LINEAR`, estado operacional, prioridade, fila, owner, blockers e próximo passo ficam no **Linear**; o Notion permanece conhecimento/governança/requisitos/arquitetura/contratos/decisões/evidência e não vira dual writer. Se o Registry declarar outra autoridade, seguir exatamente o binding vigente.
+- **GitHub remoto é a autoridade do source.** Branch ativa e SHA para qualquer claim técnico devem ser reabertos no remoto; nunca inferir `main` ou branch por nome.
+- Aprendizados, decisões duráveis, contratos e evidência consolidada permanecem no Notion; projeções operacionais ficam na autoridade de execução resolvida, sem duplicar authority.
+- Não criar commits apenas para espelhar mudanças cotidianas de governança, memória ou planejamento.
+- **Checkpoint ativo não pode se contradizer.** Registry, roteador humano, execution writer, branch/SHA, Ledger e próximo gate devem apontar para a mesma realidade; conflito material = fail-closed até reconciliação.
 
 ## Fonte do código e execução remota
 
@@ -41,11 +43,12 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 
 ## TRANSVERSAL PASS/FAIL obrigatório
 
-- Antes de qualquer verdict que possa liberar dependente material, executor **e auditor independente** devem carregar `docs/contracts/transversal-pass-fail-gate.json` e `docs/contracts/TRANSVERSAL_PASS_FAIL_GATE.md`.
-- O receipt deve classificar, uma a uma, as fontes obrigatórias `Programa Mestre`, `MASTER TRACE MAP`, `AL-001`, `AL-002`, `AL-003`, `AL-004` e `HW-001` como `APPLIES` ou `NOT_APPLICABLE_WITH_REASON`, e anexar evidência para toda obrigação aplicável.
-- Falta de leitura, aplicabilidade não classificada, requirement aplicável sem evidência, helper sem consumidor real, teste apenas string/grep para comportamento executável, benchmark host apresentado como RK3326, Prediction usada como Observation, harness quebrado usado como prova ou **implementador concedendo PASS ao próprio owner** tornam o gate automaticamente não-PASS.
+- Antes de qualquer verdict que possa liberar dependente material, executor **e auditor independente** devem bootar pelo Governance EntryPoint, resolver o `CONTRACT REGISTRY`, carregar `GLOBAL-LEDGER-001`, `docs/contracts/transversal-pass-fail-gate.json` e `docs/contracts/TRANSVERSAL_PASS_FAIL_GATE.md`.
+- O receipt deve conter `COVERAGE_MANIFEST` e classificar **todo contrato ACTIVE/retroativo aplicável** como `APPLIES` ou `NOT_APPLICABLE_WITH_REASON`; a lista mínima OMEGAS inclui Programa Mestre, MASTER TRACE MAP, GS-001, Evidence Lab/Execution Ledger provenance, AL-001, AL-002, AL-003, AL-004, ADP-001 e HW-001 quando aplicável. Lista mínima nunca limita contratos adicionais do Registry.
+- Falta de leitura, child/subpage/slice material não enumerado, aplicabilidade não classificada, requirement aplicável sem evidência, helper sem consumidor real, teste apenas string/grep para comportamento executável, benchmark host apresentado como RK3326, Prediction usada como Observation, harness quebrado usado como prova ou **implementador concedendo PASS ao próprio owner** tornam o gate automaticamente não-PASS.
 - Estados adicionais obrigatórios: `STALE_BY_GOVERNANCE` e `STALE_BY_EVIDENCE`. Qualquer PASS histórico sem receipt transversal + auditor independente vira `STALE_BY_GOVERNANCE` até reauditoria no SHA remoto exato.
-- Só `PASS` fresco do **auditor independente**, após o gate transversal completo, libera owner/extensão/gate dependente. Nenhuma urgência, sequência numérica ou CI verde substitui essa regra.
+- Implementação/migração fecha no máximo em `IMPLEMENTED_AWAITING_AUDIT`; verdict final requer auditoria independente e `META_AUDIT=PASS` sobre a própria cobertura/auditoria. Só `PASS` fresco do **auditor independente**, após o gate transversal completo, libera owner/extensão/gate dependente. Nenhuma urgência, sequência numérica ou CI verde substitui essa regra.
+- Em source/texto com bytes acessíveis, auditoria material lê integralmente a superfície relevante. Em Notion/Linear/conectores estruturados sem bytes crus, usar `block-complete/object-complete` + enumeração de children/subpages/databases e nunca alegar literal byte-a-byte sem os bytes.
 
 ## Comunicação
 
@@ -55,4 +58,4 @@ Este arquivo deve permanecer **curto e quase imutável**. Governança viva não 
 
 ## Regra de alteração deste arquivo
 
-Só alterar este arquivo quando uma **invariante durável** mudar. Se a informação puder mudar com frequência, ela pertence ao Notion.
+Só alterar este arquivo quando uma **invariante durável** mudar. Se a informação puder mudar com frequência, ela pertence ao Notion/à autoridade operacional resolvida, não a este arquivo.
