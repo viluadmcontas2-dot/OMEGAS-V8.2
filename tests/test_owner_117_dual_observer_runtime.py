@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OBSERVER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalDualFuelMaturityObserver.kt"
-KOTLINC = Path("/root/.sdkman/candidates/kotlin/current/bin/kotlinc")
+KOTLINC = "kotlinc"
 
 
 class Owner117DualObserverRuntime(unittest.TestCase):
@@ -21,6 +21,12 @@ class Owner117DualObserverRuntime(unittest.TestCase):
             (tmp / "Tracker.kt").write_text(textwrap.dedent('''
                 package com.omegas.prohub.autocal
                 object NativeAutoCalProgression { const val ACQUISITION_BANDS = 18 }
+                object AutoCal122ATargetMetrics {
+                    fun reset() = Unit
+                    fun ensureSession(currentSessionId: Long, nowElapsedMs: Long) = Unit
+                    fun sampleProcess(nowElapsedMs: Long) = Unit
+                    fun updateSerialMetrics(metrics: Any) = Unit
+                }
                 class NativeAutoCalMaturityTracker {
                     data class Transition(
                         val bandIndex:Int,val zone:Int,val previousCounter:Int,val counter:Int,
@@ -71,6 +77,9 @@ class Owner117DualObserverRuntime(unittest.TestCase):
                         return Reply(true,0,bytes)
                     }
                 }
+                open class Mp48BackpressureScheduler : Mp48SerialScheduler() {
+                    fun metricsSnapshot(): Any = Any()
+                }
                 object AutoCalProtocol {
                     data class Field(val key:String)
                     data class Decoded(val rawValues:IntArray)
@@ -119,7 +128,7 @@ class Owner117DualObserverRuntime(unittest.TestCase):
                 }
             '''), encoding="utf-8")
             jar = tmp / "observer.jar"
-            subprocess.run([str(KOTLINC), str(tmp / "Observer.kt"), str(tmp / "EventStub.kt"), str(tmp / "Tracker.kt"), str(tmp / "Ecu.kt"), str(tmp / "Main.kt"), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
+            subprocess.run([KOTLINC, str(tmp / "Observer.kt"), str(tmp / "EventStub.kt"), str(tmp / "Tracker.kt"), str(tmp / "Ecu.kt"), str(tmp / "Main.kt"), "-include-runtime", "-d", str(jar)], check=True, capture_output=True, text=True, timeout=30)
             result = subprocess.run(["java", "-jar", str(jar)], check=True, capture_output=True, text=True, timeout=10)
             self.assertIn("OWNER_117_DUAL_OBSERVER_BOOTSTRAP_RUNTIME=PASS", result.stdout)
 
