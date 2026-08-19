@@ -25,10 +25,12 @@ class PersistenceAfterValueContract(unittest.TestCase):
         novelty = source.index("ContinuousWindowNovelty.calculate(", ingest)
         duplicate = source.index("novelty.duplicate ->", novelty)
         duplicate_null = source.index("sample = null", duplicate)
-        delegate = source.index("val result = delegate.ingest(telemetry, prepared)", duplicate_null)
+        prior_scope = source.index("NativePetrolPriorScope.withAnchors(nativePetrolPriors)", duplicate_null)
+        delegate = source.index("delegate.ingest(telemetry, prepared)", prior_scope)
         persist = source.index("persistEvidenceState()", delegate)
         self.assertLess(novelty, duplicate)
-        self.assertLess(duplicate_null, delegate)
+        self.assertLess(duplicate_null, prior_scope)
+        self.assertLess(prior_scope, delegate)
         self.assertLess(delegate, persist)
 
     def test_sidecar_contains_bounded_rejection_provenance_not_raw_telemetry_frame(self):
@@ -76,11 +78,21 @@ class PersistenceAfterValueContract(unittest.TestCase):
 
     def test_session_recorder_file_write_is_worker_side_and_bounded(self):
         source = RECORDER.read_text("utf-8")
-        self.assertIn("ArrayBlockingQueue(8192)", source)
-        record = source.index("fun record(type: String, source: String, data: JSONObject")
-        enqueue = source.index("worker.execute", record)
-        record_now = source.index("recordNow(type, source, copy)", enqueue)
-        self.assertLess(enqueue, record_now)
+        self.assertIn("private const val QUEUE_CAPACITY = 8192", source)
+        self.assertIn("ArrayBlockingQueue(QUEUE_CAPACITY)", source)
+
+        record_start = source.index("fun record(type: String, source: String, data: JSONObject")
+        record_end = source.index("fun recordRawUsb(", record_start)
+        record = source[record_start:record_end]
+        enqueue = record.index("enqueuePayload(")
+        encoded_write = record.index("recordEncodedNow(type, source, dataJson, summary)", enqueue)
+        self.assertLess(enqueue, encoded_write)
+        self.assertNotIn("worker.execute", record)
+
+        enqueue_start = source.index("private fun enqueuePayload(")
+        enqueue_end = source.index("private fun consumerBudgetJson", enqueue_start)
+        enqueue_body = source[enqueue_start:enqueue_end]
+        self.assertIn("worker.execute(RecorderTask(", enqueue_body)
         self.assertIn('type == "engine_event" && data.optString("event") == "telemetry"', source)
         self.assertIn("sessionTelemetryEveryMs", source)
         self.assertIn("droppedEvents.incrementAndGet()", source)
