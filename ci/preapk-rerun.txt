@@ -1,2 +1,2 @@
-rerun: 2026-08-19-g3b-complete-generation-contract-v2
-reason: verify complete G3B harness after removing stale lock-shape assumptions from generation contract
+rerun: 2026-08-19-g3b-complete-mp48-shape-aligned
+reason: verify complete G3B harness and field-identity MP48 shape contract after stale matcher cleanup
