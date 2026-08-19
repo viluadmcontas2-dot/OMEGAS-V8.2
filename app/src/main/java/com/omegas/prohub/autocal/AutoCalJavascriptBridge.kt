@@ -151,7 +151,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 .toString()
         }
     } catch (error: Exception) {
-        localFailure(error.message ?: "Ponto inválido")
+        localFailure(error.message ?: "Fator inválido")
     }
 
     @JavascriptInterface
