@@ -36,6 +36,7 @@ data class NativeLearningAnchor(
     val eventElapsedMs: Long,
     val correlatedFrameElapsedMs: Long,
     val lagMs: Long,
+    val overlapKey: String = "$sessionId:$firstTelemetrySequence-$lastTelemetrySequence:${fuel.uppercase()}",
 ) {
     init {
         require(fingerprint.isNotBlank())
@@ -53,17 +54,26 @@ data class NativeLearningAnchor(
         require(rpm >= 0)
         require(petrolOnCngMs.isFinite())
         require(mapBar.isFinite())
-        require(fuel == "GNV")
+        require(fuel.uppercase() in setOf("GNV", "CNG", "PETROL", "GASOLINA"))
         require(firstTelemetrySequence >= 0L)
         require(lastTelemetrySequence >= firstTelemetrySequence)
         require(matchedTelemetryFrames >= 2)
         require(eventElapsedMs >= 0L)
         require(correlatedFrameElapsedMs >= 0L)
         require(lagMs >= 0L)
+        require(overlapKey.isNotBlank())
     }
+
+    val sourceFuel: String
+        get() = if (fuel.uppercase() in setOf("PETROL", "GASOLINA")) "PETROL" else "GNV"
+
+    /** Âncora é contexto independente; nunca é um segundo voto dos frames sobrepostos. */
+    val effectiveComparisonWeight: Double
+        get() = 0.0
 
     fun toJson(): JSONObject = JSONObject()
         .put("source", "ECU_NATIVE_AUTOCAL")
+        .put("sourceFuel", sourceFuel)
         .put("fingerprint", fingerprint)
         .put("calibrationEpoch", calibrationEpoch)
         .put("scientificRevision", scientificRevision)
@@ -80,6 +90,7 @@ data class NativeLearningAnchor(
         .put("rpmConfidence", rpmConfidence)
         .put("rpm", rpm)
         .put("petrolOnCngMs", petrolOnCngMs)
+        .put("nativePetrolMs", petrolOnCngMs)
         .put("gasMsDiagnostic", gasMsDiagnostic ?: JSONObject.NULL)
         .put("mapBar", mapBar)
         .put("fuel", fuel)
@@ -89,7 +100,12 @@ data class NativeLearningAnchor(
         .put("eventElapsedMs", eventElapsedMs)
         .put("correlatedFrameElapsedMs", correlatedFrameElapsedMs)
         .put("lagMs", lagMs)
+        .put("overlapKey", overlapKey)
         .put("comparisonVote", false)
+        .put("effectiveComparisonWeight", effectiveComparisonWeight)
+        .put("gasolineReferenceContext", sourceFuel == "PETROL")
+        .put("cngComparatorContext", sourceFuel == "GNV")
+        .put("directKTarget", false)
         .put("automaticWrite", false)
 
     companion object {
@@ -102,7 +118,7 @@ data class NativeLearningAnchor(
             val snapshotId = event.optString("snapshotId")
             val bandIndex = event.optInt("bandIndex", -1)
             val rpm = event.nullableInt("rpm") ?: return null
-            val petrolOnCngMs = event.nullableDouble("correlatedPetrolMs") ?: return null
+            val nativePetrolMs = event.nullableDouble("correlatedPetrolMs") ?: return null
             val mapBar = event.nullableDouble("correlatedMapBar") ?: return null
             val firstSequence = event.nullableLong("firstTelemetrySequence") ?: return null
             val lastSequence = event.nullableLong("lastTelemetrySequence") ?: return null
@@ -110,25 +126,32 @@ data class NativeLearningAnchor(
             val correlatedFrameElapsedMs = event.nullableLong("correlatedFrameElapsedMs") ?: return null
             val lagMs = event.nullableLong("correlationLagMs") ?: return null
             val matchedFrames = event.optInt("matchedTelemetryFrames", 0)
-            val fuel = event.optString("correlatedFuel", event.optString("fuel"))
+            val rawFuel = event.optString("sourceFuel", event.optString("correlatedFuel", event.optString("fuel"))).uppercase()
+            val fuel = when (rawFuel) {
+                "PETROL", "GASOLINA" -> "PETROL"
+                "GNV", "CNG" -> "GNV"
+                else -> return null
+            }
             val correlationConfidence = event.optDouble("correlationConfidence", 0.0)
                 .takeIf(Double::isFinite)?.coerceIn(0.0, 1.0) ?: return null
-            val rpmConfidence = event.optDouble("rpmConfidence", 0.0)
+            val rpmConfidence = event.optDouble("rpmConfidence", correlationConfidence)
                 .takeIf(Double::isFinite)?.coerceIn(0.0, 1.0) ?: return null
             if (sessionId <= 0L || snapshotId.isBlank() || bandIndex < 0 ||
-                firstSequence < 0L || lastSequence < firstSequence || matchedFrames < 2 || fuel != "GNV" ||
+                firstSequence < 0L || lastSequence < firstSequence || matchedFrames < 2 ||
                 correlationConfidence <= 0.0 || rpmConfidence <= 0.0
             ) return null
 
+            val overlapKey = event.optString("overlapKey").ifBlank {
+                "$sessionId:$firstSequence-$lastSequence:$fuel"
+            }
             val identity = listOf(
                 calibrationEpoch.coerceAtLeast(1).toString(),
                 sessionId.toString(),
+                fuel,
                 bandIndex.toString(),
                 event.optInt("counter", 0).toString(),
-                event.optLong("previousObservedAtElapsedMs", 0L).toString(),
                 eventElapsedMs.toString(),
-                firstSequence.toString(),
-                lastSequence.toString(),
+                overlapKey,
             ).joinToString("|")
 
             return NativeLearningAnchor(
@@ -146,16 +169,17 @@ data class NativeLearningAnchor(
                 correlationConfidence = correlationConfidence,
                 rpmConfidence = rpmConfidence,
                 rpm = rpm,
-                petrolOnCngMs = petrolOnCngMs,
+                petrolOnCngMs = nativePetrolMs,
                 gasMsDiagnostic = event.nullableDouble("correlatedGasMs"),
                 mapBar = mapBar,
-                fuel = "GNV",
+                fuel = fuel,
                 firstTelemetrySequence = firstSequence,
                 lastTelemetrySequence = lastSequence,
                 matchedTelemetryFrames = matchedFrames,
                 eventElapsedMs = eventElapsedMs.coerceAtLeast(0L),
                 correlatedFrameElapsedMs = correlatedFrameElapsedMs.coerceAtLeast(0L),
                 lagMs = lagMs.coerceAtLeast(0L),
+                overlapKey = overlapKey,
             )
         }
 
@@ -165,7 +189,7 @@ data class NativeLearningAnchor(
             val sessionId = raw.optLong("sessionId", 0L)
             val bandIndex = raw.optInt("bandIndex", -1)
             val rpm = raw.nullableInt("rpm") ?: return null
-            val petrolOnCngMs = raw.nullableDouble("petrolOnCngMs") ?: return null
+            val nativePetrolMs = raw.nullableDouble("nativePetrolMs") ?: raw.nullableDouble("petrolOnCngMs") ?: return null
             val mapBar = raw.nullableDouble("mapBar") ?: return null
             val firstSequence = raw.nullableLong("firstTelemetrySequence") ?: return null
             val lastSequence = raw.nullableLong("lastTelemetrySequence") ?: return null
@@ -175,6 +199,11 @@ data class NativeLearningAnchor(
             if (fingerprint.isBlank() || snapshotId.isBlank() || sessionId <= 0L || bandIndex < 0 ||
                 raw.optString("correlationState") != "CORRELATED" || !raw.optBoolean("nativeValidity", false)
             ) return null
+            val fuel = when (raw.optString("sourceFuel", raw.optString("fuel")).uppercase()) {
+                "PETROL", "GASOLINA" -> "PETROL"
+                "GNV", "CNG" -> "GNV"
+                else -> return null
+            }
 
             return try {
                 NativeLearningAnchor(
@@ -193,16 +222,17 @@ data class NativeLearningAnchor(
                     correlationConfidence = raw.optDouble("correlationConfidence", 0.0).coerceIn(0.0, 1.0),
                     rpmConfidence = raw.optDouble("rpmConfidence", 0.0).coerceIn(0.0, 1.0),
                     rpm = rpm,
-                    petrolOnCngMs = petrolOnCngMs,
+                    petrolOnCngMs = nativePetrolMs,
                     gasMsDiagnostic = raw.nullableDouble("gasMsDiagnostic"),
                     mapBar = mapBar,
-                    fuel = raw.optString("fuel"),
+                    fuel = fuel,
                     firstTelemetrySequence = firstSequence,
                     lastTelemetrySequence = lastSequence,
                     matchedTelemetryFrames = raw.optInt("matchedTelemetryFrames", 0),
                     eventElapsedMs = eventElapsedMs,
                     correlatedFrameElapsedMs = correlatedFrameElapsedMs,
                     lagMs = lagMs,
+                    overlapKey = raw.optString("overlapKey").ifBlank { "$sessionId:$firstSequence-$lastSequence:$fuel" },
                 )
             } catch (_: IllegalArgumentException) {
                 null
@@ -233,25 +263,32 @@ class NativeLearningAnchorRegistry(
     private val maxEntries: Int = 256,
 ) {
     private val anchors = linkedMapOf<String, NativeLearningAnchor>()
+    private val overlaps = linkedSetOf<String>()
     private var nextRevision = 0L
 
     fun upsert(anchor: NativeLearningAnchor): Boolean {
-        if (anchors.containsKey(anchor.fingerprint)) return false
+        if (anchors.containsKey(anchor.fingerprint) || anchor.overlapKey in overlaps) return false
         nextRevision += 1L
         anchors[anchor.fingerprint] = anchor.copy(scientificRevision = nextRevision)
+        overlaps += anchor.overlapKey
         while (anchors.size > maxEntries.coerceAtLeast(1)) {
-            anchors.remove(anchors.keys.first())
+            val first = anchors.keys.first()
+            val removed = anchors.remove(first)
+            if (removed != null) overlaps.remove(removed.overlapKey)
         }
         return true
     }
 
     fun replaceAll(items: List<NativeLearningAnchor>) {
         anchors.clear()
+        overlaps.clear()
         nextRevision = 0L
         items.takeLast(maxEntries.coerceAtLeast(1)).forEach { item ->
+            if (item.overlapKey in overlaps) return@forEach
             val revision = item.scientificRevision.takeIf { it > 0L } ?: (nextRevision + 1L)
             nextRevision = maxOf(nextRevision, revision)
             anchors[item.fingerprint] = item.copy(scientificRevision = revision)
+            overlaps += item.overlapKey
         }
     }
 
@@ -262,6 +299,7 @@ class NativeLearningAnchorRegistry(
     /** Limpa a epoch antiga; a epoch nova reinicia sua própria sequência científica. */
     fun clear() {
         anchors.clear()
+        overlaps.clear()
         nextRevision = 0L
     }
 }
