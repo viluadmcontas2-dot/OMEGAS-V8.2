@@ -27,7 +27,9 @@ class NativeAnchorScienceContract(unittest.TestCase):
         self.assertIn('active.mapOscillationBar', self.correlator)
         self.assertIn('active.rpmOscillationPercent', self.correlator)
         self.assertNotIn('requiredFrames', self.correlator)
-        self.assertNotIn('support =', self.correlator)
+        confidence_formula = self.correlator.split('val confidence = (', 1)[1].split('val support =', 1)[0]
+        self.assertNotIn('fresh.size', confidence_formula)
+        self.assertNotIn('matchedFrames', confidence_formula)
         self.assertIn('Quantidade de frames não participa da confiança', self.correlator)
 
     def test_refusal_is_explicit_and_reaches_native_event(self):
