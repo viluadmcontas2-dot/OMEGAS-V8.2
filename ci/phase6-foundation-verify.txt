@@ -1,0 +1,3 @@
+phase6-foundation-r1
+scope=physics-foundation-jvm
+source_after_foundation=769b46fcde3d12bcb62742ac411a9511a758df79
