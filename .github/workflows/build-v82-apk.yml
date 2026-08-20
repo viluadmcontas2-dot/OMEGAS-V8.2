@@ -1,17 +1,15 @@
-# One-shot push trigger is restricted to this workflow file; ordinary source commits do not build.
-# Physical telemetry hotfix build: USB generation + AutoCal startup isolation + Predictor pan.
+# Governed manual build only. Source commits do not build or publish an APK.
 name: Build OMEGAS V8.2 APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - work/v8.2-clean
-    paths:
-      - .github/workflows/build-v82-apk.yml
 
 permissions:
   contents: read
+
+env:
+  EXPECTED_SOURCE_BRANCH: rebuild/v8.2-final-implementation
+  TAYTECH_ABI: armeabi-v7a
 
 jobs:
   build-apk:
@@ -32,7 +30,12 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Verify source commit and Gradle target
+        shell: bash
         run: |
+          test "${GITHUB_REF_NAME}" = "${EXPECTED_SOURCE_BRANCH}" || {
+            echo "Ref ${GITHUB_REF_NAME} is not governed source branch ${EXPECTED_SOURCE_BRANCH}" >&2
+            exit 1
+          }
           echo "BUILD_COMMIT=$(git rev-parse HEAD)"
           grep '^distributionUrl=' gradle/wrapper/gradle-wrapper.properties
           git status --short
@@ -49,8 +52,24 @@ jobs:
       - name: Android lint
         run: ./gradlew --no-daemon --stacktrace :app:lintDebug
 
-      - name: Assemble debug APK
-        run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
+      - name: Assemble TayTech debug APK
+        run: ./gradlew --no-daemon --stacktrace -PomegasAbis=armeabi-v7a :app:assembleDebug
+
+      - name: Verify TayTech APK ABI
+        shell: bash
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          mapfile -t ABIS < <(unzip -Z1 "$APK" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)
+          printf 'APK_NATIVE_ABIS=%s\n' "${ABIS[*]:-none}"
+          if printf '%s\n' "${ABIS[@]}" | grep -qx 'arm64-v8a'; then
+            echo "Unexpected arm64-v8a native payload in TayTech artifact" >&2
+            exit 1
+          fi
+          if ((${#ABIS[@]} > 0)) && ! printf '%s\n' "${ABIS[@]}" | grep -qx 'armeabi-v7a'; then
+            echo "Native payload exists but armeabi-v7a is absent" >&2
+            exit 1
+          fi
 
       - name: Generate SHA-256 receipt
         shell: bash
@@ -59,13 +78,15 @@ jobs:
           test -f "$APK"
           sha256sum "$APK" | tee OMEGAS-V8.2-APK-SHA256.txt
           printf 'BUILD_COMMIT=%s\n' "$(git rev-parse HEAD)" | tee OMEGAS-V8.2-BUILD-RECEIPT.txt
+          printf 'BUILD_BRANCH=%s\n' "${GITHUB_REF_NAME}" | tee -a OMEGAS-V8.2-BUILD-RECEIPT.txt
+          printf 'TARGET_ABI=%s\n' "${TAYTECH_ABI}" | tee -a OMEGAS-V8.2-BUILD-RECEIPT.txt
           printf 'APK=%s\n' "$APK" | tee -a OMEGAS-V8.2-BUILD-RECEIPT.txt
           cat OMEGAS-V8.2-APK-SHA256.txt | tee -a OMEGAS-V8.2-BUILD-RECEIPT.txt
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OMEGAS-V8.2-debug-${{ github.sha }}
+          name: OMEGAS-V8.2-debug-taytech-${{ github.sha }}
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             OMEGAS-V8.2-APK-SHA256.txt
