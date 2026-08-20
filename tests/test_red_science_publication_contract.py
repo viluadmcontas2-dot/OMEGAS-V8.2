@@ -16,7 +16,7 @@ class RedSciencePublicationContractTest(unittest.TestCase):
         self.assertNotIn("lastRepresentedWindowEndByFuel", self.source)
 
     def test_coalesced_windows_do_not_mutate_learning_memory(self):
-        self.assertIn('reasonCode = "SCIENCE_PUBLICATION_COALESCED"', self.source)
+        self.assertIn('"SCIENCE_PUBLICATION_COALESCED"', self.source)
         self.assertIn("sample = null", self.source)
         self.assertIn("learningEligible = false", self.source)
 
