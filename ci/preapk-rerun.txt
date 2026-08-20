@@ -1,2 +1,2 @@
-rerun: 2026-08-20-122a-architectural-performance-ui-revisions-r2
-reason: verify final UI revision/dedupe candidate including Predictor identical-payload render suppression; no APK build and no physical claim
+rerun: 2026-08-20-122a-architectural-performance-ui-revisions-r3
+reason: verify coherent UI performance batch after independent cache-order audit; includes Learning/V7 revision gating, Store selectors, Predictor identical-payload suppression and capture-phase explicit invalidation; no APK build and no physical claim
