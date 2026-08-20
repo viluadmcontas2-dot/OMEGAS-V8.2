@@ -67,3 +67,12 @@ def test_predictor_subscribes_only_to_route_changes():
     assert "subscribeSelected(" in source
     assert "state => state.route" in source
     assert "this.store.subscribe(state => this.onState(state), true)" not in source
+
+
+def test_predictor_skips_parse_patch_and_dom_render_for_identical_v7_payload():
+    source = PREDICTOR.read_text(encoding="utf-8")
+    marker = "if (raw === this.lastStatePayload) return;"
+    assert "this.lastStatePayload = null;" in source
+    assert marker in source
+    assert source.index(marker) < source.index("const calibration = parse(raw, {})")
+    assert source.index(marker) < source.index("this.store.patch({", source.index("refresh()"))
