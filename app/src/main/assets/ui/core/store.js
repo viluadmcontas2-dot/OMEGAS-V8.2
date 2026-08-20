@@ -32,6 +32,21 @@
       if (immediate) listener(this.state);
       return () => this.listeners.delete(listener);
     }
+    subscribeSelected(selector, listener, immediate, equals) {
+      if (typeof selector !== 'function' || typeof listener !== 'function') return () => {};
+      const equality = typeof equals === 'function' ? equals : Object.is;
+      let selected = selector(this.state);
+      const wrapped = state => {
+        const next = selector(state);
+        if (equality(selected, next)) return;
+        const previous = selected;
+        selected = next;
+        listener(next, previous, state);
+      };
+      this.listeners.add(wrapped);
+      if (immediate) listener(selected, undefined, this.state);
+      return () => this.listeners.delete(wrapped);
+    }
     emit() {
       this.listeners.forEach(listener => {
         try { listener(this.state); } catch (error) { console.error('[OMEGAS store]', error); }
