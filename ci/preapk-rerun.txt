@@ -1,2 +1,2 @@
-rerun: 2026-08-19-integral-latest-only-ui-owner
-reason: verify integral regression after rebinding slow-UI backlog assertion to LatestOnlyBackgroundPipeline and its NativeRuntimeManager consumer call path; no app production source change
+rerun: 2026-08-20-gs-g3b-single-story
+reason: verify one continuous G3A-to-G3B real-correlation plus AutoMatch stale-reconcile JUnit story; test-only evidence, no app production source change
