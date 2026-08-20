@@ -1,2 +1,2 @@
-rerun: 2026-08-19-cost-by-class-current-semantics
-reason: verify marginal-information versus confidence separation and per-class cost observability after rebinding stale documentation matcher; no production source change
+rerun: 2026-08-19-startup-restore-causal-queue
+reason: verify startup restore after rebinding stale single-slot calibration assertion to current bounded causal DeferredOperation queue; no production source change
