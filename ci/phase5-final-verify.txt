@@ -1,6 +1,0 @@
-phase5-final-source-verification-r3
-scope=pytest+JVM+lint
-apk=forbidden
-physical=deferred-until-final-product-apk
-result_surface=omegas/phase5-final
-active-ui-graph=locked
