@@ -2,11 +2,6 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function parse(value, fallback) {
-    if (value == null || value === '') return fallback;
-    if (typeof value !== 'string') return value;
-    try { return JSON.parse(value); } catch (_) { return fallback; }
-  }
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
@@ -21,16 +16,12 @@
       this.app = app;
       this.store = app.store;
       this.router = app.router;
-      this.api = app.api;
       this.data = null;
       this.activeKey = '';
-      this.refreshing = false;
       this.lastRoute = '';
+      this.lastScienceRevision = -1;
       this.injectShell();
       this.bind();
-      this.unsubscribeContext = app.scheduler.addHook('context', () => {
-        if (this.store.get().route === 'predictor') this.refresh();
-      });
       this.unsubscribeStore = this.store.subscribe(state => this.onState(state), true);
     }
 
@@ -118,32 +109,17 @@
         if (eyebrow) eyebrow.textContent = 'DECIDIR';
         if (title) title.textContent = 'Predictor';
       }
-      if (active && this.lastRoute !== route) this.refresh();
-      this.lastRoute = route;
-    }
 
-    refresh() {
-      if (this.refreshing || !this.api.v7 || typeof this.api.v7.getState !== 'function') return;
-      this.refreshing = true;
-      try {
-        const calibration = parse(this.api.v7.getState(), {}) || {};
-        const predictor = calibration.predictor || {};
+      const revision = Number(state.scienceRevision ?? -1);
+      const predictor = state.calibrationState?.predictor || state.predictor?.data || null;
+      if (predictor && (revision !== this.lastScienceRevision || predictor !== this.data)) {
         this.data = predictor;
-        this.store.patch({
-          calibrationState: calibration,
-          predictor: {
-            ...this.store.get().predictor,
-            state: predictor.ok === false ? 'error' : 'ready',
-            data: predictor,
-            activeCell: this.activeKey || null,
-          },
-        });
+        this.lastScienceRevision = revision;
+        if (active) this.render();
+      } else if (active && this.lastRoute !== route) {
         this.render();
-      } catch (error) {
-        this.store.patch({ predictor: { state: 'error', data: null, activeCell: null, inspector: null } });
-      } finally {
-        this.refreshing = false;
       }
+      this.lastRoute = route;
     }
 
     cells() { return Array.isArray(this.data?.cells) ? this.data.cells : []; }
@@ -208,7 +184,7 @@
 
   function boot() {
     const app = root.OmegasApp;
-    if (!app?.store || !app?.router || !app?.scheduler || !ns.PredictorModel) {
+    if (!app?.store || !app?.router || !ns.PredictorModel) {
       root.setTimeout(boot, 25);
       return;
     }
