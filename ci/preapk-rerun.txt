@@ -1,2 +1,2 @@
-rerun: 2026-08-20-122a-hw001a-s4-s7-red
-reason: TDD RED for 122A HW-001A S4 typed telemetry history and S7 byte-budgeted SessionRecorder admission
+rerun: 2026-08-20-122a-hw001a-s4-s7-green
+reason: verify 122A HW-001A S4 typed bounded telemetry history and S7 byte-budgeted SessionRecorder admission after remediation
