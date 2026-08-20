@@ -205,6 +205,7 @@
       this.demo = !this.native;
       this.demoMapState = demoMap();
       this.demoCurveState = demoCurve();
+      this.demoScienceRevision = 0;
     }
 
     isDemo() { return this.demo; }
@@ -217,6 +218,29 @@
         mapBar: demoTelemetry().live.load_bar, directTelemetryAgeMs: 42, wakeLockHeld: true, demo: true,
       };
       return invoke(this.native, 'getStatus', [], {});
+    }
+    presentSnapshot() {
+      if (this.demo) return { ok: true, revision: Date.now(), data: demoTelemetry(), demo: true };
+      return invoke(this.native, 'getPresentSnapshot', [], { ok: false, revision: 0, data: {} });
+    }
+    scienceSnapshotSince(revision) {
+      if (this.demo) {
+        this.demoScienceRevision += 1;
+        const learning = demoLearning();
+        return {
+          ok: true,
+          changed: true,
+          revision: this.demoScienceRevision,
+          refreshing: false,
+          data: {
+            learning,
+            calibrationState: { ready: true, suggestionItems: [], predictor: { ok: true, cells: [] } },
+            predictor: { ok: true, cells: [] },
+          },
+          demo: true,
+        };
+      }
+      return invoke(this.native, 'getScienceSnapshotSince', [Number(revision) || 0], { ok: false, changed: false, revision: Number(revision) || 0 });
     }
     telemetry() { return this.demo ? demoTelemetry() : invoke(this.native, 'getLiveTelemetry', [], {}); }
     fullSnapshot() { return this.demo ? demoTelemetry() : invoke(this.native, 'getFullEngineSnapshot', [], {}); }
