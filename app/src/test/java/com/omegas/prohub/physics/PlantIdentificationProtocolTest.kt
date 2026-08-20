@@ -19,18 +19,46 @@ class PlantIdentificationProtocolTest {
     }
 
     @Test
-    fun `gain authority promotes only after paired intervention outcome`() {
+    fun `gain authority promotes only after informative paired intervention outcome`() {
         assertEquals(
             MagnitudeAuthority.POLICY_ONLY,
-            PlantIdentificationProtocol.gainAuthority(hasIntervention = false, hasRevalidation = false),
+            PlantIdentificationProtocol.gainAuthority(
+                hasIntervention = false,
+                hasRevalidation = false,
+                beforeLogError = null,
+                afterLogError = null,
+                appliedLogFactorDelta = null,
+            ),
         )
         assertEquals(
             MagnitudeAuthority.POLICY_ONLY,
-            PlantIdentificationProtocol.gainAuthority(hasIntervention = true, hasRevalidation = false),
+            PlantIdentificationProtocol.gainAuthority(
+                hasIntervention = true,
+                hasRevalidation = true,
+                beforeLogError = 0.10,
+                afterLogError = 0.08,
+                appliedLogFactorDelta = 0.0,
+            ),
+        )
+        assertEquals(
+            MagnitudeAuthority.POLICY_ONLY,
+            PlantIdentificationProtocol.gainAuthority(
+                hasIntervention = true,
+                hasRevalidation = true,
+                beforeLogError = 0.10,
+                afterLogError = 0.15,
+                appliedLogFactorDelta = 0.08,
+            ),
         )
         assertEquals(
             MagnitudeAuthority.EMPIRICALLY_BOUNDED,
-            PlantIdentificationProtocol.gainAuthority(hasIntervention = true, hasRevalidation = true),
+            PlantIdentificationProtocol.gainAuthority(
+                hasIntervention = true,
+                hasRevalidation = true,
+                beforeLogError = 0.10,
+                afterLogError = 0.02,
+                appliedLogFactorDelta = 0.08,
+            ),
         )
     }
 }
