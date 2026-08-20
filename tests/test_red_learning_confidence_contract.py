@@ -18,9 +18,9 @@ class RedLearningConfidenceContractTest(unittest.TestCase):
 
     def test_dimensions_reuse_existing_authoritative_observables(self):
         helper = HELPER_PATH.read_text(encoding="utf-8")
-        self.assertIn('region.optDouble("quality", 0.0)', helper)
-        self.assertIn('region.optDouble("weight",', helper)
-        self.assertIn('region.optInt("visit_count"', helper)
+        self.assertIn('.optDouble("quality", 0.0)', helper)
+        self.assertIn('.optDouble("weight",', helper)
+        self.assertIn('.optInt("visit_count"', helper)
 
     def test_projection_does_not_invent_stage_or_threshold(self):
         helper = HELPER_PATH.read_text(encoding="utf-8")
