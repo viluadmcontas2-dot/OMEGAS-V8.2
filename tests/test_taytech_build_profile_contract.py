@@ -2,24 +2,26 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-APK_WORKFLOW = REPO_ROOT / ".github/workflows/build-v82-apk.yml"
 APP_GRADLE = REPO_ROOT / "app/build.gradle.kts"
+WORKFLOW_DIR = REPO_ROOT / ".github/workflows"
 
 
-def test_taytech_apk_workflow_targets_current_branch_and_32bit_abi():
-    workflow = APK_WORKFLOW.read_text(encoding="utf-8")
+def test_taytech_build_profile_keeps_explicit_32bit_abi_override():
     gradle = APP_GRADLE.read_text(encoding="utf-8")
 
-    assert "rebuild/v8.2-final-implementation" in workflow
-    assert "-PomegasAbis=armeabi-v7a" in workflow
-    assert "armeabi-v7a" in workflow
-    assert "arm64-v8a" in gradle  # generic default may remain for non-TayTech builds
+    # The target profile is selected at build time with
+    # `-PomegasAbis=armeabi-v7a`; source must keep that override wired all the
+    # way into Android's abiFilters without hard-coding a TayTech-only default.
+    assert 'providers.gradleProperty("omegasAbis")' in gradle
+    assert 'abiFilters += targetAbis' in gradle
+    assert 'orElse("arm64-v8a")' in gradle  # generic non-TayTech default may remain
 
 
-def test_taytech_apk_workflow_verifies_artifact_abi_before_receipt():
-    workflow = APK_WORKFLOW.read_text(encoding="utf-8")
+def test_build_profile_contract_does_not_require_a_permanent_apk_workflow():
+    workflows = list(WORKFLOW_DIR.glob("*.yml")) + list(WORKFLOW_DIR.glob("*.yaml")) if WORKFLOW_DIR.is_dir() else []
+    workflow_text = "\n".join(path.read_text(encoding="utf-8") for path in workflows)
 
-    assert "Verify TayTech APK ABI" in workflow
-    assert "armeabi-v7a" in workflow
-    assert "arm64-v8a" in workflow
-    assert "exit 1" in workflow
+    # CI governance is local/ephemeral-first. The ABI contract belongs to the
+    # Gradle build profile, not to a permanently enabled remote workflow.
+    assert "build-v82-apk" not in {path.stem for path in workflows}
+    assert "Verify TayTech APK ABI" not in workflow_text
