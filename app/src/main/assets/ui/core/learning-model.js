@@ -235,11 +235,28 @@
     ].join('|');
   }
 
+  function calibrationRevisionSignature(appState = {}, scienceSignature = '') {
+    const status = appState?.status || {};
+    return [
+      scienceSignature,
+      status.usbConnected === true ? 1 : 0,
+      status.kMapHash || '',
+      finite(status.kMapUpdatedAt, 0),
+      status.kMapState || '',
+      status.kFactorState || '',
+      finite(status.kFactorProgress, 0),
+      status.calibrationBusy === true ? 1 : 0,
+    ].join('|');
+  }
+
   /**
-   * Installs two bounded UI-only efficiencies on the already-created NativeApi:
-   * 1) one Learning status bridge call is shared inside the same refresh burst;
-   * 2) the expensive persisted Learning projection is reused until its material
-   *    science signature changes. No producer, timer, serial call or writer is added.
+   * Installs bounded UI-only efficiencies on the already-created NativeApi:
+   * - one Learning status bridge call is shared inside the same refresh burst;
+   * - the persisted Learning projection is reused until material science changes;
+   * - V7/Predictor state is reused until science/calibration changes or a V7
+   *   mutation is requested;
+   * - the learning decision comes from already-fetched live telemetry.
+   * No producer, timer, serial call or writer is added.
    */
   function installRuntimeEfficiency(app, options = {}) {
     if (!app?.api || !app?.store) return null;
@@ -254,6 +271,8 @@
     let statusCachedAt = Number.NEGATIVE_INFINITY;
     let learningCache = null;
     let learningSignature = null;
+    let v7StateCache = null;
+    let v7StateSignature = null;
 
     function statusSnapshot() {
       const at = now();
@@ -261,6 +280,13 @@
       statusCache = originalLearningStatus() || {};
       statusCachedAt = at;
       return statusCache;
+    }
+
+    function invalidateStructuralCaches() {
+      statusCache = null;
+      statusCachedAt = Number.NEGATIVE_INFINITY;
+      learningSignature = null;
+      v7StateSignature = null;
     }
 
     app.api.learningStatus = statusSnapshot;
@@ -275,13 +301,33 @@
       return decisionFromTelemetry(app.store.get()?.telemetry || {});
     };
 
-    const controller = {
-      invalidate: () => {
-        statusCache = null;
-        statusCachedAt = Number.NEGATIVE_INFINITY;
-        learningSignature = null;
-      },
-    };
+    const rawV7 = app.api.v7;
+    if (rawV7 && typeof rawV7.getState === 'function' && typeof Proxy === 'function') {
+      const originalGetState = rawV7.getState.bind(rawV7);
+      const readOnlyMethods = new Set(['getState', 'getLastOperation', 'listSessionFiles', 'previewMapAdjustment']);
+      const cachedGetState = function () {
+        const scienceSignature = scienceRevisionSignature(statusSnapshot());
+        const nextSignature = calibrationRevisionSignature(app.store.get() || {}, scienceSignature);
+        if (v7StateCache !== null && v7StateSignature === nextSignature) return v7StateCache;
+        v7StateCache = originalGetState();
+        v7StateSignature = nextSignature;
+        return v7StateCache;
+      };
+      app.api.v7 = new Proxy({}, {
+        get: (_target, property) => {
+          if (property === 'getState') return cachedGetState;
+          const value = rawV7[property];
+          if (typeof value !== 'function') return value;
+          return (...args) => {
+            const result = value.apply(rawV7, args);
+            if (!readOnlyMethods.has(String(property))) v7StateSignature = null;
+            return result;
+          };
+        },
+      });
+    }
+
+    const controller = { invalidate: invalidateStructuralCaches };
     app.api.__omegasLearningEfficiencyController = controller;
     return controller;
   }
@@ -293,6 +339,7 @@
     keyOf,
     decisionFromTelemetry,
     scienceRevisionSignature,
+    calibrationRevisionSignature,
     installRuntimeEfficiency,
   };
 });
