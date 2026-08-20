@@ -1,0 +1,26 @@
+name: Phase 06 foundation verification
+
+on:
+  push:
+    branches:
+      - rebuild/v8.2-final-implementation
+    paths:
+      - ci/phase6-foundation-verify.txt
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Physics foundation JVM tests
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest --tests 'com.omegas.prohub.physics.CalibrationPhysicsFoundationTest'
