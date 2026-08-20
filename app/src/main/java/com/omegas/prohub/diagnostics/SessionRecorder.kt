@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,7 +40,9 @@ class SessionRecorder(
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
-        private const val QUEUE_CAPACITY = 8192
+        // Heap-pressure guardrail for queued recorder payload ownership. This is
+        // not a physical performance threshold; device performance still needs D receipts.
+        private const val MAX_PENDING_PAYLOAD_BYTES = 4L * 1024L * 1024L
     }
 
     private val droppedEvents = AtomicLong(0L)
@@ -95,7 +97,7 @@ class SessionRecorder(
         1,
         0L,
         TimeUnit.MILLISECONDS,
-        ArrayBlockingQueue(QUEUE_CAPACITY),
+        LinkedBlockingQueue(),
         { runnable -> Thread(runnable, "omegas-session-recorder").apply { isDaemon = true } },
         { runnable, _ ->
             (runnable as? RecorderTask)?.reject()
@@ -505,22 +507,36 @@ class SessionRecorder(
     }
 
     private fun enqueuePayload(estimatedBytes: Long, work: () -> Unit) {
-        val safeBytes = estimatedBytes.coerceAtLeast(0L)
+        val safeBytes = estimatedBytes.coerceAtLeast(1L)
+        if (!tryReservePayloadBytes(safeBytes)) {
+            droppedEvents.incrementAndGet()
+            return
+        }
         pendingEvents.incrementAndGet()
-        pendingPayloadBytes.addAndGet(safeBytes)
         worker.execute(RecorderTask(safeBytes, System.nanoTime(), work))
+    }
+
+    private fun tryReservePayloadBytes(bytes: Long): Boolean {
+        if (bytes <= 0L || bytes > MAX_PENDING_PAYLOAD_BYTES) return false
+        var current = pendingPayloadBytes.get()
+        while (true) {
+            if (current > MAX_PENDING_PAYLOAD_BYTES - bytes) return false
+            if (pendingPayloadBytes.compareAndSet(current, current + bytes)) return true
+            current = pendingPayloadBytes.get()
+        }
     }
 
     private fun consumerBudgetJson(): JSONObject = JSONObject()
         .put("consumer", "SESSION_RECORDER")
         .put("trigger", "EVENT_DRIVEN_SELECTED_DIAGNOSTIC_EVENT")
         .put("cadence", "TELEMETRY_SETTING_OR_FORCE_EVENT")
-        .put("queueBound", QUEUE_CAPACITY)
+        .put("queueBoundKind", "PENDING_PAYLOAD_BYTES")
         .put("queueDepth", worker.queue.size)
         .put("pendingEvents", pendingEvents.get())
         .put("pendingPayloadBytes", pendingPayloadBytes.get())
+        .put("maxPendingPayloadBytes", MAX_PENDING_PAYLOAD_BYTES)
         .put("pendingBytesKind", "UTF8_PAYLOAD_BYTES_EXACT_OR_RAW_ESTIMATE")
-        .put("overloadPolicy", "DROP_INCOMING_RECORDER_EVENT_ON_FULL")
+        .put("overloadPolicy", "DROP_INCOMING_RECORDER_EVENT_ON_BYTE_BUDGET")
         .put("dropAffectsAcquisition", false)
         .put("droppedEvents", droppedEvents.get())
         .put("lastQueueDelayMs", lastQueueDelayMs.get())
