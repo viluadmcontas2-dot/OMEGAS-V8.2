@@ -107,14 +107,17 @@ class CalibrationPhysicsFoundationTest {
         assertEquals(1.05 * 0.98, first.fCurrent!!, 1e-12)
     }
 
-    @Test fun policyFractionCannotMasqueradeAsIdealTarget() {
+    @Test fun policyFractionMovesFromCurrentTowardIdealAndCannotMasqueradeAsTarget() {
         val policy = LegacyAdvisorStepPolicy()
         assertEquals(MagnitudeAuthority.POLICY_ONLY, policy.authority)
         assertEquals(0.45, policy.minimumFraction, 1e-12)
         assertEquals(0.90, policy.maximumFraction, 1e-12)
 
-        val target = IdealTarget(factor = 1.12, authority = MagnitudeAuthority.EMPIRICALLY_BOUNDED)
-        val step = policy.selectStep(target, uncertainty = 0.20)
+        val current = 1.20
+        val target = IdealTarget(factor = 1.05, authority = MagnitudeAuthority.EMPIRICALLY_BOUNDED)
+        val step = policy.selectStep(currentFactor = current, target = target, uncertainty = 0.20)
+        assertTrue(step.factor < current)
+        assertTrue(step.factor > target.factor)
         assertTrue(step.factor != target.factor)
         assertEquals(MagnitudeAuthority.POLICY_ONLY, step.authority)
     }
