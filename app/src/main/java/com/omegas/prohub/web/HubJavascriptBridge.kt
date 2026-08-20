@@ -12,6 +12,9 @@ import com.omegas.prohub.learning.LearningTemperatureSettings
 import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.LearningUiSnapshotAssembler
 import com.omegas.prohub.learning.SignalLearningStore
+import com.omegas.prohub.runtime.RuntimeSnapshotBus
+import com.omegas.prohub.service.TelemetryForegroundService
+import com.omegas.prohub.service.v7CalibrationStateJson
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import org.json.JSONArray
@@ -31,6 +34,9 @@ class HubJavascriptBridge(activity: MainActivity) {
         Thread(runnable, "omegas-web-k-map-read").apply { isDaemon = true }
     }
     private val mapReadBusy = AtomicBoolean(false)
+    private val scienceRefreshBusy = AtomicBoolean(false)
+    private val uiSnapshots = RuntimeSnapshotBus()
+    @Volatile private var publishedScienceSignature = ""
 
     fun destroy() {
         mapReadExecutor.shutdownNow()
@@ -72,6 +78,87 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface
     fun getReleaseIdentity(): String = releaseIdentity().toString()
+
+    /**
+     * PresentSnapshot = cópia latest-only do TelemetryStateStore. Não lê arquivo,
+     * não serializa histórico e não toca serial/learning/writer.
+     */
+    @JavascriptInterface
+    fun getPresentSnapshot(): String = activity?.serviceOrNull()?.let { service ->
+        val root = try { JSONObject(service.telemetryStore.liveJson()) } catch (_: Exception) { JSONObject() }
+        val live = root.optJSONObject("live") ?: JSONObject()
+        val interpolation = LearningGridProjection.liveInterpolationJson(
+            rpm = live.optDouble("rpm", 0.0),
+            petrolMs = live.optDouble("petrol_ms", live.optDouble("petrolMs", 0.0)),
+            mapBar = live.optDouble("load_bar", live.optDouble("map_bar", 0.0)),
+            sequence = root.optLong("sequence", 0L),
+            updatedAt = root.optLong("updatedAt", 0L),
+            telemetryValid = root.optBoolean("valid", false),
+        )
+        root.put("ok", true)
+            .put("telemetryAgeMs", root.optLong("ageMs", -1L))
+            .put("interpolation", interpolation)
+        uiSnapshots.publishPresent(root)
+        uiSnapshots.presentJson().toString()
+    } ?: unavailable()
+
+    /**
+     * ScienceSnapshot nunca reconstrói ciência na thread da WebView. A chamada
+     * compara somente metadados de arquivos e, se necessário, agenda um prewarm
+     * no executor que já pertence à bridge. Até o prewarm terminar, devolve o
+     * último snapshot válido em RAM.
+     */
+    @JavascriptInterface
+    fun getScienceSnapshotSince(lastRevision: Long): String {
+        val service = activity?.serviceOrNull() ?: return unavailable()
+        val signature = scienceSignature(service)
+        if (signature != publishedScienceSignature && scienceRefreshBusy.compareAndSet(false, true)) {
+            mapReadExecutor.execute {
+                try {
+                    val learning = try { JSONObject(getLearningMaps()) } catch (error: Exception) {
+                        JSONObject().put("ok", false).put("error", error.message ?: "Learning indisponível")
+                    }
+                    val calibration = try { JSONObject(service.v7CalibrationStateJson()) } catch (error: Exception) {
+                        JSONObject().put("ok", false).put("error", error.message ?: "Estado V7 indisponível")
+                    }
+                    val science = JSONObject()
+                        .put("learning", learning)
+                        .put("calibrationState", calibration)
+                        .put("predictor", calibration.optJSONObject("predictor") ?: JSONObject())
+                        .put("generatedAt", System.currentTimeMillis())
+                        .put("signature", signature)
+                    uiSnapshots.publishScience(science, signature)
+                    publishedScienceSignature = signature
+                } catch (_: Exception) {
+                    // Mantém a última ciência válida; a próxima chamada tentará novamente.
+                } finally {
+                    scienceRefreshBusy.set(false)
+                }
+            }
+        }
+        return uiSnapshots.scienceJsonSince(lastRevision)
+            .put("refreshing", scienceRefreshBusy.get())
+            .put("pendingSignature", signature != publishedScienceSignature)
+            .toString()
+    }
+
+    private fun scienceSignature(service: TelemetryForegroundService): String {
+        val root = service.paths.runtimeRoot
+        val files = listOf(
+            File(root, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE),
+            File(root, "learning_v6_evidence.json"),
+            File(root, "k_map_cache.json"),
+            File(root, "k_factor_cache.json"),
+            File(root, "v7_sessions"),
+        )
+        return files.joinToString("|") { file ->
+            if (file.exists()) {
+                "${file.name}:${file.lastModified()}:${if (file.isFile) file.length() else 0L}"
+            } else {
+                "${file.name}:missing"
+            }
+        }
+    }
 
     @JavascriptInterface
     fun getStatus(): String = activity?.serviceOrNull()?.let { service ->
