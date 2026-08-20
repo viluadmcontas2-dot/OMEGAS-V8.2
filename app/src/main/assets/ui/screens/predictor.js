@@ -31,7 +31,11 @@
       this.unsubscribeContext = app.scheduler.addHook('context', () => {
         if (this.store.get().route === 'predictor') this.refresh();
       });
-      this.unsubscribeStore = this.store.subscribe(state => this.onState(state), true);
+      this.unsubscribeStore = this.store.subscribeSelected(
+        state => state.route,
+        route => this.onRoute(route),
+        true,
+      );
     }
 
     injectShell() {
@@ -105,8 +109,7 @@
       });
     }
 
-    onState(state) {
-      const route = state.route;
+    onRoute(route) {
       const active = route === 'predictor';
       this.navButton?.classList.toggle('active', active);
       this.navButton?.setAttribute('aria-current', active ? 'page' : 'false');
