@@ -59,10 +59,10 @@ def test_session_recorder_declares_its_own_queue_and_disk_side_budget():
     source = read("app/src/main/java/com/omegas/prohub/diagnostics/SessionRecorder.kt")
     assert_budget_fields(source, (
         '"consumerBudget"',
-        '"queueBound"',
         '"queueDepth"',
         '"pendingEvents"',
         '"pendingPayloadBytes"',
+        '"maxPendingPayloadBytes"',
         '"overloadPolicy"',
         '"dropAffectsAcquisition"',
         '"lastQueueDelayMs"',
@@ -72,5 +72,7 @@ def test_session_recorder_declares_its_own_queue_and_disk_side_budget():
         '"lastThreadCpuMs"',
         '"maxThreadCpuMs"',
     ))
-    assert "ArrayBlockingQueue(QUEUE_CAPACITY)" in source
-    assert "DROP_INCOMING_RECORDER_EVENT_ON_FULL" in source
+    assert "ArrayBlockingQueue" not in source
+    assert "MAX_PENDING_PAYLOAD_BYTES" in source
+    assert "tryReservePayloadBytes" in source
+    assert "DROP_INCOMING_RECORDER_EVENT_ON_BYTE_BUDGET" in source
