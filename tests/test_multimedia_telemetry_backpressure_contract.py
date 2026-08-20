@@ -80,12 +80,14 @@ for marker in (
 assert "Executors.newSingleThreadExecutor" not in delivery
 assert "ArrayDeque" not in delivery
 
-# Persistência auxiliar continua coalescida e fora do ingest quente.
+# Persistência auxiliar continua coalescida e fora do ingest quente. No RED V2,
+# somente uma publicação científica real solicita sidecar; preview/coalesced não gera I/O.
 ingest_start = learning.index("    fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject")
 ingest_end = learning.index("\n    fun statusJson()", ingest_start)
 ingest_body = learning[ingest_start:ingest_end]
 assert "val result = delegate.ingest(telemetry, prepared)" in ingest_body
-assert "if (source != null) persistEvidenceState()" in ingest_body
+assert "if (prepared.sample != null) persistEvidenceState()" in ingest_body
+assert "if (source != null) persistEvidenceState()" not in ingest_body
 assert "writeText(" not in ingest_body
 assert "CoalescedSnapshotWriter" in learning
 assert "evidenceStateWriter.request { buildEvidencePayload(snapshot) }" in learning
