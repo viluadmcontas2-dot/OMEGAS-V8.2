@@ -1,2 +1,2 @@
-rerun: 2026-08-19-transversal-provenance-independence
-reason: verify GitHub transversal enforcement after aligning JSON/Markdown/AGENTS/test with canonical GLOBAL-LEDGER-001 provenance-based audit independence; no app production source change
+rerun: 2026-08-19-integral-latest-only-ui-owner
+reason: verify integral regression after rebinding slow-UI backlog assertion to LatestOnlyBackgroundPipeline and its NativeRuntimeManager consumer call path; no app production source change
