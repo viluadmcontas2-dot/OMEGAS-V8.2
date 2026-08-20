@@ -1,2 +1,2 @@
-rerun: 2026-08-20-gs-g3b-single-story
-reason: verify one continuous G3A-to-G3B real-correlation plus AutoMatch stale-reconcile JUnit story; test-only evidence, no app production source change
+rerun: 2026-08-20-taytech-build-profile-red
+reason: TDD RED for current-branch TayTech armeabi-v7a build profile and APK ABI verification contract
