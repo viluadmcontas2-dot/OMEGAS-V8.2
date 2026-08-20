@@ -1,2 +1,2 @@
-rerun: 2026-08-20-122a-hw001a-stale-contract-repair
-reason: verify 122A after aligning legacy persistence test with the byte-budgeted SessionRecorder contract; no physical claim
+rerun: 2026-08-20-122a-architectural-performance-ui-revisions
+reason: verify revision-gated Learning/V7 projections and selected Store wake-ups before native fan-out work; no physical claim
