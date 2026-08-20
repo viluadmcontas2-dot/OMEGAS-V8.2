@@ -1,11 +1,13 @@
 {
-  "schema": "omegas-v8.2-transversal-gate-v1",
+  "schema": "omegas-v8.2-transversal-gate-v2",
   "governance_authorities": {
     "contract_registry_notion_id": "6e104f112a43445aaae49db92daa35b0",
     "dynamic_contract_registry_resolution_required": true,
     "global_ledger_notion_id": "3c18ee52ac54817db2f8ed88448470c8",
     "global_ledger_required": true,
-    "rule": "The Notion Contract Registry is canonical. This file is enforcement/minimum coverage and must not fork or replace the live registry."
+    "audit_independence_authority": "GLOBAL-LEDGER-001",
+    "audit_independence_model": "PROVENANCE_BASED",
+    "rule": "The Notion Contract Registry and GLOBAL-LEDGER-001 are canonical. This file is enforcement/minimum coverage and must not fork or replace the live governance authorities."
   },
   "mandatory_sources": [
     {"id":"PROGRAM_MASTER","notion_id":"3bd8ee52ac548148aae0f0f80132a5fa"},
@@ -33,6 +35,13 @@
     "TRANSVERSE_EVIDENCE",
     "CONSUMER_CALL_PATH",
     "FALSIFIERS",
+    "IMPLEMENTATION_RUN_ID",
+    "AUDIT_EPOCH_ID",
+    "AUDIT_RUN_ID",
+    "AUDIT_SCOPE_FINGERPRINT",
+    "AUDITOR_MODE",
+    "AUDITOR_NORMATIVE_WRITES",
+    "META_AUDIT_RUN_ID",
     "INDEPENDENT_AUDITOR_RECEIPT",
     "UNPROVEN_SURFACES",
     "INVALIDATION_EVENTS"
@@ -47,6 +56,11 @@
     "uiux_bindings_classified_when_human_facing": true,
     "all_applicable_requirements_evidenced": true,
     "independent_auditor": true,
+    "audit_independence_model": "PROVENANCE_BASED",
+    "audit_epoch_run_scope_fingerprint_required": true,
+    "auditor_read_only_normative_required": true,
+    "auditor_normative_writes_zero_required": true,
+    "meta_audit_distinct_run_required": true,
     "consumer_call_path_for_new_helpers": true,
     "behavioral_test_when_behavior_executable": true,
     "hardware_claims_require_target_device": true
@@ -59,7 +73,9 @@
     "ACTIVE_CONTRACT_NOT_CLASSIFIED",
     "UIUX_BINDING_NOT_CLASSIFIED",
     "APPLICABLE_REQUIREMENT_WITHOUT_EVIDENCE",
-    "IMPLEMENTER_SELF_PASS",
+    "AUDIT_PROVENANCE_NOT_INDEPENDENT",
+    "AUDIT_RUN_NORMATIVE_AUDITED_MUTATION",
+    "META_AUDIT_RUN_REUSED",
     "HELPER_WITHOUT_CONSUMER",
     "STRING_ONLY_TEST_FOR_EXECUTABLE_BEHAVIOR",
     "HOST_BENCHMARK_AS_RK3326_EVIDENCE",
@@ -67,6 +83,6 @@
     "SCIENTIFIC_CONSTANT_WITHOUT_JUSTIFICATION",
     "BROKEN_OR_TIMED_OUT_HARNESS_USED_AS_EVIDENCE"
   ],
-  "dependency_rule": "Only PASS after independent transversal audit may unlock a material dependent owner.",
-  "retroactive_rule": "Any earlier PASS lacking this transversal receipt becomes STALE_BY_GOVERNANCE until independently reaudited against the exact remote SHA."
+  "dependency_rule": "Only PASS from a provenance-independent read-only audit run plus a distinct meta-audit PASS may unlock a material dependent owner.",
+  "retroactive_rule": "Any earlier PASS lacking this transversal receipt and provenance-independent audit/meta-audit evidence becomes STALE_BY_GOVERNANCE until reaudited against the exact remote SHA."
 }
