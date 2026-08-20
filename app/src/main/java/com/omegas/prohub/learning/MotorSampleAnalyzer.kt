@@ -61,8 +61,23 @@ class MotorSampleAnalyzer(
         continuityLossPending = true
     }
 
+    /**
+     * Reset de uma sessão USB física recém-aberta. Não existe continuidade
+     * anterior para proteger, portanto o fast-path saudável pode ser usado.
+     * Fronteiras reais dentro de uma sessão usam [resetAfterPhysicalBoundary].
+     */
     fun reset() {
+        resetSamples()
+        fullWindowRequired = false
+        clearFuelState()
+    }
+
+    private fun resetAfterPhysicalBoundary() {
         resetSamples(requireFullWindow = true)
+        clearFuelState()
+    }
+
+    private fun clearFuelState() {
         stableFuel = null
         observedNormalFuel = null
         transitionTarget = null
@@ -104,7 +119,7 @@ class MotorSampleAnalyzer(
 
         when (frame.fuel) {
             Mp48Fuel.ENGINE_OFF -> {
-                reset()
+                resetAfterPhysicalBoundary()
                 return SampleDecision.transition(
                     state = "ENGINE_OFF",
                     reason = "Motor parado; aprendizado pausado",
@@ -397,6 +412,7 @@ class MotorSampleAnalyzer(
                         crossedPlannedOperation -> "WINDOW_RESTARTED_AFTER_PLANNED_OPERATION"
                         restartedAfterLoss -> "WINDOW_RESTARTED_AFTER_TELEMETRY_LOSS"
                         warning > 0L -> "TOLERATED_TELEMETRY_DELAY"
+                        !fullWindowRequired && frames.size >= AdaptiveSampleWindow.MICRO_CANDIDATE_FRAMES -> "MICRO_CANDIDATE"
                         else -> "FORMING_SAMPLE"
                     },
                 ),
