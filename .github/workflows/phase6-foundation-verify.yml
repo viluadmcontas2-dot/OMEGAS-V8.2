@@ -26,7 +26,7 @@ jobs:
         continue-on-error: true
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest --tests 'com.omegas.prohub.physics.CalibrationPhysicsFoundationTest'
+          ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest --tests 'com.omegas.prohub.physics.*'
       - name: Publish result
         if: always()
         env:
