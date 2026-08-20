@@ -15,9 +15,15 @@ class RedSnapshotBusContractTest(unittest.TestCase):
         self.assertIn("telemetryStore.liveJson()", BRIDGE)
         self.assertIn("uiSnapshots.publishPresent", BRIDGE)
 
-    def test_present_bridge_is_ram_only(self):
+    def test_present_bridge_body_is_ram_only(self):
         self.assertIn("fun getPresentSnapshot(): String", BRIDGE)
-        self.assertNotIn("getFullEngineSnapshot()", BRIDGE)
+        start = BRIDGE.index("fun getPresentSnapshot(): String")
+        end = BRIDGE.index("fun getScienceSnapshotSince", start)
+        body = BRIDGE[start:end]
+        self.assertIn("telemetryStore.liveJson()", body)
+        self.assertNotIn("fullEngineSnapshotJson", body)
+        self.assertNotIn("getLearningMaps", body)
+        self.assertNotIn("v7CalibrationStateJson", body)
 
     def test_science_bridge_returns_cache_and_refreshes_off_webview_thread(self):
         self.assertIn("fun getScienceSnapshotSince(lastRevision: Long): String", BRIDGE)
