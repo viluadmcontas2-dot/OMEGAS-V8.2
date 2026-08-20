@@ -1,3 +1,3 @@
-phase6-foundation-r2
-scope=physics-foundation-jvm
-status_context=omegas/phase6-foundation
+phase6-foundation-r3-red
+scope=physics-foundation-and-bindings
+expected=red-before-binding-implementation
