@@ -20,6 +20,12 @@ def run_node(script: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def predictor_refresh_body(source: str) -> str:
+    start = source.index("    refresh() {")
+    end = source.index("\n    cells() {", start)
+    return source[start:end]
+
+
 def test_selected_subscription_ignores_unrelated_store_patches():
     script = r"""
 const fs = require('fs');
@@ -71,8 +77,10 @@ def test_predictor_subscribes_only_to_route_changes():
 
 def test_predictor_skips_parse_patch_and_dom_render_for_identical_v7_payload():
     source = PREDICTOR.read_text(encoding="utf-8")
+    body = predictor_refresh_body(source)
     marker = "if (raw === this.lastStatePayload) return;"
     assert "this.lastStatePayload = null;" in source
-    assert marker in source
-    assert source.index(marker) < source.index("const calibration = parse(raw, {})")
-    assert source.index(marker) < source.index("this.store.patch({", source.index("refresh()"))
+    assert marker in body
+    assert body.index(marker) < body.index("const calibration = parse(raw, {})")
+    assert body.index(marker) < body.index("this.store.patch({")
+    assert body.index(marker) < body.index("this.render()")
