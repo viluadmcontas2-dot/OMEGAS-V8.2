@@ -35,7 +35,7 @@ class Phase6BindingIntegrationTest {
         assertFalse(policy.getBoolean("idealTarget"))
     }
 
-    @Test fun advisorProjectionDecoratesOperationalDeltasWithoutCallingThemIdealTargets() {
+    @Test fun advisorProjectionNeverPromotesLaneToCausalMechanism() {
         val advice = JSONObject()
             .put("kFactorSuggestions", JSONArray().put(JSONObject().put("direction", "INCREASE_CNG_DELIVERY")))
             .put("mapResidualSuggestions", JSONArray().put(JSONObject().put("direction", "DECREASE_CNG_DELIVERY")))
@@ -44,9 +44,11 @@ class Phase6BindingIntegrationTest {
         val map = decorated.getJSONArray("mapResidualSuggestions").getJSONObject(0)
         assertEquals("POLICY_ONLY", curve.getString("magnitudeAuthority"))
         assertEquals("STEP_POLICY_BASELINE", curve.getString("magnitudeRole"))
-        assertEquals("CURVE_MUL_ACT", curve.getString("correctionMechanism"))
+        assertEquals("UNKNOWN", curve.getString("correctionMechanism"))
+        assertEquals("CURVE_MUL_ACT", curve.getString("mechanismCandidateLane"))
         assertFalse(curve.getBoolean("idealTarget"))
-        assertEquals("MAP_LOCAL", map.getString("correctionMechanism"))
+        assertEquals("UNKNOWN", map.getString("correctionMechanism"))
+        assertEquals("MAP_LOCAL", map.getString("mechanismCandidateLane"))
         assertFalse(map.getBoolean("idealTarget"))
     }
 }
