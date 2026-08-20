@@ -122,3 +122,57 @@ if (fullSnapshotCalls !== 0) throw new Error('legacy full snapshot path was invo
 """
     result = run_node(script)
     assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_runtime_efficiency_reuses_v7_state_until_science_or_calibration_changes():
+    script = r"""
+const model = require('./app/src/main/assets/ui/core/learning-model.js');
+let now = 1000;
+let stateCalls = 0;
+let statusCalls = 0;
+let mutatorCalls = 0;
+let statusPayload = {
+  session_id: 'usb-1', epoch: 2, new_frames_absorbed: 40,
+  lifetime_new_frames_absorbed: 400, advisor_revision: 3, advisor_published_revision: 3,
+  evidence_budget: { nativeBands: 18, nativeAnchors: 2 },
+};
+let appState = {
+  telemetry: { live: {} },
+  status: { kMapHash: 'map-a', kMapUpdatedAt: 10, kMapState: 'IDLE', kFactorState: 'IDLE' },
+};
+const rawV7 = {
+  getState: () => { stateCalls += 1; return JSON.stringify({ marker: stateCalls }); },
+  synchronizeAdvisorSuggestions: () => { mutatorCalls += 1; return '{"ok":true}'; },
+  getLastOperation: () => '{"state":"IDLE"}',
+};
+const app = {
+  store: { get: () => appState },
+  api: {
+    v7: rawV7,
+    learningStatus: () => { statusCalls += 1; return JSON.parse(JSON.stringify(statusPayload)); },
+    learning: () => ({}),
+    learningDecision: () => ({}),
+  },
+};
+model.installRuntimeEfficiency(app, { now: () => now, statusBurstMs: 300 });
+const first = JSON.parse(app.api.v7.getState());
+now += 2000;
+const second = JSON.parse(app.api.v7.getState());
+if (stateCalls !== 1 || first.marker !== 1 || second.marker !== 1) {
+  throw new Error(`unchanged V7 state rebuilt: ${stateCalls}`);
+}
+statusPayload.new_frames_absorbed += 4;
+now += 2000;
+const third = JSON.parse(app.api.v7.getState());
+if (stateCalls !== 2 || third.marker !== 2) throw new Error('science revision did not invalidate V7 state');
+appState = { ...appState, status: { ...appState.status, kMapHash: 'map-b', kMapUpdatedAt: 20 } };
+now += 2000;
+const fourth = JSON.parse(app.api.v7.getState());
+if (stateCalls !== 3 || fourth.marker !== 3) throw new Error('calibration status did not invalidate V7 state');
+app.api.v7.synchronizeAdvisorSuggestions('{}');
+if (mutatorCalls !== 1) throw new Error('V7 mutator not delegated');
+const afterMutation = JSON.parse(app.api.v7.getState());
+if (stateCalls !== 4 || afterMutation.marker !== 4) throw new Error('V7 mutation did not invalidate cached state');
+"""
+    result = run_node(script)
+    assert result.returncode == 0, result.stderr or result.stdout
