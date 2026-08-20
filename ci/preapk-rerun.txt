@@ -1,2 +1,2 @@
-rerun: 2026-08-20-122a-hw001a-s4-s7-green
-reason: verify 122A HW-001A S4 typed bounded telemetry history and S7 byte-budgeted SessionRecorder admission after remediation
+rerun: 2026-08-20-122a-hw001a-stale-contract-repair
+reason: verify 122A after aligning legacy persistence test with the byte-budgeted SessionRecorder contract; no physical claim
