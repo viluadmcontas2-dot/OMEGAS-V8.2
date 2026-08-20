@@ -22,7 +22,11 @@ class PhysicsContractPropagationTest {
             target = IdealTarget(1.10, MagnitudeAuthority.EMPIRICALLY_BOUNDED),
             evidencePath = listOf("localized residual", "gain posterior"),
         )
-        val step = LegacyAdvisorStepPolicy().selectStep(requireNotNull(decision.target), uncertainty = 0.5)
+        val step = LegacyAdvisorStepPolicy().selectStep(
+            currentFactor = 1.0,
+            target = requireNotNull(decision.target),
+            uncertainty = 0.5,
+        )
         val suggestion = PhysicsContractPropagation.toSuggestion(decision, step)
         val draft = PhysicsContractPropagation.toDraft(suggestion)
         val ui = PhysicsContractPropagation.toUi(draft)
