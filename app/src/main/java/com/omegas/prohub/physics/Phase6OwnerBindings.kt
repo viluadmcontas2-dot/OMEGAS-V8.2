@@ -2,6 +2,7 @@ package com.omegas.prohub.physics
 
 import com.omegas.prohub.learning.AssistedCalibrationAdvisor
 import com.omegas.prohub.learning.ContinuousLearningMath
+import org.json.JSONArray
 import org.json.JSONObject
 
 enum class ScientificAuthority {
@@ -54,3 +55,37 @@ fun AssistedCalibrationAdvisor.correctionPolicyMetadata(): JSONObject = JSONObje
     .put("magnitudeAuthority", MagnitudeAuthority.POLICY_ONLY.name)
     .put("idealTarget", false)
     .put("role", "STEP_POLICY_BASELINE")
+
+/**
+ * Adds explicit Phase 06 authority metadata to the existing Advisor projection.
+ * The numerical deltas remain legacy operational steps; this decorator never
+ * re-labels them as K*/F* ideal targets and never creates a second advisor.
+ */
+fun AssistedCalibrationAdvisor.decoratePhysicsAuthority(advice: JSONObject): JSONObject {
+    val output = JSONObject(advice.toString())
+    output.put("physicsPolicy", correctionPolicyMetadata())
+    decorate(
+        output.optJSONArray("kFactorSuggestions") ?: JSONArray(),
+        CorrectionMechanism.CURVE_MUL_ACT,
+    )
+    decorate(
+        output.optJSONArray("mapResidualSuggestions") ?: JSONArray(),
+        CorrectionMechanism.MAP_LOCAL,
+    )
+    return output
+}
+
+private fun decorate(items: JSONArray, mechanism: CorrectionMechanism) {
+    repeat(items.length()) { index ->
+        val item = items.optJSONObject(index) ?: return@repeat
+        item.put("magnitudeAuthority", MagnitudeAuthority.POLICY_ONLY.name)
+            .put("magnitudeRole", "STEP_POLICY_BASELINE")
+            .put("correctionMechanism", mechanism.name)
+            .put("idealTarget", false)
+            .put("expectedEffectDirection", when (item.optString("direction")) {
+                "INCREASE_CNG_DELIVERY" -> EffectDirection.INCREASE.name
+                "DECREASE_CNG_DELIVERY" -> EffectDirection.DECREASE.name
+                else -> EffectDirection.UNKNOWN.name
+            })
+    }
+}
