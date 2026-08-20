@@ -23,6 +23,7 @@
       this.router = app.router;
       this.api = app.api;
       this.data = null;
+      this.lastStatePayload = null;
       this.activeKey = '';
       this.refreshing = false;
       this.lastRoute = '';
@@ -129,7 +130,10 @@
       if (this.refreshing || !this.api.v7 || typeof this.api.v7.getState !== 'function') return;
       this.refreshing = true;
       try {
-        const calibration = parse(this.api.v7.getState(), {}) || {};
+        const raw = this.api.v7.getState();
+        if (raw === this.lastStatePayload) return;
+        const calibration = parse(raw, {}) || {};
+        this.lastStatePayload = raw;
         const predictor = calibration.predictor || {};
         this.data = predictor;
         this.store.patch({
