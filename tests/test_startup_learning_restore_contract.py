@@ -38,8 +38,10 @@ class StartupLearningRestoreContract(unittest.TestCase):
         self.assertIn('if (!refreshed.optBoolean("restoring", false))', RUNTIME)
 
     def test_confirmed_calibration_is_never_forgotten_during_restore(self):
-        self.assertIn("pendingCalibrationAdjustment = JSONObject(payload.toString())", DEFERRED)
-        self.assertIn("pendingCalibrationAdjustment?.let { restored.store.onCalibrationAdjustment(it) }", DEFERRED)
+        self.assertIn("DeferredOperation.CalibrationAdjustment(JSONObject(payload.toString()))", DEFERRED)
+        self.assertIn("replayDeferredOperationsLocked(restored.store)", DEFERRED)
+        self.assertIn("is DeferredOperation.CalibrationAdjustment ->", DEFERRED)
+        self.assertIn("store.onCalibrationAdjustment(operation.payload)", DEFERRED)
         self.assertIn('put("deferred", true)', DEFERRED)
         self.assertIn('put("resetPerformed", false)', DEFERRED)
 
@@ -48,7 +50,6 @@ class StartupLearningRestoreContract(unittest.TestCase):
         self.assertIn("rebuildVisualStatusFromMemory()", MEMORY)
         self.assertIn("@Volatile private var advisor = analyzeCurrentMemory()", SIGNAL)
         self.assertIn("init { loadEvidenceState() }", SIGNAL)
-        # Esses custos continuam existindo por enquanto, mas não podem voltar ao construtor do runtime.
         self.assertNotIn("SignalLearningStore(", RUNTIME)
         self.assertNotIn("MotorLearningMemory(", RUNTIME)
 
