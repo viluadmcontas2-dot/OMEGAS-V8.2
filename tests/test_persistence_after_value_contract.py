@@ -78,8 +78,11 @@ class PersistenceAfterValueContract(unittest.TestCase):
 
     def test_session_recorder_file_write_is_worker_side_and_bounded(self):
         source = RECORDER.read_text("utf-8")
-        self.assertIn("private const val QUEUE_CAPACITY = 8192", source)
-        self.assertIn("ArrayBlockingQueue(QUEUE_CAPACITY)", source)
+        self.assertNotIn("ArrayBlockingQueue", source)
+        self.assertNotIn("QUEUE_CAPACITY = 8192", source)
+        self.assertIn("MAX_PENDING_PAYLOAD_BYTES", source)
+        self.assertIn("tryReservePayloadBytes", source)
+        self.assertIn("DROP_INCOMING_RECORDER_EVENT_ON_BYTE_BUDGET", source)
 
         record_start = source.index("fun record(type: String, source: String, data: JSONObject")
         record_end = source.index("fun recordRawUsb(", record_start)
