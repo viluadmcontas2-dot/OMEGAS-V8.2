@@ -57,30 +57,33 @@ fun AssistedCalibrationAdvisor.correctionPolicyMetadata(): JSONObject = JSONObje
     .put("role", "STEP_POLICY_BASELINE")
 
 /**
- * Adds explicit Phase 06 authority metadata to the existing Advisor projection.
- * The numerical deltas remain legacy operational steps; this decorator never
- * re-labels them as K*/F* ideal targets and never creates a second advisor.
+ * Adds Phase 06 authority metadata to the legacy Advisor projection without
+ * promoting a lane to a causal mechanism. Legacy numerical deltas remain
+ * StepPolicy outputs. `mechanismCandidateLane` is only routing provenance;
+ * `correctionMechanism` stays UNKNOWN until ResidualMechanismClassifier emits
+ * an evidence-backed decision.
  */
 fun AssistedCalibrationAdvisor.decoratePhysicsAuthority(advice: JSONObject): JSONObject {
     val output = JSONObject(advice.toString())
     output.put("physicsPolicy", correctionPolicyMetadata())
-    decorate(
+    decorateLegacyLane(
         output.optJSONArray("kFactorSuggestions") ?: JSONArray(),
-        CorrectionMechanism.CURVE_MUL_ACT,
+        candidateLane = CorrectionMechanism.CURVE_MUL_ACT,
     )
-    decorate(
+    decorateLegacyLane(
         output.optJSONArray("mapResidualSuggestions") ?: JSONArray(),
-        CorrectionMechanism.MAP_LOCAL,
+        candidateLane = CorrectionMechanism.MAP_LOCAL,
     )
     return output
 }
 
-private fun decorate(items: JSONArray, mechanism: CorrectionMechanism) {
+private fun decorateLegacyLane(items: JSONArray, candidateLane: CorrectionMechanism) {
     repeat(items.length()) { index ->
         val item = items.optJSONObject(index) ?: return@repeat
         item.put("magnitudeAuthority", MagnitudeAuthority.POLICY_ONLY.name)
             .put("magnitudeRole", "STEP_POLICY_BASELINE")
-            .put("correctionMechanism", mechanism.name)
+            .put("correctionMechanism", CorrectionMechanism.UNKNOWN.name)
+            .put("mechanismCandidateLane", candidateLane.name)
             .put("idealTarget", false)
             .put("expectedEffectDirection", when (item.optString("direction")) {
                 "INCREASE_CNG_DELIVERY" -> EffectDirection.INCREASE.name
