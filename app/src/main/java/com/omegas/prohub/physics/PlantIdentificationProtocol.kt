@@ -34,8 +34,30 @@ data class PlantIdentificationProtocol(
             ),
         )
 
-        fun gainAuthority(hasIntervention: Boolean, hasRevalidation: Boolean): MagnitudeAuthority =
-            if (hasIntervention && hasRevalidation) MagnitudeAuthority.EMPIRICALLY_BOUNDED
-            else MagnitudeAuthority.POLICY_ONLY
+        /**
+         * Revalidation alone does not create empirical authority. Promotion
+         * requires an informative, directionally coherent paired outcome.
+         */
+        fun gainAuthority(
+            hasIntervention: Boolean,
+            hasRevalidation: Boolean,
+            beforeLogError: Double?,
+            afterLogError: Double?,
+            appliedLogFactorDelta: Double?,
+        ): MagnitudeAuthority {
+            if (!hasIntervention || !hasRevalidation) return MagnitudeAuthority.POLICY_ONLY
+            val before = beforeLogError ?: return MagnitudeAuthority.POLICY_ONLY
+            val after = afterLogError ?: return MagnitudeAuthority.POLICY_ONLY
+            val delta = appliedLogFactorDelta ?: return MagnitudeAuthority.POLICY_ONLY
+            if (!before.isFinite() || !after.isFinite() || !delta.isFinite() || kotlin.math.abs(delta) < 1e-9) {
+                return MagnitudeAuthority.POLICY_ONLY
+            }
+            val observedGain = (before - after) / delta
+            return if (observedGain.isFinite() && observedGain > 0.0) {
+                MagnitudeAuthority.EMPIRICALLY_BOUNDED
+            } else {
+                MagnitudeAuthority.POLICY_ONLY
+            }
+        }
     }
 }
