@@ -1,9 +1,25 @@
 (function (root, factory) {
   'use strict';
   const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api;
+  const commonJs = typeof module === 'object' && module.exports;
+  if (commonJs) module.exports = api;
   const ns = root.OmegasUi = root.OmegasUi || {};
   ns.LearningModel = api;
+
+  if (!commonJs && typeof root.setTimeout === 'function') {
+    const installWhenReady = () => {
+      const app = root.OmegasApp;
+      if (!app?.store || !app?.api) {
+        root.setTimeout(installWhenReady, 25);
+        return;
+      }
+      const controller = api.installRuntimeEfficiency(app);
+      if (controller && typeof root.addEventListener === 'function') {
+        root.addEventListener('omegas-refresh', controller.invalidate);
+      }
+    };
+    root.setTimeout(installWhenReady, 0);
+  }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
@@ -153,5 +169,130 @@
     };
   }
 
-  return { STATES, buildModel, normalizeFuel, keyOf };
+  /**
+   * Reuses the live telemetry already fetched by the fast path instead of asking
+   * Kotlin for a second full engine snapshot just to explain the current sample.
+   */
+  function decisionFromTelemetry(telemetry = {}) {
+    const source = telemetry && typeof telemetry === 'object' ? telemetry : {};
+    const live = source.live || source.data || source;
+    const sample = live.sample && typeof live.sample === 'object' ? live.sample : {};
+    return {
+      ok: source.ok !== false,
+      state: sample.state || live.sample_state || 'OBSERVING_ENGINE',
+      reason: sample.reason || live.sample_reason || 'Observando o motor',
+      reason_code: sample.reason_code || sample.reasonCode || live.sample_state || 'OBSERVING_ENGINE',
+      frame_count: finite(sample.frame_count ?? live.sample_frame_count, 0),
+      minimum_frames: finite(sample.minimum_frames ?? live.sample_minimum_frames, 0),
+      desired_frames: finite(sample.desired_frames ?? live.sample_desired_frames, 0),
+      duration_ms: finite(sample.duration_ms ?? live.sample_duration_ms, 0),
+      median_interval_ms: finite(sample.median_interval_ms, 0),
+      gap_ms: finite(sample.gap_ms, 0),
+      learning_eligible: sample.learning_eligible === true,
+      fuel_confirmed: sample.fuel_confirmed ?? live.fuel ?? null,
+      window_age_ms: finite(sample.window_age_ms ?? sample.duration_ms, 0),
+      window_budget_ms: finite(sample.window_budget_ms, 0),
+      frames_evicted: finite(sample.frames_evicted, 0),
+      cell_key: sample.cell_key || '',
+      cell_row: finite(sample.cell_row, -1),
+      cell_column: finite(sample.cell_column, -1),
+      quality: finite(sample.quality ?? live.learning_quality, 0),
+      plausibility_reasons: Array.isArray(sample.plausibility_reasons) ? sample.plausibility_reasons : [],
+      live,
+    };
+  }
+
+  /**
+   * Structural science revision. Plain received-frame churn is intentionally not
+   * part of this key; only events capable of changing the persisted Learning/UI
+   * projection invalidate it. Explicit lifecycle/import/write refreshes also
+   * invalidate the runtime cache through `omegas-refresh`.
+   */
+  function scienceRevisionSignature(status = {}) {
+    const source = status && typeof status === 'object' ? status : {};
+    const evidence = source.evidence_budget || source.evidenceBudget || {};
+    const binding = source.calibration_binding || source.calibrationBinding || {};
+    const reset = source.last_reset || source.lastReset || {};
+    const restore = source.restore || {};
+    return [
+      source.session_id ?? source.sessionId ?? '',
+      source.epoch ?? source.memory?.epoch ?? '',
+      source.new_frames_absorbed ?? source.newFramesAbsorbed ?? 0,
+      source.lifetime_new_frames_absorbed ?? source.lifetimeNewFramesAbsorbed ?? 0,
+      source.advisor_revision ?? source.advisorRevision ?? 0,
+      source.advisor_published_revision ?? source.advisorPublishedRevision ?? 0,
+      source.comparison_count ?? source.comparisonCount ?? 0,
+      source.unique_comparison_visits ?? source.uniqueComparisonVisits ?? 0,
+      evidence.nativeBands ?? evidence.native_bands ?? 0,
+      evidence.nativeAnchors ?? evidence.native_anchors ?? 0,
+      evidence.visitAccumulators ?? evidence.visit_accumulators ?? 0,
+      reset.resetAt ?? reset.reset_at ?? 0,
+      binding.calibrationFingerprint ?? binding.calibration_fingerprint ?? '',
+      binding.calibrationGeneration ?? binding.calibration_generation ?? binding.generation ?? '',
+      binding.geometryFingerprint ?? binding.geometry_fingerprint ?? '',
+      source.learning_data_revision ?? source.learningDataRevision ?? '',
+      restore.state ?? source.restoreState ?? '',
+    ].join('|');
+  }
+
+  /**
+   * Installs two bounded UI-only efficiencies on the already-created NativeApi:
+   * 1) one Learning status bridge call is shared inside the same refresh burst;
+   * 2) the expensive persisted Learning projection is reused until its material
+   *    science signature changes. No producer, timer, serial call or writer is added.
+   */
+  function installRuntimeEfficiency(app, options = {}) {
+    if (!app?.api || !app?.store) return null;
+    if (app.api.__omegasLearningEfficiencyController) return app.api.__omegasLearningEfficiencyController;
+    if (typeof app.api.learning !== 'function' || typeof app.api.learningStatus !== 'function') return null;
+
+    const originalLearning = app.api.learning.bind(app.api);
+    const originalLearningStatus = app.api.learningStatus.bind(app.api);
+    const now = typeof options.now === 'function' ? options.now : () => Date.now();
+    const statusBurstMs = Math.max(0, finite(options.statusBurstMs, 300));
+    let statusCache = null;
+    let statusCachedAt = Number.NEGATIVE_INFINITY;
+    let learningCache = null;
+    let learningSignature = null;
+
+    function statusSnapshot() {
+      const at = now();
+      if (statusCache !== null && at - statusCachedAt <= statusBurstMs) return statusCache;
+      statusCache = originalLearningStatus() || {};
+      statusCachedAt = at;
+      return statusCache;
+    }
+
+    app.api.learningStatus = statusSnapshot;
+    app.api.learning = function () {
+      const nextSignature = scienceRevisionSignature(statusSnapshot());
+      if (learningCache !== null && learningSignature === nextSignature) return learningCache;
+      learningCache = originalLearning() || {};
+      learningSignature = nextSignature;
+      return learningCache;
+    };
+    app.api.learningDecision = function () {
+      return decisionFromTelemetry(app.store.get()?.telemetry || {});
+    };
+
+    const controller = {
+      invalidate: () => {
+        statusCache = null;
+        statusCachedAt = Number.NEGATIVE_INFINITY;
+        learningSignature = null;
+      },
+    };
+    app.api.__omegasLearningEfficiencyController = controller;
+    return controller;
+  }
+
+  return {
+    STATES,
+    buildModel,
+    normalizeFuel,
+    keyOf,
+    decisionFromTelemetry,
+    scienceRevisionSignature,
+    installRuntimeEfficiency,
+  };
 });
