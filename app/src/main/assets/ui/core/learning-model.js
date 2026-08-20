@@ -15,7 +15,7 @@
       }
       const controller = api.installRuntimeEfficiency(app);
       if (controller && typeof root.addEventListener === 'function') {
-        root.addEventListener('omegas-refresh', controller.invalidate);
+        root.addEventListener('omegas-refresh', controller.invalidate, true);
       }
     };
     root.setTimeout(installWhenReady, 0);
@@ -169,10 +169,6 @@
     };
   }
 
-  /**
-   * Reuses the live telemetry already fetched by the fast path instead of asking
-   * Kotlin for a second full engine snapshot just to explain the current sample.
-   */
   function decisionFromTelemetry(telemetry = {}) {
     const source = telemetry && typeof telemetry === 'object' ? telemetry : {};
     const live = source.live || source.data || source;
@@ -202,12 +198,6 @@
     };
   }
 
-  /**
-   * Structural science revision. Plain received-frame churn is intentionally not
-   * part of this key; only events capable of changing the persisted Learning/UI
-   * projection invalidate it. Explicit lifecycle/import/write refreshes also
-   * invalidate the runtime cache through `omegas-refresh`.
-   */
   function scienceRevisionSignature(status = {}) {
     const source = status && typeof status === 'object' ? status : {};
     const evidence = source.evidence_budget || source.evidenceBudget || {};
@@ -249,15 +239,6 @@
     ].join('|');
   }
 
-  /**
-   * Installs bounded UI-only efficiencies on the already-created NativeApi:
-   * - one Learning status bridge call is shared inside the same refresh burst;
-   * - the persisted Learning projection is reused until material science changes;
-   * - V7/Predictor state is reused until science/calibration changes or a V7
-   *   mutation is requested;
-   * - the learning decision comes from already-fetched live telemetry.
-   * No producer, timer, serial call or writer is added.
-   */
   function installRuntimeEfficiency(app, options = {}) {
     if (!app?.api || !app?.store) return null;
     if (app.api.__omegasLearningEfficiencyController) return app.api.__omegasLearningEfficiencyController;
