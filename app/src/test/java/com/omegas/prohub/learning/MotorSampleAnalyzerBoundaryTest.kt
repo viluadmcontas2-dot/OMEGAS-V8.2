@@ -114,6 +114,20 @@ class MotorSampleAnalyzerBoundaryTest {
         assertEquals(2_500.0, decision!!.sample!!.rpm, 0.0001)
     }
 
+    @Test
+    fun `engine off keeps the next window conservative`() {
+        val analyzer = MotorSampleAnalyzer()
+        repeat(6) { index -> analyzer.add(frame(index * 50L)) }
+        val off = analyzer.add(frame(500L, fuel = Mp48Fuel.ENGINE_OFF, rpm = 0, petrolMs = 0.0, mapBar = 0.0))
+        assertEquals("ENGINE_OFF", off.state)
+        assertFalse(off.learningEligible)
+
+        repeat(frames - 1) { index ->
+            assertFalse(analyzer.add(frame(1_000L + index * 50L)).learningEligible)
+        }
+        assertTrue(analyzer.add(frame(1_000L + (frames - 1) * 50L)).learningEligible)
+    }
+
     private fun frame(
         at: Long,
         fuel: Mp48Fuel = Mp48Fuel.PETROL,
@@ -147,4 +161,3 @@ class MotorSampleAnalyzerBoundaryTest {
         plausible = true,
     )
 }
-
