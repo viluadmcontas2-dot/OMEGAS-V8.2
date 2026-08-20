@@ -1,0 +1,4 @@
+phase5-final-source-verification-r1
+scope=pytest+JVM+lint
+apk=forbidden
+physical=deferred-until-final-product-apk
