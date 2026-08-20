@@ -8,6 +8,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import com.omegas.prohub.BuildConfig
@@ -61,6 +62,7 @@ class TelemetryForegroundService : Service() {
     private val scheduler = Executors.newSingleThreadScheduledExecutor { runnable ->
         Thread(runnable, "omegas-native-service").apply { isDaemon = true }
     }
+    private val overlayAdmission = VisualFanoutAdmission(250L)
 
     lateinit var paths: AppPaths
         private set
@@ -260,7 +262,7 @@ class TelemetryForegroundService : Service() {
         }
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
-        updateOverlay()
+        updateOverlay(force = true)
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
 
@@ -565,7 +567,7 @@ class TelemetryForegroundService : Service() {
     fun setTelemetryOverlayEnabled(enabled: Boolean): String {
         if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
         val result = overlay.setEnabled(enabled)
-        updateOverlay()
+        updateOverlay(force = true)
         return result.toString()
     }
 
@@ -776,8 +778,9 @@ class TelemetryForegroundService : Service() {
         updateNotification()
     }
 
-    private fun updateOverlay() {
+    private fun updateOverlay(force: Boolean = false) {
         if (!::overlay.isInitialized || (!overlay.requestedEnabled() && !overlay.visible())) return
+        if (!overlayAdmission.tryAcquire(SystemClock.elapsedRealtime(), force)) return
         val hub = status()
         val obdLive = try { JSONObject(obd?.statusJson() ?: "{}") } catch (_: Exception) { JSONObject() }
         val evidence = obdLive.optJSONObject("independentEvidence") ?: JSONObject()
