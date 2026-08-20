@@ -6,6 +6,11 @@ on:
       - rebuild/v8.2-final-implementation
     paths:
       - ci/phase5-final-verify.txt
+  pull_request:
+    branches:
+      - rebuild/v8.2-final-implementation
+    paths:
+      - ci/phase5-pr-verify.txt
 
 permissions:
   contents: read
