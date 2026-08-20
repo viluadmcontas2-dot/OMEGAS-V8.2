@@ -2,6 +2,8 @@ package com.omegas.prohub.physics
 
 import com.omegas.prohub.learning.AssistedCalibrationAdvisor
 import com.omegas.prohub.learning.ContinuousLearningMath
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -31,5 +33,20 @@ class Phase6BindingIntegrationTest {
         assertEquals(0.45, policy.getDouble("minimumFraction"), 1e-12)
         assertEquals(0.90, policy.getDouble("maximumFraction"), 1e-12)
         assertFalse(policy.getBoolean("idealTarget"))
+    }
+
+    @Test fun advisorProjectionDecoratesOperationalDeltasWithoutCallingThemIdealTargets() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray().put(JSONObject().put("direction", "INCREASE_CNG_DELIVERY")))
+            .put("mapResidualSuggestions", JSONArray().put(JSONObject().put("direction", "DECREASE_CNG_DELIVERY")))
+        val decorated = AssistedCalibrationAdvisor.decoratePhysicsAuthority(advice)
+        val curve = decorated.getJSONArray("kFactorSuggestions").getJSONObject(0)
+        val map = decorated.getJSONArray("mapResidualSuggestions").getJSONObject(0)
+        assertEquals("POLICY_ONLY", curve.getString("magnitudeAuthority"))
+        assertEquals("STEP_POLICY_BASELINE", curve.getString("magnitudeRole"))
+        assertEquals("CURVE_MUL_ACT", curve.getString("correctionMechanism"))
+        assertFalse(curve.getBoolean("idealTarget"))
+        assertEquals("MAP_LOCAL", map.getString("correctionMechanism"))
+        assertFalse(map.getBoolean("idealTarget"))
     }
 }
