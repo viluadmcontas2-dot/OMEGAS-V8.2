@@ -365,7 +365,7 @@ data class AppliedStep(
 interface TargetEstimator
 interface ActuatorAllocator
 interface StepPolicy {
-    fun selectStep(target: IdealTarget, uncertainty: Double): AppliedStep
+    fun selectStep(currentFactor: Double, target: IdealTarget, uncertainty: Double): AppliedStep
 }
 
 class LegacyAdvisorStepPolicy : StepPolicy {
@@ -373,11 +373,13 @@ class LegacyAdvisorStepPolicy : StepPolicy {
     val maximumFraction: Double = 0.90
     val authority: MagnitudeAuthority = MagnitudeAuthority.POLICY_ONLY
 
-    override fun selectStep(target: IdealTarget, uncertainty: Double): AppliedStep {
+    override fun selectStep(currentFactor: Double, target: IdealTarget, uncertainty: Double): AppliedStep {
+        require(currentFactor > 0.0 && currentFactor.isFinite())
+        require(target.factor > 0.0 && target.factor.isFinite())
         val normalizedRisk = uncertainty.coerceIn(0.0, 1.0)
         val fraction = (maximumFraction - (maximumFraction - minimumFraction) * normalizedRisk)
             .coerceIn(minimumFraction, maximumFraction)
-        val factor = 1.0 + (target.factor - 1.0) * fraction
+        val factor = currentFactor + (target.factor - currentFactor) * fraction
         return AppliedStep(factor, fraction, MagnitudeAuthority.POLICY_ONLY)
     }
 }
