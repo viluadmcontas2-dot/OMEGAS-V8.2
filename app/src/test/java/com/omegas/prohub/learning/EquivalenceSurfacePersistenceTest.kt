@@ -38,6 +38,28 @@ class EquivalenceSurfacePersistenceTest {
     }
 
     @Test
+    fun legacy_petrol_summary_preserves_mean_spread_and_explicit_provenance() {
+        val s = surface()
+        val seeded = s.seedPetrolSummary(
+            rpm = 2500.0,
+            mapBar = 0.60,
+            meanTinjMs = 3.0,
+            varianceMs2 = 0.04,
+            seedWeight = 0.20,
+            materialRevision = 7L,
+        )
+
+        assertTrue(seeded.touchedNodes in 1..4)
+        val estimate = s.query(2500.0, 0.60).petrol!!
+        assertEquals(3.0, estimate.meanTinjMs, 1e-9)
+        assertEquals(0.04, estimate.varianceMs2, 1e-9)
+        assertEquals(1.0, estimate.effectiveSupport, 1e-9)
+        val snapshot = s.snapshot()
+        assertEquals(1, snapshot.legacySeededRegions)
+        assertEquals(LegacyPetrolSeedPolicy.PROVENANCE, snapshot.legacySeedProvenance)
+    }
+
+    @Test
     fun clearing_cng_lane_preserves_petrol_reference() {
         val s = surface()
         s.observe(FuelLane.PETROL_REFERENCE, 2500.0, 0.60, 3.00, 1.0, 1L)
