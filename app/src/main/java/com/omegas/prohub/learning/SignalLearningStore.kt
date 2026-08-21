@@ -75,7 +75,7 @@ class SignalLearningStore(
     private var lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
     private val evidenceLock = Any()
     private val equivalenceLock = Any()
-    private val equivalenceRuntime = EquivalenceRuntime()
+    private val equivalenceRuntime = PersistentEquivalenceRuntime(stateFile)
     private var lastEquivalenceEstimate: EquivalenceRuntime.EquivalenceEstimate? = null
     private val nativeEvidence = linkedMapOf<String, NativeEcuEvidence>()
     private val nativeAnchors = NativeLearningAnchorRegistry(LearningEvidenceBudget.MAX_NATIVE_ANCHORS)
@@ -111,6 +111,7 @@ class SignalLearningStore(
         val result = decorate(delegate.endSession(reason))
         persistEvidenceState(forceBoundary = true)
         evidenceStateWriter.flush(2_000L)
+        equivalenceRuntime.flush(2_000L)
         return result
     }
 
@@ -399,6 +400,10 @@ class SignalLearningStore(
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject {
         resetConnectionCounters()
         synchronized(evidenceLock) { nativeAnchors.clear() }
+        synchronized(equivalenceLock) {
+            equivalenceRuntime.clearCngForCalibrationAdjustment()
+            lastEquivalenceEstimate = null
+        }
         val result = delegate.onCalibrationAdjustment(payload)
         scheduleAdvisorRefresh(advisorRevisionGate.force())
         persistenceGate.markMaterialChange()
@@ -723,6 +728,8 @@ class SignalLearningStore(
             .put("comparable", estimate != null)
             .put("runtimeAuthority", "RPM_MAP_PETROL_TINJ")
             .put("environmentGates", false)
+            .put("persistenceRepresentation", EquivalenceSurfaceCodec.REPRESENTATION)
+            .put("persistence", equivalenceRuntime.metricsJson())
         if (estimate != null) {
             root
                 .put(if (camelCase) "referenceMs" else "reference_ms", estimate.referenceMs)
@@ -742,6 +749,7 @@ class SignalLearningStore(
     fun close() {
         persistEvidenceState(forceBoundary = true)
         evidenceStateWriter.flush(5_000L)
+        equivalenceRuntime.close()
         delegate.close()
         advisorExecutor.shutdownNow()
         evidenceStateWriter.close()
