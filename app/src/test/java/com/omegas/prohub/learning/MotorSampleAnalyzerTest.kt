@@ -143,23 +143,27 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
-    fun `cold engine never creates learning evidence`() {
+    fun `cold water remains diagnostic and does not gate primary equivalence`() {
         val analyzer = MotorSampleAnalyzer()
         var decision: SampleDecision? = null
         repeat(defaultFrames) { decision = analyzer.add(frame(it * 50L, waterC = 40)) }
-        assertEquals("ENGINE_WARMING", decision?.state)
-        assertFalse(decision!!.learningEligible)
+        assertTrue(decision!!.learningEligible)
+        assertNotNull(decision!!.sample)
+        assertEquals(40.0, decision!!.sample!!.diagnostics.waterCenterC, 0.0)
     }
 
     @Test
-    fun `unstable rpm is rejected at the complete target`() {
+    fun `unstable rpm remains usable evidence with reduced weight`() {
         val analyzer = MotorSampleAnalyzer()
         var decision: SampleDecision? = null
         repeat(defaultFrames) { index ->
             decision = analyzer.add(frame(index * 50L, rpm = if (index < defaultFrames / 2) 1_600 else 3_600))
         }
-        assertEquals("SAMPLE_REJECTED", decision?.state)
-        assertFalse(decision!!.learningEligible)
+        assertEquals("SAMPLE_ACCEPTED", decision?.state)
+        assertTrue(decision!!.learningEligible)
+        assertEquals(SampleClassification.USABLE, decision!!.sample!!.classification)
+        assertTrue(decision!!.sample!!.quality < 0.5)
+        assertTrue(decision!!.sample!!.quality > 0.0)
     }
 
     @Test
@@ -235,7 +239,7 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
-    fun `strict and tolerant rpm policies produce opposite decisions`() {
+    fun `strict and tolerant rpm policies both retain evidence but assign different weight`() {
         val strict = MotorSampleAnalyzer { LearningTolerancePolicy(requiredFrames = 6) }
         val tolerant = MotorSampleAnalyzer {
             LearningTolerancePolicy(
@@ -251,8 +255,9 @@ class MotorSampleAnalyzerTest {
             strictDecision = strict.add(telemetry)
             tolerantDecision = tolerant.add(telemetry)
         }
-        assertEquals("SAMPLE_REJECTED", strictDecision?.state)
+        assertTrue(strictDecision!!.learningEligible)
         assertTrue(tolerantDecision!!.learningEligible)
+        assertTrue(strictDecision!!.sample!!.quality < tolerantDecision!!.sample!!.quality)
     }
 
     private fun frame(
