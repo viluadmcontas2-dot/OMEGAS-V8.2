@@ -11,6 +11,7 @@ import java.io.File
 internal class PersistentEquivalenceRuntime(
     stateFile: File,
     private val runtime: EquivalenceRuntime = EquivalenceRuntime(),
+    private val snapshotEncoder: (EquivalenceSurface.Snapshot) -> String = EquivalenceSurfaceCodec::encode,
 ) : AutoCloseable {
     private val lock = Any()
     private val target = File(
@@ -91,9 +92,8 @@ internal class PersistentEquivalenceRuntime(
     private fun persist(forceBoundary: Boolean = false) {
         if (!persistenceGate.shouldRequest(forceBoundary)) return
         writer.request {
-            synchronized(lock) {
-                EquivalenceSurfaceCodec.encode(runtime.surface.snapshot())
-            }
+            val snapshot = synchronized(lock) { runtime.surface.snapshot() }
+            snapshotEncoder(snapshot)
         }
     }
 
