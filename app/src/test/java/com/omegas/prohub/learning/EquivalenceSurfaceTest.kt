@@ -63,10 +63,10 @@ class EquivalenceSurfaceTest {
     @Test
     fun `query recovers nearby support with a fixed sixteen node ceiling`() {
         val surface = testSurface()
-        surface.observe(FuelLane.PETROL_REFERENCE, 2_400.0, 0.50, 3.0, 1.0, 1L)
+        // 2360 is an exact lattice node. Querying 2480 puts it 1.5 cells away,
+        // outside the old four-corner lookup but inside the approved local radius.
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_360.0, 0.50, 3.0, 1.0, 1L)
 
-        // One storage step away: outside an exact-cell lookup, but inside the
-        // fixed local neighborhood calibrated by replay.
         val nearby = surface.query(2_480.0, 0.50).petrol
 
         assertTrue(nearby != null)
