@@ -36,7 +36,8 @@ class EquivalenceOracleTest(unittest.TestCase):
 
     def test_percentile_and_bootstrap_are_seed_reproducible(self):
         values = [0.01, 0.02, 0.03, 0.04]
-        self.assertAlmostEqual(0.035, percentile(values, 0.90), places=12)
+        # Linear interpolation at p90 uses position (n-1)*q = 2.7 => 0.037.
+        self.assertAlmostEqual(0.037, percentile(values, 0.90), places=12)
         first = bootstrap_interval(values, seed=8206, iterations=500)
         second = bootstrap_interval(values, seed=8206, iterations=500)
         self.assertEqual(first, second)
