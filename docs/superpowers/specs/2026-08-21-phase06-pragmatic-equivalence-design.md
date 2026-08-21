@@ -36,7 +36,7 @@ Responsibilities:
 
 - `MotorSampleAnalyzer`: computes robust RPM/MAP/Tinj centers plus the stability diagnostics it already knows how to compute. It stops turning ordinary RPM/MAP/Tinj instability into a binary scientific rejection.
 - `ContinuousWindowNovelty`: remains the authority for how much of an overlapping window is genuinely new evidence.
-- `EquivalenceSurface`: bounded numeric accumulator keyed by an internal RPM×MAP lattice. It owns gasoline-reference moments and CNG residual moments; it never touches USB, UI, JSON hot paths, or writes.
+- `EquivalenceSurface`: bounded numeric accumulator keyed by an internal RPM×MAP lattice. It owns separate gasoline-petrol-Tinj and CNG-petrol-Tinj moment lanes in the same lattice, so a valid observation can be retained even when the opposite-fuel reference is not yet available. It never touches USB, UI, JSON hot paths, or writes.
 - `SignalLearningStore`: remains the orchestration boundary. It applies novelty, updates the surface, advances material/scientific revisions, and exposes snapshots.
 - `Advisor`: consumes published equivalence estimates and uncertainty; it does not rescan raw history on each frame.
 - `PredictorSurface`: remains downstream. It projects already-published science onto calibration space and never becomes the authority for gasoline↔CNG equivalence.
@@ -86,7 +86,7 @@ The internal storage lattice is RPM×MAP. The initial engineering resolution is 
 
 Each observation is distributed bilinearly over at most four neighboring lattice points. No evidence must land exactly on a cell center.
 
-Each lattice point stores bounded numeric moments, not an unbounded sample list:
+Each lattice point stores two compact fuel lanes, `PETROL_REFERENCE` and `CNG_PETROL_OBSERVED`. Each lane contains bounded numeric moments, not an unbounded sample list:
 
 - `sumW`
 - `sumW2`
@@ -96,7 +96,7 @@ Each lattice point stores bounded numeric moments, not an unbounded sample list:
 
 Optional bounded robust tails may be retained only where an existing bounded helper is reused and its memory ceiling remains explicit. Raw sample/provenance history is not allowed to grow with driving time in the hot state.
 
-From the moments:
+From either lane:
 
 `T_hat = sumWTinj / sumW`
 
@@ -104,29 +104,30 @@ From the moments:
 
 `ESS = (sumW²) / sumW2`
 
-The same compact pattern is used for CNG residual summaries once a gasoline reference exists.
+Because both fuel lanes exist independently, a valid CNG observation collected before a local gasoline reference is available still updates bounded scientific state. When gasoline support later appears, equivalence can be computed without having queued an unbounded raw CNG history.
 
 ## 7. Primary equivalence and uncertainty
 
-For a CNG observation at `(rpm,map)`, query the gasoline surface locally and obtain:
+At `(rpm,map)`, query both local lanes when they have support:
 
-- estimated gasoline petrol Tinj `T_ref`;
-- local reference spread;
-- effective support / ESS;
+- gasoline petrol Tinj estimate `T_ref`;
+- CNG petrol Tinj estimate `T_cng`;
+- local spread for each lane;
+- effective support / ESS for each lane;
 - spatial support distance;
 - revision/provenance metadata.
 
 Primary relative error is:
 
-`e = (T_cng_petrol - T_ref) / T_ref`
+`e = (T_cng - T_ref) / T_ref`
 
 Retain both relative error and absolute milliseconds for audit/export.
 
-Runtime uncertainty is analytic and cheap. It combines at least:
+Runtime uncertainty is analytic and cheap. All terms used in the final comparison are represented as relative fractions of the relevant Tinj estimate. It combines at least:
 
-- uncertainty of the gasoline reference derived from local spread, ESS, and support distance;
-- uncertainty/repeatability of the CNG observation derived from the same RPM/MAP/Tinj stream;
-- any justified interpolation-distance term.
+- `u_ref`: gasoline-reference uncertainty derived from gasoline spread, ESS, and support distance;
+- `u_cng`: CNG-observation uncertainty derived from CNG spread, ESS, and support distance;
+- `u_match`: any empirically justified interpolation-distance term shared by the comparison.
 
 Combination is root-sum-square when the terms are treated as independent approximations:
 
@@ -156,8 +157,10 @@ A gasoline region with only weak/provisional evidence may be observable but must
 
 The equivalence surface and Predictor solve different questions:
 
-- Equivalence: “At this RPM/MAP, what petrol Tinj does gasoline establish, and how certain is that estimate?”
+- Equivalence: “At this RPM/MAP, what petrol Tinj does gasoline establish, what petrol Tinj is observed on CNG, and how certain is their difference?”
 - Predictor projection: “Given observed correction evidence, how far can that result be projected into calibration space?”
+
+Primary matching is completed in RPM×MAP before projection. Only after the equivalence error exists may downstream logic project it onto the calibration axes used by the K-map/K-curve. The map axis must never be used as a substitute for RPM×MAP matching.
 
 `PredictorSpatialConfidence` must therefore not gate the primary equivalence path with convex-hull or trajectory-count requirements. Those requirements may remain valid for extrapolating a calibration target into unobserved K-map space.
 
@@ -180,11 +183,12 @@ Read-only characterization, test-gap inventory, and performance profiling of Pre
 Recommended migration policy, requiring owner approval with this spec:
 
 1. Do not reinterpret old environmental/K-factor physics as new primary science.
-2. Preserve existing accepted gasoline regions by seeding the new surface once at restore/migration time with explicit `LEGACY_ACCEPTED_PETROL_REGION` provenance and conservative weight derived only from already-persisted support/quality fields.
+2. Preserve existing accepted gasoline regions by seeding the new gasoline lane once at restore/migration time with explicit `LEGACY_ACCEPTED_PETROL_REGION` provenance and conservative weight derived only from already-persisted support/quality fields.
 3. Do not fabricate raw samples that no longer exist.
 4. New live evidence immediately uses the new weighting model and can refine or outweigh the seed through accumulated support.
-5. Existing CNG comparisons tied to a previous calibration epoch remain governed by the current live-only/reset rules; no stale CNG epoch is resurrected merely to populate the new surface.
+5. Existing CNG comparisons tied to a previous calibration epoch remain governed by the current live-only/reset rules; no stale CNG epoch is resurrected merely to populate the new CNG lane.
 6. Migration is versioned and auditable. If a stored state cannot be converted without inventing missing information, quarantine that part and preserve it for audit rather than guessing.
+7. The exact legacy-seed weight mapping is selected by the offline replay/oracle before production code freezes it; the mapping must be monotone in persisted support/quality and explicitly capped so a single migrated region cannot create stronger authority than the replay supports.
 
 This preserves useful gasoline knowledge without claiming unavailable historical detail and avoids a forced cold-start solely because the statistical representation changed.
 
@@ -194,7 +198,7 @@ The optimized V8.2 architecture is binding.
 
 Runtime constraints:
 
-- surface update is O(1), touching at most four lattice points;
+- surface update is O(1), touching at most four lattice points in one fuel lane;
 - a primary reference query inspects a fixed, small local neighborhood; the implementation target is no more than roughly 16 compact support points unless a benchmark justifies another bound;
 - no KNN or sort over the complete historical region list in the telemetry hot path;
 - hot state uses primitive arrays/compact typed structures, not per-frame `JSONObject`, `List`, or map construction;
@@ -232,12 +236,13 @@ Required proof classes:
 
 1. Unit: stability weight continuity/monotonicity, novelty composition, gasoline/CNG asymmetry, bilinear mass conservation, weighted moments, ESS, uncertainty arithmetic, hard-zero states.
 2. Contract: pressure/temp/K2/K3/K4/deadtime cannot gate or alter primary equivalence; only RPM+MAP locate the state and petrol Tinj forms the error.
-3. Migration: accepted gasoline memory is preserved without fabricated raw history; stale CNG epochs are not resurrected; incompatible state is quarantined explicitly.
-4. Replay: held-out real sessions show recovered useful evidence without material degradation of reference error/false-action behavior.
-5. Oracle: analytic uncertainty is calibrated against bootstrap/Monte Carlo/holdout behavior within the chosen acceptance envelope.
-6. Performance: bounded memory, fixed-neighborhood update/query, revision-gated Advisor, coalesced persistence, and no hot-path historical scan.
-7. Predictor: downstream separation, projection confidence discipline, revision dedupe, no automatic write.
-8. Integrated: fresh exact-source verification maps every acceptance criterion to executable evidence and records any unverified hardware-only claims separately.
+3. Persistence: a valid CNG observation collected before gasoline support remains represented in bounded CNG state and becomes comparable when gasoline support later appears.
+4. Migration: accepted gasoline memory is preserved without fabricated raw history; stale CNG epochs are not resurrected; incompatible state is quarantined explicitly.
+5. Replay: held-out real sessions show recovered useful evidence without material degradation of reference error/false-action behavior.
+6. Oracle: analytic uncertainty is calibrated against bootstrap/Monte Carlo/holdout behavior within the chosen acceptance envelope.
+7. Performance: bounded memory, fixed-neighborhood update/query, revision-gated Advisor, coalesced persistence, and no hot-path historical scan.
+8. Predictor: downstream separation, projection confidence discipline, revision dedupe, no automatic write.
+9. Integrated: fresh exact-source verification maps every acceptance criterion to executable evidence and records any unverified hardware-only claims separately.
 
 Formal Phase 06 close still requires the project’s independent normative audit and distinct meta-audit after implementation and fresh verification.
 
@@ -245,7 +250,8 @@ Formal Phase 06 close still requires the project’s independent normative audit
 
 The system fails by lowering authority/raising uncertainty, not by fabricating precision.
 
-- No gasoline support nearby: preserve CNG observation/provenance if useful, but do not manufacture a comparison target.
+- No gasoline support nearby: the valid CNG observation still updates the bounded CNG lane; no comparison target is manufactured yet.
+- No CNG support nearby: gasoline continues strengthening its reference lane without manufacturing a residual.
 - Weak gasoline-only support: expose low-support reference state; do not make it actionable merely from count.
 - High local Tinj dispersion: widen uncertainty; do not hide the mode by averaging to false precision.
 - Persistent multi-modality at the same RPM/MAP: first use robust dominant-mode/continuity handling; split latent regimes only if real corpus evidence proves the single surface insufficient. A/C state is not made mandatory preemptively.
@@ -265,6 +271,7 @@ Approving this spec authorizes the implementation plan to treat the following as
 - primary equivalence is RPM+MAP→gasoline petrol Tinj, compared with petrol Tinj observed on CNG;
 - physically valid evidence is continuously weighted rather than rejected by ordinary stability thresholds;
 - gasoline uses more conservative weighting than CNG to protect the reference surface;
+- valid gasoline and CNG observations are both retained in bounded fuel lanes even when the opposite-fuel support is not yet present;
 - environmental/K/deadtime signals are not primary gates or required context;
 - runtime uses bounded incremental numeric state and preserves all current performance architecture invariants;
 - accepted historical gasoline regions are preserved as conservative, provenance-marked migration seeds rather than discarded;
