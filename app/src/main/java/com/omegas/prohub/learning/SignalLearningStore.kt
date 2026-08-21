@@ -93,9 +93,13 @@ class SignalLearningStore(
     private val advisorRevisionGate = AdvisorRevisionGate()
     private val advisorRequestedRevision = AtomicLong(0L)
     private val advisorPublishedRevision = AtomicLong(0L)
-    @Volatile private var advisor = analyzeCurrentMemory()
+    @Volatile private var advisor = initialAdvisor()
 
-    init { loadEvidenceState() }
+    init {
+        loadEvidenceState()
+        migrateLegacyPetrolReferences()
+        scheduleAdvisorRefresh(advisorRevisionGate.force())
+    }
 
     fun startSession(): JSONObject {
         resetConnectionCounters()
@@ -197,6 +201,9 @@ class SignalLearningStore(
         }
         memoryDecision = prepared
 
+        var advisorEstimate: EquivalenceRuntime.EquivalenceEstimate? = null
+        var advisorRpm = Double.NaN
+        var advisorMap = Double.NaN
         if (decision.learningEligible && source != null && lastNovelty.fraction > 0.0) {
             val lane = when (source.fuel) {
                 Mp48Fuel.PETROL -> FuelLane.PETROL_REFERENCE
@@ -215,10 +222,16 @@ class SignalLearningStore(
                         novelty = lastNovelty.fraction,
                         materialRevision = frameSequence,
                     )
-                    if (observed.estimate != null) lastEquivalenceEstimate = observed.estimate
+                    if (observed.estimate != null) {
+                        lastEquivalenceEstimate = observed.estimate
+                        advisorEstimate = observed.estimate
+                        advisorRpm = source.rpm
+                        advisorMap = source.mapBar
+                    }
                 }
             }
         }
+        advisorEstimate?.let { requestAdvisorRefresh(it, advisorRpm, advisorMap) }
 
         val nativePetrolPriors = if (prepared.learningEligible && prepared.sample?.fuel?.wireName in setOf("GNV", "CNG")) {
             synchronized(evidenceLock) { nativeAnchors.snapshot().filter { it.sourceFuel == "PETROL" } }
@@ -250,7 +263,6 @@ class SignalLearningStore(
                 }
             }
         }
-        requestAdvisorRefresh(result)
         if (prepared.learningEligible && prepared.sample != null) {
             persistenceGate.markMaterialChange()
             persistEvidenceState()
@@ -320,7 +332,9 @@ class SignalLearningStore(
         val internalPayload = JSONObject(payload.toString())
             .put("format", MotorLearningMemory.FORMAT)
         val result = delegate.merge(internalPayload, localDeviceId)
-        scheduleAdvisorRefresh(advisorRevisionGate.force())
+        if (migrateLegacyPetrolReferences() > 0) {
+            scheduleAdvisorRefresh(advisorRevisionGate.force())
+        }
         return decorate(result)
     }
 
@@ -658,43 +672,39 @@ class SignalLearningStore(
             .put("confidenceBandHigh", target.confidenceBandHigh)
     }
 
-    private fun requestAdvisorRefresh(result: JSONObject) {
-        val token = advisorScientificToken(result) ?: return
-        advisorRevisionGate.revise(token)?.let(::scheduleAdvisorRefresh)
+    private fun requestAdvisorRefresh(
+        estimate: EquivalenceRuntime.EquivalenceEstimate,
+        rpm: Double,
+        mapBar: Double,
+    ) {
+        advisorRevisionGate.revise(advisorScientificToken(estimate, rpm, mapBar))
+            ?.let(::scheduleAdvisorRefresh)
     }
 
-    private fun advisorScientificToken(result: JSONObject): String? {
-        result.optJSONObject("comparison")?.let { comparison ->
-            val identity = comparison.optString("dedupe_key", comparison.optString("id"))
-            val observations = AdvisorRevisionGate.observationMilestone(
-                comparison.optInt("observation_count", 1),
-            )
-            val errorBucket = AdvisorRevisionGate.quantize(comparison.optDouble("error_pct", 0.0), 0.25)
-            val qualityBucket = AdvisorRevisionGate.quantize(comparison.optDouble("quality", 0.0), 0.05)
-            return listOf(
-                "CMP",
-                identity,
-                observations,
-                comparison.optString("direction"),
-                result.optString("comparison_stage"),
-                errorBucket,
-                qualityBucket,
-            ).joinToString(":")
-        }
-
-        result.optJSONObject("reference")?.let { reference ->
-            val petrolBucket = AdvisorRevisionGate.quantize(reference.optDouble("petrol_ms", 0.0), 0.02)
-            val confidenceBucket = AdvisorRevisionGate.quantize(reference.optDouble("confidence", 0.0), 0.05)
-            return listOf(
-                "PETROL",
-                reference.optString("id"),
-                reference.optInt("visit_count", 0),
-                reference.optString("stage"),
-                petrolBucket,
-                confidenceBucket,
-            ).joinToString(":")
-        }
-        return null
+    private fun advisorScientificToken(
+        estimate: EquivalenceRuntime.EquivalenceEstimate,
+        rpm: Double,
+        mapBar: Double,
+    ): String {
+        val supportMilestone = AdvisorRevisionGate.observationMilestone(
+            kotlin.math.min(estimate.petrolEffectiveSupport, estimate.cngEffectiveSupport)
+                .toInt()
+                .coerceAtLeast(1),
+        )
+        val rpmCell = kotlin.math.floor(rpm / 80.0).toInt()
+        val mapCell = kotlin.math.floor(mapBar / 0.02).toInt()
+        return listOf(
+            "EQ",
+            rpmCell,
+            mapCell,
+            AdvisorRevisionGate.quantize(estimate.referenceMs, 0.02),
+            AdvisorRevisionGate.quantize(estimate.cngMs, 0.02),
+            AdvisorRevisionGate.quantize(estimate.errorFraction, 0.0025),
+            AdvisorRevisionGate.quantize(estimate.uncertaintyFraction, 0.0025),
+            AdvisorRevisionGate.quantize(estimate.usefulMarginFraction, 0.0025),
+            estimate.actionable,
+            supportMilestone,
+        ).joinToString(":")
     }
 
     private fun refreshAdvisor(revision: Long) {
@@ -725,8 +735,9 @@ class SignalLearningStore(
             .put("schema", "omegas-primary-equivalence-v1")
             .put(if (camelCase) "petrolWeight" else "petrol_weight", equivalenceRuntime.totalWeight(FuelLane.PETROL_REFERENCE))
             .put(if (camelCase) "cngWeight" else "cng_weight", equivalenceRuntime.totalWeight(FuelLane.CNG_PETROL_OBSERVED))
+            .put(if (camelCase) "legacySeededRegions" else "legacy_seeded_regions", equivalenceRuntime.legacySeededRegions())
             .put("comparable", estimate != null)
-            .put("runtimeAuthority", "RPM_MAP_PETROL_TINJ")
+            .put("runtimeAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
             .put("environmentGates", false)
             .put("persistenceRepresentation", EquivalenceSurfaceCodec.REPRESENTATION)
             .put("persistence", equivalenceRuntime.metricsJson())
@@ -749,19 +760,79 @@ class SignalLearningStore(
     fun close() {
         persistEvidenceState(forceBoundary = true)
         evidenceStateWriter.flush(5_000L)
+        advisorExecutor.shutdownNow()
         equivalenceRuntime.close()
         delegate.close()
-        advisorExecutor.shutdownNow()
         evidenceStateWriter.close()
     }
 
     private fun analyzeCurrentMemory(): JSONObject = try {
-        AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())
+        val epoch = delegate.statusJson().optInt("epoch", 1).coerceAtLeast(1)
+        val boundedInput = BoundedEquivalenceAdvisorSnapshot.build(
+            equivalenceRuntime.snapshotForAdvisor(),
+            epoch = epoch,
+        )
+        AssistedCalibrationAdvisor.analyze(boundedInput)
+            .put("primaryAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
+            .put("inputSource", "BOUNDED_EQUIVALENCE_SURFACE")
+            .put("environmentGates", false)
+            .put("inputComparisonCount", boundedInput.optInt("comparisonCount", 0))
     } catch (error: Exception) {
         JSONObject()
             .put("ok", false)
             .put("automatic", false)
+            .put("primaryAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
+            .put("inputSource", "BOUNDED_EQUIVALENCE_SURFACE")
+            .put("environmentGates", false)
             .put("error", error.message ?: "Análise assistida indisponível")
+    }
+
+    private fun initialAdvisor(): JSONObject = JSONObject()
+        .put("ok", true)
+        .put("automatic", false)
+        .put("mode", "CONTINUOUS_ADAPTIVE_MANUAL")
+        .put("comparisonCount", 0)
+        .put("primaryAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
+        .put("inputSource", "BOUNDED_EQUIVALENCE_SURFACE")
+        .put("environmentGates", false)
+
+    private fun migrateLegacyPetrolReferences(): Int {
+        if (equivalenceRuntime.totalWeight(FuelLane.PETROL_REFERENCE) > 0.0 ||
+            equivalenceRuntime.legacySeededRegions() > 0
+        ) return 0
+
+        val regions = delegate.advisorSnapshot().optJSONArray("regions") ?: return 0
+        val seeds = mutableListOf<PersistentEquivalenceRuntime.LegacyPetrolSeed>()
+        repeat(regions.length()) { index ->
+            val raw = regions.optJSONObject(index) ?: return@repeat
+            val fuel = raw.optString("fuel").uppercase()
+            if (fuel !in setOf("PETROL", "GASOLINA")) return@repeat
+            val rpm = raw.optDouble("rpm", Double.NaN)
+            val mapBar = raw.optDouble("map_bar", Double.NaN)
+            val mean = raw.optDouble("petrol_ms", Double.NaN)
+            if (!rpm.isFinite() || !mapBar.isFinite() || !mean.isFinite() || mean <= 0.05) return@repeat
+
+            val persistedSquaredMean = raw.optDouble("petrol_squared_mean", Double.NaN)
+            val persistedSpread = raw.optDouble("petrol_spread_ms", Double.NaN)
+            val variance = when {
+                persistedSpread.isFinite() && persistedSpread >= 0.0 -> persistedSpread * persistedSpread
+                persistedSquaredMean.isFinite() -> kotlin.math.max(0.0, persistedSquaredMean - mean * mean)
+                else -> 0.0
+            }
+            val quality = raw.optDouble("quality", raw.optDouble("confidence", 0.25)).coerceIn(0.0, 1.0)
+            val storedWeight = raw.optDouble("weight", Double.NaN)
+            val samples = raw.optInt("samples", 1).coerceAtLeast(1).toDouble()
+            val support = storedWeight.takeIf { it.isFinite() && it > 0.0 } ?: samples
+            seeds += PersistentEquivalenceRuntime.LegacyPetrolSeed(
+                rpm = rpm,
+                mapBar = mapBar,
+                meanTinjMs = mean,
+                varianceMs2 = variance,
+                quality = quality,
+                persistedSupport = support,
+            )
+        }
+        return equivalenceRuntime.seedLegacyPetrolIfEmpty(seeds)
     }
 
     private fun decorate(source: JSONObject, includeAdvisor: Boolean = true): JSONObject {
