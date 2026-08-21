@@ -49,7 +49,8 @@ class SignalLearningStoreEquivalenceTest {
     @Test
     fun weighted_fuel_lanes_survive_store_restart_without_raw_sample_replay() {
         val state = temporary.root.resolve("equivalence-restart.json")
-        SignalLearningStore(state, RingLog()).use { first ->
+        val first = SignalLearningStore(state, RingLog())
+        try {
             first.startSession()
             first.ingest(
                 telemetry(at = 650L, fuel = Mp48Fuel.CNG, petrolMs = 3.30),
@@ -59,13 +60,18 @@ class SignalLearningStoreEquivalenceTest {
                 telemetry(at = 1_250L, fuel = Mp48Fuel.PETROL, petrolMs = 3.00),
                 SampleDecision.accepted(sample("petrol", 700L, 1_250L, Mp48Fuel.PETROL, 3.00)),
             )
+        } finally {
+            first.close()
         }
 
-        SignalLearningStore(state, RingLog()).use { restored ->
+        val restored = SignalLearningStore(state, RingLog())
+        try {
             val primary = restored.export("test").getJSONObject("primaryEquivalence")
             assertTrue(primary.getDouble("petrolWeight") > 0.0)
             assertTrue(primary.getDouble("cngWeight") > 0.0)
             assertEquals("SPARSE_MOMENTS_ONLY", primary.getString("persistenceRepresentation"))
+        } finally {
+            restored.close()
         }
     }
 
