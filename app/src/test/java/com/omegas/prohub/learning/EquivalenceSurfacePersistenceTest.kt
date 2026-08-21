@@ -60,6 +60,32 @@ class EquivalenceSurfacePersistenceTest {
     }
 
     @Test
+    fun codec_round_trip_preserves_legacy_seed_marker_exactly_once() {
+        val original = surface()
+        original.seedPetrolSummary(
+            rpm = 2500.0,
+            mapBar = 0.60,
+            meanTinjMs = 3.0,
+            varianceMs2 = 0.04,
+            seedWeight = 0.20,
+            materialRevision = 7L,
+        )
+
+        val encoded = EquivalenceSurfaceCodec.encode(original.snapshot())
+        assertTrue(encoded.contains("\"legacySeededRegions\":1"))
+        assertTrue(encoded.contains("\"legacySeedProvenance\":\"${LegacyPetrolSeedPolicy.PROVENANCE}\""))
+
+        val decoded = EquivalenceSurfaceCodec.decode(encoded)
+        assertEquals(1, decoded.legacySeededRegions)
+        assertEquals(LegacyPetrolSeedPolicy.PROVENANCE, decoded.legacySeedProvenance)
+
+        val restored = surface()
+        restored.restore(decoded)
+        assertEquals(1, restored.snapshot().legacySeededRegions)
+        assertEquals(LegacyPetrolSeedPolicy.PROVENANCE, restored.snapshot().legacySeedProvenance)
+    }
+
+    @Test
     fun clearing_cng_lane_preserves_petrol_reference() {
         val s = surface()
         s.observe(FuelLane.PETROL_REFERENCE, 2500.0, 0.60, 3.00, 1.0, 1L)
