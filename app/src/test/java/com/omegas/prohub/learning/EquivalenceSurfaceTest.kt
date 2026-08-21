@@ -61,6 +61,21 @@ class EquivalenceSurfaceTest {
     }
 
     @Test
+    fun `query recovers nearby support with a fixed sixteen node ceiling`() {
+        val surface = testSurface()
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_400.0, 0.50, 3.0, 1.0, 1L)
+
+        // One storage step away: outside an exact-cell lookup, but inside the
+        // fixed local neighborhood calibrated by replay.
+        val nearby = surface.query(2_480.0, 0.50).petrol
+
+        assertTrue(nearby != null)
+        assertEquals(3.0, nearby!!.meanTinjMs, 1e-9)
+        assertTrue(nearby.nearestSupportDistanceCells <= 1.5)
+        assertEquals(16, surface.debugMaximumQueryNodes())
+    }
+
+    @Test
     fun `state size is fixed regardless of observation count`() {
         val surface = testSurface()
         val before = surface.debugAllocatedScalarCount()
