@@ -9,7 +9,6 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.pow
 
 /**
  * Analisa o motor pelas leituras reais.
@@ -180,23 +179,10 @@ class MotorSampleAnalyzer(
         } == true
 
         if (earlyWindow && !acceptedEarly) {
-            if (result.state == "ENGINE_WARMING") {
-                return result.copy(
-                    frameCount = result.frameCount.coerceAtMost(desiredFrames),
-                    gapMs = max(result.gapMs, collection.gapMs),
-                    fuelConfirmed = stableFuel?.wireName ?: fuel.wireName,
-                    learningEligible = false,
-                    largestGapMs = largestGapMs,
-                    toleratedGapCount = toleratedGapCount,
-                    windowAgeMs = result.durationMs,
-                    windowBudgetMs = effectiveWindowBudgetMs(),
-                    reasonCode = result.state,
-                )
-            }
             val reason = when {
                 fullWindowRequired -> "Janela completa obrigatória após transição ou perda de continuidade: ${sequence.size}/$desiredFrames leituras"
-                result.sample == null -> "Amostra mínima ainda instável: ${result.reason}. Refinando até $desiredFrames leituras"
-                else -> "Amostra mínima válida com ${(result.sample.quality * 100.0).toInt()}% de qualidade; refinando até $desiredFrames leituras"
+                result.sample == null -> "Amostra mínima ainda inválida: ${result.reason}. Refinando até $desiredFrames leituras"
+                else -> "Amostra mínima válida com ${(result.sample.quality * 100.0).toInt()}% de peso; refinando até $desiredFrames leituras"
             }
             return formingDecision(
                 reason = reason,
@@ -302,7 +288,7 @@ class MotorSampleAnalyzer(
         resetSamples(requireFullWindow = true)
         return SampleDecision.transition(
             state = "FUEL_STABLE",
-            reason = "${target.label()} confirmado por uma amostra saudável; iniciando uma amostra nova",
+            reason = "${target.label()} confirmado por uma amostra válida; iniciando uma amostra nova",
             frameCount = confirmationSample.frameCount,
             diagnostics = confirmationSample.diagnostics,
             sample = confirmationSample,
@@ -476,54 +462,10 @@ class MotorSampleAnalyzer(
             toleratedGapCount = toleratedGapCount,
         )
 
-        if (waterC < minimumWaterC) {
-            return SampleDecision.transition(
-                state = "ENGINE_WARMING",
-                reason = "Água Landi ${waterC.toInt()} °C • mínimo configurado $minimumWaterC °C",
-                frameCount = sequence.size,
-                diagnostics = diagnostics,
-            )
-        }
-
-        val rejection = when {
-            rpmCenterShift > rpmCenterLimit -> "RPM mudando continuamente"
-            rpmOscillation > rpmOscillationLimit -> "Oscilação de RPM acima do natural"
-            mapCenterShift > activePolicy.mapCenterBar -> "Carga do motor mudando"
-            mapOscillation > activePolicy.mapOscillationBar -> "Oscilação de MAP acima do natural"
-            petrolCenterShift > petrolCenterLimit -> "Tempo de injeção mudando"
-            petrolOscillationRatio > activePolicy.petrolOscillationPercent / 100.0 ->
-                "Oscilação do tempo de injeção acima do natural"
-            fuel == Mp48Fuel.CNG && pressureCenterShift > activePolicy.pressureCenterBar ->
-                "Pressão diferencial mudando"
-            fuel == Mp48Fuel.CNG && pressureOscillation > activePolicy.pressureOscillationBar ->
-                "Pressão diferencial instável"
-            else -> null
-        }
-        if (rejection != null) {
-            return SampleDecision.transition(
-                state = "SAMPLE_REJECTED",
-                reason = rejection,
-                frameCount = sequence.size,
-                diagnostics = diagnostics,
-            )
-        }
-
-        val scores = mutableListOf(
-            quality(rpmCenterShift, rpmCenterLimit),
-            quality(rpmOscillation, rpmOscillationLimit),
-            quality(mapCenterShift, activePolicy.mapCenterBar),
-            quality(mapOscillation, activePolicy.mapOscillationBar),
-            quality(petrolCenterShift, petrolCenterLimit),
-            quality(petrolOscillationRatio, activePolicy.petrolOscillationPercent / 100.0),
-        )
-        if (fuel == Mp48Fuel.CNG) {
-            scores += quality(pressureCenterShift, activePolicy.pressureCenterBar)
-            scores += quality(pressureOscillation, activePolicy.pressureOscillationBar)
-        }
-        val sampleQuality = scores.fold(1.0) { acc, value -> acc * value }
-            .pow(1.0 / scores.size)
+        val primaryWeight = EquivalenceEvidenceWeight.from(diagnostics)
         val classification = if (
             sequence.size >= desiredFrames &&
+            primaryWeight.stability >= 0.5 &&
             petrolOscillationRatio <= activePolicy.strongPetrolOscillationPercent / 100.0
         ) {
             SampleClassification.STRONG
@@ -543,7 +485,7 @@ class MotorSampleAnalyzer(
                 pressureDiffBar = pressure,
                 waterC = waterC,
                 gasC = gasC,
-                quality = sampleQuality.coerceIn(0.0, 1.0),
+                quality = primaryWeight.stability,
                 classification = classification,
                 frameCount = sequence.size,
                 diagnostics = diagnostics,
@@ -591,11 +533,6 @@ class MotorSampleAnalyzer(
             durationMs = sequence.last().capturedAtElapsedMs - sequence.first().capturedAtElapsedMs,
             medianIntervalMs = median(intervals.map(Long::toDouble)).toLong(),
         )
-    }
-
-    private fun quality(measured: Double, limit: Double): Double {
-        val ratio = abs(measured) / max(1e-9, abs(limit))
-        return (1.0 - 0.85 * ratio).coerceIn(0.15, 1.0)
     }
 
     private fun robustCenter(values: List<Double>): Double {
