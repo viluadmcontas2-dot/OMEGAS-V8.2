@@ -1,6 +1,7 @@
 package com.omegas.prohub.learning
 
 import kotlin.math.ceil
+import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.sqrt
@@ -14,9 +15,9 @@ internal enum class FuelLane {
 /**
  * Bounded, incremental RPM × MAP surface for petrol injection time.
  *
- * Each observation touches at most four lattice nodes. Querying interpolates only
- * the same four local nodes; there is no historical scan, candidate list or sort.
- * The state size depends solely on [Config], never on driving time.
+ * Each observation touches at most four lattice nodes. Querying inspects one fixed
+ * 4×4 local neighborhood per lane; there is no historical scan, candidate list or
+ * global sort. The state size depends solely on [Config], never on driving time.
  */
 internal class EquivalenceSurface(
     val config: Config,
@@ -134,13 +135,14 @@ internal class EquivalenceSurface(
 
     fun query(rpm: Double, mapBar: Double): QueryResult {
         if (!rpm.isFinite() || !mapBar.isFinite()) return QueryResult(null, null)
-        val rpmAxis = axisWeights(rpm, config.minRpm, config.maxRpm, config.rpmStep, rpmCount)
-            ?: return QueryResult(null, null)
-        val mapAxis = axisWeights(mapBar, config.minMapBar, config.maxMapBar, config.mapStepBar, mapCount)
-            ?: return QueryResult(null, null)
+        if (rpm < config.minRpm || rpm > config.maxRpm || mapBar < config.minMapBar || mapBar > config.maxMapBar) {
+            return QueryResult(null, null)
+        }
+        val rpmCenter = floor((rpm - config.minRpm) / config.rpmStep).toInt().coerceIn(0, rpmCount - 1)
+        val mapCenter = floor((mapBar - config.minMapBar) / config.mapStepBar).toInt().coerceIn(0, mapCount - 1)
         return QueryResult(
-            petrol = queryLane(petrol, rpm, mapBar, rpmAxis, mapAxis),
-            cng = queryLane(cng, rpm, mapBar, rpmAxis, mapAxis),
+            petrol = queryLane(petrol, rpm, mapBar, rpmCenter, mapCenter),
+            cng = queryLane(cng, rpm, mapBar, rpmCenter, mapCenter),
         )
     }
 
@@ -188,50 +190,55 @@ internal class EquivalenceSurface(
 
     internal fun debugNodeCount(): Int = nodeCount
 
+    internal fun debugMaximumQueryNodes(): Int = QUERY_DIAMETER * QUERY_DIAMETER
+
     private fun queryLane(
         lane: LaneState,
         rpm: Double,
         mapBar: Double,
-        rpmAxis: AxisWeights,
-        mapAxis: AxisWeights,
+        rpmCenter: Int,
+        mapCenter: Int,
     ): LaneEstimate? {
-        val supports = ArrayList<WeightedNode>(4)
-        rpmAxis.forEach { rpmPoint ->
-            mapAxis.forEach { mapPoint ->
-                val interpolationWeight = rpmPoint.weight * mapPoint.weight
-                if (interpolationWeight <= 0.0) return@forEach
-                val nodeIndex = index(rpmPoint.index, mapPoint.index)
-                val local = lane.estimate(nodeIndex) ?: return@forEach
-                val nodeRpm = config.minRpm + rpmPoint.index * config.rpmStep
-                val nodeMap = config.minMapBar + mapPoint.index * config.mapStepBar
-                val dr = (rpm - nodeRpm) / config.rpmStep
+        var totalKernel = 0.0
+        var weightedMean = 0.0
+        var weightedSecondMoment = 0.0
+        var weightedInverseEss = 0.0
+        var nearestDistance = Double.POSITIVE_INFINITY
+        var materialRevision = 0L
+
+        for (rpmOffset in QUERY_MIN_OFFSET..QUERY_MAX_OFFSET) {
+            val rpmIndex = rpmCenter + rpmOffset
+            if (rpmIndex !in 0 until rpmCount) continue
+            val nodeRpm = config.minRpm + rpmIndex * config.rpmStep
+            val dr = (rpm - nodeRpm) / config.rpmStep
+            for (mapOffset in QUERY_MIN_OFFSET..QUERY_MAX_OFFSET) {
+                val mapIndex = mapCenter + mapOffset
+                if (mapIndex !in 0 until mapCount) continue
+                val nodeMap = config.minMapBar + mapIndex * config.mapStepBar
                 val dm = (mapBar - nodeMap) / config.mapStepBar
-                supports += WeightedNode(
-                    interpolationWeight = interpolationWeight,
-                    estimate = local,
-                    distanceCells = sqrt(dr * dr + dm * dm),
-                )
+                val distanceSquared = dr * dr + dm * dm
+                if (distanceSquared > QUERY_RADIUS_CELLS * QUERY_RADIUS_CELLS + EPSILON) continue
+                val local = lane.estimate(index(rpmIndex, mapIndex)) ?: continue
+                val kernel = exp(-0.5 * distanceSquared).coerceAtLeast(EPSILON)
+                totalKernel += kernel
+                weightedMean += kernel * local.meanTinjMs
+                weightedSecondMoment += kernel * (local.varianceMs2 + local.meanTinjMs * local.meanTinjMs)
+                weightedInverseEss += kernel / local.effectiveSupport.coerceAtLeast(EPSILON)
+                nearestDistance = minOf(nearestDistance, sqrt(distanceSquared))
+                materialRevision = maxOf(materialRevision, local.materialRevision)
             }
         }
-        if (supports.isEmpty()) return null
-        val totalInterpolation = supports.sumOf { it.interpolationWeight }.coerceAtLeast(EPSILON)
-        val normalized = supports.map {
-            it.copy(interpolationWeight = it.interpolationWeight / totalInterpolation)
-        }
-        val mean = normalized.sumOf { it.interpolationWeight * it.estimate.meanTinjMs }
-        val variance = normalized.sumOf { support ->
-            val delta = support.estimate.meanTinjMs - mean
-            support.interpolationWeight * (support.estimate.varianceMs2 + delta * delta)
-        }.coerceAtLeast(0.0)
-        val inverseEss = normalized.sumOf { support ->
-            support.interpolationWeight / support.estimate.effectiveSupport.coerceAtLeast(EPSILON)
-        }
+        if (totalKernel <= EPSILON) return null
+        val mean = weightedMean / totalKernel
+        val secondMoment = weightedSecondMoment / totalKernel
+        val variance = max(0.0, secondMoment - mean * mean)
+        val inverseEss = weightedInverseEss / totalKernel
         return LaneEstimate(
             meanTinjMs = mean,
             varianceMs2 = variance,
-            effectiveSupport = (1.0 / inverseEss.coerceAtLeast(EPSILON)).coerceAtLeast(0.0),
-            nearestSupportDistanceCells = normalized.minOf { it.distanceCells },
-            materialRevision = normalized.maxOf { it.estimate.materialRevision },
+            effectiveSupport = (1.0 / inverseEss.coerceAtLeast(EPSILON)).coerceAtLeast(EPSILON),
+            nearestSupportDistanceCells = nearestDistance,
+            materialRevision = materialRevision,
         )
     }
 
@@ -247,12 +254,6 @@ internal class EquivalenceSurface(
         val varianceMs2: Double,
         val effectiveSupport: Double,
         val materialRevision: Long,
-    )
-
-    private data class WeightedNode(
-        val interpolationWeight: Double,
-        val estimate: LocalEstimate,
-        val distanceCells: Double,
     )
 
     private class LaneState(nodeCount: Int) {
@@ -351,6 +352,10 @@ internal class EquivalenceSurface(
 
     companion object {
         internal const val SNAPSHOT_SCHEMA = "omegas-equivalence-surface-v1"
+        private const val QUERY_MIN_OFFSET = -1
+        private const val QUERY_MAX_OFFSET = 2
+        private const val QUERY_DIAMETER = 4
+        private const val QUERY_RADIUS_CELLS = 1.5
         private const val EPSILON = 1e-12
 
         private fun pointCount(min: Double, max: Double, step: Double): Int =
