@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
@@ -73,6 +74,9 @@ class SignalLearningStore(
     private var lifetimeEligibleFramesEvaluated = 0L
     private var lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
     private val evidenceLock = Any()
+    private val equivalenceLock = Any()
+    private val equivalenceRuntime = EquivalenceRuntime()
+    private var lastEquivalenceEstimate: EquivalenceRuntime.EquivalenceEstimate? = null
     private val nativeEvidence = linkedMapOf<String, NativeEcuEvidence>()
     private val nativeAnchors = NativeLearningAnchorRegistry(LearningEvidenceBudget.MAX_NATIVE_ANCHORS)
     private val visitAccumulators = linkedMapOf<String, VisitComparisonAccumulator>()
@@ -191,6 +195,30 @@ class SignalLearningStore(
             decision
         }
         memoryDecision = prepared
+
+        if (decision.learningEligible && source != null && lastNovelty.fraction > 0.0) {
+            val lane = when (source.fuel) {
+                Mp48Fuel.PETROL -> FuelLane.PETROL_REFERENCE
+                Mp48Fuel.CNG -> FuelLane.CNG_PETROL_OBSERVED
+                else -> null
+            }
+            if (lane != null) {
+                val stability = EquivalenceEvidenceWeight.from(source.diagnostics).stability
+                synchronized(equivalenceLock) {
+                    val observed = equivalenceRuntime.observe(
+                        lane = lane,
+                        rpm = source.rpm,
+                        mapBar = source.mapBar,
+                        petrolTinjMs = source.petrolMs,
+                        stability = stability,
+                        novelty = lastNovelty.fraction,
+                        materialRevision = frameSequence,
+                    )
+                    if (observed.estimate != null) lastEquivalenceEstimate = observed.estimate
+                }
+            }
+        }
+
         val nativePetrolPriors = if (prepared.learningEligible && prepared.sample?.fuel?.wireName in setOf("GNV", "CNG")) {
             synchronized(evidenceLock) { nativeAnchors.snapshot().filter { it.sourceFuel == "PETROL" } }
         } else {
@@ -253,7 +281,8 @@ class SignalLearningStore(
             .put("lifetimeEligibleFramesEvaluated", lifetimeEligibleFramesEvaluated)
             .put("cumulativeEvidencePreserved", true)
             .put("sessionMetadataPolicy", "timestamp-organization-only-cumulative-memory")
-            .put("equivalencePolicy", "continuous-petrol-reference-surface")
+            .put("equivalencePolicy", "rpm-map-petrol-tinj-continuous-v1")
+            .put("primaryEquivalence", primaryEquivalenceJson(camelCase = true))
             .put("assistedCalibration", advisor)
             .put("advisorRevision", advisorRequestedRevision.get())
             .put("advisorPublishedRevision", advisorPublishedRevision.get())
@@ -685,6 +714,31 @@ class SignalLearningStore(
         }
     }
 
+    private fun primaryEquivalenceJson(camelCase: Boolean): JSONObject = synchronized(equivalenceLock) {
+        val estimate = lastEquivalenceEstimate
+        val root = JSONObject()
+            .put("schema", "omegas-primary-equivalence-v1")
+            .put(if (camelCase) "petrolWeight" else "petrol_weight", equivalenceRuntime.totalWeight(FuelLane.PETROL_REFERENCE))
+            .put(if (camelCase) "cngWeight" else "cng_weight", equivalenceRuntime.totalWeight(FuelLane.CNG_PETROL_OBSERVED))
+            .put("comparable", estimate != null)
+            .put("runtimeAuthority", "RPM_MAP_PETROL_TINJ")
+            .put("environmentGates", false)
+        if (estimate != null) {
+            root
+                .put(if (camelCase) "referenceMs" else "reference_ms", estimate.referenceMs)
+                .put(if (camelCase) "cngMs" else "cng_ms", estimate.cngMs)
+                .put(if (camelCase) "deltaMs" else "delta_ms", estimate.deltaMs)
+                .put(if (camelCase) "errorFraction" else "error_fraction", estimate.errorFraction)
+                .put(if (camelCase) "uncertaintyFraction" else "uncertainty_fraction", estimate.uncertaintyFraction)
+                .put(if (camelCase) "usefulMarginFraction" else "useful_margin_fraction", estimate.usefulMarginFraction)
+                .put("actionable", estimate.actionable)
+                .put(if (camelCase) "petrolEffectiveSupport" else "petrol_effective_support", estimate.petrolEffectiveSupport)
+                .put(if (camelCase) "cngEffectiveSupport" else "cng_effective_support", estimate.cngEffectiveSupport)
+                .put(if (camelCase) "materialRevision" else "material_revision", estimate.materialRevision)
+        }
+        root
+    }
+
     fun close() {
         persistEvidenceState(forceBoundary = true)
         evidenceStateWriter.flush(5_000L)
@@ -726,7 +780,8 @@ class SignalLearningStore(
             .put("last_novelty_fraction", lastNovelty.fraction)
             .put("cumulative_evidence_preserved", true)
             .put("session_metadata_policy", "timestamp-organization-only-cumulative-memory")
-            .put("equivalence_policy", "continuous-petrol-reference-surface")
+            .put("equivalence_policy", "rpm-map-petrol-tinj-continuous-v1")
+            .put("primary_equivalence", primaryEquivalenceJson(camelCase = false))
             .put("automatic_calibration", false)
             .put("real_sample_time_preserved", true)
             .put("gas_condition_preserved", true)
