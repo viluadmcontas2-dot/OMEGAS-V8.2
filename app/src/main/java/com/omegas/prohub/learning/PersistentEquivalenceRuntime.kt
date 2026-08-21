@@ -13,6 +13,15 @@ internal class PersistentEquivalenceRuntime(
     private val runtime: EquivalenceRuntime = EquivalenceRuntime(),
     private val snapshotEncoder: (EquivalenceSurface.Snapshot) -> String = EquivalenceSurfaceCodec::encode,
 ) : AutoCloseable {
+    data class LegacyPetrolSeed(
+        val rpm: Double,
+        val mapBar: Double,
+        val meanTinjMs: Double,
+        val varianceMs2: Double,
+        val quality: Double,
+        val persistedSupport: Double,
+    )
+
     private val lock = Any()
     private val target = File(
         stateFile.parentFile ?: stateFile.absoluteFile.parentFile,
@@ -53,6 +62,44 @@ internal class PersistentEquivalenceRuntime(
             persist()
         }
         return result
+    }
+
+    /**
+     * One migration transaction from accepted legacy gasoline summaries. If any
+     * gasoline evidence or a prior migration marker already exists, the entire
+     * batch is ignored. CNG is deliberately not part of this API.
+     */
+    fun seedLegacyPetrolIfEmpty(seeds: List<LegacyPetrolSeed>): Int {
+        if (seeds.isEmpty()) return 0
+        var imported = 0
+        synchronized(lock) {
+            val current = runtime.surface.snapshot()
+            if (current.legacySeededRegions > 0 || runtime.totalWeight(FuelLane.PETROL_REFERENCE) > 0.0) {
+                return 0
+            }
+            seeds.forEach { seed ->
+                val weight = LegacyPetrolSeedPolicy.weight(seed.quality, seed.persistedSupport)
+                if (weight <= 0.0) return@forEach
+                val result = runtime.surface.seedPetrolSummary(
+                    rpm = seed.rpm,
+                    mapBar = seed.mapBar,
+                    meanTinjMs = seed.meanTinjMs,
+                    varianceMs2 = seed.varianceMs2,
+                    seedWeight = weight,
+                    materialRevision = 0L,
+                )
+                if (result.acceptedWeight > 0.0) imported += 1
+            }
+        }
+        if (imported > 0) {
+            persistenceGate.markMaterialChange()
+            persist(forceBoundary = true)
+        }
+        return imported
+    }
+
+    fun legacySeededRegions(): Int = synchronized(lock) {
+        runtime.surface.snapshot().legacySeededRegions
     }
 
     fun query(rpm: Double, mapBar: Double): EquivalenceSurface.QueryResult =
