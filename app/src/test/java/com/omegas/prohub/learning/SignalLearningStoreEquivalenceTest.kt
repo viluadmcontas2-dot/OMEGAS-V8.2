@@ -3,9 +3,11 @@ package com.omegas.prohub.learning
 import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -72,6 +74,79 @@ class SignalLearningStoreEquivalenceTest {
             assertEquals("SPARSE_MOMENTS_ONLY", primary.getString("persistenceRepresentation"))
         } finally {
             restored.close()
+        }
+    }
+
+    @Test
+    fun advisor_is_driven_by_bounded_equivalence_surface_not_legacy_region_matching() {
+        val store = SignalLearningStore(temporary.root.resolve("advisor.json"), RingLog())
+        try {
+            store.startSession()
+            store.ingest(
+                telemetry(at = 650L, fuel = Mp48Fuel.PETROL, petrolMs = 3.00),
+                SampleDecision.accepted(sample("petrol", 100L, 650L, Mp48Fuel.PETROL, 3.00)),
+            )
+            store.ingest(
+                telemetry(at = 1_250L, fuel = Mp48Fuel.CNG, petrolMs = 3.30),
+                SampleDecision.accepted(sample("cng", 700L, 1_250L, Mp48Fuel.CNG, 3.30)),
+            )
+
+            repeat(200) {
+                val exported = store.export("test")
+                val advice = exported.getJSONObject("assistedCalibration")
+                if (exported.optBoolean("advisorFresh", false) &&
+                    advice.optString("primaryAuthority") == BoundedEquivalenceAdvisorSnapshot.AUTHORITY &&
+                    advice.optInt("comparisonCount", 0) > 0
+                ) {
+                    assertEquals("BOUNDED_EQUIVALENCE_SURFACE", advice.getString("inputSource"))
+                    assertFalse(advice.optBoolean("environmentGates", true))
+                    return
+                }
+                Thread.sleep(10L)
+            }
+            fail("Advisor never published the bounded RPM+MAP/Tinj authority")
+        } finally {
+            store.close()
+        }
+    }
+
+    @Test
+    fun legacy_petrol_regions_seed_new_surface_once_after_upgrade() {
+        val stateFile = temporary.root.resolve("legacy-petrol.json")
+        val first = SignalLearningStore(stateFile, RingLog())
+        try {
+            first.startSession()
+            first.ingest(
+                telemetry(at = 650L, fuel = Mp48Fuel.PETROL, petrolMs = 3.00),
+                SampleDecision.accepted(sample("legacy-petrol", 100L, 650L, Mp48Fuel.PETROL, 3.00)),
+            )
+        } finally {
+            first.close()
+        }
+
+        val surfaceFile = File(stateFile.parentFile, "learning_equivalence_v1.json")
+        assertTrue(surfaceFile.isFile)
+        assertTrue(surfaceFile.delete())
+
+        val upgraded = SignalLearningStore(stateFile, RingLog())
+        val migratedWeight: Double
+        try {
+            val equivalence = upgraded.export("test").getJSONObject("primaryEquivalence")
+            migratedWeight = equivalence.getDouble("petrolWeight")
+            assertTrue(migratedWeight > 0.0)
+            assertEquals(1, equivalence.getInt("legacySeededRegions"))
+            assertEquals(0.0, equivalence.getDouble("cngWeight"), 0.0)
+        } finally {
+            upgraded.close()
+        }
+
+        val reopened = SignalLearningStore(stateFile, RingLog())
+        try {
+            val equivalence = reopened.export("test").getJSONObject("primaryEquivalence")
+            assertEquals(migratedWeight, equivalence.getDouble("petrolWeight"), 1e-12)
+            assertEquals(1, equivalence.getInt("legacySeededRegions"))
+        } finally {
+            reopened.close()
         }
     }
 
