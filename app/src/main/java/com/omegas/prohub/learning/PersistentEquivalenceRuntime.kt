@@ -102,6 +102,11 @@ internal class PersistentEquivalenceRuntime(
         runtime.surface.snapshot().legacySeededRegions
     }
 
+    /** Bounded sparse copy for background Advisor work; never call from telemetry hot path. */
+    fun snapshotForAdvisor(): EquivalenceSurface.Snapshot = synchronized(lock) {
+        runtime.surface.snapshot()
+    }
+
     fun query(rpm: Double, mapBar: Double): EquivalenceSurface.QueryResult =
         synchronized(lock) { runtime.query(rpm, mapBar) }
 
