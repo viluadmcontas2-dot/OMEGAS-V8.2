@@ -63,6 +63,43 @@ class MotorSampleAnalyzerContinuousEvidenceTest {
     }
 
     @Test
+    fun `cng pressure plausibility failure does not erase base plausible evidence`() {
+        val analyzer = MotorSampleAnalyzer { policy }
+        var decision: SampleDecision? = null
+        repeat(6) { index ->
+            decision = analyzer.add(
+                frame(
+                    at = index * 50L,
+                    fuel = Mp48Fuel.CNG,
+                    plausible = false,
+                    basePlausible = true,
+                    cngPressurePlausible = false,
+                ),
+            )
+        }
+
+        assertTrue(decision!!.learningEligible)
+        assertNotNull(decision!!.sample)
+    }
+
+    @Test
+    fun `base plausibility failure remains hard zero`() {
+        val analyzer = MotorSampleAnalyzer { policy }
+        val invalid = analyzer.add(
+            frame(
+                at = 0L,
+                fuel = Mp48Fuel.CNG,
+                plausible = false,
+                basePlausible = false,
+                cngPressurePlausible = true,
+            ),
+        )
+
+        assertFalse(invalid.learningEligible)
+        assertEquals("INVALID", invalid.state)
+    }
+
+    @Test
     fun `cutoff remains hard zero`() {
         val analyzer = MotorSampleAnalyzer { policy }
         repeat(5) { analyzer.add(frame(it * 50L)) }
@@ -89,6 +126,9 @@ class MotorSampleAnalyzerContinuousEvidenceTest {
         rpm: Int = 2_500,
         waterC: Int = 80,
         pressureDiffBar: Double = 1.4,
+        plausible: Boolean = true,
+        basePlausible: Boolean = plausible,
+        cngPressurePlausible: Boolean = plausible,
     ) = Mp48Telemetry(
         capturedAtElapsedMs = at,
         rpm = rpm,
@@ -110,6 +150,8 @@ class MotorSampleAnalyzerContinuousEvidenceTest {
         mapRaw = 100,
         mapBar = mapBar,
         pressureDiffBar = pressureDiffBar,
-        plausible = true,
+        plausible = plausible,
+        basePlausible = basePlausible,
+        cngPressurePlausible = cngPressurePlausible,
     )
 }
