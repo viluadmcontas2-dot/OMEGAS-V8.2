@@ -47,6 +47,29 @@ class SignalLearningStoreEquivalenceTest {
     }
 
     @Test
+    fun weighted_fuel_lanes_survive_store_restart_without_raw_sample_replay() {
+        val state = temporary.root.resolve("equivalence-restart.json")
+        SignalLearningStore(state, RingLog()).use { first ->
+            first.startSession()
+            first.ingest(
+                telemetry(at = 650L, fuel = Mp48Fuel.CNG, petrolMs = 3.30),
+                SampleDecision.accepted(sample("cng", 100L, 650L, Mp48Fuel.CNG, 3.30)),
+            )
+            first.ingest(
+                telemetry(at = 1_250L, fuel = Mp48Fuel.PETROL, petrolMs = 3.00),
+                SampleDecision.accepted(sample("petrol", 700L, 1_250L, Mp48Fuel.PETROL, 3.00)),
+            )
+        }
+
+        SignalLearningStore(state, RingLog()).use { restored ->
+            val primary = restored.export("test").getJSONObject("primaryEquivalence")
+            assertTrue(primary.getDouble("petrolWeight") > 0.0)
+            assertTrue(primary.getDouble("cngWeight") > 0.0)
+            assertEquals("SPARSE_MOMENTS_ONLY", primary.getString("persistenceRepresentation"))
+        }
+    }
+
+    @Test
     fun pressure_and_temperature_do_not_participate_in_primary_equivalence_weight() {
         val a = EquivalenceEvidenceWeight.from(diagnostics(pressureShift = 0.0, water = 80.0)).stability
         val b = EquivalenceEvidenceWeight.from(diagnostics(pressureShift = 99.0, water = -20.0)).stability
