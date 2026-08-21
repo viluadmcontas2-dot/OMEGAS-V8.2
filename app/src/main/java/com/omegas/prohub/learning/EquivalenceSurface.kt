@@ -38,10 +38,6 @@ internal class EquivalenceSurface(
         }
 
         companion object {
-            /**
-             * Full plausible MP48 envelope. Step sizes are the current replay
-             * candidates and remain subject to the offline oracle before release.
-             */
             fun mp48ReplayCandidate(): Config = Config(
                 minRpm = 0.0,
                 maxRpm = 9_000.0,
@@ -90,6 +86,8 @@ internal class EquivalenceSurface(
         val maxMapBar: Double,
         val mapStepBar: Double,
         val nodes: List<SnapshotNode>,
+        val legacySeededRegions: Int = 0,
+        val legacySeedProvenance: String? = null,
     )
 
     private val rpmCount = pointCount(config.minRpm, config.maxRpm, config.rpmStep)
@@ -97,6 +95,7 @@ internal class EquivalenceSurface(
     private val nodeCount = rpmCount * mapCount
     private val petrol = LaneState(nodeCount)
     private val cng = LaneState(nodeCount)
+    private var legacySeededRegions = 0
 
     fun observe(
         lane: FuelLane,
@@ -133,6 +132,50 @@ internal class EquivalenceSurface(
         return ObserveResult(touched, weight)
     }
 
+    /**
+     * One-time migration seam for accepted legacy gasoline summaries. It preserves
+     * the persisted mean and spread while capping one region to one effective vote.
+     * No raw frame or synthetic sample identity is created.
+     */
+    fun seedPetrolSummary(
+        rpm: Double,
+        mapBar: Double,
+        meanTinjMs: Double,
+        varianceMs2: Double,
+        seedWeight: Double,
+        materialRevision: Long,
+    ): ObserveResult {
+        if (!rpm.isFinite() || !mapBar.isFinite() || !meanTinjMs.isFinite() || meanTinjMs <= 0.0) {
+            return ObserveResult(0, 0.0)
+        }
+        if (!varianceMs2.isFinite() || varianceMs2 < 0.0 || !seedWeight.isFinite() || seedWeight <= 0.0) {
+            return ObserveResult(0, 0.0)
+        }
+        val rpmAxis = axisWeights(rpm, config.minRpm, config.maxRpm, config.rpmStep, rpmCount)
+            ?: return ObserveResult(0, 0.0)
+        val mapAxis = axisWeights(mapBar, config.minMapBar, config.maxMapBar, config.mapStepBar, mapCount)
+            ?: return ObserveResult(0, 0.0)
+        val secondMoment = meanTinjMs * meanTinjMs + varianceMs2
+        var touched = 0
+        rpmAxis.forEach { rpmPoint ->
+            mapAxis.forEach { mapPoint ->
+                val spatialWeight = rpmPoint.weight * mapPoint.weight
+                if (spatialWeight <= 0.0) return@forEach
+                val nodeWeight = seedWeight * spatialWeight
+                petrol.seedSummary(
+                    index = index(rpmPoint.index, mapPoint.index),
+                    meanTinjMs = meanTinjMs,
+                    secondMomentMs2 = secondMoment,
+                    weight = nodeWeight,
+                    revision = materialRevision,
+                )
+                touched += 1
+            }
+        }
+        if (touched > 0) legacySeededRegions += 1
+        return ObserveResult(touched, seedWeight)
+    }
+
     fun query(rpm: Double, mapBar: Double): QueryResult {
         if (!rpm.isFinite() || !mapBar.isFinite()) return QueryResult(null, null)
         if (rpm < config.minRpm || rpm > config.maxRpm || mapBar < config.minMapBar || mapBar > config.maxMapBar) {
@@ -146,7 +189,6 @@ internal class EquivalenceSurface(
         )
     }
 
-    /** Snapshot work is a persistence-boundary operation, never part of per-frame arithmetic. */
     fun snapshot(): Snapshot {
         val nodes = ArrayList<SnapshotNode>()
         petrol.snapshotInto(FuelLane.PETROL_REFERENCE, nodes)
@@ -159,16 +201,20 @@ internal class EquivalenceSurface(
             maxMapBar = config.maxMapBar,
             mapStepBar = config.mapStepBar,
             nodes = nodes,
+            legacySeededRegions = legacySeededRegions,
+            legacySeedProvenance = if (legacySeededRegions > 0) LegacyPetrolSeedPolicy.PROVENANCE else null,
         )
     }
 
-    /** Restore is strict: incompatible lattice/science is rejected instead of reinterpreted. */
     fun restore(snapshot: Snapshot) {
         require(snapshot.schema == SNAPSHOT_SCHEMA) { "Unsupported equivalence surface schema" }
         require(snapshot.minRpm == config.minRpm && snapshot.maxRpm == config.maxRpm) { "RPM lattice mismatch" }
         require(snapshot.rpmStep == config.rpmStep) { "RPM step mismatch" }
         require(snapshot.minMapBar == config.minMapBar && snapshot.maxMapBar == config.maxMapBar) { "MAP lattice mismatch" }
         require(snapshot.mapStepBar == config.mapStepBar) { "MAP step mismatch" }
+        if (snapshot.legacySeededRegions > 0) {
+            require(snapshot.legacySeedProvenance == LegacyPetrolSeedPolicy.PROVENANCE) { "Legacy seed provenance mismatch" }
+        }
         petrol.clear()
         cng.clear()
         snapshot.nodes.forEach { node ->
@@ -178,6 +224,7 @@ internal class EquivalenceSurface(
             require(node.sumWTinj.isFinite() && node.sumWTinj2.isFinite()) { "Invalid equivalence moments" }
             state(node.lane).restore(node)
         }
+        legacySeededRegions = snapshot.legacySeededRegions.coerceAtLeast(0)
     }
 
     fun clearLane(lane: FuelLane) {
@@ -185,11 +232,8 @@ internal class EquivalenceSurface(
     }
 
     internal fun debugTotalWeight(lane: FuelLane): Double = state(lane).sumW.sum()
-
     internal fun debugAllocatedScalarCount(): Int = nodeCount * 10
-
     internal fun debugNodeCount(): Int = nodeCount
-
     internal fun debugMaximumQueryNodes(): Int = QUERY_DIAMETER * QUERY_DIAMETER
 
     private fun queryLane(
@@ -268,6 +312,20 @@ internal class EquivalenceSurface(
             sumW2[index] += weight * weight
             sumWTinj[index] += weight * tinjMs
             sumWTinj2[index] += weight * tinjMs * tinjMs
+            if (revision > this.revision[index]) this.revision[index] = revision
+        }
+
+        fun seedSummary(
+            index: Int,
+            meanTinjMs: Double,
+            secondMomentMs2: Double,
+            weight: Double,
+            revision: Long,
+        ) {
+            sumW[index] += weight
+            sumW2[index] += weight * weight / LegacyPetrolSeedPolicy.MAX_EFFECTIVE_SUPPORT
+            sumWTinj[index] += weight * meanTinjMs
+            sumWTinj2[index] += weight * secondMomentMs2
             if (revision > this.revision[index]) this.revision[index] = revision
         }
 
