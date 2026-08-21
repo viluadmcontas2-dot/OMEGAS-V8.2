@@ -21,7 +21,7 @@ internal object EquivalenceSurfaceCodec {
                     .put("materialRevision", node.materialRevision),
             )
         }
-        return JSONObject()
+        val root = JSONObject()
             .put("schema", snapshot.schema)
             .put("representation", REPRESENTATION)
             .put("minRpm", snapshot.minRpm)
@@ -30,8 +30,10 @@ internal object EquivalenceSurfaceCodec {
             .put("minMapBar", snapshot.minMapBar)
             .put("maxMapBar", snapshot.maxMapBar)
             .put("mapStepBar", snapshot.mapStepBar)
+            .put("legacySeededRegions", snapshot.legacySeededRegions)
             .put("nodes", nodes)
-            .toString()
+        snapshot.legacySeedProvenance?.let { root.put("legacySeedProvenance", it) }
+        return root.toString()
     }
 
     fun decode(encoded: String): EquivalenceSurface.Snapshot {
@@ -61,6 +63,8 @@ internal object EquivalenceSurfaceCodec {
             maxMapBar = root.getDouble("maxMapBar"),
             mapStepBar = root.getDouble("mapStepBar"),
             nodes = nodes,
+            legacySeededRegions = root.optInt("legacySeededRegions", 0).coerceAtLeast(0),
+            legacySeedProvenance = root.optString("legacySeedProvenance").takeIf { it.isNotBlank() },
         )
     }
 }
