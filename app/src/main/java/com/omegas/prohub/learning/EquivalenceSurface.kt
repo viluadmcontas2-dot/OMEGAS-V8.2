@@ -70,6 +70,27 @@ internal class EquivalenceSurface(
         val cng: LaneEstimate?,
     )
 
+    data class SnapshotNode(
+        val lane: FuelLane,
+        val index: Int,
+        val sumW: Double,
+        val sumW2: Double,
+        val sumWTinj: Double,
+        val sumWTinj2: Double,
+        val materialRevision: Long,
+    )
+
+    data class Snapshot(
+        val schema: String = SNAPSHOT_SCHEMA,
+        val minRpm: Double,
+        val maxRpm: Double,
+        val rpmStep: Double,
+        val minMapBar: Double,
+        val maxMapBar: Double,
+        val mapStepBar: Double,
+        val nodes: List<SnapshotNode>,
+    )
+
     private val rpmCount = pointCount(config.minRpm, config.maxRpm, config.rpmStep)
     private val mapCount = pointCount(config.minMapBar, config.maxMapBar, config.mapStepBar)
     private val nodeCount = rpmCount * mapCount
@@ -121,6 +142,44 @@ internal class EquivalenceSurface(
             petrol = queryLane(petrol, rpm, mapBar, rpmAxis, mapAxis),
             cng = queryLane(cng, rpm, mapBar, rpmAxis, mapAxis),
         )
+    }
+
+    /** Snapshot work is a persistence-boundary operation, never part of per-frame arithmetic. */
+    fun snapshot(): Snapshot {
+        val nodes = ArrayList<SnapshotNode>()
+        petrol.snapshotInto(FuelLane.PETROL_REFERENCE, nodes)
+        cng.snapshotInto(FuelLane.CNG_PETROL_OBSERVED, nodes)
+        return Snapshot(
+            minRpm = config.minRpm,
+            maxRpm = config.maxRpm,
+            rpmStep = config.rpmStep,
+            minMapBar = config.minMapBar,
+            maxMapBar = config.maxMapBar,
+            mapStepBar = config.mapStepBar,
+            nodes = nodes,
+        )
+    }
+
+    /** Restore is strict: incompatible lattice/science is rejected instead of reinterpreted. */
+    fun restore(snapshot: Snapshot) {
+        require(snapshot.schema == SNAPSHOT_SCHEMA) { "Unsupported equivalence surface schema" }
+        require(snapshot.minRpm == config.minRpm && snapshot.maxRpm == config.maxRpm) { "RPM lattice mismatch" }
+        require(snapshot.rpmStep == config.rpmStep) { "RPM step mismatch" }
+        require(snapshot.minMapBar == config.minMapBar && snapshot.maxMapBar == config.maxMapBar) { "MAP lattice mismatch" }
+        require(snapshot.mapStepBar == config.mapStepBar) { "MAP step mismatch" }
+        petrol.clear()
+        cng.clear()
+        snapshot.nodes.forEach { node ->
+            require(node.index in 0 until nodeCount) { "Equivalence node index out of bounds" }
+            require(node.sumW.isFinite() && node.sumW > 0.0) { "Invalid equivalence weight" }
+            require(node.sumW2.isFinite() && node.sumW2 > 0.0) { "Invalid equivalence squared weight" }
+            require(node.sumWTinj.isFinite() && node.sumWTinj2.isFinite()) { "Invalid equivalence moments" }
+            state(node.lane).restore(node)
+        }
+    }
+
+    fun clearLane(lane: FuelLane) {
+        state(lane).clear()
     }
 
     internal fun debugTotalWeight(lane: FuelLane): Double = state(lane).sumW.sum()
@@ -211,6 +270,37 @@ internal class EquivalenceSurface(
             if (revision > this.revision[index]) this.revision[index] = revision
         }
 
+        fun restore(node: SnapshotNode) {
+            sumW[node.index] += node.sumW
+            sumW2[node.index] += node.sumW2
+            sumWTinj[node.index] += node.sumWTinj
+            sumWTinj2[node.index] += node.sumWTinj2
+            if (node.materialRevision > revision[node.index]) revision[node.index] = node.materialRevision
+        }
+
+        fun snapshotInto(lane: FuelLane, target: MutableList<SnapshotNode>) {
+            for (index in sumW.indices) {
+                if (sumW[index] <= EPSILON) continue
+                target += SnapshotNode(
+                    lane = lane,
+                    index = index,
+                    sumW = sumW[index],
+                    sumW2 = sumW2[index],
+                    sumWTinj = sumWTinj[index],
+                    sumWTinj2 = sumWTinj2[index],
+                    materialRevision = revision[index],
+                )
+            }
+        }
+
+        fun clear() {
+            sumW.fill(0.0)
+            sumW2.fill(0.0)
+            sumWTinj.fill(0.0)
+            sumWTinj2.fill(0.0)
+            revision.fill(0L)
+        }
+
         fun estimate(index: Int): LocalEstimate? {
             val weight = sumW[index]
             if (weight <= EPSILON) return null
@@ -260,6 +350,7 @@ internal class EquivalenceSurface(
     }
 
     companion object {
+        internal const val SNAPSHOT_SCHEMA = "omegas-equivalence-surface-v1"
         private const val EPSILON = 1e-12
 
         private fun pointCount(min: Double, max: Double, step: Double): Int =
