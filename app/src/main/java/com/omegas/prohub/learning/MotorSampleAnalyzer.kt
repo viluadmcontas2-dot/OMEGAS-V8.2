@@ -84,7 +84,7 @@ class MotorSampleAnalyzer(
         }
         activePolicySignature = signature
         if (plannedGap) markPlannedOperation()
-        if (!frame.plausible) {
+        if (!frame.basePlausible) {
             resetSamples(requireFullWindow = true)
             return SampleDecision.invalid(
                 reason = "Leitura fisicamente implausível: ${frame.plausibilityReasons.joinToString().ifBlank { "motivo não informado" }}",
