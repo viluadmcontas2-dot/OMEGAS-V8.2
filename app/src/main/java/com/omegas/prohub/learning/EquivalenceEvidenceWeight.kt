@@ -23,6 +23,12 @@ internal data class EquivalenceEvidenceWeight(
                 SignalRatio("tinj_shift", diagnostics.petrolCenterShift, diagnostics.petrolCenterLimit),
                 SignalRatio("tinj_osc", diagnostics.petrolOscillationRatio, diagnostics.petrolOscillationLimit),
             )
+            candidates.firstOrNull { !it.valid() }?.let { invalid ->
+                return EquivalenceEvidenceWeight(
+                    stability = 0.0,
+                    limitingSignal = "invalid_${invalid.name}",
+                )
+            }
             var limitingSignal = "none"
             var limitingRatio = 0.0
             candidates.forEach { candidate ->
@@ -45,10 +51,9 @@ internal data class EquivalenceEvidenceWeight(
         val measured: Double,
         val reference: Double,
     ) {
-        fun normalized(): Double = when {
-            !measured.isFinite() -> 0.0
-            !reference.isFinite() || reference <= 0.0 -> 0.0
-            else -> abs(measured) / abs(reference)
-        }
+        fun valid(): Boolean =
+            measured.isFinite() && reference.isFinite() && reference > 0.0
+
+        fun normalized(): Double = abs(measured) / abs(reference)
     }
 }
