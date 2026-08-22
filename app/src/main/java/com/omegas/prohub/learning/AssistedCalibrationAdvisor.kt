@@ -181,7 +181,11 @@ object AssistedCalibrationAdvisor {
                         visitId = sample.visitId,
                         upstreamUncertaintyFraction = sample.upstreamUncertaintyFraction,
                         removedGlobal = globalEstimate.available,
-                        globalUncertainty = if (globalEstimate.available) globalEstimate.uncertainty else 0.0,
+                        // Bounded rows and the global trend share the same upstream evidence.
+                        // Re-adding global uncertainty would count correlated measurement noise twice.
+                        globalUncertainty = if (
+                            globalEstimate.available && sample.upstreamUncertaintyFraction == null
+                        ) globalEstimate.uncertainty else 0.0,
                     )
             }
         }
