@@ -59,7 +59,7 @@ internal class EquivalenceRuntime(
                 estimate = estimate(rpm, mapBar),
             )
         }
-        val evidenceVisitRevision = evidenceVisitRevision(lane, novelty, materialRevision)
+        val evidenceVisitRevision = candidateEvidenceVisitRevision(lane, novelty, materialRevision)
         val observed = surface.observe(
             lane = lane,
             rpm = rpm,
@@ -68,6 +68,9 @@ internal class EquivalenceRuntime(
             weight = scientificWeight,
             materialRevision = evidenceVisitRevision,
         )
+        if (observed.acceptedWeight > 0.0 && observed.touchedNodes > 0) {
+            commitEvidenceVisitRevision(lane, evidenceVisitRevision)
+        }
         return ObserveOutcome(
             scientificWeight = observed.acceptedWeight,
             touchedNodes = observed.touchedNodes,
@@ -108,18 +111,20 @@ internal class EquivalenceRuntime(
 
     internal fun allocatedScalarCount(): Int = surface.debugAllocatedScalarCount()
 
-    private fun evidenceVisitRevision(lane: FuelLane, novelty: Double, candidateRevision: Long): Long {
+    private fun candidateEvidenceVisitRevision(lane: FuelLane, novelty: Double, candidateRevision: Long): Long {
         if (!novelty.isFinite() || novelty <= 0.0) return candidateRevision
         val previous = when (lane) {
             FuelLane.PETROL_REFERENCE -> petrolVisitRevision
             FuelLane.CNG_PETROL_OBSERVED -> cngVisitRevision
         }
-        val revision = if (novelty < 1.0 && previous != null) previous else candidateRevision
+        return if (novelty < 1.0 && previous != null) previous else candidateRevision
+    }
+
+    private fun commitEvidenceVisitRevision(lane: FuelLane, revision: Long) {
         when (lane) {
             FuelLane.PETROL_REFERENCE -> petrolVisitRevision = revision
             FuelLane.CNG_PETROL_OBSERVED -> cngVisitRevision = revision
         }
-        return revision
     }
 
     private fun scientificWeight(lane: FuelLane, stability: Double, novelty: Double): Double {
