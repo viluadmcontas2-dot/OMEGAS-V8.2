@@ -46,7 +46,10 @@ class CleanUiContract(unittest.TestCase):
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("['dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools']", self.router)
+        # Predictor is an optional visual extension. It may add one route,
+        # but it must reuse the same Router/Store/Scheduler instead of changing
+        # the seven static destinations baked into the base HTML shell.
+        self.assertIn("const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools']", self.router)
         for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'OBD', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
@@ -98,11 +101,13 @@ class CleanUiContract(unittest.TestCase):
         for forbidden in ('writeMap(', 'startKBatchWrite(', 'writeCurve('):
             self.assertNotIn(forbidden, self.learning_screen)
 
-    def test_dashboard_prioritizes_rpm_and_groups_context(self):
+    def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
+        self.assertIn('PETROL INJECTION', self.dashboard)
+        self.assertIn('dashHeroPetrol', self.dashboard)
         self.assertIn('dashHeroRpm', self.dashboard)
-        self.assertIn('CONDIÇÃO DO MOTOR', self.dashboard)
+        self.assertLess(self.dashboard.index('dashHeroPetrol'), self.dashboard.index('dashHeroRpm'))
         self.assertIn('hero-context-grid', self.dashboard)
-        for marker in ('dashPetrol', 'dashMap', 'dashFuel', 'dashCell'):
+        for marker in ('dashMap', 'dashFuel', 'dashCell'):
             self.assertIn(marker, self.dashboard)
         self.assertIn('dashGas', self.dashboard)
         self.assertIn('dashStft', self.html)

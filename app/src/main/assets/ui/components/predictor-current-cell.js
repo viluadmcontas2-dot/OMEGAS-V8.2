@@ -7,8 +7,6 @@
     constructor(app) {
       this.app = app;
       this.store = app.store;
-      this.api = app.api;
-      this.scheduler = app.scheduler;
       this.currentKey = '';
       this.traceKeys = new Set();
       this.lastSequence = -1;
@@ -17,7 +15,6 @@
       const enabled = this.restoreEnabled();
       this.store.patch({ liveTracingEnabled: enabled });
       this.unsubscribeStore = this.store.subscribe(state => this.render(state), true);
-      this.unsubscribeFast = this.scheduler.addHook('fast', () => this.refreshFast());
     }
 
     injectStyle() {
@@ -46,18 +43,6 @@
       this.toggle = button;
     }
 
-    refreshFast() {
-      const state = this.store.get();
-      if (state.route !== 'predictor' || state.liveTracingEnabled === false) return;
-      if (!this.api || typeof this.api.telemetry !== 'function') return;
-      const latest = this.api.telemetry() || {};
-      const interpolation = latest.interpolation || {};
-      const sequence = Number(interpolation.sequence ?? latest.sequence ?? latest.updatedAt ?? -1);
-      if (Number.isFinite(sequence) && sequence === this.lastSequence) return;
-      if (Number.isFinite(sequence)) this.lastSequence = sequence;
-      this.store.patch({ telemetry: latest });
-    }
-
     render(state) {
       const enabled = state.liveTracingEnabled !== false;
       this.renderToggle(enabled);
@@ -66,6 +51,9 @@
         return;
       }
       const interpolation = state.telemetry?.interpolation || {};
+      const sequence = Number(interpolation.sequence ?? state.telemetry?.sequence ?? state.telemetry?.updatedAt ?? -1);
+      if (Number.isFinite(sequence) && sequence === this.lastSequence) return;
+      if (Number.isFinite(sequence)) this.lastSequence = sequence;
       if (interpolation.valid !== true || interpolation.affectsLearning !== false || interpolation.affectsCalibration !== false) {
         this.clearTrace();
         return;
@@ -146,7 +134,7 @@
 
   function boot() {
     const app = root.OmegasApp;
-    if (!app?.store || !app?.scheduler || !document.querySelector('[data-screen="predictor"]')) {
+    if (!app?.store || !document.querySelector('[data-screen="predictor"]')) {
       root.setTimeout(boot, 25);
       return;
     }

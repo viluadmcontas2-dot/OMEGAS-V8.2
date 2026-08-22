@@ -65,6 +65,7 @@ class NativeRuntimeManager(
         onTelemetry = ::consumeTelemetry,
         onStateChanged = ::consumeState,
     )
+    private val serialAdmission = Mp48BackpressureScheduler(engine)
 
     @Volatile private var latestLearningState = safeLearningStatus()
     @Volatile private var latestLearningSequence = 0L
@@ -175,7 +176,7 @@ class NativeRuntimeManager(
     }
 
     /** Única autoridade serial disponibilizada aos managers Android. */
-    fun serialScheduler(): Mp48SerialScheduler = engine
+    fun serialScheduler(): Mp48SerialScheduler = serialAdmission
 
     fun statusJson(): JSONObject = engine.statusJson()
         .put("native", true)
@@ -187,6 +188,7 @@ class NativeRuntimeManager(
         .put("learningScaleMigration", learning.migrationStatus())
         .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
         .put("learningPipeline", learningPipeline.metricsJson())
+        .put("serialAdmission", serialAdmission.metricsJson())
 
     fun fullSnapshotJson(): String = snapshotJson()
 

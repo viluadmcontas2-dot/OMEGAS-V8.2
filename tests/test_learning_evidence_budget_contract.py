@@ -18,7 +18,7 @@ checks = {
     "native snapshots bounded": "MAX_NATIVE_SNAPSHOTS = 16" in budget and "trimNativeEvidenceLocked()" in store,
     "visit accumulators bounded": "MAX_VISIT_ACCUMULATORS = 256" in budget and "trimVisitAccumulatorsLocked()" in store,
     "provenance bounded": "MAX_PROVENANCE_ENTRIES = 64" in budget,
-    "sidecar schema revisioned": 'EVIDENCE_STATE_SCHEMA = "omegas-learning-evidence-v6-v2"' in store,
+    "sidecar schema revisioned": 'EVIDENCE_STATE_SCHEMA = "omegas-learning-evidence-v6-v3"' in store,
     "coalesce before payload build": "evidenceStateWriter.request { buildEvidencePayload(snapshot) }" in store,
     "writer accepts deferred provider": "fun request(payloadProvider: () -> String): Boolean" in writer,
     "live ingest remains lightweight": "return decorate(result, includeAdvisor = false)" in store,

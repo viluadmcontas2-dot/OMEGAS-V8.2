@@ -36,6 +36,64 @@ class AdaptiveSampleWindowTest {
         assertFalse(AdaptiveSampleWindow.canAcceptEarly(sample(0.90, 10, 0.02), 10, 0, false, 0.08))
     }
 
+    @Test
+    fun `progressive stage accepts exceptional six standard eight and full ten`() {
+        assertEquals(
+            AdaptiveSampleWindow.Stage.FAST_ACCEPT,
+            AdaptiveSampleWindow.acceptanceStage(
+                sample = sample(quality = 0.90, frameCount = 6, petrolOscillationRatio = 0.02),
+                desiredFrames = 10,
+                toleratedGapCount = 0,
+                fullWindowRequired = false,
+                strongPetrolOscillationRatio = 0.08,
+            ),
+        )
+        assertEquals(
+            AdaptiveSampleWindow.Stage.FORMING,
+            AdaptiveSampleWindow.acceptanceStage(
+                sample = sample(quality = 0.82, frameCount = 6, petrolOscillationRatio = 0.02),
+                desiredFrames = 10,
+                toleratedGapCount = 0,
+                fullWindowRequired = false,
+                strongPetrolOscillationRatio = 0.08,
+            ),
+        )
+        assertEquals(
+            AdaptiveSampleWindow.Stage.STANDARD_ACCEPT,
+            AdaptiveSampleWindow.acceptanceStage(
+                sample = sample(quality = 0.82, frameCount = 8, petrolOscillationRatio = 0.03),
+                desiredFrames = 10,
+                toleratedGapCount = 0,
+                fullWindowRequired = false,
+                strongPetrolOscillationRatio = 0.08,
+            ),
+        )
+        assertEquals(
+            AdaptiveSampleWindow.Stage.FULL_ACCEPT,
+            AdaptiveSampleWindow.acceptanceStage(
+                sample = sample(quality = 0.70, frameCount = 10, petrolOscillationRatio = 0.09),
+                desiredFrames = 10,
+                toleratedGapCount = 1,
+                fullWindowRequired = true,
+                strongPetrolOscillationRatio = 0.08,
+            ),
+        )
+    }
+
+    @Test
+    fun `full window protection blocks all early stages`() {
+        assertEquals(
+            AdaptiveSampleWindow.Stage.FORMING,
+            AdaptiveSampleWindow.acceptanceStage(
+                sample = sample(quality = 0.99, frameCount = 8, petrolOscillationRatio = 0.01),
+                desiredFrames = 10,
+                toleratedGapCount = 0,
+                fullWindowRequired = true,
+                strongPetrolOscillationRatio = 0.08,
+            ),
+        )
+    }
+
     private fun sample(
         quality: Double,
         frameCount: Int,

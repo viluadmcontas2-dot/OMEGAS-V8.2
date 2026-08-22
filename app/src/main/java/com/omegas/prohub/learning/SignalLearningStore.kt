@@ -59,7 +59,7 @@ class SignalLearningStore(
     )
     private var visibleDecision: SampleDecision? = null
     private var memoryDecision: SampleDecision? = null
-    private val lastRepresentedWindowEndByFuel = linkedMapOf<String, Long>()
+    private val sciencePublicationGate = SciencePublicationGate()
     private var independentSamples = 0L
     private var correlatedSamplesWeighted = 0L
     private var duplicateSamplesIgnored = 0L
@@ -96,13 +96,14 @@ class SignalLearningStore(
         resetConnectionCounters()
         visibleDecision = null
         memoryDecision = null
+        sciencePublicationGate.reset()
         return decorate(delegate.startSession())
     }
 
     fun endSession(reason: String): JSONObject {
         visibleDecision = null
         memoryDecision = null
-        lastRepresentedWindowEndByFuel.clear()
+        sciencePublicationGate.reset()
         val result = decorate(delegate.endSession(reason))
         persistEvidenceState()
         evidenceStateWriter.flush(2_000L)
@@ -111,6 +112,19 @@ class SignalLearningStore(
 
     fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject {
         visibleDecision = decision
+        val physicalBoundary = decision.fuelJustStabilized ||
+            decision.continuityLost ||
+            decision.plannedOperation ||
+            decision.state in setOf(
+                "ENGINE_OFF",
+                "CUTOFF",
+                "FUEL_TRANSITION",
+                "FUEL_STABLE",
+                "TELEMETRY_GAP",
+                "WINDOW_TIMEOUT",
+            )
+        if (physicalBoundary) sciencePublicationGate.reset()
+
         val source = decision.sample
         val sequenceBefore = synchronized(evidenceLock) {
             performance = performance.copy(framesReceived = performance.framesReceived + 1L)
@@ -120,73 +134,92 @@ class SignalLearningStore(
         }
         val prepared = if (decision.learningEligible && source != null) {
             val fuelKey = source.fuel.wireName
-            val novelty = ContinuousWindowNovelty.calculate(
+            val publication = sciencePublicationGate.evaluate(
+                key = fuelKey,
                 startedAtElapsedMs = source.startedAtElapsedMs,
                 endedAtElapsedMs = source.endedAtElapsedMs,
                 frameCount = source.frameCount,
                 medianIntervalMs = source.diagnostics.medianIntervalMs,
-                previouslyRepresentedThroughElapsedMs = lastRepresentedWindowEndByFuel[fuelKey],
             )
-            synchronized(evidenceLock) {
-                performance = performance.copy(
-                    validFrames = performance.validFrames + novelty.totalFrames,
-                    windowsEvaluated = performance.windowsEvaluated + 1L,
-                    earlySamplesAccepted = performance.earlySamplesAccepted + if (source.frameCount < 10) 1L else 0L,
-                    newFrames = performance.newFrames + novelty.newFrames,
-                    reusedFrames = performance.reusedFrames + (novelty.totalFrames - novelty.newFrames),
-                    usefulWeight = performance.usefulWeight + novelty.fraction * source.quality,
-                    firstEstimateAtMs = performance.firstEstimateAtMs ?: source.endedAtElapsedMs,
-                )
-                provenanceHistory.addLast(
-                    EvidenceProvenance(
-                        firstFrameSequence = sequenceBefore + 1L,
-                        lastFrameSequence = frameSequence,
-                        newFrameCount = novelty.newFrames,
-                        reusedFrameCount = (novelty.totalFrames - novelty.newFrames).coerceAtLeast(0),
-                        noveltyRatio = novelty.fraction,
-                    ),
-                )
-                while (provenanceHistory.size > LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES) {
-                    provenanceHistory.removeFirst()
-                }
-            }
-            lastRepresentedWindowEndByFuel[fuelKey] = novelty.representedThroughElapsedMs
+            val novelty = publication.novelty
             lastNovelty = novelty
             eligibleFramesEvaluated += novelty.totalFrames
             lifetimeEligibleFramesEvaluated += novelty.totalFrames
-            newFramesAbsorbed += novelty.newFrames
-            lifetimeNewFramesAbsorbed += novelty.newFrames
 
-            when {
-                novelty.duplicate -> {
+            synchronized(evidenceLock) {
+                performance = performance.copy(
+                    validFrames = performance.validFrames + if (publication.publish) novelty.totalFrames else 0,
+                    windowsEvaluated = performance.windowsEvaluated + 1L,
+                    earlySamplesAccepted = performance.earlySamplesAccepted + if (source.frameCount < 10) 1L else 0L,
+                    newFrames = performance.newFrames + if (publication.publish) novelty.newFrames else 0,
+                    reusedFrames = performance.reusedFrames + if (publication.publish) {
+                        novelty.totalFrames - novelty.newFrames
+                    } else {
+                        0
+                    },
+                    usefulWeight = performance.usefulWeight + if (publication.publish) {
+                        novelty.fraction * source.quality
+                    } else {
+                        0.0
+                    },
+                    firstEstimateAtMs = performance.firstEstimateAtMs ?: source.endedAtElapsedMs,
+                )
+                if (publication.publish) {
+                    provenanceHistory.addLast(
+                        EvidenceProvenance(
+                            firstFrameSequence = sequenceBefore + 1L,
+                            lastFrameSequence = frameSequence,
+                            newFrameCount = novelty.newFrames,
+                            reusedFrameCount = (novelty.totalFrames - novelty.newFrames).coerceAtLeast(0),
+                            noveltyRatio = novelty.fraction,
+                        ),
+                    )
+                    while (provenanceHistory.size > LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES) {
+                        provenanceHistory.removeFirst()
+                    }
+                }
+            }
+
+            if (!publication.publish) {
+                if (novelty.duplicate) {
                     duplicateSamplesIgnored += 1
                     lifetimeDuplicateSamplesIgnored += 1
-                    decision.copy(
-                        reason = "Janela já representada integralmente; nenhum quadro novo foi contabilizado.",
-                        sample = null,
-                        learningEligible = false,
-                        reasonCode = "DUPLICATE_WINDOW_IGNORED",
-                    )
                 }
-                !novelty.fullyNew -> {
-                    correlatedSamplesWeighted += 1
-                    lifetimeCorrelatedSamplesWeighted += 1
-                    decision.copy(
-                        reason = "Motor estável; ${novelty.newFrames}/${novelty.totalFrames} quadros novos absorvidos proporcionalmente.",
-                        sample = source.copy(
-                            quality = (source.quality * novelty.fraction).coerceIn(0.0, 1.0),
-                        ),
-                        learningEligible = true,
-                        // Mantém o código de compatibilidade; a novidade detalhada
-                        // fica disponível nas métricas e na proveniência exportada.
-                        // Compatibilidade documental: OVERLAPPING_WINDOW_NOVELTY_WEIGHTED
-                        reasonCode = "OVERLAPPING_WINDOW_WEIGHTED",
-                    )
-                }
-                else -> {
-                    independentSamples += 1
-                    lifetimeIndependentSamples += 1
-                    decision
+                decision.copy(
+                    reason = if (novelty.duplicate) {
+                        "Janela já representada integralmente; nenhum quadro novo foi contabilizado."
+                    } else {
+                        "Amostra válida mantida ao vivo; aguardando massa física nova antes de publicar ciência."
+                    },
+                    sample = null,
+                    learningEligible = false,
+                    reasonCode = if (novelty.duplicate) {
+                        "DUPLICATE_WINDOW_IGNORED"
+                    } else {
+                        "SCIENCE_PUBLICATION_COALESCED"
+                    },
+                )
+            } else {
+                newFramesAbsorbed += novelty.newFrames
+                lifetimeNewFramesAbsorbed += novelty.newFrames
+                when {
+                    !novelty.fullyNew -> {
+                        correlatedSamplesWeighted += 1
+                        lifetimeCorrelatedSamplesWeighted += 1
+                        decision.copy(
+                            reason = "Motor estável; ${novelty.newFrames}/${novelty.totalFrames} quadros novos absorvidos proporcionalmente.",
+                            sample = source.copy(
+                                quality = (source.quality * novelty.fraction).coerceIn(0.0, 1.0),
+                            ),
+                            learningEligible = true,
+                            reasonCode = "OVERLAPPING_WINDOW_WEIGHTED",
+                        )
+                    }
+                    else -> {
+                        independentSamples += 1
+                        lifetimeIndependentSamples += 1
+                        decision
+                    }
                 }
             }
         } else {
@@ -199,9 +232,7 @@ class SignalLearningStore(
             val regionId = comparison.optString("reference_region_id")
             if (visitId.isNotBlank() && regionId.isNotBlank()) {
                 val key = "$visitId:$regionId"
-                val noveltyFraction = if (prepared.sample == null) 0.0 else {
-                    if (prepared.sample === source && lastNovelty.totalFrames > 0) lastNovelty.fraction else 1.0
-                }
+                val noveltyFraction = if (prepared.sample == null) 0.0 else lastNovelty.fraction
                 val weight = (comparison.optDouble("quality", 0.0) * noveltyFraction).coerceIn(0.0, 1.0)
                 val independent = noveltyFraction >= 0.999
                 synchronized(evidenceLock) {
@@ -217,10 +248,9 @@ class SignalLearningStore(
             }
         }
         requestAdvisorRefresh(result)
-        // O sidecar é uma fotografia substituível, não um log. Só solicita nova
-        // fotografia quando o analisador realmente produziu uma amostra; decisões
-        // intermediárias continuam ao vivo, mas não geram I/O de arquivo por quadro.
-        if (source != null) persistEvidenceState()
+        // O sidecar é uma fotografia substituível, não um log. Só uma publicação
+        // científica real solicita I/O; decisões intermediárias continuam ao vivo.
+        if (prepared.sample != null) persistEvidenceState()
         return decorate(result, includeAdvisor = false)
     }
 
@@ -375,7 +405,7 @@ class SignalLearningStore(
         duplicateSamplesIgnored = 0L
         newFramesAbsorbed = 0L
         eligibleFramesEvaluated = 0L
-        lastRepresentedWindowEndByFuel.clear()
+        sciencePublicationGate.reset()
         lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
     }
 

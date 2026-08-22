@@ -21,13 +21,16 @@ class V82IntegralRegressionContract(unittest.TestCase):
         self.assertIn('EVIDENCE_STATE_SCHEMA', store)
 
     def test_slow_ui_cannot_create_visual_history_queue(self):
-        pipeline = read('app/src/main/java/com/omegas/prohub/util/OrderedBackgroundPipeline.kt')
+        pipeline = read('app/src/main/java/com/omegas/prohub/util/LatestOnlyBackgroundPipeline.kt')
         scheduler = read('app/src/main/assets/ui/core/scheduler.js')
         tracing = read('app/src/main/assets/ui/components/predictor-current-cell.js')
         self.assertIn('latest', pipeline.lower())
         self.assertIn('pending', pipeline.lower())
+        self.assertIn('coalesced', pipeline.lower())
+        self.assertIn('pending = task', pipeline)
         self.assertEqual(scheduler.count('setInterval'), 1)
-        self.assertIn("scheduler.addHook('fast'", tracing)
+        self.assertNotIn("scheduler.addHook('fast'", tracing)
+        self.assertIn('this.store.subscribe', tracing)
         self.assertNotIn('setInterval', tracing)
         self.assertNotIn('history', tracing)
         self.assertNotIn('setTrace', tracing)

@@ -90,23 +90,23 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                 val panel = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
                     gravity = Gravity.CENTER
-                    setPadding(dp(10), dp(8), dp(10), dp(8))
+                    setPadding(dp(12), dp(10), dp(12), dp(10))
                     background = rounded(0xEB0B111CL.toInt(), 16f, 0x554F8EF7)
                     elevation = dp(8).toFloat()
                 }
                 val button = TextView(context).apply {
                     text = "Ω"
-                    textSize = 20f
+                    textSize = 22f
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
-                    minWidth = dp(42)
-                    minHeight = dp(42)
+                    minWidth = dp(56)
+                    minHeight = dp(56)
                     contentDescription = "OMEGAS telemetria flutuante"
                 }
                 val data = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
                     visibility = View.GONE
-                    setPadding(dp(2), dp(2), dp(2), dp(4))
+                    setPadding(dp(4), dp(4), dp(4), dp(6))
                 }
                 cellText = metric("CÉLULA  —").also(data::addView)
                 stftText = metric("STFT  —").also(data::addView)
@@ -205,9 +205,9 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
 
     private fun metric(value: String): TextView = TextView(context).apply {
         text = value
-        textSize = 11f
+        textSize = 13f
         setTextColor(0xFFE4EAF3.toInt())
-        setPadding(dp(6), dp(3), dp(6), dp(3))
+        setPadding(dp(8), dp(4), dp(8), dp(4))
         gravity = Gravity.START
     }
 

@@ -12,7 +12,9 @@ import org.json.JSONObject
  */
 object LearningUiSnapshotAssembler {
     fun assemble(rawSnapshot: JSONObject): JSONObject {
-        val reconciled = LearningSnapshotReconciler.reconcile(rawSnapshot)
+        val reconciled = LearningEvidenceDimensions.enrichRegions(
+            LearningSnapshotReconciler.reconcile(rawSnapshot),
+        )
         val regions = reconciled.optJSONArray("regions") ?: JSONArray()
         val epoch = reconciled.optInt("epoch", 1).coerceAtLeast(1)
         val comparisons = reconciled.optJSONArray("comparisons") ?: JSONArray()

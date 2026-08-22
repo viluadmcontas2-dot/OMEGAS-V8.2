@@ -22,6 +22,7 @@
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
     learning: ['APRENDER', 'Aprender'],
+    predictor: ['DECIDIR', 'Predictor'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     obd: ['OBSERVAR', 'OBD'],
@@ -38,6 +39,7 @@
   let toastTimer = null;
   let routeButtons = [];
   let screenNodes = [];
+  let scienceRevision = 0;
 
   function byId(id) { return document.getElementById(id); }
   function setText(id, value) {
@@ -70,16 +72,41 @@
   function curveEvidenceVisible() {
     return document.querySelector('[data-screen="curve"] .evidence-disclosure')?.open === true;
   }
-  function readCalibrationState() {
-    if (api.isDemo()) return { ready: true, suggestionItems: [], suggestionPending: 0, suggestionObserving: 0, suggestionApplied: 0, suggestionSuperseded: 0 };
-    const bridge = api.v7;
-    if (!bridge || typeof bridge.getState !== 'function') return {};
-    try {
-      const raw = bridge.getState();
-      return typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
-    } catch (_) {
-      return {};
+  function afterPaint(task) {
+    if (typeof root.requestAnimationFrame === 'function') {
+      root.requestAnimationFrame(() => root.setTimeout(task, 0));
+    } else {
+      root.setTimeout(task, 0);
     }
+  }
+
+  function learningDecisionFromTelemetry(telemetry) {
+    const source = telemetry || {};
+    const live = source.live || source.data || source;
+    const sample = live.sample && typeof live.sample === 'object' ? live.sample : {};
+    return {
+      ok: source.ok !== false,
+      state: sample.state || live.sample_state || 'OBSERVING_ENGINE',
+      reason: sample.reason || live.sample_reason || 'Observando o motor',
+      reason_code: sample.reason_code || sample.reasonCode || live.sample_state || 'OBSERVING_ENGINE',
+      frame_count: Number(sample.frame_count ?? live.sample_frame_count ?? 0),
+      minimum_frames: Number(sample.minimum_frames ?? live.sample_minimum_frames ?? 0),
+      desired_frames: Number(sample.desired_frames ?? live.sample_desired_frames ?? 0),
+      duration_ms: Number(sample.duration_ms ?? live.sample_duration_ms ?? 0),
+      median_interval_ms: Number(sample.median_interval_ms ?? 0),
+      gap_ms: Number(sample.gap_ms ?? 0),
+      learning_eligible: sample.learning_eligible === true,
+      fuel_confirmed: sample.fuel_confirmed ?? live.fuel ?? null,
+      window_age_ms: Number(sample.window_age_ms ?? sample.duration_ms ?? 0),
+      window_budget_ms: Number(sample.window_budget_ms ?? 0),
+      frames_evicted: Number(sample.frames_evicted ?? 0),
+      cell_key: sample.cell_key || '',
+      cell_row: Number(sample.cell_row ?? -1),
+      cell_column: Number(sample.cell_column ?? -1),
+      quality: Number(sample.quality ?? live.learning_quality ?? 0),
+      plausibility_reasons: Array.isArray(sample.plausibility_reasons) ? sample.plausibility_reasons : [],
+      live,
+    };
   }
 
   function ensureScreen(route) {
@@ -200,14 +227,16 @@
     if (route === 'map') ensureScreen('map')?.renderLiveContext?.({ rpm, petrolMs, row, column, label });
   }
 
+  /** Único pump de PresentSnapshot. Nenhum screen abre polling nativo próprio. */
   function refreshFast() {
     const route = store.get().route;
-    if (route === 'dashboard' || route === 'learning' || route === 'map') {
-      const telemetry = api.telemetry() || {};
+    if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor') {
+      const envelope = api.presentSnapshot() || {};
+      const telemetry = envelope.data || {};
       const signature = `${route}:${telemetryVisualSignature(telemetry, route)}`;
-      if (signature !== previousTelemetrySignature) {
+      if (envelope.ok !== false && signature !== previousTelemetrySignature) {
         previousTelemetrySignature = signature;
-        store.patch({ telemetry });
+        store.patch({ telemetry, presentRevision: Number(envelope.revision || 0) });
         const state = store.get();
         if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
         if (route === 'learning' || route === 'map') renderLightLiveContext(state, route);
@@ -215,8 +244,8 @@
     }
 
     const state = store.get();
-    if (instances.map && (state.map?.state === 'writing' || state.map?.state === 'reading')) instances.map.poll();
-    if (instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
+    if (route === 'map' && instances.map && (state.map?.state === 'writing' || state.map?.state === 'reading')) instances.map.poll();
+    if (route === 'curve' && instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
   }
 
   function refreshStatus() {
@@ -242,22 +271,37 @@
       ['INPUT', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName);
   }
 
+  /** Único pump de ScienceSnapshot; rebuild pesado acontece fora da WebView no Android. */
   function refreshContext() {
     const state = store.get();
     const route = state.route;
     const curve = route === 'curve' ? ensureScreen('curve') : null;
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    if (route === 'learning' || curveNeedsLearning || route === 'suggestions' || route === 'tools') {
-      patch.learning = api.learning() || {};
-      patch.learningStatus = api.learningStatus() || {};
+    const needsScience = route === 'learning' || route === 'predictor' || route === 'suggestions' ||
+      route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
+
+    if (needsScience) {
+      const science = api.scienceSnapshotSince(scienceRevision) || {};
+      const nextRevision = Number(science.revision || scienceRevision || 0);
+      patch.scienceRefreshing = science.refreshing === true;
+      if (science.changed === true && science.data && typeof science.data === 'object') {
+        scienceRevision = nextRevision;
+        const data = science.data;
+        if (data.learning) patch.learning = data.learning;
+        if (data.calibrationState) patch.calibrationState = data.calibrationState;
+        const predictor = data.predictor || data.calibrationState?.predictor;
+        if (predictor) {
+          patch.predictor = { ...(state.predictor || {}), state: predictor.ok === false ? 'error' : 'ready', data: predictor };
+        }
+        patch.scienceRevision = scienceRevision;
+      }
     }
+
     if (route === 'learning') {
-      patch.learningDecision = api.learningDecision() || {};
+      patch.learningStatus = api.learningStatus() || {};
+      patch.learningDecision = learningDecisionFromTelemetry(state.telemetry);
       patch.learningTolerance = api.learningToleranceSettings() || {};
-    }
-    if (route === 'learning' || route === 'suggestions' || route === 'map' || route === 'curve') {
-      patch.calibrationState = readCalibrationState();
     }
     if (route === 'obd') patch.obdDevices = api.obdDevices() || {};
     if (route === 'tools') {
@@ -365,39 +409,48 @@
     }));
   }
 
+  /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
     store.patch({ suggestionsOpen: route === 'suggestions', toolsOpen: route === 'tools' });
     if (route === 'dashboard') {
       previousTelemetrySignature = '';
-      refreshFast();
       ensureScreen('dashboard')?.render(store.get());
+      afterPaint(refreshFast);
+      return;
     }
     if (route === 'learning') {
       previousTelemetrySignature = '';
-      ensureScreen('learning');
-      refreshFast();
-      refreshContext();
+      ensureScreen('learning')?.render(store.get());
       renderLightLiveContext(store.get(), 'learning');
+      afterPaint(() => { refreshFast(); refreshContext(); });
+      return;
+    }
+    if (route === 'predictor') {
+      previousTelemetrySignature = '';
+      afterPaint(() => { refreshFast(); refreshContext(); });
+      return;
     }
     if (route === 'map') {
       previousTelemetrySignature = '';
       ensureScreen('map')?.onEnter(context || store.get().routeContext);
-      refreshFast();
-      refreshContext();
+      renderLightLiveContext(store.get(), 'map');
+      afterPaint(() => { refreshFast(); refreshContext(); });
+      return;
     }
     if (route === 'curve') {
       ensureScreen('curve')?.onEnter(context || store.get().routeContext);
-      refreshContext();
+      afterPaint(refreshContext);
+      return;
     }
     if (route === 'obd') {
-      ensureScreen('obd');
-      refreshStatus();
-      refreshContext();
+      ensureScreen('obd')?.render(store.get());
+      afterPaint(() => { refreshStatus(); refreshContext(); });
+      return;
     }
     if (route === 'suggestions' || route === 'tools') {
-      refreshContext();
       if (route === 'suggestions') renderPersistentSuggestions(store.get());
       if (route === 'tools' && !toolsEditing()) utilities?.render(store.get());
+      afterPaint(refreshContext);
     }
   }
 
@@ -414,31 +467,35 @@
     routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
     document.querySelector('[data-screen="curve"] .evidence-disclosure')?.addEventListener('toggle', event => {
-      if (event.currentTarget.open && store.get().route === 'curve') refreshContext();
+      if (event.currentTarget.open && store.get().route === 'curve') afterPaint(refreshContext);
     });
 
     document.addEventListener('visibilitychange', () => {
       const visible = !document.hidden;
       store.patch({ visible });
       if (visible) {
-        scheduler.start();
-        refreshStatus();
         activateRoute(store.get().route, store.get().routeContext);
+        afterPaint(() => {
+          refreshStatus();
+          scheduler.start();
+        });
       } else {
         scheduler.stop();
       }
     });
 
     root.addEventListener('omegas-refresh', () => {
-      refreshStatus();
-      refreshContext();
-      const route = store.get().route;
-      if (route === 'dashboard' || route === 'learning' || route === 'map') {
-        previousTelemetrySignature = '';
-        refreshFast();
-      }
-      if (route === 'map') instances.map?.poll();
-      if (route === 'curve') instances.curve?.poll();
+      afterPaint(() => {
+        refreshStatus();
+        refreshContext();
+        const route = store.get().route;
+        if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor') {
+          previousTelemetrySignature = '';
+          refreshFast();
+        }
+        if (route === 'map') instances.map?.poll();
+        if (route === 'curve') instances.curve?.poll();
+      });
     });
   }
 
@@ -450,10 +507,12 @@
     store.patch({ identity, demo: api.isDemo() });
     setText('buildIdentity', `${identity.engine || identity.product || 'OMEGAS'} · ${identity.versionName || identity.generation || 'V8'}`);
     store.subscribe(renderShell, true);
-    refreshStatus();
     const route = router.restore();
     activateRoute(route, null);
-    scheduler.start();
+    afterPaint(() => {
+      refreshStatus();
+      scheduler.start();
+    });
   }
 
   root.OmegasApp = { api, store, router, scheduler, screens: instances };
