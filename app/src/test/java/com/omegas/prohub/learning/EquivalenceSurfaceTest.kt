@@ -61,6 +61,61 @@ class EquivalenceSurfaceTest {
     }
 
     @Test
+    fun `fractional scientific mass cannot impersonate full independent support`() {
+        val fragmented = testSurface()
+        repeat(10) { revision ->
+            fragmented.observe(
+                FuelLane.CNG_PETROL_OBSERVED,
+                rpm = 2_440.0,
+                mapBar = 0.51,
+                petrolTinjMs = 3.30,
+                weight = 0.10,
+                materialRevision = revision.toLong() + 1L,
+            )
+        }
+        val single = testSurface()
+        single.observe(
+            FuelLane.CNG_PETROL_OBSERVED,
+            rpm = 2_440.0,
+            mapBar = 0.51,
+            petrolTinjMs = 3.30,
+            weight = 1.0,
+            materialRevision = 1L,
+        )
+
+        val fragmentedEstimate = fragmented.query(2_440.0, 0.51).cng!!
+        val singleEstimate = single.query(2_440.0, 0.51).cng!!
+
+        assertEquals(1.0, fragmented.debugTotalWeight(FuelLane.CNG_PETROL_OBSERVED), 1e-12)
+        assertEquals(1.0, single.debugTotalWeight(FuelLane.CNG_PETROL_OBSERVED), 1e-12)
+        assertEquals(
+            "Splitting one unit of scientific authority into fractional observations must not manufacture ESS",
+            singleEstimate.effectiveSupport,
+            fragmentedEstimate.effectiveSupport,
+            1e-9,
+        )
+        assertTrue(fragmentedEstimate.effectiveSupport <= 1.0 + 1e-9)
+    }
+
+    @Test
+    fun `bilinear fractional mass stays bounded without penalizing a full observation`() {
+        val full = testSurface()
+        full.observe(
+            FuelLane.PETROL_REFERENCE,
+            rpm = 2_440.0,
+            mapBar = 0.51,
+            petrolTinjMs = 3.0,
+            weight = 1.0,
+            materialRevision = 1L,
+        )
+
+        val fullEstimate = full.query(2_440.0, 0.51).petrol!!
+
+        assertEquals(1.0, full.debugTotalWeight(FuelLane.PETROL_REFERENCE), 1e-12)
+        assertEquals(1.0, fullEstimate.effectiveSupport, 1e-9)
+    }
+
+    @Test
     fun `query recovers nearby support with a fixed sixteen node ceiling`() {
         val surface = testSurface()
         // 2360 is an exact lattice node. Querying 2480 puts it 1.5 cells away,
