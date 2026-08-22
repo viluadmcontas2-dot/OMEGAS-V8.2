@@ -21,7 +21,10 @@ import kotlin.math.max
 class MotorSampleAnalyzer(
     private val policyProvider: () -> LearningTolerancePolicy = { LearningToleranceSettings.current },
 ) {
-    private val policy: LearningTolerancePolicy get() = policyProvider().normalized()
+    private var policySource: LearningTolerancePolicy = policyProvider()
+    private var activePolicy: LearningTolerancePolicy = policySource.normalized()
+    private var activePolicyJson: String = activePolicy.toJson().toString()
+    private val policy: LearningTolerancePolicy get() = activePolicy
     private val minimumFrames: Int get() = AdaptiveSampleWindow.minimumFrames(policy.requiredFrames)
     private val desiredFrames: Int get() = policy.requiredFrames
     private val maximumAttemptMs: Long get() = policy.maximumAttemptMs
@@ -46,7 +49,6 @@ class MotorSampleAnalyzer(
     private var plannedOperationPending = false
     private var continuityLossPending = false
     private var fullWindowRequired = false
-    private var activePolicySignature = ""
 
     /** Uma operação conhecida nunca pode unir frames anteriores e posteriores. */
     fun markPlannedOperation() {
@@ -71,18 +73,25 @@ class MotorSampleAnalyzer(
         frame: Mp48Telemetry,
         plannedGap: Boolean = false,
         toleratedGap: Boolean = false,
-    ): SampleDecision = addInternal(frame, plannedGap, toleratedGap).withCell(frame)
+    ): SampleDecision {
+        refreshPolicySnapshot()
+        return addInternal(frame, plannedGap, toleratedGap).withCell(frame)
+    }
+
+    private fun refreshPolicySnapshot() {
+        val latest = policyProvider()
+        if (latest == policySource) return
+        policySource = latest
+        activePolicy = latest.normalized()
+        activePolicyJson = activePolicy.toJson().toString()
+        resetSamples(requireFullWindow = true)
+    }
 
     private fun addInternal(
         frame: Mp48Telemetry,
         plannedGap: Boolean,
         toleratedGap: Boolean,
     ): SampleDecision {
-        val signature = policy.toJson().toString()
-        if (activePolicySignature.isNotEmpty() && activePolicySignature != signature) {
-            resetSamples(requireFullWindow = true)
-        }
-        activePolicySignature = signature
         if (plannedGap) markPlannedOperation()
         if (!frame.basePlausible) {
             resetSamples(requireFullWindow = true)
@@ -585,7 +594,7 @@ class MotorSampleAnalyzer(
             cellKey = cell.optString("key"),
             cellRow = cell.optInt("row"),
             cellColumn = cell.optInt("column"),
-            tolerancePolicy = policy.toJson().toString(),
+            tolerancePolicy = activePolicyJson,
             windowAgeMs = if (windowAgeMs > 0L) windowAgeMs else durationMs,
             windowBudgetMs = if (windowBudgetMs > 0L) windowBudgetMs else effectiveWindowBudgetMs(),
         )
