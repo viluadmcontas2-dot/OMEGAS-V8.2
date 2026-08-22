@@ -441,13 +441,13 @@ object AssistedCalibrationAdvisor {
             // Several lattice projections may belong to the same physical CNG visit.
             // They can refine the weighted mean, but cannot dilute spread as independent evidence.
             val spreadTerm = (spreadOrNull() ?: 0.0) / sqrt(independent)
-            // Bounded equivalence already calculated local measurement uncertainty from
-            // petrol/CNG lane variance, empirical single-observation noise and local support.
-            // Reapplying the legacy 6% prior + weight penalty would count uncertainty twice.
+            // Bounded equivalence already calculated uncertainty of each local mean from
+            // petrol/CNG lane variance, empirical noise and its own effective support.
+            // Projected Advisor rows must not divide that mean uncertainty a second time.
             if (upstreamWeight > 0.0 && legacyWeight <= 1e-12) {
                 val upstreamTerm = sqrt(
                     (upstreamVarianceWeightSum / upstreamWeight).coerceAtLeast(0.0),
-                ) / sqrt(independent)
+                )
                 return sqrt(spreadTerm * spreadTerm + upstreamTerm * upstreamTerm)
             }
             val sparseTerm = BASE_PRIOR_UNCERTAINTY_RATIO / sqrt(independent)
