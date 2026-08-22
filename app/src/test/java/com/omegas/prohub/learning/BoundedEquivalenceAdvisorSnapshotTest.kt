@@ -25,7 +25,7 @@ class BoundedEquivalenceAdvisorSnapshotTest {
         val comparisons = snapshot.getJSONArray("comparisons")
 
         assertEquals(0, snapshot.getJSONArray("regions").length())
-        assertTrue(comparisons.length() in 1..4)
+        assertTrue(comparisons.length() in 1..16)
         repeat(comparisons.length()) { index ->
             val row = comparisons.getJSONObject(index)
             assertEquals("BOUNDED_EQUIVALENCE_SURFACE", row.getString("origin"))
@@ -40,6 +40,34 @@ class BoundedEquivalenceAdvisorSnapshotTest {
         }
         assertEquals("RPM_MAP_PETROL_TINJ", snapshot.getString("primaryAuthority"))
         assertFalse(snapshot.getBoolean("environmentGates"))
+    }
+
+    @Test
+    fun nearby_non_overlapping_nodes_remain_comparable_for_advisor() {
+        val surface = EquivalenceSurface(
+            EquivalenceSurface.Config(
+                minRpm = 1_000.0,
+                maxRpm = 4_000.0,
+                rpmStep = 80.0,
+                minMapBar = 0.20,
+                maxMapBar = 1.20,
+                mapStepBar = 0.02,
+            ),
+        )
+        // Exact adjacent lattice nodes: the two lanes share no raw node index,
+        // but the runtime 16-node local kernel considers them comparable.
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_360.0, 0.60, 3.00, 1.0, 21L)
+        surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_440.0, 0.60, 3.30, 1.0, 22L)
+
+        val snapshot = BoundedEquivalenceAdvisorSnapshot.build(surface.snapshot(), epoch = 8)
+        val comparisons = snapshot.getJSONArray("comparisons")
+
+        assertTrue("Nearby valid evidence must not disappear at the Advisor boundary", comparisons.length() > 0)
+        repeat(comparisons.length()) { index ->
+            val row = comparisons.getJSONObject(index)
+            assertEquals(3.00, row.getDouble("petrol_target_ms"), 1e-9)
+            assertEquals(3.30, row.getDouble("petrol_on_cng_ms"), 1e-9)
+        }
     }
 
     @Test
