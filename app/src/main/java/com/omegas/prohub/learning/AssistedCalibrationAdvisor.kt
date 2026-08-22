@@ -275,7 +275,7 @@ object AssistedCalibrationAdvisor {
         val observed = raw.optDouble("petrol_on_cng_ms", raw.optDouble("petrolOnCngMs", Double.NaN))
         val rpm = raw.optDouble("rpm", Double.NaN)
         val mapBar = raw.optDouble("map_bar", raw.optDouble("mapBar", Double.NaN))
-        val quality = raw.optDouble("quality", 0.1).coerceIn(0.02, 1.0)
+        val quality = raw.optDouble("quality", 0.1).coerceIn(0.0, 1.0)
         if (!target.isFinite() || !observed.isFinite() || !rpm.isFinite() || !mapBar.isFinite() ||
             target <= 0.05 || observed < 0.0 || rpm < 0.0 || mapBar < 0.0
         ) return null
