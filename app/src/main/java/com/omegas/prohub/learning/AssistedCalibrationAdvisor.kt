@@ -403,7 +403,9 @@ object AssistedCalibrationAdvisor {
             if (weight <= 0.0) return 1.0
             val effective = effectiveSamples().coerceAtLeast(0.25)
             val independent = min(effective, uniqueVisits().coerceAtLeast(1).toDouble()).coerceAtLeast(0.5)
-            val spreadTerm = (spreadOrNull() ?: 0.0) / sqrt(effective)
+            // Several lattice projections may belong to the same physical CNG visit.
+            // They can refine the weighted mean, but cannot dilute spread as independent evidence.
+            val spreadTerm = (spreadOrNull() ?: 0.0) / sqrt(independent)
             val sparseTerm = BASE_PRIOR_UNCERTAINTY_RATIO / sqrt(independent)
             val weightTerm = WEIGHT_UNCERTAINTY_RATIO / sqrt(weight.coerceAtLeast(0.25))
             return sqrt(spreadTerm * spreadTerm + sparseTerm * sparseTerm + weightTerm * weightTerm)
