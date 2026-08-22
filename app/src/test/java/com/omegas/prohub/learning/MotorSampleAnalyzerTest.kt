@@ -63,24 +63,29 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
-    fun `petrol to cng discards confirmation window`() {
+    fun `petrol to cng retains the healthy confirmation window as evidence`() {
         val analyzer = MotorSampleAnalyzer()
         repeat(6) { analyzer.add(frame(it * 50L, Mp48Fuel.PETROL)) }
         var decision: SampleDecision? = null
         repeat(defaultFrames) { decision = analyzer.add(frame(1_000L + it * 50L, Mp48Fuel.CNG)) }
         assertEquals("FUEL_STABLE", decision?.state)
-        assertFalse(decision!!.learningEligible)
-        repeat(defaultFrames - 1) { assertFalse(analyzer.add(frame(2_000L + it * 50L, Mp48Fuel.CNG)).learningEligible) }
-        assertTrue(analyzer.add(frame(2_000L + (defaultFrames - 1) * 50L, Mp48Fuel.CNG)).learningEligible)
+        assertTrue(decision!!.learningEligible)
+        assertTrue(decision!!.fuelJustStabilized)
+        assertEquals(Mp48Fuel.CNG, decision!!.sample?.fuel)
+        assertEquals(defaultFrames, decision!!.sample?.frameCount)
     }
 
     @Test
-    fun `cng to petrol has the same symmetric protection`() {
+    fun `cng to petrol retains the same symmetric confirmation evidence`() {
         val analyzer = MotorSampleAnalyzer()
         repeat(6) { analyzer.add(frame(it * 50L, Mp48Fuel.CNG)) }
-        repeat(defaultFrames) { analyzer.add(frame(1_000L + it * 50L, Mp48Fuel.PETROL)) }
-        repeat(defaultFrames - 1) { assertFalse(analyzer.add(frame(2_000L + it * 50L, Mp48Fuel.PETROL)).learningEligible) }
-        assertTrue(analyzer.add(frame(2_000L + (defaultFrames - 1) * 50L, Mp48Fuel.PETROL)).learningEligible)
+        var decision: SampleDecision? = null
+        repeat(defaultFrames) { decision = analyzer.add(frame(1_000L + it * 50L, Mp48Fuel.PETROL)) }
+        assertEquals("FUEL_STABLE", decision?.state)
+        assertTrue(decision!!.learningEligible)
+        assertTrue(decision!!.fuelJustStabilized)
+        assertEquals(Mp48Fuel.PETROL, decision!!.sample?.fuel)
+        assertEquals(defaultFrames, decision!!.sample?.frameCount)
     }
 
     @Test
