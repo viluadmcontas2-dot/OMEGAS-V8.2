@@ -233,6 +233,18 @@ class SignalLearningStore(
                 }
             }
         }
+        if ((!decision.learningEligible || source == null) &&
+            CurrentEquivalenceStatusPolicy.allowsCachedEstimate(decision)
+        ) {
+            // Current status follows a bounded local query while the next sample forms.
+            // No history, JSON, disk or Advisor snapshot work enters the telemetry hot path.
+            synchronized(equivalenceLock) {
+                lastEquivalenceEstimate = equivalenceRuntime.estimate(
+                    rpm = telemetry.rpm.toDouble(),
+                    mapBar = telemetry.mapBar,
+                )
+            }
+        }
         advisorEstimate?.let { requestAdvisorRefresh(it, advisorRpm, advisorMap) }
 
         val nativePetrolPriors = if (prepared.learningEligible && prepared.sample?.fuel?.wireName in setOf("GNV", "CNG")) {
