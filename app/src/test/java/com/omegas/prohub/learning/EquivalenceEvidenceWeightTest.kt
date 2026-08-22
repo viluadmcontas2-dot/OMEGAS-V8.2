@@ -25,6 +25,21 @@ class EquivalenceEvidenceWeightTest {
     }
 
     @Test
+    fun `non finite primary diagnostic has zero scientific authority`() {
+        val invalidMeasured = EquivalenceEvidenceWeight.from(
+            diagnostics(rpmCenterShift = Double.NaN),
+        )
+        val invalidReference = EquivalenceEvidenceWeight.from(
+            diagnostics(mapCenterLimit = Double.POSITIVE_INFINITY),
+        )
+
+        assertEquals(0.0, invalidMeasured.stability, 0.0)
+        assertEquals("invalid_rpm_shift", invalidMeasured.limitingSignal)
+        assertEquals(0.0, invalidReference.stability, 0.0)
+        assertEquals("invalid_map_shift", invalidReference.limitingSignal)
+    }
+
+    @Test
     fun `two times legacy reference keeps twenty percent scientific weight`() {
         val result = EquivalenceEvidenceWeight.from(
             diagnostics(rpmCenterShift = 200.0, rpmCenterLimit = 100.0),
