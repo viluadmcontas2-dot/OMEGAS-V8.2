@@ -97,6 +97,56 @@ class PredictorSurfaceTest {
         assertEquals(0, cell(surface, row, column).getInt("nativeAnchorCount"))
     }
 
+    @Test
+    fun `primary rpm map tinj science needs no environmental fields in predictor`() {
+        val row = 3
+        val column = 4
+        val learning = learning(
+            residuals = JSONArray().put(residual(row, column, 6.0, actionable = true, stage = "ACCEPTED")),
+            anchors = JSONArray().put(anchor(row, column, epoch = 9)),
+            epoch = 9,
+        ).put("primaryAuthority", "RPM_MAP_PETROL_TINJ")
+
+        val result = PredictorSurface.build(learning, confirmedMap(120))
+        val projected = cell(result, row, column)
+
+        assertEquals("VALIDADO", projected.getString("state"))
+        assertEquals(127, projected.getInt("targetK"))
+        assertFalse(result.getBoolean("automaticWrite"))
+    }
+
+    @Test
+    fun `predictor surface preserves upstream confidence instead of upgrading it`() {
+        val row = 6
+        val column = 5
+        val learning = learning(
+            residuals = JSONArray().put(
+                residual(row, column, 3.0, actionable = true, stage = "ACCEPTED", confidence = 0.21),
+            ),
+            anchors = JSONArray().put(anchor(row, column, epoch = 5)),
+            epoch = 5,
+        )
+
+        val projected = cell(PredictorSurface.build(learning, confirmedMap(120)), row, column)
+
+        assertEquals(0.21, projected.getDouble("confidence"), 1e-12)
+    }
+
+    @Test
+    fun `duplicate upstream payload keeps predictor revision token stable`() {
+        val learning = learning(
+            residuals = JSONArray().put(residual(2, 2, 4.0, actionable = true, stage = "ACCEPTED")),
+            anchors = JSONArray().put(anchor(2, 2, epoch = 3)),
+            epoch = 3,
+        )
+        val map = confirmedMap(120)
+
+        val first = PredictorSurface.build(JSONObject(learning.toString()), JSONObject(map.toString()))
+        val second = PredictorSurface.build(JSONObject(learning.toString()), JSONObject(map.toString()))
+
+        assertEquals(first.getString("revisionToken"), second.getString("revisionToken"))
+    }
+
     private fun learning(residuals: JSONArray, anchors: JSONArray, epoch: Int): JSONObject = JSONObject()
         .put("epoch", epoch)
         .put("advisorRevision", 12L)
@@ -109,13 +159,14 @@ class PredictorSurfaceTest {
         delta: Double,
         actionable: Boolean,
         stage: String,
+        confidence: Double = 0.82,
     ): JSONObject = JSONObject()
         .put("row", row)
         .put("column", column)
         .put("suggestedDeltaPercent", delta)
         .put("residualErrorPercent", delta)
         .put("uncertaintyPercent", 1.5)
-        .put("confidence", 0.82)
+        .put("confidence", confidence)
         .put("confidenceStage", stage)
         .put("readiness", "AVAILABLE")
         .put("actionable", actionable)
