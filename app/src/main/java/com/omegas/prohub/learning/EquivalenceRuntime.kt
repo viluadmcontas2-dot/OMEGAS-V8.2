@@ -51,7 +51,6 @@ internal class EquivalenceRuntime(
         novelty: Double,
         materialRevision: Long,
     ): ObserveOutcome {
-        val evidenceVisitRevision = evidenceVisitRevision(lane, novelty, materialRevision)
         val scientificWeight = scientificWeight(lane, stability, novelty)
         if (scientificWeight <= 0.0) {
             return ObserveOutcome(
@@ -60,6 +59,7 @@ internal class EquivalenceRuntime(
                 estimate = estimate(rpm, mapBar),
             )
         }
+        val evidenceVisitRevision = evidenceVisitRevision(lane, novelty, materialRevision)
         val observed = surface.observe(
             lane = lane,
             rpm = rpm,
