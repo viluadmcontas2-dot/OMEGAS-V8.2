@@ -247,6 +247,7 @@ internal class EquivalenceSurface(
         var weightedMean = 0.0
         var weightedSecondMoment = 0.0
         var weightedInverseEss = 0.0
+        var localScientificMass = 0.0
         var nearestDistance = Double.POSITIVE_INFINITY
         var materialRevision = 0L
 
@@ -268,6 +269,7 @@ internal class EquivalenceSurface(
                 weightedMean += kernel * local.meanTinjMs
                 weightedSecondMoment += kernel * (local.varianceMs2 + local.meanTinjMs * local.meanTinjMs)
                 weightedInverseEss += kernel / local.effectiveSupport.coerceAtLeast(EPSILON)
+                localScientificMass += local.scientificMass
                 nearestDistance = minOf(nearestDistance, sqrt(distanceSquared))
                 materialRevision = maxOf(materialRevision, local.materialRevision)
             }
@@ -277,10 +279,19 @@ internal class EquivalenceSurface(
         val secondMoment = weightedSecondMoment / totalKernel
         val variance = max(0.0, secondMoment - mean * mean)
         val inverseEss = weightedInverseEss / totalKernel
+        val relativeEffectiveSupport = (1.0 / inverseEss.coerceAtLeast(EPSILON)).coerceAtLeast(EPSILON)
+        // Kish ESS treats weights as relative and therefore cancels their absolute
+        // scientific authority. The local mass cap keeps fractional novelty/stability
+        // from impersonating full independent observations while preserving bilinear
+        // conservation: the four spatial shares of one observation still sum to one.
+        val massBoundedEffectiveSupport = minOf(
+            relativeEffectiveSupport,
+            localScientificMass.coerceAtLeast(EPSILON),
+        )
         return LaneEstimate(
             meanTinjMs = mean,
             varianceMs2 = variance,
-            effectiveSupport = (1.0 / inverseEss.coerceAtLeast(EPSILON)).coerceAtLeast(EPSILON),
+            effectiveSupport = massBoundedEffectiveSupport,
             nearestSupportDistanceCells = nearestDistance,
             materialRevision = materialRevision,
         )
@@ -297,6 +308,7 @@ internal class EquivalenceSurface(
         val meanTinjMs: Double,
         val varianceMs2: Double,
         val effectiveSupport: Double,
+        val scientificMass: Double,
         val materialRevision: Long,
     )
 
@@ -370,6 +382,7 @@ internal class EquivalenceSurface(
                 meanTinjMs = mean,
                 varianceMs2 = variance,
                 effectiveSupport = effectiveSupport.coerceAtLeast(EPSILON),
+                scientificMass = weight,
                 materialRevision = revision[index],
             )
         }
