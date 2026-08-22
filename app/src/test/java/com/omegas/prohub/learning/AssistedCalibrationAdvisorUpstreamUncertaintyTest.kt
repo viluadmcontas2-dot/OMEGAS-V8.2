@@ -33,11 +33,33 @@ class AssistedCalibrationAdvisorUpstreamUncertaintyTest {
         assertEquals(3.0, point.getDouble("uncertaintyPercent"), 1e-9)
     }
 
-    private fun comparison(visitId: String): JSONObject = JSONObject()
+    @Test
+    fun `bounded residual does not add correlated global uncertainty a second time`() {
+        val comparisons = JSONArray()
+            .put(comparison("low", observedMs = 5.4, row = 5, column = 4))
+            .put(comparison("high", observedMs = 5.6, row = 5, column = 5))
+
+        val result = AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
+        val residuals = result.getJSONArray("mapResidualSuggestions")
+
+        assertEquals(2, residuals.length())
+        repeat(residuals.length()) { index ->
+            val residual = residuals.getJSONObject(index)
+            assertEquals(3.0, residual.getDouble("uncertaintyPercent"), 1e-9)
+            assertTrue(residual.getBoolean("globalTrendRemoved"))
+        }
+    }
+
+    private fun comparison(
+        visitId: String,
+        observedMs: Double = 5.4,
+        row: Int = 5,
+        column: Int = 4,
+    ): JSONObject = JSONObject()
         .put("origin", "BOUNDED_EQUIVALENCE_SURFACE")
         .put("visit_id", visitId)
         .put("petrol_target_ms", 5.0)
-        .put("petrol_on_cng_ms", 5.4)
+        .put("petrol_on_cng_ms", observedMs)
         .put("rpm", 2_200.0)
         .put("map_bar", 0.50)
         .put("quality", 1.0)
@@ -46,8 +68,8 @@ class AssistedCalibrationAdvisorUpstreamUncertaintyTest {
             "continuous_cell_weights",
             JSONArray().put(
                 JSONObject()
-                    .put("row", 5)
-                    .put("column", 4)
+                    .put("row", row)
+                    .put("column", column)
                     .put("weight", 1.0),
             ),
         )
