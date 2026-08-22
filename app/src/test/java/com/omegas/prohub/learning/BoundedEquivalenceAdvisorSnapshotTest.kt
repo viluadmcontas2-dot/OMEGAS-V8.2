@@ -54,8 +54,6 @@ class BoundedEquivalenceAdvisorSnapshotTest {
                 mapStepBar = 0.02,
             ),
         )
-        // Exact adjacent lattice nodes: the two lanes share no raw node index,
-        // but the runtime 16-node local kernel considers them comparable.
         surface.observe(FuelLane.PETROL_REFERENCE, 2_360.0, 0.60, 3.00, 1.0, 21L)
         surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_440.0, 0.60, 3.30, 1.0, 22L)
 
@@ -94,6 +92,42 @@ class BoundedEquivalenceAdvisorSnapshotTest {
             val projectedQuality = row.getDouble("quality")
             assertTrue("Downstream quality cannot exceed paired upstream scientific mass", projectedQuality <= paired + 1e-12)
         }
+    }
+
+    @Test
+    fun overlapping_local_projection_conserves_total_scientific_authority() {
+        val surface = EquivalenceSurface(
+            EquivalenceSurface.Config(
+                minRpm = 1_000.0,
+                maxRpm = 4_000.0,
+                rpmStep = 80.0,
+                minMapBar = 0.20,
+                maxMapBar = 1.20,
+                mapStepBar = 0.02,
+            ),
+        )
+        surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_400.0, 0.60, 3.30, 0.20, 40L)
+        listOf(
+            2_320.0 to 0.58, 2_320.0 to 0.60, 2_320.0 to 0.62,
+            2_400.0 to 0.58, 2_400.0 to 0.60, 2_400.0 to 0.62,
+            2_480.0 to 0.58, 2_480.0 to 0.60, 2_480.0 to 0.62,
+        ).forEachIndexed { index, (rpm, map) ->
+            surface.observe(FuelLane.PETROL_REFERENCE, rpm, map, 3.00, 0.20, 41L + index)
+        }
+
+        val projected = BoundedEquivalenceAdvisorSnapshot.build(surface.snapshot(), epoch = 10)
+        val comparisons = projected.getJSONArray("comparisons")
+        val authorityBudget = minOf(projected.getDouble("petrolWeight"), projected.getDouble("cngWeight"))
+        var pairedTotal = 0.0
+        var qualityTotal = 0.0
+        repeat(comparisons.length()) { index ->
+            val row = comparisons.getJSONObject(index)
+            pairedTotal += row.getDouble("paired_scientific_weight")
+            qualityTotal += row.getDouble("quality")
+        }
+
+        assertTrue("Overlapping projection cannot duplicate paired physical authority", pairedTotal <= authorityBudget + 1e-12)
+        assertTrue("Advisor quality cannot exceed the available cross-fuel authority budget", qualityTotal <= authorityBudget + 1e-12)
     }
 
     @Test
