@@ -86,11 +86,11 @@ internal object BoundedEquivalenceAdvisorSnapshot {
                 mapCount = mapCount,
             )
             val pairedScientificWeight = min(petrolAnchor.sumW, cngLocalWeight).coerceAtLeast(EPSILON)
-            // AssistedCalibrationAdvisor currently consumes `quality` as its sample weight.
-            // Fold bounded scientific mass into it so bilinear projection cannot turn one
-            // physical observation into several full-strength pseudo-observations.
+            // AssistedCalibrationAdvisor consumes `quality` as scientific sample weight.
+            // Geometry/repeatability may only reduce upstream authority, never floor it
+            // upward or turn one physical observation into stronger pseudo-evidence.
             val quality = (supportConfidence * repeatability * pairedScientificWeight)
-                .coerceIn(0.02, 1.0)
+                .coerceIn(0.0, 1.0)
             val revision = max(petrol.materialRevision, cng.materialRevision)
             val id = "SURFACE-$index"
             val visitId = "SURFACE-REV-$revision"
