@@ -136,7 +136,7 @@ internal class EquivalenceRuntime(
 
     private fun laneMeanUncertaintyFraction(lane: EquivalenceSurface.LaneEstimate): Double {
         val mean = abs(lane.meanTinjMs).coerceAtLeast(EPSILON)
-        val ess = lane.effectiveSupport.coerceAtLeast(1.0)
+        val ess = lane.effectiveSupport.coerceAtLeast(EPSILON)
         val spreadFraction = sqrt(lane.varianceMs2.coerceAtLeast(0.0)) / mean
         val spreadOfMean = spreadFraction / sqrt(ess)
         val empiricalNoiseOfMean = empiricalSingleObservationNoiseFraction / sqrt(ess)
