@@ -131,6 +131,37 @@ class BoundedEquivalenceAdvisorSnapshotTest {
     }
 
     @Test
+    fun distant_cng_only_territory_cannot_subsidize_local_projection_authority() {
+        val baseline = localAuthorityFixture()
+        val augmented = localAuthorityFixture().also {
+            it.observe(FuelLane.CNG_PETROL_OBSERVED, 3_560.0, 1.00, 3.30, 10.0, 90L)
+        }
+
+        assertEquals(
+            "CNG-only territory must not increase authority in an unrelated gasoline-supported region",
+            localPairedWeight(baseline, epoch = 11),
+            localPairedWeight(augmented, epoch = 12),
+            1e-12,
+        )
+    }
+
+    @Test
+    fun distant_independent_pair_cannot_subsidize_local_projection_authority() {
+        val baseline = localAuthorityFixture()
+        val augmented = localAuthorityFixture().also {
+            it.observe(FuelLane.PETROL_REFERENCE, 3_560.0, 1.00, 3.00, 1.0, 91L)
+            it.observe(FuelLane.CNG_PETROL_OBSERVED, 3_560.0, 1.00, 3.30, 1.0, 92L)
+        }
+
+        assertEquals(
+            "Scientific authority must stay local instead of moving between disconnected RPM-MAP regions",
+            localPairedWeight(baseline, epoch = 13),
+            localPairedWeight(augmented, epoch = 14),
+            1e-12,
+        )
+    }
+
+    @Test
     fun unpaired_lane_never_fabricates_comparison() {
         val surface = EquivalenceSurface(EquivalenceSurface.Config.mp48ReplayCandidate())
         surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_500.0, 0.60, 3.30, 0.6, 12L)
@@ -140,5 +171,38 @@ class BoundedEquivalenceAdvisorSnapshotTest {
         assertEquals(0, snapshot.getJSONArray("comparisons").length())
         assertTrue(snapshot.getDouble("cngWeight") > 0.0)
         assertEquals(0.0, snapshot.getDouble("petrolWeight"), 0.0)
+    }
+
+    private fun localAuthorityFixture(): EquivalenceSurface {
+        val surface = EquivalenceSurface(
+            EquivalenceSurface.Config(
+                minRpm = 1_000.0,
+                maxRpm = 4_000.0,
+                rpmStep = 80.0,
+                minMapBar = 0.20,
+                maxMapBar = 1.20,
+                mapStepBar = 0.02,
+            ),
+        )
+        listOf(2_280.0, 2_360.0, 2_440.0).forEach { rpm ->
+            listOf(0.58, 0.60, 0.62).forEach { map ->
+                surface.observe(FuelLane.PETROL_REFERENCE, rpm, map, 3.00, 0.20, 70L)
+            }
+        }
+        surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_360.0, 0.60, 3.30, 0.20, 71L)
+        return surface
+    }
+
+    private fun localPairedWeight(surface: EquivalenceSurface, epoch: Int): Double {
+        val comparisons = BoundedEquivalenceAdvisorSnapshot.build(surface.snapshot(), epoch)
+            .getJSONArray("comparisons")
+        var total = 0.0
+        repeat(comparisons.length()) { index ->
+            val row = comparisons.getJSONObject(index)
+            if (row.getDouble("rpm") < 3_000.0) {
+                total += row.getDouble("paired_scientific_weight")
+            }
+        }
+        return total
     }
 }
