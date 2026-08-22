@@ -12,22 +12,22 @@ internal object LearningGridCellLocator {
         val key: String,
     )
 
+    private val legacyRpmAxis = KMapPhysicalAxes.rpmBins()
+    private val legacyPetrolAxis = KMapPhysicalAxes.petrolBins()
+
     fun locate(rpm: Double, petrolMs: Double): Cell {
         val binding = LearningCalibrationAuthority.snapshot()
-        val rpmAxis: IntArray
-        val petrolAxis: DoubleArray
+        val row: Int
+        val column: Int
         if (binding != null && binding.geometryKnown()) {
-            rpmAxis = binding.rpmAxis.toIntArray()
-            petrolAxis = binding.petrolAxisMs.toDoubleArray()
+            row = nearestDouble(binding.petrolAxisMs, petrolMs)
+            column = nearestInt(binding.rpmAxis, rpm)
         } else {
             if (LearningCalibrationAuthority.requiresKnownGeometry()) return unknown()
-            rpmAxis = KMapPhysicalAxes.rpmBins()
-            petrolAxis = KMapPhysicalAxes.petrolBins()
+            row = nearest(legacyPetrolAxis, petrolMs)
+            column = nearest(legacyRpmAxis, rpm)
         }
-        if (rpmAxis.isEmpty() || petrolAxis.isEmpty()) return unknown()
-
-        val row = nearest(petrolAxis, petrolMs)
-        val column = nearest(rpmAxis, rpm)
+        if (row < 0 || column < 0) return unknown()
         return Cell(
             geometryKnown = true,
             row = row,
@@ -37,6 +37,7 @@ internal object LearningGridCellLocator {
     }
 
     private fun nearest(values: DoubleArray, target: Double): Int {
+        if (values.isEmpty()) return -1
         var bestIndex = 0
         var bestDistance = Double.POSITIVE_INFINITY
         values.indices.forEach { index ->
@@ -50,6 +51,35 @@ internal object LearningGridCellLocator {
     }
 
     private fun nearest(values: IntArray, target: Double): Int {
+        if (values.isEmpty()) return -1
+        var bestIndex = 0
+        var bestDistance = Double.POSITIVE_INFINITY
+        values.indices.forEach { index ->
+            val distance = abs(values[index].toDouble() - target)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                bestIndex = index
+            }
+        }
+        return bestIndex
+    }
+
+    private fun nearestDouble(values: List<Double>, target: Double): Int {
+        if (values.isEmpty()) return -1
+        var bestIndex = 0
+        var bestDistance = Double.POSITIVE_INFINITY
+        values.indices.forEach { index ->
+            val distance = abs(values[index] - target)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                bestIndex = index
+            }
+        }
+        return bestIndex
+    }
+
+    private fun nearestInt(values: List<Int>, target: Double): Int {
+        if (values.isEmpty()) return -1
         var bestIndex = 0
         var bestDistance = Double.POSITIVE_INFINITY
         values.indices.forEach { index ->
