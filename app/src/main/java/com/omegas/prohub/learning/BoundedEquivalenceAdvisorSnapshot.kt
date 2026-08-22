@@ -47,6 +47,15 @@ internal object BoundedEquivalenceAdvisorSnapshot {
 
         val mapCount = ceil((snapshot.maxMapBar - snapshot.minMapBar) / snapshot.mapStepBar).toInt() + 1
         val rpmCount = ceil((snapshot.maxRpm - snapshot.minRpm) / snapshot.rpmStep).toInt() + 1
+        val cngAllocationDenominator = DoubleArray(rpmCount * mapCount)
+        cngByIndex.keys.forEach { cngIndex ->
+            cngAllocationDenominator[cngIndex] = localPetrolKernelMass(
+                centerIndex = cngIndex,
+                petrolIndices = petrolByIndex.keys,
+                rpmCount = rpmCount,
+                mapCount = mapCount,
+            )
+        }
         val projected = mutableListOf<JSONObject>()
         val deadband = (LearningToleranceSettings.current.equivalenceDeadbandPercent / 100.0)
             .coerceAtLeast(0.0)
@@ -79,13 +88,15 @@ internal object BoundedEquivalenceAdvisorSnapshot {
                 1.0 + sqrt(petrol.varianceMs2 + cng.varianceMs2) / referenceMs.coerceAtLeast(0.05)
             )
             val supportConfidence = 1.0 - exp(-sqrt(support))
-            val cngLocalWeight = localScientificWeight(
+            val cngLocalWeight = allocatedLocalScientificWeight(
                 centerIndex = index,
                 byIndex = cngByIndex,
+                allocationDenominator = cngAllocationDenominator,
                 rpmCount = rpmCount,
                 mapCount = mapCount,
             )
-            val pairedScientificWeight = min(petrolAnchor.sumW, cngLocalWeight).coerceAtLeast(EPSILON)
+            val pairedScientificWeight = min(petrolAnchor.sumW, cngLocalWeight).coerceAtLeast(0.0)
+            if (pairedScientificWeight <= EPSILON) return@forEach
             // AssistedCalibrationAdvisor consumes `quality` as scientific sample weight.
             // Geometry/repeatability may only reduce upstream authority, never floor it
             // upward or turn one physical observation into stronger pseudo-evidence.
@@ -161,9 +172,10 @@ internal object BoundedEquivalenceAdvisorSnapshot {
             }
     }
 
-    private fun localScientificWeight(
+    private fun allocatedLocalScientificWeight(
         centerIndex: Int,
         byIndex: Map<Int, EquivalenceSurface.SnapshotNode>,
+        allocationDenominator: DoubleArray,
         rpmCount: Int,
         mapCount: Int,
     ): Double {
@@ -178,11 +190,39 @@ internal object BoundedEquivalenceAdvisorSnapshot {
                 if (mapIndex !in 0 until mapCount) continue
                 val distanceSquared = (dr * dr + dm * dm).toDouble()
                 if (distanceSquared > LOCAL_RADIUS_CELLS * LOCAL_RADIUS_CELLS + EPSILON) continue
-                val node = byIndex[rpmIndex * mapCount + mapIndex] ?: continue
-                weight += exp(-0.5 * distanceSquared) * node.sumW
+                val nodeIndex = rpmIndex * mapCount + mapIndex
+                val node = byIndex[nodeIndex] ?: continue
+                val denominator = allocationDenominator[nodeIndex]
+                if (denominator <= EPSILON) continue
+                weight += node.sumW * exp(-0.5 * distanceSquared) / denominator
             }
         }
         return weight.coerceAtLeast(0.0)
+    }
+
+    private fun localPetrolKernelMass(
+        centerIndex: Int,
+        petrolIndices: Set<Int>,
+        rpmCount: Int,
+        mapCount: Int,
+    ): Double {
+        val centerRpm = centerIndex / mapCount
+        val centerMap = centerIndex % mapCount
+        var kernelMass = 0.0
+        for (dr in -1..1) {
+            val rpmIndex = centerRpm + dr
+            if (rpmIndex !in 0 until rpmCount) continue
+            for (dm in -1..1) {
+                val mapIndex = centerMap + dm
+                if (mapIndex !in 0 until mapCount) continue
+                val distanceSquared = (dr * dr + dm * dm).toDouble()
+                if (distanceSquared > LOCAL_RADIUS_CELLS * LOCAL_RADIUS_CELLS + EPSILON) continue
+                val petrolIndex = rpmIndex * mapCount + mapIndex
+                if (petrolIndex !in petrolIndices) continue
+                kernelMass += exp(-0.5 * distanceSquared)
+            }
+        }
+        return kernelMass.coerceAtLeast(0.0)
     }
 
     private fun meanUncertaintyFraction(variance: Double, mean: Double, ess: Double): Double {
