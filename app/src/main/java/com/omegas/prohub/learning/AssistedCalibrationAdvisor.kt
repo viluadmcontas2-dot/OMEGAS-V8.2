@@ -440,7 +440,8 @@ object AssistedCalibrationAdvisor {
             val signalScore = if (magnitude <= 1e-9) 0.0 else 1.0 - exp(-magnitude / max(uncertainty, deadband))
             val evidenceScore = 1.0 - exp(-sqrt(weight.coerceAtLeast(0.0)))
             val repeatability = 1.0 / (1.0 + (spreadOrNull() ?: 0.0) / deadband.coerceAtLeast(1e-6))
-            val confidence = (0.50 * signalScore + 0.30 * evidenceScore + 0.20 * repeatability).coerceIn(0.0, 1.0)
+            val rawConfidence = (0.50 * signalScore + 0.30 * evidenceScore + 0.20 * repeatability).coerceIn(0.0, 1.0)
+            val confidence = min(rawConfidence, evidenceScore)
             val utility = if (magnitude <= 1e-9) 0.0 else (usefulMargin / magnitude * confidence).coerceIn(0.0, 1.0)
             val readiness = when {
                 equivalent -> "EQUIVALENT"
