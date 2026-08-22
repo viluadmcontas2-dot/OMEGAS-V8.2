@@ -15,6 +15,9 @@ internal class EquivalenceRuntime(
     private val deadbandFraction: Double = DEFAULT_DEADBAND_FRACTION,
     private val empiricalSingleObservationNoiseFraction: Double = EMPIRICAL_SINGLE_OBSERVATION_NOISE_FRACTION,
 ) {
+    private var petrolVisitRevision: Long? = null
+    private var cngVisitRevision: Long? = null
+
     init {
         require(deadbandFraction.isFinite() && deadbandFraction >= 0.0)
         require(empiricalSingleObservationNoiseFraction.isFinite() && empiricalSingleObservationNoiseFraction >= 0.0)
@@ -48,6 +51,7 @@ internal class EquivalenceRuntime(
         novelty: Double,
         materialRevision: Long,
     ): ObserveOutcome {
+        val evidenceVisitRevision = evidenceVisitRevision(lane, novelty, materialRevision)
         val scientificWeight = scientificWeight(lane, stability, novelty)
         if (scientificWeight <= 0.0) {
             return ObserveOutcome(
@@ -62,7 +66,7 @@ internal class EquivalenceRuntime(
             mapBar = mapBar,
             petrolTinjMs = petrolTinjMs,
             weight = scientificWeight,
-            materialRevision = materialRevision,
+            materialRevision = evidenceVisitRevision,
         )
         return ObserveOutcome(
             scientificWeight = observed.acceptedWeight,
@@ -103,6 +107,20 @@ internal class EquivalenceRuntime(
     internal fun totalWeight(lane: FuelLane): Double = surface.debugTotalWeight(lane)
 
     internal fun allocatedScalarCount(): Int = surface.debugAllocatedScalarCount()
+
+    private fun evidenceVisitRevision(lane: FuelLane, novelty: Double, candidateRevision: Long): Long {
+        if (!novelty.isFinite() || novelty <= 0.0) return candidateRevision
+        val previous = when (lane) {
+            FuelLane.PETROL_REFERENCE -> petrolVisitRevision
+            FuelLane.CNG_PETROL_OBSERVED -> cngVisitRevision
+        }
+        val revision = if (novelty < 1.0 && previous != null) previous else candidateRevision
+        when (lane) {
+            FuelLane.PETROL_REFERENCE -> petrolVisitRevision = revision
+            FuelLane.CNG_PETROL_OBSERVED -> cngVisitRevision = revision
+        }
+        return revision
+    }
 
     private fun scientificWeight(lane: FuelLane, stability: Double, novelty: Double): Double {
         if (!stability.isFinite() || !novelty.isFinite()) return 0.0
