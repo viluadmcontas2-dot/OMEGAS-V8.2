@@ -83,6 +83,21 @@ class PredictorSpatialConfidenceTest {
         assertTrue(longPetrolStep > 0.0)
     }
 
+    @Test
+    fun `predictor spatial confidence never upgrades upstream support quality`() {
+        val support = listOf(
+            point("a", 1350.0, 3.0, 120.0, 0.20, "trip-a"),
+            point("b", 4500.0, 3.0, 121.0, 0.20, "trip-b"),
+            point("c", 3000.0, 10.0, 120.5, 0.20, "trip-c"),
+        )
+
+        val result = PredictorSpatialConfidence.evaluate(3000.0, 5.0, support)
+
+        assertTrue(result.supported)
+        assertTrue(result.qualityScore <= 0.20 + 1e-12)
+        assertTrue(result.confidence <= result.qualityScore + 1e-12)
+    }
+
     private fun point(
         id: String,
         rpm: Double,
