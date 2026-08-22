@@ -71,6 +71,32 @@ class BoundedEquivalenceAdvisorSnapshotTest {
     }
 
     @Test
+    fun advisor_projection_never_inflates_tiny_upstream_scientific_mass() {
+        val surface = EquivalenceSurface(
+            EquivalenceSurface.Config(
+                minRpm = 1_000.0,
+                maxRpm = 4_000.0,
+                rpmStep = 80.0,
+                minMapBar = 0.20,
+                maxMapBar = 1.20,
+                mapStepBar = 0.02,
+            ),
+        )
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_400.0, 0.60, 3.00, 0.005, 31L)
+        surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_400.0, 0.60, 3.30, 0.004, 32L)
+
+        val comparisons = BoundedEquivalenceAdvisorSnapshot.build(surface.snapshot(), epoch = 9)
+            .getJSONArray("comparisons")
+        assertTrue(comparisons.length() > 0)
+        repeat(comparisons.length()) { index ->
+            val row = comparisons.getJSONObject(index)
+            val paired = row.getDouble("paired_scientific_weight")
+            val projectedQuality = row.getDouble("quality")
+            assertTrue("Downstream quality cannot exceed paired upstream scientific mass", projectedQuality <= paired + 1e-12)
+        }
+    }
+
+    @Test
     fun unpaired_lane_never_fabricates_comparison() {
         val surface = EquivalenceSurface(EquivalenceSurface.Config.mp48ReplayCandidate())
         surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_500.0, 0.60, 3.30, 0.6, 12L)
