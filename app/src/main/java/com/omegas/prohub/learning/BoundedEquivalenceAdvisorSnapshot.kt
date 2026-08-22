@@ -104,7 +104,10 @@ internal object BoundedEquivalenceAdvisorSnapshot {
                 .coerceIn(0.0, 1.0)
             val revision = max(petrol.materialRevision, cng.materialRevision)
             val id = "SURFACE-$index"
-            val visitId = "SURFACE-REV-$revision"
+            // A projected comparison is an observation of CNG against the gasoline ruler.
+            // Petrol reference updates may change the ruler/revision but cannot manufacture
+            // additional independent CNG visits in the downstream Advisor.
+            val visitId = "SURFACE-CNG-REV-${cng.materialRevision}"
 
             projected += JSONObject()
                 .put("id", id)
