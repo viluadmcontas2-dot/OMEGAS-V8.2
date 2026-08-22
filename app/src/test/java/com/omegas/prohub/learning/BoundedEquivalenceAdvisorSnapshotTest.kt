@@ -162,6 +162,38 @@ class BoundedEquivalenceAdvisorSnapshotTest {
     }
 
     @Test
+    fun one_cng_revision_is_one_advisor_visit_even_across_multiple_petrol_anchors() {
+        val surface = EquivalenceSurface(
+            EquivalenceSurface.Config(
+                minRpm = 1_000.0,
+                maxRpm = 4_000.0,
+                rpmStep = 80.0,
+                minMapBar = 0.20,
+                maxMapBar = 1.20,
+                mapStepBar = 0.02,
+            ),
+        )
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_320.0, 0.60, 3.00, 1.0, 101L)
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_560.0, 0.60, 3.00, 1.0, 202L)
+        surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_440.0, 0.60, 3.30, 1.0, 7L)
+
+        val comparisons = BoundedEquivalenceAdvisorSnapshot.build(surface.snapshot(), epoch = 15)
+            .getJSONArray("comparisons")
+        val visits = linkedSetOf<String>()
+        repeat(comparisons.length()) { index ->
+            visits += comparisons.getJSONObject(index).getString("visit_id")
+        }
+
+        assertTrue("The same CNG evidence must support more than one gasoline anchor in this fixture", comparisons.length() >= 2)
+        assertEquals(
+            "Petrol ruler revisions cannot manufacture independent CNG visits",
+            1,
+            visits.size,
+        )
+        assertEquals("SURFACE-CNG-REV-7", visits.single())
+    }
+
+    @Test
     fun unpaired_lane_never_fabricates_comparison() {
         val surface = EquivalenceSurface(EquivalenceSurface.Config.mp48ReplayCandidate())
         surface.observe(FuelLane.CNG_PETROL_OBSERVED, 2_500.0, 0.60, 3.30, 0.6, 12L)
