@@ -124,9 +124,21 @@ object AssistedCalibrationAdvisor {
         samples.forEach { sample ->
             val (lower, upper, upperFraction) = KFactorProtocol.blendAxis(sample.petrolTargetMs)
             val lowerFraction = 1.0 - upperFraction
-            buckets[lower].add(sample.errorRatio, sample.weight * lowerFraction, sample.rpm, sample.visitId)
+            buckets[lower].add(
+                sample.errorRatio,
+                sample.weight * lowerFraction,
+                sample.rpm,
+                sample.visitId,
+                sample.upstreamUncertaintyFraction,
+            )
             if (upper != lower) {
-                buckets[upper].add(sample.errorRatio, sample.weight * upperFraction, sample.rpm, sample.visitId)
+                buckets[upper].add(
+                    sample.errorRatio,
+                    sample.weight * upperFraction,
+                    sample.rpm,
+                    sample.visitId,
+                    sample.upstreamUncertaintyFraction,
+                )
             }
         }
         return GlobalCurve(buckets.mapIndexed { index, bucket ->
@@ -167,6 +179,7 @@ object AssistedCalibrationAdvisor {
                         rpm = sample.rpm,
                         mapBar = sample.mapBar,
                         visitId = sample.visitId,
+                        upstreamUncertaintyFraction = sample.upstreamUncertaintyFraction,
                         removedGlobal = globalEstimate.available,
                         globalUncertainty = if (globalEstimate.available) globalEstimate.uncertainty else 0.0,
                     )
@@ -276,6 +289,9 @@ object AssistedCalibrationAdvisor {
         val rpm = raw.optDouble("rpm", Double.NaN)
         val mapBar = raw.optDouble("map_bar", raw.optDouble("mapBar", Double.NaN))
         val quality = raw.optDouble("quality", 0.1).coerceIn(0.0, 1.0)
+        val upstreamUncertaintyFraction = raw
+            .optDouble("upstream_uncertainty_fraction", Double.NaN)
+            .takeIf { it.isFinite() && it >= 0.0 }
         if (!target.isFinite() || !observed.isFinite() || !rpm.isFinite() || !mapBar.isFinite() ||
             target <= 0.05 || observed < 0.0 || rpm < 0.0 || mapBar < 0.0
         ) return null
@@ -303,6 +319,7 @@ object AssistedCalibrationAdvisor {
             mapBar = mapBar,
             weight = quality,
             visitId = visitId,
+            upstreamUncertaintyFraction = upstreamUncertaintyFraction,
             continuousWeights = weights,
         )
     }
@@ -345,6 +362,7 @@ object AssistedCalibrationAdvisor {
         val mapBar: Double,
         val weight: Double,
         val visitId: String,
+        val upstreamUncertaintyFraction: Double?,
         val continuousWeights: List<CellWeight>,
     )
 
@@ -377,14 +395,31 @@ object AssistedCalibrationAdvisor {
         private var weightSquareSum = 0.0
         private var sum = 0.0
         private var squareSum = 0.0
+        private var upstreamVarianceWeightSum = 0.0
+        private var upstreamWeight = 0.0
+        private var legacyWeight = 0.0
         private val visitIds = linkedSetOf<String>()
 
-        fun addValue(value: Double, addedWeight: Double, visitId: String) {
+        fun addValue(
+            value: Double,
+            addedWeight: Double,
+            visitId: String,
+            upstreamUncertaintyFraction: Double? = null,
+        ) {
             if (addedWeight <= 0.0 || !addedWeight.isFinite() || !value.isFinite()) return
             weight += addedWeight
             weightSquareSum += addedWeight * addedWeight
             sum += value * addedWeight
             squareSum += value * value * addedWeight
+            if (upstreamUncertaintyFraction != null &&
+                upstreamUncertaintyFraction.isFinite() &&
+                upstreamUncertaintyFraction >= 0.0
+            ) {
+                upstreamVarianceWeightSum += upstreamUncertaintyFraction * upstreamUncertaintyFraction * addedWeight
+                upstreamWeight += addedWeight
+            } else {
+                legacyWeight += addedWeight
+            }
             visitIds += visitId
         }
 
@@ -406,6 +441,15 @@ object AssistedCalibrationAdvisor {
             // Several lattice projections may belong to the same physical CNG visit.
             // They can refine the weighted mean, but cannot dilute spread as independent evidence.
             val spreadTerm = (spreadOrNull() ?: 0.0) / sqrt(independent)
+            // Bounded equivalence already calculated local measurement uncertainty from
+            // petrol/CNG lane variance, empirical single-observation noise and local support.
+            // Reapplying the legacy 6% prior + weight penalty would count uncertainty twice.
+            if (upstreamWeight > 0.0 && legacyWeight <= 1e-12) {
+                val upstreamTerm = sqrt(
+                    (upstreamVarianceWeightSum / upstreamWeight).coerceAtLeast(0.0),
+                ) / sqrt(independent)
+                return sqrt(spreadTerm * spreadTerm + upstreamTerm * upstreamTerm)
+            }
             val sparseTerm = BASE_PRIOR_UNCERTAINTY_RATIO / sqrt(independent)
             val weightTerm = WEIGHT_UNCERTAINTY_RATIO / sqrt(weight.coerceAtLeast(0.25))
             return sqrt(spreadTerm * spreadTerm + sparseTerm * sparseTerm + weightTerm * weightTerm)
@@ -505,8 +549,14 @@ object AssistedCalibrationAdvisor {
         private var rpmMin = Double.POSITIVE_INFINITY
         private var rpmMax = Double.NEGATIVE_INFINITY
 
-        fun add(value: Double, addedWeight: Double, rpm: Double, visitId: String) {
-            addValue(value, addedWeight, visitId)
+        fun add(
+            value: Double,
+            addedWeight: Double,
+            rpm: Double,
+            visitId: String,
+            upstreamUncertaintyFraction: Double?,
+        ) {
+            addValue(value, addedWeight, visitId, upstreamUncertaintyFraction)
             if (addedWeight > 0.0) {
                 rpmMin = min(rpmMin, rpm)
                 rpmMax = max(rpmMax, rpm)
@@ -528,10 +578,11 @@ object AssistedCalibrationAdvisor {
             rpm: Double,
             mapBar: Double,
             visitId: String,
+            upstreamUncertaintyFraction: Double?,
             removedGlobal: Boolean,
             globalUncertainty: Double,
         ) {
-            addValue(value, addedWeight, visitId)
+            addValue(value, addedWeight, visitId, upstreamUncertaintyFraction)
             if (addedWeight > 0.0) {
                 rpmSum += rpm * addedWeight
                 mapSum += mapBar * addedWeight
