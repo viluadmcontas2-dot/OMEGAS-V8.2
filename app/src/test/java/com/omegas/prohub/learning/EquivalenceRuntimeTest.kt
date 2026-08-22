@@ -99,6 +99,38 @@ class EquivalenceRuntimeTest {
     }
 
     @Test
+    fun surface_rejected_observation_cannot_open_phantom_visit_revision() {
+        val r = runtime()
+        val rejected = r.observe(
+            lane = FuelLane.CNG_PETROL_OBSERVED,
+            rpm = Double.NaN,
+            mapBar = 0.50,
+            petrolTinjMs = 3.30,
+            stability = 1.0,
+            novelty = 1.0,
+            materialRevision = 300L,
+        )
+        assertEquals(0.0, rejected.scientificWeight, 0.0)
+        assertEquals(0, rejected.touchedNodes)
+
+        val accepted = r.observe(
+            lane = FuelLane.CNG_PETROL_OBSERVED,
+            rpm = 2500.0,
+            mapBar = 0.50,
+            petrolTinjMs = 3.30,
+            stability = 1.0,
+            novelty = 0.25,
+            materialRevision = 400L,
+        )
+        assertTrue(accepted.scientificWeight > 0.0)
+        assertEquals(
+            "A surface-rejected observation must not become the visit identity for later evidence",
+            400L,
+            r.query(2500.0, 0.50).cng!!.materialRevision,
+        )
+    }
+
+    @Test
     fun cng_evidence_is_retained_before_petrol_and_becomes_comparable_later() {
         val r = runtime()
         r.observe(FuelLane.CNG_PETROL_OBSERVED, 2500.0, 0.50, 3.30, 1.0, 1.0, 1L)
