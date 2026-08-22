@@ -147,17 +147,19 @@ class SignalLearningStore(
                     usefulWeight = performance.usefulWeight + novelty.fraction * source.quality,
                     firstEstimateAtMs = performance.firstEstimateAtMs ?: source.endedAtElapsedMs,
                 )
-                provenanceHistory.addLast(
-                    EvidenceProvenance(
-                        firstFrameSequence = sequenceBefore + 1L,
-                        lastFrameSequence = frameSequence,
-                        newFrameCount = novelty.newFrames,
-                        reusedFrameCount = (novelty.totalFrames - novelty.newFrames).coerceAtLeast(0),
-                        noveltyRatio = novelty.fraction,
-                    ),
-                )
-                while (provenanceHistory.size > LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES) {
-                    provenanceHistory.removeFirst()
+                if (novelty.newFrames > 0) {
+                    provenanceHistory.addLast(
+                        EvidenceProvenance(
+                            firstFrameSequence = sequenceBefore + 1L,
+                            lastFrameSequence = frameSequence,
+                            newFrameCount = novelty.newFrames,
+                            reusedFrameCount = (novelty.totalFrames - novelty.newFrames).coerceAtLeast(0),
+                            noveltyRatio = novelty.fraction,
+                        ),
+                    )
+                    while (provenanceHistory.size > LearningEvidenceBudget.MAX_PROVENANCE_ENTRIES) {
+                        provenanceHistory.removeFirst()
+                    }
                 }
             }
             lastRepresentedWindowEndByFuel[fuelKey] = novelty.representedThroughElapsedMs
