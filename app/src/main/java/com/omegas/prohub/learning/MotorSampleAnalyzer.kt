@@ -14,9 +14,9 @@ import kotlin.math.max
  * Analisa o motor pelas leituras reais.
  *
  * Não existe espera fixa depois da troca de combustível. A primeira amostra
- * completamente saudável confirma fisicamente o novo combustível, mas é
- * descartada para aprendizado. Somente leituras novas podem formar a primeira
- * evidência no combustível já confirmado.
+ * completamente saudável confirma fisicamente o novo combustível e já pode ser
+ * preservada como evidência; somente estados de combustível ainda não resolvidos
+ * permanecem inelegíveis para aprendizado.
  */
 class MotorSampleAnalyzer(
     private val policyProvider: () -> LearningTolerancePolicy = { LearningToleranceSettings.current },
@@ -288,11 +288,11 @@ class MotorSampleAnalyzer(
         resetSamples(requireFullWindow = true)
         return SampleDecision.transition(
             state = "FUEL_STABLE",
-            reason = "${target.label()} confirmado por uma amostra válida; iniciando uma amostra nova",
+            reason = "${target.label()} confirmado por uma amostra válida; evidência preservada",
             frameCount = confirmationSample.frameCount,
             diagnostics = confirmationSample.diagnostics,
             sample = confirmationSample,
-            learningEligible = false,
+            learningEligible = true,
             fuelConfirmed = target.wireName,
             verificationPasses = 1,
             verificationRequired = 1,
