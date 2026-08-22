@@ -92,6 +92,42 @@ class SignalLearningStoreEquivalenceTest {
     }
 
     @Test
+    fun hard_zero_state_hides_cached_local_equivalence_without_erasing_surface() {
+        val store = SignalLearningStore(temporary.root.resolve("hard-zero-local-status.json"), RingLog())
+        try {
+            store.startSession()
+            store.ingest(
+                telemetry(at = 650L, fuel = Mp48Fuel.PETROL, petrolMs = 3.00),
+                SampleDecision.accepted(sample("petrol-a", 100L, 650L, Mp48Fuel.PETROL, 3.00)),
+            )
+            store.ingest(
+                telemetry(at = 1_250L, fuel = Mp48Fuel.CNG, petrolMs = 3.30),
+                SampleDecision.accepted(sample("cng-a", 700L, 1_250L, Mp48Fuel.CNG, 3.30)),
+            )
+            assertTrue(store.export("test").getJSONObject("primaryEquivalence").getBoolean("comparable"))
+
+            store.ingest(
+                telemetry(at = 1_300L, fuel = Mp48Fuel.ENGINE_OFF, petrolMs = 0.0),
+                SampleDecision.transition(state = "ENGINE_OFF", reason = "Motor parado"),
+            )
+            val stopped = store.export("test").getJSONObject("primaryEquivalence")
+            assertFalse("Engine-off is a physical hard-zero and cannot expose cached action", stopped.getBoolean("comparable"))
+            assertFalse(stopped.has("actionable"))
+
+            store.ingest(
+                telemetry(at = 1_900L, fuel = Mp48Fuel.CNG, petrolMs = 3.30),
+                SampleDecision.accepted(sample("cng-return", 1_350L, 1_900L, Mp48Fuel.CNG, 3.30)),
+            )
+            assertTrue(
+                "Hard-zero hides current status but must not erase the bounded gasoline/CNG surface",
+                store.export("test").getJSONObject("primaryEquivalence").getBoolean("comparable"),
+            )
+        } finally {
+            store.close()
+        }
+    }
+
+    @Test
     fun weighted_fuel_lanes_survive_store_restart_without_raw_sample_replay() {
         val state = temporary.root.resolve("equivalence-restart.json")
         val first = SignalLearningStore(state, RingLog())
