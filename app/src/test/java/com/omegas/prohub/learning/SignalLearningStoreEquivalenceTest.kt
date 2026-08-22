@@ -49,6 +49,49 @@ class SignalLearningStoreEquivalenceTest {
     }
 
     @Test
+    fun current_primary_equivalence_does_not_reuse_stale_pair_in_cng_only_territory() {
+        val store = SignalLearningStore(temporary.root.resolve("local-comparability.json"), RingLog())
+        try {
+            store.startSession()
+            store.ingest(
+                telemetry(at = 650L, fuel = Mp48Fuel.PETROL, petrolMs = 3.00),
+                SampleDecision.accepted(sample("petrol-a", 100L, 650L, Mp48Fuel.PETROL, 3.00)),
+            )
+            store.ingest(
+                telemetry(at = 1_250L, fuel = Mp48Fuel.CNG, petrolMs = 3.30),
+                SampleDecision.accepted(sample("cng-a", 700L, 1_250L, Mp48Fuel.CNG, 3.30)),
+            )
+            assertTrue(store.export("test").getJSONObject("primaryEquivalence").getBoolean("comparable"))
+
+            store.ingest(
+                telemetry(at = 1_850L, fuel = Mp48Fuel.CNG, petrolMs = 4.00),
+                SampleDecision.accepted(
+                    sample(
+                        id = "cng-only-b",
+                        start = 1_300L,
+                        end = 1_850L,
+                        fuel = Mp48Fuel.CNG,
+                        petrolMs = 4.00,
+                        rpm = 3_800.0,
+                        mapBar = 1.10,
+                    ),
+                ),
+            )
+
+            val local = store.export("test").getJSONObject("primaryEquivalence")
+            assertFalse(
+                "A previous gasoline/CNG pair must not make new CNG-only territory look locally comparable",
+                local.getBoolean("comparable"),
+            )
+            assertFalse(local.has("referenceMs"))
+            assertFalse(local.has("cngMs"))
+            assertFalse(local.has("actionable"))
+        } finally {
+            store.close()
+        }
+    }
+
+    @Test
     fun weighted_fuel_lanes_survive_store_restart_without_raw_sample_replay() {
         val state = temporary.root.resolve("equivalence-restart.json")
         val first = SignalLearningStore(state, RingLog())
@@ -163,13 +206,15 @@ class SignalLearningStoreEquivalenceTest {
         end: Long,
         fuel: Mp48Fuel,
         petrolMs: Double,
+        rpm: Double = 2_500.0,
+        mapBar: Double = 0.60,
     ) = MotorSample(
         id = id,
         startedAtElapsedMs = start,
         endedAtElapsedMs = end,
         fuel = fuel,
-        rpm = 2_500.0,
-        mapBar = 0.60,
+        rpm = rpm,
+        mapBar = mapBar,
         petrolMs = petrolMs,
         pressureDiffBar = 1.4,
         waterC = 80.0,
