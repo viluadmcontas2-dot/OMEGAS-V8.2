@@ -224,8 +224,8 @@ class SignalLearningStore(
                         novelty = lastNovelty.fraction,
                         materialRevision = frameSequence,
                     )
+                    lastEquivalenceEstimate = observed.estimate
                     if (observed.estimate != null) {
-                        lastEquivalenceEstimate = observed.estimate
                         advisorEstimate = observed.estimate
                         advisorRpm = source.rpm
                         advisorMap = source.mapBar
@@ -372,7 +372,7 @@ class SignalLearningStore(
             repeat(bandCount) { band ->
                 val count = countRaw?.takeIf { band < it.length() }?.optInt(band, 0) ?: 0
                 val petrolOnCng = petrolOnCngRaw?.takeIf { band < it.length() }?.optInt(band)
-                val mapOnCng = mapOnCngRaw?.takeIf { band < it.length() }?.optInt(band)
+                val mapOnCngRaw = mapOnCngRaw?.takeIf { band < it.length() }?.optInt(band)
                 val presentSignals = listOf(countRaw, petrolOnCngRaw, mapOnCngRaw).count { raw -> raw != null && band < raw.length() }
                 if (presentSignals == 0) return@repeat
                 val key = "$snapshotId:$band"
@@ -383,7 +383,7 @@ class SignalLearningStore(
                     coverageQuality = presentSignals / 3.0,
                     petrolTimeRaw = petrolOnCng,
                     cngTimeRaw = null,
-                    mapRaw = mapOnCng,
+                    mapRaw = mapOnCngRaw,
                 )
                 imported++
             }
