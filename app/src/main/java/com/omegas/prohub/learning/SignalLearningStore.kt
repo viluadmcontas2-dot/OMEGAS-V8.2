@@ -732,7 +732,9 @@ class SignalLearningStore(
     }
 
     private fun primaryEquivalenceJson(camelCase: Boolean): JSONObject = synchronized(equivalenceLock) {
-        val estimate = lastEquivalenceEstimate
+        val estimate = lastEquivalenceEstimate.takeIf {
+            CurrentEquivalenceStatusPolicy.allowsCachedEstimate(visibleDecision)
+        }
         val root = JSONObject()
             .put("schema", "omegas-primary-equivalence-v1")
             .put(if (camelCase) "petrolWeight" else "petrol_weight", equivalenceRuntime.totalWeight(FuelLane.PETROL_REFERENCE))
