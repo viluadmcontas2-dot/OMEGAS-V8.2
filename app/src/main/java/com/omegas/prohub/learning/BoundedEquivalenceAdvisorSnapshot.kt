@@ -229,7 +229,7 @@ internal object BoundedEquivalenceAdvisorSnapshot {
     }
 
     private fun meanUncertaintyFraction(variance: Double, mean: Double, ess: Double): Double {
-        val normalizedEss = ess.coerceAtLeast(1.0)
+        val normalizedEss = ess.coerceAtLeast(EPSILON)
         val spreadOfMean = sqrt(variance.coerceAtLeast(0.0)) /
             mean.coerceAtLeast(0.05) / sqrt(normalizedEss)
         val empiricalNoiseOfMean = EquivalenceRuntime.EMPIRICAL_SINGLE_OBSERVATION_NOISE_FRACTION /
