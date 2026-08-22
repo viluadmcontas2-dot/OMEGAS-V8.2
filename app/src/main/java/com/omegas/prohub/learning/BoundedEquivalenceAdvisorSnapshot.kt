@@ -47,7 +47,7 @@ internal object BoundedEquivalenceAdvisorSnapshot {
 
         val mapCount = ceil((snapshot.maxMapBar - snapshot.minMapBar) / snapshot.mapStepBar).toInt() + 1
         val rpmCount = ceil((snapshot.maxRpm - snapshot.minRpm) / snapshot.rpmStep).toInt() + 1
-        val comparisons = JSONArray()
+        val projected = mutableListOf<JSONObject>()
         val deadband = (LearningToleranceSettings.current.equivalenceDeadbandPercent / 100.0)
             .coerceAtLeast(0.0)
 
@@ -95,32 +95,51 @@ internal object BoundedEquivalenceAdvisorSnapshot {
             val id = "SURFACE-$index"
             val visitId = "SURFACE-REV-$revision"
 
-            comparisons.put(
-                JSONObject()
-                    .put("id", id)
-                    .put("dedupe_key", "$epoch:$ORIGIN:$index:$revision")
-                    .put("visit_id", visitId)
-                    .put("reference_region_id", id)
-                    .put("origin", ORIGIN)
-                    .put("rpm", rpm)
-                    .put("map_bar", mapBar)
-                    .put("petrol_target_ms", referenceMs)
-                    .put("petrol_on_cng_ms", observedMs)
-                    .put("difference_ms", observedMs - referenceMs)
-                    .put("error_ratio", errorRatio)
-                    .put("error_pct", errorPct)
-                    .put("direction", direction(errorRatio, deadband))
-                    .put("quality", quality)
-                    .put("paired_scientific_weight", pairedScientificWeight)
-                    .put("petrol_effective_support", petrolEss)
-                    .put("cng_effective_support", cngEss)
-                    .put("upstream_uncertainty_fraction", uncertainty)
-                    .put("useful_margin_fraction", abs(errorRatio) - uncertainty - deadband)
-                    .put("observation_count", support.toInt().coerceAtLeast(1))
-                    .put("material_revision", revision)
-                    .put("epoch", epoch),
-            )
+            projected += JSONObject()
+                .put("id", id)
+                .put("dedupe_key", "$epoch:$ORIGIN:$index:$revision")
+                .put("visit_id", visitId)
+                .put("reference_region_id", id)
+                .put("origin", ORIGIN)
+                .put("rpm", rpm)
+                .put("map_bar", mapBar)
+                .put("petrol_target_ms", referenceMs)
+                .put("petrol_on_cng_ms", observedMs)
+                .put("difference_ms", observedMs - referenceMs)
+                .put("error_ratio", errorRatio)
+                .put("error_pct", errorPct)
+                .put("direction", direction(errorRatio, deadband))
+                .put("quality", quality)
+                .put("paired_scientific_weight", pairedScientificWeight)
+                .put("petrol_effective_support", petrolEss)
+                .put("cng_effective_support", cngEss)
+                .put("upstream_uncertainty_fraction", uncertainty)
+                .put("useful_margin_fraction", abs(errorRatio) - uncertainty - deadband)
+                .put("observation_count", support.toInt().coerceAtLeast(1))
+                .put("material_revision", revision)
+                .put("epoch", epoch)
         }
+
+        val petrolWeight = petrolByIndex.values.sumOf { it.sumW }
+        val cngWeight = cngByIndex.values.sumOf { it.sumW }
+        val authorityBudget = min(petrolWeight, cngWeight).coerceAtLeast(0.0)
+        val rawPairedWeight = projected.sumOf { it.optDouble("paired_scientific_weight", 0.0) }
+        val authorityScale = when {
+            rawPairedWeight <= EPSILON -> 1.0
+            rawPairedWeight <= authorityBudget + EPSILON -> 1.0
+            else -> (authorityBudget / rawPairedWeight).coerceIn(0.0, 1.0)
+        }
+        if (authorityScale < 1.0) {
+            projected.forEach { row ->
+                row.put(
+                    "paired_scientific_weight",
+                    row.optDouble("paired_scientific_weight", 0.0) * authorityScale,
+                )
+                row.put("quality", row.optDouble("quality", 0.0) * authorityScale)
+            }
+        }
+        projected.forEach { it.put("authority_budget_scale", authorityScale) }
+        val comparisons = JSONArray(projected)
 
         return JSONObject()
             .put("format", MotorLearningMemory.FORMAT)
@@ -130,8 +149,11 @@ internal object BoundedEquivalenceAdvisorSnapshot {
             .put("primaryAuthority", AUTHORITY)
             .put("environmentGates", false)
             .put("surfaceRepresentation", EquivalenceSurfaceCodec.REPRESENTATION)
-            .put("petrolWeight", petrolByIndex.values.sumOf { it.sumW })
-            .put("cngWeight", cngByIndex.values.sumOf { it.sumW })
+            .put("petrolWeight", petrolWeight)
+            .put("cngWeight", cngWeight)
+            .put("projectionAuthorityBudget", authorityBudget)
+            .put("projectionRawPairedWeight", rawPairedWeight)
+            .put("projectionAuthorityScale", authorityScale)
             .put("comparisonCount", comparisons.length())
             .put("legacySeededRegions", snapshot.legacySeededRegions)
             .also { root ->
