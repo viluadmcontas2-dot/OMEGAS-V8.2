@@ -587,13 +587,13 @@ class MotorSampleAnalyzer(
     }
 
     private fun SampleDecision.withCell(frame: Mp48Telemetry): SampleDecision {
-        val cell = LearningGridProjection.cellFor(frame.rpm.toDouble(), frame.petrolMs)
+        val cell = LearningGridCellLocator.locate(frame.rpm.toDouble(), frame.petrolMs)
         return copy(
             minimumFrames = this@MotorSampleAnalyzer.minimumFrames,
             desiredFrames = this@MotorSampleAnalyzer.desiredFrames,
-            cellKey = cell.optString("key"),
-            cellRow = cell.optInt("row"),
-            cellColumn = cell.optInt("column"),
+            cellKey = cell.key,
+            cellRow = cell.row,
+            cellColumn = cell.column,
             tolerancePolicy = activePolicyJson,
             windowAgeMs = if (windowAgeMs > 0L) windowAgeMs else durationMs,
             windowBudgetMs = if (windowBudgetMs > 0L) windowBudgetMs else effectiveWindowBudgetMs(),
