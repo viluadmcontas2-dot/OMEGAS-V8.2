@@ -117,10 +117,12 @@ object PredictorSpatialConfidence {
         val independenceScore = (distinctTrajectories.toDouble() / usable.size.toDouble()).coerceIn(0.0, 1.0)
         val extrapolationPenalty = 1.0
 
-        // Média geométrica: um fator fraco limita o resultado; nenhum fator pode
-        // ser compensado indefinidamente por contagem de pontos.
+        // A geometria pode reduzir a autoridade científica upstream, nunca elevá-la.
+        // A média geométrica combina os fatores espaciais, mas o qualityScore publicado
+        // pela ciência upstream é um teto duro para a confiança downstream.
         val product = physicalDistanceScore * densityScore * qualityScore * coherenceScore * independenceScore
-        val confidence = product.coerceIn(0.0, 1.0).pow(1.0 / 5.0)
+        val geometricConfidence = product.coerceIn(0.0, 1.0).pow(1.0 / 5.0)
+        val confidence = minOf(geometricConfidence, qualityScore)
         return Result(
             supported = true,
             confidence = confidence.coerceIn(0.0, 1.0),
