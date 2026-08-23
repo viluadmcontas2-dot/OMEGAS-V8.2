@@ -94,13 +94,14 @@ data class PredictorEvidenceStamp(
 )
 
 /**
- * Evidência direta observada. Prediction é outro tipo e não herda deste tipo.
+ * Evidência K* direta observada. Prediction é outro tipo e não herda deste tipo.
+ * `currentK` é contexto para o futuro campo relativo delta*=ln(K*/Kcurrent), não
+ * uma autorização de escrita e não uma StepPolicy amortecida.
  */
 data class PredictorObservation(
     val cell: PredictorCell,
     val kStar: Double,
     val currentK: Int,
-    val suggestedDeltaPercent: Double,
     val uncertaintyPercent: Double,
     val support: Double,
     val knownness: PredictorKnownness,
@@ -132,6 +133,7 @@ data class IdealTargetCandidate(
     val cell: PredictorCell,
     val targetK: Int,
     val kStarObserved: Double,
+    val currentKObserved: Int,
     val uncertaintyPercent: Double,
     val support: Double,
     val provenance: String,
@@ -155,8 +157,9 @@ object PredictorContract {
             .map { observation ->
                 IdealTargetCandidate(
                     cell = observation.cell,
-                    targetK = idealTarget(observation.currentK, observation.suggestedDeltaPercent),
+                    targetK = idealTarget(observation.kStar),
                     kStarObserved = observation.kStar,
+                    currentKObserved = observation.currentK,
                     uncertaintyPercent = observation.uncertaintyPercent,
                     support = observation.support,
                     provenance = observation.provenance,
@@ -232,21 +235,18 @@ object PredictorContract {
     ): Boolean =
         observation.cell.row in calibration.petrolAxisMs.indices &&
             observation.cell.column in calibration.rpmAxis.indices &&
-            observation.kStar.isFinite() && observation.kStar > 0.0 &&
+            observation.kStar.isFinite() && observation.kStar in 0.0..255.0 &&
             observation.currentK in 0..255 &&
-            observation.suggestedDeltaPercent.isFinite() &&
             observation.uncertaintyPercent.isFinite() && observation.uncertaintyPercent >= 0.0 &&
             observation.support.isFinite() && observation.support in 0.0..1.0 &&
             observation.operatingPoint.valid() &&
             observation.provenance.isNotBlank()
 
     /**
-     * IdealTarget científico, não uma autorização de escrita. O limite abaixo é
-     * somente o domínio representável do K da calibração; nenhuma regra do writer
-     * (por exemplo MIN_SAFE_K ou step policy) entra neste contrato.
+     * IdealTarget científico direto da observação K*. Não incorpora confidence,
+     * beta, damping, MIN_SAFE_K ou qualquer StepPolicy/writer authority.
      */
-    private fun idealTarget(currentK: Int, deltaPercent: Double): Int =
-        (currentK * (1.0 + deltaPercent / 100.0)).roundToInt().coerceIn(0, 255)
+    private fun idealTarget(kStar: Double): Int = kStar.roundToInt()
 
     private fun abstain(
         input: PredictorInputSnapshot,
@@ -267,7 +267,6 @@ object PredictorContract {
                     observation.cell.column,
                     observation.kStar,
                     observation.currentK,
-                    observation.suggestedDeltaPercent,
                     observation.uncertaintyPercent,
                     observation.support,
                     observation.knownness.name,
