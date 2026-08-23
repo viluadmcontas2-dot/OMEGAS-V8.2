@@ -5,8 +5,9 @@ package com.omegas.prohub.physics
  *
  * Numeric scores remain diagnostic/provenance only. Causal promotion is driven
  * by explicit structural support flags produced from real Advisor statistics,
- * not by universal score thresholds. UNKNOWN is the default whenever support,
- * environmental context, or causal ordering is incomplete.
+ * not by universal score thresholds. UNKNOWN is the default whenever primary
+ * support or causal ordering is incomplete. Environmental context is optional
+ * diagnostic evidence and never gates the primary RPM+MAP+Tinj path.
  */
 data class ResidualEvidence(
     val comparableSamples: Int,
@@ -69,39 +70,9 @@ object ResidualMechanismClassifier {
             )
         }
 
-        if (!evidence.environmentalContextVerified) {
-            return inconclusive(
-                reason = "ENVIRONMENT_CONTEXT_UNVERIFIED",
-                nextEvidence = "verify matched pressure/temperature/water context before causal mechanism promotion",
-                inflation = evidence.environmentalCorrelation,
-            )
-        }
-
-        if (evidence.environmentalExplanationSupported) {
-            return MechanismClassification(
-                decision = CorrectionDecision(
-                    mechanism = CorrectionMechanism.ENVIRONMENTAL_DIAGNOSTIC,
-                    effect = ExpectedEffect(
-                        direction = evidence.direction,
-                        lowerBound = null,
-                        upperBound = null,
-                        assumptions = listOf("verified environmental/context evidence explains residual structure"),
-                        authority = MagnitudeAuthority.UNKNOWN,
-                        falsifier = "residual remains after conditioning on pressure/temperature/water microstate",
-                    ),
-                    target = null,
-                    evidencePath = listOf(
-                        "environmentalContextVerified=true",
-                        "environmentalExplanationSupported=true",
-                        "environmentalCorrelation=${evidence.environmentalCorrelation}",
-                    ),
-                ),
-                reasonCode = "ENVIRONMENTAL_CONFOUNDER",
-                uncertaintyInflation = evidence.environmentalCorrelation,
-                nextEvidence = "compare matched microstates conditioned on environmental context",
-            )
-        }
-
+        // Owner decision 2026-08-20: environment is diagnostic metadata only for
+        // the primary RPM+MAP+Tinj equivalence path. Missing environmental context
+        // therefore cannot veto an otherwise supported local/Curve mechanism.
         if (evidence.localizedStructureSupported) {
             return if (evidence.mapMechanismSupported) {
                 supported(
@@ -154,9 +125,36 @@ object ResidualMechanismClassifier {
             }
         }
 
+        // Environmental diagnosis remains available only when it is explicitly
+        // verified and no primary local/global causal structure was established.
+        if (evidence.environmentalExplanationSupported) {
+            return MechanismClassification(
+                decision = CorrectionDecision(
+                    mechanism = CorrectionMechanism.ENVIRONMENTAL_DIAGNOSTIC,
+                    effect = ExpectedEffect(
+                        direction = evidence.direction,
+                        lowerBound = null,
+                        upperBound = null,
+                        assumptions = listOf("verified environmental/context evidence explains residual structure"),
+                        authority = MagnitudeAuthority.UNKNOWN,
+                        falsifier = "residual remains after conditioning on pressure/temperature/water microstate",
+                    ),
+                    target = null,
+                    evidencePath = listOf(
+                        "environmentalContextVerified=true",
+                        "environmentalExplanationSupported=true",
+                        "environmentalCorrelation=${evidence.environmentalCorrelation}",
+                    ),
+                ),
+                reasonCode = "ENVIRONMENTAL_CONFOUNDER",
+                uncertaintyInflation = evidence.environmentalCorrelation,
+                nextEvidence = "compare matched microstates conditioned on environmental context",
+            )
+        }
+
         return inconclusive(
             reason = "INSUFFICIENT_STRUCTURE",
-            nextEvidence = "collect comparable microstates that discriminate local, global, and environmental mechanisms",
+            nextEvidence = "collect comparable microstates that discriminate local and global mechanisms",
             inflation = maxOf(evidence.contradiction, evidence.environmentalCorrelation),
         )
     }
