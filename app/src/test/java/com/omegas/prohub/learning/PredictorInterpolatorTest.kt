@@ -10,7 +10,7 @@ import org.junit.Test
 
 class PredictorInterpolatorTest {
     @Test
-    fun `inside hull with independent direct visits creates predicted target`() {
+    fun `legacy damped residuals cannot seed predicted ideal target`() {
         val learning = learning(
             listOf(
                 direct(2, 2, 10.0, "visit-a"),
@@ -21,18 +21,18 @@ class PredictorInterpolatorTest {
         val surface = PredictorInterpolator.build(learning, confirmedMap(120))
         val cell = cell(surface, 4, 4)
 
-        assertEquals("PREVISTO", cell.getString("state"))
-        assertTrue(cell.getBoolean("predicted"))
+        assertEquals("DESCONHECIDO", cell.getString("state"))
+        assertFalse(cell.getBoolean("predicted"))
         assertFalse(cell.getBoolean("directObservation"))
-        assertTrue(cell.getInt("targetK") > 120)
-        assertTrue(cell.getDouble("predictionConfidence") > 0.0)
-        assertTrue(cell.getInt("distinctTrajectories") >= 2)
+        assertTrue(cell.isNull("targetK"))
+        assertEquals(0.0, cell.getDouble("predictionConfidence"), 1e-12)
+        assertEquals("NO_SUPPORT", cell.getString("predictionReason"))
         assertFalse(cell.getBoolean("automaticWrite"))
         assertFalse(surface.getJSONObject("interpolation").getBoolean("predictionsFeedConfidence"))
     }
 
     @Test
-    fun `outside direct support hull remains unknown`() {
+    fun `outside legacy residual support also remains unknown because there is no K star support`() {
         val learning = learning(
             listOf(
                 direct(1, 1, 10.0, "visit-a"),
@@ -44,11 +44,12 @@ class PredictorInterpolatorTest {
 
         assertEquals("DESCONHECIDO", cell.getString("state"))
         assertFalse(cell.getBoolean("predicted"))
-        assertEquals("EXTRAPOLATION_OUTSIDE_SUPPORT_HULL", cell.getString("predictionReason"))
+        assertTrue(cell.isNull("targetK"))
+        assertEquals("NO_SUPPORT", cell.getString("predictionReason"))
     }
 
     @Test
-    fun `repeated same physical visit cannot manufacture interpolation`() {
+    fun `repeated legacy visit cannot manufacture K star interpolation`() {
         val learning = learning(
             listOf(
                 direct(2, 2, 10.0, "same-visit"),
@@ -60,11 +61,12 @@ class PredictorInterpolatorTest {
 
         assertEquals("DESCONHECIDO", cell.getString("state"))
         assertFalse(cell.getBoolean("predicted"))
-        assertEquals("INSUFFICIENT_TRAJECTORY_INDEPENDENCE", cell.getString("predictionReason"))
+        assertTrue(cell.isNull("targetK"))
+        assertEquals("NO_SUPPORT", cell.getString("predictionReason"))
     }
 
     @Test
-    fun `independent trajectories that disagree in correction direction do not predict`() {
+    fun `opposite legacy deltas stay diagnostic and do not become direction authority`() {
         val learning = learning(
             listOf(
                 direct(2, 2, 10.0, "visit-a"),
@@ -76,11 +78,12 @@ class PredictorInterpolatorTest {
 
         assertEquals("DESCONHECIDO", cell.getString("state"))
         assertFalse(cell.getBoolean("predicted"))
-        assertEquals("DIRECTION_CONFLICT", cell.getString("predictionReason"))
+        assertTrue(cell.isNull("targetK"))
+        assertEquals("NO_SUPPORT", cell.getString("predictionReason"))
     }
 
     @Test
-    fun `rebuilding same scientific snapshot does not turn prediction into support`() {
+    fun `rebuilding same legacy snapshot remains stable and non predictive`() {
         val learning = learning(
             listOf(
                 direct(2, 2, 10.0, "visit-a"),
@@ -93,10 +96,12 @@ class PredictorInterpolatorTest {
         val firstCell = cell(first, 4, 4)
         val secondCell = cell(second, 4, 4)
 
-        assertEquals(firstCell.getInt("targetK"), secondCell.getInt("targetK"))
-        assertEquals(firstCell.getInt("supportCount"), secondCell.getInt("supportCount"))
-        assertEquals(firstCell.getInt("distinctTrajectories"), secondCell.getInt("distinctTrajectories"))
+        assertTrue(firstCell.isNull("targetK"))
+        assertTrue(secondCell.isNull("targetK"))
+        assertEquals(firstCell.getString("predictionReason"), secondCell.getString("predictionReason"))
         assertEquals(firstCell.getDouble("predictionConfidence"), secondCell.getDouble("predictionConfidence"), 1e-12)
+        assertFalse(firstCell.getBoolean("predicted"))
+        assertFalse(secondCell.getBoolean("predicted"))
     }
 
     private data class Direct(val row: Int, val column: Int, val delta: Double, val visit: String)
