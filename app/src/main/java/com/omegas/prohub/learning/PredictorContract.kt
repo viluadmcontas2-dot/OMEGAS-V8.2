@@ -67,16 +67,22 @@ data class PredictorCell(
 data class PredictorOperatingPoint(
     val rpm: Double,
     val petrolInjectionMs: Double,
-    val mapBar: Double,
+    val mapBar: Double?,
+    val deltaPressureBar: Double? = null,
     val petrolReferenceTemperatureC: Double? = null,
+    val waterTemperatureC: Double? = null,
+    val gasTemperatureC: Double? = null,
     val effectiveMass: Double? = null,
     val effectiveCapacity: Double? = null,
 ) {
     fun valid(): Boolean =
         rpm.isFinite() && rpm > 0.0 &&
             petrolInjectionMs.isFinite() && petrolInjectionMs > 0.0 &&
-            mapBar.isFinite() && mapBar >= 0.0 &&
+            mapBar.nonNegativeFiniteWhenPresent() &&
+            deltaPressureBar.finiteWhenPresent() &&
             petrolReferenceTemperatureC.finiteWhenPresent() &&
+            waterTemperatureC.finiteWhenPresent() &&
+            gasTemperatureC.finiteWhenPresent() &&
             effectiveMass.positiveFiniteWhenPresent() &&
             effectiveCapacity.positiveFiniteWhenPresent()
 }
@@ -273,7 +279,10 @@ object PredictorContract {
                     observation.operatingPoint.rpm,
                     observation.operatingPoint.petrolInjectionMs,
                     observation.operatingPoint.mapBar,
+                    observation.operatingPoint.deltaPressureBar,
                     observation.operatingPoint.petrolReferenceTemperatureC,
+                    observation.operatingPoint.waterTemperatureC,
+                    observation.operatingPoint.gasTemperatureC,
                     observation.operatingPoint.effectiveMass,
                     observation.operatingPoint.effectiveCapacity,
                     observation.stamp.calibrationFingerprint,
@@ -304,4 +313,5 @@ object PredictorContract {
 }
 
 private fun Double?.finiteWhenPresent(): Boolean = this == null || isFinite()
+private fun Double?.nonNegativeFiniteWhenPresent(): Boolean = this == null || (isFinite() && this >= 0.0)
 private fun Double?.positiveFiniteWhenPresent(): Boolean = this == null || (isFinite() && this > 0.0)
