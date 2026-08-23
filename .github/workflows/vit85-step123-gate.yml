@@ -9,16 +9,16 @@ permissions:
   contents: read
 
 jobs:
-  step123-focused-red:
+  step123-focused-green:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      CANDIDATE_SHA: 3331b3c9b11c45d0ea9b1a2070f02276502263d6
+      CANDIDATE_SHA: 6cd2b3ba31761d78d838896367fa626d76a188a3
     steps:
-      - name: Checkout frozen RED candidate
+      - name: Checkout frozen GREEN candidate
         uses: actions/checkout@v4
         with:
-          ref: 3331b3c9b11c45d0ea9b1a2070f02276502263d6
+          ref: 6cd2b3ba31761d78d838896367fa626d76a188a3
           fetch-depth: 1
       - name: Assert exact source SHA
         shell: bash
@@ -33,7 +33,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Reproduce focused surface defect
+      - name: Verify focused surface contract
         shell: bash
         run: |
           set -euo pipefail
