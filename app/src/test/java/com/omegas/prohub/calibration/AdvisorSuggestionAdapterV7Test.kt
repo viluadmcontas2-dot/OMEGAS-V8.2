@@ -1,6 +1,7 @@
 package com.omegas.prohub.calibration
 
 import com.omegas.prohub.physics.CorrectionMechanism
+import com.omegas.prohub.physics.EffectDirection
 import com.omegas.prohub.physics.MagnitudeAuthority
 import com.omegas.v7.runtime.CalibrationRevisionV7
 import com.omegas.v7.runtime.CalibrationShapeV7
@@ -178,7 +179,10 @@ class AdvisorSuggestionAdapterV7Test {
                     .put("readiness", "AVAILABLE")
                     .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
                     .put("idealTarget", true)
-                    .put("correctionMechanism", CorrectionMechanism.CURVE_MUL_ACT.name)))
+                    .put("correctionMechanism", CorrectionMechanism.CURVE_MUL_ACT.name)
+                    .put("expectedEffectDirection", EffectDirection.INCREASE.name)
+                    .put("expectedEffectFalsifier", "curve response fails to improve")
+                    .put("mechanismEvidencePath", JSONArray().put("broad coherent residual"))))
             .put("mapResidualSuggestions", JSONArray())
             .put("mapCorrectionRegions", JSONArray())
 
@@ -269,4 +273,7 @@ class AdvisorSuggestionAdapterV7Test {
         .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
         .put("idealTarget", true)
         .put("correctionMechanism", CorrectionMechanism.MAP_LOCAL.name)
+        .put("expectedEffectDirection", EffectDirection.INCREASE.name)
+        .put("expectedEffectFalsifier", "map response fails to improve")
+        .put("mechanismEvidencePath", JSONArray().put("localized residual"))
 }
