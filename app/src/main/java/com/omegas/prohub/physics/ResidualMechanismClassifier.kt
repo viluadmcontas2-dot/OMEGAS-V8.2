@@ -1,10 +1,12 @@
 package com.omegas.prohub.physics
 
 /**
- * Causal classifier for residual structure. Thresholds here are decision-policy
- * bounds over normalized evidence scores, never ECU constants or physical laws.
- * The classifier never manufactures a numeric target: target estimation remains
- * owned by TargetEstimator/KStarEstimator.
+ * Causal evidence for residual structure.
+ *
+ * Numeric scores remain diagnostic/provenance only. Causal promotion is driven
+ * by explicit structural support flags produced from real Advisor statistics,
+ * not by universal score thresholds. UNKNOWN is the default whenever support,
+ * environmental context, or causal ordering is incomplete.
  */
 data class ResidualEvidence(
     val comparableSamples: Int,
@@ -15,11 +17,29 @@ data class ResidualEvidence(
     val mapMechanismSupported: Boolean,
     val curveMechanismSupported: Boolean,
     val direction: EffectDirection,
+    val localizedStructureSupported: Boolean =
+        localizedRepeatability > 0.0 && localizedRepeatability > broadCoherence,
+    val broadStructureSupported: Boolean =
+        broadCoherence > 0.0 && broadCoherence > localizedRepeatability,
+    val environmentalContextVerified: Boolean = true,
+    val environmentalExplanationSupported: Boolean =
+        environmentalCorrelation > 0.0 &&
+            environmentalCorrelation > localizedRepeatability &&
+            environmentalCorrelation > broadCoherence,
+    val contradictionObserved: Boolean =
+        contradiction > 0.0 &&
+            contradiction > localizedRepeatability &&
+            contradiction > broadCoherence &&
+            contradiction > environmentalCorrelation,
+    val localResidualCleared: Boolean = true,
 ) {
     init {
         require(comparableSamples >= 0)
         listOf(localizedRepeatability, broadCoherence, environmentalCorrelation, contradiction).forEach {
             require(it.isFinite() && it in 0.0..1.0)
+        }
+        require(!environmentalExplanationSupported || environmentalContextVerified) {
+            "environmental explanation requires verified environmental context"
         }
     }
 }
@@ -32,11 +52,6 @@ data class MechanismClassification(
 )
 
 object ResidualMechanismClassifier {
-    private const val STRONG_SUPPORT = 0.65
-    private const val DOMINANCE_MARGIN = 0.12
-    private const val HIGH_CONTRADICTION = 0.60
-    private const val ENVIRONMENTAL_DOMINANCE = 0.70
-
     fun classify(evidence: ResidualEvidence): MechanismClassification {
         if (evidence.comparableSamples == 0) {
             return inconclusive(
@@ -46,7 +61,7 @@ object ResidualMechanismClassifier {
             )
         }
 
-        if (evidence.contradiction >= HIGH_CONTRADICTION) {
+        if (evidence.contradictionObserved) {
             return inconclusive(
                 reason = "CONTRADICTORY_EVIDENCE",
                 nextEvidence = "collect comparable microstates until directional/model contradiction is resolved",
@@ -54,10 +69,15 @@ object ResidualMechanismClassifier {
             )
         }
 
-        if (evidence.environmentalCorrelation >= ENVIRONMENTAL_DOMINANCE &&
-            evidence.environmentalCorrelation >= evidence.localizedRepeatability &&
-            evidence.environmentalCorrelation >= evidence.broadCoherence
-        ) {
+        if (!evidence.environmentalContextVerified) {
+            return inconclusive(
+                reason = "ENVIRONMENT_CONTEXT_UNVERIFIED",
+                nextEvidence = "verify matched pressure/temperature/water context before causal mechanism promotion",
+                inflation = evidence.environmentalCorrelation,
+            )
+        }
+
+        if (evidence.environmentalExplanationSupported) {
             return MechanismClassification(
                 decision = CorrectionDecision(
                     mechanism = CorrectionMechanism.ENVIRONMENTAL_DIAGNOSTIC,
@@ -65,12 +85,16 @@ object ResidualMechanismClassifier {
                         direction = evidence.direction,
                         lowerBound = null,
                         upperBound = null,
-                        assumptions = listOf("environmental/context effect dominates residual structure"),
+                        assumptions = listOf("verified environmental/context evidence explains residual structure"),
                         authority = MagnitudeAuthority.UNKNOWN,
                         falsifier = "residual remains after conditioning on pressure/temperature/water microstate",
                     ),
                     target = null,
-                    evidencePath = listOf("environmentalCorrelation=${evidence.environmentalCorrelation}"),
+                    evidencePath = listOf(
+                        "environmentalContextVerified=true",
+                        "environmentalExplanationSupported=true",
+                        "environmentalCorrelation=${evidence.environmentalCorrelation}",
+                    ),
                 ),
                 reasonCode = "ENVIRONMENTAL_CONFOUNDER",
                 uncertaintyInflation = evidence.environmentalCorrelation,
@@ -78,46 +102,62 @@ object ResidualMechanismClassifier {
             )
         }
 
-        val localDominates = evidence.localizedRepeatability >= STRONG_SUPPORT &&
-            evidence.localizedRepeatability >= evidence.broadCoherence + DOMINANCE_MARGIN
-        if (localDominates && evidence.mapMechanismSupported) {
-            return supported(
-                mechanism = CorrectionMechanism.MAP_LOCAL,
-                direction = evidence.direction,
-                reason = "LOCALIZED_REPEATABLE",
-                evidencePath = listOf(
-                    "localizedRepeatability=${evidence.localizedRepeatability}",
-                    "mapMechanismSupported=true",
-                    "comparableSamples=${evidence.comparableSamples}",
-                ),
-            )
+        if (evidence.localizedStructureSupported) {
+            return if (evidence.mapMechanismSupported) {
+                supported(
+                    mechanism = CorrectionMechanism.MAP_LOCAL,
+                    direction = evidence.direction,
+                    reason = "LOCALIZED_REPEATABLE",
+                    evidencePath = listOf(
+                        "localizedStructureSupported=true",
+                        "mapMechanismSupported=true",
+                        "comparableSamples=${evidence.comparableSamples}",
+                        "localizedRepeatability=${evidence.localizedRepeatability}",
+                    ),
+                )
+            } else {
+                inconclusive(
+                    reason = "LOCAL_WITHOUT_MAP_MECHANISM_SUPPORT",
+                    nextEvidence = "verify local Map mechanism authority for the observed residual",
+                    inflation = evidence.contradiction,
+                )
+            }
         }
 
-        val broadDominates = evidence.broadCoherence >= STRONG_SUPPORT &&
-            evidence.broadCoherence >= evidence.localizedRepeatability + DOMINANCE_MARGIN
-        if (broadDominates && evidence.curveMechanismSupported) {
-            return supported(
-                mechanism = CorrectionMechanism.CURVE_MUL_ACT,
-                direction = evidence.direction,
-                reason = "BROAD_COHERENT_SUPPORTED",
-                evidencePath = listOf(
-                    "broadCoherence=${evidence.broadCoherence}",
-                    "curveMechanismSupported=true",
-                    "comparableSamples=${evidence.comparableSamples}",
-                ),
-            )
+        if (evidence.broadStructureSupported) {
+            if (!evidence.localResidualCleared) {
+                return inconclusive(
+                    reason = "LOCAL_RESIDUAL_NOT_CLEARED",
+                    nextEvidence = "resolve or condition actionable local residual before Curve mechanism promotion",
+                    inflation = evidence.contradiction,
+                )
+            }
+            return if (evidence.curveMechanismSupported) {
+                supported(
+                    mechanism = CorrectionMechanism.CURVE_MUL_ACT,
+                    direction = evidence.direction,
+                    reason = "BROAD_COHERENT_SUPPORTED",
+                    evidencePath = listOf(
+                        "broadStructureSupported=true",
+                        "localResidualCleared=true",
+                        "curveMechanismSupported=true",
+                        "comparableSamples=${evidence.comparableSamples}",
+                        "broadCoherence=${evidence.broadCoherence}",
+                    ),
+                )
+            } else {
+                inconclusive(
+                    reason = "BROAD_WITHOUT_CURVE_MECHANISM_SUPPORT",
+                    nextEvidence = "verify Curve/MUL_ACT mechanism authority for the broad residual",
+                    inflation = evidence.contradiction,
+                )
+            }
         }
 
         return inconclusive(
-            reason = if (broadDominates && !evidence.curveMechanismSupported) {
-                "BROAD_WITHOUT_CURVE_MECHANISM_SUPPORT"
-            } else if (localDominates && !evidence.mapMechanismSupported) {
-                "LOCAL_WITHOUT_MAP_MECHANISM_SUPPORT"
-            } else {
-                "INSUFFICIENT_STRUCTURE"
-            },
+            reason = "INSUFFICIENT_STRUCTURE",
             nextEvidence = "collect comparable microstates that discriminate local, global, and environmental mechanisms",
-            inflation = maxOf(evidence.contradiction, evidence.environmentalCorrelation * 0.5),
+            inflation = maxOf(evidence.contradiction, evidence.environmentalCorrelation),
         )
     }
 
