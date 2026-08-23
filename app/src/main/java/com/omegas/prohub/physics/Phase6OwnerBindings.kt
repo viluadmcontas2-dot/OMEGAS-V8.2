@@ -5,42 +5,6 @@ import com.omegas.prohub.learning.ContinuousLearningMath
 import org.json.JSONArray
 import org.json.JSONObject
 
-enum class ScientificAuthority {
-    OEM_NATIVE,
-    CLASSIC_ASSISTED,
-    ADAPTIVE_SHADOW,
-}
-
-data class PhysicsScientificInput(
-    val authority: ScientificAuthority,
-    val physicalEvidenceId: String,
-    val weight: Double,
-) {
-    init {
-        require(physicalEvidenceId.isNotBlank()) { "physicalEvidenceId is required" }
-        require(weight in 0.0..1.0) { "weight must be within 0..1" }
-    }
-
-    companion object {
-        /**
-         * One physical evidence id contributes at most once. When multiple
-         * scientific authorities expose the same physical evidence, preserve
-         * the highest-order authority rather than multiplying its vote.
-         */
-        fun deduplicateByPhysicalEvidence(inputs: List<PhysicsScientificInput>): List<PhysicsScientificInput> {
-            val priority = mapOf(
-                ScientificAuthority.OEM_NATIVE to 3,
-                ScientificAuthority.CLASSIC_ASSISTED to 2,
-                ScientificAuthority.ADAPTIVE_SHADOW to 1,
-            )
-            return inputs
-                .groupBy { it.physicalEvidenceId }
-                .values
-                .map { group -> group.maxBy { priority.getValue(it.authority) } }
-        }
-    }
-}
-
 /** Explicitly binds the existing educational interpolation to LOCAL_MODEL. */
 fun ContinuousLearningMath.physicsModelAuthority(): PhysicsModelAuthority =
     PhysicsModelContract.BILINEAR_AUTHORITY
