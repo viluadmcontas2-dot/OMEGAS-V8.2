@@ -68,7 +68,7 @@ class Phase6BindingIntegrationTest {
         assertFalse(policy.getBoolean("idealTarget"))
     }
 
-    @Test fun advisorProjectionNeverPromotesLaneToCausalMechanism() {
+    @Test fun advisorProjectionWithoutTypedResidualEvidenceStaysUnknown() {
         val advice = JSONObject()
             .put("kFactorSuggestions", JSONArray().put(JSONObject().put("direction", "INCREASE_CNG_DELIVERY")))
             .put("mapResidualSuggestions", JSONArray().put(JSONObject().put("direction", "DECREASE_CNG_DELIVERY")))
@@ -84,4 +84,105 @@ class Phase6BindingIntegrationTest {
         assertEquals("MAP_LOCAL", map.getString("mechanismCandidateLane"))
         assertFalse(map.getBoolean("idealTarget"))
     }
+
+    @Test fun typedLocalizedResidualEvidencePromotesOnlyMapMechanism() {
+        val item = JSONObject()
+            .put("direction", "INCREASE_CNG_DELIVERY")
+            .put(
+                "physicsResidualEvidence",
+                residualEvidence(
+                    comparableSamples = 6,
+                    localizedRepeatability = 0.82,
+                    broadCoherence = 0.30,
+                    environmentalCorrelation = 0.05,
+                    contradiction = 0.05,
+                    mapSupported = true,
+                    curveSupported = false,
+                    direction = "INCREASE",
+                ),
+            )
+        val decorated = AssistedCalibrationAdvisor.decoratePhysicsAuthority(
+            JSONObject().put("mapResidualSuggestions", JSONArray().put(item)),
+        )
+        val map = decorated.getJSONArray("mapResidualSuggestions").getJSONObject(0)
+
+        assertEquals("MAP_LOCAL", map.getString("correctionMechanism"))
+        assertEquals("LOCALIZED_REPEATABLE", map.getString("mechanismReasonCode"))
+        assertTrue(map.getJSONArray("mechanismEvidencePath").length() > 0)
+        assertEquals("POLICY_ONLY", map.getString("magnitudeAuthority"))
+        assertFalse(map.getBoolean("idealTarget"))
+    }
+
+    @Test fun typedBroadResidualEvidencePromotesOnlyCurveMechanism() {
+        val item = JSONObject()
+            .put("direction", "DECREASE_CNG_DELIVERY")
+            .put(
+                "physicsResidualEvidence",
+                residualEvidence(
+                    comparableSamples = 8,
+                    localizedRepeatability = 0.20,
+                    broadCoherence = 0.84,
+                    environmentalCorrelation = 0.10,
+                    contradiction = 0.05,
+                    mapSupported = false,
+                    curveSupported = true,
+                    direction = "DECREASE",
+                ),
+            )
+        val decorated = AssistedCalibrationAdvisor.decoratePhysicsAuthority(
+            JSONObject().put("kFactorSuggestions", JSONArray().put(item)),
+        )
+        val curve = decorated.getJSONArray("kFactorSuggestions").getJSONObject(0)
+
+        assertEquals("CURVE_MUL_ACT", curve.getString("correctionMechanism"))
+        assertEquals("BROAD_COHERENT_SUPPORTED", curve.getString("mechanismReasonCode"))
+        assertTrue(curve.getJSONArray("mechanismEvidencePath").length() > 0)
+        assertEquals("POLICY_ONLY", curve.getString("magnitudeAuthority"))
+        assertFalse(curve.getBoolean("idealTarget"))
+    }
+
+    @Test fun contradictoryTypedEvidenceFailsClosedToUnknown() {
+        val item = JSONObject()
+            .put("direction", "INCREASE_CNG_DELIVERY")
+            .put(
+                "physicsResidualEvidence",
+                residualEvidence(
+                    comparableSamples = 10,
+                    localizedRepeatability = 0.90,
+                    broadCoherence = 0.10,
+                    environmentalCorrelation = 0.05,
+                    contradiction = 0.80,
+                    mapSupported = true,
+                    curveSupported = false,
+                    direction = "INCREASE",
+                ),
+            )
+        val decorated = AssistedCalibrationAdvisor.decoratePhysicsAuthority(
+            JSONObject().put("mapResidualSuggestions", JSONArray().put(item)),
+        )
+        val map = decorated.getJSONArray("mapResidualSuggestions").getJSONObject(0)
+
+        assertEquals("UNKNOWN", map.getString("correctionMechanism"))
+        assertEquals("CONTRADICTORY_EVIDENCE", map.getString("mechanismReasonCode"))
+        assertFalse(map.getBoolean("idealTarget"))
+    }
+
+    private fun residualEvidence(
+        comparableSamples: Int,
+        localizedRepeatability: Double,
+        broadCoherence: Double,
+        environmentalCorrelation: Double,
+        contradiction: Double,
+        mapSupported: Boolean,
+        curveSupported: Boolean,
+        direction: String,
+    ): JSONObject = JSONObject()
+        .put("comparableSamples", comparableSamples)
+        .put("localizedRepeatability", localizedRepeatability)
+        .put("broadCoherence", broadCoherence)
+        .put("environmentalCorrelation", environmentalCorrelation)
+        .put("contradiction", contradiction)
+        .put("mapMechanismSupported", mapSupported)
+        .put("curveMechanismSupported", curveSupported)
+        .put("direction", direction)
 }
