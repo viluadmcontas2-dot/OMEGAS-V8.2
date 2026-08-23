@@ -204,11 +204,12 @@ object V7SessionSnapshotCodec {
         escape(item.physics.falsifier),
         encodeStrings(item.physics.evidencePath),
         item.physics.idealTarget.toString(),
+        item.physics.effectAuthority.name,
     ).joinToString("|")
 
     private fun decodeSuggestion(value: String): LocalSuggestionV7 {
         val parts = splitEscaped(value)
-        require(parts.size == 8 || parts.size == 11 || parts.size == 15 || parts.size == 25)
+        require(parts.size == 8 || parts.size == 11 || parts.size == 15 || parts.size == 25 || parts.size == 26)
         val target = SuggestionTargetV7.valueOf(parts[4])
         val curveChanges = parts[6].takeIf(String::isNotBlank)?.split(';').orEmpty().map { encoded ->
             val values = encoded.split(',')
@@ -221,7 +222,7 @@ object V7SessionSnapshotCodec {
             MapCellChangeV7(values[0].toInt(), values[1].toInt(), values[2].toInt(), values[3].toInt())
         }
         val createdAt = parts[1].toLong()
-        val physics = if (parts.size == 25) {
+        val physics = if (parts.size == 25 || parts.size == 26) {
             PhysicsSuggestionMetadataV7(
                 magnitudeAuthority = runCatching { MagnitudeAuthority.valueOf(parts[15]) }
                     .getOrDefault(MagnitudeAuthority.UNKNOWN),
@@ -231,6 +232,9 @@ object V7SessionSnapshotCodec {
                     .getOrDefault(CorrectionMechanism.UNKNOWN),
                 effectDirection = runCatching { EffectDirection.valueOf(parts[18]) }
                     .getOrDefault(EffectDirection.UNKNOWN),
+                effectAuthority = parts.getOrNull(25)?.let { raw ->
+                    runCatching { MagnitudeAuthority.valueOf(raw) }.getOrDefault(MagnitudeAuthority.UNKNOWN)
+                } ?: MagnitudeAuthority.UNKNOWN,
                 lowerBound = parts[19].takeIf(String::isNotBlank)?.toDoubleOrNull(),
                 upperBound = parts[20].takeIf(String::isNotBlank)?.toDoubleOrNull(),
                 assumptions = decodeStrings(parts[21]),
