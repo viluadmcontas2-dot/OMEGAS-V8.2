@@ -1,5 +1,9 @@
 package com.omegas.v7.runtime
 
+import com.omegas.prohub.physics.CorrectionMechanism
+import com.omegas.prohub.physics.EffectDirection
+import com.omegas.prohub.physics.MagnitudeAuthority
+
 enum class LearningReadinessV7 {
     EMPTY,
     PETROL_ONLY,
@@ -29,11 +33,21 @@ data class LearningUiStateV7(
     val explanation: String,
 )
 
+data class SuggestionAuthorityUiV7(
+    val suggestionId: String,
+    val magnitudeAuthority: MagnitudeAuthority,
+    val stepAuthority: MagnitudeAuthority,
+    val correctionMechanism: CorrectionMechanism,
+    val effectDirection: EffectDirection,
+    val idealTarget: Boolean,
+)
+
 data class AdjustmentUiStateV7(
     val suggestionCount: Int,
     val checkpointCount: Int,
     val lastWriteMessage: String,
     val actionLabel: String,
+    val authorities: List<SuggestionAuthorityUiV7> = emptyList(),
 )
 
 data class V7UiState(
@@ -49,6 +63,16 @@ object V7UiProjection {
         val activeComparisons = state.activeComparisons().size
         val activePendingSuggestions = state.suggestions.count {
             it.expectedRevision == state.calibration.revision && it.lifecycle == SuggestionLifecycleV7.PENDING
+        }
+        val activeAuthorities = state.activeSuggestions().map { suggestion ->
+            SuggestionAuthorityUiV7(
+                suggestionId = suggestion.id,
+                magnitudeAuthority = suggestion.physics.magnitudeAuthority,
+                stepAuthority = suggestion.physics.stepAuthority,
+                correctionMechanism = suggestion.physics.correctionMechanism,
+                effectDirection = suggestion.physics.effectDirection,
+                idealTarget = suggestion.physics.idealTarget,
+            )
         }
         val historicalComparisons = state.comparisons.size - activeComparisons
         val historicalCng = state.cngEvidenceByRevision
@@ -105,6 +129,7 @@ object V7UiProjection {
                 checkpointCount = state.checkpoints.size,
                 lastWriteMessage = state.lastWriteMessage,
                 actionLabel = "Revisar sugestão",
+                authorities = activeAuthorities,
             ),
         )
     }
