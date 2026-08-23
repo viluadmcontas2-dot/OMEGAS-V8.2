@@ -9,13 +9,13 @@ permissions:
   contents: read
 
 jobs:
-  step123-focused-green:
+  step123-final-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       CANDIDATE_SHA: 6cd2b3ba31761d78d838896367fa626d76a188a3
     steps:
-      - name: Checkout frozen GREEN candidate
+      - name: Checkout frozen candidate
         uses: actions/checkout@v4
         with:
           ref: 6cd2b3ba31761d78d838896367fa626d76a188a3
@@ -33,9 +33,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Verify focused surface contract
+      - name: Run full Android JUnit suite
         shell: bash
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          ./gradlew :app:testDebugUnitTest --tests '*EquivalenceSurfaceTest*' --stacktrace --no-daemon
+          ./gradlew :app:testDebugUnitTest --stacktrace --no-daemon
+      - name: Run Phase 06 offline oracle unit suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd tools/phase06
+          python3 -m unittest -v test_equivalence_oracle.py
