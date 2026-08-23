@@ -22,6 +22,13 @@ object PredictorSurface {
         DESCONHECIDO,
     }
 
+    /**
+     * Boundary canônico tipado do Step 147. A projeção JSONObject abaixo é
+     * mantida somente por compatibilidade diagnóstica e não substitui este
+     * contrato como autoridade científica.
+     */
+    fun build(input: PredictorInputSnapshot): PredictorSnapshot = PredictorContract.evaluate(input)
+
     fun build(
         learningSnapshot: JSONObject,
         confirmedMapSnapshot: JSONObject? = null,
