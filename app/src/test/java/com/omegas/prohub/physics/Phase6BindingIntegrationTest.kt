@@ -11,16 +11,49 @@ import org.junit.Test
 
 class Phase6BindingIntegrationTest {
     @Test fun adaptiveScientificAuthoritiesStayTypedAndCannotDoubleCountSameEvidence() {
-        val inputs = listOf(
-            PhysicsScientificInput(ScientificAuthority.OEM_NATIVE, "frame-42", 1.0),
-            PhysicsScientificInput(ScientificAuthority.CLASSIC_ASSISTED, "frame-42", 0.8),
-            PhysicsScientificInput(ScientificAuthority.ADAPTIVE_SHADOW, "frame-77", 0.6),
+        val resolution = PhysicsScientificInput.resolve(
+            listOf(
+                PhysicsScientificInput(
+                    ScientificAuthority.OEM_NATIVE,
+                    ScientificEvidenceRole.OBSERVATION,
+                    "native-frame-42",
+                    "frame-42",
+                    0.8,
+                    "native",
+                ),
+                PhysicsScientificInput(
+                    ScientificAuthority.CLASSIC_ASSISTED,
+                    ScientificEvidenceRole.OBSERVATION,
+                    "classic-frame-42",
+                    "frame-42",
+                    0.8,
+                    "classic",
+                ),
+                PhysicsScientificInput(
+                    ScientificAuthority.ADAPTIVE_SHADOW,
+                    ScientificEvidenceRole.OBSERVATION,
+                    "adaptive-frame-77",
+                    "frame-77",
+                    0.6,
+                    "adaptive-observation",
+                ),
+            ),
         )
-        val accepted = PhysicsScientificInput.deduplicateByPhysicalEvidence(inputs)
-        assertEquals(2, accepted.size)
-        assertTrue(accepted.any { it.authority == ScientificAuthority.OEM_NATIVE })
-        assertTrue(accepted.any { it.authority == ScientificAuthority.ADAPTIVE_SHADOW })
-        assertFalse(accepted.any { it.authority == ScientificAuthority.CLASSIC_ASSISTED && it.physicalEvidenceId == "frame-42" })
+
+        assertTrue(resolution.conflicts.isEmpty())
+        assertEquals(2, resolution.accepted.size)
+        val shared = resolution.accepted.single { it.physicalEvidenceId == "frame-42" }
+        assertEquals(
+            setOf(ScientificAuthority.OEM_NATIVE, ScientificAuthority.CLASSIC_ASSISTED),
+            shared.authorities,
+        )
+        assertEquals(0.8, shared.effectiveWeight, 1e-12)
+        assertTrue(
+            resolution.accepted.any {
+                it.physicalEvidenceId == "frame-77" &&
+                    it.authorities == setOf(ScientificAuthority.ADAPTIVE_SHADOW)
+            },
+        )
     }
 
     @Test fun continuousLearningBilinearProjectionDeclaresLocalModelAuthority() {
