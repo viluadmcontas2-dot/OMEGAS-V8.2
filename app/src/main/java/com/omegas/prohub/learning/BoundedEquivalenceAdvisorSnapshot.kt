@@ -1,5 +1,10 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.physics.KStarEstimator
+import com.omegas.prohub.physics.KStarScientificEvidence
+import com.omegas.prohub.physics.ScientificAuthority
+import com.omegas.prohub.physics.ScientificEvidenceRole
+import com.omegas.prohub.physics.ScientificMeasurement
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.abs
@@ -17,6 +22,12 @@ import kotlin.math.sqrt
  * disappear merely because the two fuel lanes landed on adjacent lattice nodes.
  * Gasoline nodes remain the projection anchors: CNG-only territory never manufactures
  * an Advisor comparison or authority by itself.
+ *
+ * This boundary also performs the real typed Physics/K* observation assessment. It is
+ * off the telemetry hot path (SignalLearningStore calls it from advisor refresh), so
+ * provenance collections never add per-frame allocation pressure. The assessment does
+ * not fabricate currentFactor, plant gain or a K* target; it only proves that the real
+ * bounded Classic observation pair is scientifically eligible for the shared K* seam.
  */
 internal object BoundedEquivalenceAdvisorSnapshot {
     const val AUTHORITY = "RPM_MAP_PETROL_TINJ"
@@ -109,6 +120,28 @@ internal object BoundedEquivalenceAdvisorSnapshot {
             // additional independent CNG visits in the downstream Advisor.
             val visitId = "SURFACE-CNG-REV-${cng.materialRevision}"
 
+            val kStarAssessment = KStarEstimator.assess(
+                petrolOnGas = ScientificMeasurement(
+                    valueMs = observedMs,
+                    evidence = aggregateEvidence(
+                        lane = "CNG_PETROL_OBSERVED",
+                        index = index,
+                        revision = cng.materialRevision,
+                        support = cngEss,
+                    ),
+                ),
+                petrolReference = ScientificMeasurement(
+                    valueMs = referenceMs,
+                    evidence = aggregateEvidence(
+                        lane = "PETROL_REFERENCE",
+                        index = index,
+                        revision = petrol.materialRevision,
+                        support = petrolEss,
+                    ),
+                ),
+            )
+            val trace = kStarAssessment.scientificTrace
+
             projected += JSONObject()
                 .put("id", id)
                 .put("dedupe_key", "$epoch:$ORIGIN:$index:$revision")
@@ -132,6 +165,37 @@ internal object BoundedEquivalenceAdvisorSnapshot {
                 .put("observation_count", support.toInt().coerceAtLeast(1))
                 .put("material_revision", revision)
                 .put("epoch", epoch)
+                .put("kstar_observation_role", ScientificEvidenceRole.OBSERVATION.name)
+                .put("kstar_observation_eligible", kStarAssessment.eligible)
+                .put("kstar_observation_reason", kStarAssessment.reason)
+                .put("kstar_log_error", kStarAssessment.logError)
+                .put("kstar_petrol_reference_support", petrolEss)
+                .put("kstar_petrol_on_gas_support", cngEss)
+                .put("kstar_authorities", JSONArray(trace.authorities.map { it.name }.sorted()))
+                .put(
+                    "kstar_petrol_reference_authorities",
+                    JSONArray(trace.petrolReferenceAuthorities.map { it.name }.sorted()),
+                )
+                .put(
+                    "kstar_petrol_on_gas_authorities",
+                    JSONArray(trace.petrolOnGasAuthorities.map { it.name }.sorted()),
+                )
+                .put(
+                    "kstar_petrol_reference_evidence_ids",
+                    JSONArray(trace.petrolReferenceEvidenceIds.sorted()),
+                )
+                .put(
+                    "kstar_petrol_on_gas_evidence_ids",
+                    JSONArray(trace.petrolOnGasEvidenceIds.sorted()),
+                )
+                .put(
+                    "kstar_petrol_reference_physical_evidence_ids",
+                    JSONArray(trace.petrolReferencePhysicalEvidenceIds.sorted()),
+                )
+                .put(
+                    "kstar_petrol_on_gas_physical_evidence_ids",
+                    JSONArray(trace.petrolOnGasPhysicalEvidenceIds.sorted()),
+                )
         }
 
         val petrolWeight = petrolByIndex.values.sumOf { it.sumW }
@@ -174,6 +238,20 @@ internal object BoundedEquivalenceAdvisorSnapshot {
                 snapshot.legacySeedProvenance?.let { root.put("legacySeedProvenance", it) }
             }
     }
+
+    private fun aggregateEvidence(
+        lane: String,
+        index: Int,
+        revision: Long,
+        support: Double,
+    ): KStarScientificEvidence = KStarScientificEvidence(
+        authorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+        role = ScientificEvidenceRole.OBSERVATION,
+        evidenceIds = setOf("$ORIGIN:$lane:$index:REV-$revision"),
+        physicalEvidenceIds = emptySet(),
+        effectiveSupport = support,
+        provenance = setOf("$ORIGIN:$lane"),
+    )
 
     private fun allocatedLocalScientificWeight(
         centerIndex: Int,
