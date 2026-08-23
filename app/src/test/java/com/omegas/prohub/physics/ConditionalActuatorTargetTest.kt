@@ -93,10 +93,12 @@ class ConditionalActuatorTargetTest {
     }
 
     private fun trace(cngId: String, gasId: String): KStarScientificTrace = KStarScientificTrace(
-        authorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
-        evidenceIds = setOf(cngId, gasId),
-        petrolOnGasPhysicalEvidenceId = cngId,
-        petrolReferencePhysicalEvidenceId = gasId,
+        petrolOnGasAuthorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+        petrolReferenceAuthorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+        petrolOnGasEvidenceIds = setOf(cngId),
+        petrolReferenceEvidenceIds = setOf(gasId),
+        petrolOnGasPhysicalEvidenceIds = setOf(cngId),
+        petrolReferencePhysicalEvidenceIds = setOf(gasId),
         provenance = setOf("conditional-actuator-test"),
     )
 }
