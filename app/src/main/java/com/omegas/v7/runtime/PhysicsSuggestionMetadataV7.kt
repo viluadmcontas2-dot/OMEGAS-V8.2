@@ -9,8 +9,8 @@ import com.omegas.prohub.physics.MagnitudeAuthority
  *
  * This is metadata only. It never creates writer authority and never upgrades
  * UNKNOWN/POLICY_ONLY into a concrete target. Advisor-origin suggestions are
- * executable only when the persisted metadata still proves the exact mechanism
- * and a physical/empirical ideal target.
+ * executable only when the persisted metadata still proves the exact mechanism,
+ * expected effect and a physical/empirical ideal target.
  */
 data class PhysicsSuggestionMetadataV7(
     val magnitudeAuthority: MagnitudeAuthority = MagnitudeAuthority.UNKNOWN,
@@ -37,6 +37,8 @@ data class PhysicsSuggestionMetadataV7(
                 MagnitudeAuthority.EMPIRICALLY_BOUNDED,
             )
         ) return false
+        if (effectDirection == EffectDirection.UNKNOWN) return false
+        if (falsifier.isBlank()) return false
         if (evidencePath.isEmpty()) return false
         return when (target) {
             SuggestionTargetV7.MAP_K -> correctionMechanism == CorrectionMechanism.MAP_LOCAL
