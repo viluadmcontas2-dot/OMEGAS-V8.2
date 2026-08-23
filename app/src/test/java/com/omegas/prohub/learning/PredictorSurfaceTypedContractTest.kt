@@ -36,9 +36,8 @@ class PredictorSurfaceTypedContractTest {
         )
         val observation = PredictorObservation(
             cell = PredictorCell(row = 1, column = 2),
-            kStar = 1.03,
+            kStar = 126.0,
             currentK = 120,
-            suggestedDeltaPercent = 5.0,
             uncertaintyPercent = 1.0,
             support = 0.90,
             knownness = PredictorKnownness.KNOWN,
