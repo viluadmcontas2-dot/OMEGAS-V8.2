@@ -4,6 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UntrustedAdvisorProjectionV7Test {
@@ -24,6 +25,26 @@ class UntrustedAdvisorProjectionV7Test {
 
         assertEquals("UNTRUSTED_PRECOMPUTED_ADVICE", sanitized.getString("physicsIngress"))
         assertDemoted(sanitized)
+    }
+
+    @Test
+    fun learning_snapshot_keeps_raw_evidence_but_strips_precomputed_authority() {
+        val payload = JSONObject()
+            .put("regions", JSONArray().put(JSONObject().put("fuel", "PETROL")))
+            .put("comparisons", JSONArray().put(JSONObject().put("rpm", 2_000)))
+            .put("assistedCalibration", maliciousAdvice())
+            .put("assisted_calibration", maliciousAdvice())
+            .put("kFactorSuggestions", maliciousAdvice().getJSONArray("kFactorSuggestions"))
+            .put("mapResidualSuggestions", maliciousAdvice().getJSONArray("mapResidualSuggestions"))
+
+        val sanitized = sanitizeUntrustedLearningSnapshotV7(payload)
+
+        assertTrue(sanitized.has("regions"))
+        assertTrue(sanitized.has("comparisons"))
+        assertFalse(sanitized.has("assistedCalibration"))
+        assertFalse(sanitized.has("assisted_calibration"))
+        assertFalse(sanitized.has("kFactorSuggestions"))
+        assertFalse(sanitized.has("mapResidualSuggestions"))
     }
 
     private fun maliciousAdvice(): JSONObject = JSONObject()
