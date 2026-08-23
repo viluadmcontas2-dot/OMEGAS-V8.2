@@ -39,6 +39,12 @@ data class SuggestionAuthorityUiV7(
     val stepAuthority: MagnitudeAuthority,
     val correctionMechanism: CorrectionMechanism,
     val effectDirection: EffectDirection,
+    val effectAuthority: MagnitudeAuthority,
+    val lowerBound: Double?,
+    val upperBound: Double?,
+    val assumptions: List<String>,
+    val falsifier: String,
+    val evidencePath: List<String>,
     val idealTarget: Boolean,
 )
 
@@ -71,6 +77,12 @@ object V7UiProjection {
                 stepAuthority = suggestion.physics.stepAuthority,
                 correctionMechanism = suggestion.physics.correctionMechanism,
                 effectDirection = suggestion.physics.effectDirection,
+                effectAuthority = suggestion.physics.effectAuthority,
+                lowerBound = suggestion.physics.lowerBound,
+                upperBound = suggestion.physics.upperBound,
+                assumptions = suggestion.physics.assumptions,
+                falsifier = suggestion.physics.falsifier,
+                evidencePath = suggestion.physics.evidencePath,
                 idealTarget = suggestion.physics.idealTarget,
             )
         }
