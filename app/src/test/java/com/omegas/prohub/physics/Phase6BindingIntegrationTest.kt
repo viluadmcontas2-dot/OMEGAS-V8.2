@@ -99,6 +99,7 @@ class Phase6BindingIntegrationTest {
                     mapSupported = true,
                     curveSupported = false,
                     direction = "INCREASE",
+                    localizedStructureSupported = true,
                 ),
             )
         val decorated = AssistedCalibrationAdvisor.decoratePhysicsAuthority(
@@ -127,6 +128,8 @@ class Phase6BindingIntegrationTest {
                     mapSupported = false,
                     curveSupported = true,
                     direction = "DECREASE",
+                    broadStructureSupported = true,
+                    localResidualCleared = true,
                 ),
             )
         val decorated = AssistedCalibrationAdvisor.decoratePhysicsAuthority(
@@ -155,6 +158,8 @@ class Phase6BindingIntegrationTest {
                     mapSupported = true,
                     curveSupported = false,
                     direction = "INCREASE",
+                    localizedStructureSupported = true,
+                    contradictionObserved = true,
                 ),
             )
         val decorated = AssistedCalibrationAdvisor.decoratePhysicsAuthority(
@@ -176,6 +181,12 @@ class Phase6BindingIntegrationTest {
         mapSupported: Boolean,
         curveSupported: Boolean,
         direction: String,
+        localizedStructureSupported: Boolean = false,
+        broadStructureSupported: Boolean = false,
+        environmentalContextVerified: Boolean = true,
+        environmentalExplanationSupported: Boolean = false,
+        contradictionObserved: Boolean = false,
+        localResidualCleared: Boolean = true,
     ): JSONObject = JSONObject()
         .put("comparableSamples", comparableSamples)
         .put("localizedRepeatability", localizedRepeatability)
@@ -185,4 +196,10 @@ class Phase6BindingIntegrationTest {
         .put("mapMechanismSupported", mapSupported)
         .put("curveMechanismSupported", curveSupported)
         .put("direction", direction)
+        .put("localizedStructureSupported", localizedStructureSupported)
+        .put("broadStructureSupported", broadStructureSupported)
+        .put("environmentalContextVerified", environmentalContextVerified)
+        .put("environmentalExplanationSupported", environmentalExplanationSupported)
+        .put("contradictionObserved", contradictionObserved)
+        .put("localResidualCleared", localResidualCleared)
 }
