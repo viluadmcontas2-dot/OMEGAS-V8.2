@@ -77,8 +77,8 @@ object V7UiProjection {
             petrol == 0 && activeCng == 0 -> "Nenhuma visita física foi consolidada nesta sessão."
             petrol == 0 -> "O GNV foi coletado primeiro e permanece salvo. A comparação nascerá quando uma referência gasolina equivalente aparecer."
             activeCng == 0 -> "A gasolina permanece como referência entre revisões. Falta GNV da revisão ativa."
-            activeComparisons == 0 -> "Existem dados dos dois combustíveis, mas ainda não na mesma vizinhança física de RPM, MAP e temperatura."
-            else -> "$activeComparisons visita(s) GNV já foram comparadas à referência gasolina equivalente por RPM, MAP e temperatura."
+            activeComparisons == 0 -> "Existem dados dos dois combustíveis, mas ainda não na mesma vizinhança física de RPM e MAP."
+            else -> "$activeComparisons visita(s) GNV já foram comparadas à referência gasolina equivalente por RPM e MAP."
         }
         return V7UiState(
             now = NowUiStateV7(
