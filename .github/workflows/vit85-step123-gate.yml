@@ -1,0 +1,41 @@
+name: VIT-85 Step 123 exact-SHA gate
+
+on:
+  pull_request:
+    branches:
+      - feature/phase06-pragmatic-equivalence-20260821
+
+permissions:
+  contents: read
+
+jobs:
+  step123-focused-red:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CANDIDATE_SHA: 3331b3c9b11c45d0ea9b1a2070f02276502263d6
+    steps:
+      - name: Checkout frozen RED candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 3331b3c9b11c45d0ea9b1a2070f02276502263d6
+          fetch-depth: 1
+      - name: Assert exact source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          echo "candidate=$CANDIDATE_SHA"
+          echo "actual=$actual"
+          test "$actual" = "$CANDIDATE_SHA"
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Reproduce focused surface defect
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest --tests '*EquivalenceSurfaceTest*' --stacktrace --no-daemon
