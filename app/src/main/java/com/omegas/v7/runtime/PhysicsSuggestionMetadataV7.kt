@@ -17,6 +17,7 @@ data class PhysicsSuggestionMetadataV7(
     val stepAuthority: MagnitudeAuthority = MagnitudeAuthority.UNKNOWN,
     val correctionMechanism: CorrectionMechanism = CorrectionMechanism.UNKNOWN,
     val effectDirection: EffectDirection = EffectDirection.UNKNOWN,
+    val effectAuthority: MagnitudeAuthority = MagnitudeAuthority.UNKNOWN,
     val lowerBound: Double? = null,
     val upperBound: Double? = null,
     val assumptions: List<String> = emptyList(),
