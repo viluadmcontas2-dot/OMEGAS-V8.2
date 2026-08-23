@@ -2,6 +2,7 @@ package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.learning.AssistedCalibrationAdvisor
+import com.omegas.prohub.physics.decoratePhysicsAuthority
 import com.omegas.v7.runtime.CalibrationRevisionV7
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
@@ -301,7 +302,9 @@ class V7CalibrationCoordinator(
         payload.optJSONObject("assistedCalibration")?.let { return it }
         payload.optJSONObject("assisted_calibration")?.let { return it }
         return if (payload.has("regions") || payload.has("comparisons")) {
-            AssistedCalibrationAdvisor.analyze(payload)
+            AssistedCalibrationAdvisor.decoratePhysicsAuthority(
+                AssistedCalibrationAdvisor.analyze(payload),
+            )
         } else {
             payload
         }
