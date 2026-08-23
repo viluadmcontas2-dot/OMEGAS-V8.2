@@ -35,7 +35,7 @@ class ResidualMechanismClassifierTest {
     }
 
     @Test
-    fun `environmental confounder never defaults to k correction`() {
+    fun `environmental confounder remains diagnostic when no primary mechanism is supported`() {
         val result = ResidualMechanismClassifier.classify(
             evidence(environmental = true),
         )
@@ -45,12 +45,22 @@ class ResidualMechanismClassifierTest {
     }
 
     @Test
-    fun `unverified environmental context abstains before causal mechanism`() {
+    fun `missing optional environmental context does not block supported primary mechanism`() {
         val result = ResidualMechanismClassifier.classify(
             evidence(local = true, environmentalContextVerified = false),
         )
-        assertEquals(CorrectionMechanism.UNKNOWN, result.decision.mechanism)
-        assertEquals("ENVIRONMENT_CONTEXT_UNVERIFIED", result.reasonCode)
+        assertEquals(CorrectionMechanism.MAP_LOCAL, result.decision.mechanism)
+        assertEquals("LOCALIZED_REPEATABLE", result.reasonCode)
+        assertNull(result.decision.target)
+    }
+
+    @Test
+    fun `primary mechanism wins over diagnostic environmental signal`() {
+        val result = ResidualMechanismClassifier.classify(
+            evidence(local = true, environmental = true),
+        )
+        assertEquals(CorrectionMechanism.MAP_LOCAL, result.decision.mechanism)
+        assertEquals("LOCALIZED_REPEATABLE", result.reasonCode)
         assertNull(result.decision.target)
     }
 
