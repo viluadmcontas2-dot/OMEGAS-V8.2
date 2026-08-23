@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - gate/vit85-step123-ci-20260822
+  pull_request:
+    branches:
+      - feature/phase06-pragmatic-equivalence-20260821
 
 permissions:
   contents: read
