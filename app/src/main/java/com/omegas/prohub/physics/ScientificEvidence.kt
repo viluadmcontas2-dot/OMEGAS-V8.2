@@ -11,6 +11,11 @@ enum class ScientificEvidenceRole {
     PREDICTION,
 }
 
+/**
+ * Raw producer exposure of one scientific claim. OBSERVATION requires a real
+ * physical evidence id because this layer is where duplicate physical evidence
+ * is detected before any statistical aggregation.
+ */
 data class PhysicsScientificInput(
     val authority: ScientificAuthority,
     val role: ScientificEvidenceRole,
@@ -77,6 +82,7 @@ data class PhysicsScientificInput(
     }
 }
 
+/** One resolved raw physical observation (or one raw prediction claim). */
 data class ResolvedScientificEvidence(
     val authorities: Set<ScientificAuthority>,
     val role: ScientificEvidenceRole,
@@ -116,13 +122,57 @@ data class ScientificEvidenceResolution(
     val conflicts: List<ScientificEvidenceConflict>,
 )
 
+/**
+ * Evidence carried by a K* statistical measurement.
+ *
+ * Unlike raw PhysicsScientificInput, this object may represent a bounded
+ * aggregate over many physical observations. It therefore carries scientific
+ * support separately and never invents one physicalEvidenceId for an aggregate.
+ * Raw evidence converts losslessly into this representation.
+ */
+data class KStarScientificEvidence(
+    val authorities: Set<ScientificAuthority>,
+    val role: ScientificEvidenceRole,
+    val evidenceIds: Set<String>,
+    val physicalEvidenceIds: Set<String>,
+    val effectiveSupport: Double,
+    val provenance: Set<String>,
+) {
+    init {
+        require(authorities.isNotEmpty()) { "at least one scientific authority is required" }
+        require(evidenceIds.isNotEmpty() && evidenceIds.none { it.isBlank() }) { "evidenceIds must be non-blank" }
+        require(physicalEvidenceIds.none { it.isBlank() }) { "physicalEvidenceIds must be non-blank when present" }
+        require(effectiveSupport.isFinite() && effectiveSupport >= 0.0) {
+            "effectiveSupport must be finite and non-negative"
+        }
+        require(provenance.isNotEmpty() && provenance.none { it.isBlank() }) { "provenance must be non-blank" }
+    }
+
+    companion object {
+        fun fromResolved(evidence: ResolvedScientificEvidence): KStarScientificEvidence =
+            KStarScientificEvidence(
+                authorities = evidence.authorities,
+                role = evidence.role,
+                evidenceIds = evidence.evidenceIds,
+                physicalEvidenceIds = evidence.physicalEvidenceId?.let(::setOf) ?: emptySet(),
+                effectiveSupport = evidence.effectiveWeight,
+                provenance = evidence.provenance,
+            )
+    }
+}
+
 data class ScientificMeasurement(
     val valueMs: Double,
-    val evidence: ResolvedScientificEvidence,
+    val evidence: KStarScientificEvidence,
 ) {
     init {
         require(valueMs.isFinite() && valueMs > 0.0) { "scientific measurement must be finite and positive" }
     }
+
+    constructor(valueMs: Double, evidence: ResolvedScientificEvidence) : this(
+        valueMs = valueMs,
+        evidence = KStarScientificEvidence.fromResolved(evidence),
+    )
 }
 
 data class KStarScientificInput(
