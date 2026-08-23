@@ -114,6 +114,15 @@ class V7EquivalenceEngineTest {
     }
 
     @Test
+    fun temperature_difference_is_diagnostic_only_and_never_blocks_rpm_map_match() {
+        val runtime = runtime()
+        runtime.addEvidence(petrol(rpm = 1_500.0, map = 0.50).copy(waterC = 20.0))
+        runtime.addEvidence(cng(rpm = 1_500.0, map = 0.50).copy(waterC = 100.0))
+
+        assertEquals(1, runtime.state.activeComparisons().size)
+    }
+
+    @Test
     fun unknown_temperature_does_not_block_otherwise_equivalent_conditions() {
         val runtime = runtime()
         runtime.addEvidence(petrol().copy(waterC = EvidenceV7.UNKNOWN_TEMPERATURE_C))
