@@ -10,7 +10,7 @@ import org.junit.Test
 
 class PhysicsResidualEvidenceProductionTest {
     @Test
-    fun realProjectionProducesTypedEvidenceButFailsClosedWithoutEnvironmentalContext() {
+    fun primaryRpmMapTinjProjectionDoesNotRequireEnvironmentalContext() {
         val advice = JSONObject()
             .put("environmentGates", false)
             .put("kFactorSuggestions", JSONArray())
@@ -24,8 +24,8 @@ class PhysicsResidualEvidenceProductionTest {
         assertEquals(3, evidence.getInt("comparableSamples"))
         assertTrue(evidence.getBoolean("localizedStructureSupported"))
         assertFalse(evidence.getBoolean("environmentalContextVerified"))
-        assertEquals("UNKNOWN", item.getString("correctionMechanism"))
-        assertEquals("ENVIRONMENT_CONTEXT_UNVERIFIED", item.getString("mechanismReasonCode"))
+        assertEquals("MAP_LOCAL", item.getString("correctionMechanism"))
+        assertEquals("LOCALIZED_REPEATABLE", item.getString("mechanismReasonCode"))
         assertEquals("POLICY_ONLY", item.getString("magnitudeAuthority"))
         assertFalse(item.getBoolean("idealTarget"))
     }
