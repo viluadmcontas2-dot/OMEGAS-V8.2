@@ -61,6 +61,25 @@ class EquivalenceSurfaceTest {
     }
 
     @Test
+    fun `weak local scientific mass cannot pull the mean like full authority`() {
+        val surface = testSurface()
+        // Both support nodes are exactly one RPM cell away from the query, so the
+        // spatial kernel is identical and scientific mass must decide their authority.
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_360.0, 0.60, 3.0, 1.0, 1L)
+        surface.observe(FuelLane.PETROL_REFERENCE, 2_520.0, 0.60, 9.0, 0.01, 2L)
+
+        val estimate = surface.query(2_440.0, 0.60).petrol!!
+        val expected = (3.0 * 1.0 + 9.0 * 0.01) / 1.01
+
+        assertEquals(
+            "Equal geometry cannot make 1% scientific mass as authoritative as a full observation",
+            expected,
+            estimate.meanTinjMs,
+            1e-9,
+        )
+    }
+
+    @Test
     fun `fractional scientific mass cannot impersonate full independent support`() {
         val fragmented = testSurface()
         repeat(10) { revision ->
