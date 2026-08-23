@@ -28,6 +28,7 @@ class V7SessionSnapshotStabilityTest {
                     recentErrorPercent = 2.1,
                     physics = PhysicsSuggestionMetadataV7(
                         magnitudeAuthority = MagnitudeAuthority.EMPIRICALLY_BOUNDED,
+                        effectAuthority = MagnitudeAuthority.EMPIRICALLY_BOUNDED,
                         correctionMechanism = CorrectionMechanism.MAP_LOCAL,
                         evidencePath = listOf("localized residual"),
                     ),
@@ -45,6 +46,7 @@ class V7SessionSnapshotStabilityTest {
         assertEquals(2.1, suggestion.recentErrorPercent ?: Double.NaN, 0.0)
         assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
         assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, suggestion.physics.magnitudeAuthority)
+        assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, suggestion.physics.effectAuthority)
         assertEquals(CorrectionMechanism.MAP_LOCAL, suggestion.physics.correctionMechanism)
         assertEquals(listOf("localized residual"), suggestion.physics.evidencePath)
     }
@@ -81,6 +83,7 @@ class V7SessionSnapshotStabilityTest {
         assertNull(restored.consolidatedErrorPercent)
         assertNull(restored.recentErrorPercent)
         assertEquals(MagnitudeAuthority.UNKNOWN, restored.physics.magnitudeAuthority)
+        assertEquals(MagnitudeAuthority.UNKNOWN, restored.physics.effectAuthority)
         assertEquals(CorrectionMechanism.UNKNOWN, restored.physics.correctionMechanism)
         assertTrue(!restored.actionableAt(CalibrationRevisionV7(0, 0)))
     }
