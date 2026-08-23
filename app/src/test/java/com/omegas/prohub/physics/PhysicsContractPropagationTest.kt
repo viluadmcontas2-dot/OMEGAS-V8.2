@@ -38,6 +38,7 @@ class PhysicsContractPropagationTest {
         assertEquals(suggestion, draft.suggestion)
         assertEquals("EMPIRICALLY_BOUNDED", ui.magnitudeAuthority)
         assertEquals("POLICY_ONLY", ui.stepAuthority)
+        assertEquals("EMPIRICALLY_BOUNDED", ui.effectAuthority)
         assertFalse(ui.appliedStepIsIdealTarget)
     }
 
@@ -57,8 +58,11 @@ class PhysicsContractPropagationTest {
             evidencePath = listOf("environmental correlation"),
         )
         val suggestion = PhysicsContractPropagation.toSuggestion(decision, null)
+        val ui = PhysicsContractPropagation.toUi(PhysicsContractPropagation.toDraft(suggestion))
         assertNull(suggestion.idealTargetFactor)
         assertEquals(EffectDirection.DECREASE, suggestion.expectedEffect.direction)
         assertEquals(MagnitudeAuthority.UNKNOWN, suggestion.idealTargetAuthority)
+        assertEquals("UNKNOWN", ui.effectAuthority)
+        assertEquals("DECREASE", ui.direction)
     }
 }
