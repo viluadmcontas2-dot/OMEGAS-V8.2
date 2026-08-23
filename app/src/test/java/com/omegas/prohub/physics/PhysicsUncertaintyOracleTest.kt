@@ -53,7 +53,7 @@ class PhysicsUncertaintyOracleTest {
     fun `analytic approximation stays inside oracle interval`() {
         val gain = PlantGain.empiricallyBounded(1.05, 0.9, 1.2)
         val oracle = PhysicsUncertaintyOracle.estimate(OracleRequest(5.3, 5.0, 1.08, gain, 0.01, 0.01, 1600, 9L))
-        val analytic = KStarEstimator.estimate(5.3, 5.0, 1.08, gain)
+        val analytic = KStarEstimator.estimate(typedInput(5.3, 5.0, 1.08, gain))
         val target = requireNotNull(analytic.targetFactor)
         assertTrue(target >= requireNotNull(oracle.lower95))
         assertTrue(target <= requireNotNull(oracle.upper95))
@@ -78,5 +78,27 @@ class PhysicsUncertaintyOracleTest {
         )
         assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, learned.toPlantGain().authority)
         assertTrue(requireNotNull(learned.mean) > 0.0)
+    }
+
+    private fun typedInput(
+        petrolOnGasMs: Double,
+        petrolReferenceMs: Double,
+        currentFactor: Double,
+        gain: PlantGain,
+    ): KStarScientificInput {
+        fun evidence(id: String): ResolvedScientificEvidence = ResolvedScientificEvidence(
+            authorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+            role = ScientificEvidenceRole.OBSERVATION,
+            evidenceIds = setOf(id),
+            physicalEvidenceId = id,
+            effectiveWeight = 1.0,
+            provenance = setOf("physics-uncertainty-oracle-test"),
+        )
+        return KStarScientificInput(
+            petrolOnGas = ScientificMeasurement(petrolOnGasMs, evidence("analytic-cng")),
+            petrolReference = ScientificMeasurement(petrolReferenceMs, evidence("analytic-gas")),
+            currentFactor = currentFactor,
+            gain = gain,
+        )
     }
 }
