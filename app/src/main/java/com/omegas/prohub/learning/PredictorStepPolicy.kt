@@ -5,6 +5,13 @@ import kotlin.math.ln
 import kotlin.math.roundToInt
 
 /**
+ * Correção física relativa derivada diretamente das duas autoridades já
+ * congeladas no candidato. Não é armazenada em duplicidade, evitando drift.
+ */
+val IdealTargetCandidate.deltaStar: Double?
+    get() = physicalDeltaStar(kStarObserved, currentKObserved.toDouble())
+
+/**
  * Política de passo separada do IdealTarget científico.
  *
  * Recebe somente números já publicados pelo Predictor e um beta escolhido pela
@@ -36,17 +43,12 @@ object PredictorStepPolicy {
         if (input.currentK !in 0..255 || input.idealTargetK !in 0..255) {
             return unavailable(input.beta, StepPolicyReason.INVALID_K_DOMAIN)
         }
-        if (input.currentK <= 0 || input.idealTargetK <= 0) {
-            return unavailable(input.beta, StepPolicyReason.NON_POSITIVE_LOG_DOMAIN)
-        }
         if (!input.beta.isFinite() || input.beta !in 0.0..1.0) {
             return unavailable(input.beta, StepPolicyReason.INVALID_BETA)
         }
+        val deltaStar = physicalDeltaStar(input.idealTargetK.toDouble(), input.currentK.toDouble())
+            ?: return unavailable(input.beta, StepPolicyReason.NON_POSITIVE_LOG_DOMAIN)
 
-        val deltaStar = ln(input.idealTargetK.toDouble() / input.currentK.toDouble())
-        if (!deltaStar.isFinite()) {
-            return unavailable(input.beta, StepPolicyReason.NON_POSITIVE_LOG_DOMAIN)
-        }
         val kNext = (input.currentK * exp(input.beta * deltaStar))
             .roundToInt()
             .coerceIn(0, 255)
@@ -66,4 +68,9 @@ object PredictorStepPolicy {
         beta = beta,
         reason = reason,
     )
+}
+
+private fun physicalDeltaStar(targetK: Double, currentK: Double): Double? {
+    if (!targetK.isFinite() || !currentK.isFinite() || targetK <= 0.0 || currentK <= 0.0) return null
+    return ln(targetK / currentK).takeIf { it.isFinite() }
 }
