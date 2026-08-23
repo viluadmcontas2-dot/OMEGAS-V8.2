@@ -2,12 +2,14 @@ package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.physics.CorrectionMechanism
+import com.omegas.prohub.physics.EffectDirection
 import com.omegas.prohub.physics.MagnitudeAuthority
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
 import com.omegas.v7.runtime.CurvePointChangeV7
 import com.omegas.v7.runtime.LocalSuggestionV7
 import com.omegas.v7.runtime.MapCellChangeV7
+import com.omegas.v7.runtime.PhysicsSuggestionMetadataV7
 import com.omegas.v7.runtime.SuggestionLifecycleV7
 import com.omegas.v7.runtime.SuggestionTargetV7
 import org.json.JSONArray
@@ -48,12 +50,16 @@ class AdvisorSuggestionAdapterV7 {
         val changes = linkedMapOf<Int, CurvePointChangeV7>()
         val confidences = mutableListOf<Double>()
         val reasons = linkedSetOf<String>()
+        val observedPhysics = mutableListOf<PhysicsSuggestionMetadataV7>()
+        val changedPhysics = mutableListOf<PhysicsSuggestionMetadataV7>()
         var observed = false
 
         repeat(source.length()) { position ->
             val item = source.optJSONObject(position) ?: return@repeat
             val index = item.optInt("index", -1)
             if (index !in 0 until CalibrationShapeV7.CURVE_K_POINTS) return@repeat
+            val itemPhysics = physicsMetadata(item)
+            observedPhysics += itemPhysics
             val readiness = item.optString("readiness", "")
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
             if (confidence > 0.0 || readiness.isNotBlank() && readiness != "NO_EVIDENCE") observed = true
@@ -67,13 +73,17 @@ class AdvisorSuggestionAdapterV7 {
             val after = KFactorProtocol.factorFromRaw(KFactorProtocol.rawFromFactor(bounded))
             if (after == before) return@repeat
             changes[index] = CurvePointChangeV7(index, before, after)
+            changedPhysics += itemPhysics
         }
         if (!observed && changes.isEmpty()) return null
         val ordered = changes.values.sortedBy { it.index }
-        val lifecycle = if (ordered.isEmpty()) SuggestionLifecycleV7.OBSERVING else SuggestionLifecycleV7.PENDING
+        val authorizedPhysics = aggregatePhysics(changedPhysics)
+        val concreteAuthorized = ordered.isNotEmpty() && authorizedPhysics.authorizes(SuggestionTargetV7.CURVE_K)
+        val lifecycle = if (concreteAuthorized) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
+        val persistedChanges = if (concreteAuthorized) ordered else emptyList()
         val rationale = when {
             lifecycle == SuggestionLifecycleV7.PENDING ->
-                "Target físico autorizado para ${ordered.size} ponto(s) da Curva K; aplicação exclusivamente manual."
+                "Target físico autorizado para ${persistedChanges.size} ponto(s) da Curva K; aplicação exclusivamente manual."
             reasons.isNotEmpty() -> reasons.first()
             else -> "Tendência global preservada; Physics ainda não autorizou target numérico para aplicação."
         }
@@ -83,10 +93,11 @@ class AdvisorSuggestionAdapterV7 {
             updatedAtMs = nowMs,
             expectedRevision = calibration.revision,
             target = SuggestionTargetV7.CURVE_K,
-            curveChanges = ordered,
+            curveChanges = persistedChanges,
             rationale = rationale,
             lifecycle = lifecycle,
             confidence = confidences.averageOrZero(),
+            physics = if (concreteAuthorized) authorizedPhysics else aggregatePhysics(observedPhysics),
         )
     }
 
@@ -112,7 +123,9 @@ class AdvisorSuggestionAdapterV7 {
             ) return@repeat
             val key = "$row:$column"
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
-            val authorized = authorizedForConcreteChange(item, CorrectionMechanism.MAP_LOCAL)
+            val physics = physicsMetadata(item)
+            val authorized = authorizedForConcreteChange(item, CorrectionMechanism.MAP_LOCAL) &&
+                physics.authorizes(SuggestionTargetV7.MAP_K)
             val change = if (authorized) mapChange(item, calibration) else null
             val lifecycle = if (change != null) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
             val reason = item.optString("decisionReason").takeIf(String::isNotBlank)
@@ -134,6 +147,7 @@ class AdvisorSuggestionAdapterV7 {
                 },
                 lifecycle = lifecycle,
                 confidence = confidence,
+                physics = physics,
             )
         }
         return output
@@ -148,6 +162,63 @@ class AdvisorSuggestionAdapterV7 {
         }.getOrNull() ?: return false
         return authority == MagnitudeAuthority.PHYSICALLY_ANCHORED ||
             authority == MagnitudeAuthority.EMPIRICALLY_BOUNDED
+    }
+
+    private fun physicsMetadata(item: JSONObject): PhysicsSuggestionMetadataV7 = PhysicsSuggestionMetadataV7(
+        magnitudeAuthority = enumOrDefault(
+            item.optString("magnitudeAuthority"),
+            MagnitudeAuthority.UNKNOWN,
+        ),
+        stepAuthority = enumOrDefault(
+            item.optString("stepAuthority"),
+            if (item.optString("magnitudeRole") == "STEP_POLICY_BASELINE") {
+                MagnitudeAuthority.POLICY_ONLY
+            } else {
+                MagnitudeAuthority.UNKNOWN
+            },
+        ),
+        correctionMechanism = enumOrDefault(
+            item.optString("correctionMechanism"),
+            CorrectionMechanism.UNKNOWN,
+        ),
+        effectDirection = enumOrDefault(
+            item.optString("expectedEffectDirection"),
+            legacyDirection(item),
+        ),
+        lowerBound = finite(item, "expectedEffectLowerBound"),
+        upperBound = finite(item, "expectedEffectUpperBound"),
+        assumptions = jsonStrings(item.optJSONArray("expectedEffectAssumptions")),
+        falsifier = item.optString("expectedEffectFalsifier"),
+        evidencePath = jsonStrings(item.optJSONArray("mechanismEvidencePath")),
+        idealTarget = item.optBoolean("idealTarget", false),
+    )
+
+    private fun aggregatePhysics(items: List<PhysicsSuggestionMetadataV7>): PhysicsSuggestionMetadataV7 {
+        if (items.isEmpty()) return PhysicsSuggestionMetadataV7()
+        val first = items.first()
+        val sameAuthority = items.all {
+            it.magnitudeAuthority == first.magnitudeAuthority &&
+                it.stepAuthority == first.stepAuthority &&
+                it.correctionMechanism == first.correctionMechanism &&
+                it.effectDirection == first.effectDirection &&
+                it.idealTarget == first.idealTarget
+        }
+        val evidence = items.flatMap { it.evidencePath }.distinct()
+        val assumptions = items.flatMap { it.assumptions }.distinct()
+        if (!sameAuthority) {
+            return PhysicsSuggestionMetadataV7(
+                assumptions = assumptions,
+                falsifier = "mixed physics authority across aggregated suggestion",
+                evidencePath = evidence,
+            )
+        }
+        return first.copy(
+            lowerBound = first.lowerBound.takeIf { bound -> items.all { it.lowerBound == bound } },
+            upperBound = first.upperBound.takeIf { bound -> items.all { it.upperBound == bound } },
+            assumptions = assumptions,
+            falsifier = items.map { it.falsifier }.filter(String::isNotBlank).distinct().joinToString("; "),
+            evidencePath = evidence,
+        )
     }
 
     private fun regionLabels(regions: JSONArray): Map<String, String> {
@@ -185,6 +256,24 @@ class AdvisorSuggestionAdapterV7 {
     private fun finite(source: JSONObject, key: String): Double? {
         if (!source.has(key) || source.isNull(key)) return null
         return source.optDouble(key, Double.NaN).takeIf(Double::isFinite)
+    }
+
+    private fun jsonStrings(values: JSONArray?): List<String> {
+        if (values == null) return emptyList()
+        return buildList {
+            repeat(values.length()) { index ->
+                values.optString(index).takeIf(String::isNotBlank)?.let(::add)
+            }
+        }
+    }
+
+    private inline fun <reified T : Enum<T>> enumOrDefault(value: String, default: T): T =
+        runCatching { enumValueOf<T>(value) }.getOrDefault(default)
+
+    private fun legacyDirection(item: JSONObject): EffectDirection = when (item.optString("direction")) {
+        "INCREASE_CNG_DELIVERY" -> EffectDirection.INCREASE
+        "DECREASE_CNG_DELIVERY" -> EffectDirection.DECREASE
+        else -> EffectDirection.UNKNOWN
     }
 
     private fun stableId(prefix: String, calibration: CalibrationStateV7, physicalTarget: String): String {
