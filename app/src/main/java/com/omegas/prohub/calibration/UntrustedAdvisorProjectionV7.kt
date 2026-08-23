@@ -21,9 +21,20 @@ internal fun sanitizeUntrustedAdvisorIngressV7(payload: JSONObject): JSONObject 
 }
 
 /**
- * Learning ingress is allowed to carry raw regions/comparisons because the native
- * Advisor recomputes them. Any precomputed Advisor/Physics projection is removed so
- * it cannot outrank that native computation at V7CalibrationCoordinator.resolveAdvice.
+ * A WebView may request a learning import but never supplies the scientific
+ * observations. The service-owned native export is the only admissible source;
+ * cached Advisor/Physics projections are stripped so authority is recomputed from
+ * that native evidence inside V7CalibrationCoordinator.resolveAdvice.
+ */
+internal fun selectTrustedLearningSnapshotV7(
+    @Suppress("UNUSED_PARAMETER") untrustedUiPayload: String,
+    nativeSnapshot: JSONObject,
+): JSONObject = sanitizeUntrustedLearningSnapshotV7(nativeSnapshot)
+
+/**
+ * Strip every derived Advisor/Physics projection before a fresh native recompute.
+ * Raw regions/comparisons are preserved only because the caller has already bound
+ * this object to the service-owned native learning export.
  */
 internal fun sanitizeUntrustedLearningSnapshotV7(payload: JSONObject): JSONObject =
     JSONObject(payload.toString()).apply {
