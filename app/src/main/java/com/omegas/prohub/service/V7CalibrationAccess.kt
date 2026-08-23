@@ -1,6 +1,7 @@
 package com.omegas.prohub.service
 
 import com.omegas.prohub.calibration.V7CalibrationCoordinator
+import com.omegas.prohub.calibration.sanitizeUntrustedAdvisorIngressV7
 import com.omegas.prohub.learning.LearningMutationAuthority
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
 import com.omegas.prohub.learning.PredictorInterpolator
@@ -163,7 +164,7 @@ fun TelemetryForegroundService.v7ReconcileConfirmedManualWrite(target: String): 
 fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String): String = try {
     mutationBlockedOperation("synchronize_advisor_suggestions")?.toString()
         ?: V7CalibrationRegistry.get(this)
-            .synchronizeAdvisorSuggestions(JSONObject(payload))
+            .synchronizeAdvisorSuggestions(sanitizeUntrustedAdvisorIngressV7(JSONObject(payload)))
             .toString()
 } catch (error: Exception) {
     JSONObject()
