@@ -26,6 +26,7 @@ class ConditionalActuatorTargetTest {
             authority = MagnitudeAuthority.EMPIRICALLY_BOUNDED,
             abstained = false,
             reason = "fixture",
+            scientificTrace = trace("fixture-cng", "fixture-gas"),
         )
         val target = ConditionalActuatorTargets.mapLocal(kstar, ctx)
         assertEquals(1.12 / 0.98, requireNotNull(target.factor), 1e-12)
@@ -35,7 +36,15 @@ class ConditionalActuatorTargetTest {
 
     @Test fun `curve target requires local residual removed`() {
         val ctx = context()
-        val kstar = KStarEstimator.estimate(5.5, 5.0, requireNotNull(ctx.fCurrent), PlantGain.empiricallyBounded(1.0, 0.9, 1.1))
+        val kstar = KStarEstimator.estimate(
+            typedInput(
+                petrolOnGasMs = 5.5,
+                petrolReferenceMs = 5.0,
+                currentFactor = requireNotNull(ctx.fCurrent),
+                gain = PlantGain.empiricallyBounded(1.0, 0.9, 1.1),
+                suffix = "curve",
+            ),
+        )
         val blocked = ConditionalActuatorTargets.curveGlobal(kstar, ctx, localResidualRemoved = false)
         assertNull(blocked.factor)
         assertEquals(MagnitudeAuthority.UNKNOWN, blocked.authority)
@@ -47,8 +56,47 @@ class ConditionalActuatorTargetTest {
 
     @Test fun `abstained K star cannot become actuator target`() {
         val ctx = context()
-        val kstar = KStarEstimator.estimate(5.5, 5.0, requireNotNull(ctx.fCurrent), PlantGain.unknown())
+        val kstar = KStarEstimator.estimate(
+            typedInput(
+                petrolOnGasMs = 5.5,
+                petrolReferenceMs = 5.0,
+                currentFactor = requireNotNull(ctx.fCurrent),
+                gain = PlantGain.unknown(),
+                suffix = "unknown",
+            ),
+        )
         assertNull(ConditionalActuatorTargets.mapLocal(kstar, ctx).factor)
         assertNull(ConditionalActuatorTargets.curveGlobal(kstar, ctx, true).factor)
     }
+
+    private fun typedInput(
+        petrolOnGasMs: Double,
+        petrolReferenceMs: Double,
+        currentFactor: Double,
+        gain: PlantGain,
+        suffix: String,
+    ): KStarScientificInput {
+        fun evidence(id: String): ResolvedScientificEvidence = ResolvedScientificEvidence(
+            authorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+            role = ScientificEvidenceRole.OBSERVATION,
+            evidenceIds = setOf(id),
+            physicalEvidenceId = id,
+            effectiveWeight = 1.0,
+            provenance = setOf("conditional-actuator-test"),
+        )
+        return KStarScientificInput(
+            petrolOnGas = ScientificMeasurement(petrolOnGasMs, evidence("cng-$suffix")),
+            petrolReference = ScientificMeasurement(petrolReferenceMs, evidence("gas-$suffix")),
+            currentFactor = currentFactor,
+            gain = gain,
+        )
+    }
+
+    private fun trace(cngId: String, gasId: String): KStarScientificTrace = KStarScientificTrace(
+        authorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+        evidenceIds = setOf(cngId, gasId),
+        petrolOnGasPhysicalEvidenceId = cngId,
+        petrolReferencePhysicalEvidenceId = gasId,
+        provenance = setOf("conditional-actuator-test"),
+    )
 }
