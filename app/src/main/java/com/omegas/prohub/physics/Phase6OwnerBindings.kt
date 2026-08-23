@@ -21,15 +21,15 @@ fun AssistedCalibrationAdvisor.correctionPolicyMetadata(): JSONObject = JSONObje
     .put("role", "STEP_POLICY_BASELINE")
 
 /**
- * Adds Phase 06 authority metadata to the legacy Advisor projection.
+ * Adds Phase 06 authority metadata to the Advisor projection.
  *
+ * The real Advisor statistics are first projected into typed causal evidence.
  * Legacy numerical deltas remain StepPolicy outputs and never become ideal
- * targets here. A causal mechanism is promoted only when the item carries a
- * complete, typed `physicsResidualEvidence` block accepted by
- * ResidualMechanismClassifier. Missing/malformed evidence remains UNKNOWN.
+ * targets here. Missing support or environmental context stays UNKNOWN.
  */
 fun AssistedCalibrationAdvisor.decoratePhysicsAuthority(advice: JSONObject): JSONObject {
     val output = JSONObject(advice.toString())
+    PhysicsResidualEvidenceProducer.populate(output)
     output.put("physicsPolicy", correctionPolicyMetadata())
     decorateLegacyLane(
         output.optJSONArray("kFactorSuggestions") ?: JSONArray(),
@@ -95,5 +95,11 @@ private fun JSONObject.toResidualEvidenceOrNull(): ResidualEvidence? = runCatchi
         mapMechanismSupported = getBoolean("mapMechanismSupported"),
         curveMechanismSupported = getBoolean("curveMechanismSupported"),
         direction = EffectDirection.valueOf(getString("direction")),
+        localizedStructureSupported = getBoolean("localizedStructureSupported"),
+        broadStructureSupported = getBoolean("broadStructureSupported"),
+        environmentalContextVerified = getBoolean("environmentalContextVerified"),
+        environmentalExplanationSupported = getBoolean("environmentalExplanationSupported"),
+        contradictionObserved = getBoolean("contradictionObserved"),
+        localResidualCleared = getBoolean("localResidualCleared"),
     )
 }.getOrNull()
