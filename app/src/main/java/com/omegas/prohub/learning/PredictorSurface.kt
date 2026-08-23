@@ -1,7 +1,6 @@
 package com.omegas.prohub.learning
 
 import com.omegas.prohub.calibration.KMapPhysicalAxes
-import com.omegas.prohub.calibration.MapKManualPlanner
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
@@ -23,7 +22,7 @@ object PredictorSurface {
     }
 
     /**
-     * Boundary canônico tipado do Step 147. A projeção JSONObject abaixo é
+     * Boundary canônico tipado do Step 147+. A projeção JSONObject abaixo é
      * mantida somente por compatibilidade diagnóstica e não substitui este
      * contrato como autoridade científica.
      */
@@ -86,10 +85,9 @@ object PredictorSurface {
                 val residual = residualByCell[key]
                 val cellAnchors = anchorsByCell[key].orEmpty()
                 val currentK = if (mapConfirmed) mapValue(mapRows, row, column) else null
+                // Advisor suggestedDeltaPercent é dado diagnóstico/damped. Sem K* direto,
+                // esta projeção legada não possui autoridade para fabricar IdealTarget.
                 val deltaPercent = residual?.nullableDouble("suggestedDeltaPercent")
-                val targetK = if (currentK != null && deltaPercent != null) {
-                    runCatching { MapKManualPlanner.target(currentK, "percent", deltaPercent) }.getOrNull()
-                } else null
 
                 val residualStage = residual?.optString("confidenceStage", "").orEmpty().uppercase()
                 val actionable = residual?.optBoolean("actionable", false) == true
@@ -131,7 +129,7 @@ object PredictorSurface {
                     .put("state", state.name)
                     .put("stateReason", stateReason(state, residual != null, cellAnchors.size, mapConfirmed))
                     .put("currentK", currentK ?: JSONObject.NULL)
-                    .put("targetK", targetK ?: JSONObject.NULL)
+                    .put("targetK", JSONObject.NULL)
                     .put("suggestedDeltaPercent", deltaPercent ?: JSONObject.NULL)
                     .put("residualErrorPercent", residual?.nullableDouble("residualErrorPercent") ?: JSONObject.NULL)
                     .put("uncertaintyPercent", residual?.nullableDouble("uncertaintyPercent") ?: JSONObject.NULL)
