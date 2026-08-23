@@ -49,6 +49,17 @@ class ResidualMechanismClassifierTest {
     }
 
     @Test
+    fun `zero comparable support always abstains regardless of scores`() {
+        val result = ResidualMechanismClassifier.classify(
+            ResidualEvidence(0, 0.92, 0.08, 0.02, 0.01, true, true, EffectDirection.INCREASE),
+        )
+        assertEquals(CorrectionMechanism.UNKNOWN, result.decision.mechanism)
+        assertEquals("NO_COMPARABLE_SUPPORT", result.reasonCode)
+        assertNull(result.decision.target)
+        assertTrue(result.nextEvidence.isNotBlank())
+    }
+
+    @Test
     fun `insufficient or contradictory evidence abstains with next evidence`() {
         val result = ResidualMechanismClassifier.classify(
             ResidualEvidence(2, 0.92, 0.80, 0.10, 0.78, true, true, EffectDirection.INCREASE),
