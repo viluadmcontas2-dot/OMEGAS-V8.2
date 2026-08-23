@@ -2,7 +2,7 @@ package com.omegas.prohub.service
 
 import com.omegas.prohub.calibration.V7CalibrationCoordinator
 import com.omegas.prohub.calibration.sanitizeUntrustedAdvisorIngressV7
-import com.omegas.prohub.calibration.sanitizeUntrustedLearningSnapshotV7
+import com.omegas.prohub.calibration.selectTrustedLearningSnapshotV7
 import com.omegas.prohub.learning.LearningMutationAuthority
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
 import com.omegas.prohub.learning.PredictorInterpolator
@@ -177,7 +177,12 @@ fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String):
 fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String = try {
     mutationBlockedOperation("ingest_learning_snapshot")?.toString()
         ?: V7CalibrationRegistry.get(this)
-            .ingestLearningSnapshot(sanitizeUntrustedLearningSnapshotV7(JSONObject(payload)))
+            .ingestLearningSnapshot(
+                selectTrustedLearningSnapshotV7(
+                    untrustedUiPayload = payload,
+                    nativeSnapshot = runtime.exportLearning(settings.deviceId),
+                ),
+            )
             .toString()
 } catch (error: Exception) {
     JSONObject()
