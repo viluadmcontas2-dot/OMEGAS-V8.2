@@ -82,6 +82,20 @@ class MotorSampleAnalyzerPrimaryPlausibilityTest {
         assertEquals(SampleClassification.INVALID, decision.classification)
     }
 
+    @Test
+    fun `zero injection preserves semantic hard-zero fuel states outside comparison`() {
+        listOf(
+            frame(at = 0L, rpm = 0, mapBar = 0.0, petrolMs = 0.0, fuel = Mp48Fuel.ENGINE_OFF) to "ENGINE_OFF",
+            frame(at = 50L, petrolMs = 0.0, fuel = Mp48Fuel.TRANSITION) to "FUEL_TRANSITION",
+            frame(at = 100L, petrolMs = 0.0, fuel = Mp48Fuel.UNKNOWN) to "FUEL_UNKNOWN",
+            frame(at = 150L, mapBar = 0.20, petrolMs = 0.0, fuel = Mp48Fuel.CUTOFF) to "CUTOFF",
+        ).forEach { (telemetry, expectedState) ->
+            val decision = MotorSampleAnalyzer { LearningTolerancePolicy(requiredFrames = 6) }.add(telemetry)
+            assertFalse(decision.learningEligible)
+            assertEquals(expectedState, decision.state)
+        }
+    }
+
     private fun frame(
         at: Long,
         rpm: Int = 2_500,
@@ -89,6 +103,7 @@ class MotorSampleAnalyzerPrimaryPlausibilityTest {
         petrolMs: Double = 4.0,
         waterC: Int = 80,
         gasC: Int = 30,
+        fuel: Mp48Fuel = Mp48Fuel.PETROL,
         plausible: Boolean = true,
         basePlausible: Boolean = plausible,
         plausibilityReasons: List<String> = emptyList(),
@@ -103,8 +118,8 @@ class MotorSampleAnalyzerPrimaryPlausibilityTest {
         petrolMs = petrolMs,
         dynamicCorrection = 0,
         fuelByte = 0x80,
-        fuel = Mp48Fuel.PETROL,
-        state = Mp48Fuel.PETROL.wireName,
+        fuel = fuel,
+        state = fuel.wireName,
         waterRaw = 80,
         waterC = waterC,
         gasC = gasC,
