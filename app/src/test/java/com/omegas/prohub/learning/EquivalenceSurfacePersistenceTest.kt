@@ -53,7 +53,7 @@ class EquivalenceSurfacePersistenceTest {
         val estimate = s.query(2500.0, 0.60).petrol!!
         assertEquals(3.0, estimate.meanTinjMs, 1e-9)
         assertEquals(0.04, estimate.varianceMs2, 1e-9)
-        assertEquals(1.0, estimate.effectiveSupport, 1e-9)
+        assertEquals(0.20, estimate.effectiveSupport, 1e-9)
         val snapshot = s.snapshot()
         assertEquals(1, snapshot.legacySeededRegions)
         assertEquals(LegacyPetrolSeedPolicy.PROVENANCE, snapshot.legacySeedProvenance)
