@@ -62,7 +62,7 @@ object V7UiProjection {
         val activeCng = state.activeCngEvidence().size
         val activeComparisons = state.activeComparisons().size
         val activePendingSuggestions = state.suggestions.count {
-            it.expectedRevision == state.calibration.revision && it.lifecycle == SuggestionLifecycleV7.PENDING
+            it.actionableAt(state.calibration.revision)
         }
         val activeAuthorities = state.activeSuggestions().map { suggestion ->
             SuggestionAuthorityUiV7(
