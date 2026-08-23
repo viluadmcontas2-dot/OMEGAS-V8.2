@@ -149,29 +149,114 @@ class CalibrationPhysicsFoundationTest {
         assertTrue(decision.evidencePath.isNotEmpty())
     }
 
-    @Test fun kStarEstimatorAbstainsWhenPlantGainIsUnknown() {
-        val unknown = KStarEstimator.estimate(
-            petrolOnGasMs = 4.4,
-            petrolReferenceMs = 4.0,
-            currentFactor = 1.0,
-            gain = PlantGain.unknown(),
-        )
-        assertNull(unknown.targetFactor)
-        assertEquals(MagnitudeAuthority.UNKNOWN, unknown.authority)
-        assertTrue(unknown.abstained)
+    @Test fun typedKStarReproducesCurrentNumericTarget() {
+        val estimate = KStarEstimator.estimate(kStarInput())
+        assertEquals(1.1, estimate.targetFactor!!, 1e-12)
+        assertFalse(estimate.abstained)
+        assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, estimate.authority)
+    }
 
-        val bounded = KStarEstimator.estimate(
-            petrolOnGasMs = 4.4,
-            petrolReferenceMs = 4.0,
-            currentFactor = 1.0,
-            gain = PlantGain.empiricallyBounded(mean = 1.0, lower = 0.8, upper = 1.2),
+    @Test fun producerLabelNeverChangesKStarMathematics() {
+        val targets = ScientificAuthority.values().map { authority ->
+            KStarEstimator.estimate(kStarInput(authority = authority)).targetFactor
+        }
+        assertEquals(1, targets.toSet().size)
+    }
+
+    @Test fun adaptivePredictionCannotMasqueradeAsObservation() {
+        val estimate = KStarEstimator.estimate(
+            kStarInput(
+                authority = ScientificAuthority.ADAPTIVE_SHADOW,
+                role = ScientificEvidenceRole.PREDICTION,
+                petrolOnGasPhysicalId = null,
+                petrolReferencePhysicalId = null,
+            ),
         )
-        assertTrue(bounded.targetFactor != null)
-        assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, bounded.authority)
+        assertTrue(estimate.abstained)
+        assertNull(estimate.targetFactor)
+        assertEquals(MagnitudeAuthority.UNKNOWN, estimate.authority)
+        assertEquals("PREDICTION_IS_NOT_OBSERVATION", estimate.reason)
+    }
+
+    @Test fun selfComparisonCannotCreateATarget() {
+        val estimate = KStarEstimator.estimate(
+            kStarInput(
+                petrolOnGasPhysicalId = "same-frame",
+                petrolReferencePhysicalId = "same-frame",
+            ),
+        )
+        assertTrue(estimate.abstained)
+        assertNull(estimate.targetFactor)
+        assertEquals("SELF_COMPARISON_EVIDENCE", estimate.reason)
+    }
+
+    @Test fun zeroScientificWeightCannotCreateATarget() {
+        val estimate = KStarEstimator.estimate(kStarInput(weight = 0.0))
+        assertTrue(estimate.abstained)
+        assertNull(estimate.targetFactor)
+        assertEquals("NO_SCIENTIFIC_WEIGHT", estimate.reason)
+    }
+
+    @Test fun unknownGainStillAbstainsAndKeepsScientificTrace() {
+        val estimate = KStarEstimator.estimate(kStarInput(gain = PlantGain.unknown()))
+        assertNull(estimate.targetFactor)
+        assertEquals(MagnitudeAuthority.UNKNOWN, estimate.authority)
+        assertTrue(estimate.abstained)
+        assertEquals("PLANT_GAIN_UNKNOWN", estimate.reason)
+        assertEquals(
+            setOf(ScientificAuthority.CLASSIC_ASSISTED),
+            estimate.scientificTrace.authorities,
+        )
+        assertEquals("cng-frame", estimate.scientificTrace.petrolOnGasPhysicalEvidenceId)
+        assertEquals("gas-frame", estimate.scientificTrace.petrolReferencePhysicalEvidenceId)
+    }
+
+    @Test fun publicKStarApiHasNoRawDoubleBypass() {
+        val estimates = KStarEstimator::class.java.methods.filter { it.name == "estimate" }
+        assertEquals(1, estimates.size)
+        assertEquals(
+            listOf(KStarScientificInput::class.java),
+            estimates.single().parameterTypes.toList(),
+        )
     }
 
     @Test fun bilinearProjectionIsExplicitlyALocalModel() {
         assertEquals(PhysicsModelAuthority.LOCAL_MODEL, PhysicsModelContract.BILINEAR_AUTHORITY)
         assertFalse(PhysicsModelContract.BILINEAR_AUTHORITY == PhysicsModelAuthority.ECU_INTERPOLATOR)
     }
+
+    private fun evidence(
+        authority: ScientificAuthority,
+        role: ScientificEvidenceRole,
+        evidenceId: String,
+        physicalId: String?,
+        weight: Double = 1.0,
+    ): ResolvedScientificEvidence = ResolvedScientificEvidence(
+        authorities = setOf(authority),
+        role = role,
+        evidenceIds = setOf(evidenceId),
+        physicalEvidenceId = physicalId,
+        effectiveWeight = weight,
+        provenance = setOf("test-provenance"),
+    )
+
+    private fun kStarInput(
+        authority: ScientificAuthority = ScientificAuthority.CLASSIC_ASSISTED,
+        role: ScientificEvidenceRole = ScientificEvidenceRole.OBSERVATION,
+        petrolOnGasPhysicalId: String? = "cng-frame",
+        petrolReferencePhysicalId: String? = "gas-frame",
+        weight: Double = 1.0,
+        gain: PlantGain = PlantGain.empiricallyBounded(mean = 1.0, lower = 0.8, upper = 1.2),
+    ): KStarScientificInput = KStarScientificInput(
+        petrolOnGas = ScientificMeasurement(
+            valueMs = 4.4,
+            evidence = evidence(authority, role, "cng-evidence", petrolOnGasPhysicalId, weight),
+        ),
+        petrolReference = ScientificMeasurement(
+            valueMs = 4.0,
+            evidence = evidence(authority, role, "gas-evidence", petrolReferencePhysicalId, weight),
+        ),
+        currentFactor = 1.0,
+        gain = gain,
+    )
 }
