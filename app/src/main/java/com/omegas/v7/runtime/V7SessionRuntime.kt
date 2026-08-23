@@ -395,6 +395,7 @@ class V7SessionRuntime(
                 recentErrorPercent = stability.recentErrorPercent,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Revalidando esta célula: o alvo anterior foi preservado, mas fica bloqueado até a tendência recente se confirmar ou desaparecer.",
+                physics = fresh.physics,
             )
         }
 
@@ -409,6 +410,7 @@ class V7SessionRuntime(
                     recentErrorPercent = stability.recentErrorPercent,
                     updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                     rationale = stability.reason,
+                    physics = fresh.physics,
                 )
             } else {
                 metadata.copy(lifecycle = SuggestionLifecycleV7.OBSERVING, mapChanges = emptyList(), rationale = stability.reason)
@@ -424,6 +426,7 @@ class V7SessionRuntime(
                 recentErrorPercent = null,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Consolidado preservado; a sugestão permanece estável até aplicação ou revalidação real.",
+                physics = fresh.physics,
             )
         }
         return metadata.copy(
@@ -471,6 +474,7 @@ class V7SessionRuntime(
                 recentErrorPercent = recentError,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Revalidando tendência global: a proposta anterior foi preservada, mas fica bloqueada enquanto a mudança recente é verificada.",
+                physics = fresh.physics,
             )
         }
 
@@ -486,6 +490,7 @@ class V7SessionRuntime(
                     recentErrorPercent = recentError,
                     updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                     rationale = "Tendência global preservada, mas ainda falta cobertura independente em RPM/MAP para liberar ajuste da Curva K.",
+                    physics = fresh.physics,
                 )
             } else {
                 fresh.copy(
@@ -511,6 +516,7 @@ class V7SessionRuntime(
                 recentErrorPercent = null,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Tendência global consolidada preservada; a proposta não acompanha oscilações de cada nova amostra.",
+                physics = fresh.physics,
             )
         }
         return fresh.copy(
