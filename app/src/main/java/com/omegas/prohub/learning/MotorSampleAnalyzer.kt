@@ -505,9 +505,19 @@ class MotorSampleAnalyzer(
     private fun isPrimaryEquivalencePlausible(frame: Mp48Telemetry): Boolean =
         frame.rpm in 0..9_000 &&
             frame.mapBar in 0.0..2.5 &&
+            frame.petrolMs in 0.0..40.0 &&
             (
-                (frame.petrolMs > 0.0 && frame.petrolMs <= 40.0) ||
-                    (frame.petrolMs == 0.0 && (frame.fuel == Mp48Fuel.CUTOFF || isPhysicalCutoff(frame)))
+                frame.petrolMs > 0.0 ||
+                    when (frame.fuel) {
+                        Mp48Fuel.ENGINE_OFF,
+                        Mp48Fuel.TRANSITION,
+                        Mp48Fuel.CUTOFF,
+                        Mp48Fuel.UNKNOWN,
+                        -> true
+                        Mp48Fuel.PETROL,
+                        Mp48Fuel.CNG,
+                        -> isPhysicalCutoff(frame)
+                    }
                 )
 
     private fun isPhysicalCutoff(frame: Mp48Telemetry): Boolean = policy.let { active ->
