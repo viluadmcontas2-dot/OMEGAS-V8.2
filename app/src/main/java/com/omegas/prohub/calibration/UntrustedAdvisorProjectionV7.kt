@@ -13,6 +13,13 @@ import org.json.JSONObject
  * Advisor context, but strip every field capable of authorizing a concrete target.
  * Only a fresh native Advisor -> Physics computation may promote authority again.
  */
+internal fun sanitizeUntrustedAdvisorIngressV7(payload: JSONObject): JSONObject {
+    val precomputed = payload.optJSONObject("assistedCalibration")
+        ?: payload.optJSONObject("assisted_calibration")
+        ?: payload
+    return sanitizeUntrustedAdvisorProjectionV7(precomputed)
+}
+
 internal fun sanitizeUntrustedAdvisorProjectionV7(advice: JSONObject): JSONObject {
     val output = JSONObject(advice.toString())
     sanitizeUntrustedLane(
