@@ -20,6 +20,26 @@ internal fun sanitizeUntrustedAdvisorIngressV7(payload: JSONObject): JSONObject 
     return sanitizeUntrustedAdvisorProjectionV7(precomputed)
 }
 
+/**
+ * Learning ingress is allowed to carry raw regions/comparisons because the native
+ * Advisor recomputes them. Any precomputed Advisor/Physics projection is removed so
+ * it cannot outrank that native computation at V7CalibrationCoordinator.resolveAdvice.
+ */
+internal fun sanitizeUntrustedLearningSnapshotV7(payload: JSONObject): JSONObject =
+    JSONObject(payload.toString()).apply {
+        remove("assistedCalibration")
+        remove("assisted_calibration")
+        remove("kFactorSuggestions")
+        remove("mapResidualSuggestions")
+        remove("mapCorrectionRegions")
+        remove("physicsPolicy")
+        remove("physicsIngress")
+        remove("physicsAuthoritative")
+        remove("primaryAuthority")
+        remove("inputSource")
+        remove("environmentGates")
+    }
+
 internal fun sanitizeUntrustedAdvisorProjectionV7(advice: JSONObject): JSONObject {
     val output = JSONObject(advice.toString())
     sanitizeUntrustedLane(
