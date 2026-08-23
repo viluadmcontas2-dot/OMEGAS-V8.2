@@ -7,18 +7,9 @@ import org.junit.Test
 
 class ResidualMechanismClassifierTest {
     @Test
-    fun `localized repeatable residual selects map local candidate`() {
+    fun `localized supported structure selects map local candidate`() {
         val result = ResidualMechanismClassifier.classify(
-            ResidualEvidence(
-                comparableSamples = 12,
-                localizedRepeatability = 0.88,
-                broadCoherence = 0.22,
-                environmentalCorrelation = 0.10,
-                contradiction = 0.08,
-                mapMechanismSupported = true,
-                curveMechanismSupported = true,
-                direction = EffectDirection.INCREASE,
-            ),
+            evidence(local = true, mapSupported = true),
         )
         assertEquals(CorrectionMechanism.MAP_LOCAL, result.decision.mechanism)
         assertEquals("LOCALIZED_REPEATABLE", result.reasonCode)
@@ -26,22 +17,27 @@ class ResidualMechanismClassifierTest {
     }
 
     @Test
-    fun `broad residual needs curve mechanism support`() {
+    fun `broad residual requires curve support and cleared local residual`() {
         val supported = ResidualMechanismClassifier.classify(
-            ResidualEvidence(20, 0.20, 0.91, 0.12, 0.05, true, true, EffectDirection.DECREASE),
+            evidence(broad = true, curveSupported = true, localResidualCleared = true),
         )
         val unsupported = ResidualMechanismClassifier.classify(
-            ResidualEvidence(20, 0.20, 0.91, 0.12, 0.05, true, false, EffectDirection.DECREASE),
+            evidence(broad = true, curveSupported = false, localResidualCleared = true),
+        )
+        val uncleared = ResidualMechanismClassifier.classify(
+            evidence(broad = true, curveSupported = true, localResidualCleared = false),
         )
         assertEquals(CorrectionMechanism.CURVE_MUL_ACT, supported.decision.mechanism)
         assertEquals(CorrectionMechanism.UNKNOWN, unsupported.decision.mechanism)
-        assertNull(unsupported.decision.target)
+        assertEquals("BROAD_WITHOUT_CURVE_MECHANISM_SUPPORT", unsupported.reasonCode)
+        assertEquals(CorrectionMechanism.UNKNOWN, uncleared.decision.mechanism)
+        assertEquals("LOCAL_RESIDUAL_NOT_CLEARED", uncleared.reasonCode)
     }
 
     @Test
     fun `environmental confounder never defaults to k correction`() {
         val result = ResidualMechanismClassifier.classify(
-            ResidualEvidence(14, 0.55, 0.60, 0.86, 0.12, true, true, EffectDirection.INCREASE),
+            evidence(environmental = true),
         )
         assertEquals(CorrectionMechanism.ENVIRONMENTAL_DIAGNOSTIC, result.decision.mechanism)
         assertNull(result.decision.target)
@@ -49,9 +45,19 @@ class ResidualMechanismClassifierTest {
     }
 
     @Test
-    fun `zero comparable support always abstains regardless of scores`() {
+    fun `unverified environmental context abstains before causal mechanism`() {
         val result = ResidualMechanismClassifier.classify(
-            ResidualEvidence(0, 0.92, 0.08, 0.02, 0.01, true, true, EffectDirection.INCREASE),
+            evidence(local = true, environmentalContextVerified = false),
+        )
+        assertEquals(CorrectionMechanism.UNKNOWN, result.decision.mechanism)
+        assertEquals("ENVIRONMENT_CONTEXT_UNVERIFIED", result.reasonCode)
+        assertNull(result.decision.target)
+    }
+
+    @Test
+    fun `zero comparable support always abstains regardless of structure`() {
+        val result = ResidualMechanismClassifier.classify(
+            evidence(samples = 0, local = true, broad = true),
         )
         assertEquals(CorrectionMechanism.UNKNOWN, result.decision.mechanism)
         assertEquals("NO_COMPARABLE_SUPPORT", result.reasonCode)
@@ -60,11 +66,12 @@ class ResidualMechanismClassifierTest {
     }
 
     @Test
-    fun `insufficient or contradictory evidence abstains with next evidence`() {
+    fun `explicit contradiction abstains with next evidence`() {
         val result = ResidualMechanismClassifier.classify(
-            ResidualEvidence(2, 0.92, 0.80, 0.10, 0.78, true, true, EffectDirection.INCREASE),
+            evidence(local = true, contradiction = true),
         )
         assertEquals(CorrectionMechanism.UNKNOWN, result.decision.mechanism)
+        assertEquals("CONTRADICTORY_EVIDENCE", result.reasonCode)
         assertNull(result.decision.target)
         assertTrue(result.nextEvidence.isNotBlank())
     }
@@ -79,4 +86,31 @@ class ResidualMechanismClassifierTest {
         assertEquals(0.0, allocation.curveShare, 0.0)
         assertTrue(allocation.mapShare + allocation.curveShare <= 1.0)
     }
+
+    private fun evidence(
+        samples: Int = 4,
+        local: Boolean = false,
+        broad: Boolean = false,
+        environmental: Boolean = false,
+        environmentalContextVerified: Boolean = true,
+        contradiction: Boolean = false,
+        localResidualCleared: Boolean = true,
+        mapSupported: Boolean = true,
+        curveSupported: Boolean = true,
+    ) = ResidualEvidence(
+        comparableSamples = samples,
+        localizedRepeatability = if (local) 1.0 else 0.0,
+        broadCoherence = if (broad) 1.0 else 0.0,
+        environmentalCorrelation = if (environmental) 1.0 else 0.0,
+        contradiction = if (contradiction) 1.0 else 0.0,
+        mapMechanismSupported = mapSupported,
+        curveMechanismSupported = curveSupported,
+        direction = EffectDirection.INCREASE,
+        localizedStructureSupported = local,
+        broadStructureSupported = broad,
+        environmentalContextVerified = environmentalContextVerified,
+        environmentalExplanationSupported = environmental,
+        contradictionObserved = contradiction,
+        localResidualCleared = localResidualCleared,
+    )
 }
