@@ -83,20 +83,24 @@ class MotorSampleAnalyzerContinuousEvidenceTest {
     }
 
     @Test
-    fun `base plausibility failure remains hard zero`() {
+    fun `legacy base plausibility flag alone does not gate valid primary telemetry`() {
         val analyzer = MotorSampleAnalyzer { policy }
-        val invalid = analyzer.add(
-            frame(
-                at = 0L,
-                fuel = Mp48Fuel.CNG,
-                plausible = false,
-                basePlausible = false,
-                cngPressurePlausible = true,
-            ),
-        )
+        var decision: SampleDecision? = null
+        repeat(6) { index ->
+            decision = analyzer.add(
+                frame(
+                    at = index * 50L,
+                    fuel = Mp48Fuel.CNG,
+                    plausible = false,
+                    basePlausible = false,
+                    cngPressurePlausible = true,
+                ),
+            )
+        }
 
-        assertFalse(invalid.learningEligible)
-        assertEquals("INVALID", invalid.state)
+        assertTrue(decision!!.learningEligible)
+        assertNotNull(decision!!.sample)
+        assertEquals("SAMPLE_ACCEPTED", decision!!.state)
     }
 
     @Test
