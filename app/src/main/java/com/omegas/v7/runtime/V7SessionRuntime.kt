@@ -101,6 +101,7 @@ data class LocalSuggestionV7(
     val stabilityState: String = "UNASSESSED",
     val consolidatedErrorPercent: Double? = null,
     val recentErrorPercent: Double? = null,
+    val physics: PhysicsSuggestionMetadataV7 = PhysicsSuggestionMetadataV7(),
 ) {
     init {
         require(id.isNotBlank())
@@ -128,7 +129,7 @@ data class LocalSuggestionV7(
             when (target) {
                 SuggestionTargetV7.CURVE_K -> curveChanges.isNotEmpty()
                 SuggestionTargetV7.MAP_K -> mapChanges.isNotEmpty()
-            }
+            } && (!id.startsWith("advisor-") || physics.authorizes(target))
 }
 
 data class CheckpointV7(
