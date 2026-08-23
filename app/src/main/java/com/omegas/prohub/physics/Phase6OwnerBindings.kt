@@ -47,6 +47,7 @@ private fun decorateLegacyLane(items: JSONArray, candidateLane: CorrectionMechan
     repeat(items.length()) { index ->
         val item = items.optJSONObject(index) ?: return@repeat
         item.put("magnitudeAuthority", MagnitudeAuthority.POLICY_ONLY.name)
+            .put("stepAuthority", MagnitudeAuthority.POLICY_ONLY.name)
             .put("magnitudeRole", "STEP_POLICY_BASELINE")
             .put("correctionMechanism", CorrectionMechanism.UNKNOWN.name)
             .put("mechanismCandidateLane", candidateLane.name)
@@ -70,13 +71,19 @@ private fun decorateLegacyLane(items: JSONArray, candidateLane: CorrectionMechan
         } else {
             "CANDIDATE_LANE_MISMATCH:${classification.reasonCode}"
         }
+        val effect = classification.decision.effect
 
         item.put("correctionMechanism", exportedMechanism.name)
             .put("mechanismReasonCode", reasonCode)
             .put("mechanismEvidencePath", JSONArray(classification.decision.evidencePath))
             .put("mechanismUncertaintyInflation", classification.uncertaintyInflation)
             .put("mechanismNextEvidence", classification.nextEvidence)
-            .put("expectedEffectDirection", classification.decision.effect.direction.name)
+            .put("expectedEffectDirection", effect.direction.name)
+            .put("expectedEffectAuthority", effect.authority.name)
+            .put("expectedEffectAssumptions", JSONArray(effect.assumptions))
+            .put("expectedEffectFalsifier", effect.falsifier)
+        effect.lowerBound?.let { item.put("expectedEffectLowerBound", it) }
+        effect.upperBound?.let { item.put("expectedEffectUpperBound", it) }
     }
 }
 
