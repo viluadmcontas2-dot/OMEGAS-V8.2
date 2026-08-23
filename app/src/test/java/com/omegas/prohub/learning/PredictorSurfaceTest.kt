@@ -10,7 +10,7 @@ import org.junit.Test
 
 class PredictorSurfaceTest {
     @Test
-    fun `direct residual plus native anchor and confirmed map produces validated target`() {
+    fun `direct residual plus native anchor stays diagnostic without fabricating ideal target`() {
         val row = 2
         val column = 3
         val learning = learning(
@@ -25,7 +25,7 @@ class PredictorSurfaceTest {
         assertEquals("RPM_X_PETROL_INJECTION_MS", surface.getString("physicalAxis"))
         assertEquals("VALIDADO", cell.getString("state"))
         assertEquals(120, cell.getInt("currentK"))
-        assertEquals(132, cell.getInt("targetK"))
+        assertTrue(cell.isNull("targetK"))
         assertEquals(10.0, cell.getDouble("suggestedDeltaPercent"), 1e-9)
         assertEquals(1, cell.getInt("nativeAnchorCount"))
         assertFalse(cell.getBoolean("predicted"))
@@ -49,6 +49,7 @@ class PredictorSurfaceTest {
 
         assertEquals("OBSERVADO", cell.getString("state"))
         assertEquals(0, cell.getInt("nativeAnchorCount"))
+        assertTrue(cell.isNull("targetK"))
         assertFalse(cell.getBoolean("predicted"))
     }
 
@@ -95,10 +96,11 @@ class PredictorSurfaceTest {
 
         assertEquals("OBSERVADO", cell(surface, row, column).getString("state"))
         assertEquals(0, cell(surface, row, column).getInt("nativeAnchorCount"))
+        assertTrue(cell(surface, row, column).isNull("targetK"))
     }
 
     @Test
-    fun `primary rpm map tinj science needs no environmental fields in predictor`() {
+    fun `primary rpm map tinj science keeps advisor delta diagnostic only`() {
         val row = 3
         val column = 4
         val learning = learning(
@@ -111,7 +113,8 @@ class PredictorSurfaceTest {
         val projected = cell(result, row, column)
 
         assertEquals("VALIDADO", projected.getString("state"))
-        assertEquals(127, projected.getInt("targetK"))
+        assertTrue(projected.isNull("targetK"))
+        assertEquals(6.0, projected.getDouble("suggestedDeltaPercent"), 1e-12)
         assertFalse(result.getBoolean("automaticWrite"))
     }
 
@@ -130,6 +133,7 @@ class PredictorSurfaceTest {
         val projected = cell(PredictorSurface.build(learning, confirmedMap(120)), row, column)
 
         assertEquals(0.21, projected.getDouble("confidence"), 1e-12)
+        assertTrue(projected.isNull("targetK"))
     }
 
     @Test
