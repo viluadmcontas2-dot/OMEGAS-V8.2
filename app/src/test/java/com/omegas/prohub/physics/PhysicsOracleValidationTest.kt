@@ -17,7 +17,7 @@ class PhysicsOracleValidationTest {
         val first = PhysicsOracleValidator.bootstrap(observations, currentFactor = 1.0, gain = gain, resamples = 800, seed = 77L)
         val second = PhysicsOracleValidator.bootstrap(observations, currentFactor = 1.0, gain = gain, resamples = 800, seed = 77L)
         assertEquals(first, second)
-        val analytic = KStarEstimator.estimate(5.304, 5.004, 1.0, gain)
+        val analytic = KStarEstimator.estimate(typedInput(5.304, 5.004, 1.0, gain, "bootstrap"))
         assertTrue(requireNotNull(analytic.targetFactor) in requireNotNull(first.lower95)..requireNotNull(first.upper95))
     }
 
@@ -25,15 +25,17 @@ class PhysicsOracleValidationTest {
         val gain = PlantGain.empiricallyBounded(1.0, 0.9, 1.1)
         val low = PhysicsOracleValidator.gumEquivalent(5.30, 5.00, 1.0, gain, relativeStd = 0.005)
         val high = PhysicsOracleValidator.gumEquivalent(5.30, 5.00, 1.0, gain, relativeStd = 0.030)
-        val nominal = requireNotNull(KStarEstimator.estimate(5.30, 5.00, 1.0, gain).targetFactor)
+        val nominal = requireNotNull(
+            KStarEstimator.estimate(typedInput(5.30, 5.00, 1.0, gain, "gum")).targetFactor,
+        )
         assertTrue(nominal in requireNotNull(low.lower95)..requireNotNull(low.upper95))
         assertTrue(requireNotNull(high.upper95) - requireNotNull(high.lower95) > requireNotNull(low.upper95) - requireNotNull(low.lower95))
     }
 
     @Test fun `ratio target is invariant to common time scaling`() {
         val gain = PlantGain.empiricallyBounded(1.0, 1.0, 1.0)
-        val a = KStarEstimator.estimate(5.5, 5.0, 1.0, gain)
-        val b = KStarEstimator.estimate(11.0, 10.0, 1.0, gain)
+        val a = KStarEstimator.estimate(typedInput(5.5, 5.0, 1.0, gain, "scale-a"))
+        val b = KStarEstimator.estimate(typedInput(11.0, 10.0, 1.0, gain, "scale-b"))
         assertEquals(requireNotNull(a.targetFactor), requireNotNull(b.targetFactor), 1e-12)
     }
 
@@ -48,5 +50,28 @@ class PhysicsOracleValidationTest {
         assertTrue(report.coverage in 0.0..1.0)
         assertEquals(holdouts.size, report.total)
         assertTrue(report.covered > 0)
+    }
+
+    private fun typedInput(
+        petrolOnGasMs: Double,
+        petrolReferenceMs: Double,
+        currentFactor: Double,
+        gain: PlantGain,
+        suffix: String,
+    ): KStarScientificInput {
+        fun evidence(id: String): ResolvedScientificEvidence = ResolvedScientificEvidence(
+            authorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+            role = ScientificEvidenceRole.OBSERVATION,
+            evidenceIds = setOf(id),
+            physicalEvidenceId = id,
+            effectiveWeight = 1.0,
+            provenance = setOf("physics-oracle-validation-test"),
+        )
+        return KStarScientificInput(
+            petrolOnGas = ScientificMeasurement(petrolOnGasMs, evidence("cng-$suffix")),
+            petrolReference = ScientificMeasurement(petrolReferenceMs, evidence("gas-$suffix")),
+            currentFactor = currentFactor,
+            gain = gain,
+        )
     }
 }
