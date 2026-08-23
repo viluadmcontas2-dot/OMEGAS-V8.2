@@ -77,6 +77,21 @@ class AdvisorSuggestionAdapterV7Test {
     }
 
     @Test
+    fun unknown_expected_effect_authority_stays_observing() {
+        val item = mapItem(0, 0, 10.0)
+        item.remove("expectedEffectAuthority")
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray())
+            .put("mapResidualSuggestions", JSONArray().put(item))
+
+        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
+
+        assertEquals(MagnitudeAuthority.UNKNOWN, suggestion.physics.effectAuthority)
+        assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
+        assertTrue(suggestion.mapChanges.isEmpty())
+    }
+
+    @Test
     fun explicit_ideal_empirical_target_with_matching_map_mechanism_can_be_pending() {
         val advice = JSONObject()
             .put("kFactorSuggestions", JSONArray())
@@ -181,6 +196,7 @@ class AdvisorSuggestionAdapterV7Test {
                     .put("idealTarget", true)
                     .put("correctionMechanism", CorrectionMechanism.CURVE_MUL_ACT.name)
                     .put("expectedEffectDirection", EffectDirection.INCREASE.name)
+                    .put("expectedEffectAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
                     .put("expectedEffectFalsifier", "curve response fails to improve")
                     .put("mechanismEvidencePath", JSONArray().put("broad coherent residual"))))
             .put("mapResidualSuggestions", JSONArray())
@@ -274,6 +290,7 @@ class AdvisorSuggestionAdapterV7Test {
         .put("idealTarget", true)
         .put("correctionMechanism", CorrectionMechanism.MAP_LOCAL.name)
         .put("expectedEffectDirection", EffectDirection.INCREASE.name)
+        .put("expectedEffectAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
         .put("expectedEffectFalsifier", "map response fails to improve")
         .put("mechanismEvidencePath", JSONArray().put("localized residual"))
 }
