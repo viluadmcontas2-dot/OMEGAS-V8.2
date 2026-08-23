@@ -1,5 +1,7 @@
 package com.omegas.prohub.calibration
 
+import com.omegas.prohub.physics.CorrectionMechanism
+import com.omegas.prohub.physics.MagnitudeAuthority
 import com.omegas.v7.runtime.CalibrationRevisionV7
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
@@ -26,6 +28,64 @@ class AdvisorSuggestionAdapterV7Test {
             List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
         },
     )
+
+    @Test
+    fun policy_only_unknown_map_advice_stays_observing_even_when_legacy_item_is_actionable() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray())
+            .put("mapResidualSuggestions", JSONArray().put(
+                JSONObject()
+                    .put("row", 2)
+                    .put("column", 4)
+                    .put("actionable", true)
+                    .put("suggestedDeltaPercent", 12.0)
+                    .put("confidence", 0.9)
+                    .put("magnitudeAuthority", MagnitudeAuthority.POLICY_ONLY.name)
+                    .put("idealTarget", false)
+                    .put("correctionMechanism", CorrectionMechanism.UNKNOWN.name)
+                    .put("mechanismCandidateLane", CorrectionMechanism.MAP_LOCAL.name),
+            ))
+
+        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
+
+        assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
+        assertTrue(suggestion.mapChanges.isEmpty())
+    }
+
+    @Test
+    fun candidate_lane_alone_never_authorizes_a_curve_change() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray().put(
+                JSONObject()
+                    .put("index", 3)
+                    .put("actionable", true)
+                    .put("suggestedDeltaPercent", 8.0)
+                    .put("confidence", 0.9)
+                    .put("readiness", "AVAILABLE")
+                    .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
+                    .put("idealTarget", true)
+                    .put("correctionMechanism", CorrectionMechanism.UNKNOWN.name)
+                    .put("mechanismCandidateLane", CorrectionMechanism.CURVE_MUL_ACT.name),
+            ))
+            .put("mapResidualSuggestions", JSONArray())
+
+        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
+
+        assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
+        assertTrue(suggestion.curveChanges.isEmpty())
+    }
+
+    @Test
+    fun explicit_ideal_empirical_target_with_matching_map_mechanism_can_be_pending() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray())
+            .put("mapResidualSuggestions", JSONArray().put(mapItem(0, 0, 10.0)))
+
+        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
+
+        assertEquals(SuggestionLifecycleV7.PENDING, suggestion.lifecycle)
+        assertEquals(121, suggestion.mapChanges.single().after)
+    }
 
     @Test
     fun map_advice_becomes_one_persistent_entity_per_editable_cell() {
@@ -115,7 +175,10 @@ class AdvisorSuggestionAdapterV7Test {
                     .put("actionable", true)
                     .put("suggestedDeltaPercent", 8.0)
                     .put("confidence", 0.9)
-                    .put("readiness", "AVAILABLE")))
+                    .put("readiness", "AVAILABLE")
+                    .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
+                    .put("idealTarget", true)
+                    .put("correctionMechanism", CorrectionMechanism.CURVE_MUL_ACT.name)))
             .put("mapResidualSuggestions", JSONArray())
             .put("mapCorrectionRegions", JSONArray())
 
@@ -203,4 +266,7 @@ class AdvisorSuggestionAdapterV7Test {
         .put("actionable", true)
         .put("suggestedDeltaPercent", deltaPercent)
         .put("confidence", 0.90)
+        .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
+        .put("idealTarget", true)
+        .put("correctionMechanism", CorrectionMechanism.MAP_LOCAL.name)
 }
