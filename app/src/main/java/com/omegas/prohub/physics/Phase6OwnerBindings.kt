@@ -21,11 +21,12 @@ fun AssistedCalibrationAdvisor.correctionPolicyMetadata(): JSONObject = JSONObje
     .put("role", "STEP_POLICY_BASELINE")
 
 /**
- * Adds Phase 06 authority metadata to the legacy Advisor projection without
- * promoting a lane to a causal mechanism. Legacy numerical deltas remain
- * StepPolicy outputs. `mechanismCandidateLane` is only routing provenance;
- * `correctionMechanism` stays UNKNOWN until ResidualMechanismClassifier emits
- * an evidence-backed decision.
+ * Adds Phase 06 authority metadata to the legacy Advisor projection.
+ *
+ * Legacy numerical deltas remain StepPolicy outputs and never become ideal
+ * targets here. A causal mechanism is promoted only when the item carries a
+ * complete, typed `physicsResidualEvidence` block accepted by
+ * ResidualMechanismClassifier. Missing/malformed evidence remains UNKNOWN.
  */
 fun AssistedCalibrationAdvisor.decoratePhysicsAuthority(advice: JSONObject): JSONObject {
     val output = JSONObject(advice.toString())
@@ -49,10 +50,50 @@ private fun decorateLegacyLane(items: JSONArray, candidateLane: CorrectionMechan
             .put("correctionMechanism", CorrectionMechanism.UNKNOWN.name)
             .put("mechanismCandidateLane", candidateLane.name)
             .put("idealTarget", false)
-            .put("expectedEffectDirection", when (item.optString("direction")) {
-                "INCREASE_CNG_DELIVERY" -> EffectDirection.INCREASE.name
-                "DECREASE_CNG_DELIVERY" -> EffectDirection.DECREASE.name
-                else -> EffectDirection.UNKNOWN.name
-            })
+            .put("expectedEffectDirection", legacyDirection(item).name)
+
+        val typedEvidence = item.optJSONObject("physicsResidualEvidence")
+            ?.toResidualEvidenceOrNull()
+            ?: return@repeat
+        val classification = ResidualMechanismClassifier.classify(typedEvidence)
+        val classifiedMechanism = classification.decision.mechanism
+        val exportedMechanism = when (classifiedMechanism) {
+            candidateLane,
+            CorrectionMechanism.ENVIRONMENTAL_DIAGNOSTIC,
+            CorrectionMechanism.NO_ACTION,
+            CorrectionMechanism.UNKNOWN -> classifiedMechanism
+            else -> CorrectionMechanism.UNKNOWN
+        }
+        val reasonCode = if (exportedMechanism == classifiedMechanism) {
+            classification.reasonCode
+        } else {
+            "CANDIDATE_LANE_MISMATCH:${classification.reasonCode}"
+        }
+
+        item.put("correctionMechanism", exportedMechanism.name)
+            .put("mechanismReasonCode", reasonCode)
+            .put("mechanismEvidencePath", JSONArray(classification.decision.evidencePath))
+            .put("mechanismUncertaintyInflation", classification.uncertaintyInflation)
+            .put("mechanismNextEvidence", classification.nextEvidence)
+            .put("expectedEffectDirection", classification.decision.effect.direction.name)
     }
 }
+
+private fun legacyDirection(item: JSONObject): EffectDirection = when (item.optString("direction")) {
+    "INCREASE_CNG_DELIVERY" -> EffectDirection.INCREASE
+    "DECREASE_CNG_DELIVERY" -> EffectDirection.DECREASE
+    else -> EffectDirection.UNKNOWN
+}
+
+private fun JSONObject.toResidualEvidenceOrNull(): ResidualEvidence? = runCatching {
+    ResidualEvidence(
+        comparableSamples = getInt("comparableSamples"),
+        localizedRepeatability = getDouble("localizedRepeatability"),
+        broadCoherence = getDouble("broadCoherence"),
+        environmentalCorrelation = getDouble("environmentalCorrelation"),
+        contradiction = getDouble("contradiction"),
+        mapMechanismSupported = getBoolean("mapMechanismSupported"),
+        curveMechanismSupported = getBoolean("curveMechanismSupported"),
+        direction = EffectDirection.valueOf(getString("direction")),
+    )
+}.getOrNull()
