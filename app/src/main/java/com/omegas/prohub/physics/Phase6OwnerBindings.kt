@@ -25,7 +25,8 @@ fun AssistedCalibrationAdvisor.correctionPolicyMetadata(): JSONObject = JSONObje
  *
  * The real Advisor statistics are first projected into typed causal evidence.
  * Legacy numerical deltas remain StepPolicy outputs and never become ideal
- * targets here. Missing support or environmental context stays UNKNOWN.
+ * targets here. Missing primary support or incomplete causal ordering stays
+ * UNKNOWN; optional environmental metadata never gates RPM+MAP+Tinj physics.
  */
 fun AssistedCalibrationAdvisor.decoratePhysicsAuthority(advice: JSONObject): JSONObject {
     val output = JSONObject(advice.toString())
