@@ -95,8 +95,8 @@ data class PredictorEvidenceStamp(
 
 /**
  * Evidência K* direta observada. Prediction é outro tipo e não herda deste tipo.
- * `currentK` é contexto para o futuro campo relativo delta*=ln(K*/Kcurrent), não
- * uma autorização de escrita e não uma StepPolicy amortecida.
+ * `currentK` é contexto para o futuro campo relativo delta*=ln(K_star / K_current),
+ * não uma autorização de escrita e não uma StepPolicy amortecida.
  */
 data class PredictorObservation(
     val cell: PredictorCell,
