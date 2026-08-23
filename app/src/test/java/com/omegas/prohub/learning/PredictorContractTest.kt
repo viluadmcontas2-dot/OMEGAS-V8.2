@@ -19,6 +19,17 @@ class PredictorContractTest {
     }
 
     @Test
+    fun `ideal target follows observed K star rather than legacy damped delta`() {
+        val result = PredictorContract.evaluate(
+            input().copy(observations = listOf(observation(kStar = 147.0))),
+        )
+
+        assertEquals(PredictorSnapshotState.READY, result.state)
+        assertEquals(147, result.candidates.single().targetK)
+        assertEquals(120, result.candidates.single().currentKObserved)
+    }
+
+    @Test
     fun `calibration fingerprint mismatch fails closed`() {
         val base = input()
         val mismatched = base.copy(
@@ -148,13 +159,12 @@ class PredictorContractTest {
 
     private fun observation(
         stamp: PredictorEvidenceStamp = stamp(),
-        kStar: Double = 1.08,
+        kStar: Double = 132.0,
         knownness: PredictorKnownness = PredictorKnownness.KNOWN,
     ): PredictorObservation = PredictorObservation(
         cell = PredictorCell(row = 2, column = 3),
         kStar = kStar,
         currentK = 120,
-        suggestedDeltaPercent = 10.0,
         uncertaintyPercent = 1.5,
         support = 0.82,
         knownness = knownness,
