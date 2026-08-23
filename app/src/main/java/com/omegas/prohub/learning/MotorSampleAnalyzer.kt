@@ -93,7 +93,7 @@ class MotorSampleAnalyzer(
         toleratedGap: Boolean,
     ): SampleDecision {
         if (plannedGap) markPlannedOperation()
-        if (!frame.basePlausible) {
+        if (!isPrimaryEquivalencePlausible(frame)) {
             resetSamples(requireFullWindow = true)
             return SampleDecision.invalid(
                 reason = "Leitura fisicamente implausível: ${frame.plausibilityReasons.joinToString().ifBlank { "motivo não informado" }}",
@@ -501,6 +501,11 @@ class MotorSampleAnalyzer(
             ),
         )
     }
+
+    private fun isPrimaryEquivalencePlausible(frame: Mp48Telemetry): Boolean =
+        frame.rpm in 0..9_000 &&
+            frame.mapBar in 0.0..2.5 &&
+            frame.petrolMs in 0.0..40.0
 
     private fun isPhysicalCutoff(frame: Mp48Telemetry): Boolean = policy.let { active ->
         frame.rpm >= active.cutoffMinimumRpm &&
