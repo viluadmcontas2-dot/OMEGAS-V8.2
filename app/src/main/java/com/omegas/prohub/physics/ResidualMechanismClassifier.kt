@@ -38,6 +38,14 @@ object ResidualMechanismClassifier {
     private const val ENVIRONMENTAL_DOMINANCE = 0.70
 
     fun classify(evidence: ResidualEvidence): MechanismClassification {
+        if (evidence.comparableSamples == 0) {
+            return inconclusive(
+                reason = "NO_COMPARABLE_SUPPORT",
+                nextEvidence = "collect at least one genuine comparable microstate before causal classification",
+                inflation = maxOf(evidence.contradiction, evidence.environmentalCorrelation),
+            )
+        }
+
         if (evidence.contradiction >= HIGH_CONTRADICTION) {
             return inconclusive(
                 reason = "CONTRADICTORY_EVIDENCE",
