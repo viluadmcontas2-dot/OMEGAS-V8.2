@@ -243,7 +243,7 @@ internal class EquivalenceSurface(
         rpmCenter: Int,
         mapCenter: Int,
     ): LaneEstimate? {
-        var totalKernel = 0.0
+        var totalAuthorityKernel = 0.0
         var weightedMean = 0.0
         var weightedSecondMoment = 0.0
         var weightedInverseEss = 0.0
@@ -265,20 +265,22 @@ internal class EquivalenceSurface(
                 if (distanceSquared > QUERY_RADIUS_CELLS * QUERY_RADIUS_CELLS + EPSILON) continue
                 val local = lane.estimate(index(rpmIndex, mapIndex)) ?: continue
                 val kernel = exp(-0.5 * distanceSquared).coerceAtLeast(EPSILON)
-                totalKernel += kernel
-                weightedMean += kernel * local.meanTinjMs
-                weightedSecondMoment += kernel * (local.varianceMs2 + local.meanTinjMs * local.meanTinjMs)
-                weightedInverseEss += kernel / local.effectiveSupport.coerceAtLeast(EPSILON)
+                val authorityKernel = kernel * local.scientificMass
+                if (authorityKernel <= EPSILON) continue
+                totalAuthorityKernel += authorityKernel
+                weightedMean += authorityKernel * local.meanTinjMs
+                weightedSecondMoment += authorityKernel * (local.varianceMs2 + local.meanTinjMs * local.meanTinjMs)
+                weightedInverseEss += authorityKernel / local.effectiveSupport.coerceAtLeast(EPSILON)
                 localScientificMass += local.scientificMass
                 nearestDistance = minOf(nearestDistance, sqrt(distanceSquared))
                 materialRevision = maxOf(materialRevision, local.materialRevision)
             }
         }
-        if (totalKernel <= EPSILON) return null
-        val mean = weightedMean / totalKernel
-        val secondMoment = weightedSecondMoment / totalKernel
+        if (totalAuthorityKernel <= EPSILON) return null
+        val mean = weightedMean / totalAuthorityKernel
+        val secondMoment = weightedSecondMoment / totalAuthorityKernel
         val variance = max(0.0, secondMoment - mean * mean)
-        val inverseEss = weightedInverseEss / totalKernel
+        val inverseEss = weightedInverseEss / totalAuthorityKernel
         val relativeEffectiveSupport = (1.0 / inverseEss.coerceAtLeast(EPSILON)).coerceAtLeast(EPSILON)
         // Kish ESS treats weights as relative and therefore cancels their absolute
         // scientific authority. The local mass cap keeps fractional novelty/stability
