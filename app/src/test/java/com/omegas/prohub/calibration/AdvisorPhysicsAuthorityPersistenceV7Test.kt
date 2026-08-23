@@ -44,6 +44,7 @@ class AdvisorPhysicsAuthorityPersistenceV7Test {
                     .put("idealTarget", true)
                     .put("correctionMechanism", CorrectionMechanism.MAP_LOCAL.name)
                     .put("expectedEffectDirection", EffectDirection.INCREASE.name)
+                    .put("expectedEffectAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
                     .put("expectedEffectLowerBound", 1.08)
                     .put("expectedEffectUpperBound", 1.12)
                     .put("expectedEffectAssumptions", JSONArray().put("gain empirically bounded"))
@@ -57,6 +58,7 @@ class AdvisorPhysicsAuthorityPersistenceV7Test {
         assertEquals(MagnitudeAuthority.POLICY_ONLY, suggestion.physics.stepAuthority)
         assertEquals(CorrectionMechanism.MAP_LOCAL, suggestion.physics.correctionMechanism)
         assertEquals(EffectDirection.INCREASE, suggestion.physics.effectDirection)
+        assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, suggestion.physics.effectAuthority)
         assertEquals(1.08, suggestion.physics.lowerBound!!, 0.0)
         assertEquals(1.12, suggestion.physics.upperBound!!, 0.0)
         assertEquals(listOf("gain empirically bounded"), suggestion.physics.assumptions)
@@ -77,6 +79,12 @@ class AdvisorPhysicsAuthorityPersistenceV7Test {
         assertEquals(MagnitudeAuthority.POLICY_ONLY, ui.stepAuthority)
         assertEquals(CorrectionMechanism.MAP_LOCAL, ui.correctionMechanism)
         assertEquals(EffectDirection.INCREASE, ui.effectDirection)
+        assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, ui.effectAuthority)
+        assertEquals(1.08, ui.lowerBound!!, 0.0)
+        assertEquals(1.12, ui.upperBound!!, 0.0)
+        assertEquals(listOf("gain empirically bounded"), ui.assumptions)
+        assertEquals("residual fails to improve", ui.falsifier)
+        assertEquals(listOf("localized residual", "gain posterior"), ui.evidencePath)
         assertTrue(ui.idealTarget)
     }
 
