@@ -4,7 +4,7 @@ import java.security.MessageDigest
 import kotlin.math.roundToInt
 
 /**
- * Contrato científico tipado do Predictor (Step 147).
+ * Contrato científico tipado do Predictor (Steps 147–148).
  *
  * Este boundary é deliberadamente puro: não conhece JSON, UI, transporte,
  * USB, serial, writer, Store, Router ou Scheduler. O único identity authority
@@ -22,11 +22,19 @@ enum class PredictorSnapshotState {
 enum class PredictorAbstentionReason {
     INVALID_CALIBRATION_IDENTITY,
     CALIBRATION_IDENTITY_MISMATCH,
+    IDENTITY_MISMATCH,
+    GENERATION_STALE,
+    GEOMETRY_UNKNOWN,
     GEOMETRY_MISMATCH,
     SOURCE_IDENTITY_MISMATCH,
     INVALID_SOURCE_REVISION,
     SOURCE_REVISION_MISMATCH,
     SOURCE_NOT_CURRENT,
+    REFERENCE_STALE,
+    CONTEXT_INSUFFICIENT,
+    MUTATION_QUARANTINE,
+    PHYSICS_UNKNOWN,
+    SUPPORT_INSUFFICIENT,
     EPOCH_OR_SESSION_MISMATCH,
     NO_DIRECT_OBSERVATIONS,
     INVALID_SCIENTIFIC_VALUE,
@@ -41,6 +49,36 @@ enum class PredictorKnownness {
 enum class PredictorSourceFreshness {
     CURRENT,
     STALE,
+    UNKNOWN,
+}
+
+enum class PredictorMutationState {
+    STABLE,
+    MUTATING,
+    RECONCILING,
+    UNKNOWN,
+}
+
+enum class PredictorReferenceState {
+    CURRENT,
+    STALE,
+    UNKNOWN,
+}
+
+enum class PredictorPhysicsState {
+    KNOWN,
+    UNKNOWN,
+}
+
+enum class PredictorContextState {
+    SUFFICIENT,
+    INSUFFICIENT,
+    UNKNOWN,
+}
+
+enum class PredictorSupportState {
+    SUFFICIENT,
+    INSUFFICIENT,
     UNKNOWN,
 }
 
@@ -103,6 +141,9 @@ data class PredictorEvidenceStamp(
  * Evidência K* direta observada. Prediction é outro tipo e não herda deste tipo.
  * `currentK` é contexto para o futuro campo relativo delta*=ln(K_star / K_current),
  * não uma autorização de escrita e não uma StepPolicy amortecida.
+ *
+ * Context/support sufficiency vêm tipados da autoridade científica upstream;
+ * Predictor não inventa threshold local para promovê-los.
  */
 data class PredictorObservation(
     val cell: PredictorCell,
@@ -114,6 +155,8 @@ data class PredictorObservation(
     val operatingPoint: PredictorOperatingPoint,
     val stamp: PredictorEvidenceStamp,
     val provenance: String,
+    val contextState: PredictorContextState = PredictorContextState.SUFFICIENT,
+    val supportState: PredictorSupportState = PredictorSupportState.SUFFICIENT,
 )
 
 /**
@@ -133,6 +176,10 @@ data class PredictorInputSnapshot(
     val epoch: Int,
     val sessionId: String,
     val observations: List<PredictorObservation>,
+    val mutationState: PredictorMutationState = PredictorMutationState.STABLE,
+    val referenceState: PredictorReferenceState = PredictorReferenceState.CURRENT,
+    val physicsState: PredictorPhysicsState = PredictorPhysicsState.KNOWN,
+    val previousSnapshot: PredictorSnapshot? = null,
 )
 
 data class IdealTargetCandidate(
@@ -146,11 +193,22 @@ data class IdealTargetCandidate(
     val sourceRevisions: PredictorSourceRevisions,
 )
 
+/**
+ * Carry-forward exclusivamente diagnóstico. Nunca é copiado para `candidates`
+ * do snapshot atual e portanto não recupera actionability durante quarantine.
+ */
+data class PredictorDiagnosticSnapshot(
+    val revisionToken: String,
+    val candidates: List<IdealTargetCandidate>,
+    val stale: Boolean = true,
+)
+
 data class PredictorSnapshot(
     val state: PredictorSnapshotState,
     val revisionToken: String,
     val candidates: List<IdealTargetCandidate>,
     val abstentionReasons: Set<PredictorAbstentionReason>,
+    val diagnosticPrevious: PredictorDiagnosticSnapshot? = null,
 )
 
 object PredictorContract {
@@ -183,13 +241,16 @@ object PredictorContract {
     private fun validate(input: PredictorInputSnapshot): LinkedHashSet<PredictorAbstentionReason> {
         val reasons = linkedSetOf<PredictorAbstentionReason>()
         val calibration = input.calibration
-        val calibrationUsable =
+        val identityCoreUsable =
             calibration.calibrationFingerprint.isNotBlank() &&
                 calibration.calibrationGeneration > 0 &&
                 calibration.geometryFingerprint.isNotBlank() &&
-                calibration.mapHash.isNotBlank() &&
-                calibration.geometryKnown()
-        if (!calibrationUsable || input.curveHash.isBlank() || input.epoch <= 0 || input.sessionId.isBlank()) {
+                calibration.mapHash.isNotBlank()
+        if (!identityCoreUsable || input.curveHash.isBlank() || input.epoch <= 0 || input.sessionId.isBlank()) {
+            reasons += PredictorAbstentionReason.INVALID_CALIBRATION_IDENTITY
+        }
+        if (!calibration.geometryKnown()) {
+            reasons += PredictorAbstentionReason.GEOMETRY_UNKNOWN
             reasons += PredictorAbstentionReason.INVALID_CALIBRATION_IDENTITY
         }
         if (!input.sourceRevisions.valid()) {
@@ -198,13 +259,27 @@ object PredictorContract {
         if (input.observations.isEmpty()) {
             reasons += PredictorAbstentionReason.NO_DIRECT_OBSERVATIONS
         }
+        if (input.referenceState != PredictorReferenceState.CURRENT) {
+            reasons += PredictorAbstentionReason.REFERENCE_STALE
+        }
+        if (input.mutationState != PredictorMutationState.STABLE) {
+            reasons += PredictorAbstentionReason.MUTATION_QUARANTINE
+        }
+        if (input.physicsState != PredictorPhysicsState.KNOWN) {
+            reasons += PredictorAbstentionReason.PHYSICS_UNKNOWN
+        }
 
         input.observations.forEach { observation ->
             val stamp = observation.stamp
-            if (
-                stamp.calibrationFingerprint != calibration.calibrationFingerprint ||
-                stamp.calibrationGeneration != calibration.calibrationGeneration
-            ) {
+            if (stamp.calibrationFingerprint != calibration.calibrationFingerprint) {
+                reasons += PredictorAbstentionReason.IDENTITY_MISMATCH
+                reasons += PredictorAbstentionReason.CALIBRATION_IDENTITY_MISMATCH
+            }
+            if (stamp.calibrationGeneration < calibration.calibrationGeneration) {
+                reasons += PredictorAbstentionReason.GENERATION_STALE
+                reasons += PredictorAbstentionReason.CALIBRATION_IDENTITY_MISMATCH
+            } else if (stamp.calibrationGeneration != calibration.calibrationGeneration) {
+                reasons += PredictorAbstentionReason.IDENTITY_MISMATCH
                 reasons += PredictorAbstentionReason.CALIBRATION_IDENTITY_MISMATCH
             }
             if (stamp.geometryFingerprint != calibration.geometryFingerprint) {
@@ -227,6 +302,12 @@ object PredictorContract {
             }
             if (observation.knownness != PredictorKnownness.KNOWN) {
                 reasons += PredictorAbstentionReason.SCIENTIFIC_VALUE_UNKNOWN
+            }
+            if (observation.contextState != PredictorContextState.SUFFICIENT) {
+                reasons += PredictorAbstentionReason.CONTEXT_INSUFFICIENT
+            }
+            if (observation.supportState != PredictorSupportState.SUFFICIENT) {
+                reasons += PredictorAbstentionReason.SUPPORT_INSUFFICIENT
             }
             if (!scientificallyValid(observation, calibration)) {
                 reasons += PredictorAbstentionReason.INVALID_SCIENTIFIC_VALUE
@@ -257,12 +338,28 @@ object PredictorContract {
     private fun abstain(
         input: PredictorInputSnapshot,
         reasons: Set<PredictorAbstentionReason>,
-    ): PredictorSnapshot = PredictorSnapshot(
-        state = PredictorSnapshotState.ABSTAIN,
-        revisionToken = revisionToken(input),
-        candidates = emptyList(),
-        abstentionReasons = reasons.toSet(),
-    )
+    ): PredictorSnapshot {
+        val diagnosticPrevious = if (PredictorAbstentionReason.MUTATION_QUARANTINE in reasons) {
+            input.previousSnapshot
+                ?.takeIf { it.state == PredictorSnapshotState.READY }
+                ?.let { previous ->
+                    PredictorDiagnosticSnapshot(
+                        revisionToken = previous.revisionToken,
+                        candidates = previous.candidates.toList(),
+                        stale = true,
+                    )
+                }
+        } else {
+            null
+        }
+        return PredictorSnapshot(
+            state = PredictorSnapshotState.ABSTAIN,
+            revisionToken = revisionToken(input),
+            candidates = emptyList(),
+            abstentionReasons = reasons.toSet(),
+            diagnosticPrevious = diagnosticPrevious,
+        )
+    }
 
     private fun revisionToken(input: PredictorInputSnapshot): String {
         val observations = input.observations
@@ -276,6 +373,8 @@ object PredictorContract {
                     observation.uncertaintyPercent,
                     observation.support,
                     observation.knownness.name,
+                    observation.contextState.name,
+                    observation.supportState.name,
                     observation.operatingPoint.rpm,
                     observation.operatingPoint.petrolInjectionMs,
                     observation.operatingPoint.mapBar,
@@ -304,6 +403,10 @@ object PredictorContract {
             input.sourceRevisions,
             input.epoch,
             input.sessionId,
+            input.mutationState.name,
+            input.referenceState.name,
+            input.physicsState.name,
+            input.previousSnapshot?.revisionToken,
             observations,
         ).joinToString("|")
         return MessageDigest.getInstance("SHA-256")
