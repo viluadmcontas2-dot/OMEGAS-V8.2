@@ -22,31 +22,33 @@ class MotorSampleAnalyzerBoundaryTest {
     }
 
     @Test
-    fun `a majority of cold readings keeps the whole window outside absorption`() {
+    fun `a majority of cold readings remains diagnostic without blocking primary equivalence`() {
         val analyzer = MotorSampleAnalyzer()
         var decision: SampleDecision? = null
         val coldReadings = frames / 2 + 1
         repeat(frames) { index ->
             decision = analyzer.add(frame(index * 50L, waterC = if (index < coldReadings) 40 else 80))
         }
-        assertEquals("ENGINE_WARMING", decision!!.state)
-        assertFalse(decision!!.learningEligible)
+        assertEquals("SAMPLE_ACCEPTED", decision!!.state)
+        assertTrue(decision!!.learningEligible)
         assertTrue(decision!!.diagnostics!!.waterCenterC < decision!!.diagnostics!!.minimumWaterC)
     }
 
     @Test
-    fun `continuous map movement is rejected even with stable rpm`() {
+    fun `continuous map movement remains valid weighted evidence`() {
         val analyzer = MotorSampleAnalyzer()
         var decision: SampleDecision? = null
         repeat(frames) { index ->
             decision = analyzer.add(frame(index * 50L, mapBar = if (index < frames / 2) 0.50 else 0.70))
         }
-        assertEquals("SAMPLE_REJECTED", decision!!.state)
-        assertTrue(decision!!.reason.contains("Carga"))
+        assertEquals("SAMPLE_ACCEPTED", decision!!.state)
+        assertTrue(decision!!.learningEligible)
+        assertTrue(decision!!.diagnostics!!.mapCenterShift > decision!!.diagnostics!!.mapCenterLimit)
+        assertTrue(decision!!.sample!!.quality in 0.0..<1.0)
     }
 
     @Test
-    fun `pressure instability blocks cng but does not invent a gasoline restriction`() {
+    fun `pressure instability remains diagnostic for both fuels`() {
         val cng = MotorSampleAnalyzer()
         val petrol = MotorSampleAnalyzer()
         var cngDecision: SampleDecision? = null
@@ -56,9 +58,12 @@ class MotorSampleAnalyzerBoundaryTest {
             cngDecision = cng.add(frame(index * 50L, fuel = Mp48Fuel.CNG, pressureDiffBar = pressure))
             petrolDecision = petrol.add(frame(index * 50L, fuel = Mp48Fuel.PETROL, pressureDiffBar = pressure))
         }
-        assertEquals("SAMPLE_REJECTED", cngDecision!!.state)
-        assertTrue(cngDecision!!.reason.contains("Pressão"))
+        assertEquals("SAMPLE_ACCEPTED", cngDecision!!.state)
+        assertEquals("SAMPLE_ACCEPTED", petrolDecision!!.state)
+        assertTrue(cngDecision!!.learningEligible)
         assertTrue(petrolDecision!!.learningEligible)
+        assertTrue(cngDecision!!.diagnostics!!.pressureCenterShift > cngDecision!!.diagnostics!!.pressureCenterLimit)
+        assertEquals(petrolDecision!!.sample!!.quality, cngDecision!!.sample!!.quality, 1e-12)
     }
 
     @Test
@@ -147,4 +152,3 @@ class MotorSampleAnalyzerBoundaryTest {
         plausible = true,
     )
 }
-
