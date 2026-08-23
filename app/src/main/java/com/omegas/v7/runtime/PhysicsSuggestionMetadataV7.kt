@@ -39,6 +39,11 @@ data class PhysicsSuggestionMetadataV7(
             )
         ) return false
         if (effectDirection == EffectDirection.UNKNOWN) return false
+        if (effectAuthority !in setOf(
+                MagnitudeAuthority.PHYSICALLY_ANCHORED,
+                MagnitudeAuthority.EMPIRICALLY_BOUNDED,
+            )
+        ) return false
         if (falsifier.isBlank()) return false
         if (evidencePath.isEmpty()) return false
         return when (target) {
