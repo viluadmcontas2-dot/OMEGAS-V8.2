@@ -102,7 +102,7 @@ class V7CalibrationCoordinator(
         val candidates = before.suggestions.filter { suggestion ->
             suggestion.expectedRevision == previousRevision &&
                 suggestion.target == target &&
-                suggestion.lifecycle == SuggestionLifecycleV7.PENDING
+                suggestion.actionableAt(previousRevision)
         }
 
         val sync = synchronizedFromEcu(activeFileName)
@@ -332,8 +332,12 @@ class V7CalibrationCoordinator(
             .put("files", listFiles())
         val state = active.state
         val ui = V7UiProjection.from(state)
-        val pending = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.PENDING && it.expectedRevision == state.calibration.revision }
-        val observing = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.OBSERVING && it.expectedRevision == state.calibration.revision }
+        val pending = state.suggestions.count { it.actionableAt(state.calibration.revision) }
+        val observing = state.suggestions.count {
+            it.expectedRevision == state.calibration.revision &&
+                it.lifecycle in setOf(SuggestionLifecycleV7.PENDING, SuggestionLifecycleV7.OBSERVING) &&
+                !it.actionableAt(state.calibration.revision)
+        }
         val applied = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.APPLIED }
         val superseded = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.SUPERSEDED }
         return JSONObject()
@@ -376,6 +380,17 @@ class V7CalibrationCoordinator(
         .put("consolidatedErrorPercent", value.consolidatedErrorPercent ?: JSONObject.NULL)
         .put("recentErrorPercent", value.recentErrorPercent ?: JSONObject.NULL)
         .put("rationale", value.rationale)
+        .put("magnitudeAuthority", value.physics.magnitudeAuthority.name)
+        .put("stepAuthority", value.physics.stepAuthority.name)
+        .put("correctionMechanism", value.physics.correctionMechanism.name)
+        .put("expectedEffectDirection", value.physics.effectDirection.name)
+        .put("expectedEffectAuthority", value.physics.effectAuthority.name)
+        .put("expectedEffectLowerBound", value.physics.lowerBound ?: JSONObject.NULL)
+        .put("expectedEffectUpperBound", value.physics.upperBound ?: JSONObject.NULL)
+        .put("expectedEffectAssumptions", JSONArray(value.physics.assumptions))
+        .put("expectedEffectFalsifier", value.physics.falsifier)
+        .put("mechanismEvidencePath", JSONArray(value.physics.evidencePath))
+        .put("idealTarget", value.physics.idealTarget)
         .put("curveChanges", JSONArray(value.curveChanges.map { change ->
             JSONObject()
                 .put("index", change.index)
