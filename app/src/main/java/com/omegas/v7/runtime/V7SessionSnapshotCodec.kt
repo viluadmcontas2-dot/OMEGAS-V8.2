@@ -1,10 +1,16 @@
 package com.omegas.v7.runtime
 
+import com.omegas.prohub.physics.CorrectionMechanism
+import com.omegas.prohub.physics.EffectDirection
+import com.omegas.prohub.physics.MagnitudeAuthority
+
 /** Snapshot textual determinístico, sem dependência de Android ou bibliotecas externas. */
 object V7SessionSnapshotCodec {
-    private const val SCHEMA = "OMEGAS_V7_SESSION_6"
+    private const val SCHEMA = "OMEGAS_V7_SESSION_7"
+    private const val LIST_SEPARATOR = '\u001F'
     private val ACCEPTED_SCHEMAS = setOf(
         SCHEMA,
+        "OMEGAS_V7_SESSION_6",
         "OMEGAS_V7_SESSION_5",
         "OMEGAS_V7_SESSION_4",
         "OMEGAS_V7_SESSION_3",
@@ -188,11 +194,21 @@ object V7SessionSnapshotCodec {
         escape(item.stabilityState),
         item.consolidatedErrorPercent?.toString().orEmpty(),
         item.recentErrorPercent?.toString().orEmpty(),
+        item.physics.magnitudeAuthority.name,
+        item.physics.stepAuthority.name,
+        item.physics.correctionMechanism.name,
+        item.physics.effectDirection.name,
+        item.physics.lowerBound?.toString().orEmpty(),
+        item.physics.upperBound?.toString().orEmpty(),
+        encodeStrings(item.physics.assumptions),
+        escape(item.physics.falsifier),
+        encodeStrings(item.physics.evidencePath),
+        item.physics.idealTarget.toString(),
     ).joinToString("|")
 
     private fun decodeSuggestion(value: String): LocalSuggestionV7 {
         val parts = splitEscaped(value)
-        require(parts.size == 8 || parts.size == 11 || parts.size == 15)
+        require(parts.size == 8 || parts.size == 11 || parts.size == 15 || parts.size == 25)
         val target = SuggestionTargetV7.valueOf(parts[4])
         val curveChanges = parts[6].takeIf(String::isNotBlank)?.split(';').orEmpty().map { encoded ->
             val values = encoded.split(',')
@@ -205,6 +221,26 @@ object V7SessionSnapshotCodec {
             MapCellChangeV7(values[0].toInt(), values[1].toInt(), values[2].toInt(), values[3].toInt())
         }
         val createdAt = parts[1].toLong()
+        val physics = if (parts.size == 25) {
+            PhysicsSuggestionMetadataV7(
+                magnitudeAuthority = runCatching { MagnitudeAuthority.valueOf(parts[15]) }
+                    .getOrDefault(MagnitudeAuthority.UNKNOWN),
+                stepAuthority = runCatching { MagnitudeAuthority.valueOf(parts[16]) }
+                    .getOrDefault(MagnitudeAuthority.UNKNOWN),
+                correctionMechanism = runCatching { CorrectionMechanism.valueOf(parts[17]) }
+                    .getOrDefault(CorrectionMechanism.UNKNOWN),
+                effectDirection = runCatching { EffectDirection.valueOf(parts[18]) }
+                    .getOrDefault(EffectDirection.UNKNOWN),
+                lowerBound = parts[19].takeIf(String::isNotBlank)?.toDoubleOrNull(),
+                upperBound = parts[20].takeIf(String::isNotBlank)?.toDoubleOrNull(),
+                assumptions = decodeStrings(parts[21]),
+                falsifier = unescape(parts[22]),
+                evidencePath = decodeStrings(parts[23]),
+                idealTarget = parts[24] == "true",
+            )
+        } else {
+            PhysicsSuggestionMetadataV7()
+        }
         return LocalSuggestionV7(
             id = unescape(parts[0]),
             createdAtMs = createdAt,
@@ -222,6 +258,7 @@ object V7SessionSnapshotCodec {
             stabilityState = parts.getOrNull(12)?.let(::unescape).takeUnless(String?::isNullOrBlank) ?: "UNASSESSED",
             consolidatedErrorPercent = parts.getOrNull(13)?.takeIf(String::isNotBlank)?.toDoubleOrNull(),
             recentErrorPercent = parts.getOrNull(14)?.takeIf(String::isNotBlank)?.toDoubleOrNull(),
+            physics = physics,
         )
     }
 
@@ -250,6 +287,12 @@ object V7SessionSnapshotCodec {
             calibration = calibration,
         )
     }
+
+    private fun encodeStrings(values: List<String>): String =
+        escape(values.joinToString(LIST_SEPARATOR.toString()))
+
+    private fun decodeStrings(value: String): List<String> =
+        unescape(value).split(LIST_SEPARATOR).filter(String::isNotBlank)
 
     private fun parseRevision(value: String): CalibrationRevisionV7 {
         val parts = value.split(',')
