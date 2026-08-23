@@ -788,7 +788,9 @@ class SignalLearningStore(
             equivalenceRuntime.snapshotForAdvisor(),
             epoch = epoch,
         )
-        AssistedCalibrationAdvisor.analyze(boundedInput)
+        AssistedCalibrationAdvisor.decoratePhysicsAuthority(
+            AssistedCalibrationAdvisor.analyze(boundedInput),
+        )
             .put("primaryAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
             .put("inputSource", "BOUNDED_EQUIVALENCE_SURFACE")
             .put("environmentGates", false)
