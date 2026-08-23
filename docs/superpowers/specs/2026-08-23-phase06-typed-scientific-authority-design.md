@@ -14,20 +14,20 @@ Bind the real Physics/K* entry to typed scientific evidence from the three exist
 - `CLASSIC_ASSISTED`
 - `ADAPTIVE_SHADOW`
 
-All three remain producers over the same acquisition/runtime backbone. The producer origin must be preserved and auditable, but it must not silently alter the K* mathematics, multiply one physical observation into several votes, or turn a model prediction into a physical observation.
+All three remain producers over the same acquisition/runtime backbone. Producer origin must remain auditable, but it must never silently change the K* mathematics, multiply one physical observation into several votes, or turn a model prediction into a physical observation.
 
-The result must be a durable contract that later Arbitration/Draft/UI work can consume without migrating the Physics core again.
+The result must be a durable boundary that later Arbitration/Draft/UI work can consume without replacing the Physics estimator again.
 
 ## 2. Binding authorities
 
-This design follows the current OMEGAS governance and scientific contracts:
+This design follows the current OMEGAS contracts:
 
 - `OME-ADP-001`: one physical/runtime backbone; three typed scientific authorities; no second polling loop, Store, serial authority, Draft, or Writer; conflict remains typed and observable; Prediction is never Observation.
-- `AL-004 / Fast-to-Zero`: K* remains a physics target estimator; arbitrary visit/sample constants do not become scientific authority; false precision is a failure; abstention is valid when evidence is not eligible.
-- Step 123 pragmatic equivalence contract: RPM+MAP locates comparable state and petrol Tinj is the primary comparison signal; downstream consumers may reduce upstream authority, never inflate it.
-- Existing single-writer/manual-write safety contracts remain unchanged.
+- `AL-004 / Fast-to-Zero`: K* remains a physics target estimator; arbitrary visit/sample constants do not become scientific authority; false precision is a failure; abstention is valid when evidence is ineligible.
+- Step 123 pragmatic equivalence: RPM+MAP locates comparable state and petrol Tinj is the primary comparison signal; downstream consumers may reduce upstream authority, never inflate it.
+- Existing single-writer/manual-write safety remains unchanged.
 
-## 3. Current source state and the gap
+## 3. Current source state and the actual gap
 
 The canonical source already contains the right producer enum in `Phase6OwnerBindings.kt`:
 
@@ -39,52 +39,51 @@ enum class ScientificAuthority {
 }
 ```
 
-It also contains `PhysicsScientificInput(authority, physicalEvidenceId, weight)`. However that type is not yet the real K* input contract.
+It also contains `PhysicsScientificInput(authority, physicalEvidenceId, weight)`. However that type is not the real K* entry contract yet.
 
-The current implementation has three material gaps:
+Three material gaps remain:
 
 1. `KStarEstimator.estimate(...)` accepts untyped raw doubles and `PlantGain`, so producer origin and Observation-vs-Prediction semantics can be bypassed.
-2. `PhysicsScientificInput.deduplicateByPhysicalEvidence(...)` silently ranks producers `OEM_NATIVE > CLASSIC_ASSISTED > ADAPTIVE_SHADOW`. That prevents double counting, but it violates the current ADP-001 rule that no authority silently dominates another. The physical observation should count once while all contributing origins remain visible.
-3. `KStarEstimate` does not preserve scientific producer provenance, so a downstream consumer cannot prove which scientific authority supplied the accepted evidence.
+2. `PhysicsScientificInput.deduplicateByPhysicalEvidence(...)` silently ranks producers `OEM_NATIVE > CLASSIC_ASSISTED > ADAPTIVE_SHADOW`. That prevents duplicate counting but violates the current ADP-001 rule that no scientific authority silently dominates another.
+3. `KStarEstimate` does not preserve producer/evidence provenance, so downstream code cannot prove where the accepted science came from.
 
-This step fixes those gaps without changing the K* equation itself.
+Step 123B fixes those gaps without changing the K* equation.
 
-## 4. Explicit non-goals
+## 4. Non-goals
 
 Step 123B does **not**:
 
-- create Proposal Arbitration; that belongs to the later `147B–164B` scope;
-- decide that OEM, Classic, or Adaptive is globally “better”;
+- create Proposal Arbitration; that belongs to later `147B–164B` work;
+- decide that OEM, Classic, or Adaptive is globally superior;
 - average conflicting producer predictions;
 - promote an `ADAPTIVE_SHADOW` prediction into an observation;
 - add a second Physics engine, Learning Store, acquisition path, scheduler, serial loop, recorder, Draft, or Writer;
-- change the existing K* log-domain equation or invent a new plant-gain prior;
+- change the K* log-domain equation or invent a new plant-gain prior;
 - change StepPolicy damping, MAP/Curve allocation policy, or writer safety;
-- make any physical-accuracy claim for Adaptive Shadow;
-- add new JSON/persistence work to the telemetry hot path;
-- propagate producer-origin metadata into final UI/Draft contracts yet; later Adaptive arbitration owners will extend that boundary using the trace introduced here.
+- make an Adaptive physical-accuracy claim;
+- add JSON/persistence work to the telemetry hot path;
+- duplicate Calibration Identity or epoch-validity logic inside K*;
+- propagate producer-origin metadata into final Draft/UI yet.
 
 ## 5. Architectural decision
 
-Promote the existing `ScientificAuthority` enum into the canonical producer-origin type and add one orthogonal semantic axis: `ScientificEvidenceRole`.
+Promote the existing `ScientificAuthority` enum into the canonical **producer-origin** type and add one orthogonal semantic axis: `ScientificEvidenceRole`.
 
-Do not create another enum that means the same three producers.
+Do not create another enum for the same three producers.
 
-The authority model becomes deliberately multi-axis:
+The authority vocabulary stays deliberately multi-axis:
 
 | Type | Question it answers | Examples |
 | --- | --- | --- |
-| `ScientificAuthority` | Which scientific producer exposed this evidence? | `OEM_NATIVE`, `CLASSIC_ASSISTED`, `ADAPTIVE_SHADOW` |
-| `ScientificEvidenceRole` | Is this physical evidence or a model result? | `OBSERVATION`, `PREDICTION` |
-| `MagnitudeAuthority` | How strongly is a numeric target/gain anchored? | `PHYSICALLY_ANCHORED`, `EMPIRICALLY_BOUNDED`, `POLICY_ONLY`, `UNKNOWN` |
+| `ScientificAuthority` | Which scientific producer exposed this claim? | `OEM_NATIVE`, `CLASSIC_ASSISTED`, `ADAPTIVE_SHADOW` |
+| `ScientificEvidenceRole` | Is the numeric claim observed or predicted? | `OBSERVATION`, `PREDICTION` |
+| `MagnitudeAuthority` | How strongly is a target/gain magnitude anchored? | `PHYSICALLY_ANCHORED`, `EMPIRICALLY_BOUNDED`, `POLICY_ONLY`, `UNKNOWN` |
 | `PhysicsEvidenceAuthority` | What is the knownness/provenance class of a physical factor? | `LIVE_VALIDATED`, `STATIC_ORACLE_CANDIDATE`, `OBSERVED_CONTEXT`, ... |
 | `ScientificDecisionAuthority` | Where did a comparison/decision rule come from? | native anchor vs OMEGAS comparability policy |
 
-These axes must not be collapsed or silently mapped to one another. In particular, `OEM_NATIVE` does not imply `PHYSICALLY_ANCHORED`, and `ADAPTIVE_SHADOW` does not imply low or high `MagnitudeAuthority` by itself.
+These axes must never be collapsed or silently mapped to each other. `OEM_NATIVE` does not automatically mean `PHYSICALLY_ANCHORED`, and `ADAPTIVE_SHADOW` does not automatically mean low or high magnitude authority.
 
 ## 6. File boundaries
-
-The producer/evidence types become a core Physics contract rather than remaining mixed with Advisor JSON decoration.
 
 Create:
 
@@ -95,18 +94,15 @@ Responsibilities:
 - own `ScientificAuthority` (moved, not duplicated);
 - define `ScientificEvidenceRole`;
 - own `PhysicsScientificInput`;
-- consolidate duplicate exposure of the same physical evidence without silent producer ranking;
+- consolidate duplicate exposure of the same physical observation without producer ranking;
 - represent explicit consolidation conflicts;
-- define the typed measurement and K* evidence pair used by the estimator.
+- define the resolved evidence object used by K*.
 
 Modify:
 
 `app/src/main/java/com/omegas/prohub/physics/Phase6OwnerBindings.kt`
 
-Responsibilities after the split:
-
-- legacy Advisor/Phase 06 bridge helpers only;
-- no core scientific producer taxonomy.
+After the split this file keeps legacy Advisor/Phase 06 bridge helpers only; it no longer owns the core producer taxonomy.
 
 Modify:
 
@@ -114,7 +110,7 @@ Modify:
 
 Responsibilities:
 
-- typed K* entry;
+- typed K* public entry;
 - unchanged numerical estimator core;
 - abstention on scientifically ineligible evidence;
 - output scientific trace.
@@ -123,14 +119,11 @@ Modify:
 
 `app/src/main/java/com/omegas/prohub/physics/FastPhysicsGateEvaluator.kt`
 
-Responsibilities:
+It must exercise the same typed K* public entry using explicit synthetic observations rather than keep a raw-double bypass.
 
-- exercise the same typed K* API using explicit synthetic `CLASSIC_ASSISTED` observations;
-- never use an untyped bypass just because the data are synthetic.
+Add focused tests under the existing Phase 06 physics test package.
 
-Tests live in the existing Phase 06 physics test package and add a focused scientific-authority contract test file rather than growing one giant test class.
-
-## 7. Canonical evidence types
+## 7. Canonical raw evidence claim
 
 ### 7.1 Evidence role
 
@@ -141,90 +134,93 @@ enum class ScientificEvidenceRole {
 }
 ```
 
-`OBSERVATION` means the numeric value is grounded in physical evidence on the shared acquisition/runtime backbone.
+`OBSERVATION` means the numeric claim is grounded in physical evidence from the shared acquisition/runtime backbone.
 
-`PREDICTION` means a model produced or transformed the numeric value. A prediction may be useful later for arbitration and validation, but it is not eligible to occupy a physical-observation slot in K*.
+`PREDICTION` means a model produced or transformed the value. Predictions are valid scientific objects for later arbitration/validation, but they are not physical observations.
 
-### 7.2 Raw producer exposure
+### 7.2 Producer claim
 
-`PhysicsScientificInput` remains the raw “producer X exposes physical evidence Y” object, but it is enriched so the evidence can survive future consumers without another schema migration:
+`PhysicsScientificInput` becomes:
 
 ```kotlin
 data class PhysicsScientificInput(
     val authority: ScientificAuthority,
     val role: ScientificEvidenceRole,
-    val physicalEvidenceId: String,
-    val calibrationFingerprint: String,
+    val evidenceId: String,
+    val physicalEvidenceId: String?,
     val weight: Double,
     val provenance: String,
-    val modelVersion: String? = null,
-    val predictionId: String? = null,
 )
 ```
 
-Required invariants:
+Invariants:
 
-- `physicalEvidenceId`, `calibrationFingerprint`, and `provenance` are non-blank;
+- `evidenceId` and `provenance` are non-blank;
 - `weight` is finite and in `0.0..1.0`;
-- `ADAPTIVE_SHADOW + PREDICTION` requires non-blank `modelVersion` and `predictionId`;
-- no constructor silently defaults the role to `OBSERVATION`;
-- no constructor silently defaults the producer to `CLASSIC_ASSISTED`.
+- `OBSERVATION` requires a non-blank `physicalEvidenceId` because it claims physical lineage;
+- `PREDICTION` may have `physicalEvidenceId=null` because a model result may aggregate many observations and must not invent one physical source id;
+- no constructor defaults role to `OBSERVATION`;
+- no constructor defaults producer to `CLASSIC_ASSISTED`.
 
-`modelVersion`/`predictionId` are lineage only. Their presence never upgrades a prediction into an observation.
+This intentionally does **not** duplicate `CalibrationIdentity` fields. Epoch/reference validity remains the responsibility of the upstream evidence/reference layer that already owns it.
 
-## 8. Duplicate physical evidence: count once, preserve every origin
+## 8. Why K* does not compare calibration fingerprints
 
-The current priority-based `deduplicateByPhysicalEvidence(...)` is replaced by explicit consolidation.
+The gasoline reference and the current CNG observation do not necessarily belong to the same CNG calibration fingerprint. Step 123 intentionally allows useful gasoline reference science to survive later CNG calibration changes while stale CNG comparison state is controlled separately.
 
-The new result shape is conceptually:
+Therefore Step 123B must **not** require “reference fingerprint == CNG fingerprint” inside K*. Doing that would duplicate identity policy and reject valid reference reuse.
+
+If later Adaptive model lineage requires a calibration/model binding token, that token belongs to the producer/proposal contract that owns the model. K* consumes already-eligible scientific claims and preserves their provenance; it does not become a second Calibration Identity authority.
+
+## 9. Duplicate physical evidence: one vote, all origins visible
+
+The current priority-based `deduplicateByPhysicalEvidence(...)` is removed.
+
+Raw `OBSERVATION` claims are consolidated by `physicalEvidenceId` into a resolved object conceptually shaped as:
 
 ```kotlin
-data class ConsolidatedScientificEvidence(
+data class ResolvedScientificEvidence(
     val authorities: Set<ScientificAuthority>,
     val role: ScientificEvidenceRole,
-    val physicalEvidenceId: String,
-    val calibrationFingerprint: String,
+    val evidenceIds: Set<String>,
+    val physicalEvidenceId: String?,
     val effectiveWeight: Double,
     val provenance: Set<String>,
-    val modelVersions: Set<String>,
-    val predictionIds: Set<String>,
 )
 
 data class ScientificEvidenceConflict(
-    val physicalEvidenceId: String,
+    val evidenceIds: Set<String>,
+    val physicalEvidenceId: String?,
     val authorities: Set<ScientificAuthority>,
     val reason: String,
 )
 
-data class ScientificEvidenceConsolidation(
-    val accepted: List<ConsolidatedScientificEvidence>,
+data class ScientificEvidenceResolution(
+    val accepted: List<ResolvedScientificEvidence>,
     val conflicts: List<ScientificEvidenceConflict>,
 )
 ```
 
-For several producers exposing the same physical evidence:
+Rules:
 
-- the physical vote appears once;
-- `effectiveWeight = max(weight)` rather than sum, so duplicate exposure cannot manufacture authority;
-- `authorities` is the union of all producers that exposed it;
-- provenance/model/prediction ids are retained as bounded sets for the small consolidation input;
-- no producer priority is applied.
+- the same physical observation exposed by several producers becomes **one** resolved observation;
+- all contributing `authorities`, `evidenceIds`, and provenance remain visible;
+- the physical scientific weight is not summed, averaged, or selected by producer priority;
+- duplicate exposures of the same physical observation are accepted only when they report the same physical weight; that shared value becomes `effectiveWeight`;
+- conflicting weights for the same physical observation produce `SCIENTIFIC_WEIGHT_CONFLICT` instead of a hidden max/min choice;
+- mixed Observation/Prediction semantics for the same claimed physical source produce `SCIENTIFIC_ROLE_CONFLICT`;
+- Prediction claims without a physical id remain separate model claims and are not “deduplicated as physical observations.”
 
-A group is a conflict instead of an accepted consolidated item when the same `physicalEvidenceId` is presented with incompatible scientific meaning, including:
+This makes duplicate handling conservative and future-proof: one physical event cannot gain authority merely because more producers looked at it, and disagreement is not hidden.
 
-- different `calibrationFingerprint` values;
-- mixed `OBSERVATION` and `PREDICTION` roles.
+## 10. Typed K* measurement boundary
 
-A conflict is not silently resolved. Later Arbitration may decide how to interpret producer disagreement, but Step 123B only guarantees that the Physics entry does not hide it.
-
-## 9. Typed K* measurement boundary
-
-K* receives two scientifically typed measurements instead of naked Tinj doubles:
+K* receives two typed measurements:
 
 ```kotlin
 data class ScientificMeasurement(
     val valueMs: Double,
-    val evidence: ConsolidatedScientificEvidence,
+    val evidence: ResolvedScientificEvidence,
 )
 
 data class KStarScientificInput(
@@ -235,13 +231,13 @@ data class KStarScientificInput(
 )
 ```
 
-The field names keep the Step 123 physical objective explicit. A generic “value A/value B” API would be easier to misuse later.
+The field names deliberately encode the Step 123 physical objective. A generic “value A/value B” API would be easier to misuse.
 
-## 10. K* eligibility and abstention
+## 11. K* eligibility and abstention
 
-`KStarEstimator` accepts `KStarScientificInput` as its public entry.
+`KStarEstimator` accepts `KStarScientificInput` as its public production entry.
 
-The numerical equation remains:
+The numerical equation remains unchanged:
 
 ```text
 e = ln(Tpet_GNV / Tpet_ref)
@@ -250,52 +246,53 @@ theta* = theta + e / g
 F* = exp(theta*)
 ```
 
-Before applying that equation, the estimator validates scientific eligibility.
+Before running that equation, the estimator validates scientific eligibility.
 
-It must abstain with `targetFactor=null`, `MagnitudeAuthority.UNKNOWN`, and a stable reason code when:
+It abstains with `targetFactor=null`, `MagnitudeAuthority.UNKNOWN`, and a stable reason when:
 
 - either measurement role is `PREDICTION` → `PREDICTION_IS_NOT_OBSERVATION`;
-- the two measurements have different calibration fingerprints → `CALIBRATION_FINGERPRINT_MISMATCH`;
-- either consolidated evidence has zero effective weight → `NO_SCIENTIFIC_WEIGHT`;
-- the exact same physical evidence id is used as both the CNG-side observation and the gasoline reference → `SELF_COMPARISON_EVIDENCE`;
-- plant gain remains unknown → existing `PLANT_GAIN_UNKNOWN` behavior.
+- either resolved observation has zero effective weight → `NO_SCIENTIFIC_WEIGHT`;
+- the exact same physical evidence id is used as both the CNG-side observation and gasoline reference → `SELF_COMPARISON_EVIDENCE`;
+- plant gain is unknown → existing `PLANT_GAIN_UNKNOWN` behavior.
 
-Existing positive/finite numeric preconditions remain explicit developer invariants. Step 123B does not broaden the estimator into a telemetry sanitizer because that is a different responsibility.
+Existing positive/finite numeric preconditions remain explicit developer invariants. Step 123B does not turn K* into a telemetry sanitizer.
 
-The producer identity itself never changes the formula. If identical eligible observations are labeled `OEM_NATIVE`, `CLASSIC_ASSISTED`, or `ADAPTIVE_SHADOW` with role `OBSERVATION`, the computed numeric K* is identical.
+Producer identity does not alter the equation. With identical eligible numeric measurements, OEM, Classic, and Adaptive Observation labels must produce the same numeric K* result.
 
-## 11. Adaptive Shadow rule
+## 12. Adaptive Shadow rule
 
-`ADAPTIVE_SHADOW` may participate in two distinct ways:
+`ADAPTIVE_SHADOW` may expose two kinds of claims:
 
-1. It may forward or classify an actual shared-backbone observation. In that case the role is `OBSERVATION`, the physical evidence id and calibration fingerprint must point back to the physical lineage, and it is numerically treated like any other eligible observation.
-2. It may emit a model-derived value. In that case the role is `PREDICTION`, `modelVersion` and `predictionId` are mandatory, and that value is ineligible to occupy either physical measurement slot in K*.
+1. A physical observation forwarded/classified from the shared backbone: role `OBSERVATION`, with real `physicalEvidenceId`.
+2. A model-derived value: role `PREDICTION`, with its own `evidenceId`; a singular physical id is optional because the model may aggregate many observations.
 
-This preserves the architectural value of Adaptive Shadow without allowing prediction leakage into observation authority.
+The second form is explicitly ineligible to occupy either physical K* measurement slot.
 
-## 12. K* output trace
+This preserves Adaptive Shadow as a scientific producer without allowing prediction leakage into observation authority.
 
-`KStarEstimate` gains a compact trace object:
+## 13. K* output trace
+
+`KStarEstimate` gains a compact trace:
 
 ```kotlin
 data class KStarScientificTrace(
     val authorities: Set<ScientificAuthority>,
-    val petrolOnGasEvidenceId: String,
-    val petrolReferenceEvidenceId: String,
-    val calibrationFingerprint: String,
+    val evidenceIds: Set<String>,
+    val petrolOnGasPhysicalEvidenceId: String?,
+    val petrolReferencePhysicalEvidenceId: String?,
     val provenance: Set<String>,
 )
 ```
 
 Every estimate produced from scientifically eligible evidence carries this trace, including an estimate that later abstains because plant gain is unknown.
 
-For a scientific-eligibility abstention, the result still carries enough trace to explain why it was rejected when possible.
+For scientific-eligibility abstention, the result carries enough resolved trace to explain the rejection when available.
 
-This trace is the durable handoff for later `ClassicProposal` / `AdaptiveProposal` / `ProposalArbitration` work. Step 123B does not yet project it into Draft/UI.
+This is the stable handoff for later `ClassicProposal`, `AdaptiveProposal`, and `ProposalArbitration` work. Step 123B does not yet project it into Draft/UI.
 
-## 13. Untyped bypass policy
+## 14. No public untyped bypass
 
-The existing public overload:
+The current public overload:
 
 ```kotlin
 KStarEstimator.estimate(
@@ -308,126 +305,120 @@ KStarEstimator.estimate(
 
 must not remain as a public production bypass after 123B.
 
-The implementation may keep the pure numeric calculation as a private/internal helper after scientific eligibility has passed, but callers must enter through `KStarScientificInput`.
+The implementation may retain the pure numeric calculation as a private/internal helper after scientific eligibility passes, but callers enter through `KStarScientificInput`.
 
-This is deliberate. Keeping a convenient public raw-double overload would make the new type contract optional and guarantee future migration debt.
+Keeping a public raw-double escape hatch would make the new type contract optional and recreate the exact migration debt this step exists to remove.
 
-## 14. Existing consumers
+## 15. Existing consumers
 
-`FastPhysicsGateEvaluator` is migrated to the typed API. It creates explicit synthetic observation provenance such as:
+`FastPhysicsGateEvaluator` migrates to the typed K* API. Its synthetic scenarios create explicit `CLASSIC_ASSISTED + OBSERVATION` evidence ids and physical ids.
 
-- authority: `CLASSIC_ASSISTED`;
-- role: `OBSERVATION`;
-- calibration fingerprint: `SYNTHETIC_FAST_PHYSICS_GATE`;
-- distinct physical ids for the synthetic gasoline reference and CNG-side measurement.
+`ConditionalActuatorTargets` remains downstream of `KStarEstimate`; its arithmetic does not change. It automatically receives an estimate that now has producer/evidence trace.
 
-This makes the deterministic gate a real consumer of the new public entry instead of preserving an untyped test-only escape hatch.
+`PhysicsOracleValidator` remains an independent numeric oracle. It is not a production K* entry and may continue to operate on raw numeric scenarios because its purpose is to independently validate the mathematics, not establish live provenance.
 
-`ConditionalActuatorTargets` remains downstream of `KStarEstimate`. Its arithmetic does not change. It automatically receives a K* object that now carries traceable scientific origin.
+## 16. Error/conflict semantics
 
-`PhysicsOracleValidator` remains an independent numeric oracle. It is not a production K* entry and may continue to operate on raw numeric scenarios because its job is to independently validate the mathematics, not to establish live scientific provenance.
+Expected scientific mismatch is data, not silent coercion:
 
-## 15. Error and conflict semantics
+- consistent duplicate physical exposure → consolidate once;
+- conflicting weights → explicit `SCIENTIFIC_WEIGHT_CONFLICT`;
+- incompatible roles on the same claimed physical source → explicit `SCIENTIFIC_ROLE_CONFLICT`;
+- Prediction in a K* observation slot → abstain;
+- same physical evidence on both sides of the comparison → abstain;
+- unknown plant gain → abstain.
 
-Expected scientific state mismatch is represented as data, not as silent coercion:
+Programmer-contract violations such as blank required ids or non-finite weights fail fast at construction time.
 
-- duplicate exposure with consistent lineage → consolidate;
-- duplicate exposure with incompatible lineage/role → explicit conflict;
-- prediction in observation slot → K* abstention;
-- calibration mismatch → K* abstention;
-- unknown plant gain → K* abstention.
+No producer fallback is allowed. Rejecting an Adaptive prediction never relabels it Classic or substitutes OEM evidence silently.
 
-Programmer-contract violations such as blank required ids or non-finite construction weights fail fast at construction time.
+## 17. Performance / RK3326 boundary
 
-No automatic producer fallback is allowed. For example, if an Adaptive prediction is rejected, the estimator does not silently relabel it Classic or substitute an OEM value.
-
-## 16. Performance and RK3326 boundary
-
-The change must not affect MP48 acquisition cadence or create per-frame heavy work.
+The change must not affect MP48 acquisition cadence or add per-frame heavy work.
 
 Constraints:
 
 - no new polling, scheduler, thread, Store, queue, or persistence path;
-- no JSON in the scientific arithmetic;
+- no JSON in K* arithmetic;
 - no historical scan;
-- consolidation operates only on the small set of producer exposures for one scientific evidence item/decision;
+- consolidation operates only on the small producer set for one evidence item/decision;
 - K* remains O(1);
-- trace collections are bounded by the fixed producer count (three authorities) and the small input set, not drive duration;
-- no claim of physical RK3326 performance is made by this step.
+- resolved authority sets are bounded by the fixed producer count, not drive duration;
+- no physical RK3326 claim is made by Step 123B.
 
-A source review must confirm that the diff introduces no second acquisition/runtime/writer surface.
+A source review must explicitly confirm that the diff introduces no second acquisition/runtime/writer surface.
 
-## 17. TDD falsifiers
+## 18. TDD falsifiers
 
-Implementation starts with failing tests that prove the current source violates the new contract.
+Implementation starts with failing tests that demonstrate the current source violates this contract.
 
 Required falsifiers:
 
-1. Same physical evidence exposed by OEM + Classic consolidates to one vote while preserving both authorities; neither authority silently wins.
-2. Same physical evidence exposed as both Observation and Prediction yields an explicit consolidation conflict.
-3. Same physical evidence exposed under two calibration fingerprints yields an explicit conflict.
-4. K* accepts typed Classic observations and reproduces the current numeric target exactly.
-5. Re-labeling identical eligible observations among OEM/Classic/Adaptive Observation leaves numeric K* unchanged.
-6. `ADAPTIVE_SHADOW + PREDICTION` in either K* measurement slot causes abstention with `PREDICTION_IS_NOT_OBSERVATION`.
-7. Different calibration fingerprints cause abstention with `CALIBRATION_FINGERPRINT_MISMATCH`.
-8. Reusing the same physical evidence as reference and CNG observation causes `SELF_COMPARISON_EVIDENCE` abstention.
+1. Same physical observation exposed by OEM + Classic resolves to one vote while preserving both authorities; neither silently wins.
+2. Same physical observation with conflicting weights yields `SCIENTIFIC_WEIGHT_CONFLICT`.
+3. Observation/Prediction disagreement on the same claimed physical source yields `SCIENTIFIC_ROLE_CONFLICT`.
+4. A prediction may exist without inventing a singular physical id.
+5. K* accepts typed Classic observations and reproduces the current numeric target exactly.
+6. Re-labeling identical eligible observations among OEM/Classic/Adaptive Observation leaves numeric K* unchanged.
+7. `ADAPTIVE_SHADOW + PREDICTION` in either K* measurement slot yields `PREDICTION_IS_NOT_OBSERVATION` abstention.
+8. Reusing the same physical observation as both reference and CNG-side evidence yields `SELF_COMPARISON_EVIDENCE` abstention.
 9. Zero scientific weight cannot create a target.
 10. Unknown plant gain still abstains exactly as before.
-11. `KStarEstimate` preserves producer/evidence/fingerprint trace.
+11. `KStarEstimate` preserves producer/evidence/physical lineage trace.
 12. `FastPhysicsGateEvaluator` compiles and passes using only the typed public K* entry.
 13. No public raw-double K* entry remains after migration.
-14. Existing Phase 06 physics tests remain green.
+14. Existing Phase 06 Physics tests remain green.
 
-## 18. Regression surface
+## 19. Regression surface
 
-At minimum, verification covers:
+At minimum verify:
 
-- `ScientificEvidence` focused tests;
+- focused `ScientificEvidence` tests;
 - `CalibrationPhysicsFoundationTest`;
 - `Phase6BindingIntegrationTest`;
 - `ConditionalActuatorTargetTest`;
 - `FastPhysicsGateEvaluatorTest`;
 - `PhysicsOracleValidationTest`;
-- full relevant Physics test package when the execution environment can run it.
+- the full relevant Physics test package when the available execution surface can run it.
 
-If a new source SHA is produced, all prior Step 123B source-audit receipts are invalid until a new exact-SHA audit run.
+A new source SHA invalidates any prior Step 123B source-audit receipt.
 
-## 19. Audit contract
+## 20. Audit contract
 
-The implementer may close only at `IMPLEMENTED_AWAITING_AUDIT`.
+Implementation closes at most as `IMPLEMENTED_AWAITING_AUDIT`.
 
 PASS requires a fresh read-only normative audit on the frozen candidate SHA with a new `AUDIT_EPOCH_ID` and `AUDIT_RUN_ID`, followed by a distinct read-only meta-audit.
 
-The audit must attempt to falsify at least:
+The audit must try to falsify at least:
 
 - producer origin cannot alter K* math;
 - Prediction cannot become Observation;
 - duplicate physical evidence cannot multiply authority;
-- no producer silently dominates duplicate evidence;
-- no second runtime/Store/polling/writer was created;
-- no untyped production K* bypass remains;
-- downstream `MagnitudeAuthority` is not inflated by producer origin;
+- producer disagreement cannot be hidden by priority/max/min voting;
+- no second runtime/Store/polling/writer exists;
+- no public untyped production K* bypass remains;
+- producer origin cannot inflate `MagnitudeAuthority`;
 - source branch/canonical topology is fresh.
 
-No physical RK3326 claim is required for Step 123B. Any hardware-dependent performance or Adaptive physical-accuracy claim remains deferred to the appropriate later gate.
+No physical RK3326 claim is required for Step 123B. Hardware-dependent performance and Adaptive physical-accuracy claims remain for later gates.
 
-## 20. Invalidation events
+## 21. Invalidation events
 
-This design or a resulting PASS becomes stale when any of the following changes materially:
+This design or a resulting PASS becomes stale on material change to:
 
 - `ScientificAuthority` producer semantics;
 - `ScientificEvidenceRole` semantics;
 - ADP-001 Observation/Prediction or single-backbone contract;
 - K* equation or plant-gain authority model;
-- Calibration Identity/fingerprint semantics used by the evidence boundary;
-- new producer authority is added;
-- Proposal Arbitration begins consuming the trace and discovers a missing lineage field;
+- upstream evidence identity/provenance semantics;
+- addition of a new scientific producer;
+- later Proposal Arbitration discovering a truly required lineage field that cannot be derived from existing provenance;
 - source changes in the typed evidence/K* call path after audit.
 
-## 21. Decision summary
+## 22. Decision summary
 
-The future-proof choice is to **make typed evidence mandatory at the K* boundary now**, using the producer enum that already exists, rather than adding metadata after the fact or keeping an untyped compatibility escape hatch.
+The future-proof choice is to make typed scientific evidence **mandatory at the K* boundary now**, using the producer enum that already exists and keeping evidence role orthogonal to magnitude/decision authority.
 
-One physical observation counts once. Every producer origin remains visible. Observation and Prediction are different types of scientific claims. K* mathematics remains producer-neutral. The single runtime and single writer remain untouched.
+One physical observation counts once. Every contributing producer remains visible. Disagreement is explicit rather than silently ranked. Prediction and Observation are distinct scientific claims. K* stays producer-neutral. Calibration Identity remains owned by the layer that already governs it. The single runtime and single writer remain untouched.
 
-That gives later Adaptive Arbitration a stable provenance-bearing Physics result without forcing Phase 06 to replace the estimator again.
+That gives later Adaptive Arbitration a stable provenance-bearing Physics result without forcing another Physics-core migration.
