@@ -1,6 +1,6 @@
 # Phase 06 — 123B Typed Scientific Authority for Physics/K* Design
 
-Status: DRAFT_FOR_OWNER_REVIEW
+Status: APPROVED_BY_OWNER_2026-08-23
 
 Owner: VIT-143 / Step 123B
 
