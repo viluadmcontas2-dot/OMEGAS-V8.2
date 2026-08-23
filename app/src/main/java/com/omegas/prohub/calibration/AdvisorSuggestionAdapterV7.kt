@@ -1,6 +1,8 @@
 package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
+import com.omegas.prohub.physics.CorrectionMechanism
+import com.omegas.prohub.physics.MagnitudeAuthority
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
 import com.omegas.v7.runtime.CurvePointChangeV7
@@ -19,6 +21,9 @@ import kotlin.math.roundToInt
  * magnitude momentânea, permitindo que a mesma sugestão amadureça com a coleta.
  *
  * O adaptador nunca toca na ECU. Aplicação continua exclusivamente manual.
+ * Uma magnitude numérica só pode virar alteração PENDING quando Physics declara
+ * explicitamente target ideal, mecanismo causal correspondente e autoridade
+ * física/empírica. Policy, UNKNOWN e candidate-lane permanecem observacionais.
  */
 class AdvisorSuggestionAdapterV7 {
     fun adapt(
@@ -54,7 +59,7 @@ class AdvisorSuggestionAdapterV7 {
             if (confidence > 0.0 || readiness.isNotBlank() && readiness != "NO_EVIDENCE") observed = true
             if (confidence > 0.0) confidences += confidence
             item.optString("decisionReason").takeIf(String::isNotBlank)?.let(reasons::add)
-            if (!item.optBoolean("actionable", false)) return@repeat
+            if (!authorizedForConcreteChange(item, CorrectionMechanism.CURVE_MUL_ACT)) return@repeat
             val deltaPercent = finite(item, "suggestedDeltaPercent") ?: return@repeat
             val before = calibration.curveK[index]
             val requested = before * (1.0 + deltaPercent / 100.0)
@@ -68,9 +73,9 @@ class AdvisorSuggestionAdapterV7 {
         val lifecycle = if (ordered.isEmpty()) SuggestionLifecycleV7.OBSERVING else SuggestionLifecycleV7.PENDING
         val rationale = when {
             lifecycle == SuggestionLifecycleV7.PENDING ->
-                "Tendência global atualizada para ${ordered.size} ponto(s) da Curva K; aplicação exclusivamente manual."
+                "Target físico autorizado para ${ordered.size} ponto(s) da Curva K; aplicação exclusivamente manual."
             reasons.isNotEmpty() -> reasons.first()
-            else -> "Tendência global preservada; a evidência atual não justifica correção."
+            else -> "Tendência global preservada; Physics ainda não autorizou target numérico para aplicação."
         }
         return LocalSuggestionV7(
             id = stableId("curve", calibration, "global"),
@@ -107,8 +112,8 @@ class AdvisorSuggestionAdapterV7 {
             ) return@repeat
             val key = "$row:$column"
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
-            val actionable = item.optBoolean("actionable", false)
-            val change = if (actionable) mapChange(item, calibration) else null
+            val authorized = authorizedForConcreteChange(item, CorrectionMechanism.MAP_LOCAL)
+            val change = if (authorized) mapChange(item, calibration) else null
             val lifecycle = if (change != null) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
             val reason = item.optString("decisionReason").takeIf(String::isNotBlank)
             val region = regionByCell[key]
@@ -121,17 +126,28 @@ class AdvisorSuggestionAdapterV7 {
                 mapChanges = listOfNotNull(change),
                 rationale = when {
                     lifecycle == SuggestionLifecycleV7.PENDING && region != null ->
-                        "$region · correção local atualizada para esta célula; aplicação exclusivamente manual."
+                        "$region · target físico autorizado para esta célula; aplicação exclusivamente manual."
                     lifecycle == SuggestionLifecycleV7.PENDING ->
-                        "Residual local atualizado para esta célula; aplicação exclusivamente manual."
+                        "Target físico autorizado para esta célula; aplicação exclusivamente manual."
                     reason != null -> reason
-                    else -> "Sugestão preservada; a evidência atual ainda não justifica correção."
+                    else -> "Sugestão preservada; Physics ainda não autorizou target numérico para aplicação."
                 },
                 lifecycle = lifecycle,
                 confidence = confidence,
             )
         }
         return output
+    }
+
+    private fun authorizedForConcreteChange(item: JSONObject, requiredMechanism: CorrectionMechanism): Boolean {
+        if (!item.optBoolean("actionable", false)) return false
+        if (!item.optBoolean("idealTarget", false)) return false
+        if (item.optString("correctionMechanism") != requiredMechanism.name) return false
+        val authority = runCatching {
+            MagnitudeAuthority.valueOf(item.optString("magnitudeAuthority"))
+        }.getOrNull() ?: return false
+        return authority == MagnitudeAuthority.PHYSICALLY_ANCHORED ||
+            authority == MagnitudeAuthority.EMPIRICALLY_BOUNDED
     }
 
     private fun regionLabels(regions: JSONArray): Map<String, String> {
