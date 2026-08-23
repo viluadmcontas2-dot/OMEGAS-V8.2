@@ -440,11 +440,32 @@ data class PlantGain(
 }
 
 data class KStarScientificTrace(
-    val authorities: Set<ScientificAuthority>,
-    val evidenceIds: Set<String>,
-    val petrolOnGasPhysicalEvidenceId: String?,
-    val petrolReferencePhysicalEvidenceId: String?,
+    val petrolOnGasAuthorities: Set<ScientificAuthority>,
+    val petrolReferenceAuthorities: Set<ScientificAuthority>,
+    val petrolOnGasEvidenceIds: Set<String>,
+    val petrolReferenceEvidenceIds: Set<String>,
+    val petrolOnGasPhysicalEvidenceIds: Set<String>,
+    val petrolReferencePhysicalEvidenceIds: Set<String>,
     val provenance: Set<String>,
+) {
+    val authorities: Set<ScientificAuthority>
+        get() = petrolOnGasAuthorities + petrolReferenceAuthorities
+
+    val evidenceIds: Set<String>
+        get() = petrolOnGasEvidenceIds + petrolReferenceEvidenceIds
+
+    val petrolOnGasPhysicalEvidenceId: String?
+        get() = petrolOnGasPhysicalEvidenceIds.singleOrNull()
+
+    val petrolReferencePhysicalEvidenceId: String?
+        get() = petrolReferencePhysicalEvidenceIds.singleOrNull()
+}
+
+data class KStarObservationAssessment(
+    val logError: Double,
+    val eligible: Boolean,
+    val reason: String,
+    val scientificTrace: KStarScientificTrace,
 )
 
 data class KStarEstimate(
@@ -460,27 +481,24 @@ data class KStarEstimate(
 )
 
 object KStarEstimator : TargetEstimator {
-    fun estimate(input: KStarScientificInput): KStarEstimate {
-        val petrolOnGas = input.petrolOnGas
-        val petrolReference = input.petrolReference
-        val error = ln(petrolOnGas.valueMs / petrolReference.valueMs)
-        val theta = ln(input.currentFactor)
+    fun assess(
+        petrolOnGas: ScientificMeasurement,
+        petrolReference: ScientificMeasurement,
+    ): KStarObservationAssessment {
+        val logError = ln(petrolOnGas.valueMs / petrolReference.valueMs)
         val trace = KStarScientificTrace(
-            authorities = petrolOnGas.evidence.authorities + petrolReference.evidence.authorities,
-            evidenceIds = petrolOnGas.evidence.evidenceIds + petrolReference.evidence.evidenceIds,
-            petrolOnGasPhysicalEvidenceId = petrolOnGas.evidence.physicalEvidenceId,
-            petrolReferencePhysicalEvidenceId = petrolReference.evidence.physicalEvidenceId,
+            petrolOnGasAuthorities = petrolOnGas.evidence.authorities,
+            petrolReferenceAuthorities = petrolReference.evidence.authorities,
+            petrolOnGasEvidenceIds = petrolOnGas.evidence.evidenceIds,
+            petrolReferenceEvidenceIds = petrolReference.evidence.evidenceIds,
+            petrolOnGasPhysicalEvidenceIds = petrolOnGas.evidence.physicalEvidenceIds,
+            petrolReferencePhysicalEvidenceIds = petrolReference.evidence.physicalEvidenceIds,
             provenance = petrolOnGas.evidence.provenance + petrolReference.evidence.provenance,
         )
 
-        fun abstain(reason: String): KStarEstimate = KStarEstimate(
-            logError = error,
-            currentTheta = theta,
-            targetTheta = null,
-            targetFactor = null,
-            gain = input.gain,
-            authority = MagnitudeAuthority.UNKNOWN,
-            abstained = true,
+        fun reject(reason: String): KStarObservationAssessment = KStarObservationAssessment(
+            logError = logError,
+            eligible = false,
             reason = reason,
             scientificTrace = trace,
         )
@@ -489,30 +507,59 @@ object KStarEstimator : TargetEstimator {
             petrolOnGas.evidence.role == ScientificEvidenceRole.PREDICTION ||
             petrolReference.evidence.role == ScientificEvidenceRole.PREDICTION
         ) {
-            return abstain("PREDICTION_IS_NOT_OBSERVATION")
+            return reject("PREDICTION_IS_NOT_OBSERVATION")
         }
 
         if (
-            petrolOnGas.evidence.effectiveWeight <= 0.0 ||
-            petrolReference.evidence.effectiveWeight <= 0.0
+            petrolOnGas.evidence.effectiveSupport <= 0.0 ||
+            petrolReference.evidence.effectiveSupport <= 0.0
         ) {
-            return abstain("NO_SCIENTIFIC_WEIGHT")
+            return reject("NO_SCIENTIFIC_WEIGHT")
         }
 
-        val onGasPhysicalId = petrolOnGas.evidence.physicalEvidenceId
-        val referencePhysicalId = petrolReference.evidence.physicalEvidenceId
-        if (onGasPhysicalId != null && onGasPhysicalId == referencePhysicalId) {
-            return abstain("SELF_COMPARISON_EVIDENCE")
+        if ((petrolOnGas.evidence.evidenceIds intersect petrolReference.evidence.evidenceIds).isNotEmpty() ||
+            (petrolOnGas.evidence.physicalEvidenceIds intersect petrolReference.evidence.physicalEvidenceIds).isNotEmpty()
+        ) {
+            return reject("SELF_COMPARISON_EVIDENCE")
         }
+
+        return KStarObservationAssessment(
+            logError = logError,
+            eligible = true,
+            reason = "OBSERVATION_ELIGIBLE",
+            scientificTrace = trace,
+        )
+    }
+
+    fun estimate(input: KStarScientificInput): KStarEstimate {
+        val assessment = assess(
+            petrolOnGas = input.petrolOnGas,
+            petrolReference = input.petrolReference,
+        )
+        val theta = ln(input.currentFactor)
+
+        fun abstain(reason: String): KStarEstimate = KStarEstimate(
+            logError = assessment.logError,
+            currentTheta = theta,
+            targetTheta = null,
+            targetFactor = null,
+            gain = input.gain,
+            authority = MagnitudeAuthority.UNKNOWN,
+            abstained = true,
+            reason = reason,
+            scientificTrace = assessment.scientificTrace,
+        )
+
+        if (!assessment.eligible) return abstain(assessment.reason)
 
         val g = input.gain.mean
         if (g == null || !g.isFinite() || g <= 0.0) {
             return abstain("PLANT_GAIN_UNKNOWN")
         }
 
-        val targetTheta = theta + error / g
+        val targetTheta = theta + assessment.logError / g
         return KStarEstimate(
-            logError = error,
+            logError = assessment.logError,
             currentTheta = theta,
             targetTheta = targetTheta,
             targetFactor = exp(targetTheta),
@@ -520,7 +567,7 @@ object KStarEstimator : TargetEstimator {
             authority = input.gain.authority,
             abstained = false,
             reason = "GAIN_SUPPORTED",
-            scientificTrace = trace,
+            scientificTrace = assessment.scientificTrace,
         )
     }
 }
