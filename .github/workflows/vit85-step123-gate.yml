@@ -1,0 +1,46 @@
+name: VIT-85 Step 123 exact-SHA gate
+
+on:
+  push:
+    branches:
+      - gate/vit85-step123-ci-20260822
+
+permissions:
+  contents: read
+
+jobs:
+  step123-unit-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CANDIDATE_SHA: 49c5a608c0545f83dd2ef7840f9c2b33a8740f1f
+      OMEGAS_SOURCE_SHA: 49c5a608c0545f83dd2ef7840f9c2b33a8740f1f
+    steps:
+      - name: Checkout frozen candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 49c5a608c0545f83dd2ef7840f9c2b33a8740f1f
+          fetch-depth: 1
+
+      - name: Assert exact source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          echo "candidate=$CANDIDATE_SHA"
+          echo "actual=$actual"
+          test "$actual" = "$CANDIDATE_SHA"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run full Android/JUnit unit suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew --version
+          ./gradlew :app:testDebugUnitTest --stacktrace --no-daemon
