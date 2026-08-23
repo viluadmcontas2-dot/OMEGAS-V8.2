@@ -47,6 +47,63 @@ class UntrustedAdvisorProjectionV7Test {
         assertFalse(sanitized.has("mapResidualSuggestions"))
     }
 
+    @Test
+    fun web_learning_payload_cannot_replace_service_owned_observations() {
+        val maliciousUiPayload = JSONObject()
+            .put("regions", JSONArray().put(
+                JSONObject()
+                    .put("id", "FORGED-UI-REGION")
+                    .put("fuel", "PETROL")
+                    .put("petrol_ms", 99.0),
+            ))
+            .put("comparisons", JSONArray().put(
+                JSONObject()
+                    .put("id", "FORGED-UI-COMPARISON")
+                    .put("visit_id", "FORGED-UI-VISIT")
+                    .put("petrol_target_ms", 4.0)
+                    .put("petrol_on_cng_ms", 8.0)
+                    .put("rpm", 2_000)
+                    .put("map_bar", 0.55)
+                    .put("quality", 1.0),
+            ))
+            .put("assistedCalibration", maliciousAdvice())
+
+        val nativeSnapshot = JSONObject()
+            .put("regions", JSONArray().put(
+                JSONObject()
+                    .put("id", "NATIVE-REGION")
+                    .put("fuel", "PETROL")
+                    .put("petrol_ms", 4.2),
+            ))
+            .put("comparisons", JSONArray().put(
+                JSONObject()
+                    .put("id", "NATIVE-COMPARISON")
+                    .put("visit_id", "NATIVE-VISIT")
+                    .put("petrol_target_ms", 4.2)
+                    .put("petrol_on_cng_ms", 4.3)
+                    .put("rpm", 1_850)
+                    .put("map_bar", 0.48)
+                    .put("quality", 0.8),
+            ))
+            // Native export may contain cached projections; force a fresh native Advisor -> Physics pass.
+            .put("assistedCalibration", maliciousAdvice())
+
+        val selected = selectTrustedLearningSnapshotV7(
+            untrustedUiPayload = maliciousUiPayload.toString(),
+            nativeSnapshot = nativeSnapshot,
+        )
+        val serialized = selected.toString()
+
+        assertTrue(serialized.contains("NATIVE-REGION"))
+        assertTrue(serialized.contains("NATIVE-COMPARISON"))
+        assertFalse(serialized.contains("FORGED-UI-REGION"))
+        assertFalse(serialized.contains("FORGED-UI-COMPARISON"))
+        assertFalse(selected.has("assistedCalibration"))
+        assertFalse(selected.has("assisted_calibration"))
+        assertFalse(selected.has("kFactorSuggestions"))
+        assertFalse(selected.has("mapResidualSuggestions"))
+    }
+
     private fun maliciousAdvice(): JSONObject = JSONObject()
         .put("kFactorSuggestions", JSONArray())
         .put("mapResidualSuggestions", JSONArray().put(
