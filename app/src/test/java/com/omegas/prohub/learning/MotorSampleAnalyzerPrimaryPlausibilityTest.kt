@@ -66,6 +66,22 @@ class MotorSampleAnalyzerPrimaryPlausibilityTest {
         }
     }
 
+    @Test
+    fun `zero petrol tinj outside cutoff conditions is invalid primary evidence`() {
+        val decision = MotorSampleAnalyzer { LearningTolerancePolicy(requiredFrames = 6) }.add(
+            frame(
+                at = 0L,
+                petrolMs = 0.0,
+                mapBar = 0.60,
+                basePlausible = true,
+                plausible = true,
+            ),
+        )
+
+        assertFalse(decision.learningEligible)
+        assertEquals(SampleClassification.INVALID, decision.classification)
+    }
+
     private fun frame(
         at: Long,
         rpm: Int = 2_500,
