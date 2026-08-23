@@ -10,9 +10,9 @@ import org.json.JSONObject
  * uncertainty/deadband decision, while structural breadth is topological
  * (another supported curve point with the same direction).
  *
- * Environmental context is never invented. The bounded RPM+MAP equivalence
- * path currently declares environmentGates=false, therefore production remains
- * UNKNOWN until a richer verified context is supplied.
+ * Environmental context is never invented. `environmentGates=false` means the
+ * bounded RPM+MAP+Tinj path does not use environment as a primary gate; the
+ * flag is retained only to qualify optional environmental diagnostics.
  */
 object PhysicsResidualEvidenceProducer {
     const val SOURCE = "ADVISOR_STATISTICAL_PROJECTION_V1"
