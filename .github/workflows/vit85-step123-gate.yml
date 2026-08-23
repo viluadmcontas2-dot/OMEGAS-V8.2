@@ -16,13 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      CANDIDATE_SHA: 49c5a608c0545f83dd2ef7840f9c2b33a8740f1f
-      OMEGAS_SOURCE_SHA: 49c5a608c0545f83dd2ef7840f9c2b33a8740f1f
+      CANDIDATE_SHA: e7c6137093192d8431964996b6840fd0b89f5f7f
+      OMEGAS_SOURCE_SHA: e7c6137093192d8431964996b6840fd0b89f5f7f
     steps:
       - name: Checkout frozen candidate
         uses: actions/checkout@v4
         with:
-          ref: 49c5a608c0545f83dd2ef7840f9c2b33a8740f1f
+          ref: e7c6137093192d8431964996b6840fd0b89f5f7f
           fetch-depth: 1
 
       - name: Assert exact source SHA
