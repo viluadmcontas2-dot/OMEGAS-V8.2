@@ -185,6 +185,10 @@ class AdvisorSuggestionAdapterV7 {
             item.optString("expectedEffectDirection"),
             legacyDirection(item),
         ),
+        effectAuthority = enumOrDefault(
+            item.optString("expectedEffectAuthority"),
+            MagnitudeAuthority.UNKNOWN,
+        ),
         lowerBound = finite(item, "expectedEffectLowerBound"),
         upperBound = finite(item, "expectedEffectUpperBound"),
         assumptions = jsonStrings(item.optJSONArray("expectedEffectAssumptions")),
@@ -201,6 +205,7 @@ class AdvisorSuggestionAdapterV7 {
                 it.stepAuthority == first.stepAuthority &&
                 it.correctionMechanism == first.correctionMechanism &&
                 it.effectDirection == first.effectDirection &&
+                it.effectAuthority == first.effectAuthority &&
                 it.idealTarget == first.idealTarget
         }
         val evidence = items.flatMap { it.evidencePath }.distinct()
