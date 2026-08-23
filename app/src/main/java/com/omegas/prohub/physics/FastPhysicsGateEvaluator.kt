@@ -49,7 +49,7 @@ object FastPhysicsGateEvaluator {
         var maxSteps = 0
         var falsePrecision = 0
 
-        scenarios.forEach { scenario ->
+        scenarios.forEachIndexed { index, scenario ->
             val logError = scenario.truePlantGain * ln(scenario.trueTargetFactor / scenario.currentFactor)
             val petrolOnGasMs = REFERENCE_MS * exp(logError)
             val gain = PlantGain.empiricallyBounded(
@@ -58,15 +58,18 @@ object FastPhysicsGateEvaluator {
                 upper = scenario.truePlantGain * 1.10,
             )
             val estimate = KStarEstimator.estimate(
-                petrolOnGasMs = petrolOnGasMs,
-                petrolReferenceMs = REFERENCE_MS,
-                currentFactor = scenario.currentFactor,
-                gain = gain,
+                syntheticKStarInput(
+                    petrolOnGasMs = petrolOnGasMs,
+                    petrolReferenceMs = REFERENCE_MS,
+                    currentFactor = scenario.currentFactor,
+                    gain = gain,
+                    suffix = index.toString(),
+                ),
             )
             val estimatedTarget = estimate.targetFactor
             if (estimatedTarget == null) {
                 falsePrecision++
-                return@forEach
+                return@forEachIndexed
             }
             targetErrorSum += abs(estimatedTarget - scenario.trueTargetFactor) / scenario.trueTargetFactor
             val trueDirection = direction(scenario.currentFactor, scenario.trueTargetFactor)
@@ -110,10 +113,13 @@ object FastPhysicsGateEvaluator {
         }
 
         val unknown = KStarEstimator.estimate(
-            petrolOnGasMs = 5.5,
-            petrolReferenceMs = 5.0,
-            currentFactor = 1.0,
-            gain = PlantGain.unknown(),
+            syntheticKStarInput(
+                petrolOnGasMs = 5.5,
+                petrolReferenceMs = 5.0,
+                currentFactor = 1.0,
+                gain = PlantGain.unknown(),
+                suffix = "unknown-gain",
+            ),
         )
         val unknownGainAbstains = unknown.abstained && unknown.targetFactor == null &&
             unknown.authority == MagnitudeAuthority.UNKNOWN
@@ -144,6 +150,36 @@ object FastPhysicsGateEvaluator {
             unknownGainAbstains = unknownGainAbstains,
             falsePrecisionCount = falsePrecision,
             pass = pass,
+        )
+    }
+
+    private fun syntheticKStarInput(
+        petrolOnGasMs: Double,
+        petrolReferenceMs: Double,
+        currentFactor: Double,
+        gain: PlantGain,
+        suffix: String,
+    ): KStarScientificInput {
+        fun evidence(id: String): ResolvedScientificEvidence = ResolvedScientificEvidence(
+            authorities = setOf(ScientificAuthority.CLASSIC_ASSISTED),
+            role = ScientificEvidenceRole.OBSERVATION,
+            evidenceIds = setOf(id),
+            physicalEvidenceId = id,
+            effectiveWeight = 1.0,
+            provenance = setOf("SYNTHETIC_FAST_PHYSICS_GATE"),
+        )
+
+        return KStarScientificInput(
+            petrolOnGas = ScientificMeasurement(
+                valueMs = petrolOnGasMs,
+                evidence = evidence("fast-cng-$suffix"),
+            ),
+            petrolReference = ScientificMeasurement(
+                valueMs = petrolReferenceMs,
+                evidence = evidence("fast-gas-$suffix"),
+            ),
+            currentFactor = currentFactor,
+            gain = gain,
         )
     }
 
