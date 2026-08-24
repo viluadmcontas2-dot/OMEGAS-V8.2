@@ -137,13 +137,18 @@ class PredictorRelativeFieldTest {
         currentK: Double = 120.0,
         queryUncertaintyStd: Double = 0.03,
         support: List<PredictorRelativeObservation> = positiveTriangle(),
-    ) = PredictorRelativeFieldInput(
-        targetRpm = targetRpm,
-        targetPetrolMs = targetPetrolMs,
-        currentK = currentK,
-        queryUncertaintyStd = queryUncertaintyStd,
-        support = support,
-    )
+    ): PredictorRelativeFieldInput {
+        val calibration = binding()
+        return PredictorRelativeFieldInput(
+            targetRpm = targetRpm,
+            targetPetrolMs = targetPetrolMs,
+            currentK = currentK,
+            queryUncertaintyStd = queryUncertaintyStd,
+            support = support,
+            calibration = calibration,
+            expectedGeometryFingerprint = calibration.geometryFingerprint,
+        )
+    }
 
     private fun positiveTriangle(): List<PredictorRelativeObservation> = listOf(
         support("a", 1400.0, 2.0, 120.0, 129.0, "visit-a"),
@@ -170,5 +175,16 @@ class PredictorRelativeFieldTest {
         quality = quality,
         trajectoryId = trajectoryId,
         provenance = "DIRECT_KSTAR_TEST",
+        geometryFingerprint = "geometry-A",
+    )
+
+    private fun binding(): LearningCalibrationBinding = LearningCalibrationBinding(
+        calibrationFingerprint = "calibration-A",
+        calibrationGeneration = 7,
+        geometryFingerprint = "geometry-A",
+        usbSessionId = 21L,
+        mapHash = "map-A",
+        petrolAxisMs = listOf(2.0, 2.5, 3.0, 3.5, 4.5, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0),
+        rpmAxis = listOf(850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500),
     )
 }
