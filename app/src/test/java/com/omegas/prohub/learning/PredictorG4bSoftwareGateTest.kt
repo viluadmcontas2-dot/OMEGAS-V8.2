@@ -140,6 +140,19 @@ class PredictorG4bSoftwareGateTest {
         val target = predictor.candidates.single()
         assertEquals(105.0, target.estimateK, 0.0)
         assertTrue(target.industrialIdealAuthorityEligible())
+        val humanState = PredictorHumanStateProjector.project(
+            PredictorHumanProjectionInput(
+                currentK = observation.currentK,
+                targetEstimateK = target.estimateK,
+                targetRange = target.range,
+                authority = target.authority,
+                scientificState = PredictorHumanScientificState.DIRECT_CONFIRMED,
+                riskState = PredictorHumanRiskState.CALIBRATED_ACTIONABLE,
+                confidence = 0.90,
+                reasonCode = "SYNTHETIC_G4B_RISK_GATE",
+            ),
+        )
+        assertEquals(PredictorHumanActionState.ACTIONABLE, humanState.actionState)
 
         // Predictor/Draft exist, but neither is allowed to become scientific evidence.
         ledger.ingest(PredictorScientificIngressRecord("prediction-1", PredictorScientificSourceType.PREDICTION))
@@ -149,6 +162,7 @@ class PredictorG4bSoftwareGateTest {
         var writerCalls = 0
         var suggestion = PredictorSuggestionRecord("suggestion-1", predictor.revisionToken)
         suggestion = PredictorSuggestionLifecycle.reduce(suggestion, PredictorSuggestionEvent.PROMOTE_REVIEWABLE)
+        assertEquals(PredictorHumanActionState.ACTIONABLE, humanState.actionState)
         suggestion = PredictorSuggestionLifecycle.reduce(suggestion, PredictorSuggestionEvent.PROMOTE_ACTIONABLE)
         suggestion = PredictorSuggestionLifecycle.reduce(suggestion, PredictorSuggestionEvent.HUMAN_ACCEPT)
         assertEquals(0, writerCalls)
