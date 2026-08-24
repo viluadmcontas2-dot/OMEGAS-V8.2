@@ -26,6 +26,21 @@ data class OracleRequest(
     }
 }
 
+data class KStarPropagationOracleRequest(
+    val petrolOnGasMs: Double,
+    val petrolReferenceMs: Double,
+    val currentFactor: Double,
+    val gain: PlantGain,
+    val uncertainty: KStarUncertaintyComponents,
+    val draws: Int,
+    val seed: Long,
+) {
+    init {
+        require(petrolOnGasMs > 0.0 && petrolReferenceMs > 0.0 && currentFactor > 0.0)
+        require(draws >= 100) { "oracle requires enough draws to form a useful interval" }
+    }
+}
+
 data class OracleSummary(
     val meanTargetFactor: Double?,
     val lower95: Double?,
@@ -37,8 +52,9 @@ data class OracleSummary(
 )
 
 /**
- * Deterministic seeded bootstrap/Monte-Carlo style oracle for Phase 06 tests.
- * It is deliberately offline-oriented; runtime uses the analytic KStarEstimator.
+ * Deterministic seeded bootstrap/Monte-Carlo style oracle for Phase 06/07 tests.
+ * It is deliberately offline-oriented; runtime uses the analytic KStarEstimator
+ * plus KStarObservationCalibration.
  */
 object PhysicsUncertaintyOracle {
     fun estimate(request: OracleRequest): OracleSummary {
@@ -48,15 +64,7 @@ object PhysicsUncertaintyOracle {
         if (meanGain == null || lowerGain == null || upperGain == null ||
             meanGain <= 0.0 || lowerGain <= 0.0 || upperGain < lowerGain
         ) {
-            return OracleSummary(
-                meanTargetFactor = null,
-                lower95 = null,
-                upper95 = null,
-                authority = MagnitudeAuthority.UNKNOWN,
-                abstained = true,
-                reason = "PLANT_GAIN_UNKNOWN",
-                draws = 0,
-            )
+            return unknownGain()
         }
 
         val random = Random(request.seed)
@@ -70,19 +78,77 @@ object PhysicsUncertaintyOracle {
             val sampledError = nominalLogRatio + measurementNoise + driftNoise
             samples[index] = exp(theta + sampledError / sampledGain)
         }
+        return summary(samples, request.gain.authority, "SEEDED_UNCERTAINTY_ORACLE")
+    }
+
+    /**
+     * Step 150 oracle matching the explicit uncertainty decomposition of the
+     * runtime approximation. Timing terms are sampled in log space, gain uses a
+     * truncated normal inferred from its typed 95% bounds, and theta-context
+     * terms remain additive after e/g. This is validation-only, never hot path.
+     */
+    fun propagate(request: KStarPropagationOracleRequest): OracleSummary {
+        val meanGain = request.gain.mean
+        val lowerGain = request.gain.lower
+        val upperGain = request.gain.upper
+        if (
+            meanGain == null || lowerGain == null || upperGain == null ||
+            !meanGain.isFinite() || meanGain <= 0.0 || lowerGain <= 0.0 || upperGain < lowerGain
+        ) {
+            return unknownGain()
+        }
+
+        val random = Random(request.seed)
+        val gainStd = ((upperGain - lowerGain) / 3.92).coerceAtLeast(0.0)
+        val baseTheta = ln(request.currentFactor)
+        val gasLog = ln(request.petrolOnGasMs)
+        val referenceLog = ln(request.petrolReferenceMs)
+        val u = request.uncertainty
+        val samples = DoubleArray(request.draws)
+        for (index in samples.indices) {
+            val sampledGasLog = gasLog + gaussian(random) * u.petrolOnGasRelativeStd
+            val sampledReferenceLog = referenceLog + gaussian(random) * u.petrolReferenceRelativeStd
+            val sampledGain = positiveGainSample(random, meanGain, gainStd)
+            val sampledTheta =
+                baseTheta + gaussian(random) * u.currentThetaStd +
+                    (sampledGasLog - sampledReferenceLog) / sampledGain +
+                    gaussian(random) * u.contextThetaStd +
+                    gaussian(random) * u.modelThetaStd +
+                    gaussian(random) * u.contradictionThetaStd
+            samples[index] = exp(sampledTheta)
+        }
+        return summary(samples, request.gain.authority, "SEEDED_KSTAR_PROPAGATION_ORACLE")
+    }
+
+    private fun unknownGain(): OracleSummary = OracleSummary(
+        meanTargetFactor = null,
+        lower95 = null,
+        upper95 = null,
+        authority = MagnitudeAuthority.UNKNOWN,
+        abstained = true,
+        reason = "PLANT_GAIN_UNKNOWN",
+        draws = 0,
+    )
+
+    private fun summary(samples: DoubleArray, authority: MagnitudeAuthority, reason: String): OracleSummary {
         samples.sort()
-        val mean = samples.average()
-        val lower = quantile(samples, 0.025)
-        val upper = quantile(samples, 0.975)
         return OracleSummary(
-            meanTargetFactor = mean,
-            lower95 = lower,
-            upper95 = upper,
-            authority = request.gain.authority,
+            meanTargetFactor = samples.average(),
+            lower95 = quantile(samples, 0.025),
+            upper95 = quantile(samples, 0.975),
+            authority = authority,
             abstained = false,
-            reason = "SEEDED_UNCERTAINTY_ORACLE",
-            draws = request.draws,
+            reason = reason,
+            draws = samples.size,
         )
+    }
+
+    private fun positiveGainSample(random: Random, mean: Double, std: Double): Double {
+        if (std == 0.0) return mean
+        while (true) {
+            val candidate = mean + gaussian(random) * std
+            if (candidate > 0.0 && candidate.isFinite()) return candidate
+        }
     }
 
     private fun gaussian(random: Random): Double {
