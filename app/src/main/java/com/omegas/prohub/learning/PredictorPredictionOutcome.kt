@@ -22,9 +22,11 @@ data class PredictionOutcome(
     init {
         require(predictionId.isNotBlank())
         require(predictionRevisionToken.isNotBlank())
+        require(cell.row >= 0 && cell.column >= 0)
         require(predictedEstimateK.isFinite() && predictedEstimateK > 0.0)
         require(lowerK.isFinite() && lowerK > 0.0)
         require(upperK.isFinite() && upperK >= lowerK)
+        require(predictedEstimateK in lowerK..upperK) { "Prediction estimate must lie inside its interval" }
         require(pImprove == null || pImprove.isFinite() && pImprove in 0.0..1.0)
         require(context.valid())
         require(appliedTargetK == null || appliedTargetK.isFinite() && appliedTargetK > 0.0)
