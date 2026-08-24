@@ -1,8 +1,10 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.physics.CorrectionMechanism
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.ln
+import kotlin.math.min
 import kotlin.math.sqrt
 
 /** Scientific/diagnostic state of the typed relative correction field. */
@@ -36,9 +38,9 @@ data class PredictorRelativeContext(
 }
 
 /**
- * Direct K* support only. `petrolMs` is the gasoline equilibrium reference time
- * (Tpet_ref) kept under its Step151 source-compatible name. Current petrol-on-GNV
- * timing lives only in [context]. Prediction is intentionally a different type.
+ * Direct K* support only. `petrolMs` is Tpet_ref. Physics supplies the mechanism;
+ * `queryContextComparability` is target-snapshot metadata for conflict authority,
+ * not a learned global constant. Unknown context contributes zero conflict weight.
  */
 data class PredictorRelativeObservation(
     val id: String,
@@ -52,6 +54,8 @@ data class PredictorRelativeObservation(
     val provenance: String,
     val geometryFingerprint: String = "",
     val context: PredictorRelativeContext = PredictorRelativeContext(),
+    val mechanism: CorrectionMechanism = CorrectionMechanism.UNKNOWN,
+    val queryContextComparability: Double = 0.0,
 ) {
     init {
         require(id.isNotBlank())
@@ -63,6 +67,7 @@ data class PredictorRelativeObservation(
         require(quality.isFinite() && quality in 0.0..1.0)
         require(trajectoryId.isNotBlank())
         require(provenance.isNotBlank())
+        require(queryContextComparability.isFinite() && queryContextComparability in 0.0..1.0)
     }
 
     val petrolReferenceMs: Double
@@ -81,6 +86,7 @@ data class PredictorRelativeFieldInput(
     val calibration: LearningCalibrationBinding? = null,
     val expectedGeometryFingerprint: String = calibration?.geometryFingerprint.orEmpty(),
     val context: PredictorRelativeContext = PredictorRelativeContext(),
+    val mechanism: CorrectionMechanism = CorrectionMechanism.UNKNOWN,
 ) {
     init {
         require(targetRpm.isFinite() && targetRpm > 0.0)
@@ -103,9 +109,12 @@ data class PredictorRelativePrediction(
     val upper95K: Double?,
     val uncertaintyStd: Double?,
     val shrinkFactor: Double?,
+    val baseSpatialConfidence: Double,
     val spatialConfidence: Double,
+    val localConflictScore: Double,
     val supportIds: List<String>,
     val spatialReason: String,
+    val mechanism: CorrectionMechanism,
     val geometryFingerprint: String?,
     val equilibriumCoordinate: PredictorEquilibriumCoordinate?,
     val projectionWeights: List<PredictorTargetCellWeight>,
@@ -119,16 +128,21 @@ data class PredictorRelativePrediction(
 )
 
 /**
- * Typed spatial field for Steps 151–152. It predicts only the relative physical
- * correction delta*=ln(K_star / K_current), using Tpet_ref × RPM on the current
- * Calibration Identity geometry, then shrinks that correction toward zero as
- * physical distance or uncertainty rises. Context never becomes a third Map K axis.
+ * Typed spatial field for Steps 151–154. Physics decides mechanism upstream.
+ * Predictor estimates only the same-mechanism relative correction field on the
+ * current Tpet_ref × RPM geometry. Local/context-comparable contradiction widens
+ * variance and lowers confidence continuously; distant opposite signs are not vetoed.
  */
 object PredictorRelativeField {
     private const val NORMAL_95 = 1.96
 
     fun predict(input: PredictorRelativeFieldInput): PredictorRelativePrediction {
-        if (input.support.isEmpty()) return abstain(input, "NO_DIRECT_KSTAR_SUPPORT")
+        if (!isActuatorCorrection(input.mechanism)) {
+            return abstain(input, mechanismAbstentionReason(input.mechanism))
+        }
+        val mechanismSupport = input.support.filter { it.mechanism == input.mechanism }
+        if (mechanismSupport.size < 3) return abstain(input, "MECHANISM_SUPPORT_INSUFFICIENT")
+
         val calibration = input.calibration ?: return abstain(input, "GEOMETRY_UNKNOWN")
         val projection = PredictorTargetGeometry.project(
             calibration = calibration,
@@ -137,10 +151,10 @@ object PredictorRelativeField {
             petrolReferenceMs = input.targetPetrolReferenceMs,
         )
         if (!projection.available) return abstain(input, projection.reason)
-        if (input.support.any { it.geometryFingerprint.isBlank() }) {
+        if (mechanismSupport.any { it.geometryFingerprint.isBlank() }) {
             return abstain(input, "SUPPORT_GEOMETRY_UNKNOWN", projection = projection)
         }
-        if (input.support.any { it.geometryFingerprint != input.expectedGeometryFingerprint }) {
+        if (mechanismSupport.any { it.geometryFingerprint != input.expectedGeometryFingerprint }) {
             return abstain(input, "GEOMETRY_MISMATCH", projection = projection)
         }
 
@@ -149,7 +163,7 @@ object PredictorRelativeField {
         val spatial = PredictorSpatialConfidence.evaluateRelative(
             targetRpm = input.targetRpm,
             targetPetrolMs = input.targetPetrolReferenceMs,
-            support = input.support.map { observation ->
+            support = mechanismSupport.map { observation ->
                 PredictorSpatialConfidence.RelativeSupportPoint(
                     id = observation.id,
                     rpm = observation.rpm,
@@ -162,9 +176,11 @@ object PredictorRelativeField {
             rpmAxis = rpmAxis,
             petrolReferenceAxisMs = petrolReferenceAxis,
         )
-        if (!spatial.supported) return abstain(input, spatial.reason, spatial.confidence, projection)
+        if (!spatial.supported) {
+            return abstain(input, spatial.reason, spatial.confidence, projection, mechanismSupport)
+        }
 
-        val contributions = input.support.map { observation ->
+        val contributions = mechanismSupport.map { observation ->
             val distance = PredictorSpatialConfidence.physicalDistance(
                 input.targetRpm,
                 input.targetPetrolReferenceMs,
@@ -183,12 +199,20 @@ object PredictorRelativeField {
             .groupBy { it.observation.trajectoryId }
             .mapNotNull { (trajectoryId, items) -> trajectoryEstimate(trajectoryId, items) }
         if (trajectoryEstimates.size < 2) {
-            return abstain(input, "INSUFFICIENT_TRAJECTORY_INDEPENDENCE", spatial.confidence, projection)
+            return abstain(
+                input,
+                "INSUFFICIENT_TRAJECTORY_INDEPENDENCE",
+                spatial.confidence,
+                projection,
+                mechanismSupport,
+            )
         }
 
         val totalWeight = trajectoryEstimates.sumOf { it.weight }.coerceAtLeast(1e-12)
         val rawDelta = trajectoryEstimates.sumOf { it.deltaStar * it.weight } / totalWeight
-        if (!rawDelta.isFinite()) return abstain(input, "INVALID_RELATIVE_FIELD", spatial.confidence, projection)
+        if (!rawDelta.isFinite()) {
+            return abstain(input, "INVALID_RELATIVE_FIELD", spatial.confidence, projection, mechanismSupport)
+        }
 
         val localVariance = trajectoryEstimates.sumOf { item ->
             val delta = item.deltaStar - rawDelta
@@ -198,6 +222,9 @@ object PredictorRelativeField {
         val supportUncertainty = sqrt(
             trajectoryEstimates.sumOf { it.uncertaintyStd * it.uncertaintyStd * it.weight } / totalWeight,
         )
+        val conflictScore = localConflictScore(trajectoryEstimates)
+        val conflictThetaStd = conflictScore * localStd
+
         val nearestDistance = contributions.minOf { it.distance }
         val shrinkUncertainty = input.queryUncertaintyStd + supportUncertainty
         val shrinkFactor = 1.0 / (1.0 + nearestDistance + shrinkUncertainty)
@@ -208,13 +235,20 @@ object PredictorRelativeField {
             supportUncertainty * supportUncertainty +
                 input.queryUncertaintyStd * input.queryUncertaintyStd +
                 localStd * localStd +
-                distanceThetaStd * distanceThetaStd,
+                distanceThetaStd * distanceThetaStd +
+                conflictThetaStd * conflictThetaStd,
         )
         val targetK = input.currentK * exp(predictedDelta)
         val lower = input.currentK * exp(predictedDelta - NORMAL_95 * outputStd)
         val upper = input.currentK * exp(predictedDelta + NORMAL_95 * outputStd)
         if (!targetK.isFinite() || !lower.isFinite() || !upper.isFinite()) {
-            return abstain(input, "NON_FINITE_RELATIVE_PREDICTION", spatial.confidence, projection)
+            return abstain(
+                input,
+                "NON_FINITE_RELATIVE_PREDICTION",
+                spatial.confidence,
+                projection,
+                mechanismSupport,
+            )
         }
 
         val state = if (abs(shrinkFactor - 1.0) <= 1e-12) {
@@ -222,6 +256,8 @@ object PredictorRelativeField {
         } else {
             PredictorFieldState.PREDICTED_SHRUNK
         }
+        val baseConfidence = spatial.confidence.coerceIn(0.0, 1.0)
+        val conflictAdjustedConfidence = (baseConfidence * (1.0 - conflictScore)).coerceIn(0.0, 1.0)
         return PredictorRelativePrediction(
             state = state,
             currentK = input.currentK,
@@ -232,9 +268,12 @@ object PredictorRelativeField {
             upper95K = upper,
             uncertaintyStd = outputStd,
             shrinkFactor = shrinkFactor,
-            spatialConfidence = spatial.confidence,
-            supportIds = input.support.map { it.id }.distinct(),
+            baseSpatialConfidence = baseConfidence,
+            spatialConfidence = conflictAdjustedConfidence,
+            localConflictScore = conflictScore,
+            supportIds = mechanismSupport.map { it.id }.distinct(),
             spatialReason = spatial.reason,
+            mechanism = input.mechanism,
             geometryFingerprint = projection.geometryFingerprint,
             equilibriumCoordinate = projection.coordinate,
             projectionWeights = projection.weights,
@@ -255,6 +294,29 @@ object PredictorRelativeField {
         return rawDeltaStar / (1.0 + distance + uncertainty)
     }
 
+    private fun isActuatorCorrection(mechanism: CorrectionMechanism): Boolean =
+        mechanism == CorrectionMechanism.MAP_LOCAL || mechanism == CorrectionMechanism.CURVE_MUL_ACT
+
+    private fun mechanismAbstentionReason(mechanism: CorrectionMechanism): String = when (mechanism) {
+        CorrectionMechanism.UNKNOWN -> "MECHANISM_UNKNOWN"
+        CorrectionMechanism.ENVIRONMENTAL_DIAGNOSTIC -> "MECHANISM_ENVIRONMENTAL_DIAGNOSTIC"
+        CorrectionMechanism.NO_ACTION -> "MECHANISM_NO_ACTION"
+        CorrectionMechanism.MAP_LOCAL,
+        CorrectionMechanism.CURVE_MUL_ACT -> "MECHANISM_SUPPORT_INSUFFICIENT"
+    }
+
+    private fun localConflictScore(trajectoryEstimates: List<TrajectoryEstimate>): Double {
+        val positiveWeight = trajectoryEstimates
+            .filter { it.deltaStar > 0.0 }
+            .sumOf { it.weight * it.contextComparability }
+        val negativeWeight = trajectoryEstimates
+            .filter { it.deltaStar < 0.0 }
+            .sumOf { it.weight * it.contextComparability }
+        val directionalWeight = positiveWeight + negativeWeight
+        if (directionalWeight <= 0.0) return 0.0
+        return (2.0 * min(positiveWeight, negativeWeight) / directionalWeight).coerceIn(0.0, 1.0)
+    }
+
     private fun trajectoryEstimate(
         trajectoryId: String,
         items: List<DirectContribution>,
@@ -266,8 +328,11 @@ object PredictorRelativeField {
         val uncertainty = sqrt(
             usable.sumOf { it.observation.uncertaintyStd * it.observation.uncertaintyStd * it.weight } / total,
         )
+        val comparability = (
+            usable.sumOf { it.observation.queryContextComparability * it.weight } / total
+            ).coerceIn(0.0, 1.0)
         val weight = usable.maxOf { it.weight }
-        return TrajectoryEstimate(trajectoryId, delta, uncertainty, weight)
+        return TrajectoryEstimate(trajectoryId, delta, uncertainty, comparability, weight)
     }
 
     private fun abstain(
@@ -275,6 +340,7 @@ object PredictorRelativeField {
         reason: String,
         spatialConfidence: Double = 0.0,
         projection: PredictorGeometryProjection? = null,
+        support: List<PredictorRelativeObservation> = input.support,
     ): PredictorRelativePrediction = PredictorRelativePrediction(
         state = PredictorFieldState.UNKNOWN_ABSTAIN,
         currentK = input.currentK,
@@ -285,9 +351,12 @@ object PredictorRelativeField {
         upper95K = null,
         uncertaintyStd = null,
         shrinkFactor = null,
+        baseSpatialConfidence = spatialConfidence.coerceIn(0.0, 1.0),
         spatialConfidence = spatialConfidence.coerceIn(0.0, 1.0),
-        supportIds = input.support.map { it.id }.distinct(),
+        localConflictScore = 0.0,
+        supportIds = support.map { it.id }.distinct(),
         spatialReason = reason,
+        mechanism = input.mechanism,
         geometryFingerprint = projection?.geometryFingerprint ?: input.calibration?.geometryFingerprint,
         equilibriumCoordinate = projection?.coordinate,
         projectionWeights = projection?.weights.orEmpty(),
@@ -310,6 +379,7 @@ object PredictorRelativeField {
         val trajectoryId: String,
         val deltaStar: Double,
         val uncertaintyStd: Double,
+        val contextComparability: Double,
         val weight: Double,
     )
 }
