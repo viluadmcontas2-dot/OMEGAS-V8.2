@@ -41,6 +41,9 @@ object PredictorTargetGeometry {
         ) {
             return unavailable(calibration.geometryFingerprint, "GEOMETRY_MISMATCH")
         }
+        if (!axesStrictlyIncreasing(calibration)) {
+            return unavailable(calibration.geometryFingerprint, "GEOMETRY_INVALID")
+        }
         if (!rpm.isFinite() || rpm <= 0.0 || !petrolReferenceMs.isFinite() || petrolReferenceMs <= 0.0) {
             return unavailable(calibration.geometryFingerprint, "INVALID_TARGET_COORDINATE")
         }
@@ -69,6 +72,10 @@ object PredictorTargetGeometry {
             weights = weights,
         )
     }
+
+    private fun axesStrictlyIncreasing(calibration: LearningCalibrationBinding): Boolean =
+        calibration.petrolAxisMs.zipWithNext().all { (left, right) -> right > left } &&
+            calibration.rpmAxis.zipWithNext().all { (left, right) -> right > left }
 
     private fun unavailable(
         geometryFingerprint: String,
