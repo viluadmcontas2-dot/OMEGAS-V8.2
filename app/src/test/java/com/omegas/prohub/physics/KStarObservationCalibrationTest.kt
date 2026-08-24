@@ -102,6 +102,22 @@ class KStarObservationCalibrationTest {
     }
 
     @Test
+    fun `gain prior near one is not empirical authority without an informative intervention`() {
+        val priorOnly = PlantGainPosterior.prior(mean = 1.0, variance = 0.25).toPlantGain()
+        val learned = PlantGainPosterior.prior(mean = 1.0, variance = 0.25)
+            .update(
+                beforeLogError = 0.10,
+                afterLogError = 0.02,
+                appliedLogFactorDelta = 0.08,
+                observationVariance = 0.01,
+            )
+            .toPlantGain()
+
+        assertEquals(MagnitudeAuthority.UNKNOWN, priorOnly.authority)
+        assertEquals(MagnitudeAuthority.EMPIRICALLY_BOUNDED, learned.authority)
+    }
+
+    @Test
     fun `abstained K star remains abstained in calibration layer`() {
         val estimate = estimate(gain = PlantGain.unknown())
         val result = calibrate(estimate, frames = 20)
