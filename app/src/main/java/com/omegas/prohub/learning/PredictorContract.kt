@@ -1,10 +1,11 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.physics.MagnitudeAuthority
 import java.security.MessageDigest
 import kotlin.math.roundToInt
 
 /**
- * Contrato científico tipado do Predictor (Steps 147–148).
+ * Contrato científico tipado do Predictor (Steps 147–155).
  *
  * Este boundary é deliberadamente puro: não conhece JSON, UI, transporte,
  * USB, serial, writer, Store, Router ou Scheduler. O único identity authority
@@ -142,8 +143,8 @@ data class PredictorEvidenceStamp(
  * `currentK` é contexto para o futuro campo relativo delta*=ln(K_star / K_current),
  * não uma autorização de escrita e não uma StepPolicy amortecida.
  *
- * Context/support sufficiency vêm tipados da autoridade científica upstream;
- * Predictor não inventa threshold local para promovê-los.
+ * Context/support sufficiency e magnitude authority vêm tipados da autoridade
+ * científica upstream; Predictor não inventa threshold local para promovê-los.
  */
 data class PredictorObservation(
     val cell: PredictorCell,
@@ -157,6 +158,9 @@ data class PredictorObservation(
     val provenance: String,
     val contextState: PredictorContextState = PredictorContextState.SUFFICIENT,
     val supportState: PredictorSupportState = PredictorSupportState.SUFFICIENT,
+    val magnitudeAuthority: MagnitudeAuthority = MagnitudeAuthority.UNKNOWN,
+    val assumptions: List<String> = emptyList(),
+    val evidenceRefs: List<String> = emptyList(),
 )
 
 /**
@@ -180,6 +184,8 @@ data class PredictorInputSnapshot(
     val referenceState: PredictorReferenceState = PredictorReferenceState.CURRENT,
     val physicsState: PredictorPhysicsState = PredictorPhysicsState.KNOWN,
     val previousSnapshot: PredictorSnapshot? = null,
+    val model: PredictorModelDescriptor = PredictorModelDescriptor.directKStarDefault(),
+    val predictionErrorStats: PredictorPredictionErrorStats = PredictorPredictionErrorStats.empty(),
 )
 
 data class IdealTargetCandidate(
@@ -191,7 +197,19 @@ data class IdealTargetCandidate(
     val support: Double,
     val provenance: String,
     val sourceRevisions: PredictorSourceRevisions,
-)
+    val estimateK: Double,
+    val range: PredictorTargetRange,
+    val authority: MagnitudeAuthority,
+    val assumptions: List<String>,
+    val evidenceRefs: List<String>,
+    val model: PredictorModelDescriptor,
+    val predictionErrorStats: PredictorPredictionErrorStats,
+) {
+    /** Authority eligibility is not runtime actionability and exposes no writer handle. */
+    fun industrialIdealAuthorityEligible(): Boolean =
+        authority == MagnitudeAuthority.PHYSICALLY_ANCHORED ||
+            authority == MagnitudeAuthority.EMPIRICALLY_BOUNDED
+}
 
 /**
  * Carry-forward exclusivamente diagnóstico. Nunca é copiado para `candidates`
@@ -219,6 +237,7 @@ object PredictorContract {
         val candidates = input.observations
             .sortedWith(compareBy<PredictorObservation> { it.cell.row }.thenBy { it.cell.column }.thenBy { it.provenance })
             .map { observation ->
+                val halfWidth = observation.kStar * observation.uncertaintyPercent / 100.0
                 IdealTargetCandidate(
                     cell = observation.cell,
                     targetK = idealTarget(observation.kStar),
@@ -228,6 +247,19 @@ object PredictorContract {
                     support = observation.support,
                     provenance = observation.provenance,
                     sourceRevisions = input.sourceRevisions,
+                    estimateK = observation.kStar,
+                    range = PredictorTargetRange(
+                        lowerK = (observation.kStar - halfWidth).coerceAtLeast(0.0),
+                        upperK = observation.kStar + halfWidth,
+                        basis = "OBSERVATION_DECLARED_UNCERTAINTY_PERCENT",
+                    ),
+                    authority = observation.magnitudeAuthority,
+                    assumptions = observation.assumptions.ifEmpty {
+                        listOf("same calibration identity", "current source revisions")
+                    },
+                    evidenceRefs = observation.evidenceRefs.ifEmpty { listOf(observation.provenance) },
+                    model = input.model,
+                    predictionErrorStats = input.predictionErrorStats,
                 )
             }
         return PredictorSnapshot(
@@ -327,7 +359,9 @@ object PredictorContract {
             observation.uncertaintyPercent.isFinite() && observation.uncertaintyPercent >= 0.0 &&
             observation.support.isFinite() && observation.support in 0.0..1.0 &&
             observation.operatingPoint.valid() &&
-            observation.provenance.isNotBlank()
+            observation.provenance.isNotBlank() &&
+            observation.assumptions.none { it.isBlank() } &&
+            observation.evidenceRefs.none { it.isBlank() }
 
     /**
      * IdealTarget científico direto da observação K*. Não incorpora confidence,
@@ -375,6 +409,9 @@ object PredictorContract {
                     observation.knownness.name,
                     observation.contextState.name,
                     observation.supportState.name,
+                    observation.magnitudeAuthority.name,
+                    observation.assumptions.joinToString(","),
+                    observation.evidenceRefs.joinToString(","),
                     observation.operatingPoint.rpm,
                     observation.operatingPoint.petrolInjectionMs,
                     observation.operatingPoint.mapBar,
@@ -407,6 +444,8 @@ object PredictorContract {
             input.referenceState.name,
             input.physicsState.name,
             input.previousSnapshot?.revisionToken,
+            input.model,
+            input.predictionErrorStats,
             observations,
         ).joinToString("|")
         return MessageDigest.getInstance("SHA-256")
