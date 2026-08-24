@@ -6,7 +6,7 @@ import org.junit.Test
 
 class KStarMonteCarloOracleTest {
     @Test
-    fun `analytic log uncertainty reproduces seeded Monte Carlo interval`() {
+    fun `analytic log uncertainty reproduces seeded canonical Monte Carlo interval`() {
         val gain = PlantGain.empiricallyBounded(1.0, 0.9, 1.1)
         val estimate = KStarEstimate(
             logError = kotlin.math.ln(4.4 / 4.0),
@@ -36,14 +36,16 @@ class KStarMonteCarloOracleTest {
             contradictionThetaStd = 0.0,
         )
         val analytic = KStarObservationCalibration.propagate(estimate, uncertainty)
-        val oracle = PhysicsOracleValidator.monteCarloPropagation(
-            petrolOnGasMs = 4.4,
-            petrolReferenceMs = 4.0,
-            currentFactor = 1.0,
-            gain = gain,
-            uncertainty = uncertainty,
-            draws = 30_000,
-            seed = 150L,
+        val oracle = PhysicsUncertaintyOracle.propagate(
+            KStarPropagationOracleRequest(
+                petrolOnGasMs = 4.4,
+                petrolReferenceMs = 4.0,
+                currentFactor = 1.0,
+                gain = gain,
+                uncertainty = uncertainty,
+                draws = 30_000,
+                seed = 150L,
+            ),
         )
 
         assertFalse(analytic.abstained)
