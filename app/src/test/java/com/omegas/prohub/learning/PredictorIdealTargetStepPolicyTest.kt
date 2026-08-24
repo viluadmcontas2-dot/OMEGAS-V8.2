@@ -24,10 +24,10 @@ class PredictorIdealTargetStepPolicyTest {
     fun `beta changes only k next while ideal target stays fixed`() {
         val ideal = PredictorContract.evaluate(input()).candidates.single()
         val conservative = PredictorStepPolicy.apply(
-            StepPolicyInput(currentK = ideal.currentKObserved, idealTargetK = ideal.targetK, beta = 0.25),
+            StepPolicyInput(currentK = ideal.currentKObserved, idealKStar = ideal.kStarObserved, beta = 0.25),
         )
         val assertive = PredictorStepPolicy.apply(
-            StepPolicyInput(currentK = ideal.currentKObserved, idealTargetK = ideal.targetK, beta = 0.75),
+            StepPolicyInput(currentK = ideal.currentKObserved, idealKStar = ideal.kStarObserved, beta = 0.75),
         )
 
         assertTrue(conservative.available)
@@ -41,9 +41,9 @@ class PredictorIdealTargetStepPolicyTest {
 
     @Test
     fun `beta endpoints and correction sign obey physical direction`() {
-        val noStep = PredictorStepPolicy.apply(StepPolicyInput(120, 132, 0.0))
-        val fullStep = PredictorStepPolicy.apply(StepPolicyInput(120, 132, 1.0))
-        val decrease = PredictorStepPolicy.apply(StepPolicyInput(120, 108, 0.5))
+        val noStep = PredictorStepPolicy.apply(StepPolicyInput(120, 132.0, 0.0))
+        val fullStep = PredictorStepPolicy.apply(StepPolicyInput(120, 132.0, 1.0))
+        val decrease = PredictorStepPolicy.apply(StepPolicyInput(120, 108.0, 0.5))
 
         assertEquals(120, noStep.kNext)
         assertEquals(132, fullStep.kNext)
@@ -54,11 +54,12 @@ class PredictorIdealTargetStepPolicyTest {
     @Test
     fun `invalid policy inputs fail closed`() {
         listOf(
-            StepPolicyInput(120, 132, Double.NaN),
-            StepPolicyInput(120, 132, -0.1),
-            StepPolicyInput(120, 132, 1.1),
-            StepPolicyInput(0, 132, 0.5),
-            StepPolicyInput(120, 0, 0.5),
+            StepPolicyInput(120, 132.0, Double.NaN),
+            StepPolicyInput(120, 132.0, -0.1),
+            StepPolicyInput(120, 132.0, 1.1),
+            StepPolicyInput(0, 132.0, 0.5),
+            StepPolicyInput(120, 0.0, 0.5),
+            StepPolicyInput(120, Double.NaN, 0.5),
         ).forEach { input ->
             val decision = PredictorStepPolicy.apply(input)
             assertFalse(decision.available)
