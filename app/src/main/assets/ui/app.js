@@ -22,6 +22,7 @@
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
     learning: ['APRENDER', 'Aprender'],
+    predictor: ['DECIDIR', 'Predictor'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     obd: ['OBSERVAR', 'OBD'],
@@ -256,8 +257,17 @@
       patch.learningDecision = api.learningDecision() || {};
       patch.learningTolerance = api.learningToleranceSettings() || {};
     }
-    if (route === 'learning' || route === 'suggestions' || route === 'map' || route === 'curve') {
-      patch.calibrationState = readCalibrationState();
+    if (route === 'learning' || route === 'predictor' || route === 'suggestions' || route === 'map' || route === 'curve') {
+      const calibrationState = readCalibrationState();
+      patch.calibrationState = calibrationState;
+      if (route === 'predictor') {
+        const predictor = calibrationState.predictor || null;
+        patch.predictor = {
+          ...state.predictor,
+          state: predictor?.ok === false ? 'error' : (predictor ? 'ready' : 'idle'),
+          data: predictor,
+        };
+      }
     }
     if (route === 'obd') patch.obdDevices = api.obdDevices() || {};
     if (route === 'tools') {
