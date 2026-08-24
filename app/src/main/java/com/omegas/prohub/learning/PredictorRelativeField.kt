@@ -14,6 +14,12 @@ enum class PredictorFieldState {
     UNKNOWN_ABSTAIN,
 }
 
+/** Actionability is separate from the scientific prediction state. */
+enum class PredictorActionabilityState {
+    ABSTAIN,
+    ACTIONABLE,
+}
+
 /**
  * Direct K* support only. Prediction is intentionally a different type so a
  * predicted cell cannot be appended back into the observation support set.
@@ -76,6 +82,8 @@ data class PredictorRelativePrediction(
     val riskCalibrated: Boolean,
     val pImprove: Double?,
     val actionable: Boolean,
+    val actionabilityState: PredictorActionabilityState,
+    val actionabilityReason: String,
     val nextEvidence: String,
 )
 
@@ -179,6 +187,8 @@ object PredictorRelativeField {
             riskCalibrated = false,
             pImprove = null,
             actionable = false,
+            actionabilityState = PredictorActionabilityState.ABSTAIN,
+            actionabilityReason = "RISK_NOT_CALIBRATED",
             nextEvidence = "CALIBRATE_P_IMPROVE_WITH_POST_WRITE_OUTCOMES",
         )
     }
@@ -227,6 +237,8 @@ object PredictorRelativeField {
         riskCalibrated = false,
         pImprove = null,
         actionable = false,
+        actionabilityState = PredictorActionabilityState.ABSTAIN,
+        actionabilityReason = "SCIENTIFIC_SUPPORT_ABSTAIN:$reason",
         nextEvidence = "COLLECT_DIRECT_KSTAR_SUPPORT:$reason",
     )
 
