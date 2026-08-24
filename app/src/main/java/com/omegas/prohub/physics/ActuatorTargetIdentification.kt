@@ -45,46 +45,58 @@ object ActuatorTargetIdentification {
             )
         }
 
-        return when (input.mapFreedom to input.curveFreedom) {
-            ActuatorFreedom.FREE to ActuatorFreedom.FROZEN -> {
-                val target = ConditionalActuatorTargets.mapLocal(input.kStar, input.context)
-                if (target.factor == null) {
-                    identifiedFStarOnly(fStar, input.kStar.authority, target.reason)
-                } else {
-                    IdentifiedActuatorTarget(
-                        fStar = fStar,
-                        mapTarget = target,
-                        curveTarget = null,
-                        reason = "MAP_CONDITIONED_ON_FROZEN_CURVE",
-                        authority = input.kStar.authority,
-                    )
-                }
+        return when (input.mapFreedom) {
+            ActuatorFreedom.FREE -> when (input.curveFreedom) {
+                ActuatorFreedom.FROZEN -> resolveMapConditioned(input, fStar)
+                ActuatorFreedom.FREE ->
+                    identifiedFStarOnly(fStar, input.kStar.authority, "FSTAR_PRIMARY_BOTH_ACTUATORS_FREE")
             }
 
-            ActuatorFreedom.FROZEN to ActuatorFreedom.FREE -> {
-                val target = ConditionalActuatorTargets.curveGlobal(
-                    input.kStar,
-                    input.context,
-                    input.localResidualRemoved,
-                )
-                if (target.factor == null) {
-                    identifiedFStarOnly(fStar, input.kStar.authority, target.reason)
-                } else {
-                    IdentifiedActuatorTarget(
-                        fStar = fStar,
-                        mapTarget = null,
-                        curveTarget = target,
-                        reason = "CURVE_CONDITIONED_ON_FROZEN_MAP",
-                        authority = input.kStar.authority,
-                    )
-                }
+            ActuatorFreedom.FROZEN -> when (input.curveFreedom) {
+                ActuatorFreedom.FREE -> resolveCurveConditioned(input, fStar)
+                ActuatorFreedom.FROZEN ->
+                    identifiedFStarOnly(fStar, input.kStar.authority, "NO_FREE_ACTUATOR")
             }
+        }
+    }
 
-            ActuatorFreedom.FREE to ActuatorFreedom.FREE ->
-                identifiedFStarOnly(fStar, input.kStar.authority, "FSTAR_PRIMARY_BOTH_ACTUATORS_FREE")
+    private fun resolveMapConditioned(
+        input: ActuatorIdentificationInput,
+        fStar: Double,
+    ): IdentifiedActuatorTarget {
+        val target = ConditionalActuatorTargets.mapLocal(input.kStar, input.context)
+        return if (target.factor == null) {
+            identifiedFStarOnly(fStar, input.kStar.authority, target.reason)
+        } else {
+            IdentifiedActuatorTarget(
+                fStar = fStar,
+                mapTarget = target,
+                curveTarget = null,
+                reason = "MAP_CONDITIONED_ON_FROZEN_CURVE",
+                authority = input.kStar.authority,
+            )
+        }
+    }
 
-            ActuatorFreedom.FROZEN to ActuatorFreedom.FROZEN ->
-                identifiedFStarOnly(fStar, input.kStar.authority, "NO_FREE_ACTUATOR")
+    private fun resolveCurveConditioned(
+        input: ActuatorIdentificationInput,
+        fStar: Double,
+    ): IdentifiedActuatorTarget {
+        val target = ConditionalActuatorTargets.curveGlobal(
+            input.kStar,
+            input.context,
+            input.localResidualRemoved,
+        )
+        return if (target.factor == null) {
+            identifiedFStarOnly(fStar, input.kStar.authority, target.reason)
+        } else {
+            IdentifiedActuatorTarget(
+                fStar = fStar,
+                mapTarget = null,
+                curveTarget = target,
+                reason = "CURVE_CONDITIONED_ON_FROZEN_MAP",
+                authority = input.kStar.authority,
+            )
         }
     }
 
