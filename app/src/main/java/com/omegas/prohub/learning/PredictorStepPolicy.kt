@@ -14,12 +14,13 @@ val IdealTargetCandidate.deltaStar: Double?
 /**
  * Política de passo separada do IdealTarget científico.
  *
- * Recebe somente números já publicados pelo Predictor e um beta escolhido pela
- * camada de policy/risk. Não possui writer, USB, serial, UI, Store ou Scheduler.
+ * Recebe o K* contínuo já publicado pelo Predictor e um beta escolhido pela
+ * camada de policy/risk. Somente K_next é quantizado para o domínio discreto K.
+ * Não possui writer, USB, serial, UI, Store ou Scheduler.
  */
 data class StepPolicyInput(
     val currentK: Int,
-    val idealTargetK: Int,
+    val idealKStar: Double,
     val beta: Double,
 )
 
@@ -40,13 +41,13 @@ data class StepPolicyDecision(
 
 object PredictorStepPolicy {
     fun apply(input: StepPolicyInput): StepPolicyDecision {
-        if (input.currentK !in 0..255 || input.idealTargetK !in 0..255) {
+        if (input.currentK !in 0..255 || !input.idealKStar.isFinite() || input.idealKStar !in 0.0..255.0) {
             return unavailable(input.beta, StepPolicyReason.INVALID_K_DOMAIN)
         }
         if (!input.beta.isFinite() || input.beta !in 0.0..1.0) {
             return unavailable(input.beta, StepPolicyReason.INVALID_BETA)
         }
-        val deltaStar = physicalDeltaStar(input.idealTargetK.toDouble(), input.currentK.toDouble())
+        val deltaStar = physicalDeltaStar(input.idealKStar, input.currentK.toDouble())
             ?: return unavailable(input.beta, StepPolicyReason.NON_POSITIVE_LOG_DOMAIN)
 
         val kNext = (input.currentK * exp(input.beta * deltaStar))
