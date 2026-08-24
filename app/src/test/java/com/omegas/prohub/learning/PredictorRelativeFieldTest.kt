@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.physics.CorrectionMechanism
 import kotlin.math.abs
 import kotlin.math.ln
 import org.junit.Assert.assertEquals
@@ -147,6 +148,7 @@ class PredictorRelativeFieldTest {
             support = support,
             calibration = calibration,
             expectedGeometryFingerprint = calibration.geometryFingerprint,
+            mechanism = CorrectionMechanism.MAP_LOCAL,
         )
     }
 
@@ -176,6 +178,7 @@ class PredictorRelativeFieldTest {
         trajectoryId = trajectoryId,
         provenance = "DIRECT_KSTAR_TEST",
         geometryFingerprint = "geometry-A",
+        mechanism = CorrectionMechanism.MAP_LOCAL,
     )
 
     private fun binding(): LearningCalibrationBinding = LearningCalibrationBinding(
