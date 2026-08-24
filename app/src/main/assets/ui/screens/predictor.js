@@ -2,11 +2,6 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function parse(value, fallback) {
-    if (value == null || value === '') return fallback;
-    if (typeof value !== 'string') return value;
-    try { return JSON.parse(value); } catch (_) { return fallback; }
-  }
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
@@ -21,17 +16,21 @@
       this.app = app;
       this.store = app.store;
       this.router = app.router;
-      this.api = app.api;
       this.data = null;
-      this.lastStatePayload = null;
       this.activeKey = '';
-      this.refreshing = false;
       this.lastRoute = '';
       this.injectShell();
       this.bind();
-      this.unsubscribeContext = app.scheduler.addHook('context', () => {
-        if (this.store.get().route === 'predictor') this.refresh();
-      });
+      this.unsubscribePredictor = this.store.subscribeSelected(
+        state => state.predictor,
+        predictor => this.onPredictorState(predictor),
+        true,
+      );
+      this.unsubscribeCalibration = this.store.subscribeSelected(
+        state => state.calibrationState?.predictor || null,
+        predictor => this.onCalibrationPredictorState(predictor),
+        true,
+      );
       this.unsubscribeStore = this.store.subscribeSelected(
         state => state.route,
         route => this.onRoute(route),
@@ -45,7 +44,7 @@
         link.rel = 'stylesheet';
         link.href = 'styles-predictor.css';
         link.dataset.predictorStyle = 'true';
-        document.head.appendChild(link);
+        document.head?.appendChild?.(link);
       }
       const nav = document.querySelector('.side-nav');
       if (nav && !nav.querySelector('[data-route="predictor"]')) {
@@ -110,6 +109,20 @@
       });
     }
 
+    onPredictorState(predictor) {
+      const next = predictor?.data || null;
+      if (next === this.data) return;
+      this.data = next;
+      if (this.store.get().route === 'predictor') this.render();
+    }
+
+    onCalibrationPredictorState(predictor) {
+      if (!predictor || this.store.get().predictor?.data) return;
+      if (predictor === this.data) return;
+      this.data = predictor;
+      if (this.store.get().route === 'predictor') this.render();
+    }
+
     onRoute(route) {
       const active = route === 'predictor';
       this.navButton?.classList.toggle('active', active);
@@ -121,36 +134,9 @@
         const title = document.getElementById('routeTitle');
         if (eyebrow) eyebrow.textContent = 'DECIDIR';
         if (title) title.textContent = 'Predictor';
-      }
-      if (active && this.lastRoute !== route) this.refresh();
-      this.lastRoute = route;
-    }
-
-    refresh() {
-      if (this.refreshing || !this.api.v7 || typeof this.api.v7.getState !== 'function') return;
-      this.refreshing = true;
-      try {
-        const raw = this.api.v7.getState();
-        if (raw === this.lastStatePayload) return;
-        const calibration = parse(raw, {}) || {};
-        this.lastStatePayload = raw;
-        const predictor = calibration.predictor || {};
-        this.data = predictor;
-        this.store.patch({
-          calibrationState: calibration,
-          predictor: {
-            ...this.store.get().predictor,
-            state: predictor.ok === false ? 'error' : 'ready',
-            data: predictor,
-            activeCell: this.activeKey || null,
-          },
-        });
         this.render();
-      } catch (error) {
-        this.store.patch({ predictor: { state: 'error', data: null, activeCell: null, inspector: null } });
-      } finally {
-        this.refreshing = false;
       }
+      this.lastRoute = route;
     }
 
     cells() { return Array.isArray(this.data?.cells) ? this.data.cells : []; }
@@ -159,8 +145,8 @@
       if (!this.grid || !this.inspector) return;
       const cells = this.cells();
       if (!cells.length) {
-        this.grid.innerHTML = '<div class="predictor-empty"><b>Sem superfície disponível</b><span>Leia o Mapa K e acumule evidência gasolina × GNV.</span></div>';
-        this.inspector.innerHTML = '<div class="detail-empty"><b>Predictor aguardando</b><span>Nenhuma célula foi inventada sem suporte.</span></div>';
+        this.grid.innerHTML = '<div class="predictor-empty"><b>Sem superfície disponível</b><span>A tela aguarda o estado científico já publicado na Store.</span></div>';
+        this.inspector.innerHTML = '<div class="detail-empty"><b>Predictor aguardando</b><span>A rota não inicia aquisição, polling ou recomputação científica.</span></div>';
         return;
       }
       const rpmBins = [...new Set(cells.map(item => Number(item.rpm)).filter(Number.isFinite))].sort((a, b) => a - b);
@@ -232,7 +218,7 @@
 
   function boot() {
     const app = root.OmegasApp;
-    if (!app?.store || !app?.router || !app?.scheduler || !ns.PredictorModel) {
+    if (!app?.store || !app?.router || !ns.PredictorModel) {
       root.setTimeout(boot, 25);
       return;
     }
