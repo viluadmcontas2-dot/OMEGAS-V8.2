@@ -59,6 +59,7 @@ private object PredictorStateCache {
             null
         }
         val snapshot = PredictorInterpolator.build(learning, map)
+            .withPredictorHumanState()
             .put("source", "V8_CALIBRATION_STATE")
             .put("cachedByStructuralRevision", true)
         entries[service] = Entry(signature, JSONObject(snapshot.toString()))
