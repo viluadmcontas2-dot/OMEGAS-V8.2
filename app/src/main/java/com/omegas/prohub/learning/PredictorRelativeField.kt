@@ -20,9 +20,25 @@ enum class PredictorActionabilityState {
     ACTIONABLE,
 }
 
+/** Context is preserved for conditioning/ablation, never used as the 2D Map K coordinate. */
+data class PredictorRelativeContext(
+    val petrolOnCngMs: Double? = null,
+    val mapBar: Double? = null,
+    val deltaPressureBar: Double? = null,
+    val waterTemperatureC: Double? = null,
+    val gasTemperatureC: Double? = null,
+) {
+    init {
+        listOf(petrolOnCngMs, mapBar, deltaPressureBar, waterTemperatureC, gasTemperatureC)
+            .filterNotNull()
+            .forEach { require(it.isFinite()) }
+    }
+}
+
 /**
- * Direct K* support only. Prediction is intentionally a different type so a
- * predicted cell cannot be appended back into the observation support set.
+ * Direct K* support only. `petrolMs` is the gasoline equilibrium reference time
+ * (Tpet_ref) kept under its Step151 source-compatible name. Current petrol-on-GNV
+ * timing lives only in [context]. Prediction is intentionally a different type.
  */
 data class PredictorRelativeObservation(
     val id: String,
@@ -34,6 +50,8 @@ data class PredictorRelativeObservation(
     val quality: Double,
     val trajectoryId: String,
     val provenance: String,
+    val geometryFingerprint: String = "",
+    val context: PredictorRelativeContext = PredictorRelativeContext(),
 ) {
     init {
         require(id.isNotBlank())
@@ -47,6 +65,9 @@ data class PredictorRelativeObservation(
         require(provenance.isNotBlank())
     }
 
+    val petrolReferenceMs: Double
+        get() = petrolMs
+
     val deltaStar: Double
         get() = ln(kStar / currentK)
 }
@@ -57,6 +78,9 @@ data class PredictorRelativeFieldInput(
     val currentK: Double,
     val queryUncertaintyStd: Double,
     val support: List<PredictorRelativeObservation>,
+    val calibration: LearningCalibrationBinding? = null,
+    val expectedGeometryFingerprint: String = calibration?.geometryFingerprint.orEmpty(),
+    val context: PredictorRelativeContext = PredictorRelativeContext(),
 ) {
     init {
         require(targetRpm.isFinite() && targetRpm > 0.0)
@@ -64,6 +88,9 @@ data class PredictorRelativeFieldInput(
         require(currentK.isFinite() && currentK > 0.0 && currentK <= 255.0)
         require(queryUncertaintyStd.isFinite() && queryUncertaintyStd >= 0.0)
     }
+
+    val targetPetrolReferenceMs: Double
+        get() = targetPetrolMs
 }
 
 data class PredictorRelativePrediction(
@@ -79,6 +106,9 @@ data class PredictorRelativePrediction(
     val spatialConfidence: Double,
     val supportIds: List<String>,
     val spatialReason: String,
+    val geometryFingerprint: String?,
+    val equilibriumCoordinate: PredictorEquilibriumCoordinate?,
+    val projectionWeights: List<PredictorTargetCellWeight>,
     val riskCalibrated: Boolean,
     val pImprove: Double?,
     val actionable: Boolean,
@@ -88,38 +118,59 @@ data class PredictorRelativePrediction(
 )
 
 /**
- * Typed spatial field for Step 151. It predicts only the relative physical
- * correction delta*=ln(K_star / K_current), then shrinks that correction toward zero
- * as physical distance or uncertainty rises. It owns no writer or risk policy.
+ * Typed spatial field for Steps 151–152. It predicts only the relative physical
+ * correction delta*=ln(K_star / K_current), using Tpet_ref × RPM on the current
+ * Calibration Identity geometry, then shrinks that correction toward zero as
+ * physical distance or uncertainty rises. Context never becomes a third Map K axis.
  */
 object PredictorRelativeField {
     private const val NORMAL_95 = 1.96
 
     fun predict(input: PredictorRelativeFieldInput): PredictorRelativePrediction {
         if (input.support.isEmpty()) return abstain(input, "NO_DIRECT_KSTAR_SUPPORT")
+        val calibration = input.calibration ?: return abstain(input, "GEOMETRY_UNKNOWN")
+        val projection = PredictorTargetGeometry.project(
+            calibration = calibration,
+            expectedGeometryFingerprint = input.expectedGeometryFingerprint,
+            rpm = input.targetRpm,
+            petrolReferenceMs = input.targetPetrolReferenceMs,
+        )
+        if (!projection.available) return abstain(input, projection.reason)
+        if (input.support.any { it.geometryFingerprint.isBlank() }) {
+            return abstain(input, "SUPPORT_GEOMETRY_UNKNOWN", projection = projection)
+        }
+        if (input.support.any { it.geometryFingerprint != input.expectedGeometryFingerprint }) {
+            return abstain(input, "GEOMETRY_MISMATCH", projection = projection)
+        }
 
+        val rpmAxis = calibration.rpmAxis.map(Int::toDouble).toDoubleArray()
+        val petrolReferenceAxis = calibration.petrolAxisMs.toDoubleArray()
         val spatial = PredictorSpatialConfidence.evaluateRelative(
             targetRpm = input.targetRpm,
-            targetPetrolMs = input.targetPetrolMs,
+            targetPetrolMs = input.targetPetrolReferenceMs,
             support = input.support.map { observation ->
                 PredictorSpatialConfidence.RelativeSupportPoint(
                     id = observation.id,
                     rpm = observation.rpm,
-                    petrolMs = observation.petrolMs,
+                    petrolMs = observation.petrolReferenceMs,
                     deltaStar = observation.deltaStar,
                     quality = observation.quality,
                     trajectoryId = observation.trajectoryId,
                 )
             },
+            rpmAxis = rpmAxis,
+            petrolReferenceAxisMs = petrolReferenceAxis,
         )
-        if (!spatial.supported) return abstain(input, spatial.reason, spatial.confidence)
+        if (!spatial.supported) return abstain(input, spatial.reason, spatial.confidence, projection)
 
         val contributions = input.support.map { observation ->
             val distance = PredictorSpatialConfidence.physicalDistance(
                 input.targetRpm,
-                input.targetPetrolMs,
+                input.targetPetrolReferenceMs,
                 observation.rpm,
-                observation.petrolMs,
+                observation.petrolReferenceMs,
+                rpmAxis,
+                petrolReferenceAxis,
             )
             DirectContribution(
                 observation = observation,
@@ -131,12 +182,12 @@ object PredictorRelativeField {
             .groupBy { it.observation.trajectoryId }
             .mapNotNull { (trajectoryId, items) -> trajectoryEstimate(trajectoryId, items) }
         if (trajectoryEstimates.size < 2) {
-            return abstain(input, "INSUFFICIENT_TRAJECTORY_INDEPENDENCE", spatial.confidence)
+            return abstain(input, "INSUFFICIENT_TRAJECTORY_INDEPENDENCE", spatial.confidence, projection)
         }
 
         val totalWeight = trajectoryEstimates.sumOf { it.weight }.coerceAtLeast(1e-12)
         val rawDelta = trajectoryEstimates.sumOf { it.deltaStar * it.weight } / totalWeight
-        if (!rawDelta.isFinite()) return abstain(input, "INVALID_RELATIVE_FIELD", spatial.confidence)
+        if (!rawDelta.isFinite()) return abstain(input, "INVALID_RELATIVE_FIELD", spatial.confidence, projection)
 
         val localVariance = trajectoryEstimates.sumOf { item ->
             val delta = item.deltaStar - rawDelta
@@ -163,7 +214,7 @@ object PredictorRelativeField {
         val lower = input.currentK * exp(predictedDelta - NORMAL_95 * outputStd)
         val upper = input.currentK * exp(predictedDelta + NORMAL_95 * outputStd)
         if (!targetK.isFinite() || !lower.isFinite() || !upper.isFinite()) {
-            return abstain(input, "NON_FINITE_RELATIVE_PREDICTION", spatial.confidence)
+            return abstain(input, "NON_FINITE_RELATIVE_PREDICTION", spatial.confidence, projection)
         }
 
         val state = if (abs(shrinkFactor - 1.0) <= 1e-12) {
@@ -184,6 +235,9 @@ object PredictorRelativeField {
             spatialConfidence = spatial.confidence,
             supportIds = input.support.map { it.id }.distinct(),
             spatialReason = spatial.reason,
+            geometryFingerprint = projection.geometryFingerprint,
+            equilibriumCoordinate = projection.coordinate,
+            projectionWeights = projection.weights,
             riskCalibrated = false,
             pImprove = null,
             actionable = false,
@@ -221,6 +275,7 @@ object PredictorRelativeField {
         input: PredictorRelativeFieldInput,
         reason: String,
         spatialConfidence: Double = 0.0,
+        projection: PredictorGeometryProjection? = null,
     ): PredictorRelativePrediction = PredictorRelativePrediction(
         state = PredictorFieldState.UNKNOWN_ABSTAIN,
         currentK = input.currentK,
@@ -234,6 +289,9 @@ object PredictorRelativeField {
         spatialConfidence = spatialConfidence.coerceIn(0.0, 1.0),
         supportIds = input.support.map { it.id }.distinct(),
         spatialReason = reason,
+        geometryFingerprint = projection?.geometryFingerprint ?: input.calibration?.geometryFingerprint,
+        equilibriumCoordinate = projection?.coordinate,
+        projectionWeights = projection?.weights.orEmpty(),
         riskCalibrated = false,
         pImprove = null,
         actionable = false,
