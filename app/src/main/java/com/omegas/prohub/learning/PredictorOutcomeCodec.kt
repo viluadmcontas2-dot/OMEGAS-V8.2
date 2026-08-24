@@ -12,22 +12,25 @@ object PredictorOutcomeCodec {
     const val TARGET_SCHEMA: String = "omegas-predictor-target-v155"
     const val OUTCOME_SCHEMA: String = "omegas-predictor-outcome-v155"
 
-    fun encodeTarget(target: IdealTargetCandidate): String = encode(TARGET_SCHEMA) { out ->
-        writeCell(out, target.cell)
-        out.writeInt(target.targetK)
-        out.writeDouble(target.kStarObserved)
-        out.writeInt(target.currentKObserved)
-        out.writeDouble(target.uncertaintyPercent)
-        out.writeDouble(target.support)
-        out.writeUTF(target.provenance)
-        writeRevisions(out, target.sourceRevisions)
-        out.writeDouble(target.estimateK)
-        writeRange(out, target.range)
-        out.writeUTF(target.authority.name)
-        writeStrings(out, target.assumptions)
-        writeStrings(out, target.evidenceRefs)
-        writeModel(out, target.model)
-        writeStats(out, target.predictionErrorStats)
+    fun encodeTarget(target: IdealTargetCandidate): String {
+        validateTarget(target)
+        return encode(TARGET_SCHEMA) { out ->
+            writeCell(out, target.cell)
+            out.writeInt(target.targetK)
+            out.writeDouble(target.kStarObserved)
+            out.writeInt(target.currentKObserved)
+            out.writeDouble(target.uncertaintyPercent)
+            out.writeDouble(target.support)
+            out.writeUTF(target.provenance)
+            writeRevisions(out, target.sourceRevisions)
+            out.writeDouble(target.estimateK)
+            writeRange(out, target.range)
+            out.writeUTF(target.authority.name)
+            writeStrings(out, target.assumptions)
+            writeStrings(out, target.evidenceRefs)
+            writeModel(out, target.model)
+            writeStats(out, target.predictionErrorStats)
+        }
     }
 
     fun decodeTarget(encoded: String): IdealTargetCandidate = decode(encoded, TARGET_SCHEMA) { input ->
@@ -47,7 +50,7 @@ object PredictorOutcomeCodec {
             evidenceRefs = readStrings(input),
             model = readModel(input),
             predictionErrorStats = readStats(input),
-        )
+        ).also(::validateTarget)
     }
 
     fun encodeOutcome(outcome: PredictionOutcome): String = encode(OUTCOME_SCHEMA) { out ->
@@ -82,6 +85,20 @@ object PredictorOutcomeCodec {
             model = readModel(input),
             evidenceRefs = readStrings(input),
         )
+    }
+
+    private fun validateTarget(target: IdealTargetCandidate) {
+        require(target.cell.row >= 0 && target.cell.column >= 0)
+        require(target.targetK in 0..255)
+        require(target.kStarObserved.isFinite() && target.kStarObserved in 0.0..255.0)
+        require(target.currentKObserved in 0..255)
+        require(target.uncertaintyPercent.isFinite() && target.uncertaintyPercent >= 0.0)
+        require(target.support.isFinite() && target.support in 0.0..1.0)
+        require(target.provenance.isNotBlank())
+        require(target.sourceRevisions.valid())
+        require(target.estimateK.isFinite() && target.estimateK in target.range.lowerK..target.range.upperK)
+        require(target.assumptions.isNotEmpty() && target.assumptions.none { it.isBlank() })
+        require(target.evidenceRefs.isNotEmpty() && target.evidenceRefs.none { it.isBlank() })
     }
 
     private fun encode(schema: String, writer: (DataOutputStream) -> Unit): String {
