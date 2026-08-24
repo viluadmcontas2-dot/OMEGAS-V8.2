@@ -32,6 +32,23 @@ object PredictorSpatialConfidence {
         }
     }
 
+    /** Relative-field support reuses the same geometry authority without naming delta* as K. */
+    data class RelativeSupportPoint(
+        val id: String,
+        val rpm: Double,
+        val petrolMs: Double,
+        val deltaStar: Double,
+        val quality: Double,
+        val trajectoryId: String,
+    ) {
+        init {
+            require(id.isNotBlank())
+            require(rpm.isFinite() && petrolMs.isFinite() && deltaStar.isFinite())
+            require(quality in 0.0..1.0)
+            require(trajectoryId.isNotBlank())
+        }
+    }
+
     data class Result(
         val supported: Boolean,
         val confidence: Double,
@@ -50,10 +67,48 @@ object PredictorSpatialConfidence {
         targetRpm: Double,
         targetPetrolMs: Double,
         support: List<SupportPoint>,
+    ): Result = evaluateValues(
+        targetRpm = targetRpm,
+        targetPetrolMs = targetPetrolMs,
+        support = support.map { point ->
+            ValueSupport(
+                id = point.id,
+                rpm = point.rpm,
+                petrolMs = point.petrolMs,
+                value = point.targetK,
+                quality = point.quality,
+                trajectoryId = point.trajectoryId,
+            )
+        },
+    )
+
+    fun evaluateRelative(
+        targetRpm: Double,
+        targetPetrolMs: Double,
+        support: List<RelativeSupportPoint>,
+    ): Result = evaluateValues(
+        targetRpm = targetRpm,
+        targetPetrolMs = targetPetrolMs,
+        support = support.map { point ->
+            ValueSupport(
+                id = point.id,
+                rpm = point.rpm,
+                petrolMs = point.petrolMs,
+                value = point.deltaStar,
+                quality = point.quality,
+                trajectoryId = point.trajectoryId,
+            )
+        },
+    )
+
+    private fun evaluateValues(
+        targetRpm: Double,
+        targetPetrolMs: Double,
+        support: List<ValueSupport>,
     ): Result {
         if (!targetRpm.isFinite() || !targetPetrolMs.isFinite()) return unsupported("INVALID_TARGET")
         val usable = support.filter {
-            it.rpm.isFinite() && it.petrolMs.isFinite() && it.targetK.isFinite() && it.quality > 0.0
+            it.rpm.isFinite() && it.petrolMs.isFinite() && it.value.isFinite() && it.quality > 0.0
         }
         if (usable.isEmpty()) return unsupported("NO_SUPPORT")
 
@@ -91,7 +146,7 @@ object PredictorSpatialConfidence {
         val weighted = usable.map { point ->
             val distance = distance(target, normalized(point.rpm, point.petrolMs))
             val proximity = 1.0 / (1.0 + distance)
-            WeightedSupport(point, distance, proximity, point.quality * proximity)
+            WeightedValueSupport(point, distance, proximity, point.quality * proximity)
         }
         val totalWeight = weighted.sumOf { it.weight }.coerceAtLeast(1e-12)
         val qualityScore = (weighted.sumOf { it.point.quality * it.proximity } /
@@ -106,20 +161,18 @@ object PredictorSpatialConfidence {
             .sumOf { group -> group.maxOf { it.weight } }
         val densityScore = (1.0 - exp(-independentContribution)).coerceIn(0.0, 1.0)
 
-        val meanK = weighted.sumOf { it.point.targetK * it.weight } / totalWeight
+        val meanValue = weighted.sumOf { it.point.value * it.weight } / totalWeight
         val variance = weighted.sumOf { item ->
-            val delta = item.point.targetK - meanK
+            val delta = item.point.value - meanValue
             delta * delta * item.weight
         } / totalWeight
         val standardDeviation = sqrt(variance.coerceAtLeast(0.0))
-        val coherenceScale = max(abs(meanK), 1.0)
+        val coherenceScale = max(abs(meanValue), 1.0)
         val coherenceScore = (1.0 / (1.0 + standardDeviation / coherenceScale)).coerceIn(0.0, 1.0)
         val independenceScore = (distinctTrajectories.toDouble() / usable.size.toDouble()).coerceIn(0.0, 1.0)
         val extrapolationPenalty = 1.0
 
         // A geometria pode reduzir a autoridade científica upstream, nunca elevá-la.
-        // A média geométrica combina os fatores espaciais, mas o qualityScore publicado
-        // pela ciência upstream é um teto duro para a confiança downstream.
         val product = physicalDistanceScore * densityScore * qualityScore * coherenceScore * independenceScore
         val geometricConfidence = product.coerceIn(0.0, 1.0).pow(1.0 / 5.0)
         val confidence = minOf(geometricConfidence, qualityScore)
@@ -225,8 +278,16 @@ object PredictorSpatialConfidence {
     )
 
     private data class Point(val x: Double, val y: Double)
-    private data class WeightedSupport(
-        val point: SupportPoint,
+    private data class ValueSupport(
+        val id: String,
+        val rpm: Double,
+        val petrolMs: Double,
+        val value: Double,
+        val quality: Double,
+        val trajectoryId: String,
+    )
+    private data class WeightedValueSupport(
+        val point: ValueSupport,
         val distance: Double,
         val proximity: Double,
         val weight: Double,
