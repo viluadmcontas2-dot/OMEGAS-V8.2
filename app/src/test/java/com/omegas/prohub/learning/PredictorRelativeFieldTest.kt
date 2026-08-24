@@ -38,6 +38,8 @@ class PredictorRelativeFieldTest {
         assertTrue(requireNotNull(prediction.predictedDeltaStar) > 0.0)
         assertTrue(requireNotNull(prediction.targetK) > prediction.currentK)
         assertFalse(prediction.actionable)
+        assertEquals(PredictorActionabilityState.ABSTAIN, prediction.actionabilityState)
+        assertEquals("RISK_NOT_CALIBRATED", prediction.actionabilityReason)
         assertFalse(prediction.riskCalibrated)
         assertNull(prediction.pImprove)
     }
@@ -76,6 +78,7 @@ class PredictorRelativeFieldTest {
         )
 
         assertEquals(PredictorFieldState.UNKNOWN_ABSTAIN, prediction.state)
+        assertEquals(PredictorActionabilityState.ABSTAIN, prediction.actionabilityState)
         assertNull(prediction.targetK)
         assertNull(prediction.predictedDeltaStar)
         assertFalse(prediction.actionable)
@@ -113,7 +116,7 @@ class PredictorRelativeFieldTest {
     }
 
     @Test
-    fun `high diagnostic confidence remains non actionable without risk calibration`() {
+    fun `high diagnostic confidence remains abstained without risk calibration`() {
         val support = positiveTriangle().map { it.copy(quality = 1.0, uncertaintyStd = 0.0) }
         val prediction = PredictorRelativeField.predict(input(queryUncertaintyStd = 0.0, support = support))
 
@@ -121,6 +124,8 @@ class PredictorRelativeFieldTest {
         assertFalse(prediction.riskCalibrated)
         assertNull(prediction.pImprove)
         assertFalse(prediction.actionable)
+        assertEquals(PredictorActionabilityState.ABSTAIN, prediction.actionabilityState)
+        assertEquals("RISK_NOT_CALIBRATED", prediction.actionabilityReason)
     }
 
     private fun width(prediction: PredictorRelativePrediction): Double =
