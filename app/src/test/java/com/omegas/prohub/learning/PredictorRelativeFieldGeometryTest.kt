@@ -8,35 +8,29 @@ import org.junit.Test
 
 class PredictorRelativeFieldGeometryTest {
     @Test
-    fun `current petrol on gas and environment cannot move Tpet reference projection`() {
+    fun `current petrol on gas and environment are preserved but cannot move Tpet reference projection`() {
         val calibration = binding()
-        val lowCurrent = PredictorRelativeField.predict(
-            input(
-                calibration = calibration,
-                context = PredictorRelativeContext(
-                    petrolOnCngMs = 3.2,
-                    mapBar = 0.45,
-                    deltaPressureBar = 0.80,
-                    waterTemperatureC = 82.0,
-                    gasTemperatureC = 31.0,
-                ),
-            ),
+        val lowContext = PredictorRelativeContext(
+            petrolOnCngMs = 3.2,
+            mapBar = 0.45,
+            deltaPressureBar = 0.80,
+            waterTemperatureC = 82.0,
+            gasTemperatureC = 31.0,
         )
-        val highCurrent = PredictorRelativeField.predict(
-            input(
-                calibration = calibration,
-                context = PredictorRelativeContext(
-                    petrolOnCngMs = 7.8,
-                    mapBar = 0.90,
-                    deltaPressureBar = 1.40,
-                    waterTemperatureC = 96.0,
-                    gasTemperatureC = 54.0,
-                ),
-            ),
+        val highContext = PredictorRelativeContext(
+            petrolOnCngMs = 7.8,
+            mapBar = 0.90,
+            deltaPressureBar = 1.40,
+            waterTemperatureC = 96.0,
+            gasTemperatureC = 54.0,
         )
+        val lowCurrent = PredictorRelativeField.predict(input(calibration = calibration, context = lowContext))
+        val highCurrent = PredictorRelativeField.predict(input(calibration = calibration, context = highContext))
 
         assertTrue(lowCurrent.state != PredictorFieldState.UNKNOWN_ABSTAIN)
         assertTrue(highCurrent.state != PredictorFieldState.UNKNOWN_ABSTAIN)
+        assertEquals(lowContext, lowCurrent.context)
+        assertEquals(highContext, highCurrent.context)
         assertEquals(lowCurrent.geometryFingerprint, highCurrent.geometryFingerprint)
         assertEquals(lowCurrent.equilibriumCoordinate, highCurrent.equilibriumCoordinate)
         assertEquals(lowCurrent.projectionWeights, highCurrent.projectionWeights)
