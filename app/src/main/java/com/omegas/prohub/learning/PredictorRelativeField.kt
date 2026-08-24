@@ -109,6 +109,7 @@ data class PredictorRelativePrediction(
     val geometryFingerprint: String?,
     val equilibriumCoordinate: PredictorEquilibriumCoordinate?,
     val projectionWeights: List<PredictorTargetCellWeight>,
+    val context: PredictorRelativeContext,
     val riskCalibrated: Boolean,
     val pImprove: Double?,
     val actionable: Boolean,
@@ -202,7 +203,6 @@ object PredictorRelativeField {
         val shrinkFactor = 1.0 / (1.0 + nearestDistance + shrinkUncertainty)
         val predictedDelta = shrinkDelta(rawDelta, nearestDistance, shrinkUncertainty)
 
-        // Distance creates model uncertainty rather than extrapolation authority.
         val distanceThetaStd = nearestDistance * maxOf(abs(rawDelta), 0.01)
         val outputStd = sqrt(
             supportUncertainty * supportUncertainty +
@@ -238,6 +238,7 @@ object PredictorRelativeField {
             geometryFingerprint = projection.geometryFingerprint,
             equilibriumCoordinate = projection.coordinate,
             projectionWeights = projection.weights,
+            context = input.context,
             riskCalibrated = false,
             pImprove = null,
             actionable = false,
@@ -247,7 +248,6 @@ object PredictorRelativeField {
         )
     }
 
-    /** Public for invariant/property testing; no hidden cell-count or direction threshold. */
     fun shrinkDelta(rawDeltaStar: Double, distance: Double, uncertainty: Double): Double {
         require(rawDeltaStar.isFinite())
         require(distance.isFinite() && distance >= 0.0)
@@ -266,7 +266,6 @@ object PredictorRelativeField {
         val uncertainty = sqrt(
             usable.sumOf { it.observation.uncertaintyStd * it.observation.uncertaintyStd * it.weight } / total,
         )
-        // One trajectory contributes at most its strongest local evidence weight.
         val weight = usable.maxOf { it.weight }
         return TrajectoryEstimate(trajectoryId, delta, uncertainty, weight)
     }
@@ -292,6 +291,7 @@ object PredictorRelativeField {
         geometryFingerprint = projection?.geometryFingerprint ?: input.calibration?.geometryFingerprint,
         equilibriumCoordinate = projection?.coordinate,
         projectionWeights = projection?.weights.orEmpty(),
+        context = input.context,
         riskCalibrated = false,
         pImprove = null,
         actionable = false,
