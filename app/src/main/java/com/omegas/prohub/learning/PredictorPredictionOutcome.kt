@@ -58,7 +58,9 @@ object PredictorPredictionCalibration {
         prior: PredictorPredictionErrorStats,
         outcomes: List<PredictionOutcome>,
     ): PredictorCalibrationAssessment {
-        val complete = outcomes.filter { it.completeForCalibration() }
+        val complete = outcomes
+            .filter { it.completeForCalibration() }
+            .sortedBy { it.predictionId }
         if (complete.isEmpty()) {
             return PredictorCalibrationAssessment(
                 stats = prior,
