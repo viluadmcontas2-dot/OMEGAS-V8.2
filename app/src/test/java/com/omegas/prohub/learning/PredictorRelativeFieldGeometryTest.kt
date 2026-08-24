@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.physics.CorrectionMechanism
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -86,6 +87,7 @@ class PredictorRelativeFieldGeometryTest {
         calibration = calibration,
         expectedGeometryFingerprint = calibration.geometryFingerprint,
         context = context,
+        mechanism = CorrectionMechanism.MAP_LOCAL,
     )
 
     private fun support(context: PredictorRelativeContext): List<PredictorRelativeObservation> = listOf(
@@ -113,6 +115,7 @@ class PredictorRelativeFieldGeometryTest {
         provenance = "DIRECT_KSTAR_STEP152",
         geometryFingerprint = "geometry-A",
         context = context,
+        mechanism = CorrectionMechanism.MAP_LOCAL,
     )
 
     private fun binding(): LearningCalibrationBinding = LearningCalibrationBinding(
