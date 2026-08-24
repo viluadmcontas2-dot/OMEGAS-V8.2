@@ -11,6 +11,9 @@ import kotlin.math.max
  * evidência direta. Células PREVISTO nunca voltam como entrada científica.
  */
 object PredictorInterpolator {
+    /** Canonical typed Step151 path; legacy JSONObject path below stays diagnostic-only. */
+    fun build(input: PredictorRelativeFieldInput): PredictorRelativePrediction = PredictorRelativeField.predict(input)
+
     fun build(
         learningSnapshot: JSONObject,
         confirmedMapSnapshot: JSONObject? = null,
