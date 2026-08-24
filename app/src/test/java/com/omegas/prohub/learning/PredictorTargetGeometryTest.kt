@@ -39,7 +39,6 @@ class PredictorTargetGeometryTest {
             petrolReferenceMs = 4.0,
         )
 
-        // Current petrol-on-GNV time is intentionally absent from the projection API.
         val arbitraryCurrentPetrolOnGasA = 3.2
         val arbitraryCurrentPetrolOnGasB = 7.8
         assertTrue(arbitraryCurrentPetrolOnGasA != arbitraryCurrentPetrolOnGasB)
@@ -78,6 +77,23 @@ class PredictorTargetGeometryTest {
 
         assertFalse(result.available)
         assertEquals("GEOMETRY_UNKNOWN", result.reason)
+        assertTrue(result.weights.isEmpty())
+    }
+
+    @Test
+    fun `non monotonic runtime axes fail closed`() {
+        val calibration = binding().copy(
+            petrolAxisMs = binding().petrolAxisMs.toMutableList().also { it[5] = it[4] },
+        )
+        val result = PredictorTargetGeometry.project(
+            calibration,
+            calibration.geometryFingerprint,
+            2500.0,
+            4.0,
+        )
+
+        assertFalse(result.available)
+        assertEquals("GEOMETRY_INVALID", result.reason)
         assertTrue(result.weights.isEmpty())
     }
 
