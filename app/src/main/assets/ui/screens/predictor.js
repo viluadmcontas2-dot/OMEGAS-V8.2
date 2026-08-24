@@ -80,7 +80,7 @@
               <div class="predictor-legend"><span data-state="VALIDADO">Validado</span><span data-state="OBSERVADO">Observado</span><span data-state="PREVISTO">Previsto</span><span data-state="DESCONHECIDO">Sem previsão</span></div>
             </section>
             <aside id="predictorInspector" class="inspector-panel predictor-inspector">
-              <div class="detail-empty"><b>Escolha uma célula</b><span>O Predictor explica origem, confiança e suporte antes de qualquer revisão manual.</span></div>
+              <div class="detail-empty"><b>Escolha uma célula</b><span>O Predictor explica origem, autoridade, risco e suporte antes de qualquer revisão manual.</span></div>
             </aside>
           </div>`;
         const map = host.querySelector('[data-screen="map"]');
@@ -105,7 +105,7 @@
         if (!button) return;
         const cell = this.cells().find(item => String(item.key) === this.activeKey);
         if (!cell || !ns.PredictorModel?.openMapReview(this.router, cell)) {
-          this.store.patch({ alert: { level: 'warning', message: 'Esta célula ainda não possui alvo K revisável.' } });
+          this.store.patch({ alert: { level: 'warning', message: 'Esta célula ainda não possui proposta revisável.' } });
         }
       });
     }
@@ -166,14 +166,15 @@
       const rpmBins = [...new Set(cells.map(item => Number(item.rpm)).filter(Number.isFinite))].sort((a, b) => a - b);
       const petrolBins = [...new Set(cells.map(item => Number(item.petrolMs)).filter(Number.isFinite))].sort((a, b) => a - b);
       const cellByKey = new Map(cells.map(item => [`${Number(item.row)}:${Number(item.column)}`, item]));
-      const validated = cells.filter(item => item.state === 'VALIDADO').length;
-      const observed = cells.filter(item => item.state === 'OBSERVADO').length;
-      const predicted = cells.filter(item => item.state === 'PREVISTO').length;
+      const explained = cells.map(item => ns.PredictorModel?.explainCell(item) || {});
+      const validated = explained.filter(item => item.visualState === 'VALIDADO').length;
+      const observed = explained.filter(item => item.visualState === 'OBSERVADO').length;
+      const predicted = explained.filter(item => item.visualState === 'PREVISTO').length;
       const supported = validated + observed + predicted;
       const revision = document.getElementById('predictorRevision');
       const coverage = document.getElementById('predictorCoverage');
       if (revision) revision.textContent = this.data.revisionToken ? `rev ${String(this.data.revisionToken).slice(0, 8)}` : 'revisão científica';
-      if (coverage) coverage.textContent = `${supported}/144 com suporte`;
+      if (coverage) coverage.textContent = `${supported}/144 com estado humano tipado`;
 
       let html = '<div class="predictor-corner">ms \\ RPM</div>';
       rpmBins.forEach(rpm => { html += `<div class="predictor-axis-cell">${Math.round(rpm).toLocaleString('pt-BR')}</div>`; });
@@ -181,18 +182,26 @@
         html += `<div class="predictor-axis-cell predictor-ms">${fmt(petrolMs, 1)}</div>`;
         rpmBins.forEach((_, column) => {
           const cell = cellByKey.get(`${row}:${column}`) || {};
-          const state = String(cell.state || 'DESCONHECIDO');
-          const target = finite(cell.targetK);
-          const current = finite(cell.currentK);
-          const confidence = Math.round(Math.max(0, Math.min(1, finite(cell.predictionConfidence ?? cell.confidence) || 0)) * 100);
+          const explanation = ns.PredictorModel?.explainCell(cell) || {};
+          const state = String(explanation.visualState || 'DESCONHECIDO');
+          const target = finite(explanation.targetK);
+          const current = finite(explanation.currentK);
+          const confidence = Math.round(Math.max(0, Math.min(1, finite(explanation.confidence) || 0)) * 100);
           const active = String(cell.key || `${row}:${column}`) === this.activeKey;
           const primary = target !== null ? target : current !== null ? current : '—';
-          html += `<button type="button" data-predictor-cell="${escapeHtml(cell.key || `${row}:${column}`)}" class="predictor-cell ${state.toLowerCase()} ${active ? 'active' : ''}" data-state="${escapeHtml(state)}" aria-label="${fmt(petrolMs, 1)} ms, ${rpmBins[column]} RPM, ${escapeHtml(state)}"><b>${primary}</b><span>${target !== null && current !== null ? `${current}→${target}` : escapeHtml(state === 'DESCONHECIDO' ? 'sem previsão' : state.toLowerCase())}</span><i style="--confidence:${confidence}%"></i></button>`;
+          const label = target !== null && current !== null
+            ? `${escapeHtml(explanation.targetLabel || 'ESTIMATIVA')}: ${current}→${target}`
+            : escapeHtml(explanation.stateLabel || 'Sem previsão');
+          html += `<button type="button" data-predictor-cell="${escapeHtml(cell.key || `${row}:${column}`)}" class="predictor-cell ${state.toLowerCase()} ${active ? 'active' : ''}" data-state="${escapeHtml(state)}" aria-label="${fmt(petrolMs, 1)} ms, ${rpmBins[column]} RPM, ${escapeHtml(explanation.stateLabel || state)}"><b>${primary}</b><span>${label}</span><i style="--confidence:${confidence}%"></i></button>`;
         });
       });
       this.grid.innerHTML = html;
 
-      const activeCell = cells.find(item => String(item.key) === this.activeKey) || cells.find(item => item.state === 'VALIDADO') || cells.find(item => item.state === 'OBSERVADO') || cells.find(item => item.state === 'PREVISTO') || cells[0];
+      const activeCell = cells.find(item => String(item.key) === this.activeKey)
+        || cells.find(item => item.humanState?.visualState === 'VALIDADO')
+        || cells.find(item => item.humanState?.visualState === 'OBSERVADO')
+        || cells.find(item => item.humanState?.visualState === 'PREVISTO')
+        || cells[0];
       if (!this.activeKey && activeCell) this.activeKey = String(activeCell.key || '');
       this.renderInspector(activeCell);
     }
@@ -202,13 +211,21 @@
       const confidence = Math.round((finite(explanation.confidence) || 0) * 100);
       const provenance = Array.isArray(explanation.provenance) ? explanation.provenance : [];
       const sourceLabels = provenance.slice(0, 6).map(item => String(item.source || '')).filter(Boolean);
+      const interval = finite(explanation.intervalLowerK) !== null && finite(explanation.intervalUpperK) !== null
+        ? `${fmt(explanation.intervalLowerK, 1)}–${fmt(explanation.intervalUpperK, 1)}`
+        : '—';
+      const disclosure = explanation.disclosure
+        ? `<p class="predictor-reason">${escapeHtml(explanation.disclosure)}</p>`
+        : '';
       this.inspector.innerHTML = `
         <div class="editor-heading"><div><small>${escapeHtml(explanation.stateLabel || 'Sem previsão')}</small><h3>${fmt(explanation.petrolMs, 1)} ms · ${Math.round(finite(explanation.rpm) || 0).toLocaleString('pt-BR')} RPM</h3></div><span class="predictor-confidence">${confidence}%</span></div>
-        <div class="predictor-k-pair"><div><small>K ATUAL</small><b>${explanation.currentK ?? '—'}</b></div><div><small>K ALVO</small><b>${explanation.targetK ?? '—'}</b></div></div>
-        <p class="predictor-reason">${escapeHtml(explanation.reason || 'Sem suporte científico suficiente.')}</p>
-        <div class="predictor-facts"><span>${Number(explanation.distinctTrajectories || 0)} trajetórias independentes</span><span>${Number(explanation.nativeAnchorCount || 0)} âncoras AutoCal</span><span>${explanation.predicted ? 'interpolação conservativa' : explanation.directObservation ? 'observação direta' : 'sem previsão'}</span></div>
+        <div class="predictor-k-pair"><div><small>K ATUAL</small><b>${explanation.currentK ?? '—'}</b></div><div><small>${escapeHtml(explanation.targetLabel || 'ESTIMATIVA')}</small><b>${explanation.targetK ?? '—'}</b></div></div>
+        <div class="predictor-facts"><span>intervalo ${interval}</span><span>${escapeHtml(explanation.authority || 'UNKNOWN')}</span><span>${escapeHtml(explanation.actionState || 'ABSTAIN')}</span></div>
+        <p class="predictor-reason">${escapeHtml(explanation.reason || 'Estado científico humano indisponível.')}</p>
+        ${disclosure}
+        <div class="predictor-facts"><span>${Number(explanation.distinctTrajectories || 0)} trajetórias independentes</span><span>${Number(explanation.nativeAnchorCount || 0)} âncoras AutoCal</span><span>${explanation.predicted ? 'predição tipada' : explanation.directObservation ? 'observação direta' : 'sem previsão'}</span></div>
         <details class="predictor-provenance"><summary>Ver proveniência</summary><p>${sourceLabels.length ? sourceLabels.map(escapeHtml).join(' · ') : 'Nenhuma fonte científica suficiente.'}</p></details>
-        <button type="button" data-predictor-review class="primary wide" ${explanation.requiresHumanReview ? '' : 'disabled'}>${explanation.requiresHumanReview ? 'Revisar no Mapa K' : 'Sem ajuste revisável'}</button>
+        <button type="button" data-predictor-review class="primary wide" ${explanation.requiresHumanReview ? '' : 'disabled'}>${explanation.requiresHumanReview ? 'Revisar no Mapa K' : 'Sem proposta revisável'}</button>
         <div class="safety-copy"><b>Somente decisão</b><span>Predictor não grava na ECU. O Mapa K oficial continua exigindo revisão e confirmação.</span></div>`;
     }
   }
