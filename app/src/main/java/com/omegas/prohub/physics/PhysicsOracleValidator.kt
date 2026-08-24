@@ -1,6 +1,8 @@
 package com.omegas.prohub.physics
 
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.sqrt
@@ -100,6 +102,65 @@ object PhysicsOracleValidator {
         )
     }
 
+    /**
+     * Offline seeded oracle for Step 150. Timing uncertainties are sampled in
+     * log space so positive injection times remain positive. Gain is sampled as
+     * a truncated normal derived from the typed 95% interval. Context/model/
+     * contradiction terms are independent zero-mean theta perturbations.
+     *
+     * This is validation infrastructure, not a per-frame runtime path.
+     */
+    fun monteCarloPropagation(
+        petrolOnGasMs: Double,
+        petrolReferenceMs: Double,
+        currentFactor: Double,
+        gain: PlantGain,
+        uncertainty: KStarUncertaintyComponents,
+        draws: Int,
+        seed: Long,
+    ): OracleSummary {
+        require(petrolOnGasMs > 0.0 && petrolReferenceMs > 0.0 && currentFactor > 0.0)
+        require(draws >= 100)
+        val g = gain.mean
+        val lowerGain = gain.lower
+        val upperGain = gain.upper
+        if (
+            g == null || lowerGain == null || upperGain == null ||
+            !g.isFinite() || g <= 0.0 || lowerGain <= 0.0 || upperGain < lowerGain
+        ) {
+            return OracleSummary(null, null, null, MagnitudeAuthority.UNKNOWN, true, "PLANT_GAIN_UNKNOWN", 0)
+        }
+
+        val random = Random(seed)
+        val gainStd = ((upperGain - lowerGain) / 3.92).coerceAtLeast(0.0)
+        val baseTheta = ln(currentFactor)
+        val gasLog = ln(petrolOnGasMs)
+        val referenceLog = ln(petrolReferenceMs)
+        val targets = DoubleArray(draws)
+        repeat(draws) { index ->
+            val sampledGasLog = gasLog + normal(random) * uncertainty.petrolOnGasRelativeStd
+            val sampledReferenceLog = referenceLog + normal(random) * uncertainty.petrolReferenceRelativeStd
+            val sampledGain = positiveGainSample(random, g, gainStd)
+            val sampledTheta =
+                baseTheta + normal(random) * uncertainty.currentThetaStd +
+                    (sampledGasLog - sampledReferenceLog) / sampledGain +
+                    normal(random) * uncertainty.contextThetaStd +
+                    normal(random) * uncertainty.modelThetaStd +
+                    normal(random) * uncertainty.contradictionThetaStd
+            targets[index] = exp(sampledTheta)
+        }
+        targets.sort()
+        return OracleSummary(
+            meanTargetFactor = targets.average(),
+            lower95 = quantile(targets, 0.025),
+            upper95 = quantile(targets, 0.975),
+            authority = gain.authority,
+            abstained = false,
+            reason = "SEEDED_MONTE_CARLO_LOG_PROPAGATION",
+            draws = draws,
+        )
+    }
+
     fun evaluateHoldouts(
         holdouts: List<HoldoutCase>,
         gain: PlantGain,
@@ -124,6 +185,20 @@ object PhysicsOracleValidator {
             total = holdouts.size,
             coverage = covered.toDouble() / holdouts.size,
         )
+    }
+
+    private fun positiveGainSample(random: Random, mean: Double, std: Double): Double {
+        if (std == 0.0) return mean
+        while (true) {
+            val candidate = mean + normal(random) * std
+            if (candidate > 0.0 && candidate.isFinite()) return candidate
+        }
+    }
+
+    private fun normal(random: Random): Double {
+        val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
+        val u2 = random.nextDouble()
+        return sqrt(-2.0 * ln(u1)) * cos(2.0 * PI * u2)
     }
 
     private fun quantile(sorted: DoubleArray, probability: Double): Double {
