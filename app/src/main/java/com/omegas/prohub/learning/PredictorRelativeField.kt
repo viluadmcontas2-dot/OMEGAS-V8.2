@@ -81,7 +81,7 @@ data class PredictorRelativePrediction(
 
 /**
  * Typed spatial field for Step 151. It predicts only the relative physical
- * correction delta*=ln(K*/Kcurrent), then shrinks that correction toward zero
+ * correction delta*=ln(K_star / K_current), then shrinks that correction toward zero
  * as physical distance or uncertainty rises. It owns no writer or risk policy.
  */
 object PredictorRelativeField {
