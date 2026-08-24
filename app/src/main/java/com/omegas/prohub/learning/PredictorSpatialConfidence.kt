@@ -80,6 +80,7 @@ object PredictorSpatialConfidence {
                 trajectoryId = point.trajectoryId,
             )
         },
+        axes = historicalFixtureAxes(),
     )
 
     fun evaluateRelative(
@@ -89,22 +90,38 @@ object PredictorSpatialConfidence {
     ): Result = evaluateValues(
         targetRpm = targetRpm,
         targetPetrolMs = targetPetrolMs,
-        support = support.map { point ->
-            ValueSupport(
-                id = point.id,
-                rpm = point.rpm,
-                petrolMs = point.petrolMs,
-                value = point.deltaStar,
-                quality = point.quality,
-                trajectoryId = point.trajectoryId,
-            )
-        },
+        support = support.map(::relativeValueSupport),
+        axes = historicalFixtureAxes(),
+    )
+
+    /** Canonical typed Predictor path: geometry is supplied by Calibration Identity binding. */
+    fun evaluateRelative(
+        targetRpm: Double,
+        targetPetrolMs: Double,
+        support: List<RelativeSupportPoint>,
+        rpmAxis: DoubleArray,
+        petrolReferenceAxisMs: DoubleArray,
+    ): Result = evaluateValues(
+        targetRpm = targetRpm,
+        targetPetrolMs = targetPetrolMs,
+        support = support.map(::relativeValueSupport),
+        axes = AxisGeometry.create(rpmAxis, petrolReferenceAxisMs),
+    )
+
+    private fun relativeValueSupport(point: RelativeSupportPoint): ValueSupport = ValueSupport(
+        id = point.id,
+        rpm = point.rpm,
+        petrolMs = point.petrolMs,
+        value = point.deltaStar,
+        quality = point.quality,
+        trajectoryId = point.trajectoryId,
     )
 
     private fun evaluateValues(
         targetRpm: Double,
         targetPetrolMs: Double,
         support: List<ValueSupport>,
+        axes: AxisGeometry,
     ): Result {
         if (!targetRpm.isFinite() || !targetPetrolMs.isFinite()) return unsupported("INVALID_TARGET")
         val usable = support.filter {
@@ -112,9 +129,9 @@ object PredictorSpatialConfidence {
         }
         if (usable.isEmpty()) return unsupported("NO_SUPPORT")
 
-        val target = normalized(targetRpm, targetPetrolMs)
+        val target = normalized(targetRpm, targetPetrolMs, axes)
         val geometry = usable
-            .map { it to normalized(it.rpm, it.petrolMs) }
+            .map { it to normalized(it.rpm, it.petrolMs, axes) }
             .distinctBy { (_, point) -> quantizedGeometryKey(point) }
         if (geometry.size < 3) {
             return unsupported(
@@ -144,7 +161,7 @@ object PredictorSpatialConfidence {
         }
 
         val weighted = usable.map { point ->
-            val distance = distance(target, normalized(point.rpm, point.petrolMs))
+            val distance = distance(target, normalized(point.rpm, point.petrolMs, axes))
             val proximity = 1.0 / (1.0 + distance)
             WeightedValueSupport(point, distance, proximity, point.quality * proximity)
         }
@@ -191,26 +208,50 @@ object PredictorSpatialConfidence {
         )
     }
 
-    /** Distância euclidiana após normalizar pelos spans físicos reais dos eixos. */
+    /** Distância euclidiana histórica/legada após normalizar pelos spans da fixture. */
     fun physicalDistance(
         rpmA: Double,
         petrolMsA: Double,
         rpmB: Double,
         petrolMsB: Double,
-    ): Double = distance(normalized(rpmA, petrolMsA), normalized(rpmB, petrolMsB))
+    ): Double = physicalDistance(rpmA, petrolMsA, rpmB, petrolMsB, historicalFixtureAxes())
 
-    private fun normalized(rpm: Double, petrolMs: Double): Point {
-        val rpmBins = KMapPhysicalAxes.rpmBins()
-        val petrolBins = KMapPhysicalAxes.petrolBins()
-        val rpmMin = rpmBins.first().toDouble()
-        val rpmSpan = (rpmBins.last() - rpmBins.first()).toDouble().coerceAtLeast(1.0)
-        val petrolMin = petrolBins.first()
-        val petrolSpan = (petrolBins.last() - petrolBins.first()).coerceAtLeast(1e-9)
-        return Point(
-            x = (rpm - rpmMin) / rpmSpan,
-            y = (petrolMs - petrolMin) / petrolSpan,
-        )
-    }
+    /** Canonical typed Predictor distance using the current runtime geometry spans. */
+    fun physicalDistance(
+        rpmA: Double,
+        petrolMsA: Double,
+        rpmB: Double,
+        petrolMsB: Double,
+        rpmAxis: DoubleArray,
+        petrolReferenceAxisMs: DoubleArray,
+    ): Double = physicalDistance(
+        rpmA,
+        petrolMsA,
+        rpmB,
+        petrolMsB,
+        AxisGeometry.create(rpmAxis, petrolReferenceAxisMs),
+    )
+
+    private fun physicalDistance(
+        rpmA: Double,
+        petrolMsA: Double,
+        rpmB: Double,
+        petrolMsB: Double,
+        axes: AxisGeometry,
+    ): Double = distance(
+        normalized(rpmA, petrolMsA, axes),
+        normalized(rpmB, petrolMsB, axes),
+    )
+
+    private fun historicalFixtureAxes(): AxisGeometry = AxisGeometry.create(
+        KMapPhysicalAxes.rpmBins().map(Int::toDouble).toDoubleArray(),
+        KMapPhysicalAxes.petrolBins(),
+    )
+
+    private fun normalized(rpm: Double, petrolMs: Double, axes: AxisGeometry): Point = Point(
+        x = (rpm - axes.rpmMin) / axes.rpmSpan,
+        y = (petrolMs - axes.petrolMin) / axes.petrolSpan,
+    )
 
     private fun quantizedGeometryKey(point: Point): String =
         "${(point.x * 1_000_000.0).toLong()}:${(point.y * 1_000_000.0).toLong()}"
@@ -278,6 +319,28 @@ object PredictorSpatialConfidence {
     )
 
     private data class Point(val x: Double, val y: Double)
+
+    private data class AxisGeometry(
+        val rpmMin: Double,
+        val rpmSpan: Double,
+        val petrolMin: Double,
+        val petrolSpan: Double,
+    ) {
+        companion object {
+            fun create(rpmAxis: DoubleArray, petrolAxisMs: DoubleArray): AxisGeometry {
+                require(rpmAxis.size == 12) { "Eixo RPM exige 12 pontos" }
+                require(petrolAxisMs.size == 12) { "Eixo Tpet exige 12 pontos" }
+                require(rpmAxis.all { it.isFinite() })
+                require(petrolAxisMs.all { it.isFinite() })
+                val rpmMin = rpmAxis.first()
+                val rpmSpan = (rpmAxis.last() - rpmMin).coerceAtLeast(1.0)
+                val petrolMin = petrolAxisMs.first()
+                val petrolSpan = (petrolAxisMs.last() - petrolMin).coerceAtLeast(1e-9)
+                return AxisGeometry(rpmMin, rpmSpan, petrolMin, petrolSpan)
+            }
+        }
+    }
+
     private data class ValueSupport(
         val id: String,
         val rpm: Double,
