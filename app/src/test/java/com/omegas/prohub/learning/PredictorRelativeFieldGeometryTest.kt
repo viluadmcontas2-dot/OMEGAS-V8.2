@@ -117,6 +117,7 @@ class PredictorRelativeFieldGeometryTest {
         quality = 0.90,
         trajectoryId = trajectoryId,
         provenance = "DIRECT_KSTAR_STEP152",
+        geometryFingerprint = "geometry-A",
         context = context,
     )
 
