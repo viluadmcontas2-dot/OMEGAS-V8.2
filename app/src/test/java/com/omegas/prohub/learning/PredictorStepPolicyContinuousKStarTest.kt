@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.physics.MagnitudeAuthority
 import kotlin.math.ln
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -26,15 +27,29 @@ class PredictorStepPolicyContinuousKStarTest {
 
     @Test
     fun `candidate physical delta and policy delta remain identical for non integer K star`() {
+        val kStar = 132.4
+        val uncertaintyPercent = 1.0
+        val halfWidth = kStar * uncertaintyPercent / 100.0
         val candidate = IdealTargetCandidate(
             cell = PredictorCell(2, 3),
             targetK = 132,
-            kStarObserved = 132.4,
+            kStarObserved = kStar,
             currentKObserved = 120,
-            uncertaintyPercent = 1.0,
+            uncertaintyPercent = uncertaintyPercent,
             support = 0.9,
             provenance = "DIRECT",
             sourceRevisions = PredictorSourceRevisions(1L, 2L, 3L, 4L, 5L),
+            estimateK = kStar,
+            range = PredictorTargetRange(
+                lowerK = kStar - halfWidth,
+                upperK = kStar + halfWidth,
+                basis = "TEST_DECLARED_UNCERTAINTY_PERCENT",
+            ),
+            authority = MagnitudeAuthority.EMPIRICALLY_BOUNDED,
+            assumptions = listOf("fixture preserves direct continuous K star"),
+            evidenceRefs = listOf("DIRECT"),
+            model = PredictorModelDescriptor.directKStarDefault(),
+            predictionErrorStats = PredictorPredictionErrorStats.empty(),
         )
         val decision = PredictorStepPolicy.apply(
             StepPolicyInput(
