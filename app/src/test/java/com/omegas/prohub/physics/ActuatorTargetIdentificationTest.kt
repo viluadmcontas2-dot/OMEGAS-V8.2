@@ -122,7 +122,7 @@ class ActuatorTargetIdentificationTest {
     ): KStarEstimate = KStarEstimate(
         logError = 0.0,
         currentTheta = 0.0,
-        targetTheta = targetFactor?.let(kotlin.math::ln),
+        targetTheta = targetFactor?.let { kotlin.math.ln(it) },
         targetFactor = targetFactor,
         gain = PlantGain.empiricallyBounded(1.0, 0.8, 1.2),
         authority = if (abstained) MagnitudeAuthority.UNKNOWN else MagnitudeAuthority.EMPIRICALLY_BOUNDED,
