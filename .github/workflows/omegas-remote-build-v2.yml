@@ -1,0 +1,112 @@
+name: OMEGAS remote exact-SHA build v2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/omegas-remote-build-v2.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-remote-exact-sha-v2
+  cancel-in-progress: true
+
+jobs:
+  verify-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TARGET_SHA: 8af0dd4cc6bd4e7a7066333d6f4fa2639288a22a
+
+    steps:
+      - name: Checkout exact OMEGAS source SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+
+      - name: Verify checkout identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          echo "SOURCE_SHA=$TARGET_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 35 packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Gradle test lint assemble exact SHA
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ env.TARGET_SHA }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
+
+      - name: Inspect APK and emit SHA-bound evidence
+        id: inspect
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          test -f "$APK"
+          mkdir -p build/evidence
+          EVIDENCE="build/evidence/omegas-preapk-evidence.txt"
+          APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
+          APK_BYTES="$(stat -c %s "$APK")"
+          SOURCE_TREE="$(git rev-parse HEAD^{tree})"
+          BUILD_CONFIG="$(find app/build/generated -type f -name 'BuildConfig.java' -path '*debug*' -print -quit || true)"
+          BUILD_COMMIT=""
+          if [ -n "$BUILD_CONFIG" ] && [ -f "$BUILD_CONFIG" ]; then
+            BUILD_COMMIT="$(sed -n 's/.*OMEGAS_BUILD_COMMIT = "\([^"]*\)".*/\1/p' "$BUILD_CONFIG" | head -n1)"
+          fi
+          NATIVE_ENTRIES="$(unzip -Z1 "$APK" | grep '^lib/.*/.*\.so$' || true)"
+          ABI_LIST="$(printf '%s\n' "$NATIVE_ENTRIES" | awk -F/ 'NF>=3{print $2}' | sort -u | paste -sd, -)"
+          {
+            echo "OMEGAS_PREAPK_CI=PASS"
+            echo "SOURCE_SHA=$TARGET_SHA"
+            echo "SOURCE_TREE=$SOURCE_TREE"
+            echo "OMEGAS_BUILD_COMMIT=$BUILD_COMMIT"
+            echo "EXPECTED_BUILD_COMMIT=${TARGET_SHA:0:12}"
+            echo "APK_PATH=$APK"
+            echo "APK_SHA256=$APK_SHA256"
+            echo "APK_BYTES=$APK_BYTES"
+            echo "APK_NATIVE_ABIS=$ABI_LIST"
+            echo "NO_INSTALL_PERFORMED=true"
+            echo "PHYSICAL_VALIDATION_CLAIMED=false"
+          } | tee "$EVIDENCE"
+          test "$BUILD_COMMIT" = "${TARGET_SHA:0:12}"
+          if [ -n "$ABI_LIST" ]; then
+            test "$ABI_LIST" = "armeabi-v7a"
+          fi
+          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
+
+      - name: Upload exact-SHA APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: omegas-preapk-8af0dd4cc6bd
+          path: |
+            ${{ steps.inspect.outputs.apk_path }}
+            build/evidence/omegas-preapk-evidence.txt
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
