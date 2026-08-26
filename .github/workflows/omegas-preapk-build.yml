@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - feature/phase06-pragmatic-equivalence-20260821
-    paths:
-      - .github/workflows/omegas-preapk-build.yml
   workflow_dispatch:
 
 permissions:
