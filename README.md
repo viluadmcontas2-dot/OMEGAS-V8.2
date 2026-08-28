@@ -1,25 +1,25 @@
 # OMEGAS V8.2
 
-Aplicativo Android para leitura, aprendizado, diagnóstico e ajuste manual assistido de centrais OMEGAS/MP48.
+Aplicativo Android para telemetria, aprendizado, Predictor e ajuste manual assistido de centrais OMEGAS/MP48.
 
-Esta baseline preserva o código funcional testado usado como ponto de partida da linha V8.2. A governança operacional viva fica no Notion; `AGENTS.md` contém apenas o contrato estável necessário para operar o repositório com segurança.
+O repositório é a fonte canônica de engenharia. Comece por [PROJECT.md](PROJECT.md), [STATUS.md](STATUS.md) e pela WorkUnit ativa em [docs/workunits](docs/workunits).
 
-## Contratos duráveis do produto
+## Invariantes do produto
 
-- nenhuma sugestão ou conexão grava automaticamente na ECU;
-- toda escrita é iniciada manualmente e depende de revisão/confirmação, ACK e readback;
+- equivalência primária: `RPM × MAP(bar) → Petrol Inj. (ms)`;
+- Predictor é diagnóstico, separa medido/previsto/desconhecido e se abstém sem suporte;
+- aprendizado e sugestões são passivos;
+- nenhuma conexão, sugestão ou aprendizado grava automaticamente na ECU;
+- toda escrita segue preparar → revisar → confirmar → ACK → readback;
 - falha de ACK ou readback divergente não é sucesso;
-- OBD permanece observacional;
-- Mapa K e Curva K permanecem separados;
-- a linha técnica do Mapa K não é editável;
+- Mapa K (`RPM × Petrol Inj.`) e Curva K permanecem separados;
 - matemática e protocolo críticos permanecem no Kotlin.
 
-## Verificação local
-
-Use testes proporcionais ao escopo. O gate rápido disponível nesta baseline é:
+## Verificação
 
 ```bash
-python -B tools/run_checks.py
+python3 -B tools/run_checks.py
+./gradlew testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a
 ```
 
-GitHub Actions não fazem parte deste bootstrap inicial.
+O pipeline de release registra o SHA do source, o hash SHA-256 do APK e os limites da evidência.
