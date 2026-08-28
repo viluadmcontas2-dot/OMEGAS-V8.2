@@ -34,7 +34,12 @@ const root = {
     api: { v7: { getState() { nativeReads += 1; return '{}'; } } },
     screens: {},
   },
-  document: { querySelector() { return null; }, createElement() { return {}; }, getElementById() { return null; } },
+  document: {
+    querySelector() { return null; },
+    createElement() { return { dataset: {} }; },
+    getElementById() { return null; },
+    head: { appendChild() {} },
+  },
   setTimeout() { throw new Error('Predictor screen must not create retry/poll timers once dependencies exist'); },
   globalThis: null,
 };
