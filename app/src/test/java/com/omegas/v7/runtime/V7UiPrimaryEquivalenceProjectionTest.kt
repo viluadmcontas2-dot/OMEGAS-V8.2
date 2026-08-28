@@ -17,6 +17,14 @@ class V7UiPrimaryEquivalenceProjectionTest {
                     List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
                 },
             ),
+            petrolEvidence = listOf(
+                EvidenceV7("petrol-1", FuelV7.PETROL, 1L, "petrol-visit", 1_500.0, 0.50, 3.80, 0.9, null),
+            ),
+            cngEvidenceByRevision = mapOf(
+                revision to listOf(
+                    EvidenceV7("cng-1", FuelV7.CNG, 10L, "cng-1", 1_500.0, 0.50, 4.20, 0.9, revision),
+                ),
+            ),
             comparisons = listOf(
                 FuelComparisonV7(
                     id = "0:0:cng-1",
