@@ -11,17 +11,23 @@ class StableRepositoryContract(unittest.TestCase):
         self.assertTrue(agents_path.is_file())
         agents = agents_path.read_text("utf-8").lower()
         for marker in (
-            "notion é o cérebro durável e a governança primária",
-            "github remoto é a verdade do estado atual e a única superfície de mutação do código",
-            "local_source_mutation=denied",
-            "runtime efêmero serve somente para testar/buildar o sha remoto",
-            "github actions só devem ser usadas",
+            "este repositório é a fonte canônica de engenharia",
+            "github issue → uma branch → um pr",
+            "mutação de source ocorre pela api remota do github",
+            "runtime efêmero pode testar/buildar o sha remoto exato",
+            "github actions é último recurso",
+            "notion e linear",
+            "não são dependências de boot",
         ):
             self.assertIn(marker, agents)
-        self.assertIn("governance entrypoint", agents)
-        self.assertIn("governance kernel", agents)
-        self.assertIn("project governance guard", agents)
-        self.assertIn("superseded", agents)
+        for path in (
+            "PROJECT.md",
+            "STATUS.md",
+            "docs/workunits/OMEGAS-WU-005.md",
+            "docs/evidence/OMEGAS-WU-005.json",
+            "docs/governance/README.md",
+        ):
+            self.assertTrue((ROOT / path).is_file(), path)
 
     def test_core_product_surfaces_are_present(self):
         required = [
