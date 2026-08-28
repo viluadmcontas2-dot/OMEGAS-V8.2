@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 import tempfile
 import textwrap
@@ -155,6 +156,9 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('ECU_NATIVE_AUTOCAL_EPOCH', self.learning)
 
     def test_actual_protocol_kotlin_frames_and_status_decoder(self):
+        compiler = shutil.which("kotlinc")
+        if compiler is None:
+            self.skipTest("kotlinc unavailable; Android/JUnit remains authoritative")
         with tempfile.TemporaryDirectory(prefix='autocal-protocol-contract-') as tmp:
             tmp = Path(tmp)
             (tmp/'Mp48Protocol.kt').write_text(textwrap.dedent('''
@@ -184,7 +188,7 @@ class NativeAutoCalContract(unittest.TestCase):
                 }
             '''), encoding='utf-8')
             jar = tmp/'test.jar'
-            compile_cmd = ['kotlinc', str(PROTOCOL), str(SCALE), str(tmp/'Mp48Protocol.kt'), str(tmp/'Main.kt'), '-include-runtime', '-d', str(jar)]
+            compile_cmd = [compiler, str(PROTOCOL), str(SCALE), str(tmp/'Mp48Protocol.kt'), str(tmp/'Main.kt'), '-include-runtime', '-d', str(jar)]
             subprocess.run(compile_cmd, check=True, capture_output=True, text=True, timeout=30)
             result = subprocess.run(['java','-jar',str(jar)], check=True, capture_output=True, text=True, timeout=10)
             self.assertIn('NATIVE_AUTOCAL_PROTOCOL=PASS', result.stdout)
