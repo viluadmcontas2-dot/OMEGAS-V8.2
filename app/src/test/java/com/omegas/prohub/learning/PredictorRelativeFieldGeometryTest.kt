@@ -42,13 +42,13 @@ class PredictorRelativeFieldGeometryTest {
     fun `changing petrol reference changes canonical time axis coordinate`() {
         val calibration = binding()
         val low = PredictorRelativeField.predict(input(calibration, targetPetrolReferenceMs = 3.1))
-        val high = PredictorRelativeField.predict(input(calibration, targetPetrolReferenceMs = 6.7))
+        val high = PredictorRelativeField.predict(input(calibration, targetPetrolReferenceMs = 5.1))
 
         assertTrue(low.state != PredictorFieldState.UNKNOWN_ABSTAIN)
         assertTrue(high.state != PredictorFieldState.UNKNOWN_ABSTAIN)
         assertTrue(low.projectionWeights != high.projectionWeights)
         assertEquals(3.1, low.equilibriumCoordinate!!.petrolReferenceMs, 1e-12)
-        assertEquals(6.7, high.equilibriumCoordinate!!.petrolReferenceMs, 1e-12)
+        assertEquals(5.1, high.equilibriumCoordinate!!.petrolReferenceMs, 1e-12)
     }
 
     @Test
