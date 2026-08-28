@@ -48,8 +48,10 @@ class StartupLearningRestoreContract(unittest.TestCase):
     def test_existing_heavy_operations_remain_behind_deferred_boundary(self):
         self.assertIn("load()", MEMORY)
         self.assertIn("rebuildVisualStatusFromMemory()", MEMORY)
-        self.assertIn("@Volatile private var advisor = analyzeCurrentMemory()", SIGNAL)
-        self.assertIn("init { loadEvidenceState() }", SIGNAL)
+        self.assertIn("@Volatile private var advisor = initialAdvisor()", SIGNAL)
+        self.assertIn("loadEvidenceState()", SIGNAL)
+        self.assertIn("scheduleAdvisorRefresh(advisorRevisionGate.force())", SIGNAL)
+        self.assertIn('Thread(runnable, "omegas-learning-advisor").apply { isDaemon = true }', SIGNAL)
         self.assertNotIn("SignalLearningStore(", RUNTIME)
         self.assertNotIn("MotorLearningMemory(", RUNTIME)
 
