@@ -1,45 +1,38 @@
-## Objetivo observável
+## WorkUnit e objetivo
 
-Descreva o que muda para o usuário e o que permanece intocado.
+- Issue:
+- WorkUnit:
+- Resultado observável:
 
 ## Escopo
 
-- [ ] Uma mudança observável por vez
-- [ ] Sem alteração paralela de matemática, protocolo, persistência ou UI
+- [ ] Uma branch e um PR para a WorkUnit
+- [ ] UI/UX congelada, salvo decisão explícita do owner
 - [ ] Sem escrita automática na ECU
-- [ ] Curva K e Mapa K continuam separados
-- [ ] OBD continua observacional
+- [ ] Mapa K e Curva K continuam separados
+- [ ] Predictor falha fechado sem suporte/confiança
+- [ ] Sem autoridade técnica duplicada fora do repositório
 
 ## Evidência
 
-- [ ] Gate rápido: `python -B tools/run_checks.py`
-- [ ] Testes Kotlin/JVM: `testDebugUnitTest`
-- [ ] Android Lint: `lintDebug`
-- [ ] Build debug: `assembleDebug`
-- [ ] Relatórios revisados
-- [ ] Artifact e SHA-256 ligados ao commit
+- [ ] `python3 -B tools/run_checks.py`
+- [ ] simulações/testes afetados
+- [ ] `testDebugUnitTest`
+- [ ] `lintDebug`
+- [ ] `assembleDebug`
+- [ ] artifact, SHA do source e SHA-256 do APK registrados
 
-## Mapa K, quando afetado
+## Segurança de escrita, quando afetada
 
-- [ ] Leitura antes da seleção
-- [ ] Leitura automática não inicia escrita
-- [ ] Editor visível ao tocar
-- [ ] 1 a 16 células; 17ª bloqueada sem apagar seleção
-- [ ] Linha técnica protegida
-- [ ] Revisão antes/depois
-- [ ] Cancelar não escreve
-- [ ] Uma chamada de lote
-- [ ] Falha de ACK não é sucesso
-- [ ] Readback divergente não é sucesso
-- [ ] Tela atualizada pelo readback real
+- [ ] leitura antes da edição
+- [ ] preparar e revisar não escrevem
+- [ ] confirmação humana inequívoca
+- [ ] falha de ACK não é sucesso
+- [ ] readback divergente não é sucesso
+- [ ] tela reflete o readback real
 
-## Validação externa
+## Limites e rollback
 
-- [ ] Não se aplica
-- [ ] Aguardando validação no celular
-- [ ] Aguardando validação física no veículo
-- [ ] Validado no aparelho identificado no comentário
-
-## Risco e rollback
-
-Informe riscos residuais e o commit/estratégia de rollback.
+- Validação física:
+- Riscos residuais:
+- Estratégia de rollback:
