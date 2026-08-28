@@ -1,10 +1,20 @@
-name: OMEGAS PREAPK exact-SHA build
+name: OMEGAS V8.2 release candidate
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - feature/phase06-pragmatic-equivalence-20260821
-  workflow_dispatch:
+      - work/v8.2-functional-final-20260828
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "tools/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - ".github/workflows/omegas-preapk-build.yml"
 
 permissions:
   contents: read
@@ -13,7 +23,7 @@ env:
   JAVA_VERSION: "17"
 
 concurrency:
-  group: omegas-preapk-${{ github.ref }}
+  group: omegas-v82-rc-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,6 +45,16 @@ jobs:
           echo "SOURCE_SHA=$GITHUB_SHA"
           echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
 
+      - name: Set up Python and Node contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/run_checks.py
+          python3 -B tools/phase06/test_equivalence_oracle.py
+          python3 -B tests/test_runtime_predictor_router_soak.py
+          python3 -B tests/test_predictor_map_residual_contract.py
+          node --test             tools/validation/step156_predictor_human_state_ui.test.js             tools/validation/step158_predictor_route_store.test.js             tests/ui/predictor-consumer.test.cjs             tests/ui/predictor-live-cell.test.cjs             tests/ui/predictor-pan-layout.test.cjs             tests/ui/predictor-route.test.cjs
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -51,14 +71,14 @@ jobs:
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Gradle test lint assemble exact SHA
+      - name: Test, lint and assemble exact SHA
         shell: bash
         env:
           OMEGAS_SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug             -PomegasAbis=armeabi-v7a             --no-daemon             --stacktrace
 
       - name: Inspect APK and emit SHA-bound evidence
         id: inspect
@@ -69,7 +89,7 @@ jobs:
           test -n "$APK"
           test -f "$APK"
           mkdir -p build/evidence
-          EVIDENCE="build/evidence/omegas-preapk-evidence.txt"
+          EVIDENCE="build/evidence/omegas-v82-rc-evidence.txt"
           APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
           APK_BYTES="$(stat -c %s "$APK")"
           SOURCE_TREE="$(git rev-parse HEAD^{tree})"
@@ -81,7 +101,7 @@ jobs:
           NATIVE_ENTRIES="$(unzip -Z1 "$APK" | grep '^lib/.*/.*\.so$' || true)"
           ABI_LIST="$(printf '%s\n' "$NATIVE_ENTRIES" | awk -F/ 'NF>=3{print $2}' | sort -u | paste -sd, -)"
           {
-            echo "OMEGAS_PREAPK_CI=PASS"
+            echo "OMEGAS_V82_RC=PASS"
             echo "SOURCE_SHA=$GITHUB_SHA"
             echo "SOURCE_TREE=$SOURCE_TREE"
             echo "SOURCE_BRANCH=$GITHUB_REF_NAME"
@@ -91,6 +111,7 @@ jobs:
             echo "APK_SHA256=$APK_SHA256"
             echo "APK_BYTES=$APK_BYTES"
             echo "APK_NATIVE_ABIS=$ABI_LIST"
+            echo "SIMULATED_ECU_ONLY=true"
             echo "NO_INSTALL_PERFORMED=true"
             echo "PHYSICAL_VALIDATION_CLAIMED=false"
           } | tee "$EVIDENCE"
@@ -100,13 +121,13 @@ jobs:
           fi
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
 
-      - name: Upload exact-SHA APK and evidence
+      - name: Upload APK and evidence
         uses: actions/upload-artifact@v4
         with:
-          name: omegas-preapk-${{ github.sha }}
+          name: omegas-v82-rc-${{ github.sha }}
           path: |
             ${{ steps.inspect.outputs.apk_path }}
-            build/evidence/omegas-preapk-evidence.txt
+            build/evidence/omegas-v82-rc-evidence.txt
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
           compression-level: 0
