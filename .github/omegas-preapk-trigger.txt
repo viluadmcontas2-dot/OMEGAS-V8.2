@@ -1,0 +1,3 @@
+OMEGAS PREAPK trigger marker.
+Purpose: force a normal branch push after the workflow exists in the parent commit.
+No product/runtime behavior.

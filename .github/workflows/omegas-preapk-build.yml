@@ -1,46 +1,72 @@
-name: OMEGAS remote exact-SHA build v2
+name: OMEGAS V8.2 release candidate
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/omegas-remote-build-v2.yml
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "tools/**"
+      - "config/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - ".github/workflows/omegas-preapk-build.yml"
 
 permissions:
   contents: read
 
+env:
+  JAVA_VERSION: "17"
+
 concurrency:
-  group: omegas-remote-exact-sha-v2
+  group: omegas-v82-rc-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   verify-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
-      TARGET_SHA: 8af0dd4cc6bd4e7a7066333d6f4fa2639288a22a
 
     steps:
-      - name: Checkout exact OMEGAS source SHA
+      - name: Checkout exact source SHA
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.TARGET_SHA }}
           fetch-depth: 1
 
       - name: Verify checkout identity
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
-          echo "SOURCE_SHA=$TARGET_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
           echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Set up Python and Node contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/run_checks.py
+          python3 -B tools/phase06/test_equivalence_oracle.py
+          python3 -B tests/test_runtime_predictor_router_soak.py
+          python3 -B tests/test_predictor_map_residual_contract.py
+          node --test \
+            tools/validation/step156_predictor_human_state_ui.test.js \
+            tools/validation/step158_predictor_route_store.test.js \
+            tests/ui/predictor-consumer.test.cjs \
+            tests/ui/predictor-live-cell.test.cjs \
+            tests/ui/predictor-pan-layout.test.cjs \
+            tests/ui/predictor-route.test.cjs
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -52,14 +78,17 @@ jobs:
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Gradle test lint assemble exact SHA
+      - name: Test, lint and assemble exact SHA
         shell: bash
         env:
-          OMEGAS_SOURCE_SHA: ${{ env.TARGET_SHA }}
+          OMEGAS_SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon \
+            --stacktrace
 
       - name: Inspect APK and emit SHA-bound evidence
         id: inspect
@@ -70,7 +99,7 @@ jobs:
           test -n "$APK"
           test -f "$APK"
           mkdir -p build/evidence
-          EVIDENCE="build/evidence/omegas-preapk-evidence.txt"
+          EVIDENCE="build/evidence/omegas-v82-rc-evidence.txt"
           APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
           APK_BYTES="$(stat -c %s "$APK")"
           SOURCE_TREE="$(git rev-parse HEAD^{tree})"
@@ -82,31 +111,33 @@ jobs:
           NATIVE_ENTRIES="$(unzip -Z1 "$APK" | grep '^lib/.*/.*\.so$' || true)"
           ABI_LIST="$(printf '%s\n' "$NATIVE_ENTRIES" | awk -F/ 'NF>=3{print $2}' | sort -u | paste -sd, -)"
           {
-            echo "OMEGAS_PREAPK_CI=PASS"
-            echo "SOURCE_SHA=$TARGET_SHA"
+            echo "OMEGAS_V82_RC=PASS"
+            echo "SOURCE_SHA=$GITHUB_SHA"
             echo "SOURCE_TREE=$SOURCE_TREE"
+            echo "SOURCE_BRANCH=$GITHUB_HEAD_REF"
             echo "OMEGAS_BUILD_COMMIT=$BUILD_COMMIT"
-            echo "EXPECTED_BUILD_COMMIT=${TARGET_SHA:0:12}"
+            echo "EXPECTED_BUILD_COMMIT=${GITHUB_SHA:0:12}"
             echo "APK_PATH=$APK"
             echo "APK_SHA256=$APK_SHA256"
             echo "APK_BYTES=$APK_BYTES"
             echo "APK_NATIVE_ABIS=$ABI_LIST"
+            echo "SIMULATED_ECU_ONLY=true"
             echo "NO_INSTALL_PERFORMED=true"
             echo "PHYSICAL_VALIDATION_CLAIMED=false"
           } | tee "$EVIDENCE"
-          test "$BUILD_COMMIT" = "${TARGET_SHA:0:12}"
+          test "$BUILD_COMMIT" = "${GITHUB_SHA:0:12}"
           if [ -n "$ABI_LIST" ]; then
             test "$ABI_LIST" = "armeabi-v7a"
           fi
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
 
-      - name: Upload exact-SHA APK and evidence
+      - name: Upload APK and evidence
         uses: actions/upload-artifact@v4
         with:
-          name: omegas-preapk-8af0dd4cc6bd
+          name: omegas-v82-rc-${{ github.sha }}
           path: |
             ${{ steps.inspect.outputs.apk_path }}
-            build/evidence/omegas-preapk-evidence.txt
+            build/evidence/omegas-v82-rc-evidence.txt
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
           compression-level: 0

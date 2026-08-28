@@ -1,0 +1,487 @@
+(function (root) {
+  'use strict';
+  const ns = root.OmegasUi = root.OmegasUi || {};
+
+  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  function fmt(value, digits) {
+    const n = finite(value);
+    return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  }
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+  }
+  function cellPosition(item) {
+    const cell = item && item.cell;
+    const row = finite(item?.row ?? item?.cell_row ?? item?.cng_cell_row ?? item?.cngCellRow ?? cell?.row);
+    const column = finite(item?.column ?? item?.cell_column ?? item?.cng_cell_column ?? item?.cngCellColumn ?? cell?.column);
+    return row === null || column === null ? null : { row: Math.trunc(row), column: Math.trunc(column) };
+  }
+  function key(row, column) { return `${row}:${column}`; }
+  function indexByCell(items) {
+    const map = new Map();
+    (Array.isArray(items) ? items : []).forEach(item => {
+      const pos = cellPosition(item);
+      if (!pos) return;
+      const itemKey = key(pos.row, pos.column);
+      const previous = map.get(itemKey);
+      const score = finite(item.confidence) ?? finite(item.samples) ?? finite(item.weight) ?? 0;
+      const previousScore = previous ? (finite(previous.confidence) ?? finite(previous.samples) ?? finite(previous.weight) ?? 0) : -1;
+      if (!previous || score >= previousScore) map.set(itemKey, item);
+    });
+    return map;
+  }
+  function persistentMapSuggestions(state) {
+    const map = new Map();
+    const items = Array.isArray(state?.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
+    items.forEach(item => {
+      if (item?.target !== 'MAP_K' || !['PENDING', 'OBSERVING'].includes(String(item.lifecycle || ''))) return;
+      const change = Array.isArray(item.mapChanges) ? item.mapChanges[0] : null;
+      const row = finite(change?.row);
+      const column = finite(change?.column);
+      if (row === null || column === null) return;
+      map.set(key(Math.trunc(row), Math.trunc(column)), item);
+    });
+    return map;
+  }
+  function mapSuggestionDelta(item) {
+    const change = Array.isArray(item?.mapChanges) ? item.mapChanges[0] : null;
+    const before = finite(change?.before);
+    const after = finite(change?.after);
+    if (before === null || after === null || before === 0) return null;
+    return (after / before - 1) * 100;
+  }
+  function stabilityLabel(value) {
+    const state = String(value || '').toUpperCase();
+    if (state === 'CONSOLIDATED') return 'Consolidado';
+    if (state === 'REVALIDATING') return 'Revalidando';
+    if (state === 'LEARNING') return 'Aprendendo';
+    return 'Sem evidência';
+  }
+  function comparisonError(item) {
+    return finite(item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.deltaPercent ?? item?.differencePercent ?? item?.error);
+  }
+  function comparisonTargetMs(item) { return finite(item?.petrol_target_ms ?? item?.petrolTargetMs); }
+  function comparisonObservedMs(item) { return finite(item?.petrol_on_cng_ms ?? item?.petrolOnCngMs); }
+  function confidence(item) {
+    const raw = finite(item?.confidence);
+    if (raw !== null) return raw > 1 ? Math.min(1, raw / 100) : Math.max(0, Math.min(1, raw));
+    const samples = finite(item?.samples);
+    return samples === null ? 0 : Math.min(1, samples / 50);
+  }
+  function evidenceIndex(model) { return new Map((model?.cells || []).map(cell => [cell.key, cell])); }
+  function fuelLabel(value) {
+    const fuel = String(value || '').toUpperCase();
+    if (fuel.includes('PETROL') || fuel.includes('GASOLINA')) return 'Gasolina';
+    if (fuel.includes('CNG') || fuel.includes('GNV') || fuel === 'GAS') return 'GNV';
+    return fuel || '—';
+  }
+  function stateLabel(decision) {
+    const state = String(decision?.state || 'OBSERVING_ENGINE').toUpperCase();
+    if (decision?.learning_eligible === true || state === 'SAMPLE_ACCEPTED') return 'Evidência aceita';
+    if (state === 'FORMING_SAMPLE') return 'Formando evidência';
+    if (state === 'FUEL_VERIFYING') return 'Confirmando combustível';
+    if (state === 'FUEL_STABLE') return 'Combustível confirmado';
+    if (state === 'ENGINE_WARMING') return 'Aguardando temperatura';
+    if (state === 'SAMPLE_REJECTED') return 'Janela recusada';
+    if (state === 'WINDOW_TIMEOUT') return 'Janela reiniciada';
+    if (state === 'TELEMETRY_GAP') return 'Telemetria interrompida';
+    if (state === 'CUTOFF') return 'Aprendizado pausado';
+    return state.replaceAll('_', ' ').toLowerCase().replace(/^./, char => char.toUpperCase());
+  }
+
+  class LearningScreen {
+    constructor(store, router, api) {
+      this.store = store;
+      this.router = router;
+      this.api = api;
+      this.root = document.querySelector('[data-screen="learning"]');
+      this.host = document.getElementById('learningGrid');
+      this.detail = document.getElementById('learningCellDetail');
+      this.selectedCell = null;
+      this.inspectorPane = 'collection';
+      this.toleranceSignature = '';
+      this.decisionHistory = [];
+      this.lastDecisionHistorySignature = '';
+      this.grid = this.host && ns.PhysicalGrid ? new ns.PhysicalGrid(this.host, {
+        onCell: (row, column) => {
+          this.selectedCell = { row, column };
+          this.setInspectorPane('cell');
+          this.renderDetail(this.store.get(), row, column);
+        },
+      }) : null;
+      this.ensureInspector();
+      this.bind();
+    }
+
+    ensureInspector() {
+      if (!this.detail) return;
+      this.detail.innerHTML = `
+        <div class="learning-inspector-tabs" role="tablist" aria-label="Detalhes do aprendizado">
+          <button type="button" data-learning-inspector="cell">Célula</button>
+          <button type="button" data-learning-inspector="collection" class="active">Coleta</button>
+          <button type="button" data-learning-inspector="tolerances">Tolerâncias</button>
+        </div>
+        <div id="learningCellPane" class="learning-inspector-pane" data-pane="cell">
+          <div class="detail-empty"><b>Toque em uma célula</b><span>Veja a evidência e, se quiser, abra exatamente essa célula no editor oficial do Mapa K.</span></div>
+        </div>
+        <div id="learningCollectionPane" class="learning-inspector-pane active" data-pane="collection"></div>
+        <div id="learningTolerancePane" class="learning-inspector-pane" data-pane="tolerances"></div>
+      `;
+      this.cellPane = document.getElementById('learningCellPane');
+      this.collectionPane = document.getElementById('learningCollectionPane');
+      this.tolerancePane = document.getElementById('learningTolerancePane');
+      this.detail.querySelectorAll('[data-learning-inspector]').forEach(button => {
+        button.addEventListener('click', () => this.setInspectorPane(button.dataset.learningInspector));
+      });
+    }
+
+    setInspectorPane(pane) {
+      this.inspectorPane = pane || 'collection';
+      this.detail?.querySelectorAll('[data-learning-inspector]').forEach(button => {
+        const active = button.dataset.learningInspector === this.inspectorPane;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      this.detail?.querySelectorAll('.learning-inspector-pane').forEach(node => {
+        node.classList.toggle('active', node.dataset.pane === this.inspectorPane);
+      });
+    }
+
+    bind() {
+      this.root?.querySelectorAll('[data-learning-layer]').forEach(button => {
+        button.addEventListener('click', () => this.store.patch({ learningLayer: button.dataset.learningLayer }));
+      });
+    }
+
+    buildEvidenceModel(maps) { return ns.LearningModel?.buildModel ? ns.LearningModel.buildModel(maps || {}) : null; }
+
+    observeDecision(decision) {
+      const state = String(decision?.state || '').toUpperCase();
+      const code = String(decision?.reason_code || state || '').toUpperCase();
+      const meaningful = decision?.learning_eligible === true || [
+        'SAMPLE_ACCEPTED', 'SAMPLE_REJECTED', 'WINDOW_TIMEOUT', 'TELEMETRY_GAP',
+        'FUEL_STABLE', 'ENGINE_WARMING', 'INVALID', 'PLAUSIBILITY_REJECTED',
+      ].includes(state) || ['SAMPLE_ACCEPTED', 'SAMPLE_ACCEPTED_EARLY', 'PLAUSIBILITY_REJECTED'].includes(code);
+      if (!meaningful) return;
+      const row = finite(decision?.cell_row);
+      const column = finite(decision?.cell_column);
+      const cell = row !== null && column !== null && row >= 0 && column >= 0 ? `${row + 1}×${column + 1}` : '—';
+      const signature = [state, code, decision?.learning_eligible === true, decision?.reason || '', decision?.fuel_confirmed || '', cell].join('|');
+      if (!signature || signature === this.lastDecisionHistorySignature) return;
+      this.lastDecisionHistorySignature = signature;
+      const level = decision?.learning_eligible === true || state === 'SAMPLE_ACCEPTED'
+        ? 'accepted'
+        : ['SAMPLE_REJECTED', 'WINDOW_TIMEOUT', 'TELEMETRY_GAP', 'INVALID'].includes(state) || code === 'PLAUSIBILITY_REJECTED'
+          ? 'rejected'
+          : 'info';
+      this.decisionHistory.unshift({
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        level,
+        label: stateLabel(decision),
+        reason: decision?.reason || code || 'Decisão observada',
+        code,
+        fuel: fuelLabel(decision?.fuel_confirmed),
+        cell,
+      });
+      if (this.decisionHistory.length > 6) this.decisionHistory.length = 6;
+    }
+
+    render(state) {
+      if (!this.root || !this.grid) return;
+      this.observeDecision(state.learningDecision || {});
+      const maps = state.learning || {};
+      const axes = maps.grid || {};
+      this.grid.setAxes?.(axes.rpmBins || [], axes.petrolBins || []);
+      const model = this.buildEvidenceModel(maps);
+      const evidence = evidenceIndex(model);
+      const layer = state.learningLayer || 'comparison';
+      this.root.querySelectorAll('[data-learning-layer]').forEach(button => button.classList.toggle('active', button.dataset.learningLayer === layer));
+
+      const comparisons = indexByCell(maps.comparisons);
+      const stability = indexByCell(state.calibrationState?.learningStability?.map || []);
+      const mapSuggestions = persistentMapSuggestions(state);
+      const persistentItems = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
+
+      this.grid.cells.forEach((cell, cellKey) => {
+        const learned = evidence.get(cellKey);
+        const stable = stability.get(cellKey);
+        let source = null;
+        let cellText = '·';
+        let subtext = '';
+        let heat = 0;
+        let tone = 'neutral';
+        if (layer === 'petrol') {
+          source = learned?.petrol || null;
+          if (source) {
+            const meanMs = finite(source.petrolMs);
+            cellText = meanMs === null ? '•' : fmt(meanMs, 2);
+            subtext = meanMs === null ? `${Math.round(source.samples || 0)} am.` : 'ms';
+            heat = confidence(source);
+            tone = 'petrol';
+          }
+        } else if (layer === 'cng') {
+          source = learned?.cng || null;
+          if (source) {
+            const meanMs = finite(source.petrolMs);
+            cellText = meanMs === null ? '•' : fmt(meanMs, 2);
+            subtext = meanMs === null ? `${Math.round(source.samples || 0)} am.` : 'ms';
+            heat = confidence(source);
+            tone = 'cng';
+          }
+        } else if (layer === 'comparison') {
+          source = comparisons.get(cellKey) || stable || null;
+          const consolidated = finite(stable?.consolidatedErrorPercent);
+          const rawError = comparisonError(comparisons.get(cellKey));
+          const error = consolidated ?? rawError;
+          const stableState = String(stable?.state || '').toUpperCase();
+          if (error !== null) {
+            cellText = `${error > 0 ? '+' : ''}${fmt(error, 1)}%`;
+            subtext = stableState === 'REVALIDATING'
+              ? 'revalidando'
+              : stableState === 'CONSOLIDATED'
+                ? 'consolidado'
+                : stableState === 'LEARNING'
+                  ? 'aprendendo'
+                  : 'comparando';
+            heat = Math.min(1, Math.abs(error) / 8);
+            tone = Math.abs(error) <= 1.5 ? 'good' : error > 0 ? 'high' : 'low';
+          } else if (learned?.state === ns.LearningModel?.STATES?.COMPARABLE) {
+            cellText = '…';
+            subtext = stableState === 'LEARNING' ? 'aprendendo' : 'comparando';
+            heat = 0.2;
+          }
+        } else if (layer === 'suggestion') {
+          source = mapSuggestions.get(cellKey);
+          const delta = mapSuggestionDelta(source);
+          if (source && delta !== null) {
+            cellText = `${delta > 0 ? '+' : ''}${fmt(delta, 1)}%`;
+            subtext = source.actionable === true ? 'revisar' : String(source.stabilityState || '').toUpperCase() === 'REVALIDATING' ? 'revalidando' : 'observando';
+            heat = confidence(source);
+            tone = source.actionable === true ? 'suggestion' : 'neutral';
+          }
+        }
+        this.grid.updateCell(Number(cell.dataset.row), Number(cell.dataset.column), {
+          text: cellText, subtext, heat, tone, hasData: !!source || !!learned || !!stable,
+          state: stable?.state || learned?.state || '',
+          selected: this.selectedCell?.row === Number(cell.dataset.row) && this.selectedCell?.column === Number(cell.dataset.column),
+        });
+      });
+
+      const coverage = document.getElementById('learningCoverageSummary');
+      if (coverage && model) {
+        const petrolCount = model.counts.petrol + model.counts.comparable;
+        const cngCount = model.counts.cng + model.counts.comparable;
+        coverage.textContent = `${petrolCount} gasolina · ${cngCount} GNV atual · ${model.counts.ready} comparáveis`;
+      }
+      const suggestionSummary = document.getElementById('learningSuggestionSummary');
+      if (suggestionSummary) {
+        const globalCount = persistentItems.filter(item => item.lifecycle === 'PENDING' && item.target === 'CURVE_K' && item.actionable === true).length;
+        const localCount = persistentItems.filter(item => item.lifecycle === 'PENDING' && item.target === 'MAP_K' && item.actionable === true).length;
+        suggestionSummary.textContent = `${globalCount} global · ${localCount} local`;
+      }
+
+      this.renderCollection(state);
+      this.renderTolerances(state);
+      if (this.selectedCell) this.renderDetail(state, this.selectedCell.row, this.selectedCell.column);
+    }
+
+    renderCollection(state) {
+      if (!this.collectionPane) return;
+      const decision = state.learningDecision || {};
+      const learningStatus = state.learningStatus || {};
+      const restoring = learningStatus.restoring === true || String(learningStatus.state || '').toUpperCase() === 'LEARNING_RESTORING';
+      const tolerance = state.learningTolerance || {};
+      const policy = tolerance.policy || tolerance.applied || {};
+      const live = state.telemetry?.live || {};
+      const interpolation = state.telemetry?.interpolation || {};
+      const cell = interpolation.cell || {};
+      const count = Math.max(0, finite(decision.frame_count) || 0);
+      const desired = Math.max(0, finite(decision.desired_frames) || 0);
+      const minimum = Math.max(0, finite(decision.minimum_frames) || 0);
+      const progress = desired > 0 ? Math.min(100, count / desired * 100) : 0;
+      const eligible = decision.learning_eligible === true;
+      const fuel = fuelLabel(decision.fuel_confirmed || live.fuel);
+      const reason = restoring
+        ? (learningStatus.reason || 'Restaurando conhecimento persistido em segundo plano.')
+        : (decision.reason || live.sample_reason || 'Aguardando decisão do núcleo.');
+      const quality = finite(decision.quality);
+      const row = finite(decision.cell_row ?? cell.row);
+      const column = finite(decision.cell_column ?? cell.column);
+      const rpm = finite(interpolation.rpm ?? live.rpm);
+      const petrolMs = finite(interpolation.petrolMs ?? live.petrol_ms ?? live.petrolMs);
+      const mapBar = finite(interpolation.mapBar ?? live.load_bar ?? live.map_bar);
+      const pressure = finite(live.pressure_diff_bar ?? live.gas_pressure_abs_bar);
+      const water = finite(live.water_c ?? live.waterC);
+      const timeout = finite(decision.window_budget_ms);
+      const age = finite(decision.window_age_ms);
+      const historyRows = this.decisionHistory.length
+        ? this.decisionHistory.map(item => `<div data-level="${escapeHtml(item.level)}"><time>${escapeHtml(item.time)}</time><b>${escapeHtml(item.label)}</b><span>${escapeHtml(item.reason)}</span><small>${escapeHtml(item.fuel)} · célula ${escapeHtml(item.cell)} · ${escapeHtml(item.code)}</small></div>`).join('')
+        : '<p class="empty-copy">Nenhum aceite, descarte ou transição relevante observado desde que esta tela foi aberta.</p>';
+
+      this.collectionPane.innerHTML = `
+        <section class="learning-decision-card" data-eligible="${eligible ? 'true' : 'false'}">
+          <div class="decision-top"><div><small>DECISÃO DO NÚCLEO</small><h3>${restoring ? 'Learning restaurando' : escapeHtml(stateLabel(decision))}</h3></div><span>${restoring ? 'EM SEGUNDO PLANO' : (eligible ? 'CONTA' : 'NÃO CONTA AINDA')}</span></div>
+          <p>${escapeHtml(reason)}</p>
+          <div class="collection-progress"><i style="width:${progress.toFixed(1)}%"></i></div>
+          <div class="collection-facts"><span><b>${count}/${desired || '—'}</b> leituras</span><span>mínimo ${minimum || '—'}</span><span>${fuel}</span><span>${quality === null ? 'qualidade —' : `qualidade ${Math.round(quality * 100)}%`}</span></div>
+          <small class="reason-code">${restoring ? 'LEARNING_RESTORE_PENDING' : escapeHtml(decision.reason_code || decision.state || 'OBSERVING_ENGINE')}</small>
+        </section>
+        <section class="learning-current-condition">
+          <header><div><small>CONDIÇÃO AGORA</small><h3>O que o núcleo está observando</h3></div>${row !== null && column !== null && row >= 0 && column >= 0 ? `<span>Célula ${row + 1}×${column + 1}</span>` : ''}</header>
+          <div class="condition-grid">
+            <div><small>RPM</small><b>${rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR')}</b></div>
+            <div><small>Petrol Inj.</small><b>${fmt(petrolMs, 2)} ms</b></div>
+            <div><small>MAP</small><b>${fmt(mapBar, 3)} bar</b></div>
+            <div><small>Pressão GNV</small><b>${fmt(pressure, 3)} bar</b></div>
+            <div><small>Água</small><b>${water === null ? '—' : `${fmt(water, 0)} °C`}</b></div>
+            <div><small>Janela</small><b>${age === null ? '—' : `${fmt(age / 1000, 1)} s`}${timeout ? ` / ${fmt(timeout / 1000, 1)} s` : ''}</b></div>
+          </div>
+          <p class="learning-light-note">A posição ao vivo é mostrada apenas como texto. A interpolação bilinear continua no Kotlin sem perseguir células na WebView.</p>
+        </section>
+        <section class="learning-decision-history">
+          <header><div><small>ÚLTIMAS DECISÕES OBSERVADAS</small><h3>O que acabou de acontecer com a coleta</h3></div><span>${this.decisionHistory.length}/6</span></header>
+          <div class="decision-history-list">${historyRows}</div>
+          <p>O registro persistente completo continua no SessionRecorder em Ferramentas.</p>
+        </section>
+        <section class="learning-policy-summary">
+          <header><small>LIMITES CONFIGURADOS</small><button type="button" data-open-tolerances>ajustar</button></header>
+          <div class="policy-grid"><span>RPM <b>${fmt(policy.rpmOscillationMinimum, 0)} rpm / ${fmt(policy.rpmOscillationPercent, 1)}%</b></span><span>MAP <b>${fmt(policy.mapOscillationBar, 3)} bar</b></span><span>Petrol Inj. <b>${fmt(policy.petrolOscillationPercent, 1)}%</b></span><span>Pressão <b>${fmt(policy.pressureOscillationBar, 3)} bar</b></span></div>
+          <p>Esses números vêm da política Kotlin. A interface não decide se a amostra é válida.</p>
+        </section>
+      `;
+      this.collectionPane.querySelector('[data-open-tolerances]')?.addEventListener('click', () => this.setInspectorPane('tolerances'));
+    }
+
+    renderTolerances(state) {
+      if (!this.tolerancePane) return;
+      const settings = state.learningTolerance || {};
+      const model = settings.controlModel || {};
+      const levels = Array.isArray(model.levels) ? model.levels : [];
+      const controls = Array.isArray(model.controls) ? model.controls : [];
+      const signature = JSON.stringify({ levels, controls, minimumWaterC: model.minimumWaterC, ok: settings.ok });
+      if (signature === this.toleranceSignature) return;
+      this.toleranceSignature = signature;
+      if (!controls.length || !levels.length) {
+        this.tolerancePane.innerHTML = '<div class="detail-empty"><b>Tolerâncias indisponíveis</b><span>A política nativa aparecerá aqui quando o serviço estiver disponível.</span></div>';
+        return;
+      }
+      this.tolerancePane.innerHTML = `
+        <div class="tolerance-heading"><div><small>COLETA</small><h3>Quão rigoroso o aprendizado deve ser</h3></div></div>
+        <p class="tolerance-intro">Mais flexível aceita mais variação da condução real. Mais rigoroso exige uma condição mais estável. Nada aqui escreve na ECU.</p>
+        <div class="tolerance-profiles"><button type="button" data-tolerance-profile="1">Rigoroso</button><button type="button" data-tolerance-profile="2" class="active">Equilibrado</button><button type="button" data-tolerance-profile="3">Flexível</button></div>
+        <div class="tolerance-controls">
+          ${controls.map(control => `<label><span><b>${escapeHtml(control.title)}</b><small>${escapeHtml(control.description)}</small></span><select data-tolerance-control="${escapeHtml(control.id)}">${levels.map((label, index) => `<option value="${index}" ${Number(control.selected) === index ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>`).join('')}
+          <label><span><b>Temperatura mínima da água</b><small>Abaixo disso o núcleo aguarda aquecimento antes de aceitar evidência.</small></span><input id="learningMinimumWaterInput" type="number" min="20" max="100" step="1" value="${Number(model.minimumWaterC) || 60}"></label>
+        </div>
+        <div class="tolerance-actions"><button type="button" class="primary" data-apply-tolerances>Aplicar tolerâncias</button><button type="button" class="quiet-button" data-reset-tolerances>Restaurar padrão</button></div>
+        <div class="editor-rule"><b>Somente política de coleta.</b><span>Alterar tolerância reinicia a janela atual, mas nunca inicia escrita em Mapa K ou Curva K.</span></div>
+      `;
+      this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(button => {
+        button.addEventListener('click', () => {
+          const level = Number(button.dataset.toleranceProfile);
+          this.tolerancePane.querySelectorAll('[data-tolerance-control]').forEach(select => { select.value = String(level); });
+          this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(item => item.classList.toggle('active', item === button));
+        });
+      });
+      this.tolerancePane.querySelector('[data-apply-tolerances]')?.addEventListener('click', () => this.applyTolerances());
+      this.tolerancePane.querySelector('[data-reset-tolerances]')?.addEventListener('click', () => this.resetTolerances());
+    }
+
+    applyTolerances() {
+      if (!this.api) return;
+      const controls = {};
+      this.tolerancePane?.querySelectorAll('[data-tolerance-control]').forEach(select => { controls[select.dataset.toleranceControl] = Number(select.value); });
+      controls.minimumWaterC = Number(document.getElementById('learningMinimumWaterInput')?.value || 60);
+      const result = this.api.setLearningToleranceControls(controls);
+      if (result?.ok === false) {
+        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível aplicar as tolerâncias.' } });
+        return;
+      }
+      this.toleranceSignature = '';
+      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias de coleta atualizadas.' } });
+    }
+
+    resetTolerances() {
+      if (!this.api) return;
+      const result = this.api.resetLearningToleranceSettings();
+      if (result?.ok === false) {
+        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível restaurar as tolerâncias.' } });
+        return;
+      }
+      this.toleranceSignature = '';
+      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias restauradas para o padrão.' } });
+    }
+
+    renderDetail(state, row, column) {
+      if (!this.cellPane) return;
+      const maps = state.learning || {};
+      const model = this.buildEvidenceModel(maps);
+      const learned = evidenceIndex(model).get(key(row, column));
+      const comparison = indexByCell(maps.comparisons).get(key(row, column));
+      const stability = indexByCell(state.calibrationState?.learningStability?.map || []).get(key(row, column));
+      const suggestion = persistentMapSuggestions(state).get(key(row, column));
+      const rawError = comparisonError(comparison);
+      const consolidatedError = finite(stability?.consolidatedErrorPercent);
+      const recentError = finite(stability?.recentErrorPercent);
+      const displayError = consolidatedError ?? rawError;
+      const targetMs = comparisonTargetMs(comparison);
+      const observedMs = comparisonObservedMs(comparison);
+      const delta = mapSuggestionDelta(suggestion);
+      const petrolSamples = finite(learned?.petrol?.samples) ?? 0;
+      const cngSamples = finite(learned?.cng?.samples) ?? 0;
+      const petrolVisits = finite(learned?.petrol?.visits) ?? 0;
+      const cngVisits = finite(learned?.cng?.visits) ?? 0;
+      const petrolSessions = finite(learned?.petrol?.sessions) ?? 0;
+      const cngSessions = finite(learned?.cng?.sessions) ?? 0;
+      const petrolMeanMs = finite(learned?.petrol?.petrolMs);
+      const cngMeanMs = finite(learned?.cng?.petrolMs);
+      const petrolRpm = finite(learned?.petrol?.rpm);
+      const cngRpm = finite(learned?.cng?.rpm);
+      const petrolMap = finite(learned?.petrol?.mapBar);
+      const cngMap = finite(learned?.cng?.mapBar);
+      const historicalEpochs = [...new Set((learned?.previousCng || []).map(item => item.epoch))].sort((a, b) => b - a);
+      const axes = maps.grid || {};
+      const axisRpm = finite(axes.rpmBins?.[column]);
+      const axisPetrol = finite(axes.petrolBins?.[row]);
+      const rpmLabel = finite(learned?.rpm) ?? axisRpm;
+      const petrolLabel = finite(learned?.petrolMs) ?? axisPetrol;
+      const stabilityState = String(stability?.state || 'NO_EVIDENCE').toUpperCase();
+      const comparisonText = displayError !== null && targetMs !== null && observedMs !== null
+        ? `${fmt(targetMs, 2)} → ${fmt(observedMs, 2)} ms · ${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%${consolidatedError !== null ? ' consolidado' : ''}`
+        : displayError !== null ? `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%` : 'ainda não existe par equivalente válido';
+      const recentText = stabilityState === 'REVALIDATING' && recentError !== null
+        ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}% · ${Math.round(finite(stability?.recentUniqueVisits) || 0)} visita(s) nova(s)`
+        : stabilityState === 'CONSOLIDATED'
+          ? 'sem divergência recente relevante'
+          : recentError !== null ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}%` : '—';
+      this.cellPane.innerHTML = `
+        <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
+        <h3>${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · ${fmt(petrolLabel, 1)} ms</h3>
+        <p class="learning-reason"><b>${escapeHtml(stabilityLabel(stabilityState))}.</b> ${escapeHtml(stability?.reason || learned?.readinessReason || 'Sem evidência válida nesta região. Você ainda pode abrir a célula para ajuste manual.')}</p>
+        <dl class="detail-list enhanced-detail-list">
+          <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}% · ${Math.round(finite(stability?.consolidatedUniqueVisits) || 0)} visitas`}</dd></div>
+          <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
+          <div><dt>Gasolina — referência</dt><dd>${learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms · ${petrolRpm === null ? 'RPM —' : `${Math.round(petrolRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(petrolMap, 3)} bar` : 'sem evidência'}</dd></div>
+          <div><dt>Evidência gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas · ${petrolSessions} sessões · confiança ${Math.round(confidence(learned.petrol) * 100)}%` : '—'}</dd></div>
+          <div><dt>GNV atual — Petrol Inj.</dt><dd>${learned?.cng ? `${fmt(cngMeanMs, 2)} ms · ${cngRpm === null ? 'RPM —' : `${Math.round(cngRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap, 3)} bar` : 'sem evidência atual'}</dd></div>
+          <div><dt>Evidência GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas · ${cngSessions} sessões · confiança ${Math.round(confidence(learned.cng) * 100)}% · época ${model?.epoch ?? '—'}` : '—'}</dd></div>
+          <div><dt>Equivalência</dt><dd>${comparisonText}</dd></div>
+          <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')} · somente consulta` : 'nenhum'}</dd></div>
+          <div><dt>Sugestão local</dt><dd>${delta === null ? 'nenhuma registrada' : `${delta > 0 ? '+' : ''}${fmt(delta, 1)}% · ${suggestion?.actionable === true ? 'pronta para revisar' : stabilityState === 'REVALIDATING' ? 'preservada enquanto revalida' : 'observando'}`}</dd></div>
+        </dl>
+        <button class="primary wide" type="button" data-edit-learning-cell>${suggestion?.actionable ? 'Editar esta célula com a sugestão' : 'Editar esta célula'}</button>
+        <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>
+      `;
+      this.cellPane.querySelector('[data-edit-learning-cell]')?.addEventListener('click', () => {
+        this.router.navigate('map', {
+          origin: 'learning',
+          cell: { row, column },
+          physical: { rpm: rpmLabel, petrolMs: petrolLabel },
+          suggestion: suggestion?.actionable ? suggestion : null,
+        });
+      });
+    }
+  }
+
+  ns.LearningScreen = LearningScreen;
+})(typeof window !== 'undefined' ? window : globalThis);

@@ -1,0 +1,30 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const root = path.resolve(__dirname, '../..');
+const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+const api = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/autocal-api.js'), 'utf8');
+const provider = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/AutoCalBridgeProvider.kt'), 'utf8');
+const manager = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt'), 'utf8');
+
+assert.equal(cockpit.includes("addHook('context'"), true);
+assert.equal(cockpit.includes('setInterval'), false);
+assert.equal(cockpit.includes('NUM_BUF_UPD_GAS'), true);
+assert.equal(cockpit.includes('correlationReason'), true);
+assert.equal(cockpit.includes('correlationConfidence'), true);
+assert.equal(cockpit.includes("data-autocal-action=\"ENABLE_AUTO_CAL\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"DISABLE_AUTO_CAL\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), true);
+assert.equal(cockpit.includes('NATIVE_AUTOMATCH'), false);
+assert.equal(cockpit.includes('prepare('), true);
+assert.equal(cockpit.includes('execute(prepared.preparationId)'), true);
+assert.equal(cockpit.includes('Continuar para confirmação Android'), true);
+assert.equal(api.includes('prepareNativeAction'), true);
+assert.equal(api.includes('executeNativeAction'), true);
+assert.equal(manager.includes('manualAutoMatchExposed'), false);
+assert.equal(manager.includes('NATIVE_AUTOMATCH'), false);
+assert.equal(provider.includes('hub/autocal-ui.js'), false);
+assert.equal(provider.includes('postDelayed'), false);
+assert.equal(provider.includes('addJavascriptInterface'), true);
+console.log('AUTOCAL_COCKPIT_CONTRACT=PASS');

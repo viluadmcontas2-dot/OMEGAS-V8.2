@@ -1,0 +1,13 @@
+{
+  "description": "Amostra passiva extraída do início do PortmonAUTOCAL.LOG real; sem dados pessoais e sem qualquer transmissão ativa.",
+  "originalSha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+  "compressedSha256": "202ff799ca3bba653986ce000ed69d4b3049fdf0aef6d614e605a3ca4d959deb",
+  "transactions": [
+    {"sequence":1,"request":"48 01 49","response":"48 01 49 53 22 65 03 32 1F 00 00 00 00 EC 06 00 80 2C B1 FA 09 39 93 01 00 00 00 00 00 00 00 00 00 EA 06 00 00 00 00 3D"},
+    {"sequence":2,"request":"48 01 49","response":"48 01 49 53 22 65 03 32 1F 00 00 00 00 E9 06 00 80 2C B1 F2 09 39 93 01 00 00 00 00 00 00 00 00 00 EA 06 00 00 00 00 32"},
+    {"sequence":3,"request":"48 01 49","response":"48 01 49 53 22 64 03 32 1F 00 00 00 00 E9 06 00 80 2C B1 F2 09 39 93 01 00 00 00 00 00 00 00 00 00 EA 06 00 00 00 00 31"},
+    {"sequence":10,"request":"29 1D 00 46","response":"29 1D 00 46 53 05 00 00 00 00 00 58"},
+    {"sequence":11,"request":"29 1D 00 46","response":"29 1D 00 46 53 05 00 00 00 00 00 58"},
+    {"sequence":15,"request":"09 21 00 2A","response":"09 21 00 2A 53 01 00 54"}
+  ]
+}

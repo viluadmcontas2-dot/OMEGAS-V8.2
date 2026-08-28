@@ -1,0 +1,313 @@
+.autocal-cockpit-view {
+  min-width: 0;
+}
+
+.autocal-cockpit {
+  display: grid;
+  gap: 14px;
+}
+
+.autocal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-end;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  background: rgba(255,255,255,.018);
+}
+
+.autocal-head small,
+.autocal-section-head small {
+  color: var(--muted, #8793a4);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .10em;
+}
+
+.autocal-head h3,
+.autocal-section-head h4 {
+  margin: 2px 0 0;
+}
+
+.autocal-head p,
+.autocal-note {
+  margin: 5px 0 0;
+  color: var(--muted, #8793a4);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.autocal-head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.autocal-live-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.autocal-live-strip > div {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+}
+
+.autocal-live-strip small {
+  color: var(--muted, #8793a4);
+  font-size: 8px;
+  letter-spacing: .08em;
+}
+
+.autocal-live-strip b {
+  font-size: 14px;
+}
+
+.autocal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, .75fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.autocal-bands-card,
+.autocal-events-card,
+.autocal-actions-card {
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  background: rgba(255,255,255,.018);
+}
+
+.autocal-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.autocal-section-head > span {
+  color: var(--muted, #8793a4);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.autocal-bands {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(82px, 1fr));
+  gap: 7px;
+}
+
+.autocal-band {
+  --band-accent: #5b6775;
+  display: grid;
+  gap: 5px;
+  min-height: 72px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--band-accent) 35%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--band-accent) 7%, #0a0e14);
+}
+
+.autocal-band[data-state="collecting"] { --band-accent: #4fa3ff; }
+.autocal-band[data-state="mature"] { --band-accent: #d8a93b; }
+.autocal-band[data-state="anchored"] { --band-accent: #2ebf82; }
+
+.autocal-band header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.autocal-band header span {
+  color: var(--muted, #8793a4);
+  font-size: 9px;
+}
+
+.autocal-band header b {
+  font-size: 16px;
+}
+
+.autocal-band > i,
+.autocal-action-status > i {
+  position: relative;
+  display: block;
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.05);
+  overflow: hidden;
+}
+
+.autocal-band > i::after,
+.autocal-action-status > i::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--progress, 0%);
+  background: var(--band-accent, #2ebf82);
+}
+
+.autocal-band small {
+  color: color-mix(in srgb, var(--band-accent) 70%, #c5d0db);
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+.autocal-side {
+  display: grid;
+  gap: 14px;
+}
+
+.autocal-events {
+  display: grid;
+  gap: 7px;
+}
+
+.autocal-events article {
+  display: grid;
+  gap: 4px;
+  padding: 8px 9px;
+  border-left: 2px solid #5d6875;
+  border-radius: 8px;
+  background: rgba(255,255,255,.018);
+}
+
+.autocal-events article[data-state="correlated"] {
+  border-left-color: #2ebf82;
+}
+
+.autocal-events article > div {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.autocal-events article span,
+.autocal-events article small,
+.autocal-events article p {
+  color: var(--muted, #8793a4);
+  font-size: 9px;
+}
+
+.autocal-events article p {
+  margin: 0;
+  color: #c8d3df;
+}
+
+.autocal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.autocal-actions button {
+  min-height: 40px;
+  text-align: left;
+}
+
+.autocal-actions .critical {
+  grid-column: 1 / -1;
+  color: #efb0b0;
+  border-color: rgba(226,94,94,.25);
+}
+
+.autocal-action-status {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.02);
+  color: var(--muted, #8793a4);
+  font-size: 9px;
+}
+
+.autocal-action-status b {
+  color: #dce6f0;
+}
+
+.autocal-review {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4,7,11,.82);
+  backdrop-filter: blur(5px);
+}
+
+.autocal-review[hidden] {
+  display: none;
+}
+
+.curve-screen:has(.autocal-review:not([hidden])) {
+  position: relative;
+}
+
+.autocal-review-card {
+  width: min(600px, 100%);
+  padding: 18px;
+  border: 1px solid rgba(226,94,94,.25);
+  border-radius: 14px;
+  background: #10151d;
+  box-shadow: 0 18px 48px rgba(0,0,0,.45);
+}
+
+.autocal-review-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.autocal-review-card p,
+.autocal-review-card dd,
+.autocal-review-card dt {
+  font-size: 11px;
+}
+
+.autocal-review-card dl {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.autocal-review-card dl > div {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.autocal-review-card dt {
+  color: var(--muted, #8793a4);
+}
+
+.autocal-review-card dd {
+  margin: 0;
+  color: #e0e8f1;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1080px) {
+  .autocal-layout { grid-template-columns: 1fr; }
+  .autocal-bands { grid-template-columns: repeat(6, minmax(72px, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .autocal-head { align-items: flex-start; flex-direction: column; }
+  .autocal-head-actions { justify-content: flex-start; }
+  .autocal-live-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .autocal-bands { grid-template-columns: repeat(3, minmax(72px, 1fr)); }
+}

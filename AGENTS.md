@@ -1,42 +1,26 @@
-# Contrato operacional estável
+# OMEGAS V8.2 — contrato operacional
 
-## Gate obrigatório do agente
+## Autoridade
 
-Antes de qualquer operação técnica, carregar `@governar-projeto` (referência interna: `$governar-projeto`). Projeto técnico novo ou incompleto exige `@preparar-projeto`; falha de escrita remota chama `@destravar-github`. Resolver skills pelo nome instalado, nunca por caminho `/root/...` ou diretório `skill-*`. Se a skill não estiver exposta, abrir o [Project Governance Guard — Master Checkpoint](https://www.notion.so/3ba8ee52ac5481bfb69bc53a483aad53) e permanecer fail-closed.
+- Este repositório é a fonte canônica de engenharia: código, requisitos ativos, decisões, status, testes e evidências.
+- A leitura inicial é: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → WorkUnit ativa em `docs/workunits/`.
+- GitHub Issue → uma branch → um PR → checks/evidências → merge. Não criar branches de auditoria ou genealogias paralelas.
+- Notion e Linear podem guardar estratégia ou histórico, mas não são dependências de boot nem autoridades sobre estado técnico mutável.
+- Chat, Brainbase, MCP USE e executores são superfícies de operação, nunca fonte do projeto.
 
-A sequência de engenharia é obrigatória: `@Codex Engineering Guardrails` → skill oficial direta `code-work` ou `code-verification` → [fallback integral no Notion](https://www.notion.so/3ba8ee52ac548106ad70da67a2621ea5). Antes de repetir operação conhecida, consultar o [Runbook Técnico](https://www.notion.so/f5c5e3d2a12e42feb36d25ebf8b0b7f8).
+## Execução
 
-Contrato estável: `WORK_SURFACE=REMOTE`, `SOURCE_MUTATION_TARGET=GITHUB_REMOTE_API`, `TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|NOT_AVAILABLE`, `LOCAL_SOURCE_MUTATION=DENIED`, `SYNC_STEP=NONE`. Falha, urgência, conveniência ou autorização durante a tarefa nunca liberam edição local. Sem escrita remota segura, bloquear.
+- Mutação de source ocorre pela API remota do GitHub. Runtime efêmero pode testar/buildar o SHA remoto exato.
+- UI/UX atual está congelada nesta WorkUnit. Não reinterpretar nem redesenhar sem nova decisão explícita do owner.
+- Escrita na ECU é sempre manual: preparar → revisar → confirmar → ACK → readback. Falha ou divergência nunca é sucesso.
+- Predictor é diagnóstico e deve falhar fechado/abster quando suporte ou confiança forem insuficientes.
+- A equivalência científica primária é `RPM × MAP(bar) → Petrol Inj. (ms)`; `RPM × Petrol Inj.` localiza downstream a célula física do Mapa K.
+- Mapa K e Curva K permanecem separados. Nenhum aprendizado ou sugestão grava automaticamente na ECU.
 
-Este arquivo deve permanecer **curto e quase imutável**. Governança viva não pertence ao GitHub.
+## Verificação e custo
 
-## Fonte de governança
-
-- **Notion é o cérebro e a governança primária.** Antes de operar, o agente deve ler a governança atual do projeto no Notion e a regra global de economia/execução.
-- Estado, prioridade, plano, decisão, autorização, branch ativa, exceção, aprendizado, roadmap e próximo passo ficam no **Notion**, não duplicados neste repositório.
-- Não criar commits apenas para espelhar mudanças cotidianas de governança, memória ou planejamento do Notion.
-
-## Fonte do código e execução remota
-
-- **GitHub remoto é a verdade do estado atual e a única superfície de mutação do código.**
-- A regra é: ler remoto → editar pelo GitHub Connector/API → reler o novo SHA → validar proporcionalmente ao risco → registrar checkpoint.
-- Não criar clone, ZIP, worktree nem usar Git Database de baixo nível (`blob/tree/ref`) por ritual. Esses caminhos só entram quando uma necessidade técnica real impedir a edição remota simples ou exigir atomicidade especial.
-- Para mudanças comuns de arquivo, preferir `fetch_file` + `update_file`/equivalente remoto e seguir.
-- Runtime efêmero serve somente para testar/buildar o SHA remoto e deve terminar sem alteração de fonte, configuração ou lockfiles. Sem runtime, usar CI remoto apenas quando necessário e autorizado; caso contrário registrar `TEST_NOT_AVAILABLE`.
-- **Tempo do proprietário é recurso crítico.** Entre rotas com segurança equivalente, escolher a que termina com menos passos, menos espera e menos revalidação redundante.
-
-## Testes e Actions
-
-- Validar com a prova mínima suficiente para o risco da mudança.
-- GitHub Actions só devem ser usadas quando houver dependência real de ambiente remoto, segredo protegido, publicação/deploy, assinatura ou outra prova que não possa ser obtida de forma mais simples com confiança suficiente.
-- **Edição/push remoto comum deve consumir zero Actions pesadas por padrão.** Se uma alteração comum acordar build/workflow caro sem necessidade, tratar o gatilho como defeito de automação e corrigi-lo em escopo próprio.
-- Não repetir auditoria, snapshot, hash, teste ou reconciliação já válidos sem evidência nova que os invalide.
-
-## Comunicação
-
-- O proprietário opera em linguagem humana. O agente traduz a intenção para a execução técnica adequada sem exigir nomes de comandos, workflows ou sintaxe.
-- Em execução longa ou multi-etapa, manter heartbeats curtos no chat por evento material e checkpoints correspondentes no Notion.
-
-## Regra de alteração deste arquivo
-
-Só alterar este arquivo quando uma **invariante durável** mudar. Se a informação puder mudar com frequência, ela pertence ao Notion.
+- Ordem: gate rápido → testes afetados/simulações → suíte Android → lint → APK.
+- GitHub Actions é último recurso para prova Android/APK quando o executor não possui SDK; usar somente fluxo seletivo, cancelável e sem gasto monetário.
+- Mudanças apenas documentais não podem disparar build pesado.
+- `PROVEN` exige SHA, comandos, resultados e artifact/hash registrados em `docs/evidence/` e `STATUS.md`.
+- Sem validação física, declarar explicitamente o limite; nunca alegar ECU/veículo testados.

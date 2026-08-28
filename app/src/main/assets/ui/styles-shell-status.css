@@ -1,0 +1,73 @@
+.workspace-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 18px;
+  align-items: end;
+}
+
+.vehicle-status-strip {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(90px, 1fr));
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.vehicle-status-strip > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 9px;
+  background: rgba(255,255,255,.02);
+}
+
+.vehicle-status-strip small {
+  color: var(--muted, #8793a4);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .10em;
+}
+
+.vehicle-status-strip b {
+  overflow: hidden;
+  color: #e6eef7;
+  font-size: 12px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vehicle-status-strip [data-state="online"] b,
+.vehicle-status-strip [data-state="measured"] b {
+  color: #bdebd6;
+}
+
+.vehicle-status-strip [data-state="offline"] b {
+  color: #e79595;
+}
+
+.vehicle-status-strip [data-state="cng"] b {
+  color: #79c7ff;
+}
+
+.vehicle-status-strip [data-state="petrol"] b {
+  color: #f1c77b;
+}
+
+@media (max-width: 1080px) {
+  .vehicle-status-strip {
+    grid-template-columns: repeat(3, minmax(100px, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .workspace-head {
+    grid-template-columns: 1fr;
+  }
+  .vehicle-status-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
