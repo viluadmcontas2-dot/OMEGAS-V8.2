@@ -28,7 +28,7 @@ checks = {
     "persisted regions are primary science only": 'snapshot.regions.map { it.toPersistedJson(visitLimit, sessionLimit) }' in memory,
     "persisted payload omits derived cell projection": 'regionsJsonLocked()' not in memory[memory.index("private fun buildPersistedState"):memory.index("private fun writePersistedState")],
     "compact json persisted": 'val encoded = root.toString().toByteArray(Charsets.UTF_8)' in memory,
-    "advisor uses minimal snapshot": 'AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())' in signal,
+    "advisor uses bounded equivalence snapshot": "BoundedEquivalenceAdvisorSnapshot.build(" in signal and "equivalenceRuntime.snapshotForAdvisor()" in signal,
     "advisor snapshot excludes heavy ui projections": '.put("regions", JSONArray(regions.map { it.toAdvisorJson() }))' in memory and '.put("comparisons", JSONArray(comparisons.map { it.toJson() }))' in memory,
     "grid never fabricates legacy visit ids": "legacy-visit" not in grid and "legacy-session" not in grid,
     "grid retains exact count floor": "visitCountFloor" in grid and "sessionCountFloor" in grid,
