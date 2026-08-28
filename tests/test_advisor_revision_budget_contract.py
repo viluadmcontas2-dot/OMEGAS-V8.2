@@ -15,11 +15,11 @@ advisor = ADVISOR.read_text(encoding="utf-8")
 
 checks = {
     "no advisor timer introduced": "Timer" not in gate and "scheduleAtFixedRate" not in store and "scheduleWithFixedDelay" not in store,
-    "ingest requests semantic refresh": "requestAdvisorRefresh(result)" in store,
+    "ingest requests semantic refresh": "advisorEstimate?.let { requestAdvisorRefresh(it, advisorRpm, advisorMap) }" in store,
     "raw eligible sample no longer refreshes unconditionally": "if (prepared.learningEligible && prepared.sample != null) scheduleAdvisorRefresh" not in store,
-    "comparison token uses observation milestone": "AdvisorRevisionGate.observationMilestone" in store and '"CMP"' in store,
-    "comparison token quantizes scientific change": "0.25" in store and "0.05" in store,
-    "petrol reference can trigger retroactive reconciliation": '"PETROL"' in store and 'reference.optInt("visit_count", 0)' in store,
+    "equivalence token uses observation milestone": "AdvisorRevisionGate.observationMilestone" in store and '"EQ"' in store,
+    "equivalence token quantizes scientific change": "0.02" in store and "0.0025" in store,
+    "petrol reference feeds bounded equivalence runtime": "FuelLane.PETROL_REFERENCE" in store and "equivalenceRuntime.observe(" in store,
     "export does not recompute advisor synchronously": "advisor = AssistedCalibrationAdvisor.analyze(exported)" not in store,
     "advisor derived state exposes revision freshness": '"advisorRevision"' in store and '"advisorFresh"' in store and '"advisor_fresh"' in store,
     "calibration and merge force revisions": "scheduleAdvisorRefresh(advisorRevisionGate.force())" in store,
