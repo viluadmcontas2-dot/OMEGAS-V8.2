@@ -58,8 +58,9 @@ class LearningConsolidationContract(unittest.TestCase):
         self.assertIn("stability.mapBandCount >= 2", self.runtime)
 
     def test_schema_is_backward_compatible_and_persists_stability(self):
-        self.assertIn('private const val SCHEMA = "OMEGAS_V7_SESSION_6"', self.codec)
+        self.assertIn('private const val SCHEMA = "OMEGAS_V7_SESSION_7"', self.codec)
         for schema in (
+            "OMEGAS_V7_SESSION_6",
             "OMEGAS_V7_SESSION_5",
             "OMEGAS_V7_SESSION_4",
             "OMEGAS_V7_SESSION_3",
