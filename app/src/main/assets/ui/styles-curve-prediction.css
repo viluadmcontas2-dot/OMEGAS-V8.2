@@ -1,0 +1,27 @@
+.curve-prediction-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  color: #aab5c2;
+  background: rgba(255,255,255,.025);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.curve-prediction-state[data-state="PREVISAO_OMEGAS"] {
+  color: #e8cb78;
+  border-color: rgba(216,169,59,.28);
+  background: rgba(216,169,59,.07);
+}
+
+.curve-prediction-state[data-state="OBSERVADO_SEM_PREVISAO"] {
+  color: #9bcaff;
+  border-color: rgba(79,163,255,.24);
+  background: rgba(79,163,255,.06);
+}

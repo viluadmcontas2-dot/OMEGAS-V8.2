@@ -1,0 +1,69 @@
+{
+  "workunit_id": "OMEGAS-WU-005",
+  "state": "RELEASE_PROVEN",
+  "source_branch": "work/v8.2-functional-final-20260828",
+  "base_source_sha": "8af0dd4cc6bd4e7a7066333d6f4fa2639288a22a",
+  "apk_source_sha": "da8191416d4fbd3d9b7253b10bdbe438323e8822",
+  "apk_source_tree": "d052b6930ce3a20ab396dfbc4455ab25c8260f60",
+  "issue": 5,
+  "ui_ux_frozen": true,
+  "repo_first_engineering": true,
+  "physical_ecu_validation": false,
+  "simulated_ecu_only": true,
+  "no_install_performed": true,
+  "physical_validation_claimed": false,
+  "cost_policy": "ZERO_MONETARY_SPEND=ABSOLUTE",
+  "owner_pc_route": "FORBIDDEN",
+  "checks": {
+    "fast_gate": "PASS",
+    "predictor_learning_simulations": "PASS",
+    "predictor_fail_closed_abstention": "PASS",
+    "learning": "PASS",
+    "suggestions": "PASS",
+    "confidence_uncertainty": "PASS",
+    "ecu_simulator": "PASS",
+    "ecu_ack_success": "PASS",
+    "ecu_ack_failure": "PASS",
+    "ecu_rejection": "PASS",
+    "ecu_timeout": "PASS",
+    "ecu_readback_divergence": "PASS",
+    "android_unit_tests": "PASS",
+    "android_unit_test_count": 939,
+    "android_lint": "PASS",
+    "apk_build": "PASS"
+  },
+  "android_unit_test_count_basis": "Run 33191044413 reported 939 tests. The diff from its source 59842290cbdf14ff21e418fe985f0365633362aa to green source da8191416d4fbd3d9b7253b10bdbe438323e8822 modifies only fixtures/assertions inside the same three test classes and adds/removes no test methods; current testDebugUnitTest is green.",
+  "workflow": {
+    "run_id": 33191643201,
+    "job_id": 98918331139,
+    "conclusion": "success"
+  },
+  "artifact": {
+    "artifact_id": 9694156687,
+    "name": "omegas-v82-rc-da8191416d4fbd3d9b7253b10bdbe438323e8822",
+    "zip_sha256": "8d5339158307b78a8f4e415d510b0097455db20601e5a306d12752a86430ea5a",
+    "apk_path": "app/build/outputs/apk/debug/app-debug.apk",
+    "apk_sha256": "e020afacf94e21eef085f36552f7f9bada4a67ee35bd0c3f631d43615adba07b",
+    "apk_bytes": 5126045,
+    "package_id": "com.omegas.v7.test",
+    "debug_signature_block_present": true,
+    "requested_abi_filter": "armeabi-v7a",
+    "packaged_native_abis": [],
+    "native_libs_present": false,
+    "omegas_build_commit": "da8191416d4f",
+    "expected_build_commit": "da8191416d4f"
+  },
+  "integrity": {
+    "github_artifact_digest_matches_download": true,
+    "apk_sha256_matches_build_evidence": true,
+    "apk_non_empty": true,
+    "android_manifest_present": true,
+    "ui_assets_present": true,
+    "source_sha_embedded_in_dex": true
+  },
+  "repository_closure": {
+    "lineage": "Issue #5 -> work/v8.2-functional-final-20260828 -> single PR -> main",
+    "final_main_sha_record": "Issue #5 closure receipt"
+  },
+  "next_unproven_item": "repository_cutover_and_main_integration"
+}

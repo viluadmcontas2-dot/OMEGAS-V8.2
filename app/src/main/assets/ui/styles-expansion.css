@@ -1,0 +1,186 @@
+/* OMEGAS V7 — expansão didática sobre a clean-slate aprovada.
+ * Este arquivo não redefine navegação, shell ou matemática; apenas densidade e
+ * apresentação de informação dentro dos painéis já existentes. */
+
+.learning-detail { overflow: hidden; display: flex; flex-direction: column; }
+.learning-inspector-tabs {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+  padding: 4px; margin: -2px -2px 10px; border: 1px solid var(--line);
+  border-radius: 11px; background: #09121b;
+}
+.learning-inspector-tabs button {
+  min-height: 34px; border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: var(--muted); font-size: 9px; font-weight: 850;
+}
+.learning-inspector-tabs button.active { color: var(--text); background: var(--surface-3); border-color: var(--line-strong); }
+.learning-inspector-pane { display: none; min-height: 0; overflow: auto; padding-right: 2px; }
+.learning-inspector-pane.active { display: block; }
+
+.learning-decision-card,
+.learning-current-condition,
+.learning-policy-summary,
+.live-trace-detail {
+  border: 1px solid var(--line); border-radius: 12px; background: #0a131d;
+  padding: 10px 11px; margin-bottom: 8px;
+}
+.learning-decision-card[data-eligible="true"] { border-color: #2c604c; background: #0b1817; }
+.decision-top, .learning-current-condition header, .live-trace-detail header,
+.learning-policy-summary header, .tolerance-heading, .obd-device-heading {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+}
+.decision-top h3, .learning-current-condition h3, .live-trace-detail h3,
+.tolerance-heading h3, .obd-device-heading h3 { margin: 2px 0 0; font-size: 13px; }
+.decision-top > span, .learning-current-condition header > span, .live-trace-detail header > span,
+.obd-device-heading > span {
+  min-height: 24px; display: inline-flex; align-items: center; padding: 0 7px;
+  border: 1px solid var(--line); border-radius: 999px; color: var(--muted);
+  font-size: 8px; font-weight: 900; white-space: nowrap;
+}
+.learning-decision-card[data-eligible="true"] .decision-top > span { color: var(--good); border-color: #2c604c; }
+.learning-decision-card > p { margin: 8px 0; color: var(--text); font-size: 11px; line-height: 1.35; }
+.collection-progress { height: 5px; overflow: hidden; border-radius: 999px; background: #172431; }
+.collection-progress i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+.collection-facts { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 7px; color: var(--muted); font-size: 8.5px; }
+.collection-facts b { color: var(--text); }
+.reason-code { display: block; margin-top: 7px; color: var(--dim); font-size: 7.5px; letter-spacing: .07em; overflow-wrap: anywhere; }
+
+.condition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.condition-grid > div { min-width: 0; padding: 7px 8px; border: 1px solid #1b2a39; border-radius: 8px; background: #0d1823; }
+.condition-grid small, .condition-grid b { display: block; }
+.condition-grid small { font-size: 7.5px; }
+.condition-grid b { margin-top: 3px; font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.learning-policy-summary header button {
+  border: 0; background: transparent; color: var(--accent); font-size: 9px; font-weight: 850; padding: 2px 0;
+}
+.policy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px; margin-top: 7px; }
+.policy-grid span { color: var(--muted); font-size: 8px; }
+.policy-grid b { color: var(--text); font-weight: 800; }
+.learning-policy-summary > p, .live-trace-detail > p { margin: 7px 0 0; color: var(--dim); font-size: 8px; line-height: 1.35; }
+.trace-weight-list { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 7px; }
+.trace-weight-list > div { display: flex; justify-content: space-between; gap: 8px; padding: 6px 7px; border-radius: 7px; background: #0e1b27; font-size: 8.5px; }
+.trace-weight-list span { color: var(--muted); }
+.trace-weight-list b { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.enhanced-detail-list > div { gap: 10px; }
+.enhanced-detail-list dd { max-width: 62%; text-align: right; }
+
+.tolerance-intro { margin: 6px 0 9px; color: var(--muted); font-size: 9px; line-height: 1.4; }
+.tolerance-profiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 9px; }
+.tolerance-profiles button {
+  min-height: 32px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--muted); font-size: 8.5px; font-weight: 850;
+}
+.tolerance-profiles button.active { color: var(--accent); border-color: #315f7d; background: var(--accent-soft); }
+.tolerance-controls { display: grid; gap: 6px; }
+.tolerance-controls label {
+  display: grid; grid-template-columns: minmax(0, 1fr) 112px; align-items: center; gap: 8px;
+  padding: 7px 8px; border: 1px solid var(--line); border-radius: 9px; background: #0a131d;
+}
+.tolerance-controls label span, .tolerance-controls label b, .tolerance-controls label small { display: block; }
+.tolerance-controls label b { font-size: 9px; }
+.tolerance-controls label small { margin-top: 2px; font-size: 7.5px; line-height: 1.25; letter-spacing: 0; font-weight: 600; }
+.tolerance-controls select, .tolerance-controls input {
+  width: 100%; min-height: 34px; padding: 0 7px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-2); font-size: 9px;
+}
+.tolerance-actions { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 9px; }
+.tolerance-actions .primary { min-height: 38px; font-size: 9px; }
+.tolerance-actions .quiet-button { font-size: 8.5px; }
+
+.obd-device-center { margin: 10px 0; padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: #0a131d; }
+.obd-device-heading { margin-bottom: 8px; }
+.obd-device-list { display: grid; gap: 6px; }
+.obd-device-card {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 8px 9px; border: 1px solid var(--line); border-radius: 9px; background: #0d1823;
+}
+.obd-device-card[data-selected="true"] { border-color: #31516d; }
+.obd-device-card[data-connected="true"] { border-color: #2c604c; background: #0b1817; }
+.obd-device-card small, .obd-device-card b, .obd-device-card span { display: block; }
+.obd-device-card small { color: var(--accent); font-size: 7px; }
+.obd-device-card b { margin-top: 2px; font-size: 10px; }
+.obd-device-card span { margin-top: 2px; color: var(--muted); font-size: 8px; font-variant-numeric: tabular-nums; }
+.obd-device-card button { min-width: 88px; }
+.obd-connect-message { padding: 8px 9px; border: 1px solid var(--line); border-radius: 9px; background: #0d1823; }
+.obd-connect-message[data-level="attention"] { border-color: #614f2e; background: #18150e; }
+.obd-connect-message small, .obd-connect-message b, .obd-connect-message span { display: block; }
+.obd-connect-message b { margin-top: 2px; font-size: 10px; }
+.obd-connect-message span { margin-top: 3px; color: var(--muted); font-size: 8.5px; line-height: 1.35; }
+.obd-native-reason { margin: 7px 0 0; color: var(--muted); font-size: 8.5px; }
+.obd-diagnostic-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 7px; }
+.obd-diagnostic-summary span { padding: 5px 6px; border-radius: 7px; background: #0d1823; color: var(--muted); font-size: 7.5px; }
+.obd-diagnostic-summary b { color: var(--text); }
+.sensor-row { display: grid !important; grid-template-columns: minmax(0, 1fr) auto auto; gap: 7px; align-items: center; }
+.sensor-row small { color: var(--dim); font-size: 7px; white-space: nowrap; }
+.pid-supported-list { margin: 8px 0 0; color: var(--dim); font-size: 7.5px; line-height: 1.5; overflow-wrap: anywhere; }
+
+/* Ferramentas: diagnóstico estruturado e logs. */
+.tool-diagnostics-workspace { display: grid; gap: 8px; padding: 0 14px 18px; }
+.diagnostic-recorder-card, .diagnostic-settings, .recorded-sessions, .live-log-console {
+  border: 1px solid var(--line); border-radius: 12px; background: #0a131d; padding: 10px;
+}
+.diagnostic-recorder-card[data-recording="true"] { border-color: #2c604c; background: #0b1817; }
+.diagnostic-recorder-card header, .recorded-sessions header, .live-log-console header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+}
+.diagnostic-recorder-card h3, .recorded-sessions h3, .live-log-console h3 { margin: 2px 0 0; font-size: 12px; }
+.diagnostic-recorder-card header > span, .live-log-console header > span {
+  min-height: 22px; display: inline-flex; align-items: center; padding: 0 7px; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--muted); font-size: 7px; font-weight: 900;
+}
+.diagnostic-recorder-card[data-recording="true"] header > span { color: var(--good); border-color: #2c604c; }
+.recorder-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+.recorder-metrics span { padding: 6px 7px; border-radius: 7px; background: #0d1823; color: var(--muted); font-size: 8px; }
+.recorder-metrics b { color: var(--text); }
+.recorder-space { height: 4px; overflow: hidden; margin-top: 7px; border-radius: 999px; background: #172431; }
+.recorder-space i { display: block; height: 100%; background: var(--accent); }
+.recorder-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.recorder-actions button { min-height: 36px; font-size: 8.5px; }
+.diagnostic-settings summary { cursor: pointer; color: var(--text); font-size: 10px; font-weight: 850; }
+.diagnostic-settings-grid { display: grid; gap: 6px; margin-top: 9px; }
+.diagnostic-settings-grid label { display: grid; grid-template-columns: minmax(0,1fr) 100px auto; align-items: center; gap: 6px; }
+.diagnostic-settings-grid label > span { color: var(--muted); font-size: 8.5px; }
+.diagnostic-settings-grid input, .diagnostic-settings-grid select {
+  min-height: 32px; width: 100%; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); padding: 0 7px; font-size: 8.5px;
+}
+.diagnostic-settings-grid label > small { font-size: 7px; }
+.diagnostic-settings-grid .check-setting { grid-template-columns: auto 1fr; }
+.diagnostic-settings-grid .check-setting input { width: 18px; min-height: 18px; }
+.diagnostic-settings > p { margin: 7px 0; color: var(--dim); font-size: 7.5px; line-height: 1.35; }
+.diagnostic-settings > button { min-height: 36px; font-size: 8.5px; }
+.recorded-session-list { display: grid; gap: 5px; margin-top: 7px; }
+.recorded-session-list article { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; align-items: center; padding: 7px 8px; border-radius: 8px; background: #0d1823; }
+.recorded-session-list b, .recorded-session-list span { display: block; }
+.recorded-session-list b { font-size: 8.5px; overflow-wrap: anywhere; }
+.recorded-session-list span { margin-top: 2px; color: var(--muted); font-size: 7.5px; }
+.recorded-session-list button { min-height: 30px; font-size: 7.5px; }
+.log-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 7px; }
+.log-filters select { min-height: 31px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); padding: 0 6px; font-size: 8px; }
+.log-lines { max-height: 230px; overflow: auto; display: grid; gap: 3px; margin-top: 7px; }
+.log-lines > div { display: grid; grid-template-columns: 48px 74px minmax(0,1fr); gap: 5px; align-items: start; padding: 5px 6px; border-radius: 6px; background: #0c1620; font-size: 7.5px; line-height: 1.3; }
+.log-lines time { color: var(--dim); }
+.log-lines b { color: var(--muted); overflow-wrap: anywhere; }
+.log-lines span { color: var(--text); overflow-wrap: anywhere; }
+.log-lines > div[data-level="error"] { border-left: 2px solid var(--critical); }
+.log-lines > div[data-level="warn"] { border-left: 2px solid var(--warning); }
+
+/* A tela 1024x600 precisa usar o espaço sem diminuir alvos de toque. */
+@media (max-height: 660px) and (min-width: 850px) {
+  .screen { padding-top: 12px; padding-bottom: 12px; }
+  .screen-heading { margin-bottom: 9px; }
+  .screen-heading h1 { font-size: clamp(20px, 2vw, 28px); }
+  .learning-toolbar { margin-bottom: 8px; }
+  .learning-layout { gap: 10px; }
+  .learning-decision-card, .learning-current-condition, .learning-policy-summary, .live-trace-detail { padding: 8px 9px; margin-bottom: 6px; }
+  .condition-grid > div { padding: 5px 6px; }
+  .obd-device-center { margin: 7px 0; padding: 8px; }
+}
+
+@media (max-width: 760px) {
+  .condition-grid { grid-template-columns: 1fr 1fr; }
+  .trace-weight-list, .policy-grid { grid-template-columns: 1fr; }
+  .tolerance-controls label { grid-template-columns: 1fr; }
+  .obd-device-card { grid-template-columns: 1fr; }
+  .obd-device-card button { width: 100%; }
+  .diagnostic-settings-grid label { grid-template-columns: 1fr; }
+  .recorded-session-list article { grid-template-columns: 1fr; }
+}

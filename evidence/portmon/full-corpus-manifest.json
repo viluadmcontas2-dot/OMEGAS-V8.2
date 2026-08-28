@@ -1,0 +1,27 @@
+{
+  "schema": "omegas-portmon-full-corpus-v1",
+  "source": {"file":"PortmonAUTOCAL.LOG","bytes":162700984,"sha256":"4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b"},
+  "transactions": 36463,
+  "distinctCommands": 21,
+  "envelope": {
+    "requestEcho": 36457,
+    "status53": 36456,
+    "validResponseChecksum": 36457,
+    "checksumRule": "sum(response bytes after echoed request, excluding final checksum) modulo 256",
+    "exceptions": [16110,16111,16112,16113,16114,16115],
+    "exceptionCount": 6
+  },
+  "topCommands": [
+    {"request":"48 01 49","transactions":21167,"uniqueResponses":21142,"normalLength":40,"valid":21161},
+    {"request":"29 1D 00 46","transactions":5285,"uniqueResponses":1,"normalLength":12,"valid":5285},
+    {"request":"09 21 00 2A","transactions":1057,"uniqueResponses":1,"normalLength":8,"valid":1057},
+    {"request":"29 5F 01 89","transactions":747,"uniqueResponses":259,"normalLength":43,"valid":747},
+    {"request":"29 60 01 8A","transactions":747,"uniqueResponses":232,"normalLength":43,"valid":747}
+  ],
+  "chunks": [
+    {"file":"portmon-transactions-0001.jsonl.gz","first":1,"last":10000,"transactions":10000,"bytes":265005,"sha256":"04a1b32e90f642b1ab3f667714799d4b42d9c7a0ba89ee9eaab73875fcc43656"},
+    {"file":"portmon-transactions-0002.jsonl.gz","first":10001,"last":20000,"transactions":10000,"bytes":269708,"sha256":"29da36bbeaa6da13b5f88af50827d80b1a16be668f603dd4de74e891811690a5"},
+    {"file":"portmon-transactions-0003.jsonl.gz","first":20001,"last":30000,"transactions":10000,"bytes":279460,"sha256":"ec2e2a48785802c7db833635b7c4b4b50a6b28dc20d6da68723db728332aa126"},
+    {"file":"portmon-transactions-0004.jsonl.gz","first":30001,"last":36463,"transactions":6463,"bytes":174941,"sha256":"ef297a9e236e1e78f6a09802f5aa053625423b8800cfddf64ee89fad8e2ebeac"}
+  ]
+}

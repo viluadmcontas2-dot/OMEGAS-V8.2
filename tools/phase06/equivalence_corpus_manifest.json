@@ -1,0 +1,23 @@
+{
+  "schema": "omegas-phase06-corpus-v1",
+  "captured_from": "Google Drive / OMEGAS",
+  "semantic_logs_only": true,
+  "portmon_included": false,
+  "sessions": [
+    {"session_id":"session_2026-08-09_20-33-16_2e14d32b","file":"OMEGAS_Sessao_2026-08-09_20-33.zip"},
+    {"session_id":"session_2026-08-11_10-26-37_ac62d9ea","file":"OMEGAS_Sessao_2026-08-11_10-26.zip"},
+    {"session_id":"session_2026-08-14_16-45-40_807d2a20","file":"OMEGAS_Sessao_2026-08-14_16-45.zip"},
+    {"session_id":"session_2026-08-14_23-34-20_807d2a20","file":"OMEGAS_Sessao_2026-08-14_23-27.zip"},
+    {"session_id":"session_2026-08-15_00-53-18_807d2a20","file":"OMEGAS_Sessao_2026-08-15_00-53.zip"},
+    {"session_id":"session_2026-08-15_20-37-25_f05aeb91","file":"OMEGAS_Sessao_2026-08-15_20-37.zip"},
+    {"session_id":"session_2026-08-15_21-50-33_f05aeb91","file":"OMEGAS_Sessao_2026-08-15_21-50.zip"},
+    {"session_id":"session_2026-08-15_22-00-45_f05aeb91","file":"OMEGAS_Sessao_2026-08-15_22-00.zip"},
+    {"session_id":"session_2026-08-17_10-05-54_0cab1f14","file":"OMEGAS_Sessao_2026-08-17_10-05.zip"},
+    {"session_id":"session_2026-08-17_12-58-00_0cab1f14","file":"OMEGAS_Sessao_2026-08-17_12-58.zip"},
+    {"session_id":"session_2026-08-17_13-44-44_0cab1f14","file":"OMEGAS_Sessao_2026-08-17_13-44.zip"},
+    {"session_id":"session_2026-08-17_14-01-20_0cab1f14","file":"OMEGAS_Sessao_2026-08-17_14-01 (1).zip"},
+    {"session_id":"session_2026-08-17_18-27-38_4156d399","file":"OMEGAS_Sessao_2026-08-17_18-27 (2).zip"},
+    {"session_id":"session_2026-08-17_19-22-57_4156d399","file":"OMEGAS_Sessao_2026-08-17_19-22.zip"},
+    {"session_id":"session_2026-08-20_13-21-58_87a871f9","file":"OMEGAS_Sessao_2026-08-20_13-21.zip"}
+  ]
+}

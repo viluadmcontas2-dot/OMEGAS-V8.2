@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="omegas_bg">#07111F</color>
+    <color name="omegas_surface">#0D1B2D</color>
+    <color name="omegas_accent">#3DDC97</color>
+    <color name="omegas_text">#EDF6FF</color>
+</resources>
+

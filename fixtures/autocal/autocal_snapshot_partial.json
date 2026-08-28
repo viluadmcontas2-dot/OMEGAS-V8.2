@@ -1,0 +1,13 @@
+{
+  "sessionId": "fixture-partial-001",
+  "source": "REPLAY",
+  "snapshotHash": "fixture-partial",
+  "partial": true,
+  "automatic": false,
+  "manualOnly": true,
+  "warnings": ["GAS_MNFLD_PRESS_RV: Campo não retornado"],
+  "fields": [
+    {"key":"PETR_INJ_TBP","status":"VALID","rawValues":[256,512,768]},
+    {"key":"GAS_MNFLD_PRESS_RV","status":"UNAVAILABLE","rawValues":[]}
+  ]
+}

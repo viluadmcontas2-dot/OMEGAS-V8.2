@@ -1,0 +1,5 @@
+OMEGAS V7 BLOCK 1 PREFLIGHT
+Purpose: force the final integrated Block 1 commit through testDebugUnitTest, lintDebug and assembleDebug.
+Scope: session, telemetry, reconnect, lifecycle, map invalidation safety and governance.
+This file contains no vehicle data, secret, key or runtime configuration.
+Triggered again: 2026-08-04T17:30:00-03:00

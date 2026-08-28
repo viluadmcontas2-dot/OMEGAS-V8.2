@@ -1,0 +1,15 @@
+{
+  "format": "omegas-learning-v5-mp48-v3",
+  "learningDataRevision": 3,
+  "automaticCalibration": false,
+  "manualOnly": true,
+  "metrics": {
+    "framesReceived": 0,
+    "validFrames": 0,
+    "windowsEvaluated": 0,
+    "earlySamplesAccepted": 0,
+    "newFrames": 0,
+    "reusedFrames": 0,
+    "usefulWeight": 0.0
+  }
+}

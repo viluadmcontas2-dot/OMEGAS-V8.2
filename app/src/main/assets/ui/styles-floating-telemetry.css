@@ -1,0 +1,107 @@
+.floating-telemetry {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 45;
+  width: min(430px, calc(100vw - 36px));
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 16px;
+  background: rgba(10,15,22,.94);
+  box-shadow: 0 18px 42px rgba(0,0,0,.42);
+  backdrop-filter: blur(8px);
+}
+
+.floating-telemetry header,
+.floating-telemetry footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.floating-telemetry header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.floating-telemetry header small,
+.floating-telemetry-grid small {
+  color: #8592a2;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .10em;
+}
+
+.floating-telemetry header b {
+  color: #f0f5fb;
+  font-size: 14px;
+}
+
+.floating-telemetry header button {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.floating-telemetry-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr 1fr 1fr;
+  gap: 7px;
+  margin: 10px 0;
+}
+
+.floating-telemetry-grid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 8px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 10px;
+  background: rgba(255,255,255,.025);
+}
+
+.floating-telemetry-grid b {
+  overflow: hidden;
+  color: #e8eff7;
+  font-size: 14px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floating-telemetry footer {
+  color: #8e9baa;
+  font-size: 9px;
+}
+
+.floating-telemetry[data-ecu="online"] footer span:first-child {
+  color: #8fd9b8;
+}
+
+.floating-telemetry[data-ecu="offline"] footer span:first-child {
+  color: #e69a9a;
+}
+
+.floating-telemetry.collapsed {
+  width: auto;
+  min-width: 178px;
+}
+
+.floating-telemetry.collapsed .floating-telemetry-grid,
+.floating-telemetry.collapsed footer {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .floating-telemetry {
+    right: 10px;
+    bottom: 10px;
+    width: min(390px, calc(100vw - 20px));
+  }
+  .floating-telemetry-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
