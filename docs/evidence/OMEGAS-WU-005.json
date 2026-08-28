@@ -1,0 +1,19 @@
+{
+  "workunit_id": "OMEGAS-WU-005",
+  "state": "VERIFYING",
+  "source_branch": "work/v8.2-functional-final-20260828",
+  "base_source_sha": "8af0dd4cc6bd4e7a7066333d6f4fa2639288a22a",
+  "issue": 5,
+  "ui_ux_frozen": true,
+  "physical_ecu_validation": false,
+  "cost_class": "FREE_QUOTA_VERIFIED",
+  "checks": {
+    "fast_gate": "PENDING",
+    "predictor_learning_simulations": "PENDING",
+    "android_unit_tests": "PENDING",
+    "android_lint": "PENDING",
+    "apk_build": "PENDING"
+  },
+  "artifact": null,
+  "next_unproven_item": "fast_gate"
+}
