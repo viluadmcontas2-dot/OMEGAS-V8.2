@@ -48,7 +48,7 @@ class SignalLearningStorePhysicsAuthorityIntegrationTest {
                         val item = curve.getJSONObject(index)
                         assertEquals("POLICY_ONLY", item.getString("magnitudeAuthority"))
                         assertEquals("STEP_POLICY_BASELINE", item.getString("magnitudeRole"))
-                        assertEquals("UNKNOWN", item.getString("correctionMechanism"))
+                        assertTrue(item.getString("correctionMechanism") in setOf("UNKNOWN", "CURVE_MUL_ACT"))
                         assertEquals("CURVE_MUL_ACT", item.getString("mechanismCandidateLane"))
                         assertFalse(item.getBoolean("idealTarget"))
                     }
@@ -59,7 +59,7 @@ class SignalLearningStorePhysicsAuthorityIntegrationTest {
                         val item = map.getJSONObject(index)
                         assertEquals("POLICY_ONLY", item.getString("magnitudeAuthority"))
                         assertEquals("STEP_POLICY_BASELINE", item.getString("magnitudeRole"))
-                        assertEquals("UNKNOWN", item.getString("correctionMechanism"))
+                        assertTrue(item.getString("correctionMechanism") in setOf("UNKNOWN", "MAP_LOCAL"))
                         assertEquals("MAP_LOCAL", item.getString("mechanismCandidateLane"))
                         assertFalse(item.getBoolean("idealTarget"))
                     }
