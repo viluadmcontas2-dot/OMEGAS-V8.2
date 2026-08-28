@@ -20,9 +20,15 @@ const model = loadModel();
 {
   const explanation = model.explainCell({
     key: '4:3', row: 4, column: 3, rpm: 2500, petrolMs: 4.5,
-    state: 'PREVISTO', currentK: 120, targetK: 128,
-    predictionConfidence: 0.72, predictionReason: 'SUPPORTED_INSIDE_PHYSICAL_HULL',
-    predicted: true, distinctTrajectories: 3,
+    distinctTrajectories: 3,
+    humanState: {
+      visualState: 'PREVISTO', scientificState: 'PREDICTED_SUPPORTED',
+      stateLabel: 'Previsto', targetLabel: 'ESTIMATIVA',
+      currentK: 120, targetEstimateK: 128, confidence: 0.72,
+      authority: 'MODEL_SUPPORTED', riskState: 'CALIBRATED_REVIEW',
+      actionState: 'REVIEWABLE', predicted: true,
+      requiresHumanReview: true,
+    },
   });
   assert.equal(explanation.stateLabel, 'Previsto');
   assert.equal(explanation.deltaK, 8);
@@ -34,7 +40,13 @@ const model = loadModel();
   const calls = [];
   const router = { navigate: (...args) => { calls.push(args); return true; } };
   const opened = model.openMapReview(router, {
-    row: 4, column: 3, state: 'PREVISTO', currentK: 120, targetK: 128, predictionConfidence: 0.72,
+    row: 4, column: 3,
+    humanState: {
+      visualState: 'PREVISTO', scientificState: 'PREDICTED_SUPPORTED',
+      stateLabel: 'Previsto', currentK: 120, targetEstimateK: 128, confidence: 0.72,
+      authority: 'MODEL_SUPPORTED', riskState: 'CALIBRATED_REVIEW',
+      actionState: 'REVIEWABLE', predicted: true, requiresHumanReview: true,
+    },
   });
   assert.equal(opened, true);
   assert.equal(calls.length, 1);
@@ -54,8 +66,15 @@ const model = loadModel();
 {
   const calls = [];
   const router = { navigate: (...args) => { calls.push(args); return true; } };
-  assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'DESCONHECIDO', currentK: 120, targetK: null }), false);
-  assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'PREVISTO', currentK: null, targetK: 128 }), false);
+  assert.equal(model.openMapReview(router, { row: 4, column: 3 }), false);
+  assert.equal(model.openMapReview(router, {
+    row: 4, column: 3,
+    humanState: {
+      visualState: 'DESCONHECIDO', scientificState: 'UNKNOWN_ABSTAIN',
+      actionState: 'ABSTAIN', currentK: 120, targetEstimateK: null,
+      confidence: 0, requiresHumanReview: false,
+    },
+  }), false);
   assert.equal(calls.length, 0);
 }
 
