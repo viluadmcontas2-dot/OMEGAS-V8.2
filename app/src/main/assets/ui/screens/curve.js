@@ -50,11 +50,13 @@
     needsLearning() { return this.view === 'learning'; }
 
     setView(view) {
-      this.view = view === 'learning' ? 'learning' : 'editor';
+      if (view !== 'learning' && view !== 'editor') return false;
+      this.view = view;
       document.querySelectorAll('[data-curve-view]').forEach(button => button.classList.toggle('active', button.dataset.curveView === this.view));
       document.querySelectorAll('[data-curve-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.curvePanel === this.view));
       if (this.view === 'learning') this.renderLearning(this.store.get());
       else this.renderChart();
+      return true;
     }
 
     onEnter(context) {
