@@ -28,6 +28,8 @@ commands = [
     [sys.executable, "-B", "tests/test_checkpoint_hot_path_contract.py"],
     [sys.executable, "-B", "tests/test_mp48_serial_scheduler_contract.py"],
     [sys.executable, "-B", "tests/test_native_autocal_contract.py"],
+    ["node", "--test", "tests/ui/autocal-cockpit.test.cjs"],
+    ["node", "--test", "tests/ui/curve-autocal-interoperability.test.cjs"],
     ["node", "--test", "tests/ui/didactic-expansion.test.cjs"],
     ["node", "--test", "tests/ui/obd-independent-map.test.cjs"],
     ["node", "--test", "tests/ui/obd-runtime-controls.test.cjs"],
