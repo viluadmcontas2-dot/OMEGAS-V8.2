@@ -189,6 +189,58 @@ class AssistedCalibrationAdvisorTest {
         }
     }
 
+    @Test
+    fun `alvo ideal fica separado do passo seguro limitado na primeira visita`() {
+        val comparisons = JSONArray().put(comparison(
+            id = "first-independent-visit",
+            targetMs = 5.0,
+            observedMs = 6.0,
+            rpm = 2_200.0,
+            mapBar = 0.50,
+            row = 5,
+            column = 4,
+        ))
+
+        val point = pointAt(analyze(comparisons), 5.0)
+
+        assertEquals(20.0, point.getDouble("idealDeltaPercent"), 0.000001)
+        assertEquals("INDEPENDENCE_BOUNDED", point.getString("stepPolicy"))
+        assertTrue(point.getDouble("suggestedDeltaPercent") <= 11.0)
+        assertTrue(point.getDouble("suggestedDeltaPercent") < point.getDouble("idealDeltaPercent"))
+        assertEquals(
+            point.getDouble("idealDeltaPercent") - point.getDouble("suggestedDeltaPercent"),
+            point.getDouble("estimatedResidualAfterPercent"),
+            0.000001,
+        )
+    }
+
+    @Test
+    fun `visitas independentes coerentes liberam passo maior sem ultrapassar o alvo`() {
+        val first = JSONArray().put(comparison(
+            id = "visit-1",
+            targetMs = 5.0,
+            observedMs = 6.0,
+            rpm = 2_000.0,
+            mapBar = 0.50,
+            row = 5,
+            column = 4,
+        ))
+        val repeated = buildComparisons(
+            count = 4,
+            targetMs = 5.0,
+            observedMs = 6.0,
+            row = 5,
+            column = 4,
+        )
+
+        val firstPoint = pointAt(analyze(first), 5.0)
+        val repeatedPoint = pointAt(analyze(repeated), 5.0)
+
+        assertTrue(repeatedPoint.getDouble("correctionFraction") > firstPoint.getDouble("correctionFraction"))
+        assertTrue(repeatedPoint.getDouble("correctionFraction") <= 0.90)
+        assertTrue(repeatedPoint.getDouble("suggestedDeltaPercent") <= repeatedPoint.getDouble("idealDeltaPercent"))
+    }
+
     private fun analyze(comparisons: JSONArray): JSONObject =
         AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
 
