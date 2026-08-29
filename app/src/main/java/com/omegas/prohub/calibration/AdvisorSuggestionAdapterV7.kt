@@ -11,6 +11,7 @@ import com.omegas.v7.runtime.SuggestionTargetV7
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -43,6 +44,9 @@ class AdvisorSuggestionAdapterV7 {
         val changes = linkedMapOf<Int, CurvePointChangeV7>()
         val confidences = mutableListOf<Double>()
         val reasons = linkedSetOf<String>()
+        val idealDeltas = mutableListOf<Double>()
+        val safeSteps = mutableListOf<Double>()
+        val estimatedResiduals = mutableListOf<Double>()
         var observed = false
 
         repeat(source.length()) { position ->
@@ -56,6 +60,9 @@ class AdvisorSuggestionAdapterV7 {
             item.optString("decisionReason").takeIf(String::isNotBlank)?.let(reasons::add)
             if (!item.optBoolean("actionable", false)) return@repeat
             val deltaPercent = finite(item, "suggestedDeltaPercent") ?: return@repeat
+            finite(item, "idealDeltaPercent")?.let(idealDeltas::add)
+            safeSteps += deltaPercent
+            finite(item, "estimatedResidualAfterPercent")?.let(estimatedResiduals::add)
             val before = calibration.curveK[index]
             val requested = before * (1.0 + deltaPercent / 100.0)
             val bounded = requested.coerceIn(KFactorManager.MIN_SAFE_FACTOR, KFactorManager.MAX_SAFE_FACTOR)
@@ -67,8 +74,13 @@ class AdvisorSuggestionAdapterV7 {
         val ordered = changes.values.sortedBy { it.index }
         val lifecycle = if (ordered.isEmpty()) SuggestionLifecycleV7.OBSERVING else SuggestionLifecycleV7.PENDING
         val rationale = when {
-            lifecycle == SuggestionLifecycleV7.PENDING ->
-                "Tendência global atualizada para ${ordered.size} ponto(s) da Curva K; aplicação exclusivamente manual."
+            lifecycle == SuggestionLifecycleV7.PENDING -> {
+                val ideal = idealDeltas.averageOrNull()?.let(::formatSignedPercent) ?: "—"
+                val step = safeSteps.averageOrNull()?.let(::formatSignedPercent) ?: "—"
+                val residual = estimatedResiduals.averageOrNull()?.let(::formatSignedPercent) ?: "—"
+                "Curva K · alvo ideal $ideal; passo seguro $step em ${ordered.size} ponto(s); " +
+                    "resíduo estimado $residual. Aplicação exclusivamente manual."
+            }
             reasons.isNotEmpty() -> reasons.first()
             else -> "Tendência global preservada; a evidência atual não justifica correção."
         }
@@ -186,4 +198,9 @@ class AdvisorSuggestionAdapterV7 {
     }
 
     private fun List<Double>.averageOrZero(): Double = if (isEmpty()) 0.0 else average().coerceIn(0.0, 1.0)
+
+    private fun List<Double>.averageOrNull(): Double? = if (isEmpty()) null else average()
+
+    private fun formatSignedPercent(value: Double): String =
+        String.format(Locale.US, "%+.1f%%", value).replace('.', ',')
 }
