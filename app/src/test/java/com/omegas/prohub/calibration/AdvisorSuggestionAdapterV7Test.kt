@@ -130,6 +130,31 @@ class AdvisorSuggestionAdapterV7Test {
     }
 
     @Test
+    fun global_curve_uses_bounded_step_and_explains_ideal_target_and_residual() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray()
+                .put(JSONObject()
+                    .put("index", 3)
+                    .put("actionable", true)
+                    .put("idealDeltaPercent", 20.0)
+                    .put("suggestedDeltaPercent", 10.0)
+                    .put("estimatedResidualAfterPercent", 10.0)
+                    .put("confidence", 0.9)
+                    .put("uniqueVisits", 2)
+                    .put("readiness", "AVAILABLE")))
+            .put("mapResidualSuggestions", JSONArray())
+            .put("mapCorrectionRegions", JSONArray())
+
+        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
+            .single { it.target == SuggestionTargetV7.CURVE_K }
+
+        assertEquals(1.10, suggestion.curveChanges.single().after, 0.0001)
+        assertTrue(suggestion.rationale.contains("alvo ideal +20,0%"))
+        assertTrue(suggestion.rationale.contains("passo seguro +10,0%"))
+        assertTrue(suggestion.rationale.contains("resíduo estimado +10,0%"))
+    }
+
+    @Test
     fun advisor_candidate_reaches_writer_only_after_cell_is_consolidated() {
         val initial = calibration()
         val advice = JSONObject()
