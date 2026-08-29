@@ -1,0 +1,94 @@
+# One-shot RED verification. Ordinary source commits do not trigger this workflow.
+name: OMEGAS V8.0 RED fast learning proof
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - hotfix/v8.0-red-performance
+    paths:
+      - .github/workflows/red-fast-learning-one-shot.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-red-fast-learning-proof
+  cancel-in-progress: true
+
+jobs:
+  verify-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact RED SHA
+        uses: actions/checkout@v4
+
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Fast contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/run_checks.py
+
+      - name: Focused RED regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest             --tests com.omegas.prohub.learning.AssistedCalibrationAdvisorTest             --tests com.omegas.prohub.calibration.AdvisorSuggestionAdapterV7Test             --tests com.omegas.prohub.autocal.AutoCalNativeActionManagerTest             --no-daemon --stacktrace
+
+      - name: Full JVM, lint and APK
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug             -PomegasAbis=armeabi-v7a             --no-daemon --stacktrace
+
+      - name: Emit exact-SHA evidence
+        id: evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          test -f "$APK"
+          mkdir -p build/evidence
+          RECEIPT=build/evidence/omegas-v80-red-fast-learning.txt
+          {
+            echo "OMEGAS_V80_RED_FAST_LEARNING=PASS"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+            echo "APK_PATH=$APK"
+            echo "APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')"
+            echo "APK_BYTES=$(stat -c %s "$APK")"
+            echo "SIMULATED_ECU_ONLY=true"
+            echo "NO_INSTALL_PERFORMED=true"
+            echo "PHYSICAL_FUEL_ECONOMY_CLAIMED=false"
+          } | tee "$RECEIPT"
+          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
+
+      - name: Upload RED APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: omegas-v80-red-fast-learning-${{ github.sha }}
+          path: |
+            ${{ steps.evidence.outputs.apk_path }}
+            build/evidence/omegas-v80-red-fast-learning.txt
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
