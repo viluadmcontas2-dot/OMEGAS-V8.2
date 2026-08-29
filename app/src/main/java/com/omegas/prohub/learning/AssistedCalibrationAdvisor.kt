@@ -25,6 +25,8 @@ object AssistedCalibrationAdvisor {
     private const val BASE_PRIOR_UNCERTAINTY_RATIO = 0.060
     private const val WEIGHT_UNCERTAINTY_RATIO = 0.030
     private const val MIN_CORRECTION_FRACTION = 0.45
+    private const val FIRST_VISIT_MAX_CORRECTION_FRACTION = 0.55
+    private const val EARLY_VISITS_MAX_CORRECTION_FRACTION = 0.75
     private const val MAX_CORRECTION_FRACTION = 0.90
     private val mapKnots = DoubleArray(18) { 0.20 + it * 0.05 }
 
@@ -78,7 +80,10 @@ object AssistedCalibrationAdvisor {
                 .put("correlatedEvidenceWeighted", true)
                 .put("automaticWrite", false)
                 .put("correctionFractionMinimum", MIN_CORRECTION_FRACTION)
-                .put("correctionFractionMaximum", MAX_CORRECTION_FRACTION))
+                .put("firstVisitCorrectionFractionMaximum", FIRST_VISIT_MAX_CORRECTION_FRACTION)
+                .put("earlyVisitsCorrectionFractionMaximum", EARLY_VISITS_MAX_CORRECTION_FRACTION)
+                .put("correctionFractionMaximum", MAX_CORRECTION_FRACTION)
+                .put("stepPolicy", "INDEPENDENCE_BOUNDED"))
     }
 
     private fun pairedCurves(samples: List<ComparisonSample>): PairedCurves {
@@ -432,8 +437,14 @@ object AssistedCalibrationAdvisor {
             val equivalent = magnitude <= deadband
             val actionable = !equivalent && usefulMargin > 0.0
             val certainty = if (magnitude <= 1e-9) 0.0 else (usefulMargin / magnitude).coerceIn(0.0, 1.0)
+            val independentVisitCap = when {
+                uniqueVisits() <= 1 -> FIRST_VISIT_MAX_CORRECTION_FRACTION
+                uniqueVisits() <= 3 -> EARLY_VISITS_MAX_CORRECTION_FRACTION
+                else -> MAX_CORRECTION_FRACTION
+            }
             val correctionFraction = if (actionable) {
-                MIN_CORRECTION_FRACTION + (MAX_CORRECTION_FRACTION - MIN_CORRECTION_FRACTION) * sqrt(certainty)
+                MIN_CORRECTION_FRACTION +
+                    (independentVisitCap - MIN_CORRECTION_FRACTION) * sqrt(certainty)
             } else null
             val suggested = correctionFraction?.let { estimate * it }
             val residualAfter = suggested?.let { estimate - it }
@@ -558,7 +569,9 @@ object AssistedCalibrationAdvisor {
             .put("index", index)
             .put("petrolMs", petrolMs)
             .put("errorPercent", errorRatio?.times(100.0) ?: JSONObject.NULL)
+            .put("idealDeltaPercent", errorRatio?.times(100.0) ?: JSONObject.NULL)
             .put("suggestedDeltaPercent", decision.suggestedDeltaRatio?.times(100.0) ?: JSONObject.NULL)
+            .put("stepPolicy", "INDEPENDENCE_BOUNDED")
             .put("estimatedResidualAfterPercent", decision.estimatedResidualAfterRatio?.times(100.0) ?: JSONObject.NULL)
             .put("uncertaintyPercent", decision.uncertaintyRatio.times(100.0))
             .put("usefulMarginPercent", decision.usefulMarginRatio.times(100.0))
