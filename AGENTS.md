@@ -24,3 +24,12 @@
 - Mudanças apenas documentais não podem disparar build pesado.
 - `PROVEN` exige SHA, comandos, resultados e artifact/hash registrados em `docs/evidence/` e `STATUS.md`.
 - Sem validação física, declarar explicitamente o limite; nunca alegar ECU/veículo testados.
+
+### Build/deploy discipline
+
+- `HOSTING_PROVIDER_IS_NOT_TDD_RUNNER = TRUE`.
+- RED→GREEN loops rodam na superfície válida mais barata; não exigem GitHub Actions, hosting, APK remoto ou publicação por commit.
+- Commits WIP/intermediários não devem disparar build/deploy externo pesado. Consolidar prova externa somente em gate material de integração, artifact/release ou pedido explícito do owner.
+- Docs/governança/status-only não justificam build externo.
+- Quota de CI/hosting nunca autoriza upgrade pago ou fallback pago.
+- Repo-first, TDD e evidência continuam obrigatórios; reduzir frequência de builds externos não reduz rigor.
