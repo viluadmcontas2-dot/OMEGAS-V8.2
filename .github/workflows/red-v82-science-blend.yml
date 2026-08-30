@@ -91,3 +91,21 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B -m unittest -v lab.red_blend.test_real_session_science
+
+      - name: Real-corpus gasoline session audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m lab.red_blend.session_science \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json \
+            --fuel GASOLINA --min-samples 4 --min-independent-sessions 3 --top 20
+
+      - name: Real-corpus CNG session audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m lab.red_blend.session_science \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json \
+            --fuel GNV --min-samples 4 --min-independent-sessions 3 --top 20
