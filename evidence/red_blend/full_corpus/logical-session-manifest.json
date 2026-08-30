@@ -1,0 +1,85 @@
+{
+  "artifact_sha256": "c7583306f681165c61f7d87df0399d61fad9474948423c264a11696e07d91e75",
+  "claims": {
+    "bounded_memory_index": true,
+    "f2_complete_for_mounted_corpus": true,
+    "f0_drive_complete": false,
+    "raw_event_payloads_committed": false
+  },
+  "distinct_event_variants": 5902982,
+  "logical_sessions": 34,
+  "malformed_event_lines": 2,
+  "parse_issues": [
+    {
+      "error_class": "JSONDecodeError",
+      "line_bytes": 129686,
+      "line_number": 1992,
+      "line_sha256": "68ecf4d42ca20c46e75ce004ebdf18023f33762a0d1fbbf8ae53d1e1feaf160b",
+      "segment_key": "SEG-685CD497B1297B8B",
+      "session_key": "SES-4FE2017A00E97D725514",
+      "source_key": "EXP-807D6DC937DE4AFF2A4A"
+    },
+    {
+      "error_class": "JSONDecodeError",
+      "line_bytes": 875,
+      "line_number": 7749,
+      "line_sha256": "1aa8a8ce4c907357a07a3c040369a55987fc63ee15a53472dcc9c9666870438a",
+      "segment_key": "SEG-65AC8951BF16EF7E",
+      "session_key": "SES-2B6673E35AB820C8BC76",
+      "source_key": "EXP-C5A673647ECC2B207A33"
+    }
+  ],
+  "physical_session_exports_indexed": 38,
+  "relationship_counts": {
+    "IDENTICAL_EVENT_STREAM": 1,
+    "STRICT_SUBSET": 1,
+    "STRICT_SUPERSET": 2,
+    "SEQUENCE_CONFLICT": 0
+  },
+  "relationships": [
+    {
+      "classification": "STRICT_SUPERSET",
+      "events_a": 375006,
+      "events_b": 164490,
+      "intersection": 164490,
+      "sequence_conflicts": 0,
+      "session_key": "SES-1D08856D23FBA8A62090",
+      "source_a": "EXP-7C08172A727B3CDD32A8",
+      "source_b": "EXP-E3CFCCE7970CF144BC9B"
+    },
+    {
+      "classification": "STRICT_SUPERSET",
+      "events_a": 6816,
+      "events_b": 6760,
+      "intersection": 6760,
+      "sequence_conflicts": 0,
+      "session_key": "SES-377D657C3F102301EEED",
+      "source_a": "EXP-D8221167E37F858DBBE4",
+      "source_b": "EXP-F0FBC966CBAB05083A0B"
+    },
+    {
+      "classification": "STRICT_SUBSET",
+      "events_a": 21508,
+      "events_b": 21618,
+      "intersection": 21508,
+      "sequence_conflicts": 0,
+      "session_key": "SES-571E627C7F42EDC0BD26",
+      "source_a": "EXP-36503EC7A968E6478DCE",
+      "source_b": "EXP-D8F412CE8A50315E328C"
+    },
+    {
+      "classification": "IDENTICAL_EVENT_STREAM",
+      "events_a": 8129,
+      "events_b": 8129,
+      "intersection": 8129,
+      "sequence_conflicts": 0,
+      "session_key": "SES-F308664AE2EFD342AB92",
+      "source_a": "EXP-1D10432E07E2AF6EB217",
+      "source_b": "EXP-69D3EA44D797A50339A8"
+    }
+  ],
+  "schema": "omegas-logical-session-union-v1",
+  "sessions_multi_export": 4,
+  "sessions_with_sequence_conflicts": 0,
+  "file_sha256": "667a4d82ac713c70213a854f8d58f5414ab8badfc7a0639f6e0635bf21c3eed7"
+}
