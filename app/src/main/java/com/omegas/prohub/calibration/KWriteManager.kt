@@ -43,12 +43,12 @@ class KWriteManager(
         const val EXTRA_ROW = KMapPhysicalAxes.WRITABLE_ROWS
         const val TOTAL_ROW_COUNT = KMapPhysicalAxes.PROTOCOL_ROWS
         /** Limite operacional escolhido pelo usuário; o campo U8 da ECU continua aceitando 0..255. */
-        const val MIN_ALLOWED_K = 100
-        const val MAX_ALLOWED_K = 180
+        const val MIN_ALLOWED_K = KOperatingPolicy.MIN_TARGET_K
+        const val MAX_ALLOWED_K = KOperatingPolicy.MAX_TARGET_K
         const val MAX_SAFE_STEP = 25
         const val MAX_SAFE_PAUSE_MS = 2_000
 
-        fun isAllowedTarget(value: Int): Boolean = value in MIN_ALLOWED_K..MAX_ALLOWED_K
+        fun isAllowedTarget(value: Int): Boolean = KOperatingPolicy.isAllowedTarget(value)
     }
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->

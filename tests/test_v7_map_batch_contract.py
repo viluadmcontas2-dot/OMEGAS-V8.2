@@ -55,15 +55,15 @@ class V8MapBatchContract(unittest.TestCase):
     def test_single_native_safety_policy_covers_all_mutating_bridges(self):
         for marker in (
             "MAX_SAFE_TELEMETRY_AGE_MS = 2_500L",
-            "DRIVING_PROBABLE_RPM = 1_200",
             "!status.serviceRunning",
             "!status.usbConnected",
             "status.usbPermissionPending",
             "!status.engineRunning || !status.engineReady || status.engineStuck",
             "status.directTelemetryAgeMs < 0L",
-            "status.rpm >= DRIVING_PROBABLE_RPM",
         ):
             self.assertIn(marker, self.policy)
+        self.assertNotIn('DRIVING_PROBABLE_RPM', self.policy)
+        self.assertNotIn('status.rpm >=', self.policy)
 
         self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.bridge)
         self.assertGreaterEqual(

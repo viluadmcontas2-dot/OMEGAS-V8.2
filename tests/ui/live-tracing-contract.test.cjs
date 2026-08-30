@@ -8,10 +8,10 @@ const visual = read('app/src/main/assets/ui/components/predictor-current-cell.js
 const projection = read('app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt');
 const bridge = read('app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt');
 
-// O fast path do Predictor reutiliza o único Scheduler; não cria relógio próprio.
-assert.equal(visual.includes("scheduler.addHook('fast'"), true);
+// O destaque consome o Store abastecido pelo Scheduler; não cria relógio nem leitura próprios.
+assert.equal(visual.includes('this.store.subscribe'), true);
 assert.equal(visual.includes("state.route !== 'predictor'"), true);
-assert.equal(visual.includes('this.api.telemetry()'), true);
+assert.equal(visual.includes('this.api.telemetry()'), false);
 assert.equal(visual.includes('setInterval'), false);
 
 // A geometria/weights vêm do Kotlin. JS apenas substitui o estado visual atual.

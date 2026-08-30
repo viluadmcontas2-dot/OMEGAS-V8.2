@@ -3,6 +3,7 @@
   const ns = root.OmegasUi = root.OmegasUi || {};
 
   function asNumber(value) {
+    if (value === null || value === undefined || value === '') return null;
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }
@@ -42,6 +43,7 @@
     const explanation = explainCell(cell);
     if (!router || typeof router.navigate !== 'function') return false;
     if (explanation.row < 0 || explanation.column < 0 || explanation.currentK === null || explanation.targetK === null) return false;
+    if (explanation.targetK < 100 || explanation.targetK > 180) return false;
     return router.navigate('map', {
       origin: 'predictor',
       source: 'predictor',

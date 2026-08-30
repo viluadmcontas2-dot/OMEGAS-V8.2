@@ -21,11 +21,14 @@ def test_rpm_is_not_a_manual_write_gate():
 
 def test_k_bounds_have_one_authority_at_100_through_180():
     writer = read("KWriteManager.kt")
+    policy = read("KOperatingPolicy.kt")
     planner = read("MapKManualPlanner.kt")
     advisor = read("AdvisorSuggestionAdapterV7.kt")
-    assert "const val MIN_ALLOWED_K = 100" in writer
-    assert "const val MAX_ALLOWED_K = 180" in writer
-    assert "value in MIN_ALLOWED_K..MAX_ALLOWED_K" in writer
+    assert "const val MIN_TARGET_K = 100" in policy
+    assert "const val MAX_TARGET_K = 180" in policy
+    assert "value in MIN_TARGET_K..MAX_TARGET_K" in policy
+    assert "KOperatingPolicy.MIN_TARGET_K" in writer
+    assert "KOperatingPolicy.MAX_TARGET_K" in writer
     assert "!isAllowedTarget(target)" in writer
     assert "KWriteManager.MAX_ALLOWED_K" in planner
     assert "KWriteManager.MAX_ALLOWED_K" in advisor

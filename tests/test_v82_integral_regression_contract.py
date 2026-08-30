@@ -78,7 +78,8 @@ class V82IntegralRegressionContract(unittest.TestCase):
         self.assertIn('DISABLE_AUTO_CAL', actions)
         self.assertNotIn('NATIVE_AUTOMATCH', actions)
         self.assertNotIn('NATIVE_AUTOMATCH', cockpit)
-        self.assertIn('Continuar para confirmação Android', cockpit)
+        self.assertIn('Abrir confirmação final', cockpit)
+        self.assertIn('Nada foi enviado.', cockpit)
 
     def test_predictor_never_bootstraps_confidence_from_predictions(self):
         surface = read('app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt')

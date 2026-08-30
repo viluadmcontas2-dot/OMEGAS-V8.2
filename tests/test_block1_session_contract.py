@@ -28,15 +28,15 @@ class Block1SessionContract(unittest.TestCase):
     def test_native_gate_rejects_unsafe_write_conditions(self):
         for marker in (
             'MAX_SAFE_TELEMETRY_AGE_MS = 2_500L',
-            'DRIVING_PROBABLE_RPM = 1_200',
             '!status.serviceRunning',
             '!status.usbConnected',
             'status.usbPermissionPending',
             '!status.engineRunning || !status.engineReady || status.engineStuck',
             'status.directTelemetryAgeMs < 0L || status.directTelemetryAgeMs > MAX_SAFE_TELEMETRY_AGE_MS',
-            'status.rpm >= DRIVING_PROBABLE_RPM',
         ):
             self.assertIn(marker, self.policy)
+        self.assertNotIn('DRIVING_PROBABLE_RPM', self.policy)
+        self.assertNotIn('status.rpm >=', self.policy)
         self.assertIn('CalibrationWriteSafetyPolicy.unsafeReason(service.status())', self.bridge)
         self.assertIn('.put("safetyBlocked", true)', self.bridge)
 

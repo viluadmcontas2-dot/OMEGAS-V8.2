@@ -6,8 +6,8 @@ const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/components/split-layout.js'), 'utf8');
 const style = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-split-layout.css'), 'utf8');
 
-assert.equal(source.includes('app.store'), true);
-assert.equal(source.includes('app.router'), true);
+assert.equal(source.includes('app?.store'), true);
+assert.equal(source.includes('app?.router'), true);
 assert.equal(source.includes("addEventListener('resize'"), true);
 assert.equal(source.includes('setInterval'), false);
 assert.equal(source.includes('new Store'), false);

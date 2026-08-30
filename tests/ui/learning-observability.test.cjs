@@ -114,37 +114,10 @@ test('restore do Learning é explícito sem esconder a telemetria ao vivo', () =
   assert.match(screen.collectionPane.innerHTML, /4,20 ms/);
 });
 
-test('Live Tracing temporal é limitado, reutiliza setTrace e não cria timer', () => {
-  const { context, source } = loadScript('app/src/main/assets/ui/components/physical-grid.js');
+test('grade física não conserva rastro temporal nem cria timer', () => {
+  const { source } = loadScript('app/src/main/assets/ui/components/physical-grid.js');
   assert.equal(source.includes('setInterval'), false);
   assert.equal(source.includes('setTimeout'), false);
-
-  const grid = Object.create(context.OmegasUi.PhysicalGrid.prototype);
-  grid.rows = 12;
-  grid.columns = 12;
-  grid.cells = new Map();
-  grid.traceKeys = new Set();
-  grid.activeTraceKey = null;
-  grid.traceTrail = new Map();
-  grid.traceTrailMs = 1400;
-  grid.traceTrailMax = 16;
-  grid.key = (row, column) => `${row}:${column}`;
-
-  for (let row = 0; row < 12; row += 1) {
-    for (let column = 0; column < 12; column += 1) {
-      grid.cells.set(`${row}:${column}`, fakeCell());
-    }
-  }
-
-  grid.setTrace([{ row: 0, column: 0, weight: 1 }], { row: 0, column: 0 });
-  grid.setTrace([{ row: 0, column: 1, weight: 1 }], { row: 0, column: 1 });
-  assert.equal(grid.cells.get('0:0').classList.contains('live-trail'), true, 'célula anterior deve virar rastro');
-  assert.equal(grid.cells.get('0:1').classList.contains('live-contributor'), true, 'célula atual continua contribuição ativa');
-
-  for (let index = 0; index < 30; index += 1) {
-    const row = Math.floor(index / 12);
-    const column = index % 12;
-    grid.setTrace([{ row, column, weight: 0.75 }], { row, column });
-  }
-  assert.equal(grid.traceTrail.size <= 16, true, 'rastro precisa ser estritamente limitado');
+  assert.equal(source.includes('setTrace('), false);
+  assert.equal(source.includes('traceTrail'), false);
 });

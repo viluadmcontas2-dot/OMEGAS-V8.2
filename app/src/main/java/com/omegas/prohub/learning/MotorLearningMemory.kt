@@ -1,6 +1,6 @@
 package com.omegas.prohub.learning
 
-import com.omegas.prohub.calibration.KWriteManager
+import com.omegas.prohub.calibration.KOperatingPolicy
 import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
@@ -380,8 +380,8 @@ class MotorLearningMemory(
         val confidence = evidence.confidence()
         val proposed = (value * (1.0 + 0.35 * confidence * evidence.medianErrorRatio))
             .coerceIn(
-                KWriteManager.MIN_ALLOWED_K.toDouble(),
-                KWriteManager.MAX_ALLOWED_K.toDouble(),
+                KOperatingPolicy.MIN_TARGET_K.toDouble(),
+                KOperatingPolicy.MAX_TARGET_K.toDouble(),
             )
             .toInt()
         JSONObject()

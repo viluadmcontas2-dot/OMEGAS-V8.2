@@ -56,6 +56,7 @@ const model = loadModel();
   const router = { navigate: (...args) => { calls.push(args); return true; } };
   assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'DESCONHECIDO', currentK: 120, targetK: null }), false);
   assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'PREVISTO', currentK: null, targetK: 128 }), false);
+  assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'PREVISTO', currentK: 120, targetK: 181 }), false);
   assert.equal(calls.length, 0);
 }
 

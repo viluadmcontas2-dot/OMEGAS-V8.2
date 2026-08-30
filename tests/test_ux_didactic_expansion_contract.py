@@ -42,9 +42,9 @@ assert "learningDecision" in learning
 assert "reason_code" in learning
 assert "frame_count" in learning
 assert "LIMITES CONFIGURADOS" in learning
-assert "Gasolina — referência" in learning
-assert "GNV atual — Petrol Inj." in learning
-assert "Equivalência" in learning
+assert "Gasolina — referência agregada" in learning
+assert "GNV atual agregado — Petrol Inj." in learning
+assert "Par observado usado no cálculo" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning

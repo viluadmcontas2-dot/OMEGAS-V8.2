@@ -12,7 +12,7 @@ for (const token of ['openReview()', 'writeReview()', 'readbackValid', 'writeCur
 for (const token of ['openReview()', 'writeReview()', 'readbackValid', 'previewMapAdjustment']) assert.equal(map.includes(token), true, `map missing ${token}`);
 assert.equal(curve.includes('Atual da ECU'), false); // label lives in the shared HTML shell, not recalculated in JS
 assert.equal(curve.includes('globalTrendRemoved'), false); // global/local split belongs to Kotlin Advisor, not UI
-assert.equal(map.includes('Linha técnica 0C protegida'), false); // label lives in HTML shell; writer contract is tested separately
+assert.equal(map.includes('Linha técnica 0C protegida'), true); // proteção visível acompanha a grade criada por este controlador
 assert.equal(curveState.includes('PREVISAO_OMEGAS'), true);
 assert.equal(curveState.includes('OBSERVADO_SEM_PREVISAO'), true);
 assert.equal(curveState.includes('SEM_PREVISAO'), true);
