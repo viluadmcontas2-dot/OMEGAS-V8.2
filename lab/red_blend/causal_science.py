@@ -253,10 +253,10 @@ def evaluate_adjustment(
     comparable_post: set[int] = set()
     pair_count = 0
     for i, before in enumerate(pre):
-        if before.timestamp_ms > adjustment.ended_at_ms:
+        if before.timestamp_ms >= adjustment.started_at_ms:
             continue
         for j, after in enumerate(post):
-            if after.timestamp_ms < adjustment.started_at_ms:
+            if after.timestamp_ms <= adjustment.ended_at_ms:
                 continue
             if _comparable(before, after):
                 comparable_pre.add(i)
@@ -310,8 +310,8 @@ def audit_real_causal_support(
     The current episode fixture intentionally preserves per-session ordering and
     event timestamps needed for temporal science, but it does not carry a
     repository-proven bridge declaring those timestamps to share the exact clock
-    domain of the private MAP_K intervention snapshot.  We therefore refuse to
-    align them by magnitude, session order, or guesswork.  This is an explicit
+    domain of the private MAP_K intervention snapshot. We therefore refuse to
+    align them by magnitude, session order, or guesswork. This is an explicit
     scientific abstention, not a failed engineering test.
     """
     fixture, episodes = _resolve_real_audit_inputs(
