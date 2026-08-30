@@ -1,0 +1,48 @@
+name: OMEGAS RED V8.2 Science Blend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - work/red-v82-science-blend
+    paths:
+      - "lab/red_blend/**"
+      - "tests/**"
+      - "tools/**"
+      - ".github/workflows/red-v82-science-blend.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-red-v82-blend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  science-local:
+    name: SCIENCE LOCAL falsification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact Blend SHA
+        uses: actions/checkout@v7
+
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: RED fast contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/run_checks.py
+
+      - name: Blend local science tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_local_science
