@@ -95,6 +95,20 @@ class CausalMapKScienceTest(unittest.TestCase):
         self.assertEqual(result.status, "ABSTAIN_INSUFFICIENT_COMPARABLE_PRE_POST")
         self.assertIsNone(result.effect_abs_error_delta)
 
+    def test_samples_during_adjustment_batch_are_neither_pre_nor_post_evidence(self):
+        adjustment = group_adjustments(
+            (
+                normalize_confirmed_event(event(timestamp_ms=1000, row=4)),
+                normalize_confirmed_event(event(timestamp_ms=1010, row=5)),
+            )
+        )[0]
+        pre = [outcome(1005, 3000, 0.55, 5.0, 5.50)]
+        post = [outcome(1006, 3000, 0.55, 5.0, 5.20)]
+        result = evaluate_adjustment(pre, post, adjustment)
+        self.assertEqual(result.status, "ABSTAIN_INSUFFICIENT_COMPARABLE_PRE_POST")
+        self.assertIsNone(result.effect_abs_error_delta)
+        self.assertEqual(result.comparable_pair_count, 0)
+
     def test_synthetic_improvement_is_negative_change_in_absolute_equivalence_error(self):
         adjustment = group_adjustments((normalize_confirmed_event(event()),))[0]
         pre = [
