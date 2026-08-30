@@ -1,0 +1,21 @@
+{
+  "schema": "omegas-mechanistic-asu-checksums-v1",
+  "artifacts": [
+    {
+      "path": "lab/red_blend/mechanistic_calibration.py",
+      "sha256": "c1a836e2046cfb3d49a2e185803bcb7f7fe3e10ffb6e5687a86401119d59cd5e"
+    },
+    {
+      "path": "lab/red_blend/test_mechanistic_calibration.py",
+      "sha256": "fc7ec293562482095678f86b66742f4b0f476f8980d4c7c7bdb0464d71657577"
+    },
+    {
+      "path": "evidence/red_blend/full_corpus/mechanistic-asu-simulation.json",
+      "sha256": "6d31ee1396ab5132bf2e0e2ebbd17d6ac2aa31063eb44abf73a7b7ae7835493f"
+    },
+    {
+      "path": "docs/evidence/red-blend-mechanistic-asu.md",
+      "sha256": "f93ea17b62ef5535302180f3c3d6409f04e00e3a19d910b0c69dc5f3eb09ccc6"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "schema": "omegas-mechanistic-asu-simulation-v1",
+  "status": "OFFLINE_METHOD_CANDIDATE",
+  "source": {
+    "governed_episode_index_sha256": "0d1d179e013341b84393b6b240161cc0f7f8dfde649e2aecc3e6596b6b5202da",
+    "governed_episode_payload_sha256": "ae050e6770143bd042cc0416fc66cbd91d5694d7ca7917e2d9cfdf078f34a8fd",
+    "f3_f5_checkpoint_sha256": "f32648186a9da82eaa581fbd713afe0ee1da70e8cf8bfe27174438044f3e85c4",
+    "episode_view_is_full_corpus": false,
+    "new_drive_import_performed_for_this_result": false
+  },
+  "mechanistic_identity": {
+    "combined_multiplier": "cng_petrol_ms / gasoline_reference_ms",
+    "log_decomposition": "ln(combined)=global_curve_log(petrol_ms)+local_residual_log(rpm,map_bar)",
+    "effective_calibration": "curve_factor * map_value / 100",
+    "ideal_effective_update": "effective_current * combined_multiplier",
+    "map_projection_axes": "RPM x gasoline_reference_ms",
+    "operating_coordinate": "RPM x MAP"
+  },
+  "blind_simulation": {
+    "total_gnv_episodes": 1442,
+    "supported_pairs": 1273,
+    "unsupported_pairs": 169,
+    "independent_gnv_sessions": 17,
+    "leakage_violations": 0,
+    "curve_supported_pairs": 1235,
+    "local_only_pairs": 38,
+    "median_combined_multiplier": 0.9500182523092403,
+    "evidence_weighted_median_multiplier": 0.9470593537871048,
+    "p10_combined_multiplier": 0.8824173493078111,
+    "p90_combined_multiplier": 1.0189658893126534,
+    "deadband_fraction": 0.02,
+    "reduce_demand_pairs": 992,
+    "deadband_pairs": 158,
+    "increase_demand_pairs": 123
+  },
+  "owner_photo_falsifiers": [
+    {
+      "source_sha256": "bf0f3df49bd493d9e60d92e28d34d6e261cc1bbde12aef747c657f90ef420114",
+      "gasoline_reference_ms": 4.19,
+      "cng_petrol_ms": 3.49,
+      "displayed_error_percent": -16.8
+    },
+    {
+      "source_sha256": "daee7be3c0f1fb789abf0c70420a072db2e007503ce40dba4624fec14a38ce4a",
+      "gasoline_reference_ms": 4.5,
+      "cng_petrol_ms": 4.43,
+      "displayed_error_percent": -1.7
+    },
+    {
+      "source_sha256": "7f5f37c6373848293d03fd8718be034b86d72c8dbb4eb0d9c6b1824831e88993",
+      "gasoline_reference_ms": 5.72,
+      "cng_petrol_ms": 5.14,
+      "displayed_error_percent": -10.3
+    },
+    {
+      "source_sha256": "d67fe05f7b7a4791daeedda3fb68a45b2d46ba69807d692dbb77a2d51d0a5345",
+      "gasoline_reference_ms": 5.21,
+      "cng_petrol_ms": 7.06,
+      "displayed_error_percent": 35.6
+    },
+    {
+      "source_sha256": "3f6328f0110700f170b109914720cd86527027135cfd573e3701a81e29ad9306",
+      "gasoline_reference_ms": 5.21,
+      "cng_petrol_ms": 5.69,
+      "displayed_error_percent": 9.3
+    }
+  ],
+  "interpretation": {
+    "central_tendency": "The governed view is centered near a 5 percent reduction demand, but this is not a global recommendation.",
+    "spatial_non_uniformity": "Wide regional variation and opposite correction directions require local residual modeling.",
+    "same_petrol_ms_falsifier": "The two 5.21 ms photo pairs demand materially different corrections, so curve-only calibration is falsified for those observations.",
+    "dense_local_evidence": "Episode evidence mass is retained inside region-session centers; sessions and regions determine transfer support.",
+    "unknown_current_state": "No absolute Curve K or MAP_K target is emitted without an explicit current calibration state."
+  },
+  "claims": {
+    "p_improve_proven": false,
+    "causal_map_k_proven": false,
+    "causal_k_factor_proven": false,
+    "vehicle_proven": false,
+    "actionable": false,
+    "auto_write_ecu": false,
+    "production_runtime_changed": false
+  }
+}
