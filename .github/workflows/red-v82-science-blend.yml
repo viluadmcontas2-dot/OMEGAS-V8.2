@@ -109,3 +109,17 @@ jobs:
             tests/fixtures/science/episodes \
             tests/fixtures/science/episodes/index.json \
             --fuel GNV --min-samples 4 --min-independent-sessions 3 --top 20
+
+      - name: Blend blind walk-forward tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_walk_forward
+
+      - name: Real-corpus blind walk-forward audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m lab.red_blend.walk_forward \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json
