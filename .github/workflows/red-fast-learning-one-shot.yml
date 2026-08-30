@@ -1,4 +1,5 @@
 # One-shot RED verification. Ordinary source commits do not trigger this workflow.
+# Issue #9 proof trigger: continuous RPM-MAP learning and accessible Auto-Cal.
 name: OMEGAS V8.0 RED fast learning proof
 
 on:
