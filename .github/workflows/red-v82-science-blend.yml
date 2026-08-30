@@ -42,116 +42,55 @@ jobs:
           python3 -B tools/run_checks.py
 
       - name: Blend synthetic local science tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_local_science
+        run: python3 -B -m unittest -v lab.red_blend.test_local_science
 
       - name: Reconstruct governed WU-006 episode fixture
         shell: bash
         run: |
           set -euo pipefail
-          python3 -B tools/science/reconstruct_fixture.py \
-            tests/fixtures/science/episodes \
-            tests/fixtures/science/episodes/index.json \
-            build/science/omegas_corpus_20260828_episodes.jsonl.gz
+          python3 -B tools/science/reconstruct_fixture.py tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json build/science/omegas_corpus_20260828_episodes.jsonl.gz
 
       - name: Blend real-corpus local science tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_real_corpus
+        run: python3 -B -m unittest -v lab.red_blend.test_real_corpus
 
       - name: Real-corpus gasoline audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m lab.red_blend.real_corpus \
-            tests/fixtures/science/episodes \
-            tests/fixtures/science/episodes/index.json \
-            --fuel GASOLINA --min-samples 4 --bootstrap-draws 600 --seed 20260830 --top 12
+        run: python3 -B -m lab.red_blend.real_corpus tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json --fuel GASOLINA --min-samples 4 --bootstrap-draws 600 --seed 20260830 --top 12
 
       - name: Real-corpus CNG audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m lab.red_blend.real_corpus \
-            tests/fixtures/science/episodes \
-            tests/fixtures/science/episodes/index.json \
-            --fuel GNV --min-samples 4 --bootstrap-draws 600 --seed 20260830 --top 12
+        run: python3 -B -m lab.red_blend.real_corpus tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json --fuel GNV --min-samples 4 --bootstrap-draws 600 --seed 20260830 --top 12
 
       - name: Blend synthetic session-independence tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_session_science
+        run: python3 -B -m unittest -v lab.red_blend.test_session_science
 
       - name: Blend real-corpus session-independence tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_real_session_science
+        run: python3 -B -m unittest -v lab.red_blend.test_real_session_science
 
       - name: Real-corpus gasoline session audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m lab.red_blend.session_science \
-            tests/fixtures/science/episodes \
-            tests/fixtures/science/episodes/index.json \
-            --fuel GASOLINA --min-samples 4 --min-independent-sessions 3 --top 20
+        run: python3 -B -m lab.red_blend.session_science tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json --fuel GASOLINA --min-samples 4 --min-independent-sessions 3 --top 20
 
       - name: Real-corpus CNG session audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m lab.red_blend.session_science \
-            tests/fixtures/science/episodes \
-            tests/fixtures/science/episodes/index.json \
-            --fuel GNV --min-samples 4 --min-independent-sessions 3 --top 20
+        run: python3 -B -m lab.red_blend.session_science tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json --fuel GNV --min-samples 4 --min-independent-sessions 3 --top 20
 
       - name: Blend blind walk-forward tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_walk_forward
+        run: python3 -B -m unittest -v lab.red_blend.test_walk_forward
 
       - name: Real-corpus blind walk-forward audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m lab.red_blend.walk_forward \
-            tests/fixtures/science/episodes \
-            tests/fixtures/science/episodes/index.json
+        run: python3 -B -m lab.red_blend.walk_forward tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json
 
       - name: Blend risk-gated hybrid tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_hybrid_science
+        run: python3 -B -m unittest -v lab.red_blend.test_hybrid_science
 
       - name: Real-corpus nested hybrid audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m lab.red_blend.hybrid_science \
-            tests/fixtures/science/episodes \
-            tests/fixtures/science/episodes/index.json
+        run: python3 -B -m lab.red_blend.hybrid_science tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json
 
       - name: Blend causal MAP_K contract tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_causal_map_k
+        run: python3 -B -m unittest -v lab.red_blend.test_causal_map_k
 
       - name: Blend causal science fixture and effect tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_causal_science
+        run: python3 -B -m unittest -v lab.red_blend.test_causal_science
 
       - name: Blend real causal support audit tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v lab.red_blend.test_real_causal_science
+        run: python3 -B -m unittest -v lab.red_blend.test_real_causal_science
+
+      - name: Blend sensitivity fail-closed tests
+        run: python3 -B -m unittest -v lab.red_blend.test_sensitivity_science
