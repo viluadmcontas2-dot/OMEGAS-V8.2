@@ -137,3 +137,9 @@ jobs:
           python3 -B -m lab.red_blend.hybrid_science \
             tests/fixtures/science/episodes \
             tests/fixtures/science/episodes/index.json
+
+      - name: Blend causal MAP_K contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_causal_map_k
