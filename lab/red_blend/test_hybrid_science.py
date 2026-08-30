@@ -43,7 +43,8 @@ class HybridScienceTest(unittest.TestCase):
             ep("s0", 0, 2200, 0.60, 6.0),
             ep("s1", 1, 2200, 0.60, 6.1),
         ]
-        target = ep("future", 2, 2380, 0.64, 6.3)
+        # Outside the strict neighbor anchor (~1.60 normalized) but inside Gaussian radius.
+        target = ep("future", 2, 2300, 0.62, 6.3)
         policy = HybridRiskPolicy(min_independent_sessions=3, max_model_disagreement=1.0)
         self.assertIsNone(predict_risk_gated_hybrid(training, target, policy))
 
@@ -53,7 +54,8 @@ class HybridScienceTest(unittest.TestCase):
             ep("s1", 1, 2200, 0.60, 6.04, window_count=40),
             ep("s2", 2, 2200, 0.60, 6.02, window_count=20),
         ]
-        target = ep("future", 3, 2380, 0.64, 6.2)
+        # Outside the strict neighbor anchor (~1.60 normalized) but inside Gaussian radius.
+        target = ep("future", 3, 2300, 0.62, 6.2)
         policy = HybridRiskPolicy(min_independent_sessions=3, max_model_disagreement=0.02)
         prediction = predict_risk_gated_hybrid(training, target, policy)
         self.assertIsNotNone(prediction)
