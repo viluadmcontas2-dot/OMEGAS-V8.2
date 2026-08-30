@@ -11,14 +11,21 @@ class StableRepositoryContract(unittest.TestCase):
         self.assertTrue(agents_path.is_file())
         agents = agents_path.read_text("utf-8").lower()
         for marker in (
-            "notion é o cérebro e a governança primária",
-            "github remoto é a verdade do estado atual e a única superfície de mutação do código",
-            "local_source_mutation=denied",
-            "runtime efêmero serve somente para testar/buildar o sha remoto",
-            "github actions só devem ser usadas",
+            "este repositório é a fonte canônica",
+            "uma issue → a branch red",
+            "notion e linear são somente memória histórica",
+            "mapa k editável fica limitado a `100..180`",
+            "github actions é último recurso",
         ):
             self.assertIn(marker, agents)
-        self.assertIn("project governance guard", agents)
+        for path in (
+            "PROJECT.md",
+            "STATUS.md",
+            "docs/workunits/OMEGAS-RED-WU-001.md",
+            "docs/superpowers/specs/2026-08-30-red-continuous-fast-learning-design.md",
+            "docs/superpowers/plans/2026-08-30-red-continuous-fast-learning.md",
+        ):
+            self.assertTrue((ROOT / path).is_file(), path)
 
     def test_core_product_surfaces_are_present(self):
         required = [
