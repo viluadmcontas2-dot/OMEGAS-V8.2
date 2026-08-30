@@ -1,0 +1,119 @@
+{
+  "schema": "omegas-full-corpus-f3-f5-checkpoint-v1",
+  "status": "MOUNTED_CORPUS_VERIFIED",
+  "scope": {
+    "f0_drive_complete": false,
+    "mounted_logical_sessions": 34,
+    "mounted_event_variants": 5902982
+  },
+  "tests": {
+    "command": "python -m unittest lab.red_blend.test_full_corpus_forensics lab.red_blend.test_calibration_forensics lab.red_blend.test_ecu_state_forensics -v",
+    "passed": 16,
+    "failed": 0
+  },
+  "f3_schema_coverage": {
+    "status": "GREEN_FOR_MOUNTED_CORPUS",
+    "artifact_sha256": "be7b4cd3873de077fcb2c0f3940700afe8a74b87fa8312e5a265431b41c626d7",
+    "file_sha256": "fe8e79fa674b47d75fddd7a6278edbc55f3aad70bea823a94b79423fadc6dc9e",
+    "event_type_counts": {
+      "app_log": 12463,
+      "autocal_native_snapshot": 12,
+      "engine_event": 32375,
+      "export_boundary": 10,
+      "full_snapshot": 9816,
+      "k_batch_confirmed": 70,
+      "k_factor_batch_confirmed": 29,
+      "k_read_map": 3,
+      "session_started": 34,
+      "session_stopped": 16,
+      "settings_changed": 42,
+      "telemetry": 246218,
+      "usb_raw": 5601894
+    },
+    "unknown_event_types": {},
+    "malformed_event_lines": 2,
+    "silent_drop_allowed": false
+  },
+  "f4_calibration": {
+    "status": "GREEN_FOR_MOUNTED_CORPUS",
+    "artifact_sha256": "6c6684526e4e5030ebe719da220c2e582508062748c4381ccbc59f43d2fae75d",
+    "file_sha256": "5c89e59d490cb476797b8962ddcce62050c2bab877c8eaeafca239fe9cc5cf83",
+    "map_k": {
+      "distinct_interventions": 70,
+      "valid_interventions": 70,
+      "confirmed_cell_changes": 357
+    },
+    "k_factor": {
+      "distinct_interventions": 29,
+      "valid_interventions": 29,
+      "confirmed_point_changes": 101
+    },
+    "duplicate_event_occurrences_collapsed": 11,
+    "adjustment_identity_conflicts": 0,
+    "intervention_unit": "BATCH_NOT_CELL_OR_POINT"
+  },
+  "f5_ecu_state": {
+    "status": "GREEN_FOR_MOUNTED_CORPUS",
+    "artifact_sha256": "eb4ac8ea58b6a28140a90cce0353b7f6f6fc344278e880a334a7f8260d7e6971",
+    "file_sha256": "3d884092395a3ce3a84898b1113d24d190152b2cece19bccb153d47f88921005",
+    "autocal": {
+      "distinct_snapshots": 12,
+      "duplicate_occurrences_collapsed": 2,
+      "module_versions": {"100": 12},
+      "temporal_coherent_snapshots": 0,
+      "partial_snapshots": 12,
+      "snapshots_with_invalid_fields": 12,
+      "invalid_field_occurrences": 48,
+      "systematic_invalid_fields": {
+        "PETR_INJ_TBP@014B:--": 12,
+        "MUL_ACT@0161:--": 12,
+        "PETR_MNFLD_PRESS_RV@018D:--": 12,
+        "GAS_MNFLD_PRESS_RV@018E:--": 12
+      },
+      "systematic_error": "30 elements observed; current decoder contract expects 18 for MODULE_VERSION 100",
+      "decoder_runtime_changed": false
+    },
+    "portmon": [
+      {
+        "source_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+        "raw_write_attempts": 39524,
+        "raw_supported_device_write_attempts": 39522,
+        "confirmed_transactions": 39517,
+        "unconfirmed_supported_write_attempts": 5,
+        "distinct_commands": 567,
+        "map_k_writes": 144,
+        "map_k_unique_cells": 144,
+        "map_k_values": [100],
+        "k_factor_writes": 0,
+        "autocal_toggles": 8,
+        "k_insertion_on": 8,
+        "k_insertion_off": 4,
+        "unconfirmed_tail_explanation": "five final telemetry write attempts: one 0xC0000001 and four NOT CONNECTED"
+      },
+      {
+        "source_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+        "raw_write_attempts": 36463,
+        "raw_supported_device_write_attempts": 36463,
+        "confirmed_transactions": 36463,
+        "unconfirmed_supported_write_attempts": 0,
+        "distinct_commands": 21,
+        "map_k_writes": 0,
+        "k_factor_writes": 0,
+        "autocal_toggles": 0
+      },
+      {
+        "source_sha256": "4ca4ff993a8aeaaa971b75485e62537b45da7333526c37068564bbf2b446b5c9",
+        "confirmed_transactions": 0,
+        "classification": "APPLICATION_LOG_NOT_PORTMON_TRANSACTION_STREAM"
+      }
+    ]
+  },
+  "claims": {
+    "causal_map_k_proven": false,
+    "causal_k_factor_proven": false,
+    "p_improve_proven": false,
+    "vehicle_proven": false,
+    "production_runtime_changed": false
+  },
+  "next_gate": "F6_CHRONOLOGY"
+}
