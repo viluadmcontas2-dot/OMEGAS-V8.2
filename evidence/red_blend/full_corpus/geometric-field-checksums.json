@@ -1,0 +1,29 @@
+{
+  "schema": "omegas-geometric-field-checksums-v1",
+  "artifacts": [
+    {
+      "path": "lab/red_blend/geometric_field.py",
+      "sha256": "e8090ade994d8b2837b53d1ca62fb4a0537bab118b9c96cfb85794617e044d2c"
+    },
+    {
+      "path": "lab/red_blend/test_geometric_field.py",
+      "sha256": "b45d83d3ce5c7d926aa2a0d9b1e15f352eb6e8c333c9e44854a5969291a5a5b3"
+    },
+    {
+      "path": "evidence/red_blend/full_corpus/geometric-field-blind-gate.json",
+      "sha256": "9e01580dbb657059fd940100a1ba44f014f5cc0e455740bdbb7264d993cc47d4"
+    },
+    {
+      "path": "docs/evidence/red-blend-geometric-field.md",
+      "sha256": "f816e04479319ed48561f74d4edf30b3ace45d10ab0e87b697b28940249491ce"
+    },
+    {
+      "path": "app/src/main/assets/ui/screens/learning.js",
+      "sha256": "5779d1423f135a4b51571d751c55cafe4cea18f56181731d5cb4d46066d72280"
+    },
+    {
+      "path": "app/src/main/java/com/omegas/v7/runtime/V7UiProjection.kt",
+      "sha256": "ab7bc6dc7e26d281063b347f9a2e3e434c9f6639690b438046bfcffbdcb95261"
+    }
+  ]
+}

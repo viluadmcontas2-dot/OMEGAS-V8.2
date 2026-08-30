@@ -39,6 +39,21 @@ class V7SessionRuntimeTest {
     }
 
     @Test
+    fun learning_explanation_uses_rpm_map_as_coordinate_and_temperature_as_context() {
+        val runtime = runtime()
+        runtime.addEvidence(EvidenceV7("p1", FuelV7.PETROL, 10, "visit-p", 1200.0, 0.4, 3.0, 0.8, null))
+        runtime.addEvidence(
+            EvidenceV7("g1", FuelV7.CNG, 20, "visit-g", 2400.0, 0.8, 6.0, 0.8, runtime.state.calibration.revision),
+        )
+
+        val explanation = V7UiProjection.from(runtime.state).learning.explanation
+
+        assertTrue(explanation.contains("RPM e MAP"))
+        assertTrue(explanation.contains("temperatura é contexto"))
+        assertTrue(!explanation.contains("RPM, MAP e temperatura"))
+    }
+
+    @Test
     fun one_physical_visit_is_one_immutable_evidence_unit() {
         val runtime = runtime()
         runtime.addEvidence(EvidenceV7("p1", FuelV7.PETROL, 10, "visit-1", 1200.0, 0.4, 3.0, 0.5, null))

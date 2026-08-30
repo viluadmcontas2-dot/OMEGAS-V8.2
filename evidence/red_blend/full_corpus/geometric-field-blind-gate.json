@@ -1,0 +1,50 @@
+{
+  "schema": "omegas-geometric-field-blind-gate-v1",
+  "claim_scope": "GEOMETRIC_FIELD_OFFLINE_NOT_PRODUCTION",
+  "coordinate": "RPM_X_MAP_BAR",
+  "response": "PETROL_INJ_MS",
+  "policy": {
+    "radius": 1.5,
+    "nearest": 8,
+    "ridge": 1.0,
+    "rpm_scale": 80.0,
+    "map_scale": 0.02
+  },
+  "chronology": {
+    "development_prefix_max_order": 22,
+    "blind_holdout_min_order": 26,
+    "blind_holdout_targets": 103,
+    "leakage_violations": 0
+  },
+  "red_anchor_all": {
+    "supported": 89,
+    "coverage": 0.8640776699029126,
+    "median_abs_relative_error": 0.014680590714785596,
+    "p90_abs_relative_error": 0.053734471536677306,
+    "p95_abs_relative_error": 0.07603636259056921,
+    "max_abs_relative_error": 0.14757367604697538
+  },
+  "common_support": {
+    "supported": 85,
+    "coverage": 0.8252427184466019,
+    "red_anchor": {
+      "median_abs_relative_error": 0.013744204886683478,
+      "p90_abs_relative_error": 0.04312511096425113,
+      "p95_abs_relative_error": 0.054061771034078526,
+      "max_abs_relative_error": 0.07985624213797503
+    },
+    "geometric_candidate": {
+      "median_abs_relative_error": 0.013726932022093484,
+      "p90_abs_relative_error": 0.054609517193401055,
+      "p95_abs_relative_error": 0.06740722948161998,
+      "max_abs_relative_error": 0.09053318633749165
+    }
+  },
+  "decision": "DEFER",
+  "decision_reason": "Median improved slightly, but P90, P95, maximum error and coverage gate did not all beat RED.",
+  "runtime_changed": false,
+  "p_improve_proven": false,
+  "vehicle_proven": false,
+  "actionable": false,
+  "auto_write_ecu": false
+}

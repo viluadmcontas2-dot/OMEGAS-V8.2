@@ -13,13 +13,15 @@ for (const label of [
   'Evidência recente',
   'Resumo projetado da célula',
   'não é o par usado no cálculo',
-  'Gasolina — referência agregada',
-  'GNV atual agregado — Petrol Inj.',
-  'Par observado usado no cálculo',
-  'Suporte da referência',
+  'Massa de evidência local',
   'Precisão local',
   'Histórico GNV',
-  'Sugestão local',
+  'Onde',
+  'Gasolina esperada',
+  'GNV observado',
+  'Diferença',
+  'Por que confiar',
+  'O que isso significa',
 ]) {
   assert.equal(source.includes(label), true, `missing ${label}`);
 }
@@ -28,4 +30,5 @@ assert.equal(source.includes('ainda não existe par equivalente válido'), true)
 assert.equal(source.includes('somente consulta'), true);
 assert.equal(source.includes('Abrir o editor não escreve na ECU'), true);
 assert.equal(source.includes("router.navigate('map'"), true);
+assert.equal(source.includes('RPM × MAP define a condição física'), true);
 console.log('LEARNING_UNDERSTANDING_CONTRACT=PASS');

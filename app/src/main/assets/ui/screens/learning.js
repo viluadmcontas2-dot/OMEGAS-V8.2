@@ -479,23 +479,35 @@
         : stabilityState === 'CONSOLIDATED'
           ? 'sem divergência recente relevante'
           : recentError !== null ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}%` : '—';
+      const whereText = observedPair
+        ? `${pairCondition}. RPM × MAP define a condição física; temperatura apenas contextualiza quando existe dos dois lados.`
+        : `${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap ?? petrolMap, 3)} bar. RPM × MAP define a condição física.`;
+      const gasolineExpectedText = targetMs !== null
+        ? `${fmt(targetMs, 2)} ms no par equivalente usado no cálculo`
+        : learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms no resumo agregado da região` : 'ainda sem referência equivalente';
+      const cngObservedText = observedMs !== null
+        ? `${fmt(observedMs, 2)} ms no par observado`
+        : learned?.cng ? `${fmt(cngMeanMs, 2)} ms no resumo agregado da região` : 'ainda sem observação GNV';
+      const meaningText = delta === null
+        ? 'A região continua em observação; nenhuma mudança foi registrada.'
+        : `${delta > 0 ? '+' : ''}${fmt(delta, 1)}% no Mapa K · ${suggestion?.actionable === true ? 'sugestão pronta para revisão humana' : 'evidência ainda em observação'}`;
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
         <h3>${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · ${fmt(petrolLabel, 1)} ms</h3>
         <p class="learning-reason"><b>${escapeHtml(stabilityLabel(stabilityState))}.</b> ${escapeHtml(stability?.reason || learned?.readinessReason || 'Sem evidência válida nesta região. Você ainda pode abrir a célula para ajuste manual.')}</p>
         <dl class="detail-list enhanced-detail-list">
+          <div><dt>Onde</dt><dd>${whereText}</dd></div>
+          <div><dt>Gasolina esperada</dt><dd>${gasolineExpectedText}</dd></div>
+          <div><dt>GNV observado</dt><dd>${cngObservedText}</dd></div>
+          <div><dt>Diferença</dt><dd>${comparisonText}</dd></div>
+          <div><dt>Por que confiar</dt><dd>${supportText}. Precisão local: gasolina ${Math.round(confidence(learned?.petrol) * 100)}%, GNV ${Math.round(confidence(learned?.cng) * 100)}%.</dd></div>
+          <div><dt>O que isso significa</dt><dd>${meaningText}</dd></div>
           <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}% · ${Math.round(finite(stability?.consolidatedUniqueVisits) || 0)} visitas`}</dd></div>
           <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
           <div><dt>Resumo projetado da célula</dt><dd>Este resumo não é o par usado no cálculo; agrega evidências que influenciam esta célula.</dd></div>
-          <div><dt>Gasolina — referência agregada</dt><dd>${learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms · ${petrolRpm === null ? 'RPM —' : `${Math.round(petrolRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(petrolMap, 3)} bar` : 'sem evidência agregada'}</dd></div>
-          <div><dt>Precisão local da gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas independentes · ${petrolSessions} sessões · precisão ${Math.round(confidence(learned.petrol) * 100)}%` : '—'}</dd></div>
-          <div><dt>GNV atual agregado — Petrol Inj.</dt><dd>${learned?.cng ? `${fmt(cngMeanMs, 2)} ms · ${cngRpm === null ? 'RPM —' : `${Math.round(cngRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap, 3)} bar` : 'sem evidência atual agregada'}</dd></div>
-          <div><dt>Precisão local do GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas independentes · ${cngSessions} sessões · precisão ${Math.round(confidence(learned.cng) * 100)}% · época ${model?.epoch ?? '—'}` : '—'}</dd></div>
-          <div><dt>Par observado usado no cálculo</dt><dd>${comparisonText}<br>${pairCondition}</dd></div>
-          <div><dt>Suporte da referência</dt><dd>${supportText}</dd></div>
+          <div><dt>Massa de evidência local</dt><dd>Gasolina: ${Math.round(petrolSamples)} amostras, ${petrolVisits} visitas, ${petrolSessions} sessões. GNV: ${Math.round(cngSamples)} amostras, ${cngVisits} visitas, ${cngSessions} sessões, época ${model?.epoch ?? '—'}.</dd></div>
           <div><dt>Predição contínua RPM × MAP</dt><dd>${predictionText}</dd></div>
           <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')} · somente consulta` : 'nenhum'}</dd></div>
-          <div><dt>Sugestão local</dt><dd>${delta === null ? 'nenhuma registrada' : `${delta > 0 ? '+' : ''}${fmt(delta, 1)}% · ${suggestion?.actionable === true ? 'pronta para revisar' : stabilityState === 'REVALIDATING' ? 'preservada enquanto revalida' : 'observando'}`}</dd></div>
         </dl>
         <button class="primary wide" type="button" data-edit-learning-cell>${suggestion?.actionable ? 'Editar esta célula com a sugestão' : 'Editar esta célula'}</button>
         <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>
