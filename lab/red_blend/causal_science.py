@@ -1,7 +1,7 @@
 """Deterministic offline causal MAP_K laboratory.
 
 The independent unit is the confirmed manual adjustment/batch, never the cell
-write count.  This module is analysis-only: no Android runtime dependency, no
+write count. This module is analysis-only: no Android runtime dependency, no
 ECU writer, no actionability, and no P(improve) claim.
 """
 from __future__ import annotations
@@ -85,6 +85,22 @@ class CausalResult:
     actionable: bool = False
 
 
+@dataclass(frozen=True)
+class RealCausalAudit:
+    status: str
+    reason: str
+    reasons: tuple[str, ...]
+    cell_event_count: int
+    intervention_count: int
+    comparable_interventions: int
+    abstentions: int
+    leakage_violations: int
+    episode_count: int
+    p_improve: float | None = None
+    actionable: bool = False
+    claim_scope: str = "REAL_CAUSAL_SUPPORT_AUDIT_OFFLINE_NOT_PRODUCTION"
+
+
 def _as_int(event: Mapping[str, Any], key: str) -> int:
     value = event.get(key)
     if isinstance(value, bool) or value is None:
@@ -150,7 +166,7 @@ def group_adjustments(events: Sequence[ConfirmedKCellEvent]) -> tuple[Adjustment
     groups: dict[str, list[ConfirmedKCellEvent]] = {}
     for event in events:
         groups.setdefault(event.adjustment_key, []).append(event)
-    result = []
+    result: list[Adjustment] = []
     for key, cells in groups.items():
         cells = sorted(cells, key=lambda item: (item.timestamp_ms, item.row, item.column))
         hashes = {item.final_map_hash for item in cells}
@@ -185,7 +201,7 @@ def load_adjustment_fixture(path: Path) -> AdjustmentFixture:
     if len(source_hash) != 64 or len(axis_hash) != 64:
         raise ValueError("fixture source/axis hashes must be SHA-256")
 
-    adjustments = []
+    adjustments: list[Adjustment] = []
     for row in payload.get("adjustments") or []:
         key = str(row.get("adjustment_key") or "")
         proof_hash = str(row.get("proof_envelope_sha256") or "")
@@ -259,4 +275,74 @@ def evaluate_adjustment(
         pre_median,
         post_median,
         pair_count,
+    )
+
+
+def _resolve_real_audit_inputs(
+    fixture_or_parts: AdjustmentFixture | Path,
+    episodes_or_index: Sequence[Mapping[str, Any]] | Path,
+    k_history_path: Path | None,
+) -> tuple[AdjustmentFixture, list[Mapping[str, Any]]]:
+    """Accept either governed loaded objects or the governed repository paths."""
+    if isinstance(fixture_or_parts, AdjustmentFixture):
+        if isinstance(episodes_or_index, (str, Path)):
+            raise TypeError("loaded AdjustmentFixture requires loaded episode sequence")
+        return fixture_or_parts, list(episodes_or_index)
+
+    if k_history_path is None:
+        raise TypeError("path mode requires K-history fixture path")
+    from lab.red_blend.real_corpus import load_governed_fixture
+
+    fixture = load_adjustment_fixture(Path(k_history_path))
+    episodes = load_governed_fixture(Path(fixture_or_parts), Path(episodes_or_index))
+    return fixture, episodes
+
+
+def audit_real_causal_support(
+    fixture_or_parts: AdjustmentFixture | Path,
+    episodes_or_index: Sequence[Mapping[str, Any]] | Path,
+    k_history_path: Path | None = None,
+    *,
+    episode_clock_domain: str | None = None,
+) -> RealCausalAudit:
+    """Audit whether governed real data can support intervention-level causality.
+
+    The current episode fixture intentionally preserves per-session ordering and
+    event timestamps needed for temporal science, but it does not carry a
+    repository-proven bridge declaring those timestamps to share the exact clock
+    domain of the private MAP_K intervention snapshot.  We therefore refuse to
+    align them by magnitude, session order, or guesswork.  This is an explicit
+    scientific abstention, not a failed engineering test.
+    """
+    fixture, episodes = _resolve_real_audit_inputs(
+        fixture_or_parts, episodes_or_index, k_history_path
+    )
+    intervention_count = len(fixture.adjustments)
+
+    if episode_clock_domain is None:
+        return RealCausalAudit(
+            status="INSUFFICIENT_CAUSAL_OUTCOME_SUPPORT",
+            reason="UNPROVEN_COMMON_TIMEBASE",
+            reasons=("CLOCK_DOMAIN_UNPROVEN",),
+            cell_event_count=fixture.cell_event_count,
+            intervention_count=intervention_count,
+            comparable_interventions=0,
+            abstentions=intervention_count,
+            leakage_violations=0,
+            episode_count=len(episodes),
+        )
+
+    # A label alone cannot prove clock equivalence. A future governed bridge must
+    # define and test the conversion before this branch may construct pre/post
+    # outcome windows. Until such a bridge exists, fail closed identically.
+    return RealCausalAudit(
+        status="INSUFFICIENT_CAUSAL_OUTCOME_SUPPORT",
+        reason="UNPROVEN_COMMON_TIMEBASE",
+        reasons=("CLOCK_DOMAIN_BRIDGE_NOT_GOVERNED",),
+        cell_event_count=fixture.cell_event_count,
+        intervention_count=intervention_count,
+        comparable_interventions=0,
+        abstentions=intervention_count,
+        leakage_violations=0,
+        episode_count=len(episodes),
     )
