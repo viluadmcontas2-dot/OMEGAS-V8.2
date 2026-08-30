@@ -1,0 +1,167 @@
+{
+  "schema": "omegas-red-blend-full-corpus-checkpoint-v1",
+  "date": "2026-08-30",
+  "work_unit": "RED-BLEND-001",
+  "branch": "work/red-v82-science-blend",
+  "status": "PRELIMINARY_FORENSIC_CHECKPOINT",
+  "privacy": {
+    "raw_private_logs_committed": false,
+    "private_paths_committed": false,
+    "source_identity_policy": "sha256-plus-redacted-alias"
+  },
+  "scope": {
+    "session_package_occurrences_observed": 40,
+    "physically_unique_session_zip_blobs": 38,
+    "logical_session_ids_observed": 34,
+    "note": "Counts are from the current locally mounted corpus and nested LOGS HUB pass; final closure requires F0-F7 regeneration."
+  },
+  "physical_export_event_counts_before_logical_union": {
+    "usb_raw": 5765064,
+    "telemetry": 281477,
+    "engine_event": 32375,
+    "app_log": 13380,
+    "full_snapshot": 11336,
+    "k_batch_confirmed": 75,
+    "settings_changed": 42,
+    "session_started": 38,
+    "k_factor_batch_confirmed": 35,
+    "session_stopped": 16,
+    "export_boundary": 14,
+    "autocal_native_snapshot": 14,
+    "k_read_map": 3
+  },
+  "deduplicated_intervention_evidence": {
+    "map_k": {
+      "distinct_adjustment_ids": 70,
+      "distinct_confirmed_cell_events": 357,
+      "observed_time_span_utc": {
+        "first": "2026-07-19T13:30:45.899Z",
+        "last": "2026-08-29T20:17:13.287Z"
+      }
+    },
+    "k_factor": {
+      "distinct_adjustment_ids": 29,
+      "distinct_confirmed_point_events": 101,
+      "observed_time_span_utc": {
+        "first": "2026-07-24T00:05:43.360Z",
+        "last": "2026-08-29T20:20:07.460Z"
+      }
+    },
+    "autocal": {
+      "distinct_snapshot_hashes": 12
+    }
+  },
+  "export_relationship_proofs": [
+    {
+      "relationship": "same-logical-session-identical-event-stream-different-zip-bytes",
+      "source_a_sha256_prefix": "1d10432e07e2",
+      "source_b_sha256_prefix": "69d3ea44d797",
+      "events_a": 8129,
+      "events_b": 8129,
+      "intersection": 8129,
+      "only_a": 0,
+      "only_b": 0
+    },
+    {
+      "relationship": "same-logical-session-strict-subset",
+      "source_a_sha256_prefix": "7c08172a727b",
+      "source_b_sha256_prefix": "e3cfcce7970c",
+      "events_a": 375006,
+      "events_b": 164490,
+      "intersection": 164490,
+      "only_a": 210516,
+      "only_b": 0
+    },
+    {
+      "relationship": "same-logical-session-later-export-adds-events",
+      "source_a_sha256_prefix": "f0fbc966cbab",
+      "source_b_sha256_prefix": "d8221167e37f",
+      "events_a": 6760,
+      "events_b": 6816,
+      "intersection": 6760,
+      "only_a": 0,
+      "only_b": 56
+    },
+    {
+      "relationship": "same-logical-session-later-export-adds-events",
+      "source_a_sha256_prefix": "36503ec7a968",
+      "source_b_sha256_prefix": "d8f412ce8a50",
+      "events_a": 21508,
+      "events_b": 21618,
+      "intersection": 21508,
+      "only_a": 0,
+      "only_b": 110
+    }
+  ],
+  "portmon": [
+    {
+      "alias": "PORTMON_AUTOCAL_READ_HEAVY",
+      "zip_sha256": "a927795da5800baef53d498273f4e210bc814c2e0e3649572e6de42781073b47",
+      "inner_log_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+      "inner_bytes": 162700984,
+      "line_count": 2858597,
+      "write_count": 36463,
+      "distinct_write_commands": 21,
+      "identified_map_k_writes": 0,
+      "identified_k_factor_writes": 0,
+      "identified_autocal_toggles": 0,
+      "role_interpretation": "read-heavy ECU/AutoCal state evidence"
+    },
+    {
+      "alias": "PORTMON_CALIBRATION_WRITE_CAPTURE",
+      "zip_sha256": "6879fa2a7931d22c207cd7fa47dffb59e1df0fe1de216e34e3f11e0c08cc1c17",
+      "inner_log_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+      "inner_bytes": 149911521,
+      "line_count": 2631711,
+      "write_count": 39524,
+      "distinct_write_commands": 567,
+      "identified_map_k_writes": 144,
+      "identified_map_k_unique_cells": 144,
+      "identified_map_k_rows": [0, 11],
+      "identified_map_k_columns": [0, 11],
+      "identified_map_k_unique_values": [100],
+      "identified_k_factor_writes": 0,
+      "identified_autocal_toggles": 8,
+      "identified_k_insertion_on": 8,
+      "identified_k_insertion_off": 4,
+      "role_interpretation": "calibration/write transaction evidence"
+    }
+  ],
+  "observed_event_classes": [
+    "app_log",
+    "autocal_native_snapshot",
+    "engine_event",
+    "export_boundary",
+    "full_snapshot",
+    "k_batch_confirmed",
+    "k_factor_batch_confirmed",
+    "k_read_map",
+    "session_started",
+    "session_stopped",
+    "settings_changed",
+    "telemetry",
+    "usb_raw"
+  ],
+  "methodological_findings": [
+    "Largest export is not automatically authoritative for a logical session.",
+    "Exact physical blob dedupe and logical event-union are separate operations.",
+    "MAP_K and K-factor are distinct calibration dimensions and must remain separate.",
+    "AutoCal and PortMon are first-class evidence sources rather than ancillary logs.",
+    "The 1708 WU-006 episodes are a derived compact view, not the whole corpus.",
+    "The private .omegas snapshots remain useful but are not privileged corpus authority."
+  ],
+  "analysis_failure_and_resolution": {
+    "failure": "in-memory canonical event-union exhausted the analysis kernel while processing millions of events",
+    "root_cause": "algorithm retained canonicalized event representations for the full corpus in RAM; memory demand scales with corpus cardinality",
+    "required_resolution": "bounded-memory streaming dedupe with disk-backed identity index and incremental counters",
+    "scientific_data_corruption_detected": false
+  },
+  "claims": {
+    "causal_map_k_proven": false,
+    "causal_k_factor_proven": false,
+    "p_improve_proven": false,
+    "vehicle_proven": false,
+    "production_runtime_changed": false
+  },
+  "next_required_gate": "F0-F7 full-corpus inventory and provenance closure before new scientific experiment design"
+}
