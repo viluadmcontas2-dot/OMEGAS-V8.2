@@ -9,7 +9,8 @@
   const COLUMNS = 12;
   const MAX_SELECTION = ROWS * COLUMNS;
   const MIN_K = 100;
-  const MAX_K = 255;
+  const MAX_K = 180;
+  const PROTOCOL_MAX_K = 255;
 
   const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
   const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
@@ -49,7 +50,8 @@
       if (rows.length !== ROWS || rows.some(row => !Array.isArray(row) || row.length !== COLUMNS)) {
         throw new Error('Mapa K precisa conter exatamente 12 × 12 células editáveis.');
       }
-      this.rows = rows.map(row => row.map(value => clamp(Math.round(Number(value)), 0, MAX_K)));
+      // A leitura deve permanecer fiel ao U8 da ECU; somente novos alvos usam 100..180.
+      this.rows = rows.map(row => row.map(value => clamp(Math.round(Number(value)), 0, PROTOCOL_MAX_K)));
       this.extraRow = Array.isArray(payload.extraRow) ? payload.extraRow.slice(0, COLUMNS) : [];
       const axes = payload.axes || {};
       this.axes = {

@@ -35,6 +35,17 @@ class MotorLearningMemoryTest {
         assertEquals(2, consolidated.getInt("observation_count"))
         assertTrue(consolidated.getDouble("petrol_on_cng_ms") < 5.0)
         assertTrue(consolidated.getDouble("petrol_on_cng_ms") > 4.0)
+        val pair = consolidated.getJSONObject("observed_pair")
+        assertEquals(consolidated.getDouble("petrol_target_ms"), pair.getDouble("petrol_target_ms"), 0.0)
+        assertEquals(consolidated.getDouble("petrol_on_cng_ms"), pair.getDouble("petrol_on_cng_ms"), 0.0)
+        assertTrue(pair.getString("visit_id").isNotBlank())
+        val support = consolidated.getJSONObject("reference_support")
+        assertTrue(support.getString("support_type") in setOf("DIRECT", "NEAR"))
+        assertTrue(support.getJSONArray("region_ids").length() > 0)
+        assertTrue(support.has("nearest_distance"))
+        val context = consolidated.getJSONObject("calibration_context")
+        assertEquals(consolidated.getInt("epoch"), context.getInt("epoch"))
+        assertEquals(consolidated.getString("map_hash"), context.getString("calibration_hash"))
         assertTrue(status.getString("reason").contains("consolidada"))
         assertEquals(
             status.getJSONObject("comparison").getString("direction"),

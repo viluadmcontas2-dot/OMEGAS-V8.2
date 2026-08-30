@@ -87,7 +87,7 @@ function applyPlannerPreview(editor, mode, adjustment) {
     if (mode === 'percent') rawTarget = cell.current * (1 + adjustment / 100);
     else if (mode === 'delta') rawTarget = cell.current + adjustment;
     else rawTarget = adjustment;
-    const target = Math.max(100, Math.min(255, Math.round(rawTarget)));
+    const target = Math.max(100, Math.min(180, Math.round(rawTarget)));
     return { ...cell, target, changed: target !== cell.current };
   });
   editor.applyNativePreview(items);

@@ -48,6 +48,30 @@ object AssistedCalibrationAdvisor {
         val pairedCurves = pairedCurves(samples)
         val global = globalCurve(samples)
         val residual = residualMap(samples, global)
+        val predictions = ContinuousResidualField.predict(
+            samples = samples.map { sample ->
+                val estimate = global.estimate(sample.petrolTargetMs)
+                ContinuousResidualField.Sample(
+                    rpm = sample.rpm,
+                    mapBar = sample.mapBar,
+                    petrolTargetMs = sample.petrolTargetMs,
+                    errorRatio = sample.errorRatio,
+                    globalErrorRatio = if (estimate.available) estimate.value else 0.0,
+                    globalUncertaintyRatio = if (estimate.available) estimate.uncertainty else 0.0,
+                    quality = sample.weight,
+                    visitId = sample.visitId,
+                )
+            },
+            deadbandRatio = configuredDeadbandRatio(),
+            globalAt = { petrolMs ->
+                val estimate = global.estimate(petrolMs)
+                ContinuousResidualField.GlobalEstimate(
+                    errorRatio = estimate.value,
+                    uncertaintyRatio = estimate.uncertainty,
+                    available = estimate.available,
+                )
+            },
+        )
         val regions = mapCorrectionRegions(residual)
         return JSONObject()
             .put("ok", true)
@@ -65,11 +89,12 @@ object AssistedCalibrationAdvisor {
             .put("kFactorAxisMs", JSONArray(KFactorProtocol.OBSERVED_PETROL_AXIS_MS.toList()))
             .put("kFactorSuggestions", global.toJson())
             .put("mapResidualSuggestions", residual)
+            .put("mapResidualPredictions", predictions)
             .put("mapCorrectionRegions", regions)
             .put("reconciliation", reconciled.optJSONObject("reconciliation") ?: JSONObject())
             .put("method", JSONObject()
                 .put("global", "continuous-same-map-error-surface")
-                .put("residual", "bilinear-rpm-petrol-after-supported-global-removal")
+                .put("residual", "continuous-rpm-map-after-supported-global-removal")
                 .put("decision", "useful-margin-error-minus-uncertainty-minus-deadband")
                 .put("confidence", "continuous-weight-repeatability-and-uncertainty")
                 .put("fixedBands", false)
@@ -324,6 +349,7 @@ object AssistedCalibrationAdvisor {
         .put("kFactorAxisMs", JSONArray(KFactorProtocol.OBSERVED_PETROL_AXIS_MS.toList()))
         .put("kFactorSuggestions", JSONArray())
         .put("mapResidualSuggestions", JSONArray())
+        .put("mapResidualPredictions", JSONArray())
         .put("mapCorrectionRegions", JSONArray())
         .put("message", "Ainda não existem comparações gasolina/GNV")
 

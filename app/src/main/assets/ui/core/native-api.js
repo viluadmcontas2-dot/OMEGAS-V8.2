@@ -186,7 +186,7 @@
 
   function demoMapAdjustment(cells, mode, adjustment) {
     const minimumK = 100;
-    const maximumK = 255;
+    const maximumK = 180;
     const value = Number(adjustment);
     const items = (Array.isArray(cells) ? cells : []).map(cell => {
       const current = Number(cell.current);

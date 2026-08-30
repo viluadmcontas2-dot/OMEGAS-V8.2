@@ -11,8 +11,8 @@ import kotlin.math.roundToInt
  * já lidos e devolve alvos normalizados para a UI apenas revisar/renderizar.
  */
 object MapKManualPlanner {
-    private const val MINIMUM_K = KWriteManager.MIN_SAFE_K
-    private const val MAXIMUM_K = 255
+    private const val MINIMUM_K = KWriteManager.MIN_ALLOWED_K
+    private const val MAXIMUM_K = KWriteManager.MAX_ALLOWED_K
 
     fun target(current: Int, mode: String, adjustment: Double): Int {
         require(current in 0..MAXIMUM_K) { "Valor K atual inválido [$current]" }

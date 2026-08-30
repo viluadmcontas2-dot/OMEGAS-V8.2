@@ -147,6 +147,32 @@ class AssistedCalibrationAdvisorTest {
         assertFalse(residual.getBoolean("actionable"))
         assertTrue(residual.getBoolean("globalTrendRemoved"))
         assertTrue(residual.isNull("suggestedDeltaPercent"))
+        val predictions = result.getJSONArray("mapResidualPredictions")
+        assertEquals(144, predictions.length())
+        val supported = (0 until predictions.length())
+            .map { predictions.getJSONObject(it) }
+            .filter { it.getString("supportType") in setOf("DIRECT", "NEAR") }
+        assertTrue(supported.isNotEmpty())
+        assertTrue(supported.all { !it.getBoolean("actionable") })
+    }
+
+    @Test
+    fun `residual local transfere para vizinhos mas nao atravessa area sem suporte`() {
+        val comparisons = JSONArray()
+        repeat(6) { index ->
+            comparisons.put(comparison("low-$index", 5.0, 4.5, 1_700.0 + index * 20, 0.38, 4, 2))
+            comparisons.put(comparison("high-$index", 5.0, 5.5, 1_700.0 + index * 20, 0.58, 4, 2))
+        }
+        val predictions = analyze(comparisons).getJSONArray("mapResidualPredictions")
+        assertEquals(144, predictions.length())
+        val local = (0 until predictions.length()).map { predictions.getJSONObject(it) }
+            .filter { it.getString("supportType") in setOf("DIRECT", "NEAR") }
+        assertTrue(local.isNotEmpty())
+        assertTrue(local.any { !it.isNull("localResidualPercent") })
+        val globalOnly = (0 until predictions.length()).map { predictions.getJSONObject(it) }
+            .filter { it.getString("supportType") == "GLOBAL_ONLY" }
+        assertTrue(globalOnly.isNotEmpty())
+        assertTrue(globalOnly.all { !it.getBoolean("actionable") && it.isNull("suggestedDeltaPercent") })
     }
 
     @Test

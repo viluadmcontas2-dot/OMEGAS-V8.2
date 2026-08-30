@@ -11,7 +11,6 @@ import com.omegas.prohub.model.HubStatus
  */
 object CalibrationWriteSafetyPolicy {
     const val MAX_SAFE_TELEMETRY_AGE_MS = 2_500L
-    const val DRIVING_PROBABLE_RPM = 1_200
 
     data class Decision(
         val allowed: Boolean,
@@ -30,10 +29,6 @@ object CalibrationWriteSafetyPolicy {
         status.directTelemetryAgeMs < 0L || status.directTelemetryAgeMs > MAX_SAFE_TELEMETRY_AGE_MS -> blocked(
             "TELEMETRY_STALE",
             "Telemetria não está atual; aguarde novos quadros antes de gravar",
-        )
-        status.rpm >= DRIVING_PROBABLE_RPM -> blocked(
-            "DRIVING_PROBABLE",
-            "Condução provável: escrita bloqueada enquanto o motor estiver acima de $DRIVING_PROBABLE_RPM RPM",
         )
         else -> Decision(allowed = true)
     }

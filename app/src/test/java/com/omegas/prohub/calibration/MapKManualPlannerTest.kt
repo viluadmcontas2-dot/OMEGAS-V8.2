@@ -20,8 +20,13 @@ class MapKManualPlannerTest {
     @Test
     fun safetyBoundsRemainIdentical() {
         assertEquals(100, MapKManualPlanner.target(120, "target", 10.0))
-        assertEquals(255, MapKManualPlanner.target(120, "target", 999.0))
+        assertEquals(180, MapKManualPlanner.target(120, "target", 999.0))
         assertEquals(100, MapKManualPlanner.target(101, "delta", -50.0))
+        assertEquals(180, MapKManualPlanner.target(179, "delta", 50.0))
+        assertEquals(true, KWriteManager.isAllowedTarget(100))
+        assertEquals(true, KWriteManager.isAllowedTarget(180))
+        assertEquals(false, KWriteManager.isAllowedTarget(99))
+        assertEquals(false, KWriteManager.isAllowedTarget(181))
     }
 
     @Test

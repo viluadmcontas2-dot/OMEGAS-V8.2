@@ -42,9 +42,13 @@ class KWriteManager(
         /** A ECU oficial também expõe a linha 0C, preservada separadamente. */
         const val EXTRA_ROW = KMapPhysicalAxes.WRITABLE_ROWS
         const val TOTAL_ROW_COUNT = KMapPhysicalAxes.PROTOCOL_ROWS
-        const val MIN_SAFE_K = 100
+        /** Limite operacional escolhido pelo usuário; o campo U8 da ECU continua aceitando 0..255. */
+        const val MIN_ALLOWED_K = 100
+        const val MAX_ALLOWED_K = 180
         const val MAX_SAFE_STEP = 25
         const val MAX_SAFE_PAUSE_MS = 2_000
+
+        fun isAllowedTarget(value: Int): Boolean = value in MIN_ALLOWED_K..MAX_ALLOWED_K
     }
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
@@ -292,8 +296,8 @@ class KWriteManager(
             val current = item.optInt("current", -1)
             val target = item.optInt("target", -1)
             if (!validCell(row, column)) return error("Célula [$row,$column] inválida")
-            if (current !in 0..255 || target !in MIN_SAFE_K..255) {
-                return error("Valor K alvo deve estar entre $MIN_SAFE_K e 255")
+            if (current !in 0..255 || !isAllowedTarget(target)) {
+                return error("Valor K alvo deve estar entre $MIN_ALLOWED_K e $MAX_ALLOWED_K")
             }
             if (current == target) return error("A célula [$row,$column] não possui alteração")
             if (!seen.add("$row:$column")) return error("Célula [$row,$column] repetida")

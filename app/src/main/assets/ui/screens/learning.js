@@ -58,10 +58,10 @@
     return 'Sem evidência';
   }
   function comparisonError(item) {
-    return finite(item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.deltaPercent ?? item?.differencePercent ?? item?.error);
+    return finite(item?.observed_pair?.error_percent ?? item?.predictedErrorPercent ?? item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.deltaPercent ?? item?.differencePercent ?? item?.error);
   }
-  function comparisonTargetMs(item) { return finite(item?.petrol_target_ms ?? item?.petrolTargetMs); }
-  function comparisonObservedMs(item) { return finite(item?.petrol_on_cng_ms ?? item?.petrolOnCngMs); }
+  function comparisonTargetMs(item) { return finite(item?.observed_pair?.petrol_target_ms ?? item?.petrol_target_ms ?? item?.petrolTargetMs); }
+  function comparisonObservedMs(item) { return finite(item?.observed_pair?.petrol_on_cng_ms ?? item?.petrol_on_cng_ms ?? item?.petrolOnCngMs); }
   function confidence(item) {
     const raw = finite(item?.confidence);
     if (raw !== null) return raw > 1 ? Math.min(1, raw / 100) : Math.max(0, Math.min(1, raw));
@@ -198,6 +198,8 @@
       this.root.querySelectorAll('[data-learning-layer]').forEach(button => button.classList.toggle('active', button.dataset.learningLayer === layer));
 
       const comparisons = indexByCell(maps.comparisons);
+      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
+      const predictions = indexByCell(advisor.mapResidualPredictions);
       const stability = indexByCell(state.calibrationState?.learningStability?.map || []);
       const mapSuggestions = persistentMapSuggestions(state);
       const persistentItems = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
@@ -229,10 +231,12 @@
             tone = 'cng';
           }
         } else if (layer === 'comparison') {
-          source = comparisons.get(cellKey) || stable || null;
+          const prediction = predictions.get(cellKey);
+          source = comparisons.get(cellKey) || stable || prediction || null;
           const consolidated = finite(stable?.consolidatedErrorPercent);
           const rawError = comparisonError(comparisons.get(cellKey));
-          const error = consolidated ?? rawError;
+          const predictedError = comparisonError(prediction);
+          const error = consolidated ?? rawError ?? predictedError;
           const stableState = String(stable?.state || '').toUpperCase();
           if (error !== null) {
             cellText = `${error > 0 ? '+' : ''}${fmt(error, 1)}%`;
@@ -242,7 +246,11 @@
                 ? 'consolidado'
                 : stableState === 'LEARNING'
                   ? 'aprendendo'
-                  : 'comparando';
+                  : rawError !== null
+                    ? 'par direto'
+                    : String(prediction?.supportType || '') === 'GLOBAL_ONLY'
+                      ? 'tendência global'
+                      : 'previsão local';
             heat = Math.min(1, Math.abs(error) / 8);
             tone = Math.abs(error) <= 1.5 ? 'good' : error > 0 ? 'high' : 'low';
           } else if (learned?.state === ns.LearningModel?.STATES?.COMPARABLE) {
@@ -418,6 +426,8 @@
       const model = this.buildEvidenceModel(maps);
       const learned = evidenceIndex(model).get(key(row, column));
       const comparison = indexByCell(maps.comparisons).get(key(row, column));
+      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
+      const prediction = indexByCell(advisor.mapResidualPredictions).get(key(row, column));
       const stability = indexByCell(state.calibrationState?.learningStability?.map || []).get(key(row, column));
       const suggestion = persistentMapSuggestions(state).get(key(row, column));
       const rawError = comparisonError(comparison);
@@ -426,6 +436,8 @@
       const displayError = consolidatedError ?? rawError;
       const targetMs = comparisonTargetMs(comparison);
       const observedMs = comparisonObservedMs(comparison);
+      const observedPair = comparison?.observed_pair || comparison || null;
+      const referenceSupport = comparison?.reference_support || null;
       const delta = mapSuggestionDelta(suggestion);
       const petrolSamples = finite(learned?.petrol?.samples) ?? 0;
       const cngSamples = finite(learned?.cng?.samples) ?? 0;
@@ -449,6 +461,19 @@
       const comparisonText = displayError !== null && targetMs !== null && observedMs !== null
         ? `${fmt(targetMs, 2)} → ${fmt(observedMs, 2)} ms · ${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%${consolidatedError !== null ? ' consolidado' : ''}`
         : displayError !== null ? `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%` : 'ainda não existe par equivalente válido';
+      const pairCondition = observedPair
+        ? `${finite(observedPair.rpm) === null ? 'RPM —' : `${Math.round(finite(observedPair.rpm)).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(observedPair.map_bar, 3)} bar · qualidade ${Math.round((finite(observedPair.quality) || 0) * 100)}%`
+        : '—';
+      const supportType = String(referenceSupport?.support_type || 'UNKNOWN').toUpperCase();
+      const supportLabel = supportType === 'DIRECT' ? 'direto' : supportType === 'NEAR' ? 'vizinho interpolado' : 'legado/não informado';
+      const supportDistance = finite(referenceSupport?.nearest_distance);
+      const supportText = referenceSupport
+        ? `${supportLabel} · ${Math.round(finite(referenceSupport.selected_candidates) || 0)} referência(s) · dispersão ${fmt(referenceSupport.spread_ms, 3)} ms${supportDistance === null ? '' : ` · distância ${fmt(supportDistance, 2)}`}`
+        : 'procedência não disponível em evidência legada';
+      const predictionType = String(prediction?.supportType || 'UNKNOWN').toUpperCase();
+      const predictionText = prediction
+        ? `${predictionType === 'DIRECT' ? 'suporte direto' : predictionType === 'NEAR' ? 'vizinho interpolado' : predictionType === 'GLOBAL_ONLY' ? 'somente tendência global' : 'sem suporte'} · total ${fmt(prediction.predictedErrorPercent, 1)}% = global ${fmt(prediction.globalErrorPercent, 1)}% + local ${fmt(prediction.localResidualPercent, 1)}% · incerteza ${fmt(prediction.uncertaintyPercent, 1)}%`
+        : 'ainda não calculada';
       const recentText = stabilityState === 'REVALIDATING' && recentError !== null
         ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}% · ${Math.round(finite(stability?.recentUniqueVisits) || 0)} visita(s) nova(s)`
         : stabilityState === 'CONSOLIDATED'
@@ -461,11 +486,14 @@
         <dl class="detail-list enhanced-detail-list">
           <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}% · ${Math.round(finite(stability?.consolidatedUniqueVisits) || 0)} visitas`}</dd></div>
           <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
-          <div><dt>Gasolina — referência</dt><dd>${learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms · ${petrolRpm === null ? 'RPM —' : `${Math.round(petrolRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(petrolMap, 3)} bar` : 'sem evidência'}</dd></div>
-          <div><dt>Evidência gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas · ${petrolSessions} sessões · confiança ${Math.round(confidence(learned.petrol) * 100)}%` : '—'}</dd></div>
-          <div><dt>GNV atual — Petrol Inj.</dt><dd>${learned?.cng ? `${fmt(cngMeanMs, 2)} ms · ${cngRpm === null ? 'RPM —' : `${Math.round(cngRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap, 3)} bar` : 'sem evidência atual'}</dd></div>
-          <div><dt>Evidência GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas · ${cngSessions} sessões · confiança ${Math.round(confidence(learned.cng) * 100)}% · época ${model?.epoch ?? '—'}` : '—'}</dd></div>
-          <div><dt>Equivalência</dt><dd>${comparisonText}</dd></div>
+          <div><dt>Resumo projetado da célula</dt><dd>Este resumo não é o par usado no cálculo; agrega evidências que influenciam esta célula.</dd></div>
+          <div><dt>Gasolina — referência agregada</dt><dd>${learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms · ${petrolRpm === null ? 'RPM —' : `${Math.round(petrolRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(petrolMap, 3)} bar` : 'sem evidência agregada'}</dd></div>
+          <div><dt>Precisão local da gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas independentes · ${petrolSessions} sessões · precisão ${Math.round(confidence(learned.petrol) * 100)}%` : '—'}</dd></div>
+          <div><dt>GNV atual agregado — Petrol Inj.</dt><dd>${learned?.cng ? `${fmt(cngMeanMs, 2)} ms · ${cngRpm === null ? 'RPM —' : `${Math.round(cngRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap, 3)} bar` : 'sem evidência atual agregada'}</dd></div>
+          <div><dt>Precisão local do GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas independentes · ${cngSessions} sessões · precisão ${Math.round(confidence(learned.cng) * 100)}% · época ${model?.epoch ?? '—'}` : '—'}</dd></div>
+          <div><dt>Par observado usado no cálculo</dt><dd>${comparisonText}<br>${pairCondition}</dd></div>
+          <div><dt>Suporte da referência</dt><dd>${supportText}</dd></div>
+          <div><dt>Predição contínua RPM × MAP</dt><dd>${predictionText}</dd></div>
           <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')} · somente consulta` : 'nenhum'}</dd></div>
           <div><dt>Sugestão local</dt><dd>${delta === null ? 'nenhuma registrada' : `${delta > 0 ? '+' : ''}${fmt(delta, 1)}% · ${suggestion?.actionable === true ? 'pronta para revisar' : stabilityState === 'REVALIDATING' ? 'preservada enquanto revalida' : 'observando'}`}</dd></div>
         </dl>

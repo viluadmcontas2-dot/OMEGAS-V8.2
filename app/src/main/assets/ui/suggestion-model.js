@@ -52,7 +52,9 @@
 
   function split(advice = {}) {
     const curve = Array.isArray(advice.kFactorSuggestions) ? advice.kFactorSuggestions : [];
-    const map = Array.isArray(advice.mapResidualSuggestions) ? advice.mapResidualSuggestions : [];
+    const predictions = Array.isArray(advice.mapResidualPredictions) ? advice.mapResidualPredictions : [];
+    const map = (predictions.length ? predictions : (Array.isArray(advice.mapResidualSuggestions) ? advice.mapResidualSuggestions : []))
+      .filter(item => !predictions.length || ['DIRECT', 'NEAR'].includes(String(item.supportType || '')));
     const curveItems = curve.map(item => classify({ ...item, type: 'curve' }));
     const mapItems = map.map(item => classify({ ...item, type: 'map' }));
     return {

@@ -38,7 +38,6 @@ class CalibrationWriteSafetyPolicyTest {
             safeStatus().copy(engineStuck = true) to "ENGINE_UNSAFE",
             safeStatus().copy(directTelemetryAgeMs = -1) to "TELEMETRY_STALE",
             safeStatus().copy(directTelemetryAgeMs = 2_501) to "TELEMETRY_STALE",
-            safeStatus().copy(rpm = 1_200) to "DRIVING_PROBABLE",
         )
         cases.forEach { (status, code) ->
             val decision = CalibrationWriteSafetyPolicy.evaluate(status)
@@ -51,7 +50,15 @@ class CalibrationWriteSafetyPolicyTest {
     @Test
     fun `limites seguros permanecem inclusivos onde definido`() {
         assertTrue(CalibrationWriteSafetyPolicy.evaluate(
-            safeStatus().copy(rpm = 1_199, directTelemetryAgeMs = 2_500),
+            safeStatus().copy(rpm = 6_500, directTelemetryAgeMs = 2_500),
         ).allowed)
+    }
+
+    @Test
+    fun `rpm nao bloqueia uma escrita manual quando comunicacao permanece segura`() {
+        val decision = CalibrationWriteSafetyPolicy.evaluate(safeStatus().copy(rpm = 4_500))
+
+        assertTrue(decision.allowed)
+        assertEquals("SAFE_TO_REVIEW_WRITE", decision.code)
     }
 }

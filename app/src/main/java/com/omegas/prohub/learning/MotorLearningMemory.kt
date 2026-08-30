@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
@@ -378,7 +379,10 @@ class MotorLearningMemory(
         // Modo de edição livre: sempre permite.
         val confidence = evidence.confidence()
         val proposed = (value * (1.0 + 0.35 * confidence * evidence.medianErrorRatio))
-            .coerceIn(50.0, 255.0)
+            .coerceIn(
+                KWriteManager.MIN_ALLOWED_K.toDouble(),
+                KWriteManager.MAX_ALLOWED_K.toDouble(),
+            )
             .toInt()
         JSONObject()
             .put("ok", true)
@@ -625,10 +629,9 @@ class MotorLearningMemory(
         }
 
         val candidate = compare(
-            petrolTargetMs = reference.petrolTargetMs,
+            reference = reference,
             cngSample = sample,
             visitId = visit.id,
-            referenceRegionId = reference.regionIds.joinToString(","),
             origin = "CONTINUOUS_REFERENCE_SURFACE",
             pairQuality = sqrt(reference.quality * sample.quality).coerceIn(0.0, 1.0),
         )
@@ -649,13 +652,14 @@ class MotorLearningMemory(
     }
 
     private fun compare(
-        petrolTargetMs: Double,
+        reference: PetrolReferenceEstimate,
         cngSample: MotorSample,
         visitId: String,
-        referenceRegionId: String,
         origin: String,
         pairQuality: Double,
     ): FuelComparison {
+        val petrolTargetMs = reference.petrolTargetMs
+        val referenceRegionId = reference.regionIds.joinToString(",")
         val difference = cngSample.petrolMs - petrolTargetMs
         val errorPct = if (petrolTargetMs <= 0.05) 0.0 else difference / petrolTargetMs * 100.0
         val direction = when {
@@ -691,6 +695,15 @@ class MotorLearningMemory(
             quality = pairQuality.coerceIn(0.0, 1.0),
             epoch = epoch,
             mapHash = mapHash,
+            referenceStage = reference.stage,
+            referenceSupportType = reference.supportType,
+            referenceSpreadMs = reference.spreadMs,
+            referenceExtrapolated = reference.extrapolated,
+            referenceSelectedCandidates = reference.selectedCandidates,
+            referenceNearestDistance = reference.nearestDistance,
+            referenceNearestRpmDelta = reference.nearestRpmDelta,
+            referenceNearestMapDelta = reference.nearestMapDelta,
+            referenceNearestWaterDelta = reference.nearestWaterDelta,
         )
     }
 
@@ -871,6 +884,11 @@ class MotorLearningMemory(
             regionIds = result.regionIds,
             stage = result.stage,
             extrapolated = result.extrapolated,
+            selectedCandidates = result.selectedCandidates,
+            nearestDistance = result.nearestDistance,
+            nearestRpmDelta = result.nearestRpmDelta,
+            nearestMapDelta = result.nearestMapDelta,
+            nearestWaterDelta = result.nearestWaterDelta,
         )
     }
 
@@ -1450,7 +1468,14 @@ private data class PetrolReferenceEstimate(
     val regionIds: List<String>,
     val stage: String,
     val extrapolated: Boolean = false,
+    val selectedCandidates: Int = 0,
+    val nearestDistance: Double? = null,
+    val nearestRpmDelta: Double? = null,
+    val nearestMapDelta: Double? = null,
+    val nearestWaterDelta: Double? = null,
 ) {
+    val supportType: String get() = if (extrapolated) "NEAR" else "DIRECT"
+
     fun toJson(): JSONObject = JSONObject()
         .put("petrol_target_ms", petrolTargetMs)
         .put("spread_ms", spreadMs)
@@ -1458,8 +1483,14 @@ private data class PetrolReferenceEstimate(
         .put("region_ids", JSONArray(regionIds))
         .put("region_count", regionIds.size)
         .put("stage", stage)
+        .put("support_type", supportType)
         .put("method", "RPM_MAP_WATER_WEIGHTED_SURFACE")
         .put("extrapolated", extrapolated)
+        .put("selected_candidates", selectedCandidates)
+        .put("nearest_distance", nearestDistance ?: JSONObject.NULL)
+        .put("nearest_rpm_delta", nearestRpmDelta ?: JSONObject.NULL)
+        .put("nearest_map_delta", nearestMapDelta ?: JSONObject.NULL)
+        .put("nearest_water_delta", nearestWaterDelta ?: JSONObject.NULL)
         .put("extrapolation_weight", if (extrapolated) 0.35 else 1.0)
 }
 
@@ -1489,6 +1520,15 @@ private data class FuelComparison(
     val epoch: Int,
     val mapHash: String,
     val observationCount: Int = 1,
+    val referenceStage: String = "LEGACY",
+    val referenceSupportType: String = "UNKNOWN",
+    val referenceSpreadMs: Double? = null,
+    val referenceExtrapolated: Boolean = false,
+    val referenceSelectedCandidates: Int = 0,
+    val referenceNearestDistance: Double? = null,
+    val referenceNearestRpmDelta: Double? = null,
+    val referenceNearestMapDelta: Double? = null,
+    val referenceNearestWaterDelta: Double? = null,
 ) {
     /**
      * Mantém uma única evidência independente por visita, mas deixa essa evidência amadurecer
@@ -1537,6 +1577,15 @@ private data class FuelComparison(
             quality = ((quality * oldCount + newer.quality * newCount) / (oldCount + newCount))
                 .coerceIn(0.0, 1.0),
             observationCount = oldCount + newCount,
+            referenceStage = newer.referenceStage,
+            referenceSupportType = newer.referenceSupportType,
+            referenceSpreadMs = newer.referenceSpreadMs,
+            referenceExtrapolated = newer.referenceExtrapolated,
+            referenceSelectedCandidates = newer.referenceSelectedCandidates,
+            referenceNearestDistance = newer.referenceNearestDistance,
+            referenceNearestRpmDelta = newer.referenceNearestRpmDelta,
+            referenceNearestMapDelta = newer.referenceNearestMapDelta,
+            referenceNearestWaterDelta = newer.referenceNearestWaterDelta,
         )
     }
 
@@ -1581,10 +1630,37 @@ private data class FuelComparison(
         .put("quality", quality)
         .put("epoch", epoch)
         .put("map_hash", mapHash)
+        .put("calibration_hash", mapHash)
         .put("observation_count", observationCount)
+        .put("observed_pair", JSONObject()
+            .put("petrol_target_ms", petrolTargetMs)
+            .put("petrol_on_cng_ms", petrolOnCngMs)
+            .put("difference_ms", differenceMs)
+            .put("error_percent", errorPct)
+            .put("rpm", rpm)
+            .put("map_bar", mapBar)
+            .put("quality", quality)
+            .put("visit_id", visitId)
+            .put("session_id", sessionId))
+        .put("reference_support", JSONObject()
+            .put("support_type", referenceSupportType)
+            .put("stage", referenceStage)
+            .put("extrapolated", referenceExtrapolated)
+            .put("spread_ms", referenceSpreadMs ?: JSONObject.NULL)
+            .put("region_ids", JSONArray(referenceRegionId.split(',').filter(String::isNotBlank)))
+            .put("selected_candidates", referenceSelectedCandidates)
+            .put("nearest_distance", referenceNearestDistance ?: JSONObject.NULL)
+            .put("nearest_rpm_delta", referenceNearestRpmDelta ?: JSONObject.NULL)
+            .put("nearest_map_delta", referenceNearestMapDelta ?: JSONObject.NULL)
+            .put("nearest_water_delta", referenceNearestWaterDelta ?: JSONObject.NULL))
+        .put("calibration_context", JSONObject()
+            .put("epoch", epoch)
+            .put("calibration_hash", mapHash))
 
     companion object {
-        fun fromJson(raw: JSONObject) = FuelComparison(
+        fun fromJson(raw: JSONObject): FuelComparison {
+            val support = raw.optJSONObject("reference_support")
+            return FuelComparison(
             id = raw.optString("id", UUID.randomUUID().toString()),
             dedupeKey = raw.optString("dedupe_key", UUID.randomUUID().toString()),
             visitId = raw.optString("visit_id", ""),
@@ -1610,7 +1686,20 @@ private data class FuelComparison(
             epoch = raw.optInt("epoch", 1),
             mapHash = raw.optString("map_hash", ""),
             observationCount = raw.optInt("observation_count", 1).coerceAtLeast(1),
-        )
+            referenceStage = support?.optString("stage", "LEGACY") ?: "LEGACY",
+            referenceSupportType = support?.optString("support_type", "UNKNOWN") ?: "UNKNOWN",
+            referenceSpreadMs = support?.nullableDouble("spread_ms"),
+            referenceExtrapolated = support?.optBoolean("extrapolated", false) ?: false,
+            referenceSelectedCandidates = support?.optInt("selected_candidates", 0) ?: 0,
+            referenceNearestDistance = support?.nullableDouble("nearest_distance"),
+            referenceNearestRpmDelta = support?.nullableDouble("nearest_rpm_delta"),
+            referenceNearestMapDelta = support?.nullableDouble("nearest_map_delta"),
+            referenceNearestWaterDelta = support?.nullableDouble("nearest_water_delta"),
+            )
+        }
+
+        private fun JSONObject.nullableDouble(key: String): Double? =
+            if (has(key) && !isNull(key)) optDouble(key).takeIf(Double::isFinite) else null
     }
 }
 

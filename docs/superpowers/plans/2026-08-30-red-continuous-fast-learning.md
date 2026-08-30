@@ -28,7 +28,7 @@
 - [ ] RED: permitir escrita manual acima de 1.200 RPM com demais requisitos verdes.
 - [ ] GREEN: remover somente a guarda por RPM.
 - [ ] RED: limites 100/180 e rejeição 99/181 no planner, Advisor e writer.
-- [ ] GREEN: centralizar `MAX_SAFE_K=180`.
+- [x] GREEN: centralizar o limite operacional solicitado `MAX_ALLOWED_K=180`, sem confundi-lo com o limite U8 do protocolo.
 
 ### Task 3: Procedência
 

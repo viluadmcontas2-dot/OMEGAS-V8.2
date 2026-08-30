@@ -88,6 +88,23 @@ class AdvisorSuggestionAdapterV7Test {
     }
 
     @Test
+    fun map_advice_never_exceeds_owner_approved_ceiling() {
+        val highMap = calibration().copy(
+            mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+                List(CalibrationShapeV7.MAP_K_COLUMNS) { 179 }
+            },
+        )
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray())
+            .put("mapResidualSuggestions", JSONArray().put(mapItem(2, 4, 50.0)))
+
+        val change = AdvisorSuggestionAdapterV7().adapt(advice, highMap, nowMs = 100)
+            .single().mapChanges.single()
+
+        assertEquals(180, change.after)
+    }
+
+    @Test
     fun non_actionable_cell_is_preserved_as_observing_without_old_value_being_actionable() {
         val item = JSONObject()
             .put("row", 2)

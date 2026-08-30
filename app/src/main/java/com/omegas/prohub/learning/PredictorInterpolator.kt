@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.calibration.KWriteManager
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.max
@@ -210,7 +211,7 @@ object PredictorInterpolator {
         val total = trajectoryEstimates.sumOf { it.weight }.coerceAtLeast(1e-12)
         val target = (trajectoryEstimates.sumOf { it.targetK * it.weight } / total)
             .toInt()
-            .coerceIn(100, 255)
+            .coerceIn(KWriteManager.MIN_ALLOWED_K, KWriteManager.MAX_ALLOWED_K)
         return TargetEstimate(true, target, "DIRECT_SUPPORT_INTERPOLATION", trajectoryEstimates.map { it.id })
     }
 

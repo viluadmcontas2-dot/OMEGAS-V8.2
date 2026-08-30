@@ -108,10 +108,13 @@ class AdvisorSuggestionAdapterV7 {
         nowMs: Long,
     ): List<LocalSuggestionV7> {
         val regionByCell = regionLabels(advice.optJSONArray("mapCorrectionRegions") ?: JSONArray())
-        val residual = advice.optJSONArray("mapResidualSuggestions") ?: JSONArray()
+        val predicted = advice.optJSONArray("mapResidualPredictions") ?: JSONArray()
+        val residual = if (predicted.length() > 0) predicted else
+            advice.optJSONArray("mapResidualSuggestions") ?: JSONArray()
         val output = mutableListOf<LocalSuggestionV7>()
         repeat(residual.length()) { position ->
             val item = residual.optJSONObject(position) ?: return@repeat
+            if (predicted.length() > 0 && item.optString("supportType") !in setOf("DIRECT", "NEAR")) return@repeat
             val row = item.optInt("row", -1)
             val column = item.optInt("column", -1)
             if (row !in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS ||
@@ -173,7 +176,7 @@ class AdvisorSuggestionAdapterV7 {
         ) return null
         val before = calibration.mapK[row][column]
         val after = (before * (1.0 + deltaPercent / 100.0)).roundToInt()
-            .coerceIn(KWriteManager.MIN_SAFE_K, 0xFF)
+            .coerceIn(KWriteManager.MIN_ALLOWED_K, KWriteManager.MAX_ALLOWED_K)
         if (after == before) return null
         return MapCellChangeV7(row, column, before, after)
     }
