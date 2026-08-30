@@ -19,11 +19,11 @@
   }
   function actionLabel(action) {
     return ({
-      ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
-      DISABLE_AUTO_CAL: 'Pausar Auto Calibration',
-      RESET_PETROL: 'Resetar aquisição gasolina',
-      RESET_GAS: 'Resetar aquisição GNV',
-      RESET_ALL: 'Começar nova aquisição AutoCal',
+      ENABLE_AUTO_CAL: 'Ativar coleta da ECU',
+      DISABLE_AUTO_CAL: 'Pausar coleta da ECU',
+      RESET_PETROL: 'Apagar aprendizado de gasolina',
+      RESET_GAS: 'Apagar aprendizado de GNV',
+      RESET_ALL: 'Apagar tudo e começar de novo',
     })[action] || action;
   }
 
@@ -71,36 +71,33 @@
         panel.className = 'curve-view autocal-cockpit-view';
         panel.dataset.curvePanel = 'autocal';
         panel.innerHTML = `
-          <section class="autocal-cockpit" aria-label="Cockpit Auto Calibration nativa">
+          <section class="autocal-cockpit" aria-label="Auto-Cal da ECU">
             <header class="autocal-head">
-              <div><small>AUTO CALIBRATION NATIVA</small><h3>O que a ECU está aprendendo agora</h3><p>Observação e controle manual da aquisição nativa. AutoMatch continua dentro da ECU.</p></div>
-              <div class="autocal-head-actions"><span id="autocalNativeState" class="source-status">Aguardando ECU</span><button type="button" data-autocal-read class="secondary">Solicitar snapshot</button></div>
+              <div><small>APRENDIZADO NATIVO</small><h3>Auto-Cal da ECU</h3><p>A ECU coleta condições do motor e tenta ajustar o próprio AutoMatch. O OMEGAS mostra o progresso e mantém qualquer comando sob sua confirmação.</p></div>
+              <div class="autocal-head-actions"><span id="autocalNativeState" class="source-status">Aguardando ECU</span><button type="button" data-autocal-read class="secondary">Atualizar leitura</button></div>
             </header>
+            <section class="autocal-next-step" aria-live="polite"><div><small>ORIENTAÇÃO</small><h4>O que fazer agora</h4></div><p id="autocalGuidance">Atualize a leitura para saber se a coleta da ECU está ativa.</p></section>
             <div class="autocal-live-strip">
-              <div><small>ESTADO</small><b id="autocalState">—</b></div>
-              <div><small>AQUISIÇÃO</small><b id="autocalEnable">—</b></div>
-              <div><small>AUTOMATCH ECU</small><b id="autocalMatchCount">—</b></div>
-              <div><small>MÁX. AUTOMATCH</small><b id="autocalMaxMatch">—</b></div>
-              <div><small>EVENTOS MADUROS</small><b id="autocalMatureCount">0</b></div>
+              <div><small>Coleta da ECU</small><b id="autocalEnable">—</b></div>
+              <div><small>Progresso do AutoMatch</small><b id="autocalMatchCount">—</b></div>
+              <div><small>Limite configurado</small><b id="autocalMaxMatch">—</b></div>
+              <div><small>Bandas prontas</small><b id="autocalMatureCount">0</b></div>
             </div>
             <div class="autocal-layout">
               <section class="autocal-bands-card">
-                <div class="autocal-section-head"><div><small>18 BANDAS GNV</small><h4>Contadores nativos</h4></div><span>somente leitura</span></div>
+                <div class="autocal-section-head"><div><small>18 FAIXAS DE APRENDIZADO</small><h4>Progresso por faixa</h4></div><span>somente leitura</span></div>
                 <div id="autocalBands" class="autocal-bands"></div>
-                <p class="autocal-note">O OMEGAS não inventa RPM pela banda. Posição física só vira âncora quando a correlação monotônica é confiável.</p>
+                <p class="autocal-note">Cada faixa representa uma condição interna da ECU. Ela só vira referência para o mapa quando existe uma posição física confiável.</p>
               </section>
               <aside class="autocal-side">
-                <section class="autocal-events-card"><div class="autocal-section-head"><div><small>MATURIDADE</small><h4>Últimos eventos</h4></div></div><div id="autocalEvents" class="autocal-events"></div></section>
+                <section class="autocal-events-card"><div class="autocal-section-head"><div><small>RESULTADOS RECENTES</small><h4>Onde a ECU conseguiu aprender</h4></div></div><div id="autocalEvents" class="autocal-events"></div></section>
                 <section class="autocal-actions-card">
-                  <div class="autocal-section-head"><div><small>CONTROLE MANUAL</small><h4>Ações da ECU</h4></div><span>dupla confirmação</span></div>
-                  <div class="autocal-actions">
-                    <button type="button" data-autocal-action="ENABLE_AUTO_CAL">Habilitar coleta</button>
-                    <button type="button" data-autocal-action="DISABLE_AUTO_CAL">Pausar coleta</button>
-                    <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
-                    <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
-                    <button type="button" data-autocal-action="RESET_ALL" class="critical">Nova aquisição</button>
-                  </div>
+                  <div class="autocal-section-head"><div><small>CONTROLE DA COLETA</small><h4>Escolha uma ação</h4></div><span>sempre confirmada</span></div>
+                  <p class="autocal-action-help">Ativar ou pausar não aplica um mapa sugerido pelo OMEGAS. Apenas controla a aquisição nativa da ECU.</p>
+                  <div class="autocal-actions autocal-primary-actions"><button type="button" data-autocal-action="ENABLE_AUTO_CAL">Ativar coleta</button><button type="button" data-autocal-action="DISABLE_AUTO_CAL">Pausar coleta</button></div>
+                  <details class="autocal-advanced"><summary>Reiniciar aprendizado (avançado)</summary><p>Estas ações apagam dados nativos já coletados. Use apenas quando você decidiu começar uma nova aquisição.</p><div class="autocal-actions"><button type="button" data-autocal-action="RESET_PETROL">Apagar gasolina</button><button type="button" data-autocal-action="RESET_GAS">Apagar GNV</button><button type="button" data-autocal-action="RESET_ALL" class="critical">Apagar tudo</button></div></details>
                   <div id="autocalActionStatus" class="autocal-action-status">Nenhuma ação preparada.</div>
+                  <details class="autocal-advanced autocal-diagnostic"><summary>Diagnóstico técnico</summary><p>O estado bruto, os comandos e a sessão aparecem na revisão antes de qualquer envio.</p></details>
                 </section>
               </aside>
             </div>
@@ -114,7 +111,13 @@
     }
 
     bind() {
-      this.button?.addEventListener('click', () => this.open());
+      const switcher = document.getElementById('curveViewSwitch');
+      switcher?.addEventListener('click', event => {
+        const target = event.target.closest?.('[data-curve-view="autocal"]');
+        if (!target) return;
+        this.button = target;
+        this.open();
+      });
       document.querySelectorAll('#curveViewSwitch [data-curve-view="learning"], #curveViewSwitch [data-curve-view="editor"]').forEach(button => {
         button.addEventListener('click', () => { this.active = false; });
       });
@@ -205,9 +208,23 @@
       this.text('autocalMatchCount', autoMatchCount ?? '—');
       this.text('autocalMaxMatch', maxAutoMatch ?? '—');
       this.text('autocalMatureCount', events.length);
+      this.renderGuidance(enabled, events, snapshot.available === true);
       this.renderBands(snapshot, events);
       this.renderEvents(events);
       this.renderActionState();
+    }
+
+    renderGuidance(enabled, events, available) {
+      const message = !available
+        ? 'Conecte a ECU e toque em Atualizar leitura.'
+        : enabled === 0
+          ? 'A coleta está pausada. Toque em Ativar coleta quando quiser continuar.'
+          : enabled === 1 && events.length === 0
+            ? 'A coleta está ativa. Dirija normalmente; o progresso aparece nas faixas abaixo.'
+            : enabled === 1
+              ? 'A coleta está ativa e já produziu resultados. Revise as faixas prontas abaixo.'
+              : 'Toque em Atualizar leitura para confirmar o estado da coleta.';
+      this.text('autocalGuidance', message);
     }
 
     renderBands(snapshot, events) {
@@ -240,7 +257,7 @@
         const correlated = String(event.correlationState || '') === 'CORRELATED';
         const rpm = finite(event.rpm);
         const confidence = Math.round((finite(event.correlationConfidence) || 0) * 100);
-        return `<article data-state="${correlated ? 'correlated' : 'raw'}"><div><b>B${Number(event.bandIndex) + 1}</b><span>${escapeHtml(event.zone || 'zona')}</span></div><p>${correlated ? `${rpm === null ? 'RPM —' : `${Math.round(rpm).toLocaleString('pt-BR')} RPM`} · confiança ${confidence}%` : escapeHtml(event.correlationReason || 'NO_RELIABLE_CORRELATION')}</p><small>contador ${finite(event.counter) ?? '—'} · limiar ${finite(event.threshold) ?? '—'}</small></article>`;
+        return `<article data-state="${correlated ? 'correlated' : 'raw'}"><div><b>B${Number(event.bandIndex) + 1}</b><span>${escapeHtml(event.zone || 'zona')}</span></div><p>${correlated ? `${rpm === null ? 'RPM —' : `${Math.round(rpm).toLocaleString('pt-BR')} RPM`} · precisão da correlação ${confidence}%` : escapeHtml(event.correlationReason || 'NO_RELIABLE_CORRELATION')}</p><small>contador ${finite(event.counter) ?? '—'} · limiar ${finite(event.threshold) ?? '—'}</small></article>`;
       }).join('');
     }
 
@@ -258,7 +275,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO WEBVIEW</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close">×</button></header><p>${escapeHtml(prepared.description || '')}</p><dl><div><dt>Ação</dt><dd>${escapeHtml(prepared.action)}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>ECU pode alterar MUL_ACT</dt><dd>${prepared.mayChangeMulAct ? 'sim' : 'não'}</dd></div></dl><div class="write-contract"><b>Ainda não foi enviado.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISE ANTES DE CONTINUAR</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado.</b><span>O próximo botão abre a confirmação final do Android. O comando só sai depois da sua confirmação positiva.</span></div><details class="autocal-advanced"><summary>Diagnóstico técnico</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(prepared.action)}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>ECU pode alterar MUL_ACT</dt><dd>${prepared.mayChangeMulAct ? 'sim' : 'não'}</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Abrir confirmação final</button></div></div>`;
     }
 
     renderUnavailable() {

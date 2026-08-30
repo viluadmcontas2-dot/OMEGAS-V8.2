@@ -311,3 +311,10 @@
   .autocal-live-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .autocal-bands { grid-template-columns: repeat(3, minmax(72px, 1fr)); }
 }
+
+.autocal-next-step{display:grid;grid-template-columns:minmax(9rem,.35fr) 1fr;gap:1rem;align-items:center;margin:.9rem 0;padding:1rem 1.1rem;border:1px solid rgba(91,184,255,.24);border-radius:14px;background:rgba(79,163,255,.07)}
+.autocal-next-step h4,.autocal-next-step p{margin:0}.autocal-next-step p{line-height:1.55}
+.autocal-action-help{margin:0 0 .8rem;line-height:1.5;opacity:.82}
+.autocal-advanced{margin-top:.8rem;padding:.75rem .85rem;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.02)}
+.autocal-advanced summary{cursor:pointer;font-weight:700}.autocal-advanced p{line-height:1.5;opacity:.8}.autocal-diagnostic{font-size:.88rem}
+@media(max-width:760px){.autocal-next-step{grid-template-columns:1fr}}
