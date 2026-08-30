@@ -15,7 +15,7 @@ class RiskCoverageTest(unittest.TestCase):
         second = empirical_risk_coverage_curve(list(reversed(observations)))
         self.assertEqual(first, second)
         self.assertEqual([0.25, 0.50, 0.75, 1.00], [point.coverage for point in first.points])
-        self.assertEqual([0.02, 0.05, 0.12, 0.20], [point.max_risk_score for point in []])
+        self.assertEqual([0.10, 0.20, 0.30, 0.40], [point.max_risk_score for point in first.points])
 
     def test_lower_risk_prefix_can_have_lower_empirical_tail_without_claiming_probability(self):
         observations = [
