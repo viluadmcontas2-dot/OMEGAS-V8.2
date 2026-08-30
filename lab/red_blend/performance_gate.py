@@ -42,6 +42,7 @@ _RUNTIME_EXACT = frozenset(
 _SAFE_OFFLINE_PREFIXES = (
     ".github/",
     "docs/",
+    "evidence/red_blend/",
     "lab/",
     "tests/",
     "tools/",

@@ -45,6 +45,17 @@ class PerformanceGateTest(unittest.TestCase):
         self.assertEqual(("mystery/runtime-loader.conf",), result.unclassified_changes)
         self.assertFalse(result.hot_path_preserved)
 
+    def test_red_blend_evidence_is_offline_without_whitelisting_other_namespaces(self):
+        governed = classify_runtime_delta(
+            ["evidence/red_blend/full_corpus/mechanistic-asu-simulation.json"]
+        )
+        unknown = classify_runtime_delta(["evidence/other/runtime-loader.conf"])
+
+        self.assertEqual("RED_ANDROID_RUNTIME_INPUTS_IDENTICAL", governed.status)
+        self.assertTrue(governed.hot_path_preserved)
+        self.assertEqual("BLOCKED_UNCLASSIFIED_DELTA", unknown.status)
+        self.assertFalse(unknown.hot_path_preserved)
+
 
 if __name__ == "__main__":
     unittest.main()
