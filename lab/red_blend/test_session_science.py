@@ -66,7 +66,7 @@ class SessionScienceTest(unittest.TestCase):
 
     def test_loso_requires_three_independent_sessions(self):
         groups = make_sessions([4.0, 4.1], sigma=0.02, n=20, seed=55)
-        with self.assertRaisesRegex(ValueError, "at least three independent sessions"):
+        with self.assertRaisesRegex(ValueError, "at least 3 independent sessions"):
             leave_one_session_out(groups)
 
     def test_decomposition_is_order_deterministic(self):
