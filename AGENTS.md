@@ -27,9 +27,15 @@
 - RPM não bloqueia abertura, edição ou início manual de transação confirmada; serviço, USB, engine e telemetria fresca continuam requisitos técnicos.
 - Nenhum Predictor, Advisor ou Auto-Cal grava automaticamente.
 
-## Verificação
+## Verificação e CI da RED pública
 
-- Ordem: testes focados → gate rápido → suíte JVM afetada → suíte ampla/lint/build quando proporcionais.
-- GitHub Actions é último recurso e não deve acordar em commits comuns.
-- `PROVEN` exige SHA, comandos, resultados e limites em `STATUS.md`, `docs/evidence/` e na Issue.
-- Sem teste no veículo, nunca alegar economia física comprovada.
+- `PUBLIC_REPO_STANDARD_ACTIONS=PRIMARY_REMOTE_EXECUTION` vale **somente** para o OMEGAS V8.0 RED neste repositório enquanto ele permanecer público e usar runners GitHub-hosted padrão sem custo adicional.
+- Pushes com mudanças relevantes de código, testes, build ou workflow na branch RED devem disparar GitHub Actions automaticamente; documentação isolada não deve compilar Android.
+- O pipeline remoto segue `FAST → FULL → APK/evidence`: contratos baratos falham cedo; o gate completo só começa após FAST verde; artifact só nasce após FULL verde.
+- `concurrency` deve cancelar execução supersedida por SHA mais novo da mesma branch.
+- A prova Kotlin/JVM, Android lint e geração de APK deve preferir GitHub Actions; execução local é apoio opcional e nunca autoridade exclusiva.
+- Reutilizar cache seguro de dependências/build quando suportado; evitar recompilação deliberadamente redundante dentro do mesmo run.
+- Larger runners, runners pagos ou qualquer modalidade com custo adicional exigem nova aprovação explícita do owner.
+- Se o repositório deixar de ser público, se a política de cobrança mudar materialmente ou se o runner padrão deixar de ser a rota sem custo aprovada, esta exceção expira e a estratégia de CI deve ser reavaliada antes de novas execuções agressivas.
+- `PROVEN` exige SHA, comandos, resultados e limites em `STATUS.md`, `docs/evidence/` e na Issue vinculada.
+- CI não substitui validação física: sem teste no veículo, nunca alegar economia, estabilidade física ou comportamento real comprovados.
