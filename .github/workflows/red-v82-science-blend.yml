@@ -79,3 +79,15 @@ jobs:
             tests/fixtures/science/episodes \
             tests/fixtures/science/episodes/index.json \
             --fuel GNV --min-samples 4 --bootstrap-draws 600 --seed 20260830 --top 12
+
+      - name: Blend synthetic session-independence tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_session_science
+
+      - name: Blend real-corpus session-independence tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_real_session_science
