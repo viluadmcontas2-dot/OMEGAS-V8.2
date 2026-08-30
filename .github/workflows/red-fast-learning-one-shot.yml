@@ -1,6 +1,7 @@
-# One-shot RED verification. Ordinary source commits do not trigger this workflow.
-# Issue #9 proof trigger: continuous RPM-MAP learning and accessible Auto-Cal.
-name: OMEGAS V8.0 RED fast learning proof
+# OMEGAS V8.0 RED public-repo remote CI.
+# Standard GitHub-hosted runners are the primary remote executor while this repo
+# remains public. Docs-only changes intentionally do not compile Android.
+name: OMEGAS V8.0 RED remote CI
 
 on:
   workflow_dispatch:
@@ -8,22 +9,36 @@ on:
     branches:
       - hotfix/v8.0-red-performance
     paths:
-      - .github/workflows/red-fast-learning-one-shot.yml
+      - "app/**"
+      - "tests/**"
+      - "tools/**"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "*.gradle"
+      - "*.gradle.kts"
+      - "gradle.properties"
+      - "settings.gradle"
+      - "settings.gradle.kts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/red-fast-learning-one-shot.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: omegas-red-fast-learning-proof
+  group: omegas-v80-red-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify-and-build:
+  fast:
+    name: FAST contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     steps:
       - name: Checkout exact RED SHA
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Prove source identity
         shell: bash
@@ -33,32 +48,41 @@ jobs:
           echo "SOURCE_SHA=$GITHUB_SHA"
           echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Fast contracts
+      - name: Fast Python and Node contracts
         shell: bash
         run: |
           set -euo pipefail
           python3 -B tools/run_checks.py
 
-      - name: Focused RED regressions
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x ./gradlew
-          ./gradlew testDebugUnitTest             --tests com.omegas.prohub.learning.AssistedCalibrationAdvisorTest             --tests com.omegas.prohub.calibration.AdvisorSuggestionAdapterV7Test             --tests com.omegas.prohub.autocal.AutoCalNativeActionManagerTest             --no-daemon --stacktrace
+  full:
+    name: FULL JVM lint APK
+    needs: fast
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact RED SHA
+        uses: actions/checkout@v7
 
-      - name: Full JVM, lint and APK
+      - name: Set up JDK 17 with Gradle cache
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            **/*.gradle*
+            **/gradle-wrapper.properties
+
+      - name: Full JVM, lint and APK once
         shell: bash
         env:
           OMEGAS_SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug             -PomegasAbis=armeabi-v7a             --no-daemon --stacktrace
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest lintDebug assembleDebug \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon --stacktrace
 
       - name: Emit exact-SHA evidence
         id: evidence
@@ -69,14 +93,17 @@ jobs:
           test -n "$APK"
           test -f "$APK"
           mkdir -p build/evidence
-          RECEIPT=build/evidence/omegas-v80-red-fast-learning.txt
+          RECEIPT=build/evidence/omegas-v80-red-remote-ci.txt
           {
-            echo "OMEGAS_V80_RED_FAST_LEARNING=PASS"
+            echo "OMEGAS_V80_RED_REMOTE_CI=PASS"
             echo "SOURCE_SHA=$GITHUB_SHA"
             echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
             echo "APK_PATH=$APK"
             echo "APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')"
             echo "APK_BYTES=$(stat -c %s "$APK")"
+            echo "FAST_GATE=PASS"
+            echo "FULL_JVM_LINT_APK=PASS"
+            echo "STANDARD_GITHUB_HOSTED_RUNNER=true"
             echo "SIMULATED_ECU_ONLY=true"
             echo "NO_INSTALL_PERFORMED=true"
             echo "PHYSICAL_FUEL_ECONOMY_CLAIMED=false"
@@ -84,12 +111,12 @@ jobs:
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
 
       - name: Upload RED APK and evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: omegas-v80-red-fast-learning-${{ github.sha }}
+          name: omegas-v80-red-${{ github.sha }}
           path: |
             ${{ steps.evidence.outputs.apk_path }}
-            build/evidence/omegas-v80-red-fast-learning.txt
+            build/evidence/omegas-v80-red-remote-ci.txt
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 3
           compression-level: 0
