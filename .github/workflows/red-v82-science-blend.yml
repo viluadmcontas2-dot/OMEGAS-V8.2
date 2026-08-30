@@ -106,3 +106,137 @@ jobs:
 
       - name: Blend RED runtime delta gate tests
         run: python3 -B -m unittest -v lab.red_blend.test_performance_gate
+
+  performance-ab:
+    name: PERFORMANCE RED identity + offline A/B
+    needs: science-local
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RED_BASELINE_SHA: b637f5fff19b1ece93f22d1fced9640618609a60
+    steps:
+      - name: Checkout exact Blend SHA with history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Prove exact runtime-input delta against RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$RED_BASELINE_SHA^{commit}"
+          mkdir -p build/evidence
+          git diff --name-only "$RED_BASELINE_SHA" "$GITHUB_SHA" | sort > build/evidence/red-blend-changed-paths.txt
+          python3 -B - <<'PY'
+          from dataclasses import asdict
+          import json
+          from pathlib import Path
+          from lab.red_blend.performance_gate import classify_runtime_delta
+
+          path = Path("build/evidence/red-blend-changed-paths.txt")
+          changed = [line for line in path.read_text(encoding="utf-8").splitlines() if line]
+          result = classify_runtime_delta(changed)
+          payload = asdict(result)
+          payload["baseline_sha"] = "b637f5fff19b1ece93f22d1fced9640618609a60"
+          payload["blend_sha"] = __import__("os").environ["GITHUB_SHA"]
+          payload["changed_path_count"] = len(changed)
+          Path("build/evidence/red-blend-runtime-identity.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          print(json.dumps(payload, indent=2, sort_keys=True))
+          if not result.hot_path_preserved:
+              raise SystemExit("Blend runtime/build inputs diverged from proven RED baseline")
+          PY
+
+      - name: Offline replay latency and memory observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B - <<'PY'
+          import json
+          from pathlib import Path
+          import statistics
+          import time
+          import tracemalloc
+
+          from lab.red_blend.ood_falsification import assess_transfer_ood
+          from lab.red_blend.real_corpus import load_governed_fixture
+          from lab.red_blend.walk_forward import predict_wu006_neighbor_baseline
+
+          parts = Path("tests/fixtures/science/episodes")
+          episodes = load_governed_fixture(parts, parts / "index.json")
+          gas = sorted(
+              (e for e in episodes if e["fuel"] == "GASOLINA"),
+              key=lambda e: (e["order"], e["start_ms"], e["session_key"]),
+          )
+          targets = [e for e in gas if any(t["order"] < e["order"] for t in gas)]
+
+          def timed(fn, repetitions=8):
+              samples = []
+              supported = 0
+              calls = 0
+              for _ in range(repetitions):
+                  start = time.perf_counter_ns()
+                  local_supported = 0
+                  for target in targets:
+                      value = fn(gas, target)
+                      calls += 1
+                      if value is not None:
+                          local_supported += 1
+                  elapsed = time.perf_counter_ns() - start
+                  supported = local_supported
+                  samples.append(elapsed / max(len(targets), 1))
+              return {
+                  "calls": calls,
+                  "target_count": len(targets),
+                  "supported_last_pass": supported,
+                  "ns_per_target_median": statistics.median(samples),
+                  "ns_per_target_min": min(samples),
+                  "ns_per_target_max": max(samples),
+              }
+
+          baseline = timed(predict_wu006_neighbor_baseline)
+          ood = timed(
+              lambda training, target: (
+                  decision.prediction
+                  if (decision := assess_transfer_ood(training, target)).transfer_supported
+                  else None
+              )
+          )
+
+          def peak_bytes(fn):
+              tracemalloc.start()
+              for target in targets:
+                  fn(gas, target)
+              _, peak = tracemalloc.get_traced_memory()
+              tracemalloc.stop()
+              return peak
+
+          payload = {
+              "claim_scope": "OFFLINE_REPLAY_PERFORMANCE_INFORMATIONAL_NOT_ANDROID_HOT_PATH",
+              "threshold_gate": None,
+              "red_neighbor_baseline": baseline,
+              "blend_ood_wrapper": ood,
+              "red_neighbor_peak_tracemalloc_bytes": peak_bytes(predict_wu006_neighbor_baseline),
+              "blend_ood_peak_tracemalloc_bytes": peak_bytes(
+                  lambda training, target: assess_transfer_ood(training, target)
+              ),
+          }
+          Path("build/evidence/red-blend-offline-performance.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          print(json.dumps(payload, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload G13 performance evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: omegas-red-blend-performance-${{ github.sha }}
+          path: |
+            build/evidence/red-blend-changed-paths.txt
+            build/evidence/red-blend-runtime-identity.json
+            build/evidence/red-blend-offline-performance.json
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
