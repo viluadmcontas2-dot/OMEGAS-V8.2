@@ -6,6 +6,16 @@ on:
     branches:
       - work/red-v82-science-blend
     paths:
+      - "app/**"
+      - "config/**"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "*.gradle"
+      - "*.gradle.kts"
+      - "gradle.properties"
+      - "package.json"
+      - "package-lock.json"
       - "lab/red_blend/**"
       - "tests/**"
       - "tools/**"
@@ -237,6 +247,86 @@ jobs:
             build/evidence/red-blend-changed-paths.txt
             build/evidence/red-blend-runtime-identity.json
             build/evidence/red-blend-offline-performance.json
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+
+  android-full:
+    name: ANDROID full + APK candidate
+    needs:
+      - science-local
+      - performance-ab
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact Blend SHA
+        uses: actions/checkout@v7
+
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Set up JDK 17 with Gradle cache
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            **/*.gradle*
+            **/gradle-wrapper.properties
+
+      - name: Full JVM + lint + APK
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest lintDebug assembleDebug \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon --stacktrace
+
+      - name: Prove APK and write G14/G15 receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_PATH="$(find app/build/outputs/apk/debug -type f -name '*.apk' | sort | head -n 1)"
+          test -n "$APK_PATH"
+          test -s "$APK_PATH"
+          mkdir -p build/evidence
+          APK_SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
+          APK_BYTES="$(stat -c%s "$APK_PATH")"
+          SOURCE_TREE="$(git rev-parse HEAD^{tree})"
+          {
+            echo "OMEGAS_RED_V82_BLEND_ANDROID_CI=PASS"
+            echo "G14_FULL_ANDROID=PASS"
+            echo "G15_APK_CANDIDATE=PASS"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "SOURCE_TREE=$SOURCE_TREE"
+            echo "APK_PATH=$APK_PATH"
+            echo "APK_SHA256=$APK_SHA256"
+            echo "APK_BYTES=$APK_BYTES"
+            echo "ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED=false"
+            echo "P_IMPROVE_CALIBRATED=false"
+            echo "CAUSAL_MAP_K_REAL=ABSTAIN_UNPROVEN_COMMON_TIMEBASE"
+            echo "ECU_AUTO_WRITE=false"
+            echo "SIMULATED_ECU_ONLY=true"
+            echo "NO_INSTALL_PERFORMED=true"
+            echo "VEHICLE_PROVEN=false"
+          } | tee build/evidence/omegas-red-v82-blend-android-ci.txt
+
+      - name: Upload G14/G15 APK artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: omegas-red-v82-blend-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            build/evidence/omegas-red-v82-blend-android-ci.txt
           if-no-files-found: error
           retention-days: 3
           compression-level: 0
