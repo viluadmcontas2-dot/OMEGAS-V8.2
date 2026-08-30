@@ -149,3 +149,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B -m unittest -v lab.red_blend.test_causal_science
+
+      - name: Blend real causal support audit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_real_causal_science
