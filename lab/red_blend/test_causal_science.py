@@ -3,13 +3,17 @@ import unittest
 
 from lab.red_blend.causal_science import (
     Outcome,
+    audit_real_causal_support,
     evaluate_adjustment,
     group_adjustments,
     load_adjustment_fixture,
     normalize_confirmed_event,
 )
+from lab.red_blend.real_corpus import load_governed_fixture
 
 FIXTURE = Path("tests/fixtures/science/k_history/confirmed_map_k_20260818.json")
+EPISODE_PARTS = Path("tests/fixtures/science/episodes")
+EPISODE_INDEX = EPISODE_PARTS / "index.json"
 
 
 def event(**overrides):
@@ -49,6 +53,12 @@ class CausalMapKScienceTest(unittest.TestCase):
         self.assertEqual(sum(a.cell_count for a in fixture.adjustments), 133)
         self.assertTrue(all(len(a.adjustment_key) == 16 for a in fixture.adjustments))
         self.assertTrue(all(len(a.proof_envelope_sha256) == 64 for a in fixture.adjustments))
+
+    def test_public_fixture_is_aggregated_and_omits_raw_private_identity_fields(self):
+        raw = FIXTURE.read_text(encoding="utf-8")
+        self.assertIn('"source_scope": "PRIVATE_OWNER_SNAPSHOT_DERIVED_AGGREGATED"', raw)
+        for forbidden in ("sourceDeviceId", "sourceDeviceName", '"reason"', '"adjustmentId"', '"event_id"'):
+            self.assertNotIn(forbidden, raw)
 
     def test_normalizer_rejects_incomplete_or_unconfirmed_proof_envelope(self):
         bad = event()
@@ -112,6 +122,24 @@ class CausalMapKScienceTest(unittest.TestCase):
         result = evaluate_adjustment(pre, post, adjustment)
         self.assertEqual(result.status, "COMPARABLE_EFFECT_ESTIMATE")
         self.assertGreater(result.effect_abs_error_delta, 0.0)
+
+    def test_governed_real_corpus_fail_closes_without_proven_clock_domain_bridge(self):
+        fixture = load_adjustment_fixture(FIXTURE)
+        episodes = load_governed_fixture(EPISODE_PARTS, EPISODE_INDEX)
+        audit = audit_real_causal_support(
+            fixture,
+            episodes,
+            episode_clock_domain=None,
+        )
+        self.assertEqual(audit.status, "INSUFFICIENT_CAUSAL_OUTCOME_SUPPORT")
+        self.assertIn("CLOCK_DOMAIN_UNPROVEN", audit.reasons)
+        self.assertEqual(audit.cell_event_count, 133)
+        self.assertEqual(audit.intervention_count, 11)
+        self.assertEqual(audit.comparable_interventions, 0)
+        self.assertEqual(audit.abstentions, 11)
+        self.assertEqual(audit.leakage_violations, 0)
+        self.assertIsNone(audit.p_improve)
+        self.assertFalse(audit.actionable)
 
 
 if __name__ == "__main__":
