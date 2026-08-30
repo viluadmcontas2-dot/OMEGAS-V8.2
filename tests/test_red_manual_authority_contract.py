@@ -39,7 +39,7 @@ def test_k_bounds_have_one_authority_at_100_through_180():
     assert "const MAX_K = 180" in map_editor
     assert "const PROTOCOL_MAX_K = 255" in map_editor
     assert "const maximumK = 180" in native_api
-    assert "KWriteManager.MAX_ALLOWED_K" in predictor
+    assert "KOperatingPolicy.MAX_TARGET_K" in predictor
 
 
 if __name__ == "__main__":
