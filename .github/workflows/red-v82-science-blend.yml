@@ -61,3 +61,21 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B -m unittest -v lab.red_blend.test_real_corpus
+
+      - name: Real-corpus gasoline audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m lab.red_blend.real_corpus \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json \
+            --fuel GASOLINA --min-samples 4 --bootstrap-draws 600 --seed 20260830 --top 12
+
+      - name: Real-corpus CNG audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m lab.red_blend.real_corpus \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json \
+            --fuel GNV --min-samples 4 --bootstrap-draws 600 --seed 20260830 --top 12
