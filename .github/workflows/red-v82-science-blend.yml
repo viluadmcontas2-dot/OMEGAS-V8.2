@@ -123,3 +123,17 @@ jobs:
           python3 -B -m lab.red_blend.walk_forward \
             tests/fixtures/science/episodes \
             tests/fixtures/science/episodes/index.json
+
+      - name: Blend risk-gated hybrid tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_hybrid_science
+
+      - name: Real-corpus nested hybrid audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m lab.red_blend.hybrid_science \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json
