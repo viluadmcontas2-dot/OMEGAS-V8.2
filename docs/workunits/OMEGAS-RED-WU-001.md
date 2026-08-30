@@ -1,8 +1,8 @@
 # OMEGAS-RED-WU-001 — Aprendizado contínuo rápido
 
-**Issue:** #9  
-**Branch:** `hotfix/v8.0-red-performance`  
-**Estado:** `ENGINEERING_COMPLETE`  
+**Issue:** #9
+**Branch:** `hotfix/v8.0-red-performance`
+**Estado:** `ENGINEERING_COMPLETE`
 **SHA provado:** `e8c446b3cbd54194a8bc8b805b44e2770e252a93`
 
 ## Resultado
