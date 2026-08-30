@@ -1,0 +1,21 @@
+{
+  "schema": "omegas-science-episode-fixture-index-v1",
+  "part_glob": "omegas_corpus_20260828_episodes.jsonl.gz.b64.part*",
+  "part_count": 8,
+  "part_chars": 5808,
+  "parts": [
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part00","sha256":"bde1ceade4abc4f1ad2464222fdc17feead374a808eafd9432d1a3f16561f666"},
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part01","sha256":"b24d9757ff9d8280d446992ee5bc7daf978a4bd0944eb781051667a6326473c6"},
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part02","sha256":"a37fd83f874d2fb2f43773ad78acebbd0afd32481d9d481e63ba9ae88a2b1e22"},
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part03","sha256":"e25e8ccaa5568e2dfb7c03ff3793783a49af6102269e3bfc40a97de3cce1dd49"},
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part04","sha256":"c4e092b8b4f2f485fe3525303c03add629f34b4da0abac2a1c55b7bc99fd156a"},
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part05","sha256":"8fe36777f338de7bffcc339bcd269fa87dbe126d6bf705aa4ca0456a74f8cf0c"},
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part06","sha256":"6baad0bf5c486a1af57d4bb49a2030c4c60d5154212915c58c31a3bfb0721736"},
+    {"name":"omegas_corpus_20260828_episodes.jsonl.gz.b64.part07","sha256":"fb2186160bf27e4df3496f40f2a3d7dcda7def0de263d8b7e63f72228dc21a3e"}
+  ],
+  "compressed_bytes": 34846,
+  "compressed_sha256": "9fd4a4fda3d907af67c9c29c01b17b54cb607f13c3351b66aff553e962980d94",
+  "uncompressed_bytes": 347449,
+  "uncompressed_sha256": "ae050e6770143bd042cc0416fc66cbd91d5694d7ca7917e2d9cfdf078f34a8fd",
+  "episode_lines": 1708
+}

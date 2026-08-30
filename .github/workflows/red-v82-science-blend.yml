@@ -41,8 +41,23 @@ jobs:
           set -euo pipefail
           python3 -B tools/run_checks.py
 
-      - name: Blend local science tests
+      - name: Blend synthetic local science tests
         shell: bash
         run: |
           set -euo pipefail
           python3 -B -m unittest -v lab.red_blend.test_local_science
+
+      - name: Reconstruct governed WU-006 episode fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/science/reconstruct_fixture.py \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json \
+            build/science/omegas_corpus_20260828_episodes.jsonl.gz
+
+      - name: Blend real-corpus local science tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v lab.red_blend.test_real_corpus
