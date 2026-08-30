@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 import unittest
 
 from lab.red_blend.real_corpus import load_governed_fixture
@@ -61,8 +62,8 @@ class BlindWalkForwardTest(unittest.TestCase):
 
     def test_real_fixture_walk_forward_is_blind_deterministic_and_reports_all_candidates(self):
         episodes = load_governed_fixture(
-            "tests/fixtures/science/episodes",
-            "tests/fixtures/science/episodes/index.json",
+            Path("tests/fixtures/science/episodes"),
+            Path("tests/fixtures/science/episodes/index.json"),
         )
         r1 = compare_gasoline_walk_forward(episodes)
         r2 = compare_gasoline_walk_forward(list(reversed(episodes)))
