@@ -15,7 +15,9 @@ class StableRepositoryContract(unittest.TestCase):
             "uma issue → a branch red",
             "notion e linear são somente memória histórica",
             "mapa k editável fica limitado a `100..180`",
-            "github actions é último recurso",
+            "`public_repo_standard_actions=primary_remote_execution`",
+            "larger runners",
+            "esta exceção expira",
         ):
             self.assertIn(marker, agents)
         for path in (
@@ -26,6 +28,25 @@ class StableRepositoryContract(unittest.TestCase):
             "docs/superpowers/plans/2026-08-30-red-continuous-fast-learning.md",
         ):
             self.assertTrue((ROOT / path).is_file(), path)
+
+    def test_public_red_ci_is_staged_remote_first_and_cost_bounded(self):
+        workflow_path = ROOT / ".github/workflows/red-fast-learning-one-shot.yml"
+        self.assertTrue(workflow_path.is_file())
+        workflow = workflow_path.read_text("utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("hotfix/v8.0-red-performance", workflow)
+        self.assertIn("cancel-in-progress: true", workflow)
+        self.assertIn("fast:", workflow)
+        self.assertIn("full:", workflow)
+        self.assertIn("needs: fast", workflow)
+        self.assertIn("cache: gradle", workflow)
+        self.assertIn("actions/checkout@v7", workflow)
+        self.assertIn("actions/setup-java@v5", workflow)
+        self.assertIn("actions/upload-artifact@v6", workflow)
+        self.assertNotIn("./gradlew clean", workflow)
+        self.assertNotIn("runs-on: windows", workflow.lower())
+        self.assertNotIn("runs-on: macos", workflow.lower())
+        self.assertNotIn("pull_request:", workflow)
 
     def test_core_product_surfaces_are_present(self):
         required = [
