@@ -97,3 +97,6 @@ jobs:
 
       - name: Blend empirical risk coverage tests
         run: python3 -B -m unittest -v lab.red_blend.test_risk_coverage
+
+      - name: Blend P(improve) fail-closed tests
+        run: python3 -B -m unittest -v lab.red_blend.test_p_improve_science
