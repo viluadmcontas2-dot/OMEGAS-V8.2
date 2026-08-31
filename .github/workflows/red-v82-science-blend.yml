@@ -32,7 +32,7 @@ jobs:
   science-local:
     name: SCIENCE LOCAL falsification
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Checkout exact Blend SHA
         uses: actions/checkout@v7
@@ -93,6 +93,15 @@ jobs:
       - name: Real-corpus nested hybrid audit
         run: python3 -B -m lab.red_blend.hybrid_science tests/fixtures/science/episodes tests/fixtures/science/episodes/index.json
 
+      - name: Existing mechanistic calibration tests
+        run: python3 -B -m unittest -v lab.red_blend.test_mechanistic_calibration
+
+      - name: Existing geometric field tests
+        run: python3 -B -m unittest -v lab.red_blend.test_geometric_field
+
+      - name: Science cache contracts
+        run: python3 -B -m unittest -v lab.red_blend.test_science_warehouse
+
       - name: Blend causal MAP_K contract tests
         run: python3 -B -m unittest -v lab.red_blend.test_causal_map_k
 
@@ -114,11 +123,11 @@ jobs:
       - name: Blend OOD transfer falsification tests
         run: python3 -B -m unittest -v lab.red_blend.test_ood_falsification
 
-      - name: Blend RED runtime delta gate tests
+      - name: Blend RED hot-path delta gate tests
         run: python3 -B -m unittest -v lab.red_blend.test_performance_gate
 
   performance-ab:
-    name: PERFORMANCE RED identity + offline A/B
+    name: PERFORMANCE RED hot-path guard + offline A/B
     needs: science-local
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -130,7 +139,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prove exact runtime-input delta against RED
+      - name: Prove RED hot-path delta against baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -141,22 +150,34 @@ jobs:
           python3 -B - <<'PY'
           from dataclasses import asdict
           import json
+          import os
           from pathlib import Path
+          import subprocess
           from lab.red_blend.performance_gate import classify_runtime_delta
 
           path = Path("build/evidence/red-blend-changed-paths.txt")
           changed = [line for line in path.read_text(encoding="utf-8").splitlines() if line]
-          result = classify_runtime_delta(changed)
+          current_blobs = {}
+          for changed_path in changed:
+              if not changed_path.startswith("app/"):
+                  continue
+              try:
+                  current_blobs[changed_path] = subprocess.check_output(
+                      ["git", "rev-parse", f"HEAD:{changed_path}"], text=True
+                  ).strip()
+              except subprocess.CalledProcessError:
+                  current_blobs[changed_path] = "MISSING"
+          result = classify_runtime_delta(changed, current_blobs=current_blobs)
           payload = asdict(result)
-          payload["baseline_sha"] = "b637f5fff19b1ece93f22d1fced9640618609a60"
-          payload["blend_sha"] = __import__("os").environ["GITHUB_SHA"]
+          payload["baseline_sha"] = os.environ["RED_BASELINE_SHA"]
+          payload["blend_sha"] = os.environ["GITHUB_SHA"]
           payload["changed_path_count"] = len(changed)
           Path("build/evidence/red-blend-runtime-identity.json").write_text(
               json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
           )
           print(json.dumps(payload, indent=2, sort_keys=True))
           if not result.hot_path_preserved:
-              raise SystemExit("Blend runtime/build inputs diverged from proven RED baseline")
+              raise SystemExit("Blend changed the RED hot path or contains an unreviewed runtime/build delta")
           PY
 
       - name: Offline replay latency and memory observation
@@ -258,15 +279,20 @@ jobs:
       - performance-ab
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      RED_BASELINE_SHA: b637f5fff19b1ece93f22d1fced9640618609a60
     steps:
-      - name: Checkout exact Blend SHA
+      - name: Checkout exact Blend SHA with history
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Prove source identity
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$RED_BASELINE_SHA^{commit}"
           echo "SOURCE_SHA=$GITHUB_SHA"
           echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
 
@@ -302,6 +328,11 @@ jobs:
           APK_SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
           APK_BYTES="$(stat -c%s "$APK_PATH")"
           SOURCE_TREE="$(git rev-parse HEAD^{tree})"
+          if git diff --quiet "$RED_BASELINE_SHA" "$GITHUB_SHA" -- app/; then
+            ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED=false
+          else
+            ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED=true
+          fi
           {
             echo "OMEGAS_RED_V82_BLEND_ANDROID_CI=PASS"
             echo "G14_FULL_ANDROID=PASS"
@@ -311,7 +342,9 @@ jobs:
             echo "APK_PATH=$APK_PATH"
             echo "APK_SHA256=$APK_SHA256"
             echo "APK_BYTES=$APK_BYTES"
-            echo "ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED=false"
+            echo "ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED=$ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED"
+            echo "RED_HOT_PATH_PRESERVED_BY_PINNED_GATE=true"
+            echo "FULL_ANDROID_VALIDATION_REQUIRED_AND_PASSED=true"
             echo "P_IMPROVE_CALIBRATED=false"
             echo "CAUSAL_MAP_K_REAL=ABSTAIN_UNPROVEN_COMMON_TIMEBASE"
             echo "ECU_AUTO_WRITE=false"
