@@ -96,24 +96,26 @@ jobs:
           echo "ROOT_PYTHON_DISCOVERY_STATUS=$status"
           exit 0
 
-      - name: Execute every lab Python test file directly
+      - name: Execute every lab Python test as repository module
         shell: bash
         run: |
           set -uo pipefail
           failures=0
-          : > build/evidence/lab-python-direct-results.txt
+          : > build/evidence/lab-python-module-results.txt
           while IFS= read -r test_file; do
             test -n "$test_file" || continue
-            echo "===== DIRECT LAB PYTHON: $test_file ====="
-            if python3 -B "$test_file"; then
-              echo "PASS $test_file" | tee -a build/evidence/lab-python-direct-results.txt
+            module="${test_file%.py}"
+            module="${module//\//.}"
+            echo "===== LAB MODULE: $module ====="
+            if python3 -B -m unittest -v "$module"; then
+              echo "PASS $module" | tee -a build/evidence/lab-python-module-results.txt
             else
-              echo "FAIL $test_file" | tee -a build/evidence/lab-python-direct-results.txt
+              echo "FAIL $module" | tee -a build/evidence/lab-python-module-results.txt
               failures=$((failures + 1))
             fi
           done < build/evidence/lab-python-tests.txt
-          echo "$failures" > build/evidence/lab-python-direct-failures.txt
-          echo "LAB_PYTHON_DIRECT_FAILURES=$failures"
+          echo "$failures" > build/evidence/lab-python-module-failures.txt
+          echo "LAB_PYTHON_MODULE_FAILURES=$failures"
           exit 0
 
       - name: Discover every lab Python unittest
@@ -163,11 +165,11 @@ jobs:
           set -euo pipefail
           root_direct="$(cat build/evidence/root-python-direct-failures.txt)"
           root_discovery="$(cat build/evidence/root-python-discovery-status.txt)"
-          lab_direct="$(cat build/evidence/lab-python-direct-failures.txt)"
+          lab_module="$(cat build/evidence/lab-python-module-failures.txt)"
           lab_discovery="$(cat build/evidence/lab-python-discovery-status.txt)"
           node_direct="$(cat build/evidence/node-direct-failures.txt)"
           android_jvm="$(cat build/evidence/android-jvm-status.txt)"
-          if [ "$root_direct" -eq 0 ] && [ "$root_discovery" -eq 0 ] && [ "$lab_direct" -eq 0 ] && [ "$lab_discovery" -eq 0 ] && [ "$node_direct" -eq 0 ] && [ "$android_jvm" -eq 0 ]; then
+          if [ "$root_direct" -eq 0 ] && [ "$root_discovery" -eq 0 ] && [ "$lab_module" -eq 0 ] && [ "$lab_discovery" -eq 0 ] && [ "$node_direct" -eq 0 ] && [ "$android_jvm" -eq 0 ]; then
             overall=PASS
           else
             overall=FAIL
@@ -179,7 +181,7 @@ jobs:
             cat build/evidence/exhaust-counts.txt
             echo "ROOT_PYTHON_DIRECT_FAILURES=$root_direct"
             echo "ROOT_PYTHON_DISCOVERY_STATUS=$root_discovery"
-            echo "LAB_PYTHON_DIRECT_FAILURES=$lab_direct"
+            echo "LAB_PYTHON_MODULE_FAILURES=$lab_module"
             echo "LAB_PYTHON_DISCOVERY_STATUS=$lab_discovery"
             echo "NODE_DIRECT_FAILURES=$node_direct"
             echo "ANDROID_JVM_STATUS=$android_jvm"
@@ -204,8 +206,8 @@ jobs:
             build/evidence/root-python-direct-failures.txt
             build/evidence/root-python-discovery.log
             build/evidence/root-python-discovery-status.txt
-            build/evidence/lab-python-direct-results.txt
-            build/evidence/lab-python-direct-failures.txt
+            build/evidence/lab-python-module-results.txt
+            build/evidence/lab-python-module-failures.txt
             build/evidence/lab-python-discovery.log
             build/evidence/lab-python-discovery-status.txt
             build/evidence/node-direct-results.txt
