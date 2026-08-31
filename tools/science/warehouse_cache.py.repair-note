@@ -1,0 +1,1 @@
+The canonical parser is being restored from the exact local implementation that produced OMEGAS_SCIENCE_CACHE_V1.sqlite. Remove this note after the parser contracts pass remotely.
