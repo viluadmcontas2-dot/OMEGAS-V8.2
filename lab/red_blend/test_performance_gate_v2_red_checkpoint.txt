@@ -1,0 +1,1 @@
+TDD RED checkpoint 2026-08-30: current classify_runtime_delta API rejected current_blobs with TypeError, proving pinned non-hot-path UI delta support did not exist before implementation. This file is evidence only and may be removed after the implementation gate is green.
