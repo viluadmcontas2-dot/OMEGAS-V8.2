@@ -23,7 +23,7 @@ jobs:
   exhaust-existing-tests:
     name: EXHAUST all existing repository tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout exact SHA
         uses: actions/checkout@v7
@@ -69,71 +69,125 @@ jobs:
       - name: Execute every root Python test file directly
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          failures=0
+          : > build/evidence/root-python-direct-results.txt
           while IFS= read -r test_file; do
             test -n "$test_file" || continue
             echo "===== DIRECT PYTHON: $test_file ====="
-            python3 -B "$test_file"
+            if python3 -B "$test_file"; then
+              echo "PASS $test_file" | tee -a build/evidence/root-python-direct-results.txt
+            else
+              echo "FAIL $test_file" | tee -a build/evidence/root-python-direct-results.txt
+              failures=$((failures + 1))
+            fi
           done < build/evidence/root-python-tests.txt
+          echo "$failures" > build/evidence/root-python-direct-failures.txt
+          echo "ROOT_PYTHON_DIRECT_FAILURES=$failures"
+          exit 0
 
       - name: Discover every root Python unittest
         shell: bash
         run: |
-          set -euo pipefail
-          python3 -B -m unittest discover -v -s tests -p 'test_*.py'
+          set -uo pipefail
+          python3 -B -m unittest discover -v -s tests -p 'test_*.py' 2>&1 | tee build/evidence/root-python-discovery.log
+          status=${PIPESTATUS[0]}
+          echo "$status" > build/evidence/root-python-discovery-status.txt
+          echo "ROOT_PYTHON_DISCOVERY_STATUS=$status"
+          exit 0
 
       - name: Execute every lab Python test file directly
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          failures=0
+          : > build/evidence/lab-python-direct-results.txt
           while IFS= read -r test_file; do
             test -n "$test_file" || continue
             echo "===== DIRECT LAB PYTHON: $test_file ====="
-            python3 -B "$test_file"
+            if python3 -B "$test_file"; then
+              echo "PASS $test_file" | tee -a build/evidence/lab-python-direct-results.txt
+            else
+              echo "FAIL $test_file" | tee -a build/evidence/lab-python-direct-results.txt
+              failures=$((failures + 1))
+            fi
           done < build/evidence/lab-python-tests.txt
+          echo "$failures" > build/evidence/lab-python-direct-failures.txt
+          echo "LAB_PYTHON_DIRECT_FAILURES=$failures"
+          exit 0
 
       - name: Discover every lab Python unittest
         shell: bash
         run: |
-          set -euo pipefail
-          python3 -B -m unittest discover -v -s lab/red_blend -p 'test_*.py'
+          set -uo pipefail
+          python3 -B -m unittest discover -v -s lab/red_blend -p 'test_*.py' 2>&1 | tee build/evidence/lab-python-discovery.log
+          status=${PIPESTATUS[0]}
+          echo "$status" > build/evidence/lab-python-discovery-status.txt
+          echo "LAB_PYTHON_DISCOVERY_STATUS=$status"
+          exit 0
 
       - name: Execute every Node test file
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          failures=0
+          : > build/evidence/node-direct-results.txt
           while IFS= read -r test_file; do
             test -n "$test_file" || continue
             echo "===== NODE TEST: $test_file ====="
-            node --test "$test_file"
+            if node --test "$test_file"; then
+              echo "PASS $test_file" | tee -a build/evidence/node-direct-results.txt
+            else
+              echo "FAIL $test_file" | tee -a build/evidence/node-direct-results.txt
+              failures=$((failures + 1))
+            fi
           done < build/evidence/node-tests.txt
+          echo "$failures" > build/evidence/node-direct-failures.txt
+          echo "NODE_DIRECT_FAILURES=$failures"
+          exit 0
 
       - name: Execute every Android JVM unit test
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           chmod +x ./gradlew
-          ./gradlew testDebugUnitTest -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
+          ./gradlew testDebugUnitTest -PomegasAbis=armeabi-v7a --no-daemon --stacktrace 2>&1 | tee build/evidence/android-jvm.log
+          status=${PIPESTATUS[0]}
+          echo "$status" > build/evidence/android-jvm-status.txt
+          echo "ANDROID_JVM_STATUS=$status"
+          exit 0
 
-      - name: Exhaustion receipt
+      - name: Exhaustion receipt and final gate
         shell: bash
         run: |
           set -euo pipefail
+          root_direct="$(cat build/evidence/root-python-direct-failures.txt)"
+          root_discovery="$(cat build/evidence/root-python-discovery-status.txt)"
+          lab_direct="$(cat build/evidence/lab-python-direct-failures.txt)"
+          lab_discovery="$(cat build/evidence/lab-python-discovery-status.txt)"
+          node_direct="$(cat build/evidence/node-direct-failures.txt)"
+          android_jvm="$(cat build/evidence/android-jvm-status.txt)"
+          if [ "$root_direct" -eq 0 ] && [ "$root_discovery" -eq 0 ] && [ "$lab_direct" -eq 0 ] && [ "$lab_discovery" -eq 0 ] && [ "$node_direct" -eq 0 ] && [ "$android_jvm" -eq 0 ]; then
+            overall=PASS
+          else
+            overall=FAIL
+          fi
           {
-            echo "OMEGAS_EXISTING_TEST_EXHAUSTION=PASS"
+            echo "OMEGAS_EXISTING_TEST_EXHAUSTION=$overall"
             echo "SOURCE_SHA=$GITHUB_SHA"
             echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
             cat build/evidence/exhaust-counts.txt
-            echo "ROOT_PYTHON_DIRECT=PASS"
-            echo "ROOT_PYTHON_DISCOVERY=PASS"
-            echo "LAB_PYTHON_DIRECT=PASS"
-            echo "LAB_PYTHON_DISCOVERY=PASS"
-            echo "NODE_DYNAMIC_DISCOVERY=PASS"
-            echo "ANDROID_JVM_ALL=PASS"
+            echo "ROOT_PYTHON_DIRECT_FAILURES=$root_direct"
+            echo "ROOT_PYTHON_DISCOVERY_STATUS=$root_discovery"
+            echo "LAB_PYTHON_DIRECT_FAILURES=$lab_direct"
+            echo "LAB_PYTHON_DISCOVERY_STATUS=$lab_discovery"
+            echo "NODE_DIRECT_FAILURES=$node_direct"
+            echo "ANDROID_JVM_STATUS=$android_jvm"
             echo "NEW_SCIENCE_TESTS_CREATED=false"
             echo "ECU_AUTO_WRITE=false"
             echo "VEHICLE_PROVEN=false"
           } | tee build/evidence/exhaust-existing-tests-receipt.txt
+          test "$overall" = PASS
 
       - name: Upload exhaustive inventory and receipt
         if: always()
@@ -146,6 +200,18 @@ jobs:
             build/evidence/node-tests.txt
             build/evidence/android-jvm-tests.txt
             build/evidence/exhaust-counts.txt
+            build/evidence/root-python-direct-results.txt
+            build/evidence/root-python-direct-failures.txt
+            build/evidence/root-python-discovery.log
+            build/evidence/root-python-discovery-status.txt
+            build/evidence/lab-python-direct-results.txt
+            build/evidence/lab-python-direct-failures.txt
+            build/evidence/lab-python-discovery.log
+            build/evidence/lab-python-discovery-status.txt
+            build/evidence/node-direct-results.txt
+            build/evidence/node-direct-failures.txt
+            build/evidence/android-jvm.log
+            build/evidence/android-jvm-status.txt
             build/evidence/exhaust-existing-tests-receipt.txt
           if-no-files-found: warn
           retention-days: 3
