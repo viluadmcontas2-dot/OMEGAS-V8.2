@@ -1,0 +1,152 @@
+name: OMEGAS RED V8.2 Exhaust Existing Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - work/red-v82-science-blend
+    paths:
+      - "app/**"
+      - "lab/**"
+      - "tests/**"
+      - "tools/**"
+      - ".github/workflows/red-v82-exhaust-existing-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-red-v82-exhaust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exhaust-existing-tests:
+    name: EXHAUST all existing repository tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact SHA
+        uses: actions/checkout@v7
+
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            **/*.gradle*
+            **/gradle-wrapper.properties
+
+      - name: Inventory every existing executable test
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          find tests -type f -name 'test_*.py' -print | sort > build/evidence/root-python-tests.txt
+          find lab -type f -name 'test_*.py' -print | sort > build/evidence/lab-python-tests.txt
+          find tests -type f \( -name '*.test.cjs' -o -name '*.test.js' -o -name '*.test.mjs' -o -name '*.spec.cjs' -o -name '*.spec.js' -o -name '*.spec.mjs' \) -print | sort > build/evidence/node-tests.txt
+          find app/src/test -type f \( -name '*.kt' -o -name '*.java' \) -print | sort > build/evidence/android-jvm-tests.txt
+          {
+            echo "ROOT_PYTHON_TESTS=$(wc -l < build/evidence/root-python-tests.txt)"
+            echo "LAB_PYTHON_TESTS=$(wc -l < build/evidence/lab-python-tests.txt)"
+            echo "NODE_TESTS=$(wc -l < build/evidence/node-tests.txt)"
+            echo "ANDROID_JVM_TEST_FILES=$(wc -l < build/evidence/android-jvm-tests.txt)"
+          } | tee build/evidence/exhaust-counts.txt
+          cat build/evidence/root-python-tests.txt
+          cat build/evidence/lab-python-tests.txt
+          cat build/evidence/node-tests.txt
+          cat build/evidence/android-jvm-tests.txt
+
+      - name: Execute every root Python test file directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r test_file; do
+            test -n "$test_file" || continue
+            echo "===== DIRECT PYTHON: $test_file ====="
+            python3 -B "$test_file"
+          done < build/evidence/root-python-tests.txt
+
+      - name: Discover every root Python unittest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest discover -v -s tests -p 'test_*.py'
+
+      - name: Execute every lab Python test file directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r test_file; do
+            test -n "$test_file" || continue
+            echo "===== DIRECT LAB PYTHON: $test_file ====="
+            python3 -B "$test_file"
+          done < build/evidence/lab-python-tests.txt
+
+      - name: Discover every lab Python unittest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest discover -v -s lab/red_blend -p 'test_*.py'
+
+      - name: Execute every Node test file
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r test_file; do
+            test -n "$test_file" || continue
+            echo "===== NODE TEST: $test_file ====="
+            node --test "$test_file"
+          done < build/evidence/node-tests.txt
+
+      - name: Execute every Android JVM unit test
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
+
+      - name: Exhaustion receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "OMEGAS_EXISTING_TEST_EXHAUSTION=PASS"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+            cat build/evidence/exhaust-counts.txt
+            echo "ROOT_PYTHON_DIRECT=PASS"
+            echo "ROOT_PYTHON_DISCOVERY=PASS"
+            echo "LAB_PYTHON_DIRECT=PASS"
+            echo "LAB_PYTHON_DISCOVERY=PASS"
+            echo "NODE_DYNAMIC_DISCOVERY=PASS"
+            echo "ANDROID_JVM_ALL=PASS"
+            echo "NEW_SCIENCE_TESTS_CREATED=false"
+            echo "ECU_AUTO_WRITE=false"
+            echo "VEHICLE_PROVEN=false"
+          } | tee build/evidence/exhaust-existing-tests-receipt.txt
+
+      - name: Upload exhaustive inventory and receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: omegas-red-v82-existing-test-exhaustion-${{ github.sha }}
+          path: |
+            build/evidence/root-python-tests.txt
+            build/evidence/lab-python-tests.txt
+            build/evidence/node-tests.txt
+            build/evidence/android-jvm-tests.txt
+            build/evidence/exhaust-counts.txt
+            build/evidence/exhaust-existing-tests-receipt.txt
+          if-no-files-found: warn
+          retention-days: 3
+          compression-level: 0
