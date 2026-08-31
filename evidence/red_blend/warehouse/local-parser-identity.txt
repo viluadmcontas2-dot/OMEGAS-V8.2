@@ -1,0 +1,4 @@
+LOCAL_PARSER_PATH=/mnt/data/omegas_warehouse_work/warehouse_cache.py
+LOCAL_PARSER_BYTES=21726
+ROLE=parser_that_built_OMEGAS_SCIENCE_CACHE_V1.sqlite
+TRANSFER_STATUS=repository copy under repair after CI RED
