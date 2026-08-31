@@ -1,0 +1,54 @@
+{
+  "schema": "omegas-red-v82-causal-predictor-gate-v1",
+  "date": "2026-08-31",
+  "remote_parent_sha": "e9e093e79c68c47e002f1c1424b1ab6a196c4e95",
+  "implementation_pre_evidence_sha": "346c996dec3dc338693b7b77b08b4620ca25f186",
+  "raw_logs_reparsed": false,
+  "android_changed": false,
+  "auto_write_ecu": false,
+  "red_baseline_sha": "b637f5fff19b1ece93f22d1fced9640618609a60",
+  "clock_bridge": {
+    "status": "DEFER_CLOCK_PROVENANCE_MISSING",
+    "episode_count": 1708,
+    "intervention_count": 11,
+    "pre_session_count": 15,
+    "post_session_count": 3,
+    "interventions_inside_observed_gap": true,
+    "session_episode_invariants_proven": true,
+    "common_clock_proven": false,
+    "reason": "NUMERIC_ALIGNMENT_IS_NOT_CLOCK_PROOF"
+  },
+  "calibration_ablation": {
+    "status": "DEFER_INSUFFICIENT_EXPLICIT_CALIBRATION_STATES",
+    "apparent_post_map_states": 1,
+    "apparent_post_sessions": 3,
+    "apparent_post_episodes": 549,
+    "explicit_map_states": 0,
+    "explicit_curve_states": 0,
+    "candidate_supported": 0,
+    "red_metrics": {
+      "median_abs_relative_error": 0.01252769477538073,
+      "p90_abs_relative_error": 0.05406177103407854,
+      "p95_abs_relative_error": 0.0801364710411562
+    },
+    "candidate_metrics": null,
+    "red_fallback_preserved": true
+  },
+  "autocal_regime": {
+    "status": "DEFER_NO_TEMPORALLY_COHERENT_18_ZONE_SUPPORT",
+    "acquisition_zones": 18,
+    "curve_points": 30,
+    "map_shape": [12, 12],
+    "snapshot_count": 12,
+    "partial_snapshot_count": 12,
+    "temporal_coherent_snapshot_count": 0,
+    "telemetry_aligned_zone_snapshots": 0,
+    "thirty_point_field_status": "UNKNOWN_PENDING_PROTOCOL_PROOF"
+  },
+  "promotion": {
+    "decision": "PRESERVE_RED_NO_ANDROID_PROMOTION",
+    "held_out_gain_proven": false,
+    "p_improve_proven": false,
+    "vehicle_proven": false
+  }
+}

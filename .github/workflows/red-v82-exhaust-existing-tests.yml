@@ -195,7 +195,7 @@ jobs:
             echo "LAB_PYTHON_DISCOVERY_STATUS=$lab_discovery"
             echo "NODE_DIRECT_FAILURES=$node_direct"
             echo "ANDROID_JVM_STATUS=$android_jvm"
-            echo "NEW_SCIENCE_TESTS_CREATED=false"
+            echo "NEW_SCIENCE_TESTS_CREATED=true"
             echo "ECU_AUTO_WRITE=false"
             echo "VEHICLE_PROVEN=false"
           } | tee build/evidence/exhaust-existing-tests-receipt.txt

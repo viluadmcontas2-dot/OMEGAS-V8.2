@@ -1,0 +1,10 @@
+{
+  "schema": "omegas-evidence-checksums-v1",
+  "files": {
+    "docs/evidence/red-v82-causal-predictor-gate.md": "bbaa35b577e21e39ec2a3d84966c04a7273b0b3a690981e9c382768df6da196f",
+    "evidence/red_blend/causal-predictor-gate-2026-08-31.json": "71d2357c085a43ef42deac83236cdee7e1bc4901a3f89755876feccf9db6f1e8",
+    "lab/red_blend/autocal_regime_ablation.py": "bee83d51759b088c687da856c40036a1be9ab5ba76345a409d13b3c5b0dd71ff",
+    "lab/red_blend/calibration_ablation.py": "45ea232cda18e1e5c418e2e0f676e7e39f04eea4cee4fba820a0247e4f02cd11",
+    "lab/red_blend/calibration_chronology.py": "3226f3789636a7608cf124bb2a9bb2029f309c3bd10dec6ea0fa40c851648765"
+  }
+}

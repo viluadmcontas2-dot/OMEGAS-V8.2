@@ -108,6 +108,13 @@ jobs:
       - name: Blend real causal support audit tests
         run: python3 -B -m unittest -v lab.red_blend.test_real_causal_science
 
+      - name: Blend causal Predictor promotion gate tests
+        run: >-
+          python3 -B -m unittest -v
+          lab.red_blend.test_calibration_chronology
+          lab.red_blend.test_calibration_ablation
+          lab.red_blend.test_autocal_regime_ablation
+
       - name: Blend sensitivity fail-closed tests
         run: python3 -B -m unittest -v lab.red_blend.test_sensitivity_science
 
