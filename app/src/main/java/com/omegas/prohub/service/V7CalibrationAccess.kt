@@ -2,7 +2,7 @@ package com.omegas.prohub.service
 
 import com.omegas.prohub.calibration.V7CalibrationCoordinator
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
-import com.omegas.prohub.learning.PredictorInterpolator
+import com.omegas.prohub.learning.PredictorSurface
 import com.omegas.v7.runtime.SuggestionTargetV7
 import org.json.JSONObject
 import java.io.File
@@ -55,7 +55,7 @@ private object PredictorStateCache {
         } catch (_: Exception) {
             null
         }
-        val snapshot = PredictorInterpolator.build(learning, map)
+        val snapshot = PredictorSurface.build(learning, map)
             .put("source", "V8_CALIBRATION_STATE")
             .put("cachedByStructuralRevision", true)
         entries[service] = Entry(signature, JSONObject(snapshot.toString()))

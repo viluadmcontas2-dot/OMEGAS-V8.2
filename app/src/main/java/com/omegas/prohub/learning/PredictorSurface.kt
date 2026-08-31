@@ -40,6 +40,21 @@ object PredictorSurface {
                 residualByCell["$row:$column"] = item
             }
         }
+        val predictions = advisor.optJSONArray("mapResidualPredictions") ?: JSONArray()
+        val predictionByCell = linkedMapOf<String, JSONObject>()
+        repeat(predictions.length()) { index ->
+            val item = predictions.optJSONObject(index) ?: return@repeat
+            val row = item.optInt("row", -1)
+            val column = item.optInt("column", -1)
+            val supportType = item.optString("supportType")
+            if (row in KMapPhysicalAxes.petrolBins().indices &&
+                column in KMapPhysicalAxes.rpmBins().indices &&
+                supportType in setOf("DIRECT", "NEAR") &&
+                item.nullableDouble("predictedErrorPercent") != null
+            ) {
+                predictionByCell["$row:$column"] = item
+            }
+        }
 
         val anchors = learningSnapshot.optJSONArray("nativeLearningAnchors")
             ?: learningSnapshot.optJSONArray("native_learning_anchors")
@@ -77,9 +92,13 @@ object PredictorSurface {
             rpmBins.indices.forEach { column ->
                 val key = "$row:$column"
                 val residual = residualByCell[key]
+                val prediction = predictionByCell[key]
                 val cellAnchors = anchorsByCell[key].orEmpty()
                 val currentK = if (mapConfirmed) mapValue(mapRows, row, column) else null
-                val deltaPercent = residual?.nullableDouble("suggestedDeltaPercent")
+                val predictedDelta = prediction
+                    ?.takeIf { it.optBoolean("actionable", false) }
+                    ?.nullableDouble("suggestedDeltaPercent")
+                val deltaPercent = residual?.nullableDouble("suggestedDeltaPercent") ?: predictedDelta
                 val targetK = if (currentK != null && deltaPercent != null) {
                     runCatching { MapKManualPlanner.target(currentK, "percent", deltaPercent) }.getOrNull()
                 } else null
@@ -89,6 +108,7 @@ object PredictorSurface {
                 val state = when {
                     residual != null && actionable && cellAnchors.isNotEmpty() && residualStage in setOf("ACCEPTED", "CONFIRMED") -> CellState.VALIDADO
                     residual != null || cellAnchors.isNotEmpty() -> CellState.OBSERVADO
+                    prediction != null -> CellState.PREVISTO
                     else -> CellState.DESCONHECIDO
                 }
                 counts[state.name] = counts.getValue(state.name) + 1
@@ -101,6 +121,13 @@ object PredictorSurface {
                         .put("confidenceStage", residualStage.ifBlank { "OBSERVED" })
                         .put("readiness", residual.optString("readiness", "UNKNOWN"))
                         .put("regionId", residual.optString("regionId")))
+                }
+                if (prediction != null && residual == null) {
+                    provenance.put(JSONObject()
+                        .put("source", "OMEGAS_CONTINUOUS_RESIDUAL_FIELD")
+                        .put("confidence", prediction.optDouble("confidence", 0.0).coerceIn(0.0, 1.0))
+                        .put("supportType", prediction.optString("supportType"))
+                        .put("readiness", prediction.optString("readiness", "UNKNOWN")))
                 }
                 cellAnchors.takeLast(8).forEach { anchor ->
                     provenance.put(JSONObject()
@@ -122,16 +149,24 @@ object PredictorSurface {
                     .put("rpm", rpmBins[column])
                     .put("petrolMs", petrolBins[row])
                     .put("state", state.name)
-                    .put("stateReason", stateReason(state, residual != null, cellAnchors.size, mapConfirmed))
+                    .put("stateReason", if (state == CellState.PREVISTO) {
+                        prediction?.optString("decisionReason")?.takeIf { it.isNotBlank() }
+                            ?: stateReason(state, false, 0, mapConfirmed)
+                    } else stateReason(state, residual != null, cellAnchors.size, mapConfirmed))
                     .put("currentK", currentK ?: JSONObject.NULL)
                     .put("targetK", targetK ?: JSONObject.NULL)
                     .put("suggestedDeltaPercent", deltaPercent ?: JSONObject.NULL)
-                    .put("residualErrorPercent", residual?.nullableDouble("residualErrorPercent") ?: JSONObject.NULL)
-                    .put("uncertaintyPercent", residual?.nullableDouble("uncertaintyPercent") ?: JSONObject.NULL)
-                    .put("confidence", residual?.optDouble("confidence", 0.0)?.coerceIn(0.0, 1.0) ?: 0.0)
+                    .put("residualErrorPercent", residual?.nullableDouble("residualErrorPercent")
+                        ?: prediction?.nullableDouble("localResidualPercent") ?: JSONObject.NULL)
+                    .put("predictedErrorPercent", prediction?.nullableDouble("predictedErrorPercent") ?: JSONObject.NULL)
+                    .put("uncertaintyPercent", residual?.nullableDouble("uncertaintyPercent")
+                        ?: prediction?.nullableDouble("uncertaintyPercent") ?: JSONObject.NULL)
+                    .put("supportType", prediction?.optString("supportType")?.takeIf { it.isNotBlank() } ?: JSONObject.NULL)
+                    .put("confidence", (residual?.optDouble("confidence", 0.0)
+                        ?: prediction?.optDouble("confidence", 0.0) ?: 0.0).coerceIn(0.0, 1.0))
                     .put("nativeAnchorCount", cellAnchors.size)
                     .put("directObservation", residual != null || cellAnchors.isNotEmpty())
-                    .put("predicted", false)
+                    .put("predicted", state == CellState.PREVISTO)
                     .put("provenance", provenance)
                     .put("automaticWrite", false))
             }
