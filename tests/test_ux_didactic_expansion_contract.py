@@ -42,9 +42,13 @@ assert "learningDecision" in learning
 assert "reason_code" in learning
 assert "frame_count" in learning
 assert "LIMITES CONFIGURADOS" in learning
-assert "Gasolina — referência agregada" in learning
-assert "GNV atual agregado — Petrol Inj." in learning
-assert "Par observado usado no cálculo" in learning
+assert "<dt>Onde</dt>" in learning
+assert "<dt>Gasolina esperada</dt>" in learning
+assert "<dt>GNV observado</dt>" in learning
+assert "<dt>Diferença</dt>" in learning
+assert "<dt>Por que confiar</dt>" in learning
+assert "<dt>O que isso significa</dt>" in learning
+assert "Resumo projetado da célula" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning
