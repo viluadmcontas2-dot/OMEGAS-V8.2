@@ -1,6 +1,7 @@
 from pathlib import Path
 
 
+# This existing contract intentionally participates in both curated and exhaustive CI gates.
 ROOT = Path(__file__).resolve().parents[1]
 MEMORY = (ROOT / "app/src/main/java/com/omegas/prohub/learning/MotorLearningMemory.kt").read_text("utf-8")
 VIEW = (ROOT / "app/src/main/assets/ui/screens/learning.js").read_text("utf-8")
