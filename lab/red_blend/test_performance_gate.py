@@ -3,6 +3,12 @@ import unittest
 from lab.red_blend.performance_gate import classify_runtime_delta
 
 
+PINNED_UI_BLOBS = {
+    "app/src/main/assets/ui/screens/learning.js": "ef05bb106e68e3fa23443596357eaa509cbae04c",
+    "app/src/main/java/com/omegas/v7/runtime/V7UiProjection.kt": "af1d38597768739793f4c40650854ca1512024bf",
+}
+
+
 class PerformanceGateTest(unittest.TestCase):
     def test_offline_science_only_delta_preserves_red_android_runtime_inputs(self):
         result = classify_runtime_delta(
@@ -18,8 +24,31 @@ class PerformanceGateTest(unittest.TestCase):
         self.assertEqual("RED_ANDROID_RUNTIME_INPUTS_IDENTICAL", result.status)
         self.assertEqual((), result.runtime_input_changes)
         self.assertTrue(result.hot_path_preserved)
+        self.assertTrue(result.android_runtime_identical)
+        self.assertFalse(result.requires_full_android_validation)
 
-    def test_any_app_delta_blocks_structural_performance_promotion(self):
+    def test_exact_reviewed_ui_projection_blobs_preserve_hot_path_but_not_runtime_identity(self):
+        changed = [
+            *PINNED_UI_BLOBS,
+            "app/src/test/java/com/omegas/v7/runtime/V7SessionRuntimeTest.kt",
+        ]
+        result = classify_runtime_delta(changed, current_blobs=PINNED_UI_BLOBS)
+
+        self.assertEqual("RED_HOT_PATH_PRESERVED_PINNED_UI_DELTA", result.status)
+        self.assertEqual((), result.runtime_input_changes)
+        self.assertEqual(tuple(sorted(PINNED_UI_BLOBS)), result.non_hot_path_runtime_changes)
+        self.assertTrue(result.hot_path_preserved)
+        self.assertFalse(result.android_runtime_identical)
+        self.assertTrue(result.requires_full_android_validation)
+
+    def test_same_ui_path_with_unreviewed_blob_fails_closed(self):
+        path = "app/src/main/assets/ui/screens/learning.js"
+        result = classify_runtime_delta([path], current_blobs={path: "deadbeef"})
+        self.assertEqual("BLOCKED_RUNTIME_INPUT_DELTA", result.status)
+        self.assertEqual((path,), result.runtime_input_changes)
+        self.assertFalse(result.hot_path_preserved)
+
+    def test_unknown_app_delta_blocks_structural_hot_path_claim(self):
         result = classify_runtime_delta(["app/src/main/java/com/omegas/Foo.kt"])
         self.assertEqual("BLOCKED_RUNTIME_INPUT_DELTA", result.status)
         self.assertEqual(("app/src/main/java/com/omegas/Foo.kt",), result.runtime_input_changes)
