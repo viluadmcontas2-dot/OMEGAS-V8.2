@@ -61,6 +61,10 @@ _SAFE_APP_TEST_PREFIX = "app/src/test/"
 _PINNED_NON_HOT_PATH_RUNTIME_BLOBS = {
     "app/src/main/assets/ui/screens/learning.js": "ef05bb106e68e3fa23443596357eaa509cbae04c",
     "app/src/main/java/com/omegas/v7/runtime/V7UiProjection.kt": "af1d38597768739793f4c40650854ca1512024bf",
+    "app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt": "49f12ec28bc0b09cddf0cfa140118a0ee9335b4b",
+    "app/src/main/java/com/omegas/prohub/service/V7CalibrationAccess.kt": "d5f7955d319a9ec7979d13a69f6ab88c5e47e907",
+    "app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt": "MISSING",
+    "app/src/main/java/com/omegas/prohub/learning/PredictorSpatialConfidence.kt": "MISSING",
 }
 
 
@@ -128,7 +132,7 @@ def classify_runtime_delta(
         )
     if non_hot_path_runtime:
         return RuntimeDeltaResult(
-            status="RED_HOT_PATH_PRESERVED_PINNED_UI_DELTA",
+            status="RED_HOT_PATH_PRESERVED_PINNED_NON_HOT_PATH_DELTA",
             runtime_input_changes=(),
             unclassified_changes=(),
             hot_path_preserved=True,

@@ -8,8 +8,28 @@ PINNED_UI_BLOBS = {
     "app/src/main/java/com/omegas/v7/runtime/V7UiProjection.kt": "af1d38597768739793f4c40650854ca1512024bf",
 }
 
+PINNED_ENGINE_CONSOLIDATION_BLOBS = {
+    "app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt": "49f12ec28bc0b09cddf0cfa140118a0ee9335b4b",
+    "app/src/main/java/com/omegas/prohub/service/V7CalibrationAccess.kt": "d5f7955d319a9ec7979d13a69f6ab88c5e47e907",
+    "app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt": "MISSING",
+    "app/src/main/java/com/omegas/prohub/learning/PredictorSpatialConfidence.kt": "MISSING",
+}
+
 
 class PerformanceGateTest(unittest.TestCase):
+    def test_exact_reviewed_engine_consolidation_preserves_red_core_and_requires_android_validation(self):
+        result = classify_runtime_delta(
+            [*PINNED_ENGINE_CONSOLIDATION_BLOBS],
+            current_blobs=PINNED_ENGINE_CONSOLIDATION_BLOBS,
+        )
+
+        self.assertEqual("RED_HOT_PATH_PRESERVED_PINNED_NON_HOT_PATH_DELTA", result.status)
+        self.assertEqual((), result.runtime_input_changes)
+        self.assertEqual(tuple(sorted(PINNED_ENGINE_CONSOLIDATION_BLOBS)), result.non_hot_path_runtime_changes)
+        self.assertTrue(result.hot_path_preserved)
+        self.assertFalse(result.android_runtime_identical)
+        self.assertTrue(result.requires_full_android_validation)
+
     def test_offline_science_only_delta_preserves_red_android_runtime_inputs(self):
         result = classify_runtime_delta(
             [
@@ -34,7 +54,7 @@ class PerformanceGateTest(unittest.TestCase):
         ]
         result = classify_runtime_delta(changed, current_blobs=PINNED_UI_BLOBS)
 
-        self.assertEqual("RED_HOT_PATH_PRESERVED_PINNED_UI_DELTA", result.status)
+        self.assertEqual("RED_HOT_PATH_PRESERVED_PINNED_NON_HOT_PATH_DELTA", result.status)
         self.assertEqual((), result.runtime_input_changes)
         self.assertEqual(tuple(sorted(PINNED_UI_BLOBS)), result.non_hot_path_runtime_changes)
         self.assertTrue(result.hot_path_preserved)
