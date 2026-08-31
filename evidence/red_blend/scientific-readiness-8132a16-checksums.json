@@ -1,0 +1,26 @@
+{
+  "schema": "omegas-scientific-readiness-checksums-v1",
+  "source_sha": "8132a16e1af6b557787d25dfd3de26394149c431",
+  "source_tree": "04b72c76296d0fea434d71080ab8c47b59b95015",
+  "artifacts": [
+    {
+      "path": "docs/evidence/red-v82-consolidated-scientific-readiness.md",
+      "sha256": "ad2e8c64a3304ff00a3e19fad91df9da3d77bfd0111727036fc7b1231cc979ce"
+    }
+  ],
+  "ci_evidence": {
+    "science_blend_run_id": 33349519902,
+    "exhaust_existing_tests_run_id": 33349519909,
+    "exhaust_artifact_sha256": "33ca873bc2f0edd16e09d04fb5ff7dfc5b7b7097e5610647cb06aacd8858372f",
+    "apk_sha256": "8c90eeb0b898ed0ff88d0ed3621151f2dde34fb480d76dac1d8c36f8bf84cf28"
+  },
+  "claims": {
+    "new_science_tests_created": false,
+    "raw_logs_reparsed": false,
+    "android_or_predictor_changed": false,
+    "red_baseline_preserved": true,
+    "p_improve_proven": false,
+    "vehicle_proven": false,
+    "auto_write_ecu": false
+  }
+}
