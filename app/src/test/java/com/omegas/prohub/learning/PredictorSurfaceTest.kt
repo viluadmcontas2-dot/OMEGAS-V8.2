@@ -10,6 +10,38 @@ import org.junit.Test
 
 class PredictorSurfaceTest {
     @Test
+    fun `continuous advisor prediction becomes predicted cell without becoming direct evidence`() {
+        val row = 4
+        val column = 5
+        val predictions = JSONArray().put(JSONObject()
+            .put("row", row)
+            .put("column", column)
+            .put("supportType", "NEAR")
+            .put("predictedErrorPercent", 3.2)
+            .put("localResidualPercent", 2.4)
+            .put("suggestedDeltaPercent", 2.0)
+            .put("uncertaintyPercent", 0.8)
+            .put("confidence", 0.76)
+            .put("readiness", "AVAILABLE")
+            .put("decisionReason", "Residual local previsto supera a incerteza.")
+            .put("actionable", true))
+        val learning = learning(JSONArray(), JSONArray(), epoch = 2)
+        learning.getJSONObject("assistedCalibration")
+            .put("mapResidualPredictions", predictions)
+
+        val cell = cell(PredictorSurface.build(learning, confirmedMap(120)), row, column)
+
+        assertEquals("PREVISTO", cell.getString("state"))
+        assertTrue(cell.getBoolean("predicted"))
+        assertFalse(cell.getBoolean("directObservation"))
+        assertEquals(122, cell.getInt("targetK"))
+        assertEquals(3.2, cell.getDouble("predictedErrorPercent"), 1e-9)
+        assertEquals("NEAR", cell.getString("supportType"))
+        assertEquals("OMEGAS_CONTINUOUS_RESIDUAL_FIELD", cell.getJSONArray("provenance").getJSONObject(0).getString("source"))
+        assertFalse(cell.getBoolean("automaticWrite"))
+    }
+
+    @Test
     fun `direct residual plus native anchor and confirmed map produces validated target`() {
         val row = 2
         val column = 3
