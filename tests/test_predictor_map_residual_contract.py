@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ADVISOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt'
 KWRITE = ROOT / 'app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt'
 MAP_UI = ROOT / 'app/src/main/assets/ui/screens/map.js'
-PREDICTOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt'
+PREDICTOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt'
 
 
 class PredictorMapResidualContract(unittest.TestCase):

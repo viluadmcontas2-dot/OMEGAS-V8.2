@@ -35,11 +35,11 @@ def test_k_bounds_have_one_authority_at_100_through_180():
 
     map_editor = read_root("app/src/main/assets/ui/map-editor.js")
     native_api = read_root("app/src/main/assets/ui/core/native-api.js")
-    predictor = read_root("app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt")
+    predictor = read_root("app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt")
     assert "const MAX_K = 180" in map_editor
     assert "const PROTOCOL_MAX_K = 255" in map_editor
     assert "const maximumK = 180" in native_api
-    assert "KOperatingPolicy.MAX_TARGET_K" in predictor
+    assert "MapKManualPlanner.target" in predictor
 
 
 if __name__ == "__main__":
