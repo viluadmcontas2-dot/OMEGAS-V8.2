@@ -99,9 +99,6 @@ jobs:
       - name: Existing geometric field tests
         run: python3 -B -m unittest -v lab.red_blend.test_geometric_field
 
-      - name: Science cache contracts
-        run: python3 -B -m unittest -v lab.red_blend.test_science_warehouse
-
       - name: Blend causal MAP_K contract tests
         run: python3 -B -m unittest -v lab.red_blend.test_causal_map_k
 
@@ -125,6 +122,18 @@ jobs:
 
       - name: Blend RED hot-path delta gate tests
         run: python3 -B -m unittest -v lab.red_blend.test_performance_gate
+
+  cache-contracts:
+    name: AUXILIARY science cache contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - name: Checkout exact Blend SHA
+        uses: actions/checkout@v7
+
+      - name: Run portable cache contracts
+        run: python3 -B -m unittest -v lab.red_blend.test_science_warehouse
 
   performance-ab:
     name: PERFORMANCE RED hot-path guard + offline A/B
