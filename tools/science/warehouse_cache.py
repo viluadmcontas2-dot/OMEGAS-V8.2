@@ -39,11 +39,24 @@ CREATE TABLE IF NOT EXISTS source_blob(
     source_sha256 TEXT PRIMARY KEY,
     bytes INTEGER NOT NULL,
     parser_version TEXT NOT NULL,
+    source_class TEXT NOT NULL DEFAULT 'UNKNOWN',
     parsed INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS source_session(
     source_sha256 TEXT PRIMARY KEY REFERENCES source_blob(source_sha256),
     session_key TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS source_relation(
+    parent_sha256 TEXT NOT NULL REFERENCES source_blob(source_sha256),
+    child_sha256 TEXT NOT NULL REFERENCES source_blob(source_sha256),
+    relation TEXT NOT NULL,
+    PRIMARY KEY(parent_sha256, child_sha256, relation)
+);
+CREATE TABLE IF NOT EXISTS json_artifact(
+    source_sha256 TEXT PRIMARY KEY REFERENCES source_blob(source_sha256),
+    source_class TEXT NOT NULL,
+    format TEXT,
+    document_json TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS source_occurrence(
     occurrence_key TEXT PRIMARY KEY,
@@ -270,9 +283,9 @@ def _ingest_telemetry(conn: sqlite3.Connection, skey: str, event: dict, ev_sha: 
     data = event.get("data") or {}
     cur = conn.execute(
         """INSERT OR IGNORE INTO telemetry(
-           session_key,sequence,event_sha256,recorded_at_ms,recorded_at_utc,fuel,rpm,map_bap,petrol_ms,gas_ms,
+           session_key,sequence,event_sha256,recorded_at_ms,recorded_at_utc,fuel,rpm,map_bar,petrol_ms,gas_ms,
            water_c,gas_c,gas_pressure_abs_bar,pressure_diff_bar,plausible,data_json)
-           VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             skey, int(event.get("sequence", -1)), ev_sha, event.get("recordedAtMs"), event.get("recordedAtUtc"),
             data.get("fuel"), data.get("rpm"), data.get("load_bar"), data.get("petrol_ms"),
@@ -280,7 +293,7 @@ def _ingest_telemetry(conn: sqlite3.Connection, skey: str, event: dict, ev_sha: 
             data.get("gas_pressure_abs_bar"), data.get("pressure_diff_bar"), _boolint(data.get("plausible")),
             _canonical_json(data).decode("utf-8"),
         ),
-     )
+    )
     return cur.rowcount > 0
 
 
@@ -292,15 +305,15 @@ def _ingest_map_batch(conn: sqlite3.Connection, skey: str, event: dict) -> bool:
     akey, raw_digest = _adjustment_key(raw_id, "MAP")
     cur = conn.execute(
         """INSERT OR IGNORE INTO map_k_batch(adjustment_key,raw_adjustment_sha256,session_key,recorded_at_ms,old_hash,new_hash,confirmed,readback_valid)
-           VALUES(?,?,?,?,?,?,?,?))""",
+           VALUES(?,?,?,?,?,?,?,?)""",
         (akey, raw_digest, skey, event.get("recordedAtMs"), data.get("oldHash"), data.get("newHash"),
          _boolint(data.get("humanConfirmed", True)), _boolint(data.get("readbackValid"))),
     )
     for cell in data.get("confirmedEvents") or []:
         conn.execute(
             """INSERT OR IGNORE INTO map_k_cell_change(adjustment_key,row_index,column_index,rpm_axis,petrol_ms_axis,before_k,after_k,readback_k,confirmed)
-               VALUES(?,?,?,?,?,?,?,?,?))""",
-            (key, cell.get("row"), cell.get("column"), cell.get("rpm"), cell.get("petrolMs"),
+               VALUES(?,?,?,?,?,?,?,?,?)""",
+            (akey, cell.get("row"), cell.get("column"), cell.get("rpm"), cell.get("petrolMs"),
              cell.get("before"), cell.get("after"), cell.get("readback"), _boolint(cell.get("confirmed", False))),
         )
     return cur.rowcount > 0
@@ -322,7 +335,7 @@ def _ingest_curve_batch(conn: sqlite3.Connection, skey: str, event: dict) -> boo
         conn.execute(
             """INSERT OR IGNORE INTO k_factor_point_change(adjustment_key,point_index,petrol_ms,before_raw,after_raw,before_factor,after_factor,confirmed)
                VALUES(?,?,?,?,?,?,?,?)""",
-            (key, point.get("index"), point.get("petrolMs"), point.get("beforeRaw"), point.get("afterRaw"),
+            (akey, point.get("index"), point.get("petrolMs"), point.get("beforeRaw"), point.get("afterRaw"),
              point.get("beforeFactor"), point.get("afterFactor"), _boolint(point.get("confirmed", False))),
         )
     return cur.rowcount > 0
@@ -353,6 +366,61 @@ def _ingest_autocal(conn: sqlite3.Connection, skey: str, event: dict) -> bool:
     return cur.rowcount > 0
 
 
+def rebuild_rpm_map_summary(
+    conn: sqlite3.Connection,
+    rpm_bin_width: int = 50,
+    map_bin_mbar_width: int = 10,
+) -> int:
+    if rpm_bin_width <= 0 or map_bin_mbar_width <= 0:
+        raise ValueError("bin widths must be positive")
+    conn.execute("DELETE FROM rpm_map_summary")
+    conn.execute(
+        """INSERT INTO rpm_map_summary(
+           session_key,fuel,rpm_bin,map_bin_mbar,sample_count,mean_petrol_ms,mean_map_bar,mean_rpm)
+           SELECT session_key, fuel,
+                  CAST(ROUND(rpm / ?) AS INTEGER) * ?,
+                  CAST(ROUND((map_bar * 1000.0) / ?) AS INTEGER) * ?,
+                  COUNT(*), AVG(petrol_ms), AVG(map_bar), AVG(rpm)
+             FROM telemetry
+            WHERE rpm IS NOT NULL AND rpm > 0
+              AND map_bar IS NOT NULL AND map_bar > 0
+              AND petrol_ms IS NOT NULL AND petrol_ms > 0
+              AND fuel IS NOT NULL
+              AND (plausible IS NULL OR plausible = 1)
+            GROUP BY session_key, fuel,
+                     CAST(ROUND(rpm / ?) AS INTEGER) * ?,
+                     CAST(ROUND((map_bar * 1000.0) / ?) AS INTEGER) * ?
+        """,
+        (
+            rpm_bin_width, rpm_bin_width, map_bin_mbar_width, map_bin_mbar_width,
+            rpm_bin_width, rpm_bin_width, map_bin_mbar_width, map_bin_mbar_width,
+        ),
+    )
+    conn.execute("INSERT OR REPLACE INTO meta(key,value) VALUES('rpm_bin_width',?)", (str(rpm_bin_width),))
+    conn.execute("INSERT OR REPLACE INTO meta(key,value) VALUES('map_bin_mbar_width',?)", (str(map_bin_mbar_width),))
+    count = conn.execute("SELECT COUNT(*) FROM rpm_map_summary").fetchone()[0]
+    conn.commit()
+    return int(count)
+
+
+def ingest_json_artifact(conn: sqlite3.Connection, path: Path, source_class: str) -> bool:
+    path = Path(path)
+    sha = source_sha256(path)
+    if conn.execute("SELECT 1 FROM json_artifact WHERE source_sha256=?", (sha,)).fetchone():
+        return False
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    conn.execute(
+        "INSERT OR IGNORE INTO source_blob(source_sha256,bytes,parser_version,source_class,parsed) VALUES(?,?,?,?,1)",
+        (sha, path.stat().st_size, PARSER_VERSION, source_class),
+    )
+    conn.execute(
+        "INSERT INTO json_artifact(source_sha256,source_class,format,document_json) VALUES(?,?,?,?)",
+        (sha, source_class, payload.get("format") if isinstance(payload, dict) else None, _canonical_json(payload).decode("utf-8")),
+    )
+    conn.commit()
+    return True
+
+
 def ingest_session_zip(conn: sqlite3.Connection, zip_path: Path, source_alias: str | None = None) -> IngestStats:
     zip_path = Path(zip_path)
     sha = source_sha256(zip_path)
@@ -363,7 +431,7 @@ def ingest_session_zip(conn: sqlite3.Connection, zip_path: Path, source_alias: s
 
     existing = conn.execute("SELECT parsed FROM source_blob WHERE source_sha256=?", (sha,)).fetchone()
     conn.execute(
-        "INSERT OR IGNORE INTO source_blob(source_sha256,bytes,parser_version,parsed) VALUES(?,?,?,0)",
+        "INSERT OR IGNORE INTO source_blob(source_sha256,bytes,parser_version,source_class,parsed) VALUES(?,?,?,'SESSION_ZIP',0)",
         (sha, size, PARSER_VERSION),
     )
     conn.execute(
@@ -425,14 +493,15 @@ def ingest_session_zip(conn: sqlite3.Connection, zip_path: Path, source_alias: s
                     ev_sha = event_digest(event)
                     if not _insert_event_identity(conn, skey, seq, ev_sha, ev_type):
                         continue
-                    conn.execute(
-                        """INSERT OR IGNORE INTO event_fact(session_key,sequence,event_sha256,event_type,recorded_at_ms,recorded_at_utc,event_json)
-                           VALUES(?,?,?,?,?,?,?)""",
-                        (
-                            skey, seq, ev_sha, ev_type, event.get("recordedAtMs"), event.get("recordedAtUtc"),
-                            _canonical_json(event).decode("utf-8"),
-                        ),
-                    )
+                    if ev_type != "telemetry":
+                        conn.execute(
+                            """INSERT OR IGNORE INTO event_fact(session_key,sequence,event_sha256,event_type,recorded_at_ms,recorded_at_utc,event_json)
+                               VALUES(?,?,?,?,?,?,?)""",
+                            (
+                                skey, seq, ev_sha, ev_type, event.get("recordedAtMs"), event.get("recordedAtUtc"),
+                                _canonical_json(event).decode("utf-8"),
+                            ),
+                        )
                     if ev_type == "telemetry":
                         if _ingest_telemetry(conn, skey, event, ev_sha):
                             stats.telemetry_inserted += 1
