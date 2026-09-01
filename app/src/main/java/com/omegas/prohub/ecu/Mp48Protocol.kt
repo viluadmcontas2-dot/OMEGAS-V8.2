@@ -270,6 +270,7 @@ data class Mp48Telemetry(
         .put("gas_c", gasC)
         .put("gas_pressure_raw", gasPressureRaw)
         .put("gas_pressure_abs_bar", gasPressureAbsBar)
+        .put("map_raw", mapRaw)
         .put("load_bar", mapBar)
         .put("pressure_diff_bar", pressureDiffBar)
         .put("gas_2_raw", gas2Raw)
