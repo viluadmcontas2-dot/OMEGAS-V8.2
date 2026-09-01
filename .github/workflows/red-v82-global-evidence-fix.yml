@@ -1,0 +1,38 @@
+name: OMEGAS focused global evidence fix
+
+on:
+  push:
+    branches:
+      - work/red-v82-global-evidence-fix
+    paths:
+      - "app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt"
+      - "app/src/main/assets/ui/core/learning-model.js"
+      - "app/src/main/assets/ui/screens/learning.js"
+      - "app/src/test/java/com/omegas/prohub/learning/AssistedCalibrationAdvisorTest.kt"
+      - "tests/ui/learning-view.test.cjs"
+      - ".github/workflows/red-v82-global-evidence-fix.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-focused-global-evidence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Prove exact SHA
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Global evidence regression
+        run: ./gradlew testDebugUnitTest --tests com.omegas.prohub.learning.AssistedCalibrationAdvisorTest
+      - name: Learning grid regression
+        run: node --test tests/ui/learning-view.test.cjs

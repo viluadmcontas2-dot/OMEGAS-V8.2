@@ -72,7 +72,7 @@ class AssistedCalibrationAdvisorTest {
     }
 
     @Test
-    fun `uma unica amostra com sinal muito forte pode gerar proposta`() {
+    fun `uma unica regiao fisica permanece evidencia global preliminar`() {
         val comparisons = JSONArray().put(comparison(
             id = "single-strong",
             targetMs = 5.0,
@@ -85,9 +85,11 @@ class AssistedCalibrationAdvisorTest {
 
         val point = pointAt(analyze(comparisons), 5.0)
         assertEquals(1, point.getInt("uniqueVisits"))
-        assertTrue(point.getBoolean("actionable"))
-        assertEquals("AVAILABLE", point.getString("readiness"))
-        assertTrue(point.getDouble("uncertaintyPercent") < point.getDouble("errorPercent"))
+        assertEquals(1, point.getInt("supportRegionCount"))
+        assertFalse(point.getBoolean("actionable"))
+        assertEquals("OBSERVING", point.getString("readiness"))
+        assertTrue(point.isNull("suggestedDeltaPercent"))
+        assertTrue(point.getString("decisionReason").contains("região física", ignoreCase = true))
     }
 
     @Test
@@ -216,22 +218,17 @@ class AssistedCalibrationAdvisorTest {
     }
 
     @Test
-    fun `alvo ideal fica separado do passo seguro limitado na primeira visita`() {
-        val comparisons = JSONArray().put(comparison(
-            id = "first-independent-visit",
-            targetMs = 5.0,
-            observedMs = 6.0,
-            rpm = 2_200.0,
-            mapBar = 0.50,
-            row = 5,
-            column = 4,
-        ))
+    fun `duas regioes fisicas coerentes liberam passo global limitado`() {
+        val comparisons = JSONArray()
+            .put(comparison("region-a", 5.0, 6.0, 1_400.0, 0.35, 5, 2))
+            .put(comparison("region-b", 5.0, 6.0, 2_400.0, 0.65, 5, 6))
 
         val point = pointAt(analyze(comparisons), 5.0)
 
+        assertEquals(2, point.getInt("supportRegionCount"))
+        assertTrue(point.getBoolean("actionable"))
         assertEquals(20.0, point.getDouble("idealDeltaPercent"), 0.000001)
         assertEquals("INDEPENDENCE_BOUNDED", point.getString("stepPolicy"))
-        assertTrue(point.getDouble("suggestedDeltaPercent") <= 11.0)
         assertTrue(point.getDouble("suggestedDeltaPercent") < point.getDouble("idealDeltaPercent"))
         assertEquals(
             point.getDouble("idealDeltaPercent") - point.getDouble("suggestedDeltaPercent"),
@@ -242,15 +239,9 @@ class AssistedCalibrationAdvisorTest {
 
     @Test
     fun `visitas independentes coerentes liberam passo maior sem ultrapassar o alvo`() {
-        val first = JSONArray().put(comparison(
-            id = "visit-1",
-            targetMs = 5.0,
-            observedMs = 6.0,
-            rpm = 2_000.0,
-            mapBar = 0.50,
-            row = 5,
-            column = 4,
-        ))
+        val first = JSONArray()
+            .put(comparison("visit-1a", 5.0, 6.0, 1_400.0, 0.35, 5, 2))
+            .put(comparison("visit-1b", 5.0, 6.0, 2_400.0, 0.65, 5, 6))
         val repeated = buildComparisons(
             count = 4,
             targetMs = 5.0,
@@ -314,6 +305,7 @@ class AssistedCalibrationAdvisorTest {
         .put("rpm", rpm)
         .put("map_bar", mapBar)
         .put("quality", 1.0)
+        .put("reference_region_id", "ref-${(rpm / 300.0).toInt()}-${(mapBar / 0.05).toInt()}")
         .put("continuous_cell_weights", JSONArray()
             .put(JSONObject().put("row", row).put("column", column).put("weight", 1.0)))
 }

@@ -95,3 +95,9 @@ test('preserva RPM MAP e tempo medio reais de gasolina e GNV para a camada didat
   assert.equal(target.petrol.petrolSpreadMs, 0.08);
   assert.equal(target.cng.quality, 0.89);
 });
+
+test('projecao GLOBAL_ONLY nao ocupa uma celula de diferenca local', () => {
+  assert.equal(view.localComparisonPrediction({ supportType: 'GLOBAL_ONLY', predictedErrorPercent: 0.9 }), null);
+  assert.equal(view.localComparisonPrediction({ supportType: 'DIRECT', predictedErrorPercent: 0.9 }).predictedErrorPercent, 0.9);
+  assert.equal(view.localComparisonPrediction({ supportType: 'NEAR', predictedErrorPercent: 0.7 }).predictedErrorPercent, 0.7);
+});
