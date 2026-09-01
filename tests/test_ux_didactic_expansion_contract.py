@@ -50,7 +50,7 @@ assert "Diferença aprendida" in learning
 assert "Situação" in learning
 assert "Detalhes técnicos" in learning
 assert "<dt>Onde</dt>" in learning
-assert "<dt>Procedência</dt>" in learning
+assert "<dt>Por que confiar</dt>" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning
