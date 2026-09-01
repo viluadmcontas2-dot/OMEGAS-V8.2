@@ -324,3 +324,33 @@
     min-width: 620px;
   }
 }
+
+
+.predictor-support,
+.predictor-next-step {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,.025);
+}
+
+.predictor-support small,
+.predictor-next-step small {
+  color: var(--muted, #8793a4);
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+
+.predictor-support b,
+.predictor-next-step b {
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.predictor-next-step {
+  border-left: 3px solid var(--accent, #7c6cff);
+}
