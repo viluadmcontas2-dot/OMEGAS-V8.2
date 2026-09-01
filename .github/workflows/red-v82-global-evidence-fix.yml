@@ -32,7 +32,7 @@ jobs:
           cache: gradle
       - name: Prove exact SHA
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-      - name: Global evidence regression
-        run: chmod +x gradlew && ./gradlew testDebugUnitTest --tests com.omegas.prohub.learning.AssistedCalibrationAdvisorTest
       - name: Learning grid regression
         run: node --test tests/ui/learning-view.test.cjs
+      - name: Global evidence regression
+        run: chmod +x gradlew && ./gradlew testDebugUnitTest --tests com.omegas.prohub.learning.AssistedCalibrationAdvisorTest
