@@ -575,6 +575,19 @@ class TelemetryForegroundService : Service() {
     fun nativeAutoCalSnapshotJson(): String =
         if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson().toString() else "{}"
 
+    fun nativeRequestAutoCalSnapshot(): String {
+        if (!::nativeAutoCal.isInitialized) {
+            return JSONObject().put("ok", false).put("error", "AutoCal indisponível").toString()
+        }
+        nativeAutoCal.requestSnapshot("UI_MANUAL_READ")
+        return JSONObject()
+            .put("ok", true)
+            .put("requested", true)
+            .put("readOnly", true)
+            .put("message", "Leitura AutoCal solicitada")
+            .toString()
+    }
+
     fun linkStatusJson(): String {
         val raw = try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() }
         return raw.put("connected", raw.optBoolean("peerConnected", false))
