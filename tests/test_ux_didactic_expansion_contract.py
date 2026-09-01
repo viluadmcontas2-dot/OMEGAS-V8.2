@@ -41,14 +41,16 @@ assert "resetLearningToleranceSettings" in api
 assert "learningDecision" in learning
 assert "reason_code" in learning
 assert "frame_count" in learning
-assert "LIMITES CONFIGURADOS" in learning
+assert 'data-learning-inspector="tolerances"' not in learning
+assert "LIMITES CONFIGURADOS" not in learning
+assert "COLETA AUTOMÁTICA" in learning
+assert "Gasolina esperada" in learning
+assert "GNV observado" in learning
+assert "Diferença aprendida" in learning
+assert "Situação" in learning
+assert "Detalhes técnicos" in learning
 assert "<dt>Onde</dt>" in learning
-assert "<dt>Gasolina esperada</dt>" in learning
-assert "<dt>GNV observado</dt>" in learning
-assert "<dt>Diferença</dt>" in learning
-assert "<dt>Por que confiar</dt>" in learning
-assert "<dt>O que isso significa</dt>" in learning
-assert "Resumo projetado da célula" in learning
+assert "<dt>Procedência</dt>" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning
