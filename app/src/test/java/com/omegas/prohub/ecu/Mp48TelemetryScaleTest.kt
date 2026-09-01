@@ -80,4 +80,46 @@ class Mp48TelemetryScaleTest {
         assertFalse(cng.plausible)
         assertTrue(cng.plausibilityReasons.contains("GAS_PRESSURE_DIFFERENTIAL_OUT_OF_RANGE"))
     }
+
+    @Test
+    fun `codigo de combustivel desconhecido usa pulso GNV observado sem perder byte bruto`() {
+        val payload = progBaseReferencePayload.copyOf().apply { this[11] = 0x91.toByte() }
+
+        val telemetry = Mp48Protocol.decodeTelemetry(payload, 0L)
+
+        assertEquals(0x91, telemetry.fuelByte)
+        assertEquals(Mp48Fuel.CNG, telemetry.fuel)
+        assertEquals(Mp48FuelSource.OUTPUT_PULSE_FALLBACK, telemetry.fuelSource)
+    }
+
+    @Test
+    fun `codigo desconhecido sem pulso GNV usa pulso gasolina observado`() {
+        val payload = progBaseReferencePayload.copyOf().apply {
+            this[6] = 0
+            this[7] = 0
+            this[11] = 0x81.toByte()
+        }
+
+        val telemetry = Mp48Protocol.decodeTelemetry(payload, 0L)
+
+        assertEquals(0x81, telemetry.fuelByte)
+        assertEquals(Mp48Fuel.PETROL, telemetry.fuel)
+        assertEquals(Mp48FuelSource.OUTPUT_PULSE_FALLBACK, telemetry.fuelSource)
+    }
+
+    @Test
+    fun `codigo desconhecido sem pulso fisico permanece desconhecido`() {
+        val payload = progBaseReferencePayload.copyOf().apply {
+            this[6] = 0
+            this[7] = 0
+            this[8] = 0
+            this[9] = 0
+            this[11] = 0x7F
+        }
+
+        val telemetry = Mp48Protocol.decodeTelemetry(payload, 0L)
+
+        assertEquals(Mp48Fuel.UNKNOWN, telemetry.fuel)
+        assertEquals(Mp48FuelSource.UNRESOLVED, telemetry.fuelSource)
+    }
 }
