@@ -69,3 +69,13 @@ Nenhum desses quatro itens pode ser promovido sem teste específico no carro ou 
 - O gate de UI prova layout renderizado em 1280×720 no browser do CI; legibilidade e ergonomia finais ainda exigem observação na central real.
 - Nenhum novo algoritmo de Predictor foi promovido: os candidatos Gaussian/híbridos anteriores não provaram ganho held-out.
 - `P_IMPROVE_PROVEN=false`, `VEHICLE_PROVEN=false`, `AUTO_WRITE_ECU=false`.
+
+
+### Follow-up de preservação de evidência
+
+- SHA final de produto: `1e19be36533471375491df2f34580bb8e7ecf222`
+- GitHub Actions: `33498784976` — SUCCESS
+- APK SHA-256 final: `ecb043ac01314b5afcdc85420d02f80f216e9920e3d5a5484c654c6c81c23a2a`
+- Artifact ID: `9796915806`
+- Artifact digest: `sha256:d3022cda4d47dc643c207f6db5519ae3b1eb3a1f21bcd58e848f6be86a1918f7`
+- `map_raw` foi restaurado e protegido por teste após revisão do diff; nenhum campo bruto de MAP é perdido no JSON.
