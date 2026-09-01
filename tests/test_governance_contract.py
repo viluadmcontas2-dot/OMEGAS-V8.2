@@ -7,46 +7,44 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class StableRepositoryContract(unittest.TestCase):
     def test_minimal_operational_contract_exists(self):
-        agents_path = ROOT / "AGENTS.md"
-        self.assertTrue(agents_path.is_file())
-        agents = agents_path.read_text("utf-8").lower()
+        agents = (ROOT / "AGENTS.md").read_text("utf-8").lower()
         for marker in (
-            "este repositório é a fonte canônica",
-            "uma issue → a branch red",
-            "notion e linear são somente memória histórica",
-            "mapa k editável fica limitado a `100..180`",
-            "`public_repo_standard_actions=primary_remote_execution`",
-            "larger runners",
-            "esta exceção expira",
+            "work/red-v82-science-blend",
+            "issue #11",
+            "todo frame válido conta",
+            "autocal 18 zonas",
+            "curva k 30 pontos q14",
+            "mapa k 12×12",
+            "auto_write_ecu=false",
+            "p_improve_proven=false",
+            "vehicle_proven=false",
         ):
             self.assertIn(marker, agents)
         for path in (
             "PROJECT.md",
             "STATUS.md",
-            "docs/workunits/OMEGAS-RED-WU-001.md",
-            "docs/superpowers/specs/2026-08-30-red-continuous-fast-learning-design.md",
-            "docs/superpowers/plans/2026-08-30-red-continuous-fast-learning.md",
+            "governance/constitution.md",
+            "governance/authority-map.md",
+            "governance/engineering-guardrails.md",
         ):
             self.assertTrue((ROOT / path).is_file(), path)
 
-    def test_public_red_ci_is_staged_remote_first_and_cost_bounded(self):
-        workflow_path = ROOT / ".github/workflows/red-fast-learning-one-shot.yml"
+    def test_v82_ci_is_remote_first_and_cost_bounded(self):
+        workflow_path = ROOT / ".github/workflows/red-v82-global-evidence-fix.yml"
         self.assertTrue(workflow_path.is_file())
         workflow = workflow_path.read_text("utf-8")
-        self.assertIn("workflow_dispatch:", workflow)
-        self.assertIn("hotfix/v8.0-red-performance", workflow)
+        self.assertIn("work/red-v82-global-evidence-fix", workflow)
+        self.assertIn("work/red-v82-science-blend", workflow)
         self.assertIn("cancel-in-progress: true", workflow)
-        self.assertIn("fast:", workflow)
-        self.assertIn("full:", workflow)
-        self.assertIn("needs: fast", workflow)
         self.assertIn("cache: gradle", workflow)
         self.assertIn("actions/checkout@v7", workflow)
         self.assertIn("actions/setup-java@v5", workflow)
-        self.assertIn("actions/upload-artifact@v6", workflow)
+        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertIn("testDebugUnitTest assembleDebug", workflow)
+        self.assertIn("APK SHA-256", workflow)
         self.assertNotIn("./gradlew clean", workflow)
         self.assertNotIn("runs-on: windows", workflow.lower())
         self.assertNotIn("runs-on: macos", workflow.lower())
-        self.assertNotIn("pull_request:", workflow)
 
     def test_core_product_surfaces_are_present(self):
         required = [
