@@ -167,14 +167,21 @@ class LearningEndToEndPipelineTest {
         currentVisits: Int,
         rpm: Double = 2_200.0,
         mapBar: Double = 0.55,
-    ): JSONObject = JSONObject()
-        .put("epoch", epoch)
-        .put(
-            "regions",
-            JSONArray()
-                .put(region("petrol-reference", "PETROL", rpm, mapBar, petrolMs, epoch = 1, visits = 1))
-                .put(region("current-cng", "CNG", rpm, mapBar, cngObservedPetrolMs, epoch, currentVisits)),
-        )
+    ): JSONObject {
+        val firstVisits = (currentVisits + 1) / 2
+        val secondVisits = currentVisits - firstVisits
+        val regions = JSONArray()
+            .put(region("petrol-reference-a", "PETROL", rpm, mapBar, petrolMs, epoch = 1, visits = 1))
+            .put(region("current-cng-a", "CNG", rpm, mapBar, cngObservedPetrolMs, epoch, firstVisits))
+        if (secondVisits > 0) {
+            val secondRpm = rpm + 700.0
+            val secondMap = if (mapBar <= 0.75) mapBar + 0.18 else mapBar - 0.18
+            regions
+                .put(region("petrol-reference-b", "PETROL", secondRpm, secondMap, petrolMs, epoch = 1, visits = 1))
+                .put(region("current-cng-b", "CNG", secondRpm, secondMap, cngObservedPetrolMs, epoch, secondVisits))
+        }
+        return JSONObject().put("epoch", epoch).put("regions", regions)
+    }
 
     private fun region(
         id: String,
