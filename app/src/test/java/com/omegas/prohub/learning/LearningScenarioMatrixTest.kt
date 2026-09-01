@@ -190,13 +190,14 @@ class LearningScenarioMatrixTest {
     @Test
     fun `dados invalidos sao ignorados e toda proposta continua manual e limitada`() {
         val comparisons = JSONArray()
-            .put(comparison("valid", 5.0, 6.0, 2_000.0, 0.45, 5, 5))
+            .put(comparison("valid-a", 5.0, 6.0, 2_000.0, 0.45, 5, 5))
+            .put(comparison("valid-b", 5.0, 6.0, 2_700.0, 0.65, 5, 7))
             .put(comparison("zero", 0.0, 6.0, 2_000.0, 0.45, 5, 5))
             .put(comparison("negative-rpm", 5.0, 6.0, -1.0, 0.45, 5, 5))
             .put(comparison("negative-map", 5.0, 6.0, 2_000.0, -1.0, 5, 5))
 
         val result = AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
-        assertEquals(1, result.getInt("comparisonCount"))
+        assertEquals(2, result.getInt("comparisonCount"))
         assertFalse(result.getBoolean("automatic"))
         assertTrue(result.getBoolean("humanConfirmationRequired"))
 
