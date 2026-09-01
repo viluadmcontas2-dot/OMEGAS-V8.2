@@ -1,41 +1,42 @@
-# OMEGAS V8.0 RED — contrato operacional
+# OMEGAS V8.2 RED — contrato operacional
 
 ## Autoridade
 
-- Este repositório é a fonte canônica de código, requisitos ativos, decisões, status, testes e evidências da RED.
-- A retomada começa por `AGENTS.md` → `PROJECT.md` → `STATUS.md` → WorkUnit ativa em `docs/workunits/` → Issue vinculada.
-- Fluxo: uma Issue → a branch RED → testes/evidências → checkpoint. Não criar genealogias paralelas.
-- Notion e Linear são somente memória histórica e brainstorming; não governam estado técnico mutável desta branch.
-- A branch `hotfix/v8.0-red-performance` é a linha de código da RED. Não transportar funcionalidades da V8.2 sem decisão explícita e teste de compatibilidade.
+- O repositório, a branch `work/red-v82-science-blend` e a Issue #11 são a autoridade operacional.
+- Retomada: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → `governance/` → WorkUnit ativa → Issue #11.
+- Trabalho mutável acontece em branch isolado, com comparação fresh de parent/head.
+- RED `b637f5fff19b1ece93f22d1fced9640618609a60` permanece baseline/fallback.
+- Chat e memória externa são contexto, nunca autoridade técnica.
+
+## Contrato físico
+
+- RPM × MAP identifica a condição física; Petrol Inj. é a resposta observada.
+- Todo frame válido conta para conhecimento local. Sessão/epoch mede persistência, drift e transferência.
+- Não misturar: AutoCal 18 zonas; Curva K 30 pontos Q14; Mapa K 12×12; superfícies observacionais; sugestões.
+- Curva K é tendência global por Petrol Inj.; Mapa K é residual local depois da tendência global.
+- Sugestão global exige pelo menos 2 visitas e 2 regiões físicas RPM×MAP.
+- Evidência global nunca vira sugestão local.
+- UNKNOWN não é preenchido por conveniência.
 
 ## Engenharia
 
-- TDD obrigatório: teste falha pelo motivo esperado, implementação mínima, teste verde e regressão ampla.
-- Investigar causa antes de corrigir sintomas.
-- Cada comparação deve carregar procedência suficiente para ser auditável.
-- A equivalência científica primária é `RPM × MAP(bar) → Petrol Inj. (ms)`.
-- `RPM × Petrol Inj.` é somente a projeção downstream para localizar a célula física do Mapa K.
-- Curva K representa tendência global por tempo de injeção; Mapa K representa residual local após remover a tendência global.
-- Repetição correlacionada reduz ruído, mas não fabrica independência.
+- TDD: RED pelo motivo esperado → implementação mínima → GREEN → regressão completa.
+- Falha inesperada exige systematic debugging.
+- Não corrigir dado nem afrouxar ciência para satisfazer teste.
+- Reusar cache verificado; não reparsear corpus sem necessidade.
+- Antes de concluir, todos os testes JavaScript, Python e Android e o APK devem pertencer ao mesmo SHA.
 
-## Segurança e autonomia
+## Segurança
 
 - Observar, aprender, prever, abrir editor e preparar proposta não escreve na ECU.
-- Escrita é sempre manual: preparar → revisar → confirmar → ACK → readback.
-- Falha ou divergência nunca é sucesso.
-- Mapa K editável fica limitado a `100..180`.
-- RPM não bloqueia abertura, edição ou início manual de transação confirmada; serviço, USB, engine e telemetria fresca continuam requisitos técnicos.
-- Nenhum Predictor, Advisor ou Auto-Cal grava automaticamente.
+- Escrita é manual: preparar → revisar → confirmar → ACK → readback.
+- AUTO_WRITE_ECU=false.
+- Predictor só muda runtime após ganho held-out, zero leakage e caudas não degradadas.
+- P_IMPROVE_PROVEN=false e VEHICLE_PROVEN=false até prova específica no carro.
 
-## Verificação e CI da RED pública
+## UI operacional
 
-- `PUBLIC_REPO_STANDARD_ACTIONS=PRIMARY_REMOTE_EXECUTION` vale **somente** para o OMEGAS V8.0 RED neste repositório enquanto ele permanecer público e usar runners GitHub-hosted padrão sem custo adicional.
-- Pushes com mudanças relevantes de código, testes, build ou workflow na branch RED devem disparar GitHub Actions automaticamente; documentação isolada não deve compilar Android.
-- O pipeline remoto segue `FAST → FULL → APK/evidence`: contratos baratos falham cedo; o gate completo só começa após FAST verde; artifact só nasce após FULL verde.
-- `concurrency` deve cancelar execução supersedida por SHA mais novo da mesma branch.
-- A prova Kotlin/JVM, Android lint e geração de APK deve preferir GitHub Actions; execução local é apoio opcional e nunca autoridade exclusiva.
-- Reutilizar cache seguro de dependências/build quando suportado; evitar recompilação deliberadamente redundante dentro do mesmo run.
-- Larger runners, runners pagos ou qualquer modalidade com custo adicional exigem nova aprovação explícita do owner.
-- Se o repositório deixar de ser público, se a política de cobrança mudar materialmente ou se o runner padrão deixar de ser a rota sem custo aprovada, esta exceção expira e a estratégia de CI deve ser reavaliada antes de novas execuções agressivas.
-- `PROVEN` exige SHA, comandos, resultados e limites em `STATUS.md`, `docs/evidence/` e na Issue vinculada.
-- CI não substitui validação física: sem teste no veículo, nunca alegar economia, estabilidade física ou comportamento real comprovados.
+- Alvo 1280×720, toque mínimo 48 px, texto legível e sem truncamento crítico.
+- Um dono de rolagem por painel; sem rolagem horizontal operacional.
+- Mostrar primeiro condição, evidência, diferença, situação e próximo passo.
+- Detalhes estatísticos e procedência ficam recolhidos, mas auditáveis.
