@@ -345,6 +345,10 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun listUsbDevices(): String = activity?.serviceOrNull()?.usbDevicesJson() ?: "[]"
 
     @JavascriptInterface fun getFullEngineSnapshot(): String = activity?.serviceOrNull()?.fullEngineSnapshotJson() ?: "{}"
+    @JavascriptInterface fun getNativeAutoCalStatus(): String = activity?.serviceOrNull()?.nativeAutoCalStatusJson() ?: "{}"
+    @JavascriptInterface fun getNativeAutoCalSnapshot(): String = activity?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: "{}"
+    @JavascriptInterface fun requestNativeAutoCalSnapshot(): String =
+        activity?.serviceOrNull()?.nativeRequestAutoCalSnapshot() ?: unavailable()
 
     @JavascriptInterface
     fun getLiveTelemetry(): String = activity?.serviceOrNull()?.let { service ->
