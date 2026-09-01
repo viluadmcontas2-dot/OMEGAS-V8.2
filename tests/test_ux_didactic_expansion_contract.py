@@ -40,7 +40,7 @@ assert "setLearningToleranceControls" in api
 assert "resetLearningToleranceSettings" in api
 assert "learningDecision" in learning
 assert "reason_code" in learning
-assert "frame_count" in learning
+assert "frame_count" in api
 assert 'data-learning-inspector="tolerances"' not in learning
 assert "LIMITES CONFIGURADOS" not in learning
 assert "COLETA AUTOMÁTICA" in learning
