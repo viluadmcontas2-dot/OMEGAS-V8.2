@@ -6,7 +6,7 @@ on:
       - work/red-v82-global-evidence-fix
     paths:
       - "app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt"
-      - "app/src/main/java/com/omegas/prohub/HubJavascriptBridge.kt"
+      - "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt"
       - "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt"
       - "app/src/main/assets/ui/index.html"
       - "app/src/main/assets/ui/core/native-api.js"
