@@ -127,7 +127,7 @@ jobs:
       - name: Blend OOD transfer falsification tests
         run: python3 -B -m unittest -v lab.red_blend.test_ood_falsification
 
-      - name: Blend RED hot-path delta gate tests
+      - name: Blend RED baseline delta gate tests
         run: python3 -B -m unittest -v lab.red_blend.test_performance_gate
 
   cache-contracts:
@@ -143,7 +143,7 @@ jobs:
         run: python3 -B -m unittest -v lab.red_blend.test_science_warehouse
 
   performance-ab:
-    name: PERFORMANCE RED hot-path guard + offline A/B
+    name: PERFORMANCE RED baseline guard + offline A/B
     needs: science-local
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -155,7 +155,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prove RED hot-path delta against baseline
+      - name: Prove RED baseline and exact reviewed deltas
         shell: bash
         run: |
           set -euo pipefail
@@ -175,8 +175,6 @@ jobs:
           changed = [line for line in path.read_text(encoding="utf-8").splitlines() if line]
           current_blobs = {}
           for changed_path in changed:
-              if not changed_path.startswith("app/"):
-                  continue
               try:
                   current_blobs[changed_path] = subprocess.check_output(
                       ["git", "rev-parse", f"HEAD:{changed_path}"], text=True
@@ -192,8 +190,8 @@ jobs:
               json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
           )
           print(json.dumps(payload, indent=2, sort_keys=True))
-          if not result.hot_path_preserved:
-              raise SystemExit("Blend changed the RED hot path or contains an unreviewed runtime/build delta")
+          if not result.baseline_preserved:
+              raise SystemExit("Blend contains an unreviewed runtime/build delta or no longer preserves the RED baseline")
           PY
 
       - name: Offline replay latency and memory observation
@@ -359,7 +357,9 @@ jobs:
             echo "APK_SHA256=$APK_SHA256"
             echo "APK_BYTES=$APK_BYTES"
             echo "ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED=$ANDROID_RUNTIME_SOURCE_DELTA_FROM_RED"
-            echo "RED_HOT_PATH_PRESERVED_BY_PINNED_GATE=true"
+            echo "RED_BASELINE_FALLBACK_PRESERVED=true"
+            echo "EXACT_REVIEWED_RUNTIME_DELTAS_PINNED=true"
+            echo "DEVICE_PERFORMANCE_CLAIMED=false"
             echo "FULL_ANDROID_VALIDATION_REQUIRED_AND_PASSED=true"
             echo "P_IMPROVE_CALIBRATED=false"
             echo "CAUSAL_MAP_K_REAL=ABSTAIN_UNPROVEN_COMMON_TIMEBASE"
