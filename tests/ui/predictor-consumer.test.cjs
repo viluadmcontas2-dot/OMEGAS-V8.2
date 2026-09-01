@@ -22,9 +22,12 @@ const model = loadModel();
     key: '4:3', row: 4, column: 3, rpm: 2500, petrolMs: 4.5,
     state: 'PREVISTO', currentK: 120, targetK: 128,
     predictionConfidence: 0.72, predictionReason: 'SUPPORTED_INSIDE_PHYSICAL_HULL',
-    predicted: true, distinctTrajectories: 3,
+    predicted: true, distinctTrajectories: 3, nativeAnchorCount: 2, supportType: 'NEAR',
   });
   assert.equal(explanation.stateLabel, 'Previsto');
+  assert.equal(explanation.supportLabel, 'Previsão local por proximidade física');
+  assert.equal(explanation.evidenceSummary, '3 passagens distintas · 2 leituras nativas confirmadas');
+  assert.equal(explanation.nextStep, 'Revisar a proposta no Mapa K; nada será gravado automaticamente.');
   assert.equal(explanation.deltaK, 8);
   assert.equal(explanation.automaticWrite, false);
   assert.equal(explanation.requiresHumanReview, true);
@@ -58,6 +61,14 @@ const model = loadModel();
   assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'PREVISTO', currentK: null, targetK: 128 }), false);
   assert.equal(model.openMapReview(router, { row: 4, column: 3, state: 'PREVISTO', currentK: 120, targetK: 181 }), false);
   assert.equal(calls.length, 0);
+}
+
+{
+  const unknown = model.explainCell({
+    row: 4, column: 3, state: 'DESCONHECIDO', currentK: 120, targetK: null,
+  });
+  assert.equal(unknown.supportLabel, 'Sem previsão local');
+  assert.equal(unknown.nextStep, 'Colete gasolina e GNV nesta faixa para formar uma comparação local.');
 }
 
 assert.equal(source.includes('startBatchWrite'), false);
