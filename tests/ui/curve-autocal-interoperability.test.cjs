@@ -34,9 +34,12 @@ vm.runInNewContext(source, context);
 const screen = Object.create(context.OmegasUi.CurveScreen.prototype);
 screen.view = 'editor';
 screen.store = { get: () => ({}) };
-screen.renderLearning = () => { throw new Error('external AutoCal tab must not trigger learning'); };
-screen.renderChart = () => { throw new Error('external AutoCal tab must not force editor'); };
+screen.renderLearning = () => { throw new Error('AutoCal must not trigger learning'); };
+screen.renderChart = () => { throw new Error('AutoCal must not force editor'); };
+let rendered = 0;
+screen.renderAutoCal = () => { rendered += 1; };
 
-assert.equal(screen.setView('autocal'), false);
-assert.equal(screen.view, 'editor');
+assert.equal(screen.setView('autocal'), true);
+assert.equal(screen.view, 'autocal');
+assert.equal(rendered, 1);
 console.log('CURVE_AUTOCAL_INTEROPERABILITY=PASS');
