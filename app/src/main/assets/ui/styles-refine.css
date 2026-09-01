@@ -113,3 +113,53 @@
   .physical-grid-with-axes{grid-template-columns:48px repeat(12,minmax(0,1fr))}
   .map-k-grid-with-axes{grid-template-columns:58px repeat(12,minmax(0,1fr))}
 }
+
+
+/* V8.2 operational pass: readable at a glance on the 1280×720 head unit. */
+.screen button,.screen select,.screen input{min-height:48px}
+.learning-inspector-tabs button,.view-switch button,.layer-tabs button{min-height:48px;padding:0 14px;font-size:12px}
+.learning-inspector-pane{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+.learning-now-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px}
+.learning-now-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.learning-now-card h3{margin:4px 0 0;font-size:18px}
+.learning-now-card>p{margin:10px 0;color:var(--muted);font-size:12px;line-height:1.45}
+.learning-now-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.learning-now-values>div,.learning-primary-facts>div{border:1px solid var(--line-soft);border-radius:9px;background:#0b1118;padding:10px;min-width:0}
+.learning-now-values small,.learning-now-values b,.learning-primary-facts small,.learning-primary-facts b{display:block}
+.learning-now-values small,.learning-primary-facts small{font-size:10px;color:var(--muted)}
+.learning-now-values b{margin-top:5px;font-size:16px;font-variant-numeric:tabular-nums}
+.learning-plain-note{border-left:3px solid var(--accent);padding-left:10px}
+.learning-primary-facts{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0}
+.learning-primary-facts b{margin-top:5px;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.learning-reason{font-size:12px;line-height:1.45}
+.learning-technical-details,.autocal-details{margin-top:10px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface);overflow:hidden}
+.learning-technical-details>summary,.autocal-details>summary{display:flex;align-items:center;min-height:48px;padding:0 12px;cursor:pointer;font-size:12px;font-weight:800}
+.learning-technical-details[open]>summary,.autocal-details[open]>summary{border-bottom:1px solid var(--line-soft)}
+.learning-technical-details>.decision-history-list,.learning-technical-details>.detail-list,.autocal-details>#autoCalTechnical{padding:10px}
+.detail-list dt{font-size:10px}.detail-list dd{font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+
+.autocal-view{display:none;grid-template-columns:minmax(0,1fr) 310px;gap:10px;min-height:0;height:100%}
+.autocal-view.active{display:grid}
+.autocal-surface{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px}
+.autocal-heading{position:sticky;top:-14px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-14px -14px 12px;padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--line)}
+.autocal-heading h3{margin:4px 0 0;font-size:18px}
+.autocal-state{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;border:1px solid var(--line-soft);border-radius:10px;padding:12px}
+.autocal-state b,.autocal-state p{display:block;margin:0}.autocal-state b{font-size:14px}.autocal-state p{margin-top:4px;color:var(--muted);font-size:12px}
+.autocal-state[data-level="ok"]{border-color:#285a49}.autocal-state[data-level="warning"]{border-color:#7b6930}
+.autocal-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.autocal-summary>div{border:1px solid var(--line-soft);border-radius:9px;background:#0b1118;padding:12px;min-width:0}
+.autocal-summary small,.autocal-summary b,.autocal-summary span{display:block}.autocal-summary small{font-size:10px;color:var(--muted)}.autocal-summary b{margin-top:6px;font-size:22px}.autocal-summary span{margin-top:3px;font-size:11px;color:var(--dim)}
+#autoCalTechnical>div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:12px}
+#autoCalTechnical>div:last-child{border-bottom:0}
+.autocal-explainer{overflow-y:auto;overflow-x:hidden}.autocal-explainer h3{font-size:18px}.autocal-explainer p,.autocal-safety span{font-size:12px;line-height:1.45}
+.autocal-safety{margin-top:12px;border-left:3px solid var(--ok);padding:10px 0 10px 12px}.autocal-safety b,.autocal-safety span{display:block}.autocal-safety span{margin-top:5px;color:var(--muted)}
+
+@media(max-height:760px){
+  .workspace-head{min-height:58px;padding-top:8px;padding-bottom:8px}
+  .workspace-head p{display:none}
+  .screen{padding-top:8px;padding-bottom:8px}
+  .page-intro{margin-bottom:8px}
+  .page-intro h2{font-size:20px}
+  .learning-controls{margin-bottom:7px}
+  .autocal-heading{padding-top:9px;padding-bottom:9px}
+}
