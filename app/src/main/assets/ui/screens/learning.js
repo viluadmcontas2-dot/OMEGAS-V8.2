@@ -423,7 +423,7 @@
           <dl class="detail-list">
             <div><dt>Onde</dt><dd>${whereText}</dd></div>
             <div><dt>Por que confiar</dt><dd>${supportText}. Precisão local: gasolina ${Math.round(confidence(learned?.petrol) * 100)}%, GNV ${Math.round(confidence(learned?.cng) * 100)}%.</dd></div>
-            <div><dt>Resumo projetado da célula</dt><dd>Não é o par usado no cálculo; agrega evidências que influenciam esta célula.</dd></div>
+            <div><dt>Resumo projetado da célula</dt><dd>Este resumo não é o par usado no cálculo; agrega evidências que influenciam esta célula.</dd></div>
             <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}%`}</dd></div>
             <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
             <div><dt>Massa local</dt><dd>Gasolina: ${Math.round(petrolSamples)} amostras, ${petrolVisits} visitas, ${petrolSessions} sessões. GNV: ${Math.round(cngSamples)} amostras, ${cngVisits} visitas, ${cngSessions} sessões.</dd></div>
