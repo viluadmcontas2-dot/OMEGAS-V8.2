@@ -244,6 +244,21 @@
     }
     telemetry() { return this.demo ? demoTelemetry() : invoke(this.native, 'getLiveTelemetry', [], {}); }
     fullSnapshot() { return this.demo ? demoTelemetry() : invoke(this.native, 'getFullEngineSnapshot', [], {}); }
+    autoCalStatus() {
+      return this.demo
+        ? { ok: true, state: 'READY', connected: true, snapshotRequested: false, appAutomaticWrite: false, manualAutoMatchExposed: false, demo: true }
+        : invoke(this.native, 'getNativeAutoCalStatus', [], {});
+    }
+    autoCalSnapshot() {
+      return this.demo
+        ? { ok: true, temporalCoherent: true, partial: false, fields: [], capturedAt: Date.now(), demo: true }
+        : invoke(this.native, 'getNativeAutoCalSnapshot', [], {});
+    }
+    requestAutoCalSnapshot() {
+      return this.demo
+        ? { ok: true, requested: true, readOnly: true, demo: true }
+        : invoke(this.native, 'requestNativeAutoCalSnapshot', [], { ok: false });
+    }
     learning() { return this.demo ? demoLearning() : invoke(this.native, 'getLearningMaps', [], {}); }
     learningStatus() { return this.demo ? { live: { state: 'DEMO', reason: 'Dados simulados para validar interface.' } } : invoke(this.native, 'getLearningSyncStatus', [], {}); }
     learningDecision() {
