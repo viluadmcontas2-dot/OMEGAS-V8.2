@@ -74,7 +74,7 @@ assert "function renderLightLiveContext" in app
 assert "learningLiveLabel" in app
 assert "célula ${row + 1}×${column + 1}" in app
 assert "A posição ao vivo é apenas informativa" in learning
-assert "a interpolação continua no núcleo Kotlin" in learning
+assert "A interpolação bilinear continua no Kotlin" in learning
 assert "physical-grid-with-axes" in physical_grid
 assert "setAxes(rpmBins, petrolBins)" in physical_grid
 assert ".cell-value{font-size:12px" in styles
