@@ -4,9 +4,19 @@ on:
   push:
     branches:
       - work/red-v82-global-evidence-fix
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "config/omegas-release.json"
+      - ".github/workflows/red-v82-global-evidence-fix.yml"
   pull_request:
     branches:
       - work/red-v82-science-blend
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "config/omegas-release.json"
+      - ".github/workflows/red-v82-global-evidence-fix.yml"
 
 permissions:
   contents: read
