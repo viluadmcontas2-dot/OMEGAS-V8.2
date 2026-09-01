@@ -46,6 +46,17 @@ jobs:
         run: node tests/ui/learning-understanding.test.cjs
       - name: UX didactic contract
         run: python tests/test_ux_didactic_expansion_contract.py
+      - name: Rendered 1280x720 route audit
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/omegas-ui-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          google-chrome --headless=new --no-sandbox --disable-gpu \
+            --virtual-time-budget=12000 --window-size=1320,900 --dump-dom \
+            http://127.0.0.1:4173/tests/ui/runtime-layout-audit.html \
+            > /tmp/omegas-layout-audit.html
+          cat /tmp/omegas-layout-audit.html
+          grep -q '"status":"PASS"' /tmp/omegas-layout-audit.html
       - name: Global evidence regression
         run: chmod +x gradlew && ./gradlew testDebugUnitTest --tests com.omegas.prohub.learning.AssistedCalibrationAdvisorTest
       - name: Exhaust existing JavaScript tests
