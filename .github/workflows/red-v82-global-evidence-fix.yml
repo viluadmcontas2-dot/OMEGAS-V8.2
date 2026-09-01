@@ -38,3 +38,19 @@ jobs:
         run: python tests/test_ux_didactic_expansion_contract.py
       - name: Global evidence regression
         run: chmod +x gradlew && ./gradlew testDebugUnitTest --tests com.omegas.prohub.learning.AssistedCalibrationAdvisorTest
+      - name: Exhaust existing JavaScript tests
+        run: find tests/ui -type f -name '*.test.cjs' -print0 | sort -z | xargs -0 -n1 node --test
+      - name: Exhaust existing Python contracts
+        run: find tests -maxdepth 1 -type f -name 'test_*.py' -print0 | sort -z | xargs -0 -n1 python
+      - name: Full Android unit tests and APK
+        run: ./gradlew testDebugUnitTest assembleDebug
+      - name: APK SHA-256
+        run: sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/app-debug.apk.sha256
+      - name: Publish verified APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OMEGAS-V8.2-RED-operational
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/app-debug.apk.sha256
+          if-no-files-found: error
