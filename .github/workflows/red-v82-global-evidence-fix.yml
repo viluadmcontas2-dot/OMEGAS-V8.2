@@ -4,23 +4,9 @@ on:
   push:
     branches:
       - work/red-v82-global-evidence-fix
-    paths:
-      - "app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt"
-      - "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt"
-      - "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt"
-      - "app/src/main/assets/ui/index.html"
-      - "app/src/main/assets/ui/core/native-api.js"
-      - "app/src/main/assets/ui/core/learning-model.js"
-      - "app/src/main/assets/ui/screens/curve.js"
-      - "app/src/main/assets/ui/screens/learning.js"
-      - "app/src/main/assets/ui/styles.css"
-      - "app/src/main/assets/ui/styles-refine.css"
-      - "app/src/test/java/com/omegas/prohub/learning/AssistedCalibrationAdvisorTest.kt"
-      - "tests/ui/learning-view.test.cjs"
-      - "tests/ui/learning-understanding.test.cjs"
-      - "tests/ui/red-v82-operational-ux.test.cjs"
-      - "tests/test_ux_didactic_expansion_contract.py"
-      - ".github/workflows/red-v82-global-evidence-fix.yml"
+  pull_request:
+    branches:
+      - work/red-v82-science-blend
 
 permissions:
   contents: read
