@@ -96,20 +96,40 @@ object Mp48Protocol {
         val pressureDiffBar = gasPressureAbsBar - mapBar
 
         val physicalCutoff = rpm >= 1_200 && petrolMs < 0.70 && gasRaw == 0 && mapBar < 0.35
-        val fuel = when {
-            rpm <= 0 || fuelByte == 0x00 -> Mp48Fuel.ENGINE_OFF
-            physicalCutoff -> Mp48Fuel.CUTOFF
-            fuelByte == 0x80 -> Mp48Fuel.PETROL
-            fuelByte == 0x88 -> Mp48Fuel.TRANSITION
-            fuelByte == 0x90 -> Mp48Fuel.CNG
-            else -> Mp48Fuel.UNKNOWN
+        val (fuel, fuelSource) = when {
+            rpm <= 0 || fuelByte == 0x00 ->
+                Mp48Fuel.ENGINE_OFF to Mp48FuelSource.ENGINE_STATE
+            physicalCutoff ->
+                Mp48Fuel.CUTOFF to Mp48FuelSource.PHYSICAL_CUTOFF
+            fuelByte == 0x80 ->
+                Mp48Fuel.PETROL to Mp48FuelSource.ECU_CODE
+            fuelByte == 0x88 ->
+                Mp48Fuel.TRANSITION to Mp48FuelSource.ECU_CODE
+            fuelByte == 0x90 ->
+                Mp48Fuel.CNG to Mp48FuelSource.ECU_CODE
+            gasRaw > 0 ->
+                Mp48Fuel.CNG to Mp48FuelSource.OUTPUT_PULSE_FALLBACK
+            petrolRaw > 0 ->
+                Mp48Fuel.PETROL to Mp48FuelSource.OUTPUT_PULSE_FALLBACK
+            else ->
+                Mp48Fuel.UNKNOWN to Mp48FuelSource.UNRESOLVED
         }
         val state = when (fuel) {
             Mp48Fuel.ENGINE_OFF -> "ECU_SEM_MOTOR"
             Mp48Fuel.CUTOFF -> "CUTOFF_DESACELERACAO"
-            Mp48Fuel.PETROL -> if (petrolRaw > 0) "GASOLINA_ATIVA" else "GASOLINA_SEM_PULSO"
+            Mp48Fuel.PETROL -> if (fuelSource == Mp48FuelSource.OUTPUT_PULSE_FALLBACK) {
+                "GASOLINA_ATIVA_POR_PULSO"
+            } else if (petrolRaw > 0) {
+                "GASOLINA_ATIVA"
+            } else {
+                "GASOLINA_SEM_PULSO"
+            }
             Mp48Fuel.TRANSITION -> if (gasRaw > 0) "TRANSICAO_COM_PULSO_GNV" else "AGUARDANDO_COMUTACAO_GNV"
-            Mp48Fuel.CNG -> "GNV_ATIVO"
+            Mp48Fuel.CNG -> if (fuelSource == Mp48FuelSource.OUTPUT_PULSE_FALLBACK) {
+                "GNV_ATIVO_POR_PULSO"
+            } else {
+                "GNV_ATIVO"
+            }
             Mp48Fuel.UNKNOWN -> "ESTADO_0x%02X".format(fuelByte)
         }
         val basePlausibilityReasons = buildList {
@@ -165,6 +185,7 @@ object Mp48Protocol {
             gas2MsDiagnostic = gas2Ms,
             petrol2Raw = petrol2Raw,
             petrol2MsDiagnostic = petrol2Ms,
+            fuelSource = fuelSource,
         )
     }
 
@@ -181,6 +202,14 @@ enum class Mp48Fuel(val wireName: String) {
     CNG("GNV"),
     CUTOFF("CUTOFF"),
     UNKNOWN("DESCONHECIDO"),
+}
+
+enum class Mp48FuelSource {
+    ECU_CODE,
+    OUTPUT_PULSE_FALLBACK,
+    PHYSICAL_CUTOFF,
+    ENGINE_STATE,
+    UNRESOLVED,
 }
 
 data class Mp48Telemetry(
@@ -215,6 +244,7 @@ data class Mp48Telemetry(
     val gas2MsDiagnostic: Double? = null,
     val petrol2Raw: Int = 0,
     val petrol2MsDiagnostic: Double? = null,
+    val fuelSource: Mp48FuelSource = Mp48FuelSource.ECU_CODE,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
@@ -232,6 +262,7 @@ data class Mp48Telemetry(
         .put("dynamic_correction", unknownRaw19)
         .put("fuel_byte", fuelByte)
         .put("fuel", fuel.wireName)
+        .put("fuel_source", fuelSource.name)
         .put("state", state)
         .put("water_raw", waterRaw)
         .put("water_c", waterC)
@@ -239,7 +270,6 @@ data class Mp48Telemetry(
         .put("gas_c", gasC)
         .put("gas_pressure_raw", gasPressureRaw)
         .put("gas_pressure_abs_bar", gasPressureAbsBar)
-        .put("map_raw", mapRaw)
         .put("load_bar", mapBar)
         .put("pressure_diff_bar", pressureDiffBar)
         .put("gas_2_raw", gas2Raw)
