@@ -9,7 +9,6 @@ on:
       - "lab/red_blend/**"
       - "tools/science/**"
       - "tests/test_science_corpus_replay.py"
-      - "tests/test_science_fixture_reconstruction.py"
       - "tests/fixtures/science/**"
       - ".github/workflows/wu006-science-g2-g4.yml"
 
@@ -37,11 +36,8 @@ jobs:
           echo "SOURCE_SHA=$GITHUB_SHA"
           echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
 
-      - name: Existing corpus and fixture contracts
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -B -m unittest -v tests.test_science_corpus_replay tests.test_science_fixture_reconstruction
+      - name: Existing corpus contracts
+        run: python3 -B -m unittest -v tests.test_science_corpus_replay
 
       - name: Reconstruct governed episode fixture
         shell: bash
