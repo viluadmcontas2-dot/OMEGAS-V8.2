@@ -31,6 +31,7 @@ class Mp48TelemetryScaleTest {
         assertEquals(126, telemetry.levelRaw)
         assertEquals(2.25125, telemetry.gasPressureAbsBar, 0.000001)
         assertEquals(0.452, telemetry.mapBar, 0.000001)
+        assertEquals(452, telemetry.toJson().getInt("map_raw"))
         assertEquals(1.79925, telemetry.pressureDiffBar, 0.000001)
         assertEquals(225, telemetry.unknownRaw19)
         assertEquals(4346, telemetry.gas2Raw)
