@@ -159,7 +159,7 @@ object AssistedCalibrationAdvisor {
                 sample.weight * lowerFraction,
                 sample.rpm,
                 sample.visitId,
-                sample.referenceRegionId,
+                sample.physicalRegionKey,
             )
             if (upper != lower) {
                 buckets[upper].add(
@@ -347,10 +347,7 @@ object AssistedCalibrationAdvisor {
             mapBar = mapBar,
             weight = quality,
             visitId = visitId,
-            referenceRegionId = raw.optString(
-                "reference_region_id",
-                raw.optString("referenceRegionId", "LEGACY_UNKNOWN_REGION"),
-            ).ifBlank { "LEGACY_UNKNOWN_REGION" },
+            physicalRegionKey = physicalRegionKey(rpm, mapBar),
             continuousWeights = weights,
         )
     }
@@ -386,6 +383,16 @@ object AssistedCalibrationAdvisor {
     private fun configuredDeadbandRatio(): Double =
         (LearningToleranceSettings.current.equivalenceDeadbandPercent / 100.0).coerceAtLeast(0.001)
 
+    private fun physicalRegionKey(rpm: Double, mapBar: Double): String {
+        val rpmIndex = LearningGridProjection.rpmBins.indices.minByOrNull { index ->
+            abs(LearningGridProjection.rpmBins[index] - rpm)
+        } ?: -1
+        val mapIndex = LearningGridProjection.mapBins.indices.minByOrNull { index ->
+            abs(LearningGridProjection.mapBins[index] - mapBar)
+        } ?: -1
+        return "$rpmIndex:$mapIndex"
+    }
+
     private data class ComparisonSample(
         val petrolTargetMs: Double,
         val petrolObservedMs: Double,
@@ -394,7 +401,7 @@ object AssistedCalibrationAdvisor {
         val mapBar: Double,
         val weight: Double,
         val visitId: String,
-        val referenceRegionId: String,
+        val physicalRegionKey: String,
         val continuousWeights: List<CellWeight>,
     )
 
