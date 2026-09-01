@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>OMEGAS 1280×720 audit</title></head>
+<body>
+<iframe id="appFrame" title="OMEGAS" width="1280" height="720" style="border:0;display:block"></iframe>
+<script>
+(() => {
+  const frame = document.getElementById('appFrame');
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const routes = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools'];
+  const issues = [];
+  const isVisible = (win, element) => {
+    const style = win.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0 && rect.width > 0 && rect.height > 0;
+  };
+  const allowedScroller = element => {
+    const style = element.ownerDocument.defaultView.getComputedStyle(element);
+    return ['auto', 'scroll'].includes(style.overflowX) || ['auto', 'scroll'].includes(style.overflowY);
+  };
+  async function audit() {
+    await wait(2800);
+    const doc = frame.contentDocument;
+    const win = frame.contentWindow;
+    if (!doc || !doc.querySelector('.app-shell')) {
+      document.body.textContent = JSON.stringify({ status: 'FAIL', issues: ['APP_DID_NOT_BOOT'] });
+      return;
+    }
+    for (const route of routes) {
+      const routeButton = doc.querySelector('[data-route="' + route + '"]');
+      const screen = doc.querySelector('[data-screen="' + route + '"]');
+      if (!routeButton || !screen) {
+        if (route === 'predictor') issues.push(route + ':ROUTE_OR_SCREEN_MISSING');
+        continue;
+      }
+      routeButton.click();
+      await wait(350);
+      if (!screen.classList.contains('active')) {
+        issues.push(route + ':SCREEN_NOT_ACTIVE');
+        continue;
+      }
+      if (screen.scrollWidth > screen.clientWidth + 2) {
+        issues.push(route + ':HORIZONTAL_SCREEN_OVERFLOW:' + screen.scrollWidth + '>' + screen.clientWidth);
+      }
+      const screenRect = screen.getBoundingClientRect();
+      const elements = screen.querySelectorAll('h1,h2,h3,p,b,span,label,summary,button,input,select,aside,section');
+      for (const element of elements) {
+        if (!isVisible(win, element)) continue;
+        const rect = element.getBoundingClientRect();
+        const id = element.id || element.getAttribute('data-route') || element.getAttribute('data-screen') || element.className || element.tagName;
+        if (rect.left < screenRect.left - 2 || rect.right > screenRect.right + 2) {
+          if (!element.closest('.operation-layer') && !allowedScroller(element.parentElement || element)) {
+            issues.push(route + ':OUTSIDE_X:' + String(id).slice(0, 80));
+          }
+        }
+        if ((element.matches('button,input,select,summary')) &&
+            !element.matches('.physical-cell,.map-k-cell,.obd-map-cell,.predictor-cell,.curve-point-hit') &&
+            rect.height < 44) {
+          issues.push(route + ':SMALL_CONTROL:' + String(id).slice(0, 80) + ':' + Math.round(rect.height));
+        }
+        const style = win.getComputedStyle(element);
+        const textOnly = element.children.length === 0 && (element.textContent || '').trim().length > 0;
+        if (textOnly && element.scrollWidth > element.clientWidth + 2 &&
+            !['ellipsis', 'clip'].includes(style.textOverflow) && !allowedScroller(element)) {
+          issues.push(route + ':TEXT_OVERFLOW:' + String(id).slice(0, 80));
+        }
+      }
+    }
+    const unique = [...new Set(issues)];
+    document.body.textContent = JSON.stringify({ status: unique.length ? 'FAIL' : 'PASS', viewport: '1280x720', routes, issueCount: unique.length, issues: unique });
+  }
+  frame.addEventListener('load', audit, { once: true });
+  frame.src = '../../app/src/main/assets/ui/index.html?demo=1';
+})();
+</script>
+</body>
+</html>
