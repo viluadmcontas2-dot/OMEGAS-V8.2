@@ -79,3 +79,41 @@ Nenhum desses quatro itens pode ser promovido sem teste específico no carro ou 
 - Artifact ID: `9796915806`
 - Artifact digest: `sha256:d3022cda4d47dc643c207f6db5519ae3b1eb3a1f21bcd58e848f6be86a1918f7`
 - `map_raw` foi restaurado e protegido por teste após revisão do diff; nenhum campo bruto de MAP é perdido no JSON.
+
+
+## Final software/offline closure — 2026-09-01
+
+- Verified source SHA: `6682dc85a2c9e581a83a48d7ae341e3b2b48449f`
+- Source tree: `747bffb273df480c02b30bdd605a74e32c13e148`
+- Science Blend run: `33501634588` — SUCCESS
+- Exhaust Existing Tests run: `33501634466` — SUCCESS
+- Both batteries executed against the same source SHA.
+- Existing-test inventory: 37 root Python, 21 lab Python, 28 Node and 81 Android JVM test files; every failure/status counter is zero.
+- Full Android JVM + lint + APK: PASS; Gradle BUILD SUCCESSFUL.
+- Final APK SHA-256: `23add9f0b9a7ad407a557634599e25ac76c6b90ae10ca5f17aaee62751c0c185`
+- APK bytes: `4613499`
+- APK artifact ID: `9798041369`
+- APK artifact digest: `sha256:04fc811c4dc3c9cb198f20615a590ed7722a0106e177c1dd4da794320fd9b09b`
+- Exhaustive evidence artifact ID: `9798022473`
+- Exhaustive evidence digest: `sha256:04950368f2527c1b4aa31ddaaebb938f2c0a44efdd06a852d9bd94b0c2c1a56c`
+- Performance evidence artifact ID: `9797950002`
+- Performance evidence digest: `sha256:32a9f86d5807c14287af600c16f01f1ba6a9460c7e4e4255b5dc556b2718d923`
+
+### Final harness correction
+
+The final product changes were already test-green, but the Science Blend structural gate still carried an older exact-blob allowlist. It rejected the reviewed fuel, AutoCal, learning UX, Predictor explanation and raw-MAP changes as unknown deltas. The harness was corrected without changing app runtime, mathematics, scientific outputs, Predictor behavior or ECU behavior. It now:
+
+- pins every reviewed runtime/build delta by exact Git blob;
+- blocks any later byte drift;
+- distinguishes preserved RED baseline/fallback from Android runtime identity;
+- requires full Android validation for every reviewed runtime delta;
+- makes no device-performance claim from structural inspection.
+
+### Closure boundary
+
+The offline/software mission is complete and both Issues #7 and #11 may be closed. Physical assertions remain deliberately separate:
+
+- `AUTO_WRITE_ECU=false`
+- `P_IMPROVE_PROVEN=false`
+- `VEHICLE_PROVEN=false`
+- economy, drivability, head-unit ergonomics and live fuel classification still require the owner's vehicle test.
