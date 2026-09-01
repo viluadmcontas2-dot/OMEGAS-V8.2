@@ -174,10 +174,12 @@
       this.inspector.innerHTML = `
         <div class="editor-heading"><div><small>${escapeHtml(explanation.stateLabel || 'Sem previsão')}</small><h3>${fmt(explanation.petrolMs, 1)} ms · ${Math.round(finite(explanation.rpm) || 0).toLocaleString('pt-BR')} RPM</h3></div><span class="predictor-confidence">${confidence}%</span></div>
         <div class="predictor-k-pair"><div><small>K ATUAL</small><b>${explanation.currentK ?? '—'}</b></div><div><small>K ALVO</small><b>${explanation.targetK ?? '—'}</b></div></div>
+        <div class="predictor-support"><small>DE ONDE VEIO</small><b>${escapeHtml(explanation.supportLabel || 'Sem previsão local')}</b></div>
         <p class="predictor-reason">${escapeHtml(explanation.reason || 'Sem suporte científico suficiente.')}</p>
-        <div class="predictor-facts"><span>${Number(explanation.distinctTrajectories || 0)} trajetórias independentes</span><span>${Number(explanation.nativeAnchorCount || 0)} âncoras AutoCal</span><span>${explanation.predicted ? 'interpolação conservativa' : explanation.directObservation ? 'observação direta' : 'sem previsão'}</span></div>
-        <details class="predictor-provenance"><summary>Ver proveniência</summary><p>${sourceLabels.length ? sourceLabels.map(escapeHtml).join(' · ') : 'Nenhuma fonte científica suficiente.'}</p></details>
-        <button type="button" data-predictor-review class="primary wide" ${explanation.requiresHumanReview ? '' : 'disabled'}>${explanation.requiresHumanReview ? 'Revisar no Mapa K' : 'Sem ajuste revisável'}</button>
+        <div class="predictor-facts"><span>${escapeHtml(explanation.evidenceSummary || '0 passagens distintas · 0 leituras nativas confirmadas')}</span><span>${explanation.predicted ? 'interpolação local conservadora' : explanation.directObservation ? 'observação local direta' : 'sem previsão local'}</span></div>
+        <div class="predictor-next-step"><small>PRÓXIMO PASSO</small><b>${escapeHtml(explanation.nextStep || 'Continue coletando evidência local.')}</b></div>
+        <details class="predictor-provenance"><summary>Ver fontes técnicas</summary><p>${sourceLabels.length ? sourceLabels.map(escapeHtml).join(' · ') : 'Nenhuma fonte científica suficiente.'}</p></details>
+        <button type="button" data-predictor-review class="primary wide" ${explanation.requiresHumanReview ? '' : 'disabled'}>${explanation.requiresHumanReview ? 'Revisar no Mapa K' : 'Ainda sem ajuste local'}</button>
         <div class="safety-copy"><b>Somente decisão</b><span>Predictor não grava na ECU. O Mapa K oficial continua exigindo revisão e confirmação.</span></div>`;
     }
   }
