@@ -99,7 +99,6 @@
       this.detail = document.getElementById('learningCellDetail');
       this.selectedCell = null;
       this.inspectorPane = 'collection';
-      this.toleranceSignature = '';
       this.decisionHistory = [];
       this.lastDecisionHistorySignature = '';
       this.grid = this.host && ns.PhysicalGrid ? new ns.PhysicalGrid(this.host, {
@@ -332,66 +331,6 @@
           <p class="learning-light-note">RPM × MAP define a condição física. A posição ao vivo é apenas informativa; a interpolação continua no núcleo Kotlin.</p>
         </details>
       `;
-    }
-
-    renderTolerances(state) {
-      if (!this.tolerancePane) return;
-      const settings = state.learningTolerance || {};
-      const model = settings.controlModel || {};
-      const levels = Array.isArray(model.levels) ? model.levels : [];
-      const controls = Array.isArray(model.controls) ? model.controls : [];
-      const signature = JSON.stringify({ levels, controls, minimumWaterC: model.minimumWaterC, ok: settings.ok });
-      if (signature === this.toleranceSignature) return;
-      this.toleranceSignature = signature;
-      if (!controls.length || !levels.length) {
-        this.tolerancePane.innerHTML = '<div class="detail-empty"><b>Tolerâncias indisponíveis</b><span>A política nativa aparecerá aqui quando o serviço estiver disponível.</span></div>';
-        return;
-      }
-      this.tolerancePane.innerHTML = `
-        <div class="tolerance-heading"><div><small>COLETA</small><h3>Quão rigoroso o aprendizado deve ser</h3></div></div>
-        <p class="tolerance-intro">Mais flexível aceita mais variação da condução real. Mais rigoroso exige uma condição mais estável. Nada aqui escreve na ECU.</p>
-        <div class="tolerance-profiles"><button type="button" data-tolerance-profile="1">Rigoroso</button><button type="button" data-tolerance-profile="2" class="active">Equilibrado</button><button type="button" data-tolerance-profile="3">Flexível</button></div>
-        <div class="tolerance-controls">
-          ${controls.map(control => `<label><span><b>${escapeHtml(control.title)}</b><small>${escapeHtml(control.description)}</small></span><select data-tolerance-control="${escapeHtml(control.id)}">${levels.map((label, index) => `<option value="${index}" ${Number(control.selected) === index ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>`).join('')}
-          <label><span><b>Temperatura mínima da água</b><small>Abaixo disso o núcleo aguarda aquecimento antes de aceitar evidência.</small></span><input id="learningMinimumWaterInput" type="number" min="20" max="100" step="1" value="${Number(model.minimumWaterC) || 60}"></label>
-        </div>
-        <div class="tolerance-actions"><button type="button" class="primary" data-apply-tolerances>Aplicar tolerâncias</button><button type="button" class="quiet-button" data-reset-tolerances>Restaurar padrão</button></div>
-        <div class="editor-rule"><b>Somente política de coleta.</b><span>Alterar tolerância reinicia a janela atual, mas nunca inicia escrita em Mapa K ou Curva K.</span></div>
-      `;
-      this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(button => {
-        button.addEventListener('click', () => {
-          const level = Number(button.dataset.toleranceProfile);
-          this.tolerancePane.querySelectorAll('[data-tolerance-control]').forEach(select => { select.value = String(level); });
-          this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(item => item.classList.toggle('active', item === button));
-        });
-      });
-      this.tolerancePane.querySelector('[data-apply-tolerances]')?.addEventListener('click', () => this.applyTolerances());
-      this.tolerancePane.querySelector('[data-reset-tolerances]')?.addEventListener('click', () => this.resetTolerances());
-    }
-
-    applyTolerances() {
-      if (!this.api) return;
-      const controls = {};
-      this.tolerancePane?.querySelectorAll('[data-tolerance-control]').forEach(select => { controls[select.dataset.toleranceControl] = Number(select.value); });
-      controls.minimumWaterC = Number(document.getElementById('learningMinimumWaterInput')?.value || 60);
-      const result = this.api.setLearningToleranceControls(controls);
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível aplicar as tolerâncias.' } });
-        return;
-      }
-      this.toleranceSignature = '';
-      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias de coleta atualizadas.' } });
-    }
-
-    resetTolerances() {
-      if (!this.api) return;
-      const result = this.api.resetLearningToleranceSettings();
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível restaurar as tolerâncias.' } });
-        return;
-      }
-      this.toleranceSignature = '';
-      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias restauradas para o padrão.' } });
     }
 
     renderDetail(state, row, column) {
