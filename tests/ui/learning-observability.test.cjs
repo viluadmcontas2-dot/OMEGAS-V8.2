@@ -107,7 +107,7 @@ test('restore do Learning é explícito sem esconder a telemetria ao vivo', () =
     },
   });
 
-  assert.match(screen.collectionPane.innerHTML, /Learning restaurando/);
+  assert.match(screen.collectionPane.innerHTML, /Restaurando/);
   assert.match(screen.collectionPane.innerHTML, /EM SEGUNDO PLANO/);
   assert.match(screen.collectionPane.innerHTML, /LEARNING_RESTORE_PENDING/);
   assert.match(screen.collectionPane.innerHTML, /2\.500/);
