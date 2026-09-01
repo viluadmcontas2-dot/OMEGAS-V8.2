@@ -116,20 +116,18 @@
     ensureInspector() {
       if (!this.detail) return;
       this.detail.innerHTML = `
-        <div class="learning-inspector-tabs" role="tablist" aria-label="Detalhes do aprendizado">
+        <div class="learning-inspector-tabs" role="tablist" aria-label="Aprendizado">
           <button type="button" data-learning-inspector="cell">Célula</button>
-          <button type="button" data-learning-inspector="collection" class="active">Coleta</button>
-          <button type="button" data-learning-inspector="tolerances">Tolerâncias</button>
+          <button type="button" data-learning-inspector="collection" class="active">Agora</button>
         </div>
         <div id="learningCellPane" class="learning-inspector-pane" data-pane="cell">
-          <div class="detail-empty"><b>Toque em uma célula</b><span>Veja a evidência e, se quiser, abra exatamente essa célula no editor oficial do Mapa K.</span></div>
+          <div class="detail-empty"><b>Toque em uma célula</b><span>Veja gasolina, GNV, diferença aprendida e o próximo passo.</span></div>
         </div>
         <div id="learningCollectionPane" class="learning-inspector-pane active" data-pane="collection"></div>
-        <div id="learningTolerancePane" class="learning-inspector-pane" data-pane="tolerances"></div>
       `;
       this.cellPane = document.getElementById('learningCellPane');
       this.collectionPane = document.getElementById('learningCollectionPane');
-      this.tolerancePane = document.getElementById('learningTolerancePane');
+      this.tolerancePane = null;
       this.detail.querySelectorAll('[data-learning-inspector]').forEach(button => {
         button.addEventListener('click', () => this.setInspectorPane(button.dataset.learningInspector));
       });
@@ -291,7 +289,6 @@
       }
 
       this.renderCollection(state);
-      this.renderTolerances(state);
       if (this.selectedCell) this.renderDetail(state, this.selectedCell.row, this.selectedCell.column);
     }
 
@@ -300,66 +297,41 @@
       const decision = state.learningDecision || {};
       const learningStatus = state.learningStatus || {};
       const restoring = learningStatus.restoring === true || String(learningStatus.state || '').toUpperCase() === 'LEARNING_RESTORING';
-      const tolerance = state.learningTolerance || {};
-      const policy = tolerance.policy || tolerance.applied || {};
       const live = state.telemetry?.live || {};
       const interpolation = state.telemetry?.interpolation || {};
       const cell = interpolation.cell || {};
-      const count = Math.max(0, finite(decision.frame_count) || 0);
-      const desired = Math.max(0, finite(decision.desired_frames) || 0);
-      const minimum = Math.max(0, finite(decision.minimum_frames) || 0);
-      const progress = desired > 0 ? Math.min(100, count / desired * 100) : 0;
       const eligible = decision.learning_eligible === true;
-      const fuel = fuelLabel(decision.fuel_confirmed || live.fuel);
-      const reason = restoring
-        ? (learningStatus.reason || 'Restaurando conhecimento persistido em segundo plano.')
-        : (decision.reason || live.sample_reason || 'Aguardando decisão do núcleo.');
-      const quality = finite(decision.quality);
       const row = finite(decision.cell_row ?? cell.row);
       const column = finite(decision.cell_column ?? cell.column);
       const rpm = finite(interpolation.rpm ?? live.rpm);
       const petrolMs = finite(interpolation.petrolMs ?? live.petrol_ms ?? live.petrolMs);
       const mapBar = finite(interpolation.mapBar ?? live.load_bar ?? live.map_bar);
-      const pressure = finite(live.pressure_diff_bar ?? live.gas_pressure_abs_bar);
-      const water = finite(live.water_c ?? live.waterC);
-      const timeout = finite(decision.window_budget_ms);
-      const age = finite(decision.window_age_ms);
+      const reason = restoring
+        ? (learningStatus.reason || 'Restaurando a memória salva.')
+        : (decision.reason || live.sample_reason || 'Observando o motor.');
+      const status = restoring ? 'Restaurando' : eligible ? 'Leitura aprendida' : stateLabel(decision);
+      const level = restoring ? 'waiting' : eligible ? 'accepted' : 'observing';
       const historyRows = this.decisionHistory.length
-        ? this.decisionHistory.map(item => `<div data-level="${escapeHtml(item.level)}"><time>${escapeHtml(item.time)}</time><b>${escapeHtml(item.label)}</b><span>${escapeHtml(item.reason)}</span><small>${escapeHtml(item.fuel)} · célula ${escapeHtml(item.cell)} · ${escapeHtml(item.code)}</small></div>`).join('')
-        : '<p class="empty-copy">Nenhum aceite, descarte ou transição relevante observado desde que esta tela foi aberta.</p>';
+        ? this.decisionHistory.slice(0, 4).map(item => `<div data-level="${escapeHtml(item.level)}"><time>${escapeHtml(item.time)}</time><b>${escapeHtml(item.label)}</b><span>${escapeHtml(item.reason)}</span></div>`).join('')
+        : '<p class="empty-copy">Nenhuma decisão recente nesta tela.</p>';
 
       this.collectionPane.innerHTML = `
-        <section class="learning-decision-card" data-eligible="${eligible ? 'true' : 'false'}">
-          <div class="decision-top"><div><small>DECISÃO DO NÚCLEO</small><h3>${restoring ? 'Learning restaurando' : escapeHtml(stateLabel(decision))}</h3></div><span>${restoring ? 'EM SEGUNDO PLANO' : (eligible ? 'CONTA' : 'NÃO CONTA AINDA')}</span></div>
+        <section class="learning-now-card" data-level="${level}">
+          <header><div><small>COLETA AUTOMÁTICA</small><h3>${escapeHtml(status)}</h3></div>${row !== null && column !== null && row >= 0 && column >= 0 ? `<span>Célula ${row + 1}×${column + 1}</span>` : ''}</header>
           <p>${escapeHtml(reason)}</p>
-          <div class="collection-progress"><i style="width:${progress.toFixed(1)}%"></i></div>
-          <div class="collection-facts"><span><b>${count}/${desired || '—'}</b> leituras</span><span>mínimo ${minimum || '—'}</span><span>${fuel}</span><span>${quality === null ? 'qualidade —' : `qualidade ${Math.round(quality * 100)}%`}</span></div>
-          <small class="reason-code">${restoring ? 'LEARNING_RESTORE_PENDING' : escapeHtml(decision.reason_code || decision.state || 'OBSERVING_ENGINE')}</small>
-        </section>
-        <section class="learning-current-condition">
-          <header><div><small>CONDIÇÃO AGORA</small><h3>O que o núcleo está observando</h3></div>${row !== null && column !== null && row >= 0 && column >= 0 ? `<span>Célula ${row + 1}×${column + 1}</span>` : ''}</header>
-          <div class="condition-grid">
+          <div class="learning-now-values">
             <div><small>RPM</small><b>${rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR')}</b></div>
-            <div><small>Petrol Inj.</small><b>${fmt(petrolMs, 2)} ms</b></div>
             <div><small>MAP</small><b>${fmt(mapBar, 3)} bar</b></div>
-            <div><small>Pressão GNV</small><b>${fmt(pressure, 3)} bar</b></div>
-            <div><small>Água</small><b>${water === null ? '—' : `${fmt(water, 0)} °C`}</b></div>
-            <div><small>Janela</small><b>${age === null ? '—' : `${fmt(age / 1000, 1)} s`}${timeout ? ` / ${fmt(timeout / 1000, 1)} s` : ''}</b></div>
+            <div><small>PETROL INJ.</small><b>${fmt(petrolMs, 2)} ms</b></div>
           </div>
-          <p class="learning-light-note">A posição ao vivo é mostrada apenas como texto. A interpolação bilinear continua no Kotlin sem perseguir células na WebView.</p>
+          <p class="learning-plain-note">O app observa continuamente. Esta situação informa se a leitura atual já entrou na memória.</p>
         </section>
-        <section class="learning-decision-history">
-          <header><div><small>ÚLTIMAS DECISÕES OBSERVADAS</small><h3>O que acabou de acontecer com a coleta</h3></div><span>${this.decisionHistory.length}/6</span></header>
+        <details class="learning-technical-details">
+          <summary>Detalhes técnicos</summary>
           <div class="decision-history-list">${historyRows}</div>
-          <p>O registro persistente completo continua no SessionRecorder em Ferramentas.</p>
-        </section>
-        <section class="learning-policy-summary">
-          <header><small>LIMITES CONFIGURADOS</small><button type="button" data-open-tolerances>ajustar</button></header>
-          <div class="policy-grid"><span>RPM <b>${fmt(policy.rpmOscillationMinimum, 0)} rpm / ${fmt(policy.rpmOscillationPercent, 1)}%</b></span><span>MAP <b>${fmt(policy.mapOscillationBar, 3)} bar</b></span><span>Petrol Inj. <b>${fmt(policy.petrolOscillationPercent, 1)}%</b></span><span>Pressão <b>${fmt(policy.pressureOscillationBar, 3)} bar</b></span></div>
-          <p>Esses números vêm da política Kotlin. A interface não decide se a amostra é válida.</p>
-        </section>
+          <p class="learning-light-note">RPM × MAP define a condição física. A posição ao vivo é apenas informativa; a interpolação continua no núcleo Kotlin.</p>
+        </details>
       `;
-      this.collectionPane.querySelector('[data-open-tolerances]')?.addEventListener('click', () => this.setInspectorPane('tolerances'));
     }
 
     renderTolerances(state) {
@@ -498,23 +470,27 @@
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
         <h3>${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · ${fmt(petrolLabel, 1)} ms</h3>
-        <p class="learning-reason"><b>${escapeHtml(stabilityLabel(stabilityState))}.</b> ${escapeHtml(stability?.reason || learned?.readinessReason || 'Sem evidência válida nesta região. Você ainda pode abrir a célula para ajuste manual.')}</p>
-        <dl class="detail-list enhanced-detail-list">
-          <div><dt>Onde</dt><dd>${whereText}</dd></div>
-          <div><dt>Gasolina esperada</dt><dd>${gasolineExpectedText}</dd></div>
-          <div><dt>GNV observado</dt><dd>${cngObservedText}</dd></div>
-          <div><dt>Diferença</dt><dd>${comparisonText}</dd></div>
-          <div><dt>Por que confiar</dt><dd>${supportText}. Precisão local: gasolina ${Math.round(confidence(learned?.petrol) * 100)}%, GNV ${Math.round(confidence(learned?.cng) * 100)}%.</dd></div>
-          <div><dt>O que isso significa</dt><dd>${meaningText}</dd></div>
-          <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}% · ${Math.round(finite(stability?.consolidatedUniqueVisits) || 0)} visitas`}</dd></div>
-          <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
-          <div><dt>Resumo projetado da célula</dt><dd>Este resumo não é o par usado no cálculo; agrega evidências que influenciam esta célula.</dd></div>
-          <div><dt>Massa de evidência local</dt><dd>Gasolina: ${Math.round(petrolSamples)} amostras, ${petrolVisits} visitas, ${petrolSessions} sessões. GNV: ${Math.round(cngSamples)} amostras, ${cngVisits} visitas, ${cngSessions} sessões, época ${model?.epoch ?? '—'}.</dd></div>
-          <div><dt>Predição contínua RPM × MAP</dt><dd>${predictionText}</dd></div>
-          <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')} · somente consulta` : 'nenhum'}</dd></div>
-        </dl>
-        <button class="primary wide" type="button" data-edit-learning-cell>${suggestion?.actionable ? 'Editar esta célula com a sugestão' : 'Editar esta célula'}</button>
+        <div class="learning-primary-facts">
+          <div><small>Gasolina esperada</small><b>${gasolineExpectedText}</b></div>
+          <div><small>GNV observado</small><b>${cngObservedText}</b></div>
+          <div><small>Diferença aprendida</small><b>${comparisonText}</b></div>
+          <div><small>Situação</small><b>${escapeHtml(stabilityLabel(stabilityState))}</b></div>
+        </div>
+        <p class="learning-reason">${escapeHtml(meaningText)}</p>
+        <button class="primary wide" type="button" data-edit-learning-cell>${suggestion?.actionable ? 'Revisar sugestão nesta célula' : 'Abrir esta célula no Mapa K'}</button>
         <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>
+        <details class="learning-technical-details">
+          <summary>Detalhes técnicos</summary>
+          <dl class="detail-list">
+            <div><dt>Onde</dt><dd>${whereText}</dd></div>
+            <div><dt>Procedência</dt><dd>${supportText}</dd></div>
+            <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}%`}</dd></div>
+            <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
+            <div><dt>Massa local</dt><dd>Gasolina: ${Math.round(petrolSamples)} amostras, ${petrolVisits} visitas, ${petrolSessions} sessões. GNV: ${Math.round(cngSamples)} amostras, ${cngVisits} visitas, ${cngSessions} sessões.</dd></div>
+            <div><dt>Predição RPM × MAP</dt><dd>${predictionText}</dd></div>
+            <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')} · somente consulta` : 'nenhum'}</dd></div>
+          </dl>
+        </details>
       `;
       this.cellPane.querySelector('[data-edit-learning-cell]')?.addEventListener('click', () => {
         this.router.navigate('map', {
