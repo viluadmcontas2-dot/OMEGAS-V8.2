@@ -43,3 +43,29 @@
 - Superioridade held-out de qualquer novo Predictor.
 
 Nenhum desses quatro itens pode ser promovido sem teste específico no carro ou avaliação cega aplicável.
+
+
+## Completion checkpoint — 2026-09-01
+
+- Branch de revisão: `work/red-v82-completion`
+- PR: #13
+- SHA de produto verificado: `e3e40ed2cf50231020c9620542d83adc6d5bbcbf`
+- GitHub Actions: `33498106165` — SUCCESS
+- APK SHA-256: `602dc87990953c637a73f70e8101020363a7f2d8bf0754aae8e375861d56b3d1`
+- Artifact ID: `9796619524`
+- Artifact digest: `sha256:6831f7228538411bee94cb540ed9610d93a6d882f952c802e9984be5dd880051`
+
+### Corrigido e provado
+
+1. Combustível deixa de permanecer `DESCONHECIDO` quando o código bruto não é um dos três códigos canônicos, mas o próprio frame contém pulso físico inequívoco.
+2. Códigos `0x80/0x88/0x90` continuam prioritários; o byte bruto é preservado e a origem fica auditável em `fuel_source`.
+3. Sem código canônico e sem pulso físico, o estado continua `UNKNOWN`; não existe chute nem forward-fill.
+4. Todas as oito rotas foram renderizadas em Chrome a 1280×720. O gate falhou inicialmente em quatro alvos de 38/40/42 px; todos foram corrigidos para o mínimo operacional e o gate ficou GREEN.
+5. O Predictor explica em linguagem operacional de onde veio a estimativa, quantas passagens e leituras nativas a sustentam e qual é o próximo passo. A matemática e a proibição de escrita automática permaneceram intactas.
+
+### Limites honestos
+
+- A correção de combustível está provada por protocolo/testes e ainda exige confirmação física no veículo.
+- O gate de UI prova layout renderizado em 1280×720 no browser do CI; legibilidade e ergonomia finais ainda exigem observação na central real.
+- Nenhum novo algoritmo de Predictor foi promovido: os candidatos Gaussian/híbridos anteriores não provaram ganho held-out.
+- `P_IMPROVE_PROVEN=false`, `VEHICLE_PROVEN=false`, `AUTO_WRITE_ECU=false`.
