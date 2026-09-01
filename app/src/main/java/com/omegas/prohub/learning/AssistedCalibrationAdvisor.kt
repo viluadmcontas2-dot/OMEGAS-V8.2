@@ -167,7 +167,7 @@ object AssistedCalibrationAdvisor {
                     sample.weight * upperFraction,
                     sample.rpm,
                     sample.visitId,
-                    sample.referenceRegionId,
+                    sample.physicalRegionKey,
                 )
             }
         }
