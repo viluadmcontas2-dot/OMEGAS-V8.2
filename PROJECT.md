@@ -24,6 +24,7 @@ OBD não é requisito de evolução desta versão. Código legado pode permanece
 - A equivalência/resíduo nasce da comparação desses tempos de injeção sob suporte RPM×MAP compatível.
 - `RPM × Petrol Inj.` é a geometria downstream para localizar a célula física do Mapa K conforme os eixos vivos da ECU.
 - Temperatura, ΔP e contexto ambiental não são eixos do Mapa K nem requisitos primários de matching nesta WorkUnit; podem permanecer como diagnóstico offline de robustez.
+- Frame/janela, episódio e sessão/época são massas de evidência diferentes; validação de generalização é cronológica e held-out.
 
 ## Segurança
 
@@ -35,12 +36,15 @@ Android landscape, alvo físico 1280×720, ABI de release atual solicitada `arme
 
 ## Governança ativa
 
-Repo-first.
+Repo-first / remote-first.
 
 - WorkUnit ativa: `docs/workunits/OMEGAS-WU-006.md`
 - Issue: #7
 - Branch: `work/wu-006-calibration-science-hardening`
 - Plano: `docs/plans/2026-08-29-wu006-calibration-science-hardening.md`
+- Guardrails: `governance/engineering-guardrails.md`
 - Release funcional anterior: WU-005, preservada como provenance histórica.
+
+A governança desta WU absorve a disciplina de continuidade/evidência do PULSE RIDE e os princípios científicos aplicáveis da RED Science Blend, mas **não** importa branches, issues, PRs ou status desses trabalhos como autoridade atual.
 
 Retomadas devem começar por `AGENTS.md` → `PROJECT.md` → `STATUS.md` → WU-006 → Issue #7, nunca pela memória do chat.
