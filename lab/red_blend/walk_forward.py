@@ -10,7 +10,7 @@ class Prediction:
     predicted_ms:float;raw_support_count:int;independent_session_count:int;max_training_order:int;method:str
 @dataclass(frozen=True)
 class PredictorMetrics:
-    supported:int;coverage:float;median_abs_relative_error:float;p90_abs_relative_error:float;p95_abs_relative_error:float;max_abs_relative_error:float;median_independent_sessions:float
+    supported:int;coverage:float;abstention_rate:float;mean_abs_relative_error:float;median_abs_relative_error:float;p90_abs_relative_error:float;p95_abs_relative_error:float;max_abs_relative_error:float;median_independent_sessions:float
 @dataclass(frozen=True)
 class WalkForwardComparison:
     tested_future_episodes:int;leakage_violations:int;metrics:Mapping[str,PredictorMetrics];claim_scope:str="BLIND_WALK_FORWARD_OFFLINE_NOT_PRODUCTION"
@@ -90,7 +90,8 @@ def _q(values,q):
     p=(len(o)-1)*q;lo=math.floor(p);hi=math.ceil(p);return o[lo] if lo==hi else o[lo]*(1-(p-lo))+o[hi]*(p-lo)
 def _metrics(errors,sessions,tested):
     if not errors:raise ValueError("predictor has no supported folds")
-    return PredictorMetrics(len(errors),len(errors)/tested,statistics.median(errors),_q(errors,.9),_q(errors,.95),max(errors),statistics.median(sessions))
+    coverage=len(errors)/tested
+    return PredictorMetrics(len(errors),coverage,1.0-coverage,statistics.fmean(errors),statistics.median(errors),_q(errors,.9),_q(errors,.95),max(errors),statistics.median(sessions))
 
 def compare_gasoline_walk_forward(episodes:Sequence[Mapping[str,Any]])->WalkForwardComparison:
     gas=[dict(e) for e in episodes if e.get("fuel")=="GASOLINA"];gas.sort(key=lambda e:(_order(e),int(e.get("start_ms",0)),_session(e)))
