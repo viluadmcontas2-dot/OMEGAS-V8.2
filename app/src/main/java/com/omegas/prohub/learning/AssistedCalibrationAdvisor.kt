@@ -154,14 +154,26 @@ object AssistedCalibrationAdvisor {
         samples.forEach { sample ->
             val (lower, upper, upperFraction) = KFactorProtocol.blendAxis(sample.petrolTargetMs)
             val lowerFraction = 1.0 - upperFraction
-            buckets[lower].add(sample.errorRatio, sample.weight * lowerFraction, sample.rpm, sample.visitId)
+            buckets[lower].add(
+                sample.errorRatio,
+                sample.weight * lowerFraction,
+                sample.rpm,
+                sample.visitId,
+                sample.referenceRegionId,
+            )
             if (upper != lower) {
-                buckets[upper].add(sample.errorRatio, sample.weight * upperFraction, sample.rpm, sample.visitId)
+                buckets[upper].add(
+                    sample.errorRatio,
+                    sample.weight * upperFraction,
+                    sample.rpm,
+                    sample.visitId,
+                    sample.referenceRegionId,
+                )
             }
         }
         return GlobalCurve(buckets.mapIndexed { index, bucket ->
             val estimate = bucket.meanOrNull()
-            val decision = bucket.decision(estimate)
+            val decision = bucket.globalDecision(estimate)
             GlobalPoint(
                 index = index,
                 petrolMs = KFactorProtocol.OBSERVED_PETROL_AXIS_MS[index],
@@ -170,6 +182,8 @@ object AssistedCalibrationAdvisor {
                 effectiveWeight = bucket.weight,
                 effectiveSamples = bucket.effectiveSamples(),
                 uniqueVisits = bucket.uniqueVisits(),
+                supportRegionCount = bucket.supportRegionCount(),
+                supportEstablished = bucket.supportEstablished(),
                 rpmCoverage = bucket.rpmCoverage(),
                 spread = bucket.spreadOrNull(),
             )
@@ -333,6 +347,10 @@ object AssistedCalibrationAdvisor {
             mapBar = mapBar,
             weight = quality,
             visitId = visitId,
+            referenceRegionId = raw.optString(
+                "reference_region_id",
+                raw.optString("referenceRegionId", "LEGACY_UNKNOWN_REGION"),
+            ).ifBlank { "LEGACY_UNKNOWN_REGION" },
             continuousWeights = weights,
         )
     }
@@ -376,6 +394,7 @@ object AssistedCalibrationAdvisor {
         val mapBar: Double,
         val weight: Double,
         val visitId: String,
+        val referenceRegionId: String,
         val continuousWeights: List<CellWeight>,
     )
 
@@ -538,13 +557,37 @@ object AssistedCalibrationAdvisor {
     private class WeightedBucket : WeightedStats() {
         private var rpmMin = Double.POSITIVE_INFINITY
         private var rpmMax = Double.NEGATIVE_INFINITY
+        private val supportRegionIds = linkedSetOf<String>()
 
-        fun add(value: Double, addedWeight: Double, rpm: Double, visitId: String) {
+        fun add(
+            value: Double,
+            addedWeight: Double,
+            rpm: Double,
+            visitId: String,
+            supportRegionId: String,
+        ) {
             addValue(value, addedWeight, visitId)
             if (addedWeight > 0.0) {
                 rpmMin = min(rpmMin, rpm)
                 rpmMax = max(rpmMax, rpm)
+                supportRegionIds += supportRegionId
             }
+        }
+
+        fun supportRegionCount(): Int = supportRegionIds.size
+        fun supportEstablished(): Boolean = uniqueVisits() >= 2 && supportRegionCount() >= 2
+
+        fun globalDecision(estimate: Double?): AdaptiveDecision {
+            val base = decision(estimate)
+            if (!base.actionable || supportEstablished()) return base
+            return base.copy(
+                actionable = false,
+                readiness = "OBSERVING",
+                reason = "Tendência preliminar: falta confirmação em outra região física RPM×MAP",
+                correctionFraction = null,
+                suggestedDeltaRatio = null,
+                estimatedResidualAfterRatio = null,
+            )
         }
 
         fun rpmCoverage(): Double = if (!rpmMin.isFinite() || !rpmMax.isFinite()) 0.0 else rpmMax - rpmMin
@@ -588,6 +631,8 @@ object AssistedCalibrationAdvisor {
         val effectiveWeight: Double,
         val effectiveSamples: Double,
         val uniqueVisits: Int,
+        val supportRegionCount: Int,
+        val supportEstablished: Boolean,
         val rpmCoverage: Double,
         val spread: Double?,
     ) {
@@ -609,6 +654,8 @@ object AssistedCalibrationAdvisor {
             .put("effectiveWeight", effectiveWeight)
             .put("effectiveSamples", effectiveSamples)
             .put("uniqueVisits", uniqueVisits)
+            .put("supportRegionCount", supportRegionCount)
+            .put("supportEstablished", supportEstablished)
             .put("confidenceStage", decision.compatibilityStage)
             .put("confidence", decision.confidence)
             .put("rpmCoverage", rpmCoverage)
@@ -623,8 +670,8 @@ object AssistedCalibrationAdvisor {
             val (lower, upper, fraction) = KFactorProtocol.blendAxis(petrolMs)
             val lowerPoint = points[lower]
             val upperPoint = points[upper]
-            val lowerAvailable = lowerPoint.errorRatio != null
-            val upperAvailable = upperPoint.errorRatio != null
+            val lowerAvailable = lowerPoint.errorRatio != null && lowerPoint.supportEstablished
+            val upperAvailable = upperPoint.errorRatio != null && upperPoint.supportEstablished
             if (!lowerAvailable && !upperAvailable) return Estimate(0.0, 0.0, 0.0, false)
             val lowerError = lowerPoint.errorRatio ?: upperPoint.errorRatio ?: 0.0
             val upperError = upperPoint.errorRatio ?: lowerPoint.errorRatio ?: 0.0

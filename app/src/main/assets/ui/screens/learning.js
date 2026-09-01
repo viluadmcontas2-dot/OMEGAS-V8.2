@@ -231,7 +231,9 @@
             tone = 'cng';
           }
         } else if (layer === 'comparison') {
-          const prediction = predictions.get(cellKey);
+          const prediction = ns.LearningModel?.localComparisonPrediction
+            ? ns.LearningModel.localComparisonPrediction(predictions.get(cellKey))
+            : null;
           source = comparisons.get(cellKey) || stable || prediction || null;
           const consolidated = finite(stable?.consolidatedErrorPercent);
           const rawError = comparisonError(comparisons.get(cellKey));
@@ -427,7 +429,9 @@
       const learned = evidenceIndex(model).get(key(row, column));
       const comparison = indexByCell(maps.comparisons).get(key(row, column));
       const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const prediction = indexByCell(advisor.mapResidualPredictions).get(key(row, column));
+      const prediction = ns.LearningModel?.localComparisonPrediction
+        ? ns.LearningModel.localComparisonPrediction(indexByCell(advisor.mapResidualPredictions).get(key(row, column)))
+        : null;
       const stability = indexByCell(state.calibrationState?.learningStability?.map || []).get(key(row, column));
       const suggestion = persistentMapSuggestions(state).get(key(row, column));
       const rawError = comparisonError(comparison);

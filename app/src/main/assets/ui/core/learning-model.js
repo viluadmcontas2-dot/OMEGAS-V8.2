@@ -11,6 +11,11 @@
   const finite = (value, fallback = 0) => { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : fallback; };
   const keyOf = (row, column) => `${row}:${column}`;
 
+  function localComparisonPrediction(prediction) {
+    const supportType = String(prediction?.supportType || '').toUpperCase();
+    return supportType === 'DIRECT' || supportType === 'NEAR' ? prediction : null;
+  }
+
   function normalizeFuel(value) {
     const fuel = String(value || '').toUpperCase();
     if (fuel === 'PETROL' || fuel === 'GASOLINA') return 'PETROL';
@@ -153,5 +158,5 @@
     };
   }
 
-  return { STATES, buildModel, normalizeFuel, keyOf };
+  return { STATES, buildModel, normalizeFuel, keyOf, localComparisonPrediction };
 });
