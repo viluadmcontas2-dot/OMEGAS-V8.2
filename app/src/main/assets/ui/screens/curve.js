@@ -37,7 +37,7 @@
     bind() {
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('autoCalRefresh')?.addEventListener('click', () => {
-        const result = this.api.requestAutoCalSnapshot();
+        const result = this.api?.requestAutoCalSnapshot?.() || { ok: false, error: 'Ponte nativa indisponível' };
         if (result?.ok === false) this.alert(result.error || 'Não foi possível solicitar a leitura AutoCal.');
         this.autoCalSignature = '';
         this.renderAutoCal();
@@ -163,8 +163,8 @@
     }
 
     renderAutoCal() {
-      const status = this.api.autoCalStatus?.() || {};
-      const snapshot = this.api.autoCalSnapshot?.() || {};
+      const status = this.api?.autoCalStatus?.() || {};
+      const snapshot = this.api?.autoCalSnapshot?.() || {};
       const signature = JSON.stringify({ status, snapshot });
       if (signature === this.autoCalSignature) return;
       this.autoCalSignature = signature;
