@@ -178,6 +178,34 @@
                 </aside>
               </div>
             </div>
+
+            <div class="curve-view autocal-view" data-curve-panel="autocal">
+              <section class="autocal-surface">
+                <header class="autocal-heading">
+                  <div><small>AUTOCAL DA ECU</small><h3>Estado aprendido pela MP48</h3></div>
+                  <button id="autoCalRefresh" type="button" class="secondary">Atualizar leitura</button>
+                </header>
+                <div id="autoCalState" class="autocal-state" data-level="waiting">
+                  <span class="state-indicator"></span>
+                  <div><b>Aguardando ECU</b><p>Conecte a MP48 para ler o estado AutoCal.</p></div>
+                </div>
+                <div id="autoCalSummary" class="autocal-summary">
+                  <div><small>ZONAS DE AQUISIÇÃO</small><b>18</b><span>gasolina e GNV</span></div>
+                  <div><small>CURVA K</small><b>30</b><span>pontos separados</span></div>
+                  <div><small>MAPA K</small><b>12×12</b><span>células separadas</span></div>
+                </div>
+                <details class="autocal-details">
+                  <summary>Ver detalhes técnicos</summary>
+                  <div id="autoCalTechnical">Nenhum snapshot recebido.</div>
+                </details>
+              </section>
+              <aside class="inspector-panel autocal-explainer">
+                <small>LEITURA SEGURA</small>
+                <h3>O aplicativo não calibra sozinho</h3>
+                <p>Esta tela consulta o que a ECU registrou. Nenhuma ação aqui grava Mapa K, Curva K ou AutoMatch.</p>
+                <div class="autocal-safety"><b>Escrita automática desligada</b><span>Qualquer ajuste futuro continuará exigindo revisão humana, confirmação, ACK e readback.</span></div>
+              </aside>
+            </div>
           </div>
 
           <div class="operation-layer review-layer"><div class="operation-card"><header><div><small>REVISÃO</small><h3 id="curveReviewCount">Pontos preparados</h3></div><button id="curveReviewBack" type="button" class="icon-close">×</button></header><div id="curveReviewList" class="review-list"></div><div class="write-contract"><b>A próxima ação escreve na ECU.</b><span>Backup, ACK e readback permanecem sob autoridade do Kotlin.</span></div><div class="operation-actions"><button id="curveWriteButton" type="button" class="danger-primary">Gravar pontos na ECU</button></div></div></div>
