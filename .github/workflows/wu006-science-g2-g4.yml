@@ -1,0 +1,94 @@
+name: OMEGAS WU-006 Science G2-G4
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - work/wu-006-calibration-science-hardening
+    paths:
+      - "lab/red_blend/**"
+      - "tools/science/**"
+      - "tests/test_science_corpus_replay.py"
+      - "tests/test_science_fixture_reconstruction.py"
+      - "tests/fixtures/science/**"
+      - ".github/workflows/wu006-science-g2-g4.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-wu006-g2-g4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  science-g2-g4:
+    name: G2-G4 governed replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact WU-006 SHA
+        uses: actions/checkout@v7
+
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Existing corpus and fixture contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest -v tests.test_science_corpus_replay tests.test_science_fixture_reconstruction
+
+      - name: Reconstruct governed episode fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/science build/evidence
+          python3 -B tools/science/reconstruct_fixture.py \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json \
+            build/science/omegas_corpus_20260828_episodes.jsonl.gz
+
+      - name: G2 governed independent replay contracts
+        run: python3 -B -m unittest -v lab.red_blend.test_real_corpus
+
+      - name: G3 temporal/session independence contracts
+        run: >-
+          python3 -B -m unittest -v
+          lab.red_blend.test_session_science
+          lab.red_blend.test_real_session_science
+
+      - name: G4 blind chronological walk-forward contracts
+        run: python3 -B -m unittest -v lab.red_blend.test_walk_forward
+
+      - name: Write G2-G4 evidence receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m lab.red_blend.evidence_receipt \
+            tests/fixtures/science/episodes \
+            tests/fixtures/science/episodes/index.json \
+            build/evidence/wu006-g2-g4.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          p=Path('build/evidence/wu006-g2-g4.json')
+          d=json.loads(p.read_text())
+          d['source_sha']=os.environ['GITHUB_SHA']
+          d['source_tree']=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+          p.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n')
+          print(p.read_text())
+          PY
+
+      - name: Upload G2-G4 evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: omegas-wu006-g2-g4-${{ github.sha }}
+          path: build/evidence/wu006-g2-g4.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
