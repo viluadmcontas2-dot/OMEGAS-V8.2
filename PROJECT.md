@@ -1,29 +1,34 @@
-# Projeto OMEGAS V8.0 RED Performance
+# Projeto OMEGAS V8.2 RED Science Blend
 
 ## Objetivo
 
-Reduzir tempo, combustível e esforço até aproximar de zero a diferença entre a injeção de gasolina de referência e a injeção comandada quando o veículo opera em GNV.
+Aprender com o histórico do próprio carro para reduzir a diferença gasolina × GNV e acelerar uma calibração manual segura. Economia de combustível permanece objetivo experimental, não claim provado.
 
-## Contrato científico
+## Modelo
 
-- `(RPM, MAP)` identifica a condição física comparável.
-- Gasolina constrói `Tinj_ref(RPM, MAP)`; GNV observa `Tinj_petrol_on_CNG(RPM, MAP)`.
-- O erro nasce do par comparável, não de dois agregados exibidos na mesma célula.
-- Cada evidência válida atualiza imediatamente uma superfície contínua.
-- O modelo separa `tendência global Curva K(Tinj_ref)` de `residual local RPM×MAP`.
-- A grade RPM×Petrol Inj. apenas projeta a previsão para o Mapa K físico.
+- Condição física: `RPM × MAP`.
+- Resposta: distribuição de `Petrol Inj.` observada nessa condição.
+- Local: densidade, centro robusto, dispersão e multimodalidade.
+- Persistência: sessões, epochs, walk-forward, drift e mudança de calibração.
+- Curva K: 30 pontos, tendência global por Petrol Inj.
+- Mapa K: 12×12, residual local projetado no eixo físico da ECU.
+- AutoCal: 18 zonas de aquisição, separadas de Curva K e Mapa K.
 
-## Produto e segurança
+## Produto
 
-- Aprender mostra evidência direta, previsão, procedência e incerteza.
-- Curva K recebe tendência global; Mapa K recebe residual local.
-- Auto-Cal é manual e interoperável com o ajuste global.
-- Escrita ECU é manual: preparar → revisar → confirmar → ACK → readback.
+- Aprender responde: gasolina esperada, GNV observado, diferença aprendida, situação e próximo passo.
+- AutoCal mostra estado nativo em modo somente leitura.
+- Sugestão global só nasce com cobertura em duas regiões físicas; não é replicada como correção local.
+- Predictor continua experimental e RED permanece fallback.
+
+## Segurança
+
+Nenhuma escrita automática. Toda escrita continua em fluxo manual com revisão, confirmação, ACK e readback.
 
 ## Governança ativa
 
-- WorkUnit: `docs/workunits/OMEGAS-RED-WU-001.md`
-- Issue: `#9`
-- Branch: `hotfix/v8.0-red-performance`
-- Spec: `docs/superpowers/specs/2026-08-30-red-continuous-fast-learning-design.md`
-- Plano: `docs/superpowers/plans/2026-08-30-red-continuous-fast-learning.md`
+- Branch alvo: `work/red-v82-science-blend`
+- Branch de revisão: `work/red-v82-global-evidence-fix`
+- PR: #12
+- Issue: #11
+- Constituição e guardrails: `governance/`
