@@ -30,11 +30,18 @@
       this.writing = false;
       this.view = 'editor';
       this.learningSignature = '';
+      this.autoCalSignature = '';
       this.bind();
     }
 
     bind() {
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
+      document.getElementById('autoCalRefresh')?.addEventListener('click', () => {
+        const result = this.api.requestAutoCalSnapshot();
+        if (result?.ok === false) this.alert(result.error || 'Não foi possível solicitar a leitura AutoCal.');
+        this.autoCalSignature = '';
+        this.renderAutoCal();
+      });
       document.getElementById('curvePreparePoint')?.addEventListener('click', () => this.prepareActivePoint());
       document.querySelectorAll('[data-curve-view]').forEach(button => button.addEventListener('click', () => this.setView(button.dataset.curveView || 'editor')));
       document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeActive(Number(button.dataset.curveNudge) || 0)));
@@ -50,11 +57,12 @@
     needsLearning() { return this.view === 'learning'; }
 
     setView(view) {
-      if (view !== 'learning' && view !== 'editor') return false;
+      if (view !== 'learning' && view !== 'editor' && view !== 'autocal') return false;
       this.view = view;
       document.querySelectorAll('[data-curve-view]').forEach(button => button.classList.toggle('active', button.dataset.curveView === this.view));
       document.querySelectorAll('[data-curve-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.curvePanel === this.view));
       if (this.view === 'learning') this.renderLearning(this.store.get());
+      else if (this.view === 'autocal') this.renderAutoCal();
       else this.renderChart();
       return true;
     }
@@ -72,6 +80,7 @@
         this.prepareSuggestion(suggestion, true);
       }
       if (this.view === 'learning') this.renderLearning(this.store.get());
+      if (this.view === 'autocal') this.renderAutoCal();
     }
 
     startRead() {
@@ -90,6 +99,7 @@
     }
 
     poll() {
+      if (this.view === 'autocal') this.renderAutoCal();
       if (!this.reading && !this.writing) return;
       const operation = this.api.curveOperation();
       if (!operation) return;
@@ -149,6 +159,55 @@
             this.data = null;
           }
         }
+      }
+    }
+
+    renderAutoCal() {
+      const status = this.api.autoCalStatus?.() || {};
+      const snapshot = this.api.autoCalSnapshot?.() || {};
+      const signature = JSON.stringify({ status, snapshot });
+      if (signature === this.autoCalSignature) return;
+      this.autoCalSignature = signature;
+
+      const stateHost = document.getElementById('autoCalState');
+      const summaryHost = document.getElementById('autoCalSummary');
+      const technicalHost = document.getElementById('autoCalTechnical');
+      const state = String(status.state || (status.connected ? 'READY' : 'WAITING')).toUpperCase();
+      const connected = status.connected === true || snapshot.ok === true;
+      const busy = status.busy === true || status.snapshotRequested === true;
+      const coherent = snapshot.temporalCoherent === true;
+      const partial = snapshot.partial === true;
+      const fields = Array.isArray(snapshot.fields)
+        ? snapshot.fields
+        : Object.entries(snapshot.fields || {}).map(([name, value]) => ({ name, value }));
+      const validFields = fields.filter(field => field?.valid !== false).length;
+      const capturedAt = finite(snapshot.capturedAt ?? snapshot.timestamp ?? snapshot.updatedAt);
+      const level = connected ? (partial || !coherent ? 'warning' : 'ok') : 'waiting';
+      const title = busy ? 'Atualizando leitura da ECU' : connected ? (partial ? 'Snapshot parcial' : 'AutoCal lido') : 'Aguardando ECU';
+      const detail = connected
+        ? `${coherent ? 'Campos temporalmente coerentes' : 'Coerência temporal ainda não confirmada'} · ${validFields}/${fields.length || 0} campos válidos`
+        : 'Conecte a MP48 para ler o estado AutoCal.';
+
+      if (stateHost) {
+        stateHost.dataset.level = level;
+        stateHost.innerHTML = `<span class="state-indicator"></span><div><b>${escapeHtml(title)}</b><p>${escapeHtml(detail)}</p></div><small>${escapeHtml(state)}</small>`;
+      }
+      if (summaryHost) {
+        summaryHost.innerHTML = `
+          <div><small>ZONAS DE AQUISIÇÃO</small><b>18</b><span>família AutoCal</span></div>
+          <div><small>CAMPOS LIDOS</small><b>${fields.length || '—'}</b><span>${partial ? 'snapshot parcial' : 'snapshot atual'}</span></div>
+          <div><small>ÚLTIMA LEITURA</small><b>${capturedAt ? new Date(capturedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</b><span>somente leitura</span></div>
+        `;
+      }
+      if (technicalHost) {
+        technicalHost.innerHTML = fields.length
+          ? fields.map(field => {
+              const name = field.name || field.field || field.id || 'campo';
+              const count = finite(field.rawElementCount ?? field.elementCount ?? field.count);
+              const validity = field.valid === false ? (field.failureReason || 'inválido') : 'válido';
+              return `<div><b>${escapeHtml(name)}</b><span>${count === null ? 'contagem não informada' : `${count} elementos`} · ${escapeHtml(validity)}</span></div>`;
+            }).join('')
+          : '<p>Nenhum campo materializado ainda. Use “Atualizar leitura” com a ECU conectada.</p>';
       }
     }
 
