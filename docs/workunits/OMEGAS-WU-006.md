@@ -11,32 +11,21 @@
 - Rota pelo PC do proprietário: proibida.
 - Estratégia: `CORPUS_FIRST → REPLAY_FIRST → SIMULATION_FIRST → SHADOW_FIRST → PHYSICAL_LAST`.
 - Guardrail canônico: `governance/engineering-guardrails.md`.
+- Evidence receipt G2–G4: `docs/evidence/OMEGAS-WU-006-G2-G4.md`.
 
 ## Contrato científico congelado
 
 A equivalência não é “RPM e MAP isoladamente”. O contrato correto é:
 
 1. `(RPM, MAP)` identifica a região/condição operacional física comparável;
-2. quando o motor opera em gasolina, aprendemos `Tinj_petrol_ref(RPM, MAP)`;
-3. quando o motor opera em GNV, observamos o tempo de injeção de gasolina que a ECU continua comandando nessa região, `Tinj_petrol_on_CNG(RPM, MAP)`;
-4. a equivalência/resíduo compara esses tempos de injeção em regiões RPM×MAP compatíveis;
-5. a tradução downstream para uma célula física do Mapa K usa `RPM × Petrol Inj.` conforme os eixos vivos da ECU.
+2. em gasolina aprendemos `Tinj_petrol_ref(RPM, MAP)`;
+3. em GNV observamos `Tinj_petrol_on_CNG(RPM, MAP)`;
+4. a equivalência/resíduo compara esses tempos de injeção sob suporte RPM×MAP compatível;
+5. `RPM × Petrol Inj.` localiza downstream a célula física do Mapa K conforme os eixos vivos da ECU.
 
-Temperatura, ΔP e outros canais ambientais **não são eixos do Mapa K, não são dimensões obrigatórias do matching e não podem aumentar por padrão a quantidade de amostras necessária para aprender**. Podem permanecer como metadados diagnósticos/estratificação offline para falsificar a hipótese de invariância. Qualquer promoção a dimensão primária exige nova WorkUnit e evidência cega de falha do modelo atual.
+Temperatura, ΔP e contexto ambiental não são eixos do Mapa K nem dimensões obrigatórias do matching nesta WorkUnit. Permanecem diagnósticos/ablação offline; qualquer promoção exige nova WorkUnit e evidência cega de falha do modelo atual.
 
 Mapa K e Curva K continuam separados. Nenhum aprendizado, Predictor ou sugestão autoriza escrita automática na ECU.
-
-## Evidência disponível na entrada
-
-- 33 sessões lógicas após deduplicar exports/prefixos da mesma sessão;
-- conteúdo declarado dos representantes verificado por SHA-256 em aproximadamente 2.634 GB descompactados sem mismatch no levantamento anterior;
-- telemetria V8 contém gasolina e GNV com schema `mp48-progbase-v2`;
-- telemetria consecutiva é autocorrelacionada e não pode ser tratada como IID;
-- snapshot `.omegas` contém 133 mudanças MAP_K confirmadas em 11 adjustment IDs, com ACK/readback/final-map-hash;
-- existe época natural pré/pós intervenção para replay causal;
-- Predictor de produção permanece fail-closed/ABSTAIN enquanto risco/P(improve) não forem empiricamente calibrados.
-
-Esses fatos entram como hipóteses/evidências a serem reproduzidas pelo harness canônico desta WorkUnit; não viram `PROVEN` apenas por constarem neste documento.
 
 ## Não escopo
 
@@ -44,71 +33,84 @@ Esses fatos entram como hipóteses/evidências a serem reproduzidas pelo harness
 - OBD como novo requisito;
 - escrita automática na ECU;
 - remover proteções de ACK/readback;
-- gerar APK a cada alteração de código;
+- gerar APK a cada alteração;
 - declarar validação veicular com replay/software;
-- aumentar dimensionalidade com temperatura/pressão sem falsificação que justifique.
+- aumentar dimensionalidade ambiental sem falsificação que justifique.
 
-## Plano e gates
+## Gates
 
 ### G1 — Corpus Contract — PROVEN
-Manifesto privacy-safe, hash-bound e fixture derivada determinística estão canonizados. O ZIP bruto não é versionado; deduplicação por sessão lógica impede inflação por exports/prefixos. A evidência detalhada está em `STATUS.md` e nos fixtures de `tests/fixtures/science/`.
+Fixture privacy-safe/hash-bound e deduplicação por sessão lógica canonizadas. Corpus bruto não é versionado. Fixture: 1.708 episódios, gzip SHA-256 `9fd4a4fda3d907af67c9c29c01b17b54cb607f13c3351b66aff553e962980d94`.
 
-### G2 — Independent Replay
-Extrair telemetria e episódios estáveis diretamente dos eventos brutos, sem consultar `sample_state` ou rótulos de aceitação do próprio algoritmo.
+### G2 — Independent Replay — PROVEN
+Replay governado foi exercitado no SHA `29e2f9356a45b31395e83d2c98a07552985ed7cc` / tree `0c80dbbc790e0e0180afdfe5240a6b88b5862252`. O avaliador não usa `sample_state`; fixture é validado fail-closed e os contratos de janela/trajectory/reutilização temporal passam independentemente.
 
-**Aceita quando:** replay não pode “dar nota para si mesmo”; fuel transition/cutoff/plausibility/gaps/instabilidade são tratados explicitamente; reutilização temporal é limitada; reconstrução do fixture e testes independentes passam no SHA remoto.
+### G3 — Temporal Independence / Evidence Mass — PROVEN_OFFLINE_METHOD
+Frame/janela repetidos não equivalem a suporte entre sessões. O lab separa variância within/between-session, LOSO e voto balanceado por sessão; duplicação densa dentro da mesma sessão não fabrica nova sessão independente.
 
-### G3 — Temporal Independence / Evidence Mass
-Separar estabilidade de janela de independência científica. Frames próximos podem provar estabilidade, mas não equivalem a observações independentes. Tornar suporte por episódio/sessão explícito e medir persistência entre sessões; quando trajetória/época não estiverem materializadas no fixture governado, não inventar esse suporte.
+No corpus governado:
+- GASOLINA: 266 episódios; 7 regiões analisáveis; 6 auditadas com >=3 sessões independentes; 1 insuficiente;
+- GNV: 1.442 episódios; 15 regiões analisáveis; 13 auditadas; 2 insuficientes.
 
-**Aceita quando:** repetição densa dentro de uma sessão não fabrica sessões independentes; decomposição within/between-session e leave-one-session-out tornam drift/persistência visíveis; qualquer integração Kotlin posterior deve preservar essa semântica.
+Este gate prova o método científico offline. `production_runtime_integrated=false`; integração Kotlin permanece G11.
 
-### G4 — Blind Walk-Forward
-Treinar somente com sessões/épocas anteriores e avaliar sessões futuras inteiras. Proibido random-shuffle de frames adjacentes.
+### G4 — Blind Walk-Forward — PROVEN
+Treino usa somente ordens/sessões anteriores; futuro não altera alvo anterior; `leakage_violations=0`; random shuffle de telemetria adjacente é proibido.
 
-**Métricas:** mediana/MAE relativo, P90, P95, cobertura/abstention, suporte independente e leakage count. Interval coverage e tempo até utilidade permanecem obrigatórios antes de qualquer claim de modelo final, mas não serão fabricados se o estimator atual não produzir intervalos calibrados.
+Em 247 episódios futuros gasolina:
+- baseline WU-006: 213 suportados; coverage `0.8623481781`; abstention `0.1376518219`; mean abs rel error `0.0219332429`; mediana `0.0125276948`; P90 `0.0540617710`; P95 `0.0801364710`; mediana de 3 sessões independentes;
+- pooled Gaussian: 231 suportados; coverage `0.9352226721`; mean abs rel error `0.0415702051`; mediana `0.0228080838`; P90 `0.1108447704`; P95 `0.1566843485`;
+- session-balanced Gaussian: 231 suportados; coverage `0.9352226721`; mean abs rel error `0.0442942972`; mediana `0.0221272123`; P90 `0.1196947272`; P95 `0.1566843485`.
 
-### G5 — RPM×MAP→Tinj Model Tuning
-Otimizar lattice, vizinhança, janela, peso, deadband e critérios de aceitação usando apenas evidência walk-forward. Objetivo é melhor compromisso precisão×velocidade×cobertura, não maior contagem de frames.
+A maior cobertura dos Gaussianos **não** os promove a vencedores: erro médio/cauda pioraram. Seleção/tuning pertence a G5.
+
+Prova remota final:
+- workflow run `33500808742` / job `99833459688` = GREEN;
+- 13 testes de corpus + 3 G2 + 9 G3 + 4 G4 = GREEN;
+- artifact `9797604261`, digest `sha256:e4a787b446ea9c42d0a44d94e99f2309e53f921613288925663026996c628dcb`.
+
+### G5 — RPM×MAP→Tinj Model Tuning — NEXT_UNPROVEN
+Otimizar lattice, vizinhança, janela, peso, deadband e critérios de aceitação apenas na disciplina walk-forward. Objetivo: precisão × cobertura × velocidade de aprendizado, nunca maior contagem bruta.
 
 ### G6 — Causal MAP_K Replay
-Reconstruir intervenções manuais confirmadas, preservar identidade/ordem/ACK/readback e comparar épocas pré/pós com referência congelada. Semântica física do valor K falha fechada quando não provada.
+Reconstruir intervenções manuais confirmadas e comparar épocas pré/pós com referência congelada, preservando ACK/readback/identidade.
 
 ### G7 — Sensitivity Calibration
-Calibrar/validar sensibilidade apenas com pares causais comparáveis. Contradições elevam incerteza; contexto incomparável é abstention, não dado útil forçado.
+Calibrar sensibilidade apenas com pares causais comparáveis; contradição aumenta incerteza.
 
 ### G8 — Risk Coverage
-Exercitar validação leave-one-epoch/held-out e exigir que subconjuntos de maior confiança apresentem risco empiricamente menor fora da amostra.
+Exigir risco empiricamente menor nos subconjuntos de maior confiança fora da amostra.
 
 ### G9 — P(improve)
-Calibrar probabilidade de melhora em outcomes causais held-out. Até fechar este gate, `pImprove=null`, `riskCalibrated=false`, `actionable=false` e Predictor continua ABSTAIN onde depender dessa probabilidade.
+Calibrar probabilidade de melhora em outcomes causais held-out. Até fechar: `pImprove=null`, `riskCalibrated=false`, `actionable=false`.
 
 ### G10 — Shadow + Falsification
-Rodar candidato sobre replay e, quando aplicável, telemetria sem mutação da ECU. Incluir casos adversariais, OOD, baixa cobertura, drift e contradições.
+Rodar candidato sem mutação ECU, incluindo OOD/baixa cobertura/drift/contradições.
 
 ### G11 — Production Integration / Software Proof
-Integrar somente mudanças justificadas ao Kotlin de produção com TDD. Rodar gate rápido, testes afetados, regressão relevante e segurança de escrita manual. PR único da Issue #7 apenas quando os gates offline estiverem maduros.
+Integrar somente mudanças justificadas ao Kotlin com TDD e regressão proporcional.
 
 ### G12 — APK Candidate
-Somente após os gates offline necessários: suíte Android/JVM, lint, assemble, artifact e hashes. Resultado pode ser marcado `APK_READY_FOR_PHYSICAL_TEST`, nunca `VEHICLE_PROVEN` sem teste real.
+Somente após gates offline necessários: suíte Android/JVM, lint, assemble, artifact e hashes. Pode chegar a `APK_READY_FOR_PHYSICAL_TEST`, nunca `VEHICLE_PROVEN` por software.
 
 ## Evidência e estados
 
-Níveis nunca se misturam:
-
-- `SOFTWARE_PROVEN`: contratos/implementação/testes atuais passam;
-- `REPLAY_PROVEN`: comportamento reproduzido deterministicamente no corpus histórico;
-- `MODEL_PROVEN`: held-out/falsificação/causalidade/risco atendem critérios congelados;
-- `VEHICLE_PROVEN`: evidência física nova atende envelope pré-declarado.
+- `REPLAY_PROVEN_G1_G4=true` para os contratos/métodos offline explicitamente exercitados;
+- `MODEL_PROVEN=false`;
+- `KOTLIN_RUNTIME_INTEGRATED=false`;
+- `APK_READY_FOR_PHYSICAL_TEST=false`;
+- `VEHICLE_PROVEN=false`;
+- Predictor permanece `ABSTAIN_UNCHANGED`;
+- `AUTO_WRITE_ECU=false`.
 
 Estado da WorkUnit: `IMPLEMENTING`.
 
-`next_unproven_item = G2_INDEPENDENT_REPLAY / G3_TEMPORAL_INDEPENDENCE`.
+`next_unproven_item = G5_RPM_MAP_TINJ_TUNING`.
 
 ## Estratégia de verificação e custo
 
-T0 estático/sintético → T1 testes focados → T2 replay governado/falsificação → T3 Android afetado somente quando necessário → T4 full release antes do APK candidato. Actions seletivas são permitidas como prova remota quando o fixture/SDK só está disponível no repositório/runner, com `contents: read`, SHA exato, timeout, cancelamento e receipt. Abrir PR cedo é proibido se isso apenas disparar CI pesado sem ganho de evidência.
+T0 estático/sintético → T1 focado → T2 replay governado/falsificação → T3 Android afetado somente quando necessário → T4 full release antes do APK candidato. Actions seletivas são superfície de prova remota, com `contents: read`, SHA exato, timeout, cancelamento e receipt. PR precoce/CI Android pesado continuam proibidos sem ganho de evidência.
 
 ## Fechamento
 
-`PROVEN` exige evidência reproduzível e linhagem Issue #7 → esta branch → PR único → checks → merge. O chat não é autoridade e nenhuma etapa pode ser fechada apenas por narrativa.
+`PROVEN` exige evidência reproduzível e linhagem Issue #7 → esta branch → PR único → checks → merge. Chat não é autoridade e nenhuma etapa fecha por narrativa.
