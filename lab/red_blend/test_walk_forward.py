@@ -61,9 +61,11 @@ class BlindWalkForwardTest(unittest.TestCase):
         self.assertLess(baseline.median_abs_relative_error, 0.03)
         for metric in r1.metrics.values():
             self.assertGreater(metric.supported, 0)
+            self.assertTrue(math.isfinite(metric.mean_abs_relative_error))
             self.assertTrue(math.isfinite(metric.median_abs_relative_error))
             self.assertTrue(math.isfinite(metric.p90_abs_relative_error))
             self.assertTrue(math.isfinite(metric.p95_abs_relative_error))
+            self.assertAlmostEqual(metric.abstention_rate, 1.0 - metric.coverage, places=15)
 
 if __name__ == "__main__":
     unittest.main()
