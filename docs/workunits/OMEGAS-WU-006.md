@@ -10,6 +10,7 @@
 - Custo: `ZERO_MONETARY_SPEND=ABSOLUTE`
 - Rota pelo PC do proprietário: proibida.
 - Estratégia: `CORPUS_FIRST → REPLAY_FIRST → SIMULATION_FIRST → SHADOW_FIRST → PHYSICAL_LAST`.
+- Guardrail canônico: `governance/engineering-guardrails.md`.
 
 ## Contrato científico congelado
 
@@ -49,25 +50,23 @@ Esses fatos entram como hipóteses/evidências a serem reproduzidas pelo harness
 
 ## Plano e gates
 
-### G1 — Corpus Contract
-Congelar manifesto privacy-safe, hash-bound e fixture derivada determinística. Não versionar o ZIP bruto gigante. Deduplicar exports da mesma sessão antes de qualquer contagem de evidência.
-
-**Aceita quando:** mesmos inputs geram os mesmos outputs/hashes; corrupção falha fechada; duplicatas/prefixos não aumentam massa científica.
+### G1 — Corpus Contract — PROVEN
+Manifesto privacy-safe, hash-bound e fixture derivada determinística estão canonizados. O ZIP bruto não é versionado; deduplicação por sessão lógica impede inflação por exports/prefixos. A evidência detalhada está em `STATUS.md` e nos fixtures de `tests/fixtures/science/`.
 
 ### G2 — Independent Replay
 Extrair telemetria e episódios estáveis diretamente dos eventos brutos, sem consultar `sample_state` ou rótulos de aceitação do próprio algoritmo.
 
-**Aceita quando:** replay não pode “dar nota para si mesmo”; fuel transition/cutoff/plausibility/gaps/instabilidade são tratados explicitamente; reutilização temporal é limitada.
+**Aceita quando:** replay não pode “dar nota para si mesmo”; fuel transition/cutoff/plausibility/gaps/instabilidade são tratados explicitamente; reutilização temporal é limitada; reconstrução do fixture e testes independentes passam no SHA remoto.
 
 ### G3 — Temporal Independence / Evidence Mass
-Separar estabilidade de janela de independência científica. Frames próximos podem provar estabilidade, mas não equivalem a observações independentes. Tornar episódio/trajetória/sessão/época parte explícita do suporte e introduzir piso de incerteza para drift entre sessões quando sustentado pelos dados.
+Separar estabilidade de janela de independência científica. Frames próximos podem provar estabilidade, mas não equivalem a observações independentes. Tornar suporte por episódio/sessão explícito e medir persistência entre sessões; quando trajetória/época não estiverem materializadas no fixture governado, não inventar esse suporte.
 
-**Aceita quando:** repetir frames correlacionados aumenta muito menos a confiança do que repetir a evidência em sessões/episódios independentes.
+**Aceita quando:** repetição densa dentro de uma sessão não fabrica sessões independentes; decomposição within/between-session e leave-one-session-out tornam drift/persistência visíveis; qualquer integração Kotlin posterior deve preservar essa semântica.
 
 ### G4 — Blind Walk-Forward
 Treinar somente com sessões/épocas anteriores e avaliar sessões futuras inteiras. Proibido random-shuffle de frames adjacentes.
 
-**Métricas:** mediana/MAE, P90, P95, cobertura, abstention, interval coverage, erro versus evidência e tempo até utilidade.
+**Métricas:** mediana/MAE relativo, P90, P95, cobertura/abstention, suporte independente e leakage count. Interval coverage e tempo até utilidade permanecem obrigatórios antes de qualquer claim de modelo final, mas não serão fabricados se o estimator atual não produzir intervalos calibrados.
 
 ### G5 — RPM×MAP→Tinj Model Tuning
 Otimizar lattice, vizinhança, janela, peso, deadband e critérios de aceitação usando apenas evidência walk-forward. Objetivo é melhor compromisso precisão×velocidade×cobertura, não maior contagem de frames.
@@ -104,11 +103,11 @@ Níveis nunca se misturam:
 
 Estado da WorkUnit: `IMPLEMENTING`.
 
-`next_unproven_item = G1_CORPUS_CONTRACT`.
+`next_unproven_item = G2_INDEPENDENT_REPLAY / G3_TEMPORAL_INDEPENDENCE`.
 
 ## Estratégia de verificação e custo
 
-T0 executor efêmero/local sobre fixtures → T2 testes profundos/replay → T3 Actions seletivas apenas quando Android/release exigir → T4 full release antes do APK candidato. Abrir PR cedo é proibido se isso apenas disparar CI pesado sem ganho de evidência.
+T0 estático/sintético → T1 testes focados → T2 replay governado/falsificação → T3 Android afetado somente quando necessário → T4 full release antes do APK candidato. Actions seletivas são permitidas como prova remota quando o fixture/SDK só está disponível no repositório/runner, com `contents: read`, SHA exato, timeout, cancelamento e receipt. Abrir PR cedo é proibido se isso apenas disparar CI pesado sem ganho de evidência.
 
 ## Fechamento
 
