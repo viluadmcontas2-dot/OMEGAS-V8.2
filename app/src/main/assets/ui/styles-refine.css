@@ -163,3 +163,11 @@
   .learning-controls{margin-bottom:7px}
   .autocal-heading{padding-top:9px;padding-bottom:9px}
 }
+
+
+/* Gate renderizado 1280×720: alvos operacionais mínimos. */
+.curve-screen .evidence-disclosure>summary{min-height:48px}
+.diagnostic-settings-grid select,
+.diagnostic-settings-grid input[type="number"],
+.log-filters select{min-height:48px!important}
+.diagnostic-settings [data-session-settings]{min-height:48px}
