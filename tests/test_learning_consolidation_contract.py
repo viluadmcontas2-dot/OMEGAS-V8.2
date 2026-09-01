@@ -86,7 +86,7 @@ class LearningConsolidationContract(unittest.TestCase):
         self.assertIn("recentErrorPercent", self.learning_ui)
         self.assertIn("persistentMapSuggestions(state)", self.learning_ui)
         self.assertIn("revalidando", self.learning_ui.lower())
-        self.assertIn("Editar esta célula", self.learning_ui)
+        self.assertIn("Abrir esta célula no Mapa K", self.learning_ui)
         self.assertNotIn(".setTrace(", self.learning_ui)
 
     def test_live_tracing_visual_remains_removed(self):
