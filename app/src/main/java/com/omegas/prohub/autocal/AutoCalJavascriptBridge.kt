@@ -7,6 +7,7 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.service.TelemetryForegroundService
+import com.omegas.prohub.service.blueIngestLearningSnapshot
 import com.omegas.prohub.service.blueProposalJson
 import org.json.JSONObject
 import java.io.File
@@ -15,9 +16,8 @@ import java.io.File
  * Auto-Cal do OMEGAS Blue.
  *
  * Esta bridge não calcula alvo K, residual ou confiança. Toda matemática de
- * equivalência/correção pertence ao BlueCausalEngine. Aqui permanecem somente
- * aquisição nativa, projeção de status e a transação manual confirmada com
- * ACK/readback da ECU.
+ * equivalência e correção pertence ao BlueCausalEngine. Aqui permanecem somente
+ * aquisição nativa, status e transação manual confirmada com ACK e readback.
  */
 class AutoCalJavascriptBridge(activity: MainActivity) {
     private val activityRef = java.lang.ref.WeakReference(activity)
@@ -43,7 +43,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun importSnapshotIntoLearning(snapshotJson: String): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        service.importNativeAutoCalSnapshot(snapshotJson).also { service.blueIngestLearningSnapshot(snapshotJson) }
+        service.importNativeAutoCalSnapshot(snapshotJson).also {
+            service.blueIngestLearningSnapshot(snapshotJson)
+        }
     } catch (error: Exception) {
         localFailure(error.message ?: "Não foi possível importar o snapshot")
     }
@@ -60,7 +62,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun cancelRead(): String = currentManager()?.cancel()?.toString() ?: unavailable()
 
-
     @JavascriptInterface
     fun getNativeActionStatus(): String = currentNativeManager()?.statusJson()?.toString() ?: unavailable()
 
@@ -75,8 +76,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     /**
      * Não executa a ação diretamente. Abre confirmação Android explícita; apenas
-     * o botão positivo chama o manager. A confirmação, ACK e readback continuam
-     * sendo o limite de segurança da RED/BLUE.
+     * o botão positivo chama o manager. Confirmação, ACK e readback permanecem
+     * obrigatórios para qualquer alteração da ECU.
      */
     @JavascriptInterface
     fun executeNativeAction(preparationId: String): String {
@@ -111,7 +112,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 val effect = if (action.mayChangeMulAct) {
                     "A ECU pode alterar MUL_ACT internamente."
                 } else {
-                    "A ECU modificará buffers de aquisição AutoCal."
+                    "A ECU modificará buffers de aquisição nativa."
                 }
                 AlertDialog.Builder(activity)
                     .setTitle("CONFIRMAÇÃO ANDROID — ECU")
@@ -161,7 +162,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("feature", "OMEGAS Blue Auto-Cal")
         .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
         .put("parallelCorrectionMath", false)
-                .put("nativeProtocolEvidenceExact", true)
+        .put("nativeProtocolEvidenceExact", true)
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
         .put("nativeAndroidConfirmation", true)
@@ -206,7 +207,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         )
                     },
                     onStateChanged = activity::refreshWebUi,
-                    onSnapshotReady = { snapshot -> service.runtime.importNativeAutoCalSnapshot(snapshot) },
+                    onSnapshotReady = { snapshot ->
+                        service.runtime.importNativeAutoCalSnapshot(snapshot)
+                        service.blueIngestLearningSnapshot(snapshot.toString())
+                    },
                 )
             }
             manager?.onUsbSessionChanged(service.usb.connectionSessionId)
@@ -266,7 +270,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             managerService = service
         }
     }
-
 
     private fun localFailure(message: String): String = JSONObject()
         .put("ok", false)
