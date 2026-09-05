@@ -1,19 +1,18 @@
-name: OMEGAS Blue remote convergence apply
+name: OMEGAS Blue final cleanup apply
 
 on:
   push:
     branches:
       - work/omegas-blue-causal-engine
     paths:
-      - scripts/blue_runtime_converge.py
-      - scripts/blue_learning_hard_cut.py
+      - scripts/blue_final_cleanup.py
       - .github/workflows/blue-converge-apply.yml
 
 permissions:
   contents: write
 
 concurrency:
-  group: omegas-blue-convergence-apply
+  group: omegas-blue-final-cleanup
   cancel-in-progress: false
 
 jobs:
@@ -25,18 +24,16 @@ jobs:
         with:
           ref: work/omegas-blue-causal-engine
           fetch-depth: 0
-      - name: Apply deterministic convergence patch
-        run: |
-          python3 scripts/blue_runtime_converge.py
-          python3 scripts/blue_learning_hard_cut.py
-      - name: Commit implementation if changed
+      - name: Apply final clean architecture cut
+        run: python3 scripts/blue_final_cleanup.py
+      - name: Commit cleanup if changed
         run: |
           if git diff --quiet && git diff --cached --quiet; then
-            echo "No convergence changes needed"
+            echo "No cleanup changes needed"
             exit 0
           fi
           git config user.name "omegas-blue-ci"
           git config user.email "actions@users.noreply.github.com"
           git add -A
-          git commit -m "feat(blue): replace retired learning stack with passive evidence store"
+          git commit -m "refactor(blue): remove parallel decision residues"
           git push origin HEAD:work/omegas-blue-causal-engine
