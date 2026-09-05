@@ -7,11 +7,10 @@ import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.KFactorManualPlanner
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.learning.LearningGridProjection
-import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
+import com.omegas.prohub.learning.BlueEvidenceStore
 import com.omegas.prohub.learning.LearningTemperatureSettings
 import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.LearningUiSnapshotAssembler
-import com.omegas.prohub.learning.SignalLearningStore
 import com.omegas.prohub.runtime.RuntimeSnapshotBus
 import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.service.blueCalibrationStateJson
@@ -145,9 +144,8 @@ class HubJavascriptBridge(activity: MainActivity) {
     private fun scienceSignature(service: TelemetryForegroundService): String {
         val root = service.paths.runtimeRoot
         val files = listOf(
-            File(root, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE),
-            File(root, "learning_v6_evidence.json"),
-            File(root, "k_map_cache.json"),
+            File(root, BlueEvidenceStore.STATE_FILE),
+                        File(root, "k_map_cache.json"),
             File(root, "k_factor_cache.json"),
         )
         return files.joinToString("|") { file ->
@@ -201,7 +199,7 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("kFactorProgress", factorStatus.optInt("progress", 0))
             .put("learningMinimumWaterC", learningTemperature.minimumWaterC())
             .put("learningTolerancePolicy", LearningToleranceSettings.current.toJson())
-            .put("learningScaleMigration", LearningTelemetrySchemaMigration.status(service.paths.runtimeRoot))
+            .put("learningStorage", service.runtime.learningStatus().optJSONObject("storage") ?: JSONObject())
             .put("appVersion", BuildConfig.VERSION_NAME)
             .put("release", releaseIdentity())
             .toString()
@@ -209,7 +207,7 @@ class HubJavascriptBridge(activity: MainActivity) {
         .put("serviceRunning", false)
         .put("learningMinimumWaterC", learningTemperature.minimumWaterC())
         .put("learningTolerancePolicy", LearningToleranceSettings.current.toJson())
-        .put("learningScaleMigration", LearningTelemetrySchemaMigration.status(AppPaths(appContext).runtimeRoot))
+        .put("learningStorage", JSONObject().put("stateFile", BlueEvidenceStore.STATE_FILE))
         .put("appVersion", BuildConfig.VERSION_NAME)
         .put("release", releaseIdentity())
         .toString()
@@ -220,7 +218,7 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getLearningMaps(): String {
         val status = activity?.serviceOrNull()?.status()
-        val file = File(AppPaths(appContext).runtimeRoot, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
+        val file = File(AppPaths(appContext).runtimeRoot, BlueEvidenceStore.STATE_FILE)
         val root = try {
             val raw = if (file.isFile) JSONObject(file.readText(Charsets.UTF_8)) else JSONObject()
             LearningUiSnapshotAssembler.assemble(raw)
@@ -262,11 +260,11 @@ class HubJavascriptBridge(activity: MainActivity) {
         )
         return JSONObject()
             .put("ok", true)
-            .put("source", LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
-            .put("format", SignalLearningStore.FORMAT)
+            .put("source", BlueEvidenceStore.STATE_FILE)
+            .put("format", BlueEvidenceStore.FORMAT)
             .put("internalFormat", root.optString("format", ""))
             .put("telemetryScaleSchema", BuildConfig.OMEGAS_TELEMETRY_SCHEMA)
-            .put("scaleMigration", LearningTelemetrySchemaMigration.status(AppPaths(appContext).runtimeRoot))
+            .put("storage", root.optJSONObject("storage") ?: JSONObject())
             .put("epoch", epoch)
             .put("grid", root.optJSONObject("grid") ?: LearningGridProjection.gridJson())
             .put("cells", projectedCells)
@@ -277,13 +275,9 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("cngPreviousEpochs", cngPrevious)
             .put("comparisons", comparisons)
             .put("comparisonCount", comparisons.length())
-            .put("assistedCalibration", root.optJSONObject("assistedCalibration") ?: JSONObject())
-            .put("assisted_calibration", root.optJSONObject("assisted_calibration") ?: JSONObject())
-            .put("reconciliation", root.optJSONObject("reconciliation") ?: JSONObject())
-            .put("summary", root.optJSONObject("summary") ?: JSONObject())
-            .put("uiPipeline", root.optString("uiPipeline", "PERSISTED_REGIONS_RECONCILED_ADVISOR"))
-            .put("revalidation", root.optJSONObject("revalidation") ?: JSONObject())
-            .put("current", JSONObject()
+                                                .put("summary", root.optJSONObject("summary") ?: JSONObject())
+            .put("uiPipeline", root.optString("uiPipeline", "PHYSICAL_EVIDENCE_ONLY"))
+                        .put("current", JSONObject()
                 .put("fuel", status?.fuelState ?: "--")
                 .put("rpm", status?.rpm ?: 0)
                 .put("petrolMs", status?.petrolMs ?: 0.0)

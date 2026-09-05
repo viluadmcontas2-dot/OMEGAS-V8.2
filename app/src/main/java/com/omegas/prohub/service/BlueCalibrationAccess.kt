@@ -2,7 +2,7 @@ package com.omegas.prohub.service
 
 import com.omegas.prohub.blue.BlueEvidenceProjection
 import com.omegas.prohub.calibration.BlueCalibrationCoordinator
-import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
+import com.omegas.prohub.learning.BlueEvidenceStore
 import org.json.JSONObject
 import java.io.File
 import java.util.WeakHashMap
@@ -53,8 +53,7 @@ private object BlueProjectionCache {
     private fun signature(service: TelemetryForegroundService): String {
         val root = service.paths.runtimeRoot
         return listOf(
-            File(root, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE),
-            File(root, "learning_evidence.json"),
+            File(root, BlueEvidenceStore.STATE_FILE),
             File(root, "k_map_cache.json"),
         ).joinToString("|") { file ->
             if (file.isFile) "${file.name}:${file.lastModified()}:${file.length()}" else "${file.name}:missing"

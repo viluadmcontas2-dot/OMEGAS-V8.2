@@ -7,6 +7,7 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.service.TelemetryForegroundService
+import com.omegas.prohub.service.blueProposalJson
 import com.omegas.prohub.service.blueIngestLearningSnapshot
 import com.omegas.prohub.service.blueProposalJson
 import org.json.JSONObject
@@ -43,7 +44,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun importSnapshotIntoLearning(snapshotJson: String): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        service.importNativeAutoCalSnapshot(snapshotJson).also {
+        service.importNativeAutoCalSnapshot(snapshotJson).also { service.blueIngestLearningSnapshot(snapshotJson) }.also {
             service.blueIngestLearningSnapshot(snapshotJson)
         }
     } catch (error: Exception) {

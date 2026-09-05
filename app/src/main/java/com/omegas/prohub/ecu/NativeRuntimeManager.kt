@@ -1,8 +1,7 @@
 package com.omegas.prohub.ecu
 
 import android.os.SystemClock
-import com.omegas.prohub.learning.DeferredLiveOnlyLearningStore
-import com.omegas.prohub.learning.LiveOnlyLearningStore
+import com.omegas.prohub.learning.BlueEvidenceStore
 import com.omegas.prohub.learning.SampleDecision
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.usb.UsbSerialManager
@@ -35,7 +34,7 @@ class NativeRuntimeManager(
 ) {
     private val snapshotLock = Any()
     private val learningSessionLock = Any()
-    private val learning = DeferredLiveOnlyLearningStore(paths.runtimeRoot, log)
+    private val learning = BlueEvidenceStore(paths.runtimeRoot, log)
     private val telemetryDeliveryPipeline = LatestOnlyBackgroundPipeline(
         threadName = "omegas-telemetry-delivery",
         threadPriority = Thread.NORM_PRIORITY,
@@ -185,7 +184,7 @@ class NativeRuntimeManager(
         .put("startedAt", startedAt)
         .put("last_error", lastError)
         .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
-        .put("learningScaleMigration", learning.migrationStatus())
+        .put("learningStorage", learning.storageStatus())
         .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
         .put("learningPipeline", learningPipeline.metricsJson())
         .put("serialAdmission", serialAdmission.metricsJson())
@@ -270,19 +269,12 @@ class NativeRuntimeManager(
     }
 
     fun learningStatus(): JSONObject {
-        val cached = cachedLearningState()
-        if (cached.optString("state") == DeferredLiveOnlyLearningStore.STATE_RESTORING) {
-            val refreshed = safeLearningStatus()
-            if (!refreshed.optBoolean("restoring", false)) {
-                publishLearningState(latestLearningSequence, refreshed)
-            }
-        }
-        val current = cachedLearningState()
+        val current = safeLearningStatus()
+        publishLearningState(latestLearningSequence, current)
         return current
-            .put("ok", current.optBoolean("ok", true))
-            .put("format", LiveOnlyLearningStore.FORMAT)
+            .put("format", BlueEvidenceStore.FORMAT)
             .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
-            .put("scaleMigration", learning.migrationStatus())
+            .put("storage", learning.storageStatus())
             .put("pipeline", learningPipeline.metricsJson())
     }
 

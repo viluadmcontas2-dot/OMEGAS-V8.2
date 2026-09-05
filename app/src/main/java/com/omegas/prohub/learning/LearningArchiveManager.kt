@@ -29,7 +29,7 @@ class LearningArchiveManager(
 ) {
     companion object {
         const val FORMAT = "omegas-project-calibration-v3"
-        const val NATIVE_FORMAT = SignalLearningStore.FORMAT
+        const val NATIVE_FORMAT = BlueEvidenceStore.FORMAT
         const val MIME = "application/vnd.omegas.learning+json"
     }
 
