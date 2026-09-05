@@ -1,1 +1,1127 @@
-PENDING
+app/src/main/java/com/omegas/prohub/MainActivity.kt
+  31:import com.omegas.prohub.web.V7JavascriptBridge
+  44:private var v7Bridge: V7JavascriptBridge? = null
+  223:v7Bridge?.destroy()
+  224:v7Bridge = null
+  228:try { webView.removeJavascriptInterface("OmegasV7") } catch (_: Exception) {}
+  277:v7Bridge = V7JavascriptBridge(this)
+  280:webView.addJavascriptInterface(v7Bridge!!, "OmegasV7")
+app/src/main/java/com/omegas/prohub/autocal/AutoCalBridgeProvider.kt
+  19:* Não injeta mais os assets legados da pasta `hub` e não cria outra Activity.
+app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt
+  189:.put("legacyDraftEngine", false)
+  301:.put("legacyMath", false)
+app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt
+  47:"Permite que a própria ECU continue a aquisição por zonas e execute AutoMatch quando seus critérios forem atendidos.",
+app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt
+  19:* AutoMatch continua sendo executado exclusivamente pela ECU.
+  206:.put("manualAutoMatchExposed", false)
+  341:.put("manualAutoMatchExposed", false)
+  450:.put("nativeAutoMatchCount", probe.autoMatchCount)
+  514:.put("nativeAutoMatchInsideEcu", true)
+app/src/main/java/com/omegas/prohub/blue/BlueAutoCalAdapter.kt
+  3:import com.omegas.v7.runtime.FuelComparisonV7
+  16:comparison: FuelComparisonV7,
+  36:comparison: FuelComparisonV7,
+app/src/main/java/com/omegas/prohub/blue/BlueCausalEngine.kt
+  3:import com.omegas.v7.runtime.CalibrationRevisionV7
+  4:import com.omegas.v7.runtime.EvidenceV7
+  5:import com.omegas.v7.runtime.FuelComparisonV7
+  6:import com.omegas.v7.runtime.FuelV7
+  7:import com.omegas.v7.runtime.V7SessionState
+  25:fun calibrationState(revision: CalibrationRevisionV7): BlueCalibrationStateId =
+  34:target: EvidenceV7,
+  35:petrolEvidence: List<EvidenceV7>,
+  38:.filter { it.fuel == FuelV7.PETROL }
+  114:* Compatibilidade temporária do runtime V7: a matemática já é Blue e existe
+  118:fun reconcile(state: V7SessionState, nowMs: Long = System.currentTimeMillis()): List<FuelComparisonV7> {
+  134:.sortedWith(compareBy<FuelComparisonV7> { it.createdAtMs }.thenBy { it.cngVisitId })
+  138:cng: EvidenceV7,
+  139:petrolEvidence: List<EvidenceV7>,
+  140:revision: CalibrationRevisionV7,
+  141:): FuelComparisonV7? {
+  151:return FuelComparisonV7(
+  169:private fun normalizedDistance(reference: EvidenceV7, target: EvidenceV7): Double {
+  178:reference.waterC == EvidenceV7.UNKNOWN_TEMPERATURE_C || target.waterC == EvidenceV7.UNKNOWN_TEMPERATURE_C -> 0.0
+  184:private data class BlueCandidate(val evidence: EvidenceV7, val distance: Double)
+app/src/main/java/com/omegas/prohub/blue/BluePredictorProjection.kt
+  10:* It never derives a K target from legacy Advisor/Predictor data. Until a Blue
+  13:object BluePredictorProjection {
+  56:.put("legacyPredictionUsed", false)
+app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt
+  4:import com.omegas.v7.runtime.CalibrationShapeV7
+  5:import com.omegas.v7.runtime.CalibrationStateV7
+  6:import com.omegas.v7.runtime.CurvePointChangeV7
+  7:import com.omegas.v7.runtime.LocalSuggestionV7
+  8:import com.omegas.v7.runtime.MapCellChangeV7
+  9:import com.omegas.v7.runtime.SuggestionLifecycleV7
+  10:import com.omegas.v7.runtime.SuggestionTargetV7
+  18:* Traduz a saída científica do AssistedCalibrationAdvisor para sugestões
+  24:class AdvisorSuggestionAdapterV7 {
+  27:calibration: CalibrationStateV7,
+  29:): List<LocalSuggestionV7> {
+  31:val output = mutableListOf<LocalSuggestionV7>()
+  39:calibration: CalibrationStateV7,
+  41:): LocalSuggestionV7? {
+  44:val changes = linkedMapOf<Int, CurvePointChangeV7>()
+  55:if (index !in 0 until CalibrationShapeV7.CURVE_K_POINTS) return@repeat
+  71:changes[index] = CurvePointChangeV7(index, before, after)
+  75:val lifecycle = if (ordered.isEmpty()) SuggestionLifecycleV7.OBSERVING else SuggestionLifecycleV7.PENDING
+  77:lifecycle == SuggestionLifecycleV7.PENDING -> {
+  87:return LocalSuggestionV7(
+  92:target = SuggestionTargetV7.CURVE_K,
+  107:calibration: CalibrationStateV7,
+  109:): List<LocalSuggestionV7> {
+  114:val output = mutableListOf<LocalSuggestionV7>()
+  120:if (row !in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS ||
+  121:column !in 0 until CalibrationShapeV7.MAP_K_COLUMNS
+  127:val lifecycle = if (change != null) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
+  130:output += LocalSuggestionV7(
+  135:target = SuggestionTargetV7.MAP_K,
+  138:lifecycle == SuggestionLifecycleV7.PENDING && region != null ->
+  140:lifecycle == SuggestionLifecycleV7.PENDING ->
+  162:if (row in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS &&
+  163:column in 0 until CalibrationShapeV7.MAP_K_COLUMNS
+  170:private fun mapChange(item: JSONObject, calibration: CalibrationStateV7): MapCellChangeV7? {
+  174:if (row !in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS ||
+  175:column !in 0 until CalibrationShapeV7.MAP_K_COLUMNS
+  181:return MapCellChangeV7(row, column, before, after)
+  189:private fun stableId(prefix: String, calibration: CalibrationStateV7, physicalTarget: String): String {
+app/src/main/java/com/omegas/prohub/calibration/CalibrationWriterReadBackV7.kt
+  4:import com.omegas.v7.runtime.CalibrationShapeV7
+  5:import com.omegas.v7.runtime.CalibrationStateV7
+  10:internal object CalibrationWriterReadBackV7 {
+  11:fun map(desired: CalibrationStateV7, status: JSONObject): CalibrationStateV7 {
+  21:require(visible.length() == CalibrationShapeV7.MAP_K_EDITABLE_ROWS)
+  22:require(extra.length() == CalibrationShapeV7.MAP_K_COLUMNS)
+  23:val map = MutableList(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  24:List(CalibrationShapeV7.MAP_K_COLUMNS) { 0 }
+  26:repeat(CalibrationShapeV7.MAP_K_EDITABLE_ROWS) { row ->
+  29:map[CalibrationShapeV7.MAP_K_EDITABLE_ROWS] = intRow(extra, CalibrationShapeV7.MAP_K_EDITABLE_ROWS)
+  33:fun curve(desired: CalibrationStateV7, status: JSONObject): CalibrationStateV7 {
+  43:require(raw.length() == CalibrationShapeV7.CURVE_K_POINTS)
+  51:require(values.length() == CalibrationShapeV7.MAP_K_COLUMNS) {
+  52:"Linha de readback $row não possui ${CalibrationShapeV7.MAP_K_COLUMNS} colunas"
+app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt
+  4:import com.omegas.v7.runtime.CalibrationStateV7
+  5:import com.omegas.v7.runtime.CalibrationWriteResultV7
+  6:import com.omegas.v7.runtime.CalibrationWriterV7
+  7:import com.omegas.v7.runtime.LocalSuggestionV7
+  8:import com.omegas.v7.runtime.SuggestionTargetV7
+  13:* Liga o runtime V7 aos dois writers Android já comprovados no aplicativo.
+  17:* BATCH_CONFIRMED. BATCH_QUEUED nunca avança a revisão V7.
+  19:class ExistingCalibrationWriterV7(
+  25:) : CalibrationWriterV7 {
+  28:current: CalibrationStateV7,
+  29:desired: CalibrationStateV7,
+  30:suggestion: LocalSuggestionV7,
+  31:): CalibrationWriteResultV7 = when (suggestion.target) {
+  32:SuggestionTargetV7.MAP_K -> writeMap(current, desired, suggestion)
+  33:SuggestionTargetV7.CURVE_K -> writeCurve(current, desired, suggestion)
+  37:current: CalibrationStateV7,
+  38:desired: CalibrationStateV7,
+  39:suggestion: LocalSuggestionV7,
+  40:): CalibrationWriteResultV7 {
+  60:return CalibrationWriteResultV7(
+  70:decodeReadBack = { status -> CalibrationWriterReadBackV7.map(desired, status) },
+  75:current: CalibrationStateV7,
+  76:desired: CalibrationStateV7,
+  77:suggestion: LocalSuggestionV7,
+  78:): CalibrationWriteResultV7 {
+  92:return CalibrationWriteResultV7(
+  102:decodeReadBack = { status -> CalibrationWriterReadBackV7.curve(desired, status) },
+  111:decodeReadBack: (JSONObject) -> CalibrationStateV7,
+  112:): CalibrationWriteResultV7 {
+  116:return CalibrationWriteResultV7(
+  125:return CalibrationWriteResultV7(false, message = "Escrita interrompida")
+  131:return CalibrationWriteResultV7(false, message = "Status do writer inválido: ${error.message}")
+  137:CalibrationWriteResultV7(
+  143:CalibrationWriteResultV7(
+  148:state in failureStates -> CalibrationWriteResultV7(false, message = message)
+  149:else -> CalibrationWriteResultV7(
+app/src/main/java/com/omegas/prohub/calibration/MapBatchPlan.kt
+  9:* O writer legado continua recebendo blocos internos pequenos, preservando o
+app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt
+  4:import com.omegas.prohub.learning.AssistedCalibrationAdvisor
+  5:import com.omegas.v7.runtime.CalibrationRevisionV7
+  6:import com.omegas.v7.runtime.CalibrationShapeV7
+  7:import com.omegas.v7.runtime.CalibrationStateV7
+  8:import com.omegas.v7.runtime.EvidenceV7
+  9:import com.omegas.v7.runtime.FuelV7
+  10:import com.omegas.v7.runtime.LearningStabilityJsonV7
+  11:import com.omegas.v7.runtime.LocalSuggestionV7
+  12:import com.omegas.v7.runtime.SuggestionLifecycleV7
+  13:import com.omegas.v7.runtime.SuggestionTargetV7
+  14:import com.omegas.v7.runtime.V7SessionFileStore
+  15:import com.omegas.v7.runtime.V7SessionRuntime
+  16:import com.omegas.v7.runtime.V7SessionState
+  17:import com.omegas.v7.runtime.V7UiProjection
+  25:* Autoridade de integração da sessão V7 dentro do serviço Android.
+  31:class V7CalibrationCoordinator(
+  37:private val store = V7SessionFileStore(directory)
+  38:private val ecuWriter = ExistingCalibrationWriterV7(mapManager, factorManager)
+  39:private val suggestionAdapter = AdvisorSuggestionAdapterV7()
+  41:private var runtime: V7SessionRuntime? = loadLatest()
+  57:null -> CalibrationRevisionV7(0, 0)
+  58:else -> CalibrationRevisionV7(
+  65:val calibration = CalibrationStateV7(revision, curve, map)
+  67:V7SessionState(
+  79:runtime = V7SessionRuntime(next)
+  95:target: SuggestionTargetV7,
+  104:suggestion.lifecycle == SuggestionLifecycleV7.PENDING
+  119:lifecycle = SuggestionLifecycleV7.APPLIED,
+  126:runtime = V7SessionRuntime(active.state.copy(suggestions = updated))
+  144:* O snapshot legado contém IDs de visita e a média atual da região, não os
+  159:"PETROL", "GASOLINA" -> FuelV7.PETROL
+  160:"CNG", "GNV", "GAS" -> FuelV7.CNG
+  163:if (fuel == FuelV7.CNG && region.optInt("epoch", sourceEpoch) != sourceEpoch) {
+  176:val evidence = EvidenceV7(
+  185:cngRevision = if (fuel == FuelV7.CNG) active.state.calibration.revision else null,
+  186:waterC = finiteOrUnknown(region.optDouble("water_c", EvidenceV7.UNKNOWN_TEMPERATURE_C)),
+  187:gasC = finiteOrUnknown(region.optDouble("gas_c", EvidenceV7.UNKNOWN_TEMPERATURE_C)),
+  191:if (fuel == FuelV7.PETROL) petrolImported += 1 else cngImported += 1
+  194:val registered = replaceAdvisorSuggestionsLocked(resolveAdvice(snapshot)).size
+  204:fun synchronizeAdvisorSuggestions(payload: JSONObject): JSONObject = synchronized(lock) {
+  205:val generated = replaceAdvisorSuggestionsLocked(resolveAdvice(payload))
+  212:fun addEvidence(evidence: EvidenceV7): JSONObject = synchronized(lock) {
+  219:fun registerSuggestion(suggestion: LocalSuggestionV7): JSONObject = synchronized(lock) {
+  244:.put("error", error.message ?: "Falha ao aplicar sugestão V7")
+  262:runtime = V7SessionRuntime(restored)
+  280:private fun replaceAdvisorSuggestionsLocked(advice: JSONObject): List<LocalSuggestionV7> {
+  288:suggestion: LocalSuggestionV7,
+  289:calibration: CalibrationStateV7,
+  291:SuggestionTargetV7.CURVE_K -> suggestion.curveChanges.isNotEmpty() && suggestion.curveChanges.all { change ->
+  295:SuggestionTargetV7.MAP_K -> suggestion.mapChanges.isNotEmpty() && suggestion.mapChanges.all { change ->
+  304:AssistedCalibrationAdvisor.analyze(payload)
+  310:private fun loadLatest(): V7SessionRuntime? {
+  314:V7SessionRuntime(store.load(latest.name))
+  320:private fun requireRuntime(): V7SessionRuntime = runtime
+  321:?: error("Sincronize Curva K e Mapa K com a ECU antes de usar a sessão V7")
+  331:val ui = V7UiProjection.from(state)
+  332:val pending = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.PENDING && it.expectedRevision == state.calibration.revision }
+  333:val observing = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.OBSERVING && it.expectedRevision == state.calibration.revision }
+  334:val applied = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.APPLIED }
+  335:val superseded = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.SUPERSEDED }
+  343:.put("mapEditableRows", CalibrationShapeV7.MAP_K_EDITABLE_ROWS)
+  344:.put("mapColumns", CalibrationShapeV7.MAP_K_COLUMNS)
+  349:.put("learningStability", LearningStabilityJsonV7.from(active))
+  362:private fun suggestionJson(value: LocalSuggestionV7, currentRevision: CalibrationRevisionV7): JSONObject = JSONObject()
+  391:require(rawArray != null && rawArray.length() == CalibrationShapeV7.CURVE_K_POINTS) {
+  400:require(allRows != null && allRows.length() == CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  405:require(values.length() == CalibrationShapeV7.MAP_K_COLUMNS) {
+  412:private fun revisionJson(value: CalibrationRevisionV7): JSONObject = JSONObject()
+  417:if (value.isFinite()) value else EvidenceV7.UNKNOWN_TEMPERATURE_C
+app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt
+  70:/** Alias de compatibilidade para snapshots/testes antigos; 0x0165:2 é MaxAutomatch. */
+app/src/main/java/com/omegas/prohub/learning/AdvisorRevisionGate.kt
+  6:* Decide quando uma mudança científica merece republicar o Advisor.
+  12:internal class AdvisorRevisionGate {
+app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt
+  23:object AssistedCalibrationAdvisor {
+  227:.put("confidenceStage", decision.compatibilityStage)
+  402:val compatibilityStage: String,
+  456:compatibilityStage = "OBSERVED",
+  492:val compatibilityStage = when {
+  509:compatibilityStage = compatibilityStage,
+  514:fun confidenceStage(): String = decision(meanOrNull()).compatibilityStage
+  612:.put("confidenceStage", decision.compatibilityStage)
+app/src/main/java/com/omegas/prohub/learning/BlueEvidenceQualityCompatibility.kt
+  6:* Temporary source-compatibility projection for RED persistence/UI fields.
+app/src/main/java/com/omegas/prohub/learning/LearningTelemetrySchemaMigration.kt
+  28:val legacyActive = listOf(
+  32:if (legacyActive != null) {
+  34:val target = File(quarantine, "${legacyActive.nameWithoutExtension}_pre_v3_${System.currentTimeMillis()}.json")
+  35:legacyActive.copyTo(target, overwrite = true)
+  36:legacyActive.delete()
+  47:val legacy = File(runtimeRoot, LEGACY_STATE_FILE)
+  48:val legacyBackup = File(runtimeRoot, "$LEGACY_STATE_FILE.bak")
+  49:if (!legacy.isFile && !legacyBackup.isFile) {
+  60:listOf(legacy, legacyBackup).filter { it.isFile }.forEach { source ->
+app/src/main/java/com/omegas/prohub/learning/LearningUiSnapshotAssembler.kt
+  33:val advice = AssistedCalibrationAdvisor.analyze(adviceInput)
+app/src/main/java/com/omegas/prohub/learning/LiveOnlyLearningStore.kt
+  12:* Política pragmática de aprendizado do OMEGAS V7.
+  25:const val FORMAT = "omegas-learning-v7-live-only-v1"
+app/src/main/java/com/omegas/prohub/learning/MotorLearningMemory.kt
+  201:* Fotografia mínima para o Advisor. Não inclui grid derivada, sessões nem
+  209:.put("regions", JSONArray(regions.map { it.toAdvisorJson() }))
+  1359:fun toAdvisorJson(): JSONObject = toJsonWithProvenance(
+app/src/main/java/com/omegas/prohub/learning/NativeAutoCalAnchorCorrelator.kt
+  57:val compatible = orderedPhysical.filter { frame ->
+  61:if (compatible.isEmpty()) return unreliable("OUTSIDE_NATIVE_TOLERANCE")
+  63:val fresh = compatible.filter { frame ->
+app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt
+  10:* Superfície pura do Predictor V8.2.
+  13:* Não recalcula Advisor, não toca USB, não possui writer e nunca cria confiança.
+  15:object PredictorSurface {
+app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt
+  88:private val advisorRevisionGate = AdvisorRevisionGate()
+  250:requestAdvisorRefresh(result)
+  254:return decorate(result, includeAdvisor = false)
+  318:scheduleAdvisorRefresh(advisorRevisionGate.force())
+  394:scheduleAdvisorRefresh(advisorRevisionGate.force())
+  646:private fun requestAdvisorRefresh(result: JSONObject) {
+  648:advisorRevisionGate.revise(token)?.let(::scheduleAdvisorRefresh)
+  654:val observations = AdvisorRevisionGate.observationMilestone(
+  657:val errorBucket = AdvisorRevisionGate.quantize(comparison.optDouble("error_pct", 0.0), 0.25)
+  658:val qualityBucket = AdvisorRevisionGate.quantize(comparison.optDouble("quality", 0.0), 0.05)
+  671:val petrolBucket = AdvisorRevisionGate.quantize(reference.optDouble("petrol_ms", 0.0), 0.02)
+  672:val confidenceBucket = AdvisorRevisionGate.quantize(reference.optDouble("confidence", 0.0), 0.05)
+  685:private fun refreshAdvisor(revision: Long) {
+  691:private fun scheduleAdvisorRefresh(revision: Long) {
+  698:refreshAdvisor(advisorRequestedRevision.get())
+  702:if (advisorRefreshDirty.get()) scheduleAdvisorRefresh(advisorRequestedRevision.get())
+  716:AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())
+  724:private fun decorate(source: JSONObject, includeAdvisor: Boolean = true): JSONObject {
+  756:if (includeAdvisor) {
+  774:root.put("signal_decision", if (includeAdvisor) decision.toJson() else decision.toTelemetryJson())
+  775:if (includeAdvisor) {
+app/src/main/java/com/omegas/prohub/model/ArchitectureContracts.kt
+  64:data class PredictorChanged(
+app/src/main/java/com/omegas/prohub/obd/ObdAssistManager.kt
+  1015:val gasolineAdvisory = if (petrolSamples >= settings.obdMinimumSamplesPerCell) {
+  1016:ObdLearningGate.gasolineAdvisory(gasolineStft, settings.obdNeutralBandPct)
+  1027:.put("gasolineAdvisory", gasolineAdvisory ?: JSONObject.NULL)
+app/src/main/java/com/omegas/prohub/obd/ObdLearningGate.kt
+  177:fun gasolineAdvisory(stft: Double?, neutralBandPct: Double): String? =
+app/src/main/java/com/omegas/prohub/service/V7CalibrationAccess.kt
+  3:import com.omegas.prohub.blue.BluePredictorProjection
+  4:import com.omegas.prohub.calibration.V7CalibrationCoordinator
+  6:import com.omegas.v7.runtime.SuggestionTargetV7
+  12:* Associação única entre o serviço Android e a sessão V7/Blue.
+  16:private object V7CalibrationRegistry {
+  18:private val coordinators = WeakHashMap<TelemetryForegroundService, V7CalibrationCoordinator>()
+  20:fun get(service: TelemetryForegroundService): V7CalibrationCoordinator = synchronized(lock) {
+  22:V7CalibrationCoordinator(
+  23:directory = File(service.paths.runtimeRoot, "v7_sessions"),
+  57:val snapshot = BluePredictorProjection.build(learning, map)
+  82:fun TelemetryForegroundService.v7CalibrationStateJson(): String =
+  83:JSONObject(V7CalibrationRegistry.get(this).stateJson().toString())
+  95:fun TelemetryForegroundService.v7SynchronizeCalibration(fileName: String = "sessao-atual"): String = try {
+  96:V7CalibrationRegistry.get(this).synchronizedFromEcu(fileName).toString()
+  104:fun TelemetryForegroundService.v7ReconcileConfirmedManualWrite(target: String): String = try {
+  105:val parsed = SuggestionTargetV7.valueOf(target)
+  106:V7CalibrationRegistry.get(this)
+  116:fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String): String =
+  119:.put("error", "Advisor legado não possui autoridade no OMEGAS Blue")
+  124:fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String = try {
+  125:V7CalibrationRegistry.get(this)
+  135:fun TelemetryForegroundService.v7ApplySuggestion(suggestionId: String): String =
+  144:fun TelemetryForegroundService.v7SaveSession(fileName: String): String = try {
+  145:V7CalibrationRegistry.get(this).saveAs(fileName).toString()
+  150:fun TelemetryForegroundService.v7LoadSession(fileName: String): String = try {
+  151:V7CalibrationRegistry.get(this).load(fileName).toString()
+  156:fun TelemetryForegroundService.v7SessionFilesJson(): String =
+  157:V7CalibrationRegistry.get(this).listFiles().toString()
+  159:fun TelemetryForegroundService.releaseV7CalibrationCoordinator() {
+  160:V7CalibrationRegistry.remove(this)
+app/src/main/java/com/omegas/prohub/storage/DataArchiveManager.kt
+  63:.put("legacyQuarantine", paths.quarantineRoot.absolutePath)
+  68:val legacy = active.listFiles().orEmpty()
+  69:if (legacy.isEmpty()) return
+  71:val quarantine = File(paths.quarantineRoot, "legacy_engine_$stamp").apply { mkdirs() }
+  72:legacy.forEach { source ->
+app/src/main/java/com/omegas/prohub/telemetry/TelemetryVisualLifecyclePolicy.kt
+  33:* Gráficos, superfícies e Predictor são trabalho secundário.
+app/src/main/java/com/omegas/prohub/usb/UsbRecoveryPolicy.kt
+  23:* uma geração nova. `RETRY_TRANSPORT` permanece no enum apenas por compatibilidade
+app/src/main/java/com/omegas/prohub/usb/UsbSerialManager.kt
+  144:.put("compatible", omegas && driver != null)
+app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt
+  17:import com.omegas.prohub.service.v7CalibrationStateJson
+  121:val calibration = try { JSONObject(service.v7CalibrationStateJson()) } catch (error: Exception) {
+  122:JSONObject().put("ok", false).put("error", error.message ?: "Estado V7 indisponível")
+  152:File(root, "v7_sessions"),
+app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt
+  8:import com.omegas.prohub.service.v7CalibrationStateJson
+  9:import com.omegas.prohub.service.v7IngestLearningSnapshot
+  10:import com.omegas.prohub.service.v7LoadSession
+  11:import com.omegas.prohub.service.v7ReconcileConfirmedManualWrite
+  12:import com.omegas.prohub.service.v7SaveSession
+  13:import com.omegas.prohub.service.v7SessionFilesJson
+  14:import com.omegas.prohub.service.v7SynchronizeAdvisorSuggestions
+  15:import com.omegas.prohub.service.v7SynchronizeCalibration
+  21:/** Ponte de compatibilidade V7 dentro do OMEGAS V8. Toda operação serial ocorre fora da thread da WebView. */
+  22:class V7JavascriptBridge(activity: MainActivity) {
+  30:Thread(runnable, "omegas-v7-web-operations").apply { isDaemon = true }
+  43:fun getState(): String = activity?.serviceOrNull()?.v7CalibrationStateJson()
+  47:fun listSessionFiles(): String = activity?.serviceOrNull()?.v7SessionFilesJson()
+  61:fun synchronizeAdvisorSuggestions(adviceJson: String): String =
+  62:activity?.serviceOrNull()?.v7SynchronizeAdvisorSuggestions(adviceJson)
+  68:activity?.serviceOrNull()?.v7IngestLearningSnapshot(snapshotJson)
+  73:service.v7SynchronizeCalibration(fileName)
+  173:JSONObject(service.v7ReconcileConfirmedManualWrite("CURVE_K"))
+  361:JSONObject(service.v7ReconcileConfirmedManualWrite("MAP_K"))
+  411:fun saveSession(fileName: String): String = activity?.serviceOrNull()?.v7SaveSession(fileName)
+  415:fun loadSession(fileName: String): String = activity?.serviceOrNull()?.v7LoadSession(fileName)
+app/src/main/java/com/omegas/v7/protocol/AebProtocolFramesV7.kt
+  1:package com.omegas.v7.protocol
+  3:import com.omegas.v7.runtime.CalibrationShapeV7
+  9:object AebProtocolFramesV7 {
+  66:require(row in 0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS)
+  71:CalibrationShapeV7.requireEditableCell(row, column)
+  81:require(row in 0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS)
+  82:require(values.size == CalibrationShapeV7.MAP_K_COLUMNS)
+  91:require(index in 0 until CalibrationShapeV7.CURVE_K_POINTS)
+  100:require(rawU16.size == CalibrationShapeV7.CURVE_K_POINTS)
+app/src/main/java/com/omegas/v7/runtime/BlueCompatibilityContracts.kt
+  1:package com.omegas.v7.runtime
+  4:* Passive compatibility contracts retained while RED runtime callers are moved
+  8:data class EquivalencePolicyV7(
+  28:data class FuelComparisonV7(
+  30:val revision: CalibrationRevisionV7,
+app/src/main/java/com/omegas/v7/runtime/BlueEquivalenceCompatibility.kt
+  1:package com.omegas.v7.runtime
+  7:* Transitional source-compatibility facade only. All equivalence mathematics is
+  11:class V7EquivalenceEngine(
+  12:policy: EquivalencePolicyV7 = EquivalencePolicyV7(),
+  28:state: V7SessionState,
+  30:): List<FuelComparisonV7> = blue.reconcile(state, nowMs)
+app/src/main/java/com/omegas/v7/runtime/CalibrationShapeV7.kt
+  1:package com.omegas.v7.runtime
+  14:object CalibrationShapeV7 {
+  30:"Curva K V7 exige $CURVE_K_POINTS pontos"
+  36:"Mapa K V7 exige ${MAP_K_STORAGE_ROWS}x${MAP_K_COLUMNS} no armazenamento"
+  39:"Mapa K V7 aceita somente valores U8"
+app/src/main/java/com/omegas/v7/runtime/LearningStabilityJsonV7.kt
+  1:package com.omegas.v7.runtime
+  10:* A Store consulta o estado contextual repetidamente. Como comparações V7 são
+  15:object LearningStabilityJsonV7 {
+  30:private val cache = WeakHashMap<V7SessionRuntime, Cached>()
+  33:fun from(runtime: V7SessionRuntime): JSONObject {
+  46:val map = LearningStabilityProjectionV7.mapWithEvidence(comparisons)
+  47:val curve = LearningStabilityProjectionV7.curveWithEvidence(comparisons)
+  67:private fun snapshotJson(value: LearningStabilitySnapshotV7): JSONObject = JSONObject()
+app/src/main/java/com/omegas/v7/runtime/LearningStabilityProjectionV7.kt
+  1:package com.omegas.v7.runtime
+  10:object LearningStabilityProjectionV7 {
+  11:fun mapWithEvidence(comparisons: List<FuelComparisonV7>): Map<String, LearningStabilitySnapshotV7> {
+  21:"$row:$column" to LearningStabilityV7.mapCell(comparisons, row, column)
+  25:fun curveWithEvidence(comparisons: List<FuelComparisonV7>): Map<Int, LearningStabilitySnapshotV7> {
+  33:LearningStabilityV7.curvePoint(comparisons, index)
+app/src/main/java/com/omegas/v7/runtime/LearningStabilityV7.kt
+  1:package com.omegas.v7.runtime
+  11:enum class LearningStabilityStateV7 {
+  18:data class LearningStabilitySnapshotV7(
+  19:val state: LearningStabilityStateV7,
+  34:get() = state == LearningStabilityStateV7.CONSOLIDATED ||
+  35:state == LearningStabilityStateV7.REVALIDATING
+  46:object LearningStabilityV7 {
+  71:comparisons: List<FuelComparisonV7>,
+  74:): LearningStabilitySnapshotV7 {
+  75:CalibrationShapeV7.requireEditableCell(row, column)
+  84:comparisons: List<FuelComparisonV7>,
+  86:): LearningStabilitySnapshotV7 {
+  87:require(index in 0 until CalibrationShapeV7.CURVE_K_POINTS)
+  100:fun mapGrid(comparisons: List<FuelComparisonV7>): Map<String, LearningStabilitySnapshotV7> = buildMap {
+  101:repeat(CalibrationShapeV7.MAP_K_EDITABLE_ROWS) { row ->
+  102:repeat(CalibrationShapeV7.MAP_K_COLUMNS) { column ->
+  108:fun curve(comparisons: List<FuelComparisonV7>): List<LearningStabilitySnapshotV7> =
+  109:List(CalibrationShapeV7.CURVE_K_POINTS) { index -> curvePoint(comparisons, index) }
+  111:private fun observation(comparison: FuelComparisonV7, contribution: Double): Observation? {
+  125:private fun scan(source: List<Observation>): LearningStabilitySnapshotV7 {
+  172:return LearningStabilitySnapshotV7(
+  173:state = LearningStabilityStateV7.LEARNING,
+  192:LearningStabilityStateV7.CONSOLIDATED
+  194:LearningStabilityStateV7.REVALIDATING
+  196:return LearningStabilitySnapshotV7(
+  209:reason = if (state == LearningStabilityStateV7.CONSOLIDATED) {
+  326:private fun emptySnapshot(): LearningStabilitySnapshotV7 = LearningStabilitySnapshotV7(
+  327:state = LearningStabilityStateV7.NO_EVIDENCE,
+app/src/main/java/com/omegas/v7/runtime/V7SessionFileStore.kt
+  1:package com.omegas.v7.runtime
+  8:class V7SessionFileStore(
+  12:if (!directory.exists()) require(directory.mkdirs()) { "Não foi possível criar diretório de sessões V7" }
+  21:fun save(fileName: String, state: V7SessionState): File {
+  24:temporary.writeText(V7SessionSnapshotCodec.encode(state), Charsets.UTF_8)
+  42:fun load(fileName: String): V7SessionState {
+  44:require(file.isFile) { "Sessão V7 não encontrada: ${file.name}" }
+  45:return V7SessionSnapshotCodec.decode(file.readText(Charsets.UTF_8))
+app/src/main/java/com/omegas/v7/runtime/V7SessionRuntime.kt
+  1:package com.omegas.v7.runtime
+  5:/** Runtime puro da sessão V7, com escrita real delegada ao writer da ECU. */
+  6:enum class FuelV7 { PETROL, CNG }
+  8:enum class SuggestionTargetV7 { CURVE_K, MAP_K }
+  10:enum class SuggestionLifecycleV7 { PENDING, OBSERVING, APPLIED, SUPERSEDED }
+  12:data class CalibrationRevisionV7(
+  21:fun next(target: SuggestionTargetV7): CalibrationRevisionV7 = when (target) {
+  22:SuggestionTargetV7.CURVE_K -> copy(curveK = curveK + 1)
+  23:SuggestionTargetV7.MAP_K -> copy(mapK = mapK + 1)
+  27:data class CalibrationStateV7(
+  28:val revision: CalibrationRevisionV7,
+  33:CalibrationShapeV7.requireCurve(curveK)
+  35:CalibrationShapeV7.requireMap(mapK)
+  39:data class EvidenceV7(
+  41:val fuel: FuelV7,
+  48:val cngRevision: CalibrationRevisionV7?,
+  68:require((fuel == FuelV7.PETROL && cngRevision == null) || (fuel == FuelV7.CNG && cngRevision != null))
+  72:data class CurvePointChangeV7(val index: Int, val before: Double, val after: Double) {
+  74:require(index in 0 until CalibrationShapeV7.CURVE_K_POINTS)
+  80:data class MapCellChangeV7(val row: Int, val column: Int, val before: Int, val after: Int) {
+  82:CalibrationShapeV7.requireEditableCell(row, column)
+  89:data class LocalSuggestionV7(
+  92:val expectedRevision: CalibrationRevisionV7,
+  93:val target: SuggestionTargetV7,
+  94:val curveChanges: List<CurvePointChangeV7> = emptyList(),
+  95:val mapChanges: List<MapCellChangeV7> = emptyList(),
+  98:val lifecycle: SuggestionLifecycleV7 = SuggestionLifecycleV7.PENDING,
+  115:SuggestionTargetV7.CURVE_K -> require(mapChanges.isEmpty())
+  116:SuggestionTargetV7.MAP_K -> require(curveChanges.isEmpty())
+  118:if (lifecycle == SuggestionLifecycleV7.PENDING) {
+  120:SuggestionTargetV7.CURVE_K -> require(curveChanges.isNotEmpty())
+  121:SuggestionTargetV7.MAP_K -> require(mapChanges.isNotEmpty())
+  126:fun actionableAt(revision: CalibrationRevisionV7): Boolean =
+  127:lifecycle == SuggestionLifecycleV7.PENDING && expectedRevision == revision &&
+  129:SuggestionTargetV7.CURVE_K -> curveChanges.isNotEmpty()
+  130:SuggestionTargetV7.MAP_K -> mapChanges.isNotEmpty()
+  134:data class CheckpointV7(
+  138:val calibration: CalibrationStateV7,
+  141:data class CalibrationWriteResultV7(
+  143:val readBack: CalibrationStateV7? = null,
+  148:fun interface CalibrationWriterV7 {
+  150:current: CalibrationStateV7,
+  151:desired: CalibrationStateV7,
+  152:suggestion: LocalSuggestionV7,
+  153:): CalibrationWriteResultV7
+  156:data class V7SessionState(
+  158:val calibration: CalibrationStateV7,
+  159:val petrolEvidence: List<EvidenceV7> = emptyList(),
+  160:val cngEvidenceByRevision: Map<CalibrationRevisionV7, List<EvidenceV7>> = emptyMap(),
+  161:val comparisons: List<FuelComparisonV7> = emptyList(),
+  162:val suggestions: List<LocalSuggestionV7> = emptyList(),
+  163:val checkpoints: List<CheckpointV7> = emptyList(),
+  170:fun activeCngEvidence(): List<EvidenceV7> = cngEvidenceByRevision[calibration.revision].orEmpty()
+  171:fun activeComparisons(): List<FuelComparisonV7> = comparisons.filter { it.revision == calibration.revision }
+  172:fun activeSuggestions(): List<LocalSuggestionV7> = suggestions.filter {
+  174:SuggestionLifecycleV7.PENDING,
+  175:SuggestionLifecycleV7.OBSERVING,
+  180:class V7SessionRuntime(
+  181:initialState: V7SessionState,
+  182:private val equivalenceEngine: V7EquivalenceEngine = V7EquivalenceEngine(),
+  184:var state: V7SessionState = initialState
+  191:SuggestionLifecycleV7.PENDING,
+  192:SuggestionLifecycleV7.OBSERVING,
+  195:suggestion.copy(lifecycle = SuggestionLifecycleV7.SUPERSEDED)
+  204:fun addEvidence(evidence: EvidenceV7) {
+  206:FuelV7.PETROL -> state.copy(
+  209:FuelV7.CNG -> {
+  223:fun mapStability(row: Int, column: Int): LearningStabilitySnapshotV7 =
+  224:LearningStabilityV7.mapCell(state.activeComparisons(), row, column)
+  226:fun curveStability(index: Int): LearningStabilitySnapshotV7 =
+  227:LearningStabilityV7.curvePoint(state.activeComparisons(), index)
+  229:fun registerSuggestion(suggestion: LocalSuggestionV7) {
+  244:fun replaceSuggestions(suggestions: List<LocalSuggestionV7>, nowMs: Long = System.currentTimeMillis()) {
+  256:val merged = mutableListOf<LocalSuggestionV7>()
+  262:existing.lifecycle in setOf(SuggestionLifecycleV7.APPLIED, SuggestionLifecycleV7.SUPERSEDED) -> existing
+  264:lifecycle = SuggestionLifecycleV7.SUPERSEDED,
+  272:lifecycle = SuggestionLifecycleV7.OBSERVING,
+  282:compareBy<LocalSuggestionV7> { lifecycleOrder(it.lifecycle) }
+  290:writer: CalibrationWriterV7,
+  291:): CalibrationStateV7 {
+app/src/main/java/com/omegas/v7/runtime/V7SessionSnapshotCodec.kt
+  1:package com.omegas.v7.runtime
+  4:object V7SessionSnapshotCodec {
+  5:private const val SCHEMA = "OMEGAS_V7_SESSION_6"
+  8:"OMEGAS_V7_SESSION_5",
+  9:"OMEGAS_V7_SESSION_4",
+  10:"OMEGAS_V7_SESSION_3",
+  11:"OMEGAS_V7_SESSION_2",
+  14:fun encode(state: V7SessionState): String = buildString {
+  19:line("mapShape", "${CalibrationShapeV7.MAP_K_STORAGE_ROWS},${CalibrationShapeV7.MAP_K_COLUMNS}")
+  23:state.cngEvidenceByRevision.toSortedMap(compareBy<CalibrationRevisionV7> { it.curveK }.thenBy { it.mapK })
+  40:fun decode(text: String): V7SessionState {
+  44:require(split > 0) { "Linha inválida no snapshot V7" }
+  47:require(values["schema"] in ACCEPTED_SCHEMAS) { "Schema de sessão V7 incompatível" }
+  48:require(requireValue(values, "mapShape") == "${CalibrationShapeV7.MAP_K_STORAGE_ROWS},${CalibrationShapeV7.MAP_K_COLUMNS}") {
+  53:val map = (0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS).map { row ->
+  55:require(valuesInRow.size == CalibrationShapeV7.MAP_K_COLUMNS) {
+  63:.map { decodeEvidence(it.value, FuelV7.PETROL, null) }
+  64:val cng = linkedMapOf<CalibrationRevisionV7, MutableList<EvidenceV7>>()
+  68:val itemRevision = CalibrationRevisionV7(parts[1].toLong(), parts[2].toLong())
+  70:.add(decodeEvidence(value, FuelV7.CNG, itemRevision))
+  84:return V7SessionState(
+  86:calibration = CalibrationStateV7(revision, curve, map),
+  100:private fun encodeEvidence(item: EvidenceV7): String = listOf(
+  115:fuel: FuelV7,
+  116:revision: CalibrationRevisionV7?,
+  117:): EvidenceV7 {
+  120:return EvidenceV7(
+  130:waterC = parts.getOrNull(7)?.toDouble() ?: EvidenceV7.UNKNOWN_TEMPERATURE_C,
+  131:gasC = parts.getOrNull(8)?.toDouble() ?: EvidenceV7.UNKNOWN_TEMPERATURE_C,
+  136:private fun encodeComparison(item: FuelComparisonV7): String = listOf(
+  154:private fun decodeComparison(value: String): FuelComparisonV7 {
+  157:return FuelComparisonV7(
+  159:revision = CalibrationRevisionV7(parts[1].toLong(), parts[2].toLong()),
+  175:private fun encodeSuggestion(item: LocalSuggestionV7): String = listOf(
+  193:private fun decodeSuggestion(value: String): LocalSuggestionV7 {
+  196:val target = SuggestionTargetV7.valueOf(parts[4])
+  200:CurvePointChangeV7(values[0].toInt(), values[1].toDouble(), values[2].toDouble())
+  205:MapCellChangeV7(values[0].toInt(), values[1].toInt(), values[2].toInt(), values[3].toInt())
+  208:return LocalSuggestionV7(
+  211:expectedRevision = CalibrationRevisionV7(parts[2].toLong(), parts[3].toLong()),
+  218:runCatching { SuggestionLifecycleV7.valueOf(raw) }.getOrDefault(SuggestionLifecycleV7.PENDING)
+  219:} ?: SuggestionLifecycleV7.PENDING,
+  228:private fun encodeCheckpoint(item: CheckpointV7): String = listOf(
+  238:private fun decodeCheckpoint(value: String): CheckpointV7 {
+  241:val calibration = CalibrationStateV7(
+  242:revision = CalibrationRevisionV7(parts[3].toLong(), parts[4].toLong()),
+  246:return CheckpointV7(
+  254:private fun parseRevision(value: String): CalibrationRevisionV7 {
+  257:return CalibrationRevisionV7(parts[0].toLong(), parts[1].toLong())
+app/src/main/java/com/omegas/v7/runtime/V7UiProjection.kt
+  1:package com.omegas.v7.runtime
+  3:enum class LearningReadinessV7 {
+  11:data class NowUiStateV7(
+  17:val readiness: LearningReadinessV7,
+  21:data class LearningUiStateV7(
+  28:val activeRevision: CalibrationRevisionV7,
+  32:data class AdjustmentUiStateV7(
+  39:data class V7UiState(
+  40:val now: NowUiStateV7,
+  41:val learning: LearningUiStateV7,
+  42:val adjustment: AdjustmentUiStateV7,
+  45:object V7UiProjection {
+  46:fun from(state: V7SessionState): V7UiState {
+  51:it.expectedRevision == state.calibration.revision && it.lifecycle == SuggestionLifecycleV7.PENDING
+  58:activePendingSuggestions > 0 -> LearningReadinessV7.SUGGESTION_AVAILABLE
+  59:activeComparisons > 0 -> LearningReadinessV7.READY_TO_COMPARE
+  60:petrol > 0 && activeCng > 0 -> LearningReadinessV7.READY_TO_COMPARE
+  61:petrol > 0 -> LearningReadinessV7.PETROL_ONLY
+  62:activeCng > 0 -> LearningReadinessV7.CNG_ONLY
+  63:else -> LearningReadinessV7.EMPTY
+  66:LearningReadinessV7.EMPTY -> "Comece dirigindo em gasolina ou GNV"
+  67:LearningReadinessV7.PETROL_ONLY -> "Referência gasolina preservada; falta evidência GNV equivalente"
+  68:LearningReadinessV7.CNG_ONLY -> "Evidência GNV preservada; falta referência gasolina equivalente"
+  69:LearningReadinessV7.READY_TO_COMPARE -> if (activeComparisons > 0) {
+  74:LearningReadinessV7.SUGGESTION_AVAILABLE -> "$activePendingSuggestions sugestão(ões) pronta(s) para revisar"
+  83:return V7UiState(
+  84:now = NowUiStateV7(
+  93:learning = LearningUiStateV7(
+  103:adjustment = AdjustmentUiStateV7(
+app/src/main/assets/ui/app.js
+  25:predictor: ['DECIDIR', 'Predictor'],
+app/src/main/assets/ui/components/predictor-current-cell.js
+  6:class PredictorCurrentCell {
+  142:app.predictorCurrentCell = new PredictorCurrentCell(app);
+  145:ns.PredictorCurrentCell = PredictorCurrentCell;
+app/src/main/assets/ui/core/native-api.js
+  203:this.v7 = root.OmegasV7 || null;
+  212:releaseIdentity() { return invoke(this.native, 'getReleaseIdentity', [], { product: 'OMEGAS', generation: 'V7', versionName: 'demo' }); }
+  350:return invoke(this.v7, 'previewMapAdjustment', [JSON.stringify(cells || []), mode || 'percent', Number(adjustment)], { ok: false, error: 'Prévia Kotlin do Mapa K indisponível' });
+  354:return invoke(this.v7, 'startMapBatchWrite', [JSON.stringify(cells || []), maxStep || 3, pauseMs || 150, reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
+  356:mapWriteOperation() { return this.demo ? { ok: true, state: 'IDLE', busy: false, progress: 0 } : invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false }); }
+  360:return invoke(this.v7, 'startCurveRead', [], { ok: false, error: 'Ponte V7 indisponível' });
+  364:return invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });
+  383:return invoke(this.v7, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
+app/src/main/assets/ui/core/predictor-model.js
+  72:ns.PredictorModel = {
+app/src/main/assets/ui/portmon-browser-simulator.js
+  87:getReleaseIdentity: () => json({ product: 'OMEGAS V7', versionName: 'Portmon LAB', channel: 'SIMULATOR', engine: 'MP48', debug: true }),
+app/src/main/assets/ui/screens/autocal-cockpit.js
+  76:<div><small>APRENDIZADO NATIVO</small><h3>Auto-Cal da ECU</h3><p>A ECU coleta condições do motor e tenta ajustar o próprio AutoMatch. O OMEGAS mostra o progresso e mantém qualquer comando sob sua confirmação.</p></div>
+  82:<div><small>Progresso do AutoMatch</small><b id="autocalMatchCount">—</b></div>
+  203:const maxAutoMatch = finite(snapshot.maxAutomatch ?? state.maxAutomatch);
+  209:this.text('autocalMaxMatch', maxAutoMatch ?? '—');
+app/src/main/assets/ui/screens/learning.js
+  468:const supportLabel = supportType === 'DIRECT' ? 'direto' : supportType === 'NEAR' ? 'vizinho interpolado' : 'legado/não informado';
+app/src/main/assets/ui/screens/predictor.js
+  14:class PredictorScreen {
+  41:button.innerHTML = '<i>03</i><span>Predictor</span>';
+  64:<div id="predictorGrid" class="predictor-grid" aria-label="Superfície Predictor"></div>
+  69:<div class="detail-empty"><b>Escolha uma célula</b><span>O Predictor explica origem, confiança e suporte antes de qualquer revisão manual.</span></div>
+  93:if (!cell || !ns.PredictorModel?.openMapReview(this.router, cell)) {
+  110:if (title) title.textContent = 'Predictor';
+  132:this.inspector.innerHTML = '<div class="detail-empty"><b>Predictor aguardando</b><span>Nenhuma célula foi inventada sem suporte.</span></div>';
+  170:const explanation = ns.PredictorModel?.explainCell(cell) || {};
+  181:<div class="safety-copy"><b>Somente decisão</b><span>Predictor não grava na ECU. O Mapa K oficial continua exigindo revisão e confirmação.</span></div>`;
+  187:if (!app?.store || !app?.router || !ns.PredictorModel) {
+  192:app.screens.predictor = new PredictorScreen(app);
+  195:ns.PredictorScreen = PredictorScreen;
+app/src/test/java/com/omegas/prohub/autocal/AutoCalSnapshotTest.kt
+  68:fun `contador automatch preserva compatibilidade com dois bytes`() {
+app/src/test/java/com/omegas/prohub/blue/BlueCausalEngineTest.kt
+  3:import com.omegas.v7.runtime.CalibrationRevisionV7
+  4:import com.omegas.v7.runtime.CalibrationShapeV7
+  5:import com.omegas.v7.runtime.CalibrationStateV7
+  6:import com.omegas.v7.runtime.EvidenceV7
+  7:import com.omegas.v7.runtime.FuelV7
+  8:import com.omegas.v7.runtime.V7SessionState
+  16:private val revision = CalibrationRevisionV7(2, 7)
+  18:private fun calibration() = CalibrationStateV7(
+  20:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  21:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  22:List(CalibrationShapeV7.MAP_K_COLUMNS) { 140 }
+  28:fuel: FuelV7,
+  34:) = EvidenceV7(
+  37:collectedAtMs = if (fuel == FuelV7.PETROL) 10 else 20,
+  43:cngRevision = if (fuel == FuelV7.CNG) revision else null,
+  50:val cng = evidence("g", FuelV7.CNG, "g-visit", 1500.0, 0.50, 4.40)
+  51:val petrol = evidence("p", FuelV7.PETROL, "p-visit", 1504.0, 0.503, 4.00)
+  63:val cng = evidence("g", FuelV7.CNG, "g-visit", 3000.0, 0.90, 4.00)
+  64:val petrol = evidence("p", FuelV7.PETROL, "p-visit", 900.0, 0.20, 4.00)
+  96:val petrol = evidence("p", FuelV7.PETROL, "p-visit", 1500.0, 0.50, 4.00)
+  97:val activeCng = evidence("g", FuelV7.CNG, "g-active", 1500.0, 0.50, 4.40)
+  98:val oldRevision = CalibrationRevisionV7(1, 6)
+  100:val state = V7SessionState(
+app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7Test.kt
+  3:import com.omegas.v7.runtime.CalibrationRevisionV7
+  4:import com.omegas.v7.runtime.CalibrationShapeV7
+  5:import com.omegas.v7.runtime.CalibrationStateV7
+  6:import com.omegas.v7.runtime.CalibrationWriteResultV7
+  7:import com.omegas.v7.runtime.CalibrationWriterV7
+  8:import com.omegas.v7.runtime.EvidenceV7
+  9:import com.omegas.v7.runtime.FuelV7
+  10:import com.omegas.v7.runtime.LearningStabilityStateV7
+  11:import com.omegas.v7.runtime.SuggestionLifecycleV7
+  12:import com.omegas.v7.runtime.SuggestionTargetV7
+  13:import com.omegas.v7.runtime.V7SessionRuntime
+  14:import com.omegas.v7.runtime.V7SessionState
+  21:class AdvisorSuggestionAdapterV7Test {
+  22:private fun calibration() = CalibrationStateV7(
+  23:revision = CalibrationRevisionV7(2, 5),
+  24:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  25:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  26:List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
+  45:val suggestions = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
+  47:val map = suggestions.single { it.target == SuggestionTargetV7.MAP_K }
+  53:assertEquals(SuggestionLifecycleV7.PENDING, map.lifecycle)
+  66:val suggestions = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
+  67:.filter { it.target == SuggestionTargetV7.MAP_K }
+  83:val a = AdvisorSuggestionAdapterV7().adapt(first, calibration(), nowMs = 100).single()
+  84:val b = AdvisorSuggestionAdapterV7().adapt(second, calibration(), nowMs = 200).single()
+  93:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  94:List(CalibrationShapeV7.MAP_K_COLUMNS) { 179 }
+  101:val change = AdvisorSuggestionAdapterV7().adapt(advice, highMap, nowMs = 100)
+  119:val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
+  121:assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
+  139:val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
+  140:.single { it.target == SuggestionTargetV7.CURVE_K }
+  146:assertEquals(SuggestionLifecycleV7.PENDING, suggestion.lifecycle)
+  165:val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
+  166:.single { it.target == SuggestionTargetV7.CURVE_K }
+  181:val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, initial, nowMs = 100)
+  182:.single { it.target == SuggestionTargetV7.MAP_K }
+  183:val runtime = V7SessionRuntime(V7SessionState("adapter-e2e", initial))
+  187:assertEquals(LearningStabilityStateV7.CONSOLIDATED.name, prepared.stabilityState)
+  188:assertEquals(SuggestionLifecycleV7.PENDING, prepared.lifecycle)
+  190:val writer = CalibrationWriterV7 { _, desired, received ->
+  193:CalibrationWriteResultV7(true, desired, "readback confirmado")
+  200:assertEquals(CalibrationRevisionV7(2, 6), applied.revision)
+  202:assertEquals(SuggestionLifecycleV7.APPLIED, runtime.state.suggestions.single().lifecycle)
+  205:private fun consolidate(runtime: V7SessionRuntime, row: Int, column: Int) {
+  210:EvidenceV7(
+  212:fuel = FuelV7.PETROL,
+  225:EvidenceV7(
+  227:fuel = FuelV7.CNG,
+  239:assertEquals(LearningStabilityStateV7.CONSOLIDATED, runtime.mapStability(row, column).state)
+app/src/test/java/com/omegas/prohub/calibration/CalibrationWriterReadBackV7Test.kt
+  3:import com.omegas.v7.runtime.CalibrationRevisionV7
+  4:import com.omegas.v7.runtime.CalibrationShapeV7
+  5:import com.omegas.v7.runtime.CalibrationStateV7
+  11:class CalibrationWriterReadBackV7Test {
+  12:private fun desired() = CalibrationStateV7(
+  13:revision = CalibrationRevisionV7(1, 2),
+  14:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  15:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  16:List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
+  23:repeat(CalibrationShapeV7.MAP_K_EDITABLE_ROWS) { row ->
+  24:rows.put(JSONArray(List(CalibrationShapeV7.MAP_K_COLUMNS) { column ->
+  28:val extra = JSONArray(List(CalibrationShapeV7.MAP_K_COLUMNS) { 119 })
+  34:val readBack = CalibrationWriterReadBackV7.map(desired(), status)
+  38:assertEquals(CalibrationRevisionV7(1, 2), readBack.revision)
+  43:val raw = JSONArray(List(CalibrationShapeV7.CURVE_K_POINTS) { index ->
+  50:val readBack = CalibrationWriterReadBackV7.curve(desired(), status)
+  58:CalibrationWriterReadBackV7.map(
+app/src/test/java/com/omegas/prohub/learning/AdvisorRevisionGateTest.kt
+  7:class AdvisorRevisionGateTest {
+  10:val gate = AdvisorRevisionGate()
+  18:assertEquals(1, AdvisorRevisionGate.observationMilestone(1))
+  19:assertEquals(2, AdvisorRevisionGate.observationMilestone(2))
+  20:assertEquals(2, AdvisorRevisionGate.observationMilestone(3))
+  21:assertEquals(4, AdvisorRevisionGate.observationMilestone(7))
+  22:assertEquals(8, AdvisorRevisionGate.observationMilestone(8))
+  27:val gate = AdvisorRevisionGate()
+app/src/test/java/com/omegas/prohub/learning/AssistedCalibrationAdvisorTest.kt
+  11:class AssistedCalibrationAdvisorTest {
+  19:val result = AssistedCalibrationAdvisor.analyze(
+  271:AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
+app/src/test/java/com/omegas/prohub/learning/AssistedCalibrationReconciliationEndToEndTest.kt
+  49:val advice = AssistedCalibrationAdvisor.analyze(snapshot)
+  68:val petrolFirst = AssistedCalibrationAdvisor.analyze(
+  71:val cngFirst = AssistedCalibrationAdvisor.analyze(
+  91:val advice = AssistedCalibrationAdvisor.analyze(snapshot)
+app/src/test/java/com/omegas/prohub/learning/LearningEndToEndPipelineTest.kt
+  27:val result = AssistedCalibrationAdvisor.analyze(snapshot)
+  44:val result = AssistedCalibrationAdvisor.analyze(
+  75:val firstDecision = closestKPoint(AssistedCalibrationAdvisor.analyze(once), 4.5)
+  76:val secondDecision = closestKPoint(AssistedCalibrationAdvisor.analyze(twice), 4.5)
+  92:val result = AssistedCalibrationAdvisor.analyze(
+  147:val fromRaw = AssistedCalibrationAdvisor.analyze(raw)
+  148:val fromReconciled = AssistedCalibrationAdvisor.analyze(reconciled)
+app/src/test/java/com/omegas/prohub/learning/LearningScenarioMatrixTest.kt
+  105:val result = AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
+  144:val result = AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
+  172:val direct = AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", JSONArray(items)))
+  173:val shuffled = AssistedCalibrationAdvisor.analyze(
+  198:val result = AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
+app/src/test/java/com/omegas/prohub/learning/LearningSnapshotReconcilerTest.kt
+  46:val advice = AssistedCalibrationAdvisor.analyze(reconciled)
+app/src/test/java/com/omegas/prohub/learning/LearningSuggestionSimulationTest.kt
+  118:val result = AssistedCalibrationAdvisor.analyze(export(comparisons))
+  151:val result = AssistedCalibrationAdvisor.analyze(export(comparisons))
+app/src/test/java/com/omegas/prohub/learning/LearningToleranceMigrationTest.kt
+  8:fun `legacy collection windows migrate to cadence safe budgets`() {
+  10:val legacy = mapOf(18 to 2_500L, 14 to 2_000L, 10 to 1_500L, 8 to 1_250L, 6 to 1_000L)
+  11:legacy.forEach { (frames, oldMs) ->
+app/src/test/java/com/omegas/prohub/learning/LiveOnlyLearningStoreTest.kt
+  133:fun `policy activation preserves legacy petrol and removes legacy cng once`() {
+  135:SignalLearningStore(state, RingLog()).also { legacy ->
+  136:legacy.startSession()
+  137:legacy.ingest(
+  139:accepted(sample("legacy-p", 100L, 650L, Mp48Fuel.PETROL, 4.0)),
+  141:legacy.ingest(
+  143:accepted(sample("legacy-g", 800L, 1_350L, Mp48Fuel.CNG, 5.0)),
+  145:legacy.close()
+app/src/test/java/com/omegas/prohub/learning/MotorLearningMemoryTest.kt
+  331:fun `persisted size no longer scales with full legacy provenance arrays`() {
+  333:val file = temporary.newFile("legacy-$visitTotal.json")
+app/src/test/java/com/omegas/prohub/learning/NativeAutoCalAnchorCorrelatorTest.kt
+  10:fun `correlates only compatible real GNV frames and returns best physical frame`() {
+app/src/test/java/com/omegas/prohub/learning/PredictorSurfaceTest.kt
+  11:class PredictorSurfaceTest {
+  21:val surface = PredictorSurface.build(learning, confirmedMap(current = 120))
+  40:val surface = PredictorSurface.build(
+  59:val surface = PredictorSurface.build(
+  73:val surface = PredictorSurface.build(learning(JSONArray(), JSONArray(), epoch = 1), confirmedMap(120))
+  87:val surface = PredictorSurface.build(
+app/src/test/java/com/omegas/prohub/obd/ObdLearningGateTest.kt
+  63:assertEquals("GASOLINA_FORA_DO_NEUTRO", ObdLearningGate.gasolineAdvisory(12.0, 3.0))
+  64:assertNull(ObdLearningGate.gasolineAdvisory(1.0, 3.0))
+app/src/test/java/com/omegas/v7/protocol/AebProtocolFramesV7Test.kt
+  1:package com.omegas.v7.protocol
+  8:class AebProtocolFramesV7Test {
+  13:AebProtocolFramesV7.readMapRow(0),
+  21:AebProtocolFramesV7.writeMapCell(row = 0, column = 10, value = 0xAB),
+  29:val frame = AebProtocolFramesV7.writeMapRow(12, values)
+  35:assertTrue(AebProtocolFramesV7.checksumIsValid(frame))
+  40:AebProtocolFramesV7.writeMapCell(row = 12, column = 0, value = 110)
+  45:AebProtocolFramesV7.writeMapCell(row = 13, column = 0, value = 110)
+  52:AebProtocolFramesV7.readMulAct(),
+  60:AebProtocolFramesV7.writeMulActPoint(index = 0, rawU16 = 1000),
+  66:val frame = AebProtocolFramesV7.writeMulAct(List(30) { 1000 })
+  71:assertTrue(AebProtocolFramesV7.checksumIsValid(frame))
+app/src/test/java/com/omegas/v7/runtime/LearningStabilityJsonV7Test.kt
+  1:package com.omegas.v7.runtime
+  8:class LearningStabilityJsonV7Test {
+  13:val emptyFirst = LearningStabilityJsonV7.from(runtime)
+  14:val emptySecond = LearningStabilityJsonV7.from(runtime)
+  19:val petrolOnly = LearningStabilityJsonV7.from(runtime)
+  24:val compared = LearningStabilityJsonV7.from(runtime)
+  28:val comparedAgain = LearningStabilityJsonV7.from(runtime)
+  32:private fun runtime(): V7SessionRuntime = V7SessionRuntime(
+  33:V7SessionState(
+  35:calibration = CalibrationStateV7(
+  36:revision = CalibrationRevisionV7(0, 0),
+  37:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  38:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  39:List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+  45:private fun petrol(): EvidenceV7 = EvidenceV7(
+  47:fuel = FuelV7.PETROL,
+  58:private fun cng(): EvidenceV7 = EvidenceV7(
+  60:fuel = FuelV7.CNG,
+  67:cngRevision = CalibrationRevisionV7(0, 0),
+app/src/test/java/com/omegas/v7/runtime/LearningStabilityV7Test.kt
+  1:package com.omegas.v7.runtime
+  8:class LearningStabilityV7Test {
+  9:private val revision = CalibrationRevisionV7(0, 0)
+  14:val consolidated = LearningStabilityV7.mapCell(baseline, row = 4, column = 2)
+  15:assertEquals(LearningStabilityStateV7.CONSOLIDATED, consolidated.state)
+  20:val revalidating = LearningStabilityV7.mapCell(withOutlier, row = 4, column = 2)
+  21:assertEquals(LearningStabilityStateV7.REVALIDATING, revalidating.state)
+  31:val result = LearningStabilityV7.mapCell(baseline + changed, row = 4, column = 2)
+  33:assertEquals(LearningStabilityStateV7.CONSOLIDATED, result.state)
+  43:val ordered = LearningStabilityV7.mapCell(evidence, 4, 2)
+  44:val shuffled = LearningStabilityV7.mapCell(evidence.shuffled(java.util.Random(42)), 4, 2)
+  56:val comparison = FuelComparisonV7(
+  72:val totalEffective = (0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS).sumOf { row ->
+  73:(0 until CalibrationShapeV7.MAP_K_COLUMNS).sumOf { column ->
+  74:LearningStabilityV7.mapCell(listOf(comparison), row, column).recentEffectiveVisits
+  85:val result = LearningStabilityV7.mapCell(evidence, 4, 2)
+  87:assertEquals(LearningStabilityStateV7.CONSOLIDATED, result.state)
+  98:val localizedState = LearningStabilityV7.curvePoint(localized, indexFor4ms())
+  99:assertEquals(LearningStabilityStateV7.CONSOLIDATED, localizedState.state)
+  112:val broadState = LearningStabilityV7.curvePoint(broad, indexFor4ms())
+  113:assertEquals(LearningStabilityStateV7.CONSOLIDATED, broadState.state)
+  131:): FuelComparisonV7 {
+  134:return FuelComparisonV7(
+app/src/test/java/com/omegas/v7/runtime/V7EvidenceImmutabilityRegressionTest.kt
+  1:package com.omegas.v7.runtime
+  6:class V7EvidenceImmutabilityRegressionTest {
+  9:val runtime = V7SessionRuntime(initialState())
+  10:val first = EvidenceV7(
+  12:fuel = FuelV7.PETROL,
+  45:private fun initialState(): V7SessionState = V7SessionState(
+  47:calibration = CalibrationStateV7(
+  48:revision = CalibrationRevisionV7(curveK = 0, mapK = 0),
+  49:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  50:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  51:List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+app/src/test/java/com/omegas/v7/runtime/V7SessionRuntimeTest.kt
+  1:package com.omegas.v7.runtime
+  10:class V7SessionRuntimeTest {
+  11:private fun calibration(revision: CalibrationRevisionV7 = CalibrationRevisionV7(0, 0)) =
+  12:CalibrationStateV7(
+  14:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  15:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  16:List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+  20:private fun runtime() = V7SessionRuntime(
+  21:V7SessionState(sessionId = "session-1", calibration = calibration()),
+  24:private val acceptingWriter = CalibrationWriterV7 { _, desired, _ ->
+  25:CalibrationWriteResultV7(success = true, readBack = desired, message = "ECU escrita")
+  32:EvidenceV7("g1", FuelV7.CNG, 10, "visit-g", 1500.0, 0.5, 4.0, 0.9, runtime.state.calibration.revision),
+  37:assertEquals(LearningReadinessV7.CNG_ONLY, V7UiProjection.from(runtime.state).now.readiness)
+  38:assertTrue(V7UiProjection.from(runtime.state).learning.explanation.contains("permanece salvo"))
+  44:runtime.addEvidence(EvidenceV7("p1", FuelV7.PETROL, 10, "visit-1", 1200.0, 0.4, 3.0, 0.5, null))
+  45:runtime.addEvidence(EvidenceV7("p2", FuelV7.PETROL, 20, "visit-1", 1210.0, 0.4, 3.1, 0.9, null))
+  61:assertEquals(CalibrationRevisionV7(0, 1), applied.revision)
+  64:assertEquals(SuggestionLifecycleV7.APPLIED, runtime.state.suggestions.single().lifecycle)
+  83:assertEquals(LearningStabilityStateV7.CONSOLIDATED.name, actual.stabilityState)
+  84:assertEquals(SuggestionLifecycleV7.PENDING, actual.lifecycle)
+  97:assertEquals(SuggestionLifecycleV7.OBSERVING, actual.lifecycle)
+  112:assertEquals(SuggestionLifecycleV7.PENDING, actual.lifecycle)
+  121:val state = V7SessionState(
+  126:val restored = V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(state))
+  134:MapCellChangeV7(row = 12, column = 11, before = 100, after = 123)
+  139:MapCellChangeV7(row = 13, column = 0, before = 100, after = 110)
+  151:CalibrationWriterV7 { _, _, _ -> CalibrationWriteResultV7(false, message = "Falha serial") },
+  158:assertEquals(CalibrationRevisionV7(0, 0), runtime.state.calibration.revision)
+  161:assertEquals(SuggestionLifecycleV7.PENDING, runtime.state.suggestions.single().lifecycle)
+  172:stabilityState = LearningStabilityStateV7.CONSOLIDATED.name,
+  177:val restored = V7SessionRuntime(
+  178:V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(runtime.state)),
+  194:assertEquals(CalibrationRevisionV7(0, 1), runtime.state.calibration.revision)
+  195:assertEquals(SuggestionLifecycleV7.APPLIED, runtime.state.suggestions.single { it.id == "first" }.lifecycle)
+  196:assertEquals(SuggestionLifecycleV7.SUPERSEDED, runtime.state.suggestions.single { it.id == "sibling" }.lifecycle)
+  203:val suggestion = LocalSuggestionV7(
+  207:target = SuggestionTargetV7.CURVE_K,
+  208:curveChanges = listOf(CurvePointChangeV7(0, 1.0, 1.1)),
+  213:runtime.addEvidence(EvidenceV7("g-old", FuelV7.CNG, 50, "visit-old", 1500.0, 0.5, 4.0, 0.9, oldRevision))
+  219:runtime.addEvidence(EvidenceV7("p1", FuelV7.PETROL, 10, "visit-p", 1500.0, 0.5, 4.0, 0.9, null))
+  223:val restored = V7SessionSnapshotCodec.decode(V7SessionSnapshotCodec.encode(runtime.state))
+  228:assertNotEquals(CalibrationRevisionV7(0, 0), restored.calibration.revision)
+  229:assertEquals(SuggestionLifecycleV7.APPLIED, restored.suggestions.single().lifecycle)
+  232:private fun consolidateCell(runtime: V7SessionRuntime, row: Int, column: Int) {
+  237:EvidenceV7(
+  239:fuel = FuelV7.PETROL,
+  252:EvidenceV7(
+  254:fuel = FuelV7.CNG,
+  266:assertEquals(LearningStabilityStateV7.CONSOLIDATED, runtime.mapStability(row, column).state)
+  270:runtime: V7SessionRuntime,
+  275:): LocalSuggestionV7 = LocalSuggestionV7(
+  279:target = SuggestionTargetV7.MAP_K,
+  281:MapCellChangeV7(
+app/src/test/java/com/omegas/v7/runtime/V7SessionSnapshotStabilityTest.kt
+  1:package com.omegas.v7.runtime
+  8:class V7SessionSnapshotStabilityTest {
+  13:LocalSuggestionV7(
+  16:expectedRevision = CalibrationRevisionV7(0, 0),
+  17:target = SuggestionTargetV7.MAP_K,
+  18:mapChanges = listOf(MapCellChangeV7(4, 2, 100, 108)),
+  21:lifecycle = SuggestionLifecycleV7.OBSERVING,
+  24:stabilityState = LearningStabilityStateV7.REVALIDATING.name,
+  31:val encoded = V7SessionSnapshotCodec.encode(state)
+  32:assertTrue(encoded.startsWith("schema=OMEGAS_V7_SESSION_6"))
+  33:val decoded = V7SessionSnapshotCodec.decode(encoded)
+  39:assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
+  44:val old = V7SessionSnapshotCodec.encode(initialState())
+  45:.replaceFirst("OMEGAS_V7_SESSION_6", "OMEGAS_V7_SESSION_5")
+  46:val decoded = V7SessionSnapshotCodec.decode(old)
+  49:val legacySuggestion = initialState().copy(
+  51:LocalSuggestionV7(
+  52:id = "legacy",
+  54:expectedRevision = CalibrationRevisionV7(0, 0),
+  55:target = SuggestionTargetV7.MAP_K,
+  56:mapChanges = listOf(MapCellChangeV7(4, 2, 100, 101)),
+  57:rationale = "legacy",
+  61:val schema6 = V7SessionSnapshotCodec.encode(legacySuggestion)
+  67:.replaceFirst("OMEGAS_V7_SESSION_6", "OMEGAS_V7_SESSION_5") + "\nsuggestion.0=$fields\n"
+  68:val restored = V7SessionSnapshotCodec.decode(schema5).suggestions.single()
+  75:private fun initialState(): V7SessionState = V7SessionState(
+  77:calibration = CalibrationStateV7(
+  78:revision = CalibrationRevisionV7(0, 0),
+  79:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  80:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  81:List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+app/src/test/java/com/omegas/v7/runtime/V7SuggestionStabilityTest.kt
+  1:package com.omegas.v7.runtime
+  9:class V7SuggestionStabilityTest {
+  20:assertEquals(LearningStabilityStateV7.CONSOLIDATED, runtime.mapStability(row, column).state)
+  25:assertEquals(SuggestionLifecycleV7.PENDING, pending.lifecycle)
+  32:assertEquals(LearningStabilityStateV7.REVALIDATING, runtime.mapStability(row, column).state)
+  36:assertEquals(SuggestionLifecycleV7.OBSERVING, revalidating.lifecycle)
+  37:assertEquals(LearningStabilityStateV7.REVALIDATING.name, revalidating.stabilityState)
+  44:assertEquals(LearningStabilityStateV7.CONSOLIDATED, promoted.state)
+  49:assertEquals(SuggestionLifecycleV7.PENDING, refreshed.lifecycle)
+  50:assertEquals(LearningStabilityStateV7.CONSOLIDATED.name, refreshed.stabilityState)
+  55:private fun runtime(): V7SessionRuntime = V7SessionRuntime(
+  56:V7SessionState(
+  58:calibration = CalibrationStateV7(
+  59:revision = CalibrationRevisionV7(0, 0),
+  60:curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+  61:mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+  62:List(CalibrationShapeV7.MAP_K_COLUMNS) { 100 }
+  68:private fun petrol(id: String, petrolMs: Double, rpm: Double, at: Long): EvidenceV7 = EvidenceV7(
+  70:fuel = FuelV7.PETROL,
+  81:private fun cng(id: String, petrolMs: Double, rpm: Double, at: Long): EvidenceV7 = EvidenceV7(
+  83:fuel = FuelV7.CNG,
+  90:cngRevision = CalibrationRevisionV7(0, 0),
+  94:private fun suggestion(runtime: V7SessionRuntime, row: Int, column: Int, after: Int): LocalSuggestionV7 = LocalSuggestionV7(
+  98:target = SuggestionTargetV7.MAP_K,
+  99:mapChanges = listOf(MapCellChangeV7(row, column, runtime.state.calibration.mapK[row][column], after)),
+tests/test_advisor_revision_budget_contract.py
+  8:GATE = ROOT / "app/src/main/java/com/omegas/prohub/learning/AdvisorRevisionGate.kt"
+  10:ADVISOR = ROOT / "app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt"
+  18:"ingest requests semantic refresh": "requestAdvisorRefresh(result)" in store,
+  19:"raw eligible sample no longer refreshes unconditionally": "if (prepared.learningEligible && prepared.sample != null) scheduleAdvisorRefresh" not in store,
+  20:"comparison token uses observation milestone": "AdvisorRevisionGate.observationMilestone" in store and '"CMP"' in store,
+  23:"export does not recompute advisor synchronously": "advisor = AssistedCalibrationAdvisor.analyze(exported)" not in store,
+  25:"calibration and merge force revisions": "scheduleAdvisorRefresh(advisorRevisionGate.force())" in store,
+  40:val gate = AdvisorRevisionGate()
+  49:check(AdvisorRevisionGate.observationMilestone(1) == 1)
+  50:check(AdvisorRevisionGate.observationMilestone(2) == 2)
+  51:check(AdvisorRevisionGate.observationMilestone(3) == 2)
+  52:check(AdvisorRevisionGate.observationMilestone(7) == 4)
+  53:check(AdvisorRevisionGate.observationMilestone(8) == 8)
+  54:check(AdvisorRevisionGate.quantize(1.01, 0.25) == 4L)
+  55:check(AdvisorRevisionGate.quantize(1.12, 0.25) == 4L)
+  56:check(AdvisorRevisionGate.quantize(1.14, 0.25) == 5L)
+  82:raise AssertionError("FAIL: AdvisorRevisionGate Kotlin behavior")
+  83:print("OK: AdvisorRevisionGate Kotlin behavior")
+tests/test_block1_session_contract.py
+  7:BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
+tests/test_block3_suggestion_ui_contract.py
+  15:self.runtime = (ROOT / "app/src/main/java/com/omegas/v7/runtime/V7SessionRuntime.kt").read_text("utf-8")
+  16:self.coordinator = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt").read_text("utf-8")
+  17:self.bridge = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
+tests/test_blue_runtime_convergence_contract.py
+  18:# No compatibility/legacy decision authority is allowed to survive the hard cut.
+  20:MAIN / "com/omegas/v7/runtime/BlueEquivalenceCompatibility.kt",
+  21:MAIN / "com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt",
+  22:MAIN / "com/omegas/prohub/calibration/V7CalibrationCoordinator.kt",
+  23:MAIN / "com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt",
+  24:MAIN / "com/omegas/prohub/learning/PredictorSurface.kt",
+  27:assert not path.exists(), f"legacy decision runtime still present: {path.relative_to(ROOT)}"
+  29:# Dead tests must not keep deleted AutoMatch engines alive at compile time.
+  30:legacy_test_names = {
+  31:"AutoMatchDraftReviewValidatorTest.kt",
+  32:"AutoMatchKFactorDraftTest.kt",
+  33:"AutoMatchResidualPlannerTest.kt",
+  34:"AutoMatchSnapshotAnalysisTest.kt",
+  35:"AutoMatchV5EngineTest.kt",
+  36:"V7EquivalenceEngineTest.kt",
+  38:"PredictorInterpolatorTest.kt",
+  39:"PredictorSpatialConfidenceTest.kt",
+  42:assert path.name not in legacy_test_names, f"stale legacy test remains: {path.relative_to(ROOT)}"
+tests/test_blue_single_engine_contract.py
+  17:MAIN / "com/omegas/v7/runtime/V7EquivalenceEngine.kt",
+  18:MAIN / "com/omegas/prohub/learning/PredictorInterpolator.kt",
+  19:MAIN / "com/omegas/prohub/learning/PredictorSpatialConfidence.kt",
+  21:MAIN / "com/omegas/prohub/autocal/AutoMatchV5Engine.kt",
+  22:MAIN / "com/omegas/prohub/autocal/AutoMatchKFactorDraft.kt",
+  23:MAIN / "com/omegas/prohub/autocal/AutoMatchResidualPlanner.kt",
+  26:assert not path.exists(), f"legacy decision authority still present: {path.relative_to(ROOT)}"
+  40:for forbidden_math in ["AutoMatchResidualPlanner", "AutoMatchV5Engine", "AutoMatchKFactorDraft"]:
+  41:assert forbidden_math not in adapter_text, f"Auto-Cal adapter still depends on legacy math: {forbidden_math}"
+tests/test_clean_ui_contract.py
+  49:# Predictor is an optional visual extension. It may add one route,
+  211:bridge = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
+tests/test_continuous_residual_field_contract.py
+  6:ADVISOR = (ROOT / "app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt").read_text("utf-8")
+  7:ADAPTER = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt").read_text("utf-8")
+tests/test_curve_kotlin_math_authority_contract.py
+  6:ADAPTER = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt").read_text("utf-8")
+  26:assert "CurvePointChangeV7" in ADAPTER
+tests/test_governance_contract.py
+  43:self.assertIn("actions/checkout@v7", workflow)
+  63:"tests/test_v7_map_batch_contract.py",
+tests/test_learning_consolidation_contract.py
+  5:RUNTIME = ROOT / "app/src/main/java/com/omegas/v7/runtime/V7SessionRuntime.kt"
+  8:COMPAT = ROOT / "app/src/main/java/com/omegas/v7/runtime/BlueEquivalenceCompatibility.kt"
+  9:CODEC = ROOT / "app/src/main/java/com/omegas/v7/runtime/V7SessionSnapshotCodec.kt"
+  24:def test_one_blue_engine_owns_equivalence_and_v7_is_only_facade(self):
+  26:self.assertIn("class V7EquivalenceEngine", self.compat)
+  30:self.assertFalse((ROOT / "app/src/main/java/com/omegas/v7/runtime/V7EquivalenceEngine.kt").exists())
+  63:for legacy in ("AutoMatchV5Engine", "AutoMatchResidualPlanner", "AutoMatchKFactorDraft"):
+  64:self.assertNotIn(legacy, self.blue_autocal)
+  67:self.assertIn('private const val SCHEMA = "OMEGAS_V7_SESSION_6"', self.codec)
+  68:for schema in ("OMEGAS_V7_SESSION_5", "OMEGAS_V7_SESSION_4", "OMEGAS_V7_SESSION_3", "OMEGAS_V7_SESSION_2"):
+tests/test_learning_evidence_budget_contract.py
+  24:"live ingest remains lightweight": "return decorate(result, includeAdvisor = false)" in store,
+  25:"heavy native evidence gated": 'if (includeAdvisor) {' in store and '.put("native_ecu_evidence"' in store,
+tests/test_learning_memory_budget_contract.py
+  25:"legacy exact counts survive restore": 'raw.optInt("visit_count"' in memory and 'raw.optInt("session_count"' in memory,
+  31:"advisor uses minimal snapshot": 'AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())' in signal,
+  32:"advisor snapshot excludes heavy ui projections": '.put("regions", JSONArray(regions.map { it.toAdvisorJson() }))' in memory and '.put("comparisons", JSONArray(comparisons.map { it.toJson() }))' in memory,
+  33:"grid never fabricates legacy visit ids": "legacy-visit" not in grid and "legacy-session" not in grid,
+tests/test_map_kotlin_math_authority_contract.py
+  9:BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
+  26:assert "invoke(this.v7, 'previewMapAdjustment'" in API
+tests/test_native_anchor_science_contract.py
+  82:self.assertNotIn('scheduleAdvisorRefresh', import_section)
+tests/test_native_autocal_contract.py
+  45:self.assertIn('legacyDraftEngine", false', self.bridge)
+  132:self.assertNotIn('scheduleAdvisorRefresh', import_section)
+tests/test_obd_independent_evidence_contract.py
+  10:legacy = LEGACY_INDEPENDENT.read_text(encoding="utf-8")
+  13:combined_obd = manager + "\n" + legacy + "\n" + ui
+  39:# A implementação RPM x carga antiga pode permanecer apenas como legado de arquivo,
+  41:assert '.put("y", "calculatedLoadPct")' in legacy
+tests/test_predictor_map_residual_contract.py
+  5:ADVISOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt'
+  8:PREDICTOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt'
+  11:class PredictorMapResidualContract(unittest.TestCase):
+tests/test_red_manual_authority_contract.py
+  26:advisor = read("AdvisorSuggestionAdapterV7.kt")
+  38:predictor = read_root("app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt")
+tests/test_red_single_data_pump_contract.py
+  27:def test_predictor_does_not_poll_v7_state_or_add_context_timer(self):
+  28:self.assertNotIn("this.api.v7.getState()", PREDICTOR)
+  39:self.assertNotIn("api.v7.getState()", APP)
+tests/test_red_snapshot_bus_contract.py
+  26:self.assertNotIn("v7CalibrationStateJson", body)
+tests/test_suggestion_readback_lifecycle_contract.py
+  5:BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
+  6:COORDINATOR = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt").read_text("utf-8")
+  7:ACCESS = (ROOT / "app/src/main/java/com/omegas/prohub/service/V7CalibrationAccess.kt").read_text("utf-8")
+  12:assert 'service.v7ReconcileConfirmedManualWrite("CURVE_K")' in BRIDGE
+  15:assert 'service.v7ReconcileConfirmedManualWrite("MAP_K")' in BRIDGE
+  20:# estado de calibração, não como permissão para um motor legado.
+  24:assert 'v7ApplySuggestion' in ACCESS
+tests/test_usb_permission_identity_contract.py
+  35:assert "RETRY_TRANSPORT" in policy, "enum legado pode permanecer durante a reconstrucao"
+tests/test_v7_map_batch_contract.py
+  7:BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
+  77:def test_legacy_apply_suggestion_is_prepare_only(self):
+  81:self.assertNotIn("v7ApplySuggestion", self.bridge)
+tests/test_v82_integral_regression_contract.py
+  85:surface = read('app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt')
+  86:spatial = read('app/src/main/java/com/omegas/prohub/learning/PredictorSpatialConfidence.kt')
+  87:interpolator = read('app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt')
+tests/ui/app-shell-runtime.test.cjs
+  102:test('APK usa OmegasV7 para uma única intenção de mapa e curva', () => {
+  112:context.OmegasV7 = {
+tests/ui/autocal-accessibility.test.cjs
+  14:'Progresso do AutoMatch',
+tests/ui/autocal-cockpit.test.cjs
+  26:assert.equal(manager.includes('manualAutoMatchExposed'), false);
+tests/ui/curve-map-editor-coherence.test.cjs
+  14:assert.equal(curve.includes('globalTrendRemoved'), false); // global/local split belongs to Kotlin Advisor, not UI
+tests/ui/didactic-expansion.test.cjs
+  17:getReleaseIdentity: () => JSON.stringify({ product: 'OMEGAS', generation: 'V7' }),
+  49:OmegasV7: {},
+tests/ui/map-editor-flow.test.cjs
+  104:test('uma intenção humana envia as 144 células em uma única chamada do adaptador V7', () => {
+tests/ui/map-workflow-e2e.test.cjs
+  80:test('frontend envia uma única intenção ao coordenador V7, sem chunking na escrita', () => {
+tests/ui/predictor-consumer.test.cjs
+  15:return context.globalThis.OmegasUi.PredictorModel;
