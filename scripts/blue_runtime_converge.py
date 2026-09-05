@@ -30,3 +30,4 @@ for base in SCAN_ROOTS:
 out = ROOT / "blue-migration-inventory.txt"
 out.write_text("\n".join(rows) + "\n", encoding="utf-8")
 print(f"inventory entries={len(rows)}")
+# tracked-report trigger
