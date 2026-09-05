@@ -1,11 +1,11 @@
 package com.omegas.prohub.learning
 
 /**
- * Orçamento explícito do sidecar derivado do Learning.
+ * Limites explícitos para evidência observacional complementar.
  *
- * O estado científico principal continua em MotorLearningMemory. Este orçamento
- * limita apenas evidência derivada/diagnóstica usada para confiança adaptativa,
- * contexto nativo e proveniência curta, impedindo crescimento indefinido do hot path.
+ * O estado físico principal pertence ao BlueEvidenceStore. Estes limites existem
+ * somente para contexto nativo e proveniência curta, impedindo crescimento
+ * indefinido sem atribuir autoridade de decisão a esta classe.
  */
 internal object LearningEvidenceBudget {
     const val MAX_NATIVE_SNAPSHOTS = 16
