@@ -40,7 +40,7 @@ class NativeLearningAnchorIntegrationTest {
             assertTrue(anchor.getBoolean("nativeValidity"))
             assertFalse(anchor.getBoolean("comparisonVote"))
             assertFalse(anchor.getBoolean("automaticWrite"))
-            assertEquals("omegas-learning-evidence-v6-v3", exported.getString("evidenceStateSchema"))
+            assertEquals("omegas-learning-evidence-blue", exported.getString("evidenceStateSchema"))
         } finally {
             first.close()
         }
