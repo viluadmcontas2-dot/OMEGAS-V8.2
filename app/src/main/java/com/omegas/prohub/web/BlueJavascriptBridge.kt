@@ -5,21 +5,16 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.MapBatchPlan
 import com.omegas.prohub.calibration.MapKManualPlanner
-import com.omegas.prohub.service.v7CalibrationStateJson
-import com.omegas.prohub.service.v7IngestLearningSnapshot
-import com.omegas.prohub.service.v7LoadSession
-import com.omegas.prohub.service.v7ReconcileConfirmedManualWrite
-import com.omegas.prohub.service.v7SaveSession
-import com.omegas.prohub.service.v7SessionFilesJson
-import com.omegas.prohub.service.v7SynchronizeAdvisorSuggestions
-import com.omegas.prohub.service.v7SynchronizeCalibration
+import com.omegas.prohub.service.blueCalibrationStateJson
+import com.omegas.prohub.service.blueIngestLearningSnapshot
+import com.omegas.prohub.service.blueReconcileConfirmedManualWrite
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** Ponte de compatibilidade V7 dentro do OMEGAS V8. Toda operação serial ocorre fora da thread da WebView. */
-class V7JavascriptBridge(activity: MainActivity) {
+/** Ponte de compatibilidade Blue dentro do OMEGAS calibração. Toda operação serial ocorre fora da thread da WebView. */
+class BlueJavascriptBridge(activity: MainActivity) {
     companion object {
         private const val OPERATION_TIMEOUT_MS = 15 * 60 * 1000L
     }
@@ -27,7 +22,7 @@ class V7JavascriptBridge(activity: MainActivity) {
     private val activityRef = java.lang.ref.WeakReference(activity)
     private val activity: MainActivity? get() = activityRef.get()
     private val executor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "omegas-v7-web-operations").apply { isDaemon = true }
+        Thread(runnable, "omegas-blue-calibration").apply { isDaemon = true }
     }
     private val busy = AtomicBoolean(false)
     @Volatile private var lastOperation = JSONObject()
@@ -40,12 +35,9 @@ class V7JavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun getState(): String = activity?.serviceOrNull()?.v7CalibrationStateJson()
+    fun getState(): String = activity?.serviceOrNull()?.blueCalibrationStateJson()
         ?: unavailable()
 
-    @JavascriptInterface
-    fun listSessionFiles(): String = activity?.serviceOrNull()?.v7SessionFilesJson()
-        ?: "[]"
 
     @JavascriptInterface
     fun getLastOperation(): String = JSONObject(lastOperation.toString())
@@ -56,38 +48,18 @@ class V7JavascriptBridge(activity: MainActivity) {
     fun previewMapAdjustment(cellsJson: String, mode: String, adjustment: Double): String =
         MapKManualPlanner.preview(cellsJson, mode, adjustment).toString()
 
-    /** Operação pura: converte a saída do advisor em sugestões versionadas. */
-    @JavascriptInterface
-    fun synchronizeAdvisorSuggestions(adviceJson: String): String =
-        activity?.serviceOrNull()?.v7SynchronizeAdvisorSuggestions(adviceJson)
-            ?: unavailable()
 
-    /** Importação explícita da memória física atual para a sessão V8. */
+    /** Importação explícita da memória física atual para a sessão calibração. */
     @JavascriptInterface
     fun ingestLearningSnapshot(snapshotJson: String): String =
-        activity?.serviceOrNull()?.v7IngestLearningSnapshot(snapshotJson)
+        activity?.serviceOrNull()?.blueIngestLearningSnapshot(snapshotJson)
             ?: unavailable()
 
     @JavascriptInterface
-    fun synchronizeFromEcu(fileName: String): String = startOperation("SYNCHRONIZING_ECU") { service ->
-        service.v7SynchronizeCalibration(fileName)
+    fun synchronizeFromEcu(): String = startOperation("SYNCHRONIZING_ECU") { service ->
+        service.blueSynchronizeCalibration()
     }
 
-    /**
-     * Compatibilidade de API: sugestão nunca mais alcança writer diretamente.
-     * A interface deve abrir Curva K/Mapa K, preparar a proposta e exigir revisão.
-     */
-    @JavascriptInterface
-    fun applySuggestion(suggestionId: String): String = JSONObject()
-        .put("ok", true)
-        .put("suggestionId", suggestionId)
-        .put("state", "MANUAL_REVIEW_REQUIRED")
-        .put("prepared", false)
-        .put("writesStarted", false)
-        .put("automatic", false)
-        .put("humanConfirmationRequired", true)
-        .put("message", "Sugestão não escreve diretamente. Abra o editor, revise a proposta e confirme manualmente.")
-        .toString()
 
     @JavascriptInterface
     fun startCurveRead(): String = startOperation("CURVE_READING") { service ->
@@ -108,7 +80,7 @@ class V7JavascriptBridge(activity: MainActivity) {
             return JSONObject().put("ok", false).put("error", "Selecione entre 1 e 30 pontos da Curva K").toString()
         }
         if (!busy.compareAndSet(false, true)) {
-            return JSONObject().put("ok", false).put("busy", true).put("error", "Outra operação V8 está em andamento").toString()
+            return JSONObject().put("ok", false).put("busy", true).put("error", "Outra operação calibração está em andamento").toString()
         }
         val startedAt = System.currentTimeMillis()
         lastOperation = JSONObject()
@@ -137,7 +109,7 @@ class V7JavascriptBridge(activity: MainActivity) {
                     } else {
                         val deadline = System.currentTimeMillis() + OPERATION_TIMEOUT_MS
                         while (finalStatus == null) {
-                            if (Thread.currentThread().isInterrupted) throw InterruptedException("Operação V8 interrompida")
+                            if (Thread.currentThread().isInterrupted) throw InterruptedException("Operação calibração interrompida")
                             if (System.currentTimeMillis() > deadline) {
                                 finalStatus = JSONObject().put("ok", false).put("state", "TIMEOUT")
                                     .put("error", "Tempo limite aguardando confirmação da Curva K")
@@ -170,7 +142,7 @@ class V7JavascriptBridge(activity: MainActivity) {
             val confirmed = status.optString("state") == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false)
             val suggestionReconciliation = if (confirmed) {
                 try {
-                    JSONObject(service.v7ReconcileConfirmedManualWrite("CURVE_K"))
+                    JSONObject(service.blueReconcileConfirmedManualWrite())
                 } catch (error: Exception) {
                     JSONObject().put("ok", false).put("error", error.message ?: "Reconciliação de sugestões indisponível")
                 }
@@ -233,7 +205,7 @@ class V7JavascriptBridge(activity: MainActivity) {
             return JSONObject()
                 .put("ok", false)
                 .put("busy", true)
-                .put("error", "Outra operação V8 está em andamento")
+                .put("error", "Outra operação calibração está em andamento")
                 .toString()
         }
 
@@ -298,7 +270,7 @@ class V7JavascriptBridge(activity: MainActivity) {
                     var chunkFinished = false
                     while (!chunkFinished && failure == null) {
                         if (Thread.currentThread().isInterrupted) {
-                            throw InterruptedException("Operação V8 interrompida")
+                            throw InterruptedException("Operação calibração interrompida")
                         }
                         if (System.currentTimeMillis() > deadline) {
                             failure = JSONObject()
@@ -358,7 +330,7 @@ class V7JavascriptBridge(activity: MainActivity) {
             val fullyConfirmed = failure == null && completedCells == plan.totalCells
             val suggestionReconciliation = if (fullyConfirmed) {
                 try {
-                    JSONObject(service.v7ReconcileConfirmedManualWrite("MAP_K"))
+                    JSONObject(service.blueReconcileConfirmedManualWrite())
                 } catch (error: Exception) {
                     JSONObject().put("ok", false).put("error", error.message ?: "Reconciliação de sugestões indisponível")
                 }
@@ -407,13 +379,6 @@ class V7JavascriptBridge(activity: MainActivity) {
             .toString()
     }
 
-    @JavascriptInterface
-    fun saveSession(fileName: String): String = activity?.serviceOrNull()?.v7SaveSession(fileName)
-        ?: unavailable()
-
-    @JavascriptInterface
-    fun loadSession(fileName: String): String = activity?.serviceOrNull()?.v7LoadSession(fileName)
-        ?: unavailable()
 
     private fun unsafeCalibrationWriteReason(service: com.omegas.prohub.service.TelemetryForegroundService): String? =
         CalibrationWriteSafetyPolicy.unsafeReason(service.status())
@@ -434,7 +399,7 @@ class V7JavascriptBridge(activity: MainActivity) {
             return JSONObject()
                 .put("ok", false)
                 .put("busy", true)
-                .put("error", "Outra operação V8 está em andamento")
+                .put("error", "Outra operação calibração está em andamento")
                 .toString()
         }
         val startedAt = System.currentTimeMillis()
@@ -447,7 +412,7 @@ class V7JavascriptBridge(activity: MainActivity) {
             val result = try {
                 JSONObject(action(service))
             } catch (error: Exception) {
-                JSONObject().put("ok", false).put("error", error.message ?: "Falha V8")
+                JSONObject().put("ok", false).put("error", error.message ?: "Falha calibração")
             }
             lastOperation = JSONObject(result.toString())
                 .put("state", if (result.optBoolean("ok")) "COMPLETED" else "FAILED")
@@ -467,6 +432,6 @@ class V7JavascriptBridge(activity: MainActivity) {
 
     private fun unavailable(): String = JSONObject()
         .put("ok", false)
-        .put("error", "Serviço V8 indisponível")
+        .put("error", "Serviço calibração indisponível")
         .toString()
 }

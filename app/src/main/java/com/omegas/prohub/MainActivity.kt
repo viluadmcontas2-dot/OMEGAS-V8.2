@@ -28,7 +28,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.HubJavascriptBridge
 import com.omegas.prohub.web.PowerJavascriptBridge
-import com.omegas.prohub.web.V7JavascriptBridge
+import com.omegas.prohub.web.BlueJavascriptBridge
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     private var bound = false
     private var pendingSessionExportId = ""
     private var jsBridge: HubJavascriptBridge? = null
-    private var v7Bridge: V7JavascriptBridge? = null
+    private var blueBridge: BlueJavascriptBridge? = null
     private var powerBridge: PowerJavascriptBridge? = null
 
     private val exportDataLauncher = registerForActivityResult(
@@ -220,12 +220,12 @@ class MainActivity : AppCompatActivity() {
         }
         jsBridge?.destroy()
         jsBridge = null
-        v7Bridge?.destroy()
-        v7Bridge = null
+        blueBridge?.destroy()
+        blueBridge = null
         powerBridge = null
         if (::webView.isInitialized) {
             try { webView.removeJavascriptInterface("OmegasNative") } catch (_: Exception) {}
-            try { webView.removeJavascriptInterface("OmegasV7") } catch (_: Exception) {}
+            try { webView.removeJavascriptInterface("OmegasBlue") } catch (_: Exception) {}
             try { webView.removeJavascriptInterface("OmegasPower") } catch (_: Exception) {}
             try { webView.destroy() } catch (_: Exception) {}
         }
@@ -274,10 +274,10 @@ class MainActivity : AppCompatActivity() {
             allowUniversalAccessFromFileURLs = false
         }
         jsBridge = HubJavascriptBridge(this)
-        v7Bridge = V7JavascriptBridge(this)
+        blueBridge = BlueJavascriptBridge(this)
         powerBridge = PowerJavascriptBridge(this)
         webView.addJavascriptInterface(jsBridge!!, "OmegasNative")
-        webView.addJavascriptInterface(v7Bridge!!, "OmegasV7")
+        webView.addJavascriptInterface(blueBridge!!, "OmegasBlue")
         webView.addJavascriptInterface(powerBridge!!, "OmegasPower")
         webView.webChromeClient = object : WebChromeClient() {
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {

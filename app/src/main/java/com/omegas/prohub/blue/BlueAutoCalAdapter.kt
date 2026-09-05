@@ -1,27 +1,19 @@
 package com.omegas.prohub.blue
 
-import com.omegas.v7.runtime.FuelComparisonV7
 import org.json.JSONObject
 import kotlin.math.ln
 
-/**
- * Auto-Cal is an orchestrator/consumer only. It receives observed Blue
- * comparisons and an actuator gain learned by [BlueCausalEngine]; it never owns
- * independent residual or K-target mathematics.
- */
+/** Auto-Cal consumes the single causal engine and never owns correction math. */
 class BlueAutoCalAdapter(
     private val engine: BlueCausalEngine,
 ) {
     fun proposal(
-        comparison: FuelComparisonV7,
+        comparison: FuelComparison,
         gain: BlueActuatorGain?,
     ): BlueCorrectionProposal {
         require(comparison.petrolTargetMs > 0.0)
         require(comparison.petrolOnCngMs > 0.0)
-        val errorLog = engine.cngErrorLog(
-            petrolOnCngMs = comparison.petrolOnCngMs,
-            petrolReferenceMs = comparison.petrolTargetMs,
-        )
+        val errorLog = engine.cngErrorLog(comparison.petrolOnCngMs, comparison.petrolTargetMs)
         return BlueCorrectionProposal(
             calibrationState = engine.calibrationState(comparison.revision),
             correctionMultiplier = engine.correctionMultiplier(errorLog, gain),
@@ -32,14 +24,11 @@ class BlueAutoCalAdapter(
         )
     }
 
-    fun proposalJson(
-        comparison: FuelComparisonV7,
-        gain: BlueActuatorGain?,
-    ): JSONObject {
+    fun proposalJson(comparison: FuelComparison, gain: BlueActuatorGain?): JSONObject {
         val proposal = proposal(comparison, gain)
         return JSONObject()
             .put("ok", true)
-            .put("mode", "BLUE_CAUSAL_ENGINE")
+            .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
             .put("automatic", false)
             .put("manualOnly", true)
             .put("curveRevision", proposal.calibrationState.curveK)
@@ -50,16 +39,9 @@ class BlueAutoCalAdapter(
             .put("errorPercent", proposal.errorPercent)
             .put("actuatorGain", proposal.actuatorGain?.gain ?: JSONObject.NULL)
             .put("correctionMultiplier", proposal.correctionMultiplier ?: JSONObject.NULL)
-            .put(
-                "state",
-                if (proposal.correctionMultiplier == null) "MEASURE_GAIN_FIRST" else "PROPOSAL_READY",
-            )
+            .put("state", if (proposal.correctionMultiplier == null) "MEASURE_ACTUATOR_GAIN" else "PROPOSAL_READY")
     }
 
-    /**
-     * Convenience helper for historical event identification. No default gain is
-     * fabricated when before/after K does not produce a valid causal estimate.
-     */
     fun learnGain(
         beforePetrolOnCngMs: Double,
         beforePetrolReferenceMs: Double,

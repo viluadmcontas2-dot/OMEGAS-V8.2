@@ -7,6 +7,7 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.service.TelemetryForegroundService
+import com.omegas.prohub.service.blueProposalJson
 import org.json.JSONObject
 import java.io.File
 
@@ -42,21 +43,16 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun importSnapshotIntoLearning(snapshotJson: String): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        service.importNativeAutoCalSnapshot(snapshotJson)
+        service.importNativeAutoCalSnapshot(snapshotJson).also { service.blueIngestLearningSnapshot(snapshotJson) }
     } catch (error: Exception) {
         localFailure(error.message ?: "Não foi possível importar o snapshot")
     }
 
-    /**
-     * Compatibilidade de API: o Auto-Cal não possui mais analisador paralelo.
-     * Consumidores recebem explicitamente a autoridade BLUE e nenhuma proposta
-     * é inventada a partir do snapshot nativo.
-     */
     @JavascriptInterface
-    fun getAnalysis(): String = blueAuthorityStatus()
+    fun getAnalysis(): String = activityRef.get()?.serviceOrNull()?.blueProposalJson() ?: unavailable()
 
     @JavascriptInterface
-    fun getResidualAnalysis(): String = blueAuthorityStatus()
+    fun getResidualAnalysis(): String = getAnalysis()
 
     @JavascriptInterface
     fun startRead(): String = currentManager()?.startRead()?.toString() ?: unavailable()
@@ -64,27 +60,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun cancelRead(): String = currentManager()?.cancel()?.toString() ?: unavailable()
 
-    /** Legacy draft API is deliberately fail-closed: Blue proposals are unique. */
-    @JavascriptInterface
-    fun createDraft(): String = blueAuthorityStatus()
-
-    @JavascriptInterface
-    fun getDraft(): String = blueAuthorityStatus()
-
-    @JavascriptInterface
-    fun selectDraftPoint(index: Int, selected: Boolean): String = blueAuthorityStatus()
-
-    @JavascriptInterface
-    fun setDraftTargetFactor(index: Int, factor: Double): String = blueAuthorityStatus()
-
-    @JavascriptInterface
-    fun getDraftReviewPayload(): String = blueAuthorityStatus()
-
-    @JavascriptInterface
-    fun validateDraftReviewCurve(curveJson: String): String = blueAuthorityStatus()
-
-    @JavascriptInterface
-    fun clearDraft(): String = blueAuthorityStatus()
 
     @JavascriptInterface
     fun getNativeActionStatus(): String = currentNativeManager()?.statusJson()?.toString() ?: unavailable()
@@ -186,8 +161,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("feature", "OMEGAS Blue Auto-Cal")
         .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
         .put("parallelCorrectionMath", false)
-        .put("legacyDraftEngine", false)
-        .put("nativeProtocolEvidenceExact", true)
+                .put("nativeProtocolEvidenceExact", true)
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
         .put("nativeAndroidConfirmation", true)
@@ -293,16 +267,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         }
     }
 
-    private fun blueAuthorityStatus(): String = JSONObject()
-        .put("ok", true)
-        .put("available", false)
-        .put("state", "BLUE_ENGINE_PROPOSAL_NOT_BOUND_YET")
-        .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
-        .put("legacyMath", false)
-        .put("automatic", false)
-        .put("manualOnly", true)
-        .put("requiresBlueEvidence", true)
-        .toString()
 
     private fun localFailure(message: String): String = JSONObject()
         .put("ok", false)

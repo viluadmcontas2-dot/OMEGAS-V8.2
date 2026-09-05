@@ -1,241 +1,173 @@
 package com.omegas.prohub.blue
 
-import com.omegas.v7.runtime.CalibrationRevisionV7
-import com.omegas.v7.runtime.EvidenceV7
-import com.omegas.v7.runtime.FuelComparisonV7
-import com.omegas.v7.runtime.FuelV7
-import com.omegas.v7.runtime.V7SessionState
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
- * Única autoridade matemática de equivalência do OMEGAS Blue.
+ * Single scientific authority for gasoline reference and CNG deviation.
  *
- * O motor mede primeiro a referência física de gasolina em RPM×MAP, mede o erro
- * do GNV como razão logarítmica e aprende a sensibilidade dos atuadores K a
- * partir de intervenções confirmadas. Ele não conta visitas para fabricar
- * confiança e não possui caminho de escrita automática na ECU.
+ * A coordinate hit is not enough. Reference quality rewards physical proximity,
+ * stable evidence and thermal context. The engine never invents an actuator
+ * response: a K correction is available only after a causal gain was measured
+ * from an actual before/after calibration event.
  */
 class BlueCausalEngine(
-    private val policy: BlueCausalPolicy = BlueCausalPolicy(),
+    private val policy: BluePolicy = BluePolicy(),
 ) {
-    fun calibrationState(revision: CalibrationRevisionV7): BlueCalibrationStateId =
+    fun calibrationState(revision: CalibrationRevision): BlueCalibrationStateId =
         BlueCalibrationStateId(revision.curveK, revision.mapK)
 
-    /**
-     * Uma única evidência gasolina de alta qualidade pode publicar referência.
-     * Múltiplos microbursts compatíveis reduzem ruído pela mediana, mas não são
-     * requisito artificial de maturidade.
-     */
     fun petrolReference(
-        target: EvidenceV7,
-        petrolEvidence: List<EvidenceV7>,
+        target: FuelEvidence,
+        petrolEvidence: List<FuelEvidence>,
     ): BluePetrolReference? {
-        val candidates = petrolEvidence.asSequence()
-            .filter { it.fuel == FuelV7.PETROL }
+        val candidates = petrolEvidence
+            .asSequence()
+            .filter { it.fuel == FuelKind.PETROL }
+            .filter { it.petrolMs > 0.0 && it.quality >= policy.minimumEvidenceQuality }
             .map { evidence -> BlueCandidate(evidence, normalizedDistance(evidence, target)) }
-            .filter { it.distance.isFinite() && it.distance <= policy.maximumNormalizedDistance }
+            .filter { it.distance <= policy.maximumNormalizedDistance }
             .sortedBy { it.distance }
             .take(policy.maximumReferenceBursts)
             .toList()
         if (candidates.isEmpty()) return null
 
         val values = candidates.map { it.evidence.petrolMs }.sorted()
-        val median = if (values.size % 2 == 1) {
-            values[values.size / 2]
-        } else {
+        val median = if (values.size % 2 == 0) {
             (values[values.size / 2 - 1] + values[values.size / 2]) / 2.0
-        }
-        if (!median.isFinite() || median <= policy.minimumPetrolMs) return null
-
-        val nearest = candidates.first()
-        val meanQuality = candidates.map { it.evidence.quality.coerceIn(0.0, 1.0) }.average()
-        val proximity = exp(-0.35 * nearest.distance)
-        val quality = sqrt(meanQuality.coerceIn(0.0, 1.0) * target.quality.coerceIn(0.0, 1.0)) * proximity
+        } else values[values.size / 2]
+        val meanQuality = candidates.map { it.evidence.quality }.average()
+        val proximity = exp(-candidates.map { it.distance }.average()).coerceIn(0.0, 1.0)
+        val quality = (sqrt(meanQuality * target.quality.coerceIn(0.0, 1.0)) * proximity)
+            .coerceIn(0.0, 1.0)
         return BluePetrolReference(
             petrolMs = median,
-            support = candidates.size,
-            quality = quality.coerceIn(0.0, 1.0),
-            evidenceIds = candidates.map { it.evidence.id },
-            nearestNormalizedDistance = nearest.distance,
+            quality = quality,
+            supportCount = candidates.size,
+            nearestDistance = candidates.first().distance,
         )
     }
 
     fun cngErrorLog(petrolOnCngMs: Double, petrolReferenceMs: Double): Double {
-        require(petrolOnCngMs.isFinite() && petrolOnCngMs > policy.minimumPetrolMs)
-        require(petrolReferenceMs.isFinite() && petrolReferenceMs > policy.minimumPetrolMs)
+        require(petrolOnCngMs > 0.0 && petrolReferenceMs > 0.0)
         return ln(petrolOnCngMs / petrolReferenceMs)
     }
 
-    fun errorPercentFromLog(errorLog: Double): Double {
-        require(errorLog.isFinite())
-        return (exp(errorLog) - 1.0) * 100.0
-    }
+    fun errorPercentFromLog(errorLog: Double): Double = (exp(errorLog) - 1.0) * 100.0
 
-    /**
-     * Identificação causal do ganho do atuador.
-     *
-     * Se Δln(K) não existe, ou se a resposta não é finita/coerente, o evento não
-     * produz ganho. Nenhum valor histórico (1.0, 0.7 etc.) é usado como verdade.
-     */
     fun actuatorGain(
         beforeErrorLog: Double,
         afterErrorLog: Double,
         beforeK: Double,
         afterK: Double,
     ): BlueActuatorGain? {
-        if (!beforeErrorLog.isFinite() || !afterErrorLog.isFinite()) return null
         if (!beforeK.isFinite() || !afterK.isFinite() || beforeK <= 0.0 || afterK <= 0.0) return null
         val deltaLnK = ln(afterK / beforeK)
-        if (!deltaLnK.isFinite() || abs(deltaLnK) < policy.minimumActuatorLogStep) return null
-        val rawGain = -(afterErrorLog - beforeErrorLog) / deltaLnK
-        if (!rawGain.isFinite() || rawGain <= 0.0) return null
-        return BlueActuatorGain(
-            gain = rawGain.coerceIn(policy.minimumAcceptedGain, policy.maximumAcceptedGain),
-            rawGain = rawGain,
-            saturated = rawGain !in policy.minimumAcceptedGain..policy.maximumAcceptedGain,
+        if (abs(deltaLnK) < policy.minimumActuatorStepLog) return null
+        val gain = -(afterErrorLog - beforeErrorLog) / deltaLnK
+        if (!gain.isFinite() || gain <= policy.minimumAcceptedGain || gain > policy.maximumAcceptedGain) return null
+        return BlueActuatorGain(gain)
+    }
+
+    fun correctionMultiplier(errorLog: Double, gain: BlueActuatorGain?): Double? {
+        gain ?: return null
+        return exp(errorLog / gain.gain).coerceIn(
+            policy.minimumCorrectionMultiplier,
+            policy.maximumCorrectionMultiplier,
         )
     }
 
-    /**
-     * Converte erro observado em multiplicador-alvo apenas quando existe ganho
-     * causal conhecido. Sem ganho, o motor mede e observa; não inventa correção.
-     */
-    fun correctionMultiplier(errorLog: Double, gain: BlueActuatorGain?): Double? {
-        if (!errorLog.isFinite() || gain == null || gain.gain <= 0.0) return null
-        return exp(errorLog / gain.gain)
-            .coerceIn(policy.minimumCorrectionMultiplier, policy.maximumCorrectionMultiplier)
-    }
-
-    /**
-     * Compatibilidade temporária do runtime V7: a matemática já é Blue e existe
-     * somente aqui. Comparações antigas de outras revisões permanecem para
-     * auditoria, mas nova evidência GNV é criada somente no estado ativo.
-     */
-    fun reconcile(state: V7SessionState, nowMs: Long = System.currentTimeMillis()): List<FuelComparisonV7> {
-        require(nowMs >= 0L)
-        val revision = state.calibration.revision
-        val historical = state.comparisons.filter { it.revision != revision }
-        val existingActive = state.comparisons
-            .filter { it.revision == revision }
-            .distinctBy { it.cngVisitId }
-        val alreadyCompared = existingActive.mapTo(linkedSetOf()) { it.cngVisitId }
-        val created = state.activeCngEvidence()
-            .asSequence()
-            .filter { it.cngRevision == revision }
-            .distinctBy { it.visitId }
-            .filterNot { it.visitId in alreadyCompared }
-            .mapNotNull { cng -> compare(cng, state.petrolEvidence, revision) }
-            .toList()
-        return historical + (existingActive + created)
-            .sortedWith(compareBy<FuelComparisonV7> { it.createdAtMs }.thenBy { it.cngVisitId })
+    fun reconcile(
+        state: BlueLearningState,
+        nowMs: Long = System.currentTimeMillis(),
+    ): List<FuelComparison> {
+        val activeRevision = state.calibration.revision
+        val historical = state.comparisons.filter { it.revision != activeRevision }
+        val active = state.activeCngEvidence().mapNotNull { cng ->
+            compare(cng, state.petrolEvidence, activeRevision, nowMs)
+        }
+        return (historical + active)
+            .distinctBy { it.id }
+            .sortedWith(compareBy<FuelComparison> { it.createdAtMs }.thenBy { it.cngVisitId })
     }
 
     private fun compare(
-        cng: EvidenceV7,
-        petrolEvidence: List<EvidenceV7>,
-        revision: CalibrationRevisionV7,
-    ): FuelComparisonV7? {
+        cng: FuelEvidence,
+        petrolEvidence: List<FuelEvidence>,
+        revision: CalibrationRevision,
+        nowMs: Long,
+    ): FuelComparison? {
         val reference = petrolReference(cng, petrolEvidence) ?: return null
+        if (reference.quality < policy.minimumComparisonQuality) return null
         val errorLog = cngErrorLog(cng.petrolMs, reference.petrolMs)
         val errorPercent = errorPercentFromLog(errorLog)
-        val difference = cng.petrolMs - reference.petrolMs
-        val direction = when {
-            abs(difference) <= policy.deadbandMs || abs(errorPercent) <= policy.deadbandPercent -> "EQUIVALENT"
-            difference > 0.0 -> "INCREASE_CNG_DELIVERY"
-            else -> "DECREASE_CNG_DELIVERY"
+        if (abs(cng.petrolMs - reference.petrolMs) <= policy.absoluteDeadbandMs ||
+            abs(errorPercent) <= policy.relativeDeadbandPercent
+        ) {
+            return null
         }
-        return FuelComparisonV7(
-            id = "BLUE:${revision.curveK}:${revision.mapK}:${cng.visitId}",
+        return FuelComparison(
+            id = "${revision.curveK}:${revision.mapK}:${cng.visitId}",
             revision = revision,
+            petrolVisitId = "reference:${cng.visitId}",
             cngVisitId = cng.visitId,
-            petrolEvidenceIds = reference.evidenceIds,
             rpm = cng.rpm,
             mapBar = cng.mapBar,
-            waterC = cng.waterC,
             petrolTargetMs = reference.petrolMs,
             petrolOnCngMs = cng.petrolMs,
-            differenceMs = difference,
             errorPercent = errorPercent,
-            direction = direction,
             quality = reference.quality,
-            createdAtMs = cng.collectedAtMs,
+            createdAtMs = max(cng.collectedAtMs, nowMs.coerceAtLeast(0L)),
         )
     }
 
-    private fun normalizedDistance(reference: EvidenceV7, target: EvidenceV7): Double {
-        val rpmWindow = max(
-            policy.rpmMinimumWindow,
-            max(abs(reference.rpm), abs(target.rpm)) * policy.rpmPercentWindow / 100.0,
-        )
-        val rpmUnits = abs(reference.rpm - target.rpm) / rpmWindow
-        val mapUnits = abs(reference.mapBar - target.mapBar) / policy.mapWindowBar
-        val waterUnits = when {
-            !reference.waterC.isFinite() || !target.waterC.isFinite() -> 0.0
-            reference.waterC == EvidenceV7.UNKNOWN_TEMPERATURE_C || target.waterC == EvidenceV7.UNKNOWN_TEMPERATURE_C -> 0.0
+    private fun normalizedDistance(reference: FuelEvidence, target: FuelEvidence): Double {
+        val rpmScale = max(policy.minimumRpmWindow, target.rpm * policy.relativeRpmWindow)
+        val rpm = abs(reference.rpm - target.rpm) / rpmScale
+        val map = abs(reference.mapBar - target.mapBar) / policy.mapWindowBar
+        val water = when {
+            reference.waterC == FuelEvidence.UNKNOWN_TEMPERATURE_C ||
+                target.waterC == FuelEvidence.UNKNOWN_TEMPERATURE_C -> 0.0
             else -> abs(reference.waterC - target.waterC) / policy.waterWindowC
         }
-        return sqrt(rpmUnits * rpmUnits + mapUnits * mapUnits + 0.25 * waterUnits * waterUnits)
+        return sqrt(rpm.pow(2) + map.pow(2) + water.pow(2))
     }
 
-    private data class BlueCandidate(val evidence: EvidenceV7, val distance: Double)
+    private data class BlueCandidate(val evidence: FuelEvidence, val distance: Double)
 }
 
-data class BlueCausalPolicy(
-    val rpmMinimumWindow: Double = 120.0,
-    val rpmPercentWindow: Double = 6.0,
+data class BluePolicy(
+    val minimumEvidenceQuality: Double = 0.45,
+    val minimumComparisonQuality: Double = 0.50,
+    val minimumRpmWindow: Double = 120.0,
+    val relativeRpmWindow: Double = 0.06,
     val mapWindowBar: Double = 0.08,
     val waterWindowC: Double = 8.0,
     val maximumNormalizedDistance: Double = 1.75,
     val maximumReferenceBursts: Int = 7,
-    val minimumPetrolMs: Double = 0.05,
-    val deadbandMs: Double = 0.08,
-    val deadbandPercent: Double = 2.0,
-    val minimumActuatorLogStep: Double = 0.002,
-    val minimumAcceptedGain: Double = 0.20,
-    val maximumAcceptedGain: Double = 2.50,
+    val absoluteDeadbandMs: Double = 0.08,
+    val relativeDeadbandPercent: Double = 2.0,
+    val minimumActuatorStepLog: Double = 0.003,
+    val minimumAcceptedGain: Double = 0.05,
+    val maximumAcceptedGain: Double = 12.0,
     val minimumCorrectionMultiplier: Double = 0.80,
     val maximumCorrectionMultiplier: Double = 1.20,
-) {
-    init {
-        require(rpmMinimumWindow > 0.0)
-        require(rpmPercentWindow > 0.0)
-        require(mapWindowBar > 0.0)
-        require(waterWindowC > 0.0)
-        require(maximumNormalizedDistance > 0.0)
-        require(maximumReferenceBursts > 0)
-        require(minimumPetrolMs > 0.0)
-        require(minimumAcceptedGain > 0.0 && maximumAcceptedGain > minimumAcceptedGain)
-        require(minimumCorrectionMultiplier > 0.0 && maximumCorrectionMultiplier > minimumCorrectionMultiplier)
-    }
-}
-
-data class BlueCalibrationStateId(val curveK: Long, val mapK: Long)
+)
 
 data class BluePetrolReference(
     val petrolMs: Double,
-    val support: Int,
     val quality: Double,
-    val evidenceIds: List<String>,
-    val nearestNormalizedDistance: Double,
+    val supportCount: Int,
+    val nearestDistance: Double,
 )
 
-data class BlueActuatorGain(
-    val gain: Double,
-    val rawGain: Double,
-    val saturated: Boolean,
-)
+data class BlueActuatorGain(val gain: Double)
 
-data class BlueCausalSnapshot(
-    val calibrationState: BlueCalibrationStateId,
-    val petrolReference: BluePetrolReference?,
-    val errorLog: Double?,
-    val errorPercent: Double?,
-    val actuatorGain: BlueActuatorGain?,
-)
+data class BlueCalibrationStateId(val curveK: Long, val mapK: Long)
 
 data class BlueCorrectionProposal(
     val calibrationState: BlueCalibrationStateId,

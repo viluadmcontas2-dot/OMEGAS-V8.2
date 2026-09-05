@@ -1,12 +1,12 @@
-package com.omegas.v7.protocol
+package com.omegas.prohub.ecu
 
-import com.omegas.v7.runtime.CalibrationShapeV7
+import com.omegas.prohub.calibration.CalibrationShape
 
 /**
- * Quadros AEB v2 reconstruídos do ProgBase e validados contra os logs oficiais.
+ * Quadros AEB reconstruídos do ProgBase e validados contra tráfego serial real.
  * O checksum é a soma dos bytes anteriores truncada em U8.
  */
-object AebProtocolFramesV7 {
+object AebProtocolFrames {
     const val ADDRESS_MAP_K = 0x0054
     const val ADDRESS_AUTOCAL_INJECTION_AXIS = 0x014B
     const val ADDRESS_AUTOCAL_PRESSURE_THRESHOLDS = 0x014C
@@ -15,60 +15,37 @@ object AebProtocolFramesV7 {
     const val ADDRESS_CNG_PRESSURE_RESAMPLED = 0x018E
 
     fun getNumber(address: Int): ByteArray = addressed(0x09, address)
-
-    fun getNumber(address: Int, index: Int): ByteArray =
-        addressed(0x0A, address, byte(index))
-
+    fun getNumber(address: Int, index: Int): ByteArray = addressed(0x0A, address, byte(index))
     fun getNumber(address: Int, row: Int, column: Int): ByteArray =
         addressed(0x0B, address, byte(row), byte(column))
-
     fun getVector(address: Int): ByteArray = addressed(0x29, address)
+    fun getVector(address: Int, row: Int): ByteArray = addressed(0x2A, address, byte(row))
 
-    fun getVector(address: Int, row: Int): ByteArray =
-        addressed(0x2A, address, byte(row))
-
-    /**
-     * SetNumber: opcode 0x11 + quantidade de bytes após o endereço.
-     * O corpo contém índices opcionais seguidos pelo valor LE.
-     */
     fun setNumber(address: Int, body: ByteArray): ByteArray {
         require(body.isNotEmpty() && body.size <= 6)
         return addressed(0x11 + body.size, address, *body)
     }
 
-    /**
-     * SetVector compacto para até cinco bytes e estendido (0x37) acima disso.
-     * No estendido: 37 | addrLo | blockLen | addrHi | payload | checksum,
-     * onde blockLen = addrHi + payload + checksum = payload.size + 2.
-     */
     fun setVector(address: Int, payload: ByteArray): ByteArray {
         requireAddress(address)
         return if (payload.size <= 5) {
-            val opcode = 0x31 + payload.size
-            withChecksum(
-                byteArrayOf(opcode.toByte(), low(address), high(address)) + payload,
-            )
+            withChecksum(byteArrayOf((0x31 + payload.size).toByte(), low(address), high(address)) + payload)
         } else {
             val blockLength = payload.size + 2
             require(blockLength <= 0xFF)
             withChecksum(
-                byteArrayOf(
-                    0x37,
-                    low(address),
-                    blockLength.toByte(),
-                    high(address),
-                ) + payload,
+                byteArrayOf(0x37, low(address), blockLength.toByte(), high(address)) + payload,
             )
         }
     }
 
     fun readMapRow(row: Int): ByteArray {
-        require(row in 0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS)
+        require(row in 0 until CalibrationShape.MAP_K_STORAGE_ROWS)
         return getVector(ADDRESS_MAP_K, row)
     }
 
     fun writeMapCell(row: Int, column: Int, value: Int): ByteArray {
-        CalibrationShapeV7.requireEditableCell(row, column)
+        CalibrationShape.requireEditableCell(row, column)
         require(value in 0..0xFF)
         return setNumber(
             ADDRESS_MAP_K,
@@ -76,19 +53,17 @@ object AebProtocolFramesV7 {
         )
     }
 
-    /** Escreve qualquer uma das 13 linhas físicas do Mapa K, inclusive a linha 12. */
     fun writeMapRow(row: Int, values: List<Int>): ByteArray {
-        require(row in 0 until CalibrationShapeV7.MAP_K_STORAGE_ROWS)
-        require(values.size == CalibrationShapeV7.MAP_K_COLUMNS)
+        require(row in 0 until CalibrationShape.MAP_K_STORAGE_ROWS)
+        require(values.size == CalibrationShape.MAP_K_COLUMNS)
         require(values.all { it in 0..0xFF })
-        val payload = byteArrayOf(row.toByte()) + values.map { it.toByte() }.toByteArray()
-        return setVector(ADDRESS_MAP_K, payload)
+        return setVector(ADDRESS_MAP_K, byteArrayOf(row.toByte()) + values.map { it.toByte() }.toByteArray())
     }
 
     fun readMulAct(): ByteArray = getVector(ADDRESS_MUL_ACT)
 
     fun writeMulActPoint(index: Int, rawU16: Int): ByteArray {
-        require(index in 0 until CalibrationShapeV7.CURVE_K_POINTS)
+        require(index in 0 until CalibrationShape.CURVE_K_POINTS)
         require(rawU16 in 0..0xFFFF)
         return setNumber(
             ADDRESS_MUL_ACT,
@@ -97,7 +72,7 @@ object AebProtocolFramesV7 {
     }
 
     fun writeMulAct(rawU16: List<Int>): ByteArray {
-        require(rawU16.size == CalibrationShapeV7.CURVE_K_POINTS)
+        require(rawU16.size == CalibrationShape.CURVE_K_POINTS)
         require(rawU16.all { it in 0..0xFFFF })
         val payload = ByteArray(rawU16.size * 2)
         rawU16.forEachIndexed { index, value ->
@@ -112,24 +87,15 @@ object AebProtocolFramesV7 {
 
     private fun addressed(opcode: Int, address: Int, vararg body: Byte): ByteArray {
         requireAddress(address)
-        return withChecksum(
-            byteArrayOf(opcode.toByte(), low(address), high(address)) + body,
-        )
+        return withChecksum(byteArrayOf(opcode.toByte(), low(address), high(address)) + body)
     }
 
     private fun withChecksum(content: ByteArray): ByteArray = content + checksum(content)
-
     private fun checksum(content: ByteArray): Byte =
         content.fold(0) { sum, value -> (sum + value.toUByte().toInt()) and 0xFF }.toByte()
-
-    private fun requireAddress(address: Int) {
-        require(address in 0..0xFFFF)
-    }
-
+    private fun requireAddress(address: Int) = require(address in 0..0xFFFF)
     private fun low(value: Int): Byte = (value and 0xFF).toByte()
-
     private fun high(value: Int): Byte = ((value ushr 8) and 0xFF).toByte()
-
     private fun byte(value: Int): Byte {
         require(value in 0..0xFF)
         return value.toByte()

@@ -6,9 +6,6 @@ import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 
 private fun List<Double>.medianSafe(): Double {
     if (isEmpty()) return 0.0
@@ -31,7 +28,7 @@ private data class EvidenceStateSnapshot(
 )
 
 /**
- * Fachada única V6 sobre a memória persistida.
+ * Armazenamento único de evidência física persistida.
  *
  * A interface pode reavaliar o motor com frequência. A memória preserva todas as
  * evidências válidas: janelas novas entram com peso normal e janelas que reutilizam
@@ -43,16 +40,13 @@ class SignalLearningStore(
     log: RingLog,
 ) {
     companion object {
-        const val FORMAT = "omegas-learning-v6-mp48-v4"
-        const val LEGACY_FORMAT = "omegas-learning-v5-mp48-v3"
-        const val LEGACY_FORMAT_OLD = "omegas-learning-v5-mp48-v2"
-        const val DATA_REVISION = 4
-        const val LEGACY_DATA_REVISION = 3
-        const val EVIDENCE_STATE_SCHEMA = "omegas-learning-evidence-v6-v3"
+        const val FORMAT = "omegas-learning-blue-mp48"
+        const val DATA_REVISION = 1
+        const val EVIDENCE_STATE_SCHEMA = "omegas-learning-evidence-blue"
     }
 
     private val delegate = MotorLearningMemory(stateFile, log)
-    private val evidenceStateFile = File(stateFile.parentFile ?: stateFile.absoluteFile.parentFile, "learning_v6_evidence.json")
+    private val evidenceStateFile = File(stateFile.parentFile ?: stateFile.absoluteFile.parentFile, "learning_evidence.json")
     private val evidenceStateWriter = CoalescedSnapshotWriter(
         target = evidenceStateFile,
         threadName = "omegas-learning-evidence-persist",
@@ -80,15 +74,6 @@ class SignalLearningStore(
     private var performance = LearningPerformanceMetrics()
     private var nativeSnapshotsEvicted = 0L
     private var visitAccumulatorsEvicted = 0L
-    private val advisorExecutor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "omegas-learning-advisor").apply { isDaemon = true }
-    }
-    private val advisorRefreshPending = AtomicBoolean(false)
-    private val advisorRefreshDirty = AtomicBoolean(false)
-    private val advisorRevisionGate = AdvisorRevisionGate()
-    private val advisorRequestedRevision = AtomicLong(0L)
-    private val advisorPublishedRevision = AtomicLong(0L)
-    @Volatile private var advisor = analyzeCurrentMemory()
 
     init { loadEvidenceState() }
 
@@ -247,11 +232,10 @@ class SignalLearningStore(
                 }
             }
         }
-        requestAdvisorRefresh(result)
         // O sidecar é uma fotografia substituível, não um log. Só uma publicação
         // científica real solicita I/O; decisões intermediárias continuam ao vivo.
         if (prepared.sample != null) persistEvidenceState()
-        return decorate(result, includeAdvisor = false)
+        return decorate(result, includeDetails = false)
     }
 
     fun statusJson(): JSONObject = decorate(delegate.statusJson())
@@ -263,7 +247,6 @@ class SignalLearningStore(
             .put("format", FORMAT)
             .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("learningDataRevision", DATA_REVISION)
-            .put("signalDrivenV5", true)
             .put("visitPolicy", "physical-region-exit")
             .put("sampleWeightingPolicy", "continuous-frame-novelty-per-fuel")
             .put("independentSamples", independentSamples)
@@ -279,10 +262,6 @@ class SignalLearningStore(
             .put("cumulativeEvidencePreserved", true)
             .put("sessionMetadataPolicy", "timestamp-organization-only-cumulative-memory")
             .put("equivalencePolicy", "continuous-petrol-reference-surface")
-            .put("assistedCalibration", advisor)
-            .put("advisorRevision", advisorRequestedRevision.get())
-            .put("advisorPublishedRevision", advisorPublishedRevision.get())
-            .put("advisorFresh", advisorPublishedRevision.get() >= advisorRequestedRevision.get())
             .put("automaticCalibration", false)
             .put("realSampleTimePreserved", true)
             .put("gasConditionPreserved", true)
@@ -293,7 +272,6 @@ class SignalLearningStore(
             .put("evidenceProvenance", JSONArray(evidence.provenanceHistory.map { it.toJson() }))
             .put("evidenceStateSchema", EVIDENCE_STATE_SCHEMA)
             .put("evidenceBudget", evidenceBudgetJson(evidence))
-            .put("adaptiveConfidence", adaptiveConfidenceJson())
             .put("performanceMetrics", evidence.performance.toJson())
             .put("evidencePersistence", evidenceStateWriter.metricsJson())
     }
@@ -301,9 +279,9 @@ class SignalLearningStore(
     fun merge(payload: JSONObject, localDeviceId: String = ""): JSONObject {
         val incomingFormat = payload.optString("format")
         val incomingRevision = payload.optInt("learningDataRevision", 0)
-        if (incomingFormat !in setOf(FORMAT, LEGACY_FORMAT, LEGACY_FORMAT_OLD) ||
+        if (incomingFormat != FORMAT ||
             payload.optString("telemetryScaleSchema") != Mp48Protocol.TELEMETRY_SCALE_SCHEMA ||
-            incomingRevision !in setOf(DATA_REVISION, LEGACY_DATA_REVISION)
+            incomingRevision != DATA_REVISION
         ) {
             return JSONObject()
                 .put("ok", false)
@@ -315,7 +293,6 @@ class SignalLearningStore(
         val internalPayload = JSONObject(payload.toString())
             .put("format", MotorLearningMemory.FORMAT)
         val result = delegate.merge(internalPayload, localDeviceId)
-        scheduleAdvisorRefresh(advisorRevisionGate.force())
         return decorate(result)
     }
 
@@ -391,7 +368,6 @@ class SignalLearningStore(
         resetConnectionCounters()
         synchronized(evidenceLock) { nativeAnchors.clear() }
         val result = delegate.onCalibrationAdjustment(payload)
-        scheduleAdvisorRefresh(advisorRevisionGate.force())
         persistEvidenceState()
         return decorate(result)
     }
@@ -605,130 +581,20 @@ class SignalLearningStore(
         } catch (_: Exception) { /* aprendizado principal continua funcionando sem o sidecar */ }
     }
 
-    private fun adaptiveConfidenceJson(): JSONObject {
-        val active = synchronized(evidenceLock) { visitAccumulators.values.filter { it.weight > 0.0 } }
-        if (active.isEmpty()) return JSONObject()
-            .put("stage", "OBSERVED")
-            .put("targetVisits", 10)
-            .put("confidence", 0.0)
-            .put("effectiveVisits", 0.0)
-        val means = active.map { it.meanError() }
-        val center = means.average()
-        val spread = means.map { kotlin.math.abs(it - center) }.medianSafe()
-        val positive = active.count { it.meanError() > 0.0 }
-        val consensus = (maxOf(positive, active.size - positive).toDouble() / active.size.toDouble())
-        val target = VisitConfidence.adaptiveTarget(
-            spread = spread,
-            spreadLimit = 0.25,
-            consensus = consensus,
-        )
-        val evaluated = VisitConfidence.evaluate(
-            uniqueVisits = active.size,
-            effectiveVisits = active.sumOf { it.weight },
-            spread = spread,
-            spreadLimit = 0.25,
-            consensus = consensus,
-            provisionalVisits = 1,
-            acceptedVisits = target.targetVisits,
-            confirmedVisits = target.targetVisits,
-        )
-        return JSONObject()
-            .put("stage", evaluated.stage)
-            .put("targetVisits", target.targetVisits)
-            .put("confidence", evaluated.confidence)
-            .put("effectiveVisits", evaluated.effectiveVisits)
-            .put("consensus", evaluated.consensus)
-            .put("spread", spread)
-            .put("confidenceBandLow", target.confidenceBandLow)
-            .put("confidenceBandHigh", target.confidenceBandHigh)
-    }
-
-    private fun requestAdvisorRefresh(result: JSONObject) {
-        val token = advisorScientificToken(result) ?: return
-        advisorRevisionGate.revise(token)?.let(::scheduleAdvisorRefresh)
-    }
-
-    private fun advisorScientificToken(result: JSONObject): String? {
-        result.optJSONObject("comparison")?.let { comparison ->
-            val identity = comparison.optString("dedupe_key", comparison.optString("id"))
-            val observations = AdvisorRevisionGate.observationMilestone(
-                comparison.optInt("observation_count", 1),
-            )
-            val errorBucket = AdvisorRevisionGate.quantize(comparison.optDouble("error_pct", 0.0), 0.25)
-            val qualityBucket = AdvisorRevisionGate.quantize(comparison.optDouble("quality", 0.0), 0.05)
-            return listOf(
-                "CMP",
-                identity,
-                observations,
-                comparison.optString("direction"),
-                result.optString("comparison_stage"),
-                errorBucket,
-                qualityBucket,
-            ).joinToString(":")
-        }
-
-        result.optJSONObject("reference")?.let { reference ->
-            val petrolBucket = AdvisorRevisionGate.quantize(reference.optDouble("petrol_ms", 0.0), 0.02)
-            val confidenceBucket = AdvisorRevisionGate.quantize(reference.optDouble("confidence", 0.0), 0.05)
-            return listOf(
-                "PETROL",
-                reference.optString("id"),
-                reference.optInt("visit_count", 0),
-                reference.optString("stage"),
-                petrolBucket,
-                confidenceBucket,
-            ).joinToString(":")
-        }
-        return null
-    }
-
-    private fun refreshAdvisor(revision: Long) {
-        val refreshed = analyzeCurrentMemory()
-        advisor = refreshed
-        advisorPublishedRevision.set(revision)
-    }
-
-    private fun scheduleAdvisorRefresh(revision: Long) {
-        advisorRequestedRevision.accumulateAndGet(revision) { current, incoming -> maxOf(current, incoming) }
-        advisorRefreshDirty.set(true)
-        if (!advisorRefreshPending.compareAndSet(false, true)) return
-        advisorExecutor.execute {
-            try {
-                while (advisorRefreshDirty.getAndSet(false)) {
-                    refreshAdvisor(advisorRequestedRevision.get())
-                }
-            } finally {
-                advisorRefreshPending.set(false)
-                if (advisorRefreshDirty.get()) scheduleAdvisorRefresh(advisorRequestedRevision.get())
-            }
-        }
-    }
-
     fun close() {
         persistEvidenceState()
         evidenceStateWriter.flush(5_000L)
         delegate.close()
-        advisorExecutor.shutdownNow()
         evidenceStateWriter.close()
     }
 
-    private fun analyzeCurrentMemory(): JSONObject = try {
-        AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())
-    } catch (error: Exception) {
-        JSONObject()
-            .put("ok", false)
-            .put("automatic", false)
-            .put("error", error.message ?: "Análise assistida indisponível")
-    }
-
-    private fun decorate(source: JSONObject, includeAdvisor: Boolean = true): JSONObject {
+    private fun decorate(source: JSONObject, includeDetails: Boolean = true): JSONObject {
         val performanceSnapshot = synchronized(evidenceLock) { performance }
         val root = JSONObject(source.toString())
             .put("format", FORMAT)
             .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("learning_data_revision", DATA_REVISION)
-            .put("signal_driven_v5", true)
-            .put("visit_policy", "physical-region-exit")
+                        .put("visit_policy", "physical-region-exit")
             .put("sample_weighting_policy", "continuous-frame-novelty-per-fuel")
             .put("independent_samples", independentSamples)
             .put("correlated_samples_weighted", correlatedSamplesWeighted)
@@ -753,13 +619,9 @@ class SignalLearningStore(
             .put("performance_metrics", performanceSnapshot.toJson())
             .put("evidence_persistence", evidenceStateWriter.metricsJson())
 
-        if (includeAdvisor) {
+        if (includeDetails) {
             val evidence = evidenceSnapshot()
             root
-                .put("assisted_calibration", advisor)
-                .put("advisor_revision", advisorRequestedRevision.get())
-                .put("advisor_published_revision", advisorPublishedRevision.get())
-                .put("advisor_fresh", advisorPublishedRevision.get() >= advisorRequestedRevision.get())
                 .put("native_ecu_evidence", JSONArray(evidence.nativeEvidence.map { it.toJson() }))
                 .put("native_learning_anchors", JSONArray(evidence.nativeAnchors.map { it.toJson() }))
                 .put("evidence_budget", evidenceBudgetJson(evidence))
@@ -771,8 +633,8 @@ class SignalLearningStore(
         }
 
         visibleDecision?.let { decision ->
-            root.put("signal_decision", if (includeAdvisor) decision.toJson() else decision.toTelemetryJson())
-            if (includeAdvisor) {
+            root.put("signal_decision", if (includeDetails) decision.toJson() else decision.toTelemetryJson())
+            if (includeDetails) {
                 decision.sample?.toJson()?.let { realSample ->
                     root.put("sample", realSample)
                     root.optJSONObject("live")?.put("sample", realSample)
