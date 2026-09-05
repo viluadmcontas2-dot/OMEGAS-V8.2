@@ -8,7 +8,7 @@
     return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
   function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+    return String(value ?? '').replace(/[&<>\"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[char]));
   }
   function cellPosition(item) {
     const cell = item && item.cell;
@@ -24,46 +24,23 @@
       if (!pos) return;
       const itemKey = key(pos.row, pos.column);
       const previous = map.get(itemKey);
-      const score = finite(item.confidence) ?? finite(item.samples) ?? finite(item.weight) ?? 0;
-      const previousScore = previous ? (finite(previous.confidence) ?? finite(previous.samples) ?? finite(previous.weight) ?? 0) : -1;
+      const score = finite(item.confidence) ?? finite(item.quality) ?? finite(item.samples) ?? finite(item.weight) ?? 0;
+      const previousScore = previous ? (finite(previous.confidence) ?? finite(previous.quality) ?? finite(previous.samples) ?? finite(previous.weight) ?? 0) : -1;
       if (!previous || score >= previousScore) map.set(itemKey, item);
     });
     return map;
   }
-  function persistentMapSuggestions(state) {
-    const map = new Map();
-    const items = Array.isArray(state?.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
-    items.forEach(item => {
-      if (item?.target !== 'MAP_K' || !['PENDING', 'OBSERVING'].includes(String(item.lifecycle || ''))) return;
-      const change = Array.isArray(item.mapChanges) ? item.mapChanges[0] : null;
-      const row = finite(change?.row);
-      const column = finite(change?.column);
-      if (row === null || column === null) return;
-      map.set(key(Math.trunc(row), Math.trunc(column)), item);
-    });
-    return map;
-  }
-  function mapSuggestionDelta(item) {
-    const change = Array.isArray(item?.mapChanges) ? item.mapChanges[0] : null;
-    const before = finite(change?.before);
-    const after = finite(change?.after);
-    if (before === null || after === null || before === 0) return null;
-    return (after / before - 1) * 100;
-  }
-  function stabilityLabel(value) {
-    const state = String(value || '').toUpperCase();
-    if (state === 'CONSOLIDATED') return 'Consolidado';
-    if (state === 'REVALIDATING') return 'Revalidando';
-    if (state === 'LEARNING') return 'Aprendendo';
-    return 'Sem evidência';
-  }
   function comparisonError(item) {
-    return finite(item?.observed_pair?.error_percent ?? item?.predictedErrorPercent ?? item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.deltaPercent ?? item?.differencePercent ?? item?.error);
+    return finite(item?.observed_pair?.error_percent ?? item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.differencePercent ?? item?.error);
   }
-  function comparisonTargetMs(item) { return finite(item?.observed_pair?.petrol_target_ms ?? item?.petrol_target_ms ?? item?.petrolTargetMs); }
-  function comparisonObservedMs(item) { return finite(item?.observed_pair?.petrol_on_cng_ms ?? item?.petrol_on_cng_ms ?? item?.petrolOnCngMs); }
+  function comparisonTargetMs(item) {
+    return finite(item?.observed_pair?.petrol_target_ms ?? item?.petrol_target_ms ?? item?.petrolTargetMs);
+  }
+  function comparisonObservedMs(item) {
+    return finite(item?.observed_pair?.petrol_on_cng_ms ?? item?.petrol_on_cng_ms ?? item?.petrolOnCngMs);
+  }
   function confidence(item) {
-    const raw = finite(item?.confidence);
+    const raw = finite(item?.confidence ?? item?.quality);
     if (raw !== null) return raw > 1 ? Math.min(1, raw / 100) : Math.max(0, Math.min(1, raw));
     const samples = finite(item?.samples);
     return samples === null ? 0 : Math.min(1, samples / 50);
@@ -87,6 +64,19 @@
     if (state === 'TELEMETRY_GAP') return 'Telemetria interrompida';
     if (state === 'CUTOFF') return 'Aprendizado pausado';
     return state.replaceAll('_', ' ').toLowerCase().replace(/^./, char => char.toUpperCase());
+  }
+  function blueProposalSummary(calibrationState) {
+    const blue = calibrationState || {};
+    const proposal = blue.proposal && typeof blue.proposal === 'object' ? blue.proposal : {};
+    const multiplier = finite(proposal.correctionMultiplier);
+    if (proposal.available === true && multiplier !== null) {
+      return { available: true, label: `Blue: multiplicador ${fmt(multiplier, 4)}`, detail: 'proposta separada da medição' };
+    }
+    return {
+      available: false,
+      label: 'Blue: aguardando ganho causal',
+      detail: proposal.state || blue.reason || 'sem alvo K inventado',
+    };
   }
 
   class LearningScreen {
@@ -122,7 +112,7 @@
           <button type="button" data-learning-inspector="tolerances">Tolerâncias</button>
         </div>
         <div id="learningCellPane" class="learning-inspector-pane" data-pane="cell">
-          <div class="detail-empty"><b>Toque em uma célula</b><span>Veja a evidência e, se quiser, abra exatamente essa célula no editor oficial do Mapa K.</span></div>
+          <div class="detail-empty"><b>Toque em uma célula</b><span>Veja gasolina, GNV e o desvio realmente medido. A proposta Blue aparece separada.</span></div>
         </div>
         <div id="learningCollectionPane" class="learning-inspector-pane active" data-pane="collection"></div>
         <div id="learningTolerancePane" class="learning-inspector-pane" data-pane="tolerances"></div>
@@ -194,19 +184,12 @@
       this.grid.setAxes?.(axes.rpmBins || [], axes.petrolBins || []);
       const model = this.buildEvidenceModel(maps);
       const evidence = evidenceIndex(model);
-      const layer = state.learningLayer || 'comparison';
+      const layer = ['petrol', 'cng', 'comparison'].includes(state.learningLayer) ? state.learningLayer : 'comparison';
       this.root.querySelectorAll('[data-learning-layer]').forEach(button => button.classList.toggle('active', button.dataset.learningLayer === layer));
 
       const comparisons = indexByCell(maps.comparisons);
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const predictions = indexByCell(advisor.mapResidualPredictions);
-      const stability = indexByCell(state.calibrationState?.learningStability?.map || []);
-      const mapSuggestions = persistentMapSuggestions(state);
-      const persistentItems = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
-
       this.grid.cells.forEach((cell, cellKey) => {
         const learned = evidence.get(cellKey);
-        const stable = stability.get(cellKey);
         let source = null;
         let cellText = '·';
         let subtext = '';
@@ -217,7 +200,7 @@
           if (source) {
             const meanMs = finite(source.petrolMs);
             cellText = meanMs === null ? '•' : fmt(meanMs, 2);
-            subtext = meanMs === null ? `${Math.round(source.samples || 0)} am.` : 'ms';
+            subtext = meanMs === null ? `${Math.round(source.samples || 0)} am.` : 'ms gasolina';
             heat = confidence(source);
             tone = 'petrol';
           }
@@ -226,51 +209,31 @@
           if (source) {
             const meanMs = finite(source.petrolMs);
             cellText = meanMs === null ? '•' : fmt(meanMs, 2);
-            subtext = meanMs === null ? `${Math.round(source.samples || 0)} am.` : 'ms';
+            subtext = meanMs === null ? `${Math.round(source.samples || 0)} am.` : 'ms no GNV';
             heat = confidence(source);
             tone = 'cng';
           }
         } else if (layer === 'comparison') {
-          const prediction = predictions.get(cellKey);
-          source = comparisons.get(cellKey) || stable || prediction || null;
-          const consolidated = finite(stable?.consolidatedErrorPercent);
-          const rawError = comparisonError(comparisons.get(cellKey));
-          const predictedError = comparisonError(prediction);
-          const error = consolidated ?? rawError ?? predictedError;
-          const stableState = String(stable?.state || '').toUpperCase();
+          source = comparisons.get(cellKey) || null;
+          const error = comparisonError(source);
           if (error !== null) {
             cellText = `${error > 0 ? '+' : ''}${fmt(error, 1)}%`;
-            subtext = stableState === 'REVALIDATING'
-              ? 'revalidando'
-              : stableState === 'CONSOLIDATED'
-                ? 'consolidado'
-                : stableState === 'LEARNING'
-                  ? 'aprendendo'
-                  : rawError !== null
-                    ? 'par direto'
-                    : String(prediction?.supportType || '') === 'GLOBAL_ONLY'
-                      ? 'tendência global'
-                      : 'previsão local';
+            subtext = 'par medido';
             heat = Math.min(1, Math.abs(error) / 8);
             tone = Math.abs(error) <= 1.5 ? 'good' : error > 0 ? 'high' : 'low';
           } else if (learned?.state === ns.LearningModel?.STATES?.COMPARABLE) {
             cellText = '…';
-            subtext = stableState === 'LEARNING' ? 'aprendendo' : 'comparando';
-            heat = 0.2;
-          }
-        } else if (layer === 'suggestion') {
-          source = mapSuggestions.get(cellKey);
-          const delta = mapSuggestionDelta(source);
-          if (source && delta !== null) {
-            cellText = `${delta > 0 ? '+' : ''}${fmt(delta, 1)}%`;
-            subtext = source.actionable === true ? 'revisar' : String(source.stabilityState || '').toUpperCase() === 'REVALIDATING' ? 'revalidando' : 'observando';
-            heat = confidence(source);
-            tone = source.actionable === true ? 'suggestion' : 'neutral';
+            subtext = 'sem par medido';
+            heat = 0.15;
           }
         }
         this.grid.updateCell(Number(cell.dataset.row), Number(cell.dataset.column), {
-          text: cellText, subtext, heat, tone, hasData: !!source || !!learned || !!stable,
-          state: stable?.state || learned?.state || '',
+          text: cellText,
+          subtext,
+          heat,
+          tone,
+          hasData: !!source || !!learned,
+          state: learned?.state || '',
           selected: this.selectedCell?.row === Number(cell.dataset.row) && this.selectedCell?.column === Number(cell.dataset.column),
         });
       });
@@ -279,14 +242,11 @@
       if (coverage && model) {
         const petrolCount = model.counts.petrol + model.counts.comparable;
         const cngCount = model.counts.cng + model.counts.comparable;
-        coverage.textContent = `${petrolCount} gasolina · ${cngCount} GNV atual · ${model.counts.ready} comparáveis`;
+        coverage.textContent = `${petrolCount} gasolina · ${cngCount} GNV atual · ${comparisons.size} pares medidos`;
       }
-      const suggestionSummary = document.getElementById('learningSuggestionSummary');
-      if (suggestionSummary) {
-        const globalCount = persistentItems.filter(item => item.lifecycle === 'PENDING' && item.target === 'CURVE_K' && item.actionable === true).length;
-        const localCount = persistentItems.filter(item => item.lifecycle === 'PENDING' && item.target === 'MAP_K' && item.actionable === true).length;
-        suggestionSummary.textContent = `${globalCount} global · ${localCount} local`;
-      }
+      const proposalSummary = blueProposalSummary(state.calibrationState);
+      const summary = document.getElementById('learningSuggestionSummary');
+      if (summary) summary.textContent = proposalSummary.label;
 
       this.renderCollection(state);
       this.renderTolerances(state);
@@ -344,7 +304,7 @@
             <div><small>Água</small><b>${water === null ? '—' : `${fmt(water, 0)} °C`}</b></div>
             <div><small>Janela</small><b>${age === null ? '—' : `${fmt(age / 1000, 1)} s`}${timeout ? ` / ${fmt(timeout / 1000, 1)} s` : ''}</b></div>
           </div>
-          <p class="learning-light-note">A posição ao vivo é mostrada apenas como texto. A interpolação bilinear continua no Kotlin sem perseguir células na WebView.</p>
+          <p class="learning-light-note">A posição ao vivo é somente contexto. Gasolina é a referência; GNV só é comparado quando existe par físico equivalente.</p>
         </section>
         <section class="learning-decision-history">
           <header><div><small>ÚLTIMAS DECISÕES OBSERVADAS</small><h3>O que acabou de acontecer com a coleta</h3></div><span>${this.decisionHistory.length}/6</span></header>
@@ -426,25 +386,15 @@
       const model = this.buildEvidenceModel(maps);
       const learned = evidenceIndex(model).get(key(row, column));
       const comparison = indexByCell(maps.comparisons).get(key(row, column));
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const prediction = indexByCell(advisor.mapResidualPredictions).get(key(row, column));
-      const stability = indexByCell(state.calibrationState?.learningStability?.map || []).get(key(row, column));
-      const suggestion = persistentMapSuggestions(state).get(key(row, column));
-      const rawError = comparisonError(comparison);
-      const consolidatedError = finite(stability?.consolidatedErrorPercent);
-      const recentError = finite(stability?.recentErrorPercent);
-      const displayError = consolidatedError ?? rawError;
+      const measuredError = comparisonError(comparison);
       const targetMs = comparisonTargetMs(comparison);
       const observedMs = comparisonObservedMs(comparison);
       const observedPair = comparison?.observed_pair || comparison || null;
       const referenceSupport = comparison?.reference_support || null;
-      const delta = mapSuggestionDelta(suggestion);
       const petrolSamples = finite(learned?.petrol?.samples) ?? 0;
       const cngSamples = finite(learned?.cng?.samples) ?? 0;
       const petrolVisits = finite(learned?.petrol?.visits) ?? 0;
       const cngVisits = finite(learned?.cng?.visits) ?? 0;
-      const petrolSessions = finite(learned?.petrol?.sessions) ?? 0;
-      const cngSessions = finite(learned?.cng?.sessions) ?? 0;
       const petrolMeanMs = finite(learned?.petrol?.petrolMs);
       const cngMeanMs = finite(learned?.cng?.petrolMs);
       const petrolRpm = finite(learned?.petrol?.rpm);
@@ -457,47 +407,43 @@
       const axisPetrol = finite(axes.petrolBins?.[row]);
       const rpmLabel = finite(learned?.rpm) ?? axisRpm;
       const petrolLabel = finite(learned?.petrolMs) ?? axisPetrol;
-      const stabilityState = String(stability?.state || 'NO_EVIDENCE').toUpperCase();
-      const comparisonText = displayError !== null && targetMs !== null && observedMs !== null
-        ? `${fmt(targetMs, 2)} → ${fmt(observedMs, 2)} ms · ${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%${consolidatedError !== null ? ' consolidado' : ''}`
-        : displayError !== null ? `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%` : 'ainda não existe par equivalente válido';
+      const blue = state.calibrationState || {};
+      const latestComparison = blue.latestComparison && typeof blue.latestComparison === 'object' ? blue.latestComparison : null;
+      const proposal = blue.proposal && typeof blue.proposal === 'object' ? blue.proposal : {};
+      const multiplier = finite(proposal.correctionMultiplier);
+      const comparisonText = measuredError !== null && targetMs !== null && observedMs !== null
+        ? `${fmt(targetMs, 2)} → ${fmt(observedMs, 2)} ms · ${measuredError > 0 ? '+' : ''}${fmt(measuredError, 1)}%`
+        : 'ainda não existe par equivalente válido';
       const pairCondition = observedPair
-        ? `${finite(observedPair.rpm) === null ? 'RPM —' : `${Math.round(finite(observedPair.rpm)).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(observedPair.map_bar, 3)} bar · qualidade ${Math.round((finite(observedPair.quality) || 0) * 100)}%`
+        ? `${finite(observedPair.rpm) === null ? 'RPM —' : `${Math.round(finite(observedPair.rpm)).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(observedPair.map_bar ?? observedPair.mapBar, 3)} bar · qualidade ${Math.round((finite(observedPair.quality) || 0) * 100)}%`
         : '—';
       const supportType = String(referenceSupport?.support_type || 'UNKNOWN').toUpperCase();
-      const supportLabel = supportType === 'DIRECT' ? 'direto' : supportType === 'NEAR' ? 'vizinho interpolado' : 'legado/não informado';
-      const supportDistance = finite(referenceSupport?.nearest_distance);
+      const supportLabel = supportType === 'DIRECT' ? 'direto' : supportType === 'NEAR' ? 'vizinho físico' : 'não informado';
       const supportText = referenceSupport
-        ? `${supportLabel} · ${Math.round(finite(referenceSupport.selected_candidates) || 0)} referência(s) · dispersão ${fmt(referenceSupport.spread_ms, 3)} ms${supportDistance === null ? '' : ` · distância ${fmt(supportDistance, 2)}`}`
-        : 'procedência não disponível em evidência legada';
-      const predictionType = String(prediction?.supportType || 'UNKNOWN').toUpperCase();
-      const predictionText = prediction
-        ? `${predictionType === 'DIRECT' ? 'suporte direto' : predictionType === 'NEAR' ? 'vizinho interpolado' : predictionType === 'GLOBAL_ONLY' ? 'somente tendência global' : 'sem suporte'} · total ${fmt(prediction.predictedErrorPercent, 1)}% = global ${fmt(prediction.globalErrorPercent, 1)}% + local ${fmt(prediction.localResidualPercent, 1)}% · incerteza ${fmt(prediction.uncertaintyPercent, 1)}%`
-        : 'ainda não calculada';
-      const recentText = stabilityState === 'REVALIDATING' && recentError !== null
-        ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}% · ${Math.round(finite(stability?.recentUniqueVisits) || 0)} visita(s) nova(s)`
-        : stabilityState === 'CONSOLIDATED'
-          ? 'sem divergência recente relevante'
-          : recentError !== null ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}%` : '—';
+        ? `${supportLabel} · ${Math.round(finite(referenceSupport.selected_candidates) || 0)} referência(s) · dispersão ${fmt(referenceSupport.spread_ms, 3)} ms`
+        : 'procedência não disponível';
+      const blueText = proposal.available === true && multiplier !== null
+        ? `BlueCausalEngine propõe multiplicador ${fmt(multiplier, 4)}; medir e corrigir continuam etapas separadas.`
+        : `BlueCausalEngine: ${escapeHtml(proposal.state || 'sem ganho causal suficiente')}. Nenhum alvo K é inventado.`;
+      const latestText = latestComparison
+        ? `último erro Blue ${fmt(latestComparison.errorPercent, 2)}% · qualidade ${Math.round((finite(latestComparison.quality) || 0) * 100)}%`
+        : 'nenhuma comparação Blue reconciliada ainda';
+
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
         <h3>${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · ${fmt(petrolLabel, 1)} ms</h3>
-        <p class="learning-reason"><b>${escapeHtml(stabilityLabel(stabilityState))}.</b> ${escapeHtml(stability?.reason || learned?.readinessReason || 'Sem evidência válida nesta região. Você ainda pode abrir a célula para ajuste manual.')}</p>
+        <p class="learning-reason"><b>Gasolina é a referência.</b> Esta tela mostra evidência física e o desvio medido; proposta de correção é saída separada do Blue.</p>
         <dl class="detail-list enhanced-detail-list">
-          <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}% · ${Math.round(finite(stability?.consolidatedUniqueVisits) || 0)} visitas`}</dd></div>
-          <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
-          <div><dt>Resumo projetado da célula</dt><dd>Este resumo não é o par usado no cálculo; agrega evidências que influenciam esta célula.</dd></div>
-          <div><dt>Gasolina — referência agregada</dt><dd>${learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms · ${petrolRpm === null ? 'RPM —' : `${Math.round(petrolRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(petrolMap, 3)} bar` : 'sem evidência agregada'}</dd></div>
-          <div><dt>Precisão local da gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas independentes · ${petrolSessions} sessões · precisão ${Math.round(confidence(learned.petrol) * 100)}%` : '—'}</dd></div>
-          <div><dt>GNV atual agregado — Petrol Inj.</dt><dd>${learned?.cng ? `${fmt(cngMeanMs, 2)} ms · ${cngRpm === null ? 'RPM —' : `${Math.round(cngRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap, 3)} bar` : 'sem evidência atual agregada'}</dd></div>
-          <div><dt>Precisão local do GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas independentes · ${cngSessions} sessões · precisão ${Math.round(confidence(learned.cng) * 100)}% · época ${model?.epoch ?? '—'}` : '—'}</dd></div>
-          <div><dt>Par observado usado no cálculo</dt><dd>${comparisonText}<br>${pairCondition}</dd></div>
+          <div><dt>Gasolina — referência agregada</dt><dd>${learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms · ${petrolRpm === null ? 'RPM —' : `${Math.round(petrolRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(petrolMap, 3)} bar` : 'sem evidência gasolina nesta célula'}</dd></div>
+          <div><dt>Qualidade da referência</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visita(s) · qualidade ${Math.round(confidence(learned.petrol) * 100)}%` : '—'}</dd></div>
+          <div><dt>GNV atual — Petrol Inj.</dt><dd>${learned?.cng ? `${fmt(cngMeanMs, 2)} ms · ${cngRpm === null ? 'RPM —' : `${Math.round(cngRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap, 3)} bar` : 'sem evidência GNV atual nesta célula'}</dd></div>
+          <div><dt>Qualidade do GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visita(s) · qualidade ${Math.round(confidence(learned.cng) * 100)}% · época ${model?.epoch ?? '—'}` : '—'}</dd></div>
+          <div><dt>Desvio medido</dt><dd>${comparisonText}<br>${pairCondition}</dd></div>
           <div><dt>Suporte da referência</dt><dd>${supportText}</dd></div>
-          <div><dt>Predição contínua RPM × MAP</dt><dd>${predictionText}</dd></div>
           <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')} · somente consulta` : 'nenhum'}</dd></div>
-          <div><dt>Sugestão local</dt><dd>${delta === null ? 'nenhuma registrada' : `${delta > 0 ? '+' : ''}${fmt(delta, 1)}% · ${suggestion?.actionable === true ? 'pronta para revisar' : stabilityState === 'REVALIDATING' ? 'preservada enquanto revalida' : 'observando'}`}</dd></div>
+          <div><dt>Correção Blue — separada da medição</dt><dd>${blueText}<br>${latestText}</dd></div>
         </dl>
-        <button class="primary wide" type="button" data-edit-learning-cell>${suggestion?.actionable ? 'Editar esta célula com a sugestão' : 'Editar esta célula'}</button>
+        <button class="primary wide" type="button" data-edit-learning-cell>Editar esta célula manualmente</button>
         <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>
       `;
       this.cellPane.querySelector('[data-edit-learning-cell]')?.addEventListener('click', () => {
@@ -505,7 +451,6 @@
           origin: 'learning',
           cell: { row, column },
           physical: { rpm: rpmLabel, petrolMs: petrolLabel },
-          suggestion: suggestion?.actionable ? suggestion : null,
         });
       });
     }
