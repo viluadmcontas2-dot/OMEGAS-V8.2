@@ -42,7 +42,8 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.bridge)
         self.assertNotIn('02 24 04 08 32', self.action)
-        self.assertIn('manualAutoMatchExposed", false', self.bridge)
+        self.assertIn('legacyDraftEngine", false', self.bridge)
+        self.assertIn('decisionAuthority", "BLUE_CAUSAL_ENGINE', self.bridge)
 
     def test_enable_disable_and_status_are_exact_portmon_frames(self):
         self.assertIn('CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)', self.protocol)
