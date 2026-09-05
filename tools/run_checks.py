@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 commands = [
+    [sys.executable, "-B", "tests/test_blue_source_architecture_contract.py"],
     [sys.executable, "-B", "tests/test_blue_single_engine_contract.py"],
     [sys.executable, "-B", "tests/test_governance_contract.py"],
     [sys.executable, "-B", "tests/test_clean_ui_contract.py"],
