@@ -1,13 +1,14 @@
-# OMEGAS V8.0 RED public-repo remote CI.
+# OMEGAS RED/BLUE public-repo remote CI.
 # Standard GitHub-hosted runners are the primary remote executor while this repo
 # remains public. Docs-only changes intentionally do not compile Android.
-name: OMEGAS V8.0 RED remote CI
+name: OMEGAS RED-BLUE remote CI
 
 on:
   workflow_dispatch:
   push:
     branches:
       - hotfix/v8.0-red-performance
+      - work/omegas-blue-causal-engine
     paths:
       - "app/**"
       - "tests/**"
@@ -28,7 +29,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: omegas-v80-red-${{ github.ref }}
+  group: omegas-red-blue-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -37,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout exact RED SHA
+      - name: Checkout exact source SHA
         uses: actions/checkout@v7
 
       - name: Prove source identity
@@ -60,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - name: Checkout exact RED SHA
+      - name: Checkout exact source SHA
         uses: actions/checkout@v7
 
       - name: Set up JDK 17 with Gradle cache
@@ -93,9 +94,9 @@ jobs:
           test -n "$APK"
           test -f "$APK"
           mkdir -p build/evidence
-          RECEIPT=build/evidence/omegas-v80-red-remote-ci.txt
+          RECEIPT=build/evidence/omegas-red-blue-remote-ci.txt
           {
-            echo "OMEGAS_V80_RED_REMOTE_CI=PASS"
+            echo "OMEGAS_RED_BLUE_REMOTE_CI=PASS"
             echo "SOURCE_SHA=$GITHUB_SHA"
             echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
             echo "APK_PATH=$APK"
@@ -110,13 +111,13 @@ jobs:
           } | tee "$RECEIPT"
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
 
-      - name: Upload RED APK and evidence
+      - name: Upload APK and evidence
         uses: actions/upload-artifact@v6
         with:
-          name: omegas-v80-red-${{ github.sha }}
+          name: omegas-red-blue-${{ github.sha }}
           path: |
             ${{ steps.evidence.outputs.apk_path }}
-            build/evidence/omegas-v80-red-remote-ci.txt
+            build/evidence/omegas-red-blue-remote-ci.txt
           if-no-files-found: error
           retention-days: 3
           compression-level: 0
