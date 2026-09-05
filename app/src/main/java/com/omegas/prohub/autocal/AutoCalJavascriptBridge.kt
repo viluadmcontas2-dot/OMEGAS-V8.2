@@ -11,11 +11,12 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Bridge modular do AutoMatch OMEGAS.
+ * Auto-Cal do OMEGAS Blue.
  *
- * Reconstrução, análise e rascunho permanecem somente leitura. As ações nativas
- * ficam numa superfície separada, sempre preparadas e confirmadas pelo operador
- * também em diálogo Android nativo, além da revisão crítica da WebView.
+ * Esta bridge não calcula alvo K, residual ou confiança. Toda matemática de
+ * equivalência/correção pertence ao BlueCausalEngine. Aqui permanecem somente
+ * aquisição nativa, projeção de status e a transação manual confirmada com
+ * ACK/readback da ECU.
  */
 class AutoCalJavascriptBridge(activity: MainActivity) {
     private val activityRef = java.lang.ref.WeakReference(activity)
@@ -23,7 +24,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var managerService: TelemetryForegroundService? = null
     private var manager: AutoCalSnapshotManager? = null
     private var nativeActions: AutoCalNativeActionManager? = null
-    private var draft: AutoMatchKFactorDraft? = null
     private var nativeConfirmationPendingId: String? = null
 
     @JavascriptInterface
@@ -47,101 +47,44 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Não foi possível importar o snapshot")
     }
 
+    /**
+     * Compatibilidade de API: o Auto-Cal não possui mais analisador paralelo.
+     * Consumidores recebem explicitamente a autoridade BLUE e nenhuma proposta
+     * é inventada a partir do snapshot nativo.
+     */
     @JavascriptInterface
-    fun getAnalysis(): String = currentManager()?.let { active ->
-        AutoMatchSnapshotAnalysis.analyze(active.latestSnapshotJson()).toString()
-    } ?: unavailable()
+    fun getAnalysis(): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun getResidualAnalysis(): String = try {
-        val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
-        val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        val active = currentManager() ?: throw IllegalStateException("Leitura AutoCal indisponível")
-        val analysis = AutoMatchSnapshotAnalysis.analyze(active.latestSnapshotJson())
-        val learning = service.runtime.exportLearning(service.settings.deviceId)
-        AutoMatchResidualPlanner.analyze(analysis, learning).toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Residual indisponível")
-    }
+    fun getResidualAnalysis(): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun startRead(): String {
-        synchronized(managerLock) { draft = null }
-        return currentManager()?.startRead()?.toString() ?: unavailable()
-    }
+    fun startRead(): String = currentManager()?.startRead()?.toString() ?: unavailable()
 
     @JavascriptInterface
     fun cancelRead(): String = currentManager()?.cancel()?.toString() ?: unavailable()
 
+    /** Legacy draft API is deliberately fail-closed: Blue proposals are unique. */
     @JavascriptInterface
-    fun createDraft(): String = try {
-        val active = currentManager() ?: throw IllegalStateException("Serviço indisponível")
-        val analysis = AutoMatchSnapshotAnalysis.analyze(active.latestSnapshotJson())
-        val created = AutoMatchKFactorDraftPlanner.create(analysis)
-        synchronized(managerLock) { draft = created }
-        created.toJson().toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Não foi possível criar o rascunho")
-    }
+    fun createDraft(): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun getDraft(): String = synchronized(managerLock) {
-        val current = draft
-        if (current == null) emptyDraft().toString() else current.toJson().toString()
-    }
+    fun getDraft(): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun selectDraftPoint(index: Int, selected: Boolean): String = try {
-        synchronized(managerLock) {
-            val current = draft ?: throw IllegalStateException("Crie um rascunho local primeiro")
-            AutoMatchKFactorDraftPlanner.select(current, index, selected)
-                .also { draft = it }
-                .toJson()
-                .toString()
-        }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Ponto inválido")
-    }
+    fun selectDraftPoint(index: Int, selected: Boolean): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun setDraftTargetFactor(index: Int, factor: Double): String = try {
-        synchronized(managerLock) {
-            val current = draft ?: throw IllegalStateException("Crie um rascunho local primeiro")
-            AutoMatchKFactorDraftPlanner.setTargetFactor(current, index, factor)
-                .also { draft = it }
-                .toJson()
-                .toString()
-        }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Fator inválido")
-    }
+    fun setDraftTargetFactor(index: Int, factor: Double): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun getDraftReviewPayload(): String = try {
-        synchronized(managerLock) {
-            (draft ?: throw IllegalStateException("Crie um rascunho local primeiro"))
-                .selectedPointsForReview()
-                .toString()
-        }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Rascunho indisponível")
-    }
+    fun getDraftReviewPayload(): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun validateDraftReviewCurve(curveJson: String): String = try {
-        synchronized(managerLock) {
-            val current = draft ?: throw IllegalStateException("Crie um rascunho local primeiro")
-            AutoMatchDraftReviewValidator.validate(current, JSONObject(curveJson)).toString()
-        }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "A Curva K não confirmou o rascunho")
-    }
+    fun validateDraftReviewCurve(curveJson: String): String = blueAuthorityStatus()
 
     @JavascriptInterface
-    fun clearDraft(): String = synchronized(managerLock) {
-        draft = null
-        emptyDraft().put("cleared", true).toString()
-    }
+    fun clearDraft(): String = blueAuthorityStatus()
 
     @JavascriptInterface
     fun getNativeActionStatus(): String = currentNativeManager()?.statusJson()?.toString() ?: unavailable()
@@ -156,8 +99,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         ?: unavailable()
 
     /**
-     * Não executa a ação diretamente. Agenda um AlertDialog Android não
-     * cancelável por toque externo; somente o botão positivo chama o manager.
+     * Não executa a ação diretamente. Abre confirmação Android explícita; apenas
+     * o botão positivo chama o manager. A confirmação, ACK e readback continuam
+     * sendo o limite de segurança da RED/BLUE.
      */
     @JavascriptInterface
     fun executeNativeAction(preparationId: String): String {
@@ -239,18 +183,16 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface
     fun getIdentity(): String = JSONObject()
-        .put("feature", "Auto Calibration nativa — V8.2")
-        .put("nativeFirmwareExact", false)
+        .put("feature", "OMEGAS Blue Auto-Cal")
+        .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
+        .put("parallelCorrectionMath", false)
+        .put("legacyDraftEngine", false)
         .put("nativeProtocolEvidenceExact", true)
-        .put("readOnly", false)
-        .put("readOnlyScope", "STATUS_AND_SNAPSHOT_ONLY")
-        .put("localDraft", true)
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
         .put("nativeAndroidConfirmation", true)
         .put("appAutomaticWrite", false)
-        .put("nativeAutoMatchInsideEcu", true)
-        .put("manualAutoMatchExposed", false)
+        .put("manualOnly", true)
         .put("obdIndependent", true)
         .toString()
 
@@ -262,7 +204,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             manager = null
             nativeActions = null
             managerService = null
-            draft = null
             nativeConfirmationPendingId = null
         }
     }
@@ -291,9 +232,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         )
                     },
                     onStateChanged = activity::refreshWebUi,
-                    onSnapshotReady = { snapshot ->
-                        service.runtime.importNativeAutoCalSnapshot(snapshot)
-                    },
+                    onSnapshotReady = { snapshot -> service.runtime.importNativeAutoCalSnapshot(snapshot) },
                 )
             }
             manager?.onUsbSessionChanged(service.usb.connectionSessionId)
@@ -315,9 +254,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     otherCalibrationBusy = {
                         service.kWriter.isBusy() || service.kFactor.isBusy() || manager?.isBusy() == true
                     },
-                    unsafeMutationReason = {
-                        CalibrationWriteSafetyPolicy.unsafeReason(service.status())
-                    },
+                    unsafeMutationReason = { CalibrationWriteSafetyPolicy.unsafeReason(service.status()) },
                     transaction = { request, reason, timeoutMs, expectedSessionId ->
                         val workClass = when (request.firstOrNull()?.toInt()?.and(0xFF)) {
                             0x09, 0x29, 0x0A -> Mp48WorkClass.READ_ONLY
@@ -333,7 +270,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         )
                     },
                     onConfirmed = { receipt ->
-                        synchronized(managerLock) { draft = null }
                         service.sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
                         service.nativeAutoCal.onManualActionConfirmed(receipt)
                         try { service.link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
@@ -352,27 +288,27 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeActions?.close()
             manager = null
             nativeActions = null
-            draft = null
             nativeConfirmationPendingId = null
             managerService = service
-            return
         }
     }
 
-    private fun emptyDraft(): JSONObject = JSONObject()
+    private fun blueAuthorityStatus(): String = JSONObject()
         .put("ok", true)
         .put("available", false)
-        .put("selectedCount", 0)
+        .put("state", "BLUE_ENGINE_PROPOSAL_NOT_BOUND_YET")
+        .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
+        .put("legacyMath", false)
         .put("automatic", false)
         .put("manualOnly", true)
-        .put("requiresReview", true)
+        .put("requiresBlueEvidence", true)
+        .toString()
 
     private fun localFailure(message: String): String = JSONObject()
         .put("ok", false)
         .put("error", message)
         .put("automatic", false)
         .put("manualOnly", true)
-        .put("requiresReview", true)
         .toString()
 
     private fun unavailable(): String = JSONObject()
