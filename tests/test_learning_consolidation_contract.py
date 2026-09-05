@@ -21,9 +21,12 @@ class LearningConsolidationContract(unittest.TestCase):
         self.learning_ui = LEARNING_UI.read_text("utf-8")
         self.live_budget = LIVE_BUDGET.read_text("utf-8")
 
-    def test_one_blue_engine_owns_equivalence_and_v7_is_only_alias(self):
+    def test_one_blue_engine_owns_equivalence_and_v7_is_only_facade(self):
         self.assertIn("class BlueCausalEngine", self.blue)
-        self.assertIn("typealias V7EquivalenceEngine = BlueCausalEngine", self.compat)
+        self.assertIn("class V7EquivalenceEngine", self.compat)
+        self.assertIn("private val blue = BlueCausalEngine", self.compat)
+        self.assertIn("blue.reconcile(state, nowMs)", self.compat)
+        self.assertNotIn("ln(", self.compat)
         self.assertFalse((ROOT / "app/src/main/java/com/omegas/v7/runtime/V7EquivalenceEngine.kt").exists())
 
     def test_first_cng_comparison_is_immutable_and_uses_physical_time(self):
