@@ -14,7 +14,21 @@
     if (node.textContent !== next) node.textContent = next;
   }
   function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+    return String(value ?? '').replace(/[&<>\"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[char]));
+  }
+  function comparisonTargetMs(item) {
+    return finite(item?.observed_pair?.petrol_target_ms ?? item?.petrol_target_ms ?? item?.petrolTargetMs);
+  }
+  function comparisonObservedMs(item) {
+    return finite(item?.observed_pair?.petrol_on_cng_ms ?? item?.petrol_on_cng_ms ?? item?.petrolOnCngMs);
+  }
+  function comparisonError(item) {
+    return finite(item?.observed_pair?.error_percent ?? item?.error_percent ?? item?.errorPercent ?? item?.relativeErrorPercent);
+  }
+  function comparisonQuality(item) {
+    const raw = finite(item?.observed_pair?.quality ?? item?.quality ?? item?.confidence);
+    if (raw === null) return 0;
+    return raw > 1 ? Math.min(1, raw / 100) : Math.max(0, Math.min(1, raw));
   }
 
   class CurveScreen {
@@ -290,91 +304,108 @@
       });
     }
 
-    persistentCurveChanges(state) {
-      const items = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
-      const changes = new Map();
-      items.filter(item => item.target === 'CURVE_K' && item.lifecycle === 'PENDING' && item.actionable === true)
-        .forEach(item => (Array.isArray(item.curveChanges) ? item.curveChanges : []).forEach(change => {
-          const index = Number(change.index);
-          if (Number.isInteger(index)) changes.set(index, change);
-        }));
-      return changes;
+    directComparisons(state) {
+      const maps = state.learning || {};
+      return (Array.isArray(maps.comparisons) ? maps.comparisons : [])
+        .map(item => ({
+          raw: item,
+          targetMs: comparisonTargetMs(item),
+          observedMs: comparisonObservedMs(item),
+          error: comparisonError(item),
+          quality: comparisonQuality(item),
+          rpm: finite(item?.observed_pair?.rpm ?? item?.rpm),
+          mapBar: finite(item?.observed_pair?.map_bar ?? item?.map_bar ?? item?.mapBar),
+        }))
+        .filter(item => item.targetMs !== null && item.observedMs !== null && item.error !== null)
+        .sort((a, b) => a.targetMs - b.targetMs);
     }
 
     renderLearning(state) {
       const host = document.getElementById('curveLearningChart');
       const summaryHost = document.getElementById('curveLearningSummary');
       if (!host || !summaryHost) return;
-      const maps = state.learning || {};
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const suggestions = Array.isArray(advisor.kFactorSuggestions) ? advisor.kFactorSuggestions : [];
+      const comparisons = this.directComparisons(state);
+      const calibrationState = state.calibrationState || {};
+      const latestComparison = calibrationState.latestComparison && typeof calibrationState.latestComparison === 'object'
+        ? calibrationState.latestComparison
+        : null;
+      const proposal = calibrationState.proposal && typeof calibrationState.proposal === 'object'
+        ? calibrationState.proposal
+        : {};
       const currentPoints = this.points();
-      const exactChanges = this.persistentCurveChanges(state);
-      const points = Array.from({ length: 30 }, (_, index) => {
-        const advice = suggestions.find(item => Number(item.index) === index) || {};
-        const current = currentPoints.find(item => Number(item.index) === index) || {};
-        const petrolMs = finite(current.petrolMs ?? advice.petrolMs);
-        const factor = finite(current.factor);
-        const proposal = this.proposals.get(index);
-        const exact = exactChanges.get(index);
-        return {
-          index,
-          petrolMs,
-          error: finite(advice.errorPercent ?? advice.error_percent ?? advice.relativeErrorPercent),
-          confidence: finite(advice.confidence) ?? 0,
-          uncertainty: finite(advice.uncertaintyPercent ?? advice.uncertainty_percent),
-          actionable: advice.actionable === true,
-          reason: advice.decisionReason || advice.readiness || '',
-          factor,
-          proposedFactor: finite(proposal?.targetFactor) ?? finite(exact?.after) ?? null,
-        };
+      const signature = JSON.stringify({
+        comparisons: comparisons.map(item => [item.targetMs, item.observedMs, item.error, item.quality]),
+        latestComparison,
+        proposal,
+        current: currentPoints.map(item => [item.index, item.petrolMs, item.factor]),
       });
-      const signature = JSON.stringify({ points, comparisonCount: advisor.comparisonCount, uniqueVisitCount: advisor.uniqueVisitCount });
       if (signature === this.learningSignature) return;
       this.learningSignature = signature;
 
       const heading = this.root?.querySelector('.global-learning-surface .surface-heading h3');
-      if (heading) heading.textContent = 'Erro global aprendido × Curva K';
+      if (heading) heading.textContent = 'Desvio medido × Curva K';
       const legend = this.root?.querySelector('.global-learning-surface .global-legend');
-      if (legend) legend.innerHTML = '<span>erro aprendido</span><span>atual × proposta</span>';
+      if (legend) legend.innerHTML = '<span>pares físicos medidos</span><span>Curva K atual da ECU</span>';
 
       const width = 920; const height = 180; const px = 42; const py = 22;
-      const xFor = index => px + (index / 29) * (width - px * 2);
-      const errors = points.map(item => item.error).filter(value => value !== null);
+      const targetValues = comparisons.map(item => item.targetMs).concat(currentPoints.map(item => finite(item.petrolMs)).filter(value => value !== null));
+      const minMs = targetValues.length ? Math.min(...targetValues) : 0;
+      const maxMs = targetValues.length ? Math.max(...targetValues) : 1;
+      const xForMs = value => px + ((Number(value) - minMs) / Math.max(0.01, maxMs - minMs)) * (width - px * 2);
+      const errors = comparisons.map(item => item.error);
       const maxAbs = Math.max(3, ...errors.map(Math.abs));
       const errorY = value => height / 2 - (Number(value || 0) / maxAbs) * (height / 2 - py);
-      const errorPath = points.filter(item => item.error !== null).map((item, pos) => `${pos ? 'L' : 'M'} ${xFor(item.index).toFixed(1)} ${errorY(item.error).toFixed(1)}`).join(' ');
-      const factorValues = points.flatMap(item => [item.factor, item.proposedFactor]).filter(value => value !== null);
+
+      const factorValues = currentPoints.map(item => finite(item.factor)).filter(value => value !== null);
       const minFactor = factorValues.length ? Math.min(...factorValues) - 0.05 : 0.8;
       const maxFactor = factorValues.length ? Math.max(...factorValues) + 0.05 : 1.2;
       const factorY = value => height - py - ((Number(value) - minFactor) / Math.max(0.01, maxFactor - minFactor)) * (height - py * 2);
-      const actualPath = points.filter(item => item.factor !== null).map((item, pos) => `${pos ? 'L' : 'M'} ${xFor(item.index).toFixed(1)} ${factorY(item.factor).toFixed(1)}`).join(' ');
-      const proposedPath = points.filter(item => item.proposedFactor !== null).map((item, pos) => `${pos ? 'L' : 'M'} ${xFor(item.index).toFixed(1)} ${factorY(item.proposedFactor).toFixed(1)}`).join(' ');
+      const actualPath = currentPoints.filter(item => finite(item.petrolMs) !== null && finite(item.factor) !== null)
+        .map((item, pos) => `${pos ? 'L' : 'M'} ${xForMs(item.petrolMs).toFixed(1)} ${factorY(item.factor).toFixed(1)}`)
+        .join(' ');
 
       host.innerHTML = `<div class="global-learning-stack">
-        <section class="global-error-chart"><small class="global-chart-label">ERRO GLOBAL · alvo 0%</small><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Erro global aprendido nos 30 pontos"><line x1="${px}" y1="${height / 2}" x2="${width - px}" y2="${height / 2}" class="learn-grid-line"></line>${errorPath ? `<path class="learned-cng-line" d="${errorPath}"></path>` : ''}${points.map(item => item.error === null ? '' : `<circle data-learning-curve-index="${item.index}" class="${item.actionable ? 'learned-cng-point' : 'learned-petrol-point'}" cx="${xFor(item.index).toFixed(1)}" cy="${errorY(item.error).toFixed(1)}" r="${item.index === this.activeIndex ? 7 : 4}"></circle>${item.uncertainty === null ? '' : `<line x1="${xFor(item.index).toFixed(1)}" x2="${xFor(item.index).toFixed(1)}" y1="${errorY(item.error + item.uncertainty).toFixed(1)}" y2="${errorY(item.error - item.uncertainty).toFixed(1)}" class="learn-grid-line"></line>`}`).join('')}</svg></section>
-        <section class="global-k-chart"><small class="global-chart-label">CURVA K · atual × proposta</small><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Curva K atual e proposta nos mesmos 30 pontos">${actualPath ? `<path class="curve-line actual" d="${actualPath}"></path>` : ''}${proposedPath ? `<path class="curve-line proposal" d="${proposedPath}"></path>` : ''}${points.map(item => item.factor === null ? '' : `<circle data-learning-curve-index="${item.index}" class="curve-point ${item.index === this.activeIndex ? 'active' : ''}" cx="${xFor(item.index).toFixed(1)}" cy="${factorY(item.proposedFactor ?? item.factor).toFixed(1)}" r="${item.index === this.activeIndex ? 7 : 4}"></circle>${item.index % 5 === 0 || item.index === 29 ? `<text class="curve-point-label" x="${xFor(item.index).toFixed(1)}" y="${height - 5}" text-anchor="middle">${fmt(item.petrolMs, 1)}</text>` : ''}`).join('')}</svg></section>
+        <section class="global-error-chart"><small class="global-chart-label">DESVIO MEDIDO · alvo 0%</small><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Pares físicos gasolina e GNV por Petrol Inj."><line x1="${px}" y1="${height / 2}" x2="${width - px}" y2="${height / 2}" class="learn-grid-line"></line>${comparisons.map(item => `<circle class="${Math.abs(item.error) <= 1.5 ? 'learned-petrol-point' : 'learned-cng-point'}" cx="${xForMs(item.targetMs).toFixed(1)}" cy="${errorY(item.error).toFixed(1)}" r="${Math.max(3, 3 + item.quality * 3).toFixed(1)}"><title>${fmt(item.targetMs, 2)} → ${fmt(item.observedMs, 2)} ms · ${item.error > 0 ? '+' : ''}${fmt(item.error, 2)}%</title></circle>`).join('')}</svg></section>
+        <section class="global-k-chart"><small class="global-chart-label">CURVA K · readback atual</small><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Curva K atual confirmada pela ECU">${actualPath ? `<path class="curve-line actual" d="${actualPath}"></path>` : ''}${currentPoints.filter(item => finite(item.petrolMs) !== null && finite(item.factor) !== null).map(item => `<circle class="curve-point ${Number(item.index) === this.activeIndex ? 'active' : ''}" cx="${xForMs(item.petrolMs).toFixed(1)}" cy="${factorY(item.factor).toFixed(1)}" r="${Number(item.index) === this.activeIndex ? 7 : 4}"></circle>`).join('')}</svg></section>
       </div>`;
-      host.querySelectorAll('[data-learning-curve-index]').forEach(node => node.addEventListener('click', () => this.selectPoint(Number(node.dataset.learningCurveIndex))));
 
-      const actionable = points.filter(item => item.actionable).length;
-      const observed = points.filter(item => item.error !== null).length;
-      summaryHost.innerHTML = `<div class="editor-heading"><div><small>30 PONTOS FÍSICOS</small><h3>Aprendizado global</h3></div></div><div class="global-summary-grid"><div><small>COMPARAÇÕES</small><b>${Number(advisor.comparisonCount || 0)}</b></div><div><small>VISITAS</small><b>${Number(advisor.uniqueVisitCount || 0)}</b></div><div><small>FAIXAS OBSERVADAS</small><b>${observed}/30</b></div><div><small>PRONTAS</small><b>${actionable}</b></div></div><div id="curveLearningPointContext" class="global-summary-list"></div><p class="empty-copy">O eixo X é Petrol Inj. dos 30 pontos. A linha zero é o alvo do erro. A UI só desenha alvos K exatos vindos do Kotlin.</p>`;
-      this.renderLearningPointContext(state, this.activeIndex ?? points.find(item => item.error !== null)?.index ?? 0);
+      const gain = finite(proposal.actuatorGain);
+      const multiplier = finite(proposal.correctionMultiplier);
+      const proposalState = String(proposal.state || (proposal.available === false ? 'WAITING_FOR_EQUIVALENT_FUEL_EVIDENCE' : 'MEASURE_ACTUATOR_GAIN'));
+      const proposalText = multiplier !== null
+        ? `multiplicador ${fmt(multiplier, 4)} disponível para revisão manual`
+        : gain !== null
+          ? `ganho ${fmt(gain, 4)} observado; sem multiplicador emitido`
+          : 'ganho causal ainda não medido; nenhum alvo K inventado';
+      summaryHost.innerHTML = `<div class="editor-heading"><div><small>AUTORIDADE ÚNICA</small><h3>BlueCausalEngine</h3></div></div><div class="global-summary-grid"><div><small>PARES MEDIDOS</small><b>${comparisons.length}</b></div><div><small>GASOLINA</small><b>${Number(calibrationState.petrolEvidence || 0)}</b></div><div><small>GNV ATUAL</small><b>${Number(calibrationState.activeCngEvidence || 0)}</b></div><div><small>ATIVOS BLUE</small><b>${Number(calibrationState.activeComparisons || 0)}</b></div></div><div id="curveLearningPointContext" class="global-summary-list"></div><p class="empty-copy">${escapeHtml(proposalState)} · ${escapeHtml(proposalText)}. A medição não é convertida em correção pela WebView.</p>`;
+      this.renderLearningPointContext(state, this.activeIndex ?? 0);
     }
 
     renderLearningPointContext(state, index) {
       const host = document.getElementById('curveLearningPointContext');
       if (!host) return;
-      const maps = state.learning || {};
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const advice = (Array.isArray(advisor.kFactorSuggestions) ? advisor.kFactorSuggestions : []).find(item => Number(item.index) === Number(index)) || {};
       const current = this.points().find(item => Number(item.index) === Number(index)) || {};
-      const proposal = this.proposals.get(Number(index));
-      const exact = this.persistentCurveChanges(state).get(Number(index));
-      const error = finite(advice.errorPercent ?? advice.error_percent ?? advice.relativeErrorPercent);
-      const target = finite(proposal?.targetFactor) ?? finite(exact?.after);
-      host.innerHTML = `<div><span>Ponto ${Number(index) + 1} · ${fmt(current.petrolMs ?? advice.petrolMs, 2)} ms</span><b>erro ${error === null ? '—' : `${error > 0 ? '+' : ''}${fmt(error, 1)}%`}</b><small>confiança ${Math.round((finite(advice.confidence) || 0) * 100)}% · incerteza ±${fmt(advice.uncertaintyPercent, 1)}%</small></div><div><span>K atual</span><b>${fmt(current.factor, 4)}</b><small>proposta ${fmt(target, 4)}</small></div>`;
+      const targetMs = finite(current.petrolMs);
+      const comparisons = this.directComparisons(state);
+      const nearest = targetMs === null || !comparisons.length
+        ? null
+        : comparisons.slice().sort((a, b) => Math.abs(a.targetMs - targetMs) - Math.abs(b.targetMs - targetMs))[0];
+      const manual = this.proposals.get(Number(index));
+      const calibrationState = state.calibrationState || {};
+      const latestComparison = calibrationState.latestComparison && typeof calibrationState.latestComparison === 'object'
+        ? calibrationState.latestComparison
+        : null;
+      const proposal = calibrationState.proposal && typeof calibrationState.proposal === 'object'
+        ? calibrationState.proposal
+        : {};
+      const multiplier = finite(proposal.correctionMultiplier);
+      const nearestCopy = nearest
+        ? `medido mais próximo ${fmt(nearest.targetMs, 2)} → ${fmt(nearest.observedMs, 2)} ms · ${nearest.error > 0 ? '+' : ''}${fmt(nearest.error, 2)}%`
+        : 'nenhum par físico medido próximo';
+      const blueCopy = latestComparison
+        ? `último Blue ${fmt(latestComparison.petrolReferenceMs, 2)} → ${fmt(latestComparison.petrolOnCngMs, 2)} ms · ${fmt(latestComparison.errorPercent, 2)}%`
+        : 'Blue ainda sem comparação reconciliada';
+      host.innerHTML = `<div><span>Ponto ${Number(index) + 1} · ${fmt(current.petrolMs, 2)} ms</span><b>${escapeHtml(nearestCopy)}</b><small>${escapeHtml(blueCopy)}</small></div><div><span>K atual</span><b>${fmt(current.factor, 4)}</b><small>${manual ? `prévia manual ${fmt(manual.targetFactor, 4)}` : multiplier !== null ? `multiplicador Blue ${fmt(multiplier, 4)} · sem alvo de ponto automático` : 'sem alvo automático'}</small></div>`;
     }
 
     renderProposalList() {
@@ -389,15 +420,16 @@
     renderEvidence(state) {
       const host = document.getElementById('curveEvidenceList');
       if (!host) return;
-      const maps = state.learning || {};
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const petrol = Array.isArray(advisor.petrolCurve) ? advisor.petrolCurve : [];
-      const cng = Array.isArray(advisor.cngCurve) ? advisor.cngCurve : [];
-      const rawGlobal = Array.isArray(advisor.kFactorSuggestions) ? advisor.kFactorSuggestions : [];
-      const actionablePoints = rawGlobal.filter(item => item.actionable === true);
-      const comparisonCount = finite(advisor.comparisonCount) ?? (Array.isArray(maps.comparisons) ? maps.comparisons.length : 0);
-      const uniqueVisits = finite(advisor.uniqueVisitCount) ?? 0;
-      host.innerHTML = `<div class="curve-evidence-summary"><div class="evidence-stat"><b>${comparisonCount}</b><span>comparações gasolina × GNV</span></div><div class="evidence-stat"><b>${uniqueVisits}</b><span>visitas físicas únicas</span></div><div class="evidence-stat"><b>${petrol.length}</b><span>pontos da referência gasolina</span></div><div class="evidence-stat"><b>${cng.length}</b><span>pontos observados no GNV</span></div></div><div class="curve-native-explanation"><header><div><small>EVIDÊNCIA FÍSICA</small><h3>Gasolina × GNV por MAP</h3></div><span>sob demanda</span></header><div class="global-summary-list">${petrol.slice(0, 12).map((item, i) => `<div><span>MAP ${fmt(item.mapBar, 2)} bar</span><b>Gas ${fmt(item.petrolMs, 2)} · GNV ${fmt(cng[i]?.petrolMs, 2)} ms</b><small>${escapeHtml(item.confidenceStage || cng[i]?.confidenceStage || '')}</small></div>`).join('') || '<p class="empty-copy">Ainda sem evidência física global.</p>'}</div><p>${actionablePoints.length} ponto(s) K estão atualmente prontos segundo o assessor Kotlin. Esta seção não calcula correção.</p></div>`;
+      const comparisons = this.directComparisons(state);
+      const calibrationState = state.calibrationState || {};
+      const latestComparison = calibrationState.latestComparison && typeof calibrationState.latestComparison === 'object'
+        ? calibrationState.latestComparison
+        : null;
+      const proposal = calibrationState.proposal && typeof calibrationState.proposal === 'object'
+        ? calibrationState.proposal
+        : {};
+      const multiplier = finite(proposal.correctionMultiplier);
+      host.innerHTML = `<div class="curve-evidence-summary"><div class="evidence-stat"><b>${comparisons.length}</b><span>pares físicos medidos</span></div><div class="evidence-stat"><b>${Number(calibrationState.petrolEvidence || 0)}</b><span>evidências gasolina</span></div><div class="evidence-stat"><b>${Number(calibrationState.activeCngEvidence || 0)}</b><span>evidências GNV atuais</span></div><div class="evidence-stat"><b>${Number(calibrationState.activeComparisons || 0)}</b><span>comparações Blue ativas</span></div></div><div class="curve-native-explanation"><header><div><small>EVIDÊNCIA FÍSICA</small><h3>Gasolina × GNV medidos</h3></div><span>BlueCausalEngine</span></header><div class="global-summary-list">${comparisons.slice(-12).reverse().map(item => `<div><span>${fmt(item.rpm, 0)} RPM · MAP ${fmt(item.mapBar, 3)} bar</span><b>${fmt(item.targetMs, 2)} → ${fmt(item.observedMs, 2)} ms</b><small>${item.error > 0 ? '+' : ''}${fmt(item.error, 2)}% · qualidade ${Math.round(item.quality * 100)}%</small></div>`).join('') || '<p class="empty-copy">Ainda sem par físico gasolina × GNV.</p>'}</div><p>${latestComparison ? `Última comparação reconciliada: ${fmt(latestComparison.errorPercent, 2)}%. ` : ''}${multiplier !== null ? `O núcleo emitiu multiplicador ${fmt(multiplier, 4)} para revisão manual.` : `Estado ${escapeHtml(proposal.state || 'MEASURE_ACTUATOR_GAIN')}: nenhuma correção exata é inventada pela interface.`}</p></div>`;
     }
 
     renderSuggestionFocus(suggestion, preparedPreview = null) {
