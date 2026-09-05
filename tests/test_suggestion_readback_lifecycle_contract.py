@@ -6,8 +6,7 @@ BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
 COORDINATOR = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt").read_text("utf-8")
 ACCESS = (ROOT / "app/src/main/java/com/omegas/prohub/service/V7CalibrationAccess.kt").read_text("utf-8")
 
-# A interface nunca marca sugestão aplicada no clique/preparo. O bridge só chama
-# reconciliação depois de o writer já ter confirmado readback real.
+# A interface nunca marca uma escrita como confirmada antes de ACK/readback.
 assert 'val confirmed = status.optString("state") == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false)' in BRIDGE
 assert 'if (confirmed)' in BRIDGE
 assert 'service.v7ReconcileConfirmedManualWrite("CURVE_K")' in BRIDGE
@@ -16,19 +15,15 @@ assert 'if (fullyConfirmed)' in BRIDGE
 assert 'service.v7ReconcileConfirmedManualWrite("MAP_K")' in BRIDGE
 assert '.put("readbackValid", true)' in BRIDGE
 
-# A reconciliação faz uma releitura fresca da ECU e só então compara os alvos
-# exatos persistidos com a calibração efetivamente lida.
+# A reconciliação ainda faz releitura fresca da ECU. O Blue bloqueia a antiga
+# aplicação automática/delegada de sugestões; readback serve como fronteira do
+# estado de calibração, não como permissão para um motor legado.
 assert 'fun reconcileConfirmedManualWrite(' in COORDINATOR
 assert 'val sync = synchronizedFromEcu(activeFileName)' in COORDINATOR
-assert 'suggestionMatchesCalibration(it, actual)' in COORDINATOR
-assert 'SuggestionLifecycleV7.APPLIED' in COORDINATOR
-assert 'abs(actual - change.after) <= 1e-9' in COORDINATOR
-assert '== change.after' in COORDINATOR
 assert 'CONFIRMED_MANUAL_WRITE_READBACK' in COORDINATOR
-
-# Falha nessa reconciliação auxiliar não converte uma escrita já confirmada em
-# falha e, sobretudo, não inventa APPLIED.
-assert 'suggestionReconciliation' in BRIDGE
-assert 'Falha ao reconciliar sugestões após readback' in ACCESS
+assert 'v7ApplySuggestion' in ACCESS
+assert 'Aplicação de sugestão legada bloqueada no OMEGAS Blue' in ACCESS
+assert 'decisionAuthority' in ACCESS
+assert 'BLUE_CAUSAL_ENGINE' in ACCESS
 
 print("SUGGESTION_READBACK_LIFECYCLE_CONTRACT=PASS")
