@@ -14,13 +14,15 @@ const index = read('app/src/main/assets/ui/index.html');
 for (const [name, source] of [['router', router], ['store', store], ['app', app], ['index', index]]) {
   assert.equal(/predictor/i.test(source), false, `${name} still exposes browser Predictor semantics`);
 }
-for (const retired of [
-  'core/predictor-model.js',
-  'screens/predictor.js',
-  'components/predictor-current-cell.js',
-  'components/curve-prediction-state.js',
-]) {
-  assert.equal(router.includes(retired), false, `router still loads retired module ${retired}`);
+
+const retired = [
+  'app/src/main/assets/ui/core/predictor-model.js',
+  'app/src/main/assets/ui/screens/predictor.js',
+  'app/src/main/assets/ui/components/predictor-current-cell.js',
+  'app/src/main/assets/ui/components/curve-prediction-state.js',
+];
+for (const rel of retired) {
+  assert.equal(fs.existsSync(path.join(root, rel)), false, `retired Predictor asset still exists: ${rel}`);
 }
 
 assert.equal(router.includes("'dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools'"), true);
