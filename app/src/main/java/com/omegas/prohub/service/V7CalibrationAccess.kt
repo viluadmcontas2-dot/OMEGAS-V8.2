@@ -1,16 +1,15 @@
 package com.omegas.prohub.service
 
+import com.omegas.prohub.blue.BluePredictorProjection
 import com.omegas.prohub.calibration.V7CalibrationCoordinator
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
-import com.omegas.prohub.learning.PredictorInterpolator
 import com.omegas.v7.runtime.SuggestionTargetV7
 import org.json.JSONObject
 import java.io.File
 import java.util.WeakHashMap
 
 /**
- * Associação única entre o serviço Android e a sessão V7.
- *
+ * Associação única entre o serviço Android e a sessão V7/Blue.
  * Usa os managers já pertencentes ao serviço; não cria outra conexão USB,
  * outra fila serial ou outro writer.
  */
@@ -30,16 +29,16 @@ private object V7CalibrationRegistry {
 
     fun remove(service: TelemetryForegroundService) = synchronized(lock) {
         coordinators.remove(service)
-        PredictorStateCache.remove(service)
+        BlueProjectionCache.remove(service)
         Unit
     }
 }
 
 /**
- * Predictor é estrutural, não live. A assinatura usa somente metadados baratos
- * dos snapshots persistidos; se a ciência/mapa não mudou, não remonta 144 células.
+ * Projeção estrutural passiva. Nenhum alvo é calculado aqui: até o
+ * BlueCausalEngine publicar uma proposta, targetK permanece desconhecido.
  */
-private object PredictorStateCache {
+private object BlueProjectionCache {
     private data class Entry(val signature: String, val snapshot: JSONObject)
     private val lock = Any()
     private val entries = WeakHashMap<TelemetryForegroundService, Entry>()
@@ -55,8 +54,8 @@ private object PredictorStateCache {
         } catch (_: Exception) {
             null
         }
-        val snapshot = PredictorInterpolator.build(learning, map)
-            .put("source", "V8_CALIBRATION_STATE")
+        val snapshot = BluePredictorProjection.build(learning, map)
+            .put("source", "BLUE_CAUSAL_ENGINE")
             .put("cachedByStructuralRevision", true)
         entries[service] = Entry(signature, JSONObject(snapshot.toString()))
         JSONObject(snapshot.toString())
@@ -83,11 +82,12 @@ private object PredictorStateCache {
 fun TelemetryForegroundService.v7CalibrationStateJson(): String =
     JSONObject(V7CalibrationRegistry.get(this).stateJson().toString())
         .put("predictor", try {
-            PredictorStateCache.get(this)
+            BlueProjectionCache.get(this)
         } catch (error: Exception) {
             JSONObject()
                 .put("ok", false)
-                .put("error", error.message ?: "Predictor indisponível")
+                .put("error", error.message ?: "Projeção Blue indisponível")
+                .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
                 .put("automaticWrite", false)
         })
         .toString()
@@ -97,7 +97,7 @@ fun TelemetryForegroundService.v7SynchronizeCalibration(fileName: String = "sess
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
-        .put("error", error.message ?: "Falha ao sincronizar calibração V7")
+        .put("error", error.message ?: "Falha ao sincronizar calibração")
         .toString()
 }
 
@@ -109,20 +109,17 @@ fun TelemetryForegroundService.v7ReconcileConfirmedManualWrite(target: String): 
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
-        .put("error", error.message ?: "Falha ao reconciliar sugestões após readback")
+        .put("error", error.message ?: "Falha ao reconciliar após readback")
         .toString()
 }
 
-fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String): String = try {
-    V7CalibrationRegistry.get(this)
-        .synchronizeAdvisorSuggestions(JSONObject(payload))
-        .toString()
-} catch (error: Exception) {
+fun TelemetryForegroundService.v7SynchronizeAdvisorSuggestions(payload: String): String =
     JSONObject()
         .put("ok", false)
-        .put("error", error.message ?: "Falha ao registrar sugestões do advisor")
+        .put("error", "Advisor legado não possui autoridade no OMEGAS Blue")
+        .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
+        .put("automaticWrite", false)
         .toString()
-}
 
 fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String = try {
     V7CalibrationRegistry.get(this)
@@ -131,29 +128,29 @@ fun TelemetryForegroundService.v7IngestLearningSnapshot(payload: String): String
 } catch (error: Exception) {
     JSONObject()
         .put("ok", false)
-        .put("error", error.message ?: "Falha ao importar aprendizado V7")
+        .put("error", error.message ?: "Falha ao importar evidência")
         .toString()
 }
 
-fun TelemetryForegroundService.v7ApplySuggestion(suggestionId: String): String = try {
-    V7CalibrationRegistry.get(this).applySuggestionToEcu(suggestionId).toString()
-} catch (error: Exception) {
+fun TelemetryForegroundService.v7ApplySuggestion(suggestionId: String): String =
     JSONObject()
         .put("ok", false)
-        .put("error", error.message ?: "Falha ao aplicar sugestão V7")
+        .put("error", "Aplicação de sugestão legada bloqueada no OMEGAS Blue")
+        .put("suggestionId", suggestionId)
+        .put("manualOnly", true)
+        .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
         .toString()
-}
 
 fun TelemetryForegroundService.v7SaveSession(fileName: String): String = try {
     V7CalibrationRegistry.get(this).saveAs(fileName).toString()
 } catch (error: Exception) {
-    JSONObject().put("ok", false).put("error", error.message ?: "Falha ao salvar sessão V7").toString()
+    JSONObject().put("ok", false).put("error", error.message ?: "Falha ao salvar sessão").toString()
 }
 
 fun TelemetryForegroundService.v7LoadSession(fileName: String): String = try {
     V7CalibrationRegistry.get(this).load(fileName).toString()
 } catch (error: Exception) {
-    JSONObject().put("ok", false).put("error", error.message ?: "Falha ao carregar sessão V7").toString()
+    JSONObject().put("ok", false).put("error", error.message ?: "Falha ao carregar sessão").toString()
 }
 
 fun TelemetryForegroundService.v7SessionFilesJson(): String =
