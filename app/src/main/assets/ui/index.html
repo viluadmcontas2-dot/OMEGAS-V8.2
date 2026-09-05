@@ -23,7 +23,7 @@
         <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
         <button type="button" data-route="obd"><i>05</i><span>OBD</span></button>
         <div class="nav-divider"></div>
-        <button type="button" data-route="suggestions"><i>06</i><span>Sugestões</span><em id="suggestionCount">0</em></button>
+        <button type="button" data-route="suggestions"><i>06</i><span>Proposta Blue</span><em id="suggestionCount">0</em></button>
         <button type="button" data-route="tools"><i>07</i><span>Ferramentas</span></button>
       </nav>
 
@@ -78,17 +78,16 @@
         <section class="screen" data-screen="learning" aria-labelledby="learningTitle">
           <div class="page-intro learning-intro">
             <div><small>APRENDER</small><h2 id="learningTitle">Evidência por condição física</h2></div>
-            <div class="live-condition"><small>AGORA</small><b id="learningLiveLabel">Aguardando condição válida</b><span>marcação visual leve · não altera o aprendizado</span></div>
+            <div class="live-condition"><small>AGORA</small><b id="learningLiveLabel">Aguardando condição válida</b><span>posição atual · não altera o aprendizado</span></div>
           </div>
 
           <div class="learning-controls">
-            <div class="layer-tabs" role="tablist" aria-label="Camada do aprendizado">
-              <button type="button" data-learning-layer="petrol">Referência</button>
-              <button type="button" data-learning-layer="cng">No GNV</button>
-              <button type="button" data-learning-layer="comparison" class="active">Diferença</button>
-              <button type="button" data-learning-layer="suggestion">Sugestão</button>
+            <div class="layer-tabs" role="tablist" aria-label="Camada de evidência">
+              <button type="button" data-learning-layer="petrol">Gasolina</button>
+              <button type="button" data-learning-layer="cng">GNV</button>
+              <button type="button" data-learning-layer="comparison" class="active">Desvio medido</button>
             </div>
-            <div class="coverage-copy"><span id="learningCoverageSummary">0 gasolina · 0 GNV · 0 prontas</span><span id="learningSuggestionSummary">0 global · 0 local</span></div>
+            <div class="coverage-copy"><span id="learningCoverageSummary">0 gasolina · 0 GNV · 0 pares medidos</span><span id="learningSuggestionSummary">Blue: aguardando ganho causal</span></div>
           </div>
 
           <div class="learning-workspace">
@@ -96,10 +95,10 @@
               <div class="axis-top">RPM →</div>
               <div id="learningGrid" class="physical-grid-host" aria-label="Mapa de aprendizado"></div>
               <div class="axis-side">PETROL INJ. ↓</div>
-              <div class="trace-note"><span class="trace-sample nearest"></span>célula atual <span class="trace-sample contributor"></span>até 4 contribuintes · sem trilha/fade</div>
+              <div class="trace-note"><span class="trace-sample nearest"></span>célula atual <span class="trace-sample contributor"></span>projeção física · sem previsão</div>
             </section>
             <aside id="learningCellDetail" class="inspector-panel">
-              <div class="detail-empty"><b>Coleta em andamento</b><span>Toque em uma célula para ver evidência, equivalência e próximo passo.</span></div>
+              <div class="detail-empty"><b>Coleta em andamento</b><span>Toque em uma célula para ver gasolina, GNV, desvio medido e o estado separado da proposta Blue.</span></div>
             </aside>
           </div>
         </section>
@@ -180,98 +179,43 @@
             </div>
           </div>
 
-          <div class="operation-layer review-layer"><div class="operation-card"><header><div><small>REVISÃO</small><h3 id="curveReviewCount">Pontos preparados</h3></div><button id="curveReviewBack" type="button" class="icon-close">×</button></header><div id="curveReviewList" class="review-list"></div><div class="write-contract"><b>A próxima ação escreve na ECU.</b><span>Backup, ACK e readback permanecem sob autoridade do Kotlin.</span></div><div class="operation-actions"><button id="curveWriteButton" type="button" class="danger-primary">Gravar pontos na ECU</button></div></div></div>
-          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Backup</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
+          <div class="operation-layer review-layer"><div class="operation-card"><header><div><small>REVISÃO</small><h3 id="curveReviewCount">Pontos preparados</h3></div><button id="curveReviewBack" type="button" class="icon-close">×</button></header><div id="curveReviewList" class="review-list"></div><div class="write-contract"><b>A próxima ação escreve na ECU.</b><span>Backup, ACK e readback continuam obrigatórios.</span></div><div class="operation-actions"><button id="curveWriteButton" type="button" class="danger-primary">Gravar pontos na ECU</button></div></div></div>
+          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual em andamento</h3><p id="curveOperationMessage">Preparando operação.</p><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Backup</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
         </section>
 
-        <section class="screen obd-screen" data-screen="obd" aria-labelledby="obdTitle">
-          <div class="page-intro action-intro">
-            <div><small>OBD · OBSERVAÇÃO</small><h2 id="obdTitle">O que a ECU original está corrigindo</h2><p>Mesmas faixas RPM × Petrol Inj. do aprendizado, com STFT/LTFT como segunda prova.</p></div>
-            <div class="route-actions-stack">
-              <div class="view-switch" id="obdViewSwitch" role="tablist" aria-label="Visão OBD">
-                <button type="button" data-obd-view="observe" class="active">Observar</button>
-                <button type="button" data-obd-view="map">Mapa OBD</button>
-                <button type="button" data-obd-view="setup">Conexão</button>
-              </div>
-              <span id="obdStatusPill" class="source-status" data-online="false">OBD offline</span>
-            </div>
-          </div>
-
-          <div class="obd-view-stack">
-            <section class="obd-view active" data-obd-panel="observe">
-              <div class="obd-observe-layout">
-                <section class="obd-live-card">
-                  <div class="trim-pair"><div class="trim-value"><small>STFT</small><strong id="obdStft">—</strong><span>correção curta</span></div><div class="trim-value"><small>LTFT</small><strong id="obdLtft">—</strong><span>correção longa</span></div></div>
-                  <div class="obd-metrics"><div><small>RPM</small><b id="obdRpm">—</b></div><div><small>PETROL INJ.</small><b id="obdPetrol">—</b></div><div><small>MAP</small><b id="obdMap">—</b></div><div><small>CARGA</small><b id="obdLoad">—</b></div></div>
-                  <div class="obd-metrics obd-context-metrics"><div><small>PEDAL</small><b id="obdPedal">—</b></div><div><small>MAF</small><b id="obdMaf">—</b></div><div><small>ÁGUA</small><b id="obdCoolant">—</b></div><div><small>TENSÃO ECU</small><b id="obdVoltage">—</b></div></div>
-                  <div class="obd-connection-strip"><span id="obdConnection">Bluetooth desconectado</span><span>última leitura <b id="obdFreshness">—</b></span></div>
-                </section>
-                <aside class="obd-live-context">
-                  <small>CÉLULA ATUAL</small><strong id="obdLiveCell">—</strong><p id="obdLiveDecision">Aguardando OBD + MP48.</p>
-                  <div class="obd-live-facts"><span><small>Combustível</small><b id="obdLiveFuel">—</b></span><span><small>STFT GNV da célula</small><b id="obdLiveDelta">—</b></span></div>
-                  <p id="obdObservationNote" class="obd-note">OBD é somente observação. Nenhum valor desta tela escreve Mapa K ou Curva K.</p>
-                  <button type="button" class="primary wide" data-obd-go="map">Abrir mapa OBD</button>
-                </aside>
-              </div>
-            </section>
-
-            <section class="obd-view" data-obd-panel="map">
-              <div class="obd-map-layout">
-                <section class="obd-map-surface">
-                  <div class="obd-map-toolbar"><div class="obd-map-tabs" role="tablist"><button type="button" data-obd-map-layer="gasoline">Gasolina</button><button type="button" data-obd-map-layer="gnv">GNV</button><button type="button" data-obd-map-layer="comparison" class="active">Comparação</button></div><div id="obdMapSummary" class="obd-map-summary">Aguardando evidência OBD</div></div>
-                  <div class="obd-grid-shell"><div class="obd-map-y-label">PETROL INJ. ↓</div><div id="obdIndependentMap" class="obd-map-grid" aria-label="Mapa OBD RPM por Petrol Inj."></div><div class="obd-map-x-label">RPM →</div></div>
-                  <div class="obd-map-legend"><span>Gasolina: contexto STFT</span><span>GNV: STFT direto · alvo 0%</span><span>Número menor: amostras</span></div>
-                </section>
-                <aside id="obdCellDetail" class="inspector-panel obd-cell-detail"><b>Toque em uma célula</b><span>STFT, LTFT e contexto daquela faixa aparecem aqui.</span></aside>
-              </div>
-            </section>
-
-            <section class="obd-view" data-obd-panel="setup">
-              <div class="obd-setup-layout">
-                <section id="obdConnectionCenter" class="obd-device-center"></section>
-                <section id="obdPowerCard" class="obd-power-card"></section>
-                <aside class="inspector-panel sensor-panel"><div class="editor-heading"><div><small>DIAGNÓSTICO</small><h3>PIDs disponíveis</h3></div></div><div id="obdSensorList" class="sensor-list"><p class="empty-copy">Aguardando adaptador.</p></div></aside>
-              </div>
-              <div class="obd-actions"><button id="obdPermissionButton" type="button" class="secondary">Autorizar Bluetooth</button><button id="obdRefreshButton" type="button" class="quiet-button">Atualizar</button><button id="obdDisconnectButton" type="button" class="quiet-button">Desconectar</button></div>
-            </section>
-          </div>
+        <section class="screen" data-screen="obd" aria-labelledby="obdTitle">
+          <div class="page-intro"><div><small>OBSERVAR</small><h2 id="obdTitle">OBD</h2></div><p>Diagnóstico complementar. Nunca é autoridade de calibração.</p></div>
+          <div id="obdWorkspace" class="obd-workspace"></div>
         </section>
 
-        <section id="suggestionDrawer" class="screen utility-screen" data-screen="suggestions" aria-labelledby="suggestionsTitle">
-          <div class="page-intro"><div><small>SUGESTÕES</small><h2 id="suggestionsTitle">Decisões prontas para revisar</h2></div><p>Global vai para Curva K. Local vai para Mapa K. Abrir nunca escreve.</p></div>
-          <div id="suggestionList" class="suggestion-list"><div class="detail-empty"><b>Nenhuma sugestão pronta</b><span>O aprendizado continua coletando evidência.</span></div></div>
+        <section class="screen" data-screen="suggestions" aria-labelledby="suggestionsTitle">
+          <div class="page-intro"><div><small>PROPOSTA</small><h2 id="suggestionsTitle">Proposta Blue</h2></div><p>Correção é separada da medição e nunca grava automaticamente.</p></div>
+          <div id="suggestionList" class="suggestion-list"><div class="empty-state"><b>Nenhuma proposta</b><span>O Blue explicará quando ainda faltar evidência ou ganho causal.</span></div></div>
         </section>
 
-        <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
-          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Sistema, arquivos e diagnóstico</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
-          <div class="tool-actions">
-            <button id="toolExportLearning" type="button"><b>Exportar aprendizado</b><span>Salvar arquivo .omegas</span></button>
-            <button id="toolImportLearning" type="button"><b>Importar aprendizado</b><span>Carregar arquivo validado</span></button>
-            <button id="toolExportLogs" type="button"><b>Exportar logs</b><span>Preservar evidência de diagnóstico</span></button>
-            <button id="toolSelfTest" type="button"><b>Executar autoteste</b><span>Verificar o núcleo disponível</span></button>
-          </div>
+        <section class="screen" data-screen="tools" aria-labelledby="toolsTitle">
+          <div class="page-intro"><div><small>SISTEMA</small><h2 id="toolsTitle">Ferramentas</h2></div><p>Sessões, diagnóstico, exportação e configuração operacional.</p></div>
+          <div id="toolsWorkspace" class="tools-workspace"></div>
         </section>
       </main>
     </section>
-
-    <div id="alertToast" class="alert-toast" role="status" aria-live="polite"><b></b><button type="button" aria-label="Fechar">×</button></div>
   </div>
 
-  <script src="suggestion-model.js" defer></script>
-  <script src="map-editor.js" defer></script>
-  <script src="core/native-api.js" defer></script>
-  <script src="core/store.js" defer></script>
-  <script src="core/router.js" defer></script>
-  <script src="core/scheduler.js" defer></script>
-  <script src="core/learning-model.js" defer></script>
-  <script src="components/physical-grid.js" defer></script>
-  <script src="components/drawers.js" defer></script>
-  <script src="screens/dashboard.js" defer></script>
-  <script src="screens/learning.js" defer></script>
-  <script src="screens/map.js" defer></script>
-  <script src="screens/curve.js" defer></script>
-  <script src="screens/obd.js" defer></script>
-  <script src="app.js" defer></script>
+  <div id="alertToast" class="alert-toast" data-level="warning"><b>Alerta</b><button type="button" aria-label="Fechar">×</button></div>
+
+  <script src="core/store.js"></script>
+  <script src="core/router.js"></script>
+  <script src="core/native-api.js"></script>
+  <script src="core/scheduler.js"></script>
+  <script src="core/learning-model.js"></script>
+  <script src="components/physical-grid.js"></script>
+  <script src="screens/dashboard.js"></script>
+  <script src="screens/learning.js"></script>
+  <script src="screens/map.js"></script>
+  <script src="screens/curve.js"></script>
+  <script src="screens/obd.js"></script>
+  <script src="components/drawers.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
