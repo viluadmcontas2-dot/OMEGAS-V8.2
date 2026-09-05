@@ -4,11 +4,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Monta a fonte única consumida pela interface de aprendizado.
+ * Monta a projeção de evidência física consumida pela tela Aprender.
  *
- * O arquivo persistido continua sendo a origem. Antes da projeção visual, todo
- * GNV pendente da época ativa é reconciliado contra a superfície física de
- * gasolina e o assessor é recalculado com essas comparações.
+ * Esta camada não toma decisão de calibração. Ela apenas reconcilia a memória
+ * física, calcula a geometria de visualização e publica comparações observadas.
+ * A única autoridade de equivalência e proposta de correção é o BlueCausalEngine.
  */
 object LearningUiSnapshotAssembler {
     fun assemble(rawSnapshot: JSONObject): JSONObject {
@@ -27,19 +27,14 @@ object LearningUiSnapshotAssembler {
             epoch = epoch,
             mapHash = mapHash,
         )
-        val adviceInput = JSONObject(reconciled.toString())
-            .put("cells", cells)
-            .put("integrity", integrity)
-        val advice = AssistedCalibrationAdvisor.analyze(adviceInput)
-        return adviceInput
+        return JSONObject(reconciled.toString())
             .put("cells", cells)
             .put("integrity", integrity)
             .put("comparisons", comparisons)
-            .put("assistedCalibration", advice)
-            .put("assisted_calibration", advice)
             .put("comparisonCount", comparisons.length())
             .put("comparison_count", comparisons.length())
-            .put("uiPipeline", "PERSISTED_REGIONS_RECONCILED_ADVISOR")
-            .put("ui_pipeline", "PERSISTED_REGIONS_RECONCILED_ADVISOR")
+            .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
+            .put("uiPipeline", "PHYSICAL_EVIDENCE_ONLY")
+            .put("ui_pipeline", "PHYSICAL_EVIDENCE_ONLY")
     }
 }
