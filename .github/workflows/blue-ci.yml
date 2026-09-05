@@ -1,0 +1,121 @@
+# OMEGAS Blue remote CI.
+# GitHub-hosted runners are the canonical remote executor for this public repo.
+name: OMEGAS Blue CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "tools/**"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "*.gradle"
+      - "*.gradle.kts"
+      - "gradle.properties"
+      - "settings.gradle"
+      - "settings.gradle.kts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/blue-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-blue-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast:
+    name: FAST contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source SHA
+        uses: actions/checkout@v7
+
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Fast Python and Node contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/run_checks.py
+
+  full:
+    name: FULL JVM lint APK
+    needs: fast
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact source SHA
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17 with Gradle cache
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            **/*.gradle*
+            **/gradle-wrapper.properties
+
+      - name: Full JVM, lint and APK once
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest lintDebug assembleDebug \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon --stacktrace
+
+      - name: Emit exact-SHA evidence
+        id: evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          test -f "$APK"
+          mkdir -p build/evidence
+          RECEIPT=build/evidence/omegas-blue-ci.txt
+          {
+            echo "OMEGAS_BLUE_CI=PASS"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+            echo "APK_PATH=$APK"
+            echo "APK_SHA256=$(sha256sum "$APK" | awk '{print $1}')"
+            echo "APK_BYTES=$(stat -c %s "$APK")"
+            echo "FAST_GATE=PASS"
+            echo "FULL_JVM_LINT_APK=PASS"
+            echo "STANDARD_GITHUB_HOSTED_RUNNER=true"
+            echo "SIMULATED_ECU_ONLY=true"
+            echo "NO_INSTALL_PERFORMED=true"
+            echo "PHYSICAL_FUEL_ECONOMY_CLAIMED=false"
+          } | tee "$RECEIPT"
+          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK and evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: omegas-blue-${{ github.sha }}
+          path: |
+            ${{ steps.evidence.outputs.apk_path }}
+            build/evidence/omegas-blue-ci.txt
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
