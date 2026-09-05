@@ -55,7 +55,7 @@
     return String(Math.round(number * factor) / factor);
   }
   function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+    return String(value ?? '').replace(/[&<>\"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[char]));
   }
   function fuelLabel(raw) {
     const value = String(raw || '—').toUpperCase();
@@ -229,7 +229,7 @@
   /** Único pump de PresentSnapshot. Nenhum screen abre polling nativo próprio. */
   function refreshFast() {
     const route = store.get().route;
-    if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor') {
+    if (route === 'dashboard' || route === 'learning' || route === 'map') {
       const envelope = api.presentSnapshot() || {};
       const telemetry = envelope.data || {};
       const signature = `${route}:${telemetryVisualSignature(telemetry, route)}`;
@@ -277,8 +277,8 @@
     const curve = route === 'curve' ? ensureScreen('curve') : null;
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    const needsScience = route === 'learning' || route === 'predictor' || route === 'suggestions' ||
-      route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
+    const needsScience = route === 'learning' || route === 'suggestions' || route === 'map' ||
+      route === 'tools' || curveNeedsLearning || route === 'curve';
 
     if (needsScience) {
       const science = api.scienceSnapshotSince(scienceRevision) || {};
@@ -289,10 +289,6 @@
         const data = science.data;
         if (data.learning) patch.learning = data.learning;
         if (data.calibrationState) patch.calibrationState = data.calibrationState;
-        const predictor = data.predictor || data.calibrationState?.predictor;
-        if (predictor) {
-          patch.predictor = { ...(state.predictor || {}), state: predictor.ok === false ? 'error' : 'ready', data: predictor };
-        }
         patch.scienceRevision = scienceRevision;
       }
     }
@@ -424,11 +420,6 @@
       afterPaint(() => { refreshFast(); refreshContext(); });
       return;
     }
-    if (route === 'predictor') {
-      previousTelemetrySignature = '';
-      afterPaint(() => { refreshFast(); refreshContext(); });
-      return;
-    }
     if (route === 'map') {
       previousTelemetrySignature = '';
       ensureScreen('map')?.onEnter(context || store.get().routeContext);
@@ -488,7 +479,7 @@
         refreshStatus();
         refreshContext();
         const route = store.get().route;
-        if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor') {
+        if (route === 'dashboard' || route === 'learning' || route === 'map') {
           previousTelemetrySignature = '';
           refreshFast();
         }
