@@ -31,7 +31,8 @@ assert "FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE" in service
 assert "START_STICKY" in service
 assert 'android:stopWithTask="false"' in manifest
 
-# Aprendizado explicável continua vindo do Kotlin; a UI não inventa equivalência.
+# Aprendizado explicável continua vindo do Kotlin; a UI não inventa equivalência
+# nem usa previsão/stability/sugestão como substituto de medição direta.
 assert "sample_reason" in runtime
 assert "learningDecision" in api
 assert "this.fullSnapshot()" in api
@@ -43,11 +44,15 @@ assert "reason_code" in learning
 assert "frame_count" in learning
 assert "LIMITES CONFIGURADOS" in learning
 assert "Gasolina — referência agregada" in learning
-assert "GNV atual agregado — Petrol Inj." in learning
-assert "Par observado usado no cálculo" in learning
+assert "GNV atual — Petrol Inj." in learning
+assert "Desvio medido" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning
+assert "BlueCausalEngine" in learning
+assert "mapResidualPredictions" not in learning
+assert "assistedCalibration" not in learning
+assert "learningStability" not in learning
 assert "mapBar" in learning_model
 assert "petrolMs" in learning_model
 assert "rpm" in learning_model
@@ -55,8 +60,8 @@ assert "setInterval" not in learning
 assert "writeMap" not in learning
 assert "writeCurve" not in learning
 
-# Na multimídia fraca, a posição viva é apenas texto. A interpolação bilinear
-# continua no Kotlin/telemetria, mas a WebView não persegue pesos/células no DOM.
+# Na multimídia fraca, a posição viva é apenas contexto. A WebView não cria
+# um segundo mecanismo científico nem persegue pesos/células no DOM.
 assert "setTrace(" not in physical_grid
 assert "TRACE_MAX_CONTRIBUTORS" not in physical_grid
 assert "TRACE_WEIGHT_STEPS" not in physical_grid
@@ -67,8 +72,8 @@ assert "continuousWeights" not in learning
 assert "function renderLightLiveContext" in app
 assert "learningLiveLabel" in app
 assert "célula ${row + 1}×${column + 1}" in app
-assert "A posição ao vivo é mostrada apenas como texto" in learning
-assert "A interpolação bilinear continua no Kotlin" in learning
+assert "A posição ao vivo é somente contexto" in learning
+assert "Gasolina é a referência" in learning
 assert "physical-grid-with-axes" in physical_grid
 assert "setAxes(rpmBins, petrolBins)" in physical_grid
 assert ".cell-value{font-size:12px" in styles
