@@ -1,25 +1,9 @@
-# OMEGAS V8.2
+# OMEGAS Blue
 
-Aplicativo Android para leitura, aprendizado, diagnóstico e ajuste manual assistido de centrais OMEGAS/MP48.
+OMEGAS Blue is the current development line derived directly from OMEGAS V8.0 RED.
 
-Esta baseline preserva o código funcional testado usado como ponto de partida da linha V8.2. A governança operacional viva fica no Notion; `AGENTS.md` contém apenas o contrato estável necessário para operar o repositório com segurança.
+Canonical engineering flow:
 
-## Contratos duráveis do produto
+`AGENTS.md → .specify/memory/constitution.md → specs/001-blue-runtime-convergence/{spec,plan,tasks}.md → TDD → exact-SHA CI evidence`
 
-- nenhuma sugestão ou conexão grava automaticamente na ECU;
-- toda escrita é iniciada manualmente e depende de revisão/confirmação, ACK e readback;
-- falha de ACK ou readback divergente não é sucesso;
-- OBD permanece observacional;
-- Mapa K e Curva K permanecem separados;
-- a linha técnica do Mapa K não é editável;
-- matemática e protocolo críticos permanecem no Kotlin.
-
-## Verificação local
-
-Use testes proporcionais ao escopo. O gate rápido disponível nesta baseline é:
-
-```bash
-python -B tools/run_checks.py
-```
-
-GitHub Actions não fazem parte deste bootstrap inicial.
+The single runtime decision authority is `BlueCausalEngine`. MP48 telemetry/readback remains physical authority. Calibration writes are manual and require confirmation, ACK and readback; RPM is never a write-authorization gate.
