@@ -129,7 +129,7 @@ class TelemetryForegroundService : Service() {
         archives = DataArchiveManager(paths, log)
         telemetryStore = TelemetryStateStore()
         consumptionTracker = ConsumptionTracker(this)
-        sessionRecorder = SessionRecorder(paths, settings)
+        sessionRecorder = SessionRecorder(this, paths, settings)
         log.setListener { item ->
             sessionRecorder.record("app_log", "native", item, force = true)
         }
@@ -631,6 +631,9 @@ class TelemetryForegroundService : Service() {
             val generationChanged = transition == UsbSessionTransition.GENERATION_CHANGED
             monitoringPausedByUser = false
             if (generationChanged) {
+                if (sessionRecorder.statusObject().optBoolean("recording")) {
+                    sessionRecorder.recordUsbSegment(false, previousSessionId, usb.deviceLabel)
+                }
                 runtime.endUsbSession("USB_SESSION_REPLACED")
                 nativeAutoCal.endUsbSession()
                 telemetryStore.invalidate("USB_SESSION_REPLACED")
@@ -650,6 +653,9 @@ class TelemetryForegroundService : Service() {
                     JSONObject().put("appVersion", BuildConfig.VERSION_NAME).put("usb", usb.deviceLabel),
                 )
             }
+            if (sessionRecorder.statusObject().optBoolean("recording")) {
+                sessionRecorder.recordUsbSegment(true, sessionId, usb.deviceLabel)
+            }
             if (settings.autoStartEngine && !enginePausedByUser) {
                 startEngine(if (generationChanged) "nova geração física MP48" else "nova conexão física MP48")
             }
@@ -659,7 +665,7 @@ class TelemetryForegroundService : Service() {
             nativeAutoCal.endUsbSession()
             telemetryStore.invalidate("USB_DISCONNECTED")
             if (sessionRecorder.statusObject().optBoolean("recording")) {
-                sessionRecorder.stop("MP48 desconectado")
+                sessionRecorder.recordUsbSegment(false, previousSessionId, usb.deviceLabel)
             }
             if (monitoringPausedByUser || !settings.autoReconnectUsb) {
                 stopSelf()

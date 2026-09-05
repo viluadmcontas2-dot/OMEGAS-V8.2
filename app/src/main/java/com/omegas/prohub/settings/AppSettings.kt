@@ -10,18 +10,18 @@ class AppSettings(context: Context) {
     private val prefs = context.getSharedPreferences("omegas_settings_native", Context.MODE_PRIVATE)
 
     init {
-        // Migra somente os antigos valores-padrão excessivos. Valores personalizados
-        // permanecem intocados.
-        if (!prefs.getBoolean("recorderSafeDefaultsV52", false)) {
-            val edit = prefs.edit().putBoolean("recorderSafeDefaultsV52", true)
+        // BLUE: retenção é por sessão útil, não por reconexão USB. Valores antigos
+        // abaixo do mínimo seguro são migrados uma única vez para 30.
+        if (!prefs.getBoolean("recorderMeaningfulRetentionV60", false)) {
+            val edit = prefs.edit().putBoolean("recorderMeaningfulRetentionV60", true)
             if (!prefs.contains("sessionTelemetryEveryMs") || prefs.getLong("sessionTelemetryEveryMs", 0L) < 250L) {
                 edit.putLong("sessionTelemetryEveryMs", 250L)
             }
             if (!prefs.contains("sessionLogMaxMb") || prefs.getInt("sessionLogMaxMb", 1_024) == 1_024) {
                 edit.putInt("sessionLogMaxMb", 256)
             }
-            if (!prefs.contains("sessionKeepCount") || prefs.getInt("sessionKeepCount", 5) == 5) {
-                edit.putInt("sessionKeepCount", 3)
+            if (!prefs.contains("sessionKeepCount") || prefs.getInt("sessionKeepCount", 3) < 20) {
+                edit.putInt("sessionKeepCount", 30)
             }
             edit.apply()
         }
@@ -96,8 +96,11 @@ class AppSettings(context: Context) {
         get() = prefs.getInt("sessionLogMaxMb", 256)
         set(value) = prefs.edit().putInt("sessionLogMaxMb", value.coerceIn(64, 1_024)).apply()
     var sessionKeepCount: Int
-        get() = prefs.getInt("sessionKeepCount", 3)
-        set(value) = prefs.edit().putInt("sessionKeepCount", value.coerceIn(1, 20)).apply()
+        get() = prefs.getInt("sessionKeepCount", 30)
+        set(value) = prefs.edit().putInt("sessionKeepCount", value.coerceIn(20, 100)).apply()
+    var sessionVaultTreeUri: String
+        get() = prefs.getString("sessionVaultTreeUri", "") ?: ""
+        set(value) = prefs.edit().putString("sessionVaultTreeUri", value.trim()).apply()
 
     var deviceId: String
         get() {
@@ -222,6 +225,7 @@ class AppSettings(context: Context) {
         .put("sessionCaptureRawUsb", sessionCaptureRawUsb)
         .put("sessionLogMaxMb", sessionLogMaxMb)
         .put("sessionKeepCount", sessionKeepCount)
+        .put("sessionVaultTreeUri", sessionVaultTreeUri)
         .put("deviceId", deviceId)
         .put("deviceName", deviceName)
         .put("linkEnabled", linkEnabled)

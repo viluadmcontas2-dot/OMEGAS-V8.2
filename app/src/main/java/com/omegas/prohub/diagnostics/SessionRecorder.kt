@@ -1,6 +1,7 @@
 package com.omegas.prohub.diagnostics
 
 import android.content.ContentResolver
+import android.content.Context
 import android.net.Uri
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
@@ -31,6 +32,7 @@ import java.util.zip.ZipOutputStream
  * recebe os eventos seguintes; o ZIP usa somente arquivos imutáveis.
  */
 class SessionRecorder(
+    context: Context,
     private val paths: AppPaths,
     private val settings: AppSettings,
 ) {
@@ -51,6 +53,7 @@ class SessionRecorder(
         { _, _ -> droppedEvents.incrementAndGet() },
     )
     private val sequence = AtomicLong(0L)
+    private val vault = SessionVault(context.applicationContext, paths, settings)
     private val previewLock = Any()
     private val preview = ArrayDeque<JSONObject>()
     private val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
@@ -64,6 +67,10 @@ class SessionRecorder(
     @Volatile private var stoppedAt = 0L
     @Volatile private var eventCount = 0L
     @Volatile private var byteCount = 0L
+    @Volatile private var telemetryCount = 0L
+    @Volatile private var usbSegmentCount = 0
+    @Volatile private var protectedEvidence = false
+    @Volatile private var explicitlyProtected = false
     @Volatile private var currentSegment = 0
     @Volatile private var lastTelemetryAt = 0L
     @Volatile private var lastSnapshotAt = 0L
@@ -79,7 +86,6 @@ class SessionRecorder(
     fun start(reason: String, metadata: JSONObject = JSONObject()): JSONObject {
         if (recording) return statusObject().put("ok", true).put("alreadyRecording", true)
         return try {
-            pruneOldSessions()
             val now = System.currentTimeMillis()
             val id = "session_${fileStamp.format(Date(now))}_${settings.deviceId.take(8)}"
             val dir = File(paths.sessionLogsRoot, id).apply { mkdirs() }
@@ -89,6 +95,10 @@ class SessionRecorder(
             stoppedAt = 0L
             eventCount = 0L
             byteCount = 0L
+            telemetryCount = 0L
+            usbSegmentCount = 0
+            protectedEvidence = false
+            explicitlyProtected = false
             currentSegment = 0
             segmentBytes = 0L
             lastTelemetryAt = 0L
@@ -125,8 +135,37 @@ class SessionRecorder(
             stopReason = reason
             closeWriter()
             updateManifest()
-            statusObject().put("ok", true)
+            val dir = sessionDir
+            val relevance = currentRelevance()
+            pruneOldSessions()
+            if (dir != null && relevance != SessionRelevance.PROBE) vault.promoteAsync(dir)
+            statusObject().put("ok", true).put("relevance", relevance.name)
         }
+    }
+
+    @Synchronized
+    fun recordUsbSegment(connected: Boolean, usbSessionId: Long, device: String = "") {
+        if (!recording) return
+        if (connected) usbSegmentCount += 1
+        recordNow(
+            if (connected) "usb_segment_started" else "usb_segment_ended",
+            "usb",
+            JSONObject()
+                .put("usbSessionId", usbSessionId)
+                .put("device", device)
+                .put("logicalSessionId", sessionId)
+                .put("segment", usbSegmentCount),
+        )
+        updateManifest()
+    }
+
+    @Synchronized
+    fun protectCurrentSession(reason: String = "operador"): JSONObject {
+        if (!recording) return statusObject().put("ok", false).put("error", "Nenhuma sessão ativa")
+        explicitlyProtected = true
+        recordNow("session_protected", "native", JSONObject().put("reason", reason.take(180)))
+        updateManifest()
+        return statusObject().put("ok", true).put("relevance", SessionRelevance.PROTECTED.name)
     }
 
     fun record(type: String, source: String, data: JSONObject, force: Boolean = false) {
@@ -194,6 +233,9 @@ class SessionRecorder(
             .put("events", eventCount)
             .put("droppedEvents", droppedEvents.get())
             .put("bytes", byteCount)
+            .put("telemetryFrames", telemetryCount)
+            .put("usbSegments", usbSegmentCount)
+            .put("relevance", currentRelevance().name)
             .put("megabytes", byteCount / (1024.0 * 1024.0))
             .put("limitMb", settings.sessionLogMaxMb)
             .put("segment", currentSegment)
@@ -240,6 +282,9 @@ class SessionRecorder(
                         .put("durationMs", (durationEnd - createdAt).coerceAtLeast(0L))
                         .put("reason", manifest.optString("reason", "Sessão"))
                         .put("bytes", size)
+                        .put("relevance", manifest.optString("relevance", SessionRelevance.PROBE.name))
+                        .put("telemetryFrames", manifest.optLong("telemetryFrames", 0L))
+                        .put("usbSegments", manifest.optInt("usbSegments", 0))
                         .put("active", active),
                 )
             }
@@ -336,6 +381,7 @@ class SessionRecorder(
     fun close() {
         if (recording) stop("serviço encerrado")
         worker.shutdownNow()
+        vault.close()
     }
 
     private fun createActiveExportSnapshot(dir: File): ExportSnapshot {
@@ -421,6 +467,10 @@ class SessionRecorder(
             if (eventCount % 32L == 0L || critical) writer?.flush()
             eventCount += 1L
             byteCount += bytes
+            if (type == "telemetry") telemetryCount += 1L
+            if (type in setOf("k_batch_confirmed", "k_factor_batch_confirmed", "autocal_native_calibration_epoch")) {
+                protectedEvidence = true
+            }
             segmentBytes += bytes
             synchronized(previewLock) {
                 preview.addLast(
@@ -460,7 +510,7 @@ class SessionRecorder(
     private fun writeManifestBase(dir: File, now: Long, reason: String, metadata: JSONObject) {
         val manifest = JSONObject()
             .put("format", FORMAT)
-            .put("schemaVersion", 2)
+            .put("schemaVersion", 3)
             .put("sessionId", sessionId)
             .put("createdAtMs", now)
             .put("createdAtUtc", iso(now))
@@ -498,6 +548,10 @@ class SessionRecorder(
             .put("events", eventCount)
             .put("droppedEvents", droppedEvents.get())
             .put("bytes", byteCount)
+            .put("telemetryFrames", telemetryCount)
+            .put("usbSegments", usbSegmentCount)
+            .put("relevance", currentRelevance().name)
+            .put("protectedEvidence", protectedEvidence || explicitlyProtected)
             .put("segments", currentSegment)
             .put("stopReason", stopReason)
             .put("lastError", lastError)
@@ -511,12 +565,35 @@ class SessionRecorder(
         }
     }
 
+    private fun currentRelevance(nowMs: Long = System.currentTimeMillis()): SessionRelevance =
+        SessionRelevancePolicy.classify(
+            telemetryFrames = telemetryCount,
+            durationMs = if (startedAt > 0L) ((stoppedAt.takeIf { it > 0L } ?: nowMs) - startedAt).coerceAtLeast(0L) else 0L,
+            protectedEvidence = protectedEvidence,
+            explicitlyProtected = explicitlyProtected,
+        )
+
     private fun pruneOldSessions() {
-        val keep = settings.sessionKeepCount.coerceIn(1, 20)
         val dirs = paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
             ?.sortedByDescending { it.lastModified() }
             .orEmpty()
-        dirs.drop((keep - 1).coerceAtLeast(0)).forEach { old -> old.deleteRecursively() }
+        data class Stored(val dir: File, val relevance: SessionRelevance)
+        val stored = dirs.map { dir ->
+            val relevance = try {
+                val manifest = JSONObject(File(dir, "manifest.json").readText(Charsets.UTF_8))
+                SessionRelevance.valueOf(manifest.optString("relevance", SessionRelevance.PROBE.name))
+            } catch (_: Exception) {
+                SessionRelevance.PROBE
+            }
+            Stored(dir, relevance)
+        }
+        // Probes são diagnóstico efêmero e nunca ocupam o orçamento das sessões úteis.
+        stored.filter { it.relevance == SessionRelevance.PROBE }.drop(10).forEach { it.dir.deleteRecursively() }
+        // PROTECTED é permanente até ação explícita do operador. O orçamento vale
+        // somente para VALID, que é o histórico útil rotativo.
+        stored.filter { it.relevance == SessionRelevance.VALID }
+            .drop(settings.sessionKeepCount.coerceIn(20, 100))
+            .forEach { it.dir.deleteRecursively() }
     }
 
     private fun awaitPendingWrites(timeoutMs: Long = 5_000L) {
