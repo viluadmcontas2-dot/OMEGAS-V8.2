@@ -9,23 +9,31 @@ for (const label of [
   'DECISÃO DO NÚCLEO',
   'CONDIÇÃO AGORA',
   'ÚLTIMAS DECISÕES OBSERVADAS',
-  'Memória consolidada',
-  'Evidência recente',
-  'Resumo projetado da célula',
-  'não é o par usado no cálculo',
   'Gasolina — referência agregada',
-  'GNV atual agregado — Petrol Inj.',
-  'Par observado usado no cálculo',
+  'Qualidade da referência',
+  'GNV atual — Petrol Inj.',
+  'Qualidade do GNV',
+  'Desvio medido',
   'Suporte da referência',
-  'Precisão local',
   'Histórico GNV',
-  'Sugestão local',
+  'Correção Blue — separada da medição',
+  'BlueCausalEngine',
 ]) {
   assert.equal(source.includes(label), true, `missing ${label}`);
 }
-assert.equal(source.includes('stability?.reason || learned?.readinessReason'), true);
+for (const forbidden of [
+  'Memória consolidada',
+  'Predição contínua RPM × MAP',
+  'Sugestão local',
+  'mapResidualPredictions',
+  'assistedCalibration',
+  'learningStability',
+]) {
+  assert.equal(source.includes(forbidden), false, `retired decision semantics remain: ${forbidden}`);
+}
 assert.equal(source.includes('ainda não existe par equivalente válido'), true);
 assert.equal(source.includes('somente consulta'), true);
 assert.equal(source.includes('Abrir o editor não escreve na ECU'), true);
 assert.equal(source.includes("router.navigate('map'"), true);
+assert.equal(source.includes("suggestion: suggestion"), false);
 console.log('LEARNING_UNDERSTANDING_CONTRACT=PASS');
