@@ -170,7 +170,7 @@ class BlueEvidenceStore(
                 if (!petrol.containsKey(id)) {
                     petrol[id] = JSONObject(source.toString())
                         .put("fuel", Mp48Fuel.PETROL.wireName)
-                        .remove("epoch")
+                        .apply { remove("epoch") }
                     imported += 1
                 }
             }
@@ -190,7 +190,7 @@ class BlueEvidenceStore(
             .put("epoch", synchronized(lock) { epoch })
     }
 
-    /** Snapshot Auto-Cal é contexto observacional; não vira comparação nem alvo. */
+    /** Snapshot AutoCal é contexto observacional; não vira comparação nem alvo. */
     fun importNativeSnapshot(snapshot: JSONObject): JSONObject {
         val snapshotId = snapshot.optString("snapshotId", snapshot.optString("sessionId"))
         if (snapshotId.isBlank()) return JSONObject().put("ok", false).put("error", "Snapshot nativo sem identificador")
