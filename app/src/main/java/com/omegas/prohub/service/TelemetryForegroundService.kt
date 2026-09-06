@@ -24,6 +24,8 @@ import com.omegas.prohub.link.OmegasLinkManager
 import com.omegas.prohub.model.HubStatus
 import com.omegas.prohub.network.LanPanelServer
 import com.omegas.prohub.obd.ObdAssistManager
+import com.omegas.prohub.obd.ObdWitnessEngine
+import com.omegas.prohub.obd.ObdWitnessSample
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.storage.DataArchiveManager
@@ -61,6 +63,8 @@ class TelemetryForegroundService : Service() {
     private val scheduler = Executors.newSingleThreadScheduledExecutor { runnable ->
         Thread(runnable, "omegas-native-service").apply { isDaemon = true }
     }
+    private val obdWitnessEngine = ObdWitnessEngine()
+    @Volatile private var latestObdWitness = JSONObject()
 
     lateinit var paths: AppPaths
         private set
@@ -201,7 +205,7 @@ class TelemetryForegroundService : Service() {
             },
             onStateChanged = { stateChanged() },
         )
-        // OBD é somente observacional: registra STFT/LTFT e nunca altera o motor de aprendizado.
+        // OBD é somente observacional: STFT é pareado à telemetria MP48 histórica e nunca escreve K.
         obd = ObdAssistManager(
             context = this,
             paths = paths,
@@ -211,6 +215,7 @@ class TelemetryForegroundService : Service() {
             onStateChanged = ::stateChanged,
             onLiveSample = { sample ->
                 sessionRecorder.record("obd", "obd", sample, force = true)
+                pairObdStftWitness(sample)
             },
         )
         learningArchive = LearningArchiveManager(paths, settings, runtime, obd, kWriter, log)
@@ -396,6 +401,7 @@ class TelemetryForegroundService : Service() {
             .put("k_factor", try { JSONObject(kFactor.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("session_recorder", try { JSONObject(sessionRecorder.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("obd", try { JSONObject(obd?.statusJson() ?: "{}") } catch (_: Exception) { JSONObject() })
+            .put("obd_witness", JSONObject(latestObdWitness.toString()))
             .put("link_status", try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("consumption", consumptionTracker.buildTelemetryJson(settings.gnvCylinderCapacityM3.toFloat()))
             .put("native_updated_at", System.currentTimeMillis())
@@ -553,6 +559,7 @@ class TelemetryForegroundService : Service() {
     fun obdDevicesJson(): String = obd?.pairedDevicesJson() ?: "[]"
     fun obdStatusJson(): String = obd?.statusJson() ?: "{}"
     fun obdMapsJson(): String = obd?.mapsJson() ?: "{}"
+    fun obdWitnessStatusJson(): String = JSONObject(latestObdWitness.toString()).toString()
     fun setObdMode(mode: String): String = obd?.setMode(mode)?.toString() ?: "{}"
     fun setObdManualFuel(fuel: String): String = obd?.setManualFuel(fuel)?.toString() ?: "{}"
     fun connectObd(address: String): String = obd?.connect(address)?.toString() ?: "{}"
@@ -732,6 +739,63 @@ class TelemetryForegroundService : Service() {
         sessionRecorder.record("telemetry", "mp48", live)
         sessionRecorder.record("engine_event", "native", root, force = false)
         stateChanged()
+    }
+
+    private fun pairObdStftWitness(sample: JSONObject) {
+        if (sample.optString("kind") != "STFT_OBSERVATION") return
+        val observedAtMs = sample.optLong("observedAtMs", 0L)
+        val stft = sample.optDouble("stft", Double.NaN)
+        if (observedAtMs <= 0L || !stft.isFinite()) return
+
+        val frame = telemetryStore.nearestFrame(observedAtMs, 250L) ?: return
+        val rpm = frame.optDouble("rpm", 0.0)
+        val mapBar = frame.optDouble("map_bar", 0.0)
+        val petrolMs = frame.optDouble("petrol_ms", 0.0)
+        val fuel = frame.optString("fuel", "").trim().uppercase()
+        val skewMs = frame.optLong("skew_ms", Long.MAX_VALUE)
+        if (rpm <= 0.0 || mapBar <= 0.0 || petrolMs <= 0.0 || skewMs < 0L || skewMs > 250L) return
+        if (fuel !in setOf("PETROL", "GASOLINA", "CNG", "GNV", "GAS")) return
+
+        val epoch = try {
+            JSONObject(obd?.mapsJson() ?: "{}").optJSONObject("epoch")
+        } catch (_: Exception) {
+            null
+        } ?: return
+        val mapEpochId = epoch.optString("mapEpochId").trim()
+        val curveEpochId = epoch.optString("curveEpochId").trim()
+        if (mapEpochId.isBlank() || curveEpochId.isBlank()) return
+        val calibrationState = "$mapEpochId:$curveEpochId"
+
+        obdWitnessEngine.observe(
+            ObdWitnessSample(
+                observedAtMs = observedAtMs,
+                stftPct = stft,
+                rpm = rpm,
+                mapBar = mapBar,
+                petrolMs = petrolMs,
+                fuel = fuel,
+                calibrationState = calibrationState,
+                skewMs = skewMs,
+            ),
+        )
+        val result = obdWitnessEngine.evaluate(rpm, mapBar, petrolMs, calibrationState)
+        val witness = JSONObject()
+            .put("state", result.state.name)
+            .put("gasolineReferencePct", result.gasolineReferencePct ?: JSONObject.NULL)
+            .put("gnvStftPct", result.gnvStftPct ?: JSONObject.NULL)
+            .put("residualPp", result.residualPp ?: JSONObject.NULL)
+            .put("quality", result.quality)
+            .put("gasolineSamples", result.gasolineSamples)
+            .put("gnvSamples", result.gnvSamples)
+            .put("rpm", rpm)
+            .put("map_bar", mapBar)
+            .put("petrol_ms", petrolMs)
+            .put("fuel", fuel)
+            .put("skew_ms", skewMs)
+            .put("calibrationState", calibrationState)
+            .put("observedAtMs", observedAtMs)
+        latestObdWitness = witness
+        sessionRecorder.record("obd_witness", "obd", witness, force = true)
     }
 
     private fun consumeGpsUpdate() {
