@@ -1,4 +1,4 @@
-# Scoped remote executor for the current OBD LIVE-loss TDD slice.
+# Scoped remote executor for the current OBD STFT-only TDD slice.
 name: OMEGAS Blue OBD stage apply
 
 on:
@@ -6,7 +6,7 @@ on:
     branches:
       - work/omegas-blue-causal-engine
     paths:
-      - scripts/blue_obd_live_loss_fix.py
+      - scripts/blue_obd_stft_only_apply.py
       - .github/workflows/blue-obd-stage-apply.yml
 
 permissions:
@@ -25,18 +25,18 @@ jobs:
         with:
           ref: work/omegas-blue-causal-engine
           fetch-depth: 0
-      - name: Apply scoped LIVE-loss fix
-        run: python3 scripts/blue_obd_live_loss_fix.py
-      - name: Prove focused structural contract
-        run: python3 -B tests/test_blue_obd_connection_state_contract.py
+      - name: Apply scoped STFT-only cut
+        run: python3 scripts/blue_obd_stft_only_apply.py
+      - name: Prove focused acquisition contract
+        run: python3 -B tests/test_blue_obd_stft_only_contract.py
       - name: Commit integration if changed
         run: |
           if git diff --quiet && git diff --cached --quiet; then
-            echo "No OBD LIVE-loss changes needed"
+            echo "No OBD STFT-only changes needed"
             exit 0
           fi
           git config user.name "omegas-blue-ci"
           git config user.email "actions@users.noreply.github.com"
           git add app/src/main/java/com/omegas/prohub/obd/ObdAssistManager.kt
-          git commit -m "fix(obd): expose retryable LIVE link loss"
+          git commit -m "refactor(obd): make live acquisition STFT only"
           git push origin HEAD:work/omegas-blue-causal-engine
