@@ -10,8 +10,15 @@ const router = read('app/src/main/assets/ui/core/router.js');
 const store = read('app/src/main/assets/ui/core/store.js');
 const app = read('app/src/main/assets/ui/app.js');
 const index = read('app/src/main/assets/ui/index.html');
+const nativeApi = read('app/src/main/assets/ui/core/native-api.js');
 
-for (const [name, source] of [['router', router], ['store', store], ['app', app], ['index', index]]) {
+for (const [name, source] of [
+  ['router', router],
+  ['store', store],
+  ['app', app],
+  ['index', index],
+  ['native-api', nativeApi],
+]) {
   assert.equal(/predictor/i.test(source), false, `${name} still exposes browser Predictor semantics`);
 }
 
