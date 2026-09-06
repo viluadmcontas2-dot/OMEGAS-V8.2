@@ -3,8 +3,10 @@ package com.omegas.prohub.calibration
 import com.omegas.prohub.blue.BlueAutoCalAdapter
 import com.omegas.prohub.blue.BlueCausalEngine
 import com.omegas.prohub.blue.BlueLearningState
+import com.omegas.prohub.blue.BlueWitnessConfidence
 import com.omegas.prohub.blue.CalibrationRevision
 import com.omegas.prohub.blue.CalibrationState
+import com.omegas.prohub.blue.FuelComparison
 import com.omegas.prohub.blue.FuelEvidence
 import com.omegas.prohub.blue.FuelKind
 import com.omegas.prohub.ecu.KFactorProtocol
@@ -16,6 +18,7 @@ import java.util.UUID
  * Integration boundary between proven ECU readers/writers and the Blue engine.
  * This class never writes a suggestion automatically. Manual writers remain the
  * only path to the ECU and every confirmed write is followed by fresh readback.
+ * OBD witness data is projected only after Blue has finished its causal math.
  */
 class BlueCalibrationCoordinator(
     private val mapManager: KWriteManager,
@@ -25,6 +28,7 @@ class BlueCalibrationCoordinator(
     private val engine = BlueCausalEngine()
     private val autoCal = BlueAutoCalAdapter(engine)
     private var state: BlueLearningState? = null
+    private var latestObdWitness: JSONObject? = null
 
     fun synchronizeFromEcu(): JSONObject = synchronized(lock) {
         val mapResult = mapManager.readFullMap()
@@ -112,6 +116,14 @@ class BlueCalibrationCoordinator(
             .put("cngImported", cngImported)
     }
 
+    fun updateObdWitness(witness: JSONObject): JSONObject = synchronized(lock) {
+        latestObdWitness = JSONObject(witness.toString())
+        JSONObject()
+            .put("ok", true)
+            .put("observationalOnly", true)
+            .put("calibrationState", witness.optString("calibrationState").ifBlank { JSONObject.NULL })
+    }
+
     fun reconcileConfirmedManualWrite(): JSONObject = synchronized(lock) {
         val previous = requireState().calibration.revision
         val synced = synchronizeFromEcu()
@@ -132,8 +144,10 @@ class BlueCalibrationCoordinator(
                 .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
                 .put("automatic", false)
                 .put("manualOnly", true)
-        autoCal.proposalJson(comparison, gain = null)
-            .put("available", true)
+        projectWitness(
+            baseJson = autoCal.proposalJson(comparison, gain = null),
+            comparison = comparison,
+        ).put("available", true)
     }
 
     private fun stateJsonLocked(): JSONObject {
@@ -142,6 +156,7 @@ class BlueCalibrationCoordinator(
             .put("reason", "CALIBRATION_NOT_SYNCED")
             .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
         val latest = current.activeComparisons().maxByOrNull { it.createdAtMs }
+        val latestJson = latest?.let(::comparisonJson)
         return JSONObject()
             .put("ready", true)
             .put("sessionId", current.sessionId)
@@ -151,24 +166,43 @@ class BlueCalibrationCoordinator(
             .put("petrolEvidence", current.petrolEvidence.size)
             .put("activeCngEvidence", current.activeCngEvidence().size)
             .put("activeComparisons", current.activeComparisons().size)
-            .put("latestComparison", latest?.let(::comparisonJson) ?: JSONObject.NULL)
+            .put("latestComparison", latestJson ?: JSONObject.NULL)
+            .put("baseConfidence", latestJson?.optDouble("baseConfidence") ?: JSONObject.NULL)
+            .put("effectiveConfidence", latestJson?.optDouble("effectiveConfidence") ?: JSONObject.NULL)
+            .put("obdWitness", latestJson?.optJSONObject("obdWitness") ?: JSONObject.NULL)
             .put("proposal", proposalJsonLocked(latest))
             .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
             .put("automaticWrite", false)
     }
 
-    private fun proposalJsonLocked(comparison: com.omegas.prohub.blue.FuelComparison?): Any =
-        comparison?.let { autoCal.proposalJson(it, gain = null) } ?: JSONObject.NULL
+    private fun proposalJsonLocked(comparison: FuelComparison?): Any = comparison?.let {
+        projectWitness(autoCal.proposalJson(it, gain = null), it)
+    } ?: JSONObject.NULL
 
-    private fun comparisonJson(value: com.omegas.prohub.blue.FuelComparison): JSONObject = JSONObject()
-        .put("id", value.id)
-        .put("rpm", value.rpm)
-        .put("mapBar", value.mapBar)
-        .put("petrolReferenceMs", value.petrolTargetMs)
-        .put("petrolOnCngMs", value.petrolOnCngMs)
-        .put("errorPercent", value.errorPercent)
-        .put("quality", value.quality)
-        .put("createdAt", value.createdAtMs)
+    private fun comparisonJson(value: FuelComparison): JSONObject = projectWitness(
+        baseJson = JSONObject()
+            .put("id", value.id)
+            .put("rpm", value.rpm)
+            .put("mapBar", value.mapBar)
+            .put("petrolReferenceMs", value.petrolTargetMs)
+            .put("petrolOnCngMs", value.petrolOnCngMs)
+            .put("errorPercent", value.errorPercent)
+            .put("quality", value.quality)
+            .put("createdAt", value.createdAtMs),
+        comparison = value,
+    )
+
+    private fun projectWitness(baseJson: JSONObject, comparison: FuelComparison): JSONObject =
+        BlueWitnessConfidence.project(
+            baseJson = baseJson,
+            blueErrorPercent = comparison.errorPercent,
+            baseQuality = comparison.quality,
+            witness = latestObdWitness,
+            expectedCalibrationState = calibrationStateId(comparison.revision),
+        )
+
+    private fun calibrationStateId(value: CalibrationRevision): String =
+        "map-${value.mapK}:curve-${value.curveK}"
 
     private fun decodeCurve(raw: JSONArray?): List<Double> {
         require(raw != null && raw.length() == CalibrationShape.CURVE_K_POINTS) {
