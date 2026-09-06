@@ -23,6 +23,8 @@ for (const [name, source] of [['index', index], ['drawers', drawers], ['app', ap
 }
 
 assert.equal(index.includes('suggestion-model.js'), false, 'index still loads retired suggestion model');
+assert.equal(drawers.includes('renderSuggestions'), false,
+  'tools utility shell must not own a second suggestion renderer');
 assert.equal(app.includes('calibration.suggestionItems'), true,
   'suggestions UI must project native Blue calibrationState.suggestionItems');
 assert.equal(app.includes('renderPersistentSuggestions'), true,
