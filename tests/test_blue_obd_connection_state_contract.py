@@ -21,6 +21,11 @@ def main() -> None:
         '"ATAT1"',
         "ElmResponseParser.mode01(response, pid)",
         "omegas-obd-rfcomm-watchdog",
+        '"RFCOMM_TIMEOUT"',
+        '"BLUETOOTH_PERMISSION_REQUIRED"',
+        '"PROTOCOL_FAILED"',
+        '"STFT_PROBE_FAILED"',
+        '"LIVE_LINK_LOST"',
         "if (running.get() && connectionState.snapshot().stage == ElmStage.LIVE)",
         '"Conexão ELM foi encerrada durante aquisição STFT"',
     ]
