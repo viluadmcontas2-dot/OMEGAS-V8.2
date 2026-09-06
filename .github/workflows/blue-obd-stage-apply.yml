@@ -5,7 +5,7 @@ on:
     branches:
       - work/omegas-blue-causal-engine
     paths:
-      - scripts/blue_obd_stage_integrate.py
+      - scripts/blue_obd_live_loss_fix.py
       - .github/workflows/blue-obd-stage-apply.yml
 
 permissions:
@@ -24,18 +24,18 @@ jobs:
         with:
           ref: work/omegas-blue-causal-engine
           fetch-depth: 0
-      - name: Apply scoped OBD stage integration
-        run: python3 scripts/blue_obd_stage_integrate.py
+      - name: Apply scoped LIVE-loss fix
+        run: python3 scripts/blue_obd_live_loss_fix.py
       - name: Prove focused structural contract
         run: python3 -B tests/test_blue_obd_connection_state_contract.py
       - name: Commit integration if changed
         run: |
           if git diff --quiet && git diff --cached --quiet; then
-            echo "No OBD stage changes needed"
+            echo "No OBD LIVE-loss changes needed"
             exit 0
           fi
           git config user.name "omegas-blue-ci"
           git config user.email "actions@users.noreply.github.com"
           git add app/src/main/java/com/omegas/prohub/obd/ObdAssistManager.kt
-          git commit -m "feat(obd): integrate staged ELM connection runtime"
+          git commit -m "fix(obd): expose retryable LIVE link loss"
           git push origin HEAD:work/omegas-blue-causal-engine
