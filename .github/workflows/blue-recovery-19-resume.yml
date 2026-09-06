@@ -77,12 +77,26 @@ jobs:
           text = text.replace(old, new, 1)
           path.write_text(text, encoding='utf-8')
 
-      - name: Verify focused RED-to-GREEN contracts
+      - name: Verify #19 and all FAST contracts outside known #17 RED
+        shell: python
         run: |
-          python3 -B tests/test_blue_learning_semantics_contract.py
-          node --test tests/ui/blue-learning-recovery-ui.test.cjs
-          node --check app/src/main/assets/ui/screens/learning.js
-          python3 -B tools/run_checks.py
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          root = Path.cwd()
+          commands = [[sys.executable, '-B', str(p.relative_to(root))] for p in sorted((root / 'tests').glob('test_*.py'))]
+          commands += [
+              ['node', '--test', str(p.relative_to(root))]
+              for p in sorted((root / 'tests/ui').glob('*.test.cjs'))
+              if p.name != 'blue-runtime-essential-screens.test.cjs'
+          ]
+          for command in commands:
+              print('+', ' '.join(command), flush=True)
+              result = subprocess.run(command, cwd=root)
+              if result.returncode:
+                  raise SystemExit(result.returncode)
+          print('BLUE_RECOVERY_19_SCOPED_FAST=PASS')
 
       - name: Commit production recovery and remove temporary machinery
         run: |
@@ -91,7 +105,7 @@ jobs:
           rm -f .github/workflows/blue-recovery-19-apply.yml
           rm -f .github/workflows/blue-recovery-19-resume.yml
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "418982982+github-actions[bot]@users.noreply.github.com"
           git add -A
           git diff --cached --check
           git commit -m "fix(blue): recover Learning semantics and serial policy #19"
