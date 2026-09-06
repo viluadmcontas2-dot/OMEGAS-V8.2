@@ -24,37 +24,64 @@
     }
     return null;
   }
+  function fuelLabel(raw) {
+    const value = String(raw || '—').toUpperCase();
+    if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
+    if (value.includes('CNG') || value.includes('GNV') || value === 'GAS') return 'GNV';
+    if (value.includes('CUTOFF')) return 'CUTOFF';
+    return value || '—';
+  }
+  function ensureStyles() {
+    if (document.querySelector('link[data-witness-multimedia]')) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'styles-witness-multimedia.css';
+    link.dataset.witnessMultimedia = 'true';
+    document.head.appendChild(link);
+  }
 
   class DashboardScreen {
     constructor() {
+      ensureStyles();
       this.root = document.querySelector('[data-screen="dashboard"]');
       this.lastHealthSignature = '';
-      this.ensureLayout();
+      this.installLayout();
     }
 
-    ensureLayout() {
-      const hero = this.root?.querySelector('.hero-reading');
-      if (hero && !hero.classList.contains('refined-now')) {
-        hero.classList.add('refined-now');
-        hero.innerHTML = `
-          <small>PETROL INJECTION</small>
-          <div class="hero-rpm"><strong id="dashHeroPetrol">—</strong><em>ms</em></div>
-          <p id="dashHeroContext">Aguardando ECU</p>
-          <div class="hero-context-grid">
-            <div><small>RPM</small><b id="dashHeroRpm">0</b></div>
-            <div><small>MAP</small><b id="dashMap">—</b></div>
-            <div><small>COMBUSTÍVEL</small><b id="dashFuel">—</b></div>
-            <div><small>CÉLULA</small><b id="dashCell">—</b></div>
-          </div>`;
-      }
-      const strip = this.root?.querySelector('.condition-strip');
-      if (strip) {
-        strip.innerHTML = `
-          <div class="diagnostic"><small>GAS INJ.</small><b><span id="dashGas">—</span> ms</b><span>pulso GNV · diagnóstico</span></div>
-          <div><small>ECU</small><b id="dashEcuMini">offline</b></div>
-          <div><small>OBD</small><b id="dashObdMini">offline</b></div>
-          <div><small>TELEMETRIA</small><b id="dashAgeMini">—</b></div>`;
-      }
+    installLayout() {
+      if (!this.root) return;
+      this.root.classList.add('multimedia-now-screen');
+      this.root.innerHTML = `
+        <div class="now-page-intro">
+          <div><small>AGORA</small><h2>O que o motor está fazendo</h2></div>
+          <p>Informação essencial, grande e sem repetição.</p>
+        </div>
+
+        <div class="now-dashboard-shell">
+          <section class="now-hero-card" aria-label="Leitura principal">
+            <div class="now-hero-copy">
+              <small class="now-hero-label">PETROL INJECTION</small>
+              <p id="dashHeroStatus" class="now-hero-status">Aguardando ECU</p>
+              <div class="now-hero-value"><strong id="dashHeroPetrol">—</strong><em>ms</em></div>
+              <span class="now-hero-note">Leitura em tempo real da MP48 · sem duplicar telemetria</span>
+            </div>
+            <div class="now-hero-visual" aria-hidden="true"><span></span><i></i></div>
+          </section>
+
+          <section class="now-metric-grid" aria-label="Telemetria essencial">
+            <article class="now-metric-card"><small>RPM</small><b id="dashRpm">0</b><span>rotação</span></article>
+            <article class="now-metric-card"><small>MAP</small><b id="dashMap">—</b><span>bar</span></article>
+            <article class="now-metric-card"><small>COMBUSTÍVEL</small><b id="dashFuel">—</b><span>MP48</span></article>
+            <article class="now-metric-card now-stft-card"><small>STFT</small><b id="dashStft">—</b><span id="dashStftState">OBD offline</span></article>
+            <article class="now-metric-card"><small>CÉLULA</small><b id="dashCell">—</b><span>posição atual</span></article>
+          </section>
+
+          <section id="dashHealth" class="now-session-card" data-level="offline">
+            <span class="state-indicator"></span>
+            <div class="now-session-copy"><small>SESSÃO</small><b>MP48 desconectado</b><p data-health-detail>Conecte a ECU para iniciar a sessão</p></div>
+            <div class="now-session-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashObdStatus">OBD offline</span><span id="dashAge">—</span></div>
+          </section>
+        </div>`;
     }
 
     render(state) {
@@ -66,14 +93,14 @@
       const cell = interpolation.cell || {};
       const rpm = finite(data.rpm ?? status.rpm) || 0;
       const petrol = data.petrol_ms ?? data.petrolMs ?? status.petrolMs;
-      const gas = data.gas_ms_diagnostic ?? data.gasMs ?? status.gasMs;
       const map = data.load_bar ?? data.map_bar ?? data.mapBar ?? status.mapBar;
-      const fuel = String(data.fuel || data.state || status.fuelState || '—').replace('PETROL', 'GASOLINA').replace('CNG', 'GNV');
-      const stft = obdValue(obd, ['stft', 'shortTermFuelTrim', 'short_term_fuel_trim']);
-      const ltft = obdValue(obd, ['ltft', 'longTermFuelTrim', 'long_term_fuel_trim']);
+      const fuel = fuelLabel(data.fuel || data.state || status.fuelState);
+      const rawStft = obdValue(obd, ['stft', 'shortTermFuelTrim', 'short_term_fuel_trim']);
       const age = finite(state.telemetry?.telemetryAgeMs ?? state.telemetry?.ageMs ?? status.directTelemetryAgeMs);
       const connected = status.usbConnected === true;
-      const obdConnected = obd.connected === true || ['CONNECTED', 'CONECTADO'].includes(String(obd.state || obd.status || '').toUpperCase());
+      const obdState = String(obd.connectionStage || obd.state || obd.status || '').toUpperCase();
+      const obdConnected = obd.connected === true || ['LIVE', 'CONNECTED', 'CONECTADO', 'REMOTO AO VIVO'].includes(obdState);
+      const stft = obdConnected ? rawStft : null;
       const stale = connected && age !== null && age > 2500;
       const expired = connected && age !== null && age > 8000;
       const stuck = status.engineStuck === true;
@@ -81,29 +108,31 @@
       const column = Number.isFinite(Number(cell.column)) ? Number(cell.column) : null;
 
       text('dashHeroPetrol', fmt(petrol, 2));
-      text('dashHeroRpm', Math.round(rpm).toLocaleString('pt-BR'));
-      text('dashGas', fmt(gas, 2));
-      text('dashMap', `${fmt(map, 2)} bar`);
-      text('dashStft', stft === null ? '—' : `${stft > 0 ? '+' : ''}${fmt(stft, 1)}%`);
-      text('dashLtft', ltft === null ? '—' : `${ltft > 0 ? '+' : ''}${fmt(ltft, 1)}%`);
+      text('dashRpm', Math.round(rpm).toLocaleString('pt-BR'));
+      text('dashMap', fmt(map, 2));
       text('dashFuel', fuel);
+      text('dashStft', stft === null ? '—' : `${stft > 0 ? '+' : ''}${fmt(stft, 1)}%`);
+      text('dashStftState', obdConnected ? (stft === null ? 'aguardando 0106' : 'Bank 1 · 0106') : 'OBD offline');
       text('dashCell', row !== null && column !== null ? `${row + 1}×${column + 1}` : '—');
       text('dashEcuStatus', connected ? 'ECU online' : 'ECU offline');
       text('dashObdStatus', obdConnected ? 'OBD online' : 'OBD offline');
-      text('dashEcuMini', connected ? 'online' : 'offline');
-      text('dashObdMini', obdConnected ? 'online' : 'offline');
-      const ageLabel = age === null ? '—' : age < 1000 ? `${Math.round(age)} ms` : `${fmt(age / 1000, 1)} s`;
+      const ageLabel = age === null || age < 0 ? '—' : age < 1000 ? `${Math.round(age)} ms` : `${fmt(age / 1000, 1)} s`;
       text('dashAge', ageLabel);
-      text('dashAgeMini', ageLabel);
-      text('dashHeroContext', connected
-        ? `${fuel} · ${Math.round(rpm).toLocaleString('pt-BR')} RPM · MAP ${fmt(map, 2)} bar`
-        : 'Conecte a MP48 para iniciar a sessão');
+
+      let heroStatus = 'Conecte a MP48 para iniciar a sessão';
+      if (connected && stuck) heroStatus = 'Comunicação da ECU exige atenção';
+      else if (connected && expired) heroStatus = 'Telemetria temporariamente expirada';
+      else if (connected && stale) heroStatus = 'Telemetria com atraso';
+      else if (connected) heroStatus = 'Leitura em tempo real · operação estável';
+      text('dashHeroStatus', heroStatus);
 
       const health = document.getElementById('dashHealth');
       if (health) {
         let level = 'ok';
         let message = 'Leitura em tempo real';
-        let detail = 'ECU e telemetria principal atualizadas';
+        let detail = obdConnected
+          ? 'ECU, telemetria principal e witness OBD disponíveis'
+          : 'ECU e telemetria principal atualizadas · OBD opcional';
         if (!connected) { level = 'offline'; message = 'MP48 desconectado'; detail = 'Conecte a ECU para iniciar a sessão'; }
         else if (stuck) { level = 'critical'; message = 'Comunicação travada'; detail = 'Ajustes permanecem bloqueados até a condição normalizar'; }
         else if (expired) { level = 'critical'; message = 'Telemetria expirada'; detail = 'Ajustes permanecem bloqueados até a condição normalizar'; }
@@ -112,7 +141,7 @@
         if (signature !== this.lastHealthSignature) {
           this.lastHealthSignature = signature;
           health.dataset.level = level;
-          const title = health.querySelector('b');
+          const title = health.querySelector('.now-session-copy b');
           const copy = health.querySelector('[data-health-detail]');
           if (title) title.textContent = message;
           if (copy) copy.textContent = detail;
