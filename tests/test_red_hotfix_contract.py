@@ -66,10 +66,12 @@ class RedHotfixContractTest(unittest.TestCase):
         app = read("app/src/main/assets/ui/app.js")
         self.assertIn('PETROL INJECTION', dashboard)
         self.assertIn('id="dashHeroPetrol"', dashboard)
+        self.assertIn('id="dashRpm"', dashboard)
+        self.assertNotIn('dashHeroRpm', dashboard, "RPM não pode voltar a aparecer no hero")
         self.assertLess(
             dashboard.index('id="dashHeroPetrol"'),
-            dashboard.index('id="dashHeroRpm"'),
-            "Petrol Injection deve preceder RPM na hierarquia hero",
+            dashboard.index('id="dashRpm"'),
+            "Petrol Injection deve preceder o único RPM na hierarquia",
         )
         self.assertNotIn("setInterval", dashboard, "Dashboard não ganha polling próprio")
         self.assertIn("intervalMs: 200", app)
