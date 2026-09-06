@@ -33,8 +33,8 @@ def main() -> None:
         "BlueCalibrationAccess",
         access,
         [
-            "fun TelemetryForegroundService.blueUpdateObdWitness(witness: JSONObject)",
-            "BlueCalibrationRegistry.get(this).updateObdWitness(witness)",
+            "syncObdWitness(this, coordinator)",
+            "coordinator.updateObdWitness(JSONObject(service.obdWitnessStatusJson()))",
         ],
     )
     require_tokens(
@@ -42,7 +42,7 @@ def main() -> None:
         service,
         [
             "pairObdStftWitness(sample)",
-            "blueUpdateObdWitness(witness)",
+            "fun obdWitnessStatusJson()",
         ],
     )
 
