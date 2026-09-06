@@ -19,6 +19,10 @@ def main() -> None:
         'put("retryable"',
         '"ATI"',
         '"ATAT1"',
+        "ElmResponseParser.mode01(response, pid)",
+        "omegas-obd-rfcomm-watchdog",
+        "if (running.get() && connectionState.snapshot().stage == ElmStage.LIVE)",
+        'connectionState.fail(\n                "LIVE_LINK_LOST"',
     ]
     missing = [needle for needle in required if needle not in text]
     assert not missing, f"OBD connection is not stage-aware yet: {missing}"
