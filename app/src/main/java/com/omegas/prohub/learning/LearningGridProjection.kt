@@ -157,7 +157,7 @@ object LearningGridProjection {
                     target.mapWeighted += region.optDouble("map_bar", region.optDouble("map_mean", 0.0)) * weight
                     target.samples += (region.optInt("samples", 0) * cellWeight).toInt()
                     target.addEvidenceIds(region, index)
-                    target.confidenceWeighted += region.optDouble("confidence", 0.0) * weight
+                    target.confidenceWeighted += evidenceQuality(region) * weight
                     target.stage = strongerStage(target.stage, region.optString("stage", "OBSERVED"))
                     target.regionIds.put(region.optString("id", "region-$index"))
                     target.updatedAt = max(target.updatedAt, region.optLong("updated_at", region.optLong("updatedAt", 0L)))
@@ -181,7 +181,7 @@ object LearningGridProjection {
                 target.mapWeighted += region.optDouble("map_bar", region.optDouble("map_mean", 0.0)) * weight
                 target.samples += region.optInt("samples", 0)
                 target.addEvidenceIds(region, index)
-                target.confidenceWeighted += region.optDouble("confidence", 0.0) * weight
+                target.confidenceWeighted += evidenceQuality(region) * weight
                 target.stage = strongerStage(target.stage, region.optString("stage", "OBSERVED"))
                 target.regionIds.put(region.optString("id", "region-$index"))
                 target.updatedAt = max(target.updatedAt, region.optLong("updated_at", region.optLong("updatedAt", 0L)))
@@ -264,6 +264,9 @@ object LearningGridProjection {
         else -> "UNKNOWN"
     }
 
+    private fun evidenceQuality(region: JSONObject): Double =
+        region.optDouble("quality", region.optDouble("confidence", 0.0)).coerceIn(0.0, 1.0)
+
     private fun nearest(values: DoubleArray, value: Double): Int {
         var bestIndex = 0
         var bestDistance = Double.POSITIVE_INFINITY
@@ -333,23 +336,27 @@ object LearningGridProjection {
             )
         }
 
-        fun toJson(): JSONObject = JSONObject()
-            .put("fuel", fuel)
-            .put("epoch", epoch)
-            .put("row", row)
-            .put("column", column)
-            .put("key", "$row:$column")
-            .put("rpm_bin", rpmBins[column])
-            .put("petrol_bin", petrolBins[row])
-            .put("rpm", if (weight > 0) rpmWeighted / weight else 0.0)
-            .put("petrol_ms", if (weight > 0) petrolWeighted / weight else 0.0)
-            .put("map_bar", if (weight > 0) mapWeighted / weight else 0.0)
-            .put("samples", samples)
-            .put("visit_count", max(visitIds.size, visitCountFloor))
-            .put("session_count", max(sessionIds.size, sessionCountFloor))
-            .put("confidence", if (weight > 0) confidenceWeighted / weight else 0.0)
-            .put("stage", stage)
-            .put("updated_at", updatedAt)
-            .put("region_ids", regionIds)
+        fun toJson(): JSONObject {
+            val quality = if (weight > 0) confidenceWeighted / weight else 0.0
+            return JSONObject()
+                .put("fuel", fuel)
+                .put("epoch", epoch)
+                .put("row", row)
+                .put("column", column)
+                .put("key", "$row:$column")
+                .put("rpm_bin", rpmBins[column])
+                .put("petrol_bin", petrolBins[row])
+                .put("rpm", if (weight > 0) rpmWeighted / weight else 0.0)
+                .put("petrol_ms", if (weight > 0) petrolWeighted / weight else 0.0)
+                .put("map_bar", if (weight > 0) mapWeighted / weight else 0.0)
+                .put("samples", samples)
+                .put("visit_count", max(visitIds.size, visitCountFloor))
+                .put("session_count", max(sessionIds.size, sessionCountFloor))
+                .put("quality", quality)
+                .put("confidence", quality)
+                .put("stage", stage)
+                .put("updated_at", updatedAt)
+                .put("region_ids", regionIds)
+        }
     }
 }
