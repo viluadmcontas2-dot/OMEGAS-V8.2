@@ -24,6 +24,7 @@ import com.omegas.prohub.link.OmegasLinkManager
 import com.omegas.prohub.model.HubStatus
 import com.omegas.prohub.network.LanPanelServer
 import com.omegas.prohub.obd.ObdAssistManager
+import com.omegas.prohub.obd.ObdFuelState
 import com.omegas.prohub.obd.ObdWitnessEngine
 import com.omegas.prohub.obd.ObdWitnessSample
 import com.omegas.prohub.settings.AppSettings
@@ -748,9 +749,9 @@ class TelemetryForegroundService : Service() {
         val mapBar = frame.optDouble("map_bar", 0.0)
         val petrolMs = frame.optDouble("petrol_ms", 0.0)
         val fuel = frame.optString("fuel", "").trim().uppercase()
+        val scientificFuel = ObdFuelState.normalize(fuel) ?: return
         val skewMs = frame.optLong("skew_ms", Long.MAX_VALUE)
         if (rpm <= 0.0 || mapBar <= 0.0 || petrolMs <= 0.0 || skewMs < 0L || skewMs > 250L) return
-        if (fuel !in setOf("PETROL", "GASOLINA", "CNG", "GNV", "GAS")) return
 
         val calibrationState = blueCalibrationStateId()
         if (calibrationState.isBlank()) return
@@ -762,7 +763,7 @@ class TelemetryForegroundService : Service() {
                 rpm = rpm,
                 mapBar = mapBar,
                 petrolMs = petrolMs,
-                fuel = fuel,
+                fuel = scientificFuel.name,
                 calibrationState = calibrationState,
                 skewMs = skewMs,
             ),
@@ -773,6 +774,9 @@ class TelemetryForegroundService : Service() {
             .put("gasolineReferencePct", result.gasolineReferencePct ?: JSONObject.NULL)
             .put("gnvStftPct", result.gnvStftPct ?: JSONObject.NULL)
             .put("residualPp", result.residualPp ?: JSONObject.NULL)
+            .put("correctionRatio", result.correctionRatio ?: JSONObject.NULL)
+            .put("errorLog", result.errorLog ?: JSONObject.NULL)
+            .put("correctionPercent", result.correctionPercent ?: JSONObject.NULL)
             .put("quality", result.quality)
             .put("gasolineSamples", result.gasolineSamples)
             .put("gnvSamples", result.gnvSamples)
@@ -780,6 +784,7 @@ class TelemetryForegroundService : Service() {
             .put("map_bar", mapBar)
             .put("petrol_ms", petrolMs)
             .put("fuel", fuel)
+            .put("scientificFuel", scientificFuel.name)
             .put("skew_ms", skewMs)
             .put("calibrationState", calibrationState)
             .put("observedAtMs", observedAtMs)
