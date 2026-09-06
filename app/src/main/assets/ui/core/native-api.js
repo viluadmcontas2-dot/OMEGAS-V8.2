@@ -234,8 +234,7 @@
           refreshing: false,
           data: {
             learning,
-            calibrationState: { ready: true, suggestionItems: [], predictor: { ok: true, cells: [] } },
-            predictor: { ok: true, cells: [] },
+            calibrationState: { ready: true, suggestionItems: [] },
           },
           demo: true,
         };
