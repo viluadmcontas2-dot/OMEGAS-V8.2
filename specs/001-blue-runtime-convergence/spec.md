@@ -15,6 +15,7 @@ Converge the V8.0 RED-derived Blue branch into one causal runtime with durable, 
 4. As the operator, useful session artifacts can live in a user-controlled OMEGAS folder, with private crash-safe spool as fallback.
 5. As the operator, Learning shows what was measured separately from what Blue proposes to change.
 6. As the system, exactly one runtime component owns correction mathematics: `BlueCausalEngine`.
+7. As the operator, Blue does not depend on an OBD adapter, Bluetooth OBD session, STFT/LTFT map or OBD-derived learning gate; MP48 + Blue physical evidence are the calibration source of truth.
 
 ## Functional requirements
 - FR-001: remove reachable V7 equivalence, legacy Advisor/AutoMatch/Predictor decision math and compatibility facades; pure physical protocol utilities may survive only when they own no decision math and are renamed/migrated when touched.
@@ -28,6 +29,7 @@ Converge the V8.0 RED-derived Blue branch into one causal runtime with durable, 
 - FR-009: Learning primary layers are petrol evidence, CNG evidence and measured deviation. Proposal is shown separately and comes only from Blue.
 - FR-010: stale tests/assets whose only purpose is removed legacy decision math are deleted, not patched to preserve dead APIs.
 - FR-011: Spec Kit artifacts and a convergence/drift contract are mandatory CI inputs.
+- FR-012: Blue production runtime contains no OBD subsystem, OBD route/screen, OBD-derived evidence map/gate, OBD browser bridge, OBD-only Bluetooth permission/flow, or OBD settings. Removal must not affect MP48 USB, GPS, LAN, session recording, Blue evidence, manual K writers or Auto-Cal.
 
 ## Session relevance policy
 A session is `PROTECTED` if it contains a confirmed calibration write/readback or operator protection marker. Otherwise it becomes `VALID` after at least 20 telemetry frames spanning at least 5 seconds. Anything smaller is `PROBE`. These thresholds are operational defaults and may be tightened later from evidence; they are deliberately based on useful telemetry rather than byte count.
@@ -41,4 +43,5 @@ A session is `PROTECTED` if it contains a confirmed calibration write/readback o
 - 30 useful sessions are retained by default; setting below 20 is coerced to 20; probes do not consume useful retention.
 - Vault permission/promotion is failure-safe.
 - Learning does not use prediction/stability fallbacks to label a value as directly measured deviation.
+- Production/source tree has no OBD package, OBD UI route/assets, OBD bridge methods, OBD settings, or OBD-only Bluetooth permissions; dashboard/overlay remain functional from MP48 telemetry.
 - FAST, full unit/JVM, lint and APK pass on the final exact SHA.
