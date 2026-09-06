@@ -1,3 +1,4 @@
+# Scoped remote executor for the current OBD LIVE-loss TDD slice.
 name: OMEGAS Blue OBD stage apply
 
 on:
