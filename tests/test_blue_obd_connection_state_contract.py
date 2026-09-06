@@ -22,7 +22,7 @@ def main() -> None:
         "ElmResponseParser.mode01(response, pid)",
         "omegas-obd-rfcomm-watchdog",
         "if (running.get() && connectionState.snapshot().stage == ElmStage.LIVE)",
-        'connectionState.fail(\n                "LIVE_LINK_LOST"',
+        '"Conexão ELM foi encerrada durante aquisição STFT"',
     ]
     missing = [needle for needle in required if needle not in text]
     assert not missing, f"OBD connection is not stage-aware yet: {missing}"
