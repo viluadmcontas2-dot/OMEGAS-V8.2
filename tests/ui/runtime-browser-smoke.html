@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>OMEGAS runtime smoke</title></head>
+<body data-runtime-smoke="BOOTING">
+  <pre id="result">BOOTING</pre>
+  <iframe id="omegas" src="../../app/src/main/assets/ui/index.html" style="width:1280px;height:720px"></iframe>
+  <script>
+    (function () {
+      const result = document.getElementById('result');
+      const frame = document.getElementById('omegas');
+      const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+      const fail = message => {
+        document.body.dataset.runtimeSmoke = 'FAIL';
+        result.textContent = 'FAIL: ' + message;
+      };
+      frame.addEventListener('load', async () => {
+        try {
+          await wait(450);
+          const win = frame.contentWindow;
+          const doc = frame.contentDocument;
+          if (!win || !doc || !win.OmegasApp) throw new Error('OmegasApp não inicializou');
+
+          async function check(route, minText, requiredSelector) {
+            win.OmegasApp.router.navigate(route);
+            await wait(350);
+            const host = doc.querySelector('[data-screen="' + route + '"]');
+            if (!host) throw new Error(route + ': host ausente');
+            const text = String(host.textContent || '').replace(/\s+/g, ' ').trim();
+            if (text.length < minText) throw new Error(route + ': conteúdo insuficiente (' + text.length + ')');
+            if (requiredSelector && !host.querySelector(requiredSelector)) throw new Error(route + ': marcador ' + requiredSelector + ' ausente');
+          }
+
+          await check('dashboard', 60, '.now-dashboard-shell');
+          await check('obd', 80, '.witness-panel');
+          await check('tools', 100, '#toolDiagnosticsWorkspace');
+
+          document.body.dataset.runtimeSmoke = 'PASS';
+          result.textContent = 'PASS: dashboard + obd + tools montaram em runtime';
+        } catch (error) {
+          fail(error && error.message ? error.message : String(error));
+        }
+      });
+      setTimeout(() => {
+        if (document.body.dataset.runtimeSmoke === 'BOOTING') fail('timeout aguardando bootstrap');
+      }, 3000);
+    })();
+  </script>
+</body>
+</html>
