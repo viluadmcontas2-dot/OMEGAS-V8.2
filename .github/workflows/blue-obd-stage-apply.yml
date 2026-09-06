@@ -1,0 +1,41 @@
+name: OMEGAS Blue OBD stage apply
+
+on:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - scripts/blue_obd_stage_integrate.py
+      - .github/workflows/blue-obd-stage-apply.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: omegas-blue-obd-stage-apply
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Blue branch
+        uses: actions/checkout@v7
+        with:
+          ref: work/omegas-blue-causal-engine
+          fetch-depth: 0
+      - name: Apply scoped OBD stage integration
+        run: python3 scripts/blue_obd_stage_integrate.py
+      - name: Prove focused structural contract
+        run: python3 -B tests/test_blue_obd_connection_state_contract.py
+      - name: Commit integration if changed
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No OBD stage changes needed"
+            exit 0
+          fi
+          git config user.name "omegas-blue-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git add app/src/main/java/com/omegas/prohub/obd/ObdAssistManager.kt
+          git commit -m "feat(obd): integrate staged ELM connection runtime"
+          git push origin HEAD:work/omegas-blue-causal-engine
