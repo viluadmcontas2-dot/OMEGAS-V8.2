@@ -57,3 +57,12 @@ assert '.put("obd",' not in archive
 assert 'optJSONObject("obd")' not in archive
 
 print("BLUE_OBD_LEGACY_CUT_CONTRACT=PASS")
+
+
+settings_text = read("app/src/main/java/com/omegas/prohub/settings/AppSettings.kt")
+for forbidden in [
+    "obdManualFuel", "obdMinimumCoolantC", "obdMaxRpmDifference", "obdMaxPairSkewMs",
+    "obdMaxContextAgeMs", "obdMinimumSamplesPerCell", "obdNeutralBandPct",
+    "obdDivergenceBandPct", "obdGasFlowCoefficient", "obdCylinderCount",
+]:
+    assert forbidden not in settings_text, f"configuração OBD legada ainda embarcada: {forbidden}"

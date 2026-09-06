@@ -21,7 +21,7 @@
 .autocal-head small,
 .autocal-section-head small {
   color: var(--muted, #8793a4);
-  font-size: 9px;
+  font-size:10px;
   font-weight: 700;
   letter-spacing: .10em;
 }
@@ -64,7 +64,7 @@
 
 .autocal-live-strip small {
   color: var(--muted, #8793a4);
-  font-size: 8px;
+  font-size:10px;
   letter-spacing: .08em;
 }
 
@@ -98,7 +98,7 @@
 
 .autocal-section-head > span {
   color: var(--muted, #8793a4);
-  font-size: 9px;
+  font-size:10px;
   text-transform: uppercase;
 }
 
@@ -131,7 +131,7 @@
 
 .autocal-band header span {
   color: var(--muted, #8793a4);
-  font-size: 9px;
+  font-size:10px;
 }
 
 .autocal-band header b {
@@ -159,7 +159,7 @@
 
 .autocal-band small {
   color: color-mix(in srgb, var(--band-accent) 70%, #c5d0db);
-  font-size: 8px;
+  font-size:10px;
   line-height: 1.2;
 }
 
@@ -196,7 +196,7 @@
 .autocal-events article small,
 .autocal-events article p {
   color: var(--muted, #8793a4);
-  font-size: 9px;
+  font-size:10px;
 }
 
 .autocal-events article p {
@@ -229,7 +229,7 @@
   border-radius: 8px;
   background: rgba(255,255,255,.02);
   color: var(--muted, #8793a4);
-  font-size: 9px;
+  font-size:10px;
 }
 
 .autocal-action-status b {

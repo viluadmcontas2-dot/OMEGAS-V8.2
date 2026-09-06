@@ -608,7 +608,7 @@ body:has(.multimedia-obd-screen.active) .rail-status {
 }
 
 .witness-device-row small,
-.witness-runtime-row small { display: block; color: #69bdf5; font-size: 9px; font-weight: 900; }
+.witness-runtime-row small { display: block; color: #69bdf5; font-size:10px; font-weight: 900; }
 .witness-device-row b,
 .witness-runtime-row b { display: block; margin-top: 2px; font-size: 13px; }
 .witness-device-row span { display: block; margin-top: 2px; color: #7791a7; font-size: 10px; }
@@ -669,4 +669,36 @@ body:has(.multimedia-obd-screen.active) .rail-status {
   .witness-live-main strong { font-size: 78px; }
   .witness-comparison-grid b { font-size: 20px; }
   .witness-setup-card { min-height: 270px; }
+}
+
+
+/* DISTANCE_LEGIBILITY_1280X720
+ * A multimídia é vista à distância. 10px é piso absoluto para texto auxiliar;
+ * eixos/pins do Mapa K são maiores porque orientam calibração em uso real.
+ */
+.map-screen .map-k-grid-with-axes{
+  grid-template-columns:82px repeat(12,minmax(0,1fr));
+  grid-template-rows:48px repeat(12,minmax(0,1fr));
+}
+.map-screen .map-axis-corner small{font-size:11px!important}
+.map-screen .map-axis-header small{font-size:11px!important}
+.map-screen .map-axis-corner b{font-size:12px!important}
+.map-screen .map-axis-header b{font-size:12px!important}
+.map-screen .map-rpm-header b{font-size:13px!important}
+.map-screen .map-ms-header b{font-size:13px!important}
+.map-screen .map-k-cell b{font-size:15px!important;line-height:1!important}
+.map-screen .map-k-cell span{font-size:10px!important;line-height:1.05!important}
+.map-screen .technical-row-note,
+.map-screen .surface-toolbar,
+.learning-screen .axis-top,
+.learning-screen .axis-side,
+.learning-screen .coverage-copy,
+.learning-screen .trace-note,
+.curve-screen .curve-axis,
+.curve-screen .curve-legend{font-size:11px!important}
+.learning-screen .cell-subvalue{font-size:10px!important}
+@media (max-width:1100px){
+  .map-screen .map-k-grid-with-axes{grid-template-columns:72px repeat(12,minmax(0,1fr));grid-template-rows:46px repeat(12,minmax(0,1fr))}
+  .map-screen .map-rpm-header b,.map-screen .map-ms-header b{font-size:12px!important}
+  .map-screen .map-k-cell b{font-size:14px!important}
 }

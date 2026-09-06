@@ -359,7 +359,6 @@ class OmegasLinkManager(
                 .put("epoch", controlEpoch)
                 .put("owner", controlOwnerId)
                 .put("syncManifest", syncManifest(learning, kHistory, peerKnownRevision))
-                .put("obdComponent", (obd?.exportLocalState(settings.deviceId) ?: org.json.JSONObject()))
                 .put("kHistory", kHistory)
                 .put("autoCalContext", exportAutoCalContext())
                 .put("nativeReceipts", exportNativeReceipts())
@@ -402,7 +401,6 @@ class OmegasLinkManager(
                         val localLearning = exportLearning()
                         val response = baseResponse("sync-ack")
                             .put("syncManifest", syncManifest(localLearning, exportHistory(), requesterRevision).put("acknowledgedRequesterRevision", requesterRevision))
-                            .put("obdComponent", (obd?.exportLocalState(settings.deviceId) ?: org.json.JSONObject()))
                             .put("kHistory", exportHistory())
                             .put("autoCalContext", exportAutoCalContext())
                             .put("nativeReceipts", exportNativeReceipts())
@@ -439,7 +437,6 @@ class OmegasLinkManager(
             if (!result.optBoolean("ok")) log.add("WARN", "OMEGAS LINK", "Fusão recusada: ${result.optString("error")}")
             else if (peer != null) peerLearningRevisions[peer.deviceId] = it.optLong("componentRevision", 0L)
         }
-        root.optJSONObject("obdComponent")?.let { obd?.mergeRemoteState(it) }
         root.optJSONObject("kHistory")?.let { mergeHistory(it) }
         root.optJSONObject("autoCalContext")?.let { context ->
             val result = mergeAutoCalContext(context)

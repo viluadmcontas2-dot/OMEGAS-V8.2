@@ -13,12 +13,12 @@
 .physical-axis-corner,.physical-axis{
   display:flex;align-items:center;justify-content:center;
   border:1px solid var(--line-soft);border-radius:5px;
-  background:#0b1118;color:var(--muted);font-size:8px;font-weight:800;
+  background:#0b1118;color:var(--muted);font-size:10px;font-weight:800;
   font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap;
 }
-.physical-axis-rpm{color:#b8c6d8;font-size:8px}
-.physical-axis-ms{color:#b8c6d8;font-size:8px}
-.learning-light-note,.manual-edit-contract{display:block;margin-top:8px;color:var(--dim);font-size:9px;line-height:1.35}
+.physical-axis-rpm{color:#b8c6d8;font-size:10px}
+.physical-axis-ms{color:#b8c6d8;font-size:10px}
+.learning-light-note,.manual-edit-contract{display:block;margin-top:8px;color:var(--dim);font-size:10px;line-height:1.35}
 
 /* Mapa K: eixo é controle. Cabeçalho RPM seleciona coluna; ms seleciona linha. */
 .map-k-grid-with-axes{
@@ -33,21 +33,21 @@
   min-width:0;min-height:0;padding:2px 4px;text-align:center;overflow:hidden;
 }
 .map-axis-corner{display:flex;flex-direction:column;align-items:center;justify-content:center}
-.map-axis-corner small,.map-axis-header small{display:block;font-size:7px;letter-spacing:.04em}
-.map-axis-corner b,.map-axis-header b{display:block;margin-top:2px;font-size:9px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.map-axis-corner small,.map-axis-header small{display:block;font-size:10px;letter-spacing:.04em}
+.map-axis-corner b,.map-axis-header b{display:block;margin-top:2px;font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .map-axis-header{cursor:pointer;touch-action:manipulation}
 .map-axis-header.selected{background:var(--accent-soft);border-color:#635aa7;color:var(--text)}
-.map-rpm-header b{font-size:8px}
-.map-ms-header b{font-size:9px}
+.map-rpm-header b{font-size:10px}
+.map-ms-header b{font-size:10px}
 .map-k-cell{padding:2px!important}
 .map-k-cell small{display:none!important}
 .map-k-cell b{font-size:11px!important}
-.map-k-cell span{font-size:7px!important;line-height:1!important}
+.map-k-cell span{font-size:10px!important;line-height:1!important}
 .map-screen .map-workspace{grid-template-columns:minmax(0,1fr) 286px}
 .map-live-condition{min-width:280px;text-align:right}
 .map-live-condition small,.map-live-condition b,.map-live-condition span{display:block}
 .map-live-condition b{font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums}
-.map-live-condition span{font-size:9px;color:var(--dim);margin-top:2px}
+.map-live-condition span{font-size:10px;color:var(--dim);margin-top:2px}
 .from-learning #mapBackToLearning{display:inline-flex}
 #mapBackToLearning{display:none}
 
@@ -62,7 +62,7 @@
 .suggestion-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px;border-top:1px solid var(--line-soft)}
 .suggestion-row:first-of-type{border-top:0}
 .suggestion-row input[type="checkbox"]{width:19px;height:19px;accent-color:var(--accent)}
-.suggestion-row-main b,.suggestion-row-main span{display:block}.suggestion-row-main b{font-size:11px}.suggestion-row-main span{margin-top:2px;color:var(--muted);font-size:9px}
+.suggestion-row-main b,.suggestion-row-main span{display:block}.suggestion-row-main b{font-size:11px}.suggestion-row-main span{margin-top:2px;color:var(--muted);font-size:10px}
 .suggestion-row-meta{text-align:right}.suggestion-row-meta b,.suggestion-row-meta small{display:block}.suggestion-row-meta b{font-size:11px}.suggestion-row[data-lifecycle="OBSERVING"]{opacity:.72}.suggestion-row[data-lifecycle="APPLIED"]{opacity:.56}
 
 /* Dashboard: RPM dominante, card representa condição e não um único número. */
@@ -99,7 +99,7 @@
 
 /* OBD conexão: progresso humano. */
 .obd-connection-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
-.obd-connection-progress>span{padding:8px;border:1px solid var(--line-soft);border-radius:8px;background:var(--surface);font-size:9px;color:var(--dim)}
+.obd-connection-progress>span{padding:8px;border:1px solid var(--line-soft);border-radius:8px;background:var(--surface);font-size:10px;color:var(--dim)}
 .obd-connection-progress>span[data-state="done"]{color:var(--ok);border-color:#285a49}.obd-connection-progress>span[data-state="active"]{color:var(--text);border-color:#5a5296;background:var(--accent-soft)}
 
 /* Curva K: duas leituras alinhadas nos mesmos 30 pontos. */

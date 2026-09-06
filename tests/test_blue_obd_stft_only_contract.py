@@ -12,31 +12,16 @@ def section(text: str, start: str, end: str) -> str:
 
 def main() -> None:
     text = MANAGER.read_text(encoding="utf-8")
-    poll = section(text, "    private fun pollCycle(sock: BluetoothSocket) {", "    private fun readContext(sock: BluetoothSocket)")
-
+    poll = section(text, "    private fun pollCycle(sock: BluetoothSocket) {", "    private fun readPid(sock: BluetoothSocket")
     required = [
-        'readPidTimed(sock, "0106", 0x06)',
-        "ObdStftCodec.percent",
-        "onLiveSample",
-        '"STFT_OBSERVATION"',
-        '"PENDING_MP48_PAIR"',
-        'put("requestedAtMs"',
-        'put("observedAtMs"',
+        'readPidTimed(sock, "0106", 0x06)', "ObdStftCodec.percent", "onLiveSample",
+        '"STFT_OBSERVATION"', '"PENDING_MP48_PAIR"', 'put("requestedAtMs"', 'put("observedAtMs"',
     ]
     missing = [token for token in required if token not in poll]
     assert not missing, f"STFT witness handoff metadata missing: {missing}"
-
-    forbidden = {
-        '"0103"': "fuel-system PID",
-        '"010C"': "OBD RPM PID",
-        "readContext(sock)": "scanner context sweep",
-        "qualification(": "legacy multi-PID learning gate",
-        "collectQualified(": "legacy OBD map collector",
-        "independentMap.observe(": "legacy independent OBD map",
-    }
-    present = [f"{label}: {token}" for token, label in forbidden.items() if token in poll]
-    assert not present, "live OBD acquisition is not STFT-only: " + ", ".join(present)
-
+    for forbidden in ['"0103"', '"010C"', "qualification(", "collectQualified(", "independentMap.observe("]:
+        assert forbidden not in poll, f"live OBD acquisition is not STFT-only: {forbidden}"
+    assert 'readPid(sock, "0100", 0x00)' in text
     print("BLUE_OBD_STFT_ONLY_CONTRACT=PASS")
 
 

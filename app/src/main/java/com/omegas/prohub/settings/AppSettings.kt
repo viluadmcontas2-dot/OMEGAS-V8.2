@@ -149,10 +149,6 @@ class AppSettings(context: Context) {
     var obdMode: String
         get() = prefs.getString("obdMode", "off") ?: "off"
         set(value) = prefs.edit().putString("obdMode", value.lowercase()).apply()
-    /** Declaração do operador quando a MP48 não está disponível. Nunca qualifica mapa. */
-    var obdManualFuel: String
-        get() = prefs.getString("obdManualFuel", "") ?: ""
-        set(value) = prefs.edit().putString("obdManualFuel", value.uppercase()).apply()
     var obdDeviceAddress: String
         get() = prefs.getString("obdDeviceAddress", "") ?: ""
         set(value) = prefs.edit().putString("obdDeviceAddress", value.trim()).apply()
@@ -162,36 +158,6 @@ class AppSettings(context: Context) {
     var obdPollIntervalMs: Long
         get() = prefs.getLong("obdPollIntervalMs", 350L)
         set(value) = prefs.edit().putLong("obdPollIntervalMs", value.coerceIn(150L, 3_000L)).apply()
-    var obdMinimumCoolantC: Double
-        get() = getDouble("obdMinimumCoolantC", 70.0)
-        set(value) = putDouble("obdMinimumCoolantC", value.coerceIn(30.0, 110.0))
-    var obdMaxRpmDifference: Double
-        get() = getDouble("obdMaxRpmDifference", 250.0)
-        set(value) = putDouble("obdMaxRpmDifference", value.coerceIn(20.0, 1_500.0))
-    /** Janela máxima para parear um frame OBD ao frame MP48 real. */
-    var obdMaxPairSkewMs: Long
-        get() = prefs.getLong("obdMaxPairSkewMs", 250L)
-        set(value) = prefs.edit().putLong("obdMaxPairSkewMs", value.coerceIn(50L, 3_000L)).apply()
-    /** PIDs lentos mantêm seu próprio horário e só valem enquanto estiverem frescos. */
-    var obdMaxContextAgeMs: Long
-        get() = prefs.getLong("obdMaxContextAgeMs", 15_000L)
-        set(value) = prefs.edit().putLong("obdMaxContextAgeMs", value.coerceIn(1_000L, 60_000L)).apply()
-    var obdMinimumSamplesPerCell: Long
-        get() = prefs.getLong("obdMinimumSamplesPerCell", 8L)
-        set(value) = prefs.edit().putLong("obdMinimumSamplesPerCell", value.coerceIn(2L, 500L)).apply()
-    var obdNeutralBandPct: Double
-        get() = getDouble("obdNeutralBandPct", 2.0)
-        set(value) = putDouble("obdNeutralBandPct", value.coerceIn(0.2, 15.0))
-    var obdDivergenceBandPct: Double
-        get() = getDouble("obdDivergenceBandPct", 7.0)
-        set(value) = putDouble("obdDivergenceBandPct", value.coerceIn(1.0, 30.0))
-    var obdGasFlowCoefficient: Double
-        get() = getDouble("obdGasFlowCoefficient", 0.000005)
-        set(value) = putDouble("obdGasFlowCoefficient", value.coerceIn(0.00000001, 0.01))
-    var obdCylinderCount: Int
-        get() = prefs.getInt("obdCylinderCount", 4)
-        set(value) = prefs.edit().putInt("obdCylinderCount", value.coerceIn(1, 12)).apply()
-
     var gnvCylinderCapacityM3: Float
         get() = prefs.getFloat("gnvCylinderCapacityM3", 15.0f)
         set(value) = prefs.edit().putFloat("gnvCylinderCapacityM3", value).apply()
@@ -235,19 +201,9 @@ class AppSettings(context: Context) {
         .put("linkDataPort", linkDataPort)
         .put("linkAutoSyncSeconds", linkAutoSyncSeconds)
         .put("obdMode", obdMode)
-        .put("obdManualFuel", obdManualFuel)
         .put("obdDeviceAddress", obdDeviceAddress)
         .put("obdAutoConnect", obdAutoConnect)
         .put("obdPollIntervalMs", obdPollIntervalMs)
-        .put("obdMinimumCoolantC", obdMinimumCoolantC)
-        .put("obdMaxRpmDifference", obdMaxRpmDifference)
-        .put("obdMaxPairSkewMs", obdMaxPairSkewMs)
-        .put("obdMaxContextAgeMs", obdMaxContextAgeMs)
-        .put("obdMinimumSamplesPerCell", obdMinimumSamplesPerCell)
-        .put("obdNeutralBandPct", obdNeutralBandPct)
-        .put("obdDivergenceBandPct", obdDivergenceBandPct)
-        .put("obdGasFlowCoefficient", obdGasFlowCoefficient)
-        .put("obdCylinderCount", obdCylinderCount)
         .put("gnvCylinderCapacityM3", gnvCylinderCapacityM3.toDouble())
         .put("lastEngineOffPressure", lastEngineOffPressure)
 

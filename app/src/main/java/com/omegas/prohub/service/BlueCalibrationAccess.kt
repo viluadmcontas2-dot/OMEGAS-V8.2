@@ -77,6 +77,16 @@ private fun syncObdWitness(
     }
 }
 
+fun TelemetryForegroundService.blueCalibrationStateId(): String = try {
+    val state = BlueCalibrationRegistry.get(this).stateJson()
+    if (!state.optBoolean("ready", false)) "" else {
+        val revision = state.optJSONObject("revision") ?: JSONObject()
+        "map-${revision.optInt("mapK", 0)}:curve-${revision.optInt("curveK", 0)}"
+    }
+} catch (_: Exception) {
+    ""
+}
+
 fun TelemetryForegroundService.blueCalibrationStateJson(): String = try {
     val coordinator = BlueCalibrationRegistry.get(this)
     syncObdWitness(this, coordinator)

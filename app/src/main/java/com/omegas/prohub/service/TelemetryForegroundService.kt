@@ -167,7 +167,6 @@ class TelemetryForegroundService : Service() {
             },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
-                obd?.recordConfirmedAdjustment("MAP_K", payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
                 link.markDataChanged("escrita K confirmada")
@@ -180,7 +179,6 @@ class TelemetryForegroundService : Service() {
             onBusyChanged = { stateChanged() },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true)
-                obd?.recordConfirmedAdjustment("K_FACTOR", payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
                 link.markDataChanged("escrita K factor confirmada")
@@ -218,7 +216,7 @@ class TelemetryForegroundService : Service() {
                 pairObdStftWitness(sample)
             },
         )
-        learningArchive = LearningArchiveManager(paths, settings, runtime, obd, kWriter, log)
+        learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
         link = OmegasLinkManager(
             settings = settings,
             log = log,
@@ -558,10 +556,8 @@ class TelemetryForegroundService : Service() {
 
     fun obdDevicesJson(): String = obd?.pairedDevicesJson() ?: "[]"
     fun obdStatusJson(): String = obd?.statusJson() ?: "{}"
-    fun obdMapsJson(): String = obd?.mapsJson() ?: "{}"
     fun obdWitnessStatusJson(): String = JSONObject(latestObdWitness.toString()).toString()
     fun setObdMode(mode: String): String = obd?.setMode(mode)?.toString() ?: "{}"
-    fun setObdManualFuel(fuel: String): String = obd?.setManualFuel(fuel)?.toString() ?: "{}"
     fun connectObd(address: String): String = obd?.connect(address)?.toString() ?: "{}"
     fun disconnectObd(): String {
         obd?.disconnect()
@@ -756,15 +752,8 @@ class TelemetryForegroundService : Service() {
         if (rpm <= 0.0 || mapBar <= 0.0 || petrolMs <= 0.0 || skewMs < 0L || skewMs > 250L) return
         if (fuel !in setOf("PETROL", "GASOLINA", "CNG", "GNV", "GAS")) return
 
-        val epoch = try {
-            JSONObject(obd?.mapsJson() ?: "{}").optJSONObject("epoch")
-        } catch (_: Exception) {
-            null
-        } ?: return
-        val mapEpochId = epoch.optString("mapEpochId").trim()
-        val curveEpochId = epoch.optString("curveEpochId").trim()
-        if (mapEpochId.isBlank() || curveEpochId.isBlank()) return
-        val calibrationState = "$mapEpochId:$curveEpochId"
+        val calibrationState = blueCalibrationStateId()
+        if (calibrationState.isBlank()) return
 
         obdWitnessEngine.observe(
             ObdWitnessSample(

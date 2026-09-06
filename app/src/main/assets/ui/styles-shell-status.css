@@ -26,7 +26,7 @@
 
 .vehicle-status-strip small {
   color: var(--muted, #8793a4);
-  font-size: 8px;
+  font-size:10px;
   font-weight: 700;
   letter-spacing: .10em;
 }

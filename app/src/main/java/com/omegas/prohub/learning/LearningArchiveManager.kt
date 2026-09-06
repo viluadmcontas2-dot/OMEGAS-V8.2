@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.net.Uri
 import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.ecu.NativeRuntimeManager
-import com.omegas.prohub.obd.ObdAssistManager
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.util.RingLog
@@ -23,7 +22,6 @@ class LearningArchiveManager(
     private val paths: AppPaths,
     private val settings: AppSettings,
     private val runtime: NativeRuntimeManager,
-    private val obd: ObdAssistManager?,
     private val kWriter: KWriteManager,
     private val log: RingLog,
 ) {
@@ -147,7 +145,6 @@ class LearningArchiveManager(
             .put("sourceDeviceId", settings.deviceId)
             .put("sourceDeviceName", settings.deviceName)
             .put("learning", learning)
-            .put("obd", (obd?.exportLocalState(settings.deviceId) ?: org.json.JSONObject()))
             .put("confirmedKHistory", history)
             .put("kHistoryComponent", kWriter.exportHistoryComponent(settings.deviceId))
             .put("rules", JSONObject()
@@ -187,24 +184,19 @@ class LearningArchiveManager(
             error("O arquivo contém medidas calculadas por outra escala de telemetria")
         }
         val learningResult = runtime.mergeLearning(learningPayload, settings.deviceId)
-        val obdResult = root.optJSONObject("obd")?.let { (obd?.importPortableState(it, settings.deviceId) ?: org.json.JSONObject().put("ok", true)) }
-            ?: JSONObject().put("ok", true).put("ignored", true)
         val historyPayload = root.optJSONObject("kHistoryComponent") ?: JSONObject()
             .put("format", "omegas-k-history-v1")
             .put("deviceId", root.optString("sourceDeviceId"))
             .put("events", root.optJSONArray("confirmedKHistory") ?: JSONArray())
         val historyResult = kWriter.mergeHistoryComponent(historyPayload)
-        val ok = learningResult.optBoolean("ok") &&
-            obdResult.optBoolean("ok", true) && historyResult.optBoolean("ok", true)
+        val ok = learningResult.optBoolean("ok") && historyResult.optBoolean("ok", true)
         log.add(
             if (ok) "INFO" else "WARN",
             "LEARNING-NATIVE",
-            "Importação .omegas: aprendizado=${learningResult.optBoolean("ok")} " +
-                "OBD=${obdResult.optBoolean("ok", true)} histórico=${historyResult.optBoolean("ok", true)}",
+            "Importação .omegas: aprendizado=${learningResult.optBoolean("ok")} histórico=${historyResult.optBoolean("ok", true)}",
         )
         JSONObject().put("ok", ok)
             .put("learning", learningResult)
-            .put("obd", obdResult)
             .put("history", historyResult)
     } catch (error: Exception) {
         JSONObject().put("ok", false).put("error", error.message ?: "Falha ao importar aprendizado")

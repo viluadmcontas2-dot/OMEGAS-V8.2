@@ -106,43 +106,6 @@
     };
   }
 
-  function demoObdMaps() {
-    const gasoline = {};
-    const gnv = {};
-    const validation = {};
-    for (let column = 1; column < 8; column += 1) {
-      for (let row = 1; row < 8; row += 1) {
-        if ((column + row) % 2 !== 0) continue;
-        const key = `${column}:${row}`;
-        const petrol = ((column + row) % 5 - 2) * 0.7;
-        const gas = ((column * 3 + row) % 7 - 3) * 0.8;
-        const petrolSamples = 8 + ((column + row) % 7);
-        const gnvSamples = 9 + ((column * 2 + row) % 8);
-        gasoline[key] = { stft: { mean: petrol, physicalSamples: petrolSamples }, ltft: { mean: 0.5 }, speed: { mean: 48 }, coolant: { mean: 88 }, qualified: petrolSamples };
-        gnv[key] = { stft: { mean: gas, physicalSamples: gnvSamples }, ltft: { mean: 0.8 }, speed: { mean: 52 }, coolant: { mean: 89 }, qualified: gnvSamples };
-        validation[key] = {
-          gasoline: petrol, gnv: gas, gasolineSamples: petrolSamples, gnvSamples,
-          sameCell: true, sameEpoch: true, comparisonReady: true,
-          comparisonReason: 'MESMA_CELULA_E_EPOCA',
-          status: Math.abs(gas) <= 2 ? 'EQUIVALENTE' : gas > 0 ? 'AUMENTAR_GNV' : 'DIMINUIR_GNV',
-        };
-      }
-    }
-    const independentRpmBins = [750, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000, 5000, 6500];
-    const loadBins = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 85, 100];
-    return {
-      rpmBins: RPM_BINS.slice(), petrolMsBins: PETROL_BINS.slice(), gasoline, gnv, validation,
-      updatedAt: Date.now(),
-      independent: {
-        source: 'OBD_ONLY_LEGACY', observationalOnly: true, affectsLearning: false, affectsCalibration: false,
-        minimumSamplesPerCell: 6,
-        axes: { x: 'rpm', y: 'calculatedLoadPct', rpmBins: independentRpmBins, loadBins },
-        gasoline: {}, gnv: {}, validation: {}, updatedAt: Date.now(),
-      },
-      demo: true,
-    };
-  }
-
   function demoToleranceSettings() {
     const levels = ['Muito rigoroso', 'Rigoroso', 'Equilibrado', 'Flexível', 'Muito flexível'];
     const controls = [
@@ -278,7 +241,6 @@
       };
       return invoke(this.native, 'getObdStatus', [], {});
     }
-    obdMaps() { return this.demo ? demoObdMaps() : invoke(this.native, 'getObdMaps', [], {}); }
     obdDevices() {
       if (this.demo) return { permissionRequired: false, enabled: true, devices: [{ name: 'ELM327 DEMO', address: '00:11:22:33:44:55', bonded: true, selected: true, connected: true }] };
       return invoke(this.native, 'listObdDevices', [], { permissionRequired: false, enabled: false, devices: [] });
@@ -287,7 +249,6 @@
     connectObd(address) { return this.demo ? { ok: true, state: 'CONECTANDO', address } : invoke(this.native, 'connectObd', [address || ''], { ok: false }); }
     disconnectObd() { return this.demo ? { ok: true } : invoke(this.native, 'disconnectObd', [], { ok: false }); }
     setObdMode(mode) { return this.demo ? { ok: true, mode } : invoke(this.native, 'setObdMode', [mode || 'off'], { ok: false }); }
-    setObdManualFuel(fuel) { return this.demo ? { ok: true, manualFuel: fuel } : invoke(this.native, 'setObdManualFuel', [fuel || ''], { ok: false }); }
 
     batteryOptimizationStatus() {
       return this.demo

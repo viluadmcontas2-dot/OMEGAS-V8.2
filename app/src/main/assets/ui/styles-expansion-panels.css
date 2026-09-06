@@ -30,7 +30,7 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
-  font-size: 7px;
+  font-size:10px;
   font-weight: 900;
   white-space: nowrap;
 }
@@ -50,7 +50,7 @@
   border-radius: 7px;
   background: #0d1823;
   color: var(--muted);
-  font-size: 8px;
+  font-size:10px;
 }
 .background-health-grid b,
 .learning-portability-grid b { color: var(--text); font-weight: 850; }
@@ -59,7 +59,7 @@
 .curve-native-explanation > p {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 8px;
+  font-size:10px;
   line-height: 1.4;
 }
 .background-validation-note,
@@ -79,8 +79,8 @@
   border-radius: 8px;
   background: #0d1823;
 }
-.portability-policy b { color: var(--accent); font-size: 8px; }
-.portability-policy span { color: var(--muted); font-size: 8px; line-height: 1.35; }
+.portability-policy b { color: var(--accent); font-size:10px; }
+.portability-policy span { color: var(--muted); font-size:10px; line-height: 1.35; }
 
 .curve-evidence-summary { margin: 0 0 8px; }
 .curve-evidence-summary .evidence-stat { min-width: 0; }
@@ -97,8 +97,8 @@
 .curve-native-explanation article > div { min-width: 0; }
 .curve-native-explanation article b,
 .curve-native-explanation article span { display: block; }
-.curve-native-explanation article b { font-size: 9px; font-variant-numeric: tabular-nums; }
-.curve-native-explanation article span { margin-top: 2px; color: var(--muted); font-size: 7px; }
+.curve-native-explanation article b { font-size:10px; font-variant-numeric: tabular-nums; }
+.curve-native-explanation article span { margin-top: 2px; color: var(--muted); font-size:10px; }
 .curve-native-explanation article > small {
   grid-column: 1 / -1;
   color: var(--dim);
@@ -115,8 +115,8 @@
   border-radius: 8px;
   background: #0d1823;
 }
-.curve-pending-reasons b { font-size: 8px; }
-.curve-pending-reasons span { color: var(--muted); font-size: 8px; line-height: 1.35; }
+.curve-pending-reasons b { font-size:10px; }
+.curve-pending-reasons span { color: var(--muted); font-size:10px; line-height: 1.35; }
 
 /* Histórico visual curto: não substitui o SessionRecorder persistente. */
 .learning-decision-history {
@@ -141,7 +141,7 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
-  font-size: 7px;
+  font-size:10px;
   font-weight: 900;
 }
 .decision-history-list { display: grid; gap: 4px; margin-top: 7px; }
