@@ -75,54 +75,33 @@
     const cells = [];
     for (let row = 0; row < 12; row += 1) {
       for (let column = 0; column < 12; column += 1) {
-        if ((row + column) % 3 === 0) {
-          cells.push({
-            row, column, key: `${row}:${column}`, samples: 12 + ((row * 7 + column * 5) % 55),
-            visits: 2 + ((row + column) % 4), sessions: 1 + ((row + column) % 2),
-            confidence: 0.55 + (((row + column) % 5) * 0.09), stage: 'ACCEPTED',
-          });
-        }
+        if ((row + column) % 3 !== 0) continue;
+        cells.push({
+          row, column, key: `${row}:${column}`,
+          samples: 12 + ((row * 7 + column * 5) % 55),
+          visits: 2 + ((row + column) % 4),
+          confidence: 0.55 + (((row + column) % 5) * 0.09),
+          stage: 'ACCEPTED',
+        });
       }
     }
-    const petrolCurve = Array.from({ length: 18 }, (_, index) => ({
-      mapBar: 0.20 + index * 0.05,
-      petrolMs: 2.0 + index * 0.24,
-      confidence: 0.72,
-      confidenceStage: 'ACCEPTED',
-      uniqueVisits: 4,
-      effectiveSamples: 18,
-      series: 'PETROL',
-    }));
-    const cngCurve = petrolCurve.map((item, index) => ({
+    const petrol = cells.map(item => ({ ...item, fuel: 'PETROL', petrolMs: 3.8 + item.row * 0.17 }));
+    const cng = cells.map(item => ({ ...item, fuel: 'CNG', petrolMs: 3.84 + item.row * 0.17 }));
+    const comparisons = cells.map((item, index) => ({
       ...item,
-      petrolMs: item.petrolMs * (1 + 0.035 * Math.sin(index / 4)),
-      confidence: 0.68,
-      series: 'CNG',
-    }));
-    const kFactorSuggestions = Array.from({ length: 30 }, (_, index) => ({
-      index,
-      petrolMs: 1.5 + index * 0.35,
-      actionable: index % 4 === 0,
-      confidence: 0.70,
-      confidenceStage: 'ACCEPTED',
-      suggestedDeltaPercent: index % 8 === 0 ? 1.2 : -0.8,
-      decisionReason: 'Demonstração de tendência global',
+      errorPercent: ((index % 9) - 4) * 0.35,
+      quality: item.confidence,
     }));
     return {
-      ok: true, demo: true,
+      ok: true,
+      demo: true,
+      decisionAuthority: 'BLUE_CAUSAL_ENGINE',
+      uiPipeline: 'PHYSICAL_EVIDENCE_ONLY',
       grid: { rows: 12, columns: 12, petrolBins: PETROL_BINS, rpmBins: RPM_BINS },
       cells,
-      petrol: cells.map(item => ({ ...item, fuel: 'PETROL' })),
-      cng: cells.map(item => ({ ...item, fuel: 'CNG', epoch: 1 })),
-      comparisons: cells.map((item, index) => ({ ...item, errorPercent: ((index % 9) - 4) * 0.9 })),
-      assistedCalibration: {
-        comparisonCount: cells.length,
-        uniqueVisitCount: 18,
-        petrolCurve,
-        cngCurve,
-        kFactorSuggestions,
-        reconciliation: { pending_cng_visits: 0 },
-      },
+      petrol,
+      cng,
+      comparisons,
       current: { fuel: 'GNV', rpm: 2100, petrolMs: 4.2, mapBar: 0.56, cell: { row: 4, column: 3 } },
     };
   }
@@ -382,12 +361,19 @@
       return invoke(this.blue, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte de calibração indisponível' });
     }
 
-    sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 500, captureRawUsb: false, maxSessionMb: 64, keepSessions: 10 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
+    sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 500, captureRawUsb: false, maxSessionMb: 64, keepSessions: 30 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
     sessions() { return this.demo ? [] : invoke(this.native, 'listRecordedSessions', [], []); }
     setSessionSettings(settings) {
       const s = settings || {};
-      if (this.demo) return { ok: true, settings: s, demo: true };
-      return invoke(this.native, 'setSessionRecorderSettings', [Number(s.telemetryEveryMs) || 500, Number(s.maxSessionMb) || 64, Number(s.keepSessions) || 10, s.autoStartOnUsb !== false, s.captureRawUsb === true], { ok: false });
+      const normalized = {
+        telemetryEveryMs: Number(s.telemetryEveryMs) || 500,
+        maxSessionMb: Number(s.maxSessionMb) || 64,
+        keepSessions: Math.max(20, Math.min(100, Number(s.keepSessions) || 30)),
+        autoStartOnUsb: s.autoStartOnUsb !== false,
+        captureRawUsb: s.captureRawUsb === true,
+      };
+      if (this.demo) return { ok: true, settings: normalized, demo: true };
+      return invoke(this.native, 'setSessionRecorderSettings', [normalized.telemetryEveryMs, normalized.maxSessionMb, normalized.keepSessions, normalized.autoStartOnUsb, normalized.captureRawUsb], { ok: false });
     }
     startSession(reason) { return this.demo ? { ok: true, recording: true, demo: true } : invoke(this.native, 'startSessionRecording', [reason || 'manual'], { ok: false }); }
     stopSession(reason) { return this.demo ? { ok: true, recording: false, demo: true } : invoke(this.native, 'stopSessionRecording', [reason || 'manual'], { ok: false }); }
