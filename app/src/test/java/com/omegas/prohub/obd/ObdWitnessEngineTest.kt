@@ -1,5 +1,6 @@
 package com.omegas.prohub.obd
 
+import kotlin.math.ln
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -42,6 +43,25 @@ class ObdWitnessEngineTest {
         assertEquals(2.2, result.gasolineReferencePct!!, 0.15)
         assertEquals(10.0, result.gnvStftPct!!, 0.15)
         assertEquals(7.8, result.residualPp!!, 0.25)
+        val expectedRatio = 1.10 / 1.022
+        assertEquals(expectedRatio, result.correctionRatio!!, 0.003)
+        assertEquals(ln(expectedRatio), result.errorLog!!, 0.003)
+        assertEquals((expectedRatio - 1.0) * 100.0, result.correctionPercent!!, 0.3)
+    }
+
+    @Test
+    fun `zero gasoline and plus ten GNV means ten percent physical correction`() {
+        val engine = ObdWitnessEngine()
+        repeat(5) {
+            engine.observe(sample("PETROL", 0.0, 1500.0, 0.45, 3.2, "curve=3;map=2"))
+            engine.observe(sample("GNV", 10.0, 1505.0, 0.45, 3.2, "curve=3;map=2"))
+        }
+
+        val result = engine.evaluate(1500.0, 0.45, 3.2, "curve=3;map=2")
+
+        assertEquals(1.10, result.correctionRatio!!, 1e-9)
+        assertEquals(ln(1.10), result.errorLog!!, 1e-9)
+        assertEquals(10.0, result.correctionPercent!!, 1e-9)
     }
 
     private fun sample(
