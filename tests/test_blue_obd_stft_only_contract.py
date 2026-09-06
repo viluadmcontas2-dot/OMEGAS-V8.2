@@ -14,9 +14,17 @@ def main() -> None:
     text = MANAGER.read_text(encoding="utf-8")
     poll = section(text, "    private fun pollCycle(sock: BluetoothSocket) {", "    private fun readContext(sock: BluetoothSocket)")
 
-    assert 'readPidTimed(sock, "0106", 0x06)' in poll, "live loop must read PID 0106 STFT"
-    assert "ObdStftCodec.percent" in poll, "live loop must use canonical SAE STFT codec"
-    assert "onLiveSample" in poll, "STFT observation must leave acquisition layer"
+    required = [
+        'readPidTimed(sock, "0106", 0x06)',
+        "ObdStftCodec.percent",
+        "onLiveSample",
+        '"STFT_OBSERVATION"',
+        '"PENDING_MP48_PAIR"',
+        'put("requestedAtMs"',
+        'put("observedAtMs"',
+    ]
+    missing = [token for token in required if token not in poll]
+    assert not missing, f"STFT witness handoff metadata missing: {missing}"
 
     forbidden = {
         '"0103"': "fuel-system PID",
