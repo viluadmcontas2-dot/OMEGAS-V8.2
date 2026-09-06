@@ -1,6 +1,6 @@
-# OMEGAS RED/BLUE public-repo remote CI.
-# Standard GitHub-hosted runners are the primary remote executor while this repo
-# remains public. Docs-only changes intentionally do not compile Android.
+# OMEGAS RED public-repo remote CI.
+# Standard GitHub-hosted runners are the primary remote executor for the RED hotfix
+# while this repo remains public. Blue has its own canonical workflow in blue-ci.yml.
 name: OMEGAS RED-BLUE remote CI
 
 on:
@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - hotfix/v8.0-red-performance
-      - work/omegas-blue-causal-engine
     paths:
       - "app/**"
       - "tests/**"
