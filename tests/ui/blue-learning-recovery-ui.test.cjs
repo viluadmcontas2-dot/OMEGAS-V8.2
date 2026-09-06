@@ -8,10 +8,15 @@ const test = require('node:test');
 const ROOT = path.resolve(__dirname, '../..');
 const learning = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/learning.js'), 'utf8');
 const app = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/app.js'), 'utf8');
+const hub = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt'), 'utf8');
 
 test('Learning usa comparações causais Blue e consegue localizá-las na grade física', () => {
-  assert.match(learning, /calibrationState[^\n]{0,120}comparisons|comparisons[^\n]{0,120}calibrationState/s,
-    'Desvio medido precisa consumir a lista de comparações do BlueCalibrationCoordinator');
+  assert.match(hub, /calibration\.optJSONArray\("comparisons"\)/,
+    'boundary nativo precisa receber as comparações do BlueCalibrationCoordinator');
+  assert.match(hub, /learning\.put\("comparisons"/,
+    'boundary nativo precisa publicar as comparações causais no payload de Learning');
+  assert.match(learning, /maps\.comparisons/,
+    'Learning deve consumir somente o payload causal já reconciliado');
   assert.match(learning, /petrolReferenceMs|petrolTargetMs/,
     'comparação Blue precisa usar o Petrol Inj. de referência para localizar a célula visual');
   assert.match(learning, /rpmBins/);

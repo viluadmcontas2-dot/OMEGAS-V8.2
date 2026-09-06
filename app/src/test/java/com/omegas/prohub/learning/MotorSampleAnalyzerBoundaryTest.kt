@@ -115,6 +115,26 @@ class MotorSampleAnalyzerBoundaryTest {
     }
 
     @Test
+    fun `transition byte remains gasoline evidence until cng is confirmed`() {
+        val analyzer = MotorSampleAnalyzer()
+        var decision: SampleDecision? = null
+        repeat(frames) { index ->
+            decision = analyzer.add(
+                frame(
+                    at = index * 50L,
+                    fuel = Mp48Fuel.TRANSITION,
+                    petrolMs = 4.0,
+                    gasRaw = 180,
+                    mapBar = 0.60,
+                ),
+            )
+        }
+        assertTrue(decision!!.learningEligible)
+        assertEquals(Mp48Fuel.PETROL, decision!!.sample!!.fuel)
+        assertEquals("GASOLINA", decision!!.fuelConfirmed)
+    }
+
+    @Test
     fun `engine off keeps the next window conservative`() {
         val analyzer = MotorSampleAnalyzer()
         repeat(6) { index -> analyzer.add(frame(index * 50L)) }

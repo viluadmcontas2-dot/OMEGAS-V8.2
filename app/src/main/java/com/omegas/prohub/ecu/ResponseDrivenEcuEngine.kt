@@ -1,7 +1,6 @@
 package com.omegas.prohub.ecu
 
 import android.os.SystemClock
-import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.MotorSampleAnalyzer
 import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.learning.SampleDecision
@@ -228,7 +227,6 @@ class ResponseDrivenEcuEngine(
 
     fun statusJson(): JSONObject = synchronized(stateLock) {
         val now = SystemClock.elapsedRealtime()
-        val tolerances = LearningToleranceSettings.current
         JSONObject()
             .put("state", state.name)
             .put("running", running.get())
@@ -247,10 +245,10 @@ class ResponseDrivenEcuEngine(
                 handshakeNonRetryable -> "NON_RETRYABLE_RESPONSE"
                 handshakeFailures >= HARD_HANDSHAKE_WARNING_AFTER -> "HARD_ATTENTION_REQUIRED"
                 !sessionReady && recoveringExistingSession -> "PROBING_EXISTING_SESSION"
-                consecutiveFailures > tolerances.toleratedSerialFailures -> "SOFT"
+                consecutiveFailures > Mp48SerialRecoveryPolicy.toleratedFailures -> "SOFT"
                 else -> "NONE"
             })
-            .put("learningTolerances", tolerances.toJson())
+            .put("serialRecoveryPolicy", Mp48SerialRecoveryPolicy.toJson())
     }
 
     private fun runLoop() {
@@ -458,7 +456,7 @@ class ResponseDrivenEcuEngine(
             reply.payload.size >= Mp48Protocol.TELEMETRY_PAYLOAD_SIZE
 
     private fun acceptTelemetry(reply: UsbProtocolReply, responseMs: Long, plannedGap: Boolean) {
-        val toleratedGap = consecutiveFailures in 1..LearningToleranceSettings.current.toleratedSerialFailures
+        val toleratedGap = consecutiveFailures in 1..Mp48SerialRecoveryPolicy.toleratedFailures
         val capturedAt = SystemClock.elapsedRealtime()
         lastResponseMs = responseMs
         lastIntervalMs = if (lastTelemetryAtMs == 0L) 0L else capturedAt - lastTelemetryAtMs
@@ -499,10 +497,9 @@ class ResponseDrivenEcuEngine(
         }
         val now = SystemClock.elapsedRealtime()
         val silence = if (lastValidTelemetryAtMs > 0L) now - lastValidTelemetryAtMs else Long.MAX_VALUE
-        val tolerances = LearningToleranceSettings.current
-        val softRecoveryAfterFailures = tolerances.toleratedSerialFailures + 1
-        val hardRecoveryAfterFailures = tolerances.hardRecoveryFailures
-        val hardRecoverySilenceMs = tolerances.hardRecoverySilenceMs
+        val softRecoveryAfterFailures = Mp48SerialRecoveryPolicy.toleratedFailures + 1
+        val hardRecoveryAfterFailures = Mp48SerialRecoveryPolicy.hardRecoveryFailures
+        val hardRecoverySilenceMs = Mp48SerialRecoveryPolicy.hardRecoverySilenceMs
 
         when {
             consecutiveFailures < softRecoveryAfterFailures -> {

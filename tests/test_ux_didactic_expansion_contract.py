@@ -42,7 +42,9 @@ assert "resetLearningToleranceSettings" in api
 assert "learningDecision" in learning
 assert "reason_code" in learning
 assert "frame_count" in learning
-assert "LIMITES CONFIGURADOS" in learning
+assert "ESTABILIDADE DA EVIDÊNCIA" in learning
+assert "AUTOMÁTICA" in learning
+assert "LIMITES CONFIGURADOS" not in learning
 assert "Gasolina — referência agregada" in learning
 assert "GNV atual — Petrol Inj." in learning
 assert "Desvio medido" in learning

@@ -87,7 +87,14 @@ class MotorSampleAnalyzer(
         frame: Mp48Telemetry,
         plannedGap: Boolean = false,
         toleratedGap: Boolean = false,
-    ): SampleDecision = addInternal(frame, plannedGap, toleratedGap).withCell(frame)
+    ): SampleDecision {
+        val scientificFrame = if (frame.fuel == Mp48Fuel.TRANSITION) {
+            frame.copy(fuel = Mp48Fuel.PETROL, state = "GASOLINA_TRANSICAO")
+        } else {
+            frame
+        }
+        return addInternal(scientificFrame, plannedGap, toleratedGap).withCell(frame)
+    }
 
     private fun addInternal(
         frame: Mp48Telemetry,
@@ -125,15 +132,6 @@ class MotorSampleAnalyzer(
                     reason = "Motor parado; aprendizado pausado",
                 )
             }
-            Mp48Fuel.TRANSITION -> {
-                resetSamples(requireFullWindow = true)
-                return SampleDecision.transition(
-                    state = "FUEL_TRANSITION",
-                    reason = "Troca de combustível indicada — observando o motor, sem aprender",
-                    fuelConfirmed = stableFuel?.wireName,
-                    transitionTarget = transitionTarget?.wireName,
-                )
-            }
             Mp48Fuel.UNKNOWN -> {
                 resetSamples(requireFullWindow = true)
                 return SampleDecision.transition(
@@ -142,7 +140,7 @@ class MotorSampleAnalyzer(
                     fuelConfirmed = stableFuel?.wireName,
                 )
             }
-            Mp48Fuel.PETROL, Mp48Fuel.CNG -> Unit
+            Mp48Fuel.PETROL, Mp48Fuel.TRANSITION, Mp48Fuel.CNG -> Unit
             Mp48Fuel.CUTOFF -> Unit
         }
 

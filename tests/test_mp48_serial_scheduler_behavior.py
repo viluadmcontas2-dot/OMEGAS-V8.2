@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt"
 SCHEDULER = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt"
 ANCHOR_WINDOW = ROOT / "app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt"
+RECOVERY_POLICY = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48SerialRecoveryPolicy.kt"
 
 
 class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
@@ -175,7 +176,7 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                     }
                 ''',
             }
-            files = [ENGINE, SCHEDULER, ANCHOR_WINDOW]
+            files = [ENGINE, SCHEDULER, ANCHOR_WINDOW, RECOVERY_POLICY]
             for rel, body in stubs.items():
                 path = tmp / rel
                 path.parent.mkdir(parents=True, exist_ok=True)

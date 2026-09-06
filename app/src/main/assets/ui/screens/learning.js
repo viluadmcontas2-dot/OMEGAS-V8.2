@@ -34,7 +34,7 @@
     return finite(item?.observed_pair?.error_percent ?? item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.differencePercent ?? item?.error);
   }
   function comparisonTargetMs(item) {
-    return finite(item?.observed_pair?.petrol_target_ms ?? item?.petrol_target_ms ?? item?.petrolTargetMs);
+    return finite(item?.petrolReferenceMs ?? item?.observed_pair?.petrol_target_ms ?? item?.petrol_target_ms ?? item?.petrolTargetMs);
   }
   function comparisonObservedMs(item) {
     return finite(item?.observed_pair?.petrol_on_cng_ms ?? item?.petrol_on_cng_ms ?? item?.petrolOnCngMs);
@@ -89,7 +89,6 @@
       this.detail = document.getElementById('learningCellDetail');
       this.selectedCell = null;
       this.inspectorPane = 'collection';
-      this.toleranceSignature = '';
       this.decisionHistory = [];
       this.lastDecisionHistorySignature = '';
       this.grid = this.host && ns.PhysicalGrid ? new ns.PhysicalGrid(this.host, {
@@ -109,17 +108,14 @@
         <div class="learning-inspector-tabs" role="tablist" aria-label="Detalhes do aprendizado">
           <button type="button" data-learning-inspector="cell">Célula</button>
           <button type="button" data-learning-inspector="collection" class="active">Coleta</button>
-          <button type="button" data-learning-inspector="tolerances">Tolerâncias</button>
         </div>
         <div id="learningCellPane" class="learning-inspector-pane" data-pane="cell">
           <div class="detail-empty"><b>Toque em uma célula</b><span>Veja gasolina, GNV e o desvio realmente medido. A proposta Blue aparece separada.</span></div>
         </div>
         <div id="learningCollectionPane" class="learning-inspector-pane active" data-pane="collection"></div>
-        <div id="learningTolerancePane" class="learning-inspector-pane" data-pane="tolerances"></div>
       `;
       this.cellPane = document.getElementById('learningCellPane');
       this.collectionPane = document.getElementById('learningCollectionPane');
-      this.tolerancePane = document.getElementById('learningTolerancePane');
       this.detail.querySelectorAll('[data-learning-inspector]').forEach(button => {
         button.addEventListener('click', () => this.setInspectorPane(button.dataset.learningInspector));
       });
@@ -249,7 +245,6 @@
       if (summary) summary.textContent = proposalSummary.label;
 
       this.renderCollection(state);
-      this.renderTolerances(state);
       if (this.selectedCell) this.renderDetail(state, this.selectedCell.row, this.selectedCell.column);
     }
 
@@ -258,8 +253,6 @@
       const decision = state.learningDecision || {};
       const learningStatus = state.learningStatus || {};
       const restoring = learningStatus.restoring === true || String(learningStatus.state || '').toUpperCase() === 'LEARNING_RESTORING';
-      const tolerance = state.learningTolerance || {};
-      const policy = tolerance.policy || tolerance.applied || {};
       const live = state.telemetry?.live || {};
       const interpolation = state.telemetry?.interpolation || {};
       const cell = interpolation.cell || {};
@@ -312,72 +305,11 @@
           <p>O registro persistente completo continua no SessionRecorder em Ferramentas.</p>
         </section>
         <section class="learning-policy-summary">
-          <header><small>LIMITES CONFIGURADOS</small><button type="button" data-open-tolerances>ajustar</button></header>
-          <div class="policy-grid"><span>RPM <b>${fmt(policy.rpmOscillationMinimum, 0)} rpm / ${fmt(policy.rpmOscillationPercent, 1)}%</b></span><span>MAP <b>${fmt(policy.mapOscillationBar, 3)} bar</b></span><span>Petrol Inj. <b>${fmt(policy.petrolOscillationPercent, 1)}%</b></span><span>Pressão <b>${fmt(policy.pressureOscillationBar, 3)} bar</b></span></div>
-          <p>Esses números vêm da política Kotlin. A interface não decide se a amostra é válida.</p>
+          <header><small>ESTABILIDADE DA EVIDÊNCIA</small><span>AUTOMÁTICA</span></header>
+          <div class="policy-grid"><span>RPM <b>interno</b></span><span>MAP <b>interno</b></span><span>Petrol Inj. <b>interno</b></span><span>Continuidade <b>protegida</b></span></div>
+          <p>O núcleo decide automaticamente se RPM, MAP e Petrol Inj. representam a mesma condição física. Não existe perfil do usuário para afrouxar ou apertar a ciência.</p>
         </section>
       `;
-      this.collectionPane.querySelector('[data-open-tolerances]')?.addEventListener('click', () => this.setInspectorPane('tolerances'));
-    }
-
-    renderTolerances(state) {
-      if (!this.tolerancePane) return;
-      const settings = state.learningTolerance || {};
-      const model = settings.controlModel || {};
-      const levels = Array.isArray(model.levels) ? model.levels : [];
-      const controls = Array.isArray(model.controls) ? model.controls : [];
-      const signature = JSON.stringify({ levels, controls, minimumWaterC: model.minimumWaterC, ok: settings.ok });
-      if (signature === this.toleranceSignature) return;
-      this.toleranceSignature = signature;
-      if (!controls.length || !levels.length) {
-        this.tolerancePane.innerHTML = '<div class="detail-empty"><b>Tolerâncias indisponíveis</b><span>A política nativa aparecerá aqui quando o serviço estiver disponível.</span></div>';
-        return;
-      }
-      this.tolerancePane.innerHTML = `
-        <div class="tolerance-heading"><div><small>COLETA</small><h3>Quão rigoroso o aprendizado deve ser</h3></div></div>
-        <p class="tolerance-intro">Mais flexível aceita mais variação da condução real. Mais rigoroso exige uma condição mais estável. Nada aqui escreve na ECU.</p>
-        <div class="tolerance-profiles"><button type="button" data-tolerance-profile="1">Rigoroso</button><button type="button" data-tolerance-profile="2" class="active">Equilibrado</button><button type="button" data-tolerance-profile="3">Flexível</button></div>
-        <div class="tolerance-controls">
-          ${controls.map(control => `<label><span><b>${escapeHtml(control.title)}</b><small>${escapeHtml(control.description)}</small></span><select data-tolerance-control="${escapeHtml(control.id)}">${levels.map((label, index) => `<option value="${index}" ${Number(control.selected) === index ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>`).join('')}
-          <label><span><b>Temperatura mínima da água</b><small>Abaixo disso o núcleo aguarda aquecimento antes de aceitar evidência.</small></span><input id="learningMinimumWaterInput" type="number" min="20" max="100" step="1" value="${Number(model.minimumWaterC) || 60}"></label>
-        </div>
-        <div class="tolerance-actions"><button type="button" class="primary" data-apply-tolerances>Aplicar tolerâncias</button><button type="button" class="quiet-button" data-reset-tolerances>Restaurar padrão</button></div>
-        <div class="editor-rule"><b>Somente política de coleta.</b><span>Alterar tolerância reinicia a janela atual, mas nunca inicia escrita em Mapa K ou Curva K.</span></div>
-      `;
-      this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(button => {
-        button.addEventListener('click', () => {
-          const level = Number(button.dataset.toleranceProfile);
-          this.tolerancePane.querySelectorAll('[data-tolerance-control]').forEach(select => { select.value = String(level); });
-          this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(item => item.classList.toggle('active', item === button));
-        });
-      });
-      this.tolerancePane.querySelector('[data-apply-tolerances]')?.addEventListener('click', () => this.applyTolerances());
-      this.tolerancePane.querySelector('[data-reset-tolerances]')?.addEventListener('click', () => this.resetTolerances());
-    }
-
-    applyTolerances() {
-      if (!this.api) return;
-      const controls = {};
-      this.tolerancePane?.querySelectorAll('[data-tolerance-control]').forEach(select => { controls[select.dataset.toleranceControl] = Number(select.value); });
-      controls.minimumWaterC = Number(document.getElementById('learningMinimumWaterInput')?.value || 60);
-      const result = this.api.setLearningToleranceControls(controls);
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível aplicar as tolerâncias.' } });
-        return;
-      }
-      this.toleranceSignature = '';
-      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias de coleta atualizadas.' } });
-    }
-
-    resetTolerances() {
-      if (!this.api) return;
-      const result = this.api.resetLearningToleranceSettings();
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível restaurar as tolerâncias.' } });
-        return;
-      }
-      this.toleranceSignature = '';
-      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias restauradas para o padrão.' } });
     }
 
     renderDetail(state, row, column) {

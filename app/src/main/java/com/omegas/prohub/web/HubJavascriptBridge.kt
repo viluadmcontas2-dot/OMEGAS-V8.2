@@ -120,6 +120,11 @@ class HubJavascriptBridge(activity: MainActivity) {
                     val calibration = try { JSONObject(service.blueCalibrationStateJson()) } catch (error: Exception) {
                         JSONObject().put("ok", false).put("error", error.message ?: "Estado Blue indisponível")
                     }
+                    calibration.optJSONArray("comparisons")?.let { causalComparisons ->
+                        learning.put("comparisons", JSONArray(causalComparisons.toString()))
+                            .put("comparisonCount", causalComparisons.length())
+                            .put("comparison_count", causalComparisons.length())
+                    }
                     val science = JSONObject()
                         .put("learning", learning)
                         .put("calibrationState", calibration)

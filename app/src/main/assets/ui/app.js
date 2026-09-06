@@ -296,7 +296,6 @@
     if (route === 'learning') {
       patch.learningStatus = api.learningStatus() || {};
       patch.learningDecision = learningDecisionFromTelemetry(state.telemetry);
-      patch.learningTolerance = api.learningToleranceSettings() || {};
     }
     if (route === 'obd') patch.obdDevices = api.obdDevices() || {};
     if (route === 'tools') {
