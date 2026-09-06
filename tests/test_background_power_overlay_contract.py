@@ -15,7 +15,6 @@ overlay = read("app/src/main/java/com/omegas/prohub/service/TelemetryOverlayCont
 service = read("app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt")
 api = read("app/src/main/assets/ui/core/native-api.js")
 obd = read("app/src/main/assets/ui/screens/obd.js")
-html = read("app/src/main/assets/ui/index.html")
 
 # Bateria: pedido explícito pelo fluxo oficial do Android, com prompt automático
 # único e botão manual reaproveitando a mesma ação.
@@ -58,17 +57,18 @@ assert "showPending" in overlay
 assert "overlayWindowType" in overlay
 assert "TYPE_APPLICATION_OVERLAY" in overlay
 
-# A nova tela OBD mantém energia/conexão/PIDs na visão própria, sem reintroduzir
-# a página longa antiga e sem writer.
+# A tela OBD mantém energia, conexão e diagnóstico STFT na visão própria. O mapa
+# OBD científico paralelo foi aposentado: witness usa STFT + pareamento MP48.
 for marker in [
     'data-obd-view="setup"', 'id="obdConnectionCenter"', 'id="obdPowerCard"',
-    'id="obdSensorList"', 'data-obd-view="map"', 'id="obdIndependentMap"',
+    'id="obdSensorList"', 'id="obdLiveStft"', 'id="obdWitnessState"',
 ]:
-    assert marker in html
+    assert marker in obd
 assert "renderConnection(state)" in obd
 assert "renderPower()" in obd
 assert "renderSensors(obd)" in obd
-assert "data-obd-cell-key" in obd
+assert "data-obd-cell-key" not in obd
+assert 'data-obd-view="map"' not in obd
 assert "setInterval" not in obd
 for forbidden in ["writeMap", "writeCurve", "startKWrite", "startKFactorWrite"]:
     assert forbidden not in obd
