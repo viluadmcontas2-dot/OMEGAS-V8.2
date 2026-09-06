@@ -10,8 +10,7 @@ const dashboard = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screen
 const obd = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/obd.js'), 'utf8');
 const stylePath = path.join(ROOT, 'app/src/main/assets/ui/styles-witness-multimedia.css');
 const styles = fs.existsSync(stylePath) ? fs.readFileSync(stylePath, 'utf8') : '';
-const api = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/core/native-api.js'), 'utf8');
-const bridge = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt'), 'utf8');
+const service = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'), 'utf8');
 
 function occurrences(text, token) {
   return (text.match(new RegExp(token, 'g')) || []).length;
@@ -50,19 +49,18 @@ test('tela OBD vira witness STFT e elimina scanner legado do runtime', () => {
   assert.match(obd, /Gasolina[^<`]{0,100}referência física|referência física[^<`]{0,100}Gasolina/i);
   assert.match(obd, /OBD[^<`]{0,100}não escreve[^<`]{0,40}K/i);
 
-  assert.match(obd, /this\.api\.obdWitness\(\)/);
+  assert.match(obd, /this\.api\.fullSnapshot\(\)/);
+  assert.match(obd, /obd_witness/);
   assert.doesNotMatch(obd, /obdMaps\(|renderMap\(|mapLayer|longTermFuelTrim|calculatedLoad|throttle|mafGps|coolant|moduleVoltage/i);
   for (const forbidden of ['writeMap', 'writeCurve', 'startKWrite', 'startKBatchWrite', 'startKFactorWrite']) {
     assert.equal(obd.includes(forbidden), false, `${forbidden} cannot exist in OBD witness screen`);
   }
 });
 
-test('witness possui canal read-only explícito até a UI', () => {
-  assert.match(bridge, /@JavascriptInterface fun getObdWitness\(\): String/);
-  assert.match(bridge, /obdWitnessStatusJson\(\)/);
-  assert.match(api, /obdWitness\(\)/);
-  assert.match(api, /getObdWitness/);
-  assert.match(api, /gasolineReferencePct/);
-  assert.match(api, /gnvStftPct/);
-  assert.match(api, /residualPp/);
+test('witness usa o snapshot nativo read-only já existente', () => {
+  assert.match(service, /\.put\("obd_witness"/);
+  assert.match(service, /fun obdWitnessStatusJson\(\): String/);
+  assert.match(service, /gasolineReferencePct/);
+  assert.match(service, /gnvStftPct/);
+  assert.match(service, /residualPp/);
 });
