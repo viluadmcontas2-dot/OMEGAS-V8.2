@@ -15,7 +15,7 @@ new_poll = '''    private fun pollCycle(sock: BluetoothSocket) {
         val cycleStartedAt = System.currentTimeMillis()
         val stftRead = readPidTimed(sock, "0106", 0x06)
         val rawStft = stftRead.bytes?.firstOrNull()
-        val stft = rawStft?.let(ObdStftCodec::percent)
+        val stft = rawStft?.let { ObdStftCodec.percent(it) }
         val now = System.currentTimeMillis()
         val cycleMs = (now - cycleStartedAt).coerceAtLeast(0L)
 
