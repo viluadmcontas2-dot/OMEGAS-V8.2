@@ -612,6 +612,17 @@ class ObdAssistManager(
             log.add("INFO", "OBD", "ELM327 conectado: $deviceLabel")
             onStateChanged()
             while (running.get() && current.isConnected) pollCycle(current)
+            if (running.get() && connectionState.snapshot().stage == ElmStage.LIVE) {
+                val lost = connectionState.fail(
+                    "LIVE_LINK_LOST",
+                    "Conexão ELM foi encerrada durante aquisição STFT",
+                    System.currentTimeMillis(),
+                    retryable = true,
+                )
+                publishConnectionStatus(lost, device = deviceLabel)
+                log.add("WARN", "OBD", "Conexão ELM perdida após entrar em LIVE")
+                onStateChanged()
+            }
         } catch (error: SecurityException) {
             log.add("WARN", "OBD", "Permissão Bluetooth indisponível durante a conexão")
             val failed = connectionState.fail(
