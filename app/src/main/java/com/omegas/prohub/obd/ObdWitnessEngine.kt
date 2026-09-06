@@ -1,15 +1,16 @@
 package com.omegas.prohub.obd
 
 import kotlin.math.abs
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.sqrt
 
 /**
- * Pure, bounded STFT witness store.
+ * Pure, bounded STFT physical-evidence store.
  *
- * This class has no writer dependencies and no K correction math. It only keeps
- * timestamp-paired OBD/MP48 observations and builds a gasoline-relative STFT
- * residual in RPM/MAP/Petrol-Inj. compatible regions.
+ * This class has no writer dependencies and no K target authority. It only keeps
+ * timestamp-paired OBD/MP48 observations and builds gasoline-relative physical
+ * evidence in RPM/MAP/Petrol-Inj. compatible regions.
  */
 class ObdWitnessEngine(
     private val policy: ObdWitnessPolicy = ObdWitnessPolicy(),
@@ -24,7 +25,7 @@ class ObdWitnessEngine(
         require(sample.petrolMs.isFinite() && sample.petrolMs > 0.0)
         require(sample.calibrationState.isNotBlank())
         require(sample.skewMs >= 0L)
-        require(normalizeFuel(sample.fuel) != null) { "Unsupported MP48 fuel: ${sample.fuel}" }
+        require(ObdFuelState.normalize(sample.fuel) != null) { "Unsupported MP48 fuel: ${sample.fuel}" }
 
         observations.addLast(sample)
         while (observations.size > policy.historyLimit) observations.removeFirst()
@@ -42,9 +43,9 @@ class ObdWitnessEngine(
         require(calibrationState.isNotBlank())
 
         val compatible = observations.filter { isOperatingMatch(it, rpm, mapBar, petrolMs) }
-        val gasoline = compatible.filter { normalizeFuel(it.fuel) == WitnessFuel.PETROL }
+        val gasoline = compatible.filter { ObdFuelState.normalize(it.fuel) == ObdScientificFuel.PETROL }
         val gnv = compatible.filter {
-            normalizeFuel(it.fuel) == WitnessFuel.CNG && it.calibrationState == calibrationState
+            ObdFuelState.normalize(it.fuel) == ObdScientificFuel.CNG && it.calibrationState == calibrationState
         }
 
         if (gasoline.size < policy.minimumSamples || gnv.size < policy.minimumSamples) {
@@ -53,6 +54,9 @@ class ObdWitnessEngine(
                 gasolineReferencePct = gasoline.takeIf { it.isNotEmpty() }?.let(::medianStft),
                 gnvStftPct = gnv.takeIf { it.isNotEmpty() }?.let(::medianStft),
                 residualPp = null,
+                correctionRatio = null,
+                errorLog = null,
+                correctionPercent = null,
                 quality = 0.0,
                 gasolineSamples = gasoline.size,
                 gnvSamples = gnv.size,
@@ -61,11 +65,32 @@ class ObdWitnessEngine(
 
         val gasolineMedian = medianStft(gasoline)
         val gnvMedian = medianStft(gnv)
+        val gasolineFactor = 1.0 + gasolineMedian / 100.0
+        val gnvFactor = 1.0 + gnvMedian / 100.0
+        if (gasolineFactor <= 0.0 || gnvFactor <= 0.0) {
+            return ObdWitnessResult(
+                state = ObdWitnessState.INSUFFICIENT,
+                gasolineReferencePct = gasolineMedian,
+                gnvStftPct = gnvMedian,
+                residualPp = null,
+                correctionRatio = null,
+                errorLog = null,
+                correctionPercent = null,
+                quality = 0.0,
+                gasolineSamples = gasoline.size,
+                gnvSamples = gnv.size,
+            )
+        }
+
+        val correctionRatio = gnvFactor / gasolineFactor
         return ObdWitnessResult(
             state = ObdWitnessState.SUPPORTS,
             gasolineReferencePct = gasolineMedian,
             gnvStftPct = gnvMedian,
             residualPp = gnvMedian - gasolineMedian,
+            correctionRatio = correctionRatio,
+            errorLog = ln(correctionRatio),
+            correctionPercent = (correctionRatio - 1.0) * 100.0,
             quality = quality(gasoline + gnv),
             gasolineSamples = gasoline.size,
             gnvSamples = gnv.size,
@@ -108,14 +133,6 @@ class ObdWitnessEngine(
         val middle = sorted.size / 2
         return if (sorted.size % 2 == 0) (sorted[middle - 1] + sorted[middle]) / 2.0 else sorted[middle]
     }
-
-    private fun normalizeFuel(raw: String): WitnessFuel? = when (raw.trim().uppercase()) {
-        "PETROL", "GASOLINA" -> WitnessFuel.PETROL
-        "CNG", "GNV", "GAS" -> WitnessFuel.CNG
-        else -> null
-    }
-
-    private enum class WitnessFuel { PETROL, CNG }
 }
 
 data class ObdWitnessPolicy(
@@ -162,6 +179,9 @@ data class ObdWitnessResult(
     val gasolineReferencePct: Double?,
     val gnvStftPct: Double?,
     val residualPp: Double?,
+    val correctionRatio: Double?,
+    val errorLog: Double?,
+    val correctionPercent: Double?,
     val quality: Double,
     val gasolineSamples: Int,
     val gnvSamples: Int,
