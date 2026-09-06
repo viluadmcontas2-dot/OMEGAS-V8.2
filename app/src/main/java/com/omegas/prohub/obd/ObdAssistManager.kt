@@ -704,19 +704,14 @@ class ObdAssistManager(
 
     private fun pollCycle(sock: BluetoothSocket) {
         val cycleStartedAt = System.currentTimeMillis()
-        val fuelStatusRead = readPidTimed(sock, "0103", 0x03)
-        val fuelStatus = fuelStatusRead.bytes?.firstOrNull() ?: 0
-        val closedLoop = fuelStatus == 2 || fuelStatus == 16
         val stftRead = readPidTimed(sock, "0106", 0x06)
-        val stft = stftRead.bytes?.firstOrNull()?.let { (it - 128.0) * 100.0 / 128.0 }
-        val rpmRead = readPidTimed(sock, "010C", 0x0C)
-        val rpmBytes = rpmRead.bytes
-        val rpm = rpmBytes?.takeIf { it.size >= 2 }?.let { (it[0] * 256.0 + it[1]) / 4.0 }
-        val core = currentCore(rpmRead.observedAtMs)
-        val context = readContext(sock)
+        val rawStft = stftRead.bytes?.firstOrNull()
+        val stft = rawStft?.let { ObdStftCodec.percent(it) }
         val now = System.currentTimeMillis()
         val cycleMs = (now - cycleStartedAt).coerceAtLeast(0L)
+
         synchronized(stateLock) {
+            pollSequence += 1L
             lastCycleMs = cycleMs
             if (pollWindowStartedAt == 0L || now - pollWindowStartedAt > 10_000L) {
                 pollWindowStartedAt = now
@@ -724,140 +719,60 @@ class ObdAssistManager(
             }
             pollWindowCycles += 1
         }
-        val gate = qualification(
-            core = core,
-            stft = stft,
-            rpm = rpm,
-            coolant = context.coolant,
-            closedLoop = closedLoop,
-            stftObservedAtMs = stftRead.observedAtMs,
-            rpmObservedAtMs = rpmRead.observedAtMs,
-            closedLoopObservedAtMs = fuelStatusRead.observedAtMs,
-            stftStartedAtMs = stftRead.startedAtMs,
-            rpmStartedAtMs = rpmRead.startedAtMs,
-            closedLoopStartedAtMs = fuelStatusRead.startedAtMs,
-            coolantObservedAtMs = context.coolantRead.observedAtMs,
-        )
-        val fuelState = gate.fuelState
-        val conditionState = if (gate.accepted && stft != null) {
-            collectQualified(
-                core,
-                fuelState.fuel!!,
-                stft,
-                context.ltft,
-                context.speed,
-                context.coolant,
-                rpm!!,
-                rpmRead.observedAtMs,
-            )
-        } else {
-            conditionEngine.reset()
-            evidenceLedger.recordRejection(gate.reason)
-            "PAUSADO"
-        }
-
-        val independentFuel = observationalFuel(core)
-        val independentObservation = independentMap.observe(
-            fuel = independentFuel.first,
-            rpm = rpm,
-            loadPct = context.load,
-            stftPct = stft,
-            ltftPct = context.ltft,
-            speedKmh = context.speed,
-            coolantC = context.coolant,
-            mapKpa = context.mapKpa,
-            mafGps = context.mafGps,
-            throttlePct = context.throttle,
-            closedLoop = closedLoop,
-            minimumCoolantC = settings.obdMinimumCoolantC,
-            nowMs = now,
-        )
 
         val payload = JSONObject()
             .put("connected", true)
             .put("mode", "local")
             .put("state", "CONECTADO")
+            .put("connectionStage", ElmStage.LIVE.name)
             .put("stft", stft ?: JSONObject.NULL)
-            .put("ltft", context.ltft ?: JSONObject.NULL)
-            .put("rpm", rpm ?: JSONObject.NULL)
-            .put("speed", context.speed ?: JSONObject.NULL)
-            .put("coolant", context.coolant ?: JSONObject.NULL)
-            .put("load", context.load ?: JSONObject.NULL)
-            .put("throttle", context.throttle ?: JSONObject.NULL)
-            .put("mapKpa", context.mapKpa ?: JSONObject.NULL)
-            .put("intakeAirC", context.intakeAirC ?: JSONObject.NULL)
-            .put("mafGps", context.mafGps ?: JSONObject.NULL)
-            .put("fuelLevelPct", context.fuelLevelPct ?: JSONObject.NULL)
-            .put("fuelLevelSupported", supportsStandardPid(0x2F))
-            .put("moduleVoltageV", context.moduleVoltageV ?: JSONObject.NULL)
-            .put("closedLoop", closedLoop)
-            .put("quality", if (gate.accepted) "BOA" else "OBSERVACIONAL")
-            .put("reason", gate.reason)
-            .put("fuel", fuelState.fuel ?: JSONObject.NULL)
-            .put("fuelSource", fuelState.source.name)
+            // Compatibilidade de leitura da UI: estes sinais não são mais
+            // consultados pelo loop científico OBD e portanto ficam ausentes.
+            .put("ltft", JSONObject.NULL)
+            .put("rpm", JSONObject.NULL)
+            .put("speed", JSONObject.NULL)
+            .put("coolant", JSONObject.NULL)
+            .put("load", JSONObject.NULL)
+            .put("throttle", JSONObject.NULL)
+            .put("mapKpa", JSONObject.NULL)
+            .put("intakeAirC", JSONObject.NULL)
+            .put("mafGps", JSONObject.NULL)
+            .put("fuelLevelPct", JSONObject.NULL)
+            .put("moduleVoltageV", JSONObject.NULL)
+            .put("closedLoop", JSONObject.NULL)
+            .put("fuel", JSONObject.NULL)
+            .put("fuelSource", "PENDING_MP48_PAIR")
             .put("manualFuel", settings.obdManualFuel.ifBlank { JSONObject.NULL })
-            .put("learningState", if (gate.accepted) "QUALIFICADO" else "PAUSADO")
-            .put("physicalCellAvailable", fuelState.canQualifyMap && gate.accepted)
-            .put("conditionState", conditionState)
-            .put("independentEvidence", JSONObject()
-                .put("accepted", independentObservation.accepted)
-                .put("reason", independentObservation.reason)
-                .put("cellKey", independentObservation.key ?: JSONObject.NULL)
-                .put("fuel", independentFuel.first ?: JSONObject.NULL)
-                .put("fuelSource", independentFuel.second)
-                .put("axes", "OBD_RPM_X_LOAD"))
+            .put("quality", if (stft != null) "STFT_ONLY" else "SEM DADOS")
+            .put("reason", if (stft != null) "STFT adquirido; aguardando pareamento MP48" else "PID 0106/STFT sem resposta")
+            .put("learningState", if (stft != null) "STFT_OBSERVED" else "PAUSADO")
+            .put("physicalCellAvailable", false)
+            .put("conditionState", "AGUARDANDO_PAREAMENTO_MP48")
             .put("pollCycleMs", cycleMs)
-            .put("pidObservedAt", JSONObject()
-                .put("stft", stftRead.observedAtMs)
-                .put("rpm", rpmRead.observedAtMs)
-                .put("closedLoop", fuelStatusRead.observedAtMs)
-                .put("ltft", context.ltftRead.observedAtMs)
-                .put("speed", context.speedRead.observedAtMs)
-                .put("coolant", context.coolantRead.observedAtMs)
-                .put("load", context.loadRead.observedAtMs)
-                .put("throttle", context.throttleRead.observedAtMs)
-                .put("map", context.mapRead.observedAtMs)
-                .put("intakeAir", context.intakeAirRead.observedAtMs)
-                .put("maf", context.mafRead.observedAtMs)
-                .put("fuelLevel", context.fuelLevelRead.observedAtMs)
-                .put("moduleVoltage", context.moduleVoltageRead.observedAtMs))
-            .put("pidReadStartedAt", JSONObject()
-                .put("stft", stftRead.startedAtMs)
-                .put("rpm", rpmRead.startedAtMs)
-                .put("closedLoop", fuelStatusRead.startedAtMs)
-                .put("ltft", context.ltftRead.startedAtMs)
-                .put("speed", context.speedRead.startedAtMs)
-                .put("coolant", context.coolantRead.startedAtMs)
-                .put("load", context.loadRead.startedAtMs)
-                .put("throttle", context.throttleRead.startedAtMs)
-                .put("map", context.mapRead.startedAtMs)
-                .put("intakeAir", context.intakeAirRead.startedAtMs)
-                .put("maf", context.mafRead.startedAtMs)
-                .put("fuelLevel", context.fuelLevelRead.startedAtMs)
-                .put("moduleVoltage", context.moduleVoltageRead.startedAtMs))
-            .put("pidAgeMs", JSONObject()
-                .put("stft", pidAgeMs(stftRead, now))
-                .put("rpm", pidAgeMs(rpmRead, now))
-                .put("closedLoop", pidAgeMs(fuelStatusRead, now))
-                .put("ltft", pidAgeMs(context.ltftRead, now))
-                .put("speed", pidAgeMs(context.speedRead, now))
-                .put("coolant", pidAgeMs(context.coolantRead, now))
-                .put("load", pidAgeMs(context.loadRead, now))
-                .put("throttle", pidAgeMs(context.throttleRead, now))
-                .put("map", pidAgeMs(context.mapRead, now))
-                .put("intakeAir", pidAgeMs(context.intakeAirRead, now))
-                .put("maf", pidAgeMs(context.mafRead, now))
-                .put("fuelLevel", pidAgeMs(context.fuelLevelRead, now))
-                .put("moduleVoltage", pidAgeMs(context.moduleVoltageRead, now)))
+            .put("requestedAtMs", stftRead.startedAtMs)
+            .put("observedAtMs", stftRead.observedAtMs)
+            .put("pidObservedAt", JSONObject().put("stft", stftRead.observedAtMs))
+            .put("pidReadStartedAt", JSONObject().put("stft", stftRead.startedAtMs))
+            .put("pidAgeMs", JSONObject().put("stft", pidAgeMs(stftRead, now)))
             .put("sessionLive", true)
             .put("sessionStartedAt", currentSessionStartedAt)
             .put("updatedAt", now)
-            .put("coreSource", core.optString("source", "local"))
-            .put("mp48Available", core.optBoolean("engineReady", false) && core.optString("source") != "indisponível")
+
         synchronized(stateLock) { live = payload }
-        try { onLiveSample(JSONObject(payload.toString())) } catch (_: Exception) {}
-        updateTrip(core, context.speed ?: 0.0, now)
-        if (independentObservation.accepted && pollSequence % 20L == 0L) save()
+        if (stft != null) {
+            try {
+                onLiveSample(
+                    JSONObject()
+                        .put("kind", "STFT_OBSERVATION")
+                        .put("stft", stft)
+                        .put("rawByte", rawStft)
+                        .put("requestedAtMs", stftRead.startedAtMs)
+                        .put("observedAtMs", stftRead.observedAtMs)
+                        .put("pollCycleMs", cycleMs)
+                        .put("mode", "local"),
+                )
+            } catch (_: Exception) {}
+        }
         onStateChanged()
         try {
             Thread.sleep(settings.obdPollIntervalMs.coerceIn(150L, 3000L))
