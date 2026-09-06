@@ -155,7 +155,8 @@ class BlueCalibrationCoordinator(
             .put("ready", false)
             .put("reason", "CALIBRATION_NOT_SYNCED")
             .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
-        val latest = current.activeComparisons().maxByOrNull { it.createdAtMs }
+        val active = current.activeComparisons()
+        val latest = active.maxByOrNull { it.createdAtMs }
         val latestJson = latest?.let(::comparisonJson)
         return JSONObject()
             .put("ready", true)
@@ -165,7 +166,8 @@ class BlueCalibrationCoordinator(
             .put("mapStorageRows", current.calibration.mapK.size)
             .put("petrolEvidence", current.petrolEvidence.size)
             .put("activeCngEvidence", current.activeCngEvidence().size)
-            .put("activeComparisons", current.activeComparisons().size)
+            .put("activeComparisons", active.size)
+            .put("comparisons", JSONArray(active.map(::comparisonJson)))
             .put("latestComparison", latestJson ?: JSONObject.NULL)
             .put("baseConfidence", latestJson?.optDouble("baseConfidence") ?: JSONObject.NULL)
             .put("effectiveConfidence", latestJson?.optDouble("effectiveConfidence") ?: JSONObject.NULL)
