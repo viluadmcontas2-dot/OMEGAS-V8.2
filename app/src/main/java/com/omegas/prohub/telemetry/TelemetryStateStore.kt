@@ -4,6 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.abs
 
 /**
  * Estado central e thread-safe da telemetria. A interface nativa e o painel
@@ -38,19 +39,25 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             stateUpdatedAt = now
             val isTelemetry = event == "telemetry" || payload.has("rpm")
             if (isTelemetry) {
+                // Freshness answers when the native service actually received a
+                // usable frame. Historical matching below preserves the frame's
+                // physical timestamp independently so OBD pairing cannot make
+                // service freshness stale by construction.
                 telemetryUpdatedAt = now
                 valid = true
             }
             val seq = sequence.incrementAndGet()
             if (isTelemetry) {
+                val observedAtMs = physicalObservedAtMs(root, payload, now)
                 history.addLast(
                     JSONObject()
                         .put("sequence", seq)
-                        .put("timestamp", telemetryUpdatedAt)
+                        .put("timestamp", observedAtMs)
                         .put("rpm", payload.optInt("rpm", telemetry.optInt("rpm", 0)))
                         .put("petrol_ms", payload.optDouble("petrol_ms", telemetry.optDouble("petrol_ms", 0.0)))
                         .put("gas_ms", payload.optDouble("gas_ms_diagnostic", payload.optDouble("gas_ms", telemetry.optDouble("gas_ms", 0.0))))
                         .put("map_bar", payload.optDouble("load_bar", payload.optDouble("map_bar", telemetry.optDouble("map_bar", 0.0))))
+                        .put("fuel", payload.optString("fuel", payload.optString("state", telemetry.optString("fuel", telemetry.optString("state", "")))))
                         .put("gps_speed_kmh", gps.optDouble("speedKmh", 0.0))
                         .put("gps_latitude", gps.opt("latitude") ?: JSONObject.NULL)
                         .put("gps_longitude", gps.opt("longitude") ?: JSONObject.NULL),
@@ -124,6 +131,23 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         }
     }
 
+    /**
+     * Encontra o quadro físico MP48 temporalmente mais próximo de uma observação
+     * externa (por exemplo STFT). Nunca inventa sincronismo: acima do skew
+     * permitido retorna null. O resultado é uma cópia defensiva do histórico.
+     */
+    fun nearestFrame(observedAtMs: Long, maxSkewMs: Long): JSONObject? = synchronized(lock) {
+        if (observedAtMs <= 0L || maxSkewMs < 0L || history.isEmpty()) return@synchronized null
+        val best = history.minByOrNull { frame ->
+            abs(frame.optLong("timestamp", 0L) - observedAtMs)
+        } ?: return@synchronized null
+        val timestamp = best.optLong("timestamp", 0L)
+        if (timestamp <= 0L) return@synchronized null
+        val skewMs = abs(timestamp - observedAtMs)
+        if (skewMs > maxSkewMs) return@synchronized null
+        JSONObject(best.toString()).put("skew_ms", skewMs)
+    }
+
     fun lightweightJson(): String = synchronized(lock) {
         JSONObject()
             .put("sequence", sequence.get())
@@ -173,6 +197,18 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
     fun isValid(): Boolean = synchronized(lock) { valid }
     fun ageMs(): Long = synchronized(lock) {
         if (telemetryUpdatedAt == 0L) Long.MAX_VALUE else System.currentTimeMillis() - telemetryUpdatedAt
+    }
+
+    private fun physicalObservedAtMs(root: JSONObject, payload: JSONObject, now: Long): Long {
+        val direct = payload.optLong("observed_at_ms", root.optLong("observed_at_ms", 0L))
+        if (direct > 0L) return direct
+        val timestampMs = payload.optLong("timestamp_ms", root.optLong("timestamp_ms", 0L))
+        if (timestampMs > 0L) return timestampMs
+        val lastFrameAt = payload.optDouble("last_frame_at", root.optDouble("last_frame_at", 0.0))
+        if (lastFrameAt > 0.0) return (lastFrameAt * 1000.0).toLong()
+        val ageMs = payload.optLong("last_frame_age_ms", root.optLong("last_frame_age_ms", -1L))
+        if (ageMs >= 0L) return now - ageMs.coerceAtMost(now)
+        return now
     }
 
     private fun merge(target: JSONObject, source: JSONObject) {
