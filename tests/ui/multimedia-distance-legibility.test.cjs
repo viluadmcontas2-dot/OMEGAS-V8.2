@@ -6,9 +6,9 @@ const path = require('node:path');
 const test = require('node:test');
 
 const ROOT = path.join(__dirname, '../..');
+const UI = path.join(ROOT, 'app/src/main/assets/ui');
 const read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const index = read('app/src/main/assets/ui/index.html');
-const refine = read('app/src/main/assets/ui/styles-refine.css');
 const multimedia = read('app/src/main/assets/ui/styles-witness-multimedia.css');
 const dashboard = read('app/src/main/assets/ui/screens/dashboard.js');
 const obd = read('app/src/main/assets/ui/screens/obd.js');
@@ -29,26 +29,27 @@ test('stylesheet multimídia é parte estática do APK, não depende de abrir da
   assert.match(index, /href="styles-witness-multimedia\.css"/);
 });
 
-test('Mapa K possui tipografia mínima para leitura à distância em 1280x720', () => {
+test('nenhum CSS embarcado declara texto abaixo de 10 px', () => {
+  const cssFiles = fs.readdirSync(UI).filter(name => name.endsWith('.css'));
+  const tiny = [];
+  for (const name of cssFiles) {
+    const css = fs.readFileSync(path.join(UI, name), 'utf8');
+    const regex = /font-size\s*:\s*(\d+(?:\.\d+)?)px/g;
+    for (const match of css.matchAll(regex)) {
+      const value = Number(match[1]);
+      if (value < 10) tiny.push(`${name}:${value}px`);
+    }
+  }
+  assert.deepEqual(tiny, [], `tipografia minúscula ainda embarcada: ${tiny.join(', ')}`);
+});
+
+test('Mapa K possui tipografia própria para leitura à distância em 1280x720', () => {
   expectAtLeast(multimedia, '.map-screen .map-axis-corner small', 11, 'nome do eixo Mapa K');
   expectAtLeast(multimedia, '.map-screen .map-axis-header small', 11, 'nome dos pins Mapa K');
   expectAtLeast(multimedia, '.map-screen .map-rpm-header b', 13, 'valores RPM do Mapa K');
   expectAtLeast(multimedia, '.map-screen .map-ms-header b', 13, 'valores ms do Mapa K');
   expectAtLeast(multimedia, '.map-screen .map-k-cell b', 15, 'valor K da célula');
   expectAtLeast(multimedia, '.map-screen .map-k-cell span', 10, 'delta/apoio da célula');
-});
-
-test('CSS legado não pode voltar a ser a última palavra sobre a legibilidade do Mapa K', () => {
-  for (const tiny of [
-    '.map-axis-corner small,.map-axis-header small{font-size:7px',
-    '.map-rpm-header b{font-size:8px',
-    '.map-ms-header b{font-size:9px',
-    '.map-k-cell b{font-size:11px!important',
-    '.map-k-cell span{font-size:7px!important',
-  ]) {
-    assert.ok(refine.includes(tiny), `baseline mudou; reavalie o corte de ${tiny}`);
-  }
-  assert.match(multimedia, /\.map-screen\s+\.map-k-cell\s+b\s*\{/);
 });
 
 test('HTML embarcado não conserva dashboard/OBD scanner antigos por baixo do runtime atual', () => {
