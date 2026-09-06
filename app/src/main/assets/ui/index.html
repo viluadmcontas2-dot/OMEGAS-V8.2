@@ -100,7 +100,7 @@
 
         <section class="screen curve-screen" data-screen="curve" aria-labelledby="curveTitle">
           <div class="page-intro action-intro">
-            <div><small>AJUSTE GLOBAL</small><h2 id="curveTitle">Curva K</h2><p>Aprenda a tendência global e edite cada ponto individualmente.</p></div>
+            <div><small>AJUSTE GLOBAL</small><h2 id="curveTitle">Curva K</h2><p>Aprenda a tendência global e ajuste um ou vários pontos com a mesma ação.</p></div>
             <div class="route-actions-stack">
               <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
                 <button type="button" data-curve-view="learning">Aprendizado global</button>
@@ -127,18 +127,18 @@
             <div class="curve-view curve-editor-view active" data-curve-panel="editor">
               <div class="curve-workspace">
                 <section class="curve-surface">
-                  <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque em qualquer um dos 30 pontos</span></div>
+                  <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque para selecionar · arraste para selecionar vários</span></div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
                   <div class="curve-axis">Petrol Inj. →</div>
                   <details class="evidence-disclosure"><summary><span><small>CONTEXTO</small><b>Evidência técnica</b></span><em>abrir</em></summary><div id="curveEvidenceList" class="evidence-grid"></div></details>
                 </section>
                 <aside class="inspector-panel curve-editor-panel">
-                  <div class="editor-heading"><div><small>PONTO ATIVO</small><h3 id="curveActivePoint">Selecione um ponto</h3></div></div>
+                  <div class="editor-heading"><div><small>SELEÇÃO</small><h3 id="curveActivePoint">Selecione um ou vários pontos</h3></div><button id="curveClearSelection" type="button" class="quiet-button">Limpar seleção</button></div>
                   <div class="current-value"><small>Atual</small><b id="curveCurrentFactor">—</b></div>
                   <label class="field-label"><span>Fator desejado</span><input id="curveTargetFactor" type="number" inputmode="decimal" step="0.001" min="0.6" max="4"></label>
                   <div class="curve-nudge-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
                   <div id="curveTargetNormalized" class="normalized-preview">Prévia calculada pelo Kotlin</div>
-                  <button id="curvePreparePoint" type="button" class="secondary wide">Preparar este ponto</button>
+                  <button id="curvePreparePoint" type="button" class="secondary wide">Aplicar valor à seleção</button>
                   <div class="context-separator"></div>
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
                   <div id="curveProposalList" class="proposal-list"><p>Nenhum ponto preparado.</p></div>

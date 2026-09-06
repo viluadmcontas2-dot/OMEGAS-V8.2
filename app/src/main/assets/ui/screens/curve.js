@@ -38,6 +38,11 @@
       this.root = document.querySelector('[data-screen="curve"]');
       this.data = null;
       this.activeIndex = null;
+      this.selectedIndices = new Set();
+      this.dragSelecting = false;
+      this.dragMoved = false;
+      this.dragStartIndex = null;
+      this.dragStartWasSelected = false;
       this.proposals = new Map();
       this.pendingSuggestion = null;
       this.reading = false;
@@ -49,9 +54,10 @@
 
     bind() {
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
-      document.getElementById('curvePreparePoint')?.addEventListener('click', () => this.prepareActivePoint());
+      document.getElementById('curvePreparePoint')?.addEventListener('click', () => this.prepareSelectionTarget());
+      document.getElementById('curveClearSelection')?.addEventListener('click', () => this.clearSelection());
       document.querySelectorAll('[data-curve-view]').forEach(button => button.addEventListener('click', () => this.setView(button.dataset.curveView || 'editor')));
-      document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeActive(Number(button.dataset.curveNudge) || 0)));
+      document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeSelection(Number(button.dataset.curveNudge) || 0)));
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
         this.proposals.clear(); this.renderChart(); this.renderProposalList();
       });
@@ -98,6 +104,8 @@
       this.reading = true;
       this.data = null;
       this.proposals.clear();
+      this.selectedIndices.clear();
+      this.activeIndex = null;
       text('curveSourceStatus', 'Lendo 30 pontos diretamente da ECU');
       this.root?.classList.add('is-reading');
       if (this.pendingSuggestion) this.renderSuggestionFocus(this.pendingSuggestion);
@@ -168,25 +176,82 @@
 
     points() { return Array.isArray(this.data?.points) ? this.data.points : []; }
 
-    selectPoint(index) {
-      const point = this.points().find(item => Number(item.index) === Number(index));
-      if (!point) return;
-      this.activeIndex = Number(point.index);
-      text('curveActivePoint', `Ponto ${this.activeIndex + 1} · ${fmt(point.petrolMs, 2)} ms`);
+    pointByIndex(index) {
+      return this.points().find(item => Number(item.index) === Number(index)) || null;
+    }
+
+    selectedPointIndices() {
+      if (this.selectedIndices.size) return [...this.selectedIndices].sort((a, b) => a - b);
+      return this.activeIndex === null ? [] : [this.activeIndex];
+    }
+
+    refreshActiveEditor() {
+      const point = this.activeIndex === null ? null : this.pointByIndex(this.activeIndex);
+      if (!point) {
+        text('curveActivePoint', 'Selecione um ou vários pontos');
+        text('curveCurrentFactor', '—');
+        text('curveTargetNormalized', 'Prévia calculada pelo Kotlin');
+        const input = document.getElementById('curveTargetFactor');
+        if (input) input.value = '';
+        return;
+      }
+      const count = this.selectedIndices.size || 1;
+      const suffix = count > 1 ? ` · ${count} selecionados` : '';
+      text('curveActivePoint', `Ponto ${this.activeIndex + 1} · ${fmt(point.petrolMs, 2)} ms${suffix}`);
       text('curveCurrentFactor', fmt(point.factor, 4));
       const input = document.getElementById('curveTargetFactor');
       if (input) input.value = String(finite(this.proposals.get(this.activeIndex)?.targetFactor ?? point.factor) ?? '');
-      this.renderChart();
       this.renderLearningPointContext(this.store.get(), this.activeIndex);
     }
 
-    nudgeActive(delta) {
-      if (this.activeIndex === null || !delta) return;
-      const input = document.getElementById('curveTargetFactor');
-      const current = finite(input?.value) ?? finite(this.points().find(item => Number(item.index) === this.activeIndex)?.factor);
-      if (current === null) return;
-      if (input) input.value = String(Math.max(0.6, Math.min(4, current + delta)).toFixed(4));
-      this.prepareActivePoint();
+    selectOnly(index) {
+      const point = this.pointByIndex(index);
+      if (!point) return;
+      this.selectedIndices.clear();
+      this.selectedIndices.add(Number(point.index));
+      this.activeIndex = Number(point.index);
+      this.refreshActiveEditor();
+      this.renderChart();
+    }
+
+    selectPoint(index) { this.selectOnly(index); }
+
+    toggleSelection(index) {
+      const point = this.pointByIndex(index);
+      if (!point) return;
+      const key = Number(point.index);
+      if (this.selectedIndices.has(key)) this.selectedIndices.delete(key);
+      else this.selectedIndices.add(key);
+      if (this.selectedIndices.has(key)) this.activeIndex = key;
+      else if (this.activeIndex === key) this.activeIndex = [...this.selectedIndices].at(-1) ?? null;
+      this.refreshActiveEditor();
+      this.renderChart();
+    }
+
+    clearSelection() {
+      this.selectedIndices.clear();
+      this.activeIndex = null;
+      this.refreshActiveEditor();
+      this.renderChart();
+    }
+
+    nudgeActive(delta) { this.nudgeSelection(delta); }
+
+    nudgeSelection(delta) {
+      const indices = this.selectedPointIndices();
+      if (!indices.length || !delta) return;
+      for (const index of indices) {
+        const point = this.pointByIndex(index);
+        const current = finite(this.proposals.get(index)?.targetFactor ?? point?.factor);
+        if (current === null) continue;
+        const requested = Math.max(0.6, Math.min(4, current + delta));
+        const preview = this.api.previewCurvePoint(index, requested);
+        if (!preview?.ok) continue;
+        this.acceptPreview(preview, true);
+      }
+      this.refreshActiveEditor();
+      this.renderChart();
+      this.renderProposalList();
     }
 
     focusSuggestion(suggestion) {
@@ -214,13 +279,25 @@
       )[0] || null;
     }
 
-    prepareActivePoint() {
-      if (this.activeIndex === null) return;
+    prepareActivePoint() { return this.prepareSelectionTarget(); }
+
+    prepareSelectionTarget() {
+      const indices = this.selectedPointIndices();
+      if (!indices.length) { this.alert('Selecione pelo menos um ponto da Curva K.'); return false; }
       const requested = finite(document.getElementById('curveTargetFactor')?.value);
-      if (requested === null) { this.alert('Informe o fator K desejado.'); return; }
-      const preview = this.api.previewCurvePoint(this.activeIndex, requested);
-      if (!preview?.ok) { this.alert(preview?.error || 'Prévia da Curva K inválida.'); return; }
-      this.acceptPreview(preview);
+      if (requested === null) { this.alert('Informe o fator K desejado.'); return false; }
+      let prepared = 0;
+      for (const index of indices) {
+        const preview = this.api.previewCurvePoint(index, requested);
+        if (!preview?.ok) continue;
+        this.acceptPreview(preview, true);
+        prepared += 1;
+      }
+      this.refreshActiveEditor();
+      this.renderChart();
+      this.renderProposalList();
+      if (!prepared) this.alert('Nenhum ponto selecionado produziu uma prévia válida.');
+      return prepared > 0;
     }
 
     prepareSuggestion(suggestion = this.pendingSuggestion, silent = false) {
@@ -290,18 +367,70 @@
         return `${index ? 'L' : 'M'} ${xFor(index).toFixed(1)} ${yFor(Number(value)).toFixed(1)}`;
       }).join(' ');
       host.innerHTML = `<svg class="curve-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Curva K com 30 pontos editáveis"><path class="curve-line actual" d="${actualPath}"></path><path class="curve-line proposal" d="${proposalPath}"></path>${points.map((point, index) => {
-        const selected = Number(point.index) === this.activeIndex;
+        const active = Number(point.index) === this.activeIndex;
+        const selected = this.selectedIndices.has(Number(point.index));
         const proposed = this.proposals.has(Number(point.index));
         const y = yFor(proposed ? this.proposals.get(Number(point.index)).targetFactor : point.factor).toFixed(1);
         const x = xFor(index).toFixed(1);
         const label = index % 5 === 0 || index === points.length - 1 ? `<text class="curve-point-label" x="${x}" y="${height - 8}" text-anchor="middle">${fmt(point.petrolMs, 1)}</text>` : '';
-        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="15" tabindex="0" role="button" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${selected ? 'active' : ''} ${proposed ? 'proposed' : ''}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
+        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="18" tabindex="0" role="button" aria-pressed="${selected}" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${active ? 'active' : ''} ${selected ? 'selected' : ''} ${proposed ? 'proposed' : ''}" data-curve-point="${point.index}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
       }).join('')}</svg>`;
+      const syncSelectionClasses = () => {
+        host.querySelectorAll('[data-curve-index]').forEach(hit => {
+          const index = Number(hit.dataset.curveIndex);
+          const selected = this.selectedIndices.has(index);
+          hit.setAttribute('aria-pressed', String(selected));
+          const dot = host.querySelector(`[data-curve-point="${index}"]`);
+          dot?.classList.toggle('selected', selected);
+          dot?.classList.toggle('active', index === this.activeIndex);
+          dot?.setAttribute('r', selected ? '9' : '7');
+        });
+      };
+      const finishDrag = () => {
+        if (!this.dragSelecting) return;
+        if (!this.dragMoved && this.dragStartWasSelected && this.dragStartIndex !== null) {
+          this.selectedIndices.delete(Number(this.dragStartIndex));
+          if (this.activeIndex === Number(this.dragStartIndex)) this.activeIndex = [...this.selectedIndices].at(-1) ?? null;
+          this.refreshActiveEditor();
+        }
+        this.dragSelecting = false;
+        this.dragMoved = false;
+        this.dragStartIndex = null;
+        this.dragStartWasSelected = false;
+        syncSelectionClasses();
+      };
       host.querySelectorAll('[data-curve-index]').forEach(point => {
-        const select = () => this.selectPoint(Number(point.dataset.curveIndex));
-        point.addEventListener('click', select);
-        point.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(); } });
+        const index = () => Number(point.dataset.curveIndex);
+        point.addEventListener('pointerdown', event => {
+          if (typeof event.button === 'number' && event.button !== 0) return;
+          event.preventDefault();
+          const key = index();
+          this.dragSelecting = true;
+          this.dragMoved = false;
+          this.dragStartIndex = key;
+          this.dragStartWasSelected = this.selectedIndices.has(key);
+          this.selectedIndices.add(key);
+          this.activeIndex = key;
+          this.refreshActiveEditor();
+          syncSelectionClasses();
+        });
+        point.addEventListener('pointerenter', () => {
+          if (!this.dragSelecting) return;
+          const key = index();
+          if (key !== this.dragStartIndex) this.dragMoved = true;
+          this.selectedIndices.add(key);
+          this.activeIndex = key;
+          this.refreshActiveEditor();
+          syncSelectionClasses();
+        });
+        point.addEventListener('pointerup', finishDrag);
+        point.addEventListener('pointercancel', finishDrag);
+        point.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.toggleSelection(index()); }
+        });
       });
+      host.onpointerup = finishDrag;
+      host.onpointercancel = finishDrag;
     }
 
     directComparisons(state) {

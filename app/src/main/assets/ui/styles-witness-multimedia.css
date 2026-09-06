@@ -702,3 +702,13 @@ body:has(.multimedia-obd-screen.active) .rail-status {
   .map-screen .map-rpm-header b,.map-screen .map-ms-header b{font-size:12px!important}
   .map-screen .map-k-cell b{font-size:14px!important}
 }
+
+
+/* Curve batch selection — cockpit touch hardening. */
+.curve-point-hit { touch-action: none; cursor: pointer; }
+.curve-point.selected {
+  stroke: var(--accent);
+  stroke-width: 4px;
+}
+.curve-point.active.selected { stroke-width: 5px; }
+#curveClearSelection { min-height: 40px; white-space: nowrap; }
