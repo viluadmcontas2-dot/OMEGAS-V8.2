@@ -4,12 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#070a0f">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <title>OMEGAS V8</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="styles-calibration-obd.css">
-  <link rel="stylesheet" href="styles-witness-multimedia.css" data-witness-multimedia="true">
+  <link rel="stylesheet" href="styles.css?v=blue-ui-002">
+  <link rel="stylesheet" href="styles-calibration-obd.css?v=blue-ui-002">
+  <link rel="stylesheet" href="styles-witness-multimedia.css?v=blue-ui-002" data-witness-multimedia="true">
+  <link rel="stylesheet" href="styles-runtime-compat.css?v=blue-ui-002">
 </head>
-<body>
+<body data-omegas-route="dashboard">
   <div id="app" class="app-shell" aria-label="OMEGAS V8">
     <aside class="side-rail" aria-label="Navegação principal">
       <div class="brand-block">
@@ -42,7 +44,14 @@
       </header>
 
       <main class="screen-host">
-        <section class="screen active" data-screen="dashboard" aria-label="Agora"></section>
+        <section class="screen active" data-screen="dashboard" aria-label="Agora">
+          <div class="bootstrap-fallback bootstrap-dashboard" data-bootstrap-fallback="dashboard">
+            <div><small>AGORA</small><h2>O que o motor está fazendo</h2></div>
+            <section class="bootstrap-primary"><small>PETROL INJECTION</small><strong>—</strong><em>ms</em><p>Carregando telemetria da MP48…</p></section>
+            <div class="bootstrap-facts"><span>RPM —</span><span>MAP —</span><span>COMBUSTÍVEL —</span><span>STFT —</span></div>
+            <p class="bootstrap-status">Interface local carregada · aguardando runtime</p>
+          </div>
+        </section>
 
         <section class="screen" data-screen="learning" aria-labelledby="learningTitle">
           <div class="page-intro learning-intro">
@@ -153,7 +162,14 @@
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
         </section>
 
-        <section class="screen obd-screen" data-screen="obd" aria-label="OBD witness"></section>
+        <section class="screen obd-screen" data-screen="obd" aria-label="OBD witness">
+          <div class="bootstrap-fallback bootstrap-obd" data-bootstrap-fallback="obd">
+            <div><small>OBD WITNESS</small><h2>Correção física da ECU</h2></div>
+            <section class="bootstrap-primary"><small>STFT BANK 1 · PID 0106</small><strong>—</strong><em>%</em><p>Carregando conexão OBD…</p></section>
+            <div class="bootstrap-facts"><span>OBD —</span><span>MP48 —</span><span>REFERÊNCIA GASOLINA —</span><span>RESIDUAL —</span></div>
+            <p class="bootstrap-status">Interface local carregada · OBD não escreve K</p>
+          </div>
+        </section>
 
         <section id="suggestionDrawer" class="screen utility-screen" data-screen="suggestions" aria-labelledby="suggestionsTitle">
           <div class="page-intro"><div><small>SUGESTÕES</small><h2 id="suggestionsTitle">Decisões prontas para revisar</h2></div><p>Global vai para Curva K. Local vai para Mapa K. Abrir nunca escreve.</p></div>
@@ -168,6 +184,11 @@
             <button id="toolExportLogs" type="button"><b>Exportar logs</b><span>Preservar evidência de diagnóstico</span></button>
             <button id="toolSelfTest" type="button"><b>Executar autoteste</b><span>Verificar o núcleo disponível</span></button>
           </div>
+          <div id="toolDiagnosticsWorkspace" class="tool-diagnostics-workspace">
+            <div class="bootstrap-fallback bootstrap-tools" data-bootstrap-fallback="tools">
+              <small>DIAGNÓSTICO</small><h3>Carregando estado do sistema…</h3><p>Os controles básicos acima continuam disponíveis mesmo se o diagnóstico dinâmico falhar.</p>
+            </div>
+          </div>
         </section>
       </main>
     </section>
@@ -175,19 +196,20 @@
     <div id="alertToast" class="alert-toast" role="status" aria-live="polite"><b></b><button type="button" aria-label="Fechar">×</button></div>
   </div>
 
-  <script src="map-editor.js" defer></script>
-  <script src="core/native-api.js" defer></script>
-  <script src="core/store.js" defer></script>
-  <script src="core/router.js" defer></script>
-  <script src="core/scheduler.js" defer></script>
-  <script src="core/learning-model.js" defer></script>
-  <script src="components/physical-grid.js" defer></script>
-  <script src="components/drawers.js" defer></script>
-  <script src="screens/dashboard.js" defer></script>
-  <script src="screens/learning.js" defer></script>
-  <script src="screens/map.js" defer></script>
-  <script src="screens/curve.js" defer></script>
-  <script src="screens/obd.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="map-editor.js?v=blue-ui-002" defer></script>
+  <script src="core/native-api.js?v=blue-ui-002" defer></script>
+  <script src="core/store.js?v=blue-ui-002" defer></script>
+  <script src="core/router.js?v=blue-ui-002" defer></script>
+  <script src="core/scheduler.js?v=blue-ui-002" defer></script>
+  <script src="core/learning-model.js?v=blue-ui-002" defer></script>
+  <script src="components/physical-grid.js?v=blue-ui-002" defer></script>
+  <script src="components/drawers.js?v=blue-ui-002" defer></script>
+  <script src="screens/dashboard.js?v=blue-ui-002" defer></script>
+  <script src="screens/learning.js?v=blue-ui-002" defer></script>
+  <script src="screens/map.js?v=blue-ui-002" defer></script>
+  <script src="screens/curve.js?v=blue-ui-002" defer></script>
+  <script src="screens/obd.js?v=blue-ui-002" defer></script>
+  <script src="app.js?v=blue-ui-002" defer></script>
+  <script src="core/runtime-guard.js?v=blue-ui-002" defer></script>
 </body>
 </html>
