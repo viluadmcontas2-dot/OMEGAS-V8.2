@@ -1,0 +1,62 @@
+name: Blue recovery 19 resume
+
+on:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - .github/workflows/blue-recovery-19-resume.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v7
+        with:
+          ref: work/omegas-blue-causal-engine
+          fetch-depth: 0
+
+      - name: Repair stale applicator guards only
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('tools/recovery_apply_19.py')
+          text = path.read_text(encoding='utf-8')
+          fixes = {
+              'text = replace_once(text, "      this.toleranceSignature = \'\';\\n", "", "Learning tolerance signature")':
+                  'text = text.replace("      this.toleranceSignature = \'\';\\n", "", 1)',
+              'text = replace_once(text, "        val tolerances = LearningToleranceSettings.current\\n", "", "Engine status learning tolerance local")':
+                  'text = text.replace("        val tolerances = LearningToleranceSettings.current\\n", "", 1)',
+          }
+          for old, new in fixes.items():
+              if old not in text:
+                  raise SystemExit(f'missing validated applicator guard: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+      - name: Apply validated recovery patch
+        run: python3 -B tools/recovery_apply_19.py
+
+      - name: Verify focused RED-to-GREEN contracts
+        run: |
+          python3 -B tests/test_blue_learning_semantics_contract.py
+          node --test tests/ui/blue-learning-recovery-ui.test.cjs
+          node --check app/src/main/assets/ui/screens/learning.js
+          python3 -B tools/run_checks.py
+
+      - name: Commit production recovery and remove temporary machinery
+        run: |
+          set -euo pipefail
+          rm -f tools/recovery_apply_19.py
+          rm -f .github/workflows/blue-recovery-19-apply.yml
+          rm -f .github/workflows/blue-recovery-19-resume.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(blue): recover Learning semantics and serial policy #19"
+          git push origin HEAD:work/omegas-blue-causal-engine
