@@ -10,10 +10,10 @@ import kotlin.math.sqrt
 /**
  * Single scientific authority for gasoline reference and CNG deviation.
  *
- * A coordinate hit is not enough. Reference quality rewards physical proximity,
- * stable evidence and thermal context. The engine never invents an actuator
- * response: a K correction is available only after a causal gain was measured
- * from an actual before/after calibration event.
+ * A coordinate hit is not enough. Reference quality rewards physical proximity
+ * and stable evidence. The engine never invents an actuator response: a K
+ * correction is available only after a causal gain was measured from an actual
+ * before/after calibration event.
  */
 class BlueCausalEngine(
     private val policy: BluePolicy = BluePolicy(),
@@ -129,12 +129,7 @@ class BlueCausalEngine(
         val rpmScale = max(policy.minimumRpmWindow, target.rpm * policy.relativeRpmWindow)
         val rpm = abs(reference.rpm - target.rpm) / rpmScale
         val map = abs(reference.mapBar - target.mapBar) / policy.mapWindowBar
-        val water = when {
-            reference.waterC == FuelEvidence.UNKNOWN_TEMPERATURE_C ||
-                target.waterC == FuelEvidence.UNKNOWN_TEMPERATURE_C -> 0.0
-            else -> abs(reference.waterC - target.waterC) / policy.waterWindowC
-        }
-        return sqrt(rpm.pow(2) + map.pow(2) + water.pow(2))
+        return sqrt(rpm.pow(2) + map.pow(2))
     }
 
     private data class BlueCandidate(val evidence: FuelEvidence, val distance: Double)
@@ -146,7 +141,6 @@ data class BluePolicy(
     val minimumRpmWindow: Double = 120.0,
     val relativeRpmWindow: Double = 0.06,
     val mapWindowBar: Double = 0.08,
-    val waterWindowC: Double = 8.0,
     val maximumNormalizedDistance: Double = 1.75,
     val maximumReferenceBursts: Int = 7,
     val absoluteDeadbandMs: Double = 0.08,
