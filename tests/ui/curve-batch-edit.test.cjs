@@ -37,12 +37,13 @@ test('arrastar sobre pontos seleciona em lote sem tocar no writer', () => {
 });
 
 test('nudge em lote prepara todos e renderiza apenas depois do loop', () => {
-  const start = curve.indexOf('nudgeSelection(delta)');
+  const signature = '    nudgeSelection(delta) {';
+  const start = curve.indexOf(signature);
   assert.ok(start >= 0, 'nudgeSelection ausente');
-  const end = curve.indexOf('\n    }', start);
+  const end = curve.indexOf('\n    }\n', start + signature.length);
   assert.ok(end > start, 'corpo de nudgeSelection não localizado');
-  const block = curve.slice(start, end + 6);
-  assert.match(block, /this\.selectedIndices/);
+  const block = curve.slice(start, end + 7);
+  assert.match(block, /this\.selectedPointIndices\(\)/);
   assert.match(block, /previewCurvePoint/);
   assert.match(block, /acceptPreview\(preview, true\)/);
 
