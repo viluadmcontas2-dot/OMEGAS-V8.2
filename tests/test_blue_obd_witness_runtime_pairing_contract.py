@@ -9,9 +9,11 @@ def main() -> None:
     text = SERVICE.read_text(encoding="utf-8")
     access = ACCESS.read_text(encoding="utf-8")
     required = [
-        "ObdWitnessEngine", "pairObdStftWitness(sample)", "telemetryStore.nearestFrame(observedAtMs, 250L)",
-        "ObdWitnessSample(", "obdWitnessEngine.observe", 'optDouble("rpm"', 'optDouble("map_bar"',
+        "ObdWitnessEngine", "ObdFuelState", "pairObdStftWitness(sample)",
+        "telemetryStore.nearestFrame(observedAtMs, 250L)", "ObdWitnessSample(",
+        "obdWitnessEngine.observe", 'optDouble("rpm"', 'optDouble("map_bar"',
         'optDouble("petrol_ms"', 'optString("fuel"', 'optLong("skew_ms"', "blueCalibrationStateId()",
+        "ObdFuelState.normalize(fuel)",
     ]
     missing = [token for token in required if token not in text]
     assert not missing, f"OBD witness runtime pairing seam missing: {missing}"
@@ -22,6 +24,7 @@ def main() -> None:
     pairing = text[start:end]
     for forbidden in ["coolant", "water", "load", "throttle", "maf", "speed", "iat", "ltft", "mapsJson", "mapEpochId", "curveEpochId"]:
         assert forbidden.lower() not in pairing.lower(), f"forbidden variable/legacy state leaked into witness pairing: {forbidden}"
+    assert 'fuel !in setOf(' not in pairing, "fuel science gate must use the shared MP48 fuel policy"
     print("BLUE_OBD_WITNESS_RUNTIME_PAIRING_CONTRACT=PASS")
 
 
