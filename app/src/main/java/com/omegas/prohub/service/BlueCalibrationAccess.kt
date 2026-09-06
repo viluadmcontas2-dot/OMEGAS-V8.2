@@ -61,8 +61,25 @@ private object BlueProjectionCache {
     }
 }
 
+/**
+ * Synchronizes the already-paired OBD witness into the Blue coordinator only
+ * when Blue state/proposal is requested. This keeps OBD read-only and avoids a
+ * reverse dependency from the OBD acquisition path into calibration writers.
+ */
+private fun syncObdWitness(
+    service: TelemetryForegroundService,
+    coordinator: BlueCalibrationCoordinator,
+) {
+    try {
+        coordinator.updateObdWitness(JSONObject(service.obdWitnessStatusJson()))
+    } catch (_: Exception) {
+        coordinator.updateObdWitness(JSONObject())
+    }
+}
+
 fun TelemetryForegroundService.blueCalibrationStateJson(): String = try {
     val coordinator = BlueCalibrationRegistry.get(this)
+    syncObdWitness(this, coordinator)
     JSONObject(coordinator.stateJson().toString())
         .put("evidenceProjection", BlueProjectionCache.get(this))
         .toString()
@@ -93,7 +110,9 @@ fun TelemetryForegroundService.blueIngestLearningSnapshot(payload: String): Stri
 }
 
 fun TelemetryForegroundService.blueProposalJson(): String = try {
-    BlueCalibrationRegistry.get(this).proposalJson().toString()
+    val coordinator = BlueCalibrationRegistry.get(this)
+    syncObdWitness(this, coordinator)
+    coordinator.proposalJson().toString()
 } catch (error: Exception) {
     JSONObject().put("ok", false).put("error", error.message ?: "Proposta Blue indisponível").toString()
 }
