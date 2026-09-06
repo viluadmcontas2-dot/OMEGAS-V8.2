@@ -8,7 +8,7 @@
     return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
   function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+    return String(value ?? '').replace(/[&<>\"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[char]));
   }
   function bytesLabel(bytes) {
     const n = finite(bytes) || 0;
@@ -35,7 +35,6 @@
       this.store = store;
       this.router = router;
       this.api = api;
-      this.suggestions = document.getElementById('suggestionDrawer');
       this.tools = document.getElementById('toolsDrawer');
       this.logLevel = 'ALL';
       this.logCategory = 'ALL';
@@ -52,15 +51,6 @@
     }
 
     bind() {
-      document.getElementById('suggestionsButton')?.addEventListener('click', () => {
-        this.store.patch({ suggestionsOpen: !this.store.get().suggestionsOpen, toolsOpen: false });
-      });
-      document.getElementById('toolsButton')?.addEventListener('click', () => {
-        this.store.patch({ toolsOpen: !this.store.get().toolsOpen, suggestionsOpen: false });
-      });
-      document.querySelectorAll('[data-close-drawer]').forEach(button => button.addEventListener('click', () => {
-        this.store.patch({ suggestionsOpen: false, toolsOpen: false });
-      }));
       document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
       document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
       document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
@@ -113,7 +103,7 @@
       const settings = {
         telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 500),
         maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 64),
-        keepSessions: Number(host.querySelector('[data-session-keep]')?.value || 10),
+        keepSessions: Number(host.querySelector('[data-session-keep]')?.value || 30),
         autoStartOnUsb: host.querySelector('[data-session-autostart]')?.checked === true,
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
@@ -122,42 +112,9 @@
     }
 
     render(state) {
-      if (this.suggestions) this.suggestions.classList.toggle('open', state.suggestionsOpen === true);
-      if (this.tools) this.tools.classList.toggle('open', state.toolsOpen === true);
-      document.body.classList.toggle('drawer-open', state.suggestionsOpen === true || state.toolsOpen === true);
-      this.renderSuggestions(state);
-      if (state.toolsOpen) this.renderTools(state);
+      if (state.route === 'tools') this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
       if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'APK/WebView · ponte nativa ativa';
-    }
-
-    renderSuggestions(state) {
-      const host = document.getElementById('suggestionList');
-      if (!host) return;
-      const maps = state.learning || {};
-      const model = root.OmegasSuggestionModel;
-      const split = model?.split ? model.split(maps.assistedCalibration || maps.assisted_calibration || {}) : { actionable: [], insufficient: [] };
-      const items = split.actionable || [];
-      const count = document.getElementById('suggestionCount');
-      if (count) count.textContent = String(items.length);
-      const button = document.getElementById('suggestionsButton');
-      if (button) button.classList.toggle('has-items', items.length > 0);
-      host.innerHTML = items.length ? items.map((item, index) => `
-        <article class="suggestion-item" data-suggestion-index="${index}">
-          <div class="suggestion-scope">${item.scope === 'global' ? 'GLOBAL · CURVA K' : 'LOCAL · MAPA K'}</div>
-          <div class="suggestion-main"><b>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</b><span>confiança ${escapeHtml(item.confidenceLabel)}</span></div>
-          <p>${escapeHtml(item.reason)}</p>
-          <button type="button" class="secondary compact">Revisar em ${escapeHtml(item.destination)}</button>
-        </article>`).join('') : '<div class="drawer-empty"><b>Nenhuma sugestão pronta</b><span>O aprendizado continua coletando evidência.</span></div>';
-      host.querySelectorAll('[data-suggestion-index]').forEach(card => {
-        card.querySelector('button')?.addEventListener('click', () => {
-          const item = items[Number(card.dataset.suggestionIndex)];
-          const action = model?.reviewAction ? model.reviewAction(item) : { allowed: false };
-          if (!action.allowed || action.writesEcu === true) return;
-          this.store.patch({ suggestionsOpen: false });
-          this.router.navigate(item.type === 'curve' ? 'curve' : 'map', { suggestion: item });
-        });
-      });
     }
 
     renderTools(state) {
@@ -193,20 +150,19 @@
             <span>Telemetria <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
             <span>Foreground <b>connectedDevice</b></span>
           </div>
-          <p>Ao apagar a tela, a WebView para de redesenhar, mas o ForegroundService continua responsável por USB, OBD e aprendizado. O aplicativo não pede exclusão da otimização de bateria automaticamente.</p>
+          <p>Ao apagar a tela, a WebView para de redesenhar, mas o ForegroundService continua responsável pela ECU e pelo aprendizado. O aplicativo não pede exclusão da otimização de bateria automaticamente.</p>
           <small class="background-validation-note">Validação real ainda exige teste com tela apagada e política de bateria do aparelho.</small>
         </section>
 
         <section class="learning-portability-card">
-          <header><div><small>APRENDIZADO .OMEGAS</small><h3>O que será levado no arquivo</h3></div><span>época ${Number(learning.epoch || 1)}</span></header>
+          <header><div><small>APRENDIZADO .OMEGAS</small><h3>O que será levado no arquivo</h3></div><span>${petrolCount + cngCount + comparisonCount} evidências indexadas</span></header>
           <div class="learning-portability-grid">
             <span><b>${petrolCount}</b> regiões gasolina</span>
-            <span><b>${cngCount}</b> regiões GNV atuais</span>
+            <span><b>${cngCount}</b> regiões GNV</span>
             <span><b>${comparisonCount}</b> comparações</span>
             <span><b>${escapeHtml(learning.telemetryScaleSchema || 'MP48')}</b> escala</span>
           </div>
-          <p><b>Exportar</b> leva aprendizado, contexto OBD e histórico K confirmado. <b>Importar</b> valida formato/escala antes de aceitar qualquer componente.</p>
-          <div class="portability-policy"><b>Política live-only</b><span>Gasolina é a referência preservável. Evidência GNV retroativa não volta para a memória ativa da calibração atual.</span></div>
+          <p><b>Exportar</b> preserva a evidência de aprendizado e o histórico K confirmado. <b>Importar</b> valida formato e escala antes de aceitar dados.</p>
           <small>Os botões Exportar/Importar acima apenas abrem o seletor de arquivo; nenhuma importação escreve na ECU.</small>
         </section>
 
@@ -232,20 +188,20 @@
               ${[200, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
             </select></label>
             <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="4" max="1024" step="4" value="${Number(settings.maxSessionMb || status.limitMb || 64)}"><small>MB</small></label>
-            <label><span>Manter sessões</span><input data-session-keep type="number" min="1" max="100" step="1" value="${Number(settings.keepSessions || 10)}"></label>
+            <label><span>Manter sessões úteis</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Number(settings.keepSessions || 30)}"></label>
             <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar MP48</span></label>
             <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
           </div>
-          <p>USB bruto aumenta bastante o tamanho. Use quando estiver investigando protocolo ou falha de comunicação.</p>
+          <p>Sessões úteis nunca devem ser expulsas por reconexões curtas. O núcleo classifica PROBE, VALID e PROTECTED.</p>
           <button type="button" class="secondary wide" data-session-settings>Aplicar política de logs</button>
         </details>
 
         <section class="recorded-sessions">
           <header><div><small>SESSÕES</small><h3>${sessions.length} armazenada${sessions.length === 1 ? '' : 's'}</h3></div></header>
           <div class="recorded-session-list">
-            ${sessions.length ? sessions.slice(0, 8).map(item => `
+            ${sessions.length ? sessions.slice(0, 20).map(item => `
               <article>
-                <div><b>${escapeHtml(item.reason || 'Sessão')}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · ativa' : ''}</span></div>
+                <div><b>${escapeHtml(item.reason || 'Sessão')}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · ativa' : ''}${item.relevance ? ` · ${escapeHtml(item.relevance)}` : ''}</span></div>
                 <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
               </article>`).join('') : '<p class="empty-copy">Nenhuma sessão gravada.</p>'}
           </div>
