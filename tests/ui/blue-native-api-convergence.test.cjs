@@ -22,6 +22,10 @@ test('browser bridge exposes evidence-only demo and meaningful session defaults'
     'demo learning must not expose retired assistedCalibration authority');
   assert.equal(source.includes('kFactorSuggestions'), false,
     'native-api demo must not fabricate K suggestions');
+  assert.equal(learning.decisionAuthority, 'BLUE_CAUSAL_ENGINE',
+    'demo learning must name the same single native Blue authority');
+  assert.equal(learning.uiPipeline, 'PHYSICAL_EVIDENCE_ONLY',
+    'browser demo must expose evidence, not a second decision pipeline');
 
   const status = api.sessionStatus();
   assert.equal(status.settings.keepSessions, 30,
