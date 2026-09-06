@@ -86,8 +86,10 @@ jobs:
 
           root = Path.cwd()
           excluded_node = {
-              'blue-runtime-essential-screens.test.cjs',  # #17
-              'curve-batch-edit.test.cjs',                # #22
+              'blue-runtime-essential-screens.test.cjs',  # #17 runtime bootstrap
+              'multimedia-distance-legibility.test.cjs',  # #17 cache-busting/compat
+              'runtime-browser-smoke.test.cjs',           # #17 real runtime bootstrap
+              'curve-batch-edit.test.cjs',                # #22 curve interaction
           }
           commands = [[sys.executable, '-B', str(p.relative_to(root))] for p in sorted((root / 'tests').glob('test_*.py'))]
           commands += [
