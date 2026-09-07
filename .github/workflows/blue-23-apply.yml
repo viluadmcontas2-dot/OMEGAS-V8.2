@@ -74,13 +74,11 @@ jobs:
             -PomegasAbis=armeabi-v7a \
             --no-daemon --stacktrace
 
-      - name: Commit #23 production files only
+      - name: Stage issue 23 files
         shell: bash
         run: |
           set -euo pipefail
           test ! -e local.properties
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- \
             AGENTS.md \
             .specify/memory/constitution.md \
@@ -110,13 +108,29 @@ jobs:
             tests/test_blue_obd_gnv_only_integration_contract.py \
             tests/ui/blue-multimedia-witness-dashboard.test.cjs \
             tests/ui/obd-runtime-controls.test.cjs
-          echo '--- STAGED FILES ---'
           git diff --cached --name-status
+          test -n "$(git diff --cached --name-only)"
+
+      - name: Validate staged issue 23 diff
+        shell: bash
+        run: |
+          set -euo pipefail
           if git diff --cached --name-only | grep -E '(^|/)local\.properties$|\.apk$|(^|/)build/|^\.github/blue23_payload/|^\.github/workflows/blue-23-apply\.yml$'; then
             echo "Forbidden transport/artifact staged"
             exit 1
           fi
           git diff --cached --check
-          test -n "$(git diff --cached --name-only)"
+
+      - name: Commit issue 23 files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "fix(blue): align MP48 equivalence and GNV STFT witness #23"
+
+      - name: Push issue 23 files
+        shell: bash
+        run: |
+          set -euo pipefail
           git push origin HEAD:work/omegas-blue-causal-engine
