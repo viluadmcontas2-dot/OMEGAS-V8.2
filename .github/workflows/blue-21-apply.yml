@@ -51,6 +51,19 @@ jobs:
           if s.count('}, 3000);') != 1:
               raise SystemExit('smoke timeout anchor drifted')
           smoke.write_text(s.replace('}, 3000);', '}, 6000);', 1), encoding='utf-8')
+
+          runner = Path('tests/ui/runtime-browser-smoke.test.cjs')
+          s = runner.read_text(encoding='utf-8')
+          old = """    '--virtual-time-budget=4200',"""
+          new = """    '--virtual-time-budget=5200',"""
+          if s.count(old) != 1:
+              raise SystemExit('browser budget anchor drifted')
+          s = s.replace(old, new, 1)
+          old = r'''  assert.match(run.stdout, /PASS: dashboard \+ obd \+ tools montaram em runtime/);'''
+          new = r'''  assert.match(run.stdout, /PASS: dashboard \+ obd \+ tools montaram e detalhes permanecem abertos/);'''
+          if s.count(old) != 1:
+              raise SystemExit('browser PASS assertion anchor drifted')
+          runner.write_text(s.replace(old, new, 1), encoding='utf-8')
           PY
 
       - name: Verify Tools behavior and all browser contracts
@@ -65,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
           git rm .github/workflows/blue-21-apply.yml
-          git add -- app/src/main/assets/ui/components/drawers.js tests/ui/runtime-browser-smoke.html
+          git add -- app/src/main/assets/ui/components/drawers.js tests/ui/runtime-browser-smoke.html tests/ui/runtime-browser-smoke.test.cjs
           git diff --cached --check
           test -n "$(git diff --cached --name-only)"
           git config user.name "github-actions[bot]"
