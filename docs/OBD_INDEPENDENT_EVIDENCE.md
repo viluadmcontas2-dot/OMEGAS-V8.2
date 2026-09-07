@@ -1,3 +1,6 @@
+> **SUPERSEDED SCIENTIFIC NOTE ? 2026-09-07 / Issue #23**
+> The former requirement for a gasoline OBD STFT baseline is superseded. Current authority is `specs/001-blue-runtime-convergence/spec.md`: MP48 owns gasoline?GNV equivalence; OBD contributes same-region **GNV STFT only** as a read-only witness; LTFT has no vote; Map K addressing uses current GNV RPM ? current GNV Petrol Inj.
+
 # OBD — segunda prova independente
 
 Data: 2026-08-08

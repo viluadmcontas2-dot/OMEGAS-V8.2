@@ -42,7 +42,7 @@ Keep proven MP48 transport, K writers and readback protocol. Replace decision-la
 ### G. CI convergence
 - Remove stale tests that compile deleted legacy engines.
 - Add Spec Kit/drift/legacy/RPM/session contracts to FAST.
-- Run FAST → full JVM/unit → lint → APK and publish exact-SHA evidence.
+- Run FAST -> full JVM/unit -> lint on the exact SHA and publish readiness evidence. Run APK artifact gate only after explicit owner authorization.
 
 ## Risk controls
 - Do not rewrite MP48 protocol or serial scheduler.

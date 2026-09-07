@@ -10,7 +10,7 @@ class BlueWitnessConfidenceTest {
         val result = BlueWitnessConfidence.assess(
             blueErrorPercent = 8.0,
             baseQuality = 0.60,
-            obdResidualPp = 7.0,
+            obdGnvStftPct = 7.0,
             obdQuality = 0.80,
         )
 
@@ -23,7 +23,7 @@ class BlueWitnessConfidenceTest {
         val result = BlueWitnessConfidence.assess(
             blueErrorPercent = 8.0,
             baseQuality = 0.60,
-            obdResidualPp = -7.0,
+            obdGnvStftPct = -7.0,
             obdQuality = 0.90,
         )
 

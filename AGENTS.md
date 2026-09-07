@@ -15,7 +15,7 @@
 - Cada comparação deve carregar procedência suficiente para ser auditável.
 - `BlueCausalEngine` é a única autoridade runtime de equivalência/correção. Nenhum Predictor, Advisor, AutoMatch, V7 equivalence ou Auto-Cal pode possuir matemática decisória concorrente.
 - A equivalência científica primária é `RPM × MAP(bar) → Petrol Inj. (ms)`; referência nasce de microburst estável, não de contagem artificial de visitas.
-- `RPM × Petrol Inj.` é a projeção downstream para localizar a célula física do Mapa K.
+- `RPM x Petrol Inj.` is the downstream Map K projection; for GNV evidence/correction, the address is **current GNV RPM x current GNV Petrol Inj.**, never the gasoline-reference Petrol Inj.
 - Curva K representa tendência global por tempo de injeção; Mapa K representa residual local após remover a tendência global.
 - Estado de calibração muda quando Curva K ou Mapa K muda com escrita/readback confirmado; telemetria de estados diferentes não é misturada como se fosse uma calibração.
 
@@ -48,6 +48,7 @@
 
 - GitHub Actions remoto é a execução primária aprovada enquanto o repositório permanecer público e usar runners padrão sem custo adicional.
 - Gate barato de Spec Kit/legacy/drift/RPM/sessões roda antes do Android pesado.
-- Pipeline: `FAST → FULL JVM/unit → lint → APK/evidence` no SHA exato; concurrency cancela SHA supersedido.
+- Pre-artifact software gate: `FAST -> FULL JVM/unit -> lint -> READY FOR APK GENERATION` on the exact SHA; concurrency cancels superseded SHAs.
+- APK generation/package/upload requires explicit owner authorization and a manual artifact gate; ordinary push CI must never generate an APK automatically.
 - `PROVEN` exige SHA, comandos, resultados e limites em `STATUS.md`, evidência e Issue vinculada.
 - CI não substitui validação física: sem teste no veículo, nunca alegar economia, estabilidade física ou comportamento real comprovados.

@@ -32,9 +32,9 @@ Converge the V8.0 RED-derived Blue branch into one causal runtime with durable, 
 - FR-011: Spec Kit artifacts and a convergence/drift contract are mandatory CI inputs.
 - FR-012: retain OBD as an optional auxiliary feedback subsystem. OBD must never be required for MP48 learning, Blue proposal generation, Map K/Curve K manual operation or Auto-Cal. OBD must never directly write the ECU or own correction mathematics.
 - FR-013: the production OBD evidence signal is STFT. LTFT, coolant, calculated load, throttle, MAF, vehicle speed, intake temperature and similar PIDs are not inputs to Blue confidence or OBD evidence matching in this implementation.
-- FR-014: every accepted STFT observation is paired to the nearest valid MP48 frame and carries exactly the physical context needed by the OMEGAS model: RPM, MAP, Petrol Inj., fuel label and current calibration state. RPM, MAP and Petrol Inj. are the only operating-condition variables used to compare gasoline and GNV OBD evidence.
-- FR-015: gasoline remains the reference. OBD residual is based on STFT behavior in GNV relative to gasoline evidence from a compatible RPM/MAP/Petrol Inj. region. A direct comparison of STFT to zero may be shown only as a provisional live indication while no gasoline reference exists.
-- FR-016: OBD can accelerate Blue confidence when temporally matched STFT evidence agrees in direction with Blue physical evidence. It may reduce uncertainty/confidence requirements, but it does not calculate K targets and cannot override contradictory Blue evidence.
+- FR-014: every accepted STFT observation is paired to the nearest valid MP48 frame and carries exactly the physical context needed by the OMEGAS model: RPM, MAP, Petrol Inj., fuel label and current calibration state. Only observations whose authoritative MP48 fuel is GNV/CNG enter the OBD scientific witness.
+- FR-015: gasoline remains the physical reference through the MP48 Petrol-Inj. comparison, not through a required gasoline OBD trim. The production OBD witness is STFT Bank 1 observed on GNV; gasoline OBD STFT and LTFT are not requirements for Blue equivalence or confidence.
+- FR-016: OBD can accelerate Blue confidence when temporally paired GNV STFT from the same RPM/MAP/current-GNV-Petrol-Inj. region agrees in correction direction with Blue MP48 physical evidence. It may reduce uncertainty/confidence requirements, but it does not calculate K targets and cannot override contradictory Blue evidence.
 - FR-017: OBD transport failures must be diagnosable by stage (permission, adapter, RFCOMM, ELM init, protocol, STFT PID), and connection attempts must not remain indefinitely stuck in a non-recoverable `CONECTANDO` state.
 - FR-018: OBD evidence is calibration-state aware. Confirmed Map K or Curve K write/readback opens a new OBD evidence epoch so pre-write and post-write STFT observations are never pooled.
 
@@ -53,16 +53,14 @@ For an STFT observation at time `t_obd`, select the nearest fresh MP48 frame and
 
 No temperature, load, throttle, MAF, vehicle-speed or other operating variables participate in region matching or confidence.
 
-A gasoline reference is built from compatible observations in RPM/MAP/Petrol Inj. space. For GNV observations:
+The OBD store summarizes only GNV STFT observations that are fresh, calibration-state compatible and matched to the current GNV RPM/MAP/Petrol-Inj. region. It does not manufacture a standalone K error from STFT and does not require an OBD gasoline baseline.
 
-`obd_residual_pp = STFT_GNV - STFT_GASOLINE_REFERENCE`
-
-When no compatible gasoline STFT reference exists, the OBD witness remains provisional and must not be treated as a gasoline-relative residual.
+The Blue MP48 comparison remains the primary physical error: a recent compatible gasoline Petrol-Inj. microburst is compared with the current GNV Petrol Inj. at equivalent RPM x MAP. The OBD STFT on GNV is then classified only as an agreeing or conflicting witness to that already-computed Blue direction.
 
 ## OBD confidence behavior
 Blue physical evidence remains sufficient by itself. OBD is an optional witness:
 
-- `SUPPORTS`: OBD residual and Blue physical deviation agree in correction direction; confidence may rise faster.
+- `SUPPORTS`: same-region GNV STFT and Blue MP48 deviation agree in correction direction; confidence may rise faster.
 - `CONFLICTS`: directions disagree materially; do not accelerate confidence and surface the conflict.
 - `INSUFFICIENT`: OBD is connected but lacks enough compatible paired observations.
 - `UNAVAILABLE`: no usable OBD session.
@@ -85,8 +83,8 @@ A session is `PROTECTED` if it contains a confirmed calibration write/readback o
 - OBD route, Bluetooth permissions, ELM transport and OBD evidence subsystem remain present as an optional auxiliary layer.
 - OBD cannot call Map K/Curve K write APIs directly and cannot bypass human confirmation, ACK or readback.
 - OBD confidence input uses STFT paired to MP48 RPM/MAP/Petrol Inj. only; temperature/load/throttle/MAF/speed are absent from the evidence decision path.
-- OBD gasoline/GNV interpretation is gasoline-relative when adequate gasoline evidence exists.
-- A matched OBD witness that agrees with Blue can accelerate confidence; a conflicting witness cannot increase confidence.
+- OBD scientific witness remains useful with GNV STFT alone; no gasoline OBD STFT baseline is required.
+- A same-region matched GNV STFT witness that agrees with Blue can accelerate confidence; a conflicting witness cannot increase confidence.
 - Confirmed calibration readback creates a new OBD evidence epoch.
 - A failed or stalled OBD connection produces a bounded, visible stage/error and can be retried without restarting the app.
-- FAST, full unit/JVM, lint and APK pass on the final exact SHA.
+- FAST, full unit/JVM and lint pass on the final exact SHA and establish `READY FOR APK GENERATION`. APK generation remains a separate owner-authorized gate.

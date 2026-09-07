@@ -7,7 +7,7 @@ The Git repository is the only mutable technical authority. Specs, plans, tasks,
 `BlueCausalEngine` is the only runtime authority for petrol reference, CNG equivalence error, causal actuator gain, global Curve K correction intent and local Map K residual intent. No legacy predictor, advisor, AutoMatch, V7 equivalence runtime, visit-count confidence engine or independent Auto-Cal math may remain reachable.
 
 ## 3. Physical truth
-Raw MP48 telemetry and confirmed ECU readback are physical truth. Petrol reference is learned from short stable microbursts. RPM×MAP identifies comparable operating condition; RPM+petrol-ms locates Map K geometry. Evidence from different calibration states is never pooled as one state.
+Raw MP48 telemetry and confirmed ECU readback are physical truth. Petrol reference is learned from short stable microbursts. RPM x MAP identifies comparable operating condition; **current GNV RPM + current GNV petrol-ms** locates Map K geometry for GNV evidence/correction. Optional OBD contributes same-region GNV STFT as a read-only witness; gasoline OBD STFT/LTFT are not required correction inputs. Evidence from different calibration states is never pooled as one state.
 
 ## 4. Calibration write safety
 No automatic ECU write. Every mutation is human-reviewed and follows prepare → confirm → write → ACK → readback. Service, USB, ECU readiness and fresh telemetry are legitimate write gates. **RPM value is never a write-authorization gate** for Curve K, Map K or Auto-Cal proposals: writes must not require idle or RPM below 1200.
@@ -21,4 +21,4 @@ Live recording uses a fast private spool. Qualified closed sessions are promoted
 Learning separates measurement from action. Primary evidence surfaces are Gasolina, GNV and Desvio. A correction proposal is a separate Blue output; if causal gain is unavailable, the UI says why instead of fabricating a target. Cell detail prioritizes location, petrol reference, CNG observed, measured deviation, meaning, and correction status; audit counts stay secondary.
 
 ## 7. TDD and convergence
-Every production behavior change starts with a failing test. A cheap legacy/drift gate runs before Android build work. Software-complete requires FAST → JVM/unit → lint → APK on the exact final SHA. Vehicle economy/stability claims require physical validation.
+Every production behavior change starts with a failing test. A cheap legacy/drift gate runs before Android build work. `READY FOR APK GENERATION` requires FAST -> JVM/unit -> lint on the exact final SHA. APK generation is a separate, explicitly owner-authorized artifact gate; normal push CI must not create/upload an APK. Vehicle economy/stability claims require physical validation.

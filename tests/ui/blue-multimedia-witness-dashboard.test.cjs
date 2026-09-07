@@ -40,13 +40,15 @@ test('dashboard 16:9 usa um único template grande sem repetir telemetria', () =
 test('tela OBD vira witness STFT e elimina scanner legado do runtime', () => {
   for (const marker of [
     'data-obd-view="observe"', 'data-obd-view="setup"',
-    'obdLiveStft', 'obdWitnessState', 'obdGasolineReference', 'obdGnvStft', 'obdResidual',
+    'obdLiveStft', 'obdWitnessState', 'obdGnvStft', 'obdStftMeaning', 'obdWitnessMode',
     'obdPairedRpm', 'obdPairedMap', 'obdPairedPetrol', 'obdWitnessQuality', 'obdWitnessSamples',
     'obdConnectionCenter', 'obdSensorList',
   ]) assert.match(obd, new RegExp(marker), `OBD witness missing ${marker}`);
 
   assert.doesNotMatch(obd, /data-obd-view="map"|data-obd-panel="map"|Mapa OBD|LTFT|CARGA|PEDAL|MAF|ÁGUA|TENSÃO ECU|alvo 0%/i);
-  assert.match(obd, /Gasolina[^<`]{0,100}referência física|referência física[^<`]{0,100}Gasolina/i);
+  assert.match(obd, /MP48[^<`]{0,160}equival\u00eancia[^<`]{0,160}GNV/i);
+  assert.match(obd, /STFT-only na decis\u00e3o/i);
+  assert.doesNotMatch(obd, /REFER\u00caNCIA GASOLINA|RESIDUAL GNV|gasolineReferencePct|residualPp/i);
   assert.match(obd, /OBD[^<`]{0,100}não escreve[^<`]{0,40}K/i);
 
   assert.match(obd, /this\.api\.fullSnapshot\(\)/);
@@ -60,7 +62,6 @@ test('tela OBD vira witness STFT e elimina scanner legado do runtime', () => {
 test('witness usa o snapshot nativo read-only já existente', () => {
   assert.match(service, /\.put\("obd_witness"/);
   assert.match(service, /fun obdWitnessStatusJson\(\): String/);
-  assert.match(service, /gasolineReferencePct/);
   assert.match(service, /gnvStftPct/);
-  assert.match(service, /residualPp/);
+  assert.match(service, /pairObdStftWitness/);
 });

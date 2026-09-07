@@ -3,6 +3,7 @@ package com.omegas.prohub.calibration
 import com.omegas.prohub.blue.BlueAutoCalAdapter
 import com.omegas.prohub.blue.BlueCausalEngine
 import com.omegas.prohub.blue.BlueLearningState
+import com.omegas.prohub.blue.BlueMapKAddressing
 import com.omegas.prohub.blue.BlueWitnessConfidence
 import com.omegas.prohub.blue.CalibrationRevision
 import com.omegas.prohub.blue.CalibrationState
@@ -194,14 +195,20 @@ class BlueCalibrationCoordinator(
         comparison = value,
     )
 
-    private fun projectWitness(baseJson: JSONObject, comparison: FuelComparison): JSONObject =
-        BlueWitnessConfidence.project(
-            baseJson = baseJson,
+    private fun projectWitness(baseJson: JSONObject, comparison: FuelComparison): JSONObject {
+        val enriched = JSONObject(baseJson.toString())
+            .put("mapKCell", BlueMapKAddressing.cell(comparison))
+        return BlueWitnessConfidence.project(
+            baseJson = enriched,
             blueErrorPercent = comparison.errorPercent,
             baseQuality = comparison.quality,
             witness = latestObdWitness,
             expectedCalibrationState = calibrationStateId(comparison.revision),
+            expectedRpm = comparison.rpm,
+            expectedMapBar = comparison.mapBar,
+            expectedPetrolOnCngMs = comparison.petrolOnCngMs,
         )
+    }
 
     private fun calibrationStateId(value: CalibrationRevision): String =
         "map-${value.mapK}:curve-${value.curveK}"

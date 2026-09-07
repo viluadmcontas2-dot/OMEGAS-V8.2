@@ -15,9 +15,12 @@ class BlueWitnessProjectionTest {
             .put("quality", 0.60)
         val witness = JSONObject()
             .put("state", "SUPPORTS")
-            .put("residualPp", 7.0)
+            .put("gnvStftPct", 7.0)
             .put("quality", 0.80)
             .put("calibrationState", "map-2:curve-3")
+            .put("rpm", 2000.0)
+            .put("map_bar", 0.55)
+            .put("petrol_ms", 4.8)
 
         val projected = BlueWitnessConfidence.project(
             baseJson = base,
@@ -25,6 +28,9 @@ class BlueWitnessProjectionTest {
             baseQuality = 0.60,
             witness = witness,
             expectedCalibrationState = "map-2:curve-3",
+            expectedRpm = 2000.0,
+            expectedMapBar = 0.55,
+            expectedPetrolOnCngMs = 4.8,
         )
 
         assertEquals(1.125, projected.getDouble("correctionMultiplier"), 0.000001)
@@ -42,9 +48,12 @@ class BlueWitnessProjectionTest {
             .put("targetK", 137)
         val witness = JSONObject()
             .put("state", "SUPPORTS")
-            .put("residualPp", 7.0)
+            .put("gnvStftPct", 7.0)
             .put("quality", 1.0)
             .put("calibrationState", "map-1:curve-3")
+            .put("rpm", 2000.0)
+            .put("map_bar", 0.55)
+            .put("petrol_ms", 4.8)
 
         val projected = BlueWitnessConfidence.project(
             baseJson = base,
@@ -52,6 +61,9 @@ class BlueWitnessProjectionTest {
             baseQuality = 0.60,
             witness = witness,
             expectedCalibrationState = "map-2:curve-3",
+            expectedRpm = 2000.0,
+            expectedMapBar = 0.55,
+            expectedPetrolOnCngMs = 4.8,
         )
 
         assertEquals(1.125, projected.getDouble("correctionMultiplier"), 0.000001)

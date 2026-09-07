@@ -20,11 +20,12 @@ test('OBD possui somente witness e conexão como visões runtime', () => {
 
 test('visão principal mostra STFT, resultado witness e pareamento MP48', () => {
   for (const marker of [
-    'obdLiveStft', 'obdWitnessState', 'obdGasolineReference', 'obdGnvStft', 'obdResidual',
+    'obdLiveStft', 'obdWitnessState', 'obdGnvStft', 'obdStftMeaning', 'obdWitnessMode',
     'obdPairedRpm', 'obdPairedMap', 'obdPairedPetrol', 'obdPairedFuel',
   ]) assert.match(obd, new RegExp(marker));
   assert.match(obd, /this\.api\.fullSnapshot\(\)/);
   assert.match(obd, /obd_witness/);
+  assert.doesNotMatch(obd, /obdGasolineReference|obdResidual|gasolineReferencePct|residualPp/);
 });
 
 test('conexão, STFT 0106, bateria e flutuante ficam na configuração', () => {

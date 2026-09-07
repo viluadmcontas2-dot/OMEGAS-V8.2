@@ -1,5 +1,6 @@
 package com.omegas.prohub.blue
 
+import com.omegas.prohub.obd.ObdWitnessPolicy
 import com.omegas.prohub.obd.ObdWitnessState
 import org.json.JSONObject
 import kotlin.math.abs
@@ -13,29 +14,29 @@ import kotlin.math.abs
  */
 object BlueWitnessConfidence {
     private const val BLUE_ERROR_DEADBAND_PERCENT = 0.50
-    private const val OBD_RESIDUAL_DEADBAND_PP = 0.50
+    private const val OBD_STFT_DEADBAND_PERCENT = 0.50
     private const val MAX_SUPPORT_BOOST = 0.25
 
     fun assess(
         blueErrorPercent: Double,
         baseQuality: Double,
-        obdResidualPp: Double?,
+        obdGnvStftPct: Double?,
         obdQuality: Double,
     ): BlueWitnessAssessment {
         val base = baseQuality.coerceIn(0.0, 1.0)
         val witnessQuality = obdQuality.coerceIn(0.0, 1.0)
-        if (!blueErrorPercent.isFinite() || obdResidualPp == null || !obdResidualPp.isFinite()) {
+        if (!blueErrorPercent.isFinite() || obdGnvStftPct == null || !obdGnvStftPct.isFinite()) {
             return BlueWitnessAssessment(ObdWitnessState.UNAVAILABLE, base, base, witnessQuality)
         }
         if (
             abs(blueErrorPercent) <= BLUE_ERROR_DEADBAND_PERCENT ||
-            abs(obdResidualPp) <= OBD_RESIDUAL_DEADBAND_PP ||
+            abs(obdGnvStftPct) <= OBD_STFT_DEADBAND_PERCENT ||
             witnessQuality <= 0.0
         ) {
             return BlueWitnessAssessment(ObdWitnessState.INSUFFICIENT, base, base, witnessQuality)
         }
 
-        val supports = blueErrorPercent > 0.0 == (obdResidualPp > 0.0)
+        val supports = blueErrorPercent > 0.0 == (obdGnvStftPct > 0.0)
         if (!supports) {
             return BlueWitnessAssessment(ObdWitnessState.CONFLICTS, base, base, witnessQuality)
         }
@@ -57,6 +58,9 @@ object BlueWitnessConfidence {
         baseQuality: Double,
         witness: JSONObject?,
         expectedCalibrationState: String,
+        expectedRpm: Double,
+        expectedMapBar: Double,
+        expectedPetrolOnCngMs: Double,
     ): JSONObject {
         val projected = JSONObject(baseJson.toString())
         val expected = expectedCalibrationState.trim()
@@ -64,13 +68,21 @@ object BlueWitnessConfidence {
         val sameCalibration = witness != null && expected.isNotBlank() && sourceCalibrationState == expected
         val sourceState = witness?.optString("state", ObdWitnessState.UNAVAILABLE.name)
             ?.trim()?.uppercase().orEmpty()
-        val witnessQuality = if (sameCalibration) {
+        val regionMatched = sameCalibration && witness != null && ObdWitnessPolicy().matches(
+            sampleRpm = witness.optDouble("rpm", Double.NaN),
+            sampleMapBar = witness.optDouble("map_bar", witness.optDouble("mapBar", Double.NaN)),
+            samplePetrolMs = witness.optDouble("petrol_ms", witness.optDouble("petrolMs", Double.NaN)),
+            targetRpm = expectedRpm,
+            targetMapBar = expectedMapBar,
+            targetPetrolMs = expectedPetrolOnCngMs,
+        )
+        val witnessQuality = if (sameCalibration && regionMatched) {
             witness?.optDouble("quality", 0.0)?.takeIf(Double::isFinite)?.coerceIn(0.0, 1.0) ?: 0.0
         } else {
             0.0
         }
-        val residual = if (sameCalibration && witness != null && witness.has("residualPp") && !witness.isNull("residualPp")) {
-            witness.optDouble("residualPp", Double.NaN).takeIf(Double::isFinite)
+        val gnvStft = if (sameCalibration && regionMatched && witness != null && witness.has("gnvStftPct") && !witness.isNull("gnvStftPct")) {
+            witness.optDouble("gnvStftPct", Double.NaN).takeIf(Double::isFinite)
         } else {
             null
         }
@@ -78,9 +90,11 @@ object BlueWitnessConfidence {
         val assessment = when {
             !sameCalibration || sourceState == ObdWitnessState.UNAVAILABLE.name ->
                 BlueWitnessAssessment(ObdWitnessState.UNAVAILABLE, base, base, witnessQuality)
-            sourceState == ObdWitnessState.INSUFFICIENT.name && residual == null ->
+            !regionMatched ->
                 BlueWitnessAssessment(ObdWitnessState.INSUFFICIENT, base, base, witnessQuality)
-            else -> assess(blueErrorPercent, base, residual, witnessQuality)
+            sourceState == ObdWitnessState.INSUFFICIENT.name && gnvStft == null ->
+                BlueWitnessAssessment(ObdWitnessState.INSUFFICIENT, base, base, witnessQuality)
+            else -> assess(blueErrorPercent, base, gnvStft, witnessQuality)
         }
 
         return projected
@@ -92,7 +106,9 @@ object BlueWitnessConfidence {
                     .put("state", assessment.state.name)
                     .put("sourceState", sourceState.ifBlank { ObdWitnessState.UNAVAILABLE.name })
                     .put("quality", assessment.obdQuality)
-                    .put("residualPp", residual ?: JSONObject.NULL)
+                    .put("gnvStftPct", gnvStft ?: JSONObject.NULL)
+                    .put("residualPp", JSONObject.NULL)
+                    .put("regionMatched", regionMatched)
                     .put("calibrationState", sourceCalibrationState.ifBlank { JSONObject.NULL })
                     .put("expectedCalibrationState", expected.ifBlank { JSONObject.NULL }),
             )

@@ -11,4 +11,4 @@
 - [ ] T009 Implement persisted SAF session vault promotion with private-spool fallback.
 - [ ] T010 Simplify Learning evidence layers and didactic cell detail; proposal is separate Blue output.
 - [ ] T011 Add convergence/drift gate to FAST CI and remove stale legacy tests/assets.
-- [ ] T012 Run FAST → full JVM/unit → lint → APK on exact SHA and record evidence/status.
+- [ ] T012 Run FAST -> full JVM/unit -> lint on exact SHA, record `READY FOR APK GENERATION`, and stop before APK until explicit owner authorization.

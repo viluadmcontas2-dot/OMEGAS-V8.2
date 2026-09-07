@@ -23,34 +23,29 @@ MP48 fuel state is authoritative for scientific labeling.
 No manual fuel button is part of normal operation. OBD fuel inference may exist later only as a fallback/sanity check; it is not required for this release.
 
 ## OBD physical-equivalence role
-The ELM/OBD path remains read-only and writer-isolated. For the finalization slice, the reliable production trim signal remains STFT Bank 1 (PID 0106), timestamp-paired to a fresh MP48 frame.
+The ELM/OBD path remains read-only and writer-isolated. The production trim signal is STFT Bank 1 (PID 0106), timestamp-paired to a fresh MP48 frame. Only an observation whose authoritative MP48 fuel state is GNV/CNG enters the OBD scientific witness.
 
-Accepted paired samples carry:
+Accepted GNV witness samples carry:
 - OBD STFT;
 - MP48 RPM;
 - MP48 MAP;
-- MP48 Petrol Inj.;
+- MP48 Petrol Inj. **currently observed on GNV**;
 - authoritative MP48 fuel label;
 - calibration-state id;
 - timestamps/skew.
 
-Gasoline and GNV are stored separately. A GNV observation may be compared only to compatible gasoline evidence. The physical correction ratio is:
+The primary physical equivalence remains MP48: a recent stable gasoline Petrol-Inj. microburst is matched to GNV at equivalent `RPM x MAP`, and Blue computes the Petrol-Inj. deviation. Gasoline OBD STFT is not a prerequisite and LTFT is not a correction input.
 
-`correctionRatio = (1 + STFT_GNV / 100) / (1 + STFT_GASOLINE / 100)`
-
-and the log error is:
-
-`obdErrorLog = ln(correctionRatio)`
-
-This gives Blue a physically interpretable gasoline-relative correction signal. A positive result means the original ECU is adding more fuel on GNV than on gasoline in the matched condition; a negative result means it is removing more.
+The GNV STFT witness does not compute a standalone K error. It answers one question after Blue has a valid MP48 comparison: does the same-region instantaneous lambda correction point in the same correction direction?
 
 ### Authority boundary
-- OBD may measure and expose physical correction magnitude.
-- OBD may supply that measured error to Blue when fuel, timing, condition and calibration-state gates pass.
+- MP48/Blue owns the gasoline -> GNV Petrol-Inj. equivalence error.
+- OBD supplies same-region **GNV STFT only** as a fast supporting/conflicting witness.
 - OBD never calculates a Map K or Curve K target independently.
 - Blue remains the only component allowed to translate measured error plus proven actuator response into a correction proposal.
-- If OBD and the existing MP48 Petrol-Inj. equivalence measurement conflict materially, the release must surface the conflict instead of averaging it away.
-- LTFT may be displayed/recorded later as diagnostic context, but is not promoted into final correction math in this slice because its cross-fuel adaptation/settling semantics are not yet proven for this vehicle.
+- If GNV STFT and the MP48 Petrol-Inj. equivalence measurement conflict materially, surface the conflict instead of averaging it away.
+- LTFT may be displayed/recorded later as diagnostic context, but it has no vote in K correction math.
+- Map K evidence/correction is addressed by **current GNV RPM x current GNV Petrol Inj.**, never by the gasoline-reference Petrol Inj.
 
 ## Curve K batch editing
 The existing Curve K editor remains the surface; it is not redesigned.
@@ -83,9 +78,9 @@ The dedicated surface should prioritize:
 - live STFT;
 - matched MP48 RPM / MAP / Petrol Inj.;
 - confirmed fuel;
-- gasoline STFT reference;
 - GNV STFT;
-- gasoline-relative physical correction percentage/ratio;
+- MP48 gasoline -> GNV Petrol-Inj. deviation;
+- same-region OBD witness state (supports/conflicts/insufficient);
 - evidence quality/support;
 - conflict/insufficient state;
 - connection state.
@@ -102,7 +97,7 @@ The main dashboard may show only a concise OBD/Blue status and the most useful l
 1. Existing multimedia-distance test goes green by fixing actual typography, not weakening the test.
 2. Curve K batch-edit behavior has a RED -> GREEN automated test.
 3. Fuel-state normalization has tests proving transition=gasoline and cut-off rejection.
-4. OBD physical correction math has unit tests with known gasoline/GNV STFT pairs.
+4. OBD witness has unit tests proving GNV STFT works without gasoline OBD and cannot create a standalone K error.
 5. OBD still has no writer dependency/reachable writer API.
-6. Canonical remote CI passes `FAST -> FULL JVM/unit -> lint -> APK` on the exact final SHA.
+6. Canonical remote CI passes `FAST -> FULL JVM/unit -> lint` on the exact final SHA and reaches `READY FOR APK GENERATION`; APK build remains owner-gated.
 7. `STATUS.md` records exact SHA/run/evidence and explicitly keeps physical vehicle economy/driveability validation pending.

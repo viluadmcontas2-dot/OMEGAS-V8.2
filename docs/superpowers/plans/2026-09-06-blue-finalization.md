@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Finish the current Blue release by clearing the known CI legibility failure, making Curve K batch-editable without jank, and promoting gasoline-relative OBD correction into first-class Blue physical evidence while preserving MP48/write authority.
+**Goal:** Finish the current Blue release by clearing runtime/legibility regressions, making Curve K batch-editable without jank, and integrating same-region GNV STFT as a witness to the primary MP48 gasoline?GNV equivalence while preserving Blue/write authority.
 
 **Architecture:** Keep `BlueCausalEngine` as the single calibration decision authority. MP48 supplies fuel/state/location; OBD supplies timestamp-paired physical trim evidence. Curve K batching remains UI-only preparation and reuses the existing native preview/review/write path.
 
@@ -19,7 +19,7 @@
 - OBD remains unable to reach writer APIs.
 - No shipped CSS text below 10 px.
 - TDD: every new behavior gets a failing test before production code.
-- Final proof is remote `FAST -> FULL JVM/unit -> lint -> APK` on one exact SHA.
+- Final software proof before artifact authorization is remote `FAST -> FULL JVM/unit -> lint -> READY FOR APK GENERATION` on one exact SHA. APK is a separate owner-gated step.
 
 ---
 
@@ -138,77 +138,30 @@ Expected: new batch test and all prior UI/native-authority contracts pass.
 
 ---
 
-### Task 3: MP48 fuel gate + first-class OBD physical correction
+### Task 3: GNV-only OBD witness + current-GNV Map K addressing
 
 **Files:**
-- Create: `app/src/main/java/com/omegas/prohub/obd/ObdFuelState.kt`
-- Create: `app/src/test/java/com/omegas/prohub/obd/ObdFuelStateTest.kt`
 - Modify: `app/src/main/java/com/omegas/prohub/obd/ObdWitnessEngine.kt`
-- Modify: `app/src/test/java/com/omegas/prohub/obd/ObdWitnessEngineTest.kt`
-- Modify: `app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt`
 - Modify: `app/src/main/java/com/omegas/prohub/blue/BlueWitnessConfidence.kt`
-- Modify: `app/src/test/java/com/omegas/prohub/blue/BlueWitnessConfidenceTest.kt` if present; otherwise create it.
+- Create: `app/src/main/java/com/omegas/prohub/blue/BlueMapKAddressing.kt`
+- Modify: `app/src/main/java/com/omegas/prohub/blue/BlueCausalEngine.kt`
+- Modify: `app/src/main/java/com/omegas/prohub/calibration/BlueCalibrationCoordinator.kt`
 - Modify: `app/src/main/assets/ui/screens/obd.js`
+- Test: focused OBD/Blue unit tests plus multimedia witness contract.
 
-**Interfaces:**
-- `ObdFuelState.normalize(raw: String): ObdScientificFuel?`
-- `ObdScientificFuel.PETROL`, `ObdScientificFuel.CNG`, with cut-off/unknown returning null.
-- `ObdWitnessResult` adds `correctionRatio: Double?`, `errorLog: Double?`, `correctionPercent: Double?`.
+**Scientific contract:**
+- MP48 compares gasoline and GNV in equivalent `RPM x MAP`; recent gasoline microbursts are preferred when available.
+- OBD scientific input is STFT Bank 1 on GNV only. Gasoline OBD STFT is not required.
+- LTFT does not participate in correction math.
+- Raw GNV STFT cannot manufacture a standalone correction ratio or K target.
+- Blue may boost confidence only when the STFT witness belongs to the same calibration state and same current GNV RPM/MAP/Petrol-Inj. region and agrees in direction with the MP48 error.
+- Map K evidence/correction address uses `comparison.rpm x comparison.petrolOnCngMs`; `petrolTargetMs` is never the correction address.
 
-- [ ] **Step 1: Write RED tests for fuel normalization**
-
-Required expectations:
-```kotlin
-assertEquals(PETROL, ObdFuelState.normalize("GASOLINA"))
-assertEquals(PETROL, ObdFuelState.normalize("TRANSITION"))
-assertEquals(PETROL, ObdFuelState.normalize("TRANSICAO"))
-assertEquals(CNG, ObdFuelState.normalize("GNV"))
-assertNull(ObdFuelState.normalize("CUT_OFF"))
-assertNull(ObdFuelState.normalize("CUTOFF"))
-assertNull(ObdFuelState.normalize("UNKNOWN"))
-```
-
-- [ ] **Step 2: Write RED test for physical correction math**
-
-For gasoline STFT `0%` and GNV STFT `+10%` in compatible conditions:
-```kotlin
-assertEquals(1.10, result.correctionRatio!!, 1e-9)
-assertEquals(kotlin.math.ln(1.10), result.errorLog!!, 1e-9)
-assertEquals(10.0, result.correctionPercent!!, 1e-9)
-```
-For gasoline `+2%` and GNV `+8%`, expected ratio is `1.08 / 1.02`, not a naive six-point subtraction.
-
-- [ ] **Step 3: Run JVM test and confirm RED**
-
-Expected: missing fuel policy/result fields.
-
-- [ ] **Step 4: Implement the pure fuel policy and correction math**
-
-`ObdWitnessEngine` uses the shared policy instead of a private gasoline/GNV parser. After median gasoline/GNV trims:
-```kotlin
-val gasolineFactor = 1.0 + gasolineMedian / 100.0
-val cngFactor = 1.0 + gnvMedian / 100.0
-val ratio = cngFactor / gasolineFactor
-val errorLog = ln(ratio)
-val correctionPercent = (ratio - 1.0) * 100.0
-```
-Reject pathological non-positive factors.
-
-- [ ] **Step 5: Gate collection from MP48 fuel state**
-
-`TelemetryForegroundService.pairObdStftWitness` calls `ObdFuelState.normalize(frame fuel)`; transition becomes gasoline; cut-off/unknown returns before `observe`.
-
-- [ ] **Step 6: Promote physical correction in Blue projection without creating another authority**
-
-`BlueWitnessConfidence.project` includes the OBD physical fields in `obdWitness` and keeps correction targets untouched. If Blue and OBD disagree in sign, `CONFLICTS` remains fail-closed. The UI labels the measurement as `Correção física OBD`, not as an independently calculated K target.
-
-- [ ] **Step 7: Make OBD/MDT screen show the first-class measurement**
-
-Show live STFT, gasoline reference, GNV STFT, correction percent/ratio, matched RPM/MAP/Petrol Inj., fuel, quality/support and conflict/insufficient state. Do not add writer controls.
-
-- [ ] **Step 8: Run targeted JVM + FAST**
-
-Expected: fuel-state, correction math, writer-isolation and prior witness tests all pass.
+- [ ] **Step 1: Prove RED** for GNV STFT without gasoline OBD, region mismatch rejection, temporal gasoline preference, and GNV Map K addressing.
+- [ ] **Step 2: Implement minimum production changes** while keeping OBD writer-isolated.
+- [ ] **Step 3: Update OBD/MDT UI** to show GNV STFT + MP48 pairing without a fake gasoline-OBD residual.
+- [ ] **Step 4: Run focused JVM/Node tests** and prove writer isolation.
+- [ ] **Step 5: Run FAST inventory**; unrelated recovery REDs remain owned by their issues, not hidden or weakened.
 
 ---
 
@@ -223,7 +176,7 @@ Expected: fuel-state, correction math, writer-isolation and prior witness tests 
 
 - [ ] **Step 1: Run canonical GitHub Actions on final code SHA**
 
-Required order: `FAST -> FULL JVM/unit -> lint -> APK`.
+Required order before owner artifact authorization: `FAST -> FULL JVM/unit -> lint -> READY FOR APK GENERATION`. Do not run the APK job in this plan unless the owner explicitly authorizes it in a later step.
 
 - [ ] **Step 2: Read full job results and artifact metadata**
 
@@ -231,7 +184,7 @@ No completion claim from queued/running jobs.
 
 - [ ] **Step 3: Update STATUS.md**
 
-Record branch, exact final SHA, CI run id, FAST result, JVM result, lint result, APK result/artifact, and explicit limit: no physical fuel-economy/driveability proof yet.
+Record branch, exact final SHA, CI run id, FAST result, JVM result, lint result, `READY FOR APK GENERATION`, and explicit limits: APK not generated and no physical fuel-economy/driveability proof yet.
 
 - [ ] **Step 4: Verify STATUS-only commit does not invalidate code evidence**
 

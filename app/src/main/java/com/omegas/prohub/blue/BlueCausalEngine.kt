@@ -25,16 +25,22 @@ class BlueCausalEngine(
         target: FuelEvidence,
         petrolEvidence: List<FuelEvidence>,
     ): BluePetrolReference? {
-        val candidates = petrolEvidence
+        val allCandidates = petrolEvidence
             .asSequence()
             .filter { it.fuel == FuelKind.PETROL }
             .filter { it.petrolMs > 0.0 && it.quality >= policy.minimumEvidenceQuality }
             .map { evidence -> BlueCandidate(evidence, normalizedDistance(evidence, target)) }
             .filter { it.distance <= policy.maximumNormalizedDistance }
+            .toList()
+        if (allCandidates.isEmpty()) return null
+
+        val temporalPairs = allCandidates.filter { candidate ->
+            val dt = target.collectedAtMs - candidate.evidence.collectedAtMs
+            dt in 0..policy.preferredTemporalPairWindowMs
+        }
+        val candidates = (if (temporalPairs.isNotEmpty()) temporalPairs else allCandidates)
             .sortedBy { it.distance }
             .take(policy.maximumReferenceBursts)
-            .toList()
-        if (candidates.isEmpty()) return null
 
         val values = candidates.map { it.evidence.petrolMs }.sorted()
         val median = if (values.size % 2 == 0) {
@@ -143,6 +149,7 @@ data class BluePolicy(
     val mapWindowBar: Double = 0.08,
     val maximumNormalizedDistance: Double = 1.75,
     val maximumReferenceBursts: Int = 7,
+    val preferredTemporalPairWindowMs: Long = 30_000L,
     val absoluteDeadbandMs: Double = 0.08,
     val relativeDeadbandPercent: Double = 2.0,
     val minimumActuatorStepLog: Double = 0.003,

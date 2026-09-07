@@ -4,37 +4,23 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class ObdWitnessEngineTest {
+class ObdWitnessGnvOnlyTest {
     @Test
-    fun `gasoline OBD samples do not participate in GNV witness`() {
+    fun `GNV STFT is usable without gasoline OBD samples`() {
         val engine = ObdWitnessEngine()
         repeat(5) { index ->
-            engine.observe(sample("PETROL", 25.0, 2000.0, 0.55, 4.8, "map-2:curve-3"))
             engine.observe(sample("GNV", 9.8 + index * 0.1, 2000.0, 0.55, 4.8, "map-2:curve-3"))
         }
 
         val result = engine.evaluate(2000.0, 0.55, 4.8, "map-2:curve-3")
 
+        assertEquals(ObdWitnessState.INSUFFICIENT, result.state)
         assertNull(result.gasolineReferencePct)
         assertEquals(10.0, result.gnvStftPct!!, 0.15)
-        assertNull(result.residualPp)
         assertNull(result.correctionRatio)
-        assertNull(result.errorLog)
         assertNull(result.correctionPercent)
         assertEquals(0, result.gasolineSamples)
         assertEquals(5, result.gnvSamples)
-    }
-
-    @Test
-    fun `current gasoline frame cannot publish a stale GNV witness`() {
-        val engine = ObdWitnessEngine()
-        repeat(5) { engine.observe(sample("GNV", 8.0, 1500.0, 0.45, 3.2, "map-1:curve-1")) }
-        engine.observe(sample("PETROL", 0.0, 1500.0, 0.45, 3.2, "map-1:curve-1"))
-
-        val result = engine.evaluate(1500.0, 0.45, 3.2, "map-1:curve-1")
-
-        assertEquals(ObdWitnessState.INSUFFICIENT, result.state)
-        assertNull(result.gnvStftPct)
     }
 
     private fun sample(

@@ -34,12 +34,13 @@
     link.dataset.witnessMultimedia = 'true';
     document.head.appendChild(link);
   }
-  function witnessState(raw) {
+  function witnessState(raw, gnvStft) {
     const value = String(raw || 'UNAVAILABLE').toUpperCase();
-    if (value === 'SUPPORTS') return { label: 'CONFIRMA BLUE', tone: 'supports', detail: 'Direção física concorda com a comparação Blue.' };
-    if (value === 'CONFLICTS') return { label: 'CONFLITA', tone: 'conflicts', detail: 'A evidência física discorda; a confiança não é acelerada.' };
-    if (value === 'INSUFFICIENT') return { label: 'AINDA INSUFICIENTE', tone: 'insufficient', detail: 'Faltam pares compatíveis para concluir.' };
-    return { label: 'INDISPONÍVEL', tone: 'unavailable', detail: 'Sem evidência física suficiente neste momento.' };
+    if (value === 'SUPPORTS') return { label: 'CONFIRMA BLUE', tone: 'supports', detail: 'STFT GNV concorda com o erro MP48 da mesma região.' };
+    if (value === 'CONFLICTS') return { label: 'CONFLITA', tone: 'conflicts', detail: 'STFT GNV discorda do erro MP48; a confiança não é acelerada.' };
+    if (finite(gnvStft) !== null) return { label: 'STFT GNV PRONTO', tone: 'insufficient', detail: 'Witness coletado; o Blue decide suporte/conflito junto ao erro MP48.' };
+    if (value === 'INSUFFICIENT') return { label: 'COLETANDO GNV', tone: 'insufficient', detail: 'Faltam amostras STFT pareadas ao frame MP48 atual.' };
+    return { label: 'INDISPONÍVEL', tone: 'unavailable', detail: 'Sem STFT GNV pareado neste momento.' };
   }
 
   class ObdScreen {
@@ -63,7 +64,7 @@
       this.root.classList.add('multimedia-obd-screen');
       this.root.innerHTML = `
         <div class="witness-page-intro">
-          <div><small>OBD WITNESS</small><h2>STFT como prova física</h2><p>Gasolina é a referência física compatível; GNV é comparado contra ela.</p></div>
+          <div><small>OBD WITNESS</small><h2>STFT do GNV como testemunha</h2><p>MP48 mede a equivalência gasolina→GNV; o OBD confirma ou contradiz a direção no GNV.</p></div>
           <div class="witness-head-actions">
             <span id="obdStatusPill" class="status-pill" data-online="false">OBD offline</span>
             <button id="obdRefreshButton" type="button" class="secondary">Atualizar</button>
@@ -96,10 +97,10 @@
               <div class="witness-quality"><small>QUALIDADE</small><b id="obdWitnessQuality">—</b></div>
             </div>
             <div class="witness-comparison-grid">
-              <article><small>REFERÊNCIA GASOLINA</small><b id="obdGasolineReference">—</b><span>STFT físico compatível</span></article>
-              <article><small>STFT NO GNV</small><b id="obdGnvStft">—</b><span>mesma condição física</span></article>
-              <article class="witness-residual"><small>RESIDUAL GNV − GASOLINA</small><b id="obdResidual">—</b><span>pontos percentuais</span></article>
-              <article><small>AMOSTRAS</small><b id="obdWitnessSamples">—</b><span>gasolina · GNV</span></article>
+              <article><small>STFT NO GNV</small><b id="obdGnvStft">—</b><span>testemunha rápida da lambda</span></article>
+              <article><small>LEITURA</small><b id="obdStftMeaning">—</b><span>rico / pobre / neutro</span></article>
+              <article class="witness-residual"><small>INTEGRAÇÃO</small><b id="obdWitnessMode">MP48 + STFT</b><span>STFT-only na decisão</span></article>
+              <article><small>AMOSTRAS GNV</small><b id="obdWitnessSamples">—</b><span>pareadas à MP48</span></article>
             </div>
           </section>
 
@@ -185,8 +186,8 @@
       if (witness && typeof witness === 'object') this.lastWitness = witness;
       if (this.api.isDemo?.() && !Object.keys(this.lastWitness || {}).length) {
         this.lastWitness = {
-          state: 'SUPPORTS', stftPct: 8.4, gasolineReferencePct: 1.7, gnvStftPct: 8.4,
-          residualPp: 6.7, quality: 0.86, gasolineSamples: 9, gnvSamples: 7,
+          state: 'INSUFFICIENT', stftPct: 8.4, gnvStftPct: 8.4,
+          quality: 0.86, gasolineSamples: 0, gnvSamples: 7,
           rpm: 1840, map_bar: 0.56, petrol_ms: 4.42, fuel: 'GNV', skew_ms: 34,
         };
       }
@@ -201,12 +202,9 @@
       const connecting = ['RFCOMM', 'ELM_INIT', 'PROTOCOL', 'STFT_READY', 'CONECTANDO'].includes(stage);
       const liveStft = connected ? finite(first(obd, ['stft', 'shortTermFuelTrim', 'short_term_fuel_trim'])) : null;
       const witness = this.readWitness();
-      const stateView = witnessState(witness.state);
-      const gasolineReference = finite(witness.gasolineReferencePct);
       const gnvStft = finite(witness.gnvStftPct);
-      const residual = finite(witness.residualPp);
+      const stateView = witnessState(witness.state, gnvStft);
       const quality = finite(witness.quality);
-      const gasolineSamples = Math.max(0, Number(witness.gasolineSamples || 0));
       const gnvSamples = Math.max(0, Number(witness.gnvSamples || 0));
       const pairedRpm = finite(witness.rpm);
       const pairedMap = finite(witness.map_bar ?? witness.mapBar);
@@ -219,10 +217,10 @@
       text('obdWitnessState', stateView.label);
       text('obdWitnessDetail', stateView.detail);
       text('obdWitnessQuality', quality === null ? '—' : `${Math.round(Math.max(0, Math.min(1, quality)) * 100)}%`);
-      text('obdGasolineReference', trimLabel(gasolineReference));
       text('obdGnvStft', trimLabel(gnvStft));
-      text('obdResidual', residual === null ? '—' : `${residual > 0 ? '+' : ''}${fmt(residual, 1)} pp`);
-      text('obdWitnessSamples', `${gasolineSamples} · ${gnvSamples}`);
+      text('obdStftMeaning', gnvStft === null ? '?' : Math.abs(gnvStft) <= 0.5 ? 'NEUTRO' : gnvStft > 0 ? 'POBRE' : 'RICO');
+      text('obdWitnessMode', 'MP48 + STFT');
+      text('obdWitnessSamples', `${gnvSamples}`);
       text('obdPairedRpm', pairedRpm === null ? '—' : Math.round(pairedRpm).toLocaleString('pt-BR'));
       text('obdPairedMap', pairedMap === null ? '—' : `${fmt(pairedMap, 2)} bar`);
       text('obdPairedPetrol', pairedPetrol === null ? '—' : `${fmt(pairedPetrol, 2)} ms`);

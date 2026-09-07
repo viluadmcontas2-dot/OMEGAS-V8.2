@@ -1,7 +1,6 @@
 package com.omegas.prohub.obd
 
 import kotlin.math.abs
-import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.sqrt
 
@@ -9,8 +8,8 @@ import kotlin.math.sqrt
  * Pure, bounded STFT physical-evidence store.
  *
  * This class has no writer dependencies and no K target authority. It only keeps
- * timestamp-paired OBD/MP48 observations and builds gasoline-relative physical
- * evidence in RPM/MAP/Petrol-Inj. compatible regions.
+ * timestamp-paired OBD/MP48 observations and summarizes GNV STFT in the
+ * active RPM/MAP/Petrol-Inj. region. Blue owns the support/conflict decision.
  */
 class ObdWitnessEngine(
     private val policy: ObdWitnessPolicy = ObdWitnessPolicy(),
@@ -42,60 +41,59 @@ class ObdWitnessEngine(
         require(petrolMs.isFinite() && petrolMs > 0.0)
         require(calibrationState.isNotBlank())
 
-        val compatible = observations.filter { isOperatingMatch(it, rpm, mapBar, petrolMs) }
-        val gasoline = compatible.filter { ObdFuelState.normalize(it.fuel) == ObdScientificFuel.PETROL }
-        val gnv = compatible.filter {
-            ObdFuelState.normalize(it.fuel) == ObdScientificFuel.CNG && it.calibrationState == calibrationState
+        val current = observations.lastOrNull()
+            ?: return emptyResult(ObdWitnessState.UNAVAILABLE)
+        if (ObdFuelState.normalize(current.fuel) != ObdScientificFuel.CNG) {
+            return emptyResult(ObdWitnessState.INSUFFICIENT)
         }
 
-        if (gasoline.size < policy.minimumSamples || gnv.size < policy.minimumSamples) {
+        val gnv = observations.filter { sample ->
+            ObdFuelState.normalize(sample.fuel) == ObdScientificFuel.CNG &&
+                sample.calibrationState == calibrationState &&
+                isOperatingMatch(sample, rpm, mapBar, petrolMs)
+        }
+        if (gnv.size < policy.minimumSamples) {
             return ObdWitnessResult(
-                state = if (observations.isEmpty()) ObdWitnessState.UNAVAILABLE else ObdWitnessState.INSUFFICIENT,
-                gasolineReferencePct = gasoline.takeIf { it.isNotEmpty() }?.let(::medianStft),
+                state = ObdWitnessState.INSUFFICIENT,
+                gasolineReferencePct = null,
                 gnvStftPct = gnv.takeIf { it.isNotEmpty() }?.let(::medianStft),
                 residualPp = null,
                 correctionRatio = null,
                 errorLog = null,
                 correctionPercent = null,
                 quality = 0.0,
-                gasolineSamples = gasoline.size,
+                gasolineSamples = 0,
                 gnvSamples = gnv.size,
             )
         }
 
-        val gasolineMedian = medianStft(gasoline)
         val gnvMedian = medianStft(gnv)
-        val gasolineFactor = 1.0 + gasolineMedian / 100.0
-        val gnvFactor = 1.0 + gnvMedian / 100.0
-        if (gasolineFactor <= 0.0 || gnvFactor <= 0.0) {
-            return ObdWitnessResult(
-                state = ObdWitnessState.INSUFFICIENT,
-                gasolineReferencePct = gasolineMedian,
-                gnvStftPct = gnvMedian,
-                residualPp = null,
-                correctionRatio = null,
-                errorLog = null,
-                correctionPercent = null,
-                quality = 0.0,
-                gasolineSamples = gasoline.size,
-                gnvSamples = gnv.size,
-            )
-        }
-
-        val correctionRatio = gnvFactor / gasolineFactor
         return ObdWitnessResult(
-            state = ObdWitnessState.SUPPORTS,
-            gasolineReferencePct = gasolineMedian,
+            state = ObdWitnessState.INSUFFICIENT,
+            gasolineReferencePct = null,
             gnvStftPct = gnvMedian,
-            residualPp = gnvMedian - gasolineMedian,
-            correctionRatio = correctionRatio,
-            errorLog = ln(correctionRatio),
-            correctionPercent = (correctionRatio - 1.0) * 100.0,
-            quality = quality(gasoline + gnv),
-            gasolineSamples = gasoline.size,
+            residualPp = null,
+            correctionRatio = null,
+            errorLog = null,
+            correctionPercent = null,
+            quality = quality(gnv),
+            gasolineSamples = 0,
             gnvSamples = gnv.size,
         )
     }
+
+    private fun emptyResult(state: ObdWitnessState) = ObdWitnessResult(
+        state = state,
+        gasolineReferencePct = null,
+        gnvStftPct = null,
+        residualPp = null,
+        correctionRatio = null,
+        errorLog = null,
+        correctionPercent = null,
+        quality = 0.0,
+        gasolineSamples = 0,
+        gnvSamples = 0,
+    )
 
     private fun isOperatingMatch(
         sample: ObdWitnessSample,
@@ -103,11 +101,14 @@ class ObdWitnessEngine(
         mapBar: Double,
         petrolMs: Double,
     ): Boolean {
-        val rpmWindow = max(policy.minimumRpmWindow, rpm * policy.relativeRpmWindow)
-        val petrolWindow = max(policy.minimumPetrolMsWindow, petrolMs * policy.relativePetrolMsWindow)
-        return abs(sample.rpm - rpm) <= rpmWindow &&
-            abs(sample.mapBar - mapBar) <= policy.mapWindowBar &&
-            abs(sample.petrolMs - petrolMs) <= petrolWindow
+        return policy.matches(
+            sampleRpm = sample.rpm,
+            sampleMapBar = sample.mapBar,
+            samplePetrolMs = sample.petrolMs,
+            targetRpm = rpm,
+            targetMapBar = mapBar,
+            targetPetrolMs = petrolMs,
+        )
     }
 
     private fun quality(samples: List<ObdWitnessSample>): Double {
@@ -147,6 +148,21 @@ data class ObdWitnessPolicy(
     val fullSupportSamples: Int = 10,
     val dispersionScalePp: Double = 4.0,
 ) {
+    fun matches(
+        sampleRpm: Double,
+        sampleMapBar: Double,
+        samplePetrolMs: Double,
+        targetRpm: Double,
+        targetMapBar: Double,
+        targetPetrolMs: Double,
+    ): Boolean {
+        val rpmWindow = max(minimumRpmWindow, targetRpm * relativeRpmWindow)
+        val petrolWindow = max(minimumPetrolMsWindow, targetPetrolMs * relativePetrolMsWindow)
+        return abs(sampleRpm - targetRpm) <= rpmWindow &&
+            abs(sampleMapBar - targetMapBar) <= mapWindowBar &&
+            abs(samplePetrolMs - targetPetrolMs) <= petrolWindow
+    }
+
     init {
         require(minimumSamples > 0)
         require(historyLimit >= minimumSamples * 2)
