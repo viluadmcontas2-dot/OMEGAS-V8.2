@@ -1,7 +1,7 @@
 # OMEGAS Blue remote CI.
 # Push CI proves software readiness only. APK generation is an explicit owner-authorized manual gate.
 # Every readiness claim must come from a fresh exact-SHA run after publication and cleanup.
-# Runtime #17 and Curva K #22 are published in parents; this commit forces exact-SHA readiness evidence.
+# Runtime #17, Curva K #22 and Tools #21 are published in parents; this commit forces exact-SHA readiness evidence.
 name: OMEGAS Blue CI
 
 on:
