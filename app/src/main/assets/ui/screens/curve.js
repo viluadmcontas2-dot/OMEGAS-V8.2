@@ -39,6 +39,7 @@
       this.data = null;
       this.activeIndex = null;
       this.selectedIndices = new Set();
+      this.selectionMode = false;
       this.dragSelecting = false;
       this.dragMoved = false;
       this.dragStartIndex = null;
@@ -55,7 +56,9 @@
     bind() {
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('curvePreparePoint')?.addEventListener('click', () => this.prepareSelectionTarget());
+      document.getElementById('curveSelectionMode')?.addEventListener('click', () => this.setSelectionMode(!this.selectionMode));
       document.getElementById('curveClearSelection')?.addEventListener('click', () => this.clearSelection());
+      this.updateSelectionUi();
       document.querySelectorAll('[data-curve-view]').forEach(button => button.addEventListener('click', () => this.setView(button.dataset.curveView || 'editor')));
       document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeSelection(Number(button.dataset.curveNudge) || 0)));
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
@@ -105,7 +108,9 @@
       this.data = null;
       this.proposals.clear();
       this.selectedIndices.clear();
+      this.selectionMode = false;
       this.activeIndex = null;
+      this.updateSelectionUi();
       text('curveSourceStatus', 'Lendo 30 pontos diretamente da ECU');
       this.root?.classList.add('is-reading');
       if (this.pendingSuggestion) this.renderSuggestionFocus(this.pendingSuggestion);
@@ -185,6 +190,35 @@
       return this.activeIndex === null ? [] : [this.activeIndex];
     }
 
+    updateSelectionUi() {
+      const count = this.selectedIndices.size;
+      const mode = document.getElementById('curveSelectionMode');
+      const countNode = document.getElementById('curveSelectionCount');
+      if (mode) {
+        mode.setAttribute('aria-pressed', String(this.selectionMode));
+        mode.textContent = this.selectionMode ? 'Seleção ON' : 'Ativar seleção';
+      }
+      if (countNode) countNode.textContent = `${this.selectionMode ? 'Seleção ON' : 'Seleção OFF'} · ${count} selecionado${count === 1 ? '' : 's'}`;
+    }
+
+    setSelectionMode(enabled) {
+      this.selectionMode = enabled === true;
+      this.dragSelecting = false;
+      this.dragMoved = false;
+      this.dragStartIndex = null;
+      this.dragStartWasSelected = false;
+      if (!this.selectionMode && this.selectedIndices.size > 1) {
+        const keep = this.activeIndex !== null && this.selectedIndices.has(this.activeIndex)
+          ? this.activeIndex
+          : [...this.selectedIndices].at(-1);
+        this.selectedIndices.clear();
+        if (keep !== undefined && keep !== null) this.selectedIndices.add(Number(keep));
+      }
+      this.updateSelectionUi();
+      this.renderChart();
+      return this.selectionMode;
+    }
+
     refreshActiveEditor() {
       const point = this.activeIndex === null ? null : this.pointByIndex(this.activeIndex);
       if (!point) {
@@ -211,6 +245,7 @@
       this.selectedIndices.add(Number(point.index));
       this.activeIndex = Number(point.index);
       this.refreshActiveEditor();
+      this.updateSelectionUi();
       this.renderChart();
     }
 
@@ -219,12 +254,17 @@
     toggleSelection(index) {
       const point = this.pointByIndex(index);
       if (!point) return;
+      if (!this.selectionMode) {
+        this.selectOnly(index);
+        return;
+      }
       const key = Number(point.index);
       if (this.selectedIndices.has(key)) this.selectedIndices.delete(key);
       else this.selectedIndices.add(key);
       if (this.selectedIndices.has(key)) this.activeIndex = key;
       else if (this.activeIndex === key) this.activeIndex = [...this.selectedIndices].at(-1) ?? null;
       this.refreshActiveEditor();
+      this.updateSelectionUi();
       this.renderChart();
     }
 
@@ -232,6 +272,7 @@
       this.selectedIndices.clear();
       this.activeIndex = null;
       this.refreshActiveEditor();
+      this.updateSelectionUi();
       this.renderChart();
     }
 
@@ -282,13 +323,18 @@
     prepareActivePoint() { return this.prepareSelectionTarget(); }
 
     prepareSelectionTarget() {
+      const targetFactor = finite(document.getElementById('curveTargetFactor')?.value);
+      if (targetFactor === null) { this.alert('Informe o fator K desejado.'); return false; }
+      return this.assignSelectionTarget(targetFactor);
+    }
+
+    assignSelectionTarget(targetFactor) {
       const indices = this.selectedPointIndices();
       if (!indices.length) { this.alert('Selecione pelo menos um ponto da Curva K.'); return false; }
-      const requested = finite(document.getElementById('curveTargetFactor')?.value);
-      if (requested === null) { this.alert('Informe o fator K desejado.'); return false; }
+      if (finite(targetFactor) === null) { this.alert('Informe um fator K válido.'); return false; }
       let prepared = 0;
       for (const index of indices) {
-        const preview = this.api.previewCurvePoint(index, requested);
+        const preview = this.api.previewCurvePoint(index, targetFactor);
         if (!preview?.ok) continue;
         this.acceptPreview(preview, true);
         prepared += 1;
@@ -354,6 +400,10 @@
         host.innerHTML = '<div class="chart-empty">Leia a Curva K para visualizar os 30 pontos.</div>';
         return;
       }
+      const validIndices = new Set(points.map(item => Number(item.index)));
+      for (const index of [...this.selectedIndices]) if (!validIndices.has(Number(index))) this.selectedIndices.delete(index);
+      if (this.activeIndex !== null && !validIndices.has(Number(this.activeIndex))) this.activeIndex = null;
+      this.updateSelectionUi();
       const width = 920; const height = 350; const padX = 42; const padY = 34;
       const factors = points.map(item => finite(this.proposals.get(Number(item.index))?.targetFactor ?? item.factor) || 0);
       const min = Math.max(0.55, Math.min(...factors, ...points.map(item => finite(item.factor) || 0)) - 0.08);
@@ -373,7 +423,7 @@
         const y = yFor(proposed ? this.proposals.get(Number(point.index)).targetFactor : point.factor).toFixed(1);
         const x = xFor(index).toFixed(1);
         const label = index % 5 === 0 || index === points.length - 1 ? `<text class="curve-point-label" x="${x}" y="${height - 8}" text-anchor="middle">${fmt(point.petrolMs, 1)}</text>` : '';
-        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="18" tabindex="0" role="button" aria-pressed="${selected}" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${active ? 'active' : ''} ${selected ? 'selected' : ''} ${proposed ? 'proposed' : ''}" data-curve-point="${point.index}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
+        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="22" tabindex="0" role="button" aria-pressed="${selected}" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${active ? 'active' : ''} ${selected ? 'selected' : ''} ${proposed ? 'proposed' : ''}" data-curve-point="${point.index}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
       }).join('')}</svg>`;
       const syncSelectionClasses = () => {
         host.querySelectorAll('[data-curve-index]').forEach(hit => {
@@ -397,6 +447,7 @@
         this.dragMoved = false;
         this.dragStartIndex = null;
         this.dragStartWasSelected = false;
+        this.updateSelectionUi();
         syncSelectionClasses();
       };
       host.querySelectorAll('[data-curve-index]').forEach(point => {
@@ -405,6 +456,15 @@
           if (typeof event.button === 'number' && event.button !== 0) return;
           event.preventDefault();
           const key = index();
+          if (!this.selectionMode) {
+            this.selectedIndices.clear();
+            this.selectedIndices.add(key);
+            this.activeIndex = key;
+            this.refreshActiveEditor();
+            this.updateSelectionUi();
+            syncSelectionClasses();
+            return;
+          }
           this.dragSelecting = true;
           this.dragMoved = false;
           this.dragStartIndex = key;
@@ -412,15 +472,17 @@
           this.selectedIndices.add(key);
           this.activeIndex = key;
           this.refreshActiveEditor();
+          this.updateSelectionUi();
           syncSelectionClasses();
         });
         point.addEventListener('pointerenter', () => {
-          if (!this.dragSelecting) return;
+          if (!this.selectionMode || !this.dragSelecting) return;
           const key = index();
           if (key !== this.dragStartIndex) this.dragMoved = true;
           this.selectedIndices.add(key);
           this.activeIndex = key;
           this.refreshActiveEditor();
+          this.updateSelectionUi();
           syncSelectionClasses();
         });
         point.addEventListener('pointerup', finishDrag);

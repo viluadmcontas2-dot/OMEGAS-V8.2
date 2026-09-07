@@ -708,7 +708,12 @@ body[data-omegas-route="obd"] .rail-status {
 .curve-point-hit { touch-action: none; cursor: pointer; }
 .curve-point.selected {
   stroke: var(--accent);
-  stroke-width: 4px;
+  stroke-width: 6px;
+  fill: rgba(87, 186, 255, .72);
+  filter: drop-shadow(0 0 8px rgba(87, 186, 255, .78));
 }
-.curve-point.active.selected { stroke-width: 5px; }
-#curveClearSelection { min-height: 40px; white-space: nowrap; }
+.curve-point.active.selected { stroke-width: 7px; }
+.curve-selection-actions { display:flex; align-items:center; gap:8px; }
+#curveSelectionMode,
+#curveClearSelection { min-height: 44px; white-space: nowrap; }
+#curveSelectionCount { display:block; margin-top:4px; color:#8fb0c8; font-size:11px; font-weight:800; }
