@@ -1,6 +1,7 @@
-name: Blue #23 apply
+name: "Blue #23 apply"
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - work/omegas-blue-causal-engine
