@@ -566,6 +566,12 @@ class TelemetryForegroundService : Service() {
     }
 
     fun overlayStatusJson(): String = if (::overlay.isInitialized) overlay.statusJson().toString() else "{}"
+    fun restoreTelemetryOverlayIfAllowed() {
+        if (!::overlay.isInitialized) return
+        overlay.restoreIfAllowed()
+        updateOverlay()
+    }
+
     fun setTelemetryOverlayEnabled(enabled: Boolean): String {
         if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
         val result = overlay.setEnabled(enabled)

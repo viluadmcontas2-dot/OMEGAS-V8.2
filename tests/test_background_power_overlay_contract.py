@@ -36,6 +36,11 @@ assert "data-obd-overlay-request" in obd
 assert "data-obd-overlay-enable" in obd
 assert "data-obd-overlay-disable" in obd
 
+# Retorno da tela de permissao deve reconciliar a intencao persistida e
+# efetivamente restaurar o overlay; apenas refrescar a WebView nao basta.
+assert "restoreTelemetryOverlayIfAllowed" in service
+assert "restoreTelemetryOverlayIfAllowed" in activity
+
 # O flutuante mostra somente os quatro campos aprovados e não possui writers.
 for marker in ["CÉLULA", "STFT", "PETROL", "RPM"]:
     assert marker in overlay

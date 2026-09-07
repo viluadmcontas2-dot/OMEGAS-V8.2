@@ -14,7 +14,10 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
     private val lock = Any()
     private val sequence = AtomicLong(0)
     private var stateUpdatedAt = 0L
+    // Physical/source time of the newest MP48 frame, not delivery receipt time.
     private var telemetryUpdatedAt = 0L
+    private var telemetryDeliveredAt = 0L
+    private var telemetryDeliveryDelayMs = -1L
     private var telemetry = JSONObject()
     private var runtime = JSONObject()
     private var fullSnapshot = JSONObject()
@@ -38,17 +41,22 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             val now = System.currentTimeMillis()
             stateUpdatedAt = now
             val isTelemetry = event == "telemetry" || payload.has("rpm")
+            val observedAtMs = if (isTelemetry) {
+                physicalObservedAtMs(root, payload, now).coerceIn(1L, now)
+            } else {
+                0L
+            }
             if (isTelemetry) {
-                // Freshness answers when the native service actually received a
-                // usable frame. Historical matching below preserves the frame's
-                // physical timestamp independently so OBD pairing cannot make
-                // service freshness stale by construction.
-                telemetryUpdatedAt = now
+                // Freshness follows the physical frame time carried by the engine.
+                // Receipt time is tracked separately so a slow delivery consumer
+                // cannot make an old frame look fresh.
+                telemetryUpdatedAt = observedAtMs
+                telemetryDeliveredAt = now
+                telemetryDeliveryDelayMs = (now - observedAtMs).coerceAtLeast(0L)
                 valid = true
             }
             val seq = sequence.incrementAndGet()
             if (isTelemetry) {
-                val observedAtMs = physicalObservedAtMs(root, payload, now)
                 history.addLast(
                     JSONObject()
                         .put("sequence", seq)
@@ -83,6 +91,8 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         acceptingTelemetry = true
         stateUpdatedAt = System.currentTimeMillis()
         telemetryUpdatedAt = 0L
+        telemetryDeliveredAt = 0L
+        telemetryDeliveryDelayMs = -1L
         telemetry = JSONObject()
         runtime = JSONObject().put("link", "INITIALIZING").put("session_id", id)
         fullSnapshot = JSONObject()
@@ -95,6 +105,8 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         acceptingTelemetry = false
         stateUpdatedAt = System.currentTimeMillis()
         telemetryUpdatedAt = 0L
+        telemetryDeliveredAt = 0L
+        telemetryDeliveryDelayMs = -1L
         telemetry = JSONObject()
         runtime = JSONObject().put("link", "OFFLINE").put("reason", reason).put("session_id", sessionId)
         fullSnapshot = JSONObject()
@@ -123,6 +135,8 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
                 }
                 if (frameAtMs in 1..now && frameAtMs > telemetryUpdatedAt) {
                     telemetryUpdatedAt = frameAtMs
+                    telemetryDeliveredAt = now
+                    telemetryDeliveryDelayMs = (now - frameAtMs).coerceAtLeast(0L)
                 }
             }
             root.optJSONObject("runtime")?.let { merge(runtime, it) }
@@ -153,6 +167,9 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             .put("sequence", sequence.get())
             .put("updatedAt", telemetryUpdatedAt)
             .put("stateUpdatedAt", stateUpdatedAt)
+            .put("deliveredAt", telemetryDeliveredAt)
+            .put("deliveryDelayMs", telemetryDeliveryDelayMs)
+            .put("deliveryAgeMs", if (telemetryDeliveredAt == 0L) -1 else System.currentTimeMillis() - telemetryDeliveredAt)
             .put("ageMs", if (telemetryUpdatedAt == 0L) -1 else System.currentTimeMillis() - telemetryUpdatedAt)
             .put("valid", valid)
             .put("sessionId", sessionId)
@@ -168,6 +185,9 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         JSONObject()
             .put("sequence", sequence.get())
             .put("updatedAt", telemetryUpdatedAt)
+            .put("deliveredAt", telemetryDeliveredAt)
+            .put("deliveryDelayMs", telemetryDeliveryDelayMs)
+            .put("deliveryAgeMs", if (telemetryDeliveredAt == 0L) -1 else System.currentTimeMillis() - telemetryDeliveredAt)
             .put("ageMs", if (telemetryUpdatedAt == 0L) -1 else System.currentTimeMillis() - telemetryUpdatedAt)
             .put("valid", valid)
             .put("sessionId", sessionId)
@@ -182,6 +202,8 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         result.put("native_session_id", sessionId)
         result.put("telemetry_valid", valid)
         result.put("native_updated_at", telemetryUpdatedAt)
+        result.put("native_delivered_at", telemetryDeliveredAt)
+        result.put("native_delivery_delay_ms", telemetryDeliveryDelayMs)
         result.put("native_state_updated_at", stateUpdatedAt)
         result.put("native_history", JSONArray(history.map { JSONObject(it.toString()) }))
         if (!result.has("live")) result.put("live", JSONObject(telemetry.toString()))

@@ -35,6 +35,28 @@ class TelemetryStateStoreTest {
         assertEquals(1_800, store.telemetryCopy().optInt("rpm"))
     }
 
+    @Test
+    fun `slow native delivery preserves physical frame age instead of pretending it is fresh`() {
+        val store = TelemetryStateStore()
+        store.beginSession(77L)
+        val physicalAt = System.currentTimeMillis() - 700L
+        val delayed = JSONObject()
+            .put("event", "telemetry")
+            .put("session_id", 77L)
+            .put("live", JSONObject()
+                .put("session_id", 77L)
+                .put("rpm", 2_200)
+                .put("last_frame_at", physicalAt / 1000.0)
+                .put("last_frame_age_ms", 0))
+            .toString()
+
+        assertTrue(store.updateFromEngineEvent(delayed) != null)
+        val live = JSONObject(store.liveJson())
+        assertTrue("physical age was ${live.optLong("ageMs", -1L)} ms", live.optLong("ageMs", -1L) >= 500L)
+        assertTrue("delivery delay missing", live.optLong("deliveryDelayMs", -1L) >= 500L)
+        assertTrue("receipt itself should be fresh", live.optLong("deliveryAgeMs", Long.MAX_VALUE) < 250L)
+    }
+
     private fun event(sessionId: Long, rpm: Int): String = JSONObject()
         .put("event", "telemetry")
         .put("session_id", sessionId)

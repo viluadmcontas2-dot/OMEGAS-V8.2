@@ -147,6 +147,7 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             service = (binder as TelemetryForegroundService.LocalBinder).service()
             bound = true
+            service?.restoreTelemetryOverlayIfAllowed()
             refreshWebUi()
             if (intent?.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
                 service?.connectUsb()
@@ -203,6 +204,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        service?.restoreTelemetryOverlayIfAllowed()
         refreshWebUi()
     }
 
