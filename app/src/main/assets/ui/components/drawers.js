@@ -140,6 +140,7 @@
       const limitMb = finite(status.limitMb ?? settings.maxSessionMb) || 0;
       const fullness = limitMb > 0 ? Math.min(100, mb / limitMb * 100) : 0;
       const serviceHealthy = appStatus.serviceRunning === true && appStatus.engineStuck !== true;
+      const diagnosticSettingsOpen = host.querySelector('.diagnostic-settings')?.open === true;
 
       host.innerHTML = `
         <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
@@ -223,6 +224,8 @@
           </div>
         </section>
       `;
+      const diagnosticSettings = host.querySelector('.diagnostic-settings');
+      if (diagnosticSettings) diagnosticSettings.open = diagnosticSettingsOpen;
     }
   }
 

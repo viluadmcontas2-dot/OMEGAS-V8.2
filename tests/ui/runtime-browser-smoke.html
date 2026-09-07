@@ -33,16 +33,22 @@
           await check('dashboard', 60, '.now-dashboard-shell');
           await check('obd', 80, '.witness-panel');
           await check('tools', 100, '#toolDiagnosticsWorkspace');
+          const diagnosticSettings = doc.querySelector('.diagnostic-settings');
+          if (!diagnosticSettings) throw new Error('tools: detalhes de retenção ausentes');
+          diagnosticSettings.open = true;
+          await wait(2300);
+          const refreshedSettings = doc.querySelector('.diagnostic-settings');
+          if (!refreshedSettings?.open) throw new Error('tools: detalhes colapsaram após atualização periódica');
 
           document.body.dataset.runtimeSmoke = 'PASS';
-          result.textContent = 'PASS: dashboard + obd + tools montaram em runtime';
+          result.textContent = 'PASS: dashboard + obd + tools montaram e detalhes permanecem abertos';
         } catch (error) {
           fail(error && error.message ? error.message : String(error));
         }
       });
       setTimeout(() => {
         if (document.body.dataset.runtimeSmoke === 'BOOTING') fail('timeout aguardando bootstrap');
-      }, 3000);
+      }, 6000);
     })();
   </script>
 </body>

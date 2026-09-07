@@ -31,7 +31,7 @@ test('browser real monta Agora, OBD e Ferramentas com assets empacotados', { tim
     '--disable-background-networking',
     '--allow-file-access-from-files',
     `--user-data-dir=${userDataDir}`,
-    '--virtual-time-budget=4200',
+    '--virtual-time-budget=5200',
     '--dump-dom',
     harness,
   ], { cwd: ROOT, encoding: 'utf8', timeout: 15000, maxBuffer: 8 * 1024 * 1024 });
@@ -40,7 +40,7 @@ test('browser real monta Agora, OBD e Ferramentas com assets empacotados', { tim
   assert.equal(run.status, 0, `browser smoke falhou: ${run.stderr || run.stdout}`);
   assert.match(run.stdout, /data-runtime-smoke="PASS"/,
     `UI não montou as três rotas em browser real:\n${run.stdout.slice(-4000)}\nSTDERR:\n${run.stderr}`);
-  assert.match(run.stdout, /PASS: dashboard \+ obd \+ tools montaram em runtime/);
+  assert.match(run.stdout, /PASS: dashboard \+ obd \+ tools montaram e detalhes permanecem abertos/);
 });
 
 console.log('RUNTIME_BROWSER_SMOKE=PASS');
