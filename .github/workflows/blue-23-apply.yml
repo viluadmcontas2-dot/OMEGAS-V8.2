@@ -44,6 +44,11 @@ jobs:
           echo "d7933f64a6b2f4c6b37e6e0178cb47ffbeea9c3a3c94e9f2fb8c8aca81af273d  /tmp/blue23.tar.gz" | sha256sum -c -
           tar -xzf /tmp/blue23.tar.gz -C .
           test ! -e local.properties
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/test/java/com/omegas/prohub/blue/BlueTemporalPairingTest.kt')
+          p.write_text(p.read_text(encoding='utf-8').rstrip('\n') + '\n', encoding='utf-8')
+          PY
 
       - name: Focused Python and UI contracts
         shell: bash
