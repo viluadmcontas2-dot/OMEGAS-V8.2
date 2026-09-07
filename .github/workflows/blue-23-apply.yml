@@ -46,6 +46,19 @@ jobs:
           test ! -e local.properties
           python3 - <<'PY'
           from pathlib import Path
+          import tarfile
+
+          with tarfile.open('/tmp/blue23.tar.gz', 'r:gz') as archive:
+              files = [member.name for member in archive.getmembers() if member.isfile()]
+          if len(files) != 28:
+              raise SystemExit(f'expected 28 payload files, found {len(files)}')
+          for name in files:
+              p = Path(name)
+              raw = p.read_bytes()
+              if b'\x00' in raw:
+                  raise SystemExit(f'non-text payload file: {name}')
+              p.write_bytes(raw.replace(b'\r\n', b'\n').replace(b'\r', b'\n'))
+
           p = Path('app/src/test/java/com/omegas/prohub/blue/BlueTemporalPairingTest.kt')
           p.write_text(p.read_text(encoding='utf-8').rstrip('\n') + '\n', encoding='utf-8')
           PY
