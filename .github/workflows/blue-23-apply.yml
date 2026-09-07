@@ -111,7 +111,7 @@ jobs:
           git diff --cached --name-status
           test -n "$(git diff --cached --name-only)"
 
-      - name: Validate staged issue 23 diff
+      - name: Check forbidden staged paths
         shell: bash
         run: |
           set -euo pipefail
@@ -119,6 +119,11 @@ jobs:
             echo "Forbidden transport/artifact staged"
             exit 1
           fi
+
+      - name: Check staged whitespace
+        shell: bash
+        run: |
+          set -euo pipefail
           git diff --cached --check
 
       - name: Commit issue 23 files
