@@ -1,0 +1,74 @@
+name: "Blue #21 apply"
+
+on:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - ".github/workflows/blue-21-apply.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v7
+        with:
+          ref: work/omegas-blue-causal-engine
+          fetch-depth: 0
+
+      - name: Apply issue 21 tools persistence fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          drawers = Path('app/src/main/assets/ui/components/drawers.js')
+          s = drawers.read_text(encoding='utf-8')
+          old = """      const serviceHealthy = appStatus.serviceRunning === true && appStatus.engineStuck !== true;\n\n      host.innerHTML = `"""
+          new = """      const serviceHealthy = appStatus.serviceRunning === true && appStatus.engineStuck !== true;\n      const diagnosticSettingsOpen = host.querySelector('.diagnostic-settings')?.open === true;\n\n      host.innerHTML = `"""
+          if s.count(old) != 1:
+              raise SystemExit(f'pre-render anchor drifted count={s.count(old)}')
+          s = s.replace(old, new, 1)
+          old = """        </section>\n      `;\n    }"""
+          new = """        </section>\n      `;\n      const diagnosticSettings = host.querySelector('.diagnostic-settings');\n      if (diagnosticSettings) diagnosticSettings.open = diagnosticSettingsOpen;\n    }"""
+          if s.count(old) != 1:
+              raise SystemExit(f'post-render anchor drifted count={s.count(old)}')
+          drawers.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          smoke = Path('tests/ui/runtime-browser-smoke.html')
+          s = smoke.read_text(encoding='utf-8')
+          old = """          await check('tools', 100, '#toolDiagnosticsWorkspace');\n\n          document.body.dataset.runtimeSmoke = 'PASS';\n          result.textContent = 'PASS: dashboard + obd + tools montaram em runtime';"""
+          new = """          await check('tools', 100, '#toolDiagnosticsWorkspace');\n          const diagnosticSettings = doc.querySelector('.diagnostic-settings');\n          if (!diagnosticSettings) throw new Error('tools: detalhes de retenção ausentes');\n          diagnosticSettings.open = true;\n          await wait(2300);\n          const refreshedSettings = doc.querySelector('.diagnostic-settings');\n          if (!refreshedSettings?.open) throw new Error('tools: detalhes colapsaram após atualização periódica');\n\n          document.body.dataset.runtimeSmoke = 'PASS';\n          result.textContent = 'PASS: dashboard + obd + tools montaram e detalhes permanecem abertos';"""
+          if s.count(old) != 1:
+              raise SystemExit(f'smoke anchor drifted count={s.count(old)}')
+          s = s.replace(old, new, 1)
+          if s.count('}, 3000);') != 1:
+              raise SystemExit('smoke timeout anchor drifted')
+          smoke.write_text(s.replace('}, 3000);', '}, 6000);', 1), encoding='utf-8')
+          PY
+
+      - name: Verify Tools behavior and all browser contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/ui/components/drawers.js
+          for test in tests/ui/*.test.cjs; do node --test "$test"; done
+
+      - name: Commit issue 21 and remove transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/blue-21-apply.yml
+          git add -- app/src/main/assets/ui/components/drawers.js tests/ui/runtime-browser-smoke.html
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(blue): preserve Tools details across refresh #21"
+          git push origin HEAD:work/omegas-blue-causal-engine
