@@ -11,6 +11,21 @@ const test = require('node:test');
 const ROOT = path.join(__dirname, '../..');
 
 function findBrowser() {
+  const configured = process.env.CHROME_BIN || process.env.CHROMIUM_BIN;
+  if (configured && fs.existsSync(configured)) return configured;
+
+  if (process.platform === 'win32') {
+    const roots = [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA]
+      .filter(Boolean);
+    for (const root of roots) {
+      const candidate = path.join(root, 'Google', 'Chrome', 'Application', 'chrome.exe');
+      if (fs.existsSync(candidate)) return candidate;
+    }
+    const probe = spawnSync('where.exe', ['chrome.exe'], { encoding: 'utf8' });
+    if (probe.status === 0 && probe.stdout.trim()) return probe.stdout.trim().split(/\r?\n/)[0];
+    return null;
+  }
+
   for (const candidate of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
     const probe = spawnSync('bash', ['-lc', `command -v ${candidate}`], { encoding: 'utf8' });
     if (probe.status === 0 && probe.stdout.trim()) return probe.stdout.trim();

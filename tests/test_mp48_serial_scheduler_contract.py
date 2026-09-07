@@ -22,9 +22,9 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
         self.assertEqual([], offenders)
 
     def test_known_clients_use_scheduler_and_atomic_write_readback_units(self):
-        kwrite = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt").read_text()
-        kfactor = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt").read_text()
-        bridge = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt").read_text()
+        kwrite = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt").read_text(encoding="utf-8")
+        kfactor = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt").read_text(encoding="utf-8")
+        bridge = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt").read_text(encoding="utf-8")
         self.assertNotIn("UsbSerialManager", kwrite)
         self.assertNotIn("UsbSerialManager", kfactor)
         self.assertNotIn("protocolTransaction(", bridge)
@@ -38,7 +38,7 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
         )
 
     def test_engine_protects_telemetry_opportunity_and_definitive_mutation_wait(self):
-        source = ENGINE.read_text()
+        source = ENGINE.read_text(encoding="utf-8")
         self.assertIn("PriorityBlockingQueue<QueuedSerialWork>", source)
         self.assertIn("thenBy { it.sequence }", source)
         self.assertRegex(

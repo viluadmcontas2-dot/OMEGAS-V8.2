@@ -2,9 +2,9 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSEMBLER = (ROOT / "app/src/main/java/com/omegas/prohub/learning/LearningUiSnapshotAssembler.kt").read_text()
-PROJECTION = (ROOT / "app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt").read_text()
-STORE = (ROOT / "app/src/main/java/com/omegas/prohub/learning/BlueEvidenceStore.kt").read_text()
+ASSEMBLER = (ROOT / "app/src/main/java/com/omegas/prohub/learning/LearningUiSnapshotAssembler.kt").read_text(encoding="utf-8")
+PROJECTION = (ROOT / "app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt").read_text(encoding="utf-8")
+STORE = (ROOT / "app/src/main/java/com/omegas/prohub/learning/BlueEvidenceStore.kt").read_text(encoding="utf-8")
 
 # RED #19: a projection that feeds Aprender may not erase comparisons that belong
 # to Blue authority. The exact source can evolve, but hard-coded empty payloads are
