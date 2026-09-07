@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Curva K runtime interaction</title></head>
+<body data-curve-runtime="BOOTING">
+<pre id="result">BOOTING</pre>
+<iframe id="omegas" src="../../app/src/main/assets/ui/index.html" style="width:1280px;height:720px"></iframe>
+<script>
+(function () {
+  const result = document.getElementById('result');
+  const frame = document.getElementById('omegas');
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const fail = message => { document.body.dataset.curveRuntime = 'FAIL'; result.textContent = 'FAIL: ' + message; };
+  const until = async (fn, timeout=2500) => { const start=Date.now(); while(Date.now()-start < timeout){ const value=fn(); if(value) return value; await wait(50); } return null; };
+  frame.addEventListener('load', async () => {
+    try {
+      await wait(350);
+      const win=frame.contentWindow, doc=frame.contentDocument;
+      if (!win?.OmegasApp || !doc) throw new Error('OmegasApp não inicializou');
+      win.OmegasApp.router.navigate('curve');
+      const ready = await until(() => doc.querySelectorAll('[data-curve-index]').length === 30);
+      if (!ready) throw new Error('Curva não montou 30 pontos');
+      const screen = win.OmegasApp.screens.curve;
+      if (!screen) throw new Error('CurveScreen ausente');
+      let writerCalls=0;
+      const originalWriter=screen.api.writeCurve.bind(screen.api);
+      screen.api.writeCurve=(...args) => { writerCalls += 1; return originalWriter(...args); };
+
+      const mode=doc.getElementById('curveSelectionMode');
+      if (screen.selectionMode !== false || mode?.getAttribute('aria-pressed') !== 'false') throw new Error('seleção deve iniciar OFF');
+      let hits=[...doc.querySelectorAll('[data-curve-index]')];
+      hits[0].dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,button:0}));
+      hits[1].dispatchEvent(new PointerEvent('pointerenter',{bubbles:true}));
+      hits[0].dispatchEvent(new PointerEvent('pointerup',{bubbles:true,button:0}));
+      if (screen.selectedIndices.size !== 1 || !screen.selectedIndices.has(0)) throw new Error('drag OFF selecionou mais de um ponto');
+
+      mode.click();
+      if (screen.selectionMode !== true || mode.getAttribute('aria-pressed') !== 'true') throw new Error('seleção não ligou');
+      hits=[...doc.querySelectorAll('[data-curve-index]')];
+      hits[0].dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,button:0}));
+      hits[1].dispatchEvent(new PointerEvent('pointerenter',{bubbles:true}));
+      hits[2].dispatchEvent(new PointerEvent('pointerenter',{bubbles:true}));
+      hits[2].dispatchEvent(new PointerEvent('pointerup',{bubbles:true,button:0}));
+      if (![0,1,2].every(i => screen.selectedIndices.has(i)) || screen.selectedIndices.size !== 3) throw new Error('drag ON não selecionou 3 pontos');
+      if (!String(doc.getElementById('curveSelectionCount')?.textContent).includes('3 selecionados')) throw new Error('contador de seleção incorreto');
+      if (![0,1,2].every(i => doc.querySelector(`[data-curve-index="${i}"]`)?.getAttribute('aria-pressed') === 'true')) throw new Error('highlight acessível não persistiu');
+
+      hits=[...doc.querySelectorAll('[data-curve-index]')];
+      hits[1].dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,button:0}));
+      hits[1].dispatchEvent(new PointerEvent('pointerup',{bubbles:true,button:0}));
+      if (screen.selectedIndices.has(1) || screen.selectedIndices.size !== 2) throw new Error('deselect por toque falhou');
+
+      let renders=0;
+      const originalRender=screen.renderChart.bind(screen);
+      screen.renderChart=() => { renders += 1; return originalRender(); };
+      const input=doc.getElementById('curveTargetFactor');
+      input.value='1.20';
+      doc.getElementById('curvePreparePoint').click();
+      if (renders !== 1) throw new Error('atribuição absoluta redesenhou ' + renders + ' vezes');
+      for (const i of [0,2]) {
+        const proposal=screen.proposals.get(i);
+        if (!proposal || Math.abs(Number(proposal.targetFactor)-1.2) > 1e-9) throw new Error('ponto '+i+' não virou exatamente 1.20');
+      }
+      if (writerCalls !== 0 || screen.writing) throw new Error('seleção/preparação chamou writer');
+      document.body.dataset.curveRuntime='PASS';
+      result.textContent='PASS: CURVE_K_BROWSER_INTERACTION_OK';
+    } catch (error) { fail(error?.message || String(error)); }
+  });
+  setTimeout(() => { if(document.body.dataset.curveRuntime==='BOOTING') fail('timeout'); }, 6000);
+})();
+</script></body></html>
