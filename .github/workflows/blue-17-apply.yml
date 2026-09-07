@@ -1,0 +1,114 @@
+name: "Blue #17 apply"
+
+on:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - ".github/workflows/blue-17-apply.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: blue-17-apply
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v7
+        with:
+          ref: work/omegas-blue-causal-engine
+          fetch-depth: 0
+
+      - name: Apply issue 17 runtime recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          css = Path('app/src/main/assets/ui/styles-witness-multimedia.css')
+          s = css.read_text(encoding='utf-8')
+          replacements = {
+              '''body:has(.multimedia-now-screen.active) .workspace-head,\nbody:has(.multimedia-obd-screen.active) .workspace-head {''': '''body[data-omegas-route="dashboard"] .workspace-head,\nbody[data-omegas-route="obd"] .workspace-head {''',
+              '''body:has(.multimedia-now-screen.active) .screen-host,\nbody:has(.multimedia-obd-screen.active) .screen-host {''': '''body[data-omegas-route="dashboard"] .screen-host,\nbody[data-omegas-route="obd"] .screen-host {''',
+              '''body:has(.multimedia-now-screen.active) .side-nav button,\nbody:has(.multimedia-obd-screen.active) .side-nav button {''': '''body[data-omegas-route="dashboard"] .side-nav button,\nbody[data-omegas-route="obd"] .side-nav button {''',
+              '''body:has(.multimedia-now-screen.active) .side-nav button i,\nbody:has(.multimedia-obd-screen.active) .side-nav button i {''': '''body[data-omegas-route="dashboard"] .side-nav button i,\nbody[data-omegas-route="obd"] .side-nav button i {''',
+              '''body:has(.multimedia-now-screen.active) .rail-status,\nbody:has(.multimedia-obd-screen.active) .rail-status {''': '''body[data-omegas-route="dashboard"] .rail-status,\nbody[data-omegas-route="obd"] .rail-status {''',
+          }
+          for old, new in replacements.items():
+              if s.count(old) != 1:
+                  raise SystemExit(f'expected one CSS selector block, found {s.count(old)}')
+              s = s.replace(old, new, 1)
+          css.write_text(s, encoding='utf-8')
+
+          app = Path('app/src/main/assets/ui/app.js')
+          s = app.read_text(encoding='utf-8')
+          old = '''    if (state.route !== renderedRoute) {\n      renderedRoute = state.route;'''
+          new = '''    if (state.route !== renderedRoute) {\n      renderedRoute = state.route;\n      if (document.body) document.body.dataset.omegasRoute = state.route;'''
+          if s.count(old) != 1:
+              raise SystemExit('renderShell route anchor drifted')
+          s = s.replace(old, new, 1)
+          old = '''    afterPaint(() => {\n      refreshStatus();\n      scheduler.start();\n    });\n  }'''
+          new = '''    if (document.body) document.body.dataset.omegasBoot = 'ready';\n    afterPaint(() => {\n      refreshStatus();\n      scheduler.start();\n    });\n  }'''
+          if s.count(old) != 1:
+              raise SystemExit('initialize anchor drifted')
+          app.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          activity = Path('app/src/main/java/com/omegas/prohub/MainActivity.kt')
+          s = activity.read_text(encoding='utf-8')
+          changes = [
+              ('    private var powerBridge: PowerJavascriptBridge? = null\n', '    private var powerBridge: PowerJavascriptBridge? = null\n    private var webBootstrapReloadAttempts = 0\n'),
+              ('            domStorageEnabled = true\n            databaseEnabled = false', '            domStorageEnabled = true\n            cacheMode = WebSettings.LOAD_NO_CACHE\n            databaseEnabled = false'),
+          ]
+          for old, new in changes:
+              if s.count(old) != 1:
+                  raise SystemExit('MainActivity anchor drifted')
+              s = s.replace(old, new, 1)
+          old = '''        webView.webViewClient = object : WebViewClient() {\n            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {\n                val uri = request?.url ?: return true\n                return uri.scheme != "file"\n            }\n        }\n        webView.loadUrl("file:///android_asset/ui/index.html")\n    }'''
+          new = '''        webView.clearCache(true)\n        webView.webViewClient = object : WebViewClient() {\n            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {\n                val uri = request?.url ?: return true\n                return uri.scheme != "file"\n            }\n\n            override fun onPageFinished(view: WebView?, url: String?) {\n                super.onPageFinished(view, url)\n                if (url?.startsWith("file:///android_asset/ui/") == true) {\n                    view?.postDelayed({ verifyWebUiBootstrap() }, 450L)\n                }\n            }\n        }\n        webView.loadUrl("file:///android_asset/ui/index.html")\n    }\n\n    private fun verifyWebUiBootstrap() {\n        if (!::webView.isInitialized || isFinishing || isDestroyed) return\n        webView.evaluateJavascript(\n            "document.body && document.body.dataset.omegasBoot === 'ready'",\n        ) { result ->\n            if (result == "true") {\n                webBootstrapReloadAttempts = 0\n                return@evaluateJavascript\n            }\n            service?.log?.add("WARN", "WEB", "UI bootstrap ausente após carregamento local")\n            if (webBootstrapReloadAttempts < 1) {\n                webBootstrapReloadAttempts += 1\n                webView.clearCache(true)\n                webView.reload()\n            } else {\n                webView.evaluateJavascript(\n                    "document.body && (document.body.dataset.omegasBoot = 'error')",\n                    null,\n                )\n            }\n        }\n    }'''
+          if s.count(old) != 1:
+              raise SystemExit('WebViewClient anchor drifted')
+          activity.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          media = Path('tests/ui/multimedia-distance-legibility.test.cjs')
+          s = media.read_text(encoding='utf-8')
+          old = '  assert.match(index, /href="styles-witness-multimedia\\.css"/);'
+          new = '''  assert.match(index, /href="styles-witness-multimedia\\.css(?:\\?[^\"]+)?"/);\n  assert.match(index, /styles-witness-multimedia\\.css\\?v=blue-ui-002/,\n    'stylesheet multimídia deve ter versão explícita para invalidar cache empacotado');'''
+          if s.count(old) != 1:
+              raise SystemExit('multimedia cache-busting test anchor drifted')
+          media.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Focused runtime contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/ui/blue-runtime-essential-screens.test.cjs tests/ui/multimedia-distance-legibility.test.cjs tests/ui/runtime-browser-smoke.test.cjs
+          node --check app/src/main/assets/ui/app.js
+          ! grep -q 'body:has(' app/src/main/assets/ui/styles-witness-multimedia.css
+
+      - name: Compile and lint Android runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest lintDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
+
+      - name: Commit production recovery and remove transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/blue-17-apply.yml
+          git add -- app/src/main/assets/ui/styles-witness-multimedia.css app/src/main/assets/ui/app.js app/src/main/java/com/omegas/prohub/MainActivity.kt tests/ui/multimedia-distance-legibility.test.cjs
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(blue): recover WebView runtime bootstrap #17"
+          git push origin HEAD:work/omegas-blue-causal-engine
