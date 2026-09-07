@@ -121,6 +121,7 @@
   function renderShell(state) {
     if (state.route !== renderedRoute) {
       renderedRoute = state.route;
+      if (document.body) document.body.dataset.omegasRoute = state.route;
       const meta = routeMeta[state.route] || routeMeta.dashboard;
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
@@ -498,6 +499,7 @@
     store.subscribe(renderShell, true);
     const route = router.restore();
     activateRoute(route, null);
+    if (document.body) document.body.dataset.omegasBoot = 'ready';
     afterPaint(() => {
       refreshStatus();
       scheduler.start();

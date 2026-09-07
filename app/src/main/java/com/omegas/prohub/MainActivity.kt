@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private var jsBridge: HubJavascriptBridge? = null
     private var blueBridge: BlueJavascriptBridge? = null
     private var powerBridge: PowerJavascriptBridge? = null
+    private var webBootstrapReloadAttempts = 0
 
     private val exportDataLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip"),
@@ -259,6 +260,7 @@ class MainActivity : AppCompatActivity() {
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            cacheMode = WebSettings.LOAD_NO_CACHE
             databaseEnabled = false
             allowFileAccess = true
             allowContentAccess = false
@@ -287,13 +289,44 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         }
+        webView.clearCache(true)
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return true
                 return uri.scheme != "file"
             }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                if (url?.startsWith("file:///android_asset/ui/") == true) {
+                    view?.postDelayed({ verifyWebUiBootstrap() }, 450L)
+                }
+            }
         }
         webView.loadUrl("file:///android_asset/ui/index.html")
+    }
+
+    private fun verifyWebUiBootstrap() {
+        if (!::webView.isInitialized || isFinishing || isDestroyed) return
+        webView.evaluateJavascript(
+            "document.body && document.body.dataset.omegasBoot === 'ready'",
+        ) { result ->
+            if (result == "true") {
+                webBootstrapReloadAttempts = 0
+                return@evaluateJavascript
+            }
+            service?.log?.add("WARN", "WEB", "UI bootstrap ausente após carregamento local")
+            if (webBootstrapReloadAttempts < 1) {
+                webBootstrapReloadAttempts += 1
+                webView.clearCache(true)
+                webView.reload()
+            } else {
+                webView.evaluateJavascript(
+                    "document.body && (document.body.dataset.omegasBoot = 'error')",
+                    null,
+                )
+            }
+        }
     }
 
     fun exportData() = runOnUiThread {

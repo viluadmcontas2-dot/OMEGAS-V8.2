@@ -26,7 +26,9 @@ function expectAtLeast(css, selector, minimum, label) {
 }
 
 test('stylesheet multimídia é parte estática do APK, não depende de abrir dashboard primeiro', () => {
-  assert.match(index, /href="styles-witness-multimedia\.css"/);
+  assert.match(index, /href="styles-witness-multimedia\.css(?:\?[^"]+)?"/);
+  assert.match(index, /styles-witness-multimedia\.css\?v=blue-ui-002/,
+    'stylesheet multimídia deve ter versão explícita para invalidar cache empacotado');
 });
 
 test('nenhum CSS embarcado declara texto abaixo de 10 px', () => {

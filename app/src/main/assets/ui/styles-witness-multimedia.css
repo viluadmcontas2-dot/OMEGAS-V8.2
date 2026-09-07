@@ -1,29 +1,29 @@
 /* OMEGAS Blue · multimedia-first dashboard + STFT witness */
 
-body:has(.multimedia-now-screen.active) .workspace-head,
-body:has(.multimedia-obd-screen.active) .workspace-head {
+body[data-omegas-route="dashboard"] .workspace-head,
+body[data-omegas-route="obd"] .workspace-head {
   display: none;
 }
 
-body:has(.multimedia-now-screen.active) .screen-host,
-body:has(.multimedia-obd-screen.active) .screen-host {
+body[data-omegas-route="dashboard"] .screen-host,
+body[data-omegas-route="obd"] .screen-host {
   padding: 14px 18px 16px;
   overflow: hidden;
 }
 
-body:has(.multimedia-now-screen.active) .side-nav button,
-body:has(.multimedia-obd-screen.active) .side-nav button {
+body[data-omegas-route="dashboard"] .side-nav button,
+body[data-omegas-route="obd"] .side-nav button {
   min-height: 52px;
   font-size: 15px;
 }
 
-body:has(.multimedia-now-screen.active) .side-nav button i,
-body:has(.multimedia-obd-screen.active) .side-nav button i {
+body[data-omegas-route="dashboard"] .side-nav button i,
+body[data-omegas-route="obd"] .side-nav button i {
   font-size: 12px;
 }
 
-body:has(.multimedia-now-screen.active) .rail-status,
-body:has(.multimedia-obd-screen.active) .rail-status {
+body[data-omegas-route="dashboard"] .rail-status,
+body[data-omegas-route="obd"] .rail-status {
   font-size: 13px;
 }
 
