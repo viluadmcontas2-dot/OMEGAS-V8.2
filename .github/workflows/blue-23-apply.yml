@@ -29,8 +29,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find .github/blue23_payload -maxdepth 1 -type f -name 'chunk*.txt' | wc -l)" -eq 6
-          cat .github/blue23_payload/chunk*.txt | base64 -d > /tmp/blue23.tar.gz
+          cat \
+            .github/blue23_payload/chunk00a.txt \
+            .github/blue23_payload/chunk00b.txt \
+            .github/blue23_payload/chunk01a.txt \
+            .github/blue23_payload/chunk01b.txt \
+            .github/blue23_payload/chunk02.txt \
+            .github/blue23_payload/chunk03.txt \
+            .github/blue23_payload/chunk04a.txt \
+            .github/blue23_payload/chunk04b.txt \
+            .github/blue23_payload/chunk05.txt \
+            | base64 -d > /tmp/blue23.tar.gz
           echo "d7933f64a6b2f4c6b37e6e0178cb47ffbeea9c3a3c94e9f2fb8c8aca81af273d  /tmp/blue23.tar.gz" | sha256sum -c -
           tar -xzf /tmp/blue23.tar.gz -C .
           test ! -e local.properties
