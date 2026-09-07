@@ -1,0 +1,83 @@
+name: Blue #23 apply
+
+on:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - ".github/workflows/blue-23-apply.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: blue-23-apply
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v7
+        with:
+          ref: work/omegas-blue-causal-engine
+          fetch-depth: 0
+
+      - name: Reconstruct and verify exact payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find .github/blue23_payload -maxdepth 1 -type f -name 'chunk*.txt' | wc -l)" -eq 6
+          cat .github/blue23_payload/chunk*.txt | base64 -d > /tmp/blue23.tar.gz
+          echo "d7933f64a6b2f4c6b37e6e0178cb47ffbeea9c3a3c94e9f2fb8c8aca81af273d  /tmp/blue23.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/blue23.tar.gz -C .
+          test ! -e local.properties
+
+      - name: Focused Python and UI contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tests/test_blue_apk_owner_gate_contract.py
+          python3 -B tests/test_blue_obd_gnv_only_integration_contract.py
+          node --test tests/ui/blue-multimedia-witness-dashboard.test.cjs tests/ui/obd-runtime-controls.test.cjs
+          node --check app/src/main/assets/ui/screens/obd.js
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Focused JVM science contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest \
+            --tests '*Obd*' \
+            --tests '*BlueWitness*' \
+            --tests '*BlueTemporalPairingTest*' \
+            --tests '*BlueMapKAddressingTest*' \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon --stacktrace
+
+      - name: Commit production change and remove transport scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .github/blue23_payload
+          rm -f .github/workflows/blue-23-apply.yml
+          rm -f local.properties
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --name-only | grep -E '(^|/)local\.properties$|\.apk$|(^|/)build/'; then
+            echo "Forbidden staged artifact"
+            exit 1
+          fi
+          git diff --cached --check
+          git commit -m "fix(blue): align MP48 equivalence and GNV STFT witness #23"
+          git push origin HEAD:work/omegas-blue-causal-engine
