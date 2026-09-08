@@ -13,4 +13,13 @@ object BlueMapKAddressing {
         petrolMs = comparison.petrolOnCngMs,
         mapBar = comparison.mapBar,
     )
+
+    fun presentationFields(comparison: FuelComparison): JSONObject {
+        val mapKCell = cell(comparison)
+        return JSONObject()
+            .put("mapKCell", mapKCell)
+            .put("row", mapKCell.getInt("row"))
+            .put("column", mapKCell.getInt("column"))
+            .put("cellKey", mapKCell.getString("key"))
+    }
 }

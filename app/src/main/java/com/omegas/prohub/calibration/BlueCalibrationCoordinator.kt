@@ -148,7 +148,7 @@ class BlueCalibrationCoordinator(
         projectWitness(
             baseJson = autoCal.proposalJson(comparison, gain = null),
             comparison = comparison,
-        ).put("available", true)
+        )
     }
 
     private fun stateJsonLocked(): JSONObject {
@@ -196,8 +196,12 @@ class BlueCalibrationCoordinator(
     )
 
     private fun projectWitness(baseJson: JSONObject, comparison: FuelComparison): JSONObject {
+        val presentation = BlueMapKAddressing.presentationFields(comparison)
         val enriched = JSONObject(baseJson.toString())
-            .put("mapKCell", BlueMapKAddressing.cell(comparison))
+            .put("mapKCell", presentation.getJSONObject("mapKCell"))
+            .put("row", presentation.getInt("row"))
+            .put("column", presentation.getInt("column"))
+            .put("cellKey", presentation.getString("cellKey"))
         return BlueWitnessConfidence.project(
             baseJson = enriched,
             blueErrorPercent = comparison.errorPercent,

@@ -31,6 +31,8 @@ class BlueAutoCalAdapter(
             .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
             .put("automatic", false)
             .put("manualOnly", true)
+            .put("available", proposal.correctionMultiplier != null)
+            .put("evidenceAvailable", true)
             .put("curveRevision", proposal.calibrationState.curveK)
             .put("mapRevision", proposal.calibrationState.mapK)
             .put("petrolReferenceMs", comparison.petrolTargetMs)
@@ -38,7 +40,7 @@ class BlueAutoCalAdapter(
             .put("errorLog", proposal.errorLog)
             .put("errorPercent", proposal.errorPercent)
             .put("actuatorGain", proposal.actuatorGain?.gain ?: JSONObject.NULL)
-            .put("correctionMultiplier", proposal.correctionMultiplier ?: JSONObject.NULL)
+            .apply { proposal.correctionMultiplier?.let { put("correctionMultiplier", it) } }
             .put("state", if (proposal.correctionMultiplier == null) "MEASURE_ACTUATOR_GAIN" else "PROPOSAL_READY")
     }
 
