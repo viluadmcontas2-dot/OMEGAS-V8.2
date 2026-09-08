@@ -47,13 +47,18 @@
 5. Redesign review as compact batch summary, not 30-row scroll dependency.
 6. Keep ECU write path unchanged: review -> writer -> ACK -> readback.
 
+### Phase 5.5 — OBD witness + structural convergence (#23/#16)
+1. Keep MP48 as the primary equivalence signal and GNV STFT as a read-only confidence witness.
+2. Verify current-GNV Map K addressing, no LTFT vote and no OBD writer path.
+3. Re-run single-authority/Auto-Cal/session/vault convergence contracts and remove duplicate evidence ingestion.
+
 ### Phase 6 — Convergence
 1. Re-run all focused behavior suites.
 2. Run browser runtime smoke for all essential routes.
 3. Run FAST then JVM/unit then lint on exact head.
 4. Update `PROJECT.md`, `STATUS.md`, specs/tasks and incident receipts to current truth.
 5. Resolve all P0/P1 child issues.
-6. Only then run `assembleDebug` and produce a single candidate APK for physical validation.
+6. Only then declare `READY FOR APK GENERATION` and stop. `assembleDebug` is a separate owner-authorized artifact gate.
 
 ## Failure handling
 - One hypothesis at a time.

@@ -1,40 +1,24 @@
 # Projeto OMEGAS V8.2 Blue
 
 ## Objetivo humano
+Regular o GNV com o mínimo de esforço humano, usando MP48 como verdade de combustível/calibração e evidência física gasolina↔GNV, sem escrita automática na ECU.
 
-Regular o GNV com o mínimo de esforço humano, usando a MP48 para verdade de combustível/calibração e a evidência física disponível para comparar comportamento GNV × gasolina, sem automatizar escrita na ECU.
-
-O produto deve ser utilizável na multimídia do carro: rápido, legível, didático, resistente a WebViews lentas e capaz de continuar aquisição/aprendizado no serviço Android mesmo sem a tela redesenhando.
+O produto é voltado à multimídia do carro: rápido, legível, didático, resistente a WebViews lentas e com aquisição/aprendizado mantidos pelo serviço Android mesmo sem redraw da tela.
 
 ## Contrato científico atual
-
 - `BlueCausalEngine` é a única autoridade de comparação/correção.
-- Gasolina é a referência física.
-- `(RPM, MAP)` identifica condição física comparável.
-- `Petrol Inj.` é a resposta comandada pela ECU e também localiza a geometria física do Mapa K.
-- MP48 é autoridade de combustível/calibração/write/readback.
-- `TRANSITION` continua fisicamente em gasolina; `CUT-OFF` é distinto e não é evidência de equivalência.
-- OBD pode fornecer evidência física de correção, mas não possui autoridade de escrita K.
-- Contagem de visitas é auditoria/suporte, não mecanismo de confiança por quantidade.
-- Nenhuma correção K é aplicada automaticamente: preparar → revisar → writer → ACK → readback.
+- Gasolina é a referência física; `(RPM, MAP)` define condição comparável.
+- A célula de Mapa K para GNV usa **RPM atual × Petrol Inj. atual no GNV**.
+- MP48 é autoridade de combustível, calibração, writer, ACK e readback.
+- OBD é testemunha read-only por STFT no GNV; LTFT não participa da matemática decisória.
+- `TRANSITION` ainda é gasolina; `CUT-OFF` é distinto e não é evidência de equivalência.
+- Visitas são auditoria/suporte, não confiança por contagem.
+- Toda mutação segue preparar → revisar → confirmar → ACK → readback.
 
-## Recuperação sistêmica ativa
+## Recuperação sistêmica
+A recuperação aberta após a validação física de 2026-09-06 foi implementada e verificada em software. A epic é `#18`, com convergência de `#16` e workstreams `#17/#19/#20/#21/#22/#23`.
 
-A validação física de 2026-09-06 provou regressões importantes na Blue apesar de CI/build anteriores verdes. A prioridade atual **não é gerar outro APK**; é recuperar coerência e testes comportamentais antes de novo candidato.
+O código de recuperação está completo; a declaração externa `READY FOR APK GENERATION` exige uma CI canônica `OMEGAS Blue CI` concluída com sucesso no **HEAD remoto exato** que contém a reconciliação final.
 
-- Epic: `#18 BLUE-RECOVERY-001`
-- Work Unit: `docs/workunits/OMEGAS-BLUE-RECOVERY-001.md`
-- Spec Kit: `specs/003-blue-system-recovery/`
-- Branch: `work/omegas-blue-causal-engine`
-- RED estável: referência funcional `hotfix/v8.0-red-performance`; não é autoridade matemática da Blue.
-
-### Workstreams
-- `#17` Agora/OBD runtime + WebView.
-- `#19` Learning: Desvio, qualidade, TRANSITION e tolerâncias.
-- `#20` Telemetria, backpressure, segundo plano e overlay.
-- `#21` Ferramentas, retenção e logs.
-- `#22` Curva K cockpit UX/performance.
-
-## Regra de release desta recuperação
-
-Não gerar/publicar novo APK enquanto #18 não completar triagem e remediação. Antes do próximo APK precisam existir provas de runtime/browser das telas essenciais, testes comportamentais dos bugs corrigidos, regressões científicas, FAST/JVM/lint verdes no mesmo SHA e nenhuma regressão P0/P1 conhecida aberta. Validação física no carro permanece um gate separado.
+## Gate de artefato
+Push normal executa apenas `FAST → JVM/unit → lint` e nunca gera APK. O job de APK é manual e só roda com autorização explícita do owner. Validação física no veículo ocorre depois de um APK autorizado e nunca é inferida da CI.

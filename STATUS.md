@@ -1,74 +1,40 @@
 # Status — OMEGAS V8.2 Blue
 
 - Branch: `work/omegas-blue-causal-engine`
-- Estado: `SYSTEM_RECOVERY_IN_PROGRESS`
+- Estado do código: `RECOVERY_IMPLEMENTATION_COMPLETE`
 - Epic: `#18 BLUE-RECOVERY-001`
+- Convergência estrutural: `#16`
 - Work Unit: `OMEGAS-BLUE-RECOVERY-001`
 - Spec Kit: `specs/003-blue-system-recovery/`
-- Autoridade: `REPO_FIRST_ENGINEERING=TRUE`
 - Autoridade matemática: `BlueCausalEngine`
 - Escrita automática ECU: `FALSE`
-- Novo APK durante triagem: `BLOCKED_BY_RECOVERY_GATE`
-- Referência funcional: `hotfix/v8.0-red-performance`
+- APK por push normal: `FALSE`
+- APK manual sem autorização do owner: `BLOCKED`
 
-## Por que o estado anterior foi reaberto
+## Evidência remota de base antes da reconciliação final
+- SHA: `19a116d978d2eed8ece66cc0f71e73b8a1a53bf1`
+- OMEGAS Blue CI run `34169619370`: `completed/success`
+- `FAST contracts`: success
+- `FULL JVM lint`: success
+- `Owner-authorized APK artifact`: skipped
+- MMMACHINE FAST no snapshot exato: `QUALITY_GATE_FAST=PASS python=22 node=23`
 
-A validação física no carro em 2026-09-06 mostrou que os gates anteriores eram insuficientes para afirmar usabilidade do APK Blue. Build, lint e contratos estáticos chegaram a ficar verdes enquanto telas e interações essenciais falhavam na WebView real.
+## Recuperações verificadas
+- #17: Agora/OBD possuem fallback não vazio, bootstrap real em Chrome e layout essencial sem dependência de `:has()`.
+- #19: comparações Blue chegam ao Learning, `quality` é preservada, TRANSITION é gasolina e tolerâncias foram classificadas/isoladas.
+- #20: freshness usa timestamp físico, delivery lag fica observável, latest-only/generation reset permanecem limitados, foreground/overlay têm contrato de restore.
+- #21: disclosure/foco de Ferramentas sobrevive aos refreshes; browser smoke real cobre a regressão.
+- #22: Seleção ON/OFF, drag, destaque, delta e atribuição absoluta têm teste de browser real.
+- #23: MP48 continua erro primário; STFT GNV é witness; LTFT não decide; OBD não escreve; Mapa K usa a região GNV atual.
+- #16: uma única autoridade Blue, Auto-Cal consome proposta Blue, safety não usa RPM como gate e sessões úteis/vault seguem a Constituição.
 
-A recuperação atual não aceita `CI verde` como sinônimo de `produto validado`.
+## TDD adicional da reconciliação
+Foi encontrado um duplicate ingest em `AutoCalJavascriptBridge`: a mesma importação de snapshot chamava `blueIngestLearningSnapshot()` duas vezes. O teste `test_blue_autocal_single_ingest_contract.py` falhou com `found 2 ingests`; a correção mínima deixa exatamente uma chamada e o teste passa. Testes JVM adicionais cobrem log-ratio, ganho causal, revisões Curva/Mapa independentes e PROBE/VALID/PROTECTED.
 
-## Regressões confirmadas
+## Cleanup
+- Nenhum `blue-*-apply.yml`, `recovery_apply`, payload/staging transport ou artefato temporário permanece no repo.
+- `.github/workflows/red-fast-learning-one-shot.yml` não é transporte temporário: é a CI do branch RED e não inclui a branch Blue.
+- `.github/workflows/blue-ci.yml` é a única CI canônica da branch Blue e o APK nela é somente `workflow_dispatch + build_apk=true`.
 
-1. Agora e OBD podem abrir com área principal vazia.
-2. Learning `Desvio medido` não recebe comparações Blue no payload atual.
-3. Qualidade de evidência pode aparecer 0 por divergência `quality` × `confidence` na projeção.
-4. Semântica de TRANSITION no `MotorSampleAnalyzer` conflita com a verdade física confirmada: durante TRANSITION ainda há gasolina.
-5. Tolerâncias antigas continuam expostas e acopladas a múltiplos subsistemas; precisam de classificação/redução.
-6. Telemetria é percebida como lenta/stale no carro; o estágio responsável ainda precisa ser medido.
-7. Ferramentas reconstrói DOM periodicamente e pode fechar o disclosure de retenção sozinho.
-8. Overlay nativo existe, mas o caminho de habilitação/permissão/restore precisa ser recuperado.
-9. Curva K tem seleção pouco didática e jank físico; semântica batch precisa de prova comportamental.
-
-## Causas já provadas
-
-- `LearningUiSnapshotAssembler` força `comparisons=[]` e contagem 0.
-- `BlueEvidenceStore` persiste `quality`; `LearningGridProjection` agrega apenas `confidence` ausente, produzindo 0.
-- `Drawers.renderTools()` usa `host.innerHTML` em refresh periódico e recria `<details>`.
-- O antigo hardening deixou hosts Agora/OBD vazios dependentes de bootstrap JS e usou `:has()` em layout essencial.
-- O CI anterior possuía testes de presença/contrato que não inicializavam a UI real.
-
-## Estrutura de recuperação
-
-- #17 — bootstrap/runtime Agora e OBD.
-- #19 — Learning, qualidade, Desvio, fuel boundary e tolerâncias.
-- #20 — telemetria, backpressure, background e overlay.
-- #21 — Ferramentas/logs/retenção.
-- #22 — Curva K touch UX/performance.
-
-## Gates atuais
-
-- G0 Repo/Issue/Work Unit/Spec Kit: `PASS`
-- G1 Triagem Red→Blue: `IN_PROGRESS`
-- G2 Learning/ciência: `FAIL/OPEN`
-- G3 Runtime WebView: `FAIL/OPEN`
-- G4 Telemetria/background: `OPEN`
-- G5 Tools: `FAIL/OPEN`
-- G6 Curva K: `FAIL/OPEN`
-- G7 Browser runtime regression: `FAIL/OPEN`
-- G8 FAST/JVM/lint final SHA: `NOT_RUN_AS_RELEASE_GATE`
-- G9 APK candidate: `BLOCKED`
-- G10 Validação física: `BLOCKED_BY_G2..G9`
-
-## Regra sobre tolerâncias
-
-Nenhuma decisão final de remoção total foi tomada ainda. Cada regra será classificada como:
-- hard truth/safety interna;
-- qualidade automática de amostragem;
-- contexto diagnóstico;
-- legado a remover.
-
-A hipótese de trabalho é que os perfis manuais `Muito rigoroso → Muito flexível` não devem continuar na UI normal se alterarem a verdade científica. RPM/MAP/Petrol-Inj stability pode sobreviver como política interna automática; pressão/temperatura precisam de justificativa causal antes de continuar como gate de equivalência.
-
-## Limite da afirmação
-
-Não existe APK Blue novo aprovado neste estado. O último APK fisicamente testado revelou regressões e não deve ser tratado como versão concluída. O próximo candidato só será montado depois do fechamento da epic #18 e dos gates comportamentais no SHA final.
+## Regra de prontidão
+Este documento não transforma um comando disparado em sucesso. `READY FOR APK GENERATION` só pode ser declarado fora do repo depois de read-back do HEAD remoto e de uma `OMEGAS Blue CI` `completed/success` nesse mesmo SHA. Nenhuma validação física/economia é alegada por esse gate.

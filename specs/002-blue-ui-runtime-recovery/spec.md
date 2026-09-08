@@ -44,5 +44,5 @@ A build/static-contract pass is therefore not sufficient evidence of a usable UI
 - Given selected current factors `[1.00, 1.10, 1.30]`, `+0.05` targets become `[1.05, 1.15, 1.35]`.
 - Given the same selected points, `Definir 1.20` targets become `[1.20, 1.20, 1.20]`.
 - Existing write-safety tests remain green.
-- Final exact SHA passes FAST → JVM/unit → lint → APK.
+- Final exact SHA passes FAST → JVM/unit → lint; this establishes software readiness. APK generation is a separate owner-authorized manual gate.
 - Physical vehicle validation remains a separate final gate and cannot be inferred from CI.

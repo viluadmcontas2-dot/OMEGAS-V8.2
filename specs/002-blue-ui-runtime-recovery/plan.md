@@ -27,10 +27,10 @@ Recover actual WebView/runtime behavior first, then improve Curve K interaction.
 ## Workstream D — verification/governance closure
 1. Run new runtime UI behavior tests and existing UI regression suite.
 2. Run FAST.
-3. Run JVM/unit → lint → APK on exact final SHA.
+3. Run JVM/unit → lint on exact final SHA; stop at `READY FOR APK GENERATION`. APK remains manual and owner-authorized.
 4. Update `STATUS.md` from stale RED status to current Blue incident status/evidence.
 5. Link final SHA/workflow evidence in Issue #17.
-6. Leave Issue #17 open until the corrected APK is physically validated in the vehicle.
+6. Close #17 from exact-SHA software evidence; physical validation of a future authorized APK is a separate post-artifact gate.
 
 ## Risks and controls
 - Do not treat static string assertions as proof of runtime rendering.

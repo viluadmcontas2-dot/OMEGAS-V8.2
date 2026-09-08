@@ -60,6 +60,12 @@ Nudge buttons are deltas. Absolute entry is assignment. For selected factors [0.
 ### FR-CURVE-03 Cockpit performance
 Selection/batch editing MUST not trigger ECU reread and SHOULD render at most once per user batch action. Review MUST be reachable without a long scroll through 30 per-point rows.
 
+### FR-OBD-01 Read-only GNV witness (#23)
+MP48 remains the primary gasoline↔GNV physical comparison. OBD contributes same-region GNV STFT only as a read-only witness: agreement may accelerate confidence, conflict may not increase it, LTFT does not vote, and OBD has no writer. Map K addressing always uses current GNV RPM × current GNV Petrol Inj.
+
+### FR-CONVERGENCE-01 Single authority (#16)
+`BlueCausalEngine` remains the sole correction authority. Auto-Cal consumes Blue proposals and must not duplicate imported evidence, manufacture a parallel target, or gain ECU writer authority. Useful sessions follow PROBE/VALID/PROTECTED retention and fail-safe vault rules.
+
 ## Non-goals
 - Reintroduce RED Advisor/Predictor as decision authority.
 - Add new automatic calibration.
@@ -67,4 +73,4 @@ Selection/batch editing MUST not trigger ECU reread and SHOULD render at most on
 - Claim physical vehicle success from GitHub CI.
 
 ## Acceptance
-All child issues #17, #19, #20, #21, #22 satisfy their behavior tests; no P0/P1 known regression remains; project/status/specs are coherent; canonical exact-SHA gates pass. APK generation happens only after this state.
+Convergence issue #16 and recovery issues #17, #19, #20, #21, #22 and #23 satisfy their behavior tests; no recovery-scope P0/P1 known regression remains; project/status/specs are coherent; canonical exact-SHA FAST/JVM/lint gates pass. Only then may software be declared `READY FOR APK GENERATION`; actual APK generation remains a separate owner-authorized manual gate.
