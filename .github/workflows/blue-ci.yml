@@ -1,7 +1,8 @@
 # OMEGAS Blue remote CI.
-# Push CI proves software readiness only. APK generation is an explicit owner-authorized manual gate.
+# Push CI proves software readiness only. APK generation remains an explicit owner-authorized manual gate.
+# Manual APK authorization is either workflow_dispatch(build_apk=true) or an explicit owner-triggered re-run attempt of the APK job.
+# A first-attempt ordinary push never generates an APK.
 # Every readiness claim must come from a fresh exact-SHA run after publication and cleanup.
-# Runtime #17, Curva K #22, Tools #21 and telemetry/background #20 are published in parents; this commit forces exact-SHA readiness evidence.
 name: OMEGAS Blue CI
 
 on:
@@ -29,6 +30,8 @@ on:
       - "settings.gradle.kts"
       - "package.json"
       - "package-lock.json"
+      - "STATUS.md"
+      - "docs/workunits/OMEGAS-BLUE-ALGO-VERIFY-001.md"
       - ".github/workflows/blue-ci.yml"
 
 permissions:
@@ -95,7 +98,7 @@ jobs:
 
   apk:
     name: Owner-authorized APK artifact
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk == true }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || (github.event_name == 'push' && github.run_attempt > 1 && github.triggering_actor == github.repository_owner) }}
     needs: [fast, full]
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -127,11 +130,14 @@ jobs:
           APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
           test -n "$APK"
           test -f "$APK"
+          AUTH_MODE="workflow_dispatch"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then AUTH_MODE="owner_rerun"; fi
           mkdir -p build/evidence
           RECEIPT=build/evidence/omegas-blue-apk.txt
           {
             echo "OMEGAS_BLUE_APK_GATE=PASS"
             echo "OWNER_AUTHORIZED=true"
+            echo "OWNER_AUTHORIZATION_MODE=$AUTH_MODE"
             echo "SOURCE_SHA=$GITHUB_SHA"
             echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
             echo "APK_PATH=$APK"
@@ -142,6 +148,25 @@ jobs:
             echo "PHYSICAL_FUEL_ECONOMY_CLAIMED=false"
           } | tee "$RECEIPT"
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
+      - name: Independently verify APK receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          RECEIPT=build/evidence/omegas-blue-apk.txt
+          test -f "$APK"
+          test -f "$RECEIPT"
+          RECEIPT_SHA="$(sed -n 's/^APK_SHA256=//p' "$RECEIPT")"
+          RECEIPT_BYTES="$(sed -n 's/^APK_BYTES=//p' "$RECEIPT")"
+          ACTUAL_SHA="$(sha256sum "$APK" | awk '{print $1}')"
+          ACTUAL_BYTES="$(stat -c %s "$APK")"
+          test -n "$RECEIPT_SHA"
+          test -n "$RECEIPT_BYTES"
+          test "$ACTUAL_SHA" = "$RECEIPT_SHA"
+          test "$ACTUAL_BYTES" = "$RECEIPT_BYTES"
+          echo "APK_RECEIPT_VERIFICATION=PASS"
+          echo "VERIFIED_APK_SHA256=$ACTUAL_SHA"
+          echo "VERIFIED_APK_BYTES=$ACTUAL_BYTES"
       - name: Upload owner-authorized APK and evidence
         uses: actions/upload-artifact@v6
         with:
