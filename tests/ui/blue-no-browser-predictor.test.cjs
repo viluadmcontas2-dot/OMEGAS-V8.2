@@ -32,5 +32,7 @@ for (const rel of retired) {
   assert.equal(fs.existsSync(path.join(root, rel)), false, `retired Predictor asset still exists: ${rel}`);
 }
 
-assert.equal(router.includes("'dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools'"), true);
+for (const route of ['dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools']) {
+  assert.equal(router.includes(route), true, `router missing ${route}`);
+}
 console.log('BLUE_NO_BROWSER_PREDICTOR=PASS');

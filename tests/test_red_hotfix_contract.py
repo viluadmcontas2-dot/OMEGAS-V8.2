@@ -79,7 +79,7 @@ class RedHotfixContractTest(unittest.TestCase):
     def test_tools_heavy_payloads_remain_route_gated(self):
         app = read("app/src/main/assets/ui/app.js")
         match = re.search(
-            r"if \(route === 'tools'\) \{(?P<body>.*?)\n\s*\}",
+            r"if \(route === ['\"]tools['\"]\) \{(?P<body>.*?)\n\s*\}",
             app,
             flags=re.DOTALL,
         )

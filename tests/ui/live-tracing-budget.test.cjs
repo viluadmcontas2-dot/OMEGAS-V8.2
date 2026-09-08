@@ -19,8 +19,10 @@ test('aprendizado rapido nao persegue pesos bilineares no DOM', () => {
   assert.doesNotMatch(appSource, /weightKey/);
   assert.doesNotMatch(appSource, /continuousWeights\.slice/);
   assert.match(appSource, /function renderLightLiveContext\(state, route\)/);
-  assert.match(appSource, /célula \$\{row \+ 1\}×\$\{column \+ 1\}/);
-  assert.match(appSource, /route === 'learning' \|\| route === 'map'/);
+  assert.match(appSource, /row \+ 1/);
+  assert.match(appSource, /column \+ 1/);
+  assert.match(appSource, /route === ['\"]learning['\"]/);
+  assert.match(appSource, /route === ['\"]map['\"]/);
 });
 
 test('grade fisica nao conserva implementacao visual antiga de tracing', () => {

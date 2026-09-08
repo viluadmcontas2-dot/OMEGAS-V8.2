@@ -1,320 +1,245 @@
-(function (root) {
-  'use strict';
-  const ns = root.OmegasUi = root.OmegasUi || {};
-
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
-  function fmt(value, digits) {
-    const n = finite(value);
-    return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  }
-  function text(id, value) {
-    const node = document.getElementById(id);
-    if (!node) return;
-    const next = value == null ? '—' : String(value);
-    if (node.textContent !== next) node.textContent = next;
-  }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
-  }
-  function first(source, names) {
-    for (const name of names) {
-      if (source && source[name] !== undefined && source[name] !== null) return source[name];
+(() => {
+  (function(root) {
+    "use strict";
+    const ns = root.OmegasUi = root.OmegasUi || {};
+    function finite(value) {
+      return Number.isFinite(Number(value)) ? Number(value) : null;
     }
-    return null;
-  }
-  function trimLabel(value) {
-    const n = finite(value);
-    return n === null ? '—' : `${n > 0 ? '+' : ''}${fmt(n, 1)}%`;
-  }
-  function ensureStyles() {
-    if (document.querySelector('link[data-witness-multimedia]')) return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'styles-witness-multimedia.css';
-    link.dataset.witnessMultimedia = 'true';
-    document.head.appendChild(link);
-  }
-  function witnessState(raw, gnvStft) {
-    const value = String(raw || 'UNAVAILABLE').toUpperCase();
-    if (value === 'SUPPORTS') return { label: 'CONFIRMA BLUE', tone: 'supports', detail: 'STFT GNV concorda com o erro MP48 da mesma região.' };
-    if (value === 'CONFLICTS') return { label: 'CONFLITA', tone: 'conflicts', detail: 'STFT GNV discorda do erro MP48; a confiança não é acelerada.' };
-    if (finite(gnvStft) !== null) return { label: 'STFT GNV PRONTO', tone: 'insufficient', detail: 'Witness coletado; o Blue decide suporte/conflito junto ao erro MP48.' };
-    if (value === 'INSUFFICIENT') return { label: 'COLETANDO GNV', tone: 'insufficient', detail: 'Faltam amostras STFT pareadas ao frame MP48 atual.' };
-    return { label: 'INDISPONÍVEL', tone: 'unavailable', detail: 'Sem STFT GNV pareado neste momento.' };
-  }
-
-  class ObdScreen {
-    constructor(store, api) {
-      this.store = store;
-      this.api = api;
-      this.root = document.querySelector('[data-screen="obd"]');
-      this.view = 'observe';
-      this.connectionSignature = '';
-      this.sensorSignature = '';
-      this.powerSignature = '';
-      this.lastWitness = {};
-      this.lastWitnessAt = 0;
-      ensureStyles();
-      this.installLayout();
-      this.bind();
+    function fmt(value, digits) {
+      const n = finite(value);
+      return n === null ? "\u2014" : n.toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
     }
-
-    installLayout() {
-      if (!this.root) return;
-      this.root.classList.add('multimedia-obd-screen');
-      this.root.innerHTML = `
-        <div class="witness-page-intro">
-          <div><small>OBD WITNESS</small><h2>STFT do GNV como testemunha</h2><p>MP48 mede a equivalência gasolina→GNV; o OBD confirma ou contradiz a direção no GNV.</p></div>
-          <div class="witness-head-actions">
-            <span id="obdStatusPill" class="status-pill" data-online="false">OBD offline</span>
-            <button id="obdRefreshButton" type="button" class="secondary">Atualizar</button>
-            <button id="obdDisconnectButton" type="button" class="quiet-button">Desconectar</button>
-          </div>
-        </div>
-
-        <div class="witness-view-tabs" role="tablist" aria-label="Visão OBD">
-          <button type="button" data-obd-view="observe" class="active">Witness</button>
-          <button type="button" data-obd-view="setup">Conexão</button>
-        </div>
-
-        <div class="witness-panel active" data-obd-panel="observe">
-          <section class="witness-live-card">
-            <div class="witness-live-main">
-              <small>STFT BANK 1 · PID 0106</small>
-              <div><strong id="obdLiveStft">—</strong><em>%</em></div>
-              <p id="obdLiveStatus">Aguardando ELM327</p>
-            </div>
-            <div class="witness-authority-note">
-              <b>Somente evidência</b>
-              <span>OBD observa STFT e não escreve K.</span>
-              <span>RPM, MAP, Petrol Inj. e combustível vêm da MP48.</span>
-            </div>
-          </section>
-
-          <section class="witness-result-card" id="obdWitnessCard" data-state="unavailable">
-            <div class="witness-result-heading">
-              <div><small>WITNESS</small><b id="obdWitnessState">INDISPONÍVEL</b><span id="obdWitnessDetail">Sem evidência física suficiente neste momento.</span></div>
-              <div class="witness-quality"><small>QUALIDADE</small><b id="obdWitnessQuality">—</b></div>
-            </div>
-            <div class="witness-comparison-grid">
-              <article><small>STFT NO GNV</small><b id="obdGnvStft">—</b><span>testemunha rápida da lambda</span></article>
-              <article><small>LEITURA</small><b id="obdStftMeaning">—</b><span>rico / pobre / neutro</span></article>
-              <article class="witness-residual"><small>INTEGRAÇÃO</small><b id="obdWitnessMode">MP48 + STFT</b><span>STFT-only na decisão</span></article>
-              <article><small>AMOSTRAS GNV</small><b id="obdWitnessSamples">—</b><span>pareadas à MP48</span></article>
-            </div>
-          </section>
-
-          <section class="witness-pair-card">
-            <header><div><small>PAREAMENTO MP48</small><h3>Condição física da observação</h3></div><span id="obdPairSkew">—</span></header>
-            <div class="witness-pair-grid">
-              <article><small>RPM MP48</small><b id="obdPairedRpm">—</b></article>
-              <article><small>MAP MP48</small><b id="obdPairedMap">—</b></article>
-              <article><small>PETROL INJ. MP48</small><b id="obdPairedPetrol">—</b></article>
-              <article><small>COMBUSTÍVEL MP48</small><b id="obdPairedFuel">—</b></article>
-            </div>
-          </section>
-        </div>
-
-        <div class="witness-panel" data-obd-panel="setup">
-          <div class="witness-setup-grid">
-            <section id="obdConnectionCenter" class="witness-setup-card"></section>
-            <section id="obdSensorList" class="witness-setup-card"></section>
-            <section id="obdPowerCard" class="witness-setup-card"></section>
-          </div>
-          <button id="obdPermissionButton" type="button" class="secondary witness-permission-button">Autorizar Bluetooth</button>
-        </div>`;
+    function text(id, value) {
+      const node = document.getElementById(id);
+      if (!node) return;
+      const next = value == null ? "\u2014" : String(value);
+      if (node.textContent !== next) node.textContent = next;
     }
-
-    bind() {
-      this.root?.querySelectorAll('[data-obd-view]').forEach(button => button.addEventListener('click', () => this.setView(button.dataset.obdView || 'observe')));
-      document.getElementById('obdPermissionButton')?.addEventListener('click', () => this.api.requestBluetoothPermission());
-      document.getElementById('obdDisconnectButton')?.addEventListener('click', () => {
-        const result = this.api.disconnectObd();
-        this.connectionSignature = '';
-        if (result?.ok === false) this.alert(result.error || 'Não foi possível desconectar o OBD.');
-      });
-      document.getElementById('obdRefreshButton')?.addEventListener('click', () => {
-        this.connectionSignature = '';
-        this.sensorSignature = '';
+    function escapeHtml(value) {
+      return String(value != null ? value : "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
+    }
+    function first(source, names) {
+      for (const name of names) {
+        if (source && source[name] !== void 0 && source[name] !== null) return source[name];
+      }
+      return null;
+    }
+    function trimLabel(value) {
+      const n = finite(value);
+      return n === null ? "\u2014" : "".concat(n > 0 ? "+" : "").concat(fmt(n, 1), "%");
+    }
+    function ensureStyles() {
+      if (document.querySelector("link[data-witness-multimedia]")) return;
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "styles-witness-multimedia.css";
+      link.dataset.witnessMultimedia = "true";
+      document.head.appendChild(link);
+    }
+    function witnessState(raw, gnvStft) {
+      const value = String(raw || "UNAVAILABLE").toUpperCase();
+      if (value === "SUPPORTS") return { label: "CONFIRMA BLUE", tone: "supports", detail: "STFT GNV concorda com o erro MP48 da mesma regi\xE3o." };
+      if (value === "CONFLICTS") return { label: "CONFLITA", tone: "conflicts", detail: "STFT GNV discorda do erro MP48; a confian\xE7a n\xE3o \xE9 acelerada." };
+      if (finite(gnvStft) !== null) return { label: "STFT GNV PRONTO", tone: "insufficient", detail: "Witness coletado; o Blue decide suporte/conflito junto ao erro MP48." };
+      if (value === "INSUFFICIENT") return { label: "COLETANDO GNV", tone: "insufficient", detail: "Faltam amostras STFT pareadas ao frame MP48 atual." };
+      return { label: "INDISPON\xCDVEL", tone: "unavailable", detail: "Sem STFT GNV pareado neste momento." };
+    }
+    class ObdScreen {
+      constructor(store, api) {
+        this.store = store;
+        this.api = api;
+        this.root = document.querySelector('[data-screen="obd"]');
+        this.view = "observe";
+        this.connectionSignature = "";
+        this.sensorSignature = "";
+        this.powerSignature = "";
+        this.lastWitness = {};
         this.lastWitnessAt = 0;
-        this.store.patch({ obd: this.api.obd() || {}, obdDevices: this.api.obdDevices() || {} });
-        this.render(this.store.get());
-      });
-      document.getElementById('obdConnectionCenter')?.addEventListener('click', event => {
-        const mode = event.target.closest('[data-obd-mode]');
-        if (mode) {
-          const result = this.api.setObdMode(mode.dataset.obdMode || 'off');
-          if (result?.ok === false) this.alert(result.error || 'Não foi possível alterar a fonte OBD.');
-          this.connectionSignature = '';
-          return;
+        ensureStyles();
+        this.installLayout();
+        this.bind();
+      }
+      installLayout() {
+        if (!this.root) return;
+        this.root.classList.add("multimedia-obd-screen");
+        this.root.innerHTML = '\n        <div class="witness-page-intro">\n          <div><small>OBD WITNESS</small><h2>STFT do GNV como testemunha</h2><p>MP48 mede a equival\xEAncia gasolina\u2192GNV; o OBD confirma ou contradiz a dire\xE7\xE3o no GNV.</p></div>\n          <div class="witness-head-actions">\n            <span id="obdStatusPill" class="status-pill" data-online="false">OBD offline</span>\n            <button id="obdRefreshButton" type="button" class="secondary">Atualizar</button>\n            <button id="obdDisconnectButton" type="button" class="quiet-button">Desconectar</button>\n          </div>\n        </div>\n\n        <div class="witness-view-tabs" role="tablist" aria-label="Vis\xE3o OBD">\n          <button type="button" data-obd-view="observe" class="active">Witness</button>\n          <button type="button" data-obd-view="setup">Conex\xE3o</button>\n        </div>\n\n        <div class="witness-panel active" data-obd-panel="observe">\n          <section class="witness-live-card">\n            <div class="witness-live-main">\n              <small>STFT BANK 1 \xB7 PID 0106</small>\n              <div><strong id="obdLiveStft">\u2014</strong><em>%</em></div>\n              <p id="obdLiveStatus">Aguardando ELM327</p>\n            </div>\n            <div class="witness-authority-note">\n              <b>Somente evid\xEAncia</b>\n              <span>OBD observa STFT e n\xE3o escreve K.</span>\n              <span>RPM, MAP, Petrol Inj. e combust\xEDvel v\xEAm da MP48.</span>\n            </div>\n          </section>\n\n          <section class="witness-result-card" id="obdWitnessCard" data-state="unavailable">\n            <div class="witness-result-heading">\n              <div><small>WITNESS</small><b id="obdWitnessState">INDISPON\xCDVEL</b><span id="obdWitnessDetail">Sem evid\xEAncia f\xEDsica suficiente neste momento.</span></div>\n              <div class="witness-quality"><small>QUALIDADE</small><b id="obdWitnessQuality">\u2014</b></div>\n            </div>\n            <div class="witness-comparison-grid">\n              <article><small>STFT NO GNV</small><b id="obdGnvStft">\u2014</b><span>testemunha r\xE1pida da lambda</span></article>\n              <article><small>LEITURA</small><b id="obdStftMeaning">\u2014</b><span>rico / pobre / neutro</span></article>\n              <article class="witness-residual"><small>INTEGRA\xC7\xC3O</small><b id="obdWitnessMode">MP48 + STFT</b><span>STFT-only na decis\xE3o</span></article>\n              <article><small>AMOSTRAS GNV</small><b id="obdWitnessSamples">\u2014</b><span>pareadas \xE0 MP48</span></article>\n            </div>\n          </section>\n\n          <section class="witness-pair-card">\n            <header><div><small>PAREAMENTO MP48</small><h3>Condi\xE7\xE3o f\xEDsica da observa\xE7\xE3o</h3></div><span id="obdPairSkew">\u2014</span></header>\n            <div class="witness-pair-grid">\n              <article><small>RPM MP48</small><b id="obdPairedRpm">\u2014</b></article>\n              <article><small>MAP MP48</small><b id="obdPairedMap">\u2014</b></article>\n              <article><small>PETROL INJ. MP48</small><b id="obdPairedPetrol">\u2014</b></article>\n              <article><small>COMBUST\xCDVEL MP48</small><b id="obdPairedFuel">\u2014</b></article>\n            </div>\n          </section>\n        </div>\n\n        <div class="witness-panel" data-obd-panel="setup">\n          <div class="witness-setup-grid">\n            <section id="obdConnectionCenter" class="witness-setup-card"></section>\n            <section id="obdSensorList" class="witness-setup-card"></section>\n            <section id="obdPowerCard" class="witness-setup-card"></section>\n          </div>\n          <button id="obdPermissionButton" type="button" class="secondary witness-permission-button">Autorizar Bluetooth</button>\n        </div>';
+      }
+      bind() {
+        var _a, _b, _c, _d, _e, _f;
+        (_a = this.root) == null ? void 0 : _a.querySelectorAll("[data-obd-view]").forEach((button) => button.addEventListener("click", () => this.setView(button.dataset.obdView || "observe")));
+        (_b = document.getElementById("obdPermissionButton")) == null ? void 0 : _b.addEventListener("click", () => this.api.requestBluetoothPermission());
+        (_c = document.getElementById("obdDisconnectButton")) == null ? void 0 : _c.addEventListener("click", () => {
+          const result = this.api.disconnectObd();
+          this.connectionSignature = "";
+          if ((result == null ? void 0 : result.ok) === false) this.alert(result.error || "N\xE3o foi poss\xEDvel desconectar o OBD.");
+        });
+        (_d = document.getElementById("obdRefreshButton")) == null ? void 0 : _d.addEventListener("click", () => {
+          this.connectionSignature = "";
+          this.sensorSignature = "";
+          this.lastWitnessAt = 0;
+          this.store.patch({ obd: this.api.obd() || {}, obdDevices: this.api.obdDevices() || {} });
+          this.render(this.store.get());
+        });
+        (_e = document.getElementById("obdConnectionCenter")) == null ? void 0 : _e.addEventListener("click", (event) => {
+          const mode = event.target.closest("[data-obd-mode]");
+          if (mode) {
+            const result = this.api.setObdMode(mode.dataset.obdMode || "off");
+            if ((result == null ? void 0 : result.ok) === false) this.alert(result.error || "N\xE3o foi poss\xEDvel alterar a fonte OBD.");
+            this.connectionSignature = "";
+            return;
+          }
+          const connect = event.target.closest("[data-obd-connect]");
+          if (connect) {
+            const result = this.api.connectObd(connect.dataset.obdConnect || "");
+            if ((result == null ? void 0 : result.ok) === false) this.alert(result.error || "N\xE3o foi poss\xEDvel iniciar a conex\xE3o OBD.");
+            this.connectionSignature = "";
+          }
+        });
+        (_f = document.getElementById("obdPowerCard")) == null ? void 0 : _f.addEventListener("click", (event) => {
+          if (event.target.closest("[data-obd-battery-request]")) this.api.requestBatteryOptimizationExemption();
+          if (event.target.closest("[data-obd-overlay-request]")) this.api.requestOverlayPermissionAndEnable();
+          if (event.target.closest("[data-obd-overlay-enable]")) this.api.setTelemetryOverlayEnabled(true);
+          if (event.target.closest("[data-obd-overlay-disable]")) this.api.setTelemetryOverlayEnabled(false);
+          this.powerSignature = "";
+          this.renderPower();
+        });
+      }
+      setView(view) {
+        var _a, _b;
+        this.view = ["observe", "setup"].includes(view) ? view : "observe";
+        (_a = this.root) == null ? void 0 : _a.querySelectorAll("[data-obd-view]").forEach((button) => button.classList.toggle("active", button.dataset.obdView === this.view));
+        (_b = this.root) == null ? void 0 : _b.querySelectorAll("[data-obd-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.obdPanel === this.view));
+        if (this.view === "setup") {
+          const state = this.store.get();
+          this.renderConnection(state);
+          this.renderSensors(state.obd || {});
+          this.renderPower();
         }
-        const connect = event.target.closest('[data-obd-connect]');
-        if (connect) {
-          const result = this.api.connectObd(connect.dataset.obdConnect || '');
-          if (result?.ok === false) this.alert(result.error || 'Não foi possível iniciar a conexão OBD.');
-          this.connectionSignature = '';
+      }
+      readWitness() {
+        var _a, _b;
+        const now = Date.now();
+        if (now - this.lastWitnessAt < 700) return this.lastWitness;
+        this.lastWitnessAt = now;
+        const snapshot = this.api.fullSnapshot() || {};
+        const witness = snapshot.obd_witness || snapshot.obdWitness || {};
+        if (witness && typeof witness === "object") this.lastWitness = witness;
+        if (((_b = (_a = this.api).isDemo) == null ? void 0 : _b.call(_a)) && !Object.keys(this.lastWitness || {}).length) {
+          this.lastWitness = {
+            state: "INSUFFICIENT",
+            stftPct: 8.4,
+            gnvStftPct: 8.4,
+            quality: 0.86,
+            gasolineSamples: 0,
+            gnvSamples: 7,
+            rpm: 1840,
+            map_bar: 0.56,
+            petrol_ms: 4.42,
+            fuel: "GNV",
+            skew_ms: 34
+          };
         }
-      });
-      document.getElementById('obdPowerCard')?.addEventListener('click', event => {
-        if (event.target.closest('[data-obd-battery-request]')) this.api.requestBatteryOptimizationExemption();
-        if (event.target.closest('[data-obd-overlay-request]')) this.api.requestOverlayPermissionAndEnable();
-        if (event.target.closest('[data-obd-overlay-enable]')) this.api.setTelemetryOverlayEnabled(true);
-        if (event.target.closest('[data-obd-overlay-disable]')) this.api.setTelemetryOverlayEnabled(false);
-        this.powerSignature = '';
-        this.renderPower();
-      });
-    }
-
-    setView(view) {
-      this.view = ['observe', 'setup'].includes(view) ? view : 'observe';
-      this.root?.querySelectorAll('[data-obd-view]').forEach(button => button.classList.toggle('active', button.dataset.obdView === this.view));
-      this.root?.querySelectorAll('[data-obd-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.obdPanel === this.view));
-      if (this.view === 'setup') {
-        const state = this.store.get();
-        this.renderConnection(state);
-        this.renderSensors(state.obd || {});
-        this.renderPower();
+        return this.lastWitness || {};
+      }
+      render(state) {
+        var _a, _b, _c;
+        if (!this.root) return;
+        const obd = state.obd || {};
+        const stage = String(obd.connectionStage || obd.state || obd.status || "").toUpperCase();
+        const connected = obd.connected === true || ["LIVE", "CONNECTED", "CONECTADO", "REMOTO AO VIVO"].includes(stage);
+        const connecting = ["RFCOMM", "ELM_INIT", "PROTOCOL", "STFT_READY", "CONECTANDO"].includes(stage);
+        const liveStft = connected ? finite(first(obd, ["stft", "shortTermFuelTrim", "short_term_fuel_trim"])) : null;
+        const witness = this.readWitness();
+        const gnvStft = finite(witness.gnvStftPct);
+        const stateView = witnessState(witness.state, gnvStft);
+        const quality = finite(witness.quality);
+        const gnvSamples = Math.max(0, Number(witness.gnvSamples || 0));
+        const pairedRpm = finite(witness.rpm);
+        const pairedMap = finite((_a = witness.map_bar) != null ? _a : witness.mapBar);
+        const pairedPetrol = finite((_b = witness.petrol_ms) != null ? _b : witness.petrolMs);
+        const pairedFuel = String(witness.fuel || "\u2014").replace("PETROL", "GASOLINA").replace("CNG", "GNV");
+        const skew = finite((_c = witness.skew_ms) != null ? _c : witness.skewMs);
+        text("obdLiveStft", liveStft === null ? "\u2014" : "".concat(liveStft > 0 ? "+" : "").concat(fmt(liveStft, 1)));
+        text("obdLiveStatus", connected ? liveStft === null ? "ELM online \xB7 aguardando resposta 0106" : "Leitura 0106 em tempo real" : connecting ? "Conectando \xB7 ".concat(stage) : "Aguardando ELM327");
+        text("obdWitnessState", stateView.label);
+        text("obdWitnessDetail", stateView.detail);
+        text("obdWitnessQuality", quality === null ? "\u2014" : "".concat(Math.round(Math.max(0, Math.min(1, quality)) * 100), "%"));
+        text("obdGnvStft", trimLabel(gnvStft));
+        text("obdStftMeaning", gnvStft === null ? "?" : Math.abs(gnvStft) <= 0.5 ? "NEUTRO" : gnvStft > 0 ? "POBRE" : "RICO");
+        text("obdWitnessMode", "MP48 + STFT");
+        text("obdWitnessSamples", "".concat(gnvSamples));
+        text("obdPairedRpm", pairedRpm === null ? "\u2014" : Math.round(pairedRpm).toLocaleString("pt-BR"));
+        text("obdPairedMap", pairedMap === null ? "\u2014" : "".concat(fmt(pairedMap, 2), " bar"));
+        text("obdPairedPetrol", pairedPetrol === null ? "\u2014" : "".concat(fmt(pairedPetrol, 2), " ms"));
+        text("obdPairedFuel", pairedFuel);
+        text("obdPairSkew", skew === null ? "sem pareamento" : "\u0394t ".concat(Math.round(skew), " ms"));
+        const card = document.getElementById("obdWitnessCard");
+        if (card) card.dataset.state = stateView.tone;
+        const status = document.getElementById("obdStatusPill");
+        if (status) {
+          status.dataset.online = connected ? "true" : "false";
+          text("obdStatusPill", connected ? "OBD online" : connecting ? "OBD conectando" : "OBD offline");
+        }
+        if (this.view === "setup") {
+          this.renderConnection(state);
+          this.renderSensors(obd);
+          this.renderPower();
+        }
+      }
+      renderConnection(state) {
+        const host = document.getElementById("obdConnectionCenter");
+        if (!host) return;
+        const obd = state.obd || {};
+        const devicesState = state.obdDevices || {};
+        const mode = String(obd.mode || "off").toLowerCase();
+        const rawDevices = Array.isArray(devicesState.devices) ? devicesState.devices : [];
+        const permissionRequired = obd.permissionRequired === true || devicesState.permissionRequired === true;
+        const bluetoothEnabled = devicesState.bluetoothEnabled !== false && devicesState.enabled !== false && obd.bluetoothEnabled !== false;
+        const stage = String(obd.connectionStage || obd.state || "").toUpperCase();
+        const connected = obd.connected === true || ["LIVE", "CONNECTED", "CONECTADO"].includes(stage);
+        const connecting = ["RFCOMM", "ELM_INIT", "PROTOCOL", "STFT_READY", "CONECTANDO"].includes(stage);
+        const selected = String(obd.deviceAddress || obd.lastDeviceAddress || devicesState.lastDeviceAddress || "");
+        const diagnostic = obd.diagnostic || {};
+        const protocol = String(diagnostic.protocolMode || obd.protocol || "");
+        const supported = Array.isArray(diagnostic.supportedStandardPids) ? diagnostic.supportedStandardPids : [];
+        const devices = rawDevices.slice().sort((a, b) => {
+          const score = (item) => (item.connected ? 3 : 0) + (String(item.address || "") === selected ? 2 : 0);
+          return score(b) - score(a);
+        });
+        const signature = JSON.stringify({ mode, devices, permissionRequired, bluetoothEnabled, connected, connecting, selected, protocol, supported: supported.length, stage });
+        if (signature === this.connectionSignature) return;
+        this.connectionSignature = signature;
+        const deviceRows = devices.length ? devices.map((device) => '\n        <div class="witness-device-row">\n          <div><small>'.concat(device.connected ? "CONECTADO" : String(device.address || "") === selected ? "USADO POR \xDALTIMO" : "PAREADO", "</small><b>").concat(escapeHtml(device.name || "ELM327"), "</b><span>").concat(escapeHtml(device.address || ""), '</span></div>\n          <button type="button" class="').concat(String(device.address || "") === selected ? "primary" : "secondary", '" data-obd-connect="').concat(escapeHtml(device.address || ""), '" ').concat(device.connected ? "disabled" : "", ">").concat(device.connected ? "Em uso" : String(device.address || "") === selected ? "Reconectar" : "Conectar", "</button>\n        </div>")).join("") : '<p class="empty-copy">Nenhum ELM327 pareado no Android.</p>';
+        host.innerHTML = '\n        <div class="witness-setup-heading"><div><small>CONEX\xC3O</small><h3>'.concat(connected ? "ELM pronto para STFT" : connecting ? "Conectando ao carro" : "Escolha a fonte OBD", "</h3></div><span>").concat(escapeHtml(stage || "IDLE"), '</span></div>\n        <div class="witness-connection-progress"><span data-state="').concat(permissionRequired ? "waiting" : "done", '">Bluetooth</span><span data-state="').concat(connected ? "done" : connecting ? "active" : "waiting", '">ELM327</span><span data-state="').concat(protocol ? "done" : connected ? "active" : "waiting", '">Protocolo</span><span data-state="').concat(connected ? "done" : "waiting", '">STFT 0106</span></div>\n        <div class="witness-mode-buttons"><button type="button" data-obd-mode="local" class="').concat(mode === "local" ? "active" : "", '">ELM Bluetooth</button><button type="button" data-obd-mode="remote" class="').concat(mode === "remote" ? "active" : "", '">Omegas Link</button><button type="button" data-obd-mode="off" class="').concat(mode === "off" ? "active" : "", '">Desativado</button></div>\n        ').concat(permissionRequired ? '<p class="witness-note">Autorize o Bluetooth para acessar os dispositivos pareados.</p>' : !bluetoothEnabled ? '<p class="witness-note">Ligue o Bluetooth do Android para continuar.</p>' : deviceRows, '\n        <p class="witness-note">MP48 permanece autoridade de condi\xE7\xE3o f\xEDsica e combust\xEDvel; OBD fornece apenas STFT.</p>');
+      }
+      renderSensors(obd) {
+        const host = document.getElementById("obdSensorList");
+        if (!host) return;
+        const diagnostic = obd.diagnostic || {};
+        const supported = Array.isArray(diagnostic.supportedStandardPids) ? diagnostic.supportedStandardPids : [];
+        const pidRows = Array.isArray(diagnostic.pids) ? diagnostic.pids : [];
+        const stftPid = pidRows.find((item) => String(item.command || "").replace(/\s/g, "").toUpperCase() === "0106") || null;
+        const hasStftSupport = supported.some((item) => Number(item) === 6 || String(item).toUpperCase() === "0106");
+        const signature = JSON.stringify({ protocol: diagnostic.protocolMode, cycle: diagnostic.lastCycleMs, rate: diagnostic.pollRateHz, stftPid, hasStftSupport, stage: obd.connectionStage });
+        if (signature === this.sensorSignature) return;
+        this.sensorSignature = signature;
+        host.innerHTML = '\n        <div class="witness-setup-heading"><div><small>SINAL CIENT\xCDFICO</small><h3>STFT Bank 1</h3></div><span>Mode 01</span></div>\n        <div class="witness-sensor-main"><strong>0106</strong><div><b>'.concat((stftPid == null ? void 0 : stftPid.responded) ? "respondendo" : hasStftSupport ? "suportado" : "aguardando suporte", "</b><span>").concat((stftPid == null ? void 0 : stftPid.responded) ? "".concat(fmt(stftPid.latencyMs, 0), " ms na \xFAltima resposta") : "\xFAnico PID usado como evid\xEAncia", '</span></div></div>\n        <div class="witness-diagnostic-facts"><span>Protocolo <b>').concat(escapeHtml(diagnostic.protocolMode || "aguardando"), "</b></span><span>Ciclo <b>").concat(finite(diagnostic.lastCycleMs) === null ? "\u2014" : "".concat(fmt(diagnostic.lastCycleMs, 0), " ms"), "</b></span><span>Taxa <b>").concat(finite(diagnostic.pollRateHz) === null ? "\u2014" : "".concat(fmt(diagnostic.pollRateHz, 1), " Hz"), "</b></span></div>");
+      }
+      renderPower() {
+        var _a, _b, _c, _d;
+        const host = document.getElementById("obdPowerCard");
+        if (!host) return;
+        const battery = ((_b = (_a = this.api).batteryOptimizationStatus) == null ? void 0 : _b.call(_a)) || {};
+        const overlay = ((_d = (_c = this.api).overlayStatus) == null ? void 0 : _d.call(_c)) || {};
+        const signature = JSON.stringify({ battery, overlay });
+        if (signature === this.powerSignature) return;
+        this.powerSignature = signature;
+        host.innerHTML = '\n        <div class="witness-setup-heading"><div><small>MULTIM\xCDDIA</small><h3>Sess\xE3o cont\xEDnua</h3></div></div>\n        <div class="witness-runtime-row"><div><small>BATERIA</small><b>'.concat(battery.ignoringOptimizations === true ? "Sem restri\xE7\xE3o do Android" : "Android pode limitar a sess\xE3o", "</b></div>").concat(battery.supported !== false && battery.ignoringOptimizations !== true ? '<button type="button" class="secondary" data-obd-battery-request>Permitir</button>' : "", '</div>\n        <div class="witness-runtime-row"><div><small>TELEMETRIA FLUTUANTE</small><b>').concat(overlay.visible === true ? "Ativa" : "Desativada", "</b></div>").concat(overlay.visible === true ? '<button type="button" class="quiet-button" data-obd-overlay-disable>Desativar</button>' : overlay.permissionGranted === true ? '<button type="button" class="secondary" data-obd-overlay-enable>Ativar</button>' : '<button type="button" class="secondary" data-obd-overlay-request>Autorizar</button>', "</div>");
+      }
+      alert(message) {
+        this.store.patch({ alert: { level: "warning", message: String(message || "Opera\xE7\xE3o OBD indispon\xEDvel") } });
       }
     }
-
-    readWitness() {
-      const now = Date.now();
-      if (now - this.lastWitnessAt < 700) return this.lastWitness;
-      this.lastWitnessAt = now;
-      const snapshot = this.api.fullSnapshot() || {};
-      const witness = snapshot.obd_witness || snapshot.obdWitness || {};
-      if (witness && typeof witness === 'object') this.lastWitness = witness;
-      if (this.api.isDemo?.() && !Object.keys(this.lastWitness || {}).length) {
-        this.lastWitness = {
-          state: 'INSUFFICIENT', stftPct: 8.4, gnvStftPct: 8.4,
-          quality: 0.86, gasolineSamples: 0, gnvSamples: 7,
-          rpm: 1840, map_bar: 0.56, petrol_ms: 4.42, fuel: 'GNV', skew_ms: 34,
-        };
-      }
-      return this.lastWitness || {};
-    }
-
-    render(state) {
-      if (!this.root) return;
-      const obd = state.obd || {};
-      const stage = String(obd.connectionStage || obd.state || obd.status || '').toUpperCase();
-      const connected = obd.connected === true || ['LIVE', 'CONNECTED', 'CONECTADO', 'REMOTO AO VIVO'].includes(stage);
-      const connecting = ['RFCOMM', 'ELM_INIT', 'PROTOCOL', 'STFT_READY', 'CONECTANDO'].includes(stage);
-      const liveStft = connected ? finite(first(obd, ['stft', 'shortTermFuelTrim', 'short_term_fuel_trim'])) : null;
-      const witness = this.readWitness();
-      const gnvStft = finite(witness.gnvStftPct);
-      const stateView = witnessState(witness.state, gnvStft);
-      const quality = finite(witness.quality);
-      const gnvSamples = Math.max(0, Number(witness.gnvSamples || 0));
-      const pairedRpm = finite(witness.rpm);
-      const pairedMap = finite(witness.map_bar ?? witness.mapBar);
-      const pairedPetrol = finite(witness.petrol_ms ?? witness.petrolMs);
-      const pairedFuel = String(witness.fuel || '—').replace('PETROL', 'GASOLINA').replace('CNG', 'GNV');
-      const skew = finite(witness.skew_ms ?? witness.skewMs);
-
-      text('obdLiveStft', liveStft === null ? '—' : `${liveStft > 0 ? '+' : ''}${fmt(liveStft, 1)}`);
-      text('obdLiveStatus', connected ? (liveStft === null ? 'ELM online · aguardando resposta 0106' : 'Leitura 0106 em tempo real') : connecting ? `Conectando · ${stage}` : 'Aguardando ELM327');
-      text('obdWitnessState', stateView.label);
-      text('obdWitnessDetail', stateView.detail);
-      text('obdWitnessQuality', quality === null ? '—' : `${Math.round(Math.max(0, Math.min(1, quality)) * 100)}%`);
-      text('obdGnvStft', trimLabel(gnvStft));
-      text('obdStftMeaning', gnvStft === null ? '?' : Math.abs(gnvStft) <= 0.5 ? 'NEUTRO' : gnvStft > 0 ? 'POBRE' : 'RICO');
-      text('obdWitnessMode', 'MP48 + STFT');
-      text('obdWitnessSamples', `${gnvSamples}`);
-      text('obdPairedRpm', pairedRpm === null ? '—' : Math.round(pairedRpm).toLocaleString('pt-BR'));
-      text('obdPairedMap', pairedMap === null ? '—' : `${fmt(pairedMap, 2)} bar`);
-      text('obdPairedPetrol', pairedPetrol === null ? '—' : `${fmt(pairedPetrol, 2)} ms`);
-      text('obdPairedFuel', pairedFuel);
-      text('obdPairSkew', skew === null ? 'sem pareamento' : `Δt ${Math.round(skew)} ms`);
-
-      const card = document.getElementById('obdWitnessCard');
-      if (card) card.dataset.state = stateView.tone;
-      const status = document.getElementById('obdStatusPill');
-      if (status) {
-        status.dataset.online = connected ? 'true' : 'false';
-        text('obdStatusPill', connected ? 'OBD online' : connecting ? 'OBD conectando' : 'OBD offline');
-      }
-
-      if (this.view === 'setup') {
-        this.renderConnection(state);
-        this.renderSensors(obd);
-        this.renderPower();
-      }
-    }
-
-    renderConnection(state) {
-      const host = document.getElementById('obdConnectionCenter');
-      if (!host) return;
-      const obd = state.obd || {};
-      const devicesState = state.obdDevices || {};
-      const mode = String(obd.mode || 'off').toLowerCase();
-      const rawDevices = Array.isArray(devicesState.devices) ? devicesState.devices : [];
-      const permissionRequired = obd.permissionRequired === true || devicesState.permissionRequired === true;
-      const bluetoothEnabled = devicesState.bluetoothEnabled !== false && devicesState.enabled !== false && obd.bluetoothEnabled !== false;
-      const stage = String(obd.connectionStage || obd.state || '').toUpperCase();
-      const connected = obd.connected === true || ['LIVE', 'CONNECTED', 'CONECTADO'].includes(stage);
-      const connecting = ['RFCOMM', 'ELM_INIT', 'PROTOCOL', 'STFT_READY', 'CONECTANDO'].includes(stage);
-      const selected = String(obd.deviceAddress || obd.lastDeviceAddress || devicesState.lastDeviceAddress || '');
-      const diagnostic = obd.diagnostic || {};
-      const protocol = String(diagnostic.protocolMode || obd.protocol || '');
-      const supported = Array.isArray(diagnostic.supportedStandardPids) ? diagnostic.supportedStandardPids : [];
-      const devices = rawDevices.slice().sort((a, b) => {
-        const score = item => (item.connected ? 3 : 0) + (String(item.address || '') === selected ? 2 : 0);
-        return score(b) - score(a);
-      });
-      const signature = JSON.stringify({ mode, devices, permissionRequired, bluetoothEnabled, connected, connecting, selected, protocol, supported: supported.length, stage });
-      if (signature === this.connectionSignature) return;
-      this.connectionSignature = signature;
-
-      const deviceRows = devices.length ? devices.map(device => `
-        <div class="witness-device-row">
-          <div><small>${device.connected ? 'CONECTADO' : String(device.address || '') === selected ? 'USADO POR ÚLTIMO' : 'PAREADO'}</small><b>${escapeHtml(device.name || 'ELM327')}</b><span>${escapeHtml(device.address || '')}</span></div>
-          <button type="button" class="${String(device.address || '') === selected ? 'primary' : 'secondary'}" data-obd-connect="${escapeHtml(device.address || '')}" ${device.connected ? 'disabled' : ''}>${device.connected ? 'Em uso' : String(device.address || '') === selected ? 'Reconectar' : 'Conectar'}</button>
-        </div>`).join('') : '<p class="empty-copy">Nenhum ELM327 pareado no Android.</p>';
-
-      host.innerHTML = `
-        <div class="witness-setup-heading"><div><small>CONEXÃO</small><h3>${connected ? 'ELM pronto para STFT' : connecting ? 'Conectando ao carro' : 'Escolha a fonte OBD'}</h3></div><span>${escapeHtml(stage || 'IDLE')}</span></div>
-        <div class="witness-connection-progress"><span data-state="${permissionRequired ? 'waiting' : 'done'}">Bluetooth</span><span data-state="${connected ? 'done' : connecting ? 'active' : 'waiting'}">ELM327</span><span data-state="${protocol ? 'done' : connected ? 'active' : 'waiting'}">Protocolo</span><span data-state="${connected ? 'done' : 'waiting'}">STFT 0106</span></div>
-        <div class="witness-mode-buttons"><button type="button" data-obd-mode="local" class="${mode === 'local' ? 'active' : ''}">ELM Bluetooth</button><button type="button" data-obd-mode="remote" class="${mode === 'remote' ? 'active' : ''}">Omegas Link</button><button type="button" data-obd-mode="off" class="${mode === 'off' ? 'active' : ''}">Desativado</button></div>
-        ${permissionRequired ? '<p class="witness-note">Autorize o Bluetooth para acessar os dispositivos pareados.</p>' : !bluetoothEnabled ? '<p class="witness-note">Ligue o Bluetooth do Android para continuar.</p>' : deviceRows}
-        <p class="witness-note">MP48 permanece autoridade de condição física e combustível; OBD fornece apenas STFT.</p>`;
-    }
-
-    renderSensors(obd) {
-      const host = document.getElementById('obdSensorList');
-      if (!host) return;
-      const diagnostic = obd.diagnostic || {};
-      const supported = Array.isArray(diagnostic.supportedStandardPids) ? diagnostic.supportedStandardPids : [];
-      const pidRows = Array.isArray(diagnostic.pids) ? diagnostic.pids : [];
-      const stftPid = pidRows.find(item => String(item.command || '').replace(/\s/g, '').toUpperCase() === '0106') || null;
-      const hasStftSupport = supported.some(item => Number(item) === 6 || String(item).toUpperCase() === '0106');
-      const signature = JSON.stringify({ protocol: diagnostic.protocolMode, cycle: diagnostic.lastCycleMs, rate: diagnostic.pollRateHz, stftPid, hasStftSupport, stage: obd.connectionStage });
-      if (signature === this.sensorSignature) return;
-      this.sensorSignature = signature;
-      host.innerHTML = `
-        <div class="witness-setup-heading"><div><small>SINAL CIENTÍFICO</small><h3>STFT Bank 1</h3></div><span>Mode 01</span></div>
-        <div class="witness-sensor-main"><strong>0106</strong><div><b>${stftPid?.responded ? 'respondendo' : hasStftSupport ? 'suportado' : 'aguardando suporte'}</b><span>${stftPid?.responded ? `${fmt(stftPid.latencyMs, 0)} ms na última resposta` : 'único PID usado como evidência'}</span></div></div>
-        <div class="witness-diagnostic-facts"><span>Protocolo <b>${escapeHtml(diagnostic.protocolMode || 'aguardando')}</b></span><span>Ciclo <b>${finite(diagnostic.lastCycleMs) === null ? '—' : `${fmt(diagnostic.lastCycleMs, 0)} ms`}</b></span><span>Taxa <b>${finite(diagnostic.pollRateHz) === null ? '—' : `${fmt(diagnostic.pollRateHz, 1)} Hz`}</b></span></div>`;
-    }
-
-    renderPower() {
-      const host = document.getElementById('obdPowerCard');
-      if (!host) return;
-      const battery = this.api.batteryOptimizationStatus?.() || {};
-      const overlay = this.api.overlayStatus?.() || {};
-      const signature = JSON.stringify({ battery, overlay });
-      if (signature === this.powerSignature) return;
-      this.powerSignature = signature;
-      host.innerHTML = `
-        <div class="witness-setup-heading"><div><small>MULTIMÍDIA</small><h3>Sessão contínua</h3></div></div>
-        <div class="witness-runtime-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'Android pode limitar a sessão'}</b></div>${battery.supported !== false && battery.ignoringOptimizations !== true ? '<button type="button" class="secondary" data-obd-battery-request>Permitir</button>' : ''}</div>
-        <div class="witness-runtime-row"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b></div>${overlay.visible === true ? '<button type="button" class="quiet-button" data-obd-overlay-disable>Desativar</button>' : overlay.permissionGranted === true ? '<button type="button" class="secondary" data-obd-overlay-enable>Ativar</button>' : '<button type="button" class="secondary" data-obd-overlay-request>Autorizar</button>'}</div>`;
-    }
-
-    alert(message) {
-      this.store.patch({ alert: { level: 'warning', message: String(message || 'Operação OBD indisponível') } });
-    }
-  }
-
-  ns.ObdScreen = ObdScreen;
-})(typeof window !== 'undefined' ? window : globalThis);
+    ns.ObdScreen = ObdScreen;
+  })(typeof window !== "undefined" ? window : globalThis);
+})();

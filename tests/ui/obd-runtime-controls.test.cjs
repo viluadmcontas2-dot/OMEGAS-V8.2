@@ -15,7 +15,7 @@ test('OBD possui somente witness e conexão como visões runtime', () => {
   }
   assert.doesNotMatch(obd, /data-obd-view="map"|data-obd-panel="map"/);
   assert.match(obd, /setView\(view\)/);
-  assert.match(obd, /this\.view === 'setup'/);
+  assert.match(obd, /this\.view === ['\"]setup['\"]/);
 });
 
 test('visão principal mostra STFT, resultado witness e pareamento MP48', () => {

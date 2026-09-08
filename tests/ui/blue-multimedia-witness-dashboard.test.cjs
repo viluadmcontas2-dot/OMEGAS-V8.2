@@ -6,8 +6,14 @@ const path = require('node:path');
 const test = require('node:test');
 
 const ROOT = path.join(__dirname, '../..');
-const dashboard = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/dashboard.js'), 'utf8');
-const obd = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/obd.js'), 'utf8');
+function normalizeJsSource(text) {
+  return text
+    .replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/\\u([0-9A-Fa-f]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
+const dashboard = normalizeJsSource(fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/dashboard.js'), 'utf8'));
+const obd = normalizeJsSource(fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/obd.js'), 'utf8'));
 const stylePath = path.join(ROOT, 'app/src/main/assets/ui/styles-witness-multimedia.css');
 const styles = fs.existsSync(stylePath) ? fs.readFileSync(stylePath, 'utf8') : '';
 const service = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'), 'utf8');
@@ -28,8 +34,8 @@ test('dashboard 16:9 usa um único template grande sem repetir telemetria', () =
   assert.equal(occurrences(dashboard, '>STFT<'), 1, 'STFT must appear exactly once in dashboard runtime markup');
   assert.equal(occurrences(dashboard, '>CÉLULA<'), 1, 'cell must appear exactly once in dashboard runtime markup');
   assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft|LTFT|GAS INJ\./);
-  assert.match(dashboard, /text\('dashStft'/);
-  assert.match(dashboard, /text\('dashHeroStatus'/);
+  assert.match(dashboard, /text\(['\"]dashStft['\"]/);
+  assert.match(dashboard, /text\(['\"]dashHeroStatus['\"]/);
   assert.doesNotMatch(dashboard, /dashHeroStatus[\s\S]{0,180}RPM/);
 
   assert.match(styles, /\.now-metric-grid\s*\{[^}]*grid-template-columns\s*:\s*repeat\(5/si);

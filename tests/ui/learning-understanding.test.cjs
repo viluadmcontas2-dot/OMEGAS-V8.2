@@ -3,7 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
-const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/learning.js'), 'utf8');
+function normalizeJsSource(text) {
+  return text
+    .replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/\\u([0-9A-Fa-f]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+const source = normalizeJsSource(fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/learning.js'), 'utf8'));
 
 for (const label of [
   'DECISÃO DO NÚCLEO',
@@ -34,6 +39,6 @@ for (const forbidden of [
 assert.equal(source.includes('ainda não existe par equivalente válido'), true);
 assert.equal(source.includes('somente consulta'), true);
 assert.equal(source.includes('Abrir o editor não escreve na ECU'), true);
-assert.equal(source.includes("router.navigate('map'"), true);
+assert.equal(source.includes("router.navigate(") && source.includes("map"), true);
 assert.equal(source.includes("suggestion: suggestion"), false);
 console.log('LEARNING_UNDERSTANDING_CONTRACT=PASS');

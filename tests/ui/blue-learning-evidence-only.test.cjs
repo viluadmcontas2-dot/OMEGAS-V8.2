@@ -14,6 +14,7 @@ for (const forbidden of [
   'mapResidualPredictions',
   'predictedErrorPercent',
   "layer === 'suggestion'",
+  'layer === "suggestion"',
   'persistentMapSuggestions',
   'learningStability',
 ]) {
@@ -21,9 +22,9 @@ for (const forbidden of [
 }
 
 for (const required of [
-  "layer === 'petrol'",
-  "layer === 'cng'",
-  "layer === 'comparison'",
+  'layer === "petrol"',
+  'layer === "cng"',
+  'layer === "comparison"',
   'latestComparison',
   'calibrationState',
   'BlueCausalEngine',

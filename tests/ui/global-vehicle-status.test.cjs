@@ -3,7 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
-const component = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/components/vehicle-status-strip.js'), 'utf8');
+function normalizeJsSource(text) {
+  return text
+    .replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/\\u([0-9A-Fa-f]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+const component = normalizeJsSource(fs.readFileSync(path.join(root, 'app/src/main/assets/ui/components/vehicle-status-strip.js'), 'utf8'));
 const router = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/router.js'), 'utf8');
 
 for (const label of ['SERVIÇO', 'ECU', 'FRESCOR', 'COMBUSTÍVEL', 'RPM', 'PETROL INJ.']) {

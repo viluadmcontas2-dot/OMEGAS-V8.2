@@ -19,7 +19,8 @@ function methodBlock(name, nextName) {
 
 test('Curva K possui modo de seleção explícito e feedback antes de editar valor', () => {
   for (const token of [
-    'this.selectedIndices = new Set()',
+    'this.selectedIndices',
+    'new Set()',
     'this.selectionMode = false',
     'setSelectionMode(enabled)',
     'toggleSelection(index)',

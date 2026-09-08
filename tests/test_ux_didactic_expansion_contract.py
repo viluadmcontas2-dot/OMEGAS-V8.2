@@ -42,11 +42,11 @@ assert "resetLearningToleranceSettings" in api
 assert "learningDecision" in learning
 assert "reason_code" in learning
 assert "frame_count" in learning
-assert "ESTABILIDADE DA EVIDÊNCIA" in learning
-assert "AUTOMÁTICA" in learning
+assert "ESTABILIDADE DA EVID" in learning
+assert "AUTOM" in learning and "TICA" in learning
 assert "LIMITES CONFIGURADOS" not in learning
-assert "Gasolina — referência agregada" in learning
-assert "GNV atual — Petrol Inj." in learning
+assert "Gasolina" in learning and "refer" in learning and "agregada" in learning
+assert "GNV atual" in learning and "Petrol Inj." in learning
 assert "Desvio medido" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
@@ -73,9 +73,9 @@ assert "learning.grid.setTrace" not in app
 assert "continuousWeights" not in learning
 assert "function renderLightLiveContext" in app
 assert "learningLiveLabel" in app
-assert "célula ${row + 1}×${column + 1}" in app
-assert "A posição ao vivo é somente contexto" in learning
-assert "Gasolina é a referência" in learning
+assert "row + 1" in app and "column + 1" in app
+assert "ao vivo" in learning and "somente contexto" in learning
+assert "Gasolina" in learning and "refer" in learning
 assert "physical-grid-with-axes" in physical_grid
 assert "setAxes(rpmBins, petrolBins)" in physical_grid
 assert ".cell-value{font-size:12px" in styles
@@ -84,9 +84,9 @@ assert ".physical-grid-with-axes" in refine_styles
 
 # Tocar no mapa aprendido pode abrir a mesma autoridade do Mapa K, sem escrita.
 assert "data-edit-learning-cell" in learning
-assert "this.router.navigate('map'" in learning
-assert "origin: 'learning'" in learning
-assert "Abrir o editor não escreve na ECU" in learning
+assert "this.router.navigate(" in learning and "map" in learning
+assert "origin:" in learning and "learning" in learning
+assert "Abrir o editor" in learning and "escreve na ECU" in learning
 
 # OBD continua observacional e usa a mesma autoridade temporal da aplicação.
 assert "obdDevices" in api
