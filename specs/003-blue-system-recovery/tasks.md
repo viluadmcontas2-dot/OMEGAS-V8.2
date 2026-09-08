@@ -78,4 +78,21 @@
 - [x] T906 APK generation isolated behind explicit owner-authorized manual workflow dispatch.
 - [ ] T907 Physical vehicle validation of a future authorized APK; intentionally post-artifact and not a prerequisite for software READY.
 
-Final ephemeral gate: after publishing this reconciliation, canonical `OMEGAS Blue CI` must be `completed/success` on the exact remote HEAD. Then, and only then, declare `READY FOR APK GENERATION` and stop without generating an APK.
+## Post-recovery algorithm integration verification — lineage #16/#18
+Work Unit: `docs/workunits/OMEGAS-BLUE-ALGO-VERIFY-001.md`
+
+- [x] T1000 Revalidate starting HEAD and record that historical CI green does not prove complete end-to-end causal integration.
+- [x] T1001 Trace coordinator proposal paths and confirm both currently pass `gain = null`.
+- [x] T1002 Record UI payload/null/map-cell findings and explicit evidence limits in Work Unit + STATUS.
+- [ ] T1003 RED integration test: valid physical pair without causal gain produces measured deviation but no fabricated target.
+- [ ] T1004 RED integration test: before evidence -> confirmed write/readback -> compatible after evidence -> attributable causal gain -> proposal.
+- [ ] T1005 Prove incompatible region or Curve/Map revision transition cannot create/consume gain.
+- [ ] T1006 Behaviorally prove nested `calibrationState.proposal` contract used by Learning.
+- [ ] T1007 Prove null/missing numeric values render unknown, never valid zero.
+- [ ] T1008 Prove measured comparison is displayed in current GNV Map K cell when petrol-reference and GNV Petrol Inj. differ.
+- [ ] T1009 Preserve OBD witness invariants and Curve K no-writer/delta-vs-absolute behavior under the integration change.
+- [ ] T1010 Refine Learning wording/navigation only where behavior evidence shows operator ambiguity; no second algorithm.
+- [ ] T1011 Run focused GREEN + negative scenarios, then FAST/JVM/lint only on the final production-change SHA.
+- [ ] T1012 Remote read-back of final code/docs/status with physical validation still explicitly NOT VALIDATED.
+
+The prior software recovery gate was historically green, but this continuation supersedes any claim of complete algorithm-chain readiness until T1003–T1012 are evidenced. APK remains prohibited.

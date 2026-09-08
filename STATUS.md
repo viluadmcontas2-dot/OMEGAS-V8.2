@@ -1,40 +1,51 @@
 # Status — OMEGAS V8.2 Blue
 
 - Branch: `work/omegas-blue-causal-engine`
-- Estado do código: `RECOVERY_IMPLEMENTATION_COMPLETE`
-- Epic: `#18 BLUE-RECOVERY-001`
-- Convergência estrutural: `#16`
-- Work Unit: `OMEGAS-BLUE-RECOVERY-001`
-- Spec Kit: `specs/003-blue-system-recovery/`
-- Autoridade matemática: `BlueCausalEngine`
-- Escrita automática ECU: `FALSE`
-- APK por push normal: `FALSE`
-- APK manual sem autorização do owner: `BLOCKED`
+- Current state: `ALGORITHM_INTEGRATION_VERIFICATION_ACTIVE`
+- Historical recovery lineage: `#16` + `#18` (closed)
+- Current Work Unit: `OMEGAS-BLUE-ALGO-VERIFY-001`
+- Primary spec lineage: `specs/001-blue-runtime-convergence/` + `specs/003-blue-system-recovery/`
+- Starting SHA for this work: `022945165a590781f4245c5ca0f9a8b51cbbc9f3`
+- Mathematical authority: `BlueCausalEngine`
+- Automatic ECU write: `FALSE`
+- APK/assemble/release/upload: `BLOCKED`
 
-## Evidência remota de base antes da reconciliação final
-- SHA: `19a116d978d2eed8ece66cc0f71e73b8a1a53bf1`
-- OMEGAS Blue CI run `34169619370`: `completed/success`
-- `FAST contracts`: success
-- `FULL JVM lint`: success
-- `Owner-authorized APK artifact`: skipped
-- MMMACHINE FAST no snapshot exato: `QUALITY_GATE_FAST=PASS python=22 node=23`
+## Historical evidence that remains valid
+Canonical `OMEGAS Blue CI` run `34172162423` on `022945165a590781f4245c5ca0f9a8b51cbbc9f3` completed/success. FAST succeeded (`QUALITY_GATE_FAST=PASS python=24 node=23`), FULL JVM/unit + lint succeeded, owner-authorized APK artifact was skipped, workflow artifacts were empty and releases were empty.
 
-## Recuperações verificadas
-- #17: Agora/OBD possuem fallback não vazio, bootstrap real em Chrome e layout essencial sem dependência de `:has()`.
-- #19: comparações Blue chegam ao Learning, `quality` é preservada, TRANSITION é gasolina e tolerâncias foram classificadas/isoladas.
-- #20: freshness usa timestamp físico, delivery lag fica observável, latest-only/generation reset permanecem limitados, foreground/overlay têm contrato de restore.
-- #21: disclosure/foco de Ferramentas sobrevive aos refreshes; browser smoke real cobre a regressão.
-- #22: Seleção ON/OFF, drag, destaque, delta e atribuição absoluta têm teste de browser real.
-- #23: MP48 continua erro primário; STFT GNV é witness; LTFT não decide; OBD não escreve; Mapa K usa a região GNV atual.
-- #16: uma única autoridade Blue, Auto-Cal consome proposta Blue, safety não usa RPM como gate e sessões úteis/vault seguem a Constituição.
+This is evidence for the tests that ran. It is NOT evidence that the complete causal chain is functionally integrated end-to-end.
 
-## TDD adicional da reconciliação
-Foi encontrado um duplicate ingest em `AutoCalJavascriptBridge`: a mesma importação de snapshot chamava `blueIngestLearningSnapshot()` duas vezes. O teste `test_blue_autocal_single_ingest_contract.py` falhou com `found 2 ingests`; a correção mínima deixa exatamente uma chamada e o teste passa. Testes JVM adicionais cobrem log-ratio, ganho causal, revisões Curva/Mapa independentes e PROBE/VALID/PROTECTED.
+## New verified findings
+1. `BlueCalibrationCoordinator.proposalJson()` calls `autoCal.proposalJson(comparison, gain = null)`.
+2. `BlueCalibrationCoordinator.proposalJsonLocked()` also calls `autoCal.proposalJson(..., gain = null)`.
+3. `BlueAutoCalAdapter` exposes `learnGain()` and only emits a numeric correction multiplier when a valid `BlueActuatorGain` is supplied.
+4. `BlueCausalEngine` contains the before/after actuator-gain math, but the runtime acquisition/storage/use of that gain has not yet been behaviorally proven.
+5. `learning.js` requires `proposal.available === true` and numeric `correctionMultiplier`; the nested `calibrationState.proposal` payload still requires behavioral verification.
+6. `learning.js` numeric conversion can coerce `null` through `Number(null)`; missing-value rendering must be proven so absence never becomes valid zero.
+7. Blue publishes `mapKCell`; Learning indexes row/column variants. The transformation into the displayed GNV cell is not yet proven end-to-end.
 
-## Cleanup
-- Nenhum `blue-*-apply.yml`, `recovery_apply`, payload/staging transport ou artefato temporário permanece no repo.
-- `.github/workflows/red-fast-learning-one-shot.yml` não é transporte temporário: é a CI do branch RED e não inclui a branch Blue.
-- `.github/workflows/blue-ci.yml` é a única CI canônica da branch Blue e o APK nela é somente `workflow_dispatch + build_apk=true`.
+## Previously closed work that is not being reopened by default
+- #17 runtime/WebView recovery
+- #19 Learning evidence semantics
+- #20 telemetry/background/overlay
+- #21 Tools disclosure/focus behavior
+- #22 Curve K selection/batch semantics
+- #23 OBD x MP48 witness contract
+- #16 single-authority convergence
+- #18 recovery epic
 
-## Regra de prontidão
-Este documento não transforma um comando disparado em sucesso. `READY FOR APK GENERATION` só pode ser declarado fora do repo depois de read-back do HEAD remoto e de uma `OMEGAS Blue CI` `completed/success` nesse mesmo SHA. Nenhuma validação física/economia é alegada por esse gate.
+Their historical GREEN evidence remains useful. A closed issue is only revisited if a new behavioral regression directly intersects this Work Unit.
+
+## Current gates
+- Gain acquisition/persistence/attribution into runtime proposal: `PENDING`
+- Nested proposal payload shown correctly in Learning: `PENDING`
+- Missing numeric values never shown as valid zero: `PENDING`
+- GNV Map K cell routing with distinct petrol/GNV Petrol Inj.: `PENDING`
+- End-to-end behavioral chain including negative scenarios: `PENDING`
+- Physical vehicle validation: `NOT VALIDATED`
+
+## Exact next step
+Create a focused integration RED test that reproduces the highest-impact gap: before evidence -> confirmed manual write/readback -> after evidence -> causal gain -> proposal. Do not implement a guessed attribution policy. If the repository does not already specify how a before/after comparison is bound to the same physical region and calibration transition, record the concrete policy decision required before production mutation.
+
+## Authorization boundary
+No APK, `assembleDebug`, release, upload, installation or distribution is authorized. GitHub remote remains technical authority; local snapshots are disposable test surfaces only.
