@@ -22,7 +22,7 @@ def main() -> None:
     assert "obdResidualPp" not in conf
     assert "petrolOnCngMs" in address
     assert "petrolTargetMs" not in address, "gasoline reference cannot address Map K"
-    assert "BlueMapKAddressing.cell(comparison)" in coord
+    assert "BlueMapKAddressing.presentationFields(comparison)" in coord
     assert "expectedPetrolOnCngMs = comparison.petrolOnCngMs" in coord
     assert "gasoline OBD STFT and LTFT are not requirements" in spec
 
