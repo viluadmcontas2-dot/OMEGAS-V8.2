@@ -33,6 +33,8 @@ data class BlueCausalIntervention(
     val readbackConfirmed: Boolean,
     val changedActuators: List<BlueActuatorAddress>,
     val confirmedAtMs: Long,
+    val beforeComparisonId: String = "",
+    val scientificRegionId: String = "",
 ) {
     init {
         require(id.isNotBlank())

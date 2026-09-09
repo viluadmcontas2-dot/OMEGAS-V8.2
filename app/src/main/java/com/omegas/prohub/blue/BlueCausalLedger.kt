@@ -45,7 +45,7 @@ data class BlueLedgerDecision(
  * Pending intent and confirmed readback are stored atomically; a failed,
  * partial or multi-actuator completion is consumed as ABSTAIN.
  */
-class BlueCausalLedger(private val file: File) {
+class BlueCausalLedger(private val file: File?) {
     private val lock = Any()
     private val pending = linkedMapOf<String, BluePendingIntervention>()
     private val confirmed = linkedMapOf<String, BlueCausalIntervention>()
@@ -100,6 +100,8 @@ class BlueCausalLedger(private val file: File) {
                     readbackConfirmed = true,
                     changedActuators = listOf(change.actuator),
                     confirmedAtMs = value.confirmedAtMs,
+                    beforeComparisonId = prepared.beforeComparisonId,
+                    scientificRegionId = prepared.scientificRegionId,
                 )
                 confirmed[intervention.id] = intervention
                 BlueLedgerDecision(
@@ -116,8 +118,9 @@ class BlueCausalLedger(private val file: File) {
     private fun abstain(reason: String) = BlueLedgerDecision(BlueLedgerState.ABSTAIN, reason)
 
     private fun loadLocked() {
-        if (!file.isFile || file.length() == 0L) return
-        val root = try { JSONObject(file.readText(Charsets.UTF_8)) } catch (_: Exception) { return }
+        val storage = file ?: return
+        if (!storage.isFile || storage.length() == 0L) return
+        val root = try { JSONObject(storage.readText(Charsets.UTF_8)) } catch (_: Exception) { return }
         val pendingJson = root.optJSONArray("pending") ?: JSONArray()
         repeat(pendingJson.length()) { index ->
             decodePending(pendingJson.optJSONObject(index))?.let { pending[it.id] = it }
@@ -129,22 +132,23 @@ class BlueCausalLedger(private val file: File) {
     }
 
     private fun persistLocked() {
-        file.parentFile?.mkdirs()
+        val storage = file ?: return
+        storage.parentFile?.mkdirs()
         val root = JSONObject()
             .put("schema", "omegas-blue-causal-ledger-v1")
             .put("pending", JSONArray(pending.values.map(::encodePending)))
             .put("confirmed", JSONArray(confirmed.values.map(::encodeIntervention)))
-        val temp = File(file.parentFile ?: file.absoluteFile.parentFile, file.name + ".tmp")
+        val temp = File(storage.parentFile ?: storage.absoluteFile.parentFile, storage.name + ".tmp")
         temp.writeText(root.toString(2), Charsets.UTF_8)
         try {
             Files.move(
                 temp.toPath(),
-                file.toPath(),
+                storage.toPath(),
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE,
             )
         } catch (_: Exception) {
-            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            Files.move(temp.toPath(), storage.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
 
@@ -183,6 +187,8 @@ class BlueCausalLedger(private val file: File) {
         .put("readbackConfirmed", value.readbackConfirmed)
         .put("changedActuators", JSONArray(value.changedActuators.map(::encodeAddress)))
         .put("confirmedAtMs", value.confirmedAtMs)
+        .put("beforeComparisonId", value.beforeComparisonId)
+        .put("scientificRegionId", value.scientificRegionId)
 
     private fun decodeIntervention(value: JSONObject?): BlueCausalIntervention? = try {
         requireNotNull(value)
@@ -198,6 +204,8 @@ class BlueCausalLedger(private val file: File) {
             readbackConfirmed = value.getBoolean("readbackConfirmed"),
             changedActuators = List(addresses.length()) { decodeAddress(addresses.getJSONObject(it)) },
             confirmedAtMs = value.getLong("confirmedAtMs"),
+            beforeComparisonId = value.optString("beforeComparisonId"),
+            scientificRegionId = value.optString("scientificRegionId"),
         )
     } catch (_: Exception) { null }
 

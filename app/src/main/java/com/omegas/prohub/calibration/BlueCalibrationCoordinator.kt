@@ -1,7 +1,17 @@
 package com.omegas.prohub.calibration
 
+import com.omegas.prohub.blue.BlueActuatorAddress
+import com.omegas.prohub.blue.BlueActuatorKind
+import com.omegas.prohub.blue.BlueAttributionState
 import com.omegas.prohub.blue.BlueAutoCalAdapter
+import com.omegas.prohub.blue.BlueCausalAttribution
 import com.omegas.prohub.blue.BlueCausalEngine
+import com.omegas.prohub.blue.BlueCausalLedger
+import com.omegas.prohub.blue.BlueConfirmedActuatorChange
+import com.omegas.prohub.blue.BlueGainObservation
+import com.omegas.prohub.blue.BlueInterventionConfirmation
+import com.omegas.prohub.blue.BlueLedgerState
+import com.omegas.prohub.blue.BluePendingIntervention
 import com.omegas.prohub.blue.BlueLearningState
 import com.omegas.prohub.blue.BlueMapKAddressing
 import com.omegas.prohub.blue.BlueWitnessConfidence
@@ -14,6 +24,8 @@ import com.omegas.prohub.ecu.KFactorProtocol
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * Integration boundary between proven ECU readers/writers and the Blue engine.
@@ -24,11 +36,14 @@ import java.util.UUID
 class BlueCalibrationCoordinator(
     private val mapManager: KWriteManager,
     private val factorManager: KFactorManager,
+    private val ledger: BlueCausalLedger = BlueCausalLedger(null),
 ) {
     private val lock = Any()
     private val engine = BlueCausalEngine()
     private val autoCal = BlueAutoCalAdapter(engine)
+    private val attribution = BlueCausalAttribution(engine)
     private var state: BlueLearningState? = null
+    private var latestGainObservation: BlueGainObservation? = null
     private var latestObdWitness: JSONObject? = null
 
     fun synchronizeFromEcu(): JSONObject = synchronized(lock) {
@@ -137,10 +152,125 @@ class BlueCalibrationCoordinator(
             cngEvidenceByRevision = cng.mapValues { it.value.values.sortedBy(FuelEvidence::collectedAtMs) },
         )
         state = updated.copy(comparisons = engine.reconcile(updated))
+        refreshGainLocked()
         stateJsonLocked()
             .put("ok", true)
             .put("petrolImported", petrolImported)
             .put("cngImported", cngImported)
+    }
+
+    fun prepareIntervention(payload: JSONObject): JSONObject = synchronized(lock) {
+        val current = requireState()
+        val comparison = current.activeComparisons().maxByOrNull(FuelComparison::createdAtMs)
+            ?: return@synchronized JSONObject().put("ok", true).put("eligible", false)
+                .put("reason", "COMPARISON_REQUIRED").put("automaticWrite", false)
+        val type = payload.optString("type").uppercase()
+        val changes = when (type) {
+            "CURVE" -> payload.optJSONArray("points")
+            "MAP" -> payload.optJSONArray("cells")
+            else -> null
+        } ?: return@synchronized JSONObject().put("ok", false).put("eligible", false)
+            .put("reason", "ACTUATOR_TYPE_INVALID").put("automaticWrite", false)
+        if (changes.length() != 1) {
+            return@synchronized JSONObject().put("ok", true).put("eligible", false)
+                .put("reason", "INTERVENTION_NOT_ISOLATED").put("automaticWrite", false)
+        }
+        val change = changes.getJSONObject(0)
+        val address: BlueActuatorAddress
+        val beforeK: Double
+        val targetK: Double
+        if (type == "CURVE") {
+            val index = change.getInt("index")
+            val beforeRaw = change.getInt("currentRaw")
+            val targetRaw = change.getInt("targetRaw")
+            address = BlueActuatorAddress.curvePoint(index)
+            beforeK = KFactorProtocol.factorFromRaw(beforeRaw)
+            targetK = KFactorProtocol.factorFromRaw(targetRaw)
+            if (index !in current.calibration.curveK.indices ||
+                abs(current.calibration.curveK[index] - beforeK) > 1e-9
+            ) return@synchronized stalePreview()
+        } else {
+            val row = change.getInt("row")
+            val column = change.getInt("column")
+            beforeK = change.getInt("current").toDouble()
+            targetK = change.getInt("target").toDouble()
+            address = BlueActuatorAddress.mapCell(row, column)
+            if (row !in 0 until CalibrationShape.MAP_K_EDITABLE_ROWS ||
+                column !in 0 until CalibrationShape.MAP_K_COLUMNS ||
+                current.calibration.mapK[row][column].toDouble() != beforeK
+            ) return@synchronized stalePreview()
+        }
+        val id = "BLUE-${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
+        val decision = ledger.prepare(
+            BluePendingIntervention(
+                id = id,
+                actuator = address,
+                beforeRevision = current.calibration.revision,
+                beforeK = beforeK,
+                targetK = targetK,
+                beforeComparisonId = comparison.id,
+                scientificRegionId = comparison.scientificRegionId,
+                preparedAtMs = System.currentTimeMillis(),
+            ),
+        )
+        JSONObject().put("ok", true)
+            .put("eligible", decision.state == BlueLedgerState.PREPARED)
+            .put("state", decision.state.name).put("reason", decision.reason)
+            .put("interventionId", id).put("automaticWrite", false)
+            .put("humanConfirmationRequired", true)
+    }
+
+    fun confirmIntervention(interventionId: String, writerPayload: JSONObject): JSONObject = synchronized(lock) {
+        val pending = ledger.pending(interventionId)
+            ?: return@synchronized JSONObject().put("ok", false).put("state", "ABSTAIN")
+                .put("reason", "PENDING_NOT_FOUND")
+        val events = writerPayload.optJSONArray("confirmedEvents") ?: JSONArray()
+        val changes = buildList {
+            repeat(events.length()) { index ->
+                val event = events.optJSONObject(index) ?: return@repeat
+                if (pending.actuator.kind == BlueActuatorKind.CURVE_POINT) {
+                    add(BlueConfirmedActuatorChange(
+                        BlueActuatorAddress.curvePoint(event.getInt("index")),
+                        event.optDouble("beforeFactor", KFactorProtocol.factorFromRaw(event.getInt("beforeRaw"))),
+                        event.optDouble("afterFactor", KFactorProtocol.factorFromRaw(event.getInt("afterRaw"))),
+                    ))
+                } else {
+                    add(BlueConfirmedActuatorChange(
+                        BlueActuatorAddress.mapCell(event.getInt("row"), event.getInt("column")),
+                        event.getDouble("before"), event.getDouble("after"),
+                    ))
+                }
+            }
+        }
+        val decision = ledger.confirm(
+            BlueInterventionConfirmation(
+                id = interventionId,
+                afterRevision = requireState().calibration.revision,
+                ackConfirmed = writerPayload.optBoolean("ok") && writerPayload.optBoolean("humanConfirmed"),
+                readbackConfirmed = writerPayload.optBoolean("readbackValid"),
+                changes = changes,
+                confirmedAtMs = writerPayload.optLong("confirmedAt", System.currentTimeMillis()).coerceAtLeast(0L),
+            ),
+        )
+        JSONObject().put("ok", decision.state == BlueLedgerState.CONFIRMED)
+            .put("state", decision.state.name).put("reason", decision.reason)
+            .put("interventionId", interventionId).put("automaticWrite", false)
+    }
+
+    private fun stalePreview() = JSONObject().put("ok", true).put("eligible", false)
+        .put("reason", "STALE_PREVIEW").put("automaticWrite", false)
+
+    private fun refreshGainLocked() {
+        val current = state ?: return
+        val intervention = ledger.latestConfirmed() ?: return
+        if (intervention.beforeComparisonId.isBlank() || intervention.scientificRegionId.isBlank()) return
+        val before = current.comparisons.firstOrNull { it.id == intervention.beforeComparisonId } ?: return
+        val after = current.activeComparisons().asSequence()
+            .filter { it.scientificRegionId == intervention.scientificRegionId }
+            .filter { it.createdAtMs >= intervention.confirmedAtMs }
+            .maxByOrNull(FuelComparison::createdAtMs) ?: return
+        val result = attribution.evaluate(intervention, before, after)
+        if (result.state == BlueAttributionState.ACCEPTED) latestGainObservation = result.observation
     }
 
     fun updateObdWitness(witness: JSONObject): JSONObject = synchronized(lock) {
@@ -172,7 +302,7 @@ class BlueCalibrationCoordinator(
                 .put("automatic", false)
                 .put("manualOnly", true)
         projectWitness(
-            baseJson = autoCal.proposalJson(comparison, gain = null),
+            baseJson = proposalWithExactChange(comparison),
             comparison = comparison,
         )
     }
@@ -205,7 +335,7 @@ class BlueCalibrationCoordinator(
     }
 
     private fun proposalJsonLocked(comparison: FuelComparison?): Any = comparison?.let {
-        projectWitness(autoCal.proposalJson(it, gain = null), it)
+        projectWitness(proposalWithExactChange(it), it)
     } ?: JSONObject.NULL
 
     private fun comparisonJson(value: FuelComparison): JSONObject = projectWitness(
@@ -222,6 +352,56 @@ class BlueCalibrationCoordinator(
             .put("referenceSpreadMs", value.referenceSpreadMs),
         comparison = value,
     )
+
+    private fun proposalWithExactChange(comparison: FuelComparison): JSONObject {
+        val current = requireState()
+        val observation = latestGainObservation?.takeIf {
+            it.afterRevision == comparison.revision &&
+                it.scientificRegionId == comparison.scientificRegionId
+        }
+        val base = autoCal.proposalJson(comparison, observation?.gain)
+            .put("gainAccepted", observation != null)
+        if (observation == null || base.optString("state") != "PROPOSAL_READY") return base
+        base.put("gainProvenance", JSONObject()
+            .put("interventionId", observation.interventionId)
+            .put("beforeComparisonId", observation.beforeComparisonId)
+            .put("afterComparisonId", observation.afterComparisonId)
+            .put("observedAtMs", observation.observedAtMs))
+        val multiplier = base.getDouble("correctionMultiplier")
+        if (observation.actuator.kind == BlueActuatorKind.CURVE_POINT) {
+            val axis = KFactorProtocol.OBSERVED_PETROL_AXIS_MS
+            val index = axis.indices.minByOrNull { abs(axis[it] - comparison.petrolOnCngMs) } ?: 0
+            val currentFactor = current.calibration.curveK[index]
+            val currentRaw = KFactorProtocol.rawFromFactor(currentFactor)
+            val targetRaw = KFactorProtocol.rawFromFactor(
+                (currentFactor * multiplier).coerceIn(KFactorManager.MIN_SAFE_FACTOR, KFactorManager.MAX_SAFE_FACTOR),
+            )
+            if (targetRaw == currentRaw) return noQuantizedChange(base)
+            base.put("curveChanges", JSONArray().put(JSONObject()
+                .put("index", index).put("petrolMs", axis[index])
+                .put("currentRaw", currentRaw).put("targetRaw", targetRaw)
+                .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                .put("targetFactor", KFactorProtocol.factorFromRaw(targetRaw))))
+        } else {
+            val cell = BlueMapKAddressing.cell(comparison)
+            val row = cell.getInt("row")
+            val column = cell.getInt("column")
+            val currentK = current.calibration.mapK[row][column]
+            val targetK = (currentK * multiplier).roundToInt()
+                .coerceIn(KWriteManager.MIN_ALLOWED_K, KWriteManager.MAX_ALLOWED_K)
+            if (targetK == currentK) return noQuantizedChange(base)
+            base.put("mapChanges", JSONArray().put(JSONObject()
+                .put("row", row).put("column", column)
+                .put("current", currentK).put("target", targetK)
+                .put("cellKey", cell.getString("key"))))
+        }
+        return base
+    }
+
+    private fun noQuantizedChange(base: JSONObject): JSONObject = base
+        .remove("correctionMultiplier")
+        .put("available", false)
+        .put("state", "QUANTIZED_NO_CHANGE")
 
     private fun projectWitness(baseJson: JSONObject, comparison: FuelComparison): JSONObject {
         val presentation = BlueMapKAddressing.presentationFields(comparison)
