@@ -75,6 +75,7 @@ data class FuelComparison(
     val createdAtMs: Long,
     val referenceEvidenceIds: List<String> = emptyList(),
     val referenceSpreadMs: Double = 0.0,
+    val scientificRegionId: String = cngVisitId,
 )
 
 data class BlueLearningState(
