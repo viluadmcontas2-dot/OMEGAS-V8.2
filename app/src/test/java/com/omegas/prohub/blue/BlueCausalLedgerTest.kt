@@ -14,7 +14,7 @@ class BlueCausalLedgerTest {
     fun `restart restores a pending isolated intervention`() {
         val file = temporary.newFile("blue-causal-ledger.json")
         val first = BlueCausalLedger(file)
-        first.prepare(pending())
+        first.prepare(pendingIntent())
 
         val restored = BlueCausalLedger(file).pending("write-1")
 
@@ -26,11 +26,11 @@ class BlueCausalLedgerTest {
     @Test
     fun `failed partial and multi writes can never become confirmed interventions`() {
         val file = temporary.newFile("blue-causal-ledger.json")
-        val failed = BlueCausalLedger(file).apply { prepare(pending(id = "failed")) }
+        val failed = BlueCausalLedger(file).apply { prepare(pendingIntent(id = "failed")) }
             .confirm(confirmation(id = "failed", ack = false))
-        val partialLedger = BlueCausalLedger(file).apply { prepare(pending(id = "partial")) }
+        val partialLedger = BlueCausalLedger(file).apply { prepare(pendingIntent(id = "partial")) }
         val partial = partialLedger.confirm(confirmation(id = "partial", readback = false))
-        val multiLedger = BlueCausalLedger(file).apply { prepare(pending(id = "multi")) }
+        val multiLedger = BlueCausalLedger(file).apply { prepare(pendingIntent(id = "multi")) }
         val multi = multiLedger.confirm(confirmation(
             id = "multi",
             changes = listOf(
@@ -54,7 +54,7 @@ class BlueCausalLedgerTest {
     fun `exact ACK and full readback close and persist the intervention`() {
         val file = temporary.newFile("blue-causal-ledger.json")
         val ledger = BlueCausalLedger(file)
-        ledger.prepare(pending())
+        ledger.prepare(pendingIntent())
 
         val decision = ledger.confirm(confirmation())
         val restored = BlueCausalLedger(file)
@@ -66,7 +66,7 @@ class BlueCausalLedgerTest {
         assertNotNull(restored.confirmed("write-1"))
     }
 
-    private fun pending(id: String = "write-1") = BluePendingIntervention(
+    private fun pendingIntent(id: String = "write-1") = BluePendingIntervention(
         id = id,
         actuator = BlueActuatorAddress.curvePoint(7),
         beforeRevision = CalibrationRevision(2, 4),
