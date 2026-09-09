@@ -38,6 +38,7 @@ data class FuelEvidence(
     val waterC: Double = UNKNOWN_TEMPERATURE_C,
     val gasC: Double = UNKNOWN_TEMPERATURE_C,
     val pressureDiffBar: Double = 0.0,
+    val auditVisitIds: List<String> = listOf(visitId),
 ) {
     companion object {
         const val UNKNOWN_TEMPERATURE_C = -273.15
@@ -46,6 +47,7 @@ data class FuelEvidence(
     init {
         require(id.isNotBlank())
         require(visitId.isNotBlank())
+        require(auditVisitIds.isNotEmpty() && auditVisitIds.all(String::isNotBlank))
         require(collectedAtMs >= 0)
         require(rpm.isFinite() && rpm >= 0.0)
         require(mapBar.isFinite() && mapBar >= 0.0)
@@ -71,6 +73,8 @@ data class FuelComparison(
     val errorPercent: Double,
     val quality: Double,
     val createdAtMs: Long,
+    val referenceEvidenceIds: List<String> = emptyList(),
+    val referenceSpreadMs: Double = 0.0,
 )
 
 data class BlueLearningState(

@@ -55,6 +55,8 @@ class BlueCausalEngine(
             quality = quality,
             supportCount = candidates.size,
             nearestDistance = candidates.first().distance,
+            evidenceIds = candidates.map { it.evidence.id },
+            spreadMs = values.last() - values.first(),
         )
     }
 
@@ -100,12 +102,12 @@ class BlueCausalEngine(
 
     fun reconcile(
         state: BlueLearningState,
-        nowMs: Long = System.currentTimeMillis(),
+        @Suppress("UNUSED_PARAMETER") nowMs: Long = System.currentTimeMillis(),
     ): List<FuelComparison> {
         val activeRevision = state.calibration.revision
         val historical = state.comparisons.filter { it.revision != activeRevision }
         val active = state.activeCngEvidence().mapNotNull { cng ->
-            compare(cng, state.petrolEvidence, activeRevision, nowMs)
+            compare(cng, state.petrolEvidence, activeRevision)
         }
         return (historical + active)
             .distinctBy { it.id }
@@ -116,7 +118,6 @@ class BlueCausalEngine(
         cng: FuelEvidence,
         petrolEvidence: List<FuelEvidence>,
         revision: CalibrationRevision,
-        nowMs: Long,
     ): FuelComparison? {
         val reference = petrolReference(cng, petrolEvidence) ?: return null
         if (reference.quality < policy.minimumComparisonQuality) return null
@@ -133,7 +134,9 @@ class BlueCausalEngine(
             petrolOnCngMs = cng.petrolMs,
             errorPercent = errorPercent,
             quality = reference.quality,
-            createdAtMs = max(cng.collectedAtMs, nowMs.coerceAtLeast(0L)),
+            createdAtMs = cng.collectedAtMs,
+            referenceEvidenceIds = reference.evidenceIds,
+            referenceSpreadMs = reference.spreadMs,
         )
     }
 
@@ -170,6 +173,8 @@ data class BluePetrolReference(
     val quality: Double,
     val supportCount: Int,
     val nearestDistance: Double,
+    val evidenceIds: List<String> = emptyList(),
+    val spreadMs: Double = 0.0,
 )
 
 data class BlueActuatorGain(val gain: Double)

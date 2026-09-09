@@ -108,28 +108,27 @@ class BlueCalibrationCoordinator(
                 }
                 if (isEmpty()) add(region.optString("id", "region-$index"))
             }.distinct()
-            visitIds.forEach { visitId ->
-                val id = "${region.optString("id", "region-$index")}:$visitId"
-                val evidence = FuelEvidence(
-                    id = id,
-                    fuel = fuel,
-                    collectedAtMs = region.optLong("updated_at", System.currentTimeMillis()).coerceAtLeast(0L),
-                    visitId = visitId,
-                    rpm = region.optDouble("rpm", 0.0).coerceAtLeast(0.0),
-                    mapBar = region.optDouble("map_bar", 0.0).coerceAtLeast(0.0),
-                    petrolMs = region.optDouble("petrol_ms", 0.0).coerceAtLeast(0.0),
-                    quality = region.optDouble("quality", region.optDouble("confidence", 0.0)).coerceIn(0.0, 1.0),
-                    cngRevision = if (fuel == FuelKind.CNG) current.calibration.revision else null,
-                    waterC = finiteOrUnknown(region.optDouble("water_c", FuelEvidence.UNKNOWN_TEMPERATURE_C)),
-                    gasC = finiteOrUnknown(region.optDouble("gas_c", FuelEvidence.UNKNOWN_TEMPERATURE_C)),
-                    pressureDiffBar = finiteOrZero(region.optDouble("pressure_diff_bar", 0.0)),
-                )
-                if (fuel == FuelKind.PETROL) {
-                    if (petrol.put(id, evidence) == null) petrolImported += 1
-                } else {
-                    val bucket = cng.getOrPut(current.calibration.revision) { mutableMapOf() }
-                    if (bucket.put(id, evidence) == null) cngImported += 1
-                }
+            val regionId = region.optString("id", "region-$index")
+            val evidence = FuelEvidence(
+                id = regionId,
+                fuel = fuel,
+                collectedAtMs = region.optLong("updated_at", System.currentTimeMillis()).coerceAtLeast(0L),
+                visitId = regionId,
+                rpm = region.optDouble("rpm", 0.0).coerceAtLeast(0.0),
+                mapBar = region.optDouble("map_bar", 0.0).coerceAtLeast(0.0),
+                petrolMs = region.optDouble("petrol_ms", 0.0).coerceAtLeast(0.0),
+                quality = region.optDouble("quality", region.optDouble("confidence", 0.0)).coerceIn(0.0, 1.0),
+                cngRevision = if (fuel == FuelKind.CNG) current.calibration.revision else null,
+                waterC = finiteOrUnknown(region.optDouble("water_c", FuelEvidence.UNKNOWN_TEMPERATURE_C)),
+                gasC = finiteOrUnknown(region.optDouble("gas_c", FuelEvidence.UNKNOWN_TEMPERATURE_C)),
+                pressureDiffBar = finiteOrZero(region.optDouble("pressure_diff_bar", 0.0)),
+                auditVisitIds = visitIds,
+            )
+            if (fuel == FuelKind.PETROL) {
+                if (petrol.put(regionId, evidence) == null) petrolImported += 1
+            } else {
+                val bucket = cng.getOrPut(current.calibration.revision) { mutableMapOf() }
+                if (bucket.put(regionId, evidence) == null) cngImported += 1
             }
         }
 
@@ -218,7 +217,9 @@ class BlueCalibrationCoordinator(
             .put("petrolOnCngMs", value.petrolOnCngMs)
             .put("errorPercent", value.errorPercent)
             .put("quality", value.quality)
-            .put("createdAt", value.createdAtMs),
+            .put("createdAt", value.createdAtMs)
+            .put("referenceEvidenceIds", JSONArray(value.referenceEvidenceIds))
+            .put("referenceSpreadMs", value.referenceSpreadMs),
         comparison = value,
     )
 
