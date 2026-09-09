@@ -159,7 +159,7 @@ class BlueCausalLedger(private val file: File) {
         .put("preparedAtMs", value.preparedAtMs)
 
     private fun decodePending(value: JSONObject?): BluePendingIntervention? = try {
-        value ?: return null
+        requireNotNull(value)
         BluePendingIntervention(
             id = value.getString("id"),
             actuator = decodeAddress(value.getJSONObject("actuator")),
@@ -185,7 +185,7 @@ class BlueCausalLedger(private val file: File) {
         .put("confirmedAtMs", value.confirmedAtMs)
 
     private fun decodeIntervention(value: JSONObject?): BlueCausalIntervention? = try {
-        value ?: return null
+        requireNotNull(value)
         val addresses = value.getJSONArray("changedActuators")
         BlueCausalIntervention(
             id = value.getString("id"),
