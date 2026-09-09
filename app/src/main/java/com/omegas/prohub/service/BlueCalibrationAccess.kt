@@ -1,5 +1,6 @@
 package com.omegas.prohub.service
 
+import com.omegas.prohub.blue.BlueCausalLedger
 import com.omegas.prohub.blue.BlueEvidenceProjection
 import com.omegas.prohub.calibration.BlueCalibrationCoordinator
 import com.omegas.prohub.learning.BlueEvidenceStore
@@ -13,7 +14,11 @@ private object BlueCalibrationRegistry {
 
     fun get(service: TelemetryForegroundService): BlueCalibrationCoordinator = synchronized(lock) {
         coordinators.getOrPut(service) {
-            BlueCalibrationCoordinator(service.kWriter, service.kFactor)
+            BlueCalibrationCoordinator(
+                service.kWriter,
+                service.kFactor,
+                BlueCausalLedger(File(service.paths.runtimeRoot, "blue_causal_ledger.json")),
+            )
         }
     }
 
@@ -167,6 +172,30 @@ fun TelemetryForegroundService.blueIngestLearningSnapshot(payload: String): Stri
     BlueCalibrationRegistry.get(this).ingestLearningSnapshot(JSONObject(payload)).toString()
 } catch (error: Exception) {
     JSONObject().put("ok", false).put("error", error.message ?: "Falha ao importar evidência").toString()
+}
+
+fun TelemetryForegroundService.bluePrepareIntervention(type: String, changesJson: String): String = try {
+    val key = if (type.uppercase() == "CURVE") "points" else "cells"
+    BlueCalibrationRegistry.get(this).prepareIntervention(
+        JSONObject().put("type", type).put(key, org.json.JSONArray(changesJson)),
+    ).toString()
+} catch (error: Exception) {
+    JSONObject().put("ok", false).put("eligible", false)
+        .put("reason", error.message ?: "Intenção causal inválida")
+        .put("automaticWrite", false).toString()
+}
+
+fun TelemetryForegroundService.blueConfirmIntervention(
+    interventionId: String,
+    writerPayload: String,
+): String = try {
+    BlueCalibrationRegistry.get(this)
+        .confirmIntervention(interventionId, JSONObject(writerPayload))
+        .toString()
+} catch (error: Exception) {
+    JSONObject().put("ok", false).put("state", "ABSTAIN")
+        .put("reason", error.message ?: "Confirmação causal inválida")
+        .put("automaticWrite", false).toString()
 }
 
 fun TelemetryForegroundService.blueProposalJson(): String = try {

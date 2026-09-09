@@ -6,6 +6,8 @@ import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.MapBatchPlan
 import com.omegas.prohub.calibration.MapKManualPlanner
 import com.omegas.prohub.service.blueCalibrationStateJson
+import com.omegas.prohub.service.blueConfirmIntervention
+import com.omegas.prohub.service.bluePrepareIntervention
 import com.omegas.prohub.service.blueIngestLearningSnapshot
 import com.omegas.prohub.service.blueReconcileConfirmedManualWrite
 import com.omegas.prohub.service.blueSynchronizeCalibration
@@ -84,10 +86,13 @@ class BlueJavascriptBridge(activity: MainActivity) {
         if (!busy.compareAndSet(false, true)) {
             return JSONObject().put("ok", false).put("busy", true).put("error", "Outra operação de calibração está em andamento").toString()
         }
+        val causalPreparation = JSONObject(service.bluePrepareIntervention("CURVE", points.toString()))
+        val causalInterventionId = causalPreparation.optString("interventionId")
         val startedAt = System.currentTimeMillis()
         lastOperation = JSONObject()
             .put("ok", true)
             .put("state", "CURVE_WRITE_QUEUED")
+            .put("blueCausalPreparation", causalPreparation)
             .put("busy", true)
             .put("progress", 0)
             .put("startedAt", startedAt)
@@ -149,6 +154,17 @@ class BlueJavascriptBridge(activity: MainActivity) {
                     JSONObject().put("ok", false).put("error", error.message ?: "Readback Blue indisponível")
                 }
             } else null
+            val causalClosure = causalInterventionId.takeIf(String::isNotBlank)?.let {
+                val writerEvidence = JSONObject(details.toString())
+                    .put("ok", confirmed)
+                    .put("humanConfirmed", confirmed)
+                    .put("readbackValid", confirmed && details.optBoolean("readbackValid", false))
+                try { JSONObject(service.blueConfirmIntervention(it, writerEvidence.toString())) }
+                catch (error: Exception) {
+                    JSONObject().put("ok", false).put("state", "ABSTAIN")
+                        .put("reason", error.message ?: "Fechamento causal indisponível")
+                }
+            }
             lastOperation = if (confirmed) {
                 JSONObject(status.toString())
                     .put("ok", true)
@@ -158,6 +174,7 @@ class BlueJavascriptBridge(activity: MainActivity) {
                     .put("readbackValid", true)
                     .put("humanConfirmed", true)
                     .put("blueReconciliation", reconciliation ?: JSONObject().put("ok", false))
+                    .put("blueCausalAttribution", causalClosure ?: causalPreparation)
                     .put("startedAt", startedAt)
                     .put("finishedAt", System.currentTimeMillis())
             } else {
@@ -203,10 +220,13 @@ class BlueJavascriptBridge(activity: MainActivity) {
                 .put("error", "Outra operação de calibração está em andamento").toString()
         }
 
+        val causalPreparation = JSONObject(service.bluePrepareIntervention("MAP", cells.toString()))
+        val causalInterventionId = causalPreparation.optString("interventionId")
         val startedAt = System.currentTimeMillis()
         lastOperation = JSONObject()
             .put("ok", true)
             .put("state", "MAP_K_QUEUED")
+            .put("blueCausalPreparation", causalPreparation)
             .put("busy", true)
             .put("progress", 0)
             .put("startedAt", startedAt)
@@ -217,6 +237,7 @@ class BlueJavascriptBridge(activity: MainActivity) {
             val adjustmentIds = JSONArray()
             var completedCells = 0
             var failure: JSONObject? = null
+            var confirmedWriterPayload = JSONObject()
             try {
                 plan.chunks.forEachIndexed { chunkIndex, chunk ->
                     if (failure != null) return@forEachIndexed
@@ -272,6 +293,7 @@ class BlueJavascriptBridge(activity: MainActivity) {
                             .put("writerProgress", writerProgress)
                         when {
                             writerState == "BATCH_CONFIRMED" -> {
+                                confirmedWriterPayload = writer.optJSONObject("details") ?: JSONObject()
                                 completedCells += chunk.length()
                                 chunkFinished = true
                             }
@@ -295,6 +317,17 @@ class BlueJavascriptBridge(activity: MainActivity) {
                     JSONObject().put("ok", false).put("error", error.message ?: "Readback Blue indisponível")
                 }
             } else null
+            val causalClosure = causalInterventionId.takeIf(String::isNotBlank)?.let {
+                val writerEvidence = JSONObject(confirmedWriterPayload.toString())
+                    .put("ok", fullyConfirmed)
+                    .put("humanConfirmed", fullyConfirmed)
+                    .put("readbackValid", fullyConfirmed && confirmedWriterPayload.optBoolean("readbackValid", false))
+                try { JSONObject(service.blueConfirmIntervention(it, writerEvidence.toString())) }
+                catch (error: Exception) {
+                    JSONObject().put("ok", false).put("state", "ABSTAIN")
+                        .put("reason", error.message ?: "Fechamento causal indisponível")
+                }
+            }
             lastOperation = if (fullyConfirmed) {
                 JSONObject()
                     .put("ok", true).put("state", "BATCH_CONFIRMED").put("busy", false).put("progress", 100)
@@ -303,6 +336,7 @@ class BlueJavascriptBridge(activity: MainActivity) {
                     .put("internalChunks", plan.chunks.size).put("adjustmentIds", adjustmentIds)
                     .put("humanConfirmed", true).put("readbackValid", true)
                     .put("blueReconciliation", reconciliation ?: JSONObject().put("ok", false))
+                    .put("blueCausalAttribution", causalClosure ?: causalPreparation)
             } else {
                 JSONObject()
                     .put("ok", false).put("state", "BATCH_PARTIAL_FAILED").put("busy", false)

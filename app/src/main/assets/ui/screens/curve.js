@@ -382,12 +382,14 @@
           let changed = false;
           persistentChanges.forEach((change) => {
             const index = Number(change.index);
-            const requested = finite(change.after);
-            if (!Number.isInteger(index) || requested === null) return;
+            const requested = finite(change.targetFactor != null ? change.targetFactor : change.after);
+            const normalizedRaw = finite(change.targetRaw);
+            if (!Number.isInteger(index) || requested === null || normalizedRaw === null) return;
             const preview = this.api.previewCurvePoint(index, requested);
             if (!(preview == null ? void 0 : preview.ok)) return;
             preview.preparedFromSuggestion = true;
             preview.suggestionId = suggestion.id || "";
+            preview.targetRaw = normalizedRaw;
             this.acceptPreview(preview, true);
             changed = changed || preview.changed === true;
           });
