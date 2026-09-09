@@ -65,6 +65,17 @@ class BlueCausalEngine(
 
     fun errorPercentFromLog(errorLog: Double): Double = (exp(errorLog) - 1.0) * 100.0
 
+    /**
+     * Deadband is an action policy, never an evidence filter. A measured pair
+     * inside the band still belongs in comparisons and must remain visible.
+     */
+    fun isWithinActionDeadband(petrolOnCngMs: Double, petrolReferenceMs: Double): Boolean {
+        require(petrolOnCngMs > 0.0 && petrolReferenceMs > 0.0)
+        val errorPercent = errorPercentFromLog(cngErrorLog(petrolOnCngMs, petrolReferenceMs))
+        return abs(petrolOnCngMs - petrolReferenceMs) <= policy.absoluteDeadbandMs ||
+            abs(errorPercent) <= policy.relativeDeadbandPercent
+    }
+
     fun actuatorGain(
         beforeErrorLog: Double,
         afterErrorLog: Double,
@@ -111,11 +122,6 @@ class BlueCausalEngine(
         if (reference.quality < policy.minimumComparisonQuality) return null
         val errorLog = cngErrorLog(cng.petrolMs, reference.petrolMs)
         val errorPercent = errorPercentFromLog(errorLog)
-        if (abs(cng.petrolMs - reference.petrolMs) <= policy.absoluteDeadbandMs ||
-            abs(errorPercent) <= policy.relativeDeadbandPercent
-        ) {
-            return null
-        }
         return FuelComparison(
             id = "${revision.curveK}:${revision.mapK}:${cng.visitId}",
             revision = revision,

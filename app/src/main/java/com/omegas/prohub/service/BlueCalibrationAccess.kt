@@ -62,6 +62,50 @@ private object BlueProjectionCache {
 }
 
 /**
+ * Brings the normal Learning publication into the Blue causal coordinator.
+ * Calibration is hydrated only from full readbacks already confirmed in the
+ * current USB session; this path never starts serial I/O or an ECU write.
+ */
+private fun refreshBlueLearningEvidence(
+    service: TelemetryForegroundService,
+    coordinator: BlueCalibrationCoordinator,
+): JSONObject {
+    try {
+        if (!coordinator.stateJson().optBoolean("ready", false)) {
+            val mapFile = File(service.paths.runtimeRoot, "k_map_cache.json")
+            val curveFile = File(service.paths.runtimeRoot, "k_factor_cache.json")
+            val map = mapFile.takeIf(File::isFile)?.let { JSONObject(it.readText(Charsets.UTF_8)) }
+            val curve = curveFile.takeIf(File::isFile)?.let { JSONObject(it.readText(Charsets.UTF_8)) }
+            if (map == null || curve == null ||
+                !map.optBoolean("complete", false) || !map.optBoolean("sessionConfirmed", false) ||
+                !curve.optBoolean("complete", false) || !curve.optBoolean("sessionConfirmed", false)
+            ) {
+                return JSONObject()
+                    .put("ok", false)
+                    .put("state", "CALIBRATION_READBACK_REQUIRED")
+                    .put("error", "Leia e confirme Mapa K e Curva K nesta sessão para calcular o desvio medido")
+                    .put("serialReadStarted", false)
+                    .put("automaticWrite", false)
+            }
+            coordinator.synchronizeFromConfirmedSnapshot(map, curve)
+        }
+
+        val learning = service.runtime.exportLearning(service.settings.deviceId)
+        return coordinator.ingestLearningSnapshot(learning)
+            .put("state", "LEARNING_EVIDENCE_INGESTED")
+            .put("serialReadStarted", false)
+            .put("automaticWrite", false)
+    } catch (error: Exception) {
+        return JSONObject()
+            .put("ok", false)
+            .put("state", "BLUE_LEARNING_INGEST_FAILED")
+            .put("error", error.message ?: "Falha ao reconciliar evidência Blue")
+            .put("serialReadStarted", false)
+            .put("automaticWrite", false)
+    }
+}
+
+/**
  * Synchronizes the already-paired OBD witness into the Blue coordinator only
  * when Blue state/proposal is requested. This keeps OBD read-only and avoids a
  * reverse dependency from the OBD acquisition path into calibration writers.
@@ -89,10 +133,16 @@ fun TelemetryForegroundService.blueCalibrationStateId(): String = try {
 
 fun TelemetryForegroundService.blueCalibrationStateJson(): String = try {
     val coordinator = BlueCalibrationRegistry.get(this)
+    val ingestion = refreshBlueLearningEvidence(this, coordinator)
     syncObdWitness(this, coordinator)
-    JSONObject(coordinator.stateJson().toString())
+    val state = JSONObject(coordinator.stateJson().toString())
         .put("evidenceProjection", BlueProjectionCache.get(this))
-        .toString()
+        .put("learningIngestion", ingestion)
+    if (!state.optBoolean("ready", false) && !ingestion.optBoolean("ok", false)) {
+        state.put("reason", ingestion.optString("state", "CALIBRATION_NOT_SYNCED"))
+            .put("error", ingestion.optString("error", "Estado Blue indisponível"))
+    }
+    state.toString()
 } catch (error: Exception) {
     JSONObject()
         .put("ready", false)
@@ -121,6 +171,7 @@ fun TelemetryForegroundService.blueIngestLearningSnapshot(payload: String): Stri
 
 fun TelemetryForegroundService.blueProposalJson(): String = try {
     val coordinator = BlueCalibrationRegistry.get(this)
+    refreshBlueLearningEvidence(this, coordinator)
     syncObdWitness(this, coordinator)
     coordinator.proposalJson().toString()
 } catch (error: Exception) {

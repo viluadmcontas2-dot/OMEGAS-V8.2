@@ -14,9 +14,10 @@ class BlueAutoCalAdapter(
         require(comparison.petrolTargetMs > 0.0)
         require(comparison.petrolOnCngMs > 0.0)
         val errorLog = engine.cngErrorLog(comparison.petrolOnCngMs, comparison.petrolTargetMs)
+        val actionable = !engine.isWithinActionDeadband(comparison.petrolOnCngMs, comparison.petrolTargetMs)
         return BlueCorrectionProposal(
             calibrationState = engine.calibrationState(comparison.revision),
-            correctionMultiplier = engine.correctionMultiplier(errorLog, gain),
+            correctionMultiplier = if (actionable) engine.correctionMultiplier(errorLog, gain) else null,
             errorLog = errorLog,
             errorPercent = engine.errorPercentFromLog(errorLog),
             actuatorGain = gain,
@@ -26,6 +27,12 @@ class BlueAutoCalAdapter(
 
     fun proposalJson(comparison: FuelComparison, gain: BlueActuatorGain?): JSONObject {
         val proposal = proposal(comparison, gain)
+        val actionable = !engine.isWithinActionDeadband(comparison.petrolOnCngMs, comparison.petrolTargetMs)
+        val state = when {
+            !actionable -> "MEASURED_WITHIN_ACTION_DEADBAND"
+            proposal.correctionMultiplier == null -> "MEASURE_ACTUATOR_GAIN"
+            else -> "PROPOSAL_READY"
+        }
         return JSONObject()
             .put("ok", true)
             .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
@@ -33,6 +40,7 @@ class BlueAutoCalAdapter(
             .put("manualOnly", true)
             .put("available", proposal.correctionMultiplier != null)
             .put("evidenceAvailable", true)
+            .put("actionableDeviation", actionable)
             .put("curveRevision", proposal.calibrationState.curveK)
             .put("mapRevision", proposal.calibrationState.mapK)
             .put("petrolReferenceMs", comparison.petrolTargetMs)
@@ -41,7 +49,7 @@ class BlueAutoCalAdapter(
             .put("errorPercent", proposal.errorPercent)
             .put("actuatorGain", proposal.actuatorGain?.gain ?: JSONObject.NULL)
             .apply { proposal.correctionMultiplier?.let { put("correctionMultiplier", it) } }
-            .put("state", if (proposal.correctionMultiplier == null) "MEASURE_ACTUATOR_GAIN" else "PROPOSAL_READY")
+            .put("state", state)
     }
 
     fun learnGain(

@@ -36,7 +36,34 @@ class BlueCalibrationCoordinator(
         require(mapResult.optBoolean("ok")) { mapResult.optString("error", "Falha ao ler Mapa K") }
         val curveResult = factorManager.readCurve()
         require(curveResult.optBoolean("ok")) { curveResult.optString("error", "Falha ao ler Curva K") }
+        applyCalibrationSnapshot(mapResult, curveResult, "ECU_ACK_READBACK")
+    }
 
+    /**
+     * Initializes Blue from readbacks already confirmed in the current USB
+     * session. This never starts serial I/O and therefore preserves the manual
+     * calibration-read boundary of KWriteManager/KFactorManager.
+     */
+    fun synchronizeFromConfirmedSnapshot(mapSnapshot: JSONObject, curveSnapshot: JSONObject): JSONObject = synchronized(lock) {
+        require(mapSnapshot.optBoolean("complete", false) && mapSnapshot.optBoolean("sessionConfirmed", false)) {
+            "Mapa K ainda não foi confirmado nesta sessão"
+        }
+        require(curveSnapshot.optBoolean("complete", false) && curveSnapshot.optBoolean("sessionConfirmed", false)) {
+            "Curva K ainda não foi confirmada nesta sessão"
+        }
+        val mapSessionId = mapSnapshot.optLong("sessionId", -1L)
+        val curveSessionId = curveSnapshot.optLong("sessionId", -1L)
+        require(mapSessionId >= 0L && mapSessionId == curveSessionId) {
+            "Mapa K e Curva K não pertencem à mesma sessão confirmada"
+        }
+        applyCalibrationSnapshot(
+            JSONObject(mapSnapshot.toString()).put("ok", true),
+            JSONObject(curveSnapshot.toString()).put("ok", true),
+            "CONFIRMED_SESSION_CACHE",
+        )
+    }
+
+    private fun applyCalibrationSnapshot(mapResult: JSONObject, curveResult: JSONObject, source: String): JSONObject {
         val map = decodeMap(mapResult.optJSONArray("allRows"))
         val curve = decodeCurve(curveResult.optJSONArray("factorsRaw"))
         val previous = state
@@ -52,9 +79,9 @@ class BlueCalibrationCoordinator(
             calibration = calibration,
         )
         state = next.copy(comparisons = engine.reconcile(next))
-        stateJsonLocked()
+        return stateJsonLocked()
             .put("ok", true)
-            .put("source", "ECU_ACK_READBACK")
+            .put("source", source)
     }
 
     fun ingestLearningSnapshot(snapshot: JSONObject): JSONObject = synchronized(lock) {
@@ -98,10 +125,10 @@ class BlueCalibrationCoordinator(
                     pressureDiffBar = finiteOrZero(region.optDouble("pressure_diff_bar", 0.0)),
                 )
                 if (fuel == FuelKind.PETROL) {
-                    if (petrol.putIfAbsent(id, evidence) == null) petrolImported += 1
+                    if (petrol.put(id, evidence) == null) petrolImported += 1
                 } else {
                     val bucket = cng.getOrPut(current.calibration.revision) { mutableMapOf() }
-                    if (bucket.putIfAbsent(id, evidence) == null) cngImported += 1
+                    if (bucket.put(id, evidence) == null) cngImported += 1
                 }
             }
         }
