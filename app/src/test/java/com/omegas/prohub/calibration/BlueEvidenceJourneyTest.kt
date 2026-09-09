@@ -161,6 +161,36 @@ class BlueEvidenceJourneyTest {
     }
 
     @Test
+    fun `visit audit count cannot duplicate one regional scientific estimate`() {
+        val manyVisits = JSONArray().apply { repeat(20) { put("visit-$it") } }
+        val result = readyCoordinator().ingestLearningSnapshot(snapshot(
+            region("petrol-region", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p")
+                .put("visits", manyVisits),
+            region("gnv-region", "GNV", 1500.0, 0.50, 4.40, 0.95, "g")
+                .put("visits", manyVisits),
+        ))
+
+        assertEquals(1, result.getInt("petrolEvidence"))
+        assertEquals(1, result.getInt("activeCngEvidence"))
+        assertEquals(1, result.getInt("activeComparisons"))
+    }
+
+    @Test
+    fun `latest comparison follows newest physical CNG observation not reconciliation clock`() {
+        val coordinator = readyCoordinator()
+        coordinator.ingestLearningSnapshot(snapshot(
+            region("petrol", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p", updatedAt = 500L),
+            region("gnv-old", "GNV", 1500.0, 0.50, 4.40, 0.95, "old", updatedAt = 1_000L),
+        ))
+        val result = coordinator.ingestLearningSnapshot(snapshot(
+            region("gnv-new", "GNV", 1500.0, 0.50, 4.20, 0.95, "new", updatedAt = 2_000L),
+        ))
+
+        assertEquals(2_000L, latest(result).getLong("createdAt"))
+        assertEquals(4.20, latest(result).getDouble("petrolOnCngMs"), 1e-9)
+    }
+
+    @Test
     fun `calibration snapshots must be confirmed and from the same session`() {
         val coordinator = newCoordinator()
         val unconfirmedMap = mapSnapshot(7L).put("sessionConfirmed", false)
