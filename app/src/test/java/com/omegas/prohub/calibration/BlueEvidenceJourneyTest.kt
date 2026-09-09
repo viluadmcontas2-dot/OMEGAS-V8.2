@@ -191,6 +191,77 @@ class BlueEvidenceJourneyTest {
     }
 
     @Test
+    fun `confirmed isolated curve response becomes one exact consumable change`() {
+        val coordinator = readyCoordinator()
+        coordinator.ingestLearningSnapshot(snapshot(
+            region("petrol", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p", updatedAt = 500L),
+            region("cell-a", "GNV", 1500.0, 0.50, 4.40, 0.95, "before", updatedAt = 1_000L),
+        ))
+        val point = JSONObject()
+            .put("index", 7)
+            .put("currentRaw", 16_384)
+            .put("targetRaw", 18_022)
+        val prepared = coordinator.prepareIntervention(
+            JSONObject().put("type", "CURVE").put("points", JSONArray().put(point)),
+        )
+        assertTrue(prepared.getBoolean("eligible"))
+        val interventionId = prepared.getString("interventionId")
+
+        coordinator.synchronizeFromConfirmedSnapshot(
+            mapSnapshot(42L),
+            curveSnapshot(42L, pointIndex = 7, rawAtPoint = 18_022),
+        )
+        val event = JSONObject()
+            .put("index", 7)
+            .put("beforeRaw", 16_384)
+            .put("afterRaw", 18_022)
+            .put("beforeFactor", 1.0)
+            .put("afterFactor", 18_022.0 / 16_384.0)
+        val confirmation = coordinator.confirmIntervention(
+            interventionId,
+            JSONObject()
+                .put("ok", true)
+                .put("humanConfirmed", true)
+                .put("readbackValid", true)
+                .put("confirmedAt", 1_500L)
+                .put("confirmedEvents", JSONArray().put(event)),
+        )
+        assertEquals("CONFIRMED", confirmation.getString("state"))
+
+        val result = coordinator.ingestLearningSnapshot(snapshot(
+            region("cell-a", "GNV", 1500.0, 0.50, 4.20, 0.95, "after", updatedAt = 2_000L),
+        ))
+        val proposal = result.getJSONObject("proposal")
+        assertEquals("PROPOSAL_READY", proposal.getString("state"))
+        assertTrue(proposal.getBoolean("gainAccepted"))
+        assertEquals(1, proposal.getJSONArray("curveChanges").length())
+        assertEquals(7, proposal.getJSONArray("curveChanges").getJSONObject(0).getInt("index"))
+        assertFalse(proposal.has("mapChanges"))
+        assertFalse(proposal.getBoolean("automatic"))
+        assertTrue(proposal.getBoolean("manualOnly"))
+    }
+
+    @Test
+    fun `multi point intent stays manual but is causally ineligible`() {
+        val coordinator = readyCoordinator()
+        coordinator.ingestLearningSnapshot(snapshot(
+            region("petrol", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p"),
+            region("cell-a", "GNV", 1500.0, 0.50, 4.40, 0.95, "before"),
+        ))
+        val points = JSONArray()
+            .put(JSONObject().put("index", 7).put("currentRaw", 16_384).put("targetRaw", 18_022))
+            .put(JSONObject().put("index", 8).put("currentRaw", 16_384).put("targetRaw", 18_022))
+
+        val prepared = coordinator.prepareIntervention(
+            JSONObject().put("type", "CURVE").put("points", points),
+        )
+
+        assertFalse(prepared.getBoolean("eligible"))
+        assertEquals("INTERVENTION_NOT_ISOLATED", prepared.getString("reason"))
+        assertFalse(prepared.getBoolean("automaticWrite"))
+    }
+
+    @Test
     fun `calibration snapshots must be confirmed and from the same session`() {
         val coordinator = newCoordinator()
         val unconfirmedMap = mapSnapshot(7L).put("sessionConfirmed", false)
@@ -250,9 +321,15 @@ class BlueEvidenceJourneyTest {
             .put("allRows", rows)
     }
 
-    private fun curveSnapshot(sessionId: Long): JSONObject {
+    private fun curveSnapshot(
+        sessionId: Long,
+        pointIndex: Int = -1,
+        rawAtPoint: Int = 16_384,
+    ): JSONObject {
         val raw = JSONArray()
-        repeat(CalibrationShape.CURVE_K_POINTS) { raw.put(16_384) }
+        repeat(CalibrationShape.CURVE_K_POINTS) { index ->
+            raw.put(if (index == pointIndex) rawAtPoint else 16_384)
+        }
         return JSONObject()
             .put("complete", true)
             .put("sessionConfirmed", true)
