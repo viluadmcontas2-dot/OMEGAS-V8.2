@@ -398,10 +398,11 @@ class BlueCalibrationCoordinator(
         return base
     }
 
-    private fun noQuantizedChange(base: JSONObject): JSONObject = base
-        .remove("correctionMultiplier")
-        .put("available", false)
-        .put("state", "QUANTIZED_NO_CHANGE")
+    private fun noQuantizedChange(base: JSONObject): JSONObject {
+        base.remove("correctionMultiplier")
+        return base.put("available", false)
+            .put("state", "QUANTIZED_NO_CHANGE")
+    }
 
     private fun projectWitness(baseJson: JSONObject, comparison: FuelComparison): JSONObject {
         val presentation = BlueMapKAddressing.presentationFields(comparison)
