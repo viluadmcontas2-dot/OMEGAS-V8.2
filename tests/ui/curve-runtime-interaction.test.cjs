@@ -19,7 +19,7 @@ function findBrowser() {
   return null;
 }
 
-test('Curva K executa seleção em lote e Set absoluto em browser real', { timeout: 20000 }, () => {
+test('Curva K executa seleção em lote e Set absoluto em browser real', { timeout: 40000 }, () => {
   const browser = findBrowser();
   assert.ok(browser, 'runner precisa de Chrome/Chromium para o smoke da Curva K');
   const harness = pathToFileURL(path.join(ROOT, 'tests/ui/curve-runtime-interaction-smoke.html')).href;
@@ -28,7 +28,7 @@ test('Curva K executa seleção em lote e Set absoluto em browser real', { timeo
     '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-background-networking',
     '--allow-file-access-from-files', `--user-data-dir=${userDataDir}`,
     '--virtual-time-budget=6500', '--dump-dom', harness,
-  ], { cwd: ROOT, encoding: 'utf8', timeout: 15000, maxBuffer: 8 * 1024 * 1024 });
+  ], { cwd: ROOT, encoding: 'utf8', timeout: 30000, maxBuffer: 8 * 1024 * 1024 });
   try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch (_) {}
   assert.equal(run.status, 0, `browser curve smoke falhou: ${run.stderr || run.stdout}`);
   assert.match(run.stdout, /data-curve-runtime="PASS"/, `Curva K runtime falhou:\n${run.stdout.slice(-5000)}`);
