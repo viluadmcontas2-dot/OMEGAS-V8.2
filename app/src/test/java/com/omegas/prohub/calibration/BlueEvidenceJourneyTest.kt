@@ -12,17 +12,15 @@ import org.junit.Test
 /**
  * Software-journey regressions for issue #25.
  *
- * These tests deliberately exercise the real BlueCalibrationCoordinator from
- * calibration snapshot -> Learning evidence ingestion -> equivalent pair ->
- * measured comparison -> presentation payload. The hardware managers are never
- * invoked; reflection supplies inert constructor placeholders so the test can
- * use the real coordinator without Android/USB I/O.
+ * Exercises the real BlueCalibrationCoordinator from confirmed calibration
+ * snapshot -> Learning evidence ingestion -> equivalent pair -> measured
+ * comparison -> presentation payload. Hardware managers are inert placeholders;
+ * these paths perform no Android/USB I/O.
  */
 class BlueEvidenceJourneyTest {
     @Test
     fun `gasoline 4_00 and gnv 4_40 becomes visible ten percent measured deviation`() {
-        val coordinator = readyCoordinator()
-        val result = coordinator.ingestLearningSnapshot(snapshot(
+        val result = readyCoordinator().ingestLearningSnapshot(snapshot(
             region("petrol-a", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p1"),
             region("gnv-a", "GNV", 1500.0, 0.50, 4.40, 0.95, "g1"),
         ))
@@ -32,7 +30,9 @@ class BlueEvidenceJourneyTest {
         assertEquals(4.40, comparison.getDouble("petrolOnCngMs"), 1e-9)
         assertEquals(10.0, comparison.getDouble("errorPercent"), 1e-9)
         assertTrue(comparison.getString("cellKey").isNotBlank())
-        assertEquals(4.40, comparison.getJSONObject("mapKCell").getDouble("petrolBin"), 1e-9)
+        // Measurement stays continuous at 4.40 ms; physical Map K addressing
+        // correctly snaps that observation to the immutable nearest bin, 4.5 ms.
+        assertEquals(4.50, comparison.getJSONObject("mapKCell").getDouble("petrolBin"), 1e-9)
         val proposal = result.getJSONObject("proposal")
         assertTrue(proposal.getBoolean("evidenceAvailable"))
         assertFalse(proposal.getBoolean("available"))
@@ -66,8 +66,7 @@ class BlueEvidenceJourneyTest {
             region("petrol", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p"),
             region("gnv", "GNV", 1500.0, 0.50, 4.04, 0.95, "g"),
         ))
-        val comparison = latest(result)
-        assertEquals(1.0, comparison.getDouble("errorPercent"), 1e-9)
+        assertEquals(1.0, latest(result).getDouble("errorPercent"), 1e-9)
         val proposal = result.getJSONObject("proposal")
         assertFalse(proposal.getBoolean("actionableDeviation"))
         assertFalse(proposal.getBoolean("available"))
@@ -164,7 +163,7 @@ class BlueEvidenceJourneyTest {
     @Test
     fun `calibration snapshots must be confirmed and from the same session`() {
         val coordinator = newCoordinator()
-        val unconfirmedMap = mapSnapshot(sessionId = 7L).put("sessionConfirmed", false)
+        val unconfirmedMap = mapSnapshot(7L).put("sessionConfirmed", false)
         assertThrows(IllegalArgumentException::class.java) {
             coordinator.synchronizeFromConfirmedSnapshot(unconfirmedMap, curveSnapshot(7L))
         }
@@ -184,9 +183,8 @@ class BlueEvidenceJourneyTest {
             region("p3", "PETROL", 1500.0, 0.50, 4.10, 0.95, "p3"),
             region("g", "GNV", 1500.0, 0.50, 4.40, 0.95, "g"),
         ))
-        val comparison = latest(result)
-        assertEquals(4.00, comparison.getDouble("petrolReferenceMs"), 1e-9)
-        assertEquals(10.0, comparison.getDouble("errorPercent"), 1e-9)
+        assertEquals(4.00, latest(result).getDouble("petrolReferenceMs"), 1e-9)
+        assertEquals(10.0, latest(result).getDouble("errorPercent"), 1e-9)
     }
 
     private fun latest(result: JSONObject): JSONObject {
