@@ -41,7 +41,7 @@ function comparison(overrides = {}) {
 
 function screenForDetail(model = { cells: [], counts: { petrol: 0, cng: 0, comparable: 0 }, epoch: 1 }) {
   const instance = Object.create(LearningScreen.prototype);
-  instance.cellPane = { innerHTML: '' };
+  instance.cellPane = { innerHTML: '', querySelector() { return null; } };
   instance.buildEvidenceModel = () => model;
   return instance;
 }
