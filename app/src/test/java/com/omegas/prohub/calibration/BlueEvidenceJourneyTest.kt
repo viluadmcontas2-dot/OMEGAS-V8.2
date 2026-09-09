@@ -8,7 +8,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import sun.misc.Unsafe
 
 /**
  * Software-journey regressions for issue #25.
@@ -16,7 +15,7 @@ import sun.misc.Unsafe
  * These tests deliberately exercise the real BlueCalibrationCoordinator from
  * calibration snapshot -> Learning evidence ingestion -> equivalent pair ->
  * measured comparison -> presentation payload. The hardware managers are never
- * invoked; Unsafe only supplies inert constructor placeholders so the test can
+ * invoked; reflection supplies inert constructor placeholders so the test can
  * use the real coordinator without Android/USB I/O.
  */
 class BlueEvidenceJourneyTest {
@@ -200,10 +199,12 @@ class BlueEvidenceJourneyTest {
         newCoordinator().also { it.synchronizeFromConfirmedSnapshot(mapSnapshot(sessionId), curveSnapshot(sessionId)) }
 
     private fun newCoordinator(): BlueCalibrationCoordinator {
-        val unsafeField = Unsafe::class.java.getDeclaredField("theUnsafe").apply { isAccessible = true }
-        val unsafe = unsafeField.get(null) as Unsafe
-        val mapManager = unsafe.allocateInstance(KWriteManager::class.java) as KWriteManager
-        val factorManager = unsafe.allocateInstance(KFactorManager::class.java) as KFactorManager
+        val unsafeClass = Class.forName("sun.misc.Unsafe")
+        val unsafeField = unsafeClass.getDeclaredField("theUnsafe").apply { isAccessible = true }
+        val unsafe = unsafeField.get(null)
+        val allocateInstance = unsafeClass.getMethod("allocateInstance", Class::class.java)
+        val mapManager = allocateInstance.invoke(unsafe, KWriteManager::class.java) as KWriteManager
+        val factorManager = allocateInstance.invoke(unsafe, KFactorManager::class.java) as KFactorManager
         return BlueCalibrationCoordinator(mapManager, factorManager)
     }
 
