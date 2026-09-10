@@ -84,6 +84,7 @@ data class BlueLearningState(
     val petrolEvidence: List<FuelEvidence> = emptyList(),
     val cngEvidenceByRevision: Map<CalibrationRevision, List<FuelEvidence>> = emptyMap(),
     val comparisons: List<FuelComparison> = emptyList(),
+    val calibrationConfirmed: Boolean = true,
 ) {
     init { require(sessionId.isNotBlank()) }
 

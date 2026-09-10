@@ -82,17 +82,32 @@ class BlueCalibrationCoordinator(
         val map = decodeMap(mapResult.optJSONArray("allRows"))
         val curve = decodeCurve(curveResult.optJSONArray("factorsRaw"))
         val previous = state
-        val revision = previous?.let {
+        val previousConfirmed = previous?.takeIf { it.calibrationConfirmed }
+        val revision = previousConfirmed?.let {
             CalibrationRevision(
                 curveK = it.calibration.revision.curveK + if (it.calibration.curveK == curve) 0 else 1,
                 mapK = it.calibration.revision.mapK + if (it.calibration.mapK == map) 0 else 1,
             )
         } ?: CalibrationRevision(0, 0)
         val calibration = CalibrationState(revision, curve, map)
-        val next = previous?.copy(calibration = calibration) ?: BlueLearningState(
-            sessionId = UUID.randomUUID().toString(),
-            calibration = calibration,
-        )
+        val next = when {
+            previous == null -> BlueLearningState(
+                sessionId = UUID.randomUUID().toString(),
+                calibration = calibration,
+                calibrationConfirmed = true,
+            )
+            !previous.calibrationConfirmed -> {
+                val reboundCng = previous.cngEvidenceByRevision.values.flatten().map {
+                    it.copy(cngRevision = revision)
+                }
+                previous.copy(
+                    calibration = calibration,
+                    calibrationConfirmed = true,
+                    cngEvidenceByRevision = mapOf(revision to reboundCng),
+                )
+            }
+            else -> previous.copy(calibration = calibration, calibrationConfirmed = true)
+        }
         state = next.copy(comparisons = engine.reconcile(next))
         return stateJsonLocked()
             .put("ok", true)
@@ -100,7 +115,7 @@ class BlueCalibrationCoordinator(
     }
 
     fun ingestLearningSnapshot(snapshot: JSONObject): JSONObject = synchronized(lock) {
-        val current = requireState()
+        val current = state ?: observationalState().also { state = it }
         val regions = snapshot.optJSONArray("regions") ?: JSONArray()
         val epoch = snapshot.optInt("epoch", 1)
         val petrol = current.petrolEvidence.associateBy { it.id }.toMutableMap()
@@ -161,6 +176,10 @@ class BlueCalibrationCoordinator(
 
     fun prepareIntervention(payload: JSONObject): JSONObject = synchronized(lock) {
         val current = requireState()
+        if (!current.calibrationConfirmed) {
+            return@synchronized JSONObject().put("ok", true).put("eligible", false)
+                .put("reason", "CALIBRATION_READBACK_REQUIRED").put("automaticWrite", false)
+        }
         val comparison = current.activeComparisons().maxByOrNull(FuelComparison::createdAtMs)
             ?: return@synchronized JSONObject().put("ok", true).put("eligible", false)
                 .put("reason", "COMPARISON_REQUIRED").put("automaticWrite", false)
@@ -261,7 +280,7 @@ class BlueCalibrationCoordinator(
         .put("reason", "STALE_PREVIEW").put("automaticWrite", false)
 
     private fun refreshGainLocked() {
-        val current = state ?: return
+        val current = state?.takeIf { it.calibrationConfirmed } ?: return
         val intervention = ledger.latestConfirmed() ?: return
         if (intervention.beforeComparisonId.isBlank() || intervention.scientificRegionId.isBlank()) return
         val before = current.comparisons.firstOrNull { it.id == intervention.beforeComparisonId } ?: return
@@ -292,7 +311,11 @@ class BlueCalibrationCoordinator(
     fun stateJson(): JSONObject = synchronized(lock) { stateJsonLocked() }
 
     fun proposalJson(): JSONObject = synchronized(lock) {
-        val active = state?.activeComparisons().orEmpty()
+        val current = state
+        val active = current?.activeComparisons().orEmpty()
+        if (current != null && !current.calibrationConfirmed) {
+            return@synchronized calibrationReadbackProposal(active.isNotEmpty())
+        }
         val comparison = active.maxByOrNull { it.createdAtMs }
             ?: return@synchronized JSONObject()
                 .put("ok", true)
@@ -315,12 +338,20 @@ class BlueCalibrationCoordinator(
         val active = current.activeComparisons()
         val latest = active.maxByOrNull { it.createdAtMs }
         val latestJson = latest?.let(::comparisonJson)
+        val calibrationReady = current.calibrationConfirmed
         return JSONObject()
-            .put("ready", true)
+            .put("ready", calibrationReady)
+            .put("measurementReady", active.isNotEmpty())
+            .put("reason", if (calibrationReady) JSONObject.NULL else "CALIBRATION_READBACK_REQUIRED")
+            .put(
+                "error",
+                if (calibrationReady) JSONObject.NULL
+                else "Leia e confirme Mapa K e Curva K somente para calcular uma sugestão",
+            )
             .put("sessionId", current.sessionId)
             .put("revision", revisionJson(current.calibration.revision))
-            .put("curvePoints", current.calibration.curveK.size)
-            .put("mapStorageRows", current.calibration.mapK.size)
+            .put("curvePoints", if (calibrationReady) current.calibration.curveK.size else 0)
+            .put("mapStorageRows", if (calibrationReady) current.calibration.mapK.size else 0)
             .put("petrolEvidence", current.petrolEvidence.size)
             .put("activeCngEvidence", current.activeCngEvidence().size)
             .put("activeComparisons", active.size)
@@ -329,9 +360,37 @@ class BlueCalibrationCoordinator(
             .put("baseConfidence", latestJson?.optDouble("baseConfidence") ?: JSONObject.NULL)
             .put("effectiveConfidence", latestJson?.optDouble("effectiveConfidence") ?: JSONObject.NULL)
             .put("obdWitness", latestJson?.optJSONObject("obdWitness") ?: JSONObject.NULL)
-            .put("proposal", proposalJsonLocked(latest))
+            .put(
+                "proposal",
+                if (calibrationReady) proposalJsonLocked(latest)
+                else calibrationReadbackProposal(active.isNotEmpty()),
+            )
             .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
             .put("automaticWrite", false)
+    }
+
+    private fun calibrationReadbackProposal(evidenceAvailable: Boolean): JSONObject = JSONObject()
+        .put("ok", true)
+        .put("available", false)
+        .put("evidenceAvailable", evidenceAvailable)
+        .put("state", "CALIBRATION_READBACK_REQUIRED")
+        .put("decisionAuthority", "BLUE_CAUSAL_ENGINE")
+        .put("automatic", false)
+        .put("manualOnly", true)
+
+    private fun observationalState(): BlueLearningState {
+        val revision = CalibrationRevision(0, 0)
+        return BlueLearningState(
+            sessionId = UUID.randomUUID().toString(),
+            calibration = CalibrationState(
+                revision = revision,
+                curveK = List(CalibrationShape.CURVE_K_POINTS) { 1.0 },
+                mapK = List(CalibrationShape.MAP_K_STORAGE_ROWS) {
+                    List(CalibrationShape.MAP_K_COLUMNS) { KWriteManager.MIN_ALLOWED_K }
+                },
+            ),
+            calibrationConfirmed = false,
+        )
     }
 
     private fun proposalJsonLocked(comparison: FuelComparison?): Any = comparison?.let {

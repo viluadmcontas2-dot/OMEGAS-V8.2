@@ -76,6 +76,7 @@ private fun refreshBlueLearningEvidence(
     coordinator: BlueCalibrationCoordinator,
 ): JSONObject {
     try {
+        val learning = service.runtime.exportLearning(service.settings.deviceId)
         if (!coordinator.stateJson().optBoolean("ready", false)) {
             val mapFile = File(service.paths.runtimeRoot, "k_map_cache.json")
             val curveFile = File(service.paths.runtimeRoot, "k_factor_cache.json")
@@ -85,19 +86,18 @@ private fun refreshBlueLearningEvidence(
                 !map.optBoolean("complete", false) || !map.optBoolean("sessionConfirmed", false) ||
                 !curve.optBoolean("complete", false) || !curve.optBoolean("sessionConfirmed", false)
             ) {
-                return JSONObject()
-                    .put("ok", false)
-                    .put("state", "CALIBRATION_READBACK_REQUIRED")
-                    .put("error", "Leia e confirme Mapa K e Curva K nesta sessão para calcular o desvio medido")
+                return coordinator.ingestLearningSnapshot(learning)
+                    .put("state", "MEASURED_EVIDENCE_INGESTED")
+                    .put("calibrationReadbackRequiredForProposal", true)
                     .put("serialReadStarted", false)
                     .put("automaticWrite", false)
             }
             coordinator.synchronizeFromConfirmedSnapshot(map, curve)
         }
 
-        val learning = service.runtime.exportLearning(service.settings.deviceId)
         return coordinator.ingestLearningSnapshot(learning)
             .put("state", "LEARNING_EVIDENCE_INGESTED")
+            .put("calibrationReadbackRequiredForProposal", false)
             .put("serialReadStarted", false)
             .put("automaticWrite", false)
     } catch (error: Exception) {
