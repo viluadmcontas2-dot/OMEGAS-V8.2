@@ -5,6 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.max
 
 /**
@@ -133,16 +134,43 @@ object LearningGridProjection {
             val regionEpoch = region.optInt("epoch", if (fuel == "PETROL") 0 else currentEpoch)
             val cell = region.optJSONObject("cell") ?: return@repeat
             val continuousWeights = cell.optJSONArray("continuousWeights")
+            val regionSamples = region.optInt("samples", region.optInt("frame_count", 0)).coerceAtLeast(0)
             if (continuousWeights != null) {
+                val cellWeights = DoubleArray(continuousWeights.length()) { wIndex ->
+                    max(0.0, continuousWeights.optJSONObject(wIndex)?.optDouble("weight", 0.0) ?: 0.0)
+                }
+                val totalCellWeight = cellWeights.sum()
+                val lastPositiveIndex = cellWeights.indices.lastOrNull { cellWeights[it] > 0.0 } ?: -1
+                val sampleAllocations = IntArray(cellWeights.size)
+                var cumulativeWeight = 0.0
+                var allocatedSamples = 0
+                if (regionSamples > 0 && totalCellWeight > 0.0) {
+                    cellWeights.indices.forEach { wIndex ->
+                        val cellWeight = cellWeights[wIndex]
+                        if (cellWeight <= 0.0) return@forEach
+                        cumulativeWeight += cellWeight
+                        val cumulativeSamples = if (wIndex == lastPositiveIndex) {
+                            regionSamples
+                        } else {
+                            floor(regionSamples * cumulativeWeight / totalCellWeight).toInt()
+                        }
+                        sampleAllocations[wIndex] = (cumulativeSamples - allocatedSamples).coerceAtLeast(0)
+                        allocatedSamples = cumulativeSamples
+                    }
+                }
                 repeat(continuousWeights.length()) { wIndex ->
                     val wObj = continuousWeights.optJSONObject(wIndex) ?: return@repeat
                     val row = wObj.optInt("row")
                     val column = wObj.optInt("column")
-                    val cellWeight = wObj.optDouble("weight", 0.0)
+                    val cellWeight = cellWeights[wIndex]
                     if (cellWeight <= 0.0) return@repeat
 
                     val key = "$fuel:$regionEpoch:$row:$column"
-                    val weight = max(0.001, region.optDouble("weight", region.optDouble("samples", 1.0)) * cellWeight)
+                    val evidenceWeight = region.optDouble(
+                        "weight",
+                        region.optDouble("samples", region.optDouble("frame_count", 1.0)),
+                    )
+                    val weight = max(0.001, evidenceWeight * cellWeight)
                     val target = grouped.getOrPut(key) {
                         MutableCell(
                             fuel = fuel,
@@ -155,7 +183,7 @@ object LearningGridProjection {
                     target.petrolWeighted += region.optDouble("petrol_ms", region.optDouble("petrol_mean", 0.0)) * weight
                     target.rpmWeighted += region.optDouble("rpm", region.optDouble("rpm_mean", 0.0)) * weight
                     target.mapWeighted += region.optDouble("map_bar", region.optDouble("map_mean", 0.0)) * weight
-                    target.samples += (region.optInt("samples", 0) * cellWeight).toInt()
+                    target.samples += sampleAllocations[wIndex]
                     target.addEvidenceIds(region, index)
                     target.confidenceWeighted += evidenceQuality(region) * weight
                     target.stage = strongerStage(target.stage, region.optString("stage", "OBSERVED"))
@@ -166,7 +194,10 @@ object LearningGridProjection {
                 val row = cell.optInt("row")
                 val column = cell.optInt("column")
                 val key = "$fuel:$regionEpoch:$row:$column"
-                val weight = max(0.001, region.optDouble("weight", region.optDouble("samples", 1.0)))
+                val weight = max(
+                    0.001,
+                    region.optDouble("weight", region.optDouble("samples", region.optDouble("frame_count", 1.0))),
+                )
                 val target = grouped.getOrPut(key) {
                     MutableCell(
                         fuel = fuel,
@@ -179,7 +210,7 @@ object LearningGridProjection {
                 target.petrolWeighted += region.optDouble("petrol_ms", region.optDouble("petrol_mean", 0.0)) * weight
                 target.rpmWeighted += region.optDouble("rpm", region.optDouble("rpm_mean", 0.0)) * weight
                 target.mapWeighted += region.optDouble("map_bar", region.optDouble("map_mean", 0.0)) * weight
-                target.samples += region.optInt("samples", 0)
+                target.samples += regionSamples
                 target.addEvidenceIds(region, index)
                 target.confidenceWeighted += evidenceQuality(region) * weight
                 target.stage = strongerStage(target.stage, region.optString("stage", "OBSERVED"))

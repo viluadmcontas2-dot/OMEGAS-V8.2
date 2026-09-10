@@ -87,17 +87,17 @@
         function normalizeCellSummary(item, fallbackEpoch) {
           var _a, _b, _c, _d, _e, _f, _g;
           return {
-            samples: finite(item.samples, 0),
+            samples: finite(item.samples != null ? item.samples : item.frame_count, 0),
             visits: finite((_b = item.visit_count) != null ? _b : (_a = item.visits) == null ? void 0 : _a.length, 0),
             sessions: finite((_d = item.session_count) != null ? _d : (_c = item.sessions) == null ? void 0 : _c.length, 0),
-            confidence: finite(item.confidence, 0),
+            confidence: finite(item.confidence != null ? item.confidence : item.quality, 0),
             stage: String(item.stage || "OBSERVED").toUpperCase(),
             epoch: finite(item.epoch, fallbackEpoch),
             rpm: finite((_e = item.rpm) != null ? _e : item.rpm_mean, null),
             petrolMs: finite((_f = item.petrol_ms) != null ? _f : item.petrol_mean, null),
             mapBar: finite((_g = item.map_bar) != null ? _g : item.map_mean, null),
             petrolSpreadMs: finite(item.petrol_spread_ms, null),
-            quality: finite(item.quality, null)
+            quality: finite(item.quality != null ? item.quality : item.confidence, null)
           };
         }
         function buildModel(payload = {}) {
@@ -130,9 +130,12 @@
             }
           }
           const mergedCells = [];
-          if (Array.isArray(payload.cells)) mergedCells.push(...payload.cells);
-          if (Array.isArray(payload.petrol)) mergedCells.push(...payload.petrol.map((item) => __spreadProps(__spreadValues({}, item), { fuel: item.fuel || "PETROL" })));
-          if (Array.isArray(payload.cng)) mergedCells.push(...payload.cng.map((item) => __spreadProps(__spreadValues({}, item), { fuel: item.fuel || "CNG" })));
+          if (Array.isArray(payload.cells) && payload.cells.length > 0) {
+            mergedCells.push(...payload.cells);
+          } else {
+            if (Array.isArray(payload.petrol)) mergedCells.push(...payload.petrol.map((item) => __spreadProps(__spreadValues({}, item), { fuel: item.fuel || "PETROL" })));
+            if (Array.isArray(payload.cng)) mergedCells.push(...payload.cng.map((item) => __spreadProps(__spreadValues({}, item), { fuel: item.fuel || "CNG" })));
+          }
           mergedCells.forEach((item) => {
             const { row, column } = cellCoordinates(item);
             const target = indexed.get(keyOf(row, column));
