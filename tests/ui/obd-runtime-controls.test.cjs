@@ -48,3 +48,14 @@ test('tela OBD permanece sem timer próprio, scanner paralelo e writer', () => {
     assert.equal(obd.includes(forbidden), false, `${forbidden} nao pode existir na tela OBD`);
   }
 });
+
+
+test('falha OBD expõe estágio, código, detalhe e repetição manual delimitada', () => {
+  for (const marker of [
+    'connectionStage', 'errorCode', 'retryable', 'data-obd-retry',
+    'PERMISSION', 'RFCOMM', 'ELM_INIT', 'PROTOCOL', 'STFT_READY',
+  ]) assert.match(obd, new RegExp(marker));
+  assert.match(obd, /diagnosticDetail/);
+  assert.match(obd, /data-obd-connect/);
+  assert.doesNotMatch(obd, /setInterval|setTimeout\([^)]*connectObd/);
+});
