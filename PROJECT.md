@@ -1,24 +1,35 @@
 # Projeto OMEGAS V8.2 Blue
 
 ## Objetivo humano
-Regular o GNV com o mínimo de esforço humano, usando MP48 como verdade de combustível/calibração e evidência física gasolina↔GNV, sem escrita automática na ECU.
 
-O produto é voltado à multimídia do carro: rápido, legível, didático, resistente a WebViews lentas e com aquisição/aprendizado mantidos pelo serviço Android mesmo sem redraw da tela.
+Regular o GNV com pouco esforço humano e máxima rastreabilidade, mantendo dois motores científicos autônomos e nenhuma escrita automática.
 
-## Contrato científico atual
-- `BlueCausalEngine` é a única autoridade de comparação/correção.
-- Gasolina é a referência física; `(RPM, MAP)` define condição comparável.
-- A célula de Mapa K para GNV usa **RPM atual × Petrol Inj. atual no GNV**.
-- MP48 é autoridade de combustível, calibração, writer, ACK e readback.
-- OBD é testemunha read-only por STFT no GNV; LTFT não participa da matemática decisória.
-- `TRANSITION` ainda é gasolina; `CUT-OFF` é distinto e não é evidência de equivalência.
-- Visitas são auditoria/suporte, não confiança por contagem.
+## Contrato científico atual — Issue #29
+
+### MP48
+
+- Coleta gasolina e GNV normalmente.
+- Calcula o erro pelo método original: Petrol Inj. da gasolina comparado ao Petrol Inj. observado no GNV sob RPM × MAP equivalentes.
+- Funciona sem OBD.
+- STFT OBD concordante pode aumentar confiança; ausência ou conflito nunca altera o erro, o alvo ou a disponibilidade MP48.
+
+### OBD
+
+- Aprende somente STFT Bank 1 no GNV.
+- Adquire RPM (010C), MAP (010B) e STFT (0106) no mesmo ciclo.
+- Não depende de combustível, Petrol Inj., telemetria ou disponibilidade MP48 para medir.
+- Exige declaração GNV a cada vida do serviço.
+- Persiste amostras por RPM × MAP e época; usa mediana/MAD, mínimo de 5 amostras e qualidade mínima 0,55.
+- Produz correção própria. O endereçamento exato do Mapa K é fail-closed porque o eixo físico é RPM × Petrol Inj.; sem resolvedor confiável, mantém o percentual e retorna `ADDRESS_UNRESOLVED`.
+
+## Aplicação e segurança
+
+- Resultados MP48 e OBD são identificados separadamente.
+- Nenhum motor bloqueia o outro.
+- OBD nunca escreve K; seu adaptador prepara no máximo uma célula.
 - Toda mutação segue preparar → revisar → confirmar → ACK → readback.
+- Leitura, aprendizado e proposta não escrevem na ECU.
 
-## Recuperação sistêmica
-A recuperação aberta após a validação física de 2026-09-06 foi implementada e verificada em software. A epic é `#18`, com convergência de `#16` e workstreams `#17/#19/#20/#21/#22/#23`.
+## Rastreabilidade
 
-O código de recuperação está completo; a declaração externa `READY FOR APK GENERATION` exige uma CI canônica `OMEGAS Blue CI` concluída com sucesso no **HEAD remoto exato** que contém a reconciliação final.
-
-## Gate de artefato
-Push normal executa apenas `FAST → JVM/unit → lint` e nunca gera APK. O job de APK é manual e só roda com autorização explícita do owner. Validação física no veículo ocorre depois de um APK autorizado e nunca é inferida da CI.
+A linha ativa é Issue #29 → branch `work/omegas-blue-causal-engine` → especificação/plano datados → RED → GREEN → revisão → CI exata → APK manual. Validação física continua separada da prova de software.

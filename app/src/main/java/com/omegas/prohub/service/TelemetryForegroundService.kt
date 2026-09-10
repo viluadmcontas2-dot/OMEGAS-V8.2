@@ -65,6 +65,7 @@ class TelemetryForegroundService : Service() {
     }
     private lateinit var obdLearningEngine: ObdIndependentLearningEngine
     private lateinit var obdLearningFile: File
+    @Volatile private var lastObdPersistAt = 0L
     @Volatile private var latestObdWitness = JSONObject()
 
     lateinit var paths: AppPaths
@@ -128,6 +129,8 @@ class TelemetryForegroundService : Service() {
         super.onCreate()
         paths = AppPaths(this)
         settings = AppSettings(this)
+        // GNV must be declared again for each service lifetime; never learn gasoline by stale preference.
+        settings.obdGnvLearningEnabled = false
         obdLearningEngine = ObdIndependentLearningEngine()
         obdLearningFile = File(paths.runtimeRoot, "obd_stft_learning.json")
         try {
@@ -201,6 +204,7 @@ class TelemetryForegroundService : Service() {
             },
             onNativeCalibrationObserved = { payload ->
                 val result = runtime.notifyCalibrationAdjustment(payload)
+                rotateObdLearningEpoch("Calibração nativa alterada")
                 sessionRecorder.record(
                     "autocal_native_calibration_epoch",
                     "autocal",
@@ -296,6 +300,7 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         stopping = true
         healthTask?.cancel(true)
+        if (::obdLearningEngine.isInitialized) persistObdLearning(force = true)
         scheduler.shutdownNow()
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
@@ -788,7 +793,9 @@ class TelemetryForegroundService : Service() {
         sessionRecorder.record("obd_learning", "obd", witness, force = true)
     }
 
-    private fun persistObdLearning() {
+    private fun persistObdLearning(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && now - lastObdPersistAt < 5_000L) return
         try {
             val temporary = File(obdLearningFile.parentFile, obdLearningFile.name + ".tmp")
             temporary.writeText(obdLearningEngine.snapshotJson().toString(), Charsets.UTF_8)
@@ -796,6 +803,7 @@ class TelemetryForegroundService : Service() {
                 obdLearningFile.writeText(temporary.readText(Charsets.UTF_8), Charsets.UTF_8)
                 temporary.delete()
             }
+            lastObdPersistAt = now
         } catch (error: Exception) {
             log.add("WARN", "OBD", "Falha ao persistir aprendizado STFT: ${error.message}")
         }
@@ -804,7 +812,7 @@ class TelemetryForegroundService : Service() {
     private fun rotateObdLearningEpoch(reason: String) {
         if (!::obdLearningEngine.isInitialized) return
         obdLearningEngine.beginEpoch("obd-${System.currentTimeMillis()}")
-        persistObdLearning()
+        persistObdLearning(force = true)
         latestObdWitness = JSONObject()
             .put("source", "OBD_INDEPENDENT_STFT_GNV")
             .put("state", "UNAVAILABLE")
