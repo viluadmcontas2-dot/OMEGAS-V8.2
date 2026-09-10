@@ -110,7 +110,7 @@ class BluePairedEvidenceAuthorityTest {
     }
 
     @Test
-    fun `conflicting gnv stft keeps MP48 measurement and action available` {
+    fun `conflicting gnv stft keeps MP48 measurement and action available`() {
         val projected = project(stft = -7.0, ltft = 10.0)
 
         assertEquals("CONFLICTS", projected.getJSONObject("obdWitness").getString("state"))
