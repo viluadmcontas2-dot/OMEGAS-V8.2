@@ -17,8 +17,7 @@ def main() -> None:
         'put("connectionErrorCode"',
         'put("connectionDetail"',
         'put("retryable"',
-        '"ATI"',
-        '"ATAT1"',
+        'listOf("ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0")',
         "ElmResponseParser.mode01(response, pid)",
         "omegas-obd-rfcomm-watchdog",
         '"RFCOMM_TIMEOUT"',
@@ -31,6 +30,11 @@ def main() -> None:
     ]
     missing = [needle for needle in required if needle not in text]
     assert not missing, f"OBD connection is not stage-aware yet: {missing}"
+
+    init = text[text.index("    private fun initializeElm"):text.index("    private fun pollCycle")]
+    for forbidden in ['"ATI"', '"ATAT1"', "discoverStandardPids", "supportsStandardPid", "stftProbe"]:
+        assert forbidden not in init, f"field-proven handshake regressed to strict gate: {forbidden}"
+
     print("BLUE_OBD_CONNECTION_STATE_CONTRACT=PASS")
 
 
