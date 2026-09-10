@@ -29,11 +29,12 @@ bridge = read("app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt")
 api = read("app/src/main/assets/ui/core/native-api.js")
 archive = read("app/src/main/java/com/omegas/prohub/learning/LearningArchiveManager.kt")
 
-# Aquisição científica LIVE: STFT 0106. Demais PIDs não podem sobreviver no manager.
-assert '"0106"' in assist
+# Aquisição científica LIVE independente: RPM 010C + MAP 010B + STFT 0106.
+for required in ['"010C"', '"010B"', '"0106"', "ObdPidCycle"]:
+    assert required in assist
 for forbidden in [
     '"0107"', '"010D"', '"0105"', '"0104"', '"0111"',
-    '"010B"', '"010F"', '"0110"', '"012F"', '"0142"',
+    '"010F"', '"0110"', '"012F"', '"0142"',
     "ContextReadings", "CellStats", "ObdConditionEngine", "ObdEvidenceLedger",
     "ObdIndependentEvidenceMap", "localMaps", "remoteComponents", "fusedMap(",
     "readContext(", "calculatedLoadPct", "ltft",
@@ -46,8 +47,12 @@ for forbidden in ["getObdMaps", "obdMapsJson"]:
 for forbidden in ["demoObdMaps", "obdMaps()"]:
     assert forbidden not in api, f"frontend ainda expõe mapa OBD legado: {forbidden}"
 
-# CalibrationStateID deve vir do estado canônico Blue, nunca do mapa/epoch OBD antigo.
-assert "blueCalibrationStateId()" in service
+# O aprendizado OBD não depende de CalibrationStateID nem de pareamento MP48.
+learning_start = service.index("private fun consumeObdLearningSample")
+learning_end = service.index("private fun persistObdLearning", learning_start)
+learning = service[learning_start:learning_end]
+for forbidden in ["blueCalibrationStateId", "nearestFrame", "petrol_ms"]:
+    assert forbidden not in learning
 assert "obd?.mapsJson()" not in service
 assert "mapEpochId" not in service
 assert "curveEpochId" not in service
