@@ -84,6 +84,14 @@
       if (proposal.available === true && multiplier !== null) {
         return { available: true, label: "Blue: multiplicador ".concat(fmt(multiplier, 4)), detail: "proposta separada da medi\xE7\xE3o" };
       }
+      const unavailableState = String(proposal.state || blue.reason || "").toUpperCase();
+      if (unavailableState === "CALIBRATION_READBACK_REQUIRED") {
+        return {
+          available: false,
+          label: "Blue: leia Mapa K e Curva K",
+          detail: blue.error || "leitura confirmada do Mapa K e da Curva K exigida nesta sess\xE3o"
+        };
+      }
       return {
         available: false,
         label: "Blue: aguardando ganho causal",
