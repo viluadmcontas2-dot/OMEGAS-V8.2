@@ -23,9 +23,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Sidecar OBD estritamente observacional.
  *
  * O único sinal científico LIVE é STFT Bank 1 (Mode 01 PID 0106). Comandos AT
- * e 0100 existem apenas para transporte, handshake e descoberta de suporte.
- * Pareamento RPM/MAP/Petrol Inj., combustível e CalibrationStateID pertencem
- * ao serviço Blue/MP48; este manager não possui mapa, alvo K ou writer.
+ * existem apenas para transporte/handshake. A descoberta 0100 permanece
+ * diagnóstica e nunca bloqueia a conexão. Pareamento RPM/MAP/Petrol Inj.,
+ * combustível e CalibrationStateID pertencem ao serviço Blue/MP48; este
+ * manager não possui mapa, alvo K ou writer.
  */
 class ObdAssistManager(
     private val context: Context,
@@ -308,13 +309,6 @@ class ObdAssistManager(
         else -> "OBD_CONNECTION_FAILED"
     }
 
-    private fun elmResponseFailed(response: String): Boolean {
-        val upper = response.uppercase().trim()
-        return upper.isBlank() || upper == "?" || listOf(
-            "NO DATA", "UNABLE TO CONNECT", "STOPPED", "BUS ERROR", "CAN ERROR", "ERROR",
-        ).any { upper.contains(it) }
-    }
-
     @SuppressLint("MissingPermission")
     private fun connectionLoop(address: String) {
         var current: BluetoothSocket? = null
@@ -415,32 +409,17 @@ class ObdAssistManager(
     }
 
     private fun initializeElm(sock: BluetoothSocket) {
-        val reset = elmCommand(sock, "ATZ", 2500L)
-        if (elmResponseFailed(reset)) error("ELM não respondeu ao reset ATZ")
-        listOf("ATE0", "ATL0", "ATS0", "ATH0").forEach { command ->
-            val response = elmCommand(sock, command, 1200L)
-            if (elmResponseFailed(response)) error("ELM falhou em $command")
+        listOf("ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0").forEach { command ->
+            if (command == "ATSP0") {
+                val protocol = connectionState.enter(ElmStage.PROTOCOL, System.currentTimeMillis(), "Negociando protocolo OBD automático")
+                publishConnectionStatus(protocol)
+                onStateChanged()
+            }
+            val response = elmCommand(sock, command, if (command == "ATZ") 2_500L else 1_200L)
+            if (response.contains("UNABLE TO CONNECT") && command == "ATSP0") {
+                error("ELM não encontrou protocolo OBD")
+            }
         }
-        val adaptiveTiming = elmCommand(sock, "ATAT1", 1200L)
-        if (elmResponseFailed(adaptiveTiming)) log.add("WARN", "OBD", "ELM não aceitou ATAT1; seguindo sem adaptive timing")
-        val identity = elmCommand(sock, "ATI", 1200L)
-        if (elmResponseFailed(identity) || identity.trim().equals("ATI", ignoreCase = true)) error("ELM não respondeu ao ATI")
-
-        val protocol = connectionState.enter(ElmStage.PROTOCOL, System.currentTimeMillis(), "Negociando protocolo OBD automático")
-        publishConnectionStatus(protocol)
-        onStateChanged()
-        val protocolResponse = elmCommand(sock, "ATSP0", 1500L)
-        if (elmResponseFailed(protocolResponse)) error("ELM não encontrou protocolo OBD")
-        val protocolClock = connectionState.onClock(System.currentTimeMillis())
-        if (protocolClock.stage == ElmStage.ERROR) error(protocolClock.detail)
-
-        discoverStandardPids(sock)
-        if (!supportsStandardPid(0x06)) error("ECU não anuncia PID 0106/STFT")
-        val stftProbe = readPidTimed(sock, "0106", 0x06)
-        if (stftProbe.bytes == null) error("PID 0106/STFT não respondeu")
-        val ready = connectionState.enter(ElmStage.STFT_READY, System.currentTimeMillis(), "PID 0106/STFT disponível")
-        publishConnectionStatus(ready)
-        onStateChanged()
     }
 
     private fun pollCycle(sock: BluetoothSocket) {
@@ -468,7 +447,7 @@ class ObdAssistManager(
             .put("stft", stft ?: JSONObject.NULL)
             .put("fuelSource", "PENDING_MP48_PAIR")
             .put("quality", if (stft != null) "STFT_ONLY" else "SEM DADOS")
-            .put("reason", if (stft != null) "STFT adquirido; aguardando pareamento MP48" else "PID 0106/STFT sem resposta")
+            .put("reason", if (stft != null) "STFT adquirido; aguardando pareamento MP48" else "PID 0106/STFT sem resposta; mantendo sessão e tentando novamente")
             .put("learningState", if (stft != null) "STFT_OBSERVED" else "PAUSADO")
             .put("conditionState", "AGUARDANDO_PAREAMENTO_MP48")
             .put("pollCycleMs", cycleMs)
@@ -515,8 +494,9 @@ class ObdAssistManager(
             recordPidDiagnostic(command, parsed != null, startedAt, observedAt, "")
             PidRead(parsed, startedAt, observedAt)
         } catch (error: Exception) {
-            recordPidDiagnostic(command, false, startedAt, System.currentTimeMillis(), error.message ?: "Falha de leitura")
-            throw error
+            val observedAt = System.currentTimeMillis()
+            recordPidDiagnostic(command, false, startedAt, observedAt, error.message ?: "Falha de leitura")
+            PidRead(null, startedAt, observedAt)
         }
     }
 
@@ -553,7 +533,7 @@ class ObdAssistManager(
         return JSONObject()
             .put("protocolMode", "ELM automático (ATSP0)")
             .put("scientificPolling", "0106/STFT somente")
-            .put("supportDiscovery", "0100 somente durante handshake")
+            .put("supportDiscovery", "0100 diagnóstico opcional; não bloqueia handshake")
             .put("sessionState", if (live.optBoolean("connected", false)) "LIVE" else "LAST_SESSION")
             .put("sessionStartedAt", currentSessionStartedAt)
             .put("lastSessionEndedAt", lastSessionEndedAt)
@@ -567,8 +547,9 @@ class ObdAssistManager(
     }
 
     private fun elmCommand(sock: BluetoothSocket, command: String, timeoutMs: Long): String {
-        val output = sock.outputStream
         val input = sock.inputStream
+        val output = sock.outputStream
+        while (input.available() > 0) input.read()
         output.write((command.trim() + "\r").toByteArray(StandardCharsets.US_ASCII))
         output.flush()
         val buffer = StringBuilder()
@@ -577,7 +558,13 @@ class ObdAssistManager(
             while (input.available() > 0) {
                 val char = input.read()
                 if (char < 0) break
-                if (char.toChar() == '>') return normalizeElm(buffer.toString())
+                if (char.toChar() == '>') {
+                    val normalized = normalizeElm(buffer.toString())
+                    if (normalized.contains("NO DATA") || normalized.contains("ERROR") || normalized.isBlank()) {
+                        throw IllegalStateException("$command: ${normalized.ifBlank { "sem resposta" }}")
+                    }
+                    return normalized
+                }
                 buffer.append(char.toChar())
             }
             try {
@@ -587,7 +574,11 @@ class ObdAssistManager(
                 break
             }
         }
-        return normalizeElm(buffer.toString())
+        val normalized = normalizeElm(buffer.toString())
+        if (normalized.contains("NO DATA") || normalized.contains("ERROR") || normalized.isBlank()) {
+            throw IllegalStateException("$command: ${normalized.ifBlank { "sem resposta" }}")
+        }
+        return normalized
     }
 
     private fun normalizeElm(value: String): String = value.uppercase()
