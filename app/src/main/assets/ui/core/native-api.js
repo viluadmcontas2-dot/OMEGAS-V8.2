@@ -361,6 +361,9 @@
       setObdMode(mode) {
         return this.demo ? { ok: true, mode } : invoke(this.native, "setObdMode", [mode || "off"], { ok: false });
       }
+      setObdGnvLearningEnabled(enabled) {
+        return this.demo ? { ok: true, gnvModeDeclared: enabled === true } : invoke(this.native, "setObdGnvLearningEnabled", [enabled === true], { ok: false });
+      }
       batteryOptimizationStatus() {
         return this.demo ? { supported: true, ignoringOptimizations: true, promptedAutomatically: true, demo: true } : invoke(this.power, "getBatteryOptimizationStatus", [], { supported: false, ignoringOptimizations: false });
       }

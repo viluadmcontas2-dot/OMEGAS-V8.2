@@ -1,74 +1,41 @@
 package com.omegas.prohub.blue
 
-import com.omegas.prohub.obd.ObdWitnessState
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BlueWitnessProjectionTest {
     @Test
-    fun `supporting witness boosts only effective confidence and preserves correction target`() {
-        val base = JSONObject()
-            .put("errorPercent", 8.0)
-            .put("correctionMultiplier", 1.125)
-            .put("targetK", 137)
-            .put("quality", 0.60)
-        val witness = JSONObject()
-            .put("state", "SUPPORTS")
-            .put("gnvStftPct", 7.0)
-            .put("quality", 0.80)
-            .put("calibrationState", "map-2:curve-3")
-            .put("rpm", 2000.0)
-            .put("map_bar", 0.55)
-            .put("petrol_ms", 4.8)
-
+    fun `supporting OBD boosts only confidence and preserves MP48 target`() {
         val projected = BlueWitnessConfidence.project(
-            baseJson = base,
-            blueErrorPercent = 8.0,
-            baseQuality = 0.60,
-            witness = witness,
-            expectedCalibrationState = "map-2:curve-3",
-            expectedRpm = 2000.0,
-            expectedMapBar = 0.55,
-            expectedPetrolOnCngMs = 4.8,
+            baseJson = JSONObject().put("available", true).put("state", "PROPOSAL_READY")
+                .put("errorPercent", 8.0).put("correctionMultiplier", 1.125).put("targetK", 137),
+            blueErrorPercent = 8.0, baseQuality = 0.60,
+            witness = JSONObject().put("state", "READY").put("stftMedianPct", 7.0)
+                .put("quality", 0.80).put("rpm", 2000.0).put("map_bar", 0.55),
+            expectedCalibrationState = "ignored", expectedRpm = 2000.0,
+            expectedMapBar = 0.55, expectedPetrolOnCngMs = 4.8,
         )
-
-        assertEquals(1.125, projected.getDouble("correctionMultiplier"), 0.000001)
+        assertEquals(1.125, projected.getDouble("correctionMultiplier"), 0.0)
         assertEquals(137, projected.getInt("targetK"))
-        assertEquals(8.0, projected.getDouble("errorPercent"), 0.000001)
-        assertEquals(0.60, projected.getDouble("baseConfidence"), 0.000001)
-        assertEquals(0.68, projected.getDouble("effectiveConfidence"), 0.000001)
-        assertEquals(ObdWitnessState.SUPPORTS.name, projected.getJSONObject("obdWitness").getString("state"))
+        assertEquals(0.68, projected.getDouble("effectiveConfidence"), 0.0001)
     }
 
     @Test
-    fun `stale calibration witness is unavailable and cannot boost confidence`() {
-        val base = JSONObject()
-            .put("correctionMultiplier", 1.125)
-            .put("targetK", 137)
-        val witness = JSONObject()
-            .put("state", "SUPPORTS")
-            .put("gnvStftPct", 7.0)
-            .put("quality", 1.0)
-            .put("calibrationState", "map-1:curve-3")
-            .put("rpm", 2000.0)
-            .put("map_bar", 0.55)
-            .put("petrol_ms", 4.8)
-
+    fun `conflicting OBD is diagnostic and cannot block MP48`() {
         val projected = BlueWitnessConfidence.project(
-            baseJson = base,
-            blueErrorPercent = 8.0,
-            baseQuality = 0.60,
-            witness = witness,
-            expectedCalibrationState = "map-2:curve-3",
-            expectedRpm = 2000.0,
-            expectedMapBar = 0.55,
-            expectedPetrolOnCngMs = 4.8,
+            baseJson = JSONObject().put("available", true).put("state", "PROPOSAL_READY")
+                .put("correctionMultiplier", 1.125).put("targetK", 137),
+            blueErrorPercent = 8.0, baseQuality = 0.60,
+            witness = JSONObject().put("state", "READY").put("stftMedianPct", -7.0)
+                .put("quality", 1.0).put("rpm", 2000.0).put("map_bar", 0.55),
+            expectedCalibrationState = "ignored", expectedRpm = 2000.0,
+            expectedMapBar = 0.55, expectedPetrolOnCngMs = 4.8,
         )
-
-        assertEquals(1.125, projected.getDouble("correctionMultiplier"), 0.000001)
-        assertEquals(137, projected.getInt("targetK"))
-        assertEquals(0.60, projected.getDouble("effectiveConfidence"), 0.000001)
-        assertEquals(ObdWitnessState.UNAVAILABLE.name, projected.getJSONObject("obdWitness").getString("state"))
+        assertTrue(projected.getBoolean("available"))
+        assertEquals("PROPOSAL_READY", projected.getString("state"))
+        assertEquals(0.60, projected.getDouble("effectiveConfidence"), 0.0)
+        assertEquals("CONFLICTS", projected.getJSONObject("obdWitness").getString("state"))
     }
 }

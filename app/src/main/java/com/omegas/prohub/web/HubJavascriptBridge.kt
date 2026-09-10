@@ -516,6 +516,8 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface fun getObdStatus(): String = activity?.serviceOrNull()?.obdStatusJson() ?: "{}"
     @JavascriptInterface fun setObdMode(mode: String): String = activity?.serviceOrNull()?.setObdMode(mode) ?: unavailable()
+    @JavascriptInterface fun setObdGnvLearningEnabled(enabled: Boolean): String =
+        activity?.serviceOrNull()?.setObdGnvLearningEnabled(enabled) ?: unavailable()
     @JavascriptInterface fun listObdDevices(): String = activity?.serviceOrNull()?.obdDevicesJson() ?: "{}"
     @JavascriptInterface fun connectObd(address: String): String = activity?.serviceOrNull()?.connectObd(address) ?: unavailable()
     @JavascriptInterface fun disconnectObd(): String {

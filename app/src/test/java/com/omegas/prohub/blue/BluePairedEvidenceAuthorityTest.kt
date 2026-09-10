@@ -110,14 +110,15 @@ class BluePairedEvidenceAuthorityTest {
     }
 
     @Test
-    fun `conflicting gnv stft keeps measurement but gates action for more evidence`() {
+    fun `conflicting gnv stft keeps MP48 measurement and action available` {
         val projected = project(stft = -7.0, ltft = 10.0)
 
         assertEquals("CONFLICTS", projected.getJSONObject("obdWitness").getString("state"))
         assertEquals(8.0, projected.getDouble("errorPercent"), 1e-9)
         assertEquals(1.08, projected.getDouble("correctionMultiplier"), 1e-9)
-        assertFalse(projected.getBoolean("available"))
-        assertEquals("OBD_CONFLICT_COLLECT_MORE", projected.getString("state"))
+        assertTrue(projected.getBoolean("available"))
+        assertEquals("PROPOSAL_READY", projected.getString("state"))
+        assertEquals(0.70, projected.getDouble("effectiveConfidence"), 1e-9)
     }
 
     @Test

@@ -158,6 +158,9 @@ class AppSettings(context: Context) {
     var obdPollIntervalMs: Long
         get() = prefs.getLong("obdPollIntervalMs", 350L)
         set(value) = prefs.edit().putLong("obdPollIntervalMs", value.coerceIn(150L, 3_000L)).apply()
+    var obdGnvLearningEnabled: Boolean
+        get() = prefs.getBoolean("obdGnvLearningEnabled", false)
+        set(value) = prefs.edit().putBoolean("obdGnvLearningEnabled", value).apply()
     var gnvCylinderCapacityM3: Float
         get() = prefs.getFloat("gnvCylinderCapacityM3", 15.0f)
         set(value) = prefs.edit().putFloat("gnvCylinderCapacityM3", value).apply()
@@ -204,6 +207,7 @@ class AppSettings(context: Context) {
         .put("obdDeviceAddress", obdDeviceAddress)
         .put("obdAutoConnect", obdAutoConnect)
         .put("obdPollIntervalMs", obdPollIntervalMs)
+        .put("obdGnvLearningEnabled", obdGnvLearningEnabled)
         .put("gnvCylinderCapacityM3", gnvCylinderCapacityM3.toDouble())
         .put("lastEngineOffPressure", lastEngineOffPressure)
 

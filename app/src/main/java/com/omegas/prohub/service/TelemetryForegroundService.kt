@@ -24,9 +24,8 @@ import com.omegas.prohub.link.OmegasLinkManager
 import com.omegas.prohub.model.HubStatus
 import com.omegas.prohub.network.LanPanelServer
 import com.omegas.prohub.obd.ObdAssistManager
-import com.omegas.prohub.obd.ObdFuelState
-import com.omegas.prohub.obd.ObdWitnessEngine
-import com.omegas.prohub.obd.ObdWitnessSample
+import com.omegas.prohub.obd.ObdIndependentLearningEngine
+import com.omegas.prohub.obd.ObdLearningSample
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.storage.DataArchiveManager
@@ -64,7 +63,8 @@ class TelemetryForegroundService : Service() {
     private val scheduler = Executors.newSingleThreadScheduledExecutor { runnable ->
         Thread(runnable, "omegas-native-service").apply { isDaemon = true }
     }
-    private val obdWitnessEngine = ObdWitnessEngine()
+    private lateinit var obdLearningEngine: ObdIndependentLearningEngine
+    private lateinit var obdLearningFile: File
     @Volatile private var latestObdWitness = JSONObject()
 
     lateinit var paths: AppPaths
@@ -128,6 +128,11 @@ class TelemetryForegroundService : Service() {
         super.onCreate()
         paths = AppPaths(this)
         settings = AppSettings(this)
+        obdLearningEngine = ObdIndependentLearningEngine()
+        obdLearningFile = File(paths.runtimeRoot, "obd_stft_learning.json")
+        try {
+            if (obdLearningFile.isFile) obdLearningEngine.restoreJson(JSONObject(obdLearningFile.readText(Charsets.UTF_8)))
+        } catch (_: Exception) {}
         learningTemperature = LearningTemperatureSettings(this)
         learningTolerances = LearningToleranceSettings(this)
         log = RingLog(1_500, paths.logFile)
@@ -169,6 +174,7 @@ class TelemetryForegroundService : Service() {
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
                 runtime.notifyCalibrationAdjustment(payload)
+                rotateObdLearningEpoch("Mapa K alterado")
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
                 link.markDataChanged("escrita K confirmada")
             },
@@ -181,6 +187,7 @@ class TelemetryForegroundService : Service() {
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true)
                 runtime.notifyCalibrationAdjustment(payload)
+                rotateObdLearningEpoch("Curva K alterada")
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
                 link.markDataChanged("escrita K factor confirmada")
             },
@@ -214,7 +221,7 @@ class TelemetryForegroundService : Service() {
             onStateChanged = ::stateChanged,
             onLiveSample = { sample ->
                 sessionRecorder.record("obd", "obd", sample, force = true)
-                pairObdStftWitness(sample)
+                consumeObdLearningSample(sample)
             },
         )
         learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
@@ -559,6 +566,8 @@ class TelemetryForegroundService : Service() {
     fun obdStatusJson(): String = obd?.statusJson() ?: "{}"
     fun obdWitnessStatusJson(): String = JSONObject(latestObdWitness.toString()).toString()
     fun setObdMode(mode: String): String = obd?.setMode(mode)?.toString() ?: "{}"
+    fun setObdGnvLearningEnabled(enabled: Boolean): String =
+        obd?.setGnvLearningEnabled(enabled)?.toString() ?: "{}"
     fun connectObd(address: String): String = obd?.connect(address)?.toString() ?: "{}"
     fun disconnectObd(): String {
         obd?.disconnect()
@@ -744,58 +753,63 @@ class TelemetryForegroundService : Service() {
         stateChanged()
     }
 
-    private fun pairObdStftWitness(sample: JSONObject) {
-        if (sample.optString("kind") != "STFT_OBSERVATION") return
-        val observedAtMs = sample.optLong("observedAtMs", 0L)
-        val stft = sample.optDouble("stft", Double.NaN)
-        if (observedAtMs <= 0L || !stft.isFinite()) return
-
-        val frame = telemetryStore.nearestFrame(observedAtMs, 250L) ?: return
-        val rpm = frame.optDouble("rpm", 0.0)
-        val mapBar = frame.optDouble("map_bar", 0.0)
-        val petrolMs = frame.optDouble("petrol_ms", 0.0)
-        val fuel = frame.optString("fuel", "").trim().uppercase()
-        val scientificFuel = ObdFuelState.normalize(fuel) ?: return
-        val skewMs = frame.optLong("skew_ms", Long.MAX_VALUE)
-        if (rpm <= 0.0 || mapBar <= 0.0 || petrolMs <= 0.0 || skewMs < 0L || skewMs > 250L) return
-
-        val calibrationState = blueCalibrationStateId()
-        if (calibrationState.isBlank()) return
-
-        obdWitnessEngine.observe(
-            ObdWitnessSample(
-                observedAtMs = observedAtMs,
-                stftPct = stft,
-                rpm = rpm,
-                mapBar = mapBar,
-                petrolMs = petrolMs,
-                fuel = scientificFuel.name,
-                calibrationState = calibrationState,
-                skewMs = skewMs,
-            ),
+    private fun consumeObdLearningSample(sample: JSONObject) {
+        if (sample.optString("kind") != "OBD_GNV_CYCLE") return
+        val learningSample = ObdLearningSample(
+            observedAtMs = sample.optLong("observedAtMs", -1L),
+            rpm = sample.optDouble("rpm", Double.NaN),
+            mapBar = sample.optDouble("map_bar", Double.NaN),
+            stftPct = sample.optDouble("stft", Double.NaN),
+            acquisitionSpanMs = sample.optLong("acquisitionSpanMs", -1L),
+            epoch = obdLearningEngine.currentEpoch(),
+            gnvModeDeclared = sample.optBoolean("gnvModeDeclared", false),
         )
-        val result = obdWitnessEngine.evaluate(rpm, mapBar, petrolMs, calibrationState)
+        if (!obdLearningEngine.observe(learningSample)) return
+        val result = obdLearningEngine.evaluate(learningSample.rpm, learningSample.mapBar)
+        persistObdLearning()
         val witness = JSONObject()
+            .put("source", "OBD_INDEPENDENT_STFT_GNV")
             .put("state", result.state.name)
-            .put("gasolineReferencePct", result.gasolineReferencePct ?: JSONObject.NULL)
-            .put("gnvStftPct", result.gnvStftPct ?: JSONObject.NULL)
-            .put("residualPp", result.residualPp ?: JSONObject.NULL)
-            .put("correctionRatio", result.correctionRatio ?: JSONObject.NULL)
-            .put("errorLog", result.errorLog ?: JSONObject.NULL)
-            .put("correctionPercent", result.correctionPercent ?: JSONObject.NULL)
+            .put("stftMedianPct", result.stftMedianPct ?: JSONObject.NULL)
+            .put("gnvStftPct", result.stftMedianPct ?: JSONObject.NULL)
+            .put("correctionMultiplier", result.correctionMultiplier ?: JSONObject.NULL)
+            .put("correctionPercent", result.correctionMultiplier?.let { (it - 1.0) * 100.0 } ?: JSONObject.NULL)
             .put("quality", result.quality)
-            .put("gasolineSamples", result.gasolineSamples)
-            .put("gnvSamples", result.gnvSamples)
-            .put("rpm", rpm)
-            .put("map_bar", mapBar)
-            .put("petrol_ms", petrolMs)
-            .put("fuel", fuel)
-            .put("scientificFuel", scientificFuel.name)
-            .put("skew_ms", skewMs)
-            .put("calibrationState", calibrationState)
-            .put("observedAtMs", observedAtMs)
+            .put("sampleCount", result.sampleCount)
+            .put("gnvSamples", result.sampleCount)
+            .put("rpm", learningSample.rpm)
+            .put("map_bar", learningSample.mapBar)
+            .put("epoch", result.epoch)
+            .put("gnvModeDeclared", true)
+            .put("automaticWrite", false)
+            .put("mapKProposalState", if (result.correctionMultiplier != null) "ADDRESS_UNRESOLVED" else "INSUFFICIENT")
+            .put("observedAtMs", learningSample.observedAtMs)
         latestObdWitness = witness
-        sessionRecorder.record("obd_witness", "obd", witness, force = true)
+        sessionRecorder.record("obd_learning", "obd", witness, force = true)
+    }
+
+    private fun persistObdLearning() {
+        try {
+            val temporary = File(obdLearningFile.parentFile, obdLearningFile.name + ".tmp")
+            temporary.writeText(obdLearningEngine.snapshotJson().toString(), Charsets.UTF_8)
+            if (!temporary.renameTo(obdLearningFile)) {
+                obdLearningFile.writeText(temporary.readText(Charsets.UTF_8), Charsets.UTF_8)
+                temporary.delete()
+            }
+        } catch (error: Exception) {
+            log.add("WARN", "OBD", "Falha ao persistir aprendizado STFT: ${error.message}")
+        }
+    }
+
+    private fun rotateObdLearningEpoch(reason: String) {
+        if (!::obdLearningEngine.isInitialized) return
+        obdLearningEngine.beginEpoch("obd-${System.currentTimeMillis()}")
+        persistObdLearning()
+        latestObdWitness = JSONObject()
+            .put("source", "OBD_INDEPENDENT_STFT_GNV")
+            .put("state", "UNAVAILABLE")
+            .put("reason", reason)
+            .put("epoch", obdLearningEngine.currentEpoch())
     }
 
     private fun consumeGpsUpdate() {

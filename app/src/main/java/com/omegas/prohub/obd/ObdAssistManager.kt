@@ -22,11 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Sidecar OBD estritamente observacional.
  *
- * O único sinal científico LIVE é STFT Bank 1 (Mode 01 PID 0106). Comandos AT
- * existem apenas para transporte/handshake. A descoberta 0100 permanece
- * diagnóstica e nunca bloqueia a conexão. Pareamento RPM/MAP/Petrol Inj.,
- * combustível e CalibrationStateID pertencem ao serviço Blue/MP48; este
- * manager não possui mapa, alvo K ou writer.
+ * O motor científico local usa somente dados OBD: RPM 010C, MAP 010B e
+ * STFT Bank 1 0106 no mesmo ciclo. MP48 não participa da aquisição, da
+ * qualidade nem da matemática. Este manager não possui writer.
  */
 class ObdAssistManager(
     private val context: Context,
@@ -143,6 +141,17 @@ class ObdAssistManager(
     }
 
     @Synchronized
+    fun setGnvLearningEnabled(enabled: Boolean): JSONObject {
+        settings.obdGnvLearningEnabled = enabled
+        synchronized(stateLock) {
+            live.put("gnvModeDeclared", enabled)
+                .put("learningState", if (enabled) "COLETANDO_GNV" else "PAUSADO_PELO_OPERADOR")
+        }
+        onStateChanged()
+        return JSONObject().put("ok", true).put("gnvModeDeclared", enabled)
+    }
+
+    @Synchronized
     fun connect(address: String): JSONObject {
         val now = System.currentTimeMillis()
         if (!hasBluetoothPermission()) {
@@ -201,37 +210,36 @@ class ObdAssistManager(
     /** Aceita somente STFT remoto; campos de scanner de peers antigos são descartados. */
     fun acceptRemoteLive(payload: JSONObject) {
         val now = System.currentTimeMillis()
-        val stft = payload.optDouble("stft", Double.NaN).takeIf { it.isFinite() }
         val observedAtMs = payload.optLong("observedAtMs", payload.optLong("updatedAt", now)).takeIf { it > 0L } ?: now
         val requestedAtMs = payload.optLong("requestedAtMs", observedAtMs).takeIf { it > 0L } ?: observedAtMs
+        val cycle = ObdPidCycle.fromValues(
+            rpm = payload.optDouble("rpm", Double.NaN),
+            mapBar = payload.optDouble("map_bar", payload.optDouble("mapBar", Double.NaN)),
+            stftPct = payload.optDouble("stft", Double.NaN),
+            acquisitionSpanMs = (observedAtMs - requestedAtMs).coerceAtLeast(0L),
+            observedAtMs = observedAtMs,
+        )
         synchronized(stateLock) {
             remoteLiveAt = now
             if (settings.obdMode == "remote") {
                 live = JSONObject()
-                    .put("connected", stft != null)
+                    .put("transportConnected", true)
+                    .put("connected", cycle != null)
+                    .put("dataReady", cycle != null)
                     .put("mode", "remote")
-                    .put("state", if (stft != null) "REMOTO AO VIVO" else "AGUARDANDO STFT REMOTO")
-                    .put("connectionStage", if (stft != null) ElmStage.LIVE.name else ElmStage.STFT_READY.name)
-                    .put("stft", stft ?: JSONObject.NULL)
-                    .put("quality", if (stft != null) "STFT_ONLY" else "SEM DADOS")
-                    .put("fuelSource", "PENDING_MP48_PAIR")
+                    .put("state", if (cycle != null) "REMOTO AO VIVO" else "AGUARDANDO CICLO OBD COMPLETO")
+                    .put("connectionStage", if (cycle != null) ElmStage.LIVE.name else ElmStage.STFT_READY.name)
+                    .put("rpm", cycle?.rpm ?: JSONObject.NULL)
+                    .put("map_bar", cycle?.mapBar ?: JSONObject.NULL)
+                    .put("stft", cycle?.stftPct ?: JSONObject.NULL)
+                    .put("quality", if (cycle != null) "OBD_CYCLE" else "SEM DADOS")
+                    .put("gnvModeDeclared", settings.obdGnvLearningEnabled)
                     .put("requestedAtMs", requestedAtMs)
                     .put("observedAtMs", observedAtMs)
                     .put("updatedAt", now)
             }
         }
-        if (stft != null) {
-            try {
-                onLiveSample(
-                    JSONObject()
-                        .put("kind", "STFT_OBSERVATION")
-                        .put("stft", stft)
-                        .put("requestedAtMs", requestedAtMs)
-                        .put("observedAtMs", observedAtMs)
-                        .put("mode", "remote"),
-                )
-            } catch (_: Exception) {}
-        }
+        if (cycle != null) publishLearningCycle(cycle, "remote")
         onStateChanged()
     }
 
@@ -278,6 +286,7 @@ class ObdAssistManager(
         device: String? = null,
     ) = synchronized(stateLock) {
         live.put("connectionStage", status.stage.name)
+            .put("transportConnected", status.stage in setOf(ElmStage.ELM_INIT, ElmStage.PROTOCOL, ElmStage.STFT_READY, ElmStage.LIVE))
             .put("connectionErrorCode", status.errorCode.ifBlank { JSONObject.NULL })
             .put("connectionDetail", status.detail.ifBlank { JSONObject.NULL })
             .put("retryable", status.retryable)
@@ -353,16 +362,17 @@ class ObdAssistManager(
             onStateChanged()
             initializeElm(current)
 
-            val liveStatus = connectionState.enter(ElmStage.LIVE, System.currentTimeMillis(), "STFT OBD ao vivo")
+            val readyStatus = connectionState.enter(ElmStage.STFT_READY, System.currentTimeMillis(), "ELM pronto; aguardando ciclo 010C/010B/0106")
             synchronized(stateLock) {
                 currentSessionStartedAt = System.currentTimeMillis()
                 live.put("sessionLive", true).put("sessionStartedAt", currentSessionStartedAt).put("device", deviceLabel)
+                    .put("dataReady", false).put("gnvModeDeclared", settings.obdGnvLearningEnabled)
             }
-            publishConnectionStatus(liveStatus, connected = true, device = deviceLabel)
-            log.add("INFO", "OBD", "ELM327 conectado para STFT: $deviceLabel")
+            publishConnectionStatus(readyStatus, connected = false, device = deviceLabel)
+            log.add("INFO", "OBD", "ELM327 pronto para ciclo OBD independente: $deviceLabel")
             onStateChanged()
             while (running.get() && current.isConnected) pollCycle(current)
-            if (running.get() && connectionState.snapshot().stage == ElmStage.LIVE) {
+            if (running.get() && connectionState.snapshot().stage in setOf(ElmStage.STFT_READY, ElmStage.LIVE)) {
                 val lost = connectionState.fail(
                     "LIVE_LINK_LOST",
                     "Conexão ELM foi encerrada durante aquisição STFT",
@@ -424,12 +434,18 @@ class ObdAssistManager(
 
     private fun pollCycle(sock: BluetoothSocket) {
         val cycleStartedAt = System.currentTimeMillis()
+        val rpmRead = readPidTimed(sock, "010C", 0x0C)
+        val mapRead = readPidTimed(sock, "010B", 0x0B)
         val stftRead = readPidTimed(sock, "0106", 0x06)
-        val rawStft = stftRead.bytes?.firstOrNull()
-        val stft = rawStft?.let { ObdStftCodec.percent(it) }
         val now = System.currentTimeMillis()
+        val cycle = ObdPidCycle.decode(
+            rpmBytes = rpmRead.bytes,
+            mapBytes = mapRead.bytes,
+            stftBytes = stftRead.bytes,
+            startedAtMs = cycleStartedAt,
+            endedAtMs = now,
+        )
         val cycleMs = (now - cycleStartedAt).coerceAtLeast(0L)
-
         synchronized(stateLock) {
             lastCycleMs = cycleMs
             if (pollWindowStartedAt == 0L || now - pollWindowStartedAt > 10_000L) {
@@ -438,49 +454,60 @@ class ObdAssistManager(
             }
             pollWindowCycles += 1
         }
-
+        if (cycle != null && connectionState.snapshot().stage != ElmStage.LIVE) {
+            publishConnectionStatus(
+                connectionState.enter(ElmStage.LIVE, now, "Ciclo OBD 010C/010B/0106 válido"),
+                connected = true,
+            )
+        }
+        val liveStage = connectionState.snapshot().stage == ElmStage.LIVE
         val payload = JSONObject()
-            .put("connected", true)
+            .put("transportConnected", true)
+            .put("connected", liveStage)
+            .put("dataReady", cycle != null)
             .put("mode", "local")
-            .put("state", "CONECTADO")
-            .put("connectionStage", ElmStage.LIVE.name)
-            .put("stft", stft ?: JSONObject.NULL)
-            .put("fuelSource", "PENDING_MP48_PAIR")
-            .put("quality", if (stft != null) "STFT_ONLY" else "SEM DADOS")
-            .put("reason", if (stft != null) "STFT adquirido; aguardando pareamento MP48" else "PID 0106/STFT sem resposta; mantendo sessão e tentando novamente")
-            .put("learningState", if (stft != null) "STFT_OBSERVED" else "PAUSADO")
-            .put("conditionState", "AGUARDANDO_PAREAMENTO_MP48")
+            .put("state", if (cycle != null) "CONECTADO" else "AGUARDANDO CICLO OBD COMPLETO")
+            .put("connectionStage", if (liveStage) ElmStage.LIVE.name else ElmStage.STFT_READY.name)
+            .put("rpm", cycle?.rpm ?: JSONObject.NULL)
+            .put("map_bar", cycle?.mapBar ?: JSONObject.NULL)
+            .put("stft", cycle?.stftPct ?: JSONObject.NULL)
+            .put("quality", if (cycle != null) "OBD_CYCLE" else "SEM DADOS")
+            .put("reason", if (cycle != null) "RPM, MAP e STFT adquiridos pelo OBD" else "Ciclo incompleto ou acima de 750 ms; tentando novamente")
+            .put("learningState", if (!settings.obdGnvLearningEnabled) "PAUSADO_PELO_OPERADOR" else if (cycle != null) "COLETANDO_GNV" else "AGUARDANDO_DADOS")
+            .put("gnvModeDeclared", settings.obdGnvLearningEnabled)
+            .put("conditionState", if (settings.obdGnvLearningEnabled) "GNV_DECLARADO" else "CONFIRME_MODO_GNV")
             .put("pollCycleMs", cycleMs)
-            .put("requestedAtMs", stftRead.startedAtMs)
-            .put("observedAtMs", stftRead.observedAtMs)
-            .put("pidObservedAt", JSONObject().put("stft", stftRead.observedAtMs))
-            .put("pidReadStartedAt", JSONObject().put("stft", stftRead.startedAtMs))
-            .put("pidAgeMs", JSONObject().put("stft", pidAgeMs(stftRead, now)))
+            .put("requestedAtMs", cycleStartedAt)
+            .put("observedAtMs", now)
+            .put("pidObservedAt", JSONObject()
+                .put("rpm", rpmRead.observedAtMs).put("map", mapRead.observedAtMs).put("stft", stftRead.observedAtMs))
             .put("sessionLive", true)
             .put("sessionStartedAt", currentSessionStartedAt)
             .put("updatedAt", now)
-
         synchronized(stateLock) { live = payload }
-        if (stft != null) {
-            try {
-                onLiveSample(
-                    JSONObject()
-                        .put("kind", "STFT_OBSERVATION")
-                        .put("stft", stft)
-                        .put("rawByte", rawStft)
-                        .put("requestedAtMs", stftRead.startedAtMs)
-                        .put("observedAtMs", stftRead.observedAtMs)
-                        .put("pollCycleMs", cycleMs)
-                        .put("mode", "local"),
-                )
-            } catch (_: Exception) {}
-        }
+        if (cycle != null) publishLearningCycle(cycle, "local")
         onStateChanged()
         try {
             Thread.sleep(settings.obdPollIntervalMs.coerceIn(150L, 3000L))
         } catch (error: InterruptedException) {
             Thread.currentThread().interrupt()
         }
+    }
+
+    private fun publishLearningCycle(cycle: ObdPidCycle, mode: String) {
+        try {
+            onLiveSample(
+                JSONObject()
+                    .put("kind", "OBD_GNV_CYCLE")
+                    .put("rpm", cycle.rpm)
+                    .put("map_bar", cycle.mapBar)
+                    .put("stft", cycle.stftPct)
+                    .put("acquisitionSpanMs", cycle.acquisitionSpanMs)
+                    .put("observedAtMs", cycle.observedAtMs)
+                    .put("gnvModeDeclared", settings.obdGnvLearningEnabled)
+                    .put("mode", mode),
+            )
+        } catch (_: Exception) {}
     }
 
     private fun readPid(sock: BluetoothSocket, command: String, pid: Int): List<Int>? = readPidTimed(sock, command, pid).bytes
@@ -532,7 +559,7 @@ class ObdAssistManager(
         val elapsed = (now - pollWindowStartedAt).coerceAtLeast(1L)
         return JSONObject()
             .put("protocolMode", "ELM automático (ATSP0)")
-            .put("scientificPolling", "0106/STFT somente")
+            .put("scientificPolling", "010C/RPM + 010B/MAP + 0106/STFT")
             .put("supportDiscovery", "0100 diagnóstico opcional; não bloqueia handshake")
             .put("sessionState", if (live.optBoolean("connected", false)) "LIVE" else "LAST_SESSION")
             .put("sessionStartedAt", currentSessionStartedAt)
