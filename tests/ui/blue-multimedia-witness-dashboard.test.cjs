@@ -52,8 +52,9 @@ test('tela OBD vira witness STFT e elimina scanner legado do runtime', () => {
   ]) assert.match(obd, new RegExp(marker), `OBD witness missing ${marker}`);
 
   assert.doesNotMatch(obd, /data-obd-view="map"|data-obd-panel="map"|Mapa OBD|LTFT|CARGA|PEDAL|MAF|ÁGUA|TENSÃO ECU|alvo 0%/i);
-  assert.match(obd, /MP48[^<`]{0,160}equival\u00eancia[^<`]{0,160}GNV/i);
-  assert.match(obd, /STFT-only na decis\u00e3o/i);
+  assert.match(obd, /OBD independente/i);
+  assert.match(obd, /RPM e MAP v.m diretamente do OBD/i);
+  assert.match(obd, /Aprender GNV/i);
   assert.doesNotMatch(obd, /REFER\u00caNCIA GASOLINA|RESIDUAL GNV|gasolineReferencePct|residualPp/i);
   assert.match(obd, /OBD[^<`]{0,100}não escreve[^<`]{0,40}K/i);
 
@@ -69,5 +70,6 @@ test('witness usa o snapshot nativo read-only já existente', () => {
   assert.match(service, /\.put\("obd_witness"/);
   assert.match(service, /fun obdWitnessStatusJson\(\): String/);
   assert.match(service, /gnvStftPct/);
-  assert.match(service, /pairObdStftWitness/);
+  assert.match(service, /consumeObdLearningSample/);
+  assert.match(service, /ObdIndependentLearningEngine/);
 });
