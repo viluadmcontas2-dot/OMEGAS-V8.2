@@ -1,7 +1,7 @@
 package com.omegas.prohub.obd
 
 import com.omegas.prohub.calibration.KMapPhysicalAxes
-import com.omegas.prohub.calibration.KWriteManager
+import com.omegas.prohub.calibration.KOperatingPolicy
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.abs
@@ -45,7 +45,7 @@ object ObdMapKSuggestion {
         val current = currentRow.optInt(column, -1)
         if (current !in 0..255) return base.put("available", false).put("state", "READBACK_REQUIRED")
         val target = (current * learning.correctionMultiplier).roundToInt()
-            .coerceIn(KWriteManager.MIN_ALLOWED_K, KWriteManager.MAX_ALLOWED_K)
+            .coerceIn(KOperatingPolicy.MIN_TARGET_K, KOperatingPolicy.MAX_TARGET_K)
         if (target == current) return base.put("available", false).put("state", "QUANTIZED_NO_CHANGE")
         val cell = JSONObject().put("row", row).put("column", column)
             .put("current", current).put("target", target)
