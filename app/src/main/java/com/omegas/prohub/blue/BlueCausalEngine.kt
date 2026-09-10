@@ -34,11 +34,16 @@ class BlueCausalEngine(
             .toList()
         if (allCandidates.isEmpty()) return null
 
+        // The primary gasoline reference must be a true pre-switch temporal pair.
+        // Historical same-region gasoline remains useful as memory/diagnostic
+        // evidence, but it cannot impersonate the immediately preceding side of
+        // a gasoline -> CNG comparison. Future gasoline is rejected as well.
         val temporalPairs = allCandidates.filter { candidate ->
             val dt = target.collectedAtMs - candidate.evidence.collectedAtMs
             dt in 0..policy.preferredTemporalPairWindowMs
         }
-        val candidates = (if (temporalPairs.isNotEmpty()) temporalPairs else allCandidates)
+        if (temporalPairs.isEmpty()) return null
+        val candidates = temporalPairs
             .sortedBy { it.distance }
             .take(policy.maximumReferenceBursts)
 
