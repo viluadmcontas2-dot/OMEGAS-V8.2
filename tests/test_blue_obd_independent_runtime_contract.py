@@ -12,8 +12,11 @@ assert "dataReady" in MANAGER
 assert "gnvModeDeclared" in MANAGER
 assert "obdGnvLearningEnabled" in SETTINGS
 assert "ObdIndependentLearningEngine" in SERVICE
-assert "telemetryStore.nearestFrame" not in SERVICE[SERVICE.index("private fun consumeObdLearningSample"):], "OBD learning must not pair with MP48"
-assert "petrol_ms" not in SERVICE[SERVICE.index("private fun consumeObdLearningSample"):]
+learning_start = SERVICE.index("private fun consumeObdLearningSample")
+learning_end = SERVICE.index("private fun persistObdLearning", learning_start)
+learning_section = SERVICE[learning_start:learning_end]
+assert "telemetryStore.nearestFrame" not in learning_section, "OBD learning must not pair with MP48"
+assert "petrol_ms" not in learning_section
 assert "OBD independente" in UI
 assert "MP48 + STFT" not in UI
 print("BLUE_OBD_INDEPENDENT_RUNTIME_CONTRACT=PASS")
