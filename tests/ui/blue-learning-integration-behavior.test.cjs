@@ -90,3 +90,20 @@ test('nested Blue proposal with explicit availability and numeric target is visi
   });
   assert.match(nodes.get('learningSuggestionSummary').textContent, /1[,.]0750/);
 });
+
+
+test('missing K readback is shown as an actionable prerequisite', () => {
+  const { screen, nodes } = harness();
+  screen.render({
+    learning: { grid: { rpmBins: [], petrolBins: [] }, comparisons: [] },
+    learningLayer: 'comparison',
+    calibrationState: {
+      reason: 'CALIBRATION_READBACK_REQUIRED',
+      error: 'Leia Mapa K e Curva K nesta sessão antes de calcular propostas.',
+      proposal: { available: false, state: 'CALIBRATION_READBACK_REQUIRED' },
+    },
+  });
+  const summary = nodes.get('learningSuggestionSummary').textContent;
+  assert.match(summary, /leia mapa k e curva k/i);
+  assert.doesNotMatch(summary, /aguardando ganho causal/i);
+});
