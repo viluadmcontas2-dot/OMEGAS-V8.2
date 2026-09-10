@@ -35,6 +35,7 @@ RED SHA `8de50123332df6bc3932a1bc02847dc45587c813` produced canonical run `34419
 GREEN SHA `da8f25f0299dd4fe5a22515ae41198be57df5403` produced canonical run `34419736026`:
 - `FAST contracts`: success;
 - `FULL JVM lint`: success;
+- Gradle `testDebugUnitTest lintDebug`: `BUILD SUCCESSFUL`;
 - software-ready marker: success;
 - owner-authorized APK artifact: skipped.
 
@@ -42,6 +43,9 @@ Therefore no APK was generated in this continuation.
 
 ## Readback / scope audit
 Compared with issue-#28 baseline `70c1a701818b212bf5f89743ab7241dbd8e7219e`, `da8f25f...` is 16 commits ahead and 0 behind. The changed production surfaces are confined to Blue causal attribution/ledger/coordinator/access/bridge plus Curve and OBD UI; no MP48 protocol file is in the compare.
+
+## TDD chain reconciliation
+The dated causal/OBD plan has been reconciled in commit `5353af59d0a113cc0a08a3d632727dcace84a9ca` with explicit RED/GREEN evidence for Tasks 1–5 and the exact-SHA software verification for Task 6. The history includes real failing test commits before their corresponding implementation closure; intermediate failures were retained rather than rewritten as successes.
 
 ## Issue #25 baseline
 The earlier physical symptom — gasoline and GNV collected but measured deviation absent — was corrected in software starting at `6fd49dbe299122f8bed756c0b6d575a202663930`. That correction remains covered by current CI, but the owner has not yet physically retested the corrected/current APK in the vehicle.
@@ -73,4 +77,4 @@ Still unverified physically:
 - fuel-economy improvement.
 
 ## Final documentation gate
-Documentation reconciliation started in commit `9363250bef040fca99cb16a5ecb452a8ce764ba7` and advances HEAD beyond the verified software SHA. The eventual documentation HEAD must itself finish canonical FAST -> FULL JVM/lint successfully before issue `#28` is closed. No APK should be generated merely to satisfy this documentation gate.
+This STATUS mutation is intentionally the final documentation-gate trigger because `STATUS.md` is included in the canonical `OMEGAS Blue CI` push paths. The resulting exact HEAD must reach terminal success for FAST and FULL JVM/lint before issue `#28` is closed. The APK job must remain skipped; no APK generation is required or authorized by this documentation gate.
