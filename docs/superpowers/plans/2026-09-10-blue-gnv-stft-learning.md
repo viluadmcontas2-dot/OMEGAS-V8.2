@@ -1,24 +1,30 @@
-# Plano — OMEGAS Blue com MP48 e OBD independentes
+# Plano — Issue #29: MP48 e OBD/STFT independentes
 
-## Restrições globais
+## Linha rastreável
 
-- Branch única: `work/omegas-blue-causal-engine`.
-- GitHub remoto é autoridade; nenhum checkout/branch local.
-- `BlueCausalEngine` permanece autoridade matemática.
-- O motor MP48 preserva o método original por Petrol Inj. gasolina × GNV.
-- O motor OBD aprende separadamente por RPM × MAP × STFT em GNV.
-- Nenhuma coleta, qualidade, prontidão, persistência ou correção é compartilhada entre os motores.
+1. Base: `e340709908f74a7e0181e81ad665aae2dcbcd408`.
+2. Governança inicial: `554c37f`; corrigida após revisão em `b8f64f9`.
+3. Testes RED: `a3c830e`, run `34520184617`, falha esperada por símbolos inexistentes.
+4. Implementação GREEN será ligada a `Refs #29`.
+5. Revisão e correções terão commits próprios, sempre ligados à Issue.
+6. STATUS/workunit registrarão SHA, árvore, run, jobs e limitações.
+7. APK será disparado manualmente somente após CI final verde.
+
+## Entregas
+
+- Motor OBD puro e persistível por RPM × MAP × época.
+- Ciclo 010C/010B/0106 completo e prontidão honesta.
+- Declaração explícita de modo GNV.
+- Sugestão OBD própria de Mapa K sobre readback confirmado.
+- MP48 original preservado.
+- Bônus OBD no MP48 somente quando concordante; nunca bloqueante.
+- UI com duas autoridades claras.
+- Testes comportamentais, contratos, CI e APK verificável.
+
+## Invariantes
+
+- GitHub remoto é autoridade; branch única `work/omegas-blue-causal-engine`.
 - Nenhuma escrita automática.
-- Cada mudança de produção exige teste RED anterior, GREEN focado e CI ampla no SHA exato.
-- APK somente após CI final verde e autorização do owner já concedida nesta execução.
-
-## Tarefas
-
-1. Corrigir a especificação publicada antes do código.
-2. RED: provar o método MP48 original, o motor OBD sem MP48 e o isolamento bilateral.
-3. GREEN: implementar motor OBD robusto e persistente por RPM × MAP sem alterar a matemática MP48.
-4. RED/GREEN integração: aquisição OBD 010C/010B/0106 delimitada, prontidão honesta e ingestão independente.
-5. RED/GREEN apresentação: resultados e estados separados; recomendação OBD percentual quando não houver endereçamento seguro.
-6. Revisão arquitetural, matemática, transporte Android, persistência, UX, segurança e regressão ampla.
-7. Atualizar AGENTS/PROJECT/STATUS/workunit com recibos exatos.
-8. CI final no HEAD, dispatch manual de APK, polling até terminal e verificação do artefato.
+- Nenhum dado MP48 participa da matemática OBD.
+- Nenhum dado OBD altera o erro ou alvo MP48.
+- Falha de um motor não paralisa o outro.
