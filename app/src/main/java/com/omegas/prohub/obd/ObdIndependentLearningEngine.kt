@@ -38,7 +38,8 @@ class ObdIndependentLearningEngine(
 
     @Synchronized
     fun evaluate(rpm: Double, mapBar: Double, epoch: String = activeEpoch): ObdLearningResult {
-        if (!rpm.isFinite() || !mapBar.isFinite() || epoch != activeEpoch) return emptyResult()
+        if (!rpm.isFinite() || !mapBar.isFinite()) return emptyResult()
+        if (epoch != activeEpoch) return emptyResult(ObdLearningState.INSUFFICIENT)
         val region = samples.filter {
             it.epoch == epoch &&
                 abs(it.rpm - rpm) <= max(policy.minimumRpmWindow, rpm * policy.relativeRpmWindow) &&
@@ -133,8 +134,8 @@ class ObdIndependentLearningEngine(
         return if (sorted.size % 2 == 0) (sorted[middle - 1] + sorted[middle]) / 2.0 else sorted[middle]
     }
 
-    private fun emptyResult() = ObdLearningResult(
-        state = ObdLearningState.UNAVAILABLE,
+    private fun emptyResult(state: ObdLearningState = ObdLearningState.UNAVAILABLE) = ObdLearningResult(
+        state = state,
         stftMedianPct = null,
         correctionMultiplier = null,
         quality = 0.0,
