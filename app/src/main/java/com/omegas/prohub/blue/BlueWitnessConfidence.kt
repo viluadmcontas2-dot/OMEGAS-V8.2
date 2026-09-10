@@ -9,8 +9,9 @@ import kotlin.math.abs
  * Adapta o residual OBD para a camada de confiança do Blue.
  *
  * Não conhece Map K, Curve K, writers, actuator gain nem correction target.
- * Seu único efeito possível é acelerar confiança quando a direção física
- * independente concorda com o erro já calculado pelo Blue.
+ * STFT nunca entra na matemática do alvo. Quando concorda, pode acelerar a
+ * confiança; quando contradiz o erro primário já medido, a ação é pausada para
+ * coletar mais evidência sem apagar nem recalcular o resultado do Petrol Inj.
  */
 object BlueWitnessConfidence {
     private const val BLUE_ERROR_DEADBAND_PERCENT = 0.50
@@ -50,7 +51,8 @@ object BlueWitnessConfidence {
      *
      * O JSON de entrada é clonado antes da projeção; correctionMultiplier,
      * target K, actuator gain e qualquer outro campo causal permanecem intactos.
-     * Um witness de outra revisão é tratado como indisponível.
+     * Um witness de outra revisão é tratado como indisponível. Um conflito não
+     * altera a matemática causal, mas torna a ação indisponível até nova evidência.
      */
     fun project(
         baseJson: JSONObject,
@@ -95,6 +97,13 @@ object BlueWitnessConfidence {
             sourceState == ObdWitnessState.INSUFFICIENT.name && gnvStft == null ->
                 BlueWitnessAssessment(ObdWitnessState.INSUFFICIENT, base, base, witnessQuality)
             else -> assess(blueErrorPercent, base, gnvStft, witnessQuality)
+        }
+
+        if (assessment.state == ObdWitnessState.CONFLICTS && projected.optBoolean("available", false)) {
+            projected
+                .put("available", false)
+                .put("state", "OBD_CONFLICT_COLLECT_MORE")
+                .put("witnessActionGate", "COLLECT_MORE")
         }
 
         return projected
