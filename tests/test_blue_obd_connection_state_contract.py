@@ -25,7 +25,7 @@ def main() -> None:
         '"PROTOCOL_FAILED"',
         '"STFT_PROBE_FAILED"',
         '"LIVE_LINK_LOST"',
-        "if (running.get() && connectionState.snapshot().stage == ElmStage.LIVE)",
+        "connectionState.snapshot().stage in setOf(ElmStage.STFT_READY, ElmStage.LIVE)",
         '"Conexão ELM foi encerrada durante aquisição STFT"',
     ]
     missing = [needle for needle in required if needle not in text]
