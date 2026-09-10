@@ -99,6 +99,33 @@ class LearningGridProjectionTest {
         assertEquals(report.getString("interfaceProjectionHash"), report.getString("exportProjectionHash"))
     }
 
+    @Test
+    fun `Blue export frame count remains visible as scientific sample count`() {
+        val regions = JSONArray().put(
+            JSONObject()
+                .put("id", "physical-export")
+                .put("fuel", "GASOLINA")
+                .put("epoch", 0)
+                .put("rpm", 876.0)
+                .put("map_bar", 0.413)
+                .put("petrol_ms", 4.60032)
+                .put("frame_count", 10)
+                .put("quality", 0.7951927120873843)
+                .put("visits", JSONArray().put("physical-export"))
+                .put("updated_at", 1789034678408L),
+        )
+
+        val projected = LearningGridProjection.project(regions, 1)
+        val totalSamples = (0 until projected.length()).sumOf {
+            projected.getJSONObject(it).getInt("samples")
+        }
+
+        assertEquals(10, totalSamples)
+        assertTrue((0 until projected.length()).all {
+            projected.getJSONObject(it).getDouble("quality") > 0.0
+        })
+    }
+
     private fun region(id: String, fuel: String, epoch: Int, petrolMs: Double, rpm: Double) = JSONObject()
         .put("id", id)
         .put("fuel", fuel)
