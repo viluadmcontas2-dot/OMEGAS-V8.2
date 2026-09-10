@@ -88,6 +88,18 @@
             this.connectionSignature = "";
             return;
           }
+          const retry = event.target.closest("[data-obd-retry]");
+          if (retry) {
+            const address = retry.dataset.obdRetry || "";
+            if (!address) {
+              this.alert("Selecione novamente o ELM327 para repetir a conexão.");
+              return;
+            }
+            const result = this.api.connectObd(address);
+            if ((result == null ? void 0 : result.ok) === false) this.alert(result.error || "Não foi possível repetir a conexão OBD.");
+            this.connectionSignature = "";
+            return;
+          }
           const connect = event.target.closest("[data-obd-connect]");
           if (connect) {
             const result = this.api.connectObd(connect.dataset.obdConnect || "");
@@ -200,17 +212,28 @@
         const connecting = ["RFCOMM", "ELM_INIT", "PROTOCOL", "STFT_READY", "CONECTANDO"].includes(stage);
         const selected = String(obd.deviceAddress || obd.lastDeviceAddress || devicesState.lastDeviceAddress || "");
         const diagnostic = obd.diagnostic || {};
+        const knownStages = ["PERMISSION", "RFCOMM", "ELM_INIT", "PROTOCOL", "STFT_READY", "LIVE", "ERROR"];
+        const errorCode = String(obd.errorCode || diagnostic.errorCode || "");
+        const diagnosticDetail = String(obd.detail || diagnostic.detail || obd.lastError || "");
+        const retryable = obd.retryable === true || diagnostic.retryable === true;
         const protocol = String(diagnostic.protocolMode || obd.protocol || "");
         const supported = Array.isArray(diagnostic.supportedStandardPids) ? diagnostic.supportedStandardPids : [];
         const devices = rawDevices.slice().sort((a, b) => {
           const score = (item) => (item.connected ? 3 : 0) + (String(item.address || "") === selected ? 2 : 0);
           return score(b) - score(a);
         });
-        const signature = JSON.stringify({ mode, devices, permissionRequired, bluetoothEnabled, connected, connecting, selected, protocol, supported: supported.length, stage });
+        const signature = JSON.stringify({ mode, devices, permissionRequired, bluetoothEnabled, connected, connecting, selected, protocol, supported: supported.length, stage, errorCode, diagnosticDetail, retryable, knownStages });
         if (signature === this.connectionSignature) return;
         this.connectionSignature = signature;
         const deviceRows = devices.length ? devices.map((device) => '\n        <div class="witness-device-row">\n          <div><small>'.concat(device.connected ? "CONECTADO" : String(device.address || "") === selected ? "USADO POR \xDALTIMO" : "PAREADO", "</small><b>").concat(escapeHtml(device.name || "ELM327"), "</b><span>").concat(escapeHtml(device.address || ""), '</span></div>\n          <button type="button" class="').concat(String(device.address || "") === selected ? "primary" : "secondary", '" data-obd-connect="').concat(escapeHtml(device.address || ""), '" ').concat(device.connected ? "disabled" : "", ">").concat(device.connected ? "Em uso" : String(device.address || "") === selected ? "Reconectar" : "Conectar", "</button>\n        </div>")).join("") : '<p class="empty-copy">Nenhum ELM327 pareado no Android.</p>';
         host.innerHTML = '\n        <div class="witness-setup-heading"><div><small>CONEX\xC3O</small><h3>'.concat(connected ? "ELM pronto para STFT" : connecting ? "Conectando ao carro" : "Escolha a fonte OBD", "</h3></div><span>").concat(escapeHtml(stage || "IDLE"), '</span></div>\n        <div class="witness-connection-progress"><span data-state="').concat(permissionRequired ? "waiting" : "done", '">Bluetooth</span><span data-state="').concat(connected ? "done" : connecting ? "active" : "waiting", '">ELM327</span><span data-state="').concat(protocol ? "done" : connected ? "active" : "waiting", '">Protocolo</span><span data-state="').concat(connected ? "done" : "waiting", '">STFT 0106</span></div>\n        <div class="witness-mode-buttons"><button type="button" data-obd-mode="local" class="').concat(mode === "local" ? "active" : "", '">ELM Bluetooth</button><button type="button" data-obd-mode="remote" class="').concat(mode === "remote" ? "active" : "", '">Omegas Link</button><button type="button" data-obd-mode="off" class="').concat(mode === "off" ? "active" : "", '">Desativado</button></div>\n        ').concat(permissionRequired ? '<p class="witness-note">Autorize o Bluetooth para acessar os dispositivos pareados.</p>' : !bluetoothEnabled ? '<p class="witness-note">Ligue o Bluetooth do Android para continuar.</p>' : deviceRows, '\n        <p class="witness-note">MP48 permanece autoridade de condi\xE7\xE3o f\xEDsica e combust\xEDvel; OBD fornece apenas STFT.</p>');
+        if (errorCode || diagnosticDetail) {
+          const diagnosticBox = document.createElement("div");
+          diagnosticBox.className = "witness-note";
+          diagnosticBox.dataset.obdDiagnostic = "true";
+          diagnosticBox.innerHTML = "<b>Falha ".concat(escapeHtml(errorCode || stage || "OBD"), "</b><span>Etapa ").concat(escapeHtml(stage || "desconhecida"), " · ").concat(escapeHtml(diagnosticDetail || "Sem detalhe nativo"), "</span>").concat(retryable && selected ? '<button type="button" class="secondary" data-obd-retry="'.concat(escapeHtml(selected), '">Tentar novamente</button>') : "");
+          host.appendChild(diagnosticBox);
+        }
       }
       renderSensors(obd) {
         const host = document.getElementById("obdSensorList");
