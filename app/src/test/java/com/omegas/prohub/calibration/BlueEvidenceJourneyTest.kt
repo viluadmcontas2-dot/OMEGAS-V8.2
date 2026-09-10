@@ -288,6 +288,40 @@ class BlueEvidenceJourneyTest {
         assertEquals(10.0, latest(result).getDouble("errorPercent"), 1e-9)
     }
 
+    @Test
+    fun `measured deviation does not require map or curve readback`() {
+        val result = newCoordinator().ingestLearningSnapshot(snapshot(
+            region("petrol-unbound", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p"),
+            region("gnv-unbound", "GNV", 1500.0, 0.50, 4.40, 0.95, "g"),
+        ))
+
+        assertFalse(result.getBoolean("ready"))
+        assertTrue(result.getBoolean("measurementReady"))
+        assertEquals("CALIBRATION_READBACK_REQUIRED", result.getString("reason"))
+        assertEquals(1, result.getInt("activeComparisons"))
+        assertEquals(10.0, latest(result).getDouble("errorPercent"), 1e-9)
+        val proposal = result.getJSONObject("proposal")
+        assertFalse(proposal.getBoolean("available"))
+        assertEquals("CALIBRATION_READBACK_REQUIRED", proposal.getString("state"))
+        assertFalse(result.getBoolean("automaticWrite"))
+    }
+
+    @Test
+    fun `readback binds existing measurement without losing its pair`() {
+        val coordinator = newCoordinator()
+        coordinator.ingestLearningSnapshot(snapshot(
+            region("petrol-unbound", "PETROL", 1500.0, 0.50, 4.00, 0.95, "p"),
+            region("gnv-unbound", "GNV", 1500.0, 0.50, 4.40, 0.95, "g"),
+        ))
+
+        val result = coordinator.synchronizeFromConfirmedSnapshot(mapSnapshot(42L), curveSnapshot(42L))
+
+        assertTrue(result.getBoolean("ready"))
+        assertEquals(1, result.getInt("activeComparisons"))
+        assertEquals(10.0, latest(result).getDouble("errorPercent"), 1e-9)
+        assertEquals("MEASURE_ACTUATOR_GAIN", result.getJSONObject("proposal").getString("state"))
+    }
+
     private fun latest(result: JSONObject): JSONObject {
         val comparison = result.optJSONObject("latestComparison")
         assertNotNull("journey must publish latestComparison", comparison)
