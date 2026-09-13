@@ -719,7 +719,7 @@ class TelemetryForegroundService : Service() {
         if (cngActive) {
             consumptionTracker.update(
                 timestampMs = accepted.optLong("timestamp", System.currentTimeMillis()),
-                rawPressure = live.optInt("level_raw", -1),
+                rawLevel = live.optInt("level_raw", -1),
             )
         }
 
