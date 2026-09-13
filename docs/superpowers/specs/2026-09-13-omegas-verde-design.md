@@ -10,7 +10,7 @@
 
 O OmegasVerde é uma evolução pequena e controlada do OMEGAS 8.0 RED. Ele mantém a telemetria MP48, persistência, Predictor consultivo e fluxo manual de escrita do Mapa K. A mudança central é transformar os fatos já coletados em duas superfícies simples de RPM × MAP, usando o tempo de injeção comandado pela ECU de gasolina como variável observada.
 
-Não existe importação do Blue Causal Engine, motor paralelo, ML opaco nem escrita automática na ECU.
+Não existe importação do Blue Causal Engine, motor paralelo, ML opaco nem escrita automática na ECU. A única exceção aprovada é o transplante isolado da apresentação visual da tela **Agora** da branch Blue mais recente; dados e comportamento continuam sob contratos Red/Verde.
 
 ## 2. Evidência utilizada
 
@@ -226,7 +226,42 @@ Levels não participa do aprendizado MAP–Tinj nem determina o combustível ati
 
 ## 10. Interface enxuta
 
-O redesenho é restrito ao Predictor/Learning.
+As mudanças visuais ficam restritas à tela Agora e aos cards de Predictor/Learning descritos abaixo.
+
+### 10.1 Tela Agora — apresentação visual Blue isolada
+
+Decisão aprovada em 2026-09-13: usar a organização visual da tela Agora existente na branch `work/omegas-blue-causal-engine`, sem importar qualquer lógica Blue.
+
+Fonte congelada:
+
+- head inspecionado: `08c6dc79c829851c7ee52cfdf8bea280de75df59`;
+- dashboard: `app/src/main/assets/ui/screens/dashboard.js`, blob `fa36673d948f73133afd7a112ccd897803a885c6`;
+- folha de origem: `app/src/main/assets/ui/styles-witness-multimedia.css`, blob `f2245e80a1b9a7dad0ffee199c4d3c64ba141e10`;
+- introdução visual: commit `313dbd4599f69a87719774d0fc24ecf23f7ad4bd`;
+- compatibilidade WebView refletida no blob atual: commit `4aa2d1b0ab1feb88e4cc3f3eedfb20376694961c`.
+
+A tela Verde preserva a mesma hierarquia:
+
+1. título **Agora — O que o motor está fazendo**;
+2. Petrol Injection como única leitura principal;
+3. cards RPM, MAP, combustível, STFT e célula;
+4. faixa de saúde com sessão, ECU, OBD opcional e idade da telemetria;
+5. estados desconectado, normal, atrasado, expirado e travado;
+6. layout responsivo para multimídia 1280×720.
+
+STFT e OBD permanecem estritamente informativos e opcionais nessa tela. Eles não entram no aprendizado Verde e a ausência deles não bloqueia RPM, MAP, Tinj, combustível ou sessão MP48.
+
+Isolamento obrigatório:
+
+- copiar a estrutura do dashboard atual, adaptada aos contratos de Store Red/Verde;
+- extrair somente os seletores `now-*` e os ajustes de rota do dashboard para `styles-dashboard-now.css`;
+- não copiar a folha Blue inteira, pois contém regras para OBD, Mapa K e Curva K;
+- não copiar arquivos Kotlin `blue/`, engines, modelos, policies, estados causais, advisor ou persistência;
+- não alterar o writer, Mapa K, Curva K ou telas fora do recorte;
+- manter sintaxe compatível com WebView legado;
+- não renderizar combustível desconhecido como gasolina/GNV por palpite visual; o dashboard consome o resolvedor de #40 quando disponível.
+
+### 10.2 Predictor e Learning
 
 Card principal, sempre na mesma ordem:
 
@@ -307,14 +342,15 @@ Matriz obrigatória:
 ## 14. Sequência rastreável
 
 1. [#41 VERDE-01](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/41) — base e contrato.
-2. [#40 VERDE-02](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/40) — combustível.
-3. [#39 VERDE-03](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/39) — superfícies e equivalência.
-4. [#38 VERDE-04](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/38) — migração.
-5. [#42 VERDE-05](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/42) — Levels.
-6. [#43 VERDE-06](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/43) — UI.
-7. [#44 VERDE-07](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/44) — CI e integração.
+2. [#45 VERDE-08](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/45) — transplante visual isolado da tela Agora.
+3. [#40 VERDE-02](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/40) — combustível.
+4. [#39 VERDE-03](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/39) — superfícies e equivalência.
+5. [#38 VERDE-04](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/38) — migração.
+6. [#42 VERDE-05](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/42) — Levels.
+7. [#43 VERDE-06](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/43) — UI.
+8. [#44 VERDE-07](https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/44) — CI e integração.
 
-Combustível e Levels podem ser implementados isoladamente após o plano. A UI depende dos contratos de combustível, superfícies e Levels. A integração final depende de todas as issues funcionais.
+A tela Agora pode ser transplantada isoladamente após seu plano específico. Combustível e Levels também podem ser implementados isoladamente após os respectivos planos. A UI depende dos contratos de combustível, superfícies e Levels. A integração final depende de todas as issues funcionais.
 
 ## 15. Critério de saída
 
