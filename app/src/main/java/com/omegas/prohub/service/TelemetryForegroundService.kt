@@ -791,9 +791,25 @@ class TelemetryForegroundService : Service() {
             cycleStartedAtMs = cycleStartedAtMs,
         )
         if (!obdLearningEngine.observe(learningSample, nowMs = System.currentTimeMillis())) return
-        val result = obdLearningEngine.evaluate(learningSample.rpm, learningSample.mapBar)
         persistObdLearning()
+        val witness = buildObdWitness(learningSample)
+        latestObdWitness = witness
+        sessionRecorder.record("obd_learning", "obd", witness, force = true)
+    }
 
+    private fun persistObdLearning(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && now - lastObdPersistAt < 5_000L) return
+        try {
+            if (force) obdSnapshotWriter.flush() else obdSnapshotWriter.request()
+            lastObdPersistAt = now
+        } catch (error: Exception) {
+            log.add("WARN", "OBD", "Falha ao agendar persistência STFT: ${error.message}")
+        }
+    }
+
+    private fun buildObdWitness(learningSample: ObdLearningSample): JSONObject {
+        val result = obdLearningEngine.evaluate(learningSample.rpm, learningSample.mapBar)
         val mp48 = telemetryStore.telemetryCopy()
         val mp48Fuel = mp48.optString("fuel", mp48.optString("state", "")).uppercase()
         val mp48Rpm = mp48.optDouble("rpm", Double.NaN)
@@ -812,7 +828,7 @@ class TelemetryForegroundService : Service() {
             mapRows = kWriter.confirmedMapSnapshot()?.optJSONArray("rows"),
             addressConfidence = if (bridgeValid) 0.95 else 0.0,
         )
-        val witness = JSONObject()
+        return JSONObject()
             .put("source", "OBD_INDEPENDENT_STFT_GNV")
             .put("state", result.state.name)
             .put("stftMedianPct", result.stftMedianPct ?: JSONObject.NULL)
@@ -835,19 +851,6 @@ class TelemetryForegroundService : Service() {
             .put("mapKProposalState", mapProposal.optString("state", "ADDRESS_UNRESOLVED"))
             .put("mapKProposal", mapProposal)
             .put("observedAtMs", learningSample.observedAtMs)
-        latestObdWitness = witness
-        sessionRecorder.record("obd_learning", "obd", witness, force = true)
-    }
-
-    private fun persistObdLearning(force: Boolean = false) {
-        val now = System.currentTimeMillis()
-        if (!force && now - lastObdPersistAt < 5_000L) return
-        try {
-            if (force) obdSnapshotWriter.flush() else obdSnapshotWriter.request()
-            lastObdPersistAt = now
-        } catch (error: Exception) {
-            log.add("WARN", "OBD", "Falha ao agendar persistência STFT: ${error.message}")
-        }
     }
 
     private fun rotateObdLearningEpoch(reason: String) {
