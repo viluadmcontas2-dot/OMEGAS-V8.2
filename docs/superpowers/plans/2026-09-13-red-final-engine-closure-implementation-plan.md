@@ -146,7 +146,7 @@
 - [ ] **Step 1: RED — forbid engineering jargon in the primary cell pane.**
   Primary UI must not render `BlueCausalEngine`, calibration-state internals, epoch history, ACK/readback contract text or internal IDs.
 - [ ] **Step 2: RED — require operational fields.**
-  Require RPM/MAP context, gasoline expected, GNV observed, deviation, confidence, origin (`medido`, `interpolado`, `predito`) and suggested adjustment when available.
+  Require RPM/MAP context, gasolina expected, GNV observed, deviation, confidence, origin (`medido`, `interpolado`, `predito`) and suggested adjustment when available.
 - [ ] **Step 3: RED — compact grid cells.**
   Grid cells show the principal value/state without repeated long labels such as `ms gasolina`, `ms no GNV`, or engineering explanations in every cell.
 - [ ] **Step 4: Implement minimal UI simplification without deleting diagnostic data from backend snapshots.**
@@ -211,7 +211,7 @@
 - [ ] **Step 5: If review changes code, rerun Steps 2-4 on the new exact SHA.**
 - [ ] **Step 6: Update `STATUS.md` with exact SHA/tree/run and known limits, then rerun FAST/FULL if STATUS is part of final-SHA governance.**
 - [ ] **Step 7: Stop at `READY FOR APK GENERATION` until the already-authorized artifact gate is explicitly invoked by the existing workflow contract.**
-- [ ] **Step 8: Generate APK only through the canonical owner-authorized workflow; verify receipt, ZIP integrity, APK SHA-256/bytes, `apksigner verify --verbose --print-certs`, and `aapt dump badging` against the exact final SHA.
+- [ ] **Step 8: Generate APK only through the canonical owner-authorized workflow; verify receipt, ZIP integrity, APK SHA-256/bytes, `apksigner verify --verbose --print-certs`, and `aapt dump badging` against the exact final SHA.**
 - [ ] **Step 9: Keep physical vehicle validation as a separate human gate; do not claim fuel economy, stability or real-device behavior from CI alone.**
 
 ## Self-review checklist
