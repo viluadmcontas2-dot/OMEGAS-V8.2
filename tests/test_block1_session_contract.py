@@ -8,12 +8,25 @@ BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
 POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt"
 
 
+def normalize_js_source(text: str) -> str:
+    text = re.sub(
+        r"\\\\x([0-9A-Fa-f]{2})",
+        lambda match: chr(int(match.group(1), 16)),
+        text,
+    )
+    return re.sub(
+        r"\\\\u([0-9A-Fa-f]{4})",
+        lambda match: chr(int(match.group(1), 16)),
+        text,
+    )
+
+
 class Block1SessionContract(unittest.TestCase):
     def setUp(self):
         self.html = (UI / "index.html").read_text("utf-8")
         self.app = (UI / "app.js").read_text("utf-8")
         self.scheduler = (UI / "core/scheduler.js").read_text("utf-8")
-        self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
+        self.dashboard = normalize_js_source((UI / "screens/dashboard.js").read_text("utf-8"))
         self.bridge = BRIDGE.read_text("utf-8")
         self.policy = POLICY.read_text("utf-8")
         self.css = (UI / "styles.css").read_text("utf-8")
