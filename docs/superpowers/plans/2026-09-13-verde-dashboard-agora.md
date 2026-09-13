@@ -385,7 +385,7 @@ Estado aceito: `completed/success`. Estado `queued` ou `in_progress` não é con
 
 - [ ] **Step 4: Inspecionar o diff integrado**
 
-Comparar o SHA final contra `6fd94766aa13b243bca8be0346b759036caabb68`. O diff permitido contém apenas os seis arquivos deste plano e o próprio plano.
+Comparar o SHA final contra `d4b544758d6508a92c8d73e0e99eae406f446eb2`, último commit antes da correção textual deste plano. O diff permitido contém a correção do plano e somente estes arquivos de execução: dashboard, CSS isolado, contrato Node, contrato Python, `tools/run_checks.py` e workflow rápido.
 
 - [ ] **Step 5: Atualizar #45 e a epic**
 
