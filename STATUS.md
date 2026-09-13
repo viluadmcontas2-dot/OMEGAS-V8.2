@@ -31,6 +31,8 @@
 - GREEN funcional produzido pelo one-shot: `f4bfab5aefae7cd9e1442d1f082b3a36186b1089`.
 - Run `34774860608` no successor `ca51fe6f80e0a613877c3601328ca3c3a197a11c`: contratos científicos/functional/hot-path passaram; FAST revelou conflito legado de isolamento OBD antes de FULL.
 - Correção de separação OBD learning × bridge Map-K: `ce675a30df683201bac532b5776e9d14f46245be`, árvore `e065fc249e22c66b6e489f1de1c7e148f70f6f78`.
+- Run `34774984684` no successor `40231fabe1db42e4dc8b5198ad16cfd620f3ff21`: isolamento OBD passou; FAST revelou que `evaluate()` precisava permanecer no seam de aprendizado.
+- Correção mínima de `evaluate()` no seam independente: `3bdaf25228484c2e98e7de562b8a578f3f082fba`, árvore `099c0da7dca02eed5cde0e2a1cf66e8a5e6af736`.
 - Run histórico `34522976601`: FAST success; FULL JVM lint success; APK skipped conforme gate.
 - A suíte histórica executou 273 testes JVM e lint Debug, além dos contratos Python/Node/browser.
 
@@ -49,13 +51,13 @@
 
 ## Gate atual
 
-A correção `ce675a30...` foi produzida pelo token da Actions e por isso não gera `push` CI recursiva. Este successor de documentação dispara a CI canônica FAST + FULL no SHA exato. Verificação permanece `PENDING` até conclusão bem-sucedida dos dois jobs.
+A correção `3bdaf252...` foi produzida pelo token da Actions e não gera `push` CI recursiva. Este successor de documentação dispara a CI canônica FAST + FULL. Verificação permanece `PENDING` até conclusão bem-sucedida dos dois jobs.
 
 ## Functional recovery candidate — 2026-09-13
 
 - Epic: #30; workstreams #31–#35; physical gate #25 remains separate/open.
-- Product recovery base: `ce675a30df683201bac532b5776e9d14f46245be`, tree `e065fc249e22c66b6e489f1de1c7e148f70f6f78`.
-- OBD STFT learning is isolated from the optional MP48-backed Map-K address bridge; the bridge remains observational/manual-only and cannot write automatically.
+- Product recovery base: `3bdaf25228484c2e98e7de562b8a578f3f082fba`, tree `099c0da7dca02eed5cde0e2a1cf66e8a5e6af736`.
+- OBD STFT learning keeps `observe` + `evaluate` inside the independent learning seam; the optional MP48-backed Map-K address bridge remains outside that seam, observational/manual-only, with no automatic write.
 - Verification remains `PENDING` until FAST + FULL complete successfully on this exact successor SHA.
 - APK remains blocked until the exact-SHA software gate is green and the owner-authorized artifact gate executes.
 - No physical vehicle, ELM-universal, economy, ANR/soak, battery or API 26–35 claim is implied.
