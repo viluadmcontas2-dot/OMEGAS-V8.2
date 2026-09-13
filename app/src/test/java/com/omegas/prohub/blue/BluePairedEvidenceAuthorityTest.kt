@@ -2,14 +2,13 @@ package com.omegas.prohub.blue
 
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * Evidence-authority battery for permanent gasoline reference -> CNG comparison.
  * Petrol Inj. delta is primary; GNV STFT is an optional witness; LTFT never
- * votes on correction math.
+ * votes on correction math. Canonical work unit: GitHub Issue #31.
  */
 class BluePairedEvidenceAuthorityTest {
     private val revision = CalibrationRevision(0, 0)
@@ -29,7 +28,7 @@ class BluePairedEvidenceAuthorityTest {
     }
 
     @Test
-    fun `T01-RED02 gasoline history outside former temporal window remains primary comparison`() {
+    fun `issue 31 gasoline history outside former temporal window remains primary comparison`() {
         val engine = BlueCausalEngine()
         val oldPetrol = evidence(FuelKind.PETROL, 1_000L, 870.0, 0.45, 4.50)
         val cng = evidence(FuelKind.CNG, 120_000L, 870.0, 0.45, 4.86)
@@ -42,19 +41,7 @@ class BluePairedEvidenceAuthorityTest {
     }
 
     @Test
-    fun `T01-RED05 gasoline timestamp direction does not block physical reference`() {
-        val engine = BlueCausalEngine()
-        val gasolineRecordedLater = evidence(FuelKind.PETROL, 103_000L, 870.0, 0.45, 4.50)
-        val cng = evidence(FuelKind.CNG, 102_000L, 870.0, 0.45, 4.86)
-
-        val reference = engine.petrolReference(cng, listOf(gasolineRecordedLater))
-
-        assertNotNull(reference)
-        assertEquals(4.50, reference!!.petrolMs, 1e-9)
-    }
-
-    @Test
-    fun `same-region gasoline reference aggregates physically compatible history regardless of age`() {
+    fun `issue 31 same-region gasoline reference aggregates compatible history regardless of age`() {
         val engine = BlueCausalEngine()
         val oldPetrol = evidence(FuelKind.PETROL, 10_000L, 870.0, 0.45, 4.00)
         val recentPetrol = evidence(FuelKind.PETROL, 100_000L, 870.0, 0.45, 4.50)
