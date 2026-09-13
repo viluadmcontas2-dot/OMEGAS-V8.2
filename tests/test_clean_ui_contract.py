@@ -104,14 +104,11 @@ class CleanUiContract(unittest.TestCase):
     def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
         self.assertIn('PETROL INJECTION', self.dashboard)
         self.assertIn('dashHeroPetrol', self.dashboard)
-        self.assertIn('dashHeroRpm', self.dashboard)
-        self.assertLess(self.dashboard.index('dashHeroPetrol'), self.dashboard.index('dashHeroRpm'))
-        self.assertIn('hero-context-grid', self.dashboard)
-        for marker in ('dashMap', 'dashFuel', 'dashCell'):
+        self.assertIn('now-dashboard-shell', self.dashboard)
+        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashStft', 'dashCell'):
             self.assertIn(marker, self.dashboard)
-        self.assertIn('dashGas', self.dashboard)
-        self.assertIn('dashStft', self.html)
-        self.assertIn('dashLtft', self.html)
+        self.assertNotIn('dashHeroRpm', self.dashboard)
+        self.assertNotIn('dashGas', self.dashboard)
 
     def test_learning_map_curve_and_obd_have_expected_contracts(self):
         for layer in ('petrol', 'cng', 'comparison', 'suggestion'):
