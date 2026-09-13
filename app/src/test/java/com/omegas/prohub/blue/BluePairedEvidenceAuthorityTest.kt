@@ -2,7 +2,6 @@ package com.omegas.prohub.blue
 
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -14,6 +13,7 @@ import org.junit.Test
  */
 class BluePairedEvidenceAuthorityTest {
     private val revision = CalibrationRevision(0, 0)
+    private val witnessNowMs = 20_000L
 
     @Test
     fun `two-second gasoline to gnv pair produces eight percent primary deviation`() {
@@ -91,6 +91,7 @@ class BluePairedEvidenceAuthorityTest {
             expectedRpm = 870.0,
             expectedMapBar = 0.45,
             expectedPetrolOnCngMs = 4.86,
+            nowMs = witnessNowMs,
         )
 
         assertEquals("SUPPORTS", projected.getJSONObject("obdWitness").getString("state"))
@@ -138,6 +139,7 @@ class BluePairedEvidenceAuthorityTest {
             expectedRpm = 870.0,
             expectedMapBar = 0.45,
             expectedPetrolOnCngMs = 4.86,
+            nowMs = witnessNowMs,
         )
 
         assertEquals("UNAVAILABLE", projected.getJSONObject("obdWitness").getString("state"))
@@ -168,11 +170,12 @@ class BluePairedEvidenceAuthorityTest {
             expectedRpm = 870.0,
             expectedMapBar = 0.45,
             expectedPetrolOnCngMs = 4.86,
+            nowMs = witnessNowMs,
         )
     }
 
     private fun witness(stft: Double, ltft: Double): JSONObject = JSONObject()
-        .put("state", "INSUFFICIENT")
+        .put("state", "READY")
         .put("calibrationState", "map-0:curve-0")
         .put("rpm", 870.0)
         .put("map_bar", 0.45)
@@ -180,6 +183,8 @@ class BluePairedEvidenceAuthorityTest {
         .put("gnvStftPct", stft)
         .put("ltftPct", ltft)
         .put("quality", 0.90)
+        .put("gnvModeDeclared", true)
+        .put("observedAtMs", witnessNowMs - 100L)
 
     private fun evidence(
         fuel: FuelKind,
