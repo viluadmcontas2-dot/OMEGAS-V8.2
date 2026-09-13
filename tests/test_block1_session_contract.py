@@ -10,12 +10,12 @@ POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWrit
 
 def normalize_js_source(text: str) -> str:
     text = re.sub(
-        r"\\\\x([0-9A-Fa-f]{2})",
+        r"\\x([0-9A-Fa-f]{2})",
         lambda match: chr(int(match.group(1), 16)),
         text,
     )
     return re.sub(
-        r"\\\\u([0-9A-Fa-f]{4})",
+        r"\\u([0-9A-Fa-f]{4})",
         lambda match: chr(int(match.group(1), 16)),
         text,
     )
