@@ -26,6 +26,7 @@ import com.omegas.prohub.network.LanPanelServer
 import com.omegas.prohub.obd.ObdAssistManager
 import com.omegas.prohub.obd.ObdIndependentLearningEngine
 import com.omegas.prohub.obd.ObdLearningSample
+import com.omegas.prohub.obd.ObdLearningResult
 import com.omegas.prohub.obd.ObdMapKSuggestion
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
@@ -791,8 +792,9 @@ class TelemetryForegroundService : Service() {
             cycleStartedAtMs = cycleStartedAtMs,
         )
         if (!obdLearningEngine.observe(learningSample, nowMs = System.currentTimeMillis())) return
+        val result = obdLearningEngine.evaluate(learningSample.rpm, learningSample.mapBar)
         persistObdLearning()
-        val witness = buildObdWitness(learningSample)
+        val witness = buildObdWitness(learningSample, result)
         latestObdWitness = witness
         sessionRecorder.record("obd_learning", "obd", witness, force = true)
     }
@@ -808,8 +810,10 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    private fun buildObdWitness(learningSample: ObdLearningSample): JSONObject {
-        val result = obdLearningEngine.evaluate(learningSample.rpm, learningSample.mapBar)
+    private fun buildObdWitness(
+        learningSample: ObdLearningSample,
+        result: ObdLearningResult,
+    ): JSONObject {
         val mp48 = telemetryStore.telemetryCopy()
         val mp48Fuel = mp48.optString("fuel", mp48.optString("state", "")).uppercase()
         val mp48Rpm = mp48.optDouble("rpm", Double.NaN)
