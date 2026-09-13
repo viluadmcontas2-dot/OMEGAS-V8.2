@@ -11,9 +11,10 @@ import kotlin.math.sqrt
  * Single scientific authority for gasoline reference and CNG deviation.
  *
  * A coordinate hit is not enough. Reference quality rewards physical proximity
- * and stable evidence. The engine never invents an actuator response: a K
- * correction is available only after a causal gain was measured from an actual
- * before/after calibration event.
+ * and stable evidence. The gasoline reference is persistent: time since a valid
+ * gasoline observation does not invalidate physical RPM x MAP support. The
+ * engine never invents an actuator response: a K correction is available only
+ * after a causal gain was measured from an actual before/after calibration event.
  */
 class BlueCausalEngine(
     private val policy: BluePolicy = BluePolicy(),
@@ -25,27 +26,16 @@ class BlueCausalEngine(
         target: FuelEvidence,
         petrolEvidence: List<FuelEvidence>,
     ): BluePetrolReference? {
-        val allCandidates = petrolEvidence
+        val candidates = petrolEvidence
             .asSequence()
             .filter { it.fuel == FuelKind.PETROL }
             .filter { it.petrolMs > 0.0 && it.quality >= policy.minimumEvidenceQuality }
             .map { evidence -> BlueCandidate(evidence, normalizedDistance(evidence, target)) }
             .filter { it.distance <= policy.maximumNormalizedDistance }
-            .toList()
-        if (allCandidates.isEmpty()) return null
-
-        // The primary gasoline reference must be a true pre-switch temporal pair.
-        // Historical same-region gasoline remains useful as memory/diagnostic
-        // evidence, but it cannot impersonate the immediately preceding side of
-        // a gasoline -> CNG comparison. Future gasoline is rejected as well.
-        val temporalPairs = allCandidates.filter { candidate ->
-            val dt = target.collectedAtMs - candidate.evidence.collectedAtMs
-            dt in 0..policy.preferredTemporalPairWindowMs
-        }
-        if (temporalPairs.isEmpty()) return null
-        val candidates = temporalPairs
             .sortedBy { it.distance }
             .take(policy.maximumReferenceBursts)
+            .toList()
+        if (candidates.isEmpty()) return null
 
         val values = candidates.map { it.evidence.petrolMs }.sorted()
         val median = if (values.size % 2 == 0) {
@@ -163,7 +153,6 @@ data class BluePolicy(
     val mapWindowBar: Double = 0.08,
     val maximumNormalizedDistance: Double = 1.75,
     val maximumReferenceBursts: Int = 7,
-    val preferredTemporalPairWindowMs: Long = 30_000L,
     val absoluteDeadbandMs: Double = 0.08,
     val relativeDeadbandPercent: Double = 2.0,
     val minimumActuatorStepLog: Double = 0.003,
