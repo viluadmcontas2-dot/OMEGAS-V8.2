@@ -35,6 +35,7 @@ commands = [
     ["node", "--test", "tests/ui/obd-runtime-controls.test.cjs"],
     ["node", "--test", "tests/ui/map-editor-flow.test.cjs"],
     ["node", "--test", "tests/ui/app-shell-runtime.test.cjs"],
+    ["node", "--test", "tests/ui/verde-dashboard-now.test.cjs"],
     ["node", "--test", "tests/ui/map-workflow-e2e.test.cjs"],
     ["node", "--test", "tests/ui/map-ecu-simulator-e2e.test.cjs"],
     ["node", "--test", "tests/ui/portmon-replay-adapter.test.cjs"],
