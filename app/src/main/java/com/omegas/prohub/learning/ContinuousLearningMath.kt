@@ -123,5 +123,22 @@ object ContinuousLearningMath {
         val total = valid.sumOf { it.second }
         return if (total <= 0.0) null else valid.sumOf { it.first * it.second } / total
     }
+
+    /**
+     * Kernel Gaussiano para propagação espacial do aprendizado.
+     * Permite que uma correção em (row, column) espalhe para vizinhos.
+     */
+    fun gaussianSpatialKernel(
+        centerRow: Int,
+        centerColumn: Int,
+        targetRow: Int,
+        targetColumn: Int,
+        sigmaCells: Double = 1.0
+    ): Double {
+        val rowDist = (targetRow - centerRow).toDouble()
+        val colDist = (targetColumn - centerColumn).toDouble()
+        val squaredDist = rowDist * rowDist + colDist * colDist
+        return exp(-squaredDist / (2.0 * sigmaCells * sigmaCells))
+    }
 }
 

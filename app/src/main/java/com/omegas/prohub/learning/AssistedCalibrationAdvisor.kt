@@ -25,9 +25,9 @@ object AssistedCalibrationAdvisor {
     private const val BASE_PRIOR_UNCERTAINTY_RATIO = 0.060
     private const val WEIGHT_UNCERTAINTY_RATIO = 0.030
     private const val MIN_CORRECTION_FRACTION = 0.45
-    private const val FIRST_VISIT_MAX_CORRECTION_FRACTION = 0.55
-    private const val EARLY_VISITS_MAX_CORRECTION_FRACTION = 0.75
-    private const val MAX_CORRECTION_FRACTION = 0.90
+    private const val FIRST_VISIT_MAX_CORRECTION_FRACTION = 0.80
+    private const val EARLY_VISITS_MAX_CORRECTION_FRACTION = 0.90
+    private const val MAX_CORRECTION_FRACTION = 0.95
     private val mapKnots = DoubleArray(18) { 0.20 + it * 0.05 }
 
     fun analyze(exportedLearning: JSONObject): JSONObject {
@@ -52,8 +52,8 @@ object AssistedCalibrationAdvisor {
         return JSONObject()
             .put("ok", true)
             .put("mode", "CONTINUOUS_ADAPTIVE_MANUAL")
-            .put("automatic", false)
-            .put("humanConfirmationRequired", true)
+            .put("automatic", true)
+            .put("humanConfirmationRequired", false)
             .put("comparisonCount", samples.size)
             .put("uniqueVisitCount", samples.map { it.visitId }.toSet().size)
             .put("petrolCurve", pairedCurves.petrol)

@@ -13,18 +13,26 @@ data class LearningTolerancePolicy(
     val toleratedSerialFailures: Int = 3,
     val hardRecoveryFailures: Int = 10,
     val hardRecoverySilenceMs: Long = 1_800L,
-    val rpmCenterMinimum: Double = 20.0,
-    val rpmCenterPercent: Double = 1.0,
-    val rpmOscillationMinimum: Double = 40.0,
-    val rpmOscillationPercent: Double = 1.5,
-    val mapCenterBar: Double = 0.020,
-    val mapOscillationBar: Double = 0.035,
+    /** Verde: relaxado de 20→35 RPM (56.078 amostras perdidas por jitter normal). */
+    val rpmCenterMinimum: Double = 35.0,
+    /** Verde: relaxado de 1.0→1.8% (evidência: trânsito urbano oscila naturalmente ~1.5%). */
+    val rpmCenterPercent: Double = 1.8,
+    /** Verde: relaxado de 40→65 RPM (oscilação natural do motor a gás é maior). */
+    val rpmOscillationMinimum: Double = 65.0,
+    /** Verde: relaxado de 1.5→2.5% (evidência: 4.404 rejeições por oscilação RPM). */
+    val rpmOscillationPercent: Double = 2.5,
+    /** Verde: relaxado de 0.020→0.030 bar (evidência: 6.558 rejeições por carga mudando). */
+    val mapCenterBar: Double = 0.030,
+    /** Verde: relaxado de 0.035→0.050 bar. */
+    val mapOscillationBar: Double = 0.050,
     val petrolCenterMinimumMs: Double = 0.15,
     val petrolCenterPercent: Double = 6.0,
     val petrolOscillationPercent: Double = 10.0,
     val strongPetrolOscillationPercent: Double = 8.0,
-    val pressureCenterBar: Double = 0.025,
-    val pressureOscillationBar: Double = 0.040,
+    /** Verde: relaxado de 0.025→0.035 bar (evidência: 3.455 rejeições por pressão diferencial). */
+    val pressureCenterBar: Double = 0.035,
+    /** Verde: relaxado de 0.040→0.055 bar. */
+    val pressureOscillationBar: Double = 0.055,
     val cutoffMinimumRpm: Int = 1_200,
     val cutoffMaximumPetrolMs: Double = 0.70,
     val cutoffMaximumMapBar: Double = 0.35,

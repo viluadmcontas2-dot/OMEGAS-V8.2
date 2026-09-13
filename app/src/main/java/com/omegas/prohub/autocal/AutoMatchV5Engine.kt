@@ -19,9 +19,9 @@ object AutoMatchV5Engine {
     const val ALGORITHM = "OMEGAS_INFERRED_HORIZONTAL_G1_3_S3_DB1_CAP5_MUL_Q14_V2"
     const val PRESSURE_BAND_COUNT = 18
     const val SMOOTHING_WINDOW = 3
-    const val GAIN = 1.0 / 3.0
+    const val GAIN = 0.60
     const val DEADBAND_RATIO = 0.01
-    const val MAX_STEP_RATIO = 0.05
+    const val MAX_STEP_RATIO = 0.12
     const val SUPPORT_MIN_MS = 2.785
     const val SUPPORT_MAX_MS = 12.791
     const val MIN_FACTOR = 0.60
