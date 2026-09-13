@@ -9,6 +9,7 @@ on:
       - "app/src/main/assets/ui/**"
       - "tests/**"
       - "tools/run_checks.py"
+      - "docs/superpowers/**"
   workflow_dispatch:
 
 permissions:
