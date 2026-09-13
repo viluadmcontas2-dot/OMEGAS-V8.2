@@ -225,12 +225,20 @@
         const envelope = api.presentSnapshot() || {};
         const telemetry = envelope.data || {};
         const signature = "".concat(route, ":").concat(telemetryVisualSignature(telemetry, route));
-        if (envelope.ok !== false && signature !== previousTelemetrySignature) {
-          previousTelemetrySignature = signature;
-          store.patch({ telemetry, presentRevision: Number(envelope.revision || 0) });
-          const state2 = store.get();
-          if (route === "dashboard") (_a = ensureScreen("dashboard")) == null ? void 0 : _a.render(state2);
-          if (route === "learning" || route === "map") renderLightLiveContext(state2, route);
+        if (envelope.ok !== false) {
+          const ageValue = telemetry.ageMs != null ? telemetry.ageMs : telemetry.telemetryAgeMs;
+          store.patch({
+            presentRevision: Number(envelope.revision || 0),
+            presentSequence: Number(telemetry.sequence || envelope.sequence || 0),
+            presentAgeMs: Number(ageValue != null ? ageValue : envelope.ageMs != null ? envelope.ageMs : -1)
+          });
+          if (signature !== previousTelemetrySignature) {
+            previousTelemetrySignature = signature;
+            store.patch({ telemetry });
+            const state2 = store.get();
+            if (route === "dashboard") (_a = ensureScreen("dashboard")) == null ? void 0 : _a.render(state2);
+            if (route === "learning" || route === "map") renderLightLiveContext(state2, route);
+          }
         }
       }
       const state = store.get();

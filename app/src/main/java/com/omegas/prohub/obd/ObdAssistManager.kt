@@ -60,6 +60,7 @@ class ObdAssistManager(
     private val stateLock = Any()
     private var socket: BluetoothSocket? = null
     private var remoteLiveAt = 0L
+    private var remoteSessionStartedAt = 0L
     private var live = JSONObject()
         .put("connected", false)
         .put("mode", settings.obdMode)
@@ -210,6 +211,10 @@ class ObdAssistManager(
     /** Aceita somente STFT remoto; campos de scanner de peers antigos são descartados. */
     fun acceptRemoteLive(payload: JSONObject) {
         val now = System.currentTimeMillis()
+        val remoteSessionStart = synchronized(stateLock) {
+            if (remoteSessionStartedAt <= 0L || now - remoteLiveAt > 5_000L) remoteSessionStartedAt = now
+            remoteSessionStartedAt
+        }
         val observedAtMs = payload.optLong("observedAtMs", payload.optLong("updatedAt", now)).takeIf { it > 0L } ?: now
         val requestedAtMs = payload.optLong("requestedAtMs", observedAtMs).takeIf { it > 0L } ?: observedAtMs
         val cycle = ObdPidCycle.fromValues(
@@ -239,7 +244,7 @@ class ObdAssistManager(
                     .put("updatedAt", now)
             }
         }
-        if (cycle != null) publishLearningCycle(cycle, "remote")
+        if (cycle != null) publishLearningCycle(cycle, "remote", remoteSessionStart, requestedAtMs)
         onStateChanged()
     }
 
@@ -434,6 +439,7 @@ class ObdAssistManager(
 
     private fun pollCycle(sock: BluetoothSocket) {
         val cycleStartedAt = System.currentTimeMillis()
+        val sessionStartedAtMs = synchronized(stateLock) { currentSessionStartedAt }
         val rpmRead = readPidTimed(sock, "010C", 0x0C)
         val mapRead = readPidTimed(sock, "010B", 0x0B)
         val stftRead = readPidTimed(sock, "0106", 0x06)
@@ -485,7 +491,7 @@ class ObdAssistManager(
             .put("sessionStartedAt", currentSessionStartedAt)
             .put("updatedAt", now)
         synchronized(stateLock) { live = payload }
-        if (cycle != null) publishLearningCycle(cycle, "local")
+        if (cycle != null) publishLearningCycle(cycle, "local", sessionStartedAtMs, cycleStartedAt)
         onStateChanged()
         try {
             Thread.sleep(settings.obdPollIntervalMs.coerceIn(150L, 3000L))
@@ -494,7 +500,12 @@ class ObdAssistManager(
         }
     }
 
-    private fun publishLearningCycle(cycle: ObdPidCycle, mode: String) {
+    private fun publishLearningCycle(
+        cycle: ObdPidCycle,
+        mode: String,
+        sessionStartedAtMs: Long,
+        cycleStartedAtMs: Long,
+    ) {
         try {
             onLiveSample(
                 JSONObject()
@@ -504,6 +515,9 @@ class ObdAssistManager(
                     .put("stft", cycle.stftPct)
                     .put("acquisitionSpanMs", cycle.acquisitionSpanMs)
                     .put("observedAtMs", cycle.observedAtMs)
+                    .put("cycleStartedAtMs", cycleStartedAtMs)
+                    .put("sessionStartedAtMs", sessionStartedAtMs)
+                    .put("sessionId", "$mode:$sessionStartedAtMs")
                     .put("gnvModeDeclared", settings.obdGnvLearningEnabled)
                     .put("mode", mode),
             )

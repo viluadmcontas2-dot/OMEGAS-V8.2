@@ -48,3 +48,13 @@
 ## Gate atual
 
 Este commit de reconciliação precisa de uma nova CI no seu SHA exato. Após sucesso, o workflow manual `blue-ci.yml` será disparado com `build_apk=true`; o artefato só será aceito após SHA-256 e tamanho baterem com o recibo.
+
+
+## Functional recovery candidate — 2026-09-13
+
+- Epic: #30; workstreams #31–#35; physical gate #25 remains separate/open.
+- Proven RED lineage: `f77242c226626d8be131a735dacbed922af7f688` → `16fce3200a9f03f395d2ca7001a03f2ed8c408b2` → `e09769f60ebe5f593296809afa0eef310ee61eb3`.
+- This successor contains the GREEN implementation for scientific region identity, causal participation, OBD lifecycle/hot path, UI freshness/backpressure, Map-K addressing and consumption evidence.
+- Verification state in this file is intentionally `PENDING`: only GitHub Actions FAST + FULL on the exact final SHA may promote the software gate.
+- APK remains blocked until the exact-SHA software gate is green and the owner-authorized rerun executes.
+- No physical vehicle, ELM-universal, economy, ANR/soak, battery or API 26–35 claim is implied.

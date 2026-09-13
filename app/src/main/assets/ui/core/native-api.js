@@ -306,6 +306,10 @@
       resetLearningToleranceSettings() {
         return this.demo ? demoToleranceSettings() : invoke(this.native, "resetLearningToleranceSettings", [], { ok: false });
       }
+      obdWitness() {
+        if (this.demo) return { state: "INSUFFICIENT", quality: 0, gnvSamples: 0, demo: true };
+        return invoke(this.power, "getObdWitnessStatus", [], {});
+      }
       obd() {
         if (this.demo) return {
           ok: true,

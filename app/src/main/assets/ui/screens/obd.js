@@ -135,8 +135,7 @@
         const now = Date.now();
         if (now - this.lastWitnessAt < 700) return this.lastWitness;
         this.lastWitnessAt = now;
-        const snapshot = this.api.fullSnapshot() || {};
-        const witness = snapshot.obd_witness || snapshot.obdWitness || {};
+        const witness = this.api.obdWitness() || {};
         if (witness && typeof witness === "object") this.lastWitness = witness;
         if (((_b = (_a = this.api).isDemo) == null ? void 0 : _b.call(_a)) && !Object.keys(this.lastWitness || {}).length) {
           this.lastWitness = {

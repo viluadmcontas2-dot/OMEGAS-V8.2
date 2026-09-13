@@ -14,6 +14,7 @@ import com.omegas.prohub.blue.BlueLedgerState
 import com.omegas.prohub.blue.BluePendingIntervention
 import com.omegas.prohub.blue.BlueLearningState
 import com.omegas.prohub.blue.BlueMapKAddressing
+import com.omegas.prohub.blue.BlueScientificRegion
 import com.omegas.prohub.blue.BlueWitnessConfidence
 import com.omegas.prohub.blue.CalibrationRevision
 import com.omegas.prohub.blue.CalibrationState
@@ -284,12 +285,13 @@ class BlueCalibrationCoordinator(
         val intervention = ledger.latestConfirmed() ?: return
         if (intervention.beforeComparisonId.isBlank() || intervention.scientificRegionId.isBlank()) return
         val before = current.comparisons.firstOrNull { it.id == intervention.beforeComparisonId } ?: return
-        val after = current.activeComparisons().asSequence()
-            .filter { it.scientificRegionId == intervention.scientificRegionId }
+        val accepted = current.activeComparisons().asSequence()
             .filter { it.createdAtMs >= intervention.confirmedAtMs }
-            .maxByOrNull(FuelComparison::createdAtMs) ?: return
-        val result = attribution.evaluate(intervention, before, after)
-        if (result.state == BlueAttributionState.ACCEPTED) latestGainObservation = result.observation
+            .sortedByDescending(FuelComparison::createdAtMs)
+            .map { attribution.evaluate(intervention, before, it) }
+            .firstOrNull { it.state == BlueAttributionState.ACCEPTED }
+            ?: return
+        latestGainObservation = accepted.observation
     }
 
     fun updateObdWitness(witness: JSONObject): JSONObject = synchronized(lock) {
@@ -416,7 +418,7 @@ class BlueCalibrationCoordinator(
         val current = requireState()
         val observation = latestGainObservation?.takeIf {
             it.afterRevision == comparison.revision &&
-                it.scientificRegionId == comparison.scientificRegionId
+                BlueScientificRegion.parse(it.scientificRegionId)?.physicallyMatches(comparison.rpm, comparison.mapBar) == true
         }
         val base = autoCal.proposalJson(comparison, observation?.gain)
             .put("gainAccepted", observation != null)

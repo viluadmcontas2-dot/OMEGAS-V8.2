@@ -57,6 +57,7 @@ class KWriteManager(
     private val busy = AtomicBoolean(false)
     private val historyFile = File(paths.runtimeRoot, "k_write_history.json")
     private val cacheFile = File(paths.runtimeRoot, "k_map_cache.json")
+    @Volatile private var confirmedMapSnapshotCache: JSONObject? = null
     private val safetyFile = File(paths.runtimeRoot, "k_write_safety.json")
     private val kBackupDir = File(paths.runtimeRoot, "k_map_backups").apply { mkdirs() }
     private val statusLock = Any()
@@ -69,9 +70,11 @@ class KWriteManager(
     fun isBusy(): Boolean = busy.get()
     fun statusJson(): String = synchronized(statusLock) { JSONObject(status.toString()).toString() }
     fun historyJson(): String = loadHistory().toString()
+    fun confirmedMapSnapshot(): JSONObject? = confirmedMapSnapshotCache?.let { JSONObject(it.toString()) }
 
     @Synchronized
     fun beginUsbSession(sessionId: Long) {
+        confirmedMapSnapshotCache = null
         val cache = loadCache()
         cache.put("sessionConfirmed", false)
             .put("sessionStartedAt", System.currentTimeMillis())
@@ -215,6 +218,7 @@ class KWriteManager(
                 .put("extraRow", extraRow)
                 .put("allRows", allRows)
             atomicWrite(cacheFile, cache.toString(2))
+            confirmedMapSnapshotCache = JSONObject(cache.toString())
             try { onConfirmedWrite() } catch (_: Exception) {}
             val details = JSONObject()
                 .put("hash", hash)
@@ -257,6 +261,7 @@ class KWriteManager(
             setInsertionSafetyLock(false, "Saída confirmada manualmente")
             val stale = loadCache().put("sessionConfirmed", false).put("sessionId", expectedSessionId)
             atomicWrite(cacheFile, stale.toString(2))
+            confirmedMapSnapshotCache = null
             update("MAP_PENDING", "Saída confirmada; releia o mapa K desta sessão", 100)
             JSONObject().put("ok", true).put("recovered", true).put("sessionId", expectedSessionId)
         }
@@ -508,6 +513,7 @@ class KWriteManager(
                 .put("allRows", allRows)
                 .put("verifiedRows", JSONArray(affectedRows.toList()))
             atomicWrite(cacheFile, finalCache.toString(2))
+            confirmedMapSnapshotCache = JSONObject(finalCache.toString())
             val payload = JSONObject()
                 .put("ok", true)
                 .put("calibrationType", "MAP_K")
@@ -564,6 +570,7 @@ class KWriteManager(
             }
             val stale = loadCache().put("sessionConfirmed", false)
             atomicWrite(cacheFile, stale.toString(2))
+            confirmedMapSnapshotCache = null
             update("BATCH_PARTIAL_FAILED", error.message ?: "Lote interrompido", 100,
                 JSONObject().put("adjustmentId", adjustmentId)
                     .put("oldHash", initialHash)
@@ -590,6 +597,7 @@ class KWriteManager(
                     setInsertionSafetyLock(true, error.message ?: "Saída K insertion não confirmada")
                     val stale = loadCache().put("sessionConfirmed", false)
                     atomicWrite(cacheFile, stale.toString(2))
+                    confirmedMapSnapshotCache = null
                     update(
                         "SAFETY_LOCKED_INSERTION_UNKNOWN",
                         "Saída K insertion não confirmada; execute a recuperação antes de continuar",
@@ -828,6 +836,9 @@ class KWriteManager(
         }
         cache.put("allRows", allRows)
         atomicWrite(cacheFile, cache.toString(2))
+        confirmedMapSnapshotCache = if (complete && cache.optBoolean("sessionConfirmed", false)) {
+            JSONObject(cache.toString())
+        } else null
     }
 
     private fun isCompleteVisibleMap(rows: JSONArray): Boolean {
