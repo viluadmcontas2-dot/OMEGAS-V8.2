@@ -1,0 +1,34 @@
+name: OmegasVerde fast contracts
+
+on:
+  push:
+    branches:
+      - OmegasVerde
+    paths:
+      - ".github/workflows/verde-fast-contracts.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-verde-fast-contracts
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - name: Prove RED state before implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/ui/verde-dashboard-now.test.cjs
