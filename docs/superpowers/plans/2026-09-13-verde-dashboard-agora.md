@@ -145,6 +145,32 @@ test(verde): lock isolated Blue Agora visual contract (#45)
 
 Readback obrigatório: os dois testes modificados e `tools/run_checks.py`.
 
+- [ ] **Step 6: Criar gate RED provisório e observar a falha**
+
+Criar `.github/workflows/verde-fast-contracts.yml` inicialmente com trigger somente para o próprio arquivo e comando direto:
+
+```yaml
+name: OmegasVerde fast contracts
+on:
+  push:
+    branches: [OmegasVerde]
+    paths: [".github/workflows/verde-fast-contracts.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: omegas-verde-fast-contracts
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --test tests/ui/verde-dashboard-now.test.cjs
+```
+
+A criação dispara um único run. Aguardar `completed/failure` e confirmar que a falha decorre da ausência de `styles-dashboard-now.css` ou `multimedia-now-screen`. Nenhum código de produção é criado antes dessa prova.
+
 ---
 
 ### Task 2: Isolar os estilos da tela Agora
@@ -322,13 +348,13 @@ Readback obrigatório: novo blob, IDs públicos e ausência dos tokens proibidos
 ### Task 4: Criar e executar o gate remoto econômico
 
 **Files:**
-- Create: `.github/workflows/verde-fast-contracts.yml`
+- Modify: `.github/workflows/verde-fast-contracts.yml`
 
 **Interfaces:**
 - Consumes: branch `OmegasVerde`, testes Python/Node e `tools/run_checks.py`.
 - Produces: run remoto sem Gradle, assemble ou APK.
 
-- [ ] **Step 1: Criar workflow restrito**
+- [ ] **Step 1: Promover o workflow provisório a gate rápido definitivo**
 
 ```yaml
 name: OmegasVerde fast contracts
@@ -371,7 +397,7 @@ jobs:
 
 - [ ] **Step 2: Confirmar o disparo remoto**
 
-A criação do workflow na branch é a última mutação do conjunto e deve disparar um único run por `push`.
+A atualização final do workflow é a última mutação do conjunto e dispara um único run verde. Os commits intermediários não disparam Actions porque o gate provisório observava apenas o próprio arquivo.
 
 - [ ] **Step 3: Polling remoto**
 
