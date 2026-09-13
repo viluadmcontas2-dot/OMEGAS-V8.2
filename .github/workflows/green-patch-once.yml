@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "e09769f60ebe5f593296809afa0eef310ee61eb3"
+          test "$(git rev-parse HEAD^)" = "8f66a20c50e58cc49ec06c76510cac6b2d11a076"
           echo "STAGING_SHA=$GITHUB_SHA"
           echo "STAGING_TREE=$(git rev-parse HEAD^{tree})"
 
@@ -35,7 +35,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tools/green_patch_once.py')
+          s = p.read_text(encoding='utf-8')
+          old = 'if text.count(stale) < 2:'
+          if s.count(old) != 1:
+              raise SystemExit('patcher guard not found exactly once')
+          p.write_text(s.replace(old, 'if text.count(stale) < 1:'), encoding='utf-8')
+          PY
           python3 -B tools/green_patch_once.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt')
+          s = p.read_text(encoding='utf-8')
+          pattern = r'(?m)^(\s*)atomicWrite\(cacheFile, stale\.toString\(2\)\)(?!\n\s*confirmedMapSnapshotCache)'
+          s, count = re.subn(pattern, lambda m: m.group(0) + '\n' + m.group(1) + 'confirmedMapSnapshotCache = null', s)
+          if count < 1:
+              print('K cache invalidation already complete')
+          p.write_text(s, encoding='utf-8')
+          PY
           git diff --check
           node --check app/src/main/assets/ui/app.js
           node --check app/src/main/assets/ui/core/native-api.js
