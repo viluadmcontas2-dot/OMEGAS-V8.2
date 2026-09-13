@@ -39,16 +39,22 @@ class BlueCausalEngine(
         if (candidates.isEmpty()) return null
 
         val rpmScale = max(policy.minimumRpmWindow, target.rpm * policy.relativeRpmWindow)
-        val referencePetrolMs = ContinuousLearningMath.interpolateSupported2D(
-            candidates.map { candidate ->
-                ContinuousLearningMath.SurfacePoint(
-                    x = (candidate.evidence.rpm - target.rpm) / rpmScale,
-                    y = (candidate.evidence.mapBar - target.mapBar) / policy.mapWindowBar,
-                    value = candidate.evidence.petrolMs,
-                    weight = candidate.evidence.quality,
-                )
-            },
-        ) ?: return null
+        val referencePetrolMs = if (candidates.size == 1) {
+            // One physically valid observation is already real support. Spatial
+            // interpolation is only needed when multiple coordinates exist.
+            candidates.single().evidence.petrolMs
+        } else {
+            ContinuousLearningMath.interpolateSupported2D(
+                candidates.map { candidate ->
+                    ContinuousLearningMath.SurfacePoint(
+                        x = (candidate.evidence.rpm - target.rpm) / rpmScale,
+                        y = (candidate.evidence.mapBar - target.mapBar) / policy.mapWindowBar,
+                        value = candidate.evidence.petrolMs,
+                        weight = candidate.evidence.quality,
+                    )
+                },
+            ) ?: return null
+        }
 
         val values = candidates.map { it.evidence.petrolMs }.sorted()
         val meanQuality = candidates.map { it.evidence.quality }.average()
