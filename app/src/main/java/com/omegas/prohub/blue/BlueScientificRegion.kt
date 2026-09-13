@@ -4,12 +4,6 @@ import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
 
-/**
- * Deterministic, versioned identity for the physical RPM x MAP region.
- * Evidence UUID/visit identity is deliberately separate from this scientific key.
- * Causal matching uses continuous physical distance, so adjacent quantization
- * buckets never create a fake discontinuity by themselves.
- */
 data class BlueScientificRegion(
     val rpmBucket: Int,
     val mapBucket: Int,
@@ -34,6 +28,10 @@ data class BlueScientificRegion(
         const val SCHEMA = "rpm-map-v1"
         private const val RPM_QUANTUM = 50.0
         private const val MAP_QUANTUM = 0.01
+
+        fun idFor(rpm: Double, mapBar: Double): String =
+            if (rpm.isFinite() && rpm > 0.0 && mapBar.isFinite() && mapBar > 0.0) from(rpm, mapBar).id
+            else "$SCHEMA:invalid"
 
         fun from(rpm: Double, mapBar: Double): BlueScientificRegion {
             require(rpm.isFinite() && rpm > 0.0) { "RPM inválido" }

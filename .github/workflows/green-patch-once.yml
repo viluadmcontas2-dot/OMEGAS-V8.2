@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "8f66a20c50e58cc49ec06c76510cac6b2d11a076"
+          test "$(git rev-parse HEAD^)" = "e1c97c54da86506a42440966329294dc8f95454a"
           echo "STAGING_SHA=$GITHUB_SHA"
           echo "STAGING_TREE=$(git rev-parse HEAD^{tree})"
 

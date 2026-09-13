@@ -39,11 +39,7 @@ data class FuelEvidence(
     val gasC: Double = UNKNOWN_TEMPERATURE_C,
     val pressureDiffBar: Double = 0.0,
     val auditVisitIds: List<String> = listOf(visitId),
-    val scientificRegionId: String = if (rpm > 0.0 && mapBar > 0.0) {
-        BlueScientificRegion.from(rpm, mapBar).id
-    } else {
-        "${BlueScientificRegion.SCHEMA}:invalid"
-    },
+    val scientificRegionId: String = BlueScientificRegion.idFor(rpm, mapBar),
 ) {
     companion object {
         const val UNKNOWN_TEMPERATURE_C = -273.15
@@ -81,11 +77,7 @@ data class FuelComparison(
     val createdAtMs: Long,
     val referenceEvidenceIds: List<String> = emptyList(),
     val referenceSpreadMs: Double = 0.0,
-    val scientificRegionId: String = if (rpm > 0.0 && mapBar > 0.0) {
-        BlueScientificRegion.from(rpm, mapBar).id
-    } else {
-        "${BlueScientificRegion.SCHEMA}:invalid"
-    },
+    val scientificRegionId: String = BlueScientificRegion.idFor(rpm, mapBar),
 )
 
 data class BlueLearningState(
