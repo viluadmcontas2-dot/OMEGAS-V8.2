@@ -294,7 +294,13 @@ class MotorSampleAnalyzerTest {
         petrolCounts = 100,
         petrolMs = petrolMs,
         dynamicCorrection = 0,
-        fuelByte = 0,
+        fuelByte = when (fuel) {
+            Mp48Fuel.PETROL -> 0x80
+            Mp48Fuel.CNG -> 0x90
+            Mp48Fuel.TRANSITION -> 0x88
+            Mp48Fuel.ENGINE_OFF -> 0x00
+            else -> 0x80
+        },
         fuel = fuel,
         state = fuel.wireName,
         waterRaw = 80,

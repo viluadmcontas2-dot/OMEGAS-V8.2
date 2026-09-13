@@ -22,6 +22,7 @@ import kotlin.math.pow
 class MotorSampleAnalyzer(
     private val policyProvider: () -> LearningTolerancePolicy = { LearningToleranceSettings.current },
 ) {
+    private val fuelResolver = com.omegas.prohub.ecu.FuelStateResolver()
     private val policy: LearningTolerancePolicy get() = policyProvider().normalized()
     private val minimumFrames: Int get() = AdaptiveSampleWindow.minimumFrames(policy.requiredFrames)
     private val desiredFrames: Int get() = policy.requiredFrames
@@ -108,7 +109,9 @@ class MotorSampleAnalyzer(
             )
         }
 
-        if (frame.fuel == Mp48Fuel.CUTOFF || isPhysicalCutoff(frame)) {
+        val resolvedFuel = fuelResolver.resolve(frame)
+
+        if (resolvedFuel == Mp48Fuel.CUTOFF || isPhysicalCutoff(frame)) {
             resetSamples(requireFullWindow = true)
             return SampleDecision.transition(
                 state = "CUTOFF",
@@ -117,7 +120,7 @@ class MotorSampleAnalyzer(
             )
         }
 
-        when (frame.fuel) {
+        when (resolvedFuel) {
             Mp48Fuel.ENGINE_OFF -> {
                 resetAfterPhysicalBoundary()
                 return SampleDecision.transition(
@@ -146,7 +149,7 @@ class MotorSampleAnalyzer(
             Mp48Fuel.CUTOFF -> Unit
         }
 
-        val fuel = frame.fuel
+        val fuel = resolvedFuel
         if (observedNormalFuel != fuel) {
             observedNormalFuel = fuel
             if (stableFuel != null && stableFuel != fuel) beginTargetTransition(fuel)
