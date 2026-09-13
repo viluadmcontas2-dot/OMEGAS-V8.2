@@ -1,6 +1,8 @@
 package com.omegas.prohub.learning
 
+import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.math.sqrt
 
 /**
  * Regras matemáticas do aprendizado contínuo.
@@ -23,6 +25,17 @@ object ContinuousLearningMath {
         val column: Int,
         val mapIndex: Int,
         val weight: Double,
+    )
+
+    /**
+     * Ponto físico de uma superfície contínua arbitrária. `x` e `y` devem usar
+     * a mesma normalização da vizinhança que selecionou a evidência.
+     */
+    data class SurfacePoint(
+        val x: Double,
+        val y: Double,
+        val value: Double,
+        val weight: Double = 1.0,
     )
 
     val defaultMapBins = doubleArrayOf(0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00)
@@ -56,6 +69,115 @@ object ContinuousLearningMath {
             .groupBy { it.row to it.column }
             .map { (_, values) -> values.reduce { a, b -> a.copy(weight = a.weight + b.weight) } }
             .map { it.copy(weight = it.weight.coerceIn(0.0, 1.0)) }
+    }
+
+    /**
+     * Interpola apenas dentro do suporte geométrico observado.
+     *
+     * - pontos coincidentes são agregados pelo peso;
+     * - um ponto exatamente observado domina naquele endereço;
+     * - suporte 2D usa coordenadas baricêntricas dentro de um triângulo local;
+     * - suporte 1D usa interpolação no segmento que realmente contém o alvo;
+     * - fora do casco/segmento observado, abstém em vez de extrapolar.
+     *
+     * Isso permite uma superfície contínua sobre vizinhanças irregulares sem
+     * transformar proximidade em autorização para extrapolação.
+     */
+    fun interpolateSupported2D(
+        points: List<SurfacePoint>,
+        targetX: Double = 0.0,
+        targetY: Double = 0.0,
+        epsilon: Double = 1e-9,
+    ): Double? {
+        if (!targetX.isFinite() || !targetY.isFinite() || epsilon <= 0.0) return null
+        val nodes = mutableListOf<MutableSurfaceNode>()
+        points.asSequence()
+            .filter { it.x.isFinite() && it.y.isFinite() && it.value.isFinite() && it.weight.isFinite() && it.weight > 0.0 }
+            .forEach { point ->
+                val existing = nodes.firstOrNull {
+                    abs(it.x - point.x) <= epsilon && abs(it.y - point.y) <= epsilon
+                }
+                if (existing == null) {
+                    nodes += MutableSurfaceNode(
+                        x = point.x,
+                        y = point.y,
+                        weightedValue = point.value * point.weight,
+                        weight = point.weight,
+                    )
+                } else {
+                    existing.weightedValue += point.value * point.weight
+                    existing.weight += point.weight
+                }
+            }
+        if (nodes.isEmpty()) return null
+
+        val compact = nodes.map { node ->
+            SurfaceNode(node.x, node.y, node.weightedValue / node.weight)
+        }
+
+        compact.minByOrNull { distance(it.x, it.y, targetX, targetY) }
+            ?.takeIf { distance(it.x, it.y, targetX, targetY) <= epsilon }
+            ?.let { return it.value }
+
+        var bestTriangle: SurfaceEstimate? = null
+        for (aIndex in 0 until compact.size - 2) {
+            for (bIndex in aIndex + 1 until compact.size - 1) {
+                for (cIndex in bIndex + 1 until compact.size) {
+                    val a = compact[aIndex]
+                    val b = compact[bIndex]
+                    val c = compact[cIndex]
+                    val denominator =
+                        (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y)
+                    if (abs(denominator) <= epsilon) continue
+
+                    val wa = ((b.y - c.y) * (targetX - c.x) + (c.x - b.x) * (targetY - c.y)) / denominator
+                    val wb = ((c.y - a.y) * (targetX - c.x) + (a.x - c.x) * (targetY - c.y)) / denominator
+                    val wc = 1.0 - wa - wb
+                    if (wa < -epsilon || wb < -epsilon || wc < -epsilon ||
+                        wa > 1.0 + epsilon || wb > 1.0 + epsilon || wc > 1.0 + epsilon
+                    ) continue
+
+                    val distances = listOf(a, b, c).map { distance(it.x, it.y, targetX, targetY) }
+                    val estimate = SurfaceEstimate(
+                        value = wa * a.value + wb * b.value + wc * c.value,
+                        radius = distances.maxOrNull() ?: Double.POSITIVE_INFINITY,
+                        span = distances.sum(),
+                    )
+                    if (estimate.isBetterThan(bestTriangle, epsilon)) bestTriangle = estimate
+                }
+            }
+        }
+        bestTriangle?.let { return it.value }
+
+        var bestSegment: SurfaceEstimate? = null
+        for (aIndex in 0 until compact.size - 1) {
+            for (bIndex in aIndex + 1 until compact.size) {
+                val a = compact[aIndex]
+                val b = compact[bIndex]
+                val dx = b.x - a.x
+                val dy = b.y - a.y
+                val lengthSquared = dx * dx + dy * dy
+                if (lengthSquared <= epsilon * epsilon) continue
+
+                val t = ((targetX - a.x) * dx + (targetY - a.y) * dy) / lengthSquared
+                if (t < -epsilon || t > 1.0 + epsilon) continue
+
+                val projectedX = a.x + t * dx
+                val projectedY = a.y + t * dy
+                if (distance(projectedX, projectedY, targetX, targetY) > epsilon) continue
+
+                val estimate = SurfaceEstimate(
+                    value = a.value + t * (b.value - a.value),
+                    radius = maxOf(
+                        distance(a.x, a.y, targetX, targetY),
+                        distance(b.x, b.y, targetX, targetY),
+                    ),
+                    span = sqrt(lengthSquared),
+                )
+                if (estimate.isBetterThan(bestSegment, epsilon)) bestSegment = estimate
+            }
+        }
+        return bestSegment?.value
     }
 
     /**
@@ -123,5 +245,34 @@ object ContinuousLearningMath {
         val total = valid.sumOf { it.second }
         return if (total <= 0.0) null else valid.sumOf { it.first * it.second } / total
     }
+
+    private fun distance(x: Double, y: Double, targetX: Double, targetY: Double): Double {
+        val dx = x - targetX
+        val dy = y - targetY
+        return sqrt(dx * dx + dy * dy)
+    }
+
+    private fun SurfaceEstimate.isBetterThan(other: SurfaceEstimate?, epsilon: Double): Boolean =
+        other == null || radius < other.radius - epsilon ||
+            (abs(radius - other.radius) <= epsilon && span < other.span)
+
+    private data class MutableSurfaceNode(
+        val x: Double,
+        val y: Double,
+        var weightedValue: Double,
+        var weight: Double,
+    )
+
+    private data class SurfaceNode(
+        val x: Double,
+        val y: Double,
+        val value: Double,
+    )
+
+    private data class SurfaceEstimate(
+        val value: Double,
+        val radius: Double,
+        val span: Double,
+    )
 }
 

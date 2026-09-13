@@ -1,5 +1,6 @@
 package com.omegas.prohub.blue
 
+import com.omegas.prohub.learning.ContinuousLearningMath
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.ln
@@ -37,16 +38,25 @@ class BlueCausalEngine(
             .toList()
         if (candidates.isEmpty()) return null
 
+        val rpmScale = max(policy.minimumRpmWindow, target.rpm * policy.relativeRpmWindow)
+        val referencePetrolMs = ContinuousLearningMath.interpolateSupported2D(
+            candidates.map { candidate ->
+                ContinuousLearningMath.SurfacePoint(
+                    x = (candidate.evidence.rpm - target.rpm) / rpmScale,
+                    y = (candidate.evidence.mapBar - target.mapBar) / policy.mapWindowBar,
+                    value = candidate.evidence.petrolMs,
+                    weight = candidate.evidence.quality,
+                )
+            },
+        ) ?: return null
+
         val values = candidates.map { it.evidence.petrolMs }.sorted()
-        val median = if (values.size % 2 == 0) {
-            (values[values.size / 2 - 1] + values[values.size / 2]) / 2.0
-        } else values[values.size / 2]
         val meanQuality = candidates.map { it.evidence.quality }.average()
         val proximity = exp(-candidates.map { it.distance }.average()).coerceIn(0.0, 1.0)
         val quality = (sqrt(meanQuality * target.quality.coerceIn(0.0, 1.0)) * proximity)
             .coerceIn(0.0, 1.0)
         return BluePetrolReference(
-            petrolMs = median,
+            petrolMs = referencePetrolMs,
             quality = quality,
             supportCount = candidates.size,
             nearestDistance = candidates.first().distance,
