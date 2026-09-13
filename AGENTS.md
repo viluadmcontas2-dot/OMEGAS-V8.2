@@ -7,6 +7,22 @@
 - A linha atual é o épico #30 com filhos #31–#35 na branch `work/omegas-blue-causal-engine`; #25 permanece gate físico separado.
 - Não criar genealogias paralelas nem reescrever falhas intermediárias como sucesso.
 
+## Contrato de itens atômicos
+
+- [ITEM-GOV-001] Todo plano deve ser estruturado em itens atômicos com IDs únicos e rastreáveis.
+- [ITEM-GOV-002] Todo requisito deve possuir um ID próprio; requisitos distintos não podem ser fundidos por interpretação do executor.
+- [ITEM-GOV-003] Toda restrição deve possuir um ID próprio.
+- [ITEM-GOV-004] Toda interface deve possuir um ID próprio.
+- [ITEM-GOV-005] Todo teste RED, teste GREEN, gate, evidência, critério de aceite, condição de parada e passo de execução deve possuir um ID próprio.
+- [ITEM-GOV-006] Todo checkpoint deve reportar itens por ID e status explícito.
+- [ITEM-GOV-007] Status permitidos para itens: `LOCKED`, `PENDING`, `IN_PROGRESS`, `RED`, `GREEN`, `PROVEN`, `BLOCKED`, `N/A`.
+- [ITEM-GOV-008] Nenhum agente pode renomear, fundir, enfraquecer, omitir ou reinterpretar silenciosamente um item existente.
+- [ITEM-GOV-009] Um item só pode ser marcado `PROVEN` quando a evidência remota correspondente estiver ligada explicitamente ao mesmo ID.
+- [ITEM-GOV-010] Commits e checkpoints devem declarar quais IDs avançaram.
+- [ITEM-GOV-011] Antes de executar um item, o agente deve reler HEAD remoto e o plano canônico; estado local não substitui o remoto.
+- [ITEM-GOV-012] Um agente sucessor deve continuar pelos IDs pendentes; não deve reconstruir o plano em linguagem livre.
+- [ITEM-GOV-013] Instruções em prosa podem explicar um item, mas não podem substituir nem alterar o significado do ID canônico.
+
 ## Autoridades científicas
 
 - O motor MP48 é autônomo: gasolina × GNV por Petrol Inj. sob RPM × MAP comparáveis.
