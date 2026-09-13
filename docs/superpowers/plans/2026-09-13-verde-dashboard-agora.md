@@ -32,6 +32,7 @@
 - Create: `tests/ui/verde-dashboard-now.test.cjs`
 - Modify: `tools/run_checks.py`
 - Modify: `tests/test_clean_ui_contract.py`
+- Modify: `tests/test_block1_session_contract.py`
 
 **Interfaces:**
 - Consumes: assets em `app/src/main/assets/ui/screens/dashboard.js` e `styles-dashboard-now.css`.
@@ -144,6 +145,22 @@ self.assertNotIn('dashGas', self.dashboard)
 
 Os asserts gerais de arquitetura, Mapa K, Curva K e writer permanecem intactos.
 
+Normalizar apenas escapes `\\xNN` e `\\uNNNN` ao carregar `dashboard.js` em `test_block1_session_contract.py`, preservando as frases verificadas:
+
+```python
+def normalize_js_source(text: str) -> str:
+    text = re.sub(
+        r"\\\\x([0-9A-Fa-f]{2})",
+        lambda match: chr(int(match.group(1), 16)),
+        text,
+    )
+    return re.sub(
+        r"\\\\u([0-9A-Fa-f]{4})",
+        lambda match: chr(int(match.group(1), 16)),
+        text,
+    )
+```
+
 - [ ] **Step 5: Commit remoto e readback**
 
 Mensagem:
@@ -174,7 +191,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: node --test tests/ui/verde-dashboard-now.test.cjs
 ```
 
@@ -377,6 +394,7 @@ on:
       - "app/src/main/assets/ui/**"
       - "tests/**"
       - "tools/run_checks.py"
+      - "docs/superpowers/**"
   workflow_dispatch:
 
 permissions:
@@ -391,7 +409,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Prove source identity
         run: |
           set -euo pipefail
@@ -420,7 +438,7 @@ Estado aceito: `completed/success`. Estado `queued` ou `in_progress` não é con
 
 - [ ] **Step 4: Inspecionar o diff integrado**
 
-Comparar o SHA final contra `d4b544758d6508a92c8d73e0e99eae406f446eb2`, último commit antes da correção textual deste plano. O diff permitido contém a correção do plano e somente estes arquivos de execução: dashboard, CSS isolado, contrato Node, contrato Python, `tools/run_checks.py` e workflow rápido.
+Comparar o SHA final contra `d4b544758d6508a92c8d73e0e99eae406f446eb2`, último commit antes da correção textual deste plano. O diff permitido contém a correção do plano e somente estes arquivos de execução: dashboard, CSS isolado, contrato Node, dois contratos Python, `tools/run_checks.py`, workflow rápido e correções do próprio plano.
 
 - [ ] **Step 5: Atualizar #45 e a epic**
 
@@ -430,5 +448,5 @@ Registrar SHA, tree, run, blobs, resultado dos testes e limitação: inspeção 
 
 - Spec coverage: tela Agora, isolamento Blue, WebView legado, Store Red/Verde, STFT opcional, saúde e CI econômico cobertos.
 - Placeholder scan: nenhuma instrução vaga ou decisão em aberto.
-- Type consistency: `DashboardScreen`, `render(state)`, IDs DOM e caminho CSS são consistentes entre tarefas.
+- Type consistency: `DashboardScreen`, `render(state)`, IDs DOM, caminho CSS e normalização de escapes são consistentes entre tarefas.
 - Safety: nenhum arquivo Kotlin, engine, writer, Mapa K ou Curva K entra no conjunto.
