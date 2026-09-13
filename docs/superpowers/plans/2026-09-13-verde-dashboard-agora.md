@@ -50,10 +50,19 @@ const path = require('node:path');
 const test = require('node:test');
 
 const ROOT = path.join(__dirname, '../..');
-const dashboard = fs.readFileSync(
+
+function normalizeJsSource(text) {
+  return text
+    .replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)));
+}
+
+const dashboard = normalizeJsSource(fs.readFileSync(
   path.join(ROOT, 'app/src/main/assets/ui/screens/dashboard.js'),
   'utf8',
-);
+));
 const stylePath = path.join(
   ROOT,
   'app/src/main/assets/ui/styles-dashboard-now.css',
