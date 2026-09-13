@@ -1,0 +1,66 @@
+name: OMEGAS Blue OBD separation one-shot
+
+on:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - .github/workflows/obd-separation-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact staging SHA
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: true
+      - name: Prove lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "ca51fe6f80e0a613877c3601328ca3c3a197a11c"
+      - name: Separate OBD learning from optional Map-K bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt')
+          s = p.read_text(encoding='utf-8')
+          consume = s.index('    private fun consumeObdLearningSample(sample: JSONObject) {')
+          start = s.index('        val result = obdLearningEngine.evaluate(learningSample.rpm, learningSample.mapBar)', consume)
+          end = s.index('        latestObdWitness = witness', start)
+          replacement = '''        persistObdLearning()\n        val witness = buildObdWitness(learningSample)\n'''
+          s = s[:start] + replacement + s[end:]
+          marker = '    private fun rotateObdLearningEpoch(reason: String) {'
+          insert_at = s.index(marker)
+          helper = '''    private fun buildObdWitness(learningSample: ObdLearningSample): JSONObject {\n        val result = obdLearningEngine.evaluate(learningSample.rpm, learningSample.mapBar)\n        val mp48 = telemetryStore.telemetryCopy()\n        val mp48Fuel = mp48.optString("fuel", mp48.optString("state", "")).uppercase()\n        val mp48Rpm = mp48.optDouble("rpm", Double.NaN)\n        val mp48Map = mp48.optDouble("load_bar", mp48.optDouble("map_bar", Double.NaN))\n        val mp48PetrolMs = mp48.optDouble("petrol_ms", Double.NaN)\n        val rpmWindow = kotlin.math.max(125.0, learningSample.rpm * 0.05)\n        val bridgeValid = mp48Fuel == "GNV" && telemetryStore.ageMs() <= 1_500L &&\n            mp48Rpm.isFinite() && mp48Map.isFinite() && mp48PetrolMs.isFinite() && mp48PetrolMs > 0.0 &&\n            kotlin.math.abs(mp48Rpm - learningSample.rpm) <= rpmWindow &&\n            kotlin.math.abs(mp48Map - learningSample.mapBar) <= 0.08\n        val resolvedPetrolMs = mp48PetrolMs.takeIf { bridgeValid }\n        val mapProposal = ObdMapKSuggestion.prepare(\n            learning = result,\n            rpm = learningSample.rpm,\n            resolvedPetrolMs = resolvedPetrolMs,\n            mapRows = kWriter.confirmedMapSnapshot()?.optJSONArray("rows"),\n            addressConfidence = if (bridgeValid) 0.95 else 0.0,\n        )\n        return JSONObject()\n            .put("source", "OBD_INDEPENDENT_STFT_GNV")\n            .put("state", result.state.name)\n            .put("stftMedianPct", result.stftMedianPct ?: JSONObject.NULL)\n            .put("gnvStftPct", result.stftMedianPct ?: JSONObject.NULL)\n            .put("correctionMultiplier", result.correctionMultiplier ?: JSONObject.NULL)\n            .put("correctionPercent", result.correctionMultiplier?.let { (it - 1.0) * 100.0 } ?: JSONObject.NULL)\n            .put("quality", result.quality)\n            .put("sampleCount", result.sampleCount)\n            .put("gnvSamples", result.sampleCount)\n            .put("rpm", learningSample.rpm)\n            .put("map_bar", learningSample.mapBar)\n            .put("petrol_ms", resolvedPetrolMs ?: JSONObject.NULL)\n            .put("epoch", result.epoch)\n            .put("sessionId", learningSample.sessionId)\n            .put("sessionStartedAtMs", learningSample.sessionStartedAtMs)\n            .put("cycleStartedAtMs", learningSample.cycleStartedAtMs)\n            .put("calibrationState", blueCalibrationStateId())\n            .put("gnvModeDeclared", true)\n            .put("automaticWrite", false)\n            .put("mapKProposalState", mapProposal.optString("state", "ADDRESS_UNRESOLVED"))\n            .put("mapKProposal", mapProposal)\n            .put("observedAtMs", learningSample.observedAtMs)\n    }\n\n'''
+          s = s[:insert_at] + helper + s[insert_at:]
+          p.write_text(s, encoding='utf-8')
+          PY
+          git diff --check
+          python3 -B tests/test_blue_obd_independent_runtime_contract.py
+          python3 -B tests/test_blue_hot_path_contract.py
+          python3 -B tests/test_blue_functional_recovery_contract.py
+      - name: Commit product fix and fast-forward only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/obd-separation-once.yml
+          git diff --check
+          git config user.name "OMEGAS Blue CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(blue): isolate OBD learning from Map-K bridge (#32 #33)"
+          git fetch origin work/omegas-blue-causal-engine
+          test "$(git rev-parse refs/remotes/origin/work/omegas-blue-causal-engine)" = "$GITHUB_SHA"
+          echo "FIX_SHA=$(git rev-parse HEAD)"
+          echo "FIX_TREE=$(git rev-parse HEAD^{tree})"
+          git push origin HEAD:refs/heads/work/omegas-blue-causal-engine
