@@ -472,6 +472,9 @@
       const visits = Math.max(finite(stability?.consolidatedUniqueVisits) || 0, Math.max(petrolVisits, cngVisits));
       const confianca = `${confLevel} (${visits} visitas)`;
 
+      const kChange = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges[0] : null;
+      const targetK = finite(kChange?.after) !== null ? kChange.after : 'aguardando convergência';
+
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
         <dl class="detail-list enhanced-detail-list">
@@ -480,6 +483,7 @@
           <div><dt>Gasolina esperada</dt><dd>${escapeHtml(gasolinaEsperada)}</dd></div>
           <div><dt>No GNV agora</dt><dd>${escapeHtml(noGnvAgora)}</dd></div>
           <div><dt>Diferença</dt><dd>${escapeHtml(diferenca)}</dd></div>
+          <div><dt>GNV Alvo (Mapa K)</dt><dd>${escapeHtml(targetK)}</dd></div>
           <div><dt>Confiança</dt><dd>${escapeHtml(confianca)}</dd></div>
         </dl>
         <button class="primary wide" type="button" data-edit-learning-cell ${suggestion?.actionable ? '' : 'disabled'}>

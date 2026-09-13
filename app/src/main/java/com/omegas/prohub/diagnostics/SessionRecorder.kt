@@ -396,7 +396,7 @@ class SessionRecorder(
                 .put("data", data)
             val line = item.toString() + "\n"
             val bytes = line.toByteArray(StandardCharsets.UTF_8).size.toLong()
-            val maxBytes = settings.sessionLogMaxMb.toLong() * 1024L * 1024L
+            val maxBytes = settings.sessionLogMaxMb.coerceAtLeast(512).toLong() * 1024L * 1024L
             if (byteCount + bytes > maxBytes && type != "session_stopped") {
                 stopReason = "limite de ${settings.sessionLogMaxMb} MB atingido"
                 lastError = stopReason
@@ -512,11 +512,24 @@ class SessionRecorder(
     }
 
     private fun pruneOldSessions() {
-        val keep = settings.sessionKeepCount.coerceIn(1, 20)
         val dirs = paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
             ?.sortedByDescending { it.lastModified() }
             .orEmpty()
-        dirs.drop((keep - 1).coerceAtLeast(0)).forEach { old -> old.deleteRecursively() }
+            
+        // Descartar sessões irrelevantes/vazias geradas por replug do cabo (menores que 10KB)
+        val validDirs = dirs.filter { dir ->
+            val size = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+            if (size < 10 * 1024) {
+                dir.deleteRecursively()
+                false
+            } else {
+                true
+            }
+        }
+        
+        // Padrão de armazenar ao menos 25 sessões
+        val keep = settings.sessionKeepCount.coerceAtLeast(25)
+        validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old -> old.deleteRecursively() }
     }
 
     private fun awaitPendingWrites(timeoutMs: Long = 5_000L) {
