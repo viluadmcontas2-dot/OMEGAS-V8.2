@@ -30,8 +30,9 @@ class ObdMapKSuggestionTest {
 
         assertTrue(proposal.getBoolean("available"))
         assertEquals("OBD_MAP_K_READY", proposal.getString("state"))
-        assertEquals(2, proposal.getInt("row"))
-        assertEquals(4, proposal.getInt("column"))
+        // Physical/protocol authority: row = Petrol Inj. bin, column = RPM bin.
+        assertEquals(4, proposal.getInt("row"))
+        assertEquals(2, proposal.getInt("column"))
         assertEquals(100, proposal.getInt("current"))
         assertEquals(110, proposal.getInt("target"))
         assertTrue(proposal.getBoolean("manualOnly"))
