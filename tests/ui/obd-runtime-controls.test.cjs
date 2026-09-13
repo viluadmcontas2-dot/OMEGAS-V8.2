@@ -23,8 +23,9 @@ test('visão principal mostra STFT, resultado witness e pareamento MP48', () => 
     'obdLiveStft', 'obdWitnessState', 'obdGnvStft', 'obdStftMeaning', 'obdWitnessMode',
     'obdPairedRpm', 'obdPairedMap', 'obdPairedPetrol', 'obdPairedFuel',
   ]) assert.match(obd, new RegExp(marker));
-  assert.match(obd, /this\.api\.fullSnapshot\(\)/);
-  assert.match(obd, /obd_witness/);
+  assert.match(obd, /this\.api\.obdWitness\(\)/);
+  assert.doesNotMatch(obd, /this\.api\.fullSnapshot\(\)/);
+  assert.match(api, /obdWitness\(\)/);
   assert.doesNotMatch(obd, /obdGasolineReference|obdResidual|gasolineReferencePct|residualPp/);
 });
 
