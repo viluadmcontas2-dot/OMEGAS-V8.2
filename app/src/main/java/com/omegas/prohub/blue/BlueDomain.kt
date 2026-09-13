@@ -4,6 +4,8 @@ import com.omegas.prohub.calibration.CalibrationShape
 
 enum class FuelKind { PETROL, CNG }
 
+enum class BlueReferenceProvenance { OBSERVED, INTERPOLATED }
+
 data class CalibrationRevision(
     val curveK: Long,
     val mapK: Long,
@@ -78,6 +80,7 @@ data class FuelComparison(
     val referenceEvidenceIds: List<String> = emptyList(),
     val referenceSpreadMs: Double = 0.0,
     val scientificRegionId: String = BlueScientificRegion.idFor(rpm, mapBar),
+    val petrolReferenceProvenance: BlueReferenceProvenance = BlueReferenceProvenance.OBSERVED,
 )
 
 data class BlueLearningState(

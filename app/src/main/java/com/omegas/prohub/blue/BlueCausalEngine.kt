@@ -39,6 +39,7 @@ class BlueCausalEngine(
         if (candidates.isEmpty()) return null
 
         val rpmScale = max(policy.minimumRpmWindow, target.rpm * policy.relativeRpmWindow)
+        val hasObservedCoordinate = candidates.any { it.distance <= EXACT_COORDINATE_EPSILON }
         val referencePetrolMs = if (candidates.size == 1) {
             // One physically valid observation is already real support. Spatial
             // interpolation is only needed when multiple coordinates exist.
@@ -55,6 +56,11 @@ class BlueCausalEngine(
                 },
             ) ?: return null
         }
+        val provenance = if (candidates.size == 1 || hasObservedCoordinate) {
+            BlueReferenceProvenance.OBSERVED
+        } else {
+            BlueReferenceProvenance.INTERPOLATED
+        }
 
         val values = candidates.map { it.evidence.petrolMs }.sorted()
         val meanQuality = candidates.map { it.evidence.quality }.average()
@@ -68,6 +74,7 @@ class BlueCausalEngine(
             nearestDistance = candidates.first().distance,
             evidenceIds = candidates.map { it.evidence.id },
             spreadMs = values.last() - values.first(),
+            provenance = provenance,
         )
     }
 
@@ -148,6 +155,7 @@ class BlueCausalEngine(
             createdAtMs = cng.collectedAtMs,
             referenceEvidenceIds = reference.evidenceIds,
             referenceSpreadMs = reference.spreadMs,
+            petrolReferenceProvenance = reference.provenance,
         )
     }
 
@@ -159,6 +167,10 @@ class BlueCausalEngine(
     }
 
     private data class BlueCandidate(val evidence: FuelEvidence, val distance: Double)
+
+    private companion object {
+        const val EXACT_COORDINATE_EPSILON = 1e-9
+    }
 }
 
 data class BluePolicy(
@@ -185,6 +197,7 @@ data class BluePetrolReference(
     val nearestDistance: Double,
     val evidenceIds: List<String> = emptyList(),
     val spreadMs: Double = 0.0,
+    val provenance: BlueReferenceProvenance = BlueReferenceProvenance.OBSERVED,
 )
 
 data class BlueActuatorGain(val gain: Double)
