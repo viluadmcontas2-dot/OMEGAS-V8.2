@@ -2,14 +2,14 @@ package com.omegas.prohub.blue
 
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Evidence-authority battery derived from the documented gasoline -> CNG
- * paired-injection method. Petrol Inj. delta is primary; GNV STFT is an
- * optional witness; LTFT never votes on correction math.
+ * Evidence-authority battery for permanent gasoline reference -> CNG comparison.
+ * Petrol Inj. delta is primary; GNV STFT is an optional witness; LTFT never
+ * votes on correction math.
  */
 class BluePairedEvidenceAuthorityTest {
     private val revision = CalibrationRevision(0, 0)
@@ -29,25 +29,32 @@ class BluePairedEvidenceAuthorityTest {
     }
 
     @Test
-    fun `gasoline history outside temporal pair window cannot become primary comparison`() {
+    fun `T01-RED02 gasoline history outside former temporal window remains primary comparison`() {
         val engine = BlueCausalEngine()
         val oldPetrol = evidence(FuelKind.PETROL, 1_000L, 870.0, 0.45, 4.50)
         val cng = evidence(FuelKind.CNG, 120_000L, 870.0, 0.45, 4.86)
 
-        assertTrue(engine.reconcile(state(petrol = listOf(oldPetrol), cng = listOf(cng))).isEmpty())
+        val comparison = engine.reconcile(state(petrol = listOf(oldPetrol), cng = listOf(cng))).single()
+
+        assertEquals(4.50, comparison.petrolTargetMs, 1e-9)
+        assertEquals(4.86, comparison.petrolOnCngMs, 1e-9)
+        assertEquals(8.0, comparison.errorPercent, 1e-9)
     }
 
     @Test
-    fun `gasoline observed after gnv cannot be used as before-switch reference`() {
+    fun `T01-RED05 gasoline timestamp direction does not block physical reference`() {
         val engine = BlueCausalEngine()
-        val futurePetrol = evidence(FuelKind.PETROL, 103_000L, 870.0, 0.45, 4.50)
+        val gasolineRecordedLater = evidence(FuelKind.PETROL, 103_000L, 870.0, 0.45, 4.50)
         val cng = evidence(FuelKind.CNG, 102_000L, 870.0, 0.45, 4.86)
 
-        assertNull(engine.petrolReference(cng, listOf(futurePetrol)))
+        val reference = engine.petrolReference(cng, listOf(gasolineRecordedLater))
+
+        assertNotNull(reference)
+        assertEquals(4.50, reference!!.petrolMs, 1e-9)
     }
 
     @Test
-    fun `recent pre-switch gasoline wins over older same-region history`() {
+    fun `same-region gasoline reference aggregates physically compatible history regardless of age`() {
         val engine = BlueCausalEngine()
         val oldPetrol = evidence(FuelKind.PETROL, 10_000L, 870.0, 0.45, 4.00)
         val recentPetrol = evidence(FuelKind.PETROL, 100_000L, 870.0, 0.45, 4.50)
@@ -55,8 +62,9 @@ class BluePairedEvidenceAuthorityTest {
 
         val reference = engine.petrolReference(cng, listOf(oldPetrol, recentPetrol))!!
 
-        assertEquals(4.50, reference.petrolMs, 1e-9)
-        assertEquals(listOf(recentPetrol.id), reference.evidenceIds)
+        assertEquals(4.25, reference.petrolMs, 1e-9)
+        assertEquals(2, reference.supportCount)
+        assertEquals(listOf(oldPetrol.id, recentPetrol.id), reference.evidenceIds)
     }
 
     @Test
@@ -123,7 +131,7 @@ class BluePairedEvidenceAuthorityTest {
     }
 
     @Test
-    fun `missing obd witness never erases a valid primary paired measurement`() {
+    fun `missing obd witness never erases a valid primary gasoline measurement`() {
         val base = JSONObject()
             .put("available", true)
             .put("state", "PROPOSAL_READY")
