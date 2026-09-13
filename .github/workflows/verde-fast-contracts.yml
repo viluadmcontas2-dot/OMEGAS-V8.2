@@ -6,6 +6,10 @@ on:
       - OmegasVerde
     paths:
       - ".github/workflows/verde-fast-contracts.yml"
+      - "app/src/main/assets/ui/**"
+      - "tests/**"
+      - "tools/run_checks.py"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,8 +31,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           echo "SOURCE_SHA=$GITHUB_SHA"
           echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
-      - name: Prove RED state before implementation
+      - name: Run fast contracts
         shell: bash
         run: |
           set -euo pipefail
-          node --test tests/ui/verde-dashboard-now.test.cjs
+          python3 -B tools/run_checks.py
