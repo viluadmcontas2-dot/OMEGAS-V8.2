@@ -1,0 +1,64 @@
+name: OMEGAS Blue GREEN one-shot
+
+on:
+  push:
+    branches:
+      - work/omegas-blue-causal-engine
+    paths:
+      - tools/green_patch_once.py
+      - .github/workflows/green-patch-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-green:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging SHA
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: true
+
+      - name: Prove staging lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "e09769f60ebe5f593296809afa0eef310ee61eb3"
+          echo "STAGING_SHA=$GITHUB_SHA"
+          echo "STAGING_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Apply deterministic GREEN patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/green_patch_once.py
+          git diff --check
+          node --check app/src/main/assets/ui/app.js
+          node --check app/src/main/assets/ui/core/native-api.js
+          node --check app/src/main/assets/ui/screens/obd.js
+          python3 -B tests/test_aaa_blue_scientific_causal_contract.py
+          python3 -B tests/test_blue_functional_recovery_contract.py
+          python3 -B tests/test_blue_hot_path_contract.py
+          node tests/ui/telemetry-self-paced-scheduler.test.cjs
+
+      - name: Commit product GREEN and fast-forward only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f tools/green_patch_once.py .github/workflows/green-patch-once.yml
+          git diff --check
+          git config user.name "OMEGAS Blue CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git status --short
+          git commit -m "fix(blue): functional recovery GREEN (#30 #31 #32 #33 #34 #35)"
+          git fetch origin work/omegas-blue-causal-engine
+          REMOTE_SHA="$(git rev-parse refs/remotes/origin/work/omegas-blue-causal-engine)"
+          test "$REMOTE_SHA" = "$GITHUB_SHA"
+          echo "GREEN_SHA=$(git rev-parse HEAD)"
+          echo "GREEN_TREE=$(git rev-parse HEAD^{tree})"
+          git push origin HEAD:refs/heads/work/omegas-blue-causal-engine

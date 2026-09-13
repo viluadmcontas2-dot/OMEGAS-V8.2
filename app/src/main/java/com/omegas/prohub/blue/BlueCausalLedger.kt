@@ -42,10 +42,14 @@ data class BlueLedgerDecision(
 
 /**
  * Durable hand-off between a human-approved writer and causal attribution.
- * Pending intent and confirmed readback are stored atomically; a failed,
- * partial or multi-actuator completion is consumed as ABSTAIN.
+ * V2 deliberately refuses legacy scientific identities because a visit UUID
+ * cannot prove that before/after evidence belongs to the same physical region.
  */
 class BlueCausalLedger(private val file: File?) {
+    companion object {
+        const val SCHEMA = "omegas-blue-causal-ledger-v2"
+    }
+
     private val lock = Any()
     private val pending = linkedMapOf<String, BluePendingIntervention>()
     private val confirmed = linkedMapOf<String, BlueCausalIntervention>()
@@ -58,7 +62,9 @@ class BlueCausalLedger(private val file: File?) {
         require(value.targetK.isFinite() && value.targetK > 0.0)
         require(value.beforeK != value.targetK)
         require(value.beforeComparisonId.isNotBlank())
-        require(value.scientificRegionId.isNotBlank())
+        require(BlueScientificRegion.isVersionedId(value.scientificRegionId)) {
+            "Identidade científica legada ou inválida"
+        }
         require(value.preparedAtMs >= 0L)
         pending[value.id] = value
         confirmed.remove(value.id)
@@ -121,6 +127,7 @@ class BlueCausalLedger(private val file: File?) {
         val storage = file ?: return
         if (!storage.isFile || storage.length() == 0L) return
         val root = try { JSONObject(storage.readText(Charsets.UTF_8)) } catch (_: Exception) { return }
+        if (root.optString("schema") != SCHEMA) return
         val pendingJson = root.optJSONArray("pending") ?: JSONArray()
         repeat(pendingJson.length()) { index ->
             decodePending(pendingJson.optJSONObject(index))?.let { pending[it.id] = it }
@@ -135,7 +142,7 @@ class BlueCausalLedger(private val file: File?) {
         val storage = file ?: return
         storage.parentFile?.mkdirs()
         val root = JSONObject()
-            .put("schema", "omegas-blue-causal-ledger-v1")
+            .put("schema", SCHEMA)
             .put("pending", JSONArray(pending.values.map(::encodePending)))
             .put("confirmed", JSONArray(confirmed.values.map(::encodeIntervention)))
         val temp = File(storage.parentFile ?: storage.absoluteFile.parentFile, storage.name + ".tmp")
@@ -164,6 +171,8 @@ class BlueCausalLedger(private val file: File?) {
 
     private fun decodePending(value: JSONObject?): BluePendingIntervention? = try {
         requireNotNull(value)
+        val scientificRegionId = value.getString("scientificRegionId")
+        require(BlueScientificRegion.isVersionedId(scientificRegionId))
         BluePendingIntervention(
             id = value.getString("id"),
             actuator = decodeAddress(value.getJSONObject("actuator")),
@@ -171,7 +180,7 @@ class BlueCausalLedger(private val file: File?) {
             beforeK = value.getDouble("beforeK"),
             targetK = value.getDouble("targetK"),
             beforeComparisonId = value.getString("beforeComparisonId"),
-            scientificRegionId = value.getString("scientificRegionId"),
+            scientificRegionId = scientificRegionId,
             preparedAtMs = value.getLong("preparedAtMs"),
         )
     } catch (_: Exception) { null }
@@ -192,6 +201,8 @@ class BlueCausalLedger(private val file: File?) {
 
     private fun decodeIntervention(value: JSONObject?): BlueCausalIntervention? = try {
         requireNotNull(value)
+        val scientificRegionId = value.getString("scientificRegionId")
+        require(BlueScientificRegion.isVersionedId(scientificRegionId))
         val addresses = value.getJSONArray("changedActuators")
         BlueCausalIntervention(
             id = value.getString("id"),
@@ -205,7 +216,7 @@ class BlueCausalLedger(private val file: File?) {
             changedActuators = List(addresses.length()) { decodeAddress(addresses.getJSONObject(it)) },
             confirmedAtMs = value.getLong("confirmedAtMs"),
             beforeComparisonId = value.optString("beforeComparisonId"),
-            scientificRegionId = value.optString("scientificRegionId"),
+            scientificRegionId = scientificRegionId,
         )
     } catch (_: Exception) { null }
 

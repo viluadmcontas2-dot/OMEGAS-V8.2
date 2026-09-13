@@ -5,16 +5,12 @@ import org.json.JSONObject
 import kotlin.math.abs
 import kotlin.math.max
 
-/**
- * Optional, asymmetric confidence adapter.
- *
- * OBD may reward an agreeing MP48 conclusion. It never changes MP48 error/target
- * and absence or disagreement never blocks a valid MP48 result.
- */
+/** Optional, asymmetric confidence adapter. OBD can only reward MP48. */
 object BlueWitnessConfidence {
     private const val BLUE_DEADBAND = 0.50
     private const val OBD_DEADBAND = 0.50
     private const val MAX_SUPPORT_BOOST = 0.25
+    private const val MAX_WITNESS_AGE_MS = 2_000L
 
     fun assess(
         blueErrorPercent: Double,
@@ -41,10 +37,13 @@ object BlueWitnessConfidence {
         blueErrorPercent: Double,
         baseQuality: Double,
         witness: JSONObject?,
-        @Suppress("UNUSED_PARAMETER") expectedCalibrationState: String,
+        expectedCalibrationState: String,
         expectedRpm: Double,
         expectedMapBar: Double,
         @Suppress("UNUSED_PARAMETER") expectedPetrolOnCngMs: Double,
+        nowMs: Long = System.currentTimeMillis(),
+        expectedEpoch: String? = null,
+        expectedSessionId: String? = null,
     ): JSONObject {
         val projected = JSONObject(baseJson.toString())
         val rpm = witness?.optDouble("rpm", Double.NaN) ?: Double.NaN
@@ -54,12 +53,22 @@ object BlueWitnessConfidence {
             abs(rpm - expectedRpm) <= rpmWindow && abs(map - expectedMapBar) <= 0.05
         val sourceState = witness?.optString("state", ObdWitnessState.UNAVAILABLE.name)?.uppercase()
             ?: ObdWitnessState.UNAVAILABLE.name
-        val stft = if (regionMatched && witness != null) {
+        val gnvDeclared = witness?.optBoolean("gnvModeDeclared", false) == true
+        val observedAtMs = witness?.optLong("observedAtMs", -1L) ?: -1L
+        val fresh = observedAtMs >= 0L && nowMs >= observedAtMs && nowMs - observedAtMs <= MAX_WITNESS_AGE_MS
+        val witnessCalibration = witness?.optString("calibrationState", "").orEmpty()
+        val calibrationMatched = expectedCalibrationState.isBlank() ||
+            (witnessCalibration.isNotBlank() && witnessCalibration == expectedCalibrationState)
+        val epochMatched = expectedEpoch.isNullOrBlank() || witness?.optString("epoch") == expectedEpoch
+        val sessionMatched = expectedSessionId.isNullOrBlank() || witness?.optString("sessionId") == expectedSessionId
+        val eligible = sourceState == "READY" && gnvDeclared && fresh && regionMatched &&
+            calibrationMatched && epochMatched && sessionMatched
+        val stft = if (eligible && witness != null) {
             witness.optDouble("stftMedianPct", witness.optDouble("gnvStftPct", Double.NaN)).takeIf(Double::isFinite)
         } else null
-        val quality = if (regionMatched) witness?.optDouble("quality", 0.0)?.coerceIn(0.0, 1.0) ?: 0.0 else 0.0
+        val quality = if (eligible) witness?.optDouble("quality", 0.0)?.coerceIn(0.0, 1.0) ?: 0.0 else 0.0
         val base = baseQuality.coerceIn(0.0, 1.0)
-        val assessment = if (!regionMatched) {
+        val assessment = if (!eligible) {
             BlueWitnessAssessment(
                 if (witness == null) ObdWitnessState.UNAVAILABLE else ObdWitnessState.INSUFFICIENT,
                 base, base, quality,
@@ -74,7 +83,12 @@ object BlueWitnessConfidence {
                 .put("sourceState", sourceState)
                 .put("quality", assessment.obdQuality)
                 .put("gnvStftPct", stft ?: JSONObject.NULL)
-                .put("regionMatched", regionMatched))
+                .put("regionMatched", regionMatched)
+                .put("gnvModeDeclared", gnvDeclared)
+                .put("fresh", fresh)
+                .put("calibrationMatched", calibrationMatched)
+                .put("epochMatched", epochMatched)
+                .put("sessionMatched", sessionMatched))
     }
 }
 

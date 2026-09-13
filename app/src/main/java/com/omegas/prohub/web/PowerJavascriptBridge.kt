@@ -9,7 +9,7 @@ import com.omegas.prohub.MainActivity
 import org.json.JSONObject
 
 /**
- * Ponte somente para estado/ações de energia e overlay controladas pelo Android.
+ * Ponte somente para estado/ações leves controladas pelo Android.
  * Não possui acesso a writers, protocolo MP48 ou calibração.
  */
 class PowerJavascriptBridge(activity: MainActivity) {
@@ -22,6 +22,11 @@ class PowerJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun requestBatteryOptimizationExemption(): String =
         activityRef.get()?.requestBatteryOptimizationExemption(manual = true) ?: "{}"
+
+    /** Endpoint estreito: não monta fullEngineSnapshot para a tela OBD. */
+    @JavascriptInterface
+    fun getObdWitnessStatus(): String =
+        activityRef.get()?.serviceOrNull()?.obdWitnessStatusJson() ?: "{}"
 
     @JavascriptInterface
     fun getOverlayStatus(): String {
@@ -42,8 +47,6 @@ class PowerJavascriptBridge(activity: MainActivity) {
         val service = activity.serviceOrNull()
             ?: return JSONObject().put("ok", false).put("error", "Serviço ainda iniciando").toString()
 
-        // Marca a intenção antes de abrir o Android. Se a permissão já existe,
-        // o mesmo serviço mostra o overlay imediatamente.
         val requested = try { JSONObject(service.setTelemetryOverlayEnabled(true)) } catch (error: Exception) {
             return JSONObject().put("ok", false).put("error", error.message ?: "Falha ao preparar flutuante").toString()
         }

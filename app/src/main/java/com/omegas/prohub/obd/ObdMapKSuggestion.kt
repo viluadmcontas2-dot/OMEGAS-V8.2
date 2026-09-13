@@ -35,10 +35,12 @@ object ObdMapKSuggestion {
         ) {
             return base.put("available", false).put("state", "ADDRESS_UNRESOLVED")
         }
-        val row = KMapPhysicalAxes.rpmBins().indices.minByOrNull { abs(KMapPhysicalAxes.rpmBins()[it] - rpm) }
-            ?: return base.put("available", false).put("state", "ADDRESS_UNRESOLVED")
-        val column = KMapPhysicalAxes.petrolBins().indices.minByOrNull {
+        // MP48 physical contract: protocol row = Petrol Inj., protocol column = RPM.
+        val row = KMapPhysicalAxes.petrolBins().indices.minByOrNull {
             abs(KMapPhysicalAxes.petrolBins()[it] - resolvedPetrolMs)
+        } ?: return base.put("available", false).put("state", "ADDRESS_UNRESOLVED")
+        val column = KMapPhysicalAxes.rpmBins().indices.minByOrNull {
+            abs(KMapPhysicalAxes.rpmBins()[it] - rpm)
         } ?: return base.put("available", false).put("state", "ADDRESS_UNRESOLVED")
         val currentRow = mapRows.optJSONArray(row)
             ?: return base.put("available", false).put("state", "READBACK_REQUIRED")

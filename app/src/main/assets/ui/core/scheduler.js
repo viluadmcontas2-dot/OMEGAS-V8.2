@@ -16,21 +16,29 @@
       }
       addHook(cadence, listener) {
         const set = this.hooks[cadence];
-        if (!set || typeof listener !== "function") return () => {
-        };
+        if (!set || typeof listener !== "function") return () => {};
         set.add(listener);
         return () => set.delete(listener);
       }
       start() {
-        if (this.timer) return;
+        if (this.running) return;
         this.running = true;
         this.run();
-        this.timer = root.setInterval(() => this.run(), this.intervalMs);
+        this.scheduleNext();
+      }
+      scheduleNext() {
+        if (!this.running || this.timer) return;
+        this.timer = root.setTimeout(() => {
+          this.timer = null;
+          if (!this.running) return;
+          this.run();
+          this.scheduleNext();
+        }, this.intervalMs);
       }
       stop() {
-        if (this.timer) root.clearInterval(this.timer);
-        this.timer = null;
         this.running = false;
+        if (this.timer) root.clearTimeout(this.timer);
+        this.timer = null;
       }
       emitHooks(cadence) {
         const set = this.hooks[cadence];

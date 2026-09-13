@@ -6,42 +6,64 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sqrt
 
-/**
- * Independent GNV/STFT learning authority.
- *
- * It deliberately has no MP48, Petrol Inj., gasoline or ECU writer input.
- */
+/** Independent GNV/STFT learning authority. No MP48, gasoline or writer input. */
 class ObdIndependentLearningEngine(
     private val policy: ObdLearningPolicy = ObdLearningPolicy(),
 ) {
     private val samples = ArrayDeque<ObdLearningSample>()
+    private val seenCycleIds = linkedSetOf<String>()
     private var activeEpoch = "obd-0"
+    private var epochStartedAtMs = 0L
+    private var activeSessionId = "legacy"
+    private var activeSessionStartedAtMs = 0L
 
     @Synchronized
-    fun observe(sample: ObdLearningSample): Boolean {
+    fun observe(sample: ObdLearningSample, nowMs: Long = sample.observedAtMs): Boolean {
         if (!sample.gnvModeDeclared || sample.epoch != activeEpoch || !valid(sample)) return false
+        if (nowMs < sample.observedAtMs || nowMs - sample.observedAtMs > policy.maximumSampleAgeMs) return false
+        if (sample.cycleStartedAtMs < epochStartedAtMs) return false
+        when {
+            sample.sessionStartedAtMs < activeSessionStartedAtMs -> return false
+            sample.sessionStartedAtMs > activeSessionStartedAtMs -> {
+                activeSessionStartedAtMs = sample.sessionStartedAtMs
+                activeSessionId = sample.sessionId
+                samples.clear()
+                seenCycleIds.clear()
+            }
+            sample.sessionId != activeSessionId -> return false
+        }
+        if (!seenCycleIds.add(sample.cycleId)) return false
         samples.addLast(sample)
-        while (samples.size > policy.historyLimit) samples.removeFirst()
+        while (samples.size > policy.historyLimit) {
+            val removed = samples.removeFirst()
+            seenCycleIds.remove(removed.cycleId)
+        }
         return true
     }
 
     @Synchronized
-    fun beginEpoch(epoch: String) {
+    fun beginEpoch(epoch: String, startedAtMs: Long = 0L) {
         require(epoch.isNotBlank())
-        if (epoch == activeEpoch) return
+        require(startedAtMs >= 0L)
+        if (epoch == activeEpoch && startedAtMs <= epochStartedAtMs) return
         activeEpoch = epoch
+        epochStartedAtMs = startedAtMs
         samples.clear()
+        seenCycleIds.clear()
     }
 
     @Synchronized
     fun currentEpoch(): String = activeEpoch
 
     @Synchronized
+    fun epochStartedAtMs(): Long = epochStartedAtMs
+
+    @Synchronized
     fun evaluate(rpm: Double, mapBar: Double, epoch: String = activeEpoch): ObdLearningResult {
         if (!rpm.isFinite() || !mapBar.isFinite()) return emptyResult()
         if (epoch != activeEpoch) return emptyResult(ObdLearningState.INSUFFICIENT)
         val region = samples.filter {
-            it.epoch == epoch &&
+            it.epoch == epoch && it.sessionId == activeSessionId &&
                 abs(it.rpm - rpm) <= max(policy.minimumRpmWindow, rpm * policy.relativeRpmWindow) &&
                 abs(it.mapBar - mapBar) <= policy.mapWindowBar
         }
@@ -68,29 +90,27 @@ class ObdIndependentLearningEngine(
         )
     }
 
+    fun snapshotJson(): JSONObject = snapshotState().toJson()
+
     @Synchronized
-    fun snapshotJson(): JSONObject = JSONObject()
-        .put("schema", "omegas-obd-stft-learning-v1")
-        .put("epoch", activeEpoch)
-        .put("samples", JSONArray().also { array ->
-            samples.forEach { sample ->
-                array.put(JSONObject()
-                    .put("observedAtMs", sample.observedAtMs)
-                    .put("rpm", sample.rpm)
-                    .put("mapBar", sample.mapBar)
-                    .put("stftPct", sample.stftPct)
-                    .put("acquisitionSpanMs", sample.acquisitionSpanMs)
-                    .put("epoch", sample.epoch)
-                    .put("gnvModeDeclared", sample.gnvModeDeclared))
-            }
-        })
+    fun snapshotState(): ObdLearningSnapshot = ObdLearningSnapshot(
+        epoch = activeEpoch,
+        epochStartedAtMs = epochStartedAtMs,
+        sessionId = activeSessionId,
+        sessionStartedAtMs = activeSessionStartedAtMs,
+        samples = samples.toList(),
+    )
 
     @Synchronized
     fun restoreJson(snapshot: JSONObject) {
         if (snapshot.optString("schema") != "omegas-obd-stft-learning-v1") return
         val epoch = snapshot.optString("epoch", "obd-0").takeIf(String::isNotBlank) ?: "obd-0"
         activeEpoch = epoch
+        epochStartedAtMs = snapshot.optLong("epochStartedAtMs", 0L).coerceAtLeast(0L)
+        activeSessionId = snapshot.optString("sessionId", "legacy").ifBlank { "legacy" }
+        activeSessionStartedAtMs = snapshot.optLong("sessionStartedAtMs", 0L).coerceAtLeast(0L)
         samples.clear()
+        seenCycleIds.clear()
         val array = snapshot.optJSONArray("samples") ?: return
         for (index in 0 until array.length()) {
             val item = array.optJSONObject(index) ?: continue
@@ -102,16 +122,38 @@ class ObdIndependentLearningEngine(
                 acquisitionSpanMs = item.optLong("acquisitionSpanMs", -1L),
                 epoch = item.optString("epoch", ""),
                 gnvModeDeclared = item.optBoolean("gnvModeDeclared", false),
+                sessionId = item.optString("sessionId", activeSessionId).ifBlank { activeSessionId },
+                sessionStartedAtMs = item.optLong("sessionStartedAtMs", activeSessionStartedAtMs).coerceAtLeast(0L),
+                cycleStartedAtMs = item.optLong(
+                    "cycleStartedAtMs",
+                    item.optLong("observedAtMs", -1L) - item.optLong("acquisitionSpanMs", 0L),
+                ),
+                cycleId = item.optString("cycleId").ifBlank {
+                    ObdLearningSample.cycleIdentity(
+                        item.optLong("observedAtMs", -1L),
+                        item.optDouble("rpm", Double.NaN),
+                        item.optDouble("mapBar", Double.NaN),
+                        item.optDouble("stftPct", Double.NaN),
+                    )
+                },
             )
-            if (sample.epoch == activeEpoch && sample.gnvModeDeclared && valid(sample)) {
+            if (sample.epoch == activeEpoch && sample.gnvModeDeclared && valid(sample) &&
+                sample.sessionId == activeSessionId && sample.sessionStartedAtMs == activeSessionStartedAtMs &&
+                seenCycleIds.add(sample.cycleId)
+            ) {
                 samples.addLast(sample)
-                while (samples.size > policy.historyLimit) samples.removeFirst()
+                while (samples.size > policy.historyLimit) {
+                    val removed = samples.removeFirst()
+                    seenCycleIds.remove(removed.cycleId)
+                }
             }
         }
     }
 
     private fun valid(sample: ObdLearningSample): Boolean =
-        sample.observedAtMs >= 0L &&
+        sample.observedAtMs >= 0L && sample.cycleStartedAtMs >= 0L &&
+            sample.sessionId.isNotBlank() && sample.cycleId.isNotBlank() &&
+            sample.sessionStartedAtMs >= 0L &&
             sample.rpm.isFinite() && sample.rpm in 400.0..8_000.0 &&
             sample.mapBar.isFinite() && sample.mapBar in 0.10..1.60 &&
             sample.stftPct.isFinite() && abs(sample.stftPct) <= 50.0 &&
@@ -152,7 +194,47 @@ data class ObdLearningSample(
     val acquisitionSpanMs: Long,
     val epoch: String,
     val gnvModeDeclared: Boolean,
-)
+    val sessionId: String = "legacy",
+    val sessionStartedAtMs: Long = 0L,
+    val cycleStartedAtMs: Long = (observedAtMs - acquisitionSpanMs).coerceAtLeast(0L),
+    val cycleId: String = cycleIdentity(observedAtMs, rpm, mapBar, stftPct),
+) {
+    companion object {
+        fun cycleIdentity(observedAtMs: Long, rpm: Double, mapBar: Double, stftPct: Double): String =
+            "$observedAtMs|${"%.3f".format(java.util.Locale.US, rpm)}|${"%.5f".format(java.util.Locale.US, mapBar)}|${"%.4f".format(java.util.Locale.US, stftPct)}"
+    }
+}
+
+data class ObdLearningSnapshot(
+    val epoch: String,
+    val epochStartedAtMs: Long,
+    val sessionId: String,
+    val sessionStartedAtMs: Long,
+    val samples: List<ObdLearningSample>,
+) {
+    fun toJson(): JSONObject = JSONObject()
+        .put("schema", "omegas-obd-stft-learning-v1")
+        .put("epoch", epoch)
+        .put("epochStartedAtMs", epochStartedAtMs)
+        .put("sessionId", sessionId)
+        .put("sessionStartedAtMs", sessionStartedAtMs)
+        .put("samples", JSONArray().also { array ->
+            samples.forEach { sample ->
+                array.put(JSONObject()
+                    .put("observedAtMs", sample.observedAtMs)
+                    .put("rpm", sample.rpm)
+                    .put("mapBar", sample.mapBar)
+                    .put("stftPct", sample.stftPct)
+                    .put("acquisitionSpanMs", sample.acquisitionSpanMs)
+                    .put("epoch", sample.epoch)
+                    .put("gnvModeDeclared", sample.gnvModeDeclared)
+                    .put("sessionId", sample.sessionId)
+                    .put("sessionStartedAtMs", sample.sessionStartedAtMs)
+                    .put("cycleStartedAtMs", sample.cycleStartedAtMs)
+                    .put("cycleId", sample.cycleId))
+            }
+        })
+}
 
 data class ObdLearningPolicy(
     val minimumSamples: Int = 5,
@@ -165,6 +247,7 @@ data class ObdLearningPolicy(
     val deadbandPct: Double = 1.0,
     val minimumCorrectionMultiplier: Double = 0.80,
     val maximumCorrectionMultiplier: Double = 1.20,
+    val maximumSampleAgeMs: Long = 2_000L,
 ) {
     init {
         require(minimumSamples > 0)
@@ -173,6 +256,7 @@ data class ObdLearningPolicy(
         require(minimumQuality in 0.0..1.0 && dispersionScalePct > 0.0 && deadbandPct >= 0.0)
         require(minimumCorrectionMultiplier > 0.0)
         require(maximumCorrectionMultiplier >= minimumCorrectionMultiplier)
+        require(maximumSampleAgeMs > 0L)
     }
 }
 

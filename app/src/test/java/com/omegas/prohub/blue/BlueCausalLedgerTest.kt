@@ -1,5 +1,7 @@
 package com.omegas.prohub.blue
 
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -21,6 +23,25 @@ class BlueCausalLedgerTest {
         assertNotNull(restored)
         assertEquals(BlueActuatorAddress.curvePoint(7), restored?.actuator)
         assertEquals("comparison-before", restored?.beforeComparisonId)
+    }
+
+    @Test
+    fun `legacy v1 ledger fails closed instead of restoring ambiguous identity`() {
+        val file = temporary.newFile("legacy-blue-causal-ledger.json")
+        file.writeText(
+            JSONObject()
+                .put("schema", "omegas-blue-causal-ledger-v1")
+                .put("pending", JSONArray().put(JSONObject()
+                    .put("id", "legacy")
+                    .put("scientificRegionId", "visit-random-uuid")))
+                .put("confirmed", JSONArray())
+                .toString(),
+        )
+
+        val restored = BlueCausalLedger(file)
+
+        assertNull(restored.pending("legacy"))
+        assertNull(restored.latestConfirmed())
     }
 
     @Test
@@ -73,7 +94,7 @@ class BlueCausalLedgerTest {
         beforeK = 1.0,
         targetK = 1.1,
         beforeComparisonId = "comparison-before",
-        scientificRegionId = "rpm1500-map050",
+        scientificRegionId = BlueScientificRegion.from(1_500.0, 0.50).id,
         preparedAtMs = 9_500L,
     )
 
