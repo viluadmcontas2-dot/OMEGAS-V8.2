@@ -58,8 +58,9 @@ test('tela OBD vira witness STFT e elimina scanner legado do runtime', () => {
   assert.doesNotMatch(obd, /REFER\u00caNCIA GASOLINA|RESIDUAL GNV|gasolineReferencePct|residualPp/i);
   assert.match(obd, /OBD[^<`]{0,100}não escreve[^<`]{0,40}K/i);
 
-  assert.match(obd, /this\.api\.fullSnapshot\(\)/);
-  assert.match(obd, /obd_witness/);
+  // Hot path uses the narrow witness API; fullSnapshot is intentionally excluded.
+  assert.match(obd, /this\.api\.obdWitness\(\)/);
+  assert.doesNotMatch(obd, /this\.api\.fullSnapshot\(\)/);
   assert.doesNotMatch(obd, /obdMaps\(|renderMap\(|mapLayer|longTermFuelTrim|calculatedLoad|throttle|mafGps|coolant|moduleVoltage/i);
   for (const forbidden of ['writeMap', 'writeCurve', 'startKWrite', 'startKBatchWrite', 'startKFactorWrite']) {
     assert.equal(obd.includes(forbidden), false, `${forbidden} cannot exist in OBD witness screen`);
