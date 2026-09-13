@@ -98,6 +98,8 @@ assert "setInterval" not in obd
 assert "writeMap" not in obd
 assert "writeCurve" not in obd
 
-assert scheduler.count("setInterval") == 1
+# O contrato comportamental mais novo usa um único timeout auto-cadenciado;
+# setInterval é proibido porque pode acumular trabalho e agravar backpressure.
+assert scheduler.count("setInterval") == 0
 
 print("UX_DIDACTIC_EXPANSION_CONTRACT=PASS")
