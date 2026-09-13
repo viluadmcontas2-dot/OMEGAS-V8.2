@@ -87,7 +87,10 @@ class BlueGasolineReferenceProvenanceTest {
         mapBar = mapBar,
         petrolMs = petrolMs,
         quality = 0.95,
-        cngRevision = revision,
+        cngRevision = when (fuel) {
+            FuelKind.PETROL -> null
+            FuelKind.CNG -> revision ?: CalibrationRevision(0, 0)
+        },
     )
 
     private fun calibration(revision: CalibrationRevision) = CalibrationState(
