@@ -146,7 +146,7 @@
 - [ ] **Step 1: RED — forbid engineering jargon in the primary cell pane.**
   Primary UI must not render `BlueCausalEngine`, calibration-state internals, epoch history, ACK/readback contract text or internal IDs.
 - [ ] **Step 2: RED — require operational fields.**
-  Require RPM/MAP context, gasolina expected, GNV observed, deviation, confidence, origin (`medido`, `interpolado`, `predito`) and suggested adjustment when available.
+  Require RPM/MAP context, gasoline expected, GNV observed, deviation, confidence, origin (`medido`, `interpolado`, `predito`) and suggested adjustment when available.
 - [ ] **Step 3: RED — compact grid cells.**
   Grid cells show the principal value/state without repeated long labels such as `ms gasolina`, `ms no GNV`, or engineering explanations in every cell.
 - [ ] **Step 4: Implement minimal UI simplification without deleting diagnostic data from backend snapshots.**
