@@ -177,3 +177,48 @@ test('Live Tracing temporal é limitado, reutiliza setTrace e não cria timer', 
   }
   assert.equal(grid.traceTrail.size <= 16, true, 'rastro precisa ser estritamente limitado');
 });
+
+test('review click navigates without accessing any ECU writer', () => {
+  const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
+  const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
+  let click; const calls = [];
+  screen.cellPane = { innerHTML: '', querySelector: () => ({ addEventListener: (_, fn) => { click = fn; } }) };
+  screen.api = new Proxy({}, { get() { throw Error('Unexpected ECU API access'); } });
+  screen.router = { navigate: (...args) => calls.push(args) };
+  screen.renderDetail({
+    learning: {},
+    calibrationState: { suggestionItems: [{
+      target: 'MAP_K', lifecycle: 'PENDING', actionable: true,
+      mapChanges: [{ row: 0, column: 0, before: 110, after: 115 }]
+    }] }
+  }, 0, 0);
+  assert.match(screen.cellPane.innerHTML, /Confiança/);
+  assert.match(screen.cellPane.innerHTML, /Revisar no Mapa K/);
+  click();
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'map');
+  assert.equal(calls[0][1].suggestion.mapChanges[0].after, 115);
+});
+
+test('null injection reference is not rendered as zero milliseconds', () => {
+  const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
+  const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
+  screen.cellPane = { innerHTML: '', querySelector: () => null };
+  screen.renderDetail({ learning: { comparisons: [{
+    row: 0, column: 0, petrol_target_ms: null, petrol_on_cng_ms: null
+  }] } }, 0, 0);
+  assert.match(screen.cellPane.innerHTML, /Gasolina esperada<\/dt><dd>sem evidência/);
+  assert.doesNotMatch(screen.cellPane.innerHTML, /0,00 ms/);
+});
+
+test('backend equivalent comparison stays neutral in the detail view', () => {
+  const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
+  const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
+  screen.cellPane = { innerHTML: '', querySelector: () => null };
+  screen.renderDetail({ learning: { comparisons: [{
+    row: 0, column: 0, petrol_target_ms: 5, petrol_on_cng_ms: 5.1,
+    error_pct: 2, direction: 'EQUIVALENT'
+  }] } }, 0, 0);
+  assert.match(screen.cellPane.innerHTML, /2,0% \(equivalente\)/);
+  assert.doesNotMatch(screen.cellPane.innerHTML, /precisa mais GNV/);
+});
