@@ -461,7 +461,7 @@
 
       let diferenca = 'ainda não existe par equivalente válido';
       if (displayError !== null) {
-        if (Math.abs(displayError) <= 1.5) diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (equivalente)`;
+        if ((consolidatedError === null && comparison?.direction === 'EQUIVALENT') || Math.abs(displayError) <= (finite(maps.tolerancePolicy?.equivalenceDeadbandPercent) ?? 2.5)) diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (equivalente)`;
         else diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (precisa ${displayError > 0 ? 'mais' : 'menos'} GNV)`;
       }
 
