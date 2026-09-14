@@ -8,10 +8,10 @@ const visual = read('app/src/main/assets/ui/components/predictor-current-cell.js
 const projection = read('app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt');
 const bridge = read('app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt');
 
-// O fast path do Predictor reutiliza o único Scheduler; não cria relógio próprio.
-assert.equal(visual.includes("scheduler.addHook('fast'"), true);
+// O fast path do Predictor reutiliza o Store/Scheduler do app; não cria relógio próprio.
+assert.equal(visual.includes('this.store.subscribe'), true);
 assert.equal(visual.includes("state.route !== 'predictor'"), true);
-assert.equal(visual.includes('this.api.telemetry()'), true);
+assert.equal(visual.includes('state.telemetry?.interpolation'), true);
 assert.equal(visual.includes('setInterval'), false);
 
 // A geometria/weights vêm do Kotlin. JS apenas substitui o estado visual atual.
@@ -32,7 +32,7 @@ assert.equal(visual.includes('store.patch({ liveTracingEnabled: next })'), true)
 assert.equal(visual.includes('learning:'), false);
 assert.equal(visual.includes('learningEligible'), false);
 
-// Latest-only: até quatro pesos atuais, remove os anteriores; nenhuma trilha ou writer.
+// Predictor é latest-only: até quatro pesos atuais, remove anteriores; nenhuma trilha ou writer.
 assert.equal(visual.includes('weights.slice(0, 4)'), true);
 assert.equal(visual.includes("classList.remove('trace-weight')"), true);
 assert.equal(visual.includes("classList.add('trace-weight')"), true);
