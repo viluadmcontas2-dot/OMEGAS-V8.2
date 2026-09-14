@@ -23,14 +23,17 @@ test('aprendizado rapido nao persegue pesos bilineares no DOM', () => {
   assert.match(appSource, /route === 'learning' \|\| route === 'map'/);
 });
 
-test('grade fisica nao conserva implementacao visual antiga de tracing', () => {
-  assert.doesNotMatch(gridSource, /setTrace\s*\(/);
-  assert.doesNotMatch(gridSource, /traceTrail/);
-  assert.doesNotMatch(gridSource, /TRACE_MAX_CONTRIBUTORS/);
-  assert.doesNotMatch(gridSource, /TRACE_WEIGHT_STEPS/);
-  assert.doesNotMatch(gridSource, /live-contributor/);
-  assert.doesNotMatch(gridSource, /live-nearest/);
-  assert.doesNotMatch(gridSource, /Date\.now\(/);
+test('grade fisica conserva tracing temporal limitado sem timer nem writer', () => {
+  assert.match(gridSource, /setTrace\s*\(/);
+  assert.match(gridSource, /traceTrailMs = 1400/);
+  assert.match(gridSource, /traceTrailMax = 16/);
+  assert.match(gridSource, /live-contributor/);
+  assert.match(gridSource, /live-nearest/);
+  assert.match(gridSource, /live-trail/);
+  assert.match(gridSource, /Date\.now\(/);
+  assert.doesNotMatch(gridSource, /setInterval/);
+  assert.doesNotMatch(gridSource, /setTimeout/);
+  assert.doesNotMatch(gridSource, /writeMap|startMapBatchWrite|protocolTransaction/);
 });
 
 test('ciclo rapido quantiza somente texto leve de rpm e petrol inj', () => {
