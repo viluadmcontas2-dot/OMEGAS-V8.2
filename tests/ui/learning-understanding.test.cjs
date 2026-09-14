@@ -9,13 +9,16 @@ for (const label of [
   'DECISÃO DO NÚCLEO',
   'CONDIÇÃO AGORA',
   'ÚLTIMAS DECISÕES OBSERVADAS',
-  'Memória consolidada',
-  'Evidência recente',
-  'Gasolina — referência',
-  'GNV atual — Petrol Inj.',
-  'Equivalência',
+  'LIMITES CONFIGURADOS',
+  'COLETA',
+  'Gasolina esperada',
+  'No GNV agora',
+  'Diferença',
+  'Novo valor K sugerido',
+  'Diagnóstico técnico',
+  'Evidência gasolina',
+  'Evidência GNV',
   'Histórico GNV',
-  'Sugestão local',
 ]) {
   assert.equal(source.includes(label), true, `missing ${label}`);
 }
