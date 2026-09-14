@@ -381,6 +381,9 @@ class SessionRecorder(
         return ExportSnapshot(entries, manifest, true)
     }
 
+    @Volatile private var petrolTicks = 0L
+    @Volatile private var cngTicks = 0L
+
     private fun recordNow(type: String, source: String, data: JSONObject) {
         if (!recording && type != "session_stopped") return
         try {
@@ -394,6 +397,14 @@ class SessionRecorder(
                 .put("type", type)
                 .put("source", source)
                 .put("data", data)
+            
+            if (type == "telemetry") {
+                val evData = data.optJSONObject("event")?.optJSONObject("data") ?: data.optJSONObject("data") ?: data
+                val f = evData.optString("fuel", "").uppercase()
+                if (f.contains("PETROL") || f.contains("GASOLINA")) petrolTicks++
+                if (f.contains("CNG") || f.contains("GNV") || f == "GAS") cngTicks++
+            }
+
             val line = item.toString() + "\n"
             val bytes = line.toByteArray(StandardCharsets.UTF_8).size.toLong()
             val maxBytes = settings.sessionLogMaxMb.coerceAtLeast(512).toLong() * 1024L * 1024L

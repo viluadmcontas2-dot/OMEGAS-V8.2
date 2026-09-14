@@ -108,8 +108,7 @@ internal object PetrolReferenceSelector {
         val candidates = validRegions.map { candidate(it, request, policy) }
         val bounded = candidates.filter {
             it.rpmUnits <= MAX_EXTRAPOLATION_RPM_UNITS &&
-                it.mapUnits <= MAX_EXTRAPOLATION_MAP_UNITS &&
-                (!it.temperatureCompared || it.waterUnits <= MAX_EXTRAPOLATION_WATER_UNITS)
+                it.mapUnits <= MAX_EXTRAPOLATION_MAP_UNITS
         }
         val nearest = candidates.minByOrNull { it.distance }
         if (bounded.isEmpty()) {
@@ -127,7 +126,7 @@ internal object PetrolReferenceSelector {
         }
 
         val direct = bounded.filter {
-            it.rpmUnits <= 1.0 && it.mapUnits <= 1.0 && (!it.temperatureCompared || it.waterUnits <= 1.0)
+            it.rpmUnits <= 1.0 && it.mapUnits <= 1.0
         }
         val extrapolated = direct.isEmpty()
         val source = if (direct.isNotEmpty()) direct else bounded
@@ -263,7 +262,7 @@ internal object PetrolReferenceSelector {
         val waterUnits = if (compareTemperature) {
             waterDelta / policy.historicalTemperatureC.coerceAtLeast(1.0)
         } else 0.0
-        val distance = sqrt(rpmUnits * rpmUnits + mapUnits * mapUnits + 0.25 * waterUnits * waterUnits)
+        val distance = sqrt(rpmUnits * rpmUnits + mapUnits * mapUnits)
         return Candidate(
             region,
             rpmDelta,

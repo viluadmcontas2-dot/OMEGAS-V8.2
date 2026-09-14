@@ -243,11 +243,32 @@
         <section class="recorded-sessions">
           <header><div><small>SESSÕES</small><h3>${sessions.length} armazenada${sessions.length === 1 ? '' : 's'}</h3></div></header>
           <div class="recorded-session-list">
-            ${sessions.length ? sessions.slice(0, 8).map(item => `
-              <article>
-                <div><b>${escapeHtml(item.reason || 'Sessão')}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · ativa' : ''}</span></div>
+            ${sessions.length ? sessions.slice(0, 8).map(item => {
+              const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
+              const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
+              const pctCng = (finite(item.cngTicks) || 0);
+              const pctPet = (finite(item.petrolTicks) || 0);
+              const totalTicks = pctCng + pctPet;
+              const gnvPercent = totalTicks > 0 ? Math.round((pctCng / totalTicks) * 100) : 0;
+              const gasPercent = totalTicks > 0 ? 100 - gnvPercent : 0;
+              return `
+              <article class="recorded-session-item">
+                <div class="recorded-session-header">
+                  <b>${escapeHtml(item.reason || 'Sessão')}</b>
+                  <span class="session-datetime">${readableDate}</span>
+                </div>
+                <div class="recorded-session-meta">
+                  <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · ativa' : ''}</span>
+                </div>
+                ${totalTicks > 0 ? `
+                <div class="session-fuel-bar" title="GNV: ${gnvPercent}% | Gasolina: ${gasPercent}%">
+                  <div class="fuel-segment cng" style="width: ${gnvPercent}%;"></div>
+                  <div class="fuel-segment petrol" style="width: ${gasPercent}%;"></div>
+                </div>
+                ` : ''}
                 <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
-              </article>`).join('') : '<p class="empty-copy">Nenhuma sessão gravada.</p>'}
+              </article>`;
+            }).join('') : '<p class="empty-copy">Nenhuma sessão gravada.</p>'}
           </div>
         </section>
 

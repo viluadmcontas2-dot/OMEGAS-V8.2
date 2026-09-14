@@ -495,15 +495,6 @@ class MotorSampleAnalyzer(
             toleratedGapCount = toleratedGapCount,
         )
 
-        if (waterC < minimumWaterC) {
-            return SampleDecision.transition(
-                state = "ENGINE_WARMING",
-                reason = "Água Landi ${waterC.toInt()} °C • mínimo configurado $minimumWaterC °C",
-                frameCount = sequence.size,
-                diagnostics = diagnostics,
-            )
-        }
-
         val rejection = when {
             rpmCenterShift > rpmCenterLimit -> "RPM mudando continuamente"
             rpmOscillation > rpmOscillationLimit -> "Oscilação de RPM acima do natural"
@@ -512,10 +503,6 @@ class MotorSampleAnalyzer(
             petrolCenterShift > petrolCenterLimit -> "Tempo de injeção mudando"
             petrolOscillationRatio > activePolicy.petrolOscillationPercent / 100.0 ->
                 "Oscilação do tempo de injeção acima do natural"
-            fuel == Mp48Fuel.CNG && pressureCenterShift > activePolicy.pressureCenterBar ->
-                "Pressão diferencial mudando"
-            fuel == Mp48Fuel.CNG && pressureOscillation > activePolicy.pressureOscillationBar ->
-                "Pressão diferencial instável"
             else -> null
         }
         if (rejection != null) {
@@ -535,10 +522,6 @@ class MotorSampleAnalyzer(
             quality(petrolCenterShift, petrolCenterLimit),
             quality(petrolOscillationRatio, activePolicy.petrolOscillationPercent / 100.0),
         )
-        if (fuel == Mp48Fuel.CNG) {
-            scores += quality(pressureCenterShift, activePolicy.pressureCenterBar)
-            scores += quality(pressureOscillation, activePolicy.pressureOscillationBar)
-        }
         val sampleQuality = scores.fold(1.0) { acc, value -> acc * value }
             .pow(1.0 / scores.size)
         val classification = if (

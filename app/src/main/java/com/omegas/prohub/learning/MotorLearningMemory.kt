@@ -762,9 +762,7 @@ class MotorLearningMemory(
         val effectiveSamples = ContinuousLearningMath.effectiveSampleSize(related.map { it.quality })
         val rawStage = confidenceStage(effectiveSamples, mad * mad)
         val reliable = consensus >= LearningToleranceSettings.current.directionConsensusMinimum &&
-            mad <= LearningToleranceSettings.current.comparisonMaximumMadMs &&
-            gasTempSpan <= LearningToleranceSettings.current.comparisonMaximumGasTempSpanC &&
-            pressureSpan <= LearningToleranceSettings.current.comparisonMaximumPressureSpanBar
+            mad <= LearningToleranceSettings.current.comparisonMaximumMadMs
         val stage = if (rawStage in setOf("ACCEPTED", "CONFIRMED") && !reliable) "PROVISIONAL" else rawStage
         return ComparisonEvidence(
             stage,

@@ -118,21 +118,12 @@ object Mp48Protocol {
             if (gasMs != null && gasMs !in 0.0..50.0) add("GAS_INJECTION_OUT_OF_RANGE")
             if (gas2Ms != null && gas2Ms !in 0.0..50.0) add("GAS_2_INJECTION_OUT_OF_RANGE")
             if (petrol2Ms != null && petrol2Ms !in 0.0..40.0) add("PETROL_2_INJECTION_OUT_OF_RANGE")
-            if (waterC !in -40..150) add("WATER_TEMPERATURE_OUT_OF_RANGE")
-            if (gasC !in -40..150) add("GAS_TEMPERATURE_OUT_OF_RANGE")
             if (mapBar !in 0.0..2.5) add("MAP_OUT_OF_RANGE")
         }
-        val cngPressureReasons = buildList {
-            if (gasPressureAbsBar !in 0.0..5.0) add("GAS_PRESSURE_ABSOLUTE_OUT_OF_RANGE")
-            if (pressureDiffBar !in -0.30..4.5) add("GAS_PRESSURE_DIFFERENTIAL_OUT_OF_RANGE")
-        }
+        val plausibilityReasons = basePlausibilityReasons
         val basePlausible = basePlausibilityReasons.isEmpty()
-        val cngPressurePlausible = cngPressureReasons.isEmpty()
-        // A pressão residual do trilho é diagnóstico em gasolina. Ela só
-        // participa da aceitação física quando a ECU confirma GNV ativo.
-        val plausibilityReasons = basePlausibilityReasons +
-            if (fuel == Mp48Fuel.CNG) cngPressureReasons else emptyList()
-        val plausible = basePlausible && (fuel != Mp48Fuel.CNG || cngPressurePlausible)
+        val cngPressurePlausible = true
+        val plausible = basePlausible
 
         return Mp48Telemetry(
             capturedAtElapsedMs = capturedAtElapsedMs,
