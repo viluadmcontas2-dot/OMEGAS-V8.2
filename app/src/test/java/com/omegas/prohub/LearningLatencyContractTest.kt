@@ -48,6 +48,8 @@ class LearningLatencyContractTest {
             assertEquals(key, expected.getDouble(key), actual.getDouble(key), 1e-9)
         }
         assertEquals(baseline.getDouble("referenceMs"), varied.getDouble("referenceMs"), 1e-9)
+        assertEquals("Auxiliary sensors must not gate the memory proposal",
+            baseline.getBoolean("memoryActionable"), varied.getBoolean("memoryActionable"))
         println("AUXILIARY_INVARIANCE=PASS water=10..110 gas=-20..100 pressure=0.4..2.4");
     }
 
@@ -94,10 +96,10 @@ class LearningLatencyContractTest {
                 var frame = telemetry(tick, fuel, 2400 + offset * 20, .52 + offset * .008,
                     5.0 * if (fuel == Mp48Fuel.PETROL) 1.0 else (1.0 + case.ratio + jitter))
                 if (case.auxiliary) frame = frame.copy(
-                    waterC = if (index % 2 == 0) 10 else 110,
-                    gasC = if (index % 2 == 0) -20 else 100,
-                    pressureDiffBar = if (index % 2 == 0) .4 else 2.4,
-                    gasPressureAbsBar = if (index % 2 == 0) .9 else 2.9)
+                    waterC = if ((index / 100 + visit) % 2 == 0) 10 else 110,
+                    gasC = if ((index / 100 + visit) % 2 == 0) -20 else 100,
+                    pressureDiffBar = if ((index / 100 + visit) % 2 == 0) .4 else 2.4,
+                    gasPressureAbsBar = if ((index / 100 + visit) % 2 == 0) .9 else 2.9)
                 tick += 50
                 val decision = analyzer.add(frame)
                 memory.ingest(frame, decision)
@@ -171,6 +173,7 @@ class LearningLatencyContractTest {
                     .put("minimumFrames", decision.minimumFrames).put("desiredFrames", decision.desiredFrames)
                     .put("quality", decision.sample!!.quality).put("reasonCode", decision.reasonCode).put("point", point))
             }
+            val memoryActionable = memory.statusJson().getBoolean("actionable")
             val ui = LearningUiSnapshotAssembler.assemble(memory.export("contract"))
             assertEquals(ui.getJSONObject("assistedCalibration").toString(), ui.getJSONObject("assisted_calibration").toString())
             assertFalse(ui.getJSONObject("assistedCalibration").getBoolean("automatic"))
@@ -195,7 +198,7 @@ class LearningLatencyContractTest {
                 .put("petrolFrames", petrol.first).put("petrolDecision", petrol.second.toJson())
                 .put("firstCngFrames", firstCngFrames).put("referenceMs", referenceMs)
                 .put("deadbandPercent", policy.equivalenceDeadbandPercent)
-                .put("lastPoint", point).put("trace", trace)
+                .put("lastPoint", point).put("trace", trace).put("memoryActionable", memoryActionable)
         } finally { memory.close() }
     }
 
