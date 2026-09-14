@@ -24,7 +24,7 @@ for (const label of [
 }
 assert.equal(source.includes('stability?.reason || learned?.readinessReason'), true);
 assert.equal(source.includes('ainda não existe par equivalente válido'), true);
-assert.equal(source.includes('somente consulta'), true);
+assert.equal(source.includes('Nada aqui escreve na ECU'), true);
 assert.equal(source.includes('Abrir o editor não escreve na ECU'), true);
 assert.equal(source.includes("router.navigate('map'"), true);
 console.log('LEARNING_UNDERSTANDING_CONTRACT=PASS');
