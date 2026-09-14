@@ -22,16 +22,15 @@ class MotorSampleAnalyzerBoundaryTest {
     }
 
     @Test
-    fun `a majority of cold readings keeps the whole window outside absorption`() {
+    fun `a majority of cold readings no longer keeps the whole window outside absorption`() {
         val analyzer = MotorSampleAnalyzer()
         var decision: SampleDecision? = null
         val coldReadings = frames / 2 + 1
         repeat(frames) { index ->
             decision = analyzer.add(frame(index * 50L, waterC = if (index < coldReadings) 40 else 80))
         }
-        assertEquals("ENGINE_WARMING", decision!!.state)
-        assertFalse(decision!!.learningEligible)
-        assertTrue(decision!!.diagnostics!!.waterCenterC < decision!!.diagnostics!!.minimumWaterC)
+        assertEquals("SAMPLE_ACCEPTED", decision!!.state)
+        assertTrue(decision!!.learningEligible)
     }
 
     @Test
@@ -46,7 +45,7 @@ class MotorSampleAnalyzerBoundaryTest {
     }
 
     @Test
-    fun `pressure instability blocks cng but does not invent a gasoline restriction`() {
+    fun `pressure instability no longer blocks cng`() {
         val cng = MotorSampleAnalyzer()
         val petrol = MotorSampleAnalyzer()
         var cngDecision: SampleDecision? = null
@@ -56,8 +55,8 @@ class MotorSampleAnalyzerBoundaryTest {
             cngDecision = cng.add(frame(index * 50L, fuel = Mp48Fuel.CNG, pressureDiffBar = pressure))
             petrolDecision = petrol.add(frame(index * 50L, fuel = Mp48Fuel.PETROL, pressureDiffBar = pressure))
         }
-        assertEquals("SAMPLE_REJECTED", cngDecision!!.state)
-        assertTrue(cngDecision!!.reason.contains("Pressão"))
+        assertEquals("SAMPLE_ACCEPTED", cngDecision!!.state)
+        assertTrue(cngDecision!!.learningEligible)
         assertTrue(petrolDecision!!.learningEligible)
     }
 

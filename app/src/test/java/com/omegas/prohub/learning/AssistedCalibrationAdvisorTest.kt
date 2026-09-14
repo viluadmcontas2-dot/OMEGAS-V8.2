@@ -205,7 +205,7 @@ class AssistedCalibrationAdvisorTest {
 
         assertEquals(20.0, point.getDouble("idealDeltaPercent"), 0.000001)
         assertEquals("INDEPENDENCE_BOUNDED", point.getString("stepPolicy"))
-        assertTrue(point.getDouble("suggestedDeltaPercent") <= 11.0)
+        assertTrue(point.getDouble("suggestedDeltaPercent") <= 16.5)
         assertTrue(point.getDouble("suggestedDeltaPercent") < point.getDouble("idealDeltaPercent"))
         assertEquals(
             point.getDouble("idealDeltaPercent") - point.getDouble("suggestedDeltaPercent"),

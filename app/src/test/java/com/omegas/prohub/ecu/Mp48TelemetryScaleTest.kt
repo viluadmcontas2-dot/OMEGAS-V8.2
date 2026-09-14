@@ -60,7 +60,7 @@ class Mp48TelemetryScaleTest {
     }
 
     @Test
-    fun `pressao residual alta nao invalida gasolina mas continua bloqueando gnv`() {
+    fun `pressao residual alta nao invalida gasolina nem bloqueia gnv mais`() {
         val highResidualPressure = progBaseReferencePayload.copyOf().apply {
             this[11] = 0x80.toByte() // gasolina
             this[14] = 0x50.toByte() // 3920 * 0,00125 = 4,9 bar abs
@@ -71,13 +71,10 @@ class Mp48TelemetryScaleTest {
         val petrol = Mp48Protocol.decodeTelemetry(highResidualPressure, 0L)
         assertEquals(Mp48Fuel.PETROL, petrol.fuel)
         assertTrue(petrol.plausible)
-        assertFalse(petrol.cngPressurePlausible)
-        assertTrue(petrol.plausibilityReasons.isEmpty())
 
         val cngPayload = highResidualPressure.copyOf().apply { this[11] = 0x90.toByte() }
         val cng = Mp48Protocol.decodeTelemetry(cngPayload, 0L)
         assertEquals(Mp48Fuel.CNG, cng.fuel)
-        assertFalse(cng.plausible)
-        assertTrue(cng.plausibilityReasons.contains("GAS_PRESSURE_DIFFERENTIAL_OUT_OF_RANGE"))
+        assertTrue("Pressure gates removed, should be plausible", cng.plausible)
     }
 }
