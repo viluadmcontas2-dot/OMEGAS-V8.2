@@ -114,6 +114,35 @@ test('restore do Learning é explícito sem esconder a telemetria ao vivo', () =
   assert.match(screen.collectionPane.innerHTML, /4,20 ms/);
 });
 
+test('payload de sugestão mostra tempos em ms e o novo valor K sem confundir as unidades', () => {
+  const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
+  const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
+  screen.cellPane = { innerHTML: '', querySelector: () => ({ addEventListener: () => {} }) };
+  screen.router = { navigate: () => {} };
+  screen.renderDetail({
+    learning: {
+      grid: { rpmBins: [2000], petrolBins: [4.5] },
+      regions: [
+        { fuel: 'GASOLINA', epoch: 0, cell_row: 0, cell_column: 0, rpm: 2000, map_bar: 0.5, petrol_ms: 4.7, samples: 6, visit_count: 6, confidence: 0.8 },
+        { fuel: 'GNV', epoch: 1, cell_row: 0, cell_column: 0, rpm: 2000, map_bar: 0.5, petrol_ms: 5.08, samples: 6, visit_count: 6, confidence: 0.8 },
+      ],
+      comparisons: [{ cell_row: 0, cell_column: 0, petrol_target_ms: 4.7, petrol_on_cng_ms: 5.08, error_percent: 8.1 }],
+    },
+    calibrationState: {
+      suggestionItems: [{ target: 'MAP_K', lifecycle: 'PENDING', actionable: true, mapChanges: [{ row: 0, column: 0, before: 100, after: 108 }] }],
+      learningStability: { map: [{ row: 0, column: 0, confidence: 0.8, consolidatedErrorPercent: 8.1, state: 'CONSOLIDATED' }] },
+    },
+    telemetry: { live: { fuel: 'GNV' } },
+  }, 0, 0);
+
+  assert.match(screen.cellPane.innerHTML, /Gasolina esperada.*4,70 ms/);
+  assert.match(screen.cellPane.innerHTML, /No GNV agora.*5,08 ms/);
+  assert.match(screen.cellPane.innerHTML, /Diferença.*\+8,1%/);
+  assert.match(screen.cellPane.innerHTML, /Novo valor K sugerido.*108/);
+  assert.doesNotMatch(screen.cellPane.innerHTML, /GNV Alvo/);
+  assert.match(screen.cellPane.innerHTML, /Abrir o editor não escreve na ECU/);
+});
+
 test('Live Tracing temporal é limitado, reutiliza setTrace e não cria timer', () => {
   const { context, source } = loadScript('app/src/main/assets/ui/components/physical-grid.js');
   assert.equal(source.includes('setInterval'), false);

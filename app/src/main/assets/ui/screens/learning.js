@@ -483,7 +483,7 @@
           <div><dt>Gasolina esperada</dt><dd>${escapeHtml(gasolinaEsperada)}</dd></div>
           <div><dt>No GNV agora</dt><dd>${escapeHtml(noGnvAgora)}</dd></div>
           <div><dt>Diferença</dt><dd>${escapeHtml(diferenca)}</dd></div>
-          <div><dt>GNV Alvo (Mapa K)</dt><dd>${escapeHtml(targetK)}</dd></div>
+          <div><dt>Novo valor K sugerido</dt><dd>${escapeHtml(targetK)}</dd></div>
           <div><dt>Confiança</dt><dd>${escapeHtml(confianca)}</dd></div>
         </dl>
         <button class="primary wide" type="button" data-edit-learning-cell ${suggestion?.actionable ? '' : 'disabled'}>
@@ -496,7 +496,7 @@
             <div><dt>Motivo</dt><dd>${escapeHtml(stability?.reason || learned?.readinessReason || '—')}</dd></div>
             <div><dt>Evidência gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas` : '—'}</dd></div>
             <div><dt>Evidência GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas` : '—'}</dd></div>
-            <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? \`épocas \${historicalEpochs.join(', ')}\` : 'nenhum'}</dd></div>
+            <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')}` : 'nenhum'}</dd></div>
           </dl>
         </details>
         <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>

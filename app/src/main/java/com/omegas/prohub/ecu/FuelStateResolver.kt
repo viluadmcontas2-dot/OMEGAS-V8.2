@@ -15,6 +15,7 @@ class FuelStateResolver(
         var instantaneous = frame.fuel
         if (instantaneous == Mp48Fuel.UNKNOWN) {
             instantaneous = when {
+                frame.gasRaw > 0 && frame.petrolRaw > 0 -> Mp48Fuel.TRANSITION
                 frame.gasRaw > 0 -> Mp48Fuel.CNG
                 frame.petrolRaw > 0 -> Mp48Fuel.PETROL
                 else -> Mp48Fuel.TRANSITION
@@ -28,7 +29,6 @@ class FuelStateResolver(
         }
 
         if (instantaneous == Mp48Fuel.TRANSITION) {
-            lastFuel = Mp48Fuel.TRANSITION
             return Mp48Fuel.TRANSITION
         }
 

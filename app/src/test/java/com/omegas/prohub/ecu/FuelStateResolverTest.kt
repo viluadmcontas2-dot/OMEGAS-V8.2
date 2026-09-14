@@ -21,7 +21,7 @@ class FuelStateResolverTest {
     @Test
     fun `uncatalogued byte with gas_raw gt 0 becomes CNG`() {
         val resolver = FuelStateResolver()
-        val fuel = resolver.resolve(telemetry(fuelByte = 0x82, gasRaw = 100, capturedAt = 100))
+        val fuel = resolver.resolve(telemetry(fuelByte = 0x82, gasRaw = 100, petrolRaw = 0, capturedAt = 100))
         assertEquals(Mp48Fuel.CNG, fuel)
     }
 
@@ -37,10 +37,19 @@ class FuelStateResolverTest {
     }
     
     @Test
-    fun `contradictory signals resolve to CNG by preference`() {
+    fun `contradictory physical signals enter TRANSITION`() {
         val resolver = FuelStateResolver()
         val fuel = resolver.resolve(telemetry(fuelByte = 0x82, rpm = 2000, petrolRaw = 100, gasRaw = 100, capturedAt = 100))
-        assertEquals(Mp48Fuel.CNG, fuel) // Because gasRaw > 0 comes first in the resolver logic
+        assertEquals(Mp48Fuel.TRANSITION, fuel)
+    }
+
+    @Test
+    fun `one contradictory frame does not erase last confirmed fuel`() {
+        val resolver = FuelStateResolver()
+        assertEquals(Mp48Fuel.PETROL, resolver.resolve(telemetry(fuelByte = 0x80, capturedAt = 100)))
+        assertEquals(Mp48Fuel.TRANSITION, resolver.resolve(telemetry(fuelByte = 0x82, petrolRaw = 100, gasRaw = 100, capturedAt = 150)))
+        assertEquals(Mp48Fuel.TRANSITION, resolver.resolve(telemetry(fuelByte = 0x90, petrolRaw = 0, gasRaw = 100, capturedAt = 200)))
+        assertEquals(Mp48Fuel.CNG, resolver.resolve(telemetry(fuelByte = 0x90, petrolRaw = 0, gasRaw = 100, capturedAt = 550)))
     }
     
     @Test

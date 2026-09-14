@@ -3,6 +3,7 @@ package com.omegas.prohub
 import com.omegas.prohub.ecu.*
 import com.omegas.prohub.learning.*
 import com.omegas.prohub.util.RingLog
+import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -14,8 +15,10 @@ class E2ELearningFlowTest {
     @Test
     fun `test complete learning lifecycle with latency metrics`() {
         val file = temporary.newFile("e2e-learning.json")
-        val memory = MotorLearningMemory(file, RingLog())
-        val analyzer = MotorSampleAnalyzer { LearningTolerancePolicy(requiredFrames = 6) }
+        var memory = MotorLearningMemory(file, RingLog())
+        val productionPolicy = LearningTolerancePolicy()
+        assertEquals(10, productionPolicy.requiredFrames)
+        val analyzer = MotorSampleAnalyzer { productionPolicy }
         
         memory.startSession()
         
@@ -40,6 +43,31 @@ class E2ELearningFlowTest {
         
         assertTrue("Gasolina should be absorbed", petrolAbsorbed)
         println("Gasolina latency: $petrolFrames frames")
+
+        // Persist and recreate the memory before GNV learning: gasoline truth must survive restart.
+        println("BEFORE_RELOAD=" + memory.export("e2e").toString())
+        memory.awaitPersistence()
+        assertTrue("Learning state must be written to disk", file.isFile && file.length() > 0L)
+        val persisted = JSONObject(file.readText())
+        assertEquals(MotorLearningMemory.FORMAT, persisted.getString("format"))
+        assertTrue("Persisted state must carry its integrity digest", persisted.optString("stateDigest").isNotBlank())
+        val persistedRegions = persisted.getJSONArray("regions")
+        assertTrue(
+            "Persisted state must retain the petrol reference using the public wire contract",
+            (0 until persistedRegions.length()).any {
+                persistedRegions.getJSONObject(it).getString("fuel") == Mp48Fuel.PETROL.wireName
+            },
+        )
+        memory.close()
+        memory = MotorLearningMemory(file, RingLog())
+        println("AFTER_RELOAD=" + memory.export("e2e").toString())
+        val restoredPetrol = memory.export("e2e").getJSONArray("regions")
+        assertTrue(
+            "Reload must retain the persisted petrol reference",
+            (0 until restoredPetrol.length()).any {
+                restoredPetrol.getJSONObject(it).getString("fuel") == Mp48Fuel.PETROL.wireName
+            },
+        )
         
         // Gap to simulate a later GNV visit
         tick += 5000
