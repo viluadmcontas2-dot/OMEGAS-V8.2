@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/components/predictor-current-cell.js'), 'utf8');
 const style = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-predictor-live.css'), 'utf8');
 
-assert.equal(source.includes('app.store.subscribe'), true);
+assert.equal(source.includes('this.store.subscribe'), true);
 assert.equal(source.includes('setInterval'), false);
 assert.equal(source.includes('history'), false);
 assert.equal(source.includes('trail'), false);
