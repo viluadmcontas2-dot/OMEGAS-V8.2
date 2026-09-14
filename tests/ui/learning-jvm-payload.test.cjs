@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../..');
 const xml = fs.readFileSync(path.join(root, 'app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.LearningLatencyContractTest.xml'), 'utf8');
-const match = xml.match(/^UI_PAYLOAD=(.+)$/m);
+const match = xml.match(/UI_PAYLOAD=(.+)$/m);
 assert.ok(match, 'Run LearningLatencyContractTest before this cross-runtime contract');
 const payload = JSON.parse(match[1]);
 assert.deepEqual(payload.assistedCalibration, payload.assisted_calibration);
