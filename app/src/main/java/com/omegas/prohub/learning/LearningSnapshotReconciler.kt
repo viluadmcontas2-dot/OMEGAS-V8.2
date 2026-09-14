@@ -23,6 +23,7 @@ internal object LearningSnapshotReconciler {
         val existing = root.optJSONArray("comparisons") ?: JSONArray()
         val output = JSONArray()
         val seen = linkedSetOf<String>()
+        val representedVisits = linkedSetOf<String>()
 
         repeat(existing.length()) { index ->
             val item = existing.optJSONObject(index) ?: return@repeat
@@ -31,6 +32,8 @@ internal object LearningSnapshotReconciler {
             if (seen.add(key)) {
                 if (copy.optString("dedupe_key").isBlank()) copy.put("dedupe_key", key)
                 output.put(copy)
+                val visit = copy.optString("visit_id", copy.optString("visitId"))
+                if (visit.isNotBlank()) representedVisits += "${copy.optInt("epoch", epoch)}:$visit"
             }
         }
 
@@ -79,6 +82,9 @@ internal object LearningSnapshotReconciler {
             val petrolOnCng = cng.optDouble("petrol_ms", 0.0)
             if (!petrolOnCng.isFinite() || petrolOnCng <= 0.05) return@repeat
             visits.forEach { visitId ->
+                // A stored physical comparison already represents this visit in this epoch.
+                // Re-projecting its aggregate region must not create a second vote.
+                if (!representedVisits.add("$epoch:$visitId")) return@forEach
                 val referenceIds = result.regionIds.sorted().joinToString(",")
                 val dedupe = "$epoch:RETROACTIVE_PERSISTED_SURFACE:$visitId:$referenceIds"
                 if (!seen.add(dedupe)) return@forEach
