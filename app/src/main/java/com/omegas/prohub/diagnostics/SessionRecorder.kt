@@ -248,7 +248,6 @@ class SessionRecorder(
         return array.toString()
     }
 
-    @Synchronized
     fun clearStoppedSessions(): JSONObject {
         var deleted = 0
         paths.sessionLogsRoot.listFiles { file -> file.isDirectory }?.forEach { dir ->
