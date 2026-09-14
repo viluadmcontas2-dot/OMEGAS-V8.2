@@ -15,6 +15,11 @@
       this.rows = Number(this.options.rows) || 12;
       this.columns = Number(this.options.columns) || 12;
       this.cells = new Map();
+      this.traceKeys = new Set();
+      this.activeTraceKey = null;
+      this.traceTrail = new Map();
+      this.traceTrailMs = 1400;
+      this.traceTrailMax = 16;
       this.columnAxes = [];
       this.rowAxes = [];
       this.build();
@@ -127,6 +132,58 @@
       cell.classList.toggle('preview', preview);
     }
 
+    setTrace(points, nearest) {
+      const now = Date.now();
+      const contributors = Array.isArray(points) ? points : [];
+      const nextKeys = new Set();
+      const weights = new Map();
+
+      contributors.forEach(point => {
+        const row = Number(point && point.row);
+        const column = Number(point && point.column);
+        if (!Number.isFinite(row) || !Number.isFinite(column)) return;
+        const cellKey = this.key(row, column);
+        nextKeys.add(cellKey);
+        weights.set(cellKey, Math.max(0, Math.min(1, Number(point.weight) || 0)));
+      });
+
+      this.traceKeys.forEach(cellKey => {
+        if (!nextKeys.has(cellKey)) this.traceTrail.set(cellKey, now);
+      });
+      if (this.activeTraceKey && !nextKeys.has(this.activeTraceKey)) {
+        this.traceTrail.set(this.activeTraceKey, now);
+      }
+
+      const nearestRow = Number(nearest && nearest.row);
+      const nearestColumn = Number(nearest && nearest.column);
+      const nearestKey = Number.isFinite(nearestRow) && Number.isFinite(nearestColumn)
+        ? this.key(nearestRow, nearestColumn)
+        : null;
+      this.activeTraceKey = nearestKey || nextKeys.values().next().value || null;
+      this.traceKeys = nextKeys;
+
+      const trailMs = Math.max(0, Number(this.traceTrailMs) || 0);
+      this.traceTrail.forEach((timestamp, cellKey) => {
+        if (nextKeys.has(cellKey) || (trailMs > 0 && now - timestamp > trailMs)) {
+          this.traceTrail.delete(cellKey);
+        }
+      });
+      const maxTrail = Math.max(0, Number(this.traceTrailMax) || 0);
+      if (maxTrail && this.traceTrail.size > maxTrail) {
+        const newest = [...this.traceTrail.entries()].sort((left, right) => right[1] - left[1]).slice(0, maxTrail);
+        this.traceTrail = new Map(newest);
+      }
+
+      this.cells.forEach((cell, cellKey) => {
+        const contributing = nextKeys.has(cellKey);
+        const trail = this.traceTrail.has(cellKey) && !contributing;
+        cell.classList.toggle('live-contributor', contributing);
+        cell.classList.toggle('live-nearest', nearestKey === cellKey);
+        cell.classList.toggle('live-trail', trail);
+        if (contributing) cell.style.setProperty('--trace-weight', String(weights.get(cellKey) || 0));
+        else cell.style.removeProperty('--trace-weight');
+      });
+    }
     setSelected(keys) {
       const selected = keys instanceof Set ? keys : new Set(keys || []);
       this.cells.forEach((cell, cellKey) => {
