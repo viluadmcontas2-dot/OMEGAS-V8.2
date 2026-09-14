@@ -1628,8 +1628,6 @@ private data class ComparisonEvidence(
             direction == dominantDirection &&
             directionConsensus >= LearningToleranceSettings.current.directionConsensusMinimum &&
             madMs <= LearningToleranceSettings.current.comparisonMaximumMadMs &&
-            gasTemperatureSpanC <= LearningToleranceSettings.current.comparisonMaximumGasTempSpanC &&
-            pressureSpanBar <= LearningToleranceSettings.current.comparisonMaximumPressureSpanBar &&
             effectiveSamples > 0.0
 
     fun confidence(): Double {
@@ -1647,9 +1645,7 @@ private data class ComparisonEvidence(
         .put("pressure_span_bar", pressureSpanBar)
         .put("effective_samples", effectiveSamples)
         .put("median_error_ratio", medianErrorRatio)
-        .put("stable", madMs <= tolerance.comparisonMaximumMadMs &&
-            gasTemperatureSpanC <= tolerance.comparisonMaximumGasTempSpanC &&
-            pressureSpanBar <= tolerance.comparisonMaximumPressureSpanBar)
+        .put("stable", madMs <= tolerance.comparisonMaximumMadMs)
         .put("confidence", when (stage) {
             "CONFIRMED" -> 1.0
             "ACCEPTED" -> 0.75
