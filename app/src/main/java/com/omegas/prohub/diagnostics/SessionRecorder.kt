@@ -240,7 +240,9 @@ class SessionRecorder(
                         .put("durationMs", (durationEnd - createdAt).coerceAtLeast(0L))
                         .put("reason", manifest.optString("reason", "Sessão"))
                         .put("bytes", size)
-                        .put("active", active),
+                        .put("active", active)
+                        .put("cngTicks", manifest.optLong("cngTicks", 0L))
+                        .put("petrolTicks", manifest.optLong("petrolTicks", 0L)),
                 )
             }
         return array.toString()
@@ -512,6 +514,8 @@ class SessionRecorder(
             .put("segments", currentSegment)
             .put("stopReason", stopReason)
             .put("lastError", lastError)
+            .put("petrolTicks", petrolTicks)
+            .put("cngTicks", cngTicks)
     }
 
     private fun updateManifest() {
