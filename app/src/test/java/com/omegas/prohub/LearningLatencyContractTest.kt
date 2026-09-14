@@ -16,6 +16,10 @@ class LearningLatencyContractTest {
     @get:Rule val temporary = TemporaryFolder()
     private val policy = LearningTolerancePolicy()
 
+    private fun fast(decision: SampleDecision) = AdaptiveSampleWindow.acceptanceStage(
+        decision.sample!!, decision.desiredFrames, decision.toleratedGapCount, false,
+        policy.strongPetrolOscillationPercent / 100.0).name
+
     @Test fun matrix() {
         val cases = listOf(
             Scenario("A", .08), Scenario("B", -.08), Scenario("C", .03),
@@ -171,12 +175,14 @@ class LearningLatencyContractTest {
                 assertTrue(advice.getBoolean("humanConfirmationRequired"))
                 trace.put(JSONObject().put("visit", visit).put("frames", frames)
                     .put("minimumFrames", decision.minimumFrames).put("desiredFrames", decision.desiredFrames)
-                    .put("quality", decision.sample!!.quality).put("reasonCode", decision.reasonCode).put("point", point))
+                    .put("quality", decision.sample!!.quality).put("reasonCode", decision.reasonCode)
+                    .put("acceptanceStage", fast(decision)).put("point", point))
             }
             val memoryActionable = memory.statusJson().getBoolean("actionable")
             val ui = LearningUiSnapshotAssembler.assemble(memory.export("contract"))
             assertEquals(ui.getJSONObject("assistedCalibration").toString(), ui.getJSONObject("assisted_calibration").toString())
             assertFalse(ui.getJSONObject("assistedCalibration").getBoolean("automatic"))
+            if (case.name == "A") println("UI_PAYLOAD=" + ui.toString())
             // Epoch transition: retained old CNG must not become evidence in the new epoch.
             val old = memory.export("contract")
             val oldEpoch = old.getInt("epoch")
@@ -196,6 +202,7 @@ class LearningLatencyContractTest {
                 .put("firstConfirmed", firstConfirmed).put("firstActionable", firstActionable)
                 .put("actionableDecisions", actionableDecisions).put("visits", 20).put("comparisons", 20)
                 .put("petrolFrames", petrol.first).put("petrolDecision", petrol.second.toJson())
+                .put("petrolAcceptanceStage", fast(petrol.second))
                 .put("firstCngFrames", firstCngFrames).put("referenceMs", referenceMs)
                 .put("deadbandPercent", policy.equivalenceDeadbandPercent)
                 .put("lastPoint", point).put("trace", trace).put("memoryActionable", memoryActionable)
