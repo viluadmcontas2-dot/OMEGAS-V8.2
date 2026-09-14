@@ -197,40 +197,14 @@ class LearningToleranceSettings(context: Context) {
     private val temperature = LearningTemperatureSettings(context)
 
     init {
-        current = try {
-            val saved = prefs.getString(PREF_KEY, null)
-            if (saved.isNullOrBlank()) {
-                LearningTolerancePolicy()
-            } else {
-                val loaded = LearningTolerancePolicy.fromJson(JSONObject(saved))
-                val migrated = migrateLegacyCollectionWindow(loaded)
-                if (migrated != loaded) {
-                    prefs.edit().putString(PREF_KEY, migrated.toJson().toString()).apply()
-                }
-                migrated
-            }
-        } catch (_: Exception) {
-            LearningTolerancePolicy()
-        }
+        // Tolerances are now strictly defined by the system defaults to prevent user misconfiguration
+        current = LearningTolerancePolicy()
     }
-
     fun update(payload: JSONObject): LearningTolerancePolicy {
-        val semantic = payload.optJSONObject("semanticControls")
-        val applied = if (semantic != null) {
-            val result = LearningControlModel.apply(semantic, current)
-            temperature.setMinimumWaterC(result.minimumWaterC)
-            result.policy
-        } else {
-            LearningTolerancePolicy.fromJson(payload, current)
-        }
-        prefs.edit().putString(PREF_KEY, applied.toJson().toString()).apply()
-        current = applied
-        return applied
+        return current
     }
 
     fun reset(): LearningTolerancePolicy {
-        prefs.edit().remove(PREF_KEY).apply()
-        current = LearningTolerancePolicy()
         return current
     }
 

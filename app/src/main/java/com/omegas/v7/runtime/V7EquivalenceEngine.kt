@@ -146,12 +146,7 @@ class V7EquivalenceEngine(
         )
         val rpmUnits = abs(petrol.rpm - cng.rpm) / rpmWindow
         val mapUnits = abs(petrol.mapBar - cng.mapBar) / policy.mapWindowBar
-        val waterUnits = when {
-            !petrol.waterC.isFinite() || !cng.waterC.isFinite() -> 0.0
-            petrol.waterC == EvidenceV7.UNKNOWN_TEMPERATURE_C || cng.waterC == EvidenceV7.UNKNOWN_TEMPERATURE_C -> 0.0
-            else -> abs(petrol.waterC - cng.waterC) / policy.waterWindowC
-        }
-        return sqrt(rpmUnits * rpmUnits + mapUnits * mapUnits + 0.25 * waterUnits * waterUnits)
+        return sqrt(rpmUnits * rpmUnits + mapUnits * mapUnits)
     }
 
     private data class Candidate(val evidence: EvidenceV7, val distance: Double)
