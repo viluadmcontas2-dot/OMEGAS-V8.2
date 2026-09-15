@@ -1,8 +1,48 @@
 package com.omegas.prohub.learning
 
+import org.json.JSONObject
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.sqrt
+
+/**
+ * Estado mínimo, persistível e auditável da normalização global da gasolina.
+ *
+ * `acceptedScale` é a autoridade carregada entre sessões físicas. O candidato
+ * é apenas diagnóstico da última sessão encerrada; ele não substitui o valor
+ * aceito de forma agressiva. Somente gasolina real participa desta estrutura.
+ */
+internal data class AdaptivePetrolScaleState(
+    val acceptedScale: Double? = null,
+    val candidateScale: Double? = null,
+    val supportRegions: Int = 0,
+    val promotedSessionId: String? = null,
+    val updatedAt: Long = 0L,
+) {
+    fun toJson(): JSONObject = JSONObject()
+        .put("acceptedScale", acceptedScale ?: JSONObject.NULL)
+        .put("candidateScale", candidateScale ?: JSONObject.NULL)
+        .put("supportRegions", supportRegions)
+        .put("promotedSessionId", promotedSessionId ?: JSONObject.NULL)
+        .put("updatedAt", updatedAt)
+        .put("policy", "SESSION_CARRY_FORWARD_BOUNDED_0_5_PERCENT")
+        .put("source", "REAL_PETROL_ONLY")
+
+    companion object {
+        fun fromJson(raw: JSONObject?): AdaptivePetrolScaleState {
+            if (raw == null) return AdaptivePetrolScaleState()
+            fun finiteScale(key: String): Double? = raw.optDouble(key, Double.NaN)
+                .takeIf { it.isFinite() && it in 0.60..1.60 }
+            return AdaptivePetrolScaleState(
+                acceptedScale = finiteScale("acceptedScale"),
+                candidateScale = finiteScale("candidateScale"),
+                supportRegions = raw.optInt("supportRegions", 0).coerceAtLeast(0),
+                promotedSessionId = raw.optString("promotedSessionId").takeIf { it.isNotBlank() },
+                updatedAt = raw.optLong("updatedAt", 0L).coerceAtLeast(0L),
+            )
+        }
+    }
+}
 
 /**
  * Fallback científico da referência de gasolina.
@@ -18,6 +58,7 @@ internal object AdaptivePetrolReference {
     private const val RPM_SCALE = 240.0
     private const val MAP_SCALE = 0.060
     private const val RIDGE = 0.001
+    private const val MAX_SESSION_SCALE_STEP_RATIO = 0.005
 
     private const val DOMAIN_RPM_MIN = 800.0
     private const val DOMAIN_RPM_MAX = 3_200.0
@@ -27,25 +68,21 @@ internal object AdaptivePetrolReference {
     fun estimate(
         regions: List<PetrolReferenceSelector.Region>,
         request: PetrolReferenceSelector.Request,
+        acceptedScale: Double? = null,
         policy: LearningTolerancePolicy = LearningToleranceSettings.current,
     ): PetrolReferenceSelector.Result {
         val physical = PetrolReferenceSelector.estimate(regions, request, policy)
         if (physical.available) return physical
         if (!insideDomain(request.rpm, request.mapBar)) return physical
 
-        val observed = regions.filter {
-            it.rpm.isFinite() && it.mapBar.isFinite() && it.petrolMs.isFinite() &&
-                it.petrolMs > 0.05 && insideDomain(it.rpm, it.mapBar)
-        }
+        val observed = validObserved(regions)
         if (observed.size < MIN_SUPPORT_REGIONS) return physical
 
-        val scaleCandidates = observed.mapNotNull { region ->
-            val prior = f2(region.rpm, region.mapBar)
-            (region.petrolMs / prior)
-                .takeIf { it.isFinite() && it in 0.60..1.60 }
-        }
+        val scaleCandidates = scaleCandidates(observed)
         if (scaleCandidates.size < MIN_SUPPORT_REGIONS) return physical
-        val scale = median(scaleCandidates)
+        val scale = acceptedScale
+            ?.takeIf { it.isFinite() && it in 0.60..1.60 }
+            ?: median(scaleCandidates)
 
         val support = observed.map { region ->
             val prior = scale * f2(region.rpm, region.mapBar)
@@ -113,6 +150,42 @@ internal object AdaptivePetrolReference {
         )
     }
 
+    /**
+     * Promove o candidato de uma sessão física encerrada para o S carregado.
+     *
+     * Evidência histórica mostrou que sessões consecutivas reais podem ficar muito
+     * próximas (~0,1%), enquanto uma janela precoce arbitrária pode errar vários
+     * pontos percentuais. Por isso uma sessão só move S em no máximo 0,5% relativo.
+     * Candidatos já próximos são aceitos integralmente; suporte distante converge
+     * progressivamente em sessões independentes, sem reset agressivo.
+     */
+    internal fun promoteScale(
+        previous: AdaptivePetrolScaleState,
+        sessionId: String,
+        sessionRegions: List<PetrolReferenceSelector.Region>,
+        updatedAt: Long,
+    ): AdaptivePetrolScaleState {
+        if (sessionId.isBlank() || previous.promotedSessionId == sessionId) return previous
+        val observed = validObserved(sessionRegions)
+        val candidates = scaleCandidates(observed)
+        if (candidates.size < MIN_SUPPORT_REGIONS) return previous
+        val candidate = median(candidates)
+        val old = previous.acceptedScale?.takeIf { it.isFinite() && it in 0.60..1.60 }
+        val accepted = if (old == null) {
+            candidate
+        } else {
+            val relative = candidate / old - 1.0
+            old * (1.0 + relative.coerceIn(-MAX_SESSION_SCALE_STEP_RATIO, MAX_SESSION_SCALE_STEP_RATIO))
+        }
+        return AdaptivePetrolScaleState(
+            acceptedScale = accepted.coerceIn(0.60, 1.60),
+            candidateScale = candidate,
+            supportRegions = candidates.size,
+            promotedSessionId = sessionId,
+            updatedAt = updatedAt.coerceAtLeast(previous.updatedAt),
+        )
+    }
+
     /** Prior F2 congelado pela pesquisa offline; não é ajustado em runtime. */
     internal fun f2(rpm: Double, mapBar: Double): Double {
         val x = ln(mapBar / 0.40)
@@ -132,6 +205,18 @@ internal object AdaptivePetrolReference {
                 -0.25959427 * x * z2
         return 2.14396620 + exp(polynomial)
     }
+
+    private fun validObserved(regions: List<PetrolReferenceSelector.Region>): List<PetrolReferenceSelector.Region> =
+        regions.filter {
+            it.rpm.isFinite() && it.mapBar.isFinite() && it.petrolMs.isFinite() &&
+                it.petrolMs > 0.05 && insideDomain(it.rpm, it.mapBar)
+        }
+
+    private fun scaleCandidates(regions: List<PetrolReferenceSelector.Region>): List<Double> =
+        regions.mapNotNull { region ->
+            val prior = f2(region.rpm, region.mapBar)
+            (region.petrolMs / prior).takeIf { it.isFinite() && it in 0.60..1.60 }
+        }
 
     private fun insideDomain(rpm: Double, mapBar: Double): Boolean =
         rpm.isFinite() && mapBar.isFinite() &&
