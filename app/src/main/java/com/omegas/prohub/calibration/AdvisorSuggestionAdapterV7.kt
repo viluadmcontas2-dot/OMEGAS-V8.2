@@ -3,6 +3,8 @@ package com.omegas.prohub.calibration
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
+import com.omegas.v7.runtime.CalibrationTransitionV7
+import com.omegas.v7.runtime.CausalTransitionStatusV7
 import com.omegas.v7.runtime.CurvePointChangeV7
 import com.omegas.v7.runtime.LocalSuggestionV7
 import com.omegas.v7.runtime.MapCellChangeV7
@@ -22,15 +24,20 @@ import kotlin.math.roundToInt
  * O adaptador nunca toca na ECU. Aplicação continua exclusivamente manual.
  */
 class AdvisorSuggestionAdapterV7 {
+    companion object {
+        private const val CONFIRMED_CAUSAL_FRACTION = 0.90
+    }
+
     fun adapt(
         advice: JSONObject,
         calibration: CalibrationStateV7,
         nowMs: Long = System.currentTimeMillis(),
+        causalTransitions: List<CalibrationTransitionV7> = emptyList(),
     ): List<LocalSuggestionV7> {
         require(nowMs >= 0)
         val output = mutableListOf<LocalSuggestionV7>()
-        curveSuggestion(advice, calibration, nowMs)?.let(output::add)
-        output += mapSuggestions(advice, calibration, nowMs)
+        curveSuggestion(advice, calibration, nowMs, causalTransitions)?.let(output::add)
+        output += mapSuggestions(advice, calibration, nowMs, causalTransitions)
         return output.distinctBy { it.id }
     }
 
@@ -38,6 +45,7 @@ class AdvisorSuggestionAdapterV7 {
         advice: JSONObject,
         calibration: CalibrationStateV7,
         nowMs: Long,
+        causalTransitions: List<CalibrationTransitionV7>,
     ): LocalSuggestionV7? {
         val source = advice.optJSONArray("kFactorSuggestions") ?: JSONArray()
         if (source.length() == 0) return null
@@ -48,6 +56,7 @@ class AdvisorSuggestionAdapterV7 {
         val safeSteps = mutableListOf<Double>()
         val estimatedResiduals = mutableListOf<Double>()
         var observed = false
+        var causal090Used = false
 
         repeat(source.length()) { position ->
             val item = source.optJSONObject(position) ?: return@repeat
@@ -59,8 +68,20 @@ class AdvisorSuggestionAdapterV7 {
             if (confidence > 0.0) confidences += confidence
             item.optString("decisionReason").takeIf(String::isNotBlank)?.let(reasons::add)
             if (!item.optBoolean("actionable", false)) return@repeat
-            val deltaPercent = finite(item, "suggestedDeltaPercent") ?: return@repeat
-            finite(item, "idealDeltaPercent")?.let(idealDeltas::add)
+            val baseDeltaPercent = finite(item, "suggestedDeltaPercent") ?: return@repeat
+            val idealDeltaPercent = finite(item, "idealDeltaPercent")
+            idealDeltaPercent?.let(idealDeltas::add)
+            val causallyConfirmed = causalTransitions.any { transition ->
+                transition.status == CausalTransitionStatusV7.CONFIRMED &&
+                    transition.target == SuggestionTargetV7.CURVE_K &&
+                    index in transition.curveIndexes
+            }
+            val deltaPercent = if (causallyConfirmed && idealDeltaPercent != null) {
+                causal090Used = true
+                idealDeltaPercent * CONFIRMED_CAUSAL_FRACTION
+            } else {
+                baseDeltaPercent
+            }
             safeSteps += deltaPercent
             finite(item, "estimatedResidualAfterPercent")?.let(estimatedResiduals::add)
             val before = calibration.curveK[index]
@@ -78,8 +99,13 @@ class AdvisorSuggestionAdapterV7 {
                 val ideal = idealDeltas.averageOrNull()?.let(::formatSignedPercent) ?: "—"
                 val step = safeSteps.averageOrNull()?.let(::formatSignedPercent) ?: "—"
                 val residual = estimatedResiduals.averageOrNull()?.let(::formatSignedPercent) ?: "—"
+                val policy = if (causal090Used) {
+                    "resposta causal confirmada; passo 0,90"
+                } else {
+                    "primeiro passo científico conservador"
+                }
                 "Curva K · alvo ideal $ideal; passo seguro $step em ${ordered.size} ponto(s); " +
-                    "resíduo estimado $residual. Aplicação exclusivamente manual."
+                    "resíduo estimado $residual; $policy. Aplicação exclusivamente manual."
             }
             reasons.isNotEmpty() -> reasons.first()
             else -> "Tendência global preservada; a evidência atual não justifica correção."
@@ -106,6 +132,7 @@ class AdvisorSuggestionAdapterV7 {
         advice: JSONObject,
         calibration: CalibrationStateV7,
         nowMs: Long,
+        causalTransitions: List<CalibrationTransitionV7>,
     ): List<LocalSuggestionV7> {
         val regionByCell = regionLabels(advice.optJSONArray("mapCorrectionRegions") ?: JSONArray())
         val residual = advice.optJSONArray("mapResidualSuggestions") ?: JSONArray()
@@ -120,7 +147,12 @@ class AdvisorSuggestionAdapterV7 {
             val key = "$row:$column"
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
             val actionable = item.optBoolean("actionable", false)
-            val change = if (actionable) mapChange(item, calibration) else null
+            val causalConfirmed = causalTransitions.any { transition ->
+                transition.status == CausalTransitionStatusV7.CONFIRMED &&
+                    transition.target == SuggestionTargetV7.MAP_K &&
+                    key in transition.mapCells
+            }
+            val change = if (actionable) mapChange(item, calibration, causalConfirmed) else null
             val lifecycle = if (change != null) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
             val reason = item.optString("decisionReason").takeIf(String::isNotBlank)
             val region = regionByCell[key]
@@ -132,10 +164,14 @@ class AdvisorSuggestionAdapterV7 {
                 target = SuggestionTargetV7.MAP_K,
                 mapChanges = listOfNotNull(change),
                 rationale = when {
+                    lifecycle == SuggestionLifecycleV7.PENDING && causalConfirmed && region != null ->
+                        "$region · resposta causal anterior confirmada; passo 0,90 para esta célula. Aplicação exclusivamente manual."
+                    lifecycle == SuggestionLifecycleV7.PENDING && causalConfirmed ->
+                        "Residual local com resposta causal anterior confirmada; passo 0,90. Aplicação exclusivamente manual."
                     lifecycle == SuggestionLifecycleV7.PENDING && region != null ->
-                        "$region · correção local atualizada para esta célula; aplicação exclusivamente manual."
+                        "$region · primeiro passo científico conservador para esta célula; aplicação exclusivamente manual."
                     lifecycle == SuggestionLifecycleV7.PENDING ->
-                        "Residual local atualizado para esta célula; aplicação exclusivamente manual."
+                        "Residual local no primeiro passo científico conservador; aplicação exclusivamente manual."
                     reason != null -> reason
                     else -> "Sugestão preservada; a evidência atual ainda não justifica correção."
                 },
@@ -164,10 +200,20 @@ class AdvisorSuggestionAdapterV7 {
         return out
     }
 
-    private fun mapChange(item: JSONObject, calibration: CalibrationStateV7): MapCellChangeV7? {
+    private fun mapChange(
+        item: JSONObject,
+        calibration: CalibrationStateV7,
+        causalConfirmed: Boolean,
+    ): MapCellChangeV7? {
         val row = item.optInt("row", -1)
         val column = item.optInt("column", -1)
-        val deltaPercent = finite(item, "suggestedDeltaPercent") ?: return null
+        val baseDeltaPercent = finite(item, "suggestedDeltaPercent") ?: return null
+        val idealResidualPercent = finite(item, "residualErrorPercent")
+        val deltaPercent = if (causalConfirmed && idealResidualPercent != null) {
+            idealResidualPercent * CONFIRMED_CAUSAL_FRACTION
+        } else {
+            baseDeltaPercent
+        }
         if (row !in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS ||
             column !in 0 until CalibrationShapeV7.MAP_K_COLUMNS
         ) return null
