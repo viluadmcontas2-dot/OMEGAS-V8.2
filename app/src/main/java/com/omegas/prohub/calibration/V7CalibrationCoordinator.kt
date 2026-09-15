@@ -15,6 +15,7 @@ import com.omegas.v7.runtime.V7SessionFileStore
 import com.omegas.v7.runtime.V7SessionRuntime
 import com.omegas.v7.runtime.V7SessionState
 import com.omegas.v7.runtime.V7UiProjection
+import com.omegas.v7.runtime.calibrationTransitions
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -279,7 +280,11 @@ class V7CalibrationCoordinator(
 
     private fun replaceAdvisorSuggestionsLocked(advice: JSONObject): List<LocalSuggestionV7> {
         val active = requireRuntime()
-        val generated = suggestionAdapter.adapt(advice, active.state.calibration)
+        val generated = suggestionAdapter.adapt(
+            advice = advice,
+            calibration = active.state.calibration,
+            causalTransitions = active.state.calibrationTransitions,
+        )
         active.replaceSuggestions(generated)
         return generated
     }
