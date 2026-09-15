@@ -190,7 +190,7 @@ class AssistedCalibrationAdvisorTest {
     }
 
     @Test
-    fun `alvo ideal fica separado do passo seguro limitado na primeira visita`() {
+    fun `passo manual inicial usa fracao cientifica fixa de setenta e cinco por cento`() {
         val comparisons = JSONArray().put(comparison(
             id = "first-independent-visit",
             targetMs = 5.0,
@@ -204,18 +204,14 @@ class AssistedCalibrationAdvisorTest {
         val point = pointAt(analyze(comparisons), 5.0)
 
         assertEquals(20.0, point.getDouble("idealDeltaPercent"), 0.000001)
-        assertEquals("INDEPENDENCE_BOUNDED", point.getString("stepPolicy"))
-        assertTrue(point.getDouble("suggestedDeltaPercent") <= 16.5)
-        assertTrue(point.getDouble("suggestedDeltaPercent") < point.getDouble("idealDeltaPercent"))
-        assertEquals(
-            point.getDouble("idealDeltaPercent") - point.getDouble("suggestedDeltaPercent"),
-            point.getDouble("estimatedResidualAfterPercent"),
-            0.000001,
-        )
+        assertEquals("SCIENTIFIC_FIXED_075_MANUAL", point.getString("stepPolicy"))
+        assertEquals(0.75, point.getDouble("correctionFraction"), 0.000001)
+        assertEquals(15.0, point.getDouble("suggestedDeltaPercent"), 0.000001)
+        assertEquals(5.0, point.getDouble("estimatedResidualAfterPercent"), 0.000001)
     }
 
     @Test
-    fun `visitas independentes coerentes liberam passo maior sem ultrapassar o alvo`() {
+    fun `visitas repetidas nao escalam alem de setenta e cinco sem confirmacao causal de nova epoca`() {
         val first = JSONArray().put(comparison(
             id = "visit-1",
             targetMs = 5.0,
@@ -236,8 +232,9 @@ class AssistedCalibrationAdvisorTest {
         val firstPoint = pointAt(analyze(first), 5.0)
         val repeatedPoint = pointAt(analyze(repeated), 5.0)
 
-        assertTrue(repeatedPoint.getDouble("correctionFraction") > firstPoint.getDouble("correctionFraction"))
-        assertTrue(repeatedPoint.getDouble("correctionFraction") <= 0.90)
+        assertEquals(0.75, firstPoint.getDouble("correctionFraction"), 0.000001)
+        assertEquals(0.75, repeatedPoint.getDouble("correctionFraction"), 0.000001)
+        assertEquals(firstPoint.getDouble("stepPolicy"), repeatedPoint.getDouble("stepPolicy"), 0.0)
         assertTrue(repeatedPoint.getDouble("suggestedDeltaPercent") <= repeatedPoint.getDouble("idealDeltaPercent"))
     }
 
