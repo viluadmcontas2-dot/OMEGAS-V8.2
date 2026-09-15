@@ -26,6 +26,7 @@ class CleanUiContract(unittest.TestCase):
         self.learning_screen = (UI / "screens/learning.js").read_text("utf-8")
         self.obd_screen = (UI / "screens/obd.js").read_text("utf-8")
         self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
+        self.suggestion_model = (UI / "suggestion-model.js").read_text("utf-8")
 
     def test_only_clean_ui_is_active(self):
         main = MAIN.read_text("utf-8")
@@ -46,9 +47,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        # Predictor is an optional visual extension. It may add one route,
-        # but it must reuse the same Router/Store/Scheduler instead of changing
-        # the seven static destinations baked into the base HTML shell.
         self.assertIn("const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools']", self.router)
         for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'OBD', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
@@ -80,9 +78,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('--rpm-ratio', self.css)
 
     def test_learning_fast_path_has_bounded_visual_trace_without_weight_chasing(self):
-        # The live path must not chase bilinear contributors from app.js or the
-        # Learning renderer. A small temporal trace is intentionally owned by
-        # PhysicalGrid (#46), with a strict budget and no timer/writer path.
         self.assertNotIn('setTrace(', self.app)
         self.assertNotIn('TRACE_MAX_CONTRIBUTORS', self.grid)
         self.assertNotIn('TRACE_WEIGHT_STEPS', self.grid)
@@ -127,18 +122,29 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('id="curveChart"', self.html)
         self.assertIn('OBD é somente observação', self.html)
 
-    def test_map_k_has_axes_now_and_bulk_selection_without_second_writer(self):
-        self.assertIn('id="mapNowCell"', self.html)
-        self.assertIn('id="mapBulkAction"', self.html)
+    def test_map_k_has_axes_and_manual_bulk_review_without_second_writer(self):
+        self.assertIn('id="mapActiveCell"', self.html)
         self.assertIn('id="mapSelectAll"', self.html)
-        self.assertIn('data-map-bulk', self.map_screen)
-        self.assertIn('MapKPhysicalAxes', self.map_editor)
-        self.assertNotIn('writeMap(', self.map_screen)
+        self.assertIn('data-map-nudge', self.html)
+        self.assertIn('map-k-grid-with-axes', self.map_screen)
+        self.assertIn('this.editor.selectAll()', self.map_screen)
+        self.assertIn("document.getElementById('mapWriteButton')?.addEventListener('click', () => this.writeReview())", self.map_screen)
+        self.assertIn('writeReview()', self.map_screen)
+        self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
+        self.assertIn('Ajuste manual confirmado na UI clean-slate', self.map_screen)
+        self.assertIn('ACK e readback', self.map_screen)
+        self.assertNotIn('window.Android', self.map_screen)
+        self.assertNotIn('protocolTransaction', self.map_screen)
 
-    def test_curve_k_is_global_and_manual(self):
+    def test_curve_k_is_global_and_writes_only_after_manual_review(self):
         self.assertIn('Curva K', self.curve_screen)
         self.assertIn('global', self.curve_screen.lower())
-        self.assertNotIn('writeCurve(', self.curve_screen)
+        self.assertIn("document.getElementById('curveWriteButton')?.addEventListener('click', () => this.writeReview())", self.curve_screen)
+        self.assertIn('writeReview()', self.curve_screen)
+        self.assertIn("this.api.writeCurve(points, 'Ajuste manual confirmado na UI clean-slate')", self.curve_screen)
+        self.assertIn('ACK e readback', self.curve_screen)
+        self.assertNotIn('window.Android', self.curve_screen)
+        self.assertNotIn('protocolTransaction', self.curve_screen)
 
     def test_obd_is_observation_only(self):
         self.assertIn('OBD é somente observação', self.html)
@@ -157,19 +163,26 @@ class CleanUiContract(unittest.TestCase):
         for marker in ('android_asset/hub/', '/hub/', 'hub/index.html'):
             self.assertNotIn(marker, active_sources)
 
-    def test_map_editor_remains_manual_review_surface(self):
-        self.assertIn('human_confirmation_required', self.map_editor)
-        self.assertIn('readback', self.map_editor.lower())
-        self.assertNotIn('automatic_write', self.map_editor)
+    def test_map_editor_is_pure_preview_model_and_screen_owns_manual_write(self):
+        self.assertIn('applyNativePreview', self.map_editor)
+        self.assertIn('buildReview()', self.map_editor)
+        self.assertIn('targetOverrides', self.map_editor)
+        for forbidden in ('writeMap(', 'window.Android', 'protocolTransaction', 'startKBatchWrite'):
+            self.assertNotIn(forbidden, self.map_editor)
+        self.assertIn('A próxima ação escreve na ECU.', self.html)
+        self.assertIn('Checkpoint, ACK e readback continuam obrigatórios.', self.html)
+        self.assertIn('writeReview()', self.map_screen)
+        self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
 
     def test_learning_route_never_calls_writer(self):
         for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'protocolTransaction'):
             self.assertNotIn(forbidden, self.learning_screen)
 
-    def test_suggestions_route_is_review_not_auto_apply(self):
-        suggestions = (UI / 'screens/suggestions.js').read_text('utf-8')
-        self.assertIn('manual', suggestions.lower())
-        self.assertNotIn('autoApply', suggestions)
+    def test_suggestions_route_is_review_navigation_not_auto_apply(self):
+        self.assertIn('data-screen="suggestions"', self.html)
+        self.assertIn('Abrir nunca escreve.', self.html)
+        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'autoApply', 'protocolTransaction'):
+            self.assertNotIn(forbidden, self.suggestion_model)
 
     def test_map_and_curve_share_router_state(self):
         self.assertIn("route === 'map'", self.app)
