@@ -71,11 +71,13 @@ class AdvisorSuggestionAdapterV7 {
             val baseDeltaPercent = finite(item, "suggestedDeltaPercent") ?: return@repeat
             val idealDeltaPercent = finite(item, "idealDeltaPercent")
             idealDeltaPercent?.let(idealDeltas::add)
-            val causallyConfirmed = causalTransitions.any { transition ->
-                transition.status == CausalTransitionStatusV7.CONFIRMED &&
+            val causallyConfirmed = causalTransitions.asSequence()
+                .filter { transition ->
                     transition.target == SuggestionTargetV7.CURVE_K &&
-                    index in transition.curveIndexes
-            }
+                        index in transition.curveIndexes
+                }
+                .maxByOrNull { it.appliedAtMs }
+                ?.status == CausalTransitionStatusV7.CONFIRMED
             val deltaPercent = if (causallyConfirmed && idealDeltaPercent != null) {
                 causal090Used = true
                 idealDeltaPercent * CONFIRMED_CAUSAL_FRACTION
@@ -147,11 +149,13 @@ class AdvisorSuggestionAdapterV7 {
             val key = "$row:$column"
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
             val actionable = item.optBoolean("actionable", false)
-            val causalConfirmed = causalTransitions.any { transition ->
-                transition.status == CausalTransitionStatusV7.CONFIRMED &&
+            val causalConfirmed = causalTransitions.asSequence()
+                .filter { transition ->
                     transition.target == SuggestionTargetV7.MAP_K &&
-                    key in transition.mapCells
-            }
+                        key in transition.mapCells
+                }
+                .maxByOrNull { it.appliedAtMs }
+                ?.status == CausalTransitionStatusV7.CONFIRMED
             val change = if (actionable) mapChange(item, calibration, causalConfirmed) else null
             val lifecycle = if (change != null) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
             val reason = item.optString("decisionReason").takeIf(String::isNotBlank)
