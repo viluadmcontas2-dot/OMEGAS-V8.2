@@ -1,50 +1,78 @@
 # OMEGAS VERDE — Scientific Coverage Matrix
 
-Baseline: `d51b26d0f0886c24ad71a69e9e4801b8a4b26181`  
+Baseline científico de consolidação: `d51b26d0f0886c24ad71a69e9e4801b8a4b26181`  
 Tracker: #50  
-Status: execution in progress
+Status: **runtime scientific coverage closed; final CI revalidation pending on this documentation HEAD**
 
-| Discovery | Runtime requirement | Existing seam | Evidence/test | Initial status | Action | Final status |
-|---|---|---|---|---|---|---|
-| F2 is frozen prior | Exact approved F2 coefficients; no runtime refit | `AdaptivePetrolReference.f2` | adaptive-reference tests | IMPLEMENTED | verify regression | PENDING |
-| S carry-forward | Previous accepted S survives into later session/context | adaptive reference path | new `AdaptivePetrolScaleStateTest` | NOT IMPLEMENTED | add persisted carried scale | PENDING |
-| S cautious update | Early/small cluster cannot aggressively reset S; sustained evidence can move it | adaptive reference path | new scale-state tests | NOT IMPLEMENTED | bounded evidence-dependent update | PENDING |
-| Local residual needs curvature | Anisotropic local quadratic residual over real gasoline evidence | `AdaptivePetrolReference` | existing + new regression | IMPLEMENTED | verify | PENDING |
-| Continuous gasoline reference | GNV can get reference without exact discrete petrol pair | `AdaptivePetrolReference` + `LearningSnapshotReconciler` | #48 regression | IMPLEMENTED | verify | PENDING |
-| Prediction != evidence | Interpolation/prediction cannot increment real evidence | reconciler/store | #48 regression | IMPLEMENTED | verify | PENDING |
-| Later physical petrol supersedes prediction | Existing adaptive comparison can be refreshed to direct reference without duplicate vote | `LearningSnapshotReconciler` | #48 refresh regression | IMPLEMENTED | verify | PENDING |
-| Gasoline geometry = RPM×MAP | Reference selection does not use Petrol Inj as matching dimension | `PetrolReferenceSelector` / adaptive reference | equivalence tests | IMPLEMENTED | verify | PENDING |
-| Mapa K geometry = RPM×Petrol Inj | Local residual is distributed on physical K map geometry | `ContinuousLearningMath` / advisor | advisor tests | IMPLEMENTED | verify | PENDING |
-| Curve global before Map residual | Remove supported global trend before local residual | `AssistedCalibrationAdvisor.globalCurve/residualMap` | advisor tests | IMPLEMENTED | verify | PENDING |
-| Calibration state is Curve+Map material state | Same material values => same scientific state across sessions; one value change => new state | `CalibrationStateV7`, `V7SessionRuntime` | new material-state identity tests | PARTIAL | add deterministic material state ID; preserve revisions | PENDING |
-| GNV evidence belongs to confirmed calibration state | Post-change GNV evidence cannot mix with prior state | `cngEvidenceByRevision` | runtime tests | PARTIAL | bind to material state + transition evidence | PENDING |
-| Readback defines successful intervention | No causal transition on failed/missing readback | `V7SessionRuntime.applySuggestionToEcu` | runtime tests | IMPLEMENTED/PARTIAL | persist transition receipt | PENDING |
-| First correction ≈ 0.75 | No visit-count escalation | `AssistedCalibrationAdvisor` | #48 regression | IMPLEMENTED | verify | PENDING |
-| ~0.90 only after causal confirmation | Readback + post-state evidence + correct response required | runtime/advisor | new `CausalSuggestionFractionTest` | NOT IMPLEMENTED | add minimal causal-response state | PENDING |
-| Do not relearn gain from scratch | Use established prior response; no opaque learner | advisor/runtime | code audit | IMPLEMENTED BY POLICY | verify | PENDING |
-| Failed TRUST is not write authority | Confidence is metadata/readiness, not automatic permission | stability/advisor/manual writer | code audit | IMPLEMENTED | verify | PENDING |
-| No auto-write | Human confirmation + ACK/readback mandatory | writer/runtime | writer tests | IMPLEMENTED | verify | PENDING |
-| Gasoline collectible at any time | Before/after GNV, suggestions and readback | learning stores/runtime | #48 regression | IMPLEMENTED | verify | PENDING |
-| No MAP≈0.775 hardcode | Structural weakness handled by local residual/uncertainty, not special spline | adaptive reference | code audit | IMPLEMENTED | verify | PENDING |
-| No opaque ML | Transparent math only | all learning seams | code audit | IMPLEMENTED | verify | PENDING |
-| Learning-map primary value must be robust | Single new comparison cannot make cell jump +1.7→+15→-10 if robust state exists | `LearningStabilityV7` + `learning.js` | new volatility test/contract | PARTIAL | use robust recent/consolidated precedence | PENDING |
-| REVALIDATING preserves consolidated truth | Recent contrary trend shown separately until repeatable | `LearningStabilityV7`, `V7SessionRuntime`, UI | stability tests | PARTIAL | make primary display semantics explicit | PENDING |
-| Independent visits matter more than raw frame count | Stability promotion driven by effective/unique visits and spread | `LearningStabilityV7` | stability tests | IMPLEMENTED | verify | PENDING |
-| Spatial prior confidence should not become hardcoded truth | Historical weak zones inform uncertainty only when supported; no TRUST resurrection | adaptive quality/stability | code audit | N/A/REJECTED AS HARDCODE | preserve no special production map | PENDING |
+## Matriz final
 
-## Baseline volatility diagnosis
+| Descoberta | Requisito runtime | Seam principal | Evidência | Status final |
+|---|---|---|---|---|
+| F2 é prior congelado | Coeficientes exatos; nenhum refit em runtime | `AdaptivePetrolReference.f2` | `test_verde_scientific_runtime_contract.py`, unit suite | **IMPLEMENTADO + TESTADO** |
+| S carry-forward | S aceito sobrevive à sessão seguinte | `AdaptivePetrolScaleState`, `MotorLearningMemory` | `MotorLearningScaleCarryForwardTest` | **IMPLEMENTADO + TESTADO** |
+| S atualiza cautelosamente | Janela/sessão enganosa não reseta S agressivamente | `promoteScale` | prior `1.065612`, coerente `1.066815`, enganoso `1.10058`; limite 0,5%/sessão | **IMPLEMENTADO + TESTADO** |
+| Residual local exige curvatura | Quadrático anisotrópico com gasolina real | `AdaptivePetrolReference` | 240 rpm / 0,060 bar / max 60 / ridge 0,001 + unit suite | **IMPLEMENTADO + TESTADO** |
+| Referência gasolina contínua | GNV pode receber referência sem par discreto | `AdaptivePetrolReference`, reconciler e live memory | `MotorLearningAdaptiveReferenceTest`, `AssistedCalibrationReconciliationEndToEndTest` | **IMPLEMENTADO + TESTADO** |
+| Predição != evidência | Referência estimada não cria visita/amostra física | reconciler/memory | regressões #48 + consolidation suite | **IMPLEMENTADO + TESTADO** |
+| Gasolina física posterior vence previsão | `PRIOR_PLUS_RESIDUAL` pode ser promovido para referência física sem voto duplicado | `LearningSnapshotReconciler` | `AdaptivePetrolReferenceRefreshTest` | **IMPLEMENTADO + TESTADO** |
+| Geometria gasolina = RPM×MAP | Referência não casa gasolina por Petrol Inj | `PetrolReferenceSelector`, adaptive reference | equivalence/reference tests | **IMPLEMENTADO + TESTADO** |
+| Geometria Mapa K = RPM×Petrol Inj | Residual local vai aos pontos físicos com bilinear | `ContinuousLearningMath`, advisor | `ContinuousLearningMathTest`, advisor tests | **IMPLEMENTADO + TESTADO** |
+| Curva global antes do Mapa residual | Remover tendência global antes do residual local | `AssistedCalibrationAdvisor` | ordem `globalCurve → residualMap`; scientific runtime gate | **IMPLEMENTADO + TESTADO** |
+| Estado científico é Curve+Map material | Mesmos valores materiais => mesma identidade física | `CalibrationStateV7.materialFingerprint()` | `CalibrationCausalTransitionV7Test` | **IMPLEMENTADO + TESTADO** |
+| GNV pertence ao estado que o produziu | Pós-intervenção não pode confirmar com evidência da revisão anterior | `calibrationTransitions` | filtro `revision == after.revision` + causal tests | **IMPLEMENTADO + TESTADO** |
+| Readback define intervenção concluída | Causalidade nasce somente depois de write/readback aplicado | V7 runtime/checkpoints/transitions | runtime + readback lifecycle tests | **IMPLEMENTADO + TESTADO** |
+| Primeiro passo ≈ 0,75 | Sem escalada por quantidade de visitas | `AssistedCalibrationAdvisor` | todas as fractions base = 0,75; advisor tests | **IMPLEMENTADO + TESTADO** |
+| ~0,90 só após resposta causal real | Última transição do mesmo alvo físico precisa ser `CONFIRMED` | `AdvisorSuggestionAdapterV7` + coordinator | `AdvisorSuggestionAdapterV7CausalStepTest`, wiring contract | **IMPLEMENTADO + TESTADO** |
+| Confirmação velha não vence contradição nova | Autoridade causal é a transição mais recente do mesmo alvo | adapter | `contradictedOrUnrelatedTransitionCannotUnlock090` | **IMPLEMENTADO + TESTADO** |
+| Não reaprender ganho do zero | Usar prior de resposta transparente, sem learner opaco | advisor/runtime | código + scientific runtime gate | **PRESERVADO + TESTADO** |
+| TRUST falho não é autoridade de escrita | Confidence é metadata/readiness; escrita continua humana | advisor/writer/UI | manual-review contracts + writer tests | **PRESERVADO + TESTADO** |
+| Sem auto-write | Review humano + ACK/readback obrigatórios | Map/Curve screens → Native API → Kotlin writer | clean UI contracts + writer/readback tests | **IMPLEMENTADO + TESTADO** |
+| Gasolina coletável a qualquer momento | Antes/depois de GNV, sugestão e readback | learning stores/memory | regressões #48 + unit suite | **IMPLEMENTADO + TESTADO** |
+| Sem hardcode MAP≈0,775 | Nenhuma spline/regra especial de produção | adaptive/runtime | scientific runtime gate proíbe `0.775`/`.775` | **REJEITADO COMO ESPECIAL-CASE; PRESERVADO** |
+| Sem ML opaco | Matemática auditável e determinística | learning/runtime | code audit + runtime gate | **PRESERVADO** |
+| Valor primário da célula deve ser robusto | Uma visita isolada não pode substituir verdade consolidada | `LearningStabilityV7`, `learning.js` | `LearningStabilityV7Test`, learning UI tests | **IMPLEMENTADO + TESTADO** |
+| REVALIDATING preserva verdade consolidada | Tendência nova aparece separada até repetir | stability/runtime/UI | isolated-outlier + repeated-change tests | **IMPLEMENTADO + TESTADO** |
+| Visitas independentes > frames brutos | Bilinear não transforma 1 visita em 4; ESS/visitas sustentam promoção | `LearningStabilityV7` | `LearningStabilityV7Test` | **IMPLEMENTADO + TESTADO** |
+| Gaussian espacial extra não é autorizado | Não duplicar smoothing sobre a bilinear sem falsificação | `ContinuousLearningMath` | runtime gate exige helper existente porém não conectado | **REJEITADO/PRESERVADO** |
+| Prior espacial histórico não vira verdade hardcoded | Fraqueza histórica pode informar investigação, não regra fixa | adaptive/stability | ausência de hardcodes e TRUST automático | **REJEITADO COMO HARDCODE; PRESERVADO** |
 
-Current UI comparison selection uses `consolidatedErrorPercent` when available, otherwise it can fall back to a single raw comparison selected per cell. Raw comparison objects do not reliably carry the score fields used by the JS `indexByCell` chooser; ties therefore allow later entries to replace earlier ones. During `LEARNING`, `LearningStabilityV7` already exposes a robust `recentErrorPercent`, but the primary cell can ignore it and show the raw visit instead.
+## Volatilidade — diagnóstico e fechamento
 
-This is the primary hypothesis for the observed high-frequency jumps. The fix must first use the robust state already present rather than add cosmetic EMA smoothing.
+O problema observado na UI era real: durante `LEARNING`, a projeção podia cair para uma comparação crua individual apesar de `LearningStabilityV7` já possuir centro robusto. Isso permitia sequências visuais equivalentes a `+1,7 → +15 → -10` sem que o estado científico consolidado tivesse realmente mudado.
 
-## Metrics contract
+O fluxo final usa:
 
-The focused volatility regression records:
-- raw max jump;
-- robust/primary max jump;
-- sign flips;
-- state sequence;
-- effective visits / unique visits;
-- whether a single outlier moved the consolidated primary;
-- whether repeated coherent contrary evidence eventually promoted a new generation.
+- `LEARNING` → centro robusto recente (`recentErrorPercent`);
+- `CONSOLIDATED` → `consolidatedErrorPercent`;
+- `REVALIDATING` → mantém o consolidado como valor principal e expõe a tendência recente separadamente;
+- nova geração só nasce quando a mudança contrária se torna repetível.
+
+Probe/regressão: a série crua usada para falsificação produziu salto máximo de aproximadamente **25 pontos percentuais**. Uma observação contrária isolada colocou o estado em `REVALIDATING` sem mover o consolidado; evidência contrária repetida promoveu corretamente uma nova geração. Não foi adicionado EMA cosmético nem Gaussian adicional.
+
+## Decisão sobre `gaussianSpatialKernel`
+
+O helper existe em `ContinuousLearningMath`, mas permanece deliberadamente **não conectado**. A hipótese de que as células eram independentes foi falsificada pelo código: cada observação já se distribui aos pontos físicos vizinhos por interpolação bilinear RPM×Petrol Inj. Conectar outro Gaussian sem nova evidência seria dupla suavização e poderia apagar curvatura/inversão física real.
+
+## Gates de consolidação
+
+Os seguintes gates são permanentes no repo:
+
+- `tests/test_causal_step_wiring_contract.py`
+- `tests/test_verde_scientific_runtime_contract.py`
+- `tests/test_clean_ui_contract.py`
+- `tests/test_ux_didactic_expansion_contract.py`
+- Kotlin unit tests de AdaptiveReference, S carry-forward, estabilidade, causal transition, advisor e writer/readback.
+
+Última evidência anterior a esta atualização documental:
+
+- HEAD funcional: `4eb89a0d58b99d2ea56c73bcd367f70d29015bca`
+- Fast contracts: **SUCCESS** (`35035432656`)
+- Main CI: **SUCCESS** (`35035432629`)
+- `testDebugUnitTest`: **SUCCESS**
+- `assembleDebug`: **SUCCESS**
+- Hash APK: **SUCCESS**
+- Publish artifact: **SUCCESS**
+- Artifact: `omegas-verde-debug-4eb89a0d58b99d2ea56c73bcd367f70d29015bca`
+- Artifact archive digest: `sha256:603aa169b8ce798b07adc2a919f792a3ef09ca0f844a7f56c4f5023da619f72d`
+
+Esta documentação cria um novo HEAD. O APK só deve ser chamado de entrega final depois que **fast contracts + main CI** também ficarem verdes nesse HEAD documental.
