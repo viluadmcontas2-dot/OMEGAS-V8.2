@@ -149,7 +149,7 @@ internal object LearningSnapshotReconciler {
                     .put("petrol_regions", petrol.size)
                     .put("active_cng_regions", countActiveCng(regions, epoch))
                     .put("existing_comparisons", existing.length())
-                    .put("preserved_existing_comparisons", output.length() - reconciled + refreshedAdaptiveReferences)
+                    .put("preserved_existing_comparisons", output.length() - reconciled)
                     .put("reconciled_comparisons", reconciled)
                     .put("adaptive_references", adaptiveReferences)
                     .put("refreshed_adaptive_references", refreshedAdaptiveReferences)
