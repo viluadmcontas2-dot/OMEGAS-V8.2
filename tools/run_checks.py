@@ -21,6 +21,7 @@ commands = [
     [sys.executable, "-B", "tests/test_map_kotlin_math_authority_contract.py"],
     [sys.executable, "-B", "tests/test_suggestion_readback_lifecycle_contract.py"],
     [sys.executable, "-B", "tests/test_learning_consolidation_contract.py"],
+    [sys.executable, "-B", "tests/test_causal_step_wiring_contract.py"],
     [sys.executable, "-B", "tests/test_startup_learning_restore_contract.py"],
     [sys.executable, "-B", "tests/test_learning_evidence_budget_contract.py"],
     [sys.executable, "-B", "tests/test_learning_memory_budget_contract.py"],
