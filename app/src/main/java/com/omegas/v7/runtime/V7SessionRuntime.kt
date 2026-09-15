@@ -320,6 +320,9 @@ class V7SessionRuntime(
         }
         val applied = result.readBack ?: error("Writer confirmou sem readback da ECU")
         require(applied.revision == desired.revision) { "Readback retornou revisão inesperada" }
+        require(applied.materialFingerprint() == desired.materialFingerprint()) {
+            "Readback materialmente divergente da calibração solicitada"
+        }
 
         val oldRevision = state.calibration.revision
         val lifecycleUpdated = state.suggestions.map { item ->
