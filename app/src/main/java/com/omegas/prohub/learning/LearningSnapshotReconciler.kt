@@ -12,8 +12,8 @@ import kotlin.math.sqrt
  * Reconcilia a memória persistida usada pela interface.
  *
  * A coleta continua permissiva: regiões são preservadas mesmo sem par. Este
- * componente apenas revisita GNV da época ativa quando uma superfície de
- * gasolina fisicamente compatível passa a existir.
+ * componente apenas revisita GNV da época ativa quando uma referência de
+ * gasolina física ou adaptativa passa a estar disponível.
  */
 internal object LearningSnapshotReconciler {
     fun reconcile(snapshot: JSONObject): JSONObject {
@@ -59,12 +59,13 @@ internal object LearningSnapshotReconciler {
 
         var pending = 0
         var reconciled = 0
+        var adaptiveReferences = 0
         val rejectionCounts = linkedMapOf<String, Int>()
         repeat(regions.length()) { index ->
             val cng = regions.optJSONObject(index) ?: return@repeat
             if (!isFuel(cng, Mp48Fuel.CNG) || cng.optInt("epoch", epoch) != epoch) return@repeat
             val visits = visitIds(cng, index)
-            val result = PetrolReferenceSelector.estimate(
+            val result = AdaptivePetrolReference.estimate(
                 regions = petrol,
                 request = PetrolReferenceSelector.Request(
                     rpm = cng.optDouble("rpm", 0.0),
@@ -81,12 +82,13 @@ internal object LearningSnapshotReconciler {
             val petrolTarget = result.petrolTargetMs ?: return@repeat
             val petrolOnCng = cng.optDouble("petrol_ms", 0.0)
             if (!petrolOnCng.isFinite() || petrolOnCng <= 0.05) return@repeat
+            if (result.stage == "PRIOR_PLUS_RESIDUAL") adaptiveReferences += visits.size
             visits.forEach { visitId ->
                 // A stored physical comparison already represents this visit in this epoch.
                 // Re-projecting its aggregate region must not create a second vote.
                 if (!representedVisits.add("$epoch:$visitId")) return@forEach
                 val referenceIds = result.regionIds.sorted().joinToString(",")
-                val dedupe = "$epoch:RETROACTIVE_PERSISTED_SURFACE:$visitId:$referenceIds"
+                val dedupe = "$epoch:RETROACTIVE_PERSISTED_SURFACE:$visitId:$referenceIds:${result.stage}"
                 if (!seen.add(dedupe)) return@forEach
                 output.put(
                     comparisonJson(
@@ -98,6 +100,9 @@ internal object LearningSnapshotReconciler {
                         petrolTarget = petrolTarget,
                         petrolOnCng = petrolOnCng,
                         referenceQuality = result.quality,
+                        referenceStage = result.stage,
+                        referenceReasonCode = result.reasonCode,
+                        referenceExtrapolated = result.extrapolated,
                     ),
                 )
                 reconciled += 1
@@ -115,9 +120,11 @@ internal object LearningSnapshotReconciler {
                     .put("existing_comparisons", existing.length())
                     .put("preserved_existing_comparisons", output.length() - reconciled)
                     .put("reconciled_comparisons", reconciled)
+                    .put("adaptive_references", adaptiveReferences)
                     .put("pending_cng_visits", pending)
                     .put("rejection_reasons", JSONObject(rejectionCounts as Map<*, *>))
-                    .put("temperature_unknown_is_neutral", true),
+                    .put("temperature_unknown_is_neutral", true)
+                    .put("predictions_are_evidence", false),
             )
     }
 
@@ -154,6 +161,9 @@ internal object LearningSnapshotReconciler {
         petrolTarget: Double,
         petrolOnCng: Double,
         referenceQuality: Double,
+        referenceStage: String,
+        referenceReasonCode: String,
+        referenceExtrapolated: Boolean,
     ): JSONObject {
         val difference = petrolOnCng - petrolTarget
         val errorPct = if (petrolTarget <= 0.05) 0.0 else difference / petrolTarget * 100.0
@@ -175,6 +185,10 @@ internal object LearningSnapshotReconciler {
             .put("visit_id", visitId)
             .put("reference_region_id", referenceIds)
             .put("origin", "RETROACTIVE_PERSISTED_SURFACE")
+            .put("reference_stage", referenceStage)
+            .put("reference_reason_code", referenceReasonCode)
+            .put("reference_extrapolated", referenceExtrapolated)
+            .put("reference_is_direct_evidence", false)
             .put("captured_at", cng.optLong("updated_at", System.currentTimeMillis()))
             .put("rpm", rpm)
             .put("map_bar", map)
