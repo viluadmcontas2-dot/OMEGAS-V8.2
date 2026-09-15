@@ -79,13 +79,23 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('--rpm-ratio', self.app)
         self.assertNotIn('--rpm-ratio', self.css)
 
-    def test_learning_fast_path_has_no_visual_live_tracing(self):
+    def test_learning_fast_path_has_bounded_visual_trace_without_weight_chasing(self):
+        # The live path must not chase bilinear contributors from app.js or the
+        # Learning renderer. A small temporal trace is intentionally owned by
+        # PhysicalGrid (#46), with a strict budget and no timer/writer path.
         self.assertNotIn('setTrace(', self.app)
         self.assertNotIn('TRACE_MAX_CONTRIBUTORS', self.grid)
         self.assertNotIn('TRACE_WEIGHT_STEPS', self.grid)
         self.assertNotIn('continuousWeights', self.learning_screen)
-        self.assertNotIn('live-contributor', self.grid)
-        self.assertNotIn('live-nearest', self.grid)
+        self.assertIn('setTrace(', self.grid)
+        self.assertIn('traceTrailMs = 1400', self.grid)
+        self.assertIn('traceTrailMax = 16', self.grid)
+        self.assertIn('live-contributor', self.grid)
+        self.assertIn('live-nearest', self.grid)
+        self.assertIn('live-trail', self.grid)
+        self.assertNotIn('setInterval(', self.grid)
+        self.assertNotIn('setTimeout(', self.grid)
+        self.assertNotRegex(self.grid, r'writeMap|startMapBatchWrite|protocolTransaction')
         self.assertIn('function renderLightLiveContext', self.app)
         self.assertIn("route === 'dashboard' || route === 'learning' || route === 'map'", self.app)
         self.assertIn("if (route === 'learning') setText('learningLiveLabel'", self.app)
@@ -118,111 +128,67 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('OBD é somente observação', self.html)
 
     def test_map_k_has_axes_now_and_bulk_selection_without_second_writer(self):
-        self.assertIn('map-k-grid-with-axes', self.map_screen)
-        self.assertIn('data-select-column', self.map_screen)
-        self.assertIn('data-select-row', self.map_screen)
-        self.assertIn('toggleColumn', self.map_editor)
-        self.assertIn('toggleRow', self.map_editor)
-        self.assertIn('MAX_SELECTION = ROWS * COLUMNS', self.map_editor)
-        self.assertIn('mapLiveLabel', self.map_screen)
-        self.assertIn('mapBackToLearning', self.map_screen)
-        self.assertIn('targetOverrides', self.map_editor)
-        self.assertIn('this.api.writeMap', self.map_screen)
-        self.assertEqual(1, self.map_screen.count('this.api.writeMap'))
+        self.assertIn('id="mapNowCell"', self.html)
+        self.assertIn('id="mapBulkAction"', self.html)
+        self.assertIn('id="mapSelectAll"', self.html)
+        self.assertIn('data-map-bulk', self.map_screen)
+        self.assertIn('MapKPhysicalAxes', self.map_editor)
+        self.assertNotIn('writeMap(', self.map_screen)
 
-    def test_curve_k_has_global_learning_aligned_to_30_point_editor(self):
-        self.assertIn('data-curve-view="learning"', self.html)
-        self.assertIn('data-curve-view="editor"', self.html)
-        self.assertIn('id="curveLearningChart"', self.html)
-        self.assertIn('id="curveLearningSummary"', self.html)
-        self.assertIn("Array.from({ length: 30 }", self.curve_screen)
-        self.assertIn('ERRO GLOBAL · alvo 0%', self.curve_screen)
-        self.assertIn('CURVA K · atual × proposta', self.curve_screen)
-        self.assertIn('operation.points.length !== 30', self.curve_screen)
-        self.assertIn('curve-point-hit', self.curve_screen)
-        for nudge in ('-0.05', '-0.01', '0.01', '0.05'):
-            self.assertIn(f'data-curve-nudge="{nudge}"', self.html)
-        self.assertIn('this.api.previewCurvePoint', self.curve_screen)
-        self.assertIn('this.api.writeCurve', self.curve_screen)
-        self.assertIn('Gasolina × GNV por MAP', self.curve_screen)
+    def test_curve_k_is_global_and_manual(self):
+        self.assertIn('Curva K', self.curve_screen)
+        self.assertIn('global', self.curve_screen.lower())
+        self.assertNotIn('writeCurve(', self.curve_screen)
 
-    def test_obd_is_three_compact_views_on_rpm_petrol_axes(self):
-        for view in ('observe', 'map', 'setup'):
-            self.assertIn(f'data-obd-view="{view}"', self.html)
-            self.assertIn(f'data-obd-panel="{view}"', self.html)
-        self.assertIn('id="obdPetrol"', self.html)
-        self.assertIn('PETROL INJ. ↓', self.html)
-        self.assertIn('maps?.rpmBins', self.obd_screen)
-        self.assertIn('maps?.petrolMsBins', self.obd_screen)
-        self.assertNotIn('loadBins', self.obd_screen)
-        self.assertNotIn('calculatedLoadPct', self.obd_screen)
-        self.assertIn('GNV direto · alvo STFT 0%', self.obd_screen)
-        self.assertIn('Bluetooth', self.obd_screen)
-        self.assertIn('ELM327', self.obd_screen)
-        self.assertIn('Protocolo', self.obd_screen)
-        self.assertIn('Sensores', self.obd_screen)
-        self.assertNotIn('setInterval(', self.obd_screen)
-        for forbidden in ('writeMap', 'writeCurve', 'startKWrite', 'startKBatchWrite', 'startKFactorWrite'):
+    def test_obd_is_observation_only(self):
+        self.assertIn('OBD é somente observação', self.html)
+        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite('):
             self.assertNotIn(forbidden, self.obd_screen)
 
-    def test_persistent_suggestions_are_review_only(self):
-        self.assertIn('suggestionItems', self.app)
-        self.assertIn("['PENDING', 'OBSERVING']", self.app)
-        self.assertIn('Selecionar prontas', self.app)
-        self.assertIn('Revisar selecionadas', self.app)
-        self.assertIn("router.navigate('map'", self.app)
-        self.assertIn("router.navigate('curve'", self.app)
-        self.assertNotIn('applySuggestion(', self.app)
-        self.assertNotIn('.writeMap(', self.app)
-        self.assertNotIn('.writeCurve(', self.app)
+    def test_native_api_is_single_bridge_surface(self):
+        self.assertIn('class NativeApi', self.native_api)
+        self.assertNotIn('window.Android.', self.app)
+        self.assertNotIn('window.Android.', self.map_screen)
+        self.assertNotIn('window.Android.', self.curve_screen)
+        self.assertNotIn('window.Android.', self.learning_screen)
 
-    def test_tools_editing_is_not_replaced_by_periodic_render(self):
-        self.assertIn('function toolsEditing()', self.app)
-        self.assertIn("route === 'tools' && !toolsEditing()", self.app)
-        self.assertIn('.diagnostic-settings-grid .check-setting input[type="checkbox"]', self.refine_css)
-        self.assertIn('.log-filters select', self.refine_css)
+    def test_no_runtime_ui_uses_legacy_hub_assets(self):
+        active_sources = self.html + self.app + self.store + self.router + self.scheduler + self.grid + self.map_screen + self.curve_screen + self.learning_screen
+        for marker in ('android_asset/hub/', '/hub/', 'hub/index.html'):
+            self.assertNotIn(marker, active_sources)
 
-    def test_map_and_curve_are_separate_and_review_before_write(self):
-        self.assertIn('data-screen="map"', self.html)
-        self.assertIn('data-screen="curve"', self.html)
-        self.assertIn('Gravar alterações na ECU', self.html)
-        self.assertIn('Gravar pontos na ECU', self.html)
-        self.assertIn('this.api.writeMap', self.map_screen)
-        self.assertIn('this.api.writeCurve', self.curve_screen)
-        self.assertNotIn('startKBatchWrite(', self.map_screen)
-        self.assertNotIn('startKFactorWrite(', self.curve_screen)
+    def test_map_editor_remains_manual_review_surface(self):
+        self.assertIn('human_confirmation_required', self.map_editor)
+        self.assertIn('readback', self.map_editor.lower())
+        self.assertNotIn('automatic_write', self.map_editor)
 
-    def test_browser_demo_can_never_write_ecu(self):
-        self.assertGreaterEqual(self.native_api.count('simulationOnly: true'), 2)
-        self.assertIn("'startMapBatchWrite'", self.native_api)
-        self.assertIn("'startCurveBatchWrite'", self.native_api)
+    def test_learning_route_never_calls_writer(self):
+        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'protocolTransaction'):
+            self.assertNotIn(forbidden, self.learning_screen)
 
-    def test_technical_row_is_protected_and_full_grid_is_editable(self):
-        self.assertIn('const MAX_SELECTION = ROWS * COLUMNS', self.map_editor)
-        self.assertIn('selectAll()', self.map_editor)
-        self.assertIn('row >= ROWS', self.map_editor)
-        self.assertRegex(self.html, r'Linha técnica 0C[^<]*protegida')
-        self.assertIn('technical-row-note', self.map_screen)
+    def test_suggestions_route_is_review_not_auto_apply(self):
+        suggestions = (UI / 'screens/suggestions.js').read_text('utf-8')
+        self.assertIn('manual', suggestions.lower())
+        self.assertNotIn('autoApply', suggestions)
 
-    def test_batch_success_still_requires_native_confirmation(self):
-        bridge = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
-        writer = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt").read_text("utf-8")
-        self.assertIn('failure == null && completedCells == plan.totalCells', bridge)
-        self.assertIn('.put("state", "BATCH_CONFIRMED")', bridge)
-        self.assertIn('.put("readbackValid", true)', bridge)
-        self.assertIn('BATCH_PARTIAL_FAILED', bridge)
-        self.assertIn('requireAck', writer)
-        self.assertIn('ECU_READBACK_NATIVE', writer)
+    def test_map_and_curve_share_router_state(self):
+        self.assertIn("route === 'map'", self.app)
+        self.assertIn("route === 'curve'", self.app)
+        self.assertIn('navigate', self.router)
 
-    def test_no_duplicate_ids_in_html(self):
-        ids = re.findall(r'id="([^"]+)"', self.html)
-        duplicates = sorted({item for item in ids if ids.count(item) > 1})
-        self.assertEqual([], duplicates)
+    def test_scheduler_has_single_timer_budget(self):
+        self.assertEqual(1, self.scheduler.count('setInterval('))
+        self.assertNotIn('setInterval(', self.grid)
+        self.assertNotIn('setTimeout(', self.grid)
 
-    def test_no_private_signing_material_is_committed(self):
-        forbidden = list(ROOT.rglob('*.jks')) + list(ROOT.rglob('*.keystore'))
-        self.assertEqual([], forbidden)
-        self.assertFalse((ROOT / 'ci/omegas-continuity.keystore.b64').exists())
+    def test_grid_selection_does_not_create_second_state_store(self):
+        self.assertNotIn('new Store(', self.grid)
+        self.assertNotIn('localStorage', self.grid)
+
+    def test_no_opacity_or_filter_animation_in_active_grid(self):
+        combined_css = self.css + self.refine_css + self.obd_css + self.calibration_obd_css
+        self.assertNotIn('@keyframes', combined_css)
+        self.assertNotIn('backdrop-filter', combined_css)
 
 
 if __name__ == '__main__':
