@@ -43,6 +43,11 @@ class AdaptivePetrolReferenceRefreshTest {
         assertEquals(6.60, comparison.getDouble("petrol_target_ms"), 0.000001)
         assertEquals(false, comparison.getBoolean("reference_extrapolated"))
         assertEquals(true, comparison.getBoolean("reference_is_direct_evidence"))
+
+        val reconciliation = refreshed.getJSONObject("reconciliation")
+        assertEquals(1, reconciliation.getInt("refreshed_adaptive_references"))
+        assertEquals(0, reconciliation.getInt("preserved_existing_comparisons"))
+        assertEquals(1, reconciliation.getInt("reconciled_comparisons"))
     }
 
     private fun baseRegions(): JSONArray = JSONArray()
