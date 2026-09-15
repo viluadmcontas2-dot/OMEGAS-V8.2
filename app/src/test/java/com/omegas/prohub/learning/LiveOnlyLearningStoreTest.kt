@@ -116,6 +116,57 @@ class LiveOnlyLearningStoreTest {
     }
 
     @Test
+    fun `gasoline remains collectable before cng after advice and after confirmed readback`() {
+        val store = store()
+        store.startSession()
+
+        store.ingest(
+            telemetry(650L, Mp48Fuel.PETROL, 4.0),
+            accepted(sample("petrol-before-cng", 100L, 650L, Mp48Fuel.PETROL, 4.0)),
+        )
+        val petrolOnly = store.export("petrol-only")
+        assertTrue(petrolOnly.getJSONObject("summary").getInt("petrol_regions") > 0)
+        assertEquals(0, petrolOnly.getJSONArray("comparisons").length())
+        val visitsBeforeCng = petrolVisitCount(petrolOnly)
+        assertTrue(visitsBeforeCng > 0)
+
+        store.ingest(
+            telemetry(1_350L, Mp48Fuel.CNG, 5.0),
+            accepted(sample("cng-after-petrol", 800L, 1_350L, Mp48Fuel.CNG, 5.0)),
+        )
+        val withCng = store.export("with-cng")
+        assertTrue(withCng.getJSONArray("comparisons").length() > 0)
+        val advice = AssistedCalibrationAdvisor.analyze(withCng)
+        assertFalse(advice.getBoolean("automatic"))
+        assertTrue(advice.getBoolean("humanConfirmationRequired"))
+
+        store.ingest(
+            telemetry(2_050L, Mp48Fuel.PETROL, 4.2),
+            accepted(sample("petrol-after-advice", 1_500L, 2_050L, Mp48Fuel.PETROL, 4.2)),
+        )
+        val afterAdvice = store.export("after-advice")
+        assertTrue(
+            "Nova gasolina deve continuar fortalecendo evidência mesmo com GNV/comparações existentes",
+            petrolVisitCount(afterAdvice) > visitsBeforeCng,
+        )
+
+        val reset = store.onCalibrationAdjustment(confirmedUpdate().put("adjustmentId", "flexible-petrol-reset"))
+        assertTrue(reset.getBoolean("resetPerformed"))
+        val visitsAfterReset = petrolVisitCount(store.export("after-readback"))
+
+        store.ingest(
+            telemetry(2_750L, Mp48Fuel.PETROL, 4.1),
+            accepted(sample("petrol-after-readback", 2_200L, 2_750L, Mp48Fuel.PETROL, 4.1)),
+        )
+        val finalState = store.export("final")
+        assertTrue(
+            "Readback/nova época não pode bloquear nova coleta gasolina",
+            petrolVisitCount(finalState) > visitsAfterReset,
+        )
+        assertTrue(finalState.getJSONObject("summary").getInt("petrol_regions") > 0)
+    }
+
+    @Test
     fun `unconfirmed notification cannot erase learning`() {
         val store = store()
         store.startSession()
@@ -197,6 +248,17 @@ class LiveOnlyLearningStoreTest {
             )
             repaired.close()
         }
+    }
+
+    private fun petrolVisitCount(snapshot: JSONObject): Int {
+        val regions = snapshot.getJSONArray("regions")
+        var count = 0
+        repeat(regions.length()) { index ->
+            val region = regions.optJSONObject(index) ?: return@repeat
+            if (region.optString("fuel").uppercase() !in setOf("PETROL", "GASOLINA")) return@repeat
+            count += region.optJSONArray("visits")?.length() ?: 0
+        }
+        return count
     }
 
     private fun store() = LiveOnlyLearningStore(
