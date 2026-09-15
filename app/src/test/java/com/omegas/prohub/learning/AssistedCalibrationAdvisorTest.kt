@@ -234,7 +234,8 @@ class AssistedCalibrationAdvisorTest {
 
         assertEquals(0.75, firstPoint.getDouble("correctionFraction"), 0.000001)
         assertEquals(0.75, repeatedPoint.getDouble("correctionFraction"), 0.000001)
-        assertEquals(firstPoint.getDouble("stepPolicy"), repeatedPoint.getDouble("stepPolicy"), 0.0)
+        assertEquals("SCIENTIFIC_FIXED_075_MANUAL", firstPoint.getString("stepPolicy"))
+        assertEquals(firstPoint.getString("stepPolicy"), repeatedPoint.getString("stepPolicy"))
         assertTrue(repeatedPoint.getDouble("suggestedDeltaPercent") <= repeatedPoint.getDouble("idealDeltaPercent"))
     }
 
