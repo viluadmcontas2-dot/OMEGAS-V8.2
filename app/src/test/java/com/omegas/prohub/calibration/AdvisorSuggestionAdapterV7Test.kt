@@ -3,8 +3,10 @@ package com.omegas.prohub.calibration
 import com.omegas.v7.runtime.CalibrationRevisionV7
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
+import com.omegas.v7.runtime.CalibrationTransitionV7
 import com.omegas.v7.runtime.CalibrationWriteResultV7
 import com.omegas.v7.runtime.CalibrationWriterV7
+import com.omegas.v7.runtime.CausalTransitionStatusV7
 import com.omegas.v7.runtime.EvidenceV7
 import com.omegas.v7.runtime.FuelV7
 import com.omegas.v7.runtime.LearningStabilityStateV7
@@ -155,6 +157,82 @@ class AdvisorSuggestionAdapterV7Test {
     }
 
     @Test
+    fun confirmed_causal_response_allows_090_only_for_same_map_cell() {
+        val item = mapItem(3, 0, 7.5)
+            .put("residualErrorPercent", 10.0)
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray())
+            .put("mapResidualSuggestions", JSONArray().put(item))
+            .put("mapCorrectionRegions", JSONArray())
+
+        val confirmed = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(mapCells = listOf("3:0"))),
+        ).single()
+        val differentCell = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(mapCells = listOf("4:0"))),
+        ).single()
+        val contradicted = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(
+                mapCells = listOf("3:0"),
+                status = CausalTransitionStatusV7.CONTRADICTED,
+            )),
+        ).single()
+
+        // 110 × 1.09 = 119.9 -> 120. Sem confirmação, 110 × 1.075 -> 118.
+        assertEquals(120, confirmed.mapChanges.single().after)
+        assertEquals(118, differentCell.mapChanges.single().after)
+        assertEquals(118, contradicted.mapChanges.single().after)
+    }
+
+    @Test
+    fun confirmed_causal_response_allows_090_only_for_same_curve_point() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray()
+                .put(JSONObject()
+                    .put("index", 3)
+                    .put("actionable", true)
+                    .put("idealDeltaPercent", 20.0)
+                    .put("suggestedDeltaPercent", 15.0)
+                    .put("estimatedResidualAfterPercent", 5.0)
+                    .put("confidence", 0.9)
+                    .put("readiness", "AVAILABLE")))
+            .put("mapResidualSuggestions", JSONArray())
+            .put("mapCorrectionRegions", JSONArray())
+
+        val confirmed = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(
+                target = SuggestionTargetV7.CURVE_K,
+                curveIndexes = listOf(3),
+            )),
+        ).single { it.target == SuggestionTargetV7.CURVE_K }
+        val awaiting = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(
+                target = SuggestionTargetV7.CURVE_K,
+                curveIndexes = listOf(3),
+                status = CausalTransitionStatusV7.AWAITING_POST_EVIDENCE,
+            )),
+        ).single { it.target == SuggestionTargetV7.CURVE_K }
+
+        assertEquals(1.18, confirmed.curveChanges.single().after, 0.0001)
+        assertEquals(1.15, awaiting.curveChanges.single().after, 0.0001)
+    }
+
+    @Test
     fun advisor_candidate_reaches_writer_only_after_cell_is_consolidated() {
         val initial = calibration()
         val advice = JSONObject()
@@ -221,6 +299,27 @@ class AdvisorSuggestionAdapterV7Test {
         }
         assertEquals(LearningStabilityStateV7.CONSOLIDATED, runtime.mapStability(row, column).state)
     }
+
+    private fun transition(
+        target: SuggestionTargetV7 = SuggestionTargetV7.MAP_K,
+        mapCells: List<String> = emptyList(),
+        curveIndexes: List<Int> = emptyList(),
+        status: CausalTransitionStatusV7 = CausalTransitionStatusV7.CONFIRMED,
+    ) = CalibrationTransitionV7(
+        suggestionId = "prior-transition",
+        target = target,
+        appliedAtMs = 50,
+        beforeRevision = CalibrationRevisionV7(1, 4),
+        afterRevision = CalibrationRevisionV7(2, 5),
+        beforeFingerprint = "before",
+        afterFingerprint = "after",
+        preErrorPercent = 10.0,
+        postErrorPercent = 2.0,
+        responseGain = 0.8,
+        mapCells = mapCells,
+        curveIndexes = curveIndexes,
+        status = status,
+    )
 
     private fun mapItem(row: Int, column: Int, deltaPercent: Double): JSONObject = JSONObject()
         .put("row", row)
