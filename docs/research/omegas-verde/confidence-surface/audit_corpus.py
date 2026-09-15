@@ -4,6 +4,10 @@ import numpy as np,pandas as pd
 import confidence_surface as c
 BASE=pathlib.Path(__file__).parent;OUT=BASE/'results';CACHE=BASE/'cache'
 def main():
+ tests=(BASE/'tests.log').read_text(encoding='utf-8')
+ assert 'Ran 10 tests' in tests and '\nOK' in tests, 'test evidence unavailable'
+ assert 'PREHOLDOUT_DETERMINISTIC_PASS' in (BASE/'verification_preholdout.log').read_text(encoding='utf-8')
+ assert 'EXTERNAL_DETERMINISTIC_PASS' in (BASE/'verification_external.log').read_text(encoding='utf-8')
  gate=json.loads((OUT/'frozen_gate.json').read_text(encoding='utf-8'))
  assert c.sha(OUT/'frozen_gate.json')=='4dcd64dc1681e34841b01c54f050b002efd7702ae68d693886496e1a414f4a76'
  records=[];all_sources=[]
