@@ -24,24 +24,10 @@ class CalibrationCausalTransitionV7Test {
     fun successfulReadbackRecordsMaterialTransitionAndRoundTrips() {
         val runtime = runtime()
         val before = runtime.state.calibration
-        val suggestion = LocalSuggestionV7(
-            id = "map-causal-1",
-            createdAtMs = 10,
-            expectedRevision = before.revision,
-            target = SuggestionTargetV7.MAP_K,
-            mapChanges = listOf(MapCellChangeV7(3, 0, 100, 110)),
-            rationale = "Primeiro passo científico manual",
-            consolidatedErrorPercent = 10.0,
-        )
+        val suggestion = mapSuggestion(before, "map-causal-1", 10.0)
         runtime.registerSuggestion(suggestion)
 
-        val applied = runtime.applySuggestionToEcu(
-            suggestionId = suggestion.id,
-            nowMs = 20,
-            writer = CalibrationWriterV7 { _, desired, _ ->
-                CalibrationWriteResultV7(true, desired, "ACK + readback")
-            },
-        )
+        val applied = apply(runtime, suggestion)
 
         val transition = runtime.state.calibrationTransitions.single()
         assertEquals(suggestion.id, transition.suggestionId)
@@ -62,15 +48,7 @@ class CalibrationCausalTransitionV7Test {
     fun sameRevisionWithWrongMaterialReadbackIsRejected() {
         val runtime = runtime()
         val before = runtime.state.calibration
-        val suggestion = LocalSuggestionV7(
-            id = "map-causal-wrong-readback",
-            createdAtMs = 10,
-            expectedRevision = before.revision,
-            target = SuggestionTargetV7.MAP_K,
-            mapChanges = listOf(MapCellChangeV7(3, 0, 100, 110)),
-            rationale = "Teste material",
-            consolidatedErrorPercent = 8.0,
-        )
+        val suggestion = mapSuggestion(before, "map-causal-wrong-readback", 8.0)
         runtime.registerSuggestion(suggestion)
 
         try {
@@ -95,5 +73,109 @@ class CalibrationCausalTransitionV7Test {
         assertEquals(before, runtime.state.calibration)
         assertTrue(runtime.state.calibrationTransitions.isEmpty())
         assertEquals(SuggestionLifecycleV7.PENDING, runtime.state.suggestions.single().lifecycle)
+    }
+
+    @Test
+    fun repeatedPostReadbackImprovementConfirmsCausalResponseAndGain() {
+        val runtime = runtime()
+        addPetrolReference(runtime)
+        val suggestion = mapSuggestion(runtime.state.calibration, "map-confirmed", 10.0)
+        runtime.registerSuggestion(suggestion)
+        val applied = apply(runtime, suggestion)
+
+        assertEquals(
+            CausalTransitionStatusV7.AWAITING_POST_EVIDENCE,
+            runtime.state.calibrationTransitions.single().status,
+        )
+
+        repeat(8) { index ->
+            addCng(runtime, applied.revision, "post-good-$index", 30L + index, petrolMs = 3.57)
+        }
+
+        val transition = runtime.state.calibrationTransitions.single()
+        assertEquals(CausalTransitionStatusV7.CONFIRMED, transition.status)
+        assertEquals(2.0, transition.postErrorPercent ?: Double.NaN, 1e-6)
+        assertEquals(0.8, transition.responseGain ?: Double.NaN, 1e-6)
+    }
+
+    @Test
+    fun repeatedPostReadbackWorseningContradictsCausalResponse() {
+        val runtime = runtime()
+        addPetrolReference(runtime)
+        val suggestion = mapSuggestion(runtime.state.calibration, "map-contradicted", 10.0)
+        runtime.registerSuggestion(suggestion)
+        val applied = apply(runtime, suggestion)
+
+        repeat(12) { index ->
+            addCng(runtime, applied.revision, "post-bad-$index", 30L + index, petrolMs = 3.92)
+        }
+
+        val transition = runtime.state.calibrationTransitions.single()
+        assertEquals(CausalTransitionStatusV7.CONTRADICTED, transition.status)
+        assertTrue((transition.postErrorPercent ?: 0.0) > 10.0)
+        assertTrue((transition.responseGain ?: 0.0) < 0.0)
+    }
+
+    private fun mapSuggestion(
+        calibration: CalibrationStateV7,
+        id: String,
+        preErrorPercent: Double,
+    ) = LocalSuggestionV7(
+        id = id,
+        createdAtMs = 10,
+        expectedRevision = calibration.revision,
+        target = SuggestionTargetV7.MAP_K,
+        mapChanges = listOf(MapCellChangeV7(3, 0, 100, 110)),
+        rationale = "Passo científico manual",
+        consolidatedErrorPercent = preErrorPercent,
+    )
+
+    private fun apply(runtime: V7SessionRuntime, suggestion: LocalSuggestionV7): CalibrationStateV7 =
+        runtime.applySuggestionToEcu(
+            suggestionId = suggestion.id,
+            nowMs = 20,
+            writer = CalibrationWriterV7 { _, desired, _ ->
+                CalibrationWriteResultV7(true, desired, "ACK + readback")
+            },
+        )
+
+    private fun addPetrolReference(runtime: V7SessionRuntime) {
+        runtime.addEvidence(
+            EvidenceV7(
+                id = "petrol-ref",
+                fuel = FuelV7.PETROL,
+                collectedAtMs = 1,
+                visitId = "petrol-ref",
+                rpm = 850.0,
+                mapBar = 0.40,
+                petrolMs = 3.50,
+                quality = 1.0,
+                cngRevision = null,
+                waterC = 82.0,
+            ),
+        )
+    }
+
+    private fun addCng(
+        runtime: V7SessionRuntime,
+        revision: CalibrationRevisionV7,
+        visitId: String,
+        collectedAtMs: Long,
+        petrolMs: Double,
+    ) {
+        runtime.addEvidence(
+            EvidenceV7(
+                id = visitId,
+                fuel = FuelV7.CNG,
+                collectedAtMs = collectedAtMs,
+                visitId = visitId,
+                rpm = 850.0,
+                mapBar = 0.40,
+                petrolMs = petrolMs,
+                quality = 1.0,
+                cngRevision = revision,
+                waterC = 82.0,
+            ),
+        )
     }
 }
