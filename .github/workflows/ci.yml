@@ -17,6 +17,8 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - run: chmod +x gradlew
+      - name: Learning consolidation contract
+        run: python -m unittest discover -s tests -p 'test_learning_consolidation_contract.py'
       - run: ./gradlew testDebugUnitTest
       - run: ./gradlew assembleDebug
       - name: Hash APK
