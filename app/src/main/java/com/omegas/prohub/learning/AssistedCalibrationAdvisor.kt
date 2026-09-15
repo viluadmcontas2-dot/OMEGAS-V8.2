@@ -24,10 +24,11 @@ object AssistedCalibrationAdvisor {
     private const val MAP_BANDWIDTH_BAR = 0.060
     private const val BASE_PRIOR_UNCERTAINTY_RATIO = 0.060
     private const val WEIGHT_UNCERTAINTY_RATIO = 0.030
-    private const val MIN_CORRECTION_FRACTION = 0.45
-    private const val FIRST_VISIT_MAX_CORRECTION_FRACTION = 0.80
-    private const val EARLY_VISITS_MAX_CORRECTION_FRACTION = 0.90
-    private const val MAX_CORRECTION_FRACTION = 0.95
+    // V1 científica: sem confirmação causal entre epochs, o passo manual fica em 75%.
+    private const val MIN_CORRECTION_FRACTION = 0.75
+    private const val FIRST_VISIT_MAX_CORRECTION_FRACTION = 0.75
+    private const val EARLY_VISITS_MAX_CORRECTION_FRACTION = 0.75
+    private const val MAX_CORRECTION_FRACTION = 0.75
     private val mapKnots = DoubleArray(18) { 0.20 + it * 0.05 }
 
     fun analyze(exportedLearning: JSONObject): JSONObject {
@@ -83,7 +84,7 @@ object AssistedCalibrationAdvisor {
                 .put("firstVisitCorrectionFractionMaximum", FIRST_VISIT_MAX_CORRECTION_FRACTION)
                 .put("earlyVisitsCorrectionFractionMaximum", EARLY_VISITS_MAX_CORRECTION_FRACTION)
                 .put("correctionFractionMaximum", MAX_CORRECTION_FRACTION)
-                .put("stepPolicy", "INDEPENDENCE_BOUNDED"))
+                .put("stepPolicy", "SCIENTIFIC_FIXED_075_MANUAL"))
     }
 
     private fun pairedCurves(samples: List<ComparisonSample>): PairedCurves {
@@ -571,7 +572,7 @@ object AssistedCalibrationAdvisor {
             .put("errorPercent", errorRatio?.times(100.0) ?: JSONObject.NULL)
             .put("idealDeltaPercent", errorRatio?.times(100.0) ?: JSONObject.NULL)
             .put("suggestedDeltaPercent", decision.suggestedDeltaRatio?.times(100.0) ?: JSONObject.NULL)
-            .put("stepPolicy", "INDEPENDENCE_BOUNDED")
+            .put("stepPolicy", "SCIENTIFIC_FIXED_075_MANUAL")
             .put("estimatedResidualAfterPercent", decision.estimatedResidualAfterRatio?.times(100.0) ?: JSONObject.NULL)
             .put("uncertaintyPercent", decision.uncertaintyRatio.times(100.0))
             .put("usefulMarginPercent", decision.usefulMarginRatio.times(100.0))
