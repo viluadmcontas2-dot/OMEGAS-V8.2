@@ -12,6 +12,7 @@ manifest = read("app/src/main/AndroidManifest.xml")
 service = read("app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt")
 runtime = read("app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt")
 api = read("app/src/main/assets/ui/core/native-api.js")
+index = read("app/src/main/assets/ui/index.html")
 learning = read("app/src/main/assets/ui/screens/learning.js")
 learning_model = read("app/src/main/assets/ui/core/learning-model.js")
 physical_grid = read("app/src/main/assets/ui/components/physical-grid.js")
@@ -42,9 +43,15 @@ assert "learningDecision" in learning
 assert "reason_code" in learning
 assert "frame_count" in learning
 assert "LIMITES CONFIGURADOS" in learning
-assert "Gasolina — referência" in learning
-assert "GNV atual — Petrol Inj." in learning
-assert "Equivalência" in learning
+# As quatro camadas humanas atuais vivem no shell da tela e o detalhe continua
+# separando explicitamente referência gasolina, observação GNV e diferença.
+assert ">Referência<" in index
+assert ">No GNV<" in index
+assert ">Diferença<" in index
+assert ">Sugestão<" in index
+assert "Gasolina esperada" in learning
+assert "No GNV agora" in learning
+assert "<dt>Diferença</dt>" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning
@@ -55,15 +62,21 @@ assert "setInterval" not in learning
 assert "writeMap" not in learning
 assert "writeCurve" not in learning
 
-# Na multimídia fraca, a posição viva é apenas texto. A interpolação bilinear
-# continua no Kotlin/telemetria, mas a WebView não persegue pesos/células no DOM.
-assert "setTrace(" not in physical_grid
-assert "TRACE_MAX_CONTRIBUTORS" not in physical_grid
-assert "TRACE_WEIGHT_STEPS" not in physical_grid
-assert "live-contributor" not in physical_grid
-assert "live-nearest" not in physical_grid
+# Na multimídia fraca, app.js/Learning não perseguem pesos bilineares no DOM.
+# PhysicalGrid conserva apenas o tracing temporal limitado aprovado em #46,
+# sem timer próprio e sem qualquer rota de escrita ECU.
 assert "learning.grid.setTrace" not in app
 assert "continuousWeights" not in learning
+assert "setTrace(" in physical_grid
+assert "traceTrailMs = 1400" in physical_grid
+assert "traceTrailMax = 16" in physical_grid
+assert "live-contributor" in physical_grid
+assert "live-nearest" in physical_grid
+assert "live-trail" in physical_grid
+assert "setInterval" not in physical_grid
+assert "setTimeout" not in physical_grid
+assert "writeMap" not in physical_grid
+assert "protocolTransaction" not in physical_grid
 assert "function renderLightLiveContext" in app
 assert "learningLiveLabel" in app
 assert "célula ${row + 1}×${column + 1}" in app
