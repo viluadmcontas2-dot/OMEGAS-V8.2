@@ -60,6 +60,15 @@
   function comparisonError(item) {
     return finite(item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.deltaPercent ?? item?.differencePercent ?? item?.error);
   }
+  function stableComparisonError(stable, comparison) {
+    const state = String(stable?.state || '').toUpperCase();
+    const consolidated = finite(stable?.consolidatedErrorPercent);
+    const recent = finite(stable?.recentErrorPercent);
+    const raw = comparisonError(comparison);
+    if (state === 'CONSOLIDATED' || state === 'REVALIDATING') return consolidated ?? recent ?? raw;
+    if (state === 'LEARNING') return recent ?? raw;
+    return consolidated ?? recent ?? raw;
+  }
   function comparisonTargetMs(item) { return finite(item?.petrol_target_ms ?? item?.petrolTargetMs); }
   function comparisonObservedMs(item) { return finite(item?.petrol_on_cng_ms ?? item?.petrolOnCngMs); }
   function confidence(item) {
@@ -229,10 +238,8 @@
             tone = 'cng';
           }
         } else if (layer === 'comparison') {
-          source = comparisons.get(cellKey) || stable || null;
-          const consolidated = finite(stable?.consolidatedErrorPercent);
-          const rawError = comparisonError(comparisons.get(cellKey));
-          const error = consolidated ?? rawError;
+          source = stable || comparisons.get(cellKey) || null;
+          const error = stableComparisonError(stable, comparisons.get(cellKey));
           const stableState = String(stable?.state || '').toUpperCase();
           if (error !== null) {
             cellText = `${error > 0 ? '+' : ''}${fmt(error, 1)}%`;
@@ -423,7 +430,7 @@
       const rawError = comparisonError(comparison);
       const consolidatedError = finite(stability?.consolidatedErrorPercent);
       const recentError = finite(stability?.recentErrorPercent);
-      const displayError = consolidatedError ?? rawError;
+      const displayError = stableComparisonError(stability, comparison);
       const targetMs = comparisonTargetMs(comparison);
       const observedMs = comparisonObservedMs(comparison);
       const delta = mapSuggestionDelta(suggestion);
@@ -461,7 +468,7 @@
 
       let diferenca = 'ainda não existe par equivalente válido';
       if (displayError !== null) {
-        if ((consolidatedError === null && comparison?.direction === 'EQUIVALENT') || Math.abs(displayError) <= (finite(maps.tolerancePolicy?.equivalenceDeadbandPercent) ?? 2.5)) diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (equivalente)`;
+        if ((consolidatedError === null && recentError === null && comparison?.direction === 'EQUIVALENT') || Math.abs(displayError) <= (finite(maps.tolerancePolicy?.equivalenceDeadbandPercent) ?? 2.5)) diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (equivalente)`;
         else diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (precisa ${displayError > 0 ? 'mais' : 'menos'} GNV)`;
       }
 
@@ -469,11 +476,14 @@
       let confLevel = 'Baixa';
       if (confValue >= 0.8) confLevel = 'Alta';
       else if (confValue >= 0.4) confLevel = 'Média';
-      const visits = Math.max(finite(stability?.consolidatedUniqueVisits) || 0, Math.max(petrolVisits, cngVisits));
+      const visits = Math.max(finite(stability?.consolidatedUniqueVisits) || finite(stability?.recentUniqueVisits) || 0, Math.max(petrolVisits, cngVisits));
       const confianca = `${confLevel} (${visits} visitas)`;
 
       const kChange = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges[0] : null;
       const targetK = finite(kChange?.after) !== null ? kChange.after : 'aguardando convergência';
+      const revalidationTrend = stabilityState === 'REVALIDATING' && recentError !== null
+        ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}% recente`
+        : null;
 
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
@@ -483,6 +493,7 @@
           <div><dt>Gasolina esperada</dt><dd>${escapeHtml(gasolinaEsperada)}</dd></div>
           <div><dt>No GNV agora</dt><dd>${escapeHtml(noGnvAgora)}</dd></div>
           <div><dt>Diferença</dt><dd>${escapeHtml(diferenca)}</dd></div>
+          ${revalidationTrend ? `<div><dt>Tendência em revalidação</dt><dd>${escapeHtml(revalidationTrend)}</dd></div>` : ''}
           <div><dt>Novo valor K sugerido</dt><dd>${escapeHtml(targetK)}</dd></div>
           <div><dt>Confiança</dt><dd>${escapeHtml(confianca)}</dd></div>
         </dl>
