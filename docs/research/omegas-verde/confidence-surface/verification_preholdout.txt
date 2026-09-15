@@ -1,0 +1,63 @@
+6 scientific invariant checks PASS
+{
+  "family": "consensus",
+  "thresholds": [
+    0.7,
+    0.9
+  ],
+  "metrics": [
+    {
+      "phase": "preholdout",
+      "class": "TRUST",
+      "coverage": 0.027548209366391185,
+      "N": 10,
+      "sessions": 7,
+      "safe_rate": 0.9,
+      "MAE": 0.11555355114607484,
+      "P90": 0.2571804286485065,
+      "direction_N": 4,
+      "direction_accuracy": 1.0,
+      "jeffreys_low": 0.6186852289333836,
+      "jeffreys_high": 0.9889883262368389,
+      "session_macro_safe": 0.8571428571428571
+    },
+    {
+      "phase": "preholdout",
+      "class": "PROVISIONAL",
+      "coverage": 0.33884297520661155,
+      "N": 123,
+      "sessions": 16,
+      "safe_rate": 0.7317073170731707,
+      "MAE": 0.16976186663022505,
+      "P90": 0.3832319978310165,
+      "direction_N": 57,
+      "direction_accuracy": 0.6140350877192983,
+      "jeffreys_low": 0.6486780421483274,
+      "jeffreys_high": 0.8039786042784182,
+      "session_macro_safe": 0.7314642682586231
+    },
+    {
+      "phase": "preholdout",
+      "class": "WAIT",
+      "coverage": 0.6336088154269972,
+      "N": 230,
+      "sessions": 14,
+      "safe_rate": 0.5304347826086957,
+      "MAE": 0.38116615978411333,
+      "P90": 0.8629920335110098,
+      "direction_N": 159,
+      "direction_accuracy": 0.6163522012578616,
+      "jeffreys_low": 0.46589319035236054,
+      "jeffreys_high": 0.5942157566560308,
+      "session_macro_safe": 0.5864787860517673
+    }
+  ],
+  "bootstrap": {
+    "replicates": 2000,
+    "safe_gap_low": 0.06388587693141773,
+    "safe_gap_high": 0.5638544129235618,
+    "prob_gap_positive": 0.9875
+  },
+  "frozen_hash": "0c3f0248aef5633614a39f1d92c9c9f4e0408c09ef5fd95c72631a9dd9819c37"
+}
+PREHOLDOUT_DETERMINISTIC_PASS

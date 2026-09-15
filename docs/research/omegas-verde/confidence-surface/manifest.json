@@ -1,0 +1,2938 @@
+{
+  "schema": "omegas-confidence-offline-manifest-v1",
+  "workunit": "VERDE-CONFIDENCE-OFFLINE-001",
+  "issue": "https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/issues/47",
+  "repository": "viluadmcontas2-dot/OMEGAS-V8.2",
+  "branch": "OmegasVerde",
+  "authority": "GitHub remote only; local executor/cache contain derived scientific evidence, no checkout authority",
+  "baseline_sha": "9575d5ee944bc520860c9985adc2c139973d94fb",
+  "verified_scripts_remote_sha": "ced6e6b3155fbb97146f5d35e3b534918ed43256",
+  "freeze_commit": "946373c179a1ee313a3c66ecc90a3f53a0881324",
+  "frozen_gate_sha256": "4dcd64dc1681e34841b01c54f050b002efd7702ae68d693886496e1a414f4a76",
+  "frozen_at_utc": "2026-09-15T14:18:21.885256+00:00",
+  "holdout_opening": {
+    "opening_started_utc": "2026-09-15T14:22:54.257806+00:00",
+    "remote_freeze_commit": "946373c179a1ee313a3c66ecc90a3f53a0881324",
+    "frozen_gate_sha256": "4dcd64dc1681e34841b01c54f050b002efd7702ae68d693886496e1a414f4a76",
+    "preholdout_replay": "PASS",
+    "command": "python build_cache.py --holdout; python confidence_surface.py evaluate"
+  },
+  "holdout_zip_sha256": "95c8fcf4637e1fb3dbe81e4f6892a2bb8eb8e697c5ca114e8813ba0eae91ea5b",
+  "inputs": [
+    {
+      "file": "OMEGAS_Sessao_2026-07-23_20-22.zip",
+      "sha256": "c558ed77c3599005dc222576f8d59093a8d1637682d717c7b29705d8e80f0cf7",
+      "role": "preholdout",
+      "session": "session_2026-07-23_20-22-36_751ffb48",
+      "createdAtUtc": "2026-07-23T23:22:36.195Z",
+      "createdAtMs": 1784848956195,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 2494737782,
+          "bytes": 66938510,
+          "cache_key": "db21ebf5417feed96b987a92d4fd787fe2a417c41df12bdeebd06bb2abbae322",
+          "cache_sha256": "7ff062f3f5c0ea2fa56ce0d4333ad951bd9562012b8ad582ca1231430f4e42fc"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 4166203190,
+          "bytes": 21895834,
+          "cache_key": "e4e9028f7ae9db8c976b8a26ee730378edb4951ded8ea88b9e98e89a4560b874",
+          "cache_sha256": "96b185468ad973fd346ac2b7c149ac25793d4dfc22afff4c96adb615c04c5d7b"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 328,
+      "merged_session_gasoline_regions": 18,
+      "independence_unit": "session_2026-07-23_20-22-36_751ffb48",
+      "gasolina": {
+        "frames": 1482,
+        "rpm_min": 827.0,
+        "rpm_max": 3186.0,
+        "map_min": 0.168,
+        "map_max": 0.962,
+        "regions": 136
+      },
+      "gnv": {
+        "frames": 7778,
+        "rpm_min": 541.0,
+        "rpm_max": 3536.0,
+        "map_min": 0.178,
+        "map_max": 0.982,
+        "regions": 514
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-09_20-33.zip",
+      "sha256": "f0fbc966cbab05083a0b6bacdae8bcca631308501ddce3b78a7ac812d554088e",
+      "role": "preholdout",
+      "session": "session_2026-08-09_20-33-16_2e14d32b",
+      "createdAtUtc": "2026-08-09T23:33:16.988Z",
+      "createdAtMs": 1786318396988,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 557820758,
+          "bytes": 14833730,
+          "cache_key": "b46bc457a5e98607de5f4d9e51f26f6d9a53fee46df048f58e7c46a6acf9146a",
+          "cache_sha256": "f0243ff289b6ab8d6c6e2e48783d52eaf1187ceb029e8c26b1072e4243011091"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 31,
+      "merged_session_gasoline_regions": 22,
+      "independence_unit": "session_2026-08-09_20-33-16_2e14d32b",
+      "gasolina": {
+        "frames": 346,
+        "rpm_min": 869.0,
+        "rpm_max": 3543.0,
+        "map_min": 0.158,
+        "map_max": 0.972,
+        "regions": 176
+      },
+      "gnv": {
+        "frames": 5505,
+        "rpm_min": 623.0,
+        "rpm_max": 4950.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 776
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-11_10-26.zip",
+      "sha256": "8b7c555c3eb4dec4ef854962840527acef7b1fb62227c36e419b879a16acc536",
+      "role": "preholdout",
+      "session": "session_2026-08-11_10-26-37_ac62d9ea",
+      "createdAtUtc": "2026-08-11T13:26:37.008Z",
+      "createdAtMs": 1786454797008,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 399911021,
+          "bytes": 13078579,
+          "cache_key": "00c762d58ded7a6a7431d18827c4ce37129fe31929c02a0b368265d73e74fa96",
+          "cache_sha256": "55934c2596074ea95db03d2e0810d5013188125c48a607de85706538ab7fcd9c"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-11_10-26-37_ac62d9ea",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 258,
+        "rpm_min": 801.0,
+        "rpm_max": 2170.0,
+        "map_min": 0.315,
+        "map_max": 0.854,
+        "regions": 81
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-14_16-45.zip",
+      "sha256": "02e373019dcfb98151143800b8e39c4ec4ec33cf8c3832f579bbbc1b1a8b3d4f",
+      "role": "preholdout",
+      "session": "session_2026-08-14_16-45-40_807d2a20",
+      "createdAtUtc": "2026-08-14T19:45:40.671Z",
+      "createdAtMs": 1786736740671,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 231139196,
+          "bytes": 63147984,
+          "cache_key": "6bf8b37a5e80e6646dce2fe42e60f27c592ab2b923782776353d746633edfb51",
+          "cache_sha256": "4dcc9ecda21c300f5648b59e4b336da81bfc1f2027ed8cf2d2be65b76b60bff4"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 50,
+      "merged_session_gasoline_regions": 14,
+      "independence_unit": "session_2026-08-14_16-45-40_807d2a20",
+      "gasolina": {
+        "frames": 339,
+        "rpm_min": 853.0,
+        "rpm_max": 3396.0,
+        "map_min": 0.158,
+        "map_max": 0.982,
+        "regions": 188
+      },
+      "gnv": {
+        "frames": 19565,
+        "rpm_min": 567.0,
+        "rpm_max": 5647.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 939
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-14_23-27 (2).zip",
+      "sha256": "d30f27d80dc9eef6c905afea39f78eb9cd626f3feb8fcb2e8dd27631b6da2657",
+      "role": "preholdout",
+      "session": "session_2026-08-14_23-34-20_807d2a20",
+      "createdAtUtc": "2026-08-15T02:34:20.388Z",
+      "createdAtMs": 1786761260388,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 840757146,
+          "bytes": 10905173,
+          "cache_key": "0a1c573755680b3400f1f9b39c142048ae6abb2fd9d61e984f1aecb7da82f406",
+          "cache_sha256": "fc3f798e2314dfcc569bc854b9552d51b19d3ca8b2ea4cc27a2b68629675936b"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 2082,
+      "merged_session_gasoline_regions": 4,
+      "independence_unit": "session_2026-08-14_23-34-20_807d2a20",
+      "gasolina": {
+        "frames": 2464,
+        "rpm_min": 860.0,
+        "rpm_max": 977.0,
+        "map_min": 0.384,
+        "map_max": 0.472,
+        "regions": 6
+      },
+      "gnv": {
+        "frames": 2019,
+        "rpm_min": 779.0,
+        "rpm_max": 3467.0,
+        "map_min": 0.217,
+        "map_max": 0.992,
+        "regions": 172
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-15_00-07 (2).zip",
+      "sha256": "1d10432e07e2af6eb2179828d09ffe1ee7c426e0801d039452626a577bd41c82",
+      "role": "preholdout",
+      "session": "session_2026-08-15_00-53-18_807d2a20",
+      "createdAtUtc": "2026-08-15T03:53:18.553Z",
+      "createdAtMs": 1786765998553,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 736568811,
+          "bytes": 17303042,
+          "cache_key": "85c5d4f42e077bfa7697817497c2bc77dc157aba68a59ed54bbfe074c2e77be2",
+          "cache_sha256": "7cf82f5398c652a36edbd38243c0a7255414977771b3549b87265f25ca871807"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 279,
+      "merged_session_gasoline_regions": 2,
+      "independence_unit": "session_2026-08-15_00-53-18_807d2a20",
+      "gasolina": {
+        "frames": 337,
+        "rpm_min": 855.0,
+        "rpm_max": 881.0,
+        "map_min": 0.394,
+        "map_max": 0.423,
+        "regions": 2
+      },
+      "gnv": {
+        "frames": 6639,
+        "rpm_min": 596.0,
+        "rpm_max": 5410.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 705
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-15_00-53 (2).zip",
+      "sha256": "69d3ea44d797a50339a82b89a292d5765a2e875d558a44a30ae54275818cf121",
+      "role": "preholdout",
+      "session": "session_2026-08-15_00-53-18_807d2a20",
+      "createdAtUtc": "2026-08-15T03:53:18.553Z",
+      "createdAtMs": 1786765998553,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 736568811,
+          "bytes": 17303042,
+          "cache_key": "85c5d4f42e077bfa7697817497c2bc77dc157aba68a59ed54bbfe074c2e77be2"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 279,
+      "merged_session_gasoline_regions": 2,
+      "independence_unit": "session_2026-08-15_00-53-18_807d2a20",
+      "gasolina": {
+        "frames": 337,
+        "rpm_min": 855.0,
+        "rpm_max": 881.0,
+        "map_min": 0.394,
+        "map_max": 0.423,
+        "regions": 2
+      },
+      "gnv": {
+        "frames": 6639,
+        "rpm_min": 596.0,
+        "rpm_max": 5410.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 705
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-15_20-37.zip",
+      "sha256": "24873401063b9219ab6cb68d8d8fdd95ef017a837a57cb5456ba6575cff10ebf",
+      "role": "preholdout",
+      "session": "session_2026-08-15_20-37-25_f05aeb91",
+      "createdAtUtc": "2026-08-15T23:37:25.165Z",
+      "createdAtMs": 1786837045165,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 2326488830,
+          "bytes": 67108849,
+          "cache_key": "c7ff816dff723b77c56b7ff6b4d0df7a8044a2a5e666f335c89b10828b452ab3",
+          "cache_sha256": "c312440459fdcefd7e16d68edc7bc71bf565088a3a1d63d697c2bd894e871c1d"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 708424189,
+          "bytes": 67108764,
+          "cache_key": "d6c5af957a360e131a8da454d7822ba1d5325cf551d614a6540023eb60f70970",
+          "cache_sha256": "f3bc401d6ce5e9c44264c8053b9ba23e197d3ccd7316559bad93180bce376db4"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 1998029827,
+          "bytes": 67108713,
+          "cache_key": "277c39284d9e4e9da34e02ec096fbb2549edfc95df54f53dcdbd52647bedc3bd",
+          "cache_sha256": "7af39fb3110abdf312b640bd00d510a558d510644a490a7ba4e98050d163639f"
+        },
+        {
+          "name": "events_0004.jsonl",
+          "crc32": 2305802079,
+          "bytes": 67108665,
+          "cache_key": "0f41d59477d7bad1214752f98c1fff3fdbe0f61dd1f3dabc2372333a8aeeb713",
+          "cache_sha256": "ad427059d3ca1294488b59947c09db2a2a48466c2f00a4ee415c39f6bdc156e6"
+        },
+        {
+          "name": "events_0005.jsonl",
+          "crc32": 3070228254,
+          "bytes": 412,
+          "cache_key": "3a8146cae99f14f764eeb1f967ba52f6a95d80665901fb71412d1358a7659875",
+          "cache_sha256": "9b4fe2dcd7ed44ac1db05999778ff07c9b4b5604d63e2496881cd8f007d4be44"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-15_20-37-25_f05aeb91",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 6735,
+        "rpm_min": 582.0,
+        "rpm_max": 4866.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 771
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-15_21-50.zip",
+      "sha256": "13618c0ea69c266bc468feb0b7d49a8ea9d63fa772fe4569f52ba1d0f9633d4d",
+      "role": "preholdout",
+      "session": "session_2026-08-15_21-50-33_f05aeb91",
+      "createdAtUtc": "2026-08-16T00:50:33.594Z",
+      "createdAtMs": 1786841433594,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3970513444,
+          "bytes": 49996386,
+          "cache_key": "e33d9f1a1eb8b3c0b794767eddaf90e423cb469b8c72d9ffe17b31c9a373bd31",
+          "cache_sha256": "82d787c526a0365d95dd824b91e4e054d548b5eff48634f2acb4b828a359c805"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-15_21-50-33_f05aeb91",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 1290,
+        "rpm_min": 728.0,
+        "rpm_max": 4267.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 443
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-15_22-00 (3).zip",
+      "sha256": "a61f9b000f26612b21a66863408610767fce74847e15b9d8401e0c1d7f42ecce",
+      "role": "preholdout",
+      "session": "session_2026-08-15_22-00-45_f05aeb91",
+      "createdAtUtc": "2026-08-16T01:00:45.109Z",
+      "createdAtMs": 1786842045109,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 1127869536,
+          "bytes": 9858501,
+          "cache_key": "10ecea15a782790a8b42d6585cb0356f62d4ad46ae8dbf70b1591c7a4f78fe87",
+          "cache_sha256": "a68b112bbb099eff2b60729612e6e743bacf1eede6107956011ae25c756ce787"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1973826627,
+          "bytes": 25808323,
+          "cache_key": "4b4bcafd7aadb92ceecb9d018b369f59877764a533d5a36ac58f1b25c400e90b",
+          "cache_sha256": "b3766cd2fb74dad4cd6a0a299476d412eaab6110b9c63a86d11665d7ff363837"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 2140874439,
+          "bytes": 45689834,
+          "cache_key": "233c60bb90534de749331f391d299b2a6c14683f6649652e39e30cf19a1ab978",
+          "cache_sha256": "a14a4aac0670b8059702843bea1dfb9967fa7c24995c2b308290c669fa41bbfb"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-15_22-00-45_f05aeb91",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 2515,
+        "rpm_min": 699.0,
+        "rpm_max": 3590.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 206
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-15_22-00 (4).zip",
+      "sha256": "7c08172a727b3cdd32a89b970d096d921ed9487c9c49821d2c86927a779f2ce8",
+      "role": "preholdout",
+      "session": "session_2026-08-15_22-00-45_f05aeb91",
+      "createdAtUtc": "2026-08-16T01:00:45.109Z",
+      "createdAtMs": 1786842045109,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 1127869536,
+          "bytes": 9858501,
+          "cache_key": "10ecea15a782790a8b42d6585cb0356f62d4ad46ae8dbf70b1591c7a4f78fe87"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1973826627,
+          "bytes": 25808323,
+          "cache_key": "4b4bcafd7aadb92ceecb9d018b369f59877764a533d5a36ac58f1b25c400e90b"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 2140874439,
+          "bytes": 45689834,
+          "cache_key": "233c60bb90534de749331f391d299b2a6c14683f6649652e39e30cf19a1ab978"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-15_22-00-45_f05aeb91",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 2515,
+        "rpm_min": 699.0,
+        "rpm_max": 3590.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 206
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_10-05 (1).zip",
+      "sha256": "b3a11b08de319232075fc7db0235b24535c85b242ada21ad5557673e568d3030",
+      "role": "preholdout",
+      "session": "session_2026-08-17_10-05-54_0cab1f14",
+      "createdAtUtc": "2026-08-17T13:05:54.565Z",
+      "createdAtMs": 1786971954565,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 474275568,
+          "bytes": 67108850,
+          "cache_key": "b412b75287ac398d65556e270692c25e5f29cbc2c3a4cb9612d20d68dec47e58",
+          "cache_sha256": "7121c4d8a0465b38eee2b5ce9493ef777bb4a16c2f959dd35a702c0549da96a2"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 2216502893,
+          "bytes": 67108670,
+          "cache_key": "b9629ff3c1c7657d0b061cf41d2def55e4498ffdf3f9e36e853ec6d0dee530eb",
+          "cache_sha256": "cf97a6601632ca6572b7c68c80dddace2d7548a3d6a903abe84b2b7ddba10944"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 3204980289,
+          "bytes": 67108680,
+          "cache_key": "49860ab3e38cc16899532e10dcac8469f7e9112324ee0798d07c5f06b2dc2acf",
+          "cache_sha256": "4d11397411d8b0f9016ac56ee417d32dc91d169db6bee14a7e4320ab9ea23114"
+        },
+        {
+          "name": "events_0004.jsonl",
+          "crc32": 1663454053,
+          "bytes": 67108688,
+          "cache_key": "31c7e4c3f91b1edb560f72c5216bd7a4384127cfa7d91fe89b3b52f287f31cc6",
+          "cache_sha256": "88d87ca5bc0ac83f29524860cdbcebf17dd5611427bfd16050a3ce23ca269350"
+        },
+        {
+          "name": "events_0005.jsonl",
+          "crc32": 515354153,
+          "bytes": 408,
+          "cache_key": "66cc1f73d1ebf4a7d83723c383f345ee6072b86ef570a2869ef8f4029b9e5b04",
+          "cache_sha256": "33e8b6af69244ab73df7c5b894c79b9f23450a6ee21f40555a7512b339f4354f"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 1525,
+      "merged_session_gasoline_regions": 171,
+      "independence_unit": "session_2026-08-17_10-05-54_0cab1f14",
+      "gasolina": {
+        "frames": 4478,
+        "rpm_min": 682.0,
+        "rpm_max": 4198.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 558
+      },
+      "gnv": {
+        "frames": 1551,
+        "rpm_min": 588.0,
+        "rpm_max": 3543.0,
+        "map_min": 0.168,
+        "map_max": 0.982,
+        "regions": 157
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_10-05.zip",
+      "sha256": "b3a11b08de319232075fc7db0235b24535c85b242ada21ad5557673e568d3030",
+      "role": "preholdout",
+      "duplicate_of": "OMEGAS_Sessao_2026-08-17_10-05 (1).zip",
+      "session": "session_2026-08-17_10-05-54_0cab1f14",
+      "merged_session_useful_gasoline_frames": 1525,
+      "merged_session_gasoline_regions": 171,
+      "independence_unit": "session_2026-08-17_10-05-54_0cab1f14",
+      "gasolina": {
+        "frames": 4478,
+        "rpm_min": 682.0,
+        "rpm_max": 4198.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 558
+      },
+      "gnv": {
+        "frames": 1551,
+        "rpm_min": 588.0,
+        "rpm_max": 3543.0,
+        "map_min": 0.168,
+        "map_max": 0.982,
+        "regions": 157
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_12-58.zip",
+      "sha256": "bbe7db7d47c005a51de64639ade5414bfa2253430adc70c6e4d1481c1d46e983",
+      "role": "preholdout",
+      "session": "session_2026-08-17_12-58-00_0cab1f14",
+      "createdAtUtc": "2026-08-17T15:58:00.997Z",
+      "createdAtMs": 1786982280997,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3337312061,
+          "bytes": 67108717,
+          "cache_key": "a1f3529b17f64c1bddc84f6aaf883045582142a77248d09717a7ae6f5fce2d98",
+          "cache_sha256": "cb0d81cb0c1fa40751a722b0ba9719f07de9b536309c15440a5b2f32bcef2649"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1451813401,
+          "bytes": 67108815,
+          "cache_key": "79e311ce3ef6d792e1059dd2c3062f58a12f6c456e290ced476c7a046fb08e10",
+          "cache_sha256": "a9f68a57aa2ecc99cde32ad729d6836d2e920eb5b63db05f2766c75c4275c449"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 2234855833,
+          "bytes": 18983422,
+          "cache_key": "41d2f3f1b416d68d51d18395253eee0d3ed5a0245af59f1583554642314cfd87",
+          "cache_sha256": "dc59a3119e55ed250ea2a3b78456727baaaf945ff045b6affd2484c465904079"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 885,
+      "merged_session_gasoline_regions": 10,
+      "independence_unit": "session_2026-08-17_12-58-00_0cab1f14",
+      "gasolina": {
+        "frames": 1034,
+        "rpm_min": 860.0,
+        "rpm_max": 2920.0,
+        "map_min": 0.188,
+        "map_max": 0.992,
+        "regions": 51
+      },
+      "gnv": {
+        "frames": 2832,
+        "rpm_min": 660.0,
+        "rpm_max": 2928.0,
+        "map_min": 0.217,
+        "map_max": 0.992,
+        "regions": 191
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_13-44 (1).zip",
+      "sha256": "e2980e6a17402f2890818f2670f672715ada9092e172aa38a267707edf666fc2",
+      "role": "preholdout",
+      "session": "session_2026-08-17_13-44-44_0cab1f14",
+      "createdAtUtc": "2026-08-17T16:44:44.908Z",
+      "createdAtMs": 1786985084908,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3862625634,
+          "bytes": 67108731,
+          "cache_key": "01e7e9445bd8fe4aa6dfa2eeb5afb138d8c1d161ea8706b7d42d87fc2d2a2f4f",
+          "cache_sha256": "0e521eda2a2895fdb223b910f4e0c5df87a7bad9583592c57e1cfbbd977087fe"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 3859063640,
+          "bytes": 51246788,
+          "cache_key": "63b0fa56b772078cbcc41afd4194832d4bc5b4a6a1b61064ff21b717bf253e85",
+          "cache_sha256": "e6c44d4d8b1fd714d0fee0989d53514608798fa16c2dcf2a3e1e94cd13b6ed1a"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-17_13-44-44_0cab1f14",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 2518,
+        "rpm_min": 610.0,
+        "rpm_max": 4540.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 535
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_13-44.zip",
+      "sha256": "e2980e6a17402f2890818f2670f672715ada9092e172aa38a267707edf666fc2",
+      "role": "preholdout",
+      "duplicate_of": "OMEGAS_Sessao_2026-08-17_13-44 (1).zip",
+      "session": "session_2026-08-17_13-44-44_0cab1f14",
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-17_13-44-44_0cab1f14",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 2518,
+        "rpm_min": 610.0,
+        "rpm_max": 4540.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 535
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_14-01 (1) (1).zip",
+      "sha256": "136b0c6a9e3d2da6fe1a553b29bb84875c5328bd034f1ed9e5df8fbbd8f8b86e",
+      "role": "preholdout",
+      "session": "session_2026-08-17_14-01-20_0cab1f14",
+      "createdAtUtc": "2026-08-17T17:01:20.219Z",
+      "createdAtMs": 1786986080219,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 1012555065,
+          "bytes": 67108837,
+          "cache_key": "e58b92139f2ee3acd7a2e3c57ba903a5e797abc93bcd595c8447bd1c8605318e",
+          "cache_sha256": "36e90bde1d0a4ca3a0f1ce75b3a5cffb443d2c01681b67a9aa32a6c3e6fc5e68"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1493129747,
+          "bytes": 67108331,
+          "cache_key": "ccacf086e1d587ad8626a0b7b76812068fc1ed2a93afdbed4ac8a0e364f9d465",
+          "cache_sha256": "13a58134614f212ad7609177b1b60d824e63d5ab99fb6c7fc2ad5cc420587408"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 3281338786,
+          "bytes": 67108788,
+          "cache_key": "7ad803573d7868949a5969aaf079f09f49b81539d614d4338a9ddee62f454422",
+          "cache_sha256": "9099e29bb5d538a40974d8bde68b9b0cad7864c3a6d215e56deeda9336968fdf"
+        },
+        {
+          "name": "events_0004.jsonl",
+          "crc32": 4291418680,
+          "bytes": 67108795,
+          "cache_key": "21877a08a14c646d315d62834232af8837cb894077b19798368d8cbb37619800",
+          "cache_sha256": "16677e5d8be9baf135cd39f346af77f626236c49d07b111999424bebaa9dbf53"
+        },
+        {
+          "name": "events_0005.jsonl",
+          "crc32": 784657431,
+          "bytes": 612,
+          "cache_key": "7d4cc4677bec4d8f8ea8c23491f35cd7b0e46eccde2bc26328a33722db956a7a",
+          "cache_sha256": "f9a68c9035caf32c7412bb99749122d8f52289443a2ea0647040e16917dfe588"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 73,
+      "merged_session_gasoline_regions": 14,
+      "independence_unit": "session_2026-08-17_14-01-20_0cab1f14",
+      "gasolina": {
+        "frames": 218,
+        "rpm_min": 838.0,
+        "rpm_max": 3408.0,
+        "map_min": 0.178,
+        "map_max": 0.992,
+        "regions": 119
+      },
+      "gnv": {
+        "frames": 6492,
+        "rpm_min": 552.0,
+        "rpm_max": 4422.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 692
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_14-01 (1).zip",
+      "sha256": "136b0c6a9e3d2da6fe1a553b29bb84875c5328bd034f1ed9e5df8fbbd8f8b86e",
+      "role": "preholdout",
+      "duplicate_of": "OMEGAS_Sessao_2026-08-17_14-01 (1) (1).zip",
+      "session": "session_2026-08-17_14-01-20_0cab1f14",
+      "merged_session_useful_gasoline_frames": 73,
+      "merged_session_gasoline_regions": 14,
+      "independence_unit": "session_2026-08-17_14-01-20_0cab1f14",
+      "gasolina": {
+        "frames": 218,
+        "rpm_min": 838.0,
+        "rpm_max": 3408.0,
+        "map_min": 0.178,
+        "map_max": 0.992,
+        "regions": 119
+      },
+      "gnv": {
+        "frames": 6492,
+        "rpm_min": 552.0,
+        "rpm_max": 4422.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 692
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_18-27 (2).zip",
+      "sha256": "0cda061aeb9ef3ab9b78677d0213390c0894628ecc5ac8975966794413d91e76",
+      "role": "preholdout",
+      "session": "session_2026-08-17_18-27-38_4156d399",
+      "createdAtUtc": "2026-08-17T21:27:38.519Z",
+      "createdAtMs": 1787002058519,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3877794888,
+          "bytes": 26108309,
+          "cache_key": "604fc636af7aeeecd185810f24686b6cea1c71d2be247883623ac705c9b1c898",
+          "cache_sha256": "58b7e28f34945db0d43d69352081dee92babe6010addba7bf9f8fc6626883203"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-17_18-27-38_4156d399",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 10942,
+        "rpm_min": 558.0,
+        "rpm_max": 4465.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 913
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-17_19-22.zip",
+      "sha256": "9041fc6a2dac61c3d30711401cea0bef2f7d8d2834ab06e83b61945136c5103f",
+      "role": "preholdout",
+      "session": "session_2026-08-17_19-22-57_4156d399",
+      "createdAtUtc": "2026-08-17T22:22:57.357Z",
+      "createdAtMs": 1787005377357,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3148278237,
+          "bytes": 22731688,
+          "cache_key": "999b9cc47207ea7a43b27c0daaf57975c5fccd56f5548b617a17a597b5276f62",
+          "cache_sha256": "683b63d9d20cc0997bd1a071ca550bd61197503db2074eae012542a2ba6571a5"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 87,
+      "merged_session_gasoline_regions": 14,
+      "independence_unit": "session_2026-08-17_19-22-57_4156d399",
+      "gasolina": {
+        "frames": 965,
+        "rpm_min": 631.0,
+        "rpm_max": 3941.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 379
+      },
+      "gnv": {
+        "frames": 8160,
+        "rpm_min": 576.0,
+        "rpm_max": 5312.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 733
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-20_13-21.zip",
+      "sha256": "d237278418952cf115791765762cda0d5970956afd0d89a4395ad82517e2f4ad",
+      "role": "preholdout",
+      "session": "session_2026-08-20_13-21-58_87a871f9",
+      "createdAtUtc": "2026-08-20T16:21:58.223Z",
+      "createdAtMs": 1787242918223,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 2004744980,
+          "bytes": 41527700,
+          "cache_key": "25a671f5bba96616507ce8957b781746859e31673834e854b270c01271cc18fb",
+          "cache_sha256": "c42cde222f0f390ec1ef830c52934e8b8ad378eca865d9bc6a6b512eb15d74c8"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-08-20_13-21-58_87a871f9",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 18085,
+        "rpm_min": 514.0,
+        "rpm_max": 3999.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 737
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-08-29_16-30.zip",
+      "sha256": "7b3b1ed4214635e4a190a50ff004a78ec819a7b9e8c056db7563c819de218c61",
+      "role": "preholdout",
+      "session": "session_2026-08-29_16-30-22_3747b934",
+      "createdAtUtc": "2026-08-29T19:30:22.320Z",
+      "createdAtMs": 1788031822320,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 4080141518,
+          "bytes": 29172804,
+          "cache_key": "93d0d885d1c7b47df624e5ce13e918f386f97e450aefe706ceca7e644940abee",
+          "cache_sha256": "debd10b83a5e79ef80e30664cd2404e86e06957056742f020fdfd89b94492547"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 2337,
+      "merged_session_gasoline_regions": 11,
+      "independence_unit": "session_2026-08-29_16-30-22_3747b934",
+      "gasolina": {
+        "frames": 3801,
+        "rpm_min": 769.0,
+        "rpm_max": 3634.0,
+        "map_min": 0.168,
+        "map_max": 0.972,
+        "regions": 123
+      },
+      "gnv": {
+        "frames": 7726,
+        "rpm_min": 527.0,
+        "rpm_max": 5642.0,
+        "map_min": 0.149,
+        "map_max": 0.992,
+        "regions": 1038
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-09-13_17-17.zip",
+      "sha256": "708ba1ee06ef3d75ec474e3f72d95addf98a5fc9c38fcd4943adcf09445a1d78",
+      "role": "preholdout",
+      "session": "session_2026-09-13_17-17-10_39ae26a4",
+      "createdAtUtc": "2026-09-13T20:17:10.181Z",
+      "createdAtMs": 1789330630181,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 104725384,
+          "bytes": 27230106,
+          "cache_key": "8e7bb7d2bbcb5a75bab185b2ce912d6dceeb4a5744ad7ef80e951a6f313572a1",
+          "cache_sha256": "16f98a37b468bf9852504ae0302053db206d7afd703f15f88bf2cfbca2f9af64"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-09-13_17-17-10_39ae26a4",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 10899,
+        "rpm_min": 458.0,
+        "rpm_max": 5378.0,
+        "map_min": 0.149,
+        "map_max": 0.992,
+        "regions": 1013
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-09-13_18-14 (1) (1).zip",
+      "sha256": "1a8d46d002b3ee015e406f2413b4a2bc816a848b7af219c745439bce68f0f7af",
+      "role": "preholdout",
+      "session": "session_2026-09-13_18-14-47_39ae26a4",
+      "createdAtUtc": "2026-09-13T21:14:47.010Z",
+      "createdAtMs": 1789334087010,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 1032517114,
+          "bytes": 20507265,
+          "cache_key": "96a88a76da0b9e5385694ca8bf9b6c12779f28b3df57ca6166467922ab43834e",
+          "cache_sha256": "40e136f52a4f734711590d5882f2f57ba24afba88a2fd1004888caa4abb9e677"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 3841396245,
+          "bytes": 32760871,
+          "cache_key": "3e26922b6c9332390839426c697cfdf78ca42c4d847beee72daf8adb3ff559f5",
+          "cache_sha256": "249c018643b79ad939a12b7460766de5ceb5deb96270ee8a94fc1335e0d478ee"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 461,
+      "merged_session_gasoline_regions": 4,
+      "independence_unit": "session_2026-09-13_18-14-47_39ae26a4",
+      "gasolina": {
+        "frames": 504,
+        "rpm_min": 861.0,
+        "rpm_max": 885.0,
+        "map_min": 0.384,
+        "map_max": 0.452,
+        "regions": 4
+      },
+      "gnv": {
+        "frames": 2790,
+        "rpm_min": 571.0,
+        "rpm_max": 3872.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 388
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-09-13_18-14 (1) (2).zip",
+      "sha256": "1a8d46d002b3ee015e406f2413b4a2bc816a848b7af219c745439bce68f0f7af",
+      "role": "preholdout",
+      "duplicate_of": "OMEGAS_Sessao_2026-09-13_18-14 (1) (1).zip",
+      "session": "session_2026-09-13_18-14-47_39ae26a4",
+      "merged_session_useful_gasoline_frames": 461,
+      "merged_session_gasoline_regions": 4,
+      "independence_unit": "session_2026-09-13_18-14-47_39ae26a4",
+      "gasolina": {
+        "frames": 504,
+        "rpm_min": 861.0,
+        "rpm_max": 885.0,
+        "map_min": 0.384,
+        "map_max": 0.452,
+        "regions": 4
+      },
+      "gnv": {
+        "frames": 2790,
+        "rpm_min": 571.0,
+        "rpm_max": 3872.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 388
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-09-13_18-14 (1).zip",
+      "sha256": "1a8d46d002b3ee015e406f2413b4a2bc816a848b7af219c745439bce68f0f7af",
+      "role": "preholdout",
+      "duplicate_of": "OMEGAS_Sessao_2026-09-13_18-14 (1) (1).zip",
+      "session": "session_2026-09-13_18-14-47_39ae26a4",
+      "merged_session_useful_gasoline_frames": 461,
+      "merged_session_gasoline_regions": 4,
+      "independence_unit": "session_2026-09-13_18-14-47_39ae26a4",
+      "gasolina": {
+        "frames": 504,
+        "rpm_min": 861.0,
+        "rpm_max": 885.0,
+        "map_min": 0.384,
+        "map_max": 0.452,
+        "regions": 4
+      },
+      "gnv": {
+        "frames": 2790,
+        "rpm_min": 571.0,
+        "rpm_max": 3872.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 388
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-09-13_18-14.zip",
+      "sha256": "8762380431f86390d64d218759d63a66b08f76ceb20d3eb11bd73fe4adcdc240",
+      "role": "preholdout",
+      "session": "session_2026-09-13_18-14-47_39ae26a4",
+      "createdAtUtc": "2026-09-13T21:14:47.010Z",
+      "createdAtMs": 1789334087010,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 1032517114,
+          "bytes": 20507265,
+          "cache_key": "96a88a76da0b9e5385694ca8bf9b6c12779f28b3df57ca6166467922ab43834e"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 461,
+      "merged_session_gasoline_regions": 4,
+      "independence_unit": "session_2026-09-13_18-14-47_39ae26a4",
+      "gasolina": {
+        "frames": 504,
+        "rpm_min": 861.0,
+        "rpm_max": 885.0,
+        "map_min": 0.384,
+        "map_max": 0.452,
+        "regions": 4
+      },
+      "gnv": {
+        "frames": 2790,
+        "rpm_min": 571.0,
+        "rpm_max": 3872.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 388
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-09-13_19-12.zip",
+      "sha256": "2a64a6cfc5754cc8c3daaee867a9d117575a04d8147cbc02176d21c193eba9b1",
+      "role": "preholdout",
+      "session": "session_2026-09-13_19-12-14_39ae26a4",
+      "createdAtUtc": "2026-09-13T22:12:14.043Z",
+      "createdAtMs": 1789337534043,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 4261119239,
+          "bytes": 67108772,
+          "cache_key": "a79a95819700264f0132219cc9a5ae53003e6524dccc9315cbc5a3aa4d811bf9",
+          "cache_sha256": "96491ffae68d203a13802fc8e181c0e6a20dde74f00d7913e8bb00ab41e97957"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 3125145141,
+          "bytes": 67108765,
+          "cache_key": "e1f5a5ce5a77a58d783c158f10ef8ab2c290d60861c18011d97eef48d5a88a57",
+          "cache_sha256": "34d6ff406f70f95d1a2bd3c22f9cd19e3e2929d24dcdcc48accaf7a73b76e2ba"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 3117155623,
+          "bytes": 67108796,
+          "cache_key": "581084b84e4a0f42f7ded69c94cb405b6e92599a35e63d9fd8baab1a8e9161e1",
+          "cache_sha256": "fb6a8a3f861e31c487bb268ab56c3b0efeaa6cd2ee0225e3b7765282f1162f86"
+        },
+        {
+          "name": "events_0004.jsonl",
+          "crc32": 3410595654,
+          "bytes": 34424205,
+          "cache_key": "043d7ab4b97960375e475dd3e98d15e00b8c4abc3f03eb116abb221ff1fbb96e",
+          "cache_sha256": "5c7379eaebbf700015510e8f8cafe271d6565df682722f576094526878f7a762"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 390,
+      "merged_session_gasoline_regions": 5,
+      "independence_unit": "session_2026-09-13_19-12-14_39ae26a4",
+      "gasolina": {
+        "frames": 680,
+        "rpm_min": 775.0,
+        "rpm_max": 1073.0,
+        "map_min": 0.335,
+        "map_max": 0.492,
+        "regions": 17
+      },
+      "gnv": {
+        "frames": 869,
+        "rpm_min": 836.0,
+        "rpm_max": 1519.0,
+        "map_min": 0.296,
+        "map_max": 0.747,
+        "regions": 37
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_session_2026-07-18_23-11-29_91590054.zip",
+      "sha256": "70e0cb4399385f69d91bbca3e74031ede85a382466bd64cd02c508bb2a951d4e",
+      "role": "preholdout",
+      "session": "session_2026-07-18_23-11-29_91590054",
+      "createdAtUtc": "2026-07-19T02:11:29.544Z",
+      "createdAtMs": 1784427089544,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 2569592183,
+          "bytes": 17474598,
+          "cache_key": "f2f011cc0d44e85cc9c6cc0a9819751d8526a291502c9a9f1525a50895787c5a",
+          "cache_sha256": "e0ddee563eacb746d247ebf473ebf11ac8441a49793aeb4a914cec8423bd4d65"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-07-18_23-11-29_91590054",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      }
+    },
+    {
+      "file": "gasolina casa ponto.zip",
+      "sha256": "9ec43fd47ab7e5e9d462d27d5d66ecccf4ad0f8b564a05351098d8740ff62703",
+      "role": "preholdout",
+      "session": "session_2026-07-19_11-04-09_3305e35a",
+      "createdAtUtc": "2026-07-19T14:04:09.624Z",
+      "createdAtMs": 1784469849624,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 2890902169,
+          "bytes": 67108768,
+          "cache_key": "effb4c3266e3de93d364b371ff4c1a21307d5972d14e0872f4d945575a39f331",
+          "cache_sha256": "8587f6203bc08d2da60a2044ca5bf41991533c4f5a7cb1169425177e0c9581f7"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1119820614,
+          "bytes": 5719194,
+          "cache_key": "7342901ed68b37f967d0b748929c94316e066f2d2df2aa7a384d2fdd6248dbd8",
+          "cache_sha256": "94b12b766a187aeaeef7f52d1b0e0be54fa267993abfd829688f00c97f57af78"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 1449,
+      "merged_session_gasoline_regions": 6,
+      "independence_unit": "session_2026-07-19_11-04-09_3305e35a",
+      "gasolina": {
+        "frames": 4583,
+        "rpm_min": 803.0,
+        "rpm_max": 1563.0,
+        "map_min": 0.286,
+        "map_max": 0.521,
+        "regions": 33
+      },
+      "gnv": {
+        "frames": 2540,
+        "rpm_min": 600.0,
+        "rpm_max": 2165.0,
+        "map_min": 0.286,
+        "map_max": 0.992,
+        "regions": 72
+      }
+    },
+    {
+      "file": "itaigara.zip",
+      "sha256": "36503ec7a968e6478dcec4b533c6ad49428c3ecd2bf4a04609511566d9b3fbc8",
+      "role": "preholdout",
+      "session": "session_2026-08-12_17-30-32_5f1af7df",
+      "createdAtUtc": "2026-08-12T20:30:32.965Z",
+      "createdAtMs": 1786566632965,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3585584128,
+          "bytes": 53349287,
+          "cache_key": "9afe7e25466dfb40ba611eddb038a1889a20c266f8d1554e325d9aaafee0e8fe",
+          "cache_sha256": "8775a83ce06b4d82813ac5ef7a5fcf345287501a7a743c192da9c068f46aacb4"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 1216,
+      "merged_session_gasoline_regions": 26,
+      "independence_unit": "session_2026-08-12_17-30-32_5f1af7df",
+      "gasolina": {
+        "frames": 2000,
+        "rpm_min": 727.0,
+        "rpm_max": 4236.0,
+        "map_min": 0.149,
+        "map_max": 0.992,
+        "regions": 389
+      },
+      "gnv": {
+        "frames": 18194,
+        "rpm_min": 572.0,
+        "rpm_max": 4230.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 909
+      }
+    },
+    {
+      "file": "lauro.zip",
+      "sha256": "d8221167e37f858dbbe4726b49f80859ac3c1921a2c268f04002fba4da5c5b09",
+      "role": "preholdout",
+      "session": "session_2026-08-09_20-33-16_2e14d32b",
+      "createdAtUtc": "2026-08-09T23:33:16.988Z",
+      "createdAtMs": 1786318396988,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 557820758,
+          "bytes": 14833730,
+          "cache_key": "b46bc457a5e98607de5f4d9e51f26f6d9a53fee46df048f58e7c46a6acf9146a"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1798769676,
+          "bytes": 125714,
+          "cache_key": "b31fcd5188b4a8e77edad37572f0041ca3692dabff5c91667f435bddb94da4b4",
+          "cache_sha256": "ad0724829f85789ae8a19444bdc9983f6c72488fa8d59c20b2cb42193e2c17b0"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 31,
+      "merged_session_gasoline_regions": 22,
+      "independence_unit": "session_2026-08-09_20-33-16_2e14d32b",
+      "gasolina": {
+        "frames": 346,
+        "rpm_min": 869.0,
+        "rpm_max": 3543.0,
+        "map_min": 0.158,
+        "map_max": 0.972,
+        "regions": 176
+      },
+      "gnv": {
+        "frames": 5505,
+        "rpm_min": 623.0,
+        "rpm_max": 4950.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 776
+      }
+    },
+    {
+      "file": "quarta.zip",
+      "sha256": "b2b0ffa392d785aa9f9c4a53786b68b0249b43725efbe6cd86c235704fe42359",
+      "role": "preholdout",
+      "session": "session_2026-08-12_11-44-08_5f1af7df",
+      "createdAtUtc": "2026-08-12T14:44:08.524Z",
+      "createdAtMs": 1786545848524,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 2009599544,
+          "bytes": 29359817,
+          "cache_key": "496028ee3916b84d504a3b087c96a4643865a7f48895ea5a541bad7b10159efc",
+          "cache_sha256": "bb080fb12be254da8d3a926fe8ee85a8a2d25084610cd1695abaeb20b437b73c"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 2902,
+      "merged_session_gasoline_regions": 13,
+      "independence_unit": "session_2026-08-12_11-44-08_5f1af7df",
+      "gasolina": {
+        "frames": 3195,
+        "rpm_min": 814.0,
+        "rpm_max": 3928.0,
+        "map_min": 0.158,
+        "map_max": 0.982,
+        "regions": 123
+      },
+      "gnv": {
+        "frames": 7838,
+        "rpm_min": 516.0,
+        "rpm_max": 3957.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 393
+      }
+    },
+    {
+      "file": "sessao gnv barra.zip",
+      "sha256": "17a6695f9f4c2ac7ccdb119f779a50415acae4fec67a3866d17749df7f3d808b",
+      "role": "preholdout",
+      "session": "session_2026-07-20_14-11-47_1c405785",
+      "createdAtUtc": "2026-07-20T17:11:47.639Z",
+      "createdAtMs": 1784567507639,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 236598981,
+          "bytes": 67098265,
+          "cache_key": "1ed99ea47ceecd32edb1a13d1c7f831f70a67b6a135ad87f1f53185cedfbba91",
+          "cache_sha256": "940e77d016fbf8fd86a60515b8de027a71d81d112223c36a18617af1974a6a47"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1489644693,
+          "bytes": 159868,
+          "cache_key": "e1497142f517485c659c1937a3bba6d46a2f58b3439ec5097e5ed50ee42d6734",
+          "cache_sha256": "5d696390fc4ec2580e4f7612ba0db9d9f0bc42aefbdcc321476c06bdae4ac9d8"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 0,
+      "merged_session_gasoline_regions": 0,
+      "independence_unit": "session_2026-07-20_14-11-47_1c405785",
+      "gasolina": {
+        "frames": 0,
+        "rpm_min": null,
+        "rpm_max": null,
+        "map_min": null,
+        "map_max": null,
+        "regions": 0
+      },
+      "gnv": {
+        "frames": 2390,
+        "rpm_min": 645.0,
+        "rpm_max": 4909.0,
+        "map_min": 0.158,
+        "map_max": 0.982,
+        "regions": 594
+      }
+    },
+    {
+      "file": "stels.zip",
+      "sha256": "25620d2ed6f2d5b0aa0518480623d5c65c9aa30b6275dcb92c353337780a7b56",
+      "role": "preholdout",
+      "session": "session_2026-08-09_19-44-38_2e14d32b",
+      "createdAtUtc": "2026-08-09T22:44:38.586Z",
+      "createdAtMs": 1786315478586,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 679460827,
+          "bytes": 24746161,
+          "cache_key": "5f296c301323a892f17bb287fc4ac8d65efcbcf4426dc77f428c98b0dec607b8",
+          "cache_sha256": "1621c393cd80bfe578b02bf2ba79c7352925960d11daa1dd8423c1b90b5c07bf"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 694,
+      "merged_session_gasoline_regions": 29,
+      "independence_unit": "session_2026-08-09_19-44-38_2e14d32b",
+      "gasolina": {
+        "frames": 1520,
+        "rpm_min": 579.0,
+        "rpm_max": 3834.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 427
+      },
+      "gnv": {
+        "frames": 8176,
+        "rpm_min": 543.0,
+        "rpm_max": 5395.0,
+        "map_min": 0.158,
+        "map_max": 0.992,
+        "regions": 958
+      }
+    },
+    {
+      "file": "unknow.zip",
+      "sha256": "d8f412ce8a50315e328c1e88c6894b124f4fb014b00f6b018fd2c3ebf5123445",
+      "role": "preholdout",
+      "session": "session_2026-08-12_17-30-32_5f1af7df",
+      "createdAtUtc": "2026-08-12T20:30:32.965Z",
+      "createdAtMs": 1786566632965,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3585584128,
+          "bytes": 53349287,
+          "cache_key": "9afe7e25466dfb40ba611eddb038a1889a20c266f8d1554e325d9aaafee0e8fe"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 3046847062,
+          "bytes": 277639,
+          "cache_key": "20df872653f79f90575e398a8034c1028112c293ed0571070664957427c7da49",
+          "cache_sha256": "ddd30d4e11717d0a9d8d4ee6af4c0fdbdac4db1e26df876c27749210af3e3004"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 1216,
+      "merged_session_gasoline_regions": 26,
+      "independence_unit": "session_2026-08-12_17-30-32_5f1af7df",
+      "gasolina": {
+        "frames": 2000,
+        "rpm_min": 727.0,
+        "rpm_max": 4236.0,
+        "map_min": 0.149,
+        "map_max": 0.992,
+        "regions": 389
+      },
+      "gnv": {
+        "frames": 18194,
+        "rpm_min": 572.0,
+        "rpm_max": 4230.0,
+        "map_min": 0.168,
+        "map_max": 0.992,
+        "regions": 909
+      }
+    },
+    {
+      "file": "OMEGAS_Sessao_2026-09-13_21-25.zip",
+      "sha256": "95c8fcf4637e1fb3dbe81e4f6892a2bb8eb8e697c5ca114e8813ba0eae91ea5b",
+      "role": "holdout",
+      "session": "session_2026-09-13_21-25-05_39ae26a4",
+      "createdAtUtc": "2026-09-14T00:25:05.920Z",
+      "createdAtMs": 1789345505920,
+      "members": [
+        {
+          "name": "events_0001.jsonl",
+          "crc32": 3420898258,
+          "bytes": 67104705,
+          "cache_key": "fea517e416c02b5378824998b6f82760fa84b5c82cfa2a650822fbcd81e2a791",
+          "cache_sha256": "7249d4f989a76d713c2d6777f444cc93b1b10a4d605efb29bdbeb0e786fef688"
+        },
+        {
+          "name": "events_0002.jsonl",
+          "crc32": 1196596481,
+          "bytes": 67108829,
+          "cache_key": "3167a185e2b676fbac15fe68317b2f0aa749ac6c60a19d1ed18ea5eeb629e660",
+          "cache_sha256": "d6f700019258548da964f0f766265b5b6fa291e15f5cdc5a3c599db9bc541d2b"
+        },
+        {
+          "name": "events_0003.jsonl",
+          "crc32": 712648452,
+          "bytes": 67108691,
+          "cache_key": "835bc230c8a72e72ed00f21ebd8b70d8e3fa19e0cf032d4f383e658473c5b0d2",
+          "cache_sha256": "e1b18b46c3fd8ecc2c206544a00e0861466c52d95ca1172816f95f0869757f20"
+        },
+        {
+          "name": "events_0004.jsonl",
+          "crc32": 211457655,
+          "bytes": 67108713,
+          "cache_key": "aa03ff3b15730fbcf050d07454fb95d5dace1157c16e0b8f66a8350e202acf00",
+          "cache_sha256": "f60aa879c01d71e4a86f6d8d53089d555717ba83c6c7175fe6be45fbe261920f"
+        },
+        {
+          "name": "events_0005.jsonl",
+          "crc32": 2862344085,
+          "bytes": 4492,
+          "cache_key": "c1cd5df3e45a4620a6db364a015cb9faa34a97a9a884eec61b59e52d4d941266",
+          "cache_sha256": "e2b8596c6582fd09839b304fe30d601455f7edf51a84eafb7a165907cd8a264a"
+        }
+      ],
+      "merged_session_useful_gasoline_frames": 3104,
+      "merged_session_gasoline_regions": 220,
+      "independence_unit": "session_2026-09-13_21-25-05_39ae26a4",
+      "gasolina": {
+        "frames": 6775,
+        "rpm_min": 578.0,
+        "rpm_max": 4740.0,
+        "map_min": 0.149,
+        "map_max": 0.992,
+        "regions": 831
+      },
+      "gnv": {
+        "frames": 2,
+        "rpm_min": 3045.0,
+        "rpm_max": 3263.0,
+        "map_min": 0.678,
+        "map_max": 0.727,
+        "regions": 2
+      }
+    }
+  ],
+  "sources": [
+    {
+      "session": "session_2026-07-18_23-11-29_91590054",
+      "role": "preholdout",
+      "frames": 2041,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-07-19_11-04-09_3305e35a",
+      "role": "preholdout",
+      "frames": 7832,
+      "useful_gasoline_frames": 1449,
+      "regions": 6,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-07-20_14-11-47_1c405785",
+      "role": "preholdout",
+      "frames": 2667,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-07-23_20-22-36_751ffb48",
+      "role": "preholdout",
+      "frames": 9433,
+      "useful_gasoline_frames": 328,
+      "regions": 18,
+      "K_interventions_observed": [
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784849629101,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784849681379,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784849825071,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784849913883,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784849946392,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850022247,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850070307,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850198275,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850257635,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850308997,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850354358,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850596960,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850657075,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850815777,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850849334,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850889949,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784850966059,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851066042,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851074700,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851109389,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851149333,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851162544,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851196193,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851207745,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851218844,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851322847,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851396580,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851474650,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851544091,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851673580,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851682909,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851716438,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851786845,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1784851813447,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851814202,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1784851927525,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-09_19-44-38_2e14d32b",
+      "role": "preholdout",
+      "frames": 10398,
+      "useful_gasoline_frames": 694,
+      "regions": 29,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-09_20-33-16_2e14d32b",
+      "role": "preholdout",
+      "frames": 6516,
+      "useful_gasoline_frames": 31,
+      "regions": 22,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-11_10-26-37_ac62d9ea",
+      "role": "preholdout",
+      "frames": 554,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-12_11-44-08_5f1af7df",
+      "role": "preholdout",
+      "frames": 11371,
+      "useful_gasoline_frames": 2902,
+      "regions": 13,
+      "K_interventions_observed": [
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546070230,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546196587,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546279738,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786546356128,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786546517030,
+          "message": "CÃ©lula 1/1 â€¢ 175 â†’ 172"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786546517799,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "WRITING_POINT",
+          "updatedAt": 1786546623381,
+          "message": "Ponto 1/8 â€¢ 1.311 â†’ 1.111"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546625023,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546697649,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546798563,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546881025,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786546910844,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "WRITING_POINT",
+          "updatedAt": 1786546964875,
+          "message": "Ponto 1/2 â€¢ 0.971 â†’ 1.041"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786546965300,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786547020406,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786547102127,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786547229205,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786547260867,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786547313855,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786547400306,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786547622922,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786547721081,
+          "message": "CÃ©lula 10/16 â€¢ 169 â†’ 171"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786547724357,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786547750036,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786547762824,
+          "message": "CÃ©lula 1/16 â€¢ 166 â†’ 169"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786547769274,
+          "message": "CÃ©lula 12/16 â€¢ 169 â†’ 171"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786547771514,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786547802407,
+          "message": "CÃ©lula 1/16 â€¢ 169 â†’ 171"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786547808755,
+          "message": "CÃ©lula 14/16 â€¢ 171 â†’ 174"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786547810149,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786547843331,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786547861133,
+          "message": "CÃ©lula 8/8 â€¢ 169 â†’ 171"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786547861492,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786547994084,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786548309234,
+          "message": "CÃ©lula 7/12 â€¢ 172 â†’ 173"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786548314064,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786548665859,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786548739146,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786548795809,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786548862652,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786548970727,
+          "message": "Confirmando somente as linhas alteradas"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-12_17-30-32_5f1af7df",
+      "role": "preholdout",
+      "frames": 20595,
+      "useful_gasoline_frames": 1216,
+      "regions": 26,
+      "K_interventions_observed": [
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786566675731,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786568362659,
+          "message": "CÃ©lula 2/16 â€¢ 169 â†’ 172"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786568369225,
+          "message": "CÃ©lula 9/16 â€¢ 169 â†’ 172"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786568375375,
+          "message": "CÃ©lula 15/16 â€¢ 172 â†’ 173"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786568376691,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786568436866,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786568457006,
+          "message": "CÃ©lula 5/16 â€¢ 174 â†’ 177"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786568463196,
+          "message": "CÃ©lula 11/16 â€¢ 172 â†’ 173"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786568468634,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786568509881,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786568530078,
+          "message": "CÃ©lula 4/4 â€¢ 169 â†’ 172"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786568530755,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786568634842,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786568753790,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786568901067,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786569161245,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "WRITING_POINT",
+          "updatedAt": 1786569371302,
+          "message": "Ponto 2/7 â€¢ 1.302 â†’ 1.402"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786569373074,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786571936603,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786571999939,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786572151920,
+          "message": "Confirmando a curva completa"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-14_16-45-40_807d2a20",
+      "role": "preholdout",
+      "frames": 26793,
+      "useful_gasoline_frames": 50,
+      "regions": 14,
+      "K_interventions_observed": [
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1786742707313,
+          "message": "Confirmando a curva completa"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-14_23-34-20_807d2a20",
+      "role": "preholdout",
+      "frames": 4609,
+      "useful_gasoline_frames": 2082,
+      "regions": 4,
+      "K_interventions_observed": [
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786761493519,
+          "message": "CÃ©lula 1/1 â€¢ 180 â†’ 177"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786761494250,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786761514827,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786761568229,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786762304453,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1786762323477,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1786762542265,
+          "message": "CÃ©lula 3/3 â€¢ 181 â†’ 178"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-15_00-53-18_807d2a20",
+      "role": "preholdout",
+      "frames": 7195,
+      "useful_gasoline_frames": 279,
+      "regions": 2,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-15_20-37-25_f05aeb91",
+      "role": "preholdout",
+      "frames": 7145,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-15_21-50-33_f05aeb91",
+      "role": "preholdout",
+      "frames": 1379,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-15_22-00-45_f05aeb91",
+      "role": "preholdout",
+      "frames": 2517,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-17_10-05-54_0cab1f14",
+      "role": "preholdout",
+      "frames": 6048,
+      "useful_gasoline_frames": 1525,
+      "regions": 171,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-17_12-58-00_0cab1f14",
+      "role": "preholdout",
+      "frames": 3930,
+      "useful_gasoline_frames": 885,
+      "regions": 10,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-17_13-44-44_0cab1f14",
+      "role": "preholdout",
+      "frames": 2857,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-17_14-01-20_0cab1f14",
+      "role": "preholdout",
+      "frames": 6823,
+      "useful_gasoline_frames": 73,
+      "regions": 14,
+      "K_interventions_observed": [
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1786988343510,
+          "message": "Confirmando somente as linhas alteradas"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-17_18-27-38_4156d399",
+      "role": "preholdout",
+      "frames": 11271,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-17_19-22-57_4156d399",
+      "role": "preholdout",
+      "frames": 9300,
+      "useful_gasoline_frames": 87,
+      "regions": 14,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-20_13-21-58_87a871f9",
+      "role": "preholdout",
+      "frames": 18292,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-08-29_16-30-22_3747b934",
+      "role": "preholdout",
+      "frames": 12197,
+      "useful_gasoline_frames": 2337,
+      "regions": 11,
+      "K_interventions_observed": [
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034136679,
+          "message": "CÃ©lula 4/16 â€¢ 161 â†’ 158"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034142930,
+          "message": "CÃ©lula 11/16 â€¢ 153 â†’ 152"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034147586,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034160059,
+          "message": "CÃ©lula 4/16 â€¢ 163 â†’ 160"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034166102,
+          "message": "CÃ©lula 11/16 â€¢ 162 â†’ 159"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034171305,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034179024,
+          "message": "CÃ©lula 4/16 â€¢ 163 â†’ 160"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034185245,
+          "message": "CÃ©lula 9/16 â€¢ 157 â†’ 154"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034191332,
+          "message": "CÃ©lula 16/16 â€¢ 156 â†’ 153"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034203958,
+          "message": "CÃ©lula 7/16 â€¢ 160 â†’ 157"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034210054,
+          "message": "CÃ©lula 13/16 â€¢ 169 â†’ 166"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034213890,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1788034217291,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034471285,
+          "message": "CÃ©lula 11/16 â€¢ 154 â†’ 153"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034472570,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034483781,
+          "message": "CÃ©lula 5/16 â€¢ 154 â†’ 153"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034488279,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034497004,
+          "message": "CÃ©lula 1/16 â€¢ 156 â†’ 153"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034502452,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1788034508231,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034515654,
+          "message": "CÃ©lula 10/16 â€¢ 161 â†’ 158"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034521863,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034534697,
+          "message": "CÃ©lula 5/16 â€¢ 161 â†’ 158"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034540643,
+          "message": "CÃ©lula 12/16 â€¢ 163 â†’ 160"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034545041,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034560602,
+          "message": "CÃ©lula 8/16 â€¢ 160 â†’ 157"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034566868,
+          "message": "CÃ©lula 16/16 â€¢ 150 â†’ 153"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034567256,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034579131,
+          "message": "CÃ©lula 4/16 â€¢ 163 â†’ 160"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034585266,
+          "message": "CÃ©lula 11/16 â€¢ 158 â†’ 155"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034590264,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034600757,
+          "message": "CÃ©lula 2/16 â€¢ 161 â†’ 158"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034607009,
+          "message": "CÃ©lula 9/16 â€¢ 155 â†’ 153"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034613070,
+          "message": "CÃ©lula 15/16 â€¢ 158 â†’ 155"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034614858,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_WRITING",
+          "updatedAt": 1788034625998,
+          "message": "CÃ©lula 3/9 â€¢ 158 â†’ 155"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1788034632262,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1788034807323,
+          "message": "Confirmando a curva completa"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-09-13_17-17-10_39ae26a4",
+      "role": "preholdout",
+      "frames": 12044,
+      "useful_gasoline_frames": 0,
+      "regions": 0,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-09-13_18-14-47_39ae26a4",
+      "role": "preholdout",
+      "frames": 6137,
+      "useful_gasoline_frames": 461,
+      "regions": 4,
+      "K_interventions_observed": [],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-09-13_19-12-14_39ae26a4",
+      "role": "preholdout",
+      "frames": 5716,
+      "useful_gasoline_frames": 390,
+      "regions": 5,
+      "K_interventions_observed": [
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1789337850226,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1789338250533,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1789338346143,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1789338362909,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        },
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1789338506252,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1789338536643,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_VERIFYING_ROWS",
+          "updatedAt": 1789338678468,
+          "message": "Confirmando somente as linhas alteradas"
+        },
+        {
+          "kind": "k_write",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1789338689540,
+          "message": "AlteraÃ§Ãµes confirmadas sem parar a telemetria"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    },
+    {
+      "session": "session_2026-09-13_21-25-05_39ae26a4",
+      "role": "holdout",
+      "frames": 6777,
+      "useful_gasoline_frames": 3104,
+      "regions": 220,
+      "K_interventions_observed": [
+        {
+          "kind": "k_factor",
+          "state": "VERIFYING_FINAL",
+          "updatedAt": 1789347384675,
+          "message": "Confirmando a curva completa"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_CONFIRMED",
+          "updatedAt": 1789347460032,
+          "message": "K factor confirmado por ACK e readback"
+        },
+        {
+          "kind": "k_factor",
+          "state": "BATCH_FAILED",
+          "updatedAt": 1789347591450,
+          "message": "Ponto 29: esperado 21242, encontrado 18784"
+        }
+      ],
+      "K_limit": "Recorder state observations only; not a new causal estimate or physical validation receipt"
+    }
+  ],
+  "versions": {
+    "python": "3.14.6",
+    "numpy": "2.5.1",
+    "pandas": "3.0.5",
+    "scipy": "1.18.0"
+  },
+  "score": {
+    "family": "consensus",
+    "formula": "balanced/consensus: exp(sum(w_i*ln(max(c_i,1e-15)))/sum(w_i)); minimum: min(c_i)",
+    "components": {
+      "distance": "exp(-nearest_real_scaled_distance^2/2)",
+      "sources": "min(n_sources/4,1)",
+      "sign": "max(0,2*P(Beta(max(n_pos,n_neg)+.5,min(n_pos,n_neg)+.5)>.5)-1)",
+      "spread": "exp(-1.4826*MAD(session residual estimates)/.25)",
+      "maturity": "mean_over_sources(min(nearby distinct 5-second region visits,4)/4)"
+    },
+    "weights": [
+      1,
+      1,
+      2,
+      2,
+      1
+    ],
+    "thresholds": {
+      "TRUST": 0.9,
+      "PROVISIONAL": 0.7
+    },
+    "authority": "TRUST if score>=trust threshold AND sources>=3 AND sign posterior>=.8; else PROVISIONAL if score>=provisional threshold AND sources>=2; otherwise WAIT",
+    "hyperparameters": {
+      "rpm_scale": 240.0,
+      "map_scale": 0.06,
+      "neighbors": 60,
+      "ridge": 0.001,
+      "radius": 2.5,
+      "grid_rpm": 100.0,
+      "grid_map": 0.025,
+      "spread_scale_ms": 0.25,
+      "maturity_visits": 4,
+      "min_rpm": 600,
+      "max_rpm": 4500,
+      "min_map": 0.2,
+      "max_map": 1.05,
+      "min_water": 40,
+      "source_target": 4,
+      "prior_initial_S": 1.0,
+      "external_S": 1.065612,
+      "minimum_TRUST_sources": 3,
+      "minimum_TRUST_sign_posterior": 0.8,
+      "absolute_error_ms": 0.3,
+      "direction_deadband_ms": 0.12,
+      "threshold_pairs": [
+        [
+          0.5,
+          0.7
+        ],
+        [
+          0.6,
+          0.8
+        ],
+        [
+          0.7,
+          0.9
+        ]
+      ],
+      "rng_seed": 470015,
+      "bootstrap_repetitions": 2000
+    }
+  },
+  "commands": [
+    {
+      "command": "python build_cache.py",
+      "exit_code": 0,
+      "note": "preholdout stream extraction; second execution from cache using verified remote source"
+    },
+    {
+      "command": "python confidence_surface.py check",
+      "exit_code": 0
+    },
+    {
+      "command": "python confidence_surface.py freeze",
+      "exit_code": 0
+    },
+    {
+      "command": "python - (preholdout replay harness: c.OUT=verification/preholdout; c.freeze(); compare all hashes excluding freeze timestamp)",
+      "exit_code": 0
+    },
+    {
+      "command": "python build_cache.py --holdout",
+      "exit_code": 0,
+      "note": "one raw ZIP streaming decode, after remote freeze verification"
+    },
+    {
+      "command": "python confidence_surface.py evaluate",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m unittest -v test_confidence_surface",
+      "exit_code": 0,
+      "tests": 10
+    },
+    {
+      "command": "python verify_replay.py external",
+      "exit_code": 0,
+      "note": "same frozen predictions, cache only; five CSVs byte-identical"
+    },
+    {
+      "command": "python audit_corpus.py",
+      "exit_code": 0
+    }
+  ],
+  "scripts": {
+    "build_cache.py": "ea543babdf27a62ef46a48fbda16d21da5940be2c82957a7abe88ac77cdd7c73",
+    "confidence_surface.py": "e2986a01884093c4fed574e24aa3717edce07642b7d04a69b75a7a91091c5703",
+    "test_confidence_surface.py": "4dd64d400ae2e914f4f2abd713c1e25a564e6582a6becfb074cb455cfd319ac3",
+    "verify_replay.py": "d65363b122c6cc723b43485d26829bbf14253f32931206bfe3cba9659333c6b3",
+    "audit_corpus.py": "00949f4aa64c8762441892fd6f2beaafc70c5d6c7f98574ed345177f093590ed"
+  },
+  "limitations": [
+    "Prior briefing exposed partial external outcomes: file-level isolation, not absolute human blinding.",
+    "Historical frame acceptance criteria came from recorder versions; no new runtime eligibility model.",
+    "S estimates can be biased by visited regions; local residual direction is relative to carried prior.",
+    "Region Jeffreys intervals do not establish independent observations; source bootstrap used for LOSO.",
+    "LOSO supports static cross-session transfer, not fully prospective chronological training.",
+    "Named raw/Portmon bundles and imported learned surfaces excluded; only top-level native session exports with real telemetry included.",
+    "Fallback weighted mean for <6 regional observations is declared; never counted as observation.",
+    "Five raw archive duplicates removed; session identity does not prove absence of within-trip correlation.",
+    "The current native eligible subset did not reproduce prior 4-source MAP .775 evidence.",
+    "External TRUST has two regions and one directional case; ranking failed, uncertainty remains large.",
+    "Regional medoid distances are conservative relative to all original frames.",
+    "Ablations change coverage at fixed thresholds; incremental usefulness is not fully isolated."
+  ],
+  "verdict": "FAIL",
+  "outputs": {
+    "corpus_audit.json": {
+      "bytes": 91550,
+      "sha256": "60ce5a921fcd28b7837e0009ae2bc787f8e3275e1a50fd3d0b0ea1a0e43b5e6f"
+    },
+    "corpus_regions.csv": {
+      "bytes": 41425,
+      "sha256": "f2d1dd2d3455b29ea209e2cf0b2a2b6810716fa0165a465249721e23064b71a6"
+    },
+    "feature_ablation.csv": {
+      "bytes": 3299,
+      "sha256": "bcb70786b58f5f092b8a33b287c5d0b94a65d5c7125a5d5d024ef1a821eba2be"
+    },
+    "frozen_gate.json": {
+      "bytes": 46661,
+      "sha256": "4dcd64dc1681e34841b01c54f050b002efd7702ae68d693886496e1a414f4a76"
+    },
+    "frozen_gate.sha256": {
+      "bytes": 66,
+      "sha256": "f2fe602d29671cf7f7bd68308b9ab810b479ef7664cd00d4aaabacce1b70b393"
+    },
+    "gate_selection.csv": {
+      "bytes": 4773,
+      "sha256": "ec22398f86e22209a4d6f418bcc9f3f40e3a3e094392dda7d4ce24d75c6aaa88"
+    },
+    "holdout_21_25.csv": {
+      "bytes": 71680,
+      "sha256": "41c522e4b8aa94c956288e1167ef830e1639dd3541a0fe7660a4e1b19376ed7c"
+    },
+    "holdout_classes.csv": {
+      "bytes": 527,
+      "sha256": "4125271ace05826c3959ba01139fe6a5b2ab0412df05206acbac8d573462873c"
+    },
+    "holdout_opening.json": {
+      "bytes": 349,
+      "sha256": "7eccb46e2e98268f596e48d28c61ae8701f38f274b84eae6f2b88465f236b413"
+    },
+    "holdout_receipt.json": {
+      "bytes": 3551,
+      "sha256": "8344bbcab90e458c202f540f81c19fe30d96d66e86f739f15a36aee4abd67c46"
+    },
+    "map_0775_audit.csv": {
+      "bytes": 993,
+      "sha256": "858bf5bb1fbf1db05169a3aafb6a87db7944294d69634cfe64de910833b84471"
+    },
+    "map_0775_direct_observations.csv": {
+      "bytes": 801,
+      "sha256": "3fb80d30ca46b5266dde269bfa2f7ada883c92839ac71a485c796152e9afa49a"
+    },
+    "preholdout_classes.csv": {
+      "bytes": 551,
+      "sha256": "1565afb6c31392cc1f5997e9821e47bb5e33fa6b356a12157f2959a71074822d"
+    },
+    "preholdout_loso.csv": {
+      "bytes": 119867,
+      "sha256": "da53f666f6957d8a5c6571341f7e5412afed6deb8acc7cfc2c9ec5a696712929"
+    },
+    "preholdout_manifest.json": {
+      "bytes": 38271,
+      "sha256": "6678e36f79f17bb3c2427465fd829919278f3e6cf65b99130e6d371f56ccfb82"
+    },
+    "reliability.csv": {
+      "bytes": 2345,
+      "sha256": "e4879f67dcc2b37f3ad3d20e902ed10d21b5c19e6d3cd86bc162b24ba34b7e06"
+    },
+    "REPORT.md": {
+      "bytes": 15676,
+      "sha256": "a04d54fd6e02a83b53eef68a98c2a122a174e3ad2a30f6043d2427a4041f4965"
+    },
+    "sensitivity.csv": {
+      "bytes": 21868,
+      "sha256": "9f7ff57218273fb52ff2cf02ed5c5a0e1266ec84cf713ffe5be3477ddb8b7474"
+    },
+    "source_scales.csv": {
+      "bytes": 836,
+      "sha256": "7fe5fbd2f567567e063d680837ff20ad0036149fb9460eebe734b2fb4286d628"
+    },
+    "tests.txt": {
+      "bytes": 1326,
+      "sha256": "baae3b0463c0341cd4d4b0ad0b04a9180a6e958b1c17a344a7383bc61fdd7f4d"
+    },
+    "verification_external.txt": {
+      "bytes": 1333,
+      "sha256": "4d2e872294913bd6fcc55d06858da4d7fa9989bbc64d32522f6a14d08c5c6682"
+    },
+    "verification_preholdout.txt": {
+      "bytes": 1796,
+      "sha256": "a85ae9b834a5efad31913175a520d7cbc7430f1442a7df4b3cb32055d2914e0a"
+    },
+    "verification_summary.json": {
+      "bytes": 1309,
+      "sha256": "a879d7a5931a90a45e604234845b910cf40dcab03b3be979c9f5002910061e2c"
+    }
+  }
+}
