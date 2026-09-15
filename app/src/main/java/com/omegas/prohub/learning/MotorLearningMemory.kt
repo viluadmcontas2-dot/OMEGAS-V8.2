@@ -50,6 +50,7 @@ class MotorLearningMemory(
     private var sessionId = UUID.randomUUID().toString()
     private var epoch = 1
     private var mapHash = ""
+    private var adaptiveScale = AdaptivePetrolScaleState()
     private var activeVisit: ActiveVisit? = null
     private var observedOutsideFrames = 0
     private var currentSession: PhysicalLearningSession? = null
@@ -183,6 +184,7 @@ class MotorLearningMemory(
             .put("exportedAt", System.currentTimeMillis())
             .put("epoch", epoch)
             .put("mapHash", mapHash)
+            .put("adaptiveScale", adaptiveScale.toJson())
             .put("regions", regionsJsonLocked())
             .put("cells", cellsJsonLocked())
             .put("grid", LearningGridProjection.gridJson())
@@ -205,6 +207,7 @@ class MotorLearningMemory(
             .put("format", FORMAT)
             .put("epoch", epoch)
             .put("mapHash", mapHash)
+            .put("adaptiveScale", adaptiveScale.toJson())
             .put("regions", JSONArray(regions.map { it.toAdvisorJson() }))
             .put("comparisons", JSONArray(comparisons.map { it.toJson() }))
     }
@@ -485,6 +488,7 @@ class MotorLearningMemory(
             .put("cells", cellsJsonLocked())
             .put("grid", LearningGridProjection.gridJson())
             .put("integrity", integrityJsonLocked())
+            .put("adaptive_scale", adaptiveScale.toJson())
             .put("epoch", epoch)
             .put("map_hash", mapHash)
     }
@@ -833,26 +837,28 @@ class MotorLearningMemory(
 
     private fun petrolReferenceSurface(sample: MotorSample): PetrolReferenceEstimate? {
         referenceAttempts += 1L
-        val result = PetrolReferenceSelector.estimate(
-            regions = regions.asSequence()
-                .filter { it.fuel == Mp48Fuel.PETROL && it.epoch == 0 }
-                .map { region ->
-                    PetrolReferenceSelector.Region(
-                        id = region.id,
-                        rpm = region.rpmMean,
-                        mapBar = region.mapMean,
-                        waterC = region.waterMean,
-                        petrolMs = region.petrolMean,
-                        confidence = region.confidence(),
-                        sampleCount = region.sampleCount,
-                    )
-                }
-                .toList(),
+        val petrolRegions = regions.asSequence()
+            .filter { it.fuel == Mp48Fuel.PETROL && it.epoch == 0 }
+            .map { region ->
+                PetrolReferenceSelector.Region(
+                    id = region.id,
+                    rpm = region.rpmMean,
+                    mapBar = region.mapMean,
+                    waterC = region.waterMean,
+                    petrolMs = region.petrolMean,
+                    confidence = region.confidence(),
+                    sampleCount = region.sampleCount,
+                )
+            }
+            .toList()
+        val result = AdaptivePetrolReference.estimate(
+            regions = petrolRegions,
             request = PetrolReferenceSelector.Request(
                 rpm = sample.rpm,
                 mapBar = sample.mapBar,
                 waterC = sample.waterC,
             ),
+            acceptedScale = adaptiveScale.acceptedScale,
             policy = LearningToleranceSettings.current,
         )
         lastReferenceDiagnostic = result.toJson()
@@ -869,6 +875,7 @@ class MotorLearningMemory(
             regionIds = result.regionIds,
             stage = result.stage,
             extrapolated = result.extrapolated,
+            reasonCode = result.reasonCode,
         )
     }
 
@@ -969,6 +976,7 @@ class MotorLearningMemory(
             }
             epoch = root.optInt("epoch", 1).coerceAtLeast(1)
             mapHash = root.optString("mapHash", "")
+            adaptiveScale = AdaptivePetrolScaleState.fromJson(root.optJSONObject("adaptiveScale"))
             lastCalibrationRevalidation = root.optJSONObject("revalidation")?.let { JSONObject(it.toString()) } ?: JSONObject()
             val savedRegions = root.optJSONArray("regions") ?: JSONArray()
             repeat(savedRegions.length()) { index ->
@@ -1019,6 +1027,7 @@ class MotorLearningMemory(
         savedAt = System.currentTimeMillis(),
         epoch = epoch,
         mapHash = mapHash,
+        adaptiveScale = adaptiveScale,
         revalidationJson = lastCalibrationRevalidation.toString(),
         tolerancePolicyJson = LearningToleranceSettings.current.toJson().toString(),
         regions = regions.map { it.persistenceCopy() },
@@ -1038,6 +1047,7 @@ class MotorLearningMemory(
                 .put("savedAt", snapshot.savedAt)
                 .put("epoch", snapshot.epoch)
                 .put("mapHash", snapshot.mapHash)
+                .put("adaptiveScale", snapshot.adaptiveScale.toJson())
                 .put("revalidation", JSONObject(snapshot.revalidationJson))
                 .put("tolerancePolicy", JSONObject(snapshot.tolerancePolicyJson))
                 // Persistência guarda somente ciência primária; célula/grid são derivados recalculáveis.
@@ -1137,6 +1147,7 @@ private data class MotorLearningPersistenceSnapshot(
     val savedAt: Long,
     val epoch: Int,
     val mapHash: String,
+    val adaptiveScale: AdaptivePetrolScaleState,
     val revalidationJson: String,
     val tolerancePolicyJson: String,
     val regions: List<LearningRegion>,
@@ -1448,6 +1459,7 @@ private data class PetrolReferenceEstimate(
     val regionIds: List<String>,
     val stage: String,
     val extrapolated: Boolean = false,
+    val reasonCode: String = "LOCAL_REFERENCE_AVAILABLE",
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("petrol_target_ms", petrolTargetMs)
@@ -1456,7 +1468,15 @@ private data class PetrolReferenceEstimate(
         .put("region_ids", JSONArray(regionIds))
         .put("region_count", regionIds.size)
         .put("stage", stage)
-        .put("method", "RPM_MAP_WATER_WEIGHTED_SURFACE")
+        .put("reason_code", reasonCode)
+        .put(
+            "method",
+            if (reasonCode == "ADAPTIVE_PRIOR_RESIDUAL") {
+                "ADAPTIVE_F2_LOCAL_QUADRATIC_RESIDUAL"
+            } else {
+                "RPM_MAP_WATER_WEIGHTED_SURFACE"
+            },
+        )
         .put("extrapolated", extrapolated)
         .put("extrapolation_weight", if (extrapolated) 0.35 else 1.0)
 }
