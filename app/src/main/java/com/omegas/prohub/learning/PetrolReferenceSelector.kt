@@ -88,16 +88,6 @@ internal object PetrolReferenceSelector {
         regions: List<Region>,
         request: Request,
         policy: LearningTolerancePolicy = LearningToleranceSettings.current,
-    ): Result = AdaptivePetrolReference.estimate(
-        regions = regions,
-        request = request,
-        policy = policy,
-    )
-
-    internal fun estimatePhysical(
-        regions: List<Region>,
-        request: Request,
-        policy: LearningTolerancePolicy = LearningToleranceSettings.current,
     ): Result {
         val validRegions = regions.filter {
             it.rpm.isFinite() && it.mapBar.isFinite() && it.petrolMs.isFinite() &&
