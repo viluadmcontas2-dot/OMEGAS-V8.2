@@ -71,7 +71,7 @@ internal object AdaptivePetrolReference {
         acceptedScale: Double? = null,
         policy: LearningTolerancePolicy = LearningToleranceSettings.current,
     ): PetrolReferenceSelector.Result {
-        val physical = PetrolReferenceSelector.estimate(regions, request, policy)
+        val physical = PetrolReferenceSelector.estimatePhysical(regions, request, policy)
         if (physical.available) return physical
         if (!insideDomain(request.rpm, request.mapBar)) return physical
 
