@@ -441,6 +441,291 @@ def build_cache_selected(root: Path, sources: list[str], cache: Path, manifest_p
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps({k: manifest[k] for k in ["rows", "canonical_sessions", "fuel_counts"]}))
 
+
+def add_stability_features(df: pd.DataFrame, window: int) -> pd.DataFrame:
+    x = df.sort_values(["session", "recorded_at_ms", "sequence"]).copy()
+    grouped = x.groupby("session", sort=False)
+    x[f"map_range_w{window}"] = grouped["map_bar"].transform(
+        lambda s: s.rolling(window, min_periods=window).max() - s.rolling(window, min_periods=window).min()
+    )
+    x[f"rpm_range_w{window}"] = grouped["rpm"].transform(
+        lambda s: s.rolling(window, min_periods=window).max() - s.rolling(window, min_periods=window).min()
+    )
+    x["fresh_petrol"] = ~x["same_petrol_prev"].fillna(False)
+    return x
+
+
+def stable_filter(
+    df: pd.DataFrame,
+    window: int,
+    map_range: float,
+    rpm_range: float,
+    require_fresh: bool,
+    max_dt_ms: float | None,
+) -> pd.DataFrame:
+    x = add_stability_features(df, window)
+    mask = (
+        x[f"map_range_w{window}"].le(map_range) &
+        x[f"rpm_range_w{window}"].le(rpm_range) &
+        (~x["stale_conflict"])
+    )
+    if require_fresh:
+        mask &= x["fresh_petrol"]
+    if max_dt_ms is not None:
+        mask &= x["dt_ms"].fillna(max_dt_ms).le(max_dt_ms)
+    return x[mask].copy()
+
+
+def fit_predict_baseline(train: pd.DataFrame, test: pd.DataFrame, model_name: str):
+    from sklearn.linear_model import Ridge
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import PolynomialFeatures, SplineTransformer, StandardScaler
+
+    if model_name.startswith("spline"):
+        _, k, d = model_name.split("_")
+        knots = int(k[1:])
+        degree = int(d[1:])
+        model = make_pipeline(
+            SplineTransformer(n_knots=knots, degree=degree, include_bias=False),
+            Ridge(alpha=1e-4),
+        )
+        features = ["map_bar"]
+    elif model_name == "map_rpm_poly2":
+        model = make_pipeline(
+            PolynomialFeatures(2, include_bias=False),
+            StandardScaler(),
+            Ridge(alpha=0.1),
+        )
+        features = ["map_bar", "rpm"]
+    elif model_name == "map_rpm_poly3":
+        model = make_pipeline(
+            PolynomialFeatures(3, include_bias=False),
+            StandardScaler(),
+            Ridge(alpha=0.3),
+        )
+        features = ["map_bar", "rpm"]
+    else:
+        raise ValueError(model_name)
+
+    train2 = train.dropna(subset=features + ["petrol_ms"])
+    test2 = test.dropna(subset=features + ["petrol_ms"])
+    if len(train2) < 100 or len(test2) < 20:
+        return None, test2
+    model.fit(train2[features], train2["petrol_ms"])
+    return model.predict(test2[features]), test2
+
+
+def stable_sweep(cache: Path, window: int, output: Path):
+    raw = petrol_rows(load_cache(cache), clean=False)
+    model_names = [
+        "spline_k4_d2", "spline_k6_d2", "spline_k8_d2", "spline_k10_d2",
+        "spline_k12_d2", "spline_k16_d2", "spline_k20_d2",
+        "spline_k6_d3", "spline_k10_d3", "spline_k16_d3",
+        "map_rpm_poly2", "map_rpm_poly3",
+    ]
+    map_ranges = [0.004, 0.006, 0.008, 0.010, 0.015, 0.020, 0.030, 0.050]
+    rpm_ranges = [20, 35, 50, 75, 100, 150, 250]
+    max_dts = [None, 400.0, 600.0, 900.0]
+    fresh_options = [True, False]
+    results = []
+    for map_thr in map_ranges:
+        for rpm_thr in rpm_ranges:
+            for require_fresh in fresh_options:
+                for max_dt in max_dts:
+                    filtered = stable_filter(raw, window, map_thr, rpm_thr, require_fresh, max_dt)
+                    session_counts = filtered.groupby("session").size()
+                    usable_sessions = session_counts[session_counts >= 40].index.tolist()
+                    filtered = filtered[filtered["session"].isin(usable_sessions)]
+                    if len(usable_sessions) < 3 or len(filtered) < 300:
+                        continue
+                    for model_name in model_names:
+                        folds = []
+                        for held in usable_sessions:
+                            train = filtered[filtered["session"] != held]
+                            test = filtered[filtered["session"] == held]
+                            pred, test2 = fit_predict_baseline(train, test, model_name)
+                            if pred is None:
+                                continue
+                            folds.append({"session": held, **metrics(test2["petrol_ms"], pred)})
+                        if len(folds) < 3:
+                            continue
+                        summary = macro_summary(folds)
+                        # Practical score drives toward zero while penalizing low coverage.
+                        coverage = float(len(filtered) / max(1, len(raw)))
+                        score = (
+                            summary.get("macro_mean_abs_correction_pct", 999.0)
+                            + 0.20 * summary.get("macro_p90_abs_correction_pct", 999.0)
+                            + 2.0 * max(0.0, 0.25 - coverage)
+                        )
+                        results.append({
+                            "window": window,
+                            "map_range": map_thr,
+                            "rpm_range": rpm_thr,
+                            "require_fresh": require_fresh,
+                            "max_dt_ms": max_dt,
+                            "model": model_name,
+                            "rows": int(len(filtered)),
+                            "sessions": len(usable_sessions),
+                            "coverage": coverage,
+                            "score": score,
+                            "summary": summary,
+                            "folds": folds,
+                        })
+    results.sort(key=lambda r: (r["score"], r["summary"].get("macro_mean_abs_correction_pct", 999)))
+    payload = {
+        "window": window,
+        "raw_petrol_rows": int(len(raw)),
+        "candidate_count": len(results),
+        "top": results[:50],
+        "best": results[0] if results else None,
+    }
+    output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    best = payload["best"]
+    print(json.dumps({
+        "window": window,
+        "candidate_count": len(results),
+        "best": None if best is None else {
+            "filter": {k: best[k] for k in ["map_range","rpm_range","require_fresh","max_dt_ms","model","rows","sessions","coverage"]},
+            "summary": best["summary"],
+        },
+    }))
+
+
+def calibration_sweep(cache: Path, output: Path):
+    from sklearn.linear_model import LinearRegression, Ridge
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import SplineTransformer
+
+    raw = petrol_rows(load_cache(cache), clean=True).sort_values(["session", "recorded_at_ms", "sequence"]).copy()
+    sessions = sorted(raw["session"].unique())
+    baseline_specs = [(6,2),(8,2),(12,2),(20,2),(8,3),(12,3)]
+    calib_sizes = [10, 20, 50, 100, 200, 500, 1000]
+    modes = ["offset", "gain", "affine"]
+    results = []
+
+    for knots, degree in baseline_specs:
+        for held in sessions:
+            train = raw[raw["session"] != held].copy()
+            test = raw[raw["session"] == held].copy()
+            if len(train) < 500 or len(test) < 100:
+                continue
+            base = make_pipeline(SplineTransformer(n_knots=knots, degree=degree, include_bias=False), Ridge(alpha=1e-4))
+            base.fit(train[["map_bar"]], train["petrol_ms"])
+            base_pred = base.predict(test[["map_bar"]])
+            zero_shot = metrics(test["petrol_ms"], base_pred)
+            results.append({
+                "baseline": f"spline_k{knots}_d{degree}",
+                "held": held,
+                "calib_n": 0,
+                "mode": "zero_shot",
+                "calib_fraction": 0.0,
+                **zero_shot,
+            })
+
+            for n in calib_sizes:
+                if len(test) <= n + 30:
+                    continue
+                calib = test.iloc[:n]
+                eval_df = test.iloc[n:]
+                calib_base = base.predict(calib[["map_bar"]])
+                eval_base = base.predict(eval_df[["map_bar"]])
+                y_cal = calib["petrol_ms"].to_numpy()
+
+                for mode in modes:
+                    if mode == "offset":
+                        b = float(np.median(y_cal - calib_base))
+                        pred = eval_base + b
+                        params = {"offset_ms": b}
+                    elif mode == "gain":
+                        ratios = y_cal / np.maximum(calib_base, 1e-6)
+                        a = float(np.median(ratios))
+                        pred = eval_base * a
+                        params = {"gain": a}
+                    else:
+                        reg = LinearRegression().fit(calib_base.reshape(-1,1), y_cal)
+                        a = float(reg.coef_[0]); b = float(reg.intercept_)
+                        # keep calibration physically conservative
+                        a = float(np.clip(a, 0.75, 1.25))
+                        b = float(np.clip(b, -1.5, 1.5))
+                        pred = eval_base * a + b
+                        params = {"gain": a, "offset_ms": b}
+                    results.append({
+                        "baseline": f"spline_k{knots}_d{degree}",
+                        "held": held,
+                        "calib_n": n,
+                        "mode": mode,
+                        "calib_fraction": float(n / len(test)),
+                        "params": params,
+                        **metrics(eval_df["petrol_ms"], pred),
+                    })
+
+    # Aggregate by baseline/calib/mode over held-out sessions.
+    groups = {}
+    for row in results:
+        key = (row["baseline"], row["calib_n"], row["mode"])
+        groups.setdefault(key, []).append(row)
+    summaries = []
+    for (baseline, n, mode), folds in groups.items():
+        if len(folds) < 3:
+            continue
+        summary = macro_summary(folds)
+        summaries.append({
+            "baseline": baseline,
+            "calib_n": n,
+            "mode": mode,
+            "folds": len(folds),
+            "summary": summary,
+            "per_session": folds,
+        })
+    summaries.sort(key=lambda r: (
+        r["summary"].get("macro_mean_abs_correction_pct", 999),
+        r["calib_n"],
+    ))
+    payload = {"rows": int(len(raw)), "sessions": len(sessions), "summaries": summaries, "best": summaries[0] if summaries else None}
+    output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(json.dumps({"rows": len(raw), "sessions": len(sessions), "best": payload["best"]}))
+
+
+def blocked_session_sweep(cache: Path, output: Path):
+    from sklearn.linear_model import Ridge
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import PolynomialFeatures, SplineTransformer, StandardScaler
+
+    df = petrol_rows(load_cache(cache), clean=True).sort_values(["session","recorded_at_ms","sequence"]).copy()
+    model_specs = [
+        ("spline_k8_d2", ["map_bar"], make_pipeline(SplineTransformer(n_knots=8,degree=2,include_bias=False),Ridge(alpha=1e-4))),
+        ("spline_k20_d2", ["map_bar"], make_pipeline(SplineTransformer(n_knots=20,degree=2,include_bias=False),Ridge(alpha=1e-4))),
+        ("map_rpm_poly2", ["map_bar","rpm"], make_pipeline(PolynomialFeatures(2,include_bias=False),StandardScaler(),Ridge(alpha=0.1))),
+    ]
+    fractions = [0.2,0.3,0.4,0.5,0.6,0.7,0.8]
+    results=[]
+    for session,g in df.groupby("session",sort=False):
+        g=g.sort_values(["recorded_at_ms","sequence"])
+        if len(g)<150: continue
+        for frac in fractions:
+            cut=max(50,int(len(g)*frac))
+            if len(g)-cut<30: continue
+            train=g.iloc[:cut]; test=g.iloc[cut:]
+            for name,features,model in model_specs:
+                try:
+                    model.fit(train[features],train["petrol_ms"])
+                    pred=model.predict(test[features])
+                    results.append({"session":session,"train_fraction":frac,"model":name,"train_n":len(train),"test_n":len(test),**metrics(test["petrol_ms"],pred)})
+                except Exception as exc:
+                    results.append({"session":session,"train_fraction":frac,"model":name,"error":repr(exc),"n":0})
+    groups={}
+    for row in results:
+        if row.get("n",0)<=0: continue
+        key=(row["train_fraction"],row["model"])
+        groups.setdefault(key,[]).append(row)
+    summaries=[]
+    for (frac,model),folds in groups.items():
+        summaries.append({"train_fraction":frac,"model":model,"summary":macro_summary(folds),"per_session":folds})
+    summaries.sort(key=lambda r:r["summary"].get("macro_mean_abs_correction_pct",999))
+    payload={"rows":len(df),"sessions":int(df.session.nunique()),"summaries":summaries,"best":summaries[0] if summaries else None}
+    output.write_text(json.dumps(payload,indent=2,ensure_ascii=False),encoding="utf-8")
+    print(json.dumps({"best":payload["best"]}))
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -476,6 +761,19 @@ def main():
     p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
     p.add_argument("--output", type=Path, required=True)
 
+    p = sub.add_parser("stable-sweep")
+    p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
+    p.add_argument("--window", type=int, choices=[3,5,7,9], required=True)
+    p.add_argument("--output", type=Path, required=True)
+
+    p = sub.add_parser("calibration-sweep")
+    p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
+    p.add_argument("--output", type=Path, required=True)
+
+    p = sub.add_parser("blocked-session-sweep")
+    p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
+    p.add_argument("--output", type=Path, required=True)
+
     args = parser.parse_args()
     if args.cmd == "build-cache":
         build_cache(args.root, args.cache, args.manifest)
@@ -489,6 +787,12 @@ def main():
         global_family(args.cache, args.family, args.output)
     elif args.cmd == "falsification":
         falsification(args.cache, args.output)
+    elif args.cmd == "stable-sweep":
+        stable_sweep(args.cache, args.window, args.output)
+    elif args.cmd == "calibration-sweep":
+        calibration_sweep(args.cache, args.output)
+    elif args.cmd == "blocked-session-sweep":
+        blocked_session_sweep(args.cache, args.output)
 
 
 if __name__ == "__main__":
