@@ -33,6 +33,9 @@ class RecordedMp48Transport(
     private val recorded = frames.sortedWith(compareBy<RecordedMp48Frame> { it.recordedAtMs }.thenBy { it.sequence })
     private var nextIndex = 0
 
+    val consumedFrames: Int
+        get() = synchronized(this) { nextIndex }
+
     override val connected: Boolean
         get() = true
 
