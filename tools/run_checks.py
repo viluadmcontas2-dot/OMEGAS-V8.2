@@ -4,49 +4,28 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+python_tests = sorted((ROOT / "tests").glob("test_*.py"))
+ui_tests = sorted((ROOT / "tests" / "ui").glob("*.test.cjs"))
+
+if not python_tests:
+    raise SystemExit("QUALITY_GATE_DISCOVERY_ERROR: no Python contracts found")
+if not ui_tests:
+    raise SystemExit("QUALITY_GATE_DISCOVERY_ERROR: no UI tests found")
+
 commands = [
-    [sys.executable, "-B", "tests/test_governance_contract.py"],
-    [sys.executable, "-B", "tests/test_clean_ui_contract.py"],
-    [sys.executable, "-B", "tests/test_block1_session_contract.py"],
-    [sys.executable, "-B", "tests/test_block3_suggestion_ui_contract.py"],
-    [sys.executable, "-B", "tests/test_v7_map_batch_contract.py"],
-    [sys.executable, "-B", "tests/test_mp48_k_map_axes_contract.py"],
-    [sys.executable, "-B", "tests/test_mp48_extended_status_contract.py"],
-    [sys.executable, "-B", "tests/test_multimedia_telemetry_backpressure_contract.py"],
-    [sys.executable, "-B", "tests/test_ux_didactic_expansion_contract.py"],
-    [sys.executable, "-B", "tests/test_usb_permission_identity_contract.py"],
-    [sys.executable, "-B", "tests/test_obd_independent_evidence_contract.py"],
-    [sys.executable, "-B", "tests/test_background_power_overlay_contract.py"],
-    [sys.executable, "-B", "tests/test_curve_kotlin_math_authority_contract.py"],
-    [sys.executable, "-B", "tests/test_map_kotlin_math_authority_contract.py"],
-    [sys.executable, "-B", "tests/test_suggestion_readback_lifecycle_contract.py"],
-    [sys.executable, "-B", "tests/test_learning_consolidation_contract.py"],
-    [sys.executable, "-B", "tests/test_causal_step_wiring_contract.py"],
-    [sys.executable, "-B", "tests/test_verde_scientific_runtime_contract.py"],
-    [sys.executable, "-B", "tests/test_startup_learning_restore_contract.py"],
-    [sys.executable, "-B", "tests/test_learning_evidence_budget_contract.py"],
-    [sys.executable, "-B", "tests/test_learning_memory_budget_contract.py"],
-    [sys.executable, "-B", "tests/test_advisor_revision_budget_contract.py"],
-    [sys.executable, "-B", "tests/test_checkpoint_hot_path_contract.py"],
-    [sys.executable, "-B", "tests/test_mp48_serial_scheduler_contract.py"],
-    [sys.executable, "-B", "tests/test_native_autocal_contract.py"],
-    ["node", "--test", "tests/ui/autocal-cockpit.test.cjs"],
-    ["node", "--test", "tests/ui/curve-autocal-interoperability.test.cjs"],
-    ["node", "--test", "tests/ui/didactic-expansion.test.cjs"],
-    ["node", "--test", "tests/ui/obd-independent-map.test.cjs"],
-    ["node", "--test", "tests/ui/obd-runtime-controls.test.cjs"],
-    ["node", "--test", "tests/ui/map-editor-flow.test.cjs"],
-    ["node", "--test", "tests/ui/app-shell-runtime.test.cjs"],
-    ["node", "--test", "tests/ui/verde-dashboard-now.test.cjs"],
-    ["node", "--test", "tests/ui/map-workflow-e2e.test.cjs"],
-    ["node", "--test", "tests/ui/map-ecu-simulator-e2e.test.cjs"],
-    ["node", "--test", "tests/ui/portmon-replay-adapter.test.cjs"],
-    ["node", "--test", "tests/ui/portmon-browser-simulator-e2e.test.cjs"],
-    ["node", "--test", "tests/ui/portmon-frame-decoder.test.cjs"],
-    ["node", "--test", "tests/ui/learning-view.test.cjs"],
-    ["node", "--test", "tests/ui/live-tracing-budget.test.cjs"],
-    ["node", "--test", "tests/ui/suggestion-model.test.cjs"],
+    [sys.executable, "-B", str(path.relative_to(ROOT))]
+    for path in python_tests
 ]
+commands += [
+    ["node", "--test", str(path.relative_to(ROOT))]
+    for path in ui_tests
+]
+
+print(
+    f"QUALITY_GATE_DISCOVERED python={len(python_tests)} ui={len(ui_tests)} total={len(commands)}",
+    flush=True,
+)
 
 for command in commands:
     print("+", " ".join(command), flush=True)
