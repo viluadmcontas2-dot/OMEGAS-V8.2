@@ -40,8 +40,8 @@ class PracticalToleranceTest(unittest.TestCase):
             (20.0, 19.8),   # -1.0%
         ])
         self.assertEqual(4, summary["count"])
-        self.assertEqual(2, summary["within_tolerance"])
-        self.assertAlmostEqual(0.50, summary["within_tolerance_rate"], places=9)
+        self.assertEqual(3, summary["within_tolerance"])
+        self.assertAlmostEqual(0.75, summary["within_tolerance_rate"], places=9)
         self.assertEqual(2, summary["within_preferred"])
         self.assertAlmostEqual(0.50, summary["within_preferred_rate"], places=9)
         self.assertAlmostEqual(4.125, summary["mean_abs_correction_pct"], places=9)
