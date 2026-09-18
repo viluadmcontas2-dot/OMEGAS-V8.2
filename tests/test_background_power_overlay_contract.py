@@ -55,6 +55,12 @@ assert "updateOverlay()" in service
 assert "stateChanged()" in service
 assert "250L" in overlay
 assert "showPending" in overlay
+assert "@Volatile private var closed = false" in overlay
+assert "private val showEpoch = AtomicLong(0L)" in overlay
+assert "if (closed || root != null || showPending || !permissionGranted()) return" in overlay
+assert "epoch != showEpoch.get()" in overlay
+assert "showEpoch.incrementAndGet()" in overlay
+assert "closed = true" in overlay
 assert "overlayWindowType" in overlay
 assert "TYPE_APPLICATION_OVERLAY" in overlay
 
