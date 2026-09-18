@@ -63,7 +63,7 @@ class CorpusProtocolTest(unittest.TestCase):
         for index, chunk in enumerate(chunks, start=101):
             lines.append(f"{index}  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length {len(chunk)}")
             lines.append(
-                f"{index + 100}  0.00000000  SUCCESS Length {len(chunk)}: "
+                f"{index}  0.00000000  SUCCESS Length {len(chunk)}: "
                 + " ".join(f"{value:02X}" for value in chunk)
             )
         with tempfile.TemporaryDirectory() as td:
