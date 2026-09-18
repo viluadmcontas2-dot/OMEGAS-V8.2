@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import math
+from statistics import mean
+from typing import Iterable
+
+PRACTICAL_TOLERANCE_PCT = 5.0
+
+
+def relative_error_pct(observed_ms: float, predicted_ms: float) -> float:
+    if not math.isfinite(observed_ms) or observed_ms <= 0.0:
+        return math.nan
+    if not math.isfinite(predicted_ms):
+        return math.nan
+    return abs(predicted_ms - observed_ms) / observed_ms * 100.0
+
+
+def within_tolerance(
+    observed_ms: float,
+    predicted_ms: float,
+    tolerance_pct: float = PRACTICAL_TOLERANCE_PCT,
+) -> bool:
+    error = relative_error_pct(observed_ms, predicted_ms)
+    return math.isfinite(error) and error <= tolerance_pct + 1e-12
+
+
+def _quantile(values: list[float], q: float) -> float:
+    if not values:
+        return math.nan
+    ordered = sorted(values)
+    if len(ordered) == 1:
+        return ordered[0]
+    pos = (len(ordered) - 1) * q
+    lo = math.floor(pos)
+    hi = math.ceil(pos)
+    if lo == hi:
+        return ordered[lo]
+    fraction = pos - lo
+    return ordered[lo] * (1.0 - fraction) + ordered[hi] * fraction
+
+
+def summarize_reference_errors(
+    pairs: Iterable[tuple[float, float]],
+    tolerance_pct: float = PRACTICAL_TOLERANCE_PCT,
+) -> dict:
+    usable: list[tuple[float, float, float]] = []
+    for observed, predicted in pairs:
+        error_pct = relative_error_pct(observed, predicted)
+        if not math.isfinite(error_pct):
+            continue
+        usable.append((observed, predicted, error_pct))
+
+    abs_errors = [abs(predicted - observed) for observed, predicted, _ in usable]
+    within = sum(error_pct <= tolerance_pct + 1e-12 for _, _, error_pct in usable)
+    count = len(usable)
+    return {
+        "tolerance_pct": tolerance_pct,
+        "count": count,
+        "within_5pct": within,
+        "within_5pct_rate": within / count if count else 0.0,
+        "mae_ms": mean(abs_errors) if abs_errors else math.nan,
+        "p90_abs_error_ms": _quantile(abs_errors, 0.90),
+        "p99_abs_error_ms": _quantile(abs_errors, 0.99),
+        "max_abs_error_ms": max(abs_errors) if abs_errors else math.nan,
+    }
