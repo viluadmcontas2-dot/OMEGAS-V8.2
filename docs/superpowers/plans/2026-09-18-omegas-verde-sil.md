@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. TDD applies to production-facing seams.
 
-**Goal:** Build a deterministic headless replay laboratory that executes the real Verde MP48 decoder, engine analyzer and learning memory over recorded sessions, with ±5% as the primary practical reference-error band.
+**Goal:** Build a deterministic headless replay laboratory that executes the real Verde MP48 decoder, engine analyzer and learning memory over recorded sessions, optimizing residual correction/STFT toward 0%, with ±5% only as the owner's operational acceptance band.
 
 **Architecture:** Introduce only two production-neutral seams required for headless execution: an MP48 transport interface and a runtime clock interface, both defaulting to current Android behavior. The SIL itself lives under `tools/omegas-sil` plus JVM test fixtures; Python handles corpus reconstruction/dedup/orchestration, while Kotlin executes production science.
 
@@ -16,8 +16,9 @@
 - Scientific algorithm must not be copied into Python.
 - No Android Emulator, APK, UI or ADB in this flow.
 - Source corpus is read-only under `G:\Meu Drive\OMEGAS`.
-- Absolute relative reference error <= 5% is operationally acceptable.
-- Generalization/coverage/robustness outrank optimization below the 5% band.
+- Scientific optimization target is 0% residual correction/STFT across usable conditions.
+- Absolute correction <= 5% is operationally acceptable, but values inside the band remain candidates for improvement toward zero.
+- Generalization/coverage/robustness constrain the optimization; they do not replace the zero-correction target.
 - No ECU writer action.
 - Remote GitHub remains source mutation authority.
 
@@ -87,7 +88,7 @@
 - [ ] Stop exactly at corpus exhaustion without writer calls.
 - [ ] Verify deterministic replay by hashing normalized outputs across two runs.
 
-### Task 4: Add practical ±5% science metrics and Verde stability/advisor projection
+### Task 4: Add zero-target correction metrics, ±5% acceptance band, and Verde stability/advisor projection
 
 **Files:**
 - Create: `tools/omegas-sil/metrics.py`
@@ -96,13 +97,16 @@
 
 **Interfaces:**
 - `relative_error_pct(observed, predicted)`
-- `within_5pct_rate`
+- signed `correction_pct` with target 0%
+- mean/median/P90/P99 absolute correction and signed bias
+- `within_5pct_rate` as acceptance-band metric
 - session-level MAE/P90/P99/coverage
 - stale/freeze counters
 
 - [ ] Write RED metrics tests around exact 5% boundary.
 - [ ] Compute reference error only where the real runtime produced a usable reference.
-- [ ] Report `within_5pct_rate` as primary operational score, while retaining MAE/P90/P99.
+- [ ] Optimize and report distance to 0% correction across all usable samples, including samples already within ±5%.
+- [ ] Report `within_5pct_rate` as the operational acceptance-band score, while retaining signed bias, absolute-correction distribution and MAE/P90/P99.
 - [ ] Export real comparisons and run the existing Verde stability/advisor functions over them where their production APIs permit direct JVM use.
 - [ ] Never count predicted/interpolated references as physical gasoline evidence.
 - [ ] Tag failures by regime: stale/freeze, transient, high-load, insufficient support, other.
@@ -118,7 +122,7 @@
 - [ ] Replay every canonical session headlessly, parallelizing independent sessions within host capacity.
 - [ ] Produce aggregate `sil_fleet_summary.json` plus per-session artifacts.
 - [ ] Run leave-one-session-out and blocked temporal summaries over canonical sessions.
-- [ ] Publish AgentRed receipt with exact branch SHA, canonical sessions, frames, within-5% rate, MAE/P90/P99, coverage, stale/freeze rate and failures.
+- [ ] Publish AgentRed receipt with exact branch SHA, canonical sessions, frames, mean/median/P90/P99 absolute correction, signed bias, within-5% rate, MAE/P90/P99, coverage, stale/freeze rate and failures.
 - [ ] Re-read remote branch HEAD and compare against base to ensure only SIL/seam changes exist.
 
 ## Completion Gate
