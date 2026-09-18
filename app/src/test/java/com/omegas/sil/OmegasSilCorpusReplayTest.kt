@@ -16,13 +16,13 @@ import java.util.concurrent.TimeUnit
 class OmegasSilCorpusReplayTest {
     @Test
     fun replayConfiguredCorpusThroughRealVerdeScience() {
-        val inputPath = System.getProperty("omegas.sil.input")?.trim().orEmpty()
+        val inputPath = (System.getProperty("omegas.sil.input") ?: System.getenv("OMEGAS_SIL_INPUT"))?.trim().orEmpty()
         assumeTrue("omegas.sil.input not configured", inputPath.isNotEmpty())
         val input = File(inputPath)
         assertTrue("SIL input does not exist: $inputPath", input.isFile)
 
         val output = File(
-            System.getProperty("omegas.sil.output")?.trim().orEmpty()
+            (System.getProperty("omegas.sil.output") ?: System.getenv("OMEGAS_SIL_OUTPUT"))?.trim().orEmpty()
                 .ifEmpty { File(input.parentFile, "sil-output").absolutePath },
         ).apply { mkdirs() }
         val frames = readFrames(input)
