@@ -57,15 +57,15 @@ The optimization target is always:
 
 `correction_pct -> 0%`.
 
-An absolute correction of **5% or less** is the owner's operational acceptance band:
+An absolute correction of **4% or less** is the owner's operational acceptance band, while **3.5% or less** is the preferred operating band:
 
-`abs(correction_pct) <= 5%`.
+`abs(correction_pct) <= 4%` (acceptable), with `abs(correction_pct) <= 3.5%` preferred.
 
-This tolerance is **not** a stopping target and does not mean that samples already inside ±5% should be ignored. Improvements from ±4% toward 0% remain scientifically valuable, provided they generalize and do not reduce robustness.
+This tolerance is **not** a stopping target and does not mean that samples already inside ±4% should be ignored. Improvements from ±4% toward 0% remain scientifically valuable, provided they generalize and do not reduce robustness.
 
 Metrics therefore track both:
 - distance to zero: mean/median/P90/P99 absolute correction and signed bias;
-- operational acceptance: `within_5pct_rate`.
+- operational acceptance: `within_tolerance_rate`.
 
 Generalization to unseen sessions, resistance to stale/frozen signals and transients, deterministic repeatability, coverage, and explainability remain mandatory constraints while optimizing toward zero.
 
@@ -95,7 +95,7 @@ The first usable SIL is complete when:
 1. a canonical LOGNOVO replay traverses the real decoder/analyzer/learning chain headlessly;
 2. all canonical sessions in the corpus can be enumerated/deduplicated;
 3. a machine-readable frame trace and session summary are produced;
-4. the summary reports `mean_abs_correction_pct`, signed bias, P90/P99 absolute correction, `within_5pct_rate`, MAE, coverage, stale/freeze counts and learning/reference states;
+4. the summary reports `mean_abs_correction_pct`, signed bias, P90/P99 absolute correction, `within_tolerance_rate`, MAE, coverage, stale/freeze counts and learning/reference states;
 5. focused parity/determinism tests pass;
 6. AgentRed executes the corpus run and publishes receipts/artifacts;
 7. no production scientific algorithm has been duplicated or silently replaced.
