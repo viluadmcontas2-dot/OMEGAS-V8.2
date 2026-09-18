@@ -70,6 +70,40 @@ class AdaptivePetrolScaleStateTest {
     }
 
     @Test
+    fun onlineSessionScaleTracksRealPetrolWithoutChangingPersistedCarryForwardPolicy() {
+        val rpm = 1_800.0
+        val map = 0.50
+        val persisted = 1.0
+        val realScale = 1.08
+        val observed = AdaptivePetrolReference.f2(rpm, map) * realScale
+
+        val sessionScale = AdaptivePetrolReference.updateOnlineScale(
+            previousScale = persisted,
+            rpm = rpm,
+            mapBar = map,
+            observedPetrolMs = observed,
+        )
+
+        assertEquals(realScale, sessionScale ?: Double.NaN, 0.000001)
+
+        val previous = AdaptivePetrolScaleState(
+            acceptedScale = persisted,
+            candidateScale = persisted,
+            supportRegions = 12,
+            promotedSessionId = "previous-session",
+            updatedAt = 1L,
+        )
+        val promoted = AdaptivePetrolReference.promoteScale(
+            previous = previous,
+            sessionId = "new-session",
+            sessionRegions = regionsForScale(realScale),
+            updatedAt = 2L,
+        )
+
+        assertTrue("persisted carry-forward remains bounded", promoted.acceptedScale!! <= persisted * 1.0050001)
+    }
+
+    @Test
     fun scaleStateRoundTripsForPersistence() {
         val state = AdaptivePetrolScaleState(
             acceptedScale = 1.065612,
