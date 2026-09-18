@@ -16,6 +16,7 @@ import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import org.json.JSONObject
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.abs
 
 /**
@@ -36,6 +37,8 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     private var expanded = false
     private var showPending = false
     private var lastDrawAt = 0L
+    @Volatile private var closed = false
+    private val showEpoch = AtomicLong(0L)
     @Volatile private var lastSnapshot = Snapshot()
 
     data class Snapshot(
@@ -55,13 +58,15 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         .put("requestedEnabled", requestedEnabled())
         .put("visible", visible())
         .put("showPending", showPending)
+        .put("closed", closed)
         .put("observationalOnly", true)
 
     fun restoreIfAllowed() {
-        if (requestedEnabled() && permissionGranted()) show()
+        if (!closed && requestedEnabled() && permissionGranted()) show()
     }
 
     fun setEnabled(enabled: Boolean): JSONObject {
+        if (closed) return statusJson().put("ok", false)
         prefs.edit().putBoolean("telemetry_overlay_enabled", enabled).apply()
         if (!enabled) {
             hide()
@@ -73,20 +78,22 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     }
 
     fun update(snapshot: Snapshot) {
+        if (closed) return
         lastSnapshot = snapshot
         if (!visible()) return
         val now = SystemClock.elapsedRealtime()
         if (now - lastDrawAt < 250L) return
         lastDrawAt = now
-        main.post { render(lastSnapshot) }
+        main.post { if (!closed) render(lastSnapshot) }
     }
 
     private fun show() {
-        if (root != null || showPending || !permissionGranted()) return
+        if (closed || root != null || showPending || !permissionGranted()) return
+        val epoch = showEpoch.get()
         showPending = true
         main.post {
             try {
-                if (root != null || !permissionGranted() || !requestedEnabled()) return@post
+                if (closed || epoch != showEpoch.get() || root != null || !permissionGranted() || !requestedEnabled()) return@post
                 val panel = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
                     gravity = Gravity.CENTER
@@ -130,7 +137,12 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                 }
                 params = lp
                 installDrag(panel, button)
+                if (closed || epoch != showEpoch.get() || !requestedEnabled()) return@post
                 windowManager.addView(panel, lp)
+                if (closed || epoch != showEpoch.get() || !requestedEnabled()) {
+                    try { windowManager.removeView(panel) } catch (_: Exception) {}
+                    return@post
+                }
                 root = panel
                 render(lastSnapshot)
             } catch (_: Exception) {
@@ -143,11 +155,14 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     }
 
     private fun hide() {
+        showEpoch.incrementAndGet()
         showPending = false
-        val view = root ?: return
+        val view = root
         root = null
         main.post {
-            try { windowManager.removeView(view) } catch (_: Exception) {}
+            if (view != null) {
+                try { windowManager.removeView(view) } catch (_: Exception) {}
+            }
         }
     }
 
@@ -221,11 +236,14 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     }
 
     override fun close() {
+        if (closed) return
+        closed = true
         hide()
         cellText = null
         stftText = null
         petrolText = null
         rpmText = null
         details = null
+        params = null
     }
 }
