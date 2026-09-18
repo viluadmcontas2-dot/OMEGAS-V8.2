@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 import tempfile
 import textwrap
@@ -143,6 +144,10 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('ECU_NATIVE_AUTOCAL_EPOCH', self.learning)
 
     def test_actual_protocol_kotlin_frames_and_status_decoder(self):
+        kotlinc = shutil.which('kotlinc')
+        java = shutil.which('java')
+        if kotlinc is None or java is None:
+            self.skipTest('kotlinc/java unavailable; Gradle/JUnit remains authoritative')
         with tempfile.TemporaryDirectory(prefix='autocal-protocol-contract-') as tmp:
             tmp = Path(tmp)
             (tmp/'Mp48Protocol.kt').write_text(textwrap.dedent('''
@@ -172,9 +177,9 @@ class NativeAutoCalContract(unittest.TestCase):
                 }
             '''), encoding='utf-8')
             jar = tmp/'test.jar'
-            compile_cmd = ['kotlinc', str(PROTOCOL), str(SCALE), str(tmp/'Mp48Protocol.kt'), str(tmp/'Main.kt'), '-include-runtime', '-d', str(jar)]
+            compile_cmd = [kotlinc, str(PROTOCOL), str(SCALE), str(tmp/'Mp48Protocol.kt'), str(tmp/'Main.kt'), '-include-runtime', '-d', str(jar)]
             subprocess.run(compile_cmd, check=True, capture_output=True, text=True, timeout=30)
-            result = subprocess.run(['java','-jar',str(jar)], check=True, capture_output=True, text=True, timeout=10)
+            result = subprocess.run([java,'-jar',str(jar)], check=True, capture_output=True, text=True, timeout=10)
             self.assertIn('NATIVE_AUTOCAL_PROTOCOL=PASS', result.stdout)
 
 if __name__ == '__main__':
