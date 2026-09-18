@@ -1,13 +1,12 @@
 package com.omegas.prohub.ecu
 
-import android.os.SystemClock
 import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.MotorSampleAnalyzer
 import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.learning.SampleDecision
 import com.omegas.prohub.usb.UsbProtocolReply
 import com.omegas.prohub.usb.UsbProtocolStatusClass
-import com.omegas.prohub.usb.UsbSerialManager
+import com.omegas.prohub.usb.Mp48Transport
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
 import java.util.concurrent.CompletableFuture
@@ -26,10 +25,11 @@ import java.util.concurrent.atomic.AtomicLong
  * em retry cego: aguardam uma nova sessão USB física.
  */
 class ResponseDrivenEcuEngine(
-    private val usb: UsbSerialManager,
+    private val usb: Mp48Transport,
     private val log: RingLog,
     private val onTelemetry: (Mp48Telemetry, SampleDecision, EngineMetrics) -> Unit,
     private val onStateChanged: (JSONObject) -> Unit = {},
+    private val clock: Mp48RuntimeClock = AndroidMp48RuntimeClock,
 ) : Mp48SerialScheduler {
     companion object {
         private const val HANDSHAKE_BACKOFF_MS = 250L
@@ -227,7 +227,7 @@ class ResponseDrivenEcuEngine(
     }
 
     fun statusJson(): JSONObject = synchronized(stateLock) {
-        val now = SystemClock.elapsedRealtime()
+        val now = clock.elapsedRealtime()
         val tolerances = LearningToleranceSettings.current
         JSONObject()
             .put("state", state.name)
@@ -281,7 +281,7 @@ class ResponseDrivenEcuEngine(
                 }
                 if (!sessionReady) {
                     if (!performHandshakeOrResume()) {
-                        SystemClock.sleep(80L)
+                        clock.sleep(80L)
                         continue
                     }
                 }
@@ -315,11 +315,11 @@ class ResponseDrivenEcuEngine(
     }
 
     private fun performHandshakeOrResume(): Boolean {
-        val now = SystemClock.elapsedRealtime()
+        val now = clock.elapsedRealtime()
         val backoff = handshakeBackoffMs(handshakeFailures)
         val wait = backoff - (now - lastHandshakeAttemptMs)
-        if (wait > 0L) SystemClock.sleep(wait)
-        lastHandshakeAttemptMs = SystemClock.elapsedRealtime()
+        if (wait > 0L) clock.sleep(wait)
+        lastHandshakeAttemptMs = clock.elapsedRealtime()
         val expectedSessionId = physicalSessionId
 
         if (hadOnlineSession || recoveringExistingSession) {
@@ -403,7 +403,7 @@ class ResponseDrivenEcuEngine(
 
     private fun probeExistingSession(expectedSessionId: Long = physicalSessionId): Boolean {
         return try {
-            val started = SystemClock.elapsedRealtime()
+            val started = clock.elapsedRealtime()
             val reply = usb.protocolTransaction(
                 Mp48Protocol.CMD_TELEMETRY,
                 "sonda de sessão MP48 existente",
@@ -411,7 +411,7 @@ class ResponseDrivenEcuEngine(
                 false,
                 expectedSessionId,
             )
-            val responseMs = SystemClock.elapsedRealtime() - started
+            val responseMs = clock.elapsedRealtime() - started
             if (validTelemetryReply(reply)) {
                 acceptTelemetry(reply, responseMs, plannedGap = false)
                 true
@@ -435,7 +435,7 @@ class ResponseDrivenEcuEngine(
     }
 
     private fun pollTelemetry() {
-        val started = SystemClock.elapsedRealtime()
+        val started = clock.elapsedRealtime()
         val expectedSessionId = physicalSessionId
         val reply = usb.protocolTransaction(
             Mp48Protocol.CMD_TELEMETRY,
@@ -444,7 +444,7 @@ class ResponseDrivenEcuEngine(
             false,
             expectedSessionId,
         )
-        val responseMs = SystemClock.elapsedRealtime() - started
+        val responseMs = clock.elapsedRealtime() - started
         if (!validTelemetryReply(reply)) {
             handleTelemetryFailure(reply)
             return
@@ -459,7 +459,7 @@ class ResponseDrivenEcuEngine(
 
     private fun acceptTelemetry(reply: UsbProtocolReply, responseMs: Long, plannedGap: Boolean) {
         val toleratedGap = consecutiveFailures in 1..LearningToleranceSettings.current.toleratedSerialFailures
-        val capturedAt = SystemClock.elapsedRealtime()
+        val capturedAt = clock.elapsedRealtime()
         lastResponseMs = responseMs
         lastIntervalMs = if (lastTelemetryAtMs == 0L) 0L else capturedAt - lastTelemetryAtMs
         lastTelemetryAtMs = capturedAt
@@ -497,7 +497,7 @@ class ResponseDrivenEcuEngine(
         lastError = reply.error.ifBlank {
             "Telemetria incompleta: ${reply.payload.size}/${Mp48Protocol.TELEMETRY_PAYLOAD_SIZE}"
         }
-        val now = SystemClock.elapsedRealtime()
+        val now = clock.elapsedRealtime()
         val silence = if (lastValidTelemetryAtMs > 0L) now - lastValidTelemetryAtMs else Long.MAX_VALUE
         val tolerances = LearningToleranceSettings.current
         val softRecoveryAfterFailures = tolerances.toleratedSerialFailures + 1
@@ -516,7 +516,7 @@ class ResponseDrivenEcuEngine(
                     EngineState.RECOVERING_SOFT,
                     "Recuperando telemetria sem reiniciar a sessão (${consecutiveFailures}/$hardRecoveryAfterFailures)",
                 )
-                SystemClock.sleep(20L)
+                clock.sleep(20L)
             }
             else -> {
                 sessionReady = false
