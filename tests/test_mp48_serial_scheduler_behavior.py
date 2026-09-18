@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt"
 SCHEDULER = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt"
+TRANSPORT = ROOT / "app/src/main/java/com/omegas/prohub/usb/Mp48Transport.kt"
+CLOCK = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48RuntimeClock.kt"
 ANCHOR_WINDOW = ROOT / "app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt"
 
 
@@ -74,11 +76,11 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                         val error: String = "",
                         val elapsedMs: Long = 0L,
                     ) { val statusClass: UsbProtocolStatusClass get() = if (ok) UsbProtocolStatusClass.ACK else UsbProtocolStatusClass.UNKNOWN }
-                    class UsbSerialManager {
-                        @Volatile var connected: Boolean = true
+                    class UsbSerialManager : Mp48Transport {
+                        @Volatile override var connected: Boolean = true
                         val events = Collections.synchronizedList(mutableListOf<String>())
-                        fun purge(reason: String) {}
-                        fun protocolTransaction(
+                        override fun purge(reason: String): Boolean = true
+                        override fun protocolTransaction(
                             request: ByteArray,
                             reason: String,
                             timeoutMs: Int = 1800,
@@ -175,7 +177,7 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                     }
                 ''',
             }
-            files = [ENGINE, SCHEDULER, ANCHOR_WINDOW]
+            files = [ENGINE, SCHEDULER, TRANSPORT, CLOCK, ANCHOR_WINDOW]
             for rel, body in stubs.items():
                 path = tmp / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
