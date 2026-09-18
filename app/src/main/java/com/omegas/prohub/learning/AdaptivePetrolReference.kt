@@ -186,6 +186,45 @@ internal object AdaptivePetrolReference {
         )
     }
 
+    /**
+     * Ajuste rápido e estritamente session-local do scale global da gasolina.
+     *
+     * Usa somente observação física real de gasolina. O valor persistido entre
+     * sessões continua governado por [promoteScale], com carry-forward
+     * conservador. Este ajuste existe para acompanhar drift dentro da sessão
+     * sem transformar previsão em evidência.
+     */
+    internal fun updateOnlineScale(
+        previousScale: Double?,
+        rpm: Double,
+        mapBar: Double,
+        observedPetrolMs: Double,
+    ): Double? {
+        if (!insideDomain(rpm, mapBar)) return previousScale
+        if (!observedPetrolMs.isFinite() || observedPetrolMs <= 0.05) return previousScale
+
+        val prior = f2(rpm, mapBar)
+        if (!prior.isFinite() || prior <= 0.05) return previousScale
+
+        val observedScale = (observedPetrolMs / prior)
+            .takeIf { it.isFinite() && it in 0.60..1.60 }
+            ?: return previousScale
+
+        val current = previousScale
+            ?.takeIf { it.isFinite() && it in 0.60..1.60 }
+            ?: observedScale
+
+        val predicted = prior * current
+        val errorPercent = kotlin.math.abs(predicted - observedPetrolMs) / observedPetrolMs * 100.0
+        val alpha = (
+            0.30 +
+                0.70 * (errorPercent / 1.50).coerceIn(0.0, 1.0)
+            ).coerceIn(0.30, 1.0)
+
+        return ((1.0 - alpha) * current + alpha * observedScale)
+            .coerceIn(0.60, 1.60)
+    }
+
     /** Prior F2 congelado pela pesquisa offline; não é ajustado em runtime. */
     internal fun f2(rpm: Double, mapBar: Double): Double {
         val x = ln(mapBar / 0.40)
