@@ -45,9 +45,17 @@ class ResponseDrivenEcuEngineTransportTest {
         assertEquals(870, frame.rpm)
         assertEquals(0.400, frame.mapBar, 0.000001)
         assertEquals(4.50048, frame.petrolMs, 0.000001)
-        assertTrue(transport.requests.take(3).contentEquals(
-            listOf(Mp48Protocol.CMD_INIT_1, Mp48Protocol.CMD_INIT_2, Mp48Protocol.CMD_IDENTIFY),
-        ))
+        val expectedHandshake = listOf(
+            Mp48Protocol.CMD_INIT_1,
+            Mp48Protocol.CMD_INIT_2,
+            Mp48Protocol.CMD_IDENTIFY,
+        )
+        assertEquals(expectedHandshake.size, transport.requests.take(3).size)
+        assertTrue(
+            transport.requests.take(3)
+                .zip(expectedHandshake)
+                .all { (actual, expected) -> actual.contentEquals(expected) },
+        )
 
         engine.stop(graceful = false)
         engine.close()
