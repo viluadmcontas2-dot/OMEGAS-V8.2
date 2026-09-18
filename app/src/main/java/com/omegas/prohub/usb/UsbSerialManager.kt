@@ -32,7 +32,7 @@ class UsbSerialManager(
     private val log: RingLog,
     private val onStateChanged: () -> Unit,
     private val onRawIo: (String, ByteArray) -> Unit = { _, _ -> },
-) : SerialInputOutputManager.Listener {
+) : SerialInputOutputManager.Listener, Mp48Transport {
 
     private val actionUsbPermission = "${context.packageName}.USB_PERMISSION"
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
@@ -52,7 +52,7 @@ class UsbSerialManager(
     @Volatile var transactionActive = false
         private set
 
-    @Volatile var connected = false
+    @Volatile override var connected = false
         private set
     @Volatile var recovering = false
         private set
@@ -281,7 +281,7 @@ class UsbSerialManager(
     }
 
     @Synchronized
-    fun purge(reason: String = "sincronização serial"): Boolean = purge(reason, port)
+    override fun purge(reason: String): Boolean = purge(reason, port)
 
     private fun purge(reason: String, target: UsbSerialPort?): Boolean {
         clearReceiveBuffer()
@@ -325,7 +325,7 @@ class UsbSerialManager(
     }
 
     /** Executa uma transação exclusiva com eco, frame 53/LEN/PAYLOAD/CK e checksum. */
-    fun protocolTransaction(
+    override fun protocolTransaction(
         request: ByteArray,
         reason: String,
         timeoutMs: Int = 1800,
