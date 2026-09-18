@@ -47,20 +47,27 @@ Each replay frame receives a stable SIL sequence id. The trace must preserve:
 
 ## 5. Operational accuracy criterion
 
-The human objective is useful calibration, not numerical perfection.
+The scientific target is **zero correction**: the learned/reference behavior should drive the residual correction/STFT toward **0%** across the usable operating region.
 
-For reference-error evaluation, an absolute relative error of **5% or less** is operationally acceptable:
+Define signed correction error as:
 
-`abs(predicted_ms - observed_ms) / observed_ms <= 0.05`.
+`correction_pct = (predicted_ms - observed_ms) / observed_ms * 100`.
 
-Optimization below this band is secondary to:
-1. generalization to unseen sessions;
-2. resistance to stale/frozen signals and transients;
-3. deterministic repeatability;
-4. broad coverage;
-5. implementation simplicity and explainability.
+The optimization target is always:
 
-Metrics still report MAE/P90/P99, but the primary practical metric is `within_5pct_rate` plus failure distribution outside the band.
+`correction_pct -> 0%`.
+
+An absolute correction of **5% or less** is the owner's operational acceptance band:
+
+`abs(correction_pct) <= 5%`.
+
+This tolerance is **not** a stopping target and does not mean that samples already inside ±5% should be ignored. Improvements from ±4% toward 0% remain scientifically valuable, provided they generalize and do not reduce robustness.
+
+Metrics therefore track both:
+- distance to zero: mean/median/P90/P99 absolute correction and signed bias;
+- operational acceptance: `within_5pct_rate`.
+
+Generalization to unseen sessions, resistance to stale/frozen signals and transients, deterministic repeatability, coverage, and explainability remain mandatory constraints while optimizing toward zero.
 
 ## 6. Validation
 
@@ -88,7 +95,7 @@ The first usable SIL is complete when:
 1. a canonical LOGNOVO replay traverses the real decoder/analyzer/learning chain headlessly;
 2. all canonical sessions in the corpus can be enumerated/deduplicated;
 3. a machine-readable frame trace and session summary are produced;
-4. the summary reports `within_5pct_rate`, MAE, P90, coverage, stale/freeze counts and learning/reference states;
+4. the summary reports `mean_abs_correction_pct`, signed bias, P90/P99 absolute correction, `within_5pct_rate`, MAE, coverage, stale/freeze counts and learning/reference states;
 5. focused parity/determinism tests pass;
 6. AgentRed executes the corpus run and publishes receipts/artifacts;
 7. no production scientific algorithm has been duplicated or silently replaced.
