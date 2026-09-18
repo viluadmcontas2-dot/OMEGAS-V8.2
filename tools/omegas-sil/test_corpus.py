@@ -59,6 +59,7 @@ class CorpusProtocolTest(unittest.TestCase):
         chunks = (raw[:3], raw[3:20], raw[20:])
         lines = [
             "100  0.00000000  ProgBase.exe  IRP_MJ_WRITE  Silabser0  Length 3: 48 01 49",
+            "100  0.00000000  SUCCESS",
         ]
         for index, chunk in enumerate(chunks, start=101):
             lines.append(f"{index}  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length {len(chunk)}")
