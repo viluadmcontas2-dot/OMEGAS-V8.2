@@ -328,9 +328,9 @@ class UsbSerialManager(
     override fun protocolTransaction(
         request: ByteArray,
         reason: String,
-        timeoutMs: Int = 1800,
-        purgeBefore: Boolean = true,
-        expectedSessionId: Long = 0L,
+        timeoutMs: Int,
+        purgeBefore: Boolean,
+        expectedSessionId: Long,
     ): UsbProtocolReply = transactionLock.withLock {
         val started = android.os.SystemClock.elapsedRealtime()
         if (recovering) {
