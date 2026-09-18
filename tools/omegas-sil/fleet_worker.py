@@ -338,6 +338,101 @@ def falsification(cache: Path, output: Path):
     print(json.dumps({"folds": len(folds), "real_macro_abs_corr": float(np.mean([x["real"]["mean_abs_correction_pct"] for x in folds])), "shuffle_macro_abs_corr": float(np.mean([x["shuffle_null"]["mean_abs_correction_pct"] for x in folds]))}))
 
 
+
+def frame_df_from_transactions(session_name: str, transactions) -> pd.DataFrame:
+    rows = []
+    for tx in transactions:
+        row = decode_payload(tx.payload)
+        row.update({
+            "session": session_name,
+            "sequence": tx.sequence,
+            "recorded_at_ms": tx.recorded_at_ms,
+            "fingerprint": "",
+        })
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    df.sort_values(["recorded_at_ms", "sequence"], inplace=True)
+    df["dt_ms"] = df["recorded_at_ms"].diff()
+    df["dmap"] = df["map_bar"].diff()
+    df["drpm"] = df["rpm"].diff()
+    df["dpetrol_ms"] = df["petrol_ms"].diff()
+    df["same_petrol_prev"] = df["petrol_raw"].diff().eq(0)
+    df["stale_conflict"] = df["same_petrol_prev"] & df["dmap"].abs().ge(0.01)
+    return df
+
+
+def source_profile(root: Path, source: str, output: Path):
+    path = root / source
+    reader = read_portmon_zip if path.name.lower().startswith("portmon") else read_session_zip
+    result = reader(path)
+    df = frame_df_from_transactions(source, result.telemetry)
+    if df.empty:
+        out = {"session": source, "frames": 0, "unsupported": result.unsupported_reason, "invalid": result.invalid_replies}
+        output.write_text(json.dumps(out, indent=2), encoding="utf-8")
+        print(json.dumps(out))
+        return
+    temp = output.with_suffix(".tmp.csv.gz")
+    df.to_csv(temp, index=False, compression="gzip")
+    try:
+        session_profile(temp, source, output)
+        payload = json.loads(output.read_text(encoding="utf-8"))
+        payload["invalid_replies"] = result.invalid_replies
+        payload["transactions"] = len(result.transactions)
+        payload["unsupported"] = result.unsupported_reason
+        output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    finally:
+        temp.unlink(missing_ok=True)
+
+
+def build_cache_selected(root: Path, sources: list[str], cache: Path, manifest_path: Path):
+    sessions = {}
+    source_meta = []
+    for name in sources:
+        path = root / name
+        reader = read_portmon_zip if path.name.lower().startswith("portmon") else read_session_zip
+        try:
+            result = reader(path)
+            tx = list(result.telemetry)
+            source_meta.append({"file": name, "telemetry": len(tx), "invalid": result.invalid_replies, "unsupported": result.unsupported_reason})
+            if tx:
+                sessions[name] = tx
+        except Exception as exc:
+            source_meta.append({"file": name, "telemetry": 0, "error": repr(exc)})
+    corpus = canonicalize_sessions(sessions)
+    rows = []
+    for session in corpus.sessions:
+        for tx in session.telemetry:
+            row = decode_payload(tx.payload)
+            row.update({
+                "session": session.canonical_id,
+                "sequence": tx.sequence,
+                "recorded_at_ms": tx.recorded_at_ms,
+                "fingerprint": session.fingerprint,
+            })
+            rows.append(row)
+    df = pd.DataFrame(rows)
+    df.sort_values(["session", "recorded_at_ms", "sequence"], inplace=True)
+    g = df.groupby("session", sort=False)
+    df["dt_ms"] = g["recorded_at_ms"].diff()
+    df["dmap"] = g["map_bar"].diff()
+    df["drpm"] = g["rpm"].diff()
+    df["dpetrol_ms"] = g["petrol_ms"].diff()
+    df["same_petrol_prev"] = g["petrol_raw"].diff().eq(0)
+    df["stale_conflict"] = df["same_petrol_prev"] & df["dmap"].abs().ge(0.01)
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(cache, index=False, compression="gzip")
+    manifest = {
+        "root": str(root), "cache": str(cache), "rows": int(len(df)),
+        "canonical_sessions": int(df["session"].nunique()),
+        "fuel_counts": {str(k): int(v) for k, v in df["fuel"].value_counts().items()},
+        "sessions": [{"session": s.canonical_id, "aliases": list(s.aliases), "frames": len(s.telemetry), "fingerprint": s.fingerprint} for s in corpus.sessions],
+        "sources": source_meta,
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(json.dumps({k: manifest[k] for k in ["rows", "canonical_sessions", "fuel_counts"]}))
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -351,6 +446,17 @@ def main():
     p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
     p.add_argument("--session", required=True)
     p.add_argument("--output", type=Path, required=True)
+
+    p = sub.add_parser("source-profile")
+    p.add_argument("--root", type=Path, required=True)
+    p.add_argument("--source", required=True)
+    p.add_argument("--output", type=Path, required=True)
+
+    p = sub.add_parser("build-cache-selected")
+    p.add_argument("--root", type=Path, required=True)
+    p.add_argument("--source", action="append", required=True)
+    p.add_argument("--cache", type=Path, required=True)
+    p.add_argument("--manifest", type=Path, required=True)
 
     p = sub.add_parser("global-family")
     p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
@@ -366,6 +472,10 @@ def main():
         build_cache(args.root, args.cache, args.manifest)
     elif args.cmd == "session-profile":
         session_profile(args.cache, args.session, args.output)
+    elif args.cmd == "source-profile":
+        source_profile(args.root, args.source, args.output)
+    elif args.cmd == "build-cache-selected":
+        build_cache_selected(args.root, args.source, args.cache, args.manifest)
     elif args.cmd == "global-family":
         global_family(args.cache, args.family, args.output)
     elif args.cmd == "falsification":
