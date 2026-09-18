@@ -38,6 +38,61 @@ class MotorLearningScaleCarryForwardTest {
     }
 
     @Test
+    fun onlineSessionScaleIsEphemeralAndPetrolOnly() {
+        val persisted = 1.0
+        val target = 1.08
+        val rpm = 1_800.0
+        val mapBar = 0.50
+        val petrolMs = AdaptivePetrolReference.f2(rpm, mapBar) * target
+        val memory = seededMemory(persisted)
+        memory.startSession()
+
+        memory.ingest(
+            petrolTelemetry(rpm, mapBar, petrolMs),
+            SampleDecision.accepted(petrolSample(0, rpm, mapBar, petrolMs)),
+        )
+
+        val afterPetrol = memory.export("test")
+        assertEquals(
+            target,
+            afterPetrol.getJSONObject("session_summary").getDouble("online_petrol_scale"),
+            0.000001,
+        )
+        assertEquals(
+            persisted,
+            afterPetrol.getJSONObject("adaptiveScale").getDouble("acceptedScale"),
+            0.000001,
+        )
+
+        val cngSample = petrolSample(1, rpm, mapBar, petrolMs).copy(
+            id = "cng-scale-freeze",
+            fuel = Mp48Fuel.CNG,
+            pressureDiffBar = 1.4,
+            gasC = 65.0,
+        )
+        val cngTelemetry = petrolTelemetry(rpm, mapBar, petrolMs).copy(
+            fuelByte = 0x90,
+            fuel = Mp48Fuel.CNG,
+            state = Mp48Fuel.CNG.wireName,
+            gasC = 65,
+            pressureDiffBar = 1.4,
+        )
+        memory.ingest(cngTelemetry, SampleDecision.accepted(cngSample))
+
+        val afterCng = memory.export("test")
+        assertEquals(
+            target,
+            afterCng.getJSONObject("session_summary").getDouble("online_petrol_scale"),
+            0.000001,
+        )
+        assertEquals(
+            persisted,
+            afterCng.getJSONObject("adaptiveScale").getDouble("acceptedScale"),
+            0.000001,
+        )
+    }
+
+    @Test
     fun distantSessionCandidateIsBoundedInsteadOfResettingCarriedScale() {
         val prior = 1.065612
         val misleading = 1.10058
