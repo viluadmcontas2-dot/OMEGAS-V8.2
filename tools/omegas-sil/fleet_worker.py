@@ -363,7 +363,7 @@ def frame_df_from_transactions(session_name: str, transactions) -> pd.DataFrame:
     return df
 
 
-def source_profile(root: Path, source: str, output: Path):
+def source_profile(root: Path, source: str, output: Path, cache_output: Path | None = None):
     path = root / source
     reader = read_portmon_zip if path.name.lower().startswith("portmon") else read_session_zip
     result = reader(path)
@@ -373,8 +373,15 @@ def source_profile(root: Path, source: str, output: Path):
         output.write_text(json.dumps(out, indent=2), encoding="utf-8")
         print(json.dumps(out))
         return
-    temp = output.with_suffix(".tmp.csv.gz")
-    df.to_csv(temp, index=False, compression="gzip")
+    if cache_output is not None:
+        cache_output.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(cache_output, index=False, compression="gzip")
+        temp = cache_output
+        delete_temp = False
+    else:
+        temp = output.with_suffix(".tmp.csv.gz")
+        df.to_csv(temp, index=False, compression="gzip")
+        delete_temp = True
     try:
         session_profile(temp, source, output)
         payload = json.loads(output.read_text(encoding="utf-8"))
@@ -383,7 +390,8 @@ def source_profile(root: Path, source: str, output: Path):
         payload["unsupported"] = result.unsupported_reason
         output.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     finally:
-        temp.unlink(missing_ok=True)
+        if delete_temp:
+            temp.unlink(missing_ok=True)
 
 
 def build_cache_selected(root: Path, sources: list[str], cache: Path, manifest_path: Path):
@@ -451,6 +459,7 @@ def main():
     p.add_argument("--root", type=Path, required=True)
     p.add_argument("--source", required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--cache-output", type=Path)
 
     p = sub.add_parser("build-cache-selected")
     p.add_argument("--root", type=Path, required=True)
@@ -473,7 +482,7 @@ def main():
     elif args.cmd == "session-profile":
         session_profile(args.cache, args.session, args.output)
     elif args.cmd == "source-profile":
-        source_profile(args.root, args.source, args.output)
+        source_profile(args.root, args.source, args.output, args.cache_output)
     elif args.cmd == "build-cache-selected":
         build_cache_selected(args.root, args.source, args.cache, args.manifest)
     elif args.cmd == "global-family":
