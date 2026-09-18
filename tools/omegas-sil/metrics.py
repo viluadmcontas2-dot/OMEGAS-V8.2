@@ -5,7 +5,8 @@ import math
 from statistics import mean
 from typing import Iterable
 
-PRACTICAL_TOLERANCE_PCT = 5.0
+PREFERRED_TOLERANCE_PCT = 3.5
+PRACTICAL_TOLERANCE_PCT = 4.0
 
 
 def correction_pct(observed_ms: float, predicted_ms: float) -> float:
@@ -61,13 +62,17 @@ def summarize_reference_errors(
     abs_corrections = [abs(correction) for correction in signed_corrections]
     abs_errors = [abs(predicted - observed) for observed, predicted, _ in usable]
     within = sum(abs(correction) <= tolerance_pct + 1e-12 for correction in signed_corrections)
+    within_preferred = sum(abs(correction) <= PREFERRED_TOLERANCE_PCT + 1e-12 for correction in signed_corrections)
     count = len(usable)
     return {
         "target_correction_pct": 0.0,
+        "preferred_tolerance_pct": PREFERRED_TOLERANCE_PCT,
         "tolerance_pct": tolerance_pct,
         "count": count,
-        "within_5pct": within,
-        "within_5pct_rate": within / count if count else 0.0,
+        "within_preferred": within_preferred,
+        "within_preferred_rate": within_preferred / count if count else 0.0,
+        "within_tolerance": within,
+        "within_tolerance_rate": within / count if count else 0.0,
         "mean_signed_correction_pct": mean(signed_corrections) if signed_corrections else math.nan,
         "mean_abs_correction_pct": mean(abs_corrections) if abs_corrections else math.nan,
         "median_abs_correction_pct": _quantile(abs_corrections, 0.50),
