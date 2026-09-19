@@ -402,3 +402,133 @@ The next experiments must therefore test:
 5. transient guard + shock limiter on that bridge.
 
 No APK, Emulator, OBD dependency or automatic writer belongs to this stage.
+
+
+## 13. 2026-09-19 continuation — strict switch anchors and fast GNV calibration
+
+### AgentRed #649 — MP48 petrol_ms semantics during CNG
+Receipt: https://github.com/viluadmcontas2-dot/AgentRed/issues/649  
+Artifact manifest: https://github.com/viluadmcontas2-dot/AgentRed/blob/8eba3a035fef38aa83e816c9bc26e82137021fad/manifest.json
+
+Observed in the canonical corpus:
+- CNG frames: **65,443**;
+- `petrol_ms > 0.7` in **99.998%** of CNG frames;
+- gas pulse present in **99.966%** of CNG frames;
+- stable-CNG frames with both signals: **54,779**;
+- gas_ms vs petrol_ms correlation in stable CNG: **0.9475**;
+- 17 strict switch pairs under the job's gate;
+- median direct PETROL→CNG correction: **2.984%**.
+
+**Conclusion:** `petrol_ms` remains a live, highly continuous signal while the ECU is physically on CNG. Together with the AEB documentation already cited above, this supports using it as the non-OBD feedback signal for gasoline-equivalence calibration.
+
+**Status: PROMOTE semantic use of petrol_ms during CNG.**
+
+### AgentRed #650 — sparse strict-switch K anchor field
+Receipt: https://github.com/viluadmcontas2-dot/AgentRed/issues/650  
+Artifact manifest: https://github.com/viluadmcontas2-dot/AgentRed/blob/36479f35d0771578f789ffc8e4825a318df8d124/manifest.json
+
+19 anchors were evaluated leave-one-session-out.
+
+A simple global median of the remaining anchors:
+- MAE **2.369%**;
+- within ±4% **78.95%**;
+- P90 **5.381%**;
+- worst **10.075%**.
+
+Spatial kernels over RPM × petrol_ms were worse and/or had low coverage:
+- best tested kernel MAE ~**3.99%** at only ~31.6% coverage;
+- high-coverage kernels were roughly **4.46–4.64% MAE**.
+
+**Conclusion:** the available strict switch evidence does **not** justify building a second dense GNV map. The first useful calibration object is a global/curve-level bias; local K memory should remain residual evidence only.
+
+**Status: PROMOTE global-first; REJECT sparse-anchor spatial field as primary mechanism.**
+
+### AgentRed #651 — long-CNG anchor plus causal residual adaptation
+Receipt: https://github.com/viluadmcontas2-dot/AgentRed/issues/651  
+Artifact manifest: https://github.com/viluadmcontas2-dot/AgentRed/blob/12116ef065c5ab9a7307b1e2bd3a255d99099ad5/manifest.json
+
+Only 9 segments met both strict start and strict end validation gates.
+
+Best tested causal residual alpha:
+- alpha 0.10;
+- MAE **5.91%**;
+- median **2.10%**;
+- within ±4% **55.6%**;
+- P90 **11.88%**;
+- worst **21.22%**.
+
+Frozen start anchor:
+- MAE **6.27%**;
+- within ±4% **22.2%**;
+- worst **13.04%**.
+
+**Conclusion:** continuous CNG residual adaptation can improve central behavior but the tested formulation still has an unacceptable tail. It must not become a new high-authority learner.
+
+**Status: KEEP_AS_LAYER / INCONCLUSIVE for long-CNG residual control.**
+
+### Read-only strict-anchor convergence falsification on canonical cache
+
+A stricter gate matching AgentRed #575 was evaluated directly on the canonical cache:
+- RPM gap <= **50 RPM**;
+- MAP gap <= **0.02 bar**;
+- 11 strict anchors remained.
+
+Using the median of previous strict anchors in the **same session**:
+- after >=1 prior anchor: n=8, MAE **1.865%**, **87.5%** within ±4%, worst **4.42%**;
+- after >=2 prior anchors: n=6, MAE **1.724%**, **100%** within ±4%, worst **3.60%**;
+- after >=3 prior anchors: n=4, MAE **2.062%**, **100%** within ±4%.
+
+This is a small sample and is **not** physical validation. It is sufficient to justify a conservative software gate: strict switch anchors may become the preferred global calibration source after two such observations, while continuous CNG evidence remains the residual/local lane.
+
+### Implemented candidate
+
+Code lineage:
+- `c2592be0dc93fbcb95627fad085459429fb56f83` — capture strict PETROL→CNG anchor;
+- `6588068893c65616658d6535c38abbdf85f3de2f` — prefer strict anchors for global trend after two anchors;
+- `b753f82ca2f250aee794040a63a47390115e7a1c` — memory anchor tests;
+- `28e335636b874c7908851342a073c99c5cf9f74f` — advisor anchor-source tests;
+- `4563f545e0b7c5a91fe2e7980d307c3a008396e2` — compact-status readback fix.
+
+Behavior:
+1. normal gasoline learning remains the dense reference;
+2. when CNG stabilization follows gasoline and the operating point remains within 50 RPM / 0.02 bar, the confirmation sample creates a `STRICT_SWITCH_ANCHOR`;
+3. the anchor is a comparison only — it does not create a second GNV reference map;
+4. with fewer than two strict anchors, the Advisor keeps the existing continuous global path;
+5. with two or more strict anchors, strict anchors own the global/Curve-K trend;
+6. all continuous CNG comparisons remain available to the residual Map-K calculation **after** removal of the supported global trend;
+7. automatic ECU writing remains disabled and human confirmation remains required.
+
+This directly implements the fast-calibration strategy:
+**gasoline reference -> a few high-confidence switch anchors -> global correction first -> local residual only where evidence proves it is needed.**
+
+### Validation status
+
+AgentRed validation jobs:
+- #684 — created for SHA `28e33563...`, no dispatch/receipt appeared during bounded polling; closed as `not_planned` after the SHA became stale.
+- #686 — created for SHA `4563f545...`, no dispatch/receipt appeared during bounded polling; closed as `not_planned` to prevent later duplicate execution.
+
+Ephemeral MMMACHINE validation for exact code SHA `4563f545e0b7c5a91fe2e7980d307c3a008396e2`:
+1. first run: **FAILURE (environment)** before tests — Android SDK path was not configured;
+2. SDK was found at `C:\Users\hugov\AppData\Local\Android\Sdk`;
+3. second run with `ANDROID_HOME`/ `ANDROID_SDK_ROOT` configured advanced through Android resource processing, but did not reach a test result inside the bounded polling window;
+4. process was explicitly terminated to avoid unbounded execution.
+
+**Validation terminal state for this round: TIMEOUT.**
+
+Therefore:
+- remote source mutation is confirmed;
+- the scientific rationale is supported by corpus evidence;
+- targeted unit-test success is **not yet verified**;
+- no APK was generated;
+- no Emulator was used;
+- no automatic writer was enabled;
+- no physical vehicle validation is claimed.
+
+## 14. Current decision
+
+**Candidate:** strict-switch-anchor preferred global calibration + continuous residual local refinement.
+
+Scientific status: **PROMOTE AS CANDIDATE**.  
+Software verification status: **TIMEOUT / NOT GREEN YET**.
+
+The next execution must be only one thing: rerun the two targeted unit-test classes for code SHA `4563f545...` (or a descendant differing only in documentation) on a runner with Android SDK configured, then accept or fix the concrete test failure. Do not open another algorithm-search round before that verification.
