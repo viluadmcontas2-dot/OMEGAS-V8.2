@@ -50,20 +50,14 @@ object AssistedCalibrationAdvisor {
                 .put("reconciliation", reconciled.optJSONObject("reconciliation") ?: JSONObject())
         }
 
-        val pairedCurves = pairedCurves(samples)
         val strictSwitchAnchors = samples.filter { it.origin == STRICT_SWITCH_ANCHOR_ORIGIN }
-        val globalSamples = if (strictSwitchAnchors.size >= MIN_STRICT_SWITCH_ANCHORS_FOR_GLOBAL) {
-            strictSwitchAnchors
-        } else {
-            samples
-        }
-        val globalSource = if (strictSwitchAnchors.size >= MIN_STRICT_SWITCH_ANCHORS_FOR_GLOBAL) {
-            "STRICT_SWITCH_ANCHORS"
-        } else {
-            "CONTINUOUS_REFERENCE_SURFACE"
-        }
-        val global = globalCurve(globalSamples)
-        val residual = residualMap(samples, global)
+        // Trocas PETROL→CNG são apenas verdade de auditoria. O algoritmo operacional
+        // nunca depende delas: controle e aprendizado usam somente o caminho contínuo.
+        val controlSamples = samples.filter { it.origin != STRICT_SWITCH_ANCHOR_ORIGIN }
+        val pairedCurves = pairedCurves(controlSamples)
+        val globalSource = "CONTINUOUS_REFERENCE_SURFACE"
+        val global = globalCurve(controlSamples)
+        val residual = residualMap(controlSamples, global)
         val regions = mapCorrectionRegions(residual)
         return JSONObject()
             .put("ok", true)
@@ -71,7 +65,8 @@ object AssistedCalibrationAdvisor {
             .put("automatic", false)
             .put("humanConfirmationRequired", true)
             .put("comparisonCount", samples.size)
-            .put("uniqueVisitCount", samples.map { it.visitId }.toSet().size)
+            .put("controlComparisonCount", controlSamples.size)
+            .put("uniqueVisitCount", controlSamples.map { it.visitId }.toSet().size)
             .put("strictSwitchAnchorCount", strictSwitchAnchors.size)
             .put("petrolCurve", pairedCurves.petrol)
             .put("cngCurve", pairedCurves.cng)
@@ -85,8 +80,10 @@ object AssistedCalibrationAdvisor {
             .put("mapCorrectionRegions", regions)
             .put("reconciliation", reconciled.optJSONObject("reconciliation") ?: JSONObject())
             .put("method", JSONObject()
-                .put("global", "strict-switch-anchor-preferred-then-continuous-fallback")
+                .put("global", "continuous-reference-surface")
                 .put("globalSource", globalSource)
+                .put("strictSwitchRole", "VALIDATION_ONLY")
+                .put("runtimeFuelSwitchingRequired", false)
                 .put("strictSwitchAnchorMinimum", MIN_STRICT_SWITCH_ANCHORS_FOR_GLOBAL)
                 .put("residual", "bilinear-rpm-petrol-after-supported-global-removal")
                 .put("decision", "useful-margin-error-minus-uncertainty-minus-deadband")
@@ -339,7 +336,10 @@ object AssistedCalibrationAdvisor {
         .put("automatic", false)
         .put("humanConfirmationRequired", true)
         .put("comparisonCount", 0)
+        .put("controlComparisonCount", 0)
         .put("uniqueVisitCount", 0)
+        .put("strictSwitchAnchorCount", 0)
+        .put("runtimeFuelSwitchingRequired", false)
         .put("petrolCurve", JSONArray())
         .put("cngCurve", JSONArray())
         .put("kFactorAxisMs", JSONArray(KFactorProtocol.OBSERVED_PETROL_AXIS_MS.toList()))
