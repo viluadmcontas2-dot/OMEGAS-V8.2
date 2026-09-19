@@ -143,13 +143,12 @@ def w07(d):
     for q in [.0005,.001,.002,.005,.01,.02,.05]:
       es=[]
       for s,tr,te in heldout_petrol(d):
-        b=base_reference(tr,te);y=te.petrol_ms.to_numpy(float);m=1.;v=.01;p=[]
-        for i in range(len(te)):
-            p.append(b[i]*m)
-            v+=q
+        b=base_reference(tr,te);y=te.petrol_ms.to_numpy(float);dm=np.nan_to_num(np.abs(te.dmap.to_numpy(float)),nan=0.0)
+        m=1.;v=.01;p=np.full(len(y),np.nan)
+        for i in range(len(y)):
+            p[i]=b[i]*m;v+=q
             if b[i]>.7:
-                z=y[i]/b[i]; r=.0025 + .04*min(1.,abs(float(te.iloc[i].dmap))/.05 if np.isfinite(te.iloc[i].dmap) else 0)
-                k=v/(v+r);m=m+k*(z-m);v=(1-k)*v
+                z=y[i]/b[i];noise=.0025+.04*min(1.,dm[i]/.05);k=v/(v+noise);m=m+k*(z-m);v=(1-k)*v
         es.append(metrics(y,p)["mae_pct"])
       if es:rows.append({"process_q":q,"mae_pct":float(np.mean(es))})
     return {"role":"KALMAN_GAIN","claim":"state-space gain estimator should smooth noise without SMA lag","results":rows}
@@ -164,12 +163,14 @@ def w08(d):
         # compact prototypes to avoid O(N^2)
         tr["rb"]=(tr.rpm/bw_r).round().astype(int);tr["mb"]=(tr.map_bar/bw_m).round().astype(int)
         pr=tr.groupby(["rb","mb"]).agg(rpm=("rpm","median"),map_bar=("map_bar","median"),petrol_ms=("petrol_ms","median")).reset_index()
+        eval_te=te if len(te)<=3500 else te.iloc[np.linspace(0,len(te)-1,3500,dtype=int)]
         preds=[]
-        for r in te.itertuples():
-            dist=((pr.rpm-r.rpm)/bw_r)**2+((pr.map_bar-r.map_bar)/bw_m)**2
-            ix=np.argsort(dist.to_numpy())[:12];dd=dist.iloc[ix].to_numpy();w=np.exp(-.5*dd)
-            preds.append(float(np.sum(pr.petrol_ms.iloc[ix].to_numpy()*w)/max(w.sum(),1e-12)))
-        errs.append(metrics(te.petrol_ms,preds)["mae_pct"])
+        prv=pr[["rpm","map_bar","petrol_ms"]].to_numpy(float)
+        for r in eval_te.itertuples():
+            dist=((prv[:,0]-r.rpm)/bw_r)**2+((prv[:,1]-r.map_bar)/bw_m)**2
+            ix=np.argpartition(dist,min(12,len(dist)-1))[:12];dd=dist[ix];w=np.exp(-.5*dd)
+            preds.append(float(np.sum(prv[ix,2]*w)/max(w.sum(),1e-12)))
+        errs.append(metrics(eval_te.petrol_ms,preds)["mae_pct"])
       rows.append({"bw_rpm":bw_r,"bw_map":bw_m,"mae_pct":float(np.mean(errs))})
     return {"role":"GAUSSIAN_REFERENCE","claim":"modern local Gaussian reference should beat crude lookup without overfit","results":rows}
 
@@ -264,9 +265,9 @@ def w12(d):
 def w13(d):
     # Last-ratio with transient authority reduction.
     rows=[]
-    for dm in [.015,.025,.04,.06,.10]:
-      for dr in [50,100,150,250,400]:
-        for fallback in [0.,.25,.5,.75]:
+    for dm in [.02,.05,.08]:
+      for dr in [100,200,400]:
+        for fallback in [0.,.25,.5]:
           errs=[]
           for s,tr,te in heldout_petrol(d):
             b=base_reference(tr,te);y=te.petrol_ms.to_numpy(float);gain=1.;p=[]
