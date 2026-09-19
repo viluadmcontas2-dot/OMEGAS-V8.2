@@ -154,6 +154,14 @@
       this.state = {};
       this.snapshot = {};
       this.actionState = {};
+      this.chartView = AutoCalUxModel.updateChartView(null, 'fit');
+      this.chartPointers = new Map();
+      this.pinchBase = null;
+      this.previousReferencePoints = [];
+      this.currentReferencePoints = [];
+      this.chartHistoryVisible = false;
+      this.selectedReferenceIndex = null;
+      this.selectedBandIndex = null;
       this.inject();
       this.bind();
       this.unsubscribeContext = this.scheduler.addHook('context', () => {
@@ -187,38 +195,68 @@
         panel.className = 'curve-view autocal-cockpit-view';
         panel.dataset.curvePanel = 'autocal';
         panel.innerHTML = `
-          <section class="autocal-cockpit" aria-label="Cockpit Auto Calibration nativa">
-            <header class="autocal-head">
-              <div><small>AUTO CALIBRATION NATIVA</small><h3>O que a ECU está aprendendo agora</h3><p>Observação e controle manual da aquisição nativa. AutoMatch continua dentro da ECU.</p></div>
-              <div class="autocal-head-actions"><span id="autocalNativeState" class="source-status">Aguardando ECU</span><button type="button" data-autocal-read class="secondary">Solicitar snapshot</button></div>
+          <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
+            <header class="autocal-hero" aria-live="polite">
+              <div class="autocal-human-copy">
+                <small>AGORA</small>
+                <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
+                <p id="autocalHumanProgress">Gasolina 0/4 zonas · GNV 0/4 zonas</p>
+                <strong id="autocalHumanAction">Atualize a leitura para receber o estado nativo da ECU.</strong>
+              </div>
+              <div class="autocal-hero-actions">
+                <span id="autocalNativeState" class="source-status">Aguardando ECU</span>
+                <button type="button" data-autocal-read class="secondary">Atualizar leitura</button>
+              </div>
             </header>
-            <div class="autocal-live-strip">
-              <div><small>ESTADO</small><b id="autocalState">—</b></div>
-              <div><small>AQUISIÇÃO</small><b id="autocalEnable">—</b></div>
-              <div><small>AUTOMATCH ECU</small><b id="autocalMatchCount">—</b></div>
-              <div><small>MÁX. AUTOMATCH</small><b id="autocalMaxMatch">—</b></div>
-              <div><small>EVENTOS MADUROS</small><b id="autocalMatureCount">0</b></div>
-            </div>
-            <div class="autocal-layout">
-              <section class="autocal-bands-card">
-                <div class="autocal-section-head"><div><small>18 BANDAS GNV</small><h4>Contadores nativos</h4></div><span>somente leitura</span></div>
-                <div id="autocalBands" class="autocal-bands"></div>
-                <p class="autocal-note">O OMEGAS não inventa RPM pela banda. Posição física só vira âncora quando a correlação monotônica é confiável.</p>
-              </section>
-              <aside class="autocal-side">
-                <section class="autocal-events-card"><div class="autocal-section-head"><div><small>MATURIDADE</small><h4>Últimos eventos</h4></div></div><div id="autocalEvents" class="autocal-events"></div></section>
-                <section class="autocal-actions-card">
-                  <div class="autocal-section-head"><div><small>CONTROLE MANUAL</small><h4>Ações da ECU</h4></div><span>dupla confirmação</span></div>
-                  <div class="autocal-actions">
-                    <button type="button" data-autocal-action="ENABLE_AUTO_CAL">Habilitar coleta</button>
-                    <button type="button" data-autocal-action="DISABLE_AUTO_CAL">Pausar coleta</button>
-                    <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
-                    <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
-                  </div>
-                  <div id="autocalActionStatus" class="autocal-action-status">Nenhuma ação preparada.</div>
-                </section>
-              </aside>
-            </div>
+
+            <section class="autocal-reference-card">
+              <div class="autocal-section-head">
+                <div><small>REFERÊNCIA NATIVA</small><h4>Gasolina × GNV</h4><p>Petrol Inj. no eixo horizontal e MAP no vertical. A tela só desenha o que a ECU publicou.</p></div>
+                <div class="autocal-chart-tools" aria-label="Controles do gráfico">
+                  <button type="button" data-autocal-chart-action="zoom-out" aria-label="Diminuir zoom">−</button>
+                  <button type="button" data-autocal-chart-action="zoom-in" aria-label="Aumentar zoom">+</button>
+                  <button type="button" data-autocal-chart-action="fit">Ajustar</button>
+                  <button type="button" data-autocal-history disabled>Anterior</button>
+                </div>
+              </div>
+              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
+              <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
+              <div id="autocalChartInspector" class="autocal-inline-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP de gasolina/GNV sem alterar nada.</span></div>
+            </section>
+
+            <section class="autocal-bands-card">
+              <div class="autocal-section-head compact">
+                <div><small>18 FAIXAS DE AQUISIÇÃO GNV</small><h4>Onde a ECU já passou</h4></div>
+                <span id="autocalZoneSummary">0/4 zonas GNV</span>
+              </div>
+              <div id="autocalBands" class="autocal-band-strip" role="list"></div>
+              <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Toque numa faixa</b><span>Os detalhes aparecem aqui; a faixa não é um comando.</span></div>
+            </section>
+
+            <section class="autocal-command-bar">
+              <div class="autocal-command-copy"><small>AUTOMATCH DA ECU</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
+              <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
+              <details class="autocal-more-actions">
+                <summary>Mais ações</summary>
+                <div class="autocal-reset-actions">
+                  <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
+                  <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
+                  <p>Reset é uma ação crítica. A revisão WebView e a confirmação Android continuam obrigatórias.</p>
+                </div>
+              </details>
+            </section>
+
+            <details id="autocalTechnicalDetails" class="autocal-technical-details">
+              <summary>Detalhes técnicos</summary>
+              <div class="autocal-tech-grid">
+                <div><small>ESTADO RAW</small><b id="autocalStateRaw">—</b></div>
+                <div><small>AQUISIÇÃO</small><b id="autocalEnableRaw">—</b></div>
+                <div><small>SNAPSHOT</small><b id="autocalSnapshotHash">—</b></div>
+                <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">0</b></div>
+              </div>
+              <div id="autocalEvents" class="autocal-events"></div>
+            </details>
+
             <div id="autocalReview" class="autocal-review" hidden></div>
           </section>`;
         stack.appendChild(panel);
