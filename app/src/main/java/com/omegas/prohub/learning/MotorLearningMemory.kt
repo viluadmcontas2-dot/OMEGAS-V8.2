@@ -496,6 +496,8 @@ class MotorLearningMemory(
             "actionable",
             "suggested_delta_k_percent",
             "suggested_delta_k",
+            "strict_switch_anchor_registered",
+            "strict_switch_anchor",
         ).forEach { key ->
             if (lastStatus.has(key)) compact.put(key, lastStatus.get(key))
         }
