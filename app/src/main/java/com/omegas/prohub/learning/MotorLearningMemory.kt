@@ -263,6 +263,51 @@ class MotorLearningMemory(
             .put("comparisons", JSONArray(comparisons.map { it.toJson() }))
     }
 
+    /**
+     * Referência gasolina somente-leitura para o observador rápido de frames GNV.
+     *
+     * Não altera contadores, não persiste evidência e não cria comparação. Usa
+     * exatamente a mesma superfície física de gasolina da memória consolidada.
+     */
+    internal fun fastPetrolReference(telemetry: Mp48Telemetry): FastPetrolReferenceEstimate? = synchronized(lock) {
+        if (!telemetry.plausible || telemetry.rpm <= 0 || telemetry.mapBar <= 0.0) {
+            return@synchronized null
+        }
+        val petrolRegions = regions.asSequence()
+            .filter { it.fuel == Mp48Fuel.PETROL && it.epoch == 0 }
+            .map { region ->
+                PetrolReferenceSelector.Region(
+                    id = region.id,
+                    rpm = region.rpmMean,
+                    mapBar = region.mapMean,
+                    waterC = region.waterMean,
+                    petrolMs = region.petrolMean,
+                    confidence = region.confidence(),
+                    sampleCount = region.sampleCount,
+                )
+            }
+            .toList()
+        if (petrolRegions.isEmpty()) return@synchronized null
+        val result = AdaptivePetrolReference.estimate(
+            regions = petrolRegions,
+            request = PetrolReferenceSelector.Request(
+                rpm = telemetry.rpm.toDouble(),
+                mapBar = telemetry.mapBar,
+                waterC = telemetry.waterC.toDouble(),
+            ),
+            acceptedScale = adaptiveScale.acceptedScale,
+            policy = LearningToleranceSettings.current,
+        )
+        if (!result.available || result.petrolTargetMs == null) {
+            return@synchronized null
+        }
+        FastPetrolReferenceEstimate(
+            petrolTargetMs = result.petrolTargetMs,
+            quality = result.quality,
+            stage = result.stage,
+        )
+    }
+
     fun merge(payload: JSONObject, localDeviceId: String = ""): JSONObject = synchronized(lock) {
         val format = payload.optString("format")
         if (format != FORMAT) {
