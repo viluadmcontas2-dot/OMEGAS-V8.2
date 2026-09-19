@@ -313,7 +313,14 @@
         return;
       }
       this.state = this.api.status() || {};
-      this.snapshot = this.api.snapshot() || {};
+      const nextSnapshot = this.api.snapshot() || {};
+      const oldHash = String(this.snapshot?.snapshotHash || '');
+      const nextHash = String(nextSnapshot?.snapshotHash || '');
+      if (oldHash && nextHash && oldHash !== nextHash) {
+        const previous = AutoCalUxModel.referencePoints(this.snapshot);
+        if (previous.length) this.previousReferencePoints = previous;
+      }
+      this.snapshot = nextSnapshot;
       this.actionState = this.api.actionStatus() || {};
       this.render();
     }
