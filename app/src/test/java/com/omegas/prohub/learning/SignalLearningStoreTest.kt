@@ -1,6 +1,12 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.calibration.AdvisorSuggestionAdapterV7
 import com.omegas.prohub.ecu.Mp48Fuel
+import com.omegas.v7.runtime.CalibrationRevisionV7
+import com.omegas.v7.runtime.CalibrationShapeV7
+import com.omegas.v7.runtime.CalibrationStateV7
+import com.omegas.v7.runtime.SuggestionLifecycleV7
+import com.omegas.v7.runtime.SuggestionTargetV7
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
 import org.junit.Assert.assertEquals
@@ -100,6 +106,73 @@ class SignalLearningStoreTest {
     }
 
     @Test
+    fun `duas ancoras estritas acordam advisor e viram sugestao concreta de curva k`() {
+        val store = store()
+        try {
+            store.startSession()
+
+            store.ingest(
+                telemetry(650L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL),
+                accepted(sample("p1", 100L, 650L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL)),
+            )
+            val firstCng = sample("g1", 700L, 800L, petrolMs = 4.8, fuel = Mp48Fuel.CNG)
+            val firstAnchor = store.ingest(
+                telemetry(800L, petrolMs = 4.8, fuel = Mp48Fuel.CNG),
+                stabilizedCng(firstCng),
+            )
+            assertTrue(firstAnchor.getBoolean("strict_switch_anchor_registered"))
+            assertEquals("STRICT_SWITCH_ANCHOR", firstAnchor.getJSONObject("comparison").getString("origin"))
+
+            store.ingest(
+                telemetry(1_450L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL),
+                accepted(sample("p2", 900L, 1_450L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL)),
+            )
+            val secondCng = sample("g2", 1_500L, 1_600L, petrolMs = 4.8, fuel = Mp48Fuel.CNG)
+            val secondAnchor = store.ingest(
+                telemetry(1_600L, petrolMs = 4.8, fuel = Mp48Fuel.CNG),
+                stabilizedCng(secondCng),
+            )
+            assertTrue(secondAnchor.getBoolean("strict_switch_anchor_registered"))
+
+            var exported = store.export("test")
+            val deadline = System.currentTimeMillis() + 2_000L
+            while (System.currentTimeMillis() < deadline) {
+                val advice = exported.getJSONObject("assistedCalibration")
+                if (exported.getBoolean("advisorFresh") &&
+                    advice.optInt("strictSwitchAnchorCount", 0) >= 2
+                ) break
+                Thread.sleep(10L)
+                exported = store.export("test")
+            }
+
+            val advice = exported.getJSONObject("assistedCalibration")
+            assertTrue(exported.getBoolean("advisorFresh"))
+            assertEquals(2, advice.getInt("strictSwitchAnchorCount"))
+            assertEquals(
+                "STRICT_SWITCH_ANCHORS",
+                advice.getJSONObject("method").getString("globalSource"),
+            )
+
+            val calibration = CalibrationStateV7(
+                revision = CalibrationRevisionV7(0, 0),
+                curveK = List(CalibrationShapeV7.CURVE_K_POINTS) { 1.0 },
+                mapK = List(CalibrationShapeV7.MAP_K_STORAGE_ROWS) {
+                    List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
+                },
+            )
+            val curve = AdvisorSuggestionAdapterV7()
+                .adapt(advice, calibration, nowMs = 2_000L)
+                .single { it.target == SuggestionTargetV7.CURVE_K }
+
+            assertEquals(SuggestionLifecycleV7.PENDING, curve.lifecycle)
+            assertTrue(curve.curveChanges.isNotEmpty())
+            assertTrue(curve.curveChanges.all { it.after > it.before })
+        } finally {
+            store.close()
+        }
+    }
+
+    @Test
     fun `native sidecar remains bounded by complete recent snapshots`() {
         val state = temporary.root.resolve("bounded-native-${System.nanoTime()}.json")
         val store = SignalLearningStore(state, RingLog())
@@ -179,6 +252,17 @@ class SignalLearningStoreTest {
         diagnostics = diagnostics(),
     )
 
+    private fun stabilizedCng(sample: MotorSample) = SampleDecision.transition(
+        state = "FUEL_STABLE",
+        reason = "GNV confirmado",
+        frameCount = sample.frameCount,
+        sample = sample,
+        diagnostics = sample.diagnostics,
+        learningEligible = false,
+        fuelConfirmed = Mp48Fuel.CNG.wireName,
+        fuelJustStabilized = true,
+    )
+
     private fun diagnostics() = SampleDiagnostics(
         frameCount = LearningTolerancePolicy().requiredFrames,
         durationMs = 550L,
@@ -203,19 +287,23 @@ class SignalLearningStoreTest {
         pressureOscillationLimit = 0.08,
     )
 
-    private fun telemetry(at: Long, petrolMs: Double = 4.0) = Mp48Telemetry(
+    private fun telemetry(
+        at: Long,
+        petrolMs: Double = 4.0,
+        fuel: Mp48Fuel = Mp48Fuel.PETROL,
+    ) = Mp48Telemetry(
         capturedAtElapsedMs = at,
         rpm = 2_500,
         levelRaw = 100,
-        gasRaw = 0,
-        gasMsDiagnostic = null,
+        gasRaw = if (fuel == Mp48Fuel.CNG) 120 else 0,
+        gasMsDiagnostic = if (fuel == Mp48Fuel.CNG) 6.0 else null,
         petrolRaw = 100,
         petrolCounts = 100,
         petrolMs = petrolMs,
         dynamicCorrection = 0,
-        fuelByte = 0,
-        fuel = Mp48Fuel.PETROL,
-        state = Mp48Fuel.PETROL.wireName,
+        fuelByte = if (fuel == Mp48Fuel.CNG) 1 else 0,
+        fuel = fuel,
+        state = fuel.wireName,
         waterRaw = 80,
         waterC = 80,
         gasC = 30,
