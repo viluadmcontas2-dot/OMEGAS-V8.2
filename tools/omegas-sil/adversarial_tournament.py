@@ -263,24 +263,31 @@ def w12(d):
     return {"role":"MONTE_CARLO","claim":"winner must survive 100 randomized drop/noise trials","summary":{k:{"mean_mae":float(np.mean(v)),"p90_mae":float(np.quantile(v,.9)),"worst_mae":float(max(v))} for k,v in res.items()}}
 
 def w13(d):
-    # Last-ratio with transient authority reduction.
+    # Last-ratio with transient authority reduction. Compact adversarial set.
+    configs=[
+      (.05,200,.5),   # prior strong candidate
+      (.05,200,0.0),  # freeze entirely on transient
+      (.05,200,.25),  # lower transient authority
+      (.03,150,.5),   # stricter transient trigger
+      (.08,300,.5),   # looser transient trigger
+      (.02,100,.25),  # highly conservative
+    ]
     rows=[]
-    for dm in [.02,.05,.08]:
-      for dr in [100,200,400]:
-        for fallback in [0.,.25,.5]:
-          errs=[]
-          for s,tr,te in heldout_petrol(d):
-            b=base_reference(tr,te);y=te.petrol_ms.to_numpy(float);gain=1.;p=[]
-            for i,r in enumerate(te.itertuples()):
-              p.append(b[i]*gain)
-              if b[i]>.7:
-                obs=y[i]/b[i]
-                trans=(abs(r.dmap) if np.isfinite(r.dmap) else 0)>dm or (abs(r.drpm) if np.isfinite(r.drpm) else 0)>dr
-                authority=fallback if trans else 1.
-                gain=(1-authority)*gain+authority*obs
-            errs.append(metrics(y,p)["mae_pct"])
-          rows.append({"dmap":dm,"drpm":dr,"fallback":fallback,"mae_pct":float(np.mean(errs))})
-    return {"role":"TRANSIENT_ADVERSARY","claim":"fast gain must lose authority only where transients empirically demand it","top":sorted(rows,key=lambda x:x["mae_pct"])[:25]}
+    folds=list(heldout_petrol(d))
+    for dm,dr,fallback in configs:
+      errs=[]
+      for s,tr,te in folds:
+        b=base_reference(tr,te);y=te.petrol_ms.to_numpy(float);dm_arr=np.nan_to_num(np.abs(te.dmap.to_numpy(float)),nan=0.0);dr_arr=np.nan_to_num(np.abs(te.drpm.to_numpy(float)),nan=0.0)
+        gain=1.;p=np.full(len(y),np.nan)
+        for i in range(len(y)):
+          p[i]=b[i]*gain
+          if b[i]>.7:
+            obs=y[i]/b[i]
+            authority=fallback if (dm_arr[i]>dm or dr_arr[i]>dr) else 1.
+            gain=(1-authority)*gain+authority*obs
+        errs.append(metrics(y,p)["mae_pct"])
+      rows.append({"dmap":dm,"drpm":dr,"fallback":fallback,"mae_pct":float(np.mean(errs))})
+    return {"role":"TRANSIENT_ADVERSARY","claim":"fast gain must lose authority only where transients empirically demand it","results":sorted(rows,key=lambda x:x["mae_pct"])}
 
 def w14(d):
     # Simulation only: can one small manual probe identify plant gain and accelerate K convergence?
