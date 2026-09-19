@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
@@ -52,6 +53,7 @@ class SignalLearningStore(
     }
 
     private val delegate = MotorLearningMemory(stateFile, log)
+    private val fastCngObserver = FastCngObserver()
     private val evidenceStateFile = File(stateFile.parentFile ?: stateFile.absoluteFile.parentFile, "learning_v6_evidence.json")
     private val evidenceStateWriter = CoalescedSnapshotWriter(
         target = evidenceStateFile,
@@ -94,6 +96,7 @@ class SignalLearningStore(
 
     fun startSession(): JSONObject {
         resetConnectionCounters()
+        fastCngObserver.reset()
         visibleDecision = null
         memoryDecision = null
         sciencePublicationGate.reset()
@@ -112,6 +115,16 @@ class SignalLearningStore(
 
     fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject {
         visibleDecision = decision
+
+        // O observador rápido trabalha em todo frame CNG plausível, antes da
+        // coalescência científica. Ele nunca cria voto persistido.
+        val fastReference = if (telemetry.fuel == Mp48Fuel.CNG) {
+            delegate.fastPetrolReference(telemetry)
+        } else {
+            null
+        }
+        fastCngObserver.observe(telemetry, fastReference)
+
         val physicalBoundary = decision.fuelJustStabilized ||
             decision.continuityLost ||
             decision.plannedOperation ||
@@ -284,6 +297,7 @@ class SignalLearningStore(
             .put("cumulativeEvidencePreserved", true)
             .put("sessionMetadataPolicy", "timestamp-organization-only-cumulative-memory")
             .put("equivalencePolicy", "continuous-petrol-reference-surface")
+            .put("fastCngObserver", fastCngObserver.snapshot().toJson())
             .put("assistedCalibration", advisor)
             .put("advisorRevision", advisorRequestedRevision.get())
             .put("advisorPublishedRevision", advisorPublishedRevision.get())
@@ -320,6 +334,9 @@ class SignalLearningStore(
         val internalPayload = JSONObject(payload.toString())
             .put("format", MotorLearningMemory.FORMAT)
         val result = delegate.merge(internalPayload, localDeviceId)
+        // A superfície gasolina mudou; previsões locais calculadas contra a
+        // referência anterior não podem atravessar esta fronteira.
+        fastCngObserver.reset()
         scheduleAdvisorRefresh(advisorRevisionGate.force())
         return decorate(result)
     }
@@ -394,6 +411,7 @@ class SignalLearningStore(
 
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject {
         resetConnectionCounters()
+        fastCngObserver.reset()
         synchronized(evidenceLock) { nativeAnchors.clear() }
         val result = delegate.onCalibrationAdjustment(payload)
         scheduleAdvisorRefresh(advisorRevisionGate.force())
@@ -719,6 +737,7 @@ class SignalLearningStore(
 
     private fun analyzeCurrentMemory(): JSONObject = try {
         AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())
+            .put("fastLocalObserver", fastCngObserver.snapshot().toJson())
     } catch (error: Exception) {
         JSONObject()
             .put("ok", false)
@@ -751,6 +770,7 @@ class SignalLearningStore(
             .put("cumulative_evidence_preserved", true)
             .put("session_metadata_policy", "timestamp-organization-only-cumulative-memory")
             .put("equivalence_policy", "continuous-petrol-reference-surface")
+            .put("fast_cng_observer", fastCngObserver.snapshot().toJson())
             .put("automatic_calibration", false)
             .put("real_sample_time_preserved", true)
             .put("gas_condition_preserved", true)
