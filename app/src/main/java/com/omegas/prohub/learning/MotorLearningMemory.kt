@@ -142,9 +142,19 @@ class MotorLearningMemory(
                 .put("session_id", sessionId)
                 .put("epoch", epoch)
             strictSwitchAnchor?.let { anchor ->
+                val evidence = comparisonEvidence(anchor.rpm, anchor.mapBar)
                 lastStatus
                     .put("strict_switch_anchor_registered", true)
                     .put("strict_switch_anchor", anchor.toJson())
+                    // Publica a âncora também no contrato canônico de comparação
+                    // para que o SignalLearningStore acorde o Advisor neste mesmo
+                    // evento físico, sem esperar uma amostra posterior.
+                    .put("comparison", anchor.toJson())
+                    .put("comparison_evidence", evidence.toJson())
+                    .put("comparison_stage", evidence.stage)
+                    .put("direction", anchor.direction)
+                    .put("error_pct", anchor.errorPct)
+                    .put("quality", anchor.quality)
                 persist()
             }
             return@synchronized compactStatusLocked()
