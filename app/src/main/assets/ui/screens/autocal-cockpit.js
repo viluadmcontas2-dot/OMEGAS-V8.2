@@ -370,42 +370,231 @@
       this.refresh();
     }
 
+
     render() {
-      const state = this.state || {};
       const snapshot = this.snapshot || {};
-      const nativeStatus = snapshot.nativeStatus || state.latestSnapshot?.nativeStatus || {};
-      const enabled = finite(snapshot.autoCalEnabled ?? state.autoCalEnabled);
-      const autoMatchCount = finite(nativeStatus.autoMatchCount ?? state.autoMatchCount);
-      const maxAutoMatch = finite(snapshot.maxAutomatch ?? state.maxAutomatch);
+      const state = this.state || {};
       const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
+      const human = AutoCalUxModel.humanState(snapshot, state);
+
+      this.text('autocalHumanTitle', human.title);
+      this.text('autocalHumanProgress', human.progress);
+      this.text('autocalHumanAction', human.nextAction);
+      this.text('autocalHumanAutoMatch', human.autoMatch);
       this.text('autocalNativeState', state.state || (snapshot.available ? 'READY' : 'AGUARDANDO'));
-      this.text('autocalState', state.state || '—');
-      this.text('autocalEnable', enabled === 1 ? 'ATIVA' : enabled === 0 ? 'PAUSADA' : '—');
-      this.text('autocalMatchCount', autoMatchCount ?? '—');
-      this.text('autocalMaxMatch', maxAutoMatch ?? '—');
-      this.text('autocalMatureCount', events.length);
-      this.renderBands(snapshot, events);
+      this.text('autocalZoneSummary', human.gasZones + '/4 zonas GNV');
+      this.text('autocalStateRaw', state.state || '—');
+      this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
+      this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
+      this.text('autocalMaturityRaw', events.length);
+
+      const toggle = this.panel?.querySelector('[data-autocal-toggle]');
+      if (toggle) {
+        const action = AutoCalUxModel.toggleAction(human.enabled);
+        toggle.dataset.action = action || '';
+        toggle.disabled = !action;
+        toggle.textContent = action === 'DISABLE_AUTO_CAL'
+          ? 'Pausar coleta'
+          : action === 'ENABLE_AUTO_CAL' ? 'Retomar coleta' : 'Aguardando estado';
+      }
+
+      const history = this.panel?.querySelector('[data-autocal-history]');
+      if (history) {
+        history.disabled = this.previousReferencePoints.length === 0;
+        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Anterior';
+      }
+
+      this.renderReferenceChart(snapshot);
+      this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
     }
 
-    renderBands(snapshot, events) {
-      const host = document.getElementById('autocalBands');
+    chartTransform() {
+      const zoom = finite(this.chartView?.zoom) ?? 1;
+      const panX = finite(this.chartView?.panX) ?? 0;
+      const panY = finite(this.chartView?.panY) ?? 0;
+      return 'translate(' + (500 + panX) + ' ' + (120 + panY) + ') scale(' + zoom + ') translate(-500 -120)';
+    }
+
+    renderReferenceChart(snapshot) {
+      const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
-      const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
-      const matured = new Map(events.map(event => [Number(event.bandIndex), event]));
-      if (!counters.length) {
-        host.innerHTML = '<div class="detail-empty"><b>Sem contador válido</b><span>A ECU ainda não publicou NUM_BUF_UPD_GAS neste snapshot.</span></div>';
+      const points = AutoCalUxModel.referencePoints(snapshot);
+      this.currentReferencePoints = points;
+      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
+
+      if (!points.length) {
+        host.innerHTML = '<div class="chart-empty"><b>Referência ainda indisponível</b><span>A ECU ainda não publicou os vetores físicos necessários neste snapshot.</span></div>';
+        this.text('autocalChartInspector', 'Aguardando Petrol Inj. e MAP nativos.');
         return;
       }
-      host.innerHTML = counters.slice(0, 18).map((count, index) => {
-        const event = matured.get(index);
-        const threshold = finite(event?.threshold);
-        const ratio = threshold && threshold > 0 ? Math.min(100, count / threshold * 100) : 0;
-        const correlated = String(event?.correlationState || '') === 'CORRELATED';
-        const state = event ? (correlated ? 'anchored' : 'mature') : count > 0 ? 'collecting' : 'empty';
-        return `<div class="autocal-band" data-state="${state}"><header><span>B${String(index + 1).padStart(2, '0')}</span><b>${Math.round(count)}</b></header><i style="--progress:${ratio}%"></i><small>${event ? (correlated ? 'âncora correlacionada' : 'madura · sem posição confiável') : count > 0 ? 'coletando' : 'sem dados'}</small></div>`;
+
+      const width = 1000;
+      const height = 240;
+      const padX = 48;
+      const padY = 24;
+      const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
+      const yValues = points.flatMap(point => [point.petrolMapBar, point.gasMapBar])
+        .concat(history.flatMap(point => [point.petrolMapBar, point.gasMapBar]))
+        .filter(value => finite(value) !== null);
+      const xValues = points.map(point => point.petrolMs);
+      let xMin = Math.min(...xValues);
+      let xMax = Math.max(...xValues);
+      let yMin = Math.min(...yValues);
+      let yMax = Math.max(...yValues);
+      if (xMax - xMin < 0.01) { xMin -= 0.1; xMax += 0.1; }
+      if (yMax - yMin < 0.01) { yMin -= 0.02; yMax += 0.02; }
+      const yPad = Math.max(0.02, (yMax - yMin) * 0.12);
+      yMin -= yPad;
+      yMax += yPad;
+
+      const xFor = value => padX + ((value - xMin) / (xMax - xMin)) * (width - padX * 2);
+      const yFor = value => height - padY - ((value - yMin) / (yMax - yMin)) * (height - padY * 2);
+      const pathFor = (items, key) => items.map((point, index) =>
+        (index ? 'L' : 'M') + ' ' + xFor(point.petrolMs).toFixed(1) + ' ' + yFor(point[key]).toFixed(1)
+      ).join(' ');
+
+      const grid = Array.from({ length: 5 }, (_, index) => {
+        const y = padY + index * ((height - padY * 2) / 4);
+        return '<line class="autocal-grid-line" x1="' + padX + '" y1="' + y.toFixed(1) + '" x2="' + (width - padX) + '" y2="' + y.toFixed(1) + '"></line>';
       }).join('');
+
+      const labels = points.map((point, index) => {
+        if (index % 5 !== 0 && index !== points.length - 1) return '';
+        return '<text class="autocal-axis-label" x="' + xFor(point.petrolMs).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">' + point.petrolMs.toFixed(1) + ' ms</text>';
+      }).join('');
+
+      const previous = history.length
+        ? '<path class="autocal-reference-line previous petrol" d="' + pathFor(history, 'petrolMapBar') + '"></path>' +
+          '<path class="autocal-reference-line previous gas" d="' + pathFor(history, 'gasMapBar') + '"></path>'
+        : '';
+
+      const pointMarkup = points.map(point => {
+        const x = xFor(point.petrolMs).toFixed(1);
+        const petrolY = yFor(point.petrolMapBar).toFixed(1);
+        const gasY = yFor(point.gasMapBar).toFixed(1);
+        return '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="16"></circle>' +
+          '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="5"></circle>' +
+          '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="16"></circle>' +
+          '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="5"></circle>';
+      }).join('');
+
+      host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina e GNV por Petrol Inj. e MAP">' +
+        grid +
+        '<g data-autocal-chart-group transform="' + this.chartTransform() + '">' +
+        previous +
+        '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
+        '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
+        pointMarkup + labels +
+        '</g></svg>';
+
+      const svg = host.querySelector('svg');
+      if (svg) this.bindChartGestures(svg);
+      const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
+      this.inspectReferencePoint(selected);
+    }
+
+    bindChartGestures(svg) {
+      const distance = values => {
+        if (values.length < 2) return 0;
+        const a = values[0];
+        const b = values[1];
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      };
+      svg.addEventListener('pointerdown', event => {
+        this.chartPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        try { svg.setPointerCapture(event.pointerId); } catch (_) {}
+        if (this.chartPointers.size === 2) {
+          this.pinchBase = { distance: distance([...this.chartPointers.values()]), zoom: this.chartView.zoom };
+        }
+      });
+      svg.addEventListener('pointermove', event => {
+        const previous = this.chartPointers.get(event.pointerId);
+        if (!previous) return;
+        this.chartPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        const values = [...this.chartPointers.values()];
+        if (values.length >= 2 && this.pinchBase?.distance > 0) {
+          const ratio = distance(values) / this.pinchBase.distance;
+          this.chartView = AutoCalUxModel.updateChartView(this.chartView, 'pinch', { zoom: this.pinchBase.zoom * ratio });
+          this.applyChartTransform();
+          return;
+        }
+        if (values.length === 1) {
+          this.chartView = AutoCalUxModel.updateChartView(this.chartView, 'pan', {
+            dx: event.clientX - previous.x,
+            dy: event.clientY - previous.y,
+          });
+          this.applyChartTransform();
+        }
+      });
+      const end = event => {
+        this.chartPointers.delete(event.pointerId);
+        if (this.chartPointers.size < 2) this.pinchBase = null;
+        try { svg.releasePointerCapture(event.pointerId); } catch (_) {}
+      };
+      svg.addEventListener('pointerup', end);
+      svg.addEventListener('pointercancel', end);
+    }
+
+    applyChartTransform() {
+      const group = document.querySelector('#autocalReferenceChart [data-autocal-chart-group]');
+      if (group) group.setAttribute('transform', this.chartTransform());
+    }
+
+    inspectReferencePoint(index) {
+      const host = document.getElementById('autocalChartInspector');
+      const point = this.currentReferencePoints.find(item => Number(item.index) === Number(index));
+      if (!host || !point) return;
+      this.selectedReferenceIndex = point.index;
+      host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + point.petrolMs.toFixed(2) + ' ms</b>' +
+        '<span>MAP gasolina ' + point.petrolMapBar.toFixed(3) + ' bar · MAP GNV ' + point.gasMapBar.toFixed(3) + ' bar</span>';
+      document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
+        node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
+      });
+    }
+
+    renderBands(snapshot) {
+      const host = document.getElementById('autocalBands');
+      if (!host) return;
+      const bands = AutoCalUxModel.bandStrip(snapshot);
+      host.innerHTML = bands.map(band => {
+        const stateLabel = band.state === 'anchored' ? 'correlacionada'
+          : band.state === 'mature' ? 'evento'
+          : band.state === 'activity' ? 'atividade' : 'vazia';
+        return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
+          '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
+          '" role="listitem" aria-label="Faixa B' + String(band.index + 1).padStart(2, '0') + ', ' + stateLabel +
+          ', contador ' + Math.round(band.counter) + '"><span>B' + String(band.index + 1).padStart(2, '0') +
+          '</span><i></i><small>' + Math.round(band.counter) + '</small></button>';
+      }).join('');
+      const preferred = Number.isInteger(this.selectedBandIndex)
+        ? this.selectedBandIndex
+        : (bands.find(item => item.state !== 'empty')?.index ?? 0);
+      this.inspectBand(preferred);
+    }
+
+    inspectBand(index) {
+      const band = AutoCalUxModel.bandStrip(this.snapshot || {}).find(item => item.index === index);
+      const host = document.getElementById('autocalBandInspector');
+      if (!band || !host) return;
+      this.selectedBandIndex = index;
+      document.querySelectorAll('[data-autocal-band-index]').forEach(node => {
+        node.classList.toggle('selected', Number(node.dataset.autocalBandIndex) === index);
+      });
+
+      let message = band.counter > 0 ? 'A ECU registrou atividade nesta faixa.' : 'Ainda não há atividade nesta faixa.';
+      if (band.state === 'anchored') message = 'Nesta leitura, a faixa amadureceu e encontrou correlação física confiável.';
+      else if (band.state === 'mature') message = 'Nesta leitura, a faixa amadureceu, mas a posição física ainda não foi correlacionada com confiança.';
+
+      const zoneText = band.zoneAcquired
+        ? 'Zona ' + (band.zone + 1) + ' marcada pela ECU'
+        : 'Zona ' + (band.zone + 1) + ' ainda não marcada pela ECU';
+      const event = band.event;
+      const detail = event
+        ? ' · contador ' + (finite(event.counter) ?? Math.round(band.counter)) + ' / limiar ' + (finite(event.threshold) ?? '—')
+        : ' · contador ' + Math.round(band.counter);
+      host.innerHTML = '<b>B' + String(index + 1).padStart(2, '0') + ' · ' + zoneText + '</b><span>' + message + detail + '</span>';
     }
 
     renderEvents(events) {
