@@ -15,7 +15,7 @@ assert.equal(cockpit.includes('correlationReason'), true);
 assert.equal(cockpit.includes('correlationConfidence'), true);
 assert.equal(cockpit.includes("data-autocal-action=\"ENABLE_AUTO_CAL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"DISABLE_AUTO_CAL\""), true);
-assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), false);
 assert.equal(cockpit.includes('NATIVE_AUTOMATCH'), false);
 assert.equal(cockpit.includes('prepare('), true);
 assert.equal(cockpit.includes('execute(prepared.preparationId)'), true);
