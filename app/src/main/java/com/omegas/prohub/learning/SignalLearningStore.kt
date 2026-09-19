@@ -232,9 +232,14 @@ class SignalLearningStore(
             val regionId = comparison.optString("reference_region_id")
             if (visitId.isNotBlank() && regionId.isNotBlank()) {
                 val key = "$visitId:$regionId"
-                val noveltyFraction = if (prepared.sample == null) 0.0 else lastNovelty.fraction
+                val strictSwitchAnchor = comparison.optString("origin") == "STRICT_SWITCH_ANCHOR"
+                val noveltyFraction = when {
+                    strictSwitchAnchor -> 1.0
+                    prepared.sample == null -> 0.0
+                    else -> lastNovelty.fraction
+                }
                 val weight = (comparison.optDouble("quality", 0.0) * noveltyFraction).coerceIn(0.0, 1.0)
-                val independent = noveltyFraction >= 0.999
+                val independent = strictSwitchAnchor || noveltyFraction >= 0.999
                 synchronized(evidenceLock) {
                     val updated = (visitAccumulators[key] ?: VisitComparisonAccumulator(key = key)).add(
                         error = comparison.optDouble("error_pct", 0.0),
