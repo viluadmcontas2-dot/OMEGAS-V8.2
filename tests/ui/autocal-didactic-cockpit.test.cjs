@@ -95,5 +95,15 @@ assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
 assert.equal(css.includes('min-height: 40px'), false);
+assert.equal(source.includes('id="autocalZoneMeter"'), true, 'cockpit premium deve expor progresso visual das zonas');
+assert.equal(source.includes('data-autocal-zone-petrol'), true);
+assert.equal(source.includes('data-autocal-zone-gas'), true);
+assert.equal(source.includes('autocal-band-legend'), true, 'estados das 18 faixas precisam de legenda visível');
+assert.equal(source.includes('autocal-review-tech'), true, 'metadados técnicos da ação crítica devem ficar sob demanda');
+assert.match(source, /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
+assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
+assert.match(css, /\.autocal-inline-inspector\s*\{[^}]*font-size:\s*11px/s, 'inspector operacional não pode ficar microscópico');
+assert.match(css, /\.autocal-human-copy strong\s*\{[^}]*font-size:\s*13px/s, 'próxima ação precisa ser legível a distância');
+
 
 console.log('AUTOCAL_DIDACTIC_COCKPIT=PASS');

@@ -202,6 +202,10 @@
                 <small>AGORA</small>
                 <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
                 <p id="autocalHumanProgress">Gasolina 0/4 zonas · GNV 0/4 zonas</p>
+                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Gasolina 0 de 4 zonas, GNV 0 de 4 zonas">
+                  <div class="petrol"><span>Gasolina</span><div class="autocal-zone-dots"><i data-autocal-zone-petrol="0"></i><i data-autocal-zone-petrol="1"></i><i data-autocal-zone-petrol="2"></i><i data-autocal-zone-petrol="3"></i></div></div>
+                  <div class="gas"><span>GNV</span><div class="autocal-zone-dots"><i data-autocal-zone-gas="0"></i><i data-autocal-zone-gas="1"></i><i data-autocal-zone-gas="2"></i><i data-autocal-zone-gas="3"></i></div></div>
+                </div>
                 <strong id="autocalHumanAction">Atualize a leitura para receber o estado nativo da ECU.</strong>
               </div>
               <div class="autocal-hero-actions">
@@ -217,7 +221,7 @@
                   <button type="button" data-autocal-chart-action="zoom-out" aria-label="Diminuir zoom">−</button>
                   <button type="button" data-autocal-chart-action="zoom-in" aria-label="Aumentar zoom">+</button>
                   <button type="button" data-autocal-chart-action="fit">Ajustar</button>
-                  <button type="button" data-autocal-history disabled>Anterior</button>
+                  <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior para comparação">Comparar</button>
                 </div>
               </div>
               <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
@@ -229,6 +233,9 @@
               <div class="autocal-section-head compact">
                 <div><small>18 FAIXAS DE AQUISIÇÃO GNV</small><h4>Onde a ECU já passou</h4></div>
                 <span id="autocalZoneSummary">0/4 zonas GNV</span>
+              </div>
+              <div class="autocal-band-legend" aria-label="Legenda das faixas">
+                <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
               </div>
               <div id="autocalBands" class="autocal-band-strip" role="list"></div>
               <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Toque numa faixa</b><span>Os detalhes aparecem aqui; a faixa não é um comando.</span></div>
@@ -388,6 +395,7 @@
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
       this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
       this.text('autocalMaturityRaw', events.length);
+      this.renderZoneMeter(human);
 
       const toggle = this.panel?.querySelector('[data-autocal-toggle]');
       if (toggle) {
@@ -402,13 +410,27 @@
       const history = this.panel?.querySelector('[data-autocal-history]');
       if (history) {
         history.disabled = this.previousReferencePoints.length === 0;
-        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Anterior';
+        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Comparar';
       }
 
       this.renderReferenceChart(snapshot);
       this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
+    }
+
+    renderZoneMeter(human) {
+      const meter = document.getElementById('autocalZoneMeter');
+      if (!meter) return;
+      const petrolZones = Math.max(0, Math.min(4, Math.round(finite(human?.petrolZones) ?? 0)));
+      const gasZones = Math.max(0, Math.min(4, Math.round(finite(human?.gasZones) ?? 0)));
+      meter.setAttribute('aria-label', 'Gasolina ' + petrolZones + ' de 4 zonas, GNV ' + gasZones + ' de 4 zonas');
+      this.panel?.querySelectorAll('[data-autocal-zone-petrol]').forEach(node => {
+        node.dataset.active = Number(node.dataset.autocalZonePetrol) < petrolZones ? 'true' : 'false';
+      });
+      this.panel?.querySelectorAll('[data-autocal-zone-gas]').forEach(node => {
+        node.dataset.active = Number(node.dataset.autocalZoneGas) < gasZones ? 'true' : 'false';
+      });
     }
 
     chartTransform() {
@@ -475,9 +497,9 @@
         const x = xFor(point.petrolMs).toFixed(1);
         const petrolY = yFor(point.petrolMapBar).toFixed(1);
         const gasY = yFor(point.gasMapBar).toFixed(1);
-        return '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="16"></circle>' +
+        return '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="22"></circle>' +
           '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="5"></circle>' +
-          '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="16"></circle>' +
+          '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
           '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="5"></circle>';
       }).join('');
 
@@ -565,7 +587,7 @@
           : band.state === 'activity' ? 'atividade' : 'vazia';
         return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
           '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
-          '" role="listitem" aria-label="Faixa B' + String(band.index + 1).padStart(2, '0') + ', ' + stateLabel +
+          '" role="listitem" aria-pressed="false" aria-label="Faixa B' + String(band.index + 1).padStart(2, '0') + ', ' + stateLabel +
           ', contador ' + Math.round(band.counter) + '"><span>B' + String(band.index + 1).padStart(2, '0') +
           '</span><i></i><small>' + Math.round(band.counter) + '</small></button>';
       }).join('');
@@ -581,7 +603,9 @@
       if (!band || !host) return;
       this.selectedBandIndex = index;
       document.querySelectorAll('[data-autocal-band-index]').forEach(node => {
-        node.classList.toggle('selected', Number(node.dataset.autocalBandIndex) === index);
+        const selected = Number(node.dataset.autocalBandIndex) === index;
+        node.classList.toggle('selected', selected);
+        node.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
 
       let message = band.counter > 0 ? 'A ECU registrou atividade nesta faixa.' : 'Ainda não há atividade nesta faixa.';
@@ -627,7 +651,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close">×</button></header><p>${escapeHtml(prepared.description || '')}</p><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>ECU pode alterar MUL_ACT</dt><dd>${prepared.mayChangeMulAct ? 'sim' : 'não'}</dd></div></dl><div class="write-contract"><b>Ainda não foi enviado.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>ECU pode alterar MUL_ACT</dt><dd>${prepared.mayChangeMulAct ? 'sim' : 'não'}</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
     }
 
     renderUnavailable() {

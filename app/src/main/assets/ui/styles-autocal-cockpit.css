@@ -45,29 +45,74 @@
 .autocal-tech-grid small {
   display: block;
   color: #8291a4;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .12em;
 }
 
 .autocal-human-copy h3 {
   margin: 3px 0 2px;
-  font-size: clamp(18px, 2.2cqw, 26px);
+  font-size: clamp(22px, 2.5cqw, 30px);
   line-height: 1.05;
 }
 
 .autocal-human-copy p {
   margin: 0;
   color: #d5dee8;
-  font-size: 12px;
+  font-size: 13px;
+}
+
+.autocal-zone-meter {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.autocal-zone-meter > div {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.autocal-zone-meter span {
+  color: #9aa8b8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.autocal-zone-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.autocal-zone-dots i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
+}
+
+.autocal-zone-meter .petrol i[data-active="true"] {
+  border-color: rgba(120,183,255,.72);
+  background: #78b7ff;
+  box-shadow: 0 0 0 3px rgba(120,183,255,.09);
+}
+
+.autocal-zone-meter .gas i[data-active="true"] {
+  border-color: rgba(93,211,158,.72);
+  background: #5dd39e;
+  box-shadow: 0 0 0 3px rgba(93,211,158,.09);
 }
 
 .autocal-human-copy strong {
   display: block;
   margin-top: 5px;
   color: #9bd9c0;
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .autocal-hero-actions {
@@ -105,19 +150,19 @@
 
 .autocal-section-head h4 {
   margin: 2px 0 0;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .autocal-section-head p {
   margin: 3px 0 0;
   color: #8291a4;
-  font-size: 10px;
-  line-height: 1.3;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .autocal-section-head > span {
   color: #aab7c6;
-  font-size: 10px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -131,7 +176,7 @@
 .autocal-chart-tools button {
   min-width: 52px;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .autocal-chart-legend {
@@ -140,7 +185,7 @@
   align-items: center;
   margin-bottom: 4px;
   color: #8f9daf;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .autocal-chart-legend span::before {
@@ -266,7 +311,7 @@
   padding: 6px 8px;
   border-radius: 8px;
   background: rgba(255,255,255,.025);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .autocal-inline-inspector b {
@@ -285,6 +330,34 @@
 .autocal-bands-card {
   padding: 9px 11px;
 }
+
+.autocal-band-legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 1px 0 7px;
+  color: #98a6b7;
+  font-size: 10px;
+}
+
+.autocal-band-legend span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.autocal-band-legend span::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #505d6c;
+}
+
+.autocal-band-legend span[data-state="activity"]::before { background: #4fa3ff; }
+.autocal-band-legend span[data-state="mature"]::before { background: #d9aa3e; }
+.autocal-band-legend span[data-state="anchored"]::before { background: #36c28a; }
 
 .autocal-band-strip {
   display: grid;
@@ -315,14 +388,16 @@
 .autocal-band-segment[data-zone-acquired="true"] { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--band-accent) 70%, white); }
 
 .autocal-band-segment.selected {
-  outline: 2px solid rgba(255,255,255,.55);
+  border-color: rgba(255,255,255,.46);
+  outline: 2px solid rgba(255,255,255,.72);
   outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(255,255,255,.05), inset 0 -2px 0 var(--band-accent);
 }
 
 .autocal-band-segment span,
 .autocal-band-segment small {
   overflow: hidden;
-  font-size: 8px;
+  font-size: 9px;
   text-overflow: ellipsis;
 }
 
@@ -348,12 +423,12 @@
 
 .autocal-command-copy b {
   color: #e2eaf1;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .autocal-command-copy span {
   color: #8998aa;
-  font-size: 9px;
+  font-size: 11px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -378,7 +453,7 @@
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 10px;
   color: #c8d2dd;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   list-style: none;
 }
@@ -411,8 +486,8 @@
   grid-column: 1 / -1;
   margin: 0;
   color: #a79498;
-  font-size: 9px;
-  line-height: 1.35;
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 .autocal-technical-details {
@@ -482,7 +557,7 @@
 .autocal-events .empty-copy {
   margin: 0;
   color: #8997a8;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .autocal-events article p {
@@ -530,6 +605,25 @@
 .autocal-review-card dt {
   font-size: 11px;
 }
+
+.autocal-review-tech {
+  margin: 12px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.autocal-review-tech > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  color: #aab7c6;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.autocal-review-tech > summary::-webkit-details-marker { display: none; }
 
 .autocal-review-card dl {
   display: grid;
@@ -609,4 +703,26 @@
   .autocal-events {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.autocal-hero {
+  background:
+    radial-gradient(circle at 0 0, rgba(93,211,158,.075), transparent 42%),
+    linear-gradient(180deg, rgba(255,255,255,.032), rgba(255,255,255,.018));
+}
+
+.autocal-reference-card,
+.autocal-bands-card {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.autocal-chart-host {
+  border: 1px solid rgba(255,255,255,.055);
+  box-shadow: inset 0 1px 18px rgba(0,0,0,.22);
+}
+
+.autocal-cockpit button:focus-visible,
+.autocal-cockpit summary:focus-visible {
+  outline: 3px solid rgba(120,183,255,.7);
+  outline-offset: 2px;
 }
