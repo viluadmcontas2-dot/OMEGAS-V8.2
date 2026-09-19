@@ -57,7 +57,7 @@ const bands = model.bandStrip(snapshot);
 assert.equal(bands.length, 18);
 assert.equal(bands[4].state, 'anchored');
 assert.equal(bands[16].state, 'empty');
-assert.equal(bands[15].zoneAcquired, true);
+assert.equal(bands[13].zoneAcquired, true);
 assert.equal(bands[16].zoneAcquired, false);
 
 assert.equal(model.toggleAction(1), 'DISABLE_AUTO_CAL');
