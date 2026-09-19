@@ -265,7 +265,7 @@ def k15(cycles,i):
         obs_var=.01
         prec=1/var0 + float(np.sum(x*x))/obs_var
         mu=(mu0/var0 + float(np.sum(x*z))/obs_var)/prec
-        rt,yt,_,_=flatten(te);fold.append(met(yt,predict_linear(rt,mu,.20)))
+        rt,yt,_,_=flatten(te);folds.append(met(yt,predict_linear(rt,mu,.20)))
     return {"variant":f"posterior_mu{mu0}_v{var0}","metrics":{"mae_step_pct":float(np.mean([z["mae_step_pct"] for z in folds])),"p90_step_pct":float(np.mean([z["p90_step_pct"] for z in folds])),"sign_accuracy_pct":float(np.mean([z["sign_accuracy_pct"] for z in folds]))}}
 
 FUNCS={f"k{i:02d}":globals()[f"k{i:02d}"] for i in range(1,16)}
