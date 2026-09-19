@@ -23,7 +23,6 @@
       DISABLE_AUTO_CAL: 'Pausar Auto Calibration',
       RESET_PETROL: 'Resetar aquisição gasolina',
       RESET_GAS: 'Resetar aquisição GNV',
-      RESET_ALL: 'Começar nova aquisição AutoCal',
     })[action] || action;
   }
 
@@ -98,7 +97,6 @@
                     <button type="button" data-autocal-action="DISABLE_AUTO_CAL">Pausar coleta</button>
                     <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
                     <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
-                    <button type="button" data-autocal-action="RESET_ALL" class="critical">Nova aquisição</button>
                   </div>
                   <div id="autocalActionStatus" class="autocal-action-status">Nenhuma ação preparada.</div>
                 </section>
