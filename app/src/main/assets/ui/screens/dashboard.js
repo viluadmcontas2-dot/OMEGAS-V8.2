@@ -60,6 +60,7 @@
         const status = state.status || {};
         const obd = state.obd || {};
         const interpolation = ((_a = state.telemetry) == null ? void 0 : _a.interpolation) || {};
+        const interpolationValid = interpolation.valid === true;
         const cell = interpolation.cell || {};
         const rpm = finite((_b = data.rpm) != null ? _b : status.rpm) || 0;
         const petrol = (_d = (_c = data.petrol_ms) != null ? _c : data.petrolMs) != null ? _d : status.petrolMs;
@@ -74,8 +75,8 @@
         const stale = connected && age !== null && age > 2500;
         const expired = connected && age !== null && age > 8e3;
         const stuck = status.engineStuck === true;
-        const row = Number.isFinite(Number(cell.row)) ? Number(cell.row) : null;
-        const column = Number.isFinite(Number(cell.column)) ? Number(cell.column) : null;
+        const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
+        const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
         text("dashHeroPetrol", fmt(petrol, 2));
         text("dashRpm", Math.round(rpm).toLocaleString("pt-BR"));
         text("dashMap", fmt(map, 2));
