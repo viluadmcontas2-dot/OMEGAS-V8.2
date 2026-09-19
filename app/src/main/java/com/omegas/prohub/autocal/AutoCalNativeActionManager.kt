@@ -56,25 +56,23 @@ class AutoCalNativeActionManager(
             0,
         ),
         RESET_PETROL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
             "Resetar aquisição gasolina",
-            "Apaga somente os dados AutoCal de gasolina.",
+            "O ProgBase identifica este comando como reset dos pontos de gasolina. O efeito real é conferido no recibo antes/depois.",
             false,
         ),
         RESET_GAS(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
-            "Resetar aquisição GNV",
-            "Apaga somente os dados AutoCal de GNV.",
-            false,
-        ),
-        RESET_ALL(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
-            "Começar nova aquisição AutoCal",
-            "Apaga as aquisições AutoCal de gasolina e GNV. Nunca é executado automaticamente.",
-            false,
+            "Resetar aquisição GNV",
+            "O ProgBase identifica este comando como reset dos pontos de GNV. Em firmware observado, o efeito pode ser mais amplo; revise o recibo antes/depois.",
+            true,
         );
     }
 
+    // 0x01 = Manual AutoMatch e 0x08 = Modify map refs no ProgBase 4.2.0.6.
+    // Ambos permanecem deliberadamente fora desta superfície operacional.
+    // O verdadeiro Reset All usa outra rota no software original e não é exposto
+    // até sua sequência nativa ser provada.
     private data class Preparation(
         val id: String,
         val action: Action,
