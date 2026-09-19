@@ -11,6 +11,7 @@ import com.omegas.v7.runtime.SuggestionLifecycleV7
 import com.omegas.v7.runtime.SuggestionTargetV7
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -58,10 +59,7 @@ class OmegasSilFunctionalCalibrationTest {
         val latch = CountDownLatch(frames.size)
         var callbackIndex = 0
         var strictAnchors = 0
-        var firstAnchorSequence: Long? = null
-        var secondAnchorSequence: Long? = null
-        var firstConcreteSequence: Long? = null
-        var firstConcreteRecordedAtMs: Long? = null
+        var firstFastEstimateSequence: Long? = null
 
         try {
             val neutralCalibration = CalibrationStateV7(
@@ -83,40 +81,13 @@ class OmegasSilFunctionalCalibrationTest {
 
                     if (learning.optBoolean("strict_switch_anchor_registered", false)) {
                         strictAnchors += 1
-                        if (firstAnchorSequence == null) firstAnchorSequence = source.sequence
-                        if (strictAnchors == 2 && secondAnchorSequence == null) {
-                            secondAnchorSequence = source.sequence
-                        }
                     }
-
-                    if (strictAnchors >= 2 && firstConcreteSequence == null) {
-                        val exported = store.export("omegas-sil-functional")
-                        val advice = exported.optJSONObject("assistedCalibration")
-                        val fresh = exported.optBoolean("advisorFresh", false)
-                        if (
-                            fresh &&
-                            advice != null &&
-                            advice.optInt("strictSwitchAnchorCount", 0) >= 2 &&
-                            advice.optJSONObject("method")
-                                ?.optString("globalSource") == "STRICT_SWITCH_ANCHORS"
-                        ) {
-                            val concrete = adapter.adapt(
-                                advice = advice,
-                                calibration = neutralCalibration,
-                                nowMs = source.recordedAtMs,
-                            )
-                            if (concrete.any {
-                                    it.lifecycle == SuggestionLifecycleV7.PENDING &&
-                                        (
-                                            it.target == SuggestionTargetV7.CURVE_K ||
-                                                it.target == SuggestionTargetV7.MAP_K
-                                            )
-                                }
-                            ) {
-                                firstConcreteSequence = source.sequence
-                                firstConcreteRecordedAtMs = source.recordedAtMs
-                            }
-                        }
+                    val fast = learning.optJSONObject("fast_cng_observer")
+                    if (
+                        firstFastEstimateSequence == null &&
+                        fast?.optString("state") == "LOCAL_ESTIMATE_READY"
+                    ) {
+                        firstFastEstimateSequence = source.sequence
                     }
 
                     latch.countDown()
@@ -159,25 +130,28 @@ class OmegasSilFunctionalCalibrationTest {
             }
             val curveChanges = curveSuggestions.sumOf { it.curveChanges.size }
             val mapChanges = mapSuggestions.sumOf { it.mapChanges.size }
-            val globalSource = advice.optJSONObject("method")
-                ?.optString("globalSource", "")
-                .orEmpty()
+            val method = advice.getJSONObject("method")
+            val globalSource = method.optString("globalSource", "")
+            val fast = exported.getJSONObject("fastCngObserver")
 
             val summary = JSONObject()
                 .put("input", input.absolutePath)
                 .put("frames_input", frames.size)
                 .put("frames_callbacks", callbackIndex)
                 .put("frames_consumed", transport.consumedFrames)
-                .put("strict_switch_anchors", strictAnchors)
-                .put("first_anchor_sequence", firstAnchorSequence ?: JSONObject.NULL)
-                .put("second_anchor_sequence", secondAnchorSequence ?: JSONObject.NULL)
-                .put("first_concrete_sequence", firstConcreteSequence ?: JSONObject.NULL)
-                .put("first_concrete_recorded_at_ms", firstConcreteRecordedAtMs ?: JSONObject.NULL)
+                .put("fast_observer_observations", fast.getLong("observations"))
+                .put("fast_observer_predictions", fast.getLong("predictions"))
+                .put("fast_prediction_coverage_percent", fast.getDouble("predictionCoveragePercent"))
+                .put("first_fast_estimate_sequence", firstFastEstimateSequence ?: JSONObject.NULL)
+                .put("strict_switch_anchors_validation_only", strictAnchors)
                 .put("advisor_fresh", exported.optBoolean("advisorFresh", false))
                 .put("advisor_revision", exported.optLong("advisorRevision", 0L))
                 .put("advisor_published_revision", exported.optLong("advisorPublishedRevision", 0L))
                 .put("strict_anchor_count_advisor", advice.optInt("strictSwitchAnchorCount", 0))
+                .put("control_comparison_count", advice.optInt("controlComparisonCount", 0))
                 .put("global_source", globalSource)
+                .put("strict_switch_role", method.optString("strictSwitchRole"))
+                .put("runtime_fuel_switching_required", method.optBoolean("runtimeFuelSwitchingRequired", true))
                 .put("curve_suggestions", curveSuggestions.size)
                 .put("curve_changes", curveChanges)
                 .put("map_suggestions", mapSuggestions.size)
@@ -194,19 +168,16 @@ class OmegasSilFunctionalCalibrationTest {
 
             assertEquals(frames.size, callbackIndex)
             assertEquals(frames.size, transport.consumedFrames)
-            assertTrue(
-                "Recorded replay produced fewer than two strict PETROL->CNG anchors: $strictAnchors",
-                strictAnchors >= 2,
-            )
+            assertTrue("Fast observer saw no CNG frames", fast.getLong("observations") > 0L)
+            assertTrue("Fast observer never produced a causal local estimate", fast.getLong("predictions") > 0L)
+            assertTrue("Fast observer never became ready during replay", firstFastEstimateSequence != null)
             assertTrue("Advisor did not become fresh", exported.optBoolean("advisorFresh", false))
-            assertEquals("STRICT_SWITCH_ANCHORS", globalSource)
+            assertEquals("CONTINUOUS_REFERENCE_SURFACE", globalSource)
+            assertEquals("VALIDATION_ONLY", method.getString("strictSwitchRole"))
+            assertFalse(method.getBoolean("runtimeFuelSwitchingRequired"))
             assertTrue(
                 "No concrete manual Curve-K/Map-K change was produced",
                 curveChanges > 0 || mapChanges > 0,
-            )
-            assertTrue(
-                "No concrete calibration was observed after the second strict anchor",
-                firstConcreteSequence != null,
             )
 
             println("OMEGAS_FUNCTIONAL_CALIBRATION=" + summary.toString())
