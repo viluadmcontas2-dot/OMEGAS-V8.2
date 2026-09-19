@@ -601,7 +601,7 @@
       const host = document.getElementById('autocalEvents');
       if (!host) return;
       if (!events.length) {
-        host.innerHTML = '<p class="empty-copy">Nenhuma banda recém-amadurecida neste snapshot.</p>';
+        host.innerHTML = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
         return;
       }
       host.innerHTML = events.slice(-6).reverse().map(event => {
@@ -617,8 +617,8 @@
       if (!host) return;
       const state = this.actionState || {};
       const name = String(state.state || 'IDLE');
-      const progress = finite(state.progress);
-      host.innerHTML = `<b>${escapeHtml(name)}</b><span>${escapeHtml(state.message || 'Nenhuma ação preparada.')}</span>${progress === null ? '' : `<i style="--progress:${Math.max(0, Math.min(100, progress))}%"></i>`}`;
+      const message = String(state.message || 'Nenhuma ação preparada.');
+      host.textContent = name === 'IDLE' ? message : name + ' · ' + message;
     }
 
     renderReview() {
@@ -626,13 +626,16 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO WEBVIEW</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close">×</button></header><p>${escapeHtml(prepared.description || '')}</p><dl><div><dt>Ação</dt><dd>${escapeHtml(prepared.action)}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>ECU pode alterar MUL_ACT</dt><dd>${prepared.mayChangeMulAct ? 'sim' : 'não'}</dd></div></dl><div class="write-contract"><b>Ainda não foi enviado.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close">×</button></header><p>${escapeHtml(prepared.description || '')}</p><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>ECU pode alterar MUL_ACT</dt><dd>${prepared.mayChangeMulAct ? 'sim' : 'não'}</dd></div></dl><div class="write-contract"><b>Ainda não foi enviado.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
     }
 
     renderUnavailable() {
       this.text('autocalNativeState', 'BRIDGE INDISPONÍVEL');
-      const host = document.getElementById('autocalBands');
-      if (host) host.innerHTML = '<div class="detail-empty"><b>AutoCal indisponível</b><span>O bridge nativo ainda não foi anexado à WebView.</span></div>';
+      this.text('autocalHumanTitle', 'AutoCal indisponível');
+      this.text('autocalHumanProgress', 'A tela não recebeu o bridge nativo.');
+      this.text('autocalHumanAction', 'Reconecte o serviço antes de tentar qualquer ação.');
+      const host = document.getElementById('autocalReferenceChart');
+      if (host) host.innerHTML = '<div class="chart-empty"><b>Sem ligação com a ECU</b><span>Nenhum dado foi inventado para preencher o gráfico.</span></div>';
     }
 
     text(id, value) {
@@ -651,6 +654,7 @@
     app.autoCalCockpit = new AutoCalCockpit(app);
   }
 
+  ns.AutoCalUxModel = AutoCalUxModel;
   ns.AutoCalCockpit = AutoCalCockpit;
   boot();
 })(typeof window !== 'undefined' ? window : globalThis);
