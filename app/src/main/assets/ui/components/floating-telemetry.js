@@ -80,15 +80,16 @@
       const telemetryRoot = state.telemetry || {};
       const live = telemetryRoot.live || telemetryRoot.data || telemetryRoot;
       const interpolation = telemetryRoot.interpolation || {};
+      const interpolationValid = interpolation.valid === true;
       const cell = interpolation.cell || {};
       const decision = state.learningDecision || {};
       const rpm = finite(live.rpm ?? status.rpm);
       const petrol = finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs);
       const gas = finite(live.gas_ms_diagnostic ?? live.gasMsDiagnostic ?? live.gas_ms ?? live.gasMs ?? status.gasMsDiagnostic);
       const age = finite(telemetryRoot.ageMs ?? telemetryRoot.telemetryAgeMs ?? status.directTelemetryAgeMs);
-      const row = finite(cell.row ?? decision.cell_row);
-      const column = finite(cell.column ?? decision.cell_column);
-      const cellLabel = row !== null && column !== null ? `R${Math.round(row) + 1} · C${Math.round(column) + 1}` : '—';
+      const row = interpolationValid ? finite(cell.row ?? decision.cell_row) : null;
+      const column = interpolationValid ? finite(cell.column ?? decision.cell_column) : null;
+      const cellLabel = row !== null && column !== null && row >= 0 && column >= 0 ? `R${Math.round(row) + 1} · C${Math.round(column) + 1}` : '—';
       const ecuOnline = status.usbConnected === true && status.engineReady !== false;
 
       this.text('fuel', fuelLabel(live.fuel ?? live.state ?? status.fuelState));
