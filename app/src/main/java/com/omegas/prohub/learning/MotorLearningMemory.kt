@@ -40,6 +40,11 @@ class MotorLearningMemory(
         private const val MAX_COMPARISONS = 600
         private const val MAX_SESSIONS = 100
         private const val MAX_REGIONS = 2000
+
+        // AgentRed #575: strict PETROL→CNG anchors were reliable only when the
+        // operating point stayed within 50 RPM and 0.02 bar across the switch.
+        private const val STRICT_SWITCH_MAX_RPM_GAP = 50.0
+        private const val STRICT_SWITCH_MAX_MAP_GAP_BAR = 0.02
     }
 
     private val lock = Any()
@@ -57,6 +62,7 @@ class MotorLearningMemory(
     private var lastStatus = JSONObject()
     private var lastCalibrationRevalidation = JSONObject()
     private var lastReferenceDiagnostic = JSONObject()
+    private var lastAcceptedPetrolSample: MotorSample? = null
     private var referenceAttempts = 0L
     private var referenceAccepted = 0L
     private val referenceRejectCounts = linkedMapOf<String, Long>()
@@ -84,6 +90,7 @@ class MotorLearningMemory(
         sessionId = UUID.randomUUID().toString()
         activeVisit = null
         observedOutsideFrames = 0
+        lastAcceptedPetrolSample = null
         currentSession = PhysicalLearningSession(
             id = sessionId,
             startedAt = System.currentTimeMillis(),
@@ -108,6 +115,7 @@ class MotorLearningMemory(
         closeCurrentSession(reason)
         activeVisit = null
         observedOutsideFrames = 0
+        lastAcceptedPetrolSample = null
         persist()
         statusLocked()
     }
@@ -115,6 +123,16 @@ class MotorLearningMemory(
     fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject = synchronized(lock) {
         observePhysicalExit(telemetry)
         val sample = decision.sample
+        val strictSwitchAnchor = if (
+            sample != null &&
+            !decision.learningEligible &&
+            decision.fuelJustStabilized &&
+            sample.fuel == Mp48Fuel.CNG
+        ) {
+            registerStrictSwitchAnchor(sample)
+        } else {
+            null
+        }
         if (sample == null || !decision.learningEligible) {
             lastStatus = JSONObject()
                 .put("state", decision.state)
@@ -123,6 +141,12 @@ class MotorLearningMemory(
                 .put("sample", decision.toJson())
                 .put("session_id", sessionId)
                 .put("epoch", epoch)
+            strictSwitchAnchor?.let { anchor ->
+                lastStatus
+                    .put("strict_switch_anchor_registered", true)
+                    .put("strict_switch_anchor", anchor.toJson())
+                persist()
+            }
             return@synchronized compactStatusLocked()
         }
 
@@ -134,6 +158,7 @@ class MotorLearningMemory(
         val region = updateRegion(sample, visit)
         when (sample.fuel) {
             Mp48Fuel.PETROL -> {
+                lastAcceptedPetrolSample = sample
                 sessionPetrolRegions += region.id
                 sessionPetrolScaleByVisit.putIfAbsent(
                     visit.id,
@@ -632,6 +657,27 @@ class MotorLearningMemory(
             .put("learning", true)
             .put("registered_now", true)
             .put("petrol_target_ms", sample.petrolMs)
+    }
+
+    private fun registerStrictSwitchAnchor(cngSample: MotorSample): FuelComparison? {
+        val petrolSample = lastAcceptedPetrolSample ?: return null
+        // A referência é consumida pela troca: nunca deve vazar para um trecho
+        // posterior de GNV ou para uma segunda confirmação.
+        lastAcceptedPetrolSample = null
+
+        val rpmGap = abs(cngSample.rpm - petrolSample.rpm)
+        val mapGap = abs(cngSample.mapBar - petrolSample.mapBar)
+        if (rpmGap > STRICT_SWITCH_MAX_RPM_GAP || mapGap > STRICT_SWITCH_MAX_MAP_GAP_BAR) return null
+
+        val candidate = compare(
+            petrolTargetMs = petrolSample.petrolMs,
+            cngSample = cngSample,
+            visitId = "strict-switch:$sessionId:${cngSample.startedAtElapsedMs}",
+            referenceRegionId = "strict-switch:${petrolSample.id}",
+            origin = "STRICT_SWITCH_ANCHOR",
+            pairQuality = sqrt(petrolSample.quality * cngSample.quality).coerceIn(0.0, 1.0),
+        )
+        return addComparisonOnce(candidate).comparison
     }
 
     private fun cngStatus(region: LearningRegion, sample: MotorSample, visit: ActiveVisit): JSONObject {
