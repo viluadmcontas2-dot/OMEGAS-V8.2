@@ -39,6 +39,14 @@ class NativeAutoCalContract(unittest.TestCase):
         self.correlator = CORRELATOR.read_text('utf-8')
         self.anchor = ANCHOR.read_text('utf-8')
 
+    def test_native_autocal_scale_and_action_identity_matches_recovered_progbase(self):
+        scale = SCALE.read_text('utf-8')
+        self.assertIn('INJECTION_COUNTS_PER_MS = 500.0', scale)
+        self.assertIn('MAP_COUNTS_PER_BAR = 1_000.0', scale)
+        self.assertIn('RESET_PETROL(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))', self.action)
+        self.assertIn('RESET_GAS(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04))', self.action)
+        self.assertNotIn('RESET_ALL(', self.action)
+
     def test_manual_automatch_route_is_removed(self):
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.bridge)
