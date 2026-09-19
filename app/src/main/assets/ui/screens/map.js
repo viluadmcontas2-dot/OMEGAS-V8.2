@@ -145,7 +145,7 @@
 
       const corner = document.createElement('div');
       corner.className = 'map-axis-corner';
-      corner.innerHTML = '<small>Petrol Inj.</small><b>ms \\ RPM</b>';
+      corner.innerHTML = '<small>INJEÇÃO</small><b>ms ↓ · RPM →</b>';
       table.appendChild(corner);
 
       for (let column = 0; column < 12; column += 1) {
@@ -153,7 +153,7 @@
         header.type = 'button';
         header.className = 'map-axis-header map-rpm-header';
         header.dataset.selectColumn = String(column);
-        header.innerHTML = `<small>RPM</small><b>${Math.round(snapshot.axes.rpmBins[column] || 0).toLocaleString('pt-BR')}</b>`;
+        header.innerHTML = `<b>${Math.round(snapshot.axes.rpmBins[column] || 0).toLocaleString('pt-BR')}</b>`;
         header.title = 'Selecionar ou desmarcar toda esta faixa de RPM';
         this.columnHeaders.push(header);
         table.appendChild(header);
@@ -164,7 +164,7 @@
         rowHeader.type = 'button';
         rowHeader.className = 'map-axis-header map-ms-header';
         rowHeader.dataset.selectRow = String(row);
-        rowHeader.innerHTML = `<small>Petrol Inj.</small><b>${fmt(snapshot.axes.petrolBins[row], 1)} ms</b>`;
+        rowHeader.innerHTML = `<b>${fmt(snapshot.axes.petrolBins[row], 1)} ms</b>`;
         rowHeader.title = 'Selecionar ou desmarcar toda esta faixa de Petrol Inj.';
         this.rowHeaders.push(rowHeader);
         table.appendChild(rowHeader);

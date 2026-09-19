@@ -84,7 +84,7 @@ assert "A posição ao vivo é mostrada apenas como texto" in learning
 assert "A interpolação bilinear continua no Kotlin" in learning
 assert "physical-grid-with-axes" in physical_grid
 assert "setAxes(rpmBins, petrolBins)" in physical_grid
-assert ".cell-value{font-size:12px" in styles
+assert ".cell-value{font-size:13px" in styles
 assert ".cell-subvalue" in styles
 assert ".physical-grid-with-axes" in refine_styles
 
