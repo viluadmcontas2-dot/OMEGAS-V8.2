@@ -26,6 +26,123 @@
     })[action] || action;
   }
 
+  function physicalVector(snapshot, key) {
+    const item = field(snapshot, key);
+    return Array.isArray(item?.physicalValues) ? item.physicalValues.map(value => finite(value)) : [];
+  }
+
+  function zoneForBand(index) {
+    if (index <= 5) return 0;
+    if (index <= 9) return 1;
+    if (index <= 13) return 2;
+    return 3;
+  }
+
+  function nativeZoneCount(snapshot, key) {
+    return vector(snapshot, key).slice(0, 4).filter(value => value > 0).length;
+  }
+
+  const AutoCalUxModel = {
+    humanState(snapshot = {}, state = {}) {
+      const enabled = finite(snapshot.autoCalEnabled ?? state.autoCalEnabled);
+      const petrolZones = nativeZoneCount(snapshot, 'ACQUIRED_ZONES_PETROL');
+      const gasZones = nativeZoneCount(snapshot, 'ACQUIRED_ZONES_GAS');
+      const nativeStatus = snapshot.nativeStatus || state.latestSnapshot?.nativeStatus || {};
+      const autoMatchCount = finite(nativeStatus.autoMatchCount ?? state.autoMatchCount);
+      const maxAutoMatch = finite(snapshot.maxAutomatch ?? state.maxAutomatch);
+      const title = enabled === 1 ? 'AutoCal ativo'
+        : enabled === 0 ? 'AutoCal pausado'
+        : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
+      const progress = 'Gasolina ' + petrolZones + '/4 zonas · GNV ' + gasZones + '/4 zonas';
+      const autoMatch = autoMatchCount === null
+        ? 'AutoMatch ainda sem contador válido'
+        : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
+          (maxAutoMatch === null ? '' : ' · limite configurado ' + Math.round(maxAutoMatch));
+      let nextAction = 'Atualize a leitura para receber o estado nativo da ECU.';
+      if (enabled === 0) nextAction = 'Retome a coleta quando quiser continuar o aprendizado nativo.';
+      else if (enabled === 1 && gasZones < 4) nextAction = 'Continue dirigindo normalmente para a ECU visitar as zonas que ainda faltam.';
+      else if (enabled === 1) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Acompanhe os AutoMatch; não é necessário resetar nada.';
+      return { title, progress, autoMatch, nextAction, petrolZones, gasZones, enabled, autoMatchCount, maxAutoMatch };
+    },
+
+    referencePoints(snapshot = {}) {
+      const petrolMs = physicalVector(snapshot, 'PETR_INJ_TBP');
+      const petrolMap = physicalVector(snapshot, 'PETR_MNFLD_PRESS_RV');
+      const gasMap = physicalVector(snapshot, 'GAS_MNFLD_PRESS_RV');
+      const count = Math.min(petrolMs.length, petrolMap.length, gasMap.length);
+      const points = [];
+      for (let index = 0; index < count; index += 1) {
+        const x = finite(petrolMs[index]);
+        const petrol = finite(petrolMap[index]);
+        const gas = finite(gasMap[index]);
+        if (x !== null && petrol !== null && gas !== null) {
+          points.push({ index, petrolMs: x, petrolMapBar: petrol, gasMapBar: gas });
+        }
+      }
+      return points;
+    },
+
+    bandStrip(snapshot = {}) {
+      const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
+      const zones = vector(snapshot, 'ACQUIRED_ZONES_GAS');
+      const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
+      const byBand = new Map(events.map(event => [Number(event?.bandIndex), event]));
+      return Array.from({ length: 18 }, (_, index) => {
+        const counter = finite(counters[index]) ?? 0;
+        const zone = zoneForBand(index);
+        const event = byBand.get(index) || null;
+        const correlated = String(event?.correlationState || '') === 'CORRELATED';
+        const stateName = correlated ? 'anchored' : event ? 'mature' : counter > 0 ? 'activity' : 'empty';
+        return {
+          index,
+          zone,
+          counter,
+          zoneAcquired: (finite(zones[zone]) ?? 0) > 0,
+          state: stateName,
+          event,
+        };
+      });
+    },
+
+    toggleAction(enabled) {
+      const value = finite(enabled);
+      if (value === 1) return 'DISABLE_AUTO_CAL';
+      if (value === 0) return 'ENABLE_AUTO_CAL';
+      return null;
+    },
+
+    updateChartView(current, action, payload = {}) {
+      const base = {
+        zoom: Math.max(1, Math.min(3, finite(current?.zoom) ?? 1)),
+        panX: finite(current?.panX) ?? 0,
+        panY: finite(current?.panY) ?? 0,
+      };
+      if (action === 'fit') return { zoom: 1, panX: 0, panY: 0 };
+      if (action === 'zoom-in') return { ...base, zoom: Math.min(3, base.zoom + 0.25) };
+      if (action === 'zoom-out') {
+        const zoom = Math.max(1, base.zoom - 0.25);
+        return zoom === 1 ? { zoom: 1, panX: 0, panY: 0 } : { ...base, zoom };
+      }
+      if (action === 'pinch') {
+        const zoom = Math.max(1, Math.min(3, finite(payload.zoom) ?? base.zoom));
+        return zoom === 1 ? { zoom: 1, panX: 0, panY: 0 } : { ...base, zoom };
+      }
+      if (action === 'pan') {
+        if (base.zoom <= 1) return base;
+        const limitX = 240 * (base.zoom - 1);
+        const limitY = 100 * (base.zoom - 1);
+        const dx = finite(payload.dx) ?? 0;
+        const dy = finite(payload.dy) ?? 0;
+        return {
+          ...base,
+          panX: Math.max(-limitX, Math.min(limitX, base.panX + dx)),
+          panY: Math.max(-limitY, Math.min(limitY, base.panY + dy)),
+        };
+      }
+      return base;
+    },
+  };
+
   class AutoCalCockpit {
     constructor(app) {
       this.app = app;
