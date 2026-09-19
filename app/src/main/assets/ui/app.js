@@ -140,7 +140,7 @@
     const status = state.status || {};
     const obdStatus = state.obd || {};
     const obdOnline = obdStatus.connected === true || ['CONNECTED', 'CONECTADO', 'REMOTO AO VIVO'].includes(String(obdStatus.state || obdStatus.status || '').toUpperCase());
-    const fuel = fuelLabel(status.fuelState || liveFrom(state).fuel || liveFrom(state).state);
+    const fuel = fuelLabel(liveFrom(state).fuel || liveFrom(state).state || status.fuelState);
     const globalSignature = `${status.usbConnected === true ? 1 : 0}:${obdOnline ? 1 : 0}:${fuel}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
@@ -191,9 +191,14 @@
   function telemetryVisualSignature(telemetry, route) {
     const source = telemetry || {};
     const live = source.live || source.data || source;
+    const freshnessAge = finite(source.telemetryAgeMs ?? source.ageMs);
+    const freshnessBucket = freshnessAge === null || freshnessAge < 0 ? -1 : Math.min(20, Math.floor(freshnessAge / 500));
+    const sourceSequence = Number.isFinite(Number(source.sequence)) ? Number(source.sequence) : -1;
     if (route === 'dashboard') {
       return [
         source.valid === false ? 0 : 1,
+        sourceSequence,
+        freshnessBucket,
         rounded(live.rpm, 0),
         rounded(live.petrol_ms ?? live.petrolMs, 2),
         rounded(live.gas_ms_diagnostic ?? live.gasMs, 2),
@@ -205,6 +210,8 @@
     const cell = interpolation.cell || {};
     return [
       source.valid === false ? 0 : 1,
+      sourceSequence,
+      freshnessBucket,
       Math.round((finite(interpolation.rpm ?? live.rpm) || 0) / 25) * 25,
       Math.round((finite(interpolation.petrolMs ?? live.petrol_ms ?? live.petrolMs) || 0) * 20) / 20,
       Number.isFinite(Number(cell.row)) ? Number(cell.row) : '-',
@@ -214,13 +221,14 @@
 
   function renderLightLiveContext(state, route) {
     const interpolation = state.telemetry?.interpolation || {};
+    const interpolationValid = interpolation.valid === true;
     const cell = interpolation.cell || {};
     const rpm = finite(interpolation.rpm ?? liveFrom(state).rpm);
     const petrolMs = finite(interpolation.petrolMs ?? liveFrom(state).petrol_ms ?? liveFrom(state).petrolMs);
-    const row = Number.isFinite(Number(cell.row)) ? Number(cell.row) : null;
-    const column = Number.isFinite(Number(cell.column)) ? Number(cell.column) : null;
+    const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
+    const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
     const position = row !== null && column !== null ? ` · célula ${row + 1}×${column + 1}` : '';
-    const label = rpm !== null && petrolMs !== null
+    const label = interpolationValid && rpm !== null && petrolMs !== null
       ? `${Math.round(rpm).toLocaleString('pt-BR')} RPM · ${petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms${position}`
       : 'Aguardando condição válida';
     if (route === 'learning') setText('learningLiveLabel', label);
