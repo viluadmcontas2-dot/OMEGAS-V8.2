@@ -106,7 +106,7 @@ class SignalLearningStoreTest {
     }
 
     @Test
-    fun `duas ancoras estritas acordam advisor e viram sugestao concreta de curva k`() {
+    fun `ancoras estritas acordam advisor mas permanecem somente auditoria`() {
         val store = store()
         try {
             store.startSession()
@@ -115,22 +115,19 @@ class SignalLearningStoreTest {
                 telemetry(650L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL),
                 accepted(sample("p1", 100L, 650L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL)),
             )
-            val firstCng = sample("g1", 700L, 800L, petrolMs = 4.8, fuel = Mp48Fuel.CNG)
             val firstAnchor = store.ingest(
                 telemetry(800L, petrolMs = 4.8, fuel = Mp48Fuel.CNG),
-                stabilizedCng(firstCng),
+                stabilizedCng(sample("g1", 700L, 800L, petrolMs = 4.8, fuel = Mp48Fuel.CNG)),
             )
             assertTrue(firstAnchor.getBoolean("strict_switch_anchor_registered"))
-            assertEquals("STRICT_SWITCH_ANCHOR", firstAnchor.getJSONObject("comparison").getString("origin"))
 
             store.ingest(
                 telemetry(1_450L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL),
                 accepted(sample("p2", 900L, 1_450L, petrolMs = 4.0, fuel = Mp48Fuel.PETROL)),
             )
-            val secondCng = sample("g2", 1_500L, 1_600L, petrolMs = 4.8, fuel = Mp48Fuel.CNG)
             val secondAnchor = store.ingest(
                 telemetry(1_600L, petrolMs = 4.8, fuel = Mp48Fuel.CNG),
-                stabilizedCng(secondCng),
+                stabilizedCng(sample("g2", 1_500L, 1_600L, petrolMs = 4.8, fuel = Mp48Fuel.CNG)),
             )
             assertTrue(secondAnchor.getBoolean("strict_switch_anchor_registered"))
 
@@ -146,12 +143,13 @@ class SignalLearningStoreTest {
             }
 
             val advice = exported.getJSONObject("assistedCalibration")
+            val method = advice.getJSONObject("method")
             assertTrue(exported.getBoolean("advisorFresh"))
             assertEquals(2, advice.getInt("strictSwitchAnchorCount"))
-            assertEquals(
-                "STRICT_SWITCH_ANCHORS",
-                advice.getJSONObject("method").getString("globalSource"),
-            )
+            assertEquals(0, advice.getInt("controlComparisonCount"))
+            assertEquals("CONTINUOUS_REFERENCE_SURFACE", method.getString("globalSource"))
+            assertEquals("VALIDATION_ONLY", method.getString("strictSwitchRole"))
+            assertFalse(method.getBoolean("runtimeFuelSwitchingRequired"))
 
             val calibration = CalibrationStateV7(
                 revision = CalibrationRevisionV7(0, 0),
@@ -160,13 +158,8 @@ class SignalLearningStoreTest {
                     List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
                 },
             )
-            val curve = AdvisorSuggestionAdapterV7()
-                .adapt(advice, calibration, nowMs = 2_000L)
-                .single { it.target == SuggestionTargetV7.CURVE_K }
-
-            assertEquals(SuggestionLifecycleV7.PENDING, curve.lifecycle)
-            assertTrue(curve.curveChanges.isNotEmpty())
-            assertTrue(curve.curveChanges.all { it.after > it.before })
+            val suggestions = AdvisorSuggestionAdapterV7().adapt(advice, calibration, nowMs = 2_000L)
+            assertTrue("Âncoras de auditoria não podem autorizar K", suggestions.isEmpty())
         } finally {
             store.close()
         }
