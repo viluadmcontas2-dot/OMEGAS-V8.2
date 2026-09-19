@@ -1,7 +1,7 @@
 # Incidente — AutoCal expunha Manual AutoMatch sem fidelidade ao comportamento observado
 
 ## Sintoma e impacto
-O fluxo Android mantinha uma ação explícita `NATIVE_AUTOMATCH` que enviava o modo `0x08` quando o operador confirmava. O novo corpus Portmon de Auto Calibration, porém, mostra a ECU alterando `MUL_ACT` e incrementando o contador de AutoMatch sem nenhuma ocorrência do comando manual `02 24 04 08 32`. Isso criava uma representação incorreta do software original e um caminho de mutação desnecessário no app.
+O fluxo Android mantinha uma ação explícita `NATIVE_AUTOMATCH` que enviava o modo `0x08` quando o operador confirmava. A engenharia reversa posterior do ProgBase 4.2.0.6 corrigiu essa interpretação: `0x01` é Manual AutoMatch; `0x08` é Modify map refs. Nos Portmon fornecidos, a ECU altera `MUL_ACT` e incrementa o contador de AutoMatch sem um comando host Manual AutoMatch adjacente. Assim, continua correto não expor Manual AutoMatch no fluxo normal, mas a identidade de protocolo anterior estava errada.
 
 ## Causa imediata
 A implementação anterior transformou a existência conhecida do modo nativo `0x08` em uma ação operacional exposta ao usuário, antes de existir evidência de que o ProgBase o disparava manualmente no fluxo normal.
@@ -13,7 +13,7 @@ O contrato de AutoCal não separava com rigor três responsabilidades: habilitar
 Os testes protegiam a presença e a confirmação do próprio `NATIVE_AUTOMATCH`; portanto validavam a hipótese antiga em vez de confrontá-la com o tráfego real do ProgBase.
 
 ## Evidência nova
-`PortmonLOGNOVO.LOG` contém 39.524 escritas seriais e 20.456 consultas de telemetria `48 01 49`. No corpus não existe `02 24 04 08 32`. Apesar disso, o contador `0x0174` evolui `0 → 1 → 2 → 3` e `MUL_ACT` muda nos mesmos ciclos. Os frames de controle observados para a aquisição são `12 4A 01 01 5E` (Enable) e `12 4A 01 00 5D` (Disable). Durante o período desabilitado, os principais vetores repetem o mesmo payload, compatível com pausa/congelamento sem reset.
+`PortmonLOGNOVO.LOG` contém 39.524 escritas seriais e 20.456 consultas de telemetria `48 01 49`. No corpus analisado não há comando host Manual AutoMatch `02 24 04 01 2B` junto dos três ciclos automáticos observados. Mesmo assim, o contador `0x0174` evolui `0 → 1 → 2 → 3` e `MUL_ACT` muda nos mesmos ciclos. A desmontagem do ProgBase recuperou ainda `0x02 = Reset petrol point`, `0x04 = Reset gas point` e `0x08 = Modify map refs`. Os frames de controle observados para a aquisição continuam `12 4A 01 01 5E` (Enable) e `12 4A 01 00 5D` (Disable).
 
 ## Correção
 - remover `NATIVE_AUTOMATCH` do fluxo operacional normal;
