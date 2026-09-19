@@ -12,6 +12,7 @@ const app = read('app/src/main/assets/ui/app.js');
 const dashboard = read('app/src/main/assets/ui/screens/dashboard.js');
 const floating = read('app/src/main/assets/ui/components/floating-telemetry.js');
 const vehicle = read('app/src/main/assets/ui/components/vehicle-status-strip.js');
+const obd = read('app/src/main/assets/ui/screens/obd.js');
 
 function between(source, start, end) {
   const a = source.indexOf(start);
@@ -49,6 +50,12 @@ test('unavailable telemetry never turns HubStatus numeric defaults into fake mea
   assert.match(floating, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'floating telemetry must require valid telemetry before showing measurements');
   assert.match(vehicle, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'vehicle strip must require valid telemetry before showing measurements');
   assert.doesNotMatch(dashboard, /id=\\?"dashRpm\\?"[^>]*>0<\/b>/, 'dashboard initial state cannot claim 0 RPM before valid telemetry');
+});
+
+test('missing OBD PID stays unavailable instead of becoming numeric zero', () => {
+  const finiteFn = obd.match(/function finite\(value\)\s*\{[\s\S]*?\}/)?.[0] || '';
+  assert.match(finiteFn, /value\s*===\s*null|value\s*==\s*null/, 'OBD finite must explicitly reject null');
+  assert.match(finiteFn, /undefined|value\s*==\s*null/, 'OBD finite must explicitly reject undefined');
 });
 
 console.log('TELEMETRY_TRUTH_CONTRACT=PASS');
