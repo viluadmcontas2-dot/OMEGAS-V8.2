@@ -12,7 +12,7 @@ class AutoCalSnapshotTest {
     @Test
     fun `snapshot parcial preserva campos validos e avisos`() {
         val observations = listOf(
-            observation(AutoCalProtocol.PETR_INJ_TBP, byteArrayOf(0x00, 0x02), 100L),
+            observation(AutoCalProtocol.PETR_INJ_TBP, byteArrayOf(0xF4.toByte(), 0x01), 100L),
             AutoCalReadObservation(
                 field = AutoCalProtocol.MUL_ACT,
                 capturedAtMs = 110L,

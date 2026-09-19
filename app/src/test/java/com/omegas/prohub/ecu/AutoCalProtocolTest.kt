@@ -81,9 +81,9 @@ class AutoCalProtocolTest {
         val decoded = AutoCalProtocol.decode(
             AutoCalProtocol.MNFLD_PRESS_BUF,
             Mp48Protocol.STATUS_ACK,
-            byteArrayOf(0x00, 0x04, 0x00, 0xFC.toByte()),
+            byteArrayOf(0xE8.toByte(), 0x03, 0x18, 0xFC.toByte()),
         )
-        assertArrayEquals(intArrayOf(1024, -1024), decoded.rawValues)
+        assertArrayEquals(intArrayOf(1000, -1000), decoded.rawValues)
         assertEquals(1.0, decoded.physicalValues[0], 0.0)
         assertEquals(-1.0, decoded.physicalValues[1], 0.0)
     }
@@ -93,9 +93,9 @@ class AutoCalProtocolTest {
         val time = AutoCalProtocol.decode(
             AutoCalProtocol.PETR_INJ_TBP,
             Mp48Protocol.STATUS_ACK,
-            byteArrayOf(0x00, 0x02),
+            byteArrayOf(0xF4.toByte(), 0x01),
         )
-        assertEquals(512, time.rawValues.single())
+        assertEquals(500, time.rawValues.single())
         assertEquals(1.0, time.physicalValues.single(), 0.0)
 
         val factor = AutoCalProtocol.decode(

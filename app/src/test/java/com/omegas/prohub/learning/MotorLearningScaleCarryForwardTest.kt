@@ -6,6 +6,7 @@ import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +39,7 @@ class MotorLearningScaleCarryForwardTest {
     }
 
     @Test
-    fun onlineSessionScaleIsEphemeralAndPetrolOnly() {
+    fun sessionPetrolScaleEvidenceIsSessionScopedAndPetrolOnly() {
         val persisted = 1.0
         val target = 1.08
         val rpm = 1_800.0
@@ -53,11 +54,9 @@ class MotorLearningScaleCarryForwardTest {
         )
 
         val afterPetrol = memory.export("test")
-        assertEquals(
-            target,
-            afterPetrol.getJSONObject("session_summary").getDouble("online_petrol_scale"),
-            0.000001,
-        )
+        val petrolSummary = afterPetrol.getJSONObject("session_summary")
+        assertEquals(1, petrolSummary.getInt("petrol_scale_visits"))
+        assertFalse(petrolSummary.has("online_petrol_scale"))
         assertEquals(
             persisted,
             afterPetrol.getJSONObject("adaptiveScale").getDouble("acceptedScale"),
@@ -80,11 +79,9 @@ class MotorLearningScaleCarryForwardTest {
         memory.ingest(cngTelemetry, SampleDecision.accepted(cngSample))
 
         val afterCng = memory.export("test")
-        assertEquals(
-            target,
-            afterCng.getJSONObject("session_summary").getDouble("online_petrol_scale"),
-            0.000001,
-        )
+        val cngSummary = afterCng.getJSONObject("session_summary")
+        assertEquals(1, cngSummary.getInt("petrol_scale_visits"))
+        assertFalse(cngSummary.has("online_petrol_scale"))
         assertEquals(
             persisted,
             afterCng.getJSONObject("adaptiveScale").getDouble("acceptedScale"),
