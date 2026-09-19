@@ -62,6 +62,10 @@ assert.equal(bands[16].zoneAcquired, false);
 
 assert.equal(model.toggleAction(1), 'DISABLE_AUTO_CAL');
 assert.equal(model.toggleAction(0), 'ENABLE_AUTO_CAL');
+assert.equal(model.toggleAction(null), null, 'estado nativo ausente não pode virar comando de retomar coleta');
+assert.equal(model.toggleAction(undefined), null, 'estado nativo indefinido não pode virar comando de retomar coleta');
+const disconnected = model.humanState({ available: false }, { state: 'DISCONNECTED' });
+assert.equal(disconnected.enabled, null, 'DISCONNECTED deve preservar estado AutoCal desconhecido');
 
 let view = model.updateChartView(null, 'zoom-in');
 assert.ok(view.zoom > 1);
@@ -86,6 +90,7 @@ assert.equal(source.includes('RESET_ALL'), false);
 assert.equal(source.includes('setInterval'), false);
 
 assert.equal(css.includes('overflow-x: hidden'), true);
+assert.match(css, /\.autocal-cockpit-view\s*\{[^}]*overflow-y:\s*auto/s, 'cockpit deve rolar verticalmente dentro da viewport em vez de cortar bandas e controles');
 assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
