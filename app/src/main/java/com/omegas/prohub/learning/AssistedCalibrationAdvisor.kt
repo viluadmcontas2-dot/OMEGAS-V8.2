@@ -29,6 +29,10 @@ object AssistedCalibrationAdvisor {
     private const val FIRST_VISIT_MAX_CORRECTION_FRACTION = 0.75
     private const val EARLY_VISITS_MAX_CORRECTION_FRACTION = 0.75
     private const val MAX_CORRECTION_FRACTION = 0.75
+    private const val STRICT_SWITCH_ANCHOR_ORIGIN = "STRICT_SWITCH_ANCHOR"
+    // SIL 2026-09-19: with >=2 previous strict anchors, all 6 subsequent
+    // strict switches in the available corpus stayed within ±4% (small sample).
+    private const val MIN_STRICT_SWITCH_ANCHORS_FOR_GLOBAL = 2
     private val mapKnots = DoubleArray(18) { 0.20 + it * 0.05 }
 
     fun analyze(exportedLearning: JSONObject): JSONObject {
@@ -47,7 +51,18 @@ object AssistedCalibrationAdvisor {
         }
 
         val pairedCurves = pairedCurves(samples)
-        val global = globalCurve(samples)
+        val strictSwitchAnchors = samples.filter { it.origin == STRICT_SWITCH_ANCHOR_ORIGIN }
+        val globalSamples = if (strictSwitchAnchors.size >= MIN_STRICT_SWITCH_ANCHORS_FOR_GLOBAL) {
+            strictSwitchAnchors
+        } else {
+            samples
+        }
+        val globalSource = if (strictSwitchAnchors.size >= MIN_STRICT_SWITCH_ANCHORS_FOR_GLOBAL) {
+            "STRICT_SWITCH_ANCHORS"
+        } else {
+            "CONTINUOUS_REFERENCE_SURFACE"
+        }
+        val global = globalCurve(globalSamples)
         val residual = residualMap(samples, global)
         val regions = mapCorrectionRegions(residual)
         return JSONObject()
@@ -57,6 +72,7 @@ object AssistedCalibrationAdvisor {
             .put("humanConfirmationRequired", true)
             .put("comparisonCount", samples.size)
             .put("uniqueVisitCount", samples.map { it.visitId }.toSet().size)
+            .put("strictSwitchAnchorCount", strictSwitchAnchors.size)
             .put("petrolCurve", pairedCurves.petrol)
             .put("cngCurve", pairedCurves.cng)
             .put("curveAxes", JSONObject()
@@ -69,7 +85,9 @@ object AssistedCalibrationAdvisor {
             .put("mapCorrectionRegions", regions)
             .put("reconciliation", reconciled.optJSONObject("reconciliation") ?: JSONObject())
             .put("method", JSONObject()
-                .put("global", "continuous-same-map-error-surface")
+                .put("global", "strict-switch-anchor-preferred-then-continuous-fallback")
+                .put("globalSource", globalSource)
+                .put("strictSwitchAnchorMinimum", MIN_STRICT_SWITCH_ANCHORS_FOR_GLOBAL)
                 .put("residual", "bilinear-rpm-petrol-after-supported-global-removal")
                 .put("decision", "useful-margin-error-minus-uncertainty-minus-deadband")
                 .put("confidence", "continuous-weight-repeatability-and-uncertainty")
@@ -282,6 +300,7 @@ object AssistedCalibrationAdvisor {
         val rpm = raw.optDouble("rpm", Double.NaN)
         val mapBar = raw.optDouble("map_bar", raw.optDouble("mapBar", Double.NaN))
         val quality = raw.optDouble("quality", 0.1).coerceIn(0.02, 1.0)
+        val origin = raw.optString("origin", "CONTINUOUS_REFERENCE_SURFACE")
         if (!target.isFinite() || !observed.isFinite() || !rpm.isFinite() || !mapBar.isFinite() ||
             target <= 0.05 || observed < 0.0 || rpm < 0.0 || mapBar < 0.0
         ) return null
@@ -309,6 +328,7 @@ object AssistedCalibrationAdvisor {
             mapBar = mapBar,
             weight = quality,
             visitId = visitId,
+            origin = origin,
             continuousWeights = weights,
         )
     }
@@ -351,6 +371,7 @@ object AssistedCalibrationAdvisor {
         val mapBar: Double,
         val weight: Double,
         val visitId: String,
+        val origin: String,
         val continuousWeights: List<CellWeight>,
     )
 
