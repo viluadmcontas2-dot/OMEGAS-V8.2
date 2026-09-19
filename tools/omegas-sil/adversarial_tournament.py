@@ -215,11 +215,10 @@ def w10(d):
     for name,k in coords.items():
         z=x.copy()
         for col in k:z[col]=k[col].to_numpy()
-        stats=z.groupby(list(k.columns)).corr.agg(["count","median"])
         # actual stability = median absolute deviation inside cells
         vals=[]
         for _,g in z.groupby(list(k.columns)):
-            if len(g)>=8: vals.append(float(np.median(np.abs(g.corr-g.corr.median()))))
+            if len(g)>=8: vals.append(float(np.median(np.abs(g["corr"]-g["corr"].median()))))
         out[name]={"cells":len(vals),"weighted_mad_pct":float(np.median(vals)) if vals else None}
     return {"role":"RESIDUAL_COORDINATES","claim":"find the smallest coordinate system that preserves stable GNV residuals","results":out}
 
@@ -228,16 +227,16 @@ def w11(d):
     if x.empty:return {"role":"PHYSICS_RESIDUAL","status":"NO_DATA"}
     stable=x[(x.dmap.abs().fillna(0)<=.02)&(x.drpm.abs().fillna(0)<=150)].copy()
     cols=["gas_pressure_raw","gas_temp_raw","petrol_ms","rpm","map_bar"]
-    corr={c:float(stable.corr.corr(stable[c],method="spearman")) for c in cols}
+    corr={c:float(stable["corr"].corr(stable[c],method="spearman")) for c in cols}
     # linear incremental test, session holdout
     base=[];aug=[]
     for s in stable.session.unique():
         tr=stable[stable.session!=s];te=stable[stable.session==s]
         if len(tr)<100 or len(te)<20:continue
-        b=float(tr.corr.median());base.extend(te.corr-b)
+        b=float(tr["corr"].median());base.extend(te["corr"]-b)
         X=np.column_stack([np.ones(len(tr)),tr.gas_pressure_raw,tr.gas_temp_raw,tr.petrol_ms,tr.rpm/1000,tr.map_bar])
         Xt=np.column_stack([np.ones(len(te)),te.gas_pressure_raw,te.gas_temp_raw,te.petrol_ms,te.rpm/1000,te.map_bar])
-        beta=np.linalg.lstsq(X,tr.corr.to_numpy(float),rcond=None)[0];aug.extend(te.corr-Xt@beta)
+        beta=np.linalg.lstsq(X,tr["corr"].to_numpy(float),rcond=None)[0];aug.extend(te["corr"]-Xt@beta)
     return {"role":"PRESSURE_TEMP_DEADTIME","claim":"physical compensators matter only if they reduce held-out residual","spearman":corr,"base":abs_metrics(base),"augmented":abs_metrics(aug)}
 
 def w12(d):
@@ -317,17 +316,17 @@ def w15(d):
         cut=max(20,int(len(g)*frac))
         if len(g)<cut+30:continue
         tr=g.iloc[:cut];te=g.iloc[cut:]
-        glob=float(tr.corr.median())
+        glob=float(tr["corr"].median())
         # global curve by petrol-time bins plus sparse residual rpm×petrol
         tr=tr.copy();tr["pb"]=(tr.petrol_ms/.5).round().astype(int);tr["rb"]=(tr.rpm/300).round().astype(int)
-        curve=tr.groupby("pb").corr.median()
-        cell=tr.assign(res=tr.corr-tr["pb"].map(curve).fillna(glob)).groupby(["rb","pb"]).res.median()
+        curve=tr.groupby("pb")["corr"].median()
+        cell=tr.assign(res=tr["corr"]-tr["pb"].map(curve).fillna(glob)).groupby(["rb","pb"]).res.median()
         pred=[]
         for r in te.itertuples():
             pb=int(round(r.petrol_ms/.5));rb=int(round(r.rpm/300))
             cg=float(curve.get(pb,glob));rr=float(cell.get((rb,pb),0.))
             pred.append(cg+rr)
-        errs.extend(te.corr.to_numpy(float)-np.asarray(pred));covered+=len(te)
+        errs.extend(te["corr"].to_numpy(float)-np.asarray(pred));covered+=len(te)
       m=abs_metrics(errs);m["fraction"]=frac;m["frames_tested"]=covered;results.append(m)
     return {"role":"FAST_K_FIELD","claim":"measure how little continuous CNG exposure is needed to predict later correction field without switching","results":results}
 
