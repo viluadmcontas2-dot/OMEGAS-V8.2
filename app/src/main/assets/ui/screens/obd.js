@@ -2,7 +2,7 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  function finite(value) { if (value === null || value === undefined || value === '') return null; return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
     return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
