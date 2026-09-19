@@ -503,22 +503,73 @@ This directly implements the fast-calibration strategy:
 
 ### Validation status
 
-AgentRed validation jobs:
-- #684 — created for SHA `28e33563...`, no dispatch/receipt appeared during bounded polling; closed as `not_planned` after the SHA became stale.
-- #686 — created for SHA `4563f545...`, no dispatch/receipt appeared during bounded polling; closed as `not_planned` to prevent later duplicate execution.
+The first AgentRed diagnosis was initially misread from the GitHub comment surface. Local receiver state later proved that both jobs had actually executed and failed:
 
-Ephemeral MMMACHINE validation for exact code SHA `4563f545e0b7c5a91fe2e7980d307c3a008396e2`:
-1. first run: **FAILURE (environment)** before tests — Android SDK path was not configured;
-2. SDK was found at `C:\Users\hugov\AppData\Local\Android\Sdk`;
-3. second run with `ANDROID_HOME`/ `ANDROID_SDK_ROOT` configured advanced through Android resource processing, but did not reach a test result inside the bounded polling window;
-4. process was explicitly terminated to avoid unbounded execution.
+- #684 — SHA `28e33563...`: **failed**, exit 1.
+- #686 — SHA `4563f545...`: **failed**, exit 1.
 
-**Validation terminal state for this round: TIMEOUT.**
+Both failures stopped at Gradle startup with PowerShell 5.1 `NativeCommandError`. The job wrapper combined:
+
+- `$ErrorActionPreference='Stop'`;
+- direct invocation of `gradlew.bat`;
+- merged stderr/stdout through PowerShell.
+
+That caused native stderr emitted by Gradle to become a terminating PowerShell error before the real Gradle/test result could be observed. A separate manual run also established that the Android SDK must be exported explicitly at:
+
+`C:\Users\hugov\AppData\Local\Android\Sdk`
+
+### Gemini independent diagnosis — AgentRed #689
+
+Gemini was invoked through the AgentRed native AI worker:
+- requested model: `gemini-3.8-flash`;
+- primary attempt: transient timeout;
+- bounded fallback: `gemini-3.5-flash-lite`;
+- result: **succeeded**.
+
+Gemini independently identified the same two leading causes:
+1. PowerShell 5.1 native stderr + `$ErrorActionPreference='Stop'`;
+2. missing/unexported `ANDROID_HOME` / `ANDROID_SDK_ROOT`.
+
+This advice was treated as a second opinion only; the machine logs remained the execution authority.
+
+### Corrected AgentRed validation — #690
+
+Exact validated repository SHA:
+
+`0a361453d28bce177ed14cd1f6c03ba97a2dad6d`
+
+This SHA is the current `work/omegas-verde-sil` descendant containing the strict-switch candidate; the only commit after code SHA `4563f545...` before this validation was documentation.
+
+The corrected job:
+- exported `ANDROID_HOME=C:\Users\hugov\AppData\Local\Android\Sdk`;
+- exported `ANDROID_SDK_ROOT` to the same path;
+- downloaded the exact GitHub SHA as an ephemeral ZIP;
+- used `cmd.exe /d /s /c` as the native Gradle boundary so PowerShell did not reinterpret Gradle stderr;
+- preserved the real Gradle exit code;
+- required a `BUILD SUCCESSFUL` marker;
+- ran only:
+  - `MotorLearningMemoryTest`;
+  - `AssistedCalibrationAdvisorTest`;
+- generated no APK and used no Emulator.
+
+Remote AgentRed receipt:
+- issue: **#690**;
+- status: **succeeded**;
+- exitCode: **0**;
+- verification: **passed**;
+- Gradle: **BUILD SUCCESSFUL in 1m 16s**;
+- `:app:testDebugUnitTest FROM-CACHE`;
+- stderr artifact: **0 bytes**;
+- stdout artifact SHA-256: `c72e1ffd7151a76b14395fb73d54d82f745ba8c357929ea55ffb658acbe5b0f6`;
+- manifest commit: `7c788f14f9f7ad552b79ce9bcb2ddfa6ffdcb649`.
+
+**Validation terminal state for this round: SUCCESS.**
 
 Therefore:
 - remote source mutation is confirmed;
-- the scientific rationale is supported by corpus evidence;
-- targeted unit-test success is **not yet verified**;
+- strict-switch capture and global-source selection compile;
+- the two targeted unit-test classes pass on the exact validated remote SHA;
+- the scientific rationale remains supported by corpus evidence;
 - no APK was generated;
 - no Emulator was used;
 - no automatic writer was enabled;
@@ -529,6 +580,6 @@ Therefore:
 **Candidate:** strict-switch-anchor preferred global calibration + continuous residual local refinement.
 
 Scientific status: **PROMOTE AS CANDIDATE**.  
-Software verification status: **TIMEOUT / NOT GREEN YET**.
+Software verification status: **GREEN FOR THE TARGETED SIL/LEARNING SCOPE**.
 
-The next execution must be only one thing: rerun the two targeted unit-test classes for code SHA `4563f545...` (or a descendant differing only in documentation) on a runner with Android SDK configured, then accept or fix the concrete test failure. Do not open another algorithm-search round before that verification.
+This closes the previously identified software-verification gate. Future work should continue from this candidate and target only new falsification evidence or the next explicitly authorized integration step, rather than reopening the same algorithm-search loop.
