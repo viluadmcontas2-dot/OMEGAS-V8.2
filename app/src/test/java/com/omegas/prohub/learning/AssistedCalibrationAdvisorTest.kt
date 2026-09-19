@@ -25,6 +25,67 @@ class AssistedCalibrationAdvisorTest {
     }
 
     @Test
+    fun `duas ancoras estritas assumem a tendencia global e continuo vira residual`() {
+        val comparisons = JSONArray()
+        repeat(12) { index ->
+            comparisons.put(comparison(
+                id = "continuous-$index",
+                targetMs = 5.0,
+                observedMs = 6.0,
+                rpm = 1_500.0 + index * 40.0,
+                mapBar = 0.45,
+                row = 5,
+                column = 4,
+            ).put("origin", "CONTINUOUS_REFERENCE_SURFACE"))
+        }
+        repeat(2) { index ->
+            comparisons.put(comparison(
+                id = "anchor-$index",
+                targetMs = 5.0,
+                observedMs = 5.2,
+                rpm = 2_000.0 + index * 20.0,
+                mapBar = 0.45,
+                row = 5,
+                column = 4,
+            ).put("origin", "STRICT_SWITCH_ANCHOR"))
+        }
+
+        val result = analyze(comparisons)
+        val point = pointAt(result, 5.0)
+
+        assertEquals(2, result.getInt("strictSwitchAnchorCount"))
+        assertEquals("STRICT_SWITCH_ANCHORS", result.getJSONObject("method").getString("globalSource"))
+        assertEquals(4.0, point.getDouble("errorPercent"), 0.000001)
+        assertTrue(result.getJSONArray("mapResidualSuggestions").getJSONObject(0).getDouble("residualErrorPercent") > 0.0)
+    }
+
+    @Test
+    fun `uma unica ancora estrita ainda usa fallback continuo`() {
+        val comparisons = buildComparisons(
+            count = 6,
+            targetMs = 5.0,
+            observedMs = 6.0,
+            row = 5,
+            column = 4,
+        )
+        comparisons.put(comparison(
+            id = "only-anchor",
+            targetMs = 5.0,
+            observedMs = 5.2,
+            rpm = 2_000.0,
+            mapBar = 0.45,
+            row = 5,
+            column = 4,
+        ).put("origin", "STRICT_SWITCH_ANCHOR"))
+
+        val result = analyze(comparisons)
+
+        assertEquals(1, result.getInt("strictSwitchAnchorCount"))
+        assertEquals("CONTINUOUS_REFERENCE_SURFACE", result.getJSONObject("method").getString("globalSource"))
+        assertTrue(pointAt(result, 5.0).getDouble("errorPercent") > 4.0)
+    }
+
+    @Test
     fun `curvas e propostas permanecem exclusivamente manuais`() {
         val result = analyze(
             comparisons = buildComparisons(
