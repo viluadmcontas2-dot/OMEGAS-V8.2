@@ -272,12 +272,31 @@
         button.addEventListener('click', () => { this.active = false; });
       });
       this.panel?.querySelector('[data-autocal-read]')?.addEventListener('click', () => this.requestRead());
+      this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
+        const action = event.currentTarget?.dataset?.action;
+        if (action) this.prepare(action);
+      });
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
+      });
+      this.panel?.querySelectorAll('[data-autocal-chart-action]').forEach(button => {
+        button.addEventListener('click', () => {
+          this.chartView = AutoCalUxModel.updateChartView(this.chartView, button.dataset.autocalChartAction);
+          this.applyChartTransform();
+        });
+      });
+      this.panel?.querySelector('[data-autocal-history]')?.addEventListener('click', () => {
+        if (!this.previousReferencePoints.length) return;
+        this.chartHistoryVisible = !this.chartHistoryVisible;
+        this.renderReferenceChart(this.snapshot);
       });
       this.panel?.addEventListener('click', event => {
         if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
         if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
+        const band = event.target.closest('[data-autocal-band-index]');
+        if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
+        const point = event.target.closest('[data-autocal-ref-index]');
+        if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
       });
     }
 
