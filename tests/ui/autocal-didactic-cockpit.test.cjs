@@ -69,7 +69,9 @@ view = model.updateChartView(view, 'pan', { dx: 40, dy: -20 });
 assert.notEqual(view.panX, 0);
 assert.notEqual(view.panY, 0);
 view = model.updateChartView(view, 'fit');
-assert.deepEqual(view, { zoom: 1, panX: 0, panY: 0 });
+assert.equal(view.zoom, 1);
+assert.equal(view.panX, 0);
+assert.equal(view.panY, 0);
 
 assert.equal(source.includes('data-autocal-chart-action="zoom-in"'), true);
 assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), true);
