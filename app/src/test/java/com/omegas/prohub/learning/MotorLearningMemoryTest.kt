@@ -43,6 +43,61 @@ class MotorLearningMemoryTest {
     }
 
     @Test
+    fun `strict petrol to cng stabilization becomes a dedicated anchor`() {
+        val memory = memory()
+        memory.startSession()
+        val petrol = sample("petrol-anchor", 100L, petrolMs = 4.0)
+        memory.ingest(telemetry(), accepted(petrol))
+        val cng = sample("cng-confirmed", 800L, Mp48Fuel.CNG, petrolMs = 4.12)
+        val stabilized = SampleDecision.transition(
+            state = "FUEL_STABLE",
+            reason = "GNV confirmado",
+            frameCount = cng.frameCount,
+            sample = cng,
+            diagnostics = cng.diagnostics,
+            learningEligible = false,
+            fuelConfirmed = Mp48Fuel.CNG.wireName,
+            fuelJustStabilized = true,
+        )
+
+        val status = memory.ingest(
+            telemetry(at = 800L, fuel = Mp48Fuel.CNG),
+            stabilized,
+        )
+        val comparisons = memory.export("test").getJSONArray("comparisons")
+
+        assertEquals(1, comparisons.length())
+        val anchor = comparisons.getJSONObject(0)
+        assertEquals("STRICT_SWITCH_ANCHOR", anchor.getString("origin"))
+        assertEquals(4.0, anchor.getDouble("petrol_target_ms"), 0.000001)
+        assertEquals(4.12, anchor.getDouble("petrol_on_cng_ms"), 0.000001)
+        assertTrue(status.getBoolean("strict_switch_anchor_registered"))
+        assertFalse(status.getBoolean("learning"))
+    }
+
+    @Test
+    fun `strict switch anchor rejects a different operating point`() {
+        val memory = memory()
+        memory.startSession()
+        memory.ingest(telemetry(), accepted(sample("petrol-anchor", 100L)))
+        val cng = sample("cng-far", 800L, Mp48Fuel.CNG, petrolMs = 4.12).copy(rpm = 2_600.0)
+        val stabilized = SampleDecision.transition(
+            state = "FUEL_STABLE",
+            reason = "GNV confirmado",
+            frameCount = cng.frameCount,
+            sample = cng,
+            diagnostics = cng.diagnostics,
+            learningEligible = false,
+            fuelConfirmed = Mp48Fuel.CNG.wireName,
+            fuelJustStabilized = true,
+        )
+
+        memory.ingest(telemetry(at = 800L, fuel = Mp48Fuel.CNG), stabilized)
+
+        assertEquals(0, memory.export("test").getJSONArray("comparisons").length())
+    }
+
+    @Test
     fun `repeated samples and visual reads do not invent visits`() {
         val memory = memory()
         memory.startSession()
