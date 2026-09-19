@@ -25,7 +25,7 @@ class AssistedCalibrationAdvisorTest {
     }
 
     @Test
-    fun `duas ancoras estritas assumem a tendencia global e continuo vira residual`() {
+    fun `ancoras estritas ficam somente na auditoria e nao alteram tendencia continua`() {
         val comparisons = JSONArray()
         repeat(12) { index ->
             comparisons.put(comparison(
@@ -51,16 +51,24 @@ class AssistedCalibrationAdvisorTest {
         }
 
         val result = analyze(comparisons)
+        val method = result.getJSONObject("method")
         val point = pointAt(result, 5.0)
 
+        assertEquals(14, result.getInt("comparisonCount"))
+        assertEquals(12, result.getInt("controlComparisonCount"))
         assertEquals(2, result.getInt("strictSwitchAnchorCount"))
-        assertEquals("STRICT_SWITCH_ANCHORS", result.getJSONObject("method").getString("globalSource"))
-        assertEquals(4.0, point.getDouble("errorPercent"), 0.000001)
-        assertTrue(result.getJSONArray("mapResidualSuggestions").getJSONObject(0).getDouble("residualErrorPercent") > 0.0)
+        assertEquals("CONTINUOUS_REFERENCE_SURFACE", method.getString("globalSource"))
+        assertEquals("VALIDATION_ONLY", method.getString("strictSwitchRole"))
+        assertFalse(method.getBoolean("runtimeFuelSwitchingRequired"))
+        assertEquals(20.0, point.getDouble("errorPercent"), 0.000001)
+
+        val residual = result.getJSONArray("mapResidualSuggestions").getJSONObject(0)
+        assertEquals(0.0, residual.getDouble("residualErrorPercent"), 0.000001)
+        assertFalse(residual.getBoolean("actionable"))
     }
 
     @Test
-    fun `uma unica ancora estrita ainda usa fallback continuo`() {
+    fun `uma unica ancora estrita tambem permanece apenas auditoria`() {
         val comparisons = buildComparisons(
             count = 6,
             targetMs = 5.0,
@@ -79,10 +87,14 @@ class AssistedCalibrationAdvisorTest {
         ).put("origin", "STRICT_SWITCH_ANCHOR"))
 
         val result = analyze(comparisons)
+        val method = result.getJSONObject("method")
 
         assertEquals(1, result.getInt("strictSwitchAnchorCount"))
-        assertEquals("CONTINUOUS_REFERENCE_SURFACE", result.getJSONObject("method").getString("globalSource"))
-        assertTrue(pointAt(result, 5.0).getDouble("errorPercent") > 4.0)
+        assertEquals(6, result.getInt("controlComparisonCount"))
+        assertEquals("CONTINUOUS_REFERENCE_SURFACE", method.getString("globalSource"))
+        assertEquals("VALIDATION_ONLY", method.getString("strictSwitchRole"))
+        assertFalse(method.getBoolean("runtimeFuelSwitchingRequired"))
+        assertEquals(20.0, pointAt(result, 5.0).getDouble("errorPercent"), 0.000001)
     }
 
     @Test
