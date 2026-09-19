@@ -583,3 +583,262 @@ Scientific status: **PROMOTE AS CANDIDATE**.
 Software verification status: **GREEN FOR THE TARGETED SIL/LEARNING SCOPE**.
 
 This closes the previously identified software-verification gate. Future work should continue from this candidate and target only new falsification evidence or the next explicitly authorized integration step, rather than reopening the same algorithm-search loop.
+
+
+## 15. 2026-09-19 adversarial 15-worker tournament — no repeated switching
+
+### Execution topology
+
+A 15-way AgentRed mission was launched with `maxParallel=15` and all 15 workers entered RUNNING simultaneously.
+
+Primary mission:
+- AgentRed #718 — 15 independent workers in parallel.
+- The mission later received a remote `/cancel` while three expensive workers were still running.
+- Completed local step artifacts were preserved.
+
+Repair/recovery:
+- #722 — repaired W10/W11/W15 after two Pandas column/method name collisions and republished them; **SUCCEEDED**.
+- #730 — recovered the three interrupted workers W07/W08/W13; **SUCCEEDED**.
+- #737 — harvested all 15 final worker outputs into one authoritative remote artifact set; **SUCCEEDED**.
+
+Authoritative tournament artifact:
+- issue: https://github.com/viluadmcontas2-dot/AgentRed/issues/737
+- manifest commit: `ed338c190e1eb738cdefc09758771e4af4644c04`
+- `artifacts/tournament-summary.json`
+- SHA-256: `011502cbb963a5c1705daba41d889361a8f52f84aa217f109d140250c7fce178`
+
+The original ProgBase binary in the OMEGAS Drive folder was re-identified:
+- file: `Copy of ProgBase (3).exe`
+- SHA-256: `8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4`
+
+The historical ~15-frame behavior is treated here as a **legacy smoothing/reference baseline**. It is not a requirement for the new OMEGAS algorithm and it is not evidence that fuel must be switched repeatedly.
+
+### Runtime requirement
+
+The tournament intentionally enforced this target architecture:
+
+`learn gasoline reference -> remain on CNG -> continuously compare petrol_ms_on_CNG to gasoline reference -> infer correction`
+
+Repeated PETROL↔CNG switching is **not** an operational requirement.
+
+Natural fuel transitions may be retained as hidden validation truth, but the runtime learner must continue working while remaining on CNG.
+
+### Tournament results
+
+#### W01 — ProgBase-like rolling mean baseline
+
+A causal moving average of the previous 15 petrol frames produced:
+- MAE **15.32%**;
+- within ±4% **50.88%**.
+
+This is not a reconstruction of every internal ProgBase detail. It is the requested legacy **15-frame smoothing baseline** under a causal prediction test.
+
+**Status: REJECT_AS_CORE_LEGACY_BASELINE.**
+
+#### W02 — EMA
+
+Best tested EMA (`alpha=0.8`):
+- MAE **4.06%**.
+
+Substantially better than the 15-frame mean, but weaker than the multiplicative previous-frame mechanism.
+
+**Status: REJECT_AS_CORE / keep only as a possible display/smoothing primitive.**
+
+#### W03 — median / trimmed windows
+
+Robust windows did not beat the fast multiplicative mechanism.
+
+**Status: REJECT.**
+
+#### W04 — adaptive window
+
+Short transient / longer stable moving windows:
+- MAE **10.38%**.
+
+**Status: REJECT.**
+
+#### W05 — causal multiplicative last-ratio
+
+Held-out session gasoline-reference test:
+- aggregate MAE **3.725%**.
+
+This is the modern core analogous to the earlier winning experiments:
+the previous observed proportional gain updates the next prediction.
+
+**Status: PROMOTE_CORE.**
+
+Important: this does **not** mean fuel switching each frame. The gain is temporal and can be updated continuously from the signals available while operating on CNG.
+
+#### W06 — fast + slow gain
+
+Best tested configuration:
+- fast alpha = 1.0;
+- slow alpha = 0.005;
+- MAE **3.725%**.
+
+At fast alpha 1.0 the formulation collapses to essentially the same behavior as last-ratio, so the additional state adds no demonstrated benefit.
+
+**Status: REJECT_EXTRA_COMPLEXITY_NO_GAIN.**
+
+#### W07 — Kalman gain
+
+Best:
+- process q = 0.05;
+- MAE **3.7248%**.
+
+Numerically negligible improvement versus last-ratio and more complexity.
+
+**Status: REJECT_EXTRA_COMPLEXITY_NEGLIGIBLE_GAIN.**
+
+#### W08 — Gaussian local gasoline reference
+
+Best tested bandwidth:
+- 250 RPM / 0.03 bar;
+- MAE **6.67%**.
+
+**Status: REJECT_AS_PRIMARY.**
+
+#### W09 — compact MAP/RPM formula
+
+Polynomial family:
+- degree 1: 9.16%;
+- degree 2: 7.75%;
+- degree 3: **7.33%**;
+- degree 4: 7.37%.
+
+A simple global formula is useful as a prior/initializer at most. It is not accurate enough to replace learned gasoline reference evidence.
+
+**Status: REJECT_AS_PRIMARY_FORMULA.**
+
+#### W10 — residual coordinate competition
+
+Within-cell residual MAD:
+- MAP: **10.17%**;
+- petrol_ms: **8.25%**;
+- RPM×MAP: **9.32%**;
+- RPM×petrol_ms: **6.95%**.
+
+RPM×petrol_ms is the least-bad residual coordinate, but 6.95% spread is still too high to justify a second dense GNV map as the core learner.
+
+**Status: KEEP_AS_LAYER_RPM_X_PETROL.**
+
+#### W11 — pressure / temperature / pulse-context residual layer
+
+Held-out residual:
+- base MAE **9.69%**;
+- with pressure/temp/petrol_ms/RPM/MAP covariates: **7.43%**.
+
+Pressure and temperature contain real residual information but do not solve calibration alone.
+
+**Status: KEEP_AS_LAYER_PRESSURE_TEMP.**
+
+#### W12 — Monte Carlo frame-loss/noise adversary
+
+100 randomized drop/noise trials:
+
+| Method | mean MAE | P90 run MAE | worst run MAE |
+|---|---:|---:|---:|
+| legacy SMA-15 | 12.87% | 27.14% | 31.27% |
+| EMA | 6.00% | 12.50% | 13.96% |
+| previous-frame / last-ratio | **3.16%** | **6.31%** | **7.36%** |
+
+**Status: PROMOTE_ROBUSTNESS_EVIDENCE_FOR_LAST_RATIO.**
+
+#### W13 — transient guard adversary
+
+Best tested:
+- `abs(dMAP) > 0.05 bar` or `abs(dRPM) > 200 RPM`;
+- transient authority = 0.5;
+- MAE **3.6915%** versus ~3.7255% unguarded in this harness.
+
+Freezing completely on transients was worse. Half-authority repeatedly survives as the more useful direction.
+
+**Status: PROMOTE_TRANSIENT_GUARD.**
+
+#### W14 — active K probe / plant identification simulation
+
+Simulation only — **not vehicle evidence**.
+
+Mean steps to enter the simulated acceptable region:
+- fixed 35% authority: **2.33**;
+- full bounded/clipped correction: **1.66**;
+- one probe then identified gain: **2.31**.
+
+The tested synthetic probe did not beat the bounded full correction policy.
+
+**Status: INCONCLUSIVE_SIMULATION_ONLY.**
+
+This does not reject real plant identification. It means simulated sensitivity alone is insufficient authority; the next useful evidence is actual confirmed `before K -> after K -> observed error response` from real historical/manual interventions.
+
+#### W15 — naive early K-field learning
+
+Attempt: learn a global Curve-K-like correction plus sparse RPM×petrol residual from only the early fraction of each continuous CNG session, then predict the remainder.
+
+Results remained poor:
+- 1% exposure: MAE **12.03%**;
+- 10%: **12.00%**;
+- 20%: **10.76%**;
+- 50%: **10.50%**.
+
+**Status: REJECT_NAIVE_EARLY_DENSE_K_MAP.**
+
+Therefore the fast solution is not “collect a little GNV and immediately interpolate a second map”.
+
+### Scientific decision after the tournament
+
+The surviving architecture is:
+
+```text
+LEARNED GASOLINE REFERENCE
+        |
+        v
+CONTINUOUS CNG petrol_ms ERROR
+        |
+        v
+MULTIPLICATIVE LAST-RATIO FAST CORE
+        |
+        v
+TRANSIENT GUARD
+  dMAP ~0.05 bar
+  dRPM ~200 rpm
+  half authority
+        |
+        +---- pressure / temperature residual compensation
+        |
+        +---- sparse RPM x petrol_ms residual memory
+        |
+        v
+GLOBAL CURVE-K CORRECTION FIRST
+        |
+        v
+MAP-K ONLY FOR RESIDUAL STRUCTURE
+```
+
+No repeated switching is required.
+
+### What is still missing for genuinely fast K calibration
+
+The tournament falsifies the idea that generic smoothing, Gaussian interpolation, a simple MAP/RPM formula, Kalman filtering, or an early dense GNV map is enough.
+
+The unresolved quantity is the **plant sensitivity**:
+
+`g = change in observed gasoline-equivalence error / actual confirmed change in K`
+
+That quantity determines whether a measured 8% equivalence error should produce, for example, a 3%, 5% or 8% K movement at that operating point.
+
+The repository already contains the correct scientific primitives:
+- `PlantIdentificationProtocol`;
+- `PredictorSensitivityCalibration`;
+- confirmed write/readback epochs;
+- manual AutoMatch/AutoCal before/after evidence.
+
+Therefore the next falsification target is **real historical K interventions**, not another prediction algorithm:
+
+1. identify confirmed K/Curve changes with ACK + readback;
+2. bracket comparable pre/post operating evidence;
+3. estimate local/global `d(error)/dK`;
+4. test cross-session stability and sign;
+5. determine whether one or a few human-confirmed bounded interventions can collapse time-to-calibration versus fixed 35% authority;
+6. only then promote a “suggest a deliberate small K change to learn faster” workflow.
+
+Until that real sensitivity is measured, active probing remains experimental and no automatic writer is authorized.
