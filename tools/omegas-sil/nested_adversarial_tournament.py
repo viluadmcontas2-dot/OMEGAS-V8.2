@@ -21,6 +21,8 @@ CACHE_DEFAULT = r"C:\Users\hugov\AppData\Local\AgentRed\cache\omegas-sil-v2\cano
 COLS=["rpm","gas_ms","petrol_ms","fuel","gas_pressure_raw","gas_temp_raw","map_bar","session","sequence",
       "recorded_at_ms","dt_ms","dmap","drpm","dpetrol_ms","stale_conflict"]
 
+_CTX = {}
+
 TEAMS = {
  "t01":"legacy_temporal_baselines",
  "t02":"exponential_temporal_filters",
@@ -151,27 +153,27 @@ def temporal_predict(g,kind,param):
 def t01(d,i):
     windows=[2,3,5,8,10,15,20,30,45,60];n=windows[i]
     es=[]
-    for _,g in temporal_series(d).groupby("session"):
+    for g in _CTX["temporal_sessions"]:
         g=sample_even(g,5000);m=metric_yhat(g.petrol_ms,temporal_predict(g,"sma",n));es.append(m["mae_pct"])
     return {"variant":f"SMA_{n}","legacy":True,"mae_pct":float(np.mean(es)),"note":"historical baseline to beat"}
 
 def t02(d,i):
     alphas=[.03,.05,.08,.12,.18,.25,.35,.5,.7,.9];a=alphas[i];es=[]
-    for _,g in temporal_series(d).groupby("session"):
+    for g in _CTX["temporal_sessions"]:
         g=sample_even(g,5000);es.append(metric_yhat(g.petrol_ms,temporal_predict(g,"ema",a))["mae_pct"])
     return {"variant":f"EMA_{a}","mae_pct":float(np.mean(es))}
 
 def t03(d,i):
     cfg=[("median",3),("median",5),("median",9),("median",15),("median",25),
          ("trim",5),("trim",9),("trim",15),("trim",25),("trim",35)][i];es=[]
-    for _,g in temporal_series(d).groupby("session"):
+    for g in _CTX["temporal_sessions"]:
         g=sample_even(g,5000);es.append(metric_yhat(g.petrol_ms,temporal_predict(g,*cfg))["mae_pct"])
     return {"variant":f"{cfg[0]}_{cfg[1]}","mae_pct":float(np.mean(es))}
 
 def gain_holdout(d,mode,cfg):
     fold=[]
-    for s,tr,te in petrol_holdouts(d,4000):
-        base=gasoline_ref(tr,te);y=te.petrol_ms.to_numpy(float);pred=[];gf=1.;gs=1.;var=.01
+    for s,te,base in _CTX["gain_folds"]:
+        y=te.petrol_ms.to_numpy(float);pred=[];gf=1.;gs=1.;var=.01
         for j,r in enumerate(te.itertuples()):
             pred.append(base[j]*gf*gs)
             if not np.isfinite(base[j]) or base[j]<=.7:continue
@@ -241,7 +243,7 @@ def residual_field_model(train,test,coord,bin_scale):
     return np.array([float(tab.get((int(round(r.rpm/bin_scale[0])),int(round(r.map_bar/bin_scale[1]))),glob)) for r in test.itertuples()])
 
 def t09(d,i):
-    x=continuous_cng_error(d,5000)
+    x=_CTX["cng_error"]
     cfg=[("petrol",(.25,)),("petrol",(.5,)),("petrol",(1.,)),("map",(.02,)),("map",(.04,)),
          ("rpm_petrol",(150,.25)),("rpm_petrol",(300,.5)),("rpm_petrol",(500,1.)),("rpm_map",(200,.02)),("rpm_map",(400,.04))][i]
     errs=[]
@@ -252,7 +254,7 @@ def t09(d,i):
     return {"variant":f"{cfg[0]}_{cfg[1]}","metrics":metric_from_percent_errors(errs)}
 
 def t10(d,i):
-    x=continuous_cng_error(d,4500)
+    x=_CTX["cng_error"]
     feature_sets=[
       ["petrol_ms"],["map_bar"],["rpm"],["gas_pressure_raw"],["gas_temp_raw"],
       ["gas_pressure_raw","gas_temp_raw"],["petrol_ms","gas_pressure_raw"],["map_bar","gas_pressure_raw"],
@@ -283,7 +285,7 @@ def t11(d,i):
             "p90_pct":float(np.mean([z["p90_pct"] for z in fold])),"within4_pct":float(np.mean([z["within4_pct"] for z in fold]))}
 
 def t12(d,i):
-    rng=np.random.default_rng(1200+i);g=temporal_series(d);sessions=[sample_even(x,3500) for _,x in g.groupby("session") if len(x)>100]
+    rng=np.random.default_rng(1200+i);sessions=_CTX["mc_sessions"]
     drop=[0,.03,.05,.08,.10,.12,.15,.18,.22,.28][i];noise=[0,.001,.002,.003,.004,.005,.006,.008,.01,.015][i]
     methods={"sma15":[],"ema35":[],"last":[],"median5":[]}
     for _ in range(40):
@@ -301,7 +303,7 @@ def t12(d,i):
     return {"variant":f"drop{drop}_noise{noise}","methods":{k:{"mean_mae":float(np.mean(v)),"p90_mae":float(np.quantile(v,.9))} for k,v in methods.items()}}
 
 def t13(d,i):
-    x=continuous_cng_error(d,7000);fracs=[.005,.01,.02,.03,.05,.08,.10,.15,.20,.30];frac=fracs[i];errs=[];frames=[];sessions=0
+    x=_CTX["cng_error"];fracs=[.005,.01,.02,.03,.05,.08,.10,.15,.20,.30];frac=fracs[i];errs=[];frames=[];sessions=0
     for s,g in x.groupby("session"):
         g=g.sort_values("sequence").reset_index(drop=True);cut=max(12,int(len(g)*frac))
         if len(g)<=cut+50:continue
@@ -329,7 +331,7 @@ def t14(d,i):
             "failure_pct":fails/len(steps)*100,"mean_peak_error":float(np.mean(peaks))}
 
 def t15(d,i):
-    x=continuous_cng_error(d,7000);cfgs=[(.02,150,.25),(.03,200,.25),(.05,250,.25),(.08,300,.5),(.10,300,.5),
+    x=_CTX["cng_error"];cfgs=[(.02,150,.25),(.03,200,.25),(.05,250,.25),(.08,300,.5),(.10,300,.5),
        (.10,400,.5),(.15,300,.5),(.15,500,1.),(.20,400,.5),(.25,500,1.)]
     frac,rpb,pb=cfgs[i];errs=[];frames=[]
     for s,g in x.groupby("session"):
@@ -366,9 +368,23 @@ def worker(team,idx,d):
     except Exception as e:
         return {"worker":name,"team":team,"ok":False,"error":repr(e),"score":999.}
 
+def prepare_context(team,d):
+    _CTX.clear()
+    if team in {"t01","t02","t03"}:
+        _CTX["temporal_sessions"]=[sample_even(g,5000) for _,g in temporal_series(d).groupby("session")]
+    if team in {"t04","t05","t06","t11"}:
+        folds=[]
+        for s,tr,te in petrol_holdouts(d,4000):
+            folds.append((s,te,gasoline_ref(tr,te)))
+        _CTX["gain_folds"]=folds
+    if team=="t12":
+        _CTX["mc_sessions"]=[sample_even(x,3500) for _,x in temporal_series(d).groupby("session") if len(x)>100]
+    if team in {"t09","t10","t13","t15"}:
+        _CTX["cng_error"]=continuous_cng_error(d,7000)
+
 def main():
     ap=argparse.ArgumentParser();ap.add_argument("--team",choices=sorted(TEAMS),required=True);ap.add_argument("--cache",default=CACHE_DEFAULT);ap.add_argument("--out",default="artifacts")
-    a=ap.parse_args();d=load_cache(a.cache)
+    a=ap.parse_args();d=load_cache(a.cache);prepare_context(a.team,d)
     with cf.ThreadPoolExecutor(max_workers=10,thread_name_prefix=f"{a.team}-micro") as ex:
         fut=[ex.submit(worker,a.team,i,d) for i in range(10)]
         results=[f.result() for f in fut]
