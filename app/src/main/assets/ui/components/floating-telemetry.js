@@ -78,21 +78,22 @@
       if (!this.node) return;
       const status = state.status || {};
       const telemetryRoot = state.telemetry || {};
+      const telemetryValid = telemetryRoot.valid === true;
       const live = telemetryRoot.live || telemetryRoot.data || telemetryRoot;
       const interpolation = telemetryRoot.interpolation || {};
       const interpolationValid = interpolation.valid === true;
       const cell = interpolation.cell || {};
       const decision = state.learningDecision || {};
-      const rpm = finite(live.rpm ?? status.rpm);
-      const petrol = finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs);
-      const gas = finite(live.gas_ms_diagnostic ?? live.gasMsDiagnostic ?? live.gas_ms ?? live.gasMs ?? status.gasMsDiagnostic);
+      const rpm = telemetryValid ? finite(live.rpm ?? status.rpm) : null;
+      const petrol = telemetryValid ? finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs) : null;
+      const gas = telemetryValid ? finite(live.gas_ms_diagnostic ?? live.gasMsDiagnostic ?? live.gas_ms ?? live.gasMs ?? status.gasMsDiagnostic) : null;
       const age = finite(telemetryRoot.ageMs ?? telemetryRoot.telemetryAgeMs ?? status.directTelemetryAgeMs);
       const row = interpolationValid ? finite(cell.row ?? decision.cell_row) : null;
       const column = interpolationValid ? finite(cell.column ?? decision.cell_column) : null;
       const cellLabel = row !== null && column !== null && row >= 0 && column >= 0 ? `R${Math.round(row) + 1} · C${Math.round(column) + 1}` : '—';
       const ecuOnline = status.usbConnected === true && status.engineReady !== false;
 
-      this.text('fuel', fuelLabel(live.fuel ?? live.state ?? status.fuelState));
+      this.text('fuel', telemetryValid ? fuelLabel(live.fuel ?? live.state ?? status.fuelState) : '—');
       this.text('rpm', rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR'));
       this.text('petrol', petrol === null ? '—' : `${petrol.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms`);
       this.text('gas', gas === null ? '—' : `${gas.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms`);
