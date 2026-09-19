@@ -842,3 +842,70 @@ Therefore the next falsification target is **real historical K interventions**, 
 6. only then promote a “suggest a deliberate small K change to learn faster” workflow.
 
 Until that real sensitivity is measured, active probing remains experimental and no automatic writer is authorized.
+
+
+## 16. Final non-switching SIL gate — 2026-09-19
+
+The adversarial tournament result was integrated into the real runtime at code SHA:
+
+`3bda8b5296c1c6de4659aaec45a64b297feae01b`
+
+Implemented behavior:
+- a raw-frame `FastCngObserver` runs before scientific coalescence;
+- it uses only prior CNG observations, bounded to the latest **300 frames**;
+- local neighborhood: **±80 RPM / ±0.01 bar**;
+- local estimate: robust median of previous errors only;
+- gasoline truth still comes from the learned petrol reference surface;
+- strict PETROL→CNG switch anchors remain observable but are now **VALIDATION_ONLY**;
+- runtime fuel switching is not required;
+- Curva K remains the global correction lane;
+- Mapa K remains residual/local correction only;
+- automatic ECU writing remains disabled and human confirmation remains required.
+
+### Gate repair
+
+AgentRed #791 proved that both targeted unit tests and SIL Gradle tasks could return `BUILD SUCCESSFUL`, but its SIL task was restored `FROM-CACHE`. Because the functional test writes side-effect artifacts, a cached test result did not recreate `functional-calibration.json`, `assisted-calibration.json`, or `learning.json` in that workspace. The job therefore failed correctly at the artifact gate. No OMEGAS code change was required.
+
+The corrected gate was AgentRed **#813** with the exact same code SHA and `--rerun-tasks` on the SIL task.
+
+Remote receipt:
+- issue: https://github.com/viluadmcontas2-dot/AgentRed/issues/813
+- status: **succeeded**;
+- exitCode: **0**;
+- verification: **passed**;
+- stderr: **0 bytes**;
+- artifact manifest: https://github.com/viluadmcontas2-dot/AgentRed/blob/e7e39e158230fecd1760c694ae25ea74e3bb2dc9/manifest.json
+- `functional-calibration.json` SHA-256: `f4ab527a0b16e7d881bf5958197daae7ca863aadbac49367e73e0edd9878650d`;
+- `learning.json` SHA-256: `d91c20c92533343cbf179dd511fe1c8f3aedf9450e3fcb3880619dc9d05a46b0`;
+- `assisted-calibration.json` SHA-256: `83b249ae662856b109673325dc27d7683ced049b69b47e910b4e6a3ed029af2e`.
+
+### Full LOGNOVO replay result
+
+Real chain:
+
+`20,450 recorded MP48 frames -> RecordedMp48Transport -> ResponseDrivenEcuEngine -> SignalLearningStore -> FastCngObserver -> AssistedCalibrationAdvisor -> AdvisorSuggestionAdapterV7`
+
+Observed result:
+- input frames: **20,450**;
+- callbacks: **20,450**;
+- consumed frames: **20,450**;
+- fast CNG observations: **5,209**;
+- fast local predictions: **5,124**;
+- fast prediction coverage: **98.3682%**;
+- first fast estimate sequence: **2,643**;
+- Advisor fresh: **true**;
+- Advisor revision / published revision: **7 / 7**;
+- control comparisons: **8**;
+- global source: **CONTINUOUS_REFERENCE_SURFACE**;
+- strict switch role: **VALIDATION_ONLY**;
+- runtime fuel switching required: **false**;
+- Curve-K suggestions: **1**, covering **2 concrete changes**;
+- Map-K suggestions: **4**, covering **4 concrete changes**;
+- automatic calibration: **false**;
+- human confirmation required: **true**.
+
+The replay therefore demonstrates that the software can stay on CNG, use the already-learned gasoline reference continuously, generate fast local estimates on nearly all eligible CNG observations, keep switch events non-authoritative, and still produce concrete manual Curve-K/Map-K calibration suggestions.
+
+**Final software/SIL status: SUCCESS.**
+
+The remaining gate is physical/human validation on the real vehicle/ECU. No APK generation, Emulator validation, automatic writer authorization, or physical-success claim is implied by this SIL result.
