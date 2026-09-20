@@ -41,7 +41,7 @@
         button.innerHTML = '<i>03</i><span>Predictor</span>';
         const learning = nav.querySelector('[data-route="learning"]');
         if (learning?.nextSibling) nav.insertBefore(button, learning.nextSibling); else nav.appendChild(button);
-        const order = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools'];
+        const order = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools'];
         order.forEach((route, index) => {
           const node = nav.querySelector(`[data-route="${route}"] i`);
           if (node) node.textContent = String(index + 1).padStart(2, '0');

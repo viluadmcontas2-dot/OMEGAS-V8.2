@@ -33,18 +33,19 @@ const snapshot = {
   ],
 };
 
-const human = model.humanState(snapshot, { state: 'READY' });
-assert.equal(human.title, 'AutoCal ativo');
+const human = model.humanState(snapshot, { state: 'READY', autoCalEnabled: 1, latestSnapshot: snapshot });
+assert.equal(human.title, 'AutoCal adquirindo');
 assert.equal(human.petrolZones, 4);
 assert.equal(human.gasZones, 3);
 assert.match(human.progress, /Gasolina 4\/4 zonas/);
 assert.match(human.progress, /GNV 3\/4 zonas/);
 assert.match(human.autoMatch, /3 AutoMatch executados/);
-assert.match(human.nextAction, /Continue dirigindo normalmente/);
+assert.match(human.nextAction, /Aquisição habilitada/);
 
-const paused = model.humanState({ ...snapshot, autoCalEnabled: 0 }, { state: 'PAUSED' });
+const pausedNativeSnapshot = { ...snapshot, autoCalEnabled: 0 };
+const paused = model.humanState(snapshot, { state: 'PAUSED', autoCalEnabled: 0, latestSnapshot: pausedNativeSnapshot });
 assert.equal(paused.title, 'AutoCal pausado');
-assert.match(paused.nextAction, /Retome a coleta/);
+assert.match(paused.nextAction, /Inicie a aquisição/);
 
 const refs = model.referencePoints(snapshot);
 assert.equal(refs.length, 30);
@@ -64,7 +65,7 @@ assert.equal(model.toggleAction(1), 'DISABLE_AUTO_CAL');
 assert.equal(model.toggleAction(0), 'ENABLE_AUTO_CAL');
 assert.equal(model.toggleAction(null), null, 'estado nativo ausente não pode virar comando de retomar coleta');
 assert.equal(model.toggleAction(undefined), null, 'estado nativo indefinido não pode virar comando de retomar coleta');
-const disconnected = model.humanState({ available: false }, { state: 'DISCONNECTED' });
+const disconnected = model.humanState({ available: false }, { state: 'DISCONNECTED', latestSnapshot: { available: false } });
 assert.equal(disconnected.enabled, null, 'DISCONNECTED deve preservar estado AutoCal desconhecido');
 
 let view = model.updateChartView(null, 'zoom-in');
@@ -107,3 +108,30 @@ assert.match(css, /\.autocal-human-copy strong\s*\{[^}]*font-size:\s*13px/s, 'pr
 
 
 console.log('AUTOCAL_DIDACTIC_COCKPIT=PASS');
+
+assert.equal(source.includes('>Ajustar</button>'), false, 'fit visual não pode parecer ajuste de ECU');
+assert.equal(source.includes('>Ver tudo</button>'), true, 'fit visual deve dizer Ver tudo');
+assert.equal(source.includes('autocal-live-point'), true, 'cursor AGORA precisa de camada própria');
+
+const staleManualWhilePaused = model.humanState(
+  { ...snapshot, autoCalEnabled: 1 },
+  { state: 'PAUSED', autoCalEnabled: 0, latestSnapshot: pausedNativeSnapshot },
+);
+assert.equal(staleManualWhilePaused.enabled, 0, 'snapshot manual antigo não pode reativar a aquisição');
+assert.equal(staleManualWhilePaused.title, 'AutoCal pausado');
+assert.equal(model.toggleAction(staleManualWhilePaused.enabled), 'ENABLE_AUTO_CAL');
+
+const nativeActiveWhileManualStale = model.humanState(
+  { ...snapshot, autoCalEnabled: 0 },
+  { state: 'READY', autoCalEnabled: 1, latestSnapshot: snapshot },
+);
+assert.equal(nativeActiveWhileManualStale.enabled, 1, 'monitor nativo deve vencer snapshot manual antigo');
+assert.equal(model.toggleAction(nativeActiveWhileManualStale.enabled), 'DISABLE_AUTO_CAL');
+
+const cancelling = model.readNarrative({ state: 'CANCEL_REQUESTED', busy: true, message: 'Cancelamento solicitado', progress: 40 });
+assert.equal(cancelling.busy, true);
+assert.equal(cancelling.cancelling, true);
+assert.equal(cancelling.title, 'Cancelando leitura');
+
+const invalidLive = model.livePoint({ valid: false, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44 } });
+assert.equal(invalidLive, null, 'telemetria inválida não pode produzir cursor AGORA');

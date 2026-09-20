@@ -41,14 +41,15 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('styles-calibration-obd.css', self.html)
         self.assertIn("refinementStyle.href = 'styles-refine.css'", self.app)
 
-    def test_seven_human_destinations_are_first_class(self):
+    def test_eight_static_human_destinations_include_autocal_above_obd(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools']
+        expected = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools']", self.router)
-        for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'OBD', 'Sugestões', 'Ferramentas'):
+        self.assertIn("const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools']", self.router)
+        self.assertLess(routes.index('autocal'), routes.index('obd'))
+        for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'AutoCal', 'OBD', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):

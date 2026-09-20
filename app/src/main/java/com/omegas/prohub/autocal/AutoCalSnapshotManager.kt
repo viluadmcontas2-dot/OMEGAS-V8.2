@@ -55,14 +55,14 @@ class AutoCalSnapshotManager(
     fun startRead(
         fields: List<AutoCalProtocol.Field> = AutoCalProtocol.READ_ONLY_FIELDS,
     ): JSONObject {
-        if (fields.isEmpty()) return failure("Nenhum campo AutoCal selecionado")
-        if (!isConnected()) return failure("USB desconectado")
-        if (otherCalibrationBusy()) return failure("Outra operação de calibração está em andamento")
+        if (fields.isEmpty()) return rejectStart("FAILED", "Nenhum campo AutoCal selecionado")
+        if (!isConnected()) return rejectStart("DISCONNECTED", "USB desconectado")
+        if (otherCalibrationBusy()) return rejectStart("CALIBRATION_CONFLICT", "Outra operação de calibração está em andamento")
         if (!busy.compareAndSet(false, true)) return failure("Leitura AutoCal já está em andamento")
         val expectedSessionId = currentSessionId()
         if (expectedSessionId <= 0L) {
             busy.set(false)
-            return failure("Sessão USB inválida")
+            return rejectStart("FAILED", "Sessão USB inválida")
         }
         val ticket = generation.incrementAndGet()
         update(
@@ -156,6 +156,24 @@ class AutoCalSnapshotManager(
             )
             ensureCurrent(ticket, expectedSessionId)
             latestSnapshot = snapshot
+            if (snapshot.validFieldCount == 0) {
+                val allTimedOut = observations.isNotEmpty() && observations.all {
+                    it.error?.contains("timeout", ignoreCase = true) == true
+                }
+                terminalState = if (allTimedOut) "TIMEOUT" else "FAILED"
+                terminalMessage = if (allTimedOut) {
+                    "A ECU não respondeu no prazo em nenhum campo AutoCal"
+                } else {
+                    "Nenhum campo AutoCal foi confirmado pela ECU"
+                }
+                update(
+                    terminalState,
+                    terminalMessage,
+                    100,
+                    snapshot.toJson().put("sessionId", expectedSessionId),
+                )
+                return
+            }
             // A leitura nativa entra no aprendizado apenas como contexto ECU_NATIVE.
             // Esse callback não possui acesso a nenhum writer.
             onSnapshotReady(snapshot.toJson())
@@ -222,7 +240,14 @@ class AutoCalSnapshotManager(
         onStateChanged()
     }
 
-    private fun failure(message: String): JSONObject = JSONObject()
+    private fun rejectStart(state: String, message: String): JSONObject {
+        update(state, message, 0)
+        return statusJson()
+            .put("ok", false)
+            .put("error", message)
+    }
+
+    private fun failure(message: String): JSONObject = statusJson()
         .put("ok", false)
         .put("error", message)
         .put("automatic", false)

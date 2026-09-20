@@ -64,10 +64,11 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
-            // Nunca iniciar uma aquisição pesada só porque a porta acabou de abrir.
-            // Primeiro a telemetria precisa provar que a sessão está estável.
-            snapshotRequested = false
-            snapshotReason = ""
+            // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
+            // de qualquer leitura pesada. Assim o primeiro probe estável sempre
+            // produz um snapshot completo e a UI não fica presa sem thresholds.
+            snapshotRequested = newSessionId > 0L
+            snapshotReason = if (newSessionId > 0L) "SESSION_BOOTSTRAP" else ""
             latestSnapshot = JSONObject().put("available", false).put("sessionId", newSessionId)
             state = baseState("WAITING_TELEMETRY_SETTLE", "Aguardando telemetria estabilizar antes do AutoCal")
                 .put("sessionId", newSessionId)

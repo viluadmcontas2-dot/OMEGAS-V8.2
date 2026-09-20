@@ -726,3 +726,141 @@
   outline: 3px solid rgba(120,183,255,.7);
   outline-offset: 2px;
 }
+
+
+.autocal-route-screen {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.autocal-route-panel {
+  min-width: 0;
+}
+
+.autocal-now-card,
+.autocal-read-card {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,.022);
+}
+
+.autocal-now-card {
+  padding: 10px 12px;
+}
+
+.autocal-now-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.autocal-now-values > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.035);
+}
+
+.autocal-now-values small,
+.autocal-read-card small {
+  display: block;
+  color: #8291a4;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.autocal-now-values b {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.autocal-now-card > p {
+  margin: 7px 0 0;
+  color: #aebbc9;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.autocal-read-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, .8fr);
+  gap: 14px;
+  align-items: center;
+  padding: 9px 12px;
+}
+
+.autocal-read-card b,
+.autocal-read-card span {
+  display: block;
+}
+
+.autocal-read-card b {
+  margin-top: 2px;
+  font-size: 14px;
+}
+
+.autocal-read-card span,
+.autocal-read-card p {
+  color: #9dacbc;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.autocal-read-card p {
+  margin: 0;
+  text-align: right;
+}
+
+.autocal-live-layer {
+  pointer-events: none;
+}
+
+.autocal-live-halo {
+  fill: rgba(255,255,255,.08);
+  stroke: rgba(255,255,255,.55);
+  stroke-width: 2;
+}
+
+.autocal-live-point {
+  fill: #ffffff;
+  stroke: #071018;
+  stroke-width: 2;
+}
+
+.autocal-live-label {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  paint-order: stroke;
+  stroke: #071018;
+  stroke-width: 4px;
+}
+
+.autocal-chart-legend .live::before {
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.12);
+}
+
+.source-status[data-level="working"],
+.autocal-read-card[data-read-level="working"] {
+  border-color: rgba(120,183,255,.4);
+}
+
+.source-status[data-level="error"],
+.autocal-read-card[data-read-level="error"] {
+  border-color: rgba(255,119,119,.5);
+}
+
+@container (max-width: 760px) {
+  .autocal-read-card {
+    grid-template-columns: 1fr;
+  }
+  .autocal-read-card p {
+    text-align: left;
+  }
+}

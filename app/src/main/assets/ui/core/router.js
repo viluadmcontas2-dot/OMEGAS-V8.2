@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools'];
+  const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
 
   function loadOptionalScript(src, onload) {

@@ -21,10 +21,11 @@
         <button type="button" data-route="learning"><i>02</i><span>Aprender</span></button>
         <button type="button" data-route="map"><i>03</i><span>Ajuste local</span></button>
         <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
-        <button type="button" data-route="obd"><i>05</i><span>OBD</span></button>
+        <button type="button" data-route="autocal"><i>05</i><span>AutoCal</span></button>
+        <button type="button" data-route="obd"><i>06</i><span>OBD</span></button>
         <div class="nav-divider"></div>
-        <button type="button" data-route="suggestions"><i>06</i><span>Sugestões</span><em id="suggestionCount">0</em></button>
-        <button type="button" data-route="tools"><i>07</i><span>Ferramentas</span></button>
+        <button type="button" data-route="suggestions"><i>07</i><span>Sugestões</span><em id="suggestionCount">0</em></button>
+        <button type="button" data-route="tools"><i>08</i><span>Ferramentas</span></button>
       </nav>
 
       <div class="rail-status">
@@ -182,6 +183,14 @@
           <div class="operation-layer review-layer"><div class="operation-card"><header><div><small>REVISÃO</small><h3 id="curveReviewCount">Pontos preparados</h3></div><button id="curveReviewBack" type="button" class="icon-close">×</button></header><div id="curveReviewList" class="review-list"></div><div class="write-contract"><b>A próxima ação escreve na ECU.</b><span>Backup, ACK e readback permanecem sob autoridade do Kotlin.</span></div><div class="operation-actions"><button id="curveWriteButton" type="button" class="danger-primary">Gravar pontos na ECU</button></div></div></div>
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Backup</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
+        </section>
+
+        <section class="screen autocal-route-screen" data-screen="autocal" aria-labelledby="autocalRouteTitle">
+          <div class="page-intro">
+            <div><small>AUTO-CAL</small><h2 id="autocalRouteTitle">Aquisição nativa da ECU</h2></div>
+            <p>Leitura, aquisição e diagnóstico AutoCal separados com feedback imediato.</p>
+          </div>
+          <div id="autocalScreenHost" class="autocal-cockpit-view" aria-live="polite"></div>
         </section>
 
         <section class="screen obd-screen" data-screen="obd" aria-labelledby="obdTitle">

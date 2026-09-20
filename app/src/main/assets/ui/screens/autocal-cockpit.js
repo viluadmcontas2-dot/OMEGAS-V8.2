@@ -43,27 +43,71 @@
     return vector(snapshot, key).slice(0, 4).filter(value => value > 0).length;
   }
 
+  function scalarValue(snapshot, key) {
+    const item = field(snapshot, key);
+    const values = Array.isArray(item?.rawValues) ? item.rawValues : [];
+    return values.length === 1 ? finite(values[0]) : null;
+  }
+
   const AutoCalUxModel = {
     humanState(snapshot = {}, state = {}) {
-      const enabled = finite(snapshot.autoCalEnabled ?? state.autoCalEnabled);
-      const petrolZones = nativeZoneCount(snapshot, 'ACQUIRED_ZONES_PETROL');
-      const gasZones = nativeZoneCount(snapshot, 'ACQUIRED_ZONES_GAS');
-      const nativeStatus = snapshot.nativeStatus || state.latestSnapshot?.nativeStatus || {};
-      const autoMatchCount = finite(nativeStatus.autoMatchCount ?? state.autoMatchCount);
-      const maxAutoMatch = finite(snapshot.maxAutomatch ?? state.maxAutomatch);
-      const title = enabled === 1 ? 'AutoCal ativo'
-        : enabled === 0 ? 'AutoCal pausado'
-        : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
+      const nativeSnapshot = state.latestSnapshot?.fields ? state.latestSnapshot : {};
+      const evidenceSnapshot = nativeSnapshot.fields ? nativeSnapshot : snapshot;
+      const enabled = finite(state.autoCalEnabled ?? nativeSnapshot.autoCalEnabled ?? scalarValue(nativeSnapshot, 'AUTO_CAL_ENABLE'));
+      const petrolZones = nativeZoneCount(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL');
+      const gasZones = nativeZoneCount(evidenceSnapshot, 'ACQUIRED_ZONES_GAS');
+      const nativeStatus = nativeSnapshot.nativeStatus || {};
+      const autoMatchCount = finite(state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
+      const maxAutoMatch = finite(state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
+      const acquisitionState = String(state.state || '').toUpperCase();
+      const title = acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED'
+        ? 'AutoCal com erro de leitura'
+        : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
+          ? 'Conectando à aquisição'
+          : enabled === 1 ? 'AutoCal adquirindo'
+          : enabled === 0 ? 'AutoCal pausado'
+          : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
       const progress = 'Gasolina ' + petrolZones + '/4 zonas · GNV ' + gasZones + '/4 zonas';
       const autoMatch = autoMatchCount === null
         ? 'AutoMatch ainda sem contador válido'
         : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
           (maxAutoMatch === null ? '' : ' · limite configurado ' + Math.round(maxAutoMatch));
-      let nextAction = 'Atualize a leitura para receber o estado nativo da ECU.';
-      if (enabled === 0) nextAction = 'Retome a coleta quando quiser continuar o aprendizado nativo.';
-      else if (enabled === 1 && gasZones < 4) nextAction = 'Continue dirigindo normalmente para a ECU visitar as zonas que ainda faltam.';
-      else if (enabled === 1) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Acompanhe os AutoMatch; não é necessário resetar nada.';
+      let nextAction = 'Consulte a ECU para receber o estado nativo.';
+      if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
+        nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão e tente consultar novamente.';
+      } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
+      else if (enabled === 1 && gasZones < 4) nextAction = 'Aquisição habilitada. Mantenha condições estáveis para visitar as regiões que ainda faltam.';
+      else if (enabled === 1) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
       return { title, progress, autoMatch, nextAction, petrolZones, gasZones, enabled, autoMatchCount, maxAutoMatch };
+    },
+
+    readNarrative(readerState = {}) {
+      const state = String(readerState.state || 'IDLE').toUpperCase();
+      const busy = readerState.busy === true || state === 'QUEUED' || state === 'READING' || state === 'CANCEL_REQUESTED';
+      const progress = finite(readerState.progress);
+      const suffix = progress !== null && busy ? ' · ' + Math.round(progress) + '%' : '';
+      if (state === 'QUEUED') return { state, busy, level: 'working', title: 'Solicitação recebida', detail: 'Preparando leitura da ECU' + suffix, next: 'Aguarde a leitura iniciar.' };
+      if (state === 'READING') return { state, busy, level: 'working', title: 'Lendo ECU', detail: String(readerState.message || 'Recebendo campos AutoCal') + suffix, next: 'Aguarde ou cancele a leitura.' };
+      if (state === 'CANCEL_REQUESTED') return { state, busy: true, cancelling: true, level: 'working', title: 'Cancelando leitura', detail: String(readerState.message || 'Cancelamento solicitado') + suffix, next: 'Aguarde a leitura encerrar com segurança.' };
+      if (state === 'READY') return { state, busy: false, level: 'ok', title: 'Leitura concluída', detail: String(readerState.message || 'Todos os campos esperados foram processados.'), next: 'Dados prontos para inspeção.' };
+      if (state === 'READY_PARTIAL') return { state, busy: false, level: 'warning', title: 'Leitura parcial', detail: String(readerState.message || 'Alguns campos não foram confirmados pela ECU.'), next: 'Veja os detalhes técnicos ou tente consultar novamente.' };
+      if (state === 'CANCELLED') return { state, busy: false, level: 'neutral', title: 'Leitura cancelada', detail: String(readerState.message || 'A leitura foi interrompida sem alterar a ECU.'), next: 'Consulte novamente quando quiser.' };
+      if (state === 'DISCONNECTED') return { state, busy: false, level: 'error', title: 'ECU desconectada', detail: String(readerState.message || 'A conexão foi perdida.'), next: 'Reconecte a ECU e tente novamente.' };
+      if (state === 'STALE_SESSION') return { state, busy: false, level: 'error', title: 'Sessão mudou', detail: String(readerState.message || 'A sessão USB mudou durante a leitura.'), next: 'Faça uma nova consulta na sessão atual.' };
+      if (state === 'CALIBRATION_CONFLICT') return { state, busy: false, level: 'warning', title: 'Outra calibração está em uso', detail: String(readerState.message || 'A porta serial está ocupada por outra operação.'), next: 'Finalize a outra operação e tente novamente.' };
+      if (state === 'FAILED' || state === 'TIMEOUT' || state === 'UNAVAILABLE') return { state, busy: false, level: 'error', title: state === 'TIMEOUT' ? 'Tempo de leitura esgotado' : 'Leitura falhou', detail: String(readerState.error || readerState.message || 'A ECU não concluiu a leitura.'), next: 'Verifique a conexão e tente consultar novamente.' };
+      return { state, busy: false, level: 'neutral', title: 'Leitura pronta para iniciar', detail: 'Nenhuma consulta manual em andamento.', next: 'Use Consultar ECU para obter um snapshot completo.' };
+    },
+
+    livePoint(telemetry = {}) {
+      const source = telemetry || {};
+      if (source.valid === false) return null;
+      const live = source.live || source.data || source;
+      const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
+      const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
+      const rpm = finite(live.rpm);
+      if (petrolMs === null || mapBar === null) return null;
+      return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs: finite(source.telemetryAgeMs ?? source.ageMs) };
     },
 
     referencePoints(snapshot = {}) {
@@ -154,7 +198,12 @@
       this.prepared = null;
       this.state = {};
       this.snapshot = {};
+      this.readerState = {};
+      this.readerSnapshot = {};
+      this.acquisitionState = {};
+      this.acquisitionSnapshot = {};
       this.actionState = {};
+      this.chartScale = null;
       this.chartView = AutoCalUxModel.updateChartView(null, 'fit');
       this.chartPointers = new Map();
       this.pinchBase = null;
@@ -166,8 +215,15 @@
       this.inject();
       this.bind();
       this.unsubscribeContext = this.scheduler.addHook('context', () => {
-        if (this.store.get().route === 'curve' && this.active) this.refresh();
+        if (this.store.get().route === 'autocal') this.refresh();
       });
+      this.unsubscribeFast = this.scheduler.addHook('fast', () => {
+        if (this.store.get().route === 'autocal') this.renderLiveCursor();
+      });
+      if (this.store.get().route === 'autocal') {
+        this.active = true;
+        root.setTimeout(() => this.refresh(), 0);
+      }
     }
 
     inject() {
@@ -178,23 +234,10 @@
         link.dataset.autocalCockpitStyle = 'true';
         document.head.appendChild(link);
       }
-      const switcher = document.getElementById('curveViewSwitch');
-      if (switcher && !switcher.querySelector('[data-curve-view="autocal"]')) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.curveView = 'autocal';
-        button.textContent = 'AutoCal';
-        switcher.appendChild(button);
-        this.button = button;
-      } else {
-        this.button = switcher?.querySelector('[data-curve-view="autocal"]') || null;
-      }
-
-      const stack = document.querySelector('[data-screen="curve"] .curve-view-stack');
-      if (stack && !stack.querySelector('[data-curve-panel="autocal"]')) {
+      const stack = document.getElementById('autocalScreenHost');
+      if (stack && !stack.querySelector('.autocal-cockpit')) {
         const panel = document.createElement('div');
-        panel.className = 'curve-view autocal-cockpit-view';
-        panel.dataset.curvePanel = 'autocal';
+        panel.className = 'autocal-route-panel';
         panel.innerHTML = `
           <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
             <header class="autocal-hero" aria-live="polite">
@@ -206,11 +249,13 @@
                   <div class="petrol"><span>Gasolina</span><div class="autocal-zone-dots"><i data-autocal-zone-petrol="0"></i><i data-autocal-zone-petrol="1"></i><i data-autocal-zone-petrol="2"></i><i data-autocal-zone-petrol="3"></i></div></div>
                   <div class="gas"><span>GNV</span><div class="autocal-zone-dots"><i data-autocal-zone-gas="0"></i><i data-autocal-zone-gas="1"></i><i data-autocal-zone-gas="2"></i><i data-autocal-zone-gas="3"></i></div></div>
                 </div>
-                <strong id="autocalHumanAction">Atualize a leitura para receber o estado nativo da ECU.</strong>
+                <strong id="autocalHumanAction">Consulte a ECU para receber o estado nativo.</strong>
               </div>
               <div class="autocal-hero-actions">
-                <span id="autocalNativeState" class="source-status">Aguardando ECU</span>
-                <button type="button" data-autocal-read class="secondary">Atualizar leitura</button>
+                <span id="autocalNativeState" class="source-status">Aquisição: aguardando ECU</span>
+                <span id="autocalReadState" class="source-status" data-level="neutral">Leitura pronta</span>
+                <button type="button" data-autocal-read class="secondary">Consultar ECU</button>
+                <button type="button" data-autocal-cancel-read class="secondary" hidden>Cancelar leitura</button>
               </div>
             </header>
 
@@ -220,25 +265,36 @@
                 <div class="autocal-chart-tools" aria-label="Controles do gráfico">
                   <button type="button" data-autocal-chart-action="zoom-out" aria-label="Diminuir zoom">−</button>
                   <button type="button" data-autocal-chart-action="zoom-in" aria-label="Aumentar zoom">+</button>
-                  <button type="button" data-autocal-chart-action="fit">Ajustar</button>
-                  <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior para comparação">Comparar</button>
+                  <button type="button" data-autocal-chart-action="fit">Ver tudo</button>
+                  <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 </div>
               </div>
-              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
+              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
               <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
               <div id="autocalChartInspector" class="autocal-inline-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP de gasolina/GNV sem alterar nada.</span></div>
             </section>
 
+            <section class="autocal-now-card" aria-live="polite">
+              <div class="autocal-section-head compact"><div><small>O QUE ESTÁ ACONTECENDO AGORA</small><h4 id="autocalLiveTitle">Aguardando telemetria</h4></div><span id="autocalLiveFuel">—</span></div>
+              <div class="autocal-now-values"><div><small>RPM</small><b id="autocalLiveRpm">—</b></div><div><small>PETROL INJ.</small><b><span id="autocalLivePetrol">—</span> ms</b></div><div><small>MAP</small><b><span id="autocalLiveMap">—</span> bar</b></div></div>
+              <p id="autocalLiveNarrative">O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
+            </section>
+
+            <section class="autocal-read-card" data-read-level="neutral">
+              <div><small>CONSULTA À ECU</small><b id="autocalReadTitle">Leitura pronta para iniciar</b><span id="autocalReadDetail">Nenhuma consulta manual em andamento.</span></div>
+              <p id="autocalReadNext">Use Consultar ECU para obter um snapshot completo.</p>
+            </section>
+
             <section class="autocal-bands-card">
               <div class="autocal-section-head compact">
-                <div><small>18 FAIXAS DE AQUISIÇÃO GNV</small><h4>Onde a ECU já passou</h4></div>
+                <div><small>18 REGIÕES DE AQUISIÇÃO GNV</small><h4>Onde a ECU já registrou atividade</h4></div>
                 <span id="autocalZoneSummary">0/4 zonas GNV</span>
               </div>
               <div class="autocal-band-legend" aria-label="Legenda das faixas">
                 <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
               </div>
               <div id="autocalBands" class="autocal-band-strip" role="list"></div>
-              <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Toque numa faixa</b><span>Os detalhes aparecem aqui; a faixa não é um comando.</span></div>
+              <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Toque numa região</b><span>O estado humano aparece aqui; detalhes RAW ficam no painel técnico.</span></div>
             </section>
 
             <section class="autocal-command-bar">
@@ -270,16 +326,13 @@
         stack.appendChild(panel);
         this.panel = panel;
       } else {
-        this.panel = stack?.querySelector('[data-curve-panel="autocal"]') || null;
+        this.panel = stack?.querySelector('.autocal-route-panel') || null;
       }
     }
 
     bind() {
-      this.button?.addEventListener('click', () => this.open());
-      document.querySelectorAll('#curveViewSwitch [data-curve-view="learning"], #curveViewSwitch [data-curve-view="editor"]').forEach(button => {
-        button.addEventListener('click', () => { this.active = false; });
-      });
       this.panel?.querySelector('[data-autocal-read]')?.addEventListener('click', () => this.requestRead());
+      this.panel?.querySelector('[data-autocal-cancel-read]')?.addEventListener('click', () => this.cancelRead());
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
         if (action) this.prepare(action);
@@ -308,10 +361,8 @@
       });
     }
 
-    open() {
+    enter() {
       this.active = true;
-      document.querySelectorAll('#curveViewSwitch [data-curve-view]').forEach(button => button.classList.toggle('active', button === this.button));
-      document.querySelectorAll('[data-screen="curve"] [data-curve-panel]').forEach(panel => panel.classList.toggle('active', panel === this.panel));
       this.refresh();
     }
 
@@ -320,15 +371,35 @@
         this.renderUnavailable();
         return;
       }
-      this.state = this.api.status() || {};
-      const nextSnapshot = this.api.snapshot() || {};
+      this.readerState = this.api.readerStatus() || {};
+      this.readerSnapshot = this.api.readerSnapshot() || {};
+      const acquisitionStatus = this.api.acquisitionStatus() || {};
+      this.acquisitionSnapshot = this.api.acquisitionSnapshot() || {};
+      this.acquisitionState = {
+        ...acquisitionStatus,
+        latestSnapshot: this.acquisitionSnapshot?.available
+          ? this.acquisitionSnapshot
+          : acquisitionStatus.latestSnapshot,
+      };
+      this.state = this.acquisitionState;
+
+      const readerStateName = String(this.readerState?.state || '').toUpperCase();
+      const readerReady = ['READY', 'READY_PARTIAL'].includes(readerStateName) && this.readerSnapshot?.available !== false;
+      const nextSnapshot = readerReady
+        ? this.readerSnapshot
+        : this.acquisitionSnapshot?.available
+          ? this.acquisitionSnapshot
+          : this.readerSnapshot?.available
+            ? this.readerSnapshot
+            : this.acquisitionSnapshot || {};
+
       const oldHash = String(this.snapshot?.snapshotHash || '');
       const nextHash = String(nextSnapshot?.snapshotHash || '');
       if (oldHash && nextHash && oldHash !== nextHash) {
         const previous = AutoCalUxModel.referencePoints(this.snapshot);
         if (previous.length) this.previousReferencePoints = previous;
       }
-      this.snapshot = nextSnapshot;
+      this.snapshot = nextSnapshot || {};
       this.actionState = this.api.actionStatus() || {};
       this.render();
     }
@@ -336,10 +407,23 @@
     requestRead() {
       if (!this.api?.available?.()) return;
       const result = this.api.startRead();
+      this.readerState = result && typeof result === 'object' ? result : this.api.readerStatus() || {};
       if (result?.ok === false) {
         this.store.patch({ alert: { level: 'warning', message: result.error || 'Leitura AutoCal indisponível.' } });
       } else {
-        this.store.patch({ alert: { level: 'ok', message: 'Snapshot AutoCal solicitado. A telemetria continua sob a mesma engine MP48.' } });
+        this.store.patch({ alert: { level: 'ok', message: 'Consulta recebida. A tela acompanhará o reader até READY, parcial ou erro.' } });
+      }
+      this.renderReadState();
+      this.refresh();
+    }
+
+    cancelRead() {
+      if (!this.api?.available?.()) return;
+      const result = this.api.cancelRead();
+      if (result?.ok === false) {
+        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível cancelar a leitura.' } });
+      } else {
+        this.store.patch({ alert: { level: 'ok', message: 'Cancelamento da leitura solicitado. Nenhum dado foi gravado na ECU.' } });
       }
       this.refresh();
     }
@@ -384,18 +468,27 @@
       const state = this.state || {};
       const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
       const human = AutoCalUxModel.humanState(snapshot, state);
+      const acquisitionName = String(state.state || '').toUpperCase();
+      const acquisitionLabel = acquisitionName === 'WAITING_TELEMETRY_SETTLE' ? 'conectando'
+        : acquisitionName === 'PROBE_FAILED' || acquisitionName === 'FAILED' ? 'erro'
+        : human.enabled === 1 ? 'adquirindo'
+        : human.enabled === 0 ? 'pausado'
+        : acquisitionName === 'DISCONNECTED' ? 'desconectado'
+        : snapshot.available ? 'pronto' : 'aguardando';
 
       this.text('autocalHumanTitle', human.title);
       this.text('autocalHumanProgress', human.progress);
       this.text('autocalHumanAction', human.nextAction);
       this.text('autocalHumanAutoMatch', human.autoMatch);
-      this.text('autocalNativeState', state.state || (snapshot.available ? 'READY' : 'AGUARDANDO'));
+      this.text('autocalNativeState', 'Aquisição: ' + acquisitionLabel);
       this.text('autocalZoneSummary', human.gasZones + '/4 zonas GNV');
       this.text('autocalStateRaw', state.state || '—');
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
       this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
       this.text('autocalMaturityRaw', events.length);
       this.renderZoneMeter(human);
+      this.renderReadState();
+      this.renderLiveNarrative();
 
       const toggle = this.panel?.querySelector('[data-autocal-toggle]');
       if (toggle) {
@@ -403,20 +496,97 @@
         toggle.dataset.action = action || '';
         toggle.disabled = !action;
         toggle.textContent = action === 'DISABLE_AUTO_CAL'
-          ? 'Pausar coleta'
-          : action === 'ENABLE_AUTO_CAL' ? 'Retomar coleta' : 'Aguardando estado';
+          ? 'Pausar aquisição'
+          : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
       }
 
       const history = this.panel?.querySelector('[data-autocal-history]');
       if (history) {
         history.disabled = this.previousReferencePoints.length === 0;
-        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Comparar';
+        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Leitura anterior';
       }
 
       this.renderReferenceChart(snapshot);
       this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
+    }
+
+    renderReadState() {
+      const read = AutoCalUxModel.readNarrative(this.readerState || {});
+      this.text('autocalReadState', read.title);
+      this.text('autocalReadTitle', read.title);
+      this.text('autocalReadDetail', read.detail);
+      this.text('autocalReadNext', read.next);
+      const pill = document.getElementById('autocalReadState');
+      if (pill) pill.dataset.level = read.level;
+      const card = this.panel?.querySelector('.autocal-read-card');
+      if (card) card.dataset.readLevel = read.level;
+      const start = this.panel?.querySelector('[data-autocal-read]');
+      const cancel = this.panel?.querySelector('[data-autocal-cancel-read]');
+      if (start) {
+        start.disabled = read.busy;
+        start.textContent = read.busy ? 'Consultando ECU…' : 'Consultar ECU';
+      }
+      if (cancel) {
+        cancel.hidden = !read.busy;
+        cancel.disabled = !read.busy || read.cancelling === true;
+      }
+    }
+
+    renderLiveNarrative() {
+      const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
+      if (!live) {
+        this.text('autocalLiveTitle', 'Aguardando telemetria válida');
+        this.text('autocalLiveFuel', '—');
+        this.text('autocalLiveRpm', '—');
+        this.text('autocalLivePetrol', '—');
+        this.text('autocalLiveMap', '—');
+        this.text('autocalLiveNarrative', 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
+        return;
+      }
+      const rpmLabel = live.rpm === null ? 'RPM —' : Math.round(live.rpm).toLocaleString('pt-BR') + ' RPM';
+      this.text('autocalLiveTitle', 'Motor nesta região agora');
+      this.text('autocalLiveFuel', live.fuel);
+      this.text('autocalLiveRpm', live.rpm === null ? '—' : Math.round(live.rpm).toLocaleString('pt-BR'));
+      this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }));
+      const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}).enabled;
+      const acquisitionCopy = enabled === 1
+        ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
+        : enabled === 0 ? 'Aquisição pausada. O ponto AGORA é somente telemetria.' : 'Estado de aquisição ainda não confirmado.';
+      this.text('autocalLiveNarrative', rpmLabel + ' · ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. ' + acquisitionCopy);
+    }
+
+    renderLiveCursor() {
+      this.renderLiveNarrative();
+      const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
+      const scale = this.chartScale;
+      const layer = this.panel?.querySelector('.autocal-live-layer');
+      if (!live) {
+        if (layer) layer.setAttribute('display', 'none');
+        return;
+      }
+      if (!scale || !layer) {
+        this.renderReferenceChart(this.snapshot || {});
+        return;
+      }
+      layer.removeAttribute('display');
+      if (live.petrolMs < scale.xMin || live.petrolMs > scale.xMax || live.mapBar < scale.yMin || live.mapBar > scale.yMax) {
+        this.renderReferenceChart(this.snapshot || {});
+        return;
+      }
+      const x = scale.xFor(live.petrolMs);
+      const y = scale.yFor(live.mapBar);
+      this.panel?.querySelectorAll('[data-autocal-live-point]').forEach(node => {
+        node.setAttribute('cx', x.toFixed(1));
+        node.setAttribute('cy', y.toFixed(1));
+      });
+      const label = this.panel?.querySelector('[data-autocal-live-label]');
+      if (label) {
+        label.setAttribute('x', (x + 12).toFixed(1));
+        label.setAttribute('y', (y - 12).toFixed(1));
+      }
     }
 
     renderZoneMeter(human) {
@@ -444,11 +614,13 @@
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
       const points = AutoCalUxModel.referencePoints(snapshot);
+      const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       this.currentReferencePoints = points;
       this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
 
-      if (!points.length) {
-        host.innerHTML = '<div class="chart-empty"><b>Referência ainda indisponível</b><span>A ECU ainda não publicou os vetores físicos necessários neste snapshot.</span></div>';
+      if (!points.length && !live) {
+        this.chartScale = null;
+        host.innerHTML = '<div class="chart-empty"><b>Referência ainda indisponível</b><span>Aguardando vetores nativos e telemetria válida. Nenhum ponto é inventado.</span></div>';
         this.text('autocalChartInspector', 'Aguardando Petrol Inj. e MAP nativos.');
         return;
       }
@@ -460,14 +632,15 @@
       const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
       const yValues = points.flatMap(point => [point.petrolMapBar, point.gasMapBar])
         .concat(history.flatMap(point => [point.petrolMapBar, point.gasMapBar]))
+        .concat(live ? [live.mapBar] : [])
         .filter(value => finite(value) !== null);
-      const xValues = points.map(point => point.petrolMs);
+      const xValues = points.map(point => point.petrolMs).concat(live ? [live.petrolMs] : []);
       let xMin = Math.min(...xValues);
       let xMax = Math.max(...xValues);
       let yMin = Math.min(...yValues);
       let yMax = Math.max(...yValues);
-      if (xMax - xMin < 0.01) { xMin -= 0.1; xMax += 0.1; }
-      if (yMax - yMin < 0.01) { yMin -= 0.02; yMax += 0.02; }
+      if (xMax - xMin < 0.01) { xMin -= Math.max(0.25, Math.abs(xMin) * 0.08); xMax += Math.max(0.25, Math.abs(xMax) * 0.08); }
+      if (yMax - yMin < 0.01) { yMin -= 0.08; yMax += 0.08; }
       const yPad = Math.max(0.02, (yMax - yMin) * 0.12);
       yMin -= yPad;
       yMax += yPad;
@@ -502,20 +675,33 @@
           '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
           '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="5"></circle>';
       }).join('');
+      const liveMarkup = live
+        ? '<g class="autocal-live-layer" aria-label="Posição atual do motor">' +
+            '<circle class="autocal-live-halo" data-autocal-live-point cx="' + xFor(live.petrolMs).toFixed(1) + '" cy="' + yFor(live.mapBar).toFixed(1) + '" r="13"></circle>' +
+            '<circle class="autocal-live-point" data-autocal-live-point cx="' + xFor(live.petrolMs).toFixed(1) + '" cy="' + yFor(live.mapBar).toFixed(1) + '" r="6"></circle>' +
+            '<text class="autocal-live-label" data-autocal-live-label x="' + (xFor(live.petrolMs) + 12).toFixed(1) + '" y="' + (yFor(live.mapBar) - 12).toFixed(1) + '">AGORA</text>' +
+          '</g>'
+        : '';
+      this.chartScale = { xMin, xMax, yMin, yMax, xFor, yFor };
 
-      host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina e GNV por Petrol Inj. e MAP">' +
+      host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV e posição AGORA por Petrol Inj. e MAP">' +
         grid +
         '<g data-autocal-chart-group transform="' + this.chartTransform() + '">' +
         previous +
         '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
         '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
-        pointMarkup + labels +
+        pointMarkup + liveMarkup + labels +
         '</g></svg>';
 
       const svg = host.querySelector('svg');
       if (svg) this.bindChartGestures(svg);
-      const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
-      this.inspectReferencePoint(selected);
+      if (points.length) {
+        const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
+        this.inspectReferencePoint(selected);
+      } else {
+        this.text('autocalChartInspector', 'Somente o cursor AGORA está disponível; a ECU ainda não publicou a referência nativa.');
+      }
+      this.renderLiveNarrative();
     }
 
     bindChartGestures(svg) {
@@ -587,9 +773,8 @@
           : band.state === 'activity' ? 'atividade' : 'vazia';
         return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
           '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
-          '" role="listitem" aria-pressed="false" aria-label="Faixa B' + String(band.index + 1).padStart(2, '0') + ', ' + stateLabel +
-          ', contador ' + Math.round(band.counter) + '"><span>B' + String(band.index + 1).padStart(2, '0') +
-          '</span><i></i><small>' + Math.round(band.counter) + '</small></button>';
+          '" role="listitem" aria-pressed="false" aria-label="Região ' + (band.index + 1) + ' de 18, ' + stateLabel +
+          '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'zona ok' : stateLabel) + '</small></button>';
       }).join('');
       const preferred = Number.isInteger(this.selectedBandIndex)
         ? this.selectedBandIndex
@@ -608,18 +793,14 @@
         node.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
 
-      let message = band.counter > 0 ? 'A ECU registrou atividade nesta faixa.' : 'Ainda não há atividade nesta faixa.';
-      if (band.state === 'anchored') message = 'Nesta leitura, a faixa amadureceu e encontrou correlação física confiável.';
-      else if (band.state === 'mature') message = 'Nesta leitura, a faixa amadureceu, mas a posição física ainda não foi correlacionada com confiança.';
+      let message = band.counter > 0 ? 'A ECU registrou atividade nesta região.' : 'Ainda não há atividade nesta região.';
+      if (band.state === 'anchored') message = 'Nesta leitura, a região amadureceu e encontrou correlação física confiável.';
+      else if (band.state === 'mature') message = 'Nesta leitura, a região amadureceu; a correlação física ainda não foi confirmada com confiança.';
 
       const zoneText = band.zoneAcquired
-        ? 'Zona ' + (band.zone + 1) + ' marcada pela ECU'
-        : 'Zona ' + (band.zone + 1) + ' ainda não marcada pela ECU';
-      const event = band.event;
-      const detail = event
-        ? ' · contador ' + (finite(event.counter) ?? Math.round(band.counter)) + ' / limiar ' + (finite(event.threshold) ?? '—')
-        : ' · contador ' + Math.round(band.counter);
-      host.innerHTML = '<b>B' + String(index + 1).padStart(2, '0') + ' · ' + zoneText + '</b><span>' + message + detail + '</span>';
+        ? 'Zona ' + (band.zone + 1) + ' confirmada pela ECU'
+        : 'Zona ' + (band.zone + 1) + ' ainda não confirmada pela ECU';
+      host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
     }
 
     renderEvents(events) {

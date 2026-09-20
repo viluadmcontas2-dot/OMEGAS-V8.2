@@ -162,6 +162,23 @@ class AutoCalProtocolTest {
     }
 
     @Test
+    fun `contador automatch aceita payload observado u8 e firmware u16`() {
+        val oneByte = AutoCalProtocol.decode(
+            AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x7F),
+        )
+        assertEquals(127, oneByte.rawValues.single())
+
+        val twoBytes = AutoCalProtocol.decode(
+            AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x34, 0x12),
+        )
+        assertEquals(0x1234, twoBytes.rawValues.single())
+    }
+
+    @Test
     fun `contrato inicial possui somente leituras conhecidas`() {
         assertEquals(AutoCalProtocol.MODULE_VERSION, AutoCalProtocol.READ_ONLY_FIELDS.first())
         assertTrue(AutoCalProtocol.READ_ONLY_FIELDS.isNotEmpty())

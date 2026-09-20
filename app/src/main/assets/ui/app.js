@@ -25,6 +25,7 @@
     predictor: ['DECIDIR', 'Predictor'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
+    autocal: ['AUTO-CAL', 'AutoCal'],
     obd: ['OBSERVAR', 'OBD'],
     suggestions: ['DECIDIR', 'Sugestões'],
     tools: ['SISTEMA', 'Ferramentas'],
@@ -238,7 +239,7 @@
   /** Único pump de PresentSnapshot. Nenhum screen abre polling nativo próprio. */
   function refreshFast() {
     const route = store.get().route;
-    if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor') {
+    if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor' || route === 'autocal') {
       const envelope = api.presentSnapshot() || {};
       const telemetry = envelope.data || {};
       const signature = `${route}:${telemetryVisualSignature(telemetry, route)}`;
@@ -450,6 +451,15 @@
       afterPaint(refreshContext);
       return;
     }
+    if (route === 'autocal') {
+      previousTelemetrySignature = '';
+      root.OmegasApp?.autoCalCockpit?.enter?.();
+      afterPaint(() => {
+        refreshFast();
+        root.OmegasApp?.autoCalCockpit?.refresh?.();
+      });
+      return;
+    }
     if (route === 'obd') {
       ensureScreen('obd')?.render(store.get());
       afterPaint(() => { refreshStatus(); refreshContext(); });
@@ -497,12 +507,13 @@
         refreshStatus();
         refreshContext();
         const route = store.get().route;
-        if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor') {
+        if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor' || route === 'autocal') {
           previousTelemetrySignature = '';
           refreshFast();
         }
         if (route === 'map') instances.map?.poll();
         if (route === 'curve') instances.curve?.poll();
+        if (route === 'autocal') root.OmegasApp?.autoCalCockpit?.refresh?.();
       });
     });
   }

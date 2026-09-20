@@ -5,6 +5,13 @@ on:
     branches: [ OmegasVerde ]
   pull_request:
     branches: [ OmegasVerde ]
+  workflow_dispatch:
+    inputs:
+      build_apk:
+        description: 'Gerar APK após autorização explícita do proprietário'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build_and_test:
@@ -17,11 +24,17 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - run: chmod +x gradlew
-      - name: Learning consolidation contract
-        run: python -m unittest discover -s tests -p 'test_learning_consolidation_contract.py'
-      - run: ./gradlew testDebugUnitTest
-      - run: ./gradlew assembleDebug
+      - name: Fast contracts
+        run: python3 -B tools/run_checks.py
+      - name: JVM unit tests
+        run: ./gradlew testDebugUnitTest
+      - name: Android lint
+        run: ./gradlew lintDebug
+      - name: Build APK
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk == true }}
+        run: ./gradlew assembleDebug
       - name: Hash APK
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk == true }}
         shell: bash
         run: |
           set -euo pipefail
@@ -29,6 +42,7 @@ jobs:
           test -f "$APK"
           sha256sum "$APK" | tee "$APK.sha256"
       - name: Publish APK artifact
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk == true }}
         uses: actions/upload-artifact@v4
         with:
           name: omegas-verde-debug-${{ github.sha }}
