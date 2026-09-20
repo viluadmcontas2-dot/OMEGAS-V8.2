@@ -17,7 +17,6 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
     private var lastTelemetryCapturedElapsedMs = -1L
     private var telemetry = JSONObject()
     private var runtime = JSONObject()
-    private var fullSnapshot = JSONObject()
     private var gps = JSONObject()
     private var sessionId = 0L
     private var valid = false
@@ -101,7 +100,6 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         lastTelemetryCapturedElapsedMs = -1L
         telemetry = JSONObject()
         runtime = JSONObject().put("link", "INITIALIZING").put("session_id", id)
-        fullSnapshot = JSONObject()
         history.clear()
         sequence.incrementAndGet()
     }
@@ -114,42 +112,8 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         lastTelemetryCapturedElapsedMs = -1L
         telemetry = JSONObject()
         runtime = JSONObject().put("link", "OFFLINE").put("reason", reason).put("session_id", sessionId)
-        fullSnapshot = JSONObject()
         history.clear()
         sequence.incrementAndGet()
-    }
-
-    fun updateFullSnapshot(root: JSONObject) {
-        synchronized(lock) {
-            val snapshotSessionId = root.optLong("session_id", root.optLong("native_session_id", 0L))
-            if (!acceptingTelemetry || (snapshotSessionId > 0L && snapshotSessionId != sessionId)) {
-                return@synchronized
-            }
-            fullSnapshot = JSONObject(root.toString())
-            val now = System.currentTimeMillis()
-            root.optJSONObject("live")?.let { live ->
-                val capturedElapsedMs = physicalFrameRevision(live)
-                if (capturedElapsedMs != null && capturedElapsedMs > lastTelemetryCapturedElapsedMs) {
-                    telemetry = copyObject(live)
-                    lastTelemetryCapturedElapsedMs = capturedElapsedMs
-                    // Caminho legado: só um frame físico completo e mais novo pode
-                    // substituir a projeção atual. Nunca complete campos entre revisões.
-                    val frameAtMs = when {
-                        live.optDouble("last_frame_at", 0.0) > 0.0 ->
-                            (live.optDouble("last_frame_at") * 1000.0).toLong()
-                        live.has("last_frame_age_ms") ->
-                            now - live.optLong("last_frame_age_ms", Long.MAX_VALUE).coerceAtLeast(0L)
-                        else -> 0L
-                    }
-                    if (frameAtMs in 1..now && frameAtMs > telemetryUpdatedAt) {
-                        telemetryUpdatedAt = frameAtMs
-                    }
-                }
-            }
-            root.optJSONObject("runtime")?.let { merge(runtime, it) }
-            stateUpdatedAt = now
-            sequence.incrementAndGet()
-        }
     }
 
     fun lightweightJson(): String = synchronized(lock) {
@@ -178,20 +142,6 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             .put("live", JSONObject(telemetry.toString()))
             .put("runtime", JSONObject(runtime.toString()))
             .toString()
-    }
-
-    fun fullJson(): String = synchronized(lock) {
-        val result = if (fullSnapshot.length() > 0) JSONObject(fullSnapshot.toString()) else JSONObject()
-        result.put("native_sequence", sequence.get())
-        result.put("native_session_id", sessionId)
-        result.put("telemetry_valid", valid)
-        result.put("native_updated_at", telemetryUpdatedAt)
-        result.put("native_state_updated_at", stateUpdatedAt)
-        result.put("native_history", JSONArray(history.map { JSONObject(it.toString()) }))
-        if (!result.has("live")) result.put("live", JSONObject(telemetry.toString()))
-        if (!result.has("runtime")) result.put("runtime", JSONObject(runtime.toString()))
-        result.put("gps", JSONObject(gps.toString()))
-        result.toString()
     }
 
     fun telemetryCopy(): JSONObject = synchronized(lock) {
