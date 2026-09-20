@@ -52,8 +52,12 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
         stop = RECORDER[RECORDER.index("fun stop("):RECORDER.index("fun record(", RECORDER.index("fun stop("))]
         self.assertIn("syncDocumentsMirror(force = true)", stop)
         prune = RECORDER[RECORDER.index("private fun pruneOldSessions"):RECORDER.index("private fun awaitPendingWrites")]
-        self.assertNotIn("Documents", prune)
-        self.assertNotIn("documentsMirror", prune)
+        self.assertIn("paths.sessionLogsRoot", prune)
+        self.assertIn("documentsMirrorMarker", prune)
+        self.assertNotIn("PUBLIC_ROOT", prune)
+        self.assertNotIn("MediaStore", prune)
+        self.assertNotIn("Environment.getExternalStoragePublicDirectory", prune)
+        self.assertRegex(prune, r"documentsMirrorMarker\([^)]*\)\.isFile")
 
     def test_status_tells_hmi_where_the_durable_copy_lives(self):
         self.assertIn('"documentsMirror"', RECORDER)
