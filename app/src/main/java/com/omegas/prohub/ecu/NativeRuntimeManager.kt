@@ -30,7 +30,7 @@ class NativeRuntimeManager(
     private val usb: UsbSerialManager,
     private val log: RingLog,
     private val onStateChanged: () -> Unit,
-    private val onTelemetryEvent: (String) -> Unit,
+    private val onTelemetryEvent: (JSONObject) -> Unit,
     private val onEngineExited: (Boolean) -> Unit,
 ) {
     private val snapshotLock = Any()
@@ -358,13 +358,12 @@ class NativeRuntimeManager(
             .put("learning_state", learningState)
             .put("learning", learningState)
 
-        val rawEvent = root.toString()
         synchronized(snapshotLock) { latestSnapshot = root }
         running = true
         ready = true
         lastError = ""
 
-        if (!telemetryDeliveryPipeline.submit(sequence) { onTelemetryEvent(rawEvent) }) {
+        if (!telemetryDeliveryPipeline.submit(sequence) { onTelemetryEvent(root) }) {
             log.add("WARN", "TELEMETRY-DELIVERY", "Quadro $sequence não aceito porque a fila está encerrando")
         }
 

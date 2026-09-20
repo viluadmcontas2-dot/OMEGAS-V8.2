@@ -723,9 +723,8 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    private fun consumeEngineEvent(raw: String) {
-        val accepted = telemetryStore.updateFromEngineEvent(raw) ?: return
-        val root = try { JSONObject(raw) } catch (_: Exception) { JSONObject() }
+    private fun consumeEngineEvent(root: JSONObject) {
+        val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
         val live = root.optJSONObject("live") ?: root.optJSONObject("data") ?: JSONObject()
         val cngActive = live.optString("fuel").uppercase() == "GNV"
         if (cngActive) {
