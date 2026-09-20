@@ -137,24 +137,74 @@
       return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs: finite(source.telemetryAgeMs ?? source.ageMs) };
     },
 
-    referencePoints(snapshot = {}) {
+    referencePoints(snapshot = {}, analysis = {}) {
       const petrolMs = physicalVector(snapshot, 'PETR_INJ_TBP');
       const petrolMap = physicalVector(snapshot, 'PETR_MNFLD_PRESS_RV');
       const gasMap = physicalVector(snapshot, 'GAS_MNFLD_PRESS_RV');
+      const analysisPoints = Array.isArray(analysis?.points) ? analysis.points : [];
+      const byIndex = new Map(analysisPoints.map(point => [Number(point?.index), point]));
       const count = Math.min(petrolMs.length, petrolMap.length, gasMap.length);
       const points = [];
       for (let index = 0; index < count; index += 1) {
         const x = finite(petrolMs[index]);
         const petrol = finite(petrolMap[index]);
         const gas = finite(gasMap[index]);
+        const nativeAnalysis = byIndex.get(index) || {};
+        const gasEquivalentMs = finite(nativeAnalysis.gasEquivalentTimeMs);
         if (x !== null && petrol !== null && gas !== null) {
-          points.push({ index, petrolMs: x, petrolMapBar: petrol, gasMapBar: gas });
+          points.push({ index, petrolMs: x, petrolMapBar: petrol, gasMapBar: gas, gasEquivalentMs });
         }
       }
       return points;
     },
 
-    bandStrip(snapshot = {}) {
+    referenceDomain(points = [], history = []) {
+      const all = [...points, ...history];
+      if (!all.length) return null;
+      const xValues = all.flatMap(point => {
+        const values = [finite(point.petrolMs)];
+        const equivalent = finite(point.gasEquivalentMs);
+        if (equivalent !== null) values.push(equivalent);
+        return values.filter(value => value !== null);
+      });
+      const yValues = all
+        .flatMap(point => [finite(point.petrolMapBar), finite(point.gasMapBar)])
+        .filter(value => value !== null);
+      if (!xValues.length || !yValues.length) return null;
+      let xMin = Math.min(...xValues);
+      let xMax = Math.max(...xValues);
+      let yMin = Math.min(...yValues);
+      let yMax = Math.max(...yValues);
+      if (xMax - xMin < 0.01) {
+        const pad = Math.max(0.25, Math.abs(xMin) * 0.08);
+        xMin -= pad; xMax += pad;
+      } else {
+        const pad = Math.max(0.08, (xMax - xMin) * 0.05);
+        xMin -= pad; xMax += pad;
+      }
+      if (yMax - yMin < 0.01) {
+        yMin -= 0.08; yMax += 0.08;
+      } else {
+        const pad = Math.max(0.02, (yMax - yMin) * 0.12);
+        yMin -= pad; yMax += pad;
+      }
+      return { xMin, xMax, yMin, yMax };
+    },
+
+    projectLive(live, scale) {
+      if (!live || !scale) return null;
+      const outsideX = live.petrolMs < scale.xMin || live.petrolMs > scale.xMax;
+      const outsideY = live.mapBar < scale.yMin || live.mapBar > scale.yMax;
+      const clampedX = Math.max(scale.xMin, Math.min(scale.xMax, live.petrolMs));
+      const clampedY = Math.max(scale.yMin, Math.min(scale.yMax, live.mapBar));
+      return {
+        x: scale.xFor(clampedX),
+        y: scale.yFor(clampedY),
+        outOfRange: outsideX || outsideY,
+      };
+    },
+
+    bandStrip(snapshot = {}) {    bandStrip(snapshot = {}) {
       const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
       const zones = vector(snapshot, 'ACQUIRED_ZONES_GAS');
       const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
@@ -225,6 +275,10 @@
       this.prepared = null;
       this.state = {};
       this.snapshot = {};
+      this.projection = {};
+      this.analysis = {};
+      this.referenceUsable = false;
+      this.operationalPending = false;
       this.readerState = {};
       this.readerSnapshot = {};
       this.acquisitionState = {};
@@ -381,7 +435,7 @@
       this.panel?.querySelector('[data-autocal-cancel-read]')?.addEventListener('click', () => this.cancelRead());
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
-        if (action) this.prepare(action);
+        if (action) this.runOperational(action);
       });
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
@@ -426,10 +480,13 @@
         this.renderUnavailable();
         return;
       }
-      this.readerState = this.api.readerStatus() || {};
-      this.readerSnapshot = this.api.readerSnapshot() || {};
-      const acquisitionStatus = this.api.acquisitionStatus() || {};
-      this.acquisitionSnapshot = this.api.acquisitionSnapshot() || {};
+      const projection = this.api.projection?.() || {};
+      const authoritative = projection?.ok === true;
+      this.projection = projection;
+      this.readerState = authoritative ? (projection.manualStatus || {}) : (this.api.readerStatus() || {});
+      this.readerSnapshot = authoritative ? (projection.manualSnapshot || {}) : (this.api.readerSnapshot() || {});
+      const acquisitionStatus = authoritative ? (projection.nativeStatus || {}) : (this.api.acquisitionStatus() || {});
+      this.acquisitionSnapshot = authoritative ? (projection.nativeSnapshot || {}) : (this.api.acquisitionSnapshot() || {});
       this.acquisitionState = {
         ...acquisitionStatus,
         latestSnapshot: this.acquisitionSnapshot?.available
@@ -438,29 +495,41 @@
       };
       this.state = this.acquisitionState;
 
-      const readerStateName = String(this.readerState?.state || '').toUpperCase();
-      const readerReady = ['READY', 'READY_PARTIAL'].includes(readerStateName) && this.readerSnapshot?.available !== false;
-      const nextSnapshot = readerReady
-        ? this.readerSnapshot
-        : this.acquisitionSnapshot?.available
-          ? this.acquisitionSnapshot
-          : this.readerSnapshot?.available
-            ? this.readerSnapshot
-            : this.acquisitionSnapshot || {};
+      let nextSnapshot;
+      let nextAnalysis = {};
+      if (authoritative) {
+        nextSnapshot = projection.snapshot || {};
+        nextAnalysis = projection.analysis || {};
+        this.referenceUsable = projection.referenceUsable === true;
+      } else {
+        const readerStateName = String(this.readerState?.state || '').toUpperCase();
+        const readerReady = ['READY', 'READY_PARTIAL'].includes(readerStateName) && this.readerSnapshot?.available !== false;
+        nextSnapshot = readerReady
+          ? this.readerSnapshot
+          : this.acquisitionSnapshot?.available
+            ? this.acquisitionSnapshot
+            : this.readerSnapshot?.available
+              ? this.readerSnapshot
+              : this.acquisitionSnapshot || {};
+        this.referenceUsable = AutoCalUxModel.referencePoints(nextSnapshot).length > 0;
+      }
 
       const oldHash = String(this.snapshot?.snapshotHash || '');
       const nextHash = String(nextSnapshot?.snapshotHash || '');
       if (oldHash && nextHash && oldHash !== nextHash) {
-        const previous = AutoCalUxModel.referencePoints(this.snapshot);
+        const previous = AutoCalUxModel.referencePoints(this.snapshot, this.analysis);
         if (previous.length) this.previousReferencePoints = previous;
       }
       this.snapshot = nextSnapshot || {};
+      this.analysis = nextAnalysis;
       this.actionState = this.api.actionStatus() || {};
+      this.operationalPending = this.actionState?.busy === true ||
+        ['QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
       this.sessionState = this.api.sessionStatus?.() || {};
       this.render();
     }
 
-    loadSessions() {
+    loadSessions() {    loadSessions() {
       if (!this.api?.available?.()) return;
       const next = this.api.sessions?.();
       this.sessions = Array.isArray(next) ? next : [];
@@ -487,6 +556,23 @@
         this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível cancelar a leitura.' } });
       } else {
         this.store.patch({ alert: { level: 'ok', message: 'Cancelamento da leitura solicitado. Nenhum dado foi gravado na ECU.' } });
+      }
+      this.refresh();
+    }
+
+    runOperational(action) {
+      if (!['ENABLE_AUTO_CAL', 'DISABLE_AUTO_CAL'].includes(action) || !this.api?.available?.()) return;
+      const enable = action === 'ENABLE_AUTO_CAL';
+      this.operationalPending = true;
+      this.render();
+      const result = this.api.setAcquisitionEnabled?.(enable) || { ok: false, error: 'Ação operacional indisponível.' };
+      if (result?.ok === false) {
+        this.operationalPending = false;
+        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível alterar a aquisição AutoCal.' } });
+      } else {
+        this.store.patch({ alert: { level: 'ok', message: enable
+          ? 'Início enviado. Confirmando ACK e leitura de volta da ECU…'
+          : 'Pausa enviada. Confirmando ACK e leitura de volta da ECU…' } });
       }
       this.refresh();
     }
@@ -558,10 +644,12 @@
       if (toggle) {
         const action = AutoCalUxModel.toggleAction(human.enabled);
         toggle.dataset.action = action || '';
-        toggle.disabled = !action;
-        toggle.textContent = action === 'DISABLE_AUTO_CAL'
-          ? 'Pausar aquisição'
-          : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
+        toggle.disabled = !action || this.operationalPending;
+        toggle.textContent = this.operationalPending
+          ? 'Confirmando ECU…'
+          : action === 'DISABLE_AUTO_CAL'
+            ? 'Pausar aquisição'
+            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
       }
 
       const history = this.panel?.querySelector('[data-autocal-history]');
@@ -670,29 +758,24 @@
         if (layer) layer.setAttribute('display', 'none');
         return;
       }
-      if (!scale || !layer) {
-        this.renderReferenceChart(this.snapshot || {});
-        return;
-      }
+      if (!scale || !layer) return;
+      const projected = AutoCalUxModel.projectLive(live, scale);
+      if (!projected) return;
       layer.removeAttribute('display');
-      if (live.petrolMs < scale.xMin || live.petrolMs > scale.xMax || live.mapBar < scale.yMin || live.mapBar > scale.yMax) {
-        this.renderReferenceChart(this.snapshot || {});
-        return;
-      }
-      const x = scale.xFor(live.petrolMs);
-      const y = scale.yFor(live.mapBar);
+      layer.setAttribute('data-out-of-range', projected.outOfRange ? 'true' : 'false');
       this.panel?.querySelectorAll('[data-autocal-live-point]').forEach(node => {
-        node.setAttribute('cx', x.toFixed(1));
-        node.setAttribute('cy', y.toFixed(1));
+        node.setAttribute('cx', projected.x.toFixed(1));
+        node.setAttribute('cy', projected.y.toFixed(1));
       });
       const label = this.panel?.querySelector('[data-autocal-live-label]');
       if (label) {
-        label.setAttribute('x', (x + 12).toFixed(1));
-        label.setAttribute('y', (y - 12).toFixed(1));
+        label.setAttribute('x', (projected.x + 12).toFixed(1));
+        label.setAttribute('y', (projected.y - 12).toFixed(1));
+        label.textContent = projected.outOfRange ? 'AGORA · fora da escala' : 'AGORA';
       }
     }
 
-    renderZoneMeter(human) {
+    renderZoneMeter(human) {    renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');
       if (!meter) return;
       const petrolZones = Math.max(0, Math.min(4, Math.round(finite(human?.petrolZones) ?? 0)));
@@ -716,98 +799,106 @@
     renderReferenceChart(snapshot) {
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
-      const points = AutoCalUxModel.referencePoints(snapshot);
+      const points = AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       this.currentReferencePoints = points;
       this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
 
-      if (!points.length && !live) {
+      if (!points.length || this.referenceUsable === false) {
         this.chartScale = null;
-        host.innerHTML = '<div class="chart-empty"><b>Referência ainda indisponível</b><span>Aguardando vetores nativos e telemetria válida. Nenhum ponto é inventado.</span></div>';
-        this.text('autocalChartInspector', 'Aguardando Petrol Inj. e MAP nativos.');
+        host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
+        this.text('autocalChartInspector', live
+          ? 'AGORA: ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. Referência nativa indisponível.'
+          : 'Aguardando Petrol Inj. e MAP nativos.');
+        this.renderLiveNarrative();
         return;
       }
 
       const width = 1000;
       const height = 240;
-      const padX = 48;
-      const padY = 24;
+      const padLeft = 64;
+      const padRight = 28;
+      const padTop = 18;
+      const padBottom = 44;
       const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
-      const yValues = points.flatMap(point => [point.petrolMapBar, point.gasMapBar])
-        .concat(history.flatMap(point => [point.petrolMapBar, point.gasMapBar]))
-        .concat(live ? [live.mapBar] : [])
-        .filter(value => finite(value) !== null);
-      const xValues = points.map(point => point.petrolMs).concat(live ? [live.petrolMs] : []);
-      let xMin = Math.min(...xValues);
-      let xMax = Math.max(...xValues);
-      let yMin = Math.min(...yValues);
-      let yMax = Math.max(...yValues);
-      if (xMax - xMin < 0.01) { xMin -= Math.max(0.25, Math.abs(xMin) * 0.08); xMax += Math.max(0.25, Math.abs(xMax) * 0.08); }
-      if (yMax - yMin < 0.01) { yMin -= 0.08; yMax += 0.08; }
-      const yPad = Math.max(0.02, (yMax - yMin) * 0.12);
-      yMin -= yPad;
-      yMax += yPad;
+      const domain = AutoCalUxModel.referenceDomain(points, history);
+      if (!domain) {
+        this.chartScale = null;
+        host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>';
+        return;
+      }
+      const { xMin, xMax, yMin, yMax } = domain;
+      const xFor = value => padLeft + ((value - xMin) / (xMax - xMin)) * (width - padLeft - padRight);
+      const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
+      const scale = { xMin, xMax, yMin, yMax, xFor, yFor };
+      this.chartScale = scale;
+      const pathFor = (items, yKey, xKey = 'petrolMs') => items
+        .filter(point => finite(point?.[xKey]) !== null && finite(point?.[yKey]) !== null)
+        .map((point, index) => (index ? 'L' : 'M') + ' ' + xFor(point[xKey]).toFixed(1) + ' ' + yFor(point[yKey]).toFixed(1))
+        .join(' ');
 
-      const xFor = value => padX + ((value - xMin) / (xMax - xMin)) * (width - padX * 2);
-      const yFor = value => height - padY - ((value - yMin) / (yMax - yMin)) * (height - padY * 2);
-      const pathFor = (items, key) => items.map((point, index) =>
-        (index ? 'L' : 'M') + ' ' + xFor(point.petrolMs).toFixed(1) + ' ' + yFor(point[key]).toFixed(1)
-      ).join(' ');
-
-      const grid = Array.from({ length: 5 }, (_, index) => {
-        const y = padY + index * ((height - padY * 2) / 4);
-        return '<line class="autocal-grid-line" x1="' + padX + '" y1="' + y.toFixed(1) + '" x2="' + (width - padX) + '" y2="' + y.toFixed(1) + '"></line>';
-      }).join('');
-
-      const labels = points.map((point, index) => {
-        if (index % 5 !== 0 && index !== points.length - 1) return '';
-        return '<text class="autocal-axis-label" x="' + xFor(point.petrolMs).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">' + point.petrolMs.toFixed(1) + ' ms</text>';
+      const xTicks = Array.from({ length: 6 }, (_, index) => xMin + index * (xMax - xMin) / 5);
+      const yTicks = Array.from({ length: 5 }, (_, index) => yMin + index * (yMax - yMin) / 4);
+      const grid = yTicks.map(value => {
+        const y = yFor(value);
+        return '<line class="autocal-grid-line" x1="' + padLeft + '" y1="' + y.toFixed(1) + '" x2="' + (width - padRight) + '" y2="' + y.toFixed(1) + '"></line>' +
+          '<text class="autocal-axis-tick-y" x="' + (padLeft - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + value.toFixed(2) + '</text>';
+      }).join('') + xTicks.map(value => {
+        const x = xFor(value);
+        return '<line class="autocal-grid-line vertical" x1="' + x.toFixed(1) + '" y1="' + padTop + '" x2="' + x.toFixed(1) + '" y2="' + (height - padBottom) + '"></line>' +
+          '<text class="autocal-axis-tick-x" x="' + x.toFixed(1) + '" y="' + (height - 23) + '" text-anchor="middle">' + value.toFixed(1) + '</text>';
       }).join('');
 
       const previous = history.length
         ? '<path class="autocal-reference-line previous petrol" d="' + pathFor(history, 'petrolMapBar') + '"></path>' +
           '<path class="autocal-reference-line previous gas" d="' + pathFor(history, 'gasMapBar') + '"></path>'
         : '';
+      const equivalent = points.filter(point => finite(point.gasEquivalentMs) !== null);
+      const equivalencePath = equivalent.length > 1
+        ? '<path class="autocal-equivalence-line" d="' + pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs') + '"></path>'
+        : '';
 
       const pointMarkup = points.map(point => {
         const x = xFor(point.petrolMs).toFixed(1);
         const petrolY = yFor(point.petrolMapBar).toFixed(1);
         const gasY = yFor(point.gasMapBar).toFixed(1);
+        const equivalentX = finite(point.gasEquivalentMs) === null ? null : xFor(point.gasEquivalentMs).toFixed(1);
         return '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="22"></circle>' +
           '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="5"></circle>' +
           '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
-          '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="5"></circle>';
+          '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="5"></circle>' +
+          (equivalentX === null ? '' : '<circle class="autocal-equivalence-point" cx="' + equivalentX + '" cy="' + petrolY + '" r="4"></circle>');
       }).join('');
-      const liveMarkup = live
-        ? '<g class="autocal-live-layer" aria-label="Posição atual do motor">' +
-            '<circle class="autocal-live-halo" data-autocal-live-point cx="' + xFor(live.petrolMs).toFixed(1) + '" cy="' + yFor(live.mapBar).toFixed(1) + '" r="13"></circle>' +
-            '<circle class="autocal-live-point" data-autocal-live-point cx="' + xFor(live.petrolMs).toFixed(1) + '" cy="' + yFor(live.mapBar).toFixed(1) + '" r="6"></circle>' +
-            '<text class="autocal-live-label" data-autocal-live-label x="' + (xFor(live.petrolMs) + 12).toFixed(1) + '" y="' + (yFor(live.mapBar) - 12).toFixed(1) + '">AGORA</text>' +
+
+      const projectedLive = AutoCalUxModel.projectLive(live, scale);
+      const liveMarkup = live && projectedLive
+        ? '<g class="autocal-live-layer" data-out-of-range="' + (projectedLive.outOfRange ? 'true' : 'false') + '" aria-label="Posição atual do motor">' +
+            '<circle class="autocal-live-halo" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="13"></circle>' +
+            '<circle class="autocal-live-point" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="6"></circle>' +
+            '<text class="autocal-live-label" data-autocal-live-label x="' + (projectedLive.x + 12).toFixed(1) + '" y="' + (projectedLive.y - 12).toFixed(1) + '">' +
+              (projectedLive.outOfRange ? 'AGORA · fora da escala' : 'AGORA') + '</text>' +
           '</g>'
         : '';
-      this.chartScale = { xMin, xMax, yMin, yMax, xFor, yFor };
 
-      host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV e posição AGORA por Petrol Inj. e MAP">' +
+      host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV, equivalência nativa e posição AGORA por Petrol Inj. e MAP">' +
         grid +
+        '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
+        '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
         '<g data-autocal-chart-group transform="' + this.chartTransform() + '">' +
-        previous +
+        previous + equivalencePath +
         '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
         '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
-        pointMarkup + liveMarkup + labels +
+        pointMarkup + liveMarkup +
         '</g></svg>';
 
       const svg = host.querySelector('svg');
       if (svg) this.bindChartGestures(svg);
-      if (points.length) {
-        const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
-        this.inspectReferencePoint(selected);
-      } else {
-        this.text('autocalChartInspector', 'Somente o cursor AGORA está disponível; a ECU ainda não publicou a referência nativa.');
-      }
+      const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
+      this.inspectReferencePoint(selected);
       this.renderLiveNarrative();
     }
 
-    bindChartGestures(svg) {
+    bindChartGestures(svg) {    bindChartGestures(svg) {
       const distance = values => {
         if (values.length < 2) return 0;
         const a = values[0];
@@ -860,7 +951,8 @@
       if (!host || !point) return;
       this.selectedReferenceIndex = point.index;
       host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + point.petrolMs.toFixed(2) + ' ms</b>' +
-        '<span>MAP gasolina ' + point.petrolMapBar.toFixed(3) + ' bar · MAP GNV ' + point.gasMapBar.toFixed(3) + ' bar</span>';
+        '<span>MAP gasolina ' + point.petrolMapBar.toFixed(3) + ' bar · MAP GNV ' + point.gasMapBar.toFixed(3) + ' bar' +
+        (finite(point.gasEquivalentMs) === null ? '' : ' · GNV equivalente ' + point.gasEquivalentMs.toFixed(2) + ' ms') + '</span>';
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
       });

@@ -39,6 +39,25 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
 
     @JavascriptInterface
+    fun getUiProjection(): String = try {
+        val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
+        val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        val manual = currentManager()
+        val nativeStatus = JSONObject(service.nativeAutoCalStatusJson())
+        val nativeSnapshot = JSONObject(service.nativeAutoCalSnapshotJson())
+        val manualStatus = manual?.statusJson() ?: JSONObject()
+        val manualSnapshot = manual?.latestSnapshotJson() ?: JSONObject().put("available", false)
+        AutoCalUiProjection.project(
+            nativeStatus = nativeStatus,
+            nativeSnapshot = nativeSnapshot,
+            manualStatus = manualStatus,
+            manualSnapshot = manualSnapshot,
+        ).toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Projeção AutoCal indisponível")
+    }
+
+    @JavascriptInterface
     fun getSessionLedgerStatus(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderStatusJson() ?: unavailable()
 
     @JavascriptInterface
@@ -161,10 +180,39 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getNativeActionReceipts(): String = currentNativeManager()?.receiptsJson()?.toString() ?: "[]"
 
     @JavascriptInterface
-    fun prepareNativeAction(action: String): String = currentNativeManager()
-        ?.prepare(action)
-        ?.toString()
-        ?: unavailable()
+    fun prepareNativeAction(action: String): String {
+        val parsed = try {
+            AutoCalNativeActionManager.Action.valueOf(action.trim().uppercase())
+        } catch (_: Exception) {
+            return localFailure("Ação nativa inválida")
+        }
+        if (parsed.operationalToggle) {
+            return localFailure("Iniciar/Pausar usa a ação operacional de um toque")
+        }
+        return currentNativeManager()?.prepare(parsed.name)?.toString() ?: unavailable()
+    }
+
+    @JavascriptInterface
+    fun setAcquisitionEnabled(enabled: Boolean): String {
+        val actionManager = currentNativeManager() ?: return unavailable()
+        val action = if (enabled) {
+            AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL
+        } else {
+            AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL
+        }
+        val prepared = actionManager.prepare(action.name)
+        if (!prepared.optBoolean("ok", false) || !prepared.optBoolean("prepared", false)) {
+            return prepared.toString()
+        }
+        if (prepared.optBoolean("requiresCriticalConfirmation", true)) {
+            actionManager.clearPreparation()
+            return localFailure("Ação operacional foi classificada incorretamente como crítica")
+        }
+        return actionManager.execute(prepared.getString("preparationId"))
+            .put("operationalOneTouch", true)
+            .put("requestedEnabled", enabled)
+            .toString()
+    }
 
     /**
      * Não executa a ação diretamente. Agenda um AlertDialog Android não
@@ -185,6 +233,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             AutoCalNativeActionManager.Action.valueOf(actionName)
         } catch (_: Exception) {
             return localFailure("Ação nativa inválida")
+        }
+        if (action.operationalToggle) {
+            actionManager.clearPreparation()
+            return localFailure("Iniciar/Pausar não usa diálogo crítico; use a ação operacional de um toque")
         }
         synchronized(managerLock) {
             if (nativeConfirmationPendingId != null) {

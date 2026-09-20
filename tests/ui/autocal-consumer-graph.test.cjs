@@ -20,7 +20,7 @@ for (const method of invoked) {
 const controls = [
   ['data-autocal-read', "querySelector('[data-autocal-read]')", 'requestRead()'],
   ['data-autocal-cancel-read', "querySelector('[data-autocal-cancel-read]')", 'cancelRead()'],
-  ['data-autocal-toggle', "querySelector('[data-autocal-toggle]')", 'this.prepare(action)'],
+  ['data-autocal-toggle', "querySelector('[data-autocal-toggle]')", 'this.runOperational(action)'],
   ['data-autocal-action', "querySelectorAll('[data-autocal-action]')", 'this.prepare(button.dataset.autocalAction)'],
   ['data-autocal-chart-action', "querySelectorAll('[data-autocal-chart-action]')", 'updateChartView'],
   ['data-autocal-history', "querySelector('[data-autocal-history]')", 'chartHistoryVisible'],
@@ -40,7 +40,8 @@ assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="obd
 assert.equal(cockpit.includes('data-curve-view="autocal"'), false, 'subview legada não pode voltar');
 assert.equal(cockpit.includes('data-curve-panel="autocal"'), false, 'painel legado não pode voltar');
 
-assert.match(cockpit, /prepare\(action\)[\s\S]*this\.api\.prepare\(action\)/, 'ação nativa precisa passar por prepare');
+assert.match(cockpit, /runOperational\(action\)[\s\S]*this\.api\.setAcquisitionEnabled/, 'Start\/Pause precisa usar ação operacional de um toque');
+assert.match(cockpit, /prepare\(action\)[\s\S]*this\.api\.prepare\(action\)/, 'reset nativo precisa passar por prepare');
 assert.match(cockpit, /confirmPrepared\(\)[\s\S]*this\.api\.execute\(prepared\.preparationId\)/, 'confirmação deve executar exatamente a preparação revisada');
 assert.match(actions, /ENABLE_AUTO_CAL[\s\S]*setEnabled\(true\)/, 'iniciar aquisição deve usar ação nativa existente');
 assert.match(actions, /DISABLE_AUTO_CAL[\s\S]*setEnabled\(false\)/, 'pausar aquisição deve usar ação nativa existente');

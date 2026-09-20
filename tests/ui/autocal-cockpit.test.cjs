@@ -20,6 +20,8 @@ assert.equal(cockpit.includes("data-autocal-action=\"RESET_PETROL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_GAS\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), false);
 assert.equal(cockpit.includes('NATIVE_AUTOMATCH'), false);
+assert.equal(cockpit.includes('runOperational(action)'), true);
+assert.equal(cockpit.includes('setAcquisitionEnabled'), true);
 assert.equal(cockpit.includes('prepare('), true);
 assert.equal(cockpit.includes('execute(prepared.preparationId)'), true);
 assert.equal(cockpit.includes('Continuar para confirmação Android'), true);
