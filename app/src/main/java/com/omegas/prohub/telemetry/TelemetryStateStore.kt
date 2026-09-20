@@ -50,9 +50,8 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
                 if (capturedElapsedMs <= lastTelemetryCapturedElapsedMs) return@synchronized null
                 telemetry = copyObject(payload)
                 lastTelemetryCapturedElapsedMs = capturedElapsedMs
-            } else {
-                merge(telemetry, payload)
             }
+            // Eventos que não são telemetria não podem completar nem alterar o frame físico.
             root.optJSONObject("runtime")?.let { merge(runtime, it) }
 
             val now = System.currentTimeMillis()
