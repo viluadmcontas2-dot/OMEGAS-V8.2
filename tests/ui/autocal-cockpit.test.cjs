@@ -4,10 +4,20 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '../..');
 const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+const cockpitCss = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
 const api = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/autocal-api.js'), 'utf8');
 const provider = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/AutoCalBridgeProvider.kt'), 'utf8');
 const manager = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt'), 'utf8');
 
+assert.equal(cockpit.includes('autocal-chart-workspace'), true);
+assert.equal(cockpit.includes('autocal-live-strip'), true);
+assert.equal(cockpit.includes('data-autocal-read-context'), true);
+assert.equal(cockpit.includes('autocal-now-card'), false);
+assert.equal(cockpit.includes('autocal-read-card'), false);
+assert.equal(cockpitCss.includes('.autocal-chart-workspace'), true);
+assert.equal(cockpitCss.includes('.autocal-live-strip'), true);
+assert.equal(cockpit.indexOf('autocal-chart-workspace') < cockpit.indexOf('autocalReferenceChart'), true);
+assert.equal(cockpit.indexOf('autocalReferenceChart') < cockpit.indexOf('autocalChartInspector'), true);
 assert.equal(cockpit.includes("addHook('context'"), true);
 assert.equal(cockpit.includes('setInterval'), false);
 assert.equal(cockpit.includes('NUM_BUF_UPD_GAS'), true);
