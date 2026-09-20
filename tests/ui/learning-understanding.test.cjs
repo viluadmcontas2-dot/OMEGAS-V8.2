@@ -13,7 +13,9 @@ for (const label of [
   'COLETA',
   'Gasolina esperada',
   'No GNV agora',
-  'Diferença',
+  'Diferença agora',
+  'Diferença estável',
+  'Tendência recente',
   'Novo valor K sugerido',
   'Diagnóstico técnico',
   'Evidência gasolina',
@@ -23,7 +25,7 @@ for (const label of [
   assert.equal(source.includes(label), true, `missing ${label}`);
 }
 assert.equal(source.includes('stability?.reason || learned?.readinessReason'), true);
-assert.equal(source.includes('ainda não existe par equivalente válido'), true);
+assert.equal(source.includes('sem par equivalente válido'), true);
 assert.equal(source.includes('Nada aqui escreve na ECU'), true);
 assert.equal(source.includes('Abrir o editor não escreve na ECU'), true);
 assert.equal(source.includes("router.navigate('map'"), true);
