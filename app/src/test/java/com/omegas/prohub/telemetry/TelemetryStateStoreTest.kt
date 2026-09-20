@@ -35,9 +35,66 @@ class TelemetryStateStoreTest {
         assertEquals(1_800, store.telemetryCopy().optInt("rpm"))
     }
 
-    private fun event(sessionId: Long, rpm: Int): String = JSONObject()
+    @Test
+    fun `partial telemetry cannot inherit map from previous physical revision`() {
+        val store = TelemetryStateStore()
+        store.beginSession(21L)
+        assertTrue(store.updateFromEngineEvent(fullEvent(21L, 1_000L, 2_000, 4.5, 0.45)) != null)
+
+        val partial = JSONObject()
+            .put("event", "telemetry")
+            .put("session_id", 21L)
+            .put("live", JSONObject()
+                .put("session_id", 21L)
+                .put("captured_elapsed_ms", 1_100L)
+                .put("rpm", 2_100)
+                .put("petrol_ms", 5.0))
+            .toString()
+
+        assertNull(store.updateFromEngineEvent(partial))
+        val current = store.telemetryCopy()
+        assertEquals(1_000L, current.getLong("captured_elapsed_ms"))
+        assertEquals(2_000, current.getInt("rpm"))
+        assertEquals(4.5, current.getDouble("petrol_ms"), 0.0001)
+        assertEquals(0.45, current.getDouble("load_bar"), 0.0001)
+    }
+
+    @Test
+    fun `older frame from same usb generation cannot replace newer physical revision`() {
+        val store = TelemetryStateStore()
+        store.beginSession(22L)
+        assertTrue(store.updateFromEngineEvent(fullEvent(22L, 2_000L, 3_000, 6.0, 0.70)) != null)
+        assertNull(store.updateFromEngineEvent(fullEvent(22L, 1_900L, 9_000, 9.0, 1.20)))
+
+        val current = store.telemetryCopy()
+        assertEquals(2_000L, current.getLong("captured_elapsed_ms"))
+        assertEquals(3_000, current.getInt("rpm"))
+        assertEquals(6.0, current.getDouble("petrol_ms"), 0.0001)
+        assertEquals(0.70, current.getDouble("load_bar"), 0.0001)
+    }
+
+    private fun fullEvent(
+        sessionId: Long,
+        capturedElapsedMs: Long,
+        rpm: Int,
+        petrolMs: Double,
+        mapBar: Double,
+    ): JSONObject = JSONObject()
         .put("event", "telemetry")
         .put("session_id", sessionId)
-        .put("live", JSONObject().put("session_id", sessionId).put("rpm", rpm))
-        .toString()
+        .put("live", JSONObject()
+            .put("session_id", sessionId)
+            .put("captured_elapsed_ms", capturedElapsedMs)
+            .put("rpm", rpm)
+            .put("petrol_ms", petrolMs)
+            .put("load_bar", mapBar)
+            .put("fuel", "GNV"))
+
+    private fun event(sessionId: Long, rpm: Int): String = fullEvent(
+        sessionId = sessionId,
+        capturedElapsedMs = rpm.toLong(),
+        rpm = rpm,
+        petrolMs = 4.0,
+        mapBar = 0.5,
+    ).toString()
 }
