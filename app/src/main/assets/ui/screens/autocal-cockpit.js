@@ -241,36 +241,7 @@
       return null;
     },
 
-    updateChartView(current, action, payload = {}) {
-      const base = {
-        zoom: Math.max(1, Math.min(3, finite(current?.zoom) ?? 1)),
-        panX: finite(current?.panX) ?? 0,
-        panY: finite(current?.panY) ?? 0,
-      };
-      if (action === 'fit') return { zoom: 1, panX: 0, panY: 0 };
-      if (action === 'zoom-in') return { ...base, zoom: Math.min(3, base.zoom + 0.25) };
-      if (action === 'zoom-out') {
-        const zoom = Math.max(1, base.zoom - 0.25);
-        return zoom === 1 ? { zoom: 1, panX: 0, panY: 0 } : { ...base, zoom };
-      }
-      if (action === 'pinch') {
-        const zoom = Math.max(1, Math.min(3, finite(payload.zoom) ?? base.zoom));
-        return zoom === 1 ? { zoom: 1, panX: 0, panY: 0 } : { ...base, zoom };
-      }
-      if (action === 'pan') {
-        if (base.zoom <= 1) return base;
-        const limitX = 240 * (base.zoom - 1);
-        const limitY = 100 * (base.zoom - 1);
-        const dx = finite(payload.dx) ?? 0;
-        const dy = finite(payload.dy) ?? 0;
-        return {
-          ...base,
-          panX: Math.max(-limitX, Math.min(limitX, base.panX + dx)),
-          panY: Math.max(-limitY, Math.min(limitY, base.panY + dy)),
-        };
-      }
-      return base;
-    },
+
   };
 
   class AutoCalCockpit {
@@ -296,9 +267,6 @@
       this.sessions = [];
       this.sessionDrawerOpen = false;
       this.chartScale = null;
-      this.chartView = AutoCalUxModel.updateChartView(null, 'fit');
-      this.chartPointers = new Map();
-      this.pinchBase = null;
       this.previousReferencePoints = [];
       this.currentReferencePoints = [];
       this.chartHistoryVisible = false;
@@ -376,9 +344,6 @@
               <div class="autocal-section-head">
                 <div><small>REFERÊNCIA NATIVA</small><h4>Gasolina × GNV</h4><p>Petrol Inj. no eixo horizontal e MAP no vertical. A tela só desenha o que a ECU publicou.</p></div>
                 <div class="autocal-chart-tools" aria-label="Controles do gráfico">
-                  <button type="button" data-autocal-chart-action="zoom-out" aria-label="Diminuir zoom">−</button>
-                  <button type="button" data-autocal-chart-action="zoom-in" aria-label="Aumentar zoom">+</button>
-                  <button type="button" data-autocal-chart-action="fit">Ver tudo</button>
                   <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 </div>
               </div>
@@ -451,12 +416,6 @@
       });
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
-      });
-      this.panel?.querySelectorAll('[data-autocal-chart-action]').forEach(button => {
-        button.addEventListener('click', () => {
-          this.chartView = AutoCalUxModel.updateChartView(this.chartView, button.dataset.autocalChartAction);
-          this.applyChartTransform();
-        });
       });
       this.panel?.querySelector('[data-autocal-history]')?.addEventListener('click', () => {
         if (!this.previousReferencePoints.length) return;
@@ -814,13 +773,6 @@
       });
     }
 
-    chartTransform() {
-      const zoom = finite(this.chartView?.zoom) ?? 1;
-      const panX = finite(this.chartView?.panX) ?? 0;
-      const panY = finite(this.chartView?.panY) ?? 0;
-      return 'translate(' + (500 + panX) + ' ' + (120 + panY) + ') scale(' + zoom + ') translate(-500 -120)';
-    }
-
     renderReferenceChart(snapshot) {
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
@@ -909,65 +861,16 @@
         grid +
         '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
         '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
-        '<g data-autocal-chart-group transform="' + this.chartTransform() + '">' +
+        '<g>' +
         previous + equivalencePath +
         '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
         '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
         pointMarkup + liveMarkup +
         '</g></svg>';
 
-      const svg = host.querySelector('svg');
-      if (svg) this.bindChartGestures(svg);
       const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
       this.inspectReferencePoint(selected);
       this.renderLiveNarrative();
-    }
-
-    bindChartGestures(svg) {
-      const distance = values => {
-        if (values.length < 2) return 0;
-        const a = values[0];
-        const b = values[1];
-        return Math.hypot(a.x - b.x, a.y - b.y);
-      };
-      svg.addEventListener('pointerdown', event => {
-        this.chartPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        try { svg.setPointerCapture(event.pointerId); } catch (_) {}
-        if (this.chartPointers.size === 2) {
-          this.pinchBase = { distance: distance([...this.chartPointers.values()]), zoom: this.chartView.zoom };
-        }
-      });
-      svg.addEventListener('pointermove', event => {
-        const previous = this.chartPointers.get(event.pointerId);
-        if (!previous) return;
-        this.chartPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        const values = [...this.chartPointers.values()];
-        if (values.length >= 2 && this.pinchBase?.distance > 0) {
-          const ratio = distance(values) / this.pinchBase.distance;
-          this.chartView = AutoCalUxModel.updateChartView(this.chartView, 'pinch', { zoom: this.pinchBase.zoom * ratio });
-          this.applyChartTransform();
-          return;
-        }
-        if (values.length === 1) {
-          this.chartView = AutoCalUxModel.updateChartView(this.chartView, 'pan', {
-            dx: event.clientX - previous.x,
-            dy: event.clientY - previous.y,
-          });
-          this.applyChartTransform();
-        }
-      });
-      const end = event => {
-        this.chartPointers.delete(event.pointerId);
-        if (this.chartPointers.size < 2) this.pinchBase = null;
-        try { svg.releasePointerCapture(event.pointerId); } catch (_) {}
-      };
-      svg.addEventListener('pointerup', end);
-      svg.addEventListener('pointercancel', end);
-    }
-
-    applyChartTransform() {
-      const group = document.querySelector('#autocalReferenceChart [data-autocal-chart-group]');
-      if (group) group.setAttribute('transform', this.chartTransform());
     }
 
     inspectReferencePoint(index) {
