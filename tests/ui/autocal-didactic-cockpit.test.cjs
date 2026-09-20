@@ -81,19 +81,13 @@ assert.equal(model.toggleAction(undefined), null, 'estado nativo indefinido não
 const disconnected = model.humanState({ available: false }, { state: 'DISCONNECTED', latestSnapshot: { available: false } });
 assert.equal(disconnected.enabled, null, 'DISCONNECTED deve preservar estado AutoCal desconhecido');
 
-let view = model.updateChartView(null, 'zoom-in');
-assert.ok(view.zoom > 1);
-view = model.updateChartView(view, 'pan', { dx: 40, dy: -20 });
-assert.notEqual(view.panX, 0);
-assert.notEqual(view.panY, 0);
-view = model.updateChartView(view, 'fit');
-assert.equal(view.zoom, 1);
-assert.equal(view.panX, 0);
-assert.equal(view.panY, 0);
-
-assert.equal(source.includes('data-autocal-chart-action="zoom-in"'), true);
-assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), true);
-assert.equal(source.includes('data-autocal-chart-action="fit"'), true);
+assert.equal(typeof model.updateChartView, 'undefined', 'gráfico físico não pode ter transform visual desacoplado dos eixos');
+assert.equal(source.includes('data-autocal-chart-action="zoom-in"'), false);
+assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), false);
+assert.equal(source.includes('data-autocal-chart-action="fit"'), false);
+assert.equal(source.includes('Petrol Inj. (ms)'), true, 'eixo X precisa manter unidade física');
+assert.equal(source.includes('MAP (bar)'), true, 'eixo Y precisa manter unidade física');
+assert.equal(source.includes('data-autocal-history'), true, 'comparação com leitura anterior deve permanecer disponível');
 assert.equal(source.includes('data-autocal-toggle'), true);
 assert.equal(source.includes('data-autocal-band-index'), true);
 assert.equal(source.includes('autocalHumanTitle'), true);
@@ -123,7 +117,8 @@ assert.match(css, /\.autocal-human-copy strong\s*\{[^}]*font-size:\s*13px/s, 'pr
 console.log('AUTOCAL_DIDACTIC_COCKPIT=PASS');
 
 assert.equal(source.includes('>Ajustar</button>'), false, 'fit visual não pode parecer ajuste de ECU');
-assert.equal(source.includes('>Ver tudo</button>'), true, 'fit visual deve dizer Ver tudo');
+assert.equal(source.includes('>Ver tudo</button>'), false, 'fit/zoom não pode voltar sem transformar também os eixos físicos');
+assert.equal(css.includes('touch-action: pan-y'), true, 'gráfico fixo deve devolver rolagem vertical à HMI');
 assert.equal(source.includes('autocal-live-point'), true, 'cursor AGORA precisa de camada própria');
 
 const staleManualWhilePaused = model.humanState(

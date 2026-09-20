@@ -41,10 +41,14 @@ assert.match(cockpit, /route === ['"]autocal['"]/,
   'cockpit deve acompanhar a rota AutoCal');
 assert.match(cockpit, /data-autocal-cancel-read/,
   'leitura em andamento precisa oferecer cancelamento');
-assert.match(cockpit, /readerStatus\(\)/,
-  'cockpit precisa consultar o estado do reader manual');
-assert.match(cockpit, /readerSnapshot\(\)/,
-  'cockpit precisa consultar o snapshot do reader manual');
+assert.match(cockpit, /this\.api\.projection/,
+  'cockpit deve consumir a projeção Kotlin unificada');
+assert.equal(cockpit.includes('this.api.readerSnapshot()'), false,
+  'cockpit não pode escolher snapshot manual diretamente');
+assert.equal(cockpit.includes('this.api.acquisitionSnapshot()'), false,
+  'cockpit não pode escolher snapshot do monitor diretamente');
+assert.match(cockpit, /AUTOCAL_PROJECTION_UNAVAILABLE/,
+  'perda da projeção deve falhar fechado e ficar explícita');
 assert.match(cockpit, /livePoint\(/,
   'modelo deve separar cursor vivo da evidência adquirida');
 assert.match(cockpit, /autocal-live-point/,
@@ -52,9 +56,15 @@ assert.match(cockpit, /autocal-live-point/,
 assert.match(cockpit, />AGORA</,
   'cursor vivo precisa ser rotulado para o operador');
 assert.equal(cockpit.includes('>Ajustar</button>'), false,
-  'fit visual não pode parecer ajuste da ECU');
-assert.match(cockpit, />Ver tudo</,
-  'fit deve ter linguagem visual inequívoca');
+  'controle visual não pode parecer ajuste da ECU');
+assert.equal(cockpit.includes('data-autocal-chart-action'), false,
+  'zoom/pan desacoplado dos eixos físicos não pode voltar');
+assert.match(cockpit, /Petrol Inj\. \(ms\)/,
+  'eixo X deve declarar a unidade física');
+assert.match(cockpit, /MAP \(bar\)/,
+  'eixo Y deve declarar a unidade física');
+assert.match(cockpit, /data-autocal-history/,
+  'leitura anterior continua sendo a comparação gráfica permitida');
 
 assert.equal(cockpit.includes("'<span>B' +"), false,
   'Bxx não pode ser rótulo primário das regiões');
