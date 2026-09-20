@@ -22,7 +22,6 @@ const controls = [
   ['data-autocal-cancel-read', "querySelector('[data-autocal-cancel-read]')", 'cancelRead()'],
   ['data-autocal-toggle', "querySelector('[data-autocal-toggle]')", 'this.runOperational(action)'],
   ['data-autocal-action', "querySelectorAll('[data-autocal-action]')", 'this.prepare(button.dataset.autocalAction)'],
-  ['data-autocal-chart-action', "querySelectorAll('[data-autocal-chart-action]')", 'updateChartView'],
   ['data-autocal-history', "querySelector('[data-autocal-history]')", 'chartHistoryVisible'],
   ['data-autocal-band-index', "closest('[data-autocal-band-index]')", 'inspectBand'],
   ['data-autocal-ref-index', "closest('[data-autocal-ref-index]')", 'inspectReferencePoint'],
@@ -34,6 +33,12 @@ for (const [selector, hook, handler] of controls) {
   assert.ok(cockpit.includes(hook), selector + ' existe sem binding de clique');
   assert.ok(cockpit.includes(handler), selector + ' não alcança handler esperado');
 }
+
+assert.equal(cockpit.includes('data-autocal-chart-action'), false, 'zoom/pan genérico não pode voltar com eixos físicos fixos');
+assert.equal(cockpit.includes('updateChartView'), false, 'transformação visual desacoplada dos eixos não pode voltar');
+assert.ok(cockpit.includes('Petrol Inj. (ms)'), 'eixo X físico precisa permanecer explícito');
+assert.ok(cockpit.includes('MAP (bar)'), 'eixo Y físico precisa permanecer explícito');
+assert.ok(cockpit.includes('data-autocal-history'), 'histórico de leitura continua sendo o controle gráfico permitido');
 
 assert.ok(index.includes('data-route="autocal"'), 'rota AutoCal ausente');
 assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="obd"'), 'AutoCal deve preceder OBD');
