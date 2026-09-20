@@ -67,20 +67,24 @@
       const autoMatchCount = finite(state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
       const maxAutoMatch = finite(state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
       const acquisitionState = String(state.state || '').toUpperCase();
-      const title = acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED'
-        ? 'AutoCal com erro de leitura'
-        : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
-          ? 'Conectando à aquisição'
-          : enabled === 1 ? 'AutoCal adquirindo'
-          : enabled === 0 ? 'AutoCal pausado'
-          : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
+      const title = acquisitionState === 'UNAVAILABLE'
+        ? 'AutoCal sem estado confiável'
+        : acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED'
+          ? 'AutoCal com erro de leitura'
+          : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
+            ? 'Conectando à aquisição'
+            : enabled === 1 ? 'AutoCal adquirindo'
+            : enabled === 0 ? 'AutoCal pausado'
+            : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
       const progress = 'Gasolina ' + petrolZones + '/4 zonas · GNV ' + gasZones + '/4 zonas';
       const autoMatch = autoMatchCount === null
         ? 'AutoMatch ainda sem contador válido'
         : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
           (maxAutoMatch === null ? '' : ' · limite configurado ' + Math.round(maxAutoMatch));
       let nextAction = 'Consulte a ECU para receber o estado nativo.';
-      if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
+      if (acquisitionState === 'UNAVAILABLE') {
+        nextAction = String(state.message || state.error || 'A projeção nativa do AutoCal está indisponível.') + ' · Nenhuma referência será escolhida pela interface.';
+      } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão e tente consultar novamente.';
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
       else if (enabled === 1 && gasZones < 4) nextAction = 'Aquisição habilitada. Mantenha condições estáveis para visitar as regiões que ainda faltam.';
@@ -454,10 +458,38 @@
       const projection = this.api.projection?.() || {};
       const authoritative = projection?.ok === true;
       this.projection = projection;
-      this.readerState = authoritative ? (projection.manualStatus || {}) : (this.api.readerStatus() || {});
-      this.readerSnapshot = authoritative ? (projection.manualSnapshot || {}) : (this.api.readerSnapshot() || {});
-      const acquisitionStatus = authoritative ? (projection.nativeStatus || {}) : (this.api.acquisitionStatus() || {});
-      this.acquisitionSnapshot = authoritative ? (projection.nativeSnapshot || {}) : (this.api.acquisitionSnapshot() || {});
+
+      if (!authoritative) {
+        const message = String(projection?.error || 'A projeção nativa do AutoCal não respondeu com estado confiável.');
+        this.readerState = {
+          state: 'UNAVAILABLE',
+          error: message,
+          reasonCode: 'AUTOCAL_PROJECTION_UNAVAILABLE',
+        };
+        this.readerSnapshot = { available: false, fields: [] };
+        this.acquisitionSnapshot = { available: false, fields: [] };
+        this.acquisitionState = {
+          state: 'UNAVAILABLE',
+          message,
+          error: message,
+          reasonCode: 'AUTOCAL_PROJECTION_UNAVAILABLE',
+        };
+        this.state = this.acquisitionState;
+        this.snapshot = { available: false, fields: [] };
+        this.analysis = {};
+        this.referenceUsable = false;
+        this.actionState = this.api.actionStatus() || {};
+        this.operationalPending = this.actionState?.busy === true ||
+          ['QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
+        this.sessionState = this.api.sessionStatus?.() || {};
+        this.render();
+        return;
+      }
+
+      this.readerState = projection.manualStatus || {};
+      this.readerSnapshot = projection.manualSnapshot || {};
+      const acquisitionStatus = projection.nativeStatus || {};
+      this.acquisitionSnapshot = projection.nativeSnapshot || {};
       this.acquisitionState = {
         ...acquisitionStatus,
         latestSnapshot: this.acquisitionSnapshot?.available
@@ -466,24 +498,9 @@
       };
       this.state = this.acquisitionState;
 
-      let nextSnapshot;
-      let nextAnalysis = {};
-      if (authoritative) {
-        nextSnapshot = projection.snapshot || {};
-        nextAnalysis = projection.analysis || {};
-        this.referenceUsable = projection.referenceUsable === true;
-      } else {
-        const readerStateName = String(this.readerState?.state || '').toUpperCase();
-        const readerReady = ['READY', 'READY_PARTIAL'].includes(readerStateName) && this.readerSnapshot?.available !== false;
-        nextSnapshot = readerReady
-          ? this.readerSnapshot
-          : this.acquisitionSnapshot?.available
-            ? this.acquisitionSnapshot
-            : this.readerSnapshot?.available
-              ? this.readerSnapshot
-              : this.acquisitionSnapshot || {};
-        this.referenceUsable = AutoCalUxModel.referencePoints(nextSnapshot).length > 0;
-      }
+      const nextSnapshot = projection.snapshot || {};
+      const nextAnalysis = projection.analysis || {};
+      this.referenceUsable = projection.referenceUsable === true;
 
       const oldHash = String(this.snapshot?.snapshotHash || '');
       const nextHash = String(nextSnapshot?.snapshotHash || '');
@@ -510,7 +527,9 @@
     requestRead() {
       if (!this.api?.available?.()) return;
       const result = this.api.startRead();
-      this.readerState = result && typeof result === 'object' ? result : this.api.readerStatus() || {};
+      this.readerState = result && typeof result === 'object'
+        ? result
+        : { state: 'UNAVAILABLE', error: 'Retorno da consulta AutoCal inválido.', reasonCode: 'AUTOCAL_PROJECTION_UNAVAILABLE' };
       if (result?.ok === false) {
         this.store.patch({ alert: { level: 'warning', message: result.error || 'Leitura AutoCal indisponível.' } });
       } else {
@@ -589,7 +608,8 @@
       const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
       const human = AutoCalUxModel.humanState(snapshot, state);
       const acquisitionName = String(state.state || '').toUpperCase();
-      const acquisitionLabel = acquisitionName === 'WAITING_TELEMETRY_SETTLE' ? 'conectando'
+      const acquisitionLabel = acquisitionName === 'UNAVAILABLE' ? 'indisponível'
+        : acquisitionName === 'WAITING_TELEMETRY_SETTLE' ? 'conectando'
         : acquisitionName === 'PROBE_FAILED' || acquisitionName === 'FAILED' ? 'erro'
         : human.enabled === 1 ? 'adquirindo'
         : human.enabled === 0 ? 'pausado'
