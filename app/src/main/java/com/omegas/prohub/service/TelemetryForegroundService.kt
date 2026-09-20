@@ -14,6 +14,7 @@ import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.KFactorManager
 import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.autocal.NativeAutoCalMonitor
+import com.omegas.prohub.diagnostics.DocumentsSessionMirror
 import com.omegas.prohub.diagnostics.SessionRecorder
 import com.omegas.prohub.ecu.NativeRuntimeManager
 import com.omegas.prohub.gps.GpsTelemetryManager
@@ -129,7 +130,9 @@ class TelemetryForegroundService : Service() {
         archives = DataArchiveManager(paths, log)
         telemetryStore = TelemetryStateStore()
         consumptionTracker = ConsumptionTracker(this)
-        sessionRecorder = SessionRecorder(paths, settings)
+        val documentsMirror = DocumentsSessionMirror(this)
+        sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
+        sessionRecorder.recoverDocumentsMirrorAsync()
         log.setListener { item ->
             sessionRecorder.record("app_log", "native", item, force = true)
         }

@@ -118,6 +118,12 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission(),
     ) { }
 
+    private val legacyStoragePermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) runWithService { it.sessionRecorder.recoverDocumentsMirrorAsync() }
+    }
+
     private val locationPermission = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { grants ->
@@ -190,6 +196,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         applySystemInsets()
         requestNotificationPermission()
+        requestLegacyStoragePermission()
         startHubService()
         configureWebView()
         webView.post { maybePromptBatteryOptimization() }
@@ -479,6 +486,16 @@ class MainActivity : AppCompatActivity() {
             message,
             if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT,
         ).show()
+    }
+
+    private fun requestLegacyStoragePermission() {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) return
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+        legacyStoragePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }
 
     private fun requestNotificationPermission() {

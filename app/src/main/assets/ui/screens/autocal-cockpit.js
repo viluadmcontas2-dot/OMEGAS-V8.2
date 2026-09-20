@@ -109,15 +109,21 @@
       const gasZones = Math.max(0, Math.min(4, Math.round(finite(autocal.gasZones) ?? 0)));
       const dropped = Math.max(0, Math.round(finite(status.droppedEvents) ?? 0));
       const lastError = String(status.lastError || '');
-      const warning = dropped > 0 || lastError.length > 0;
+      const documentsMirror = status?.documentsMirror && typeof status.documentsMirror === 'object' ? status.documentsMirror : {};
+      const mirrorFailed = documentsMirror.available === false || documentsMirror.lastSyncOk === false;
+      const warning = dropped > 0 || lastError.length > 0 || mirrorFailed;
       const title = recording ? 'Sessão atual' : summary?.sessionId ? 'Última sessão' : 'Sessões prontas';
       const detail = (recording ? minutes + ' min' : 'histórico preservado') +
         ' · ' + regions + ' ' + (regions === 1 ? 'região correlacionada' : 'regiões correlacionadas') +
         ' · GNV ' + gasZones + '/4';
-      const next = warning
-        ? 'Há uma lacuna na gravação da evidência. Veja os detalhes antes de usar esta sessão em análise.'
-        : recording ? 'Evidência AutoCal sendo preservada nesta sessão.' : 'Abra Sessões para revisar ou exportar o histórico.';
-      return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped };
+      const next = dropped > 0 || lastError.length > 0
+        ? 'Há uma lacuna na gravação interna da evidência. Veja os detalhes antes de usar esta sessão.'
+        : mirrorFailed
+          ? 'A sessão segue protegida na memória interna, mas Documentos/Omegas precisa de atenção.'
+          : recording
+            ? 'Salvando em Documentos/Omegas automaticamente enquanto a sessão acontece.'
+            : 'Salvo em Documentos/Omegas. Abra Sessões apenas para revisar ou exportar.';
+      return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped, documentsMirror, mirrorFailed };
     },
 
     livePoint(telemetry = {}) {
@@ -290,7 +296,7 @@
                 <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
               </div>
               <div class="autocal-session-actions">
-                <span id="autocalSessionState">Persistência pronta</span>
+                <span id="autocalSessionState">Documentos/Omegas · persistência automática</span>
                 <button type="button" data-autocal-sessions class="secondary">Ver sessões</button>
               </div>
             </section>
@@ -596,7 +602,12 @@
       const narrative = AutoCalUxModel.sessionNarrative(this.sessionState || {});
       this.text('autocalSessionSummary', narrative.title);
       this.text('autocalSessionDetail', narrative.detail);
-      this.text('autocalSessionState', narrative.recording ? 'Salvando evidência' : 'Persistência pronta');
+      this.text(
+        'autocalSessionState',
+        narrative.mirrorFailed
+          ? 'Protegido na memória interna'
+          : narrative.recording ? 'Salvando em Documentos/Omegas' : 'Salvo em Documentos/Omegas',
+      );
       this.text('autocalSessionNext', narrative.next);
       const strip = this.panel?.querySelector('.autocal-session-strip');
       if (strip) strip.dataset.sessionLevel = narrative.level;

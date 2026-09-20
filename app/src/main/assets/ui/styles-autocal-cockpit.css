@@ -948,3 +948,56 @@
     justify-content: space-between;
   }
 }
+
+/* HMI automotiva: texto operacional legível a aproximadamente um braço de distância. */
+.autocal-human-copy small,
+.autocal-section-head small,
+.autocal-command-copy small,
+.autocal-tech-grid small { font-size: 11px; }
+.autocal-human-copy p { font-size: 14px; }
+.autocal-zone-meter span { font-size: 12px; }
+.autocal-zone-dots i { width: 11px; height: 11px; }
+.autocal-human-copy strong { font-size: 14px; }
+.autocal-section-head h4 { font-size: 18px; }
+.autocal-section-head p { font-size: 13px; }
+.autocal-section-head > span { font-size: 13px; }
+.autocal-chart-tools button { font-size: 14px; }
+.autocal-chart-legend { font-size: 13px; }
+.autocal-axis-label { font-size: 12px; }
+.chart-empty { font-size: 13px; }
+.chart-empty b { font-size: 15px; }
+.autocal-inline-inspector { font-size: 13px; }
+.autocal-band-legend { font-size: 12px; }
+.autocal-band-segment span,
+.autocal-band-segment small { font-size: 11px; }
+.autocal-command-copy b { font-size: 15px; }
+.autocal-command-copy span { font-size: 13px; }
+.autocal-more-actions > summary,
+.autocal-technical-details > summary { font-size: 14px; }
+.autocal-reset-actions p { font-size: 12px; }
+.autocal-tech-grid b { font-size: 13px; }
+.autocal-events article p,
+.autocal-events article small,
+.autocal-events article span,
+.autocal-events .empty-copy { font-size: 12px; }
+.autocal-review-card p,
+.autocal-review-card dd,
+.autocal-review-card dt { font-size: 13px; }
+.autocal-review-tech > summary { font-size: 13px; }
+.autocal-now-values small,
+.autocal-read-card small { font-size: 11px; }
+.autocal-now-values b { font-size: 18px; }
+.autocal-now-card > p { font-size: 14px; }
+.autocal-read-card b { font-size: 15px; }
+.autocal-read-card span { font-size: 13px; }
+.autocal-read-card p { font-size: 13px; }
+.autocal-live-label { font-size: 13px; }
+.autocal-session-copy small,
+.autocal-session-item small { font-size: 11px; }
+.autocal-session-copy b { font-size: 16px; }
+.autocal-session-copy span { font-size: 13px; }
+.autocal-session-actions > span { font-size: 13px; }
+.autocal-session-item span { font-size: 13px; }
+.autocal-session-item b { font-size: 14px; }
+.autocal-session-item button,
+.autocal-session-actions button { min-height: 52px; font-size: 14px; }

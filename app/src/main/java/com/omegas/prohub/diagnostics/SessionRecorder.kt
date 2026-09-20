@@ -33,11 +33,13 @@ import java.util.zip.ZipOutputStream
 class SessionRecorder(
     private val paths: AppPaths,
     private val settings: AppSettings,
+    private val documentsMirror: DocumentsSessionMirror? = null,
 ) {
     companion object {
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
+        private const val DOCUMENTS_MIRROR_INTERVAL_MS = 30_000L
     }
 
     private val droppedEvents = AtomicLong(0L)
@@ -69,6 +71,7 @@ class SessionRecorder(
     @Volatile private var lastSnapshotAt = 0L
     @Volatile private var stopReason = ""
     @Volatile private var lastError = ""
+    @Volatile private var lastDocumentsMirrorAt = 0L
 
     private var sessionDir: File? = null
     private var semanticLedger: SessionSemanticLedger? = null
@@ -96,6 +99,7 @@ class SessionRecorder(
             lastSnapshotAt = 0L
             stopReason = ""
             lastError = ""
+            lastDocumentsMirrorAt = 0L
             sequence.set(0L)
             droppedEvents.set(0L)
             petrolTicks = 0L
@@ -117,6 +121,11 @@ class SessionRecorder(
                 "native",
                 JSONObject().put("reason", reason).put("metadata", metadata),
             )
+            worker.execute {
+                synchronized(this) {
+                    if (recording && sessionId == id) syncDocumentsMirror(force = true)
+                }
+            }
             statusObject().put("ok", true)
         } catch (error: Exception) {
             recording = false
@@ -136,6 +145,7 @@ class SessionRecorder(
             semanticLedger?.finish(stoppedAt, stopReason)
             closeWriter()
             updateManifest()
+            syncDocumentsMirror(force = true)
             statusObject().put("ok", true)
         }
     }
@@ -211,6 +221,10 @@ class SessionRecorder(
             .put("stopReason", stopReason)
             .put("lastError", lastError)
             .put("directory", sessionDir?.absolutePath ?: "")
+            .put("documentsMirror", documentsMirror?.statusObject() ?: JSONObject()
+                .put("available", false)
+                .put("lastSyncOk", false)
+                .put("relativeRoot", DocumentsSessionMirror.PUBLIC_ROOT))
             .put("semanticSummary", semanticLedger?.snapshot(recording, stoppedAt, stopReason) ?: JSONObject.NULL)
             .put(
                 "settings",
@@ -351,6 +365,18 @@ class SessionRecorder(
         }
     }
 
+    fun recoverDocumentsMirrorAsync() {
+        val mirror = documentsMirror ?: return
+        if (worker.isShutdown) return
+        worker.execute {
+            paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
+                ?.sortedBy { it.lastModified() }
+                ?.forEach { dir ->
+                    try { mirror.sync(dir, dir.name) } catch (_: Exception) {}
+                }
+        }
+    }
+
     @Synchronized
     fun close() {
         if (recording) stop("serviço encerrado")
@@ -476,6 +502,16 @@ class SessionRecorder(
                 )
                 while (preview.size > PREVIEW_LIMIT) preview.removeFirst()
             }
+            val durableAutoCalEvent = type in setOf(
+                "autocal_native_snapshot",
+                "autocal_manual_snapshot",
+                "autocal_native_action",
+                "autocal_native_calibration_epoch",
+            )
+            val periodicCandidate = type == "telemetry" || type == "full_snapshot"
+            if (durableAutoCalEvent || (periodicCandidate && now - lastDocumentsMirrorAt >= DOCUMENTS_MIRROR_INTERVAL_MS)) {
+                syncDocumentsMirror(force = durableAutoCalEvent)
+            }
         } catch (error: Exception) {
             lastError = error.message ?: error.javaClass.simpleName
         }
@@ -553,6 +589,21 @@ class SessionRecorder(
         try {
             File(dir, "manifest.json").writeText(manifestObject().toString(2), Charsets.UTF_8)
         } catch (_: Exception) {
+        }
+    }
+
+    private fun syncDocumentsMirror(force: Boolean) {
+        val mirror = documentsMirror ?: return
+        val dir = sessionDir ?: return
+        val now = System.currentTimeMillis()
+        if (!force && now - lastDocumentsMirrorAt < DOCUMENTS_MIRROR_INTERVAL_MS) return
+        try {
+            writer?.flush()
+            updateManifest()
+            semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
+            mirror.sync(dir, sessionId)
+        } finally {
+            lastDocumentsMirrorAt = now
         }
     }
 
@@ -637,4 +688,3 @@ Unidades: RPM em rpm; tempos em ms; MAP/pressões em bar; temperaturas em °C.
         val immutableBoundary: Boolean,
     )
 }
-
