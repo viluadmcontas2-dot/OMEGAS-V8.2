@@ -143,6 +143,40 @@ test('payload de sugestão mostra tempos em ms e o novo valor K sem confundir as
   assert.match(screen.cellPane.innerHTML, /Abrir o editor não escreve na ECU/);
 });
 
+test('endereço do Mapa K deixa explícito que segue a condição GNV observada, não a gasolina alvo', () => {
+  const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
+  const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
+  screen.cellPane = { innerHTML: '', querySelector: () => ({ addEventListener: () => {} }) };
+  screen.router = { navigate: () => {} };
+  screen.renderDetail({
+    learning: {
+      grid: {
+        rpmBins: [850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500],
+        petrolBins: [2.0, 2.5, 3.0, 3.5, 4.5, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0],
+      },
+      comparisons: [{
+        cng_cell_row: 5, cng_cell_column: 3,
+        reference_cell_row: 4, reference_cell_column: 3,
+        petrol_target_ms: 4.5, petrol_on_cng_ms: 6.0, error_pct: 33.3,
+      }],
+    },
+    calibrationState: {
+      suggestionItems: [{
+        target: 'MAP_K', lifecycle: 'PENDING', actionable: true,
+        mapChanges: [{ row: 5, column: 3, before: 100, after: 108 }],
+      }],
+      learningStability: { map: [{ row: 5, column: 3, state: 'CONSOLIDATED', consolidatedErrorPercent: 33.3 }] },
+    },
+    telemetry: { live: { fuel: 'GNV' } },
+  }, 5, 3);
+
+  assert.match(screen.cellPane.innerHTML, /Gasolina esperada.*4,50 ms/s);
+  assert.match(screen.cellPane.innerHTML, /No GNV agora.*6,00 ms/s);
+  assert.match(screen.cellPane.innerHTML, /Endereço Mapa K.*6,0 ms.*2\.500 RPM/s);
+  assert.match(screen.cellPane.innerHTML, /condição GNV observada/i);
+  assert.match(screen.cellPane.innerHTML, /gasolina esperada.*referência/i);
+});
+
 test('Diferença separa último par, consolidado e tendência sem apagar estabilidade', () => {
   const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
   const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
