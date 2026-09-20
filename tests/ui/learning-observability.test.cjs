@@ -247,6 +247,6 @@ test('backend equivalent comparison stays neutral in the detail view', () => {
     row: 0, column: 0, petrol_target_ms: 5, petrol_on_cng_ms: 5.1,
     error_pct: 2, direction: 'EQUIVALENT'
   }] } }, 0, 0);
-  assert.match(screen.cellPane.innerHTML, /2,0% \(equivalente\)/);
+  assert.match(screen.cellPane.innerHTML, /\+2,0% · equivalente/);
   assert.doesNotMatch(screen.cellPane.innerHTML, /precisa mais GNV/);
 });
