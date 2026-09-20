@@ -51,7 +51,9 @@ assert ">Diferença<" in index
 assert ">Sugestão<" in index
 assert "Gasolina esperada" in learning
 assert "No GNV agora" in learning
-assert "<dt>Diferença</dt>" in learning
+assert "<dt>Diferença agora</dt>" in learning
+assert "<dt>Diferença estável</dt>" in learning
+assert "<dt>Tendência recente</dt>" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning
