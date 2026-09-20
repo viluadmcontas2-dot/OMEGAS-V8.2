@@ -37,6 +37,8 @@ const human = model.humanState(snapshot, { state: 'READY', autoCalEnabled: 1, la
 assert.equal(human.title, 'AutoCal adquirindo');
 assert.equal(human.petrolZones, 4);
 assert.equal(human.gasZones, 3);
+assert.equal(human.petrolZoneFlags.join(','), 'true,true,true,true');
+assert.equal(human.gasZoneFlags.join(','), 'true,true,true,false');
 assert.match(human.progress, /Gasolina 4\/4 zonas/);
 assert.match(human.progress, /GNV 3\/4 zonas/);
 assert.match(human.autoMatch, /3 AutoMatch executados/);
@@ -53,6 +55,17 @@ assert.deepEqual(
   { petrolMs: refs[0].petrolMs, petrolMapBar: refs[0].petrolMapBar, gasMapBar: refs[0].gasMapBar },
   { petrolMs: 2, petrolMapBar: 0.3, gasMapBar: 0.31 },
 );
+
+const sparseZoneSnapshot = {
+  ...snapshot,
+  fields: snapshot.fields.map(field => field.key === 'ACQUIRED_ZONES_GAS'
+    ? { ...field, rawValues: [1, 0, 1, 0], physicalValues: [1, 0, 1, 0] }
+    : field),
+};
+const sparseHuman = model.humanState(sparseZoneSnapshot, { state: 'READY', autoCalEnabled: 1, latestSnapshot: sparseZoneSnapshot });
+assert.equal(sparseHuman.gasZones, 2);
+assert.equal(sparseHuman.gasZoneFlags.join(','), 'true,false,true,false',
+  'zonas esparsas devem preservar posição física, não compactar para as duas primeiras');
 
 const bands = model.bandStrip(snapshot);
 assert.equal(bands.length, 18);
@@ -133,5 +146,7 @@ assert.equal(cancelling.busy, true);
 assert.equal(cancelling.cancelling, true);
 assert.equal(cancelling.title, 'Cancelando leitura');
 
-const invalidLive = model.livePoint({ valid: false, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44 } });
-assert.equal(invalidLive, null, 'telemetria inválida não pode produzir cursor AGORA');
+const validLiveWithLevel = model.livePoint({ valid: true, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 173 } });
+assert.equal(validLiveWithLevel.levelRaw, 173, 'LEVELS deve permanecer RAW, sem percentual inventado');
+const invalidLive = model.livePoint({ valid: false, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 173 } });
+assert.equal(invalidLive, null, 'telemetria inválida não pode produzir cursor AGORA nem LEVELS antigo');

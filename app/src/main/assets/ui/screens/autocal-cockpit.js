@@ -39,8 +39,13 @@
     return 3;
   }
 
+  function nativeZoneFlags(snapshot, key) {
+    const values = vector(snapshot, key).slice(0, 4);
+    return Array.from({ length: 4 }, (_, index) => (finite(values[index]) ?? 0) > 0);
+  }
+
   function nativeZoneCount(snapshot, key) {
-    return vector(snapshot, key).slice(0, 4).filter(value => value > 0).length;
+    return nativeZoneFlags(snapshot, key).filter(Boolean).length;
   }
 
   function scalarValue(snapshot, key) {
@@ -54,8 +59,10 @@
       const nativeSnapshot = state.latestSnapshot?.fields ? state.latestSnapshot : {};
       const evidenceSnapshot = nativeSnapshot.fields ? nativeSnapshot : snapshot;
       const enabled = finite(state.autoCalEnabled ?? nativeSnapshot.autoCalEnabled ?? scalarValue(nativeSnapshot, 'AUTO_CAL_ENABLE'));
-      const petrolZones = nativeZoneCount(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL');
-      const gasZones = nativeZoneCount(evidenceSnapshot, 'ACQUIRED_ZONES_GAS');
+      const petrolZoneFlags = nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL');
+      const gasZoneFlags = nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_GAS');
+      const petrolZones = petrolZoneFlags.filter(Boolean).length;
+      const gasZones = gasZoneFlags.filter(Boolean).length;
       const nativeStatus = nativeSnapshot.nativeStatus || {};
       const autoMatchCount = finite(state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
       const maxAutoMatch = finite(state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
@@ -78,7 +85,7 @@
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
       else if (enabled === 1 && gasZones < 4) nextAction = 'Aquisição habilitada. Mantenha condições estáveis para visitar as regiões que ainda faltam.';
       else if (enabled === 1) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
-      return { title, progress, autoMatch, nextAction, petrolZones, gasZones, enabled, autoMatchCount, maxAutoMatch };
+      return { title, progress, autoMatch, nextAction, petrolZones, gasZones, petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch };
     },
 
     readNarrative(readerState = {}) {
@@ -133,8 +140,9 @@
       const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
       const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
       const rpm = finite(live.rpm);
+      const levelRaw = finite(live.level_raw ?? live.levelRaw);
       if (petrolMs === null || mapBar === null) return null;
-      return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs: finite(source.telemetryAgeMs ?? source.ageMs) };
+      return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs: finite(source.telemetryAgeMs ?? source.ageMs) };
     },
 
     referencePoints(snapshot = {}, analysis = {}) {
@@ -376,7 +384,7 @@
 
             <section class="autocal-now-card" aria-live="polite">
               <div class="autocal-section-head compact"><div><small>O QUE ESTÁ ACONTECENDO AGORA</small><h4 id="autocalLiveTitle">Aguardando telemetria</h4></div><span id="autocalLiveFuel">—</span></div>
-              <div class="autocal-now-values"><div><small>RPM</small><b id="autocalLiveRpm">—</b></div><div><small>PETROL INJ.</small><b><span id="autocalLivePetrol">—</span> ms</b></div><div><small>MAP</small><b><span id="autocalLiveMap">—</span> bar</b></div></div>
+              <div class="autocal-now-values"><div><small>RPM</small><b id="autocalLiveRpm">—</b></div><div><small>PETROL INJ.</small><b><span id="autocalLivePetrol">—</span> ms</b></div><div><small>MAP</small><b><span id="autocalLiveMap">—</span> bar</b></div><div><small>LEVELS RAW</small><b id="autocalLiveLevel">—</b></div></div>
               <p id="autocalLiveNarrative">O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
             </section>
 
@@ -733,6 +741,7 @@
         this.text('autocalLiveRpm', '—');
         this.text('autocalLivePetrol', '—');
         this.text('autocalLiveMap', '—');
+        this.text('autocalLiveLevel', '—');
         this.text('autocalLiveNarrative', 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
         return;
       }
@@ -742,6 +751,7 @@
       this.text('autocalLiveRpm', live.rpm === null ? '—' : Math.round(live.rpm).toLocaleString('pt-BR'));
       this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }));
+      this.text('autocalLiveLevel', live.levelRaw === null ? '—' : String(Math.round(live.levelRaw)));
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}).enabled;
       const acquisitionCopy = enabled === 1
         ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
@@ -778,14 +788,22 @@
     renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');
       if (!meter) return;
-      const petrolZones = Math.max(0, Math.min(4, Math.round(finite(human?.petrolZones) ?? 0)));
-      const gasZones = Math.max(0, Math.min(4, Math.round(finite(human?.gasZones) ?? 0)));
+      const petrolFlags = Array.isArray(human?.petrolZoneFlags)
+        ? human.petrolZoneFlags.slice(0, 4)
+        : Array.from({ length: 4 }, (_, index) => index < (finite(human?.petrolZones) ?? 0));
+      const gasFlags = Array.isArray(human?.gasZoneFlags)
+        ? human.gasZoneFlags.slice(0, 4)
+        : Array.from({ length: 4 }, (_, index) => index < (finite(human?.gasZones) ?? 0));
+      const petrolZones = petrolFlags.filter(Boolean).length;
+      const gasZones = gasFlags.filter(Boolean).length;
       meter.setAttribute('aria-label', 'Gasolina ' + petrolZones + ' de 4 zonas, GNV ' + gasZones + ' de 4 zonas');
       this.panel?.querySelectorAll('[data-autocal-zone-petrol]').forEach(node => {
-        node.dataset.active = Number(node.dataset.autocalZonePetrol) < petrolZones ? 'true' : 'false';
+        const index = Number(node.dataset.autocalZonePetrol);
+        node.dataset.active = petrolFlags[index] === true ? 'true' : 'false';
       });
       this.panel?.querySelectorAll('[data-autocal-zone-gas]').forEach(node => {
-        node.dataset.active = Number(node.dataset.autocalZoneGas) < gasZones ? 'true' : 'false';
+        const index = Number(node.dataset.autocalZoneGas);
+        node.dataset.active = gasFlags[index] === true ? 'true' : 'false';
       });
     }
 
