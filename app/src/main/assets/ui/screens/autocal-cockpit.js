@@ -369,7 +369,7 @@
                   <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 </div>
               </div>
-              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
+              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="equivalence">GNV equivalente</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
               <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
               <div id="autocalChartInspector" class="autocal-inline-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP de gasolina/GNV sem alterar nada.</span></div>
             </section>

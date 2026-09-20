@@ -207,6 +207,10 @@
   background: #5dd39e;
 }
 
+.autocal-chart-legend .equivalence::before {
+  background: #f0c45c;
+}
+
 .autocal-chart-host {
   position: relative;
   width: 100%;
@@ -233,10 +237,24 @@
   vector-effect: non-scaling-stroke;
 }
 
-.autocal-axis-label {
-  fill: #7f8c9c;
+.autocal-axis-label,
+.autocal-axis-tick-x,
+.autocal-axis-tick-y {
+  fill: #8fa0b3;
   font-size: 11px;
   pointer-events: none;
+}
+
+.autocal-axis-title {
+  fill: #cbd7e4;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  pointer-events: none;
+}
+
+.autocal-grid-line.vertical {
+  stroke: rgba(255,255,255,.045);
 }
 
 .autocal-reference-line {
@@ -258,6 +276,21 @@
 .autocal-reference-line.previous {
   opacity: .26;
   stroke-dasharray: 7 6;
+}
+
+.autocal-equivalence-line {
+  fill: none;
+  stroke: rgba(240,196,92,.78);
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.autocal-equivalence-point {
+  fill: #f0c45c;
+  stroke: #081018;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .autocal-reference-point {
@@ -817,6 +850,15 @@
 
 .autocal-live-layer {
   pointer-events: none;
+}
+
+.autocal-live-layer[data-out-of-range="true"] .autocal-live-halo {
+  stroke: #f0c45c;
+  stroke-dasharray: 3 2;
+}
+
+.autocal-live-layer[data-out-of-range="true"] .autocal-live-label {
+  fill: #f0c45c;
 }
 
 .autocal-live-halo {

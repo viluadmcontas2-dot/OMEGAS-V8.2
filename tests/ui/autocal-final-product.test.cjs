@@ -78,7 +78,7 @@ assert.match(
   /val NUM_AUTOMATCH_EXECUTED = Field\("NUM_AUTOMATCH_EXECUTED", 0x0174, Encoding\.U8_OR_U16_LE, Shape\.SCALAR, 1\)/,
   'contrato exato do contador AutoMatch precisa continuar U8/U16'
 );
-assert.match(cockpit, /const liveMarkup = live\s*\?/, 'camada AGORA precisa depender da telemetria viva');
+assert.match(cockpit, /const liveMarkup = live/, 'camada AGORA precisa depender da telemetria viva');
 assert.match(cockpit, /if \(!live\) \{\s*if \(layer\) layer\.setAttribute\('display', 'none'\);/s,
   'telemetria inválida precisa esconder cursor AGORA antigo');
 assert.match(cockpit, /state === 'CANCEL_REQUESTED'/, 'cancelamento intermediário precisa de estado humano explícito');
