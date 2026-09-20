@@ -71,6 +71,7 @@ class SessionRecorder(
     @Volatile private var lastError = ""
 
     private var sessionDir: File? = null
+    private var semanticLedger: SessionSemanticLedger? = null
     private var writer: BufferedWriter? = null
     private var segmentFile: File? = null
     private var segmentBytes = 0L
@@ -97,7 +98,16 @@ class SessionRecorder(
             lastError = ""
             sequence.set(0L)
             droppedEvents.set(0L)
+            petrolTicks = 0L
+            cngTicks = 0L
             synchronized(previewLock) { preview.clear() }
+            semanticLedger = SessionSemanticLedger(
+                sessionDir = dir,
+                sessionId = id,
+                physicalUsbSessionId = metadata.optLong("usbSessionId", 0L),
+                startedAtMs = now,
+                startReason = reason,
+            )
             openNextSegment()
             recording = true
             writeManifestBase(dir, now, reason, metadata)
@@ -123,6 +133,7 @@ class SessionRecorder(
             recording = false
             stoppedAt = System.currentTimeMillis()
             stopReason = reason
+            semanticLedger?.finish(stoppedAt, stopReason)
             closeWriter()
             updateManifest()
             statusObject().put("ok", true)
@@ -200,6 +211,7 @@ class SessionRecorder(
             .put("stopReason", stopReason)
             .put("lastError", lastError)
             .put("directory", sessionDir?.absolutePath ?: "")
+            .put("semanticSummary", semanticLedger?.snapshot(recording, stoppedAt, stopReason) ?: JSONObject.NULL)
             .put(
                 "settings",
                 JSONObject()
@@ -232,6 +244,11 @@ class SessionRecorder(
                 val active = dir.absolutePath == sessionDir?.absolutePath && recording
                 val stoppedAt = manifest.optLong("stoppedAtMs", 0L)
                 val durationEnd = if (active) System.currentTimeMillis() else stoppedAt.takeIf { it > 0L } ?: dir.lastModified()
+                val semantic = if (active) {
+                    semanticLedger?.snapshot(true) ?: JSONObject()
+                } else {
+                    try { SessionSemanticLedger.loadOrRebuild(dir) } catch (_: Exception) { JSONObject() }
+                }
                 array.put(
                     JSONObject()
                         .put("id", dir.name)
@@ -242,7 +259,8 @@ class SessionRecorder(
                         .put("bytes", size)
                         .put("active", active)
                         .put("cngTicks", manifest.optLong("cngTicks", 0L))
-                        .put("petrolTicks", manifest.optLong("petrolTicks", 0L)),
+                        .put("petrolTicks", manifest.optLong("petrolTicks", 0L))
+                        .put("semanticSummary", semantic),
                 )
             }
         return array.toString()
@@ -349,6 +367,7 @@ class SessionRecorder(
         writer?.close()
         writer = null
 
+        semanticLedger?.persist(recording = true)
         val closedFiles = dir.walkTopDown()
             .filter { it.isFile && it.name != "manifest.json" }
             .toList()
@@ -364,7 +383,12 @@ class SessionRecorder(
 
         val entries = mutableListOf(ExportEntry("manifest.json", bytes = manifestBytes))
         closedFiles.forEach { file ->
-            entries += ExportEntry(file.relativeTo(dir).invariantSeparatorsPath, file = file)
+            val path = file.relativeTo(dir).invariantSeparatorsPath
+            if (file.name == SessionSemanticLedger.FILE_NAME) {
+                entries += ExportEntry(path, bytes = file.readBytes())
+            } else {
+                entries += ExportEntry(path, file = file)
+            }
         }
         return ExportSnapshot(entries, JSONObject(String(manifestBytes, Charsets.UTF_8)), true)
     }
@@ -434,6 +458,13 @@ class SessionRecorder(
             eventCount += 1L
             byteCount += bytes
             segmentBytes += bytes
+            semanticLedger?.observe(
+                sequence = item.optLong("sequence"),
+                type = type,
+                source = source,
+                data = data,
+                recordedAtMs = now,
+            )
             synchronized(previewLock) {
                 preview.addLast(
                     JSONObject()
@@ -606,5 +637,4 @@ Unidades: RPM em rpm; tempos em ms; MAP/pressões em bar; temperaturas em °C.
         val immutableBoundary: Boolean,
     )
 }
-
 

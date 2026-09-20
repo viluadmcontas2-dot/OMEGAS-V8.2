@@ -520,7 +520,10 @@ class TelemetryForegroundService : Service() {
     }
     fun startSessionRecording(reason: String): String = sessionRecorder.start(
         reason.ifBlank { "manual" },
-        JSONObject().put("appVersion", BuildConfig.VERSION_NAME).put("native", true),
+        JSONObject()
+            .put("appVersion", BuildConfig.VERSION_NAME)
+            .put("native", true)
+            .put("usbSessionId", if (usb.connected) usb.connectionSessionId else 0L),
     ).toString()
     fun stopSessionRecording(reason: String): String = sessionRecorder.stop(reason.ifBlank { "manual" }).toString()
     fun exportSession(uri: Uri, sessionId: String): String = sessionRecorder.exportSession(contentResolver, uri, sessionId).toString()
@@ -631,6 +634,9 @@ class TelemetryForegroundService : Service() {
             val generationChanged = transition == UsbSessionTransition.GENERATION_CHANGED
             monitoringPausedByUser = false
             if (generationChanged) {
+                if (sessionRecorder.statusObject().optBoolean("recording")) {
+                    sessionRecorder.stop("USB_SESSION_REPLACED")
+                }
                 runtime.endUsbSession("USB_SESSION_REPLACED")
                 nativeAutoCal.endUsbSession()
                 telemetryStore.invalidate("USB_SESSION_REPLACED")
@@ -647,7 +653,10 @@ class TelemetryForegroundService : Service() {
             ) {
                 sessionRecorder.start(
                     "MP48 conectado",
-                    JSONObject().put("appVersion", BuildConfig.VERSION_NAME).put("usb", usb.deviceLabel),
+                    JSONObject()
+                        .put("appVersion", BuildConfig.VERSION_NAME)
+                        .put("usb", usb.deviceLabel)
+                        .put("usbSessionId", sessionId),
                 )
             }
             if (settings.autoStartEngine && !enginePausedByUser) {

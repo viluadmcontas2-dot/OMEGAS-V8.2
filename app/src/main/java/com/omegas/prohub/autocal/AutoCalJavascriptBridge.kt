@@ -39,6 +39,17 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
 
     @JavascriptInterface
+    fun getSessionLedgerStatus(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderStatusJson() ?: unavailable()
+
+    @JavascriptInterface
+    fun listAutoCalSessions(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderListJson() ?: "[]"
+
+    @JavascriptInterface
+    fun exportAutoCalSession(sessionId: String) {
+        activityRef.get()?.exportSession(sessionId)
+    }
+
+    @JavascriptInterface
     fun importSnapshotIntoLearning(snapshotJson: String): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
@@ -293,6 +304,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     onStateChanged = activity::refreshWebUi,
                     onSnapshotReady = { snapshot ->
                         service.runtime.importNativeAutoCalSnapshot(snapshot)
+                        service.sessionRecorder.record("autocal_manual_snapshot", "autocal", snapshot, force = true)
                     },
                 )
             }

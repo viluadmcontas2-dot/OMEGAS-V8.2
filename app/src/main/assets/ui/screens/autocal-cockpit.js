@@ -99,6 +99,27 @@
       return { state, busy: false, level: 'neutral', title: 'Leitura pronta para iniciar', detail: 'Nenhuma consulta manual em andamento.', next: 'Use Consultar ECU para obter um snapshot completo.' };
     },
 
+    sessionNarrative(status = {}) {
+      const summary = status?.semanticSummary && typeof status.semanticSummary === 'object' ? status.semanticSummary : {};
+      const autocal = summary?.autocal && typeof summary.autocal === 'object' ? summary.autocal : {};
+      const recording = status.recording === true;
+      const durationMs = Math.max(0, finite(status.durationMs ?? summary.durationMs) ?? 0);
+      const minutes = Math.floor(durationMs / 60000);
+      const regions = Array.isArray(autocal.correlatedRegions) ? autocal.correlatedRegions.length : 0;
+      const gasZones = Math.max(0, Math.min(4, Math.round(finite(autocal.gasZones) ?? 0)));
+      const dropped = Math.max(0, Math.round(finite(status.droppedEvents) ?? 0));
+      const lastError = String(status.lastError || '');
+      const warning = dropped > 0 || lastError.length > 0;
+      const title = recording ? 'Sessão atual' : summary?.sessionId ? 'Última sessão' : 'Sessões prontas';
+      const detail = (recording ? minutes + ' min' : 'histórico preservado') +
+        ' · ' + regions + ' ' + (regions === 1 ? 'região correlacionada' : 'regiões correlacionadas') +
+        ' · GNV ' + gasZones + '/4';
+      const next = warning
+        ? 'Há uma lacuna na gravação da evidência. Veja os detalhes antes de usar esta sessão em análise.'
+        : recording ? 'Evidência AutoCal sendo preservada nesta sessão.' : 'Abra Sessões para revisar ou exportar o histórico.';
+      return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped };
+    },
+
     livePoint(telemetry = {}) {
       const source = telemetry || {};
       if (source.valid === false) return null;
@@ -203,6 +224,9 @@
       this.acquisitionState = {};
       this.acquisitionSnapshot = {};
       this.actionState = {};
+      this.sessionState = {};
+      this.sessions = [];
+      this.sessionDrawerOpen = false;
       this.chartScale = null;
       this.chartView = AutoCalUxModel.updateChartView(null, 'fit');
       this.chartPointers = new Map();
@@ -258,6 +282,22 @@
                 <button type="button" data-autocal-cancel-read class="secondary" hidden>Cancelar leitura</button>
               </div>
             </header>
+
+            <section class="autocal-session-strip" data-session-level="ok" aria-live="polite">
+              <div class="autocal-session-copy">
+                <small>SESSÃO</small>
+                <b id="autocalSessionSummary">Sessões prontas</b>
+                <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
+              </div>
+              <div class="autocal-session-actions">
+                <span id="autocalSessionState">Persistência pronta</span>
+                <button type="button" data-autocal-sessions class="secondary">Ver sessões</button>
+              </div>
+            </section>
+            <section id="autocalSessionDrawer" class="autocal-session-drawer" hidden aria-label="Histórico de sessões AutoCal">
+              <div class="autocal-section-head compact"><div><small>HISTÓRICO</small><h4>Sessões recentes</h4><p id="autocalSessionNext">As sessões são separadas pela geração física USB.</p></div></div>
+              <div id="autocalSessionList" class="autocal-session-list"></div>
+            </section>
 
             <section class="autocal-reference-card">
               <div class="autocal-section-head">
@@ -351,6 +391,13 @@
         this.chartHistoryVisible = !this.chartHistoryVisible;
         this.renderReferenceChart(this.snapshot);
       });
+      this.panel?.querySelector('[data-autocal-sessions]')?.addEventListener('click', event => {
+        this.sessionDrawerOpen = !this.sessionDrawerOpen;
+        const drawer = document.getElementById('autocalSessionDrawer');
+        if (drawer) drawer.hidden = !this.sessionDrawerOpen;
+        event.currentTarget.textContent = this.sessionDrawerOpen ? 'Ocultar sessões' : 'Ver sessões';
+        if (this.sessionDrawerOpen) this.renderSessionState();
+      });
       this.panel?.addEventListener('click', event => {
         if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
         if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
@@ -358,6 +405,8 @@
         if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
         const point = event.target.closest('[data-autocal-ref-index]');
         if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
+        const exportButton = event.target.closest('[data-autocal-export-session]');
+        if (exportButton?.dataset?.sessionId) this.api?.exportSession?.(exportButton.dataset.sessionId);
       });
     }
 
@@ -401,6 +450,8 @@
       }
       this.snapshot = nextSnapshot || {};
       this.actionState = this.api.actionStatus() || {};
+      this.sessionState = this.api.sessionStatus?.() || {};
+      this.sessions = this.api.sessions?.() || [];
       this.render();
     }
 
@@ -488,6 +539,7 @@
       this.text('autocalMaturityRaw', events.length);
       this.renderZoneMeter(human);
       this.renderReadState();
+      this.renderSessionState();
       this.renderLiveNarrative();
 
       const toggle = this.panel?.querySelector('[data-autocal-toggle]');
@@ -532,6 +584,40 @@
         cancel.hidden = !read.busy;
         cancel.disabled = !read.busy || read.cancelling === true;
       }
+    }
+
+    renderSessionState() {
+      const narrative = AutoCalUxModel.sessionNarrative(this.sessionState || {});
+      this.text('autocalSessionSummary', narrative.title);
+      this.text('autocalSessionDetail', narrative.detail);
+      this.text('autocalSessionState', narrative.recording ? 'Salvando evidência' : 'Persistência pronta');
+      this.text('autocalSessionNext', narrative.next);
+      const strip = this.panel?.querySelector('.autocal-session-strip');
+      if (strip) strip.dataset.sessionLevel = narrative.level;
+
+      const host = document.getElementById('autocalSessionList');
+      if (!host || !this.sessionDrawerOpen) return;
+      const sessions = Array.isArray(this.sessions) ? this.sessions.slice(0, 8) : [];
+      if (!sessions.length) {
+        host.innerHTML = '<p class="empty-copy">Nenhuma sessão gravada ainda.</p>';
+        return;
+      }
+      host.innerHTML = sessions.map((item, index) => {
+        const summary = item?.semanticSummary && typeof item.semanticSummary === 'object' ? item.semanticSummary : {};
+        const autocal = summary?.autocal && typeof summary.autocal === 'object' ? summary.autocal : {};
+        const when = finite(item.createdAt);
+        const date = when === null ? 'Data indisponível' : new Date(when).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const duration = Math.max(0, finite(item.durationMs ?? summary.durationMs) ?? 0);
+        const minutes = Math.max(0, Math.floor(duration / 60000));
+        const regions = Array.isArray(autocal.correlatedRegions) ? autocal.correlatedRegions.length : 0;
+        const gasZones = Math.max(0, Math.min(4, Math.round(finite(autocal.gasZones) ?? 0)));
+        const active = item.active === true;
+        const id = escapeHtml(item.id || '');
+        return '<article class="autocal-session-item" data-active="' + (active ? 'true' : 'false') + '">' +
+          '<div><small>' + (active ? 'AGORA' : date) + '</small><b>' + minutes + ' min · ' + regions + ' ' + (regions === 1 ? 'região' : 'regiões') + '</b><span>GNV ' + gasZones + '/4 · ' + escapeHtml(item.reason || 'Sessão MP48') + '</span></div>' +
+          '<button type="button" class="secondary" data-autocal-export-session data-session-id="' + id + '">Exportar</button>' +
+        '</article>';
+      }).join('');
     }
 
     renderLiveNarrative() {
