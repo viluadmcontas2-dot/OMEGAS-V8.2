@@ -305,7 +305,7 @@ node --test tests/ui/autocal-runtime-1280.test.cjs tests/ui/autocal-cockpit.test
 - Modify: `app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt`
 - Modify: `app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt`
 - Modify: `app/src/main/assets/ui/screens/learning.js`
-- Modify only after call-site proof: Difference projection file discovered by Task 1 audit
+- Modify: `app/src/main/assets/ui/screens/learning.js` (the existing `data-learning-layer="comparison"` / Diferença consumer)
 - Modify physical geometry authority only after mismatch proof: `app/src/main/java/com/omegas/v7/runtime/CalibrationShapeV7.kt` and current JS projection consumer
 - Test: `app/src/test/java/com/omegas/prohub/learning/AssistedCalibrationAdvisorTest.kt`
 - Test: `tests/test_block3_suggestion_ui_contract.py`
