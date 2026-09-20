@@ -69,6 +69,13 @@
     if (state === 'LEARNING') return recent ?? raw;
     return consolidated ?? recent ?? raw;
   }
+  function differenceText(error, deadband) {
+    const value = finite(error);
+    if (value === null) return 'sem par equivalente válido';
+    const sign = value > 0 ? '+' : '';
+    if (Math.abs(value) <= deadband) return `${sign}${fmt(value, 1)}% · equivalente`;
+    return `${sign}${fmt(value, 1)}% · precisa ${value > 0 ? 'mais' : 'menos'} GNV`;
+  }
   function comparisonTargetMs(item) { return finite(item?.petrol_target_ms ?? item?.petrolTargetMs); }
   function comparisonObservedMs(item) { return finite(item?.petrol_on_cng_ms ?? item?.petrolOnCngMs); }
   function confidence(item) {
@@ -466,11 +473,14 @@
       const gasolinaEsperada = targetMs !== null ? `${fmt(targetMs, 2)} ms` : 'sem evidência';
       const noGnvAgora = observedMs !== null ? `${fmt(observedMs, 2)} ms` : 'sem evidência atual';
 
-      let diferenca = 'ainda não existe par equivalente válido';
-      if (displayError !== null) {
-        if ((consolidatedError === null && recentError === null && comparison?.direction === 'EQUIVALENT') || Math.abs(displayError) <= (finite(maps.tolerancePolicy?.equivalenceDeadbandPercent) ?? 2.5)) diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (equivalente)`;
-        else diferenca = `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}% (precisa ${displayError > 0 ? 'mais' : 'menos'} GNV)`;
-      }
+      const deadband = finite(maps.tolerancePolicy?.equivalenceDeadbandPercent) ?? 2.5;
+      const differenceNow = differenceText(rawError, deadband);
+      const differenceStable = consolidatedError === null
+        ? 'ainda não consolidada'
+        : differenceText(consolidatedError, deadband);
+      const differenceTrend = recentError === null
+        ? 'sem tendência recente'
+        : differenceText(recentError, deadband) + (stabilityState === 'REVALIDATING' ? ' · revalidando' : '');
 
       const confValue = Math.max(finite(stability?.confidence) || 0, Math.max(confidence(learned?.petrol || {}), confidence(learned?.cng || {})));
       let confLevel = 'Baixa';
@@ -481,10 +491,6 @@
 
       const kChange = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges[0] : null;
       const targetK = finite(kChange?.after) !== null ? kChange.after : 'aguardando convergência';
-      const revalidationTrend = stabilityState === 'REVALIDATING' && recentError !== null
-        ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}% recente`
-        : null;
-
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
         <dl class="detail-list enhanced-detail-list">
@@ -492,8 +498,9 @@
           <div><dt>Condição</dt><dd>${escapeHtml(condicao)}</dd></div>
           <div><dt>Gasolina esperada</dt><dd>${escapeHtml(gasolinaEsperada)}</dd></div>
           <div><dt>No GNV agora</dt><dd>${escapeHtml(noGnvAgora)}</dd></div>
-          <div><dt>Diferença</dt><dd>${escapeHtml(diferenca)}</dd></div>
-          ${revalidationTrend ? `<div><dt>Tendência em revalidação</dt><dd>${escapeHtml(revalidationTrend)}</dd></div>` : ''}
+          <div><dt>Diferença agora</dt><dd>${escapeHtml(differenceNow)}</dd></div>
+          <div><dt>Diferença estável</dt><dd>${escapeHtml(differenceStable)}</dd></div>
+          <div><dt>Tendência recente</dt><dd>${escapeHtml(differenceTrend)}</dd></div>
           <div><dt>Novo valor K sugerido</dt><dd>${escapeHtml(targetK)}</dd></div>
           <div><dt>Confiança</dt><dd>${escapeHtml(confianca)}</dd></div>
         </dl>

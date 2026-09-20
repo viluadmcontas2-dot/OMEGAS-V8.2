@@ -143,6 +143,34 @@ test('payload de sugestão mostra tempos em ms e o novo valor K sem confundir as
   assert.match(screen.cellPane.innerHTML, /Abrir o editor não escreve na ECU/);
 });
 
+test('Diferença separa último par, consolidado e tendência sem apagar estabilidade', () => {
+  const { context } = loadScript('app/src/main/assets/ui/screens/learning.js');
+  const screen = Object.create(context.OmegasUi.LearningScreen.prototype);
+  screen.cellPane = { innerHTML: '', querySelector: () => ({ addEventListener: () => {} }) };
+  screen.router = { navigate: () => {} };
+  screen.renderDetail({
+    learning: {
+      grid: { rpmBins: [2000], petrolBins: [4.5] },
+      tolerancePolicy: { equivalenceDeadbandPercent: 2.5 },
+      regions: [
+        { fuel: 'GASOLINA', epoch: 0, cell_row: 0, cell_column: 0, rpm: 2000, map_bar: 0.5, petrol_ms: 4.7, samples: 8, visit_count: 8, confidence: 0.9 },
+        { fuel: 'GNV', epoch: 1, cell_row: 0, cell_column: 0, rpm: 2000, map_bar: 0.5, petrol_ms: 5.26, samples: 8, visit_count: 8, confidence: 0.9 },
+      ],
+      comparisons: [{ cell_row: 0, cell_column: 0, petrol_target_ms: 4.7, petrol_on_cng_ms: 5.26, error_percent: 12.0 }],
+    },
+    calibrationState: {
+      suggestionItems: [{ target: 'MAP_K', lifecycle: 'OBSERVING', actionable: false, mapChanges: [{ row: 0, column: 0, before: 100, after: 108 }] }],
+      learningStability: { map: [{ row: 0, column: 0, confidence: 0.9, consolidatedErrorPercent: 8.1, recentErrorPercent: 3.0, state: 'REVALIDATING' }] },
+    },
+    telemetry: { live: { fuel: 'GNV' } },
+  }, 0, 0);
+
+  assert.match(screen.cellPane.innerHTML, /Diferença agora.*\+12,0%/s);
+  assert.match(screen.cellPane.innerHTML, /Diferença estável.*\+8,1%/s);
+  assert.match(screen.cellPane.innerHTML, /Tendência recente.*\+3,0%.*revalidando/s);
+  assert.match(screen.cellPane.innerHTML, /Sem sugestão segura/);
+});
+
 test('Live Tracing temporal é limitado, reutiliza setTrace e não cria timer', () => {
   const { context, source } = loadScript('app/src/main/assets/ui/components/physical-grid.js');
   assert.equal(source.includes('setInterval'), false);
