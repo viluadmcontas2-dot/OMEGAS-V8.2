@@ -491,6 +491,17 @@
 
       const kChange = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges[0] : null;
       const targetK = finite(kChange?.after) !== null ? kChange.after : 'aguardando convergência';
+      const mapAddressRow = finite(kChange?.row);
+      const mapAddressColumn = finite(kChange?.column);
+      const mapAddressMs = mapAddressRow !== null && Number.isInteger(mapAddressRow)
+        ? finite(axes.petrolBins?.[mapAddressRow])
+        : null;
+      const mapAddressRpm = mapAddressColumn !== null && Number.isInteger(mapAddressColumn)
+        ? finite(axes.rpmBins?.[mapAddressColumn])
+        : null;
+      const mapAddress = mapAddressMs !== null && mapAddressRpm !== null
+        ? `${fmt(mapAddressMs, 1)} ms · ${Math.round(mapAddressRpm).toLocaleString('pt-BR')} RPM · condição GNV observada`
+        : 'aguardando endereço físico confiável';
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
         <dl class="detail-list enhanced-detail-list">
@@ -501,6 +512,7 @@
           <div><dt>Diferença agora</dt><dd>${escapeHtml(differenceNow)}</dd></div>
           <div><dt>Diferença estável</dt><dd>${escapeHtml(differenceStable)}</dd></div>
           <div><dt>Tendência recente</dt><dd>${escapeHtml(differenceTrend)}</dd></div>
+          <div><dt>Endereço Mapa K</dt><dd>${escapeHtml(mapAddress)}</dd></div>
           <div><dt>Novo valor K sugerido</dt><dd>${escapeHtml(targetK)}</dd></div>
           <div><dt>Confiança</dt><dd>${escapeHtml(confianca)}</dd></div>
         </dl>
@@ -517,13 +529,18 @@
             <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')}` : 'nenhum'}</dd></div>
           </dl>
         </details>
+        <small class="map-address-contract">A gasolina esperada é a referência da diferença; o Mapa K é endereçado pela condição GNV observada (RPM × Petrol Inj. no GNV).</small>
         <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>
       `;
       this.cellPane.querySelector('[data-edit-learning-cell]')?.addEventListener('click', () => {
         this.router.navigate('map', {
           origin: 'learning',
           cell: { row, column },
-          physical: { rpm: rpmLabel, petrolMs: petrolLabel },
+          physical: {
+            rpm: mapAddressRpm ?? rpmLabel,
+            petrolMs: mapAddressMs ?? petrolLabel,
+            basis: kChange ? 'CNG_OBSERVED_MAP_ADDRESS' : 'SELECTED_LEARNING_CELL',
+          },
           suggestion: suggestion?.actionable ? suggestion : null,
         });
       });
