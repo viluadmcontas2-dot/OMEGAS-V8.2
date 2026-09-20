@@ -171,6 +171,11 @@ class UsbSerialManager(
             }
         settings.preferredDeviceName = device.deviceName
         if (!usbManager.hasPermission(device)) {
+            if (permissionPending && activeDeviceName == device.deviceName) {
+                log.add("INFO", "USB", "Permissão OMEGAS já solicitada; aguardando resposta Android para ${device.deviceName}")
+                onStateChanged()
+                return false
+            }
             permissionPending = true
             activeDeviceName = device.deviceName
             usbManager.requestPermission(device, permissionIntent)
