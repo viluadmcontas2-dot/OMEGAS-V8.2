@@ -204,7 +204,7 @@
       };
     },
 
-    bandStrip(snapshot = {}) {    bandStrip(snapshot = {}) {
+    bandStrip(snapshot = {}) {
       const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
       const zones = vector(snapshot, 'ACQUIRED_ZONES_GAS');
       const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
@@ -529,7 +529,7 @@
       this.render();
     }
 
-    loadSessions() {    loadSessions() {
+    loadSessions() {
       if (!this.api?.available?.()) return;
       const next = this.api.sessions?.();
       this.sessions = Array.isArray(next) ? next : [];
@@ -775,7 +775,7 @@
       }
     }
 
-    renderZoneMeter(human) {    renderZoneMeter(human) {
+    renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');
       if (!meter) return;
       const petrolZones = Math.max(0, Math.min(4, Math.round(finite(human?.petrolZones) ?? 0)));
@@ -898,7 +898,7 @@
       this.renderLiveNarrative();
     }
 
-    bindChartGestures(svg) {    bindChartGestures(svg) {
+    bindChartGestures(svg) {
       const distance = values => {
         if (values.length < 2) return 0;
         const a = values[0];
