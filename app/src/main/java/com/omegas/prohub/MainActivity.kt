@@ -196,8 +196,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         applySystemInsets()
         requestNotificationPermission()
-        requestLegacyStoragePermission()
         startHubService()
+        requestLegacyStoragePermission()
         configureWebView()
         webView.post { maybePromptBatteryOptimization() }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

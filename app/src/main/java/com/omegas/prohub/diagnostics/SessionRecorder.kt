@@ -282,11 +282,19 @@ class SessionRecorder(
 
     fun clearStoppedSessions(): JSONObject {
         var deleted = 0
+        var preserved = 0
         paths.sessionLogsRoot.listFiles { file -> file.isDirectory }?.forEach { dir ->
             if (recording && dir.absolutePath == sessionDir?.absolutePath) return@forEach
+            if (documentsMirror != null && !documentsMirrorMarker(dir).isFile) {
+                val result = try { documentsMirror.sync(dir, dir.name) } catch (_: Exception) { JSONObject().put("ok", false) }
+                if (result.optBoolean("ok")) markDocumentsMirrored(dir) else {
+                    preserved += 1
+                    return@forEach
+                }
+            }
             if (dir.deleteRecursively()) deleted += 1
         }
-        return JSONObject().put("ok", true).put("deleted", deleted)
+        return JSONObject().put("ok", true).put("deleted", deleted).put("preservedWithoutPublicCopy", preserved)
     }
 
     fun exportSession(
@@ -372,7 +380,10 @@ class SessionRecorder(
             paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
                 ?.sortedBy { it.lastModified() }
                 ?.forEach { dir ->
-                    try { mirror.sync(dir, dir.name) } catch (_: Exception) {}
+                    try {
+                        val result = mirror.sync(dir, dir.name)
+                        if (result.optBoolean("ok")) markDocumentsMirrored(dir)
+                    } catch (_: Exception) {}
                 }
         }
     }
@@ -466,6 +477,8 @@ class SessionRecorder(
                 stoppedAt = now
                 closeWriter()
                 updateManifest()
+                semanticLedger?.finish(stoppedAt, stopReason)
+                syncDocumentsMirror(force = true)
                 return
             }
             if (segmentBytes + bytes > SEGMENT_LIMIT_BYTES) openNextSegment()
@@ -601,31 +614,42 @@ class SessionRecorder(
             writer?.flush()
             updateManifest()
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
-            mirror.sync(dir, sessionId)
+            val result = mirror.sync(dir, sessionId)
+            if (result.optBoolean("ok")) markDocumentsMirrored(dir)
         } finally {
             lastDocumentsMirrorAt = now
         }
+    }
+
+    private fun documentsMirrorMarker(dir: File): File = File(dir, ".documents_mirrored")
+
+    private fun markDocumentsMirrored(dir: File) {
+        try {
+            documentsMirrorMarker(dir).writeText(System.currentTimeMillis().toString(), Charsets.UTF_8)
+        } catch (_: Exception) {}
     }
 
     private fun pruneOldSessions() {
         val dirs = paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
             ?.sortedByDescending { it.lastModified() }
             .orEmpty()
-            
-        // Descartar sessões irrelevantes/vazias geradas por replug do cabo (menores que 10KB)
+
+        // Sessão sem cópia pública confirmada nunca é podada automaticamente.
         val validDirs = dirs.filter { dir ->
+            val durable = documentsMirror == null || documentsMirrorMarker(dir).isFile
             val size = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-            if (size < 10 * 1024) {
+            if (size < 10 * 1024 && durable) {
                 dir.deleteRecursively()
                 false
             } else {
                 true
             }
         }
-        
-        // Padrão de armazenar ao menos 25 sessões
+
         val keep = settings.sessionKeepCount.coerceAtLeast(25)
-        validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old -> old.deleteRecursively() }
+        validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old ->
+            if (documentsMirror == null || documentsMirrorMarker(old).isFile) old.deleteRecursively()
+        }
     }
 
     private fun awaitPendingWrites(timeoutMs: Long = 5_000L) {

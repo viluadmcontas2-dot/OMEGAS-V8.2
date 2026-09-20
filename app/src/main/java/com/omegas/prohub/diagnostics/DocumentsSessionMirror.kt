@@ -48,7 +48,10 @@ class DocumentsSessionMirror(private val context: Context) {
         }
         return try {
             val safeSession = safeName(sessionId)
-            val files = sessionDir.walkTopDown().filter { it.isFile }.sortedBy { it.name }.toList()
+            val files = sessionDir.walkTopDown()
+                .filter { it.isFile && !it.name.startsWith(".") }
+                .sortedBy { it.name }
+                .toList()
             files.forEach { source ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) syncScoped(source, safeSession)
                 else syncLegacy(source, safeSession)
