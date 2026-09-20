@@ -18,11 +18,22 @@ assert.match(api, /sessions:\s*\(\)\s*=>\s*invoke\(['"]listAutoCalSessions['"]/,
   'AutoCalApi deve listar sessões pelo mesmo bridge AutoCal');
 assert.match(bridge, /fun\s+getSessionLedgerStatus\s*\(/);
 assert.match(bridge, /fun\s+listAutoCalSessions\s*\(/);
+assert.match(api, /exportSession:\s*sessionId\s*=>\s*invoke\(['"]exportAutoCalSession['"]/,
+  'exportar sessão deve usar o mesmo bridge AutoCal');
+assert.match(bridge, /fun\s+exportAutoCalSession\s*\(/);
 
 assert.ok(cockpit.includes('data-autocal-sessions'), 'cockpit precisa abrir histórico de sessões');
 assert.ok(cockpit.includes('autocalSessionSummary'), 'sessão atual precisa aparecer de forma compacta');
 assert.ok(cockpit.includes('autocalSessionDrawer'), 'histórico deve ficar sob demanda');
 assert.ok(cockpit.includes('renderSessionState()'), 'sessão precisa de renderer explícito');
+assert.ok(cockpit.includes('data-autocal-export-session'), 'cada sessão recente precisa oferecer exportação');
+assert.ok(cockpit.includes('loadSessions()'), 'histórico precisa de carregamento explícito e preguiçoso');
+const refreshBody = cockpit.slice(cockpit.indexOf('    refresh() {'), cockpit.indexOf('    requestRead() {'));
+assert.equal(refreshBody.includes('this.api.sessions?.()'), false,
+  'refresh normal não pode varrer histórico no disco');
+const sessionsBinding = cockpit.slice(cockpit.indexOf("[data-autocal-sessions]"), cockpit.indexOf("this.panel?.addEventListener('click'"));
+assert.ok(sessionsBinding.includes('this.loadSessions()'),
+  'histórico só deve ser carregado quando o operador abrir Sessões');
 assert.ok(cockpit.includes('sessionNarrative'), 'copy da sessão deve ser derivada de estado real');
 assert.equal(cockpit.includes('directory'), false, 'path de armazenamento não pertence à UX primária');
 assert.equal(cockpit.includes('sessionId.slice'), false, 'ID técnico não deve ser a identidade humana da sessão');
