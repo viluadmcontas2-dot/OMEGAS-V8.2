@@ -60,6 +60,36 @@ class AutoCalUiProjectionTest {
     }
 
     @Test
+    fun `temporally incoherent native curves stay visible but are not a usable reference`() {
+        val projection = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L),
+            nativeSnapshot = usableReference("native-incoherent", longArrayOf(100L, 200L, 2_201L)),
+            manualStatus = status("IDLE", 42L),
+            manualSnapshot = unavailableSnapshot(),
+        )
+        assertEquals("NATIVE_MONITOR", projection.getString("source"))
+        assertTrue(projection.getBoolean("snapshotAvailable"))
+        assertFalse(projection.getBoolean("referenceUsable"))
+        assertFalse(projection.getBoolean("referenceTimingCoherent"))
+        assertEquals(2_101L, projection.getLong("referenceTimingSpanMs"))
+        assertEquals(AutoCalSnapshotBuilder.MAX_AUTOMATCH_GROUP_SKEW_MS, projection.getLong("referenceTimingLimitMs"))
+    }
+
+    @Test
+    fun `manual coherent reference wins over temporally incoherent monitor`() {
+        val projection = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L),
+            nativeSnapshot = usableReference("native-incoherent", longArrayOf(100L, 200L, 2_201L)),
+            manualStatus = status("READY", 42L),
+            manualSnapshot = usableReference("manual-coherent", longArrayOf(100L, 200L, 300L)),
+        )
+        assertEquals("MANUAL_READER", projection.getString("source"))
+        assertTrue(projection.getBoolean("referenceUsable"))
+        assertTrue(projection.getBoolean("referenceTimingCoherent"))
+        assertEquals(200L, projection.getLong("referenceTimingSpanMs"))
+    }
+
+    @Test
     fun `partial current monitor stays visible but never claims reference`() {
         val projection = AutoCalUiProjection.project(
             nativeStatus = status("MONITORING", 7L),
@@ -87,15 +117,15 @@ class AutoCalUiProjectionTest {
         .put("snapshotHash", hash)
         .put("fields", JSONArray().put(vectorField("PETR_INJ_TBP", 30, 2.0)))
 
-    private fun usableReference(hash: String) = JSONObject()
+    private fun usableReference(hash: String, capturedAtMs: LongArray? = null) = JSONObject()
         .put("available", true)
         .put("snapshotHash", hash)
         .put("fields", JSONArray()
-            .put(vectorField("PETR_INJ_TBP", 30, 2.0))
-            .put(vectorField("PETR_MNFLD_PRESS_RV", 30, 0.3))
-            .put(vectorField("GAS_MNFLD_PRESS_RV", 30, 0.32)))
+            .put(vectorField("PETR_INJ_TBP", 30, 2.0, capturedAtMs?.getOrNull(0)))
+            .put(vectorField("PETR_MNFLD_PRESS_RV", 30, 0.3, capturedAtMs?.getOrNull(1)))
+            .put(vectorField("GAS_MNFLD_PRESS_RV", 30, 0.32, capturedAtMs?.getOrNull(2))))
 
-    private fun vectorField(key: String, count: Int, base: Double): JSONObject {
+    private fun vectorField(key: String, count: Int, base: Double, capturedAtMs: Long? = null): JSONObject {
         val raw = JSONArray()
         val physical = JSONArray()
         repeat(count) { index ->
@@ -107,5 +137,6 @@ class AutoCalUiProjectionTest {
             .put("status", "VALID")
             .put("rawValues", raw)
             .put("physicalValues", physical)
+            .also { field -> capturedAtMs?.let { field.put("capturedAtMs", it) } }
     }
 }
