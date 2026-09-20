@@ -28,7 +28,7 @@ assert.ok(cockpit.includes('autocalSessionDrawer'), 'histórico deve ficar sob d
 assert.ok(cockpit.includes('renderSessionState()'), 'sessão precisa de renderer explícito');
 assert.ok(cockpit.includes('data-autocal-export-session'), 'cada sessão recente precisa oferecer exportação');
 assert.ok(cockpit.includes('loadSessions()'), 'histórico precisa de carregamento explícito e preguiçoso');
-const refreshBody = cockpit.slice(cockpit.indexOf('    refresh() {'), cockpit.indexOf('    requestRead() {'));
+const refreshBody = cockpit.slice(cockpit.indexOf('    refresh() {'), cockpit.indexOf('    loadSessions() {'));
 assert.equal(refreshBody.includes('this.api.sessions?.()'), false,
   'refresh normal não pode varrer histórico no disco');
 const sessionsBinding = cockpit.slice(cockpit.indexOf("[data-autocal-sessions]"), cockpit.indexOf("this.panel?.addEventListener('click'"));
