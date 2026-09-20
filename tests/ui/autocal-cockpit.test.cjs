@@ -12,6 +12,14 @@ const manager = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/pr
 assert.equal(cockpit.includes('autocal-chart-workspace'), true);
 assert.equal(cockpit.includes('autocal-live-strip'), true);
 assert.equal(cockpit.includes('data-autocal-read-context'), true);
+assert.equal(cockpit.includes('data-autocal-chart-action="zoom-in"'), false);
+assert.equal(cockpit.includes('data-autocal-chart-action="zoom-out"'), false);
+assert.equal(cockpit.includes('data-autocal-chart-action="fit"'), false);
+assert.equal(cockpit.includes('chartTransform()'), false);
+assert.equal(cockpit.includes('bindChartGestures('), false);
+assert.equal(cockpit.includes('Petrol Inj. (ms)'), true);
+assert.equal(cockpit.includes('MAP (bar)'), true);
+assert.equal(cockpitCss.includes('touch-action: pan-y'), true);
 assert.equal(cockpit.includes('autocal-now-card'), false);
 assert.equal(cockpit.includes('autocal-read-card'), false);
 assert.equal(cockpitCss.includes('.autocal-chart-workspace'), true);
