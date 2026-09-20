@@ -396,7 +396,7 @@
         const drawer = document.getElementById('autocalSessionDrawer');
         if (drawer) drawer.hidden = !this.sessionDrawerOpen;
         event.currentTarget.textContent = this.sessionDrawerOpen ? 'Ocultar sessões' : 'Ver sessões';
-        if (this.sessionDrawerOpen) this.renderSessionState();
+        if (this.sessionDrawerOpen) this.loadSessions();
       });
       this.panel?.addEventListener('click', event => {
         if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
@@ -451,8 +451,14 @@
       this.snapshot = nextSnapshot || {};
       this.actionState = this.api.actionStatus() || {};
       this.sessionState = this.api.sessionStatus?.() || {};
-      this.sessions = this.api.sessions?.() || [];
       this.render();
+    }
+
+    loadSessions() {
+      if (!this.api?.available?.()) return;
+      const next = this.api.sessions?.();
+      this.sessions = Array.isArray(next) ? next : [];
+      this.renderSessionState();
     }
 
     requestRead() {
