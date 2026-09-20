@@ -14,6 +14,18 @@ import org.json.JSONObject
  * uma geração USB conhecida.
  */
 object AutoCalUiProjection {
+    private data class ReferenceTiming(
+        val known: Boolean,
+        val coherent: Boolean,
+        val spanMs: Long?,
+    )
+
+    private val referenceKeys = listOf(
+        AutoCalProtocol.PETR_INJ_TBP.key,
+        AutoCalProtocol.PETR_MNFLD_PRESS_RV.key,
+        AutoCalProtocol.GAS_MNFLD_PRESS_RV.key,
+    )
+
     private const val SOURCE_NATIVE = "NATIVE_MONITOR"
     private const val SOURCE_MANUAL = "MANUAL_READER"
     private const val SOURCE_NONE = "NONE"
@@ -31,8 +43,12 @@ object AutoCalUiProjection {
         val nativeCurrent = snapshotAvailable(nativeSnapshot) && sameSession(nativeSession, currentSession)
         val manualReady = manualStatus.optString("state").uppercase() in setOf("READY", "READY_PARTIAL")
         val manualCurrent = snapshotAvailable(manualSnapshot) && manualReady && sameSession(manualSession, currentSession)
-        val nativeReference = nativeCurrent && hasNativeReference(nativeSnapshot)
-        val manualReference = manualCurrent && hasNativeReference(manualSnapshot)
+        val nativeTiming = referenceTiming(nativeSnapshot)
+        val manualTiming = referenceTiming(manualSnapshot)
+        val nativeReference =
+            nativeCurrent && hasNativeReference(nativeSnapshot) && nativeTiming.coherent
+        val manualReference =
+            manualCurrent && hasNativeReference(manualSnapshot) && manualTiming.coherent
 
         val source = when {
             nativeReference -> SOURCE_NATIVE
@@ -51,7 +67,14 @@ object AutoCalUiProjection {
             SOURCE_MANUAL -> manualStatus
             else -> JSONObject()
         }
-        val referenceUsable = hasNativeReference(selected)
+        val referenceShapeAvailable = hasNativeReference(selected)
+        val selectedTiming = when (source) {
+            SOURCE_NATIVE -> nativeTiming
+            SOURCE_MANUAL -> manualTiming
+            else -> ReferenceTiming(known = false, coherent = false, spanMs = null)
+        }
+        val referenceTimingCoherent = referenceShapeAvailable && selectedTiming.coherent
+        val referenceUsable = referenceShapeAvailable && referenceTimingCoherent
         val staleCandidate =
             (snapshotAvailable(nativeSnapshot) && !sameSession(nativeSession, currentSession)) ||
             (snapshotAvailable(manualSnapshot) && manualReady && !sameSession(manualSession, currentSession))
@@ -61,7 +84,14 @@ object AutoCalUiProjection {
             JSONObject()
                 .put("ok", true)
                 .put("available", false)
-                .put("message", "Referência física AutoCal ainda indisponível")
+                .put(
+                    "message",
+                    if (referenceShapeAvailable && !selectedTiming.coherent) {
+                        "Referência física AutoCal fora da janela temporal; releia o snapshot"
+                    } else {
+                        "Referência física AutoCal ainda indisponível"
+                    },
+                )
         }
 
         return JSONObject()
@@ -81,6 +111,10 @@ object AutoCalUiProjection {
             .put("snapshotAvailable", source != SOURCE_NONE && snapshotAvailable(selected))
             .put("referenceAvailable", referenceUsable)
             .put("referenceUsable", referenceUsable)
+            .put("referenceTimingKnown", referenceShapeAvailable && selectedTiming.known)
+            .put("referenceTimingCoherent", referenceTimingCoherent)
+            .put("referenceTimingSpanMs", selectedTiming.spanMs ?: JSONObject.NULL)
+            .put("referenceTimingLimitMs", AutoCalSnapshotBuilder.MAX_AUTOMATCH_GROUP_SKEW_MS)
             .put("snapshotHash", selected.optString("snapshotHash", ""))
             .put("revision", selected.optString("snapshotHash", ""))
             .put("snapshot", selected)
@@ -112,11 +146,37 @@ object AutoCalUiProjection {
     }
 
     private fun hasNativeReference(snapshot: JSONObject): Boolean =
-        listOf(
-            AutoCalProtocol.PETR_INJ_TBP.key,
-            AutoCalProtocol.PETR_MNFLD_PRESS_RV.key,
-            AutoCalProtocol.GAS_MNFLD_PRESS_RV.key,
-        ).all { key -> validVector(snapshot, key, KFactorProtocol.POINT_COUNT) }
+        referenceKeys.all { key -> validVector(snapshot, key, KFactorProtocol.POINT_COUNT) }
+
+    /**
+     * O gráfico usa três vetores físicos. A coerência deles é independente dos
+     * campos adicionais exigidos pelo cálculo completo (bandas/MUL_ACT).
+     *
+     * Snapshots legados sem timestamp continuam visíveis somente quando não se
+     * declaram como ECU_READ. O runtime atual ECU_READ falha fechado se perder
+     * proveniência temporal.
+     */
+    private fun referenceTiming(snapshot: JSONObject): ReferenceTiming {
+        val times = referenceKeys.mapNotNull { key ->
+            findValidField(snapshot, key)
+                ?.optLong("capturedAtMs", 0L)
+                ?.takeIf { it > 0L }
+        }
+        if (times.size != referenceKeys.size) {
+            val currentRuntime = snapshot.optString("source").uppercase() == AutoCalSnapshotSource.ECU_READ.name
+            return ReferenceTiming(
+                known = false,
+                coherent = !currentRuntime,
+                spanMs = null,
+            )
+        }
+        val spanMs = (times.maxOrNull() ?: 0L) - (times.minOrNull() ?: 0L)
+        return ReferenceTiming(
+            known = true,
+            coherent = spanMs <= AutoCalSnapshotBuilder.MAX_AUTOMATCH_GROUP_SKEW_MS,
+            spanMs = spanMs,
+        )
+    }
 
     private fun validVector(snapshot: JSONObject, key: String, expected: Int): Boolean {
         val field = findValidField(snapshot, key) ?: return false
