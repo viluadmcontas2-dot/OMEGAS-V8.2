@@ -31,10 +31,14 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^()|[\]\\]/g, '\\$&');
 }
 for (const [selector, min] of primaryTiny) {
-  const block = css.match(new RegExp(escapeRegExp(selector) + '\\s*\\{([\\s\\S]*?)\\}'));
-  assert.ok(block, 'CSS ausente para ' + selector);
-  const size = block[1].match(/font-size:\s*(\d+)px/);
-  assert.ok(size && Number(size[1]) >= min, selector + ' pequeno demais para uso automotivo');
+  const matches = [...css.matchAll(new RegExp(escapeRegExp(selector) + '\\s*\\{([\\s\\S]*?)\\}', 'g'))];
+  assert.ok(matches.length, 'CSS ausente para ' + selector);
+  const declared = matches
+    .map(match => [...match[1].matchAll(/font-size:\s*(\d+)px/g)].map(item => Number(item[1])))
+    .flat();
+  assert.ok(declared.length, 'font-size ausente para ' + selector);
+  const effective = declared[declared.length - 1];
+  assert.ok(effective >= min, selector + ' pequeno demais para uso automotivo: ' + effective + 'px');
 }
 
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
