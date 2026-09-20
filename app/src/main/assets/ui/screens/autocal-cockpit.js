@@ -349,6 +349,11 @@
                 <button type="button" data-autocal-read class="secondary">Consultar ECU</button>
                 <button type="button" data-autocal-cancel-read class="secondary" hidden>Cancelar leitura</button>
               </div>
+              <div class="autocal-read-context" data-autocal-read-context data-read-level="neutral" hidden>
+                <b id="autocalReadTitle">Leitura pronta para iniciar</b>
+                <span id="autocalReadDetail">Nenhuma consulta manual em andamento.</span>
+                <p id="autocalReadNext">Use Consultar ECU para obter um snapshot completo.</p>
+              </div>
             </header>
 
             <section class="autocal-session-strip" data-session-level="ok" aria-live="polite">
@@ -378,19 +383,18 @@
                 </div>
               </div>
               <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="equivalence">GNV equivalente</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
-              <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
-              <div id="autocalChartInspector" class="autocal-inline-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP de gasolina/GNV sem alterar nada.</span></div>
-            </section>
-
-            <section class="autocal-now-card" aria-live="polite">
-              <div class="autocal-section-head compact"><div><small>O QUE ESTÁ ACONTECENDO AGORA</small><h4 id="autocalLiveTitle">Aguardando telemetria</h4></div><span id="autocalLiveFuel">—</span></div>
-              <div class="autocal-now-values"><div><small>RPM</small><b id="autocalLiveRpm">—</b></div><div><small>PETROL INJ.</small><b><span id="autocalLivePetrol">—</span> ms</b></div><div><small>MAP</small><b><span id="autocalLiveMap">—</span> bar</b></div><div><small>LEVELS RAW</small><b id="autocalLiveLevel">—</b></div></div>
-              <p id="autocalLiveNarrative">O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
-            </section>
-
-            <section class="autocal-read-card" data-read-level="neutral">
-              <div><small>CONSULTA À ECU</small><b id="autocalReadTitle">Leitura pronta para iniciar</b><span id="autocalReadDetail">Nenhuma consulta manual em andamento.</span></div>
-              <p id="autocalReadNext">Use Consultar ECU para obter um snapshot completo.</p>
+              <div class="autocal-live-strip" aria-live="polite">
+                <div class="autocal-live-summary"><small>AGORA</small><b id="autocalLiveTitle">Aguardando telemetria</b><span id="autocalLiveFuel">—</span></div>
+                <div class="autocal-live-metric"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
+                <div class="autocal-live-metric"><small>PETROL INJ.</small><b><span id="autocalLivePetrol">—</span> ms</b></div>
+                <div class="autocal-live-metric"><small>MAP</small><b><span id="autocalLiveMap">—</span> bar</b></div>
+                <div class="autocal-live-metric"><small>LEVELS RAW</small><b id="autocalLiveLevel">—</b></div>
+                <p id="autocalLiveNarrative" class="autocal-live-narrative">O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
+              </div>
+              <div class="autocal-chart-workspace">
+                <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
+                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP de gasolina/GNV sem alterar nada.</span></aside>
+              </div>
             </section>
 
             <section class="autocal-bands-card">
@@ -680,8 +684,11 @@
       this.text('autocalReadNext', read.next);
       const pill = document.getElementById('autocalReadState');
       if (pill) pill.dataset.level = read.level;
-      const card = this.panel?.querySelector('.autocal-read-card');
-      if (card) card.dataset.readLevel = read.level;
+      const context = this.panel?.querySelector('[data-autocal-read-context]');
+      if (context) {
+        context.dataset.readLevel = read.level;
+        context.hidden = (read.level === 'neutral' || read.level === 'ok') && !read.busy;
+      }
       const start = this.panel?.querySelector('[data-autocal-read]');
       const cancel = this.panel?.querySelector('[data-autocal-cancel-read]');
       if (start) {

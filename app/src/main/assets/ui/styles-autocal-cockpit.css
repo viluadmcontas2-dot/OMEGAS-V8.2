@@ -771,33 +771,90 @@
   min-width: 0;
 }
 
-.autocal-now-card,
-.autocal-read-card {
-  min-width: 0;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  background: rgba(255,255,255,.022);
-}
-
-.autocal-now-card {
-  padding: 10px 12px;
-}
-
-.autocal-now-values {
+.autocal-read-context {
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.autocal-now-values > div {
+  grid-template-columns: auto minmax(0, 1fr) minmax(220px, .8fr);
+  gap: 10px;
+  align-items: center;
   min-width: 0;
   padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: 10px;
-  background: rgba(255,255,255,.035);
+  background: rgba(255,255,255,.02);
 }
 
-.autocal-now-values small,
-.autocal-read-card small {
+.autocal-read-context[hidden] {
+  display: none;
+}
+
+.autocal-read-context b,
+.autocal-read-context span {
+  display: block;
+}
+
+.autocal-read-context b {
+  color: #e0e8f1;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.autocal-read-context span,
+.autocal-read-context p {
+  color: #9dacbc;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.autocal-read-context p {
+  margin: 0;
+  text-align: right;
+}
+
+.autocal-live-strip {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.3fr) repeat(4, minmax(86px, .7fr));
+  gap: 6px;
+  align-items: stretch;
+  margin-bottom: 7px;
+}
+
+.autocal-live-summary,
+.autocal-live-metric {
+  min-width: 0;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.028);
+}
+
+.autocal-live-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-content: center;
+}
+
+.autocal-live-summary small {
+  grid-column: 1 / -1;
+}
+
+.autocal-live-summary b {
+  overflow: hidden;
+  color: #e4edf6;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocal-live-summary span {
+  align-self: center;
+  color: #9bd9c0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.autocal-live-summary small,
+.autocal-live-metric small {
   display: block;
   color: #8291a4;
   font-size: 10px;
@@ -805,49 +862,56 @@
   letter-spacing: .1em;
 }
 
-.autocal-now-values b {
+.autocal-live-metric b {
   display: block;
   margin-top: 2px;
+  overflow: hidden;
+  color: #edf3f8;
   font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.autocal-now-card > p {
-  margin: 7px 0 0;
-  color: #aebbc9;
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.autocal-read-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, .8fr);
-  gap: 14px;
-  align-items: center;
-  padding: 9px 12px;
-}
-
-.autocal-read-card b,
-.autocal-read-card span {
-  display: block;
-}
-
-.autocal-read-card b {
-  margin-top: 2px;
-  font-size: 14px;
-}
-
-.autocal-read-card span,
-.autocal-read-card p {
+.autocal-live-narrative {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0 3px;
   color: #9dacbc;
   font-size: 11px;
   line-height: 1.35;
 }
 
-.autocal-read-card p {
-  margin: 0;
-  text-align: right;
+.autocal-chart-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 24%);
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
 }
 
+.autocal-chart-inspector {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  background: rgba(255,255,255,.025);
+}
+
+.autocal-chart-inspector b {
+  color: #dbe5ee;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.autocal-chart-inspector span {
+  color: #95a4b5;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 .autocal-live-layer {
   pointer-events: none;
 }
@@ -889,21 +953,50 @@
 }
 
 .source-status[data-level="working"],
-.autocal-read-card[data-read-level="working"] {
+.autocal-read-context[data-read-level="working"] {
   border-color: rgba(120,183,255,.4);
 }
 
 .source-status[data-level="error"],
-.autocal-read-card[data-read-level="error"] {
+.autocal-read-context[data-read-level="error"] {
   border-color: rgba(255,119,119,.5);
 }
 
-@container (max-width: 760px) {
-  .autocal-read-card {
+@container (max-width: 900px) {
+  .autocal-chart-workspace {
     grid-template-columns: 1fr;
   }
-  .autocal-read-card p {
+
+  .autocal-chart-inspector {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+  }
+
+  .autocal-live-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .autocal-live-summary {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 760px) {
+  .autocal-read-context {
+    grid-template-columns: 1fr;
+  }
+
+  .autocal-read-context p {
     text-align: left;
+  }
+
+  .autocal-live-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .autocal-live-summary,
+  .autocal-live-narrative {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1026,13 +1119,15 @@
 .autocal-review-card dd,
 .autocal-review-card dt { font-size: 13px; }
 .autocal-review-tech > summary { font-size: 13px; }
-.autocal-now-values small,
-.autocal-read-card small { font-size: 11px; }
-.autocal-now-values b { font-size: 18px; }
-.autocal-now-card > p { font-size: 14px; }
-.autocal-read-card b { font-size: 15px; }
-.autocal-read-card span { font-size: 13px; }
-.autocal-read-card p { font-size: 13px; }
+.autocal-live-summary small,
+.autocal-live-metric small { font-size: 11px; }
+.autocal-live-summary b { font-size: 15px; }
+.autocal-live-summary span { font-size: 13px; }
+.autocal-live-metric b { font-size: 18px; }
+.autocal-live-narrative { font-size: 13px; }
+.autocal-read-context b { font-size: 15px; }
+.autocal-read-context span,
+.autocal-read-context p { font-size: 13px; }
 .autocal-live-label { font-size: 13px; }
 .autocal-session-copy small,
 .autocal-session-item small { font-size: 11px; }
