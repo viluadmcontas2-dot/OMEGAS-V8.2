@@ -1,0 +1,289 @@
+{
+  "schema": "omegas.amarelo.autocal-acquired-zones.v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "parser_contract": "tools/omegas_amarelo/portmon_transactions.py framing semantics: write begins transaction; fragmented reads concatenate; echo + 0x53 + length + additive checksum validated",
+  "fields": {
+    "ACQUIRED_ZONES_PETROL": {
+      "address": "0x016F",
+      "request": "29 6F 01 99",
+      "payload_length": 4
+    },
+    "ACQUIRED_ZONES_GAS": {
+      "address": "0x0170",
+      "request": "29 70 01 9A",
+      "payload_length": 4
+    }
+  },
+  "captures": {
+    "PortmonAUTOCAL": {
+      "0x016F": {
+        "count": 244,
+        "first_occurrence_by_unique_payload": [
+          {
+            "portmon_write_index": 10950,
+            "payload": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 79146,
+            "payload": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 380400,
+            "payload": [
+              1,
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 452476,
+            "payload": [
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 500042,
+            "payload": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ]
+      },
+      "0x0170": {
+        "count": 501,
+        "first_occurrence_by_unique_payload": [
+          {
+            "portmon_write_index": 88752,
+            "payload": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 142636,
+            "payload": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 200422,
+            "payload": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 202346,
+            "payload": [
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 248426,
+            "payload": [
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 586517,
+            "payload": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 648031,
+            "payload": [
+              1,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 715514,
+            "payload": [
+              0,
+              0,
+              1,
+              0
+            ]
+          }
+        ]
+      }
+    },
+    "PortmonLOGNOVO": {
+      "0x016F": {
+        "count": 111,
+        "first_occurrence_by_unique_payload": [
+          {
+            "portmon_write_index": 7117,
+            "payload": [
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 35419,
+            "payload": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 344542,
+            "payload": [
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 702241,
+            "payload": [
+              1,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 708181,
+            "payload": [
+              1,
+              1,
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      "0x0170": {
+        "count": 325,
+        "first_occurrence_by_unique_payload": [
+          {
+            "portmon_write_index": 44726,
+            "payload": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 226682,
+            "payload": [
+              1,
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "portmon_write_index": 652741,
+            "payload": [
+              1,
+              1,
+              0,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 667911,
+            "payload": [
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 790792,
+            "payload": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 824550,
+            "payload": [
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          {
+            "portmon_write_index": 849124,
+            "payload": [
+              1,
+              0,
+              1,
+              1
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "progbase_consumer": {
+    "helper": "0x517254",
+    "logical_zone_count": 4,
+    "element_getter": "0x979DA4",
+    "presentation_rule": "each element is rounded to integer then tested as zero vs non-zero to choose acquisition-area presentation",
+    "status": "PROVEN"
+  },
+  "conclusions": {
+    "vector_shape": "4 independent byte-sized observed elements",
+    "observed_domain": [
+      0,
+      1
+    ],
+    "monotonic_progress": false,
+    "percent_semantics": "PROHIBITED_WITHOUT_SEPARATE_EVIDENCE",
+    "element_order_semantics": "UNKNOWN"
+  }
+}
