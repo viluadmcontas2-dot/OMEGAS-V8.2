@@ -184,3 +184,46 @@ def parse_portmon_lines(lines: Iterable[str]) -> Iterator[PortmonTransaction]:
     last = finish()
     if last is not None:
         yield last
+
+
+@dataclass(frozen=True)
+class ObjectReply:
+    status: int
+    payload: bytes
+    checksum: int
+    checksum_valid: bool
+    raw: bytes
+
+
+def decode_echo_response(request: bytes, response: bytes) -> ObjectReply:
+    """Decode request-echo + status + length + payload + checksum."""
+    if not response.startswith(request):
+        raise ValueError("MP48 response does not echo request")
+    tail = response[len(request):]
+    if len(tail) < 3:
+        raise ValueError("MP48 response tail is too short")
+    status = tail[0]
+    length = tail[1]
+    expected = 2 + length + 1
+    if len(tail) != expected:
+        raise ValueError(
+            f"MP48 response length mismatch: declared {length}, got {len(tail) - 3}"
+        )
+    payload = tail[2:2 + length]
+    checksum = tail[-1]
+    valid = (sum(tail[:-1]) & 0xFF) == checksum
+    if not valid:
+        raise ValueError("MP48 response checksum mismatch")
+    return ObjectReply(
+        status=status,
+        payload=payload,
+        checksum=checksum,
+        checksum_valid=True,
+        raw=bytes(response),
+    )
+
+
+def u16le_values(payload: bytes) -> tuple[int, ...]:
+    if len(payload) % 2:
+        raise ValueError("U16 payload must contain an even number of bytes")
+    return tuple(payload[i] | (payload[i + 1] << 8) for i in range(0, len(payload), 2))

@@ -1,0 +1,81 @@
+{
+  "schema": "omegas.amarelo.native-mulact-transitions.v1",
+  "sourceRawName": "PortmonAUTOCAL (1).LOG",
+  "sourceRawSha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+  "extraction": {
+    "authority": "raw Portmon transaction event IDs",
+    "eventIds": [
+      10880,
+      499796,
+      502716,
+      696141,
+      697091,
+      828608,
+      829550
+    ],
+    "rule": "capture write transaction and concatenate successful IRP_MJ_READ fragments until next write"
+  },
+  "transactions": [
+    {
+      "label": "MUL_INITIAL",
+      "eventId": 10880,
+      "request": "29 61 01 8B",
+      "response": "29 61 01 8B 53 3C 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 0F"
+    },
+    {
+      "label": "MUL_1",
+      "eventId": 499796,
+      "request": "29 61 01 8B",
+      "response": "29 61 01 8B 53 3C A6 3C A6 3C A6 3C A6 3C A6 3C 2A 41 D2 3F 78 48 8E 4A 66 4B 00 50 00 50 A2 4F 84 4E 00 50 00 50 00 50 00 50 00 50 00 50 CD 4C CD 4C CD 4C CD 4C CD 4C CD 4C CD 4C CD 4C CD 4C CD 4C FB"
+    },
+    {
+      "label": "COUNT_1",
+      "eventId": 502716,
+      "request": "09 74 01 7E",
+      "response": "09 74 01 7E 53 01 01 55"
+    },
+    {
+      "label": "MUL_2",
+      "eventId": 696141,
+      "request": "29 61 01 8B",
+      "response": "29 61 01 8B 53 3C 2D 3B 2D 3B 2D 3B 2D 3B 2D 3B 4F 42 A4 3E 2A 51 79 50 6E 4F 99 59 99 59 30 59 EF 57 99 59 99 59 99 59 99 59 99 59 99 59 04 56 04 56 04 56 04 56 04 56 04 56 04 56 04 56 04 56 04 56 EE"
+    },
+    {
+      "label": "COUNT_2",
+      "eventId": 697091,
+      "request": "09 74 01 7E",
+      "response": "09 74 01 7E 53 01 02 56"
+    },
+    {
+      "label": "MUL_3",
+      "eventId": 828608,
+      "request": "29 61 01 8B",
+      "response": "29 61 01 8B 53 3C B9 3E B9 3E B9 3E B9 3E B9 3E 49 46 A5 41 08 56 4D 55 31 54 F9 5E F9 5E 89 5E 35 5D F9 5E F9 5E F9 5E F9 5E F9 5E F9 5E 2D 5B 2D 5B 2D 5B 2D 5B 2D 5B 2D 5B 2D 5B 2D 5B 2D 5B 2D 5B DD"
+    },
+    {
+      "label": "COUNT_3",
+      "eventId": 829550,
+      "request": "09 74 01 7E",
+      "response": "09 74 01 7E 53 01 03 57"
+    }
+  ],
+  "nonReadRequests": [
+    {
+      "eventId": 26238,
+      "request": "02 24 04 04 2E"
+    },
+    {
+      "eventId": 631253,
+      "request": "01 00 3A 3B"
+    },
+    {
+      "eventId": 631280,
+      "request": "01 00 3A 3B"
+    },
+    {
+      "eventId": 631290,
+      "request": "00 25 25"
+    }
+  ],
+  "hostWriteToMulActObserved": false
+}

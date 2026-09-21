@@ -3,14 +3,17 @@ import unittest
 from pathlib import Path
 
 from tools.omegas_amarelo.portmon import (
+    decode_echo_response,
     decode_object_request,
     parse_portmon_lines,
+    u16le_values,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTOCAL = ROOT / "tests" / "fixtures" / "portmon-autocal-cycle-v1.json"
 LOGNOVO_RAW = ROOT / "tests" / "fixtures" / "portmon-lognovo-enable-disable-v1.txt"
 LOGNOVO_META = ROOT / "tests" / "fixtures" / "portmon-lognovo-enable-disable-v1.json"
+NATIVE_TRANSITIONS = ROOT / "tests" / "fixtures" / "portmon-autocal-mulact-transitions-v1.json"
 
 AUTOCAL_SHA = "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b"
 LOGNOVO_SHA = "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
@@ -56,6 +59,46 @@ class AutoCalGroundTruthTest(unittest.TestCase):
         meta = json.loads(LOGNOVO_META.read_text(encoding="utf-8"))
         self.assertEqual("AUTO_CAL_ENABLE_0_FREEZES_ACQUISITION", meta["disableSemantic"])
         self.assertFalse(meta["separatePauseControlProven"])
+
+
+    def test_native_ecu_mutates_mul_act_without_host_curve_write(self):
+        fixture = json.loads(NATIVE_TRANSITIONS.read_text(encoding="utf-8"))
+        self.assertEqual(AUTOCAL_SHA, fixture["sourceRawSha256"])
+        self.assertFalse(fixture["hostWriteToMulActObserved"])
+
+        rows = {row["label"]: row for row in fixture["transactions"]}
+        self.assertEqual(
+            ["MUL_INITIAL", "MUL_1", "COUNT_1", "MUL_2", "COUNT_2", "MUL_3", "COUNT_3"],
+            [row["label"] for row in fixture["transactions"]],
+        )
+
+        curves = []
+        for label in ("MUL_INITIAL", "MUL_1", "MUL_2", "MUL_3"):
+            row = rows[label]
+            request = bytes.fromhex(row["request"])
+            reply = decode_echo_response(request, bytes.fromhex(row["response"]))
+            self.assertEqual(0x53, reply.status)
+            curve = u16le_values(reply.payload)
+            self.assertEqual(30, len(curve))
+            curves.append(curve)
+
+        self.assertEqual((16384,) * 30, curves[0])
+        self.assertTrue(all(curves[i] != curves[i - 1] for i in range(1, 4)))
+        self.assertTrue(all(a != b for a, b in zip(curves[0], curves[1])))
+        self.assertTrue(all(a != b for a, b in zip(curves[1], curves[2])))
+        self.assertTrue(all(a != b for a, b in zip(curves[2], curves[3])))
+
+        counts = []
+        for label in ("COUNT_1", "COUNT_2", "COUNT_3"):
+            row = rows[label]
+            request = bytes.fromhex(row["request"])
+            reply = decode_echo_response(request, bytes.fromhex(row["response"]))
+            self.assertEqual(1, len(reply.payload))
+            counts.append(reply.payload[0])
+        self.assertEqual([1, 2, 3], counts)
+
+        host_requests = [row["request"] for row in fixture["nonReadRequests"]]
+        self.assertNotIn("12 61 01", [request[:8] for request in host_requests])
 
 
 if __name__ == "__main__":
