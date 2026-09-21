@@ -38,10 +38,13 @@ projection = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProje
 protocol = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt").read_text(encoding="utf-8")
 engine = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt").read_text(encoding="utf-8")
 
-assert "snapshot completo só é lido por evento" in monitor
 assert "AutoCalProtocol.NUM_BUF_UPD_GAS" in monitor
 assert "probeMaturityCounters" in monitor
-assert "AutoCalProtocol.NUM_BUF_UPD_PETR" not in monitor.split("private fun probeMaturityCounters",1)[1].split("private fun readFullSnapshot",1)[0]
+assert "refreshAcquisitionGroup" in monitor
+assert "AutoCalProtocol.NUM_BUF_UPD_PETR" in monitor
+assert "AutoCalProtocol.NUM_BUF_UPD_GAS" in monitor
+assert "AutoCalProtocol.ACQUIRED_ZONES_PETROL" in monitor
+assert "AutoCalProtocol.ACQUIRED_ZONES_GAS" in monitor
 assert "addHook('fast'" in cockpit
 assert "renderLiveCursor()" in cockpit
 assert "const levelRaw = finite(live.level_raw ?? live.levelRaw);" in cockpit
