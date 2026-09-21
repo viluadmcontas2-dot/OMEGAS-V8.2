@@ -335,9 +335,67 @@
         "rule": "each element is rounded to integer and presented by zero vs non-zero"
       },
       "monotonic": false,
-      "ui_contract": "present four current zone flags/regions; do not convert to completion percentage or assume monotonic progress",
-      "element_order_semantics": "UNKNOWN",
-      "status": "PROVEN_SHAPE_AND_BINARY_DOMAIN"
+      "ui_contract": "draw four native MAP regions using ECU thresholds; flags are per-region context, never percentage/progress",
+      "element_order_semantics": "PROVEN_LOW_TO_HIGH_MAP_ORDER",
+      "status": "PROVEN_SHAPE_AND_BINARY_DOMAIN",
+      "geometry": {
+        "projection_function": "0x517254",
+        "map_threshold_field": "MNFLD_PRESS_THD@0x014C",
+        "injection_axis_field": "PETR_INJ_TBP@0x014B",
+        "internal_cut_indices": [
+          5,
+          9,
+          13
+        ],
+        "upper_endpoint_index": 17,
+        "observed_thresholds_raw": [
+          461,
+          666,
+          870,
+          1126
+        ],
+        "observed_thresholds_bar": [
+          0.461,
+          0.666,
+          0.87,
+          1.126
+        ],
+        "ordered_regions": [
+          {
+            "index": 0,
+            "low_map_bar": 0,
+            "high_map_bar": 0.461
+          },
+          {
+            "index": 1,
+            "low_map_bar": 0.461,
+            "high_map_bar": 0.666
+          },
+          {
+            "index": 2,
+            "low_map_bar": 0.666,
+            "high_map_bar": 0.87
+          },
+          {
+            "index": 3,
+            "low_map_bar": 0.87,
+            "high_map_bar": 1.126
+          }
+        ],
+        "raw_reads": {
+          "MNFLD_PRESS_THD": [
+            5024,
+            222125,
+            556056
+          ],
+          "PETR_INJ_TBP": [
+            5070,
+            222171,
+            556102
+          ]
+        },
+        "status": "PROVEN_STATIC_AND_RAW_LOGNOVO"
+      }
     },
     "gas_point_buffers": {
       "current": {
@@ -443,9 +501,9 @@
   "unknowns": [
     "Any ECU/physical AutoCAL state machine distinct from the proven refresh-dispatch scheduler; transition producers/guards remain UNKNOWN.",
     "Exact producer/consumer transforms not already listed as PROVEN.",
-    "Exact semantic/order meaning of acquired-zone indices 0..3; shape/domain are PROVEN but physical zone labels remain UNKNOWN.",
     "Firmware meaning/lifecycle of GasPointPrev beyond its proven separate native buffer.",
     "Exact firmware threshold/guard that promotes NUM_BUF_UPD activity into ACQUIRED_ZONES flags.",
-    "Finish AutoCAL exact ECU-side physical effect after the connection-aware VECT_AUTOCAL_U8_0 commit; supplied raw captures contain reads but no 0x0165 write."
+    "Finish AutoCAL exact ECU-side physical effect after the connection-aware VECT_AUTOCAL_U8_0 commit; supplied raw captures contain reads but no 0x0165 write.",
+    "Human/physical semantic names beyond numeric low-to-high MAP region order for acquired-zone indices 0..3."
   ]
 }
