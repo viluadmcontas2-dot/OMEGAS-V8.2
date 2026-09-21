@@ -308,13 +308,53 @@
       "cursor_advance": "0x51ADE8",
       "status": "PROVEN",
       "authority_boundary": "host/UI projection over already-read values; not evidence of a new ECU calibration mutation"
+    },
+    "acquired_zones": {
+      "fields": [
+        {
+          "name": "ACQUIRED_ZONES_PETROL",
+          "address": "0x016F",
+          "request": "29 6F 01 99"
+        },
+        {
+          "name": "ACQUIRED_ZONES_GAS",
+          "address": "0x0170",
+          "request": "29 70 01 9A"
+        }
+      ],
+      "payload_shape": "4 bytes",
+      "observed_domain": [
+        0,
+        1
+      ],
+      "dual_capture_counts": {
+        "PortmonAUTOCAL": {
+          "0x016F": 244,
+          "0x0170": 501
+        },
+        "PortmonLOGNOVO": {
+          "0x016F": 111,
+          "0x0170": 325
+        }
+      },
+      "progbase_consumer": {
+        "dispatcher": "0x5171EC",
+        "area_builder": "0x517254",
+        "element_getter": "0x979DA4",
+        "logical_zone_count": 4,
+        "rule": "each element is rounded to integer and presented by zero vs non-zero"
+      },
+      "monotonic": false,
+      "ui_contract": "present four current zone flags/regions; do not convert to completion percentage or assume monotonic progress",
+      "element_order_semantics": "UNKNOWN",
+      "status": "PROVEN_SHAPE_AND_BINARY_DOMAIN"
     }
   },
   "unknowns": [
     "Exact semantic identity of DM+0x7C and DM+0xCC in Finish.",
     "Exact 0x0165 subindex semantics.",
     "Any ECU/physical AutoCAL state machine distinct from the proven refresh-dispatch scheduler; transition producers/guards remain UNKNOWN.",
-    "Acquired-zone bit/byte meaning.",
-    "Exact producer/consumer transforms not already listed as PROVEN."
+    "Exact producer/consumer transforms not already listed as PROVEN.",
+    "Exact semantic/order meaning of acquired-zone indices 0..3; shape/domain are PROVEN but physical zone labels remain UNKNOWN."
   ]
 }
