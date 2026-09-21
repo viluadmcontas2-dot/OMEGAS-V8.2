@@ -1,6 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
+  const AUTO_CAL_LIVE_STALE_MS = 2500;
 
   function finite(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -139,14 +140,15 @@
 
     livePoint(telemetry = {}) {
       const source = telemetry || {};
-      if (source.valid === false) return null;
+      const ageMs = finite(source.telemetryAgeMs ?? source.ageMs);
+      if (source.valid !== true || ageMs === null || ageMs < 0 || ageMs > AUTO_CAL_LIVE_STALE_MS) return null;
       const live = source.live || source.data || source;
       const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
       const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
       const rpm = finite(live.rpm);
       const levelRaw = finite(live.level_raw ?? live.levelRaw);
       if (petrolMs === null || mapBar === null) return null;
-      return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs: finite(source.telemetryAgeMs ?? source.ageMs) };
+      return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
     },
 
     referencePoints(snapshot = {}, analysis = {}) {
@@ -747,15 +749,20 @@
     }
 
     renderLiveNarrative() {
-      const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
+      const telemetry = this.store.get().telemetry || {};
+      const live = AutoCalUxModel.livePoint(telemetry);
       if (!live) {
-        this.text('autocalLiveTitle', 'Aguardando telemetria válida');
+        const ageMs = finite(telemetry.telemetryAgeMs ?? telemetry.ageMs);
+        const stale = telemetry.valid === true && ageMs !== null && ageMs > AUTO_CAL_LIVE_STALE_MS;
+        this.text('autocalLiveTitle', stale ? 'Telemetria com atraso' : 'Aguardando telemetria válida');
         this.text('autocalLiveFuel', '—');
         this.text('autocalLiveRpm', '—');
         this.text('autocalLivePetrol', '—');
         this.text('autocalLiveMap', '—');
         this.text('autocalLiveLevel', '—');
-        this.text('autocalLiveNarrative', 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
+        this.text('autocalLiveNarrative', stale
+          ? 'O último frame já passou de 2,5 s. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
+          : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
         return;
       }
       const rpmLabel = live.rpm === null ? 'RPM —' : Math.round(live.rpm).toLocaleString('pt-BR') + ' RPM';

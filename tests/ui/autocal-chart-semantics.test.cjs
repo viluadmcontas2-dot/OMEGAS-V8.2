@@ -58,6 +58,31 @@ assert.equal(ref[0].gasEquivalentMs, 2.25);
 assert.equal(ref[1].gasEquivalentMs, 10.5);
 
 
+const freshTelemetry = {
+  valid: true,
+  ageMs: 2500,
+  live: { petrol_ms: 4.50, load_bar: 0.45, rpm: 900, level_raw: 173, fuel: 'GNV' },
+};
+assert.equal(model.livePoint(freshTelemetry).levelRaw, 173, 'LEVELS deve permanecer RAW quando a telemetria está fresca');
+assert.equal(
+  model.livePoint({ ...freshTelemetry, ageMs: 2501 }),
+  null,
+  'AGORA não pode continuar visível depois da janela de frescor adotada pela HMI',
+);
+assert.equal(
+  model.livePoint({ ...freshTelemetry, valid: false, ageMs: 50 }),
+  null,
+  'telemetria explicitamente inválida não pode materializar AGORA',
+);
+assert.equal(
+  model.livePoint({ ...freshTelemetry, ageMs: -1 }),
+  null,
+  'frescor desconhecido falha fechado para o cursor AGORA',
+);
+assert.match(source, /Telemetria com atraso/);
+assert.match(source, /AGORA foi ocultado/);
+
+
 const previousProjection = { sessionId: 101 };
 const sameSessionProjection = { sessionId: 101 };
 const nextSessionProjection = { sessionId: 202 };
