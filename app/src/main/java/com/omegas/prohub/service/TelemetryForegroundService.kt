@@ -692,7 +692,7 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         try {
             handleUsbTransition()
-            if (!usb.connected && settings.autoReconnectUsb && !enginePausedByUser && usb.hasCompatibleDevice()) {
+            if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
                 connectUsb()
             }
             if (usb.connected && settings.autoStartEngine && !enginePausedByUser &&
