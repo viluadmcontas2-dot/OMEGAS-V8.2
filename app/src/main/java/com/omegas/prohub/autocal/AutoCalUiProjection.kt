@@ -128,7 +128,7 @@ object AutoCalUiProjection {
             .put("revision", selected.optString("snapshotHash", ""))
             .put("snapshot", selected)
             .put("analysis", analysis)
-            .put("acquisitionZones", acquisitionZones(selected))
+            .put("acquisitionZones", acquisitionZones(nativeSnapshot.takeIf { nativeCurrent }, selected))
             .put("correlation", correlationEvents)
             .put("correlationState", correlationState)
             .put("levelsRaw", levelsRaw(telemetryStatus, currentSession))
@@ -138,9 +138,20 @@ object AutoCalUiProjection {
             .put("manualSnapshot", copy(manualSnapshot))
     }
 
-    private fun acquisitionZones(snapshot: JSONObject): JSONObject = JSONObject()
-        .put("petrol", zoneVector(snapshot, AutoCalProtocol.ACQUIRED_ZONES_PETROL.key))
-        .put("gas", zoneVector(snapshot, AutoCalProtocol.ACQUIRED_ZONES_GAS.key))
+    private fun acquisitionZones(nativeCurrent: JSONObject?, selected: JSONObject): JSONObject = JSONObject()
+        .put(
+            "petrol",
+            preferredZoneVector(nativeCurrent, selected, AutoCalProtocol.ACQUIRED_ZONES_PETROL.key),
+        )
+        .put(
+            "gas",
+            preferredZoneVector(nativeCurrent, selected, AutoCalProtocol.ACQUIRED_ZONES_GAS.key),
+        )
+
+    private fun preferredZoneVector(nativeCurrent: JSONObject?, selected: JSONObject, key: String): JSONArray {
+        val native = nativeCurrent?.let { zoneVector(it, key) }
+        return if (native != null && native.length() > 0) native else zoneVector(selected, key)
+    }
 
     private fun zoneVector(snapshot: JSONObject, key: String): JSONArray {
         val field = findValidField(snapshot, key) ?: return JSONArray()
