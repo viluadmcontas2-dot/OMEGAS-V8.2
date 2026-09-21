@@ -348,6 +348,45 @@
       "ui_contract": "present four current zone flags/regions; do not convert to completion percentage or assume monotonic progress",
       "element_order_semantics": "UNKNOWN",
       "status": "PROVEN_SHAPE_AND_BINARY_DOMAIN"
+    },
+    "gas_point_buffers": {
+      "current": {
+        "x": "PETR_INJ_TBUF_GAS@0x015F",
+        "y": "MNFLD_PRESS_BUF_GAS@0x0160",
+        "consumer": "GasPoint",
+        "status": "PROVEN"
+      },
+      "previous": {
+        "x": "PETR_INJ_TBUF_GAS_PREV@0x015D",
+        "y": "MNFLD_PRESS_BUF_GAS_PREV@0x015E",
+        "consumer": "GasPointPrev",
+        "status": "PROVEN"
+      },
+      "dual_capture": {
+        "PortmonAUTOCAL": {
+          "complete_ordered_quartet_cycles": 744,
+          "current_point_changed_index_events": 322,
+          "previous_equals_immediate_prior_current": 58,
+          "ratio": 0.1801
+        },
+        "PortmonLOGNOVO": {
+          "complete_ordered_quartet_cycles": 437,
+          "current_point_changed_index_events": 250,
+          "previous_equals_immediate_prior_current": 57,
+          "ratio": 0.228
+        }
+      },
+      "immediate_previous_equivalence": "FALSIFIED",
+      "firmware_reason_for_previous_buffer": "UNKNOWN",
+      "ui_contract": "render current and native previous buffers as distinct layers; do not claim every previous buffer is the immediate prior current point"
+    },
+    "point_activity_context": {
+      "gas_point_changes_while_all_zone_flags_zero": "PROVEN",
+      "num_buf_upd_gas_finer_grained_than_zone_flags": "PROVEN_PARTIAL",
+      "point_change_requires_automatch_transition": "FALSIFIED",
+      "zone_flag_percent_completion": "FALSIFIED",
+      "firmware_counter_to_zone_threshold": "UNKNOWN",
+      "ui_contract": "current native acquisition points remain visible independently of zone-flag completion"
     }
   },
   "unknowns": [
@@ -355,6 +394,8 @@
     "Exact 0x0165 subindex semantics.",
     "Any ECU/physical AutoCAL state machine distinct from the proven refresh-dispatch scheduler; transition producers/guards remain UNKNOWN.",
     "Exact producer/consumer transforms not already listed as PROVEN.",
-    "Exact semantic/order meaning of acquired-zone indices 0..3; shape/domain are PROVEN but physical zone labels remain UNKNOWN."
+    "Exact semantic/order meaning of acquired-zone indices 0..3; shape/domain are PROVEN but physical zone labels remain UNKNOWN.",
+    "Firmware meaning/lifecycle of GasPointPrev beyond its proven separate native buffer.",
+    "Exact firmware threshold/guard that promotes NUM_BUF_UPD activity into ACQUIRED_ZONES flags."
   ]
 }
