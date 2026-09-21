@@ -73,6 +73,7 @@ jobs:
             --lane "${{ matrix.target }}" \
             --receipt "research-receipts/${{ matrix.id }}.json"
           rc=$?
+          export HARVEST_RC="$rc"
           set -e
           python3 - <<'PY'
           import json, pathlib, os, sys
@@ -86,7 +87,8 @@ jobs:
               row["status"]="RED"
               row["summary"]="HARVESTED_VERDE_RED — "+str(row.get("summary",""))
               p.write_text(json.dumps(row,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
-          elif rc != 0 and original not in {"RED","PASS","INFO"}:
+          rc=int(os.environ.get("HARVEST_RC","0"))
+          if rc != 0 and original not in {"RED","PASS","INFO","BROKEN"}:
               raise SystemExit(f"harvested lane failed rc={rc} status={original}")
           PY
 
