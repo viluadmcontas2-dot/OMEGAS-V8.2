@@ -29,7 +29,6 @@ Consumer-graph research may proceed independently, but closure remains gated by 
 ### Ainda UNKNOWN / incompleto
 - máquina de estados física/ECU, caso exista separada do scheduler de refresh;
 - transforms exatos de todos os consumers;
-- identidade exata de `DM+0x7C` / `DM+0xCC` e subíndices `0x0165`;
 - relação completa host write vs ECU mutation.
 
 
@@ -92,3 +91,36 @@ A HMI consome a projeção tipada; não reconstrói a semântica nativa dos buff
 Último SHA com pipeline publisher/consumer confirmado verde antes desta reconciliação documental:
 `277effc942da48661f1567a05b88425ad1068ab9`, run `35654147198` = SUCCESS.
 Cada SHA posterior continua exigindo receipt próprio.
+
+
+## Finish AutoCAL / família 0x0165 — 2026-09-21
+
+ProgBase RTTI resolveu os wrappers antes anônimos:
+- `DM+0x7C = VECT_AUTOCAL_U8_1` — PROVEN;
+- `DM+0xCC = VECT_AUTOCAL_U8_0` — PROVEN;
+- `DM+0xD0 = NUM_ATUOMATCH_EXECUTED` — PROVEN.
+
+O handler `ActionFinishAutocalExecute@0x51A390`:
+1. lê `VECT_AUTOCAL_U8_1` via `0x976C44`;
+2. passa o mesmo inteiro ao setter de `VECT_AUTOCAL_U8_0` via `0x976CB8`;
+3. o setter entra no caminho genérico TAebNumber `0x976DF0 -> 0x977014`, que é connection-aware e pode atingir serial quando conectado;
+4. espera 100 ms;
+5. chama `PostActionRefresh(1)`.
+
+DFM + wire:
+- U8_1: SerialCode `0x0165`, RowIndex 1 — PROVEN;
+- U8_2: SerialCode `0x0165`, RowIndex 2 — PROVEN;
+- U8_0: SerialCode `0x0165`, RowIndex omitido/default; associação ao índice 0 é **INFERRED_STRONG**, não promovida a PROVEN;
+- LOGNOVO contém 3 leituras de cada índice 0/1/2 (`0A 65 01 00 70`, `...01 71`, `...02 72`), todas retornando payload `03`;
+- AUTOCAL não contém transação 0x0165;
+- nenhum write 0x0165 foi observado nos dois raws fornecidos.
+
+Classificação correta:
+`Finish -> U8_1 -> U8_0 -> connection-aware commit -> 100 ms -> refresh` = **PROVEN_STATIC**.
+O write físico do Finish e seu efeito exato dentro da ECU = **NOT OBSERVED / UNKNOWN**.
+
+Fixture/gate:
+- `tests/fixtures/amarelo-autocal-finish-0165-v1.json`;
+- `tests/test_amarelo_autocal_finish_0165_evidence.py`.
+
+LEVELS não participa desta cadeia.
