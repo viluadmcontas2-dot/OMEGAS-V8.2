@@ -140,8 +140,7 @@
     "machine_path": "tests/fixtures/omegas-autocal-progbase-parity-v1.json",
     "status": "ACTIVE_REPAIR",
     "confirmed_red_candidates": [
-      "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
-      "AUTOCAL_PETROL_MATURITY_REFRESH"
+      "AUTOCAL_REFERENCE_PERIODIC_REFRESH"
     ],
     "protected_matches": [
       "LIVE_AGORA_TELEMETRY_SEPARATION",
@@ -174,11 +173,47 @@
         "first_fix_sha": "38ccb9ee38d833b911687ab1e1c5e87b23bf6959",
         "original_rule": "threshold[i] < MAP <= threshold[i+1]; global min/max excluded",
         "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
+      },
+      "grouped_acquisition": {
+        "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
+        "red_fast_run": {
+          "number": 122,
+          "id": 35637404907,
+          "conclusion": "failure"
+        },
+        "first_fix_sha": "714725f2e7417a847c19a94e4ddb70096b0af2e3",
+        "fields": [
+          "NUM_BUF_UPD_PETR",
+          "NUM_BUF_UPD_GAS",
+          "ACQUIRED_ZONES_PETROL",
+          "ACQUIRED_ZONES_GAS"
+        ],
+        "cadence_ms": 2000,
+        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_PARITY_RECONCILIATION"
       }
     },
     "next_red_candidates": [
-      "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
-      "AUTOCAL_PETROL_MATURITY_REFRESH"
-    ]
+      "AUTOCAL_REFERENCE_PERIODIC_REFRESH"
+    ],
+    "forensic_fanout": {
+      "workflow": ".github/workflows/verde-forensic-fanout.yml",
+      "first_run_id": 35638339743,
+      "lanes": 40,
+      "max_parallel": 20,
+      "first_findings": {
+        "pass": [
+          "AUTOCAL_LEVELS_FAST_AUTHORITY",
+          "AUTOCAL_CURRENT_BAND",
+          "GROUPED_ACQUISITION_REFRESH",
+          "PETROL_GAS_ACQUISITION_SYMMETRY"
+        ],
+        "red": [
+          "GROUPED_REFERENCE_REFRESH",
+          "GLOBAL_LEVELS_PERCENTAGE_STILL_EMITTED",
+          "DASHBOARD_LEVELS_RAW_ABSENT_STATIC"
+        ]
+      },
+      "dashboard_note": "Static RED is not sufficient for #85; rendered 1280x720 replay RED remains required before production change."
+    }
   }
 }

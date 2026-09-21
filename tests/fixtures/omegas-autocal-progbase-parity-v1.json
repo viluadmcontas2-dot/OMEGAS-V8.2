@@ -118,37 +118,52 @@
     },
     {
       "behavior": "NUM_BUF maturity / acquisition activity",
-      "classification": "WRONG",
+      "classification": "MATCH",
       "dimensions": {
-        "gas_probe": "MATCH_PARTIAL",
-        "petrol_probe": "MISSING",
+        "gas_probe": "MATCH_AFTER_FIX",
+        "petrol_probe": "MATCH_AFTER_FIX",
         "event_deduplication": "INTENTIONAL_IMPROVEMENT"
       },
       "progbase": "NUM_BUF_UPD_PETR and NUM_BUF_UPD_GAS are both observed in ~2s family",
-      "omegas": "monitor probes only NUM_BUF_UPD_GAS between full snapshots; NUM_BUF_UPD_PETR is refreshed only when a full snapshot happens",
+      "omegas": "NativeAutoCalMonitor now refreshes NUM_BUF_UPD_PETR and NUM_BUF_UPD_GAS in the grouped ~2s acquisition refresh while retaining deduplicated gas maturity events.",
       "evidence": [
         "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt",
         "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
         "tests/test_native_autocal_contract.py"
       ],
       "red_id": "AUTOCAL_PETROL_MATURITY_REFRESH",
-      "action": "RED: petrol activity must be able to advance without requiring an unrelated full-snapshot trigger"
+      "action": "PRESERVE grouped acquisition refresh on the existing serial scheduler; maturity-event semantics may remain richer than ProgBase.",
+      "resolution": {
+        "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
+        "red_fast_run": {
+          "number": 122,
+          "id": 35637404907,
+          "conclusion": "failure"
+        },
+        "red_observed": "refresh planner/grouped acquisition path absent",
+        "first_fix_sha": "714725f2e7417a847c19a94e4ddb70096b0af2e3",
+        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_PARITY_RECONCILIATION"
+      }
     },
     {
       "behavior": "ACQUIRED_ZONES",
-      "classification": "WRONG",
+      "classification": "MATCH",
       "dimensions": {
         "field_identity": "MATCH",
         "session_precedence": "INTENTIONAL_IMPROVEMENT",
-        "freshness": "WRONG"
+        "freshness": "MATCH_AFTER_FIX"
       },
       "progbase": "petrol/gas acquired-zone vectors participate in recurring slow AutoCal polling",
-      "omegas": "zones are projected correctly when present, but native snapshot refresh is event-driven and gas-biased; petrol zone changes can remain stale",
+      "omegas": "ACQUIRED_ZONES_PETROL and ACQUIRED_ZONES_GAS are now refreshed together in the grouped ~2s acquisition path and merged into the current native snapshot.",
       "evidence": [
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
         "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt"
       ],
-      "action": "Fix as part of grouped slow refresh, not with UI polling"
+      "action": "PRESERVE grouped native refresh; no UI polling.",
+      "resolution": {
+        "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
+        "first_fix_sha": "714725f2e7417a847c19a94e4ddb70096b0af2e3"
+      }
     },
     {
       "behavior": "PollingPetrol/PollingGas",

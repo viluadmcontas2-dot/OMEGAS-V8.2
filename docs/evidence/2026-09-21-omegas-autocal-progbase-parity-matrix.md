@@ -20,8 +20,8 @@ That separation is a match worth preserving. The parity defects are narrower and
 | PetrolCurve / GasCurve identity | **MATCH** | Same common `PETR_INJ_TBP` X and petrol/gas RV vectors. |
 | PetrolCurve / GasCurve freshness | **WRONG** | ProgBase recurrently renews slow reference vectors; OMEGAS full snapshot is event-driven and can remain unchanged indefinitely. |
 | CurrentBand | **MATCH — resolved** | RED `b05705e...` proved the consumer/layer missing. The cockpit now selects the original MAP threshold interval from physical `MNFLD_PRESS_THD` and renders a dedicated horizontal live band, separate from maturity. |
-| Petrol/Gas maturity | **WRONG/PARTIAL** | ProgBase observes both `NUM_BUF_UPD_PETR` and `NUM_BUF_UPD_GAS`; OMEGAS lightweight monitor probes only GAS. |
-| ACQUIRED_ZONES | **WRONG freshness** | Values are projected correctly when a snapshot is current, but refresh is event-driven and gas-biased. |
+| Petrol/Gas maturity | **MATCH — acquisition refresh resolved** | Grouped ~2 s refresh now reads both `NUM_BUF_UPD_PETR` and `NUM_BUF_UPD_GAS`; richer deduplicated maturity events remain an intentional improvement. |
+| ACQUIRED_ZONES | **MATCH — freshness resolved** | Petrol and GNV zone vectors are refreshed together in the grouped acquisition path and merged into the current native snapshot. |
 | PollingPetrol/Gas literal shapes | **INTENTIONAL IMPROVEMENT** | Human-readable states replace red/lime polling lamps. |
 | Enable/disable | **MATCH** | 0x014A manual action semantics preserved with stronger ACK/readback safety. |
 | Reference skew gate | **INTENTIONAL IMPROVEMENT** | OMEGAS adds current-session and temporal-coherence safety. |
@@ -75,15 +75,15 @@ The fix at `38ccb9ee38d833b911687ab1e1c5e87b23bf6959` uses the already-physical 
 
 **GREEN:** pending after evidence reconciliation.
 
-## 5. Maturity and zones — gas-only lightweight observation is insufficient
+## 5. Maturity and zones — confirmed defect, grouped acquisition repair applied
 
-The original recurring family includes both `NUM_BUF_UPD_PETR` and `NUM_BUF_UPD_GAS` at roughly two seconds in the capture.
+The original recurring family includes both `NUM_BUF_UPD_PETR` and `NUM_BUF_UPD_GAS` at roughly two seconds in the capture, together with recurring acquired-zone reads.
 
-The OMEGAS lightweight monitor calls only `probeMaturityCounters()` for `NUM_BUF_UPD_GAS`. Petrol counters and acquired-zone vectors are otherwise renewed only by a full snapshot. Existing tests explicitly enforce the gas-only probe.
+The RED at `0dbeed2feb51263efc96374290134e345acff03a` required an explicit grouped acquisition cadence and failed because the planner/path did not yet exist.
 
-This creates a plausible blind spot: gasoline-side activity/zone progress can change without triggering the event that would refresh the snapshot.
+The repair at `714725f2e7417a847c19a94e4ddb70096b0af2e3` adds a pure refresh planner and a shared service cadence, while keeping `NativeAutoCalMonitor` free of its own thread/timer. The grouped acquisition path reads `NUM_BUF_UPD_PETR`, `NUM_BUF_UPD_GAS`, `ACQUIRED_ZONES_PETROL` and `ACQUIRED_ZONES_GAS` through the existing `Mp48SerialScheduler`, then merges only those operational fields into the current native snapshot.
 
-**RED:** `AUTOCAL_PETROL_MATURITY_REFRESH`.
+This removes the gasoline-side blind spot without converting the whole AutoCal snapshot into a 2 s full read. The remaining parity RED is the slower reference family (`PETR_INJ_TBP`, `MNFLD_PRESS_THD`, petrol/gas RV vectors).
 
 ## 6. Architecture chosen for the repair
 
