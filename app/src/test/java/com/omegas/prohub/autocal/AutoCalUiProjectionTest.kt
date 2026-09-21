@@ -178,6 +178,23 @@ class AutoCalUiProjectionTest {
     }
 
     @Test
+    fun `cylinder level never belongs to AutoCal projection`() {
+        val projection = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L),
+            nativeSnapshot = usableReference("native-no-level"),
+            manualStatus = status("IDLE", 42L),
+            manualSnapshot = unavailableSnapshot(),
+            telemetryStatus = JSONObject()
+                .put("valid", true)
+                .put("ageMs", 50L)
+                .put("sessionId", 42L)
+                .put("live", JSONObject().put("level_raw", 173)),
+        )
+        assertFalse(projection.has("levelsRaw"))
+        assertFalse(projection.getJSONObject("instrument").has("levelsRaw"))
+    }
+
+    @Test
     fun `partial current monitor stays visible but never claims reference`() {
         val projection = AutoCalUiProjection.project(
             nativeStatus = status("MONITORING", 7L),
