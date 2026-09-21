@@ -121,6 +121,32 @@ class AutoCalUiProjectionTest {
     }
 
     @Test
+    fun `manual reference cannot replace current native acquisition zones`() {
+        val nativeSnapshot = partialSnapshot("native-zones").apply {
+            getJSONArray("fields")
+                .put(zoneField("ACQUIRED_ZONES_PETROL", intArrayOf(1, 0, 1, 0)))
+                .put(zoneField("ACQUIRED_ZONES_GAS", intArrayOf(1, 1, 0, 1)))
+        }
+        val manualSnapshot = usableReference("manual-reference").apply {
+            getJSONArray("fields")
+                .put(zoneField("ACQUIRED_ZONES_PETROL", intArrayOf(0, 1, 0, 0)))
+                .put(zoneField("ACQUIRED_ZONES_GAS", intArrayOf(0, 0, 1, 0)))
+        }
+
+        val projection = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L),
+            nativeSnapshot = nativeSnapshot,
+            manualStatus = status("READY", 42L),
+            manualSnapshot = manualSnapshot,
+        )
+
+        assertEquals("MANUAL_READER", projection.getString("source"))
+        val zones = projection.getJSONObject("acquisitionZones")
+        assertEquals(listOf(true, false, true, false), booleanList(zones.getJSONArray("petrol")))
+        assertEquals(listOf(true, true, false, true), booleanList(zones.getJSONArray("gas")))
+    }
+
+    @Test
     fun `manual reference keeps current native correlation state and events`() {
         val nativeSnapshot = partialSnapshot("native-partial-correlation")
             .put(
@@ -238,6 +264,18 @@ class AutoCalUiProjectionTest {
             .put(vectorField("PETR_INJ_TBP", 30, 2.0, capturedAtMs?.getOrNull(0)))
             .put(vectorField("PETR_MNFLD_PRESS_RV", 30, 0.3, capturedAtMs?.getOrNull(1)))
             .put(vectorField("GAS_MNFLD_PRESS_RV", 30, 0.32, capturedAtMs?.getOrNull(2))))
+
+    private fun zoneField(key: String, values: IntArray): JSONObject {
+        val raw = JSONArray()
+        values.forEach { raw.put(it) }
+        return JSONObject()
+            .put("key", key)
+            .put("status", "VALID")
+            .put("rawValues", raw)
+    }
+
+    private fun booleanList(values: JSONArray): List<Boolean> =
+        List(values.length()) { index -> values.getBoolean(index) }
 
     private fun vectorField(key: String, count: Int, base: Double, capturedAtMs: Long? = null): JSONObject {
         val raw = JSONArray()
