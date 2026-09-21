@@ -11,7 +11,23 @@ def build_lanes():
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     lanes = []
     seen = set()
-    for tx in portmon["transactions"]:
+
+    # High-information workers are deliberately first because GitHub creates
+    # matrix jobs in matrix order. Then prioritize rare/secondary protocol
+    # transactions before the abundant 48 01 49 live stream.
+    for item in config["meta_lanes"]:
+        lane = dict(item)
+        lane["os"] = "ubuntu-latest"
+        lane["sequence"] = 0
+        assert lane["id"] not in seen
+        seen.add(lane["id"])
+        lanes.append(lane)
+
+    ordered_transactions = sorted(
+        portmon["transactions"],
+        key=lambda tx: (tx["request"] == "48 01 49", float(tx["at_ms"]), int(tx["sequence"])),
+    )
+    for tx in ordered_transactions:
         seq = int(tx["sequence"])
         lane = {
             "id": f"tx_{seq:06d}",
@@ -20,13 +36,6 @@ def build_lanes():
             "os": "ubuntu-latest",
             "sequence": seq,
         }
-        assert lane["id"] not in seen
-        seen.add(lane["id"])
-        lanes.append(lane)
-    for item in config["meta_lanes"]:
-        lane = dict(item)
-        lane["os"] = "ubuntu-latest"
-        lane["sequence"] = 0
         assert lane["id"] not in seen
         seen.add(lane["id"])
         lanes.append(lane)
