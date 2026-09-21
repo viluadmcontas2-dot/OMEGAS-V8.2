@@ -1,0 +1,121 @@
+name: OmegasVerde forensic fanout
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [OmegasVerde]
+    paths:
+      - '.github/workflows/verde-forensic-fanout.yml'
+      - 'tools/ci/autocal_forensic_lane.py'
+      - 'tests/fixtures/autocal-forensic-lanes-v1.json'
+      - 'tests/fixtures/progbase-autocal-consumer-map-v1.json'
+      - 'tests/fixtures/portmon-autocal-cycle-v1.json'
+      - 'app/src/main/java/com/omegas/prohub/autocal/**'
+      - 'app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt'
+      - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
+      - 'app/src/main/java/com/omegas/prohub/ecu/Mp48TelemetryScale.kt'
+      - 'app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt'
+      - 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'
+      - 'app/src/main/assets/ui/screens/autocal-cockpit.js'
+      - 'app/src/main/assets/ui/core/**'
+      - 'tests/ui/autocal-*.test.cjs'
+      - 'tests/test_autocal*.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-verde-forensic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          cfg=json.load(open("tests/fixtures/autocal-forensic-lanes-v1.json",encoding="utf-8"))
+          print("matrix="+json.dumps({"include":cfg["lanes"]},separators=(",",":")))
+          PY
+
+  forensic:
+    needs: plan
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java for JVM lanes
+        if: ${{ matrix.kind == 'jvm' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare Gradle wrapper
+        if: ${{ matrix.kind == 'jvm' }}
+        run: chmod +x gradlew
+
+      - name: Run forensic lane
+        run: |
+          python3 tools/ci/autocal_forensic_lane.py \
+            --lane "${{ matrix.id }}" \
+            --receipt "forensic-receipts/${{ matrix.id }}.json"
+
+      - name: Upload lane receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forensic-${{ matrix.id }}
+          path: forensic-receipts/${{ matrix.id }}.json
+          retention-days: 5
+          if-no-files-found: error
+
+  aggregate:
+    if: always()
+    needs: forensic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: forensic-*
+          path: forensic-receipts
+          merge-multiple: true
+
+      - name: Aggregate receipts
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, collections, os
+          root=pathlib.Path("forensic-receipts")
+          rows=[json.loads(p.read_text(encoding="utf-8")) for p in sorted(root.glob("*.json"))]
+          counts=collections.Counter(r.get("status","MISSING") for r in rows)
+          summary={"count":len(rows),"statuses":dict(counts),"receipts":rows}
+          pathlib.Path("forensic-summary.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("# OMEGAS AutoCal forensic fan-out\n\n")
+              f.write(f"Receipts: **{len(rows)}** · PASS **{counts['PASS']}** · RED **{counts['RED']}** · INFO **{counts['INFO']}** · BROKEN **{counts['BROKEN']}**\n\n")
+              f.write("| Lane | Status | Finding |\n|---|---|---|\n")
+              for r in rows:
+                  f.write(f"| \`{r.get('lane')}\` | **{r.get('status')}** | {str(r.get('summary','')).replace('|','/')} |\n")
+          if counts["BROKEN"]:
+              raise SystemExit("forensic lane infrastructure broken")
+          PY
+
+      - name: Upload aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forensic-summary
+          path: forensic-summary.json
+          retention-days: 5

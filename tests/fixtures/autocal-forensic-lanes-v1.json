@@ -1,0 +1,253 @@
+{
+  "schema": "omegas.autocal.forensic-fanout.v1",
+  "max_parallel": 20,
+  "policy": {
+    "mode": "read-only-analysis",
+    "red_is_observation_not_infrastructure_failure": true,
+    "broken_is_workflow_failure": true,
+    "source_of_truth": "GitHub remote + committed ProgBase/Portmon evidence",
+    "original_exe_policy": "Do not commit ProgBase EXE. Execute binary-only questions on MMMACHINE, distill signed/hash-tied oracles into repo, then fan out in Actions."
+  },
+  "lanes": [
+    {
+      "id": "provenance_progbase_oracle",
+      "kind": "python",
+      "category": "provenance",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "provenance_portmon_fixture",
+      "kind": "python",
+      "category": "provenance",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "portmon_live_envelope",
+      "kind": "python",
+      "category": "wire",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "portmon_request_checksums",
+      "kind": "python",
+      "category": "wire",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "portmon_live_cadence",
+      "kind": "python",
+      "category": "cadence",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "portmon_autocal_2s_cadence",
+      "kind": "python",
+      "category": "cadence",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "portmon_reference_4s_cadence",
+      "kind": "python",
+      "category": "cadence",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "portmon_live_interleave",
+      "kind": "python",
+      "category": "ordering",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "portmon_slow_ordering",
+      "kind": "python",
+      "category": "ordering",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "shape_buffers_015b_0163",
+      "kind": "python",
+      "category": "shape",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "shape_zones_016f_0170",
+      "kind": "python",
+      "category": "shape",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "shape_reference_018d_018e",
+      "kind": "python",
+      "category": "shape",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "oracle_live_offsets",
+      "kind": "python",
+      "category": "oracle",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "oracle_runpoint",
+      "kind": "python",
+      "category": "oracle",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "oracle_levels",
+      "kind": "python",
+      "category": "oracle",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "oracle_currentband",
+      "kind": "python",
+      "category": "oracle",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "oracle_curves",
+      "kind": "python",
+      "category": "oracle",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "oracle_acquisition_zones",
+      "kind": "python",
+      "category": "oracle",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_protocol_addresses",
+      "kind": "python",
+      "category": "source",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_live_decoder",
+      "kind": "python",
+      "category": "source",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_single_serial_authority",
+      "kind": "python",
+      "category": "architecture",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_telemetry_after_secondary",
+      "kind": "python",
+      "category": "architecture",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_levels_fast_authority",
+      "kind": "node",
+      "category": "hmi",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_currentband_presence",
+      "kind": "node",
+      "category": "hmi",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_currentband_boundary",
+      "kind": "node",
+      "category": "hmi",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_grouped_acquisition_refresh",
+      "kind": "python",
+      "category": "refresh",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_grouped_reference_refresh",
+      "kind": "python",
+      "category": "refresh",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_petrol_gas_refresh_symmetry",
+      "kind": "python",
+      "category": "refresh",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_snapshot_coherence_guard",
+      "kind": "python",
+      "category": "safety",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_session_safety",
+      "kind": "python",
+      "category": "safety",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_no_automatic_write",
+      "kind": "python",
+      "category": "safety",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_bridge_no_serial_io",
+      "kind": "python",
+      "category": "architecture",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "omegas_ui_fast_scheduler",
+      "kind": "python",
+      "category": "hmi",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "global_levels_percentage_scan",
+      "kind": "python",
+      "category": "science",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "dashboard_levels_raw_presence",
+      "kind": "python",
+      "category": "global-ui",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "mutation_bad_checksum",
+      "kind": "python",
+      "category": "mutation",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "mutation_bad_shape",
+      "kind": "python",
+      "category": "mutation",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "targeted_ui_autocal_suite",
+      "kind": "node",
+      "category": "test",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "targeted_jvm_projection",
+      "kind": "jvm",
+      "category": "test",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "targeted_jvm_refresh_planner",
+      "kind": "jvm",
+      "category": "test",
+      "os": "ubuntu-latest"
+    }
+  ]
+}
