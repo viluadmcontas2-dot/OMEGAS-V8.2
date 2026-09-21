@@ -221,10 +221,17 @@ class DashboardLevelsRenderTest {
             """.trimIndent(),
         )
 
-    private fun activateAutocal(scenario: ActivityScenario<MainActivity>) {
-        evalRaw(scenario, "document.querySelector('[data-route=\"autocal\"]')?.click(); 'ok';")
-        SystemClock.sleep(350L)
+    private fun activateRoute(
+        scenario: ActivityScenario<MainActivity>,
+        route: String,
+        settleMs: Long = 350L,
+    ) {
+        evalRaw(scenario, "document.querySelector('[data-route=\\"$route\\"]')?.click(); 'ok';")
+        SystemClock.sleep(settleMs)
     }
+
+    private fun activateAutocal(scenario: ActivityScenario<MainActivity>) =
+        activateRoute(scenario, "autocal")
 
     private fun autocalDom(scenario: ActivityScenario<MainActivity>): JSONObject =
         evalJson(
@@ -289,6 +296,133 @@ class DashboardLevelsRenderTest {
             })())
             """.trimIndent(),
         )
+
+    private fun globalRouteDom(
+        scenario: ActivityScenario<MainActivity>,
+        route: String,
+    ): JSONObject = evalJson(
+        scenario,
+        """
+        JSON.stringify((() => {
+          const active = document.querySelector('[data-screen="$route"]')?.classList.contains('active') === true;
+          const body = document.querySelector('[data-screen="$route"]')?.innerText ?? '';
+          return {
+            active,
+            bodyHasNaN: /\\bNaN\\b/.test(body),
+            bodyHasUndefined: /\\bundefined\\b/i.test(body),
+            learningLive: document.getElementById('learningLiveLabel')?.textContent ?? null,
+            learningCoverage: document.getElementById('learningCoverageSummary')?.textContent ?? null,
+            mapLive: document.getElementById('mapLiveLabel')?.textContent ?? null,
+            mapCell: document.getElementById('mapLiveCell')?.textContent ?? null,
+            mapSource: document.getElementById('mapSourceStatus')?.textContent ?? null,
+            curveSource: document.getElementById('curveSourceStatus')?.textContent ?? null,
+            obdStatus: document.getElementById('obdStatusPill')?.textContent ?? null,
+            obdStft: document.getElementById('obdStft')?.textContent ?? null,
+            obdConnection: document.getElementById('obdConnection')?.textContent ?? null,
+            obdDecision: document.getElementById('obdLiveDecision')?.textContent ?? null
+          };
+        })())
+        """.trimIndent(),
+    )
+
+    @Test
+    fun learningFreshMp48ContextRender() {
+        val scenario = launch()
+        try {
+            val fixture = liveFixture()
+            activateRoute(scenario, "learning")
+            injectFresh(scenario, fixture, settleMs = 900L)
+            val dom = globalRouteDom(scenario, "learning")
+            saveEvidence("learning-fresh-context", dom, scenario)
+            assertTrue("Learning route must activate", dom.getBoolean("active"))
+            assertTrue("Learning must receive live RPM through PresentSnapshot", dom.optString("learningLive").contains("869 RPM"))
+            assertTrue("Learning must receive live Petrol Injection through PresentSnapshot", dom.optString("learningLive").contains("4,54 ms"))
+            assertTrue("Learning must never render NaN", !dom.getBoolean("bodyHasNaN"))
+            assertTrue("Learning must never render undefined", !dom.getBoolean("bodyHasUndefined"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun mapFreshMp48ContextRender() {
+        val scenario = launch()
+        try {
+            val fixture = liveFixture()
+            activateRoute(scenario, "map", settleMs = 500L)
+            injectFresh(scenario, fixture, settleMs = 900L)
+            val dom = globalRouteDom(scenario, "map")
+            saveEvidence("map-fresh-context", dom, scenario)
+            assertTrue("Map route must activate", dom.getBoolean("active"))
+            assertTrue("Map must receive live RPM through PresentSnapshot", dom.optString("mapLive").contains("869 RPM"))
+            assertTrue("Map must receive live Petrol Injection through PresentSnapshot", dom.optString("mapLive").contains("4,54 ms"))
+            assertTrue("Map live cell must stay explicit instead of fabricating undefined coordinates", !dom.optString("mapCell").contains("undefined", ignoreCase = true))
+            assertTrue("Map must never render NaN", !dom.getBoolean("bodyHasNaN"))
+            assertTrue("Map must never render undefined", !dom.getBoolean("bodyHasUndefined"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun curveOfflineDoesNotFabricateEcuRead() {
+        val scenario = launch()
+        try {
+            activateRoute(scenario, "curve", settleMs = 850L)
+            val dom = globalRouteDom(scenario, "curve")
+            saveEvidence("curve-offline-honest", dom, scenario)
+            assertTrue("Curve route must activate", dom.getBoolean("active"))
+            assertTrue("Emulator without ECU must not claim a confirmed curve", !dom.optString("curveSource").contains("ECU confirmada", ignoreCase = true))
+            assertTrue("Curve must never render NaN", !dom.getBoolean("bodyHasNaN"))
+            assertTrue("Curve must never render undefined", !dom.getBoolean("bodyHasUndefined"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun obdOfflineIsHonest() {
+        val scenario = launch()
+        try {
+            activateRoute(scenario, "obd", settleMs = 850L)
+            val dom = globalRouteDom(scenario, "obd")
+            saveEvidence("obd-offline-honest", dom, scenario)
+            assertTrue("OBD route must activate", dom.getBoolean("active"))
+            assertEquals("OBD offline", dom.optString("obdStatus"))
+            assertEquals("—", dom.optString("obdStft"))
+            assertTrue("OBD connection copy must remain disconnected without ELM hardware", dom.optString("obdConnection").contains("desconectado", ignoreCase = true))
+            assertTrue("OBD must never render NaN", !dom.getBoolean("bodyHasNaN"))
+            assertTrue("OBD must never render undefined", !dom.getBoolean("bodyHasUndefined"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun sessionChangeInvalidatesOldTelemetry() {
+        val scenario = launch()
+        try {
+            val fixture = liveFixture()
+            injectFresh(scenario, fixture, settleMs = 700L)
+            val before = dashboardDom(scenario)
+            assertTrue("Precondition: first session must have live petrol injection", before.optString("petrol") != "—")
+
+            scenario.onActivity { activity ->
+                val service = activity.serviceOrNull() ?: error("service unavailable")
+                service.telemetryStore.beginSession(9002L)
+                activity.refreshWebUi()
+            }
+            SystemClock.sleep(900L)
+
+            val after = dashboardDom(scenario)
+            saveEvidence("dashboard-session-invalidated", after, scenario)
+            assertEquals("New session must invalidate old Petrol Injection", "—", after.optString("petrol"))
+            assertEquals("New session must invalidate old MAP", "—", after.optString("map"))
+            assertEquals("New session must invalidate old LEVELS RAW", "—", after.optString("levelsRaw"))
+        } finally {
+            scenario.close()
+        }
+    }
 
     @Test
     fun dashboardFreshLevelsRaw() {
