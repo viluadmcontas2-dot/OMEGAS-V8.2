@@ -110,7 +110,22 @@ class DashboardLevelsRenderTest {
             JSON.stringify({
               active: document.querySelector('[data-screen="autocal"]')?.classList.contains('active') === true,
               level: document.getElementById('autocalLiveLevel')?.textContent ?? null,
-              title: document.getElementById('autocalLiveTitle')?.textContent ?? null
+              title: document.getElementById('autocalLiveTitle')?.textContent ?? null,
+              geometry: (() => {
+                const chart = document.getElementById('autocalReferenceChart')?.getBoundingClientRect();
+                const live = document.querySelector('.autocal-live-strip')?.getBoundingClientRect();
+                const hero = document.querySelector('.autocal-hero')?.getBoundingClientRect();
+                const inspector = document.getElementById('autocalChartInspector')?.getBoundingClientRect();
+                return {
+                  chartHeight: chart?.height ?? 0,
+                  chartWidth: chart?.width ?? 0,
+                  chartTop: chart?.top ?? 0,
+                  chartBottom: chart?.bottom ?? 0,
+                  liveTop: live?.top ?? 0,
+                  heroHeight: hero?.height ?? 0,
+                  inspectorWidth: inspector?.width ?? 0
+                };
+              })()
             })
             """.trimIndent(),
         )
@@ -154,8 +169,8 @@ class DashboardLevelsRenderTest {
             val dom = dashboardDom(scenario)
             saveEvidence("dashboard-historical-pre-levels", dom, scenario)
             assertTrue("Historical Dashboard route must render", dom.getBoolean("route"))
-            assertFalse("Historical pre-fix Dashboard must omit LEVELS RAW label", dom.getBoolean("hasLevelsRawLabel"))
-            assertFalse("Historical pre-fix Dashboard body must omit LEVELS RAW", dom.getBoolean("bodyHasLevelsRaw"))
+            assertTrue("Historical pre-fix Dashboard must omit LEVELS RAW label", !dom.getBoolean("hasLevelsRawLabel"))
+            assertTrue("Historical pre-fix Dashboard body must omit LEVELS RAW", !dom.getBoolean("bodyHasLevelsRaw"))
         } finally {
             scenario.close()
         }
@@ -172,6 +187,12 @@ class DashboardLevelsRenderTest {
             saveEvidence("autocal-fresh-control", dom, scenario)
             assertTrue("AutoCal route must activate", dom.getBoolean("active"))
             assertEquals(fixture.levelRaw.toString(), dom.optString("level"))
+            val geometry = dom.getJSONObject("geometry")
+            assertTrue("Acquisition chart must dominate vertically", geometry.getDouble("chartHeight") >= 300.0)
+            assertTrue("Acquisition chart must use the available horizontal canvas", geometry.getDouble("chartWidth") >= 760.0)
+            assertTrue("Live telemetry rail must sit below the chart", geometry.getDouble("liveTop") >= geometry.getDouble("chartBottom"))
+            assertTrue("Operational hero must stay compact relative to chart", geometry.getDouble("heroHeight") < geometry.getDouble("chartHeight"))
+            assertTrue("Desktop point inspector must not consume a permanent chart column", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.31)
         } finally {
             scenario.close()
         }
