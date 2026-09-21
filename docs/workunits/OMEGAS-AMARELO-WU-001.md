@@ -42,3 +42,29 @@ Antes de começar: atualizar #80 com HEAD e delta.
 - Binary action family proved: 1/2/4/8 -> `02 24 04 <action> checksum`.
 - Only action 4 is also raw-wire observed; 1/2/8 remain explicitly wire-unobserved.
 - Scheduler observations are evidence, not constants: live ~47–60 ms median, AutoCal vectors ~2 s, RV references ~4 s.
+
+
+## GitHub Actions action-family closure — 2026-09-21
+Executor: GitHub Actions. AgentRed not used.
+
+Minimal source fixture:
+- `tests/fixtures/progbase-autocal-byte-slices-v1.json`
+- source ProgBase SHA-256 `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4`
+
+Workflow:
+- `OMEGAS Amarelo WU-001 action proof`
+- run `35646784070`
+- source SHA `ba585599628fa261059450b3380e689b162a5ec6`
+- result: **8/8 jobs PASS**
+
+Byte-exact native action family:
+- Reset Petrol (1): `02 24 04 01 2B`
+- Reset Gas (2): `02 24 04 02 2C`
+- Reset All (4): `02 24 04 04 2E`
+- Manual AutoMatch (8): `02 24 04 08 32`
+
+Evidence classification:
+- 1/2/8: **BINARY_PROVEN_WIRE_UNOBSERVED**
+- 4: **BINARY_PROVEN_AND_RAW_OBSERVED** in both authoritative Portmon captures.
+
+The action-family byte mapping is no longer UNKNOWN. Remaining closure work belongs to state semantics/consumer attribution, not frame construction.
