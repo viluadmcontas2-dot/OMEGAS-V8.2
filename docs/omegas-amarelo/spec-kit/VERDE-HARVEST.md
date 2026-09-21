@@ -94,3 +94,15 @@ Delta desde `f4acc3c84d3d91ffdc9817de4f8493904cbd6b27`: 11 commits.
 - **REJECT AS AUTHORITY** — qualquer semântica nativa de AutoCAL/LEVELS derivada do runtime Verde em vez de ProgBase + Portmons.
 
 Nenhum merge/cherry-pick wholesale. O Amarelo mantém LEVELS exclusivamente em Dashboard/Agora e AutoCAL sem esse sinal.
+
+
+## Watermark delta — 2026-09-21 — `d9bcf6f0b0e8eaf1437c060356d5f240858d4b65`
+Delta desde `1f044b8991291f699e1cf73a70ff0f3333e41ee6`: 8 commits.
+
+### Classificação
+- **REVALIDATE** — reforços de testes do cockpit AutoCAL, sensibilidade de testes e harness de render Android; úteis para validação visual/física do Amarelo depois dos gates nativos.
+- **HARVEST (princípio já adotado)** — manutenção explícita da separação LEVELS/AutoCAL.
+- **REFERENCE ONLY** — detalhes de layout/cockpit e render específicos do Verde.
+- **REJECT AS AUTHORITY** — qualquer semântica nativa de zonas, curvas, AutoMatch ou LEVELS inferida do JS Verde.
+
+Nenhum merge/cherry-pick wholesale. O Amarelo continua usando ProgBase + Portmons como autoridade e o Blueprint CUSTOMROM/OMEGADEV como autoridade de experiência.
