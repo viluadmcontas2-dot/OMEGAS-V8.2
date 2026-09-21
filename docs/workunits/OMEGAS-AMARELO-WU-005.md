@@ -63,14 +63,23 @@ Implementação:
 - fast-contract CI agora executa teste de fronteira garantindo presença no Agora e ausência no AutoCAL.
 
 
-## Contrato UX original — checkbox Auto Calibration — 2026-09-21
+## Contrato UX — ação única Auto Calibration — 2026-09-21
 
 Observação operacional do owner, alinhada ao binding já provado de `AUTO_CAL_ENABLE`:
-- o ProgBase original usa um único checkbox Auto Calibration;
-- marcado: ativa Auto Calibration e o AutoMatch automático da ECU;
-- desmarcado: desativa ambos e mostra aviso antes de efetivar;
-- não modelar botões separados de Start/Stop AutoCAL;
+- o ProgBase original usa um único controle Auto Calibration; o componente visual original não é autoridade de UX;
+- Amarelo usa um único botão contextual: `Ativar Auto Calibration` / `Desativar Auto Calibration`;
+- ativar mantém a semântica nativa de AutoCAL + AutoMatch automático;
+- desativar faz a ação diretamente, sem modal redundante;
 - não modelar um segundo enable de AutoMatch sem evidência nativa;
 - desativar não é reset: buffers/pontos não devem ser apagados por inferência.
 
-O cockpit Amarelo foi ajustado para checkbox com aviso na desativação.
+
+## Regra de confirmação — 2026-09-21
+
+Blueprint aplicado: intenção explícita já é consentimento.
+
+- Auto Calibration: botão único, sem confirmação adicional.
+- Curva K: editar/preparar mostra before→target; `Aplicar alterações` escreve diretamente.
+- Depois da ação, a UI mostra execução, ACK e readback; isso substitui o segundo “confirmar”.
+- O antigo fluxo `Revisar -> Gravar` foi removido.
+- Confirmação separada fica reservada a ação genuinamente destrutiva/irreversível, não a write normal já explicitamente solicitado.
