@@ -1,0 +1,44 @@
+name: OMEGAS Amarelo fast contracts
+
+on:
+  push:
+    branches:
+      - "work/omegas-amarelo-*"
+    paths:
+      - ".github/workflows/amarelo-fast-contracts.yml"
+      - "tools/omegas_amarelo/**"
+      - "tests/test_amarelo_*.py"
+      - "tests/test_real_mp48_replay_fixture_contract.py"
+      - "tests/fixtures/portmon-autocal-*"
+      - "tests/fixtures/portmon-lognovo-*"
+      - "tests/fixtures/amarelo-autocal-action-wire-*.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-amarelo-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  protocol-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - name: Python runtime
+        run: python3 --version
+      - name: OMEGAS Amarelo Portmon ground truth
+        run: python3 -B -m unittest tests.test_amarelo_portmon_ground_truth -v
+      - name: Native AutoCAL action wire evidence
+        run: python3 -B -m pytest tests/test_amarelo_autocal_action_wire_evidence.py -q
+      - name: Harvested real MP48 fixture contract
+        run: python3 -B tests/test_real_mp48_replay_fixture_contract.py
