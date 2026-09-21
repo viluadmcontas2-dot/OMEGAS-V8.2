@@ -61,3 +61,16 @@ Implementação:
 - Dashboard/Agora consome `telemetry.live.level_raw` como `NÍVEL GNV`;
 - valor permanece RAW/sinal ECU até existir conversão física comprovada; não inventar %, litros ou m³;
 - fast-contract CI agora executa teste de fronteira garantindo presença no Agora e ausência no AutoCAL.
+
+
+## Contrato UX original — checkbox Auto Calibration — 2026-09-21
+
+Observação operacional do owner, alinhada ao binding já provado de `AUTO_CAL_ENABLE`:
+- o ProgBase original usa um único checkbox Auto Calibration;
+- marcado: ativa Auto Calibration e o AutoMatch automático da ECU;
+- desmarcado: desativa ambos e mostra aviso antes de efetivar;
+- não modelar botões separados de Start/Stop AutoCAL;
+- não modelar um segundo enable de AutoMatch sem evidência nativa;
+- desativar não é reset: buffers/pontos não devem ser apagados por inferência.
+
+O cockpit Amarelo foi ajustado para checkbox com aviso na desativação.
