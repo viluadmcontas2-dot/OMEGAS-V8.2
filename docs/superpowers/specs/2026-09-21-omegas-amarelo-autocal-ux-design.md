@@ -63,7 +63,7 @@ The following original concepts are treated as product semantics, subject to byt
 - K line / `MUL_ACT`;
 - acquisition zones/bands;
 - AutoMatch counter/state;
-- checkbox Auto Calibration: marcado ativa AutoCAL + AutoMatch automático; desmarcado desativa ambos após aviso;
+- ação principal contextual Auto Calibration: um único botão ativa/desativa o modo; a lógica original de AutoCAL + AutoMatch é preservada sem copiar o checkbox do ProgBase;
 - reset petrol/gas/all;
 - finish AutoCAL;
 - polling of live telemetry independently from slower AutoCAL vectors.
@@ -76,9 +76,9 @@ Current proven action pattern:
 - shared dispatcher -> native bridge -> ECU/native state -> refresh/projection.
 
 Operator-observed original UX contract:
-- there is one Auto Calibration checkbox, not separate Start/Stop controls;
-- checking it activates Auto Calibration and automatic AutoMatch together;
-- unchecking it warns the operator that both will be disabled;
+- the original uses one Auto Calibration control; Amarelo preserves that one-control behavior but may use a button instead of a checkbox;
+- activating it enables Auto Calibration and automatic AutoMatch together;
+- deactivating it disables both directly; no redundant confirmation modal;
 - the wire control remains AUTO_CAL_ENABLE; do not invent a second AutoMatch enable command.
 
 Unknown lower-level side effects remain UNKNOWN until WU-001 proves them.
@@ -245,7 +245,7 @@ Every action must show:
 1. current state;
 2. intended action;
 3. native consequence expected;
-4. confirmation if destructive;
+4. explicit action with immediate consequence; reserve confirmation only for genuinely destructive/irreversible cases;
 5. ACK/readback/proven result;
 6. failure without false success.
 
@@ -426,7 +426,7 @@ Before implementation is accepted:
 4. native curve mutation produces a visible before/after event;
 5. stale live telemetry never masquerades as current;
 6. 1280×720 screenshot proves no-scroll dominant operation;
-7. destructive action flow proves confirmation + ACK/readback;
+7. write flow proves immediate action + ACK/readback; no duplicate confirmation for an already explicit write;
 8. both raw Portmon sources remain provenance anchors;
 9. no UI-generated science changes native values;
 10. performance budgets from WU-006 are met.
@@ -448,3 +448,15 @@ This design is ready for implementation planning when:
 - owner approves this written UX contract;
 - #77 links to this spec;
 - implementation plan is written from this spec, not from chat memory.
+
+
+## Anti-friction rule — explicit write is already consent
+
+For ordinary, intentional calibration actions:
+- editing/preparing a K target is not a write;
+- the single CTA `Aplicar alterações` is the user's consent to write;
+- after that CTA, the product must execute and show execution/readback state;
+- do not ask “tem certeza?” again;
+- do not add a second review/confirm screen just to repeat the same intent.
+
+A separate confirmation is reserved only for actions whose primary purpose is destructive/irreversible data loss, not for normal AutoCAL enable/disable or an explicit Curve K write.
