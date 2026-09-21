@@ -1,0 +1,41 @@
+{
+  "schema": "omegas.amarelo.progbase-byte-slices.v1",
+  "source": {
+    "name": "Copy of ProgBase (3).exe",
+    "sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "extraction": "Exact PE virtual-address slices copied from the owner Drive artifact; only minimal bytes needed for Actions proof are retained."
+  },
+  "slices": {
+    "AUTO_MATCH_HANDLER": {
+      "va": "0x005189B4",
+      "size": 12,
+      "hex": "6A 08 50 E8 AC EB FF FF 83 C4 08 C3"
+    },
+    "RESET_PETROL_HANDLER": {
+      "va": "0x005189C0",
+      "size": 12,
+      "hex": "6A 01 50 E8 A0 EB FF FF 83 C4 08 C3"
+    },
+    "RESET_GAS_HANDLER": {
+      "va": "0x005189CC",
+      "size": 12,
+      "hex": "6A 02 50 E8 94 EB FF FF 83 C4 08 C3"
+    },
+    "RESET_ALL_HANDLER": {
+      "va": "0x005189D8",
+      "size": 12,
+      "hex": "6A 04 50 E8 88 EB FF FF 83 C4 08 C3"
+    },
+    "NATIVE_BRIDGE": {
+      "va": "0x00512280",
+      "size": 96,
+      "sha256": "7d562bc981ecae0a5de6f873d85df9c8a9f696fb2c11609a395db741acf7d17c",
+      "hex": "55 8B EC 83 C4 D4 B8 28 C6 A9 00 53 56 8B 75 08 E8 6F 7F 53 00 33 DB 56 E8 C7 FF FF FF 59 84 C0 74 44 A1 88 C5 A9 00 8D 4D D4 89 45 D8 A1 D8 BE AE 00 C6 45 D8 04 8A 55 0C 88 55 D9 C7 45 D4 02 00 00 00 51 6A 04 8B 10 8D 4D D8 8B 42 6C BA 24 00 00 00 8B 40 40 E8 ED 21 41 00 84 C0 75 0C BB"
+    },
+    "TRANSPORT_PREFIX": {
+      "va": "0x009244C8",
+      "size": 176,
+      "hex": "55 8B EC 83 C4 B4 53 89 4D C8 89 55 CC 89 45 D0 B8 60 82 AB 00 E8 22 5D 12 00 8B 55 D0 83 7A 40 00 75 11 33 C0 8B 55 D4 64 89 15 00 00 00 00 E9 04 02 00 00 8B 4D D0 8B 41 40 8B 10 FF 52 28 84 C0 74 0C 8B 4D D0 80 B9 B0 02 00 00 00 75 11 33 C0 8B 55 D4 64 89 15 00 00 00 00 E9 D8 01 00 00 8B 4D CC 81 E1 FF 00 00 00 C1 E1 08 89 4D C4 83 4D C4 00 8B 45 0C 83 38 07 7C 06 83 4D C4 07 EB 09 8B 55 0C 0F BE 0A 09 4D C4 33 C0 89 45 C0 8B 45 D0 E8 99 E6 FF FF 8B 55 C4 8B 45 D0 E8 66 EA FF FF 8B 55 0C 83 3A 07 7C 0E 8B 4D 0C 8A 11 42 8B 45 D0 E8 9C E6 FF FF"
+    }
+  }
+}
