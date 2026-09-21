@@ -414,7 +414,8 @@
         "index0": {
           "request": "0A 65 01 00 70",
           "semantic": "VECT_AUTOCAL_U8_0",
-          "status": "INFERRED_STRONG"
+          "status": "PROVEN_RESOURCE_WIRE_MAPPING",
+          "basis": "Exactly three DFM components use SerialCode 0x0165; U8_1 RowIndex=1, U8_2 RowIndex=2, U8_0 sole default/omitted RowIndex; raw wire exposes exactly indices 0/1/2."
         }
       },
       "post_write_wait_ms": 100,
@@ -429,7 +430,6 @@
     "Exact semantic/order meaning of acquired-zone indices 0..3; shape/domain are PROVEN but physical zone labels remain UNKNOWN.",
     "Firmware meaning/lifecycle of GasPointPrev beyond its proven separate native buffer.",
     "Exact firmware threshold/guard that promotes NUM_BUF_UPD activity into ACQUIRED_ZONES flags.",
-    "VECT_AUTOCAL_U8_0 -> serial 0x0165 index 0 is INFERRED_STRONG from default RowIndex/resource layout plus exclusive 0/1/2 wire family; not promoted to PROVEN without direct component/default proof.",
     "Finish AutoCAL exact ECU-side physical effect after the connection-aware VECT_AUTOCAL_U8_0 commit; supplied raw captures contain reads but no 0x0165 write."
   ]
 }
