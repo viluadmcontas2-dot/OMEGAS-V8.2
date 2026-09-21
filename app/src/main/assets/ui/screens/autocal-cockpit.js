@@ -799,17 +799,32 @@
       const points = AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       this.currentReferencePoints = points;
-      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
+      const timingKnown = this.projection?.referenceTimingKnown === true;
+      const timingCoherent = this.projection?.referenceTimingCoherent === true;
+      const timingSpanMs = finite(this.projection?.referenceTimingSpanMs);
+      const timingLimitMs = finite(this.projection?.referenceTimingLimitMs);
+      const timingProblem = timingKnown && !timingCoherent;
 
       if (!points.length || this.referenceUsable === false) {
         this.chartScale = null;
-        host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
-        this.text('autocalChartInspector', live
-          ? 'AGORA: ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. Referência nativa indisponível.'
-          : 'Aguardando Petrol Inj. e MAP nativos.');
+        if (timingProblem) {
+          const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
+          const limitLabel = timingLimitMs === null ? 'limite nativo' : Math.round(timingLimitMs) + ' ms';
+          this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' · fora da janela');
+          host.innerHTML = '<div class="chart-empty"><b>REFERÊNCIA FORA DA JANELA</b><span>Os vetores físicos foram lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '. Consulte a ECU novamente. O AGORA continua vivo sem virar referência.</span></div>';
+          this.text('autocalChartInspector', 'Referência física temporalmente incoerente. Consulte a ECU novamente; o cursor AGORA continua somente como telemetria.');
+        } else {
+          this.text('autocalReferenceCount', '0 pontos utilizáveis');
+          host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
+          this.text('autocalChartInspector', live
+            ? 'AGORA: ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. Referência nativa indisponível.'
+            : 'Aguardando Petrol Inj. e MAP nativos.');
+        }
         this.renderLiveNarrative();
         return;
       }
+
+      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
 
       const width = 1000;
       const height = 240;
