@@ -38,6 +38,11 @@ run_case() {
 }
 
 set -e
+if [ "$#" -ge 2 ]; then
+  run_case "$1" "$2"
+  exit "$overall"
+fi
+
 run_case "dashboard-fresh" "dashboardFreshLevelsRaw"
 run_case "dashboard-invalid" "dashboardInvalidLevelsPlaceholder"
 run_case "autocal-fresh-control" "autocalFreshTelemetryControl"
@@ -48,4 +53,5 @@ run_case "map-fresh-context" "mapFreshMp48ContextRender"
 run_case "curve-offline-honest" "curveOfflineDoesNotFabricateEcuRead"
 run_case "obd-offline-honest" "obdOfflineIsHonest"
 run_case "dashboard-session-invalidated" "sessionChangeInvalidatesOldTelemetry"
+run_case "dashboard-session-recovered" "sessionReconnectRecoversFreshTelemetry"
 exit "$overall"
