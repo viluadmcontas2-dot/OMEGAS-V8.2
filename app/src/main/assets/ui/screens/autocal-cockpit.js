@@ -156,7 +156,7 @@
       const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
       const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
       const rpm = finite(live.rpm);
-      const levelRaw = finite(projection?.levelsRaw);
+      const levelRaw = finite(live.level_raw ?? live.levelRaw);
       if (petrolMs === null || mapBar === null) return null;
       return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
     },
