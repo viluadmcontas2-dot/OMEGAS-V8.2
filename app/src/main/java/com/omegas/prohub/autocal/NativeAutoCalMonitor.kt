@@ -432,6 +432,7 @@ class NativeAutoCalMonitor(
         patch = patch,
         refreshedAtElapsedMs = refreshedAtElapsedMs,
         group = "acquisition",
+        refreshTimestampKey = "acquisitionRefreshAtElapsedMs",
         reviseSnapshotHashOnChange = false,
     )
 
@@ -442,6 +443,7 @@ class NativeAutoCalMonitor(
         patch = patch,
         refreshedAtElapsedMs = refreshedAtElapsedMs,
         group = "reference",
+        refreshTimestampKey = "referenceRefreshAtElapsedMs",
         reviseSnapshotHashOnChange = true,
     )
 
@@ -449,6 +451,7 @@ class NativeAutoCalMonitor(
         patch: AutoCalSnapshot,
         refreshedAtElapsedMs: Long,
         group: String,
+        refreshTimestampKey: String,
         reviseSnapshotHashOnChange: Boolean,
     ) {
         val patchFields = patch.toJson().optJSONArray("fields") ?: return
@@ -488,7 +491,7 @@ class NativeAutoCalMonitor(
             current
                 .put("fields", merged)
                 .put("operationalUpdatedAtElapsedMs", refreshedAtElapsedMs)
-                .put("${group}RefreshAtElapsedMs", refreshedAtElapsedMs)
+                .put(refreshTimestampKey, refreshedAtElapsedMs)
                 .put("incrementalRefreshGroup", group)
                 .put("operationalRefreshOnly", true)
             if (reviseSnapshotHashOnChange && changed) {
