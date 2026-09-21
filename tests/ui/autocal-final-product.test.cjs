@@ -11,6 +11,8 @@ const index = read('app/src/main/assets/ui/index.html');
 const app = read('app/src/main/assets/ui/app.js');
 const api = read('app/src/main/assets/ui/core/autocal-api.js');
 const cockpit = read('app/src/main/assets/ui/screens/autocal-cockpit.js');
+const bridge = read('app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt');
+const projection = read('app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt');
 const monitor = read('app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt');
 const protocol = read('app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt');
 
@@ -43,6 +45,10 @@ assert.match(cockpit, /data-autocal-cancel-read/,
   'leitura em andamento precisa oferecer cancelamento');
 assert.match(cockpit, /this\.api\.projection/,
   'cockpit deve consumir a projeção Kotlin unificada');
+assert.match(bridge, /telemetryStatus\s*=\s*JSONObject\(service\.telemetryStore\.liveJson\(\)\)/,
+  'bridge deve fornecer telemetria viva ao projetor Kotlin para LEVELS RAW');
+assert.match(projection, /\.put\("levelsRaw"/,
+  'projeção Kotlin deve publicar levelsRaw');
 assert.equal(cockpit.includes('this.api.readerSnapshot()'), false,
   'cockpit não pode escolher snapshot manual diretamente');
 assert.equal(cockpit.includes('this.api.acquisitionSnapshot()'), false,
