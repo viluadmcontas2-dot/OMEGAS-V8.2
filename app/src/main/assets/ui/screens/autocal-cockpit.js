@@ -1242,7 +1242,9 @@
 
       const message = AutoCalUxModel.bandNarrative(band);
 
-      const zoneText = 'Região MAP R' + (band.zone + 1) + ': flag ' + (band.zoneAcquired ? 'ativa' : 'inativa') + ' na ECU';
+      const zoneText = Number.isInteger(band.zone)
+        ? 'Região MAP R' + (band.zone + 1) + ': flag ' + (band.zoneAcquired ? 'ativa' : 'inativa') + ' na ECU'
+        : 'Região MAP ainda não determinada para esta posição';
       host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
     }
 
