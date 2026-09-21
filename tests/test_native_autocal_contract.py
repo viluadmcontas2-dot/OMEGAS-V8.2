@@ -94,6 +94,9 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('recordCorrelationResult', self.maturity)
         self.assertIn('correlationRetry', self.maturity)
         self.assertIn('maturityTracker.recordCorrelationResult(', self.monitor)
+        self.assertIn('nativeCorrelationState', self.monitor)
+        self.assertIn('correlatedBandIndexes', self.maturity)
+        self.assertIn('retryableCorrelationBandIndexes', self.maturity)
         self.assertNotIn('Thread(', self.maturity)
         self.assertNotIn('Executors.', self.maturity)
 

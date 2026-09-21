@@ -93,6 +93,13 @@ object AutoCalUiProjection {
                     },
                 )
         }
+        val correlationSource = if (nativeCurrent) nativeSnapshot else selected
+        val correlationState = correlationSource.optJSONObject("nativeCorrelationState")
+            ?.let(::copy)
+            ?: emptyCorrelationState()
+        val correlationEvents = correlationSource.optJSONArray("nativeMaturityEvents")
+            ?.let(::copy)
+            ?: JSONArray()
 
         return JSONObject()
             .put("ok", true)
@@ -120,7 +127,8 @@ object AutoCalUiProjection {
             .put("snapshot", selected)
             .put("analysis", analysis)
             .put("acquisitionZones", acquisitionZones(selected))
-            .put("correlation", selected.optJSONArray("nativeMaturityEvents") ?: JSONArray())
+            .put("correlation", correlationEvents)
+            .put("correlationState", correlationState)
             .put("nativeStatus", copy(nativeStatus))
             .put("nativeSnapshot", copy(nativeSnapshot))
             .put("manualStatus", copy(manualStatus))
@@ -207,5 +215,11 @@ object AutoCalUiProjection {
         .put("available", false)
         .put("fields", JSONArray())
 
+    private fun emptyCorrelationState(): JSONObject = JSONObject()
+        .put("correlatedBands", JSONArray())
+        .put("retryableBands", JSONArray())
+
     private fun copy(value: JSONObject): JSONObject = JSONObject(value.toString())
+
+    private fun copy(value: JSONArray): JSONArray = JSONArray(value.toString())
 }

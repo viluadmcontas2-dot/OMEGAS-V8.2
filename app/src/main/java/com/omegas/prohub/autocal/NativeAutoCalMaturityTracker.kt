@@ -41,10 +41,24 @@ class NativeAutoCalMaturityTracker {
         }
     }
 
-    fun baseline(counters: IntArray, observedAtElapsedMs: Long) {
-        previousCounters = counters.copyOf(18)
+    fun baseline(
+        counters: IntArray,
+        observedAtElapsedMs: Long,
+        gasLowThreshold: Int? = null,
+        gasNormalThreshold: Int? = null,
+        enabled: Boolean = false,
+    ) {
+        val normalized = counters.copyOf(18)
+        previousCounters = normalized
         previousObservedAtElapsedMs = observedAtElapsedMs
+        if (enabled && gasLowThreshold != null && gasNormalThreshold != null) {
+            reconcileBaselineCorrelationState(normalized, gasLowThreshold, gasNormalThreshold)
+        }
     }
+
+    fun correlatedBandIndexes(): IntArray = correlatedBands.sorted().toIntArray()
+
+    fun retryableCorrelationBandIndexes(): IntArray = retryableCorrelationBands.sorted().toIntArray()
 
     fun observe(
         counters: IntArray,
@@ -64,14 +78,7 @@ class NativeAutoCalMaturityTracker {
         fun thresholdFor(band: Int): Int = if (band <= 5) gasLowThreshold else gasNormalThreshold
 
         if (previous == null) {
-            if (enabled) {
-                repeat(18) { band ->
-                    val threshold = thresholdFor(band)
-                    if (threshold > 0 && normalized[band] >= threshold && band !in correlatedBands) {
-                        retryableCorrelationBands.add(band)
-                    }
-                }
-            }
+            if (enabled) reconcileBaselineCorrelationState(normalized, gasLowThreshold, gasNormalThreshold)
             return emptyList()
         }
         if (!enabled) return emptyList()
@@ -115,6 +122,23 @@ class NativeAutoCalMaturityTracker {
                         ),
                     )
                 }
+            }
+        }
+    }
+
+    private fun reconcileBaselineCorrelationState(
+        counters: IntArray,
+        gasLowThreshold: Int,
+        gasNormalThreshold: Int,
+    ) {
+        repeat(18) { band ->
+            val threshold = if (band <= 5) gasLowThreshold else gasNormalThreshold
+            if (threshold <= 0) return@repeat
+            if (counters[band] < threshold) {
+                correlatedBands.remove(band)
+                retryableCorrelationBands.remove(band)
+            } else if (band !in correlatedBands) {
+                retryableCorrelationBands.add(band)
             }
         }
     }

@@ -418,8 +418,17 @@ class NativeAutoCalMonitor(
 
         val currentCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS)
         if (pending.isEmpty() || enabled != 1) {
-            currentCounters?.let { maturityTracker.baseline(it, SystemClock.elapsedRealtime()) }
+            currentCounters?.let {
+                maturityTracker.baseline(
+                    counters = it,
+                    observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                    gasLowThreshold = newGasLowThreshold,
+                    gasNormalThreshold = newGasNormalThreshold,
+                    enabled = enabled == 1,
+                )
+            }
         }
+        decorated.put("nativeCorrelationState", correlationStateJson())
 
         val previousMul = synchronized(lock) { lastMulActHash }
         synchronized(lock) {
@@ -466,6 +475,14 @@ class NativeAutoCalMonitor(
             } catch (_: Exception) {}
         }
         onStateChanged()
+    }
+
+    private fun correlationStateJson(): JSONObject = JSONObject()
+        .put("correlatedBands", intArrayJson(maturityTracker.correlatedBandIndexes()))
+        .put("retryableBands", intArrayJson(maturityTracker.retryableCorrelationBandIndexes()))
+
+    private fun intArrayJson(values: IntArray): JSONArray = JSONArray().apply {
+        values.forEach { put(it) }
     }
 
     private fun scalar(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): Int? =
