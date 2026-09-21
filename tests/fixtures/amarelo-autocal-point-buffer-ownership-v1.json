@@ -1,0 +1,83 @@
+{
+  "schema": "omegas.amarelo.autocal-point-buffer-ownership-v1",
+  "authority": {
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "fields": {
+    "0x015D": "PETR_INJ_TBUF_GAS_PREV",
+    "0x015E": "MNFLD_PRESS_BUF_GAS_PREV",
+    "0x015F": "PETR_INJ_TBUF_GAS",
+    "0x0160": "MNFLD_PRESS_BUF_GAS"
+  },
+  "wire_access": {
+    "PortmonAUTOCAL": {
+      "0x015D": {
+        "commands": {
+          "0x29_read_vector": 744
+        },
+        "non_read_commands": 0
+      },
+      "0x015E": {
+        "commands": {
+          "0x29_read_vector": 744
+        },
+        "non_read_commands": 0
+      },
+      "0x015F": {
+        "commands": {
+          "0x29_read_vector": 747
+        },
+        "non_read_commands": 0
+      },
+      "0x0160": {
+        "commands": {
+          "0x29_read_vector": 747
+        },
+        "non_read_commands": 0
+      }
+    },
+    "PortmonLOGNOVO": {
+      "0x015D": {
+        "commands": {
+          "0x29_read_vector": 437
+        },
+        "non_read_commands": 0
+      },
+      "0x015E": {
+        "commands": {
+          "0x29_read_vector": 437
+        },
+        "non_read_commands": 0
+      },
+      "0x015F": {
+        "commands": {
+          "0x29_read_vector": 440
+        },
+        "non_read_commands": 0
+      },
+      "0x0160": {
+        "commands": {
+          "0x29_read_vector": 440
+        },
+        "non_read_commands": 0
+      }
+    }
+  },
+  "observed_mutation": {
+    "PortmonAUTOCAL": {
+      "gas_current_changed_index_events": 322
+    },
+    "PortmonLOGNOVO": {
+      "gas_current_changed_index_events": 250
+    },
+    "source_fixture": "amarelo-autocal-gaspoint-current-prev-v1.json"
+  },
+  "conclusions": {
+    "host_writes_point_buffers_in_supplied_captures": "FALSIFIED",
+    "point_buffers_change_without_host_write": "PROVEN",
+    "ecu_or_firmware_side_point_update_ownership": "PROVEN_FOR_SUPPLIED_CAPTURES",
+    "exact_firmware_update_formula": "UNKNOWN",
+    "product_contract": "OMEGAS reads/projects these native buffers; it must not synthesize or overwrite their values."
+  }
+}
