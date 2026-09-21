@@ -3,16 +3,16 @@
   "workunit_id": "OMEGAS-WU-006",
   "state": "ACTIVE",
   "branch": "OmegasVerde",
-  "baseline_source_sha": "bbf4135875ac792a4f54ff4d49054ae914b7f6ac",
+  "baseline_source_sha": "7e6e37ae42527621e20fdada0e55b7c1f03c97d2",
   "baseline_ci": {
     "fast_contracts": {
-      "run": 112,
-      "run_id": 35620444262,
+      "run": 113,
+      "run_id": 35627609608,
       "conclusion": "success"
     },
     "canonical": {
-      "run": 168,
-      "run_id": 35620444449,
+      "run": 169,
+      "run_id": 35627609600,
       "conclusion": "success"
     }
   },
@@ -46,7 +46,16 @@
       "human_path": "docs/evidence/2026-09-21-progbase-autocal-byte-consumer-matrix.md",
       "machine_path": "tests/fixtures/progbase-autocal-consumer-map-v1.json",
       "contract_path": "tests/test_progbase_autocal_consumer_map_contract.py",
-      "status": "PUBLISHED_V1_PENDING_FINAL_FALSIFIER_REVIEW"
+      "status": "FALSIFIED_INDEPENDENTLY_AND_ACCEPTED",
+      "falsifier": {
+        "binary_sha256": "8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4",
+        "checks": [
+          "DFM_TIMER_BYTES",
+          "RUNPOINT_XREF_AND_LIVE_OFFSETS",
+          "LEVELS_CHANNEL_0E_GET_SET"
+        ],
+        "result": "PASS"
+      }
     },
     "live_chain": {
       "command": "48 01 49",
@@ -124,5 +133,27 @@
       "docs/evidence"
     ],
     "executor_independence": "Once a fixture is committed, its replay/render gate must not depend on MMMACHINE."
+  },
+  "omegas_parity": {
+    "issue": 83,
+    "human_path": "docs/evidence/2026-09-21-omegas-autocal-progbase-parity-matrix.md",
+    "machine_path": "tests/fixtures/omegas-autocal-progbase-parity-v1.json",
+    "status": "PUBLISHED_V1_PENDING_CI",
+    "confirmed_red_candidates": [
+      "AUTOCAL_LEVELS_RAW_FAST_FRESHNESS",
+      "AUTOCAL_CURRENT_BAND_PRESENTATION",
+      "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
+      "AUTOCAL_PETROL_MATURITY_REFRESH"
+    ],
+    "protected_matches": [
+      "LIVE_AGORA_TELEMETRY_SEPARATION",
+      "SINGLE_SERIAL_AUTHORITY",
+      "PETROL_GAS_REFERENCE_FIELD_IDENTITY",
+      "NO_AUTOMATIC_ECU_WRITE"
+    ],
+    "evidence_debt": [
+      "0x0165 index semantics remain unproven by original binary evidence",
+      "session ownership is delegated to issue #86"
+    ]
   }
 }
