@@ -140,18 +140,18 @@
     },
     {
       "from": "ActionFinishAutocalExecute:0x51A390",
-      "to": "VECT_AUTOCAL_U8_1@DM+0x7C",
+      "to": "MAX_AUTOMATCH@DM+0x7C",
       "transform": "scalar getter 0x976C44",
-      "status": "PROVEN"
+      "status": "PROVEN_RTTI_AND_STATIC"
     },
     {
-      "from": "VECT_AUTOCAL_U8_1@DM+0x7C",
-      "to": "VECT_AUTOCAL_U8_0@DM+0xCC",
+      "from": "MAX_AUTOMATCH@DM+0x7C",
+      "to": "NUM_AUTOMATCH_EXECUTED@DM+0xCC",
       "transform": "same integer passed through TAebNumber setter 0x976CB8",
-      "status": "PROVEN_STATIC"
+      "status": "PROVEN_RTTI_AND_STATIC"
     },
     {
-      "from": "VECT_AUTOCAL_U8_0@DM+0xCC",
+      "from": "NUM_AUTOMATCH_EXECUTED@DM+0xCC",
       "to": "PostActionRefresh:0x5162F8",
       "transform": "connection-aware TAebNumber commit path -> 100ms wait -> refresh(1)",
       "status": "PROVEN_STATIC"
@@ -440,14 +440,23 @@
       "handler": "ActionFinishAutocalExecute:0x51A390",
       "source_field": {
         "offset": "DM+0x7C",
-        "semantic": "VECT_AUTOCAL_U8_1",
-        "status": "PROVEN_RTTI"
+        "semantic": "VECT_AUTOCAL_U8_2 / MAX_AUTOMATCH",
+        "serial_family": "0x0165:2",
+        "status": "PROVEN_RTTI_AND_WIRE"
       },
       "destination_field": {
         "offset": "DM+0xCC",
-        "semantic": "VECT_AUTOCAL_U8_0",
+        "semantic": "NUM_ATUOMATCH_EXECUTED",
+        "serialCode": "0x0174",
         "status": "PROVEN_RTTI"
       },
+      "static_transform": "NUM_AUTOMATCH_EXECUTED := MAX_AUTOMATCH",
+      "routine_bytes": [
+        "0x51A41C [esi+0x7C]",
+        "0x51A41F getter 0x976C44",
+        "0x51A426 [esi+0xCC]",
+        "0x51A42C setter 0x976CB8"
+      ],
       "destination_commit": {
         "wrapper": "0x976CB8",
         "validator_update": "0x976DF0",
@@ -455,30 +464,10 @@
         "status": "PROVEN_STATIC",
         "raw_write_observed": false
       },
-      "serial_family": {
-        "address": "0x0165",
-        "observed_in_PortmonAUTOCAL": 0,
-        "observed_in_PortmonLOGNOVO": 9,
-        "index1": {
-          "request": "0A 65 01 01 71",
-          "semantic": "VECT_AUTOCAL_U8_1",
-          "status": "PROVEN"
-        },
-        "index2": {
-          "request": "0A 65 01 02 72",
-          "semantic": "VECT_AUTOCAL_U8_2",
-          "status": "PROVEN"
-        },
-        "index0": {
-          "request": "0A 65 01 00 70",
-          "semantic": "VECT_AUTOCAL_U8_0",
-          "status": "PROVEN_RESOURCE_WIRE_MAPPING",
-          "basis": "Exactly three DFM components use SerialCode 0x0165; U8_1 RowIndex=1, U8_2 RowIndex=2, U8_0 sole default/omitted RowIndex; raw wire exposes exactly indices 0/1/2."
-        }
-      },
       "post_write_wait_ms": 100,
       "refresh": "PostActionRefresh:0x5162F8",
-      "exact_ecu_physical_effect": "UNKNOWN",
+      "completion_intent": "SUPPORTED_BY_FIELD_NAMES_AND_ASSIGNMENT",
+      "exact_ecu_side_effect": "UNKNOWN",
       "status": "PROVEN_STATIC_NOT_RAW_WRITE_OBSERVED"
     },
     "enable_automatch_coupling": {
@@ -503,7 +492,7 @@
     "Exact producer/consumer transforms not already listed as PROVEN.",
     "Firmware meaning/lifecycle of GasPointPrev beyond its proven separate native buffer.",
     "Exact firmware threshold/guard that promotes NUM_BUF_UPD activity into ACQUIRED_ZONES flags.",
-    "Finish AutoCAL exact ECU-side physical effect after the connection-aware VECT_AUTOCAL_U8_0 commit; supplied raw captures contain reads but no 0x0165 write.",
-    "Human/physical semantic names beyond numeric low-to-high MAP region order for acquired-zone indices 0..3."
+    "Human/physical semantic names beyond numeric low-to-high MAP region order for acquired-zone indices 0..3.",
+    "Finish AutoCAL exact ECU-side effect after setting NUM_AUTOMATCH_EXECUTED to MAX_AUTOMATCH; the write path is statically proven but no 0x0174 write is present in supplied raws."
   ]
 }
