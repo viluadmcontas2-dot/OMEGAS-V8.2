@@ -231,6 +231,8 @@
         const pad = Math.max(0.02, (yMax - yMin) * 0.12);
         yMin -= pad; yMax += pad;
       }
+      xMin = Math.max(0, xMin);
+      yMin = Math.max(0, yMin);
       return { xMin, xMax, yMin, yMax };
     },
 
