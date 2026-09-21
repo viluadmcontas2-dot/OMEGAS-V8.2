@@ -62,6 +62,8 @@ class UsbSerialManager(
         private set
     @Volatile var permissionPending = false
         private set
+    @Volatile var permissionDeniedDeviceName = ""
+        private set
     @Volatile var deviceLabel = "Nenhum"
         private set
     @Volatile var activeDeviceName = ""
@@ -84,16 +86,20 @@ class UsbSerialManager(
                     val device = intent.usbDevice()
                     val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
                     if (granted && device != null && isOmegasDevice(device)) {
+                        permissionDeniedDeviceName = ""
                         open(device)
                     } else if (device != null && !isOmegasDevice(device)) {
                         log.add("INFO", "USB", "Permissão ignorada para USB fora da identidade OMEGAS")
                     } else {
-                        log.add("WARN", "USB", "Permissão USB negada")
+                        val deniedDeviceName = device?.deviceName?.takeIf { it.isNotBlank() } ?: activeDeviceName
+                        if (deniedDeviceName.isNotBlank()) permissionDeniedDeviceName = deniedDeviceName
+                        log.add("WARN", "USB", "Permissão USB negada; retry automático suspenso até reconexão física ou nova tentativa manual")
                     }
                     onStateChanged()
                 }
                 UsbManager.ACTION_USB_DEVICE_DETACHED -> {
                     val detached = intent.usbDevice()
+                    if (detached != null && detached.deviceName == permissionDeniedDeviceName) permissionDeniedDeviceName = ""
                     if (detached != null && detached.deviceName == activeDeviceName) {
                         log.add("WARN", "USB", "Interface OMEGAS removida: ${detached.deviceName}")
                         hardDisconnect(scheduleReconnect = false, reason = "USB_DEVICE_DETACHED")
@@ -102,6 +108,7 @@ class UsbSerialManager(
                 UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
                     val attached = intent.usbDevice()
                     if (attached != null && isOmegasDevice(attached)) {
+                        if (permissionDeniedDeviceName == attached.deviceName) permissionDeniedDeviceName = ""
                         log.add("INFO", "USB", "Interface OMEGAS detectada: ${attached.deviceName}")
                         if (settings.autoConnectUsb) connect(attached.deviceName)
                     }
@@ -151,7 +158,7 @@ class UsbSerialManager(
     }
 
     @Synchronized
-    fun connect(requestedDeviceName: String? = null): Boolean {
+    fun connect(requestedDeviceName: String? = null, allowPermissionRetry: Boolean = false): Boolean {
         manualDisconnect = false
         recoveryTask?.cancel(false)
         recoveryTask = null
@@ -175,6 +182,14 @@ class UsbSerialManager(
                 log.add("INFO", "USB", "Permissão OMEGAS já solicitada; aguardando resposta Android para ${device.deviceName}")
                 onStateChanged()
                 return false
+            }
+            if (permissionDeniedDeviceName == device.deviceName && !allowPermissionRetry) {
+                log.add("INFO", "USB", "Permissão OMEGAS negada anteriormente; retry automático suspenso para ${device.deviceName}")
+                onStateChanged()
+                return false
+            }
+            if (permissionDeniedDeviceName == device.deviceName && allowPermissionRetry) {
+                permissionDeniedDeviceName = ""
             }
             permissionPending = true
             activeDeviceName = device.deviceName
@@ -211,6 +226,7 @@ class UsbSerialManager(
             lastRecoveryReason = ""
             connectionSessionId = sessionCounter.incrementAndGet()
             permissionPending = false
+            permissionDeniedDeviceName = ""
             clearReceiveBuffer()
             log.add(
                 "INFO",

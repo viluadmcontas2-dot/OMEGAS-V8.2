@@ -271,7 +271,7 @@ class TelemetryForegroundService : Service() {
         when (intent?.action) {
             ACTION_TOGGLE_ENGINE -> scheduler.execute { toggleEngine() }
             ACTION_DISCONNECT_USB -> scheduler.execute {
-                if (usb.connected) disconnectUsb() else connectUsb()
+                if (usb.connected) disconnectUsb() else connectUsb(userInitiated = true)
             }
             ACTION_RESTART_ENGINE -> scheduler.execute { restartEngine() }
             ACTION_STOP_SERVICE -> scheduler.execute { stopSelf() }
@@ -372,10 +372,10 @@ class TelemetryForegroundService : Service() {
         }.also { stateChanged() }
     }
 
-    fun connectUsb(deviceName: String? = null): Boolean {
+    fun connectUsb(deviceName: String? = null, userInitiated: Boolean = false): Boolean {
         enginePausedByUser = false
         monitoringPausedByUser = false
-        return usb.connect(deviceName).also { stateChanged() }
+        return usb.connect(deviceName, allowPermissionRetry = userInitiated).also { stateChanged() }
     }
 
     fun disconnectUsb() {
