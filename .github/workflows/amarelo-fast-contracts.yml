@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/amarelo-fast-contracts.yml"
       - "tools/omegas_amarelo/**"
+      - "docs/omegas-amarelo/evidence/**"
       - "tests/test_amarelo_*.py"
       - "tests/test_real_mp48_replay_fixture_contract.py"
       - "tests/fixtures/portmon-autocal-*"
