@@ -34,9 +34,13 @@ class NativeConsumerGraphContractTest(unittest.TestCase):
             key[("DM+0xCC", "VECT_AUTOCAL_U8_2_or_NUM_AUTOMATCH_EXECUTED")]["status"],
             "UNKNOWN",
         )
-        self.assertEqual(data["states"]["label_use_status"], "PROVEN")\n        self.assertEqual(data["states"]["transition_status"], "UNKNOWN")
-        self.assertIn("state_acquire_petrol_line", [row["name"] for row in data["states"]["labels"]])
-        self.assertIn("state_draw_gas_petrol_curve", data["states"]["rtti_strings_observed"])
+
+        states = data["states"]
+        self.assertEqual(states["label_use_status"], "PROVEN")
+        self.assertEqual(states["transition_status"], "UNKNOWN")
+        labels = [row["name"] for row in states["labels"]]
+        self.assertIn("state_acquire_petrol_line", labels)
+        self.assertIn("state_draw_gas_petrol_curve", labels)
 
 
 if __name__ == "__main__":
