@@ -50,3 +50,22 @@ class AutoCalAcquiredZonesEvidenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AutoCalAcquiredZoneOwnershipEvidenceTest(unittest.TestCase):
+    def test_supplied_captures_only_read_zone_vectors(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        ownership = data["wire_ownership"]
+        for capture in ("PortmonAUTOCAL", "PortmonLOGNOVO"):
+            for address in ("0x016F", "0x0170"):
+                row = ownership[capture][address]
+                self.assertGreater(row["read_vector_commands"], 0)
+                self.assertEqual(row["non_read_commands"], 0)
+
+    def test_zone_flags_are_ecu_owned_not_host_maturity_formula(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        conclusions = data["conclusions"]
+        self.assertEqual(conclusions["host_writes_acquired_zone_vectors_in_supplied_captures"], "FALSIFIED")
+        self.assertEqual(conclusions["ecu_or_firmware_side_zone_flag_ownership"], "PROVEN_FOR_SUPPLIED_CAPTURES")
+        self.assertEqual(conclusions["zone_flag_transition_formula"], "UNKNOWN")
+        self.assertEqual(conclusions["host_maturity_threshold_is_zone_flag_formula"], "FALSIFIED")
