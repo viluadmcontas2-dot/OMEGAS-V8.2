@@ -1017,9 +1017,9 @@
         const gasY = yFor(point.gasMapBar).toFixed(1);
         const equivalentX = finite(point.gasEquivalentMs) === null ? null : xFor(point.gasEquivalentMs).toFixed(1);
         return '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="22"></circle>' +
-          '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="5"></circle>' +
+          '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="6.5"></circle>' +
           '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
-          '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="5"></circle>' +
+          '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="4.2"></circle>' +
           (equivalentX === null ? '' : '<circle class="autocal-equivalence-point" cx="' + equivalentX + '" cy="' + petrolY + '" r="4"></circle>');
       }).join('');
 
@@ -1055,8 +1055,10 @@
       const point = this.currentReferencePoints.find(item => Number(item.index) === Number(index));
       if (!host || !point) return;
       this.selectedReferenceIndex = point.index;
+      const mapDelta = point.gasMapBar - point.petrolMapBar;
       host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + point.petrolMs.toFixed(2) + ' ms</b>' +
         '<span>MAP gasolina ' + point.petrolMapBar.toFixed(3) + ' bar · MAP GNV ' + point.gasMapBar.toFixed(3) + ' bar' +
+        ' · ΔMAP ' + (mapDelta > 0 ? '+' : '') + mapDelta.toFixed(3) + ' bar' +
         (finite(point.gasEquivalentMs) === null ? '' : ' · GNV equivalente ' + point.gasEquivalentMs.toFixed(2) + ' ms') + '</span>';
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
