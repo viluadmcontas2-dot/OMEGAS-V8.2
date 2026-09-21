@@ -1159,9 +1159,9 @@
   gap: 7px;
 }
 
-.autocal-hero { order: 0; padding: 9px 12px; }
+.autocal-hero { order: 2; padding: 9px 12px; }
 .autocal-reference-card {
-  order: 1;
+  order: 0;
   display: flex;
   flex-direction: column;
   padding: 11px 12px 10px;
@@ -1173,12 +1173,12 @@
     inset 0 1px 0 rgba(255,255,255,.035),
     0 16px 42px rgba(0,0,0,.16);
 }
-.autocal-session-strip { order: 2; }
-.autocal-session-drawer { order: 3; }
-.autocal-bands-card { order: 4; }
-.autocal-command-bar { order: 5; }
-.autocal-technical-details { order: 6; }
-.autocal-review { order: 7; }
+.autocal-session-strip { order: 3; }
+.autocal-session-drawer { order: 4; }
+.autocal-bands-card { order: 5; }
+.autocal-command-bar { order: 6; }
+.autocal-technical-details { order: 7; }
+.autocal-review { order: 8; }
 
 .autocal-reference-card .autocal-section-head { order: 0; }
 .autocal-reference-card .autocal-chart-legend { order: 1; }

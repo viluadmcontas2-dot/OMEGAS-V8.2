@@ -122,7 +122,10 @@ class DashboardLevelsRenderTest {
                   chartTop: chart?.top ?? 0,
                   chartBottom: chart?.bottom ?? 0,
                   liveTop: live?.top ?? 0,
+                  liveBottom: live?.bottom ?? 0,
+                  heroTop: hero?.top ?? 0,
                   heroHeight: hero?.height ?? 0,
+                  viewportHeight: window.innerHeight,
                   inspectorWidth: inspector?.width ?? 0
                 };
               })()
@@ -191,6 +194,8 @@ class DashboardLevelsRenderTest {
             assertTrue("Acquisition chart must dominate vertically", geometry.getDouble("chartHeight") >= 300.0)
             assertTrue("Acquisition chart must use the available horizontal canvas", geometry.getDouble("chartWidth") >= 760.0)
             assertTrue("Live telemetry rail must sit below the chart", geometry.getDouble("liveTop") >= geometry.getDouble("chartBottom"))
+            assertTrue("Live telemetry rail must remain visible without scrolling", geometry.getDouble("liveBottom") <= geometry.getDouble("viewportHeight"))
+            assertTrue("Operational hero must follow the instrument surface", geometry.getDouble("heroTop") >= geometry.getDouble("liveBottom"))
             assertTrue("Operational hero must stay compact relative to chart", geometry.getDouble("heroHeight") < geometry.getDouble("chartHeight"))
             assertTrue("Desktop point inspector must not consume a permanent chart column", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.31)
         } finally {
