@@ -30,13 +30,17 @@ class AutoCalGroundTruthTest(unittest.TestCase):
         self.assertEqual(LOGNOVO_SHA, meta["sourceRawSha256"])
         self.assertEqual("12 4A 01 01 5E", meta["enableRequest"])
         self.assertEqual("12 4A 01 00 5D", meta["disableRequest"])
-        self.assertTrue(meta["sourceLineRanges"])
+        self.assertEqual(4, meta["observedEnableWrites"])
+        self.assertEqual(4, meta["observedDisableWrites"])
+        self.assertEqual(8, len(meta["sourceLineRanges"]))
 
     def test_parser_reconstructs_enable_checkbox_write(self):
         tx = list(parse_portmon_lines(LOGNOVO_RAW.read_text(encoding="utf-8").splitlines()))
         requests = [item.request.hex(" ").upper() for item in tx]
         self.assertIn("12 4A 01 01 5E", requests)
         self.assertIn("12 4A 01 00 5D", requests)
+        self.assertEqual(4, requests.count("12 4A 01 01 5E"))
+        self.assertEqual(4, requests.count("12 4A 01 00 5D"))
 
     def test_enable_disable_decode_as_same_native_object(self):
         enable = decode_object_request(bytes.fromhex("12 4A 01 01 5E"))

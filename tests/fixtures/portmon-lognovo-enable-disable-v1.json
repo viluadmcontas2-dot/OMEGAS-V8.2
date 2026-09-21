@@ -1,0 +1,66 @@
+{
+  "schema": "omegas.amarelo.autocal-enable.v1",
+  "sourceRawName": "PortmonLOGNOVO.LOG",
+  "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+  "enableRequest": "12 4A 01 01 5E",
+  "disableRequest": "12 4A 01 00 5D",
+  "sourceLineRanges": [
+    {
+      "request": "12 4A 01 00 5D",
+      "start": 697670,
+      "end": 697682,
+      "matchLine": 697674
+    },
+    {
+      "request": "12 4A 01 01 5E",
+      "start": 703606,
+      "end": 703618,
+      "matchLine": 703610
+    },
+    {
+      "request": "12 4A 01 00 5D",
+      "start": 713642,
+      "end": 713654,
+      "matchLine": 713646
+    },
+    {
+      "request": "12 4A 01 01 5E",
+      "start": 716938,
+      "end": 716950,
+      "matchLine": 716942
+    },
+    {
+      "request": "12 4A 01 00 5D",
+      "start": 1946554,
+      "end": 1946566,
+      "matchLine": 1946558
+    },
+    {
+      "request": "12 4A 01 01 5E",
+      "start": 1956694,
+      "end": 1956706,
+      "matchLine": 1956698
+    },
+    {
+      "request": "12 4A 01 00 5D",
+      "start": 2153042,
+      "end": 2153054,
+      "matchLine": 2153046
+    },
+    {
+      "request": "12 4A 01 01 5E",
+      "start": 2378226,
+      "end": 2378238,
+      "matchLine": 2378230
+    }
+  ],
+  "observedEnableWrites": 4,
+  "observedDisableWrites": 4,
+  "disableSemantic": "AUTO_CAL_ENABLE_0_FREEZES_ACQUISITION",
+  "separatePauseControlProven": false,
+  "semanticBasis": [
+    "raw LOGNOVO shows AUTO_CAL_ENABLE writes 1/0 with echoed readback",
+    "ProgBase CheckAutoCalEnable binds to native AUTO_CAL_ENABLE object",
+    "existing incident reports repeated native vectors while disabled, compatible with frozen acquisition"
+  ]
+}
