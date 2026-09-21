@@ -148,7 +148,7 @@
       return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped, documentsMirror, mirrorFailed };
     },
 
-    livePoint(telemetry = {}) {
+    livePoint(telemetry = {}, projection = {}) {
       const source = telemetry || {};
       const ageMs = finite(source.telemetryAgeMs ?? source.ageMs);
       if (source.valid !== true || ageMs === null || ageMs < 0 || ageMs > AUTO_CAL_LIVE_STALE_MS) return null;
@@ -156,7 +156,7 @@
       const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
       const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
       const rpm = finite(live.rpm);
-      const levelRaw = finite(live.level_raw ?? live.levelRaw);
+      const levelRaw = finite(projection?.levelsRaw);
       if (petrolMs === null || mapBar === null) return null;
       return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
     },
@@ -792,7 +792,7 @@
 
     renderLiveNarrative() {
       const telemetry = this.store.get().telemetry || {};
-      const live = AutoCalUxModel.livePoint(telemetry);
+      const live = AutoCalUxModel.livePoint(telemetry, this.projection);
       if (!live) {
         const ageMs = finite(telemetry.telemetryAgeMs ?? telemetry.ageMs);
         const stale = telemetry.valid === true && ageMs !== null && ageMs > AUTO_CAL_LIVE_STALE_MS;

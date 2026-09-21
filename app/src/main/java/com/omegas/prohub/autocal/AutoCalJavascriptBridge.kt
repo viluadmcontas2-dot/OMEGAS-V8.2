@@ -52,6 +52,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeSnapshot = nativeSnapshot,
             manualStatus = manualStatus,
             manualSnapshot = manualSnapshot,
+            telemetryStatus = JSONObject(service.telemetryStore.liveJson()),
         ).toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Projeção AutoCal indisponível")
