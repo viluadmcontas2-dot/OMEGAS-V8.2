@@ -9,14 +9,16 @@ import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.NativeAutoCalAnchorCorrelator
 import org.json.JSONArray
 import org.json.JSONObject
+import java.security.MessageDigest
 
 /**
  * Observa a Auto Calibration nativa sem possuir timer, thread serial ou writer.
  *
  * O serviço chama [tick] em uma cadência compartilhada; o monitor não possui
  * thread nem timer. Toda I/O passa pelo scheduler MP48 único. O probe 48 0B
- * acompanha status global; um grupo leve renova contadores/zonas de gasolina e
- * GNV. Snapshot completo continua reservado a bootstrap/eventos científicos.
+ * acompanha status global; um grupo leve renova contadores/zonas em ~2 s e um
+ * grupo de referência renova eixos/curvas/MUL_ACT em ~4 s. Snapshot completo
+ * continua reservado a bootstrap/eventos científicos.
  * AutoMatch continua sendo executado exclusivamente pela ECU.
  */
 class NativeAutoCalMonitor(
@@ -42,6 +44,11 @@ class NativeAutoCalMonitor(
     private data class AcquisitionRefresh(
         val snapshot: AutoCalSnapshot,
         val gasProbe: MaturityProbe,
+        val observedAtElapsedMs: Long,
+    )
+
+    private data class ReferenceRefresh(
+        val snapshot: AutoCalSnapshot,
         val observedAtElapsedMs: Long,
     )
 
@@ -173,7 +180,8 @@ class NativeAutoCalMonitor(
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
         val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
-        val acquisitionRefresh = if (thresholdsReady && refreshDue.acquisition) {
+        val fullSnapshotAlreadyDue = synchronized(lock) { snapshotRequested } || probeChanged
+        val acquisitionRefresh = if (!fullSnapshotAlreadyDue && thresholdsReady && refreshDue.acquisition) {
             refreshAcquisitionGroup(currentSession)
         } else null
         val maturityEvents = acquisitionRefresh?.gasProbe?.let { observed ->
@@ -194,6 +202,17 @@ class NativeAutoCalMonitor(
             refreshPlanner.markAcquisition(acquisitionRefresh.observedAtElapsedMs)
         }
 
+        val referenceRefresh = if (!fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference) {
+            refreshReferenceGroup(currentSession)
+        } else null
+        if (referenceRefresh != null) {
+            mergeReferenceFields(
+                patch = referenceRefresh.snapshot,
+                refreshedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
+            )
+            refreshPlanner.markReference(referenceRefresh.observedAtElapsedMs)
+        }
+
         synchronized(lock) {
             lastProbe = probe
             state = baseState("MONITORING", "AutoCal nativo monitorado")
@@ -204,7 +223,8 @@ class NativeAutoCalMonitor(
                 .put("thresholdsReady", thresholdsReady)
                 .put("maturityProbe", acquisitionRefresh != null)
                 .put("acquisitionRefresh", acquisitionRefresh != null)
-                .put("referenceRefreshDue", refreshDue.reference)
+                .put("referenceRefresh", referenceRefresh != null)
+                .put("referenceRefreshDue", refreshDue.reference && referenceRefresh == null)
             if (maturityEvents.isNotEmpty()) {
                 pendingMaturity = maturityEvents
                 snapshotRequested = true
@@ -367,19 +387,90 @@ class NativeAutoCalMonitor(
         )
     }
 
+    private fun refreshReferenceGroup(expectedSessionId: Long): ReferenceRefresh? {
+        val startedAtMs = System.currentTimeMillis()
+        val observations = REFERENCE_REFRESH_FIELDS.map { field ->
+            val reply = serial.transaction(
+                request = AutoCalProtocol.read(field),
+                reason = "AutoCal referência ${field.key}",
+                timeoutMs = 1_200,
+                purgeBefore = false,
+                expectedSessionId = expectedSessionId,
+                workClass = Mp48WorkClass.READ_ONLY,
+            )
+            AutoCalReadObservation(
+                field = field,
+                status = reply.status.takeIf { it >= 0 },
+                payload = reply.payload.takeIf { it.isNotEmpty() },
+                capturedAtMs = System.currentTimeMillis(),
+                error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
+            )
+        }
+        val finishedAtMs = System.currentTimeMillis()
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = observations,
+            expectedFields = REFERENCE_REFRESH_FIELDS,
+            sessionId = "AUTOCAL-REF-$expectedSessionId-$finishedAtMs",
+            source = AutoCalSnapshotSource.ECU_READ,
+            startedAtMs = startedAtMs,
+            finishedAtMs = finishedAtMs,
+        )
+        if (snapshot.partial ||
+            snapshot.validFieldCount != REFERENCE_REFRESH_FIELDS.size ||
+            !snapshot.temporalCoherent
+        ) return null
+        return ReferenceRefresh(
+            snapshot = snapshot,
+            observedAtElapsedMs = SystemClock.elapsedRealtime(),
+        )
+    }
+
     private fun mergeOperationalFields(
         patch: AutoCalSnapshot,
         refreshedAtElapsedMs: Long,
+    ) = mergeRefreshedFields(
+        patch = patch,
+        refreshedAtElapsedMs = refreshedAtElapsedMs,
+        group = "acquisition",
+        reviseSnapshotHashOnChange = false,
+    )
+
+    private fun mergeReferenceFields(
+        patch: AutoCalSnapshot,
+        refreshedAtElapsedMs: Long,
+    ) = mergeRefreshedFields(
+        patch = patch,
+        refreshedAtElapsedMs = refreshedAtElapsedMs,
+        group = "reference",
+        reviseSnapshotHashOnChange = true,
+    )
+
+    private fun mergeRefreshedFields(
+        patch: AutoCalSnapshot,
+        refreshedAtElapsedMs: Long,
+        group: String,
+        reviseSnapshotHashOnChange: Boolean,
     ) {
         val patchFields = patch.toJson().optJSONArray("fields") ?: return
         synchronized(lock) {
             if (!latestSnapshot.optBoolean("available", false)) return
             val current = JSONObject(latestSnapshot.toString())
             val currentFields = current.optJSONArray("fields") ?: JSONArray()
+            val existingByKey = linkedMapOf<String, JSONObject>()
+            repeat(currentFields.length()) { index ->
+                val field = currentFields.optJSONObject(index) ?: return@repeat
+                existingByKey[field.optString("key")] = field
+            }
             val replacements = linkedMapOf<String, JSONObject>()
             repeat(patchFields.length()) { index ->
                 val field = patchFields.optJSONObject(index) ?: return@repeat
                 replacements[field.optString("key")] = JSONObject(field.toString())
+            }
+            val changed = replacements.any { (key, replacement) ->
+                val previous = existingByKey[key]
+                previous == null ||
+                    previous.optString("status") != replacement.optString("status") ||
+                    previous.optString("rawPayloadHex") != replacement.optString("rawPayloadHex")
             }
 
             val merged = JSONArray()
@@ -397,10 +488,32 @@ class NativeAutoCalMonitor(
             current
                 .put("fields", merged)
                 .put("operationalUpdatedAtElapsedMs", refreshedAtElapsedMs)
-                .put("acquisitionRefreshAtElapsedMs", refreshedAtElapsedMs)
+                .put("${group}RefreshAtElapsedMs", refreshedAtElapsedMs)
+                .put("incrementalRefreshGroup", group)
                 .put("operationalRefreshOnly", true)
+            if (reviseSnapshotHashOnChange && changed) {
+                current.put(
+                    "snapshotHash",
+                    incrementalReferenceRevision(
+                        previousHash = current.optString("snapshotHash", ""),
+                        replacements = replacements,
+                    ),
+                )
+            }
             latestSnapshot = current
         }
+    }
+
+    private fun incrementalReferenceRevision(
+        previousHash: String,
+        replacements: Map<String, JSONObject>,
+    ): String {
+        val canonical = replacements.toSortedMap().entries.joinToString("|") { (key, field) ->
+            "$key:${field.optString("status")}:${field.optString("rawPayloadHex")}"
+        }
+        return MessageDigest.getInstance("SHA-256")
+            .digest("$previousHash|reference|$canonical".toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
     }
 
     private fun readFullSnapshot(
@@ -659,6 +772,13 @@ class NativeAutoCalMonitor(
             AutoCalProtocol.NUM_BUF_UPD_GAS,
             AutoCalProtocol.ACQUIRED_ZONES_PETROL,
             AutoCalProtocol.ACQUIRED_ZONES_GAS,
+        )
+        private val REFERENCE_REFRESH_FIELDS = listOf(
+            AutoCalProtocol.PETR_INJ_TBP,
+            AutoCalProtocol.MNFLD_PRESS_THD,
+            AutoCalProtocol.MUL_ACT,
+            AutoCalProtocol.PETR_MNFLD_PRESS_RV,
+            AutoCalProtocol.GAS_MNFLD_PRESS_RV,
         )
     }
 }
