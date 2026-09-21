@@ -33,6 +33,16 @@ const domain = model.referenceDomain(points, []);
 assert.ok(domain.xMin < 2 && domain.xMax > 10.4);
 assert.ok(domain.xMax < 12, 'domínio deve vir apenas da referência nativa');
 
+const nearZeroDomain = model.referenceDomain([
+  { index: 0, petrolMs: 0.05, petrolMapBar: 0.01, gasMapBar: 0.015, gasEquivalentMs: 0.06 },
+  { index: 1, petrolMs: 0.40, petrolMapBar: 0.08, gasMapBar: 0.09, gasEquivalentMs: 0.45 },
+], []);
+assert.ok(nearZeroDomain.xMin >= 0,
+  'padding visual não pode fabricar tempo de injeção negativo');
+assert.ok(nearZeroDomain.yMin >= 0,
+  'padding visual não pode fabricar MAP negativo');
+
+
 const scale = {
   ...domain,
   xFor: value => value,
