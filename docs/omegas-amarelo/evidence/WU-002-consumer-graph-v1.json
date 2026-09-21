@@ -485,14 +485,49 @@
       "product_contract": "single AutoCAL mode control; no second automatic-AutoMatch enable writer",
       "internal_ecu_automatch_trigger": "UNKNOWN",
       "status": "PROVEN_HOST_CONTROL_SUPPORTED_FIRMWARE_BEHAVIOR"
+    },
+    "maturity_visibility": {
+      "progbase_function": "0x516F64",
+      "host_rule": "threshold <= NUM_BUF_UPD_[fuel][index]",
+      "immature_presentation": "-1.0 sentinel in polling/maturity series",
+      "mature_presentation": "native MNFLD_PRESS_BUF_[fuel][index] in polling/maturity series",
+      "threshold_sources": {
+        "petrol_low": {
+          "max_index": 5,
+          "source": "VECT_AUTOCAL_U8_1@DM+0x78 / 0x0165:1"
+        },
+        "petrol_normal": {
+          "min_index": 6,
+          "source": "CALIBRATION_VAL_1[2]@DM+0xC0 / 0x0172"
+        },
+        "gas_low": {
+          "max_index": 5,
+          "source": "CALIBRATION_VAL_1[5]@DM+0xC0 / 0x0172"
+        },
+        "gas_normal": {
+          "min_index": 6,
+          "source": "CALIBRATION_VAL_1[8]@DM+0xC0 / 0x0172"
+        }
+      },
+      "observed_lognovo_values": {
+        "petrol_low": 3,
+        "petrol_normal": 3,
+        "gas_low": 3,
+        "gas_normal": 3
+      },
+      "observed_value_scope": "capture-specific; must be read from ECU, never hardcoded",
+      "raw_current_point_refresh_is_separate": true,
+      "acquired_zone_flags_are_separate": true,
+      "map_region_assignment": "derive from native point MAP vs MNFLD_PRESS_THD; never from buffer index",
+      "status": "PROVEN_STATIC_AND_WIRE"
     }
   },
   "unknowns": [
     "Any ECU/physical AutoCAL state machine distinct from the proven refresh-dispatch scheduler; transition producers/guards remain UNKNOWN.",
     "Exact producer/consumer transforms not already listed as PROVEN.",
     "Firmware meaning/lifecycle of GasPointPrev beyond its proven separate native buffer.",
-    "Exact firmware threshold/guard that promotes NUM_BUF_UPD activity into ACQUIRED_ZONES flags.",
     "Human/physical semantic names beyond numeric low-to-high MAP region order for acquired-zone indices 0..3.",
-    "Finish AutoCAL exact ECU-side effect after setting NUM_AUTOMATCH_EXECUTED to MAX_AUTOMATCH; the write path is statically proven but no 0x0174 write is present in supplied raws."
+    "Finish AutoCAL exact ECU-side effect after setting NUM_AUTOMATCH_EXECUTED to MAX_AUTOMATCH; the write path is statically proven but no 0x0174 write is present in supplied raws.",
+    "Firmware rule that changes ACQUIRED_ZONES flags remains UNKNOWN; host maturity/polling threshold is now separately proven and must not be conflated with zone-flag transitions."
   ]
 }
