@@ -1,0 +1,32 @@
+{
+  "schema": "omegas.amarelo.autocal-action-wire.v1",
+  "authority": {
+    "progbase_sha256": "8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4",
+    "portmon_autocal_sha256": "4A70F5AE79B1D688C05BD169F3E6A588B52105580D24B8A72A5CFF398A384C0B",
+    "portmon_lognovo_sha256": "43A632724182C72CBD4F386EA0F7421E01D38242B48B919705671751E9EB8A64"
+  },
+  "binary": {
+    "bridge_va": "0x512280",
+    "action_store_va": "0x5122B9",
+    "service_id_va": "0x5122CE",
+    "service_id": 36,
+    "dispatcher_va": "0x517568",
+    "dispatcher_calls": [
+      {"callsite_va":"0x5189B4","action":8},
+      {"callsite_va":"0x5189C0","action":1},
+      {"callsite_va":"0x5189CC","action":2},
+      {"callsite_va":"0x5189D8","action":4}
+    ]
+  },
+  "checksum_scan": {
+    "portmon_autocal": {"writes":36463,"additive_ok":36463,"exceptions":[]},
+    "portmon_lognovo": {"writes":39524,"additive_ok":39522,"exceptions":[{"event":15,"bytes":"00"},{"event":34,"bytes":"00"}]}
+  },
+  "actions": [
+    {"name":"RESET_PETROL","code":1,"request":"02 24 04 01 2B","classification":"PROVEN","raw_observed":false},
+    {"name":"RESET_GAS","code":2,"request":"02 24 04 02 2C","classification":"PROVEN","raw_observed":false},
+    {"name":"RESET_ALL","code":4,"request":"02 24 04 04 2E","classification":"PROVEN","raw_observed":true,
+      "observations":[{"corpus":"PortmonAUTOCAL","event":26238,"line":52478},{"corpus":"PortmonLOGNOVO","event":34971,"line":69944}]},
+    {"name":"AUTOMATCH","code":8,"request":"02 24 04 08 32","classification":"PROVEN","raw_observed":false}
+  ]
+}
