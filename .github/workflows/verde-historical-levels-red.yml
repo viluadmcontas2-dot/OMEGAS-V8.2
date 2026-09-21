@@ -45,24 +45,8 @@ jobs:
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
           disable-animations: true
-          script: |
-            set -euo pipefail
-            chmod +x gradlew
-            ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
-            adb shell wm size 1280x720
-            adb shell wm density 160
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            mkdir -p historical-levels-evidence
-            adb shell am instrument -w -r \
-              -e class 'com.omegas.prohub.DashboardLevelsRenderTest#historicalPreLevelsDashboardOmitsRawLevels' \
-              com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner \
-              > historical-levels-evidence/instrumentation.txt 2>&1
-            cat historical-levels-evidence/instrumentation.txt
-            grep -q 'OK (1 test)' historical-levels-evidence/instrumentation.txt
-            ! grep -q 'FAILURES!!!' historical-levels-evidence/instrumentation.txt
-            adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. historical-levels-evidence/ || true
-            adb exec-out screencap -p > historical-levels-evidence/post.png || true
+          script: bash tools/ci/run_historical_levels_red.sh
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
