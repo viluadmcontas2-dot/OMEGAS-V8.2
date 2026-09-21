@@ -1221,7 +1221,7 @@
         return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
           '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
           '" role="listitem" aria-pressed="false" aria-label="Região ' + (band.index + 1) + ' de 18, ' + stateLabel +
-          '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'zona ok' : stateLabel) + '</small></button>';
+          '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'flag ativa' : stateLabel) + '</small></button>';
       }).join('');
       const preferred = Number.isInteger(this.selectedBandIndex)
         ? this.selectedBandIndex
