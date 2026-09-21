@@ -26,7 +26,6 @@ class NativeAutoCalMaturityTrackerTest {
 
         assertEquals(1, first.size)
         assertEquals(3, first.single().bandIndex)
-        assertEquals(0, first.single().zone)
         assertEquals(0, first.single().previousCounter)
         assertEquals(5, first.single().counter)
         assertEquals(5, first.single().threshold)
@@ -36,7 +35,7 @@ class NativeAutoCalMaturityTrackerTest {
     }
 
     @Test
-    fun `normal band uses normal threshold and reports its zone`() {
+    fun `normal band uses normal threshold without inventing MAP zone`() {
         val tracker = NativeAutoCalMaturityTracker()
         tracker.observe(IntArray(18), 5, 10, enabled = true, observedAtElapsedMs = 1_000L)
         val counters = IntArray(18).also { it[12] = 10 }
@@ -45,7 +44,6 @@ class NativeAutoCalMaturityTrackerTest {
 
         assertEquals(1, events.size)
         assertEquals(12, events.single().bandIndex)
-        assertEquals(2, events.single().zone)
         assertEquals(10, events.single().threshold)
     }
 
