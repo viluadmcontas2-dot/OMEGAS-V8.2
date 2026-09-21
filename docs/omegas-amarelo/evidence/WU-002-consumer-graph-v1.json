@@ -422,6 +422,22 @@
       "refresh": "PostActionRefresh:0x5162F8",
       "exact_ecu_physical_effect": "UNKNOWN",
       "status": "PROVEN_STATIC_NOT_RAW_WRITE_OBSERVED"
+    },
+    "enable_automatch_coupling": {
+      "control": "CheckAutoCalEnable",
+      "value_binding": "AutoCalDM.AUTO_CAL_ENABLE",
+      "wire_enable": "12 4A 01 01 5E",
+      "wire_disable": "12 4A 01 00 5D",
+      "lognovo_enable_writes": 4,
+      "lognovo_disable_writes": 4,
+      "separate_manual_automatch_action": {
+        "handler": "ActionAutoMatchExecute",
+        "action_code": 8,
+        "lognovo_writes": 0
+      },
+      "product_contract": "single AutoCAL mode control; no second automatic-AutoMatch enable writer",
+      "internal_ecu_automatch_trigger": "UNKNOWN",
+      "status": "PROVEN_HOST_CONTROL_SUPPORTED_FIRMWARE_BEHAVIOR"
     }
   },
   "unknowns": [
