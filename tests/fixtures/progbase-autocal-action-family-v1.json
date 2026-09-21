@@ -1,0 +1,54 @@
+{
+  "schema": "omegas.amarelo.progbase-action-family.v1",
+  "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "binary": {
+    "handlers": {
+      "AUTO_MATCH": {
+        "va": "0x005189B4",
+        "action_code": 8
+      },
+      "RESET_PETROL": {
+        "va": "0x005189C0",
+        "action_code": 1
+      },
+      "RESET_GAS": {
+        "va": "0x005189CC",
+        "action_code": 2
+      },
+      "RESET_ALL": {
+        "va": "0x005189D8",
+        "action_code": 4
+      }
+    },
+    "shared_dispatcher": "0x00517568",
+    "native_bridge": "0x00512280",
+    "transport": "0x009244C8",
+    "header_serializer": "0x00922FD0",
+    "append_byte": "0x00922C1C",
+    "finalize": "0x00923608",
+    "frame_rule": "LE16((0x24<<8)|2) + [0x04, action_code] + additive_checksum"
+  },
+  "frames": {
+    "RESET_PETROL": {
+      "frame": "02 24 04 01 2B",
+      "status": "BINARY_PROVEN_WIRE_UNOBSERVED"
+    },
+    "RESET_GAS": {
+      "frame": "02 24 04 02 2C",
+      "status": "BINARY_PROVEN_WIRE_UNOBSERVED"
+    },
+    "RESET_ALL": {
+      "frame": "02 24 04 04 2E",
+      "status": "BINARY_PROVEN_AND_RAW_OBSERVED",
+      "raw_sources": [
+        "PortmonAUTOCAL (1).LOG",
+        "PortmonLOGNOVO.LOG"
+      ]
+    },
+    "AUTO_MATCH": {
+      "frame": "02 24 04 08 32",
+      "status": "BINARY_PROVEN_WIRE_UNOBSERVED"
+    }
+  },
+  "safety": "Static proof is not permission to transmit unobserved action frames to a physical ECU."
+}
