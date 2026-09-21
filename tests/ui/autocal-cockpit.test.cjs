@@ -57,9 +57,9 @@ assert.equal(provider.includes('addJavascriptInterface'), true);
 console.log('AUTOCAL_COCKPIT_CONTRACT=PASS');
 
 
-assert.match(cockpit, /type="checkbox" data-autocal-toggle/);
-assert.match(cockpit, /Auto Calibration/);
-assert.match(cockpit, /AutoCAL \+ AutoMatch automático da ECU/);
-assert.match(cockpit, /Desativar a Auto Calibration também desativa o AutoMatch automático da ECU/);
-assert.equal(cockpit.includes('Pausar aquisição'), false);
-assert.equal(cockpit.includes('Iniciar aquisição'), false);
+
+assert.match(cockpit, /Ativar Auto Calibration/);
+assert.match(cockpit, /Desativar Auto Calibration/);
+assert.equal(cockpit.includes('type="checkbox" data-autocal-toggle'), false);
+assert.equal(cockpit.includes('window.confirm('), false);
+assert.equal(cockpit.includes('Deseja continuar?'), false);
