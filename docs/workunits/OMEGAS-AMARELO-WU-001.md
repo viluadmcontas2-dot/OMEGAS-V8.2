@@ -35,7 +35,7 @@ Antes de começar: atualizar #80 com HEAD e delta.
 - Research Farm authoritative run: `35642442355` — SUCCESS, 160/160 receipts, BROKEN=0.
 - Enable Auto Calibration (0x014A) já possui contrato byte-exato comprovado.
 - Ação 4 / Reset All possui frame observado nos dois Portmon.
-- Fechamento continua bloqueado pelos códigos 1/2/8, semântica completa start/finish/reset e separação host-write vs ECU-mutation nos estados ainda UNKNOWN.
+- Fechamento não depende mais de inventar um `start` separado: `AUTO_CAL_ENABLE` é o controle host nativo do modo. Restam principalmente efeito físico exato do Finish, atribuição completa host-write vs ECU-mutation e unknowns de firmware ainda não observáveis nos raws.
 
 
 ## Gate action-wire — 2026-09-21
@@ -65,9 +65,21 @@ Evidence:
 - result: **SUCCESS**
 
 ### Remaining closure blockers
-- exact Finish semantics / `0x0165` subindex responsibility;
-- complete native state transitions, including acquire-petrol-line and draw-gas-petrol-curve;
-- acquired-zone bit/byte semantics;
-- complete host-write vs ECU-mutation attribution.
+- exact ECU-side physical effect of Finish after the statically proven 0x0165 commit path;
+- any ECU/physical state machine distinct from the already-proven refresh scheduler;
+- exact physical labels/order of acquired-zone indices 0..3;
+- complete host-write vs ECU-mutation attribution for remaining native mutations.
+
+### Enable / automatic AutoMatch coupling — 2026-09-21
+- ProgBase resource binds `CheckAutoCalEnable` directly to `AutoCalDM.AUTO_CAL_ENABLE` — PROVEN_RESOURCE.
+- Manual AutoMatch is a separate `ActionAutoMatchExecute` action with code 8 — PROVEN_RESOURCE_STATIC.
+- LOGNOVO raw contains 4 enable writes `12 4A 01 01 5E` and 4 disable writes `12 4A 01 00 5D`.
+- LOGNOVO contains zero `02 24 04 08` manual-AutoMatch writes.
+- Therefore the normal host model is one AutoCAL mode control; do not introduce a second AutoMatch-enable writer.
+- Exact internal ECU mechanism that schedules automatic AutoMatch remains firmware-internal; current evidence supports it but does not byte-level prove the internal trigger.
+
+Evidence:
+- `tests/fixtures/amarelo-autocal-enable-automatch-coupling-v1.json`;
+- `tests/test_amarelo_autocal_enable_automatch_coupling.py`.
 
 WU-002 research is unblocked; product implementation remains blocked until WU-001/WU-002 closure.
