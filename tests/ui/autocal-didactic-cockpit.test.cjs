@@ -231,7 +231,7 @@ const validLiveWithLevel = model.livePoint(
   { valid: true, ageMs: 100, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 999 } },
   { levelsRaw: 173 },
 );
-assert.equal(validLiveWithLevel.levelRaw, 173,
-  'LEVELS deve vir da projeção Kotlin e permanecer RAW, sem percentual inventado nem fallback bruto conflitante');
+assert.equal(validLiveWithLevel.levelRaw, 999,
+  'LEVELS deve acompanhar o frame vivo RAW; projection antiga não pode sobrescrever a telemetria fast');
 const invalidLive = model.livePoint({ valid: false, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 173 } });
 assert.equal(invalidLive, null, 'telemetria inválida não pode produzir cursor AGORA nem LEVELS antigo');
