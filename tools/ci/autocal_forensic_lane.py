@@ -188,7 +188,7 @@ def meta_oracle_source_semantics():
         "levels_raw": ("u8", 13),
         "gas_pressure_raw": ("u16le", 14),
         "gas_temperature_raw": ("u8", 16),
-        "map_raw": ("u16le", 17),
+        "map_raw": ("s16le", 17),
         "gas_injection_bank2_raw": ("u16le", 24),
         "petrol_injection_bank2_raw": ("u16le", 28),
     }
