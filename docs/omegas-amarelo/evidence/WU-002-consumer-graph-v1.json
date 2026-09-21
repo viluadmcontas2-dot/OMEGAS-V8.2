@@ -538,6 +538,55 @@
       "exact_update_formula": "UNKNOWN",
       "product_contract": "do not synthesize or overwrite native point buffers",
       "status": "PROVEN_FOR_SUPPLIED_CAPTURES"
+    },
+    "point_update_dynamics": {
+      "observed_index": 6,
+      "same_observed_counter_multiple_point_values": [
+        {
+          "counter": 9,
+          "values": [
+            [
+              3721,
+              541
+            ],
+            [
+              3704,
+              538
+            ]
+          ]
+        },
+        {
+          "counter": 10,
+          "values": [
+            [
+              3704,
+              538
+            ],
+            [
+              3640,
+              538
+            ]
+          ]
+        },
+        {
+          "counter": 2,
+          "values": [
+            [
+              2890,
+              546
+            ],
+            [
+              2805,
+              538
+            ]
+          ]
+        }
+      ],
+      "inference_boundary": "counter and point vectors are separate transactions; same observed counter does not prove exact same ECU instant",
+      "conclusion": "NUM_BUF_UPD alone cannot reconstruct native point update formula",
+      "exact_firmware_formula": "UNKNOWN",
+      "product_contract": "consume ECU point buffer; do not emulate averaging from counter alone",
+      "status": "PROVEN_BOUNDARY"
     }
   },
   "unknowns": [
