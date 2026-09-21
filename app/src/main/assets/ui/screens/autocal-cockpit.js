@@ -33,13 +33,6 @@
     return Array.isArray(item?.physicalValues) ? item.physicalValues.map(value => finite(value)) : [];
   }
 
-  function zoneForBand(index) {
-    if (index <= 5) return 0;
-    if (index <= 9) return 1;
-    if (index <= 13) return 2;
-    return 3;
-  }
-
   function nativeZoneFlags(snapshot, key) {
     const values = vector(snapshot, key).slice(0, 4);
     return Array.from({ length: 4 }, (_, index) => (finite(values[index]) ?? 0) > 0);
@@ -317,8 +310,10 @@
 
     bandStrip(snapshot = {}, projection = {}) {
       const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
-      const rawZones = vector(snapshot, 'ACQUIRED_ZONES_GAS');
-      const projectedZones = projectedZoneFlags(projection, 'gas');
+      const instrument = projection?.instrument || {};
+      const regions = this.instrumentZoneRegions(instrument);
+      const currentPoints = this.instrumentAcquisitionPoints(instrument, 'gasCurrent');
+      const pointsByIndex = new Map(currentPoints.map(point => [Number(point.index), point]));
       const events = Array.isArray(projection?.correlation)
         ? projection.correlation
         : Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
@@ -334,16 +329,24 @@
         : []);
       return Array.from({ length: 18 }, (_, index) => {
         const counter = finite(counters[index]) ?? 0;
-        const zone = zoneForBand(index);
+        const point = pointsByIndex.get(index) || null;
+        const mapBar = finite(point?.mapBar);
+        const region = counter > 0 && mapBar !== null
+          ? regions.find((candidate, candidateIndex) =>
+              mapBar >= candidate.lowMapBar &&
+              (candidateIndex === regions.length - 1 ? mapBar <= candidate.highMapBar : mapBar < candidate.highMapBar)
+            ) || null
+          : null;
         const event = byBand.get(index) || null;
         const correlated = correlatedBands.has(index) || String(event?.correlationState || '') === 'CORRELATED';
         const retryable = retryableBands.has(index);
         const stateName = correlated ? 'anchored' : (event || retryable) ? 'mature' : counter > 0 ? 'activity' : 'empty';
         return {
           index,
-          zone,
+          zone: region ? region.index : null,
+          mapBar,
           counter,
-          zoneAcquired: projectedZones ? projectedZones[zone] === true : (finite(rawZones[zone]) ?? 0) > 0,
+          zoneAcquired: region ? region.gasAcquired : false,
           state: stateName,
           event,
         };
