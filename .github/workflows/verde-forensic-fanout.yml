@@ -111,8 +111,8 @@ jobs:
               f.write("| Lane | Status | Finding |\n|---|---|---|\n")
               for r in rows:
                   f.write(f"| `{r.get('lane')}` | **{r.get('status')}** | {str(r.get('summary','')).replace('|','/')} |\n")
-          if len(rows) != 252:
-              raise SystemExit(f"expected 252 receipts, got {len(rows)}")
+          if len(rows) != 256:
+              raise SystemExit(f"expected 256 receipts, got {len(rows)}")
           if counts["BROKEN"]:
               raise SystemExit("forensic worker/harness broken")
           PY
