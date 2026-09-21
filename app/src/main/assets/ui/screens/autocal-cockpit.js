@@ -151,7 +151,7 @@
       return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped, documentsMirror, mirrorFailed };
     },
 
-    livePoint(telemetry = {}, projection = {}) {
+    livePoint(telemetry = {}) {
       const source = telemetry || {};
       const ageMs = finite(source.telemetryAgeMs ?? source.ageMs);
       if (source.valid !== true || ageMs === null || ageMs < 0 || ageMs > AUTO_CAL_LIVE_STALE_MS) return null;
@@ -159,9 +159,8 @@
       const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
       const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
       const rpm = finite(live.rpm);
-      const levelRaw = finite(projection?.levelsRaw);
       if (petrolMs === null || mapBar === null) return null;
-      return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
+      return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
     },
 
     instrumentLive(instrument = {}) {
@@ -484,7 +483,6 @@
                 <div class="autocal-live-metric"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
                 <div class="autocal-live-metric"><small>PETROL INJ.</small><b><span id="autocalLivePetrol">—</span> ms</b></div>
                 <div class="autocal-live-metric"><small>MAP</small><b><span id="autocalLiveMap">—</span> bar</b></div>
-                <div class="autocal-live-metric"><small>LEVELS RAW</small><b id="autocalLiveLevel">—</b></div>
                 <p id="autocalLiveNarrative" class="autocal-live-narrative">O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
               </div>
               <div class="autocal-chart-workspace">
@@ -872,7 +870,7 @@
 
     renderLiveNarrative() {
       const telemetry = this.store.get().telemetry || {};
-      const live = AutoCalUxModel.livePoint(telemetry, this.projection);
+      const live = AutoCalUxModel.livePoint(telemetry);
       if (!live) {
         const ageMs = finite(telemetry.telemetryAgeMs ?? telemetry.ageMs);
         const stale = telemetry.valid === true && ageMs !== null && ageMs > AUTO_CAL_LIVE_STALE_MS;
@@ -881,7 +879,6 @@
         this.text('autocalLiveRpm', '—');
         this.text('autocalLivePetrol', '—');
         this.text('autocalLiveMap', '—');
-        this.text('autocalLiveLevel', '—');
         this.text('autocalLiveNarrative', stale
           ? 'O último frame já passou de 2,5 s. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
           : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
@@ -893,7 +890,6 @@
       this.text('autocalLiveRpm', live.rpm === null ? '—' : Math.round(live.rpm).toLocaleString('pt-BR'));
       this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }));
-      this.text('autocalLiveLevel', live.levelRaw === null ? '—' : String(Math.round(live.levelRaw)));
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
         ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
