@@ -55,30 +55,7 @@ jobs:
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
           disable-animations: true
-          script: |
-            set -u
-            chmod +x gradlew
-            ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace || exit 2
-            adb shell wm size 1280x720
-            adb shell wm density 160
-            adb install -r app/build/outputs/apk/debug/app-debug.apk || exit 2
-            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || exit 2
-            adb shell pm grant com.omegas.v7.test android.permission.POST_NOTIFICATIONS || true
-            adb shell dumpsys deviceidle whitelist +com.omegas.v7.test || true
-            mkdir -p rendered-evidence
-            overall=0
-            for entry in "dashboard-fresh:dashboardFreshLevelsRaw" "dashboard-invalid:dashboardInvalidLevelsPlaceholder" "autocal-fresh-control:autocalFreshLevelsControl"
-            do
-              scenario="${entry%%:*}"
-              method="${entry##*:}"
-              adb shell am instrument -w -r -e class "com.omegas.prohub.DashboardLevelsRenderTest#${method}" com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner > "rendered-evidence/${scenario}-instrumentation.txt" 2>&1
-              rc=$?
-              cat "rendered-evidence/${scenario}-instrumentation.txt"
-              adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
-              adb exec-out screencap -p > "rendered-evidence/${scenario}-post.png" || true
-              if [ "$rc" -ne 0 ]; then overall=1; fi
-            done
-            exit "$overall"
+          script: bash tools/ci/run_android_render_evidence.sh
 
       - name: Upload rendered evidence
         if: always()

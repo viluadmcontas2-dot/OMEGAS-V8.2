@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -u
+chmod +x gradlew
+./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace || exit 2
+
+adb shell wm size 1280x720 || exit 2
+adb shell wm density 160 || exit 2
+adb install -r app/build/outputs/apk/debug/app-debug.apk || exit 2
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || exit 2
+adb shell pm grant com.omegas.v7.test android.permission.POST_NOTIFICATIONS || true
+adb shell dumpsys deviceidle whitelist +com.omegas.v7.test || true
+
+mkdir -p rendered-evidence
+overall=0
+
+run_case() {
+  local scenario="$1"
+  local method="$2"
+  set +e
+  adb shell am instrument -w -r \
+    -e class "com.omegas.prohub.DashboardLevelsRenderTest#${method}" \
+    com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner \
+    > "rendered-evidence/${scenario}-instrumentation.txt" 2>&1
+  local rc=$?
+  set -e
+  cat "rendered-evidence/${scenario}-instrumentation.txt"
+  adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
+  adb exec-out screencap -p > "rendered-evidence/${scenario}-post.png" || true
+  if [ "$rc" -ne 0 ]; then overall=1; fi
+}
+
+set -e
+run_case "dashboard-fresh" "dashboardFreshLevelsRaw"
+run_case "dashboard-invalid" "dashboardInvalidLevelsPlaceholder"
+run_case "autocal-fresh-control" "autocalFreshLevelsControl"
+exit "$overall"
