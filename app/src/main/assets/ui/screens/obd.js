@@ -134,19 +134,27 @@
       if (!this.root) return;
       const obd = state.obd || {};
       const hub = state.status || {};
+      const telemetryRoot = state.telemetry || {};
+      const telemetry = telemetryRoot.live || telemetryRoot.data || telemetryRoot;
+      const telemetryValid = telemetryRoot.valid === true;
       const connected = obd.connected === true || ['CONNECTED', 'CONECTADO', 'REMOTO AO VIVO'].includes(String(obd.state || obd.status || '').toUpperCase());
       const connecting = String(obd.state || '').toUpperCase() === 'CONECTANDO';
-      const stft = finite(first(obd, ['stft', 'shortTermFuelTrim', 'short_term_fuel_trim']));
-      const ltft = finite(first(obd, ['ltft', 'longTermFuelTrim', 'long_term_fuel_trim']));
-      const obdRpm = finite(first(obd, ['rpm', 'engineRpm', 'engine_rpm']));
-      const map = finite(first(obd, ['mapKpa', 'map', 'mapBar', 'map_bar', 'manifoldPressure']));
-      const load = finite(first(obd, ['load', 'engineLoad', 'calculatedLoad', 'calculated_load']));
-      const pedal = finite(first(obd, ['pedal', 'acceleratorPedal', 'accelerator_pedal', 'throttle']));
-      const maf = finite(first(obd, ['mafGps', 'maf', 'massAirFlow']));
-      const coolant = finite(first(obd, ['coolant', 'coolantC', 'waterC']));
-      const voltage = finite(first(obd, ['moduleVoltageV', 'controlModuleVoltage', 'voltage']));
-      const petrolMs = finite(hub.petrolMs);
-      const rpm = finite(hub.rpm) ?? obdRpm;
+      const stft = connected ? finite(first(obd, ['stft', 'shortTermFuelTrim', 'short_term_fuel_trim'])) : null;
+      const ltft = connected ? finite(first(obd, ['ltft', 'longTermFuelTrim', 'long_term_fuel_trim'])) : null;
+      const obdRpm = connected ? finite(first(obd, ['rpm', 'engineRpm', 'engine_rpm'])) : null;
+      const map = connected ? finite(first(obd, ['mapKpa', 'map', 'mapBar', 'map_bar', 'manifoldPressure'])) : null;
+      const load = connected ? finite(first(obd, ['load', 'engineLoad', 'calculatedLoad', 'calculated_load'])) : null;
+      const pedal = connected ? finite(first(obd, ['pedal', 'acceleratorPedal', 'accelerator_pedal', 'throttle'])) : null;
+      const maf = connected ? finite(first(obd, ['mafGps', 'maf', 'massAirFlow'])) : null;
+      const coolant = connected ? finite(first(obd, ['coolant', 'coolantC', 'waterC'])) : null;
+      const voltage = connected ? finite(first(obd, ['moduleVoltageV', 'controlModuleVoltage', 'voltage'])) : null;
+      const petrolMs = telemetryValid
+        ? finite(first(telemetry, ['petrol_ms', 'petrolMs'])) ?? finite(hub.petrolMs)
+        : null;
+      const mp48Rpm = telemetryValid
+        ? finite(first(telemetry, ['rpm'])) ?? finite(hub.rpm)
+        : null;
+      const rpm = mp48Rpm ?? obdRpm;
       const updatedAt = finite(first(obd, ['updatedAt', 'lastUpdatedAt']));
       const explicitAge = finite(first(obd, ['ageMs', 'telemetryAgeMs', 'lastAgeMs']));
       const age = explicitAge !== null ? explicitAge : updatedAt !== null ? Math.max(0, Date.now() - updatedAt) : null;
