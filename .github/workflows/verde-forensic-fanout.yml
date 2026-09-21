@@ -6,8 +6,9 @@ on:
     branches: [OmegasVerde]
     paths:
       - '.github/workflows/verde-forensic-fanout.yml'
+      - 'tools/ci/autocal_forensic_plan.py'
       - 'tools/ci/autocal_forensic_lane.py'
-      - 'tests/fixtures/autocal-forensic-lanes-v1.json'
+      - 'tests/fixtures/autocal-forensic-plan-v2.json'
       - 'tests/fixtures/progbase-autocal-consumer-map-v1.json'
       - 'tests/fixtures/portmon-autocal-cycle-v1.json'
       - 'app/src/main/java/com/omegas/prohub/autocal/**'
@@ -17,7 +18,9 @@ on:
       - 'app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt'
       - 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'
       - 'app/src/main/assets/ui/screens/autocal-cockpit.js'
+      - 'app/src/main/assets/ui/screens/dashboard.js'
       - 'app/src/main/assets/ui/core/**'
+      - 'app/src/test/java/com/omegas/prohub/ecu/PortmonSameEcuParityTest.kt'
       - 'tests/ui/autocal-*.test.cjs'
       - 'tests/test_autocal*.py'
 
@@ -34,30 +37,27 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: matrix
         shell: bash
         run: |
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          cfg=json.load(open("tests/fixtures/autocal-forensic-lanes-v1.json",encoding="utf-8"))
-          print("matrix="+json.dumps({"include":cfg["lanes"]},separators=(",",":")))
-          PY
+          set -euo pipefail
+          echo "matrix=$(python3 tools/ci/autocal_forensic_plan.py)" >> "$GITHUB_OUTPUT"
 
   forensic:
     needs: plan
     strategy:
       fail-fast: false
-      max-parallel: 20
+      max-parallel: 40
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Java for JVM lanes
         if: ${{ matrix.kind == 'jvm' }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -70,6 +70,7 @@ jobs:
         run: |
           python3 tools/ci/autocal_forensic_lane.py \
             --lane "${{ matrix.id }}" \
+            --sequence "${{ matrix.sequence }}" \
             --receipt "forensic-receipts/${{ matrix.id }}.json"
 
       - name: Upload lane receipt
@@ -78,7 +79,8 @@ jobs:
         with:
           name: forensic-${{ matrix.id }}
           path: forensic-receipts/${{ matrix.id }}.json
-          retention-days: 5
+          retention-days: 3
+          compression-level: 0
           if-no-files-found: error
 
   aggregate:
@@ -95,21 +97,24 @@ jobs:
       - name: Aggregate receipts
         shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
-          import json, pathlib, collections, os
+          import collections, json, os, pathlib
           root=pathlib.Path("forensic-receipts")
           rows=[json.loads(p.read_text(encoding="utf-8")) for p in sorted(root.glob("*.json"))]
           counts=collections.Counter(r.get("status","MISSING") for r in rows)
           summary={"count":len(rows),"statuses":dict(counts),"receipts":rows}
           pathlib.Path("forensic-summary.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
-              f.write("# OMEGAS AutoCal forensic fan-out\n\n")
+              f.write("# OMEGAS forensic fan-out v2\n\n")
               f.write(f"Receipts: **{len(rows)}** · PASS **{counts['PASS']}** · RED **{counts['RED']}** · INFO **{counts['INFO']}** · BROKEN **{counts['BROKEN']}**\n\n")
               f.write("| Lane | Status | Finding |\n|---|---|---|\n")
               for r in rows:
-                  f.write(f"| \`{r.get('lane')}\` | **{r.get('status')}** | {str(r.get('summary','')).replace('|','/')} |\n")
+                  f.write(f"| `{r.get('lane')}` | **{r.get('status')}** | {str(r.get('summary','')).replace('|','/')} |\n")
+          if len(rows) != 252:
+              raise SystemExit(f"expected 252 receipts, got {len(rows)}")
           if counts["BROKEN"]:
-              raise SystemExit("forensic lane infrastructure broken")
+              raise SystemExit("forensic worker/harness broken")
           PY
 
       - name: Upload aggregate

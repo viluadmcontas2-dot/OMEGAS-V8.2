@@ -1,0 +1,61 @@
+{
+  "schema": "omegas.autocal.forensic-plan.v2",
+  "max_parallel": 40,
+  "matrix_target": 252,
+  "policy": {
+    "mode": "read-only-analysis",
+    "matrix_cap": 256,
+    "transaction_lane_policy": "one captured Portmon transaction per lane",
+    "red_is_observation_not_infrastructure_failure": true,
+    "broken_is_worker_or_harness_failure": true,
+    "source_of_truth": "GitHub remote + committed ProgBase/Portmon evidence",
+    "original_exe_policy": "Binary-only questions remain MMMACHINE-only; GitHub consumes provenance-linked distilled oracles."
+  },
+  "meta_lanes": [
+    {
+      "id": "meta_same_ecu_jvm",
+      "kind": "jvm",
+      "category": "same-ecu"
+    },
+    {
+      "id": "meta_autocal_jvm",
+      "kind": "jvm",
+      "category": "jvm"
+    },
+    {
+      "id": "meta_ui_autocal",
+      "kind": "node",
+      "category": "ui"
+    },
+    {
+      "id": "meta_architecture_bundle",
+      "kind": "python",
+      "category": "architecture"
+    },
+    {
+      "id": "meta_oracle_source_semantics",
+      "kind": "python",
+      "category": "oracle"
+    },
+    {
+      "id": "meta_levels_global",
+      "kind": "python",
+      "category": "science"
+    },
+    {
+      "id": "meta_session_write_safety",
+      "kind": "python",
+      "category": "safety"
+    },
+    {
+      "id": "meta_mutation_negative_bundle",
+      "kind": "python",
+      "category": "mutation"
+    },
+    {
+      "id": "meta_forensic_selftest",
+      "kind": "python",
+      "category": "harness"
+    }
+  ]
+}

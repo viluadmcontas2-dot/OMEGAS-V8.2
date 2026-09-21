@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PORTMON = ROOT / "tests/fixtures/portmon-autocal-cycle-v1.json"
 ORACLE = ROOT / "tests/fixtures/progbase-autocal-consumer-map-v1.json"
-PARITY = ROOT / "tests/fixtures/omegas-autocal-progbase-parity-v1.json"
+PLAN = ROOT / "tests/fixtures/autocal-forensic-plan-v2.json"
 
 def load(path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -20,281 +20,319 @@ def load(path):
 def text(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
-def median_gap(items):
-    return statistics.median(b["at_ms"] - a["at_ms"] for a,b in zip(items, items[1:]))
+def hx(value):
+    return bytes.fromhex(value)
 
-def tx_by_request():
-    data=load(PORTMON)
-    out={}
-    for item in data["transactions"]:
-        out.setdefault(item["request"],[]).append(item)
-    return data,out
+def checksum_request(frame):
+    return bool(frame) and (sum(frame[:-1]) & 0xFF) == frame[-1]
 
-def receipt(status, summary, evidence=None, metrics=None):
-    return {
-        "status": status,
-        "summary": summary,
-        "evidence": evidence or [],
-        "metrics": metrics or {},
-    }
+def checksum_response(response, request_len):
+    return len(response) >= request_len + 3 and (sum(response[request_len:-1]) & 0xFF) == response[-1]
+
+def response_parts(tx):
+    req = hx(tx["request"])
+    res = hx(tx["response"])
+    if len(res) < len(req) + 3:
+        raise ValueError("response shorter than echo+status+length+checksum")
+    status = res[len(req)]
+    declared = res[len(req)+1]
+    payload = res[len(req)+2:-1]
+    return req, res, status, declared, payload
+
+def u8(payload, offset):
+    return payload[offset]
+
+def u16le(payload, offset):
+    return payload[offset] | (payload[offset+1] << 8)
+
+def s16le(payload, offset):
+    value = u16le(payload, offset)
+    return value - 65536 if value >= 32768 else value
 
 def command(cmd):
-    p=subprocess.run(cmd,cwd=ROOT,text=True,capture_output=True)
-    tail=(p.stdout+"\n"+p.stderr)[-10000:]
-    return p.returncode,tail
+    p = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True)
+    return p.returncode, (p.stdout + "\n" + p.stderr)[-16000:]
 
-def source_contains(path,*needles):
-    s=text(path)
-    missing=[x for x in needles if x not in s]
-    return s,missing
+def receipt(status, summary, evidence=None, metrics=None):
+    return {"status": status, "summary": summary, "evidence": evidence or [], "metrics": metrics or {}}
 
-def lane(name):
-    pm,by=tx_by_request()
-    oracle=load(ORACLE)
-    protocol=text("app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt")
-    mp48=text("app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt")
-    monitor=text("app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt")
-    engine=text("app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt")
-    cockpit=text("app/src/main/assets/ui/screens/autocal-cockpit.js")
+def oracle_request_map(oracle):
+    return {row.get("request"): row for row in oracle.get("autocal_dm", []) if row.get("request")}
 
-    if name=="provenance_progbase_oracle":
-        got=oracle["source"]["progbase"]["sha256"]
-        ok=got=="8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4"
-        return receipt("PASS" if ok else "BROKEN","ProgBase oracle SHA pinned",[got])
+def tx_lane(sequence):
+    pm = load(PORTMON)
+    oracle = load(ORACLE)
+    tx = next((t for t in pm["transactions"] if int(t["sequence"]) == sequence), None)
+    if tx is None:
+        return receipt("BROKEN", "transaction lane points to missing sequence", [sequence])
 
-    if name=="provenance_portmon_fixture":
-        ok=(oracle["source"]["portmon"]["source_raw_sha256"]==pm["sourceRawSha256"] and oracle["source"]["portmon"]["source_zip_sha256"]==pm["sourceZipSha256"])
-        return receipt("PASS" if ok else "BROKEN","Portmon provenance hashes cross-check",[
-            pm["sourceRawSha256"],pm["sourceZipSha256"]])
+    req, res, status, declared, payload = response_parts(tx)
+    violations = []
+    if not checksum_request(req):
+        violations.append("request checksum")
+    if res[:len(req)] != req:
+        violations.append("request echo")
+    if status not in (0x53, 0xCA):
+        violations.append(f"unexpected status 0x{status:02X}")
+    if declared != len(payload):
+        violations.append(f"declared payload={declared} actual={len(payload)}")
+    if not checksum_response(res, len(req)):
+        violations.append("response checksum from status")
+    row = oracle_request_map(oracle).get(tx["request"])
+    if row and row.get("response_total_bytes") is not None and len(res) != int(row["response_total_bytes"]):
+        violations.append(f"oracle total bytes={row['response_total_bytes']} actual={len(res)}")
 
-    if name=="portmon_live_envelope":
-        rows=by["48 01 49"]; bad=[]
-        for t in rows:
-            raw=bytes.fromhex(t["response"])
-            if len(raw)!=40 or raw[:3]!=bytes.fromhex("48 01 49") or raw[3]!=0x53 or raw[4]!=0x22 or len(raw[5:-1])!=34:
-                bad.append(t["sequence"])
-        return receipt("PASS" if not bad else "BROKEN","Live 48 envelope/34-byte payload",bad,{"samples":len(rows)})
+    metrics = {
+        "sequence": sequence,
+        "at_ms": tx["at_ms"],
+        "request": tx["request"],
+        "response_bytes": len(res),
+        "status": f"0x{status:02X}",
+        "payload_bytes": len(payload),
+    }
 
-    if name=="portmon_request_checksums":
-        bad=[]
-        for t in pm["transactions"]:
-            req=bytes.fromhex(t["request"])
-            if len(req)>=2 and (sum(req[:-1])&0xff)!=req[-1]: bad.append(t["sequence"])
-        return receipt("PASS" if not bad else "BROKEN","All captured request checksums",bad,{"transactions":len(pm["transactions"])})
+    if tx["request"] == "48 01 49" and status == 0x53:
+        if len(payload) != 34:
+            violations.append(f"live payload bytes={len(payload)}")
+        else:
+            metrics["live"] = {
+                "rpm_raw": u16le(payload, 0),
+                "gas_injection_raw": u16le(payload, 6),
+                "petrol_injection_raw": u16le(payload, 8),
+                "fuel_state": u8(payload, 11),
+                "levels_raw": u8(payload, 13),
+                "gas_pressure_raw": u16le(payload, 14),
+                "gas_temperature_raw": u8(payload, 16),
+                "map_raw_signed": s16le(payload, 17),
+                "gas_bank2_raw": u16le(payload, 24),
+                "petrol_bank2_raw": u16le(payload, 28),
+            }
+    elif tx["request"] == "48 0B 53" and status == 0x53:
+        if len(payload) != 14:
+            violations.append(f"native status payload bytes={len(payload)}")
+        else:
+            metrics["native_status"] = {"flag13": payload[12], "automatch_count": payload[13]}
+    elif row:
+        if row.get("data_length") == 2 and len(payload) % 2:
+            violations.append("16-bit vector has odd payload length")
+        if row.get("data_mask") == 255 and row.get("class") == "TAebVector" and row.get("name","").startswith("ACQUIRED_ZONES") and len(payload) != 4:
+            violations.append("zone vector is not 4 bytes")
 
-    if name=="portmon_live_cadence":
-        rows=by["48 01 49"]; med=median_gap(rows)
-        return receipt("PASS" if 30<=med<=70 else "RED","Observed live telemetry cadence",metrics={"median_ms":med,"samples":len(rows)})
+    return receipt("RED" if violations else "PASS",
+                   "Captured Portmon transaction satisfies protocol/oracle envelope" if not violations else "Captured Portmon transaction has an evidence/protocol discrepancy",
+                   violations,
+                   metrics)
 
-    if name=="portmon_autocal_2s_cadence":
-        reqs=["29 5B 01 85","29 5C 01 86","29 5D 01 87","29 5E 01 88","29 5F 01 89","29 60 01 8A","29 61 01 8B","29 62 01 8C","29 63 01 8D","29 6F 01 99","29 70 01 9A"]
-        vals={q:median_gap(by[q]) for q in reqs}
-        ok=all(1500<=v<=2600 for v in vals.values())
-        return receipt("PASS" if ok else "RED","Observed ~2s AutoCal family",metrics=vals)
+def javascript_interface_bodies(source):
+    lines = source.splitlines()
+    bodies = []
+    i = 0
+    while i < len(lines):
+        if lines[i].strip() != "@JavascriptInterface":
+            i += 1
+            continue
+        start = i
+        i += 1
+        brace = 0
+        saw_fun = False
+        collected = []
+        while i < len(lines):
+            line = lines[i]
+            if i > start + 1 and line.strip() == "@JavascriptInterface" and brace <= 0:
+                break
+            collected.append(line)
+            if "fun " in line:
+                saw_fun = True
+            brace += line.count("{") - line.count("}")
+            if saw_fun and brace <= 0 and ("=" in "".join(collected) or "{" in "".join(collected)):
+                i += 1
+                break
+            i += 1
+        bodies.append("\n".join(collected))
+    return bodies
 
-    if name=="portmon_reference_4s_cadence":
-        vals={q:median_gap(by[q]) for q in ["29 8D 01 B7","29 8E 01 B8"]}
-        ok=all(3000<=v<=5000 for v in vals.values())
-        return receipt("PASS" if ok else "RED","Observed ~4s RV family",metrics=vals)
+def meta_architecture_bundle():
+    monitor = text("app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt")
+    service = text("app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt")
+    engine = text("app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt")
+    bridge = text("app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt")
+    failures = []
+    for forbidden in ("Executors.", "ScheduledExecutor", "Thread("):
+        if forbidden in monitor:
+            failures.append(f"monitor owns concurrency primitive: {forbidden}")
+    if "Mp48SerialScheduler" not in monitor:
+        failures.append("monitor missing shared serial scheduler")
+    if "scheduleWithFixedDelay(::autoCalTick" not in service:
+        failures.append("service does not own AutoCal cadence")
+    if "if (queued.telemetryAfter" not in engine or "pollTelemetry()" not in engine:
+        failures.append("telemetry-after-secondary invariant missing")
+    exposed = javascript_interface_bodies(bridge)
+    direct = [body.splitlines()[0:4] for body in exposed if "serial.transaction(" in body or "Mp48WorkClass" in body]
+    if direct:
+        failures.append("JavascriptInterface directly owns serial work")
+    return receipt("RED" if failures else "PASS",
+                   "Architecture keeps serial ownership below exposed JS methods",
+                   failures,
+                   {"javascript_interfaces": len(exposed)})
 
-    if name=="portmon_live_interleave":
-        slow={row.get("request") for row in oracle["autocal_dm"] if row.get("request")}
-        tx=pm["transactions"]; hits=0; total=0
-        for i,t in enumerate(tx):
-            if t["request"] not in slow: continue
-            total+=1
-            lo=max(0,i-6); hi=min(len(tx),i+7)
-            if any(x["request"]=="48 01 49" for x in tx[lo:hi]): hits+=1
-        ratio=hits/max(total,1)
-        return receipt("PASS" if ratio>=0.9 else "RED","Telemetry interleaved around secondary AutoCal reads",metrics={"covered":hits,"total":total,"ratio":ratio})
+def meta_oracle_source_semantics():
+    oracle = load(ORACLE)
+    mp48 = text("app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt")
+    protocol = text("app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt")
+    mismatches = []
+    live_source = {
+        "rpm_raw": ("u16le", 0),
+        "gas_injection_raw": ("u16le", 6),
+        "petrol_injection_raw": ("u16le", 8),
+        "fuel_state": ("u8", 11),
+        "levels_raw": ("u8", 13),
+        "gas_pressure_raw": ("u16le", 14),
+        "gas_temperature_raw": ("u8", 16),
+        "map_raw": ("u16le", 17),
+        "gas_injection_bank2_raw": ("u16le", 24),
+        "petrol_injection_bank2_raw": ("u16le", 28),
+    }
+    for item in oracle["live_telemetry"]["payload_fields"]:
+        semantic = item["semantic"]
+        got = live_source.get(semantic)
+        expected = (item["encoding"], int(item["offset"]))
+        if got != expected:
+            mismatches.append(f"live {semantic}: oracle={expected} OMEGAS={got}")
+        if got and f"{got[0]}(payload, {got[1]})" not in mp48:
+            mismatches.append(f"live {semantic}: source expression absent")
+    for row in oracle["autocal_dm"]:
+        name = row["name"]
+        if name not in protocol:
+            mismatches.append(f"AutoCal field name missing: {name}")
+            continue
+        if row.get("signed") is True and name not in {"VECT_AUTOCAL_U8_0_1_2"}:
+            pattern = rf'val\s+{re.escape(name)}\s*=\s*Field\([^\n]+Encoding\.S16_LE'
+            if re.search(pattern, protocol) is None:
+                mismatches.append(f"AutoCal signed encoding mismatch: {name}")
+    return receipt("RED" if mismatches else "PASS",
+                   "OMEGAS source semantics match distilled ProgBase oracle",
+                   mismatches)
 
-    if name=="portmon_slow_ordering":
-        seq=[t["request"] for t in pm["transactions"] if t["request"]!="48 01 49"]
-        return receipt("INFO","Captured non-live order retained as forensic evidence",evidence=seq[:80],metrics={"non_live_transactions":len(seq)})
+def meta_levels_global():
+    mp48 = text("app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt")
+    scale = text("app/src/main/java/com/omegas/prohub/ecu/Mp48TelemetryScale.kt")
+    dash = text("app/src/main/assets/ui/screens/dashboard.js")
+    findings = []
+    if "fun levelPercentage" in scale and '.put("level_percentage", Mp48TelemetryScale.levelPercentage(levelRaw))' in mp48:
+        findings.append("backend still publishes uncalibrated level_percentage")
+    if not any(token in dash for token in ("LEVELS RAW", "level_raw", "levelRaw")):
+        findings.append("Dashboard/Agora still omits LEVELS RAW")
+    return receipt("RED" if findings else "PASS",
+                   "Global LEVELS semantics stay RAW-only and visible",
+                   findings)
 
-    if name=="shape_buffers_015b_0163":
-        reqs=["29 5B 01 85","29 5C 01 86","29 5D 01 87","29 5E 01 88","29 5F 01 89","29 60 01 8A","29 62 01 8C","29 63 01 8D"]
-        bad={q:sorted({len(bytes.fromhex(x["response"])) for x in by[q]}) for q in reqs}
-        ok=all(v==[43] for v in bad.values())
-        return receipt("PASS" if ok else "BROKEN","18x16-bit buffer envelope sizes",metrics=bad)
+def meta_session_write_safety():
+    monitor = text("app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt")
+    projection = text("app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt")
+    action = text("app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt")
+    failures = []
+    if "MANUAL_WRITE" in monitor or "protocolTransaction(" in monitor:
+        failures.append("monitor contains write path")
+    if 'appAutomaticWrite", false' not in monitor:
+        failures.append("automatic-write false identity missing")
+    for token in ("currentSession", "STALE_SESSION", "sessionId"):
+        if token not in projection:
+            failures.append(f"projection session guard missing: {token}")
+    for token in ("expectedEnableReadback", "requiresCriticalConfirmation"):
+        if token not in action:
+            failures.append(f"manual action safety missing: {token}")
+    return receipt("RED" if failures else "PASS", "Session and manual-write safety invariants", failures)
 
-    if name=="shape_zones_016f_0170":
-        vals={q:sorted({len(bytes.fromhex(x["response"])) for x in by[q]}) for q in ["29 6F 01 99","29 70 01 9A"]}
-        return receipt("PASS" if all(v==[11] for v in vals.values()) else "BROKEN","4-byte zone vector envelopes",metrics=vals)
+def meta_mutation_negative_bundle():
+    pm = load(PORTMON)
+    sample_live = next(t for t in pm["transactions"] if t["request"] == "48 01 49")
+    sample_vec = next(t for t in pm["transactions"] if t["request"] == "29 5B 01 85")
+    detected = []
+    req, res, status, declared, payload = response_parts(sample_live)
+    bad = bytearray(res); bad[-1] ^= 1
+    detected.append(not checksum_response(bytes(bad), len(req)))
+    detected.append(len(payload[:-1]) != 34)
+    req2, res2, status2, declared2, payload2 = response_parts(sample_vec)
+    detected.append(len(payload2[:-1]) % 2 == 1)
+    bad_echo = bytearray(res2); bad_echo[0] ^= 1
+    detected.append(bytes(bad_echo[:len(req2)]) != req2)
+    return receipt("PASS" if all(detected) else "BROKEN",
+                   "Harness detects checksum, truncation, shape and echo mutations",
+                   metrics={"detected": detected})
 
-    if name=="shape_reference_018d_018e":
-        vals={q:sorted({len(bytes.fromhex(x["response"])) for x in by[q]}) for q in ["29 8D 01 B7","29 8E 01 B8"]}
-        return receipt("PASS" if all(v==[67] for v in vals.values()) else "BROKEN","30x16-bit reference vector envelopes",metrics=vals)
+def meta_forensic_selftest():
+    rc, out = command(["python3", "tools/ci/autocal_forensic_plan.py"])
+    if rc != 0:
+        return receipt("BROKEN", "Forensic planner executes", [out])
+    matrix = json.loads(out)
+    lanes = matrix.get("include", [])
+    ids = [x["id"] for x in lanes]
+    tx = [x for x in lanes if x.get("category") == "transaction"]
+    ok = len(lanes) == 252 and len(tx) == 243 and len(ids) == len(set(ids)) and len(lanes) <= 256
+    return receipt("PASS" if ok else "BROKEN",
+                   "Forensic matrix is unique, complete and within GitHub cap",
+                   metrics={"lanes":len(lanes),"transaction_lanes":len(tx),"unique":len(set(ids))})
 
-    if name=="oracle_live_offsets":
-        f={x["semantic"]:x["offset"] for x in oracle["live_telemetry"]["payload_fields"]}
-        required={"petrol_injection_raw":8,"levels_raw":13,"map_raw":17}
-        ok=all(f.get(k)==v for k,v in required.items())
-        return receipt("PASS" if ok else "BROKEN","Original live payload offsets",metrics=f)
+def meta_same_ecu_jvm():
+    rc, out = command(["./gradlew","testDebugUnitTest","--tests","com.omegas.prohub.ecu.PortmonSameEcuParityTest","--stacktrace"])
+    return receipt("PASS" if rc == 0 else "RED", "Production Kotlin decoders consume the same committed ECU replay", [out])
 
-    if name=="oracle_runpoint":
-        rp=oracle["live_telemetry"]["runpoint"]
-        ok=rp["chart"]=="ChartData" and rp["caller_xref_va"]=="0x004A4BC9" and rp["helper_va"]=="0x005158F4"
-        return receipt("PASS" if ok else "BROKEN","RunPoint call graph oracle",metrics=rp)
+def meta_autocal_jvm():
+    cmd = ["./gradlew","testDebugUnitTest",
+           "--tests","com.omegas.prohub.autocal.AutoCalUiProjectionTest",
+           "--tests","com.omegas.prohub.autocal.NativeAutoCalRefreshPlannerTest",
+           "--tests","com.omegas.prohub.autocal.AutoCalAcquisitionTest",
+           "--stacktrace"]
+    rc, out = command(cmd)
+    return receipt("PASS" if rc == 0 else "RED", "Targeted AutoCal JVM state/projection tests", [out])
 
-    if name=="oracle_levels":
-        lv=oracle["levels"]
-        ok=lv["live_raw"]["offset"]==13 and lv["live_raw"]["conversion"]=="NONE" and lv["calibration"]["channel_index_hex"]=="0x0E"
-        return receipt("PASS" if ok else "BROKEN","LEVELS live RAW separated from learned references",metrics=lv)
+def meta_ui_autocal():
+    rc, out = command(["node","--test",
+                      "tests/ui/autocal-current-band-parity.test.cjs",
+                      "tests/ui/autocal-didactic-cockpit.test.cjs",
+                      "tests/ui/autocal-cockpit.test.cjs"])
+    return receipt("PASS" if rc == 0 else "RED", "Targeted AutoCal UI contracts", [out])
 
-    if name=="oracle_currentband":
-        cb=oracle["consumers"]["CurrentBand"]
-        ok="MNFLD_PRESS_THD" in cb["producer"] and "live RunPoint MAP" in cb["producer"]
-        return receipt("PASS" if ok else "BROKEN","CurrentBand uses live MAP + thresholds",metrics=cb)
-
-    if name=="oracle_curves":
-        p=oracle["consumers"]["PetrolCurve"]; g=oracle["consumers"]["GasCurve"]
-        ok=p["producer_x"]=="PETR_INJ_TBP" and p["producer_y"]=="PETR_MNFLD_PRESS_RV" and g["producer_y"]=="GAS_MNFLD_PRESS_RV"
-        return receipt("PASS" if ok else "BROKEN","Original curve producer identity",metrics={"petrol":p,"gas":g})
-
-    if name=="oracle_acquisition_zones":
-        acq=oracle["consumers"]["AcqusitionAreas"]
-        ok=all(x in acq["producer"] for x in ["ACQUIRED_ZONES_PETROL","ACQUIRED_ZONES_GAS","PETR_INJ_TBP","MNFLD_PRESS_THD"])
-        return receipt("PASS" if ok else "BROKEN","Original acquisition-area dependencies",metrics=acq)
-
-    if name=="omegas_protocol_addresses":
-        wanted=["0x014A","0x014B","0x014C","0x015B","0x015C","0x016F","0x0170","0x018D","0x018E"]
-        missing=[x for x in wanted if x not in protocol]
-        return receipt("PASS" if not missing else "BROKEN","OMEGAS protocol contains original addresses",missing)
-
-    if name=="omegas_live_decoder":
-        wanted=["u16le(payload, 8)","u8(payload, 13)","u16le(payload, 17)","TELEMETRY_PAYLOAD_SIZE = 34"]
-        missing=[x for x in wanted if x not in mp48]
-        return receipt("PASS" if not missing else "BROKEN","OMEGAS live decoder uses recovered offsets",missing)
-
-    if name=="omegas_single_serial_authority":
-        bad=[x for x in ["Executors.","ScheduledExecutor","Thread("] if x in monitor]
-        ok=not bad and "Mp48SerialScheduler" in monitor
-        return receipt("PASS" if ok else "BROKEN","NativeAutoCalMonitor owns no thread/serial transport",bad)
-
-    if name=="omegas_telemetry_after_secondary":
-        ok="if (queued.telemetryAfter" in engine and "pollTelemetry()" in engine
-        return receipt("PASS" if ok else "BROKEN","Serial engine restores telemetry after queued secondary work")
-
-    if name=="omegas_levels_fast_authority":
-        ok="const levelRaw = finite(live.level_raw ?? live.levelRaw);" in cockpit and "const levelRaw = finite(projection?.levelsRaw);" not in cockpit
-        return receipt("PASS" if ok else "RED","AutoCal live strip LEVELS source is live frame")
-
-    if name=="omegas_currentband_presence":
-        ok="currentBand(snapshot = {}, live = {})" in cockpit and "physicalVector(snapshot, 'MNFLD_PRESS_THD')" in cockpit and "data-autocal-current-band" in cockpit
-        return receipt("PASS" if ok else "RED","CurrentBand consumer and visual layer")
-
-    if name=="omegas_currentband_boundary":
-        rc,out=command(["node","--test","tests/ui/autocal-current-band-parity.test.cjs"])
-        return receipt("PASS" if rc==0 else "RED","Executable CurrentBand boundary oracle",[out])
-
-    if name=="omegas_grouped_acquisition_refresh":
-        planner=ROOT/"app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt"
-        service=text("app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt")
-        ok=planner.exists() and "refreshAcquisitionGroup" in monitor and all(x in monitor for x in ["NUM_BUF_UPD_PETR","NUM_BUF_UPD_GAS","ACQUIRED_ZONES_PETROL","ACQUIRED_ZONES_GAS"]) and "scheduleWithFixedDelay(::autoCalTick" in service
-        return receipt("PASS" if ok else "RED","Grouped ~2s acquisition refresh on existing serial authority")
-
-    if name=="omegas_grouped_reference_refresh":
-        planner=(ROOT/"app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt")
-        ps=planner.read_text("utf-8") if planner.exists() else ""
-        wanted=["refreshReferenceGroup","PETR_INJ_TBP","MNFLD_PRESS_THD","PETR_MNFLD_PRESS_RV","GAS_MNFLD_PRESS_RV"]
-        missing=[x for x in wanted if x not in monitor]
-        ok="REFERENCE_INTERVAL_MS = 4_000L" in ps and not missing
-        return receipt("PASS" if ok else "RED","Grouped ~4s reference refresh",missing)
-
-    if name=="omegas_petrol_gas_refresh_symmetry":
-        acq=monitor.split("private fun refreshAcquisitionGroup",1)[1].split("private fun",1)[0] if "private fun refreshAcquisitionGroup" in monitor else ""
-        wanted=["NUM_BUF_UPD_PETR","NUM_BUF_UPD_GAS","ACQUIRED_ZONES_PETROL","ACQUIRED_ZONES_GAS"]
-        missing=[x for x in wanted if x not in acq]
-        return receipt("PASS" if not missing else "RED","Petrol/GNV acquisition-side symmetry",missing)
-
-    if name=="omegas_snapshot_coherence_guard":
-        snap=text("app/src/main/java/com/omegas/prohub/autocal/AutoCalSnapshot.kt")
-        ok="MAX_AUTOMATCH_GROUP_SKEW_MS = 2_000L" in snap and "coherenceGroups" in snap
-        return receipt("PASS" if ok else "BROKEN","Temporal coherence guard retained")
-
-    if name=="omegas_session_safety":
-        projection=text("app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt")
-        ok="currentSession" in projection and "STALE_SESSION" in projection and "sessionId" in projection
-        return receipt("PASS" if ok else "BROKEN","Current-session rejection remains present")
-
-    if name=="omegas_no_automatic_write":
-        action=text("app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt")
-        bad=("MANUAL_WRITE" in monitor or "protocolTransaction(" in monitor)
-        ok=not bad and 'appAutomaticWrite", false' in monitor and "expectedEnableReadback" in action
-        return receipt("PASS" if ok else "BROKEN","Monitor remains read-only; writes stay manual/readback-gated")
-
-    if name=="omegas_bridge_no_serial_io":
-        bridge=text("app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt")
-        bad=[x for x in ["protocolTransaction(","serial.transaction(","Mp48WorkClass"] if x in bridge]
-        return receipt("PASS" if not bad else "BROKEN","Web bridge performs no serial I/O",bad)
-
-    if name=="omegas_ui_fast_scheduler":
-        app=text("app/src/main/assets/ui/app.js"); scheduler=text("app/src/main/assets/ui/core/scheduler.js")
-        ok="intervalMs: 200" in app and "this.tick % 10 === 0" in scheduler and "addHook('fast'" in cockpit
-        return receipt("PASS" if ok else "RED","UI fast/context cadence separation")
-
-    if name=="global_levels_percentage_scan":
-        scale=text("app/src/main/java/com/omegas/prohub/ecu/Mp48TelemetryScale.kt")
-        active=("fun levelPercentage" in scale and '.put("level_percentage", Mp48TelemetryScale.levelPercentage(levelRaw))' in mp48)
-        return receipt("RED" if active else "PASS","No invented LEVELS percentage should remain active",["Mp48Protocol.kt emits level_percentage" if active else "no active percentage conversion"])
-
-    if name=="dashboard_levels_raw_presence":
-        ui=ROOT/"app/src/main/assets/ui"
-        hits=[]
-        for p in ui.rglob("*.js"):
-            s=p.read_text("utf-8",errors="ignore")
-            if "LEVELS RAW" in s or "level_raw" in s or "levelRaw" in s:
-                hits.append(str(p.relative_to(ROOT)))
-        dashboard=[h for h in hits if "dashboard" in h.lower() or "now" in h.lower() or "home" in h.lower()]
-        return receipt("PASS" if dashboard else "RED","Dashboard/Agora exposes LEVELS RAW",hits)
-
-    if name=="mutation_bad_checksum":
-        req=bytearray.fromhex("29 5B 01 85"); req[-1]^=1
-        detected=((sum(req[:-1])&0xff)!=req[-1])
-        return receipt("PASS" if detected else "BROKEN","Checksum mutation is detected",metrics={"mutated":req.hex(" ")})
-
-    if name=="mutation_bad_shape":
-        raw=bytes.fromhex(by["29 8D 01 B7"][0]["response"]); mutated=raw[:-2]
-        detected=len(mutated)!=67
-        return receipt("PASS" if detected else "BROKEN","Reference-vector truncation is observable",metrics={"original":len(raw),"mutated":len(mutated)})
-
-    if name=="targeted_ui_autocal_suite":
-        rc,out=command(["node","--test","tests/ui/autocal-current-band-parity.test.cjs","tests/ui/autocal-didactic-cockpit.test.cjs","tests/ui/autocal-cockpit.test.cjs"])
-        return receipt("PASS" if rc==0 else "RED","Targeted executable AutoCal UI suite",[out])
-
-    if name=="targeted_jvm_projection":
-        rc,out=command(["./gradlew","testDebugUnitTest","--tests","com.omegas.prohub.autocal.AutoCalUiProjectionTest","--stacktrace"])
-        return receipt("PASS" if rc==0 else "RED","Targeted JVM projection tests",[out])
-
-    if name=="targeted_jvm_refresh_planner":
-        rc,out=command(["./gradlew","testDebugUnitTest","--tests","com.omegas.prohub.autocal.NativeAutoCalRefreshPlannerTest","--stacktrace"])
-        return receipt("PASS" if rc==0 else "RED","Targeted JVM refresh-planner tests",[out])
-
-    raise KeyError(name)
+META = {
+    "meta_same_ecu_jvm": meta_same_ecu_jvm,
+    "meta_autocal_jvm": meta_autocal_jvm,
+    "meta_ui_autocal": meta_ui_autocal,
+    "meta_architecture_bundle": meta_architecture_bundle,
+    "meta_oracle_source_semantics": meta_oracle_source_semantics,
+    "meta_levels_global": meta_levels_global,
+    "meta_session_write_safety": meta_session_write_safety,
+    "meta_mutation_negative_bundle": meta_mutation_negative_bundle,
+    "meta_forensic_selftest": meta_forensic_selftest,
+}
 
 def main():
-    ap=argparse.ArgumentParser()
-    ap.add_argument("--lane",required=True)
-    ap.add_argument("--receipt",required=True)
-    args=ap.parse_args()
-    out=Path(args.receipt)
-    out.parent.mkdir(parents=True,exist_ok=True)
-    base={"lane":args.lane,"sha":os.environ.get("GITHUB_SHA",""),"runner":os.environ.get("RUNNER_OS","")}
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--lane", required=True)
+    ap.add_argument("--sequence", type=int, default=0)
+    ap.add_argument("--receipt", required=True)
+    args = ap.parse_args()
+    out = Path(args.receipt)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    base = {"lane": args.lane, "sha": os.environ.get("GITHUB_SHA",""), "runner": os.environ.get("RUNNER_OS","")}
     try:
-        res=lane(args.lane)
+        if args.sequence > 0:
+            res = tx_lane(args.sequence)
+        else:
+            fn = META.get(args.lane)
+            if fn is None:
+                raise KeyError(args.lane)
+            res = fn()
         base.update(res)
     except Exception as exc:
         base.update({
             "status":"BROKEN",
-            "summary":"lane infrastructure/analysis exception",
+            "summary":"lane worker exception",
             "evidence":[str(exc),traceback.format_exc()],
             "metrics":{},
         })
-    out.write_text(json.dumps(base,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
-    print(json.dumps(base,indent=2,ensure_ascii=False))
-    # Research workflow: RED is a finding; only BROKEN means the lane itself malfunctioned.
-    return 2 if base["status"]=="BROKEN" else 0
+    out.write_text(json.dumps(base, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(json.dumps(base, indent=2, ensure_ascii=False))
+    return 2 if base["status"] == "BROKEN" else 0
 
-if __name__=="__main__":
+if __name__ == "__main__":
     sys.exit(main())
