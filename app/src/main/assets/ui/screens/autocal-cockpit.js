@@ -198,6 +198,15 @@
       })).filter(point => Number.isInteger(point.index) && point.petrolMs !== null && point.mapBar !== null);
     },
 
+    instrumentKPoints(instrument = {}) {
+      const rows = Array.isArray(instrument?.kCurve?.points) ? instrument.kCurve.points : [];
+      return rows.map(point => ({
+        index: Number(point?.index),
+        petrolMs: finite(point?.petrolMs),
+        factor: finite(point?.factor),
+      })).filter(point => Number.isInteger(point.index) && point.petrolMs !== null && point.factor !== null);
+    },
+
     referencePoints(snapshot = {}, analysis = {}) {
       const petrolMs = physicalVector(snapshot, 'PETR_INJ_TBP');
       const petrolMap = physicalVector(snapshot, 'PETR_MNFLD_PRESS_RV');
@@ -482,6 +491,16 @@
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
                 <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP de gasolina/GNV sem alterar nada.</span></aside>
               </div>
+            </section>
+
+            <section class="autocal-k-card" aria-label="Curve K nativa">
+              <div class="autocal-section-head compact">
+                <div><small>CURVE K · ECU</small><h4>Multiplicador global nativo</h4><p>PETR_INJ_TBP × MUL_ACT. A tela não suaviza nem recalcula os valores da ECU.</p></div>
+                <span id="autocalKCount">0 pontos K</span>
+              </div>
+              <div class="autocal-k-legend"><span class="native-k">MUL_ACT atual</span><span class="unity">K = 1,000</span></div>
+              <div id="autocalKChart" class="autocal-k-chart"><div class="chart-empty">Aguardando Curve K nativa.</div></div>
+              <div id="autocalKInspector" class="autocal-inline-inspector"><b>Curve K aguardando ECU</b><span>Os 30 multiplicadores nativos aparecem aqui sem interpolação científica.</span></div>
             </section>
 
             <section class="autocal-bands-card">
@@ -781,6 +800,7 @@
       }
 
       this.renderReferenceChart(snapshot);
+      this.renderKCurve();
       this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
@@ -1072,6 +1092,71 @@
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
       });
+    }
+
+    renderKCurve() {
+      const host = document.getElementById('autocalKChart');
+      if (!host) return;
+      const instrument = this.projection?.instrument || {};
+      const points = AutoCalUxModel.instrumentKPoints(instrument);
+      this.text('autocalKCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' K');
+      if (!points.length) {
+        host.innerHTML = '<div class="chart-empty"><b>SEM CURVE K</b><span>MUL_ACT ainda não foi publicado pela ECU nesta sessão.</span></div>';
+        this.text('autocalKInspector', 'Aguardando PETR_INJ_TBP × MUL_ACT nativos.');
+        return;
+      }
+
+      const width = 1000;
+      const height = 150;
+      const padLeft = 62;
+      const padRight = 24;
+      const padTop = 16;
+      const padBottom = 34;
+      const xs = points.map(point => point.petrolMs);
+      const ys = points.map(point => point.factor).concat([1.0]);
+      let xMin = Math.min(...xs);
+      let xMax = Math.max(...xs);
+      let yMin = Math.min(...ys);
+      let yMax = Math.max(...ys);
+      if (xMax - xMin < 0.01) { xMin -= 0.25; xMax += 0.25; }
+      else { const p = Math.max(0.08, (xMax - xMin) * 0.04); xMin -= p; xMax += p; }
+      if (yMax - yMin < 0.002) { yMin -= 0.02; yMax += 0.02; }
+      else { const p = Math.max(0.01, (yMax - yMin) * 0.15); yMin -= p; yMax += p; }
+
+      const xFor = value => padLeft + ((value - xMin) / (xMax - xMin)) * (width - padLeft - padRight);
+      const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
+      const path = points.map((point, index) =>
+        (index ? 'L' : 'M') + ' ' + xFor(point.petrolMs).toFixed(1) + ' ' + yFor(point.factor).toFixed(1)
+      ).join(' ');
+      const dots = points.map(point =>
+        '<circle class="autocal-k-point" cx="' + xFor(point.petrolMs).toFixed(1) + '" cy="' + yFor(point.factor).toFixed(1) +
+        '" r="3.5"><title>' + point.petrolMs.toFixed(2) + ' ms · K ' + point.factor.toFixed(4) + '</title></circle>'
+      ).join('');
+      const unityY = yFor(1.0);
+      const xTicks = [xMin, (xMin + xMax) / 2, xMax].map(value =>
+        '<text class="autocal-axis-tick-x" x="' + xFor(value).toFixed(1) + '" y="' + (height - 12) + '" text-anchor="middle">' + value.toFixed(1) + '</text>'
+      ).join('');
+      const yTicks = [yMin, 1.0, yMax].filter((value, index, array) =>
+        array.findIndex(candidate => Math.abs(candidate - value) < 0.0005) === index
+      ).map(value =>
+        '<text class="autocal-axis-tick-y" x="' + (padLeft - 8) + '" y="' + (yFor(value) + 4).toFixed(1) + '" text-anchor="end">' + value.toFixed(3) + '</text>'
+      ).join('');
+
+      host.innerHTML =
+        '<svg class="autocal-k-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Curve K nativa por tempo de injeção de gasolina">' +
+        '<line class="autocal-k-unity" x1="' + padLeft + '" y1="' + unityY.toFixed(1) + '" x2="' + (width - padRight) + '" y2="' + unityY.toFixed(1) + '"></line>' +
+        '<path class="autocal-k-line" d="' + path + '"></path>' + dots + xTicks + yTicks +
+        '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 1) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
+        '</svg>';
+
+      const factors = points.map(point => point.factor);
+      const minFactor = Math.min(...factors);
+      const maxFactor = Math.max(...factors);
+      this.text(
+        'autocalKInspector',
+        'MUL_ACT atual · ' + points.length + ' pontos · K ' + minFactor.toFixed(4) + ' a ' + maxFactor.toFixed(4) +
+        '. Valores publicados pela ECU; sem alvo calculado pelo OMEGAS.'
+      );
     }
 
     renderBands(snapshot) {
