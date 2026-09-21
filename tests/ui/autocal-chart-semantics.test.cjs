@@ -123,4 +123,28 @@ assert.equal(reconnectTransition.resetSelection, true, 'reconnect deve invalidar
 assert.equal(reconnectTransition.clearHistory, true, 'reconnect deve fechar Leitura anterior');
 assert.equal(reconnectTransition.previousPoints.length, 0, 'Leitura anterior não pode atravessar sessão USB');
 
+const referenceLostTransition = model.referenceTransition(
+  { sessionId: 101, referenceUsable: true },
+  { sessionId: 101, referenceUsable: false },
+  oldReferenceSnapshot,
+  { fields: [] },
+  { points: [] },
+);
+assert.equal(referenceLostTransition.resetSelection, true,
+  'perda da referência precisa invalidar seleção antiga mesmo sem novo hash');
+assert.equal(referenceLostTransition.clearHistory, true,
+  'histórico gráfico não pode sobreviver a um intervalo sem referência utilizável');
+
+const referenceRegainedTransition = model.referenceTransition(
+  { sessionId: 101, referenceUsable: false },
+  { sessionId: 101, referenceUsable: true },
+  { fields: [] },
+  newReferenceSnapshot,
+  { points: [] },
+);
+assert.equal(referenceRegainedTransition.resetSelection, true,
+  'referência recuperada precisa começar sem seleção herdada do estado indisponível');
+assert.equal(referenceRegainedTransition.previousPoints.length, 0,
+  'referência recuperada após gap não pode inventar Leitura anterior');
+
 console.log('AUTOCAL_CHART_SEMANTICS=PASS');
