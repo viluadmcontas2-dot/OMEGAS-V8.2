@@ -75,3 +75,8 @@ test('dashboard é consumidor Red ou Verde e não carrega Blue', () => {
   assert.match(dashboard, /const obd = state\.obd \|\| \{\}/);
   assert.match(dashboard, /styles-dashboard-now\.css/);
 });
+
+
+test('dashboard não converte ausência de telemetria em zero físico', () => {
+  assert.match(dashboard, /value === null \|\| value === undefined \|\| value === ""/);
+});

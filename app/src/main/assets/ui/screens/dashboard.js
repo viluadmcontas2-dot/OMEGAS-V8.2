@@ -3,6 +3,7 @@
     "use strict";
     const ns = root.OmegasUi = root.OmegasUi || {};
     function finite(value) {
+      if (value === null || value === undefined || value === "") return null;
       return Number.isFinite(Number(value)) ? Number(value) : null;
     }
     function fmt(value, digits) {
