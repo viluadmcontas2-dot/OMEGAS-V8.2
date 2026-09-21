@@ -554,10 +554,6 @@
         const button = event.currentTarget;
         const action = button?.dataset?.action;
         if (!action) return;
-        if (action === 'DISABLE_AUTO_CAL') {
-          const confirmed = window.confirm('Desativar a Auto Calibration também desativa o AutoMatch automático da ECU. Os dados já coletados não serão resetados. Deseja continuar?');
-          if (!confirmed) return;
-        }
         this.runOperational(action);
       });
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
