@@ -37,3 +37,14 @@ Delta desde o watermark anterior registrado `2e3eaffedeb6a20972275bfee7d065e5d2a
 - **REJECT AS AUTHORITY** — qualquer conclusão que trate a arquitetura/runtime Verde como semântica nativa do ProgBase/ECU.
 
 Nenhum merge wholesale é autorizado.
+
+
+## Watermark delta — 2026-09-21 — `b65b90bbad72c40890a383448a879b040ee05342`
+Delta desde `eeefaaa4d8371e3c4c6cf1260f1ee4b65e836618`: 1 commit.
+
+### Classificação
+- **REVALIDATE** — refresh operacional de inputs AutoCAL em `NativeAutoCalMonitor.kt` e teste associado.
+- **REFERENCE ONLY** — exposição visual de LEVELS RAW e ajustes de dashboard.
+- **REJECT AS AUTHORITY** — usar essas mudanças do runtime Verde para definir semântica nativa ProgBase/ECU.
+
+Nenhum merge/cherry-pick wholesale. Próximo watermark parte de `b65b90bbad72c40890a383448a879b040ee05342`.
