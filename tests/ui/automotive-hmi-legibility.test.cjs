@@ -45,4 +45,13 @@ assert.match(refine, /\.tolerance-profiles button[\s\S]*min-height:\s*44px[\s\S]
 assert.match(refine, /\.tolerance-controls (?:select|input)[\s\S]*min-height:\s*44px/s,
   'inputs de tolerância devem ter alvo mínimo de 44px');
 
+assert.match(refine, /\.recorder-actions button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
+  'ações do gravador devem ser tocáveis na multimídia');
+assert.match(refine, /\.diagnostic-settings > button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
+  'ação principal das configurações de diagnóstico deve ter alvo automotivo');
+assert.match(refine, /\.recorded-session-list button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
+  'ações de sessões gravadas não podem exigir toque de precisão');
+assert.match(refine, /\.diagnostic-settings-grid select,[\s\S]*min-height:\s*44px/s,
+  'campos diagnósticos devem manter piso automotivo de 44px');
+
 console.log('AUTOMOTIVE_HMI_LEGIBILITY=PASS');
