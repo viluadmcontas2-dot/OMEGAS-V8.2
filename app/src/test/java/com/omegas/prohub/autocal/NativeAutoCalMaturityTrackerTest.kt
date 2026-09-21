@@ -72,4 +72,45 @@ class NativeAutoCalMaturityTrackerTest {
 
         assertTrue(events.isEmpty())
     }
+    @Test
+    fun `failed correlation retries only after fresh mature counter growth`() {
+        val tracker = NativeAutoCalMaturityTracker()
+        tracker.observe(IntArray(18), 5, 10, enabled = true, observedAtElapsedMs = 1_000L)
+        val crossing = IntArray(18).also { it[3] = 5 }
+
+        val first = tracker.observe(crossing, 5, 10, enabled = true, observedAtElapsedMs = 2_000L)
+        assertEquals(1, first.size)
+        tracker.recordCorrelationResult(3, correlated = false)
+
+        val unchanged = tracker.observe(crossing, 5, 10, enabled = true, observedAtElapsedMs = 3_000L)
+        val grown = crossing.copyOf().also { it[3] = 6 }
+        val retry = tracker.observe(grown, 5, 10, enabled = true, observedAtElapsedMs = 4_000L)
+
+        assertTrue(unchanged.isEmpty())
+        assertEquals(1, retry.size)
+        assertEquals(3, retry.single().bandIndex)
+        assertTrue(retry.single().correlationRetry)
+
+        tracker.recordCorrelationResult(3, correlated = true)
+        val afterSuccess = grown.copyOf().also { it[3] = 7 }
+        assertTrue(tracker.observe(afterSuccess, 5, 10, enabled = true, observedAtElapsedMs = 5_000L).isEmpty())
+    }
+
+    @Test
+    fun `mature baseline can retry on later growth but reset clears retry lifecycle`() {
+        val tracker = NativeAutoCalMaturityTracker()
+        val mature = IntArray(18).also { it[8] = 10 }
+
+        assertTrue(tracker.observe(mature, 5, 10, enabled = true, observedAtElapsedMs = 1_000L).isEmpty())
+        val grown = mature.copyOf().also { it[8] = 11 }
+        val retry = tracker.observe(grown, 5, 10, enabled = true, observedAtElapsedMs = 2_000L)
+
+        assertEquals(1, retry.size)
+        assertTrue(retry.single().correlationRetry)
+
+        tracker.reset()
+        val postReset = grown.copyOf().also { it[8] = 12 }
+        assertTrue(tracker.observe(postReset, 5, 10, enabled = true, observedAtElapsedMs = 3_000L).isEmpty())
+    }
+
 }
