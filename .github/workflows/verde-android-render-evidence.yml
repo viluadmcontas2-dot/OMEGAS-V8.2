@@ -49,22 +49,51 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x gradlew
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "emulator" "platforms;android-35" "system-images;android-35;google_apis;x86_64"
-          echo no | avdmanager create avd --force -n omegas-ci -k "system-images;android-35;google_apis;x86_64"
-          sudo chmod 666 /dev/kvm || true
-          nohup "$ANDROID_HOME/emulator/emulator" -avd omegas-ci -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none > emulator.log 2>&1 &
-          adb wait-for-device
+
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          test -d "$SDK_ROOT" || { echo "Android SDK root missing: $SDK_ROOT"; exit 2; }
+
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' | sort -V | tail -n 1)"
+          AVDMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/avdmanager' | sort -V | tail -n 1)"
+          ADB="$SDK_ROOT/platform-tools/adb"
+          EMULATOR="$SDK_ROOT/emulator/emulator"
+
+          test -x "$SDKMANAGER" || { echo "sdkmanager not found under $SDK_ROOT/cmdline-tools"; find "$SDK_ROOT/cmdline-tools" -maxdepth 4 -type f | head -80; exit 2; }
+          test -x "$AVDMANAGER" || { echo "avdmanager not found under $SDK_ROOT/cmdline-tools"; exit 2; }
+          test -x "$ADB" || { echo "adb not found: $ADB"; exit 2; }
+
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK_ROOT/emulator" >> "$GITHUB_PATH"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "emulator" "platforms;android-35" "system-images;android-35;google_apis;x86_64"
+          echo no | "$AVDMANAGER" create avd --force -n omegas-ci -k "system-images;android-35;google_apis;x86_64"
+
+          test -x "$EMULATOR" || { echo "emulator not found after sdkmanager: $EMULATOR"; exit 2; }
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm || true; fi
+          nohup "$EMULATOR" -avd omegas-ci -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none > emulator.log 2>&1 &
+
+          "$ADB" wait-for-device
           for i in $(seq 1 180); do
-            if [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; then break; fi
+            if [ "$("$ADB" shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; then break; fi
             sleep 2
           done
-          test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
-          adb shell settings put global window_animation_scale 0
-          adb shell settings put global transition_animation_scale 0
-          adb shell settings put global animator_duration_scale 0
-          adb shell wm size 1280x720
-          adb shell wm density 160
+          test "$("$ADB" shell getprop sys.boot_completed | tr -d '\r')" = "1" || {
+            echo "Emulator failed to boot"
+            tail -200 emulator.log || true
+            "$ADB" devices -l || true
+            exit 2
+          }
+          "$ADB" shell settings put global window_animation_scale 0
+          "$ADB" shell settings put global transition_animation_scale 0
+          "$ADB" shell settings put global animator_duration_scale 0
+          "$ADB" shell wm size 1280x720
+          "$ADB" shell wm density 160
+          "$ADB" shell wm size
+          "$ADB" shell wm density
       - name: Build app and instrumentation APK
         run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
       - name: Install and authorize test app
