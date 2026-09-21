@@ -41,9 +41,7 @@
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
         this.proposals.clear(); this.renderChart(); this.renderProposalList();
       });
-      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.openReview());
-      document.getElementById('curveReviewBack')?.addEventListener('click', () => this.closeReview());
-      document.getElementById('curveWriteButton')?.addEventListener('click', () => this.writeReview());
+      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writeReview());
       document.getElementById('curveDismissResult')?.addEventListener('click', () => this.closeReview());
     }
 
@@ -383,7 +381,7 @@
       const items = [...this.proposals.values()].sort((a, b) => Number(a.index) - Number(b.index));
       host.innerHTML = items.length ? items.map(item => `<div><span>${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b><small>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</small></div>`).join('') : '<p>Nenhum ponto preparado.</p>';
       const review = document.getElementById('curveReviewButton');
-      if (review) { review.disabled = items.length === 0; review.textContent = items.length ? `Revisar ${items.length} ponto${items.length === 1 ? '' : 's'}` : 'Prepare pontos'; }
+      if (review) { review.disabled = items.length === 0; review.textContent = items.length ? `Aplicar ${items.length} alteraç${items.length === 1 ? 'ão' : 'ões'}` : 'Prepare pontos'; }
     }
 
     renderEvidence(state) {
@@ -430,7 +428,7 @@
     writeReview() {
       const points = [...this.proposals.values()].map(item => ({ index: Number(item.index), currentRaw: Number(item.currentRaw), targetRaw: Number(item.targetRaw) }));
       if (!points.length) return;
-      const result = this.api.writeCurve(points, 'Ajuste manual confirmado na UI clean-slate');
+      const result = this.api.writeCurve(points, 'Ajuste manual solicitado diretamente pela ação explícita da UI');
       if (!result?.ok || !result?.started) { this.alert(result?.error || 'A escrita da Curva K não iniciou.'); return; }
       this.writing = true;
       this.root?.classList.remove('is-reviewing');
