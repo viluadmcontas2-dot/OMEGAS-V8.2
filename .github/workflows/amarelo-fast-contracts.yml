@@ -1,0 +1,37 @@
+name: OMEGAS Amarelo evidence contracts
+
+on:
+  push:
+    branches:
+      - "work/amarelo-*"
+    paths:
+      - ".github/workflows/amarelo-fast-contracts.yml"
+      - "tools/omegas_amarelo/**"
+      - "tests/test_amarelo_*.py"
+      - "tests/fixtures/portmon-*"
+      - "docs/omegas-amarelo/**"
+      - "docs/workunits/OMEGAS-AMARELO-*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: amarelo-evidence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - name: Run Amarelo evidence contracts
+        run: python3 -m unittest discover tests -p "test_amarelo_*.py" -v
