@@ -281,6 +281,20 @@
       });
     },
 
+    referenceSourceLabel(projection = {}) {
+      const source = String(projection?.source || '').toUpperCase();
+      const freshness = String(projection?.freshness || '').toUpperCase();
+      if (source === 'NATIVE_MONITOR') {
+        return freshness === 'CURRENT_SESSION' ? 'Monitor nativo · sessão atual' : 'Monitor nativo';
+      }
+      if (source === 'MANUAL_READER') {
+        return freshness === 'CURRENT_SESSION' ? 'Leitura manual · sessão atual' : 'Leitura manual';
+      }
+      if (freshness === 'STALE_SESSION') return 'Sem fonte atual · sessão anterior rejeitada';
+      if (source === 'NONE') return 'Sem fonte confiável';
+      return source || '—';
+    },
+
     bandNarrative(band = {}) {
       const eventState = String(band?.event?.correlationState || '');
       if (band.state === 'anchored') {
@@ -457,6 +471,7 @@
                 <div><small>ESTADO RAW</small><b id="autocalStateRaw">—</b></div>
                 <div><small>AQUISIÇÃO</small><b id="autocalEnableRaw">—</b></div>
                 <div><small>SNAPSHOT</small><b id="autocalSnapshotHash">—</b></div>
+                <div><small>FONTE DA REFERÊNCIA</small><b id="autocalReferenceSource">—</b></div>
                 <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">0</b></div>
               </div>
               <div id="autocalEvents" class="autocal-events"></div>
@@ -696,6 +711,7 @@
       this.text('autocalStateRaw', state.state || '—');
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
       this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
+      this.text('autocalReferenceSource', AutoCalUxModel.referenceSourceLabel(this.projection));
       this.text('autocalMaturityRaw', events.length);
       this.renderZoneMeter(human);
       this.renderReadState();
