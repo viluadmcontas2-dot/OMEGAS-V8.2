@@ -48,3 +48,14 @@ Delta desde `eeefaaa4d8371e3c4c6cf1260f1ee4b65e836618`: 1 commit.
 - **REJECT AS AUTHORITY** — usar essas mudanças do runtime Verde para definir semântica nativa ProgBase/ECU.
 
 Nenhum merge/cherry-pick wholesale. Próximo watermark parte de `b65b90bbad72c40890a383448a879b040ee05342`.
+
+
+## Watermark delta — 2026-09-21 — `361904c5ad28fc6a7451c37d10fb76057bf5eee8`
+Delta desde `b65b90bbad72c40890a383448a879b040ee05342`: 4 commits.
+
+### Classificação
+- **REVALIDATE** — portabilidade/correção do runner de evidência Android; relevante apenas como padrão de CI.
+- **REFERENCE ONLY** — alterações de dashboard e seus testes de apresentação.
+- **REJECT AS AUTHORITY** — qualquer inferência de semântica nativa AutoCAL a partir dessas mudanças de UI/runner.
+
+Nenhum ativo deste delta altera o contrato WU-001. Próximo watermark parte de `361904c5ad28fc6a7451c37d10fb76057bf5eee8`.
