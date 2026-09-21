@@ -209,3 +209,23 @@ assert.equal(source.includes('LEVELS RAW'), false, 'LEVELS não pertence ao Auto
 assert.equal(source.includes('autocalLiveLevel'), false, 'AutoCAL não pode renderizar nível do cilindro');
 assert.equal(source.includes('levelsRaw'), false, 'projeção AutoCAL não pode carregar LEVELS');
 assert.equal(source.includes('level_raw'), false, 'AutoCAL não pode consumir sinal de nível do cilindro');
+
+
+const typedRegions = model.instrumentZoneRegions({
+  zoneRegions: [
+    { index: 0, lowMapBar: 0.000, highMapBar: 0.461, petrolAcquired: true, gasAcquired: false, label: 'Região 1' },
+    { index: 1, lowMapBar: 0.461, highMapBar: 0.666, petrolAcquired: true, gasAcquired: true, label: 'Região 2' },
+    { index: 2, lowMapBar: 0.666, highMapBar: 0.870, petrolAcquired: false, gasAcquired: true, label: 'Região 3' },
+    { index: 3, lowMapBar: 0.870, highMapBar: 1.126, petrolAcquired: false, gasAcquired: false, label: 'Região 4' },
+  ],
+});
+assert.equal(typedRegions.length, 4);
+assert.equal(typedRegions[0].highMapBar, 0.461);
+assert.equal(typedRegions[3].lowMapBar, 0.870);
+assert.equal(typedRegions[3].highMapBar, 1.126);
+assert.match(source, /instrumentZoneRegions/);
+assert.match(source, /autocal-zone-region/);
+assert.match(source, /R' \+ \(region\.index \+ 1\)/);
+assert.equal(source.includes('/4 zonas GNV'), false);
+assert.equal(source.includes(' de 4 zonas'), false);
+assert.equal(source.includes('zona ok'), false);
