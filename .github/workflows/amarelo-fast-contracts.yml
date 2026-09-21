@@ -16,6 +16,7 @@ on:
       - "tests/fixtures/amarelo-autocal-acquired-zones-*.json"
       - "tests/fixtures/amarelo-autocal-finish-*.json"
       - "tests/fixtures/amarelo-autocal-enable-*.json"
+      - "tests/fixtures/amarelo-autocal-maturity-*.json"
       - "app/src/main/java/com/omegas/prohub/autocal/**"
       - "app/src/main/assets/ui/screens/autocal-cockpit.js"
       - "app/src/main/assets/ui/screens/curve.js"
@@ -68,6 +69,8 @@ jobs:
         run: python3 -B -m unittest tests.test_amarelo_autocal_acquired_zones_evidence -v
       - name: AutoCAL native MAP region geometry evidence
         run: python3 -B -m unittest tests.test_amarelo_autocal_zone_geometry_evidence -v
+      - name: AutoCAL ECU-sourced maturity visibility evidence
+        run: python3 -B -m unittest tests.test_amarelo_autocal_maturity_visibility_evidence -v
       - name: AutoCAL GNV current and previous buffer evidence
         run: python3 -B -m unittest tests.test_amarelo_autocal_gaspoint_current_prev_evidence -v
       - name: AutoCAL point activity versus zone evidence
