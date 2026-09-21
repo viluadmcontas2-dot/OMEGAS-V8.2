@@ -138,9 +138,8 @@
     "issue": 83,
     "human_path": "docs/evidence/2026-09-21-omegas-autocal-progbase-parity-matrix.md",
     "machine_path": "tests/fixtures/omegas-autocal-progbase-parity-v1.json",
-    "status": "PUBLISHED_V1_PENDING_CI",
+    "status": "ACTIVE_REPAIR",
     "confirmed_red_candidates": [
-      "AUTOCAL_LEVELS_RAW_FAST_FRESHNESS",
       "AUTOCAL_CURRENT_BAND_PRESENTATION",
       "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
       "AUTOCAL_PETROL_MATURITY_REFRESH"
@@ -154,6 +153,23 @@
     "evidence_debt": [
       "0x0165 index semantics remain unproven by original binary evidence",
       "session ownership is delegated to issue #86"
+    ],
+    "resolved_slices": {
+      "levels_raw_live": {
+        "red_sha": "9df2a69b7f009fb7c8fb7301a778a27c4bd9fdf7",
+        "red_fast_run": {
+          "number": 115,
+          "id": 35631590908,
+          "conclusion": "failure"
+        },
+        "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
+        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
+      }
+    },
+    "next_red_candidates": [
+      "AUTOCAL_CURRENT_BAND_PRESENTATION",
+      "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
+      "AUTOCAL_PETROL_MATURITY_REFRESH"
     ]
   }
 }

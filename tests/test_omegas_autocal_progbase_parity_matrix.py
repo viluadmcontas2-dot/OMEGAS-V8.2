@@ -9,7 +9,7 @@ assert matrix["schema"] == "omegas.autocal.progbase-parity.v1"
 rows = {row["behavior"]: row for row in matrix["classifications"]}
 
 assert rows["RunPoint/AGORA XY"]["classification"] == "MATCH"
-assert rows["LEVELS RAW in AutoCal live strip"]["classification"] == "WRONG"
+assert rows["LEVELS RAW in AutoCal live strip"]["classification"] == "MATCH"
 assert rows["PetrolCurve/GasCurve"]["dimensions"]["field_identity"] == "MATCH"
 assert rows["PetrolCurve/GasCurve"]["dimensions"]["refresh_policy"] == "WRONG"
 assert rows["CurrentBand"]["classification"] == "MISSING"
@@ -44,8 +44,8 @@ assert "probeMaturityCounters" in monitor
 assert "AutoCalProtocol.NUM_BUF_UPD_PETR" not in monitor.split("private fun probeMaturityCounters",1)[1].split("private fun readFullSnapshot",1)[0]
 assert "addHook('fast'" in cockpit
 assert "renderLiveCursor()" in cockpit
-assert "const levelRaw = finite(projection?.levelsRaw);" in cockpit
-assert "const levelRaw = finite(live.level_raw" not in cockpit
+assert "const levelRaw = finite(live.level_raw ?? live.levelRaw);" in cockpit
+assert "const levelRaw = finite(projection?.levelsRaw);" not in cockpit
 assert "MNFLD_PRESS_THD" not in cockpit
 assert "intervalMs: 200" in app
 assert "this.tick % 10 === 0" in scheduler

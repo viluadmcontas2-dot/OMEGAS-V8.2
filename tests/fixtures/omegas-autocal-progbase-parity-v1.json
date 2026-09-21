@@ -27,11 +27,11 @@
     },
     {
       "behavior": "LEVELS RAW in AutoCal live strip",
-      "classification": "WRONG",
+      "classification": "MATCH",
       "dimensions": {
         "decode": "MATCH",
         "backend_projection": "MATCH",
-        "visible_freshness": "WRONG"
+        "visible_freshness": "MATCH_AFTER_FIX"
       },
       "progbase": "payload byte 13 is consumed on live TimerDati path",
       "omegas": "Telemetry store carries live.level_raw, but AutoCalUxModel.livePoint sources visible levelRaw from projection.levelsRaw; projection refresh is context cadence (~2s), not fast cadence",
@@ -42,7 +42,22 @@
         "app/src/main/assets/ui/core/scheduler.js"
       ],
       "red_id": "AUTOCAL_LEVELS_RAW_FAST_FRESHNESS",
-      "action": "RED: fresh telemetry level_raw must win on the live strip while preserving validity/session/stale gates"
+      "action": "PRESERVE live-frame authority; projection may carry diagnostic LEVELS but must not override the fresh HMI value",
+      "resolution": {
+        "baseline_sha": "89a06e2eb79220aa3a76beefad01487a95df349b",
+        "red_sha": "9df2a69b7f009fb7c8fb7301a778a27c4bd9fdf7",
+        "red_fast_run": {
+          "number": 115,
+          "id": 35631590908,
+          "conclusion": "failure"
+        },
+        "red_observed": [
+          "projection 91 overrode live 126",
+          "missing live raw reused stale projection 91"
+        ],
+        "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
+        "fix": "AutoCalUxModel.livePoint sources levelRaw from fresh telemetry live.level_raw/live.levelRaw"
+      }
     },
     {
       "behavior": "PetrolCurve/GasCurve",
