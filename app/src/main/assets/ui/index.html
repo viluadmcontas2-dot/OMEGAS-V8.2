@@ -125,8 +125,6 @@
               <button id="mapReviewButton" type="button" class="primary wide" disabled>Selecione células</button>
             </aside>
           </div>
-
-          <div class="operation-layer review-layer"><div class="operation-card"><header><div><small>REVISÃO</small><h3 id="mapReviewCount">Alterações preparadas</h3></div><button id="mapReviewBack" type="button" class="icon-close">×</button></header><div id="mapReviewList" class="review-list"></div><div class="write-contract"><b>A próxima ação escreve na ECU.</b><span>Checkpoint, ACK e readback continuam obrigatórios.</span></div><div class="operation-actions"><button id="mapWriteButton" type="button" class="danger-primary">Gravar alterações na ECU</button></div></div></div>
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Escrita manual em andamento</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Checkpoint</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="mapOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="mapDismissResult" type="button" class="secondary">Voltar ao mapa</button></div></div>
         </section>
@@ -174,7 +172,7 @@
                   <div class="context-separator"></div>
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
                   <div id="curveProposalList" class="proposal-list"><p>Nenhum ponto preparado.</p></div>
-                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Prepare pontos</button>
+                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Prepare pontos</button><small class="inline-help">Uma ação explícita aplica as alterações. O retorno é confirmado por ACK + readback da ECU.</small>
                 </aside>
               </div>
             </div>
