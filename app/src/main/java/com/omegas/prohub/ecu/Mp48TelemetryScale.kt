@@ -33,10 +33,7 @@ object Mp48TelemetryScale {
         return raw / GAS_PRESSURE_COUNTS_PER_BAR
     }
 
-    fun mapBar(raw: Int): Double {
-        require(raw >= 0) { "MAP bruto inválido: $raw" }
-        return raw / MAP_COUNTS_PER_BAR
-    }
+    fun mapBar(raw: Int): Double = raw / MAP_COUNTS_PER_BAR
 
 }
 

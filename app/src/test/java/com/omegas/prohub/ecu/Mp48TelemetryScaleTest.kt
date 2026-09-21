@@ -60,6 +60,20 @@ class Mp48TelemetryScaleTest {
     }
 
     @Test
+    fun `MAP live preserva signed word do ProgBase e high bit falha fechado`() {
+        val negativeMap = progBaseReferencePayload.copyOf().apply {
+            this[17] = 0xFF.toByte()
+            this[18] = 0xFF.toByte()
+        }
+        val telemetry = Mp48Protocol.decodeTelemetry(negativeMap, 0L)
+
+        assertEquals(-1, telemetry.mapRaw)
+        assertEquals(-0.001, telemetry.mapBar, 0.000001)
+        assertFalse(telemetry.plausible)
+        assertTrue(telemetry.plausibilityReasons.contains("MAP_OUT_OF_RANGE"))
+    }
+
+    @Test
     fun `pressao residual alta nao invalida gasolina nem bloqueia gnv mais`() {
         val highResidualPressure = progBaseReferencePayload.copyOf().apply {
             this[11] = 0x80.toByte() // gasolina

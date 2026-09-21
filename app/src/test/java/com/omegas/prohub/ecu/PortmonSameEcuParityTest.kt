@@ -53,6 +53,8 @@ class PortmonSameEcuParityTest {
 
     private fun u8(bytes: ByteArray, offset: Int): Int = bytes[offset].toInt() and 0xFF
     private fun u16(bytes: ByteArray, offset: Int): Int = u8(bytes, offset) or (u8(bytes, offset + 1) shl 8)
+    private fun s16(bytes: ByteArray, offset: Int): Int =
+        u16(bytes, offset).let { if (it >= 0x8000) it - 0x10000 else it }
 
     @Test
     fun `all captured live frames feed the production MP48 decoder at the recovered offsets`() {
@@ -70,7 +72,7 @@ class PortmonSameEcuParityTest {
             assertEquals(u8(payload, 13), decoded.levelRaw)
             assertEquals(u16(payload, 14), decoded.gasPressureRaw)
             assertEquals(u8(payload, 16), decoded.gasTemperatureRaw)
-            assertEquals(u16(payload, 17), decoded.mapRaw)
+            assertEquals(s16(payload, 17), decoded.mapRaw)
             assertEquals(u16(payload, 24), decoded.gas2Raw)
             assertEquals(u16(payload, 28), decoded.petrol2Raw)
             assertEquals(decoded.levelRaw, decoded.toJson().getInt("level_raw"))

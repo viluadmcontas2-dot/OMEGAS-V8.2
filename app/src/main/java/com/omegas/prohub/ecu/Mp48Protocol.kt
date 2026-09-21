@@ -78,7 +78,7 @@ object Mp48Protocol {
         val levelRaw = u8(payload, 13)
         val gasPressureRaw = u16le(payload, 14)
         val gasTemperatureRaw = u8(payload, 16)
-        val mapRaw = u16le(payload, 17)
+        val mapRaw = s16le(payload, 17)
         val unknownRaw19 = u8(payload, 19)
         val gas2Raw = u16le(payload, 24)
         val petrol2Raw = u16le(payload, 28)
@@ -163,6 +163,9 @@ object Mp48Protocol {
 
     private fun u16le(bytes: ByteArray, offset: Int): Int =
         u8(bytes, offset) or (u8(bytes, offset + 1) shl 8)
+
+    private fun s16le(bytes: ByteArray, offset: Int): Int =
+        u16le(bytes, offset).let { if (it >= 0x8000) it - 0x10000 else it }
 }
 
 enum class Mp48Fuel(val wireName: String) {
