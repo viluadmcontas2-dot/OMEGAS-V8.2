@@ -61,13 +61,8 @@ assert.equal(ref[1].gasEquivalentMs, 10.5);
 const freshTelemetry = {
   valid: true,
   ageMs: 2500,
-  live: { petrol_ms: 4.50, load_bar: 0.45, rpm: 900, level_raw: 173, fuel: 'GNV' },
+  live: { petrol_ms: 4.50, load_bar: 0.45, rpm: 900, fuel: 'GNV' },
 };
-assert.equal(
-  model.livePoint(freshTelemetry, { levelsRaw: 173 }).levelRaw,
-  173,
-  'LEVELS deve permanecer RAW quando a telemetria está fresca e a projeção Kotlin o confirma',
-);
 assert.equal(
   model.livePoint({ ...freshTelemetry, ageMs: 2501 }),
   null,
@@ -208,3 +203,9 @@ assert.match(source, /renderKCurve\(\)/);
 assert.match(source, /PETR_INJ_TBP × MUL_ACT/);
 assert.match(source, /sem alvo calculado pelo OMEGAS/);
 assert.equal(source.includes('targetK'), false, 'Curve K nativa não pode ganhar alvo calculado no JS');
+
+
+assert.equal(source.includes('LEVELS RAW'), false, 'LEVELS não pertence ao AutoCAL');
+assert.equal(source.includes('autocalLiveLevel'), false, 'AutoCAL não pode renderizar nível do cilindro');
+assert.equal(source.includes('levelsRaw'), false, 'projeção AutoCAL não pode carregar LEVELS');
+assert.equal(source.includes('level_raw'), false, 'AutoCAL não pode consumir sinal de nível do cilindro');
