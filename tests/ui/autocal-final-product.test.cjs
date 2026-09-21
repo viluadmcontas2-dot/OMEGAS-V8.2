@@ -45,10 +45,16 @@ assert.match(cockpit, /data-autocal-cancel-read/,
   'leitura em andamento precisa oferecer cancelamento');
 assert.match(cockpit, /this\.api\.projection/,
   'cockpit deve consumir a projeção Kotlin unificada');
-assert.match(bridge, /telemetryStatus\s*=\s*JSONObject\(service\.telemetryStore\.liveJson\(\)\)/,
-  'bridge deve fornecer telemetria viva ao projetor Kotlin para LEVELS RAW');
-assert.match(projection, /\.put\("levelsRaw"/,
-  'projeção Kotlin deve publicar levelsRaw');
+assert.equal(bridge.includes('telemetryStore.liveJson()'), false,
+  'AutoCal bridge não deve carregar LEVELS/telemetria global para a projeção');
+assert.equal(projection.includes('levelsRaw'), false,
+  'AutoCal projection não deve publicar LEVELS');
+assert.equal(projection.includes('telemetryStatus'), false,
+  'AutoCal projection deve depender apenas do estado/snapshot AutoCal');
+assert.equal(cockpit.includes('LEVELS RAW'), false,
+  'AutoCal HMI não deve exibir LEVELS');
+assert.equal(cockpit.includes('autocalLiveLevel'), false,
+  'AutoCal rail deve ficar restrito a RPM, Petrol Injection e MAP');
 assert.equal(cockpit.includes('this.api.readerSnapshot()'), false,
   'cockpit não pode escolher snapshot manual diretamente');
 assert.equal(cockpit.includes('this.api.acquisitionSnapshot()'), false,
