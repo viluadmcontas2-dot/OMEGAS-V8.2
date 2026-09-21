@@ -18,6 +18,10 @@ assert.match(source, /MAP \(bar\)/);
 assert.match(source, /autocal-axis-tick-x/);
 assert.match(source, /autocal-axis-tick-y/);
 assert.match(source, />SEM REFERÊNCIA</);
+assert.match(source, /REFERÊNCIA FORA DA JANELA/);
+assert.match(source, /referenceTimingSpanMs/);
+assert.match(source, /referenceTimingLimitMs/);
+assert.match(source, /Consulte a ECU novamente/);
 assert.equal(/\.concat\(live \? \[live\.mapBar\]/.test(source), false, 'AGORA não pode participar do domínio');
 
 const points = [
