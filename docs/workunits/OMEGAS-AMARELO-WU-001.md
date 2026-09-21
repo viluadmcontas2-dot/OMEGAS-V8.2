@@ -1,7 +1,7 @@
 # OMEGAS-AMARELO-WU-001 — Ground truth byte a byte do AutoCAL
 
 Issue: #73
-Estado: PLANNED
+Estado: ACTIVE
 Depende de: spec kit aprovado.
 
 ## Resultado observável
@@ -29,3 +29,9 @@ UI nova, Mapa K, APK.
 
 ## Verde gate
 Antes de começar: atualizar #80 com HEAD e delta.
+
+## Execução iniciada
+- Branch: `work/omegas-amarelo-wu001-autocal-ground-truth`
+- Parent remoto: `41be880bc13f02a33a25c2096bee599cfd6817b0`
+- Correção metodológica: o relógio Portmon é acumulado sobre todas as operações (incluindo IOCTL); `at_ms` marca o início do WRITE.
+- A análise temporal anterior que tratava o segundo campo como timestamp absoluto é inválida e não será promovida.

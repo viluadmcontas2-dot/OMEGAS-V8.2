@@ -1,0 +1,11 @@
+{
+  "schema": "omegas.amarelo.raw-excerpt.v1",
+  "sourceRawName": "PortmonAUTOCAL (1).LOG",
+  "sourceRawSha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+  "extraction": "first 220 physical lines, byte/text exact via Remote Desktop Commander read_file",
+  "sourceLineRange": [
+    1,
+    220
+  ],
+  "purpose": "prove Portmon operation clock and fragmented response reconstruction against portmon-autocal-cycle-v1.json"
+}

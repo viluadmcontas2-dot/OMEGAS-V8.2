@@ -1,0 +1,33 @@
+{
+  "schema": "omegas.amarelo.evidence.v1",
+  "workunit_id": "OMEGAS-AMARELO-WU-001",
+  "state": "IN_PROGRESS",
+  "branch": "work/omegas-amarelo-wu001-autocal-ground-truth",
+  "parent_sha": "41be880bc13f02a33a25c2096bee599cfd6817b0",
+  "sources": [
+    {
+      "name": "ProgBase.exe",
+      "sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+    },
+    {
+      "name": "PortmonAUTOCAL (1).LOG",
+      "sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b"
+    },
+    {
+      "name": "PortmonLOGNOVO.LOG",
+      "sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+    }
+  ],
+  "proven_now": [
+    "Portmon second numeric field is operation duration, not an absolute transaction clock.",
+    "Canonical transaction at_ms equals cumulative duration of all prior completed Portmon operations at start of WRITE.",
+    "LOGNOVO byte evidence decodes MAX_RPM_FOR_AUTOCAL as 3000 rpm.",
+    "LOGNOVO AutoMatch counter byte evidence includes 3 -> 0 -> 1 -> 2 -> 3 observations.",
+    "A post-candidate MUL_ACT observation is 30 x Q14 1.0."
+  ],
+  "not_yet_proven": [
+    "Exact wire command corresponding to ProgBase action codes 1/2/4/8.",
+    "Complete native AutoCal firmware state machine.",
+    "Host-vs-ECU numerical responsibility beyond observed mutation evidence."
+  ]
+}

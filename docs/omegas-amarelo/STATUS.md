@@ -19,8 +19,8 @@ Estado: **FOUNDATION / TRACEABILITY FIRST**
 - Radar Verde: #80
 
 ## Estado das WorkUnits
-- WU-001: PLANNED — primeira ativa após aprovação do spec kit.
-- WU-002..007: BLOCKED_BY_DEPENDENCY.
+- WU-001: ACTIVE — parser/timeline Portmon e byte-ground-truth em execução.
+- WU-002..007: BLOCKED_BY_DEPENDENCY; análises paralelas podem produzir evidência, mas não promovem estado sem gates.
 
 ## Evidência já confirmada
 - ProgBase 4.2.0.6 localizado e hashado.

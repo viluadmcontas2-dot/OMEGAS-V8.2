@@ -1,0 +1,88 @@
+{
+  "schema": "omegas.amarelo.portmon-evidence.v1",
+  "sourceRawName": "PortmonLOGNOVO.LOG",
+  "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+  "extraction": "stream IRP_MJ_WRITE + following successful fragmented IRP_MJ_READ; selected byte-exact evidence from AgentRed extraction",
+  "evidenceStatus": "BYTE_EXACT_FIXTURE; semantic labels are PROVEN only where noted",
+  "evidence": {
+    "READ_MUL_ACT": [
+      {
+        "sequence": 1475,
+        "portmon_index": 34421,
+        "request": "29 61 01 8B",
+        "response": "29 61 01 8B 53 3C B1 35 AE 35 A9 35 B6 33 6C 32 B3 32 77 34 80 37 2B 47 94 55 D3 54 40 53 8B 4E 99 4A 55 4C 59 50 01 50 5B 53 6E 53 A6 50 26 42 2B 3F B8 41 5E 42 91 45 91 45 91 45 91 45 91 45 44"
+      },
+      {
+        "sequence": 1496,
+        "portmon_index": 35349,
+        "request": "29 61 01 8B",
+        "response": "29 61 01 8B 53 3C 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 0F"
+      }
+    ],
+    "READ_AUTOMATCH_COUNT": [
+      {
+        "sequence": 349,
+        "portmon_index": 5689,
+        "request": "09 74 01 7E",
+        "response": "09 74 01 7E 53 01 03 57"
+      },
+      {
+        "sequence": 1502,
+        "portmon_index": 35595,
+        "request": "09 74 01 7E",
+        "response": "09 74 01 7E 53 01 00 54"
+      },
+      {
+        "sequence": 24671,
+        "portmon_index": 731703,
+        "request": "09 74 01 7E",
+        "response": "09 74 01 7E 53 01 01 55"
+      },
+      {
+        "sequence": 27874,
+        "portmon_index": 857432,
+        "request": "09 74 01 7E",
+        "response": "09 74 01 7E 53 01 02 56"
+      },
+      {
+        "sequence": 30178,
+        "portmon_index": 947713,
+        "request": "09 74 01 7E",
+        "response": "09 74 01 7E 53 01 03 57"
+      }
+    ],
+    "READ_MAX_RPM_AUTOCAL": [
+      {
+        "sequence": 350,
+        "portmon_index": 5700,
+        "request": "09 7A 01 84",
+        "response": "09 7A 01 84 53 02 B8 0B 18"
+      }
+    ],
+    "ENABLE_AUTOCAL_0": [
+      {
+        "sequence": 12615,
+        "portmon_index": 348836,
+        "request": "12 4A 01 00 5D",
+        "response": "12 4A 01 00 5D 53 00 53"
+      }
+    ],
+    "ENABLE_AUTOCAL_1": [
+      {
+        "sequence": 12691,
+        "portmon_index": 351804,
+        "request": "12 4A 01 01 5E",
+        "response": "12 4A 01 01 5E 53 00 53"
+      }
+    ],
+    "ACTION_CODE_4_FRAME_CANDIDATE": [
+      {
+        "status": "INFERRED_PENDING_CLOCK_CORRELATION",
+        "sequence": 1487,
+        "portmon_index": 34971,
+        "request": "02 24 04 04 2E",
+        "response": "02 24 04 04 2E 53 00 53"
+      }
+    ]
+  }
+}

@@ -1,0 +1,220 @@
+[\\SILVDOWN-58C615]
+0  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+0  0.00000307  SUCCESS  Length 1: 01 
+1  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+1  0.00000335  SUCCESS  Length 1: 00 
+2  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+2  0.00056460  SUCCESS  Length 1: 00 
+3  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+3  0.00169128  SUCCESS  Length 1: 00 
+4  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+4  0.00156808  SUCCESS  Length 1: 00 
+5  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+5  0.00000196  SUCCESS  Length 1: 00 
+6  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+6  0.00162479  SUCCESS  Length 1: 00 
+7  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+7  0.00000223  SUCCESS  Length 1: 00 
+8  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+8  0.00106857  SUCCESS  Length 1: 00 
+9  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+9  0.00149069  SUCCESS  Length 1: 00 
+10  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+10  0.00156053  SUCCESS  Length 1: E6 
+11  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+11  0.00000251  SUCCESS  Length 1: 06 
+12  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+12  0.00146499  SUCCESS  Length 1: 00 
+13  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+13  0.00150326  SUCCESS  Length 1: 00 
+14  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+14  0.00000251  SUCCESS  Length 1: 00 
+15  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+15  0.00156249  SUCCESS  Length 1: 00 
+16  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+16  0.00171921  SUCCESS  Length 1: 13 
+17  0.00000000  ProgBase.exe  IOCTL_SERIAL_PURGE  Silabser0  Purge: TXCLEAR RXCLEAR
+17  0.00197120  SUCCESS  
+18  0.00000000  ProgBase.exe  IRP_MJ_WRITE  Silabser0  Length 3: 48 01 49 
+18  0.00148930  SUCCESS  
+19  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+19  0.00335685  SUCCESS  Length 1: 48 
+20  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 2
+20  0.00239192  SUCCESS  Length 2: 01 49 
+21  0.00000000  ProgBase.exe  IOCTL_SERIAL_GET_TIMEOUTS  Silabser0  
+21  0.00000698  SUCCESS  
+22  0.00000000  ProgBase.exe  IOCTL_SERIAL_SET_TIMEOUTS  Silabser0  RI:100 RM:50 RC:1200 WM:50 WC:50
+22  0.00000419  SUCCESS  
+23  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+23  0.00147281  SUCCESS  Length 1: 53 
+24  0.00000000  ProgBase.exe  IOCTL_SERIAL_SET_TIMEOUTS  Silabser0  RI:100 RM:50 RC:200 WM:50 WC:50
+24  0.00000559  SUCCESS  
+25  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+25  0.00143203  SUCCESS  Length 1: 22 
+26  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+26  0.00152114  SUCCESS  Length 1: 65 
+27  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+27  0.00000196  SUCCESS  Length 1: 03 
+28  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+28  0.00148734  SUCCESS  Length 1: 32 
+29  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+29  0.00122641  SUCCESS  Length 1: 1F 
+30  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+30  0.00000196  SUCCESS  Length 1: 00 
+31  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+31  0.00165189  SUCCESS  Length 1: 00 
+32  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+32  0.00154657  SUCCESS  Length 1: 00 
+33  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+33  0.00000196  SUCCESS  Length 1: 00 
+34  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+34  0.00148510  SUCCESS  Length 1: EC 
+35  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+35  0.00155942  SUCCESS  Length 1: 06 
+36  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+36  0.00000223  SUCCESS  Length 1: 00 
+37  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+37  0.00142504  SUCCESS  Length 1: 80 
+38  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+38  0.00148622  SUCCESS  Length 1: 2C 
+39  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+39  0.00000223  SUCCESS  Length 1: B1 
+40  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+40  0.00148985  SUCCESS  Length 1: FA 
+41  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+41  0.00155997  SUCCESS  Length 1: 09 
+42  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+42  0.00000223  SUCCESS  Length 1: 39 
+43  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+43  0.00151975  SUCCESS  Length 1: 93 
+44  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+44  0.00140102  SUCCESS  Length 1: 01 
+45  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+45  0.00000168  SUCCESS  Length 1: 00 
+46  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+46  0.00161110  SUCCESS  Length 1: 00 
+47  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+47  0.00144488  SUCCESS  Length 1: 00 
+48  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+48  0.00000140  SUCCESS  Length 1: 00 
+49  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+49  0.00165356  SUCCESS  Length 1: 00 
+50  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+50  0.00000168  SUCCESS  Length 1: 00 
+51  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+51  0.00146750  SUCCESS  Length 1: 00 
+52  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+52  0.00157115  SUCCESS  Length 1: 00 
+53  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+53  0.00000168  SUCCESS  Length 1: 00 
+54  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+54  0.00148650  SUCCESS  Length 1: EA 
+55  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+55  0.00152924  SUCCESS  Length 1: 06 
+56  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+56  0.00000168  SUCCESS  Length 1: 00 
+57  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+57  0.00152897  SUCCESS  Length 1: 00 
+58  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+58  0.00102304  SUCCESS  Length 1: 00 
+59  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+59  0.00000196  SUCCESS  Length 1: 00 
+60  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+60  0.00137252  SUCCESS  Length 1: 3D 
+61  0.00000000  ProgBase.exe  IOCTL_SERIAL_PURGE  Silabser0  Purge: TXCLEAR RXCLEAR
+61  0.00173877  SUCCESS  
+62  0.00000000  ProgBase.exe  IRP_MJ_WRITE  Silabser0  Length 3: 48 01 49 
+62  0.00153371  SUCCESS  
+63  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+63  0.00335657  SUCCESS  Length 1: 48 
+64  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 2
+64  0.00321577  SUCCESS  Length 2: 01 49 
+65  0.00000000  ProgBase.exe  IOCTL_SERIAL_GET_TIMEOUTS  Silabser0  
+65  0.00000587  SUCCESS  
+66  0.00000000  ProgBase.exe  IOCTL_SERIAL_SET_TIMEOUTS  Silabser0  RI:100 RM:50 RC:1200 WM:50 WC:50
+66  0.00000391  SUCCESS  
+67  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+67  0.00149991  SUCCESS  Length 1: 53 
+68  0.00000000  ProgBase.exe  IOCTL_SERIAL_SET_TIMEOUTS  Silabser0  RI:100 RM:50 RC:200 WM:50 WC:50
+68  0.00000587  SUCCESS  
+69  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+69  0.00156417  SUCCESS  Length 1: 22 
+70  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+70  0.00000223  SUCCESS  Length 1: 65 
+71  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+71  0.00162032  SUCCESS  Length 1: 03 
+72  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+72  0.00000251  SUCCESS  Length 1: 32 
+73  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+73  0.00170971  SUCCESS  Length 1: 1F 
+74  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+74  0.00130408  SUCCESS  Length 1: 00 
+75  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+75  0.00000251  SUCCESS  Length 1: 00 
+76  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+76  0.00157757  SUCCESS  Length 1: 00 
+77  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+77  0.00161780  SUCCESS  Length 1: 00 
+78  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+78  0.00000251  SUCCESS  Length 1: E9 
+79  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+79  0.00164546  SUCCESS  Length 1: 06 
+80  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+80  0.00000251  SUCCESS  Length 1: 00 
+81  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+81  0.00151500  SUCCESS  Length 1: 80 
+82  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+82  0.00165133  SUCCESS  Length 1: 2C 
+83  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+83  0.00000251  SUCCESS  Length 1: B1 
+84  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+84  0.00152561  SUCCESS  Length 1: F2 
+85  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+85  0.00164546  SUCCESS  Length 1: 09 
+86  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+86  0.00000251  SUCCESS  Length 1: 39 
+87  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+87  0.00152030  SUCCESS  Length 1: 93 
+88  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+88  0.00000251  SUCCESS  Length 1: 01 
+89  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+89  0.00172648  SUCCESS  Length 1: 00 
+90  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+90  0.00140297  SUCCESS  Length 1: 00 
+91  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+91  0.00000251  SUCCESS  Length 1: 00 
+92  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+92  0.00166138  SUCCESS  Length 1: 00 
+93  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+93  0.00160719  SUCCESS  Length 1: 00 
+94  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+94  0.00000223  SUCCESS  Length 1: 00 
+95  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+95  0.00167088  SUCCESS  Length 1: 00 
+96  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+96  0.00000251  SUCCESS  Length 1: 00 
+97  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+97  0.00149432  SUCCESS  Length 1: 00 
+98  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+98  0.00246512  SUCCESS  Length 1: EA 
+99  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+99  0.00000251  SUCCESS  Length 1: 06 
+100  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+100  0.00051822  SUCCESS  Length 1: 00 
+101  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+101  0.00158372  SUCCESS  Length 1: 00 
+102  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+102  0.00000223  SUCCESS  Length 1: 00 
+103  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+103  0.00159909  SUCCESS  Length 1: 00 
+104  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+104  0.00159294  SUCCESS  Length 1: 32 
+105  0.00000000  ProgBase.exe  IOCTL_SERIAL_PURGE  Silabser0  Purge: TXCLEAR RXCLEAR
+105  0.00151220  SUCCESS  
+106  0.00000000  ProgBase.exe  IRP_MJ_WRITE  Silabser0  Length 3: 48 01 49 
+106  0.00140297  SUCCESS  
+107  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 1
+107  0.00311017  SUCCESS  Length 1: 48 
+108  0.00000000  ProgBase.exe  IRP_MJ_READ  Silabser0  Length 2
+108  0.00293361  SUCCESS  Length 2: 01 49 
+109  0.00000000  ProgBase.exe  IOCTL_SERIAL_GET_TIMEOUTS  Silabser0  
