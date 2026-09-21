@@ -315,9 +315,11 @@ class DashboardLevelsRenderTest {
             mapLive: document.getElementById('mapLiveLabel')?.textContent ?? null,
             mapCell: document.getElementById('mapLiveCell')?.textContent ?? null,
             mapSource: document.getElementById('mapSourceStatus')?.textContent ?? null,
+            mapGridText: document.getElementById('mapGrid')?.innerText ?? null,
             curveSource: document.getElementById('curveSourceStatus')?.textContent ?? null,
             obdStatus: document.getElementById('obdStatusPill')?.textContent ?? null,
             obdStft: document.getElementById('obdStft')?.textContent ?? null,
+            obdRpm: document.getElementById('obdRpm')?.textContent ?? null,
             obdConnection: document.getElementById('obdConnection')?.textContent ?? null,
             obdDecision: document.getElementById('obdLiveDecision')?.textContent ?? null
           };
@@ -357,6 +359,8 @@ class DashboardLevelsRenderTest {
             assertTrue("Map must receive live RPM through PresentSnapshot", dom.optString("mapLive").contains("869 RPM"))
             assertTrue("Map must receive live Petrol Injection through PresentSnapshot", dom.optString("mapLive").contains("4,54 ms"))
             assertTrue("Map live cell must stay explicit instead of fabricating undefined coordinates", !dom.optString("mapCell").contains("undefined", ignoreCase = true))
+            assertEquals("Offline ECU read must settle as not confirmed", "Mapa não confirmado", dom.optString("mapSource"))
+            assertTrue("Failed map read must clear the stale loading spinner", !dom.optString("mapGridText").contains("Lendo Mapa K da ECU"))
             assertTrue("Map must never render NaN", !dom.getBoolean("bodyHasNaN"))
             assertTrue("Map must never render undefined", !dom.getBoolean("bodyHasUndefined"))
         } finally {
@@ -390,6 +394,7 @@ class DashboardLevelsRenderTest {
             assertTrue("OBD route must activate", dom.getBoolean("active"))
             assertEquals("OBD offline", dom.optString("obdStatus"))
             assertEquals("—", dom.optString("obdStft"))
+            assertEquals("Offline MP48/OBD must not masquerade as measured zero RPM", "—", dom.optString("obdRpm"))
             assertTrue("OBD connection copy must remain disconnected without ELM hardware", dom.optString("obdConnection").contains("desconectado", ignoreCase = true))
             assertTrue("OBD must never render NaN", !dom.getBoolean("bodyHasNaN"))
             assertTrue("OBD must never render undefined", !dom.getBoolean("bodyHasUndefined"))
