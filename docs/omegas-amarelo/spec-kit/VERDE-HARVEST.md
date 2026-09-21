@@ -59,3 +59,15 @@ Delta desde `b65b90bbad72c40890a383448a879b040ee05342`: 4 commits.
 - **REJECT AS AUTHORITY** — qualquer inferência de semântica nativa AutoCAL a partir dessas mudanças de UI/runner.
 
 Nenhum ativo deste delta altera o contrato WU-001. Próximo watermark parte de `361904c5ad28fc6a7451c37d10fb76057bf5eee8`.
+
+
+## Watermark delta — 2026-09-21 — `d231f230e5ed09e7003fe62538efa0090214ca9b`
+Delta desde `361904c5ad28fc6a7451c37d10fb76057bf5eee8`: 11 commits.
+
+### Classificação
+- **HARVEST** — padrão de fan-out com agregação a partir da verdade de cada job em `.github/workflows/verde-global-reality-fanout.yml`; útil como desenho de compute/evidence, não como ciência nativa.
+- **REVALIDATE** — `PortmonSameEcuParityTest.kt`, contrato de sessão canônica e endurecimento do render Android; só podem ser promovidos após gates Amarelo e corpus dual-Portmon.
+- **REFERENCE ONLY** — `STATUS.md`, WU-006 Verde, dashboard/render e mudanças do runtime `Mp48Protocol.kt`/`Mp48TelemetryScale.kt`.
+- **REJECT AS AUTHORITY** — qualquer semântica de protocolo, AutoCAL, escala ou estado inferida do runtime Verde em vez de ProgBase 4.2.0.6 + Portmons crus.
+
+Nenhum merge/cherry-pick wholesale. Este delta não substitui a autoridade nativa do WU-001/WU-002. Próximo watermark parte de `d231f230e5ed09e7003fe62538efa0090214ca9b`.
