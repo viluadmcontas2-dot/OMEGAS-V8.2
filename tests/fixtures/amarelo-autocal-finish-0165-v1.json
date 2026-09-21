@@ -6,21 +6,24 @@
     "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
   },
   "rtti": {
-    "DM+0x7C": {
+    "DM+0x78": {
       "name": "VECT_AUTOCAL_U8_1",
-      "status": "PROVEN"
+      "status": "PROVEN_RTTI_BYTE_LAYOUT"
     },
-    "DM+0x80": {
+    "DM+0x7C": {
       "name": "VECT_AUTOCAL_U8_2",
-      "status": "PROVEN"
+      "alias": "MAX_AUTOMATCH",
+      "status": "PROVEN_RTTI_BYTE_LAYOUT"
+    },
+    "DM+0xC8": {
+      "name": "VECT_AUTOCAL_U8_0",
+      "status": "PROVEN_RTTI_BYTE_LAYOUT"
     },
     "DM+0xCC": {
-      "name": "VECT_AUTOCAL_U8_0",
-      "status": "PROVEN"
-    },
-    "DM+0xD0": {
       "name": "NUM_ATUOMATCH_EXECUTED",
-      "status": "PROVEN"
+      "canonical_spelling": "NUM_AUTOMATCH_EXECUTED",
+      "serialCode": "0x0174",
+      "status": "PROVEN_RTTI_BYTE_LAYOUT"
     }
   },
   "dfm": {
@@ -82,17 +85,27 @@
     "function": "ActionFinishAutocalExecute@0x51A390",
     "read": {
       "field": "DM+0x7C",
-      "semantic": "VECT_AUTOCAL_U8_1",
+      "semantic": "VECT_AUTOCAL_U8_2 / MAX_AUTOMATCH",
       "getter": "0x976C44"
     },
     "write": {
       "field": "DM+0xCC",
-      "semantic": "VECT_AUTOCAL_U8_0",
+      "semantic": "NUM_ATUOMATCH_EXECUTED",
+      "serialCode": "0x0174",
       "setter": "0x976CB8"
     },
     "post_write_wait_ms": 100,
     "refresh": "PostActionRefresh@0x5162F8",
-    "status": "PROVEN_STATIC"
+    "status": "PROVEN_STATIC",
+    "routine_bytes": [
+      "0x51A41C mov eax,[esi+0x7C]",
+      "0x51A41F call 0x976C44",
+      "0x51A424 mov edx,eax",
+      "0x51A426 mov eax,[esi+0xCC]",
+      "0x51A42C call 0x976CB8",
+      "0x51A431 wait 100 ms",
+      "0x51A43B call PostActionRefresh@0x5162F8"
+    ]
   },
   "setter_static_path": {
     "0x976CB8": "integer-to-TAebNumber setter wrapper",
@@ -116,10 +129,13 @@
     }
   },
   "conclusions": {
-    "finish_copies_u8_1_value_into_u8_0": "PROVEN_STATIC",
+    "finish_sets_num_automatch_executed_to_max_automatch": "PROVEN_STATIC",
+    "old_u8_1_to_u8_0_interpretation": "FALSIFIED_BY_RTTI_BYTE_LAYOUT_AND_DIRECT_ASSEMBLY",
     "finish_path_can_reach_serial_commit_when_connected": "PROVEN_STATIC",
-    "finish_0x0165_write_observed_in_supplied_raw": "NO",
-    "exact_physical_effect_in_ecu_after_finish": "UNKNOWN",
+    "finish_0x0174_write_observed_in_supplied_raw": "NO",
+    "completion_intent_from_field_names": "SUPPORTED",
+    "exact_ecu_side_effect_after_write": "UNKNOWN",
     "levels_related": "FALSIFIED"
-  }
+  },
+  "correction_note": "Previous RTTI interpretation assigned offsets after the field name instead of reading the field-entry offset before the Pascal short-string name. Direct byte layout plus ActionFinishAutocalExecute proves the corrected map."
 }
