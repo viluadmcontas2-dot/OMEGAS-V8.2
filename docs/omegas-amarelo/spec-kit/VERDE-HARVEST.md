@@ -82,3 +82,15 @@ Delta desde `c05062211f37f54e6f5ba85859cd6c3be68d06d2`: 3 commits.
 - **REJECT AS AUTHORITY** — qualquer semântica de pontos, zonas, buffers anteriores, Curve K ou estado derivada dessa UI Verde em vez de ProgBase + dual Portmon.
 
 Nenhum merge/cherry-pick wholesale. A implementação Amarelo continua orientada pelo consumer graph nativo e pelo payload tipado próprio.
+
+
+## Watermark delta — 2026-09-21 — `1f044b8991291f699e1cf73a70ff0f3333e41ee6`
+Delta desde `f4acc3c84d3d91ffdc9817de4f8493904cbd6b27`: 11 commits.
+
+### Classificação
+- **HARVEST (princípio de domínio)** — LEVELS deve permanecer fora do modelo/live AutoCAL; coincide com a correção de fronteira feita no Amarelo.
+- **REVALIDATE** — testes de scope/hierarquia e fixture de equivalência deslocada; úteis apenas se passarem contratos Amarelo.
+- **REFERENCE ONLY** — render Android/dashboard e refinamentos visuais específicos do Verde.
+- **REJECT AS AUTHORITY** — qualquer semântica nativa de AutoCAL/LEVELS derivada do runtime Verde em vez de ProgBase + Portmons.
+
+Nenhum merge/cherry-pick wholesale. O Amarelo mantém LEVELS exclusivamente em Dashboard/Agora e AutoCAL sem esse sinal.
