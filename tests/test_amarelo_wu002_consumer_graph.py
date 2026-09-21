@@ -52,6 +52,24 @@ class NativeConsumerGraphContractTest(unittest.TestCase):
         self.assertIn("state_acquire_petrol_line", labels)
         self.assertIn("state_draw_gas_petrol_curve", labels)
 
+        roles = {row["label"]: row for row in states["resolved_refresh_roles"]}
+        self.assertEqual(roles["state_0"]["role"], "PetrolPoint + petrol maturity/polling")
+        self.assertEqual(roles["state_1"]["role"], "GasPointPrev")
+        self.assertEqual(roles["state_2"]["role"], "GasPoint + gas maturity/polling")
+        self.assertEqual(roles["state_3"]["role"], "KLine = PETR_INJ_TBP x MUL_ACT")
+        self.assertEqual(roles["state_4"]["role"], "acquisition areas / acquired zones")
+
+        refs = states["reference_line_scheduler"]
+        self.assertEqual(refs["petrol"]["semantic"], "PETR_MNFLD_PRESS_RV")
+        self.assertEqual(refs["gas"]["semantic"], "GAS_MNFLD_PRESS_RV")
+        self.assertEqual(refs["petrol"]["parity_byte"], "0xA9DA18")
+        self.assertEqual(refs["gas"]["parity_byte"], "0xA9DA19")
+
+        projection = states["curve_projection"]
+        self.assertEqual(projection["common_x_semantic"], "PETR_INJ_TBP")
+        self.assertEqual(projection["status"], "PROVEN")
+        self.assertIn("not evidence of a new ECU calibration mutation", projection["authority_boundary"])
+
 
 if __name__ == "__main__":
     unittest.main()
