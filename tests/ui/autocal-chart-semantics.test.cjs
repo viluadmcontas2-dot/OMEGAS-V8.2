@@ -87,9 +87,9 @@ assert.match(source, /Telemetria com atraso/);
 assert.match(source, /AGORA foi ocultado/);
 
 
-const previousProjection = { sessionId: 101 };
-const sameSessionProjection = { sessionId: 101 };
-const nextSessionProjection = { sessionId: 202 };
+const previousProjection = { sessionId: 101, referenceUsable: true };
+const sameSessionProjection = { sessionId: 101, referenceUsable: true };
+const nextSessionProjection = { sessionId: 202, referenceUsable: true };
 const oldReferenceSnapshot = {
   snapshotHash: 'old-reference',
   fields: snapshot.fields,
