@@ -1,0 +1,37 @@
+{
+  "schema": "omegas.amarelo.autocal-enable-automatch-coupling-v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "progbase_resource": {
+    "control": "CheckAutoCalEnable",
+    "value_binding": "AutoCalDM.AUTO_CAL_ENABLE",
+    "before_set_handler": "CheckAutoCalEnableBeforeSetData",
+    "caption_original": "Abilita autocalibrazione",
+    "status": "PROVEN_RESOURCE"
+  },
+  "manual_automatch": {
+    "action": "ActionAutoMatch",
+    "caption": "Manual automatch",
+    "handler": "ActionAutoMatchExecute",
+    "action_code": 8,
+    "separate_from_enable_control": true,
+    "status": "PROVEN_RESOURCE_STATIC"
+  },
+  "raw_lognovo": {
+    "enable_frame": "12 4A 01 01 5E",
+    "disable_frame": "12 4A 01 00 5D",
+    "enable_writes": 4,
+    "disable_writes": 4,
+    "manual_action8_frame_prefix": "02 24 04 08",
+    "manual_action8_writes": 0
+  },
+  "conclusions": {
+    "auto_cal_enable_is_single_host_mode_control": "PROVEN",
+    "host_sends_separate_manual_automatch_when_enabling": "FALSIFIED_IN_LOGNOVO",
+    "automatic_automatch_requires_second_ui_enable": "FALSIFIED_PRODUCT_MODEL",
+    "automatic_automatch_internal_ecu_mechanism": "SUPPORTED_NOT_BYTE_LEVEL_PROVEN",
+    "ui_contract": "One human control may enable/disable native Auto Calibration mode. Do not add a second AutoMatch-enable writer."
+  }
+}
