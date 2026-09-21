@@ -202,6 +202,13 @@ def meta_oracle_source_semantics():
             mismatches.append(f"live {semantic}: source expression absent")
     for row in oracle["autocal_dm"]:
         name = row["name"]
+        if name == "VECT_AUTOCAL_U8_0_1_2":
+            # The original oracle proves one 0x0165 family but not exact
+            # subindex semantics. OMEGAS intentionally exposes only the
+            # currently named index 1 plus the still-debt-tracked index 2.
+            if "VECT_AUTOCAL_U8_1" not in protocol or "MAX_AUTOMATCH" not in protocol:
+                mismatches.append("AutoCal 0x0165 indexed family missing")
+            continue
         if name not in protocol:
             mismatches.append(f"AutoCal field name missing: {name}")
             continue
@@ -261,10 +268,15 @@ def meta_mutation_negative_bundle():
                    metrics={"detected": detected})
 
 def meta_forensic_selftest():
-    rc, out = command(["python3", "tools/ci/autocal_forensic_plan.py"])
-    if rc != 0:
-        return receipt("BROKEN", "Forensic planner executes", [out])
-    matrix = json.loads(out)
+    proc = subprocess.run(
+        ["python3", "tools/ci/autocal_forensic_plan.py"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        return receipt("BROKEN", "Forensic planner executes", [proc.stdout, proc.stderr])
+    matrix = json.loads(proc.stdout)
     lanes = matrix.get("include", [])
     ids = [x["id"] for x in lanes]
     tx = [x for x in lanes if x.get("category") == "transaction"]

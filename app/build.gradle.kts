@@ -57,6 +57,7 @@ android {
         targetSdk = 35
         versionCode = releaseInt("versionCode")
         versionName = releaseString("versionName")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", releaseString("appLabel"))
 
         buildConfigField("String", "OMEGAS_PRODUCT", buildConfigString(releaseString("product")))
@@ -116,6 +117,8 @@ android {
         buildConfig = true
     }
 
+    sourceSets.getByName("androidTest").assets.srcDir(rootProject.file("tests/fixtures"))
+
     packaging {
         resources.excludes += setOf(
             "META-INF/DEPENDENCIES",
@@ -134,5 +137,8 @@ dependencies {
     implementation("com.github.mik3y:usb-serial-for-android:3.8.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+    androidTestImplementation("androidx.test:core-ktx:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
 }
 

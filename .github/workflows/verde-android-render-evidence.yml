@@ -1,0 +1,100 @@
+name: OmegasVerde Android render evidence
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [OmegasVerde]
+    paths:
+      - '.github/workflows/verde-android-render-evidence.yml'
+      - 'app/build.gradle.kts'
+      - 'app/src/androidTest/**'
+      - 'app/src/main/assets/ui/**'
+      - 'app/src/main/java/com/omegas/prohub/MainActivity.kt'
+      - 'app/src/main/java/com/omegas/prohub/web/**'
+      - 'app/src/main/java/com/omegas/prohub/telemetry/**'
+      - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
+      - 'tests/fixtures/portmon-autocal-cycle-v1.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-verde-android-render-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - scenario: dashboard-fresh
+            method: dashboardFreshLevelsRaw
+          - scenario: dashboard-invalid
+            method: dashboardInvalidLevelsPlaceholder
+          - scenario: autocal-fresh-control
+            method: autocalFreshLevelsControl
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Prepare Android emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "emulator" "platforms;android-35" "system-images;android-35;google_apis;x86_64"
+          echo no | avdmanager create avd --force -n omegas-ci -k "system-images;android-35;google_apis;x86_64"
+          sudo chmod 666 /dev/kvm || true
+          nohup "$ANDROID_HOME/emulator/emulator" -avd omegas-ci -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none > emulator.log 2>&1 &
+          adb wait-for-device
+          for i in $(seq 1 180); do
+            if [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; then break; fi
+            sleep 2
+          done
+          test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell wm size 1280x720
+          adb shell wm density 160
+      - name: Build app and instrumentation APK
+        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+      - name: Install and authorize test app
+        shell: bash
+        run: |
+          set -euo pipefail
+          adb install -r app/build/outputs/apk/debug/app-debug.apk
+          adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          adb shell pm grant com.omegas.v7.test android.permission.POST_NOTIFICATIONS || true
+          adb shell dumpsys deviceidle whitelist +com.omegas.v7.test || true
+      - name: Run real WebView evidence scenario
+        id: instrument
+        shell: bash
+        run: |
+          set -o pipefail
+          adb shell am instrument -w -r             -e class "com.omegas.prohub.DashboardLevelsRenderTest#${{ matrix.method }}"             com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner             | tee instrumentation.txt
+      - name: Pull rendered evidence
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p rendered-evidence
+          adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
+          adb exec-out screencap -p > "rendered-evidence/${{ matrix.scenario }}-post.png" || true
+          cp instrumentation.txt rendered-evidence/ 2>/dev/null || true
+          cp emulator.log rendered-evidence/ 2>/dev/null || true
+      - name: Upload rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-${{ matrix.scenario }}
+          path: rendered-evidence
+          retention-days: 7
+          if-no-files-found: warn
