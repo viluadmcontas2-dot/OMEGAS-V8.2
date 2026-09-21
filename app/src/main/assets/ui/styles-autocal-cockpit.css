@@ -211,6 +211,12 @@
   background: #f0c45c;
 }
 
+.autocal-chart-legend .current-band::before {
+  height: 8px;
+  border: 1px solid rgba(255,255,255,.26);
+  background: rgba(79,163,255,.16);
+}
+
 .autocal-chart-host {
   position: relative;
   width: 100%;
@@ -912,6 +918,14 @@
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
+.autocal-current-band-layer {
+  fill: rgba(79,163,255,.10);
+  stroke: rgba(120,183,255,.38);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
 .autocal-live-layer {
   pointer-events: none;
 }

@@ -161,6 +161,26 @@
       return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
     },
 
+    currentBand(snapshot = {}, live = {}) {
+      const thresholds = physicalVector(snapshot, 'MNFLD_PRESS_THD');
+      const mapBar = finite(live?.mapBar ?? live?.load_bar ?? live?.map_bar);
+      if (mapBar === null || thresholds.length < 2) return null;
+      if (thresholds.some(value => finite(value) === null)) return null;
+
+      const values = thresholds.map(Number);
+      for (let index = 0; index < values.length - 1; index += 1) {
+        if (!(values[index + 1] > values[index])) return null;
+      }
+      if (!(mapBar > values[0] && mapBar < values[values.length - 1])) return null;
+
+      for (let index = 0; index < values.length - 1; index += 1) {
+        if (mapBar > values[index] && mapBar <= values[index + 1]) {
+          return { index, lower: values[index], upper: values[index + 1] };
+        }
+      }
+      return null;
+    },
+
     referencePoints(snapshot = {}, analysis = {}) {
       const petrolMs = physicalVector(snapshot, 'PETR_INJ_TBP');
       const petrolMap = physicalVector(snapshot, 'PETR_MNFLD_PRESS_RV');
@@ -432,7 +452,7 @@
                   <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 </div>
               </div>
-              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="equivalence">GNV equivalente</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
+              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="equivalence">GNV equivalente</span><span class="current-band">Faixa MAP atual</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
               <div class="autocal-live-strip" aria-live="polite">
                 <div class="autocal-live-summary"><small>AGORA</small><b id="autocalLiveTitle">Aguardando telemetria</b><span id="autocalLiveFuel">—</span></div>
                 <div class="autocal-live-metric"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
@@ -849,9 +869,31 @@
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       const scale = this.chartScale;
       const layer = this.panel?.querySelector('.autocal-live-layer');
+      const bandLayer = this.panel?.querySelector('[data-autocal-current-band]');
       if (!live) {
         if (layer) layer.setAttribute('display', 'none');
+        if (bandLayer) bandLayer.setAttribute('display', 'none');
         return;
+      }
+      if (scale && bandLayer) {
+        const band = AutoCalUxModel.currentBand(this.snapshot || {}, live);
+        const lower = band ? Math.max(band.lower, scale.yMin) : null;
+        const upper = band ? Math.min(band.upper, scale.yMax) : null;
+        if (band && lower !== null && upper !== null && upper > lower) {
+          const x1 = scale.xFor(scale.xMin);
+          const x2 = scale.xFor(scale.xMax);
+          const y1 = scale.yFor(lower);
+          const y2 = scale.yFor(upper);
+          bandLayer.removeAttribute('display');
+          bandLayer.setAttribute('data-band-index', String(band.index));
+          bandLayer.setAttribute('x', Math.min(x1, x2).toFixed(1));
+          bandLayer.setAttribute('width', Math.abs(x2 - x1).toFixed(1));
+          bandLayer.setAttribute('y', Math.min(y1, y2).toFixed(1));
+          bandLayer.setAttribute('height', Math.max(1, Math.abs(y2 - y1)).toFixed(1));
+        } else {
+          bandLayer.setAttribute('display', 'none');
+          bandLayer.removeAttribute('data-band-index');
+        }
       }
       if (!scale || !layer) return;
       const projected = AutoCalUxModel.projectLive(live, scale);
@@ -996,6 +1038,7 @@
         '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
         '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
         '<g>' +
+        '<rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>' +
         previous + equivalencePath +
         '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
         '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
@@ -1004,7 +1047,7 @@
 
       const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
       this.inspectReferencePoint(selected);
-      this.renderLiveNarrative();
+      this.renderLiveCursor();
     }
 
     inspectReferencePoint(index) {
