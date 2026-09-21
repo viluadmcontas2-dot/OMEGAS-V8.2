@@ -11,8 +11,11 @@ for p in sorted((ROOT/"tests").glob("test_*.py")):
         lanes.append({"id":"py_"+p.stem,"kind":"python","target":str(p.relative_to(ROOT)),"os":"ubuntu-latest"})
 
 for p in sorted((ROOT/"tests/ui").glob("*.test.cjs")):
-    if KEYWORDS.search(p.name):
-        lanes.append({"id":"node_"+p.stem.replace(".test",""),"kind":"node","target":str(p.relative_to(ROOT)),"os":"ubuntu-latest"})
+    if not KEYWORDS.search(p.name):
+        continue
+    source=p.read_text("utf-8",errors="ignore")
+    kind="jvm_node" if "@requires-gradle-test-results" in source else "node"
+    lanes.append({"id":"node_"+p.stem.replace(".test",""),"kind":kind,"target":str(p.relative_to(ROOT)),"os":"ubuntu-latest"})
 
 for p in sorted((ROOT/"app/src/test/java").rglob("*Test.kt")):
     rel=str(p.relative_to(ROOT))

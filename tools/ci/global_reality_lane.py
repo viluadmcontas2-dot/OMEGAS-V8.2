@@ -20,9 +20,18 @@ elif args.kind=="node":
     cmd=["node","--test",args.target]
 elif args.kind=="jvm":
     cmd=["./gradlew","testDebugUnitTest","--tests",args.target,"--stacktrace"]
+elif args.kind=="jvm_node":
+    prerequisite = ["./gradlew","testDebugUnitTest","--tests","com.omegas.prohub.LearningLatencyContractTest","--stacktrace"]
+    rc1,seconds1,out1=run(prerequisite)
+    if rc1 != 0:
+        rc,seconds,out=rc1,seconds1,out1
+    else:
+        rc2,seconds2,out2=run(["node","--test",args.target])
+        rc,seconds,out=rc2,seconds1+seconds2,out1+"\n--- JVM->NODE ---\n"+out2
 else:
     raise SystemExit(f"unknown kind {args.kind}")
-rc,seconds,out=run(cmd)
+if args.kind!="jvm_node":
+    rc,seconds,out=run(cmd)
 receipt={
     "id":args.id,
     "kind":args.kind,
