@@ -140,31 +140,21 @@
     },
     {
       "from": "ActionFinishAutocalExecute:0x51A390",
-      "to": "DM+0x7C",
+      "to": "VECT_AUTOCAL_U8_1@DM+0x7C",
       "transform": "scalar getter 0x976C44",
       "status": "PROVEN"
     },
     {
-      "from": "DM+0x7C",
-      "to": "DM+0xCC",
-      "transform": "same scalar passed to setter 0x976CB8",
-      "status": "PROVEN"
+      "from": "VECT_AUTOCAL_U8_1@DM+0x7C",
+      "to": "VECT_AUTOCAL_U8_0@DM+0xCC",
+      "transform": "same integer passed through TAebNumber setter 0x976CB8",
+      "status": "PROVEN_STATIC"
     },
     {
-      "from": "DM+0xCC",
+      "from": "VECT_AUTOCAL_U8_0@DM+0xCC",
       "to": "PostActionRefresh:0x5162F8",
-      "transform": "100ms wait then refresh(1)",
-      "status": "PROVEN"
-    },
-    {
-      "from": "DM+0x7C",
-      "to": "VECT_AUTOCAL_U8_2_or_NUM_AUTOMATCH_EXECUTED",
-      "status": "UNKNOWN"
-    },
-    {
-      "from": "DM+0xCC",
-      "to": "VECT_AUTOCAL_U8_2_or_NUM_AUTOMATCH_EXECUTED",
-      "status": "UNKNOWN"
+      "transform": "connection-aware TAebNumber commit path -> 100ms wait -> refresh(1)",
+      "status": "PROVEN_STATIC"
     }
   ],
   "states": {
@@ -387,15 +377,59 @@
       "zone_flag_percent_completion": "FALSIFIED",
       "firmware_counter_to_zone_threshold": "UNKNOWN",
       "ui_contract": "current native acquisition points remain visible independently of zone-flag completion"
+    },
+    "finish_autocal": {
+      "handler": "ActionFinishAutocalExecute:0x51A390",
+      "source_field": {
+        "offset": "DM+0x7C",
+        "semantic": "VECT_AUTOCAL_U8_1",
+        "status": "PROVEN_RTTI"
+      },
+      "destination_field": {
+        "offset": "DM+0xCC",
+        "semantic": "VECT_AUTOCAL_U8_0",
+        "status": "PROVEN_RTTI"
+      },
+      "destination_commit": {
+        "wrapper": "0x976CB8",
+        "validator_update": "0x976DF0",
+        "connection_aware_commit": "0x977014",
+        "status": "PROVEN_STATIC",
+        "raw_write_observed": false
+      },
+      "serial_family": {
+        "address": "0x0165",
+        "observed_in_PortmonAUTOCAL": 0,
+        "observed_in_PortmonLOGNOVO": 9,
+        "index1": {
+          "request": "0A 65 01 01 71",
+          "semantic": "VECT_AUTOCAL_U8_1",
+          "status": "PROVEN"
+        },
+        "index2": {
+          "request": "0A 65 01 02 72",
+          "semantic": "VECT_AUTOCAL_U8_2",
+          "status": "PROVEN"
+        },
+        "index0": {
+          "request": "0A 65 01 00 70",
+          "semantic": "VECT_AUTOCAL_U8_0",
+          "status": "INFERRED_STRONG"
+        }
+      },
+      "post_write_wait_ms": 100,
+      "refresh": "PostActionRefresh:0x5162F8",
+      "exact_ecu_physical_effect": "UNKNOWN",
+      "status": "PROVEN_STATIC_NOT_RAW_WRITE_OBSERVED"
     }
   },
   "unknowns": [
-    "Exact semantic identity of DM+0x7C and DM+0xCC in Finish.",
-    "Exact 0x0165 subindex semantics.",
     "Any ECU/physical AutoCAL state machine distinct from the proven refresh-dispatch scheduler; transition producers/guards remain UNKNOWN.",
     "Exact producer/consumer transforms not already listed as PROVEN.",
     "Exact semantic/order meaning of acquired-zone indices 0..3; shape/domain are PROVEN but physical zone labels remain UNKNOWN.",
     "Firmware meaning/lifecycle of GasPointPrev beyond its proven separate native buffer.",
-    "Exact firmware threshold/guard that promotes NUM_BUF_UPD activity into ACQUIRED_ZONES flags."
+    "Exact firmware threshold/guard that promotes NUM_BUF_UPD activity into ACQUIRED_ZONES flags.",
+    "VECT_AUTOCAL_U8_0 -> serial 0x0165 index 0 is INFERRED_STRONG from default RowIndex/resource layout plus exclusive 0/1/2 wire family; not promoted to PROVEN without direct component/default proof.",
+    "Finish AutoCAL exact ECU-side physical effect after the connection-aware VECT_AUTOCAL_U8_0 commit; supplied raw captures contain reads but no 0x0165 write."
   ]
 }
