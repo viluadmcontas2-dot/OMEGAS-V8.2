@@ -1,0 +1,1291 @@
+{
+  "schema": "omegas.amarelo.research-wave.v1",
+  "wave": "001",
+  "issue": 96,
+  "purpose": "AutoCal native/protocol/consumer/runtime/learning/UI decomposition before product implementation",
+  "created_from_amarelo": "41be880bc13f02a33a25c2096bee599cfd6817b0",
+  "verde_watermark": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+  "lane_count": 160,
+  "lanes": [
+    {
+      "id": "verde-provenance_progbase_oracle",
+      "driver": "verde-forensic",
+      "target": "provenance_progbase_oracle",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-provenance_portmon_fixture",
+      "driver": "verde-forensic",
+      "target": "provenance_portmon_fixture",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-portmon_live_envelope",
+      "driver": "verde-forensic",
+      "target": "portmon_live_envelope",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-portmon_request_checksums",
+      "driver": "verde-forensic",
+      "target": "portmon_request_checksums",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-portmon_live_cadence",
+      "driver": "verde-forensic",
+      "target": "portmon_live_cadence",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-portmon_autocal_2s_cadence",
+      "driver": "verde-forensic",
+      "target": "portmon_autocal_2s_cadence",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-portmon_reference_4s_cadence",
+      "driver": "verde-forensic",
+      "target": "portmon_reference_4s_cadence",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-portmon_live_interleave",
+      "driver": "verde-forensic",
+      "target": "portmon_live_interleave",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-portmon_slow_ordering",
+      "driver": "verde-forensic",
+      "target": "portmon_slow_ordering",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-shape_buffers_015b_0163",
+      "driver": "verde-forensic",
+      "target": "shape_buffers_015b_0163",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-shape_zones_016f_0170",
+      "driver": "verde-forensic",
+      "target": "shape_zones_016f_0170",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-shape_reference_018d_018e",
+      "driver": "verde-forensic",
+      "target": "shape_reference_018d_018e",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-oracle_live_offsets",
+      "driver": "verde-forensic",
+      "target": "oracle_live_offsets",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-oracle_runpoint",
+      "driver": "verde-forensic",
+      "target": "oracle_runpoint",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-oracle_levels",
+      "driver": "verde-forensic",
+      "target": "oracle_levels",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-oracle_currentband",
+      "driver": "verde-forensic",
+      "target": "oracle_currentband",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-oracle_curves",
+      "driver": "verde-forensic",
+      "target": "oracle_curves",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-oracle_acquisition_zones",
+      "driver": "verde-forensic",
+      "target": "oracle_acquisition_zones",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_protocol_addresses",
+      "driver": "verde-forensic",
+      "target": "omegas_protocol_addresses",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_live_decoder",
+      "driver": "verde-forensic",
+      "target": "omegas_live_decoder",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_single_serial_authority",
+      "driver": "verde-forensic",
+      "target": "omegas_single_serial_authority",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_telemetry_after_secondary",
+      "driver": "verde-forensic",
+      "target": "omegas_telemetry_after_secondary",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_levels_fast_authority",
+      "driver": "verde-forensic",
+      "target": "omegas_levels_fast_authority",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "node",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_currentband_presence",
+      "driver": "verde-forensic",
+      "target": "omegas_currentband_presence",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "node",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_currentband_boundary",
+      "driver": "verde-forensic",
+      "target": "omegas_currentband_boundary",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "node",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_grouped_acquisition_refresh",
+      "driver": "verde-forensic",
+      "target": "omegas_grouped_acquisition_refresh",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_grouped_reference_refresh",
+      "driver": "verde-forensic",
+      "target": "omegas_grouped_reference_refresh",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_petrol_gas_refresh_symmetry",
+      "driver": "verde-forensic",
+      "target": "omegas_petrol_gas_refresh_symmetry",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_snapshot_coherence_guard",
+      "driver": "verde-forensic",
+      "target": "omegas_snapshot_coherence_guard",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_session_safety",
+      "driver": "verde-forensic",
+      "target": "omegas_session_safety",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_no_automatic_write",
+      "driver": "verde-forensic",
+      "target": "omegas_no_automatic_write",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_bridge_no_serial_io",
+      "driver": "verde-forensic",
+      "target": "omegas_bridge_no_serial_io",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-omegas_ui_fast_scheduler",
+      "driver": "verde-forensic",
+      "target": "omegas_ui_fast_scheduler",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-global_levels_percentage_scan",
+      "driver": "verde-forensic",
+      "target": "global_levels_percentage_scan",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-dashboard_levels_raw_presence",
+      "driver": "verde-forensic",
+      "target": "dashboard_levels_raw_presence",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-mutation_bad_checksum",
+      "driver": "verde-forensic",
+      "target": "mutation_bad_checksum",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-mutation_bad_shape",
+      "driver": "verde-forensic",
+      "target": "mutation_bad_shape",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-targeted_ui_autocal_suite",
+      "driver": "verde-forensic",
+      "target": "targeted_ui_autocal_suite",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "node",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-targeted_jvm_projection",
+      "driver": "verde-forensic",
+      "target": "targeted_jvm_projection",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "jvm",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "verde-targeted_jvm_refresh_planner",
+      "driver": "verde-forensic",
+      "target": "targeted_jvm_refresh_planner",
+      "ref": "2e3eaffedeb6a20972275bfee7d065e5d2a88c86",
+      "kind": "jvm",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-001-autocalacquisition-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoCalAcquisition.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-002-autocalbridgeprovider-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoCalBridgeProvider.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-003-autocaljavascriptbridge-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-004-autocalnativeactionmanager-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-005-autocalsnapshot-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoCalSnapshot.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-006-autocalsnapshotmanager-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoCalSnapshotManager.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-007-autocaluiprojection-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-008-automatchdraftreviewvalidator-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoMatchDraftReviewValidator.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-009-automatchkfactordraft-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoMatchKFactorDraft.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-010-automatchresidualplanner-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoMatchResidualPlanner.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-011-automatchsnapshotanalysis-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoMatchSnapshotAnalysis.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-012-automatchv5engine-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/AutoMatchV5Engine.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-013-nativeautocalmaturitytracker-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMaturityTracker.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-014-nativeautocalmonitor-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-015-advisorsuggestionadapterv7-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-016-calibrationwritesafetypolicy-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-017-calibrationwriterreadbackv7-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriterReadBackV7.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-018-existingcalibrationwriterv7-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-019-kfactormanager-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-020-kfactormanualplanner-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/KFactorManualPlanner.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-021-kmapphysicalaxes-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/KMapPhysicalAxes.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-022-kwritemanager-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-023-mapbatchplan-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/MapBatchPlan.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-024-mapkmanualplanner-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/MapKManualPlanner.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-025-v7calibrationcoordinator-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-026-autocalprotocol-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-027-autocalscale-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/AutoCalScale.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-028-fuelstateresolver-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/FuelStateResolver.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-029-kfactorprotocol-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/KFactorProtocol.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-030-mp48backpressurescheduler-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/Mp48BackpressureScheduler.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-031-mp48protocol-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-032-mp48serialscheduler-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-033-mp48telemetryscale-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/Mp48TelemetryScale.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-034-nativeruntimemanager-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-035-responsedrivenecuengine-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-036-adaptivepetrolreference-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/AdaptivePetrolReference.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-037-adaptivesamplewindow-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/AdaptiveSampleWindow.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-038-advisorrevisiongate-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/AdvisorRevisionGate.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-039-assistedcalibrationadvisor-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/AssistedCalibrationAdvisor.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-040-coalescedsnapshotwriter-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/CoalescedSnapshotWriter.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-041-continuouslearningmath-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/ContinuousLearningMath.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-042-continuouswindownovelty-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/ContinuousWindowNovelty.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-043-curvekcomparison-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/CurveKComparison.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-044-deferredliveonlylearningstore-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/DeferredLiveOnlyLearningStore.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-045-internallearningnamespace-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/InternalLearningNamespace.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-046-learningarchivemanager-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningArchiveManager.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-047-learningcontrolmodel-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningControlModel.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-048-learningevidencebudget-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningEvidenceBudget.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-049-learningevidencedimensions-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningEvidenceDimensions.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-050-learningevidencemodels-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningEvidenceModels.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-051-learninggridprojection-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-052-learningmemorybudget-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningMemoryBudget.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-053-learningsnapshotreconciler-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningSnapshotReconciler.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-054-learningtelemetryschemamigration-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningTelemetrySchemaMigration.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-055-learningtemperaturesettings-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningTemperatureSettings.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-056-learningtolerancesettings-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningToleranceSettings.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-057-learninguisnapshotassembler-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LearningUiSnapshotAssembler.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-058-liveonlylearningstore-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/LiveOnlyLearningStore.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-059-motorlearningmemory-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/MotorLearningMemory.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-060-motorsampleanalyzer-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/MotorSampleAnalyzer.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-061-nativeanchortelemetrywindow-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-062-nativeautocalanchorcorrelator-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/NativeAutoCalAnchorCorrelator.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-063-nativeautocalevidencesummary-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/NativeAutoCalEvidenceSummary.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-064-nativelearninganchor-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/NativeLearningAnchor.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-065-petrolreferenceselector-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/PetrolReferenceSelector.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-066-predictorinterpolator-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-067-predictorspatialconfidence-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/PredictorSpatialConfidence.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-068-predictorsurface-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-069-sciencepublicationgate-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/SciencePublicationGate.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-070-signallearningstore-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-071-visitconfidence-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/learning/VisitConfidence.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-072-notificationcontroller-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/service/NotificationController.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-073-telemetryforegroundservice-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-074-telemetryoverlaycontroller-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/service/TelemetryOverlayController.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-075-usbsessiontransitionpolicy-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/service/UsbSessionTransitionPolicy.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "src-076-v7calibrationaccess-kt",
+      "driver": "source-scan",
+      "target": "app/src/main/java/com/omegas/prohub/service/V7CalibrationAccess.kt",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-001-app-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/app.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-002-curve-prediction-state-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/components/curve-prediction-state.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-003-drawers-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/components/drawers.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-004-floating-telemetry-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/components/floating-telemetry.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-005-physical-grid-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/components/physical-grid.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-006-predictor-current-cell-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/components/predictor-current-cell.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-007-split-layout-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/components/split-layout.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-008-vehicle-status-strip-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/components/vehicle-status-strip.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-009-autocal-api-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/core/autocal-api.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-010-learning-model-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/core/learning-model.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-011-native-api-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/core/native-api.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-012-predictor-model-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/core/predictor-model.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-013-router-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/core/router.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-014-scheduler-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/core/scheduler.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-015-store-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/core/store.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-016-index-html",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/index.html",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-017-map-editor-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/map-editor.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-018-portmon-browser-simulator-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/portmon-browser-simulator.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-019-portmon-frame-decoder-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/portmon-frame-decoder.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-020-portmon-replay-adapter-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/portmon-replay-adapter.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-021-autocal-cockpit-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/screens/autocal-cockpit.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-022-curve-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/screens/curve.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-023-dashboard-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/screens/dashboard.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "ui-024-learning-js",
+      "driver": "source-scan",
+      "target": "app/src/main/assets/ui/screens/learning.js",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-001-mul-act",
+      "driver": "symbol-scan",
+      "target": "MUL_ACT",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-002-num-atuomatch-executed",
+      "driver": "symbol-scan",
+      "target": "NUM_ATUOMATCH_EXECUTED",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-003-petr-inj-tbp",
+      "driver": "symbol-scan",
+      "target": "PETR_INJ_TBP",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-004-mnfld-press-thd",
+      "driver": "symbol-scan",
+      "target": "MNFLD_PRESS_THD",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-005-petr-mnfld-press-rv",
+      "driver": "symbol-scan",
+      "target": "PETR_MNFLD_PRESS_RV",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-006-gas-mnfld-press-rv",
+      "driver": "symbol-scan",
+      "target": "GAS_MNFLD_PRESS_RV",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-007-acquired-zones-petrol",
+      "driver": "symbol-scan",
+      "target": "ACQUIRED_ZONES_PETROL",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-008-acquired-zones-gas",
+      "driver": "symbol-scan",
+      "target": "ACQUIRED_ZONES_GAS",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-009-auto-cal-enable",
+      "driver": "symbol-scan",
+      "target": "AUTO_CAL_ENABLE",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-010-automatchv5engine",
+      "driver": "symbol-scan",
+      "target": "AutoMatchV5Engine",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-011-nativeautocalmonitor",
+      "driver": "symbol-scan",
+      "target": "NativeAutoCalMonitor",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-012-autocaluiprojection",
+      "driver": "symbol-scan",
+      "target": "AutoCalUiProjection",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-013-autocaljavascriptbridge",
+      "driver": "symbol-scan",
+      "target": "AutoCalJavascriptBridge",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-014-responsedrivenecuengine",
+      "driver": "symbol-scan",
+      "target": "ResponseDrivenEcuEngine",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-015-mp48serialscheduler",
+      "driver": "symbol-scan",
+      "target": "Mp48SerialScheduler",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-016-learninggridprojection",
+      "driver": "symbol-scan",
+      "target": "LearningGridProjection",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-017-learningstabilityv7",
+      "driver": "symbol-scan",
+      "target": "LearningStabilityV7",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-018-adaptivepetrolreference",
+      "driver": "symbol-scan",
+      "target": "AdaptivePetrolReference",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-019-kmapphysicalaxes",
+      "driver": "symbol-scan",
+      "target": "KMapPhysicalAxes",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    },
+    {
+      "id": "sym-020-stablecomparisonerror",
+      "driver": "symbol-scan",
+      "target": "stableComparisonError",
+      "ref": "SELF",
+      "kind": "python",
+      "os": "ubuntu-latest"
+    }
+  ]
+}

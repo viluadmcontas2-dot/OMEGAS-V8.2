@@ -1,0 +1,119 @@
+name: OMEGAS Amarelo research farm
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/omegas-amarelo-foundation]
+    paths:
+      - '.github/workflows/amarelo-research-farm.yml'
+      - 'tools/amarelo/**'
+      - 'docs/omegas-amarelo/research-requests/**'
+      - 'docs/workunits/OMEGAS-AMARELO-INFRA-001.md'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: omegas-amarelo-research-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      wave: ${{ steps.matrix.outputs.wave }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          p="docs/omegas-amarelo/research-requests/wave-001.json"
+          cfg=json.load(open(p,encoding="utf-8"))
+          for row in cfg["lanes"]:
+              if row.get("ref")=="SELF":
+                  row["ref"]=os.environ["GITHUB_SHA"]
+          print("matrix="+json.dumps({"include":cfg["lanes"]},separators=(",",":")))
+          print("wave="+cfg["wave"])
+          PY
+
+  research:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          fetch-depth: 1
+
+      - name: Set up Java
+        if: ${{ matrix.kind == 'jvm' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare Gradle
+        if: ${{ matrix.kind == 'jvm' }}
+        run: chmod +x gradlew
+
+      - name: Run harvested Verde forensic lane
+        if: ${{ matrix.driver == 'verde-forensic' }}
+        run: |
+          python3 tools/ci/autocal_forensic_lane.py             --lane "${{ matrix.target }}"             --receipt "research-receipts/${{ matrix.id }}.json"
+
+      - name: Run Amarelo source/symbol lane
+        if: ${{ matrix.driver != 'verde-forensic' }}
+        run: |
+          python3 tools/amarelo/research_lane.py             --driver "${{ matrix.driver }}"             --target "${{ matrix.target }}"             --lane "${{ matrix.id }}"             --receipt "research-receipts/${{ matrix.id }}.json"
+
+      - name: Upload receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amarelo-wave-001-${{ matrix.id }}
+          path: research-receipts/${{ matrix.id }}.json
+          retention-days: 14
+          if-no-files-found: error
+
+  aggregate:
+    if: always()
+    needs: [plan, research]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: amarelo-wave-001-*
+          path: research-receipts
+          merge-multiple: true
+
+      - name: Aggregate
+        run: python3 tools/amarelo/aggregate_research.py
+
+      - name: Publish job summary
+        if: always()
+        run: cat research-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment INFRA issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment 96 --body-file research-summary.md
+
+      - name: Upload aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amarelo-wave-001-summary
+          path: |
+            research-summary.json
+            research-summary.md
+          retention-days: 30
