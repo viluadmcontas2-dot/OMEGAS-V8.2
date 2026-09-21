@@ -110,6 +110,21 @@ const projectedBands = model.bandStrip(conflictingSnapshot, authoritativeProject
 assert.equal(projectedBands[4].state, 'anchored', 'correlação persistente da projeção deve sobreviver sem evento novo');
 assert.equal(projectedBands[8].state, 'mature', 'retry persistente deve permanecer distinto de simples atividade');
 
+assert.equal(typeof model.referenceSourceLabel, 'function',
+  'fonte da referência deve ser traduzida pelo modelo e ficar testável sem DOM');
+assert.equal(
+  model.referenceSourceLabel({ source: 'NATIVE_MONITOR', freshness: 'CURRENT_SESSION' }),
+  'Monitor nativo · sessão atual',
+);
+assert.equal(
+  model.referenceSourceLabel({ source: 'MANUAL_READER', freshness: 'CURRENT_SESSION' }),
+  'Leitura manual · sessão atual',
+);
+assert.equal(
+  model.referenceSourceLabel({ source: 'NONE', freshness: 'STALE_SESSION' }),
+  'Sem fonte atual · sessão anterior rejeitada',
+);
+
 assert.equal(typeof model.bandNarrative, 'function', 'mensagem da região deve ser testável sem DOM');
 const persistedCorrelationNarrative = model.bandNarrative({ ...projectedBands[4], event: null });
 assert.match(persistedCorrelationNarrative, /confirmada nesta sessão/i);
@@ -159,6 +174,10 @@ assert.equal(source.includes('data-autocal-toggle'), true);
 assert.equal(source.includes('data-autocal-band-index'), true);
 assert.equal(source.includes('autocalHumanTitle'), true);
 assert.equal(source.includes('autocalTechnicalDetails'), true);
+assert.equal(source.includes('id="autocalReferenceSource"'), true,
+  'fonte da referência deve existir somente no painel técnico existente');
+assert.match(source, /autocalReferenceSource[^\n]*referenceSourceLabel|referenceSourceLabel\(this\.projection\)/,
+  'render deve expor a fonte selecionada pela projeção Kotlin');
 assert.equal(source.includes('AUTOMATCH ECU'), false);
 assert.equal(source.includes('EVENTOS MADUROS'), false);
 assert.equal(source.includes('RESET_ALL'), false);
