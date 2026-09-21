@@ -89,7 +89,11 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('nativeMaturityEvents', self.monitor)
         self.assertIn('counterPayloadHex', self.monitor)
         self.assertIn('before < threshold && after >= threshold', self.maturity)
-        self.assertIn('if (previous == null || !enabled) return emptyList()', self.maturity)
+        self.assertIn('if (previous == null)', self.maturity)
+        self.assertIn('if (!enabled) return emptyList()', self.maturity)
+        self.assertIn('recordCorrelationResult', self.maturity)
+        self.assertIn('correlationRetry', self.maturity)
+        self.assertIn('maturityTracker.recordCorrelationResult(', self.monitor)
         self.assertNotIn('Thread(', self.maturity)
         self.assertNotIn('Executors.', self.maturity)
 
