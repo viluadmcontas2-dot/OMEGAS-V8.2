@@ -43,6 +43,7 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
     'dashFuel',
     'dashStft',
     'dashCell',
+    'dashGnvLevel',
     'dashHealth',
   ]) {
     assert.match(dashboard, new RegExp(marker), `missing ${marker}`);
@@ -53,11 +54,13 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
   assert.equal(occurrences(dashboard, '>COMBUSTÍVEL<'), 1);
   assert.equal(occurrences(dashboard, '>STFT<'), 1);
   assert.equal(occurrences(dashboard, '>CÉLULA<'), 1);
+  assert.equal(occurrences(dashboard, '>NÍVEL GNV<'), 1);
+  assert.match(dashboard, /level_raw/);
   assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft|GAS INJ\./);
 });
 
 test('CSS contém somente o recorte Agora', () => {
-  assert.match(styles, /grid-template-columns:\s*repeat\(5/);
+  assert.match(styles, /grid-template-columns:\s*repeat\(6/);
   assert.match(styles, /\.now-hero-value strong[\s\S]*font-size:\s*118px/);
   assert.match(styles, /@media \(max-width:\s*1050px\), \(max-height:\s*650px\)/);
   assert.doesNotMatch(styles, /witness-|multimedia-obd|map-screen|curve-screen|learning-screen/);
@@ -72,4 +75,16 @@ test('dashboard é consumidor Red ou Verde e não carrega Blue', () => {
   assert.doesNotMatch(dashboard, /\?\.|\?\?|replaceAll\(/);
   assert.match(dashboard, /const obd = state\.obd \|\| \{\}/);
   assert.match(dashboard, /styles-dashboard-now\.css/);
+});
+
+
+test('LEVELS pertence ao Agora e não ao AutoCAL', () => {
+  const autoCal = normalizeJsSource(fs.readFileSync(
+    path.join(ROOT, 'app/src/main/assets/ui/screens/autocal-cockpit.js'),
+    'utf8',
+  ));
+  assert.match(dashboard, /dashGnvLevel/);
+  assert.match(dashboard, /NÍVEL GNV/);
+  assert.match(dashboard, /level_raw/);
+  assert.doesNotMatch(autoCal, /LEVELS RAW|autocalLiveLevel|levelsRaw|level_raw/);
 });
