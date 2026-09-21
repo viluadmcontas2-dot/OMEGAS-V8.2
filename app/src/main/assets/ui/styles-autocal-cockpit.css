@@ -1238,3 +1238,27 @@
 }
 
 
+
+
+/* Four native MAP regions proven from MNFLD_PRESS_THD indices 5/9/13.
+   These are chart context, not progress bars. */
+.autocal-zone-region rect {
+  fill: rgba(148, 163, 184, 0.025);
+  stroke: rgba(148, 163, 184, 0.10);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+.autocal-zone-region text {
+  fill: rgba(203, 213, 225, 0.48);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+.autocal-zone-region.petrol-active rect {
+  fill: rgba(248, 113, 113, 0.045);
+}
+.autocal-zone-region.gas-active rect {
+  fill: rgba(74, 222, 128, 0.055);
+}
+.autocal-zone-region.both-active rect {
+  fill: rgba(56, 189, 248, 0.050);
+}
