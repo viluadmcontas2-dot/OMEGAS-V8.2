@@ -216,6 +216,24 @@
       };
     },
 
+    referenceTransition(previousProjection = {}, nextProjection = {}, previousSnapshot = {}, nextSnapshot = {}, previousAnalysis = {}) {
+      const previousSession = String(previousProjection?.sessionId ?? '');
+      const nextSession = String(nextProjection?.sessionId ?? '');
+      const sessionChanged = previousSession !== nextSession;
+      const previousHash = String(previousSnapshot?.snapshotHash || '');
+      const nextHash = String(nextSnapshot?.snapshotHash || '');
+      const referenceChanged = !!(previousHash && nextHash && previousHash !== nextHash);
+      return {
+        sessionChanged,
+        referenceChanged,
+        resetSelection: sessionChanged || referenceChanged,
+        clearHistory: sessionChanged,
+        previousPoints: !sessionChanged && referenceChanged
+          ? this.referencePoints(previousSnapshot, previousAnalysis)
+          : [],
+      };
+    },
+
     bandStrip(snapshot = {}) {
       const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
       const zones = vector(snapshot, 'ACQUIRED_ZONES_GAS');
@@ -457,6 +475,7 @@
       }
       const projection = this.api.projection?.() || {};
       const authoritative = projection?.ok === true;
+      const previousProjection = this.projection || {};
       this.projection = projection;
 
       if (!authoritative) {
@@ -502,12 +521,20 @@
       const nextAnalysis = projection.analysis || {};
       this.referenceUsable = projection.referenceUsable === true;
 
-      const oldHash = String(this.snapshot?.snapshotHash || '');
-      const nextHash = String(nextSnapshot?.snapshotHash || '');
-      if (oldHash && nextHash && oldHash !== nextHash) {
-        const previous = AutoCalUxModel.referencePoints(this.snapshot, this.analysis);
-        if (previous.length) this.previousReferencePoints = previous;
+      const referenceTransition = AutoCalUxModel.referenceTransition(
+        previousProjection,
+        projection,
+        this.snapshot,
+        nextSnapshot,
+        this.analysis,
+      );
+      if (referenceTransition.clearHistory) {
+        this.previousReferencePoints = [];
+        this.chartHistoryVisible = false;
+      } else if (referenceTransition.referenceChanged) {
+        this.previousReferencePoints = referenceTransition.previousPoints;
       }
+      if (referenceTransition.resetSelection) this.selectedReferenceIndex = null;
       this.snapshot = nextSnapshot || {};
       this.analysis = nextAnalysis;
       this.actionState = this.api.actionStatus() || {};
