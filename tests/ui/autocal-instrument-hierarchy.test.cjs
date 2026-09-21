@@ -34,3 +34,11 @@ test('AGORA is visually distinct but remains telemetry', () => {
   assert.match(js, /Ele nunca vira evidência adquirida/);
   assert.match(js, /ageMs > AUTO_CAL_LIVE_STALE_MS/);
 });
+
+
+test('overlapping petrol and GNV curves remain distinguishable without geometric offset', () => {
+  assert.match(css, /\.autocal-reference-line\.petrol:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*6/);
+  assert.match(css, /\.autocal-reference-line\.gas:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*2\.8/);
+  assert.match(css, /\.autocal-reference-point\.petrol\s*\{[\s\S]*fill:\s*#07101a[\s\S]*stroke:\s*#78b7ff/);
+  assert.match(js, /ΔMAP/);
+});
