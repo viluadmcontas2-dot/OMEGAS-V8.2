@@ -27,10 +27,10 @@ Consumer-graph research may proceed independently, but closure remains gated by 
 - duas cadências distintas no original: live telemetry e AutoCAL lento.
 
 ### Ainda UNKNOWN / incompleto
-- state-machine completa;
+- máquina de estados física/ECU, caso exista separada do scheduler de refresh;
 - transforms exatos de todos os consumers;
 - bit/byte das zonas adquiridas;
-- código de ação 1/2/8 -> wire;
+- identidade exata de `DM+0x7C` / `DM+0xCC` e subíndices `0x0165`;
 - relação completa host write vs ECU mutation.
 
 
@@ -44,9 +44,24 @@ New PROVEN Finish relation from ProgBase:
 
 The semantic identities of `DM+0x7C` and `DM+0xCC` remain **UNKNOWN** between the known Finish-related native wrappers; they are deliberately not named from Verde assumptions.
 
-RTTI/string evidence also exposes:
+RTTI/string + use-site evidence exposes:
 `state_0..state_5`, `state_acquire_petrol_line`, `state_acquire_gas_line`, `state_draw_gas_petrol_curve`.
-Their presence/order is evidence; transition/ordinal semantics remain **INFERRED** until switch/use sites are correlated.
+
+Correction after direct ProgBase disassembly: these labels participate in a **refresh-dispatch scheduler**, not a proven ECU/physical state machine. `DM+0x4BC` holds the active table pointer, `DM+0x4C0` its count, and `DM+0x4C4` the cursor. Selector `0x51AE20` chooses a 6-entry (`0xA9EB98`) or 8-entry (`0xA9EBB4`) table and resets the cursor; matcher `0x51ABA8` wraps/matches the current label; `0x51ADE8` advances the cursor. This structure is **PROVEN** from ProgBase 4.2.0.6. The meaning/order of all table entries as physical AutoCAL states and any ECU transition graph remain **UNKNOWN**.
+
+Action codes `1/2/4/8` -> native wire are now PROVEN by the generic ProgBase bridge/checksum path; only action `4` is independently observed in both supplied raw captures.
 
 Contract test:
 `tests/test_amarelo_wu002_consumer_graph.py`.
+
+
+## Verification closure update — 2026-09-21
+
+The WU-002 contract test was repaired after a malformed literal `\\n` and stale field reference were found. The fast-contract workflow now executes `tests.test_amarelo_wu002_consumer_graph` explicitly.
+
+CI receipt before scheduler extension:
+- SHA: `21332252106eaf3f0b4a9c70870b511821565eb0`
+- run: `35648301543`
+- conclusion: **SUCCESS**
+
+Any later scheduler-evidence SHA requires its own CI receipt before being called green.
