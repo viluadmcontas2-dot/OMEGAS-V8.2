@@ -55,3 +55,11 @@ assert.equal(provider.includes('hub/autocal-ui.js'), false);
 assert.equal(provider.includes('postDelayed'), false);
 assert.equal(provider.includes('addJavascriptInterface'), true);
 console.log('AUTOCAL_COCKPIT_CONTRACT=PASS');
+
+
+assert.match(cockpit, /type="checkbox" data-autocal-toggle/);
+assert.match(cockpit, /Auto Calibration/);
+assert.match(cockpit, /AutoCAL \+ AutoMatch automático da ECU/);
+assert.match(cockpit, /Desativar a Auto Calibration também desativa o AutoMatch automático da ECU/);
+assert.equal(cockpit.includes('Pausar aquisição'), false);
+assert.equal(cockpit.includes('Iniciar aquisição'), false);
