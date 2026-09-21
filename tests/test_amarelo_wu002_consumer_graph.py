@@ -23,21 +23,21 @@ class NativeConsumerGraphContractTest(unittest.TestCase):
             self.assertEqual(edge["transform"], f"action_code={code}")
 
         finish_copy = key[(
-            "VECT_AUTOCAL_U8_1@DM+0x7C",
-            "VECT_AUTOCAL_U8_0@DM+0xCC",
+            "MAX_AUTOMATCH@DM+0x7C",
+            "NUM_AUTOMATCH_EXECUTED@DM+0xCC",
         )]
-        self.assertEqual(finish_copy["status"], "PROVEN_STATIC")
+        self.assertEqual(finish_copy["status"], "PROVEN_RTTI_AND_STATIC")
         self.assertIn("setter 0x976CB8", finish_copy["transform"])
 
         finish = data["states"]["finish_autocal"]
-        self.assertEqual(finish["source_field"]["semantic"], "VECT_AUTOCAL_U8_1")
-        self.assertEqual(finish["destination_field"]["semantic"], "VECT_AUTOCAL_U8_0")
+        self.assertEqual(finish["source_field"]["semantic"], "VECT_AUTOCAL_U8_2 / MAX_AUTOMATCH")
+        self.assertEqual(finish["source_field"]["serial_family"], "0x0165:2")
+        self.assertEqual(finish["destination_field"]["semantic"], "NUM_ATUOMATCH_EXECUTED")
+        self.assertEqual(finish["destination_field"]["serialCode"], "0x0174")
+        self.assertEqual(finish["static_transform"], "NUM_AUTOMATCH_EXECUTED := MAX_AUTOMATCH")
         self.assertEqual(finish["status"], "PROVEN_STATIC_NOT_RAW_WRITE_OBSERVED")
         self.assertFalse(finish["destination_commit"]["raw_write_observed"])
-        self.assertEqual(finish["exact_ecu_physical_effect"], "UNKNOWN")
-        self.assertEqual(finish["serial_family"]["index1"]["status"], "PROVEN")
-        self.assertEqual(finish["serial_family"]["index2"]["status"], "PROVEN")
-        self.assertEqual(finish["serial_family"]["index0"]["status"], "PROVEN_RESOURCE_WIRE_MAPPING")
+        self.assertEqual(finish["exact_ecu_side_effect"], "UNKNOWN")
 
         states = data["states"]
         self.assertEqual(states["label_use_status"], "PROVEN")
