@@ -140,7 +140,7 @@
       const title = recording ? 'Sessão atual' : summary?.sessionId ? 'Última sessão' : 'Sessões prontas';
       const detail = (recording ? minutes + ' min' : 'histórico preservado') +
         ' · ' + regions + ' ' + (regions === 1 ? 'região correlacionada' : 'regiões correlacionadas') +
-        ' · GNV ' + gasZones + '/4';
+        ' · flags GNV ativas ' + gasZones;
       const next = dropped > 0 || lastError.length > 0
         ? 'Há uma lacuna na gravação interna da evidência. Veja os detalhes antes de usar esta sessão.'
         : mirrorFailed
@@ -205,6 +205,23 @@
         factor: finite(point?.factor),
       })).filter(point => Number.isInteger(point.index) && point.petrolMs !== null && point.factor !== null);
     },
+    instrumentZoneRegions(instrument = {}) {
+      const rows = Array.isArray(instrument?.zoneRegions) ? instrument.zoneRegions : [];
+      return rows.map(region => ({
+        index: Number(region?.index),
+        lowMapBar: finite(region?.lowMapBar),
+        highMapBar: finite(region?.highMapBar),
+        petrolAcquired: region?.petrolAcquired === true,
+        gasAcquired: region?.gasAcquired === true,
+        label: String(region?.label || ''),
+      })).filter(region =>
+        Number.isInteger(region.index) &&
+        region.lowMapBar !== null &&
+        region.highMapBar !== null &&
+        region.highMapBar >= region.lowMapBar
+      );
+    },
+
 
     referencePoints(snapshot = {}, analysis = {}) {
       const petrolMs = physicalVector(snapshot, 'PETR_INJ_TBP');
@@ -503,7 +520,7 @@
 
             <section class="autocal-bands-card">
               <div class="autocal-section-head compact">
-                <div><small>18 REGIÕES DE AQUISIÇÃO GNV</small><h4>Onde a ECU já registrou atividade</h4></div>
+                <div><small>18 POSIÇÕES NATIVAS DE AQUISIÇÃO GNV</small><h4>Pontos internos observados pela ECU</h4></div>
                 <span id="autocalZoneSummary">4 flags nativas GNV · não monotônicas</span>
               </div>
               <div class="autocal-band-legend" aria-label="Legenda das faixas">
@@ -770,7 +787,13 @@
       this.text('autocalHumanAction', human.nextAction);
       this.text('autocalHumanAutoMatch', human.autoMatch);
       this.text('autocalNativeState', 'Aquisição: ' + acquisitionLabel);
-      this.text('autocalZoneSummary', human.gasZones + '/4 zonas GNV');
+      const regionFlags = Array.isArray(human.gasZoneFlags) ? human.gasZoneFlags.slice(0, 4) : [];
+      this.text(
+        'autocalZoneSummary',
+        regionFlags.length
+          ? regionFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? '●' : '○')).join(' · ')
+          : 'Flags de região indisponíveis'
+      );
       this.text('autocalStateRaw', state.state || '—');
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
       this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
@@ -935,13 +958,15 @@
       if (!meter) return;
       const petrolFlags = Array.isArray(human?.petrolZoneFlags)
         ? human.petrolZoneFlags.slice(0, 4)
-        : Array.from({ length: 4 }, (_, index) => index < (finite(human?.petrolZones) ?? 0));
+        : Array.from({ length: 4 }, () => false);
       const gasFlags = Array.isArray(human?.gasZoneFlags)
         ? human.gasZoneFlags.slice(0, 4)
-        : Array.from({ length: 4 }, (_, index) => index < (finite(human?.gasZones) ?? 0));
-      const petrolZones = petrolFlags.filter(Boolean).length;
-      const gasZones = gasFlags.filter(Boolean).length;
-      meter.setAttribute('aria-label', 'Gasolina ' + petrolZones + ' de 4 zonas, GNV ' + gasZones + ' de 4 zonas');
+        : Array.from({ length: 4 }, () => false);
+      meter.setAttribute(
+        'aria-label',
+        'Flags de região. Gasolina: ' + petrolFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? 'ativa' : 'inativa')).join(', ') +
+        '. GNV: ' + gasFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? 'ativa' : 'inativa')).join(', ')
+      );
       this.panel?.querySelectorAll('[data-autocal-zone-petrol]').forEach(node => {
         const index = Number(node.dataset.autocalZonePetrol);
         node.dataset.active = petrolFlags[index] === true ? 'true' : 'false';
@@ -965,6 +990,7 @@
       const petrolAcquisition = AutoCalUxModel.instrumentAcquisitionPoints(instrument, 'petrolCurrent');
       const gasCurrentAcquisition = AutoCalUxModel.instrumentAcquisitionPoints(instrument, 'gasCurrent');
       const gasPreviousAcquisition = AutoCalUxModel.instrumentAcquisitionPoints(instrument, 'gasPrevious');
+      const zoneRegions = AutoCalUxModel.instrumentZoneRegions(instrument);
       this.currentReferencePoints = points;
       const timingKnown = this.projection?.referenceTimingKnown === true;
       const timingCoherent = this.projection?.referenceTimingCoherent === true;
@@ -1006,7 +1032,11 @@
         host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>';
         return;
       }
-      const { xMin, xMax, yMin, yMax } = domain;
+      let { xMin, xMax, yMin, yMax } = domain;
+      if (zoneRegions.length) {
+        yMin = Math.min(yMin, ...zoneRegions.map(region => region.lowMapBar));
+        yMax = Math.max(yMax, ...zoneRegions.map(region => region.highMapBar));
+      }
       const xFor = value => padLeft + ((value - xMin) / (xMax - xMin)) * (width - padLeft - padRight);
       const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
       const scale = { xMin, xMax, yMin, yMax, xFor, yFor };
@@ -1026,6 +1056,21 @@
         const x = xFor(value);
         return '<line class="autocal-grid-line vertical" x1="' + x.toFixed(1) + '" y1="' + padTop + '" x2="' + x.toFixed(1) + '" y2="' + (height - padBottom) + '"></line>' +
           '<text class="autocal-axis-tick-x" x="' + x.toFixed(1) + '" y="' + (height - 23) + '" text-anchor="middle">' + value.toFixed(1) + '</text>';
+      }).join('');
+
+      const zoneRegionMarkup = zoneRegions.map(region => {
+        const top = yFor(Math.min(yMax, region.highMapBar));
+        const bottom = yFor(Math.max(yMin, region.lowMapBar));
+        const stateClass = region.petrolAcquired && region.gasAcquired
+          ? 'both-active'
+          : region.gasAcquired ? 'gas-active' : region.petrolAcquired ? 'petrol-active' : 'inactive';
+        return '<g class="autocal-zone-region ' + stateClass + '" data-zone-region="' + region.index + '">' +
+          '<rect x="' + padLeft + '" y="' + top.toFixed(1) + '" width="' + (width - padLeft - padRight) +
+            '" height="' + Math.max(0, bottom - top).toFixed(1) + '"></rect>' +
+          '<text x="' + (width - padRight - 8) + '" y="' + (top + 14).toFixed(1) +
+            '" text-anchor="end">R' + (region.index + 1) + ' · ' +
+            region.lowMapBar.toFixed(3) + '–' + region.highMapBar.toFixed(3) + ' bar</text>' +
+          '</g>';
       }).join('');
 
       const previous = history.length
@@ -1068,7 +1113,7 @@
         : '';
 
       host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV, equivalência nativa e posição AGORA por Petrol Inj. e MAP">' +
-        grid +
+        zoneRegionMarkup + grid +
         '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
         '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
         '<g>' +
@@ -1194,9 +1239,7 @@
 
       const message = AutoCalUxModel.bandNarrative(band);
 
-      const zoneText = band.zoneAcquired
-        ? 'Zona ' + (band.zone + 1) + ' confirmada pela ECU'
-        : 'Zona ' + (band.zone + 1) + ' ainda não confirmada pela ECU';
+      const zoneText = 'Região MAP R' + (band.zone + 1) + ': flag ' + (band.zoneAcquired ? 'ativa' : 'inativa') + ' na ECU';
       host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
     }
 
