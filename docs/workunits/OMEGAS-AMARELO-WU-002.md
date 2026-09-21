@@ -29,7 +29,6 @@ Consumer-graph research may proceed independently, but closure remains gated by 
 ### Ainda UNKNOWN / incompleto
 - máquina de estados física/ECU, caso exista separada do scheduler de refresh;
 - transforms exatos de todos os consumers;
-- bit/byte das zonas adquiridas;
 - identidade exata de `DM+0x7C` / `DM+0xCC` e subíndices `0x0165`;
 - relação completa host write vs ECU mutation.
 
@@ -65,3 +64,31 @@ CI receipt before scheduler extension:
 - conclusion: **SUCCESS**
 
 Any later scheduler-evidence SHA requires its own CI receipt before being called green.
+
+
+## Decomposição adicional — GasPoint / GasPointPrev / activity context — 2026-09-21
+
+Dual-Portmon + consumer graph agora provam quatro produtores distintos:
+- `0x015D PETR_INJ_TBUF_GAS_PREV -> GasPointPrev.x`;
+- `0x015E MNFLD_PRESS_BUF_GAS_PREV -> GasPointPrev.y`;
+- `0x015F PETR_INJ_TBUF_GAS -> GasPoint.x`;
+- `0x0160 MNFLD_PRESS_BUF_GAS -> GasPoint.y`.
+
+A hipótese de que `GasPointPrev` seja sempre uma cópia do `GasPoint` imediatamente anterior foi **FALSIFICADA** nos dois Portmons. O buffer anterior continua sendo um produtor nativo distinto, mas seu significado/lifecycle interno da firmware permanece UNKNOWN.
+
+Também ficou PROVEN que `GasPoint` pode mudar enquanto `ACQUIRED_ZONES_GAS=[0,0,0,0]`. `NUM_BUF_UPD_GAS` expõe atividade mais fina que as quatro flags, porém o threshold/guard interno que promove atividade para flag de zona permanece UNKNOWN. Assim:
+- pontos atuais não podem ser escondidos esperando a flag de zona;
+- as quatro flags não são porcentagem nem progresso monotônico;
+- mudança de ponto não exige transição de `NUM_AUTOMATCH_EXECUTED`.
+
+Evidence fixtures:
+- `tests/fixtures/amarelo-autocal-gaspoint-current-prev-v1.json`;
+- `tests/fixtures/amarelo-autocal-point-context-v1.json`.
+
+Implementation boundary:
+`AutoCalInstrumentProjection -> AutoCalUiProjection.instrument -> autocal-cockpit.js`.
+A HMI consome a projeção tipada; não reconstrói a semântica nativa dos buffers.
+
+Último SHA com pipeline publisher/consumer confirmado verde antes desta reconciliação documental:
+`277effc942da48661f1567a05b88425ad1068ab9`, run `35654147198` = SUCCESS.
+Cada SHA posterior continua exigindo receipt próprio.
