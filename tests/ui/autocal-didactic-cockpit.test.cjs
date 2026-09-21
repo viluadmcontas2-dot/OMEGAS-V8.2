@@ -67,6 +67,56 @@ assert.equal(sparseHuman.gasZones, 2);
 assert.equal(sparseHuman.gasZoneFlags.join(','), 'true,false,true,false',
   'zonas esparsas devem preservar posição física, não compactar para as duas primeiras');
 
+
+const conflictingSnapshot = {
+  ...snapshot,
+  nativeMaturityEvents: [],
+  fields: snapshot.fields.map(field => {
+    if (field.key === 'ACQUIRED_ZONES_PETROL' || field.key === 'ACQUIRED_ZONES_GAS') {
+      return { ...field, rawValues: [1, 1, 1, 1], physicalValues: [1, 1, 1, 1] };
+    }
+    if (field.key === 'NUM_BUF_UPD_GAS') {
+      return {
+        ...field,
+        rawValues: Array.from({ length: 18 }, (_, i) => (i === 4 || i === 8 ? 12 : 0)),
+        physicalValues: Array.from({ length: 18 }, (_, i) => (i === 4 || i === 8 ? 12 : 0)),
+      };
+    }
+    return field;
+  }),
+};
+const authoritativeProjection = {
+  ok: true,
+  acquisitionZones: {
+    petrol: [true, false, false, false],
+    gas: [true, false, true, false],
+  },
+  correlationState: {
+    correlatedBands: [4],
+    retryableBands: [8],
+  },
+  correlation: [],
+};
+const projectedHuman = model.humanState(
+  conflictingSnapshot,
+  { state: 'READY', autoCalEnabled: 1, latestSnapshot: conflictingSnapshot },
+  authoritativeProjection,
+);
+assert.equal(projectedHuman.petrolZones, 1, 'projeção Kotlin deve vencer vetor bruto conflitante de gasolina');
+assert.equal(projectedHuman.gasZones, 2, 'projeção Kotlin deve vencer vetor bruto conflitante de GNV');
+assert.equal(projectedHuman.gasZoneFlags.join(','), 'true,false,true,false');
+
+const projectedBands = model.bandStrip(conflictingSnapshot, authoritativeProjection);
+assert.equal(projectedBands[4].state, 'anchored', 'correlação persistente da projeção deve sobreviver sem evento novo');
+assert.equal(projectedBands[8].state, 'mature', 'retry persistente deve permanecer distinto de simples atividade');
+
+assert.match(source, /AutoCalUxModel\.humanState\(snapshot,\s*state,\s*this\.projection\)/,
+  'render deve consumir a projeção Kotlin para zonas');
+assert.match(source, /AutoCalUxModel\.bandStrip\([^)]*this\.projection/,
+  'render/inspector de regiões devem consumir a projeção Kotlin');
+assert.match(source, /this\.projection\?\.correlation/,
+  'eventos de correlação exibidos devem vir da projeção Kotlin');
+
 const bands = model.bandStrip(snapshot);
 assert.equal(bands.length, 18);
 assert.equal(bands[4].state, 'anchored');
