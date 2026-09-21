@@ -246,6 +246,68 @@
       "selector_guard": "scalar getter from DM+0xC4 selects 8-entry table for observed value range 3..4; otherwise 6-entry table",
       "cursor_contract": "reset to 0 on table selection; matcher wraps cursor to 0 when cursor >= count; advance helper increments cursor",
       "note": "This proves a refresh-dispatch schedule over label tables. It does not prove ECU/physical AutoCAL state transitions or ordinal state semantics."
+    },
+    "resolved_refresh_roles": [
+      {
+        "label": "state_0",
+        "role": "PetrolPoint + petrol maturity/polling",
+        "status": "PROVEN"
+      },
+      {
+        "label": "state_1",
+        "role": "GasPointPrev",
+        "status": "PROVEN"
+      },
+      {
+        "label": "state_2",
+        "role": "GasPoint + gas maturity/polling",
+        "status": "PROVEN"
+      },
+      {
+        "label": "state_3",
+        "role": "KLine = PETR_INJ_TBP x MUL_ACT",
+        "status": "PROVEN"
+      },
+      {
+        "label": "state_4",
+        "role": "acquisition areas / acquired zones",
+        "status": "PROVEN"
+      },
+      {
+        "label": "state_5",
+        "role": "reference axes / run geometry",
+        "status": "PROVEN_ROLE"
+      }
+    ],
+    "reference_line_scheduler": {
+      "petrol": {
+        "label": "state_acquire_petrol_line",
+        "parity_byte": "0xA9DA18",
+        "dm_field": "DM+0xD4",
+        "semantic": "PETR_MNFLD_PRESS_RV",
+        "behavior": "native refresh on one parity; parity byte increments on every selected visit",
+        "status": "PROVEN"
+      },
+      "gas": {
+        "label": "state_acquire_gas_line",
+        "parity_byte": "0xA9DA19",
+        "dm_field": "DM+0xD8",
+        "semantic": "GAS_MNFLD_PRESS_RV",
+        "behavior": "native refresh on one parity; parity byte increments on every selected visit",
+        "status": "PROVEN"
+      },
+      "captured_timing_relation": "operational vectors ~2 s; reference RV vectors ~4 s",
+      "timing_status": "PROVEN_CAPTURED_BEHAVIOR"
+    },
+    "curve_projection": {
+      "label": "state_draw_gas_petrol_curve",
+      "common_x_field": "DM+0x70",
+      "common_x_semantic": "PETR_INJ_TBP",
+      "petrol_y_field": "DM+0xD4",
+      "gas_y_field": "DM+0xD8",
+      "cursor_advance": "0x51ADE8",
+      "status": "PROVEN",
+      "authority_boundary": "host/UI projection over already-read values; not evidence of a new ECU calibration mutation"
     }
   },
   "unknowns": [
