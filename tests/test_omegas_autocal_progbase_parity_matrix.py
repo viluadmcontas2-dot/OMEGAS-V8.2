@@ -35,6 +35,7 @@ cockpit = (ROOT / "app/src/main/assets/ui/screens/autocal-cockpit.js").read_text
 app = (ROOT / "app/src/main/assets/ui/app.js").read_text(encoding="utf-8")
 scheduler = (ROOT / "app/src/main/assets/ui/core/scheduler.js").read_text(encoding="utf-8")
 projection = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt").read_text(encoding="utf-8")
+bridge = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt").read_text(encoding="utf-8")
 protocol = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt").read_text(encoding="utf-8")
 engine = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt").read_text(encoding="utf-8")
 
