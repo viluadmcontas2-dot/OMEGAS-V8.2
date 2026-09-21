@@ -152,6 +152,52 @@ class AutoCalUiProjectionTest {
     }
 
     @Test
+    fun `levels raw requires valid fresh telemetry from current usb session`() {
+        val baseArgs = arrayOf(
+            status("MONITORING", 42L),
+            usableReference("native-levels"),
+            status("IDLE", 42L),
+            unavailableSnapshot(),
+        )
+
+        val fresh = AutoCalUiProjection.project(
+            nativeStatus = baseArgs[0],
+            nativeSnapshot = baseArgs[1],
+            manualStatus = baseArgs[2],
+            manualSnapshot = baseArgs[3],
+            telemetryStatus = telemetry(valid = true, ageMs = 2_500L, sessionId = 42L, levelRaw = 173),
+        )
+        assertEquals(173, fresh.getInt("levelsRaw"))
+
+        val stale = AutoCalUiProjection.project(
+            nativeStatus = baseArgs[0],
+            nativeSnapshot = baseArgs[1],
+            manualStatus = baseArgs[2],
+            manualSnapshot = baseArgs[3],
+            telemetryStatus = telemetry(valid = true, ageMs = 2_501L, sessionId = 42L, levelRaw = 173),
+        )
+        assertTrue(stale.isNull("levelsRaw"))
+
+        val invalid = AutoCalUiProjection.project(
+            nativeStatus = baseArgs[0],
+            nativeSnapshot = baseArgs[1],
+            manualStatus = baseArgs[2],
+            manualSnapshot = baseArgs[3],
+            telemetryStatus = telemetry(valid = false, ageMs = 100L, sessionId = 42L, levelRaw = 173),
+        )
+        assertTrue(invalid.isNull("levelsRaw"))
+
+        val wrongSession = AutoCalUiProjection.project(
+            nativeStatus = baseArgs[0],
+            nativeSnapshot = baseArgs[1],
+            manualStatus = baseArgs[2],
+            manualSnapshot = baseArgs[3],
+            telemetryStatus = telemetry(valid = true, ageMs = 100L, sessionId = 41L, levelRaw = 173),
+        )
+        assertTrue(wrongSession.isNull("levelsRaw"))
+    }
+
+    @Test
     fun `partial current monitor stays visible but never claims reference`() {
         val projection = AutoCalUiProjection.project(
             nativeStatus = status("MONITORING", 7L),
@@ -164,6 +210,12 @@ class AutoCalUiProjectionTest {
         assertFalse(projection.getBoolean("referenceAvailable"))
         assertFalse(projection.getBoolean("referenceUsable"))
     }
+
+    private fun telemetry(valid: Boolean, ageMs: Long, sessionId: Long, levelRaw: Int) = JSONObject()
+        .put("valid", valid)
+        .put("ageMs", ageMs)
+        .put("sessionId", sessionId)
+        .put("live", JSONObject().put("level_raw", levelRaw))
 
     private fun status(state: String, sessionId: Long) = JSONObject()
         .put("state", state)
