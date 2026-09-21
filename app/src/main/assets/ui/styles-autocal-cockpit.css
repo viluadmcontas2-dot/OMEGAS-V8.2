@@ -1138,3 +1138,37 @@
 .autocal-session-item b { font-size: 14px; }
 .autocal-session-item button,
 .autocal-session-actions button { min-height: 52px; font-size: 14px; }
+
+
+/* Native adaptive acquisition layers — WU-005.
+   Previous GNV points remain visible only as a faded native "before" layer.
+   Current points are the ECU-owned state; no JS-generated learning history. */
+.autocal-acquisition-point {
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.autocal-acquisition-point.petrol-current {
+  fill: rgba(238, 246, 255, 0.96);
+  stroke: rgba(255, 255, 255, 0.82);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 3px rgba(210, 230, 255, 0.36));
+}
+.autocal-acquisition-point.gas-previous {
+  fill: rgba(74, 222, 128, 0.22);
+  stroke: rgba(74, 222, 128, 0.26);
+  stroke-width: 1;
+}
+.autocal-acquisition-point.gas-current {
+  fill: rgba(74, 222, 128, 0.98);
+  stroke: rgba(225, 255, 234, 0.92);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.50));
+}
+.autocal-chart-legend .acquired::before {
+  background: rgba(238, 246, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+}
+.autocal-chart-legend .previous::before {
+  background: rgba(74, 222, 128, 0.24);
+  border: 1px solid rgba(74, 222, 128, 0.34);
+}
