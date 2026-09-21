@@ -26,7 +26,15 @@ run_case() {
   cat "rendered-evidence/${scenario}-instrumentation.txt"
   adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
   adb exec-out screencap -p > "rendered-evidence/${scenario}-post.png" || true
-  if [ "$rc" -ne 0 ]; then overall=1; fi
+  if [ "$rc" -ne 0 ] ||
+     grep -q 'FAILURES!!!' "rendered-evidence/${scenario}-instrumentation.txt" ||
+     grep -q 'INSTRUMENTATION_STATUS_CODE: -2' "rendered-evidence/${scenario}-instrumentation.txt" ||
+     ! grep -q 'OK (1 test)' "rendered-evidence/${scenario}-instrumentation.txt"; then
+    echo "SCENARIO_RESULT=${scenario}:FAIL"
+    overall=1
+  else
+    echo "SCENARIO_RESULT=${scenario}:PASS"
+  fi
 }
 
 set -e

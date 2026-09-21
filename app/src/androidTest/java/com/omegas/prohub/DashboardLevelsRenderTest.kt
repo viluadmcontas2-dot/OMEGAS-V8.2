@@ -54,7 +54,11 @@ class DashboardLevelsRenderTest {
         error("No live Portmon frame")
     }
 
-    private fun injectFresh(scenario: ActivityScenario<MainActivity>, fixture: LiveFixture) {
+    private fun injectFresh(
+        scenario: ActivityScenario<MainActivity>,
+        fixture: LiveFixture,
+        settleMs: Long = 700L,
+    ) {
         scenario.onActivity { activity ->
             val service = activity.serviceOrNull() ?: error("service unavailable")
             val session = 9001L
@@ -72,7 +76,7 @@ class DashboardLevelsRenderTest {
             check(accepted != null) { "TelemetryStateStore rejected replay" }
             activity.refreshWebUi()
         }
-        SystemClock.sleep(1_400L)
+        SystemClock.sleep(settleMs)
     }
 
     private fun dashboardDom(scenario: ActivityScenario<MainActivity>): JSONObject =
@@ -92,10 +96,13 @@ class DashboardLevelsRenderTest {
             """.trimIndent(),
         )
 
-    private fun autocalDom(scenario: ActivityScenario<MainActivity>): JSONObject {
+    private fun activateAutocal(scenario: ActivityScenario<MainActivity>) {
         evalRaw(scenario, "document.querySelector('[data-route=\"autocal\"]')?.click(); 'ok';")
-        SystemClock.sleep(1_500L)
-        return evalJson(
+        SystemClock.sleep(350L)
+    }
+
+    private fun autocalDom(scenario: ActivityScenario<MainActivity>): JSONObject =
+        evalJson(
             scenario,
             """
             JSON.stringify({
@@ -105,7 +112,6 @@ class DashboardLevelsRenderTest {
             })
             """.trimIndent(),
         )
-    }
 
     @Test
     fun dashboardFreshLevelsRaw() {
@@ -140,7 +146,8 @@ class DashboardLevelsRenderTest {
         val scenario = launch()
         try {
             val fixture = liveFixture()
-            injectFresh(scenario, fixture)
+            activateAutocal(scenario)
+            injectFresh(scenario, fixture, settleMs = 700L)
             val dom = autocalDom(scenario)
             saveEvidence("autocal-fresh-control", dom, scenario)
             assertTrue("AutoCal route must activate", dom.getBoolean("active"))
