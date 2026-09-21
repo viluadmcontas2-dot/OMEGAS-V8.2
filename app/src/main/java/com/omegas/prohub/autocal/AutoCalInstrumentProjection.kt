@@ -22,6 +22,7 @@ object AutoCalInstrumentProjection {
     ): JSONObject {
         val dynamic = nativeCurrentSnapshot ?: JSONObject()
         val kSource = if (hasValidField(dynamic, "MUL_ACT")) dynamic else referenceSnapshot
+        val geometrySource = if (hasValidField(dynamic, "MNFLD_PRESS_THD")) dynamic else referenceSnapshot
 
         return JSONObject()
             .put("schema", "omegas.autocal.instrument.v1")
@@ -54,6 +55,7 @@ object AutoCalInstrumentProjection {
                     .put("capturedAtMs", maxFieldTimestamp(kSource, listOf("PETR_INJ_TBP", "MUL_ACT"))),
             )
             .put("zones", JSONObject(acquisitionZones.toString()))
+            .put("zoneRegions", zoneRegions(geometrySource, acquisitionZones))
             .put("liveNow", livePoint(telemetryStatus, currentSessionId))
             .put(
                 "freshness",
@@ -78,6 +80,36 @@ object AutoCalInstrumentProjection {
                     .put("liveNow", "MP48_LIVE")
                     .put("uiDerivesScience", false),
             )
+    }
+
+    private fun zoneRegions(snapshot: JSONObject, acquisitionZones: JSONObject): JSONArray {
+        val thresholds = physicalVector(snapshot, "MNFLD_PRESS_THD")
+        if (thresholds.size < 18) return JSONArray()
+
+        val petrol = acquisitionZones.optJSONArray("petrol") ?: JSONArray()
+        val gas = acquisitionZones.optJSONArray("gas") ?: JSONArray()
+        val cuts = listOf(5, 9, 13)
+        val bounds = listOf(
+            0.0 to thresholds[cuts[0]],
+            thresholds[cuts[0]] to thresholds[cuts[1]],
+            thresholds[cuts[1]] to thresholds[cuts[2]],
+            thresholds[cuts[2]] to thresholds[17],
+        )
+        if (bounds.any { (low, high) -> !low.isFinite() || !high.isFinite() || high < low }) return JSONArray()
+
+        return JSONArray().apply {
+            bounds.forEachIndexed { index, (low, high) ->
+                put(
+                    JSONObject()
+                        .put("index", index)
+                        .put("lowMapBar", low)
+                        .put("highMapBar", high)
+                        .put("petrolAcquired", petrol.optBoolean(index, false))
+                        .put("gasAcquired", gas.optBoolean(index, false))
+                        .put("label", "Região " + (index + 1)),
+                )
+            }
+        }
     }
 
     private fun pairedPoints(snapshot: JSONObject, xKey: String, yKey: String): JSONArray {
