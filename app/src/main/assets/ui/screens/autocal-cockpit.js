@@ -281,6 +281,23 @@
       });
     },
 
+    bandNarrative(band = {}) {
+      const eventState = String(band?.event?.correlationState || '');
+      if (band.state === 'anchored') {
+        return eventState === 'CORRELATED'
+          ? 'Nesta leitura, a região amadureceu e encontrou correlação física confiável.'
+          : 'Correlação física confiável confirmada nesta sessão.';
+      }
+      if (band.state === 'mature') {
+        return band.event
+          ? 'Nesta leitura, a região amadureceu; a correlação física ainda não foi confirmada com confiança.'
+          : 'Região madura nesta sessão; aguardando nova janela de telemetria para tentar a correlação física novamente.';
+      }
+      return band.counter > 0
+        ? 'A ECU registrou atividade nesta região.'
+        : 'Ainda não há atividade nesta região.';
+    },
+
     toggleAction(enabled) {
       const value = finite(enabled);
       if (value === 1) return 'DISABLE_AUTO_CAL';
@@ -1010,9 +1027,7 @@
         node.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
 
-      let message = band.counter > 0 ? 'A ECU registrou atividade nesta região.' : 'Ainda não há atividade nesta região.';
-      if (band.state === 'anchored') message = 'Nesta leitura, a região amadureceu e encontrou correlação física confiável.';
-      else if (band.state === 'mature') message = 'Nesta leitura, a região amadureceu; a correlação física ainda não foi confirmada com confiança.';
+      const message = AutoCalUxModel.bandNarrative(band);
 
       const zoneText = band.zoneAcquired
         ? 'Zona ' + (band.zone + 1) + ' confirmada pela ECU'
