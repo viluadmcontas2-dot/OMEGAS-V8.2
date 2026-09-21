@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: omegas-verde-global-reality-${{ github.ref }}
@@ -62,45 +63,79 @@ jobs:
       - name: Execute isolated product contract
         run: |
           python3 tools/ci/global_reality_lane.py             --id "${{ matrix.id }}"             --kind "${{ matrix.kind }}"             --target "${{ matrix.target }}"             --receipt "global-reality/${{ matrix.id }}.json"
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: global-${{ matrix.id }}
-          path: global-reality/${{ matrix.id }}.json
-          retention-days: 3
-          compression-level: 0
-          if-no-files-found: error
-
   aggregate:
     if: always()
     needs: [plan, lane]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: global-*
-          path: global-reality
-          merge-multiple: true
-      - name: Aggregate global contracts
+      - name: Aggregate job truth from GitHub Actions API
         shell: bash
         env:
           EXPECTED: ${{ needs.plan.outputs.count }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import collections,json,os,pathlib
-          files=sorted(pathlib.Path("global-reality").glob("*.json"))
-          rows=[json.loads(p.read_text("utf-8")) for p in files]
-          c=collections.Counter(r["status"] for r in rows)
+          import json, os, urllib.request
+
+          repo=os.environ["GITHUB_REPOSITORY"]
+          run_id=os.environ["GITHUB_RUN_ID"]
           expected=int(os.environ["EXPECTED"])
-          out={"expected":expected,"count":len(rows),"statuses":dict(c),"reds":[r for r in rows if r["status"]!="PASS"]}
-          pathlib.Path("global-reality-summary.json").write_text(json.dumps(out,indent=2,ensure_ascii=False)+"\n","utf-8")
+          token=os.environ["GH_TOKEN"]
+
+          jobs=[]
+          page=1
+          while True:
+              url=f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100&page={page}"
+              req=urllib.request.Request(url,headers={
+                  "Authorization":f"Bearer {token}",
+                  "Accept":"application/vnd.github+json",
+                  "X-GitHub-Api-Version":"2022-11-28",
+              })
+              with urllib.request.urlopen(req) as response:
+                  data=json.load(response)
+              batch=data.get("jobs",[])
+              jobs.extend(batch)
+              if len(batch)<100: break
+              page+=1
+
+          lanes=[j for j in jobs if str(j.get("name","")).startswith("lane (")]
+          rows=[]
+          for job in lanes:
+              steps=job.get("steps") or []
+              execute=next((s for s in steps if s.get("name")=="Execute isolated product contract"),None)
+              conclusion=job.get("conclusion")
+              if conclusion=="success":
+                  status="PASS"
+              elif conclusion=="failure" and execute and execute.get("conclusion")=="failure":
+                  status="RED"
+              else:
+                  status="BROKEN"
+              rows.append({
+                  "id":job.get("id"),
+                  "name":job.get("name"),
+                  "status":status,
+                  "conclusion":conclusion,
+                  "execute_conclusion":execute.get("conclusion") if execute else None,
+                  "html_url":job.get("html_url"),
+              })
+
+          counts={k:sum(1 for r in rows if r["status"]==k) for k in ("PASS","RED","BROKEN")}
+          out={"expected":expected,"count":len(rows),"statuses":counts,"reds":[r for r in rows if r["status"]=="RED"],"broken":[r for r in rows if r["status"]=="BROKEN"]}
+          with open("global-reality-summary.json","w",encoding="utf-8") as f:
+              json.dump(out,f,indent=2,ensure_ascii=False); f.write("\n")
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
-              f.write(f"# Global reality fan-out\n\nExpected **{expected}**, receipts **{len(rows)}**, PASS **{c['PASS']}**, RED **{c['RED']}**.\n")
+              f.write(f"# Global reality fan-out\n\nExpected **{expected}**, jobs **{len(rows)}**, PASS **{counts['PASS']}**, RED **{counts['RED']}**, BROKEN **{counts['BROKEN']}**.\n")
               for r in out["reds"]:
-                  f.write(f"- RED `{r['id']}` — `{r['target']}`\n")
-          if len(rows)!=expected: raise SystemExit(f"receipt count mismatch {len(rows)} != {expected}")
-          if c["RED"]: raise SystemExit(f"{c['RED']} global lanes RED")
+                  f.write(f"- RED \`{r['name']}\`\n")
+              for r in out["broken"]:
+                  f.write(f"- BROKEN \`{r['name']}\`\n")
+          if len(rows)!=expected:
+              raise SystemExit(f"lane count mismatch {len(rows)} != {expected}")
+          if counts["BROKEN"]:
+              raise SystemExit(f"{counts['BROKEN']} global lanes BROKEN")
+          if counts["RED"]:
+              raise SystemExit(f"{counts['RED']} global lanes RED")
           PY
       - uses: actions/upload-artifact@v4
         if: always()

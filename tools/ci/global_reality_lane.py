@@ -45,4 +45,7 @@ receipt={
 path=Path(args.receipt); path.parent.mkdir(parents=True,exist_ok=True)
 path.write_text(json.dumps(receipt,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
 print(json.dumps({k:v for k,v in receipt.items() if k!="tail"},indent=2,ensure_ascii=False))
+if rc != 0:
+    print("--- GLOBAL_REALITY_FAILURE_TAIL ---")
+    print(out)
 sys.exit(0 if rc==0 else 1)
