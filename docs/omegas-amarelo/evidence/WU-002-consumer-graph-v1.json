@@ -1,0 +1,58 @@
+{
+  "schema": "omegas.amarelo.autocal-consumer-graph.v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "edges": [
+    {"from":"ActionAutoMatchExecute","to":"dispatcher:0x517568","transform":"action_code=8","status":"PROVEN"},
+    {"from":"ActionResetPetrolExecute","to":"dispatcher:0x517568","transform":"action_code=1","status":"PROVEN"},
+    {"from":"ActionResetGasExecute","to":"dispatcher:0x517568","transform":"action_code=2","status":"PROVEN"},
+    {"from":"ActionResetAllExecute","to":"dispatcher:0x517568","transform":"action_code=4","status":"PROVEN"},
+    {"from":"dispatcher:0x517568","to":"AutoCalNativeAction:0x512280","transform":"shared native action bridge","status":"PROVEN"},
+    {"from":"AutoCalNativeAction:0x512280","to":"serial-service:0x24","transform":"payload=[0x04,action_code]","status":"PROVEN"},
+    {"from":"serial-service:0x24","to":"PostActionRefresh:0x5162F8","transform":"dispatcher waits then refreshes","status":"PROVEN"},
+
+    {"from":"PETR_INJ_TBP","to":"PetrolCurve.x","status":"PROVEN"},
+    {"from":"PETR_MNFLD_PRESS_RV","to":"PetrolCurve.y","status":"PROVEN"},
+    {"from":"PETR_INJ_TBP","to":"GasCurve.x","status":"PROVEN"},
+    {"from":"GAS_MNFLD_PRESS_RV","to":"GasCurve.y","status":"PROVEN"},
+    {"from":"PETR_INJ_TBUF","to":"PetrolPoint.x","status":"PROVEN"},
+    {"from":"MNFLD_PRESS_BUF","to":"PetrolPoint.y","status":"PROVEN"},
+    {"from":"PETR_INJ_TBUF_GAS","to":"GasPoint.x","status":"PROVEN"},
+    {"from":"MNFLD_PRESS_BUF_GAS","to":"GasPoint.y","status":"PROVEN"},
+    {"from":"PETR_INJ_TBUF_GAS_PREV","to":"GasPointPrev.x","status":"PROVEN"},
+    {"from":"MNFLD_PRESS_BUF_GAS_PREV","to":"GasPointPrev.y","status":"PROVEN"},
+    {"from":"MUL_ACT","to":"KLine.y","status":"PROVEN"},
+    {"from":"PETR_INJ_TBP","to":"KLine.x","status":"PROVEN"},
+    {"from":"live_MAP","to":"CurrentBand","status":"PROVEN"},
+    {"from":"MNFLD_PRESS_THD","to":"CurrentBand","status":"PROVEN"},
+    {"from":"ACQUIRED_ZONES_PETROL","to":"AcqusitionAreas","status":"PROVEN"},
+    {"from":"ACQUIRED_ZONES_GAS","to":"AcqusitionAreas","status":"PROVEN"},
+    {"from":"PETR_INJ_TBP","to":"AcqusitionAreas","status":"PROVEN"},
+    {"from":"MNFLD_PRESS_THD","to":"AcqusitionAreas","status":"PROVEN"},
+
+    {"from":"ActionFinishAutocalExecute:0x51A390","to":"DM+0x7C","transform":"scalar getter 0x976C44","status":"PROVEN"},
+    {"from":"DM+0x7C","to":"DM+0xCC","transform":"same scalar passed to setter 0x976CB8","status":"PROVEN"},
+    {"from":"DM+0xCC","to":"PostActionRefresh:0x5162F8","transform":"100ms wait then refresh(1)","status":"PROVEN"},
+
+    {"from":"DM+0x7C","to":"VECT_AUTOCAL_U8_2_or_NUM_AUTOMATCH_EXECUTED","status":"UNKNOWN"},
+    {"from":"DM+0xCC","to":"VECT_AUTOCAL_U8_2_or_NUM_AUTOMATCH_EXECUTED","status":"UNKNOWN"}
+  ],
+  "states": {
+    "rtti_strings_observed": [
+      "state_0","state_1","state_2","state_3","state_4","state_5",
+      "state_acquire_petrol_line","state_acquire_gas_line","state_draw_gas_petrol_curve"
+    ],
+    "status": "INFERRED",
+    "note": "RTTI/string order is observed, but ordinal-to-transition semantics are not promoted until code-switch/use sites are correlated."
+  },
+  "unknowns": [
+    "Exact semantic identity of DM+0x7C and DM+0xCC in Finish.",
+    "Exact 0x0165 subindex semantics.",
+    "Complete state transition graph and guards.",
+    "Acquired-zone bit/byte meaning.",
+    "Exact producer/consumer transforms not already listed as PROVEN."
+  ]
+}
