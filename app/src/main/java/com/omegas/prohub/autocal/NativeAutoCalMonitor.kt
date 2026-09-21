@@ -365,6 +365,10 @@ class NativeAutoCalMonitor(
                     policy = LearningToleranceSettings.current,
                     sessionId = expectedSessionId,
                 )
+                maturityTracker.recordCorrelationResult(
+                    bandIndex = transition.bandIndex,
+                    correlated = correlation.state == "CORRELATED",
+                )
                 maturityEvents.put(
                     JSONObject()
                         .put("eventType", "NATIVE_BAND_MATURED")
@@ -380,6 +384,7 @@ class NativeAutoCalMonitor(
                         .put("threshold", transition.threshold)
                         .put("previousObservedAtElapsedMs", transition.previousObservedAtElapsedMs)
                         .put("observedAtElapsedMs", transition.observedAtElapsedMs)
+                        .put("correlationRetry", transition.correlationRetry)
                         .put("counterPayloadHex", pendingEvent.counterPayloadHex)
                         .put("timeRaw", point?.opt("timeRaw") ?: JSONObject.NULL)
                         .put("timeMs", nativePetrolMs ?: JSONObject.NULL)

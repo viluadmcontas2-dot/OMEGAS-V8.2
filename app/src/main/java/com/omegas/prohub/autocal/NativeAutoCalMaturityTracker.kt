@@ -16,14 +16,29 @@ class NativeAutoCalMaturityTracker {
         val threshold: Int,
         val previousObservedAtElapsedMs: Long,
         val observedAtElapsedMs: Long,
+        val correlationRetry: Boolean = false,
     )
 
     private var previousCounters: IntArray? = null
     private var previousObservedAtElapsedMs: Long = 0L
+    private val retryableCorrelationBands = mutableSetOf<Int>()
+    private val correlatedBands = mutableSetOf<Int>()
 
     fun reset() {
         previousCounters = null
         previousObservedAtElapsedMs = 0L
+        retryableCorrelationBands.clear()
+        correlatedBands.clear()
+    }
+
+    fun recordCorrelationResult(bandIndex: Int, correlated: Boolean) {
+        if (bandIndex !in 0 until 18) return
+        if (correlated) {
+            correlatedBands.add(bandIndex)
+            retryableCorrelationBands.remove(bandIndex)
+        } else if (bandIndex !in correlatedBands) {
+            retryableCorrelationBands.add(bandIndex)
+        }
     }
 
     fun baseline(counters: IntArray, observedAtElapsedMs: Long) {
@@ -44,16 +59,51 @@ class NativeAutoCalMaturityTracker {
         previousCounters = normalized
         previousObservedAtElapsedMs = observedAtElapsedMs
 
-        if (previous == null || !enabled) return emptyList()
         if (gasLowThreshold == null || gasNormalThreshold == null) return emptyList()
+
+        fun thresholdFor(band: Int): Int = if (band <= 5) gasLowThreshold else gasNormalThreshold
+
+        if (previous == null) {
+            if (enabled) {
+                repeat(18) { band ->
+                    val threshold = thresholdFor(band)
+                    if (threshold > 0 && normalized[band] >= threshold && band !in correlatedBands) {
+                        retryableCorrelationBands.add(band)
+                    }
+                }
+            }
+            return emptyList()
+        }
+        if (!enabled) return emptyList()
 
         return buildList {
             repeat(18) { band ->
-                val threshold = if (band <= 5) gasLowThreshold else gasNormalThreshold
+                val threshold = thresholdFor(band)
                 if (threshold <= 0) return@repeat
                 val before = previous.getOrElse(band) { 0 }
                 val after = normalized[band]
-                if (before < threshold && after >= threshold) {
+
+                if (after < before) {
+                    correlatedBands.remove(band)
+                    retryableCorrelationBands.remove(band)
+                    if (after >= threshold) retryableCorrelationBands.add(band)
+                    return@repeat
+                }
+                if (after < threshold) {
+                    correlatedBands.remove(band)
+                    retryableCorrelationBands.remove(band)
+                    return@repeat
+                }
+
+                val crossedThreshold = before < threshold && after >= threshold
+                if (!crossedThreshold && before >= threshold && band !in correlatedBands) {
+                    retryableCorrelationBands.add(band)
+                }
+                val retryGrowth = !crossedThreshold &&
+                    band in retryableCorrelationBands &&
+                    after > before
+
+                if (crossedThreshold || retryGrowth) {
                     add(
                         Transition(
                             bandIndex = band,
@@ -63,6 +113,7 @@ class NativeAutoCalMaturityTracker {
                             threshold = threshold,
                             previousObservedAtElapsedMs = previousAt,
                             observedAtElapsedMs = observedAtElapsedMs,
+                            correlationRetry = retryGrowth,
                         ),
                     )
                 }
