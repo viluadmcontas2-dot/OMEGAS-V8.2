@@ -22,8 +22,8 @@ const primaryTiny = [
   ['.autocal-band-legend', 11],
   ['.autocal-command-copy b', 14],
   ['.autocal-command-copy span', 12],
-  ['.autocal-now-card > p', 13],
-  ['.autocal-read-card span', 12],
+  ['.autocal-live-narrative', 13],
+  ['.autocal-read-context span', 12],
   ['.autocal-session-copy b', 15],
   ['.autocal-session-copy span', 12],
 ];
