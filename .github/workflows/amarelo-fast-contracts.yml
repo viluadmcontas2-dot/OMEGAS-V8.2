@@ -16,7 +16,10 @@ on:
       - "app/src/main/java/com/omegas/prohub/autocal/**"
       - "app/src/main/assets/ui/screens/autocal-cockpit.js"
       - "app/src/main/assets/ui/styles-autocal-cockpit.css"
+      - "app/src/main/assets/ui/screens/dashboard.js"
+      - "app/src/main/assets/ui/styles-dashboard-now.css"
       - "tests/ui/autocal-*.test.cjs"
+      - "tests/ui/verde-dashboard-now.test.cjs"
   workflow_dispatch:
 
 permissions:
@@ -70,3 +73,5 @@ jobs:
         run: node tests/ui/autocal-chart-semantics.test.cjs
       - name: AutoCAL cockpit consumer contract
         run: node tests/ui/autocal-cockpit.test.cjs
+      - name: Agora dashboard GNV level domain boundary
+        run: node --test tests/ui/verde-dashboard-now.test.cjs
