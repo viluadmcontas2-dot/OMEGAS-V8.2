@@ -44,8 +44,11 @@ class AutoCalFinish0165EvidenceTest(unittest.TestCase):
         self.assertEqual(mapping["VECT_AUTOCAL_U8_1"]["index"], 1)
         self.assertEqual(mapping["VECT_AUTOCAL_U8_2"]["status"], "PROVEN")
         self.assertEqual(mapping["VECT_AUTOCAL_U8_2"]["index"], 2)
-        self.assertEqual(mapping["VECT_AUTOCAL_U8_0"]["status"], "INFERRED_STRONG")
+        self.assertEqual(mapping["VECT_AUTOCAL_U8_0"]["status"], "PROVEN_RESOURCE_WIRE_MAPPING")
         self.assertEqual(mapping["VECT_AUTOCAL_U8_0"]["index"], 0)
+        inventory = self.data["dfm"]["serial_code_0x0165_component_inventory"]
+        self.assertEqual(inventory["count"], 3)
+        self.assertEqual(inventory["status"], "PROVEN_RESOURCE")
 
 
 if __name__ == "__main__":
