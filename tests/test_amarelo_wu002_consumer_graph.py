@@ -37,7 +37,7 @@ class NativeConsumerGraphContractTest(unittest.TestCase):
         self.assertEqual(finish["exact_ecu_physical_effect"], "UNKNOWN")
         self.assertEqual(finish["serial_family"]["index1"]["status"], "PROVEN")
         self.assertEqual(finish["serial_family"]["index2"]["status"], "PROVEN")
-        self.assertEqual(finish["serial_family"]["index0"]["status"], "INFERRED_STRONG")
+        self.assertEqual(finish["serial_family"]["index0"]["status"], "PROVEN_RESOURCE_WIRE_MAPPING")
 
         states = data["states"]
         self.assertEqual(states["label_use_status"], "PROVEN")
