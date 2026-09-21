@@ -1172,3 +1172,67 @@
   background: rgba(74, 222, 128, 0.24);
   border: 1px solid rgba(74, 222, 128, 0.34);
 }
+
+
+/* Native Curve K instrument — values are direct PETR_INJ_TBP × MUL_ACT projection. */
+.autocal-k-card {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.72);
+  padding: 14px 16px 12px;
+}
+.autocal-k-card .autocal-section-head {
+  margin-bottom: 8px;
+}
+.autocal-k-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  color: rgba(226, 232, 240, 0.76);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.autocal-k-legend span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.autocal-k-legend span::before {
+  content: '';
+  width: 16px;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.autocal-k-legend .native-k {
+  color: rgba(250, 204, 21, 0.94);
+}
+.autocal-k-legend .unity {
+  color: rgba(148, 163, 184, 0.66);
+}
+.autocal-k-chart {
+  min-height: 126px;
+}
+.autocal-k-svg {
+  width: 100%;
+  height: 126px;
+  overflow: visible;
+}
+.autocal-k-line {
+  fill: none;
+  stroke: rgba(250, 204, 21, 0.96);
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+}
+.autocal-k-point {
+  fill: rgba(250, 204, 21, 1);
+  stroke: rgba(255, 251, 235, 0.9);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.autocal-k-unity {
+  stroke: rgba(148, 163, 184, 0.38);
+  stroke-width: 1;
+  stroke-dasharray: 6 7;
+  vector-effect: non-scaling-stroke;
+}
