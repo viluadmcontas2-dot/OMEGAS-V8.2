@@ -65,7 +65,7 @@ Evidence:
 - result: **SUCCESS**
 
 ### Remaining closure blockers
-- exact ECU-side physical effect of Finish after the statically proven 0x0165 commit path;
+- exact ECU-side effect of Finish after the statically proven `NUM_AUTOMATCH_EXECUTED := MAX_AUTOMATCH` assignment and connection-aware commit path;
 - any ECU/physical state machine distinct from the already-proven refresh scheduler;
 - exact physical labels/order of acquired-zone indices 0..3;
 - complete host-write vs ECU-mutation attribution for remaining native mutations.
@@ -83,3 +83,26 @@ Evidence:
 - `tests/test_amarelo_autocal_enable_automatch_coupling.py`.
 
 WU-002 research is unblocked; product implementation remains blocked until WU-001/WU-002 closure.
+
+
+## Finish AutoCAL — RTTI correction — 2026-09-21
+
+Direct byte parsing of the Delphi field table plus `ActionFinishAutocalExecute@0x51A390` corrected an earlier 4-byte semantic offset error.
+
+Correct field map:
+- `DM+0x78 = VECT_AUTOCAL_U8_1`;
+- `DM+0x7C = VECT_AUTOCAL_U8_2 / MAX_AUTOMATCH`;
+- `DM+0xC8 = VECT_AUTOCAL_U8_0`;
+- `DM+0xCC = NUM_ATUOMATCH_EXECUTED` (`0x0174`).
+
+The Finish handler performs:
+`MAX_AUTOMATCH -> getter -> NUM_AUTOMATCH_EXECUTED -> setter -> 100 ms -> PostActionRefresh`.
+
+Therefore:
+- `NUM_AUTOMATCH_EXECUTED := MAX_AUTOMATCH`: **PROVEN_STATIC**;
+- previous interpretation `VECT_AUTOCAL_U8_1 -> VECT_AUTOCAL_U8_0`: **FALSIFIED**;
+- exact ECU-side effect of that write: still **UNKNOWN** because supplied Portmons contain no observed `0x0174` write during Finish.
+
+Canonical evidence:
+- `tests/fixtures/amarelo-autocal-finish-0165-v1.json`;
+- `tests/test_amarelo_autocal_finish_0165_evidence.py`.
