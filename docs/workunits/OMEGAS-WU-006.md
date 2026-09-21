@@ -2,97 +2,87 @@
 
 ## Controle
 
-- Estado: `ACTIVE`
+- Estado: `ACTIVE — RENDER/GLOBAL E2E`
 - Epic: #81
 - Spec Kit: `OMEGAS-SK-001`
 - Branch: `OmegasVerde`
-- Baseline inicial: `6049a6f4d9b56aa6d380500a475567ec6f1ad4bc`
+- GitHub remoto é autoridade.
 
 ## Resultado observável
 
-Ao final, o operador deve abrir AutoCal e ver a informação equivalente à rotina original — curvas gasolina/GNV e estado atual quando a ECU fornece os dados — em uma HMI mais simples e segura, sem consultas manuais desnecessárias. O restante das superfícies dependentes de telemetria deve possuir gate E2E derivado de logs reais.
+Ao final, AutoCal deve apresentar curvas gasolina/GNV e estado atual equivalentes ao comportamento original comprovado, com HMI mais simples e segura. Todas as superfícies dependentes de MP48/ECU devem possuir gate E2E derivado de dados reais até a maior fronteira real aplicável, incluindo WebView real em 1280×720 para comportamento visível.
 
 ## Sub-objetivo A — original como evidência
 
-### Início
-Congelar EXE/hash, Portmon e corpus real.
-
-### Meio
-Mapear byte/endereço -> producer -> cadência -> estado -> consumer VCL/UI.
-
-### Fim
-Matriz ProgBase completa e versionada, com desconhecidos explícitos.
+**CONCLUÍDO.**
+- EXE/hash congelados.
+- Portmon real destilado em fixture versionado.
+- Byte/endereço → producer → cadência → consumer original mapeados em #82.
+- Desconhecidos permanecem explícitos; SIL/CIU não é autoridade.
 
 ## Sub-objetivo B — OMEGAS parity
 
-### Início
-Traçar a cadeia real atual até a WebView.
-
-### Meio
-Comparar consumer por consumer com o original.
-
-### Fim
-Cada item classificado: `MATCH | INTENTIONAL_IMPROVEMENT | MISSING | WRONG | INCONCLUSIVE`.
+**CONCLUÍDO NO CORPUS/ORACLE.**
+- #83 fechada.
+- Cadeia ECU/MP48 → scheduler/runtime → NativeAutoCalMonitor → snapshot → projeção → bridge → JS mapeada.
+- Forensic fan-out #13: 256 PASS / 0 RED / 0 BROKEN.
 
 ## Sub-objetivo C — correções provadas
 
-### Início
-Criar RED que reproduza cada divergência confirmada.
-
-### Meio
-Aplicar a menor correção coerente, uma superfície de escrita por vez.
-
-### Fim
-GREEN focado + diff review + suites proporcionais + CI remota.
+**GREEN NO CORPUS/CI.**
+- LEVELS live freshness.
+- CurrentBand.
+- refresh operacional ~2 s completo para os consumers de aquisição.
+- refresh de referência ~4 s coerente.
+- LEVELS RAW no Dashboard; porcentagem não calibrada removida.
+- MAP live alinhado a S16LE com fronteira high-bit fail-closed.
+- single serial authority e no-auto-write preservados.
 
 ## Sub-objetivo D — realidade visual/runtime
 
-### Início
-Usar fixture/corpus real versionado.
+**ATIVO / GATE DE FECHAMENTO.**
 
-### Meio
-Replay determinístico pela fronteira real aplicável e render da WebView `1280x720`.
+Pipeline:
+`fixture real -> maior fronteira real aplicável -> bridge real -> assets reais -> WebView real -> 1280×720 -> DOM/assertions -> screenshot + receipt`.
 
-### Fim
-Screenshots/receipts demonstram curva, AGORA, Dashboard, estados, Map/Learning e sessão conforme cenários cobertos.
+Estado:
+- Android emulator/KVM: provado.
+- app + instrumentation APK: build/install provados.
+- harness Bash versionado para executar os cenários.
+- próximo GREEN necessário: Dashboard fresh LEVELS, Dashboard invalid/stale placeholder e AutoCal fresh control.
+- após estabilizar o harness, ampliar no mesmo AVD para Learning, Map, Curve, OBD, reconnect e sessão.
 
 ## Sub-objetivo E — produto humano
 
-### Início
-Reproduzir ausência de LEVELS no Dashboard e divergência de sessão.
-
-### Meio
-Corrigir somente após causa provada.
-
-### Fim
-LEVELS RAW está na superfície principal sem semântica inventada; AutoCal pertence à sessão canônica.
+**PARCIALMENTE CONCLUÍDO.**
+- LEVELS RAW está na superfície principal sem semântica física inventada.
+- #86 provou que AutoCal já pertence à sessão canônica; não há segundo recorder/export authority.
+- UX ainda precisa de prova renderizada antes de PASS de produto.
 
 ## Estratégia de execução
 
-### Caminho padrão
-`fixture versionado -> GitHub Actions -> runtime real aplicável -> WebView real -> artifact`.
-
-### Uso local excepcional
-MMMACHINE/AgentRed é permitida para:
-- extrair uma nova evidência do ProgBase/Portmon/Drive;
-- reduzir log pesado a fixture compacto;
-- reproduzir algo que ainda não possui seam/fixture remoto.
-
-Assim que o dado necessário estiver destilado e versionado, o gate correspondente migra para GitHub Actions.
+### Padrão
+GitHub Actions é executor primário.
 
 ### Paralelismo
-Jobs independentes devem usar matrix/fan-out remoto; integração e qualquer write compartilhado continuam serializados.
+- até 256 lanes direcionadas no fan-out forense;
+- fan-out global dinâmico por contrato real de produto;
+- integração/writes compartilhados permanecem serializados.
+
+### Uso local excepcional
+MMMACHINE/AgentRed apenas quando a próxima pergunta depende de bytes ainda não destilados do EXE, Portmon bruto, Drive ou log pesado. Uma vez versionado o fixture/oracle, o gate deve ser independente da máquina local.
 
 ## Fechamento
 
-A WorkUnit fecha somente com:
-- #82–#86 reconciliadas;
-- spec/plan/status/evidence atualizados;
-- regressões principais renderizadas;
-- CI canônica verde no SHA final;
-- classificação PASS/PARTIAL/FAIL/INCONCLUSIVE;
-- limite físico declarado.
+A WorkUnit fecha somente quando:
+- #82–#86 e repairs relacionadas estiverem reconciliadas;
+- #84/#85/#95 atingirem o gate renderizado aplicável;
+- STATUS/spec/plan/evidence refletirem o SHA final;
+- CI canônica estiver verde no mesmo SHA final;
+- screenshots/receipts estiverem arquivados;
+- limites de evidência física forem declarados;
+- nenhuma alegação de veículo real for inferida apenas de CI/emulator.
 
 ## NON-GOAL
 
-Portar SIL/CIU.
+Portar SIL/CIU ou gerar APK final sem autorização explícita do owner.

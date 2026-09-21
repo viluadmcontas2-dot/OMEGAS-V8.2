@@ -1,18 +1,18 @@
 {
   "schema": "omegas.workunit.evidence.v1",
   "workunit_id": "OMEGAS-WU-006",
-  "state": "ACTIVE",
+  "state": "ACTIVE_RENDER_GLOBAL_E2E",
   "branch": "OmegasVerde",
-  "baseline_source_sha": "7e6e37ae42527621e20fdada0e55b7c1f03c97d2",
+  "baseline_source_sha": "28c119fbe34eec8ef6a2695e172cd4c9583b91a7",
   "baseline_ci": {
     "fast_contracts": {
-      "run": 113,
-      "run_id": 35627609608,
+      "run": 133,
+      "run_id": 35647103061,
       "conclusion": "success"
     },
     "canonical": {
-      "run": 169,
-      "run_id": 35627609600,
+      "run": 202,
+      "run_id": 35647103096,
       "conclusion": "success"
     }
   },
@@ -138,10 +138,8 @@
     "issue": 83,
     "human_path": "docs/evidence/2026-09-21-omegas-autocal-progbase-parity-matrix.md",
     "machine_path": "tests/fixtures/omegas-autocal-progbase-parity-v1.json",
-    "status": "ACTIVE_REPAIR",
-    "confirmed_red_candidates": [
-      "AUTOCAL_REFERENCE_PERIODIC_REFRESH"
-    ],
+    "status": "CORPUS_ORACLE_GREEN_RENDER_PENDING",
+    "confirmed_red_candidates": [],
     "protected_matches": [
       "LIVE_AGORA_TELEMETRY_SEPARATION",
       "SINGLE_SERIAL_AUTHORITY",
@@ -149,8 +147,8 @@
       "NO_AUTOMATIC_ECU_WRITE"
     ],
     "evidence_debt": [
-      "0x0165 index semantics remain unproven by original binary evidence",
-      "session ownership is delegated to issue #86"
+      "0x0165 exact original subindex semantics remain only partially proven; OMEGAS keeps named compatibility aliases fail-closed",
+      "vehicle-real behavior is not inferred from CI/emulator"
     ],
     "resolved_slices": {
       "levels_raw_live": {
@@ -161,7 +159,7 @@
           "conclusion": "failure"
         },
         "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
-        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
+        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING"
       },
       "current_band": {
         "red_sha": "b05705e772835ebf0dec7206c3dffb1cbd35026e",
@@ -172,7 +170,7 @@
         },
         "first_fix_sha": "38ccb9ee38d833b911687ab1e1c5e87b23bf6959",
         "original_rule": "threshold[i] < MAP <= threshold[i+1]; global min/max excluded",
-        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
+        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING"
       },
       "grouped_acquisition": {
         "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
@@ -183,37 +181,122 @@
         },
         "first_fix_sha": "714725f2e7417a847c19a94e4ddb70096b0af2e3",
         "fields": [
+          "PETR_INJ_TBUF",
+          "MNFLD_PRESS_BUF",
           "NUM_BUF_UPD_PETR",
+          "PETR_INJ_TBUF_GAS_PREV",
+          "MNFLD_PRESS_BUF_GAS_PREV",
+          "PETR_INJ_TBUF_GAS",
+          "MNFLD_PRESS_BUF_GAS",
           "NUM_BUF_UPD_GAS",
           "ACQUIRED_ZONES_PETROL",
           "ACQUIRED_ZONES_GAS"
         ],
         "cadence_ms": 2000,
-        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_PARITY_RECONCILIATION"
+        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING"
+      },
+      "grouped_reference": {
+        "cadence_ms": 4000,
+        "fields": [
+          "PETR_INJ_TBP",
+          "MNFLD_PRESS_THD",
+          "MUL_ACT",
+          "PETR_MNFLD_PRESS_RV",
+          "GAS_MNFLD_PRESS_RV"
+        ],
+        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING",
+        "revision_policy": "byte-sensitive snapshot revision on coherent reference change"
+      },
+      "levels_dashboard": {
+        "raw_only": true,
+        "uncalibrated_percentage_removed": true,
+        "current_state": "SOURCE_AND_FANOUT_GREEN_RENDER_PENDING",
+        "issue": 85
+      },
+      "map_signedness": {
+        "original_oracle": "S16LE payload offset 17",
+        "production": "S16LE",
+        "boundary_test": "0xFFFF -> -1 -> plausibility=false",
+        "real_fixture_high_bit_samples": 0,
+        "current_state": "GREEN_ORACLE_REPLAY"
       }
     },
-    "next_red_candidates": [
-      "AUTOCAL_REFERENCE_PERIODIC_REFRESH"
-    ],
+    "next_red_candidates": [],
     "forensic_fanout": {
       "workflow": ".github/workflows/verde-forensic-fanout.yml",
-      "first_run_id": 35638339743,
-      "lanes": 40,
-      "max_parallel": 20,
-      "first_findings": {
-        "pass": [
-          "AUTOCAL_LEVELS_FAST_AUTHORITY",
-          "AUTOCAL_CURRENT_BAND",
-          "GROUPED_ACQUISITION_REFRESH",
-          "PETROL_GAS_ACQUISITION_SYMMETRY"
-        ],
-        "red": [
-          "GROUPED_REFERENCE_REFRESH",
-          "GLOBAL_LEVELS_PERCENTAGE_STILL_EMITTED",
-          "DASHBOARD_LEVELS_RAW_ABSENT_STATIC"
-        ]
-      },
-      "dashboard_note": "Static RED is not sufficient for #85; rendered 1280x720 replay RED remains required before production change."
+      "lanes": 256,
+      "transaction_lanes": 243,
+      "meta_lanes": 13,
+      "max_parallel": 40,
+      "green_baseline": {
+        "run": 13,
+        "run_id": 35646095776,
+        "sha": "873550b1b13e594c9ffaba7229688f243de3ecaf",
+        "pass": 256,
+        "red": 0,
+        "broken": 0
+      }
     }
+  },
+  "issues_state": {
+    "81": "OPEN",
+    "82": "CLOSED_COMPLETED",
+    "83": "CLOSED_COMPLETED",
+    "84": "OPEN_RENDER_GATE",
+    "85": "OPEN_RENDER_GATE",
+    "86": "CLOSED_MATCH",
+    "95": "OPEN_RENDER_GATE"
+  },
+  "session_unification": {
+    "issue": 86,
+    "state": "CLOSED_MATCH",
+    "contract": "tests/test_autocal_canonical_session_contract.py",
+    "introduced_sha": "5693c1d7858de0405adac87f6bca9db23ab645ac",
+    "verification": {
+      "fast": {
+        "run": 132,
+        "run_id": 35646916927,
+        "conclusion": "success"
+      },
+      "forensic": {
+        "run": 14,
+        "run_id": 35646916926,
+        "conclusion": "success"
+      },
+      "canonical": {
+        "run": 201,
+        "run_id": 35646916974,
+        "conclusion": "success"
+      }
+    },
+    "conclusion": "AutoCal evidence and exports use the canonical SessionRecorder/session ZIP; compatibility receipts are not a second session authority."
+  },
+  "global_reality_fanout": {
+    "workflow": ".github/workflows/verde-global-reality-fanout.yml",
+    "plan": "tools/ci/global_reality_plan.py",
+    "lane_runner": "tools/ci/global_reality_lane.py",
+    "max_parallel": 80,
+    "first_run_id": 35647103126,
+    "note": "Cross-runtime tests declare their JVM->Node prerequisite explicitly; RED is product/test contract failure, not missing upstream artifact."
+  },
+  "android_render_gate": {
+    "workflow": ".github/workflows/verde-android-render-evidence.yml",
+    "viewport": "1280x720",
+    "emulator": "reactivecircus/android-emulator-runner@v2; pinned emulator build 15917651",
+    "proven": [
+      "KVM",
+      "emulator boot",
+      "debug APK build",
+      "androidTest APK build",
+      "APK install",
+      "viewport configuration"
+    ],
+    "harness": "tools/ci/run_android_render_evidence.sh",
+    "pending_scenarios": [
+      "dashboardFreshLevelsRaw",
+      "dashboardInvalidLevelsPlaceholder",
+      "autocalFreshLevelsControl"
+    ],
+    "state": "IN_PROGRESS_NOT_YET_PRODUCT_PASS"
   }
 }

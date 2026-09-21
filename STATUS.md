@@ -6,73 +6,90 @@
 - WorkUnit: `OMEGAS-WU-006`
 - Epic: #81
 - Branch: `OmegasVerde`
-- Estado: `ACTIVE — DISCOVERY/PARITY`
+- Estado: `ACTIVE — PARITY GREEN / GLOBAL RENDER GATE`
 
-Sempre resolver o HEAD remoto antes de agir. Este status registra evidência, não fixa o HEAD para sempre.
+Sempre resolver o HEAD remoto antes de agir. GitHub remoto é autoridade; este arquivo registra evidência e direção, não fixa o HEAD.
 
-## Baseline de evidência
+## Evidência já fechada
 
-- Baseline científico/runtime antes deste pacote documental: `6049a6f4d9b56aa6d380500a475567ec6f1ad4bc`
-- Fast contracts: PASS nesse baseline
-- OMEGAS VERDE CI: PASS nesse baseline
-- Fixture real MP48: `tests/fixtures/portmon-autocal-cycle-v1.json`
-- Origem do fixture: Issue #68 / Portmon real
+- #82 ProgBase byte/consumer map: **CLOSED / COMPLETED**.
+- #83 OMEGAS parity matrix: **CLOSED / COMPLETED**.
+- #86 sessão canônica: **CLOSED / MATCH** — AutoCal usa o mesmo `SessionRecorder`, o mesmo diretório de sessão e o mesmo ZIP canônico.
+- Fixture real MP48: `tests/fixtures/portmon-autocal-cycle-v1.json`, origem #68 / Portmon real.
+- ProgBase original: `G:\Meu Drive\OMEGAS\Copy of ProgBase (3).exe`.
+- ProgBase SHA-256: `8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4`.
+- Forensic fan-out #13 (`35646095776`) no SHA `873550b1b13e594c9ffaba7229688f243de3ecaf`: **256 PASS / 0 RED / 0 BROKEN**.
+- Canonical CI #202 (`35647103096`) no SHA `28c119fbe34eec8ef6a2695e172cd4c9583b91a7`: **PASS**.
+- Fast contracts #133 (`35647103061`) no mesmo SHA: **PASS**.
 
-## Descobertas confirmadas que orientam a próxima execução
-
-### ProgBase original
-
-Executável:
-`G:\Meu Drive\OMEGAS\Copy of ProgBase (3).exe`
-
-SHA-256:
-`8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4`
+## ProgBase/original confirmado
 
 Estruturas VCL observadas:
-- `TAutoCalUI`
-- `TAutoCalDM`
-- `TFormRifAutocal`
-- `ChartData`
-- `PetrolCurve`
-- `GasCurve`
-- `RunPoint`
-- `CurrentBand`
-- `PollingPetrol`
-- `PollingGas`
+- `TAutoCalUI`, `TAutoCalDM`, `TFormRifAutocal`;
+- `ChartData`, `PetrolCurve`, `GasCurve`;
+- `RunPoint`, `CurrentBand`, `PollingPetrol`, `PollingGas`.
 
-Portmon bruto observado:
+Portmon:
 - `48 01 49`: mediana ~46,57 ms;
-- família AutoCal `0x015B..0x0163`: ~2,01 s;
-- `0x018D/0x018E`: ~4,05 s.
+- família `0x015B..0x0163`: ~2,01 s;
+- família `0x018D/0x018E`: ~4,05 s;
+- leituras secundárias intercaladas com telemetria viva.
 
-### OMEGAS atual
+Semântica live recuperada:
+- Petrol Injection raw: payload offset 8;
+- LEVELS RAW: payload offset 13;
+- MAP raw: payload offset 17, **S16LE**;
+- nenhuma conversão física LEVELS→%/litros/m³ está autorizada.
 
-Hipótese forte já sustentada por leitura de código:
-- `NativeAutoCalMonitor` trabalha por probe/material-change e não mantém por si só a mesma renovação contínua observada no ProgBase;
-- o tick do monitor passa pelo health loop de serviço;
-- essa diferença precisa ser fechada por mapa producer/consumer + RED visual/runtime antes de qualquer correção.
+## OMEGAS atual — correções provadas
 
-## Relatos físicos do owner que precisam virar RED
+- LEVELS do AutoCal usa telemetria live fresca.
+- Dashboard/Agora contém `LEVELS RAW`; emissão de `level_percentage` não calibrado foi removida.
+- `CurrentBand` reproduz o helper original: threshold[i] < MAP <= threshold[i+1], fora do domínio não seleciona faixa.
+- Refresh operacional ~2 s usa a autoridade serial existente e renova a unidade consumida por `AutoCalAcquisition`:
+  - gasolina: tempo + MAP + contador;
+  - GNV atual: tempo + MAP + contador;
+  - GNV anterior: tempo + MAP;
+  - zonas gasolina/GNV.
+- Refresh de referência ~4 s renova atomicamente `PETR_INJ_TBP`, `MNFLD_PRESS_THD`, `MUL_ACT`, petrol RV e gas RV.
+- `MUL_ACT` permanece no grupo coerente de referência, não no grupo operacional.
+- MAP live foi alinhado ao S16LE do oracle; fronteira `0xFFFF -> -1` fica implausível/fail-closed.
+- Nenhum segundo serial owner/thread foi criado; `telemetryAfter` permanece preservado.
+- Escrita automática na ECU continua proibida.
 
-- curva AutoCal não aparece como no ProgBase;
-- cursor AGORA pode desaparecer;
-- estado pode ficar em “sem referência / snapshot parcial / 18 de 22”;
-- LEVELS não está no Dashboard/Agora;
-- AutoCal parece manter fluxo/sessão separado em vez de integrar a sessão canônica.
+## Sessão
 
-Estes itens são requisitos de investigação/teste, não prova automática de causa.
+AutoCal não possui um segundo sistema de sessão:
+- snapshots nativos, snapshots manuais, epochs e ações confirmadas entram no `SessionRecorder` canônico;
+- aliases AutoCal de listar/exportar delegam para a sessão/ZIP canônicos;
+- `autocal_native_receipts.json` permanece apenas como compatibilidade/readback e não deve ser apagado sem provar readers/writers.
 
-## Estratégia de executor
+## Execução paralela
 
-- GitHub Actions: executor primário para replay, testes, render WebView, screenshots e matrizes paralelas.
-- MMMACHINE/AgentRed: aquisição excepcional de evidência bruta que ainda vive só no EXE/Drive/log pesado.
-- Depois da extração, o repo guarda fixtures compactos com proveniência; o CI não depende do computador.
-- O raw pesado não precisa ser enviado ao GitHub para tornar o teste fiel.
+### Fan-out forense
+- workflow: `.github/workflows/verde-forensic-fanout.yml`;
+- matriz máxima: **256 lanes**;
+- 243 lanes = uma por transação Portmon;
+- 13 lanes meta = oracle, same-ECU JVM, UI, arquitetura, segurança, mutações, MAP, LEVELS, aquisição e revisão.
 
-## Próximo passo único
+### Fan-out global
+- workflow: `.github/workflows/verde-global-reality-fanout.yml`;
+- descobre e isola contratos de Dashboard, Learning, Map, Curve, OBD, sessão, reconnect, telemetry/runtime/bridges;
+- uma dependência JVM→Node do Learning foi tornada explícita; não era RED de produto.
 
-Concluir #82: mapa byte/consumer ProgBase. Em paralelo somente onde não houver dependência de evidência, preparar #84 para executar fixtures compactos no GitHub Actions. Depois preencher #83 com classificação MATCH / INTENTIONAL IMPROVEMENT / MISSING / WRONG / INCONCLUSIVE e abrir REDs apenas para divergências confirmadas.
+### Render Android real
+Pipeline vinculante:
+`fixture real -> decoder/runtime/bridge reais -> MainActivity/WebView real -> 1280x720 -> DOM/assertions -> screenshot + receipt`.
+
+O emulator, build e instalação dos APKs já foram provados no run #9; a falha desse run foi apenas sintaxe do wrapper shell. O run seguinte usa `tools/ci/run_android_render_evidence.sh` para executar os cenários dentro de Bash real.
+
+## Pendências vinculantes
+
+- #84: completar o gate renderizado para Dashboard, AutoCal e depois Learning/Map/Curve/OBD/reconnect/sessões.
+- #85: só fechar depois de screenshot + receipt 1280x720 provando LEVELS RAW fresh e placeholder inválido/stale.
+- #95: só fechar depois do render real da paridade AutoCal, apesar do corpus/oracle já estar 256/256 PASS.
+- Reconciliar #81 somente após #84/#85/#95 e CI final no mesmo SHA.
 
 ## NON-GOAL
 
-Nenhum port SIL/CIU nesta WorkUnit.
+Nenhum port/cherry-pick/cópia SIL/CIU nesta WorkUnit.
