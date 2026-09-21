@@ -1,0 +1,61 @@
+{
+  "schema": "omegas.amarelo.autocal-point-update-dynamics-v1",
+  "authority": {
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b"
+  },
+  "observed_index": 6,
+  "sequence_examples": [
+    {
+      "counter": 8,
+      "x_raw": 3721,
+      "y_raw": 541
+    },
+    {
+      "counter": 9,
+      "x_raw": 3721,
+      "y_raw": 541
+    },
+    {
+      "counter": 9,
+      "x_raw": 3704,
+      "y_raw": 538
+    },
+    {
+      "counter": 10,
+      "x_raw": 3704,
+      "y_raw": 538
+    },
+    {
+      "counter": 10,
+      "x_raw": 3640,
+      "y_raw": 538
+    },
+    {
+      "counter": 1,
+      "x_raw": 2890,
+      "y_raw": 546
+    },
+    {
+      "counter": 2,
+      "x_raw": 2890,
+      "y_raw": 546
+    },
+    {
+      "counter": 2,
+      "x_raw": 2805,
+      "y_raw": 538
+    },
+    {
+      "counter": 3,
+      "x_raw": 2805,
+      "y_raw": 538
+    }
+  ],
+  "conclusions": {
+    "point_value_is_not_a_function_of_counter_alone": "PROVEN_AT_HOST_OBSERVATION_GRANULARITY",
+    "counter_is_not_safe_to_treat_as_running_average_sample_count": "PROVEN_UNSAFE",
+    "exact_firmware_point_update_formula": "UNKNOWN",
+    "asynchronous_read_cadence_caveat": "Counter and point vectors are polled as separate transactions, so equality of observed counter values does not prove the ECU counter was physically unchanged at the exact mutation instant.",
+    "product_contract": "Do not reconstruct or emulate native point averaging from NUM_BUF_UPD alone; consume the ECU point buffer as authority."
+  }
+}
