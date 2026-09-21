@@ -187,5 +187,5 @@ assert.notEqual(currentGas[0].mapBar, previousGas[0].mapBar, 'GNV anterior e atu
 assert.match(source, /this\.projection\?\.instrument/);
 assert.match(source, /gasPreviousMarkup/);
 assert.match(source, /gasCurrentMarkup/);
-assert.match(source, /autocal-acquisition-point gas-previous/);
-assert.match(source, /autocal-acquisition-point gas-current/);
+assert.match(source, /acquisitionMarkup\(gasPreviousAcquisition, 'gas-previous'/);
+assert.match(source, /acquisitionMarkup\(gasCurrentAcquisition, 'gas-current'/);
