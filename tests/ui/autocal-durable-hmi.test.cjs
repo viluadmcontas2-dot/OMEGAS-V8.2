@@ -27,14 +27,17 @@ const primaryTiny = [
   ['.autocal-session-copy b', 15],
   ['.autocal-session-copy span', 12],
 ];
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^()|[\]\\]/g, '\\$&');
+function cssDeclarationsFor(selector) {
+  const blocks = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+  return blocks
+    .filter(match => match[1].split(',').map(item => item.trim()).includes(selector))
+    .map(match => match[2]);
 }
 for (const [selector, min] of primaryTiny) {
-  const matches = [...css.matchAll(new RegExp(escapeRegExp(selector) + '\\s*\\{([\\s\\S]*?)\\}', 'g'))];
-  assert.ok(matches.length, 'CSS ausente para ' + selector);
-  const declared = matches
-    .map(match => [...match[1].matchAll(/font-size:\s*(\d+)px/g)].map(item => Number(item[1])))
+  const declarations = cssDeclarationsFor(selector);
+  assert.ok(declarations.length, 'CSS ausente para ' + selector);
+  const declared = declarations
+    .map(body => [...body.matchAll(/font-size:\s*(\d+)px/g)].map(item => Number(item[1])))
     .flat();
   assert.ok(declared.length, 'font-size ausente para ' + selector);
   const effective = declared[declared.length - 1];
