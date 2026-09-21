@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the high-resolution gasoline reference separate from the 144-node Map K control surface. Each current-revision CNG visit produces a total physical error, a global Curve K component is removed first, and the remaining local residual is distributed bilinearly to immutable Map K nodes. Sparse node evidence is robustly aggregated and optionally shrunk toward a provenance-bound AutoCal/global neutral prior; the prior never marks a node consolidated by itself and repeated independent local evidence can override it.
 
-**Tech Stack:** Python 3 SIL tooling + pytest/unittest-style deterministic tests; existing OMEGAS JSONL/Portmon replay corpus; Kotlin/Android production code is read-only evidence during this plan.
+**Tech Stack:** Python 3 SIL tooling + unittest-style deterministic tests; original ProgBase 4.2.0.6 static evidence; the two raw Portmon captures as mandatory protocol/replay ground truth; Kotlin/Android production code is read-only evidence during this plan.
 
 **Spec:** `docs/superpowers/specs/2026-09-21-omegas-verde-sil-fixed-control-surface-design.md`
 
@@ -25,6 +25,8 @@
 - Raw one-visit evidence cannot be published as stable Difference or actionable Suggestion.
 - Real repeated local evidence must be able to defeat the prior.
 - All scientific claims require deterministic test/replay evidence.
+- Native AutoCal means the ECU mechanism observed through ProgBase/raw wire evidence; `AutoMatchV5Engine` is only an OMEGAS inferred reconstruction until byte-level equivalence is proven.
+- Every scientific subsystem must include evidence from both raw traces: `PortmonAUTOCAL (1).LOG` SHA-256 `4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b` and `PortmonLOGNOVO.LOG` SHA-256 `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64`.
 
 ## Review Focus
 
@@ -33,6 +35,86 @@
 3. **Strong AutoCal prior + true local defect:** repeated local evidence must eventually override the prior rather than being smoothed away.
 4. **Sparse edge-of-domain observation:** model must explicitly clamp/abstain according to the declared policy and never relabel the nearest node coordinate.
 5. **Mixed global + local error:** global correction must not be double-counted in both Curve K and Map K residual.
+
+---
+
+### Task 0: Native ProgBase / ECU AutoCal transaction ground truth
+
+**Files:**
+- Create: `tools/omegas-sil/portmon_transactions.py`
+- Create: `tools/omegas-sil/test_portmon_transactions.py`
+- Create: `tools/omegas-sil/progbase_autocal_trace.py`
+- Test fixtures: byte-exact excerpts extracted from both raw Portmon logs with source SHA and transaction indices embedded in fixture metadata.
+
+**Interfaces:**
+- Produces:
+  - `iter_portmon_transactions(path) -> Iterator[SerialTransaction]`
+  - `decode_autocal_object(transaction) -> AutoCalObjectRead | None`
+  - `AutoCalTimeline` with enable/status/counters/buffers/pressure-curves/MUL_ACT transitions
+  - machine-readable evidence report used by all later tasks.
+
+- [ ] **Step 1: Write failing parser tests from both raw logs**
+
+The tests must include byte-exact transactions from **both** Portmon captures, covering at minimum:
+- `MUL_ACT 0x0161`;
+- `NUM_AUTOMATCH_EXECUTED 0x0174`;
+- `AUTO_CAL_ENABLE 0x014A`;
+- `MAX_RPM_FOR_AUTOCAL 0x017A`;
+- petrol/gas AutoCal buffers or pressure curves.
+
+Fixture metadata must include source filename, SHA-256, Portmon transaction/event index and extraction command.
+
+- [ ] **Step 2: Run tests and verify RED**
+
+Run:
+
+`python -m unittest tools/omegas-sil/test_portmon_transactions.py -v`
+
+Expected: parser/timeline APIs missing.
+
+- [ ] **Step 3: Implement streaming Portmon transaction reconstruction**
+
+Requirements:
+- never load the complete 150–163 MB logs into a test fixture;
+- reconstruct request + fragmented read response exactly;
+- verify response echo/status/length/checksum where known;
+- decode Q14 `MUL_ACT`, U16 counters/buffers and indexed/scalar objects;
+- preserve raw bytes beside decoded values.
+
+- [ ] **Step 4: Prove native self-adjustment on PortmonAUTOCAL**
+
+The integration test must verify:
+- initial observed `MUL_ACT` is 30 × Q14 1.0;
+- at least three later `MUL_ACT` vector transitions occur;
+- AutoMatch counter observations progress through 1, 2 and 3;
+- no ProgBase request in the corresponding capture writes a replacement `MUL_ACT` vector.
+
+Do not generalize beyond what the captured trace proves.
+
+- [ ] **Step 5: Build LOGNOVO corroboration timeline**
+
+Verify:
+- AutoCal enable/disable frames where present;
+- counter reset/progression;
+- `MUL_ACT` transitions;
+- `MAX_RPM_FOR_AUTOCAL` raw `0x0BB8 = 3000`;
+- distinguish unrelated Map K writes from native AutoCal state transitions.
+
+- [ ] **Step 6: Emit machine-readable native timeline**
+
+Write a JSON report containing:
+- artifact hashes;
+- decoded objects;
+- `MUL_ACT` transitions;
+- counter transitions;
+- host write inventory;
+- uncertainty notes.
+
+- [ ] **Step 7: Commit**
+
+Commit message:
+
+`test(sil): ground AutoCal in ProgBase raw wire traces`
 
 ---
 
