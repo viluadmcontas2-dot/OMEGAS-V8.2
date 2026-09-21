@@ -63,10 +63,11 @@ class DashboardLevelsRenderTest {
         scenario: ActivityScenario<MainActivity>,
         fixture: LiveFixture,
         settleMs: Long = 700L,
+        sessionId: Long = 9001L,
     ) {
         scenario.onActivity { activity ->
             val service = activity.serviceOrNull() ?: error("service unavailable")
-            val session = 9001L
+            val session = sessionId
             val captured = SystemClock.elapsedRealtime()
             service.telemetryStore.beginSession(session)
             val live = Mp48Protocol.decodeTelemetry(fixture.payload, captured).toJson()
@@ -426,6 +427,40 @@ class DashboardLevelsRenderTest {
             assertEquals("New session must invalidate old Petrol Injection", "—", after.optString("petrol"))
             assertEquals("New session must invalidate old MAP", "—", after.optString("map"))
             assertEquals("New session must invalidate old LEVELS RAW", "—", after.optString("levelsRaw"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun sessionReconnectRecoversFreshTelemetry() {
+        val scenario = launch()
+        try {
+            val fixture = liveFixture()
+            activateRoute(scenario, "dashboard", settleMs = 350L)
+
+            injectFresh(scenario, fixture, settleMs = 650L, sessionId = 9101L)
+            val first = dashboardDom(scenario)
+            assertTrue("Initial session must expose Petrol Injection", first.optString("petrol") != "—")
+            assertTrue("Initial session must expose MAP", first.optString("map") != "—")
+
+            scenario.onActivity { activity ->
+                val service = activity.serviceOrNull() ?: error("service unavailable")
+                service.telemetryStore.beginSession(9102L)
+                activity.refreshWebUi()
+            }
+            SystemClock.sleep(650L)
+            val invalidated = dashboardDom(scenario)
+            assertEquals("Session switch must invalidate old Petrol Injection", "—", invalidated.optString("petrol"))
+            assertEquals("Session switch must invalidate old MAP", "—", invalidated.optString("map"))
+
+            injectFresh(scenario, fixture, settleMs = 700L, sessionId = 9103L)
+            val recovered = dashboardDom(scenario)
+            saveEvidence("dashboard-session-recovered", recovered, scenario)
+            assertTrue("Recovered session must keep Dashboard active", recovered.getBoolean("route"))
+            assertTrue("Recovered session must expose fresh Petrol Injection again", recovered.optString("petrol") != "—")
+            assertTrue("Recovered session must expose fresh MAP again", recovered.optString("map") != "—")
+            assertTrue("Recovered session must expose fresh RPM again", recovered.optString("rpm") != "—")
         } finally {
             scenario.close()
         }
