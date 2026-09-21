@@ -24,106 +24,69 @@ concurrency:
 
 jobs:
   render:
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        include:
-          - scenario: dashboard-fresh
-            method: dashboardFreshLevelsRaw
-          - scenario: dashboard-invalid
-            method: dashboardInvalidLevelsPlaceholder
-          - scenario: autocal-fresh-control
-            method: autocalFreshLevelsControl
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
-      - name: Prepare Android emulator
+
+      - name: Enable KVM
         shell: bash
         run: |
           set -euo pipefail
-          chmod +x gradlew
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          test -e /dev/kvm || { echo "/dev/kvm unavailable"; exit 2; }
 
-          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          test -d "$SDK_ROOT" || { echo "Android SDK root missing: $SDK_ROOT"; exit 2; }
+      - name: Run real Android WebView evidence
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          cores: 2
+          ram-size: 2048M
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
+          disable-animations: true
+          script: |
+            set -uo pipefail
+            chmod +x gradlew
+            ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace || exit 2
+            adb shell wm size 1280x720
+            adb shell wm density 160
+            adb install -r app/build/outputs/apk/debug/app-debug.apk || exit 2
+            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || exit 2
+            adb shell pm grant com.omegas.v7.test android.permission.POST_NOTIFICATIONS || true
+            adb shell dumpsys deviceidle whitelist +com.omegas.v7.test || true
 
-          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' | sort -V | tail -n 1)"
-          AVDMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/avdmanager' | sort -V | tail -n 1)"
-          ADB="$SDK_ROOT/platform-tools/adb"
-          EMULATOR="$SDK_ROOT/emulator/emulator"
+            mkdir -p rendered-evidence
+            overall=0
+            for entry in               "dashboard-fresh:dashboardFreshLevelsRaw"               "dashboard-invalid:dashboardInvalidLevelsPlaceholder"               "autocal-fresh-control:autocalFreshLevelsControl"
+            do
+              scenario="${entry%%:*}"
+              method="${entry##*:}"
+              set +e
+              adb shell am instrument -w -r                 -e class "com.omegas.prohub.DashboardLevelsRenderTest#${method}"                 com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner                 | tee "rendered-evidence/${scenario}-instrumentation.txt"
+              rc=${PIPESTATUS[0]}
+              set -e
+              adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
+              adb exec-out screencap -p > "rendered-evidence/${scenario}-post.png" || true
+              if [ "$rc" -ne 0 ]; then overall=1; fi
+            done
+            exit "$overall"
 
-          test -x "$SDKMANAGER" || { echo "sdkmanager not found under $SDK_ROOT/cmdline-tools"; find "$SDK_ROOT/cmdline-tools" -maxdepth 4 -type f | head -80; exit 2; }
-          test -x "$AVDMANAGER" || { echo "avdmanager not found under $SDK_ROOT/cmdline-tools"; exit 2; }
-          test -x "$ADB" || { echo "adb not found: $ADB"; exit 2; }
-
-          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
-          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
-          echo "$SDK_ROOT/emulator" >> "$GITHUB_PATH"
-          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
-
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platform-tools" "emulator" "platforms;android-35" "system-images;android-35;google_apis;x86_64"
-          echo no | "$AVDMANAGER" create avd --force -n omegas-ci -k "system-images;android-35;google_apis;x86_64"
-
-          test -x "$EMULATOR" || { echo "emulator not found after sdkmanager: $EMULATOR"; exit 2; }
-          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm || true; fi
-          nohup "$EMULATOR" -avd omegas-ci -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none > emulator.log 2>&1 &
-
-          "$ADB" wait-for-device
-          for i in $(seq 1 180); do
-            if [ "$("$ADB" shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; then break; fi
-            sleep 2
-          done
-          test "$("$ADB" shell getprop sys.boot_completed | tr -d '\r')" = "1" || {
-            echo "Emulator failed to boot"
-            tail -200 emulator.log || true
-            "$ADB" devices -l || true
-            exit 2
-          }
-          "$ADB" shell settings put global window_animation_scale 0
-          "$ADB" shell settings put global transition_animation_scale 0
-          "$ADB" shell settings put global animator_duration_scale 0
-          "$ADB" shell wm size 1280x720
-          "$ADB" shell wm density 160
-          "$ADB" shell wm size
-          "$ADB" shell wm density
-      - name: Build app and instrumentation APK
-        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
-      - name: Install and authorize test app
-        shell: bash
-        run: |
-          set -euo pipefail
-          adb install -r app/build/outputs/apk/debug/app-debug.apk
-          adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-          adb shell pm grant com.omegas.v7.test android.permission.POST_NOTIFICATIONS || true
-          adb shell dumpsys deviceidle whitelist +com.omegas.v7.test || true
-      - name: Run real WebView evidence scenario
-        id: instrument
-        shell: bash
-        run: |
-          set -o pipefail
-          adb shell am instrument -w -r             -e class "com.omegas.prohub.DashboardLevelsRenderTest#${{ matrix.method }}"             com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner             | tee instrumentation.txt
-      - name: Pull rendered evidence
-        if: always()
-        shell: bash
-        run: |
-          mkdir -p rendered-evidence
-          adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
-          adb exec-out screencap -p > "rendered-evidence/${{ matrix.scenario }}-post.png" || true
-          cp instrumentation.txt rendered-evidence/ 2>/dev/null || true
-          cp emulator.log rendered-evidence/ 2>/dev/null || true
       - name: Upload rendered evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: render-${{ matrix.scenario }}
+          name: android-render-evidence
           path: rendered-evidence
           retention-days: 7
           if-no-files-found: warn
