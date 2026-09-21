@@ -23,29 +23,29 @@ function loadModel() {
   return context.OmegasUi.AutoCalUxModel;
 }
 
-test('LEVELS RAW do frame vivo vence projection AutoCal mais antiga', () => {
+test('LEVELS do frame global não entra no modelo AutoCal', () => {
   const model = loadModel();
-  const live = model.livePoint(
-    {
-      valid: true,
-      ageMs: 40,
-      sequence: 77,
-      live: {
-        rpm: 875,
-        petrol_ms: 4.8,
-        load_bar: 0.452,
-        level_raw: 126,
-        fuel: 'GNV',
-      },
+  const live = model.livePoint({
+    valid: true,
+    ageMs: 40,
+    sequence: 77,
+    live: {
+      rpm: 875,
+      petrol_ms: 4.8,
+      load_bar: 0.452,
+      level_raw: 126,
+      fuel: 'GNV',
     },
-    { levelsRaw: 91 },
-  );
+  });
 
   assert.ok(live);
-  assert.equal(live.levelRaw, 126);
+  assert.equal(live.rpm, 875);
+  assert.equal(live.petrolMs, 4.8);
+  assert.equal(live.mapBar, 0.452);
+  assert.equal(Object.prototype.hasOwnProperty.call(live, 'levelRaw'), false);
 });
 
-test('LEVELS RAW ausente no frame vivo falha fechado em vez de reutilizar projection velha', () => {
+test('projection legada de LEVELS não altera contexto AutoCal', () => {
   const model = loadModel();
   const live = model.livePoint(
     {
@@ -63,5 +63,5 @@ test('LEVELS RAW ausente no frame vivo falha fechado em vez de reutilizar projec
   );
 
   assert.ok(live);
-  assert.equal(live.levelRaw, null);
+  assert.equal(Object.prototype.hasOwnProperty.call(live, 'levelRaw'), false);
 });
