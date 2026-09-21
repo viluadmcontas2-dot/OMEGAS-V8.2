@@ -1152,3 +1152,175 @@
 .autocal-session-item b { font-size: 14px; }
 .autocal-session-item button,
 .autocal-session-actions button { min-height: 52px; font-size: 14px; }
+
+
+/* 2026-09-21 — hierarchy refinement: curve is the dominant instrument surface. */
+.autocal-cockpit {
+  gap: 7px;
+}
+
+.autocal-hero { order: 0; padding: 9px 12px; }
+.autocal-reference-card {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 11px 12px 10px;
+  background:
+    radial-gradient(circle at 68% 14%, rgba(42, 207, 238, .055), transparent 34%),
+    linear-gradient(180deg, rgba(10,20,31,.96), rgba(6,12,20,.985));
+  border-color: rgba(77, 172, 218, .20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 16px 42px rgba(0,0,0,.16);
+}
+.autocal-session-strip { order: 2; }
+.autocal-session-drawer { order: 3; }
+.autocal-bands-card { order: 4; }
+.autocal-command-bar { order: 5; }
+.autocal-technical-details { order: 6; }
+.autocal-review { order: 7; }
+
+.autocal-reference-card .autocal-section-head { order: 0; }
+.autocal-reference-card .autocal-chart-legend { order: 1; }
+.autocal-reference-card .autocal-chart-workspace { order: 2; }
+.autocal-reference-card .autocal-live-strip { order: 3; }
+
+.autocal-section-head h4 {
+  font-size: 22px;
+  letter-spacing: -.015em;
+}
+.autocal-section-head p {
+  max-width: 760px;
+}
+.autocal-chart-legend {
+  min-height: 26px;
+  margin-bottom: 7px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.autocal-chart-workspace {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+.autocal-chart-host {
+  height: clamp(300px, 43vh, 390px);
+  min-height: 300px;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(74,118,154,.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74,118,154,.08) 1px, transparent 1px),
+    radial-gradient(circle at 50% 30%, rgba(13,59,86,.20), transparent 56%),
+    #07101a;
+  background-size: 11.111% 25%, 10% 100%, auto, auto;
+}
+.autocal-chart-inspector {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: min(238px, 30%);
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  padding: 11px 12px;
+  border-color: rgba(70,203,231,.20);
+  background: rgba(7,16,26,.86);
+  box-shadow: 0 12px 32px rgba(0,0,0,.28);
+  backdrop-filter: blur(8px);
+}
+
+.autocal-live-strip {
+  grid-template-columns: minmax(180px, 1.2fr) repeat(4, minmax(105px, .72fr));
+  gap: 8px;
+  margin: 9px 0 0;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,.055);
+}
+.autocal-live-summary,
+.autocal-live-metric {
+  min-height: 64px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255,255,255,.055);
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.018));
+}
+.autocal-live-summary {
+  border-color: rgba(31,213,239,.20);
+  box-shadow: inset 3px 0 0 rgba(31,213,239,.74);
+}
+.autocal-live-summary small,
+.autocal-live-metric small {
+  color: #7f96aa;
+  letter-spacing: .12em;
+}
+.autocal-live-summary b { font-size: 16px; }
+.autocal-live-metric b { font-size: 20px; }
+.autocal-live-narrative {
+  color: #8597a9;
+  font-size: 12px;
+}
+
+.autocal-live-halo {
+  fill: rgba(23,218,246,.14);
+  stroke: rgba(23,218,246,.55);
+  stroke-width: 2;
+}
+.autocal-live-point {
+  fill: #19daf4;
+  stroke: #dffcff;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 6px rgba(25,218,244,.75));
+}
+.autocal-live-label {
+  fill: #49e7fb;
+  stroke: #061019;
+}
+.autocal-chart-legend .live::before {
+  background: #19daf4;
+  box-shadow: 0 0 0 3px rgba(25,218,244,.14), 0 0 12px rgba(25,218,244,.28);
+}
+
+.autocal-hero {
+  grid-template-columns: minmax(0,1fr) minmax(390px, auto);
+}
+.autocal-human-copy h3 {
+  font-size: clamp(19px, 2cqw, 24px);
+}
+.autocal-zone-meter {
+  margin-top: 5px;
+}
+.autocal-human-copy strong {
+  margin-top: 3px;
+}
+.autocal-hero-actions button,
+.autocal-primary-action,
+.autocal-reset-actions button,
+.autocal-chart-tools button,
+.autocal-review-card button {
+  min-height: 48px;
+}
+
+.autocal-session-strip {
+  padding: 8px 11px;
+  border-radius: 11px;
+}
+
+@container (max-width: 900px) {
+  .autocal-chart-inspector {
+    position: static;
+    width: auto;
+    max-height: none;
+    margin-top: 8px;
+    backdrop-filter: none;
+  }
+  .autocal-chart-host {
+    height: clamp(270px, 40vh, 340px);
+    min-height: 270px;
+  }
+}
+
+@container (max-width: 760px) {
+  .autocal-hero { grid-template-columns: 1fr; }
+  .autocal-live-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .autocal-chart-host { min-height: 250px; }
+}

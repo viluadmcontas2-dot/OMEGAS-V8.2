@@ -447,7 +447,7 @@
 
             <section class="autocal-reference-card">
               <div class="autocal-section-head">
-                <div><small>REFERÊNCIA NATIVA</small><h4>Gasolina × GNV</h4><p>Petrol Inj. no eixo horizontal e MAP no vertical. A tela só desenha o que a ECU publicou.</p></div>
+                <div><small>CURVA DE AQUISIÇÃO</small><h4>Gasolina × GNV</h4><p>Resposta da injeção por Petrol Inj. × MAP · somente dados publicados pela ECU.</p></div>
                 <div class="autocal-chart-tools" aria-label="Controles do gráfico">
                   <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 </div>
