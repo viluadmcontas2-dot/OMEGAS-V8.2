@@ -18,6 +18,35 @@ This design also makes USB/session boundaries scientifically irrelevant. A recon
 
 The target outcome is a Difference/Suggestion system that cannot produce large adjacent contradictions merely because observations were binned independently, a USB session changed, or stale evidence from a previous calibration revision remains active.
 
+## 1.1 Native AutoCal terminology and authority
+
+Within this design, **AutoCal** means the native ECU mechanism observed through the original Landi Renzo ProgBase unless explicitly qualified otherwise.
+
+Ground-truth evidence is recorded in:
+
+`docs/reports/2026-09-21-progbase-native-autocal-ground-truth.md`
+
+Current wire-level evidence shows that, during the raw AutoCal capture, the ECU's 30-point `MUL_ACT` curve changed three times while ProgBase sent no corresponding replacement-vector write; `NUM_AUTOMATCH_EXECUTED` was subsequently observed at 1, 2 and 3. This strongly supports native ECU self-adjustment.
+
+Therefore:
+
+- `AutoMatchV5Engine` is an **OMEGAS inferred reconstruction**, not native ground truth;
+- inferred OMEGAS formulas may be compared against native behavior but may not define it;
+- ProgBase binary structure + raw Portmon traffic are the authority for native orchestration/protocol claims;
+- native RPM usage must be discovered from evidence. `MAX_RPM_FOR_AUTOCAL=3000` proves RPM is at least a native condition/limit, but does not prove RPM is an axis of the resulting K-factor curve;
+- no Map K RPM coordinate may be invented from AutoCal curve data that lacks correlated RPM evidence.
+
+### Mandatory raw-artifact rule
+
+Every scientific subsystem introduced by this design must be tested against both authoritative raw traces:
+
+1. `PortmonAUTOCAL (1).LOG` — SHA-256 `4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b`
+2. `PortmonLOGNOVO.LOG` — SHA-256 `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64`
+
+Synthetic tests remain required for falsification, but they cannot be the sole evidence for a scientific claim.
+
+Fast unit tests may use byte-exact fixtures extracted from those logs only when the extraction recipe, source hash and transaction range are recorded.
+
 ## 2. Scope
 
 This design governs the scientific SIL implementation and the later porting contract for:
