@@ -3,14 +3,16 @@
   "workunit_id": "OMEGAS-WU-006",
   "state": "ACTIVE",
   "branch": "OmegasVerde",
-  "baseline_source_sha": "6049a6f4d9b56aa6d380500a475567ec6f1ad4bc",
+  "baseline_source_sha": "bbf4135875ac792a4f54ff4d49054ae914b7f6ac",
   "baseline_ci": {
     "fast_contracts": {
-      "run": 109,
+      "run": 112,
+      "run_id": 35620444262,
       "conclusion": "success"
     },
     "canonical": {
-      "run": 165,
+      "run": 168,
+      "run_id": 35620444449,
       "conclusion": "success"
     }
   },
@@ -39,7 +41,36 @@
       "CurrentBand",
       "PollingPetrol",
       "PollingGas"
-    ]
+    ],
+    "consumer_matrix": {
+      "human_path": "docs/evidence/2026-09-21-progbase-autocal-byte-consumer-matrix.md",
+      "machine_path": "tests/fixtures/progbase-autocal-consumer-map-v1.json",
+      "contract_path": "tests/test_progbase_autocal_consumer_map_contract.py",
+      "status": "PUBLISHED_V1_PENDING_FINAL_FALSIFIER_REVIEW"
+    },
+    "live_chain": {
+      "command": "48 01 49",
+      "payload_bytes": 34,
+      "stream_cache": "TStreamDati+0x293C",
+      "cache_getter_va": "0x004381FC",
+      "presentation_timer": "TimerDati",
+      "presentation_timer_interval_ms": 75,
+      "presentation_timer_resource_enabled": false,
+      "presentation_callback_va": "0x004A307C",
+      "runpoint_callback_va": "0x005158F4",
+      "runpoint_x_payload_offset": 8,
+      "runpoint_y_payload_offset": 17,
+      "levels_raw_payload_offset": 13
+    },
+    "levels": {
+      "live_raw": "48 payload byte 13",
+      "calibration_channel_index": "0x0E",
+      "calibration_word_cache": "TStreamDati+0x2BE4",
+      "calibration_word_low_byte": "minimum reference",
+      "calibration_word_high_byte": "maximum reference",
+      "find_levels_interpolation": "four thresholds at 1/5, 2/5, 3/5, 4/5 between learned extrema, reversed when sensor direction requires it",
+      "physical_conversion": "NOT_PROVEN_AND_NOT_ALLOWED"
+    }
   },
   "portmon_observations": {
     "live_telemetry_command": "48 01 49",
@@ -47,7 +78,10 @@
     "autocal_family": "0x015B..0x0163",
     "autocal_family_approx_period_ms": 2010,
     "secondary_family": "0x018D/0x018E",
-    "secondary_family_approx_period_ms": 4050
+    "secondary_family_approx_period_ms": 4050,
+    "live_telemetry_compact_fixture_median_gap_ms": 45.844,
+    "autocal_family_compact_fixture_period_ms": "~1.95-2.18s depending address/sample",
+    "secondary_family_compact_fixture_period_ms": "~3.92-3.93s median in sampled fixture"
   },
   "committed_fixture": {
     "path": "tests/fixtures/portmon-autocal-cycle-v1.json",
@@ -59,7 +93,7 @@
     "NO_RESET_ALL",
     "NO_INVENTED_LEVELS_PERCENT_OR_VOLUME"
   ],
-  "note": "All timings are evidence observations from the captured ProgBase/Portmon corpus, not universal firmware guarantees.",
+  "note": "All timings are evidence observations from the captured ProgBase/Portmon corpus, not universal firmware guarantees. Binary-derived claims are tied to the recorded ProgBase SHA-256; unresolved symbolic/scaling details remain explicit rather than inferred.",
   "executor_strategy": {
     "primary": "GITHUB_ACTIONS",
     "local_exception": [
