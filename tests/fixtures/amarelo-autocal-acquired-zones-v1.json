@@ -284,6 +284,32 @@
     ],
     "monotonic_progress": false,
     "percent_semantics": "PROHIBITED_WITHOUT_SEPARATE_EVIDENCE",
-    "element_order_semantics": "UNKNOWN"
+    "element_order_semantics": "LOW_TO_HIGH_MAP_ORDER_PROVEN_SEPARATELY",
+    "host_writes_acquired_zone_vectors_in_supplied_captures": "FALSIFIED",
+    "ecu_or_firmware_side_zone_flag_ownership": "PROVEN_FOR_SUPPLIED_CAPTURES",
+    "zone_flag_transition_formula": "UNKNOWN",
+    "host_maturity_threshold_is_zone_flag_formula": "FALSIFIED"
+  },
+  "wire_ownership": {
+    "PortmonAUTOCAL": {
+      "0x016F": {
+        "read_vector_commands": 244,
+        "non_read_commands": 0
+      },
+      "0x0170": {
+        "read_vector_commands": 501,
+        "non_read_commands": 0
+      }
+    },
+    "PortmonLOGNOVO": {
+      "0x016F": {
+        "read_vector_commands": 111,
+        "non_read_commands": 0
+      },
+      "0x0170": {
+        "read_vector_commands": 325,
+        "non_read_commands": 0
+      }
+    }
   }
 }
