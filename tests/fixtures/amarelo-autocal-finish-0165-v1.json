@@ -1,0 +1,57 @@
+{
+  "schema": "omegas.amarelo.autocal-finish-0165-v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "rtti": {
+    "DM+0x7C": {"name":"VECT_AUTOCAL_U8_1","status":"PROVEN"},
+    "DM+0x80": {"name":"VECT_AUTOCAL_U8_2","status":"PROVEN"},
+    "DM+0xCC": {"name":"VECT_AUTOCAL_U8_0","status":"PROVEN"},
+    "DM+0xD0": {"name":"NUM_ATUOMATCH_EXECUTED","status":"PROVEN"}
+  },
+  "dfm": {
+    "VECT_AUTOCAL_U8_0": {"serialCode":"0x0165","rowIndex":"OMITTED_DEFAULT","colIndex":-1,"status":"PROVEN_RESOURCE"},
+    "VECT_AUTOCAL_U8_1": {"serialCode":"0x0165","rowIndex":1,"colIndex":-1,"status":"PROVEN_RESOURCE"},
+    "VECT_AUTOCAL_U8_2": {"serialCode":"0x0165","rowIndex":2,"colIndex":-1,"status":"PROVEN_RESOURCE"}
+  },
+  "wire_observation": {
+    "PortmonAUTOCAL": {"address_0x0165_reads":0},
+    "PortmonLOGNOVO": {
+      "address_0x0165_reads":9,
+      "requests": {
+        "index0":{"request":"0A 65 01 00 70","count":3,"response_payload_hex":"03"},
+        "index1":{"request":"0A 65 01 01 71","count":3,"response_payload_hex":"03"},
+        "index2":{"request":"0A 65 01 02 72","count":3,"response_payload_hex":"03"}
+      },
+      "writes_observed":0
+    }
+  },
+  "finish_static_path": {
+    "function":"ActionFinishAutocalExecute@0x51A390",
+    "read":{"field":"DM+0x7C","semantic":"VECT_AUTOCAL_U8_1","getter":"0x976C44"},
+    "write":{"field":"DM+0xCC","semantic":"VECT_AUTOCAL_U8_0","setter":"0x976CB8"},
+    "post_write_wait_ms":100,
+    "refresh":"PostActionRefresh@0x5162F8",
+    "status":"PROVEN_STATIC"
+  },
+  "setter_static_path": {
+    "0x976CB8":"integer-to-TAebNumber setter wrapper",
+    "0x976DF0":"generic value validation/update path",
+    "0x977014":"connection-aware commit path selecting serial write helpers when connected",
+    "status":"PROVEN_STATIC"
+  },
+  "subindex_mapping": {
+    "VECT_AUTOCAL_U8_1": {"index":1,"status":"PROVEN"},
+    "VECT_AUTOCAL_U8_2": {"index":2,"status":"PROVEN"},
+    "VECT_AUTOCAL_U8_0": {"index":0,"status":"INFERRED_STRONG","basis":"RowIndex omitted/default in DFM; U8_1=1 and U8_2=2; wire exposes exactly indices 0/1/2"}
+  },
+  "conclusions": {
+    "finish_copies_u8_1_value_into_u8_0":"PROVEN_STATIC",
+    "finish_path_can_reach_serial_commit_when_connected":"PROVEN_STATIC",
+    "finish_0x0165_write_observed_in_supplied_raw":"NO",
+    "exact_physical_effect_in_ecu_after_finish":"UNKNOWN",
+    "levels_related":"FALSIFIED"
+  }
+}
