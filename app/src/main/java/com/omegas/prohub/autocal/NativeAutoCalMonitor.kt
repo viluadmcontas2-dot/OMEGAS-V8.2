@@ -13,9 +13,10 @@ import org.json.JSONObject
 /**
  * Observa a Auto Calibration nativa sem possuir timer, thread serial ou writer.
  *
- * O serviço chama [tick] em seu health tick já existente. Toda I/O passa pelo
- * scheduler MP48 único. O probe 48 0B acompanha status global; NUM_BUF_UPD_GAS
- * detecta maturidade por banda; snapshot completo só é lido por evento.
+ * O serviço chama [tick] em uma cadência compartilhada; o monitor não possui
+ * thread nem timer. Toda I/O passa pelo scheduler MP48 único. O probe 48 0B
+ * acompanha status global; um grupo leve renova contadores/zonas de gasolina e
+ * GNV. Snapshot completo continua reservado a bootstrap/eventos científicos.
  * AutoMatch continua sendo executado exclusivamente pela ECU.
  */
 class NativeAutoCalMonitor(
@@ -34,10 +35,19 @@ class NativeAutoCalMonitor(
         val counters: IntArray,
         val payloadHex: String,
         val observedAtElapsedMs: Long,
+        val status: Int,
+        val payload: ByteArray,
+    )
+
+    private data class AcquisitionRefresh(
+        val snapshot: AutoCalSnapshot,
+        val gasProbe: MaturityProbe,
+        val observedAtElapsedMs: Long,
     )
 
     private val lock = Any()
     private val maturityTracker = NativeAutoCalMaturityTracker()
+    private val refreshPlanner = NativeAutoCalRefreshPlanner()
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
@@ -64,6 +74,7 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
+            refreshPlanner.reset()
             // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
             // de qualquer leitura pesada. Assim o primeiro probe estável sempre
             // produz um snapshot completo e a UI não fica presa sem thresholds.
@@ -88,6 +99,7 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
+            refreshPlanner.reset()
             snapshotRequested = false
             snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false)
@@ -160,8 +172,11 @@ class NativeAutoCalMonitor(
 
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
-        val maturityProbe = if (thresholdsReady) probeMaturityCounters(currentSession) else null
-        val maturityEvents = maturityProbe?.let { observed ->
+        val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
+        val acquisitionRefresh = if (thresholdsReady && refreshDue.acquisition) {
+            refreshAcquisitionGroup(currentSession)
+        } else null
+        val maturityEvents = acquisitionRefresh?.gasProbe?.let { observed ->
             maturityTracker.observe(
                 counters = observed.counters,
                 gasLowThreshold = thresholds.first,
@@ -171,6 +186,14 @@ class NativeAutoCalMonitor(
             ).map { transition -> PendingMaturity(transition, observed.payloadHex) }
         }.orEmpty()
 
+        if (acquisitionRefresh != null) {
+            mergeOperationalFields(
+                patch = acquisitionRefresh.snapshot,
+                refreshedAtElapsedMs = acquisitionRefresh.observedAtElapsedMs,
+            )
+            refreshPlanner.markAcquisition(acquisitionRefresh.observedAtElapsedMs)
+        }
+
         synchronized(lock) {
             lastProbe = probe
             state = baseState("MONITORING", "AutoCal nativo monitorado")
@@ -179,7 +202,9 @@ class NativeAutoCalMonitor(
                 .put("autoMatchCount", probe.autoMatchCount)
                 .put("fallback", probe.nativeFlag13 < 0)
                 .put("thresholdsReady", thresholdsReady)
-                .put("maturityProbe", maturityProbe != null)
+                .put("maturityProbe", acquisitionRefresh != null)
+                .put("acquisitionRefresh", acquisitionRefresh != null)
+                .put("referenceRefreshDue", refreshDue.reference)
             if (maturityEvents.isNotEmpty()) {
                 pendingMaturity = maturityEvents
                 snapshotRequested = true
@@ -283,9 +308,98 @@ class NativeAutoCalMonitor(
                 counters = decoded.rawValues.copyOf(),
                 payloadHex = reply.payload.toHex(),
                 observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                status = reply.status,
+                payload = reply.payload.copyOf(),
             )
         } catch (_: Exception) {
             null
+        }
+    }
+
+    private fun refreshAcquisitionGroup(expectedSessionId: Long): AcquisitionRefresh? {
+        val startedAtMs = System.currentTimeMillis()
+        val observations = mutableListOf<AutoCalReadObservation>()
+
+        fun read(field: AutoCalProtocol.Field, reason: String): Boolean {
+            val reply = serial.transaction(
+                request = AutoCalProtocol.read(field),
+                reason = reason,
+                timeoutMs = 900,
+                purgeBefore = false,
+                expectedSessionId = expectedSessionId,
+                workClass = Mp48WorkClass.READ_ONLY,
+            )
+            observations += AutoCalReadObservation(
+                field = field,
+                status = reply.status.takeIf { it >= 0 },
+                payload = reply.payload.takeIf { it.isNotEmpty() },
+                capturedAtMs = System.currentTimeMillis(),
+                error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
+            )
+            return reply.ok
+        }
+
+        if (!read(AutoCalProtocol.NUM_BUF_UPD_PETR, "AutoCal maturidade gasolina")) return null
+        val gasProbe = probeMaturityCounters(expectedSessionId) ?: return null
+        observations += AutoCalReadObservation(
+            field = AutoCalProtocol.NUM_BUF_UPD_GAS,
+            status = gasProbe.status,
+            payload = gasProbe.payload.copyOf(),
+            capturedAtMs = System.currentTimeMillis(),
+        )
+        if (!read(AutoCalProtocol.ACQUIRED_ZONES_PETROL, "AutoCal zonas gasolina")) return null
+        if (!read(AutoCalProtocol.ACQUIRED_ZONES_GAS, "AutoCal zonas GNV")) return null
+
+        val finishedAtMs = System.currentTimeMillis()
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = observations,
+            expectedFields = ACQUISITION_REFRESH_FIELDS,
+            sessionId = "AUTOCAL-ACQ-$expectedSessionId-$finishedAtMs",
+            source = AutoCalSnapshotSource.ECU_READ,
+            startedAtMs = startedAtMs,
+            finishedAtMs = finishedAtMs,
+        )
+        if (snapshot.partial || snapshot.validFieldCount != ACQUISITION_REFRESH_FIELDS.size) return null
+        return AcquisitionRefresh(
+            snapshot = snapshot,
+            gasProbe = gasProbe,
+            observedAtElapsedMs = SystemClock.elapsedRealtime(),
+        )
+    }
+
+    private fun mergeOperationalFields(
+        patch: AutoCalSnapshot,
+        refreshedAtElapsedMs: Long,
+    ) {
+        val patchFields = patch.toJson().optJSONArray("fields") ?: return
+        synchronized(lock) {
+            if (!latestSnapshot.optBoolean("available", false)) return
+            val current = JSONObject(latestSnapshot.toString())
+            val currentFields = current.optJSONArray("fields") ?: JSONArray()
+            val replacements = linkedMapOf<String, JSONObject>()
+            repeat(patchFields.length()) { index ->
+                val field = patchFields.optJSONObject(index) ?: return@repeat
+                replacements[field.optString("key")] = JSONObject(field.toString())
+            }
+
+            val merged = JSONArray()
+            val seen = mutableSetOf<String>()
+            repeat(currentFields.length()) { index ->
+                val existing = currentFields.optJSONObject(index) ?: return@repeat
+                val key = existing.optString("key")
+                val replacement = replacements[key]
+                merged.put(if (replacement != null) JSONObject(replacement.toString()) else JSONObject(existing.toString()))
+                seen += key
+            }
+            replacements.forEach { (key, field) ->
+                if (key !in seen) merged.put(JSONObject(field.toString()))
+            }
+            current
+                .put("fields", merged)
+                .put("operationalUpdatedAtElapsedMs", refreshedAtElapsedMs)
+                .put("acquisitionRefreshAtElapsedMs", refreshedAtElapsedMs)
+                .put("operationalRefreshOnly", true)
+            latestSnapshot = current
         }
     }
 
@@ -433,6 +547,7 @@ class NativeAutoCalMonitor(
         val previousMul = synchronized(lock) { lastMulActHash }
         synchronized(lock) {
             latestSnapshot = decorated
+            refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
             gasLowThreshold = newGasLowThreshold
             gasNormalThreshold = newGasNormalThreshold
@@ -539,5 +654,11 @@ class NativeAutoCalMonitor(
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
         private const val SESSION_SETTLE_MS = 8_000L
+        private val ACQUISITION_REFRESH_FIELDS = listOf(
+            AutoCalProtocol.NUM_BUF_UPD_PETR,
+            AutoCalProtocol.NUM_BUF_UPD_GAS,
+            AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+            AutoCalProtocol.ACQUIRED_ZONES_GAS,
+        )
     }
 }

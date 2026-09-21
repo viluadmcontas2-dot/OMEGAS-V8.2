@@ -104,6 +104,7 @@ class TelemetryForegroundService : Service() {
 
     private lateinit var notifications: NotificationController
     private var healthTask: ScheduledFuture<*>? = null
+    private var autoCalTask: ScheduledFuture<*>? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private val startedAt = System.currentTimeMillis()
     private var lastNotificationAt = 0L
@@ -263,6 +264,7 @@ class TelemetryForegroundService : Service() {
         }
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
+        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 2_000L, 2_000L, TimeUnit.MILLISECONDS)
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
@@ -288,6 +290,7 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         stopping = true
         healthTask?.cancel(true)
+        autoCalTask?.cancel(true)
         scheduler.shutdownNow()
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
@@ -702,11 +705,6 @@ class TelemetryForegroundService : Service() {
                 startEngine("recuperação automática do núcleo")
             }
             if (!usb.connected && runtime.running) runtime.stop(2)
-            if (usb.connected && runtime.running && runtime.ready && telemetryStore.isValid() &&
-                runtime.serialScheduler().currentSessionId() > 0L
-            ) {
-                nativeAutoCal.tick()
-            }
             if (sessionRecorder.statusObject().optBoolean("recording")) {
                 sessionRecorder.record(
                     "full_snapshot",
@@ -720,6 +718,19 @@ class TelemetryForegroundService : Service() {
         } catch (error: Exception) {
             healthFailures += 1
             log.add("WARN", "SERVICE", "Monitor nativo: ${error.message}")
+        }
+    }
+
+    private fun autoCalTick() {
+        if (stopping) return
+        try {
+            if (usb.connected && runtime.running && runtime.ready && telemetryStore.isValid() &&
+                runtime.serialScheduler().currentSessionId() > 0L
+            ) {
+                nativeAutoCal.tick()
+            }
+        } catch (error: Exception) {
+            log.add("WARN", "AUTOCAL-NATIVE", "Refresh nativo: ${error.message}")
         }
     }
 
