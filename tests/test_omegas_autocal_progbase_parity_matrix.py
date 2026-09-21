@@ -12,7 +12,7 @@ assert rows["RunPoint/AGORA XY"]["classification"] == "MATCH"
 assert rows["LEVELS RAW in AutoCal live strip"]["classification"] == "MATCH"
 assert rows["PetrolCurve/GasCurve"]["dimensions"]["field_identity"] == "MATCH"
 assert rows["PetrolCurve/GasCurve"]["dimensions"]["refresh_policy"] == "WRONG"
-assert rows["CurrentBand"]["classification"] == "MISSING"
+assert rows["CurrentBand"]["classification"] == "MATCH"
 assert rows["NUM_BUF maturity / acquisition activity"]["dimensions"]["petrol_probe"] == "MISSING"
 assert rows["PollingPetrol/PollingGas"]["classification"] == "INTENTIONAL_IMPROVEMENT"
 assert rows["Enable/disable acquisition"]["classification"] == "MATCH"
@@ -46,7 +46,9 @@ assert "addHook('fast'" in cockpit
 assert "renderLiveCursor()" in cockpit
 assert "const levelRaw = finite(live.level_raw ?? live.levelRaw);" in cockpit
 assert "const levelRaw = finite(projection?.levelsRaw);" not in cockpit
-assert "MNFLD_PRESS_THD" not in cockpit
+assert "MNFLD_PRESS_THD" in cockpit
+assert "currentBand(snapshot = {}, live = {})" in cockpit
+assert "data-autocal-current-band" in cockpit
 assert "intervalMs: 200" in app
 assert "this.tick % 10 === 0" in scheduler
 assert '.put("levelsRaw", levelsRaw(telemetryStatus, currentSession))' in projection

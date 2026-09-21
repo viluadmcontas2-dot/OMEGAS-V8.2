@@ -19,7 +19,7 @@ That separation is a match worth preserving. The parity defects are narrower and
 | LEVELS RAW live strip | **MATCH — resolved** | Baseline diagnosis was WRONG freshness; RED `9df2a69...` proved stale projection 91 overriding live 126. The HMI now uses the fresh telemetry frame and fails closed when RAW is absent. |
 | PetrolCurve / GasCurve identity | **MATCH** | Same common `PETR_INJ_TBP` X and petrol/gas RV vectors. |
 | PetrolCurve / GasCurve freshness | **WRONG** | ProgBase recurrently renews slow reference vectors; OMEGAS full snapshot is event-driven and can remain unchanged indefinitely. |
-| CurrentBand | **MISSING** | OMEGAS has live MAP and `MNFLD_PRESS_THD`, but does not locate/highlight the current threshold band. Its 18-band strip is maturity, not CurrentBand. |
+| CurrentBand | **MATCH — resolved** | RED `b05705e...` proved the consumer/layer missing. The cockpit now selects the original MAP threshold interval from physical `MNFLD_PRESS_THD` and renders a dedicated horizontal live band, separate from maturity. |
 | Petrol/Gas maturity | **WRONG/PARTIAL** | ProgBase observes both `NUM_BUF_UPD_PETR` and `NUM_BUF_UPD_GAS`; OMEGAS lightweight monitor probes only GAS. |
 | ACQUIRED_ZONES | **WRONG freshness** | Values are projected correctly when a snapshot is current, but refresh is event-driven and gas-biased. |
 | PollingPetrol/Gas literal shapes | **INTENTIONAL IMPROVEMENT** | Human-readable states replace red/lime polling lamps. |
@@ -63,19 +63,17 @@ The existing test `test_monitor_uses_existing_health_tick_and_event_driven_snaps
 
 **RED:** `AUTOCAL_REFERENCE_PERIODIC_REFRESH`.
 
-## 4. CurrentBand — consumer missing, not merely styled differently
+## 4. CurrentBand — confirmed missing, repaired by RED → GREEN candidate
 
-ProgBase locates the live MAP inside `MNFLD_PRESS_THD` and updates a dedicated `CurrentBand` area on the live RunPoint path.
+ProgBase locates the live MAP inside `MNFLD_PRESS_THD` and updates a dedicated `CurrentBand` horizontal area on the live RunPoint path.
 
-OMEGAS possesses both inputs:
-- live `load_bar`;
-- `MNFLD_PRESS_THD` in the AutoCal snapshot.
+The RED at `b05705e772835ebf0dec7206c3dffb1cbd35026e` failed in all three expected dimensions: no `currentBand` consumer, no boundary rule, and no dedicated horizontal layer.
 
-But `AutoCalUxModel.bandStrip()` uses `NUM_BUF_UPD_GAS`, acquisition-zone flags and maturity/correlation events. It never consumes `MNFLD_PRESS_THD` and does not locate the current live MAP band. Choosing the first non-empty maturity segment is not equivalent.
+The recovered helper `0x51A614` is more specific than a generic nearest-bin rule: the valid global domain excludes the first and last threshold, and band `i` is selected when `threshold[i] < live MAP <= threshold[i+1]`. Internal equality therefore belongs to the immediately previous band.
 
-**RED:** `AUTOCAL_CURRENT_BAND_PRESENTATION`.
+The fix at `38ccb9ee38d833b911687ab1e1c5e87b23bf6959` uses the already-physical `MNFLD_PRESS_THD` values plus the fast live MAP. It adds a dedicated SVG horizontal band updated by `renderLiveCursor()`; the 18 maturity regions remain untouched and keep their separate meaning. No unit conversion, serial read, timer or ECU write was added.
 
-The preferred repair is to project current-band semantics from authoritative native data and let JS render it. Do not invent a second scientific transform in the DOM.
+**GREEN:** pending after evidence reconciliation.
 
 ## 5. Maturity and zones — gas-only lightweight observation is insufficient
 

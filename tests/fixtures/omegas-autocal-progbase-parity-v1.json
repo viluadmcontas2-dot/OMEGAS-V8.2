@@ -82,21 +82,39 @@
     },
     {
       "behavior": "CurrentBand",
-      "classification": "MISSING",
+      "classification": "MATCH",
       "dimensions": {
-        "threshold_source": "AVAILABLE",
-        "live_map": "AVAILABLE",
-        "current_band_projection": "MISSING",
-        "visual_highlight": "MISSING"
+        "threshold_source": "MATCH",
+        "live_map": "MATCH",
+        "current_band_projection": "MATCH_AFTER_FIX",
+        "visual_highlight": "MATCH_AFTER_FIX",
+        "maturity_separation": "MATCH"
       },
       "progbase": "live MAP is located against MNFLD_PRESS_THD and CurrentBand THorizAreaSeries is updated from RunPoint path",
-      "omegas": "MNFLD_PRESS_THD exists in snapshot, live MAP exists in telemetry, but bandStrip models maturity/activity only and does not locate the live MAP threshold band",
+      "omegas": "AutoCalUxModel.currentBand consumes physical MNFLD_PRESS_THD plus fresh live MAP; renderLiveCursor updates a dedicated horizontal band layer independently of the 18 maturity regions",
       "evidence": [
         "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
         "app/src/main/assets/ui/screens/autocal-cockpit.js"
       ],
       "red_id": "AUTOCAL_CURRENT_BAND_PRESENTATION",
-      "action": "RED: project current band from fresh live MAP + current native MNFLD_PRESS_THD; keep physics/selection authority out of ad-hoc DOM math"
+      "action": "PRESERVE fast live MAP + slow physical threshold geometry; do not merge CurrentBand with maturity/activity semantics",
+      "resolution": {
+        "baseline_sha": "9e0fcfde362805165609903e314f7b2e445a8bec",
+        "red_sha": "b05705e772835ebf0dec7206c3dffb1cbd35026e",
+        "red_fast_run": {
+          "number": 119,
+          "id": 35636142562,
+          "conclusion": "failure"
+        },
+        "red_observed": [
+          "AutoCalUxModel.currentBand undefined",
+          "original boundary rule absent",
+          "dedicated horizontal current-band layer absent"
+        ],
+        "first_fix_sha": "38ccb9ee38d833b911687ab1e1c5e87b23bf6959",
+        "original_rule": "threshold[i] < live MAP <= threshold[i+1], with global min/max excluded",
+        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
+      }
     },
     {
       "behavior": "NUM_BUF maturity / acquisition activity",

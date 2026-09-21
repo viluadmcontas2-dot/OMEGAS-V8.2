@@ -140,7 +140,6 @@
     "machine_path": "tests/fixtures/omegas-autocal-progbase-parity-v1.json",
     "status": "ACTIVE_REPAIR",
     "confirmed_red_candidates": [
-      "AUTOCAL_CURRENT_BAND_PRESENTATION",
       "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
       "AUTOCAL_PETROL_MATURITY_REFRESH"
     ],
@@ -164,10 +163,20 @@
         },
         "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
         "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
+      },
+      "current_band": {
+        "red_sha": "b05705e772835ebf0dec7206c3dffb1cbd35026e",
+        "red_fast_run": {
+          "number": 119,
+          "id": 35636142562,
+          "conclusion": "failure"
+        },
+        "first_fix_sha": "38ccb9ee38d833b911687ab1e1c5e87b23bf6959",
+        "original_rule": "threshold[i] < MAP <= threshold[i+1]; global min/max excluded",
+        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
       }
     },
     "next_red_candidates": [
-      "AUTOCAL_CURRENT_BAND_PRESENTATION",
       "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
       "AUTOCAL_PETROL_MATURITY_REFRESH"
     ]
