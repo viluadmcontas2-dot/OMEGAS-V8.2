@@ -15,6 +15,15 @@ class AutoCalInstrumentProjectionTest {
             vectorField("PETR_MNFLD_PRESS_RV", doubleArrayOf(0.20, 0.40, 0.60), 120L),
             vectorField("GAS_MNFLD_PRESS_RV", doubleArrayOf(0.18, 0.37, 0.56), 130L),
             vectorField("MUL_ACT", doubleArrayOf(1.0, 1.01, 1.02), 140L),
+            vectorField(
+                "MNFLD_PRESS_THD",
+                doubleArrayOf(
+                    0.154, 0.256, 0.307, 0.358, 0.410, 0.461,
+                    0.512, 0.563, 0.614, 0.666, 0.717, 0.768,
+                    0.819, 0.870, 0.922, 0.973, 1.024, 1.126,
+                ),
+                150L,
+            ),
         )
         val native = snapshot(
             vectorField("PETR_INJ_TBUF", doubleArrayOf(2.1, 4.1), 200L),
@@ -56,6 +65,18 @@ class AutoCalInstrumentProjectionTest {
         assertFalse(authority.getBoolean("uiDerivesScience"))
         assertEquals("ECU_READ", authority.getString("nativePoints"))
         assertEquals(listOf(true, false, true, false), bools(result.getJSONObject("zones").getJSONArray("petrol")))
+
+        val regions = result.getJSONArray("zoneRegions")
+        assertEquals(4, regions.length())
+        assertEquals(0.0, regions.getJSONObject(0).getDouble("lowMapBar"), 0.0001)
+        assertEquals(0.461, regions.getJSONObject(0).getDouble("highMapBar"), 0.0001)
+        assertEquals(0.461, regions.getJSONObject(1).getDouble("lowMapBar"), 0.0001)
+        assertEquals(0.666, regions.getJSONObject(1).getDouble("highMapBar"), 0.0001)
+        assertEquals(0.870, regions.getJSONObject(3).getDouble("lowMapBar"), 0.0001)
+        assertEquals(1.126, regions.getJSONObject(3).getDouble("highMapBar"), 0.0001)
+        assertTrue(regions.getJSONObject(0).getBoolean("petrolAcquired"))
+        assertTrue(regions.getJSONObject(1).getBoolean("gasAcquired"))
+        assertEquals("Região 4", regions.getJSONObject(3).getString("label"))
     }
 
     @Test
