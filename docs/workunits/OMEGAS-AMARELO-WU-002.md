@@ -159,3 +159,24 @@ O JavaScript apenas desenha as quatro faixas discretas no gráfico; não conhece
 Evidence:
 - `tests/fixtures/amarelo-autocal-zone-geometry-v1.json`;
 - `tests/test_amarelo_autocal_zone_geometry_evidence.py`.
+
+
+## Maturity / polling visibility — 2026-09-21
+
+`0x516F64` does not invent a completion percentage and does not decide ACQUIRED_ZONES. It applies a host presentation rule over ECU-provided counters and ECU-provided thresholds.
+
+- GNV index 0..5: threshold = `CALIBRATION_VAL_1[5]`.
+- GNV index 6..17: threshold = `CALIBRATION_VAL_1[8]`.
+- Gasoline index 0..5: threshold = `VECT_AUTOCAL_U8_1` (`0x0165:1`).
+- Gasoline index 6..17: threshold = `CALIBRATION_VAL_1[2]`.
+- condition: `counter[index] >= threshold` -> polling/maturity layer renders the native Y; otherwise it renders `-1.0` sentinel.
+
+In PortmonLOGNOVO, all four effective thresholds are `3`, but this is capture evidence only and is **not** a product constant. Product reads the values from the ECU.
+
+Important separation:
+- point buffers may change before acquired-zone flags change;
+- acquired-zone flags are independent ECU objects;
+- index split 0..5 / 6..17 is proven only for choosing maturity threshold;
+- R1..R4 MAP region must be derived from the point's MAP against `MNFLD_PRESS_THD`, not from the buffer index.
+
+Evidence: `tests/fixtures/amarelo-autocal-maturity-visibility-v1.json` + `tests/test_amarelo_autocal_maturity_visibility_evidence.py`.
