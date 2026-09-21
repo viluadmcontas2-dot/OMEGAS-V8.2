@@ -126,6 +126,22 @@ Para superfícies dependentes de telemetria:
 
 O modo demo senoidal do browser não é evidência suficiente para produto.
 
+### 7.1 Modelo de execução
+
+A execução padrão deste gate é **GitHub Actions-first**.
+
+Fluxo:
+
+`fonte bruta pesada/local -> extração única -> fixture compacto versionado -> matriz GitHub Actions -> runtime/bridge real -> WebView 1280x720 -> screenshots/receipts`.
+
+Regras:
+- não versionar logs enormes apenas para fazê-los caber no CI;
+- versionar somente o subconjunto necessário para reproduzir comandos, respostas, cadência, shapes, valores e estados observados;
+- cada fixture deve apontar para hash/origem da captura da qual foi derivado;
+- GitHub Actions executa os cenários de forma paralela e reproduzível;
+- MMMACHINE/AgentRed só volta a ser necessária quando a próxima pergunta depende de bytes que ainda não foram destilados do EXE/Drive/log bruto;
+- resultados locais não substituem o gate remoto quando o cenário já possui fixture no repo.
+
 ## 8. AutoCal — critério de produto
 
 Uma referência nativa válida deve resultar em curva visível sem exigir “consulta” operacional repetida.

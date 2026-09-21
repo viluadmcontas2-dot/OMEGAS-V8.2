@@ -59,5 +59,36 @@
     "NO_RESET_ALL",
     "NO_INVENTED_LEVELS_PERCENT_OR_VOLUME"
   ],
-  "note": "All timings are evidence observations from the captured ProgBase/Portmon corpus, not universal firmware guarantees."
+  "note": "All timings are evidence observations from the captured ProgBase/Portmon corpus, not universal firmware guarantees.",
+  "executor_strategy": {
+    "primary": "GITHUB_ACTIONS",
+    "local_exception": [
+      "PROGBASE_BINARY_EXTRACTION",
+      "RAW_PORTMON_LOG_MINING",
+      "DRIVE_ONLY_EVIDENCE_ACQUISITION"
+    ],
+    "agentred_role": "OPTIONAL_LOCAL_EVIDENCE_EXECUTOR_NOT_CONTROL_PLANE",
+    "raw_log_policy": "DO_NOT_UPLOAD_HEAVY_RAW_BY_DEFAULT",
+    "fixture_policy": "VERSION_COMPACT_PROVENANCE_LINKED_REPLAY_DATA",
+    "rendered_gate": {
+      "viewport": "1280x720",
+      "artifacts": [
+        "screenshot",
+        "scenario_receipt"
+      ],
+      "required_for_user_visible_runtime_pass": true
+    }
+  },
+  "traceability": {
+    "control_plane": [
+      "GitHub Issues",
+      "Spec Kit OMEGAS-SK-001",
+      "WorkUnit OMEGAS-WU-006",
+      "spec",
+      "plan",
+      "STATUS.md",
+      "docs/evidence"
+    ],
+    "executor_independence": "Once a fixture is committed, its replay/render gate must not depend on MMMACHINE."
+  }
 }

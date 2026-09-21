@@ -122,7 +122,11 @@ Só inicia após Task 3.
 ## Task 5 — gate global real-log + render (#84)
 
 ### Início
-- [ ] catálogo de cenários por tela.
+- [ ] catálogo de cenários por tela;
+- [ ] classificar cada fonte pesada como `RAW_LOCAL_ONLY` ou `FIXTURE_VERSIONED`;
+- [ ] extrair dos logs/EXE apenas os comandos, respostas, cadências, shapes e valores necessários;
+- [ ] registrar hash/proveniência de cada fixture compacto;
+- [ ] definir matriz de GitHub Actions por cenário/tela e viewport `1280x720`.
 
 ### Meio
 - [ ] Dashboard/Agora;
@@ -138,10 +142,13 @@ Para cada:
 - [ ] runtime/bridge real aplicável;
 - [ ] render real;
 - [ ] assertion visual/estado;
-- [ ] artifact.
+- [ ] screenshot + receipt como artifact;
+- [ ] job GitHub Actions independente quando não houver dependência serial.
 
 ### Fim
-- [ ] CI não promove PASS visual só por contrato textual.
+- [ ] CI não promove PASS visual só por contrato textual;
+- [ ] replay/render não depende da MMMACHINE quando o fixture já está versionado;
+- [ ] falha visual bloqueia promoção mesmo que contratos estáticos estejam verdes.
 
 ---
 

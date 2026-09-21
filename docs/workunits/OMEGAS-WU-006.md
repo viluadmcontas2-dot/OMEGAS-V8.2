@@ -67,6 +67,22 @@ Corrigir somente após causa provada.
 ### Fim
 LEVELS RAW está na superfície principal sem semântica inventada; AutoCal pertence à sessão canônica.
 
+## Estratégia de execução
+
+### Caminho padrão
+`fixture versionado -> GitHub Actions -> runtime real aplicável -> WebView real -> artifact`.
+
+### Uso local excepcional
+MMMACHINE/AgentRed é permitida para:
+- extrair uma nova evidência do ProgBase/Portmon/Drive;
+- reduzir log pesado a fixture compacto;
+- reproduzir algo que ainda não possui seam/fixture remoto.
+
+Assim que o dado necessário estiver destilado e versionado, o gate correspondente migra para GitHub Actions.
+
+### Paralelismo
+Jobs independentes devem usar matrix/fan-out remoto; integração e qualquer write compartilhado continuam serializados.
+
 ## Fechamento
 
 A WorkUnit fecha somente com:

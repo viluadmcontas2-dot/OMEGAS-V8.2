@@ -30,6 +30,13 @@ Fechar AutoCal e o gate de realidade do OMEGAS sem tentativa-e-erro: entender o 
 
 `#83 + #84 -> #85/#86 quando a divergência estiver reproduzida`
 
+## Executor padrão
+
+- **GitHub Actions é o executor primário** para replay, matrizes paralelas, WebView renderizada, screenshots, JVM/lint/build e gates de regressão.
+- MMMACHINE/AgentRed é **exceção de aquisição**, usada quando a evidência ainda existe apenas no disco/Drive/EXE/log bruto ou quando um teste realmente depende desse ambiente.
+- Logs brutos pesados não são requisito para CI. Extraímos uma vez dados, sequência, shape, cadência e valores relevantes; o repo recebe fixtures compactos com hash/proveniência e GitHub Actions os reproduz.
+- AgentRed não é control plane do OMEGAS. Issues/spec/plan/WU/evidence + Actions permanecem a superfície rastreável.
+
 ## Limites
 
 - nada de SIL/CIU;

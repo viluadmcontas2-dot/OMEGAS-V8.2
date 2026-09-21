@@ -62,9 +62,16 @@ Hipótese forte já sustentada por leitura de código:
 
 Estes itens são requisitos de investigação/teste, não prova automática de causa.
 
+## Estratégia de executor
+
+- GitHub Actions: executor primário para replay, testes, render WebView, screenshots e matrizes paralelas.
+- MMMACHINE/AgentRed: aquisição excepcional de evidência bruta que ainda vive só no EXE/Drive/log pesado.
+- Depois da extração, o repo guarda fixtures compactos com proveniência; o CI não depende do computador.
+- O raw pesado não precisa ser enviado ao GitHub para tornar o teste fiel.
+
 ## Próximo passo único
 
-Concluir #82: mapa byte/consumer ProgBase. Depois preencher #83 com classificação MATCH / INTENTIONAL IMPROVEMENT / MISSING / WRONG / INCONCLUSIVE e abrir REDs apenas para divergências confirmadas.
+Concluir #82: mapa byte/consumer ProgBase. Em paralelo somente onde não houver dependência de evidência, preparar #84 para executar fixtures compactos no GitHub Actions. Depois preencher #83 com classificação MATCH / INTENTIONAL IMPROVEMENT / MISSING / WRONG / INCONCLUSIVE e abrir REDs apenas para divergências confirmadas.
 
 ## NON-GOAL
 
