@@ -22,18 +22,22 @@ class NativeConsumerGraphContractTest(unittest.TestCase):
             self.assertEqual(edge["status"], "PROVEN")
             self.assertEqual(edge["transform"], f"action_code={code}")
 
-        finish_copy = key[("DM+0x7C", "DM+0xCC")]
-        self.assertEqual(finish_copy["status"], "PROVEN")
+        finish_copy = key[(
+            "VECT_AUTOCAL_U8_1@DM+0x7C",
+            "VECT_AUTOCAL_U8_0@DM+0xCC",
+        )]
+        self.assertEqual(finish_copy["status"], "PROVEN_STATIC")
         self.assertIn("setter 0x976CB8", finish_copy["transform"])
 
-        self.assertEqual(
-            key[("DM+0x7C", "VECT_AUTOCAL_U8_2_or_NUM_AUTOMATCH_EXECUTED")]["status"],
-            "UNKNOWN",
-        )
-        self.assertEqual(
-            key[("DM+0xCC", "VECT_AUTOCAL_U8_2_or_NUM_AUTOMATCH_EXECUTED")]["status"],
-            "UNKNOWN",
-        )
+        finish = data["states"]["finish_autocal"]
+        self.assertEqual(finish["source_field"]["semantic"], "VECT_AUTOCAL_U8_1")
+        self.assertEqual(finish["destination_field"]["semantic"], "VECT_AUTOCAL_U8_0")
+        self.assertEqual(finish["status"], "PROVEN_STATIC_NOT_RAW_WRITE_OBSERVED")
+        self.assertFalse(finish["destination_commit"]["raw_write_observed"])
+        self.assertEqual(finish["exact_ecu_physical_effect"], "UNKNOWN")
+        self.assertEqual(finish["serial_family"]["index1"]["status"], "PROVEN")
+        self.assertEqual(finish["serial_family"]["index2"]["status"], "PROVEN")
+        self.assertEqual(finish["serial_family"]["index0"]["status"], "INFERRED_STRONG")
 
         states = data["states"]
         self.assertEqual(states["label_use_status"], "PROVEN")
