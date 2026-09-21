@@ -9,7 +9,7 @@ assert matrix["schema"] == "omegas.autocal.progbase-parity.v1"
 rows = {row["behavior"]: row for row in matrix["classifications"]}
 
 assert rows["RunPoint/AGORA XY"]["classification"] == "MATCH"
-assert rows["LEVELS RAW in AutoCal live strip"]["classification"] == "MATCH"
+assert rows["LEVELS RAW routing"]["classification"] == "INTENTIONAL_IMPROVEMENT"
 assert rows["PetrolCurve/GasCurve"]["dimensions"]["field_identity"] == "MATCH"
 assert rows["PetrolCurve/GasCurve"]["dimensions"]["refresh_policy"] == "WRONG"
 assert rows["CurrentBand"]["classification"] == "MATCH"
@@ -47,8 +47,9 @@ assert "AutoCalProtocol.ACQUIRED_ZONES_PETROL" in monitor
 assert "AutoCalProtocol.ACQUIRED_ZONES_GAS" in monitor
 assert "addHook('fast'" in cockpit
 assert "renderLiveCursor()" in cockpit
-assert "const levelRaw = finite(live.level_raw ?? live.levelRaw);" in cockpit
-assert "const levelRaw = finite(projection?.levelsRaw);" not in cockpit
+assert "LEVELS RAW" not in cockpit
+assert "autocalLiveLevel" not in cockpit
+assert "level_raw" not in cockpit
 assert "MNFLD_PRESS_THD" in cockpit
 assert "currentBand(snapshot = {}, live = {})" in cockpit
 assert "data-autocal-current-band" in cockpit
