@@ -16,7 +16,7 @@ That separation is a match worth preserving. The parity defects are narrower and
 | Behavior | Classification | What is actually different |
 |---|---|---|
 | RunPoint / AGORA XY | **MATCH** | Same live Petrol Inj. × MAP semantics, independently refreshed. OMEGAS renders at 200 ms rather than ProgBase's 75 ms presentation timer. |
-| LEVELS RAW live strip | **MATCH — resolved** | Baseline diagnosis was WRONG freshness; RED `9df2a69...` proved stale projection 91 overriding live 126. The HMI now uses the fresh telemetry frame and fails closed when RAW is absent. |
+| LEVELS RAW routing | **INTENTIONAL IMPROVEMENT** | LEVELS is global MP48 telemetry owned by Dashboard/AGORA. AutoCal projection and cockpit intentionally do not consume it. |
 | PetrolCurve / GasCurve identity | **MATCH** | Same common `PETR_INJ_TBP` X and petrol/gas RV vectors. |
 | PetrolCurve / GasCurve freshness | **WRONG** | ProgBase recurrently renews slow reference vectors; OMEGAS full snapshot is event-driven and can remain unchanged indefinitely. |
 | CurrentBand | **MATCH — resolved** | RED `b05705e...` proved the consumer/layer missing. The cockpit now selects the original MAP threshold interval from physical `MNFLD_PRESS_THD` and renders a dedicated horizontal live band, separate from maturity. |
@@ -36,17 +36,18 @@ Therefore AGORA XY is not coupled to `NativeAutoCalMonitor.latestSnapshot`. A re
 
 The 200 ms HMI cadence differs from ProgBase's 75 ms `TimerDati`, but this matrix does not label that difference a defect without render/performance evidence.
 
-## 2. LEVELS RAW — confirmed defect, repaired by RED → GREEN
+## 2. LEVELS RAW — Dashboard/AGORA ownership; outside AutoCal
 
-The Kotlin side is correct: `Mp48Protocol` decodes payload byte 13 into `level_raw`, and `AutoCalUiProjection.levelsRaw()` enforces valid, fresh, same-session telemetry.
+MP48 payload byte 13 remains decoded as `level_raw` in global telemetry. Product ownership is explicit: **Dashboard/AGORA presents LEVELS RAW; AutoCal does not consume, project or display it.**
 
-The HMI then weakens this path. `AutoCalUxModel.livePoint()` reads Petrol Inj., MAP and RPM from the fast telemetry object, but reads LEVELS from `projection.levelsRaw`. The projection is refreshed by the AutoCal `context` hook (~2 s), while `renderLiveCursor()` is invoked by the `fast` hook (200 ms).
+This is an intentional product boundary:
+- LEVELS is the GNV cylinder/sensor quantity signal for the operator;
+- it does not participate in PetrolCurve/GasCurve, CurrentBand, acquisition maturity, AutoMatch, equivalence or AutoCal writes;
+- `AutoCalUiProjection` has no LEVELS field and no global telemetry dependency;
+- `AutoCalJavascriptBridge.getUiProjection()` does not pull `TelemetryStateStore.liveJson()`;
+- the AutoCal AGORA rail is restricted to RPM, Petrol Injection and MAP.
 
-The baseline therefore mixed two clocks: XY/RPM could be current while LEVELS lagged roughly an order of magnitude. ProgBase consumes LEVELS byte 13 on the same live presentation path as the other live values.
-
-**RED receipt:** commit `9df2a69b7f009fb7c8fb7301a778a27c4bd9fdf7`, fast run #115 failed exactly with `91 !== 126` and `91 !== null`.
-
-**Minimal repair:** `AutoCalUxModel.livePoint()` now reads `live.level_raw ?? live.levelRaw` under the existing telemetry-validity/age gate. No serial, decoder, bridge, snapshot or scheduler behavior changed.
+The raw decode remains available to Dashboard, and no conversion to percentage/litres/m³ is authorized.
 
 ## 3. Curves — correct identity, wrong renewal model
 

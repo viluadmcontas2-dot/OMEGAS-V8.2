@@ -50,12 +50,14 @@ assert "renderLiveCursor()" in cockpit
 assert "LEVELS RAW" not in cockpit
 assert "autocalLiveLevel" not in cockpit
 assert "level_raw" not in cockpit
+assert "levelsRaw" not in projection
+assert "telemetryStatus" not in projection
+assert "telemetryStore.liveJson()" not in bridge
 assert "MNFLD_PRESS_THD" in cockpit
 assert "currentBand(snapshot = {}, live = {})" in cockpit
 assert "data-autocal-current-band" in cockpit
 assert "intervalMs: 200" in app
 assert "this.tick % 10 === 0" in scheduler
-assert '.put("levelsRaw", levelsRaw(telemetryStatus, currentSession))' in projection
 assert 'val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C' in protocol
 assert "if (queued.telemetryAfter" in engine
 assert "pollTelemetry()" in engine
