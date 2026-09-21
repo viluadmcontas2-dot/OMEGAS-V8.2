@@ -38,5 +38,11 @@ assert.match(obd, /\.obd-map-grid\s*\{[^}]*grid-template-columns:64px repeat\(12
 assert.match(obd, /\.obd-map-axis,\.obd-map-corner\s*\{[^}]*font-size:10px/s);
 assert.match(obd, /\.obd-map-cell b\s*\{[^}]*font-size:11px/s);
 assert.match(obd, /\.obd-map-tabs button\s*\{[^}]*min-height:44px[^}]*font-size:11px/s);
+assert.match(obd, /\.obd-mode-buttons button\s*\{[^}]*min-height:44px[^}]*font-size:11px/s,
+  'seletor da fonte OBD deve ter alvo automotivo de 44px e texto legível');
+assert.match(refine, /\.tolerance-profiles button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
+  'perfis de tolerância devem ser tocáveis sem precisão fina');
+assert.match(refine, /\.tolerance-controls (?:select|input)[\s\S]*min-height:\s*44px/s,
+  'inputs de tolerância devem ter alvo mínimo de 44px');
 
 console.log('AUTOMOTIVE_HMI_LEGIBILITY=PASS');
