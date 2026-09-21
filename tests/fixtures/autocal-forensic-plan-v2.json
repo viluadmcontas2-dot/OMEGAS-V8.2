@@ -1,7 +1,7 @@
 {
   "schema": "omegas.autocal.forensic-plan.v2",
   "max_parallel": 40,
-  "matrix_target": 252,
+  "matrix_target": 256,
   "policy": {
     "mode": "read-only-analysis",
     "matrix_cap": 256,
@@ -56,6 +56,26 @@
       "id": "meta_forensic_selftest",
       "kind": "python",
       "category": "harness"
+    },
+    {
+      "id": "meta_map_signedness_boundary",
+      "kind": "python",
+      "category": "science"
+    },
+    {
+      "id": "meta_acquisition_family_completeness",
+      "kind": "python",
+      "category": "refresh"
+    },
+    {
+      "id": "meta_reference_revision_contract",
+      "kind": "python",
+      "category": "refresh"
+    },
+    {
+      "id": "meta_levels_consumer_reachability",
+      "kind": "python",
+      "category": "science"
     }
   ]
 }

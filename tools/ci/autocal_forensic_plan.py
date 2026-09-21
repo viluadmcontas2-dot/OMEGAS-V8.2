@@ -40,8 +40,8 @@ def build_lanes():
         seen.add(lane["id"])
         lanes.append(lane)
     assert len(portmon["transactions"]) == 243, len(portmon["transactions"])
-    assert len(config["meta_lanes"]) == 9, len(config["meta_lanes"])
-    assert len(lanes) == config["matrix_target"] == 252, len(lanes)
+    assert len(config["meta_lanes"]) == 13, len(config["meta_lanes"])
+    assert len(lanes) == config["matrix_target"] == 256, len(lanes)
     assert len(lanes) <= config["policy"]["matrix_cap"]
     return lanes
 

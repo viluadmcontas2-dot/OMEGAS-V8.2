@@ -16,10 +16,10 @@ ids = [lane["id"] for lane in lanes]
 tx = [lane for lane in lanes if lane["category"] == "transaction"]
 meta = [lane for lane in lanes if lane["category"] != "transaction"]
 
-assert len(lanes) == 252
+assert len(lanes) == 256
 assert len(tx) == 243
-assert len(meta) == 9
+assert len(meta) == 13
 assert len(ids) == len(set(ids))
 assert all(lane["sequence"] > 0 for lane in tx)
 assert len(lanes) <= 256
-print("AUTOCAL_FORENSIC_PLAN_V2=PASS lanes=252 transactions=243 meta=9")
+print("AUTOCAL_FORENSIC_PLAN_V2=PASS lanes=256 transactions=243 meta=13")

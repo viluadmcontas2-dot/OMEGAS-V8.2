@@ -267,6 +267,115 @@ def meta_mutation_negative_bundle():
                    "Harness detects checksum, truncation, shape and echo mutations",
                    metrics={"detected": detected})
 
+
+def meta_map_signedness_boundary():
+    oracle = load(ORACLE)
+    mp48 = text("app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt")
+    live_field = next(
+        item for item in oracle["live_telemetry"]["payload_fields"]
+        if item["semantic"] == "map_raw"
+    )
+    pm = load(PORTMON)
+    observed = []
+    for tx in pm["transactions"]:
+        if tx["request"] != "48 01 49":
+            continue
+        _, _, status, _, payload = response_parts(tx)
+        if status != 0x53 or len(payload) != 34:
+            continue
+        observed.append(u16le(payload, 17))
+    high_bit = [value for value in observed if value >= 0x8000]
+    source_signed = "s16le(payload, 17)" in mp48
+    source_unsigned = "u16le(payload, 17)" in mp48
+    oracle_signed = live_field.get("encoding") == "s16le"
+    synthetic_u16 = 0xFFFF
+    synthetic_s16 = synthetic_u16 - 0x10000
+    findings = []
+    if oracle_signed and not source_signed:
+        findings.append("ProgBase oracle requires S16LE MAP but OMEGAS source decodes U16LE")
+    return receipt(
+        "RED" if findings else "PASS",
+        "Live MAP signedness agrees with original oracle at the high-bit boundary",
+        findings,
+        {
+            "oracle_encoding": live_field.get("encoding"),
+            "omegas_u16_source": source_unsigned,
+            "omegas_s16_source": source_signed,
+            "observed_samples": len(observed),
+            "observed_min": min(observed) if observed else None,
+            "observed_max": max(observed) if observed else None,
+            "observed_high_bit_count": len(high_bit),
+            "synthetic_ffff_u16": synthetic_u16,
+            "synthetic_ffff_s16": synthetic_s16,
+            "replay_can_distinguish_signedness": bool(high_bit),
+        },
+    )
+
+def meta_acquisition_family_completeness():
+    oracle = load(ORACLE)
+    monitor = text("app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt")
+    recurring = [
+        row["name"] for row in oracle["autocal_dm"]
+        if row.get("request") and row["request"].startswith("29 ")
+        and 0x015B <= int(row["address_hex"], 16) <= 0x0163
+    ]
+    section = monitor.split("private fun refreshAcquisitionGroup", 1)[1].split("private fun refreshReferenceGroup", 1)[0]
+    missing = [name for name in recurring if f"AutoCalProtocol.{name}" not in section]
+    return receipt(
+        "RED" if missing else "PASS",
+        "OMEGAS grouped acquisition refresh covers the original recurring 0x015B..0x0163 family",
+        missing,
+        {"oracle_recurring_fields": recurring, "missing_count": len(missing)},
+    )
+
+def meta_reference_revision_contract():
+    monitor = text("app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt")
+    planner = text("app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt")
+    required = [
+        'REFERENCE_INTERVAL_MS = 4_000L',
+        'refreshReferenceGroup',
+        'referenceRefreshAtElapsedMs',
+        'reviseSnapshotHashOnChange = true',
+        'incrementalReferenceRevision',
+        'previous.optString("rawPayloadHex") != replacement.optString("rawPayloadHex")',
+        'refreshPlanner.markReference',
+    ]
+    joined = planner + "\n" + monitor
+    missing = [token for token in required if token not in joined]
+    return receipt(
+        "RED" if missing else "PASS",
+        "Reference refresh publishes explicit timestamp and byte-sensitive revision",
+        missing,
+    )
+
+def meta_levels_consumer_reachability():
+    hits = []
+    for root_name in ("app/src/main", "app/src/test", "tests"):
+        root = ROOT / root_name
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if not path.is_file() or path.suffix.lower() not in {".kt", ".java", ".js", ".cjs", ".py", ".html"}:
+                continue
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            for token in ("level_percentage", "levelPercentage"):
+                if token in source:
+                    hits.append({"path": str(path.relative_to(ROOT)), "token": token})
+    production_consumers = [
+        h for h in hits
+        if h["path"].startswith("app/src/main")
+        and h["path"] not in {
+            "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt",
+            "app/src/main/java/com/omegas/prohub/ecu/Mp48TelemetryScale.kt",
+        }
+    ]
+    return receipt(
+        "RED" if production_consumers else "PASS",
+        "Uncalibrated LEVELS percentage has no production consumer beyond its producer/scale",
+        [f"{h['path']}:{h['token']}" for h in production_consumers],
+        {"all_hits": hits, "production_consumer_count": len(production_consumers)},
+    )
+
 def meta_forensic_selftest():
     proc = subprocess.run(
         ["python3", "tools/ci/autocal_forensic_plan.py"],
@@ -280,7 +389,7 @@ def meta_forensic_selftest():
     lanes = matrix.get("include", [])
     ids = [x["id"] for x in lanes]
     tx = [x for x in lanes if x.get("category") == "transaction"]
-    ok = len(lanes) == 252 and len(tx) == 243 and len(ids) == len(set(ids)) and len(lanes) <= 256
+    ok = len(lanes) == 256 and len(tx) == 243 and len(ids) == len(set(ids)) and len(lanes) <= 256
     return receipt("PASS" if ok else "BROKEN",
                    "Forensic matrix is unique, complete and within GitHub cap",
                    metrics={"lanes":len(lanes),"transaction_lanes":len(tx),"unique":len(set(ids))})
@@ -314,6 +423,10 @@ META = {
     "meta_levels_global": meta_levels_global,
     "meta_session_write_safety": meta_session_write_safety,
     "meta_mutation_negative_bundle": meta_mutation_negative_bundle,
+    "meta_map_signedness_boundary": meta_map_signedness_boundary,
+    "meta_acquisition_family_completeness": meta_acquisition_family_completeness,
+    "meta_reference_revision_contract": meta_reference_revision_contract,
+    "meta_levels_consumer_reachability": meta_levels_consumer_reachability,
     "meta_forensic_selftest": meta_forensic_selftest,
 }
 
