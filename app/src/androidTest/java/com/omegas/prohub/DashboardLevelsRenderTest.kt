@@ -146,6 +146,22 @@ class DashboardLevelsRenderTest {
     }
 
     @Test
+    fun historicalPreLevelsDashboardOmitsRawLevels() {
+        val scenario = launch()
+        try {
+            val fixture = liveFixture()
+            injectFresh(scenario, fixture)
+            val dom = dashboardDom(scenario)
+            saveEvidence("dashboard-historical-pre-levels", dom, scenario)
+            assertTrue("Historical Dashboard route must render", dom.getBoolean("route"))
+            assertFalse("Historical pre-fix Dashboard must omit LEVELS RAW label", dom.getBoolean("hasLevelsRawLabel"))
+            assertFalse("Historical pre-fix Dashboard body must omit LEVELS RAW", dom.getBoolean("bodyHasLevelsRaw"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
     fun autocalFreshLevelsControl() {
         val scenario = launch()
         try {
