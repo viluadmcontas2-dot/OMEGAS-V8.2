@@ -1,0 +1,159 @@
+{
+  "schema": "omegas.amarelo.autocal-zone-geometry-v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "wire": {
+    "MNFLD_PRESS_THD": {
+      "address": "0x014C",
+      "request": "29 4C 01 76",
+      "observed_write_indices": [
+        5024,
+        222125,
+        556056
+      ],
+      "raw_values": [
+        154,
+        256,
+        307,
+        358,
+        410,
+        461,
+        512,
+        563,
+        614,
+        666,
+        717,
+        768,
+        819,
+        870,
+        922,
+        973,
+        1024,
+        1126
+      ],
+      "identical_across_three_reads": true
+    },
+    "PETR_INJ_TBP": {
+      "address": "0x014B",
+      "request": "29 4B 01 75",
+      "observed_write_indices": [
+        5070,
+        222171,
+        556102
+      ],
+      "raw_values": [
+        256,
+        512,
+        768,
+        1024,
+        1280,
+        1536,
+        1792,
+        2048,
+        2304,
+        2560,
+        2816,
+        3072,
+        3328,
+        3584,
+        3840,
+        4096,
+        4352,
+        4608,
+        4864,
+        5120,
+        5632,
+        6144,
+        6656,
+        7168,
+        7680,
+        8192,
+        8704,
+        9216,
+        10240,
+        11264
+      ],
+      "identical_across_three_reads": true
+    }
+  },
+  "progbase_projection": {
+    "function": "0x517254",
+    "threshold_field": "MNFLD_PRESS_THD@DM+0x6C",
+    "x_axis_field": "PETR_INJ_TBP@DM+0x70",
+    "logical_zone_count": 4,
+    "internal_cut_indices": [
+      5,
+      9,
+      13
+    ],
+    "upper_endpoint_index": 17,
+    "lower_endpoint_zone0": 0,
+    "construction": [
+      {
+        "zone_index": 0,
+        "low_source": "0",
+        "high_source": "MNFLD_PRESS_THD[5]"
+      },
+      {
+        "zone_index": 1,
+        "low_source": "MNFLD_PRESS_THD[5]",
+        "high_source": "MNFLD_PRESS_THD[9]"
+      },
+      {
+        "zone_index": 2,
+        "low_source": "MNFLD_PRESS_THD[9]",
+        "high_source": "MNFLD_PRESS_THD[13]"
+      },
+      {
+        "zone_index": 3,
+        "low_source": "MNFLD_PRESS_THD[13]",
+        "high_source": "MNFLD_PRESS_THD[17]"
+      }
+    ],
+    "status": "PROVEN_STATIC"
+  },
+  "physical_scale": {
+    "map_counts_per_bar": 1000,
+    "injection_counts_per_ms": 500,
+    "source": "AutoCalScale canonical runtime; recovered by independent correlation",
+    "status": "PROJECT_CANONICAL_PROVEN"
+  },
+  "observed_regions": [
+    {
+      "zone_index": 0,
+      "low_map_bar": 0,
+      "high_map_bar": 0.461
+    },
+    {
+      "zone_index": 1,
+      "low_map_bar": 0.461,
+      "high_map_bar": 0.666
+    },
+    {
+      "zone_index": 2,
+      "low_map_bar": 0.666,
+      "high_map_bar": 0.87
+    },
+    {
+      "zone_index": 3,
+      "low_map_bar": 0.87,
+      "high_map_bar": 1.126
+    }
+  ],
+  "x_axis_observed": {
+    "raw_min": 256,
+    "raw_max": 11264,
+    "physical_min_ms": 0.512,
+    "physical_max_ms": 22.528,
+    "point_count": 30
+  },
+  "conclusions": {
+    "zone_indices_are_ordered_map_regions": "PROVEN",
+    "zone_zero_to_three_are_low_to_high_map_order": "PROVEN",
+    "semantic_names_for_regions": "UNKNOWN",
+    "zone_flags_are_percent_progress": "FALSIFIED",
+    "ui_contract": "Draw four MAP regions using native thresholds; label by region/index or numeric bounds, not invented names or percentage."
+  }
+}
