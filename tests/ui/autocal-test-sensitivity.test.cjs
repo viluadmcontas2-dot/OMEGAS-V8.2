@@ -14,6 +14,8 @@ const required = [
   'app/src/main/assets/ui/app.js',
   'app/src/main/assets/ui/core/autocal-api.js',
   'app/src/main/assets/ui/screens/autocal-cockpit.js',
+  'app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt',
+  'app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt',
   'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt',
   'app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt',
 ];
@@ -57,6 +59,9 @@ const mutants = [
     "if (layer) layer.setAttribute('display', 'none');", "if (layer) layer.removeAttribute('display');"],
   ['x-axis-unit-removed', 'app/src/main/assets/ui/screens/autocal-cockpit.js',
     'Petrol Inj. (ms)', 'Petrol Inj.'],
+  ['levels-projection-detached', 'app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt',
+    'telemetryStatus = JSONObject(service.telemetryStore.liveJson()),',
+    'telemetryStatus = JSONObject(),'],
   ['native-bootstrap-killed', 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt',
     'snapshotRequested = newSessionId > 0L', 'snapshotRequested = false'],
   ['automatch-u8-killed', 'app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt',
