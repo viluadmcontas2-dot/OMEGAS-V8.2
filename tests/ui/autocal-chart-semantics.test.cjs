@@ -63,7 +63,11 @@ const freshTelemetry = {
   ageMs: 2500,
   live: { petrol_ms: 4.50, load_bar: 0.45, rpm: 900, level_raw: 173, fuel: 'GNV' },
 };
-assert.equal(model.livePoint(freshTelemetry).levelRaw, 173, 'LEVELS deve permanecer RAW quando a telemetria está fresca');
+assert.equal(
+  model.livePoint(freshTelemetry, { levelsRaw: 173 }).levelRaw,
+  173,
+  'LEVELS deve permanecer RAW quando a telemetria está fresca e a projeção Kotlin o confirma',
+);
 assert.equal(
   model.livePoint({ ...freshTelemetry, ageMs: 2501 }),
   null,
