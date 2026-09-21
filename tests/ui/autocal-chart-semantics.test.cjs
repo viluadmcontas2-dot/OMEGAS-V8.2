@@ -189,3 +189,22 @@ assert.match(source, /gasPreviousMarkup/);
 assert.match(source, /gasCurrentMarkup/);
 assert.match(source, /acquisitionMarkup\(gasPreviousAcquisition, 'gas-previous'/);
 assert.match(source, /acquisitionMarkup\(gasCurrentAcquisition, 'gas-current'/);
+
+
+const typedK = model.instrumentKPoints({
+  kCurve: {
+    points: [
+      { index: 0, petrolMs: 2.0, factor: 1.0 },
+      { index: 1, petrolMs: 4.5, factor: 1.025 },
+      { index: 2, petrolMs: 6.0, factor: 0.99 },
+    ],
+  },
+});
+assert.equal(typedK.length, 3);
+assert.equal(typedK[1].petrolMs, 4.5);
+assert.equal(typedK[1].factor, 1.025);
+assert.match(source, /instrumentKPoints/);
+assert.match(source, /renderKCurve\(\)/);
+assert.match(source, /PETR_INJ_TBP × MUL_ACT/);
+assert.match(source, /sem alvo calculado pelo OMEGAS/);
+assert.equal(source.includes('targetK'), false, 'Curve K nativa não pode ganhar alvo calculado no JS');
