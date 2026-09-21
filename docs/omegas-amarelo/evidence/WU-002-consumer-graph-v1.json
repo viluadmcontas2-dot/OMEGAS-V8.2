@@ -219,12 +219,39 @@
       }
     ],
     "transition_status": "UNKNOWN",
-    "note": "All nine labels have direct code references inside PostActionRefresh and are passed through the common matcher/dispatch helper. This proves active dispatch labels, not ordinal mapping, transition guards or transition producers."
+    "note": "All nine labels have direct code references inside PostActionRefresh and are passed through a common table/cursor matcher. Binary structure proves refresh-dispatch scheduling; ECU/physical state transitions, ordinal state semantics and transition producers remain UNKNOWN.",
+    "role": "refresh_dispatch_scheduler",
+    "scheduler_structure_status": "PROVEN",
+    "ecu_state_semantics": "UNKNOWN",
+    "scheduler": {
+      "selector_function": "0x51AE20",
+      "matcher_helper": "0x51ABA8",
+      "advance_helper": "0x51ADE8",
+      "reset_helper": "0x51AE10",
+      "table_pointer_field": "DM+0x4BC",
+      "table_count_field": "DM+0x4C0",
+      "cursor_field": "DM+0x4C4",
+      "variants": [
+        {
+          "table_va": "0xA9EB98",
+          "entry_count": 6,
+          "status": "PROVEN_STRUCTURE"
+        },
+        {
+          "table_va": "0xA9EBB4",
+          "entry_count": 8,
+          "status": "PROVEN_STRUCTURE"
+        }
+      ],
+      "selector_guard": "scalar getter from DM+0xC4 selects 8-entry table for observed value range 3..4; otherwise 6-entry table",
+      "cursor_contract": "reset to 0 on table selection; matcher wraps cursor to 0 when cursor >= count; advance helper increments cursor",
+      "note": "This proves a refresh-dispatch schedule over label tables. It does not prove ECU/physical AutoCAL state transitions or ordinal state semantics."
+    }
   },
   "unknowns": [
     "Exact semantic identity of DM+0x7C and DM+0xCC in Finish.",
     "Exact 0x0165 subindex semantics.",
-    "Complete state transition graph and guards.",
+    "Any ECU/physical AutoCAL state machine distinct from the proven refresh-dispatch scheduler; transition producers/guards remain UNKNOWN.",
     "Acquired-zone bit/byte meaning.",
     "Exact producer/consumer transforms not already listed as PROVEN."
   ]
