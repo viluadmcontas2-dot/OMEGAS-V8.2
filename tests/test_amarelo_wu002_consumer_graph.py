@@ -38,6 +38,16 @@ class NativeConsumerGraphContractTest(unittest.TestCase):
         states = data["states"]
         self.assertEqual(states["label_use_status"], "PROVEN")
         self.assertEqual(states["transition_status"], "UNKNOWN")
+        self.assertEqual(states["role"], "refresh_dispatch_scheduler")
+        self.assertEqual(states["scheduler_structure_status"], "PROVEN")
+        self.assertEqual(states["ecu_state_semantics"], "UNKNOWN")
+        scheduler = states["scheduler"]
+        self.assertEqual(scheduler["table_count_field"], "DM+0x4C0")
+        self.assertEqual(scheduler["cursor_field"], "DM+0x4C4")
+        self.assertEqual(
+            [(row["table_va"], row["entry_count"]) for row in scheduler["variants"]],
+            [("0xA9EB98", 6), ("0xA9EBB4", 8)],
+        )
         labels = [row["name"] for row in states["labels"]]
         self.assertIn("state_acquire_petrol_line", labels)
         self.assertIn("state_draw_gas_petrol_curve", labels)
