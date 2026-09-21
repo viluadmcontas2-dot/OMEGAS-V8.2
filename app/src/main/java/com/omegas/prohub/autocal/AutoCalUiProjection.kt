@@ -29,7 +29,6 @@ object AutoCalUiProjection {
     private const val SOURCE_NATIVE = "NATIVE_MONITOR"
     private const val SOURCE_MANUAL = "MANUAL_READER"
     private const val SOURCE_NONE = "NONE"
-    private const val LEVELS_MAX_AGE_MS = 2_500L
 
     fun project(
         nativeStatus: JSONObject,
@@ -140,7 +139,6 @@ object AutoCalUiProjection {
             .put("instrument", instrument)
             .put("correlation", correlationEvents)
             .put("correlationState", correlationState)
-            .put("levelsRaw", levelsRaw(telemetryStatus, currentSession))
             .put("nativeStatus", copy(nativeStatus))
             .put("nativeSnapshot", copy(nativeSnapshot))
             .put("manualStatus", copy(manualStatus))
@@ -223,25 +221,6 @@ object AutoCalUiProjection {
             if (field.optString("key") == key && field.optString("status") == "VALID") return field
         }
         return null
-    }
-
-    private fun levelsRaw(telemetryStatus: JSONObject, currentSession: Long?): Any {
-        if (!telemetryStatus.optBoolean("valid", false)) return JSONObject.NULL
-        if (!telemetryStatus.has("ageMs") || telemetryStatus.isNull("ageMs")) return JSONObject.NULL
-        val ageMs = telemetryStatus.optLong("ageMs", -1L)
-        if (ageMs < 0L || ageMs > LEVELS_MAX_AGE_MS) return JSONObject.NULL
-
-        if (currentSession != null) {
-            val telemetrySession = telemetryStatus.optLong("sessionId", 0L).takeIf { it > 0L }
-                ?: return JSONObject.NULL
-            if (telemetrySession != currentSession) return JSONObject.NULL
-        }
-
-        val live = telemetryStatus.optJSONObject("live") ?: return JSONObject.NULL
-        if (!live.has("level_raw") || live.isNull("level_raw")) return JSONObject.NULL
-        val raw = live.opt("level_raw")
-        if (raw !is Number || !raw.toDouble().isFinite()) return JSONObject.NULL
-        return raw
     }
 
     private fun statusSessionId(status: JSONObject): Long? {
