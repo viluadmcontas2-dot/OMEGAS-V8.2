@@ -192,3 +192,16 @@ Across both supplied Portmons, `0x015D..0x0160` are accessed only with command `
 Therefore ECU/firmware-side point-buffer update ownership is **PROVEN FOR SUPPLIED CAPTURES**. Exact firmware averaging/replacement formula remains **UNKNOWN**.
 
 Product rule: OMEGAS reads/projects the native point buffers and must not synthesize or overwrite them.
+
+
+## Native point-update dynamics — 2026-09-21
+
+A targeted Portmon sequence for GNV buffer index 6 shows multiple point coordinates under the same latest observed `NUM_BUF_UPD_GAS` value (for example counter 9 with 3721/541 then 3704/538; counter 10 with 3704/538 then 3640/538).
+
+Because counter and point vectors are separate serial transactions, this does not prove the ECU counter was unchanged at the exact mutation instant. It **does** prove that the host-visible counter is insufficient to reconstruct the point-update formula.
+
+Therefore:
+- do not treat `NUM_BUF_UPD_GAS` as a running-average sample count;
+- do not emulate native point averaging/replacement in OMEGAS;
+- exact firmware point-update formula remains **UNKNOWN**;
+- native point buffer remains the product authority.
