@@ -86,11 +86,25 @@
       if (this.editor.hasMap()) this.applyContext(this.pendingContext);
     }
 
+    settleReadFailure(message) {
+      this.reading = false;
+      this.editor.reset();
+      this.cells.clear();
+      this.rowHeaders = [];
+      this.columnHeaders = [];
+      if (this.host) {
+        this.host.innerHTML = '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
+      }
+      text('mapSourceStatus', 'Mapa não confirmado');
+      this.store.patch({ map: { ...this.store.get().map, state: 'failed', data: null, selection: 0, review: null } });
+      if (message) this.alert(message);
+    }
+
     startRead(automatic) {
       if (this.reading) return;
       const result = this.api.startMapRead();
       if (!result?.ok || !result?.started) {
-        this.alert(result?.error || 'Não foi possível iniciar a leitura do Mapa K.');
+        this.settleReadFailure(result?.error || 'Não foi possível iniciar a leitura do Mapa K.');
         return;
       }
       this.reading = true;
@@ -111,9 +125,7 @@
         if (!result?.busy && result?.state !== 'READING') {
           this.reading = false;
           if (!result?.ok || result?.state === 'FAILED') {
-            this.editor.reset();
-            this.alert(result?.error || 'Falha ao ler o Mapa K.');
-            text('mapSourceStatus', 'Mapa não confirmado');
+            this.settleReadFailure(result?.error || 'Falha ao ler o Mapa K.');
           } else {
             try {
               this.editor.load(result);
@@ -124,7 +136,7 @@
               this.store.patch({ map: { ...this.store.get().map, state: 'ready', data: result, selection: 0, review: null } });
               this.applyContext(this.pendingContext || this.store.get().routeContext);
             } catch (error) {
-              this.alert(error.message);
+              this.settleReadFailure(error.message);
             }
           }
         }
