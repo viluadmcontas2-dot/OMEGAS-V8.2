@@ -6,52 +6,120 @@
     "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
   },
   "rtti": {
-    "DM+0x7C": {"name":"VECT_AUTOCAL_U8_1","status":"PROVEN"},
-    "DM+0x80": {"name":"VECT_AUTOCAL_U8_2","status":"PROVEN"},
-    "DM+0xCC": {"name":"VECT_AUTOCAL_U8_0","status":"PROVEN"},
-    "DM+0xD0": {"name":"NUM_ATUOMATCH_EXECUTED","status":"PROVEN"}
+    "DM+0x7C": {
+      "name": "VECT_AUTOCAL_U8_1",
+      "status": "PROVEN"
+    },
+    "DM+0x80": {
+      "name": "VECT_AUTOCAL_U8_2",
+      "status": "PROVEN"
+    },
+    "DM+0xCC": {
+      "name": "VECT_AUTOCAL_U8_0",
+      "status": "PROVEN"
+    },
+    "DM+0xD0": {
+      "name": "NUM_ATUOMATCH_EXECUTED",
+      "status": "PROVEN"
+    }
   },
   "dfm": {
-    "VECT_AUTOCAL_U8_0": {"serialCode":"0x0165","rowIndex":"OMITTED_DEFAULT","colIndex":-1,"status":"PROVEN_RESOURCE"},
-    "VECT_AUTOCAL_U8_1": {"serialCode":"0x0165","rowIndex":1,"colIndex":-1,"status":"PROVEN_RESOURCE"},
-    "VECT_AUTOCAL_U8_2": {"serialCode":"0x0165","rowIndex":2,"colIndex":-1,"status":"PROVEN_RESOURCE"}
+    "VECT_AUTOCAL_U8_0": {
+      "serialCode": "0x0165",
+      "rowIndex": "OMITTED_DEFAULT",
+      "colIndex": -1,
+      "status": "PROVEN_RESOURCE"
+    },
+    "VECT_AUTOCAL_U8_1": {
+      "serialCode": "0x0165",
+      "rowIndex": 1,
+      "colIndex": -1,
+      "status": "PROVEN_RESOURCE"
+    },
+    "VECT_AUTOCAL_U8_2": {
+      "serialCode": "0x0165",
+      "rowIndex": 2,
+      "colIndex": -1,
+      "status": "PROVEN_RESOURCE"
+    },
+    "serial_code_0x0165_component_inventory": {
+      "count": 3,
+      "components": [
+        "VECT_AUTOCAL_U8_0",
+        "VECT_AUTOCAL_U8_1",
+        "VECT_AUTOCAL_U8_2"
+      ],
+      "status": "PROVEN_RESOURCE"
+    }
   },
   "wire_observation": {
-    "PortmonAUTOCAL": {"address_0x0165_reads":0},
+    "PortmonAUTOCAL": {
+      "address_0x0165_reads": 0
+    },
     "PortmonLOGNOVO": {
-      "address_0x0165_reads":9,
+      "address_0x0165_reads": 9,
       "requests": {
-        "index0":{"request":"0A 65 01 00 70","count":3,"response_payload_hex":"03"},
-        "index1":{"request":"0A 65 01 01 71","count":3,"response_payload_hex":"03"},
-        "index2":{"request":"0A 65 01 02 72","count":3,"response_payload_hex":"03"}
+        "index0": {
+          "request": "0A 65 01 00 70",
+          "count": 3,
+          "response_payload_hex": "03"
+        },
+        "index1": {
+          "request": "0A 65 01 01 71",
+          "count": 3,
+          "response_payload_hex": "03"
+        },
+        "index2": {
+          "request": "0A 65 01 02 72",
+          "count": 3,
+          "response_payload_hex": "03"
+        }
       },
-      "writes_observed":0
+      "writes_observed": 0
     }
   },
   "finish_static_path": {
-    "function":"ActionFinishAutocalExecute@0x51A390",
-    "read":{"field":"DM+0x7C","semantic":"VECT_AUTOCAL_U8_1","getter":"0x976C44"},
-    "write":{"field":"DM+0xCC","semantic":"VECT_AUTOCAL_U8_0","setter":"0x976CB8"},
-    "post_write_wait_ms":100,
-    "refresh":"PostActionRefresh@0x5162F8",
-    "status":"PROVEN_STATIC"
+    "function": "ActionFinishAutocalExecute@0x51A390",
+    "read": {
+      "field": "DM+0x7C",
+      "semantic": "VECT_AUTOCAL_U8_1",
+      "getter": "0x976C44"
+    },
+    "write": {
+      "field": "DM+0xCC",
+      "semantic": "VECT_AUTOCAL_U8_0",
+      "setter": "0x976CB8"
+    },
+    "post_write_wait_ms": 100,
+    "refresh": "PostActionRefresh@0x5162F8",
+    "status": "PROVEN_STATIC"
   },
   "setter_static_path": {
-    "0x976CB8":"integer-to-TAebNumber setter wrapper",
-    "0x976DF0":"generic value validation/update path",
-    "0x977014":"connection-aware commit path selecting serial write helpers when connected",
-    "status":"PROVEN_STATIC"
+    "0x976CB8": "integer-to-TAebNumber setter wrapper",
+    "0x976DF0": "generic value validation/update path",
+    "0x977014": "connection-aware commit path selecting serial write helpers when connected",
+    "status": "PROVEN_STATIC"
   },
   "subindex_mapping": {
-    "VECT_AUTOCAL_U8_1": {"index":1,"status":"PROVEN"},
-    "VECT_AUTOCAL_U8_2": {"index":2,"status":"PROVEN"},
-    "VECT_AUTOCAL_U8_0": {"index":0,"status":"INFERRED_STRONG","basis":"RowIndex omitted/default in DFM; U8_1=1 and U8_2=2; wire exposes exactly indices 0/1/2"}
+    "VECT_AUTOCAL_U8_1": {
+      "index": 1,
+      "status": "PROVEN"
+    },
+    "VECT_AUTOCAL_U8_2": {
+      "index": 2,
+      "status": "PROVEN"
+    },
+    "VECT_AUTOCAL_U8_0": {
+      "index": 0,
+      "status": "PROVEN_RESOURCE_WIRE_MAPPING",
+      "basis": "Exactly three DFM components use SerialCode 0x0165; U8_1 explicitly RowIndex=1, U8_2 RowIndex=2, U8_0 is the sole default/omitted RowIndex; raw wire exposes exactly indices 0/1/2."
+    }
   },
   "conclusions": {
-    "finish_copies_u8_1_value_into_u8_0":"PROVEN_STATIC",
-    "finish_path_can_reach_serial_commit_when_connected":"PROVEN_STATIC",
-    "finish_0x0165_write_observed_in_supplied_raw":"NO",
-    "exact_physical_effect_in_ecu_after_finish":"UNKNOWN",
-    "levels_related":"FALSIFIED"
+    "finish_copies_u8_1_value_into_u8_0": "PROVEN_STATIC",
+    "finish_path_can_reach_serial_commit_when_connected": "PROVEN_STATIC",
+    "finish_0x0165_write_observed_in_supplied_raw": "NO",
+    "exact_physical_effect_in_ecu_after_finish": "UNKNOWN",
+    "levels_related": "FALSIFIED"
   }
 }
