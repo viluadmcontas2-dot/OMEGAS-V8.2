@@ -44,16 +44,16 @@ class AutoCalNativeActionManager(
     ) {
         ENABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(true),
-            "Habilitar Auto Calibration",
-            "Permite que a própria ECU continue a aquisição por zonas e execute AutoMatch quando seus critérios forem atendidos.",
+            "Ativar Auto Calibration",
+            "Ativa o modo Auto Calibration da ECU; a aquisição por zonas e o AutoMatch automático passam a operar segundo os critérios nativos.",
             true,
             1,
             true,
         ),
         DISABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(false),
-            "Pausar Auto Calibration",
-            "Pausa a aquisição nativa sem apagar os buffers já coletados.",
+            "Desativar Auto Calibration",
+            "Desativa Auto Calibration e o AutoMatch automático da ECU sem evidência de reset dos buffers já coletados.",
             false,
             0,
             true,
