@@ -226,7 +226,7 @@ class DashboardLevelsRenderTest {
         route: String,
         settleMs: Long = 350L,
     ) {
-        evalRaw(scenario, "document.querySelector('[data-route=\\"$route\\"]')?.click(); 'ok';")
+        evalRaw(scenario, "document.querySelector('[data-route=\"$route\"]')?.click(); 'ok';")
         SystemClock.sleep(settleMs)
     }
 
