@@ -41,7 +41,7 @@
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
         this.proposals.clear(); this.renderChart(); this.renderProposalList();
       });
-      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writeReview());
+      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.applyChanges());
       document.getElementById('curveDismissResult')?.addEventListener('click', () => this.closeReview());
     }
 
@@ -412,20 +412,9 @@
       host.querySelector('[data-curve-prepare-suggestion]')?.addEventListener('click', () => this.prepareSuggestion(suggestion));
     }
 
-    openReview() {
-      if (!this.proposals.size) return;
-      const host = document.getElementById('curveReviewList');
-      const items = [...this.proposals.values()].sort((a, b) => Number(a.index) - Number(b.index));
-      if (host) host.innerHTML = items.map(item => `<div><span>Ponto ${Number(item.index) + 1} · ${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b></div>`).join('');
-      text('curveReviewCount', `${items.length} ponto${items.length === 1 ? '' : 's'}`);
-      const button = document.getElementById('curveWriteButton');
-      if (button) button.textContent = `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`;
-      this.root?.classList.add('is-reviewing');
-    }
-
     closeReview() { this.root?.classList.remove('is-reviewing', 'is-writing', 'has-result'); }
 
-    writeReview() {
+    applyChanges() {
       const points = [...this.proposals.values()].map(item => ({ index: Number(item.index), currentRaw: Number(item.currentRaw), targetRaw: Number(item.targetRaw) }));
       if (!points.length) return;
       const result = this.api.writeCurve(points, 'Ajuste manual solicitado diretamente pela ação explícita da UI');
