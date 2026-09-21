@@ -350,6 +350,7 @@ Expected: estimator APIs missing.
 
 Implementation details:
 - weighted median rejects nonpositive weights;
+- compute and expose both support mass and Kish effective sample size;
 - directional consensus uses weight on the sign/direction of the robust center;
 - prior strength never enters live evidence counts;
 - empty node => `NO_EVIDENCE`, no stable percentage, not actionable;
@@ -407,6 +408,7 @@ Hard acceptance constraints:
 - no single visit actionable;
 - repeated local ±10% becomes actionable by 5 exact-node visits;
 - near-zero becomes consolidated by 3 exact-node visits when AutoCal prior is strong;
+- six independent visits of equal 0.5 interpolation weight report Kish ESS ≈ 6, not 3, while support mass remains 3;
 - pure global case local absolute stable residual <= 1.0%;
 - one +30% spike after strong AutoCal prior is not actionable;
 - node identity violations = 0.
