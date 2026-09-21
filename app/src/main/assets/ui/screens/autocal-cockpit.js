@@ -515,7 +515,7 @@
 
             <section class="autocal-command-bar">
               <div class="autocal-command-copy"><small>AUTOMATCH DA ECU</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
-              <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
+              <label class="autocal-enable-checkbox"><input type="checkbox" data-autocal-toggle disabled><span><b>Auto Calibration</b><small>Ativa AutoCAL + AutoMatch automático da ECU</small></span></label>
               <details class="autocal-more-actions">
                 <summary>Mais ações</summary>
                 <div class="autocal-reset-actions">
@@ -550,9 +550,18 @@
     bind() {
       this.panel?.querySelector('[data-autocal-read]')?.addEventListener('click', () => this.requestRead());
       this.panel?.querySelector('[data-autocal-cancel-read]')?.addEventListener('click', () => this.cancelRead());
-      this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
-        const action = event.currentTarget?.dataset?.action;
-        if (action) this.runOperational(action);
+      this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('change', event => {
+        const toggle = event.currentTarget;
+        const action = toggle?.dataset?.action;
+        if (!action) return;
+        if (action === 'DISABLE_AUTO_CAL') {
+          const confirmed = window.confirm('Desativar a Auto Calibration também desativa o AutoMatch automático da ECU. Os dados já coletados não serão resetados. Deseja continuar?');
+          if (!confirmed) {
+            toggle.checked = true;
+            return;
+          }
+        }
+        this.runOperational(action);
       });
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
@@ -706,8 +715,8 @@
         this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível alterar a aquisição AutoCal.' } });
       } else {
         this.store.patch({ alert: { level: 'ok', message: enable
-          ? 'Início enviado. Confirmando ACK e leitura de volta da ECU…'
-          : 'Pausa enviada. Confirmando ACK e leitura de volta da ECU…' } });
+          ? 'Auto Calibration ativada; AutoMatch automático da ECU também fica ativo. Confirmando ACK e leitura de volta…'
+          : 'Auto Calibration e AutoMatch automático desativados. Confirmando ACK e leitura de volta…' } });
       }
       this.refresh();
     }
@@ -784,11 +793,10 @@
         const action = AutoCalUxModel.toggleAction(human.enabled);
         toggle.dataset.action = action || '';
         toggle.disabled = !action || this.operationalPending;
-        toggle.textContent = this.operationalPending
-          ? 'Confirmando ECU…'
-          : action === 'DISABLE_AUTO_CAL'
-            ? 'Pausar aquisição'
-            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
+        toggle.checked = human.enabled === 1;
+        toggle.setAttribute('aria-label', human.enabled === 1
+          ? 'Auto Calibration ativa; desmarcar desativa também o AutoMatch automático'
+          : 'Auto Calibration desativada; marcar ativa também o AutoMatch automático');
       }
 
       const history = this.panel?.querySelector('[data-autocal-history]');
