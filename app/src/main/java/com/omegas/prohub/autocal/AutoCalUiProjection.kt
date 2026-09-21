@@ -102,6 +102,14 @@ object AutoCalUiProjection {
         val correlationEvents = correlationSource.optJSONArray("nativeMaturityEvents")
             ?.let(::copy)
             ?: JSONArray()
+        val zones = acquisitionZones(nativeSnapshot.takeIf { nativeCurrent }, selected)
+        val instrument = AutoCalInstrumentProjection.project(
+            referenceSnapshot = selected,
+            nativeCurrentSnapshot = nativeSnapshot.takeIf { nativeCurrent },
+            telemetryStatus = telemetryStatus,
+            currentSessionId = currentSession,
+            acquisitionZones = zones,
+        )
 
         return JSONObject()
             .put("ok", true)
@@ -128,7 +136,8 @@ object AutoCalUiProjection {
             .put("revision", selected.optString("snapshotHash", ""))
             .put("snapshot", selected)
             .put("analysis", analysis)
-            .put("acquisitionZones", acquisitionZones(nativeSnapshot.takeIf { nativeCurrent }, selected))
+            .put("acquisitionZones", zones)
+            .put("instrument", instrument)
             .put("correlation", correlationEvents)
             .put("correlationState", correlationState)
             .put("levelsRaw", levelsRaw(telemetryStatus, currentSession))
