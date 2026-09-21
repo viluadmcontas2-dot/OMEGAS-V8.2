@@ -89,6 +89,8 @@ class DashboardLevelsRenderTest {
                 route: document.querySelector('[data-screen="dashboard"]')?.classList.contains('active') === true,
                 hasLevelsRawLabel: labels.includes('LEVELS RAW'),
                 levelsRaw: document.getElementById('dashLevelsRaw')?.textContent ?? null,
+                petrol: document.getElementById('dashHeroPetrol')?.textContent ?? null,
+                map: document.getElementById('dashMap')?.textContent ?? null,
                 hero: document.getElementById('dashHeroStatus')?.textContent ?? null,
                 bodyHasLevelsRaw: document.body.innerText.toUpperCase().includes('LEVELS RAW')
               };
@@ -136,6 +138,8 @@ class DashboardLevelsRenderTest {
             saveEvidence("dashboard-invalid", dom, scenario)
             assertTrue("Dashboard must reserve LEVELS RAW even without telemetry", dom.getBoolean("hasLevelsRawLabel"))
             assertEquals("—", dom.optString("levelsRaw"))
+            assertEquals("Invalid telemetry must not masquerade as zero petrol injection", "—", dom.optString("petrol"))
+            assertEquals("Invalid telemetry must not masquerade as zero MAP", "—", dom.optString("map"))
         } finally {
             scenario.close()
         }
