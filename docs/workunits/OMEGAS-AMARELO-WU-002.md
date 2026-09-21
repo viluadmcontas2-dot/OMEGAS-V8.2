@@ -124,3 +124,38 @@ Fixture/gate:
 - `tests/test_amarelo_autocal_finish_0165_evidence.py`.
 
 LEVELS não participa desta cadeia.
+
+
+## Geometria das 4 regiões MAP adquiridas — 2026-09-21
+
+A rotina nativa `0x517254` fecha a geometria das quatro regiões usadas por `ACQUIRED_ZONES_PETROL/GAS`.
+
+ProgBase:
+- campo vertical: `MNFLD_PRESS_THD@0x014C / DM+0x6C`;
+- eixo horizontal: `PETR_INJ_TBP@0x014B / DM+0x70`;
+- cortes internos: índices `5, 9, 13`;
+- extremo superior: índice `17`;
+- quatro regiões construídas consecutivamente em ordem crescente de MAP.
+
+LOGNOVO contém três leituras idênticas dos dois vetores:
+- `MNFLD_PRESS_THD`: writes 5024, 222125, 556056;
+- `PETR_INJ_TBP`: writes 5070, 222171, 556102.
+
+Com as escalas canônicas AutoCal (1000 counts/bar; 500 counts/ms), os limites observados são:
+- R1: `0.000 -> 0.461 bar`;
+- R2: `0.461 -> 0.666 bar`;
+- R3: `0.666 -> 0.870 bar`;
+- R4: `0.870 -> 1.126 bar`.
+
+Conclusão:
+- índice 0..3 = regiões MAP ordenadas baixa->alta: **PROVEN**;
+- nomes físicos/humanos além de R1..R4 + limite numérico: **UNKNOWN**;
+- flags continuam não monotônicas e não representam porcentagem.
+
+Implementação:
+`AutoCalInstrumentProjection.zoneRegions` publica limites + flags gasolina/GNV.
+O JavaScript apenas desenha as quatro faixas discretas no gráfico; não conhece os índices 5/9/13 e não recalcula a ciência.
+
+Evidence:
+- `tests/fixtures/amarelo-autocal-zone-geometry-v1.json`;
+- `tests/test_amarelo_autocal_zone_geometry_evidence.py`.
