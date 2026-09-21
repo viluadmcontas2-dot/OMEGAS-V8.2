@@ -113,4 +113,38 @@ class NativeAutoCalMaturityTrackerTest {
         assertTrue(tracker.observe(postReset, 5, 10, enabled = true, observedAtElapsedMs = 3_000L).isEmpty())
     }
 
+    @Test
+    fun `explicit baseline preserves correlation lifecycle across later snapshots`() {
+        val tracker = NativeAutoCalMaturityTracker()
+        val mature = IntArray(18).also { it[8] = 10 }
+
+        tracker.baseline(
+            counters = mature,
+            observedAtElapsedMs = 1_000L,
+            gasLowThreshold = 5,
+            gasNormalThreshold = 10,
+            enabled = true,
+        )
+
+        assertEquals(listOf(8), tracker.retryableCorrelationBandIndexes().toList())
+        assertTrue(tracker.correlatedBandIndexes().isEmpty())
+
+        tracker.recordCorrelationResult(8, correlated = true)
+        assertTrue(tracker.retryableCorrelationBandIndexes().isEmpty())
+        assertEquals(listOf(8), tracker.correlatedBandIndexes().toList())
+
+        tracker.baseline(
+            counters = mature.copyOf(),
+            observedAtElapsedMs = 2_000L,
+            gasLowThreshold = 5,
+            gasNormalThreshold = 10,
+            enabled = true,
+        )
+        assertEquals(listOf(8), tracker.correlatedBandIndexes().toList())
+
+        tracker.reset()
+        assertTrue(tracker.retryableCorrelationBandIndexes().isEmpty())
+        assertTrue(tracker.correlatedBandIndexes().isEmpty())
+    }
+
 }

@@ -90,6 +90,37 @@ class AutoCalUiProjectionTest {
     }
 
     @Test
+    fun `projection keeps persistent correlation state separate from current events`() {
+        val nativeSnapshot = usableReference("native-correlation")
+            .put(
+                "nativeCorrelationState",
+                JSONObject()
+                    .put("correlatedBands", JSONArray().put(4))
+                    .put("retryableBands", JSONArray().put(8)),
+            )
+            .put(
+                "nativeMaturityEvents",
+                JSONArray().put(
+                    JSONObject()
+                        .put("bandIndex", 8)
+                        .put("correlationState", "NO_RELIABLE_CORRELATION"),
+                ),
+            )
+
+        val projection = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L),
+            nativeSnapshot = nativeSnapshot,
+            manualStatus = status("IDLE", 42L),
+            manualSnapshot = unavailableSnapshot(),
+        )
+
+        val correlationState = projection.getJSONObject("correlationState")
+        assertEquals(4, correlationState.getJSONArray("correlatedBands").getInt(0))
+        assertEquals(8, correlationState.getJSONArray("retryableBands").getInt(0))
+        assertEquals(1, projection.getJSONArray("correlation").length())
+    }
+
+    @Test
     fun `partial current monitor stays visible but never claims reference`() {
         val projection = AutoCalUiProjection.project(
             nativeStatus = status("MONITORING", 7L),
