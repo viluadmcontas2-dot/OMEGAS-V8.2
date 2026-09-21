@@ -148,7 +148,7 @@ RPM may appear as:
 - live metadata;
 - filter;
 - diagnostic annotation;
-- later correlation input if WU-001/WU-002 prove it.
+- correlation input only in a future WorkUnit explicitly scoped after WU-001/WU-002 prove the native relationship.
 
 ### Layers
 
@@ -157,7 +157,7 @@ The graph supports only evidence-backed layers:
 1. **Petrol reference**
    - source: proven native/reference producer;
    - visually stable;
-   - never hidden merely because a later partial snapshot is missing fields when a valid current reference is still retained.
+   - never hidden merely because a subsequent partial snapshot is missing fields when a valid current reference is still retained.
 
 2. **Gas/current native curve**
    - source: proven native gas/reference producer;
@@ -374,13 +374,13 @@ AutoCAL and OMEGAS learning coexist but remain separate authorities.
 
 AutoCAL screen shows what the native ECU is doing.
 
-The 144-node learning system may consume proven native revision events/provenance later, but:
+The 144-node learning system may consume proven native revision events/provenance only through an explicitly scoped integration WorkUnit after WU-004 is proven, but:
 - it does not rewrite the AutoCAL graph;
 - it does not invent RPM into native curves;
 - it does not reinterpret a native curve as local Map K truth;
 - its residual/local conclusions live in Learning/Map surfaces.
 
-A later cross-link may say:
+A future explicitly scoped cross-surface integration may say:
 > AutoCAL global atualizado. Mapa local sendo revalidado.
 
 It must not merge the two visual models.
