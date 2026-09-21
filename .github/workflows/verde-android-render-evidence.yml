@@ -26,6 +26,33 @@ concurrency:
 
 jobs:
   render:
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - scenario: dashboard-fresh
+            method: dashboardFreshLevelsRaw
+          - scenario: dashboard-invalid
+            method: dashboardInvalidLevelsPlaceholder
+          - scenario: autocal-fresh-control
+            method: autocalFreshTelemetryControl
+          - scenario: autocal-reference-curves
+            method: autocalReferenceCurvesRenderFixture
+          - scenario: autocal-equivalence-shifted
+            method: autocalShiftedEquivalenceRendersHorizontalProjection
+          - scenario: learning-fresh-context
+            method: learningFreshMp48ContextRender
+          - scenario: map-fresh-context
+            method: mapFreshMp48ContextRender
+          - scenario: curve-offline-honest
+            method: curveOfflineDoesNotFabricateEcuRead
+          - scenario: obd-offline-honest
+            method: obdOfflineIsHonest
+          - scenario: dashboard-session-invalidated
+            method: sessionChangeInvalidatesOldTelemetry
+          - scenario: dashboard-session-recovered
+            method: sessionReconnectRecoversFreshTelemetry
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -57,13 +84,13 @@ jobs:
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
           disable-animations: true
-          script: bash tools/ci/run_android_render_evidence.sh
+          script: bash tools/ci/run_android_render_evidence.sh "${{ matrix.scenario }}" "${{ matrix.method }}"
 
       - name: Upload rendered evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-render-evidence
+          name: android-render-${{ matrix.scenario }}
           path: rendered-evidence
           retention-days: 7
           if-no-files-found: warn
