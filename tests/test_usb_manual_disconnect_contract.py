@@ -4,7 +4,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SERVICE = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt").read_text(encoding="utf-8")
 
 assert "fun disconnectUsb()" in SERVICE
-disconnect = SERVICE[SERVICE.index("fun disconnectUsb()"):SERVICE.index("fun pauseMonitoring()", SERVICE.index("fun disconnectUsb()"))]
+disconnect = SERVICE[SERVICE.index("fun disconnectUsb()"):SERVICE.index("fun usbDevicesJson()", SERVICE.index("fun disconnectUsb()"))]
 assert "monitoringPausedByUser = true" in disconnect, (
     "desconexão explícita precisa marcar intenção humana de permanecer desconectado"
 )
