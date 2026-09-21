@@ -53,10 +53,10 @@ jobs:
           cores: 2
           ram-size: 2048M
           emulator-boot-timeout: 600
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
           disable-animations: true
           script: |
-            set -uo pipefail
+            set -u
             chmod +x gradlew
             ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace || exit 2
             adb shell wm size 1280x720
@@ -68,18 +68,19 @@ jobs:
 
             mkdir -p rendered-evidence
             overall=0
-            for entry in               "dashboard-fresh:dashboardFreshLevelsRaw"               "dashboard-invalid:dashboardInvalidLevelsPlaceholder"               "autocal-fresh-control:autocalFreshLevelsControl"
+
+            for entry in "dashboard-fresh:dashboardFreshLevelsRaw" "dashboard-invalid:dashboardInvalidLevelsPlaceholder" "autocal-fresh-control:autocalFreshLevelsControl"
             do
               scenario="${entry%%:*}"
               method="${entry##*:}"
-              set +e
-              adb shell am instrument -w -r                 -e class "com.omegas.prohub.DashboardLevelsRenderTest#${method}"                 com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner                 | tee "rendered-evidence/${scenario}-instrumentation.txt"
-              rc=${PIPESTATUS[0]}
-              set -e
+              adb shell am instrument -w -r -e class "com.omegas.prohub.DashboardLevelsRenderTest#${method}" com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner > "rendered-evidence/${scenario}-instrumentation.txt" 2>&1
+              rc=$?
+              cat "rendered-evidence/${scenario}-instrumentation.txt"
               adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
               adb exec-out screencap -p > "rendered-evidence/${scenario}-post.png" || true
               if [ "$rc" -ne 0 ]; then overall=1; fi
             done
+
             exit "$overall"
 
       - name: Upload rendered evidence
