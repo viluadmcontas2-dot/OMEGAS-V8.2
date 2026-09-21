@@ -378,7 +378,7 @@ class NativeAutoCalMonitor(
                         .put("snapshotHash", snapshot.snapshotHash)
                         .put("fuel", "GNV")
                         .put("bandIndex", transition.bandIndex)
-                        .put("zone", transition.zone)
+                        .put("zone", point?.opt("zone") ?: JSONObject.NULL)
                         .put("previousCounter", transition.previousCounter)
                         .put("counter", transition.counter)
                         .put("threshold", transition.threshold)
