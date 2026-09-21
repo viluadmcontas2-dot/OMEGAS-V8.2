@@ -39,6 +39,6 @@ jobs:
       - name: OMEGAS Amarelo Portmon ground truth
         run: python3 -B -m unittest tests.test_amarelo_portmon_ground_truth -v
       - name: Native AutoCAL action wire evidence
-        run: python3 -B -m pytest tests/test_amarelo_autocal_action_wire_evidence.py -q
+        run: python3 -B -m unittest tests.test_amarelo_autocal_action_wire_evidence -v
       - name: Harvested real MP48 fixture contract
         run: python3 -B tests/test_real_mp48_replay_fixture_contract.py
