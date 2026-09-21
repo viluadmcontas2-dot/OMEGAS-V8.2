@@ -68,6 +68,7 @@
         const petrol = telemetryValid ? ((_d = (_c = data.petrol_ms) != null ? _c : data.petrolMs) != null ? _d : status.petrolMs) : null;
         const map = telemetryValid ? ((_g = (_f = (_e = data.load_bar) != null ? _e : data.map_bar) != null ? _f : data.mapBar) != null ? _g : status.mapBar) : null;
         const fuel = telemetryValid ? fuelLabel(data.fuel || data.state || status.fuelState) : "\u2014";
+        const levelsRaw = telemetryValid ? finite(data.level_raw != null ? data.level_raw : data.levelRaw) : null;
         const rawStft = obdValue(obd, ["stft", "shortTermFuelTrim", "short_term_fuel_trim"]);
         const age = finite((_k = (_j = (_h = state.telemetry) == null ? void 0 : _h.telemetryAgeMs) != null ? _j : (_i = state.telemetry) == null ? void 0 : _i.ageMs) != null ? _k : status.directTelemetryAgeMs);
         const connected = status.usbConnected === true;
@@ -83,6 +84,7 @@
         text("dashRpm", rpm === null ? "\u2014" : Math.round(rpm).toLocaleString("pt-BR"));
         text("dashMap", fmt(map, 2));
         text("dashFuel", fuel);
+        text("dashLevelsRaw", levelsRaw === null ? "\u2014" : Math.round(levelsRaw).toLocaleString("pt-BR"));
         text("dashStft", stft === null ? "\u2014" : "".concat(stft > 0 ? "+" : "").concat(fmt(stft, 1), "%"));
         text("dashStftState", obdConnected ? stft === null ? "aguardando 0106" : "Bank 1 \xB7 0106" : "OBD offline");
         text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");

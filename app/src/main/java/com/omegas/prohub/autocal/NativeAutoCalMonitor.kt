@@ -359,7 +359,14 @@ class NativeAutoCalMonitor(
             return reply.ok
         }
 
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF, "AutoCal aquisição gasolina tempo")) return null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF, "AutoCal aquisição gasolina MAP")) return null
         if (!read(AutoCalProtocol.NUM_BUF_UPD_PETR, "AutoCal maturidade gasolina")) return null
+
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV, "AutoCal aquisição GNV anterior tempo")) return null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV, "AutoCal aquisição GNV anterior MAP")) return null
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS, "AutoCal aquisição GNV tempo")) return null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, "AutoCal aquisição GNV MAP")) return null
         val gasProbe = probeMaturityCounters(expectedSessionId) ?: return null
         observations += AutoCalReadObservation(
             field = AutoCalProtocol.NUM_BUF_UPD_GAS,
@@ -367,6 +374,7 @@ class NativeAutoCalMonitor(
             payload = gasProbe.payload.copyOf(),
             capturedAtMs = System.currentTimeMillis(),
         )
+
         if (!read(AutoCalProtocol.ACQUIRED_ZONES_PETROL, "AutoCal zonas gasolina")) return null
         if (!read(AutoCalProtocol.ACQUIRED_ZONES_GAS, "AutoCal zonas GNV")) return null
 
@@ -771,7 +779,14 @@ class NativeAutoCalMonitor(
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
         private const val SESSION_SETTLE_MS = 8_000L
         private val ACQUISITION_REFRESH_FIELDS = listOf(
+            // Unidade operacional consumida por AutoCalAcquisition: dados + MAP + contadores.
+            AutoCalProtocol.PETR_INJ_TBUF,
+            AutoCalProtocol.MNFLD_PRESS_BUF,
             AutoCalProtocol.NUM_BUF_UPD_PETR,
+            AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV,
+            AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV,
+            AutoCalProtocol.PETR_INJ_TBUF_GAS,
+            AutoCalProtocol.MNFLD_PRESS_BUF_GAS,
             AutoCalProtocol.NUM_BUF_UPD_GAS,
             AutoCalProtocol.ACQUIRED_ZONES_PETROL,
             AutoCalProtocol.ACQUIRED_ZONES_GAS,

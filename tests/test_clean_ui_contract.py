@@ -111,8 +111,11 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('PETROL INJECTION', self.dashboard)
         self.assertIn('dashHeroPetrol', self.dashboard)
         self.assertIn('now-dashboard-shell', self.dashboard)
-        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashStft', 'dashCell'):
+        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashStft', 'dashCell'):
             self.assertIn(marker, self.dashboard)
+        self.assertIn('LEVELS RAW', self.dashboard)
+        self.assertIn('level_raw', self.dashboard)
+        self.assertNotIn('level_percentage', self.dashboard)
         self.assertNotIn('dashHeroRpm', self.dashboard)
         self.assertNotIn('dashGas', self.dashboard)
 

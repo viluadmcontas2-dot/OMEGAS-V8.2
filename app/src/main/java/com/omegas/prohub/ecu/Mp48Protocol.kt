@@ -212,7 +212,6 @@ data class Mp48Telemetry(
         .put("captured_elapsed_ms", capturedAtElapsedMs)
         .put("rpm", rpm)
         .put("level_raw", levelRaw)
-        .put("level_percentage", Mp48TelemetryScale.levelPercentage(levelRaw))
         .put("gas_raw", gasRaw)
         .put("gas_ms_diagnostic", gasMsDiagnostic ?: JSONObject.NULL)
         .put("gas_pulse_present", gasRaw > 0)

@@ -312,20 +312,38 @@ def meta_map_signedness_boundary():
     )
 
 def meta_acquisition_family_completeness():
-    oracle = load(ORACLE)
     monitor = text("app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt")
-    recurring = [
-        row["name"] for row in oracle["autocal_dm"]
-        if row.get("request") and row["request"].startswith("29 ")
-        and 0x015B <= int(row["address_hex"], 16) <= 0x0163
+    acquisition = text("app/src/main/java/com/omegas/prohub/autocal/AutoCalAcquisition.kt")
+    operational = [
+        "PETR_INJ_TBUF",
+        "MNFLD_PRESS_BUF",
+        "NUM_BUF_UPD_PETR",
+        "PETR_INJ_TBUF_GAS_PREV",
+        "MNFLD_PRESS_BUF_GAS_PREV",
+        "PETR_INJ_TBUF_GAS",
+        "MNFLD_PRESS_BUF_GAS",
+        "NUM_BUF_UPD_GAS",
+        "ACQUIRED_ZONES_PETROL",
+        "ACQUIRED_ZONES_GAS",
     ]
     section = monitor.split("private fun refreshAcquisitionGroup", 1)[1].split("private fun refreshReferenceGroup", 1)[0]
-    missing = [name for name in recurring if f"AutoCalProtocol.{name}" not in section]
+    missing = [name for name in operational if f"AutoCalProtocol.{name}" not in section]
+    source_missing = [
+        name for name in (
+            "PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_UPD_PETR",
+            "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV",
+            "PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS", "NUM_BUF_UPD_GAS",
+        )
+        if f'"{name}"' not in acquisition
+    ]
+    if "AutoCalProtocol.MUL_ACT" in section:
+        missing.append("MUL_ACT_MUST_REMAIN_REFERENCE_ONLY")
+    failures = missing + [f"AutoCalAcquisition missing consumer {name}" for name in source_missing]
     return receipt(
-        "RED" if missing else "PASS",
-        "OMEGAS grouped acquisition refresh covers the original recurring 0x015B..0x0163 family",
-        missing,
-        {"oracle_recurring_fields": recurring, "missing_count": len(missing)},
+        "RED" if failures else "PASS",
+        "Two-second operational refresh updates the complete AutoCalAcquisition consumer unit without stealing MUL_ACT from reference",
+        failures,
+        {"operational_fields": operational, "failure_count": len(failures)},
     )
 
 def meta_reference_revision_contract():
