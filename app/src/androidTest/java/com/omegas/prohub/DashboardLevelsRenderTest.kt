@@ -84,9 +84,11 @@ class DashboardLevelsRenderTest {
         SystemClock.sleep(settleMs)
     }
 
-    private fun autoCalFixtureRawValues(): Map<String, IntArray> {
+    private fun autoCalFixtureRawValues(
+        fixtureName: String = "autocal_snapshot_complete.json",
+    ): Map<String, IntArray> {
         val raw = instrumentation.context.assets
-            .open("autocal_snapshot_complete.json")
+            .open(fixtureName)
             .bufferedReader()
             .use { it.readText() }
         val fields = JSONObject(raw).getJSONArray("fields")
@@ -124,8 +126,9 @@ class DashboardLevelsRenderTest {
     private fun installAutoCalReferenceFixture(
         scenario: ActivityScenario<MainActivity>,
         sessionId: Long = 9001L,
+        fixtureName: String = "autocal_snapshot_complete.json",
     ) {
-        val rawByKey = autoCalFixtureRawValues()
+        val rawByKey = autoCalFixtureRawValues(fixtureName)
         val referenceFields = listOf(
             AutoCalProtocol.PETR_INJ_TBP,
             AutoCalProtocol.MNFLD_PRESS_THD,
@@ -373,6 +376,31 @@ class DashboardLevelsRenderTest {
             assertTrue("Fresh AGORA cursor must remain on the same chart", dom.getBoolean("liveVisible"))
             assertTrue("Reference chart remains dominant", dom.getDouble("chartHeight") >= 300.0)
             assertTrue("Reference chart remains wide", dom.getDouble("chartWidth") >= 760.0)
+            assertTrue("Live rail remains above the fold", dom.getDouble("railBottom") <= dom.getDouble("viewportHeight"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun autocalShiftedEquivalenceRendersHorizontalProjection() {
+        val scenario = launch()
+        try {
+            val live = liveFixture()
+            installAutoCalReferenceFixture(
+                scenario = scenario,
+                fixtureName = "autocal_snapshot_shifted_equivalence.json",
+            )
+            activateAutocal(scenario)
+            injectFresh(scenario, live, settleMs = 850L)
+            val dom = autocalReferenceDom(scenario)
+            saveEvidence("autocal-equivalence-shifted", dom, scenario)
+            assertTrue("Shifted fixture must render production reference chart", dom.getBoolean("svg"))
+            assertTrue("Shifted fixture must keep gasoline reference", dom.getString("petrolPath").length > 20)
+            assertTrue("Shifted fixture must keep GNV reference", dom.getString("gasPath").length > 20)
+            assertTrue("Horizontal same-pressure equivalence must render a drawable path", dom.getString("equivalentPath").length > 20)
+            assertTrue("Horizontal same-pressure equivalence must expose multiple points", dom.getInt("equivalentPoints") >= 20)
+            assertTrue("AGORA remains a live overlay, not acquired evidence", dom.getBoolean("liveVisible"))
             assertTrue("Live rail remains above the fold", dom.getDouble("railBottom") <= dom.getDouble("viewportHeight"))
         } finally {
             scenario.close()
