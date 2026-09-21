@@ -63,10 +63,14 @@ const freshTelemetry = {
   ageMs: 2500,
   live: { petrol_ms: 4.50, load_bar: 0.45, rpm: 900, level_raw: 173, fuel: 'GNV' },
 };
+const freshAutoCalPoint = model.livePoint(freshTelemetry);
+assert.equal(freshAutoCalPoint.petrolMs, 4.50);
+assert.equal(freshAutoCalPoint.mapBar, 0.45);
+assert.equal(freshAutoCalPoint.rpm, 900);
 assert.equal(
-  model.livePoint(freshTelemetry, { levelsRaw: 173 }).levelRaw,
-  173,
-  'LEVELS deve permanecer RAW quando a telemetria está fresca e a projeção Kotlin o confirma',
+  Object.prototype.hasOwnProperty.call(freshAutoCalPoint, 'levelRaw'),
+  false,
+  'LEVELS pertence ao Dashboard/AGORA global e deve ser ignorado pelo modelo AutoCal',
 );
 assert.equal(
   model.livePoint({ ...freshTelemetry, ageMs: 2501 }),
