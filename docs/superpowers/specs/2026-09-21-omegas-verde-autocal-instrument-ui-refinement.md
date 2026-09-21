@@ -11,7 +11,7 @@ At 1280×720 the AutoCal screen should read first as an automotive acquisition i
 1. the acquisition curve is the dominant surface;
 2. gasoline and GNV remain visually distinguishable;
 3. AGORA remains on the same graph, never in a separate tab;
-4. live RPM / Petrol Injection / MAP / LEVELS RAW remain visible in a compact rail;
+4. live RPM / Petrol Injection / MAP remain visible in a compact rail;
 5. state/session/actions remain available but do not push the graph below the fold;
 6. point inspection is contextual and non-destructive;
 7. technical RAW details remain available on demand.
@@ -24,11 +24,14 @@ Allowed on the dominant surface:
 - native GNV MAP response;
 - proven GNV-equivalent points;
 - live AGORA telemetry when fresh;
-- CurrentBand from proven MAP thresholds;
-- LEVELS RAW only.
+- CurrentBand from proven MAP thresholds.
+
+Explicit scope boundary:
+- LEVELS RAW belongs to Dashboard/AGORA only. It is not an AutoCal input, reference, acquisition metric or AutoCal live-rail metric.
 
 Not allowed:
-- LEVELS percentage/litres/m³;
+- LEVELS RAW or any LEVELS-derived quantity inside AutoCal;
+- LEVELS percentage/litres/m³ anywhere;
 - synthetic acquired points;
 - guessed interpolation where original semantics are not proven;
 - automatic ECU write;

@@ -15,6 +15,8 @@ test('AutoCal uses acquisition curve as dominant instrument surface', () => {
   assert.match(js, /id="autocalLiveRpm"/);
   assert.match(js, /id="autocalLivePetrol"/);
   assert.match(js, /id="autocalLiveMap"/);
+  assert.doesNotMatch(js, /autocalLiveLevel/);
+  assert.doesNotMatch(js, /LEVELS RAW/);
   assert.match(js, /id="autocalLiveLevel"/);
   assert.match(css, /\.autocal-reference-card\s*\{[\s\S]*order:\s*0/);
   assert.match(css, /\.autocal-hero\s*\{\s*order:\s*2/);

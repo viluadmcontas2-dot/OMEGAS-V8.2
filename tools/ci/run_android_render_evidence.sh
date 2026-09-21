@@ -40,7 +40,7 @@ run_case() {
 set -e
 run_case "dashboard-fresh" "dashboardFreshLevelsRaw"
 run_case "dashboard-invalid" "dashboardInvalidLevelsPlaceholder"
-run_case "autocal-fresh-control" "autocalFreshLevelsControl"
+run_case "autocal-fresh-control" "autocalFreshTelemetryControl"
 run_case "autocal-reference-curves" "autocalReferenceCurvesRenderFixture"
 run_case "autocal-equivalence-shifted" "autocalShiftedEquivalenceRendersHorizontalProjection"
 exit "$overall"

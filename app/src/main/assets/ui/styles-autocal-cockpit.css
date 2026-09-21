@@ -819,7 +819,7 @@
 
 .autocal-live-strip {
   display: grid;
-  grid-template-columns: minmax(180px, 1.3fr) repeat(4, minmax(86px, .7fr));
+  grid-template-columns: minmax(180px, 1.3fr) repeat(3, minmax(86px, .7fr));
   gap: 6px;
   align-items: stretch;
   margin-bottom: 7px;
@@ -1231,7 +1231,7 @@
 }
 
 .autocal-live-strip {
-  grid-template-columns: minmax(180px, 1.2fr) repeat(4, minmax(105px, .72fr));
+  grid-template-columns: minmax(180px, 1.2fr) repeat(3, minmax(105px, .72fr));
   gap: 8px;
   margin: 9px 0 0;
   padding-top: 9px;

@@ -232,8 +232,11 @@ class DashboardLevelsRenderTest {
             """
             JSON.stringify({
               active: document.querySelector('[data-screen="autocal"]')?.classList.contains('active') === true,
-              level: document.getElementById('autocalLiveLevel')?.textContent ?? null,
               title: document.getElementById('autocalLiveTitle')?.textContent ?? null,
+              rpm: document.getElementById('autocalLiveRpm')?.textContent ?? null,
+              petrol: document.getElementById('autocalLivePetrol')?.textContent ?? null,
+              map: document.getElementById('autocalLiveMap')?.textContent ?? null,
+              hasLevelsMetric: document.getElementById('autocalLiveLevel') !== null,
               geometry: (() => {
                 const chart = document.getElementById('autocalReferenceChart')?.getBoundingClientRect();
                 const live = document.querySelector('.autocal-live-strip')?.getBoundingClientRect();
@@ -334,7 +337,7 @@ class DashboardLevelsRenderTest {
     }
 
     @Test
-    fun autocalFreshLevelsControl() {
+    fun autocalFreshTelemetryControl() {
         val scenario = launch()
         try {
             val fixture = liveFixture()
@@ -343,7 +346,10 @@ class DashboardLevelsRenderTest {
             val dom = autocalDom(scenario)
             saveEvidence("autocal-fresh-control", dom, scenario)
             assertTrue("AutoCal route must activate", dom.getBoolean("active"))
-            assertEquals(fixture.levelRaw.toString(), dom.optString("level"))
+            assertTrue("LEVELS belongs to Dashboard/AGORA, not AutoCal", !dom.getBoolean("hasLevelsMetric"))
+            assertTrue("AutoCal live RPM must be present", dom.optString("rpm") != "—")
+            assertTrue("AutoCal live Petrol Injection must be present", dom.optString("petrol") != "—")
+            assertTrue("AutoCal live MAP must be present", dom.optString("map") != "—")
             val geometry = dom.getJSONObject("geometry")
             assertTrue("Acquisition chart must dominate vertically", geometry.getDouble("chartHeight") >= 300.0)
             assertTrue("Acquisition chart must use the available horizontal canvas", geometry.getDouble("chartWidth") >= 760.0)
