@@ -71,3 +71,14 @@ Delta desde `361904c5ad28fc6a7451c37d10fb76057bf5eee8`: 11 commits.
 - **REJECT AS AUTHORITY** — qualquer semântica de protocolo, AutoCAL, escala ou estado inferida do runtime Verde em vez de ProgBase 4.2.0.6 + Portmons crus.
 
 Nenhum merge/cherry-pick wholesale. Este delta não substitui a autoridade nativa do WU-001/WU-002. Próximo watermark parte de `d231f230e5ed09e7003fe62538efa0090214ca9b`.
+
+
+## Watermark delta — 2026-09-21 — `f4acc3c84d3d91ffdc9817de4f8493904cbd6b27`
+Delta desde `c05062211f37f54e6f5ba85859cd6c3be68d06d2`: 3 commits.
+
+### Classificação
+- **REVALIDATE** — refinamentos de hierarquia/overlap do cockpit AutoCAL e respectivo teste; úteis como hipótese de apresentação, não como ciência nativa.
+- **REFERENCE ONLY** — CSS/layout específicos do Verde.
+- **REJECT AS AUTHORITY** — qualquer semântica de pontos, zonas, buffers anteriores, Curve K ou estado derivada dessa UI Verde em vez de ProgBase + dual Portmon.
+
+Nenhum merge/cherry-pick wholesale. A implementação Amarelo continua orientada pelo consumer graph nativo e pelo payload tipado próprio.
