@@ -28,6 +28,7 @@ object AutoCalAcquisition {
                 }
             }
         }
+        val mapThresholds = fields["MNFLD_PRESS_THD"]?.rawValues() ?: intArrayOf()
         val petrolLowThreshold = fields["VECT_AUTOCAL_U8_1"]?.rawValues()?.firstOrNull()
         val maxAutomatch = (fields["MAX_AUTOMATCH"] ?: fields["VECT_AUTOCAL_U8_2"])
             ?.rawValues()?.firstOrNull()
@@ -53,6 +54,8 @@ object AutoCalAcquisition {
                     index in 0..5 -> gasLowThreshold
                     else -> gasNormalThreshold
                 }
+                val zone = mapRaw?.let { regionForMapRaw(it, mapThresholds) }
+                val maturityGroup = if (index <= 5) "LOW_INDEX" else "NORMAL_INDEX"
                 val state = when {
                     timeRaw == null || mapRaw == null || count == null -> "SEM_DADO"
                     threshold == null -> "LIMIAR_NAO_LIDO"
@@ -62,7 +65,8 @@ object AutoCalAcquisition {
                 }
                 points.put(JSONObject()
                     .put("index", index)
-                    .put("zone", zone(index))
+                    .put("zone", zone ?: JSONObject.NULL)
+                    .put("maturityGroup", maturityGroup)
                     .put("fuel", source.fuel)
                     .put("timeRaw", timeRaw ?: JSONObject.NULL)
                     .put("timeMs", timeRaw?.let { AutoCalScale.injectionMs(it) } ?: JSONObject.NULL)
@@ -96,11 +100,17 @@ object AutoCalAcquisition {
             .put("noCorrectionApplied", true)
     }
 
-    private fun zone(index: Int): Int = when (index) {
-        in 0..5 -> 0
-        in 6..9 -> 1
-        in 10..13 -> 2
-        else -> 3
+    private fun regionForMapRaw(mapRaw: Int, thresholds: IntArray): Int? {
+        if (thresholds.size < 18) return null
+        val bounds = intArrayOf(thresholds[5], thresholds[9], thresholds[13], thresholds[17])
+        return when {
+            mapRaw < 0 -> null
+            mapRaw < bounds[0] -> 0
+            mapRaw < bounds[1] -> 1
+            mapRaw < bounds[2] -> 2
+            mapRaw <= bounds[3] -> 3
+            else -> null
+        }
     }
 
     private fun JSONObject.rawValues(): IntArray {
