@@ -10,7 +10,6 @@ package com.omegas.prohub.autocal
 class NativeAutoCalMaturityTracker {
     data class Transition(
         val bandIndex: Int,
-        val zone: Int,
         val previousCounter: Int,
         val counter: Int,
         val threshold: Int,
@@ -112,7 +111,6 @@ class NativeAutoCalMaturityTracker {
                     add(
                         Transition(
                             bandIndex = band,
-                            zone = zone(band),
                             previousCounter = before,
                             counter = after,
                             threshold = threshold,
@@ -143,10 +141,4 @@ class NativeAutoCalMaturityTracker {
         }
     }
 
-    private fun zone(index: Int): Int = when (index) {
-        in 0..5 -> 0
-        in 6..9 -> 1
-        in 10..13 -> 2
-        else -> 3
-    }
 }
