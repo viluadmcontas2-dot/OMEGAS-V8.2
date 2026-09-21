@@ -2,7 +2,7 @@
 
 Aplicativo Android para leitura, aprendizado, diagnóstico e ajuste manual assistido de centrais OMEGAS/MP48.
 
-Esta baseline preserva o código funcional testado usado como ponto de partida da linha V8.2. A governança operacional viva fica no Notion; `AGENTS.md` contém apenas o contrato estável necessário para operar o repositório com segurança.
+Esta linha usa governança **repo-first**: GitHub remoto, Issues, `PROJECT.md`, `STATUS.md`, Spec Kit e WorkUnit ativa formam a superfície canônica de continuidade. Notion é referência read-only quando explicitamente necessário para critérios de UX/produto.
 
 ## Contratos duráveis do produto
 
@@ -23,3 +23,8 @@ python -B tools/run_checks.py
 ```
 
 GitHub Actions não fazem parte deste bootstrap inicial.
+
+
+## Programa ativo — OMEGAS Verde
+
+O programa atual está indexado em `docs/spec-kits/OMEGAS-SK-001.md` e rastreado pela Issue #81. O foco é paridade observável do AutoCal com o ProgBase original, replay derivado de logs reais e gate visual/runtime. SIL/CIU permanece fora do escopo até autorização explícita.

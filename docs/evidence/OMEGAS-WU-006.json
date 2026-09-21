@@ -1,0 +1,63 @@
+{
+  "schema": "omegas.workunit.evidence.v1",
+  "workunit_id": "OMEGAS-WU-006",
+  "state": "ACTIVE",
+  "branch": "OmegasVerde",
+  "baseline_source_sha": "6049a6f4d9b56aa6d380500a475567ec6f1ad4bc",
+  "baseline_ci": {
+    "fast_contracts": {
+      "run": 109,
+      "conclusion": "success"
+    },
+    "canonical": {
+      "run": 165,
+      "conclusion": "success"
+    }
+  },
+  "issues": {
+    "epic": 81,
+    "progbase_map": 82,
+    "omegas_parity": 83,
+    "global_e2e": 84,
+    "levels_dashboard": 85,
+    "session_unification": 86,
+    "real_fixture": 68,
+    "prior_global_gate": 67
+  },
+  "progbase": {
+    "path": "G:\\Meu Drive\\OMEGAS\\Copy of ProgBase (3).exe",
+    "sha256": "8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4",
+    "version": "4.2.0.6",
+    "observed_objects": [
+      "TAutoCalUI",
+      "TAutoCalDM",
+      "TFormRifAutocal",
+      "ChartData",
+      "PetrolCurve",
+      "GasCurve",
+      "RunPoint",
+      "CurrentBand",
+      "PollingPetrol",
+      "PollingGas"
+    ]
+  },
+  "portmon_observations": {
+    "live_telemetry_command": "48 01 49",
+    "live_telemetry_median_gap_ms": 46.57,
+    "autocal_family": "0x015B..0x0163",
+    "autocal_family_approx_period_ms": 2010,
+    "secondary_family": "0x018D/0x018E",
+    "secondary_family_approx_period_ms": 4050
+  },
+  "committed_fixture": {
+    "path": "tests/fixtures/portmon-autocal-cycle-v1.json",
+    "source_issue": 68
+  },
+  "non_goals": [
+    "NO_SIL_CIU_PORT",
+    "NO_AUTO_K_WRITE",
+    "NO_RESET_ALL",
+    "NO_INVENTED_LEVELS_PERCENT_OR_VOLUME"
+  ],
+  "note": "All timings are evidence observations from the captured ProgBase/Portmon corpus, not universal firmware guarantees."
+}
