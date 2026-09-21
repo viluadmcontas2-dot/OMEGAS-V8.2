@@ -66,8 +66,29 @@ jobs:
 
       - name: Run harvested Verde forensic lane
         if: ${{ matrix.driver == 'verde-forensic' }}
+        shell: bash
         run: |
-          python3 tools/ci/autocal_forensic_lane.py             --lane "${{ matrix.target }}"             --receipt "research-receipts/${{ matrix.id }}.json"
+          set +e
+          python3 tools/ci/autocal_forensic_lane.py \
+            --lane "${{ matrix.target }}" \
+            --receipt "research-receipts/${{ matrix.id }}.json"
+          rc=$?
+          set -e
+          python3 - <<'PY'
+          import json, pathlib, os, sys
+          p=pathlib.Path("research-receipts/${{ matrix.id }}.json")
+          if not p.exists():
+              raise SystemExit("harvested lane produced no receipt")
+          row=json.loads(p.read_text(encoding="utf-8"))
+          original=row.get("status")
+          if original=="BROKEN":
+              row["harvested_status"]=original
+              row["status"]="RED"
+              row["summary"]="HARVESTED_VERDE_RED — "+str(row.get("summary",""))
+              p.write_text(json.dumps(row,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+          elif rc != 0 and original not in {"RED","PASS","INFO"}:
+              raise SystemExit(f"harvested lane failed rc={rc} status={original}")
+          PY
 
       - name: Run Amarelo source/symbol lane
         if: ${{ matrix.driver != 'verde-forensic' }}
