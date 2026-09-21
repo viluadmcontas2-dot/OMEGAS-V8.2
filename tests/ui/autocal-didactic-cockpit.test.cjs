@@ -227,11 +227,13 @@ assert.equal(cancelling.busy, true);
 assert.equal(cancelling.cancelling, true);
 assert.equal(cancelling.title, 'Cancelando leitura');
 
-const validLiveWithLevel = model.livePoint(
+const validAutoCalLive = model.livePoint(
   { valid: true, ageMs: 100, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 999 } },
-  { levelsRaw: 173 },
 );
-assert.equal(validLiveWithLevel.levelRaw, 999,
-  'LEVELS deve acompanhar o frame vivo RAW; projection antiga não pode sobrescrever a telemetria fast');
+assert.equal(validAutoCalLive.rpm, 1300);
+assert.equal(validAutoCalLive.petrolMs, 4.8);
+assert.equal(validAutoCalLive.mapBar, 0.44);
+assert.equal(Object.prototype.hasOwnProperty.call(validAutoCalLive, 'levelRaw'), false,
+  'LEVELS pertence ao Dashboard/AGORA global e não pode vazar para o contexto AutoCal');
 const invalidLive = model.livePoint({ valid: false, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 173 } });
-assert.equal(invalidLive, null, 'telemetria inválida não pode produzir cursor AGORA nem LEVELS antigo');
+assert.equal(invalidLive, null, 'telemetria inválida não pode produzir cursor AGORA');
