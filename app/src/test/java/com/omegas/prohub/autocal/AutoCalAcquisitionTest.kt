@@ -88,6 +88,43 @@ class AutoCalAcquisitionTest {
         assertEquals(9, thresholds.getInt("gasNormal"))
     }
 
+
+    @Test
+    fun `regiao visual vem do MAP nativo e nao do indice do buffer`() {
+        val thresholds = intArrayOf(
+            154, 256, 307, 358, 410, 461,
+            512, 563, 614, 666, 717, 768,
+            819, 870, 922, 973, 1024, 1126,
+        )
+        val gasTimes = IntArray(18)
+        val gasMaps = IntArray(18)
+        val gasCounts = IntArray(18)
+        gasTimes[17] = 3600
+        gasMaps[17] = 400
+        gasCounts[17] = 3
+        val calibration = IntArray(10).also {
+            it[5] = 3
+            it[8] = 3
+        }
+        val snapshot = snapshot(
+            field("MNFLD_PRESS_THD", thresholds),
+            field("CALIBRATION_VAL_1", calibration),
+            field("PETR_INJ_TBUF_GAS", gasTimes),
+            field("MNFLD_PRESS_BUF_GAS", gasMaps),
+            field("NUM_BUF_UPD_GAS", gasCounts),
+        )
+
+        val gasPoint17 = AutoCalAcquisition.fromSnapshot(snapshot)
+            .getJSONArray("points")
+            .getJSONObject(18 + 17)
+
+        assertEquals(0, gasPoint17.getInt("zone"))
+        assertEquals("NORMAL_INDEX", gasPoint17.getString("maturityGroup"))
+        assertEquals(0.4, gasPoint17.getDouble("mapBar"), 0.0001)
+        assertEquals(3, gasPoint17.getInt("threshold"))
+        assertEquals("VALIDO", gasPoint17.getString("state"))
+    }
+
     private fun snapshot(vararg fields: JSONObject) = JSONObject().put("fields", JSONArray(fields.toList()))
 
     private fun field(key: String, raw: IntArray) = JSONObject()
