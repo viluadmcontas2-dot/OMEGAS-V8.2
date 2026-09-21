@@ -15,8 +15,8 @@ permissions:
   issues: write
 
 concurrency:
-  group: omegas-amarelo-research-${{ github.ref }}
-  cancel-in-progress: true
+  group: omegas-amarelo-research-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
 
 jobs:
   plan:
