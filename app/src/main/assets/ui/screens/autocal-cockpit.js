@@ -87,7 +87,11 @@
             : enabled === 1 ? 'AutoCal adquirindo'
             : enabled === 0 ? 'AutoCal pausado'
             : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
-      const progress = 'Gasolina ' + petrolZones + '/4 zonas · GNV ' + gasZones + '/4 zonas';
+      const progress = enabled === 1
+        ? 'Aprendizado nativo ativo · a ECU atualiza pontos e curvas conforme adquire novas amostras'
+        : enabled === 0
+          ? 'Aquisição nativa pausada · dados já adquiridos permanecem visíveis'
+          : 'Aguardando estado nativo da aquisição';
       const autoMatch = autoMatchCount === null
         ? 'AutoMatch ainda sem contador válido'
         : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
@@ -98,8 +102,7 @@
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão e tente consultar novamente.';
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
-      else if (enabled === 1 && gasZones < 4) nextAction = 'Aquisição habilitada. Mantenha condições estáveis para visitar as regiões que ainda faltam.';
-      else if (enabled === 1) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
+      else if (enabled === 1) nextAction = 'Continue dirigindo normalmente. Quando a ECU atualizar uma região, o ponto GNV atual substitui visualmente a posição anterior; as quatro flags de zona são contexto, não porcentagem de conclusão.';
       return { title, progress, autoMatch, nextAction, petrolZones, gasZones, petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch };
     },
 
@@ -423,8 +426,8 @@
               <div class="autocal-human-copy">
                 <small>AGORA</small>
                 <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
-                <p id="autocalHumanProgress">Gasolina 0/4 zonas · GNV 0/4 zonas</p>
-                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Gasolina 0 de 4 zonas, GNV 0 de 4 zonas">
+                <p id="autocalHumanProgress">Aguardando estado nativo da aquisição</p>
+                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Flags nativas de aquisição por zona; não representam porcentagem de progresso">
                   <div class="petrol"><span>Gasolina</span><div class="autocal-zone-dots"><i data-autocal-zone-petrol="0"></i><i data-autocal-zone-petrol="1"></i><i data-autocal-zone-petrol="2"></i><i data-autocal-zone-petrol="3"></i></div></div>
                   <div class="gas"><span>GNV</span><div class="autocal-zone-dots"><i data-autocal-zone-gas="0"></i><i data-autocal-zone-gas="1"></i><i data-autocal-zone-gas="2"></i><i data-autocal-zone-gas="3"></i></div></div>
                 </div>
@@ -484,7 +487,7 @@
             <section class="autocal-bands-card">
               <div class="autocal-section-head compact">
                 <div><small>18 REGIÕES DE AQUISIÇÃO GNV</small><h4>Onde a ECU já registrou atividade</h4></div>
-                <span id="autocalZoneSummary">0/4 zonas GNV</span>
+                <span id="autocalZoneSummary">4 flags nativas GNV · não monotônicas</span>
               </div>
               <div class="autocal-band-legend" aria-label="Legenda das faixas">
                 <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
