@@ -43,3 +43,21 @@ Evidência corretiva importante:
 Gate de fechamento continua:
 real replay -> runtime/bridge -> WebView renderizado -> screenshot/DOM artifact em 1280×720.
 Nenhuma aprovação visual final é inferida apenas de testes unitários/DOM.
+
+
+## Correção de fronteira de domínio — LEVELS — 2026-09-21
+
+`LEVELS / level_raw` **não pertence ao AutoCAL**.
+
+Semântica de produto:
+- LEVELS representa exclusivamente o sinal/quantidade de GNV no cilindro;
+- sua superfície é `Dashboard / Agora`;
+- AutoCAL não publica, não renderiza e não usa LEVELS para aquisição, zonas, Curve K, estado ou progresso;
+- nenhuma relação encontrada por proximidade em ProgBase pode promover LEVELS ao domínio AutoCAL.
+
+Implementação:
+- removido `levelsRaw` de `AutoCalUiProjection`;
+- removido `LEVELS RAW` do cockpit AutoCAL;
+- Dashboard/Agora consome `telemetry.live.level_raw` como `NÍVEL GNV`;
+- valor permanece RAW/sinal ECU até existir conversão física comprovada; não inventar %, litros ou m³;
+- fast-contract CI agora executa teste de fronteira garantindo presença no Agora e ausência no AutoCAL.
