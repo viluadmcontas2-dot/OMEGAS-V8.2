@@ -229,3 +229,35 @@ assert.match(source, /R' \+ \(region\.index \+ 1\)/);
 assert.equal(source.includes('/4 zonas GNV'), false);
 assert.equal(source.includes(' de 4 zonas'), false);
 assert.equal(source.includes('zona ok'), false);
+
+
+const spatialBands = model.bandStrip(
+  {
+    fields: [
+      {
+        key: 'NUM_BUF_UPD_GAS',
+        status: 'VALID',
+        rawValues: Array.from({ length: 18 }, (_, index) => index === 17 ? 3 : 0),
+      },
+    ],
+  },
+  {
+    instrument: {
+      zoneRegions: [
+        { index: 0, lowMapBar: 0.000, highMapBar: 0.461, petrolAcquired: false, gasAcquired: true, label: 'Região 1' },
+        { index: 1, lowMapBar: 0.461, highMapBar: 0.666, petrolAcquired: false, gasAcquired: false, label: 'Região 2' },
+        { index: 2, lowMapBar: 0.666, highMapBar: 0.870, petrolAcquired: false, gasAcquired: false, label: 'Região 3' },
+        { index: 3, lowMapBar: 0.870, highMapBar: 1.126, petrolAcquired: false, gasAcquired: false, label: 'Região 4' },
+      ],
+      acquisition: {
+        gasCurrent: [{ index: 17, petrolMs: 7.2, mapBar: 0.400 }],
+      },
+    },
+  },
+);
+assert.equal(spatialBands[17].zone, 0,
+  'posição 18 com MAP 0.400 deve pertencer espacialmente à R1, não à região inferida pelo índice');
+assert.equal(spatialBands[17].zoneAcquired, true);
+assert.equal(spatialBands[17].mapBar, 0.400);
+assert.equal(source.includes('zoneForBand('), false,
+  'consumer não pode manter agrupamento 18→4 hardcoded por índice');
