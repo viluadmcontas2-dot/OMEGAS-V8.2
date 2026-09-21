@@ -24,3 +24,16 @@ HARVEST/REVALIDATE:
 
 ## Proibição
 Nunca mergear Verde wholesale para “atualizar” o Amarelo. Harvest é por contrato e evidência.
+
+## Watermark atual — 2026-09-21
+`eeefaaa4d8371e3c4c6cf1260f1ee4b65e836618`
+
+Delta desde o watermark anterior registrado `2e3eaffedeb6a20972275bfee7d065e5d2a88c86`: 6 commits.
+
+### Classificação do delta
+- **HARVEST** — padrão de fan-out/receipts do forensic workflow e plano determinístico v2.
+- **REVALIDATE** — `PortmonSameEcuParityTest.kt` e evidência de render 1280×720; úteis, mas precisam passar pelos gates Amarelo e pelo corpus dual-Portmon.
+- **REFERENCE ONLY** — mudanças de build/render específicas do Verde.
+- **REJECT AS AUTHORITY** — qualquer conclusão que trate a arquitetura/runtime Verde como semântica nativa do ProgBase/ECU.
+
+Nenhum merge wholesale é autorizado.
