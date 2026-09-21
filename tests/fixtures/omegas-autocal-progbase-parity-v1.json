@@ -26,15 +26,16 @@
       "action": "PRESERVE; do not route XY through AutoCal snapshots"
     },
     {
-      "behavior": "LEVELS RAW in AutoCal live strip",
-      "classification": "MATCH",
+      "behavior": "LEVELS RAW routing",
+      "classification": "INTENTIONAL_IMPROVEMENT",
       "dimensions": {
         "decode": "MATCH",
-        "backend_projection": "MATCH",
-        "visible_freshness": "MATCH_AFTER_FIX"
+        "backend_projection": "PRESERVED_DIAGNOSTIC_ONLY",
+        "autocal_visible_surface": "INTENTIONAL_DIFFERENCE",
+        "dashboard_visible_surface": "MATCH_AFTER_FIX"
       },
-      "progbase": "payload byte 13 is consumed on live TimerDati path",
-      "omegas": "Telemetry store carries live.level_raw, but AutoCalUxModel.livePoint sources visible levelRaw from projection.levelsRaw; projection refresh is context cadence (~2s), not fast cadence",
+      "progbase": "payload byte 13 is consumed on the live TimerDati path",
+      "omegas": "Telemetry store preserves live.level_raw and Dashboard/AGORA exposes LEVELS RAW; AutoCal intentionally omits LEVELS because it is not an acquisition/reference input",
       "evidence": [
         "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt",
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
@@ -42,7 +43,7 @@
         "app/src/main/assets/ui/core/scheduler.js"
       ],
       "red_id": "AUTOCAL_LEVELS_RAW_FAST_FRESHNESS",
-      "action": "PRESERVE live-frame authority; projection may carry diagnostic LEVELS but must not override the fresh HMI value",
+      "action": "PRESERVE raw decode and Dashboard visibility; keep LEVELS out of AutoCal primary HMI",
       "resolution": {
         "baseline_sha": "89a06e2eb79220aa3a76beefad01487a95df349b",
         "red_sha": "9df2a69b7f009fb7c8fb7301a778a27c4bd9fdf7",
@@ -57,6 +58,11 @@
         ],
         "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
         "fix": "AutoCalUxModel.livePoint sources levelRaw from fresh telemetry live.level_raw/live.levelRaw"
+      },
+      "scopeDecision": {
+        "status": "OWNER_PRODUCT_SCOPE",
+        "rationale": "AutoCal primary HMI is limited to acquisition-relevant RPM, Petrol Injection and MAP; LEVELS remains available on Dashboard/AGORA without reinterpretation",
+        "noScientificReinterpretation": true
       }
     },
     {
