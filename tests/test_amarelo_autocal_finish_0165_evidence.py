@@ -11,18 +11,20 @@ class AutoCalFinish0165EvidenceTest(unittest.TestCase):
 
     def test_rtti_resolves_finish_fields(self):
         rtti = self.data["rtti"]
-        self.assertEqual(rtti["DM+0x7C"]["name"], "VECT_AUTOCAL_U8_1")
-        self.assertEqual(rtti["DM+0x7C"]["status"], "PROVEN")
-        self.assertEqual(rtti["DM+0xCC"]["name"], "VECT_AUTOCAL_U8_0")
-        self.assertEqual(rtti["DM+0xCC"]["status"], "PROVEN")
-        self.assertEqual(rtti["DM+0xD0"]["name"], "NUM_ATUOMATCH_EXECUTED")
+        self.assertEqual(rtti["DM+0x78"]["name"], "VECT_AUTOCAL_U8_1")
+        self.assertEqual(rtti["DM+0x7C"]["name"], "VECT_AUTOCAL_U8_2")
+        self.assertEqual(rtti["DM+0x7C"]["alias"], "MAX_AUTOMATCH")
+        self.assertEqual(rtti["DM+0xC8"]["name"], "VECT_AUTOCAL_U8_0")
+        self.assertEqual(rtti["DM+0xCC"]["name"], "NUM_ATUOMATCH_EXECUTED")
+        self.assertEqual(rtti["DM+0xCC"]["serialCode"], "0x0174")
 
     def test_finish_static_path_is_separate_from_raw_observation(self):
         conclusions = self.data["conclusions"]
-        self.assertEqual(conclusions["finish_copies_u8_1_value_into_u8_0"], "PROVEN_STATIC")
+        self.assertEqual(conclusions["finish_sets_num_automatch_executed_to_max_automatch"], "PROVEN_STATIC")
+        self.assertEqual(conclusions["old_u8_1_to_u8_0_interpretation"], "FALSIFIED_BY_RTTI_BYTE_LAYOUT_AND_DIRECT_ASSEMBLY")
         self.assertEqual(conclusions["finish_path_can_reach_serial_commit_when_connected"], "PROVEN_STATIC")
-        self.assertEqual(conclusions["finish_0x0165_write_observed_in_supplied_raw"], "NO")
-        self.assertEqual(conclusions["exact_physical_effect_in_ecu_after_finish"], "UNKNOWN")
+        self.assertEqual(conclusions["finish_0x0174_write_observed_in_supplied_raw"], "NO")
+        self.assertEqual(conclusions["exact_ecu_side_effect_after_write"], "UNKNOWN")
         self.assertEqual(conclusions["levels_related"], "FALSIFIED")
 
     def test_0165_wire_family_is_indexed_zero_one_two(self):
