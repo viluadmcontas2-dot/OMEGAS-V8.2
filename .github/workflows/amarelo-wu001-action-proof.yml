@@ -1,0 +1,41 @@
+name: OMEGAS Amarelo WU-001 action proof
+
+on:
+  push:
+    branches:
+      - "work/omegas-amarelo-wu001-autocal-ground-truth"
+    paths:
+      - ".github/workflows/amarelo-wu001-action-proof.yml"
+      - "tools/omegas_amarelo/progbase_action_evidence.py"
+      - "tests/fixtures/progbase-autocal-byte-slices-v1.json"
+      - "tests/fixtures/portmon-autocal-cycle-v1.json"
+      - "tests/fixtures/portmon-lognovo-control-v1.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    strategy:
+      fail-fast: false
+      matrix:
+        lane:
+          - AUTO_MATCH_HANDLER
+          - RESET_PETROL_HANDLER
+          - RESET_GAS_HANDLER
+          - RESET_ALL_HANDLER
+          - bridge
+          - transport
+          - frames
+          - dual-portmon
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prove source identity
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+      - name: Run evidence lane
+        run: python3 tools/omegas_amarelo/progbase_action_evidence.py --lane "${{ matrix.lane }}"
