@@ -1324,3 +1324,23 @@
   .autocal-live-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .autocal-chart-host { min-height: 250px; }
 }
+
+
+/* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
+.autocal-reference-line.petrol:not(.previous) {
+  stroke-width: 6;
+  opacity: .54;
+}
+.autocal-reference-line.gas:not(.previous) {
+  stroke-width: 2.8;
+}
+.autocal-reference-point.petrol {
+  fill: #07101a;
+  stroke: #78b7ff;
+  stroke-width: 2.6;
+}
+.autocal-reference-point.gas {
+  fill: #5dd39e;
+  stroke: #d9fff0;
+  stroke-width: 1.2;
+}
