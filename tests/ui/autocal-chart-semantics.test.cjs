@@ -57,4 +57,41 @@ const ref = model.referencePoints(snapshot, { points: [
 assert.equal(ref[0].gasEquivalentMs, 2.25);
 assert.equal(ref[1].gasEquivalentMs, 10.5);
 
+
+const previousProjection = { sessionId: 101 };
+const sameSessionProjection = { sessionId: 101 };
+const nextSessionProjection = { sessionId: 202 };
+const oldReferenceSnapshot = {
+  snapshotHash: 'old-reference',
+  fields: snapshot.fields,
+};
+const newReferenceSnapshot = {
+  snapshotHash: 'new-reference',
+  fields: snapshot.fields,
+};
+
+const sameSessionTransition = model.referenceTransition(
+  previousProjection,
+  sameSessionProjection,
+  oldReferenceSnapshot,
+  newReferenceSnapshot,
+  { points: [] },
+);
+assert.equal(sameSessionTransition.sessionChanged, false);
+assert.equal(sameSessionTransition.referenceChanged, true);
+assert.equal(sameSessionTransition.resetSelection, true, 'nova referência deve invalidar a seleção antiga');
+assert.equal(sameSessionTransition.previousPoints.length, 2, 'mesma sessão pode preservar a leitura imediatamente anterior');
+
+const reconnectTransition = model.referenceTransition(
+  previousProjection,
+  nextSessionProjection,
+  oldReferenceSnapshot,
+  newReferenceSnapshot,
+  { points: [] },
+);
+assert.equal(reconnectTransition.sessionChanged, true);
+assert.equal(reconnectTransition.resetSelection, true, 'reconnect deve invalidar seleção da sessão anterior');
+assert.equal(reconnectTransition.clearHistory, true, 'reconnect deve fechar Leitura anterior');
+assert.equal(reconnectTransition.previousPoints.length, 0, 'Leitura anterior não pode atravessar sessão USB');
+
 console.log('AUTOCAL_CHART_SEMANTICS=PASS');
