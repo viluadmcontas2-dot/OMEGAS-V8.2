@@ -49,6 +49,14 @@
     return nativeZoneFlags(snapshot, key).filter(Boolean).length;
   }
 
+  function projectedZoneFlags(projection, fuel) {
+    const zones = projection?.ok === true && projection?.acquisitionZones && typeof projection.acquisitionZones === 'object'
+      ? projection.acquisitionZones[fuel]
+      : null;
+    if (!Array.isArray(zones)) return null;
+    return Array.from({ length: 4 }, (_, index) => zones[index] === true);
+  }
+
   function scalarValue(snapshot, key) {
     const item = field(snapshot, key);
     const values = Array.isArray(item?.rawValues) ? item.rawValues : [];
@@ -56,12 +64,14 @@
   }
 
   const AutoCalUxModel = {
-    humanState(snapshot = {}, state = {}) {
+    humanState(snapshot = {}, state = {}, projection = {}) {
       const nativeSnapshot = state.latestSnapshot?.fields ? state.latestSnapshot : {};
       const evidenceSnapshot = nativeSnapshot.fields ? nativeSnapshot : snapshot;
       const enabled = finite(state.autoCalEnabled ?? nativeSnapshot.autoCalEnabled ?? scalarValue(nativeSnapshot, 'AUTO_CAL_ENABLE'));
-      const petrolZoneFlags = nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL');
-      const gasZoneFlags = nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_GAS');
+      const petrolZoneFlags = projectedZoneFlags(projection, 'petrol')
+        ?? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL');
+      const gasZoneFlags = projectedZoneFlags(projection, 'gas')
+        ?? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_GAS');
       const petrolZones = petrolZoneFlags.filter(Boolean).length;
       const gasZones = gasZoneFlags.filter(Boolean).length;
       const nativeStatus = nativeSnapshot.nativeStatus || {};
@@ -236,22 +246,35 @@
       };
     },
 
-    bandStrip(snapshot = {}) {
+    bandStrip(snapshot = {}, projection = {}) {
       const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
-      const zones = vector(snapshot, 'ACQUIRED_ZONES_GAS');
-      const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
+      const rawZones = vector(snapshot, 'ACQUIRED_ZONES_GAS');
+      const projectedZones = projectedZoneFlags(projection, 'gas');
+      const events = Array.isArray(projection?.correlation)
+        ? projection.correlation
+        : Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
       const byBand = new Map(events.map(event => [Number(event?.bandIndex), event]));
+      const persistent = projection?.correlationState && typeof projection.correlationState === 'object'
+        ? projection.correlationState
+        : {};
+      const correlatedBands = new Set(Array.isArray(persistent.correlatedBands)
+        ? persistent.correlatedBands.map(Number).filter(Number.isInteger)
+        : []);
+      const retryableBands = new Set(Array.isArray(persistent.retryableBands)
+        ? persistent.retryableBands.map(Number).filter(Number.isInteger)
+        : []);
       return Array.from({ length: 18 }, (_, index) => {
         const counter = finite(counters[index]) ?? 0;
         const zone = zoneForBand(index);
         const event = byBand.get(index) || null;
-        const correlated = String(event?.correlationState || '') === 'CORRELATED';
-        const stateName = correlated ? 'anchored' : event ? 'mature' : counter > 0 ? 'activity' : 'empty';
+        const correlated = correlatedBands.has(index) || String(event?.correlationState || '') === 'CORRELATED';
+        const retryable = retryableBands.has(index);
+        const stateName = correlated ? 'anchored' : (event || retryable) ? 'mature' : counter > 0 ? 'activity' : 'empty';
         return {
           index,
           zone,
           counter,
-          zoneAcquired: (finite(zones[zone]) ?? 0) > 0,
+          zoneAcquired: projectedZones ? projectedZones[zone] === true : (finite(rawZones[zone]) ?? 0) > 0,
           state: stateName,
           event,
         };
@@ -634,8 +657,10 @@
     render() {
       const snapshot = this.snapshot || {};
       const state = this.state || {};
-      const events = Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
-      const human = AutoCalUxModel.humanState(snapshot, state);
+      const events = Array.isArray(this.projection?.correlation)
+        ? this.projection.correlation
+        : Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
+      const human = AutoCalUxModel.humanState(snapshot, state, this.projection);
       const acquisitionName = String(state.state || '').toUpperCase();
       const acquisitionLabel = acquisitionName === 'UNAVAILABLE' ? 'indisponível'
         : acquisitionName === 'WAITING_TELEMETRY_SETTLE' ? 'conectando'
@@ -772,7 +797,7 @@
       this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }));
       this.text('autocalLiveLevel', live.levelRaw === null ? '—' : String(Math.round(live.levelRaw)));
-      const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}).enabled;
+      const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
         ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
         : enabled === 0 ? 'Aquisição pausada. O ponto AGORA é somente telemetria.' : 'Estado de aquisição ainda não confirmado.';
@@ -958,7 +983,7 @@
     renderBands(snapshot) {
       const host = document.getElementById('autocalBands');
       if (!host) return;
-      const bands = AutoCalUxModel.bandStrip(snapshot);
+      const bands = AutoCalUxModel.bandStrip(snapshot, this.projection);
       host.innerHTML = bands.map(band => {
         const stateLabel = band.state === 'anchored' ? 'correlacionada'
           : band.state === 'mature' ? 'evento'
@@ -975,7 +1000,7 @@
     }
 
     inspectBand(index) {
-      const band = AutoCalUxModel.bandStrip(this.snapshot || {}).find(item => item.index === index);
+      const band = AutoCalUxModel.bandStrip(this.snapshot || {}, this.projection).find(item => item.index === index);
       const host = document.getElementById('autocalBandInspector');
       if (!band || !host) return;
       this.selectedBandIndex = index;
