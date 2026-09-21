@@ -142,7 +142,7 @@
   width: 100%;
   min-height: 44px;
   padding: 0 9px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   font-size: 11px;
