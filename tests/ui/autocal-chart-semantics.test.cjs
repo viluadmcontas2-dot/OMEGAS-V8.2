@@ -22,6 +22,7 @@ assert.match(source, /REFERÊNCIA FORA DA JANELA/);
 assert.match(source, /referenceTimingSpanMs/);
 assert.match(source, /referenceTimingLimitMs/);
 assert.match(source, /Consulte a ECU novamente/);
+assert.match(source, /'limite ' \+ Math\.round\(timingLimitMs\) \+ ' ms'/);
 assert.equal(/\.concat\(live \? \[live\.mapBar\]/.test(source), false, 'AGORA não pode participar do domínio');
 
 const points = [
