@@ -14,6 +14,8 @@ on:
       - 'app/src/main/java/com/omegas/prohub/telemetry/**'
       - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
       - 'tests/fixtures/portmon-autocal-cycle-v1.json'
+      - 'fixtures/autocal/**'
+      - 'tools/ci/run_android_render_evidence.sh'
 
 permissions:
   contents: read
