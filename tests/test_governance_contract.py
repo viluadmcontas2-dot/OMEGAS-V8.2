@@ -11,14 +11,31 @@ class StableRepositoryContract(unittest.TestCase):
         self.assertTrue(agents_path.is_file())
         agents = agents_path.read_text("utf-8").lower()
         for marker in (
-            "notion é o cérebro e a governança primária",
-            "github remoto é a verdade do estado atual e a única superfície de mutação do código",
+            "github remoto é a autoridade técnica do omegas",
+            "boot obrigatório",
+            "project.md",
+            "status.md",
+            "spec kit ativo",
+            "workunit ativa",
             "local_source_mutation=denied",
-            "runtime efêmero serve somente para testar/buildar o sha remoto",
-            "github actions só devem ser usadas",
+            "runtime local/mmmachine pode testar ou inspecionar o sha remoto exato",
+            "gate global de realidade",
+            "sil/ciu é independente",
         ):
             self.assertIn(marker, agents)
-        self.assertIn("project governance guard", agents)
+        self.assertIn("@codex engineering guardrails", agents)
+
+    def test_repo_first_control_surface_is_present(self):
+        required = [
+            "PROJECT.md",
+            "STATUS.md",
+            "docs/spec-kits/OMEGAS-SK-001.md",
+            "docs/workunits/OMEGAS-WU-006.md",
+            "docs/evidence/OMEGAS-WU-006.json",
+            "docs/superpowers/specs/2026-09-21-omegas-verde-progbase-autocal-parity-design.md",
+            "docs/superpowers/plans/2026-09-21-omegas-verde-progbase-autocal-parity.md",
+        ]
+        self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])
 
     def test_core_product_surfaces_are_present(self):
         required = [
