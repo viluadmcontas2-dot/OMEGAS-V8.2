@@ -161,6 +161,40 @@
       return { petrolMs, mapBar, rpm, levelRaw, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
     },
 
+    instrumentLive(instrument = {}) {
+      const live = instrument?.liveNow;
+      if (!live || typeof live !== 'object') return null;
+      const petrolMs = finite(live.petrolMs);
+      const mapBar = finite(live.mapBar);
+      const rpm = finite(live.rpm);
+      const ageMs = finite(live.ageMs);
+      if (petrolMs === null || mapBar === null || ageMs === null || ageMs < 0 || ageMs > AUTO_CAL_LIVE_STALE_MS) return null;
+      return { petrolMs, mapBar, rpm, ageMs, fuel: String(live.fuel || '—'), gasMs: finite(live.gasMs) };
+    },
+
+    instrumentReferencePoints(instrument = {}) {
+      const petrol = Array.isArray(instrument?.reference?.petrol) ? instrument.reference.petrol : [];
+      const gas = Array.isArray(instrument?.reference?.gas) ? instrument.reference.gas : [];
+      const gasByIndex = new Map(gas.map(point => [Number(point?.index), point]));
+      return petrol.map(point => {
+        const index = Number(point?.index);
+        const gasPoint = gasByIndex.get(index) || {};
+        const petrolMs = finite(point?.petrolMs);
+        const petrolMapBar = finite(point?.mapBar);
+        const gasMapBar = finite(gasPoint?.mapBar);
+        return { index, petrolMs, petrolMapBar, gasMapBar, gasEquivalentMs: null };
+      }).filter(point => Number.isInteger(point.index) && point.petrolMs !== null && point.petrolMapBar !== null && point.gasMapBar !== null);
+    },
+
+    instrumentAcquisitionPoints(instrument = {}, key = '') {
+      const rows = Array.isArray(instrument?.acquisition?.[key]) ? instrument.acquisition[key] : [];
+      return rows.map(point => ({
+        index: Number(point?.index),
+        petrolMs: finite(point?.petrolMs),
+        mapBar: finite(point?.mapBar),
+      })).filter(point => Number.isInteger(point.index) && point.petrolMs !== null && point.mapBar !== null);
+    },
+
     referencePoints(snapshot = {}, analysis = {}) {
       const petrolMs = physicalVector(snapshot, 'PETR_INJ_TBP');
       const petrolMap = physicalVector(snapshot, 'PETR_MNFLD_PRESS_RV');
@@ -427,12 +461,12 @@
 
             <section class="autocal-reference-card">
               <div class="autocal-section-head">
-                <div><small>REFERÊNCIA NATIVA</small><h4>Gasolina × GNV</h4><p>Petrol Inj. no eixo horizontal e MAP no vertical. A tela só desenha o que a ECU publicou.</p></div>
+                <div><small>AUTOCAL NATIVO</small><h4>Curva de aquisição</h4><p>Gasolina referência × resposta GNV. Os pontos são reposicionados conforme a própria ECU atualiza os buffers nativos.</p></div>
                 <div class="autocal-chart-tools" aria-label="Controles do gráfico">
                   <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 </div>
               </div>
-              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="equivalence">GNV equivalente</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
+              <div class="autocal-chart-legend"><span class="petrol">Gasolina referência</span><span class="gas">GNV resposta</span><span class="acquired">Pontos adquiridos pela ECU</span><span class="previous">GNV anterior</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
               <div class="autocal-live-strip" aria-live="polite">
                 <div class="autocal-live-summary"><small>AGORA</small><b id="autocalLiveTitle">Aguardando telemetria</b><span id="autocalLiveFuel">—</span></div>
                 <div class="autocal-live-metric"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
@@ -895,8 +929,16 @@
     renderReferenceChart(snapshot) {
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
-      const points = AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
-      const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
+      const instrument = this.projection?.instrument || {};
+      const nativeReferencePoints = AutoCalUxModel.instrumentReferencePoints(instrument);
+      const points = nativeReferencePoints.length
+        ? nativeReferencePoints
+        : AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
+      const live = AutoCalUxModel.instrumentLive(instrument)
+        || AutoCalUxModel.livePoint(this.store.get().telemetry || {}, this.projection);
+      const petrolAcquisition = AutoCalUxModel.instrumentAcquisitionPoints(instrument, 'petrolCurrent');
+      const gasCurrentAcquisition = AutoCalUxModel.instrumentAcquisitionPoints(instrument, 'gasCurrent');
+      const gasPreviousAcquisition = AutoCalUxModel.instrumentAcquisitionPoints(instrument, 'gasPrevious');
       this.currentReferencePoints = points;
       const timingKnown = this.projection?.referenceTimingKnown === true;
       const timingCoherent = this.projection?.referenceTimingCoherent === true;
@@ -981,6 +1023,14 @@
           (equivalentX === null ? '' : '<circle class="autocal-equivalence-point" cx="' + equivalentX + '" cy="' + petrolY + '" r="4"></circle>');
       }).join('');
 
+      const acquisitionMarkup = (items, className, radius) => items
+        .filter(point => point.petrolMs >= xMin && point.petrolMs <= xMax && point.mapBar >= yMin && point.mapBar <= yMax)
+        .map(point => '<circle class="autocal-acquisition-point ' + className + '" cx="' + xFor(point.petrolMs).toFixed(1) + '" cy="' + yFor(point.mapBar).toFixed(1) + '" r="' + radius + '"></circle>')
+        .join('');
+      const petrolAcquisitionMarkup = acquisitionMarkup(petrolAcquisition, 'petrol-current', 4.5);
+      const gasPreviousMarkup = acquisitionMarkup(gasPreviousAcquisition, 'gas-previous', 4.5);
+      const gasCurrentMarkup = acquisitionMarkup(gasCurrentAcquisition, 'gas-current', 5.2);
+
       const projectedLive = AutoCalUxModel.projectLive(live, scale);
       const liveMarkup = live && projectedLive
         ? '<g class="autocal-live-layer" data-out-of-range="' + (projectedLive.outOfRange ? 'true' : 'false') + '" aria-label="Posição atual do motor">' +
@@ -999,6 +1049,7 @@
         previous + equivalencePath +
         '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
         '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
+        gasPreviousMarkup + petrolAcquisitionMarkup + gasCurrentMarkup +
         pointMarkup + liveMarkup +
         '</g></svg>';
 
