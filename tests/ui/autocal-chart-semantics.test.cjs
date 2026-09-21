@@ -148,3 +148,44 @@ assert.equal(referenceRegainedTransition.previousPoints.length, 0,
   'referência recuperada após gap não pode inventar Leitura anterior');
 
 console.log('AUTOCAL_CHART_SEMANTICS=PASS');
+
+
+const typedInstrument = {
+  liveNow: { petrolMs: 4.84, mapBar: 0.44, rpm: 2500, ageMs: 75, fuel: 'GNV' },
+  reference: {
+    petrol: [
+      { index: 0, petrolMs: 2.0, mapBar: 0.20 },
+      { index: 1, petrolMs: 4.0, mapBar: 0.40 },
+    ],
+    gas: [
+      { index: 0, petrolMs: 2.0, mapBar: 0.18 },
+      { index: 1, petrolMs: 4.0, mapBar: 0.37 },
+    ],
+  },
+  acquisition: {
+    petrolCurrent: [{ index: 0, petrolMs: 4.0, mapBar: 0.40 }],
+    gasCurrent: [{ index: 0, petrolMs: 4.0, mapBar: 0.39 }],
+    gasPrevious: [{ index: 0, petrolMs: 4.0, mapBar: 0.46 }],
+  },
+};
+const typedReference = model.instrumentReferencePoints(typedInstrument);
+assert.equal(typedReference.length, 2);
+assert.equal(typedReference[1].petrolMapBar, 0.40);
+assert.equal(typedReference[1].gasMapBar, 0.37);
+
+const typedLive = model.instrumentLive(typedInstrument);
+assert.equal(typedLive.petrolMs, 4.84);
+assert.equal(typedLive.mapBar, 0.44);
+assert.equal(model.instrumentLive({ liveNow: { petrolMs: 4, mapBar: 0.4, ageMs: 2501 } }), null);
+
+const currentGas = model.instrumentAcquisitionPoints(typedInstrument, 'gasCurrent');
+const previousGas = model.instrumentAcquisitionPoints(typedInstrument, 'gasPrevious');
+assert.equal(currentGas[0].mapBar, 0.39);
+assert.equal(previousGas[0].mapBar, 0.46);
+assert.notEqual(currentGas[0].mapBar, previousGas[0].mapBar, 'GNV anterior e atual precisam permanecer camadas distintas');
+
+assert.match(source, /this\.projection\?\.instrument/);
+assert.match(source, /gasPreviousMarkup/);
+assert.match(source, /gasCurrentMarkup/);
+assert.match(source, /autocal-acquisition-point gas-previous/);
+assert.match(source, /autocal-acquisition-point gas-current/);
