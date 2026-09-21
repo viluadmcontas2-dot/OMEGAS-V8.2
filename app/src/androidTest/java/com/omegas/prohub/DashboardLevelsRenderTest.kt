@@ -403,18 +403,20 @@ class DashboardLevelsRenderTest {
         val scenario = launch()
         try {
             val fixture = liveFixture()
+            activateRoute(scenario, "dashboard", settleMs = 350L)
             injectFresh(scenario, fixture, settleMs = 700L)
             val before = dashboardDom(scenario)
+            assertTrue("Precondition: Dashboard route must be active", before.getBoolean("route"))
             assertTrue("Precondition: first session must have live petrol injection", before.optString("petrol") != "—")
 
             scenario.onActivity { activity ->
                 val service = activity.serviceOrNull() ?: error("service unavailable")
                 service.telemetryStore.beginSession(9002L)
-                activity.refreshWebUi()
             }
-            SystemClock.sleep(900L)
+            SystemClock.sleep(1_000L)
 
             val after = dashboardDom(scenario)
+            assertTrue("Session invalidation must not navigate away from Dashboard", after.getBoolean("route"))
             saveEvidence("dashboard-session-invalidated", after, scenario)
             assertEquals("New session must invalidate old Petrol Injection", "—", after.optString("petrol"))
             assertEquals("New session must invalidate old MAP", "—", after.optString("map"))
