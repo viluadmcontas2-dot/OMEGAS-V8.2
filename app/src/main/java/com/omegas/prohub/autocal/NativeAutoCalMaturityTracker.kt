@@ -3,9 +3,9 @@ package com.omegas.prohub.autocal
 /**
  * Detecta somente a transição de uma banda GNV para o critério nativo de maturidade.
  *
- * A primeira leitura cria baseline. Leituras repetidas ou crescimento posterior de uma
- * banda já madura não criam outro evento. Quando a AutoCal está pausada, a leitura
- * atualiza o baseline sem produzir ciência nova.
+ * A primeira leitura cria baseline. Crescimento posterior só reabre correlação quando a
+ * banda já estava madura no baseline ou uma tentativa anterior falhou explicitamente.
+ * Quando a AutoCal está pausada, a leitura atualiza o baseline sem produzir ciência nova.
  */
 class NativeAutoCalMaturityTracker {
     data class Transition(
@@ -96,11 +96,9 @@ class NativeAutoCalMaturityTracker {
                 }
 
                 val crossedThreshold = before < threshold && after >= threshold
-                if (!crossedThreshold && before >= threshold && band !in correlatedBands) {
-                    retryableCorrelationBands.add(band)
-                }
                 val retryGrowth = !crossedThreshold &&
                     band in retryableCorrelationBands &&
+                    band !in correlatedBands &&
                     after > before
 
                 if (crossedThreshold || retryGrowth) {
