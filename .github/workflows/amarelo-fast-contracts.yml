@@ -13,6 +13,10 @@ on:
       - "tests/fixtures/portmon-lognovo-*"
       - "tests/fixtures/amarelo-autocal-action-wire-*.json"
       - "tests/fixtures/amarelo-autocal-acquired-zones-*.json"
+      - "app/src/main/java/com/omegas/prohub/autocal/**"
+      - "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      - "app/src/main/assets/ui/styles-autocal-cockpit.css"
+      - "tests/ui/autocal-*.test.cjs"
   workflow_dispatch:
 
 permissions:
@@ -35,8 +39,17 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           echo "SOURCE_SHA=$GITHUB_SHA"
           echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
       - name: Python runtime
         run: python3 --version
+      - name: Node runtime
+        run: node --version
+      - name: Prepare Gradle
+        run: chmod +x gradlew
       - name: OMEGAS Amarelo Portmon ground truth
         run: python3 -B -m unittest tests.test_amarelo_portmon_ground_truth -v
       - name: Native AutoCAL action wire evidence
@@ -47,3 +60,9 @@ jobs:
         run: python3 -B -m unittest tests.test_amarelo_autocal_acquired_zones_evidence -v
       - name: Harvested real MP48 fixture contract
         run: python3 -B tests/test_real_mp48_replay_fixture_contract.py
+      - name: AutoCAL typed publisher and projection unit tests
+        run: ./gradlew :app:testDebugUnitTest --tests com.omegas.prohub.autocal.AutoCalInstrumentProjectionTest --tests com.omegas.prohub.autocal.AutoCalUiProjectionTest
+      - name: AutoCAL chart consumer semantics
+        run: node tests/ui/autocal-chart-semantics.test.cjs
+      - name: AutoCAL cockpit consumer contract
+        run: node tests/ui/autocal-cockpit.test.cjs
