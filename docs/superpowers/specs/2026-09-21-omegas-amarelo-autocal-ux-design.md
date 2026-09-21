@@ -63,7 +63,7 @@ The following original concepts are treated as product semantics, subject to byt
 - K line / `MUL_ACT`;
 - acquisition zones/bands;
 - AutoMatch counter/state;
-- enable/pause;
+- checkbox Auto Calibration: marcado ativa AutoCAL + AutoMatch automático; desmarcado desativa ambos após aviso;
 - reset petrol/gas/all;
 - finish AutoCAL;
 - polling of live telemetry independently from slower AutoCAL vectors.
@@ -75,7 +75,13 @@ Current proven action pattern:
 - manual AutoMatch -> action code 8;
 - shared dispatcher -> native bridge -> ECU/native state -> refresh/projection.
 
-Unknown command semantics remain UNKNOWN until WU-001 proves them.
+Operator-observed original UX contract:
+- there is one Auto Calibration checkbox, not separate Start/Stop controls;
+- checking it activates Auto Calibration and automatic AutoMatch together;
+- unchecking it warns the operator that both will be disabled;
+- the wire control remains AUTO_CAL_ENABLE; do not invent a second AutoMatch enable command.
+
+Unknown lower-level side effects remain UNKNOWN until WU-001 proves them.
 
 ## 4. Screen information architecture
 
