@@ -232,14 +232,21 @@
       const previousSession = String(previousProjection?.sessionId ?? '');
       const nextSession = String(nextProjection?.sessionId ?? '');
       const sessionChanged = previousSession !== nextSession;
+      const previousUsable = previousProjection?.referenceUsable === true;
+      const nextUsable = nextProjection?.referenceUsable === true;
+      const referenceLost = previousUsable && !nextUsable;
+      const referenceRegained = !previousUsable && nextUsable;
       const previousHash = String(previousSnapshot?.snapshotHash || '');
       const nextHash = String(nextSnapshot?.snapshotHash || '');
-      const referenceChanged = !!(previousHash && nextHash && previousHash !== nextHash);
+      const referenceChanged = previousUsable && nextUsable &&
+        !!(previousHash && nextHash && previousHash !== nextHash);
       return {
         sessionChanged,
         referenceChanged,
-        resetSelection: sessionChanged || referenceChanged,
-        clearHistory: sessionChanged,
+        referenceLost,
+        referenceRegained,
+        resetSelection: sessionChanged || referenceChanged || referenceLost || referenceRegained,
+        clearHistory: sessionChanged || referenceLost,
         previousPoints: !sessionChanged && referenceChanged
           ? this.referencePoints(previousSnapshot, previousAnalysis)
           : [],
