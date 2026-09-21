@@ -305,23 +305,66 @@ Gasoline reference is permanent across GNV calibration changes.
 
 GNV comparisons, local residuals, Difference state, confidence derived from those comparisons, and Suggestions are bound to the calibration revision that produced them.
 
-### 10.2 Material native AutoCal change
+### 10.2 Material native AutoCal change — verified current behavior
 
-If native AutoCal materially changes the effective calibration/reference used by GNV:
+Current `OmegasVerde` already has a conservative invalidation path when native AutoCal is **actually observed** to change calibration:
 
-- create/observe a new calibration revision;
-- preserve gasoline evidence;
-- preserve old GNV evidence only as history;
-- exclude old-revision GNV residuals from current Difference/Suggestion;
-- enter `LEARNING` or `REVALIDATING` until current-revision evidence exists.
+- `NativeAutoCalMonitor` requires an AutoMatch-count increase plus a changed `MUL_ACT` hash and valid readback before emitting `ECU_NATIVE_AUTOCAL`;
+- `TelemetryForegroundService` forwards that observation into `NativeRuntimeManager.notifyCalibrationAdjustment()`;
+- `LiveOnlyLearningStore.onCalibrationAdjustment()` preserves gasoline and discards current GNV regions/comparisons/derived confidence before opening a fresh calibration epoch;
+- V7 runtime also scopes active CNG evidence/comparisons to the current calibration revision.
 
-The UI must never show stale pre-AutoCal local differences as if they describe the post-AutoCal state.
+Therefore the principal post-AutoCal problem is **not assumed to be stale old GNV evidence surviving indefinitely** when this detection path fires.
 
-### 10.3 Why this matters
+The SIL must still test the detection path, including missed/partial native changes, but the main scientific target is the cold-start behavior after a valid reset.
 
-A physically well-aligned AutoCal result must not coexist indefinitely with old local extremes merely because the app's prior cell evidence is still cached.
+### 10.3 Verified post-AutoCal blind-start problem
 
-If the new calibration is aligned, current-revision evidence should converge toward neutral.
+Current `LiveOnlyLearningStore.importNativeSnapshot()` explicitly keeps AutoCal snapshots observational:
+
+`activeLearningMutation = false`
+
+and comments that the snapshot remains diagnostic rather than becoming an active learning sample.
+
+At the same time, current Learning UI semantics expose an immature estimate:
+
+- `stableComparisonError()` returns `recent ?? raw` while state is `LEARNING`;
+- a first valid current-revision comparison can therefore appear as a large cell percentage even though confidence is still low;
+- `LearningStabilityV7` requires `confirmedVisits` effective support before consolidation (default 6);
+- each physical visit contributes `quality × bilinearWeight`, often much less than 1.0 to an individual node.
+
+This means six physical passes do not necessarily equal six effective visits for a node. Sparse nodes can require substantially more passes before consolidation.
+
+This directly explains the observed product failure mode: **AutoCal may already have produced a well-aligned global calibration while the application still shows volatile per-cell percentages during its own slow local relearning.**
+
+### 10.4 AutoCal-informed fast re-acquisition
+
+After a readback-valid native AutoCal change, the new epoch must not start as if the application knows nothing.
+
+The design uses AutoCal as an explicit **prior**, not as fabricated local truth.
+
+AutoCal may initialize or strongly constrain the **global Curve K component** using its native/same-pressure evidence.
+
+For the local Map K residual field:
+
+- start with a neutral residual prior centered at zero when AutoCal global alignment is strong;
+- keep uncertainty high until live local evidence arrives;
+- never mark a local node `CONSOLIDATED` from the prior alone;
+- shrink sparse/one-off local observations toward the global/neighbor prior instead of publishing their raw percentage;
+- let repeated independent physical evidence override the prior and prove a real localized defect.
+
+The goal is not to claim “AutoCal means every local cell is perfect.” The goal is to avoid pretending that the first noisy local visit is more informative than the strong global evidence that the ECU has just produced.
+
+### 10.5 UI consequence
+
+While a node is `LEARNING` after a calibration revision:
+
+- the stable Difference layer must not present one raw/recent percentage as if it were the node's established truth;
+- raw current evidence belongs to an explicit `Agora`/diagnostic surface;
+- the stable 144-node field exposes either a prior-backed estimate with uncertainty or `aprendendo`, depending on the validated estimator;
+- actionable Suggestion remains blocked until its publication gate is satisfied.
+
+A physically aligned AutoCal followed by one +30% visit must not immediately paint the fixed node as “+30% wrong.”
 
 ## 11. AutoCal scientific role
 
