@@ -1,7 +1,7 @@
 {
   "schema": "omegas.amarelo.evidence.v1",
   "workunit_id": "OMEGAS-AMARELO-WU-001",
-  "state": "IN_PROGRESS",
+  "state": "IN_PROGRESS_REMOTE_GREEN",
   "branch": "work/omegas-amarelo-wu001-autocal-ground-truth",
   "parent_sha": "41be880bc13f02a33a25c2096bee599cfd6817b0",
   "sources": [
@@ -23,11 +23,22 @@
     "Canonical transaction at_ms equals cumulative duration of all prior completed Portmon operations at start of WRITE.",
     "LOGNOVO byte evidence decodes MAX_RPM_FOR_AUTOCAL as 3000 rpm.",
     "LOGNOVO AutoMatch counter byte evidence includes 3 -> 0 -> 1 -> 2 -> 3 observations.",
-    "A post-candidate MUL_ACT observation is 30 x Q14 1.0."
+    "A post-candidate MUL_ACT observation is 30 x Q14 1.0.",
+    "ProgBase handlers push AutoCal native action codes 1/2/4/8 into one shared dispatcher.",
+    "ProgBase binary serialization proves action request family 02 24 04 <action> <additive checksum>.",
+    "Action code 4 frame 02 24 04 04 2E is observed in both raw corpora; codes 1/2/8 are binary-proven but wire-unobserved in current captures.",
+    "Corrected-clock scan of both raw corpora independently shows fast live telemetry, ~2 s AutoCal state/vector cadence, and ~4 s reference-RV cadence."
   ],
   "not_yet_proven": [
-    "Exact wire command corresponding to ProgBase action codes 1/2/4/8.",
+    "Raw-wire observations for action codes 1/2/8 are absent from the current two captures; their frame bytes are proven statically from ProgBase only.",
     "Complete native AutoCal firmware state machine.",
     "Host-vs-ECU numerical responsibility beyond observed mutation evidence."
-  ]
+  ],
+  "last_proven_sha": "f73cb3a822e1d062423cf211a708832ab22a88c7",
+  "ci": {
+    "workflow": "OMEGAS Amarelo fast contracts",
+    "run_id": 35631210289,
+    "source_sha": "f73cb3a822e1d062423cf211a708832ab22a88c7",
+    "conclusion": "success"
+  }
 }

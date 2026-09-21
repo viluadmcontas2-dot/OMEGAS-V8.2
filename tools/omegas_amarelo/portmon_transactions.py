@@ -150,3 +150,30 @@ def u16le_values(payload: bytes) -> tuple[int, ...]:
 
 def q14_values(payload: bytes) -> tuple[float, ...]:
     return tuple(value / 16384.0 for value in u16le_values(payload))
+
+
+PROGBASE_AUTOCAL_ACTION_CODES = {
+    "RESET_PETROL": 0x01,
+    "RESET_GAS": 0x02,
+    "RESET_ALL": 0x04,
+    "AUTO_MATCH": 0x08,
+}
+
+def progbase_autocal_action_frame(action_code: int) -> bytes:
+    """Reconstruct the ProgBase native-action request proven from binary code.
+
+    Binary evidence:
+    - handlers push action codes 1/2/4/8 into shared dispatcher 0x00517568;
+    - native bridge 0x00512280 builds payload [0x04, action];
+    - transport 0x009244C8 serializes header word (0x24 << 8) | 2 little-endian;
+    - byte append accumulates an additive checksum;
+    - finalize appends that checksum.
+
+    Only action code 4 is also observed byte-for-byte in the current raw logs.
+    This is engineering evidence tooling, not permission to transmit
+    unobserved actions to a real ECU.
+    """
+    if action_code not in PROGBASE_AUTOCAL_ACTION_CODES.values():
+        raise ValueError(f"unsupported ProgBase AutoCal action code: {action_code}")
+    body = bytes((0x02, 0x24, 0x04, action_code))
+    return body + bytes((sum(body) & 0xFF,))

@@ -9,6 +9,8 @@ from tools.omegas_amarelo.portmon_transactions import (
     response_payload,
     u16le_values,
     valid_echo_response,
+    progbase_autocal_action_frame,
+    PROGBASE_AUTOCAL_ACTION_CODES,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,6 +68,28 @@ class AmareloPortmonGroundTruthTest(unittest.TestCase):
                 response = bytes.fromhex(row["response"])
                 self.assertTrue(additive_checksum_ok(request), key)
                 self.assertEqual(response_payload(request, response), b"")
+
+    def test_progbase_binary_proves_action_frame_family_without_claiming_wire_observation(self):
+        expected = {
+            "RESET_PETROL": "02 24 04 01 2B",
+            "RESET_GAS": "02 24 04 02 2C",
+            "RESET_ALL": "02 24 04 04 2E",
+            "AUTO_MATCH": "02 24 04 08 32",
+        }
+        for name, code in PROGBASE_AUTOCAL_ACTION_CODES.items():
+            self.assertEqual(
+                progbase_autocal_action_frame(code).hex(" ").upper(),
+                expected[name],
+            )
+
+        fixture = json.loads(
+            (FIXTURES / "portmon-lognovo-control-v1.json").read_text(encoding="utf-8")
+        )
+        observed = fixture["evidence"]["ACTION_CODE_4_FRAME_CANDIDATE"][0]["request"]
+        self.assertEqual(
+            progbase_autocal_action_frame(PROGBASE_AUTOCAL_ACTION_CODES["RESET_ALL"]).hex(" ").upper(),
+            observed,
+        )
 
 if __name__ == "__main__":
     unittest.main()

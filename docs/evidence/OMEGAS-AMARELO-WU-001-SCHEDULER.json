@@ -1,0 +1,42 @@
+{
+  "schema": "omegas.amarelo.corrected-clock-scheduler.v1",
+  "timing_rule": "cumulative duration of all completed Portmon operations at start of IRP_MJ_WRITE",
+  "generated_by": "AgentRed P13-correct-clock",
+  "sources": {
+    "AUTOCAL": {
+      "sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+      "writes": 36463,
+      "cadence_ms": {
+        "live_48_01_49": {
+          "count": 21167,
+          "median": 46.567535,
+          "p10": 44.897325,
+          "p90": 154.30569
+        },
+        "mul_0161_median": 2024.93724,
+        "zones_petrol_016F_median": 2026.85304,
+        "zones_gas_0170_median": 2028.96548,
+        "petrol_rv_018D_median": 4045.792675,
+        "gas_rv_018E_median": 4044.636125
+      }
+    },
+    "LOGNOVO": {
+      "sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+      "writes": 39517,
+      "cadence_ms": {
+        "live_48_01_49": {
+          "count": 20451,
+          "median": 59.87977,
+          "p10": 45.61108,
+          "p90": 120.758289
+        },
+        "mul_0161_median": 2002.728955,
+        "zones_petrol_016F_median": 2028.767125,
+        "zones_gas_0170_median": 2010.398775,
+        "petrol_rv_018D_median": 4024.70878,
+        "gas_rv_018E_median": 4029.30571
+      }
+    }
+  },
+  "conclusion": "Both raw captures independently support a fast live telemetry plane, ~2s AutoCal state/vector plane and ~4s reference-RV plane. Observed cadences are evidence, not future scheduler constants."
+}
