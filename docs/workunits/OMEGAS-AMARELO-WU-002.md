@@ -110,7 +110,7 @@ O handler `ActionFinishAutocalExecute@0x51A390`:
 DFM + wire:
 - U8_1: SerialCode `0x0165`, RowIndex 1 — PROVEN;
 - U8_2: SerialCode `0x0165`, RowIndex 2 — PROVEN;
-- U8_0: SerialCode `0x0165`, RowIndex omitido/default; associação ao índice 0 é **INFERRED_STRONG**, não promovida a PROVEN;
+- U8_0: SerialCode `0x0165`, RowIndex omitido/default; inventário DFM mostra exatamente três componentes `0x0165` (`U8_0/_1/_2`) e o wire exatamente índices `0/1/2`; como U8_1=1 e U8_2=2 são explícitos, U8_0=0 fica **PROVEN_RESOURCE_WIRE_MAPPING**;
 - LOGNOVO contém 3 leituras de cada índice 0/1/2 (`0A 65 01 00 70`, `...01 71`, `...02 72`), todas retornando payload `03`;
 - AUTOCAL não contém transação 0x0165;
 - nenhum write 0x0165 foi observado nos dois raws fornecidos.
