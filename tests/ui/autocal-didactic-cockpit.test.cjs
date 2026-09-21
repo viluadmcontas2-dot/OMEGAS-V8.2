@@ -110,6 +110,23 @@ const projectedBands = model.bandStrip(conflictingSnapshot, authoritativeProject
 assert.equal(projectedBands[4].state, 'anchored', 'correlação persistente da projeção deve sobreviver sem evento novo');
 assert.equal(projectedBands[8].state, 'mature', 'retry persistente deve permanecer distinto de simples atividade');
 
+assert.equal(typeof model.bandNarrative, 'function', 'mensagem da região deve ser testável sem DOM');
+const persistedCorrelationNarrative = model.bandNarrative({ ...projectedBands[4], event: null });
+assert.match(persistedCorrelationNarrative, /confirmada nesta sessão/i);
+assert.doesNotMatch(persistedCorrelationNarrative, /Nesta leitura/i,
+  'correlação persistente não pode ser apresentada como evento da leitura atual');
+
+const currentCorrelationNarrative = model.bandNarrative({
+  ...projectedBands[4],
+  event: { bandIndex: 4, correlationState: 'CORRELATED' },
+});
+assert.match(currentCorrelationNarrative, /Nesta leitura/i,
+  'evento correlacionado realmente atual pode manter contexto temporal da leitura');
+
+const persistedRetryNarrative = model.bandNarrative({ ...projectedBands[8], event: null });
+assert.match(persistedRetryNarrative, /aguardando.*janela|nova janela/i,
+  'retry persistente deve explicar o próximo passo sem afirmar correlação inexistente');
+
 assert.match(source, /AutoCalUxModel\.humanState\(snapshot,\s*state,\s*this\.projection\)/,
   'render deve consumir a projeção Kotlin para zonas');
 assert.match(source, /AutoCalUxModel\.bandStrip\([^)]*this\.projection/,
