@@ -180,3 +180,15 @@ Important separation:
 - R1..R4 MAP region must be derived from the point's MAP against `MNFLD_PRESS_THD`, not from the buffer index.
 
 Evidence: `tests/fixtures/amarelo-autocal-maturity-visibility-v1.json` + `tests/test_amarelo_autocal_maturity_visibility_evidence.py`.
+
+
+## Point-buffer ownership — 2026-09-21
+
+Across both supplied Portmons, `0x015D..0x0160` are accessed only with command `0x29` read-vector, while GasPoint current buffers change hundreds of times.
+
+- PortmonAUTOCAL: 322 changed-index events; 744/744/747/747 reads for 0x015D..0x0160; zero non-read commands.
+- PortmonLOGNOVO: 250 changed-index events; 437/437/440/440 reads; zero non-read commands.
+
+Therefore ECU/firmware-side point-buffer update ownership is **PROVEN FOR SUPPLIED CAPTURES**. Exact firmware averaging/replacement formula remains **UNKNOWN**.
+
+Product rule: OMEGAS reads/projects the native point buffers and must not synthesize or overwrite them.
