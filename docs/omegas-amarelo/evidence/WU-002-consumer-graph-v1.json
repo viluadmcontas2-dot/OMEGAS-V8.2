@@ -520,6 +520,24 @@
       "acquired_zone_flags_are_separate": true,
       "map_region_assignment": "derive from native point MAP vs MNFLD_PRESS_THD; never from buffer index",
       "status": "PROVEN_STATIC_AND_WIRE"
+    },
+    "point_buffer_ownership": {
+      "fields": [
+        "0x015D PETR_INJ_TBUF_GAS_PREV",
+        "0x015E MNFLD_PRESS_BUF_GAS_PREV",
+        "0x015F PETR_INJ_TBUF_GAS",
+        "0x0160 MNFLD_PRESS_BUF_GAS"
+      ],
+      "supplied_capture_access": "0x29 read-vector only",
+      "non_read_host_commands_observed": 0,
+      "mutations_observed": {
+        "PortmonAUTOCAL": 322,
+        "PortmonLOGNOVO": 250
+      },
+      "conclusion": "ECU/firmware updates native point buffers; ProgBase reads/projects them in supplied captures",
+      "exact_update_formula": "UNKNOWN",
+      "product_contract": "do not synthesize or overwrite native point buffers",
+      "status": "PROVEN_FOR_SUPPLIED_CAPTURES"
     }
   },
   "unknowns": [
