@@ -1,11 +1,7 @@
 name: OmegasVerde historical LEVELS render RED
 
 on:
-  push:
-    branches: [OmegasVerde]
-    paths:
-      - '.github/workflows/verde-historical-levels-red.yml'
-      - 'app/src/androidTest/java/com/omegas/prohub/DashboardLevelsRenderTest.kt'
+  workflow_dispatch:
 
 permissions:
   contents: read

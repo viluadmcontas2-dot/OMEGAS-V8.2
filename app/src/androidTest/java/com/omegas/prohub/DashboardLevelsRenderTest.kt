@@ -6,7 +6,12 @@ import android.webkit.WebView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.omegas.prohub.autocal.AutoCalReadObservation
+import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
+import com.omegas.prohub.autocal.AutoCalSnapshotSource
+import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
+import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 import org.junit.Assert.assertEquals
@@ -79,6 +84,121 @@ class DashboardLevelsRenderTest {
         SystemClock.sleep(settleMs)
     }
 
+    private fun autoCalFixtureRawValues(): Map<String, IntArray> {
+        val raw = instrumentation.context.assets
+            .open("autocal_snapshot_complete.json")
+            .bufferedReader()
+            .use { it.readText() }
+        val fields = JSONObject(raw).getJSONArray("fields")
+        val result = linkedMapOf<String, IntArray>()
+        for (index in 0 until fields.length()) {
+            val field = fields.getJSONObject(index)
+            val values = field.getJSONArray("rawValues")
+            result[field.getString("key")] = IntArray(values.length()) { values.getInt(it) }
+        }
+        return result
+    }
+
+    private fun payloadFor(field: AutoCalProtocol.Field, values: IntArray): ByteArray =
+        when (field.encoding) {
+            AutoCalProtocol.Encoding.U8 -> ByteArray(values.size) { values[it].toByte() }
+            AutoCalProtocol.Encoding.U16_LE,
+            AutoCalProtocol.Encoding.S16_LE,
+            AutoCalProtocol.Encoding.Q14_U16_LE -> ByteArray(values.size * 2).also { payload ->
+                values.forEachIndexed { index, value ->
+                    val raw = value and 0xFFFF
+                    payload[index * 2] = (raw and 0xFF).toByte()
+                    payload[index * 2 + 1] = ((raw ushr 8) and 0xFF).toByte()
+                }
+            }
+            AutoCalProtocol.Encoding.U8_OR_U16_LE ->
+                error("Render fixture does not use U8_OR_U16_LE")
+        }
+
+    private fun setPrivateField(target: Any, name: String, value: Any?) {
+        val field = target.javaClass.getDeclaredField(name)
+        field.isAccessible = true
+        field.set(target, value)
+    }
+
+    private fun installAutoCalReferenceFixture(
+        scenario: ActivityScenario<MainActivity>,
+        sessionId: Long = 9001L,
+    ) {
+        val rawByKey = autoCalFixtureRawValues()
+        val referenceFields = listOf(
+            AutoCalProtocol.PETR_INJ_TBP,
+            AutoCalProtocol.MNFLD_PRESS_THD,
+            AutoCalProtocol.MUL_ACT,
+            AutoCalProtocol.PETR_MNFLD_PRESS_RV,
+            AutoCalProtocol.GAS_MNFLD_PRESS_RV,
+        )
+        val expectedFields = listOf(AutoCalProtocol.MODULE_VERSION) +
+            referenceFields +
+            listOf(AutoCalProtocol.AUTO_CAL_ENABLE)
+        val capturedAt = System.currentTimeMillis()
+        val observations = mutableListOf(
+            AutoCalReadObservation(
+                field = AutoCalProtocol.MODULE_VERSION,
+                status = Mp48Protocol.STATUS_ACK,
+                payload = byteArrayOf(4),
+                capturedAtMs = capturedAt,
+            ),
+        )
+        referenceFields.forEach { field ->
+            val values = checkNotNull(rawByKey[field.key]) { "Missing render fixture field ${field.key}" }
+            observations += AutoCalReadObservation(
+                field = field,
+                status = Mp48Protocol.STATUS_ACK,
+                payload = payloadFor(field, values),
+                capturedAtMs = capturedAt,
+            )
+        }
+        observations += AutoCalReadObservation(
+            field = AutoCalProtocol.AUTO_CAL_ENABLE,
+            status = Mp48Protocol.STATUS_ACK,
+            payload = byteArrayOf(1),
+            capturedAtMs = capturedAt,
+        )
+
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = observations,
+            expectedFields = expectedFields,
+            sessionId = "AUTOCAL-$sessionId-RENDER",
+            source = AutoCalSnapshotSource.REPLAY,
+            startedAtMs = capturedAt,
+            finishedAtMs = capturedAt,
+        )
+        check(!snapshot.partial) { "Reference render fixture became partial: ${snapshot.warnings}" }
+        check(snapshot.temporalCoherent) { "Reference render fixture became incoherent: ${snapshot.warnings}" }
+
+        val decorated = snapshot.toJson()
+            .put("available", true)
+            .put("nativeAutoCal", true)
+            .put("autoCalEnabled", 1)
+            .put("nativeMaturityEvents", JSONArray())
+            .put("nativeMaturityEventCount", 0)
+            .put("nativeCorrelationState", JSONObject()
+                .put("correlatedBands", JSONArray())
+                .put("retryableBands", JSONArray()))
+
+        val state = JSONObject()
+            .put("state", "READY")
+            .put("message", "Render fixture through production AutoCal projection")
+            .put("sessionId", sessionId)
+            .put("autoCalEnabled", 1)
+            .put("nativeFlag13", 0)
+            .put("autoMatchCount", 0)
+            .put("appAutomaticWrite", false)
+
+        scenario.onActivity { activity ->
+            val service = activity.serviceOrNull() ?: error("service unavailable")
+            setPrivateField(service.nativeAutoCal, "latestSnapshot", decorated)
+            setPrivateField(service.nativeAutoCal, "state", state)
+            activity.refreshWebUi()
+        }
+    }
+
     private fun dashboardDom(scenario: ActivityScenario<MainActivity>): JSONObject =
         evalJson(
             scenario,
@@ -130,6 +250,37 @@ class DashboardLevelsRenderTest {
                 };
               })()
             })
+            """.trimIndent(),
+        )
+
+    private fun autocalReferenceDom(scenario: ActivityScenario<MainActivity>): JSONObject =
+        evalJson(
+            scenario,
+            """
+            JSON.stringify((() => {
+              const petrolPath = document.querySelector('.autocal-reference-line.petrol:not(.previous)');
+              const gasPath = document.querySelector('.autocal-reference-line.gas:not(.previous)');
+              const equivalentPath = document.querySelector('.autocal-equivalence-line');
+              const live = document.querySelector('.autocal-live-layer');
+              const chart = document.getElementById('autocalReferenceChart')?.getBoundingClientRect();
+              const rail = document.querySelector('.autocal-live-strip')?.getBoundingClientRect();
+              return {
+                svg: document.querySelector('.autocal-reference-svg') !== null,
+                empty: document.querySelector('#autocalReferenceChart .chart-empty') !== null,
+                petrolPath: petrolPath?.getAttribute('d') ?? '',
+                gasPath: gasPath?.getAttribute('d') ?? '',
+                equivalentPath: equivalentPath?.getAttribute('d') ?? '',
+                petrolPoints: document.querySelectorAll('.autocal-reference-point.petrol').length,
+                gasPoints: document.querySelectorAll('.autocal-reference-point.gas').length,
+                equivalentPoints: document.querySelectorAll('.autocal-equivalence-point').length,
+                liveVisible: !!live && live.getAttribute('display') !== 'none',
+                count: document.getElementById('autocalReferenceCount')?.textContent ?? '',
+                chartHeight: chart?.height ?? 0,
+                chartWidth: chart?.width ?? 0,
+                railBottom: rail?.bottom ?? 0,
+                viewportHeight: window.innerHeight
+              };
+            })())
             """.trimIndent(),
         )
 
@@ -198,6 +349,31 @@ class DashboardLevelsRenderTest {
             assertTrue("Operational hero must follow the instrument surface", geometry.getDouble("heroTop") >= geometry.getDouble("liveBottom"))
             assertTrue("Operational hero must stay compact relative to chart", geometry.getDouble("heroHeight") < geometry.getDouble("chartHeight"))
             assertTrue("Desktop point inspector must not consume a permanent chart column", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.31)
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun autocalReferenceCurvesRenderFixture() {
+        val scenario = launch()
+        try {
+            val live = liveFixture()
+            installAutoCalReferenceFixture(scenario)
+            activateAutocal(scenario)
+            injectFresh(scenario, live, settleMs = 850L)
+            val dom = autocalReferenceDom(scenario)
+            saveEvidence("autocal-reference-curves", dom, scenario)
+            assertTrue("Production projection must render an SVG reference chart", dom.getBoolean("svg"))
+            assertTrue("Reference chart must not fall back to empty state", !dom.getBoolean("empty"))
+            assertTrue("Gasoline reference line must have a drawable path", dom.getString("petrolPath").length > 20)
+            assertTrue("GNV reference line must have a drawable path", dom.getString("gasPath").length > 20)
+            assertEquals("Complete render fixture must expose all 30 gasoline points", 30, dom.getInt("petrolPoints"))
+            assertEquals("Complete render fixture must expose all 30 GNV points", 30, dom.getInt("gasPoints"))
+            assertTrue("Fresh AGORA cursor must remain on the same chart", dom.getBoolean("liveVisible"))
+            assertTrue("Reference chart remains dominant", dom.getDouble("chartHeight") >= 300.0)
+            assertTrue("Reference chart remains wide", dom.getDouble("chartWidth") >= 760.0)
+            assertTrue("Live rail remains above the fold", dom.getDouble("railBottom") <= dom.getDouble("viewportHeight"))
         } finally {
             scenario.close()
         }

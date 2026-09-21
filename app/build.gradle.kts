@@ -117,7 +117,10 @@ android {
         buildConfig = true
     }
 
-    sourceSets.getByName("androidTest").assets.srcDir(rootProject.file("tests/fixtures"))
+    sourceSets.getByName("androidTest").assets.srcDirs(
+        rootProject.file("tests/fixtures"),
+        rootProject.file("fixtures/autocal"),
+    )
 
     packaging {
         resources.excludes += setOf(

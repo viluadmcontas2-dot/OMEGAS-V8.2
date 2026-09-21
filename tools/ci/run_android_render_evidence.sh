@@ -41,4 +41,5 @@ set -e
 run_case "dashboard-fresh" "dashboardFreshLevelsRaw"
 run_case "dashboard-invalid" "dashboardInvalidLevelsPlaceholder"
 run_case "autocal-fresh-control" "autocalFreshLevelsControl"
+run_case "autocal-reference-curves" "autocalReferenceCurvesRenderFixture"
 exit "$overall"
