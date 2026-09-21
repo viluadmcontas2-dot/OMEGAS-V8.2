@@ -12,6 +12,7 @@ on:
       - "tests/fixtures/portmon-autocal-*"
       - "tests/fixtures/portmon-lognovo-*"
       - "tests/fixtures/amarelo-autocal-action-wire-*.json"
+      - "tests/fixtures/amarelo-autocal-acquired-zones-*.json"
   workflow_dispatch:
 
 permissions:
@@ -42,5 +43,7 @@ jobs:
         run: python3 -B -m unittest tests.test_amarelo_autocal_action_wire_evidence -v
       - name: WU-002 native consumer graph contract
         run: python3 -B -m unittest tests.test_amarelo_wu002_consumer_graph -v
+      - name: AutoCAL acquired zones dual-log evidence
+        run: python3 -B -m unittest tests.test_amarelo_autocal_acquired_zones_evidence -v
       - name: Harvested real MP48 fixture contract
         run: python3 -B tests/test_real_mp48_replay_fixture_contract.py
