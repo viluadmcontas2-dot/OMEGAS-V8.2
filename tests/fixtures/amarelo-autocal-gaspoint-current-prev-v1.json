@@ -1,0 +1,73 @@
+{
+  "schema": "omegas.amarelo.autocal-gaspoint-current-prev-v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "fields": {
+    "PETR_INJ_TBUF_GAS_PREV": {"address":"0x015D","role":"GasPointPrev.x","status":"PROVEN"},
+    "MNFLD_PRESS_BUF_GAS_PREV": {"address":"0x015E","role":"GasPointPrev.y","status":"PROVEN"},
+    "PETR_INJ_TBUF_GAS": {"address":"0x015F","role":"GasPoint.x","status":"PROVEN"},
+    "MNFLD_PRESS_BUF_GAS": {"address":"0x0160","role":"GasPoint.y","status":"PROVEN"}
+  },
+  "dual_capture_observation": {
+    "PortmonAUTOCAL": {
+      "complete_ordered_quartet_cycles": 744,
+      "current_point_changed_index_events": 322,
+      "prev_equals_immediate_prior_current_events": 58,
+      "ratio": 0.1801
+    },
+    "PortmonLOGNOVO": {
+      "complete_ordered_quartet_cycles": 437,
+      "current_point_changed_index_events": 250,
+      "prev_equals_immediate_prior_current_events": 57,
+      "ratio": 0.228
+    }
+  },
+  "representative_transitions": [
+    {
+      "capture":"PortmonAUTOCAL",
+      "portmon_write_index":90116,
+      "element_index":6,
+      "prior_current":[0,0],
+      "native_previous":[0,0],
+      "new_current":[3508,550],
+      "prev_matches_immediate_prior_current":true
+    },
+    {
+      "capture":"PortmonAUTOCAL",
+      "portmon_write_index":92050,
+      "element_index":6,
+      "prior_current":[3508,550],
+      "native_previous":[0,0],
+      "new_current":[3546,545],
+      "prev_matches_immediate_prior_current":false
+    },
+    {
+      "capture":"PortmonLOGNOVO",
+      "portmon_write_index":6909,
+      "element_index":3,
+      "prior_current":[2125,365],
+      "native_previous":[2096,394],
+      "new_current":[2141,372],
+      "prev_matches_immediate_prior_current":false
+    },
+    {
+      "capture":"PortmonLOGNOVO",
+      "portmon_write_index":46162,
+      "element_index":6,
+      "prior_current":[0,0],
+      "native_previous":[0,0],
+      "new_current":[3600,546],
+      "prev_matches_immediate_prior_current":true
+    }
+  ],
+  "conclusions": {
+    "separate_native_current_and_previous_buffers": "PROVEN",
+    "ui_may_render_both_as_distinct_native_layers": "PROVEN",
+    "previous_buffer_is_always_immediate_prior_current": "FALSIFIED",
+    "firmware_reason_for_previous_buffer": "UNKNOWN",
+    "ui_animation_old_to_new_every_refresh": "PROHIBITED_WITHOUT_SEPARATE_EVIDENCE"
+  }
+}
