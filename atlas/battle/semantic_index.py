@@ -95,9 +95,10 @@ def parse(text: str):
         if rm:
             resource = rm.group(1)
             resource_class = rm.group(2).strip()
+            resource_root_name = rm.group(3).strip()
             obj = None
             if "AUTOCAL" in resource.upper():
-                resources.append({"name": resource, "root_class": resource_class, "objects": []})
+                resources.append({"name": resource, "root_class": resource_class, "root_name": resource_root_name, "objects": []})
             continue
 
         if not resources or resources[-1]["name"] != resource:

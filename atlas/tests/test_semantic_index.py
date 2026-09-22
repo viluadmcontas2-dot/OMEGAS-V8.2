@@ -32,16 +32,16 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
       0x0051b000  _AcqusitionAreas0Click
       0x0051087c  ChartDataAfterDraw
     virtual methods (1):
-  resource TAUTOCALSETTINGS TAutoCalSettings:AutoCalSettings  (1 components)
+  resource TAUTOCALSETTINGS → TAutoCalSettings:AutoCalSettings  (1 components)
         <object TAutoCalSettings:AutoCalSettings>
           OnClose = "FormClose"  → 0x513e68
           OnShow = "FormShow"  → 0x513da8
-  resource TAUTOCALDM TAutoCalDM:AutoCalDM  (1 components)
+  resource TAUTOCALDM → TAutoCalDM:AutoCalDM  (1 components)
       <object TAebVector:PETR_INJ_TBP>
         SerialCode = 331
         FileSection = "AutoCal"
         FileKeyName = "PetrInjTBp"
-  resource TAUTOCALUI TAutoCalUI:AutoCalUI  (2 components)
+  resource TAUTOCALUI → TAutoCalUI:AutoCalUI  (2 components)
         <object TButton:ButtonAutoMatch>
           Action = "ActionAutoMatch"
         <object TAction:ActionAutoMatch>
@@ -49,7 +49,7 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
           OnExecute = "ActionAutoMatchExecute"
         <object TChart:ChartData>
           OnAfterDraw = "ChartDataAfterDraw"
-  resource TAUTOCALCOLORSETTINGS TAutoCalColorSettings:AutoCalColorSettings  (1 components)
+  resource TAUTOCALCOLORSETTINGS → TAutoCalColorSettings:AutoCalColorSettings  (1 components)
         <object TShape:_GasPoint>
           OnClick = "_AcqusitionAreas0Click"
         <object TChart:ChartData>
@@ -65,6 +65,7 @@ class SemanticIndexTest(unittest.TestCase):
         x=mod.parse(SAMPLE)
         self.assertEqual(x["classes"]["TAutoCalDM"]["fields"][0]["name"],"PETR_INJ_TBP")
         self.assertEqual(x["serial_objects"][0]["serial_code"],331)
+        self.assertEqual(x["resources"][0]["root_name"],"AutoCalSettings")
         auto_match_event=next(e for e in x["event_bindings"] if e["handler"]=="ActionAutoMatchExecute")
         self.assertTrue(auto_match_event["resolved_method"])
         self.assertTrue(x["action_bindings"][0]["resolved_object"])
