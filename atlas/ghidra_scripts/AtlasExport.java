@@ -126,7 +126,7 @@ public class AtlasExport extends GhidraScript {
             n++;
         }
         iface.dispose();
-        String meta="{\"schema\":\"omegas.atlas.ghidra-index.v1\",\"program\":\""+safe(currentProgram.getName())+"\",\"seed_functions\":"+seeds.size()+",\"reachable_functions\":"+fs.size()+",\"function_cap\":"+MAX_FUNCS+",\"function_cap_hit\":"+functionCapHit+",\"decompile_attempts\":"+Math.min(fs.size(),MAX_DECOMPILE)+",\"decompile_cap\":"+MAX_DECOMPILE+",\"decompile_cap_hit\":"+decompileCapHit+"}\\n";
+        String meta="{\"schema\":\"omegas.atlas.ghidra-index.v1\",\"program\":\""+safe(currentProgram.getName())+"\",\"seed_functions\":"+seeds.size()+",\"reachable_functions\":"+fs.size()+",\"function_cap\":"+MAX_FUNCS+",\"function_cap_hit\":"+functionCapHit+",\"decompile_attempts\":"+Math.min(fs.size(),MAX_DECOMPILE)+",\"decompile_cap\":"+MAX_DECOMPILE+",\"decompile_cap_hit\":"+decompileCapHit+"}\n";
         Files.writeString(out.resolve("meta.json"),meta,StandardCharsets.UTF_8);
         println(meta);
     }
