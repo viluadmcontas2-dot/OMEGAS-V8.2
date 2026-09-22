@@ -74,6 +74,8 @@
       const gasZones = gasZoneFlags.filter(Boolean).length;
       const nativeStatus = nativeSnapshot.nativeStatus || {};
       const epoch = AutoCalUxModel.instrumentEpoch(projection?.instrument || {});
+      const epochPending = !!epoch.pending;
+      const epochUnconfirmed = !!epoch.unconfirmed;
       const autoMatchCount = finite(epoch.autoMatchExecuted ?? state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
       const maxAutoMatch = finite(epoch.maxAutoMatch ?? state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
       const acquisitionState = String(state.state || '').toUpperCase();
@@ -83,7 +85,11 @@
           ? 'AutoCal com erro de leitura'
           : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
             ? 'Conectando à aquisição'
-            : enabled === 1 ? 'AutoCal adquirindo'
+            : epochPending
+              ? 'Verificando ajuste da ECU'
+              : epochUnconfirmed
+                ? 'Mudança ainda não confirmada'
+                : enabled === 1 ? 'AutoCal adquirindo'
             : enabled === 0 ? 'AutoCal pausado'
             : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
       const progress = enabled === 1
@@ -100,6 +106,10 @@
         nextAction = String(state.message || state.error || 'A projeção nativa do AutoCal está indisponível.') + ' · Nenhuma referência será escolhida pela interface.';
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão e tente consultar novamente.';
+      } else if (epochPending) {
+        nextAction = 'A ECU sinalizou uma mudança de AutoMatch. Estou verificando a nova Curva K antes de tratá-la como um novo ciclo.';
+      } else if (epochUnconfirmed) {
+        nextAction = 'A mudança do contador não veio acompanhada de uma nova Curva K nas leituras de confirmação. O OMEGAS manteve o ciclo atual e aguarda nova evidência da ECU.';
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
       else if (enabled === 1) nextAction = 'Continue dirigindo normalmente. A tela mostra separadamente os pontos GNV da época atual e o snapshot da época AutoMatch anterior publicados pela ECU; as regiões registradas são contexto, não porcentagem de conclusão.';
       return { title, progress, autoMatch, nextAction, petrolZones, gasZones, petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch };
@@ -211,6 +221,23 @@
             cause: String(epoch.transition.cause || ''),
           }
         : null;
+      const pending = epoch?.pending && typeof epoch.pending === 'object'
+        ? {
+            before: finite(epoch.pending.before),
+            after: finite(epoch.pending.after),
+            rollover: epoch.pending.rollover === true,
+            snapshotsObserved: finite(epoch.pending.snapshotsObserved),
+          }
+        : null;
+      const unconfirmed = epoch?.unconfirmed && typeof epoch.unconfirmed === 'object'
+        ? {
+            before: finite(epoch.unconfirmed.before),
+            after: finite(epoch.unconfirmed.after),
+            rollover: epoch.unconfirmed.rollover === true,
+            snapshotsObserved: finite(epoch.unconfirmed.snapshotsObserved),
+            reason: String(epoch.unconfirmed.reason || ''),
+          }
+        : null;
       return {
         autoMatchExecuted: finite(epoch.autoMatchExecuted),
         maxAutoMatch: finite(epoch.maxAutoMatch),
@@ -218,6 +245,8 @@
         gasPreviousRole: String(epoch.gasPreviousRole || ''),
         authority: String(epoch.authority || ''),
         transition,
+        pending,
+        unconfirmed,
       };
     },
 
