@@ -285,6 +285,7 @@
 }
 
 .autocal-equivalence-line {
+  display: none;
   fill: none;
   stroke: rgba(240,196,92,.78);
   stroke-width: 2;
@@ -293,6 +294,7 @@
 }
 
 .autocal-equivalence-point {
+  display: none;
   fill: #f0c45c;
   stroke: #081018;
   stroke-width: 2;
@@ -300,10 +302,16 @@
 }
 
 .autocal-reference-point {
+  opacity: 0;
   stroke: #081018;
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.autocal-reference-hit.selected + .autocal-reference-point {
+  opacity: 1;
 }
 
 .autocal-reference-point.petrol {
@@ -1200,8 +1208,8 @@
 }
 
 .autocal-chart-workspace {
-  position: relative;
-  display: block;
+  display: grid;
+  gap: 7px;
   min-width: 0;
 }
 .autocal-chart-host {
@@ -1216,18 +1224,18 @@
   background-size: 11.111% 25%, 10% 100%, auto, auto;
 }
 .autocal-chart-inspector {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 3;
-  width: min(238px, 30%);
-  max-height: calc(100% - 24px);
-  overflow: auto;
-  padding: 11px 12px;
-  border-color: rgba(70,203,231,.20);
-  background: rgba(7,16,26,.86);
-  box-shadow: 0 12px 32px rgba(0,0,0,.28);
-  backdrop-filter: blur(8px);
+  position: static;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: auto;
+  max-height: none;
+  overflow: hidden;
+  padding: 8px 10px;
+  border-color: rgba(70,203,231,.16);
+  background: rgba(7,16,26,.58);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .autocal-live-strip {
@@ -1328,11 +1336,11 @@
 
 /* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
 .autocal-reference-line.petrol:not(.previous) {
-  stroke-width: 6;
-  opacity: .54;
+  stroke-width: 4;
+  opacity: .62;
 }
 .autocal-reference-line.gas:not(.previous) {
-  stroke-width: 2.8;
+  stroke-width: 2.5;
 }
 .autocal-reference-point.petrol {
   fill: #07101a;

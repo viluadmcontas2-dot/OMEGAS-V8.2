@@ -42,11 +42,11 @@
       this.tick += 1;
       try { if (typeof this.onFast === 'function') this.onFast(this.tick); } catch (error) { console.error('[OMEGAS scheduler fast]', error); }
       this.emitHooks('fast');
-      if (this.tick === 1 || this.tick % 5 === 0) {
+      if (this.tick === 1 || this.tick % 10 === 0) {
         try { if (typeof this.onStatus === 'function') this.onStatus(this.tick); } catch (error) { console.error('[OMEGAS scheduler status]', error); }
         this.emitHooks('status');
       }
-      if (this.tick === 1 || this.tick % 10 === 0) {
+      if (this.tick === 1 || this.tick % 20 === 0) {
         try { if (typeof this.onContext === 'function') this.onContext(this.tick); } catch (error) { console.error('[OMEGAS scheduler context]', error); }
         this.emitHooks('context');
       }

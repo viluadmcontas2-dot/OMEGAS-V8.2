@@ -453,7 +453,7 @@
                   <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 </div>
               </div>
-              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="equivalence">GNV equivalente</span><span class="current-band">Faixa MAP atual</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
+              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="current-band">Faixa MAP atual</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
               <div class="autocal-live-strip" aria-live="polite">
                 <div class="autocal-live-summary"><small>AGORA</small><b id="autocalLiveTitle">Aguardando telemetria</b><span id="autocalLiveFuel">—</span></div>
                 <div class="autocal-live-metric"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
@@ -485,9 +485,9 @@
               <details class="autocal-more-actions">
                 <summary>Mais ações</summary>
                 <div class="autocal-reset-actions">
-                  <button type="button" data-autocal-action="RESET_PETROL" disabled aria-disabled="true" title="Bloqueado até validação Atlas">Reset gasolina — bloqueado</button>
-                  <button type="button" data-autocal-action="RESET_GAS" disabled aria-disabled="true" title="Bloqueado até validação Atlas">Reset GNV — bloqueado</button>
-                  <p>Resets bloqueados por segurança até o Atlas provar o efeito real de cada comando na ECU. Habilitar/Pausar coleta permanece disponível.</p>
+                  <button type="button" data-autocal-action="RESET_PETROL" disabled aria-disabled="true" title="Bloqueado até validação física controlada">Reset nativo gasolina — bloqueado</button>
+                  <button type="button" data-autocal-action="RESET_GAS" disabled aria-disabled="true" title="Efeito amplo observado; bloqueado">Reset nativo GNV — bloqueado</button>
+                  <p>Resets continuam bloqueados. No Lognovo original, o comando “Reset gas point” também zerou estado AutoCal de gasolina e MUL_ACT; a tela não promete seletividade inexistente.</p>
                 </div>
               </details>
             </section>
