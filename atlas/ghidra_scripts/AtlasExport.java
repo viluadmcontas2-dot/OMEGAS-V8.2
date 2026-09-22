@@ -9,10 +9,10 @@ import java.nio.file.*;
 import java.util.*;
 
 public class AtlasExport extends GhidraScript {
-    private static final int MAX_FUNCS = 900;
+    private static final int MAX_FUNCS = 5000;
     private static final int MAX_DEPTH = 10;
     private static final int HUB_LIMIT = 80;
-    private static final int MAX_DECOMPILE = 320;
+    private static final int MAX_DECOMPILE = 1200;
 
     private String safe(String s) {
         if (s == null) return "";
@@ -96,7 +96,7 @@ public class AtlasExport extends GhidraScript {
             }
         }
 
-        ArrayList<Function> fs=new ArrayList<>(dist.keySet());
+        boolean functionCapHit=!q.isEmpty();\n        ArrayList<Function> fs=new ArrayList<>(dist.keySet());
         fs.sort((a,b)->{
             int x=Integer.compare(dist.get(a),dist.get(b));
             return x!=0?x:a.getEntryPoint().compareTo(b.getEntryPoint());
@@ -113,7 +113,7 @@ public class AtlasExport extends GhidraScript {
         DecompInterface iface=new DecompInterface();
         iface.setOptions(new DecompileOptions()); iface.toggleCCode(true); iface.toggleSyntaxTree(true);
         iface.openProgram(currentProgram);
-        int n=0;
+        int n=0;\n        boolean decompileCapHit=fs.size()>MAX_DECOMPILE;
         for (Function f:fs) {
             if (n>=MAX_DECOMPILE) break;
             DecompileResults dr=iface.decompileFunction(f,15,monitor);
@@ -124,7 +124,7 @@ public class AtlasExport extends GhidraScript {
             n++;
         }
         iface.dispose();
-        String meta="{\"schema\":\"omegas.atlas.ghidra-index.v1\",\"program\":\""+safe(currentProgram.getName())+"\",\"seed_functions\":"+seeds.size()+",\"reachable_functions\":"+fs.size()+",\"decompile_attempts\":"+Math.min(fs.size(),MAX_DECOMPILE)+"}\n";
+        String meta="{\"schema\":\"omegas.atlas.ghidra-index.v1\",\"program\":\""+safe(currentProgram.getName())+"\",\"seed_functions\":"+seeds.size()+",\"reachable_functions\":"+fs.size()+",\"function_cap\":"+MAX_FUNCS+",\"function_cap_hit\":"+functionCapHit+",\"decompile_attempts\":"+Math.min(fs.size(),MAX_DECOMPILE)+",\"decompile_cap\":"+MAX_DECOMPILE+",\"decompile_cap_hit\":"+decompileCapHit+"}\\n";
         Files.writeString(out.resolve("meta.json"),meta,StandardCharsets.UTF_8);
         println(meta);
     }
