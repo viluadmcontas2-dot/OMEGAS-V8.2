@@ -92,6 +92,34 @@ class AutoCalInstrumentProjectionTest {
     }
 
     @Test
+    fun `empty zero acquisition slots are not published as physical points`() {
+        val reference = snapshot(
+            vectorField("PETR_INJ_TBP", doubleArrayOf(2.0), 100L),
+            vectorField("PETR_MNFLD_PRESS_RV", doubleArrayOf(0.2), 100L),
+            vectorField("GAS_MNFLD_PRESS_RV", doubleArrayOf(0.2), 100L),
+        )
+        val rawX = IntArray(18)
+        val rawY = IntArray(18)
+        rawX[13] = 3600
+        rawY[13] = 884
+        val physicalX = DoubleArray(18)
+        val physicalY = DoubleArray(18)
+        physicalX[13] = 7.2
+        physicalY[13] = 0.884
+        val native = snapshot(
+            vectorField("PETR_INJ_TBUF_GAS", physicalX, 200L, raw = rawX),
+            vectorField("MNFLD_PRESS_BUF_GAS", physicalY, 201L, raw = rawY),
+        )
+
+        val result = AutoCalInstrumentProjection.project(reference, native, JSONObject(), null, JSONObject())
+        val points = result.getJSONObject("acquisition").getJSONArray("gasCurrent")
+        assertEquals(1, points.length())
+        assertEquals(13, points.getJSONObject(0).getInt("index"))
+        assertEquals(7.2, points.getJSONObject(0).getDouble("petrolMs"), 0.0001)
+        assertEquals(0.884, points.getJSONObject(0).getDouble("mapBar"), 0.0001)
+    }
+
+    @Test
     fun `stale or wrong-session telemetry never materializes agora`() {
         val base = snapshot(
             vectorField("PETR_INJ_TBP", doubleArrayOf(2.0), 100L),
