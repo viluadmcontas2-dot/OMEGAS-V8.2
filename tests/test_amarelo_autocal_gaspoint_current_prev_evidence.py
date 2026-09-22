@@ -13,11 +13,20 @@ class AutoCalGasPointCurrentPrevEvidenceTest(unittest.TestCase):
         self.assertEqual(conclusions["separate_native_current_and_previous_buffers"], "PROVEN")
         self.assertEqual(conclusions["ui_may_render_both_as_distinct_native_layers"], "PROVEN")
         self.assertEqual(conclusions["previous_buffer_is_always_immediate_prior_current"], "FALSIFIED")
-        self.assertEqual(conclusions["firmware_reason_for_previous_buffer"], "UNKNOWN")
         self.assertEqual(
-            conclusions["ui_animation_old_to_new_every_refresh"],
-            "PROHIBITED_WITHOUT_SEPARATE_EVIDENCE",
+            conclusions["previous_buffer_behaves_as_prior_automatch_epoch_snapshot"],
+            "PROVEN_DUAL_CAPTURE_BEHAVIOR",
         )
+        self.assertEqual(
+            conclusions["previous_buffer_bulk_replacement_tracks_automatch_epoch_rollover"],
+            "PROVEN_DUAL_CAPTURE_BEHAVIOR",
+        )
+        self.assertEqual(conclusions["exact_firmware_copy_guard"], "UNKNOWN")
+        self.assertEqual(
+            conclusions["firmware_reason_for_previous_buffer"],
+            "PRIOR_AUTOMATCH_EPOCH_SNAPSHOT_SUPPORTED_AND_OPERATIONALLY_CLOSED",
+        )
+        self.assertEqual(conclusions["ui_animation_old_to_new_every_refresh"], "PROHIBITED")
 
         for capture in ("PortmonAUTOCAL", "PortmonLOGNOVO"):
             stats = data["dual_capture_observation"][capture]
@@ -43,3 +52,16 @@ class AutoCalGasPointCurrentPrevEvidenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AutoCalGasPointPrevEpochEvidenceTest(unittest.TestCase):
+    def test_epoch_rollover_snapshot_matches_prior_current(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        epoch = data["epoch_snapshot_observation"]
+        autocal = epoch["PortmonAUTOCAL"]["prior_current_exact_match"]
+        self.assertEqual([(r["exact"], r["changed"]) for r in autocal], [(12, 12), (15, 16), (15, 16)])
+
+        lognovo = epoch["PortmonLOGNOVO"]["prior_current_exact_match"]
+        usable = [r for r in lognovo if "note" not in r]
+        self.assertEqual([(r["exact"], r["changed"]) for r in usable], [(13, 13), (15, 16), (14, 15)])
+        self.assertTrue(all(r["ratio"] >= 0.93 for r in usable))
