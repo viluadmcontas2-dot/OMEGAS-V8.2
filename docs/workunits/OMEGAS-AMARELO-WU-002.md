@@ -1,7 +1,7 @@
 # OMEGAS-AMARELO-WU-002 — State machine e consumer graph do ProgBase AutoCAL
 
 Issue: #74  
-Estado: **CLOSURE_CANDIDATE — depende do fechamento WU-001 + receipt integrado**
+Estado: **CLOSED / PROVEN — consumer graph e lifecycle host-observável fechados**
 
 ## Resultado observável
 
@@ -193,17 +193,35 @@ Esses UNKNOWNs **não autorizam algoritmo host paralelo**.
 | native epoch single authority | IMPLEMENTED |
 | predictor separado do native AutoCAL | IMPLEMENTED |
 | UNKNOWNs explicitamente marcados | PROVEN |
-| receipt integrado do fechamento | PENDING |
-| WU-001 fechado | PENDING |
+| receipt integrado do fechamento | PROVEN — fast `35766226922` + render `35766226859` no SHA `6e669ce9159f9baf1f6f467427e00ecca96cc5f6` |
+| WU-001 fechado | PROVEN — issue #73 CLOSED / COMPLETED |
 
-## Gate de fechamento
+## Closure receipt — 2026-09-22
 
-#74 pode ser fechado quando:
-1. WU-001 receber seu receipt integrado e for encerrado;
-2. fast contracts do conjunto atual estiverem verdes;
-3. Android render evidence do conjunto visual relevante estiver verde.
+WU-002 está **CLOSED / PROVEN** para a fronteira host-observável e para o caminho de produção tipado.
 
-Não escavar firmware inexistente para substituir esses gates.
+Pré-requisito:
+- WU-001 / issue #73: **CLOSED / COMPLETED**.
+
+Receipts integrados do código:
+- `OMEGAS Amarelo fast contracts` — run `35766226922` — SHA `6e669ce9159f9baf1f6f467427e00ecca96cc5f6` — **SUCCESS**;
+- `OMEGAS Amarelo Android render evidence` — run `35766226859` — mesmo SHA — **SUCCESS**.
+
+Receipt documental posterior:
+- fast contracts run `35766739562` — SHA `ddd5ac3181ef4d85c27cf0fa58c28e3a19d5a2c2` — **SUCCESS**.
+
+Fechamento significa:
+- scheduler host separado de qualquer state machine física interna;
+- consumers e publishers nativos mapeados;
+- 4 regiões MAP e 18 posições mantidas como conceitos distintos;
+- maturity/counters separados de ACQUIRED_ZONES;
+- GasPoint current/previous e epochs AutoMatch tratados pela autoridade nativa;
+- predictor inferido separado do AutoCAL nativo;
+- counter-only jamais promovido a novo epoch científico;
+- confirmação de epoch protegida contra polling assíncrono e replay do mesmo evento;
+- UNKNOWNs firmware-internos preservados como limites explícitos, sem algoritmo host paralelo.
+
+Nenhum desses UNKNOWNs reabre WU-002 sem novo artefato capaz de fornecer evidência direta.
 
 
 ## Polling-safe native epoch confirmation — 2026-09-22
