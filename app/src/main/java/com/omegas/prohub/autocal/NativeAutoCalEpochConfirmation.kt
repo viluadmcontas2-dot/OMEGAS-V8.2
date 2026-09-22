@@ -64,6 +64,12 @@ internal class NativeAutoCalEpochConfirmation(
 
     fun observeMul(currentMulHash: String): Observation {
         val current = pending ?: return Observation.None
+        if (!current.retryBudgetExhausted) {
+            current.snapshotsObserved += 1
+            if (current.snapshotsObserved >= maxSnapshots) {
+                current.retryBudgetExhausted = true
+            }
+        }
         if (currentMulHash.isNotBlank() && currentMulHash != current.oldMulHash) {
             val confirmation = Confirmation(
                 transition = current.transition,
@@ -73,12 +79,6 @@ internal class NativeAutoCalEpochConfirmation(
             )
             pending = null
             return Observation.Confirmed(confirmation)
-        }
-        if (!current.retryBudgetExhausted) {
-            current.snapshotsObserved += 1
-            if (current.snapshotsObserved >= maxSnapshots) {
-                current.retryBudgetExhausted = true
-            }
         }
         if (current.retryBudgetExhausted) {
             return Observation.RetryBudgetExhausted(
