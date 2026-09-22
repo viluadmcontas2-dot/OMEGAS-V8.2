@@ -202,30 +202,47 @@
       };
     },
 
-    epochTransition(previousProjection = {}, nextProjection = {}) {
+    sameKCurve(left = [], right = []) {
+      if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+      return left.every((point, index) => {
+        const other = right[index] || {};
+        return Number(point?.index) === Number(other?.index) &&
+          Math.abs((finite(point?.petrolMs) ?? NaN) - (finite(other?.petrolMs) ?? NaN)) < 1e-9 &&
+          Math.abs((finite(point?.factor) ?? NaN) - (finite(other?.factor) ?? NaN)) < 1e-9;
+      });
+    },
+
+    epochTransition(previousProjection = {}, nextProjection = {}, epochBaselineK = []) {
       if (previousProjection?.ok !== true || nextProjection?.ok !== true) {
-        return { changed: false, reason: 'UNAVAILABLE' };
+        return { changed: false, counterChanged: false, reason: 'UNAVAILABLE' };
       }
       const previousSession = String(previousProjection?.sessionId ?? '');
       const nextSession = String(nextProjection?.sessionId ?? '');
       if (!previousSession || !nextSession || previousSession !== nextSession) {
-        return { changed: false, reason: 'SESSION_CHANGED' };
+        return { changed: false, counterChanged: false, reason: 'SESSION_CHANGED' };
       }
       const previousEpoch = this.instrumentEpoch(previousProjection?.instrument || {});
       const nextEpoch = this.instrumentEpoch(nextProjection?.instrument || {});
       const before = finite(previousEpoch.autoMatchExecuted);
       const after = finite(nextEpoch.autoMatchExecuted);
       if (before === null || after === null || before === after) {
-        return { changed: false, reason: 'UNCHANGED', before, after };
+        return { changed: false, counterChanged: false, reason: 'UNCHANGED', before, after };
       }
+      const currentKPoints = this.instrumentKPoints(nextProjection?.instrument || {});
+      const fallbackPreviousK = this.instrumentKPoints(previousProjection?.instrument || {});
+      const baseline = Array.isArray(epochBaselineK) && epochBaselineK.length ? epochBaselineK : fallbackPreviousK;
+      const kChanged = baseline.length > 0 && currentKPoints.length > 0 && !this.sameKCurve(baseline, currentKPoints);
       return {
-        changed: true,
+        changed: kChanged,
+        counterChanged: true,
+        kChanged,
         before,
         after,
         rollover: after < before,
-        previousKPoints: this.instrumentKPoints(previousProjection?.instrument || {}),
-        currentKPoints: this.instrumentKPoints(nextProjection?.instrument || {}),
+        previousKPoints: baseline,
+        currentKPoints,
         authority: 'ECU_NATIVE_AUTOMATCH_EPOCH_READBACK',
+        reason: kChanged ? 'COUNTER_AND_K_CHANGED' : 'COUNTER_CHANGED_WITHOUT_K_DELTA',
       };
     },
 
@@ -459,6 +476,7 @@
       this.previousReferencePoints = [];
       this.currentReferencePoints = [];
       this.previousKPoints = [];
+      this.epochKPoints = [];
       this.lastEpochTransition = null;
       this.chartHistoryVisible = false;
       this.selectedReferenceIndex = null;
@@ -657,7 +675,7 @@
       const projection = this.api.projection?.() || {};
       const authoritative = projection?.ok === true;
       const previousProjection = this.projection || {};
-      const epochTransition = AutoCalUxModel.epochTransition(previousProjection, projection);
+      const epochTransition = AutoCalUxModel.epochTransition(previousProjection, projection, this.epochKPoints);
       this.projection = projection;
 
       if (!authoritative) {
@@ -710,18 +728,31 @@
         nextSnapshot,
         this.analysis,
       );
+      const currentKPoints = AutoCalUxModel.instrumentKPoints(projection?.instrument || {});
       if (referenceTransition.clearHistory) {
         this.previousReferencePoints = [];
         this.previousKPoints = [];
+        this.epochKPoints = currentKPoints;
         this.lastEpochTransition = null;
         this.chartHistoryVisible = false;
       } else if (referenceTransition.referenceChanged) {
         this.previousReferencePoints = referenceTransition.previousPoints;
       }
       if (referenceTransition.resetSelection) this.selectedReferenceIndex = null;
-      if (epochTransition.changed) {
-        this.previousKPoints = epochTransition.previousKPoints;
-        this.lastEpochTransition = epochTransition;
+      if (!this.epochKPoints.length && currentKPoints.length) {
+        this.epochKPoints = currentKPoints;
+      }
+      if (epochTransition.counterChanged) {
+        if (epochTransition.changed) {
+          this.previousKPoints = epochTransition.previousKPoints;
+          this.lastEpochTransition = epochTransition;
+        } else {
+          this.previousKPoints = [];
+          this.lastEpochTransition = null;
+        }
+        if (epochTransition.currentKPoints.length) {
+          this.epochKPoints = epochTransition.currentKPoints;
+        }
       }
       this.snapshot = nextSnapshot || {};
       this.analysis = nextAnalysis;
@@ -1211,8 +1242,9 @@
       const padRight = 24;
       const padTop = 16;
       const padBottom = 34;
-      const xs = points.map(point => point.petrolMs);
-      const ys = points.map(point => point.factor).concat([1.0]);
+      const previousK = Array.isArray(this.previousKPoints) ? this.previousKPoints : [];
+      const xs = points.map(point => point.petrolMs).concat(previousK.map(point => point.petrolMs));
+      const ys = points.map(point => point.factor).concat(previousK.map(point => point.factor), [1.0]);
       let xMin = Math.min(...xs);
       let xMax = Math.max(...xs);
       let yMin = Math.min(...ys);
@@ -1227,7 +1259,6 @@
       const path = points.map((point, index) =>
         (index ? 'L' : 'M') + ' ' + xFor(point.petrolMs).toFixed(1) + ' ' + yFor(point.factor).toFixed(1)
       ).join('');
-      const previousK = Array.isArray(this.previousKPoints) ? this.previousKPoints : [];
       const previousPath = previousK.length
         ? previousK.map((point, index) =>
             (index ? 'L' : 'M') + ' ' + xFor(point.petrolMs).toFixed(1) + ' ' + yFor(point.factor).toFixed(1)
