@@ -395,6 +395,7 @@
     exportSession(sessionId) { return this.demo ? false : invoke(this.native, 'exportSession', [sessionId || ''], false); }
     logs() { return this.demo ? [] : invoke(this.native, 'getLogs', [], []); }
 
+    exportData() { return this.demo ? false : invoke(this.native, 'exportData', [], false); }
     exportLearning() { return this.demo ? false : invoke(this.native, 'exportLearningArchive', [], false); }
     importLearning() { return this.demo ? false : invoke(this.native, 'importLearningArchive', [], false); }
     exportLogs() { return this.demo ? false : invoke(this.native, 'exportLogs', [], false); }

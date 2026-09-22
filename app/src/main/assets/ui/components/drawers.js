@@ -61,6 +61,7 @@
       document.querySelectorAll('[data-close-drawer]').forEach(button => button.addEventListener('click', () => {
         this.store.patch({ suggestionsOpen: false, toolsOpen: false });
       }));
+      document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
       document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
       document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
       document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
