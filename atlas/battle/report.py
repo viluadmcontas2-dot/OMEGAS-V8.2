@@ -19,7 +19,7 @@ def main():
         kinds[t["kind"]]=kinds.get(t["kind"],0)+1
     cov=s.get("coverage",{})
     open_count=sum(1 for t in targets if t["status"]!="PROVEN")
-    complete=(open_count==0 and cov.get("graph_functions_unseen",1)==0 and cov.get("broken",1)==0 and cov.get("stalled_targets",1)==0)
+    semantic_complete=bool(s.get("semantic_closure",False))\n    no_collector_truncation=not bool(cov.get("function_cap_hit",False))\n    complete=(open_count==0 and cov.get("graph_functions_unseen",1)==0 and cov.get("broken",1)==0 and cov.get("stalled_targets",1)==0 and semantic_complete and no_collector_truncation)
     lines=[
         "# OMEGAS Atlas — Battle Royale status","",
         f"Last reconciled wave: **{s.get('wave')}**",
