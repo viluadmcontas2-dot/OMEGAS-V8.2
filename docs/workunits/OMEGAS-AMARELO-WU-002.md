@@ -254,3 +254,27 @@ Therefore these simple guards are falsified:
 - mature-point presence as a required guard.
 
 The exact ECU set guard is **not recoverable from the supplied polling cadence**. Product rule remains unchanged: ECU flag is authority; live MAP, point presence and maturity are explanatory context only and must not synthesize the flag.
+
+
+## ACQUIRED_ZONES set-guard boundary — 2026-09-22
+
+Additional dual-capture testing falsifies the remaining simple host-visible guards.
+
+PortmonLOGNOVO, after AUTO_CAL_ENABLE state becomes known:
+- 320 zone-poll windows had known enable state;
+- 193 region/windows contained **CNG active + AutoCAL enabled + live MAP visitation in that same region** while the ECU flag remained `0 -> 0`.
+
+Combined with prior evidence:
+- every observed activation is associated with same-region live MAP visitation in the current or immediately preceding zone-poll window;
+- fixed dwell is falsified;
+- current point presence is not required;
+- mature point presence is not required;
+- maturity counter threshold is not the zone-flag formula;
+- ProgBase never writes the zone vectors in supplied captures.
+
+Conclusion:
+`CNG + AUTO_CAL_ENABLE + same-region live MAP visit` is **not sufficient** to set the flag.
+The exact set guard depends on ECU-internal state not present in current host-side artifacts.
+
+Stop condition:
+do not reconstruct or predict ACQUIRED_ZONES in OMEGAS. Consume the ECU flag as authority and use live MAP only as explanatory context.
