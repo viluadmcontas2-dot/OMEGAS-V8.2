@@ -43,9 +43,11 @@ class NativeAutoCalContract(unittest.TestCase):
         scale = SCALE.read_text('utf-8')
         self.assertIn('INJECTION_COUNTS_PER_MS = 500.0', scale)
         self.assertIn('MAP_COUNTS_PER_BAR = 1_000.0', scale)
-        self.assertIn('RESET_PETROL(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))', self.action)
-        self.assertIn('RESET_GAS(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04))', self.action)
+        # ProgBase 4.2.0.6 original handlers: petrol=0x01, gas=0x02, all=0x04.
+        self.assertIn('RESET_PETROL(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01))', self.action)
+        self.assertIn('RESET_GAS(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))', self.action)
         self.assertNotIn('RESET_ALL(', self.action)
+        self.assertNotIn('RESET_GAS(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04))', self.action)
 
     def test_manual_automatch_route_is_removed(self):
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
