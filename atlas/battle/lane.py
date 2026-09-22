@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, base64, hashlib, json, re, subprocess
+import argparse, base64, hashlib, json, re, subprocess, sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import semantic_targets
 
 ROOT=Path(__file__).resolve().parents[2]
 CANON=ROOT/"atlas/manifests/canonical-inputs.json"
@@ -32,21 +35,51 @@ def functions(indices:Path):
 def prove(summary,claims,evidence,new_targets=None):
     return {"status":"PROVEN","summary":summary,"claims":claims,"evidence":evidence,"new_targets":new_targets or [],"contradictions":[]}
 
-def escalate(summary,evidence=None):
-    return {"status":"ESCALATE","summary":summary,"claims":[],"evidence":evidence or [],"new_targets":[],"contradictions":[]}
+def escalate(summary,evidence=None,new_targets=None):
+    return {"status":"ESCALATE","summary":summary,"claims":[],"evidence":evidence or [],"new_targets":new_targets or [],"contradictions":[]}
+
+def occurrences(data:bytes, needle:bytes, limit=64):
+    out=[]; pos=0
+    while True:
+        pos=data.find(needle,pos)
+        if pos<0 or len(out)>=limit:return out
+        out.append(pos);pos+=max(1,len(needle))
+
+def semantic_payload(indices:Path):
+    p=indices/"ghidra/autocal-semantics.json"
+    if not p.is_file(): p=indices/"undelphi/autocal-semantics.json"
+    if not p.is_file(): raise RuntimeError("semantic index missing")
+    return semantic_targets.load(p)
+
+def semantic_entry(indices:Path,kind,target):
+    p=semantic_payload(indices)
+    for x in semantic_targets.build(p):
+        if x["kind"]==kind and x["target"]==target:return p,x
+    return p,None
+
+def function_for_va(indices:Path,va:int):
+    fs=functions(indices)
+    exact=f"{va:08x}"
+    if exact in fs:return fs[exact]
+    for f in fs.values():
+        if int(f["min"],16)<=va<=int(f["max"],16):return f
+    return None
+
+def ghidra_function_evidence(indices:Path,f):
+    ev={"kind":"ghidra-function","entry":f["entry"],"distance":f["distance"],"min":f["min"],"max":f["max"],"name":f["name"],"boundary":f["boundary"],"callers":f["callers"],"callees":f["callees"]}
+    dp=indices/"ghidra/decomp"/(f["entry"]+".c")
+    if dp.is_file():
+        raw=dp.read_bytes();ev["decompile_sha256"]=sha256_bytes(raw);ev["decompile_bytes"]=len(raw);ev["decompile_path"]=str(dp)
+    return ev
 
 def ghidra_fn(indices,target):
     fs=functions(indices); f=fs.get(target.lower())
     if not f:return escalate("function absent from Ghidra AutoCal graph")
-    dp=indices/"ghidra/decomp"/(f["entry"]+".c")
-    ev={"kind":"ghidra-function","entry":f["entry"],"distance":f["distance"],"min":f["min"],"max":f["max"],"name":f["name"],"boundary":f["boundary"],"callers":f["callers"],"callees":f["callees"]}
-    if dp.is_file():
-        raw=dp.read_bytes(); ev["decompile_sha256"]=sha256_bytes(raw); ev["decompile_bytes"]=len(raw); ev["decompile_path"]=str(dp)
     nts=[]
     for addr in (f["callers"]+f["callees"])[:64]:
         n=fs.get(addr.lower())
         if n is not None: nts.append({"kind":"function","target":n["entry"],"distance":n["distance"]})
-    return prove("Ghidra resolved native function and graph neighborhood",[{"kind":"native-function","subject":f["entry"],"value":True}], [ev],nts)
+    return prove("Ghidra resolved native function and graph neighborhood",[{"kind":"native-function","subject":f["entry"],"value":True}],[ghidra_function_evidence(indices,f)],nts)
 
 def objdump_fn(indices,binary_path,target):
     fs=functions(indices); f=fs.get(target.lower())
@@ -123,14 +156,154 @@ def portmon_frame(indices,target):
     return prove("frame is directly observed in AutoCal Portmon corpus",[{"kind":"frame-observed","subject":target,"value":True}],[{"kind":"portmon","observation":row,"clock_semantics":idx["clock_semantics"]}])
 
 def binary_frame(binary_path,target):
-    needle=bytes.fromhex(target); data=binary_path.read_bytes(); hits=[]; pos=0
-    while True:
-        pos=data.find(needle,pos)
-        if pos<0:break
-        hits.append(pos);pos+=1
-        if len(hits)>=64:break
+    needle=bytes.fromhex(target); hits=occurrences(binary_path.read_bytes(),needle)
     if not hits:return escalate("exact wire frame is not literal in executable; construction path requires escalation")
     return prove("exact wire frame bytes occur literally in executable",[{"kind":"literal-frame","subject":target,"value":True}],[{"kind":"raw-bytes","file_offsets":hits}])
+
+def delphi_method(indices,target):
+    _,item=semantic_entry(indices,"method",target)
+    if not item:return escalate("method absent from Delphi semantic index")
+    return prove("Delphi RTTI/VMT metadata identifies published method",[{"kind":"published-method","subject":target,"value":True}],[{"kind":"delphi-method","metadata":item["meta"]}])
+
+def ghidra_method(indices,target):
+    _,item=semantic_entry(indices,"method",target)
+    if not item:return escalate("method absent from semantic catalog")
+    f=function_for_va(indices,int(item["meta"]["va"]))
+    if not f:return escalate("published method VA is outside current Ghidra AutoCal graph")
+    return prove("published Delphi method resolves to Ghidra native function",[{"kind":"method-native-function","subject":target,"value":f["entry"]}],[ghidra_function_evidence(indices,f)],[{"kind":"function","target":f["entry"]}])
+
+def delphi_field(indices,target):
+    _,item=semantic_entry(indices,"field",target)
+    if not item:return escalate("field absent from Delphi semantic index")
+    return prove("Delphi metadata identifies field layout",[{"kind":"field-layout","subject":target,"value":True}],[{"kind":"delphi-field","metadata":item["meta"]}])
+
+def raw_field_name(indices,binary_path,target):
+    _,item=semantic_entry(indices,"field",target)
+    if not item:return escalate("field absent from semantic catalog")
+    name=item["meta"]["name"]; data=binary_path.read_bytes()
+    ah=occurrences(data,name.encode("ascii","ignore")); uh=occurrences(data,name.encode("utf-16le"))
+    if not ah and not uh:return escalate("field name not independently visible in canonical raw bytes")
+    return prove("canonical binary independently contains the Delphi field name",[{"kind":"field-name-present","subject":target,"value":True}],[{"kind":"raw-field-name","ascii_offsets":ah,"utf16le_offsets":uh}])
+
+def ghidra_field_use(indices,target):
+    _,item=semantic_entry(indices,"field-use",target)
+    if not item:return escalate("field-use target absent from semantic catalog")
+    name=item["meta"]["name"]; off=int(item["meta"]["offset"]); patterns=[re.compile(rf"\b{re.escape(name)}\b",re.I),re.compile(rf"0x{off:x}\b",re.I)]
+    hits=[]
+    for p in sorted((indices/"ghidra/decomp").glob("*.c")):
+        for lineno,line in enumerate(p.read_text(encoding="utf-8",errors="replace").splitlines(),1):
+            if any(rx.search(line) for rx in patterns):
+                hits.append({"function":p.stem,"line":lineno,"text":line[:500]})
+                if len(hits)>=64:break
+        if len(hits)>=64:break
+    if not hits:return escalate("Ghidra decompiler has no direct field-name/offset signal in current corpus")
+    nts=[{"kind":"function","target":h["function"]} for h in hits[:16]]
+    return prove("Ghidra decompiler exposes field-use signal in reachable AutoCal code",[{"kind":"field-use-signal","subject":target,"value":True}],[{"kind":"ghidra-field-use","hits":hits}],nts)
+
+def capstone_field_use(indices,binary_path,target):
+    import pefile
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+    from capstone.x86 import X86_OP_MEM
+    _,item=semantic_entry(indices,"field-use",target)
+    if not item:return escalate("field-use target absent from semantic catalog")
+    wanted=int(item["meta"]["offset"])
+    pe=pefile.PE(str(binary_path),fast_load=False);image=int(pe.OPTIONAL_HEADER.ImageBase);data=binary_path.read_bytes()
+    mode=CS_MODE_64 if int(pe.FILE_HEADER.Machine)==0x8664 else CS_MODE_32
+    md=Cs(CS_ARCH_X86,mode);md.detail=True
+    def va_to_off(va):
+        rva=va-image
+        for s in pe.sections:
+            a=int(s.VirtualAddress);size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+            if a<=rva<a+size:return int(s.PointerToRawData)+(rva-a)
+        return None
+    hits=[]
+    for f in functions(indices).values():
+        start=int(f["min"],16);end=int(f["max"],16)+1;fo=va_to_off(start)
+        if fo is None:continue
+        raw=data[fo:fo+max(1,end-start)]
+        for ins in md.disasm(raw,start):
+            for op in ins.operands:
+                if op.type==X86_OP_MEM and int(op.mem.disp)==wanted:
+                    hits.append({"function":f["entry"],"address":f"{ins.address:08x}","mnemonic":ins.mnemonic,"op_str":ins.op_str})
+                    break
+            if len(hits)>=64:break
+        if len(hits)>=64:break
+    if not hits:return escalate("Capstone found no memory displacement matching the field offset in reachable AutoCal functions")
+    nts=[{"kind":"function","target":h["function"]} for h in hits[:16]]
+    return prove("Capstone independently finds field-offset memory accesses in reachable AutoCal code",[{"kind":"field-memory-access","subject":target,"value":True}],[{"kind":"capstone-field-use","offset":wanted,"hits":hits}],nts)
+
+def delphi_event(indices,target):
+    payload,item=semantic_entry(indices,"event",target)
+    if not item:return escalate("event binding absent from semantic index")
+    method=semantic_targets.find_method_target(payload,item["meta"]["handler"])
+    nts=[{"kind":"method","target":method["target"]}] if method else []
+    return prove("DFM/Delphi metadata binds UI event to handler",[{"kind":"event-handler","subject":target,"value":item["meta"]["handler"]}],[{"kind":"delphi-event","metadata":item["meta"]}],nts)
+
+def ghidra_event(indices,target):
+    payload,item=semantic_entry(indices,"event",target)
+    if not item:return escalate("event binding absent from semantic index")
+    method=semantic_targets.find_method_target(payload,item["meta"]["handler"])
+    if not method:return escalate("event handler has no unique published Delphi method")
+    r=ghidra_method(indices,method["target"])
+    if r["status"]!="PROVEN":return escalate("event handler did not resolve to native Ghidra function",r.get("evidence"),[{"kind":"method","target":method["target"]}])
+    return prove("UI event handler resolves to native Ghidra code",[{"kind":"event-native-handler","subject":target,"value":method["meta"]["va_hex"]}],r["evidence"],[{"kind":"method","target":method["target"]}]+r.get("new_targets",[]))
+
+def delphi_action(indices,target):
+    payload,item=semantic_entry(indices,"action",target)
+    if not item:return escalate("action binding absent from semantic index")
+    ev=semantic_targets.find_event_for_action(payload,item["meta"]["action"])
+    nts=[{"kind":"event","target":ev["target"]}] if ev else []
+    return prove("DFM binds control to action object",[{"kind":"control-action","subject":target,"value":item["meta"]["action"]}],[{"kind":"delphi-action","metadata":item["meta"]}],nts)
+
+def ghidra_action(indices,target):
+    payload,item=semantic_entry(indices,"action",target)
+    if not item:return escalate("action binding absent from semantic index")
+    ev=semantic_targets.find_event_for_action(payload,item["meta"]["action"])
+    if not ev:return escalate("action object has no unique executable event binding")
+    method=semantic_targets.find_method_target(payload,ev["meta"]["handler"])
+    if not method:return escalate("action handler has no unique published method")
+    r=ghidra_method(indices,method["target"])
+    if r["status"]!="PROVEN":return escalate("action handler did not resolve to native Ghidra function",r.get("evidence"))
+    return prove("control action resolves through OnExecute to native code",[{"kind":"action-native-handler","subject":target,"value":method["meta"]["va_hex"]}],r["evidence"],[{"kind":"event","target":ev["target"]},{"kind":"method","target":method["target"]}]+r.get("new_targets",[]))
+
+def delphi_serial(indices,target):
+    _,item=semantic_entry(indices,"serial",target)
+    if not item:return escalate("serial object absent from Delphi resource index")
+    return prove("Delphi resource binds AutoCal object to serial code",[{"kind":"serial-binding","subject":target,"value":item["meta"]["serial_hex"]}],[{"kind":"delphi-serial","metadata":item["meta"]}])
+
+def portmon_object(indices,target):
+    _,item=semantic_entry(indices,"serial",target)
+    if not item:return escalate("serial target absent from semantic catalog")
+    code=int(item["meta"]["serial_code"]); needle=code.to_bytes(2,"little")
+    idx=json.loads((indices/"portmon/portmon-index.json").read_text(encoding="utf-8"))
+    hits=[]
+    for row in idx.get("request_catalog",[]):
+        try:b=bytes.fromhex(row["frame"])
+        except ValueError:continue
+        if len(b)>=3 and b[1:3]==needle:
+            hits.append(row)
+    if not hits:return escalate("serial code was not observed at the object-address position in recorded requests")
+    return prove("Portmon independently observes the serial object address on wire",[{"kind":"serial-object-observed","subject":target,"value":True}],[{"kind":"portmon-object-position","little_endian":" ".join(f"{x:02X}" for x in needle),"hits":hits[:64],"clock_semantics":idx["clock_semantics"]}])
+
+def delphi_visual(indices,target):
+    _,item=semantic_entry(indices,"visual",target)
+    if not item:return escalate("visual object absent from Delphi resource index")
+    return prove("Delphi resource identifies AutoCal render object",[{"kind":"visual-object","subject":target,"value":True}],[{"kind":"delphi-visual","metadata":item["meta"]}])
+
+def ghidra_visual(indices,target):
+    _,item=semantic_entry(indices,"visual",target)
+    if not item:return escalate("visual target absent from semantic catalog")
+    name=item["meta"]["object"];hits=[]
+    for line in (indices/"ghidra/strings.tsv").read_text(encoding="utf-8",errors="replace").splitlines():
+        q=line.split("\t")
+        if len(q)<2:continue
+        try:s=base64.b64decode(q[1]).decode("utf-8","replace")
+        except Exception:continue
+        refs=q[2].split(";") if len(q)>2 and q[2] else []
+        if name.lower() in s.lower() and refs:hits.append({"address":q[0],"text":s[:500],"refs":refs})
+    if not hits:return escalate("Ghidra found no code-referenced defined string for visual object")
+    nts=[{"kind":"function","target":r} for h in hits for r in h["refs"][:8]]
+    return prove("Ghidra independently links visual object name to code references",[{"kind":"visual-code-reference","subject":target,"value":True}],[{"kind":"ghidra-visual","hits":hits[:32]}],nts[:32])
 
 def main():
     ap=argparse.ArgumentParser()
@@ -145,6 +318,20 @@ def main():
         elif a.driver=="ghidra-string":r=ghidra_string(a.indices,a.target)
         elif a.driver=="portmon-frame":r=portmon_frame(a.indices,a.target)
         elif a.driver=="binary-frame":r=binary_frame(bp,a.target)
+        elif a.driver=="delphi-method":r=delphi_method(a.indices,a.target)
+        elif a.driver=="ghidra-method":r=ghidra_method(a.indices,a.target)
+        elif a.driver=="delphi-field":r=delphi_field(a.indices,a.target)
+        elif a.driver=="raw-field-name":r=raw_field_name(a.indices,bp,a.target)
+        elif a.driver=="ghidra-field-use":r=ghidra_field_use(a.indices,a.target)
+        elif a.driver=="capstone-field-use":r=capstone_field_use(a.indices,bp,a.target)
+        elif a.driver=="delphi-event":r=delphi_event(a.indices,a.target)
+        elif a.driver=="ghidra-event":r=ghidra_event(a.indices,a.target)
+        elif a.driver=="delphi-action":r=delphi_action(a.indices,a.target)
+        elif a.driver=="ghidra-action":r=ghidra_action(a.indices,a.target)
+        elif a.driver=="delphi-serial":r=delphi_serial(a.indices,a.target)
+        elif a.driver=="portmon-object":r=portmon_object(a.indices,a.target)
+        elif a.driver=="delphi-visual":r=delphi_visual(a.indices,a.target)
+        elif a.driver=="ghidra-visual":r=ghidra_visual(a.indices,a.target)
         else:raise ValueError("unsupported driver "+a.driver)
     except Exception as e:
         r={"status":"BROKEN","summary":f"{type(e).__name__}: {e}","claims":[],"evidence":[],"new_targets":[],"contradictions":[]}
