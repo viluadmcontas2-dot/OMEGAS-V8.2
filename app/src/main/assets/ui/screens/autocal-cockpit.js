@@ -202,6 +202,33 @@
       };
     },
 
+    epochTransition(previousProjection = {}, nextProjection = {}) {
+      if (previousProjection?.ok !== true || nextProjection?.ok !== true) {
+        return { changed: false, reason: 'UNAVAILABLE' };
+      }
+      const previousSession = String(previousProjection?.sessionId ?? '');
+      const nextSession = String(nextProjection?.sessionId ?? '');
+      if (!previousSession || !nextSession || previousSession !== nextSession) {
+        return { changed: false, reason: 'SESSION_CHANGED' };
+      }
+      const previousEpoch = this.instrumentEpoch(previousProjection?.instrument || {});
+      const nextEpoch = this.instrumentEpoch(nextProjection?.instrument || {});
+      const before = finite(previousEpoch.autoMatchExecuted);
+      const after = finite(nextEpoch.autoMatchExecuted);
+      if (before === null || after === null || before === after) {
+        return { changed: false, reason: 'UNCHANGED', before, after };
+      }
+      return {
+        changed: true,
+        before,
+        after,
+        rollover: after < before,
+        previousKPoints: this.instrumentKPoints(previousProjection?.instrument || {}),
+        currentKPoints: this.instrumentKPoints(nextProjection?.instrument || {}),
+        authority: 'ECU_NATIVE_AUTOMATCH_EPOCH_READBACK',
+      };
+    },
+
     instrumentKPoints(instrument = {}) {
       const rows = Array.isArray(instrument?.kCurve?.points) ? instrument.kCurve.points : [];
       return rows.map(point => ({
@@ -431,6 +458,8 @@
       this.chartScale = null;
       this.previousReferencePoints = [];
       this.currentReferencePoints = [];
+      this.previousKPoints = [];
+      this.lastEpochTransition = null;
       this.chartHistoryVisible = false;
       this.selectedReferenceIndex = null;
       this.selectedBandIndex = null;
@@ -528,7 +557,7 @@
                 <div><small>CURVE K · ECU</small><h4>Multiplicador global nativo</h4><p>PETR_INJ_TBP × MUL_ACT. A tela não suaviza nem recalcula os valores da ECU.</p></div>
                 <span id="autocalKCount">0 pontos K</span>
               </div>
-              <div class="autocal-k-legend"><span class="native-k">MUL_ACT atual</span><span class="unity">K = 1,000</span></div>
+              <div class="autocal-k-legend"><span class="native-k">MUL_ACT atual</span><span class="previous-k">Epoch anterior</span><span class="unity">K = 1,000</span></div>
               <div id="autocalKChart" class="autocal-k-chart"><div class="chart-empty">Aguardando Curve K nativa.</div></div>
               <div id="autocalKInspector" class="autocal-inline-inspector"><b>Curve K aguardando ECU</b><span>Os 30 multiplicadores nativos aparecem aqui sem interpolação científica.</span></div>
             </section>
@@ -628,6 +657,7 @@
       const projection = this.api.projection?.() || {};
       const authoritative = projection?.ok === true;
       const previousProjection = this.projection || {};
+      const epochTransition = AutoCalUxModel.epochTransition(previousProjection, projection);
       this.projection = projection;
 
       if (!authoritative) {
@@ -682,11 +712,17 @@
       );
       if (referenceTransition.clearHistory) {
         this.previousReferencePoints = [];
+        this.previousKPoints = [];
+        this.lastEpochTransition = null;
         this.chartHistoryVisible = false;
       } else if (referenceTransition.referenceChanged) {
         this.previousReferencePoints = referenceTransition.previousPoints;
       }
       if (referenceTransition.resetSelection) this.selectedReferenceIndex = null;
+      if (epochTransition.changed) {
+        this.previousKPoints = epochTransition.previousKPoints;
+        this.lastEpochTransition = epochTransition;
+      }
       this.snapshot = nextSnapshot || {};
       this.analysis = nextAnalysis;
       this.actionState = this.api.actionStatus() || {};
@@ -1190,7 +1226,13 @@
       const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
       const path = points.map((point, index) =>
         (index ? 'L' : 'M') + ' ' + xFor(point.petrolMs).toFixed(1) + ' ' + yFor(point.factor).toFixed(1)
-      ).join(' ');
+      ).join('');
+      const previousK = Array.isArray(this.previousKPoints) ? this.previousKPoints : [];
+      const previousPath = previousK.length
+        ? previousK.map((point, index) =>
+            (index ? 'L' : 'M') + ' ' + xFor(point.petrolMs).toFixed(1) + ' ' + yFor(point.factor).toFixed(1)
+          ).join('')
+        : '';
       const dots = points.map(point =>
         '<circle class="autocal-k-point" cx="' + xFor(point.petrolMs).toFixed(1) + '" cy="' + yFor(point.factor).toFixed(1) +
         '" r="3.5"><title>' + point.petrolMs.toFixed(2) + ' ms · K ' + point.factor.toFixed(4) + '</title></circle>'
@@ -1208,6 +1250,7 @@
       host.innerHTML =
         '<svg class="autocal-k-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Curve K nativa por tempo de injeção de gasolina">' +
         '<line class="autocal-k-unity" x1="' + padLeft + '" y1="' + unityY.toFixed(1) + '" x2="' + (width - padRight) + '" y2="' + unityY.toFixed(1) + '"></line>' +
+        (previousPath ? '<path class="autocal-k-line previous" d="' + previousPath + '"></path>' : '') +
         '<path class="autocal-k-line" d="' + path + '"></path>' + dots + xTicks + yTicks +
         '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 1) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
         '</svg>';
@@ -1215,10 +1258,15 @@
       const factors = points.map(point => point.factor);
       const minFactor = Math.min(...factors);
       const maxFactor = Math.max(...factors);
+      const epoch = this.lastEpochTransition;
+      const epochCopy = epoch?.changed
+        ? ' Novo epoch nativo ' + Math.round(epoch.before) + '→' + Math.round(epoch.after) +
+          (epoch.rollover ? ' (rollover)' : '') + '; linha anterior preservada do readback precedente.'
+        : '';
       this.text(
         'autocalKInspector',
         'MUL_ACT atual · ' + points.length + ' pontos · K ' + minFactor.toFixed(4) + ' a ' + maxFactor.toFixed(4) +
-        '. Valores publicados pela ECU; sem alvo calculado pelo OMEGAS.'
+        '. Valores publicados pela ECU; sem alvo calculado pelo OMEGAS.' + epochCopy
       );
     }
 
