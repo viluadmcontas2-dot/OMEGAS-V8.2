@@ -59,23 +59,22 @@ class AutoCalNativeActionManager(
             true,
         ),
         RESET_PETROL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
             "Resetar aquisição gasolina",
-            "O ProgBase identifica este comando como reset dos pontos de gasolina. O efeito real é conferido no recibo antes/depois.",
+            "ProgBase original: ActionResetPetrolExecute usa modo 0x01. Backup completo é obrigatório antes do envio.",
             false,
         ),
         RESET_GAS(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
             "Resetar aquisição GNV",
-            "O ProgBase identifica este comando como reset dos pontos de GNV. Em firmware observado, o efeito pode ser mais amplo; revise o recibo antes/depois.",
-            true,
+            "ProgBase original: ActionResetGasExecute usa modo 0x02. Backup completo é obrigatório antes do envio.",
+            false,
         );
     }
 
-    // 0x01 = Manual AutoMatch e 0x08 = Modify map refs no ProgBase 4.2.0.6.
-    // Ambos permanecem deliberadamente fora desta superfície operacional.
-    // O verdadeiro Reset All usa outra rota no software original e não é exposto
-    // até sua sequência nativa ser provada.
+    // ProgBase 4.2.0.6 original, confirmado por handlers do executável:
+    // 0x01 = Reset petrol, 0x02 = Reset gas, 0x04 = Reset all.
+    // RESET_ALL permanece deliberadamente fora da superfície operacional.
     private data class Preparation(
         val id: String,
         val action: Action,
@@ -206,6 +205,13 @@ class AutoCalNativeActionManager(
             update("READING_BEFORE", "Lendo snapshot anterior", 8, prepared)
             val before = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
             ensureSession(prepared)
+            val preMutationBackup = if (!prepared.action.operationalToggle) {
+                update("PERSISTING_BACKUP", "Gravando backup obrigatório antes do reset", 36, prepared)
+                persistPreMutationBackup(prepared, before)
+            } else {
+                null
+            }
+            ensureSession(prepared)
 
             update("SENDING_ACTION", prepared.action.label, 48, prepared)
             val reply = transaction(
@@ -223,7 +229,7 @@ class AutoCalNativeActionManager(
             update("READING_AFTER", "Lendo snapshot posterior", 70, prepared)
             val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
             validateActionReadback(prepared.action, after)
-            val receipt = receipt(prepared, reply, before, after, startedAt)
+            val receipt = receipt(prepared, reply, before, after, startedAt, preMutationBackup)
             appendReceipt(receipt)
             try { onConfirmed(receipt) } catch (_: Exception) {}
             update("CONFIRMED", "Ação confirmada por ACK e recibo antes/depois", 100, prepared, receipt)
@@ -270,6 +276,7 @@ class AutoCalNativeActionManager(
         before: AutoCalSnapshot,
         after: AutoCalSnapshot,
         startedAt: Long,
+        preMutationBackup: JSONObject?,
     ): JSONObject {
         val changed = JSONArray()
         fieldsForReceipt.distinctBy { it.identity }.sortedWith(compareBy<AutoCalProtocol.Field> { it.address }.thenBy { it.index ?: -1 }).forEach { field ->
@@ -308,7 +315,55 @@ class AutoCalNativeActionManager(
             .put("automatic", false)
             .put("manualOnly", true)
             .put("readbackValid", true)
+            .put("preMutationBackup", preMutationBackup ?: JSONObject.NULL)
             .put("automaticRollback", false)
+    }
+
+    private fun persistPreMutationBackup(
+        prepared: Preparation,
+        before: AutoCalSnapshot,
+    ): JSONObject {
+        require(!before.partial) {
+            "Backup pré-reset incompleto; reset bloqueado antes da USB"
+        }
+        val root = File(receiptFile.parentFile, "backups/autocal_pre_reset")
+        require(root.exists() || root.mkdirs()) {
+            "Não foi possível criar o diretório de backup pré-reset"
+        }
+        require(root.isDirectory) {
+            "Diretório de backup pré-reset inválido"
+        }
+        val createdAtMs = System.currentTimeMillis()
+        val backupFile = File(root, "autocal_pre_reset_${createdAtMs}_${prepared.action.name}.json")
+        val payload = JSONObject()
+            .put("format", "omegas-autocal-pre-reset-v1")
+            .put("action", prepared.action.name)
+            .put("label", prepared.action.label)
+            .put("commandHex", prepared.action.request.hex())
+            .put("sessionId", prepared.sessionId)
+            .put("createdAtMs", createdAtMs)
+            .put("beforeHash", before.snapshotHash)
+            .put("beforePartial", before.partial)
+            .put("before", before.toJson())
+        atomicWrite(backupFile, payload.toString(2))
+
+        val verified = JSONObject(backupFile.readText(Charsets.UTF_8))
+        require(verified.getString("format") == "omegas-autocal-pre-reset-v1") {
+            "Formato do backup pré-reset inválido"
+        }
+        require(verified.getString("beforeHash") == before.snapshotHash) {
+            "Hash do backup pré-reset divergente"
+        }
+        require(
+            verified.getJSONObject("before").getString("snapshotHash") == before.snapshotHash,
+        ) {
+            "Snapshot do backup pré-reset divergente"
+        }
+        return JSONObject()
+            .put("verified", true)
+            .put("fileName", backupFile.name)
+            .put("beforeHash", before.snapshotHash)
+            .put("createdAtMs", createdAtMs)
     }
 
     private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
