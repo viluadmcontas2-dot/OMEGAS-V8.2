@@ -562,6 +562,7 @@ class DashboardLevelsRenderTest {
             mapSource: document.getElementById('mapSourceStatus')?.textContent ?? null,
             mapGridText: document.getElementById('mapGrid')?.innerText ?? null,
             curveSource: document.getElementById('curveSourceStatus')?.textContent ?? null,
+            curveReading: document.querySelector('[data-screen="curve"]')?.classList.contains('is-reading') === true,
             obdStatus: document.getElementById('obdStatusPill')?.textContent ?? null,
             obdStft: document.getElementById('obdStft')?.textContent ?? null,
             obdRpm: document.getElementById('obdRpm')?.textContent ?? null,
@@ -618,9 +619,12 @@ class DashboardLevelsRenderTest {
         val scenario = launch()
         try {
             activateRoute(scenario, "curve", settleMs = 850L)
+            SystemClock.sleep(2_500L)
             val dom = globalRouteDom(scenario, "curve")
             saveEvidence("curve-offline-honest", dom, scenario)
             assertTrue("Curve route must activate", dom.getBoolean("active"))
+            assertEquals("Offline Curve read must settle honestly", "Curva não confirmada", dom.optString("curveSource"))
+            assertTrue("Offline Curve must leave the reading state", !dom.getBoolean("curveReading"))
             assertTrue("Emulator without ECU must not claim a confirmed curve", !dom.optString("curveSource").contains("ECU confirmada", ignoreCase = true))
             assertTrue("Curve must never render NaN", !dom.getBoolean("bodyHasNaN"))
             assertTrue("Curve must never render undefined", !dom.getBoolean("bodyHasUndefined"))
