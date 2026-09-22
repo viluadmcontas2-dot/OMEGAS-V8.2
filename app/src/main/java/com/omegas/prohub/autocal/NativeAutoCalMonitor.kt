@@ -152,7 +152,7 @@ class NativeAutoCalMonitor(
         val previousProbe = synchronized(lock) { lastProbe }
         val probe = probe(currentSession) ?: return
         val autoMatchCountChanged = previousProbe != null && probe.autoMatchCount != previousProbe.autoMatchCount
-        val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
+        val previousAutoMatchCount = previousProbe?.autoMatchCount
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
         val probeChanged = previousProbe != null && (
             autoMatchCountChanged ||
@@ -193,7 +193,7 @@ class NativeAutoCalMonitor(
 
         val shouldSnapshot = synchronized(lock) { snapshotRequested }
         if (shouldSnapshot) {
-            readFullSnapshot(currentSession, probe, countIncreased)
+            readFullSnapshot(currentSession, probe, autoMatchCountChanged, previousAutoMatchCount)
         } else {
             onStateChanged()
         }
@@ -293,7 +293,8 @@ class NativeAutoCalMonitor(
     private fun readFullSnapshot(
         expectedSessionId: Long,
         probe: AutoCalProtocol.NativeStatus,
-        countIncreased: Boolean,
+        autoMatchCountChanged: Boolean,
+        previousAutoMatchCount: Int?,
     ) {
         val reason = synchronized(lock) { snapshotReason }
         val started = System.currentTimeMillis()
@@ -454,7 +455,7 @@ class NativeAutoCalMonitor(
         if (enabled == 1) {
             try { onFreshSnapshot(decorated) } catch (_: Exception) {}
         }
-        if (countIncreased && previousMul.isNotBlank() && mulActHash.isNotBlank() && previousMul != mulActHash) {
+        if (autoMatchCountChanged && previousMul.isNotBlank() && mulActHash.isNotBlank() && previousMul != mulActHash) {
             try {
                 onNativeCalibrationObserved(
                     JSONObject()
@@ -464,6 +465,9 @@ class NativeAutoCalMonitor(
                         .put("oldHash", previousMul)
                         .put("newHash", mulActHash)
                         .put("nativeAutoMatchCount", probe.autoMatchCount)
+                        .put("nativeAutoMatchBefore", previousAutoMatchCount ?: JSONObject.NULL)
+                        .put("nativeAutoMatchAfter", probe.autoMatchCount)
+                        .put("nativeAutoMatchRollover", previousAutoMatchCount != null && probe.autoMatchCount < previousAutoMatchCount)
                         .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                         .put("nativeFlag13", probe.nativeFlag13)
                         .put("readbackValid", true)
