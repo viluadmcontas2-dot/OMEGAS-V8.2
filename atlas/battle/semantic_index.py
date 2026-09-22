@@ -20,6 +20,9 @@ def is_target_class(name: str | None) -> bool:
 
 def clean_value(value: str):
     v = value.strip()
+    annotated = re.fullmatch(r'"([^"]*)"\\s+→\\s+0x[0-9a-fA-F]+', v)
+    if annotated:
+        return annotated.group(1)
     if len(v) >= 2 and v[0] == v[-1] == '"':
         return v[1:-1]
     if re.fullmatch(r"-?\d+", v):

@@ -24,6 +24,10 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
     published methods (1):
       0x0051b000  _AcqusitionAreas0Click
     virtual methods (1):
+  resource TAUTOCALSETTINGS TAutoCalSettings:AutoCalSettings  (1 components)
+        <object TAutoCalSettings:AutoCalSettings>
+          OnClose = "FormClose"  → 0x513e68
+          OnShow = "FormShow"  → 0x513da8
   resource TAUTOCALDM TAutoCalDM:AutoCalDM  (1 components)
       <object TAebVector:PETR_INJ_TBP>
         SerialCode = 331
@@ -54,5 +58,9 @@ class SemanticIndexTest(unittest.TestCase):
         color_event=next(e for e in x["event_bindings"] if e["object"]=="_GasPoint")
         self.assertTrue(color_event["resolved_method"])
         self.assertEqual(color_event["handler_candidates"][0]["class"],"TAutoCalColorSettings")
+        settings_close=next(e for e in x["event_bindings"] if e["object"]=="AutoCalSettings" and e["event"]=="OnClose")
+        settings_show=next(e for e in x["event_bindings"] if e["object"]=="AutoCalSettings" and e["event"]=="OnShow")
+        self.assertEqual(settings_close["handler"],"FormClose")
+        self.assertEqual(settings_show["handler"],"FormShow")
 
 if __name__=="__main__":unittest.main()
