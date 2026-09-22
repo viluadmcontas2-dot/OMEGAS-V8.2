@@ -553,7 +553,7 @@
               <div class="autocal-section-head">
                 <div><small>AUTOCAL NATIVO</small><h4>Curva de aquisição</h4><p>Gasolina referência × resposta GNV. Os pontos são reposicionados conforme a própria ECU atualiza os buffers nativos.</p></div>
                 <div class="autocal-chart-tools" aria-label="Controles do gráfico">
-                  <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
+                  <button type="button" data-autocal-history disabled aria-label="Comparar snapshot anterior da referência">Comparar referência anterior</button>
                 </div>
               </div>
               <div class="autocal-chart-legend"><span class="petrol">Gasolina referência</span><span class="gas">GNV resposta</span><span class="acquired">Pontos adquiridos pela ECU</span><span class="previous">GNV · época anterior</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
@@ -906,7 +906,7 @@
       const history = this.panel?.querySelector('[data-autocal-history]');
       if (history) {
         history.disabled = this.previousReferencePoints.length === 0;
-        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Leitura anterior';
+        history.textContent = this.chartHistoryVisible ? 'Ocultar comparação' : 'Comparar referência anterior';
       }
 
       this.renderReferenceChart(snapshot);
