@@ -21,8 +21,8 @@
   }
   function actionLabel(action) {
     return ({
-      ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
-      DISABLE_AUTO_CAL: 'Pausar Auto Calibration',
+      ENABLE_AUTO_CAL: 'Ativar Auto Calibration',
+      DISABLE_AUTO_CAL: 'Desativar Auto Calibration',
       RESET_PETROL: 'Resetar aquisição gasolina',
       RESET_GAS: 'Resetar aquisição GNV',
     })[action] || action;
@@ -632,7 +632,7 @@
             </section>
 
             <section class="autocal-command-bar">
-              <div class="autocal-command-copy"><small>AUTOMATCH DA ECU</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
+              <div class="autocal-command-copy"><small>AUTOMATCH DA ECU</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação em andamento.</span></div>
               <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
               <details class="autocal-more-actions">
                 <summary>Mais ações</summary>
