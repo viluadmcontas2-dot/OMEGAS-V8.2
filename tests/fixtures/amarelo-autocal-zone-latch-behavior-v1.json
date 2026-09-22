@@ -124,7 +124,10 @@
     "exact_firmware_set_guard": "UNKNOWN",
     "exact_firmware_clear_guard": "UNKNOWN",
     "acquired_zone_flag_is_maturity_threshold": "FALSIFIED",
-    "acquired_zone_flag_is_percent_progress": "FALSIFIED"
+    "acquired_zone_flag_is_percent_progress": "FALSIFIED",
+    "fixed_live_dwell_guard": "FALSIFIED_AT_HOST_OBSERVATION_GRANULARITY",
+    "current_point_presence_is_sufficient_or_required_set_guard": "FALSIFIED",
+    "mature_point_presence_is_required_set_guard": "FALSIFIED"
   },
   "product_contract": {
     "human_label_true": "Região registrada pela ECU neste ciclo",
@@ -133,5 +136,47 @@
     "never_recompute_flag_from_live_map": true,
     "use_ecu_flag_as_authority": true,
     "live_map_correlation_is_explanatory_context_only": true
+  },
+  "set_guard_observation_boundary": {
+    "PortmonAUTOCAL": {
+      "activations": 14,
+      "same_region_current_window_frames": {
+        "min": 1,
+        "median": 28,
+        "max": 30
+      },
+      "activations_without_current_region_point": 1,
+      "activations_without_mature_region_point": 4,
+      "example_single_live_frame_activation": {
+        "portmon_index": 946451,
+        "zone": 0,
+        "live_frames": 1,
+        "first_visit_to_flag_ms": 45.742
+      },
+      "example_no_current_point_activation": {
+        "portmon_index": 734980,
+        "zone": 3
+      }
+    },
+    "PortmonLOGNOVO": {
+      "activations": 14,
+      "same_region_current_window_frames": {
+        "min": 0,
+        "median": 26.5,
+        "max": 2340
+      },
+      "activation_seen_only_in_previous_window": {
+        "portmon_index": 887015,
+        "zone": 3,
+        "previous_window_frames": 1
+      }
+    },
+    "conclusions": {
+      "fixed_live_dwell_guard_visible_to_host": "FALSIFIED",
+      "current_native_point_required_at_observed_activation": "FALSIFIED",
+      "mature_native_point_required_at_observed_activation": "FALSIFIED",
+      "exact_firmware_set_guard_recoverable_from_supplied_polling_cadence": "NO",
+      "reason": "Zone vector is polled at slow cadence; activation can be observed after one live frame, after long dwell, with no current region point, or only after a prior-window visit."
+    }
   }
 }
