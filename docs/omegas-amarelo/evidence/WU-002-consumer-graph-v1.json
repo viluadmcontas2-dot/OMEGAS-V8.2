@@ -335,7 +335,7 @@
         "rule": "each element is rounded to integer and presented by zero vs non-zero"
       },
       "monotonic": false,
-      "ui_contract": "draw four native MAP regions using ECU thresholds; flags are per-region context, never percentage/progress",
+      "ui_contract": "draw four native MAP regions using ECU thresholds; true flag means region registered by ECU in current acquisition epoch; never percentage/progress; do not recompute from live MAP",
       "element_order_semantics": "PROVEN_LOW_TO_HIGH_MAP_ORDER",
       "status": "PROVEN_SHAPE_AND_BINARY_DOMAIN",
       "geometry": {
@@ -395,6 +395,36 @@
           ]
         },
         "status": "PROVEN_STATIC_AND_RAW_LOGNOVO"
+      },
+      "latch_behavior": {
+        "activation_live_map_correlation": {
+          "PortmonAUTOCAL": {
+            "activations": 14,
+            "same_region_current_window": 14,
+            "same_region_two_windows": 14
+          },
+          "PortmonLOGNOVO": {
+            "activations": 14,
+            "same_region_current_window": 13,
+            "same_region_two_windows": 14
+          }
+        },
+        "falling_edges": {
+          "PortmonAUTOCAL": {
+            "events": 3,
+            "all_observed_after_zero_vector": true
+          },
+          "PortmonLOGNOVO": {
+            "events": 3,
+            "all_observed_after_zero_vector": true
+          }
+        },
+        "observed_behavior": "flags rise individually after/around live MAP visitation and remain latched until an ECU-side epoch clear",
+        "exact_set_guard": "UNKNOWN",
+        "exact_clear_guard": "UNKNOWN",
+        "automatch_relationship": "RELATED_NOT_SOLE_PROVEN_GUARD",
+        "product_authority": "use ECU flags; never recompute them from live MAP",
+        "status": "PROVEN_OBSERVED_BEHAVIOR_WITH_GUARD_UNKNOWN"
       }
     },
     "gas_point_buffers": {
