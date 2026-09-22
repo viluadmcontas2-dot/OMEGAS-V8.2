@@ -17,8 +17,8 @@ Baseline de reconciliação: `1807b42c43ab084c2efb8c59a439aa7b270db4ee`. Esta ma
 | Cursor AGORA | `autocal-live-layer` | `renderLiveCursor()` | PresentSnapshot global | telemetria MP48 | nenhum write/persist | Store.telemetry | efêmero; some quando telemetria fica inválida |
 | Selecionar região | `data-autocal-band-index` | `inspectBand` | — | maturity/snapshot nativo | nenhum write | counters + zonas + eventos | superfície humana sem Bxx/contador/limiar |
 | Detalhes técnicos | `autocalTechnicalDetails` | disclosure | — | snapshots | leitura apenas | RAW/hash/eventos | Bxx/contador/threshold sob demanda |
-| Reset gasolina | `RESET_PETROL` | bloqueado | bridge rejeita antes de prepare | `AutoCalNativeActionManager` | identidade original `02 24 04 01 2B`; efeito seletivo não observado nos Portmons fornecidos | — | interlock destrutivo ativo até validação física específica |
-| Reset GNV | `RESET_GAS` | bloqueado | bridge rejeita antes de prepare | `AutoCalNativeActionManager` | identidade original `02 24 04 02 2C`; efeito seletivo não observado nos Portmons fornecidos | — | interlock destrutivo ativo até validação física específica |
+| Reset gasolina | `RESET_PETROL` | bloqueado | bridge rejeita antes de prepare | `AutoCalNativeActionManager` | identidade original `02 24 04 02 2C`; efeito seletivo não observado nos Portmons fornecidos | — | interlock destrutivo ativo até validação física específica |
+| Reset GNV | `RESET_GAS` | bloqueado | bridge rejeita antes de prepare | `AutoCalNativeActionManager` | identidade original `02 24 04 04 2E`; Lognovo mostra efeito amplo em gasolina/GNV/MUL_ACT | — | interlock destrutivo ativo; nunca apresentar como seletivo |
 
 ## Autoridades separadas
 
@@ -30,8 +30,8 @@ Baseline de reconciliação: `1807b42c43ab084c2efb8c59a439aa7b270db4ee`. Esta ma
 
 ## Invariantes
 
-- AutoMatch manual (`0x08`) e RESET_ALL (`0x04`) não são expostos.
-- RESET_PETROL (`0x01`) e RESET_GAS (`0x02`) estão temporariamente intertravados na UI/bridge; identidade de comando não equivale a efeito físico seletivo já validado.
+- Manual AutoMatch (`0x01`) e RESET_ALL (wire não fechado; rotina separada) não são expostos.
+- RESET_PETROL (`0x02`) e RESET_GAS (`0x04`) estão intertravados na UI/bridge. O `0x04` teve efeito amplo observado no Lognovo; identidade/caption não equivale a seletividade.
 - Snapshot manual antigo nunca decide enable/pause.
 - Falha/timeout não vira READY silencioso.
 - Telemetria inválida remove o cursor AGORA anterior.

@@ -33,12 +33,12 @@ Fontes reconciliadas: `AutoCalProtocol.kt`, testes de protocolo, `byte-matrix.js
 
 - Enable AutoCal: `12 4A 01 01 5E`, observado no Lognovo.
 - Disable AutoCal: `12 4A 01 00 5D`, observado no Lognovo.
-- Manual AutoMatch: modo `0x08` → `02 24 04 08 32`, identidade provada pelo EXE; ausente nos dois Portmons fornecidos e não exposto pelo OMEGAS.
-- Reset gasolina: modo `0x01` → `02 24 04 01 2B`, identidade provada pelo EXE; ausente nos dois Portmons fornecidos e atualmente intertravado no OMEGAS.
-- Reset GNV: modo `0x02` → `02 24 04 02 2C`, identidade provada pelo EXE; ausente nos dois Portmons fornecidos e atualmente intertravado no OMEGAS.
-- Reset all: modo `0x04` → `02 24 04 04 2E`, provado pelo EXE e observado uma vez em cada Portmon; não exposto pelo OMEGAS.
-- `Modify map refs` é a ação separada `ActionAutoCalRifExecute`; este corpus não autoriza atribuir a ela o modo `0x08`.
+- Modify map refs: `ActionAutoCalRifExecute@0x005189B4` → modo `0x08` → `02 24 04 08 32`; identidade provada pelo EXE, ausente nos Portmons fornecidos.
+- Manual AutoMatch: `ActionAutoMatchExecute@0x005189C0` → modo `0x01` → `02 24 04 01 2B`; identidade provada pelo EXE, ausente nos Portmons fornecidos e não exposto pelo OMEGAS.
+- Reset gasolina: `ActionResetPetrolExecute@0x005189CC` → modo `0x02` → `02 24 04 02 2C`; identidade provada pelo EXE, ausente nos Portmons fornecidos e intertravado no OMEGAS.
+- Reset GNV: `ActionResetGasExecute@0x005189D8` → modo `0x04` → `02 24 04 04 2E`; observado nos dois Portmons. No Lognovo, o efeito capturado foi amplo: zerou buffers/referências gasolina+GNV e retornou `MUL_ACT` a Q14 1.0. Não pode ser apresentado como “somente GNV”.
+- Reset all: `ActionResetAllExecute@0x005189E4` chama uma rotina diferente (`0x005185D4`); este corpus não fecha seu wire e o OMEGAS não o expõe.
 
-O EXE prova identidade/mode; Portmon prova apenas o tráfego efetivamente capturado. A ausência de `0x01/0x02/0x08` nos captures significa que o efeito físico seletivo desses três comandos não deve ser inventado.
+O EXE prova identidade/handler/mode; Portmon prova tráfego e efeitos capturados. Nome de ação do ProgBase não autoriza inferir seletividade física.
 
 Screenshot não é prova de byte; nome de campo não é prova de semântica. Lacunas permanecem **DESCONHECIDO/HIPÓTESE**.

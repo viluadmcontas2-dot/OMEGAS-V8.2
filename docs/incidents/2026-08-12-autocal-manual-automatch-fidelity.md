@@ -1,7 +1,7 @@
 # Incidente — AutoCal expunha Manual AutoMatch sem fidelidade ao comportamento observado
 
 ## Sintoma e impacto
-O fluxo Android mantinha uma ação explícita `NATIVE_AUTOMATCH` que enviava o modo `0x08` quando o operador confirmava. A revalidação direta do ProgBase 4.2.0.6 original fechou a identidade correta: `0x08` é Manual AutoMatch, `0x01` é Reset petrol, `0x02` é Reset gas e `0x04` é Reset all. `Modify map refs` é outra ação VCL (`ActionAutoCalRifExecute`) e este incidente não atribui a ela um modo de wire. Nos Portmon fornecidos, a ECU altera `MUL_ACT` e incrementa o contador de AutoMatch sem um comando host Manual AutoMatch adjacente. Assim, continua correto não expor Manual AutoMatch no fluxo normal, mas a identidade de protocolo anterior estava errada.
+O fluxo Android manteve no passado uma ação explícita `NATIVE_AUTOMATCH` com modo `0x08`. A revalidação direta do ProgBase 4.2.0.6 pelo RTTI de métodos + disassembly fecha a identidade real: `0x08 = Modify map refs`, `0x01 = Manual AutoMatch`, `0x02 = Reset petrol point`, `0x04 = Reset gas point`. `Reset all` usa outra rotina (`ActionResetAllExecute -> 0x005185D4`) e não deve ser confundido com `0x04`. Nos Portmons fornecidos, a ECU altera `MUL_ACT` e incrementa o contador de AutoMatch sem um comando host Manual AutoMatch adjacente; portanto continua correto não expor Manual AutoMatch no fluxo normal.
 
 ## Causa imediata
 A implementação anterior transformou a existência conhecida do modo nativo `0x08` em uma ação operacional exposta ao usuário, antes de existir evidência de que o ProgBase o disparava manualmente no fluxo normal.
@@ -13,7 +13,7 @@ O contrato de AutoCal não separava com rigor três responsabilidades: habilitar
 Os testes protegiam a presença e a confirmação do próprio `NATIVE_AUTOMATCH`; portanto validavam a hipótese antiga em vez de confrontá-la com o tráfego real do ProgBase.
 
 ## Evidência nova
-`PortmonLOGNOVO.LOG` contém 39.524 escritas seriais e 20.456 consultas de telemetria `48 01 49`. No corpus analisado não há comando host Manual AutoMatch `02 24 04 08 32` junto dos três ciclos automáticos observados. Mesmo assim, o contador `0x0174` evolui `0 → 1 → 2 → 3` e `MUL_ACT` muda nos mesmos ciclos. A desmontagem do executável original prova os handlers `ActionAutoMatchExecute -> 0x08`, `ActionResetPetrolExecute -> 0x01`, `ActionResetGasExecute -> 0x02` e `ActionResetAllExecute -> 0x04`; a rotina comum usa esse byte como modo no frame `02 24 04 xx`. Nos Portmons fornecidos, apenas `02 24 04 04 2E` aparece, uma vez em cada captura. Os frames de controle observados para a aquisição continuam `12 4A 01 01 5E` (Enable) e `12 4A 01 00 5D` (Disable).
+`PortmonLOGNOVO.LOG` contém 39.524 escritas seriais e 20.456 consultas de telemetria `48 01 49`. Não há `02 24 04 01 2B` (Manual AutoMatch) junto dos três ciclos automáticos observados; mesmo assim, o contador `0x0174` evolui `0 → 1 → 2 → 3` e `MUL_ACT` muda. O executável original mapeia `ActionAutoCalRifExecute@0x005189B4 -> 0x08`, `ActionAutoMatchExecute@0x005189C0 -> 0x01`, `ActionResetPetrolExecute@0x005189CC -> 0x02`, `ActionResetGasExecute@0x005189D8 -> 0x04`; `ActionResetAllExecute@0x005189E4` segue uma rotina distinta. O frame `02 24 04 04 2E` aparece nos dois Portmons e, no Lognovo, seu antes/depois mostra efeito amplo: buffers/referências de gasolina e GNV zerados e `MUL_ACT` retornando a Q14 1.0. Os frames de controle observados continuam `12 4A 01 01 5E` (Enable) e `12 4A 01 00 5D` (Disable).
 
 ## Correção
 - remover `NATIVE_AUTOMATCH` do fluxo operacional normal;
