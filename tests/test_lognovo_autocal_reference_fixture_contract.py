@@ -62,3 +62,9 @@ def test_android_render_fixture_provenance_is_enforced_end_to_end():
     render_test = Path("app/src/androidTest/java/com/omegas/prohub/DashboardLevelsRenderTest.kt").read_text(encoding="utf-8")
     assert 'root.getString("classification") == "SYNTHETIC_NON_SCIENTIFIC"' in render_test
     assert 'saveEvidence("autocal-equivalence-shifted", dom, scenario, provenance)' in render_test
+
+
+if __name__ == "__main__":
+    test_lognovo_reference_fixture_has_original_provenance_and_exact_bytes()
+    test_original_lognovo_reference_is_not_the_test_only_shifted_fixture()
+    test_android_render_fixture_provenance_is_enforced_end_to_end()
