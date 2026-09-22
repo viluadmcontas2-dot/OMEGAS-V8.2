@@ -38,6 +38,7 @@ class NativeAutoCalMonitor(
 
     private val lock = Any()
     private val maturityTracker = NativeAutoCalMaturityTracker()
+    private val epochConfirmation = NativeAutoCalEpochConfirmation(maxSnapshots = 3)
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
@@ -64,6 +65,7 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
+            epochConfirmation.reset()
             // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
             // de qualquer leitura pesada. Assim o primeiro probe estável sempre
             // produz um snapshot completo e a UI não fica presa sem thresholds.
@@ -88,6 +90,7 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
+            epochConfirmation.reset()
             snapshotRequested = false
             snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false)
@@ -104,6 +107,7 @@ class NativeAutoCalMonitor(
     }
 
     fun onManualActionConfirmed(receipt: JSONObject) {
+        synchronized(lock) { epochConfirmation.reset() }
         requestSnapshot("ACTION_${receipt.optString("action", "UNKNOWN")}")
         val beforeMul = mulActRawFromSnapshot(receipt.optJSONObject("before"))
         val afterMul = mulActRawFromSnapshot(receipt.optJSONObject("after"))
@@ -153,6 +157,11 @@ class NativeAutoCalMonitor(
         val probe = probe(currentSession) ?: return
         val epochTransition = AutoCalEpochTransition.between(previousProbe?.autoMatchCount, probe.autoMatchCount)
         val autoMatchCountChanged = epochTransition != null
+        if (epochTransition != null) {
+            synchronized(lock) {
+                epochConfirmation.start(epochTransition, lastMulActHash)
+            }
+        }
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
         val probeChanged = previousProbe != null && (
             autoMatchCountChanged ||
@@ -188,12 +197,15 @@ class NativeAutoCalMonitor(
             } else if (probeChanged) {
                 snapshotRequested = true
                 snapshotReason = if (autoMatchCountChanged) "AUTOMATCH_EPOCH_CHANGED" else "NATIVE_STATUS_CHANGED"
+            } else if (epochConfirmation.hasPending()) {
+                snapshotRequested = true
+                snapshotReason = "AUTOMATCH_EPOCH_AWAITING_K_READBACK"
             }
         }
 
         val shouldSnapshot = synchronized(lock) { snapshotRequested }
         if (shouldSnapshot) {
-            readFullSnapshot(currentSession, probe, epochTransition)
+            readFullSnapshot(currentSession, probe)
         } else {
             onStateChanged()
         }
@@ -206,6 +218,7 @@ class NativeAutoCalMonitor(
             .put("snapshotReason", snapshotReason)
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
+            .put("nativeEpochPending", epochConfirmation.hasPending())
     }
 
     fun latestSnapshotJson(): JSONObject = synchronized(lock) { JSONObject(latestSnapshot.toString()) }
@@ -293,7 +306,6 @@ class NativeAutoCalMonitor(
     private fun readFullSnapshot(
         expectedSessionId: Long,
         probe: AutoCalProtocol.NativeStatus,
-        epochTransition: AutoCalEpochTransition?,
     ) {
         val reason = synchronized(lock) { snapshotReason }
         val started = System.currentTimeMillis()
@@ -431,33 +443,54 @@ class NativeAutoCalMonitor(
         }
         decorated.put("nativeCorrelationState", correlationStateJson())
 
-        val previousMul = synchronized(lock) { lastMulActHash }
-        val nativeEpochEvent = if (
-            epochTransition != null &&
-            previousMul.isNotBlank() &&
-            mulActHash.isNotBlank() &&
-            previousMul != mulActHash
-        ) {
-            JSONObject()
-                .put("source", SOURCE_NATIVE_AUTOCAL)
-                .put("calibrationType", "K_FACTOR")
-                .put("cause", "ECU_AUTOMATCH_COUNT_CHANGED")
-                .put("oldHash", previousMul)
-                .put("newHash", mulActHash)
-                .put("nativeAutoMatchCount", probe.autoMatchCount)
-                .put("nativeAutoMatchBefore", epochTransition.before)
-                .put("nativeAutoMatchAfter", epochTransition.after)
-                .put("nativeAutoMatchRollover", epochTransition.rollover)
-                .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
-                .put("nativeFlag13", probe.nativeFlag13)
-                .put("readbackValid", true)
-                .put("humanConfirmed", false)
-                .put("ecuNativeObserved", true)
-                .put("appWritePerformed", false)
-                .put("ecuNativeAutomatic", true)
-                .put("appAutomaticWrite", false)
-        } else {
-            null
+        val epochObservation = synchronized(lock) {
+            epochConfirmation.observeMul(mulActHash)
+        }
+        val nativeEpochEvent = when (epochObservation) {
+            is NativeAutoCalEpochConfirmation.Observation.Confirmed -> {
+                val confirmation = epochObservation.value
+                val transition = confirmation.transition
+                JSONObject()
+                    .put("source", SOURCE_NATIVE_AUTOCAL)
+                    .put("calibrationType", "K_FACTOR")
+                    .put("cause", "ECU_AUTOMATCH_COUNT_CHANGED")
+                    .put("oldHash", confirmation.oldMulHash)
+                    .put("newHash", confirmation.newMulHash)
+                    .put("nativeAutoMatchCount", transition.after)
+                    .put("nativeAutoMatchBefore", transition.before)
+                    .put("nativeAutoMatchAfter", transition.after)
+                    .put("nativeAutoMatchRollover", transition.rollover)
+                    .put("confirmationSnapshots", confirmation.snapshotsObserved)
+                    .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
+                    .put("nativeFlag13", probe.nativeFlag13)
+                    .put("readbackValid", true)
+                    .put("humanConfirmed", false)
+                    .put("ecuNativeObserved", true)
+                    .put("appWritePerformed", false)
+                    .put("ecuNativeAutomatic", true)
+                    .put("appAutomaticWrite", false)
+            }
+            else -> null
+        }
+        when (epochObservation) {
+            is NativeAutoCalEpochConfirmation.Observation.Awaiting -> decorated.put(
+                "nativeAutoMatchEpochPending",
+                JSONObject()
+                    .put("before", epochObservation.transition.before)
+                    .put("after", epochObservation.transition.after)
+                    .put("rollover", epochObservation.transition.rollover)
+                    .put("snapshotsObserved", epochObservation.snapshotsObserved),
+            )
+            is NativeAutoCalEpochConfirmation.Observation.Expired -> decorated.put(
+                "nativeAutoMatchEpochUnconfirmed",
+                JSONObject()
+                    .put("before", epochObservation.transition.before)
+                    .put("after", epochObservation.transition.after)
+                    .put("rollover", epochObservation.transition.rollover)
+                    .put("snapshotsObserved", epochObservation.snapshotsObserved)
+                    .put("reason", "MUL_ACT_READBACK_UNCHANGED"),
+            )
+            else -> Unit
         }
         if (nativeEpochEvent != null) {
             decorated.put("nativeAutoMatchEpochEvent", JSONObject(nativeEpochEvent.toString()))
@@ -470,8 +503,8 @@ class NativeAutoCalMonitor(
             gasNormalThreshold = newGasNormalThreshold
             autoCalEnabled = enabled
             pendingMaturity = emptyList()
-            snapshotRequested = false
-            snapshotReason = ""
+            snapshotRequested = epochConfirmation.hasPending()
+            snapshotReason = if (snapshotRequested) "AUTOMATCH_EPOCH_AWAITING_K_READBACK" else ""
             state = baseState(if (enabled == 0) "PAUSED" else "READY", if (enabled == 0) "AutoCal pausado; dados congelados" else "AutoCal nativo acompanhado")
                 .put("sessionId", expectedSessionId)
                 .put("nativeFlag13", probe.nativeFlag13)
@@ -479,6 +512,7 @@ class NativeAutoCalMonitor(
                 .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
                 .put("nativeMaturityEventCount", maturityEvents.length())
+                .put("nativeEpochPending", epochConfirmation.hasPending())
                 .put("snapshotHash", snapshot.snapshotHash)
         }
 
