@@ -716,7 +716,9 @@
         "prior_k_curve_is_display_baseline_only": true,
         "status": "IMPLEMENTED_AND_TESTED",
         "typed_event_requires_mul_act_readback_change": true,
-        "same_snapshot_assumption": false
+        "same_snapshot_assumption": false,
+        "replayed_typed_event": "REJECT_UNLESS_EVENT_BEFORE_AFTER_MATCHS_ACTUAL_PROJECTION_EDGE",
+        "typed_event_hash_guard": "oldHash and newHash must both exist and differ"
       },
       "confirmation": {
         "signal": "NUM_AUTOMATCH_EXECUTED transition",
@@ -725,14 +727,17 @@
         "pending_tracker": "NativeAutoCalEpochConfirmation",
         "max_full_snapshots": 3,
         "health_tick_cadence_ms": 3000,
-        "operational_coverage_note": "initial snapshot + up to two follow-ups; retry budget is product robustness, not ECU science",
+        "operational_coverage_note": "initial snapshot + up to two forced follow-ups; after that forced heavy polling stops, but pending evidence remains eligible for confirmation by later natural snapshots",
         "manual_action_overlap": "pending native epoch is cleared before explicit app write readback",
         "session_change": "pending native epoch is cleared",
         "overlap_policy": "fail closed; a second distinct counter transition before confirmation drops ambiguous pending attribution",
-        "expired_behavior": "do not emit nativeAutoMatchEpochEvent",
         "ui_pending": "Verificando ajuste da ECU",
         "ui_unconfirmed": "Mudança ainda não confirmada",
-        "status": "IMPLEMENTED_GATED_PENDING_CI_RECEIPT"
+        "status": "IMPLEMENTED_FAST_GREEN_6e669ce9159f9baf1f6f467427e00ecca96cc5f6",
+        "active_retry_budget_snapshots": 3,
+        "passive_pending_after_retry_budget": true,
+        "natural_snapshot_can_still_confirm": true,
+        "active_retry_exhausted_behavior": "do not emit nativeAutoMatchEpochEvent; stop forced heavy snapshots; keep pending transition until later natural confirmation, session reset, manual app action, or fail-closed overlap"
       }
     },
     "native_projection_boundary": {
