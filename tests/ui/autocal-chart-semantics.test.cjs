@@ -261,3 +261,9 @@ assert.equal(spatialBands[17].zoneAcquired, true);
 assert.equal(spatialBands[17].mapBar, 0.400);
 assert.equal(source.includes('zoneForBand('), false,
   'consumer não pode manter agrupamento 18→4 hardcoded por índice');
+
+
+assert.match(source, /Regiões registradas neste ciclo/);
+assert.match(source, /registrada pela ECU neste ciclo/);
+assert.equal(source.includes('flag ativa'), false);
+assert.equal(source.includes('flag inativa'), false);
