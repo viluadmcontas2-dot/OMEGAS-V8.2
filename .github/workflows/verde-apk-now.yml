@@ -14,7 +14,7 @@ env:
   PRODUCT_SHA: 651cc9e89687edc3988441668658e3b8c7aa7a8f
 
 concurrency:
-  group: omegas-verde-apk-now
+  group: omegas-verde-apk-final-651cc9e8
   cancel-in-progress: true
 
 jobs:
