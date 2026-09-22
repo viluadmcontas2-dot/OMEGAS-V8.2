@@ -61,16 +61,28 @@
   }
 
   function normalizeCellSummary(item, fallbackEpoch) {
+    const controlRpm = finite(item.control_rpm ?? item.rpm_bin, null);
+    const controlPetrolMs = finite(item.control_petrol_ms ?? item.petrol_bin, null);
+    const observedRpmCenter = finite(item.observed_rpm_center ?? item.rpm ?? item.rpm_mean, null);
+    const observedPetrolMsCenter = finite(item.observed_petrol_ms_center ?? item.petrol_ms ?? item.petrol_mean, null);
+    const observedMapCenter = finite(item.observed_map_center ?? item.map_bar ?? item.map_mean, null);
     return {
       samples: finite(item.samples, 0),
       visits: finite(item.visit_count ?? item.visits?.length, 0),
       sessions: finite(item.session_count ?? item.sessions?.length, 0),
+      supportMass: finite(item.support_mass, null),
       confidence: finite(item.confidence, 0),
       stage: String(item.stage || 'OBSERVED').toUpperCase(),
       epoch: finite(item.epoch, fallbackEpoch),
-      rpm: finite(item.rpm ?? item.rpm_mean, null),
-      petrolMs: finite(item.petrol_ms ?? item.petrol_mean, null),
-      mapBar: finite(item.map_bar ?? item.map_mean, null),
+      controlRpm,
+      controlPetrolMs,
+      observedRpmCenter,
+      observedPetrolMsCenter,
+      observedMapCenter,
+      // Legacy aliases remain evidence-center aliases only.
+      rpm: observedRpmCenter,
+      petrolMs: observedPetrolMsCenter,
+      mapBar: observedMapCenter,
       petrolSpreadMs: finite(item.petrol_spread_ms, null),
       quality: finite(item.quality, null),
     };
