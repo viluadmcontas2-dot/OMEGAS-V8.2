@@ -61,12 +61,14 @@ object AutoCalInstrumentProjection {
                     .put("maxAutoMatch", rawScalar(dynamic, "MAX_AUTOMATCH"))
                     .put("gasCurrentRole", "CURRENT_NATIVE_AUTOMATCH_EPOCH")
                     .put("gasPreviousRole", "PREVIOUS_NATIVE_AUTOMATCH_EPOCH")
-                    .put("authority", "ECU_READ"),
+                    .put("authority", "ECU_READ")
+                    .put("transition", nativeEpochEvent(dynamic)),
             )
             .put(
                 "kCurve",
                 JSONObject()
                     .put("points", pairedFactorPoints(kSource, "PETR_INJ_TBP", "MUL_ACT"))
+                    .put("rawPayloadHex", rawPayloadHex(kSource, "MUL_ACT"))
                     .put("capturedAtMs", maxFieldTimestamp(kSource, listOf("PETR_INJ_TBP", "MUL_ACT"))),
             )
             .put("zones", JSONObject(acquisitionZones.toString()))
@@ -220,6 +222,14 @@ object AutoCalInstrumentProjection {
         val values = field.optJSONArray("physicalValues") ?: return emptyList()
         return List(values.length()) { index -> values.optDouble(index, Double.NaN) }
     }
+
+    private fun nativeEpochEvent(snapshot: JSONObject): Any =
+        snapshot.optJSONObject("nativeAutoMatchEpochEvent")
+            ?.let { JSONObject(it.toString()) }
+            ?: JSONObject.NULL
+
+    private fun rawPayloadHex(snapshot: JSONObject, key: String): String =
+        findValidField(snapshot, key)?.optString("rawPayloadHex", "").orEmpty()
 
     private fun rawScalar(snapshot: JSONObject, key: String): Any {
         val field = findValidField(snapshot, key) ?: return JSONObject.NULL
