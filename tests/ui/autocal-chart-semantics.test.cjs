@@ -272,3 +272,44 @@ assert.equal(source.includes('flag inativa'), false);
 assert.match(source, /GNV · época anterior/);
 assert.match(source, /Leitura anterior/);
 assert.equal(source.includes('Buffer GNV anterior'), false);
+
+
+const typedEpoch = model.instrumentEpoch({
+  epoch: {
+    autoMatchExecuted: 2,
+    maxAutoMatch: 3,
+    gasCurrentRole: 'CURRENT_NATIVE_AUTOMATCH_EPOCH',
+    gasPreviousRole: 'PREVIOUS_NATIVE_AUTOMATCH_EPOCH',
+    authority: 'ECU_READ',
+  },
+});
+assert.equal(typedEpoch.autoMatchExecuted, 2);
+assert.equal(typedEpoch.maxAutoMatch, 3);
+assert.equal(typedEpoch.gasPreviousRole, 'PREVIOUS_NATIVE_AUTOMATCH_EPOCH');
+assert.equal(typedEpoch.authority, 'ECU_READ');
+
+const humanFromTypedEpoch = model.humanState(
+  {},
+  {
+    latestSnapshot: {
+      fields: [
+        { key: 'NUM_AUTOMATCH_EXECUTED', rawValues: [1] },
+        { key: 'MAX_AUTOMATCH', rawValues: [9] },
+      ],
+      autoCalEnabled: 1,
+    },
+  },
+  {
+    instrument: {
+      epoch: {
+        autoMatchExecuted: 2,
+        maxAutoMatch: 3,
+        authority: 'ECU_READ',
+      },
+    },
+  },
+);
+assert.equal(humanFromTypedEpoch.autoMatchCount, 2,
+  'typed instrument epoch must outrank raw snapshot fallback');
+assert.equal(humanFromTypedEpoch.maxAutoMatch, 3,
+  'typed max AutoMatch must outrank raw snapshot fallback');
