@@ -187,8 +187,17 @@ class AmareloAutoCalRenderTest {
               const chart = document.getElementById('autocalReferenceChart');
               const kChart = document.getElementById('autocalKChart');
               const live = document.getElementById('autocalLiveTitle');
+              const cockpit = document.querySelector('.autocal-cockpit');
+              const toggle = document.querySelector('[data-autocal-toggle]');
+              const kCard = document.querySelector('.autocal-k-card');
+              const bandsCard = document.querySelector('.autocal-bands-card');
               const body = screen?.innerText ?? '';
               const rect = chart?.getBoundingClientRect();
+              const screenRect = screen?.getBoundingClientRect();
+              const cockpitRect = cockpit?.getBoundingClientRect();
+              const toggleRect = toggle?.getBoundingClientRect();
+              const kRect = kCard?.getBoundingClientRect();
+              const bandsRect = bandsCard?.getBoundingClientRect();
               return {
                 active: screen?.classList.contains('active') === true,
                 hasLevels: /LEVELS|NÍVEL GNV/i.test(body),
@@ -211,6 +220,12 @@ class AmareloAutoCalRenderTest {
                 chartHeight: rect?.height ?? 0,
                 viewportWidth: window.innerWidth,
                 viewportHeight: window.innerHeight,
+                screenBottom: screenRect?.bottom ?? 0,
+                cockpitBottom: cockpitRect?.bottom ?? 0,
+                cockpitHeight: cockpitRect?.height ?? 0,
+                toggleBottom: toggleRect?.bottom ?? 0,
+                kCardBottom: kRect?.bottom ?? 0,
+                bandsCardBottom: bandsRect?.bottom ?? 0,
                 hasPosition18Copy: body.includes('POSIÇÕES NATIVAS DE AQUISIÇÃO GNV'),
                 hasFakeFourProgress: /GNV\s+\d+\/4/.test(body),
                 previousEpochCopy: /época AutoMatch anterior|epoch anterior|snapshot.*anterior/i.test(body)
@@ -263,6 +278,22 @@ class AmareloAutoCalRenderTest {
 
             assertTrue("Primary AutoCal chart must use substantial width", dom.getDouble("chartWidth") >= 760.0)
             assertTrue("Primary AutoCal chart must remain visually dominant", dom.getDouble("chartHeight") >= 260.0)
+            assertTrue(
+                "Normal 1280x720 AutoCal cockpit must fit without mandatory vertical scrolling",
+                dom.getDouble("cockpitBottom") <= dom.getDouble("screenBottom") + 2.0,
+            )
+            assertTrue(
+                "Native Curve K must remain visible in the normal 1280x720 composition",
+                dom.getDouble("kCardBottom") <= dom.getDouble("screenBottom") + 2.0,
+            )
+            assertTrue(
+                "Native acquisition positions must remain visible in the normal 1280x720 composition",
+                dom.getDouble("bandsCardBottom") <= dom.getDouble("screenBottom") + 2.0,
+            )
+            assertTrue(
+                "Auto Calibration primary action must remain visible without scrolling",
+                dom.getDouble("toggleBottom") <= dom.getDouble("screenBottom") + 2.0,
+            )
         } finally {
             scenario.close()
         }

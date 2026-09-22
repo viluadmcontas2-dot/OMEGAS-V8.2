@@ -1405,3 +1405,338 @@
     grid-template-columns: minmax(0, 1fr) minmax(205px, 22%);
   }
 }
+
+
+/* WU-005 final 1280x720 cockpit composition */
+@media (min-width: 1000px) and (max-height: 760px) {
+  .autocal-route-screen {
+    padding: 8px 12px 10px;
+  }
+
+  .autocal-route-screen > .page-intro {
+    min-height: 44px;
+    padding: 0 2px 4px;
+    align-items: center;
+  }
+
+  .autocal-route-screen > .page-intro > p {
+    display: none;
+  }
+
+  .autocal-route-screen > .page-intro h2 {
+    margin-top: 1px;
+    font-size: 20px;
+  }
+
+  .autocal-cockpit-view {
+    flex: 1;
+    min-height: 0;
+    overflow-y: hidden;
+  }
+
+  .autocal-cockpit {
+    height: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 258px;
+    grid-template-areas:
+      "hero hero"
+      "reference k"
+      "reference bands"
+      "reference command"
+      "reference session"
+      "technical technical";
+    grid-template-rows: auto auto auto auto auto auto;
+    gap: 6px;
+    align-content: stretch;
+    padding-bottom: 0;
+  }
+
+  .autocal-hero { grid-area: hero; }
+  .autocal-reference-card { grid-area: reference; }
+  .autocal-k-card { grid-area: k; }
+  .autocal-bands-card { grid-area: bands; }
+  .autocal-command-bar { grid-area: command; }
+  .autocal-session-strip { grid-area: session; }
+  .autocal-technical-details { grid-area: technical; }
+  .autocal-session-drawer { grid-column: 1 / -1; }
+
+  .autocal-hero {
+    gap: 8px;
+    padding: 7px 10px;
+  }
+
+  .autocal-human-copy h3 {
+    font-size: 22px;
+  }
+
+  .autocal-human-copy p {
+    display: none;
+  }
+
+  .autocal-zone-meter {
+    margin-top: 3px;
+  }
+
+  .autocal-human-copy strong {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.2;
+    -webkit-line-clamp: 1;
+  }
+
+  .autocal-hero-actions {
+    gap: 5px;
+  }
+
+  .autocal-hero-actions .source-status {
+    min-height: 38px;
+    padding-inline: 9px;
+    font-size: 10px;
+  }
+
+  .autocal-hero-actions button {
+    min-height: 40px;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+
+  .autocal-reference-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 7px 9px;
+  }
+
+  .autocal-reference-card .autocal-section-head {
+    margin-bottom: 2px;
+  }
+
+  .autocal-reference-card .autocal-section-head h4 {
+    font-size: 16px;
+  }
+
+  .autocal-reference-card .autocal-chart-legend {
+    gap: 8px;
+    margin-bottom: 2px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .autocal-reference-card .autocal-live-strip {
+    grid-template-columns: minmax(150px, 1.2fr) repeat(3, minmax(76px, .7fr));
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .autocal-reference-card .autocal-live-summary,
+  .autocal-reference-card .autocal-live-metric {
+    padding: 4px 7px;
+  }
+
+  .autocal-reference-card .autocal-live-summary small,
+  .autocal-reference-card .autocal-live-metric small {
+    font-size: 9px;
+  }
+
+  .autocal-reference-card .autocal-live-summary b,
+  .autocal-reference-card .autocal-live-metric b {
+    font-size: 14px;
+  }
+
+  .autocal-reference-card .autocal-chart-workspace {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .autocal-reference-card .autocal-chart-host {
+    flex: 1;
+    height: 260px;
+    min-height: 260px;
+  }
+
+  .autocal-reference-card .autocal-chart-inspector {
+    min-height: 34px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 7px;
+    padding: 5px 7px;
+  }
+
+  .autocal-reference-card .autocal-chart-inspector b {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .autocal-reference-card .autocal-chart-inspector span {
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .autocal-k-card {
+    padding: 7px 9px;
+    border-radius: 13px;
+  }
+
+  .autocal-k-card .autocal-section-head {
+    margin-bottom: 2px;
+  }
+
+  .autocal-k-card .autocal-section-head h4 {
+    font-size: 14px;
+  }
+
+  .autocal-k-card .autocal-section-head p,
+  .autocal-k-card .autocal-inline-inspector {
+    display: none;
+  }
+
+  .autocal-k-legend {
+    gap: 7px;
+    margin-bottom: 1px;
+    font-size: 9px;
+  }
+
+  .autocal-k-legend span::before {
+    width: 11px;
+  }
+
+  .autocal-k-chart {
+    min-height: 86px;
+  }
+
+  .autocal-k-svg {
+    height: 86px;
+  }
+
+  .autocal-bands-card {
+    padding: 6px 8px;
+  }
+
+  .autocal-bands-card .autocal-section-head {
+    margin-bottom: 3px;
+  }
+
+  .autocal-bands-card .autocal-section-head small {
+    display: none;
+  }
+
+  .autocal-bands-card .autocal-section-head h4 {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.15;
+  }
+
+  .autocal-bands-card .autocal-section-head > span {
+    font-size: 9px;
+  }
+
+  .autocal-bands-card .autocal-band-legend,
+  .autocal-bands-card .autocal-inline-inspector {
+    display: none;
+  }
+
+  .autocal-bands-card .autocal-band-strip {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .autocal-bands-card .autocal-band-segment {
+    min-height: 27px;
+    grid-template-rows: auto 2px;
+    gap: 2px;
+    padding: 2px 1px;
+    border-radius: 6px;
+  }
+
+  .autocal-bands-card .autocal-band-segment small {
+    display: none;
+  }
+
+  .autocal-bands-card .autocal-band-segment span {
+    font-size: 9px;
+  }
+
+  .autocal-command-bar {
+    grid-template-columns: minmax(0, 1fr) 78px;
+    gap: 5px;
+    padding: 6px 8px;
+  }
+
+  .autocal-command-copy {
+    grid-column: 1 / -1;
+    gap: 1px;
+  }
+
+  .autocal-command-copy small {
+    display: none;
+  }
+
+  .autocal-command-copy b {
+    font-size: 12px;
+  }
+
+  .autocal-command-copy span {
+    font-size: 10px;
+  }
+
+  .autocal-primary-action {
+    min-width: 0;
+    min-height: 42px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .autocal-more-actions > summary {
+    min-height: 42px;
+    padding: 0 7px;
+    font-size: 10px;
+  }
+
+  .autocal-more-actions[open] {
+    grid-column: 1 / -1;
+  }
+
+  .autocal-session-strip {
+    min-height: 42px;
+    gap: 6px;
+    padding: 4px 7px;
+    border-radius: 10px;
+  }
+
+  .autocal-session-copy {
+    min-width: 0;
+  }
+
+  .autocal-session-copy small,
+  .autocal-session-copy span,
+  .autocal-session-actions > span {
+    display: none;
+  }
+
+  .autocal-session-copy b {
+    margin: 0;
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .autocal-session-actions button {
+    min-height: 36px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .autocal-technical-details > summary {
+    min-height: 32px;
+    padding-inline: 9px;
+    font-size: 11px;
+  }
+}
