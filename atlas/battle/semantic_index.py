@@ -9,7 +9,7 @@ from pathlib import Path
 CLASS_RE = re.compile(r"^\s{2}(T\w+)\s+.*?size=(\d+)B,\s*vmt=(0x[0-9a-fA-F]+)")
 FIELD_RE = re.compile(r"^\s+\+0x([0-9a-fA-F]+)\s+([A-Za-z_]\w*)\s*:\s*(.+?)\s*$")
 METHOD_RE = re.compile(r"^\s+(0x[0-9a-fA-F]+)\s+([A-Za-z_]\w*)\s*$")
-RESOURCE_RE = re.compile(r"^\s*resource\s+(\S+)", re.I)
+RESOURCE_RE = re.compile(r"^\s*resource\s+(\S+)\s+(\S+):", re.I)
 OBJECT_RE = re.compile(r"^\s*<object\s+([^:>]+):([^>]+)>")
 PROP_RE = re.compile(r"^\s+([A-Za-z_]\w*)\s*=\s*(.*?)\s*$")
 
