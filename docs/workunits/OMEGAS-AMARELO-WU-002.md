@@ -222,3 +222,16 @@ Supported operational meaning: each flag behaves as a **latched native region ma
 Product rule: show `Região registrada pela ECU neste ciclo`; use the ECU flag as authority. Live MAP is explanatory context only and must never synthesize the flag.
 
 Evidence: `tests/fixtures/amarelo-autocal-zone-latch-behavior-v1.json`.
+
+
+## GasPointPrev = previous native AutoMatch epoch — 2026-09-21
+
+`PETR_INJ_TBUF_GAS_PREV@0x015D` + `MNFLD_PRESS_BUF_GAS_PREV@0x015E` do not behave as previous polling refresh.
+
+PortmonAUTOCAL: only 3 Prev-vector changes in the capture. New Prev matches prior Current at 12/12, 15/16 and 15/16 changed positions.
+PortmonLOGNOVO: 4 Prev-vector changes. The capture-start event lacks a usable prior Current baseline; subsequent events match 13/13, 15/16 and 14/15 changed positions.
+Bulk Prev replacements align with `NUM_AUTOMATCH_EXECUTED` epoch transitions. One-element mismatches are compatible with X/Y vectors being separate serial transactions.
+
+Operational conclusion: **GasPointPrev is the previous native AutoMatch epoch snapshot**. Exact firmware copy guard/timing remains UNKNOWN.
+
+UX rule: render Current and Previous as two native epoch layers; never animate Prev as a 2-second-old ghost of Current.
