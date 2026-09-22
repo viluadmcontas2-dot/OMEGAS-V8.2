@@ -63,6 +63,7 @@ def test_android_render_fixture_provenance_is_enforced_end_to_end():
     render_test = Path("app/src/androidTest/java/com/omegas/prohub/DashboardLevelsRenderTest.kt").read_text(encoding="utf-8")
     assert 'root.getString("classification") == "SYNTHETIC_NON_SCIENTIFIC"' in render_test
     assert 'root.getString("scientificUse") == "VISUAL_ONLY_NON_SCIENTIFIC"' in render_test
+    assert '.put("fixtureProvenance", fixtureProvenance)' in render_test
     assert 'saveEvidence("autocal-equivalence-shifted", dom, scenario, provenance)' in render_test
 
 
