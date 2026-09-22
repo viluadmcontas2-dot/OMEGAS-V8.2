@@ -18,6 +18,12 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
     published methods (1):
       0x005189b4  ActionAutoMatchExecute
     virtual methods (1):
+  TAutoCalSettings — size=256B, vmt=0xa9dd00, ptrsize=4B
+    fields (0):
+    published methods (2):
+      0x00513e68  FormClose
+      0x00513da8  FormShow
+    virtual methods (1):
   TAutoCalColorSettings — size=128B, vmt=0xa9ff00, ptrsize=4B
     fields (1):
       +0x000050  _GasPoint                            : TShape
@@ -49,7 +55,8 @@ class SemanticIndexTest(unittest.TestCase):
         x=mod.parse(SAMPLE)
         self.assertEqual(x["classes"]["TAutoCalDM"]["fields"][0]["name"],"PETR_INJ_TBP")
         self.assertEqual(x["serial_objects"][0]["serial_code"],331)
-        self.assertTrue(x["event_bindings"][0]["resolved_method"])
+        auto_match_event=next(e for e in x["event_bindings"] if e["handler"]=="ActionAutoMatchExecute")
+        self.assertTrue(auto_match_event["resolved_method"])
         self.assertTrue(x["action_bindings"][0]["resolved_object"])
         self.assertEqual(x["counts"]["unresolved_event_bindings"],0)
         self.assertEqual(x["counts"]["unresolved_action_bindings"],0)
