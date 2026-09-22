@@ -1,0 +1,11 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '../..');
+const app = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/app.js'), 'utf8');
+const scheduler = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/scheduler.js'), 'utf8');
+assert.match(app, /intervalMs:\s*100/);
+assert.match(scheduler, /this\.tick % 10 === 0/);
+assert.match(scheduler, /this\.tick % 20 === 0/);
+console.log('AUTOCAL_REALTIME_HMI_CADENCE=PASS');

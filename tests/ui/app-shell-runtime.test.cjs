@@ -70,7 +70,7 @@ test('Scheduler cria um único intervalo e separa fast status e contexto', () =>
   const shell = bootCore();
   const calls = { fast: 0, status: 0, context: 0 };
   const scheduler = new shell.context.OmegasUi.Scheduler({
-    intervalMs: 200,
+    intervalMs: 100,
     onFast: () => { calls.fast += 1; },
     onStatus: () => { calls.status += 1; },
     onContext: () => { calls.context += 1; },
