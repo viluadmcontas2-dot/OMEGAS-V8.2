@@ -430,3 +430,56 @@ assert.match(source, /Novo epoch nativo/);
 assert.match(source, /TYPED_NATIVE_EPOCH_EVENT/);
 assert.match(source, /COUNTER_CHANGED_AWAITING_TYPED_EVENT/);
 assert.equal(source.includes('sameKCurve('), false);
+
+
+const pendingEpochProjection = {
+  instrument: {
+    epoch: {
+      autoMatchExecuted: 3,
+      pending: { before: 2, after: 3, rollover: false, snapshotsObserved: 1 },
+    },
+  },
+};
+const pendingHuman = model.humanState(
+  { available: true },
+  { state: 'READY', autoCalEnabled: 1 },
+  pendingEpochProjection,
+);
+assert.equal(pendingHuman.title, 'Verificando ajuste da ECU');
+assert.match(pendingHuman.nextAction, /verificando a nova Curva K/);
+
+const unconfirmedEpochProjection = {
+  instrument: {
+    epoch: {
+      autoMatchExecuted: 3,
+      unconfirmed: {
+        before: 2,
+        after: 3,
+        rollover: false,
+        snapshotsObserved: 3,
+        reason: 'MUL_ACT_READBACK_UNCHANGED',
+      },
+    },
+  },
+};
+const unconfirmedHuman = model.humanState(
+  { available: true },
+  { state: 'READY', autoCalEnabled: 1 },
+  unconfirmedEpochProjection,
+);
+assert.equal(unconfirmedHuman.title, 'Mudança ainda não confirmada');
+assert.match(unconfirmedHuman.nextAction, /manteve o ciclo atual/);
+
+const parsedPendingEpoch = model.instrumentEpoch(pendingEpochProjection.instrument);
+assert.equal(parsedPendingEpoch.pending.before, 2);
+assert.equal(parsedPendingEpoch.pending.after, 3);
+assert.equal(parsedPendingEpoch.pending.snapshotsObserved, 1);
+
+const counterOnlyTransition = model.epochTransition(
+  { ok: true, sessionId: 'S1', instrument: { epoch: { autoMatchExecuted: 2 }, kCurve: { points: [] } } },
+  { ok: true, sessionId: 'S1', instrument: { epoch: { autoMatchExecuted: 3 }, kCurve: { points: [] } } },
+  [],
+);
+assert.equal(counterOnlyTransition.changed, false);
+assert.equal(counterOnlyTransition.counterChanged, true);
+assert.equal(counterOnlyTransition.reason, 'COUNTER_CHANGED_AWAITING_TYPED_EVENT');
