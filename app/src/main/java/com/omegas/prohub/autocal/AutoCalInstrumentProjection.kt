@@ -62,7 +62,9 @@ object AutoCalInstrumentProjection {
                     .put("gasCurrentRole", "CURRENT_NATIVE_AUTOMATCH_EPOCH")
                     .put("gasPreviousRole", "PREVIOUS_NATIVE_AUTOMATCH_EPOCH")
                     .put("authority", "ECU_READ")
-                    .put("transition", nativeEpochEvent(dynamic)),
+                    .put("transition", nativeEpochEvent(dynamic))
+                    .put("pending", nativeEpochPending(dynamic))
+                    .put("unconfirmed", nativeEpochUnconfirmed(dynamic)),
             )
             .put(
                 "kCurve",
@@ -225,6 +227,16 @@ object AutoCalInstrumentProjection {
 
     private fun nativeEpochEvent(snapshot: JSONObject): Any =
         snapshot.optJSONObject("nativeAutoMatchEpochEvent")
+            ?.let { JSONObject(it.toString()) }
+            ?: JSONObject.NULL
+
+    private fun nativeEpochPending(snapshot: JSONObject): Any =
+        snapshot.optJSONObject("nativeAutoMatchEpochPending")
+            ?.let { JSONObject(it.toString()) }
+            ?: JSONObject.NULL
+
+    private fun nativeEpochUnconfirmed(snapshot: JSONObject): Any =
+        snapshot.optJSONObject("nativeAutoMatchEpochUnconfirmed")
             ?.let { JSONObject(it.toString()) }
             ?: JSONObject.NULL
 
