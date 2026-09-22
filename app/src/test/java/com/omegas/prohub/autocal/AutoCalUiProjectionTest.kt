@@ -195,6 +195,22 @@ class AutoCalUiProjectionTest {
     }
 
     @Test
+    fun `native projection never attaches inferred AutoMatch predictor`() {
+        val projection = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L),
+            nativeSnapshot = usableReference("native-only"),
+            manualStatus = status("IDLE", 42L),
+            manualSnapshot = unavailableSnapshot(),
+        )
+
+        val analysis = projection.getJSONObject("analysis")
+        assertFalse(analysis.getBoolean("available"))
+        assertEquals("NATIVE_AUTOCAL_ONLY", analysis.getString("mode"))
+        assertFalse(analysis.getBoolean("inferredPredictorAttached"))
+        assertTrue(analysis.getString("message").contains("predictor inferido"))
+    }
+
+    @Test
     fun `partial current monitor stays visible but never claims reference`() {
         val projection = AutoCalUiProjection.project(
             nativeStatus = status("MONITORING", 7L),
