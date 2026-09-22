@@ -151,8 +151,8 @@ class NativeAutoCalMonitor(
 
         val previousProbe = synchronized(lock) { lastProbe }
         val probe = probe(currentSession) ?: return
-        val autoMatchCountChanged = previousProbe != null && probe.autoMatchCount != previousProbe.autoMatchCount
-        val previousAutoMatchCount = previousProbe?.autoMatchCount
+        val epochTransition = AutoCalEpochTransition.between(previousProbe?.autoMatchCount, probe.autoMatchCount)
+        val autoMatchCountChanged = epochTransition != null
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
         val probeChanged = previousProbe != null && (
             autoMatchCountChanged ||
@@ -193,7 +193,7 @@ class NativeAutoCalMonitor(
 
         val shouldSnapshot = synchronized(lock) { snapshotRequested }
         if (shouldSnapshot) {
-            readFullSnapshot(currentSession, probe, autoMatchCountChanged, previousAutoMatchCount)
+            readFullSnapshot(currentSession, probe, epochTransition)
         } else {
             onStateChanged()
         }
@@ -293,8 +293,7 @@ class NativeAutoCalMonitor(
     private fun readFullSnapshot(
         expectedSessionId: Long,
         probe: AutoCalProtocol.NativeStatus,
-        autoMatchCountChanged: Boolean,
-        previousAutoMatchCount: Int?,
+        epochTransition: AutoCalEpochTransition?,
     ) {
         val reason = synchronized(lock) { snapshotReason }
         val started = System.currentTimeMillis()
@@ -433,6 +432,37 @@ class NativeAutoCalMonitor(
         decorated.put("nativeCorrelationState", correlationStateJson())
 
         val previousMul = synchronized(lock) { lastMulActHash }
+        val nativeEpochEvent = if (
+            epochTransition != null &&
+            previousMul.isNotBlank() &&
+            mulActHash.isNotBlank() &&
+            previousMul != mulActHash
+        ) {
+            JSONObject()
+                .put("source", SOURCE_NATIVE_AUTOCAL)
+                .put("calibrationType", "K_FACTOR")
+                .put("cause", "ECU_AUTOMATCH_COUNT_CHANGED")
+                .put("oldHash", previousMul)
+                .put("newHash", mulActHash)
+                .put("nativeAutoMatchCount", probe.autoMatchCount)
+                .put("nativeAutoMatchBefore", epochTransition.before)
+                .put("nativeAutoMatchAfter", epochTransition.after)
+                .put("nativeAutoMatchRollover", epochTransition.rollover)
+                .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
+                .put("nativeFlag13", probe.nativeFlag13)
+                .put("readbackValid", true)
+                .put("humanConfirmed", false)
+                .put("ecuNativeObserved", true)
+                .put("appWritePerformed", false)
+                .put("ecuNativeAutomatic", true)
+                .put("appAutomaticWrite", false)
+        } else {
+            null
+        }
+        if (nativeEpochEvent != null) {
+            decorated.put("nativeAutoMatchEpochEvent", JSONObject(nativeEpochEvent.toString()))
+        }
+
         synchronized(lock) {
             latestSnapshot = decorated
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
@@ -455,28 +485,9 @@ class NativeAutoCalMonitor(
         if (enabled == 1) {
             try { onFreshSnapshot(decorated) } catch (_: Exception) {}
         }
-        if (autoMatchCountChanged && previousMul.isNotBlank() && mulActHash.isNotBlank() && previousMul != mulActHash) {
+        if (nativeEpochEvent != null) {
             try {
-                onNativeCalibrationObserved(
-                    JSONObject()
-                        .put("source", SOURCE_NATIVE_AUTOCAL)
-                        .put("calibrationType", "K_FACTOR")
-                        .put("cause", "ECU_AUTOMATCH_COUNT_CHANGED")
-                        .put("oldHash", previousMul)
-                        .put("newHash", mulActHash)
-                        .put("nativeAutoMatchCount", probe.autoMatchCount)
-                        .put("nativeAutoMatchBefore", previousAutoMatchCount ?: JSONObject.NULL)
-                        .put("nativeAutoMatchAfter", probe.autoMatchCount)
-                        .put("nativeAutoMatchRollover", previousAutoMatchCount != null && probe.autoMatchCount < previousAutoMatchCount)
-                        .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
-                        .put("nativeFlag13", probe.nativeFlag13)
-                        .put("readbackValid", true)
-                        .put("humanConfirmed", false)
-                        .put("ecuNativeObserved", true)
-                        .put("appWritePerformed", false)
-                        .put("ecuNativeAutomatic", true)
-                        .put("appAutomaticWrite", false),
-                )
+                onNativeCalibrationObserved(JSONObject(nativeEpochEvent.toString()))
             } catch (_: Exception) {}
         }
         onStateChanged()
