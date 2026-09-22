@@ -35,7 +35,7 @@ internal class NativeAutoCalEpochConfirmation(
             val snapshotsObserved: Int,
         ) : Observation()
         data class Confirmed(val value: Confirmation) : Observation()
-        data class Expired(
+        data class RetryBudgetExhausted(
             val transition: AutoCalEpochTransition,
             val snapshotsObserved: Int,
         ) : Observation()
@@ -45,6 +45,7 @@ internal class NativeAutoCalEpochConfirmation(
         val transition: AutoCalEpochTransition,
         val oldMulHash: String,
         var snapshotsObserved: Int = 0,
+        var retryBudgetExhausted: Boolean = false,
     )
 
     private var pending: Pending? = null
@@ -63,7 +64,6 @@ internal class NativeAutoCalEpochConfirmation(
 
     fun observeMul(currentMulHash: String): Observation {
         val current = pending ?: return Observation.None
-        current.snapshotsObserved += 1
         if (currentMulHash.isNotBlank() && currentMulHash != current.oldMulHash) {
             val confirmation = Confirmation(
                 transition = current.transition,
@@ -74,13 +74,17 @@ internal class NativeAutoCalEpochConfirmation(
             pending = null
             return Observation.Confirmed(confirmation)
         }
-        if (current.snapshotsObserved >= maxSnapshots) {
-            val expired = Observation.Expired(
+        if (!current.retryBudgetExhausted) {
+            current.snapshotsObserved += 1
+            if (current.snapshotsObserved >= maxSnapshots) {
+                current.retryBudgetExhausted = true
+            }
+        }
+        if (current.retryBudgetExhausted) {
+            return Observation.RetryBudgetExhausted(
                 transition = current.transition,
                 snapshotsObserved = current.snapshotsObserved,
             )
-            pending = null
-            return expired
         }
         return Observation.Awaiting(
             transition = current.transition,
@@ -89,6 +93,8 @@ internal class NativeAutoCalEpochConfirmation(
     }
 
     fun hasPending(): Boolean = pending != null
+
+    fun shouldRetry(): Boolean = pending?.retryBudgetExhausted == false
 
     fun pendingTransition(): AutoCalEpochTransition? = pending?.transition
 
