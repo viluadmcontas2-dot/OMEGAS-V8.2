@@ -1,7 +1,7 @@
 {
   "schema": "omegas.progbase.autocal-action-map.v1",
   "classification": "ORIGINAL_DERIVED",
-  "description": "Canonical action identity recovered from the original ProgBase 4.2.0.6 binary. Handler disassembly proves the mode byte passed to the common 0x02/0x24/0x04 action sender; Portmon observations are recorded separately.",
+  "description": "Canonical AutoCal action identity recovered from the original ProgBase 4.2.0.6 RTTI method table plus handler disassembly. Handler identity and wire mode are independent from the human caption; Portmon observations/effects are recorded separately.",
   "sources": {
     "progbase": {
       "file": "Copy of ProgBase (3).exe",
@@ -21,54 +21,44 @@
   },
   "binaryEvidence": {
     "actionDfmOffsetRange": "0x00904061..0x009041EA",
-    "commonSenderVa": "0x00512280",
-    "commonSenderSemantics": "Builds command 0x02 / group 0x24 / subcommand 0x04 and copies the handler argument byte into the action-mode byte.",
-    "handlerRange": "0x005189B4..0x005189E3"
+    "commonSenderVa": "0x00517568",
+    "commonSenderSemantics": "ActionAutoCalRif/AutoMatch/ResetPetrol/ResetGas push mode 0x08/0x01/0x02/0x04 and call the same action sender. ActionResetAll instead pushes 0 and calls 0x005185D4.",
+    "handlerRange": "0x005189B4..0x005189EF",
+    "actionMethodTable": "RTTI method table maps ActionAutoCalRifExecute=0x005189B4, ActionAutoMatchExecute=0x005189C0, ActionResetPetrolExecute=0x005189CC, ActionResetGasExecute=0x005189D8, ActionResetAllExecute=0x005189E4."
   },
   "actions": [
     {
       "action": "MANUAL_AUTOMATCH",
       "caption": "Manual automatch",
       "handler": "ActionAutoMatchExecute",
-      "handlerVa": "0x005189B4",
-      "mode": "0x08",
-      "frame": "02 24 04 08 32",
-      "portmonObserved": false,
-      "operationalExposure": false,
-      "evidence": "original EXE"
-    },
-    {
-      "action": "RESET_PETROL",
-      "caption": "Reset petrol point",
-      "handler": "ActionResetPetrolExecute",
       "handlerVa": "0x005189C0",
       "mode": "0x01",
       "frame": "02 24 04 01 2B",
       "portmonObserved": false,
       "operationalExposure": false,
-      "evidence": "original EXE; currently interlocked in OMEGAS"
+      "evidence": "original EXE RTTI method table + handler disassembly"
     },
     {
-      "action": "RESET_GAS",
-      "caption": "Reset gas point",
-      "handler": "ActionResetGasExecute",
+      "action": "RESET_PETROL",
+      "caption": "Reset petrol point",
+      "handler": "ActionResetPetrolExecute",
       "handlerVa": "0x005189CC",
       "mode": "0x02",
       "frame": "02 24 04 02 2C",
       "portmonObserved": false,
       "operationalExposure": false,
-      "evidence": "original EXE; currently interlocked in OMEGAS"
+      "evidence": "original EXE RTTI method table + handler disassembly; currently interlocked in OMEGAS"
     },
     {
-      "action": "RESET_ALL",
-      "caption": "Reset all",
-      "handler": "ActionResetAllExecute",
+      "action": "RESET_GAS",
+      "caption": "Reset gas point",
+      "handler": "ActionResetGasExecute",
       "handlerVa": "0x005189D8",
       "mode": "0x04",
       "frame": "02 24 04 04 2E",
       "portmonObserved": true,
       "operationalExposure": false,
-      "evidence": "original EXE + both original Portmon captures",
+      "evidence": "original EXE RTTI method table + handler disassembly + original Portmon evidence; currently interlocked in OMEGAS",
       "portmonObservations": [
         {
           "source": "PortmonLOGNOVO.LOG",
@@ -81,15 +71,28 @@
           "event": 26238
         }
       ]
+    },
+    {
+      "action": "RESET_ALL",
+      "caption": "Reset all",
+      "handler": "ActionResetAllExecute",
+      "handlerVa": "0x005189E4",
+      "mode": null,
+      "frame": null,
+      "portmonObserved": false,
+      "operationalExposure": false,
+      "evidence": "original EXE proves separate call path via 0x005185D4; exact wire sequence unresolved"
     }
   ],
   "separateActions": {
     "modifyMapRefs": {
       "caption": "Modify map refs",
       "handler": "ActionAutoCalRifExecute",
-      "mode": null,
-      "frame": null,
-      "note": "Separate ProgBase action. This evidence does not map it to mode 0x08."
+      "handlerVa": "0x005189B4",
+      "mode": "0x08",
+      "frame": "02 24 04 08 32",
+      "portmonObserved": false,
+      "note": "Original EXE RTTI + handler disassembly. Distinct from Manual AutoMatch."
     }
   },
   "dfmFields": {
@@ -107,8 +110,27 @@
     }
   },
   "epistemicBoundary": {
-    "exeProves": "action identity and mode byte passed to the common sender",
-    "portmonProves": "only traffic actually present in each capture",
-    "suppliedPortmonsDoNotProve": "selective physical effects of RESET_PETROL, RESET_GAS, or MANUAL_AUTOMATCH because those frames are absent"
+    "exeProves": "RTTI action-to-handler identity and handler mode byte; ResetAll uses a separate routine",
+    "portmonProves": "traffic and before/after effects actually present in each capture",
+    "suppliedPortmonsProve": "RESET_GAS frame 02 24 04 04 2E occurred; Lognovo shows broad reset of petrol/GNV acquisition state, petrol/GNV reference curves and MUL_ACT",
+    "suppliedPortmonsDoNotProve": "selective physical effect of RESET_PETROL or MANUAL_AUTOMATCH; exact RESET_ALL wire path"
+  },
+  "observedEffects": {
+    "RESET_GAS_LOGNOVO": {
+      "classification": "ORIGINAL_DERIVED",
+      "source": "PortmonLOGNOVO.LOG",
+      "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+      "sourceLine": 69944,
+      "event": 34971,
+      "frame": "02 24 04 04 2E",
+      "firmwareScope": "Effect observed in the captured ProgBase/ECU session; do not universalize to every firmware without independent proof.",
+      "petrolBuffersCleared": true,
+      "gasBuffersCleared": true,
+      "petrolReferenceCurveCleared": true,
+      "gasReferenceCurveCleared": true,
+      "mulActResetToQ14One": true,
+      "petrolAcquiredZonesCleared": true,
+      "interpretation": "ProgBase names this action Reset gas point, but the captured physical effect is broad AutoCal-state reset, not GNV-only."
+    }
   }
 }

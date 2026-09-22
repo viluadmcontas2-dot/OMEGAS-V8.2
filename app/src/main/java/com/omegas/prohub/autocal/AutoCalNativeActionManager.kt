@@ -59,22 +59,23 @@ class AutoCalNativeActionManager(
             true,
         ),
         RESET_PETROL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
-            "Resetar aquisição gasolina",
-            "ProgBase original: ActionResetPetrolExecute usa modo 0x01. Backup completo é obrigatório antes do envio.",
-            false,
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
+            "Reset nativo gasolina",
+            "ProgBase original: ActionResetPetrolExecute usa modo 0x02. O efeito seletivo não aparece nos Portmons fornecidos; a ação permanece intertravada e exige backup completo antes de qualquer futura liberação.",
+            true,
         ),
         RESET_GAS(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
-            "Resetar aquisição GNV",
-            "ProgBase original: ActionResetGasExecute usa modo 0x02. Backup completo é obrigatório antes do envio.",
-            false,
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
+            "Reset nativo GNV — efeito amplo observado",
+            "ProgBase original: ActionResetGasExecute usa modo 0x04. No Lognovo capturado, este comando também zerou buffers/referências de gasolina e MUL_ACT; não é seguro tratá-lo como GNV-only.",
+            true,
         );
     }
 
-    // ProgBase 4.2.0.6 original, confirmado por handlers do executável:
-    // 0x01 = Reset petrol, 0x02 = Reset gas, 0x04 = Reset all.
-    // RESET_ALL permanece deliberadamente fora da superfície operacional.
+    // ProgBase 4.2.0.6 original, confirmado por RTTI + disassembly:
+    // 0x08 = Modify map refs; 0x01 = Manual AutoMatch; 0x02 = Reset petrol; 0x04 = Reset gas.
+    // ResetAll usa outra rotina e não é mapeado para 0x04.
+    // Reset gas 0x04 teve efeito amplo no Lognovo; resets permanecem intertravados no bridge/UI.
     private data class Preparation(
         val id: String,
         val action: Action,

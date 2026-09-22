@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicLong
 class AutoCalNativeActionManagerTest {
     @Test
     fun `quadros nativos conhecidos sao exatos`() {
-        assertArrayEquals(hex("02 24 04 01 2B"), AutoCalNativeActionManager.Action.RESET_PETROL.request)
-        assertArrayEquals(hex("02 24 04 02 2C"), AutoCalNativeActionManager.Action.RESET_GAS.request)
+        assertArrayEquals(hex("02 24 04 02 2C"), AutoCalNativeActionManager.Action.RESET_PETROL.request)
+        assertArrayEquals(hex("02 24 04 04 2E"), AutoCalNativeActionManager.Action.RESET_GAS.request)
         assertTrue(AutoCalNativeActionManager.Action.values().none { it.name == "RESET_ALL" })
         assertArrayEquals(hex("12 4A 01 01 5E"), AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL.request)
         assertArrayEquals(hex("12 4A 01 00 5D"), AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL.request)
