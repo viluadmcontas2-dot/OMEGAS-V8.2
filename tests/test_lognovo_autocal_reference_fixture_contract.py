@@ -54,6 +54,7 @@ def test_original_lognovo_reference_is_not_the_test_only_shifted_fixture():
 def test_android_render_fixture_provenance_is_enforced_end_to_end():
     workflow = Path(".github/workflows/verde-android-render-evidence.yml").read_text(encoding="utf-8")
     assert "tests/fixtures/portmon-lognovo-autocal-reference-v1.json" in workflow
+    assert "tests/test_lognovo_autocal_reference_fixture_contract.py" in workflow
 
     shifted = json.loads(Path("fixtures/autocal/autocal_snapshot_shifted_equivalence.json").read_text(encoding="utf-8"))
     assert shifted["classification"] == "SYNTHETIC_NON_SCIENTIFIC"
