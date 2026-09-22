@@ -447,12 +447,12 @@
       const cngVisits = finite(learned?.cng?.visits) ?? 0;
       const petrolSessions = finite(learned?.petrol?.sessions) ?? 0;
       const cngSessions = finite(learned?.cng?.sessions) ?? 0;
-      const petrolMeanMs = finite(learned?.petrol?.petrolMs);
-      const cngMeanMs = finite(learned?.cng?.petrolMs);
-      const petrolRpm = finite(learned?.petrol?.rpm);
-      const cngRpm = finite(learned?.cng?.rpm);
-      const petrolMap = finite(learned?.petrol?.mapBar);
-      const cngMap = finite(learned?.cng?.mapBar);
+      const petrolMeanMs = finite(learned?.petrol?.observedPetrolMsCenter);
+      const cngMeanMs = finite(learned?.cng?.observedPetrolMsCenter);
+      const petrolRpm = finite(learned?.petrol?.observedRpmCenter);
+      const cngRpm = finite(learned?.cng?.observedRpmCenter);
+      const petrolMap = finite(learned?.petrol?.observedMapCenter);
+      const cngMap = finite(learned?.cng?.observedMapCenter);
       const historicalEpochs = [...new Set((learned?.previousCng || []).map(item => item.epoch))].sort((a, b) => b - a);
       const axes = maps.grid || {};
       const axisRpm = finite(axes.rpmBins?.[column]);
