@@ -10,6 +10,7 @@ import com.omegas.prohub.autocal.AutoCalReadObservation
 import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
 import com.omegas.prohub.autocal.AutoCalSnapshotSource
 import com.omegas.prohub.ecu.AutoCalProtocol
+import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import org.json.JSONArray
 import org.json.JSONObject
@@ -98,6 +99,87 @@ class DashboardLevelsRenderTest {
         val provenance: JSONObject,
     )
 
+    private data class OriginalKFactorFixture(
+        val operation: JSONObject,
+        val provenance: JSONObject,
+    )
+
+    private fun originalKFactorFixture(
+        fixtureName: String = "portmon-lognovo-autocal-reference-v1.json",
+    ): OriginalKFactorFixture {
+        val raw = instrumentation.context.assets
+            .open(fixtureName)
+            .bufferedReader()
+            .use { it.readText() }
+        val root = JSONObject(raw)
+        check(root.getString("classification") == "ORIGINAL_DERIVED") {
+            "$fixtureName is not allowed as a Curve K oracle"
+        }
+        val provenance = root.getJSONObject("provenance")
+        check(provenance.getString("sourceRawSha256") ==
+            "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64") {
+            "Unexpected PortmonLOGNOVO source hash"
+        }
+        val rows = root.getJSONArray("transactions")
+
+        fun payloadForKey(key: String): ByteArray {
+            for (index in 0 until rows.length()) {
+                val tx = rows.getJSONObject(index)
+                if (tx.getString("key") != key) continue
+                val request = hex(tx.getString("request"))
+                val response = hex(tx.getString("response"))
+                check(response.size >= request.size + 3) { "$key: truncated response" }
+                check(response.copyOfRange(0, request.size).contentEquals(request)) {
+                    "$key: response echo differs from original request"
+                }
+                val status = response[request.size].toInt() and 0xFF
+                check(status == Mp48Protocol.STATUS_ACK) { "$key: original transaction is not ACK" }
+                val payloadSize = response[request.size + 1].toInt() and 0xFF
+                val payloadStart = request.size + 2
+                val payloadEnd = payloadStart + payloadSize
+                check(response.size == payloadEnd + 1) {
+                    "$key: response must contain exactly one trailing checksum byte"
+                }
+                return response.copyOfRange(payloadStart, payloadEnd)
+            }
+            error("Missing original transaction for $key")
+        }
+
+        val axisRaw = KFactorProtocol.decodeRawPoints(payloadForKey("PETR_INJ_TBP"))
+        val factorsRaw = KFactorProtocol.decodeRawPoints(payloadForKey("MUL_ACT"))
+        check(axisRaw.size == KFactorProtocol.POINT_COUNT)
+        check(factorsRaw.size == KFactorProtocol.POINT_COUNT)
+        val points = JSONArray()
+        repeat(KFactorProtocol.POINT_COUNT) { index ->
+            points.put(JSONObject()
+                .put("index", index)
+                .put("petrolAxisRaw", axisRaw[index])
+                .put("petrolMs", KFactorProtocol.petrolMsFromAxisRaw(axisRaw[index]))
+                .put("factorRaw", factorsRaw[index])
+                .put("factor", KFactorProtocol.factorFromRaw(factorsRaw[index])))
+        }
+        val operation = JSONObject()
+            .put("ok", true)
+            .put("state", "COMPLETED")
+            .put("busy", false)
+            .put("axisRaw", JSONArray(axisRaw.toList()))
+            .put("factorsRaw", JSONArray(factorsRaw.toList()))
+            .put("points", points)
+            .put("pointCount", KFactorProtocol.POINT_COUNT)
+            .put("factorEncoding", "Q14")
+            .put("axisEncoding", "raw/512 ms")
+            .put("complete", true)
+            .put("automatic", false)
+            .put("source", "ORIGINAL_DERIVED_REPLAY")
+        return OriginalKFactorFixture(
+            operation = operation,
+            provenance = JSONObject(provenance.toString())
+                .put("replayRole", "CURVE_K_POSITIVE_RENDER")
+                .put("productionDecoder", "KFactorProtocol")
+                .put("liveEcuClaim", false),
+        )
+    }
+
     private fun autoCalFixtureRawValues(
         fixtureName: String,
     ): Map<String, IntArray> {
@@ -185,6 +267,12 @@ class DashboardLevelsRenderTest {
             "Original AutoCal fixture must contain exactly the five reference fields"
         }
         return OriginalAutoCalFixture(observations, provenance)
+    }
+
+    private fun getPrivateField(target: Any, name: String): Any? {
+        val field = target.javaClass.getDeclaredField(name)
+        field.isAccessible = true
+        return field.get(target)
     }
 
     private fun setPrivateField(target: Any, name: String, value: Any?) {
@@ -296,6 +384,45 @@ class DashboardLevelsRenderTest {
             .put("nativeFirmwareExact", root.optBoolean("nativeFirmwareExact", false))
     }
 
+    private fun installOriginalKFactorCurve(
+        scenario: ActivityScenario<MainActivity>,
+    ): JSONObject {
+        val fixture = originalKFactorFixture()
+        waitFor(10_000L) {
+            var idle = false
+            scenario.onActivity { activity ->
+                val bridge = getPrivateField(activity, "v7Bridge")
+                if (bridge != null) {
+                    val getLastOperation = bridge.javaClass.getMethod("getLastOperation")
+                    val current = JSONObject(getLastOperation.invoke(bridge) as String)
+                    idle = !current.optBoolean("busy", false)
+                }
+            }
+            idle
+        }
+        scenario.onActivity { activity ->
+            val bridge = checkNotNull(getPrivateField(activity, "v7Bridge")) {
+                "V7 bridge unavailable"
+            }
+            setPrivateField(bridge, "lastOperation", JSONObject(fixture.operation.toString()))
+            activity.refreshWebUi()
+        }
+        evalRaw(
+            scenario,
+            """
+            (() => {
+              const curve = window.OmegasApp?.screens?.curve;
+              if (!curve) throw new Error('Curve screen unavailable');
+              curve.reading = true;
+              curve.poll();
+              return 'ok';
+            })()
+            """.trimIndent(),
+        )
+        SystemClock.sleep(650L)
+        return fixture.provenance
+    }
+
     private fun dashboardDom(scenario: ActivityScenario<MainActivity>): JSONObject =
         evalJson(
             scenario,
@@ -395,6 +522,26 @@ class DashboardLevelsRenderTest {
             """.trimIndent(),
         )
 
+    private fun curvePositiveDom(scenario: ActivityScenario<MainActivity>): JSONObject =
+        evalJson(
+            scenario,
+            """
+            JSON.stringify((() => {
+              const root = document.querySelector('[data-screen="curve"]');
+              const body = root?.innerText ?? '';
+              const actual = document.querySelector('#curveChart .curve-line.actual');
+              return {
+                active: root?.classList.contains('active') === true,
+                source: document.getElementById('curveSourceStatus')?.textContent ?? null,
+                actualPath: actual?.getAttribute('d') ?? '',
+                pointCount: document.querySelectorAll('#curveChart [data-curve-index]').length,
+                bodyHasNaN: /\\bNaN\\b/.test(body),
+                bodyHasUndefined: /\\bundefined\\b/i.test(body)
+              };
+            })())
+            """.trimIndent(),
+        )
+
     private fun globalRouteDom(
         scenario: ActivityScenario<MainActivity>,
         route: String,
@@ -475,6 +622,28 @@ class DashboardLevelsRenderTest {
             saveEvidence("curve-offline-honest", dom, scenario)
             assertTrue("Curve route must activate", dom.getBoolean("active"))
             assertTrue("Emulator without ECU must not claim a confirmed curve", !dom.optString("curveSource").contains("ECU confirmada", ignoreCase = true))
+            assertTrue("Curve must never render NaN", !dom.getBoolean("bodyHasNaN"))
+            assertTrue("Curve must never render undefined", !dom.getBoolean("bodyHasUndefined"))
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun curveOriginalLognovoRendersThirtyDecodedPoints() {
+        val scenario = launch()
+        try {
+            activateRoute(scenario, "curve", settleMs = 850L)
+            val provenance = installOriginalKFactorCurve(scenario)
+            val dom = curvePositiveDom(scenario)
+            saveEvidence("curve-original-lognovo", dom, scenario, provenance)
+            assertTrue("Curve route must activate", dom.getBoolean("active"))
+            assertTrue(
+                "Original captured ACK replay must drive the production confirmed-curve state",
+                dom.optString("source").contains("ECU confirmada", ignoreCase = true),
+            )
+            assertEquals("Original Curve K replay must expose all 30 points", 30, dom.getInt("pointCount"))
+            assertTrue("Original Curve K line must be drawable", dom.getString("actualPath").length > 20)
             assertTrue("Curve must never render NaN", !dom.getBoolean("bodyHasNaN"))
             assertTrue("Curve must never render undefined", !dom.getBoolean("bodyHasUndefined"))
         } finally {

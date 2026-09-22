@@ -13,6 +13,7 @@ on:
       - 'app/src/main/java/com/omegas/prohub/web/**'
       - 'app/src/main/java/com/omegas/prohub/telemetry/**'
       - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
+      - 'app/src/main/java/com/omegas/prohub/ecu/KFactorProtocol.kt'
       - 'tests/fixtures/portmon-autocal-cycle-v1.json'
       - 'tests/fixtures/portmon-lognovo-autocal-reference-v1.json'
       - 'tests/test_lognovo_autocal_reference_fixture_contract.py'
@@ -49,6 +50,8 @@ jobs:
             method: mapFreshMp48ContextRender
           - scenario: curve-offline-honest
             method: curveOfflineDoesNotFabricateEcuRead
+          - scenario: curve-original-lognovo
+            method: curveOriginalLognovoRendersThirtyDecodedPoints
           - scenario: obd-offline-honest
             method: obdOfflineIsHonest
           - scenario: dashboard-session-invalidated
