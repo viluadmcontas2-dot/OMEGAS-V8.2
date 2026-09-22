@@ -36,7 +36,7 @@ jobs:
           name: atlas-index-bundle
           path: atlas-indices
       - name: Prepare challenger decoder when required
-        if: matrix.driver == 'capstone-fn'
+        if: startsWith(matrix.driver, 'capstone-')
         run: python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26
       - name: Investigate target
         run: |

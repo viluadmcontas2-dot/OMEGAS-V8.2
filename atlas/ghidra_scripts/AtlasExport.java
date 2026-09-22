@@ -28,7 +28,10 @@ public class AtlasExport extends GhidraScript {
         String x=s.toLowerCase(Locale.ROOT);
         return x.contains("autocal") || x.contains("auto cal") || x.contains("automatch") ||
                x.contains("mul_act") || x.contains("acquired_zones") || x.contains("mnfld") ||
-               x.contains("petr_inj") || x.contains("gas_mnfld") || x.contains("rifautocal");
+               x.contains("petr_inj") || x.contains("gas_mnfld") || x.contains("rifautocal") ||
+               x.contains("curve") || x.contains("point") || x.contains("band") ||
+               x.contains("acquisition") || x.contains("acqusition") || x.contains("cursorlimit") ||
+               x.contains("chart") || x.contains("series");
     }
 
     @Override public void run() throws Exception {
