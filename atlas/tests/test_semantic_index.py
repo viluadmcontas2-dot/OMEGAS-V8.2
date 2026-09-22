@@ -51,6 +51,10 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
 """
 
 class SemanticIndexTest(unittest.TestCase):
+    def test_clean_value_normalizes_annotated_handler(self):
+        self.assertEqual(mod.clean_value('"FormClose"  → 0x513e68'),"FormClose")
+        self.assertEqual(mod.clean_value('"FormShow" → 0x513da8'),"FormShow")
+
     def test_extracts_fields_serial_and_event_graph(self):
         x=mod.parse(SAMPLE)
         self.assertEqual(x["classes"]["TAutoCalDM"]["fields"][0]["name"],"PETR_INJ_TBP")
