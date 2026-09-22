@@ -30,7 +30,7 @@ class AutoCalAcquiredZonesEvidenceTest(unittest.TestCase):
             conclusions["percent_semantics"],
             "PROHIBITED_WITHOUT_SEPARATE_EVIDENCE",
         )
-        self.assertEqual(conclusions["element_order_semantics"], "UNKNOWN")
+        self.assertEqual(conclusions["element_order_semantics"], "LOW_TO_HIGH_MAP_ORDER_PROVEN_SEPARATELY")
 
     def test_captures_contain_reset_or_regression_evidence(self):
         data = json.loads(FIXTURE.read_text(encoding="utf-8"))
