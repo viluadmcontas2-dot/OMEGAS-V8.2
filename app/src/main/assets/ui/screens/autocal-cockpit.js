@@ -383,17 +383,17 @@
       const eventState = String(band?.event?.correlationState || '');
       if (band.state === 'anchored') {
         return eventState === 'CORRELATED'
-          ? 'Nesta leitura, a região amadureceu e encontrou correlação física confiável.'
+          ? 'Nesta leitura, a posição amadureceu e encontrou correlação física confiável.'
           : 'Correlação física confiável confirmada nesta sessão.';
       }
       if (band.state === 'mature') {
         return band.event
-          ? 'Nesta leitura, a região amadureceu; a correlação física ainda não foi confirmada com confiança.'
-          : 'Região madura nesta sessão; aguardando nova janela de telemetria para tentar a correlação física novamente.';
+          ? 'Nesta leitura, a posição amadureceu; a correlação física ainda não foi confirmada com confiança.'
+          : 'Posição madura nesta sessão; aguardando nova janela de telemetria para tentar a correlação física novamente.';
       }
       return band.counter > 0
-        ? 'A ECU registrou atividade nesta região.'
-        : 'Ainda não há atividade nesta região.';
+        ? 'A ECU registrou atividade nesta posição.'
+        : 'Ainda não há atividade nesta posição.';
     },
 
     toggleAction(enabled) {
@@ -542,7 +542,7 @@
                 <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
               </div>
               <div id="autocalBands" class="autocal-band-strip" role="list"></div>
-              <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Toque numa região</b><span>O estado humano aparece aqui; detalhes RAW ficam no painel técnico.</span></div>
+              <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Toque numa posição</b><span>O estado humano aparece aqui; detalhes RAW ficam no painel técnico.</span></div>
             </section>
 
             <section class="autocal-command-bar">
