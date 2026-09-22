@@ -278,3 +278,20 @@ The exact set guard depends on ECU-internal state not present in current host-si
 
 Stop condition:
 do not reconstruct or predict ACQUIRED_ZONES in OMEGAS. Consume the ECU flag as authority and use live MAP only as explanatory context.
+
+
+## GasPointPrev / AutoMatch epoch — bidirectional closure — 2026-09-22
+
+LOGNOVO provides a complete observable epoch sequence:
+- `NUM_AUTOMATCH_EXECUTED`: `3->0`, `0->1`, `1->2`, `2->3`;
+- four bulk `GasPointPrev` replacements;
+- every non-baseline counter transition has exactly one nearby Prev bulk replacement;
+- every Prev bulk replacement has exactly one nearby counter transition;
+- observed offset is ~0.36–3.43 s, compatible with the independent polling cadence.
+
+AUTOCAL:
+- measurable transitions `1->2` and `2->3` each align with a Prev replacement;
+- one earlier Prev replacement occurs before the capture has an earlier AutoMatch counter baseline.
+
+Therefore `GasPointPrev` as **previous native AutoMatch epoch snapshot** is operationally closed with a capture-start caveat.
+Exact firmware copy instruction/instant remains UNKNOWN because vectors and counter are polled asynchronously and ECU firmware is not available.
