@@ -19,6 +19,7 @@ on:
       - "tests/fixtures/amarelo-autocal-maturity-*.json"
       - "tests/fixtures/amarelo-autocal-point-buffer-*.json"
       - "tests/fixtures/amarelo-autocal-point-update-*.json"
+      - "tests/fixtures/amarelo-autocal-zone-latch-*.json"
       - "app/src/main/java/com/omegas/prohub/autocal/**"
       - "app/src/main/assets/ui/screens/autocal-cockpit.js"
       - "app/src/main/assets/ui/screens/curve.js"
@@ -71,6 +72,8 @@ jobs:
         run: python3 -B -m unittest tests.test_amarelo_autocal_acquired_zones_evidence -v
       - name: AutoCAL native MAP region geometry evidence
         run: python3 -B -m unittest tests.test_amarelo_autocal_zone_geometry_evidence -v
+      - name: AutoCAL latched region behavior evidence
+        run: python3 -B -m unittest tests.test_amarelo_autocal_zone_latch_behavior_evidence -v
       - name: AutoCAL ECU-sourced maturity visibility evidence
         run: python3 -B -m unittest tests.test_amarelo_autocal_maturity_visibility_evidence -v
       - name: AutoCAL ECU point-buffer ownership evidence
