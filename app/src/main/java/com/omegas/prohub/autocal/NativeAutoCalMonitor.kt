@@ -151,10 +151,11 @@ class NativeAutoCalMonitor(
 
         val previousProbe = synchronized(lock) { lastProbe }
         val probe = probe(currentSession) ?: return
+        val autoMatchCountChanged = previousProbe != null && probe.autoMatchCount != previousProbe.autoMatchCount
         val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
         val probeChanged = previousProbe != null && (
-            previousProbe.autoMatchCount != probe.autoMatchCount ||
+            autoMatchCountChanged ||
                 previousProbe.nativeFlag13 != probe.nativeFlag13
         )
 
@@ -186,7 +187,7 @@ class NativeAutoCalMonitor(
                 snapshotReason = "NATIVE_BAND_MATURED"
             } else if (probeChanged) {
                 snapshotRequested = true
-                snapshotReason = if (countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
+                snapshotReason = if (autoMatchCountChanged) "AUTOMATCH_EPOCH_CHANGED" else "NATIVE_STATUS_CHANGED"
             }
         }
 
