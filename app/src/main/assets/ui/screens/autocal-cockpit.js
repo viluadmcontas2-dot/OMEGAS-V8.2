@@ -95,7 +95,7 @@
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão e tente consultar novamente.';
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
-      else if (enabled === 1) nextAction = 'Continue dirigindo normalmente. A tela mostra separadamente o ponto GNV atual e o buffer GNV anterior publicados pela ECU; as quatro flags de zona são contexto, não porcentagem de conclusão.';
+      else if (enabled === 1) nextAction = 'Continue dirigindo normalmente. A tela mostra separadamente os pontos GNV da época atual e o snapshot da época AutoMatch anterior publicados pela ECU; as regiões registradas são contexto, não porcentagem de conclusão.';
       return { title, progress, autoMatch, nextAction, petrolZones, gasZones, petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch };
     },
 
@@ -494,10 +494,10 @@
               <div class="autocal-section-head">
                 <div><small>AUTOCAL NATIVO</small><h4>Curva de aquisição</h4><p>Gasolina referência × resposta GNV. Os pontos são reposicionados conforme a própria ECU atualiza os buffers nativos.</p></div>
                 <div class="autocal-chart-tools" aria-label="Controles do gráfico">
-                  <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
+                  <button type="button" data-autocal-history disabled aria-label="Mostrar época anterior">Leitura anterior</button>
                 </div>
               </div>
-              <div class="autocal-chart-legend"><span class="petrol">Gasolina referência</span><span class="gas">GNV resposta</span><span class="acquired">Pontos adquiridos pela ECU</span><span class="previous">Buffer GNV anterior</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
+              <div class="autocal-chart-legend"><span class="petrol">Gasolina referência</span><span class="gas">GNV resposta</span><span class="acquired">Pontos adquiridos pela ECU</span><span class="previous">GNV · época anterior</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
               <div class="autocal-live-strip" aria-live="polite">
                 <div class="autocal-live-summary"><small>AGORA</small><b id="autocalLiveTitle">Aguardando telemetria</b><span id="autocalLiveFuel">—</span></div>
                 <div class="autocal-live-metric"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
@@ -827,7 +827,7 @@
       const history = this.panel?.querySelector('[data-autocal-history]');
       if (history) {
         history.disabled = this.previousReferencePoints.length === 0;
-        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Leitura anterior';
+        history.textContent = this.chartHistoryVisible ? 'Ocultar época anterior' : 'Época anterior';
       }
 
       this.renderReferenceChart(snapshot);
