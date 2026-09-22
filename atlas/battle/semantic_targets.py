@@ -6,11 +6,11 @@ from pathlib import Path
 
 SEMANTIC_KINDS = {"method", "field", "field-use", "event", "action", "serial", "visual"}
 PRIORITY = {
-    "event": 0,
-    "action": 1,
-    "serial": 2,
-    "visual": 3,
-    "method": 4,
+    "method": 0,
+    "serial": 1,
+    "visual": 2,
+    "event": 3,
+    "action": 4,
     "field-use": 5,
     "field": 6,
 }

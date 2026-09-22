@@ -167,9 +167,35 @@ def delphi_method(indices,target):
 def ghidra_method(indices,target):
     _,item=semantic_entry(indices,"method",target)
     if not item:return escalate("method absent from semantic catalog")
-    f=function_for_va(indices,int(item["meta"]["va"]))
-    if not f:return escalate("published method VA is outside current Ghidra AutoCal graph")
-    return prove("published Delphi method resolves to Ghidra native function",[{"kind":"method-native-function","subject":target,"value":f["entry"]}],[ghidra_function_evidence(indices,f)],[{"kind":"function","target":f["entry"]}])
+    va=int(item["meta"]["va"])
+    f=function_for_va(indices,va)
+    exact={"kind":"function","target":f"{va:08x}","origin":"published-method-va"}
+    if not f:return escalate("published method VA is outside current Ghidra AutoCal graph",new_targets=[exact])
+    return prove("published Delphi method resolves to Ghidra native function",[{"kind":"method-native-function","subject":target,"value":f["entry"]}],[ghidra_function_evidence(indices,f)],[{"kind":"function","target":f["entry"],"origin":"published-method-va"}])
+
+def capstone_method(indices,binary_path,target):
+    import pefile
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    _,item=semantic_entry(indices,"method",target)
+    if not item:return escalate("method absent from semantic catalog")
+    va=int(item["meta"]["va"])
+    pe=pefile.PE(str(binary_path),fast_load=False); image=int(pe.OPTIONAL_HEADER.ImageBase)
+    rva=va-image; off=None
+    for s in pe.sections:
+        a=int(s.VirtualAddress); size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+        if a<=rva<a+size:
+            off=int(s.PointerToRawData)+(rva-a); break
+    if off is None:return escalate("published method VA is outside executable PE sections")
+    raw=binary_path.read_bytes()[off:off+384]
+    md=Cs(CS_ARCH_X86,CS_MODE_32)
+    ins=[]
+    for i in md.disasm(raw,va):
+        ins.append(i)
+        if len(ins)>=96 or i.mnemonic.startswith("ret"):break
+    if not ins or ins[0].address!=va:return escalate("Capstone could not decode the exact published method VA")
+    text="\n".join(f"{i.address:08x}:{i.mnemonic} {i.op_str}" for i in ins)
+    ev={"kind":"capstone-method","va":f"0x{va:08x}","instruction_count":len(ins),"sha256":sha256_bytes(text.encode()),"first_instructions":text.splitlines()[:16]}
+    return prove("Capstone independently decodes the exact Delphi published-method VA",[{"kind":"method-native-code","subject":target,"value":f"0x{va:08x}"}],[ev],[{"kind":"function","target":f"{va:08x}","origin":"published-method-va"}])
 
 def delphi_field(indices,target):
     _,item=semantic_entry(indices,"field",target)
@@ -196,8 +222,7 @@ def ghidra_field_use(indices,target):
                 if len(hits)>=64:break
         if len(hits)>=64:break
     if not hits:return escalate("Ghidra decompiler has no direct field-name/offset signal in current corpus")
-    nts=[{"kind":"function","target":h["function"]} for h in hits[:16]]
-    return prove("Ghidra decompiler exposes field-use signal in reachable AutoCal code",[{"kind":"field-use-signal","subject":target,"value":True}],[{"kind":"ghidra-field-use","hits":hits}],nts)
+    return prove("Ghidra decompiler exposes field-use signal in reachable AutoCal code",[{"kind":"field-use-signal","subject":target,"value":True}],[{"kind":"ghidra-field-use","hits":hits}])
 
 def capstone_field_use(indices,binary_path,target):
     import pefile
@@ -228,8 +253,7 @@ def capstone_field_use(indices,binary_path,target):
             if len(hits)>=64:break
         if len(hits)>=64:break
     if not hits:return escalate("Capstone found no memory displacement matching the field offset in reachable AutoCal functions")
-    nts=[{"kind":"function","target":h["function"]} for h in hits[:16]]
-    return prove("Capstone independently finds field-offset memory accesses in reachable AutoCal code",[{"kind":"field-memory-access","subject":target,"value":True}],[{"kind":"capstone-field-use","offset":wanted,"hits":hits}],nts)
+    return prove("Capstone independently finds field-offset memory accesses in reachable AutoCal code",[{"kind":"field-memory-access","subject":target,"value":True}],[{"kind":"capstone-field-use","offset":wanted,"hits":hits}])
 
 def delphi_event(indices,target):
     payload,item=semantic_entry(indices,"event",target)
@@ -241,7 +265,7 @@ def delphi_event(indices,target):
 def ghidra_event(indices,target):
     payload,item=semantic_entry(indices,"event",target)
     if not item:return escalate("event binding absent from semantic index")
-    method=semantic_targets.find_method_target(payload,item["meta"]["handler"])
+    method=semantic_targets.find_method_for_event(payload,item["meta"])
     if not method:return escalate("event handler has no unique published Delphi method")
     r=ghidra_method(indices,method["target"])
     if r["status"]!="PROVEN":return escalate("event handler did not resolve to native Ghidra function",r.get("evidence"),[{"kind":"method","target":method["target"]}])
@@ -283,11 +307,35 @@ def portmon_object(indices,target):
             hits.append(row)
     if not hits:return escalate("serial code was not observed at the object-address position in recorded requests")
     return prove("Portmon independently observes the serial object address on wire",[{"kind":"serial-object-observed","subject":target,"value":True}],[{"kind":"portmon-object-position","little_endian":" ".join(f"{x:02X}" for x in needle),"hits":hits[:64],"clock_semantics":idx["clock_semantics"]}])
+\ndef pe_serial_resource(indices,binary_path,target):
+    import dfm_resource
+    _,item=semantic_entry(indices,"serial",target)
+    if not item:return escalate("serial target absent from semantic catalog")
+    meta=item["meta"]
+    fact=dfm_resource.inspect_object(binary_path,meta["resource"],meta["object"])
+    expected_class=meta.get("object_class")
+    if expected_class and fact["class"].lower()!=expected_class.lower():
+        return escalate("independent PE/DFM parser found object with unexpected class",[{"kind":"pe-dfm","fact":fact}])
+    observed=fact["properties"].get("SerialCode")
+    expected=int(meta["serial_code"])
+    if observed!=expected:
+        return escalate(f"independent PE/DFM SerialCode mismatch: observed={observed!r} expected={expected}",[{"kind":"pe-dfm","fact":fact}])
+    return prove("independent PE/DFM parser confirms object SerialCode",[{"kind":"serial-resource-binding","subject":target,"value":expected}],[{"kind":"pe-dfm","fact":fact}])
 
 def delphi_visual(indices,target):
     _,item=semantic_entry(indices,"visual",target)
     if not item:return escalate("visual object absent from Delphi resource index")
     return prove("Delphi resource identifies AutoCal render object",[{"kind":"visual-object","subject":target,"value":True}],[{"kind":"delphi-visual","metadata":item["meta"]}])
+\ndef pe_visual_resource(indices,binary_path,target):
+    import dfm_resource
+    _,item=semantic_entry(indices,"visual",target)
+    if not item:return escalate("visual target absent from semantic catalog")
+    meta=item["meta"]
+    fact=dfm_resource.inspect_object(binary_path,meta["resource"],meta["object"])
+    expected=meta["object_class"]
+    if fact["class"].lower()!=expected.lower():
+        return escalate(f"independent PE/DFM class mismatch: observed={fact['class']} expected={expected}",[{"kind":"pe-dfm","fact":fact}])
+    return prove("independent PE/DFM parser confirms render object and class",[{"kind":"visual-resource-binding","subject":target,"value":expected}],[{"kind":"pe-dfm","fact":fact}])
 
 def ghidra_visual(indices,target):
     _,item=semantic_entry(indices,"visual",target)
@@ -319,6 +367,7 @@ def main():
         elif a.driver=="binary-frame":r=binary_frame(bp,a.target)
         elif a.driver=="delphi-method":r=delphi_method(a.indices,a.target)
         elif a.driver=="ghidra-method":r=ghidra_method(a.indices,a.target)
+        elif a.driver=="capstone-method":r=capstone_method(a.indices,bp,a.target)
         elif a.driver=="delphi-field":r=delphi_field(a.indices,a.target)
         elif a.driver=="raw-field-name":r=raw_field_name(a.indices,bp,a.target)
         elif a.driver=="ghidra-field-use":r=ghidra_field_use(a.indices,a.target)
@@ -329,8 +378,10 @@ def main():
         elif a.driver=="ghidra-action":r=ghidra_action(a.indices,a.target)
         elif a.driver=="delphi-serial":r=delphi_serial(a.indices,a.target)
         elif a.driver=="portmon-object":r=portmon_object(a.indices,a.target)
+        elif a.driver=="pe-serial-resource":r=pe_serial_resource(a.indices,bp,a.target)
         elif a.driver=="delphi-visual":r=delphi_visual(a.indices,a.target)
         elif a.driver=="ghidra-visual":r=ghidra_visual(a.indices,a.target)
+        elif a.driver=="pe-visual-resource":r=pe_visual_resource(a.indices,bp,a.target)
         else:raise ValueError("unsupported driver "+a.driver)
     except Exception as e:
         r={"status":"BROKEN","summary":f"{type(e).__name__}: {e}","claims":[],"evidence":[],"new_targets":[],"contradictions":[]}

@@ -10,13 +10,13 @@ import semantic_targets
 SEEDS=ROOT/"atlas/manifests/autocal-seeds.json"
 
 DRIVERS={
-    "method":["delphi-method","ghidra-method"],
+    "method":["delphi-method","capstone-method"],
     "field":["delphi-field","raw-field-name"],
     "field-use":["ghidra-field-use","capstone-field-use"],
-    "event":["delphi-event","ghidra-event"],
-    "action":["delphi-action","ghidra-action"],
-    "serial":["delphi-serial","portmon-object"],
-    "visual":["delphi-visual","ghidra-visual"],
+    "event":["delphi-event"],
+    "action":["delphi-action"],
+    "serial":["delphi-serial","pe-serial-resource"],
+    "visual":["delphi-visual","pe-visual-resource"],
 }
 
 def parse_functions(path:Path):
