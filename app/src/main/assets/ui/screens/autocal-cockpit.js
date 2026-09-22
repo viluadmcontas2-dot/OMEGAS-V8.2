@@ -43,9 +43,14 @@
   }
 
   function projectedZoneFlags(projection, fuel) {
-    const zones = projection?.ok === true && projection?.acquisitionZones && typeof projection.acquisitionZones === 'object'
+    if (projection?.ok !== true) return null;
+    const typedZones = projection?.instrument?.zones && typeof projection.instrument.zones === 'object'
+      ? projection.instrument.zones[fuel]
+      : null;
+    const legacyZones = projection?.acquisitionZones && typeof projection.acquisitionZones === 'object'
       ? projection.acquisitionZones[fuel]
       : null;
+    const zones = Array.isArray(typedZones) ? typedZones : legacyZones;
     if (!Array.isArray(zones)) return null;
     return Array.from({ length: 4 }, (_, index) => zones[index] === true);
   }
@@ -396,8 +401,11 @@
     },
 
     bandStrip(snapshot = {}, projection = {}) {
-      const counters = vector(snapshot, 'NUM_BUF_UPD_GAS');
       const instrument = projection?.instrument || {};
+      const typedCounters = Array.isArray(instrument?.acquisition?.gasCounter)
+        ? instrument.acquisition.gasCounter.map(value => finite(value) ?? 0)
+        : [];
+      const counters = typedCounters.length ? typedCounters : vector(snapshot, 'NUM_BUF_UPD_GAS');
       const regions = this.instrumentZoneRegions(instrument);
       const currentPoints = this.instrumentAcquisitionPoints(instrument, 'gasCurrent');
       const pointsByIndex = new Map(currentPoints.map(point => [Number(point.index), point]));
