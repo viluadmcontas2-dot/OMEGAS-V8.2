@@ -483,3 +483,24 @@ const counterOnlyTransition = model.epochTransition(
 assert.equal(counterOnlyTransition.changed, false);
 assert.equal(counterOnlyTransition.counterChanged, true);
 assert.equal(counterOnlyTransition.reason, 'COUNTER_CHANGED_AWAITING_TYPED_EVENT');
+
+
+const repeatedTypedEpoch = model.epochTransition(
+  epochProjection(101, 3, [1.01, 1.02, 1.0], typedNativeEvent(2, 3, false)),
+  epochProjection(101, 3, [1.01, 1.02, 1.0], typedNativeEvent(2, 3, false)),
+  epochBaseline,
+);
+assert.equal(repeatedTypedEpoch.changed, false,
+  'the same latched typed event must not replay after the counter is already at its after value');
+assert.equal(repeatedTypedEpoch.counterChanged, false);
+assert.equal(repeatedTypedEpoch.reason, 'UNCHANGED');
+
+const staleTypedEpoch = model.epochTransition(
+  epochProjection(101, 3, [1.01, 1.02, 1.0]),
+  epochProjection(101, 0, [0.99, 1.0, 1.01], typedNativeEvent(2, 3, false)),
+  epochBaseline,
+);
+assert.equal(staleTypedEpoch.changed, false,
+  'typed event whose before/after do not match the actual projection edge must fail closed');
+assert.equal(staleTypedEpoch.counterChanged, true);
+assert.equal(staleTypedEpoch.reason, 'COUNTER_CHANGED_AWAITING_TYPED_EVENT');
