@@ -13,6 +13,11 @@ def read_receipts(root):
             rows.append(r)
     return rows
 
+def write_json(path, payload):
+    path=Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--receipts",required=True)
@@ -65,7 +70,6 @@ def main():
             else:
                 resolutions[target]="ESCALATE"
 
-    # De-duplicate planned attempts by (target, driver).
     unique=[];seen=set()
     for lane in lanes:
         key=(lane["target"],lane["driver"])
@@ -78,8 +82,8 @@ def main():
         "resolutions":resolutions,"frontier_count":len(lanes),
         "has_next":bool(lanes),"matrix":{"include":lanes},
     }
-    Path(args.output).write_text(json.dumps(out,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
-    Path(args.frontier).write_text(json.dumps({"lanes":lanes},indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+    write_json(args.output,out)
+    write_json(args.frontier,{"lanes":lanes})
     print(json.dumps(out,indent=2,ensure_ascii=False))
     if broken: raise SystemExit("BROKEN receipt present")
 

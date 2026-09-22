@@ -16,5 +16,12 @@ class AtlasContractTest(unittest.TestCase):
             (p/"x.json").write_text(json.dumps({"schema":"other","status":"UNKNOWN"}),encoding="utf-8")
             self.assertEqual(MOD.read_receipts(p),[])
 
+    def test_write_json_creates_missing_parent_directories(self):
+        with tempfile.TemporaryDirectory() as td:
+            p=Path(td)/"nested"/"atlas-out"/"result.json"
+            MOD.write_json(p,{"ok":True})
+            self.assertTrue(p.is_file())
+            self.assertEqual(json.loads(p.read_text(encoding="utf-8")),{"ok":True})
+
 if __name__=="__main__":
     unittest.main()
