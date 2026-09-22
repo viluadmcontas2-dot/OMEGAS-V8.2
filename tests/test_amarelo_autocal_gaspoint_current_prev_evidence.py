@@ -19,9 +19,9 @@ class AutoCalGasPointCurrentPrevEvidenceTest(unittest.TestCase):
         )
         self.assertEqual(
             conclusions["previous_buffer_bulk_replacement_tracks_automatch_epoch_rollover"],
-            "PROVEN_DUAL_CAPTURE_BEHAVIOR",
+            "PROVEN_BIDIRECTIONAL_WITH_CAPTURE_START_CAVEAT",
         )
-        self.assertEqual(conclusions["exact_firmware_copy_guard"], "UNKNOWN")
+        self.assertEqual(conclusions["exact_firmware_copy_guard"], "UNKNOWN_DUE_ASYNC_POLLING_AND_NO_ECU_FIRMWARE")
         self.assertEqual(
             conclusions["firmware_reason_for_previous_buffer"],
             "PRIOR_AUTOMATCH_EPOCH_SNAPSHOT_SUPPORTED_AND_OPERATIONALLY_CLOSED",
@@ -65,3 +65,22 @@ class AutoCalGasPointPrevEpochEvidenceTest(unittest.TestCase):
         usable = [r for r in lognovo if "note" not in r]
         self.assertEqual([(r["exact"], r["changed"]) for r in usable], [(13, 13), (15, 16), (14, 15)])
         self.assertTrue(all(r["ratio"] >= 0.93 for r in usable))
+
+
+class AutoCalGasPointPrevBidirectionalEpochEvidenceTest(unittest.TestCase):
+    def test_lognovo_counter_transitions_and_prev_replacements_are_one_to_one(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        row = data["epoch_snapshot_observation"]["PortmonLOGNOVO"]["bidirectional_epoch_association"]
+        self.assertEqual(row["nonbaseline_automatch_transitions"], 4)
+        self.assertEqual(row["prev_bulk_replacements"], 4)
+        self.assertTrue(row["every_nonbaseline_counter_transition_has_one_near_prev_replacement"])
+        self.assertTrue(row["every_prev_replacement_has_one_near_nonbaseline_counter_transition"])
+        self.assertEqual(row["status"], "PROVEN_LOGNOVO_BIDIRECTIONAL")
+
+    def test_autocal_has_capture_start_caveat_only(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        row = data["epoch_snapshot_observation"]["PortmonAUTOCAL"]["bidirectional_epoch_association"]
+        self.assertEqual(row["measurable_automatch_transitions"], 2)
+        self.assertEqual(row["prev_bulk_replacements"], 3)
+        self.assertTrue(row["first_prev_replacement_has_no_earlier_counter_baseline"])
+        self.assertEqual(row["status"], "PROVEN_WITH_CAPTURE_START_CAVEAT")
