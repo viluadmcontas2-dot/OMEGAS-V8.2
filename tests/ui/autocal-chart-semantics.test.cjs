@@ -267,3 +267,8 @@ assert.match(source, /Regiões registradas neste ciclo/);
 assert.match(source, /registrada pela ECU neste ciclo/);
 assert.equal(source.includes('flag ativa'), false);
 assert.equal(source.includes('flag inativa'), false);
+
+
+assert.match(source, /GNV · época anterior/);
+assert.match(source, /Leitura anterior/);
+assert.equal(source.includes('Buffer GNV anterior'), false);
