@@ -75,6 +75,54 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `reset persiste snapshot antes de enviar comando destrutivo`() {
+        val receiptFile = temporaryFile()
+        val backupExistedBeforeWrite = AtomicBoolean(false)
+        val manager = manager(receiptFile = receiptFile) { request, _, _, _ ->
+            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
+                val backupDir = File(receiptFile.parentFile, "backups/autocal_pre_reset")
+                val backup = backupDir.listFiles()?.singleOrNull { it.extension == "json" }
+                backupExistedBeforeWrite.set(
+                    backup != null &&
+                        org.json.JSONObject(backup.readText(Charsets.UTF_8))
+                            .getJSONObject("before")
+                            .getString("snapshotHash")
+                            .isNotBlank(),
+                )
+            }
+            reply(request, byteArrayOf(1))
+        }
+
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertTrue("Reset só pode sair depois de backup durável", backupExistedBeforeWrite.get())
+        manager.close()
+    }
+
+    @Test
+    fun `falha ao persistir backup bloqueia reset antes da usb`() {
+        val receiptFile = temporaryFile()
+        File(receiptFile.parentFile, "backups").writeText("bloqueia diretório de backup")
+        val resetCalls = AtomicInteger(0)
+        val manager = manager(receiptFile = receiptFile) { request, _, _, _ ->
+            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
+                resetCalls.incrementAndGet()
+            }
+            reply(request, byteArrayOf(1))
+        }
+
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertEquals(0, resetCalls.get())
+        assertEquals("FAILED", manager.statusJson().getString("state"))
+        manager.close()
+    }
+
+    @Test
     fun `enable exige readback do AUTO_CAL_ENABLE`() {
         val actionSent = AtomicBoolean(false)
         val manager = manager { request, _, _, _ ->
