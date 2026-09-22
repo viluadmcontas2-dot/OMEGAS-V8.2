@@ -1,0 +1,265 @@
+name: OMEGAS Atlas recursive continuation
+
+on:
+  workflow_dispatch:
+    inputs:
+      atlas_sha:
+        description: Immutable OmegasAtlas commit containing analysis code and canonical corpus
+        required: true
+        type: string
+      index_run_id:
+        description: Run that owns atlas-index-bundle
+        required: true
+        type: string
+      state_run_id:
+        description: Previous run that owns frontier state
+        required: true
+        type: string
+      state_artifact:
+        description: Previous frontier artifact name
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+concurrency:
+  group: omegas-atlas-recursive-${{ inputs.atlas_sha }}
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      wave: ${{ steps.frontier.outputs.wave }}
+      matrix: ${{ steps.frontier.outputs.matrix }}
+    steps:
+      - name: Checkout immutable Atlas authority
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.atlas_sha }}
+          fetch-depth: 0
+      - name: Refuse non-Atlas code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/OmegasAtlas:refs/remotes/origin/OmegasAtlas
+          git merge-base --is-ancestor "${{ inputs.atlas_sha }}" origin/OmegasAtlas
+          test "$(git rev-parse HEAD)" = "${{ inputs.atlas_sha }}"
+      - name: Reverify canonical input hashes
+        run: python3 atlas/tools/seed.py --output /tmp/atlas-seed.json
+      - name: Download previous frontier
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.state_artifact }}
+          path: previous-state
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.state_run_id }}
+      - id: frontier
+        name: Validate frontier
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          s=json.loads(Path("previous-state/state.json").read_text())
+          m=json.loads(Path("previous-state/next-matrix.json").read_text())
+          lanes=m.get("include",[])
+          if not s.get("has_next"):
+              raise SystemExit("previous state has no next frontier")
+          if not (1 <= len(lanes) <= 256):
+              raise SystemExit(f"invalid frontier lane count: {len(lanes)}")
+          if int(s.get("coverage",{}).get("broken",0)) != 0:
+              raise SystemExit("cannot continue from BROKEN state")
+          print(f"wave={int(s.get('wave',0))+1}")
+          print("matrix="+json.dumps(m,separators=(",",":")))
+          PY
+
+  research:
+    needs: bootstrap
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.bootstrap.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.atlas_sha }}
+      - name: Download immutable analysis indices
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-index-bundle
+          path: atlas-indices
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.index_run_id }}
+      - name: Prepare optional independent decoder
+        if: matrix.driver == 'capstone-fn'
+        run: python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26
+      - name: Investigate target
+        run: |
+          python3 atlas/battle/lane.py \
+            --indices atlas-indices \
+            --kind "${{ matrix.kind }}" \
+            --target "${{ matrix.target }}" \
+            --driver "${{ matrix.driver }}" \
+            --lane "${{ matrix.id }}" \
+            --receipt "battle-receipts/${{ matrix.id }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-cont-w${{ needs.bootstrap.outputs.wave }}-${{ matrix.id }}
+          path: battle-receipts/${{ matrix.id }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+  reconcile:
+    if: always()
+    needs: [bootstrap, research]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      wave: ${{ needs.bootstrap.outputs.wave }}
+      has_next: ${{ steps.gate.outputs.has_next }}
+      complete: ${{ steps.gate.outputs.complete }}
+      broken: ${{ steps.gate.outputs.broken }}
+      stalled: ${{ steps.gate.outputs.stalled }}
+      proven: ${{ steps.gate.outputs.proven }}
+      unseen: ${{ steps.gate.outputs.unseen }}
+      targets: ${{ steps.gate.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.atlas_sha }}
+      - name: Download immutable analysis indices
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-index-bundle
+          path: atlas-indices
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.index_run_id }}
+      - name: Download previous state
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.state_artifact }}
+          path: previous-state
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.state_run_id }}
+      - name: Download current receipts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-cont-w${{ needs.bootstrap.outputs.wave }}-*
+          path: battle-receipts/current
+          merge-multiple: true
+      - id: reconcile_step
+        name: Reconcile and expand frontier
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 atlas/battle/reconcile.py \
+            --wave "${{ needs.bootstrap.outputs.wave }}" \
+            --receipts battle-receipts/current \
+            --indices atlas-indices \
+            --previous previous-state/state.json \
+            --state atlas-state/state.json \
+            --matrix atlas-state/next-matrix.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-continuation-state
+          path: atlas-state/
+          retention-days: 30
+          if-no-files-found: error
+      - id: gate
+        name: Prove novelty and evaluate closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          prev=json.loads(Path("previous-state/state.json").read_text())
+          cur=json.loads(Path("atlas-state/state.json").read_text())
+          cov=cur.get("coverage",{})
+          counts=cov.get("status_counts",{})
+          fp=len(cur.get("attempt_fingerprints",[]))
+          prev_fp=len(prev.get("attempt_fingerprints",[]))
+          if fp <= prev_fp:
+              raise SystemExit("no novel attempt fingerprint; refusing recursive loop")
+          has_next=bool(cur.get("has_next"))
+          broken=int(cov.get("broken",0))
+          stalled=int(cov.get("stalled_targets",0))
+          unseen=int(cov.get("graph_functions_unseen",0))
+          proven=int(counts.get("PROVEN",0))
+          targets=int(cov.get("targets_total",len(cur.get("targets",{}))))
+          open_targets=sum(1 for t in cur.get("targets",{}).values() if t.get("status") not in {"PROVEN","REFUTED"})
+          semantic_complete=bool(cur.get("semantic_closure",False))
+          complete=(not has_next and open_targets==0 and unseen==0 and broken==0 and stalled==0 and semantic_complete)
+          print("has_next="+str(has_next).lower())
+          print("complete="+str(complete).lower())
+          print(f"broken={broken}")
+          print(f"stalled={stalled}")
+          print(f"proven={proven}")
+          print(f"unseen={unseen}")
+          print(f"targets={targets}")
+          PY
+      - name: Refuse hidden harness failure
+        if: steps.reconcile_step.outcome != 'success'
+        run: |
+          echo "Reconciler reported BROKEN/harness failure; state artifact was preserved." >&2
+          exit 1
+
+  continue-or-close:
+    if: always() && needs.reconcile.result == 'success'
+    needs: [bootstrap, reconcile]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment issue 97
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/status.md <<EOF
+          ## Atlas recursive wave ${{ needs.reconcile.outputs.wave }}
+
+          Remote run: ${{ github.run_id }}
+          Pinned Atlas SHA: ${{ inputs.atlas_sha }}
+          Tracked targets: ${{ needs.reconcile.outputs.targets }}
+          PROVEN: ${{ needs.reconcile.outputs.proven }}
+          Graph functions not yet admitted: ${{ needs.reconcile.outputs.unseen }}
+          Stalled: ${{ needs.reconcile.outputs.stalled }}
+          BROKEN: ${{ needs.reconcile.outputs.broken }}
+          Next frontier: ${{ needs.reconcile.outputs.has_next }}
+          Full semantic closure: ${{ needs.reconcile.outputs.complete }}
+
+          No UNKNOWN state is terminal. An open frontier is automatically continued.
+          EOF
+          gh issue comment 97 --repo "${{ github.repository }}" --body-file /tmp/status.md
+      - name: Dispatch next recursive run
+        if: needs.reconcile.outputs.has_next == 'true' && needs.reconcile.outputs.broken == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run omegas-atlas-continuation.yml \
+            --repo "${{ github.repository }}" \
+            --ref main \
+            --field atlas_sha="${{ inputs.atlas_sha }}" \
+            --field index_run_id="${{ inputs.index_run_id }}" \
+            --field state_run_id="${{ github.run_id }}" \
+            --field state_artifact="atlas-continuation-state"
+      - name: Require full semantic closure when frontier empties
+        if: needs.reconcile.outputs.has_next != 'true'
+        run: |
+          if [[ "${{ needs.reconcile.outputs.complete }}" != "true" ]]; then
+            echo "Mechanical frontier exhausted before semantic closure. Atlas remains OPEN." >&2
+            exit 1
+          fi
+          echo "Atlas closure criteria satisfied."
