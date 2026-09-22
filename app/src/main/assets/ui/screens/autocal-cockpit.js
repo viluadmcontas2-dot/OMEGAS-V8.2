@@ -68,8 +68,9 @@
       const petrolZones = petrolZoneFlags.filter(Boolean).length;
       const gasZones = gasZoneFlags.filter(Boolean).length;
       const nativeStatus = nativeSnapshot.nativeStatus || {};
-      const autoMatchCount = finite(state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
-      const maxAutoMatch = finite(state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
+      const epoch = AutoCalUxModel.instrumentEpoch(projection?.instrument || {});
+      const autoMatchCount = finite(epoch.autoMatchExecuted ?? state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
+      const maxAutoMatch = finite(epoch.maxAutoMatch ?? state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
       const acquisitionState = String(state.state || '').toUpperCase();
       const title = acquisitionState === 'UNAVAILABLE'
         ? 'AutoCal sem estado confiável'
@@ -188,6 +189,17 @@
         petrolMs: finite(point?.petrolMs),
         mapBar: finite(point?.mapBar),
       })).filter(point => Number.isInteger(point.index) && point.petrolMs !== null && point.mapBar !== null);
+    },
+
+    instrumentEpoch(instrument = {}) {
+      const epoch = instrument?.epoch && typeof instrument.epoch === 'object' ? instrument.epoch : {};
+      return {
+        autoMatchExecuted: finite(epoch.autoMatchExecuted),
+        maxAutoMatch: finite(epoch.maxAutoMatch),
+        gasCurrentRole: String(epoch.gasCurrentRole || ''),
+        gasPreviousRole: String(epoch.gasPreviousRole || ''),
+        authority: String(epoch.authority || ''),
+      };
     },
 
     instrumentKPoints(instrument = {}) {
