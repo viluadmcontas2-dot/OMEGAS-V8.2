@@ -1,0 +1,78 @@
+name: OMEGAS Amarelo Android render evidence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "work/omegas-amarelo-*"
+    paths:
+      - ".github/workflows/amarelo-android-render-evidence.yml"
+      - "app/build.gradle.kts"
+      - "app/src/androidTest/**"
+      - "app/src/main/assets/ui/**"
+      - "app/src/main/java/com/omegas/prohub/MainActivity.kt"
+      - "app/src/main/java/com/omegas/prohub/autocal/**"
+      - "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt"
+      - "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt"
+      - "tests/fixtures/amarelo-autocal-render-original-v1.json"
+      - "tools/ci/run_amarelo_android_render_evidence.sh"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-amarelo-android-render-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Enable KVM
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          test -e /dev/kvm
+
+      - name: Run original-derived AutoCal WebView evidence
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          cores: 2
+          ram-size: 2048M
+          emulator-build: 15917651
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
+          disable-animations: true
+          script: bash tools/ci/run_amarelo_android_render_evidence.sh
+
+      - name: Upload rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amarelo-autocal-render-${{ github.sha }}
+          path: rendered-evidence
+          retention-days: 7
+          if-no-files-found: warn
