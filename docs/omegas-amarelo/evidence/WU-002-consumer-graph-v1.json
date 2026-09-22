@@ -693,6 +693,17 @@
       "exact_automatch_formula": "UNKNOWN",
       "product_contract": "show epoch transition as ECU-native event; fresh readback required; do not claim host-computed adjustment",
       "status": "PROVEN_DUAL_CAPTURE_LIFECYCLE"
+    },
+    "epoch_lifecycle": {
+      "consumer_authority": {
+        "producer": "NativeAutoCalMonitor.nativeAutoMatchEpochEvent",
+        "publisher": "AutoCalInstrumentProjection.epoch.transition",
+        "consumer": "AutoCalUxModel.instrumentEpoch -> epochTransition",
+        "ui_may_rederive_epoch_from_curve_diff": false,
+        "counter_change_without_typed_event": "WAIT_FOR_NATIVE_EVENT",
+        "prior_k_curve_is_display_baseline_only": true,
+        "status": "IMPLEMENTED_AND_TESTED"
+      }
     }
   },
   "unknowns": [
