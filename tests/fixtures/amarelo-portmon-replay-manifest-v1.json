@@ -20,25 +20,29 @@
       "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
       "byteEvidence": "tests/fixtures/portmon-lognovo-control-v1.json",
       "compactReplay": "tests/fixtures/portmon-lognovo-replay-v1.json",
-      "status": "PROVEN_BYTES_TIMING_REPLAY_PENDING_RAW_ACCESS",
+      "compactReplaySha256": "62001a5c38206466e1444b24438eba608440c0192b9e923721e0504c446de70e",
+      "status": "PROVEN_COMPACT_REPLAY",
       "generationCommand": "python3 tools/omegas_amarelo/build_portmon_replay_fixture.py <PortmonLOGNOVO.LOG> --output tests/fixtures/portmon-lognovo-replay-v1.json",
       "referenceBytes": "tests/fixtures/portmon-lognovo-autocal-reference-v1.json",
+      "observedWriteCount": 39517,
+      "observedUniqueCommands": 567,
       "provenance": {
         "referenceBytes": "ORIGINAL_DERIVED exact request/response bytes; no original timing claimed",
         "controlBytes": "selected control/action/count bytes from the same raw SHA",
-        "timingReplay": "PENDING"
+        "timingReplay": "PROVEN_RAW_DERIVED",
+        "materialization": "Google Drive raw file accepted only after exact SHA-256 match"
       }
     }
   },
   "closure": {
-    "closureAllowed": false,
-    "blocker": "PortmonLOGNOVO exact bytes/provenance are versioned, but cumulative at_ms replay, command counts, cadence metrics, and ordering still require a compact raw-derived timing fixture.",
-    "afterMaterialization": [
-      "validate dual-corpus provenance",
-      "validate live cadence independently in both corpora",
-      "validate slow AutoCAL/reference cadence and ordering",
-      "emit CI diagnostic artifact",
-      "close WU-003 only on a green exact SHA"
+    "closureAllowed": true,
+    "blocker": null,
+    "requiredFinalGate": "GREEN dedicated replay workflow + diagnostic artifact on the exact final SHA",
+    "validatedContracts": [
+      "dual-corpus provenance",
+      "live cadence independently in both corpora",
+      "slow AutoCAL/reference cadence and ordering",
+      "deterministic compact LOGNOVO selection recipe"
     ]
   }
 }
