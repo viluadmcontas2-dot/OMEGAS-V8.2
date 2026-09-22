@@ -295,3 +295,31 @@ AUTOCAL:
 
 Therefore `GasPointPrev` as **previous native AutoMatch epoch snapshot** is operationally closed with a capture-start caveat.
 Exact firmware copy instruction/instant remains UNKNOWN because vectors and counter are polled asynchronously and ECU firmware is not available.
+
+
+## Native AutoMatch epoch lifecycle — 2026-09-22
+
+Cross-object readback around every measurable AutoMatch epoch closes the observable lifecycle.
+
+AUTOCAL measurable epochs: `1->2`, `2->3`.
+LOGNOVO measurable epochs: `3->0`, `0->1`, `1->2`, `2->3`.
+
+Every measurable epoch contains:
+1. bulk `GasPointPrev` replacement;
+2. `NUM_BUF_UPD_GAS` reset/reseed;
+3. full `MUL_ACT` change across all 30 native nodes;
+4. acquired-zone clear when the vector is non-zero in the observed window;
+5. a subsequent read of `NUM_AUTOMATCH_EXECUTED` reflecting the new epoch.
+
+The same readback ordering repeats across both captures. Because every object is polled independently, this is **observed readback order**, not proof of firmware instruction order.
+
+Product consequence:
+- new AutoMatch epoch = ECU-native event;
+- Current/Previous GNV layers represent current/prior epochs;
+- Curve K change is shown as native ECU readback;
+- OMEGAS must not claim it computed the native adjustment;
+- post-epoch state is accepted only after fresh native readback.
+
+Evidence:
+- `tests/fixtures/amarelo-autocal-epoch-lifecycle-v1.json`;
+- `tests/test_amarelo_autocal_epoch_lifecycle_evidence.py`.
