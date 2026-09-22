@@ -92,6 +92,48 @@ class AutoCalInstrumentProjectionTest {
     }
 
     @Test
+    fun `projects pending and unconfirmed native epoch states without ui inference`() {
+        val reference = snapshot(
+            vectorField("PETR_INJ_TBP", doubleArrayOf(2.0), 100L),
+            vectorField("PETR_MNFLD_PRESS_RV", doubleArrayOf(0.2), 100L),
+            vectorField("GAS_MNFLD_PRESS_RV", doubleArrayOf(0.2), 100L),
+        )
+        val native = snapshot(
+            vectorField("NUM_AUTOMATCH_EXECUTED", doubleArrayOf(3.0), 200L, raw = intArrayOf(3)),
+        )
+            .put(
+                "nativeAutoMatchEpochPending",
+                JSONObject()
+                    .put("before", 2)
+                    .put("after", 3)
+                    .put("rollover", false)
+                    .put("snapshotsObserved", 1),
+            )
+            .put(
+                "nativeAutoMatchEpochUnconfirmed",
+                JSONObject()
+                    .put("before", 1)
+                    .put("after", 2)
+                    .put("rollover", false)
+                    .put("snapshotsObserved", 3)
+                    .put("reason", "MUL_ACT_READBACK_UNCHANGED"),
+            )
+
+        val result = AutoCalInstrumentProjection.project(reference, native, JSONObject(), null, JSONObject())
+        val epoch = result.getJSONObject("epoch")
+
+        val pending = epoch.getJSONObject("pending")
+        assertEquals(2, pending.getInt("before"))
+        assertEquals(3, pending.getInt("after"))
+        assertEquals(1, pending.getInt("snapshotsObserved"))
+
+        val unconfirmed = epoch.getJSONObject("unconfirmed")
+        assertEquals(1, unconfirmed.getInt("before"))
+        assertEquals(2, unconfirmed.getInt("after"))
+        assertEquals("MUL_ACT_READBACK_UNCHANGED", unconfirmed.getString("reason"))
+    }
+
+    @Test
     fun `empty zero acquisition slots are not published as physical points`() {
         val reference = snapshot(
             vectorField("PETR_INJ_TBP", doubleArrayOf(2.0), 100L),
