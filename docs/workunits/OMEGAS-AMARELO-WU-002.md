@@ -342,3 +342,29 @@ Rules:
 - Typed event must report native readback and no app write before the UI labels it as a native epoch adjustment.
 
 This keeps firmware/monitor readback as scientific authority and the UI as a consumer only.
+
+
+## Native projection / inferred predictor boundary — 2026-09-22
+
+The native AutoCAL projection no longer executes `AutoMatchSnapshotAnalysis`.
+
+- `AutoCalUiProjection.analysis.mode = NATIVE_AUTOCAL_ONLY`;
+- `inferredPredictorAttached = false`;
+- `AutoMatchSnapshotAnalysis / AUTOMATCH_INFERIDO_V2` remains available as a separate, explicitly inferred/manual module;
+- the native cockpit does not receive inferred GNV-equivalence points from this predictor.
+
+This enforces the product boundary: **native AutoCAL = ECU truth; predictor = separate hypothesis/tool**.
+
+## Previous GNV epoch maturity boundary — 2026-09-22
+
+`GasPointPrev` is the previous native AutoMatch epoch snapshot. There is no proven previous-epoch counter object corresponding to `NUM_BUF_UPD_GAS`.
+
+Therefore `AutoCalAcquisition` no longer attaches the current epoch's `NUM_BUF_UPD_GAS` or maturity threshold to `GNV_ANTERIOR`.
+
+Previous-epoch points keep:
+- native Petrol Inj. coordinate;
+- native MAP coordinate;
+- native MAP region;
+- previous-epoch identity.
+
+They expose `maturityApplicable=false`; maturity remains a property of the current acquisition epoch only.
