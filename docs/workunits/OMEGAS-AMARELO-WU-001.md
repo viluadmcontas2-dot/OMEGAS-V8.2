@@ -1,108 +1,148 @@
 # OMEGAS-AMARELO-WU-001 — Ground truth byte a byte do AutoCAL
 
-Issue: #73
-Estado: ACTIVE
-Depende de: spec kit aprovado.
+Issue: #73  
+Estado: **CLOSURE_CANDIDATE — aguardando receipt integrado final**
 
-## Resultado observável
-Tabela e parser/timeline que explicam, com raw bytes, as ações e objetos AutoCAL relevantes nos dois Portmon.
+## Objetivo
 
-## Entrada
-ProgBase 4.2.0.6, PortmonAUTOCAL, PortmonLOGNOVO, relatório SIL existente e fixture real do Verde.
+Reconstruir o contrato observável do AutoCAL nativo usando somente:
+- ProgBase 4.2.0.6 original;
+- PortmonAUTOCAL cru;
+- PortmonLOGNOVO cru;
+- fixtures/testes derivados desses artefatos.
 
-## Escopo
-- actions 1/2/4/8;
-- enable/disable/start/finish/reset;
-- 0x014A..0x018E relevantes;
-- checksum/timing;
-- MUL_ACT/counter transitions;
-- host write vs ECU mutation.
+Nenhuma fórmula OMEGAS é autoridade para firmware.
 
-## Não escopo
-UI nova, Mapa K, APK.
+## Autoridade
 
-## Verificação
-- parser determinístico;
-- fixtures extraídos dos dois logs;
-- cada fato com hash + índice;
-- nenhuma fórmula OMEGAS como ground truth.
+- ProgBase SHA-256: `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4`
+- PortmonAUTOCAL SHA-256: `4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b`
+- PortmonLOGNOVO SHA-256: `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64`
 
-## Verde gate
-Antes de começar: atualizar #80 com HEAD e delta.
+## Contrato nativo fechado
 
-## Continuidade remota — 2026-09-21
-- Verde watermark: `eeefaaa4d8371e3c4c6cf1260f1ee4b65e836618`.
-- Research Farm authoritative run: `35642442355` — SUCCESS, 160/160 receipts, BROKEN=0.
-- Enable Auto Calibration (0x014A) já possui contrato byte-exato comprovado.
-- Ação 4 / Reset All possui frame observado nos dois Portmon.
-- Fechamento não depende mais de inventar um `start` separado: `AUTO_CAL_ENABLE` é o controle host nativo do modo. Restam principalmente efeito físico exato do Finish, atribuição completa host-write vs ECU-mutation e unknowns de firmware ainda não observáveis nos raws.
+### Enable / Disable
 
+Objeto: `0x014A AUTO_CAL_ENABLE`.
 
-## Gate action-wire — 2026-09-21
+- Enable: `12 4A 01 01 5E`
+- Disable: `12 4A 01 00 5D`
 
-### PROVEN
-A família nativa de ações está fechada no nível de request:
-- Reset Petrol (1): `02 24 04 01 2B`;
-- Reset Gas (2): `02 24 04 02 2C`;
-- Reset All (4): `02 24 04 04 2E`;
-- AutoMatch (8): `02 24 04 08 32`.
+ProgBase liga seu controle diretamente a `AUTO_CAL_ENABLE`. LOGNOVO contém quatro enables e quatro disables.
 
-Proveniência:
-- ProgBase original prova dispatcher 1/2/4/8 e bridge genérico `0x512280`;
-- ambos os Portmon observam diretamente o frame de ação 4;
-- 1/2/8 são binary-proven, wire-unobserved nos dois captures atuais;
-- checksum aditivo foi verificado em 36.463/36.463 writes do AUTOCAL e em 39.522/39.524 writes do LOGNOVO; as duas exceções são writes startup `00`, fora do framing protocolar.
+A observação operacional do original indica um único controle humano para o modo AutoCAL. Isso **não prescreve checkbox na nova UX**. O componente visual é decisão CUSTOMROM/OMEGADEV; o contrato científico é apenas um único enable/disable nativo.
 
-Evidence:
-- `docs/omegas-amarelo/evidence/WU-001-action-wire-proof-v2.md`;
-- `tests/fixtures/amarelo-autocal-action-wire-v1.json`;
-- `tests/test_amarelo_autocal_action_wire_evidence.py`.
+Nenhum comando manual AutoMatch `action=8` acompanha os enables observados. AutoMatch automático pertence ao comportamento nativo da ECU quando AutoCAL está ativo.
 
-### CI
-- SHA: `584fed6fc432a460576558c74c511428d51ec5c2`
-- workflow: OMEGAS Amarelo fast contracts
-- run: `35645763077`
-- result: **SUCCESS**
+### Actions 1 / 2 / 4 / 8
 
-### Remaining closure blockers
-- exact ECU-side effect of Finish after the statically proven `NUM_AUTOMATCH_EXECUTED := MAX_AUTOMATCH` assignment and connection-aware commit path;
-- any ECU/physical state machine distinct from the already-proven refresh scheduler;
-- exact physical labels/order of acquired-zone indices 0..3;
-- complete host-write vs ECU-mutation attribution for remaining native mutations.
+ProgBase prova o dispatcher comum e o bridge nativo:
 
-### Enable / automatic AutoMatch coupling — 2026-09-21
-- ProgBase resource binds `CheckAutoCalEnable` directly to `AutoCalDM.AUTO_CAL_ENABLE` — PROVEN_RESOURCE.
-- Manual AutoMatch is a separate `ActionAutoMatchExecute` action with code 8 — PROVEN_RESOURCE_STATIC.
-- LOGNOVO raw contains 4 enable writes `12 4A 01 01 5E` and 4 disable writes `12 4A 01 00 5D`.
-- LOGNOVO contains zero `02 24 04 08` manual-AutoMatch writes.
-- Therefore the normal host model is one AutoCAL mode control; do not introduce a second AutoMatch-enable writer.
-- Exact internal ECU mechanism that schedules automatic AutoMatch remains firmware-internal; current evidence supports it but does not byte-level prove the internal trigger.
+- Reset Petrol = 1 → `02 24 04 01 2B`
+- Reset Gas = 2 → `02 24 04 02 2C`
+- Reset All = 4 → `02 24 04 04 2E`
+- Manual AutoMatch = 8 → `02 24 04 08 32`
 
-Evidence:
-- `tests/fixtures/amarelo-autocal-enable-automatch-coupling-v1.json`;
-- `tests/test_amarelo_autocal_enable_automatch_coupling.py`.
+A família completa é **PROVEN_STATIC/BINARY** pelo bridge + checksum.  
+Ação 4 é também **PROVEN_RAW** nos dois Portmons.  
+1/2/8 não aparecem nos raws fornecidos e não devem ser descritos como raw-observed.
 
-WU-002 research is unblocked; product implementation remains blocked until WU-001/WU-002 closure.
+### Finish AutoCAL
 
+A leitura RTTI corrigida é:
 
-## Finish AutoCAL — RTTI correction — 2026-09-21
+- `DM+0x78 = VECT_AUTOCAL_U8_1`
+- `DM+0x7C = VECT_AUTOCAL_U8_2 / MAX_AUTOMATCH`
+- `DM+0xC8 = VECT_AUTOCAL_U8_0`
+- `DM+0xCC = NUM_ATUOMATCH_EXECUTED` / `0x0174`
 
-Direct byte parsing of the Delphi field table plus `ActionFinishAutocalExecute@0x51A390` corrected an earlier 4-byte semantic offset error.
+`ActionFinishAutocalExecute@0x51A390` executa:
 
-Correct field map:
-- `DM+0x78 = VECT_AUTOCAL_U8_1`;
-- `DM+0x7C = VECT_AUTOCAL_U8_2 / MAX_AUTOMATCH`;
-- `DM+0xC8 = VECT_AUTOCAL_U8_0`;
-- `DM+0xCC = NUM_ATUOMATCH_EXECUTED` (`0x0174`).
+`MAX_AUTOMATCH -> NUM_AUTOMATCH_EXECUTED -> wait 100 ms -> PostActionRefresh`
 
-The Finish handler performs:
-`MAX_AUTOMATCH -> getter -> NUM_AUTOMATCH_EXECUTED -> setter -> 100 ms -> PostActionRefresh`.
+Classificação:
+- `NUM_AUTOMATCH_EXECUTED := MAX_AUTOMATCH` = **PROVEN_STATIC**
+- caminho connection-aware do setter = **PROVEN_STATIC**
+- write `0x0174` durante Finish nos raws fornecidos = **NOT OBSERVED**
+- efeito interno exato da ECU após esse write = **UNKNOWN**
 
-Therefore:
-- `NUM_AUTOMATCH_EXECUTED := MAX_AUTOMATCH`: **PROVEN_STATIC**;
-- previous interpretation `VECT_AUTOCAL_U8_1 -> VECT_AUTOCAL_U8_0`: **FALSIFIED**;
-- exact ECU-side effect of that write: still **UNKNOWN** because supplied Portmons contain no observed `0x0174` write during Finish.
+A interpretação histórica `U8_1 -> U8_0` está **FALSIFICADA** e não é contrato vigente.
 
-Canonical evidence:
-- `tests/fixtures/amarelo-autocal-finish-0165-v1.json`;
-- `tests/test_amarelo_autocal_finish_0165_evidence.py`.
+### Ownership host x ECU
+
+Nos dois Portmons:
+- `0x015D..0x0160` (GasPointPrev/GasPoint current) são lidos pelo host e mudam sem host write;
+- `0x016F/0x0170` (ACQUIRED_ZONES petrol/GNV) são lidos pelo host e mudam sem host write;
+- `MUL_ACT` muda em epochs AutoMatch sem replacement-vector write do host.
+
+Conclusão operacional:
+**ECU/firmware possui a mutação nativa de pontos, flags de região e Curve K/MUL_ACT. ProgBase/OMEGAS observa e projeta.**
+
+OMEGAS não deve sintetizar nem sobrescrever esses buffers para imitar o firmware.
+
+### Maturidade / polling
+
+ProgBase `0x516F64` compara counters da ECU contra thresholds também vindos da ECU.
+
+- Gas 0..5 → `CALIBRATION_VAL_1[5]`
+- Gas 6..17 → `CALIBRATION_VAL_1[8]`
+- Petrol 0..5 → `VECT_AUTOCAL_U8_1`
+- Petrol 6..17 → `CALIBRATION_VAL_1[2]`
+
+LOGNOVO observa valor 3 nos quatro thresholds efetivos desta captura.  
+**3 não é constante de produto.**
+
+Essa comparação governa apresentação/maturidade; não é a fórmula de `ACQUIRED_ZONES`.
+
+### AutoMatch epoch observável
+
+Em cada epoch mensurável nas capturas aparecem, por readback independente:
+- mudança de `NUM_AUTOMATCH_EXECUTED`;
+- mudança dos 30 nós `MUL_ACT`;
+- substituição em bloco de `GasPointPrev`;
+- reset/reseed de counters GNV;
+- clear de zonas quando o vetor estava não-zero.
+
+Isso fecha o evento observável AutoMatch sem alegar ordem de instrução interna do firmware.
+
+## Bounded UNKNOWN — não reproduzir no app
+
+Os artefatos atuais não contêm firmware da ECU. Portanto permanecem deliberadamente UNKNOWN:
+
+- fórmula interna que atualiza/remarca GasPoint;
+- guard interno que seta/limpa `ACQUIRED_ZONES`;
+- instante/instrução exata que copia Current → Prev no rollover;
+- efeito interno exato de Finish após o write em `NUM_AUTOMATCH_EXECUTED`;
+- eventual state machine física da ECU distinta do scheduler de refresh do ProgBase.
+
+Esses itens possuem **stop condition**: não derivar fórmula host-side a partir de polling assíncrono quando o produto pode consumir o valor nativo diretamente.
+
+## DoD
+
+| Critério | Estado |
+| --- | --- |
+| parser/replay determinístico dos raws | PROVEN |
+| hashes/proveniência canônicos | PROVEN |
+| enable/disable byte-exato | PROVEN_RAW |
+| action bridge 1/2/4/8 | PROVEN_STATIC; 4 também RAW |
+| checksum/framing | PROVEN |
+| host write vs ECU mutation observável | PROVEN para superfícies usadas pelo produto |
+| MUL_ACT / AutoMatch epoch observável | PROVEN |
+| facts separados de inferência | PROVEN por fixtures/gates |
+| UNKNOWNs internos explicitamente limitados | PROVEN |
+| receipt integrado do HEAD de fechamento | PENDING |
+
+## Evidência canônica
+
+- `docs/omegas-amarelo/evidence/WU-001-action-wire-proof-v2.md`
+- `tests/fixtures/amarelo-autocal-action-wire-v1.json`
+- `tests/fixtures/amarelo-autocal-enable-automatch-coupling-v1.json`
+- `tests/fixtures/amarelo-autocal-finish-0165-v1.json`
+- `tests/fixtures/amarelo-autocal-point-buffer-ownership-v1.json`
+- `tests/fixtures/amarelo-autocal-acquired-zones-v1.json`
+- `tests/fixtures/amarelo-autocal-epoch-lifecycle-v1.json`
+- respectivos `tests/test_amarelo_*.py`
+
+## Gate de fechamento
+
+Não declarar CLOSED/PROVEN no issue #73 até existir um receipt do fast-contract contendo o conjunto integrado atual. UNKNOWNs firmware-internos acima são limites de evidência, não convite para inventar implementação paralela.
