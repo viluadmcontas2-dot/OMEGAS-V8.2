@@ -19,6 +19,7 @@ on:
       - "tests/fixtures/amarelo-autocal-maturity-*.json"
       - "tests/fixtures/amarelo-autocal-point-buffer-*.json"
       - "tests/fixtures/amarelo-autocal-point-update-*.json"
+      - "tests/fixtures/amarelo-autocal-epoch-*.json"
       - "tests/fixtures/amarelo-autocal-zone-latch-*.json"
       - "app/src/main/java/com/omegas/prohub/autocal/**"
       - "app/src/main/assets/ui/screens/autocal-cockpit.js"
@@ -80,6 +81,8 @@ jobs:
         run: python3 -B -m unittest tests.test_amarelo_autocal_point_buffer_ownership_evidence -v
       - name: AutoCAL native point-update dynamics evidence
         run: python3 -B -m unittest tests.test_amarelo_autocal_point_update_dynamics_evidence -v
+      - name: AutoCAL native epoch lifecycle evidence
+        run: python3 -B -m unittest tests.test_amarelo_autocal_epoch_lifecycle_evidence -v
       - name: AutoCAL Android render fixture provenance
         run: python3 -B -m unittest tests.test_amarelo_autocal_android_render_fixture_contract -v
       - name: AutoCAL GNV current and previous buffer evidence
