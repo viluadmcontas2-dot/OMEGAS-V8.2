@@ -46,7 +46,22 @@ object AutoCalInstrumentProjection {
                     .put("gasCurrent", pairedPoints(dynamic, "PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS"))
                     .put("gasPrevious", pairedPoints(dynamic, "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV"))
                     .put("petrolCounter", rawVector(dynamic, "NUM_BUF_UPD_PETR"))
-                    .put("gasCounter", rawVector(dynamic, "NUM_BUF_UPD_GAS")),
+                    .put("gasCounter", rawVector(dynamic, "NUM_BUF_UPD_GAS"))
+                    .put(
+                        "roles",
+                        JSONObject()
+                            .put("gasCurrent", "CURRENT_NATIVE_AUTOMATCH_EPOCH")
+                            .put("gasPrevious", "PREVIOUS_NATIVE_AUTOMATCH_EPOCH"),
+                    ),
+            )
+            .put(
+                "epoch",
+                JSONObject()
+                    .put("autoMatchExecuted", rawScalar(dynamic, "NUM_AUTOMATCH_EXECUTED"))
+                    .put("maxAutoMatch", rawScalar(dynamic, "MAX_AUTOMATCH"))
+                    .put("gasCurrentRole", "CURRENT_NATIVE_AUTOMATCH_EPOCH")
+                    .put("gasPreviousRole", "PREVIOUS_NATIVE_AUTOMATCH_EPOCH")
+                    .put("authority", "ECU_READ"),
             )
             .put(
                 "kCurve",
@@ -182,6 +197,13 @@ object AutoCalInstrumentProjection {
         val field = findValidField(snapshot, key) ?: return emptyList()
         val values = field.optJSONArray("physicalValues") ?: return emptyList()
         return List(values.length()) { index -> values.optDouble(index, Double.NaN) }
+    }
+
+    private fun rawScalar(snapshot: JSONObject, key: String): Any {
+        val field = findValidField(snapshot, key) ?: return JSONObject.NULL
+        val values = field.optJSONArray("rawValues") ?: return JSONObject.NULL
+        if (values.length() == 0) return JSONObject.NULL
+        return values.optInt(0)
     }
 
     private fun rawVector(snapshot: JSONObject, key: String): JSONArray {
