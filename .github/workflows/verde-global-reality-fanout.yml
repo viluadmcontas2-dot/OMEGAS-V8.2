@@ -8,6 +8,7 @@ on:
       - '.github/workflows/verde-global-reality-fanout.yml'
       - 'tools/ci/global_reality_plan.py'
       - 'tools/ci/global_reality_lane.py'
+      - 'tools/ci/global_reality_status.py'
       - 'app/src/main/**'
       - 'app/src/test/**'
       - 'tests/ui/**'
@@ -61,8 +62,27 @@ jobs:
       - name: Prepare
         run: chmod +x gradlew
       - name: Execute isolated product contract
+        id: execute
+        shell: bash
         run: |
+          set +e
           python3 tools/ci/global_reality_lane.py             --id "${{ matrix.id }}"             --kind "${{ matrix.kind }}"             --target "${{ matrix.target }}"             --receipt "global-reality/${{ matrix.id }}.json"
+          rc=$?
+          set -e
+          case "$rc" in
+            0) status=PASS ;;
+            1) status=RED ;;
+            2) status=BROKEN ;;
+            *) status=BROKEN ;;
+          esac
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "GLOBAL_REALITY_STEP_STATUS=$status"
+      - name: Fail RED product contract
+        if: ${{ steps.execute.outputs.status == 'RED' }}
+        run: exit 1
+      - name: Fail BROKEN infrastructure
+        if: ${{ steps.execute.outputs.status == 'BROKEN' }}
+        run: exit 2
   aggregate:
     if: always()
     needs: [plan, lane]
@@ -104,10 +124,14 @@ jobs:
           for job in lanes:
               steps=job.get("steps") or []
               execute=next((s for s in steps if s.get("name")=="Execute isolated product contract"),None)
+              red=next((s for s in steps if s.get("name")=="Fail RED product contract"),None)
+              broken=next((s for s in steps if s.get("name")=="Fail BROKEN infrastructure"),None)
               conclusion=job.get("conclusion")
               if conclusion=="success":
                   status="PASS"
-              elif conclusion=="failure" and execute and execute.get("conclusion")=="failure":
+              elif broken and broken.get("conclusion")=="failure":
+                  status="BROKEN"
+              elif red and red.get("conclusion")=="failure":
                   status="RED"
               else:
                   status="BROKEN"
@@ -117,6 +141,8 @@ jobs:
                   "status":status,
                   "conclusion":conclusion,
                   "execute_conclusion":execute.get("conclusion") if execute else None,
+                  "red_conclusion":red.get("conclusion") if red else None,
+                  "broken_conclusion":broken.get("conclusion") if broken else None,
                   "html_url":job.get("html_url"),
               })
 
