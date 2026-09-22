@@ -1,0 +1,39 @@
+{
+  "schema": "omegas.atlas.autocal-seeds.v1",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "symbols": [
+    {"term":"TAutoCalUI","kind":"class","provenance":"canonical-binary-root"},
+    {"term":"TAutoCalDM","kind":"class","provenance":"canonical-binary-root"},
+    {"term":"TFormRifAutocal","kind":"form","provenance":"canonical-binary-root"},
+    {"term":"ActionAutoCalRifExecute","kind":"event-handler","provenance":"canonical-binary-root"},
+    {"term":"ActionAutoMatchExecute","kind":"event-handler","provenance":"canonical-binary-root"},
+    {"term":"ActionFinishAutocalExecute","kind":"event-handler","provenance":"canonical-binary-string"},
+    {"term":"CheckAutoCalEnableBeforeSetData","kind":"event-handler","provenance":"canonical-binary-string"},
+    {"term":"ActionFinishAutocal","kind":"action","provenance":"canonical-binary-string"},
+    {"term":"ButtonAutoMatch","kind":"control","provenance":"canonical-binary-string"},
+    {"term":"CheckAutoCalEnable","kind":"control","provenance":"canonical-binary-string"},
+    {"term":"LabelNumAutoMatch","kind":"control","provenance":"canonical-binary-string"},
+    {"term":"EditNumAutomatch","kind":"control","provenance":"canonical-binary-string"},
+    {"term":"MUL_ACT","kind":"state","provenance":"canonical-binary-root"},
+    {"term":"ACQUIRED_ZONES_PETROL","kind":"state","provenance":"canonical-binary-string"},
+    {"term":"ACQUIRED_ZONES_GAS","kind":"state","provenance":"canonical-binary-string"},
+    {"term":"VECT_AUTOCAL_U8_0","kind":"state","provenance":"canonical-binary-string"},
+    {"term":"VECT_AUTOCAL_U8_1","kind":"state","provenance":"canonical-binary-string"},
+    {"term":"VECT_AUTOCAL_U8_2","kind":"state","provenance":"canonical-binary-string"},
+    {"term":"MAX_RPM_FOR_AUTOCAL","kind":"state","provenance":"canonical-binary-string"},
+    {"term":"PETR_INJ_TBP","kind":"state","provenance":"historical-lead-not-authority"},
+    {"term":"MNFLD_PRESS_THD","kind":"state","provenance":"historical-lead-not-authority"},
+    {"term":"PETR_MNFLD_PRESS_RV","kind":"state","provenance":"historical-lead-not-authority"},
+    {"term":"GAS_MNFLD_PRESS_RV","kind":"state","provenance":"historical-lead-not-authority"},
+    {"term":"AUTO_CAL_ENABLE","kind":"state","provenance":"historical-lead-not-authority"}
+  ],
+  "address_leads": [
+    {"va":"0x00512280","label":"AutoCalNativeAction","provenance":"historical-static-lead-not-authority"},
+    {"va":"0x00517568","label":"shared-dispatcher","provenance":"historical-static-lead-not-authority"}
+  ],
+  "protocol_leads": [
+    {"frame":"12 4A 01 01 5E","label":"enable-autocal-candidate","provenance":"historical-capture-lead-not-authority"},
+    {"frame":"12 4A 01 00 5D","label":"disable-autocal-candidate","provenance":"historical-capture-lead-not-authority"},
+    {"frame":"02 24 04 04 2E","label":"action-4-candidate","provenance":"historical-capture-lead-not-authority"}
+  ]
+}

@@ -1,0 +1,257 @@
+name: OMEGAS Atlas ProgBase AutoCal Battle Royale
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [OmegasAtlas]
+    paths:
+      - 'atlas/battle/**'
+      - 'atlas/ghidra_scripts/**'
+      - 'atlas/manifests/autocal-seeds.json'
+      - '.github/workflows/atlas-battle-royale.yml'
+      - '.github/workflows/atlas-wave.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: omegas-atlas-battle-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Contract tests and pinned PE index
+        run: |
+          python3 -m unittest atlas.tests.test_battle_contract
+          python3 -m pip install --disable-pip-version-check pefile==2024.8.26
+          python3 atlas/battle/static_index.py --out atlas-index/static
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-static-index
+          path: atlas-index/static/
+          retention-days: 30
+          if-no-files-found: error
+
+  portmon-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build duration-correct Portmon differential index
+        run: python3 atlas/battle/portmon_index.py --out atlas-index/portmon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-portmon-index
+          path: atlas-index/portmon/
+          retention-days: 30
+          if-no-files-found: error
+
+  undelphi-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build exact undelphi v0.3.2 commit
+        run: |
+          set -euo pipefail
+          git clone https://github.com/ATRAPSLLC/undelphi.git /tmp/undelphi
+          cd /tmp/undelphi
+          git checkout --detach dc12c62ec32f42b4ae5e9dfe2bb678a762490d53
+          test "$(git rev-parse HEAD)" = "dc12c62ec32f42b4ae5e9dfe2bb678a762490d53"
+          cargo build --locked --release --example dump
+          mkdir -p "$GITHUB_WORKSPACE/atlas-index/undelphi"
+          target/release/examples/dump "$GITHUB_WORKSPACE/atlas/originals/progbase/ProgBase-4.2.0.6.exe" > "$GITHUB_WORKSPACE/atlas-index/undelphi/undelphi.txt"
+          test -s "$GITHUB_WORKSPACE/atlas-index/undelphi/undelphi.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-undelphi-index
+          path: atlas-index/undelphi/
+          retention-days: 30
+          if-no-files-found: error
+
+  ghidra-index:
+    needs: preflight-static
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-static-index
+          path: atlas-index/static
+      - name: Install hash-pinned official Ghidra 12.1.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          java -version
+          curl -fL --retry 3 -o /tmp/ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.3_build/ghidra_12.1.3_PUBLIC_20260817.zip
+          echo "93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54  /tmp/ghidra.zip" | sha256sum -c -
+          unzip -q /tmp/ghidra.zip -d /tmp
+      - name: Build native AutoCal graph and decompilation corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          mkdir -p atlas-index/ghidra /tmp/ghidra-projects
+          /tmp/ghidra_12.1.3_PUBLIC/support/analyzeHeadless /tmp/ghidra-projects OmegasAtlas \
+            -import atlas/originals/progbase/ProgBase-4.2.0.6.exe \
+            -scriptPath atlas/ghidra_scripts \
+            -postScript AtlasExport.java "$GITHUB_WORKSPACE/atlas-index/ghidra" "$GITHUB_WORKSPACE/atlas-index/static/ghidra-seeds.txt" \
+            -deleteProject
+          test -s atlas-index/ghidra/functions.tsv
+          test -s atlas-index/ghidra/meta.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-ghidra-index
+          path: atlas-index/ghidra/
+          retention-days: 30
+          if-no-files-found: error
+
+  bundle:
+    needs: [preflight-static, portmon-index, undelphi-index, ghidra-index]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-static-index
+          path: atlas-indices/static
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-portmon-index
+          path: atlas-indices/portmon
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-undelphi-index
+          path: atlas-indices/undelphi
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-ghidra-index
+          path: atlas-indices/ghidra
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-index-bundle
+          path: atlas-indices/
+          retention-days: 30
+          if-no-files-found: error
+
+  plan:
+    needs: bundle
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-index-bundle
+          path: atlas-indices
+      - id: plan
+        run: |
+          python3 atlas/battle/plan.py --indices atlas-indices --output /tmp/matrix.json
+          echo "matrix=$(cat /tmp/matrix.json)" >> "$GITHUB_OUTPUT"
+
+  wave1:
+    needs: plan
+    uses: ./.github/workflows/atlas-wave.yml
+    with:
+      wave: 1
+      matrix: ${{ needs.plan.outputs.matrix }}
+
+  wave2:
+    needs: wave1
+    if: needs.wave1.outputs.has_next == 'true'
+    uses: ./.github/workflows/atlas-wave.yml
+    with:
+      wave: 2
+      matrix: ${{ needs.wave1.outputs.matrix }}
+      previous_state_artifact: atlas-state-w1
+
+  wave3:
+    needs: wave2
+    if: needs.wave2.outputs.has_next == 'true'
+    uses: ./.github/workflows/atlas-wave.yml
+    with:
+      wave: 3
+      matrix: ${{ needs.wave2.outputs.matrix }}
+      previous_state_artifact: atlas-state-w2
+
+  wave4:
+    needs: wave3
+    if: needs.wave3.outputs.has_next == 'true'
+    uses: ./.github/workflows/atlas-wave.yml
+    with:
+      wave: 4
+      matrix: ${{ needs.wave3.outputs.matrix }}
+      previous_state_artifact: atlas-state-w3
+
+  wave5:
+    needs: wave4
+    if: needs.wave4.outputs.has_next == 'true'
+    uses: ./.github/workflows/atlas-wave.yml
+    with:
+      wave: 5
+      matrix: ${{ needs.wave4.outputs.matrix }}
+      previous_state_artifact: atlas-state-w4
+
+  wave6:
+    needs: wave5
+    if: needs.wave5.outputs.has_next == 'true'
+    uses: ./.github/workflows/atlas-wave.yml
+    with:
+      wave: 6
+      matrix: ${{ needs.wave5.outputs.matrix }}
+      previous_state_artifact: atlas-state-w5
+
+  report:
+    if: always()
+    needs: [wave1, wave2, wave3, wave4, wave5, wave6]
+    runs-on: ubuntu-latest
+    outputs:
+      complete: ${{ steps.closure.outputs.complete }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-state-w*
+          path: atlas-states
+      - name: Build campaign report
+        run: python3 atlas/battle/report.py --states atlas-states --report atlas-battle-report.md --closure atlas-closure.json
+      - id: closure
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          x=json.load(open("atlas-closure.json"))
+          print("complete="+str(x["complete"]).lower())
+          PY
+      - run: cat atlas-battle-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Comment Atlas issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment 97 --body-file atlas-battle-report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-battle-report
+          path: |
+            atlas-battle-report.md
+            atlas-closure.json
+          retention-days: 30
+
+  closure-gate:
+    if: always()
+    needs: report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse false completion
+        run: |
+          if [[ "${{ needs.report.outputs.complete }}" != "true" ]]; then
+            echo "Atlas frontier remains open; campaign is NOT complete." >&2
+            exit 1
+          fi

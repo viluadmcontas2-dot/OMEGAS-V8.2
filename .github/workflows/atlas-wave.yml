@@ -1,0 +1,109 @@
+name: OMEGAS Atlas reusable battle wave
+
+on:
+  workflow_call:
+    inputs:
+      wave:
+        required: true
+        type: number
+      matrix:
+        required: true
+        type: string
+      previous_state_artifact:
+        required: false
+        type: string
+        default: ''
+    outputs:
+      has_next:
+        value: ${{ jobs.reconcile.outputs.has_next }}
+      matrix:
+        value: ${{ jobs.reconcile.outputs.matrix }}
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(inputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-index-bundle
+          path: atlas-indices
+      - name: Prepare challenger decoder when required
+        if: matrix.driver == 'capstone-fn'
+        run: python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26
+      - name: Investigate target
+        run: |
+          python3 atlas/battle/lane.py \
+            --indices atlas-indices \
+            --kind "${{ matrix.kind }}" \
+            --target "${{ matrix.target }}" \
+            --driver "${{ matrix.driver }}" \
+            --lane "${{ matrix.id }}" \
+            --receipt "battle-receipts/w${{ inputs.wave }}/${{ matrix.id }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-wave-${{ inputs.wave }}-${{ matrix.id }}
+          path: battle-receipts/w${{ inputs.wave }}/${{ matrix.id }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+  reconcile:
+    if: always()
+    needs: research
+    runs-on: ubuntu-latest
+    outputs:
+      has_next: ${{ steps.publish.outputs.has_next }}
+      matrix: ${{ steps.publish.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-index-bundle
+          path: atlas-indices
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-wave-${{ inputs.wave }}-*
+          path: battle-receipts/current
+          merge-multiple: true
+      - name: Download previous state
+        if: inputs.previous_state_artifact != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.previous_state_artifact }}
+          path: previous-state
+      - name: Reconcile evidence and expand frontier
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREV=()
+          if [[ -f previous-state/state.json ]]; then PREV=(--previous previous-state/state.json); fi
+          python3 atlas/battle/reconcile.py \
+            --wave "${{ inputs.wave }}" \
+            --receipts battle-receipts/current \
+            --indices atlas-indices \
+            "${PREV[@]}" \
+            --state atlas-state/state.json \
+            --matrix atlas-state/next-matrix.json
+      - id: publish
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          s=json.load(open("atlas-state/state.json"))
+          m=json.load(open("atlas-state/next-matrix.json"))
+          print("has_next="+str(bool(s["has_next"])).lower())
+          print("matrix="+json.dumps(m,separators=(",",":")))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-state-w${{ inputs.wave }}
+          path: atlas-state/
+          retention-days: 30
+          if-no-files-found: error
