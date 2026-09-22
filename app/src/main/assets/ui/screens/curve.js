@@ -74,6 +74,15 @@
       if (this.view === 'learning') this.renderLearning(this.store.get());
     }
 
+    settleReadFailure(message) {
+      this.reading = false;
+      this.data = null;
+      this.root?.classList.remove('is-reading');
+      text('curveSourceStatus', 'Curva não confirmada');
+      this.store.patch({ curve: { ...this.store.get().curve, state: 'failed', data: null, status: {} } });
+      if (message) this.alert(message);
+    }
+
     startRead() {
       if (this.reading || this.writing) return;
       const result = this.api.startCurveRead();
@@ -93,12 +102,15 @@
       if (!this.reading && !this.writing) return;
       const operation = this.api.curveOperation();
       if (!operation) return;
-      if (this.reading && !operation.busy && (operation.state === 'COMPLETED' || operation.demo)) {
+      if (this.reading && !operation.busy) {
+        if (operation.state !== 'COMPLETED' && !operation.demo) {
+          this.settleReadFailure(operation.error || 'A leitura da Curva K não foi confirmada pela ECU.');
+          return;
+        }
         this.reading = false;
         this.root?.classList.remove('is-reading');
         if (!operation.ok || !Array.isArray(operation.points) || operation.points.length !== 30) {
-          this.alert(operation.error || 'A Curva K não retornou os 30 pontos válidos.');
-          text('curveSourceStatus', 'Curva não confirmada');
+          this.settleReadFailure(operation.error || 'A Curva K não retornou os 30 pontos válidos.');
           return;
         }
         this.data = operation;
