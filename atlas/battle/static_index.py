@@ -21,6 +21,19 @@ def find_all(data:bytes,needle:bytes):
         yield pos
         pos+=max(1,len(needle))
 
+HEX_TOKEN_RE=re.compile(r"(?:0x)?([0-9a-fA-F]{6,16})")
+
+def operand_hex_values(line:str):
+    """Return address-like hex values from the instruction body, never its address label."""
+    if ":" not in line:
+        return set()
+    body=line.split(":",1)[1]
+    out=set()
+    for tok in HEX_TOKEN_RE.findall(body):
+        try: out.add(int(tok,16))
+        except ValueError: pass
+    return out
+
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--out",type=Path,required=True); args=ap.parse_args()
     import pefile
@@ -79,16 +92,12 @@ def main():
     proc=subprocess.run(["objdump","-d","-M","intel",str(binary)],capture_output=True,text=True,errors="replace")
     if proc.returncode!=0: raise SystemExit("objdump failed: "+proc.stderr[-1000:])
     addr_line=re.compile(r"^\s*([0-9a-fA-F]+):")
-    hex_token=re.compile(r"(?:0x)?([0-9a-fA-F]{6,16})")
     xref_seed=set()
     for line in proc.stdout.splitlines():
         m=addr_line.match(line)
         if not m: continue
         insn_va=int(m.group(1),16)
-        values=set()
-        for tok in hex_token.findall(line):
-            try: values.add(int(tok,16))
-            except ValueError: pass
+        values=operand_hex_values(line)
         matches=[v for v in values if v in target_vas]
         for v in matches:
             term=target_vas[v]
