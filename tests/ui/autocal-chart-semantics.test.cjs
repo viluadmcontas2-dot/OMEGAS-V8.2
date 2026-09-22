@@ -237,7 +237,7 @@ const spatialBands = model.bandStrip(
       {
         key: 'NUM_BUF_UPD_GAS',
         status: 'VALID',
-        rawValues: Array.from({ length: 18 }, (_, index) => index === 17 ? 3 : 0),
+        rawValues: Array.from({ length: 18 }, (_, index) => index === 17 ? 1 : 0),
       },
     ],
   },
@@ -251,6 +251,7 @@ const spatialBands = model.bandStrip(
       ],
       acquisition: {
         gasCurrent: [{ index: 17, petrolMs: 7.2, mapBar: 0.400 }],
+        gasCounter: Array.from({ length: 18 }, (_, index) => index === 17 ? 7 : 0),
       },
     },
   },
@@ -259,6 +260,8 @@ assert.equal(spatialBands[17].zone, 0,
   'posição 18 com MAP 0.400 deve pertencer espacialmente à R1, não à região inferida pelo índice');
 assert.equal(spatialBands[17].zoneAcquired, true);
 assert.equal(spatialBands[17].mapBar, 0.400);
+assert.equal(spatialBands[17].counter, 7,
+  'typed instrument gasCounter must outrank contradictory raw snapshot counter');
 assert.equal(source.includes('zoneForBand('), false,
   'consumer não pode manter agrupamento 18→4 hardcoded por índice');
 
@@ -315,6 +318,35 @@ assert.equal(humanFromTypedEpoch.autoMatchCount, 2,
   'typed instrument epoch must outrank raw snapshot fallback');
 assert.equal(humanFromTypedEpoch.maxAutoMatch, 3,
   'typed max AutoMatch must outrank raw snapshot fallback');
+
+const humanFromTypedZones = model.humanState(
+  {
+    available: true,
+    fields: [
+      { key: 'ACQUIRED_ZONES_PETROL', status: 'VALID', rawValues: [0, 0, 0, 0] },
+      { key: 'ACQUIRED_ZONES_GAS', status: 'VALID', rawValues: [0, 0, 0, 0] },
+    ],
+  },
+  { autoCalEnabled: 1 },
+  {
+    ok: true,
+    acquisitionZones: {
+      petrol: [false, false, false, false],
+      gas: [false, false, false, false],
+    },
+    instrument: {
+      zones: {
+        petrol: [true, false, true, false],
+        gas: [false, true, false, true],
+      },
+      epoch: {},
+    },
+  },
+);
+assert.deepEqual(humanFromTypedZones.petrolZoneFlags, [true, false, true, false],
+  'typed instrument petrol zones must outrank legacy/raw zone sources');
+assert.deepEqual(humanFromTypedZones.gasZoneFlags, [false, true, false, true],
+  'typed instrument gas zones must outrank legacy/raw zone sources');
 
 
 const epochProjection = (sessionId, autoMatchExecuted, factors, transition = null) => ({
