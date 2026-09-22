@@ -205,3 +205,20 @@ Therefore:
 - do not emulate native point averaging/replacement in OMEGAS;
 - exact firmware point-update formula remains **UNKNOWN**;
 - native point buffer remains the product authority.
+
+
+## ACQUIRED_ZONES as native epoch latches — 2026-09-21
+
+Dual-capture correlation closes the observed behavior of the four native region flags without claiming an unknown firmware formula.
+
+- PortmonAUTOCAL: 14/14 observed `0->1` activations have live MAP visitation in the same native region within the current zone-poll window.
+- PortmonLOGNOVO: 13/14 in the current window; the one delayed observation has region visitation in the immediately preceding window, giving 14/14 within two windows.
+- Both captures contain 3 falling-edge events; every observed falling event produces `[0,0,0,0]` rather than an isolated region loss.
+- Zone vectors are ECU-owned/read-only from the ProgBase host in supplied captures.
+- Maturity thresholds do not explain zone activation and are a separate concept.
+
+Supported operational meaning: each flag behaves as a **latched native region marker within an acquisition epoch**. Exact ECU set/clear guards remain UNKNOWN. AutoMatch is related to some clears but is not proven to be the sole clear guard.
+
+Product rule: show `Região registrada pela ECU neste ciclo`; use the ECU flag as authority. Live MAP is explanatory context only and must never synthesize the flag.
+
+Evidence: `tests/fixtures/amarelo-autocal-zone-latch-behavior-v1.json`.
