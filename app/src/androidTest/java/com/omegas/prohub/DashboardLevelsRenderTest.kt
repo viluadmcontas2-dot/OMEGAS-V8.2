@@ -85,8 +85,21 @@ class DashboardLevelsRenderTest {
         SystemClock.sleep(settleMs)
     }
 
+    private val referenceAutoCalFields = listOf(
+        AutoCalProtocol.PETR_INJ_TBP,
+        AutoCalProtocol.MNFLD_PRESS_THD,
+        AutoCalProtocol.MUL_ACT,
+        AutoCalProtocol.PETR_MNFLD_PRESS_RV,
+        AutoCalProtocol.GAS_MNFLD_PRESS_RV,
+    )
+
+    private data class OriginalAutoCalFixture(
+        val observations: List<AutoCalReadObservation>,
+        val provenance: JSONObject,
+    )
+
     private fun autoCalFixtureRawValues(
-        fixtureName: String = "autocal_snapshot_complete.json",
+        fixtureName: String,
     ): Map<String, IntArray> {
         val raw = instrumentation.context.assets
             .open(fixtureName)
@@ -118,59 +131,82 @@ class DashboardLevelsRenderTest {
                 error("Render fixture does not use U8_OR_U16_LE")
         }
 
+    private fun originalAutoCalFixture(
+        fixtureName: String = "portmon-lognovo-autocal-reference-v1.json",
+    ): OriginalAutoCalFixture {
+        val raw = instrumentation.context.assets
+            .open(fixtureName)
+            .bufferedReader()
+            .use { it.readText() }
+        val root = JSONObject(raw)
+        check(root.getString("classification") == "ORIGINAL_DERIVED") {
+            "$fixtureName is not allowed as an AutoCal oracle"
+        }
+        val provenance = root.getJSONObject("provenance")
+        check(provenance.getString("sourceRawSha256") ==
+            "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64") {
+            "Unexpected PortmonLOGNOVO source hash"
+        }
+        val fieldsByKey = referenceAutoCalFields.associateBy { it.key }
+        val rows = root.getJSONArray("transactions")
+        val capturedAt = System.currentTimeMillis()
+        val observations = ArrayList<AutoCalReadObservation>(rows.length())
+        for (index in 0 until rows.length()) {
+            val tx = rows.getJSONObject(index)
+            val field = checkNotNull(fieldsByKey[tx.getString("key")]) {
+                "Unexpected reference field ${tx.getString("key")}"
+            }
+            val request = hex(tx.getString("request"))
+            val response = hex(tx.getString("response"))
+            check(response.size >= request.size + 3) { "${field.key}: truncated response" }
+            check(response.copyOfRange(0, request.size).contentEquals(request)) {
+                "${field.key}: response echo differs from original request"
+            }
+            val status = response[request.size].toInt() and 0xFF
+            val payloadSize = response[request.size + 1].toInt() and 0xFF
+            val payloadStart = request.size + 2
+            val payloadEnd = payloadStart + payloadSize
+            check(response.size == payloadEnd + 1) {
+                "${field.key}: response must contain exactly one trailing checksum byte"
+            }
+            val payload = response.copyOfRange(payloadStart, payloadEnd)
+            val decoded = AutoCalProtocol.decode(field, status, payload)
+            check(decoded.elementCount == field.expectedElementsHint) {
+                "${field.key}: original fixture has ${decoded.elementCount} elements"
+            }
+            observations += AutoCalReadObservation(
+                field = field,
+                status = status,
+                payload = payload,
+                capturedAtMs = capturedAt,
+            )
+        }
+        check(observations.map { it.field.key }.toSet() == fieldsByKey.keys) {
+            "Original AutoCal fixture must contain exactly the five reference fields"
+        }
+        return OriginalAutoCalFixture(observations, provenance)
+    }
+
     private fun setPrivateField(target: Any, name: String, value: Any?) {
         val field = target.javaClass.getDeclaredField(name)
         field.isAccessible = true
         field.set(target, value)
     }
 
-    private fun installAutoCalReferenceFixture(
+    private fun publishAutoCalSnapshot(
         scenario: ActivityScenario<MainActivity>,
-        sessionId: Long = 9001L,
-        fixtureName: String = "autocal_snapshot_complete.json",
+        observations: List<AutoCalReadObservation>,
+        expectedFields: List<AutoCalProtocol.Field>,
+        sessionId: Long,
+        message: String,
     ) {
-        val rawByKey = autoCalFixtureRawValues(fixtureName)
-        val referenceFields = listOf(
-            AutoCalProtocol.PETR_INJ_TBP,
-            AutoCalProtocol.MNFLD_PRESS_THD,
-            AutoCalProtocol.MUL_ACT,
-            AutoCalProtocol.PETR_MNFLD_PRESS_RV,
-            AutoCalProtocol.GAS_MNFLD_PRESS_RV,
-        )
-        val expectedFields = listOf(AutoCalProtocol.MODULE_VERSION) +
-            referenceFields +
-            listOf(AutoCalProtocol.AUTO_CAL_ENABLE)
-        val capturedAt = System.currentTimeMillis()
-        val observations = mutableListOf(
-            AutoCalReadObservation(
-                field = AutoCalProtocol.MODULE_VERSION,
-                status = Mp48Protocol.STATUS_ACK,
-                payload = byteArrayOf(4),
-                capturedAtMs = capturedAt,
-            ),
-        )
-        referenceFields.forEach { field ->
-            val values = checkNotNull(rawByKey[field.key]) { "Missing render fixture field ${field.key}" }
-            observations += AutoCalReadObservation(
-                field = field,
-                status = Mp48Protocol.STATUS_ACK,
-                payload = payloadFor(field, values),
-                capturedAtMs = capturedAt,
-            )
-        }
-        observations += AutoCalReadObservation(
-            field = AutoCalProtocol.AUTO_CAL_ENABLE,
-            status = Mp48Protocol.STATUS_ACK,
-            payload = byteArrayOf(1),
-            capturedAtMs = capturedAt,
-        )
-
+        val capturedAt = observations.maxOfOrNull { it.capturedAtMs } ?: System.currentTimeMillis()
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = observations,
             expectedFields = expectedFields,
             sessionId = "AUTOCAL-$sessionId-RENDER",
             source = AutoCalSnapshotSource.REPLAY,
-            startedAtMs = capturedAt,
+            startedAtMs = observations.minOfOrNull { it.capturedAtMs } ?: capturedAt,
             finishedAtMs = capturedAt,
         )
         check(!snapshot.partial) { "Reference render fixture became partial: ${snapshot.warnings}" }
@@ -188,7 +224,7 @@ class DashboardLevelsRenderTest {
 
         val state = JSONObject()
             .put("state", "READY")
-            .put("message", "Render fixture through production AutoCal projection")
+            .put("message", message)
             .put("sessionId", sessionId)
             .put("autoCalEnabled", 1)
             .put("nativeFlag13", 0)
@@ -201,6 +237,46 @@ class DashboardLevelsRenderTest {
             setPrivateField(service.nativeAutoCal, "state", state)
             activity.refreshWebUi()
         }
+    }
+
+    private fun installOriginalAutoCalReferenceFixture(
+        scenario: ActivityScenario<MainActivity>,
+        sessionId: Long = 9001L,
+    ): JSONObject {
+        val fixture = originalAutoCalFixture()
+        publishAutoCalSnapshot(
+            scenario = scenario,
+            observations = fixture.observations,
+            expectedFields = referenceAutoCalFields,
+            sessionId = sessionId,
+            message = "Original-derived PortmonLOGNOVO reference through production decoder",
+        )
+        return fixture.provenance
+    }
+
+    private fun installTestOnlyAutoCalReferenceFixture(
+        scenario: ActivityScenario<MainActivity>,
+        sessionId: Long = 9001L,
+        fixtureName: String,
+    ) {
+        val rawByKey = autoCalFixtureRawValues(fixtureName)
+        val capturedAt = System.currentTimeMillis()
+        val observations = referenceAutoCalFields.map { field ->
+            val values = checkNotNull(rawByKey[field.key]) { "Missing render fixture field ${field.key}" }
+            AutoCalReadObservation(
+                field = field,
+                status = Mp48Protocol.STATUS_ACK,
+                payload = payloadFor(field, values),
+                capturedAtMs = capturedAt,
+            )
+        }
+        publishAutoCalSnapshot(
+            scenario = scenario,
+            observations = observations,
+            expectedFields = referenceAutoCalFields,
+            sessionId = sessionId,
+            message = "TEST_ONLY visual mutation through production AutoCal projection",
+        )
     }
 
     private fun dashboardDom(scenario: ActivityScenario<MainActivity>): JSONObject =
@@ -544,11 +620,11 @@ class DashboardLevelsRenderTest {
         val scenario = launch()
         try {
             val live = liveFixture()
-            installAutoCalReferenceFixture(scenario)
+            val provenance = installOriginalAutoCalReferenceFixture(scenario)
             activateAutocal(scenario)
             injectFresh(scenario, live, settleMs = 850L)
             val dom = autocalReferenceDom(scenario)
-            saveEvidence("autocal-reference-curves", dom, scenario)
+            saveEvidence("autocal-reference-curves", dom, scenario, provenance)
             assertTrue("Production projection must render an SVG reference chart", dom.getBoolean("svg"))
             assertTrue("Reference chart must not fall back to empty state", !dom.getBoolean("empty"))
             assertTrue("Gasoline reference line must have a drawable path", dom.getString("petrolPath").length > 20)
@@ -569,7 +645,7 @@ class DashboardLevelsRenderTest {
         val scenario = launch()
         try {
             val live = liveFixture()
-            installAutoCalReferenceFixture(
+            installTestOnlyAutoCalReferenceFixture(
                 scenario = scenario,
                 fixtureName = "autocal_snapshot_shifted_equivalence.json",
             )
@@ -593,6 +669,7 @@ class DashboardLevelsRenderTest {
         name: String,
         dom: JSONObject,
         scenario: ActivityScenario<MainActivity>,
+        fixtureProvenance: JSONObject? = null,
     ) {
         var web = JSONObject()
         scenario.onActivity { activity ->
@@ -612,6 +689,9 @@ class DashboardLevelsRenderTest {
             .put("densityDpi", metrics.densityDpi)
             .put("dom", dom)
             .put("webView", web)
+        if (fixtureProvenance != null) {
+            receipt.put("fixtureProvenance", fixtureProvenance)
+        }
         File(dir, "$name.json").writeText(receipt.toString(2))
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
         FileOutputStream(File(dir, "$name.png")).use {
