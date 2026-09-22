@@ -10,6 +10,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PRODUCT_SHA: 651cc9e89687edc3988441668658e3b8c7aa7a8f
+
 concurrency:
   group: omegas-verde-apk-now
   cancel-in-progress: true
@@ -22,14 +25,13 @@ jobs:
       - name: Checkout exact product SHA
         uses: actions/checkout@v4
         with:
-          ref: 651cc9e89687edc3988441668658e3b8c7aa7a8f
-
+          ref: ${{ env.PRODUCT_SHA }}
 
       - name: Prove checkout identity
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "651cc9e89687edc3988441668658e3b8c7aa7a8f"
+          test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
           echo "SOURCE_SHA=$(git rev-parse HEAD)"
 
       - name: Set up JDK 17
@@ -42,12 +44,15 @@ jobs:
       - name: Run contracts, unit tests, lint and assemble
         shell: bash
         env:
-          OMEGAS_SOURCE_SHA: ${{ github.sha }}
+          OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
         run: |
           set -euo pipefail
           chmod +x ./gradlew
           python3 -B tools/run_checks.py
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug             -PomegasAbis=armeabi-v7a             --no-daemon             --stacktrace
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon \
+            --stacktrace
 
       - name: Verify and hash APK
         id: apk
@@ -59,24 +64,38 @@ jobs:
           mkdir -p build/evidence
           APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
           APK_BYTES="$(stat -c %s "$APK")"
+          SOURCE_SHA="$(git rev-parse HEAD)"
           SOURCE_TREE="$(git rev-parse HEAD^{tree})"
           unzip -t "$APK" >/dev/null
+
+          BUILD_CONFIG="$(find app/build/generated -type f -name 'BuildConfig.java' -path '*debug*' -print -quit || true)"
+          BUILD_COMMIT=""
+          if [ -n "$BUILD_CONFIG" ] && [ -f "$BUILD_CONFIG" ]; then
+            BUILD_COMMIT="$(sed -n 's/.*OMEGAS_BUILD_COMMIT = "\([^"]*\)".*/\1/p' "$BUILD_CONFIG" | head -n1)"
+          fi
+
           {
             echo "OMEGAS_VERDE_APK=PASS"
-            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "SOURCE_SHA=$SOURCE_SHA"
             echo "SOURCE_TREE=$SOURCE_TREE"
+            echo "OMEGAS_BUILD_COMMIT=$BUILD_COMMIT"
+            echo "EXPECTED_BUILD_COMMIT=${PRODUCT_SHA:0:12}"
             echo "APK_PATH=$APK"
             echo "APK_SHA256=$APK_SHA256"
             echo "APK_BYTES=$APK_BYTES"
             echo "APK_ZIP_INTEGRITY=PASS"
             echo "PHYSICAL_INSTALL_NOT_YET_CLAIMED=true"
           } | tee build/evidence/omegas-verde-apk-evidence.txt
-          echo "apk_sha256=$APK_SHA256" >> "$GITHUB_OUTPUT"
+
+          test "$SOURCE_SHA" = "$PRODUCT_SHA"
+          if [ -n "$BUILD_COMMIT" ]; then
+            test "$BUILD_COMMIT" = "${PRODUCT_SHA:0:12}"
+          fi
 
       - name: Publish APK + evidence
         uses: actions/upload-artifact@v4
         with:
-          name: omegas-verde-apk-${{ github.sha }}
+          name: omegas-verde-final-${{ env.PRODUCT_SHA }}
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             build/evidence/omegas-verde-apk-evidence.txt
