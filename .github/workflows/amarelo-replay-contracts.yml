@@ -1,0 +1,81 @@
+name: OMEGAS Amarelo replay contracts
+
+on:
+  push:
+    branches:
+      - "work/omegas-amarelo-*"
+    paths:
+      - ".github/workflows/amarelo-replay-contracts.yml"
+      - "tools/omegas_amarelo/portmon_transactions.py"
+      - "tools/omegas_amarelo/build_portmon_replay_fixture.py"
+      - "tests/fixtures/amarelo-portmon-replay-manifest-v1.json"
+      - "tests/fixtures/portmon-autocal-*"
+      - "tests/fixtures/portmon-lognovo-*"
+      - "tests/test_amarelo_wu003_replay_kit.py"
+      - "tests/test_real_mp48_replay_fixture_contract.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-amarelo-replay-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  replay-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - name: Python runtime
+        run: python3 --version
+      - name: WU-003 deterministic replay kit
+        run: python3 -B -m unittest tests.test_amarelo_wu003_replay_kit -v
+      - name: Harvested AUTOCAL replay regression
+        run: python3 -B tests/test_real_mp48_replay_fixture_contract.py
+      - name: Build diagnostic report
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path("tests/fixtures/amarelo-portmon-replay-manifest-v1.json").read_text(encoding="utf-8")
+          )
+          report = {
+              "schema": "omegas.amarelo.replay-ci-report.v1",
+              "sourceSha": os.environ["GITHUB_SHA"],
+              "workUnit": manifest["workUnit"],
+              "timingRule": manifest["timingRule"],
+              "closureAllowed": manifest["closure"]["closureAllowed"],
+              "corpora": {
+                  name: {
+                      "sourceRawSha256": row["sourceRawSha256"],
+                      "status": row["status"],
+                      "compactReplay": row.get("compactReplay"),
+                  }
+                  for name, row in manifest["corpora"].items()
+              },
+          }
+          Path("artifacts/replay-contract-report.json").write_text(
+              json.dumps(report, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amarelo-replay-contract-report
+          path: artifacts/replay-contract-report.json
+          if-no-files-found: error
+          retention-days: 14
