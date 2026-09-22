@@ -1,0 +1,152 @@
+{
+  "schema": "omegas.amarelo.android-render-composite-original-derived.v1",
+  "classification": "COMPOSITE_ORIGINAL_DERIVED_FOR_RENDER_ONLY",
+  "provenance": {
+    "sourceRawName": "PortmonLOGNOVO.LOG",
+    "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+    "targetPortmonIndex": 824550,
+    "coherenceWarning": "Latest original reads at/before target; reference and operational objects have different native polling cadences. Valid for decoder/publisher/WebView render integration, not simultaneous scientific inference."
+  },
+  "fields": [
+    {
+      "key": "PETR_INJ_TBP",
+      "portmonIndex": 556102,
+      "atMs": 634210.6056112096,
+      "request": "29 4B 01 75",
+      "response": "29 4B 01 75 53 3C 00 01 00 02 00 03 00 04 00 05 00 06 00 07 00 08 00 09 00 0A 00 0B 00 0C 00 0D 00 0E 00 0F 00 10 00 11 00 12 00 13 00 14 00 16 00 18 00 1A 00 1C 00 1E 00 20 00 22 00 24 00 28 00 2C 9D"
+    },
+    {
+      "key": "MNFLD_PRESS_THD",
+      "portmonIndex": 556056,
+      "atMs": 634162.7665912092,
+      "request": "29 4C 01 76",
+      "response": "29 4C 01 76 53 24 9A 00 00 01 33 01 66 01 9A 01 CD 01 00 02 33 02 66 02 9A 02 CD 02 00 03 33 03 66 03 9A 03 CD 03 00 04 66 04 9D"
+    },
+    {
+      "key": "NUM_BUF_UPD_PETR",
+      "portmonIndex": 823678,
+      "atMs": 921379.3617026518,
+      "request": "29 5B 01 85",
+      "response": "29 5B 01 85 53 24 0A 00 0A 00 0A 00 0A 00 04 00 03 00 03 00 04 00 04 00 06 00 08 00 04 00 00 00 01 00 00 00 01 00 00 00 00 00 C5"
+    },
+    {
+      "key": "NUM_BUF_UPD_GAS",
+      "portmonIndex": 824170,
+      "atMs": 921919.1807726555,
+      "request": "29 5C 01 86",
+      "response": "29 5C 01 86 53 24 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 02 00 01 00 00 00 01 00 03 00 00 00 00 00 82"
+    },
+    {
+      "key": "PETR_INJ_TBUF_GAS_PREV",
+      "portmonIndex": 823854,
+      "atMs": 921591.1808926532,
+      "request": "29 5D 01 87",
+      "response": "29 5D 01 87 53 24 CF 04 A6 05 A8 06 42 08 63 09 7A 0C 2E 0E F6 0F 08 10 29 13 01 15 D3 10 00 00 1B 16 00 00 00 00 00 00 00 00 9E"
+    },
+    {
+      "key": "MNFLD_PRESS_BUF_GAS_PREV",
+      "portmonIndex": 823900,
+      "atMs": 921639.8851026535,
+      "request": "29 5E 01 88",
+      "response": "29 5E 01 88 53 24 F7 00 14 01 47 01 7B 01 A9 01 E6 01 1C 02 4E 02 75 02 B6 02 E6 02 1E 03 00 00 78 03 00 00 00 00 00 00 00 00 F9"
+    },
+    {
+      "key": "PETR_INJ_TBUF_GAS",
+      "portmonIndex": 824078,
+      "atMs": 921817.6425126543,
+      "request": "29 5F 01 89",
+      "response": "29 5F 01 89 53 24 E6 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2C 0A 00 00 E2 0D 90 0F 00 00 7C 15 A8 17 00 00 00 00 74"
+    },
+    {
+      "key": "MNFLD_PRESS_BUF_GAS",
+      "portmonIndex": 824124,
+      "atMs": 921867.9290226549,
+      "request": "29 60 01 8A",
+      "response": "29 60 01 8A 53 24 DB 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 B5 02 00 00 20 03 3E 03 00 00 A6 03 EA 03 00 00 00 00 03"
+    },
+    {
+      "key": "MUL_ACT",
+      "portmonIndex": 824348,
+      "atMs": 922106.1918326563,
+      "request": "29 61 01 8B",
+      "response": "29 61 01 8B 53 3C 50 34 50 34 50 34 50 34 50 34 EA 3D C9 49 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 46 4D 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 5D"
+    },
+    {
+      "key": "PETR_INJ_TBUF",
+      "portmonIndex": 823586,
+      "atMs": 921280.457032651,
+      "request": "29 62 01 8C",
+      "response": "29 62 01 8C 53 24 CD 04 B4 05 AC 06 BE 07 20 08 20 08 DA 08 7A 09 3E 0A 89 0B B3 0C BA 0E 00 00 C0 13 00 00 DA 17 00 00 00 00 54"
+    },
+    {
+      "key": "MNFLD_PRESS_BUF",
+      "portmonIndex": 823632,
+      "atMs": 921330.6211926513,
+      "request": "29 63 01 8D",
+      "response": "29 63 01 8D 53 24 C5 00 1A 01 48 01 72 01 B2 01 E3 01 1E 02 54 02 79 02 B8 02 E8 02 1B 03 00 00 6A 03 00 00 F0 03 00 00 00 00 BD"
+    },
+    {
+      "key": "VECT_AUTOCAL_U8_1",
+      "portmonIndex": 556183,
+      "atMs": 634296.96038121,
+      "request": "0A 65 01 01 71",
+      "response": "0A 65 01 01 71 53 01 03 57"
+    },
+    {
+      "key": "MAX_AUTOMATCH",
+      "portmonIndex": 556194,
+      "atMs": 634312.2670612102,
+      "request": "0A 65 01 02 72",
+      "response": "0A 65 01 02 72 53 01 03 57"
+    },
+    {
+      "key": "ACQUIRED_ZONES_PETROL",
+      "portmonIndex": 785290,
+      "atMs": 879945.1148724275,
+      "request": "29 6F 01 99",
+      "response": "29 6F 01 99 53 04 01 01 01 01 5B"
+    },
+    {
+      "key": "ACQUIRED_ZONES_GAS",
+      "portmonIndex": 824550,
+      "atMs": 922320.4529626574,
+      "request": "29 70 01 9A",
+      "response": "29 70 01 9A 53 04 00 00 01 01 59"
+    },
+    {
+      "key": "CALIBRATION_VAL_1",
+      "portmonIndex": 556679,
+      "atMs": 634831.4012812122,
+      "request": "29 72 01 9C",
+      "response": "29 72 01 9C 53 0A 01 03 03 01 03 03 01 03 03 01 73"
+    },
+    {
+      "key": "NUM_AUTOMATCH_EXECUTED",
+      "portmonIndex": 731703,
+      "atMs": 822194.9241321268,
+      "request": "09 74 01 7E",
+      "response": "09 74 01 7E 53 01 01 55"
+    },
+    {
+      "key": "PETR_MNFLD_PRESS_RV",
+      "portmonIndex": 823008,
+      "atMs": 920678.9125526476,
+      "request": "29 8D 01 B7",
+      "response": "29 8D 01 B7 53 3C 0A 00 0A 00 36 00 87 00 D8 00 1B 01 7A 01 C1 01 05 02 5D 02 97 02 CF 02 EF 02 07 03 19 03 2B 03 40 03 4D 03 60 03 7B 03 B0 03 E5 03 1A 04 4F 04 84 04 B9 04 EE 04 23 05 8D 05 F7 05 13"
+    },
+    {
+      "key": "GAS_MNFLD_PRESS_RV",
+      "portmonIndex": 821364,
+      "atMs": 918908.6117426364,
+      "request": "29 8E 01 B8",
+      "response": "29 8E 01 B8 53 3C 66 00 8C 00 B2 00 D8 00 FE 00 22 01 4A 01 78 01 93 01 B5 01 C9 01 DA 01 FA 01 14 02 48 02 97 02 B7 02 DA 02 DE 02 DE 02 35 03 8C 03 E3 03 3A 04 91 04 E8 04 3F 05 96 05 44 06 F2 06 B5"
+    }
+  ],
+  "live": {
+    "portmonIndex": 824506,
+    "atMs": 922272.6318426571,
+    "request": "48 01 49",
+    "response": "48 01 49 53 22 36 07 B4 3C 00 00 5B 11 BF 07 00 90 34 B2 30 07 45 B0 02 DB 00 00 00 00 32 11 00 00 AD 07 00 00 00 00 4A"
+  },
+  "missing": []
+}
