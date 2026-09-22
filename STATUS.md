@@ -6,7 +6,7 @@
 - WorkUnit: `OMEGAS-WU-006`
 - Epic: #81
 - Branch: `OmegasVerde`
-- Estado: `ACTIVE — PARITY GREEN / GLOBAL RENDER GATE`
+- Estado: `FINAL GATE — SAME-SHA REVALIDATION`
 
 Sempre resolver o HEAD remoto antes de agir. GitHub remoto é autoridade; este arquivo registra evidência e direção, não fixa o HEAD.
 
@@ -15,12 +15,23 @@ Sempre resolver o HEAD remoto antes de agir. GitHub remoto é autoridade; este a
 - #82 ProgBase byte/consumer map: **CLOSED / COMPLETED**.
 - #83 OMEGAS parity matrix: **CLOSED / COMPLETED**.
 - #86 sessão canônica: **CLOSED / MATCH** — AutoCal usa o mesmo `SessionRecorder`, o mesmo diretório de sessão e o mesmo ZIP canônico.
+- #85 Dashboard LEVELS RAW: **CLOSED / GREEN** — fresh `177`, invalid/stale `—`, sem conversão física inventada.
+- #95 AutoCal parity/repair/render: **CLOSED / GREEN** no escopo determinístico; validação física em veículo continua separada.
 - Fixture real MP48: `tests/fixtures/portmon-autocal-cycle-v1.json`, origem #68 / Portmon real.
 - ProgBase original: `G:\Meu Drive\OMEGAS\Copy of ProgBase (3).exe`.
 - ProgBase SHA-256: `8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4`.
 - Forensic fan-out #13 (`35646095776`) no SHA `873550b1b13e594c9ffaba7229688f243de3ecaf`: **256 PASS / 0 RED / 0 BROKEN**.
 - Canonical CI #202 (`35647103096`) no SHA `28c119fbe34eec8ef6a2695e172cd4c9583b91a7`: **PASS**.
 - Fast contracts #133 (`35647103061`) no mesmo SHA: **PASS**.
+
+### Evidência recente inspecionada
+
+- Provenance audit: `docs/evidence/2026-09-22-autocal-fixture-provenance.md`.
+- Android render #45 (`35755193960`) no SHA de produto `87a4ffbd91da1c01c2452b98dc83077eb83b093c`: **12/12 cenários PASS**, receipts e screenshots inspecionados em 1280×720.
+- Global reality fan-out #36 (`35755194066`) no mesmo SHA: **159 lanes PASS / 0 RED / 0 BROKEN**; plan + aggregate também verdes.
+- Fast contracts #164 (`35755193972`) e CI canônica #263 (`35755194006`) no mesmo SHA: **PASS**.
+- RED real preservado: render #44 (`35754584631`) provou que Curve K offline ficava presa em “Lendo 30 pontos diretamente da ECU”; `87a4ffbd...` corrigiu o settle para “Curva não confirmada”.
+- Os commits posteriores ao SHA de produto alteraram apenas o workflow autorizado de APK; por isso o fechamento exige uma nova rodada CI + render + fan-out no HEAD atual.
 
 ## ProgBase/original confirmado
 
@@ -83,12 +94,18 @@ Pipeline vinculante:
 
 O emulator, build e instalação dos APKs já foram provados no run #9; a falha desse run foi apenas sintaxe do wrapper shell. O run seguinte usa `tools/ci/run_android_render_evidence.sh` para executar os cenários dentro de Bash real.
 
-## Pendências vinculantes
+## Gate de fechamento
 
-- #84: completar o gate renderizado para Dashboard, AutoCal e depois Learning/Map/Curve/OBD/reconnect/sessões.
-- #85: só fechar depois de screenshot + receipt 1280x720 provando LEVELS RAW fresh e placeholder inválido/stale.
-- #95: só fechar depois do render real da paridade AutoCal, apesar do corpus/oracle já estar 256/256 PASS.
-- Reconciliar #81 somente após #84/#85/#95 e CI final no mesmo SHA.
+Para fechar #84 e reconciliar #81, o HEAD corrente deve produzir, no mesmo SHA:
+
+- CI canônica verde;
+- fast contracts verdes;
+- global reality fan-out sem RED/BROKEN;
+- Android render com os 12 cenários verdes em 1280×720;
+- receipts e screenshots inspecionados, não apenas badge;
+- provenance ORIGINAL_DERIVED preservada para AutoCal/Curve K e `SYNTHETIC_NON_SCIENTIFIC` explícita no cenário visual shifted.
+
+Os run IDs do SHA final são registrados nos issues #84/#81 depois que Actions termina; não se cria outro commit apenas para registrar o próprio run ID.
 
 ## NON-GOAL
 

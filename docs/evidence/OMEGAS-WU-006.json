@@ -1,18 +1,18 @@
 {
   "schema": "omegas.workunit.evidence.v1",
   "workunit_id": "OMEGAS-WU-006",
-  "state": "ACTIVE_RENDER_GLOBAL_E2E",
+  "state": "FINAL_SAME_SHA_REVALIDATION",
   "branch": "OmegasVerde",
-  "baseline_source_sha": "28c119fbe34eec8ef6a2695e172cd4c9583b91a7",
+  "baseline_source_sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
   "baseline_ci": {
     "fast_contracts": {
-      "run": 133,
-      "run_id": 35647103061,
+      "run": 164,
+      "run_id": 35755193972,
       "conclusion": "success"
     },
     "canonical": {
-      "run": 202,
-      "run_id": 35647103096,
+      "run": 263,
+      "run_id": 35755194006,
       "conclusion": "success"
     }
   },
@@ -138,7 +138,7 @@
     "issue": 83,
     "human_path": "docs/evidence/2026-09-21-omegas-autocal-progbase-parity-matrix.md",
     "machine_path": "tests/fixtures/omegas-autocal-progbase-parity-v1.json",
-    "status": "CORPUS_ORACLE_GREEN_RENDER_PENDING",
+    "status": "CORPUS_ORACLE_AND_ANDROID_RENDER_GREEN_FINAL_HEAD_REVALIDATION",
     "confirmed_red_candidates": [],
     "protected_matches": [
       "LIVE_AGORA_TELEMETRY_SEPARATION",
@@ -159,7 +159,7 @@
           "conclusion": "failure"
         },
         "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
-        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING"
+        "current_state": "GREEN_CORPUS_CI_RENDER"
       },
       "current_band": {
         "red_sha": "b05705e772835ebf0dec7206c3dffb1cbd35026e",
@@ -170,7 +170,7 @@
         },
         "first_fix_sha": "38ccb9ee38d833b911687ab1e1c5e87b23bf6959",
         "original_rule": "threshold[i] < MAP <= threshold[i+1]; global min/max excluded",
-        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING"
+        "current_state": "GREEN_CORPUS_CI_RENDER"
       },
       "grouped_acquisition": {
         "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
@@ -193,7 +193,7 @@
           "ACQUIRED_ZONES_GAS"
         ],
         "cadence_ms": 2000,
-        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING"
+        "current_state": "GREEN_CORPUS_CI_RENDER"
       },
       "grouped_reference": {
         "cadence_ms": 4000,
@@ -204,13 +204,13 @@
           "PETR_MNFLD_PRESS_RV",
           "GAS_MNFLD_PRESS_RV"
         ],
-        "current_state": "GREEN_CORPUS_CI_RENDER_PENDING",
+        "current_state": "GREEN_CORPUS_CI_RENDER",
         "revision_policy": "byte-sensitive snapshot revision on coherent reference change"
       },
       "levels_dashboard": {
         "raw_only": true,
         "uncalibrated_percentage_removed": true,
-        "current_state": "SOURCE_AND_FANOUT_GREEN_RENDER_PENDING",
+        "current_state": "GREEN_CORPUS_CI_RENDER",
         "issue": 85
       },
       "map_signedness": {
@@ -239,13 +239,13 @@
     }
   },
   "issues_state": {
-    "81": "OPEN",
+    "81": "OPEN_FINAL_RECONCILIATION",
     "82": "CLOSED_COMPLETED",
     "83": "CLOSED_COMPLETED",
-    "84": "OPEN_RENDER_GATE",
-    "85": "OPEN_RENDER_GATE",
+    "84": "OPEN_FINAL_SAME_SHA_REVALIDATION",
+    "85": "CLOSED_COMPLETED",
     "86": "CLOSED_MATCH",
-    "95": "OPEN_RENDER_GATE"
+    "95": "CLOSED_COMPLETED"
   },
   "session_unification": {
     "issue": 86,
@@ -277,7 +277,17 @@
     "lane_runner": "tools/ci/global_reality_lane.py",
     "max_parallel": 80,
     "first_run_id": 35647103126,
-    "note": "Cross-runtime tests declare their JVM->Node prerequisite explicitly; RED is product/test contract failure, not missing upstream artifact."
+    "note": "Cross-runtime tests declare their JVM->Node prerequisite explicitly; RED is product/test contract failure, not missing upstream artifact.",
+    "latest_green": {
+      "run": 36,
+      "run_id": 35755194066,
+      "sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
+      "lanes": 159,
+      "pass": 159,
+      "red": 0,
+      "broken": 0,
+      "conclusion": "success"
+    }
   },
   "android_render_gate": {
     "workflow": ".github/workflows/verde-android-render-evidence.yml",
@@ -292,11 +302,52 @@
       "viewport configuration"
     ],
     "harness": "tools/ci/run_android_render_evidence.sh",
-    "pending_scenarios": [
-      "dashboardFreshLevelsRaw",
-      "dashboardInvalidLevelsPlaceholder",
-      "autocalFreshLevelsControl"
+    "pending_scenarios": [],
+    "state": "GREEN_12_SCENARIOS_FINAL_HEAD_REVALIDATION_REQUIRED",
+    "latest_green": {
+      "run": 45,
+      "run_id": 35755193960,
+      "sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
+      "scenarios": 12,
+      "conclusion": "success",
+      "artifacts_inspected": true,
+      "viewport": "1280x720"
+    },
+    "scenarios": [
+      "dashboard-fresh",
+      "dashboard-invalid",
+      "autocal-fresh-control",
+      "autocal-reference-curves",
+      "autocal-equivalence-shifted",
+      "learning-fresh-context",
+      "map-fresh-context",
+      "curve-offline-honest",
+      "curve-original-lognovo",
+      "obd-offline-honest",
+      "dashboard-session-invalidated",
+      "dashboard-session-recovered"
     ],
-    "state": "IN_PROGRESS_NOT_YET_PRODUCT_PASS"
+    "provenance_policy": {
+      "autocal_reference_curves": "ORIGINAL_DERIVED_LOGNOVO_PROGBASE",
+      "curve_original_lognovo": "ORIGINAL_DERIVED_LOGNOVO_PROGBASE",
+      "autocal_equivalence_shifted": "SYNTHETIC_NON_SCIENTIFIC_VISUAL_ONLY",
+      "omegas_generated_scientific_oracle": "FORBIDDEN"
+    },
+    "curve_offline_repair": {
+      "red_sha": "c4650e8f2303d0e69ccba60835607a2e4e9b4cfc",
+      "red_run": 44,
+      "red_run_id": 35754584631,
+      "observed": "Lendo 30 pontos diretamente da ECU",
+      "fix_sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
+      "green_run": 45,
+      "green_run_id": 35755193960,
+      "expected": "Curva não confirmada",
+      "reading_state": false
+    }
+  },
+  "final_gate_policy": {
+    "requirement": "CI + FAST + GLOBAL_REALITY + ANDROID_RENDER on the same final HEAD",
+    "run_ids_recorded_after_commit": "issues #84/#81",
+    "reason": "A commit cannot contain the run IDs it triggers without changing its own SHA."
   }
 }

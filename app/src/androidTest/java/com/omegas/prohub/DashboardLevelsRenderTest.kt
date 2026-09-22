@@ -619,7 +619,9 @@ class DashboardLevelsRenderTest {
         val scenario = launch()
         try {
             activateRoute(scenario, "curve", settleMs = 850L)
-            SystemClock.sleep(2_500L)
+            waitFor(5_000L) {
+                globalRouteDom(scenario, "curve").optString("curveSource") == "Curva não confirmada"
+            }
             val dom = globalRouteDom(scenario, "curve")
             saveEvidence("curve-offline-honest", dom, scenario)
             assertTrue("Curve route must activate", dom.getBoolean("active"))

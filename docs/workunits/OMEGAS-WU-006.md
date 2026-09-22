@@ -2,7 +2,7 @@
 
 ## Controle
 
-- Estado: `ACTIVE — RENDER/GLOBAL E2E`
+- Estado: `FINAL GATE — SAME-SHA REVALIDATION`
 - Epic: #81
 - Spec Kit: `OMEGAS-SK-001`
 - Branch: `OmegasVerde`
@@ -40,7 +40,7 @@ Ao final, AutoCal deve apresentar curvas gasolina/GNV e estado atual equivalente
 
 ## Sub-objetivo D — realidade visual/runtime
 
-**ATIVO / GATE DE FECHAMENTO.**
+**GREEN NO SHA DE PRODUTO / REVALIDAÇÃO FINAL NO HEAD.**
 
 Pipeline:
 `fixture real -> maior fronteira real aplicável -> bridge real -> assets reais -> WebView real -> 1280×720 -> DOM/assertions -> screenshot + receipt`.
@@ -49,15 +49,19 @@ Estado:
 - Android emulator/KVM: provado.
 - app + instrumentation APK: build/install provados.
 - harness Bash versionado para executar os cenários.
-- próximo GREEN necessário: Dashboard fresh LEVELS, Dashboard invalid/stale placeholder e AutoCal fresh control.
-- após estabilizar o harness, ampliar no mesmo AVD para Learning, Map, Curve, OBD, reconnect e sessão.
+- Android render #45 / `35755193960` no SHA `87a4ffbd91da1c01c2452b98dc83077eb83b093c`: 12 cenários PASS com receipts/screenshots 1280×720 inspecionados.
+- cenários: Dashboard fresh/invalid, AutoCal fresh/reference/shifted, Learning, Map, Curve offline/original-derived, OBD offline, session invalidated/recovered.
+- shifted permanece `SYNTHETIC_NON_SCIENTIFIC / VISUAL_ONLY_NON_SCIENTIFIC`; AutoCal reference e Curve K positive usam bytes ORIGINAL_DERIVED de Lognovo/ProgBase.
+- Curve K offline ganhou RED renderizado #44 e correção mínima em `87a4ffbd...`: falha agora sai de `is-reading` e apresenta “Curva não confirmada”.
+- global reality #36: 159 lanes PASS / 0 RED / 0 BROKEN.
+- como commits posteriores alteraram o workflow autorizado de APK, o fechamento exige rerun dos gates no HEAD corrente.
 
 ## Sub-objetivo E — produto humano
 
-**PARCIALMENTE CONCLUÍDO.**
+**CONCLUÍDO NO ESCOPO DETERMINÍSTICO/RENDER.**
 - LEVELS RAW está na superfície principal sem semântica física inventada.
 - #86 provou que AutoCal já pertence à sessão canônica; não há segundo recorder/export authority.
-- UX ainda precisa de prova renderizada antes de PASS de produto.
+- UX foi provada em WebView Android real 1280×720 nos cenários vinculantes. Isso não equivale a validação física no veículo.
 
 ## Estratégia de execução
 
