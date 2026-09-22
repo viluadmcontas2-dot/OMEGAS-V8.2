@@ -106,12 +106,16 @@ def main():
         schedule(t,"portmon-frame");schedule(t,"binary-frame")
 
     # Recompute coverage after scheduling: scheduled targets remain ESCALATE by design.
+    ghidra_meta=json.loads((a.indices/"ghidra/meta.json").read_text(encoding="utf-8"))
+    semantics_path=a.indices/"ghidra/autocal-semantics.json"
+    semantics=json.loads(semantics_path.read_text(encoding="utf-8")) if semantics_path.is_file() else {"counts":{}}
     counts=collections.Counter(t["status"] for t in state["targets"].values())
     graph_entries={f["entry"].lower() for f in all_funcs}
     seen_entries={t["target"].lower() for t in state["targets"].values() if t["kind"]=="function"}
     unseen_graph=len(graph_entries-seen_entries)
     stalled=[k for k,t in state["targets"].items() if t["status"]=="ESCALATE" and all(d in t["drivers"] for d in ({"function":["ghidra-fn","objdump-fn","capstone-fn"],"symbol":["raw-symbol","undelphi-symbol","ghidra-string"],"frame":["portmon-frame","binary-frame"]}.get(t["kind"],[])))]
-    state["coverage"]={"graph_functions_total":len(graph_entries),"graph_functions_unseen":unseen_graph,"targets_total":len(state["targets"]),"status_counts":dict(counts),"broken":broken,"stalled_targets":len(stalled)}
+    state["coverage"]={"graph_functions_total":len(graph_entries),"graph_functions_unseen":unseen_graph,"targets_total":len(state["targets"]),"status_counts":dict(counts),"broken":broken,"stalled_targets":len(stalled),"function_cap":ghidra_meta.get("function_cap"),"function_cap_hit":bool(ghidra_meta.get("function_cap_hit",False)),"decompile_cap":ghidra_meta.get("decompile_cap"),"decompile_cap_hit":bool(ghidra_meta.get("decompile_cap_hit",False)),"semantic_index_counts":semantics.get("counts",{})}
+    state["semantic_closure"]=False
     state["next_lane_count"]=len(lanes)
     state["has_next"]=bool(lanes)
     state["stalled_keys"]=stalled[:200]
