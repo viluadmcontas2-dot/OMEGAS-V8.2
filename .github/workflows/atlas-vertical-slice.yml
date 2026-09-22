@@ -1,0 +1,186 @@
+name: OMEGAS Atlas vertical slice
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [OmegasAtlas]
+    paths:
+      - 'atlas/**'
+      - '.github/workflows/atlas-vertical-slice.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: omegas-atlas-vertical-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify canonical inputs and seed roots
+        run: |
+          python3 -m unittest atlas.tests.test_reconcile
+          python3 atlas/tools/seed.py --output atlas-out/seed.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-seed
+          path: atlas-out/seed.json
+          retention-days: 30
+          if-no-files-found: error
+
+  build-undelphi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Build pinned Delphi metadata analyzer
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustc --version
+          git clone --depth 1 --branch v0.3.2 https://github.com/ATRAPSLLC/undelphi.git
+          cd undelphi
+          test "$(git describe --tags --exact-match)" = "v0.3.2"
+          cargo build --locked --release --example dump
+          mkdir -p ../atlas-tool
+          cp target/release/examples/dump ../atlas-tool/undelphi-dump
+          ../atlas-tool/undelphi-dump --help >/dev/null 2>&1 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-undelphi-v0.3.2
+          path: atlas-tool/undelphi-dump
+          retention-days: 7
+          if-no-files-found: error
+
+  plan-r1:
+    needs: seed
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        run: |
+          python3 atlas/tools/planner.py --round 1 --output /tmp/matrix.json
+          echo "matrix=$(cat /tmp/matrix.json)" >> "$GITHUB_OUTPUT"
+
+  research-r1:
+    needs: [seed, build-undelphi, plan-r1]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan-r1.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-undelphi-v0.3.2
+          path: .atlas-tools
+      - name: Prepare analyzers
+        run: |
+          chmod +x .atlas-tools/undelphi-dump
+          python3 -m pip install --disable-pip-version-check pefile==2024.8.26
+      - name: Investigate
+        env:
+          UNDELPHI_DUMP: ${{ github.workspace }}/.atlas-tools/undelphi-dump
+        run: |
+          python3 atlas/tools/investigate.py             --driver "${{ matrix.driver }}"             --target "${{ matrix.target }}"             --lane "${{ matrix.id }}"             --receipt "atlas-receipts/r1/${{ matrix.id }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-r1-${{ matrix.id }}
+          path: atlas-receipts/r1/${{ matrix.id }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+  reconcile-r1:
+    if: always()
+    needs: [research-r1]
+    runs-on: ubuntu-latest
+    outputs:
+      has_next: ${{ steps.next.outputs.has_next }}
+      matrix: ${{ steps.next.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-r1-*
+          path: atlas-receipts/r1
+          merge-multiple: true
+      - name: Reconcile round 1
+        run: |
+          python3 atlas/tools/reconcile.py --receipts atlas-receipts/r1 --round 1             --output atlas-out/reconcile-r1.json --frontier atlas-out/frontier-r2.json
+      - id: next
+        name: Publish round 2 matrix
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          x=json.load(open("atlas-out/reconcile-r1.json"))
+          print("has_next="+str(x["has_next"]).lower())
+          print("matrix="+json.dumps(x["matrix"],separators=(",",":")))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-reconcile-r1
+          path: atlas-out/
+          retention-days: 30
+
+  research-r2:
+    if: needs.reconcile-r1.outputs.has_next == 'true'
+    needs: [build-undelphi, reconcile-r1]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.reconcile-r1.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-undelphi-v0.3.2
+          path: .atlas-tools
+      - run: |
+          chmod +x .atlas-tools/undelphi-dump
+          python3 -m pip install --disable-pip-version-check pefile==2024.8.26
+      - name: Investigate frontier
+        env:
+          UNDELPHI_DUMP: ${{ github.workspace }}/.atlas-tools/undelphi-dump
+        run: |
+          python3 atlas/tools/investigate.py             --driver "${{ matrix.driver }}"             --target "${{ matrix.target }}"             --lane "${{ matrix.id }}"             --receipt "atlas-receipts/r2/${{ matrix.id }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-r2-${{ matrix.id }}
+          path: atlas-receipts/r2/${{ matrix.id }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+  verify:
+    if: always()
+    needs: [research-r1, reconcile-r1, research-r2]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-r?-*
+          path: atlas-all-receipts
+          merge-multiple: true
+      - name: Verify battle-royale vertical slice
+        run: python3 atlas/tools/verify_vertical.py --receipts atlas-all-receipts --report atlas-vertical-report.md
+      - name: Publish summary
+        run: cat atlas-vertical-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Comment Atlas issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment 97 --body-file atlas-vertical-report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-vertical-report
+          path: atlas-vertical-report.md
+          retention-days: 30
