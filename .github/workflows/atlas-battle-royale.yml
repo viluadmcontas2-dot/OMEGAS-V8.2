@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
   issues: write
 
 concurrency:
@@ -233,6 +234,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       complete: ${{ steps.closure.outputs.complete }}
+      has_next: ${{ steps.closure.outputs.has_next }}
+      wave: ${{ steps.closure.outputs.wave }}
+      state_artifact: ${{ steps.closure.outputs.state_artifact }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -247,6 +251,9 @@ jobs:
           import json
           x=json.load(open("atlas-closure.json"))
           print("complete="+str(x["complete"]).lower())
+          print("has_next="+str(x["has_next"]).lower())
+          print("wave="+str(x["wave"]))
+          print("state_artifact="+x["state_artifact"])
           PY
       - run: cat atlas-battle-report.md >> "$GITHUB_STEP_SUMMARY"
       - name: Comment Atlas issue
@@ -260,6 +267,23 @@ jobs:
             atlas-battle-report.md
             atlas-closure.json
           retention-days: 30
+
+  recursive-handoff:
+    if: needs.report.outputs.complete != 'true' && needs.report.outputs.has_next == 'true'
+    needs: report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Continue Atlas remotely from the exact frontier
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run omegas-atlas-continuation.yml \
+            --repo "${{ github.repository }}" \
+            --ref main \
+            --field atlas_sha="${{ github.sha }}" \
+            --field index_run_id="${{ github.run_id }}" \
+            --field state_run_id="${{ github.run_id }}" \
+            --field state_artifact="${{ needs.report.outputs.state_artifact }}"
 
   closure-gate:
     if: always()
