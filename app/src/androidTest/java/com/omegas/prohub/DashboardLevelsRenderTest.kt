@@ -258,7 +258,18 @@ class DashboardLevelsRenderTest {
         scenario: ActivityScenario<MainActivity>,
         sessionId: Long = 9001L,
         fixtureName: String,
-    ) {
+    ): JSONObject {
+        val raw = instrumentation.context.assets
+            .open(fixtureName)
+            .bufferedReader()
+            .use { it.readText() }
+        val root = JSONObject(raw)
+        check(root.getString("classification") == "SYNTHETIC_NON_SCIENTIFIC") {
+            "$fixtureName must remain explicitly non-scientific"
+        }
+        check(root.getString("scientificUse") == "VISUAL_ONLY_NON_SCIENTIFIC") {
+            "$fixtureName must remain visual-only evidence"
+        }
         val rawByKey = autoCalFixtureRawValues(fixtureName)
         val capturedAt = System.currentTimeMillis()
         val observations = referenceAutoCalFields.map { field ->
@@ -277,6 +288,12 @@ class DashboardLevelsRenderTest {
             sessionId = sessionId,
             message = "TEST_ONLY visual mutation through production AutoCal projection",
         )
+        return JSONObject()
+            .put("classification", root.getString("classification"))
+            .put("scientificUse", root.getString("scientificUse"))
+            .put("source", root.optString("source"))
+            .put("description", root.optString("description"))
+            .put("nativeFirmwareExact", root.optBoolean("nativeFirmwareExact", false))
     }
 
     private fun dashboardDom(scenario: ActivityScenario<MainActivity>): JSONObject =
@@ -645,14 +662,14 @@ class DashboardLevelsRenderTest {
         val scenario = launch()
         try {
             val live = liveFixture()
-            installTestOnlyAutoCalReferenceFixture(
+            val provenance = installTestOnlyAutoCalReferenceFixture(
                 scenario = scenario,
                 fixtureName = "autocal_snapshot_shifted_equivalence.json",
             )
             activateAutocal(scenario)
             injectFresh(scenario, live, settleMs = 850L)
             val dom = autocalReferenceDom(scenario)
-            saveEvidence("autocal-equivalence-shifted", dom, scenario)
+            saveEvidence("autocal-equivalence-shifted", dom, scenario, provenance)
             assertTrue("Shifted fixture must render production reference chart", dom.getBoolean("svg"))
             assertTrue("Shifted fixture must keep gasoline reference", dom.getString("petrolPath").length > 20)
             assertTrue("Shifted fixture must keep GNV reference", dom.getString("gasPath").length > 20)
