@@ -74,6 +74,30 @@ class LearningGridProjectionTest {
     }
 
     @Test
+    fun `interior evidence keeps fixed control address separate from observed center`() {
+        val regions = JSONArray()
+            .put(region("g", "GNV", 1, 5.3, 2_100.0))
+        val cells = LearningGridProjection.project(regions, 1)
+
+        val lower = (0 until cells.length())
+            .map { cells.getJSONObject(it) }
+            .single { it.getInt("row") == 4 && it.getInt("column") == 2 }
+        val upper = (0 until cells.length())
+            .map { cells.getJSONObject(it) }
+            .single { it.getInt("row") == 5 && it.getInt("column") == 2 }
+
+        assertEquals(4.5, lower.getDouble("control_petrol_ms"), 0.0001)
+        assertEquals(6.0, upper.getDouble("control_petrol_ms"), 0.0001)
+        assertEquals(1_850, lower.getInt("control_rpm"))
+        assertEquals(1_850, upper.getInt("control_rpm"))
+        assertEquals(5.3, lower.getDouble("observed_petrol_ms_center"), 0.0001)
+        assertEquals(5.3, upper.getDouble("observed_petrol_ms_center"), 0.0001)
+        assertEquals(2_100.0, lower.getDouble("observed_rpm_center"), 0.0001)
+        assertTrue(lower.getDouble("support_mass") > 0.0)
+        assertTrue(upper.getDouble("support_mass") > 0.0)
+    }
+
+    @Test
     fun `integrity detects a value divergence even when cell keys are equal`() {
         val regions = JSONArray().put(region("p", "GASOLINA", 0, 4.0, 2_500.0))
         val cells = LearningGridProjection.project(regions, 1)
