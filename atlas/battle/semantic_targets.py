@@ -71,12 +71,29 @@ def catalog(path: Path) -> dict[tuple[str, str], dict]:
     return {(x["kind"], x["target"]): x for x in build(load(path))}
 
 
-def find_method_target(payload: dict, handler: str) -> dict | None:
+def find_method_target(payload: dict, handler: str, class_name: str | None = None) -> dict | None:
     matches = []
     for target in build(payload):
-        if target["kind"] == "method" and target["meta"].get("name") == handler:
-            matches.append(target)
+        if target["kind"] != "method" or target["meta"].get("name") != handler:
+            continue
+        if class_name and target["meta"].get("class", "").lower() != class_name.lower():
+            continue
+        matches.append(target)
     return matches[0] if len(matches) == 1 else None
+
+
+def find_method_for_event(payload: dict, event_meta: dict) -> dict | None:
+    resolved = event_meta.get("resolved_method_target")
+    if isinstance(resolved, dict):
+        target = find_method_target(payload, resolved.get("name", ""), resolved.get("class"))
+        if target is not None and target["meta"].get("va_hex") == resolved.get("va_hex"):
+            return target
+    resource_class = event_meta.get("resource_class")
+    if resource_class:
+        target = find_method_target(payload, event_meta.get("handler", ""), resource_class)
+        if target is not None:
+            return target
+    return find_method_target(payload, event_meta.get("handler", ""))
 
 
 def find_event_for_action(payload: dict, action_name: str) -> dict | None:

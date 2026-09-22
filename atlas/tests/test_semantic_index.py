@@ -15,8 +15,9 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
     fields (2):
       +0x0002e8  ButtonAutoMatch                      : TypeIndex(4)
       +0x00034c  ActionAutoMatch                      : TypeIndex(11)
-    published methods (1):
+    published methods (2):
       0x005189b4  ActionAutoMatchExecute
+      0x0051a998  ChartDataAfterDraw
     virtual methods (1):
   TAutoCalSettings — size=256B, vmt=0xa9dd00, ptrsize=4B
     fields (0):
@@ -27,8 +28,9 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
   TAutoCalColorSettings — size=128B, vmt=0xa9ff00, ptrsize=4B
     fields (1):
       +0x000050  _GasPoint                            : TShape
-    published methods (1):
+    published methods (2):
       0x0051b000  _AcqusitionAreas0Click
+      0x0051087c  ChartDataAfterDraw
     virtual methods (1):
   resource TAUTOCALSETTINGS TAutoCalSettings:AutoCalSettings  (1 components)
         <object TAutoCalSettings:AutoCalSettings>
@@ -45,9 +47,13 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
         <object TAction:ActionAutoMatch>
           Caption = "Manual automatch"
           OnExecute = "ActionAutoMatchExecute"
+        <object TChart:ChartData>
+          OnAfterDraw = "ChartDataAfterDraw"
   resource TAUTOCALCOLORSETTINGS TAutoCalColorSettings:AutoCalColorSettings  (1 components)
         <object TShape:_GasPoint>
           OnClick = "_AcqusitionAreas0Click"
+        <object TChart:ChartData>
+          OnAfterDraw = "ChartDataAfterDraw"
 """
 
 class SemanticIndexTest(unittest.TestCase):
@@ -73,5 +79,14 @@ class SemanticIndexTest(unittest.TestCase):
         settings_show=next(e for e in x["event_bindings"] if e["object"]=="AutoCalSettings" and e["event"]=="OnShow")
         self.assertEqual(settings_close["handler"],"FormClose")
         self.assertEqual(settings_show["handler"],"FormShow")
+        chart_events=[e for e in x["event_bindings"] if e["handler"]=="ChartDataAfterDraw"]
+        self.assertEqual(len(chart_events),2)
+        self.assertTrue(all(e["resolved_method"] for e in chart_events))
+        ui_chart=next(e for e in chart_events if e["resource"]=="TAUTOCALUI")
+        color_chart=next(e for e in chart_events if e["resource"]=="TAUTOCALCOLORSETTINGS")
+        self.assertEqual(ui_chart["resolved_method_target"]["class"],"TAutoCalUI")
+        self.assertEqual(ui_chart["resolved_method_target"]["va_hex"],"0x0051a998")
+        self.assertEqual(color_chart["resolved_method_target"]["class"],"TAutoCalColorSettings")
+        self.assertEqual(color_chart["resolved_method_target"]["va_hex"],"0x0051087c")
 
 if __name__=="__main__":unittest.main()

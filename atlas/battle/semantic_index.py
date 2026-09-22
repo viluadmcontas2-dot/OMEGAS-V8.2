@@ -94,9 +94,10 @@ def parse(text: str):
         rm = RESOURCE_RE.match(line)
         if rm:
             resource = rm.group(1)
+            resource_class = rm.group(2).strip()
             obj = None
             if "AUTOCAL" in resource.upper():
-                resources.append({"name": resource, "objects": []})
+                resources.append({"name": resource, "root_class": resource_class, "objects": []})
             continue
 
         if not resources or resources[-1]["name"] != resource:
@@ -130,7 +131,7 @@ def parse(text: str):
         for field in class_data["fields"]
     ]
     objects = [
-        {**obj, "resource": resource["name"]}
+        {**obj, "resource": resource["name"], "resource_class": resource.get("root_class")}
         for resource in resources
         for obj in resource["objects"]
     ]
@@ -145,14 +146,21 @@ def parse(text: str):
         for prop, val in obj["properties"].items():
             if prop.startswith("On") and isinstance(val, str) and val:
                 candidates = method_candidates.get(val, [])
+                same_class = [
+                    candidate for candidate in candidates
+                    if candidate.get("class", "").lower() == (obj.get("resource_class") or "").lower()
+                ]
+                selected = same_class[0] if len(same_class) == 1 else (candidates[0] if len(candidates) == 1 else None)
                 event_bindings.append(
                     {
                         "resource": obj["resource"],
+                        "resource_class": obj.get("resource_class"),
                         "object": obj["name"],
                         "object_class": obj["class"],
                         "event": prop,
                         "handler": val,
-                        "resolved_method": len(candidates) == 1,
+                        "resolved_method": selected is not None,
+                        "resolved_method_target": selected,
                         "handler_candidates": candidates,
                     }
                 )

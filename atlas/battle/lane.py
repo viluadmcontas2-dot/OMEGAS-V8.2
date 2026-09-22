@@ -234,7 +234,7 @@ def capstone_field_use(indices,binary_path,target):
 def delphi_event(indices,target):
     payload,item=semantic_entry(indices,"event",target)
     if not item:return escalate("event binding absent from semantic index")
-    method=semantic_targets.find_method_target(payload,item["meta"]["handler"])
+    method=semantic_targets.find_method_for_event(payload,item["meta"])
     nts=[{"kind":"method","target":method["target"]}] if method else []
     return prove("DFM/Delphi metadata binds UI event to handler",[{"kind":"event-handler","subject":target,"value":item["meta"]["handler"]}],[{"kind":"delphi-event","metadata":item["meta"]}],nts)
 
@@ -259,7 +259,7 @@ def ghidra_action(indices,target):
     if not item:return escalate("action binding absent from semantic index")
     ev=semantic_targets.find_event_for_action(payload,item["meta"]["action"])
     if not ev:return escalate("action object has no unique executable event binding")
-    method=semantic_targets.find_method_target(payload,ev["meta"]["handler"])
+    method=semantic_targets.find_method_for_event(payload,ev["meta"])
     if not method:return escalate("action handler has no unique published method")
     r=ghidra_method(indices,method["target"])
     if r["status"]!="PROVEN":return escalate("action handler did not resolve to native Ghidra function",r.get("evidence"))
