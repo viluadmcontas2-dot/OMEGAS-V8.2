@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse, json, re
 from pathlib import Path
 
-def is_target_class(name: str) -> bool:
-    return "autocal" in name.lower()
+def is_target_class(name: str | None) -> bool:
+    return isinstance(name, str) and "autocal" in name.lower()
 
 CLASS_RE = re.compile(r"^  (T\w+) — size=(\d+)B, vmt=(0x[0-9a-fA-F]+)")
 METHOD_RE = re.compile(r"^      (0x[0-9a-fA-F]+)\s+(.+?)\s*$")

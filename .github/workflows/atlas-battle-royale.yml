@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Contract tests and pinned PE index
         run: |
-          python3 -m unittest atlas.tests.test_battle_contract atlas.tests.test_semantic_index atlas.tests.test_semantic_targets atlas.tests.test_workflow_contract
+          python3 -m unittest atlas.tests.test_battle_contract atlas.tests.test_semantic_index atlas.tests.test_semantic_targets atlas.tests.test_undelphi_seeds atlas.tests.test_workflow_contract
           python3 -m pip install --disable-pip-version-check pefile==2024.8.26
           python3 atlas/battle/static_index.py --out atlas-index/static
       - uses: actions/upload-artifact@v4
