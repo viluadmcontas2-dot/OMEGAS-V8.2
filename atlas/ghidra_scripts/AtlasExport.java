@@ -96,7 +96,8 @@ public class AtlasExport extends GhidraScript {
             }
         }
 
-        boolean functionCapHit=!q.isEmpty();\n        ArrayList<Function> fs=new ArrayList<>(dist.keySet());
+        boolean functionCapHit=!q.isEmpty();
+        ArrayList<Function> fs=new ArrayList<>(dist.keySet());
         fs.sort((a,b)->{
             int x=Integer.compare(dist.get(a),dist.get(b));
             return x!=0?x:a.getEntryPoint().compareTo(b.getEntryPoint());
@@ -113,7 +114,8 @@ public class AtlasExport extends GhidraScript {
         DecompInterface iface=new DecompInterface();
         iface.setOptions(new DecompileOptions()); iface.toggleCCode(true); iface.toggleSyntaxTree(true);
         iface.openProgram(currentProgram);
-        int n=0;\n        boolean decompileCapHit=fs.size()>MAX_DECOMPILE;
+        int n=0;
+        boolean decompileCapHit=fs.size()>MAX_DECOMPILE;
         for (Function f:fs) {
             if (n>=MAX_DECOMPILE) break;
             DecompileResults dr=iface.decompileFunction(f,15,monitor);
