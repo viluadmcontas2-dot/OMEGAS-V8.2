@@ -217,13 +217,14 @@ The runtime now treats the counter transition as a **signal**, not as scientific
 2. the pre-transition `MUL_ACT` payload is preserved as baseline;
 3. full snapshot readback checks for a changed native `MUL_ACT`;
 4. only a changed K readback emits `nativeAutoMatchEpochEvent`;
-5. unchanged K remains pending for at most 3 heavy snapshots total (initial + two follow-ups);
-6. expiry does not promote a new epoch;
-7. session change/disconnect clears pending state;
-8. an explicit manual app action clears pending native attribution before its own readback;
-9. overlapping unresolved counter transitions fail closed rather than attributing a K change to the wrong epoch.
+5. up to 3 heavy snapshots are actively requested (initial + two follow-ups);
+6. if K is still unchanged after that budget, forced heavy polling stops but the transition remains passively pending;
+7. any later natural full snapshot may still confirm the pending epoch if native K finally changes;
+8. session change/disconnect clears pending state;
+9. an explicit manual app action clears pending native attribution before its own readback;
+10. overlapping unresolved counter transitions fail closed rather than attributing a K change to the wrong epoch.
 
-The 3-snapshot budget is an operational anti-race/anti-loop policy, **not ECU science**.
+The 3-snapshot budget limits only **active retries**. It is an operational anti-race/anti-loop policy, **not ECU science**, and it does not erase unresolved evidence.
 
 Typed HMI projection now carries:
 - `epoch.pending` -> human state **Verificando ajuste da ECU**;
@@ -231,3 +232,26 @@ Typed HMI projection now carries:
 - `epoch.transition` only after native K readback confirmation.
 
 Counter-only change remains insufficient to create a scientific epoch in the UI.
+
+
+### Native epoch edge identity — 2026-09-22
+
+The typed native event is treated as an edge, not as a latched state that can replay forever.
+
+A UI epoch transition is accepted only when:
+- typed `before` equals the previous projection AutoMatch counter;
+- typed `after` equals the current projection AutoMatch counter;
+- `oldHash` and `newHash` are both present and differ;
+- readback is valid;
+- ECU-native observation is true;
+- no app write produced the event.
+
+Therefore:
+- repeating the same typed event after the counter is already at its `after` value does **not** create another epoch;
+- a stale typed event whose before/after do not match the actual projection edge fails closed;
+- counter-only change remains pending/unconfirmed and never becomes a scientific epoch by itself.
+
+Fast-contract receipt for monitor + projection + consumer logic:
+- SHA `6e669ce9159f9baf1f6f467427e00ecca96cc5f6`
+- run `35766226922`
+- conclusion: **SUCCESS**.
