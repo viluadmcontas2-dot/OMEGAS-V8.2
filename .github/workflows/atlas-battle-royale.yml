@@ -7,6 +7,7 @@ on:
     paths:
       - 'atlas/battle/**'
       - 'atlas/ghidra_scripts/**'
+      - 'atlas/tests/**'
       - 'atlas/manifests/autocal-seeds.json'
       - '.github/workflows/atlas-battle-royale.yml'
       - '.github/workflows/atlas-wave.yml'
