@@ -671,6 +671,28 @@
           "status": "PROVEN_WITH_CAPTURE_START_CAVEAT"
         }
       }
+    },
+    "automatch_epoch_lifecycle": {
+      "authority": "ECU/native readback",
+      "measurable_epoch_events": {
+        "PortmonAUTOCAL": 2,
+        "PortmonLOGNOVO": 4
+      },
+      "observed_readback_sequence": [
+        "GasPointPrev bulk replacement",
+        "NUM_BUF_UPD_GAS reset/reseed",
+        "MUL_ACT full 30-node change",
+        "ACQUIRED_ZONES_GAS clear when non-zero",
+        "NUM_AUTOMATCH_EXECUTED transition observed"
+      ],
+      "all_measurable_epochs_have_full_mul_act_change": true,
+      "mul_act_changed_nodes": 30,
+      "gaspointprev_role": "previous native AutoMatch epoch snapshot",
+      "readback_order_status": "PROVEN_OBSERVED_ORDER",
+      "firmware_instruction_order": "UNKNOWN_DUE_ASYNC_POLLING",
+      "exact_automatch_formula": "UNKNOWN",
+      "product_contract": "show epoch transition as ECU-native event; fresh readback required; do not claim host-computed adjustment",
+      "status": "PROVEN_DUAL_CAPTURE_LIFECYCLE"
     }
   },
   "unknowns": [
