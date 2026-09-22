@@ -43,6 +43,16 @@
       "live cadence independently in both corpora",
       "slow AutoCAL/reference cadence and ordering",
       "deterministic compact LOGNOVO selection recipe"
-    ]
+    ],
+    "preClosureEvidence": {
+      "sourceSha": "86270351c05e050dd1ce1e83ccc2bc3578668921",
+      "dedicatedReplayRun": 35796107887,
+      "dedicatedReplayConclusion": "SUCCESS",
+      "artifactId": 10723599842,
+      "artifactDigest": "sha256:64ec886fcb7ce1f33fb7336ca98c95bd19947747d8b94d925eddbaf52a2b272a",
+      "fastRegressionRun": 35796107621,
+      "fastRegressionConclusion": "SUCCESS"
+    },
+    "terminalReceiptPolicy": "GitHub issue #75 records the dedicated replay run for the exact closing SHA."
   }
 }
