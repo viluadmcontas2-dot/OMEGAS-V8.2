@@ -49,3 +49,16 @@ def test_original_lognovo_reference_is_not_the_test_only_shifted_fixture():
     shifted = json.loads(Path("fixtures/autocal/autocal_snapshot_shifted_equivalence.json").read_text(encoding="utf-8"))
     assert shifted["nativeFirmwareExact"] is False
     assert "Test/visual evidence only" in shifted["description"]
+
+
+def test_android_render_fixture_provenance_is_enforced_end_to_end():
+    workflow = Path(".github/workflows/verde-android-render-evidence.yml").read_text(encoding="utf-8")
+    assert "tests/fixtures/portmon-lognovo-autocal-reference-v1.json" in workflow
+
+    shifted = json.loads(Path("fixtures/autocal/autocal_snapshot_shifted_equivalence.json").read_text(encoding="utf-8"))
+    assert shifted["classification"] == "SYNTHETIC_NON_SCIENTIFIC"
+    assert shifted["scientificUse"] == "VISUAL_ONLY_NON_SCIENTIFIC"
+
+    render_test = Path("app/src/androidTest/java/com/omegas/prohub/DashboardLevelsRenderTest.kt").read_text(encoding="utf-8")
+    assert 'root.getString("classification") == "SYNTHETIC_NON_SCIENTIFIC"' in render_test
+    assert 'saveEvidence("autocal-equivalence-shifted", dom, scenario, provenance)' in render_test
