@@ -15,6 +15,7 @@ on:
       - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
       - 'tests/fixtures/portmon-autocal-cycle-v1.json'
       - 'tests/fixtures/portmon-lognovo-autocal-reference-v1.json'
+      - 'tests/test_lognovo_autocal_reference_fixture_contract.py'
       - 'fixtures/autocal/**'
       - 'tools/ci/run_android_render_evidence.sh'
 
