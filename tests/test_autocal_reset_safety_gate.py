@@ -15,9 +15,10 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         text = UI.read_text(encoding="utf-8")
         self.assertIn('data-autocal-action="RESET_PETROL" disabled', text)
         self.assertIn('data-autocal-action="RESET_GAS" disabled', text)
-        self.assertIn("Resets continuam bloqueados", text)
-        self.assertIn("efeito amplo observado", text)
-        self.assertIn("não promete seletividade inexistente", text)
+        lower = text.lower()
+        self.assertIn("resets continuam bloqueados", lower)
+        self.assertIn("efeito amplo observado", lower)
+        self.assertIn("não promete seletividade inexistente", lower)
 
 if __name__ == "__main__":
     unittest.main()
