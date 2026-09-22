@@ -197,7 +197,7 @@ class NativeAutoCalMonitor(
             } else if (probeChanged) {
                 snapshotRequested = true
                 snapshotReason = if (autoMatchCountChanged) "AUTOMATCH_EPOCH_CHANGED" else "NATIVE_STATUS_CHANGED"
-            } else if (epochConfirmation.hasPending()) {
+            } else if (epochConfirmation.shouldRetry()) {
                 snapshotRequested = true
                 snapshotReason = "AUTOMATCH_EPOCH_AWAITING_K_READBACK"
             }
@@ -219,6 +219,7 @@ class NativeAutoCalMonitor(
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
             .put("nativeEpochPending", epochConfirmation.hasPending())
+            .put("nativeEpochRetrying", epochConfirmation.shouldRetry())
     }
 
     fun latestSnapshotJson(): JSONObject = synchronized(lock) { JSONObject(latestSnapshot.toString()) }
@@ -481,13 +482,14 @@ class NativeAutoCalMonitor(
                     .put("rollover", epochObservation.transition.rollover)
                     .put("snapshotsObserved", epochObservation.snapshotsObserved),
             )
-            is NativeAutoCalEpochConfirmation.Observation.Expired -> decorated.put(
+            is NativeAutoCalEpochConfirmation.Observation.RetryBudgetExhausted -> decorated.put(
                 "nativeAutoMatchEpochUnconfirmed",
                 JSONObject()
                     .put("before", epochObservation.transition.before)
                     .put("after", epochObservation.transition.after)
                     .put("rollover", epochObservation.transition.rollover)
                     .put("snapshotsObserved", epochObservation.snapshotsObserved)
+                    .put("activeRetry", false)
                     .put("reason", "MUL_ACT_READBACK_UNCHANGED"),
             )
             else -> Unit
@@ -503,7 +505,7 @@ class NativeAutoCalMonitor(
             gasNormalThreshold = newGasNormalThreshold
             autoCalEnabled = enabled
             pendingMaturity = emptyList()
-            snapshotRequested = epochConfirmation.hasPending()
+            snapshotRequested = epochConfirmation.shouldRetry()
             snapshotReason = if (snapshotRequested) "AUTOMATCH_EPOCH_AWAITING_K_READBACK" else ""
             state = baseState(if (enabled == 0) "PAUSED" else "READY", if (enabled == 0) "AutoCal pausado; dados congelados" else "AutoCal nativo acompanhado")
                 .put("sessionId", expectedSessionId)
@@ -513,6 +515,7 @@ class NativeAutoCalMonitor(
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
                 .put("nativeMaturityEventCount", maturityEvents.length())
                 .put("nativeEpochPending", epochConfirmation.hasPending())
+                .put("nativeEpochRetrying", epochConfirmation.shouldRetry())
                 .put("snapshotHash", snapshot.snapshotHash)
         }
 
