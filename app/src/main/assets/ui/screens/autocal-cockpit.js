@@ -193,23 +193,27 @@
 
     instrumentEpoch(instrument = {}) {
       const epoch = instrument?.epoch && typeof instrument.epoch === 'object' ? instrument.epoch : {};
+      const transition = epoch?.transition && typeof epoch.transition === 'object'
+        ? {
+            before: finite(epoch.transition.nativeAutoMatchBefore),
+            after: finite(epoch.transition.nativeAutoMatchAfter),
+            rollover: epoch.transition.nativeAutoMatchRollover === true,
+            oldHash: String(epoch.transition.oldHash || ''),
+            newHash: String(epoch.transition.newHash || ''),
+            readbackValid: epoch.transition.readbackValid === true,
+            ecuNativeObserved: epoch.transition.ecuNativeObserved === true,
+            appWritePerformed: epoch.transition.appWritePerformed === true,
+            cause: String(epoch.transition.cause || ''),
+          }
+        : null;
       return {
         autoMatchExecuted: finite(epoch.autoMatchExecuted),
         maxAutoMatch: finite(epoch.maxAutoMatch),
         gasCurrentRole: String(epoch.gasCurrentRole || ''),
         gasPreviousRole: String(epoch.gasPreviousRole || ''),
         authority: String(epoch.authority || ''),
+        transition,
       };
-    },
-
-    sameKCurve(left = [], right = []) {
-      if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
-      return left.every((point, index) => {
-        const other = right[index] || {};
-        return Number(point?.index) === Number(other?.index) &&
-          Math.abs((finite(point?.petrolMs) ?? NaN) - (finite(other?.petrolMs) ?? NaN)) < 1e-9 &&
-          Math.abs((finite(point?.factor) ?? NaN) - (finite(other?.factor) ?? NaN)) < 1e-9;
-      });
     },
 
     epochTransition(previousProjection = {}, nextProjection = {}, epochBaselineK = []) {
@@ -221,28 +225,55 @@
       if (!previousSession || !nextSession || previousSession !== nextSession) {
         return { changed: false, counterChanged: false, reason: 'SESSION_CHANGED' };
       }
+
       const previousEpoch = this.instrumentEpoch(previousProjection?.instrument || {});
       const nextEpoch = this.instrumentEpoch(nextProjection?.instrument || {});
       const before = finite(previousEpoch.autoMatchExecuted);
       const after = finite(nextEpoch.autoMatchExecuted);
-      if (before === null || after === null || before === after) {
-        return { changed: false, counterChanged: false, reason: 'UNCHANGED', before, after };
-      }
       const currentKPoints = this.instrumentKPoints(nextProjection?.instrument || {});
       const fallbackPreviousK = this.instrumentKPoints(previousProjection?.instrument || {});
       const baseline = Array.isArray(epochBaselineK) && epochBaselineK.length ? epochBaselineK : fallbackPreviousK;
-      const kChanged = baseline.length > 0 && currentKPoints.length > 0 && !this.sameKCurve(baseline, currentKPoints);
+      const typed = nextEpoch.transition;
+
+      if (
+        typed &&
+        typed.readbackValid === true &&
+        typed.ecuNativeObserved === true &&
+        typed.appWritePerformed !== true &&
+        typed.before !== null &&
+        typed.after !== null
+      ) {
+        return {
+          changed: true,
+          counterChanged: true,
+          kChanged: true,
+          before: typed.before,
+          after: typed.after,
+          rollover: typed.rollover,
+          previousKPoints: baseline,
+          currentKPoints,
+          oldHash: typed.oldHash,
+          newHash: typed.newHash,
+          authority: 'ECU_NATIVE_TYPED_EVENT',
+          reason: 'TYPED_NATIVE_EPOCH_EVENT',
+        };
+      }
+
+      if (before === null || after === null || before === after) {
+        return { changed: false, counterChanged: false, reason: 'UNCHANGED', before, after };
+      }
+
       return {
-        changed: kChanged,
+        changed: false,
         counterChanged: true,
-        kChanged,
+        kChanged: false,
         before,
         after,
         rollover: after < before,
-        previousKPoints: baseline,
+        previousKPoints: [],
         currentKPoints,
-        authority: 'ECU_AUTOMATCH_EPOCH_READBACK',
-        reason: kChanged ? 'COUNTER_AND_K_CHANGED' : 'COUNTER_CHANGED_WITHOUT_K_DELTA',
+        authority: 'ECU_COUNTER_READBACK',
+        reason: 'COUNTER_CHANGED_AWAITING_TYPED_EVENT',
       };
     },
 
