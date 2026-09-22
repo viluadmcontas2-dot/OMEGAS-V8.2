@@ -1207,6 +1207,9 @@
 .autocal-k-legend .native-k {
   color: rgba(250, 204, 21, 0.94);
 }
+.autocal-k-legend .previous-k {
+  color: rgba(148, 163, 184, 0.82);
+}
 .autocal-k-legend .unity {
   color: rgba(148, 163, 184, 0.66);
 }
@@ -1223,6 +1226,11 @@
   stroke: rgba(250, 204, 21, 0.96);
   stroke-width: 2.2;
   vector-effect: non-scaling-stroke;
+}
+.autocal-k-line.previous {
+  stroke: rgba(148, 163, 184, 0.72);
+  stroke-width: 1.6;
+  stroke-dasharray: 7 6;
 }
 .autocal-k-point {
   fill: rgba(250, 204, 21, 1);
