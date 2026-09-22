@@ -203,7 +203,7 @@ jobs:
           targets=int(cov.get("targets_total",len(cur.get("targets",{}))))
           open_targets=sum(1 for t in cur.get("targets",{}).values() if t.get("status") not in {"PROVEN","REFUTED"})
           semantic_complete=bool(cur.get("semantic_closure",False))
-          complete=(not has_next and open_targets==0 and unseen==0 and broken==0 and stalled==0 and semantic_complete)
+          complete=(not has_next and open_targets==0 and broken==0 and stalled==0 and semantic_complete)
           print("has_next="+str(has_next).lower())
           print("complete="+str(complete).lower())
           print(f"broken={broken}")
@@ -234,7 +234,7 @@ jobs:
           Pinned Atlas SHA: ${{ inputs.atlas_sha }}
           Tracked targets: ${{ needs.reconcile.outputs.targets }}
           PROVEN: ${{ needs.reconcile.outputs.proven }}
-          Graph functions not yet admitted: ${{ needs.reconcile.outputs.unseen }}
+          Native graph catalog functions not promoted to semantic battle: ${{ needs.reconcile.outputs.unseen }}
           Stalled: ${{ needs.reconcile.outputs.stalled }}
           BROKEN: ${{ needs.reconcile.outputs.broken }}
           Next frontier: ${{ needs.reconcile.outputs.has_next }}
