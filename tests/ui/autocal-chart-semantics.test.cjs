@@ -343,9 +343,9 @@ const humanFromTypedZones = model.humanState(
     },
   },
 );
-assert.deepEqual(humanFromTypedZones.petrolZoneFlags, [true, false, true, false],
+assert.deepEqual(Array.from(humanFromTypedZones.petrolZoneFlags), [true, false, true, false],
   'typed instrument petrol zones must outrank legacy/raw zone sources');
-assert.deepEqual(humanFromTypedZones.gasZoneFlags, [false, true, false, true],
+assert.deepEqual(Array.from(humanFromTypedZones.gasZoneFlags), [false, true, false, true],
   'typed instrument gas zones must outrank legacy/raw zone sources');
 
 
