@@ -227,6 +227,14 @@ class AmareloAutoCalRenderTest {
             activateAutoCal(scenario)
             installFixture(scenario, fixture)
 
+            waitFor(5_000L) {
+                runCatching {
+                    val liveDom = dom(scenario)
+                    liveDom.optString("rpm", "—") != "—" &&
+                        liveDom.optString("petrol", "—") != "—" &&
+                        liveDom.optString("map", "—") != "—"
+                }.getOrDefault(false)
+            }
             val dom = dom(scenario)
             saveEvidence("amarelo-autocal-original-derived", dom, fixture.provenance, scenario)
 
