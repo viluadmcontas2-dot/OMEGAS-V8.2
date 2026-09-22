@@ -420,11 +420,22 @@
           }
         },
         "observed_behavior": "flags rise individually after/around live MAP visitation and remain latched until an ECU-side epoch clear",
-        "exact_set_guard": "UNKNOWN",
+        "exact_set_guard": "FIRMWARE_INTERNAL_UNKNOWN_WITH_CURRENT_HOST_ARTIFACTS",
         "exact_clear_guard": "UNKNOWN",
         "automatch_relationship": "RELATED_NOT_SOLE_PROVEN_GUARD",
         "product_authority": "use ECU flags; never recompute them from live MAP",
-        "status": "PROVEN_OBSERVED_BEHAVIOR_WITH_GUARD_UNKNOWN"
+        "status": "PROVEN_OBSERVED_BEHAVIOR_WITH_GUARD_UNKNOWN",
+        "set_guard_boundary": {
+          "live_map_visit_association": "PROVEN_DUAL_CAPTURE",
+          "fixed_dwell_guard": "FALSIFIED",
+          "point_presence_required": "FALSIFIED",
+          "mature_point_required": "FALSIFIED",
+          "cng_enabled_live_map_visit_sufficient": "FALSIFIED",
+          "lognovo_known_zone_poll_windows": 320,
+          "lognovo_zero_to_zero_windows_with_cng_enabled_same_region_visit": 193,
+          "exact_set_guard": "FIRMWARE_INTERNAL_UNKNOWN_WITH_CURRENT_HOST_ARTIFACTS",
+          "stop_condition": "Do not derive ECU flag from host-observable MAP/fuel/enable/point/maturity rules."
+        }
       }
     },
     "gas_point_buffers": {
@@ -654,7 +665,7 @@
     "Exact producer/consumer transforms not already listed as PROVEN.",
     "Human/physical semantic names beyond numeric low-to-high MAP region order for acquired-zone indices 0..3.",
     "Finish AutoCAL exact ECU-side effect after setting NUM_AUTOMATCH_EXECUTED to MAX_AUTOMATCH; the write path is statically proven but no 0x0174 write is present in supplied raws.",
-    "Firmware rule that changes ACQUIRED_ZONES flags remains UNKNOWN; host maturity/polling threshold is now separately proven and must not be conflated with zone-flag transitions.",
-    "Exact firmware copy guard/timing for GasPointPrev epoch rollover; operational prior-AutoMatch-epoch behavior is proven, exact internal trigger remains UNKNOWN."
+    "Exact firmware copy guard/timing for GasPointPrev epoch rollover; operational prior-AutoMatch-epoch behavior is proven, exact internal trigger remains UNKNOWN.",
+    "Exact ACQUIRED_ZONES set/clear firmware guard is not identifiable from current host-side artifacts; ECU flags remain authoritative."
   ]
 }
