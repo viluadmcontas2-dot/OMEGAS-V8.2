@@ -2,6 +2,7 @@ package com.omegas.v7.runtime
 
 import com.omegas.prohub.calibration.KMapPhysicalAxes
 import com.omegas.prohub.ecu.KFactorProtocol
+import com.omegas.prohub.learning.ContinuousLearningMath
 import com.omegas.prohub.learning.LearningToleranceSettings
 import kotlin.math.abs
 import kotlin.math.max
@@ -23,6 +24,10 @@ data class LearningStabilitySnapshotV7(
     val confidence: Double,
     val consolidatedEffectiveVisits: Double,
     val recentEffectiveVisits: Double,
+    val consolidatedSupportMass: Double,
+    val recentSupportMass: Double,
+    val consolidatedKishEss: Double,
+    val recentKishEss: Double,
     val consolidatedUniqueVisits: Int,
     val recentUniqueVisits: Int,
     val rpmBandCount: Int,
@@ -59,7 +64,8 @@ object LearningStabilityV7 {
         val centerDifferenceMs: Double,
         val errorMadPercent: Double,
         val differenceMadMs: Double,
-        val effectiveVisits: Double,
+        val supportMass: Double,
+        val kishEss: Double,
         val uniqueVisits: Int,
         val directionConsensus: Double,
         val direction: String,
@@ -176,7 +182,11 @@ object LearningStabilityV7 {
                 recentErrorPercent = learningSummary.centerErrorPercent.takeIf { learning.isNotEmpty() },
                 confidence = learningSummary.confidence(),
                 consolidatedEffectiveVisits = 0.0,
-                recentEffectiveVisits = learningSummary.effectiveVisits,
+                recentEffectiveVisits = learningSummary.supportMass,
+                consolidatedSupportMass = 0.0,
+                recentSupportMass = learningSummary.supportMass,
+                consolidatedKishEss = 0.0,
+                recentKishEss = learningSummary.kishEss,
                 consolidatedUniqueVisits = 0,
                 recentUniqueVisits = learningSummary.uniqueVisits,
                 rpmBandCount = learningSummary.rpmBands,
@@ -199,8 +209,12 @@ object LearningStabilityV7 {
             consolidatedErrorPercent = stable.centerErrorPercent,
             recentErrorPercent = recent.centerErrorPercent.takeIf { candidate.isNotEmpty() },
             confidence = stable.confidence(),
-            consolidatedEffectiveVisits = stable.effectiveVisits,
-            recentEffectiveVisits = recent.effectiveVisits,
+            consolidatedEffectiveVisits = stable.supportMass,
+            recentEffectiveVisits = recent.supportMass,
+            consolidatedSupportMass = stable.supportMass,
+            recentSupportMass = recent.supportMass,
+            consolidatedKishEss = stable.kishEss,
+            recentKishEss = recent.kishEss,
             consolidatedUniqueVisits = stable.uniqueVisits,
             recentUniqueVisits = recent.uniqueVisits,
             rpmBandCount = stable.rpmBands,
@@ -216,21 +230,33 @@ object LearningStabilityV7 {
 
     private fun Summary.isStableForPromotion(): Boolean {
         val tolerance = LearningToleranceSettings.current
-        return effectiveVisits >= tolerance.confirmedVisits.toDouble() &&
+        return supportMass >= tolerance.confirmedVisits.toDouble() &&
             directionConsensus >= tolerance.directionConsensusMinimum &&
             differenceMadMs <= tolerance.comparisonMaximumMadMs
     }
 
     private fun Summary.confidence(): Double {
         val tolerance = LearningToleranceSettings.current
-        val evidence = (effectiveVisits / tolerance.confirmedVisits.toDouble().coerceAtLeast(1.0)).coerceIn(0.0, 1.0)
+        val evidence = (supportMass / tolerance.confirmedVisits.toDouble().coerceAtLeast(1.0)).coerceIn(0.0, 1.0)
         val spread = (1.0 - differenceMadMs / tolerance.comparisonMaximumMadMs.coerceAtLeast(1e-9)).coerceIn(0.0, 1.0)
         return (sqrt(evidence) * directionConsensus.coerceIn(0.0, 1.0) * (0.5 + 0.5 * spread)).coerceIn(0.0, 1.0)
     }
 
     private fun summarize(values: List<Observation>): Summary {
         if (values.isEmpty()) {
-            return Summary(0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, "NO_EVIDENCE", 0, 0)
+            return Summary(
+                centerErrorPercent = 0.0,
+                centerDifferenceMs = 0.0,
+                errorMadPercent = 0.0,
+                differenceMadMs = 0.0,
+                supportMass = 0.0,
+                kishEss = 0.0,
+                uniqueVisits = 0,
+                directionConsensus = 0.0,
+                direction = "NO_EVIDENCE",
+                rpmBands = 0,
+                mapBands = 0,
+            )
         }
         val weighted = values.map { it.errorPercent to it.weight }
         val centerError = weightedMedian(weighted)
@@ -247,7 +273,8 @@ object LearningStabilityV7 {
             centerDifferenceMs = centerDifference,
             errorMadPercent = errorMad,
             differenceMadMs = differenceMad,
-            effectiveVisits = totalWeight,
+            supportMass = totalWeight,
+            kishEss = ContinuousLearningMath.effectiveSampleSize(values.map { it.weight }),
             uniqueVisits = values.map { it.visitId }.distinct().size,
             directionConsensus = directionWeight / totalWeight,
             direction = dominant,
@@ -331,6 +358,10 @@ object LearningStabilityV7 {
         confidence = 0.0,
         consolidatedEffectiveVisits = 0.0,
         recentEffectiveVisits = 0.0,
+        consolidatedSupportMass = 0.0,
+        recentSupportMass = 0.0,
+        consolidatedKishEss = 0.0,
+        recentKishEss = 0.0,
         consolidatedUniqueVisits = 0,
         recentUniqueVisits = 0,
         rpmBandCount = 0,
