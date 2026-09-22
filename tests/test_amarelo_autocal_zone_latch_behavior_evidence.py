@@ -36,9 +36,10 @@ class AutoCalZoneLatchBehaviorEvidenceTest(unittest.TestCase):
             conclusions["flags_behave_as_latched_region_markers_within_acquisition_epoch"],
             "STRONGLY_SUPPORTED",
         )
-        self.assertEqual(conclusions["live_map_visit_is_sufficient_firmware_set_guard"], "UNKNOWN")
-        self.assertEqual(conclusions["exact_firmware_set_guard"], "UNKNOWN")
+        self.assertEqual(conclusions["live_map_visit_is_sufficient_firmware_set_guard"], "FALSIFIED")
+        self.assertEqual(conclusions["exact_firmware_set_guard"], "FIRMWARE_INTERNAL_UNKNOWN_WITH_CURRENT_HOST_ARTIFACTS")
         self.assertEqual(conclusions["exact_firmware_clear_guard"], "UNKNOWN")
+        self.assertEqual(conclusions["cng_enabled_live_map_visit_is_sufficient_firmware_set_guard"], "FALSIFIED")
         self.assertEqual(conclusions["acquired_zone_flag_is_maturity_threshold"], "FALSIFIED")
         self.assertEqual(conclusions["acquired_zone_flag_is_percent_progress"], "FALSIFIED")
 
@@ -65,3 +66,15 @@ class AutoCalZoneSetGuardBoundaryTest(unittest.TestCase):
         self.assertEqual(conclusions["current_native_point_required_at_observed_activation"], "FALSIFIED")
         self.assertEqual(conclusions["mature_native_point_required_at_observed_activation"], "FALSIFIED")
         self.assertEqual(conclusions["exact_firmware_set_guard_recoverable_from_supplied_polling_cadence"], "NO")
+
+
+class AutoCalZoneSetGuardFuelEnableBoundaryTest(unittest.TestCase):
+    def test_cng_enabled_visit_is_not_sufficient_to_set_flag(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        row = data["set_guard_observation_boundary"]["PortmonLOGNOVO"]["cng_enabled_visit_test"]
+        self.assertEqual(row["known_zone_poll_windows"], 320)
+        self.assertEqual(row["zero_to_zero_region_windows_with_cng_autocal_enabled_visit"], 193)
+        self.assertGreater(row["zero_to_zero_region_windows_with_cng_autocal_enabled_visit"], 0)
+        conclusions = data["set_guard_observation_boundary"]["conclusions"]
+        self.assertEqual(conclusions["cng_enabled_region_visit_is_sufficient"], "FALSIFIED")
+        self.assertIn("ECU firmware/internal state", conclusions["stop_condition"])
