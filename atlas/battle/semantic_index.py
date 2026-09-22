@@ -3,8 +3,7 @@ from __future__ import annotations
 import argparse, json, re
 from pathlib import Path
 
-TARGET_CLASSES={"TAutoCalDM","TAutoCalDM_EE","TAutoCalSettings","TAutoCalUI","TFormRifAutocal"}
-CLASS_RE=re.compile(r"^\s{2}(T\w+)\s+.*?size=(\d+)B,\s*vmt=(0x[0-9a-fA-F]+)")
+def is_target_class(name:str)->bool:\n    return "autocal" in name.lower()\n\nCLASS_RE=re.compile(r"^\s{2}(T\w+)\s+.*?size=(\d+)B,\s*vmt=(0x[0-9a-fA-F]+)")
 FIELD_RE=re.compile(r"^\s+\+0x([0-9a-fA-F]+)\s+([A-Za-z_]\w*)\s*:\s*(.+?)\s*$")
 METHOD_RE=re.compile(r"^\s+(0x[0-9a-fA-F]+)\s+([A-Za-z_]\w*)\s*$")
 RESOURCE_RE=re.compile(r"^\s*resource\s+(\S+)",re.I)
@@ -26,10 +25,10 @@ def parse(text:str):
         cm=CLASS_RE.match(line)
         if cm:
             current=cm.group(1);section=None
-            if current in TARGET_CLASSES:
+            if is_target_class(current):
                 classes[current]={"size":int(cm.group(2)),"vmt":cm.group(3).lower(),"fields":[],"published_methods":[]}
             continue
-        if current not in TARGET_CLASSES:continue
+        if not is_target_class(current):continue
         if "fields (" in line:section="fields";continue
         if "published methods (" in line:section="methods";continue
         if re.match(r"^\s{4}(?:interfaces|virtual methods|instance layout|published properties)",line):
@@ -60,15 +59,14 @@ def parse(text:str):
             pm=PROP_RE.match(line)
             if pm:obj["properties"][pm.group(1)]=clean_value(pm.group(2))
 
-    methods={m["name"]:{**m,"class":cn} for cn,c in classes.items() for m in c["published_methods"]}
-    fields=[{**f,"class":cn} for cn,c in classes.items() for f in c["fields"]]
+    method_candidates={}\n    for cn,c in classes.items():\n        for m in c["published_methods"]:\n            method_candidates.setdefault(m["name"],[]).append({**m,"class":cn})\n    methods={name:items[0] for name,items in method_candidates.items() if len(items)==1}\n    fields=[{**f,"class":cn} for cn,c in classes.items() for f in c["fields"]]
     objects=[{**o,"resource":r["name"]} for r in resources for o in r["objects"]]
     object_names={o["name"] for o in objects}
     event_bindings=[];action_bindings=[];serial_objects=[];visual_objects=[]
     for o in objects:
         for prop,val in o["properties"].items():
             if prop.startswith("On") and isinstance(val,str) and val:
-                event_bindings.append({"resource":o["resource"],"object":o["name"],"object_class":o["class"],"event":prop,"handler":val,"resolved_method":val in methods})
+                candidates=method_candidates.get(val,[])\n                event_bindings.append({"resource":o["resource"],"object":o["name"],"object_class":o["class"],"event":prop,"handler":val,"resolved_method":len(candidates)==1,"handler_candidates":candidates})
             elif prop=="Action" and isinstance(val,str) and val:
                 action_bindings.append({"resource":o["resource"],"object":o["name"],"action":val,"resolved_object":val in object_names})
         if isinstance(o["properties"].get("SerialCode"),int):
@@ -93,7 +91,7 @@ def parse(text:str):
         "unresolved_event_bindings":unresolved_events,
         "unresolved_action_bindings":unresolved_actions,
         "counts":{
-            "classes":len(classes),"fields":len(fields),"published_methods":len(methods),
+            "classes":len(classes),"fields":len(fields),"published_methods":sum(len(v) for v in method_candidates.values()),
             "resources":len(resources),"objects":len(objects),"event_bindings":len(event_bindings),
             "action_bindings":len(action_bindings),"serial_objects":len(serial_objects),
             "visual_objects":len(visual_objects),"object_field_links":len(object_field_links),

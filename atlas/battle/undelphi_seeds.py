@@ -3,13 +3,8 @@ from __future__ import annotations
 import argparse, json, re
 from pathlib import Path
 
-TARGET_CLASSES = {
-    "TAutoCalDM",
-    "TAutoCalDM_EE",
-    "TAutoCalSettings",
-    "TAutoCalUI",
-    "TFormRifAutocal",
-}
+def is_target_class(name: str) -> bool:
+    return "autocal" in name.lower()
 
 CLASS_RE = re.compile(r"^  (T\w+) — size=(\d+)B, vmt=(0x[0-9a-fA-F]+)")
 METHOD_RE = re.compile(r"^      (0x[0-9a-fA-F]+)\s+(.+?)\s*$")
@@ -25,7 +20,7 @@ def extract(text: str):
         if m:
             current = m.group(1)
             in_published = False
-            if current in TARGET_CLASSES:
+            if is_target_class(current):
                 classes[current] = {
                     "size": int(m.group(2)),
                     "vmt": int(m.group(3), 16),
@@ -33,7 +28,7 @@ def extract(text: str):
                     "published_methods": [],
                 }
             continue
-        if current not in TARGET_CLASSES:
+        if not is_target_class(current):
             continue
         if "published methods (" in line:
             in_published = True

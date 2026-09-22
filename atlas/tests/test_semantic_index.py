@@ -18,6 +18,12 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
     published methods (1):
       0x005189b4  ActionAutoMatchExecute
     virtual methods (1):
+  TAutoCalColorSettings — size=128B, vmt=0xa9ff00, ptrsize=4B
+    fields (1):
+      +0x000050  _GasPoint                            : TShape
+    published methods (1):
+      0x0051b000  _AcqusitionAreas0Click
+    virtual methods (1):
   resource TAUTOCALDM TAutoCalDM:AutoCalDM  (1 components)
       <object TAebVector:PETR_INJ_TBP>
         SerialCode = 331
@@ -29,6 +35,9 @@ SAMPLE="""  TAutoCalDM — size=268B, vmt=0xa9c944, ptrsize=4B
         <object TAction:ActionAutoMatch>
           Caption = "Manual automatch"
           OnExecute = "ActionAutoMatchExecute"
+  resource TAUTOCALCOLORSETTINGS TAutoCalColorSettings:AutoCalColorSettings  (1 components)
+        <object TShape:_GasPoint>
+          OnClick = "_AcqusitionAreas0Click"
 """
 
 class SemanticIndexTest(unittest.TestCase):
@@ -41,5 +50,9 @@ class SemanticIndexTest(unittest.TestCase):
         self.assertEqual(x["counts"]["unresolved_event_bindings"],0)
         self.assertEqual(x["counts"]["unresolved_action_bindings"],0)
         self.assertTrue(any(e["object"]=="PETR_INJ_TBP" for e in x["object_field_links"]))
+        self.assertIn("TAutoCalColorSettings",x["classes"])
+        color_event=next(e for e in x["event_bindings"] if e["object"]=="_GasPoint")
+        self.assertTrue(color_event["resolved_method"])
+        self.assertEqual(color_event["handler_candidates"][0]["class"],"TAutoCalColorSettings")
 
 if __name__=="__main__":unittest.main()
