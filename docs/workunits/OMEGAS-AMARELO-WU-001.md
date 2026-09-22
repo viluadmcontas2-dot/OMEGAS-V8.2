@@ -1,7 +1,7 @@
 # OMEGAS-AMARELO-WU-001 — Ground truth byte a byte do AutoCAL
 
 Issue: #73  
-Estado: **CLOSURE_CANDIDATE — aguardando receipt integrado final**
+Estado: **CLOSED / PROVEN — contrato host-observável fechado; UNKNOWNs firmware-internos bounded**
 
 ## Objetivo
 
@@ -130,7 +130,7 @@ Esses itens possuem **stop condition**: não derivar fórmula host-side a partir
 | MUL_ACT / AutoMatch epoch observável | PROVEN |
 | facts separados de inferência | PROVEN por fixtures/gates |
 | UNKNOWNs internos explicitamente limitados | PROVEN |
-| receipt integrado do HEAD de fechamento | PENDING |
+| receipt integrado do conjunto de fechamento | PROVEN — fast `35766226922` + render `35766226859` no SHA `6e669ce9159f9baf1f6f467427e00ecca96cc5f6` |
 
 ## Evidência canônica
 
@@ -143,6 +143,17 @@ Esses itens possuem **stop condition**: não derivar fórmula host-side a partir
 - `tests/fixtures/amarelo-autocal-epoch-lifecycle-v1.json`
 - respectivos `tests/test_amarelo_*.py`
 
-## Gate de fechamento
+## Closure receipt — 2026-09-22
 
-Não declarar CLOSED/PROVEN no issue #73 até existir um receipt do fast-contract contendo o conjunto integrado atual. UNKNOWNs firmware-internos acima são limites de evidência, não convite para inventar implementação paralela.
+WU-001 está **CLOSED / PROVEN** dentro da fronteira explicitamente observável.
+
+Receipts integrados do código:
+- `OMEGAS Amarelo fast contracts` — run `35766226922` — SHA `6e669ce9159f9baf1f6f467427e00ecca96cc5f6` — **SUCCESS**;
+- `OMEGAS Amarelo Android render evidence` — run `35766226859` — mesmo SHA — **SUCCESS**.
+
+Receipt documental posterior:
+- fast contracts run `35766739562` — SHA `ddd5ac3181ef4d85c27cf0fa58c28e3a19d5a2c2` — **SUCCESS**.
+
+Os UNKNOWNs firmware-internos listados acima permanecem deliberadamente bounded. Eles não bloqueiam o produto porque OMEGAS consome os valores nativos da ECU em vez de reconstruir fórmulas internas não observáveis.
+
+Nenhuma nova escavação de firmware deve reabrir WU-001 sem um novo artefato-fonte (firmware/binário/captura) capaz de responder objetivamente a um desses UNKNOWNs.
