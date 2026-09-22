@@ -3,6 +3,7 @@ from pathlib import Path
 import unittest
 
 from tools.omegas_amarelo.build_portmon_replay_fixture import build_fixture
+from tools.omegas_amarelo.portmon_transactions import response_payload
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -51,12 +52,34 @@ class AmareloWu003ReplayKitTest(unittest.TestCase):
             "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
         )
         self.assertEqual(autocal["status"], "PROVEN_COMPACT_REPLAY")
-        self.assertEqual(lognovo["status"], "TIMING_REPLAY_PENDING_RAW_ACCESS")
+        self.assertEqual(lognovo["status"], "PROVEN_BYTES_TIMING_REPLAY_PENDING_RAW_ACCESS")
         self.assertFalse(manifest["closure"]["closureAllowed"])
 
         self.assertTrue((ROOT / autocal["compactReplay"]).is_file())
         self.assertTrue((ROOT / lognovo["byteEvidence"]).is_file())
+        self.assertTrue((ROOT / lognovo["referenceBytes"]).is_file())
+        self.assertEqual(lognovo["provenance"]["timingReplay"], "PENDING")
         self.assertFalse((ROOT / lognovo["compactReplay"]).exists())
+
+
+    def test_lognovo_reference_bytes_are_original_derived_and_do_not_claim_timing(self):
+        fixture = json.loads(
+            (FIXTURES / "portmon-lognovo-autocal-reference-v1.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(fixture["classification"], "ORIGINAL_DERIVED")
+        provenance = fixture["provenance"]
+        self.assertEqual(
+            provenance["sourceRawSha256"],
+            "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+        )
+        self.assertIn("timing is not claimed as an original measurement", provenance["extractionRule"])
+        self.assertEqual(len(fixture["transactions"]), 5)
+        for row in fixture["transactions"]:
+            request = bytes.fromhex(row["request"])
+            response = bytes.fromhex(row["response"])
+            self.assertTrue(response.startswith(request))
+            self.assertGreater(len(response_payload(request, response)), 0)
+            self.assertNotIn("at_ms", row)
 
     def test_existing_autocal_replay_has_real_cadence_and_slow_families(self):
         fixture = json.loads(
