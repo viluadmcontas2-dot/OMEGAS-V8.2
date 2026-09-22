@@ -121,8 +121,10 @@ jobs:
             -deleteProject
           test -s atlas-index/ghidra/functions.tsv
           test -s atlas-index/ghidra/meta.json
-      - cp atlas-index/ghidra-seeds-primary.txt atlas-index/ghidra/primary-seeds.txt
-      - cp atlas-index/undelphi/autocal-metadata.json atlas-index/ghidra/autocal-metadata.json
+      - name: Preserve exact seed and metadata provenance
+        run: |
+          cp atlas-index/ghidra-seeds-primary.txt atlas-index/ghidra/primary-seeds.txt
+          cp atlas-index/undelphi/autocal-metadata.json atlas-index/ghidra/autocal-metadata.json
       - uses: actions/upload-artifact@v4
         with:
           name: atlas-ghidra-index
