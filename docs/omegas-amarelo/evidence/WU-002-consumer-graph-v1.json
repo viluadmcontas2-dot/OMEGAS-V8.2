@@ -712,9 +712,27 @@
         "publisher": "AutoCalInstrumentProjection.epoch.transition",
         "consumer": "AutoCalUxModel.instrumentEpoch -> epochTransition",
         "ui_may_rederive_epoch_from_curve_diff": false,
-        "counter_change_without_typed_event": "WAIT_FOR_NATIVE_EVENT",
+        "counter_change_without_typed_event": "PENDING_OR_UNCONFIRMED_NEVER_PROMOTE",
         "prior_k_curve_is_display_baseline_only": true,
-        "status": "IMPLEMENTED_AND_TESTED"
+        "status": "IMPLEMENTED_AND_TESTED",
+        "typed_event_requires_mul_act_readback_change": true,
+        "same_snapshot_assumption": false
+      },
+      "confirmation": {
+        "signal": "NUM_AUTOMATCH_EXECUTED transition",
+        "confirmation": "MUL_ACT readback hash differs from pre-transition baseline",
+        "same_snapshot_required": false,
+        "pending_tracker": "NativeAutoCalEpochConfirmation",
+        "max_full_snapshots": 3,
+        "health_tick_cadence_ms": 3000,
+        "operational_coverage_note": "initial snapshot + up to two follow-ups; retry budget is product robustness, not ECU science",
+        "manual_action_overlap": "pending native epoch is cleared before explicit app write readback",
+        "session_change": "pending native epoch is cleared",
+        "overlap_policy": "fail closed; a second distinct counter transition before confirmation drops ambiguous pending attribution",
+        "expired_behavior": "do not emit nativeAutoMatchEpochEvent",
+        "ui_pending": "Verificando ajuste da ECU",
+        "ui_unconfirmed": "Mudança ainda não confirmada",
+        "status": "IMPLEMENTED_GATED_PENDING_CI_RECEIPT"
       }
     },
     "native_projection_boundary": {
