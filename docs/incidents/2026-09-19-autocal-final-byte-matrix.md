@@ -18,8 +18,8 @@ Fontes reconciliadas: `AutoCalProtocol.kt`, testes de protocolo, `byte-matrix.js
 | MUL_ACT | 0x0161 · 29 61 01 8B | Q14 U16LE vector | 747 / 439 | CONFIRMADO | CONFIRMADO como fator nativo observado |
 | PETR_INJ_TBUF | 0x0162 · 29 62 01 8C | U16LE vector18, ms | 745 / 437 | CONFIRMADO | CONFIRMADO pelo consumer atual |
 | MNFLD_PRESS_BUF | 0x0163 · 29 63 01 8D | S16LE vector18, bar | 745 / 437 | CONFIRMADO | CONFIRMADO pelo consumer atual |
-| VECT_AUTOCAL_U8_1 | 0x0165 idx1 · 0A 65 01 01 71 | U8 indexed | 0 / 3 | CONFIRMADO | DESCONHECIDO; não expor como linguagem humana |
-| MAX_AUTOMATCH | 0x0165 idx2 · 0A 65 01 02 72 | U8 indexed | 0 / 3 | CONFIRMADO | CONFIRMADO como limite no contrato atual |
+| VECT_AUTOCAL_U8_1 | 0x0165 idx1 · 0A 65 01 01 71 | U8 indexed | 0 / 3 | CONFIRMADO | DFM original: `FileKeyName=!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD`; não interpretar o prefixo `!` além do que o binário prova |
+| MAX_AUTOMATCH | 0x0165 idx2 · 0A 65 01 02 72 | U8 indexed | 0 / 3 | CONFIRMADO | CONFIRMADO no DFM original: `VECT_AUTOCAL_U8_2.FileKeyName=MaxAutomatch` |
 | ACQUIRED_ZONES_PETROL | 0x016F · 29 6F 01 99 | U8 vector4 | 244 / 111 | CONFIRMADO | CONFIRMADO como quatro zonas gasolina |
 | ACQUIRED_ZONES_GAS | 0x0170 · 29 70 01 9A | U8 vector4 | 501 / 325 | CONFIRMADO | CONFIRMADO como quatro zonas GNV |
 | CALIBRATION_VAL_1 | 0x0172 · 29 72 01 9C | U8 vector10 | 0 / 3 | CONFIRMADO | DESCONHECIDO além do contrato observado |
@@ -29,12 +29,16 @@ Fontes reconciliadas: `AutoCalProtocol.kt`, testes de protocolo, `byte-matrix.js
 | PETR_MNFLD_PRESS_RV | 0x018D · 29 8D 01 B7 | S16LE vector, bar | 373 / 218 | CONFIRMADO | CONFIRMADO como referência MAP gasolina usada no gráfico |
 | GAS_MNFLD_PRESS_RV | 0x018E · 29 8E 01 B8 | S16LE vector, bar | 373 / 220 | CONFIRMADO | CONFIRMADO como resposta MAP GNV usada no gráfico |
 
-## Escritas nativas observadas
+## Ações nativas — identidade original e observação de wire
 
-- Enable AutoCal: `12 4A 01 01 5E`.
-- Disable AutoCal: `12 4A 01 00 5D`.
-- Reset gasolina: corpo `02 24 04 02`; efeito conferido por snapshot antes/depois.
-- Reset GNV: corpo `02 24 04 04`; o código mantém aviso de efeito potencialmente mais amplo em firmware observado.
-- Manual AutoMatch e RESET_ALL ficam fora da superfície operacional.
+- Enable AutoCal: `12 4A 01 01 5E`, observado no Lognovo.
+- Disable AutoCal: `12 4A 01 00 5D`, observado no Lognovo.
+- Manual AutoMatch: modo `0x08` → `02 24 04 08 32`, identidade provada pelo EXE; ausente nos dois Portmons fornecidos e não exposto pelo OMEGAS.
+- Reset gasolina: modo `0x01` → `02 24 04 01 2B`, identidade provada pelo EXE; ausente nos dois Portmons fornecidos e atualmente intertravado no OMEGAS.
+- Reset GNV: modo `0x02` → `02 24 04 02 2C`, identidade provada pelo EXE; ausente nos dois Portmons fornecidos e atualmente intertravado no OMEGAS.
+- Reset all: modo `0x04` → `02 24 04 04 2E`, provado pelo EXE e observado uma vez em cada Portmon; não exposto pelo OMEGAS.
+- `Modify map refs` é a ação separada `ActionAutoCalRifExecute`; este corpus não autoriza atribuir a ela o modo `0x08`.
+
+O EXE prova identidade/mode; Portmon prova apenas o tráfego efetivamente capturado. A ausência de `0x01/0x02/0x08` nos captures significa que o efeito físico seletivo desses três comandos não deve ser inventado.
 
 Screenshot não é prova de byte; nome de campo não é prova de semântica. Lacunas permanecem **DESCONHECIDO/HIPÓTESE**.

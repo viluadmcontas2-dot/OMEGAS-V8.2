@@ -25,7 +25,7 @@ That separation is a match worth preserving. The parity defects are narrower and
 | PollingPetrol/Gas literal shapes | **INTENTIONAL IMPROVEMENT** | Human-readable states replace red/lime polling lamps. |
 | Enable/disable | **MATCH** | 0x014A manual action semantics preserved with stronger ACK/readback safety. |
 | Reference skew gate | **INTENTIONAL IMPROVEMENT** | OMEGAS adds current-session and temporal-coherence safety. |
-| 0x0165 index semantics | **INCONCLUSIVE** | Current OMEGAS names index 2 `MAX_AUTOMATCH`; original evidence has not yet proved that mapping. |
+| 0x0165 index semantics | **MATCH — original DFM proven** | `VECT_AUTOCAL_U8_2.FileKeyName=MaxAutomatch`; index 1 is `!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD`. Lognovo contains the corresponding indexed reads. |
 | Session ownership | **INCONCLUSIVE / #86** | Deliberately excluded from this slice. |
 
 ## 1. AGORA XY — preserve, do not rebuild
@@ -85,6 +85,10 @@ The RED at `0dbeed2feb51263efc96374290134e345acff03a` required an explicit group
 The repair at `714725f2e7417a847c19a94e4ddb70096b0af2e3` adds a pure refresh planner and a shared service cadence, while keeping `NativeAutoCalMonitor` free of its own thread/timer. The grouped acquisition path reads `NUM_BUF_UPD_PETR`, `NUM_BUF_UPD_GAS`, `ACQUIRED_ZONES_PETROL` and `ACQUIRED_ZONES_GAS` through the existing `Mp48SerialScheduler`, then merges only those operational fields into the current native snapshot.
 
 This removes the gasoline-side blind spot without converting the whole AutoCal snapshot into a 2 s full read. The remaining parity RED is the slower reference family (`PETR_INJ_TBP`, `MNFLD_PRESS_THD`, petrol/gas RV vectors).
+
+### 5.1 0x0165 semantic debt closed
+
+The original ProgBase DFM binds `VECT_AUTOCAL_U8_2` directly to `FileKeyName=MaxAutomatch` and `VECT_AUTOCAL_U8_1` to `FileKeyName=!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD`. Lognovo independently contains `0A 65 01 01 71` and `0A 65 01 02 72` three times each. The old `INCONCLUSIVE` label is therefore stale; OMEGAS index 2 → `MAX_AUTOMATCH` is a match to the original artifact.
 
 ## 6. Architecture chosen for the repair
 

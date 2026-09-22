@@ -1,0 +1,114 @@
+{
+  "schema": "omegas.progbase.autocal-action-map.v1",
+  "classification": "ORIGINAL_DERIVED",
+  "description": "Canonical action identity recovered from the original ProgBase 4.2.0.6 binary. Handler disassembly proves the mode byte passed to the common 0x02/0x24/0x04 action sender; Portmon observations are recorded separately.",
+  "sources": {
+    "progbase": {
+      "file": "Copy of ProgBase (3).exe",
+      "version": "4.2.0.6",
+      "sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+    },
+    "lognovo": {
+      "file": "PortmonLOGNOVO.LOG",
+      "rawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+      "zipSha256": "6879fa2a7931d22c207cd7fa47dffb59e1df0fe1de216e34e3f11e0c08cc1c17"
+    },
+    "autocal": {
+      "file": "PortmonAUTOCAL (1).LOG",
+      "rawSha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+      "zipSha256": "a927795da5800baef53d498273f4e210bc814c2e0e3649572e6de42781073b47"
+    }
+  },
+  "binaryEvidence": {
+    "actionDfmOffsetRange": "0x00904061..0x009041EA",
+    "commonSenderVa": "0x00512280",
+    "commonSenderSemantics": "Builds command 0x02 / group 0x24 / subcommand 0x04 and copies the handler argument byte into the action-mode byte.",
+    "handlerRange": "0x005189B4..0x005189E3"
+  },
+  "actions": [
+    {
+      "action": "MANUAL_AUTOMATCH",
+      "caption": "Manual automatch",
+      "handler": "ActionAutoMatchExecute",
+      "handlerVa": "0x005189B4",
+      "mode": "0x08",
+      "frame": "02 24 04 08 32",
+      "portmonObserved": false,
+      "operationalExposure": false,
+      "evidence": "original EXE"
+    },
+    {
+      "action": "RESET_PETROL",
+      "caption": "Reset petrol point",
+      "handler": "ActionResetPetrolExecute",
+      "handlerVa": "0x005189C0",
+      "mode": "0x01",
+      "frame": "02 24 04 01 2B",
+      "portmonObserved": false,
+      "operationalExposure": false,
+      "evidence": "original EXE; currently interlocked in OMEGAS"
+    },
+    {
+      "action": "RESET_GAS",
+      "caption": "Reset gas point",
+      "handler": "ActionResetGasExecute",
+      "handlerVa": "0x005189CC",
+      "mode": "0x02",
+      "frame": "02 24 04 02 2C",
+      "portmonObserved": false,
+      "operationalExposure": false,
+      "evidence": "original EXE; currently interlocked in OMEGAS"
+    },
+    {
+      "action": "RESET_ALL",
+      "caption": "Reset all",
+      "handler": "ActionResetAllExecute",
+      "handlerVa": "0x005189D8",
+      "mode": "0x04",
+      "frame": "02 24 04 04 2E",
+      "portmonObserved": true,
+      "operationalExposure": false,
+      "evidence": "original EXE + both original Portmon captures",
+      "portmonObservations": [
+        {
+          "source": "PortmonLOGNOVO.LOG",
+          "sourceLine": 69944,
+          "event": 34971
+        },
+        {
+          "source": "PortmonAUTOCAL (1).LOG",
+          "sourceLine": 52478,
+          "event": 26238
+        }
+      ]
+    }
+  ],
+  "separateActions": {
+    "modifyMapRefs": {
+      "caption": "Modify map refs",
+      "handler": "ActionAutoCalRifExecute",
+      "mode": null,
+      "frame": null,
+      "note": "Separate ProgBase action. This evidence does not map it to mode 0x08."
+    }
+  },
+  "dfmFields": {
+    "VECT_AUTOCAL_U8_0": {
+      "fileKeyName": "AUTOCAL_IDLE_MIN_BUF_PETR_THD",
+      "stringOffset": "0x008C6825"
+    },
+    "VECT_AUTOCAL_U8_1": {
+      "fileKeyName": "!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD",
+      "stringOffset": "0x008C4676"
+    },
+    "VECT_AUTOCAL_U8_2": {
+      "fileKeyName": "MaxAutomatch",
+      "stringOffset": "0x008C47ED"
+    }
+  },
+  "epistemicBoundary": {
+    "exeProves": "action identity and mode byte passed to the common sender",
+    "portmonProves": "only traffic actually present in each capture",
+    "suppliedPortmonsDoNotProve": "selective physical effects of RESET_PETROL, RESET_GAS, or MANUAL_AUTOMATCH because those frames are absent"
+  }
+}

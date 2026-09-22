@@ -221,18 +221,19 @@
     },
     {
       "behavior": "0x0165 subindex semantics",
-      "classification": "INCONCLUSIVE",
+      "classification": "MATCH",
       "dimensions": {
-        "original": "INCONCLUSIVE",
-        "omegas": "ASSERTS_INDEX_2_MAX_AUTOMATCH"
+        "original": "PROVEN_FROM_PROGBASE_DFM",
+        "omegas": "INDEX_2_MAX_AUTOMATCH_MATCH"
       },
-      "progbase": "three wrappers share SerialCode 0x0165; exact subindex semantic mapping not yet proven",
-      "omegas": "AutoCalProtocol names index 2 MAX_AUTOMATCH and tests enforce it",
+      "progbase": "Original DFM binds VECT_AUTOCAL_U8_1 to !AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD and VECT_AUTOCAL_U8_2 to MaxAutomatch; Lognovo issues indexed reads 0A 65 01 01 71 and 0A 65 01 02 72.",
+      "omegas": "AutoCalProtocol maps index 1 to VECT_AUTOCAL_U8_1 and index 2 to MAX_AUTOMATCH.",
       "evidence": [
-        "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
-        "tests/test_native_autocal_contract.py"
+        "tests/fixtures/progbase-autocal-action-map-v1.json",
+        "tests/fixtures/progbase-autocal-consumer-map-v1.json",
+        "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt"
       ],
-      "action": "Do not expand dependence on MAX_AUTOMATCH until original evidence closes this semantic debt"
+      "action": "PRESERVE index 2 as MAX_AUTOMATCH; do not infer additional semantics beyond the original DFM evidence."
     },
     {
       "behavior": "Session ownership",

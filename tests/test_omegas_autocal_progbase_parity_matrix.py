@@ -16,7 +16,8 @@ assert rows["CurrentBand"]["classification"] == "MATCH"
 assert rows["NUM_BUF maturity / acquisition activity"]["dimensions"]["petrol_probe"] == "MATCH_AFTER_FIX"
 assert rows["PollingPetrol/PollingGas"]["classification"] == "INTENTIONAL_IMPROVEMENT"
 assert rows["Enable/disable acquisition"]["classification"] == "MATCH"
-assert rows["0x0165 subindex semantics"]["classification"] == "INCONCLUSIVE"
+assert rows["0x0165 subindex semantics"]["classification"] == "MATCH"
+assert rows["0x0165 subindex semantics"]["dimensions"]["original"] == "PROVEN_FROM_PROGBASE_DFM"
 
 decision = matrix["architecture_decision"]
 assert decision["preferred"] == "GROUPED_INCREMENTAL_REFRESH_ON_EXISTING_MP48_SERIAL_AUTHORITY"

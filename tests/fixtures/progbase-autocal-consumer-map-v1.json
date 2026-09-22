@@ -257,7 +257,26 @@
       "class": "TAebNumber",
       "data_mask": 255,
       "consumer": "Finish/auxiliary AutoCal state",
-      "status": "SUBINDEX_SEMANTICS_NOT_YET_PROVEN"
+      "status": "SUBINDEX_SEMANTICS_PROVEN_FROM_PROGBASE_DFM",
+      "subindexes": {
+        "0": {
+          "component": "VECT_AUTOCAL_U8_0",
+          "fileKeyName": "AUTOCAL_IDLE_MIN_BUF_PETR_THD",
+          "wireObservation": "NOT_OBSERVED_IN_SUPPLIED_LOGNOVO_COMMAND_SET"
+        },
+        "1": {
+          "component": "VECT_AUTOCAL_U8_1",
+          "fileKeyName": "!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD",
+          "request": "0A 65 01 01 71",
+          "lognovoTransactions": 3
+        },
+        "2": {
+          "component": "VECT_AUTOCAL_U8_2",
+          "fileKeyName": "MaxAutomatch",
+          "request": "0A 65 01 02 72",
+          "lognovoTransactions": 3
+        }
+      }
     },
     {
       "name": "ACQUIRED_ZONES_PETROL",
@@ -413,13 +432,13 @@
         "VECT_AUTOCAL_U8_2",
         "NUM_AUTOMATCH_EXECUTED"
       ],
-      "status": "EXACT_0x0165_SUBINDEX_SEMANTICS_INCONCLUSIVE"
+      "status": "INDEX_2_MAXAUTOMATCH_PROVEN_FROM_PROGBASE_DFM"
     }
   },
   "unresolved": [
     "Semantic name and runtime value provenance for TStreamDati+0x2980 used in injection-time scaling.",
-    "Exact subindex semantics of the three VECT_AUTOCAL_U8_* wrappers sharing SerialCode 0x0165.",
     "Exact runtime site that enables TimerDati after its resource default Enabled=false.",
-    "The selected compact fixture does not contain 0x014A/0x014B/0x014C reads, so their cadence is not asserted."
+    "The selected compact fixture does not contain 0x014A/0x014B/0x014C reads, so their cadence is not asserted.",
+    "Runtime consumer role of VECT_AUTOCAL_U8_0 is not mapped here; its DFM FileKeyName identity is proven."
   ]
 }
