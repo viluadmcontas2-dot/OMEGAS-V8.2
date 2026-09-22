@@ -67,7 +67,22 @@ def test_android_render_fixture_provenance_is_enforced_end_to_end():
     assert 'saveEvidence("autocal-equivalence-shifted", dom, scenario, provenance)' in render_test
 
 
+def test_legacy_autocal_snapshots_are_quarantined_from_scientific_oracle_use():
+    for name in ("autocal_snapshot_complete.json", "autocal_snapshot_partial.json"):
+        data = json.loads((Path("fixtures/autocal") / name).read_text(encoding="utf-8"))
+        assert data["classification"] == "TEST_ONLY"
+        assert data["scientificUse"] == "STRUCTURAL_ONLY_NON_SCIENTIFIC"
+        assert data["provenanceStatus"] == "NO_ORIGINAL_BYTE_CHAIN"
+
+    render_test = Path("app/src/androidTest/java/com/omegas/prohub/DashboardLevelsRenderTest.kt").read_text(encoding="utf-8")
+    assert "autocal_snapshot_complete.json" not in render_test
+    assert "autocal_snapshot_partial.json" not in render_test
+    assert 'currentBandVisible' in render_test
+    assert 'CurrentBand must render from original MNFLD_PRESS_THD plus live MAP' in render_test
+
+
 if __name__ == "__main__":
     test_lognovo_reference_fixture_has_original_provenance_and_exact_bytes()
     test_original_lognovo_reference_is_not_the_test_only_shifted_fixture()
     test_android_render_fixture_provenance_is_enforced_end_to_end()
+    test_legacy_autocal_snapshots_are_quarantined_from_scientific_oracle_use()

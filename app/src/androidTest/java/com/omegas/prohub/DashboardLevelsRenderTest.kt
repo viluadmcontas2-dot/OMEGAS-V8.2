@@ -369,6 +369,7 @@ class DashboardLevelsRenderTest {
               const gasPath = document.querySelector('.autocal-reference-line.gas:not(.previous)');
               const equivalentPath = document.querySelector('.autocal-equivalence-line');
               const live = document.querySelector('.autocal-live-layer');
+              const currentBand = document.querySelector('[data-autocal-current-band]');
               const chart = document.getElementById('autocalReferenceChart')?.getBoundingClientRect();
               const rail = document.querySelector('.autocal-live-strip')?.getBoundingClientRect();
               return {
@@ -381,6 +382,9 @@ class DashboardLevelsRenderTest {
                 gasPoints: document.querySelectorAll('.autocal-reference-point.gas').length,
                 equivalentPoints: document.querySelectorAll('.autocal-equivalence-point').length,
                 liveVisible: !!live && live.getAttribute('display') !== 'none',
+                currentBandVisible: !!currentBand && currentBand.getAttribute('display') !== 'none',
+                currentBandHeight: Number(currentBand?.getAttribute('height') ?? 0),
+                currentBandY: Number(currentBand?.getAttribute('y') ?? -1),
                 count: document.getElementById('autocalReferenceCount')?.textContent ?? '',
                 chartHeight: chart?.height ?? 0,
                 chartWidth: chart?.width ?? 0,
@@ -649,6 +653,9 @@ class DashboardLevelsRenderTest {
             assertEquals("Complete render fixture must expose all 30 gasoline points", 30, dom.getInt("petrolPoints"))
             assertEquals("Complete render fixture must expose all 30 GNV points", 30, dom.getInt("gasPoints"))
             assertTrue("Fresh AGORA cursor must remain on the same chart", dom.getBoolean("liveVisible"))
+            assertTrue("CurrentBand must render from original MNFLD_PRESS_THD plus live MAP", dom.getBoolean("currentBandVisible"))
+            assertTrue("CurrentBand must have positive rendered height", dom.getDouble("currentBandHeight") > 0.0)
+            assertTrue("CurrentBand must stay inside the SVG plot", dom.getDouble("currentBandY") >= 0.0)
             assertTrue("Reference chart remains dominant", dom.getDouble("chartHeight") >= 300.0)
             assertTrue("Reference chart remains wide", dom.getDouble("chartWidth") >= 760.0)
             assertTrue("Live rail remains above the fold", dom.getDouble("railBottom") <= dom.getDouble("viewportHeight"))
