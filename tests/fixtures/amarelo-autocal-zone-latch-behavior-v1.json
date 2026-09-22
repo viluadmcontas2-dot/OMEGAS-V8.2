@@ -1,0 +1,137 @@
+{
+  "schema": "omegas.amarelo.autocal-zone-latch-behavior-v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "geometry": {
+    "source": "MNFLD_PRESS_THD",
+    "regions": [
+      {
+        "index": 0,
+        "low_bar": 0,
+        "high_bar": 0.461
+      },
+      {
+        "index": 1,
+        "low_bar": 0.461,
+        "high_bar": 0.666
+      },
+      {
+        "index": 2,
+        "low_bar": 0.666,
+        "high_bar": 0.87
+      },
+      {
+        "index": 3,
+        "low_bar": 0.87,
+        "high_bar": 1.126
+      }
+    ]
+  },
+  "live_map_activation_correlation": {
+    "PortmonAUTOCAL": {
+      "observed_0_to_1_activations": 14,
+      "same_region_in_current_zone_poll_window": 14,
+      "same_region_within_two_zone_poll_windows": 14
+    },
+    "PortmonLOGNOVO": {
+      "observed_0_to_1_activations": 14,
+      "same_region_in_current_zone_poll_window": 13,
+      "same_region_within_two_zone_poll_windows": 14,
+      "delayed_observation_example": {
+        "activation_portmon_index": 887015,
+        "zone": 3,
+        "current_window_regions": [
+          2
+        ],
+        "previous_window_included_zone3_frames": 1
+      }
+    }
+  },
+  "falling_edge_behavior": {
+    "PortmonAUTOCAL": {
+      "falling_events": 3,
+      "all_observed_after_vectors_zero": true,
+      "after_vectors": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "PortmonLOGNOVO": {
+      "falling_events": 3,
+      "all_observed_after_vectors_zero": true,
+      "after_vectors": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  "automatch_relationship": {
+    "PortmonAUTOCAL": {
+      "drops_near_subsequent_count_increment": 2,
+      "note": "Two observed clears precede NUM_AUTOMATCH_EXECUTED increments by about 0.75 s; first clear occurs before a measurable prior baseline transition."
+    },
+    "PortmonLOGNOVO": {
+      "drops_near_subsequent_count_increment": 2,
+      "near_deltas_ms": [
+        679.213,
+        2878.798
+      ],
+      "non_near_drop_count": 1,
+      "note": "One clear occurs about 60 s after the prior AutoMatch increment and cannot be assigned to AutoMatch as sole clear guard."
+    },
+    "exact_clear_guard": "UNKNOWN"
+  },
+  "conclusions": {
+    "zone_activation_is_associated_with_live_map_visit": "PROVEN_OBSERVED_CORRELATION_DUAL_CAPTURE",
+    "all_observed_falling_edges_clear_vector_to_zero": "PROVEN_FOR_SUPPLIED_CAPTURES",
+    "flags_behave_as_latched_region_markers_within_acquisition_epoch": "STRONGLY_SUPPORTED",
+    "live_map_visit_is_sufficient_firmware_set_guard": "UNKNOWN",
+    "exact_firmware_set_guard": "UNKNOWN",
+    "exact_firmware_clear_guard": "UNKNOWN",
+    "acquired_zone_flag_is_maturity_threshold": "FALSIFIED",
+    "acquired_zone_flag_is_percent_progress": "FALSIFIED"
+  },
+  "product_contract": {
+    "human_label_true": "Região registrada pela ECU neste ciclo",
+    "human_label_false": "Região ainda não registrada neste ciclo",
+    "never_render_as_percentage": true,
+    "never_recompute_flag_from_live_map": true,
+    "use_ecu_flag_as_authority": true,
+    "live_map_correlation_is_explanatory_context_only": true
+  }
+}
