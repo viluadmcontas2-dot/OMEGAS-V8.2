@@ -19,6 +19,7 @@ class NativeAutoCalEpochConfirmationTest {
         val first = tracker.observeMul("OLD")
         assertTrue(first is NativeAutoCalEpochConfirmation.Observation.Awaiting)
         assertTrue(tracker.hasPending())
+        assertTrue(tracker.shouldRetry())
 
         val second = tracker.observeMul("NEW")
         assertTrue(second is NativeAutoCalEpochConfirmation.Observation.Confirmed)
@@ -32,7 +33,7 @@ class NativeAutoCalEpochConfirmationTest {
     }
 
     @Test
-    fun `unchanged K expires without inventing epoch`() {
+    fun `unchanged K exhausts active retries without forgetting pending epoch`() {
         val tracker = NativeAutoCalEpochConfirmation(maxSnapshots = 3)
         tracker.start(AutoCalEpochTransition(3, 0), oldMulHash = "OLD")
 
@@ -40,11 +41,21 @@ class NativeAutoCalEpochConfirmationTest {
         assertTrue(tracker.observeMul("OLD") is NativeAutoCalEpochConfirmation.Observation.Awaiting)
 
         val third = tracker.observeMul("OLD")
-        assertTrue(third is NativeAutoCalEpochConfirmation.Observation.Expired)
-        val expired = third as NativeAutoCalEpochConfirmation.Observation.Expired
-        assertEquals(3, expired.transition.before)
-        assertEquals(0, expired.transition.after)
-        assertEquals(3, expired.snapshotsObserved)
+        assertTrue(third is NativeAutoCalEpochConfirmation.Observation.RetryBudgetExhausted)
+        val exhausted = third as NativeAutoCalEpochConfirmation.Observation.RetryBudgetExhausted
+        assertEquals(3, exhausted.transition.before)
+        assertEquals(0, exhausted.transition.after)
+        assertEquals(3, exhausted.snapshotsObserved)
+        assertTrue(tracker.hasPending())
+        assertFalse(tracker.shouldRetry())
+
+        val later = tracker.observeMul("NEW")
+        assertTrue(later is NativeAutoCalEpochConfirmation.Observation.Confirmed)
+        val confirmed = (later as NativeAutoCalEpochConfirmation.Observation.Confirmed).value
+        assertEquals(3, confirmed.transition.before)
+        assertEquals(0, confirmed.transition.after)
+        assertEquals("OLD", confirmed.oldMulHash)
+        assertEquals("NEW", confirmed.newMulHash)
         assertFalse(tracker.hasPending())
     }
 
