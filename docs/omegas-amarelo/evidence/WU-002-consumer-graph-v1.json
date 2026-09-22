@@ -670,6 +670,18 @@
           "capture_start_without_prior_counter_baseline": true,
           "status": "PROVEN_WITH_CAPTURE_START_CAVEAT"
         }
+      },
+      "maturity_semantics": {
+        "previous_epoch_counter_object_available": false,
+        "current_NUM_BUF_UPD_GAS_must_not_be_attached_to_previous_epoch": true,
+        "published_previous_point_fields": [
+          "petrol time",
+          "MAP",
+          "MAP region",
+          "previous-epoch role"
+        ],
+        "maturityApplicable": false,
+        "status": "IMPLEMENTED"
       }
     },
     "automatch_epoch_lifecycle": {
@@ -704,6 +716,14 @@
         "prior_k_curve_is_display_baseline_only": true,
         "status": "IMPLEMENTED_AND_TESTED"
       }
+    },
+    "native_projection_boundary": {
+      "native_projection": "AutoCalUiProjection -> AutoCalInstrumentProjection",
+      "inferred_predictor": "AutoMatchSnapshotAnalysis / AUTOMATCH_INFERIDO_V2",
+      "inferred_predictor_attached_to_native_projection": false,
+      "predictor_module_preserved": true,
+      "product_contract": "Native AutoCAL screen consumes ECU/monitor truth only; inferred predictor stays separate.",
+      "status": "IMPLEMENTED_AND_GATED"
     }
   },
   "unknowns": [
