@@ -270,7 +270,9 @@ assert.equal(source.includes('flag inativa'), false);
 
 
 assert.match(source, /GNV · época anterior/);
-assert.match(source, /Leitura anterior/);
+assert.match(source, /Comparar referência anterior/);
+assert.match(source, /GNV · época anterior/);
+assert.equal(source.includes('Mostrar leitura anterior'), false);
 assert.equal(source.includes('Buffer GNV anterior'), false);
 
 
