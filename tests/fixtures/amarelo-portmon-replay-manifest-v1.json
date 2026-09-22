@@ -1,0 +1,38 @@
+{
+  "schema": "omegas.amarelo.portmon-replay-manifest.v1",
+  "workUnit": "WU-003",
+  "authority": "ProgBase 4.2.0.6 + dual raw Portmon captures",
+  "rawMaterializationPolicy": "raw captures stay outside Git; compact fixtures must preserve SHA-256 and deterministic recipe",
+  "builder": "tools/omegas_amarelo/build_portmon_replay_fixture.py",
+  "timingRule": "transaction.at_ms = cumulative duration of every completed Portmon operation before the IRP_MJ_WRITE that starts the transaction",
+  "corpora": {
+    "PortmonAUTOCAL": {
+      "sourceRawName": "PortmonAUTOCAL (1).LOG",
+      "sourceRawSha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+      "compactReplay": "tests/fixtures/portmon-autocal-cycle-v1.json",
+      "rawExcerpt": "tests/fixtures/portmon-autocal-head-real.log",
+      "status": "PROVEN_COMPACT_REPLAY",
+      "observedWriteCount": 36463,
+      "observedUniqueCommands": 21
+    },
+    "PortmonLOGNOVO": {
+      "sourceRawName": "PortmonLOGNOVO.LOG",
+      "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+      "byteEvidence": "tests/fixtures/portmon-lognovo-control-v1.json",
+      "compactReplay": "tests/fixtures/portmon-lognovo-replay-v1.json",
+      "status": "TIMING_REPLAY_PENDING_RAW_ACCESS",
+      "generationCommand": "python3 tools/omegas_amarelo/build_portmon_replay_fixture.py <PortmonLOGNOVO.LOG> --output tests/fixtures/portmon-lognovo-replay-v1.json"
+    }
+  },
+  "closure": {
+    "closureAllowed": false,
+    "blocker": "PortmonLOGNOVO compact replay with cumulative at_ms, command counts, cadence metrics, and exact raw SHA is not yet materialized in Git.",
+    "afterMaterialization": [
+      "validate dual-corpus provenance",
+      "validate live cadence independently in both corpora",
+      "validate slow AutoCAL/reference cadence and ordering",
+      "emit CI diagnostic artifact",
+      "close WU-003 only on a green exact SHA"
+    ]
+  }
+}
