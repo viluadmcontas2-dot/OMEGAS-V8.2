@@ -317,11 +317,16 @@ assert.equal(humanFromTypedEpoch.maxAutoMatch, 3,
   'typed max AutoMatch must outrank raw snapshot fallback');
 
 
-const epochProjection = (sessionId, autoMatchExecuted, factors) => ({
+const epochProjection = (sessionId, autoMatchExecuted, factors, transition = null) => ({
   ok: true,
   sessionId,
   instrument: {
-    epoch: { autoMatchExecuted, maxAutoMatch: 3, authority: 'ECU_READ' },
+    epoch: {
+      autoMatchExecuted,
+      maxAutoMatch: 3,
+      authority: 'ECU_READ',
+      transition,
+    },
     kCurve: {
       points: factors.map((factor, index) => ({
         index,
@@ -332,40 +337,56 @@ const epochProjection = (sessionId, autoMatchExecuted, factors) => ({
   },
 });
 
+const typedNativeEvent = (before, after, rollover = false) => ({
+  nativeAutoMatchBefore: before,
+  nativeAutoMatchAfter: after,
+  nativeAutoMatchRollover: rollover,
+  oldHash: 'old-k-hash',
+  newHash: 'new-k-hash',
+  readbackValid: true,
+  ecuNativeObserved: true,
+  appWritePerformed: false,
+  cause: 'ECU_AUTOMATCH_COUNT_CHANGED',
+});
+
 const epochBaseline = model.instrumentKPoints(epochProjection(101, 2, [1.0, 1.01, 0.99]).instrument);
 const nativeEpochChange = model.epochTransition(
   epochProjection(101, 2, [1.0, 1.01, 0.99]),
-  epochProjection(101, 3, [1.01, 1.02, 1.0]),
+  epochProjection(101, 3, [1.01, 1.02, 1.0], typedNativeEvent(2, 3, false)),
   epochBaseline,
 );
 assert.equal(nativeEpochChange.counterChanged, true);
 assert.equal(nativeEpochChange.changed, true);
 assert.equal(nativeEpochChange.rollover, false);
-assert.equal(nativeEpochChange.reason, 'COUNTER_AND_K_CHANGED');
+assert.equal(nativeEpochChange.reason, 'TYPED_NATIVE_EPOCH_EVENT');
+assert.equal(nativeEpochChange.authority, 'ECU_NATIVE_TYPED_EVENT');
+assert.equal(nativeEpochChange.oldHash, 'old-k-hash');
+assert.equal(nativeEpochChange.newHash, 'new-k-hash');
 assert.equal(nativeEpochChange.previousKPoints.length, 3);
 assert.equal(nativeEpochChange.currentKPoints.length, 3);
 
 const nativeEpochRollover = model.epochTransition(
   epochProjection(101, 3, [1.01, 1.02, 1.0]),
-  epochProjection(101, 0, [0.99, 1.0, 1.01]),
+  epochProjection(101, 0, [0.99, 1.0, 1.01], typedNativeEvent(3, 0, true)),
   model.instrumentKPoints(epochProjection(101, 3, [1.01, 1.02, 1.0]).instrument),
 );
 assert.equal(nativeEpochRollover.changed, true);
-assert.equal(nativeEpochRollover.rollover, true, '3→0 must remain a native epoch transition');
+assert.equal(nativeEpochRollover.rollover, true, '3→0 typed event must remain a native epoch transition');
 
 const counterOnlyChange = model.epochTransition(
   epochProjection(101, 2, [1.0, 1.01, 0.99]),
-  epochProjection(101, 3, [1.0, 1.01, 0.99]),
+  epochProjection(101, 3, [1.01, 1.02, 1.0]),
   epochBaseline,
 );
 assert.equal(counterOnlyChange.counterChanged, true);
 assert.equal(counterOnlyChange.changed, false,
-  'counter change without Curve K delta must not be presented as native K adjustment');
-assert.equal(counterOnlyChange.reason, 'COUNTER_CHANGED_WITHOUT_K_DELTA');
+  'counter change without typed native event must not be promoted to native K adjustment');
+assert.equal(counterOnlyChange.reason, 'COUNTER_CHANGED_AWAITING_TYPED_EVENT');
+assert.equal(counterOnlyChange.authority, 'ECU_COUNTER_READBACK');
 
 const crossSessionEpoch = model.epochTransition(
   epochProjection(101, 2, [1.0, 1.01, 0.99]),
-  epochProjection(202, 3, [1.01, 1.02, 1.0]),
+  epochProjection(202, 3, [1.01, 1.02, 1.0], typedNativeEvent(2, 3, false)),
   epochBaseline,
 );
 assert.equal(crossSessionEpoch.changed, false);
@@ -374,4 +395,6 @@ assert.equal(crossSessionEpoch.reason, 'SESSION_CHANGED');
 assert.match(source, /previousKPoints/);
 assert.match(source, /autocal-k-line previous/);
 assert.match(source, /Novo epoch nativo/);
-assert.match(source, /COUNTER_CHANGED_WITHOUT_K_DELTA/);
+assert.match(source, /TYPED_NATIVE_EPOCH_EVENT/);
+assert.match(source, /COUNTER_CHANGED_AWAITING_TYPED_EVENT/);
+assert.equal(source.includes('sameKCurve('), false);
