@@ -269,13 +269,22 @@
       const baseline = Array.isArray(epochBaselineK) && epochBaselineK.length ? epochBaselineK : fallbackPreviousK;
       const typed = nextEpoch.transition;
 
-      if (
+      const typedMatchesProjection =
         typed &&
+        typed.before !== null &&
+        typed.after !== null &&
+        before !== null &&
+        after !== null &&
+        typed.before === before &&
+        typed.after === after &&
+        typed.oldHash.length > 0 &&
+        typed.newHash.length > 0 &&
+        typed.oldHash !== typed.newHash;
+      if (
+        typedMatchesProjection &&
         typed.readbackValid === true &&
         typed.ecuNativeObserved === true &&
-        typed.appWritePerformed !== true &&
-        typed.before !== null &&
-        typed.after !== null
+        typed.appWritePerformed !== true
       ) {
         return {
           changed: true,
