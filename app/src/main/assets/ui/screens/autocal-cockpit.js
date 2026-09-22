@@ -485,9 +485,9 @@
               <details class="autocal-more-actions">
                 <summary>Mais ações</summary>
                 <div class="autocal-reset-actions">
-                  <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
-                  <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
-                  <p>Reset é uma ação crítica. A revisão WebView e a confirmação Android continuam obrigatórias.</p>
+                  <button type="button" data-autocal-action="RESET_PETROL" disabled aria-disabled="true" title="Bloqueado até validação Atlas">Reset gasolina — bloqueado</button>
+                  <button type="button" data-autocal-action="RESET_GAS" disabled aria-disabled="true" title="Bloqueado até validação Atlas">Reset GNV — bloqueado</button>
+                  <p>Resets bloqueados por segurança até o Atlas provar o efeito real de cada comando na ECU. Habilitar/Pausar coleta permanece disponível.</p>
                 </div>
               </details>
             </section>

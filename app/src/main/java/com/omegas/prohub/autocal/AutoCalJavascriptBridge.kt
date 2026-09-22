@@ -86,7 +86,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         if (parsed.operationalToggle) {
             return localFailure("Iniciar/Pausar usa a ação operacional de um toque")
         }
-        return currentNativeManager()?.prepare(parsed.name)?.toString() ?: unavailable()
+        return localFailure(DESTRUCTIVE_RESET_INTERLOCK_MESSAGE)
     }
 
     @JavascriptInterface
@@ -135,6 +135,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             actionManager.clearPreparation()
             return localFailure("Iniciar/Pausar não usa diálogo crítico; use a ação operacional de um toque")
         }
+        actionManager.clearPreparation()
+        return localFailure(DESTRUCTIVE_RESET_INTERLOCK_MESSAGE)
         synchronized(managerLock) {
             if (nativeConfirmationPendingId != null) {
                 return localFailure("Já existe uma confirmação Android aberta")
@@ -324,6 +326,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("manualOnly", true)
         .put("requiresReview", true)
         .toString()
+
+    companion object {
+        private const val DESTRUCTIVE_RESET_INTERLOCK_MESSAGE =
+            "Resets AutoCal temporariamente bloqueados: efeito real na ECU divergiu do esperado. Aguarde validação Atlas antes de qualquer nova ação destrutiva."
+    }
 
     private fun unavailable(): String = JSONObject()
         .put("ok", false)
