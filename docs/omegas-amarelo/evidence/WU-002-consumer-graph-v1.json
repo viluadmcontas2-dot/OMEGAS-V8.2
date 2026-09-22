@@ -617,14 +617,44 @@
       "exact_firmware_formula": "UNKNOWN",
       "product_contract": "consume ECU point buffer; do not emulate averaging from counter alone",
       "status": "PROVEN_BOUNDARY"
+    },
+    "gas_point_prev": {
+      "fields": [
+        "0x015D PETR_INJ_TBUF_GAS_PREV",
+        "0x015E MNFLD_PRESS_BUF_GAS_PREV"
+      ],
+      "refresh_role": "state_1 / GasPointPrev",
+      "epoch_behavior": {
+        "PortmonAUTOCAL": {
+          "prev_vector_changes": 3,
+          "prior_current_match_ratios": [
+            1,
+            0.9375,
+            0.9375
+          ]
+        },
+        "PortmonLOGNOVO": {
+          "prev_vector_changes": 4,
+          "usable_prior_current_match_ratios": [
+            1,
+            0.9375,
+            0.9333
+          ]
+        }
+      },
+      "automatch_alignment": "Bulk Prev replacement aligns with NUM_AUTOMATCH_EXECUTED epoch transitions in both captures.",
+      "interpretation": "previous native AutoMatch epoch snapshot, not previous polling refresh",
+      "exact_firmware_copy_guard": "UNKNOWN",
+      "ui_contract": "render as prior AutoMatch epoch layer; never animate every refresh as old->new",
+      "status": "PROVEN_DUAL_CAPTURE_BEHAVIOR"
     }
   },
   "unknowns": [
     "Any ECU/physical AutoCAL state machine distinct from the proven refresh-dispatch scheduler; transition producers/guards remain UNKNOWN.",
     "Exact producer/consumer transforms not already listed as PROVEN.",
-    "Firmware meaning/lifecycle of GasPointPrev beyond its proven separate native buffer.",
     "Human/physical semantic names beyond numeric low-to-high MAP region order for acquired-zone indices 0..3.",
     "Finish AutoCAL exact ECU-side effect after setting NUM_AUTOMATCH_EXECUTED to MAX_AUTOMATCH; the write path is statically proven but no 0x0174 write is present in supplied raws.",
-    "Firmware rule that changes ACQUIRED_ZONES flags remains UNKNOWN; host maturity/polling threshold is now separately proven and must not be conflated with zone-flag transitions."
+    "Firmware rule that changes ACQUIRED_ZONES flags remains UNKNOWN; host maturity/polling threshold is now separately proven and must not be conflated with zone-flag transitions.",
+    "Exact firmware copy guard/timing for GasPointPrev epoch rollover; operational prior-AutoMatch-epoch behavior is proven, exact internal trigger remains UNKNOWN."
   ]
 }
