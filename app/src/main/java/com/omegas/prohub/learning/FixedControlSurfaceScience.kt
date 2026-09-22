@@ -204,8 +204,7 @@ object FixedControlSurfaceScience {
             abs(a.rpm - b.rpm) <= 1e-9 &&
             abs(a.petrolMs - b.petrolMs) <= 1e-9 &&
             abs(a.residualPercent - b.residualPercent) <= 1e-9 &&
-            abs(a.quality - b.quality) <= 1e-9 &&
-            a.collectedAtMs == b.collectedAtMs
+            abs(a.quality - b.quality) <= 1e-9
 
     private fun weightedMean(values: List<Pair<Double, Double>>): Double? {
         val total = values.sumOf { it.second }
