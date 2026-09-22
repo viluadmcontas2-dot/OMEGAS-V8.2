@@ -116,7 +116,7 @@ DFM + wire:
 - nenhum write 0x0165 foi observado nos dois raws fornecidos.
 
 Classificação correta:
-`Finish -> U8_1 -> U8_0 -> connection-aware commit -> 100 ms -> refresh` = **PROVEN_STATIC**.
+`Finish -> MAX_AUTOMATCH -> NUM_AUTOMATCH_EXECUTED -> connection-aware commit -> 100 ms -> refresh` = **PROVEN_STATIC**.
 O write físico do Finish e seu efeito exato dentro da ECU = **NOT OBSERVED / UNKNOWN**.
 
 Fixture/gate:
@@ -235,3 +235,22 @@ Bulk Prev replacements align with `NUM_AUTOMATCH_EXECUTED` epoch transitions. On
 Operational conclusion: **GasPointPrev is the previous native AutoMatch epoch snapshot**. Exact firmware copy guard/timing remains UNKNOWN.
 
 UX rule: render Current and Previous as two native epoch layers; never animate Prev as a 2-second-old ghost of Current.
+
+
+## Zone-set guard evidence boundary — 2026-09-21
+
+The supplied captures do not expose a single host-visible formula for `ACQUIRED_ZONES_GAS 0->1`.
+
+Observed:
+- every activation remains associated with live MAP visitation in the same native region within at most two slow zone-poll windows;
+- AUTOCAL contains an activation after only one live frame in-region (~46 ms before observation);
+- other activations appear after ~2 s of in-region live MAP;
+- one observed activation has no current native point in that region at the latest heavy snapshot;
+- four AUTOCAL activations have no mature point in-region under the proven host polling threshold.
+
+Therefore these simple guards are falsified:
+- fixed dwell / fixed live-frame count;
+- current native point presence as a required guard;
+- mature-point presence as a required guard.
+
+The exact ECU set guard is **not recoverable from the supplied polling cadence**. Product rule remains unchanged: ECU flag is authority; live MAP, point presence and maturity are explanatory context only and must not synthesize the flag.
