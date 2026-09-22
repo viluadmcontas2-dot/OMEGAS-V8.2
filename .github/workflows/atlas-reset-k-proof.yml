@@ -1,0 +1,135 @@
+name: OMEGAS Atlas Targeted Reset-K Proof
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/atlas-reset-k-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  prove-reset-k:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout canonical Atlas SHA
+        uses: actions/checkout@v4
+        with:
+          ref: 427fbcb8d71689e97c4bc9d7f2dd3be36f935d81
+
+      - name: Verify canonical ProgBase
+        shell: bash
+        run: |
+          set -euo pipefail
+          P=atlas/originals/progbase/ProgBase-4.2.0.6.exe
+          test -s "$P"
+          ACTUAL="$(sha256sum "$P" | awk '{print $1}')"
+          EXPECTED="8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+          echo "ACTUAL=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+
+      - name: Install pinned decoder
+        run: python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26
+
+      - name: Prove ActionResetKFactor native value
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p atlas-proof
+          python3 - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          import pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+          from capstone.x86 import X86_OP_IMM
+
+          binary = Path("atlas/originals/progbase/ProgBase-4.2.0.6.exe")
+          expected_sha = "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+          actual_sha = hashlib.sha256(binary.read_bytes()).hexdigest()
+          assert actual_sha == expected_sha
+
+          pe = pefile.PE(str(binary), fast_load=False)
+          image = int(pe.OPTIONAL_HEADER.ImageBase)
+          start = 0x0051A070
+          end = 0x0051A168
+
+          def va_to_off(va):
+              rva = va - image
+              for s in pe.sections:
+                  a = int(s.VirtualAddress)
+                  size = max(int(s.Misc_VirtualSize), int(s.SizeOfRawData))
+                  if a <= rva < a + size:
+                      return int(s.PointerToRawData) + (rva - a)
+              raise RuntimeError(f"VA not mapped: {va:#x}")
+
+          data = binary.read_bytes()
+          off = va_to_off(start)
+          raw = data[off:off + (end-start)]
+          md = Cs(CS_ARCH_X86, CS_MODE_32)
+          md.detail = True
+          ins = list(md.disasm(raw, start))
+          lines = [f"{i.address:08x}: {i.bytes.hex(' '):<24} {i.mnemonic:<8} {i.op_str}".rstrip() for i in ins]
+
+          target = 0x00979EE8
+          call_indexes = []
+          for idx,i in enumerate(ins):
+              if i.mnemonic == "call" and i.operands and i.operands[0].type == X86_OP_IMM and int(i.operands[0].imm) == target:
+                  call_indexes.append(idx)
+
+          windows = []
+          for idx in call_indexes:
+              lo=max(0,idx-14); hi=min(len(ins),idx+4)
+              windows.append(lines[lo:hi])
+
+          x87 = [line for line,i in zip(lines,ins) if i.mnemonic.startswith("f")]
+          proof = {
+              "schema":"omegas.atlas.reset-k-proof.v1",
+              "binary_sha256":actual_sha,
+              "function":"TAutoCalUI.ActionResetKFactorExecute",
+              "start_va":"0x0051A070",
+              "end_va_exclusive":"0x0051A168",
+              "set_double_target":"0x00979EE8",
+              "set_double_call_count":len(call_indexes),
+              "set_double_windows":windows,
+              "x87_instructions":x87,
+              "full_disassembly":lines,
+          }
+          Path("atlas-proof/reset-k-proof.json").write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")
+          md_lines=[
+              "## Atlas targeted proof — ActionResetKFactorExecute",
+              "",
+              f"- binary SHA-256: \`{actual_sha}\`",
+              "- function: \`TAutoCalUI.ActionResetKFactorExecute @ 0x0051A070\`",
+              f"- direct calls to \`TAebVector_SetDouble @ 0x00979EE8\`: **{len(call_indexes)}**",
+              "",
+              "### Call window",
+              "\`\`\`asm",
+          ]
+          for window in windows:
+              md_lines.extend(window)
+              md_lines.append("")
+          md_lines += ["\`\`\`","","### x87 instructions","\`\`\`asm",*x87,"\`\`\`"]
+          Path("atlas-proof/reset-k-proof.md").write_text("\n".join(md_lines)+"\n",encoding="utf-8")
+          print("\n".join(md_lines))
+          assert call_indexes, "SetDouble call not found"
+          PY
+
+      - name: Publish proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-reset-k-proof
+          path: atlas-proof/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach proof to Atlas issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh issue comment 100 --repo "${{ github.repository }}" --body-file atlas-proof/reset-k-proof.md
