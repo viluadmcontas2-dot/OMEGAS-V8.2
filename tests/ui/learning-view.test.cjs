@@ -80,18 +80,69 @@ test('preserva RPM MAP e tempo medio reais de gasolina e GNV para a camada didat
     epoch: 4,
     grid: { rows: 12, columns: 12, rpmBins: [2500], petrolBins: [4.5] },
     cells: [
-      { ...cell('PETROL', 0, 0, 0, 8), rpm: 2488, map_bar: 0.604, petrol_ms: 4.42, petrol_spread_ms: 0.08, quality: 0.93 },
-      { ...cell('CNG', 0, 0, 4, 7), rpm: 2496, map_bar: 0.611, petrol_ms: 4.84, petrol_spread_ms: 0.10, quality: 0.89 },
+      {
+        ...cell('PETROL', 0, 0, 0, 8),
+        control_rpm: 2500, control_petrol_ms: 4.5,
+        observed_rpm_center: 2488, observed_map_center: 0.604, observed_petrol_ms_center: 4.42,
+        rpm: 2488, map_bar: 0.604, petrol_ms: 4.42, petrol_spread_ms: 0.08, quality: 0.93,
+      },
+      {
+        ...cell('CNG', 0, 0, 4, 7),
+        control_rpm: 2500, control_petrol_ms: 4.5,
+        observed_rpm_center: 2496, observed_map_center: 0.611, observed_petrol_ms_center: 4.84,
+        rpm: 2496, map_bar: 0.611, petrol_ms: 4.84, petrol_spread_ms: 0.10, quality: 0.89,
+      },
     ],
     comparisons: [comparison(0, 0)],
   });
   const target = model.cells.find(item => item.key === '0:0');
-  assert.equal(target.petrol.petrolMs, 4.42);
-  assert.equal(target.petrol.rpm, 2488);
-  assert.equal(target.petrol.mapBar, 0.604);
-  assert.equal(target.cng.petrolMs, 4.84);
-  assert.equal(target.cng.rpm, 2496);
-  assert.equal(target.cng.mapBar, 0.611);
+  assert.equal(target.petrolMs, 4.5, 'endereço do nó não pode virar o centro observado');
+  assert.equal(target.rpm, 2500, 'RPM do nó permanece no eixo físico');
+  assert.equal(target.petrol.controlPetrolMs, 4.5);
+  assert.equal(target.petrol.controlRpm, 2500);
+  assert.equal(target.petrol.observedPetrolMsCenter, 4.42);
+  assert.equal(target.petrol.observedRpmCenter, 2488);
+  assert.equal(target.petrol.observedMapCenter, 0.604);
+  assert.equal(target.cng.controlPetrolMs, 4.5);
+  assert.equal(target.cng.observedPetrolMsCenter, 4.84);
+  assert.equal(target.cng.observedRpmCenter, 2496);
+  assert.equal(target.cng.observedMapCenter, 0.611);
   assert.equal(target.petrol.petrolSpreadMs, 0.08);
   assert.equal(target.cng.quality, 0.89);
+});
+
+
+test('evidência em 5,3 ms não renomeia os nós fixos 4,5 e 6,0 ms', () => {
+  const model = view.buildModel({
+    epoch: 1,
+    grid: {
+      rows: 12, columns: 12,
+      rpmBins: [850,1350,1850,2500,3000,3500,4000,4500,5000,5500,6000,6500],
+      petrolBins: [2,2.5,3,3.5,4.5,6,8,10,12,14,16,18],
+    },
+    cells: [
+      {
+        ...cell('CNG', 4, 2, 1, 1),
+        control_rpm: 1850,
+        control_petrol_ms: 4.5,
+        observed_rpm_center: 2100,
+        observed_petrol_ms_center: 5.3,
+        observed_map_center: 0.60,
+      },
+      {
+        ...cell('CNG', 5, 2, 1, 1),
+        control_rpm: 1850,
+        control_petrol_ms: 6.0,
+        observed_rpm_center: 2100,
+        observed_petrol_ms_center: 5.3,
+        observed_map_center: 0.60,
+      },
+    ],
+  });
+  const lower = model.cells.find(item => item.key === '4:2');
+  const upper = model.cells.find(item => item.key === '5:2');
+  assert.equal(lower.petrolMs, 4.5);
+  assert.equal(upper.petrolMs, 6.0);
+  assert.equal(lower.cng.observedPetrolMsCenter, 5.3);
+  assert.equal(upper.cng.observedPetrolMsCenter, 5.3);
 });
