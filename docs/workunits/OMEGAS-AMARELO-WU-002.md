@@ -204,3 +204,30 @@ Esses UNKNOWNs **não autorizam algoritmo host paralelo**.
 3. Android render evidence do conjunto visual relevante estiver verde.
 
 Não escavar firmware inexistente para substituir esses gates.
+
+
+## Polling-safe native epoch confirmation — 2026-09-22
+
+A previous monitor implementation could miss a real native epoch if `NUM_AUTOMATCH_EXECUTED`
+changed in one probe but the changed `MUL_ACT` became visible only in a later full readback.
+
+The runtime now treats the counter transition as a **signal**, not as scientific confirmation:
+
+1. counter transition opens a pending native epoch;
+2. the pre-transition `MUL_ACT` payload is preserved as baseline;
+3. full snapshot readback checks for a changed native `MUL_ACT`;
+4. only a changed K readback emits `nativeAutoMatchEpochEvent`;
+5. unchanged K remains pending for at most 3 heavy snapshots total (initial + two follow-ups);
+6. expiry does not promote a new epoch;
+7. session change/disconnect clears pending state;
+8. an explicit manual app action clears pending native attribution before its own readback;
+9. overlapping unresolved counter transitions fail closed rather than attributing a K change to the wrong epoch.
+
+The 3-snapshot budget is an operational anti-race/anti-loop policy, **not ECU science**.
+
+Typed HMI projection now carries:
+- `epoch.pending` -> human state **Verificando ajuste da ECU**;
+- `epoch.unconfirmed` -> **Mudança ainda não confirmada**;
+- `epoch.transition` only after native K readback confirmation.
+
+Counter-only change remains insufficient to create a scientific epoch in the UI.
