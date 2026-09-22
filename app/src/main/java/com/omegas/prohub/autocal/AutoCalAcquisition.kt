@@ -10,13 +10,13 @@ object AutoCalAcquisition {
         val fuel: String,
         val time: String,
         val map: String,
-        val count: String,
+        val count: String?,
         val previous: Boolean = false,
     )
     private val sources = listOf(
         Source("GASOLINA", "PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_UPD_PETR"),
         Source("GNV", "PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS", "NUM_BUF_UPD_GAS"),
-        Source("GNV_ANTERIOR", "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV", "NUM_BUF_UPD_GAS", previous = true),
+        Source("GNV_ANTERIOR", "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV", null, previous = true),
     )
 
     fun fromSnapshot(snapshot: JSONObject): JSONObject {
@@ -43,21 +43,24 @@ object AutoCalAcquisition {
         sources.forEach { source ->
             val times = fields[source.time]?.rawValues() ?: intArrayOf()
             val maps = fields[source.map]?.rawValues() ?: intArrayOf()
-            val counts = fields[source.count]?.rawValues() ?: intArrayOf()
+            val counts = source.count?.let { fields[it]?.rawValues() } ?: intArrayOf()
             repeat(18) { index ->
                 val timeRaw = times.getOrNull(index)
                 val mapRaw = maps.getOrNull(index)
                 val count = counts.getOrNull(index)
                 val threshold = when {
+                    source.previous -> null
                     source.fuel == "GASOLINA" && index in 0..5 -> petrolLowThreshold
                     source.fuel == "GASOLINA" -> petrolNormalThreshold
                     index in 0..5 -> gasLowThreshold
                     else -> gasNormalThreshold
                 }
                 val zone = mapRaw?.let { regionForMapRaw(it, mapThresholds) }
-                val maturityGroup = if (index <= 5) "LOW_INDEX" else "NORMAL_INDEX"
+                val maturityGroup = if (source.previous) null else if (index <= 5) "LOW_INDEX" else "NORMAL_INDEX"
                 val state = when {
-                    timeRaw == null || mapRaw == null || count == null -> "SEM_DADO"
+                    timeRaw == null || mapRaw == null -> "SEM_DADO"
+                    source.previous -> "EPOCA_ANTERIOR"
+                    count == null -> "SEM_DADO"
                     threshold == null -> "LIMIAR_NAO_LIDO"
                     count >= threshold -> { valid++; "VALIDO" }
                     count > 0 -> { collecting++; "COLETANDO" }
@@ -66,7 +69,8 @@ object AutoCalAcquisition {
                 points.put(JSONObject()
                     .put("index", index)
                     .put("zone", zone ?: JSONObject.NULL)
-                    .put("maturityGroup", maturityGroup)
+                    .put("maturityGroup", maturityGroup ?: JSONObject.NULL)
+                    .put("maturityApplicable", !source.previous)
                     .put("fuel", source.fuel)
                     .put("timeRaw", timeRaw ?: JSONObject.NULL)
                     .put("timeMs", timeRaw?.let { AutoCalScale.injectionMs(it) } ?: JSONObject.NULL)
@@ -75,7 +79,7 @@ object AutoCalAcquisition {
                     .put("counter", count ?: JSONObject.NULL)
                     .put("threshold", threshold ?: JSONObject.NULL)
                     .put("state", state)
-                    .put("draw", state == "VALIDO")
+                    .put("draw", !source.previous && state == "VALIDO")
                     .put("previous", source.previous)
                     .put("rawOnly", true))
             }
