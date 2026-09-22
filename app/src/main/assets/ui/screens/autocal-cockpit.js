@@ -795,7 +795,7 @@
         'autocalZoneSummary',
         regionFlags.length
           ? regionFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? '●' : '○')).join(' · ')
-          : 'Flags de região indisponíveis'
+          : 'Regiões do ciclo indisponíveis'
       );
       this.text('autocalStateRaw', state.state || '—');
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
@@ -967,8 +967,8 @@
         : Array.from({ length: 4 }, () => false);
       meter.setAttribute(
         'aria-label',
-        'Flags de região. Gasolina: ' + petrolFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? 'ativa' : 'inativa')).join(', ') +
-        '. GNV: ' + gasFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? 'ativa' : 'inativa')).join(', ')
+        'Regiões registradas neste ciclo. Gasolina: ' + petrolFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? 'registrada' : 'ainda não registrada')).join(', ') +
+        '. GNV: ' + gasFlags.map((active, index) => 'R' + (index + 1) + ' ' + (active ? 'registrada' : 'ainda não registrada')).join(', ')
       );
       this.panel?.querySelectorAll('[data-autocal-zone-petrol]').forEach(node => {
         const index = Number(node.dataset.autocalZonePetrol);
@@ -1221,7 +1221,7 @@
         return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
           '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
           '" role="listitem" aria-pressed="false" aria-label="Região ' + (band.index + 1) + ' de 18, ' + stateLabel +
-          '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'flag ativa' : stateLabel) + '</small></button>';
+          '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'região registrada' : stateLabel) + '</small></button>';
       }).join('');
       const preferred = Number.isInteger(this.selectedBandIndex)
         ? this.selectedBandIndex
@@ -1243,7 +1243,7 @@
       const message = AutoCalUxModel.bandNarrative(band);
 
       const zoneText = Number.isInteger(band.zone)
-        ? 'Região MAP R' + (band.zone + 1) + ': flag ' + (band.zoneAcquired ? 'ativa' : 'inativa') + ' na ECU'
+        ? 'Região MAP R' + (band.zone + 1) + ': ' + (band.zoneAcquired ? 'registrada pela ECU neste ciclo' : 'ainda não registrada pela ECU neste ciclo')
         : 'Região MAP ainda não determinada para esta posição';
       host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
     }
