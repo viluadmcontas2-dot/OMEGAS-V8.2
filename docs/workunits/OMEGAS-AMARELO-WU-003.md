@@ -1,7 +1,7 @@
 # OMEGAS-AMARELO-WU-003 — Replay real e GitHub Actions
 
 Issue: #75
-Estado: **IN_PROGRESS — replay infra PROVEN; LOGNOVO timing replay pending**
+Estado: **PROVEN — dual raw replay + dedicated GitHub Actions gate**
 
 ## Resultado observável
 CI reexecuta contratos AutoCAL/MP48 a partir de fixtures compactos derivados dos dois logs crus.
@@ -53,35 +53,42 @@ Workflow: **OMEGAS Amarelo replay contracts**
 
 General fast-contract regression:
 - run `35777192904` at SHA `3be57ae7944cae061d116ac5a870167c7cc5e168`: **SUCCESS** for builder + initial manifest;
-- newer fast-contract runs are separate regression receipts and do not substitute the dedicated replay gate.
+- newer fast-contract runs are separate regression receipts and do not substitute the dedicated replay gate.\n\n## Closure receipt — 2026-09-22
 
-## Remaining blocker
+WU-003 está **PROVEN**.
 
-WU-003 is **not closed**.
+### LOGNOVO raw → compact replay
+- raw materializado fora do Git a partir do arquivo original de Drive;
+- raw size: `149911521` bytes;
+- raw SHA-256: `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64` — match exato com a autoridade canônica;
+- fixture: `tests/fixtures/portmon-lognovo-replay-v1.json`;
+- fixture SHA-256: `62001a5c38206466e1444b24438eba608440c0192b9e923721e0504c446de70e`;
+- 39,517 writes / 567 comandos únicos;
+- 964 transações compactas selecionadas deterministicamente;
+- `sequence`, `portmon_index` e `at_ms` são estritamente crescentes no replay selecionado.
 
-Missing artifact:
-`tests/fixtures/portmon-lognovo-replay-v1.json`
+### Cadência raw-derived
+- live `48 01 49`: mediana `59.628 ms`;
+- famílias AutoCAL lentas: aproximadamente `1.99–2.02 s`;
+- referências `0x018D/0x018E`: aproximadamente `4.02 s`;
+- timing permanece definido exclusivamente pelo relógio cumulativo das operações Portmon, nunca por source line/render timestamp.
 
-It must be generated from the original raw LOGNOVO using the canonical parser/builder, preserving:
-- exact raw SHA;
-- `sequence`;
-- `portmon_index`;
-- cumulative `at_ms`;
-- full command counts;
-- live cadence;
-- slow AutoCAL/reference cadence;
-- deterministic selection recipe.
+### CI receipts no primeiro SHA com o dual replay
+Source SHA: `86270351c05e050dd1ce1e83ccc2bc3578668921`
 
-Canonical generation command:
-`python3 tools/omegas_amarelo/build_portmon_replay_fixture.py <PortmonLOGNOVO.LOG> --output tests/fixtures/portmon-lognovo-replay-v1.json`
+Dedicated replay workflow:
+- run `35796107887` — **SUCCESS**;
+- artifact `amarelo-replay-contract-report`, id `10723599842`;
+- artifact digest `sha256:64ec886fcb7ce1f33fb7336ca98c95bd19947747d8b94d925eddbaf52a2b272a`.
 
-Do **not** substitute `sourceEvent`, source line, render timestamps or synthetic timestamps for `at_ms`.
+Fast regression:
+- run `35796107621` — **SUCCESS**;
+- protocolo, consumer graph, evidência nativa, Kotlin projection/publisher e UI contracts passaram no mesmo SHA.
 
-## Gate to close #75
-1. materialize the original LOGNOVO raw outside Git;
-2. generate the compact replay with the canonical builder;
-3. promote the manifest to dual replay PROVEN;
-4. add dual-corpus cadence/ordering assertions;
-5. obtain GREEN dedicated replay workflow + diagnostic artifact on the exact final SHA.
+### Final exact-SHA rule
+Qualquer commit documental de fechamento que altere o HEAD deve tocar o manifest de replay e obter novamente o dedicated replay workflow verde. O receipt terminal fica registrado na GitHub issue #75.
+
+## Próximo WorkUnit
+WU-005 / #77 — fechar a tela AutoCAL por `replay → runtime/bridge → WebView real → screenshot/DOM 1280×720`.
 
 No APK.
