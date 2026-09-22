@@ -241,7 +241,7 @@
         rollover: after < before,
         previousKPoints: baseline,
         currentKPoints,
-        authority: 'ECU_NATIVE_AUTOMATCH_EPOCH_READBACK',
+        authority: 'ECU_AUTOMATCH_EPOCH_READBACK',
         reason: kChanged ? 'COUNTER_AND_K_CHANGED' : 'COUNTER_CHANGED_WITHOUT_K_DELTA',
       };
     },
