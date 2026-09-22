@@ -1,0 +1,92 @@
+name: OMEGAS VERDE APK NOW
+
+on:
+  push:
+    branches: [ OmegasVerde ]
+    paths:
+      - '.github/workflows/verde-apk-now.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-verde-apk-now
+  cancel-in-progress: true
+
+jobs:
+  verify-build-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact remote SHA
+        uses: actions/checkout@v4
+
+      - name: Prove checkout identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 35 packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Run contracts, unit tests, lint and assemble
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          python3 -B tools/run_checks.py
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug             -PomegasAbis=armeabi-v7a             --no-daemon             --stacktrace
+
+      - name: Verify and hash APK
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          mkdir -p build/evidence
+          APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
+          APK_BYTES="$(stat -c %s "$APK")"
+          SOURCE_TREE="$(git rev-parse HEAD^{tree})"
+          unzip -t "$APK" >/dev/null
+          {
+            echo "OMEGAS_VERDE_APK=PASS"
+            echo "SOURCE_SHA=$GITHUB_SHA"
+            echo "SOURCE_TREE=$SOURCE_TREE"
+            echo "APK_PATH=$APK"
+            echo "APK_SHA256=$APK_SHA256"
+            echo "APK_BYTES=$APK_BYTES"
+            echo "APK_ZIP_INTEGRITY=PASS"
+            echo "PHYSICAL_INSTALL_NOT_YET_CLAIMED=true"
+          } | tee build/evidence/omegas-verde-apk-evidence.txt
+          echo "apk_sha256=$APK_SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Publish APK + evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: omegas-verde-apk-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            build/evidence/omegas-verde-apk-evidence.txt
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
