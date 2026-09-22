@@ -653,11 +653,24 @@
           ]
         }
       },
-      "automatch_alignment": "Bulk Prev replacement aligns with NUM_AUTOMATCH_EXECUTED epoch transitions in both captures.",
+      "automatch_alignment": "PROVEN_BIDIRECTIONAL_WITH_CAPTURE_START_CAVEAT",
       "interpretation": "previous native AutoMatch epoch snapshot, not previous polling refresh",
-      "exact_firmware_copy_guard": "UNKNOWN",
+      "exact_firmware_copy_guard": "UNKNOWN_DUE_ASYNC_POLLING_AND_NO_ECU_FIRMWARE",
       "ui_contract": "render as prior AutoMatch epoch layer; never animate every refresh as old->new",
-      "status": "PROVEN_DUAL_CAPTURE_BEHAVIOR"
+      "status": "PROVEN_DUAL_CAPTURE_BEHAVIOR",
+      "bidirectional_epoch_association": {
+        "PortmonLOGNOVO": {
+          "nonbaseline_counter_transitions": 4,
+          "prev_bulk_replacements": 4,
+          "status": "PROVEN_ONE_TO_ONE"
+        },
+        "PortmonAUTOCAL": {
+          "measurable_counter_transitions": 2,
+          "prev_bulk_replacements": 3,
+          "capture_start_without_prior_counter_baseline": true,
+          "status": "PROVEN_WITH_CAPTURE_START_CAVEAT"
+        }
+      }
     }
   },
   "unknowns": [
