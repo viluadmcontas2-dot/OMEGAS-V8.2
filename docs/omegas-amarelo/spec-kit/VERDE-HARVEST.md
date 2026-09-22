@@ -106,3 +106,24 @@ Delta desde `1f044b8991291f699e1cf73a70ff0f3333e41ee6`: 8 commits.
 - **REJECT AS AUTHORITY** — qualquer semântica nativa de zonas, curvas, AutoMatch ou LEVELS inferida do JS Verde.
 
 Nenhum merge/cherry-pick wholesale. O Amarelo continua usando ProgBase + Portmons como autoridade e o Blueprint CUSTOMROM/OMEGADEV como autoridade de experiência.
+
+
+## WU-003 radar — 2026-09-22 — Verde `a76d9e7cf184b1145d089e25e61753220b55659e`
+
+Scope: replay/provenance only.
+
+### HARVEST
+- `tests/fixtures/portmon-lognovo-autocal-reference-v1.json` from Verde commit `4238c721...`: exact ORIGINAL_DERIVED LOGNOVO request/response bytes for PETR_INJ_TBP, MNFLD_PRESS_THD, MUL_ACT, PETR_MNFLD_PRESS_RV and GAS_MNFLD_PRESS_RV.
+- raw authority remains `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64`.
+- the original AUTOCAL compact replay and its replay contract are unchanged since commits `6049a6f4...` / `760310aa...`.
+
+### REVALIDATE
+- Verde render-provenance harness is useful as a pattern for preserving ORIGINAL_DERIVED vs TEST_ONLY fixture classification.
+- It does not provide the missing LOGNOVO cumulative transaction clock.
+
+### REJECT AS WU-003 TIMING AUTHORITY
+- `sourceEvent` and source-line numbers are not timestamps.
+- synthetic render timestamps are explicitly non-original.
+- no Verde fixture currently provides a compact LOGNOVO replay with canonical cumulative `at_ms`.
+
+Result: harvested exact LOGNOVO bytes; WU-003 timing blocker remains bounded to one missing raw-derived compact replay. No wholesale merge.
