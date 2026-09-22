@@ -10,6 +10,7 @@ def load(name,path):
 LANE=load("battle_lane","atlas/battle/lane.py")
 RECON=load("battle_reconcile","atlas/battle/reconcile.py")
 STATIC=load("battle_static","atlas/battle/static_index.py")
+UNDELPHI=load("undelphi_seeds","atlas/battle/undelphi_seeds.py")
 
 class BattleContractTest(unittest.TestCase):
     def test_unknown_is_not_a_terminal_state(self):
@@ -22,6 +23,18 @@ class BattleContractTest(unittest.TestCase):
 
     def test_reusable_lane_ids_change_with_engine(self):
         self.assertNotEqual(RECON.lane_id(2,"ghidra-fn","function","00401000"),RECON.lane_id(2,"objdump-fn","function","00401000"))
+
+    def test_undelphi_exact_method_parser(self):
+        sample = """  TAutoCalUI — size=1260B, vmt=0xa9ee00, ptrsize=4B
+    published methods (2):
+      0x005187a0 ActionAutoCalRifExecute
+      0x005189b4 ActionAutoMatchExecute
+    virtual methods (78):
+"""
+        classes, methods = UNDELPHI.extract(sample)
+        self.assertEqual(classes["TAutoCalUI"]["size"], 1260)
+        self.assertEqual([m["name"] for m in methods], ["ActionAutoCalRifExecute", "ActionAutoMatchExecute"])
+        self.assertEqual([m["va_hex"] for m in methods], ["0x005187a0", "0x005189b4"])
 
     def test_objdump_xref_parser_never_counts_instruction_address(self):
         self.assertEqual(STATIC.operand_hex_values("  513596:\t54 \tpush esp"), set())

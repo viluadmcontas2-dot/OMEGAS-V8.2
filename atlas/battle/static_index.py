@@ -104,9 +104,13 @@ def main():
             targets[term]["objdump_xrefs"].append({"instruction_va":insn_va,"instruction_va_hex":hex(insn_va),"target_va":v,"target_va_hex":hex(v),"line":line[:500]})
             xref_seed.add(insn_va)
 
+    # Primary Ghidra roots must be direct evidence, not "any nearby dword that looks executable".
+    # Heuristic code-pointer candidates remain available as hypotheses but are excluded from
+    # the primary graph seed set.
     seed_addrs=set(xref_seed)
+    heuristic_addrs=set()
     for t in targets.values():
-        seed_addrs.update(c["va"] for c in t["candidate_code_pointers"])
+        heuristic_addrs.update(c["va"] for c in t["candidate_code_pointers"])
     for lead in seeds.get("address_leads",[]):
         seed_addrs.add(int(lead["va"],16))
 
@@ -117,15 +121,18 @@ def main():
         "image_base":image_base,"image_base_hex":hex(image_base),
         "sections":sections,"targets":targets,
         "seed_address_count":len(seed_addrs),
+        "heuristic_address_count":len(heuristic_addrs),
         "objdump_sha256":hashlib.sha256(proc.stdout.encode("utf-8","replace")).hexdigest()
     }
     args.out.mkdir(parents=True,exist_ok=True)
     (args.out/"static-index.json").write_text(json.dumps(out,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
     with (args.out/"ghidra-seeds.txt").open("w",encoding="utf-8") as f:
         for a in sorted(seed_addrs): f.write(f"0x{a:08x}\n")
+    with (args.out/"hypothesis-code-pointers.txt").open("w",encoding="utf-8") as f:
+        for a in sorted(heuristic_addrs): f.write(f"0x{a:08x}\n")
     with (args.out/"objdump-auto-xrefs.txt").open("w",encoding="utf-8") as f:
         for term,t in targets.items():
             for x in t["objdump_xrefs"]: f.write(f"{term}\t{x['line']}\n")
-    print(json.dumps({"targets":len(targets),"seed_addresses":len(seed_addrs),"direct_objdump_xrefs":sum(len(x["objdump_xrefs"]) for x in targets.values())},indent=2))
+    print(json.dumps({"targets":len(targets),"primary_seed_addresses":len(seed_addrs),"heuristic_addresses":len(heuristic_addrs),"direct_objdump_xrefs":sum(len(x["objdump_xrefs"]) for x in targets.values())},indent=2))
 
 if __name__=="__main__": main()

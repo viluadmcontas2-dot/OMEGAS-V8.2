@@ -5,7 +5,14 @@ on:
   push:
     branches: [OmegasAtlas]
     paths:
-      - 'atlas/**'
+      - 'atlas/tools/seed.py'
+      - 'atlas/tools/planner.py'
+      - 'atlas/tools/investigate.py'
+      - 'atlas/tools/reconcile.py'
+      - 'atlas/tools/verify_vertical.py'
+      - 'atlas/tests/test_reconcile.py'
+      - 'atlas/originals/**'
+      - 'atlas/manifests/canonical-inputs.json'
       - '.github/workflows/atlas-vertical-slice.yml'
 
 permissions:

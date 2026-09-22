@@ -75,7 +75,7 @@ jobs:
           if-no-files-found: error
 
   ghidra-index:
-    needs: preflight-static
+    needs: [preflight-static, undelphi-index]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -84,6 +84,19 @@ jobs:
         with:
           name: atlas-static-index
           path: atlas-index/static
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-undelphi-index
+          path: atlas-index/undelphi
+      - name: Promote exact Delphi handlers into graph roots
+        run: |
+          python3 atlas/battle/undelphi_seeds.py \
+            --input atlas-index/undelphi/undelphi.txt \
+            --seeds atlas-index/undelphi/ghidra-seeds-exact.txt \
+            --json atlas-index/undelphi/autocal-metadata.json
+          cat atlas-index/static/ghidra-seeds.txt atlas-index/undelphi/ghidra-seeds-exact.txt \
+            | awk 'NF' | sort -u > atlas-index/ghidra-seeds-primary.txt
+          echo "Primary seed count: $(wc -l < atlas-index/ghidra-seeds-primary.txt)"
       - name: Install hash-pinned official Ghidra 12.1.3
         shell: bash
         run: |
@@ -104,10 +117,12 @@ jobs:
           /tmp/ghidra_12.1.3_PUBLIC/support/analyzeHeadless /tmp/ghidra-projects OmegasAtlas \
             -import atlas/originals/progbase/ProgBase-4.2.0.6.exe \
             -scriptPath atlas/ghidra_scripts \
-            -postScript AtlasExport.java "$GITHUB_WORKSPACE/atlas-index/ghidra" "$GITHUB_WORKSPACE/atlas-index/static/ghidra-seeds.txt" \
+            -postScript AtlasExport.java "$GITHUB_WORKSPACE/atlas-index/ghidra" "$GITHUB_WORKSPACE/atlas-index/ghidra-seeds-primary.txt" \
             -deleteProject
           test -s atlas-index/ghidra/functions.tsv
           test -s atlas-index/ghidra/meta.json
+      - cp atlas-index/ghidra-seeds-primary.txt atlas-index/ghidra/primary-seeds.txt
+      - cp atlas-index/undelphi/autocal-metadata.json atlas-index/ghidra/autocal-metadata.json
       - uses: actions/upload-artifact@v4
         with:
           name: atlas-ghidra-index
