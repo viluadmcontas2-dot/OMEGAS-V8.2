@@ -36,6 +36,8 @@ class AutoCalInstrumentProjectionTest {
             vectorField("NUM_BUF_UPD_GAS", doubleArrayOf(5.0, 6.0), 207L, raw = intArrayOf(5, 6)),
             vectorField("PETR_INJ_TBP", doubleArrayOf(2.0, 4.0, 6.0), 208L),
             vectorField("MUL_ACT", doubleArrayOf(1.0, 1.01, 1.02), 209L),
+            vectorField("NUM_AUTOMATCH_EXECUTED", doubleArrayOf(2.0), 210L, raw = intArrayOf(2)),
+            vectorField("MAX_AUTOMATCH", doubleArrayOf(3.0), 211L, raw = intArrayOf(3)),
         )
 
         val result = AutoCalInstrumentProjection.project(
@@ -55,6 +57,16 @@ class AutoCalInstrumentProjectionTest {
         assertEquals(2, result.getJSONObject("acquisition").getJSONArray("gasCurrent").length())
         assertEquals(2, result.getJSONObject("acquisition").getJSONArray("gasPrevious").length())
         assertEquals(3, result.getJSONObject("kCurve").getJSONArray("points").length())
+
+        val epoch = result.getJSONObject("epoch")
+        assertEquals(2, epoch.getInt("autoMatchExecuted"))
+        assertEquals(3, epoch.getInt("maxAutoMatch"))
+        assertEquals("CURRENT_NATIVE_AUTOMATCH_EPOCH", epoch.getString("gasCurrentRole"))
+        assertEquals("PREVIOUS_NATIVE_AUTOMATCH_EPOCH", epoch.getString("gasPreviousRole"))
+        assertEquals("ECU_READ", epoch.getString("authority"))
+        val roles = result.getJSONObject("acquisition").getJSONObject("roles")
+        assertEquals("CURRENT_NATIVE_AUTOMATCH_EPOCH", roles.getString("gasCurrent"))
+        assertEquals("PREVIOUS_NATIVE_AUTOMATCH_EPOCH", roles.getString("gasPrevious"))
 
         val live = result.getJSONObject("liveNow")
         assertEquals(4.84, live.getDouble("petrolMs"), 0.0001)
