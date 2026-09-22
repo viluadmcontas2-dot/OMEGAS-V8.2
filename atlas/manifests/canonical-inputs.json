@@ -1,0 +1,43 @@
+﻿{
+    "schema":  "omegas.atlas.canonical-inputs.v1",
+    "campaign":  "progbase-autocal",
+    "captured_at":  "2026-09-21",
+    "authority":  "remote hash-bound originals",
+    "inputs":  [
+                   {
+                       "id":  "progbase-4.2.0.6",
+                       "kind":  "executable",
+                       "repo_path":  "atlas/originals/progbase/ProgBase-4.2.0.6.exe",
+                       "source_name":  "ProgBase (3).exe",
+                       "size":  12643840,
+                       "sha256":  "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+                   },
+                   {
+                       "id":  "portmon-lognovo-1",
+                       "kind":  "zip+raw-log",
+                       "repo_path":  "atlas/originals/portmon/PortmonLOGNOVO-1.zip",
+                       "source_name":  "PortmonLOGNOVO (1).zip",
+                       "archive_size":  14170842,
+                       "archive_sha256":  "6879fa2a7931d22c207cd7fa47dffb59e1df0fe1de216e34e3f11e0c08cc1c17",
+                       "raw_entry":  "PortmonLOGNOVO.LOG",
+                       "raw_size":  149911521,
+                       "raw_sha256":  "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+                   },
+                   {
+                       "id":  "portmon-autocal-1",
+                       "kind":  "zip+raw-log",
+                       "repo_path":  "atlas/originals/portmon/PortmonAUTOCAL-1.zip",
+                       "source_name":  "PortmonAUTOCAL (1).zip",
+                       "archive_size":  15150667,
+                       "archive_sha256":  "a927795da5800baef53d498273f4e210bc814c2e0e3649572e6de42781073b47",
+                       "raw_entry":  "PortmonAUTOCAL (1).LOG",
+                       "raw_size":  162700984,
+                       "raw_sha256":  "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b"
+                   }
+               ],
+    "provenance":  {
+                       "transport":  "MMMACHINE read-only Google Drive mirror",
+                       "authority_after_materialization":  "GitHub OmegasAtlas blob + manifest hashes",
+                       "notes":  "Local machine is not scientific authority."
+                   }
+}
