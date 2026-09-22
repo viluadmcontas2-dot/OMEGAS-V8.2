@@ -323,3 +323,22 @@ Product consequence:
 Evidence:
 - `tests/fixtures/amarelo-autocal-epoch-lifecycle-v1.json`;
 - `tests/test_amarelo_autocal_epoch_lifecycle_evidence.py`.
+
+
+## Single epoch authority — 2026-09-22
+
+The epoch consumer path is now intentionally one-way:
+
+`NativeAutoCalMonitor.nativeAutoMatchEpochEvent`
+→ `AutoCalInstrumentProjection.epoch.transition`
+→ `AutoCalUxModel.instrumentEpoch()`
+→ cockpit presentation.
+
+Rules:
+- JavaScript no longer compares Curve K values to invent a scientific epoch transition.
+- The prior K curve is retained only as a visual before/after baseline.
+- A counter change without a typed native event is rendered as pending native confirmation, not promoted to an adjustment.
+- Session changes invalidate any local epoch baseline.
+- Typed event must report native readback and no app write before the UI labels it as a native epoch adjustment.
+
+This keeps firmware/monitor readback as scientific authority and the UI as a consumer only.
