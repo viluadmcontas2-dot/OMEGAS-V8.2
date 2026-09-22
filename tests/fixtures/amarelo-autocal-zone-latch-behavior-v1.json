@@ -120,14 +120,15 @@
     "zone_activation_is_associated_with_live_map_visit": "PROVEN_OBSERVED_CORRELATION_DUAL_CAPTURE",
     "all_observed_falling_edges_clear_vector_to_zero": "PROVEN_FOR_SUPPLIED_CAPTURES",
     "flags_behave_as_latched_region_markers_within_acquisition_epoch": "STRONGLY_SUPPORTED",
-    "live_map_visit_is_sufficient_firmware_set_guard": "UNKNOWN",
-    "exact_firmware_set_guard": "UNKNOWN",
+    "live_map_visit_is_sufficient_firmware_set_guard": "FALSIFIED",
+    "exact_firmware_set_guard": "FIRMWARE_INTERNAL_UNKNOWN_WITH_CURRENT_HOST_ARTIFACTS",
     "exact_firmware_clear_guard": "UNKNOWN",
     "acquired_zone_flag_is_maturity_threshold": "FALSIFIED",
     "acquired_zone_flag_is_percent_progress": "FALSIFIED",
     "fixed_live_dwell_guard": "FALSIFIED_AT_HOST_OBSERVATION_GRANULARITY",
     "current_point_presence_is_sufficient_or_required_set_guard": "FALSIFIED",
-    "mature_point_presence_is_required_set_guard": "FALSIFIED"
+    "mature_point_presence_is_required_set_guard": "FALSIFIED",
+    "cng_enabled_live_map_visit_is_sufficient_firmware_set_guard": "FALSIFIED"
   },
   "product_contract": {
     "human_label_true": "Região registrada pela ECU neste ciclo",
@@ -169,6 +170,12 @@
         "portmon_index": 887015,
         "zone": 3,
         "previous_window_frames": 1
+      },
+      "cng_enabled_visit_test": {
+        "known_zone_poll_windows": 320,
+        "zero_to_zero_region_windows_with_cng_autocal_enabled_visit": 193,
+        "activation_rows_after_enable_state_known": 12,
+        "observation": "CNG active + AUTO_CAL_ENABLE=true + live MAP visitation in the same native region is not sufficient to set the ECU zone flag."
       }
     },
     "conclusions": {
@@ -176,7 +183,9 @@
       "current_native_point_required_at_observed_activation": "FALSIFIED",
       "mature_native_point_required_at_observed_activation": "FALSIFIED",
       "exact_firmware_set_guard_recoverable_from_supplied_polling_cadence": "NO",
-      "reason": "Zone vector is polled at slow cadence; activation can be observed after one live frame, after long dwell, with no current region point, or only after a prior-window visit."
+      "reason": "Zone vector is polled at slow cadence; activation can be observed after one live frame, after long dwell, with no current region point, or only after a prior-window visit.",
+      "cng_enabled_region_visit_is_sufficient": "FALSIFIED",
+      "stop_condition": "No host-visible rule tested so far explains all activations across both captures. Exact set guard requires ECU firmware/internal state not present in current artifacts."
     }
   }
 }
