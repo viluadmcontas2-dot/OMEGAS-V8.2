@@ -78,6 +78,40 @@ class LearningStabilityV7Test {
     }
 
     @Test
+    fun `support mass and Kish ESS are published as different evidence concepts`() {
+        val evidence = (0 until 3).map { index ->
+            FuelComparisonV7(
+                id = "mass-$index",
+                revision = revision,
+                cngVisitId = "mass-visit-$index",
+                petrolEvidenceIds = listOf("p-$index"),
+                rpm = 1_850.0,
+                mapBar = 0.50,
+                waterC = 82.0,
+                petrolTargetMs = 4.0,
+                petrolOnCngMs = 4.5,
+                differenceMs = 0.5,
+                errorPercent = 12.5,
+                direction = "INCREASE_CNG_DELIVERY",
+                quality = 0.5,
+                createdAtMs = 1_000L + index * 100L,
+            )
+        }
+
+        val result = LearningStabilityV7.mapCell(evidence, row = 4, column = 2)
+
+        assertEquals(LearningStabilityStateV7.LEARNING, result.state)
+        assertEquals(1.5, result.recentSupportMass, 0.000001)
+        assertEquals(3.0, result.recentKishEss, 0.000001)
+        assertEquals(3, result.recentUniqueVisits)
+        assertEquals(
+            result.recentSupportMass,
+            result.recentEffectiveVisits,
+            0.000001,
+        )
+    }
+
+    @Test
     fun `mais de seiscentas visitas nao fazem a memoria consolidada depender da fila bruta`() {
         val evidence = (0 until 620).map { index ->
             comparison(index, targetMs = 4.0, observedMs = 4.5)
