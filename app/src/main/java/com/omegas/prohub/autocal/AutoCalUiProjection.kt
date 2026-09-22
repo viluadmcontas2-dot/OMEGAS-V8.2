@@ -79,21 +79,22 @@ object AutoCalUiProjection {
         val staleCandidate =
             (snapshotAvailable(nativeSnapshot) && !sameSession(nativeSession, currentSession)) ||
             (snapshotAvailable(manualSnapshot) && manualReady && !sameSession(manualSession, currentSession))
-        val analysis = if (referenceUsable) {
-            AutoMatchSnapshotAnalysis.analyze(selected)
-        } else {
-            JSONObject()
-                .put("ok", true)
-                .put("available", false)
-                .put(
-                    "message",
-                    if (referenceShapeAvailable && !selectedTiming.coherent) {
+        val analysis = JSONObject()
+            .put("ok", true)
+            .put("available", false)
+            .put("mode", "NATIVE_AUTOCAL_ONLY")
+            .put("inferredPredictorAttached", false)
+            .put(
+                "message",
+                when {
+                    referenceShapeAvailable && !selectedTiming.coherent ->
                         "Referência física AutoCal fora da janela temporal; releia o snapshot"
-                    } else {
+                    !referenceShapeAvailable ->
                         "Referência física AutoCal ainda indisponível"
-                    },
-                )
-        }
+                    else ->
+                        "AutoCal nativo: predictor inferido permanece separado desta projeção."
+                },
+            )
         val correlationSource = if (nativeCurrent) nativeSnapshot else selected
         val correlationState = correlationSource.optJSONObject("nativeCorrelationState")
             ?.let(::copy)
