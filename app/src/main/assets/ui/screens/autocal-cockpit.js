@@ -907,7 +907,7 @@
         const active = item.active === true;
         const id = escapeHtml(item.id || '');
         return '<article class="autocal-session-item" data-active="' + (active ? 'true' : 'false') + '">' +
-          '<div><small>' + (active ? 'AGORA' : date) + '</small><b>' + minutes + ' min · ' + regions + ' ' + (regions === 1 ? 'região' : 'regiões') + '</b><span>GNV ' + gasZones + '/4 · ' + escapeHtml(item.reason || 'Sessão MP48') + '</span></div>' +
+          '<div><small>' + (active ? 'AGORA' : date) + '</small><b>' + minutes + ' min · ' + regions + ' ' + (regions === 1 ? 'região registrada' : 'regiões registradas') + '</b><span>' + escapeHtml(item.reason || 'Sessão MP48') + '</span></div>' +
           '<button type="button" class="secondary" data-autocal-export-session data-session-id="' + id + '">Exportar</button>' +
         '</article>';
       }).join('');
@@ -1232,7 +1232,7 @@
           : band.state === 'activity' ? 'atividade' : 'vazia';
         return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
           '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
-          '" role="listitem" aria-pressed="false" aria-label="Região ' + (band.index + 1) + ' de 18, ' + stateLabel +
+          '" role="listitem" aria-pressed="false" aria-label="Posição ' + (band.index + 1) + ' de 18, ' + stateLabel +
           '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'região registrada' : stateLabel) + '</small></button>';
       }).join('');
       const preferred = Number.isInteger(this.selectedBandIndex)
@@ -1257,7 +1257,7 @@
       const zoneText = Number.isInteger(band.zone)
         ? 'Região MAP R' + (band.zone + 1) + ': ' + (band.zoneAcquired ? 'registrada pela ECU neste ciclo' : 'ainda não registrada pela ECU neste ciclo')
         : 'Região MAP ainda não determinada para esta posição';
-      host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
+      host.innerHTML = '<b>Posição ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
     }
 
     renderEvents(events) {
