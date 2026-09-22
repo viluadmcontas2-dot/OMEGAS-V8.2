@@ -51,3 +51,17 @@ class AutoCalZoneLatchBehaviorEvidenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AutoCalZoneSetGuardBoundaryTest(unittest.TestCase):
+    def test_supplied_captures_falsify_simple_host_visible_set_guards(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        boundary = data["set_guard_observation_boundary"]
+        self.assertEqual(boundary["PortmonAUTOCAL"]["same_region_current_window_frames"]["min"], 1)
+        self.assertGreater(boundary["PortmonAUTOCAL"]["activations_without_current_region_point"], 0)
+        self.assertGreater(boundary["PortmonAUTOCAL"]["activations_without_mature_region_point"], 0)
+        conclusions = boundary["conclusions"]
+        self.assertEqual(conclusions["fixed_live_dwell_guard_visible_to_host"], "FALSIFIED")
+        self.assertEqual(conclusions["current_native_point_required_at_observed_activation"], "FALSIFIED")
+        self.assertEqual(conclusions["mature_native_point_required_at_observed_activation"], "FALSIFIED")
+        self.assertEqual(conclusions["exact_firmware_set_guard_recoverable_from_supplied_polling_cadence"], "NO")
