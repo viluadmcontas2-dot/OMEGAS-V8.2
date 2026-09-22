@@ -1262,3 +1262,138 @@
 .autocal-zone-region.both-active rect {
   fill: rgba(56, 189, 248, 0.050);
 }
+
+
+/* 1280×720 automotive composition: the acquisition curve is the primary object. */
+@media (min-width: 1000px) and (max-height: 760px) {
+  .autocal-cockpit {
+    gap: 6px;
+    padding-bottom: 6px;
+  }
+
+  .autocal-hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 12px;
+  }
+
+  .autocal-human-copy h3 {
+    margin: 2px 0 1px;
+    font-size: 23px;
+  }
+
+  .autocal-human-copy p {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .autocal-zone-meter {
+    margin-top: 4px;
+    gap: 12px;
+  }
+
+  .autocal-human-copy strong {
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .autocal-hero-actions {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .autocal-hero-actions button {
+    min-height: 44px;
+    padding-inline: 11px;
+  }
+
+  .autocal-session-strip {
+    min-height: 44px;
+    padding: 5px 10px;
+    gap: 10px;
+  }
+
+  .autocal-session-copy {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .autocal-session-copy small {
+    display: none;
+  }
+
+  .autocal-session-copy b {
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 13px;
+  }
+
+  .autocal-session-copy span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .autocal-session-actions > span {
+    display: none;
+  }
+
+  .autocal-session-actions button {
+    min-height: 38px;
+    padding-inline: 12px;
+  }
+
+  .autocal-reference-card {
+    padding: 7px 10px 8px;
+  }
+
+  .autocal-reference-card .autocal-section-head {
+    margin-bottom: 3px;
+  }
+
+  .autocal-reference-card .autocal-section-head p {
+    display: none;
+  }
+
+  .autocal-chart-legend {
+    margin-bottom: 2px;
+    gap: 11px;
+    font-size: 10px;
+  }
+
+  .autocal-live-strip {
+    grid-template-columns: minmax(170px, 1.25fr) repeat(3, minmax(84px, .72fr));
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+
+  .autocal-live-summary,
+  .autocal-live-metric {
+    padding: 5px 8px;
+  }
+
+  .autocal-live-summary b,
+  .autocal-live-metric b {
+    font-size: 15px;
+  }
+
+  .autocal-live-narrative {
+    display: none;
+  }
+
+  .autocal-chart-host {
+    height: 280px;
+    min-height: 280px;
+  }
+
+  .autocal-chart-workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(205px, 22%);
+  }
+}
