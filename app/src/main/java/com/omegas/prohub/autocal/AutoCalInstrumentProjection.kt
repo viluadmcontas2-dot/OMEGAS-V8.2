@@ -42,9 +42,9 @@ object AutoCalInstrumentProjection {
             .put(
                 "acquisition",
                 JSONObject()
-                    .put("petrolCurrent", pairedPoints(dynamic, "PETR_INJ_TBUF", "MNFLD_PRESS_BUF"))
-                    .put("gasCurrent", pairedPoints(dynamic, "PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS"))
-                    .put("gasPrevious", pairedPoints(dynamic, "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV"))
+                    .put("petrolCurrent", pairedAcquisitionPoints(dynamic, "PETR_INJ_TBUF", "MNFLD_PRESS_BUF"))
+                    .put("gasCurrent", pairedAcquisitionPoints(dynamic, "PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS"))
+                    .put("gasPrevious", pairedAcquisitionPoints(dynamic, "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV"))
                     .put("petrolCounter", rawVector(dynamic, "NUM_BUF_UPD_PETR"))
                     .put("gasCounter", rawVector(dynamic, "NUM_BUF_UPD_GAS"))
                     .put(
@@ -127,6 +127,28 @@ object AutoCalInstrumentProjection {
         }
     }
 
+    private fun pairedAcquisitionPoints(snapshot: JSONObject, xKey: String, yKey: String): JSONArray {
+        val x = physicalVector(snapshot, xKey)
+        val y = physicalVector(snapshot, yKey)
+        val xRaw = rawVectorList(snapshot, xKey)
+        val yRaw = rawVectorList(snapshot, yKey)
+        val count = minOf(x.size, y.size, xRaw.size, yRaw.size)
+        return JSONArray().apply {
+            repeat(count) { index ->
+                val xv = x[index]
+                val yv = y[index]
+                if (xRaw[index] != 0 && yRaw[index] != 0 && xv.isFinite() && yv.isFinite()) {
+                    put(
+                        JSONObject()
+                            .put("index", index)
+                            .put("petrolMs", xv)
+                            .put("mapBar", yv),
+                    )
+                }
+            }
+        }
+    }
+
     private fun pairedPoints(snapshot: JSONObject, xKey: String, yKey: String): JSONArray {
         val x = physicalVector(snapshot, xKey)
         val y = physicalVector(snapshot, yKey)
@@ -204,6 +226,12 @@ object AutoCalInstrumentProjection {
         val values = field.optJSONArray("rawValues") ?: return JSONObject.NULL
         if (values.length() == 0) return JSONObject.NULL
         return values.optInt(0)
+    }
+
+    private fun rawVectorList(snapshot: JSONObject, key: String): List<Int> {
+        val field = findValidField(snapshot, key) ?: return emptyList()
+        val values = field.optJSONArray("rawValues") ?: return emptyList()
+        return List(values.length()) { index -> values.optInt(index) }
     }
 
     private fun rawVector(snapshot: JSONObject, key: String): JSONArray {
