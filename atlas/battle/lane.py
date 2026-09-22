@@ -307,7 +307,8 @@ def portmon_object(indices,target):
             hits.append(row)
     if not hits:return escalate("serial code was not observed at the object-address position in recorded requests")
     return prove("Portmon independently observes the serial object address on wire",[{"kind":"serial-object-observed","subject":target,"value":True}],[{"kind":"portmon-object-position","little_endian":" ".join(f"{x:02X}" for x in needle),"hits":hits[:64],"clock_semantics":idx["clock_semantics"]}])
-\ndef pe_serial_resource(indices,binary_path,target):
+
+def pe_serial_resource(indices,binary_path,target):
     import dfm_resource
     _,item=semantic_entry(indices,"serial",target)
     if not item:return escalate("serial target absent from semantic catalog")
@@ -326,7 +327,8 @@ def delphi_visual(indices,target):
     _,item=semantic_entry(indices,"visual",target)
     if not item:return escalate("visual object absent from Delphi resource index")
     return prove("Delphi resource identifies AutoCal render object",[{"kind":"visual-object","subject":target,"value":True}],[{"kind":"delphi-visual","metadata":item["meta"]}])
-\ndef pe_visual_resource(indices,binary_path,target):
+
+def pe_visual_resource(indices,binary_path,target):
     import dfm_resource
     _,item=semantic_entry(indices,"visual",target)
     if not item:return escalate("visual target absent from semantic catalog")
