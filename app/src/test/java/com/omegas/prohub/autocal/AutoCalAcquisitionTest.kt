@@ -90,6 +90,44 @@ class AutoCalAcquisitionTest {
 
 
     @Test
+    fun `GNV anterior nao herda contador nem maturidade do epoch atual`() {
+        val thresholds = intArrayOf(
+            154, 256, 307, 358, 410, 461,
+            512, 563, 614, 666, 717, 768,
+            819, 870, 922, 973, 1024, 1126,
+        )
+        val calibration = IntArray(10).also {
+            it[5] = 3
+            it[8] = 3
+        }
+        val currentCounts = IntArray(18).also { it[0] = 9 }
+        val previousTimes = IntArray(18).also { it[0] = 2100 }
+        val previousMaps = IntArray(18).also { it[0] = 400 }
+        val snapshot = snapshot(
+            field("MNFLD_PRESS_THD", thresholds),
+            field("CALIBRATION_VAL_1", calibration),
+            field("NUM_BUF_UPD_GAS", currentCounts),
+            field("PETR_INJ_TBUF_GAS_PREV", previousTimes),
+            field("MNFLD_PRESS_BUF_GAS_PREV", previousMaps),
+        )
+
+        val previous = AutoCalAcquisition.fromSnapshot(snapshot)
+            .getJSONArray("points")
+            .getJSONObject(36)
+
+        assertEquals("GNV_ANTERIOR", previous.getString("fuel"))
+        assertTrue(previous.getBoolean("previous"))
+        assertFalse(previous.getBoolean("maturityApplicable"))
+        assertTrue(previous.isNull("counter"))
+        assertTrue(previous.isNull("threshold"))
+        assertTrue(previous.isNull("maturityGroup"))
+        assertEquals("EPOCA_ANTERIOR", previous.getString("state"))
+        assertFalse(previous.getBoolean("draw"))
+        assertEquals(0, previous.getInt("zone"))
+        assertEquals(0.4, previous.getDouble("mapBar"), 0.0001)
+    }
+
+    @Test
     fun `regiao visual vem do MAP nativo e nao do indice do buffer`() {
         val thresholds = intArrayOf(
             154, 256, 307, 358, 410, 461,
