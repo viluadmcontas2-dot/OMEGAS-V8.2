@@ -1,0 +1,87 @@
+name: OMEGAS Amarelo learning science contracts
+
+on:
+  push:
+    branches:
+      - "work/omegas-amarelo-*"
+    paths:
+      - ".github/workflows/amarelo-learning-science-contracts.yml"
+      - "app/src/main/java/com/omegas/prohub/calibration/KMapPhysicalAxes.kt"
+      - "app/src/main/java/com/omegas/prohub/learning/ContinuousLearningMath.kt"
+      - "app/src/main/java/com/omegas/prohub/learning/FixedControlSurfaceScience.kt"
+      - "app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt"
+      - "app/src/test/java/com/omegas/prohub/learning/ContinuousLearningMathTest.kt"
+      - "app/src/test/java/com/omegas/prohub/learning/FixedControlSurfaceScienceTest.kt"
+      - "app/src/test/java/com/omegas/prohub/learning/LearningGridProjectionTest.kt"
+      - "app/src/main/assets/ui/core/learning-model.js"
+      - "app/src/main/assets/ui/screens/learning.js"
+      - "tests/ui/learning-view.test.cjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-amarelo-learning-science-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  learning-science:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
+      - name: Prepare Gradle
+        run: chmod +x gradlew
+      - name: Fixed control science unit contracts
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.omegas.prohub.learning.ContinuousLearningMathTest \
+            --tests com.omegas.prohub.learning.FixedControlSurfaceScienceTest \
+            --tests com.omegas.prohub.learning.LearningGridProjectionTest
+      - name: Learning UI fixed-address contract
+        run: node --test tests/ui/learning-view.test.cjs
+      - name: Build diagnostic receipt
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          receipt = {
+              "schema": "omegas.amarelo.learning-science-ci.v1",
+              "sourceSha": os.environ["GITHUB_SHA"],
+              "contracts": [
+                  "FIXED_144_CONTROL_NODES",
+                  "BILINEAR_CONTINUOUS_EVIDENCE",
+                  "USB_SESSION_ZERO_SCIENTIFIC_WEIGHT",
+                  "SUPPORT_MASS_SEPARATE_FROM_KISH_ESS",
+                  "CONTROL_ADDRESS_SEPARATE_FROM_OBSERVED_CENTER",
+              ],
+              "automaticEcuWrite": False,
+          }
+          Path("artifacts/learning-science-contract-report.json").write_text(
+              json.dumps(receipt, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amarelo-learning-science-contract-report
+          path: artifacts/learning-science-contract-report.json
+          if-no-files-found: error
+          retention-days: 14
