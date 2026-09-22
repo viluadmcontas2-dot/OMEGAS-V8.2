@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import unittest
 
-FIXTURE = Path("tests/fixtures/amarelo-autocal-render-original-v1.json")
+FIXTURE = Path("tests/fixtures/amarelo-autocal-render-original-v1.json")\nREPLAY_FIXTURE = Path("tests/fixtures/portmon-lognovo-replay-v1.json")\nANDROID_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRenderTest.kt")
 
 EXPECTED_KEYS = {
     "PETR_INJ_TBP",
