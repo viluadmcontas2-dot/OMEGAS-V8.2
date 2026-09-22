@@ -1,0 +1,83 @@
+{
+  "schema": "omegas.amarelo.autocal-epoch-lifecycle-v1",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "portmon_autocal_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+    "portmon_lognovo_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64"
+  },
+  "observed_readback_lifecycle": {
+    "PortmonAUTOCAL": [
+      {
+        "automatch": "1->2",
+        "prev_bulk_delta_ms": -1545.647,
+        "counter_reseed_delta_ms": -1205.779,
+        "mul_act_delta_ms": -1019.435,
+        "zone_clear_delta_ms": -761.514,
+        "mul_act_changed_nodes": 30
+      },
+      {
+        "automatch": "2->3",
+        "prev_bulk_delta_ms": -1512.113,
+        "counter_reseed_delta_ms": -1177.011,
+        "mul_act_delta_ms": -990.775,
+        "zone_clear_delta_ms": -750.909,
+        "mul_act_changed_nodes": 30
+      }
+    ],
+    "PortmonLOGNOVO": [
+      {
+        "automatch": "3->0",
+        "prev_bulk_delta_ms": -511.446,
+        "counter_reseed_delta_ms": -313.204,
+        "mul_act_delta_ms": -264.055,
+        "zone_clear_delta_ms": null,
+        "mul_act_changed_nodes": 30,
+        "note": "No zone clear observed inside +/-5 s; zone vector did not need to transition if already clear."
+      },
+      {
+        "automatch": "0->1",
+        "prev_bulk_delta_ms": -1584.588,
+        "counter_reseed_delta_ms": -1237.211,
+        "mul_act_delta_ms": -1049.908,
+        "zone_clear_delta_ms": null,
+        "mul_act_changed_nodes": 30,
+        "note": "No zone clear observed inside +/-5 s."
+      },
+      {
+        "automatch": "1->2",
+        "prev_bulk_delta_ms": -1524.588,
+        "counter_reseed_delta_ms": -1185.497,
+        "mul_act_delta_ms": -918.342,
+        "zone_clear_delta_ms": -679.213,
+        "mul_act_changed_nodes": 30
+      },
+      {
+        "automatch": "2->3",
+        "prev_bulk_delta_ms": -3722.579,
+        "counter_reseed_delta_ms": -3386.921,
+        "mul_act_delta_ms": -3197.019,
+        "zone_clear_delta_ms": -2878.798,
+        "mul_act_changed_nodes": 30
+      }
+    ]
+  },
+  "conclusions": {
+    "every_measurable_epoch_has_prev_bulk_replacement": "PROVEN_DUAL_CAPTURE",
+    "every_measurable_epoch_has_counter_reset_or_reseed": "PROVEN_DUAL_CAPTURE",
+    "every_measurable_epoch_has_full_mul_act_vector_change": "PROVEN_DUAL_CAPTURE",
+    "mul_act_changed_nodes_per_epoch": 30,
+    "active_zone_latches_clear_around_epoch_rollover": "PROVEN_WHEN_NONZERO_IN_OBSERVED_WINDOW",
+    "prev_is_prior_automatch_epoch_snapshot": "PROVEN_DUAL_CAPTURE_BEHAVIOR",
+    "readback_order_repeats": "PROVEN_OBSERVED_READBACK_ORDER",
+    "firmware_instruction_order": "UNKNOWN_DUE_ASYNC_POLLING",
+    "exact_native_automatch_formula": "UNKNOWN"
+  },
+  "product_contract": {
+    "ecu_epoch_counter_is_authority": true,
+    "render_current_and_previous_epoch_as_distinct_layers": true,
+    "show_curve_k_change_as_native_epoch_event": true,
+    "do_not_claim_host_computed_adjustment": true,
+    "do_not_claim_exact_internal_instruction_order": true,
+    "after_epoch_transition_require_fresh_native_readback": true
+  }
+}
