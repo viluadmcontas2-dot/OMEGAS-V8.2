@@ -9,10 +9,10 @@ import java.nio.file.*;
 import java.util.*;
 
 public class AtlasExport extends GhidraScript {
-    private static final int MAX_FUNCS = 5000;
-    private static final int MAX_DEPTH = 10;
-    private static final int HUB_LIMIT = 80;
-    private static final int MAX_DECOMPILE = 1200;
+    private static final int MAX_FUNCS = 12000;
+    private static final int MAX_DEPTH = 8;
+    private static final int HUB_LIMIT = 48;
+    private static final int MAX_DECOMPILE = 2500;
 
     private String safe(String s) {
         if (s == null) return "";

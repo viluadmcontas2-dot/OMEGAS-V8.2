@@ -75,11 +75,10 @@ def ghidra_function_evidence(indices:Path,f):
 def ghidra_fn(indices,target):
     fs=functions(indices); f=fs.get(target.lower())
     if not f:return escalate("function absent from Ghidra AutoCal graph")
-    nts=[]
-    for addr in (f["callers"]+f["callees"])[:64]:
-        n=fs.get(addr.lower())
-        if n is not None: nts.append({"kind":"function","target":n["entry"],"distance":n["distance"]})
-    return prove("Ghidra resolved native function and graph neighborhood",[{"kind":"native-function","subject":f["entry"],"value":True}],[ghidra_function_evidence(indices,f)],nts)
+    # Callers/callees are preserved as evidence, but are not recursively promoted by
+    # mechanical connectivity alone. Semantic lanes are responsible for discovering
+    # producer/consumer dependencies that become new obligations.
+    return prove("Ghidra resolved native function and graph neighborhood",[{"kind":"native-function","subject":f["entry"],"value":True}],[ghidra_function_evidence(indices,f)])
 
 def objdump_fn(indices,binary_path,target):
     fs=functions(indices); f=fs.get(target.lower())

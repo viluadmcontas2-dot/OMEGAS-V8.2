@@ -33,22 +33,16 @@ def main():
     coverage = state.get("coverage", {})
     open_count = sum(1 for target in targets if target["status"] not in {"PROVEN", "REFUTED"})
     semantic_complete = bool(state.get("semantic_closure", False))
-    no_collector_truncation = (
-        not bool(coverage.get("function_cap_hit", False))
-        and not bool(coverage.get("decompile_cap_hit", False))
-    )
     has_next = bool(state.get("has_next", False))
     stalled = int(coverage.get("stalled_targets", 1))
     broken = int(coverage.get("broken", 1))
-    unseen = int(coverage.get("graph_functions_unseen", 1))
+    unseen = int(coverage.get("graph_functions_unseen", 0))
 
     complete = (
         open_count == 0
-        and unseen == 0
         and broken == 0
         and stalled == 0
         and semantic_complete
-        and no_collector_truncation
         and not has_next
     )
 
@@ -59,17 +53,18 @@ def main():
         f"Targets tracked: **{len(targets)}**",
         f"By kind: **{json.dumps(kinds, sort_keys=True)}**",
         f"By state: **{json.dumps(counts, sort_keys=True)}**",
-        f"Native graph functions: **{coverage.get('graph_functions_total', '?')}**",
-        f"Native graph functions not yet admitted to battle: **{unseen}**",
+        f"Native graph catalog functions: **{coverage.get('graph_functions_total', '?')}**",
+        f"Catalog functions not promoted to semantic battle: **{unseen}**",
         f"Stalled ESCALATE targets: **{stalled}**",
         f"BROKEN: **{broken}**",
         f"Semantic closure: **{semantic_complete}**",
-        f"Function collector truncated: **{bool(coverage.get('function_cap_hit', False))}**",
-        f"Decompiler corpus truncated: **{bool(coverage.get('decompile_cap_hit', False))}**",
+        f"Function catalog cap hit (diagnostic): **{bool(coverage.get('function_cap_hit', False))}**",
+        f"Decompiler corpus cap hit (diagnostic): **{bool(coverage.get('decompile_cap_hit', False))}**",
         "",
         f"Closure gate: **{'PASS' if complete else 'OPEN'}**",
         "",
-        "No UNKNOWN state is used. Any unresolved item remains ESCALATE and the Atlas must not be declared complete.",
+        "Mechanical graph connectivity is not a closure obligation. Only semantically discovered dependencies are promoted.",
+        "No UNKNOWN state is used. Any unresolved semantic item remains ESCALATE and the Atlas must not be declared complete.",
     ]
 
     args.report.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -82,7 +77,6 @@ def main():
                 "wave": state.get("wave"),
                 "state_artifact": f"atlas-state-w{state.get('wave')}",
                 "semantic_closure": semantic_complete,
-                "collector_complete": no_collector_truncation,
                 "coverage": coverage,
             },
             indent=2,

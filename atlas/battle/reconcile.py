@@ -136,15 +136,10 @@ def main():
             if len(lanes)>=254:break
             schedule(t,d)
 
-    # 3) Expand the entire exported native graph.
+    # 3) Keep the native graph as an oracle/catalog only.
+    # Functions become battle obligations only when semantic evidence discovers them.
     all_funcs=funcs(a.indices/"ghidra/functions.tsv")
     all_funcs.sort(key=lambda x:(x["distance"],x["entry"]))
-    for f in all_funcs:
-        if len(lanes)>=254:break
-        k=key("function",f["entry"])
-        if k in state["targets"]:continue
-        t=ensure_target(state,"function",f["entry"],origin="ghidra-graph",metadata={"distance":f["distance"]})
-        schedule(t,"ghidra-fn");schedule(t,"objdump-fn")
 
     # 4) Expand configured symbols and Portmon candidates.
     seed_path=Path(__file__).resolve().parents[2]/"atlas/manifests/autocal-seeds.json"

@@ -51,25 +51,19 @@ def main():
         for driver in ds:add(target["kind"],target["target"],driver,target["target"])
         semantic_targets_admitted+=1
 
-    # Any remaining capacity is spent on high-information native functions.
-    funcs.sort(key=lambda x:(x["distance"],x["entry"]))
-    for f in funcs:
-        if len(lanes)+2>256:break
-        add("function",f["entry"],"ghidra-fn",f["entry"]);add("function",f["entry"],"objdump-fn",f["entry"])
-
-    # If semantic corpus is unusually small, spend spare lanes on protocol/symbol challenges.
+    # Spare capacity goes to independent protocol/symbol challenges, never generic graph churn.
     if len(lanes)<256:
         for s in seed["symbols"][:24]:
             if len(lanes)+2>256:break
             add("symbol",s["term"],"raw-symbol",s["term"]);add("symbol",s["term"],"undelphi-symbol",s["term"])
     if len(lanes)<256:
-        for fr in port.get("candidates",[])[:8]:
+        for fr in port.get("candidates",[])[:16]:
             if len(lanes)+2>256:break
             add("frame",fr["frame"],"portmon-frame","frame");add("frame",fr["frame"],"binary-frame","frame")
 
     if not lanes or len(lanes)>256: raise SystemExit(f"invalid initial matrix size: {len(lanes)}")
     out={"include":lanes}
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(out,separators=(",",":"))+"\n",encoding="utf-8")
-    print(json.dumps({"semantic_targets_total":len(sem),"semantic_targets_admitted":semantic_targets_admitted,"functions_in_graph":len(funcs),"lanes":len(lanes)},indent=2))
+    print(json.dumps({"semantic_targets_total":len(sem),"semantic_targets_admitted":semantic_targets_admitted,"functions_catalogued":len(funcs),"lanes":len(lanes)},indent=2))
 
 if __name__=="__main__": main()
