@@ -333,23 +333,36 @@ object LearningGridProjection {
             )
         }
 
-        fun toJson(): JSONObject = JSONObject()
-            .put("fuel", fuel)
-            .put("epoch", epoch)
-            .put("row", row)
-            .put("column", column)
-            .put("key", "$row:$column")
-            .put("rpm_bin", rpmBins[column])
-            .put("petrol_bin", petrolBins[row])
-            .put("rpm", if (weight > 0) rpmWeighted / weight else 0.0)
-            .put("petrol_ms", if (weight > 0) petrolWeighted / weight else 0.0)
-            .put("map_bar", if (weight > 0) mapWeighted / weight else 0.0)
-            .put("samples", samples)
-            .put("visit_count", max(visitIds.size, visitCountFloor))
-            .put("session_count", max(sessionIds.size, sessionCountFloor))
-            .put("confidence", if (weight > 0) confidenceWeighted / weight else 0.0)
-            .put("stage", stage)
-            .put("updated_at", updatedAt)
-            .put("region_ids", regionIds)
+        fun toJson(): JSONObject {
+            val observedRpmCenter = if (weight > 0) rpmWeighted / weight else 0.0
+            val observedPetrolMsCenter = if (weight > 0) petrolWeighted / weight else 0.0
+            val observedMapCenter = if (weight > 0) mapWeighted / weight else 0.0
+            return JSONObject()
+                .put("fuel", fuel)
+                .put("epoch", epoch)
+                .put("row", row)
+                .put("column", column)
+                .put("key", "$row:$column")
+                .put("control_rpm", rpmBins[column])
+                .put("control_petrol_ms", petrolBins[row])
+                .put("observed_rpm_center", observedRpmCenter)
+                .put("observed_petrol_ms_center", observedPetrolMsCenter)
+                .put("observed_map_center", observedMapCenter)
+                .put("support_mass", weight)
+                // Legacy aliases remain during migration. They are evidence centers,
+                // never control-point identity.
+                .put("rpm_bin", rpmBins[column])
+                .put("petrol_bin", petrolBins[row])
+                .put("rpm", observedRpmCenter)
+                .put("petrol_ms", observedPetrolMsCenter)
+                .put("map_bar", observedMapCenter)
+                .put("samples", samples)
+                .put("visit_count", max(visitIds.size, visitCountFloor))
+                .put("session_count", max(sessionIds.size, sessionCountFloor))
+                .put("confidence", if (weight > 0) confidenceWeighted / weight else 0.0)
+                .put("stage", stage)
+                .put("updated_at", updatedAt)
+                .put("region_ids", regionIds)
+        }
     }
 }
