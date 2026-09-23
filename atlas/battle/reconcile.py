@@ -288,6 +288,7 @@ def main():
     semantic_closure=(not semantic_missing and not semantic_open and unresolved_bindings==0)
 
     broken=sum(1 for t in state["targets"].values() if t["status"]=="BROKEN")
+    behavior=behavior_gate.evaluate(Path(__file__).resolve().parents[2])
     state["coverage"]={
         "graph_functions_total":len(graph_entries),"graph_functions_unseen":unseen_graph,
         "targets_total":len(state["targets"]),"status_counts":dict(counts),"broken":broken,
@@ -303,7 +304,6 @@ def main():
         "behavior_gates_open":behavior["open"],
     }
     state["semantic_closure"]=semantic_closure
-    behavior=behavior_gate.evaluate(Path(__file__).resolve().parents[2])
     state["behavior_closure"]=bool(behavior["complete"])
     state["behavior_gates"]=behavior
     state["semantic_missing_keys"]=semantic_missing[:200]

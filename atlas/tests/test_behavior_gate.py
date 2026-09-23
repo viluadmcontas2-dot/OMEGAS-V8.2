@@ -7,13 +7,16 @@ spec=importlib.util.spec_from_file_location("behavior_gate",ROOT/"atlas/battle/b
 GATE=importlib.util.module_from_spec(spec);spec.loader.exec_module(GATE)
 
 class BehaviorGateTest(unittest.TestCase):
-    def test_repo_contract_is_fail_closed_and_reset_k_is_proven(self):
+    def test_repo_contract_requires_all_behavior_proofs_and_is_now_closed(self):
         result=GATE.evaluate(ROOT)
-        self.assertGreater(result["required"],1)
-        self.assertFalse(result["complete"])
+        self.assertEqual(result["required"],14)
+        self.assertTrue(result["complete"], result)
+        self.assertEqual(result["proven"],14)
+        self.assertEqual(result["open"],[])
         rows={x["id"]:x for x in result["gates"]}
         self.assertEqual(rows["action.reset_k_factor_effect"]["status"],"PROVEN")
-        self.assertEqual(rows["action.reset_gas_effect"]["status"],"OPEN")
+        self.assertEqual(rows["action.reset_gas_effect"]["status"],"PROVEN")
+        self.assertEqual(rows["scheduler.refresh_cadence"]["status"],"PROVEN")
 
 if __name__=="__main__":
     unittest.main()
