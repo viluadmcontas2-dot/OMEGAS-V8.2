@@ -25,7 +25,8 @@
       return () => set.delete(listener);
     }
     armTimer() {
-      this.armTimer();
+      if (!this.running || this.timer) return;
+      this.timer = root.setInterval(() => this.run(), this.intervalMs);
     }
     setCadenceMs(intervalMs) {
       const next = Math.max(50, Number(intervalMs) || 200);
@@ -45,7 +46,7 @@
       this.statusElapsedMs = 0;
       this.contextElapsedMs = 0;
       this.run();
-      this.timer = root.setInterval(() => this.run(), this.intervalMs);
+      this.armTimer();
     }
     stop() {
       if (this.timer) root.clearInterval(this.timer);
