@@ -1,0 +1,36 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "action.manual_automatch_effect",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "action_rtti_run_id": 35809435511,
+    "action_rtti_artifact_id": 10729032358,
+    "action_rtti_digest": "sha256:5c0c8f60914a36e414ea6b625eb40dba2305c5c3de72c4efbc7ddf774d857869",
+    "dispatcher_corpus_run_id": 35802546712,
+    "dispatcher_corpus_artifact_id": 10726947451,
+    "dispatcher_decompile_00517568_sha256": "3ffc069948864a63cb4ef5a7d7069b08dc43037bc8cd893e9538da370ef1b205",
+    "sender_decompile_00512280_sha256": "1c8016a7db5e0fea64004147f0e10fd97998a0717ce815404669573b8e479747"
+  },
+  "claims": [
+    "ActionAutoMatchExecute is raw-RTTI-bound to 0x005189B4.",
+    "The native wrapper pushes mode 0x08 and calls the shared AutoCal dispatcher at 0x00517568.",
+    "The native sender at 0x00512280 sends service 0x24 with four payload bytes containing subcommand 0x04 and the wrapper mode; the resulting host frame is 02 24 04 08 32.",
+    "The shared dispatcher requires connection and operator confirmation before the native send.",
+    "On successful send it waits 1000 ms and then forces the common AutoCal refresh path 0x005162F8.",
+    "This completely reconstructs the behavior implemented by ProgBase for this action."
+  ],
+  "evidence": [
+    "Raw RTTI + disassembly run 35809435511: ActionAutoMatchExecute -> 0x005189B4 -> push 0x08 -> call 0x00517568.",
+    "0x00512280 calls TAebProtocol_SendCommand with service 0x24, payload length 4 and action byte passed from the wrapper.",
+    "0x00517568 checks protocol connection, asks for confirmation, invokes 0x00512280, Sleep(1000) on success and calls 0x005162F8.",
+    "Neither canonical Portmon capture contains 02 24 04 08 32; therefore no firmware-internal selective mutation is claimed from the supplied captures."
+  ],
+  "epistemic_boundary": {
+    "progbase_host_contract": "PROVEN",
+    "exact_host_frame": "PROVEN_FROM_CANONICAL_EXE",
+    "post_action_refresh": "PROVEN",
+    "ecu_internal_physical_mutation": "NOT_OBSERVED_IN_SUPPLIED_PORTMONS",
+    "rationale": "Atlas reconstructs ProgBase. Firmware-internal behavior not observable in the canonical host binary/captures is not fabricated and is not treated as a missing ProgBase code path."
+  }
+}
