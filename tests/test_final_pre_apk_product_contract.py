@@ -35,6 +35,8 @@ assert "Restaurar backup" in index
 assert "backupTask" in curve
 assert "restoreContext" in curve
 assert "Restaurar backup Curva K" in curve
+assert "const cancelledRestore = this.restoreContext !== null" in curve
+assert "if (cancelledRestore) this.proposals.clear()" in curve
 
 # AutoCal: uma única identificação de rota e 18 regiões fora da superfície primária.
 autocal_screen = index.split('data-screen="autocal"', 1)[1].split('data-screen="obd"', 1)[0]
