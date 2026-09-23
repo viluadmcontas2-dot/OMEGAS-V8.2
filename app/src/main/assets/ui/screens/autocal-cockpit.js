@@ -659,7 +659,7 @@
 
             <section class="autocal-bands-card">
               <div class="autocal-section-head compact">
-                <div><small>18 POSIÇÕES NATIVAS DE AQUISIÇÃO GNV</small><h4>Pontos internos observados pela ECU</h4></div>
+                <div><small>AQUISIÇÃO GNV · ECU</small><h4>18 posições nativas de aquisição GNV</h4></div>
                 <span id="autocalZoneSummary">4 flags nativas GNV · não monotônicas</span>
               </div>
               <div class="autocal-band-legend" aria-label="Legenda das faixas">

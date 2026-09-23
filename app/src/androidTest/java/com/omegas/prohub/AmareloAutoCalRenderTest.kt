@@ -275,7 +275,7 @@ class AmareloAutoCalRenderTest {
                 toggleBottom: toggleRect?.bottom ?? 0,
                 kCardBottom: kRect?.bottom ?? 0,
                 bandsCardBottom: bandsRect?.bottom ?? 0,
-                hasPosition18Copy: body.includes('POSIÇÕES NATIVAS DE AQUISIÇÃO GNV'),
+                hasPosition18Copy: /18\s+posições nativas de aquisição GNV/i.test(body),
                 hasFakeFourProgress: /GNV\s+\d+\/4/.test(body),
                 previousEpochCopy: /época AutoMatch anterior|epoch anterior|snapshot.*anterior/i.test(body)
               };

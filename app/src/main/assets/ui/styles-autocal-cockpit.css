@@ -1410,7 +1410,7 @@
 /* WU-005 final 1280x720 cockpit composition */
 @media (min-width: 1000px) and (max-height: 760px) {
   .autocal-route-screen {
-    padding: 8px 12px 10px;
+    padding: 8px 12px 0;
   }
 
   .autocal-route-screen > .page-intro {
@@ -1739,4 +1739,20 @@
     padding-inline: 9px;
     font-size: 11px;
   }
+}
+
+
+/* Auto Calibration is the primary cockpit action: state remains obvious without a modal. */
+.autocal-primary-action[data-action="ENABLE_AUTO_CAL"] {
+  border-color: rgba(93, 211, 158, .58);
+  background: rgba(93, 211, 158, .16);
+  color: #bff5dc;
+}
+.autocal-primary-action[data-action="DISABLE_AUTO_CAL"] {
+  border-color: rgba(240, 196, 92, .48);
+  background: rgba(240, 196, 92, .11);
+  color: #f4d98f;
+}
+.autocal-primary-action:disabled {
+  opacity: .58;
 }
