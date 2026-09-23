@@ -16,7 +16,7 @@ assert "if (!action.operationalToggle)" in manager
 assert "if (!current.action.operationalToggle)" in manager
 assert "if (!prepared.action.operationalToggle)" in manager
 assert "RESET_ALL(" not in manager
-assert "data-autocal-action=\"RESET_PETROL\"" in cockpit
+assert "data-autocal-action=\"RESET_PETROL\"" not in cockpit
 assert "data-autocal-action=\"RESET_GAS\"" in cockpit
 assert "Continuar para confirmação Android" in cockpit
 
