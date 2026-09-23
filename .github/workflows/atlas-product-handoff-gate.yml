@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 90e89df61148bcb761271b04a55799fa5230633f
+          ref: 2ba19ecc58a120385d68b9b296595f325d542d14
       - name: Run Atlas product handoff contract
         run: |
           python3 -m unittest \
