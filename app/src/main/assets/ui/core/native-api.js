@@ -359,6 +359,18 @@
       if (this.demo) return { ok: true, started: true, state: 'CURVE_READING' };
       return invoke(this.v7, 'startCurveRead', [], { ok: false, error: 'Ponte V7 indisponível' });
     }
+    startCurveBackup(label) {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Backup real exige ECU conectada.' };
+      return invoke(this.v7, 'startCurveBackup', [label || 'Curva salva manualmente'], { ok: false, error: 'Backup da Curva K indisponível' });
+    }
+    curveBackups() {
+      if (this.demo) return [];
+      return invoke(this.v7, 'listCurveBackups', [], []);
+    }
+    prepareCurveRestore(fileName) {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Restauração real exige ECU conectada.' };
+      return invoke(this.v7, 'startCurveRestorePrepare', [fileName || ''], { ok: false, error: 'Restauração da Curva K indisponível' });
+    }
     curveOperation() {
       if (this.demo) return { ...this.demoCurveState, state: 'COMPLETED', busy: false };
       return invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });
