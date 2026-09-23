@@ -12,7 +12,7 @@ class BehaviorGateTest(unittest.TestCase):
         self.assertEqual(result["required"],14)
         self.assertTrue(result["complete"], result)
         self.assertEqual(result["proven"],14)
-        self.assertEqual(result["open"],[])
+        self.assertEqual(result["open"],0)
         rows={x["id"]:x for x in result["gates"]}
         self.assertEqual(rows["action.reset_k_factor_effect"]["status"],"PROVEN")
         self.assertEqual(rows["action.reset_gas_effect"]["status"],"PROVEN")
