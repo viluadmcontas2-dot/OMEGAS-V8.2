@@ -487,18 +487,6 @@
               </div>
             </section>
 
-            <section class="autocal-bands-card">
-              <div class="autocal-section-head compact">
-                <div><small>18 REGIÕES DE AQUISIÇÃO GNV</small><h4>Onde a ECU já registrou atividade</h4></div>
-                <span id="autocalZoneSummary">0/4 zonas GNV</span>
-              </div>
-              <div class="autocal-band-legend" aria-label="Legenda das faixas">
-                <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
-              </div>
-              <div id="autocalBands" class="autocal-band-strip" role="list"></div>
-              <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Toque numa região</b><span>O estado humano aparece aqui; detalhes RAW ficam no painel técnico.</span></div>
-            </section>
-
             <section class="autocal-command-bar">
               <div class="autocal-command-copy"><small>AUTOMATCH DA ECU</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
               <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
@@ -521,6 +509,17 @@
                 <div><small>FONTE DA REFERÊNCIA</small><b id="autocalReferenceSource">—</b></div>
                 <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">0</b></div>
               </div>
+              <section class="autocal-bands-card autocal-bands-technical">
+                <div class="autocal-section-head compact">
+                  <div><small>18 REGIÕES · DETALHE TÉCNICO</small><h4>Atividade nativa por região</h4></div>
+                  <span id="autocalZoneSummary">0/4 zonas GNV</span>
+                </div>
+                <div class="autocal-band-legend" aria-label="Legenda das faixas">
+                  <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
+                </div>
+                <div id="autocalBands" class="autocal-band-strip" role="list"></div>
+                <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Diagnóstico por região</b><span>Use só para investigação técnica. Para dirigir, use Z1–Z4, OK/FALTA e AGORA acima da curva.</span></div>
+              </section>
               <div id="autocalEvents" class="autocal-events"></div>
             </details>
 
