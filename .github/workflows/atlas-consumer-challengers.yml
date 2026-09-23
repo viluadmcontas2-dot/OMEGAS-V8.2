@@ -80,7 +80,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          set +e
           python3 atlas/tools/audit_product_handoff.py --current-repo --out /tmp/product-handoff-audit.json
+          AUDIT_RC=$?
+          set -e
+          test "$AUDIT_RC" -eq 2
           python3 - <<'PY'
           import json
           x=json.load(open("/tmp/product-handoff-audit.json",encoding="utf-8"))
