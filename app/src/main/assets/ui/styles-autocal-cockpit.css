@@ -1496,3 +1496,9 @@
   background: transparent;
   box-shadow: none;
 }
+
+
+/* WebView-safe disclosure: engineering regions never leak into the driving surface. */
+.autocal-technical-details:not([open]) .autocal-bands-technical {
+  display: none;
+}
