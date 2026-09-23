@@ -35,10 +35,11 @@ assert "Restaurar backup" in index
 assert "backupTask" in curve
 assert "restoreContext" in curve
 assert "Restaurar backup Curva K" in curve
-assert "const cancelledRestore = this.restoreContext !== null" in curve
-assert "if (cancelledRestore)" in curve
-assert "this.proposals.clear()" in curve
-assert "Restauração cancelada · nenhuma escrita enviada" in curve
+assert "this.writePrepared()" in curve
+assert "Restauração validada · iniciando escrita segura" in curve
+assert "classList.add('is-reviewing')" not in curve
+assert 'id="curveWriteButton"' not in index
+assert 'id="mapWriteButton"' not in index
 
 # AutoCal: uma única identificação de rota e 18 regiões fora da superfície primária.
 autocal_screen = index.split('data-screen="autocal"', 1)[1].split('data-screen="obd"', 1)[0]
