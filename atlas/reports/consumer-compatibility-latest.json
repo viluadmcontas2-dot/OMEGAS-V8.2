@@ -1,0 +1,29 @@
+{
+  "schema": "omegas.atlas.consumer-compatibility.v1",
+  "status": "PROVEN_WITH_CONSUMER_DRIFT",
+  "captured_at": "2026-09-23",
+  "atlas_sha": "141ec3407240181ff8eed09ffc5f6a8a94bf4f89",
+  "atlas_closure": {
+    "semantic": "1417/1417",
+    "behavior": "14/14"
+  },
+  "verde_sha": "47d75ce19b1b1f10377a742d87c379f970e7de47",
+  "amarelo_sha": "60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf",
+  "proof_run_id": 35815913611,
+  "proof_artifact": {
+    "id": 10732060227,
+    "digest": "sha256:c77c3a056676baa9fb483392faf6cdd319da729a5b5d81627aefb96dcda066a9"
+  },
+  "amarelo_replay": {
+    "status": "PROVEN",
+    "validated_exact_transactions": 964,
+    "max_timing_delta_ms": 0.0004999999996471161,
+    "proof": "atlas/proofs/consumer/amarelo-lognovo-replay.json"
+  },
+  "verde_action_map": {
+    "status": "DRIFT_DETECTED",
+    "conflicts": 5,
+    "proof": "atlas/proofs/consumer/verde-action-map-drift.json"
+  },
+  "authority_rule": "ProgBase EXE + raw Portmon/LOGNOVO -> Atlas proof -> consumer compatibility. Consumer evidence cannot override native evidence."
+}

@@ -1,0 +1,88 @@
+{
+  "schema": "omegas.atlas.consumer-action-drift.v1",
+  "status": "DRIFT_DETECTED",
+  "consumer_branch": "OmegasVerde",
+  "consumer_sha": "47d75ce19b1b1f10377a742d87c379f970e7de47",
+  "consumer_fixture": "tests/fixtures/progbase-autocal-action-map-v1.json",
+  "proof_run_id": 35815913611,
+  "artifact_id": 10732060227,
+  "canonical_source": "atlas/proofs/behavior/action-host-mode-map.json",
+  "conflicts": [
+    {
+      "action": "MANUAL_AUTOMATCH",
+      "expected": {
+        "handler": "ActionAutoMatchExecute",
+        "handlerVa": "0x005189B4",
+        "mode": "0x08",
+        "frame": "02 24 04 08 32"
+      },
+      "actual": {
+        "handler": "ActionAutoMatchExecute",
+        "handlerVa": "0x005189C0",
+        "mode": "0x01",
+        "frame": "02 24 04 01 2B"
+      }
+    },
+    {
+      "action": "RESET_PETROL",
+      "expected": {
+        "handler": "ActionResetPetrolExecute",
+        "handlerVa": "0x005189C0",
+        "mode": "0x01",
+        "frame": "02 24 04 01 2B"
+      },
+      "actual": {
+        "handler": "ActionResetPetrolExecute",
+        "handlerVa": "0x005189CC",
+        "mode": "0x02",
+        "frame": "02 24 04 02 2C"
+      }
+    },
+    {
+      "action": "RESET_GAS",
+      "expected": {
+        "handler": "ActionResetGasExecute",
+        "handlerVa": "0x005189CC",
+        "mode": "0x02",
+        "frame": "02 24 04 02 2C"
+      },
+      "actual": {
+        "handler": "ActionResetGasExecute",
+        "handlerVa": "0x005189D8",
+        "mode": "0x04",
+        "frame": "02 24 04 04 2E"
+      }
+    },
+    {
+      "action": "RESET_ALL",
+      "expected": {
+        "handler": "ActionResetAllExecute",
+        "handlerVa": "0x005189D8",
+        "mode": "0x04",
+        "frame": "02 24 04 04 2E"
+      },
+      "actual": {
+        "handler": "ActionResetAllExecute",
+        "handlerVa": "0x005189E4",
+        "mode": null,
+        "frame": null
+      }
+    },
+    {
+      "action": "MODIFY_MAP_REFS",
+      "expected": {
+        "handler": "ActionAutoCalRifExecute",
+        "handlerVa": "0x005187A0",
+        "mode": null,
+        "frame": null
+      },
+      "actual": {
+        "handler": "ActionAutoCalRifExecute",
+        "handlerVa": "0x005189B4",
+        "mode": "0x08",
+        "frame": "02 24 04 08 32"
+      }
+    }
+  ],
+  "rule": "Canonical EXE/log evidence remains authoritative; consumer fixtures are never promoted over Atlas proof."
+}

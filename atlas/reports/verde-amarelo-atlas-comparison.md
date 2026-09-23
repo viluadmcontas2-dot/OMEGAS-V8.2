@@ -1,31 +1,40 @@
-# Verde × Amarelo × Atlas — comparação canônica
+# Verde × Amarelo × Atlas — comparação pós-fechamento
 
-Snapshot: 2026-09-23
+Snapshot canônico: 2026-09-23
 
-## Papel correto de cada linha
+## Resultado
 
-**Atlas — autoridade científica.** Mantém o ProgBase 4.2.0.6 e os Portmons canônicos hash-bound, fechou 1417/1417 alvos e 14/14 gates comportamentais, e resolve conflitos pela evidência original.
+### Atlas — autoridade científica + árbitro de consumidores
+- ProgBase e Portmons canônicos hash-bound.
+- **1417/1417** alvos semânticos PROVEN.
+- **14/14** gates comportamentais PROVEN.
+- RTTI/VMT/DFM, disassembly, Portmon, producer/consumer, render e scheduler reconciliados.
+- Agora também valida replay de consumidores e detecta deriva semântica.
 
-**Verde — consumidor de produto.** É a superfície mais avançada de implementação, UX e segurança operacional. Serve como fonte de leads e regressões reais, mas não pode substituir o EXE/logs como oracle.
+### Amarelo — melhor ideia reaproveitada: replay end-to-end
+O Atlas validou o replay do HEAD `60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf` novamente contra o LOGNOVO bruto:
+- **964/964 transações** coincidem em índice, request e response;
+- checksums/echo válidos;
+- diferença temporal máxima após arredondamento: **0,0005 ms**;
+- o replay passa a ser um challenger de compatibilidade do Atlas, não uma nova fonte de verdade.
 
-**Amarelo — challenger de replay/runtime.** A maior contribuição é o replay canônico do LOGNOVO atravessando scheduler/runtime/WebView, com proveniência explícita e separação entre fixture visual e inferência científica.
+### Verde — melhor fonte de integração/UX/campo, mas não oracle
+O HEAD `47d75ce19b1b1f10377a742d87c379f970e7de47` continua útil como produto e fonte de incidentes reais. Porém o detector Atlas encontrou **5 conflitos** no fixture de action-map frente ao EXE canônico:
+- Manual AutoMatch;
+- Reset Petrol;
+- Reset Gas;
+- Reset All;
+- Modify Map Refs.
 
-## Diferenças atuais
+Atlas registra a deriva; não a importa.
 
-- Atlas tem fechamento científico reproduzível e frontier zero.
-- Verde atual ainda contém deriva no fixture de action map em relação ao RTTI bruto/prova Atlas; além disso, os runs CI/fast do HEAD observado estão vermelhos.
-- Amarelo atual mantém fast contracts verdes, mas o render runtime do HEAD observado está vermelho por compile-time access a `nativeAutoCal` privado (além de ruído ADB). A ideia do replay continua valiosa; o harness atual não é autoridade científica.
-- Atlas já absorveu do Verde as pistas válidas de zonas, indexed `0x0165`, segurança e topologia, sem promover escolhas de produto como semântica nativa.
+## Arquitetura resultante
 
-## Refinamento incorporado
+`ProgBase EXE + Portmon/LOGNOVO bruto → Atlas proof → replay/compatibility challengers → Verde/Amarelo`
 
-Atlas passa a ter dois challengers pós-closure:
+Isso combina o melhor dos três sem misturar autoridade:
+- **Atlas:** verdade e fechamento.
+- **Amarelo:** prova de replay/runtime.
+- **Verde:** produto, segurança, UX e evidência de campo.
 
-1. **Canonical consumer replay validation:** confirma que cada transação escolhida pelo Amarelo existe byte-a-byte no LOGNOVO canônico, no mesmo índice Portmon e com a mesma regra de tempo acumulado.
-2. **Consumer drift detector:** compara fixtures/oracles de consumidores com o mapa canônico do Atlas e registra conflito sem contaminar a verdade nativa.
-
-A hierarquia permanece:
-
-`ProgBase EXE + raw Portmon/LOGNOVO → Atlas proof → consumer compatibility (Verde/Amarelo)`.
-
-Consumer compatibility melhora a confiança de integração; nunca substitui a evidência original.
+O consumidor pode revelar um defeito, mas não pode reescrever a semântica original sem nova prova canônica.
