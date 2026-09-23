@@ -79,10 +79,10 @@ test('Scheduler cria um único intervalo e separa fast status e contexto', () =>
   scheduler.start();
   assert.equal(shell.intervalCount(), 1);
   assert.deepEqual(calls, { fast: 1, status: 1, context: 1 });
-  for (let index = 0; index < 10; index += 1) shell.fireInterval();
-  assert.equal(calls.fast, 11);
-  assert.equal(calls.status, 3);
-  assert.equal(calls.context, 2);
+  for (let index = 0; index < 20; index += 1) shell.fireInterval();
+  assert.equal(calls.fast, 21);
+  assert.equal(calls.status, 3, 'status permanece em ~1s apesar do fast a 100ms');
+  assert.equal(calls.context, 2, 'contexto permanece em ~2s apesar do fast a 100ms');
   scheduler.stop();
   assert.equal(shell.clearCount(), 1);
 });
