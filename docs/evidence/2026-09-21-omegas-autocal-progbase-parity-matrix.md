@@ -15,7 +15,7 @@ That separation is a match worth preserving. The parity defects are narrower and
 
 | Behavior | Classification | What is actually different |
 |---|---|---|
-| RunPoint / AGORA XY | **MATCH** | Same live Petrol Inj. × MAP semantics, independently refreshed. OMEGAS renders the cached AGORA layer at 75 ms, matching ProgBase's TimerDati presentation cadence without adding serial reads. |
+| RunPoint / AGORA XY | **MATCH** | Same live Petrol Inj. × MAP semantics, independently refreshed. OMEGAS keeps the global HMI scheduler at 200 ms and switches the same scheduler to 75 ms only while AutoCal is active, matching ProgBase's TimerDati presentation cadence without adding serial reads. |
 | LEVELS RAW routing | **INTENTIONAL IMPROVEMENT** | LEVELS is global MP48 telemetry owned by Dashboard/AGORA. AutoCal projection and cockpit intentionally do not consume it. |
 | PetrolCurve / GasCurve identity | **MATCH** | Same common `PETR_INJ_TBP` X and petrol/gas RV vectors. |
 | PetrolCurve / GasCurve freshness | **MATCH — grouped reference refresh resolved** | The existing serial authority refreshes the reference family at ~4 s, matching the cadence class observed in ProgBase without duplicating serial ownership. |

@@ -15,7 +15,7 @@
         "presentation_cadence": "MATCH_AFTER_FIX"
       },
       "progbase": "48 01 49 -> live cache -> TimerDati 75ms -> RunPoint",
-      "omegas": "TelemetryStateStore latest-only -> PresentSnapshot -> Store -> scheduler fast 75ms -> renderLiveCursor; cached HMI refresh matches ProgBase TimerDati presentation cadence without adding serial reads.",
+      "omegas": "TelemetryStateStore latest-only -> PresentSnapshot -> Store -> single scheduler uses 200ms base cadence and switches to 75ms only on AutoCal -> renderLiveCursor; cached HMI refresh matches ProgBase TimerDati without adding serial reads.",
       "evidence": [
         "app/src/main/java/com/omegas/prohub/telemetry/TelemetryStateStore.kt",
         "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",

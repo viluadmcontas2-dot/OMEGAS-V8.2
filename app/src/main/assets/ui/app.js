@@ -420,6 +420,7 @@
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
+    scheduler.setIntervalMs(route === 'autocal' ? 75 : 200);
     store.patch({ suggestionsOpen: route === 'suggestions', toolsOpen: route === 'tools' });
     if (route === 'dashboard') {
       previousTelemetrySignature = '';
@@ -475,7 +476,7 @@
   router.onNavigate = (route, from, context) => activateRoute(route, context);
 
   const scheduler = new ui.Scheduler({
-    intervalMs: 75,
+    intervalMs: 200,
     onFast: refreshFast,
     onStatus: refreshStatus,
     onContext: refreshContext,
