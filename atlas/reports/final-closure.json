@@ -1,0 +1,64 @@
+{
+  "schema": "omegas.atlas.final-closure.v1",
+  "campaign": "progbase-autocal",
+  "status": "CLOSED",
+  "closed_at": "2026-09-23",
+  "atlas_head_before_receipt": "014a397ea0bd19d2ffc7c2aa36d9344500139196",
+  "canonical_binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "final_wave": 11,
+  "final_run_id": 35811055077,
+  "final_state_artifact": {
+    "id": 10730051091,
+    "name": "atlas-continuation-state",
+    "digest": "sha256:f66479c7fa74f97f755688243768723897b1e866a06b3ad2643aa18635d2112f",
+    "state_json_sha256": "f77fe11b60b19722a0b11a46dc783942178b02bc2b7c12055fcb06db4b6ae495",
+    "next_matrix_sha256": "d8c04ef911e850e4eeed2e35ca6ee5d4cdf7f6086297d89e40c56f4e96472fe7"
+  },
+  "closure": {
+    "targets_total": 1417,
+    "proven": 1417,
+    "refuted": 0,
+    "open": 0,
+    "broken": 0,
+    "stalled": 0,
+    "has_next": false,
+    "semantic_closure": true,
+    "semantic_targets_total": 862,
+    "semantic_targets_missing": 0,
+    "semantic_targets_open": 0,
+    "unresolved_semantic_bindings": 0,
+    "behavior_closure": true,
+    "behavior_gates_required": 14,
+    "behavior_gates_proven": 14,
+    "behavior_gates_open": 0
+  },
+  "semantic_index": {
+    "classes": 6,
+    "fields": 305,
+    "published_methods": 61,
+    "resources": 6,
+    "objects": 311,
+    "event_bindings": 76,
+    "action_bindings": 22,
+    "serial_objects": 49,
+    "visual_objects": 44,
+    "object_field_links": 305,
+    "unresolved_event_bindings": 0,
+    "unresolved_action_bindings": 0
+  },
+  "canonical_corrections": {
+    "manual_automatch": "mode 0x08 -> frame 02 24 04 08 32",
+    "reset_petrol": "mode 0x01 -> frame 02 24 04 01 2B",
+    "reset_gas": "mode 0x02 -> frame 02 24 04 02 2C",
+    "reset_all": "mode 0x04 -> frame 02 24 04 04 2E",
+    "reset_k_factor": "separate path ActionResetKFactorExecute; writes MUL_ACT[i]=1.0",
+    "modify_map_refs": "separate modal path ActionAutoCalRifExecute; writes native map-reference objects",
+    "scheduler": "refresh_time_ms; default 300 ms; DFM range 200..2000 ms; not a fixed native 75 ms loop"
+  },
+  "epistemic_boundary": [
+    "Closure is for the ProgBase 4.2.0.6 AutoCal subsystem and its reachable semantic graph, not the entire ProgBase executable.",
+    "For Reset Petrol, Reset Gas and Manual AutoMatch, the canonical EXE proves the host contract/frame and post-action refresh, but the supplied Portmon captures do not observe those commands; firmware-internal selective mutation is therefore not fabricated.",
+    "Reset All 0x04 is observed in both canonical Portmon captures; LOGNOVO proves a broad AutoCal-state reset in the captured firmware/session.",
+    "The 12000-function native catalog and 2500-decompile caps are diagnostic discovery ceilings; closure is based on all semantically admitted AutoCal targets/dependencies, all of which are closed."
+  ]
+}
