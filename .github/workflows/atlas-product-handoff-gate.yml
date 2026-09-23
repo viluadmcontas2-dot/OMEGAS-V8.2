@@ -17,10 +17,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 1029e1837e39785f882ee3fcf7b04435371b400a
+          ref: bb8fad4ae85d46d785912124595838f8f56e9911
       - name: Run Atlas product handoff contract
         run: |
           python3 -m unittest \
             atlas.tests.test_product_handoff_gate \
             atlas.tests.test_consumer_compatibility \
             tests.test_transversal_governance_contract
+
+      - name: Verify real repository stays fail-closed
+        shell: bash
+        run: |
+          set +e
+          python3 atlas/tools/audit_product_handoff.py --current-repo --out /tmp/product-handoff-audit.json
+          rc=$?
+          set -e
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          x=json.load(open("/tmp/product-handoff-audit.json",encoding="utf-8"))
+          audit=x["audit"]
+          assert audit["status"]=="FAIL"
+          required={
+            "UNRESOLVED_CONSUMER_SEMANTIC_DRIFT",
+            "LIVE_CONTRACT_REGISTRY_NOT_RESOLVED",
+            "GLOBAL_LEDGER_NOT_LOADED",
+            "TRANSVERSAL_GATE_NOT_PASS",
+            "AUDIT_NOT_PROVENANCE_INDEPENDENT",
+            "AUDITOR_MUTATED_NORMATIVE_TARGET",
+            "META_AUDIT_NOT_DISTINCT",
+          }
+          assert required.issubset(set(audit["violations"]))
+          print("ATLAS_REAL_HANDOFF_FAIL_CLOSED=PASS")
+          PY
