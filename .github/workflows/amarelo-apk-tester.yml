@@ -1,0 +1,128 @@
+name: OMEGAS Amarelo Tester APK
+
+on:
+  push:
+    branches:
+      - "work/omegas-amarelo-foundation"
+    paths:
+      - ".github/workflows/amarelo-apk-tester.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PRODUCT_SHA: f602a16a6ced08cfa165b91c16e4f073c866fa44
+  FAST_RUN_ID: "35874990766"
+  RENDER_RUN_ID: "35874990664"
+
+concurrency:
+  group: omegas-amarelo-tester-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-build-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout exactly validated Amarelo source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PRODUCT_SHA }}
+
+      - name: Check immutable source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
+          echo "PRODUCT_SOURCE_SHA=$(git rev-parse HEAD)"
+          echo "PRODUCT_SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+
+      - name: Prove both existing gates passed on exact product SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for RUN_ID in "$FAST_RUN_ID" "$RENDER_RUN_ID"; do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" |
+              python3 -c 'import json,os,sys; r=json.load(sys.stdin); assert r["head_sha"]==os.environ["PRODUCT_SHA"], "gate SHA mismatch"; assert r["status"]=="completed" and r["conclusion"]=="success", "gate not green"; print("VERIFIED_GATE="+r["name"]+" RUN_ID="+str(r["id"]))'
+          done
+
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: gradle
+
+      - name: Full repository contracts, JVM tests, lint, dual ARM APK
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          python3 -B tools/run_checks.py
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug -PomegasAbis=armeabi-v7a,arm64-v8a --no-daemon --stacktrace
+
+      - name: Verify tester identity, APK integrity and build provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+
+          SDK_DIR="$(printenv ANDROID_HOME || printenv ANDROID_SDK_ROOT || echo /usr/local/lib/android/sdk)"
+          AAPT="$(find "$SDK_DIR/build-tools" -type f -name aapt | sort -V | tail -n1)"
+          APKSIGNER="$(find "$SDK_DIR/build-tools" -type f -name apksigner | sort -V | tail -n1)"
+          test -x "$AAPT"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify "$APK"
+          BADGING="$("$AAPT" dump badging "$APK")"
+          echo "$BADGING" | grep -F "name='com.omegas.v7.test.amarelo'"
+          echo "$BADGING" | grep -F "application-label:'OMEGAS AMARELO TEST'"
+
+          EXPECTED_PREFIX="$(echo "$PRODUCT_SHA" | cut -c1-12)"
+          BUILD_CONFIG="$(find app/build/generated -type f -name BuildConfig.java -path '*debug*' -print -quit)"
+          test -s "$BUILD_CONFIG"
+          grep -F "OMEGAS_BUILD_COMMIT = \"$EXPECTED_PREFIX\"" "$BUILD_CONFIG"
+
+          mkdir -p build/evidence
+          sha256sum "$APK" | tee "$APK.sha256"
+          APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
+          APK_BYTES="$(stat -c %s "$APK")"
+          APK_ABIS="$(unzip -Z1 "$APK" | awk -F/ '$1=="lib" && NF>=3 {print $2}' | sort -u | paste -sd, -)"
+          {
+            echo "OMEGAS_AMARELO_TESTER_APK=PASS"
+            echo "SOURCE_SHA=$PRODUCT_SHA"
+            echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+            echo "OMEGAS_BUILD_COMMIT=$EXPECTED_PREFIX"
+            echo "FAST_RUN_ID=$FAST_RUN_ID"
+            echo "RENDER_RUN_ID=$RENDER_RUN_ID"
+            echo "APP_ID=com.omegas.v7.test.amarelo"
+            echo "APP_LABEL=OMEGAS AMARELO TEST"
+            echo "APK_PATH=$APK"
+            echo "APK_SHA256=$APK_SHA256"
+            echo "APK_BYTES=$APK_BYTES"
+            echo "APK_NATIVE_ABIS=$APK_ABIS"
+            echo "APK_SIGNATURE_VERIFY=PASS"
+            echo "APK_ZIP_INTEGRITY=PASS"
+            echo "WU004_144_CELLS=DEFERRED_BY_OWNER"
+            echo "WU006_PHYSICAL_HARDWARE_BUDGETS=NOT_YET_PROVEN"
+            echo "WU007_FULL_RELEASE=NOT_CLAIMED"
+            echo "PHYSICAL_ECU_VALIDATION=NOT_YET_CLAIMED"
+          } | tee build/evidence/omegas-amarelo-tester-apk-evidence.txt
+
+      - name: Publish APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: omegas-amarelo-tester-${{ env.PRODUCT_SHA }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/app-debug.apk.sha256
+            build/evidence/omegas-amarelo-tester-apk-evidence.txt
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
