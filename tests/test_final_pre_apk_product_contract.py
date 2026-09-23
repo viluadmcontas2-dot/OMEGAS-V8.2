@@ -35,8 +35,9 @@ assert "Restaurar backup" in index
 assert "backupTask" in curve
 assert "restoreContext" in curve
 assert "Restaurar backup Curva K" in curve
-assert "curveBackupSelect" in curve and "prepareRestore()" in curve
-assert "curveBackupRestore" in curve and "writePrepared()" in curve
+assert "curveBackupSelect" in curve and "prepareRestore(" in curve
+assert "curveBackupRestore" in curve and "writeRestore()" in curve
+assert "this.writePrepared()" in curve
 assert "Restauração pronta" in curve
 assert "Restauração validada · iniciando escrita segura" not in curve
 assert "classList.add('is-reviewing')" not in curve
