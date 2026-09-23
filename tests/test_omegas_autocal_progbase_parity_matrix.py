@@ -11,7 +11,7 @@ rows = {row["behavior"]: row for row in matrix["classifications"]}
 assert rows["RunPoint/AGORA XY"]["classification"] == "MATCH"
 assert rows["LEVELS RAW routing"]["classification"] == "INTENTIONAL_IMPROVEMENT"
 assert rows["PetrolCurve/GasCurve"]["dimensions"]["field_identity"] == "MATCH"
-assert rows["PetrolCurve/GasCurve"]["dimensions"]["refresh_policy"] == "WRONG"
+assert rows["PetrolCurve/GasCurve"]["dimensions"]["refresh_policy"] == "MATCH_AFTER_FIX"
 assert rows["CurrentBand"]["classification"] == "MATCH"
 assert rows["NUM_BUF maturity / acquisition activity"]["dimensions"]["petrol_probe"] == "MATCH_AFTER_FIX"
 assert rows["PollingPetrol/PollingGas"]["classification"] == "INTENTIONAL_IMPROVEMENT"
@@ -58,8 +58,9 @@ assert "telemetryStore.liveJson()" not in bridge
 assert "MNFLD_PRESS_THD" in cockpit
 assert "currentBand(snapshot = {}, live = {})" in cockpit
 assert "data-autocal-current-band" in cockpit
-assert "intervalMs: 200" in app
+assert "intervalMs: 100" in app
 assert "this.tick % 10 === 0" in scheduler
+assert "this.tick % 20 === 0" in scheduler
 assert 'val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C' in protocol
 assert "if (queued.telemetryAfter" in engine
 assert "pollTelemetry()" in engine

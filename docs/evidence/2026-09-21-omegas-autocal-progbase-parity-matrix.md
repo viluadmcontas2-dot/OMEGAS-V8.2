@@ -15,10 +15,10 @@ That separation is a match worth preserving. The parity defects are narrower and
 
 | Behavior | Classification | What is actually different |
 |---|---|---|
-| RunPoint / AGORA XY | **MATCH** | Same live Petrol Inj. × MAP semantics, independently refreshed. OMEGAS renders at 200 ms rather than ProgBase's 75 ms presentation timer. |
+| RunPoint / AGORA XY | **MATCH** | Same live Petrol Inj. × MAP semantics, independently refreshed. OMEGAS renders the cached AGORA layer at 100 ms, close to ProgBase's 75 ms presentation timer, without adding serial reads. |
 | LEVELS RAW routing | **INTENTIONAL IMPROVEMENT** | LEVELS is global MP48 telemetry owned by Dashboard/AGORA. AutoCal projection and cockpit intentionally do not consume it. |
 | PetrolCurve / GasCurve identity | **MATCH** | Same common `PETR_INJ_TBP` X and petrol/gas RV vectors. |
-| PetrolCurve / GasCurve freshness | **WRONG** | ProgBase recurrently renews slow reference vectors; OMEGAS full snapshot is event-driven and can remain unchanged indefinitely. |
+| PetrolCurve / GasCurve freshness | **MATCH — grouped reference refresh resolved** | The existing serial authority refreshes the reference family at ~4 s, matching the cadence class observed in ProgBase without duplicating serial ownership. |
 | CurrentBand | **MATCH — resolved** | RED `b05705e...` proved the consumer/layer missing. The cockpit now selects the original MAP threshold interval from physical `MNFLD_PRESS_THD` and renders a dedicated horizontal live band, separate from maturity. |
 | Petrol/Gas maturity | **MATCH — acquisition refresh resolved** | Grouped ~2 s refresh now reads both `NUM_BUF_UPD_PETR` and `NUM_BUF_UPD_GAS`; richer deduplicated maturity events remain an intentional improvement. |
 | ACQUIRED_ZONES | **MATCH — freshness resolved** | Petrol and GNV zone vectors are refreshed together in the grouped acquisition path and merged into the current native snapshot. |
@@ -49,20 +49,16 @@ This is an intentional product boundary:
 
 The raw decode remains available to Dashboard, and no conversion to percentage/litres/m³ is authorized.
 
-## 3. Curves — correct identity, wrong renewal model
+## 3. Curves — identity and renewal now aligned
 
-OMEGAS correctly identifies:
+OMEGAS uses the same original producers:
 - `PETR_INJ_TBP` = common X;
 - `PETR_MNFLD_PRESS_RV` = PetrolCurve Y;
 - `GAS_MNFLD_PRESS_RV` = GasCurve Y.
 
-It also adds a useful current-session/temporal-coherence gate.
+The earlier mismatch was renewal. ProgBase repeatedly reads the reference family, with `0x018D/0x018E` around four seconds in the captured run. OMEGAS now uses `NativeAutoCalRefreshPlanner` to refresh the grouped reference family at ~4 s through the existing `Mp48SerialScheduler`, then merges those fields into the current native snapshot. It does not create a second serial owner and it preserves the current-session/temporal-coherence gate.
 
-The mismatch is renewal. ProgBase evidence shows slow recurring reads, with the RV curve vectors around four seconds in the captured run. `NativeAutoCalMonitor`, by design and by test contract, says “snapshot completo só é lido por evento”. A full snapshot is requested at session bootstrap, native status/count change, GNV maturity, or manual action. If none occurs, `latestSnapshot` can remain unchanged even while the ECU's native reference evolves.
-
-The existing test `test_monitor_uses_existing_health_tick_and_event_driven_snapshot` protects this old design, so the future fix must deliberately revise that contract rather than accidentally work around it.
-
-**RED:** `AUTOCAL_REFERENCE_PERIODIC_REFRESH`.
+The independent contract `tests/test_autocal_grouped_reference_refresh_contract.py` protects this behavior. Classification: **MATCH_AFTER_FIX**.
 
 ## 4. CurrentBand — confirmed missing, repaired by RED → GREEN candidate
 
@@ -84,7 +80,7 @@ The RED at `0dbeed2feb51263efc96374290134e345acff03a` required an explicit group
 
 The repair at `714725f2e7417a847c19a94e4ddb70096b0af2e3` adds a pure refresh planner and a shared service cadence, while keeping `NativeAutoCalMonitor` free of its own thread/timer. The grouped acquisition path reads `NUM_BUF_UPD_PETR`, `NUM_BUF_UPD_GAS`, `ACQUIRED_ZONES_PETROL` and `ACQUIRED_ZONES_GAS` through the existing `Mp48SerialScheduler`, then merges only those operational fields into the current native snapshot.
 
-This removes the gasoline-side blind spot without converting the whole AutoCal snapshot into a 2 s full read. The remaining parity RED is the slower reference family (`PETR_INJ_TBP`, `MNFLD_PRESS_THD`, petrol/gas RV vectors).
+This removes the gasoline-side blind spot without converting the whole AutoCal snapshot into a 2 s full read. The slower reference family is handled separately by the ~4 s grouped reference refresh.
 
 ### 5.1 0x0165 semantic debt closed
 
@@ -114,4 +110,4 @@ Implementation must stop and replan if any RED demonstrates one of these:
 3. `MNFLD_PRESS_THD` cannot produce the same current-band semantics under real replay;
 4. a current-session safety rule would be weakened by a proposed incremental merge.
 
-Until a RED falsifies the current behavior, production remains untouched.
+The grouped repair is now in production source and remains subject to the stop conditions above; no claim of vehicle-real equivalence is derived from CI alone.

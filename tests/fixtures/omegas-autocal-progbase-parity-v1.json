@@ -12,10 +12,10 @@
       "dimensions": {
         "source": "MATCH",
         "independence_from_reference_snapshot": "MATCH",
-        "presentation_cadence": "INTENTIONAL_DIFFERENCE"
+        "presentation_cadence": "NEAR_MATCH_INTENTIONAL_DIFFERENCE"
       },
       "progbase": "48 01 49 -> live cache -> TimerDati 75ms -> RunPoint",
-      "omegas": "TelemetryStateStore latest-only -> PresentSnapshot -> Store -> scheduler fast 200ms -> renderLiveCursor",
+      "omegas": "TelemetryStateStore latest-only -> PresentSnapshot -> Store -> scheduler fast 100ms -> renderLiveCursor; cached HMI refresh does not add serial reads.",
       "evidence": [
         "app/src/main/java/com/omegas/prohub/telemetry/TelemetryStateStore.kt",
         "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
@@ -68,24 +68,30 @@
     },
     {
       "behavior": "PetrolCurve/GasCurve",
-      "classification": "WRONG",
+      "classification": "MATCH",
       "dimensions": {
         "field_identity": "MATCH",
         "physical_scaling": "MATCH",
         "snapshot_safety": "INTENTIONAL_IMPROVEMENT",
-        "refresh_policy": "WRONG"
+        "refresh_policy": "MATCH_AFTER_FIX"
       },
       "progbase": "PETR_INJ_TBP is common X; PETR_MNFLD_PRESS_RV/GAS_MNFLD_PRESS_RV are renewed by observed slow serial cycles (~4s for RV vectors)",
-      "omegas": "same three physical vectors drive reference chart, but NativeAutoCalMonitor replaces latestSnapshot only on bootstrap/status/maturity/manual events; no periodic reference refresh exists",
+      "omegas": "same three physical vectors drive the reference chart; NativeAutoCalRefreshPlanner refreshes the grouped reference family at ~4s through the existing MP48 serial authority and merges it into the current native snapshot.",
       "evidence": [
         "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
         "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt",
         "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
         "app/src/main/assets/ui/screens/autocal-cockpit.js",
-        "tests/test_native_autocal_contract.py"
+        "tests/test_native_autocal_contract.py",
+        "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt",
+        "tests/test_autocal_grouped_reference_refresh_contract.py"
       ],
       "red_id": "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
-      "action": "RED: unchanged native status must not allow reference vectors to remain indefinitely stale; implement lightweight grouped refresh through existing serial scheduler, not a second timer/serial owner"
+      "action": "PRESERVE grouped ~4s reference refresh on the existing serial scheduler; do not add a second timer/serial owner.",
+      "resolution": {
+        "state": "MATCH_AFTER_FIX",
+        "proof": "tests/test_autocal_grouped_reference_refresh_contract.py"
+      }
     },
     {
       "behavior": "CurrentBand",
