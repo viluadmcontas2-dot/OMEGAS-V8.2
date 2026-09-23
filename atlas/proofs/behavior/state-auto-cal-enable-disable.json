@@ -1,0 +1,32 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "state.auto_cal_enable_disable",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "atlas_index_run_id": 35802546712,
+    "atlas_index_artifact_id": 10726947451,
+    "atlas_index_artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "portmon_index_sha256": "68e21b68027133ab1ecd1d9eb34664b53f61ddcf5f4cf4153b2617b23943f070",
+    "semantic_index_sha256": "7189e64742bea4496ed1d9e57a035a5f3cbcc215d4738cf4ee088eac3e1b31eb",
+    "reconciliation_issue": 73,
+    "reconciliation_comment_ids": [
+      5767886807,
+      5781777441
+    ]
+  },
+  "claims": [
+    "AUTO_CAL_ENABLE is the native AutoCal enable/disable control object at SerialCode 0x014A.",
+    "The ProgBase AutoCal checkbox is bound directly to AUTO_CAL_ENABLE; there is no separate normal 'start AutoMatch' writer.",
+    "Enable writes value 1 with frame 12 4A 01 01 5E; disable writes value 0 with frame 12 4A 01 00 5D.",
+    "The authoritative LOGNOVO capture contains four observed writes of each value.",
+    "Disable pauses/freezes automatic acquisition and is not a reset operation."
+  ],
+  "evidence": [
+    "Delphi/DFM semantic index: TAUTOCALDM/AUTO_CAL_ENABLE is TAebNumber, SerialCode 330 (0x014A), key AutoCalEnable.",
+    "Delphi/DFM semantic index: TAUTOCALUI/CheckAutoCalEnable.OnBeforeSetData -> CheckAutoCalEnableBeforeSetData.",
+    "Portmon differential index observes frame 12 4A 01 01 5E four times in LOGNOVO.",
+    "Portmon differential index observes frame 12 4A 01 00 5D four times in LOGNOVO.",
+    "Issue #73 reconciliation records the enable/disable contract as PROVEN from ProgBase binding + raw LOGNOVO + operational observation, and explicitly rejects a separate normal start writer."
+  ]
+}
