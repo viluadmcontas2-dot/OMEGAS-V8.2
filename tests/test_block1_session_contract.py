@@ -35,8 +35,14 @@ class Block1SessionContract(unittest.TestCase):
         active = self.html + self.app
         for marker in ('workshopModeButton', 'workshopRequested', 'confirmWriteCheckbox', 'Ative o modo oficina'):
             self.assertNotIn(marker, active)
-        self.assertIn('Gravar alterações na ECU', self.html)
-        self.assertIn('Gravar pontos na ECU', self.html)
+        self.assertIn('id="mapReviewButton"', self.html)
+        self.assertIn('id="curveReviewButton"', self.html)
+        self.assertIn('Gravar é a única confirmação humana', self.html)
+        self.assertIn('Uma confirmação', self.html)
+        self.assertNotIn('id="mapWriteButton"', self.html)
+        self.assertNotIn('id="curveWriteButton"', self.html)
+        self.assertNotIn('id="mapReviewBack"', self.html)
+        self.assertNotIn('id="curveReviewBack"', self.html)
 
     def test_native_gate_rejects_unsafe_write_conditions(self):
         for marker in (
