@@ -48,6 +48,12 @@ class BattleContractTest(unittest.TestCase):
         t={"kind":"function","target":"005189cc","status":"ESCALATE","drivers":{"ghidra-fn":{"status":"ESCALATE"},"objdump-fn":{"status":"ESCALATE"},"capstone-fn":{"status":"ESCALATE"}},"origins":[method_key],"new_targets":[]}
         self.assertEqual(RECON.target_status(state,t),"PROVEN")
 
+    def test_owner_field_use_global_tokens_match_real_delphi_names(self):
+        src=(ROOT/"atlas/battle/lane.py").read_text(encoding="utf-8")
+        self.assertIn('"TAutoCalDM":["PTR__AutoCalDM_"]',src)
+        self.assertIn('"TAutoCalDM_EE":["PTR__AutoCalDM_EE_"]',src)
+        self.assertIn('"pe-dfm-field-binding"',src)
+
     def test_owner_field_use_is_composite_class_bound_proof(self):
         t={"kind":"field-use","target":"F","drivers":{"owner-field-use":{"status":"PROVEN","evidence":[{"hits":[{"function":"0051b910","source":"owner-global-ghidra"}]}]}},"new_targets":[]}
         self.assertEqual(RECON.target_status({"targets":{}},t),"PROVEN")

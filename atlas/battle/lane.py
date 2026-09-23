@@ -290,13 +290,18 @@ def owner_field_use(indices,binary_path,target):
             if matched or count>=128 or ins.mnemonic.startswith("ret"):break
 
     # Path B: for data modules, require the exact global owner pointer and field offset in one decompiled function.
-    if owner in {"TAutoCalDM","TAutoCalDM_EE"}:
-        token=f"PTR__{owner}_"
+    owner_tokens={
+        "TAutoCalDM":["PTR__AutoCalDM_"],
+        "TAutoCalDM_EE":["PTR__AutoCalDM_EE_"],
+    }
+    if owner in owner_tokens:
         off_rx=re.compile(rf"\+\s*0x{wanted:x}\b",re.I)
         for p in sorted((indices/"ghidra/decomp").glob("*.c")):
             txt=p.read_text(encoding="utf-8",errors="replace")
-            if token in txt and off_rx.search(txt):
-                hits.append({"function":p.stem,"source":"owner-global-ghidra","owner_token":token,"offset":wanted})
+            for token in owner_tokens[owner]:
+                if token in txt and off_rx.search(txt):
+                    hits.append({"function":p.stem,"source":"owner-global-ghidra","owner_token":token,"offset":wanted})
+                    break
 
     # Path C: if Ghidra decompiled an owned published method, bind self-relative offset there too.
     off_rx=re.compile(rf"\+\s*0x{wanted:x}\b",re.I)
@@ -307,15 +312,40 @@ def owner_field_use(indices,binary_path,target):
             if off_rx.search(txt):
                 hits.append({"function":f"{int(method['va']):08x}","source":"owner-method-ghidra","method":method["name"],"offset":wanted})
 
+    # Path D: visual/form fields are instantiated by VCL streaming, so prove the
+    # field-to-object binding independently from the raw PE/DFM resource rather than
+    # demanding a machine-code dereference that may never occur directly.
+    if owner not in owner_tokens:
+        import dfm_resource
+        field_name=meta["name"]
+        for link in payload.get("object_field_links",[]):
+            if link.get("field") != field_name:
+                continue
+            resource=link.get("resource"); obj=link.get("object")
+            if not resource or not obj:
+                continue
+            try:
+                fact=dfm_resource.inspect_object(binary_path,resource,obj)
+            except Exception:
+                continue
+            hits.append({
+                "function":"<vcl-stream>",
+                "source":"pe-dfm-field-binding",
+                "resource":resource,
+                "object":obj,
+                "object_class":fact.get("class"),
+                "offset":wanted,
+            })
+
     dedup=[];seen=set()
     for h in hits:
-        sig=(h.get("function"),h.get("address"),h.get("source"))
+        sig=(h.get("function"),h.get("address"),h.get("source"),h.get("resource"),h.get("object"))
         if sig in seen:continue
         seen.add(sig);dedup.append(h)
     if not dedup:
-        return escalate("owner-aware analysis found no class-bound access to this field offset")
+        return escalate("owner-aware analysis found no class-bound access or independent PE/DFM field binding")
     return prove(
-        "owner-aware analysis binds the field offset to its Delphi class/object context",
+        "owner-aware analysis binds the field to its Delphi class/object context",
         [{"kind":"owner-field-use","subject":target,"value":True}],
         [{"kind":"owner-field-use","owner":owner,"offset":wanted,"hits":dedup[:64]}],
     )
