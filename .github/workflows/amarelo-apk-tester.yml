@@ -59,6 +59,7 @@ jobs:
       - name: Full repository contracts, JVM tests, lint, dual ARM APK
         shell: bash
         env:
+          PYTHONPATH: .
           OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
         run: |
           set -euo pipefail
