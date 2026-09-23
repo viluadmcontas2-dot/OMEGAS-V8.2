@@ -8,7 +8,7 @@ def load(name,path):
     mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod);return mod
 
 LANE=load("battle_lane","atlas/battle/lane.py")
-RECON=load("battle_reconcile","atlas/battle/reconcile.py")
+RECON=load("battle_reconcile","atlas/battle/RECON.py")
 STATIC=load("battle_static","atlas/battle/static_index.py")
 UNDELPHI=load("undelphi_seeds","atlas/battle/undelphi_seeds.py")
 
@@ -95,7 +95,7 @@ class PseudoFunctionFilteringTest(unittest.TestCase):
                 }
             }
         }
-        self.assertEqual(reconcile.field_consumer_functions(t), {"0051a070"})
+        self.assertEqual(RECON.field_consumer_functions(t), {"0051a070"})
 
     def test_drop_existing_pseudo_function_target(self):
         state={
@@ -105,7 +105,7 @@ class PseudoFunctionFilteringTest(unittest.TestCase):
                 "field-use|x":{"kind":"field-use","target":"x","new_targets":["function|<vcl-stream>","function|0051a070"]},
             }
         }
-        removed=reconcile.drop_pseudo_function_targets(state)
+        removed=RECON.drop_pseudo_function_targets(state)
         self.assertEqual(removed, ["function|<vcl-stream>"])
         self.assertNotIn("function|<vcl-stream>", state["targets"])
         self.assertEqual(state["targets"]["field-use|x"]["new_targets"], ["function|0051a070"])
