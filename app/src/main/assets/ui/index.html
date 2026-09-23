@@ -121,12 +121,11 @@
               <label class="field-label"><span>Como ajustar</span><select id="mapAdjustmentMode"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select></label>
               <label class="field-label"><span>Valor</span><input id="mapAdjustmentValue" type="number" inputmode="decimal" step="1" value="0"></label>
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
-              <div class="safety-copy"><b>Prévia somente</b><span>Nada é gravado enquanto você ajusta.</span></div>
+              <div class="safety-copy"><b>Prévia somente</b><span>Confira atual→alvo no mapa. Gravar é a única confirmação humana; Checkpoint, ACK e readback são automáticos.</span></div>
               <button id="mapReviewButton" type="button" class="primary wide" disabled>Selecione células</button>
             </aside>
           </div>
 
-          <div class="operation-layer review-layer"><div class="operation-card"><header><div><small>REVISÃO</small><h3 id="mapReviewCount">Alterações preparadas</h3></div><button id="mapReviewBack" type="button" class="icon-close">×</button></header><div id="mapReviewList" class="review-list"></div><div class="write-contract"><b>A próxima ação escreve na ECU.</b><span>Checkpoint, ACK e readback continuam obrigatórios.</span></div><div class="operation-actions"><button id="mapWriteButton" type="button" class="danger-primary">Gravar alterações na ECU</button></div></div></div>
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Escrita manual em andamento</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Checkpoint</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="mapOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="mapDismissResult" type="button" class="secondary">Voltar ao mapa</button></div></div>
         </section>
@@ -180,13 +179,13 @@
                   <div class="context-separator"></div>
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
                   <div id="curveProposalList" class="proposal-list"><p>Nenhum ponto preparado.</p></div>
+                  <div class="safety-copy"><b>Uma confirmação</b><span>Confira antes→depois acima. Gravar inicia backup, escrita, ACK e readback sem outro “tem certeza?”.</span></div>
                   <button id="curveReviewButton" type="button" class="primary wide" disabled>Prepare pontos</button>
                 </aside>
               </div>
             </div>
           </div>
 
-          <div class="operation-layer review-layer"><div class="operation-card"><header><div><small>REVISÃO</small><h3 id="curveReviewCount">Pontos preparados</h3></div><button id="curveReviewBack" type="button" class="icon-close">×</button></header><div id="curveReviewList" class="review-list"></div><div class="write-contract"><b>A próxima ação escreve na ECU.</b><span>Backup, ACK e readback permanecem sob autoridade do Kotlin.</span></div><div class="operation-actions"><button id="curveWriteButton" type="button" class="danger-primary">Gravar pontos na ECU</button></div></div></div>
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Backup</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
         </section>
