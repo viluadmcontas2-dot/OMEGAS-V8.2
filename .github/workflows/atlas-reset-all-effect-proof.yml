@@ -1,0 +1,179 @@
+name: OMEGAS Atlas Targeted Reset-All Effect Proof
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/atlas-reset-all-effect-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  prove-reset-all-effect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout immutable Atlas authority
+        uses: actions/checkout@v4
+        with:
+          ref: f48f8f59e0fa863cdd7926f09719090f61ba6d8d
+
+      - name: Verify canonical inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(sha256sum atlas/originals/progbase/ProgBase-4.2.0.6.exe | awk '{print $1}')" = "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+          test "$(sha256sum atlas/originals/portmon/PortmonLOGNOVO-1.zip | awk '{print $1}')" = "6879fa2a7931d22c207cd7fa47dffb59e1df0fe1de216e34e3f11e0c08cc1c17"
+          test "$(sha256sum atlas/originals/portmon/PortmonAUTOCAL-1.zip | awk '{print $1}')" = "a927795da5800baef53d498273f4e210bc814c2e0e3649572e6de42781073b47"
+
+      - name: Extract before-after state around canonical 0x04 action
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p atlas-proof
+          python3 - <<'PY'
+          import hashlib, json, re, zipfile
+          from pathlib import Path
+
+          EVENT_RE=re.compile(r"^(?P<index>\d+)\s+(?P<field2>\d+\.\d+)\s+ProgBase\.exe\s+(?P<op>IRP_MJ_WRITE|IRP_MJ_READ|IOCTL_SERIAL_PURGE)\s+Silabser\d+\s*(?P<detail>.*)$")
+          SUCCESS_RE=re.compile(r"^(?P<index>\d+)\s+(?P<duration>\d+\.\d+)\s+SUCCESS\s*(?P<detail>.*)$")
+          HEX_RE=re.compile(r"Length\s+\d+:\s*((?:[0-9A-Fa-f]{2}(?:\s+|$))+)")
+          ACTION="02 24 04 04 2E"
+
+          targets={
+            "MUL_ACT":"29 61 01 8B",
+            "PETR_INJ_TBUF":"29 62 01 8C",
+            "MNFLD_PRESS_BUF":"29 63 01 8D",
+            "PETR_INJ_TBUF_GAS_PREV":"29 5D 01 87",
+            "MNFLD_PRESS_BUF_GAS_PREV":"29 5E 01 88",
+            "PETR_INJ_TBUF_GAS":"29 5F 01 89",
+            "MNFLD_PRESS_BUF_GAS":"29 60 01 8A",
+            "ACQUIRED_ZONES_PETROL":"29 6F 01 99",
+            "ACQUIRED_ZONES_GAS":"29 70 01 9A",
+            "PETR_MNFLD_PRESS_RV":"29 8D 01 B7",
+            "GAS_MNFLD_PRESS_RV":"29 8E 01 B8",
+          }
+
+          def payload(detail):
+              m=HEX_RE.search(detail)
+              return "" if not m else " ".join(m.group(1).upper().split())
+
+          def events(path,entry):
+              pending=None;clock=0.0
+              with zipfile.ZipFile(path) as zf, zf.open(entry) as raw:
+                  for b in raw:
+                      line=b.decode("utf-8","replace").rstrip("\r\n")
+                      m=EVENT_RE.match(line)
+                      if m:
+                          pending=(int(m.group("index")),m.group("op"),payload(m.group("detail")))
+                          continue
+                      s=SUCCESS_RE.match(line)
+                      if s and pending:
+                          idx,op,p0=pending
+                          if int(s.group("index"))==idx:
+                              dur=float(s.group("duration")); p=payload(s.group("detail")) or p0
+                              yield {"index":idx,"clock":clock,"duration":dur,"op":op,"payload":p}
+                              clock+=dur
+                          pending=None
+
+          def transactions(path,entry):
+              tx=[];cur=None
+              for ev in events(path,entry):
+                  if ev["op"]=="IRP_MJ_WRITE":
+                      if cur is not None: tx.append(cur)
+                      cur={"request":ev["payload"],"request_index":ev["index"],"clock":ev["clock"],"reads":[]}
+                  elif ev["op"]=="IRP_MJ_READ" and cur is not None and ev["payload"]:
+                      cur["reads"].append({"index":ev["index"],"payload":ev["payload"]})
+              if cur is not None: tx.append(cur)
+              for row in tx:
+                  row["response"]=" ".join(x["payload"] for x in row["reads"])
+              return tx
+
+          def zero_fraction(hex_string):
+              try:b=bytes.fromhex(hex_string)
+              except Exception:return None
+              if not b:return None
+              return sum(x==0 for x in b)/len(b)
+
+          def one_q14_count(hex_string):
+              try:b=bytes.fromhex(hex_string)
+              except Exception:return 0
+              return sum(1 for i in range(len(b)-1) if b[i]==0x00 and b[i+1]==0x40)
+
+          def analyze(label,path,entry):
+              tx=transactions(path,entry)
+              action_positions=[i for i,x in enumerate(tx) if x["request"]==ACTION]
+              rows=[]
+              for pos in action_positions:
+                  action=tx[pos]
+                  observed={}
+                  for name,req in targets.items():
+                      before=next((tx[i] for i in range(pos-1,-1,-1) if tx[i]["request"]==req),None)
+                      after=next((tx[i] for i in range(pos+1,len(tx)) if tx[i]["request"]==req),None)
+                      observed[name]={
+                          "request":req,
+                          "before":None if before is None else {
+                              "request_index":before["request_index"],"clock":before["clock"],"response":before["response"],
+                              "zero_fraction":zero_fraction(before["response"]),"q14_one_pairs":one_q14_count(before["response"])
+                          },
+                          "after":None if after is None else {
+                              "request_index":after["request_index"],"clock":after["clock"],"response":after["response"],
+                              "zero_fraction":zero_fraction(after["response"]),"q14_one_pairs":one_q14_count(after["response"])
+                          },
+                      }
+                  rows.append({
+                      "action_transaction_position":pos,
+                      "action_request_index":action["request_index"],
+                      "action_clock":action["clock"],
+                      "action_response":action["response"],
+                      "objects":observed,
+                  })
+              return {"source":label,"action_count":len(action_positions),"actions":rows}
+
+          result={
+              "schema":"omegas.atlas.reset-all-effect-window.v1",
+              "canonical_action_frame":ACTION,
+              "classification":"raw Portmon before/after extraction; semantic action identity supplied independently by raw RTTI proof run 35809435511",
+              "sources":[
+                  analyze("LOGNOVO",Path("atlas/originals/portmon/PortmonLOGNOVO-1.zip"),"PortmonLOGNOVO.LOG"),
+                  analyze("AUTOCAL",Path("atlas/originals/portmon/PortmonAUTOCAL-1.zip"),"PortmonAUTOCAL (1).LOG"),
+              ],
+          }
+          Path("atlas-proof/reset-all-effect-window.json").write_text(json.dumps(result,indent=2)+"\n",encoding="utf-8")
+
+          lines=["## Atlas targeted Reset All (0x04) Portmon window","",f"frame: {ACTION}"]
+          for src in result["sources"]:
+              lines += ["",f"### {src['source']}",f"observed actions: {src['action_count']}"]
+              for action in src["actions"]:
+                  lines += [f"action event: {action['action_request_index']} clock={action['action_clock']:.6f}"]
+                  for name,obj in action["objects"].items():
+                      b=obj["before"];a=obj["after"]
+                      lines.append(
+                          f"- {name}: before_event={None if b is None else b['request_index']} "
+                          f"after_event={None if a is None else a['request_index']} "
+                          f"before_zero={None if b is None else round(b['zero_fraction'],3)} "
+                          f"after_zero={None if a is None else round(a['zero_fraction'],3)} "
+                          f"before_q14one={None if b is None else b['q14_one_pairs']} "
+                          f"after_q14one={None if a is None else a['q14_one_pairs']}"
+                      )
+          Path("atlas-proof/reset-all-effect-window.md").write_text("\n".join(lines)+"\n",encoding="utf-8")
+          print("\n".join(lines))
+          assert sum(x["action_count"] for x in result["sources"])==2
+          PY
+
+      - name: Publish proof window
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-reset-all-effect-window
+          path: atlas-proof/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach window to effect issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh issue comment 99 --repo "${{ github.repository }}" --body-file atlas-proof/reset-all-effect-window.md
