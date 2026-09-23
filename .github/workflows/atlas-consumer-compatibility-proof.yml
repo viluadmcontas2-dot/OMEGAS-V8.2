@@ -1,0 +1,109 @@
+name: OMEGAS Atlas Consumer Compatibility Proof
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/atlas-consumer-compatibility-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout immutable Atlas authority
+        uses: actions/checkout@v4
+        with:
+          ref: 97dbd5e01b7248373a284e1a88274a308ce77c54
+          fetch-depth: 1
+
+      - name: Verify Atlas closure and tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m compileall -q atlas/tools atlas/tests
+          python3 -m unittest atlas.tests.test_consumer_compatibility
+          python3 - <<'PY'
+          import json
+          x=json.load(open("atlas/reports/final-closure.json",encoding="utf-8"))
+          assert x["status"]=="CLOSED"
+          assert x["closure"]["proven"]==x["closure"]["targets_total"]==1417
+          assert x["closure"]["behavior_gates_proven"]==x["closure"]["behavior_gates_required"]==14
+          PY
+
+      - name: Fetch exact consumer artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin d5739989f0be69e28f2822dd7c050d07e298241f
+          git show d5739989f0be69e28f2822dd7c050d07e298241f:tests/fixtures/progbase-autocal-action-map-v1.json > /tmp/verde-action-map.json
+          git fetch --no-tags --depth=1 origin b1f1a94143b2d13a43aac69e6c56c83c5b8e4203
+          git show b1f1a94143b2d13a43aac69e6c56c83c5b8e4203:tests/fixtures/portmon-lognovo-replay-v1.json > /tmp/amarelo-replay.json
+          mkdir -p consumer-proof
+          sha256sum /tmp/verde-action-map.json /tmp/amarelo-replay.json | tee consumer-proof/consumer-files.sha256
+
+      - name: Prove Amarelo replay against canonical LOGNOVO
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 atlas/tools/verify_consumer_replay.py             --replay /tmp/amarelo-replay.json             --canonical-zip atlas/originals/portmon/PortmonLOGNOVO-1.zip             --raw-entry PortmonLOGNOVO.LOG             --raw-sha256 43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64             --out consumer-proof/amarelo-replay-proof.json
+
+      - name: Detect Verde semantic drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 atlas/tools/audit_consumer_action_map.py             --consumer-oracle /tmp/verde-action-map.json             --out consumer-proof/verde-action-drift.json
+
+      - name: Build cross-branch receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          replay=json.load(open("consumer-proof/amarelo-replay-proof.json",encoding="utf-8"))
+          drift=json.load(open("consumer-proof/verde-action-drift.json",encoding="utf-8"))
+          receipt={
+            "schema":"omegas.atlas.consumer-compatibility.v1",
+            "status":"PROVEN_WITH_CONSUMER_DRIFT" if drift["status"]=="DRIFT_DETECTED" else "PROVEN_CONVERGED",
+            "atlas_sha":"97dbd5e01b7248373a284e1a88274a308ce77c54",
+            "verde_sha":"d5739989f0be69e28f2822dd7c050d07e298241f",
+            "amarelo_sha":"b1f1a94143b2d13a43aac69e6c56c83c5b8e4203",
+            "atlas_closure":{"semantic":"1417/1417","behavior":"14/14"},
+            "amarelo_replay":replay,
+            "verde_action_map":drift,
+            "authority_rule":"Canonical ProgBase EXE + raw Portmon/LOGNOVO + reproducible Atlas proof outrank all consumer branches.",
+          }
+          Path("consumer-proof/consumer-compatibility.json").write_text(json.dumps(receipt,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+          lines=[
+            "## Atlas consumer compatibility proof",
+            "",
+            f"- Atlas: `97dbd5e01b7248373a284e1a88274a308ce77c54` — CLOSED 1417/1417, behavior 14/14",
+            f"- Amarelo: `b1f1a94143b2d13a43aac69e6c56c83c5b8e4203` — canonical replay {replay['status']}, {replay['validated_exact_transactions']} transactions matched byte/timing-exactly to raw LOGNOVO",
+            f"- Verde: `d5739989f0be69e28f2822dd7c050d07e298241f` — action-map status {drift['status']}, conflicts={len(drift['conflicts'])}",
+            "",
+            "The Amarelo replay is accepted as a compatibility challenger, not as native semantic authority.",
+            "Any Verde drift is reported rather than imported into Atlas truth.",
+          ]
+          Path("consumer-proof/consumer-compatibility.md").write_text("\n".join(lines)+"\n",encoding="utf-8")
+          print("\n".join(lines))
+          PY
+
+      - name: Upload proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-consumer-compatibility-proof
+          path: consumer-proof/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach receipt to Atlas issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh issue comment 97 --repo "${{ github.repository }}" --body-file consumer-proof/consumer-compatibility.md
