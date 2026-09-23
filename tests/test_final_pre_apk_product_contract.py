@@ -43,7 +43,7 @@ assert "autocal-focus" in app
 assert ".app-shell.autocal-focus .workspace-head" in base_css
 assert "display: none" in base_css.split(".app-shell.autocal-focus .workspace-head", 1)[1].split("}", 1)[0]
 assert autocal.index('<details id="autocalTechnicalDetails"') < autocal.index('id="autocalBands"')
-assert "18 REGIÕES DE AQUISIÇÃO GNV" in autocal
+assert "18 REGIÕES · DETALHE TÉCNICO" in autocal
 assert "height: clamp(340px, 52vh, 430px)" in css
 
 print("FINAL_PRE_APK_PRODUCT_CONTRACT=PASS")
