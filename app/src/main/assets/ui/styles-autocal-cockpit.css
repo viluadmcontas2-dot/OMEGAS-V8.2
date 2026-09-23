@@ -1444,9 +1444,8 @@
       "reference k"
       "reference bands"
       "reference command"
-      "reference session"
-      "technical technical";
-    grid-template-rows: auto auto auto auto auto auto;
+      "reference session";
+    grid-template-rows: auto auto auto auto auto;
     gap: 6px;
     align-content: stretch;
     padding-bottom: 0;
@@ -1755,4 +1754,33 @@
 }
 .autocal-primary-action:disabled {
   opacity: .58;
+}
+
+
+@media (min-width: 1000px) and (max-height: 760px) {
+  .autocal-cockpit {
+    position: relative;
+  }
+
+  .autocal-technical-details {
+    display: none;
+  }
+
+  .autocal-technical-details[open] {
+    position: absolute;
+    inset: 54px 8px 8px;
+    z-index: 40;
+    display: block;
+    overflow: auto;
+    border-color: rgba(120, 183, 255, .22);
+    background: rgba(10, 15, 22, .98);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .55);
+  }
+
+  .autocal-tech-open {
+    grid-column: 1 / -1;
+    min-height: 40px !important;
+    color: #cbd7e4 !important;
+    border-color: rgba(120, 183, 255, .22) !important;
+  }
 }

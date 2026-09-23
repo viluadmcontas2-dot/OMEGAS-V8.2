@@ -677,6 +677,7 @@
                 <div class="autocal-reset-actions">
                   <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
                   <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
+                  <button type="button" data-autocal-technical-toggle class="autocal-tech-open">Detalhes técnicos</button>
                   <p>Reset é uma ação crítica. A revisão WebView e a confirmação Android continuam obrigatórias.</p>
                 </div>
               </details>
@@ -719,6 +720,10 @@
         if (!this.previousReferencePoints.length) return;
         this.chartHistoryVisible = !this.chartHistoryVisible;
         this.renderReferenceChart(this.snapshot);
+      });
+      this.panel?.querySelector('[data-autocal-technical-toggle]')?.addEventListener('click', () => {
+        const details = document.getElementById('autocalTechnicalDetails');
+        if (details) details.open = true;
       });
       this.panel?.querySelector('[data-autocal-sessions]')?.addEventListener('click', event => {
         this.sessionDrawerOpen = !this.sessionDrawerOpen;
