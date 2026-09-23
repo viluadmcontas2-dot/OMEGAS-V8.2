@@ -1,0 +1,139 @@
+name: OMEGAS Atlas Indexed U8 Semantics Proof
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/atlas-indexed-u8-semantics-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  prove-indexed-u8:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout immutable Atlas authority
+        uses: actions/checkout@v4
+        with:
+          ref: 1ad8af2b249e069cee7b92f211f6678ce990de98
+
+      - name: Verify canonical ProgBase
+        shell: bash
+        run: |
+          set -euo pipefail
+          P=atlas/originals/progbase/ProgBase-4.2.0.6.exe
+          test -s "$P"
+          test "$(sha256sum "$P" | awk '{print $1}')" = "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+
+      - name: Install pinned PE parser
+        run: python3 -m pip install --disable-pip-version-check pefile==2024.8.26
+
+      - name: Extract indexed U8 semantics directly from DFM
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p atlas-proof
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          sys.path.insert(0, str(Path("atlas/battle").resolve()))
+          import dfm_resource
+
+          binary=Path("atlas/originals/progbase/ProgBase-4.2.0.6.exe")
+          names=["VECT_AUTOCAL_U8_0","VECT_AUTOCAL_U8_1","VECT_AUTOCAL_U8_2"]
+          facts={name:dfm_resource.inspect_object(binary,"TAUTOCALDM",name) for name in names}
+
+          expected={
+            "VECT_AUTOCAL_U8_0":{
+              "SerialCode":0x0165,
+              "FileSection":"AutoCal",
+              "FileKeyName":"AUTOCAL_IDLE_MIN_BUF_PETR_THD",
+              "Type":{"ident":"ntVectorElement"},
+              "OnGetData":{"ident":"AUTO_CAL_ENABLEGetData"},
+            },
+            "VECT_AUTOCAL_U8_1":{
+              "SerialCode":0x0165,
+              "FileSection":"AutoCal",
+              "FileKeyName":"AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD",
+              "Type":{"ident":"ntVectorElement"},
+              "RowIndex":1,
+            },
+            "VECT_AUTOCAL_U8_2":{
+              "SerialCode":0x0165,
+              "FileSection":"AutoCal",
+              "FileKeyName":"MaxAutomatch",
+              "Type":{"ident":"ntVectorElement"},
+              "RowIndex":2,
+              "OnGetData":{"ident":"VECT_AUTOCAL_U8_2GetData"},
+            },
+          }
+
+          for name,want in expected.items():
+            fact=facts[name]
+            assert fact["class"]=="TAebNumber", (name,fact["class"])
+            props=fact["properties"]
+            for k,v in want.items():
+              assert props.get(k)==v, (name,k,props.get(k),v)
+
+          proof={
+            "schema":"omegas.atlas.indexed-u8-semantics.v1",
+            "binary_sha256":"8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+            "atlas_sha":"1ad8af2b249e069cee7b92f211f6678ce990de98",
+            "resource":"TAUTOCALDM",
+            "serial_code":"0x0165",
+            "objects":facts,
+            "derived":{
+              "row0_or_default":{
+                "object":"VECT_AUTOCAL_U8_0",
+                "file_key":"AUTOCAL_IDLE_MIN_BUF_PETR_THD",
+                "note":"No RowIndex is serialized in DFM; object name and FileKeyName are direct evidence. Do not infer additional physical units."
+              },
+              "row1":{
+                "object":"VECT_AUTOCAL_U8_1",
+                "row_index":1,
+                "file_key":"AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD"
+              },
+              "row2":{
+                "object":"VECT_AUTOCAL_U8_2",
+                "row_index":2,
+                "file_key":"MaxAutomatch",
+                "on_get_data":"VECT_AUTOCAL_U8_2GetData"
+              }
+            },
+            "epistemic_boundary":"FileKeyName semantics and indexed identity are proven from canonical DFM. Physical engineering units/behavior beyond these names are not inferred."
+          }
+          Path("atlas-proof/indexed-u8-semantics.json").write_text(json.dumps(proof,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+          md=[
+            "## Atlas indexed U8 semantics — direct DFM proof",
+            "",
+            "Canonical ProgBase SHA-256: 8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+            "Shared SerialCode: 0x0165",
+            "",
+            "- VECT_AUTOCAL_U8_0: FileKeyName=AUTOCAL_IDLE_MIN_BUF_PETR_THD; OnGetData=AUTO_CAL_ENABLEGetData; no RowIndex serialized.",
+            "- VECT_AUTOCAL_U8_1: RowIndex=1; FileKeyName=AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD.",
+            "- VECT_AUTOCAL_U8_2: RowIndex=2; FileKeyName=MaxAutomatch; OnGetData=VECT_AUTOCAL_U8_2GetData.",
+            "",
+            "This proves indexed identity/naming only. No extra physical meaning is inferred."
+          ]
+          Path("atlas-proof/indexed-u8-semantics.md").write_text("\n".join(md)+"\n",encoding="utf-8")
+          print("\n".join(md))
+          PY
+
+      - name: Publish proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-indexed-u8-semantics-proof
+          path: atlas-proof/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach proof to Atlas issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh issue comment 97 --repo "${{ github.repository }}" --body-file atlas-proof/indexed-u8-semantics.md
