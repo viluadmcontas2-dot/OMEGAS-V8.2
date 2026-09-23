@@ -37,6 +37,7 @@ jobs:
       wave: ${{ steps.frontier.outputs.wave }}
       matrix: ${{ steps.frontier.outputs.matrix }}
       atlas_sha: ${{ steps.authority.outputs.atlas_sha }}
+      closed: ${{ steps.closure.outputs.closed }}
     steps:
       - id: authority
         name: Resolve compatible Atlas authority
@@ -73,9 +74,38 @@ jobs:
           git merge-base --is-ancestor "${{ inputs.atlas_sha }}" HEAD
           git merge-base --is-ancestor HEAD origin/OmegasAtlas
           test "$(git rev-parse HEAD)" = "${{ steps.authority.outputs.atlas_sha }}"
+      - id: closure
+        name: Honor durable Atlas closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          p=Path("atlas/reports/final-closure.json")
+          closed=False
+          reason="no durable closure receipt"
+          if p.is_file():
+              x=json.loads(p.read_text(encoding="utf-8"))
+              c=x.get("closure",{})
+              closed=(
+                  x.get("status")=="CLOSED"
+                  and int(c.get("open",-1))==0
+                  and int(c.get("broken",-1))==0
+                  and int(c.get("stalled",-1))==0
+                  and bool(c.get("semantic_closure"))
+                  and bool(c.get("behavior_closure"))
+                  and not bool(c.get("has_next"))
+              )
+              reason=f"receipt status={x.get('status')} targets={c.get('proven')}/{c.get('targets_total')} has_next={c.get('has_next')}"
+          print("closed="+str(closed).lower())
+          print("reason="+reason.replace("\n"," "))
+          PY
       - name: Reverify canonical input hashes
+        if: steps.closure.outputs.closed != 'true'
         run: python3 atlas/tools/seed.py --output /tmp/atlas-seed.json
       - name: Download previous frontier
+        if: steps.closure.outputs.closed != 'true'
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.state_artifact }}
@@ -85,6 +115,7 @@ jobs:
           run-id: ${{ inputs.state_run_id }}
       - id: frontier
         name: Validate frontier
+        if: steps.closure.outputs.closed != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -104,7 +135,18 @@ jobs:
           print("matrix="+json.dumps(m,separators=(",",":")))
           PY
 
+  closed-already:
+    if: needs.bootstrap.outputs.closed == 'true'
+    needs: bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse stale post-closure frontier
+        run: |
+          echo "Atlas has a durable CLOSED receipt on ${{ needs.bootstrap.outputs.atlas_sha }}."
+          echo "This stale continuation is intentionally terminated without research, reconcile or redispatch."
+
   research:
+    if: needs.bootstrap.outputs.closed != 'true'
     needs: bootstrap
     strategy:
       fail-fast: false
@@ -144,7 +186,7 @@ jobs:
           if-no-files-found: error
 
   reconcile:
-    if: always()
+    if: always() && needs.bootstrap.result == 'success' && needs.bootstrap.outputs.closed != 'true'
     needs: [bootstrap, research]
     runs-on: ubuntu-latest
     timeout-minutes: 20
