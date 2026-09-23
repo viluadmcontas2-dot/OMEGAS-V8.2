@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
 
+  // FINAL_PRE_APK_SAME_SHA_GATE: no runtime behavior; forces all Verde evidence workflows onto one SHA.
+
   const ns = root.OmegasUi = root.OmegasUi || {};
   const PETROL_BINS = [2, 2.5, 3, 3.5, 4.5, 6, 8, 10, 12, 14, 16, 18];
   const RPM_BINS = [850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500];
