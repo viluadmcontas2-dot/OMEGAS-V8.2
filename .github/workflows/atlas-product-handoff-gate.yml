@@ -1,0 +1,22 @@
+name: OMEGAS Atlas Product Handoff Gate
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/atlas-product-handoff-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  handoff-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1a2e0cce04250aba5405f2894a0e73a213c7e404
+      - name: Run Atlas product handoff contract
+        run: python3 -m unittest atlas.tests.test_product_handoff_gate
