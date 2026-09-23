@@ -58,6 +58,9 @@ class ProductHandoffGateContract(unittest.TestCase):
             "NO_FAKE_PROGRESS_PERCENT",
             "WRITE_PREVIEW_BEFORE_HUMAN_COMMIT",
             "ACK_READBACK_RECOVERY_MANDATORY_AFTER_WRITE",
+            "AUTOCAL_ZONES_DERIVE_FROM_NATIVE_MAP_THRESHOLDS",
+            "AUTOCAL_4_ZONES_NOT_DERIVED_FROM_18_POSITION_INDEX",
+            "PRODUCT_CADENCE_MUST_NOT_REDEFINE_NATIVE_SCHEDULER",
         }:
             self.assertIn(item, required)
 
@@ -112,6 +115,18 @@ class ProductHandoffGateContract(unittest.TestCase):
             "META_AUDIT_NOT_DISTINCT",
         }:
             self.assertIn(code, result["violations"])
+
+    def test_fail_closed_when_autocal_zone_or_cadence_semantics_drift(self):
+        audit = self.load_tool()
+        receipt = audit.example_receipt()
+        receipt["runtime"]["autocal_zone_regions_from_native_thresholds"] = False
+        receipt["runtime"]["four_zones_not_from_18_index"] = False
+        receipt["runtime"]["product_cadence_redefines_native_scheduler"] = True
+        result = audit.audit(receipt)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("AUTOCAL_ZONE_REGIONS_NOT_NATIVE_THRESHOLD_DERIVED", result["violations"])
+        self.assertIn("AUTOCAL_4_ZONES_DERIVED_FROM_18_POSITION_INDEX", result["violations"])
+        self.assertIn("PRODUCT_CADENCE_REDEFINES_NATIVE_SCHEDULER", result["violations"])
 
     def test_good_cross_branch_handoff_passes(self):
         audit = self.load_tool()
