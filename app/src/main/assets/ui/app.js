@@ -475,7 +475,7 @@
   router.onNavigate = (route, from, context) => activateRoute(route, context);
 
   const scheduler = new ui.Scheduler({
-    intervalMs: 100,
+    intervalMs: 75,
     onFast: refreshFast,
     onStatus: refreshStatus,
     onContext: refreshContext,
