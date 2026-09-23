@@ -43,3 +43,12 @@ Verde is valuable as a consumer, regression surface and lead generator. It is no
 When Verde and Atlas disagree about original ProgBase behavior:
 
 **canonical EXE + raw Portmon/LOGNOVO + reproducible Atlas proof win.**
+
+
+## Post-closure refinements
+
+After the Verde review, Atlas added three refinements without reopening scientific closure:
+
+- **Indexed `0x0165` semantics:** direct canonical DFM proof run `35814233455`, artifact `10731072232`, confirms the original `FileKeyName`/RowIndex identities for `VECT_AUTOCAL_U8_0/1/2`.
+- **Acquisition topology:** the 18-element reference/counter grid is explicitly separated from the 4-element `ACQUIRED_ZONES_PETROL/GAS` state and from the separate `CurrentBand` render path.
+- **Post-closure hard-stop:** run `35814342790` proved that stale recursive frontiers are terminated before research/reconcile/redispatch once the durable closure receipt is present.

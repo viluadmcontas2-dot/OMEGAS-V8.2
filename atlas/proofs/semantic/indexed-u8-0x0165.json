@@ -10,7 +10,14 @@
     "files": [
       "undelphi/undelphi.txt",
       "ghidra/autocal-semantics.json"
-    ]
+    ],
+    "direct_dfm_proof": {
+      "run_id": 35814233455,
+      "artifact_id": 10731072232,
+      "artifact_digest": "sha256:65f9ff1240e0228950b7d2f1cb80856ddc4c60943b4d5ef07a775809d81f36bb",
+      "method": "direct canonical PE RT_RCDATA/TPF0 extraction using atlas/battle/dfm_resource.py",
+      "conclusion": "PASS"
+    }
   },
   "shared_serial_object": {
     "serial_code": "0x0165",

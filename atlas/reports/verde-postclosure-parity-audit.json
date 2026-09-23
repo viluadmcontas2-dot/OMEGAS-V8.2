@@ -90,6 +90,30 @@
     "verde_use": "IMPLEMENTATION_CONSUMER_AND_LEAD_SOURCE",
     "conflicts_open": 0,
     "critical_conflicts_documented": 1,
-    "rule": "When Verde and Atlas disagree about original ProgBase behavior, canonical EXE/log evidence wins."
-  }
+    "rule": "When Verde and Atlas disagree about original ProgBase behavior, canonical EXE/log evidence wins.",
+    "post_closure_refinement_complete": true
+  },
+  "post_closure_refinements": [
+    {
+      "id": "INDEXED_U8_0x0165",
+      "status": "PROVEN",
+      "proof": "atlas/proofs/semantic/indexed-u8-0x0165.json",
+      "direct_dfm_run_id": 35814233455,
+      "direct_dfm_artifact_id": 10731072232,
+      "result": "Original FileKeyName/index semantics for VECT_AUTOCAL_U8_0/1/2 promoted from canonical DFM."
+    },
+    {
+      "id": "ACQUISITION_TOPOLOGY",
+      "status": "PROVEN",
+      "proof": "atlas/proofs/semantic/autocal-acquisition-topology.json",
+      "result": "18-element reference/counter grid is distinct from four-element ACQUIRED_ZONES state and separate CurrentBand render path."
+    },
+    {
+      "id": "POST_CLOSURE_HARD_STOP",
+      "status": "PROVEN",
+      "main_workflow_commit": "13ea85ea18a96ee652f1b1c3a67cd5d0f0d61822",
+      "verification_run_id": 35814342790,
+      "result": "Durable CLOSED receipt skips stale research/reconcile/redispatch."
+    }
+  ]
 }
