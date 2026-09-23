@@ -266,10 +266,31 @@ assert.equal(source.includes('zoneForBand('), false,
   'consumer não pode manter agrupamento 18→4 hardcoded por índice');
 
 
-assert.match(source, /Regiões registradas neste ciclo/);
-assert.match(source, /registrada pela ECU neste ciclo/);
+assert.match(source, /Zonas AutoCal lidas/);
+assert.match(source, /registrada pela ECU/);
+assert.match(source, /FALTA/);
+assert.match(source, /AGORA/);
 assert.equal(source.includes('flag ativa'), false);
 assert.equal(source.includes('flag inativa'), false);
+
+const physicalZoneProjection = {
+  instrument: {
+    zoneRegions: [
+      { index: 0, lowMapBar: 0.000, highMapBar: 0.461 },
+      { index: 1, lowMapBar: 0.461, highMapBar: 0.666 },
+      { index: 2, lowMapBar: 0.666, highMapBar: 0.870 },
+      { index: 3, lowMapBar: 0.870, highMapBar: 1.126 },
+    ],
+  },
+};
+assert.equal(model.currentZone(physicalZoneProjection, { mapBar: 0.400 }), 1);
+assert.equal(model.currentZone(physicalZoneProjection, { mapBar: 0.500 }), 2);
+assert.equal(model.currentZone(physicalZoneProjection, { mapBar: 0.700 }), 3);
+assert.equal(model.currentZone(physicalZoneProjection, { mapBar: 0.900 }), 4);
+assert.equal(model.currentZone(physicalZoneProjection, { mapBar: 0.461 }), 2,
+  'boundary 0.461 belongs to Z2 by physical MAP geometry');
+assert.equal(source.includes('zoneForBand('), false,
+  'Z1–Z4 must never be derived from the 18-position index');
 
 
 assert.match(source, /GNV · época anterior/);
