@@ -36,6 +36,8 @@ test('AutoCal inspector sits below the plot without stealing chart width', () =>
 test('AGORA is visually distinct but remains telemetry', () => {
   assert.match(css, /\.autocal-live-point\s*\{[\s\S]*#19daf4/);
   assert.match(js, /Ele nunca vira evidência adquirida/);
+  assert.match(js, /id="autocalLiveNarrative"[^>]*hidden/,
+    'narrativa duplicada deve ficar fora da superfície principal para preservar a curva em 1280x720');
   assert.match(js, /ageMs > AUTO_CAL_LIVE_STALE_MS/);
 });
 

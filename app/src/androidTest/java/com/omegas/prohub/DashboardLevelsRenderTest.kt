@@ -568,7 +568,13 @@ class DashboardLevelsRenderTest {
                 gasZoneLabels: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.textContent.trim()),
                 currentPetrolZones: [...document.querySelectorAll('[data-autocal-zone-petrol][data-current="true"]')].map(node => Number(node.dataset.autocalZonePetrol) + 1),
                 currentGasZones: [...document.querySelectorAll('[data-autocal-zone-gas][data-current="true"]')].map(node => Number(node.dataset.autocalZoneGas) + 1),
-                zoneMeterBottom: document.getElementById('autocalZoneMeter')?.getBoundingClientRect().bottom ?? 0
+                zoneMeterBottom: document.getElementById('autocalZoneMeter')?.getBoundingClientRect().bottom ?? 0,
+                liveNarrativeVisible: (() => {
+                  const node = document.getElementById('autocalLiveNarrative');
+                  if (!node) return false;
+                  const style = window.getComputedStyle(node);
+                  return style.display !== 'none' && style.visibility !== 'hidden' && node.getBoundingClientRect().height > 0;
+                })()
               };
             })())
             """.trimIndent(),
@@ -902,6 +908,7 @@ class DashboardLevelsRenderTest {
             assertEquals("Current MAP must identify exactly one zone", 1, dom.getJSONArray("currentGasZones").length())
             assertTrue("Zone map must remain visible above the fold", dom.getDouble("zoneMeterBottom") <= dom.getDouble("viewportHeight"))
             assertTrue("Acquisition chart must remain dominant after adding zone map", dom.getDouble("chartHeight") >= 300.0)
+            assertTrue("Duplicated live narrative must not compete with the primary curve", !dom.getBoolean("liveNarrativeVisible"))
         } finally {
             scenario.close()
         }
