@@ -1480,3 +1480,19 @@
     display: none;
   }
 }
+
+
+/* Custom-ROM/1280x720 focus: use reclaimed chrome for the acquisition geometry. */
+.app-shell.autocal-focus .autocal-chart-host {
+  height: clamp(340px, 52vh, 430px);
+  min-height: 340px;
+}
+.autocal-bands-technical {
+  margin-top: 10px;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
