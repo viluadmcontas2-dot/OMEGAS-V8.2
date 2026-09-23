@@ -66,6 +66,26 @@ const sparseHuman = model.humanState(sparseZoneSnapshot, { state: 'READY', autoC
 assert.equal(sparseHuman.gasZones, 2);
 assert.equal(sparseHuman.gasZoneFlags.join(','), 'true,false,true,false',
   'zonas esparsas devem preservar posição física, não compactar para as duas primeiras');
+assert.deepEqual(Array.from(sparseHuman.gasMissingZones), [2, 4],
+  'HMI deve dizer exatamente quais zonas GNV faltam, não apenas N/4');
+assert.match(sparseHuman.progress, /Faltam GNV: Z2, Z4/,
+  'resumo operacional deve nomear as zonas GNV faltantes');
+
+const currentZoneSnapshot = {
+  fields: [
+    {
+      key: 'MNFLD_PRESS_THD',
+      status: 'VALID',
+      rawValues: Array.from({ length: 18 }, (_, i) => 200 + i * 100),
+      physicalValues: Array.from({ length: 18 }, (_, i) => 0.2 + i * 0.1),
+    },
+  ],
+};
+assert.equal(typeof model.currentZone, 'function',
+  'modelo deve expor a zona física atual usando o mesmo CurrentBand do ProgBase');
+assert.equal(model.currentZone(currentZoneSnapshot, { mapBar: 0.85 }), 2,
+  'MAP dentro da segunda zona deve orientar o operador como Z2');
+
 
 
 const conflictingSnapshot = {
@@ -192,6 +212,14 @@ assert.equal(css.includes('min-height: 40px'), false);
 assert.equal(source.includes('id="autocalZoneMeter"'), true, 'cockpit premium deve expor progresso visual das zonas');
 assert.equal(source.includes('data-autocal-zone-petrol'), true);
 assert.equal(source.includes('data-autocal-zone-gas'), true);
+assert.equal(source.includes('autocal-zone-cell'), true,
+  'zonas precisam ser células rotuladas Z1..Z4, não bolinhas anônimas');
+assert.match(source, /FALTA/,
+  'estado visual precisa nomear explicitamente zona faltante');
+assert.match(source, /data-current/,
+  'zona física atual precisa ter estado visual AGORA');
+assert.match(css, /\.autocal-zone-cell\s*\{/,
+  'mapa de zonas precisa de tratamento visual próprio');
 assert.equal(source.includes('autocal-band-legend'), true, 'estados das 18 faixas precisam de legenda visível');
 assert.equal(source.includes('autocal-review-tech'), true, 'metadados técnicos da ação crítica devem ficar sob demanda');
 assert.match(source, /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
