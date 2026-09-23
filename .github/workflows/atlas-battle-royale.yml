@@ -30,7 +30,7 @@ jobs:
       - name: Contract tests and pinned PE index
         run: |
           python3 -m compileall -q atlas/battle atlas/tests
-          python3 -m unittest atlas.tests.test_battle_contract atlas.tests.test_semantic_index atlas.tests.test_semantic_targets atlas.tests.test_undelphi_seeds atlas.tests.test_workflow_contract atlas.tests.test_dfm_resource
+          python3 -m unittest atlas.tests.test_battle_contract atlas.tests.test_behavior_gate atlas.tests.test_semantic_index atlas.tests.test_semantic_targets atlas.tests.test_undelphi_seeds atlas.tests.test_workflow_contract atlas.tests.test_dfm_resource
           python3 -m pip install --disable-pip-version-check pefile==2024.8.26
           python3 atlas/battle/static_index.py --out atlas-index/static
           python3 atlas/battle/dfm_resource.py --binary atlas/originals/progbase/ProgBase-4.2.0.6.exe --resource TAUTOCALDM --object PETROL_POINT_2DELETE --property SerialCode --expect-int 0x016d

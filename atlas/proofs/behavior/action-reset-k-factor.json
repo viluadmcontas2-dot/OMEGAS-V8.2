@@ -1,0 +1,25 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "action.reset_k_factor_effect",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "workflow_run_id": 35798369532,
+    "artifact_id": 10724289712,
+    "artifact_digest": "sha256:8df52b322bda2f3ae3ee1b3dd1a675f7721a061f999daa57a2dd21d1ddcb643f"
+  },
+  "claims": [
+    "TAutoCalUI.ActionResetKFactorExecute is at 0x0051A070.",
+    "The loop resolves owner field +0xA0, identified as TAutoCalDM.MUL_ACT.",
+    "For each vector index it calls TAebVector_SetDouble at 0x00979EE8 with IEEE-754 double 1.0.",
+    "After the loop it refreshes AutoCal UI/state through 0x005162F8."
+  ],
+  "evidence": [
+    "0051A108 loads the AutoCalDM global owner.",
+    "0051A116 loads [owner + 0xA0].",
+    "0051A10D pushes 0x3FF00000 and 0051A112 pushes 0x00000000, forming double 1.0.",
+    "0051A11E calls 0x00979EE8 (TAebVector_SetDouble).",
+    "0051A123 increments the index and loops until vector count.",
+    "0051A138 calls 0x005162F8 after reset."
+  ]
+}

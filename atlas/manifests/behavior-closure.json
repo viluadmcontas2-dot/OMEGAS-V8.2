@@ -1,0 +1,90 @@
+{
+  "schema": "omegas.atlas.behavior-closure.v1",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gates": [
+    {
+      "id": "state.auto_cal_enable_disable",
+      "category": "state_machine",
+      "proof": "atlas/proofs/behavior/state-auto-cal-enable-disable.json",
+      "required": true
+    },
+    {
+      "id": "action.reset_petrol_effect",
+      "category": "action_effect",
+      "proof": "atlas/proofs/behavior/action-reset-petrol.json",
+      "required": true
+    },
+    {
+      "id": "action.reset_gas_effect",
+      "category": "action_effect",
+      "proof": "atlas/proofs/behavior/action-reset-gas.json",
+      "required": true
+    },
+    {
+      "id": "action.reset_all_effect",
+      "category": "action_effect",
+      "proof": "atlas/proofs/behavior/action-reset-all.json",
+      "required": true
+    },
+    {
+      "id": "action.manual_automatch_effect",
+      "category": "action_effect",
+      "proof": "atlas/proofs/behavior/action-manual-automatch.json",
+      "required": true
+    },
+    {
+      "id": "action.reset_k_factor_effect",
+      "category": "action_effect",
+      "proof": "atlas/proofs/behavior/action-reset-k-factor.json",
+      "required": true
+    },
+    {
+      "id": "action.modify_map_refs_effect",
+      "category": "action_effect",
+      "proof": "atlas/proofs/behavior/action-modify-map-refs.json",
+      "required": true
+    },
+    {
+      "id": "action.finish_autocal_effect",
+      "category": "action_effect",
+      "proof": "atlas/proofs/behavior/action-finish-autocal.json",
+      "required": true
+    },
+    {
+      "id": "consumer.petrol_to_petrol_point",
+      "category": "consumer_chain",
+      "proof": "atlas/proofs/behavior/consumer-petrol-point.json",
+      "required": true
+    },
+    {
+      "id": "consumer.gas_prev_to_gas_point_prev",
+      "category": "consumer_chain",
+      "proof": "atlas/proofs/behavior/consumer-gas-point-prev.json",
+      "required": true
+    },
+    {
+      "id": "consumer.gas_to_gas_point",
+      "category": "consumer_chain",
+      "proof": "atlas/proofs/behavior/consumer-gas-point.json",
+      "required": true
+    },
+    {
+      "id": "consumer.mul_act_to_kline",
+      "category": "consumer_chain",
+      "proof": "atlas/proofs/behavior/consumer-mul-act-kline.json",
+      "required": true
+    },
+    {
+      "id": "render.current_band_and_zones",
+      "category": "render",
+      "proof": "atlas/proofs/behavior/render-current-band-zones.json",
+      "required": true
+    },
+    {
+      "id": "scheduler.refresh_cadence",
+      "category": "scheduler",
+      "proof": "atlas/proofs/behavior/scheduler-refresh-cadence.json",
+      "required": true
+    }
+  ]
+}

@@ -33,6 +33,8 @@ def main():
     coverage = state.get("coverage", {})
     open_count = sum(1 for target in targets if target["status"] not in {"PROVEN", "REFUTED"})
     semantic_complete = bool(state.get("semantic_closure", False))
+    behavior_complete = bool(state.get("behavior_closure", False))
+    behavior = state.get("behavior_gates", {})
     has_next = bool(state.get("has_next", False))
     stalled = int(coverage.get("stalled_targets", 1))
     broken = int(coverage.get("broken", 1))
@@ -43,6 +45,7 @@ def main():
         and broken == 0
         and stalled == 0
         and semantic_complete
+        and behavior_complete
         and not has_next
     )
 
@@ -58,6 +61,7 @@ def main():
         f"Stalled ESCALATE targets: **{stalled}**",
         f"BROKEN: **{broken}**",
         f"Semantic closure: **{semantic_complete}**",
+        f"Behavior closure: **{behavior_complete}** ({behavior.get('proven',0)}/{behavior.get('required',0)} gates PROVEN)",
         f"Function catalog cap hit (diagnostic): **{bool(coverage.get('function_cap_hit', False))}**",
         f"Decompiler corpus cap hit (diagnostic): **{bool(coverage.get('decompile_cap_hit', False))}**",
         "",
@@ -77,6 +81,8 @@ def main():
                 "wave": state.get("wave"),
                 "state_artifact": f"atlas-state-w{state.get('wave')}",
                 "semantic_closure": semantic_complete,
+                "behavior_closure": behavior_complete,
+                "behavior_gates": behavior,
                 "coverage": coverage,
             },
             indent=2,

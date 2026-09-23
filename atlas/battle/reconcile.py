@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import semantic_targets
+import behavior_gate
 
 ALLOWED={"PROVEN","REFUTED","ESCALATE","BROKEN"}
 DRIVER_CHOICES={
@@ -297,8 +298,14 @@ def main():
         "semantic_targets_total":len(semantic_keys),"semantic_targets_missing":len(semantic_missing),
         "semantic_targets_open":len(semantic_open),"unresolved_semantic_bindings":unresolved_bindings,
         "semantic_index_counts":sem_payload.get("counts",{}),
+        "behavior_gates_required":behavior["required"],
+        "behavior_gates_proven":behavior["proven"],
+        "behavior_gates_open":behavior["open"],
     }
     state["semantic_closure"]=semantic_closure
+    behavior=behavior_gate.evaluate(Path(__file__).resolve().parents[2])
+    state["behavior_closure"]=bool(behavior["complete"])
+    state["behavior_gates"]=behavior
     state["semantic_missing_keys"]=semantic_missing[:200]
     state["semantic_open_keys"]=semantic_open[:200]
     state["next_lane_count"]=len(lanes);state["has_next"]=bool(lanes);state["stalled_keys"]=stalled[:200]
