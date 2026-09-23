@@ -566,6 +566,12 @@ class DashboardLevelsRenderTest {
                 gasZoneStates: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.dataset.state ?? ''),
                 petrolZoneLabels: [...document.querySelectorAll('[data-autocal-zone-petrol]')].map(node => node.textContent.trim()),
                 gasZoneLabels: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.textContent.trim()),
+                zoneSurfaceGasStates: [...document.querySelectorAll('[data-autocal-zone-surface]')].map(node => node.dataset.gasState ?? ''),
+                zoneSurfacePetrolStates: [...document.querySelectorAll('[data-autocal-zone-surface]')].map(node => node.dataset.petrolState ?? ''),
+                zoneSurfaceLabels: [...document.querySelectorAll('[data-autocal-zone-label]')].map(node => node.textContent.trim()),
+                currentChartZones: [...document.querySelectorAll('[data-autocal-zone-surface][data-current="true"]')].map(node => Number(node.dataset.autocalZoneSurface)),
+                liveZoneLabel: document.querySelector('[data-autocal-live-label]')?.textContent ?? '',
+                broadResetEnabled: document.querySelector('[data-autocal-action="RESET_GAS"]')?.disabled === false,
                 currentPetrolZones: [...document.querySelectorAll('[data-autocal-zone-petrol][data-current="true"]')].map(node => Number(node.dataset.autocalZonePetrol) + 1),
                 currentGasZones: [...document.querySelectorAll('[data-autocal-zone-gas][data-current="true"]')].map(node => Number(node.dataset.autocalZoneGas) + 1),
                 zoneMeterBottom: document.getElementById('autocalZoneMeter')?.getBoundingClientRect().bottom ?? 0,
@@ -935,6 +941,32 @@ class DashboardLevelsRenderTest {
                 dom.getJSONArray("currentGasZones").toString(),
             )
             assertEquals("Current MAP must identify exactly one zone", 1, dom.getJSONArray("currentGasZones").length())
+            assertEquals(
+                "Four physical zones must be painted ON THE CHART using the native thresholds",
+                4, dom.getJSONArray("zoneSurfaceLabels").length(),
+            )
+            assertEquals(
+                "Painted GNV zones must preserve sparse native identities",
+                listOf("acquired", "missing", "acquired", "missing"),
+                dom.getJSONArray("zoneSurfaceGasStates").let { array ->
+                    List(array.length()) { index -> array.getString(index) }
+                },
+            )
+            assertEquals(
+                "Painted gasoline zones must preserve sparse native identities",
+                listOf("acquired", "acquired", "missing", "missing"),
+                dom.getJSONArray("zoneSurfacePetrolStates").let { array ->
+                    List(array.length()) { index -> array.getString(index) }
+                },
+            )
+            assertEquals("AGORA must highlight exactly one zone on the chart", 1, dom.getJSONArray("currentChartZones").length())
+            assertEquals(
+                "Chart highlight and native CurrentBand must identify the SAME zone",
+                dom.getJSONArray("currentGasZones").getInt(0),
+                dom.getJSONArray("currentChartZones").getInt(0),
+            )
+            assertTrue("AGORA cursor must name its zone ON THE CHART", dom.getString("liveZoneLabel").contains("AGORA · Z"))
+            assertTrue("Owner must have an enabled broad acquisition reset", dom.getBoolean("broadResetEnabled"))
             assertTrue("Zone map must remain visible above the fold", dom.getDouble("zoneMeterBottom") <= dom.getDouble("viewportHeight"))
             assertTrue("Acquisition chart must use the freed Custom-ROM viewport", dom.getDouble("chartHeight") >= 340.0)
             assertTrue("Duplicated live narrative must not compete with the primary curve", !dom.getBoolean("liveNarrativeVisible"))
