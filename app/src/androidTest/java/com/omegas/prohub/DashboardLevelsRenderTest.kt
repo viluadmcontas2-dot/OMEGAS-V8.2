@@ -480,7 +480,9 @@ class DashboardLevelsRenderTest {
                   heroTop: hero?.top ?? 0,
                   heroHeight: hero?.height ?? 0,
                   viewportHeight: window.innerHeight,
-                  inspectorWidth: inspector?.width ?? 0
+                  inspectorWidth: inspector?.width ?? 0,
+                  inspectorTop: inspector?.top ?? 0,
+                  inspectorBottom: inspector?.bottom ?? 0
                 };
               })()
             })
@@ -805,7 +807,9 @@ class DashboardLevelsRenderTest {
             assertTrue("Live telemetry rail must remain visible without scrolling", geometry.getDouble("liveBottom") <= geometry.getDouble("viewportHeight"))
             assertTrue("Operational hero must follow the instrument surface", geometry.getDouble("heroTop") >= geometry.getDouble("liveBottom"))
             assertTrue("Operational hero must stay compact relative to chart", geometry.getDouble("heroHeight") < geometry.getDouble("chartHeight"))
-            assertTrue("Desktop point inspector must not consume a permanent chart column", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.31)
+            assertTrue("Point inspector must sit below the plot instead of overlaying it", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartBottom"))
+            assertTrue("Live telemetry rail must follow the point inspector", geometry.getDouble("liveTop") >= geometry.getDouble("inspectorBottom"))
+            assertTrue("Point inspector may use chart width without narrowing the plot", geometry.getDouble("inspectorWidth") >= geometry.getDouble("chartWidth") * 0.70)
         } finally {
             scenario.close()
         }
