@@ -556,8 +556,14 @@
     }
 
     closeReview() {
+      const cancelledRestore = this.restoreContext !== null && !this.writing;
       this.root?.classList.remove('is-reviewing', 'is-writing', 'has-result');
       if (!this.writing) this.restoreContext = null;
+      if (cancelledRestore) {
+        this.proposals.clear();
+        this.renderProposalList();
+        text('curveBackupStatus', 'Restauração cancelada · nenhuma escrita enviada');
+      }
     }
 
     writeReview() {
