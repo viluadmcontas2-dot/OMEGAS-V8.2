@@ -505,8 +505,8 @@
               <details class="autocal-more-actions">
                 <summary>Mais ações</summary>
                 <div class="autocal-reset-actions">
-                  <button type="button" data-autocal-action="RESET_PETROL" disabled aria-disabled="true" title="Bloqueado até validação física controlada">Reset nativo gasolina — bloqueado</button>
-                  <button type="button" data-autocal-action="RESET_GAS" disabled aria-disabled="true" title="Efeito amplo observado; bloqueado">Reset nativo GNV — bloqueado</button>
+                  <button type="button" data-autocal-action="RESET_PETROL" disabled aria-disabled="true" title="Seletividade física não comprovada; bloqueado">Reset nativo gasolina — bloqueado</button>
+                  <button type="button" data-autocal-action="RESET_GAS" disabled aria-disabled="true" title="Efeito amplo observado no corpus original; bloqueado">Reset nativo GNV — bloqueado</button>
                   <p>Resets continuam bloqueados. No Lognovo original, o comando “Reset gas point” também zerou estado AutoCal de gasolina e MUL_ACT; a tela não promete seletividade inexistente.</p>
                 </div>
               </details>

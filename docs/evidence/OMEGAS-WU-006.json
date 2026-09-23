@@ -24,7 +24,8 @@
     "levels_dashboard": 85,
     "session_unification": 86,
     "real_fixture": 68,
-    "prior_global_gate": 67
+    "prior_global_gate": 67,
+    "p0_reset": 98
   },
   "progbase": {
     "path": "G:\\Meu Drive\\OMEGAS\\Copy of ProgBase (3).exe",
@@ -79,6 +80,39 @@
       "calibration_word_high_byte": "maximum reference",
       "find_levels_interpolation": "four thresholds at 1/5, 2/5, 3/5, 4/5 between learned extrema, reversed when sensor direction requires it",
       "physical_conversion": "NOT_PROVEN_AND_NOT_ALLOWED"
+    },
+    "action_map": {
+      "path": "tests/fixtures/progbase-autocal-action-map-v1.json",
+      "classification": "ORIGINAL_DERIVED",
+      "modify_map_refs": {
+        "handler": "ActionAutoCalRifExecute",
+        "mode": "0x08",
+        "frame": "02 24 04 08 32"
+      },
+      "manual_automatch": {
+        "handler": "ActionAutoMatchExecute",
+        "mode": "0x01",
+        "frame": "02 24 04 01 2B"
+      },
+      "reset_petrol": {
+        "handler": "ActionResetPetrolExecute",
+        "mode": "0x02",
+        "frame": "02 24 04 02 2C",
+        "operational_exposure": false
+      },
+      "reset_gas": {
+        "handler": "ActionResetGasExecute",
+        "mode": "0x04",
+        "frame": "02 24 04 04 2E",
+        "operational_exposure": false,
+        "observed_effect": "BROAD_AUTOCAL_RESET_IN_LOGNOVO"
+      },
+      "reset_all": {
+        "handler": "ActionResetAllExecute",
+        "mode": null,
+        "frame": null,
+        "path": "SEPARATE_ROUTINE_WIRE_UNRESOLVED"
+      }
     }
   },
   "portmon_observations": {
@@ -144,11 +178,11 @@
       "LIVE_AGORA_TELEMETRY_SEPARATION",
       "SINGLE_SERIAL_AUTHORITY",
       "PETROL_GAS_REFERENCE_FIELD_IDENTITY",
-      "NO_AUTOMATIC_ECU_WRITE"
+      "NO_AUTOMATIC_ECU_WRITE",
+      "ORIGINAL_PROGBASE_ACTION_IDENTITY"
     ],
     "evidence_debt": [
-      "0x0165 exact original subindex semantics remain only partially proven; OMEGAS keeps named compatibility aliases fail-closed",
-      "vehicle-real behavior is not inferred from CI/emulator"
+      "vehicle-real behavior beyond the captured reset incident is not inferred from CI/emulator"
     ],
     "resolved_slices": {
       "levels_raw_live": {
@@ -239,13 +273,14 @@
     }
   },
   "issues_state": {
-    "81": "OPEN_FINAL_RECONCILIATION",
+    "81": "CLOSED_COMPLETED",
     "82": "CLOSED_COMPLETED",
     "83": "CLOSED_COMPLETED",
-    "84": "OPEN_FINAL_SAME_SHA_REVALIDATION",
+    "84": "CLOSED_COMPLETED",
     "85": "CLOSED_COMPLETED",
     "86": "CLOSED_MATCH",
-    "95": "CLOSED_COMPLETED"
+    "95": "CLOSED_COMPLETED",
+    "98": "OPEN_FINAL_SAME_SHA_REVALIDATION"
   },
   "session_unification": {
     "issue": 86,
@@ -303,12 +338,12 @@
     ],
     "harness": "tools/ci/run_android_render_evidence.sh",
     "pending_scenarios": [],
-    "state": "GREEN_12_SCENARIOS_FINAL_HEAD_REVALIDATION_REQUIRED",
+    "state": "GREEN_13_SCENARIOS_PRE_FINAL_SAME_SHA_REVALIDATION",
     "latest_green": {
-      "run": 45,
-      "run_id": 35755193960,
-      "sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
-      "scenarios": 12,
+      "run": 61,
+      "run_id": 35809110846,
+      "sha": "aee50900b907c44de2cb8c562ed998b8a5d39314",
+      "scenarios": 13,
       "conclusion": "success",
       "artifacts_inspected": true,
       "viewport": "1280x720"
@@ -319,6 +354,7 @@
       "autocal-fresh-control",
       "autocal-reference-curves",
       "autocal-equivalence-shifted",
+      "autocal-sparse-zone-map",
       "learning-fresh-context",
       "map-fresh-context",
       "curve-offline-honest",
@@ -331,7 +367,8 @@
       "autocal_reference_curves": "ORIGINAL_DERIVED_LOGNOVO_PROGBASE",
       "curve_original_lognovo": "ORIGINAL_DERIVED_LOGNOVO_PROGBASE",
       "autocal_equivalence_shifted": "SYNTHETIC_NON_SCIENTIFIC_VISUAL_ONLY",
-      "omegas_generated_scientific_oracle": "FORBIDDEN"
+      "omegas_generated_scientific_oracle": "FORBIDDEN",
+      "autocal_sparse_zone_map": "SYNTHETIC_NON_SCIENTIFIC_VISUAL_ONLY_ON_ORIGINAL_DERIVED_BASE"
     },
     "curve_offline_repair": {
       "red_sha": "c4650e8f2303d0e69ccba60835607a2e4e9b4cfc",
@@ -343,11 +380,34 @@
       "green_run_id": 35755193960,
       "expected": "Curva não confirmada",
       "reading_state": false
+    },
+    "zone_map": {
+      "native_fields": [
+        "ACQUIRED_ZONES_PETROL_0x016F",
+        "ACQUIRED_ZONES_GAS_0x0170"
+      ],
+      "identity_preserved": "Z1_Z2_Z3_Z4",
+      "states": [
+        "OK",
+        "FALTA",
+        "AGORA"
+      ],
+      "sparse_visual_proof": "gas Z1/Z3 acquired; Z2/Z4 missing",
+      "current_zone_source": "CurrentBand from live MAP + MNFLD_PRESS_THD"
     }
   },
   "final_gate_policy": {
     "requirement": "CI + FAST + GLOBAL_REALITY + ANDROID_RENDER on the same final HEAD",
     "run_ids_recorded_after_commit": "issues #84/#81",
     "reason": "A commit cannot contain the run IDs it triggers without changing its own SHA."
+  },
+  "p0_reset_safety": {
+    "issue": 98,
+    "original_authority": "tests/fixtures/progbase-autocal-action-map-v1.json",
+    "captured_reset_gas_effect": "broad AutoCal reset in Lognovo, including petrol/GNV acquisition, reference curves and MUL_ACT",
+    "destructive_resets_exposed": false,
+    "pre_mutation_backup_required": true,
+    "backup_failure_policy": "FAIL_CLOSED_BEFORE_USB_WRITE",
+    "full_export_surface": true
   }
 }
