@@ -1,0 +1,23 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "action.finish_autocal_effect",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "workflow_run_id": 35802546712,
+    "artifact_id": 10726947451,
+    "artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "decompile_0051a390_sha256": "194cb52e9b2a8c4c35a9bf04899db99274367fda5c37a8ec00a30dce777997c0",
+    "semantic_index_sha256": "7189e64742bea4496ed1d9e57a035a5f3cbcc215d4738cf4ee088eac3e1b31eb"
+  },
+  "claims": [
+    "TAutoCalUI.ActionFinishAutocalExecute is at 0x0051A390.",
+    "After affirmative confirmation, it copies TAutoCalDM.VECT_AUTOCAL_U8_2 into TAutoCalDM.NUM_ATUOMATCH_EXECUTED, waits 100 ms, then refreshes AutoCal state/UI."
+  ],
+  "evidence": [
+    "Delphi semantic index binds TAutoCalDM +0x7C = VECT_AUTOCAL_U8_2 and +0xCC = NUM_ATUOMATCH_EXECUTED.",
+    "0x0051A390 checks the confirmation result against 6.",
+    "It calls TAebNumber_GetInt on owner +0x7C and TAebNumber_SetInt on owner +0xCC with the returned value.",
+    "It calls Sleep(100), then 0x005162F8."
+  ]
+}

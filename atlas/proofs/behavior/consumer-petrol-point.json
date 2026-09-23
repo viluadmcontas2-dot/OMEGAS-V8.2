@@ -1,0 +1,21 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "consumer.petrol_to_petrol_point",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "workflow_run_id": 35802546712,
+    "artifact_id": 10726947451,
+    "artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "decompile_005162f8_sha256": "35e67e6c6d834d810b5ee876c286a213773764de1e95a52e422642a66da7dac9",
+    "semantic_index_sha256": "7189e64742bea4496ed1d9e57a035a5f3cbcc215d4738cf4ee088eac3e1b31eb"
+  },
+  "claims": [
+    "Refresh 0x005162F8 reads PETR_INJ_TBUF and MNFLD_PRESS_BUF from TAutoCalDM and writes the paired samples into TAutoCalUI.PetrolPoint."
+  ],
+  "evidence": [
+    "Delphi semantic index binds TAutoCalDM +0x84 = PETR_INJ_TBUF and +0x88 = MNFLD_PRESS_BUF.",
+    "Delphi semantic index binds TAutoCalUI +0x2CC = PetrolPoint.",
+    "0x005162F8 invokes the TAeb read operation on +0x84 and +0x88, iterates the buffer count, reads both vectors with TAebVector_GetDouble, and calls the chart-series add/update functions on UI +0x2CC."
+  ]
+}
