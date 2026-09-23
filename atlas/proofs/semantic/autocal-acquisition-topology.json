@@ -1,0 +1,72 @@
+{
+  "schema": "omegas.atlas.semantic-proof.v1",
+  "id": "autocal-acquisition-topology",
+  "status": "PROVEN",
+  "canonical_binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "analysis_run_id": 35802546712,
+    "index_artifact_id": 10726947451,
+    "index_artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "render_proof": "atlas/proofs/behavior/render-current-band-zones.json"
+  },
+  "native_layers": {
+    "reference_grid_18": [
+      {
+        "object": "PETR_INJ_TBP",
+        "serial_code": "0x014B",
+        "array_dimension": 18,
+        "role": "petrol injection-time reference axis"
+      },
+      {
+        "object": "MNFLD_PRESS_THD",
+        "serial_code": "0x014C",
+        "array_dimension": 18,
+        "role": "manifold-pressure reference axis"
+      }
+    ],
+    "acquisition_counters_18": [
+      {
+        "object": "NUM_BUF_UPD_PETR",
+        "serial_code": "0x015B",
+        "array_dimension": 18,
+        "read_only": true
+      },
+      {
+        "object": "NUM_BUF_UPD_GAS",
+        "serial_code": "0x015C",
+        "array_dimension": 18,
+        "read_only": true
+      }
+    ],
+    "acquired_zone_state_4": [
+      {
+        "object": "ACQUIRED_ZONES_PETROL",
+        "serial_code": "0x016F",
+        "array_dimension": 4,
+        "read_only": true
+      },
+      {
+        "object": "ACQUIRED_ZONES_GAS",
+        "serial_code": "0x0170",
+        "array_dimension": 4,
+        "read_only": true
+      }
+    ],
+    "current_band": {
+      "presentation": "separate TeeChart series",
+      "source": "live selected/current MAP routed against MNFLD_PRESS_THD boundaries",
+      "proof": "atlas/proofs/behavior/render-current-band-zones.json"
+    }
+  },
+  "claims": [
+    "The 18-element acquisition/reference grid and the 4-element acquired-zone state are distinct native structures.",
+    "NUM_BUF_UPD_PETR/GAS are 18-element read-only vectors, not the same object as ACQUIRED_ZONES_PETROL/GAS.",
+    "ACQUIRED_ZONES_PETROL/GAS are four-element read-only vectors.",
+    "CurrentBand is a separate render path from acquired-zone state.",
+    "A UI may present the four zones prominently and keep the 18-element counters as technical detail without losing native semantics."
+  ],
+  "epistemic_boundary": [
+    "This proof establishes dimensions, identities and render separation.",
+    "It does not assign human labels or physical boundaries beyond the native object structure and existing render proof."
+  ]
+}
