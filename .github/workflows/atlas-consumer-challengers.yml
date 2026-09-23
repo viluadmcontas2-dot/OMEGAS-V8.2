@@ -85,8 +85,17 @@ jobs:
           import json
           x=json.load(open("/tmp/product-handoff-audit.json",encoding="utf-8"))
           audit=x["audit"]
-          # Current known Verde drift is expected to fail closed, not to disappear.
+          # Static repository state cannot establish live governance/audit provenance.
           assert audit["status"]=="FAIL"
-          assert "UNRESOLVED_CONSUMER_SEMANTIC_DRIFT" in audit["violations"]
+          required={
+            "UNRESOLVED_CONSUMER_SEMANTIC_DRIFT",
+            "LIVE_CONTRACT_REGISTRY_NOT_RESOLVED",
+            "GLOBAL_LEDGER_NOT_LOADED",
+            "TRANSVERSAL_GATE_NOT_PASS",
+            "AUDIT_NOT_PROVENANCE_INDEPENDENT",
+            "AUDITOR_MUTATED_NORMATIVE_TARGET",
+            "META_AUDIT_NOT_DISTINCT",
+          }
+          assert required.issubset(set(audit["violations"]))
           print("ATLAS_PRODUCT_HANDOFF_FAIL_CLOSED=PASS")
           PY

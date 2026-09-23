@@ -164,6 +164,16 @@ def current_repo_receipt(root: Path) -> dict:
     }
     receipt["consumer_runtime"]["canonical_replay_status"]=replay["status"]
     receipt["consumer_runtime"]["semantic_drift_conflicts"]=len(drift.get("conflicts",[]))
+    # Repository files cannot establish live governance/auditor provenance.
+    # Those facts must come from the real downstream handoff audit.
+    receipt["governance"].update({
+        "contract_registry_resolved": False,
+        "global_ledger_loaded": False,
+        "transversal_status": "NOT_EVALUATED",
+        "audit_independence_model": "NOT_EVALUATED",
+        "auditor_normative_writes": -1,
+        "meta_audit_distinct": False,
+    })
     return receipt
 
 
