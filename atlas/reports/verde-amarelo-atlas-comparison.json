@@ -1,0 +1,59 @@
+{
+  "schema": "omegas.atlas.cross-branch-comparison.v1",
+  "captured_at": "2026-09-23",
+  "heads": {
+    "atlas": "b6ceff6888a330c65fb8682aceb6e5d6aaba646c",
+    "verde": "d5739989f0be69e28f2822dd7c050d07e298241f",
+    "amarelo": "b1f1a94143b2d13a43aac69e6c56c83c5b8e4203"
+  },
+  "scope": "ProgBase 4.2.0.6 AutoCal truth recovery and downstream validation",
+  "comparison": {
+    "atlas": {
+      "role": "SCIENTIFIC_AUTHORITY",
+      "strengths": [
+        "canonical EXE and raw Portmon/LOGNOVO hash-bound in-repo",
+        "1417/1417 semantic targets proven",
+        "14/14 behavior gates proven",
+        "raw RTTI/VMT/DFM/static/disassembly/Portmon cross-proof",
+        "adaptive recursive frontier with no terminal UNKNOWN",
+        "durable post-closure hard stop"
+      ],
+      "weaknesses": [
+        "Does not itself prove Android/WebView product integration unless a consumer challenger is added."
+      ]
+    },
+    "verde": {
+      "role": "PRODUCT_CONSUMER_AND_LEAD_SOURCE",
+      "strengths": [
+        "real Android runtime integration",
+        "operational safety extensions and backup/restore concepts",
+        "current product UX and write-confirmation work"
+      ],
+      "weaknesses": [
+        "current action oracle fixture conflicts with canonical Atlas proof",
+        "current HEAD CI and fast-contract runs are red",
+        "product choices such as 75 ms presentation cadence are not native ProgBase authority"
+      ]
+    },
+    "amarelo": {
+      "role": "REPLAY_AND_RUNTIME_CHALLENGER",
+      "strengths": [
+        "canonical LOGNOVO replay fixture with raw SHA provenance",
+        "cumulative Portmon duration timing semantics",
+        "runtime bridge/WebView end-to-end evidence design",
+        "render-only fixture explicitly separated from scientific inference"
+      ],
+      "weaknesses": [
+        "current Android render workflow is red",
+        "current failure includes compile-time access to private nativeAutoCal plus ADB startup noise",
+        "replay/runtime success cannot override canonical EXE/log semantics"
+      ]
+    }
+  },
+  "atlas_refinements": [
+    "Add byte-and-timing validation for Amarelo canonical replay against Atlas raw LOGNOVO.",
+    "Add automatic consumer action-map drift detection against Atlas canonical action proof.",
+    "Keep consumer compatibility as post-closure validation, never scientific authority."
+  ],
+  "decision": "Atlas remains canonical authority and absorbs Amarelo replay validation plus Verde/Amarelo drift detection as post-closure challengers."
+}
