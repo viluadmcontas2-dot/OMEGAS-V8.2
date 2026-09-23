@@ -17,6 +17,8 @@ for marker in ("saveCurrentBackup(", "listBackups(", "prepareRestore("):
     assert marker in manager, marker
 assert "MANUAL_SNAPSHOT" in manager
 assert "PRE_WRITE" in manager
+assert "KFactorBackupRetention.visibleFiles(backupDir.listFiles())" in manager
+assert "KFactorBackupRetention.pruneAutomatic(backupDir)" in manager
 assert "geometryMismatch" in manager
 assert "startBatchWrite(points" in curve or "writeCurve(points" in curve
 assert "saveKFactorBackup(" in service
