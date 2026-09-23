@@ -1446,6 +1446,10 @@
 
 /* Preserve the 300px dominant plot while keeping AGORA visible at 1280x720. */
 .autocal-chart-inspector {
+  position: static;
+  width: auto;
+  max-height: none;
+  overflow: hidden;
   gap: 6px;
   padding: 3px 8px;
   line-height: 1.2;
