@@ -58,7 +58,7 @@ assert "telemetryStore.liveJson()" not in bridge
 assert "MNFLD_PRESS_THD" in cockpit
 assert "currentBand(snapshot = {}, live = {})" in cockpit
 assert "data-autocal-current-band" in cockpit
-assert "intervalMs: 100" in app
+assert "intervalMs: 75" in app
 assert "this.tick % 10 === 0" in scheduler
 assert "this.tick % 20 === 0" in scheduler
 assert 'val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C' in protocol
