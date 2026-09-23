@@ -13,7 +13,7 @@ DRIVER_CHOICES={
     "frame":["portmon-frame","binary-frame"],
     "method":["delphi-method","capstone-method","ghidra-method"],
     "field":["delphi-field","raw-field-name"],
-    "field-use":["ghidra-field-use","capstone-field-use","owner-field-use"],
+    "field-use":["ghidra-field-use","capstone-field-use","owner-field-use","owner-field-use-v2"],
     "event":["delphi-event","ghidra-event"],
     "action":["delphi-action","ghidra-action"],
     "serial":["delphi-serial","pe-serial-resource","portmon-object"],
@@ -98,6 +98,7 @@ def proven_method_origins(state,t):
 def field_consumer_functions(t):
     out=set(field_overlap(t))
     out |= evidence_functions(t,"owner-field-use")
+    out |= evidence_functions(t,"owner-field-use-v2")
     return out
 
 def target_status(state,t):
@@ -119,7 +120,7 @@ def target_status(state,t):
         return "PROVEN" if driver_proven(t,"delphi-field") and driver_proven(t,"raw-field-name") else "ESCALATE"
     if kind=="field-use":
         overlap = driver_proven(t,"ghidra-field-use") and driver_proven(t,"capstone-field-use") and bool(field_overlap(t))
-        owner = driver_proven(t,"owner-field-use")
+        owner = driver_proven(t,"owner-field-use") or driver_proven(t,"owner-field-use-v2")
         return "PROVEN" if overlap or owner else "ESCALATE"
     if kind=="event":
         return "PROVEN" if driver_proven(t,"delphi-event") and (driver_proven(t,"ghidra-event") or dep_proven(state,t,"method")) else "ESCALATE"

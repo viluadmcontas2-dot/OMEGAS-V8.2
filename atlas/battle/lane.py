@@ -469,7 +469,7 @@ def main():
         elif a.driver=="raw-field-name":r=raw_field_name(a.indices,bp,a.target)
         elif a.driver=="ghidra-field-use":r=ghidra_field_use(a.indices,a.target)
         elif a.driver=="capstone-field-use":r=capstone_field_use(a.indices,bp,a.target)
-        elif a.driver=="owner-field-use":r=owner_field_use(a.indices,bp,a.target)
+        elif a.driver in {"owner-field-use","owner-field-use-v2"}:r=owner_field_use(a.indices,bp,a.target)
         elif a.driver=="delphi-event":r=delphi_event(a.indices,a.target)
         elif a.driver=="ghidra-event":r=ghidra_event(a.indices,a.target)
         elif a.driver=="delphi-action":r=delphi_action(a.indices,a.target)
