@@ -72,7 +72,7 @@ jobs:
           assert len(drift["conflicts"])==5
           assert report["status"]=="PROVEN_WITH_CONSUMER_DRIFT"
           handoff=json.load(open("atlas/reports/product-handoff-status.json",encoding="utf-8"))
-          assert handoff["status"] in {"PASS","HOLD"}
+          assert handoff.get("handoff_status", handoff.get("status")) in {"PASS","HOLD"}
           print("ATLAS_CONSUMER_CHALLENGERS=PASS")
           PY
 
