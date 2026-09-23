@@ -91,6 +91,28 @@ class ProductHandoffGateContract(unittest.TestCase):
         self.assertIn("WRITE_WITHOUT_ACK_READBACK", result["violations"])
         self.assertIn("WRITE_WITHOUT_RECOVERY", result["violations"])
 
+
+    def test_fail_closed_without_live_governance_and_independent_audit(self):
+        audit = self.load_tool()
+        receipt = audit.example_receipt()
+        receipt["governance"]["contract_registry_resolved"] = False
+        receipt["governance"]["global_ledger_loaded"] = False
+        receipt["governance"]["transversal_status"] = "PARTIAL"
+        receipt["governance"]["audit_independence_model"] = "SELF_ASSERTED"
+        receipt["governance"]["auditor_normative_writes"] = 1
+        receipt["governance"]["meta_audit_distinct"] = False
+        result = audit.audit(receipt)
+        self.assertEqual("FAIL", result["status"])
+        for code in {
+            "LIVE_CONTRACT_REGISTRY_NOT_RESOLVED",
+            "GLOBAL_LEDGER_NOT_LOADED",
+            "TRANSVERSAL_GATE_NOT_PASS",
+            "AUDIT_NOT_PROVENANCE_INDEPENDENT",
+            "AUDITOR_MUTATED_NORMATIVE_TARGET",
+            "META_AUDIT_NOT_DISTINCT",
+        }:
+            self.assertIn(code, result["violations"])
+
     def test_good_cross_branch_handoff_passes(self):
         audit = self.load_tool()
         result = audit.audit(audit.example_receipt())
