@@ -109,3 +109,15 @@ class PseudoFunctionFilteringTest(unittest.TestCase):
         self.assertEqual(removed, ["function|<vcl-stream>"])
         self.assertNotIn("function|<vcl-stream>", state["targets"])
         self.assertEqual(state["targets"]["field-use|x"]["new_targets"], ["function|0051a070"])
+
+
+class ComponentFieldUseClosureTest(unittest.TestCase):
+    def test_component_field_use_can_close_framework_managed_field(self):
+        t={
+            "kind":"field-use",
+            "target":"TAutoCalDM::X@0x000010",
+            "drivers":{"component-field-use":{"status":"PROVEN"}},
+            "new_targets":[],
+        }
+        self.assertEqual(RECON.target_status({"targets":{}},t),"PROVEN")
+        self.assertIn("component-field-use",RECON.DRIVER_CHOICES["field-use"])

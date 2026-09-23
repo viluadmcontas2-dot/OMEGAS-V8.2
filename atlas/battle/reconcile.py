@@ -13,7 +13,7 @@ DRIVER_CHOICES={
     "frame":["portmon-frame","binary-frame"],
     "method":["delphi-method","capstone-method","ghidra-method"],
     "field":["delphi-field","raw-field-name"],
-    "field-use":["ghidra-field-use","capstone-field-use","owner-field-use","owner-field-use-v2"],
+    "field-use":["ghidra-field-use","capstone-field-use","owner-field-use","owner-field-use-v2","component-field-use"],
     "event":["delphi-event","ghidra-event"],
     "action":["delphi-action","ghidra-action"],
     "serial":["delphi-serial","pe-serial-resource","portmon-object"],
@@ -136,7 +136,8 @@ def target_status(state,t):
     if kind=="field-use":
         overlap = driver_proven(t,"ghidra-field-use") and driver_proven(t,"capstone-field-use") and bool(field_overlap(t))
         owner = driver_proven(t,"owner-field-use") or driver_proven(t,"owner-field-use-v2")
-        return "PROVEN" if overlap or owner else "ESCALATE"
+        component = driver_proven(t,"component-field-use")
+        return "PROVEN" if overlap or owner or component else "ESCALATE"
     if kind=="event":
         return "PROVEN" if driver_proven(t,"delphi-event") and (driver_proven(t,"ghidra-event") or dep_proven(state,t,"method")) else "ESCALATE"
     if kind=="action":

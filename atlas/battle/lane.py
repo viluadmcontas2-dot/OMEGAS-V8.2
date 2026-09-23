@@ -350,6 +350,96 @@ def owner_field_use(indices,binary_path,target):
         [{"kind":"owner-field-use","owner":owner,"offset":wanted,"hits":dedup[:64]}],
     )
 
+
+def component_field_use(indices,binary_path,target):
+    import dfm_resource
+    payload,item=semantic_entry(indices,"field-use",target)
+    if not item:return escalate("field-use target absent from semantic catalog")
+    meta=item["meta"]; owner=meta["class"]; field_name=meta["name"]; wanted=int(meta["offset"])
+
+    owner_resources={
+        r.get("name")
+        for r in payload.get("resources",[])
+        if str(r.get("root_class","")).lower()==owner.lower()
+    }
+    links=[
+        x for x in payload.get("object_field_links",[])
+        if x.get("field")==field_name and x.get("resource") in owner_resources
+    ]
+    if len(links)!=1:
+        return escalate(
+            f"component binding is not unique for owner={owner} field={field_name}",
+            [{"kind":"component-field-use","owner":owner,"field":field_name,"links":links}],
+        )
+    link=links[0]
+    resource=link["resource"]; obj=link["object"]
+    fact=dfm_resource.inspect_object(binary_path,resource,obj)
+
+    serial_matches=[
+        x for x in payload.get("serial_objects",[])
+        if x.get("resource")==resource and x.get("object")==obj
+    ]
+    if not serial_matches:
+        return escalate(
+            "field is DFM-bound but has no operational serial object binding",
+            [{"kind":"component-field-use","resource":resource,"object":obj,"fact":fact}],
+        )
+    if len(serial_matches)!=1:
+        return escalate(
+            "field has ambiguous serial object bindings",
+            [{"kind":"component-field-use","resource":resource,"object":obj,"serial_matches":serial_matches}],
+        )
+    serial=serial_matches[0]
+    expected_class=serial.get("object_class")
+    if expected_class and str(fact.get("class","")).lower()!=str(expected_class).lower():
+        return escalate(
+            "PE/DFM object class disagrees with semantic serial binding",
+            [{"kind":"component-field-use","fact":fact,"serial":serial}],
+        )
+    observed=fact.get("properties",{}).get("SerialCode")
+    expected=int(serial["serial_code"])
+    if observed!=expected:
+        return escalate(
+            f"PE/DFM SerialCode mismatch: observed={observed!r} expected={expected}",
+            [{"kind":"component-field-use","fact":fact,"serial":serial}],
+        )
+
+    events=[
+        x for x in payload.get("event_bindings",[])
+        if x.get("resource")==resource and x.get("object")==obj
+    ]
+    nts=[]
+    for ev in events:
+        method=semantic_targets.find_method_for_event(payload,ev)
+        if method is not None:
+            nts.append({"kind":"method","target":method["target"]})
+
+    return prove(
+        "DFM runtime component binding proves owner field is operationally used by a serial-backed TAeb object",
+        [{
+            "kind":"component-runtime-field-use",
+            "subject":target,
+            "value":{
+                "resource":resource,
+                "object":obj,
+                "object_class":fact.get("class"),
+                "serial_code":expected,
+            },
+        }],
+        [{
+            "kind":"component-field-use",
+            "owner":owner,
+            "field":field_name,
+            "offset":wanted,
+            "resource":resource,
+            "object":obj,
+            "fact":fact,
+            "serial":serial,
+            "events":events,
+        }],
+        nts,
+    )
+
 def delphi_event(indices,target):
     payload,item=semantic_entry(indices,"event",target)
     if not item:return escalate("event binding absent from semantic index")
@@ -470,6 +560,7 @@ def main():
         elif a.driver=="ghidra-field-use":r=ghidra_field_use(a.indices,a.target)
         elif a.driver=="capstone-field-use":r=capstone_field_use(a.indices,bp,a.target)
         elif a.driver in {"owner-field-use","owner-field-use-v2"}:r=owner_field_use(a.indices,bp,a.target)
+        elif a.driver=="component-field-use":r=component_field_use(a.indices,bp,a.target)
         elif a.driver=="delphi-event":r=delphi_event(a.indices,a.target)
         elif a.driver=="ghidra-event":r=ghidra_event(a.indices,a.target)
         elif a.driver=="delphi-action":r=delphi_action(a.indices,a.target)
