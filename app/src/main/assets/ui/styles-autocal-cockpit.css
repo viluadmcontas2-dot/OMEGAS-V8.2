@@ -1353,3 +1353,126 @@
   stroke: #d9fff0;
   stroke-width: 1.2;
 }
+
+
+/* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */
+.autocal-chart-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+.autocal-zone-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.autocal-zone-meter > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.autocal-zone-fuel {
+  color: #90a2b4;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.autocal-zone-cells {
+  display: flex;
+  gap: 3px;
+}
+.autocal-zone-cell {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto;
+  place-items: center;
+  min-width: 34px;
+  min-height: 30px;
+  padding: 3px 4px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 7px;
+  background: rgba(255,255,255,.025);
+}
+.autocal-zone-cell b {
+  color: #dbe5ef;
+  font-size: 10px;
+  line-height: 1;
+}
+.autocal-zone-cell small {
+  margin-top: 2px;
+  color: #7f90a2;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] {
+  border-color: rgba(120,183,255,.52);
+  background: rgba(120,183,255,.13);
+}
+.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] small { color: #8dc5ff; }
+.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] {
+  border-color: rgba(93,211,158,.52);
+  background: rgba(93,211,158,.13);
+}
+.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] small { color: #79ddb0; }
+.autocal-zone-cell[data-state="missing"] {
+  border-color: rgba(240,196,92,.42);
+  border-style: dashed;
+  background: rgba(240,196,92,.06);
+}
+.autocal-zone-cell[data-state="missing"] small { color: #f0c45c; }
+.autocal-zone-cell[data-current="true"] {
+  outline: 2px solid #19daf4;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(25,218,244,.10);
+}
+.autocal-zone-cell[data-current="true"]::after {
+  content: 'AGORA';
+  position: absolute;
+  top: -8px;
+  right: -3px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: #19daf4;
+  color: #061019;
+  font-size: 6px;
+  font-weight: 950;
+  letter-spacing: .04em;
+}
+
+/* Preserve the 300px dominant plot while keeping AGORA visible at 1280x720. */
+.autocal-chart-inspector {
+  gap: 6px;
+  padding: 3px 8px;
+  line-height: 1.2;
+}
+.autocal-live-strip {
+  gap: 6px;
+  margin: 2px 0 0;
+  padding-top: 4px;
+}
+.autocal-live-summary,
+.autocal-live-metric {
+  min-height: 56px;
+  padding: 7px 9px;
+}
+.autocal-live-narrative {
+  font-size: 11px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@container (max-width: 980px) {
+  .autocal-chart-head-actions {
+    flex-wrap: wrap;
+  }
+  .autocal-zone-fuel {
+    display: none;
+  }
+}

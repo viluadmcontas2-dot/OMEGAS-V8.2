@@ -68,12 +68,22 @@
       const nativeSnapshot = state.latestSnapshot?.fields ? state.latestSnapshot : {};
       const evidenceSnapshot = nativeSnapshot.fields ? nativeSnapshot : snapshot;
       const enabled = finite(state.autoCalEnabled ?? nativeSnapshot.autoCalEnabled ?? scalarValue(nativeSnapshot, 'AUTO_CAL_ENABLE'));
-      const petrolZoneFlags = projectedZoneFlags(projection, 'petrol')
-        ?? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL');
-      const gasZoneFlags = projectedZoneFlags(projection, 'gas')
-        ?? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_GAS');
-      const petrolZones = petrolZoneFlags.filter(Boolean).length;
-      const gasZones = gasZoneFlags.filter(Boolean).length;
+      const projectedPetrolZones = projectedZoneFlags(projection, 'petrol');
+      const projectedGasZones = projectedZoneFlags(projection, 'gas');
+      const petrolFieldAvailable = field(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL') !== null;
+      const gasFieldAvailable = field(evidenceSnapshot, 'ACQUIRED_ZONES_GAS') !== null;
+      const petrolZoneFlags = projectedPetrolZones
+        ?? (petrolFieldAvailable ? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL') : null);
+      const gasZoneFlags = projectedGasZones
+        ?? (gasFieldAvailable ? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_GAS') : null);
+      const petrolZones = Array.isArray(petrolZoneFlags) ? petrolZoneFlags.filter(Boolean).length : null;
+      const gasZones = Array.isArray(gasZoneFlags) ? gasZoneFlags.filter(Boolean).length : null;
+      const petrolMissingZones = Array.isArray(petrolZoneFlags)
+        ? petrolZoneFlags.map((acquired, index) => acquired ? null : index + 1).filter(Number.isInteger)
+        : [];
+      const gasMissingZones = Array.isArray(gasZoneFlags)
+        ? gasZoneFlags.map((acquired, index) => acquired ? null : index + 1).filter(Number.isInteger)
+        : [];
       const nativeStatus = nativeSnapshot.nativeStatus || {};
       const autoMatchCount = finite(state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
       const maxAutoMatch = finite(state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
@@ -87,7 +97,9 @@
             : enabled === 1 ? 'AutoCal adquirindo'
             : enabled === 0 ? 'AutoCal pausado'
             : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
-      const progress = 'Gasolina ' + petrolZones + '/4 zonas · GNV ' + gasZones + '/4 zonas';
+      let progress = 'Gasolina ' + (petrolZones === null ? '—' : petrolZones) + '/4 zonas · GNV ' + (gasZones === null ? '—' : gasZones) + '/4 zonas';
+      if (gasMissingZones.length) progress += ' · Faltam GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ');
+      if (petrolMissingZones.length) progress += ' · Faltam gasolina: ' + petrolMissingZones.map(zone => 'Z' + zone).join(', ');
       const autoMatch = autoMatchCount === null
         ? 'AutoMatch ainda sem contador válido'
         : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
@@ -98,9 +110,10 @@
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão e tente consultar novamente.';
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
-      else if (enabled === 1 && gasZones < 4) nextAction = 'Aquisição habilitada. Mantenha condições estáveis para visitar as regiões que ainda faltam.';
-      else if (enabled === 1) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
-      return { title, progress, autoMatch, nextAction, petrolZones, gasZones, petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch };
+      else if (enabled === 1 && gasMissingZones.length) nextAction = 'Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
+      else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
+      else if (enabled === 1) nextAction = 'Aquisição habilitada; aguardando a ECU publicar o mapa das quatro zonas.';
+      return { title, progress, autoMatch, nextAction, petrolZones, gasZones, petrolMissingZones, gasMissingZones, petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch };
     },
 
     readNarrative(readerState = {}) {
@@ -178,6 +191,11 @@
         }
       }
       return null;
+    },
+
+    currentZone(snapshot = {}, live = {}) {
+      const band = this.currentBand(snapshot, live);
+      return band ? zoneForBand(band.index) + 1 : null;
     },
 
     referencePoints(snapshot = {}, analysis = {}) {
@@ -410,11 +428,7 @@
               <div class="autocal-human-copy">
                 <small>AGORA</small>
                 <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
-                <p id="autocalHumanProgress">Gasolina 0/4 zonas · GNV 0/4 zonas</p>
-                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Gasolina 0 de 4 zonas, GNV 0 de 4 zonas">
-                  <div class="petrol"><span>Gasolina</span><div class="autocal-zone-dots"><i data-autocal-zone-petrol="0"></i><i data-autocal-zone-petrol="1"></i><i data-autocal-zone-petrol="2"></i><i data-autocal-zone-petrol="3"></i></div></div>
-                  <div class="gas"><span>GNV</span><div class="autocal-zone-dots"><i data-autocal-zone-gas="0"></i><i data-autocal-zone-gas="1"></i><i data-autocal-zone-gas="2"></i><i data-autocal-zone-gas="3"></i></div></div>
-                </div>
+                <p id="autocalHumanProgress">Gasolina —/4 zonas · GNV —/4 zonas</p>
                 <strong id="autocalHumanAction">Consulte a ECU para receber o estado nativo.</strong>
               </div>
               <div class="autocal-hero-actions">
@@ -449,8 +463,14 @@
             <section class="autocal-reference-card">
               <div class="autocal-section-head">
                 <div><small>CURVA DE AQUISIÇÃO</small><h4>Gasolina × GNV</h4><p>Resposta da injeção por Petrol Inj. × MAP · somente dados publicados pela ECU.</p></div>
-                <div class="autocal-chart-tools" aria-label="Controles do gráfico">
-                  <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
+                <div class="autocal-chart-head-actions">
+                  <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
+                    <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                    <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                  </div>
+                  <div class="autocal-chart-tools" aria-label="Controles do gráfico">
+                    <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
+                  </div>
                 </div>
               </div>
               <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="current-band">Faixa MAP atual</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
@@ -734,7 +754,7 @@
       this.text('autocalHumanAction', human.nextAction);
       this.text('autocalHumanAutoMatch', human.autoMatch);
       this.text('autocalNativeState', 'Aquisição: ' + acquisitionLabel);
-      this.text('autocalZoneSummary', human.gasZones + '/4 zonas GNV');
+      this.text('autocalZoneSummary', human.gasZones === null ? 'Zonas GNV sem leitura' : human.gasZones + '/4 zonas GNV');
       this.text('autocalStateRaw', state.state || '—');
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
       this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
@@ -865,6 +885,7 @@
     renderLiveCursor() {
       this.renderLiveNarrative();
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
+      this.renderZoneCursor(live);
       const scale = this.chartScale;
       const layer = this.panel?.querySelector('.autocal-live-layer');
       const bandLayer = this.panel?.querySelector('[data-autocal-current-band]');
@@ -913,22 +934,42 @@
     renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');
       if (!meter) return;
-      const petrolFlags = Array.isArray(human?.petrolZoneFlags)
-        ? human.petrolZoneFlags.slice(0, 4)
-        : Array.from({ length: 4 }, (_, index) => index < (finite(human?.petrolZones) ?? 0));
-      const gasFlags = Array.isArray(human?.gasZoneFlags)
-        ? human.gasZoneFlags.slice(0, 4)
-        : Array.from({ length: 4 }, (_, index) => index < (finite(human?.gasZones) ?? 0));
-      const petrolZones = petrolFlags.filter(Boolean).length;
-      const gasZones = gasFlags.filter(Boolean).length;
-      meter.setAttribute('aria-label', 'Gasolina ' + petrolZones + ' de 4 zonas, GNV ' + gasZones + ' de 4 zonas');
-      this.panel?.querySelectorAll('[data-autocal-zone-petrol]').forEach(node => {
-        const index = Number(node.dataset.autocalZonePetrol);
-        node.dataset.active = petrolFlags[index] === true ? 'true' : 'false';
-      });
-      this.panel?.querySelectorAll('[data-autocal-zone-gas]').forEach(node => {
-        const index = Number(node.dataset.autocalZoneGas);
-        node.dataset.active = gasFlags[index] === true ? 'true' : 'false';
+      const petrolFlags = Array.isArray(human?.petrolZoneFlags) ? human.petrolZoneFlags.slice(0, 4) : null;
+      const gasFlags = Array.isArray(human?.gasZoneFlags) ? human.gasZoneFlags.slice(0, 4) : null;
+      const paint = (selector, flags, fuelLabel) => {
+        this.panel?.querySelectorAll(selector).forEach(node => {
+          const rawIndex = node.dataset.autocalZonePetrol ?? node.dataset.autocalZoneGas;
+          const index = Number(rawIndex);
+          const known = Array.isArray(flags) && index >= 0 && index < flags.length;
+          const acquired = known && flags[index] === true;
+          const state = !known ? 'unknown' : acquired ? 'acquired' : 'missing';
+          node.dataset.state = state;
+          node.dataset.active = acquired ? 'true' : 'false';
+          const status = node.querySelector('small');
+          if (status) status.textContent = state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
+          node.setAttribute('aria-label', fuelLabel + ' Z' + (index + 1) + ': ' +
+            (state === 'acquired' ? 'adquirida' : state === 'missing' ? 'falta adquirir' : 'estado não lido'));
+        });
+      };
+      paint('[data-autocal-zone-petrol]', petrolFlags, 'Gasolina');
+      paint('[data-autocal-zone-gas]', gasFlags, 'GNV');
+      const petrolMissing = Array.isArray(human?.petrolMissingZones) ? human.petrolMissingZones : [];
+      const gasMissing = Array.isArray(human?.gasMissingZones) ? human.gasMissingZones : [];
+      const parts = [
+        'Gasolina ' + (human?.petrolZones === null ? 'sem leitura' : human?.petrolZones + ' de 4'),
+        'GNV ' + (human?.gasZones === null ? 'sem leitura' : human?.gasZones + ' de 4'),
+      ];
+      if (gasMissing.length) parts.push('faltam GNV ' + gasMissing.map(zone => 'Z' + zone).join(', '));
+      if (petrolMissing.length) parts.push('faltam gasolina ' + petrolMissing.map(zone => 'Z' + zone).join(', '));
+      meter.setAttribute('aria-label', parts.join('; '));
+    }
+
+    renderZoneCursor(live) {
+      const currentZone = live ? AutoCalUxModel.currentZone(this.snapshot || {}, live) : null;
+      this.panel?.querySelectorAll('.autocal-zone-cell').forEach(node => {
+        const rawIndex = node.dataset.autocalZonePetrol ?? node.dataset.autocalZoneGas;
+        const zone = Number(rawIndex) + 1;
+        node.dataset.current = currentZone !== null && zone === currentZone ? 'true' : 'false';
       });
     }
 
