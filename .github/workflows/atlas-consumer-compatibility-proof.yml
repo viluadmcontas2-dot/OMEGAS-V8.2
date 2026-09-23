@@ -19,7 +19,7 @@ jobs:
       - name: Checkout immutable Atlas authority
         uses: actions/checkout@v4
         with:
-          ref: d217447169c01182f36d4b8ce504490eeb7c4e6e
+          ref: 141ec3407240181ff8eed09ffc5f6a8a94bf4f89
           fetch-depth: 1
 
       - name: Verify Atlas closure and tooling
