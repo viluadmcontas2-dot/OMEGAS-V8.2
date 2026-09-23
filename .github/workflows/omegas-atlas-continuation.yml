@@ -227,7 +227,8 @@ jobs:
           targets=int(cov.get("targets_total",len(cur.get("targets",{}))))
           open_targets=sum(1 for t in cur.get("targets",{}).values() if t.get("status") not in {"PROVEN","REFUTED"})
           semantic_complete=bool(cur.get("semantic_closure",False))
-          complete=(not has_next and open_targets==0 and broken==0 and stalled==0 and semantic_complete)
+          behavior_complete=bool(cur.get("behavior_closure",False))
+          complete=(not has_next and open_targets==0 and broken==0 and stalled==0 and semantic_complete and behavior_complete)
           print("has_next="+str(has_next).lower())
           print("complete="+str(complete).lower())
           print(f"broken={broken}")
@@ -263,7 +264,7 @@ jobs:
           Stalled: ${{ needs.reconcile.outputs.stalled }}
           BROKEN: ${{ needs.reconcile.outputs.broken }}
           Next frontier: ${{ needs.reconcile.outputs.has_next }}
-          Full semantic closure: ${{ needs.reconcile.outputs.complete }}
+          Full Atlas closure (semantic + behavioral): ${{ needs.reconcile.outputs.complete }}
 
           No UNKNOWN state is terminal. An open frontier is automatically continued.
           EOF
