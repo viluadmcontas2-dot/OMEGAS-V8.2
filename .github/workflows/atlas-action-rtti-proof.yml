@@ -1,0 +1,196 @@
+name: OMEGAS Atlas Targeted Action RTTI Proof
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/atlas-action-rtti-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  prove-action-rtti:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout immutable Atlas authority
+        uses: actions/checkout@v4
+        with:
+          ref: 214b795e11f50f767de77115e3e2c48a9eba733d
+
+      - name: Verify canonical ProgBase
+        shell: bash
+        run: |
+          set -euo pipefail
+          P=atlas/originals/progbase/ProgBase-4.2.0.6.exe
+          test -s "$P"
+          test "$(sha256sum "$P" | awk '{print $1}')" = "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+
+      - name: Install pinned decoders
+        run: python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26
+
+      - name: Recover raw Delphi method table and wrappers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p atlas-proof
+          python3 - <<'PY'
+          import hashlib, json, struct
+          from pathlib import Path
+          import pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+
+          binary=Path("atlas/originals/progbase/ProgBase-4.2.0.6.exe")
+          data=binary.read_bytes()
+          sha=hashlib.sha256(data).hexdigest()
+          assert sha=="8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+          pe=pefile.PE(str(binary),fast_load=False)
+          image=int(pe.OPTIONAL_HEADER.ImageBase)
+
+          def section_for_va(va):
+              rva=va-image
+              for s in pe.sections:
+                  start=int(s.VirtualAddress)
+                  size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+                  if start<=rva<start+size:
+                      return s
+              return None
+
+          def va_to_off(va):
+              s=section_for_va(va)
+              if s is None:return None
+              return int(s.PointerToRawData)+(va-image-int(s.VirtualAddress))
+
+          def executable_va(va):
+              s=section_for_va(va)
+              return s is not None and bool(int(s.Characteristics)&0x20000000)
+
+          md=Cs(CS_ARCH_X86,CS_MODE_32);md.detail=True
+
+          def disasm(va,max_bytes=96):
+              off=va_to_off(va)
+              if off is None:return []
+              out=[]
+              for ins in md.disasm(data[off:off+max_bytes],va):
+                  out.append({
+                      "address":f"0x{ins.address:08X}",
+                      "bytes":ins.bytes.hex(" ").upper(),
+                      "mnemonic":ins.mnemonic,
+                      "op_str":ins.op_str,
+                  })
+                  if ins.mnemonic.startswith("ret"):break
+                  if len(out)>=40:break
+              return out
+
+          names=[
+              "ActionAutoCalRifExecute",
+              "ActionAutoMatchExecute",
+              "ActionResetPetrolExecute",
+              "ActionResetGasExecute",
+              "ActionResetAllExecute",
+              "ActionResetKFactorExecute",
+          ]
+
+          recovered={}
+          raw_occurrences={}
+          for name in names:
+              needle=name.encode("ascii")
+              pos=0;candidates=[];occ=[]
+              while True:
+                  p=data.find(needle,pos)
+                  if p<0:break
+                  row={"file_offset":p}
+                  if p>=7:
+                      row["name_len_byte"]=data[p-1]
+                      row["entry_len_u16"]=struct.unpack_from("<H",data,p-7)[0]
+                      va=struct.unpack_from("<I",data,p-5)[0]
+                      row["candidate_va"]=f"0x{va:08X}"
+                      row["candidate_executable"]=executable_va(va)
+                      if data[p-1]==len(name) and executable_va(va):
+                          candidates.append(va)
+                  occ.append(row);pos=p+1
+              raw_occurrences[name]=occ
+              uniq=sorted(set(candidates))
+              recovered[name]={
+                  "candidate_vas":[f"0x{x:08X}" for x in uniq],
+                  "unique":len(uniq)==1,
+                  "disassembly":disasm(uniq[0]) if len(uniq)==1 else [],
+              }
+
+          reset_k=recovered["ActionResetKFactorExecute"]["candidate_vas"]
+          assert reset_k==["0x0051A070"], f"RTTI parser validation failed for ResetKFactor: {reset_k}"
+
+          slots={}
+          for va in [0x005187A0,0x005189B4,0x005189C0,0x005189CC,0x005189D8,0x005189E4,0x00517568,0x005185D4]:
+              slots[f"0x{va:08X}"]=disasm(va)
+
+          derived={}
+          for name,row in recovered.items():
+              if not row["unique"]:continue
+              push_imm=None;calls=[]
+              for x in row["disassembly"]:
+                  if x["mnemonic"]=="push":
+                      try: push_imm=int(x["op_str"],0)
+                      except Exception: pass
+                  if x["mnemonic"]=="call":
+                      try: calls.append(int(x["op_str"],0))
+                      except Exception: pass
+              derived[name]={
+                  "va":row["candidate_vas"][0],
+                  "last_push_immediate":push_imm,
+                  "call_targets":[f"0x{x:08X}" for x in calls],
+              }
+
+          proof={
+              "schema":"omegas.atlas.action-rtti-proof.v1",
+              "binary_sha256":sha,
+              "atlas_sha":"214b795e11f50f767de77115e3e2c48a9eba733d",
+              "rtti_layout_probe":"ASCII method name; preceding ShortString length byte; candidate code VA at name_offset-5; accepted only when VA maps executable PE section",
+              "raw_occurrences":raw_occurrences,
+              "recovered":recovered,
+              "derived":derived,
+              "slots":slots,
+          }
+          Path("atlas-proof/action-rtti-proof.json").write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")
+
+          lines=[
+              "## Atlas targeted raw RTTI + wrapper proof",
+              "",
+              f"canonical binary SHA-256: {sha}",
+              "immutable Atlas SHA: 214b795e11f50f767de77115e3e2c48a9eba733d",
+              "parser self-check: ActionResetKFactorExecute -> 0x0051A070 PASS",
+              "",
+              "Recovered published methods:",
+          ]
+          for name,row in recovered.items():
+              lines.append(f"- {name} -> {', '.join(row['candidate_vas']) or 'NO UNIQUE EXECUTABLE CANDIDATE'}")
+          lines += ["","Derived wrapper behavior:"]
+          for name,row in derived.items():
+              lines.append(f"- {name} @ {row['va']}: push={row['last_push_immediate']!r}, calls={row['call_targets']}")
+          lines += ["","Wrapper slot disassembly:"]
+          for va,ins in slots.items():
+              lines += ["",va]
+              lines += ["    "+f"{x['address']}: {x['bytes']:<24} {x['mnemonic']:<8} {x['op_str']}".rstrip() for x in ins]
+          Path("atlas-proof/action-rtti-proof.md").write_text("\n".join(lines)+"\n",encoding="utf-8")
+          print("\n".join(lines))
+
+          for name in names:
+              assert recovered[name]["unique"], f"non-unique RTTI method mapping for {name}: {recovered[name]['candidate_vas']}"
+          PY
+
+      - name: Publish proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-action-rtti-proof
+          path: atlas-proof/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach proof to Atlas issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh issue comment 97 --repo "${{ github.repository }}" --body-file atlas-proof/action-rtti-proof.md
