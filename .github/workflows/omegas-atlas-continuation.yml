@@ -36,19 +36,43 @@ jobs:
     outputs:
       wave: ${{ steps.frontier.outputs.wave }}
       matrix: ${{ steps.frontier.outputs.matrix }}
+      atlas_sha: ${{ steps.authority.outputs.atlas_sha }}
     steps:
+      - id: authority
+        name: Resolve compatible Atlas authority
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REQUESTED="${{ inputs.atlas_sha }}"
+          LATEST="$(gh api "repos/${{ github.repository }}/branches/OmegasAtlas" --jq .commit.sha)"
+          if [[ "$LATEST" == "$REQUESTED" ]]; then
+            EFFECTIVE="$REQUESTED"
+          else
+            STATUS="$(gh api "repos/${{ github.repository }}/compare/$REQUESTED...$LATEST" --jq .status)"
+            if [[ "$STATUS" != "ahead" && "$STATUS" != "identical" ]]; then
+              echo "Refusing non-descendant Atlas upgrade: requested=$REQUESTED latest=$LATEST status=$STATUS" >&2
+              exit 1
+            fi
+            EFFECTIVE="$LATEST"
+          fi
+          echo "atlas_sha=$EFFECTIVE" >> "$GITHUB_OUTPUT"
+          echo "Requested Atlas: $REQUESTED"
+          echo "Effective Atlas: $EFFECTIVE"
       - name: Checkout immutable Atlas authority
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.atlas_sha }}
+          ref: ${{ steps.authority.outputs.atlas_sha }}
           fetch-depth: 0
       - name: Refuse non-Atlas code
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin refs/heads/OmegasAtlas:refs/remotes/origin/OmegasAtlas
-          git merge-base --is-ancestor "${{ inputs.atlas_sha }}" origin/OmegasAtlas
-          test "$(git rev-parse HEAD)" = "${{ inputs.atlas_sha }}"
+          git merge-base --is-ancestor "${{ inputs.atlas_sha }}" HEAD
+          git merge-base --is-ancestor HEAD origin/OmegasAtlas
+          test "$(git rev-parse HEAD)" = "${{ steps.authority.outputs.atlas_sha }}"
       - name: Reverify canonical input hashes
         run: python3 atlas/tools/seed.py --output /tmp/atlas-seed.json
       - name: Download previous frontier
@@ -90,7 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.atlas_sha }}
+          ref: ${{ needs.bootstrap.outputs.atlas_sha }}
       - name: Download immutable analysis indices
         uses: actions/download-artifact@v4
         with:
@@ -100,7 +124,7 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ inputs.index_run_id }}
       - name: Prepare optional independent decoder
-        if: startsWith(matrix.driver, 'capstone-') || startsWith(matrix.driver, 'pe-')
+        if: startsWith(matrix.driver, 'capstone-') || startsWith(matrix.driver, 'pe-') || matrix.driver == 'owner-field-use'
         run: python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26
       - name: Investigate target
         run: |
@@ -136,7 +160,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.atlas_sha }}
+          ref: ${{ needs.bootstrap.outputs.atlas_sha }}
       - name: Download immutable analysis indices
         uses: actions/download-artifact@v4
         with:
@@ -231,7 +255,8 @@ jobs:
           ## Atlas recursive wave ${{ needs.reconcile.outputs.wave }}
 
           Remote run: ${{ github.run_id }}
-          Pinned Atlas SHA: ${{ inputs.atlas_sha }}
+          Effective Atlas SHA: ${{ needs.bootstrap.outputs.atlas_sha }}
+          Previous Atlas SHA: ${{ inputs.atlas_sha }}
           Tracked targets: ${{ needs.reconcile.outputs.targets }}
           PROVEN: ${{ needs.reconcile.outputs.proven }}
           Native graph catalog functions not promoted to semantic battle: ${{ needs.reconcile.outputs.unseen }}
@@ -251,7 +276,7 @@ jobs:
           gh workflow run omegas-atlas-continuation.yml \
             --repo "${{ github.repository }}" \
             --ref main \
-            --field atlas_sha="${{ inputs.atlas_sha }}" \
+            --field atlas_sha="${{ needs.bootstrap.outputs.atlas_sha }}" \
             --field index_run_id="${{ inputs.index_run_id }}" \
             --field state_run_id="${{ github.run_id }}" \
             --field state_artifact="atlas-continuation-state"
