@@ -38,7 +38,7 @@ assert.equal(cockpit.includes('correlationConfidence'), true);
 assert.equal(cockpit.includes("data-autocal-toggle"), true);
 assert.equal(cockpit.includes("data-autocal-action=\"ENABLE_AUTO_CAL\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"DISABLE_AUTO_CAL\""), false);
-assert.equal(cockpit.includes("data-autocal-action=\"RESET_PETROL\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"RESET_PETROL\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_GAS\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), false);
 assert.equal(cockpit.includes('NATIVE_AUTOMATCH'), false);

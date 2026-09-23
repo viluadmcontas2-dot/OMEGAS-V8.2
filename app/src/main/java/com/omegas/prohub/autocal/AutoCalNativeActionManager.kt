@@ -66,8 +66,8 @@ class AutoCalNativeActionManager(
         ),
         RESET_GAS(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
-            "Reset nativo GNV — efeito amplo observado",
-            "ProgBase original: ActionResetGasExecute usa modo 0x04. No Lognovo capturado, este comando também zerou buffers/referências de gasolina e MUL_ACT; não é seguro tratá-lo como GNV-only.",
+            "Reiniciar aquisição AutoCal — efeito amplo",
+            "Comando original Reset gas point (modo 0x04): no Lognovo apagou aquisição gasolina/GNV, referências e MUL_ACT (Curva K). NÃO é a rotina Reset All do ProgBase, não é seletivo e não possui restauração automática. Exige backup completo persistido e relido antes do envio.",
             true,
         );
     }
@@ -75,7 +75,8 @@ class AutoCalNativeActionManager(
     // ProgBase 4.2.0.6 original, confirmado por RTTI + disassembly:
     // 0x08 = Modify map refs; 0x01 = Manual AutoMatch; 0x02 = Reset petrol; 0x04 = Reset gas.
     // ResetAll usa outra rotina e não é mapeado para 0x04.
-    // Reset gas 0x04 teve efeito amplo no Lognovo; resets permanecem intertravados no bridge/UI.
+    // Reset gas 0x04 teve efeito amplo no Lognovo; somente a ação manual ampla é exposta,
+    // após revisão humana, confirmação Android e backup completo pré-mutação.
     private data class Preparation(
         val id: String,
         val action: Action,

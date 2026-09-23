@@ -83,6 +83,24 @@ const currentZoneSnapshot = {
 };
 assert.equal(typeof model.currentZone, 'function',
   'modelo deve expor a zona física atual usando o mesmo CurrentBand do ProgBase');
+const surface = model.zoneSurface(currentZoneSnapshot, {
+  petrolZoneFlags: [true, false, false, false],
+  gasZoneFlags: [true, false, true, false],
+});
+assert.equal(surface.length, 4, 'malha deve conter quatro zonas físicas');
+assert.equal(surface[0].lower, 0.2);
+assert.ok(Math.abs(surface[0].upper - 0.8) < 1e-9);
+assert.ok(Math.abs(surface[3].upper - 1.9) < 1e-9, 'zona 4 termina no último dos 18 limiares reais');
+assert.equal(surface.map(item => item.gasState).join(','), 'acquired,missing,acquired,missing');
+assert.equal(surface.map(item => item.petrolState).join(','), 'acquired,missing,missing,missing');
+assert.equal(model.zoneSurface({ fields: [] }, {}).length, 0, 'sem limiares não se inventam faixas');
+const brokenZones = { fields: [{
+  key: 'MNFLD_PRESS_THD', status: 'VALID',
+  physicalValues: Array.from({ length: 18 }, (_, i) => i === 8 ? 0.1 : 0.2 + i * 0.1),
+}] };
+assert.equal(model.zoneSurface(brokenZones, {}).length, 0, 'limiares não-monótonos falham fechado');
+assert.match(source, /data-autocal-zone-surface/, 'zona precisa estar marcada sobre a malha');
+assert.match(source, /AGORA · Z/, 'cursor precisa identificar sua zona no próprio gráfico');
 assert.equal(model.currentZone(currentZoneSnapshot, { mapBar: 0.85 }), 2,
   'MAP dentro da segunda zona deve orientar o operador como Z2');
 

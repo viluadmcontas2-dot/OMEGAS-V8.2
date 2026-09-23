@@ -24,7 +24,7 @@
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
       DISABLE_AUTO_CAL: 'Pausar Auto Calibration',
       RESET_PETROL: 'Resetar aquisição gasolina',
-      RESET_GAS: 'Resetar aquisição GNV',
+      RESET_GAS: 'Reiniciar aquisição (efeito amplo)',
     })[action] || action;
   }
 
@@ -196,6 +196,23 @@
     currentZone(snapshot = {}, live = {}) {
       const band = this.currentBand(snapshot, live);
       return band ? zoneForBand(band.index) + 1 : null;
+    },
+
+    zoneSurface(snapshot = {}, human = {}) {
+      const thresholds = physicalVector(snapshot, 'MNFLD_PRESS_THD');
+      if (thresholds.length !== 18 || thresholds.some(value => finite(value) === null)) return [];
+      if (thresholds.some((value, index) => index > 0 && !(value > thresholds[index - 1]))) return [];
+      // São 18 limiares físicos, portanto 17 intervalos; não inventar threshold[18].
+      const edges = [0, 6, 10, 14, 17];
+      const state = (flags, index) => !Array.isArray(flags) || flags.length !== 4
+        ? 'unknown' : flags[index] === true ? 'acquired' : 'missing';
+      return Array.from({ length: 4 }, (_, index) => ({
+        zone: index + 1,
+        lower: thresholds[edges[index]],
+        upper: thresholds[edges[index + 1]],
+        petrolState: state(human.petrolZoneFlags, index),
+        gasState: state(human.gasZoneFlags, index),
+      }));
     },
 
     referencePoints(snapshot = {}, analysis = {}) {
@@ -493,9 +510,8 @@
               <details class="autocal-more-actions">
                 <summary>Mais ações</summary>
                 <div class="autocal-reset-actions">
-                  <button type="button" data-autocal-action="RESET_PETROL" disabled aria-disabled="true" title="Seletividade física não comprovada; bloqueado">Reset nativo gasolina — bloqueado</button>
-                  <button type="button" data-autocal-action="RESET_GAS" disabled aria-disabled="true" title="Efeito amplo observado no corpus original; bloqueado">Reset nativo GNV — bloqueado</button>
-                  <p>Resets continuam bloqueados. No Lognovo original, o comando “Reset gas point” também zerou estado AutoCal de gasolina e MUL_ACT; a tela não promete seletividade inexistente.</p>
+                  <button type="button" data-autocal-action="RESET_GAS" class="danger-primary" title="Reinicia a aquisição com efeito amplo; exige confirmação e backup">Reiniciar aquisição · efeito amplo</button>
+                  <p>O comando original Reset GNV apagou também aquisição de gasolina, referências e MUL_ACT (Curva K). Não é reset seletivo nem Reset All do ProgBase. Backup completo obrigatório antes do envio; sem restauração automática.</p>
                 </div>
               </details>
             </section>
@@ -924,9 +940,21 @@
       });
       const label = this.panel?.querySelector('[data-autocal-live-label]');
       if (label) {
-        label.setAttribute('x', (projected.x + 12).toFixed(1));
+        const maxLabelX = scale.xFor(scale.xMax) - 184;
+        const labelOnLeft = projected.x > maxLabelX;
+        label.setAttribute('x', (labelOnLeft ? projected.x - 12 : projected.x + 12).toFixed(1));
+        label.setAttribute('text-anchor', labelOnLeft ? 'end' : 'start');
         label.setAttribute('y', (projected.y - 12).toFixed(1));
-        label.textContent = projected.outOfRange ? 'AGORA · fora da escala' : 'AGORA';
+        const zone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
+        const human = AutoCalUxModel.humanState(this.snapshot || {}, this.state || {}, this.projection);
+        const gnv = /gnv|gás|gas\b/i.test(live.fuel);
+        const flags = gnv ? human.gasZoneFlags : human.petrolZoneFlags;
+        const fuel = gnv ? 'GNV' : 'Gasolina';
+        const state = zone !== null && Array.isArray(flags) && flags.length === 4
+          ? flags[zone - 1] === true ? 'OK' : 'FALTA' : '—';
+        label.textContent = projected.outOfRange ? 'AGORA · fora da escala'
+          : zone === null ? 'AGORA · zona indisponível'
+            : 'AGORA · Z' + zone + ' · ' + fuel + ' ' + state;
       }
     }
 
@@ -969,6 +997,12 @@
         const rawIndex = node.dataset.autocalZonePetrol ?? node.dataset.autocalZoneGas;
         const zone = Number(rawIndex) + 1;
         node.dataset.current = currentZone !== null && zone === currentZone ? 'true' : 'false';
+      });
+      this.panel?.querySelectorAll('[data-autocal-zone-surface]').forEach(node => {
+        const current = currentZone !== null && Number(node.dataset.autocalZoneSurface) === currentZone;
+        node.dataset.current = current ? 'true' : 'false';
+        const label = node.querySelector('[data-autocal-zone-label]');
+        if (label) label.textContent = label.dataset.baseLabel + (current ? ' · AGORA' : '');
       });
     }
 
@@ -1023,6 +1057,8 @@
       const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
       const scale = { xMin, xMax, yMin, yMax, xFor, yFor };
       this.chartScale = scale;
+      const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
+      const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
       const pathFor = (items, yKey, xKey = 'petrolMs') => items
         .filter(point => finite(point?.[xKey]) !== null && finite(point?.[yKey]) !== null)
         .map((point, index) => (index ? 'L' : 'M') + ' ' + xFor(point[xKey]).toFixed(1) + ' ' + yFor(point[yKey]).toFixed(1))
@@ -1038,6 +1074,27 @@
         const x = xFor(value);
         return '<line class="autocal-grid-line vertical" x1="' + x.toFixed(1) + '" y1="' + padTop + '" x2="' + x.toFixed(1) + '" y2="' + (height - padBottom) + '"></line>' +
           '<text class="autocal-axis-tick-x" x="' + x.toFixed(1) + '" y="' + (height - 23) + '" text-anchor="middle">' + value.toFixed(1) + '</text>';
+      }).join('');
+
+      const zoneMarkup = zoneSurface.map(zone => {
+        const lower = Math.max(zone.lower, yMin);
+        const upper = Math.min(zone.upper, yMax);
+        if (upper <= lower) return '';
+        const top = Math.min(yFor(lower), yFor(upper));
+        const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
+        const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
+        const caption = 'Z' + zone.zone + ' · Gasolina ' + label(zone.petrolState) + ' · GNV ' + label(zone.gasState);
+        return '<g class="autocal-zone-surface" data-autocal-zone-surface="' + zone.zone +
+          '" data-gas-state="' + zone.gasState + '" data-petrol-state="' + zone.petrolState + '" data-current="false" aria-label="' + caption + '">' +
+          '<rect class="autocal-zone-background" x="' + padLeft + '" y="' + top.toFixed(1) +
+          '" width="' + (width - padLeft - padRight) + '" height="' + zoneHeight.toFixed(1) + '"></rect>' +
+          '<rect class="autocal-zone-petrol-edge" x="' + (padLeft + 2) + '" y="' + top.toFixed(1) +
+          '" width="5" height="' + zoneHeight.toFixed(1) + '"></rect>' +
+          '<rect class="autocal-zone-gas-edge" x="' + (padLeft + 9) + '" y="' + top.toFixed(1) +
+          '" width="5" height="' + zoneHeight.toFixed(1) + '"></rect>' +
+          '<text class="autocal-zone-label" data-autocal-zone-label data-base-label="' + caption +
+          '" x="' + (width - padRight - 10) + '" y="' + (top + zoneHeight / 2 + 4).toFixed(1) +
+          '" text-anchor="end">' + caption + '</text></g>';
       }).join('');
 
       const previous = history.length
@@ -1072,7 +1129,7 @@
         : '';
 
       host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV, equivalência nativa e posição AGORA por Petrol Inj. e MAP">' +
-        grid +
+        grid + zoneMarkup +
         '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
         '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
         '<g>' +

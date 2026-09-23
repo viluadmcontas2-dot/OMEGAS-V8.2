@@ -78,7 +78,7 @@ Semântica live recuperada:
 - MAP live foi alinhado ao S16LE do oracle; fronteira `0xFFFF -> -1` fica implausível/fail-closed.
 - Nenhum segundo serial owner/thread foi criado; `telemetryAfter` permanece preservado.
 - Escrita automática na ECU continua proibida.
-- Reset gasolina/GNV continua bloqueado na HMI operacional; nenhuma ação destrutiva pode sair antes de backup pré-mutação completo, persistido e revalidado.
+- Reset gasolina seletivo não é prometido; reinício manual amplo via Reset gas point 0x04 fica disponível com aviso de perda de gasolina/GNV/referências/MUL_ACT, revisão humana, confirmação Android e backup completo pré-mutação persistido e relido. Sem restauração automática.
 - Ferramentas expõe exportação de backup completo; isso é proteção operacional, não autorização para escrever dados de volta sem protocolo original comprovado.
 - Zonas `0x016F/0x0170` preservam identidade Z1..Z4 na tela: `OK`, `FALTA` e marcador `AGORA`; não são mais reduzidas apenas a N/4.
 

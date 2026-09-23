@@ -516,7 +516,7 @@
 
 .autocal-reset-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 7px;
   margin-top: 7px;
   padding: 9px;
@@ -926,6 +926,35 @@
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
+.autocal-zone-surface { pointer-events: none; }
+.autocal-zone-background {
+  fill: rgba(123,146,167,.045);
+  stroke: rgba(154,180,203,.22);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-background { fill: rgba(58,208,149,.085); }
+.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-background { fill: rgba(242,177,79,.10); }
+.autocal-zone-surface[data-current="true"] .autocal-zone-background {
+  stroke: #f4f9ff;
+  stroke-width: 2;
+  fill-opacity: 1;
+}
+.autocal-zone-petrol-edge { fill: rgba(120,183,255,.24); }
+.autocal-zone-surface[data-petrol-state="acquired"] .autocal-zone-petrol-edge { fill: #78b7ff; }
+.autocal-zone-gas-edge { fill: rgba(177,191,199,.25); }
+.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-gas-edge { fill: #5dd39e; }
+.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-gas-edge { fill: #f0b65e; }
+.autocal-zone-label {
+  fill: #dbe7f2;
+  font-size: 12px;
+  font-weight: 750;
+  paint-order: stroke;
+  stroke: #07101a;
+  stroke-width: 3px;
+}
+.autocal-zone-surface[data-current="true"] .autocal-zone-label { fill: #ffffff; font-weight: 900; }
+
 .autocal-current-band-layer {
   fill: rgba(79,163,255,.10);
   stroke: rgba(120,183,255,.38);

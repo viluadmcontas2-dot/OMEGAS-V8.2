@@ -86,7 +86,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         if (parsed.operationalToggle) {
             return localFailure("Iniciar/Pausar usa a ação operacional de um toque")
         }
-        return localFailure(DESTRUCTIVE_RESET_INTERLOCK_MESSAGE)
+        if (parsed != AutoCalNativeActionManager.Action.RESET_GAS) {
+            return localFailure("Reset gasolina seletivo não comprovado. Use o reset de aquisição de efeito amplo, com backup obrigatório.")
+        }
+        return currentNativeManager()?.prepare(parsed.name)?.toString() ?: unavailable()
     }
 
     @JavascriptInterface
@@ -135,8 +138,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             actionManager.clearPreparation()
             return localFailure("Iniciar/Pausar não usa diálogo crítico; use a ação operacional de um toque")
         }
-        actionManager.clearPreparation()
-        return localFailure(DESTRUCTIVE_RESET_INTERLOCK_MESSAGE)
+        if (action != AutoCalNativeActionManager.Action.RESET_GAS) {
+            actionManager.clearPreparation()
+            return localFailure(DESTRUCTIVE_RESET_INTERLOCK_MESSAGE)
+        }
         synchronized(managerLock) {
             if (nativeConfirmationPendingId != null) {
                 return localFailure("Já existe uma confirmação Android aberta")
@@ -151,16 +156,15 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     return@runOnUiThread
                 }
                 val commandHex = action.request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-                val effect = if (action.mayChangeMulAct) {
-                    "A ECU pode alterar MUL_ACT internamente."
-                } else {
-                    "A ECU modificará buffers de aquisição AutoCal."
-                }
+                val effect = "No Lognovo original, este comando apagou a aquisição de gasolina e GNV, " +
+                    "referências AutoCal e MUL_ACT (Curva K). NÃO é a rotina Reset All do ProgBase."
                 AlertDialog.Builder(activity)
-                    .setTitle("CONFIRMAÇÃO ANDROID — ECU")
+                    .setTitle("RESET DE AQUISIÇÃO — ECU")
                     .setMessage(
                         "${action.label}\n\n$effect\n\nComando: $commandHex\n\n" +
-                            "Esta ação nunca é automática e não possui rollback automático.",
+                            "Após confirmar, o app lê, grava e relê um backup completo ANTES de enviar o comando. " +
+                            "Se falhar, nenhum reset é enviado. O backup NÃO tem restauração automática. " +
+                            "Execute somente com o veículo parado e sabendo que pode perder a calibração atual.",
                     )
                     .setCancelable(false)
                     .setNegativeButton("CANCELAR") { dialog, _ ->
@@ -169,7 +173,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         activity.refreshWebUi()
                         dialog.dismiss()
                     }
-                    .setPositiveButton("ENVIAR COMANDO") { dialog, _ ->
+                    .setPositiveButton("RESETAR AQUISIÇÃO") { dialog, _ ->
                         synchronized(managerLock) { nativeConfirmationPendingId = null }
                         val result = actionManager.execute(preparationId)
                         if (!result.optBoolean("ok")) actionManager.clearPreparation()
@@ -329,7 +333,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     companion object {
         private const val DESTRUCTIVE_RESET_INTERLOCK_MESSAGE =
-            "Resets AutoCal temporariamente bloqueados: efeito real na ECU divergiu do esperado. Aguarde validação Atlas antes de qualquer nova ação destrutiva."
+            "Somente o reset de aquisição de efeito amplo é permitido, com confirmação Android e backup pré-mutação obrigatório."
     }
 
     private fun unavailable(): String = JSONObject()

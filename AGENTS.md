@@ -43,7 +43,7 @@ Viewport automotivo canônico: `1280x720`.
 
 - nenhuma escrita automática de Map K/Curve K;
 - escrita manual exige intenção explícita + ACK + readback;
-- `RESET_ALL` não é ação operacional exposta;
+- `RESET_ALL` não é ação operacional exposta; somente Reset gas point 0x04, observado com efeito amplo, pode ser solicitado manualmente como reinício de aquisição com aviso explícito, confirmação Android e backup completo pré-mutação;
 - ciência/protocolo críticos permanecem Kotlin/native;
 - AGORA deve permanecer no mesmo contexto da referência AutoCal;
 - LEVELS permanece RAW até existir calibração física separada;
