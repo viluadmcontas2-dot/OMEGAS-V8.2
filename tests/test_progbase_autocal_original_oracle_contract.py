@@ -40,7 +40,8 @@ assert actions["RESET_PETROL"]["portmonObserved"] is False
 assert actions["RESET_GAS"]["portmonObserved"] is True
 assert actions["MANUAL_AUTOMATCH"]["portmonObserved"] is False
 assert oracle["separateActions"]["modifyMapRefs"]["handler"] == "ActionAutoCalRifExecute"
-assert oracle["separateActions"]["modifyMapRefs"]["mode"] == "0x08"\nassert oracle["separateActions"]["modifyMapRefs"]["frame"] == "02 24 04 08 32"
+assert oracle["separateActions"]["modifyMapRefs"]["mode"] == "0x08"
+assert oracle["separateActions"]["modifyMapRefs"]["frame"] == "02 24 04 08 32"
 
 fields = oracle["dfmFields"]
 assert fields["VECT_AUTOCAL_U8_1"]["fileKeyName"] == "!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD"
