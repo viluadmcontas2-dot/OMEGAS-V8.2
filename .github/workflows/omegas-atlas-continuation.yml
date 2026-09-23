@@ -124,7 +124,7 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ inputs.index_run_id }}
       - name: Prepare optional independent decoder
-        if: startsWith(matrix.driver, 'capstone-') || startsWith(matrix.driver, 'pe-') || startsWith(matrix.driver, 'owner-field-use')
+        if: startsWith(matrix.driver, 'capstone-') || startsWith(matrix.driver, 'pe-') || startsWith(matrix.driver, 'owner-field-use') || matrix.driver == 'component-field-use'
         run: python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26
       - name: Investigate target
         run: |
