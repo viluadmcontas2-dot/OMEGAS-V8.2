@@ -9,6 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.omegas.prohub.autocal.AutoCalReadObservation
 import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
 import com.omegas.prohub.autocal.AutoCalSnapshotSource
+import com.omegas.prohub.autocal.AutoCalUiProjection
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import org.json.JSONArray
@@ -147,6 +148,8 @@ class AmareloAutoCalRenderTest {
             .put("maxAutomatch", 3)
             .put("appAutomaticWrite", false)
 
+        var renderProjection = JSONObject()
+        var renderTelemetry = JSONObject()
         scenario.onActivity { activity ->
             val service = activity.serviceOrNull() ?: error("service unavailable")
             setPrivateField(service.nativeAutoCal, "latestSnapshot", decorated)
@@ -165,9 +168,54 @@ class AmareloAutoCalRenderTest {
                     .put("data", live),
             )
             check(accepted != null) { "TelemetryStateStore rejected original-derived live frame" }
+
+            renderTelemetry = JSONObject()
+                .put("valid", true)
+                .put("ageMs", 50)
+                .put("telemetryAgeMs", 50)
+                .put("sessionId", sessionId)
+                .put("sequence", 1)
+                .put("updatedAt", System.currentTimeMillis())
+                .put("live", JSONObject(live.toString()))
+
+            renderProjection = AutoCalUiProjection.project(
+                nativeStatus = JSONObject(state.toString()).put("updatedAt", System.currentTimeMillis()),
+                nativeSnapshot = JSONObject(decorated.toString()),
+                manualStatus = JSONObject().put("state", "IDLE").put("sessionId", sessionId),
+                manualSnapshot = JSONObject().put("available", false),
+                telemetryStatus = JSONObject(renderTelemetry.toString()),
+            )
             activity.refreshWebUi()
         }
-        SystemClock.sleep(900L)
+
+        val projectionLiteral = renderProjection.toString()
+        val telemetryLiteral = renderTelemetry.toString()
+        val patched = evalRaw(
+            scenario,
+            """
+            (() => {
+              const api = window.OmegasUi?.AutoCalApi;
+              const app = window.OmegasApp;
+              if (!api || !app?.store || !app?.autoCalCockpit) return 'missing';
+              const projection = $projectionLiteral;
+              const telemetry = $telemetryLiteral;
+              api.projection = () => projection;
+              api.actionStatus = () => ({ state: 'IDLE', busy: false });
+              api.sessionStatus = () => ({
+                recording: false,
+                durationMs: 0,
+                droppedEvents: 0,
+                semanticSummary: { sessionId: 'ANDROID-RENDER', autocal: { correlatedRegions: [], gasZones: 2 } },
+                documentsMirror: { available: true, lastSyncOk: true }
+              });
+              app.store.patch({ telemetry });
+              app.autoCalCockpit.refresh();
+              return 'ok';
+            })();
+            """.trimIndent(),
+        )
+        check(patched.contains("ok")) { "WebView render seam unavailable: $patched" }
+        SystemClock.sleep(250L)
     }
 
     private fun activateAutoCal(scenario: ActivityScenario<MainActivity>) {
