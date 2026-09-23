@@ -139,9 +139,8 @@ class KFactorManager(
     }
 
     fun listBackups(): JSONArray {
-        val rows = backupDir.listFiles()
-            ?.filter { it.isFile && it.extension.equals("json", ignoreCase = true) }
-            ?.mapNotNull { file ->
+        val rows = KFactorBackupRetention.visibleFiles(backupDir.listFiles())
+            .mapNotNull { file ->
                 try {
                     val backup = loadBackup(file.name)
                     JSONObject()
@@ -155,9 +154,7 @@ class KFactorManager(
                     null
                 }
             }
-            ?.sortedByDescending { it.optLong("createdAt", 0L) }
-            ?.take(30)
-            ?: emptyList()
+            .sortedByDescending { it.optLong("createdAt", 0L) }
         return JSONArray(rows)
     }
 
@@ -520,11 +517,7 @@ class KFactorManager(
     }
 
     private fun pruneBackups() {
-        backupDir.listFiles()
-            ?.filter { it.isFile && it.extension.equals("json", ignoreCase = true) }
-            ?.sortedByDescending { it.lastModified() }
-            ?.drop(30)
-            ?.forEach { it.delete() }
+        KFactorBackupRetention.pruneAutomatic(backupDir)
     }
 
     private fun loadCache(): JSONObject = try {
