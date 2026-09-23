@@ -8,7 +8,7 @@ def load(name,path):
     mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod);return mod
 
 LANE=load("battle_lane","atlas/battle/lane.py")
-RECON=load("battle_reconcile","atlas/battle/RECON.py")
+RECON=load("battle_reconcile","atlas/battle/reconcile.py")
 STATIC=load("battle_static","atlas/battle/static_index.py")
 UNDELPHI=load("undelphi_seeds","atlas/battle/undelphi_seeds.py")
 
