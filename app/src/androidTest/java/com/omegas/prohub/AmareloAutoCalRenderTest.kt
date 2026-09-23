@@ -200,6 +200,7 @@ class AmareloAutoCalRenderTest {
               const projection = $projectionLiteral;
               const telemetry = $telemetryLiteral;
               api.projection = () => projection;
+              app.api.presentSnapshot = () => ({ ok: true, revision: 1, data: telemetry });
               api.actionStatus = () => ({ state: 'IDLE', busy: false });
               api.sessionStatus = () => ({
                 recording: false,
