@@ -33,25 +33,25 @@ test('abrir Mapa K inicia leitura automática e leitura nunca chama writer', () 
   assert.doesNotMatch(startRead, /writeMap|startMapBatchWrite|startKBatchWrite/);
 });
 
-test('fluxo visual é selecionar, pedir prévia Kotlin, revisar e só então gravar', () => {
+test('fluxo visual é selecionar, pedir prévia Kotlin e usar uma única confirmação final para gravar', () => {
   assert.match(MAP_SCREEN, /this\.editor\.toggle/);
   assert.match(MAP_SCREEN, /this\.editor\.selectRange/);
   const applyAdjustment = MAP_SCREEN.match(/applyAdjustment\(\) \{(.*?)\n    \}/s)?.[1] || '';
-  const openReview = MAP_SCREEN.match(/openReview\(\) \{(.*?)\n    \}/s)?.[1] || '';
-  const writeReview = MAP_SCREEN.match(/writeReview\(\) \{(.*?)\n    \}/s)?.[1] || '';
+  const writePrepared = MAP_SCREEN.match(/writePrepared\(\) \{(.*?)\n    \}/s)?.[1] || '';
   assert.match(applyAdjustment, /this\.api\.previewMapAdjustment/);
   assert.match(applyAdjustment, /this\.editor\.applyNativePreview/);
   assert.doesNotMatch(applyAdjustment, /writeMap|startMapBatchWrite|startKBatchWrite/);
-  assert.match(openReview, /this\.editor\.buildReview\(\)/);
-  assert.doesNotMatch(openReview, /this\.api\.writeMap/);
-  assert.match(writeReview, /this\.api\.writeMap\(this\.review\.items/);
+  assert.match(writePrepared, /this\.editor\.buildReview\(\)/);
+  assert.match(writePrepared, /this\.api\.writeMap\(this\.review\.items/);
+  assert.doesNotMatch(MAP_SCREEN, /openReview\(\)|writeReview\(\)|is-reviewing/);
 });
 
-test('não existe modo oficina nem checkbox de confirmação no fluxo ativo', () => {
+test('não existe modo oficina, checkbox nem segunda confirmação no fluxo ativo', () => {
   const active = MAP_SCREEN + HTML;
-  assert.doesNotMatch(active, /workshopModeButton|workshopRequested|confirmWriteCheckbox/);
-  assert.match(HTML, /Gravar alterações na ECU/);
-  assert.match(HTML, /Checkpoint, ACK e readback continuam obrigatórios/);
+  assert.doesNotMatch(active, /workshopModeButton|workshopRequested|confirmWriteCheckbox|mapWriteButton|mapReviewBack/);
+  assert.match(HTML, /Gravar é a única confirmação humana/);
+  assert.match(HTML, /Checkpoint, ACK e readback são automáticos/);
+  assert.match(MAP_SCREEN, /Gravar \$\{count\} alteração/);
 });
 
 test('uma grade completa produz revisão de 144 células após a prévia nativa e antes de qualquer envio', () => {
@@ -65,10 +65,9 @@ test('uma grade completa produz revisão de 144 células após a prévia nativa 
   assert.deepEqual(review.items[0], { row: 0, column: 0, current: 120, target: 125, petrolMs: 2, rpm: 850 });
 });
 
-test('cancelar revisão não possui caminho de escrita', () => {
-  const closeReview = MAP_SCREEN.match(/closeReview\(\) \{(.*?)\n    \}/s)?.[1] || '';
-  assert.doesNotMatch(closeReview, /writeMap|startMapBatchWrite|startKBatchWrite/);
-  assert.match(closeReview, /is-reviewing/);
+test('não existe modal intermediário de revisão que exija um segundo clique', () => {
+  assert.doesNotMatch(MAP_SCREEN, /openReview\(\)|closeReview\(\)|writeReview\(\)|is-reviewing/);
+  assert.doesNotMatch(HTML, /id="mapWriteButton"|id="mapReviewBack"|class="operation-layer review-layer"/);
 });
 
 test('resultado só é sucesso com BATCH_CONFIRMED e readbackValid', () => {
@@ -79,7 +78,7 @@ test('resultado só é sucesso com BATCH_CONFIRMED e readbackValid', () => {
 
 test('frontend envia uma única intenção ao coordenador V7, sem chunking na escrita', () => {
   assert.match(NATIVE_API, /'startMapBatchWrite'/);
-  const writeReview = MAP_SCREEN.match(/writeReview\(\) \{(.*?)\n    \}/s)?.[1] || '';
-  assert.match(writeReview, /this\.api\.writeMap\(this\.review\.items/);
-  assert.doesNotMatch(writeReview, /slice\(|chunk|16 células|MAX_SELECTION\s*=\s*16/);
+  const writePrepared = MAP_SCREEN.match(/writePrepared\(\) \{(.*?)\n    \}/s)?.[1] || '';
+  assert.match(writePrepared, /this\.api\.writeMap\(this\.review\.items/);
+  assert.doesNotMatch(writePrepared, /slice\(|chunk|16 células|MAX_SELECTION\s*=\s*16/);
 });
