@@ -220,8 +220,8 @@ class AmareloAutoCalRuntimeBridgeTest {
 
             scenario.onActivity { activity ->
                 val service = activity.serviceOrNull() ?: error("service unavailable")
-                originalMonitor = service.nativeAutoCal
-                service.nativeAutoCal = monitor
+                originalMonitor = getPrivateField(service, "nativeAutoCal") as NativeAutoCalMonitor
+                setPrivateField(service, "nativeAutoCal", monitor)
                 service.telemetryStore.beginSession(replaySessionId)
                 val accepted = service.telemetryStore.updateFromEngineEvent(
                     JSONObject()
@@ -268,7 +268,7 @@ class AmareloAutoCalRuntimeBridgeTest {
             if (previous != null) {
                 runCatching {
                     scenario.onActivity { activity ->
-                        activity.serviceOrNull()?.nativeAutoCal = previous
+                        activity.serviceOrNull()?.let { setPrivateField(it, "nativeAutoCal", previous) }
                     }
                 }
             }
@@ -341,6 +341,18 @@ class AmareloAutoCalRuntimeBridgeTest {
         FileOutputStream(File(dir, "amarelo-autocal-canonical-replay-runtime-bridge.png")).use {
             check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
         }
+    }
+
+    private fun getPrivateField(target: Any, name: String): Any? {
+        val field = target.javaClass.getDeclaredField(name)
+        field.isAccessible = true
+        return field.get(target)
+    }
+
+    private fun setPrivateField(target: Any, name: String, value: Any?) {
+        val field = target.javaClass.getDeclaredField(name)
+        field.isAccessible = true
+        field.set(target, value)
     }
 
     private fun evalJson(scenario: ActivityScenario<MainActivity>, script: String): JSONObject {

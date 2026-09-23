@@ -108,11 +108,12 @@ class AutoCalAndroidRenderFixtureContractTest(unittest.TestCase):
         self.assertIn('open("portmon-lognovo-replay-v1.json")', android)
         self.assertIn("CanonicalReplayScheduler", android)
         self.assertIn("NativeAutoCalMonitor(", android)
-        self.assertIn("service.nativeAutoCal = monitor", android)
+        self.assertIn('setPrivateField(service, "nativeAutoCal", monitor)', android)
         self.assertIn("window.OmegasAutoCal?.getUiProjection", android)
         self.assertIn("const projection = api.projection();", android)
         self.assertNotIn("api.projection = () =>", android)
         self.assertNotIn('setPrivateField(service.nativeAutoCal, "latestSnapshot"', android)
+        self.assertNotIn("service.nativeAutoCal = monitor", android)
 
 
 if __name__ == "__main__":
