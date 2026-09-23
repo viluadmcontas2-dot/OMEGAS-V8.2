@@ -101,6 +101,125 @@ class KFactorManager(
         }
     }
 
+    fun saveCurrentBackup(label: String = "Curva salva manualmente"): JSONObject {
+        val curve = readCurve()
+        if (!curve.optBoolean("ok", false)) return curve
+        return try {
+            val axisRaw = jsonIntArray(curve.optJSONArray("axisRaw"))
+            val factorsRaw = jsonIntArray(curve.optJSONArray("factorsRaw"))
+            require(axisRaw.size == KFactorProtocol.POINT_COUNT && factorsRaw.size == KFactorProtocol.POINT_COUNT) {
+                "Curva K incompleta; backup não salvo"
+            }
+            val createdAt = System.currentTimeMillis()
+            val curveHash = hash(factorsRaw)
+            val fileName = "MANUAL-$createdAt-${curveHash.take(8)}.json"
+            val backup = curveJson(axisRaw, factorsRaw)
+                .put("format", "omegas-k-factor-backup-v1")
+                .put("type", "MANUAL_SNAPSHOT")
+                .put("label", label.trim().take(80).ifBlank { "Curva salva manualmente" })
+                .put("createdAt", createdAt)
+                .put("hash", curveHash)
+                .put("changes", JSONArray())
+            atomicWrite(File(backupDir, fileName), backup.toString(2))
+            val verified = loadBackup(fileName)
+            require(verified.getString("hash") == curveHash) { "Hash do backup salvo divergiu" }
+            pruneBackups()
+            JSONObject()
+                .put("ok", true)
+                .put("fileName", fileName)
+                .put("createdAt", createdAt)
+                .put("hash", curveHash)
+                .put("type", "MANUAL_SNAPSHOT")
+                .put("label", backup.getString("label"))
+                .put("pointCount", KFactorProtocol.POINT_COUNT)
+                .put("curve", curve)
+        } catch (error: Exception) {
+            error(error.message ?: "Falha ao salvar backup da Curva K")
+        }
+    }
+
+    fun listBackups(): JSONArray {
+        val rows = backupDir.listFiles()
+            ?.filter { it.isFile && it.extension.equals("json", ignoreCase = true) }
+            ?.mapNotNull { file ->
+                try {
+                    val backup = loadBackup(file.name)
+                    JSONObject()
+                        .put("fileName", file.name)
+                        .put("createdAt", backup.optLong("createdAt", file.lastModified()))
+                        .put("hash", backup.getString("hash"))
+                        .put("type", backup.optString("type", "PRE_WRITE"))
+                        .put("label", backup.optString("label", if (file.name.startsWith("MANUAL-")) "Curva salva" else "Backup automático"))
+                        .put("pointCount", KFactorProtocol.POINT_COUNT)
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            ?.sortedByDescending { it.optLong("createdAt", 0L) }
+            ?.take(30)
+            ?: emptyList()
+        return JSONArray(rows)
+    }
+
+    fun prepareRestore(fileName: String): JSONObject {
+        return try {
+            val backup = loadBackup(fileName)
+            val targetAxis = jsonIntArray(backup.optJSONArray("axisRaw"))
+            val targetFactors = jsonIntArray(backup.optJSONArray("factorsRaw"))
+            val fresh = readCurve()
+            if (!fresh.optBoolean("ok", false)) return fresh
+            val currentAxis = jsonIntArray(fresh.optJSONArray("axisRaw"))
+            val currentFactors = jsonIntArray(fresh.optJSONArray("factorsRaw"))
+            if (!currentAxis.contentEquals(targetAxis)) {
+                return error("O eixo Petrol Inj. atual difere do backup; restauração bloqueada")
+                    .put("geometryMismatch", true)
+                    .put("fileName", fileName)
+            }
+            val minimumRaw = KFactorProtocol.rawFromFactor(MIN_SAFE_FACTOR)
+            val points = JSONArray()
+            repeat(KFactorProtocol.POINT_COUNT) { index ->
+                val currentRaw = currentFactors[index]
+                val targetRaw = targetFactors[index]
+                if (targetRaw !in minimumRaw..KFactorProtocol.MAX_RAW) {
+                    return error("O backup contém fator fora da faixa segura no ponto ${index + 1}")
+                        .put("unsafeBackup", true)
+                        .put("fileName", fileName)
+                }
+                if (currentRaw != targetRaw) {
+                    points.put(
+                        JSONObject()
+                            .put("index", index)
+                            .put("petrolMs", KFactorProtocol.petrolMsFromAxisRaw(currentAxis[index]))
+                            .put("currentRaw", currentRaw)
+                            .put("targetRaw", targetRaw)
+                            .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                            .put("targetFactor", KFactorProtocol.factorFromRaw(targetRaw))
+                            .put(
+                                "deltaPercent",
+                                if (currentRaw == 0) 0.0
+                                else (targetRaw.toDouble() / currentRaw.toDouble() - 1.0) * 100.0,
+                            ),
+                    )
+                }
+            }
+            JSONObject()
+                .put("ok", true)
+                .put("fileName", fileName)
+                .put("createdAt", backup.optLong("createdAt", 0L))
+                .put("hash", backup.getString("hash"))
+                .put("type", backup.optString("type", "PRE_WRITE"))
+                .put("label", backup.optString("label", "Backup Curva K"))
+                .put("currentHash", hash(currentFactors))
+                .put("changedPoints", points.length())
+                .put("points", points)
+                .put("currentCurve", fresh)
+                .put("restoreUsesExistingWriter", true)
+                .put("preWriteBackupRequired", true)
+        } catch (error: Exception) {
+            error(error.message ?: "Backup da Curva K inválido")
+        }
+    }
+
     fun startBatchWrite(points: JSONArray, reason: String = "Ajuste manual assistido"): JSONObject {
         if (points.length() !in 1..MAX_BATCH_POINTS) {
             return error("Selecione entre 1 e $MAX_BATCH_POINTS pontos")
@@ -371,12 +490,41 @@ class KFactorManager(
     ) {
         val backup = curveJson(axisRaw, factorsRaw)
             .put("format", "omegas-k-factor-backup-v1")
+            .put("type", "PRE_WRITE")
+            .put("label", "Backup automático antes da escrita")
             .put("adjustmentId", adjustmentId)
             .put("createdAt", System.currentTimeMillis())
             .put("hash", initialHash)
             .put("changes", JSONArray(points.toString()))
         atomicWrite(File(backupDir, "$adjustmentId.json"), backup.toString(2))
-        backupDir.listFiles()?.sortedByDescending { it.lastModified() }?.drop(30)?.forEach { it.delete() }
+        loadBackup("$adjustmentId.json")
+        pruneBackups()
+    }
+
+    private fun loadBackup(fileName: String): JSONObject {
+        require(fileName.isNotBlank() && File(fileName).name == fileName && !fileName.contains("..")) {
+            "Nome de backup inválido"
+        }
+        val file = File(backupDir, fileName)
+        require(file.isFile) { "Backup da Curva K não encontrado" }
+        val backup = JSONObject(file.readText(Charsets.UTF_8))
+        require(backup.optString("format") == "omegas-k-factor-backup-v1") { "Formato de backup inválido" }
+        val axisRaw = jsonIntArray(backup.optJSONArray("axisRaw"))
+        val factorsRaw = jsonIntArray(backup.optJSONArray("factorsRaw"))
+        require(axisRaw.size == KFactorProtocol.POINT_COUNT && factorsRaw.size == KFactorProtocol.POINT_COUNT) {
+            "Backup da Curva K incompleto"
+        }
+        val expectedHash = backup.optString("hash")
+        require(expectedHash.isNotBlank() && expectedHash == hash(factorsRaw)) { "Hash do backup da Curva K inválido" }
+        return backup
+    }
+
+    private fun pruneBackups() {
+        backupDir.listFiles()
+            ?.filter { it.isFile && it.extension.equals("json", ignoreCase = true) }
+            ?.sortedByDescending { it.lastModified() }
+            ?.drop(30)
+            ?.forEach { it.delete() }
     }
 
     private fun loadCache(): JSONObject = try {
