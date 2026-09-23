@@ -63,3 +63,10 @@ assert.match(cockpit, /Desativar Auto Calibration/);
 assert.equal(cockpit.includes('type="checkbox" data-autocal-toggle'), false);
 assert.equal(cockpit.includes('window.confirm('), false);
 assert.equal(cockpit.includes('Deseja continuar?'), false);
+
+
+assert.equal(cockpit.includes('data-autocal-technical-toggle'), true);
+assert.equal(cockpit.includes('details.open = true'), true);
+assert.equal(cockpitCss.includes('.autocal-technical-details[open]'), true);
+assert.equal(cockpitCss.includes('.autocal-primary-action[data-action="ENABLE_AUTO_CAL"]'), true);
+assert.equal(cockpitCss.includes('.autocal-primary-action[data-action="DISABLE_AUTO_CAL"]'), true);

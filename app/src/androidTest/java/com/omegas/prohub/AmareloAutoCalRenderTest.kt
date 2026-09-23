@@ -300,7 +300,8 @@ class AmareloAutoCalRenderTest {
                 }.getOrDefault(false)
             }
             val dom = dom(scenario)
-            saveEvidence("amarelo-autocal-original-derived", dom, fixture.provenance, scenario)
+            val interactions = exerciseCockpitInteractions(scenario)
+            saveEvidence("amarelo-autocal-original-derived", dom, interactions, fixture.provenance, scenario)
 
             assertTrue("AutoCal route must be active", dom.getBoolean("active"))
             assertFalse("LEVELS belongs only to Dashboard/Agora", dom.getBoolean("hasLevels"))
@@ -343,14 +344,145 @@ class AmareloAutoCalRenderTest {
                 "Auto Calibration primary action must remain visible without scrolling",
                 dom.getDouble("toggleBottom") <= dom.getDouble("screenBottom") + 2.0,
             )
+
+            assertTrue("Primary button must route active AutoCal to disable", interactions.getBoolean("toggleDisableRequested"))
+            assertEquals("Consultar ECU must call the reader exactly once", 1, interactions.getInt("readRequests"))
+            assertEquals("Reset GNV must route through prepare", "RESET_GAS", interactions.getString("preparedAction"))
+            assertTrue("Reset preparation must expose the review surface", interactions.getBoolean("reviewVisible"))
+            assertTrue("Technical details must open on demand", interactions.getBoolean("technicalOpened"))
+            assertTrue("Sessions drawer must open from the cockpit", interactions.getBoolean("sessionsOpened"))
+            assertTrue("Sessions drawer must render returned sessions", interactions.getInt("sessionItems") > 0)
+            assertTrue("Reference points must drive the point inspector", interactions.getBoolean("referenceInspectorChanged"))
+            assertTrue("Native positions must drive the band inspector", interactions.getBoolean("bandInspectorChanged"))
         } finally {
             scenario.close()
         }
     }
 
+    private fun exerciseCockpitInteractions(
+        scenario: ActivityScenario<MainActivity>,
+    ): JSONObject =
+        evalJson(
+            scenario,
+            """
+            JSON.stringify((() => {
+              const app = window.OmegasApp;
+              const api = window.OmegasUi?.AutoCalApi;
+              const cockpit = app?.autoCalCockpit;
+              if (!app?.store || !api || !cockpit) return { available: false };
+
+              const original = {
+                setAcquisitionEnabled: api.setAcquisitionEnabled,
+                startRead: api.startRead,
+                prepare: api.prepare,
+                cancelPreparation: api.cancelPreparation,
+                sessions: api.sessions
+              };
+              const tap = node => {
+                if (!node) return false;
+                node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                return true;
+              };
+
+              let toggleRequest = null;
+              let readRequests = 0;
+              let preparedAction = '';
+
+              api.setAcquisitionEnabled = enabled => {
+                toggleRequest = enabled;
+                return { ok: true };
+              };
+              api.startRead = () => {
+                readRequests += 1;
+                return { ok: true, state: 'QUEUED', busy: true, message: 'Render interaction read' };
+              };
+              api.prepare = action => {
+                preparedAction = String(action || '');
+                return {
+                  ok: true,
+                  prepared: true,
+                  preparationId: 'render-preparation',
+                  action: preparedAction,
+                  label: preparedAction === 'RESET_GAS' ? 'Reset GNV' : preparedAction,
+                  description: 'Render-only UI interaction',
+                  commandHex: '00',
+                  sessionId: 'ANDROID-RENDER',
+                  mayChangeMulAct: false
+                };
+              };
+              api.cancelPreparation = () => ({ ok: true });
+              api.sessions = () => [{
+                id: 'ANDROID-RENDER-SESSION',
+                active: false,
+                createdAt: Date.now(),
+                durationMs: 60000,
+                reason: 'Render interaction',
+                semanticSummary: { autocal: { correlatedRegions: [1], gasZones: 2 } }
+              }];
+
+              const toggle = document.querySelector('[data-autocal-toggle]');
+              tap(toggle);
+
+              const read = document.querySelector('[data-autocal-read]');
+              tap(read);
+
+              const more = document.querySelector('.autocal-more-actions');
+              if (more) more.open = true;
+
+              tap(document.querySelector('[data-autocal-action="RESET_GAS"]'));
+              const review = document.getElementById('autocalReview');
+              const reviewVisible = !!review && review.hidden === false;
+              tap(review?.querySelector('[data-autocal-cancel]'));
+
+              tap(document.querySelector('[data-autocal-technical-toggle]'));
+              const technical = document.getElementById('autocalTechnicalDetails');
+              const technicalOpened = technical?.open === true;
+              if (technical) technical.open = false;
+
+              tap(document.querySelector('[data-autocal-sessions]'));
+              const sessionDrawer = document.getElementById('autocalSessionDrawer');
+              const sessionsOpened = !!sessionDrawer && sessionDrawer.hidden === false;
+              const sessionItems = document.querySelectorAll('#autocalSessionList .autocal-session-item').length;
+              tap(document.querySelector('[data-autocal-sessions]'));
+
+              const referenceBefore = document.getElementById('autocalChartInspector')?.textContent || '';
+              tap(document.querySelector('[data-autocal-ref-index]'));
+              const referenceAfter = document.getElementById('autocalChartInspector')?.textContent || '';
+
+              const bandBefore = document.getElementById('autocalBandInspector')?.textContent || '';
+              tap(document.querySelector('[data-autocal-band-index]'));
+              const bandAfter = document.getElementById('autocalBandInspector')?.textContent || '';
+
+              if (more) more.open = false;
+              document.getElementById('alertToast')?.classList.remove('show');
+
+              api.setAcquisitionEnabled = original.setAcquisitionEnabled;
+              api.startRead = original.startRead;
+              api.prepare = original.prepare;
+              api.cancelPreparation = original.cancelPreparation;
+              api.sessions = original.sessions;
+              cockpit.refresh();
+
+              return {
+                available: true,
+                toggleDisableRequested: toggleRequest === false,
+                readRequests,
+                preparedAction,
+                reviewVisible,
+                technicalOpened,
+                sessionsOpened,
+                sessionItems,
+                referenceInspectorChanged: referenceAfter.length > 0 && referenceAfter !== referenceBefore,
+                bandInspectorChanged: bandAfter.length > 0 && bandAfter !== bandBefore
+              };
+            })())
+            """.trimIndent(),
+        )
+
     private fun saveEvidence(
         name: String,
         dom: JSONObject,
+        interactions: JSONObject,
         provenance: JSONObject,
         scenario: ActivityScenario<MainActivity>,
     ) {
@@ -373,6 +505,7 @@ class AmareloAutoCalRenderTest {
             .put("densityDpi", metrics.densityDpi)
             .put("fixtureProvenance", provenance)
             .put("dom", dom)
+            .put("interactions", interactions)
             .put("webView", web)
         File(dir, "$name.json").writeText(receipt.toString(2))
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
