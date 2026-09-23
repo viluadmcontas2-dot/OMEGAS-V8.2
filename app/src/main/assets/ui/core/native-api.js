@@ -2,6 +2,7 @@
   'use strict';
 
   // FINAL_PRE_APK_SAME_SHA_GATE: no runtime behavior; forces all Verde evidence workflows onto one SHA.
+  // CURVE_K_RETENTION_FINAL_GATE_20260923: same-SHA proof, no runtime behavior.
 
   const ns = root.OmegasUi = root.OmegasUi || {};
   const PETROL_BINS = [2, 2.5, 3, 3.5, 4.5, 6, 8, 10, 12, 14, 16, 18];

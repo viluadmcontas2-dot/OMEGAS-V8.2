@@ -601,11 +601,24 @@ class DashboardLevelsRenderTest {
               const root = document.querySelector('[data-screen="curve"]');
               const body = root?.innerText ?? '';
               const actual = document.querySelector('#curveChart .curve-line.actual');
+              const visibleInViewport = id => {
+                const node = document.getElementById(id);
+                if (!node) return false;
+                const rect = node.getBoundingClientRect();
+                const style = window.getComputedStyle(node);
+                return style.display !== 'none' && style.visibility !== 'hidden' &&
+                  rect.width > 0 && rect.height > 0 &&
+                  rect.top >= 0 && rect.left >= 0 &&
+                  rect.right <= window.innerWidth && rect.bottom <= window.innerHeight;
+              };
               return {
                 active: root?.classList.contains('active') === true,
                 source: document.getElementById('curveSourceStatus')?.textContent ?? null,
                 actualPath: actual?.getAttribute('d') ?? '',
                 pointCount: document.querySelectorAll('#curveChart [data-curve-index]').length,
+                backupSaveVisible: visibleInViewport('curveBackupSave'),
+                backupSelectVisible: visibleInViewport('curveBackupSelect'),
+                backupRestoreVisible: visibleInViewport('curveBackupRestore'),
                 bodyHasNaN: /\\bNaN\\b/.test(body),
                 bodyHasUndefined: /\\bundefined\\b/i.test(body)
               };
@@ -721,6 +734,9 @@ class DashboardLevelsRenderTest {
             )
             assertEquals("Original Curve K replay must expose all 30 points", 30, dom.getInt("pointCount"))
             assertTrue("Original Curve K line must be drawable", dom.getString("actualPath").length > 20)
+            assertTrue("Save Curve K control must be visible in 1280x720 WebView", dom.getBoolean("backupSaveVisible"))
+            assertTrue("Curve K backup selector must be visible in 1280x720 WebView", dom.getBoolean("backupSelectVisible"))
+            assertTrue("Curve K restore control must be visible in 1280x720 WebView", dom.getBoolean("backupRestoreVisible"))
             assertTrue("Curve must never render NaN", !dom.getBoolean("bodyHasNaN"))
             assertTrue("Curve must never render undefined", !dom.getBoolean("bodyHasUndefined"))
         } finally {
