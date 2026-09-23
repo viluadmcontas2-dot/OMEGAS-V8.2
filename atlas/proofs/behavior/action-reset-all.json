@@ -1,0 +1,33 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "action.reset_all_effect",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "action_identity_run_id": 35809435511,
+    "action_identity_artifact_id": 10729032358,
+    "action_identity_artifact_digest": "sha256:5c0c8f60914a36e414ea6b625eb40dba2305c5c3de72c4efbc7ddf774d857869",
+    "effect_run_id": 35809729292,
+    "effect_artifact_id": 10729012912,
+    "effect_artifact_digest": "sha256:ed1ac26a168a40bb791aaa5034f2363fa28034bfd0c1d85b9bc3577d31f79912",
+    "lognovo_raw_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+    "autocal_raw_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b"
+  },
+  "claims": [
+    "ActionResetAllExecute is published at 0x005189D8 and pushes mode 0x04 into the shared AutoCal action dispatcher.",
+    "The resulting host frame is 02 24 04 04 2E.",
+    "That frame occurs once in each canonical Portmon capture.",
+    "In LOGNOVO the captured before/after state shows broad AutoCal reset: petrol and gas acquisition buffers become zero-dominant, petrol and gas reference curves become zero-dominant, and MUL_ACT becomes 30 Q14 values equal to 1.0.",
+    "Therefore the observed broad reset belongs to Reset All for ProgBase 4.2.0.6; it must not be attributed to Reset Gas."
+  ],
+  "evidence": [
+    "Raw RTTI + wrapper proof run 35809435511 maps ActionResetAllExecute -> 0x005189D8 -> push 4 -> call 0x00517568.",
+    "LOGNOVO action request event 34971 is frame 02 24 04 04 2E.",
+    "LOGNOVO MUL_ACT nearest read: before event 34421 has 0 Q14-one pairs; after event 35349 has 30 Q14-one pairs.",
+    "LOGNOVO PETR_INJ_TBUF zero fraction rises from 0.093 before to 0.837 after.",
+    "LOGNOVO MNFLD_PRESS_BUF zero fraction rises from 0.116 before to 0.837 after.",
+    "LOGNOVO PETR_INJ_TBUF_GAS and MNFLD_PRESS_BUF_GAS rise to zero fraction 0.837 after the action.",
+    "LOGNOVO PETR_MNFLD_PRESS_RV and GAS_MNFLD_PRESS_RV rise to zero fraction 0.896 after the action.",
+    "AUTOCAL capture contains the same 0x04 frame and corroborates post-action zero-dominant acquisition buffers; some state was already reset before that action in that session."
+  ]
+}
