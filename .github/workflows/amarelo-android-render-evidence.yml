@@ -14,7 +14,7 @@ on:
       - "app/src/main/java/com/omegas/prohub/autocal/**"
       - "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt"
       - "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt"
-      - "tests/fixtures/amarelo-autocal-render-original-v1.json"
+      - "tests/fixtures/amarelo-autocal-render-original-v1.json"\n      - "tests/fixtures/portmon-lognovo-replay-v1.json"
       - "tools/ci/run_amarelo_android_render_evidence.sh"
 
 permissions:

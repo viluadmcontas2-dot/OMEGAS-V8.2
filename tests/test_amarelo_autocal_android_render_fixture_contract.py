@@ -4,7 +4,7 @@ import unittest
 
 FIXTURE = Path("tests/fixtures/amarelo-autocal-render-original-v1.json")
 REPLAY_FIXTURE = Path("tests/fixtures/portmon-lognovo-replay-v1.json")
-ANDROID_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRenderTest.kt")
+ANDROID_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRenderTest.kt")\nRUNTIME_BRIDGE_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRuntimeBridgeTest.kt")
 
 EXPECTED_KEYS = {
     "PETR_INJ_TBP",
@@ -91,6 +91,27 @@ class AutoCalAndroidRenderFixtureContractTest(unittest.TestCase):
         self.assertGreater(non_zero_u16(previous), 0)
         self.assertEqual(non_zero_u16(petrol_ref), 30)
         self.assertEqual(non_zero_u16(gas_ref), 30)
+
+
+    def test_canonical_replay_runtime_bridge_test_has_no_projection_stub(self):
+        replay = json.loads(REPLAY_FIXTURE.read_text(encoding="utf-8"))
+        self.assertEqual(
+            replay["sourceRawSha256"],
+            "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+        )
+        requests = {row["request"] for row in replay["transactions"]}
+        for request in ("48 0B 53", "48 01 49", "29 4B 01 75", "29 61 01 8B", "29 8D 01 B7", "29 8E 01 B8"):
+            self.assertIn(request, requests)
+
+        android = RUNTIME_BRIDGE_TEST.read_text(encoding="utf-8")
+        self.assertIn('open("portmon-lognovo-replay-v1.json")', android)
+        self.assertIn("CanonicalReplayScheduler", android)
+        self.assertIn("NativeAutoCalMonitor(", android)
+        self.assertIn("service.nativeAutoCal = monitor", android)
+        self.assertIn("window.OmegasAutoCal?.getUiProjection", android)
+        self.assertIn("const projection = api.projection();", android)
+        self.assertNotIn("api.projection = () =>", android)
+        self.assertNotIn('setPrivateField(service.nativeAutoCal, "latestSnapshot"', android)
 
 
 if __name__ == "__main__":
