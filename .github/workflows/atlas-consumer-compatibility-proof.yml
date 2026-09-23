@@ -40,10 +40,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags --depth=1 origin d5739989f0be69e28f2822dd7c050d07e298241f
-          git show d5739989f0be69e28f2822dd7c050d07e298241f:tests/fixtures/progbase-autocal-action-map-v1.json > /tmp/verde-action-map.json
-          git fetch --no-tags --depth=1 origin b1f1a94143b2d13a43aac69e6c56c83c5b8e4203
-          git show b1f1a94143b2d13a43aac69e6c56c83c5b8e4203:tests/fixtures/portmon-lognovo-replay-v1.json > /tmp/amarelo-replay.json
+          git fetch --no-tags --depth=1 origin 47d75ce19b1b1f10377a742d87c379f970e7de47
+          git show 47d75ce19b1b1f10377a742d87c379f970e7de47:tests/fixtures/progbase-autocal-action-map-v1.json > /tmp/verde-action-map.json
+          git fetch --no-tags --depth=1 origin 60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf
+          git show 60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf:tests/fixtures/portmon-lognovo-replay-v1.json > /tmp/amarelo-replay.json
           mkdir -p consumer-proof
           sha256sum /tmp/verde-action-map.json /tmp/amarelo-replay.json | tee consumer-proof/consumer-files.sha256
 
@@ -72,8 +72,8 @@ jobs:
             "schema":"omegas.atlas.consumer-compatibility.v1",
             "status":"PROVEN_WITH_CONSUMER_DRIFT" if drift["status"]=="DRIFT_DETECTED" else "PROVEN_CONVERGED",
             "atlas_sha":"97dbd5e01b7248373a284e1a88274a308ce77c54",
-            "verde_sha":"d5739989f0be69e28f2822dd7c050d07e298241f",
-            "amarelo_sha":"b1f1a94143b2d13a43aac69e6c56c83c5b8e4203",
+            "verde_sha":"47d75ce19b1b1f10377a742d87c379f970e7de47",
+            "amarelo_sha":"60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf",
             "atlas_closure":{"semantic":"1417/1417","behavior":"14/14"},
             "amarelo_replay":replay,
             "verde_action_map":drift,
@@ -84,8 +84,8 @@ jobs:
             "## Atlas consumer compatibility proof",
             "",
             f"- Atlas: `97dbd5e01b7248373a284e1a88274a308ce77c54` — CLOSED 1417/1417, behavior 14/14",
-            f"- Amarelo: `b1f1a94143b2d13a43aac69e6c56c83c5b8e4203` — canonical replay {replay['status']}, {replay['validated_exact_transactions']} transactions matched byte/timing-exactly to raw LOGNOVO",
-            f"- Verde: `d5739989f0be69e28f2822dd7c050d07e298241f` — action-map status {drift['status']}, conflicts={len(drift['conflicts'])}",
+            f"- Amarelo: `60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf` — canonical replay {replay['status']}, {replay['validated_exact_transactions']} transactions matched byte/timing-exactly to raw LOGNOVO",
+            f"- Verde: `47d75ce19b1b1f10377a742d87c379f970e7de47` — action-map status {drift['status']}, conflicts={len(drift['conflicts'])}",
             "",
             "The Amarelo replay is accepted as a compatibility challenger, not as native semantic authority.",
             "Any Verde drift is reported rather than imported into Atlas truth.",
