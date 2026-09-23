@@ -11,10 +11,10 @@ permissions:
   contents: read
 
 env:
-  PRODUCT_SHA: 651cc9e89687edc3988441668658e3b8c7aa7a8f
+  PRODUCT_SHA: 84a6f02daf41152b7df9846fbfda2fefa576214e
 
 concurrency:
-  group: omegas-verde-apk-final-651cc9e8
+  group: omegas-verde-apk-final-84a6f02d
   cancel-in-progress: true
 
 jobs:
