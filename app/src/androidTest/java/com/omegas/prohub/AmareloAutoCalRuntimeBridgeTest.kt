@@ -1,6 +1,8 @@
 package com.omegas.prohub
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.os.SystemClock
 import android.webkit.WebView
 import androidx.test.core.app.ActivityScenario
@@ -333,11 +335,12 @@ class AmareloAutoCalRuntimeBridgeTest {
             .put("displayWidth", metrics.widthPixels)
             .put("displayHeight", metrics.heightPixels)
             .put("densityDpi", metrics.densityDpi)
+            .put("screenshotCapture", "APP_WINDOW_DECOR_VIEW")
             .put("replayProvenance", provenance)
             .put("bridgeDom", proof)
             .put("webView", web)
         File(dir, "amarelo-autocal-canonical-replay-runtime-bridge.json").writeText(receipt.toString(2))
-        val bitmap = instrumentation.uiAutomation.takeScreenshot()
+        val bitmap = captureAppWindow(scenario)
         FileOutputStream(File(dir, "amarelo-autocal-canonical-replay-runtime-bridge.png")).use {
             check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
         }
@@ -347,6 +350,21 @@ class AmareloAutoCalRuntimeBridgeTest {
         val field = target.javaClass.getDeclaredField(name)
         field.isAccessible = true
         return field.get(target)
+    }
+
+    private fun captureAppWindow(scenario: ActivityScenario<MainActivity>): Bitmap {
+        val metrics = instrumentation.targetContext.resources.displayMetrics
+        val bitmap = Bitmap.createBitmap(
+            metrics.widthPixels,
+            metrics.heightPixels,
+            Bitmap.Config.ARGB_8888,
+        )
+        bitmap.eraseColor(Color.BLACK)
+        scenario.onActivity { activity ->
+            val canvas = Canvas(bitmap)
+            activity.window.decorView.draw(canvas)
+        }
+        return bitmap
     }
 
     private fun setPrivateField(target: Any, name: String, value: Any?) {

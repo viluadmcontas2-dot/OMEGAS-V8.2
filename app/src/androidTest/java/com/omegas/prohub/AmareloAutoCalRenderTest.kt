@@ -1,6 +1,8 @@
 package com.omegas.prohub
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.os.SystemClock
 import android.webkit.WebView
 import androidx.test.core.app.ActivityScenario
@@ -509,15 +511,31 @@ class AmareloAutoCalRenderTest {
             .put("displayWidth", metrics.widthPixels)
             .put("displayHeight", metrics.heightPixels)
             .put("densityDpi", metrics.densityDpi)
+            .put("screenshotCapture", "APP_WINDOW_DECOR_VIEW")
             .put("fixtureProvenance", provenance)
             .put("dom", dom)
             .put("interactions", interactions)
             .put("webView", web)
         File(dir, "$name.json").writeText(receipt.toString(2))
-        val bitmap = instrumentation.uiAutomation.takeScreenshot()
+        val bitmap = captureAppWindow(scenario)
         FileOutputStream(File(dir, "$name.png")).use {
             check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
         }
+    }
+
+    private fun captureAppWindow(scenario: ActivityScenario<MainActivity>): Bitmap {
+        val metrics = instrumentation.targetContext.resources.displayMetrics
+        val bitmap = Bitmap.createBitmap(
+            metrics.widthPixels,
+            metrics.heightPixels,
+            Bitmap.Config.ARGB_8888,
+        )
+        bitmap.eraseColor(Color.BLACK)
+        scenario.onActivity { activity ->
+            val canvas = Canvas(bitmap)
+            activity.window.decorView.draw(canvas)
+        }
+        return bitmap
     }
 
     private fun setPrivateField(target: Any, name: String, value: Any?) {
