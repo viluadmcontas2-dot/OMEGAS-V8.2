@@ -94,6 +94,11 @@ class DashboardLevelsRenderTest {
         AutoCalProtocol.GAS_MNFLD_PRESS_RV,
     )
 
+    private val zoneMapAutoCalFields = referenceAutoCalFields + listOf(
+        AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+        AutoCalProtocol.ACQUIRED_ZONES_GAS,
+    )
+
     private data class OriginalAutoCalFixture(
         val observations: List<AutoCalReadObservation>,
         val provenance: JSONObject,
@@ -342,6 +347,42 @@ class DashboardLevelsRenderTest {
         return fixture.provenance
     }
 
+    private fun installVisualOnlySparseZoneFixture(
+        scenario: ActivityScenario<MainActivity>,
+        sessionId: Long = 9001L,
+    ): JSONObject {
+        val original = originalAutoCalFixture()
+        val capturedAt = original.observations.maxOfOrNull { it.capturedAtMs } ?: System.currentTimeMillis()
+        val observations = ArrayList<AutoCalReadObservation>(original.observations)
+        observations += AutoCalReadObservation(
+            field = AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+            status = Mp48Protocol.STATUS_ACK,
+            payload = payloadFor(AutoCalProtocol.ACQUIRED_ZONES_PETROL, intArrayOf(1, 1, 0, 0)),
+            capturedAtMs = capturedAt,
+        )
+        observations += AutoCalReadObservation(
+            field = AutoCalProtocol.ACQUIRED_ZONES_GAS,
+            status = Mp48Protocol.STATUS_ACK,
+            payload = payloadFor(AutoCalProtocol.ACQUIRED_ZONES_GAS, intArrayOf(1, 0, 1, 0)),
+            capturedAtMs = capturedAt,
+        )
+        publishAutoCalSnapshot(
+            scenario = scenario,
+            observations = observations,
+            expectedFields = zoneMapAutoCalFields,
+            sessionId = sessionId,
+            message = "VISUAL_ONLY sparse zone identity through production AutoCal projection",
+        )
+        return JSONObject()
+            .put("classification", "SYNTHETIC_NON_SCIENTIFIC")
+            .put("scientificUse", "VISUAL_ONLY_NON_SCIENTIFIC")
+            .put("visualPurpose", "prove Z1..Z4 identity and missing-zone HMI without claiming a captured vehicle state")
+            .put("baseReferenceClassification", "ORIGINAL_DERIVED")
+            .put("baseReferenceRawSha256", original.provenance.getString("sourceRawSha256"))
+            .put("petrolZoneFlags", JSONArray(listOf(1, 1, 0, 0)))
+            .put("gasZoneFlags", JSONArray(listOf(1, 0, 1, 0)))
+    }
+
     private fun installTestOnlyAutoCalReferenceFixture(
         scenario: ActivityScenario<MainActivity>,
         sessionId: Long = 9001L,
@@ -518,7 +559,16 @@ class DashboardLevelsRenderTest {
                 chartHeight: chart?.height ?? 0,
                 chartWidth: chart?.width ?? 0,
                 railBottom: rail?.bottom ?? 0,
-                viewportHeight: window.innerHeight
+                viewportHeight: window.innerHeight,
+                progress: document.getElementById('autocalHumanProgress')?.textContent ?? '',
+                action: document.getElementById('autocalHumanAction')?.textContent ?? '',
+                petrolZoneStates: [...document.querySelectorAll('[data-autocal-zone-petrol]')].map(node => node.dataset.state ?? ''),
+                gasZoneStates: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.dataset.state ?? ''),
+                petrolZoneLabels: [...document.querySelectorAll('[data-autocal-zone-petrol]')].map(node => node.textContent.trim()),
+                gasZoneLabels: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.textContent.trim()),
+                currentPetrolZones: [...document.querySelectorAll('[data-autocal-zone-petrol][data-current="true"]')].map(node => Number(node.dataset.autocalZonePetrol) + 1),
+                currentGasZones: [...document.querySelectorAll('[data-autocal-zone-gas][data-current="true"]')].map(node => Number(node.dataset.autocalZoneGas) + 1),
+                zoneMeterBottom: document.getElementById('autocalZoneMeter')?.getBoundingClientRect().bottom ?? 0
               };
             })())
             """.trimIndent(),
@@ -810,6 +860,48 @@ class DashboardLevelsRenderTest {
             assertTrue("Point inspector must sit below the plot instead of overlaying it", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartBottom"))
             assertTrue("Live telemetry rail must follow the point inspector", geometry.getDouble("liveTop") >= geometry.getDouble("inspectorBottom"))
             assertTrue("Point inspector may use chart width without narrowing the plot", geometry.getDouble("inspectorWidth") >= geometry.getDouble("chartWidth") * 0.70)
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun autocalSparseZoneMapShowsExactMissingRegions() {
+        val scenario = launch()
+        try {
+            val live = liveFixture()
+            val provenance = installVisualOnlySparseZoneFixture(scenario)
+            activateAutocal(scenario)
+            injectFresh(scenario, live, settleMs = 850L)
+            val dom = autocalReferenceDom(scenario)
+            saveEvidence("autocal-sparse-zone-map", dom, scenario, provenance)
+
+            assertEquals(
+                "Gas zone identity must remain sparse instead of compacting N/4",
+                listOf("acquired", "missing", "acquired", "missing"),
+                dom.getJSONArray("gasZoneStates").let { array ->
+                    List(array.length()) { index -> array.getString(index) }
+                },
+            )
+            assertEquals(
+                "Petrol zone identity must remain sparse",
+                listOf("acquired", "acquired", "missing", "missing"),
+                dom.getJSONArray("petrolZoneStates").let { array ->
+                    List(array.length()) { index -> array.getString(index) }
+                },
+            )
+            assertTrue("Operator must see exact missing gas zones", dom.getString("progress").contains("Faltam GNV: Z2, Z4"))
+            assertTrue("Guidance must name exact missing gas zones", dom.getString("action").contains("Z2, Z4"))
+            assertTrue("Z2 must be visibly labelled FALTA", dom.getJSONArray("gasZoneLabels").getString(1).contains("FALTA"))
+            assertTrue("Z3 must be visibly labelled OK", dom.getJSONArray("gasZoneLabels").getString(2).contains("OK"))
+            assertEquals(
+                "Current MAP orientation must point to one physical zone for both fuels",
+                dom.getJSONArray("currentPetrolZones").toString(),
+                dom.getJSONArray("currentGasZones").toString(),
+            )
+            assertEquals("Current MAP must identify exactly one zone", 1, dom.getJSONArray("currentGasZones").length())
+            assertTrue("Zone map must remain visible above the fold", dom.getDouble("zoneMeterBottom") <= dom.getDouble("viewportHeight"))
+            assertTrue("Acquisition chart must remain dominant after adding zone map", dom.getDouble("chartHeight") >= 300.0)
         } finally {
             scenario.close()
         }
