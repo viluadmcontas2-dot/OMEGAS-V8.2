@@ -59,8 +59,8 @@ assert "MNFLD_PRESS_THD" in cockpit
 assert "currentBand(snapshot = {}, live = {})" in cockpit
 assert "data-autocal-current-band" in cockpit
 assert "intervalMs: 75" in app
-assert "this.tick % 10 === 0" in scheduler
-assert "this.tick % 20 === 0" in scheduler
+assert "this.tick % 13 === 0" in scheduler
+assert "this.tick % 27 === 0" in scheduler
 assert 'val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C' in protocol
 assert "if (queued.telemetryAfter" in engine
 assert "pollTelemetry()" in engine
