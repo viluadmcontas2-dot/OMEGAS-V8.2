@@ -431,6 +431,14 @@ class TelemetryForegroundService : Service() {
     fun kFactorStatusJson(): String = kFactor.statusJson()
     fun kFactorHistoryJson(): String = kFactor.historyJson()
 
+    @Synchronized fun saveKFactorBackup(label: String): String =
+        if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.saveCurrentBackup(label).toString()
+
+    fun listKFactorBackups(): String = kFactor.listBackups().toString()
+
+    @Synchronized fun prepareKFactorRestore(fileName: String): String =
+        if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.prepareRestore(fileName).toString()
+
     @Synchronized fun startKWrite(
         row: Int,
         column: Int,
