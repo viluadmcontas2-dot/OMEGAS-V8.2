@@ -49,10 +49,8 @@
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
         this.proposals.clear(); this.renderChart(); this.renderProposalList();
       });
-      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.openReview());
-      document.getElementById('curveReviewBack')?.addEventListener('click', () => this.closeReview());
-      document.getElementById('curveWriteButton')?.addEventListener('click', () => this.writeReview());
-      document.getElementById('curveDismissResult')?.addEventListener('click', () => this.closeReview());
+      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
+      document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
     }
 
     needsLearning() { return this.view === 'learning'; }
@@ -204,8 +202,8 @@
             deltaPercent: Number(item.deltaPercent),
           }));
           this.renderProposalList();
-          this.openReview();
-          text('curveBackupStatus', `Restauração pronta · ${points.length} ponto${points.length === 1 ? '' : 's'}`);
+          text('curveBackupStatus', 'Restauração validada · iniciando escrita segura');
+          this.writePrepared();
           return;
         }
       }
@@ -270,6 +268,10 @@
               result.querySelector('span').textContent = operation.error || operation.message || 'A ECU não confirmou toda a operação. Releitura obrigatória.';
             }
             this.data = null;
+            if (this.restoreContext) text('curveBackupStatus', 'Restauração não confirmada · releitura obrigatória');
+            this.restoreContext = null;
+            this.proposals.clear();
+            this.renderProposalList();
           }
         }
       }
@@ -506,7 +508,12 @@
       const items = [...this.proposals.values()].sort((a, b) => Number(a.index) - Number(b.index));
       host.innerHTML = items.length ? items.map(item => `<div><span>${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b><small>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</small></div>`).join('') : '<p>Nenhum ponto preparado.</p>';
       const review = document.getElementById('curveReviewButton');
-      if (review) { review.disabled = items.length === 0; review.textContent = items.length ? `Revisar ${items.length} ponto${items.length === 1 ? '' : 's'}` : 'Prepare pontos'; }
+      if (review) {
+        review.disabled = items.length === 0;
+        review.textContent = items.length
+          ? `${this.restoreContext ? 'Restaurar' : 'Gravar'} ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`
+          : 'Prepare pontos';
+      }
     }
 
     renderEvidence(state) {
@@ -537,49 +544,37 @@
       host.querySelector('[data-curve-prepare-suggestion]')?.addEventListener('click', () => this.prepareSuggestion(suggestion));
     }
 
-    openReview() {
-      if (!this.proposals.size) return;
-      const host = document.getElementById('curveReviewList');
-      const items = [...this.proposals.values()].sort((a, b) => Number(a.index) - Number(b.index));
-      if (host) host.innerHTML = items.map(item => `<div><span>Ponto ${Number(item.index) + 1} · ${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b></div>`).join('');
-      text(
-        'curveReviewCount',
-        this.restoreContext
-          ? `Restaurar backup · ${items.length} ponto${items.length === 1 ? '' : 's'}`
-          : `${items.length} ponto${items.length === 1 ? '' : 's'}`,
-      );
-      const button = document.getElementById('curveWriteButton');
-      if (button) button.textContent = this.restoreContext
-        ? `Restaurar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`
-        : `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`;
-      this.root?.classList.add('is-reviewing');
-    }
-
-    closeReview() {
-      const cancelledRestore = this.restoreContext !== null && !this.writing;
-      this.root?.classList.remove('is-reviewing', 'is-writing', 'has-result');
-      if (!this.writing) this.restoreContext = null;
-      if (cancelledRestore) {
-        this.proposals.clear();
-        this.renderProposalList();
-        text('curveBackupStatus', 'Restauração cancelada · nenhuma escrita enviada');
-      }
-    }
-
-    writeReview() {
-      const points = [...this.proposals.values()].map(item => ({ index: Number(item.index), currentRaw: Number(item.currentRaw), targetRaw: Number(item.targetRaw) }));
+    writePrepared() {
+      const points = [...this.proposals.values()].map(item => ({
+        index: Number(item.index),
+        currentRaw: Number(item.currentRaw),
+        targetRaw: Number(item.targetRaw),
+      }));
       if (!points.length) return;
-      const reason = this.restoreContext
+      const restoring = this.restoreContext !== null;
+      const reason = restoring
         ? `Restaurar backup Curva K ${this.restoreContext.fileName}`
         : 'Ajuste manual confirmado na UI clean-slate';
       const result = this.api.writeCurve(points, reason);
-      if (!result?.ok || !result?.started) { this.alert(result?.error || 'A escrita da Curva K não iniciou.'); return; }
+      if (!result?.ok || !result?.started) {
+        if (restoring) {
+          this.restoreContext = null;
+          this.proposals.clear();
+          this.renderProposalList();
+          text('curveBackupStatus', 'Restauração não iniciada');
+        }
+        this.alert(result?.error || 'A escrita da Curva K não iniciou.');
+        return;
+      }
       this.writing = true;
-      this.root?.classList.remove('is-reviewing');
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', this.restoreContext ? 'Restaurando backup da Curva K' : 'Escrita manual da Curva K');
+      text('curveOperationTitle', restoring ? 'Restaurando backup da Curva K' : 'Escrita manual da Curva K');
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
+    }
+
+    dismissResult() {
+      this.root?.classList.remove('is-writing', 'has-result');
     }
 
     alert(message) { this.store.patch({ alert: { level: 'warning', message: String(message || 'Operação indisponível') } }); }
