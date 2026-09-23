@@ -948,13 +948,14 @@
         const zone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
         const human = AutoCalUxModel.humanState(this.snapshot || {}, this.state || {}, this.projection);
         const gnv = /gnv|gás|gas\b/i.test(live.fuel);
-        const flags = gnv ? human.gasZoneFlags : human.petrolZoneFlags;
-        const fuel = gnv ? 'GNV' : 'Gasolina';
+        const petrol = /gasolina|petrol|etanol/i.test(live.fuel);
+        const flags = gnv ? human.gasZoneFlags : petrol ? human.petrolZoneFlags : null;
+        const fuel = gnv ? 'GNV' : petrol ? 'Gasolina' : '';
         const state = zone !== null && Array.isArray(flags) && flags.length === 4
           ? flags[zone - 1] === true ? 'OK' : 'FALTA' : '—';
         label.textContent = projected.outOfRange ? 'AGORA · fora da escala'
           : zone === null ? 'AGORA · zona indisponível'
-            : 'AGORA · Z' + zone + ' · ' + fuel + ' ' + state;
+            : 'AGORA · Z' + zone + (fuel ? ' · ' + fuel + ' ' + state : '');
       }
     }
 
