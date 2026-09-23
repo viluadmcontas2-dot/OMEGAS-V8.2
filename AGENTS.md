@@ -33,3 +33,12 @@
 - Docs/governança/status-only não justificam build externo.
 - Quota de CI/hosting nunca autoriza upgrade pago ou fallback pago.
 - Repo-first, TDD e evidência continuam obrigatórios; reduzir frequência de builds externos não reduz rigor.
+
+## TRANSVERSAL PASS/FAIL
+
+- Antes de liberar qualquer dependente material, aplicar `docs/contracts/transversal-pass-fail-gate.json` e resolver o Contract Registry vivo + `GLOBAL-LEDGER-001`.
+- `AUDIT_INDEPENDENCE=PROVENANCE_BASED`: auditoria normativa usa `AUDITOR_MODE=READ_ONLY_NORMATIVE` e `AUDITOR_NORMATIVE_WRITES=0`.
+- `NORMATIVE_AUDITED_MUTATION` invalida o PASS da própria execução que produziu a mutação; correção exige novo audit epoch/run.
+- `META_AUDIT_RUN_ID == AUDIT_RUN_ID` é inválido; meta-audit deve ser distinto.
+- Mudança humana/UI resolve `OME-STATE-HUMAN-UI`, `UIUX-CUSTOMROM` e `UIUX-OMEGADEV`.
+- PASS antigo sem recibo transversal e audit/meta-audit válidos é `STALE_BY_GOVERNANCE` até reauditoria do SHA remoto exato.
