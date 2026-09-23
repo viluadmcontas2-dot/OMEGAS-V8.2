@@ -24,10 +24,13 @@ test('AutoCal uses acquisition curve as dominant instrument surface', () => {
   assert.match(css, /height:\s*clamp\(300px,\s*43vh,\s*390px\)/);
 });
 
-test('AutoCal inspector overlays desktop chart instead of stealing plot width', () => {
-  assert.match(css, /\.autocal-chart-workspace\s*\{[\s\S]*position:\s*relative/);
-  assert.match(css, /\.autocal-chart-inspector\s*\{[\s\S]*position:\s*absolute/);
-  assert.match(css, /@container \(max-width:\s*900px\)[\s\S]*\.autocal-chart-inspector\s*\{[\s\S]*position:\s*static/);
+test('AutoCal inspector sits below the plot without stealing chart width', () => {
+  const finalWorkspace = css.lastIndexOf('.autocal-chart-workspace {');
+  const finalInspector = css.lastIndexOf('.autocal-chart-inspector {');
+  assert.ok(finalWorkspace >= 0);
+  assert.ok(finalInspector > finalWorkspace);
+  assert.match(css.slice(finalWorkspace, finalInspector), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(css.slice(finalInspector), /position:\s*static/);
 });
 
 test('AGORA is visually distinct but remains telemetry', () => {
@@ -38,8 +41,8 @@ test('AGORA is visually distinct but remains telemetry', () => {
 
 
 test('overlapping petrol and GNV curves remain distinguishable without geometric offset', () => {
-  assert.match(css, /\.autocal-reference-line\.petrol:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*6/);
-  assert.match(css, /\.autocal-reference-line\.gas:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*2\.8/);
+  assert.match(css, /\.autocal-reference-line\.petrol:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*4/);
+  assert.match(css, /\.autocal-reference-line\.gas:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*2\.5/);
   assert.match(css, /\.autocal-reference-point\.petrol\s*\{[\s\S]*fill:\s*#07101a[\s\S]*stroke:\s*#78b7ff/);
   assert.match(js, /ΔMAP/);
 });
