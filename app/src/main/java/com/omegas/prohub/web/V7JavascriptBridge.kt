@@ -95,6 +95,21 @@ class V7JavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface
+    fun startCurveBackup(label: String): String = startOperation("CURVE_BACKUP_SAVING") { service ->
+        service.saveKFactorBackup(label)
+    }
+
+    @JavascriptInterface
+    fun listCurveBackups(): String =
+        activity?.serviceOrNull()?.listKFactorBackups() ?: "[]"
+
+    @JavascriptInterface
+    fun startCurveRestorePrepare(fileName: String): String =
+        startOperation("CURVE_RESTORE_PREPARING") { service ->
+            service.prepareKFactorRestore(fileName)
+        }
+
+    @JavascriptInterface
     fun startCurveBatchWrite(pointsJson: String, reason: String): String {
         val currentActivity = activity ?: return unavailable()
         val service = currentActivity.serviceOrNull() ?: return unavailable()
