@@ -446,11 +446,17 @@ class AmareloAutoCalRenderTest {
               tap(document.querySelector('[data-autocal-sessions]'));
 
               const referenceBefore = document.getElementById('autocalChartInspector')?.textContent || '';
-              tap(document.querySelector('[data-autocal-ref-index]'));
+              const selectedReference = document.querySelector('[data-autocal-ref-index].selected')?.dataset?.autocalRefIndex;
+              const referenceTarget = Array.from(document.querySelectorAll('[data-autocal-ref-index]'))
+                .find(node => node.dataset.autocalRefIndex !== selectedReference);
+              tap(referenceTarget);
               const referenceAfter = document.getElementById('autocalChartInspector')?.textContent || '';
 
               const bandBefore = document.getElementById('autocalBandInspector')?.textContent || '';
-              tap(document.querySelector('[data-autocal-band-index]'));
+              const selectedBand = document.querySelector('[data-autocal-band-index].selected')?.dataset?.autocalBandIndex;
+              const bandTarget = Array.from(document.querySelectorAll('[data-autocal-band-index]'))
+                .find(node => node.dataset.autocalBandIndex !== selectedBand);
+              tap(bandTarget);
               const bandAfter = document.getElementById('autocalBandInspector')?.textContent || '';
 
               if (more) more.open = false;

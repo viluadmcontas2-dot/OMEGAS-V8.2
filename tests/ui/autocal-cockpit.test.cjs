@@ -70,3 +70,6 @@ assert.equal(cockpit.includes('details.open = true'), true);
 assert.equal(cockpitCss.includes('.autocal-technical-details[open]'), true);
 assert.equal(cockpitCss.includes('.autocal-primary-action[data-action="ENABLE_AUTO_CAL"]'), true);
 assert.equal(cockpitCss.includes('.autocal-primary-action[data-action="DISABLE_AUTO_CAL"]'), true);
+
+assert.equal(cockpit.includes('this.inspectReferencePoint(selected)'), true);
+assert.equal(cockpit.includes('this.inspectBand(preferred)'), true);
