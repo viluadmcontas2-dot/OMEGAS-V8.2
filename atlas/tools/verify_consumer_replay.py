@@ -56,7 +56,7 @@ def iter_events(zip_path: Path, entry: str):
             if s and pending is not None:
                 idx, op, fallback = pending
                 if int(s.group("index")) == idx:
-                    duration = float(s.group("duration"))
+                    duration = float(s.group("duration")) * 1000.0
                     p = _payload(s.group("detail")) or fallback
                     yield {
                         "index": idx,
