@@ -4,7 +4,8 @@ import unittest
 
 FIXTURE = Path("tests/fixtures/amarelo-autocal-render-original-v1.json")
 REPLAY_FIXTURE = Path("tests/fixtures/portmon-lognovo-replay-v1.json")
-ANDROID_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRenderTest.kt")\nRUNTIME_BRIDGE_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRuntimeBridgeTest.kt")
+ANDROID_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRenderTest.kt")
+RUNTIME_BRIDGE_TEST = Path("app/src/androidTest/java/com/omegas/prohub/AmareloAutoCalRuntimeBridgeTest.kt")
 
 EXPECTED_KEYS = {
     "PETR_INJ_TBP",
