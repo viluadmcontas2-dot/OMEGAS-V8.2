@@ -1,0 +1,62 @@
+{
+  "schema": "omegas.atlas.semantic-proof.v1",
+  "id": "indexed-u8-0x0165",
+  "status": "PROVEN",
+  "canonical_binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "analysis_run_id": 35802546712,
+    "index_artifact_id": 10726947451,
+    "index_artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "files": [
+      "undelphi/undelphi.txt",
+      "ghidra/autocal-semantics.json"
+    ]
+  },
+  "shared_serial_object": {
+    "serial_code": "0x0165",
+    "class": "TAebNumber",
+    "type": "ntVectorElement",
+    "file_section": "AutoCal"
+  },
+  "slots": [
+    {
+      "object": "VECT_AUTOCAL_U8_0",
+      "owner": "TAutoCalDM",
+      "field_offset": "0x0000C8",
+      "file_key_name": "AUTOCAL_IDLE_MIN_BUF_PETR_THD",
+      "row_index_serialized": null,
+      "on_get_data": "AUTO_CAL_ENABLEGetData",
+      "handler_va": "0x00512B8C",
+      "note": "RowIndex is not serialized in DFM. Do not infer extra physical semantics beyond the original FileKeyName."
+    },
+    {
+      "object": "VECT_AUTOCAL_U8_1",
+      "owner": "TAutoCalDM",
+      "field_offset": "0x000078",
+      "file_key_name": "AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD",
+      "row_index_serialized": 1,
+      "on_get_data": null
+    },
+    {
+      "object": "VECT_AUTOCAL_U8_2",
+      "owner": "TAutoCalDM",
+      "field_offset": "0x00007C",
+      "file_key_name": "MaxAutomatch",
+      "row_index_serialized": 2,
+      "on_get_data": "VECT_AUTOCAL_U8_2GetData",
+      "handler_va": "0x00512B90"
+    }
+  ],
+  "claims": [
+    "VECT_AUTOCAL_U8_0, _1 and _2 are three TAebNumber views over serial object 0x0165.",
+    "The DFM directly names U8_0 as AUTOCAL_IDLE_MIN_BUF_PETR_THD.",
+    "The DFM directly names U8_1 as AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD and serializes RowIndex=1.",
+    "The DFM directly names U8_2 as MaxAutomatch and serializes RowIndex=2.",
+    "U8_2 has a published OnGetData handler at 0x00512B90; U8_0 binds AUTO_CAL_ENABLEGetData at 0x00512B8C."
+  ],
+  "epistemic_boundary": [
+    "These names/index identities are original ProgBase DFM semantics.",
+    "No physical engineering unit or threshold behavior beyond the literal original names is inferred here.",
+    "OMEGAS product interpretations may use these names as leads, but must not exceed the native evidence."
+  ]
+}
