@@ -55,6 +55,63 @@
     "ROUTE_CHURN_CHANGES_SCIENCE",
     "WRITE_WITHOUT_PREVIEW",
     "WRITE_WITHOUT_ACK_READBACK",
-    "WRITE_WITHOUT_RECOVERY"
-  ]
+    "WRITE_WITHOUT_RECOVERY",
+    "LIVE_CONTRACT_REGISTRY_NOT_RESOLVED",
+    "GLOBAL_LEDGER_NOT_LOADED",
+    "TRANSVERSAL_GATE_NOT_PASS",
+    "AUDIT_NOT_PROVENANCE_INDEPENDENT",
+    "AUDITOR_MUTATED_NORMATIVE_TARGET",
+    "META_AUDIT_NOT_DISTINCT",
+    "SCREEN_LIFECYCLE_OWNS_SERIAL_IO",
+    "DUPLICATE_UI_RUNTIME_AUTHORITY",
+    "SILENT_CLAMP",
+    "FAKE_PROGRESS_PERCENT"
+  ],
+  "transversal_gate": {
+    "path": "docs/contracts/transversal-pass-fail-gate.json",
+    "required_ui_contracts": [
+      "OME-STATE-HUMAN-UI",
+      "UIUX-CUSTOMROM",
+      "UIUX-OMEGADEV"
+    ],
+    "live_registry_required": true,
+    "global_ledger_required": true,
+    "provenance_independent_audit_required": true,
+    "distinct_meta_audit_required": true
+  },
+  "best_of_branches": {
+    "OmegasAtlas": [
+      "canonical EXE/log scientific authority",
+      "1417/1417 semantic closure and 14/14 behavior gates",
+      "consumer drift detection and byte/timing replay verification",
+      "durable post-closure hard stop"
+    ],
+    "work/omegas-amarelo-foundation": [
+      "canonical replay through Android runtime/WebView",
+      "real AutoCal cockpit interaction/render evidence",
+      "technical detail on demand",
+      "render evidence explicitly separated from scientific inference"
+    ],
+    "OmegasVerde": [
+      "current Android product integration",
+      "single clear human write commit after prepared preview",
+      "automatic checkpoint/validation/ACK/readback",
+      "backup/recovery safety and Map K/Curve K/Predictor product refinement"
+    ]
+  },
+  "live_governance_requirements": {
+    "contract_registry_resolved": true,
+    "global_ledger_loaded": true,
+    "transversal_status": "PASS",
+    "audit_independence_model": "PROVENANCE_BASED",
+    "auditor_normative_writes": 0,
+    "meta_audit_distinct": true
+  },
+  "product_refinement_policy": {
+    "human_commit": "One explicit final human commit is compatible with the UX blueprints when the prepared preview is already visible and backend checkpoint/validation/ACK/readback/recovery remain mandatory.",
+    "science": "UI and consumer branches may project, replay and challenge Atlas truth; they cannot redefine native ProgBase semantics.",
+    "lifecycle": "Route/screen lifecycle must not own or materially retime scientific serial acquisition.",
+    "progress": "Never invent progress percentages; show actual stage, recent activity, elapsed time and liveness.",
+    "authority": "One Store/Router/Scheduler and one material owner per truth; replacements retire old equivalent authorities."
+  }
 }
