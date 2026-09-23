@@ -126,29 +126,35 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('id="curveChart"', self.html)
         self.assertIn('OBD é somente observação', self.html)
 
-    def test_map_k_has_axes_and_manual_bulk_review_without_second_writer(self):
+    def test_map_k_has_axes_and_single_human_write_confirmation(self):
         self.assertIn('id="mapActiveCell"', self.html)
         self.assertIn('id="mapSelectAll"', self.html)
         self.assertIn('data-map-nudge', self.html)
         self.assertIn('map-k-grid-with-axes', self.map_screen)
         self.assertIn('this.editor.selectAll()', self.map_screen)
-        self.assertIn("document.getElementById('mapWriteButton')?.addEventListener('click', () => this.writeReview())", self.map_screen)
-        self.assertIn('writeReview()', self.map_screen)
+        self.assertIn("document.getElementById('mapReviewButton')?.addEventListener('click', () => this.writePrepared())", self.map_screen)
+        self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
         self.assertIn('Ajuste manual confirmado na UI clean-slate', self.map_screen)
+        self.assertNotIn("classList.add('is-reviewing')", self.map_screen)
+        self.assertNotIn('id="mapWriteButton"', self.html)
+        self.assertNotIn('id="mapReviewBack"', self.html)
         self.assertIn('ACK e readback', self.map_screen)
         self.assertNotIn('window.Android', self.map_screen)
         self.assertNotIn('protocolTransaction', self.map_screen)
 
-    def test_curve_k_is_global_and_writes_only_after_manual_review(self):
+    def test_curve_k_is_global_and_uses_one_human_write_confirmation(self):
         self.assertIn('Curva K', self.curve_screen)
         self.assertIn('global', self.curve_screen.lower())
-        self.assertIn("document.getElementById('curveWriteButton')?.addEventListener('click', () => this.writeReview())", self.curve_screen)
-        self.assertIn('writeReview()', self.curve_screen)
+        self.assertIn("document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared())", self.curve_screen)
+        self.assertIn('writePrepared()', self.curve_screen)
         self.assertIn("const reason = this.restoreContext", self.curve_screen)
         self.assertIn("this.api.writeCurve(points, reason)", self.curve_screen)
         self.assertIn("Ajuste manual confirmado na UI clean-slate", self.curve_screen)
         self.assertIn("Restaurar backup Curva K", self.curve_screen)
+        self.assertNotIn("classList.add('is-reviewing')", self.curve_screen)
+        self.assertNotIn('id="curveWriteButton"', self.html)
+        self.assertNotIn('id="curveReviewBack"', self.html)
         self.assertIn('ACK e readback', self.curve_screen)
         self.assertNotIn('window.Android', self.curve_screen)
         self.assertNotIn('protocolTransaction', self.curve_screen)
@@ -176,9 +182,9 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('targetOverrides', self.map_editor)
         for forbidden in ('writeMap(', 'window.Android', 'protocolTransaction', 'startKBatchWrite'):
             self.assertNotIn(forbidden, self.map_editor)
-        self.assertIn('A próxima ação escreve na ECU.', self.html)
-        self.assertIn('Checkpoint, ACK e readback continuam obrigatórios.', self.html)
-        self.assertIn('writeReview()', self.map_screen)
+        self.assertIn('Prévia somente', self.html)
+        self.assertIn('Checkpoint, ACK e readback', self.html)
+        self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
 
     def test_learning_route_never_calls_writer(self):
