@@ -1,0 +1,86 @@
+{
+  "schema": "omegas.atlas.product-handoff-gate.v1",
+  "purpose": "Keep Atlas as canonical ProgBase AutoCal authority while making downstream runtime/product consumers pass replay, safety, governance and UI/UX constraints before claiming parity.",
+  "authority_order": [
+    "CANONICAL_INPUTS",
+    "ATLAS_PROOF",
+    "CONSUMER_RUNTIME",
+    "PRODUCT_UIUX"
+  ],
+  "branch_roles": {
+    "OmegasAtlas": "SCIENTIFIC_AUTHORITY",
+    "work/omegas-amarelo-foundation": "REPLAY_RUNTIME_CHALLENGER",
+    "OmegasVerde": "PRODUCT_CONSUMER_AND_LEAD_SOURCE"
+  },
+  "canonical_rule": "ProgBase EXE + raw Portmon/LOGNOVO + reproducible Atlas proof always outrank consumer fixtures, product labels, UI behavior or branch-local assumptions.",
+  "transversal_gate": {
+    "path": "docs/contracts/transversal-pass-fail-gate.json",
+    "required_ui_contracts": [
+      "OME-STATE-HUMAN-UI",
+      "UIUX-CUSTOMROM",
+      "UIUX-OMEGADEV"
+    ],
+    "rule": "Reuse the existing transversal gate; do not create a parallel governance authority."
+  },
+  "notion_sources": {
+    "CUSTOMROM_BLUEPRINT": "3b68ee52ac5481839046f36b482aab44",
+    "OMEGADEV_UIUX": "3b78ee52ac5481eb89b2cc4bb711700b",
+    "FINAL_PREIMPLEMENTATION_AUDIT": "3bf8ee52ac54813bac00cbe631255507",
+    "OMEGAS_CLEAN_HEART": "3bd8ee52ac548168bc66fa1998de0586"
+  },
+  "required_invariants": [
+    "HUMAN_INTENT_BEFORE_TECHNOLOGY",
+    "UI_PROJECTS_TYPED_STATE_ONLY",
+    "UI_MUST_NOT_RECREATE_SCIENCE",
+    "TECHNICAL_DETAIL_ON_DEMAND",
+    "NORMALITY_COMPACT_PROBLEM_EXPANDS",
+    "VISIBLE_FAILURE_AND_RECOVERY",
+    "REVERSIBLE_ACTION_SHOWS_ROLLBACK",
+    "SCREEN_LIFECYCLE_MUST_NOT_OWN_SERIAL_IO",
+    "ROUTE_CHURN_MUST_NOT_CHANGE_SCIENCE",
+    "ONE_STORE_ROUTER_SCHEDULER",
+    "NO_SILENT_CLAMP",
+    "STABLE_INTENT_ID_FOR_MATERIAL_ACTIONS",
+    "NO_FAKE_PROGRESS_PERCENT",
+    "WRITE_PREVIEW_BEFORE_HUMAN_COMMIT",
+    "ACK_READBACK_RECOVERY_MANDATORY_AFTER_WRITE"
+  ],
+  "best_of_branches": {
+    "atlas": [
+      "canonical hash-bound EXE/log authority",
+      "1417/1417 semantic closure",
+      "14/14 behavioral closure",
+      "consumer action drift detection",
+      "byte/timing replay verification"
+    ],
+    "amarelo": [
+      "canonical replay through Android runtime/WebView",
+      "real cockpit interaction/render challenger",
+      "technical detail on demand",
+      "render fixture kept separate from scientific inference"
+    ],
+    "verde": [
+      "single clear human commit point after prepared preview",
+      "automatic checkpoint/validation/ACK/readback behind the human action",
+      "backup/recovery product safety",
+      "current Map K / Curve K / Predictor product integration"
+    ]
+  },
+  "product_refinement_policy": {
+    "human_commit": "One explicit final human write confirmation is allowed after a visible prepared preview; scientific validation, checkpoint, ACK/readback and recovery remain mandatory automatic gates.",
+    "consumer_truth": "Consumer/runtime evidence may detect integration drift but cannot redefine original ProgBase semantics.",
+    "ui_truth": "UI formats typed state; it never invents readiness, confidence, thresholds, physics, protocol meaning or scientific progress.",
+    "lifecycle": "Navigation and screen mount/unmount must not start/stop or materially retime the scientific acquisition engine.",
+    "progress": "Do not invent percentages; expose actual stage, recent activity, elapsed time and liveness."
+  },
+  "invalidation_events": [
+    "canonical ProgBase binary hash changes",
+    "raw LOGNOVO/PortmonAUTOCAL corpus changes",
+    "Atlas semantic or behavioral closure is reopened",
+    "consumer action/protocol fixture drifts from Atlas",
+    "UI starts deriving scientific truth",
+    "route/screen lifecycle changes serial/science counts",
+    "write path loses preview, ACK/readback or recovery",
+    "live Notion Contract Registry changes applicable UI/UX obligations"
+  ]
+}
