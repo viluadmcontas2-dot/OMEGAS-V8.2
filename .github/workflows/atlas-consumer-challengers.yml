@@ -1,0 +1,71 @@
+name: OMEGAS Atlas Consumer Challengers
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [OmegasAtlas]
+    paths:
+      - 'atlas/tools/verify_consumer_replay.py'
+      - 'atlas/tools/audit_consumer_action_map.py'
+      - 'atlas/tests/test_consumer_compatibility.py'
+      - 'atlas/proofs/consumer/**'
+      - 'atlas/reports/consumer-compatibility-latest.json'
+      - 'atlas/reports/verde-amarelo-atlas-comparison.json'
+      - 'atlas/reports/verde-amarelo-atlas-comparison.md'
+      - '.github/workflows/atlas-consumer-challengers.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-atlas-consumer-challengers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify durable Atlas closure remains authoritative
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          x=json.load(open("atlas/reports/final-closure.json",encoding="utf-8"))
+          assert x["status"]=="CLOSED"
+          c=x["closure"]
+          assert c["proven"]==c["targets_total"]==1417
+          assert c["open"]==c["broken"]==c["stalled"]==0
+          assert c["semantic_closure"] is True
+          assert c["behavior_closure"] is True
+          assert c["behavior_gates_proven"]==c["behavior_gates_required"]==14
+          print("ATLAS_NATIVE_CLOSURE=PASS")
+          PY
+
+      - name: Compile and test consumer challengers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m compileall -q atlas/tools atlas/tests/test_consumer_compatibility.py
+          python3 -m unittest atlas.tests.test_consumer_compatibility
+
+      - name: Validate durable consumer receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          replay=json.load(open("atlas/proofs/consumer/amarelo-lognovo-replay.json",encoding="utf-8"))
+          drift=json.load(open("atlas/proofs/consumer/verde-action-map-drift.json",encoding="utf-8"))
+          report=json.load(open("atlas/reports/consumer-compatibility-latest.json",encoding="utf-8"))
+          assert replay["status"]=="PROVEN"
+          assert replay["validated_exact_transactions"]==replay["replay_transactions"]==964
+          assert replay["max_timing_delta_ms"] <= 0.001
+          assert drift["status"]=="DRIFT_DETECTED"
+          assert len(drift["conflicts"])==5
+          assert report["status"]=="PROVEN_WITH_CONSUMER_DRIFT"
+          print("ATLAS_CONSUMER_CHALLENGERS=PASS")
+          PY
