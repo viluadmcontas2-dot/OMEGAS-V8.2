@@ -84,3 +84,28 @@ class BattleContractTest(unittest.TestCase):
         self.assertEqual(STATIC.operand_hex_values("  401000:\ta1 96 35 51 00\tmov eax,ds:0x513596"),{0x513596})
 
 if __name__=="__main__":unittest.main()
+
+
+class PseudoFunctionFilteringTest(unittest.TestCase):
+    def test_pseudo_vcl_stream_is_not_promoted_as_function(self):
+        t={
+            "drivers":{
+                "owner-field-use":{
+                    "evidence":[{"hits":[{"function":"<vcl-stream>"},{"function":"0051a070"}]}]
+                }
+            }
+        }
+        self.assertEqual(reconcile.field_consumer_functions(t), {"0051a070"})
+
+    def test_drop_existing_pseudo_function_target(self):
+        state={
+            "targets":{
+                "function|<vcl-stream>":{"kind":"function","target":"<vcl-stream>","new_targets":[]},
+                "function|0051a070":{"kind":"function","target":"0051a070","new_targets":[]},
+                "field-use|x":{"kind":"field-use","target":"x","new_targets":["function|<vcl-stream>","function|0051a070"]},
+            }
+        }
+        removed=reconcile.drop_pseudo_function_targets(state)
+        self.assertEqual(removed, ["function|<vcl-stream>"])
+        self.assertNotIn("function|<vcl-stream>", state["targets"])
+        self.assertEqual(state["targets"]["field-use|x"]["new_targets"], ["function|0051a070"])

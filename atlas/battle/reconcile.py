@@ -95,11 +95,26 @@ def proven_method_origins(state,t):
             out.append(origin)
     return out
 
+def native_function_id(value):
+    s=str(value or "").lower()
+    return len(s)==8 and all(c in "0123456789abcdef" for c in s)
+
 def field_consumer_functions(t):
     out=set(field_overlap(t))
     out |= evidence_functions(t,"owner-field-use")
     out |= evidence_functions(t,"owner-field-use-v2")
-    return out
+    return {fn for fn in out if native_function_id(fn)}
+
+def drop_pseudo_function_targets(state):
+    removed=[]
+    for k,t in list(state.get("targets",{}).items()):
+        if t.get("kind")=="function" and not native_function_id(t.get("target")):
+            removed.append(k)
+            del state["targets"][k]
+    if removed:
+        for t in state.get("targets",{}).values():
+            t["new_targets"]=[x for x in t.get("new_targets",[]) if x not in removed]
+    return removed
 
 def target_status(state,t):
     if any(x.get("status")=="BROKEN" for x in t.get("drivers",{}).values()):return "BROKEN"
@@ -191,6 +206,7 @@ def main():
             ensure_target(state,n["kind"],n["target"],origin=k,metadata={x:y for x,y in n.items() if x not in {"kind","target"}})
     state["attempt_fingerprints"]=sorted(fps)
 
+    removed_pseudo_functions=drop_pseudo_function_targets(state)
     recompute_all(state)
     promoted=promote_confirmed_field_consumers(state)
     if promoted:recompute_all(state)
@@ -274,6 +290,7 @@ def main():
         "graph_functions_total":len(graph_entries),"graph_functions_unseen":unseen_graph,
         "targets_total":len(state["targets"]),"status_counts":dict(counts),"broken":broken,
         "stalled_targets":len(stalled),"confirmed_field_consumers_promoted":promoted,
+        "pseudo_function_targets_removed":len(removed_pseudo_functions),
         "function_cap":ghidra_meta.get("function_cap"),"function_cap_hit":bool(ghidra_meta.get("function_cap_hit",False)),
         "decompile_cap":ghidra_meta.get("decompile_cap"),"decompile_cap_hit":bool(ghidra_meta.get("decompile_cap_hit",False)),
         "semantic_targets_total":len(semantic_keys),"semantic_targets_missing":len(semantic_missing),
