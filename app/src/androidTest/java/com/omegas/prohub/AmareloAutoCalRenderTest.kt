@@ -286,7 +286,10 @@ class AmareloAutoCalRenderTest {
                 gasZoneStates: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.dataset.state || ''),
                 gasZoneLabels: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.textContent.trim()),
                 currentGasZones: [...document.querySelectorAll('[data-autocal-zone-gas][data-current="true"]')].map(node => Number(node.dataset.autocalZoneGas) + 1),
-                hasPosition18Copy: /18\s+posições nativas de aquisição GNV/i.test(screen?.textContent ?? ''),
+                hasPosition18Copy: technical?.contains(bandsCard) === true &&
+                  /18\s+POSIÇÕES/i.test(bandsCard?.textContent ?? '') &&
+                  /posição nativa/i.test(bandsCard?.textContent ?? '') &&
+                  !/18\s+regiões/i.test(bandsCard?.textContent ?? ''),
                 hasFakeFourProgress: /GNV\s+\d+\/4/.test(body),
                 previousEpochCopy: /época AutoMatch anterior|epoch anterior|snapshot.*anterior/i.test(body)
               };
@@ -472,12 +475,14 @@ class AmareloAutoCalRenderTest {
               tap(referenceTarget);
               const referenceAfter = document.getElementById('autocalChartInspector')?.textContent || '';
 
+              if (technical) technical.open = true;
               const bandBefore = document.getElementById('autocalBandInspector')?.textContent || '';
               const selectedBand = document.querySelector('[data-autocal-band-index].selected')?.dataset?.autocalBandIndex;
               const bandTarget = Array.from(document.querySelectorAll('[data-autocal-band-index]'))
                 .find(node => node.dataset.autocalBandIndex !== selectedBand);
               tap(bandTarget);
               const bandAfter = document.getElementById('autocalBandInspector')?.textContent || '';
+              if (technical) technical.open = false;
 
               if (more) more.open = false;
               document.getElementById('alertToast')?.classList.remove('show');
