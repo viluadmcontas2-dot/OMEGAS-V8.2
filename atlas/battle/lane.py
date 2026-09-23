@@ -255,6 +255,71 @@ def capstone_field_use(indices,binary_path,target):
     if not hits:return escalate("Capstone found no memory displacement matching the field offset in reachable AutoCal functions")
     return prove("Capstone independently finds field-offset memory accesses in reachable AutoCal code",[{"kind":"field-memory-access","subject":target,"value":True}],[{"kind":"capstone-field-use","offset":wanted,"hits":hits}])
 
+
+def owner_field_use(indices,binary_path,target):
+    import pefile
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from capstone.x86 import X86_OP_MEM
+    payload,item=semantic_entry(indices,"field-use",target)
+    if not item:return escalate("field-use target absent from semantic catalog")
+    meta=item["meta"]; owner=meta["class"]; wanted=int(meta["offset"])
+    hits=[]
+
+    # Path A: direct decode of published methods owned by the exact Delphi class.
+    pe=pefile.PE(str(binary_path),fast_load=False); image=int(pe.OPTIONAL_HEADER.ImageBase); data=binary_path.read_bytes()
+    def va_to_off(va):
+        rva=va-image
+        for s in pe.sections:
+            a=int(s.VirtualAddress);size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+            if a<=rva<a+size:return int(s.PointerToRawData)+(rva-a)
+        return None
+    md=Cs(CS_ARCH_X86,CS_MODE_32);md.detail=True
+    cls=payload.get("classes",{}).get(owner,{})
+    for method in cls.get("published_methods",[]):
+        va=int(method["va"]); fo=va_to_off(va)
+        if fo is None:continue
+        raw=data[fo:fo+512]
+        count=0
+        for ins in md.disasm(raw,va):
+            count+=1
+            matched=False
+            for op in ins.operands:
+                if op.type==X86_OP_MEM and int(op.mem.disp)==wanted:
+                    hits.append({"function":f"{va:08x}","address":f"{ins.address:08x}","source":"owner-method-capstone","method":method["name"],"mnemonic":ins.mnemonic,"op_str":ins.op_str})
+                    matched=True;break
+            if matched or count>=128 or ins.mnemonic.startswith("ret"):break
+
+    # Path B: for data modules, require the exact global owner pointer and field offset in one decompiled function.
+    if owner in {"TAutoCalDM","TAutoCalDM_EE"}:
+        token=f"PTR__{owner}_"
+        off_rx=re.compile(rf"\+\s*0x{wanted:x}\b",re.I)
+        for p in sorted((indices/"ghidra/decomp").glob("*.c")):
+            txt=p.read_text(encoding="utf-8",errors="replace")
+            if token in txt and off_rx.search(txt):
+                hits.append({"function":p.stem,"source":"owner-global-ghidra","owner_token":token,"offset":wanted})
+
+    # Path C: if Ghidra decompiled an owned published method, bind self-relative offset there too.
+    off_rx=re.compile(rf"\+\s*0x{wanted:x}\b",re.I)
+    for method in cls.get("published_methods",[]):
+        p=indices/"ghidra/decomp"/(f"{int(method['va']):08x}.c")
+        if p.is_file():
+            txt=p.read_text(encoding="utf-8",errors="replace")
+            if off_rx.search(txt):
+                hits.append({"function":f"{int(method['va']):08x}","source":"owner-method-ghidra","method":method["name"],"offset":wanted})
+
+    dedup=[];seen=set()
+    for h in hits:
+        sig=(h.get("function"),h.get("address"),h.get("source"))
+        if sig in seen:continue
+        seen.add(sig);dedup.append(h)
+    if not dedup:
+        return escalate("owner-aware analysis found no class-bound access to this field offset")
+    return prove(
+        "owner-aware analysis binds the field offset to its Delphi class/object context",
+        [{"kind":"owner-field-use","subject":target,"value":True}],
+        [{"kind":"owner-field-use","owner":owner,"offset":wanted,"hits":dedup[:64]}],
+    )
+
 def delphi_event(indices,target):
     payload,item=semantic_entry(indices,"event",target)
     if not item:return escalate("event binding absent from semantic index")
@@ -374,6 +439,7 @@ def main():
         elif a.driver=="raw-field-name":r=raw_field_name(a.indices,bp,a.target)
         elif a.driver=="ghidra-field-use":r=ghidra_field_use(a.indices,a.target)
         elif a.driver=="capstone-field-use":r=capstone_field_use(a.indices,bp,a.target)
+        elif a.driver=="owner-field-use":r=owner_field_use(a.indices,bp,a.target)
         elif a.driver=="delphi-event":r=delphi_event(a.indices,a.target)
         elif a.driver=="ghidra-event":r=ghidra_event(a.indices,a.target)
         elif a.driver=="delphi-action":r=delphi_action(a.indices,a.target)

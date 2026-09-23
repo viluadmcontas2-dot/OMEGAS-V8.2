@@ -13,7 +13,7 @@ DRIVER_CHOICES={
     "frame":["portmon-frame","binary-frame"],
     "method":["delphi-method","capstone-method","ghidra-method"],
     "field":["delphi-field","raw-field-name"],
-    "field-use":["ghidra-field-use","capstone-field-use"],
+    "field-use":["ghidra-field-use","capstone-field-use","owner-field-use"],
     "event":["delphi-event","ghidra-event"],
     "action":["delphi-action","ghidra-action"],
     "serial":["delphi-serial","pe-serial-resource","portmon-object"],
@@ -85,10 +85,27 @@ def evidence_functions(t,driver):
 def field_overlap(t):
     return evidence_functions(t,"ghidra-field-use") & evidence_functions(t,"capstone-field-use")
 
+def proven_method_origins(state,t):
+    out=[]
+    for origin in t.get("origins",[]):
+        if not origin.startswith("method|"):
+            continue
+        dep=state.get("targets",{}).get(origin)
+        if dep is not None and dep.get("status")=="PROVEN":
+            out.append(origin)
+    return out
+
+def field_consumer_functions(t):
+    out=set(field_overlap(t))
+    out |= evidence_functions(t,"owner-field-use")
+    return out
+
 def target_status(state,t):
     if any(x.get("status")=="BROKEN" for x in t.get("drivers",{}).values()):return "BROKEN"
     kind=t["kind"]
     if kind=="function":
+        if proven_method_origins(state,t):
+            return "PROVEN"
         p={d for d in ("ghidra-fn","objdump-fn","capstone-fn") if driver_proven(t,d)}
         return "PROVEN" if len(p)>=2 else "ESCALATE"
     if kind=="symbol":
@@ -101,7 +118,9 @@ def target_status(state,t):
     if kind=="field":
         return "PROVEN" if driver_proven(t,"delphi-field") and driver_proven(t,"raw-field-name") else "ESCALATE"
     if kind=="field-use":
-        return "PROVEN" if driver_proven(t,"ghidra-field-use") and driver_proven(t,"capstone-field-use") and bool(field_overlap(t)) else "ESCALATE"
+        overlap = driver_proven(t,"ghidra-field-use") and driver_proven(t,"capstone-field-use") and bool(field_overlap(t))
+        owner = driver_proven(t,"owner-field-use")
+        return "PROVEN" if overlap or owner else "ESCALATE"
     if kind=="event":
         return "PROVEN" if driver_proven(t,"delphi-event") and (driver_proven(t,"ghidra-event") or dep_proven(state,t,"method")) else "ESCALATE"
     if kind=="action":
@@ -116,6 +135,11 @@ def recompute_all(state):
     for _ in range(12):
         changed=False
         for t in state["targets"].values():
+            aliases=proven_method_origins(state,t) if t.get("kind")=="function" else []
+            if aliases:
+                t["resolution"]={"kind":"published-method-alias","origins":aliases}
+            elif t.get("resolution",{}).get("kind")=="published-method-alias":
+                t.pop("resolution",None)
             s=target_status(state,t)
             if t.get("status")!=s:
                 t["status"]=s;changed=True
@@ -125,7 +149,7 @@ def promote_confirmed_field_consumers(state):
     added=0
     for k,t in list(state["targets"].items()):
         if t.get("kind")!="field-use" or t.get("status")!="PROVEN":continue
-        for fn in sorted(field_overlap(t)):
+        for fn in sorted(field_consumer_functions(t)):
             before=key("function",fn) in state["targets"]
             ensure_target(state,"function",fn,origin=k,metadata={"reason":"cross-engine-field-use"})
             if not before:added+=1

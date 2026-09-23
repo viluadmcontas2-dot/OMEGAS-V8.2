@@ -42,6 +42,16 @@ class BattleContractTest(unittest.TestCase):
         t={"kind":"serial","target":"S","drivers":{"delphi-serial":{"status":"PROVEN"},"pe-serial-resource":{"status":"PROVEN"},"portmon-object":{"status":"ESCALATE"}},"new_targets":[]}
         self.assertEqual(RECON.target_status({"targets":{}},t),"PROVEN")
 
+    def test_function_alias_closes_when_exact_published_method_is_proven(self):
+        method_key="method|TAutoCalUI::ActionResetGasExecute@0x005189cc"
+        state={"targets":{method_key:{"kind":"method","target":"TAutoCalUI::ActionResetGasExecute@0x005189cc","status":"PROVEN","drivers":{},"new_targets":[]}}}
+        t={"kind":"function","target":"005189cc","status":"ESCALATE","drivers":{"ghidra-fn":{"status":"ESCALATE"},"objdump-fn":{"status":"ESCALATE"},"capstone-fn":{"status":"ESCALATE"}},"origins":[method_key],"new_targets":[]}
+        self.assertEqual(RECON.target_status(state,t),"PROVEN")
+
+    def test_owner_field_use_is_composite_class_bound_proof(self):
+        t={"kind":"field-use","target":"F","drivers":{"owner-field-use":{"status":"PROVEN","evidence":[{"hits":[{"function":"0051b910","source":"owner-global-ghidra"}]}]}},"new_targets":[]}
+        self.assertEqual(RECON.target_status({"targets":{}},t),"PROVEN")
+
     def test_field_use_requires_same_function_overlap(self):
         t={"kind":"field-use","target":"F","drivers":{
             "ghidra-field-use":{"status":"PROVEN","evidence":[{"hits":[{"function":"005162f8"}]}]},
