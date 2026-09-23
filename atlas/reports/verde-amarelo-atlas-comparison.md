@@ -1,40 +1,71 @@
-# Verde × Amarelo × Atlas — comparação pós-fechamento
+# Verde × Amarelo × Atlas — refino pós-closure
 
-Snapshot canônico: 2026-09-23
+Snapshot: 2026-09-23 01:03 BRT
 
 ## Resultado
 
-### Atlas — autoridade científica + árbitro de consumidores
-- ProgBase e Portmons canônicos hash-bound.
-- **1417/1417** alvos semânticos PROVEN.
-- **14/14** gates comportamentais PROVEN.
-- RTTI/VMT/DFM, disassembly, Portmon, producer/consumer, render e scheduler reconciliados.
-- Agora também valida replay de consumidores e detecta deriva semântica.
+**Atlas é a autoridade científica e o gate de handoff.** A reversão nativa está fechada em **1417/1417 alvos semânticos** e **14/14 gates comportamentais**. O Atlas não vira uma quarta UI: ele absorve os melhores mecanismos dos outros ramos sem permitir que um consumidor redefina o ProgBase.
 
-### Amarelo — melhor ideia reaproveitada: replay end-to-end
-O Atlas validou o replay do HEAD `60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf` novamente contra o LOGNOVO bruto:
-- **964/964 transações** coincidem em índice, request e response;
-- checksums/echo válidos;
-- diferença temporal máxima após arredondamento: **0,0005 ms**;
-- o replay passa a ser um challenger de compatibilidade do Atlas, não uma nova fonte de verdade.
+**Amarelo é o challenger de runtime/replay.** O Atlas validou **964 transações** do replay contra o LOGNOVO canônico, byte a byte e com a regra temporal corrigida. A evidência de cockpit/runtime é valiosa para integração, mas não ganha autoridade semântica sobre o EXE/logs.
 
-### Verde — melhor fonte de integração/UX/campo, mas não oracle
-O HEAD `47d75ce19b1b1f10377a742d87c379f970e7de47` continua útil como produto e fonte de incidentes reais. Porém o detector Atlas encontrou **5 conflitos** no fixture de action-map frente ao EXE canônico:
-- Manual AutoMatch;
-- Reset Petrol;
-- Reset Gas;
-- Reset All;
-- Modify Map Refs.
+**Verde é o consumidor de produto e fonte de leads.** Ele está mais avançado em operação humana, Map K/Curve K/Predictor, segurança e simplificação de writes. Porém o fixture atual capturado em `d120dc4...` ainda possui **5 conflitos materiais** com o mapa de ações provado pelo Atlas; portanto o handoff permanece fail-closed.
 
-Atlas registra a deriva; não a importa.
+## Crivo Notion resolvido
 
-## Arquitetura resultante
+Leitura viva do Governance EntryPoint confirmou:
 
-`ProgBase EXE + Portmon/LOGNOVO bruto → Atlas proof → replay/compatibility challengers → Verde/Amarelo`
+- `OME-STATE-HUMAN-UI`: ACTIVE; binding `OMEGAS_V8_2` = **APPLIES**.
+- `UIUX-CUSTOMROM`: ACTIVE; binding `OMEGAS_V8_2` = **APPLIES**.
+- `UIUX-OMEGADEV`: ACTIVE; binding `OMEGAS_V8_2` = **APPLIES**.
+- `GLOBAL-LEDGER-001`: ACTIVE e exige audit epoch/run provenance-based + meta-audit distinto.
 
-Isso combina o melhor dos três sem misturar autoridade:
-- **Atlas:** verdade e fechamento.
-- **Amarelo:** prova de replay/runtime.
-- **Verde:** produto, segurança, UX e evidência de campo.
+O Atlas reutiliza `docs/contracts/transversal-pass-fail-gate.json`; não cria uma segunda governança.
 
-O consumidor pode revelar um defeito, mas não pode reescrever a semântica original sem nova prova canônica.
+## O que foi promovido
+
+Do **Amarelo**:
+- replay canônico como challenger de integração;
+- prova runtime/WebView/cockpit;
+- captura limpa da janela do app;
+- detalhe técnico sob demanda.
+
+Do **Verde**:
+- uma ação humana final mais direta para writes;
+- preview/preparo antes do commit;
+- checkpoint/validação/ACK/readback/recovery automáticos;
+- backup/recovery;
+- regressões reais como sinais de drift.
+
+Do **CUSTOMROM + Omega Dev**:
+- intenção humana → consequência → detalhe;
+- UI projeta typed state, nunca cria ciência;
+- normalidade compacta, problema ganha espaço;
+- falha + recuperação visíveis;
+- rollback visível;
+- `data-intent`/intent estável;
+- sem silent clamp;
+- sem porcentagem inventada;
+- screen/route lifecycle não governa aquisição;
+- uma única autoridade Store/Router/Scheduler.
+
+## O que foi rejeitado
+
+- fixture/oracle consumidor acima do EXE/logs;
+- 75 ms de apresentação como paridade do scheduler nativo;
+- ciência/readiness/confidence inventada em JS;
+- lifecycle de tela controlando serial;
+- replay sendo promovido a oracle;
+- duplicação de autoridades;
+- write sem preview, ACK/readback e recovery.
+
+## Refinamento de UX adotado
+
+**Síntese Atlas, não citação literal do Notion:** uma única confirmação humana final é aceitável quando o preview preparado já está visível. Isso remove desgaste sem retirar os gates automáticos de ciência e segurança.
+
+## Estado do handoff
+
+`ATLAS_SCIENCE=CLOSED`
+
+`PRODUCT_HANDOFF=HOLD`
+
+O HOLD é correto: ainda existe drift do consumidor Verde e um snapshot de repositório não pode autoafirmar Contract Registry/auditoria/meta-auditoria vivos. O gate falha fechado até que esses requisitos sejam satisfeitos num audit epoch independente.

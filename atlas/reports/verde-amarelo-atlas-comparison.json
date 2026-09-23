@@ -1,53 +1,170 @@
 {
   "schema": "omegas.atlas.cross-branch-comparison.v2",
-  "captured_at": "2026-09-23",
+  "captured_at": "2026-09-23T01:03:00-03:00",
   "heads": {
-    "atlas": "141ec3407240181ff8eed09ffc5f6a8a94bf4f89",
-    "verde": "47d75ce19b1b1f10377a742d87c379f970e7de47",
+    "atlas": "bb8fad4ae85d46d785912124595838f8f56e9911",
+    "verde": "d120dc4e7afb230fb451ba7774ce5bf777216882",
     "amarelo": "60505375f0f5334f6bcfb23ce8c2b0a88bbbcadf"
   },
-  "scope": "ProgBase 4.2.0.6 AutoCal truth recovery, replay validation and downstream consumer drift",
-  "atlas": {
-    "role": "SCIENTIFIC_AUTHORITY_AND_CONSUMER_ARBITER",
-    "evidence": [
-      "canonical EXE + raw Portmon/LOGNOVO hash-bound",
-      "semantic closure 1417/1417",
-      "behavior closure 14/14",
-      "raw RTTI/VMT/DFM/disassembly/Portmon cross-proof",
-      "consumer replay validator",
-      "consumer action-map drift detector",
-      "durable post-closure hard stop"
+  "source_classes": {
+    "CANONICAL_NATIVE": [
+      "ProgBase 4.2.0.6 canonical EXE",
+      "raw LOGNOVO",
+      "raw PortmonAUTOCAL"
     ],
-    "result": "Native AutoCal truth is closed and reproducible; downstream branches can be challenged without becoming authority."
-  },
-  "verde": {
-    "role": "PRODUCT_IMPLEMENTATION_AND_FIELD_LEAD",
-    "strengths": [
-      "real Android/product integration",
-      "operator-facing UX refinement",
-      "backup/restore and write-safety concepts",
-      "field incidents expose dangerous semantic drift"
+    "ATLAS_PROOF": [
+      "1417/1417 semantic closure",
+      "14/14 behavioral closure",
+      "raw RTTI/VMT/DFM/disassembly/Portmon proofs"
     ],
-    "current_cross_check": "DRIFT_DETECTED: 5 action-map conflicts against canonical Atlas proof at pinned SHA.",
-    "use_in_atlas": "lead source, safety requirements and regression surface only"
-  },
-  "amarelo": {
-    "role": "CANONICAL_REPLAY_AND_RUNTIME_CHALLENGER",
-    "strengths": [
-      "LOGNOVO replay with raw SHA provenance",
-      "correct cumulative Portmon timing rule",
-      "runtime bridge/WebView replay design",
-      "render-only evidence explicitly separated from scientific inference"
+    "CONSUMER_EVIDENCE": [
+      "Amarelo runtime replay/render receipts",
+      "Verde Android product contracts and UX tests"
     ],
-    "current_cross_check": "PROVEN: 964/964 selected replay transactions match raw LOGNOVO byte-for-byte and timing-exactly within 0.0005 ms at pinned SHA.",
-    "use_in_atlas": "post-closure integration challenger, never semantic authority"
+    "GOVERNANCE_NOTION": [
+      "CONTRACT REGISTRY",
+      "GLOBAL-LEDGER-001",
+      "OME-STATE-HUMAN-UI",
+      "UIUX-CUSTOMROM",
+      "UIUX-OMEGADEV",
+      "OMEGAS_V8_2 project bindings"
+    ],
+    "ATLAS_SYNTHESIS": [
+      "best-of-branches product handoff policy"
+    ]
   },
-  "combined_architecture": [
-    "Canonical sources define truth.",
-    "Atlas proves native semantics and behavior.",
-    "Amarelo-style replay challenges end-to-end consumption of canonical traffic.",
-    "Verde/Amarelo drift detectors prevent downstream branches from silently redefining native semantics.",
-    "Consumer failures do not reopen native truth; they open compatibility defects."
+  "comparison": {
+    "atlas": {
+      "role": "SCIENTIFIC_AUTHORITY_AND_HANDOFF_GATE",
+      "strengths": [
+        "canonical EXE/log authority",
+        "1417/1417 semantic targets PROVEN",
+        "14/14 behavior gates PROVEN",
+        "consumer action-map drift detection",
+        "byte/timing validation of Amarelo replay",
+        "fail-closed product handoff gate bound to existing transversal governance",
+        "post-closure hard stop prevents stale re-analysis"
+      ],
+      "current_limit": "Atlas does not become the product UI/runtime. It validates downstream consumers and blocks handoff when they drift."
+    },
+    "amarelo": {
+      "role": "REPLAY_RUNTIME_CHALLENGER",
+      "strengths": [
+        "canonical LOGNOVO replay through Android/runtime bridge",
+        "964 replay transactions validated byte-for-byte and timing-faithful by Atlas",
+        "real AutoCal cockpit interaction/render evidence",
+        "clean app-window screenshot capture",
+        "technical detail can remain on demand instead of dominating operator view"
+      ],
+      "boundary": "Runtime/render evidence raises integration confidence but cannot redefine native ProgBase semantics."
+    },
+    "verde": {
+      "role": "PRODUCT_CONSUMER_AND_LEAD_SOURCE",
+      "strengths": [
+        "most current Android product integration",
+        "single final human commit UX for Map K/Curve K after prepared preview",
+        "automatic checkpoint/validation/ACK/readback/recovery concepts behind writes",
+        "backup/recovery safety",
+        "Map K, Curve K and Predictor product refinement"
+      ],
+      "blockers": [
+        "current d120dc4 fixture still conflicts with canonical Atlas action map in five material identities",
+        "consumer labels/fixtures cannot override raw EXE RTTI + wrapper disassembly"
+      ]
+    }
+  },
+  "notion_live_resolution": {
+    "contract_registry": {
+      "status": "RESOLVED",
+      "id": "6e104f112a43445aaae49db92daa35b0"
+    },
+    "global_ledger": {
+      "status": "ACTIVE",
+      "id": "3c18ee52ac54817db2f8ed88448470c8"
+    },
+    "contracts": {
+      "OME-STATE-HUMAN-UI": {
+        "status": "ACTIVE",
+        "omegas_binding": "APPLIES",
+        "binding_id": "3c28ee52ac54814f9baae97e459f75bf"
+      },
+      "UIUX-CUSTOMROM": {
+        "status": "ACTIVE",
+        "omegas_binding": "APPLIES",
+        "binding_id": "3c28ee52ac5481b09164c4192c31d072"
+      },
+      "UIUX-OMEGADEV": {
+        "status": "ACTIVE",
+        "omegas_binding": "APPLIES",
+        "binding_id": "3c28ee52ac5481218939ed9cbf81a74b"
+      }
+    }
+  },
+  "promoted_to_atlas": [
+    {
+      "from": "Amarelo",
+      "capability": "canonical runtime replay",
+      "mechanism": "atlas/tools/verify_consumer_replay.py",
+      "authority": "CHALLENGER_ONLY"
+    },
+    {
+      "from": "Amarelo",
+      "capability": "runtime/render cockpit evidence",
+      "mechanism": "consumer compatibility layer",
+      "authority": "CHALLENGER_ONLY"
+    },
+    {
+      "from": "Verde",
+      "capability": "product write UX and recovery patterns",
+      "mechanism": "product-handoff-gate invariants",
+      "authority": "PRODUCT_ONLY"
+    },
+    {
+      "from": "Verde",
+      "capability": "consumer regression signals",
+      "mechanism": "atlas/tools/audit_consumer_action_map.py",
+      "authority": "LEAD_AND_DRIFT_SIGNAL"
+    },
+    {
+      "from": "Notion",
+      "capability": "CUSTOMROM/Omega Dev/Human-State UI crivo",
+      "mechanism": "existing transversal gate + atlas product handoff gate",
+      "authority": "GOVERNANCE"
+    }
   ],
-  "comparison_proof": "atlas/reports/consumer-compatibility-latest.json"
+  "rejected_or_demoted": [
+    "Verde shifted AutoCal action oracle as native authority",
+    "75 ms product presentation cadence as native ProgBase scheduler parity",
+    "any UI-derived readiness/confidence/physics/protocol meaning",
+    "screen or route lifecycle owning serial/scientific acquisition",
+    "runtime replay promoted above canonical EXE/log proof",
+    "fake progress percentages",
+    "silent clamp or hidden destructive consequence",
+    "duplicate Store/Router/Scheduler or parallel scientific authority"
+  ],
+  "uiux_handoff_invariants": [
+    "human intention before implementation detail",
+    "typed state projects to UI; UI does not recreate science",
+    "technical detail on demand",
+    "normality compact; problem state gets space",
+    "failure and recovery visible",
+    "rollback visible for reversible actions",
+    "stable intent ID for material actions",
+    "no silent clamp",
+    "no fake progress percentage",
+    "screen lifecycle does not own serial I/O",
+    "route churn cannot change scientific behavior",
+    "one Store/Router/Scheduler",
+    "write preview before final human commit",
+    "ACK/readback/recovery mandatory after write"
+  ],
+  "synthesis_note": "ATLAS_SYNTHESIS: one explicit final human write confirmation is accepted only after a visible prepared preview; scientific validation/checkpoint/ACK/readback/recovery remain automatic mandatory gates. This combines current Verde UX direction with CUSTOMROM/Omega Dev principles and is not quoted as a literal Notion rule.",
+  "current_handoff": {
+    "status": "HOLD",
+    "reasons": [
+      "five unresolved Verde action-map conflicts at the captured consumer evidence",
+      "a repository snapshot cannot itself prove live provenance-independent audit + distinct meta-audit"
+    ]
+  },
+  "decision": "Atlas is the highest-authority cross-branch reference: canonical science first, Amarelo as runtime challenger, Verde as product consumer, and Notion UI/UX governance enforced at downstream handoff."
 }
