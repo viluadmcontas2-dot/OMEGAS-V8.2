@@ -1,0 +1,27 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "action.modify_map_refs_effect",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "workflow_run_id": 35802546712,
+    "artifact_id": 10726947451,
+    "artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "decompile_0051b910_sha256": "f437a6d6ca5b965200acfd79427ca81a6ef2f00cc5e3a81d19477cb975f07693"
+  },
+  "claims": [
+    "ActionAutoCalRifExecute is a separate modal Modify Map Refs path, not one of the 0x24 mode wrappers.",
+    "TFormRifAutocal.ButtonOkClick @ 0x0051B910 validates and writes the 18 MAP reference points into TAutoCalDM.MNFLD_PRESS_THD (+0x6C).",
+    "The same confirmation path writes the petrol injection-time reference vector TAutoCalDM.PETR_INJ_TBP (+0x70).",
+    "If the new MAP endpoints exceed the existing allowed range, it updates LIMIT_PRESSURE_MAX (+0xB4) and/or LIMIT_PRESSURE_MIN (+0xA8).",
+    "The writes use native TAebVector/TAebNumber setters, so this is an ECU-backed mutation path rather than a chart-only edit."
+  ],
+  "evidence": [
+    "Raw RTTI proof maps ActionAutoCalRifExecute to 0x005187A0 and shows it is not a push-mode wrapper.",
+    "0x0051B910 loops 18 times and calls TAebVector_SetDouble on AutoCalDM +0x6C.",
+    "0x0051B910 loops over PETR_INJ_TBP vector length and calls TAebVector_SetDouble on AutoCalDM +0x70.",
+    "0x0051B910 compares first/last MAP references against AutoCalDM +0xA8/+0xB4 and calls TAebNumber_SetDouble when limits must expand.",
+    "Native TAeb setters continue through SetData/SetDataInEcu in the recovered ProgBase class path.",
+    "The supplied Portmons contain reads of these native objects but do not contain a captured confirmation transaction; therefore exact write-frame bytes are not claimed."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "scheduler.refresh_cadence",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "workflow_run_id": 35802546712,
+    "artifact_id": 10726947451,
+    "artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "decompile_0051988c_sha256": "ca7286d688db391bdff1e1278fbc1413687a4edc1cc70c1db8ee304d225d800a",
+    "decompile_005162f8_sha256": "35e67e6c6d834d810b5ee876c286a213773764de1e95a52e422642a66da7dac9"
+  },
+  "claims": [
+    "ProgBase AutoCal native refresh cadence is configuration-driven; it is not a fixed 75 ms loop.",
+    "The native preference key is refresh_time_ms with a default value of 300.",
+    "0x0051988C loads refresh_time_ms and stores the signed interval into TAutoCalUI +0x4A8/+0x4AC.",
+    "0x005162F8 checks elapsed time against +0x4A8/+0x4AC before performing the expensive AutoCal refresh; a force flag can bypass the early return.",
+    "The AutoCal Settings DFM exposes RefreshTime as a trackbar with Min=200, Max=2000, Position=300 and OnChange=RefreshTimeChange.",
+    "RefreshTimeChange @ 0x005141A4 reads the trackbar Position and updates LabelRefreshValue; FormClose reads the same RefreshTime.Position into the settings persistence path.",
+    "SettingsImgClick and other settings reload paths call 0x0051988C, applying the stored cadence to the live AutoCal UI."
+  ],
+  "evidence": [
+    "0x0051988C references the literal preference key refresh_time_ms with fallback/default 300 and writes the returned integer to UI +0x4A8, sign extension to +0x4AC.",
+    "0x005162F8 obtains timing state, compares it with UI +0x4A8/+0x4AC, and returns early unless the interval elapsed or the force flag is set.",
+    "DFM RefreshTime: Min=200, Max=2000, Position=300, OnChange=RefreshTimeChange; LabelRefreshValue Caption=300.",
+    "0x005141A4 reads *(RefreshTime +0x2B0) and writes the formatted value to LabelRefreshValue.",
+    "TAutoCalSettings.FormClose @ 0x00513E68 reads RefreshTime.Position as part of settings persistence.",
+    "TAutoCalUI.SettingsImgClick @ 0x00519708 calls 0x0051988C after settings dialog completion."
+  ],
+  "boundary": "This proof establishes the native ProgBase scheduling contract. A 75 ms OMEGAS presentation cadence is an OMEGAS design choice unless separately tied to another original ProgBase path."
+}

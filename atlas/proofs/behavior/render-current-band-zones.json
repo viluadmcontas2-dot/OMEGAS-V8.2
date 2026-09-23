@@ -1,0 +1,30 @@
+{
+  "schema": "omegas.atlas.behavior-proof.v1",
+  "gate_id": "render.current_band_and_zones",
+  "status": "PROVEN",
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "source": {
+    "workflow_run_id": 35802546712,
+    "artifact_id": 10726947451,
+    "artifact_digest": "sha256:38c030171e564b6bbdc46591971456520064fa3c2881538e2323a6e23e8c15fa",
+    "decompile_00517254_sha256": "eea9155706691f57d2ca0137dfb271fb37648627cc61db9317bc72ef0bfa3470",
+    "decompile_0051a51c_sha256": "2ed6d58f53a057dd62fe70b15c9e02e1361f0750ef1f02486b441e8efb1d3c9d"
+  },
+  "claims": [
+    "ProgBase renders acquisition-zone state and the current band as two distinct TeeChart series.",
+    "TAutoCalUI.AcqusitionAreas is field +0x384 (THorizAreaSeries); TAutoCalUI.CurrentBand is field +0x40C (THorizAreaSeries).",
+    "0x005171EC selects ACQUIRED_ZONES_GAS (+0xBC) or ACQUIRED_ZONES_PETROL (+0xB8), reads it from ECU, then calls 0x00517254.",
+    "0x00517254 clears AcqusitionAreas and rebuilds four horizontal areas from acquired-zone state and MNFLD_PRESS_THD boundaries.",
+    "BtnShowBandClick @ 0x0051A74C routes the selected/current MAP value through 0x0051A614, which calls 0x0051A51C.",
+    "0x0051A51C clears CurrentBand and adds exactly two boundary points using the selected band limits and the MAP-reference endpoint."
+  ],
+  "evidence": [
+    "DFM: AcqusitionAreas is THorizAreaSeries with DrawArea=true, Transparency=50.",
+    "DFM: CurrentBand is THorizAreaSeries titled CurrentBand, SeriesColor=clFuchsia, DrawArea=true, Transparency=80.",
+    "Delphi field layout: AcqusitionAreas +0x384; CurrentBand +0x40C.",
+    "0x005171EC reads AutoCalDM +0xBC for UI mode 0/2, otherwise +0xB8, then invokes 0x00517254.",
+    "Delphi layout identifies +0xB8=ACQUIRED_ZONES_PETROL and +0xBC=ACQUIRED_ZONES_GAS.",
+    "0x00517254 repeatedly invokes the series add method on UI +0x384 for four areas.",
+    "0x0051A51C invokes the series clear method on UI +0x40C and then its add method twice."
+  ]
+}
