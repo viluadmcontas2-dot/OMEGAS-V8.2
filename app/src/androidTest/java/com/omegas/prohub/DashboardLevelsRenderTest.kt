@@ -574,6 +574,19 @@ class DashboardLevelsRenderTest {
                   if (!node) return false;
                   const style = window.getComputedStyle(node);
                   return style.display !== 'none' && style.visibility !== 'hidden' && node.getBoundingClientRect().height > 0;
+                })(),
+                workspaceHeadVisible: (() => {
+                  const node = document.querySelector('.workspace-head');
+                  if (!node) return false;
+                  const style = window.getComputedStyle(node);
+                  return style.display !== 'none' && node.getBoundingClientRect().height > 0;
+                })(),
+                autoCalPageIntroCount: document.querySelectorAll('[data-screen="autocal"] > .page-intro').length,
+                technicalBandsVisible: (() => {
+                  const node = document.querySelector('.autocal-bands-card');
+                  if (!node) return false;
+                  const rect = node.getBoundingClientRect();
+                  return rect.height > 0 && rect.width > 0;
                 })()
               };
             })())
@@ -907,8 +920,11 @@ class DashboardLevelsRenderTest {
             )
             assertEquals("Current MAP must identify exactly one zone", 1, dom.getJSONArray("currentGasZones").length())
             assertTrue("Zone map must remain visible above the fold", dom.getDouble("zoneMeterBottom") <= dom.getDouble("viewportHeight"))
-            assertTrue("Acquisition chart must remain dominant after adding zone map", dom.getDouble("chartHeight") >= 300.0)
+            assertTrue("Acquisition chart must use the freed Custom-ROM viewport", dom.getDouble("chartHeight") >= 340.0)
             assertTrue("Duplicated live narrative must not compete with the primary curve", !dom.getBoolean("liveNarrativeVisible"))
+            assertTrue("AutoCal must not waste a full row on the global route header", !dom.getBoolean("workspaceHeadVisible"))
+            assertEquals("AutoCal must not render a second page intro", 0, dom.getInt("autoCalPageIntroCount"))
+            assertTrue("18-region engineering strip must stay collapsed by default", !dom.getBoolean("technicalBandsVisible"))
         } finally {
             scenario.close()
         }
