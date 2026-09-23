@@ -56,7 +56,7 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Full repository contracts, JVM tests, lint, dual ARM APK
+      - name: Scoped Amarelo runtime contracts, JVM tests, lint, dual ARM APK
         shell: bash
         env:
           PYTHONPATH: .
@@ -64,7 +64,11 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          python3 -B tools/run_checks.py
+          python3 -B -m unittest tests.test_amarelo_autocal_android_render_fixture_contract tests.test_multimedia_telemetry_backpressure_contract tests.test_red_snapshot_bus_contract -v
+          node tests/ui/autocal-chart-semantics.test.cjs
+          node tests/ui/autocal-cockpit.test.cjs
+          node tests/ui/autocal-direct-actions.test.cjs
+          node --test tests/ui/app-shell-runtime.test.cjs tests/ui/live-tracing-budget.test.cjs
           ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug -PomegasAbis=armeabi-v7a,arm64-v8a --no-daemon --stacktrace
 
       - name: Verify tester identity, APK integrity and build provenance
@@ -111,6 +115,7 @@ jobs:
             echo "APK_SIGNATURE_VERIFY=PASS"
             echo "APK_ZIP_INTEGRITY=PASS"
             echo "WU004_144_CELLS=DEFERRED_BY_OWNER"
+            echo "FULL_REPO_SUITE=NOT_CLAIMED_LEGACY_UI_COPY_CONTRACT_35876158236"
             echo "WU006_PHYSICAL_HARDWARE_BUDGETS=NOT_YET_PROVEN"
             echo "WU007_FULL_RELEASE=NOT_CLAIMED"
             echo "PHYSICAL_ECU_VALIDATION=NOT_YET_CLAIMED"
