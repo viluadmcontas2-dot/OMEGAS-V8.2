@@ -61,3 +61,15 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 .alert-toast{position:fixed;right:18px;bottom:16px;z-index:50;min-width:280px;max-width:480px;border:1px solid var(--line);border-radius:9px;background:var(--surface-3);padding:10px 38px 10px 12px;display:none}.alert-toast.show{display:block}.alert-toast b{font-size:10px}.alert-toast button{position:absolute;right:6px;top:5px;border:0;background:transparent;color:var(--muted);font-size:18px}
 /* O layout é intencionalmente fixado para a multimídia 1280×720. Não há animação contínua. */
 @media (max-width:1100px){:root{--rail-width:184px}.side-nav button{min-height:42px}.workspace-head{padding-inline:16px}.screen{padding-inline:13px}.learning-workspace,.map-workspace,.curve-workspace,.obd-workspace{grid-template-columns:minmax(0,1fr) 290px}.hero-reading strong{font-size:74px}.tool-actions{grid-template-columns:repeat(2,1fr)}}
+
+
+/* AutoCal focus: the side rail already identifies the route. */
+.app-shell.autocal-focus .workspace {
+  grid-template-rows: minmax(0, 1fr);
+}
+.app-shell.autocal-focus .workspace-head {
+  display: none;
+}
+.app-shell.autocal-focus [data-screen="autocal"] {
+  padding: 8px 12px 8px;
+}

@@ -1442,7 +1442,6 @@
     grid-template-areas:
       "hero hero"
       "reference k"
-      "reference bands"
       "reference command"
       "reference session";
     grid-template-rows: auto auto auto auto auto;
@@ -1454,7 +1453,6 @@
   .autocal-hero { grid-area: hero; }
   .autocal-reference-card { grid-area: reference; }
   .autocal-k-card { grid-area: k; }
-  .autocal-bands-card { grid-area: bands; }
   .autocal-command-bar { grid-area: command; }
   .autocal-session-strip { grid-area: session; }
   .autocal-technical-details { grid-area: technical; }
@@ -1552,8 +1550,8 @@
 
   .autocal-reference-card .autocal-chart-host {
     flex: 1;
-    height: 260px;
-    min-height: 260px;
+    height: 340px;
+    min-height: 340px;
   }
 
   .autocal-reference-card .autocal-chart-inspector {
@@ -1783,4 +1781,41 @@
     color: #cbd7e4 !important;
     border-color: rgba(120, 183, 255, .22) !important;
   }
+}
+
+
+/* Verde harvest, Amarelo authority: explicit Z1-Z4 state, never fake completion. */
+.autocal-chart-head-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; min-width:0; }
+.autocal-zone-meter,.autocal-zone-meter>div,.autocal-zone-cells { display:flex; align-items:center; }
+.autocal-zone-meter { gap:8px; margin:0; }
+.autocal-zone-meter>div { gap:5px; }
+.autocal-zone-cells { gap:3px; }
+.autocal-zone-fuel { color:#90a2b4; font-size:9px; font-weight:800; letter-spacing:.06em; }
+.autocal-zone-cell {
+  position:relative; display:grid; grid-template-rows:auto auto; place-items:center;
+  min-width:34px; min-height:30px; padding:3px 4px;
+  border:1px solid rgba(255,255,255,.10); border-radius:7px; background:rgba(255,255,255,.025);
+}
+.autocal-zone-cell b { color:#dbe5ef; font-size:10px; line-height:1; }
+.autocal-zone-cell small { margin-top:2px; color:#7f90a2; font-size:7px; font-weight:900; letter-spacing:.04em; line-height:1; }
+.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] { border-color:rgba(120,183,255,.52); background:rgba(120,183,255,.13); }
+.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] small { color:#8dc5ff; }
+.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] { border-color:rgba(93,211,158,.52); background:rgba(93,211,158,.13); }
+.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] small { color:#79ddb0; }
+.autocal-zone-cell[data-state="missing"] { border-color:rgba(240,196,92,.42); border-style:dashed; background:rgba(240,196,92,.06); }
+.autocal-zone-cell[data-state="missing"] small { color:#f0c45c; }
+.autocal-zone-cell[data-current="true"] { outline:2px solid #19daf4; outline-offset:1px; box-shadow:0 0 0 3px rgba(25,218,244,.10); }
+.autocal-zone-cell[data-current="true"]::after {
+  content:'AGORA'; position:absolute; top:-8px; right:-3px; padding:1px 3px;
+  border-radius:4px; background:#19daf4; color:#061019; font-size:6px; font-weight:950; letter-spacing:.04em;
+}
+.autocal-bands-technical {
+  margin-top:10px; padding:8px 0 0; border:0; border-top:1px solid rgba(255,255,255,.07);
+  border-radius:0; background:transparent; box-shadow:none;
+}
+.autocal-technical-details:not([open]) .autocal-bands-technical { display:none; }
+@media (min-width:1000px) and (max-height:760px) {
+  .autocal-reference-card .autocal-chart-head-actions { gap:6px; }
+  .autocal-zone-fuel { display:none; }
+  .autocal-zone-cell { min-width:31px; min-height:28px; }
 }

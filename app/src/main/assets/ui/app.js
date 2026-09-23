@@ -124,6 +124,7 @@
     if (state.route !== renderedRoute) {
       renderedRoute = state.route;
       const meta = routeMeta[state.route] || routeMeta.dashboard;
+      document.getElementById('app')?.classList.toggle('autocal-focus', state.route === 'autocal');
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
       routeButtons.forEach(button => {
@@ -420,6 +421,7 @@
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
+    scheduler.setCadenceMs(route === 'autocal' ? 75 : 200);
     store.patch({ suggestionsOpen: route === 'suggestions', toolsOpen: route === 'tools' });
     if (route === 'dashboard') {
       previousTelemetrySignature = '';

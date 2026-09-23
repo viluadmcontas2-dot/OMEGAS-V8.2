@@ -6,6 +6,10 @@ const root = path.resolve(__dirname, '../..');
 const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 const cockpitCss = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
 const api = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/autocal-api.js'), 'utf8');
+const appJs = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/app.js'), 'utf8');
+const schedulerJs = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/scheduler.js'), 'utf8');
+const indexHtml = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/index.html'), 'utf8');
+const shellCss = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles.css'), 'utf8');
 const provider = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/AutoCalBridgeProvider.kt'), 'utf8');
 const manager = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt'), 'utf8');
 
@@ -73,3 +77,20 @@ assert.equal(cockpitCss.includes('.autocal-primary-action[data-action="DISABLE_A
 
 assert.equal(cockpit.includes('this.inspectReferencePoint(selected)'), true);
 assert.equal(cockpit.includes('this.inspectBand(preferred)'), true);
+
+
+assert.equal(appJs.includes("scheduler.setCadenceMs(route === 'autocal' ? 75 : 200)"), true);
+assert.equal(appJs.includes("classList.toggle('autocal-focus', state.route === 'autocal')"), true);
+assert.equal(schedulerJs.includes('setCadenceMs(intervalMs)'), true);
+assert.equal(schedulerJs.includes('statusElapsedMs'), true);
+assert.equal(schedulerJs.includes('contextElapsedMs'), true);
+assert.equal(shellCss.includes('.app-shell.autocal-focus .workspace-head'), true);
+assert.equal(indexHtml.includes('id="autocalRouteTitle"'), false);
+assert.equal(cockpit.includes('autocal-zone-cell'), true);
+assert.equal(cockpit.includes("state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA'"), true);
+assert.equal(cockpit.includes('renderZoneCursor(live)'), true);
+assert.equal(cockpit.includes('mapBar >= candidate.lowMapBar'), true);
+assert.equal(cockpit.includes('zoneForBand('), false);
+assert.equal(cockpit.includes('autocal-bands-card autocal-bands-technical'), true);
+assert.equal(cockpit.indexOf('autocal-bands-card autocal-bands-technical') > cockpit.indexOf('id="autocalTechnicalDetails"'), true);
+assert.equal(cockpitCss.includes('.autocal-technical-details:not([open]) .autocal-bands-technical'), true);

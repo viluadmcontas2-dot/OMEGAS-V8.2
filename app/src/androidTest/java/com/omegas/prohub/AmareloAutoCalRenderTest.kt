@@ -242,6 +242,8 @@ class AmareloAutoCalRenderTest {
               const toggle = document.querySelector('[data-autocal-toggle]');
               const kCard = document.querySelector('.autocal-k-card');
               const bandsCard = document.querySelector('.autocal-bands-card');
+              const technical = document.getElementById('autocalTechnicalDetails');
+              const zoneMeter = document.getElementById('autocalZoneMeter');
               const body = screen?.innerText ?? '';
               const rect = chart?.getBoundingClientRect();
               const screenRect = screen?.getBoundingClientRect();
@@ -249,6 +251,7 @@ class AmareloAutoCalRenderTest {
               const toggleRect = toggle?.getBoundingClientRect();
               const kRect = kCard?.getBoundingClientRect();
               const bandsRect = bandsCard?.getBoundingClientRect();
+              const zoneMeterRect = zoneMeter?.getBoundingClientRect();
               return {
                 active: screen?.classList.contains('active') === true,
                 hasLevels: /LEVELS|NÍVEL GNV/i.test(body),
@@ -277,7 +280,13 @@ class AmareloAutoCalRenderTest {
                 toggleBottom: toggleRect?.bottom ?? 0,
                 kCardBottom: kRect?.bottom ?? 0,
                 bandsCardBottom: bandsRect?.bottom ?? 0,
-                hasPosition18Copy: /18\s+posições nativas de aquisição GNV/i.test(body),
+                zoneMeterBottom: zoneMeterRect?.bottom ?? 0,
+                technicalOpen: technical?.open === true,
+                bandsInsideTechnical: technical?.contains(bandsCard) === true,
+                gasZoneStates: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.dataset.state || ''),
+                gasZoneLabels: [...document.querySelectorAll('[data-autocal-zone-gas]')].map(node => node.textContent.trim()),
+                currentGasZones: [...document.querySelectorAll('[data-autocal-zone-gas][data-current="true"]')].map(node => Number(node.dataset.autocalZoneGas) + 1),
+                hasPosition18Copy: /18\s+posições nativas de aquisição GNV/i.test(screen?.textContent ?? ''),
                 hasFakeFourProgress: /GNV\s+\d+\/4/.test(body),
                 previousEpochCopy: /época AutoMatch anterior|epoch anterior|snapshot.*anterior/i.test(body)
               };
@@ -329,7 +338,7 @@ class AmareloAutoCalRenderTest {
             assertTrue("Previous layer must be described as prior AutoMatch epoch", dom.getBoolean("previousEpochCopy"))
 
             assertTrue("Primary AutoCal chart must use substantial width", dom.getDouble("chartWidth") >= 760.0)
-            assertTrue("Primary AutoCal chart must remain visually dominant", dom.getDouble("chartHeight") >= 260.0)
+            assertTrue("Primary AutoCal chart must remain visually dominant", dom.getDouble("chartHeight") >= 300.0)
             assertTrue(
                 "Normal 1280x720 AutoCal cockpit must fit without mandatory vertical scrolling",
                 dom.getDouble("cockpitBottom") <= dom.getDouble("screenBottom") + 2.0,
@@ -338,10 +347,19 @@ class AmareloAutoCalRenderTest {
                 "Native Curve K must remain visible in the normal 1280x720 composition",
                 dom.getDouble("kCardBottom") <= dom.getDouble("screenBottom") + 2.0,
             )
+            assertFalse("Technical disclosure must stay closed in the normal driving view", dom.getBoolean("technicalOpen"))
+            assertTrue("18 native positions must remain available inside technical disclosure", dom.getBoolean("bandsInsideTechnical"))
             assertTrue(
-                "Native acquisition positions must remain visible in the normal 1280x720 composition",
-                dom.getDouble("bandsCardBottom") <= dom.getDouble("screenBottom") + 2.0,
+                "Operator Z1-Z4 map must remain visible in the normal 1280x720 composition",
+                dom.getDouble("zoneMeterBottom") <= dom.getDouble("screenBottom") + 2.0,
             )
+            assertEquals("GNV zone map must expose exactly four cells", 4, dom.getJSONArray("gasZoneStates").length())
+            assertTrue(
+                "GNV zone cells must use explicit OK/FALTA state",
+                dom.getJSONArray("gasZoneLabels").toString().contains("OK") ||
+                    dom.getJSONArray("gasZoneLabels").toString().contains("FALTA"),
+            )
+            assertEquals("Current physical MAP must identify exactly one GNV zone", 1, dom.getJSONArray("currentGasZones").length())
             assertTrue(
                 "Auto Calibration primary action must remain visible without scrolling",
                 dom.getDouble("toggleBottom") <= dom.getDouble("screenBottom") + 2.0,
