@@ -27,7 +27,7 @@
     armTimer() {
       this.armTimer();
     }
-    setIntervalMs(intervalMs) {
+    setCadenceMs(intervalMs) {
       const next = Math.max(50, Number(intervalMs) || 200);
       if (next === this.intervalMs) return this.intervalMs;
       const wasRunning = !!this.timer;

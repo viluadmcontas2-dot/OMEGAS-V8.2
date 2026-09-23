@@ -420,7 +420,7 @@
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
-    scheduler.setIntervalMs(route === 'autocal' ? 75 : 200);
+    scheduler.setCadenceMs(route === 'autocal' ? 75 : 200);
     store.patch({ suggestionsOpen: route === 'suggestions', toolsOpen: route === 'tools' });
     if (route === 'dashboard') {
       previousTelemetrySignature = '';

@@ -95,16 +95,16 @@ test('Scheduler troca 200ms por 75ms sem manter dois intervalos ativos', () => {
   assert.equal(shell.clearCount(), 0);
   assert.equal(scheduler.intervalMs, 200);
 
-  scheduler.setIntervalMs(75);
+  scheduler.setCadenceMs(75);
   assert.equal(scheduler.intervalMs, 75);
   assert.equal(shell.intervalCount(), 2, 'troca cria apenas o intervalo substituto');
   assert.equal(shell.clearCount(), 1, 'intervalo anterior precisa ser encerrado antes da troca');
 
-  scheduler.setIntervalMs(75);
+  scheduler.setCadenceMs(75);
   assert.equal(shell.intervalCount(), 2, 'mesma cadência não recria timer');
   assert.equal(shell.clearCount(), 1);
 
-  scheduler.setIntervalMs(200);
+  scheduler.setCadenceMs(200);
   assert.equal(scheduler.intervalMs, 200);
   assert.equal(shell.intervalCount(), 3);
   assert.equal(shell.clearCount(), 2);
