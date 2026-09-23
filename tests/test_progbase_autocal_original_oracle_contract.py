@@ -21,33 +21,34 @@ assert oracle["sources"]["autocal"]["rawSha256"] == "4a70f5ae79b1d688c05bd169f3e
 
 actions = {item["action"]: item for item in oracle["actions"]}
 expected = {
-    "MANUAL_AUTOMATCH": ("0x08", "02 24 04 08 32"),
-    "RESET_PETROL": ("0x01", "02 24 04 01 2B"),
-    "RESET_GAS": ("0x02", "02 24 04 02 2C"),
-    "RESET_ALL": ("0x04", "02 24 04 04 2E"),
+    "MANUAL_AUTOMATCH": ("0x01", "02 24 04 01 2B"),
+    "RESET_PETROL": ("0x02", "02 24 04 02 2C"),
+    "RESET_GAS": ("0x04", "02 24 04 04 2E"),
 }
 for name, (mode, frame) in expected.items():
     assert actions[name]["mode"] == mode
     assert actions[name]["frame"] == frame
+assert actions["RESET_ALL"]["mode"] is None
+assert actions["RESET_ALL"]["frame"] is None
 
 assert actions["MANUAL_AUTOMATCH"]["handler"] == "ActionAutoMatchExecute"
 assert actions["RESET_PETROL"]["handler"] == "ActionResetPetrolExecute"
 assert actions["RESET_GAS"]["handler"] == "ActionResetGasExecute"
 assert actions["RESET_ALL"]["handler"] == "ActionResetAllExecute"
-assert actions["RESET_ALL"]["portmonObserved"] is True
+assert actions["RESET_ALL"]["portmonObserved"] is False
 assert actions["RESET_PETROL"]["portmonObserved"] is False
-assert actions["RESET_GAS"]["portmonObserved"] is False
+assert actions["RESET_GAS"]["portmonObserved"] is True
 assert actions["MANUAL_AUTOMATCH"]["portmonObserved"] is False
 assert oracle["separateActions"]["modifyMapRefs"]["handler"] == "ActionAutoCalRifExecute"
-assert oracle["separateActions"]["modifyMapRefs"]["mode"] is None
+assert oracle["separateActions"]["modifyMapRefs"]["mode"] == "0x08"\nassert oracle["separateActions"]["modifyMapRefs"]["frame"] == "02 24 04 08 32"
 
 fields = oracle["dfmFields"]
 assert fields["VECT_AUTOCAL_U8_1"]["fileKeyName"] == "!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD"
 assert fields["VECT_AUTOCAL_U8_2"]["fileKeyName"] == "MaxAutomatch"
 
 action_source = ACTION.read_text(encoding="utf-8")
-assert 'RESET_PETROL(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01))' in action_source
-assert 'RESET_GAS(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))' in action_source
+assert 'RESET_PETROL(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))' in action_source
+assert 'RESET_GAS(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04))' in action_source
 assert "RESET_ALL(" not in action_source
 bridge = BRIDGE.read_text(encoding="utf-8")
 assert 'manualAutoMatchExposed", false' in bridge
