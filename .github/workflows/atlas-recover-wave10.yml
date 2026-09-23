@@ -1,0 +1,161 @@
+name: OMEGAS Atlas Recover Wave 10
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/atlas-recover-wave10.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      has_next: ${{ steps.read.outputs.has_next }}
+      complete: ${{ steps.read.outputs.complete }}
+      proven: ${{ steps.read.outputs.proven }}
+      targets: ${{ steps.read.outputs.targets }}
+      behavior: ${{ steps.read.outputs.behavior }}
+      semantic: ${{ steps.read.outputs.semantic }}
+    steps:
+      - name: Checkout immutable current Atlas
+        uses: actions/checkout@v4
+        with:
+          ref: 6fa91b2bf52137b438c9d6a0456d5aeeb538356d
+
+      - name: Reverify canonical inputs and contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m compileall -q atlas/battle atlas/tests
+          python3 -m unittest atlas.tests.test_battle_contract atlas.tests.test_semantic_index atlas.tests.test_semantic_targets atlas.tests.test_undelphi_seeds atlas.tests.test_workflow_contract atlas.tests.test_dfm_resource atlas.tests.test_behavior_gate
+          python3 atlas/tools/seed.py --output /tmp/atlas-seed.json
+
+      - name: Download immutable analysis indices
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-index-bundle
+          path: atlas-indices
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 35802546712
+
+      - name: Download wave 9 state
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-continuation-state
+          path: previous-state
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 35806204168
+
+      - name: Download already-completed wave 10 receipts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-cont-w10-*
+          path: battle-receipts/current
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 35806517876
+
+      - name: Prove receipt completeness
+        shell: bash
+        run: |
+          set -euo pipefail
+          COUNT="$(find battle-receipts/current -type f -name '*.json' | wc -l)"
+          echo "wave10_receipts=$COUNT"
+          test "$COUNT" -eq 254
+
+      - name: Reconcile recovered wave 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p atlas-state
+          python3 atlas/battle/reconcile.py \
+            --wave 10 \
+            --receipts battle-receipts/current \
+            --indices atlas-indices \
+            --previous previous-state/state.json \
+            --state atlas-state/state.json \
+            --matrix atlas-state/next-matrix.json
+
+      - id: read
+        name: Read recovered closure state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          s=json.loads(Path("atlas-state/state.json").read_text())
+          cov=s.get("coverage",{})
+          counts=cov.get("status_counts",{})
+          open_targets=sum(1 for t in s.get("targets",{}).values() if t.get("status") not in {"PROVEN","REFUTED"})
+          has_next=bool(s.get("has_next"))
+          broken=int(cov.get("broken",0))
+          stalled=int(cov.get("stalled_targets",0))
+          semantic=bool(s.get("semantic_closure",False))
+          behavior=bool(s.get("behavior_closure",False))
+          complete=(not has_next and open_targets==0 and broken==0 and stalled==0 and semantic and behavior)
+          print("has_next="+str(has_next).lower())
+          print("complete="+str(complete).lower())
+          print("semantic="+str(semantic).lower())
+          print("behavior="+str(behavior).lower())
+          print("proven="+str(int(counts.get("PROVEN",0))))
+          print("targets="+str(int(cov.get("targets_total",len(s.get("targets",{}))))))
+          print("open_targets="+str(open_targets))
+          print("stalled="+str(stalled))
+          print("broken="+str(broken))
+          PY
+          cat atlas-state/state.json | python3 -c 'import json,sys; s=json.load(sys.stdin); print(json.dumps({"wave":s.get("wave"),"coverage":s.get("coverage"),"semantic_closure":s.get("semantic_closure"),"behavior_closure":s.get("behavior_closure"),"next_lane_count":s.get("next_lane_count"),"stalled_keys":s.get("stalled_keys")},indent=2))'
+
+      - name: Publish recovered state
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-recovered-state-w10
+          path: atlas-state/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Comment recovery checkpoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cat > /tmp/status.md <<EOF
+          ## Atlas recovered wave 10
+
+          Recovery run: ${{ github.run_id }}
+          Atlas SHA: 6fa91b2bf52137b438c9d6a0456d5aeeb538356d
+          Reused 254/254 completed receipts from failed-harness run 35806517876.
+          PROVEN: ${{ steps.read.outputs.proven }}
+          Targets: ${{ steps.read.outputs.targets }}
+          Semantic closure: ${{ steps.read.outputs.semantic }}
+          Behavioral closure: ${{ steps.read.outputs.behavior }}
+          Next frontier: ${{ steps.read.outputs.has_next }}
+          Full closure: ${{ steps.read.outputs.complete }}
+
+          No scientific work was rerun; only the failed reconciliation was recovered.
+          EOF
+          gh issue comment 97 --repo "${{ github.repository }}" --body-file /tmp/status.md
+
+      - name: Continue automatically from recovered state
+        if: steps.read.outputs.has_next == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh workflow run omegas-atlas-continuation.yml \
+            --repo "${{ github.repository }}" \
+            --ref main \
+            --field atlas_sha="6fa91b2bf52137b438c9d6a0456d5aeeb538356d" \
+            --field index_run_id="35802546712" \
+            --field state_run_id="${{ github.run_id }}" \
+            --field state_artifact="atlas-recovered-state-w10"
