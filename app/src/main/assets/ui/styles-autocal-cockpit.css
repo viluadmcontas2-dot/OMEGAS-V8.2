@@ -1461,8 +1461,8 @@
   padding: 7px 9px;
 }
 .autocal-live-narrative {
-  font-size: 11px;
-  line-height: 1.25;
+  font-size: 13px;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
