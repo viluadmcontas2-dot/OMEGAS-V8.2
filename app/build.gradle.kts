@@ -102,6 +102,7 @@ android {
             )
         }
         debug {
+            applicationIdSuffix = ".amarelo"
             versionNameSuffix = "-debug"
             signingConfig = signingConfigs.getByName("debug")
         }

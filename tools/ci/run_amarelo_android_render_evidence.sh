@@ -9,17 +9,17 @@ adb shell wm density 160 || exit 2
 
 adb install -r app/build/outputs/apk/debug/app-debug.apk || exit 2
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || exit 2
-adb shell pm grant com.omegas.v7.test android.permission.POST_NOTIFICATIONS || true
-adb shell dumpsys deviceidle whitelist +com.omegas.v7.test || true
+adb shell pm grant com.omegas.v7.test.amarelo android.permission.POST_NOTIFICATIONS || true
+adb shell dumpsys deviceidle whitelist +com.omegas.v7.test.amarelo || true
 
 mkdir -p rendered-evidence
 set +e
-adb shell am instrument -w -r   -e class "com.omegas.prohub.AmareloAutoCalRenderTest#autocalOriginalDerivedAdaptiveRender"   com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner   > rendered-evidence/amarelo-autocal-original-derived-instrumentation.txt 2>&1
+adb shell am instrument -w -r   -e class "com.omegas.prohub.AmareloAutoCalRenderTest#autocalOriginalDerivedAdaptiveRender"   com.omegas.v7.test.amarelo.test/androidx.test.runner.AndroidJUnitRunner   > rendered-evidence/amarelo-autocal-original-derived-instrumentation.txt 2>&1
 rc=$?
 set -e
 
 cat rendered-evidence/amarelo-autocal-original-derived-instrumentation.txt
-adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
+adb pull /sdcard/Android/data/com.omegas.v7.test.amarelo/files/omegas-evidence/. rendered-evidence/ || true
 adb exec-out screencap -p > rendered-evidence/amarelo-autocal-original-derived-post.png || true
 
 if [ "$rc" -ne 0 ] ||
@@ -42,13 +42,13 @@ test -s rendered-evidence/amarelo-autocal-original-derived.png || {
 set +e
 adb shell am instrument -w -r \
   -e class "com.omegas.prohub.AmareloAutoCalRuntimeBridgeTest#canonicalReplayFlowsThroughRuntimeBridgeAndWebView" \
-  com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner \
+  com.omegas.v7.test.amarelo.test/androidx.test.runner.AndroidJUnitRunner \
   > rendered-evidence/amarelo-autocal-runtime-bridge-instrumentation.txt 2>&1
 runtime_rc=$?
 set -e
 
 cat rendered-evidence/amarelo-autocal-runtime-bridge-instrumentation.txt
-adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
+adb pull /sdcard/Android/data/com.omegas.v7.test.amarelo/files/omegas-evidence/. rendered-evidence/ || true
 
 if [ "$runtime_rc" -ne 0 ] ||
    grep -q 'FAILURES!!!' rendered-evidence/amarelo-autocal-runtime-bridge-instrumentation.txt ||

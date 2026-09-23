@@ -7,6 +7,9 @@ on:
     paths:
       - ".github/workflows/amarelo-fast-contracts.yml"
       - "tools/omegas_amarelo/**"
+      - "app/build.gradle.kts"
+      - "config/omegas-release.json"
+      - "tools/ci/run_amarelo_android_render_evidence.sh"
       - "docs/omegas-amarelo/evidence/**"
       - "tests/test_amarelo_*.py"
       - "tests/test_real_mp48_replay_fixture_contract.py"

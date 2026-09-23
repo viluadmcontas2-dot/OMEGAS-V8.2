@@ -115,6 +115,17 @@ class AutoCalAndroidRenderFixtureContractTest(unittest.TestCase):
         self.assertNotIn('setPrivateField(service.nativeAutoCal, "latestSnapshot"', android)
         self.assertNotIn("service.nativeAutoCal = monitor", android)
 
+    def test_amarelo_debug_apk_has_separate_identity_from_verde(self):
+        config = json.loads(Path("config/omegas-release.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["applicationId"], "com.omegas.v7.test")
+        self.assertEqual(config["appLabel"], "OMEGAS AMARELO TEST")
+        gradle = Path("app/build.gradle.kts").read_text(encoding="utf-8")
+        self.assertIn('applicationIdSuffix = ".amarelo"', gradle)
+        render = Path("tools/ci/run_amarelo_android_render_evidence.sh").read_text(encoding="utf-8")
+        self.assertIn("com.omegas.v7.test.amarelo.test/androidx.test.runner.AndroidJUnitRunner", render)
+        self.assertIn("/sdcard/Android/data/com.omegas.v7.test.amarelo/files/omegas-evidence/", render)
+        self.assertNotIn("pm grant com.omegas.v7.test android.permission", render)
+
 
 if __name__ == "__main__":
     unittest.main()
