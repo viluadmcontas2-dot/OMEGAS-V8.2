@@ -1,0 +1,95 @@
+{
+  "schema": "omegas.atlas.verde-parity-audit.v1",
+  "created_at": "2026-09-23",
+  "atlas_scope": "ProgBase 4.2.0.6 AutoCal host subsystem",
+  "atlas_base_sha": "6fbca0e704272023b9c58ce40caca4b43f57ed70",
+  "verde_head_sha": "a4ff14001dff4019c5402f1a28ed33bdbdb22bff",
+  "canonical_binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "canonical_closure": {
+    "run_id": 35811055077,
+    "final_wave": 11,
+    "targets_proven": "1417/1417",
+    "behavior_gates": "14/14",
+    "final_state_artifact_id": 10730051091
+  },
+  "policy": "Verde is a consumer/implementation and may provide leads. It is never promoted over canonical ProgBase EXE, raw Portmon/LOGNOVO, or independently reproducible Atlas evidence.",
+  "findings": [
+    {
+      "id": "VERDE_ACTION_ORACLE_SHIFT",
+      "severity": "CRITICAL",
+      "classification": "CONTRADICTED_BY_CANONICAL_EXE",
+      "verde_claim": {
+        "modify_map_refs": "0x08",
+        "manual_automatch": "0x01",
+        "reset_petrol": "0x02",
+        "reset_gas": "0x04",
+        "reset_all": "separate routine"
+      },
+      "atlas_proven": {
+        "modify_map_refs": "separate ActionAutoCalRifExecute @ 0x005187A0; not a 0x24 mode wrapper",
+        "manual_automatch": "0x08 -> 02 24 04 08 32; ActionAutoMatchExecute @ 0x005189B4",
+        "reset_petrol": "0x01 -> 02 24 04 01 2B; ActionResetPetrolExecute @ 0x005189C0",
+        "reset_gas": "0x02 -> 02 24 04 02 2C; ActionResetGasExecute @ 0x005189CC",
+        "reset_all": "0x04 -> 02 24 04 04 2E; ActionResetAllExecute @ 0x005189D8"
+      },
+      "proof": {
+        "raw_rtti_run_id": 35809435511,
+        "raw_rtti_artifact_id": 10729032358,
+        "raw_rtti_artifact_digest": "sha256:5c0c8f60914a36e414ea6b625eb40dba2305c5c3de72c4efbc7ddf774d857869",
+        "atlas_proof": "atlas/proofs/behavior/action-host-mode-map.json"
+      },
+      "implication": "Never import tests/fixtures/progbase-autocal-action-map-v1.json from Verde as native truth. The shifted product mapping is consistent with an operator selecting a gas reset while 0x04 (canonical Reset All) produces a broad reset."
+    },
+    {
+      "id": "VERDE_75MS_PRESENTATION",
+      "severity": "MEDIUM",
+      "classification": "PRODUCT_DESIGN_NOT_NATIVE_PARITY",
+      "verde_claim": "AutoCal presentation/update cadence scoped to 75 ms.",
+      "atlas_proven": "Native ProgBase AutoCal scheduler is configuration-driven: refresh_time_ms, default 300 ms, DFM range 200..2000 ms; force-refresh paths can bypass the interval.",
+      "proof": "atlas/proofs/behavior/scheduler-refresh-cadence.json",
+      "implication": "75 ms may remain an OMEGAS HMI choice, but must not be described as native ProgBase scheduler parity."
+    },
+    {
+      "id": "VERDE_ZONE_IDENTITY",
+      "severity": "INFO",
+      "classification": "MATCH_WITH_PRODUCT_PRESENTATION",
+      "verde_claim": "Expose Z1..Z4 as OK/FALTA and mark AGORA from CurrentBand.",
+      "atlas_proven": "ACQUIRED_ZONES_PETROL/GAS drive acquisition areas; CurrentBand is a separate series derived from live MAP and MNFLD_PRESS_THD.",
+      "proof": "atlas/proofs/behavior/render-current-band-zones.json",
+      "implication": "The Verde UI presentation is compatible with native semantics if synthetic sparse-zone test data remains explicitly visual-only."
+    },
+    {
+      "id": "VERDE_CURVE_K_BACKUP_RESTORE",
+      "severity": "INFO",
+      "classification": "PRODUCT_SAFETY_EXTENSION",
+      "verde_claim": "Persistent Curve K backup/restore, one-touch recovery and restore reason/audit.",
+      "atlas_proven": "Native Reset K Factor is a separate ECU-backed path: ActionResetKFactorExecute writes every MUL_ACT[i] = 1.0 then refreshes.",
+      "proof": "atlas/proofs/behavior/action-reset-k-factor.json",
+      "implication": "Backup/restore is a valuable OMEGAS safety feature, but it is not native ProgBase behavior and must not become a scientific oracle."
+    },
+    {
+      "id": "VERDE_RESET_INTERLOCK",
+      "severity": "INFO",
+      "classification": "PRODUCT_SAFETY_EXTENSION",
+      "verde_claim": "Destructive AutoCal resets interlocked; pre-mutation backup required/fail-closed.",
+      "atlas_proven": "Reset All 0x04 has a captured broad destructive effect; selective firmware effects of 0x01/0x02/0x08 are not observed in supplied Portmons.",
+      "proof": "atlas/proofs/behavior/action-reset-all.json",
+      "implication": "Fail-closed interlock is justified as product safety. The reason must be framed as safety under bounded firmware evidence, not as a ProgBase UI feature."
+    },
+    {
+      "id": "VERDE_FOCUS_AND_TECHNICAL_DISCLOSURE",
+      "severity": "INFO",
+      "classification": "PRODUCT_UX_ONLY",
+      "verde_claim": "AutoCal focus shell, larger plot, collapsed technical regions, compact recovery bar.",
+      "atlas_proven": "No native semantic claim depends on these layout choices.",
+      "implication": "Useful for product refinement; outside Atlas scientific authority."
+    }
+  ],
+  "conclusion": {
+    "atlas_scientific_status": "CLOSED",
+    "verde_use": "IMPLEMENTATION_CONSUMER_AND_LEAD_SOURCE",
+    "conflicts_open": 0,
+    "critical_conflicts_documented": 1,
+    "rule": "When Verde and Atlas disagree about original ProgBase behavior, canonical EXE/log evidence wins."
+  }
+}
