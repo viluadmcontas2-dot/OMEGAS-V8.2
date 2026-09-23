@@ -27,7 +27,7 @@ jobs:
       - name: Checkout immutable current Atlas
         uses: actions/checkout@v4
         with:
-          ref: 6fa91b2bf52137b438c9d6a0456d5aeeb538356d
+          ref: 014a397ea0bd19d2ffc7c2aa36d9344500139196
 
       - name: Reverify canonical inputs and contracts
         shell: bash
@@ -133,7 +133,7 @@ jobs:
           ## Atlas recovered wave 10
 
           Recovery run: ${{ github.run_id }}
-          Atlas SHA: 6fa91b2bf52137b438c9d6a0456d5aeeb538356d
+          Atlas SHA: 014a397ea0bd19d2ffc7c2aa36d9344500139196
           Reused 254/254 completed receipts from failed-harness run 35806517876.
           PROVEN: ${{ steps.read.outputs.proven }}
           Targets: ${{ steps.read.outputs.targets }}
@@ -155,7 +155,7 @@ jobs:
           gh workflow run omegas-atlas-continuation.yml \
             --repo "${{ github.repository }}" \
             --ref main \
-            --field atlas_sha="6fa91b2bf52137b438c9d6a0456d5aeeb538356d" \
+            --field atlas_sha="014a397ea0bd19d2ffc7c2aa36d9344500139196" \
             --field index_run_id="35802546712" \
             --field state_run_id="${{ github.run_id }}" \
             --field state_artifact="atlas-recovered-state-w10"
