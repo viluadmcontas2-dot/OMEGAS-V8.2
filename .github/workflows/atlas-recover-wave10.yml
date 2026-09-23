@@ -56,14 +56,16 @@ jobs:
           set -euo pipefail
           mkdir -p battle-receipts/current /tmp/atlas-artifacts
           gh api --paginate "repos/${{ github.repository }}/actions/runs/35806517876/artifacts?per_page=100" \
-            --jq '.artifacts[] | select(.name | startswith("atlas-cont-w10-")) | "\(.id)|\(.name)"' \
-            > /tmp/atlas-artifacts/list.txt
-          test "$(wc -l < /tmp/atlas-artifacts/list.txt)" -eq 254
-          while IFS='|' read -r ID NAME; do
+            --jq '.artifacts[] | select(.name | startswith("atlas-cont-w10-")) | .id' \
+            > /tmp/atlas-artifacts/ids.txt
+          test "$(wc -l < /tmp/atlas-artifacts/ids.txt)" -eq 254
+          export GH_REPO="${{ github.repository }}"
+          cat /tmp/atlas-artifacts/ids.txt | xargs -P 16 -I '{}' bash -euo pipefail -c '
+            ID="$1"
             ZIP="/tmp/atlas-artifacts/${ID}.zip"
-            gh api "repos/${{ github.repository }}/actions/artifacts/${ID}/zip" > "$ZIP"
+            gh api "repos/${GH_REPO}/actions/artifacts/${ID}/zip" > "$ZIP"
             unzip -oq "$ZIP" -d battle-receipts/current
-          done < /tmp/atlas-artifacts/list.txt
+          ' _ '{}'
           COUNT="$(find battle-receipts/current -type f -name '*.json' | wc -l)"
           echo "wave10_receipts=$COUNT"
           test "$COUNT" -eq 254
