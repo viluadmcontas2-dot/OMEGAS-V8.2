@@ -26,6 +26,22 @@ class ConsumerReplayValidatorTest(unittest.TestCase):
         self.assertEqual(result["status"],"DRIFT_DETECTED")
         self.assertGreaterEqual(len(result["conflicts"]),4)
 
+    def test_all_completed_portmon_operations_advance_clock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            z=Path(tmp)/"x.zip"
+            log=(
+                "1 0.000 ProgBase.exe IOCTL_SERIAL_SET_TIMEOUTS Silabser0\n"
+                "1 0.050 SUCCESS\n"
+                "2 0.000 ProgBase.exe IRP_MJ_WRITE Silabser0 Length 3: 48 01 49\n"
+                "2 0.001 SUCCESS\n"
+                "3 0.000 ProgBase.exe IRP_MJ_READ Silabser0 Length 3: 48 01 49\n"
+                "3 0.001 SUCCESS Length 3: 48 01 49\n"
+            )
+            with zipfile.ZipFile(z,"w") as zf:
+                zf.writestr("x.log",log)
+            rows=REPLAY.canonical_transactions(z,"x.log")
+            self.assertAlmostEqual(rows[2]["at_ms"],50.0,places=6)
+
     def test_frame_and_response_checksum_helpers(self):
         self.assertTrue(REPLAY._frame_ok("02 24 04 04 2E"))
         self.assertTrue(REPLAY._response_ok("02 24 04 04 2E","02 24 04 04 2E 53 00 53"))

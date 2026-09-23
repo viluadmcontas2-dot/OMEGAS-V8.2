@@ -10,7 +10,7 @@ from pathlib import Path
 
 EVENT_RE = re.compile(
     r"^(?P<index>\d+)\s+(?P<field2>\d+\.\d+)\s+ProgBase\.exe\s+"
-    r"(?P<op>IRP_MJ_WRITE|IRP_MJ_READ|IOCTL_SERIAL_PURGE)\s+Silabser\d+\s*(?P<detail>.*)$"
+    r"(?P<op>[^\s]+)\s+Silabser\d+\s*(?P<detail>.*)$"
 )
 SUCCESS_RE = re.compile(r"^(?P<index>\d+)\s+(?P<duration>\d+\.\d+)\s+SUCCESS\s*(?P<detail>.*)$")
 HEX_RE = re.compile(r"Length\s+\d+:\s*((?:[0-9A-Fa-f]{2}(?:\s+|$))+)")
