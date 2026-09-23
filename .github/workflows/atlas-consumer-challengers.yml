@@ -8,6 +8,10 @@ on:
       - 'atlas/tools/verify_consumer_replay.py'
       - 'atlas/tools/audit_consumer_action_map.py'
       - 'atlas/tests/test_consumer_compatibility.py'
+      - 'atlas/tests/test_product_handoff_gate.py'
+      - 'atlas/manifests/product-handoff-gate.json'
+      - 'atlas/tools/audit_product_handoff.py'
+      - 'atlas/reports/product-handoff-status.json'
       - 'atlas/proofs/consumer/**'
       - 'atlas/reports/consumer-compatibility-latest.json'
       - 'atlas/reports/verde-amarelo-atlas-comparison.json'
@@ -49,8 +53,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m compileall -q atlas/tools atlas/tests/test_consumer_compatibility.py
-          python3 -m unittest atlas.tests.test_consumer_compatibility
+          python3 -m compileall -q atlas/tools atlas/tests/test_consumer_compatibility.py atlas/tests/test_product_handoff_gate.py
+          python3 -m unittest atlas.tests.test_consumer_compatibility atlas.tests.test_product_handoff_gate
 
       - name: Validate durable consumer receipts
         shell: bash
@@ -67,5 +71,22 @@ jobs:
           assert drift["status"]=="DRIFT_DETECTED"
           assert len(drift["conflicts"])==5
           assert report["status"]=="PROVEN_WITH_CONSUMER_DRIFT"
+          handoff=json.load(open("atlas/reports/product-handoff-status.json",encoding="utf-8"))
+          assert handoff["status"] in {"PASS","HOLD"}
           print("ATLAS_CONSUMER_CHALLENGERS=PASS")
+          PY
+
+      - name: Audit current product handoff without overriding science
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 atlas/tools/audit_product_handoff.py --current-repo --out /tmp/product-handoff-audit.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open("/tmp/product-handoff-audit.json",encoding="utf-8"))
+          audit=x["audit"]
+          # Current known Verde drift is expected to fail closed, not to disappear.
+          assert audit["status"]=="FAIL"
+          assert "UNRESOLVED_CONSUMER_SEMANTIC_DRIFT" in audit["violations"]
+          print("ATLAS_PRODUCT_HANDOFF_FAIL_CLOSED=PASS")
           PY

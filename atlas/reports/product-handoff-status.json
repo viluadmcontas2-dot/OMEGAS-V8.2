@@ -1,0 +1,22 @@
+{
+  "schema": "omegas.atlas.product-handoff-status.v1",
+  "captured_at": "2026-09-23",
+  "status": "HOLD",
+  "atlas": {
+    "status": "CLOSED",
+    "semantic": "1417/1417",
+    "behavior": "14/14"
+  },
+  "amarelo_runtime": {
+    "canonical_replay": "PROVEN",
+    "validated_exact_transactions": 964
+  },
+  "verde_consumer": {
+    "semantic_drift": "DRIFT_DETECTED",
+    "conflicts": 5
+  },
+  "blockers": [
+    "UNRESOLVED_CONSUMER_SEMANTIC_DRIFT"
+  ],
+  "meaning": "Atlas science is closed. Product handoff remains fail-closed until downstream semantic drift is reconciled with Atlas proof."
+}
