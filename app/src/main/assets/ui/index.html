@@ -140,6 +140,12 @@
                 <button type="button" data-curve-view="editor" class="active">Editar Curva K</button>
               </div>
               <div class="inline-actions"><span id="curveSourceStatus" class="source-status">Curva não lida</span><button id="curveReadButton" type="button" class="secondary">Reler ECU</button></div>
+              <div class="curve-backup-bar" aria-label="Backup da Curva K">
+                <button id="curveBackupSave" type="button" class="secondary">Salvar curva atual</button>
+                <select id="curveBackupSelect" aria-label="Backup salvo da Curva K"><option value="">Nenhum backup salvo</option></select>
+                <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>
+                <span id="curveBackupStatus">Nenhum backup salvo</span>
+              </div>
             </div>
           </div>
           <div id="curveSuggestionFocus" class="suggestion-focus" hidden></div>
@@ -185,11 +191,7 @@
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
         </section>
 
-        <section class="screen autocal-route-screen" data-screen="autocal" aria-labelledby="autocalRouteTitle">
-          <div class="page-intro">
-            <div><small>AUTO-CAL</small><h2 id="autocalRouteTitle">Aquisição nativa da ECU</h2></div>
-            <p>Leitura, aquisição e diagnóstico AutoCal separados com feedback imediato.</p>
-          </div>
+        <section class="screen autocal-route-screen" data-screen="autocal" aria-label="AutoCal">
           <div id="autocalScreenHost" class="autocal-cockpit-view" aria-live="polite"></div>
         </section>
 
