@@ -28,11 +28,12 @@ class PredictorMapResidualContract(unittest.TestCase):
         self.assertIn('Mp48WorkClass.MANUAL_WRITE', self.kwrite)
         self.assertIn('Mp48WorkClass.SAFETY', self.kwrite)
 
-    def test_ui_keeps_0c_protected_and_manual_review_before_write(self):
+    def test_ui_keeps_0c_protected_and_single_manual_confirmation_before_write(self):
         self.assertIn('Linha técnica 0C protegida', self.map_ui)
         self.assertIn('previewMapAdjustment', self.map_ui)
-        self.assertIn('openReview()', self.map_ui)
-        self.assertIn('writeReview()', self.map_ui)
+        self.assertIn('writePrepared()', self.map_ui)
+        self.assertIn('this.editor.buildReview()', self.map_ui)
+        self.assertNotIn("classList.add('is-reviewing')", self.map_ui)
 
     def test_predictor_cannot_become_map_writer(self):
         self.assertNotIn('KWriteManager', self.predictor)
