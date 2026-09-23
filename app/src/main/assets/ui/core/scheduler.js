@@ -24,6 +24,9 @@
       set.add(listener);
       return () => set.delete(listener);
     }
+    armTimer() {
+      this.armTimer();
+    }
     setIntervalMs(intervalMs) {
       const next = Math.max(50, Number(intervalMs) || 200);
       if (next === this.intervalMs) return this.intervalMs;
@@ -33,7 +36,7 @@
       this.intervalMs = next;
       this.statusElapsedMs = 0;
       this.contextElapsedMs = 0;
-      if (wasRunning) this.timer = root.setInterval(() => this.run(), this.intervalMs);
+      if (wasRunning) this.armTimer();
       return this.intervalMs;
     }
     start() {
