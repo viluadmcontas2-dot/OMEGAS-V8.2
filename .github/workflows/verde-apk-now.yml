@@ -1,22 +1,16 @@
 name: OMEGAS VERDE APK NOW
 
 on:
-  push:
-    branches: [ OmegasVerde ]
-    paths:
-      - '.github/workflows/verde-apk-now.yml'
-  pull_request:
-    branches: [ OmegasVerde ]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  PRODUCT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  PRODUCT_SHA: ${{ github.sha }}
 
 concurrency:
-  group: omegas-verde-apk-final-${{ env.PRODUCT_SHA }}
+  group: omegas-verde-apk-final-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
