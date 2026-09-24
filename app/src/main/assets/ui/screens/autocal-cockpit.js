@@ -468,7 +468,7 @@
               </div>
 
               <div class="autocal-focus-actions">
-                <span id="autocalNativeState" class="source-status">Aquisição: aguardando ECU</span>
+                <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
                 <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
                 <details class="autocal-reset-menu">
                 <summary>Resetar aquisição</summary>
@@ -500,8 +500,8 @@
             </section>
 
             <details class="autocal-secondary-details">
-              <summary>Detalhes</summary>
-              <div class="autocal-secondary-rail" role="region" aria-label="Informações secundárias do AutoCal">
+              <summary>Mais informações</summary>
+              <div class="autocal-secondary-stack" role="region" aria-label="Informações secundárias do AutoCal">
               <header class="autocal-hero autocal-secondary-card" aria-live="polite">
                 <div class="autocal-human-copy">
                   <small>ESTADO</small>
