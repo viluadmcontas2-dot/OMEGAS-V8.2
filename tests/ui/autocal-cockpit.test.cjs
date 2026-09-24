@@ -11,7 +11,7 @@ const manager = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/pr
 
 assert.equal(cockpit.includes('autocal-chart-workspace'), true);
 assert.equal(cockpit.includes('autocal-focus-toolbar'), true);
-assert.equal(cockpit.includes('data-autocal-read-context'), true);
+assert.equal(cockpit.includes('data-autocal-read'), false);
 assert.equal(cockpit.includes('data-autocal-chart-action="zoom-in"'), false);
 assert.equal(cockpit.includes('data-autocal-chart-action="zoom-out"'), false);
 assert.equal(cockpit.includes('data-autocal-chart-action="fit"'), false);
@@ -49,7 +49,9 @@ assert.equal(cockpit.includes('prepare('), true);
 assert.equal(cockpit.includes('execute(prepared.preparationId)'), true);
 assert.equal(cockpit.includes('Continuar para confirmação Android'), true);
 assert.equal(cockpit.includes('autocal-secondary-rail'), true);
-assert.equal(cockpitCss.includes('overflow-x: auto'), true);
+assert.equal(cockpit.includes('Consultar ECU'), false);
+assert.equal(cockpit.includes('autocal-secondary-details'), true);
+assert.equal(cockpitCss.includes('.autocal-secondary-details'), true);
 assert.equal(api.includes('prepareNativeAction'), true);
 assert.equal(api.includes('executeNativeAction'), true);
 assert.equal(manager.includes('manualAutoMatchExposed'), false);
