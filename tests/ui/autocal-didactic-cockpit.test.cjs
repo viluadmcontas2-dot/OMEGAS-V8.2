@@ -218,11 +218,12 @@ assert.match(source, /autocalReferenceSource[^\n]*referenceSourceLabel|reference
   'render deve expor a fonte selecionada pela projeção Kotlin');
 assert.equal(source.includes('AUTOMATCH ECU'), false);
 assert.equal(source.includes('EVENTOS MADUROS'), false);
-assert.equal(source.includes('RESET_ALL'), true);\nassert.equal(source.includes('RESET_K_FACTOR'), true);
+assert.equal(source.includes('RESET_ALL'), true);
+assert.equal(source.includes('RESET_K_FACTOR'), true);
 assert.equal(source.includes('setInterval'), false);
 
 assert.equal(css.includes('overflow-x: auto'), true);
-assert.match(css, /\.autocal-cockpit-view\s*\{[^}]*overflow-y:\s*auto/s, 'cockpit deve rolar verticalmente dentro da viewport em vez de cortar bandas e controles');
+assert.match(css, /\.autocal-secondary-rail\s*\{[\s\S]*overflow-x:\s*auto/s, 'informações secundárias devem rolar horizontalmente sem roubar altura do gráfico');
 assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
