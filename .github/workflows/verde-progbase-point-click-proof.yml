@@ -386,6 +386,12 @@ jobs:
               "TAebVectorVirtual94_97B58C":0x0097B58C,
               "TAebVectorVirtual98_97AB44":0x0097AB44,
               "TAebVectorSetDataInEcu_9796B8":0x009796B8,
+              "TAebVectorElementCommit_9752C8":0x009752C8,
+              "TAebVectorAttachProtocol_975FD0":0x00975FD0,
+              "TAebVectorSetElement_979D28":0x00979D28,
+              "TAebVectorFinalize_97909C":0x0097909C,
+              "PointDeletePrereqSource_512254":0x00512254,
+              "ProtocolReady_921FCC":0x00921FCC,
               "ProtocolWrite_925D18":0x00925D18,
               "ProtocolWrite_925F44":0x00925F44,
               "ProtocolWrite_9265F8":0x009265F8,
@@ -400,6 +406,12 @@ jobs:
               for n,ins in enumerate(md.disasm(data[off:off+2200],va)):
                   print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
                   if ins.mnemonic.startswith("ret") or n>=520: break
+
+          print("\n== POINT DELETE COMMIT STATIC BYTES ==")
+          for va in (0x00A9C58C, 0x00A9C640):
+              off=va_to_off(va)
+              blob=data[off:off+16] if off is not None else b""
+              print(f"STATIC_0x{va:08X}=" + blob.hex(" ").upper())
 
           print("\n== POINT DELETE DFM CONTRACT ==")
           for name in ("GAS_POINT_2DELETE","PETROL_POINT_2DELETE"):
