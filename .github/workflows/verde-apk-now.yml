@@ -5,16 +5,18 @@ on:
     branches: [ OmegasVerde ]
     paths:
       - '.github/workflows/verde-apk-now.yml'
+  pull_request:
+    branches: [ OmegasVerde ]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  PRODUCT_SHA: b38836d75790e4c4644e71d0c9ed06ac544ed5e8
+  PRODUCT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 concurrency:
-  group: omegas-verde-apk-final-b38836d7
+  group: omegas-verde-apk-final-${{ env.PRODUCT_SHA }}
   cancel-in-progress: true
 
 jobs:
