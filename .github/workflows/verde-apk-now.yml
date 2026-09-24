@@ -1,18 +1,16 @@
 name: OMEGAS VERDE APK NOW
 
 on:
-  pull_request:
-    branches: [ OmegasVerde ]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  PRODUCT_SHA: febb8482a64e53ca2cafe8a7bd232ad4d38d3693
+  PRODUCT_SHA: ${{ github.sha }}
 
 concurrency:
-  group: omegas-verde-apk-final-febb8482
+  group: omegas-verde-apk-final-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
