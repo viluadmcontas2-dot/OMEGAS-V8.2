@@ -70,7 +70,7 @@ jobs:
                       pass
 
           targets={}
-          wanted=re.compile(r"(AcqusitionAreas\d*Click|AcquisitionAreas\d*Click|GasPoint\w*Click|PetrolPoint\w*Click)",re.I)
+          wanted=re.compile(r"(AcqusitionAreas\d*Click|AcquisitionAreas\d*Click|GasPoint\w*Click|PetrolPoint\w*Click|ChartDataClickSeries|ChartDataDblClick|ChartDataMouseUp|ChartDataKeyDown|ChartDataKeyUp|ChartDataClickAxis)",re.I)
           method_line=re.compile(r"(0x[0-9a-fA-F]{6,8})\s+([A-Za-z_]\w*)")
           for fn,text in texts:
               for line in text.splitlines():
@@ -100,12 +100,12 @@ jobs:
               if off is None:
                   print("VA_NOT_MAPPED"); continue
               calls=[]
-              for n,ins in enumerate(md.disasm(data[off:off+320],va)):
+              for n,ins in enumerate(md.disasm(data[off:off+768],va)):
                   print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
                   if ins.mnemonic=="call":
                       try: calls.append(int(ins.op_str,0))
                       except Exception: pass
-                  if ins.mnemonic.startswith("ret") or n>=100: break
+                  if ins.mnemonic.startswith("ret") or n>=220: break
               print("DIRECT_CALLS", [f"0x{x:08X}" for x in calls])
           PY
 
