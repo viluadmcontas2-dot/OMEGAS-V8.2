@@ -1219,8 +1219,8 @@
 
 .autocal-reference-card .autocal-section-head { order: 0; }
 .autocal-reference-card .autocal-chart-legend { order: 1; }
-.autocal-reference-card .autocal-chart-workspace { order: 2; }
-.autocal-reference-card .autocal-live-strip { order: 3; }
+.autocal-reference-card .autocal-live-strip { order: 2; }
+.autocal-reference-card .autocal-chart-workspace { order: 3; }
 
 .autocal-section-head h4 {
   font-size: 22px;
@@ -1529,5 +1529,19 @@
 
 /* WebView-safe disclosure: engineering regions never leak into the driving surface. */
 .autocal-technical-details:not([open]) .autocal-bands-technical {
+  display: none;
+}
+
+
+/* 2026-09-23 — owner physical envelope: the vehicle does not use MAP above 1.15 bar.
+   No expanded-scale mode: spend the surface on Z1–Z4 and the live cursor. */
+.app-shell.autocal-focus .autocal-chart-host {
+  height: clamp(380px, 58vh, 460px);
+  min-height: 380px;
+}
+.autocal-reference-card .autocal-section-head p {
+  display: none;
+}
+.autocal-zone-meter {
   display: none;
 }

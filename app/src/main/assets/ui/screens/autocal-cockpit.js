@@ -2,6 +2,7 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
   const AUTO_CAL_LIVE_STALE_MS = 2500;
+  const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
 
   function finite(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -236,8 +237,15 @@
       return points;
     },
 
-    referenceDomain(points = [], history = []) {
-      const all = [...points, ...history];
+    referenceDomain(points = [], history = [], zoneSurface = []) {
+      const physicalFloor = Array.isArray(zoneSurface) && zoneSurface.length
+        ? Math.max(0, finite(zoneSurface[0]?.lower) ?? 0)
+        : 0;
+      const yMin = Math.min(physicalFloor, AUTO_CAL_OPERATIONAL_MAP_MAX_BAR - 0.05);
+      const yMax = AUTO_CAL_OPERATIONAL_MAP_MAX_BAR;
+      const all = [...points, ...history].filter(point =>
+        [finite(point?.petrolMapBar), finite(point?.gasMapBar)]
+          .some(value => value !== null && value >= yMin && value <= yMax));
       if (!all.length) return null;
       const xValues = all.flatMap(point => {
         const values = [finite(point.petrolMs)];
@@ -245,14 +253,9 @@
         if (equivalent !== null) values.push(equivalent);
         return values.filter(value => value !== null);
       });
-      const yValues = all
-        .flatMap(point => [finite(point.petrolMapBar), finite(point.gasMapBar)])
-        .filter(value => value !== null);
-      if (!xValues.length || !yValues.length) return null;
+      if (!xValues.length) return null;
       let xMin = Math.min(...xValues);
       let xMax = Math.max(...xValues);
-      let yMin = Math.min(...yValues);
-      let yMax = Math.max(...yValues);
       if (xMax - xMin < 0.01) {
         const pad = Math.max(0.25, Math.abs(xMin) * 0.08);
         xMin -= pad; xMax += pad;
@@ -260,14 +263,7 @@
         const pad = Math.max(0.08, (xMax - xMin) * 0.05);
         xMin -= pad; xMax += pad;
       }
-      if (yMax - yMin < 0.01) {
-        yMin -= 0.08; yMax += 0.08;
-      } else {
-        const pad = Math.max(0.02, (yMax - yMin) * 0.12);
-        yMin -= pad; yMax += pad;
-      }
       xMin = Math.max(0, xMin);
-      yMin = Math.max(0, yMin);
       return { xMin, xMax, yMin, yMax };
     },
 
@@ -1041,13 +1037,15 @@
       this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
 
       const width = 1000;
-      const height = 240;
+      const height = 400;
       const padLeft = 64;
       const padRight = 28;
-      const padTop = 18;
-      const padBottom = 44;
+      const padTop = 22;
+      const padBottom = 48;
       const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
-      const domain = AutoCalUxModel.referenceDomain(points, history);
+      const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
+      const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
+      const domain = AutoCalUxModel.referenceDomain(points, history, zoneSurface);
       if (!domain) {
         this.chartScale = null;
         host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>';
@@ -1058,10 +1056,12 @@
       const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
       const scale = { xMin, xMax, yMin, yMax, xFor, yFor };
       this.chartScale = scale;
-      const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
-      const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
       const pathFor = (items, yKey, xKey = 'petrolMs') => items
-        .filter(point => finite(point?.[xKey]) !== null && finite(point?.[yKey]) !== null)
+        .filter(point => {
+          const xValue = finite(point?.[xKey]);
+          const yValue = finite(point?.[yKey]);
+          return xValue !== null && yValue !== null && yValue >= yMin && yValue <= yMax;
+        })
         .map((point, index) => (index ? 'L' : 'M') + ' ' + xFor(point[xKey]).toFixed(1) + ' ' + yFor(point[yKey]).toFixed(1))
         .join(' ');
 
@@ -1109,13 +1109,19 @@
 
       const pointMarkup = points.map(point => {
         const x = xFor(point.petrolMs).toFixed(1);
-        const petrolY = yFor(point.petrolMapBar).toFixed(1);
-        const gasY = yFor(point.gasMapBar).toFixed(1);
-        const equivalentX = finite(point.gasEquivalentMs) === null ? null : xFor(point.gasEquivalentMs).toFixed(1);
-        return '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="22"></circle>' +
-          '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="6.5"></circle>' +
-          '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
-          '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="4.2"></circle>' +
+        const petrolVisible = point.petrolMapBar >= yMin && point.petrolMapBar <= yMax;
+        const gasVisible = point.gasMapBar >= yMin && point.gasMapBar <= yMax;
+        const petrolY = petrolVisible ? yFor(point.petrolMapBar).toFixed(1) : null;
+        const gasY = gasVisible ? yFor(point.gasMapBar).toFixed(1) : null;
+        const equivalentX = petrolVisible && finite(point.gasEquivalentMs) !== null ? xFor(point.gasEquivalentMs).toFixed(1) : null;
+        return (petrolVisible
+          ? '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="22"></circle>' +
+            '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="6.5"></circle>'
+          : '') +
+          (gasVisible
+            ? '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
+              '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="4.2"></circle>'
+            : '') +
           (equivalentX === null ? '' : '<circle class="autocal-equivalence-point" cx="' + equivalentX + '" cy="' + petrolY + '" r="4"></circle>');
       }).join('');
 

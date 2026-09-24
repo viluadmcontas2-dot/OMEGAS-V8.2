@@ -31,7 +31,9 @@ const points = [
 ];
 const domain = model.referenceDomain(points, []);
 assert.ok(domain.xMin < 2 && domain.xMax > 10.4);
-assert.ok(domain.xMax < 12, 'domínio deve vir apenas da referência nativa');
+assert.ok(domain.xMax < 12, 'domínio deve vir apenas da referência nativa dentro da janela operacional');
+assert.equal(domain.yMin, 0, 'sem thresholds, fallback operacional começa em zero');
+assert.equal(domain.yMax, 1.15, 'a escala MAP do AutoCal deve terminar em 1,15 bar');
 
 const nearZeroDomain = model.referenceDomain([
   { index: 0, petrolMs: 0.05, petrolMapBar: 0.01, gasMapBar: 0.015, gasEquivalentMs: 0.06 },
@@ -41,6 +43,8 @@ assert.ok(nearZeroDomain.xMin >= 0,
   'padding visual não pode fabricar tempo de injeção negativo');
 assert.ok(nearZeroDomain.yMin >= 0,
   'padding visual não pode fabricar MAP negativo');
+assert.equal(nearZeroDomain.yMax, 1.15,
+  'não deve existir expansão automática do eixo MAP acima de 1,15 bar');
 
 
 const scale = {
@@ -162,3 +166,21 @@ assert.equal(referenceRegainedTransition.previousPoints.length, 0,
   'referência recuperada após gap não pode inventar Leitura anterior');
 
 console.log('AUTOCAL_CHART_SEMANTICS=PASS');
+
+
+const zoneWindow = [
+  { zone: 1, lower: 0.20, upper: 0.50 },
+  { zone: 2, lower: 0.50, upper: 0.74 },
+  { zone: 3, lower: 0.74, upper: 0.98 },
+  { zone: 4, lower: 0.98, upper: 1.12 },
+];
+const focused = model.referenceDomain([
+  { petrolMs: 3.0, petrolMapBar: 0.30, gasMapBar: 0.32, gasEquivalentMs: 3.1 },
+  { petrolMs: 8.0, petrolMapBar: 1.10, gasMapBar: 1.12, gasEquivalentMs: 8.2 },
+  { petrolMs: 20.0, petrolMapBar: 1.60, gasMapBar: 1.70, gasEquivalentMs: 21.0 },
+], [], zoneWindow);
+assert.equal(focused.yMin, 0.20, 'o gráfico deve começar no primeiro limiar físico quando conhecido');
+assert.equal(focused.yMax, 1.15, 'o gráfico deve terminar em 1,15 bar sem opção de escala completa');
+assert.ok(focused.xMax < 10, 'pontos acima de 1,15 bar não podem esticar também o eixo de injeção');
+assert.equal(/expandir escala|escala completa|ver escala/i.test(source), false,
+  'a HMI não deve oferecer modo de escala expandida');
