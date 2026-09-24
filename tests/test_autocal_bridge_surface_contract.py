@@ -47,3 +47,10 @@ for name in REQUIRED:
     assert f"fun {name}(" in BRIDGE, f"live AutoCal bridge method was removed: {name}"
 
 print("AUTOCAL_BRIDGE_SURFACE_CONTRACT=PASS")
+
+assert "AlertDialog" not in BRIDGE, "AutoCal must not open redundant Android AlertDialog after OMEGAS review"
+assert "nativeConfirmationPendingId" not in BRIDGE, "stale Android confirmation state must not remain"
+assert '.put("nativeAndroidConfirmation", true)' not in BRIDGE
+assert '.put("nativeAndroidConfirmation", false)' in BRIDGE
+assert "actionManager.execute(preparationId)" in BRIDGE, "prepared AutoCal action must execute directly through canonical manager"
+assert "startKFactorReset()" in BRIDGE, "Curva K reset must start directly after OMEGAS review"
