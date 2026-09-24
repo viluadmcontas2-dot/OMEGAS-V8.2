@@ -477,7 +477,7 @@
                     <small>READQUIRIR COMBUSTÍVEL</small>
                     <button type="button" data-autocal-action="RESET_GAS">Readquirir GNV</button>
                     <button type="button" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
-                    <p>Usa o comando dedicado do original para o combustível escolhido. A Curva K usa outro caminho. Depois do ACK, o OMEGAS compara o snapshot antes/depois e avisa se observar mudança fora do esperado.</p>
+                    <p>Usa o comando dedicado do original para o combustível escolhido. A Curva K usa outro caminho. Depois do ACK, o OMEGAS relê a ECU para atualizar a tela. Backup da Curva K é manual.</p>
                   </section>
                   <details class="autocal-reset-advanced">
                     <summary>Outras redefinições</summary>
@@ -650,7 +650,7 @@
         this.referenceUsable = false;
         this.actionState = this.api.actionStatus() || {};
         this.operationalPending = this.actionState?.busy === true ||
-          ['QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
+          ['QUEUED', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
         this.sessionState = this.api.sessionStatus?.() || {};
         this.render();
         return;
@@ -690,7 +690,7 @@
       this.analysis = nextAnalysis;
       this.actionState = this.api.actionStatus() || {};
       this.operationalPending = this.actionState?.busy === true ||
-        ['QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
+        ['QUEUED', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
       this.sessionState = this.api.sessionStatus?.() || {};
       this.render();
     }
@@ -1213,15 +1213,13 @@
       const state = this.actionState || {};
       const name = String(state.state || 'IDLE').toUpperCase();
       const message = String(state.message || 'Nenhuma ação preparada.');
-      const working = ['PREPARED', 'QUEUED', 'READING_BEFORE', 'PERSISTING_BACKUP', 'SENDING_ACTION', 'READING_AFTER'].includes(name);
-      const warning = name === 'CONFIRMED_WITH_SCOPE_WARNING';
+      const working = ['PREPARED', 'QUEUED', 'SENDING_ACTION', 'READING_AFTER'].includes(name);
       const failed = name === 'FAILED';
-      host.dataset.level = failed ? 'error' : warning ? 'warning' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
+      host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
       host.textContent = name === 'IDLE' ? message
-        : warning ? 'Concluído · confira o escopo · ' + message
         : name === 'CONFIRMED' ? 'Concluído · ' + message
         : failed ? 'Não concluído · ' + message
-        : 'Executando com segurança · ' + message;
+        : 'Executando · ' + message;
     }
 
     renderReview() {
@@ -1229,7 +1227,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>snapshot antes/depois · gasolina · GNV · Curva K</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre a confirmação Android. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>snapshot antes/depois · gasolina · GNV · Curva K</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
     }
 
     renderUnavailable() {
