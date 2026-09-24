@@ -1685,10 +1685,11 @@
   right: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(2, minmax(138px, 1fr));
-  gap: 6px;
-  width: 314px;
-  padding: 9px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: min(360px, calc(100vw - 230px));
+  padding: 10px;
+  overflow: hidden;
   border: 1px solid rgba(255,105,115,.26);
   border-radius: 12px;
   background: rgba(9,14,22,.98);
@@ -1699,12 +1700,55 @@
   border-color: rgba(255,105,115,.24);
   color: #f3c8cc;
 }
-.autocal-reset-popover p {
+.autocal-reset-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  min-width: 0;
+}
+.autocal-reset-group > small,
+.autocal-reset-group > p {
   grid-column: 1 / -1;
-  margin: 2px 2px 0;
-  color: #998c95;
+}
+.autocal-reset-group > small {
+  color: #9fb0c0;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .11em;
+}
+.autocal-reset-popover p {
+  margin: 1px 1px 0;
+  color: #a99ca4;
   font-size: 10px;
-  line-height: 1.35;
+  line-height: 1.4;
+}
+.autocal-reset-advanced {
+  min-width: 0;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding-top: 7px;
+}
+.autocal-reset-advanced > summary {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  color: #95a6b7;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+.autocal-reset-advanced > summary::-webkit-details-marker { display: none; }
+.autocal-reset-advanced > summary::after {
+  content: '↓';
+  margin-left: auto;
+  color: #71879a;
+}
+.autocal-reset-advanced[open] > summary::after { content: '↑'; }
+.autocal-reset-advanced > div {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding-top: 4px;
 }
 
 .autocal-reference-card {
