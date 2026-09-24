@@ -59,24 +59,29 @@ class AutoCalNativeActionManager(
             true,
         ),
         RESET_PETROL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
-            "Reset nativo gasolina",
-            "ProgBase original: ActionResetPetrolExecute usa modo 0x02. O efeito seletivo não aparece nos Portmons fornecidos; a ação permanece intertravada e exige backup completo antes de qualquer futura liberação.",
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
+            "Reset gasolina",
+            "ProgBase 4.2.0.6: ActionResetPetrolExecute -> modo 0x01 -> quadro 02 24 04 01 2B. Identidade e quadro são provados pelo EXE canônico.",
             true,
         ),
         RESET_GAS(
+            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
+            "Reset GNV",
+            "ProgBase 4.2.0.6: ActionResetGasExecute -> modo 0x02 -> quadro 02 24 04 02 2C. Identidade e quadro são provados pelo EXE canônico.",
+            true,
+        ),
+        RESET_ALL(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
-            "Reiniciar aquisição AutoCal — efeito amplo",
-            "Comando original Reset gas point (modo 0x04): no Lognovo apagou aquisição gasolina/GNV, referências e MUL_ACT (Curva K). NÃO é a rotina Reset All do ProgBase, não é seletivo e não possui restauração automática. Exige backup completo persistido e relido antes do envio.",
+            "Reset ALL",
+            "ProgBase 4.2.0.6: ActionResetAllExecute -> modo 0x04 -> quadro 02 24 04 04 2E. O quadro também aparece no corpus original com efeito amplo.",
             true,
         );
     }
 
-    // ProgBase 4.2.0.6 original, confirmado por RTTI + disassembly:
-    // 0x08 = Modify map refs; 0x01 = Manual AutoMatch; 0x02 = Reset petrol; 0x04 = Reset gas.
-    // ResetAll usa outra rotina e não é mapeado para 0x04.
-    // Reset gas 0x04 teve efeito amplo no Lognovo; somente a ação manual ampla é exposta,
-    // após revisão humana, confirmação Android e backup completo pré-mutação.
+    // ProgBase 4.2.0.6 canônico, raw RTTI + wrappers (Atlas):
+    // 0x08 = Manual AutoMatch; 0x01 = Reset petrol; 0x02 = Reset gas; 0x04 = Reset all.
+    // Modify Map Refs e Reset K Factor são caminhos separados no código original.
+    // OMEGAS preserva confirmação humana e backup pré-mutação como extensão de segurança.
     private data class Preparation(
         val id: String,
         val action: Action,
