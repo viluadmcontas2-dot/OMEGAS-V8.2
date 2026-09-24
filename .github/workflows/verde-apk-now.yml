@@ -5,6 +5,8 @@ on:
     branches: [ OmegasVerde ]
     paths:
       - '.github/workflows/verde-apk-now.yml'
+  pull_request:
+    branches: [ OmegasVerde ]
   workflow_dispatch:
 
 permissions:
