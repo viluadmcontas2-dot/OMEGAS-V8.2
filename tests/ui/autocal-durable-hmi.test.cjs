@@ -9,28 +9,27 @@ const root = path.resolve(__dirname, '../..');
 const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
 
-assert.ok(cockpit.includes('Documentos/Omegas'), 'a sessão deve comunicar o destino persistente ao motorista');
+assert.ok(cockpit.includes('Downloads/Omegas'), 'a sessão deve comunicar o destino persistente ao motorista');
 assert.ok(cockpit.includes('documentsMirror'), 'a UI deve consumir o estado real do espelho em Documentos');
-assert.ok(cockpit.includes('Salvo em Documentos/Omegas') || cockpit.includes('Salvando em Documentos/Omegas'),
+assert.ok(cockpit.includes('Salvo em Downloads/Omegas') || cockpit.includes('Salvando em Downloads/Omegas'),
   'copy principal precisa explicar persistência sem path técnico interno');
 
-// The graph is the primary driving surface. Secondary cards are intentionally
-// compact and horizontally scrollable; only always-visible driving telemetry
-// keeps the larger automotive type scale.
+// The graph is the primary driving surface. Secondary information is collapsed
+// below it and expands in the same vertical flow; no nested horizontal rail.
 assert.match(css, /\.autocal-focus-metric b[\s\S]*font-size:\s*21px/);
 assert.match(css, /\.autocal-focus-zone b[\s\S]*font-size:\s*18px/);
-assert.match(css, /\.autocal-chart-host[\s\S]*height:\s*clamp\(405px,\s*65vh,\s*515px\)/);
+assert.match(css, /\.app-shell\.autocal-focus \.autocal-chart-host,[\s\S]*height:\s*clamp\(420px,\s*68vh,\s*520px\)/);
 
 const primaryTiny = [
-  ['.autocal-human-copy p', 10],
-  ['.autocal-human-copy strong', 10],
+  ['.autocal-human-copy p', 11],
+  ['.autocal-human-copy strong', 11],
   ['.autocal-chart-legend', 12],
   ['.autocal-band-legend', 11],
-  ['.autocal-command-copy b', 12],
-  ['.autocal-command-copy span', 9],
+  ['.autocal-command-copy b', 13],
+  ['.autocal-command-copy span', 10],
   ['.autocal-live-narrative', 13],
-  ['.autocal-session-copy b', 13],
-  ['.autocal-session-copy span', 10],
+  ['.autocal-session-copy b', 14],
+  ['.autocal-session-copy span', 11],
 ];
 function cssDeclarationsFor(selector) {
   const blocks = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
@@ -59,10 +58,10 @@ const durable = model.sessionNarrative({
   recording: true,
   durationMs: 120000,
   droppedEvents: 0,
-  documentsMirror: { available: true, lastSyncOk: true, relativeRoot: 'Documents/Omegas/AutoCal' },
+  documentsMirror: { available: true, lastSyncOk: true, relativeRoot: 'Download/Omegas' },
   semanticSummary: { autocal: { gasZones: 2, petrolZones: 4, correlatedRegions: [2, 3] } },
 });
-assert.match(durable.next, /Documentos\/Omegas/);
+assert.match(durable.next, /Downloads\/Omegas/);
 assert.equal(durable.level, 'ok');
 
 const mirrorFailure = model.sessionNarrative({
@@ -73,6 +72,6 @@ const mirrorFailure = model.sessionNarrative({
   semanticSummary: { autocal: { gasZones: 2, petrolZones: 4, correlatedRegions: [2, 3] } },
 });
 assert.equal(mirrorFailure.level, 'warning');
-assert.match(mirrorFailure.next, /memória interna|Documentos/i);
+assert.match(mirrorFailure.next, /memória interna|Downloads/i);
 
 console.log('AUTOCAL_DURABLE_HMI=PASS');
