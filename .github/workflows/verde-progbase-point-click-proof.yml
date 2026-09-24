@@ -1,0 +1,118 @@
+name: OMEGAS targeted ProgBase point-click proof
+
+on:
+  push:
+    branches: [ OmegasVerde ]
+    paths:
+      - '.github/workflows/verde-progbase-point-click-proof.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  prove-point-click:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Reuse corrected remote Atlas undelphi artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-undelphi-index
+          path: atlas-undelphi
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 35755928817
+
+      - name: Extract AutoCal click bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p point-proof
+          {
+            echo "SOURCE_RUN=35755928817"
+            echo "SOURCE_ARTIFACT=atlas-undelphi-index"
+            echo "CANONICAL_PROGBASE_SHA256=8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+            echo
+            echo "== FILES =="
+            find atlas-undelphi -maxdepth 3 -type f -print | sort
+            echo
+            echo "== AUTOCAL CLICK / SERIES MATCHES =="
+            grep -RinE -C 5 '(_GasPoint|_PetrolPoint|GasPoint|PetrolPoint|AcqusitionAreas|AcquisitionAreas|OnClick|OnMouse|ChartData)' atlas-undelphi || true
+          } | tee point-proof/undelphi-click-bindings.txt
+
+          test -s point-proof/undelphi-click-bindings.txt
+
+      - name: Recover handler addresses and targeted disassembly
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check capstone==5.0.6 pefile==2024.8.26 >/dev/null
+          git fetch --no-tags --depth=1 origin 214b795e11f50f767de77115e3e2c48a9eba733d
+          git show 214b795e11f50f767de77115e3e2c48a9eba733d:atlas/originals/progbase/ProgBase-4.2.0.6.exe > /tmp/ProgBase.exe
+          test "$(sha256sum /tmp/ProgBase.exe | awk '{print $1}')" = "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+
+          python3 - <<'PY' | tee point-proof/targeted-disassembly.txt
+          import re, struct
+          from pathlib import Path
+          import pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+
+          root=Path("atlas-undelphi")
+          texts=[]
+          for p in root.rglob("*"):
+              if p.is_file():
+                  try:
+                      texts.append((str(p),p.read_text(encoding="utf-8",errors="ignore")))
+                  except Exception:
+                      pass
+
+          targets={}
+          wanted=re.compile(r"(AcqusitionAreas\d*Click|AcquisitionAreas\d*Click|GasPoint\w*Click|PetrolPoint\w*Click)",re.I)
+          method_line=re.compile(r"(0x[0-9a-fA-F]{6,8})\s+([A-Za-z_]\w*)")
+          for fn,text in texts:
+              for line in text.splitlines():
+                  m=method_line.search(line)
+                  if m and wanted.search(m.group(2)):
+                      targets[m.group(2)]=int(m.group(1),16)
+
+          print("TARGETS", {k:f"0x{v:08X}" for k,v in sorted(targets.items())})
+          if not targets:
+              print("NO_TARGET_HANDLER_ADDRESS_RECOVERED")
+              raise SystemExit(0)
+
+          data=Path("/tmp/ProgBase.exe").read_bytes()
+          pe=pefile.PE("/tmp/ProgBase.exe",fast_load=False)
+          image=int(pe.OPTIONAL_HEADER.ImageBase)
+          def va_to_off(va):
+              rva=va-image
+              for s in pe.sections:
+                  start=int(s.VirtualAddress); size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+                  if start<=rva<start+size:
+                      return int(s.PointerToRawData)+(rva-start)
+              return None
+          md=Cs(CS_ARCH_X86,CS_MODE_32)
+          for name,va in sorted(targets.items()):
+              off=va_to_off(va)
+              print(f"\n== {name} @ 0x{va:08X} ==")
+              if off is None:
+                  print("VA_NOT_MAPPED"); continue
+              calls=[]
+              for n,ins in enumerate(md.disasm(data[off:off+320],va)):
+                  print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+                  if ins.mnemonic=="call":
+                      try: calls.append(int(ins.op_str,0))
+                      except Exception: pass
+                  if ins.mnemonic.startswith("ret") or n>=100: break
+              print("DIRECT_CALLS", [f"0x{x:08X}" for x in calls])
+          PY
+
+      - name: Publish targeted proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: progbase-point-click-proof
+          path: point-proof/
+          if-no-files-found: error
+          retention-days: 7
