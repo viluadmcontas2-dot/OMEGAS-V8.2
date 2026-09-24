@@ -226,11 +226,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 val commandHex = action.request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
                 val effect = when (action) {
                     AutoCalNativeActionManager.Action.RESET_PETROL ->
-                        "ProgBase: Reset petrol point (modo 0x01). O EXE canônico prova o comando host."
+                        "Readquirir gasolina usa a ação original dedicada Reset petrol point (modo 0x01). A Curva K usa outro caminho. Após o ACK, o OMEGAS compara o snapshot antes/depois e avisa se observar mudança fora do escopo esperado."
                     AutoCalNativeActionManager.Action.RESET_GAS ->
-                        "ProgBase: Reset gas point (modo 0x02). O EXE canônico prova o comando host."
+                        "Readquirir GNV usa a ação original dedicada Reset gas point (modo 0x02). A Curva K usa outro caminho. Após o ACK, o OMEGAS compara o snapshot antes/depois e avisa se observar mudança fora do escopo esperado."
                     AutoCalNativeActionManager.Action.RESET_ALL ->
-                        "ProgBase: Reset all (modo 0x04). No corpus capturado, este quadro produziu reset amplo."
+                        "Nova aquisição completa usa a ação original Reset all (modo 0x04) e deve ser tratada como redefinição ampla."
                     else -> action.description
                 }
                 AlertDialog.Builder(activity)
