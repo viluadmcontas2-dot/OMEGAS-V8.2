@@ -123,6 +123,85 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `reset gas registra escopo dedicado quando gasolina e curva k ficam intactas`() {
+        val actionSent = AtomicBoolean(false)
+        val fields = listOf(
+            AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+            AutoCalProtocol.ACQUIRED_ZONES_GAS,
+            AutoCalProtocol.MUL_ACT,
+        )
+        val manager = manager(fieldsForReceipt = fields) { request, _, _, _ ->
+            when {
+                request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request) -> {
+                    actionSent.set(true)
+                    reply(request, byteArrayOf())
+                }
+                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_PETROL)) ->
+                    reply(request, byteArrayOf(1, 1, 1, 1))
+                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_GAS)) ->
+                    reply(request, if (actionSent.get()) byteArrayOf(0, 0, 0, 0) else byteArrayOf(1, 1, 1, 1))
+                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)) ->
+                    reply(request, q14Payload(16384))
+                else -> error("request inesperado")
+            }
+        }
+
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        val scope = manager.receiptsJson().getJSONObject(0).getJSONObject("scopeAssessment")
+        assertEquals("GNV_REACQUISITION", scope.getString("intendedScope"))
+        assertTrue(scope.getBoolean("scopeConclusive"))
+        assertTrue(scope.getBoolean("gasAcquisitionChanged"))
+        assertFalse(scope.getBoolean("petrolAcquisitionChanged"))
+        assertFalse(scope.getBoolean("mulActChanged"))
+        assertFalse(scope.getBoolean("broaderThanIntended"))
+        assertTrue(scope.getBoolean("dedicatedScopeObserved"))
+        assertFalse(scope.getBoolean("requiresAttention"))
+        manager.close()
+    }
+
+    @Test
+    fun `reset gas alerta quando readback mostra gasolina ou curva k alteradas`() {
+        val actionSent = AtomicBoolean(false)
+        val fields = listOf(
+            AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+            AutoCalProtocol.ACQUIRED_ZONES_GAS,
+            AutoCalProtocol.MUL_ACT,
+        )
+        val manager = manager(fieldsForReceipt = fields) { request, _, _, _ ->
+            when {
+                request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request) -> {
+                    actionSent.set(true)
+                    reply(request, byteArrayOf())
+                }
+                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_PETROL)) ->
+                    reply(request, if (actionSent.get()) byteArrayOf(0, 0, 0, 0) else byteArrayOf(1, 1, 1, 1))
+                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_GAS)) ->
+                    reply(request, if (actionSent.get()) byteArrayOf(0, 0, 0, 0) else byteArrayOf(1, 1, 1, 1))
+                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)) ->
+                    reply(request, q14Payload(if (actionSent.get()) 16000 else 16384))
+                else -> error("request inesperado")
+            }
+        }
+
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertEquals("CONFIRMED_WITH_SCOPE_WARNING", manager.statusJson().getString("state"))
+        val scope = manager.receiptsJson().getJSONObject(0).getJSONObject("scopeAssessment")
+        assertTrue(scope.getBoolean("petrolAcquisitionChanged"))
+        assertTrue(scope.getBoolean("mulActChanged"))
+        assertTrue(scope.getBoolean("broaderThanIntended"))
+        assertFalse(scope.getBoolean("dedicatedScopeObserved"))
+        assertTrue(scope.getBoolean("requiresAttention"))
+        manager.close()
+    }
+
+    @Test
     fun `enable exige readback do AUTO_CAL_ENABLE`() {
         val actionSent = AtomicBoolean(false)
         val manager = manager { request, _, _, _ ->
@@ -175,6 +254,7 @@ class AutoCalNativeActionManagerTest {
         connected: AtomicBoolean = AtomicBoolean(true),
         otherBusy: AtomicBoolean = AtomicBoolean(false),
         onConfirmed: (org.json.JSONObject) -> Unit = {},
+        fieldsForReceipt: List<AutoCalProtocol.Field> = listOf(AutoCalProtocol.AUTO_CAL_ENABLE),
         transaction: (ByteArray, String, Int, Long) -> UsbProtocolReply,
     ) = AutoCalNativeActionManager(
         receiptFile = receiptFile,
@@ -182,9 +262,16 @@ class AutoCalNativeActionManagerTest {
         currentSessionId = session::get,
         otherCalibrationBusy = otherBusy::get,
         transaction = transaction,
-        fieldsForReceipt = listOf(AutoCalProtocol.AUTO_CAL_ENABLE),
+        fieldsForReceipt = fieldsForReceipt,
         onConfirmed = onConfirmed,
     )
+
+    private fun q14Payload(value: Int): ByteArray = ByteArray(60).also { bytes ->
+        repeat(30) { index ->
+            bytes[index * 2] = (value and 0xFF).toByte()
+            bytes[index * 2 + 1] = ((value ushr 8) and 0xFF).toByte()
+        }
+    }
 
     private fun reply(request: ByteArray, payload: ByteArray) = UsbProtocolReply(
         ok = true,
