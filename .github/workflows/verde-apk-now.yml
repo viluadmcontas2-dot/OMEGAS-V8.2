@@ -1,17 +1,12 @@
 name: OMEGAS VERDE APK NOW
 
 on:
-  push:
-    branches: [ OmegasVerde ]
-    paths:
-      - '.github/workflows/verde-apk-now.yml'
   pull_request:
     branches: [ OmegasVerde ]
   workflow_dispatch:
 
 permissions:
   contents: read
-  issues: write
 
 env:
   PRODUCT_SHA: febb8482a64e53ca2cafe8a7bd232ad4d38d3693
@@ -37,22 +32,6 @@ jobs:
           test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
           echo "SOURCE_SHA=$(git rev-parse HEAD)"
 
-      - name: Publish remote run locator
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          BODY=$(cat <<EOF
-          OMEGAS_APK_RUN_LOCATOR
-          run_id=${{ github.run_id }}
-          run_attempt=${{ github.run_attempt }}
-          trigger_sha=${{ github.sha }}
-          product_sha=${PRODUCT_SHA}
-          EOF
-          )
-          gh api "repos/${GITHUB_REPOSITORY}/issues/101/comments" -f body="$BODY"
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -68,7 +47,10 @@ jobs:
           set -euo pipefail
           chmod +x ./gradlew
           python3 -B tools/run_checks.py
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug             -PomegasAbis=armeabi-v7a             --no-daemon             --stacktrace
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon \
+            --stacktrace
 
       - name: Verify and hash APK
         id: apk
@@ -107,8 +89,6 @@ jobs:
           if [ -n "$BUILD_COMMIT" ]; then
             test "$BUILD_COMMIT" = "${PRODUCT_SHA:0:12}"
           fi
-          echo "sha256=$APK_SHA256" >> "$GITHUB_OUTPUT"
-          echo "bytes=$APK_BYTES" >> "$GITHUB_OUTPUT"
 
       - name: Publish APK + evidence
         uses: actions/upload-artifact@v4
@@ -120,26 +100,3 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
-
-      - name: Publish remote receipt
-        if: always()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          APK_SHA256: ${{ steps.apk.outputs.sha256 }}
-          APK_BYTES: ${{ steps.apk.outputs.bytes }}
-        run: |
-          set -euo pipefail
-          BODY=$(cat <<EOF
-          OMEGAS_APK_REMOTE_RECEIPT
-          run_id=${{ github.run_id }}
-          run_attempt=${{ github.run_attempt }}
-          trigger_sha=${{ github.sha }}
-          product_sha=${PRODUCT_SHA}
-          job_status=${{ job.status }}
-          artifact=omegas-verde-final-${PRODUCT_SHA}
-          apk_sha256=${APK_SHA256:-unavailable}
-          apk_bytes=${APK_BYTES:-unavailable}
-          EOF
-          )
-          gh api "repos/${GITHUB_REPOSITORY}/issues/101/comments" -f body="$BODY"
