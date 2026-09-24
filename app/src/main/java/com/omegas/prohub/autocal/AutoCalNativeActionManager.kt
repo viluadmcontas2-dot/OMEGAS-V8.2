@@ -61,13 +61,13 @@ class AutoCalNativeActionManager(
         RESET_PETROL(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
             "Readquirir gasolina",
-            "Usa a ação nativa dedicada Reset petrol point do ProgBase 4.2.0.6 (modo 0x01). A Curva K usa outro caminho. O OMEGAS registra snapshot antes/depois e sinaliza se observar mudança fora do escopo esperado.",
+            "Usa a ação nativa dedicada Reset petrol point do ProgBase 4.2.0.6 (modo 0x01). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
             true,
         ),
         RESET_GAS(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
             "Readquirir GNV",
-            "Usa a ação nativa dedicada Reset gas point do ProgBase 4.2.0.6 (modo 0x02). A Curva K usa outro caminho. O OMEGAS registra snapshot antes/depois e sinaliza se observar mudança fora do escopo esperado.",
+            "Usa a ação nativa dedicada Reset gas point do ProgBase 4.2.0.6 (modo 0x02). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
             true,
         ),
         RESET_ALL(
@@ -81,7 +81,7 @@ class AutoCalNativeActionManager(
     // ProgBase 4.2.0.6 canônico, raw RTTI + wrappers (Atlas):
     // 0x08 = Manual AutoMatch; 0x01 = Reset petrol; 0x02 = Reset gas; 0x04 = Reset all.
     // Modify Map Refs e Reset K Factor são caminhos separados no código original.
-    // OMEGAS preserva confirmação humana e backup pré-mutação como extensão de segurança.
+    // OMEGAS preserva confirmação humana, ACK e readback. Backup é uma ação manual separada.
     private data class Preparation(
         val id: String,
         val action: Action,
@@ -174,7 +174,7 @@ class AutoCalNativeActionManager(
             preparation = null
             current
         }
-        update("QUEUED", "Ação confirmada; iniciando recibo antes/depois", 0, prepared)
+        update("QUEUED", "Ação confirmada; enviando para a ECU", 0, prepared)
         executor.execute { executePrepared(prepared) }
         return JSONObject()
             .put("ok", true)
@@ -209,18 +209,7 @@ class AutoCalNativeActionManager(
         val startedAt = System.currentTimeMillis()
         try {
             ensureSession(prepared)
-            update("READING_BEFORE", "Lendo snapshot anterior", 8, prepared)
-            val before = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-            ensureSession(prepared)
-            val preMutationBackup = if (!prepared.action.operationalToggle) {
-                update("PERSISTING_BACKUP", "Gravando backup obrigatório antes do reset", 36, prepared)
-                persistPreMutationBackup(prepared, before)
-            } else {
-                null
-            }
-            ensureSession(prepared)
-
-            update("SENDING_ACTION", prepared.action.label, 48, prepared)
+            update("SENDING_ACTION", prepared.action.label, 18, prepared)
             val reply = transaction(
                 prepared.action.request,
                 "AutoCal ${prepared.action.name}",
@@ -233,21 +222,15 @@ class AutoCalNativeActionManager(
 
             Thread.sleep(250L)
             ensureSession(prepared)
-            update("READING_AFTER", "Lendo snapshot posterior", 70, prepared)
+            update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
             val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
             validateActionReadback(prepared.action, after)
-            val receipt = receipt(prepared, reply, before, after, startedAt, preMutationBackup)
+            val receipt = receipt(prepared, reply, after, startedAt)
             appendReceipt(receipt)
             try { onConfirmed(receipt) } catch (_: Exception) {}
-            val scope = receipt.optJSONObject("scopeAssessment") ?: JSONObject()
-            val scopeAttention = scope.optBoolean("requiresAttention", false)
             update(
-                if (scopeAttention) "CONFIRMED_WITH_SCOPE_WARNING" else "CONFIRMED",
-                if (scopeAttention) {
-                    "ACK confirmado; o readback exige atenção ao escopo observado. Veja o recibo antes/depois."
-                } else {
-                    scope.optString("humanSummary", "Ação confirmada por ACK e recibo antes/depois")
-                },
+                "CONFIRMED",
+                "ACK confirmado; estado da ECU atualizado",
                 100,
                 prepared,
                 receipt,
@@ -292,159 +275,30 @@ class AutoCalNativeActionManager(
     private fun receipt(
         prepared: Preparation,
         reply: UsbProtocolReply,
-        before: AutoCalSnapshot,
         after: AutoCalSnapshot,
         startedAt: Long,
-        preMutationBackup: JSONObject?,
-    ): JSONObject {
-        val changed = JSONArray()
-        fieldsForReceipt.distinctBy { it.identity }.sortedWith(compareBy<AutoCalProtocol.Field> { it.address }.thenBy { it.index ?: -1 }).forEach { field ->
-            val old = before.field(field)
-            val fresh = after.field(field)
-            if (old?.status != fresh?.status || old?.rawPayloadHex != fresh?.rawPayloadHex) {
-                changed.put(JSONObject()
-                    .put("key", field.key)
-                    .put("address", field.address)
-                    .put("beforeStatus", old?.status?.name ?: JSONObject.NULL)
-                    .put("afterStatus", fresh?.status?.name ?: JSONObject.NULL)
-                    .put("beforeRaw", old?.rawPayloadHex ?: "")
-                    .put("afterRaw", fresh?.rawPayloadHex ?: ""))
-            }
-        }
-        return JSONObject()
-            .put("id", "RECEIPT-${UUID.randomUUID()}")
-            .put("preparationId", prepared.id)
-            .put("action", prepared.action.name)
-            .put("label", prepared.action.label)
-            .put("commandHex", prepared.action.request.hex())
-            .put("ackStatus", reply.status)
-            .put("sessionId", prepared.sessionId)
-            .put("startedAtMs", startedAt)
-            .put("finishedAtMs", System.currentTimeMillis())
-            .put("beforeHash", before.snapshotHash)
-            .put("afterHash", after.snapshotHash)
-            .put("beforePartial", before.partial)
-            .put("afterPartial", after.partial)
-            .put("changedFields", changed)
-            .put("scopeAssessment", scopeAssessment(prepared.action, changed, before, after))
-            .put("before", before.toJson())
-            .put("after", after.toJson())
-            .put("ecuMutation", true)
-            .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
-            .put("humanConfirmed", true)
-            .put("automatic", false)
-            .put("manualOnly", true)
-            .put("readbackValid", true)
-            .put("preMutationBackup", preMutationBackup ?: JSONObject.NULL)
-            .put("automaticRollback", false)
-    }
-
-    private fun scopeAssessment(
-        action: Action,
-        changed: JSONArray,
-        before: AutoCalSnapshot,
-        after: AutoCalSnapshot,
-    ): JSONObject {
-        val changedKeys = buildSet {
-            for (index in 0 until changed.length()) {
-                val key = changed.optJSONObject(index)?.optString("key").orEmpty()
-                if (key.isNotBlank()) add(key)
-            }
-        }
-        val petrolChanged = changedKeys.any { it in PETROL_ACQUISITION_KEYS }
-        val gasChanged = changedKeys.any { it in GAS_ACQUISITION_KEYS }
-        val mulActChanged = AutoCalProtocol.MUL_ACT.key in changedKeys
-        val scopeConclusive = !before.partial && !after.partial
-
-        val intendedScope = when (action) {
-            Action.RESET_GAS -> "GNV_REACQUISITION"
-            Action.RESET_PETROL -> "PETROL_REACQUISITION"
-            Action.RESET_ALL -> "FULL_REACQUISITION"
-            else -> "OPERATIONAL_TOGGLE"
-        }
-        val broaderThanIntended = when (action) {
-            Action.RESET_GAS -> petrolChanged || mulActChanged
-            Action.RESET_PETROL -> gasChanged || mulActChanged
-            else -> false
-        }
-        val requiresAttention = !scopeConclusive || broaderThanIntended
-        val dedicatedScopeObserved = scopeConclusive && when (action) {
-            Action.RESET_GAS -> gasChanged && !petrolChanged && !mulActChanged
-            Action.RESET_PETROL -> petrolChanged && !gasChanged && !mulActChanged
-            else -> false
-        }
-        val humanSummary = when {
-            !scopeConclusive ->
-                "ACK confirmado, mas o snapshot posterior ficou parcial; o escopo da mudança não pôde ser fechado."
-            broaderThanIntended ->
-                "ACK confirmado, mas o snapshot posterior mostra mudança fora da readquisição solicitada."
-            action == Action.RESET_GAS && dedicatedScopeObserved ->
-                "GNV liberado para readquisição; neste readback, gasolina e Curva K permaneceram preservadas."
-            action == Action.RESET_PETROL && dedicatedScopeObserved ->
-                "Gasolina liberada para readquisição; neste readback, GNV e Curva K permaneceram preservados."
-            else ->
-                "Ação confirmada por ACK e snapshot antes/depois; nenhuma mudança fora do escopo esperado foi observada."
-        }
-
-        return JSONObject()
-            .put("intendedScope", intendedScope)
-            .put("scopeConclusive", scopeConclusive)
-            .put("petrolAcquisitionChanged", petrolChanged)
-            .put("gasAcquisitionChanged", gasChanged)
-            .put("mulActChanged", mulActChanged)
-            .put("broaderThanIntended", broaderThanIntended)
-            .put("dedicatedScopeObserved", dedicatedScopeObserved)
-            .put("requiresAttention", requiresAttention)
-            .put("changedKeys", JSONArray(changedKeys.sorted()))
-            .put("humanSummary", humanSummary)
-    }
-
-    private fun persistPreMutationBackup(
-        prepared: Preparation,
-        before: AutoCalSnapshot,
-    ): JSONObject {
-        require(!before.partial) {
-            "Backup pré-reset incompleto; reset bloqueado antes da USB"
-        }
-        val root = File(receiptFile.parentFile, "backups/autocal_pre_reset")
-        require(root.exists() || root.mkdirs()) {
-            "Não foi possível criar o diretório de backup pré-reset"
-        }
-        require(root.isDirectory) {
-            "Diretório de backup pré-reset inválido"
-        }
-        val createdAtMs = System.currentTimeMillis()
-        val backupFile = File(root, "autocal_pre_reset_${createdAtMs}_${prepared.action.name}.json")
-        val payload = JSONObject()
-            .put("format", "omegas-autocal-pre-reset-v1")
-            .put("action", prepared.action.name)
-            .put("label", prepared.action.label)
-            .put("commandHex", prepared.action.request.hex())
-            .put("sessionId", prepared.sessionId)
-            .put("createdAtMs", createdAtMs)
-            .put("beforeHash", before.snapshotHash)
-            .put("beforePartial", before.partial)
-            .put("before", before.toJson())
-        atomicWrite(backupFile, payload.toString(2))
-
-        val verified = JSONObject(backupFile.readText(Charsets.UTF_8))
-        require(verified.getString("format") == "omegas-autocal-pre-reset-v1") {
-            "Formato do backup pré-reset inválido"
-        }
-        require(verified.getString("beforeHash") == before.snapshotHash) {
-            "Hash do backup pré-reset divergente"
-        }
-        require(
-            verified.getJSONObject("before").getString("snapshotHash") == before.snapshotHash,
-        ) {
-            "Snapshot do backup pré-reset divergente"
-        }
-        return JSONObject()
-            .put("verified", true)
-            .put("fileName", backupFile.name)
-            .put("beforeHash", before.snapshotHash)
-            .put("createdAtMs", createdAtMs)
-    }
+    ): JSONObject = JSONObject()
+        .put("id", "RECEIPT-${UUID.randomUUID()}")
+        .put("preparationId", prepared.id)
+        .put("action", prepared.action.name)
+        .put("label", prepared.action.label)
+        .put("commandHex", prepared.action.request.hex())
+        .put("ackStatus", reply.status)
+        .put("sessionId", prepared.sessionId)
+        .put("startedAtMs", startedAt)
+        .put("finishedAtMs", System.currentTimeMillis())
+        .put("afterHash", after.snapshotHash)
+        .put("afterPartial", after.partial)
+        .put("after", after.toJson())
+        .put("ecuMutation", true)
+        .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
+        .put("humanConfirmed", true)
+        .put("automatic", false)
+        .put("manualOnly", true)
+        .put("readbackValid", true)
+        .put("preMutationBackup", JSONObject.NULL)
+        .put("automaticBackup", false)
+        .put("automaticRollback", false)
 
     private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
         val expected = action.expectedEnableReadback ?: return
@@ -533,22 +387,5 @@ class AutoCalNativeActionManager(
         private const val PREPARATION_TTL_MS = 120_000L
         private const val MAX_RECEIPTS = 200
 
-        private val PETROL_ACQUISITION_KEYS = setOf(
-            AutoCalProtocol.NUM_BUF_UPD_PETR.key,
-            AutoCalProtocol.PETR_INJ_TBUF.key,
-            AutoCalProtocol.MNFLD_PRESS_BUF.key,
-            AutoCalProtocol.ACQUIRED_ZONES_PETROL.key,
-            AutoCalProtocol.PETR_MNFLD_PRESS_RV.key,
-        )
-
-        private val GAS_ACQUISITION_KEYS = setOf(
-            AutoCalProtocol.NUM_BUF_UPD_GAS.key,
-            AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV.key,
-            AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV.key,
-            AutoCalProtocol.PETR_INJ_TBUF_GAS.key,
-            AutoCalProtocol.MNFLD_PRESS_BUF_GAS.key,
-            AutoCalProtocol.ACQUIRED_ZONES_GAS.key,
-            AutoCalProtocol.GAS_MNFLD_PRESS_RV.key,
-        )
     }
 }
