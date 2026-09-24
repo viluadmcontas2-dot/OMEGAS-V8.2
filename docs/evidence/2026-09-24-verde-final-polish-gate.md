@@ -25,3 +25,5 @@ Locked product requirements:
 - ECU writes retain ACK + readback.
 
 PR-triggered authorized APK gate retriggered after the manual-only canonical CI contract was restored.
+
+Retrigger after removing the non-essential PR comment step that returned HTTP 403.
