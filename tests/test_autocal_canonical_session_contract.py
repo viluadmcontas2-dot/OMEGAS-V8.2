@@ -33,7 +33,7 @@ assert 'fun exportSession(' in RECORDER
 assert 'ZipOutputStream' in RECORDER
 
 # Operator messaging says evidence is saved into the same OMEGAS sessions/document mirror.
-assert 'Salvando em Documentos/Omegas automaticamente enquanto a sessão acontece.' in COCKPIT
-assert 'Salvo em Documentos/Omegas. Abra Sessões apenas para revisar ou exportar.' in COCKPIT
+assert 'Salvando em Downloads/Omegas automaticamente enquanto a sessão acontece.' in COCKPIT
+assert 'Salvo em Downloads/Omegas. Abra Sessões apenas para revisar ou exportar.' in COCKPIT
 
 print("AUTOCAL_CANONICAL_SESSION_CONTRACT=PASS")
