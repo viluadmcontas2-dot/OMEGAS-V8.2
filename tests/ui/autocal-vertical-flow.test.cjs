@@ -14,8 +14,10 @@ assert.equal(cockpit.includes('autocal-secondary-stack'), true,
 assert.ok(cockpit.indexOf('autocalReferenceChart') < cockpit.indexOf('autocal-secondary-details'),
   'graph must precede all secondary content in reading order');
 
-assert.match(css, /\.autocal-cockpit-view\s*\{[\s\S]*?overflow-y:\s*auto;/,
-  'the page must own vertical scrolling');
+assert.match(css, /\.screen\.autocal-route-screen\s*\{[\s\S]*?overflow-y:\s*auto;/,
+  'the AutoCal screen itself must be the single vertical scroll authority');
+assert.match(css, /\.autocal-cockpit-view\s*\{[\s\S]*?overflow:\s*visible;/,
+  'the cockpit host must not create a nested scroll viewport');
 assert.match(css, /\.autocal-cockpit\s*\{[\s\S]*?overflow:\s*visible;/,
   'cockpit must not trap scrolling in an inner viewport');
 assert.match(css, /\.autocal-secondary-details\s*\{[\s\S]*?position:\s*static;/,
