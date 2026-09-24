@@ -23,7 +23,7 @@ test('AutoCal uses graph-first premium hierarchy', () => {
 });
 
 test('secondary state stays below the graph in one vertical flow', () => {
-  assert.match(css, /\.autocal-cockpit-view\s*\{[\s\S]*overflow-y:\s*auto/);
+  assert.match(css, /\.screen\.autocal-route-screen\s*\{[\s\S]*overflow-y:\s*auto/);
   assert.match(css, /\.autocal-secondary-details\s*\{[\s\S]*position:\s*static/);
   assert.match(css, /\.autocal-secondary-card\s*\{[\s\S]*width:\s*100%/);
   assert.match(css, /\.autocal-chart-inspector\s*\{[\s\S]*position:\s*absolute/);
