@@ -508,19 +508,22 @@ class DashboardLevelsRenderTest {
               hasLevelsMetric: document.getElementById('autocalLiveLevel') !== null,
               geometry: (() => {
                 const chart = document.getElementById('autocalReferenceChart')?.getBoundingClientRect();
-                const live = document.querySelector('.autocal-live-strip')?.getBoundingClientRect();
-                const hero = document.querySelector('.autocal-hero')?.getBoundingClientRect();
+                const toolbar = document.querySelector('.autocal-focus-toolbar')?.getBoundingClientRect();
+                const details = document.querySelector('.autocal-secondary-details > summary')?.getBoundingClientRect();
                 const inspector = document.getElementById('autocalChartInspector')?.getBoundingClientRect();
+                const screen = document.querySelector('[data-screen="autocal"]');
                 return {
                   chartHeight: chart?.height ?? 0,
                   chartWidth: chart?.width ?? 0,
                   chartTop: chart?.top ?? 0,
                   chartBottom: chart?.bottom ?? 0,
-                  liveTop: live?.top ?? 0,
-                  liveBottom: live?.bottom ?? 0,
-                  heroTop: hero?.top ?? 0,
-                  heroHeight: hero?.height ?? 0,
+                  toolbarTop: toolbar?.top ?? 0,
+                  toolbarBottom: toolbar?.bottom ?? 0,
+                  detailsTop: details?.top ?? 0,
+                  detailsBottom: details?.bottom ?? 0,
                   viewportHeight: window.innerHeight,
+                  screenScrollWidth: screen?.scrollWidth ?? 0,
+                  screenClientWidth: screen?.clientWidth ?? 0,
                   inspectorWidth: inspector?.width ?? 0,
                   inspectorTop: inspector?.top ?? 0,
                   inspectorBottom: inspector?.bottom ?? 0
@@ -901,15 +904,14 @@ class DashboardLevelsRenderTest {
             assertTrue("AutoCal live Petrol Injection must be present", dom.optString("petrol") != "—")
             assertTrue("AutoCal live MAP must be present", dom.optString("map") != "—")
             val geometry = dom.getJSONObject("geometry")
-            assertTrue("Acquisition chart must dominate vertically", geometry.getDouble("chartHeight") >= 300.0)
+            assertTrue("Acquisition chart must dominate vertically", geometry.getDouble("chartHeight") >= 420.0)
             assertTrue("Acquisition chart must use the available horizontal canvas", geometry.getDouble("chartWidth") >= 760.0)
-            assertTrue("Live telemetry rail must sit below the chart", geometry.getDouble("liveTop") >= geometry.getDouble("chartBottom"))
-            assertTrue("Live telemetry rail must remain visible without scrolling", geometry.getDouble("liveBottom") <= geometry.getDouble("viewportHeight"))
-            assertTrue("Operational hero must follow the instrument surface", geometry.getDouble("heroTop") >= geometry.getDouble("liveBottom"))
-            assertTrue("Operational hero must stay compact relative to chart", geometry.getDouble("heroHeight") < geometry.getDouble("chartHeight"))
-            assertTrue("Point inspector must sit below the plot instead of overlaying it", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartBottom"))
-            assertTrue("Live telemetry rail must follow the point inspector", geometry.getDouble("liveTop") >= geometry.getDouble("inspectorBottom"))
-            assertTrue("Point inspector may use chart width without narrowing the plot", geometry.getDouble("inspectorWidth") >= geometry.getDouble("chartWidth") * 0.70)
+            assertTrue("Operational toolbar must precede the chart", geometry.getDouble("toolbarBottom") <= geometry.getDouble("chartTop"))
+            assertTrue("Secondary disclosure must follow the chart in reading order", geometry.getDouble("detailsTop") >= geometry.getDouble("chartBottom"))
+            assertTrue("AutoCal must not create horizontal overflow", geometry.getDouble("screenScrollWidth") <= geometry.getDouble("screenClientWidth") + 1.0)
+            assertTrue("Point inspector must stay inside the graph surface", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartTop"))
+            assertTrue("Point inspector must stay inside the graph surface", geometry.getDouble("inspectorBottom") <= geometry.getDouble("chartBottom"))
+            assertTrue("Point inspector must remain contextual instead of narrowing the plot", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.35)
         } finally {
             scenario.close()
         }
@@ -923,13 +925,15 @@ class DashboardLevelsRenderTest {
             val provenance = installVisualOnlySparseZoneFixture(scenario)
             activateAutocal(scenario)
             injectFresh(scenario, live, settleMs = 850L)
+            val dom = autocalReferenceDom(scenario)
+
             evalRaw(
                 scenario,
                 "document.querySelector('.autocal-secondary-details')?.setAttribute('open', ''); 'ok';",
             )
             SystemClock.sleep(120L)
-            val dom = autocalReferenceDom(scenario)
-            saveEvidence("autocal-sparse-zone-map", dom, scenario, provenance)
+            val expandedDom = autocalReferenceDom(scenario)
+            saveEvidence("autocal-sparse-zone-map", expandedDom, scenario, provenance)
 
             assertEquals(
                 "Gas zone identity must remain sparse instead of compacting N/4",
@@ -981,11 +985,11 @@ class DashboardLevelsRenderTest {
             )
             assertTrue("AGORA cursor must name its zone ON THE CHART", dom.getString("liveZoneLabel").contains("AGORA · Z"))
             assertTrue("Owner must have an enabled broad acquisition reset", dom.getBoolean("broadResetEnabled"))
-            assertTrue("Secondary information must expand in the same vertical flow", dom.getBoolean("detailsOpen"))
-            assertTrue("Zone map must follow the graph vertically instead of becoming a horizontal rail", dom.getDouble("zoneMeterBottom") > dom.getDouble("chartBottom"))
-            assertTrue("Expanded AutoCal must not create horizontal overflow", dom.getDouble("screenScrollWidth") <= dom.getDouble("screenClientWidth") + 1.0)
-            assertTrue("Expanded secondary content must use vertical page scrolling", dom.getDouble("screenScrollHeight") > dom.getDouble("screenClientHeight"))
-            assertTrue("Acquisition chart must dominate the Custom-ROM viewport", dom.getDouble("chartHeight") >= 420.0)
+            assertTrue("Secondary information must expand in the same vertical flow", expandedDom.getBoolean("detailsOpen"))
+            assertTrue("Zone map must follow the graph vertically instead of becoming a horizontal rail", expandedDom.getDouble("zoneMeterBottom") > expandedDom.getDouble("chartBottom"))
+            assertTrue("Expanded AutoCal must not create horizontal overflow", expandedDom.getDouble("screenScrollWidth") <= expandedDom.getDouble("screenClientWidth") + 1.0)
+            assertTrue("Expanded secondary content must use vertical page scrolling", expandedDom.getDouble("screenScrollHeight") > expandedDom.getDouble("screenClientHeight"))
+            assertTrue("Acquisition chart must dominate the Custom-ROM viewport", expandedDom.getDouble("chartHeight") >= 420.0)
             assertTrue("Duplicated live narrative must not compete with the primary curve", !dom.getBoolean("liveNarrativeVisible"))
             assertTrue("AutoCal must not waste a full row on the global route header", !dom.getBoolean("workspaceHeadVisible"))
             assertEquals("AutoCal must not render a second page intro", 0, dom.getInt("autoCalPageIntroCount"))
