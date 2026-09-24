@@ -110,6 +110,119 @@ class V7JavascriptBridge(activity: MainActivity) {
         }
 
     @JavascriptInterface
+    fun startCurveReset(): String {
+        val currentActivity = activity ?: return unavailable()
+        val service = currentActivity.serviceOrNull() ?: return unavailable()
+        unsafeCalibrationWriteReason(service)?.let { return safetyBlocked(it) }
+        if (!busy.compareAndSet(false, true)) {
+            return JSONObject().put("ok", false).put("busy", true)
+                .put("error", "Outra operação V8 está em andamento").toString()
+        }
+        val startedAt = System.currentTimeMillis()
+        lastOperation = JSONObject()
+            .put("ok", true)
+            .put("state", "CURVE_RESET_QUEUED")
+            .put("busy", true)
+            .put("progress", 0)
+            .put("message", "Preparando reset da Curva K para 1.0")
+            .put("startedAt", startedAt)
+
+        executor.execute {
+            var finalStatus: JSONObject? = null
+            try {
+                unsafeCalibrationWriteReason(service)?.let { reasonUnsafe ->
+                    finalStatus = JSONObject()
+                        .put("ok", false)
+                        .put("state", "CURVE_RESET_FAILED")
+                        .put("safetyBlocked", true)
+                        .put("error", reasonUnsafe)
+                }
+                if (finalStatus == null) {
+                    val started = JSONObject(service.startKFactorReset())
+                    if (!started.optBoolean("ok") || !started.optBoolean("started")) {
+                        finalStatus = JSONObject(started.toString()).put("state", "CURVE_RESET_FAILED")
+                    } else {
+                        val deadline = System.currentTimeMillis() + OPERATION_TIMEOUT_MS
+                        while (finalStatus == null) {
+                            if (Thread.currentThread().isInterrupted) throw InterruptedException("Reset da Curva K interrompido")
+                            if (System.currentTimeMillis() > deadline) {
+                                finalStatus = JSONObject()
+                                    .put("ok", false)
+                                    .put("state", "CURVE_RESET_FAILED")
+                                    .put("error", "Tempo limite aguardando confirmação do reset da Curva K")
+                                break
+                            }
+                            val status = try {
+                                JSONObject(service.kFactorStatusJson())
+                            } catch (error: Exception) {
+                                JSONObject().put("state", "RESET_FAILED")
+                                    .put("error", error.message ?: "Status da Curva K indisponível")
+                            }
+                            val writerState = status.optString("state", "")
+                            val details = status.optJSONObject("details") ?: JSONObject()
+                            val progress = status.optInt("progress", 0)
+                            lastOperation = JSONObject(status.toString())
+                                .put("ok", !writerState.contains("FAILED"))
+                                .put("state", "CURVE_RESETTING")
+                                .put("writerState", writerState)
+                                .put("busy", true)
+                                .put("progress", progress)
+                                .put("startedAt", startedAt)
+                            when {
+                                writerState == "RESET_CONFIRMED" -> {
+                                    finalStatus = JSONObject(status.toString())
+                                        .put("ok", true)
+                                        .put("state", "BATCH_CONFIRMED")
+                                        .put("readbackValid", true)
+                                }
+                                writerState == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false) -> {
+                                    finalStatus = JSONObject(status.toString())
+                                        .put("ok", true)
+                                        .put("state", "BATCH_CONFIRMED")
+                                        .put("readbackValid", true)
+                                }
+                                writerState.contains("FAILED") -> {
+                                    finalStatus = JSONObject(status.toString())
+                                        .put("ok", false)
+                                        .put("state", "CURVE_RESET_FAILED")
+                                }
+                                else -> Thread.sleep(80L)
+                            }
+                        }
+                    }
+                }
+            } catch (error: Exception) {
+                finalStatus = JSONObject()
+                    .put("ok", false)
+                    .put("state", "CURVE_RESET_FAILED")
+                    .put("error", error.message ?: "Falha ao coordenar reset da Curva K")
+            }
+
+            val status = finalStatus ?: JSONObject()
+                .put("ok", false)
+                .put("state", "CURVE_RESET_FAILED")
+                .put("error", "Confirmação do reset ausente")
+            val confirmed = status.optString("state") == "BATCH_CONFIRMED" &&
+                status.optBoolean("readbackValid", false)
+            lastOperation = JSONObject(status.toString())
+                .put("ok", confirmed)
+                .put("busy", false)
+                .put("state", if (confirmed) "BATCH_CONFIRMED" else "CURVE_RESET_FAILED")
+                .put("readbackValid", confirmed)
+                .put("completedAt", System.currentTimeMillis())
+            busy.set(false)
+        }
+
+        return JSONObject()
+            .put("ok", true)
+            .put("started", true)
+            .put("state", "CURVE_RESET_QUEUED")
+            .put("busy", true)
+            .put("humanConfirmationRequired", true)
+            .toString()
+    }
+
+    @JavascriptInterface
     fun startCurveBatchWrite(pointsJson: String, reason: String): String {
         val currentActivity = activity ?: return unavailable()
         val service = currentActivity.serviceOrNull() ?: return unavailable()
