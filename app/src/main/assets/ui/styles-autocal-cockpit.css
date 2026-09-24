@@ -1547,7 +1547,7 @@
 }
 
 /* 2026-09-24 — Premium cockpit final direction.
-   Primary surface = graph. Everything secondary lives on a horizontal rail. */
+   Primary surface = graph. Secondary content stays collapsed below it in one vertical flow. */
 .autocal-cockpit-view {
   overflow-y: auto;
   overflow-x: hidden;
