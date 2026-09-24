@@ -41,8 +41,10 @@ assert.equal(cockpit.includes('data-curve-panel="autocal"'), false,
   'painel AutoCal não pode ser injetado dentro da Curva K');
 assert.match(cockpit, /route === ['"]autocal['"]/,
   'cockpit deve acompanhar a rota AutoCal');
-assert.match(cockpit, /data-autocal-cancel-read/,
-  'leitura em andamento precisa oferecer cancelamento');
+assert.equal(cockpit.includes('data-autocal-read'), false,
+  'cockpit operacional não deve expor consulta manual da ECU');
+assert.match(cockpit, /autocal-secondary-details/,
+  'informações secundárias devem ficar recolhidas fora da superfície principal');
 assert.match(cockpit, /this\.api\.projection/,
   'cockpit deve consumir a projeção Kotlin unificada');
 assert.equal(bridge.includes('telemetryStore.liveJson()'), false,
