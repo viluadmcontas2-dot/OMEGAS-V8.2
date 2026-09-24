@@ -15,9 +15,16 @@ assert "requiresCriticalConfirmation\", !action.operationalToggle" in manager
 assert "if (!action.operationalToggle)" in manager
 assert "if (!current.action.operationalToggle)" in manager
 assert "if (!prepared.action.operationalToggle)" in manager
-assert "RESET_ALL(" not in manager
-assert "data-autocal-action=\"RESET_PETROL\"" not in cockpit
-assert "data-autocal-action=\"RESET_GAS\"" in cockpit
+
+# Destructive resets are separate from the operational enable/pause toggle,
+# but they are intentionally present because the canonical ProgBase EXE proves them.
+assert "RESET_PETROL(" in manager
+assert "RESET_GAS(" in manager
+assert "RESET_ALL(" in manager
+assert 'data-autocal-action="RESET_PETROL"' in cockpit
+assert 'data-autocal-action="RESET_GAS"' in cockpit
+assert 'data-autocal-action="RESET_K_FACTOR"' in cockpit
+assert 'data-autocal-action="RESET_ALL"' in cockpit
 assert "Continuar para confirmação Android" in cockpit
 
 print("AUTOCAL_OPERATIONAL_TOGGLE_CONTRACT=PASS")
