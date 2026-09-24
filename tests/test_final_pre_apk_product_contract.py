@@ -57,3 +57,14 @@ assert "18 REGIÕES · DETALHE TÉCNICO" in autocal
 assert "height: clamp(340px, 52vh, 430px)" in css
 
 print("FINAL_PRE_APK_PRODUCT_CONTRACT=PASS")
+
+# Multimidia: sem scroll horizontal operacional e sem mini-scroll no card de revisão.
+assert "overflow-x: auto" not in css
+assert "overflow-x: scroll" not in css
+review_card_block = css.split(".autocal-review-card {", 1)[1].split("}", 1)[0]
+assert "overflow: auto" not in review_card_block
+assert "overflow: scroll" not in review_card_block
+assert "overflow: visible" in review_card_block
+review_overlay_block = css.split(".autocal-review {", 1)[1].split("}", 1)[0]
+assert "overflow-y: auto" in review_overlay_block
+assert "overflow-x: hidden" in review_overlay_block
