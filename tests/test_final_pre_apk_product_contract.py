@@ -56,6 +56,10 @@ assert autocal.index('<details id="autocalTechnicalDetails"') < autocal.index('i
 assert "18 REGIÕES · DETALHE TÉCNICO" in autocal
 assert "height: clamp(340px, 52vh, 430px)" in css
 
+# Custom ROM/head unit: WebView render can lag briefly; AGORA must not vanish mid-refresh.
+assert "const AUTO_CAL_LIVE_STALE_MS = 7500" in autocal
+assert "2,5 s" not in autocal
+
 print("FINAL_PRE_APK_PRODUCT_CONTRACT=PASS")
 
 # Multimidia: sem scroll horizontal operacional e sem mini-scroll no card de revisão.
