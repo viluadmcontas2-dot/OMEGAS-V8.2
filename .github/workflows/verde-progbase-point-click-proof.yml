@@ -157,6 +157,93 @@ jobs:
               ])
           PY
 
+      - name: Resolve point-delete data model and writer semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "== UNDELPHI METHODS AROUND 0x00512xxx =="
+            grep -Ein -C 10 '0x00512[0-9a-fA-F]{3}' atlas-undelphi/undelphi.txt || true
+            echo
+            echo "== AUTOCAL DATA-MODEL NAMES =="
+            grep -Ein -C 8 '(TAutoCal|AutoCal.*Data|Data.*AutoCal|Acquisition.*Data|Acqusition.*Data|NumBuf|TBuf|MUL_ACT|MNFLD)' atlas-undelphi/undelphi.txt || true
+          } | tee point-proof/model-rtti.txt
+
+          python3 - <<'PY' | tee point-proof/writer-callgraph.txt
+          import struct
+          from pathlib import Path
+          import pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+
+          exe=Path("/tmp/ProgBase.exe")
+          data=exe.read_bytes()
+          pe=pefile.PE(str(exe),fast_load=False)
+          image=int(pe.OPTIONAL_HEADER.ImageBase)
+          text=next(s for s in pe.sections if s.Name.rstrip(b'\0')==b'.text')
+          text_va=image+int(text.VirtualAddress)
+          text_off=int(text.PointerToRawData)
+          text_bytes=data[text_off:text_off+int(text.SizeOfRawData)]
+
+          def va_to_off(va):
+              rva=va-image
+              for s in pe.sections:
+                  start=int(s.VirtualAddress); size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+                  if start<=rva<start+size:
+                      return int(s.PointerToRawData)+(rva-start)
+              return None
+
+          # Parse all recovered Delphi method symbols.
+          symbols={}
+          txt=Path("atlas-undelphi/undelphi.txt").read_text(encoding="utf-8",errors="ignore")
+          import re
+          for m in re.finditer(r'0x([0-9a-fA-F]{8})\s+([A-Za-z_]\w*)',txt):
+              symbols[int(m.group(1),16)]=m.group(2)
+
+          def nearest_symbol(va):
+              candidates=[x for x in symbols if x<=va]
+              if not candidates: return None
+              a=max(candidates)
+              return a,symbols[a],va-a
+
+          target=0x009244C8
+          # x86 CALL rel32: destination = next_ip + signed displacement.
+          sites=[]
+          for i in range(len(text_bytes)-5):
+              if text_bytes[i]!=0xE8: continue
+              disp=struct.unpack_from("<i",text_bytes,i+1)[0]
+              site=text_va+i
+              dest=site+5+disp
+              if dest==target:
+                  sites.append(site)
+
+          print("WRITER_TARGET=0x%08X"%target)
+          print("CALL_SITE_COUNT",len(sites))
+          for site in sites:
+              print("\nCALL_SITE 0x%08X nearest=%r"%(site,nearest_symbol(site)))
+              start=max(text_va,site-96)
+              off=va_to_off(start)
+              md=Cs(CS_ARCH_X86,CS_MODE_32)
+              for ins in md.disasm(data[off:off+192],start):
+                  prefix=">>" if ins.address==site else "  "
+                  print(f"{prefix} {ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+                  if ins.address>site+48: break
+
+          print("\n== GENERIC WRITER 0x009244C8 ==")
+          off=va_to_off(target)
+          md=Cs(CS_ARCH_X86,CS_MODE_32)
+          for n,ins in enumerate(md.disasm(data[off:off+1200],target)):
+              print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+              if ins.mnemonic.startswith("ret") or n>=320: break
+
+          # Dump the two functions adjacent to the point-delete commit gate.
+          for va in (0x00512264,0x00512300):
+              print(f"\n== TARGET 0x{va:08X} {symbols.get(va,'')} ==")
+              off=va_to_off(va)
+              for n,ins in enumerate(md.disasm(data[off:off+1100],va)):
+                  print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+                  if ins.mnemonic.startswith("ret") or n>=300: break
+          PY
+
       - name: Publish targeted proof
         uses: actions/upload-artifact@v4
         with:
