@@ -21,7 +21,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var managerService: TelemetryForegroundService? = null
     private var manager: AutoCalSnapshotManager? = null
     private var nativeActions: AutoCalNativeActionManager? = null
-    private var nativeConfirmationPendingId: String? = null
     private var kFactorResetPreparationId: String? = null
     private var kFactorResetPreparedAtMs: Long = 0L
 
@@ -170,8 +169,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     }
 
     /**
-     * Executa após a revisão crítica dentro do OMEGAS. Não abre confirmação Android
-     * redundante; os interlocks, ACK e readback continuam no manager canônico.
+     * Executa após a revisão crítica dentro do OMEGAS. Os interlocks, ACK e
+     * readback continuam no manager canônico.
      */
     @JavascriptInterface
     fun executeNativeAction(preparationId: String): String {
