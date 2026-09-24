@@ -69,7 +69,14 @@ jobs:
                   except Exception:
                       pass
 
-          targets={}
+          targets={
+              "PointHelper_518B80": 0x00518B80,
+              "PointHelper_518D60": 0x00518D60,
+              "PointHelper_518D94": 0x00518D94,
+              "PointHelper_518DF8": 0x00518DF8,
+              "PointHelper_519144": 0x00519144,
+              "PointHelper_519354": 0x00519354,
+          }
           wanted=re.compile(r"(AcqusitionAreas\d*Click|AcquisitionAreas\d*Click|GasPoint\w*Click|PetrolPoint\w*Click|ChartDataClickSeries|ChartDataDblClick|ChartDataMouseUp|ChartDataKeyDown|ChartDataKeyUp|ChartDataClickAxis)",re.I)
           method_line=re.compile(r"(0x[0-9a-fA-F]{6,8})\s+([A-Za-z_]\w*)")
           for fn,text in texts:
@@ -94,6 +101,16 @@ jobs:
                       return int(s.PointerToRawData)+(rva-start)
               return None
           md=Cs(CS_ARCH_X86,CS_MODE_32)
+
+          # Build a best-effort address→Delphi symbol map from the exact undelphi artifact.
+          symbols={}
+          for _,text in texts:
+              for line in text.splitlines():
+                  m=method_line.search(line)
+                  if m:
+                      symbols.setdefault(int(m.group(1),16),m.group(2))
+
+          discovered_calls=set()
           for name,va in sorted(targets.items()):
               off=va_to_off(va)
               print(f"\n== {name} @ 0x{va:08X} ==")
@@ -103,10 +120,36 @@ jobs:
               for n,ins in enumerate(md.disasm(data[off:off+768],va)):
                   print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
                   if ins.mnemonic=="call":
+                      try:
+                          target=int(ins.op_str,0)
+                          calls.append(target)
+                          if 0x00510000 <= target <= 0x0051B000:
+                              discovered_calls.add(target)
+                      except Exception:
+                          pass
+                  if ins.mnemonic.startswith("ret") or n>=220: break
+              print("DIRECT_CALLS", [
+                  f"0x{x:08X}" + (f"={symbols[x]}" if x in symbols else "")
+                  for x in calls
+              ])
+
+          print("\n== ONE-LEVEL INTERNAL CALLEES ==")
+          for va in sorted(discovered_calls - set(targets.values())):
+              off=va_to_off(va)
+              print(f"\n== 0x{va:08X} {symbols.get(va,'')} ==")
+              if off is None:
+                  print("VA_NOT_MAPPED"); continue
+              calls=[]
+              for n,ins in enumerate(md.disasm(data[off:off+512],va)):
+                  print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+                  if ins.mnemonic=="call":
                       try: calls.append(int(ins.op_str,0))
                       except Exception: pass
-                  if ins.mnemonic.startswith("ret") or n>=220: break
-              print("DIRECT_CALLS", [f"0x{x:08X}" for x in calls])
+                  if ins.mnemonic.startswith("ret") or n>=160: break
+              print("DIRECT_CALLS", [
+                  f"0x{x:08X}" + (f"={symbols[x]}" if x in symbols else "")
+                  for x in calls
+              ])
           PY
 
       - name: Publish targeted proof
