@@ -35,6 +35,22 @@ jobs:
           test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
           echo "SOURCE_SHA=$(git rev-parse HEAD)"
 
+      - name: Publish remote run locator
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BODY=$(cat <<EOF
+          OMEGAS_APK_RUN_LOCATOR
+          run_id=${{ github.run_id }}
+          run_attempt=${{ github.run_attempt }}
+          trigger_sha=${{ github.sha }}
+          product_sha=${PRODUCT_SHA}
+          EOF
+          )
+          gh api "repos/${GITHUB_REPOSITORY}/issues/101/comments" -f body="$BODY"
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
