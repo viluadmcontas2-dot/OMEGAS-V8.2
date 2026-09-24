@@ -1211,9 +1211,17 @@
       const host = document.getElementById('autocalActionStatus');
       if (!host) return;
       const state = this.actionState || {};
-      const name = String(state.state || 'IDLE');
+      const name = String(state.state || 'IDLE').toUpperCase();
       const message = String(state.message || 'Nenhuma ação preparada.');
-      host.textContent = name === 'IDLE' ? message : name + ' · ' + message;
+      const working = ['PREPARED', 'QUEUED', 'READING_BEFORE', 'PERSISTING_BACKUP', 'SENDING_ACTION', 'READING_AFTER'].includes(name);
+      const warning = name === 'CONFIRMED_WITH_SCOPE_WARNING';
+      const failed = name === 'FAILED';
+      host.dataset.level = failed ? 'error' : warning ? 'warning' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
+      host.textContent = name === 'IDLE' ? message
+        : warning ? 'Concluído · confira o escopo · ' + message
+        : name === 'CONFIRMED' ? 'Concluído · ' + message
+        : failed ? 'Não concluído · ' + message
+        : 'Executando com segurança · ' + message;
     }
 
     renderReview() {
