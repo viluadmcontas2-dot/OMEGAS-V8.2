@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -31,10 +33,10 @@ jobs:
       - name: Android lint
         run: ./gradlew lintDebug
       - name: Build APK
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk == true }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || (github.event_name == 'pull_request' && github.event.pull_request.number == 101) }}
         run: ./gradlew assembleDebug
       - name: Hash APK
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk == true }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || (github.event_name == 'pull_request' && github.event.pull_request.number == 101) }}
         shell: bash
         run: |
           set -euo pipefail
@@ -42,7 +44,7 @@ jobs:
           test -f "$APK"
           sha256sum "$APK" | tee "$APK.sha256"
       - name: Publish APK artifact
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_apk == true }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || (github.event_name == 'pull_request' && github.event.pull_request.number == 101) }}
         uses: actions/upload-artifact@v4
         with:
           name: omegas-verde-debug-${{ github.sha }}
