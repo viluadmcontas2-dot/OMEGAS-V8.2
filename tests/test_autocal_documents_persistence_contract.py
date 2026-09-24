@@ -13,7 +13,7 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
     def test_documents_mirror_exists_and_uses_exact_public_root(self):
         self.assertTrue(MIRROR_PATH.is_file(), "DocumentsSessionMirror.kt ainda não existe")
         mirror = MIRROR_PATH.read_text(encoding="utf-8")
-        self.assertIn('PUBLIC_ROOT = "Documents/Omegas/AutoCal"', mirror)
+        self.assertIn('PUBLIC_ROOT = "Download/Omegas"', mirror)
         self.assertIn("MediaStore.Files.getContentUri", mirror)
         self.assertIn("MediaStore.MediaColumns.RELATIVE_PATH", mirror)
         self.assertIn("Environment.getExternalStoragePublicDirectory", mirror)
@@ -61,7 +61,7 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
 
     def test_status_tells_hmi_where_the_durable_copy_lives(self):
         self.assertIn('"documentsMirror"', RECORDER)
-        self.assertIn('"Documents/Omegas/AutoCal"', MIRROR_PATH.read_text(encoding="utf-8"))
+        self.assertIn('"Download/Omegas"', MIRROR_PATH.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
