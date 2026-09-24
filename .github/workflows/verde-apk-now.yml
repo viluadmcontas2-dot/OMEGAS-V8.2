@@ -2,6 +2,7 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
+  # APK evidence trigger: 27f7ea1-custom-rom-refine
   push:
     branches: [OmegasVerde]
     paths:
