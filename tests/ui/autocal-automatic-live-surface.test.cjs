@@ -10,6 +10,7 @@ const app = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/app.js'), 'u
 const monitor = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt'), 'utf8');
 
 assert.equal(cockpit.includes('Consultar ECU'), false, 'AutoCal cockpit must not require a manual ECU read');
+assert.doesNotMatch(cockpit, /Consulte a ECU/i, 'operator copy must not tell the user to manually refresh ECU state');
 assert.equal(cockpit.includes('data-autocal-read'), false, 'manual reader controls must not be exposed on the operational surface');
 assert.equal(cockpit.includes('this.api.startRead()'), false, 'cockpit must rely on automatic native monitor');
 assert.equal(cockpit.includes('autocal-secondary-details'), true, 'secondary information must be collapsed below the chart');
