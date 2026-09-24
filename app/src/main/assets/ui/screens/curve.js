@@ -38,6 +38,7 @@
     bind() {
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
+      document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
       document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.writeRestore());
       document.getElementById('curveBackupSelect')?.addEventListener('change', event => {
         const fileName = String(event.target?.value || '');
@@ -113,6 +114,30 @@
       }
       this.backupTask = 'save';
       text('curveBackupStatus', 'Salvando curva atual…');
+    }
+
+    resetCurve() {
+      if (this.reading || this.writing || this.backupTask) return;
+      const confirmed = window.confirm(
+        'Resetar a Curva K para 1.0? A curva atual será lida e um backup automático pré-escrita será preservado antes de qualquer alteração.'
+      );
+      if (!confirmed) return;
+      this.cancelRestorePreview('');
+      this.proposals.clear();
+      this.renderChart();
+      this.renderProposalList();
+      const result = this.api.resetCurve();
+      if (!result?.ok || !result?.started) {
+        this.alert(result?.error || 'Não foi possível iniciar o reset da Curva K.');
+        return;
+      }
+      this.writing = true;
+      this.root?.classList.remove('has-result');
+      this.root?.classList.add('is-writing');
+      text('curveOperationTitle', 'Resetando Curva K para 1.0');
+      text('curveOperationMessage', 'Backup pré-escrita → escrita → ACK → readback');
+      const bar = document.getElementById('curveOperationProgress');
+      if (bar) bar.style.width = '0%';
     }
 
     prepareRestore(fileName = String(document.getElementById('curveBackupSelect')?.value || '')) {
@@ -213,7 +238,7 @@
             this.data = operation.curve;
             this.renderChart();
           }
-          text('curveBackupStatus', 'Curva salva · ' + String(operation.hash || '').slice(0, 8));
+          text('curveBackupStatus', (operation.publicPath || 'Download/Omegas') + ' · ' + String(operation.hash || '').slice(0, 8));
           this.refreshBackups();
           return;
         }
