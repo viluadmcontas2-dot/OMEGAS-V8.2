@@ -17,9 +17,10 @@ for (const method of invoked) {
   assert.match(bridge, new RegExp('fun\\s+' + method + '\\s*\\('), 'bridge Kotlin ausente para AutoCalApi.' + method);
 }
 
+assert.equal(cockpit.includes('data-autocal-read'), false, 'consulta manual da ECU não pertence ao cockpit operacional');
+assert.equal(cockpit.includes('requestRead()'), false, 'cockpit deve depender do monitor nativo automático');
+
 const controls = [
-  ['data-autocal-read', "querySelector('[data-autocal-read]')", 'requestRead()'],
-  ['data-autocal-cancel-read', "querySelector('[data-autocal-cancel-read]')", 'cancelRead()'],
   ['data-autocal-toggle', "querySelector('[data-autocal-toggle]')", 'this.runOperational(action)'],
   ['data-autocal-action', "querySelectorAll('[data-autocal-action]')", 'this.prepare(button.dataset.autocalAction)'],
   ['data-autocal-history', "querySelector('[data-autocal-history]')", 'chartHistoryVisible'],
