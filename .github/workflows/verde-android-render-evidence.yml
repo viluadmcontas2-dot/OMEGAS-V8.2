@@ -2,6 +2,7 @@ name: OmegasVerde Android render evidence
 
 on:
   workflow_dispatch:
+  # Final APK/render evidence can be re-run against an exact SHA.
   push:
     branches: [OmegasVerde]
     paths:

@@ -2,6 +2,10 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
+  push:
+    branches: [OmegasVerde]
+    paths:
+      - '.github/workflows/verde-apk-now.yml'
 
 permissions:
   contents: read
