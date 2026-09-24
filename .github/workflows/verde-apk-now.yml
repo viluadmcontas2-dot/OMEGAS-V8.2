@@ -1,16 +1,20 @@
 name: OMEGAS VERDE APK NOW
 
 on:
+  push:
+    branches: [ OmegasVerde ]
+    paths:
+      - '.github/workflows/verde-apk-now.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  PRODUCT_SHA: ${{ github.sha }}
+  PRODUCT_SHA: febb8482a64e53ca2cafe8a7bd232ad4d38d3693
 
 concurrency:
-  group: omegas-verde-apk-final-${{ github.sha }}
+  group: omegas-verde-apk-final-febb8482
   cancel-in-progress: true
 
 jobs:
@@ -45,10 +49,7 @@ jobs:
           set -euo pipefail
           chmod +x ./gradlew
           python3 -B tools/run_checks.py
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
-            -PomegasAbis=armeabi-v7a \
-            --no-daemon \
-            --stacktrace
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug             -PomegasAbis=armeabi-v7a             --no-daemon             --stacktrace
 
       - name: Verify and hash APK
         id: apk
