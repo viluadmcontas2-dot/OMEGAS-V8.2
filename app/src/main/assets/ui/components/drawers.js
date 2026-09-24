@@ -112,9 +112,9 @@
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
       const settings = {
-        telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 500),
-        maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 64),
-        keepSessions: Number(host.querySelector('[data-session-keep]')?.value || 10),
+        telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 250),
+        maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 256),
+        keepSessions: Math.max(20, Number(host.querySelector('[data-session-keep]')?.value || 20)),
         autoStartOnUsb: host.querySelector('[data-session-autostart]')?.checked === true,
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
@@ -161,9 +161,17 @@
       });
     }
 
+    preserveSessionSettingsInteraction(host) {
+      const panel = host?.querySelector('.diagnostic-settings');
+      if (!panel) return false;
+      const active = document.activeElement;
+      return panel.open === true || (active && panel.contains(active));
+    }
+
     renderTools(state) {
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
+      if (this.preserveSessionSettingsInteraction(host)) return;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
@@ -230,10 +238,10 @@
           <summary>Retenção e tamanho dos logs</summary>
           <div class="diagnostic-settings-grid">
             <label><span>Telemetria salva</span><select data-session-telemetry>
-              ${[200, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
+              ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
             </select></label>
-            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="4" max="1024" step="4" value="${Number(settings.maxSessionMb || status.limitMb || 64)}"><small>MB</small></label>
-            <label><span>Manter sessões</span><input data-session-keep type="number" min="1" max="100" step="1" value="${Number(settings.keepSessions || 10)}"></label>
+            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
+            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
             <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar MP48</span></label>
             <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
           </div>
