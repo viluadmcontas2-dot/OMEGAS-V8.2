@@ -74,6 +74,8 @@ jobs:
               "PointHelper_518D60": 0x00518D60,
               "PointHelper_518D94": 0x00518D94,
               "PointHelper_518DF8": 0x00518DF8,
+              "ActionDeleteSelectedPointsExecute": 0x00518E6C,
+              "MenuChartDataPopup": 0x005190A0,
               "PointHelper_519144": 0x00519144,
               "PointHelper_519354": 0x00519354,
           }
