@@ -31,6 +31,9 @@ class KFactorManager(
     private val log: RingLog,
     private val onBusyChanged: (Boolean) -> Unit,
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
+    private val publishManualBackup: (File) -> JSONObject = {
+        JSONObject().put("ok", true).put("published", false)
+    },
 ) {
     companion object {
         const val MAX_BATCH_POINTS = KFactorProtocol.POINT_COUNT
@@ -211,13 +214,28 @@ class KFactorManager(
                 .put("createdAt", createdAt)
                 .put("hash", curveHash)
                 .put("changes", JSONArray())
-            atomicWrite(File(backupDir, fileName), backup.toString(2))
+            val backupFile = File(backupDir, fileName)
+            atomicWrite(backupFile, backup.toString(2))
             val verified = loadBackup(fileName)
             require(verified.getString("hash") == curveHash) { "Hash do backup salvo divergiu" }
+            val publicCopy = try {
+                publishManualBackup(backupFile)
+            } catch (error: Exception) {
+                JSONObject().put("ok", false).put("error", error.message ?: "Falha ao publicar backup")
+            }
+            if (!publicCopy.optBoolean("ok", false)) {
+                return error("Backup interno validado, mas não foi possível salvar em Download/Omegas")
+                    .put("internalSaved", true)
+                    .put("fileName", fileName)
+                    .put("hash", curveHash)
+                    .put("publicError", publicCopy.optString("error", "Armazenamento público indisponível"))
+            }
             pruneBackups()
             JSONObject()
                 .put("ok", true)
                 .put("fileName", fileName)
+                .put("publicPath", publicCopy.optString("path", "Download/Omegas/$fileName"))
+                .put("publicCopy", publicCopy)
                 .put("createdAt", createdAt)
                 .put("hash", curveHash)
                 .put("type", "MANUAL_SNAPSHOT")
