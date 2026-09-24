@@ -1,64 +1,100 @@
-name: OMEGAS VERDE RAW APK HANDOFF
+name: OMEGAS VERDE APK NOW
 
 on:
-  push:
-    branches:
-      - OmegasVerde
-    paths:
-      - .github/workflows/verde-apk-now.yml
   workflow_dispatch:
 
 permissions:
-  contents: write
-  actions: read
+  contents: read
 
 env:
-  PRODUCT_SHA: febb8482a64e53ca2cafe8a7bd232ad4d38d3693
-  ARTIFACT_ID: "10810564529"
-  EXPECTED_APK_SHA256: 18240c81c2f4e3f516ee1b267ec630ff4024cd55ffa7ec4202584b3e4849f432
-  RELEASE_TAG: omegas-verde-febb8482-drive-handoff
-  APK_NAME: OMEGAS-Verde-FINAL-febb8482.apk
+  PRODUCT_SHA: ${{ github.sha }}
+
+concurrency:
+  group: omegas-verde-apk-final-${{ github.sha }}
+  cancel-in-progress: true
 
 jobs:
-  publish-raw-apk:
+  verify-build-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 45
     steps:
-      - name: Download exact verified GitHub artifact
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh api \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
-            > artifact.zip
-          mkdir artifact
-          unzip -q artifact.zip -d artifact
-          APK="$(find artifact -type f -name 'app-debug.apk' -print -quit)"
-          test -n "$APK"
-          cp "$APK" "$APK_NAME"
-          ACTUAL_SHA="$(sha256sum "$APK_NAME" | awk '{print $1}')"
-          test "$ACTUAL_SHA" = "$EXPECTED_APK_SHA256"
-          echo "RAW_APK_SHA256=$ACTUAL_SHA"
-          echo "RAW_APK_BYTES=$(stat -c %s "$APK_NAME")"
+      - name: Checkout exact product SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PRODUCT_SHA }}
 
-      - name: Publish raw APK as GitHub release asset
+      - name: Prove checkout identity
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" \
-              --repo "$GITHUB_REPOSITORY" \
-              --target "$PRODUCT_SHA" \
-              --title "OMEGAS Verde final febb8482" \
-              --notes "Raw APK handoff for Google Drive. Product source: $PRODUCT_SHA. APK SHA-256: $EXPECTED_APK_SHA256."
+          test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
+          echo "SOURCE_SHA=$(git rev-parse HEAD)"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Run contracts, unit tests, lint and assemble
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          python3 -B tools/run_checks.py
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
+            -PomegasAbis=armeabi-v7a \
+            --no-daemon \
+            --stacktrace
+
+      - name: Verify and hash APK
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          mkdir -p build/evidence
+          APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
+          APK_BYTES="$(stat -c %s "$APK")"
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          SOURCE_TREE="$(git rev-parse HEAD^{tree})"
+          unzip -t "$APK" >/dev/null
+
+          BUILD_CONFIG="$(find app/build/generated -type f -name 'BuildConfig.java' -path '*debug*' -print -quit || true)"
+          BUILD_COMMIT=""
+          if [ -n "$BUILD_CONFIG" ] && [ -f "$BUILD_CONFIG" ]; then
+            BUILD_COMMIT="$(sed -n 's/.*OMEGAS_BUILD_COMMIT = "\([^"]*\)".*/\1/p' "$BUILD_CONFIG" | head -n1)"
           fi
-          gh release upload "$RELEASE_TAG" "$APK_NAME#$APK_NAME" \
-            --repo "$GITHUB_REPOSITORY" \
-            --clobber
-          gh api "/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
-            --jq '.assets[] | select(.name == env.APK_NAME) | {name,size,browser_download_url}'
+
+          {
+            echo "OMEGAS_VERDE_APK=PASS"
+            echo "SOURCE_SHA=$SOURCE_SHA"
+            echo "SOURCE_TREE=$SOURCE_TREE"
+            echo "OMEGAS_BUILD_COMMIT=$BUILD_COMMIT"
+            echo "EXPECTED_BUILD_COMMIT=${PRODUCT_SHA:0:12}"
+            echo "APK_PATH=$APK"
+            echo "APK_SHA256=$APK_SHA256"
+            echo "APK_BYTES=$APK_BYTES"
+            echo "APK_ZIP_INTEGRITY=PASS"
+            echo "PHYSICAL_INSTALL_NOT_YET_CLAIMED=true"
+          } | tee build/evidence/omegas-verde-apk-evidence.txt
+
+          test "$SOURCE_SHA" = "$PRODUCT_SHA"
+          if [ -n "$BUILD_COMMIT" ]; then
+            test "$BUILD_COMMIT" = "${PRODUCT_SHA:0:12}"
+          fi
+
+      - name: Publish APK + evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: omegas-verde-final-${{ env.PRODUCT_SHA }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            build/evidence/omegas-verde-apk-evidence.txt
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
