@@ -14,7 +14,7 @@ assert.equal(cockpit.includes('data-autocal-read'), false, 'manual reader contro
 assert.equal(cockpit.includes('this.api.startRead()'), false, 'cockpit must rely on automatic native monitor');
 assert.equal(cockpit.includes('autocal-secondary-details'), true, 'secondary information must be collapsed below the chart');
 assert.equal(cockpit.includes('data-autocal-toggle'), true, 'acquisition control remains available');
-assert.match(cockpitCss, /\.autocal-chart-host\s*\{[\s\S]*height:\s*clamp\(360px,\s*56vh,\s*500px\)/);
+assert.match(cockpitCss, /\.app-shell\.autocal-focus \.autocal-chart-host,[\s\S]*height:\s*clamp\(420px,\s*68vh,\s*520px\)/);
 assert.match(app, /setCadenceMs\(route === 'autocal' \? 50 : 200\)/);
 assert.match(monitor, /snapshotRequested = newSessionId > 0L/);
 assert.match(monitor, /snapshotReason = if \(newSessionId > 0L\) "SESSION_BOOTSTRAP"/);
