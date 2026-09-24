@@ -20,11 +20,15 @@ assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Reset Curva K<\/butt
 assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Nova aquisição completa<\/button>/);
 assert.match(cockpit, /Curva K usa outro caminho/i,
   'a interface deve explicar a separação sem expor byte/protocolo no primeiro nível');
-assert.match(cockpit, /avisa se observar mudança fora do esperado/i,
-  'o produto deve prometer verificação pós-ação, não seletividade não provada');
+assert.match(cockpit, /Backup da Curva K é manual/i,
+  'backup deve ser opcional e manual, nunca um gate do reset');
 assert.match(cockpit, /RESET_GAS:\s*'Readquirir GNV'/);
 assert.match(cockpit, /RESET_PETROL:\s*'Readquirir gasolina'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
+assert.match(cockpit, /Backup não é requisito/);
+assert.doesNotMatch(cockpit, /READING_BEFORE/);
+assert.doesNotMatch(cockpit, /PERSISTING_BACKUP/);
+assert.doesNotMatch(cockpit, /CONFIRMED_WITH_SCOPE_WARNING/);
 
 console.log('AUTOCAL_REACQUISITION_UX=PASS');
