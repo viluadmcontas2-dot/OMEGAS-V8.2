@@ -50,6 +50,6 @@ assert.match(cockpit, /prepare\(action\)[\s\S]*this\.api\.prepare\(action\)/, 'r
 assert.match(cockpit, /confirmPrepared\(\)[\s\S]*this\.api\.execute\(prepared\.preparationId\)/, 'confirmação deve executar exatamente a preparação revisada');
 assert.match(actions, /ENABLE_AUTO_CAL[\s\S]*setEnabled\(true\)/, 'iniciar aquisição deve usar ação nativa existente');
 assert.match(actions, /DISABLE_AUTO_CAL[\s\S]*setEnabled\(false\)/, 'pausar aquisição deve usar ação nativa existente');
-assert.equal(actions.includes('RESET_ALL('), false, 'RESET_ALL não pode ser exposto');
+assert.equal(actions.includes('RESET_ALL('), true, 'RESET_ALL do ProgBase deve permanecer exposto atrás da confirmação crítica');
 
 console.log('AUTOCAL_CONSUMER_GRAPH=PASS');
