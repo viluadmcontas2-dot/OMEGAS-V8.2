@@ -380,6 +380,12 @@ jobs:
 
           md=Cs(CS_ARCH_X86,CS_MODE_32)
           targets={
+              "PointDeleteCommitPrereq_512264":0x00512264,
+              "PointDeleteCommit_512300":0x00512300,
+              "TAebVectorVirtual90_97B584":0x0097B584,
+              "TAebVectorVirtual94_97B58C":0x0097B58C,
+              "TAebVectorVirtual98_97AB44":0x0097AB44,
+              "TAebVectorSetDataInEcu_9796B8":0x009796B8,
               "ProtocolWrite_925D18":0x00925D18,
               "ProtocolWrite_925F44":0x00925F44,
               "ProtocolWrite_9265F8":0x009265F8,
@@ -412,6 +418,27 @@ jobs:
                   "DataMask":int(mask.group(1)) if mask else None,
                   "DataLength_explicit":int(dlen.group(1)) if dlen else None,
               })
+          PY
+
+      - name: Assert recovered point-delete invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("point-proof/point-delete-wire-contract.txt").read_text(encoding="utf-8",errors="ignore")
+          q=Path("point-proof/point-delete-native-targets.txt").read_text(encoding="utf-8",errors="ignore") if Path("point-proof/point-delete-native-targets.txt").exists() else ""
+          required = [
+              "GAS_POINT_2DELETE {'SerialCode': 366, 'hex': '0x016E', 'ArrayDimension': 18, 'DataMask': 255",
+              "PETROL_POINT_2DELETE {'SerialCode': 365, 'hex': '0x016D', 'ArrayDimension': 18, 'DataMask': 255",
+              "== TAebVectorVirtual94_97B58C @ 0x0097B58C",
+              "== TAebVectorSetDataInEcu_9796B8 @ 0x009796B8",
+              "== PointDeleteCommit_512300 @ 0x00512300",
+          ]
+          missing=[x for x in required if x not in p]
+          if missing:
+              raise SystemExit("POINT_DELETE_PROOF_MISSING=" + repr(missing))
+          print("POINT_DELETE_FORENSIC_GATE=PASS")
           PY
 
       - name: Publish targeted proof
