@@ -24,10 +24,10 @@
     return ({
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
       DISABLE_AUTO_CAL: 'Pausar Auto Calibration',
-      RESET_PETROL: 'Reset gasolina',
-      RESET_GAS: 'Reset GNV',
+      RESET_PETROL: 'Readquirir gasolina',
+      RESET_GAS: 'Readquirir GNV',
       RESET_K_FACTOR: 'Reset Curva K',
-      RESET_ALL: 'Reset ALL',
+      RESET_ALL: 'Nova aquisição completa',
     })[action] || action;
   }
 
@@ -471,13 +471,21 @@
                 <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
                 <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
                 <details class="autocal-reset-menu">
-                <summary>Resetar aquisição</summary>
-                <div class="autocal-reset-popover" aria-label="Resets ProgBase">
-                  <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
-                  <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
-                  <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
-                  <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Reset ALL</button>
-                  <p>Comandos recuperados do código canônico do ProgBase. OMEGAS mantém confirmação humana e backup antes das mutações.</p>
+                <summary>Corrigir aquisição</summary>
+                <div class="autocal-reset-popover" aria-label="Corrigir aquisição AutoCal">
+                  <section class="autocal-reset-group" data-reset-scope="fuel">
+                    <small>READQUIRIR COMBUSTÍVEL</small>
+                    <button type="button" data-autocal-action="RESET_GAS">Readquirir GNV</button>
+                    <button type="button" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
+                    <p>Usa o comando dedicado do original para o combustível escolhido. A Curva K usa outro caminho. Depois do ACK, o OMEGAS compara o snapshot antes/depois e avisa se observar mudança fora do esperado.</p>
+                  </section>
+                  <details class="autocal-reset-advanced">
+                    <summary>Outras redefinições</summary>
+                    <div>
+                      <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
+                      <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
+                    </div>
+                  </details>
                 </div>
                 </details>
               </div>
@@ -1213,7 +1221,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>ECU pode alterar MUL_ACT</dt><dd>${prepared.mayChangeMulAct ? 'sim' : 'não'}</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre uma segunda confirmação Android. Só o botão positivo desse diálogo envia o comando.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>snapshot antes/depois · gasolina · GNV · Curva K</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
     }
 
     renderUnavailable() {
