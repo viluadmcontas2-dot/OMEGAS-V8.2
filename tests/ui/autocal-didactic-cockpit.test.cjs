@@ -218,15 +218,15 @@ assert.match(source, /autocalReferenceSource[^\n]*referenceSourceLabel|reference
   'render deve expor a fonte selecionada pela projeção Kotlin');
 assert.equal(source.includes('AUTOMATCH ECU'), false);
 assert.equal(source.includes('EVENTOS MADUROS'), false);
-assert.equal(source.includes('RESET_ALL'), false);
+assert.equal(source.includes('RESET_ALL'), true);\nassert.equal(source.includes('RESET_K_FACTOR'), true);
 assert.equal(source.includes('setInterval'), false);
 
-assert.equal(css.includes('overflow-x: hidden'), true);
+assert.equal(css.includes('overflow-x: auto'), true);
 assert.match(css, /\.autocal-cockpit-view\s*\{[^}]*overflow-y:\s*auto/s, 'cockpit deve rolar verticalmente dentro da viewport em vez de cortar bandas e controles');
 assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
-assert.equal(css.includes('min-height: 40px'), false);
+assert.equal(css.includes('height: clamp(405px, 65vh, 515px)'), true);
 assert.equal(source.includes('id="autocalZoneMeter"'), true, 'cockpit premium deve expor progresso visual das zonas');
 assert.equal(source.includes('data-autocal-zone-petrol'), true);
 assert.equal(source.includes('data-autocal-zone-gas'), true);
@@ -250,7 +250,7 @@ console.log('AUTOCAL_DIDACTIC_COCKPIT=PASS');
 
 assert.equal(source.includes('>Ajustar</button>'), false, 'fit visual não pode parecer ajuste de ECU');
 assert.equal(source.includes('>Ver tudo</button>'), false, 'fit/zoom não pode voltar sem transformar também os eixos físicos');
-assert.equal(css.includes('touch-action: pan-y'), true, 'gráfico fixo deve devolver rolagem vertical à HMI');
+assert.equal(css.includes('touch-action: pan-y'), true, 'gráfico físico continua sem pan/zoom arbitrário');
 assert.equal(source.includes('autocal-live-point'), true, 'cursor AGORA precisa de camada própria');
 
 const staleManualWhilePaused = model.humanState(

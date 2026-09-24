@@ -8,39 +8,33 @@ const ROOT = path.join(__dirname, '../..');
 const js = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
 
-test('AutoCal uses acquisition curve as dominant instrument surface', () => {
-  assert.match(js, /CURVA DE AQUISIÇÃO/);
-  assert.match(js, /Gasolina × GNV/);
+test('AutoCal uses graph-first premium hierarchy', () => {
+  assert.match(js, /AutoCal · Gasolina e GNV/);
+  assert.match(js, /CURVA DE AQUISIÇÃO · Gasolina × GNV/);
   assert.match(js, /id="autocalReferenceChart"/);
   assert.match(js, /id="autocalLiveRpm"/);
   assert.match(js, /id="autocalLivePetrol"/);
   assert.match(js, /id="autocalLiveMap"/);
+  assert.match(js, /id="autocalLiveZone"/);
   assert.doesNotMatch(js, /autocalLiveLevel/);
-  assert.doesNotMatch(js, /LEVELS RAW/);
-  assert.match(css, /\.autocal-reference-card\s*\{[\s\S]*order:\s*0/);
-  assert.match(css, /\.autocal-hero\s*\{\s*order:\s*2/);
-  assert.match(css, /\.autocal-reference-card \.autocal-chart-workspace\s*\{\s*order:\s*2/);
-  assert.match(css, /\.autocal-reference-card \.autocal-live-strip\s*\{\s*order:\s*3/);
-  assert.match(css, /height:\s*clamp\(300px,\s*43vh,\s*390px\)/);
+  assert.match(css, /\.autocal-focus-toolbar\s*\{/);
+  assert.match(css, /\.autocal-secondary-rail\s*\{[\s\S]*overflow-x:\s*auto/);
+  assert.match(css, /height:\s*clamp\(405px,\s*65vh,\s*515px\)/);
 });
 
-test('AutoCal inspector sits below the plot without stealing chart width', () => {
-  const finalWorkspace = css.lastIndexOf('.autocal-chart-workspace {');
-  const finalInspector = css.lastIndexOf('.autocal-chart-inspector {');
-  assert.ok(finalWorkspace >= 0);
-  assert.ok(finalInspector > finalWorkspace);
-  assert.match(css.slice(finalWorkspace, finalInspector), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
-  assert.match(css.slice(finalInspector), /position:\s*static/);
+test('secondary state does not steal graph height', () => {
+  assert.match(css, /\.autocal-secondary-rail\s*\{[\s\S]*max-height:\s*98px/);
+  assert.match(css, /\.autocal-secondary-card\s*\{[\s\S]*height:\s*88px/);
+  assert.match(css, /\.autocal-chart-inspector\s*\{[\s\S]*position:\s*absolute/);
+  assert.match(css, /\.autocal-chart-legend\s*\{[\s\S]*position:\s*absolute/);
 });
 
 test('AGORA is visually distinct but remains telemetry', () => {
   assert.match(css, /\.autocal-live-point\s*\{[\s\S]*#19daf4/);
   assert.match(js, /Ele nunca vira evidência adquirida/);
-  assert.match(js, /id="autocalLiveNarrative"[^>]*hidden/,
-    'narrativa duplicada deve ficar fora da superfície principal para preservar a curva em 1280x720');
+  assert.match(js, /id="autocalLiveNarrative"[^>]*hidden/);
   assert.match(js, /ageMs > AUTO_CAL_LIVE_STALE_MS/);
 });
-
 
 test('overlapping petrol and GNV curves remain distinguishable without geometric offset', () => {
   assert.match(css, /\.autocal-reference-line\.petrol:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*4/);

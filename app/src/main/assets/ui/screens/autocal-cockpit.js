@@ -24,8 +24,10 @@
     return ({
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
       DISABLE_AUTO_CAL: 'Pausar Auto Calibration',
-      RESET_PETROL: 'Resetar aquisição gasolina',
-      RESET_GAS: 'Reiniciar aquisição (efeito amplo)',
+      RESET_PETROL: 'Reset gasolina',
+      RESET_GAS: 'Reset GNV',
+      RESET_K_FACTOR: 'Reset Curva K',
+      RESET_ALL: 'Reset ALL',
     })[action] || action;
   }
 
@@ -437,103 +439,133 @@
         panel.className = 'autocal-route-panel';
         panel.innerHTML = `
           <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
-            <header class="autocal-hero" aria-live="polite">
-              <div class="autocal-human-copy">
-                <small>AGORA</small>
-                <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
-                <p id="autocalHumanProgress">Gasolina —/4 zonas · GNV —/4 zonas</p>
-                <strong id="autocalHumanAction">Consulte a ECU para receber o estado nativo.</strong>
+            <header class="autocal-focus-toolbar" aria-label="AutoCal · Gasolina e GNV">
+              <div class="autocal-focus-title">
+                <h3>AutoCal · Gasolina e GNV</h3>
+                <p>Aquisição e ajuste da malha de injeção</p>
               </div>
-              <div class="autocal-hero-actions">
-                <span id="autocalNativeState" class="source-status">Aquisição: aguardando ECU</span>
-                <span id="autocalReadState" class="source-status" data-level="neutral">Leitura pronta</span>
-                <button type="button" data-autocal-read class="secondary">Consultar ECU</button>
-                <button type="button" data-autocal-cancel-read class="secondary" hidden>Cancelar leitura</button>
-              </div>
-              <div class="autocal-read-context" data-autocal-read-context data-read-level="neutral" hidden>
-                <b id="autocalReadTitle">Leitura pronta para iniciar</b>
-                <span id="autocalReadDetail">Nenhuma consulta manual em andamento.</span>
-                <p id="autocalReadNext">Use Consultar ECU para obter um snapshot completo.</p>
-              </div>
-            </header>
 
-            <section class="autocal-session-strip" data-session-level="ok" aria-live="polite">
-              <div class="autocal-session-copy">
-                <small>SESSÃO</small>
-                <b id="autocalSessionSummary">Sessões prontas</b>
-                <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
-              </div>
-              <div class="autocal-session-actions">
-                <span id="autocalSessionState">Documentos/Omegas · persistência automática</span>
-                <button type="button" data-autocal-sessions class="secondary">Ver sessões</button>
-              </div>
-            </section>
-            <section id="autocalSessionDrawer" class="autocal-session-drawer" hidden aria-label="Histórico de sessões AutoCal">
-              <div class="autocal-section-head compact"><div><small>HISTÓRICO</small><h4>Sessões recentes</h4><p id="autocalSessionNext">As sessões são separadas pela geração física USB.</p></div></div>
-              <div id="autocalSessionList" class="autocal-session-list"></div>
-            </section>
-
-            <section class="autocal-reference-card">
-              <div class="autocal-section-head">
-                <div><small>CURVA DE AQUISIÇÃO</small><h4>Gasolina × GNV</h4><p>Resposta da injeção por Petrol Inj. × MAP · somente dados publicados pela ECU.</p></div>
-                <div class="autocal-chart-head-actions">
-                  <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
-                    <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                    <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                  </div>
-                  <div class="autocal-chart-tools" aria-label="Controles do gráfico">
-                    <button type="button" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
-                  </div>
+              <div class="autocal-focus-metrics" aria-live="polite">
+                <div class="autocal-focus-metric">
+                  <small>MAP</small>
+                  <b><span id="autocalLiveMap">—</span><em>bar</em></b>
                 </div>
-              </div>
-              <div class="autocal-chart-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span><span class="current-band">Faixa MAP atual</span><span class="live">AGORA</span><span id="autocalReferenceCount">0 pontos nativos</span></div>
-              <div class="autocal-live-strip" aria-live="polite">
-                <div class="autocal-live-summary"><small>AGORA</small><b id="autocalLiveTitle">Aguardando telemetria</b><span id="autocalLiveFuel">—</span></div>
-                <div class="autocal-live-metric"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
-                <div class="autocal-live-metric"><small>PETROL INJ.</small><b><span id="autocalLivePetrol">—</span> ms</b></div>
-                <div class="autocal-live-metric"><small>MAP</small><b><span id="autocalLiveMap">—</span> bar</b></div>
+                <div class="autocal-focus-metric">
+                  <small>Petrol Inj.</small>
+                  <b><span id="autocalLivePetrol">—</span><em>ms</em></b>
+                </div>
+                <div class="autocal-focus-metric">
+                  <small>RPM</small>
+                  <b id="autocalLiveRpm">—</b>
+                </div>
+                <div class="autocal-focus-zone">
+                  <small>Zona</small>
+                  <b id="autocalLiveZone">—</b>
+                </div>
+                <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
+                <span id="autocalLiveFuel" hidden>—</span>
                 <p id="autocalLiveNarrative" class="autocal-live-narrative" hidden>O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
               </div>
-              <div class="autocal-chart-workspace">
-                <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
-                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP de gasolina/GNV sem alterar nada.</span></aside>
-              </div>
-            </section>
 
-            <section class="autocal-command-bar">
-              <div class="autocal-command-copy"><small>AUTOMATCH DA ECU</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
-              <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
-              <details class="autocal-more-actions">
-                <summary>Mais ações</summary>
-                <div class="autocal-reset-actions">
-                  <button type="button" data-autocal-action="RESET_GAS" class="danger-primary" title="Reinicia a aquisição com efeito amplo; exige confirmação e backup">Reiniciar aquisição · efeito amplo</button>
-                  <p>O comando original Reset GNV apagou também aquisição de gasolina, referências e MUL_ACT (Curva K). Não é reset seletivo nem Reset All do ProgBase. Backup completo obrigatório antes do envio; sem restauração automática.</p>
+              <details class="autocal-reset-menu">
+                <summary>Resetar aquisição</summary>
+                <div class="autocal-reset-popover" aria-label="Resets ProgBase">
+                  <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
+                  <button type="button" data-autocal-action="RESET_GAS">Reset GNV</button>
+                  <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
+                  <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Reset ALL</button>
+                  <p>Comandos recuperados do código canônico do ProgBase. OMEGAS mantém confirmação humana e backup antes das mutações.</p>
                 </div>
               </details>
+            </header>
+
+            <section class="autocal-reference-card" aria-label="CURVA DE AQUISIÇÃO · Gasolina × GNV">
+              <span class="autocal-plot-title">CURVA DE AQUISIÇÃO · Gasolina × GNV</span>
+              <div class="autocal-chart-workspace">
+                <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
+                <div class="autocal-chart-legend">
+                  <span class="petrol">Gasolina</span>
+                  <span class="gas">GNV</span>
+                  <span class="current-band">Zona atual</span>
+                  <span class="live">AGORA</span>
+                  <span id="autocalReferenceCount">0 pontos nativos</span>
+                </div>
+                <button type="button" class="autocal-history-float" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
+                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP sem alterar a ECU.</span></aside>
+              </div>
             </section>
 
-            <details id="autocalTechnicalDetails" class="autocal-technical-details">
-              <summary>Detalhes técnicos</summary>
-              <div class="autocal-tech-grid">
-                <div><small>ESTADO RAW</small><b id="autocalStateRaw">—</b></div>
-                <div><small>AQUISIÇÃO</small><b id="autocalEnableRaw">—</b></div>
-                <div><small>SNAPSHOT</small><b id="autocalSnapshotHash">—</b></div>
-                <div><small>FONTE DA REFERÊNCIA</small><b id="autocalReferenceSource">—</b></div>
-                <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">0</b></div>
-              </div>
-              <section class="autocal-bands-card autocal-bands-technical">
-                <div class="autocal-section-head compact">
-                  <div><small>18 REGIÕES · DETALHE TÉCNICO</small><h4>Atividade nativa por região</h4></div>
-                  <span id="autocalZoneSummary">0/4 zonas GNV</span>
+            <div class="autocal-secondary-rail" role="region" aria-label="Informações secundárias do AutoCal">
+              <header class="autocal-hero autocal-secondary-card" aria-live="polite">
+                <div class="autocal-human-copy">
+                  <small>ESTADO</small>
+                  <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
+                  <p id="autocalHumanProgress">Gasolina —/4 zonas · GNV —/4 zonas</p>
+                  <strong id="autocalHumanAction">Consulte a ECU para receber o estado nativo.</strong>
                 </div>
-                <div class="autocal-band-legend" aria-label="Legenda das faixas">
-                  <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
+                <div class="autocal-hero-actions">
+                  <span id="autocalNativeState" class="source-status">Aquisição: aguardando ECU</span>
+                  <span id="autocalReadState" class="source-status" data-level="neutral">Leitura pronta</span>
+                  <button type="button" data-autocal-read class="secondary">Consultar ECU</button>
+                  <button type="button" data-autocal-cancel-read class="secondary" hidden>Cancelar leitura</button>
                 </div>
-                <div id="autocalBands" class="autocal-band-strip" role="list"></div>
-                <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Diagnóstico por região</b><span>Use só para investigação técnica. Para dirigir, use Z1–Z4, OK/FALTA e AGORA acima da curva.</span></div>
+                <div class="autocal-read-context" data-autocal-read-context data-read-level="neutral" hidden>
+                  <b id="autocalReadTitle">Leitura pronta para iniciar</b>
+                  <span id="autocalReadDetail">Nenhuma consulta manual em andamento.</span>
+                  <p id="autocalReadNext">Use Consultar ECU para obter um snapshot completo.</p>
+                </div>
+              </header>
+
+              <section class="autocal-session-strip autocal-secondary-card" data-session-level="ok" aria-live="polite">
+                <div class="autocal-session-copy">
+                  <small>SESSÃO</small>
+                  <b id="autocalSessionSummary">Sessões prontas</b>
+                  <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
+                </div>
+                <div class="autocal-session-actions">
+                  <span id="autocalSessionState">Documentos/Omegas · persistência automática</span>
+                  <button type="button" data-autocal-sessions class="secondary">Ver sessões</button>
+                </div>
               </section>
-              <div id="autocalEvents" class="autocal-events"></div>
-            </details>
+
+              <section class="autocal-zone-card autocal-secondary-card" aria-label="Cobertura das zonas">
+                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
+                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                </div>
+                <span id="autocalZoneSummary">0/4 zonas GNV</span>
+              </section>
+
+              <section class="autocal-command-bar autocal-secondary-card">
+                <div class="autocal-command-copy"><small>AQUISIÇÃO</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
+                <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
+              </section>
+
+              <details id="autocalTechnicalDetails" class="autocal-technical-details autocal-secondary-card">
+                <summary>Detalhes técnicos</summary>
+                <div class="autocal-tech-grid">
+                  <div><small>ESTADO RAW</small><b id="autocalStateRaw">—</b></div>
+                  <div><small>AQUISIÇÃO</small><b id="autocalEnableRaw">—</b></div>
+                  <div><small>SNAPSHOT</small><b id="autocalSnapshotHash">—</b></div>
+                  <div><small>FONTE DA REFERÊNCIA</small><b id="autocalReferenceSource">—</b></div>
+                  <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">0</b></div>
+                </div>
+                <section class="autocal-bands-card autocal-bands-technical">
+                  <div class="autocal-section-head compact"><div><small>18 REGIÕES · DETALHE TÉCNICO</small><h4>Atividade nativa por região</h4></div></div>
+                  <div class="autocal-band-legend" aria-label="Legenda das faixas">
+                    <span data-state="empty">Sem atividade</span><span data-state="activity">Atividade</span><span data-state="mature">Evento</span><span data-state="anchored">Correlacionada</span>
+                  </div>
+                  <div id="autocalBands" class="autocal-band-strip" role="list"></div>
+                  <div id="autocalBandInspector" class="autocal-inline-inspector"><b>Diagnóstico por região</b><span>Detalhe técnico sob demanda.</span></div>
+                </section>
+                <div id="autocalEvents" class="autocal-events"></div>
+              </details>
+
+              <section id="autocalSessionDrawer" class="autocal-session-drawer autocal-secondary-card" hidden aria-label="Histórico de sessões AutoCal">
+                <div class="autocal-section-head compact"><div><small>HISTÓRICO</small><h4>Sessões recentes</h4><p id="autocalSessionNext">As sessões são separadas pela geração física USB.</p></div></div>
+                <div id="autocalSessionList" class="autocal-session-list"></div>
+              </section>
+            </div>
 
             <div id="autocalReview" class="autocal-review" hidden></div>
           </section>`;
@@ -552,7 +584,10 @@
         if (action) this.runOperational(action);
       });
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
-        button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
+        button.addEventListener('click', () => {
+          button.closest('.autocal-reset-menu')?.removeAttribute('open');
+          this.prepare(button.dataset.autocalAction);
+        });
       });
       this.panel?.querySelector('[data-autocal-history]')?.addEventListener('click', () => {
         if (!this.previousReferencePoints.length) return;
@@ -875,6 +910,7 @@
         this.text('autocalLiveRpm', '—');
         this.text('autocalLivePetrol', '—');
         this.text('autocalLiveMap', '—');
+        this.text('autocalLiveZone', '—');
         this.text('autocalLiveNarrative', stale
           ? 'O último frame já passou de 2,5 s. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
           : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
@@ -885,7 +921,9 @@
       this.text('autocalLiveFuel', live.fuel);
       this.text('autocalLiveRpm', live.rpm === null ? '—' : Math.round(live.rpm).toLocaleString('pt-BR'));
       this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }));
+      this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      const liveZone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
+      this.text('autocalLiveZone', liveZone === null ? '—' : 'Z' + liveZone);
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
         ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
