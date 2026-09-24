@@ -6,26 +6,31 @@ manager = (ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActi
 bridge = (ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt').read_text(encoding='utf-8')
 cockpit = (ROOT / 'app/src/main/assets/ui/screens/autocal-cockpit.js').read_text(encoding='utf-8')
 
-# Host intent remains the proven ProgBase action. Curve K is a distinct host path.
+# Host intent remains the proven ProgBase action. Curve K is a distinct path.
 assert 'RESET_GAS(' in manager
 assert 'byteArrayOf(0x02, 0x24, 0x04, 0x02)' in manager
 assert 'RESET_K_FACTOR' not in manager.split('enum class Action', 1)[1].split('// ProgBase', 1)[0]
 
-# Every destructive acquisition action must record what actually changed after ACK/readback.
-for token in (
-    'scopeAssessment',
+# Reset must not be gated by a pre-reset snapshot/backup.
+for forbidden in (
+    'PERSISTING_BACKUP',
+    'persistPreMutationBackup',
+    'autocal_pre_reset',
+    'READING_BEFORE',
     'CONFIRMED_WITH_SCOPE_WARNING',
-    'MUL_ACT',
-    'ACQUIRED_ZONES_PETROL',
-    'ACQUIRED_ZONES_GAS',
-    'broaderThanIntended',
 ):
-    assert token in manager, token
+    assert forbidden not in manager, forbidden
 
-# UI/bridge must not claim firmware-selective behavior before the after-snapshot proves it.
-assert 'Curva K usa outro caminho' in cockpit
-assert 'Readquirir GNV' in cockpit
-assert 'mudança fora do esperado' in cockpit
-assert 'efeito seletivo garantido' not in bridge.lower()
+assert '.put("automaticBackup", false)' in manager
+assert '.put("preMutationBackup", JSONObject.NULL)' in manager
+assert 'update("SENDING_ACTION"' in manager
+assert 'update("READING_AFTER", "Atualizando estado da ECU"' in manager
 
-print('AUTOCAL_REACQUISITION_SCOPE_CONTRACT=PASS')
+# UX says exactly what the operator asked for: backups are optional/manual.
+assert 'Backup da Curva K é manual' in cockpit
+assert 'Backup não é requisito' in cockpit
+assert 'Nenhum backup automático é criado' in bridge
+assert 'Nenhum backup automático será criado' in bridge
+assert 'backup pré-mutação' not in bridge.lower()
+
+print('AUTOCAL_REACQUISITION_NO_BACKUP_CONTRACT=PASS')
