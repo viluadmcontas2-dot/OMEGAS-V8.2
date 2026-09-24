@@ -17,9 +17,9 @@ assert.ok(cockpit.includes('Salvo em Documentos/Omegas') || cockpit.includes('Sa
 // The graph is the primary driving surface. Secondary cards are intentionally
 // compact and horizontally scrollable; only always-visible driving telemetry
 // keeps the larger automotive type scale.
-assert.match(css, /\.autocal-focus-metric b[\\s\\S]*font-size:\\s*21px/);
-assert.match(css, /\.autocal-focus-zone b[\\s\\S]*font-size:\\s*18px/);
-assert.match(css, /\.autocal-chart-host[\\s\\S]*height:\\s*clamp\\(405px,\\s*65vh,\\s*515px\\)/);
+assert.match(css, /\.autocal-focus-metric b[\s\S]*font-size:\s*21px/);
+assert.match(css, /\.autocal-focus-zone b[\s\S]*font-size:\s*18px/);
+assert.match(css, /\.autocal-chart-host[\s\S]*height:\s*clamp\(405px,\s*65vh,\s*515px\)/);
 
 const primaryTiny = [
   ['.autocal-human-copy p', 10],
