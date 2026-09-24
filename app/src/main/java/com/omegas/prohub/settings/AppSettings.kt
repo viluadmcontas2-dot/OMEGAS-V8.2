@@ -21,7 +21,14 @@ class AppSettings(context: Context) {
                 edit.putInt("sessionLogMaxMb", 256)
             }
             if (!prefs.contains("sessionKeepCount") || prefs.getInt("sessionKeepCount", 5) == 5) {
-                edit.putInt("sessionKeepCount", 3)
+                edit.putInt("sessionKeepCount", 20)
+            }
+            edit.apply()
+        }
+        if (!prefs.getBoolean("recorderRetentionFloor20V1", false)) {
+            val edit = prefs.edit().putBoolean("recorderRetentionFloor20V1", true)
+            if (!prefs.contains("sessionKeepCount") || prefs.getInt("sessionKeepCount", 20) < 20) {
+                edit.putInt("sessionKeepCount", 20)
             }
             edit.apply()
         }
@@ -96,8 +103,8 @@ class AppSettings(context: Context) {
         get() = prefs.getInt("sessionLogMaxMb", 256)
         set(value) = prefs.edit().putInt("sessionLogMaxMb", value.coerceIn(64, 1_024)).apply()
     var sessionKeepCount: Int
-        get() = prefs.getInt("sessionKeepCount", 3)
-        set(value) = prefs.edit().putInt("sessionKeepCount", value.coerceIn(1, 20)).apply()
+        get() = prefs.getInt("sessionKeepCount", 20)
+        set(value) = prefs.edit().putInt("sessionKeepCount", value.coerceIn(20, 100)).apply()
 
     var deviceId: String
         get() {
