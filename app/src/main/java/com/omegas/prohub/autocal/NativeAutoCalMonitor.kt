@@ -54,6 +54,7 @@ class NativeAutoCalMonitor(
 
     private val lock = Any()
     private val maturityTracker = NativeAutoCalMaturityTracker()
+    private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
     private val refreshPlanner = NativeAutoCalRefreshPlanner()
 
     @Volatile private var sessionId = 0L
@@ -81,6 +82,7 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
+            autoMatchCounterTracker.reset()
             refreshPlanner.reset()
             // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
             // de qualquer leitura pesada. Assim o primeiro probe estável sempre
@@ -106,6 +108,7 @@ class NativeAutoCalMonitor(
             autoCalEnabled = null
             pendingMaturity = emptyList()
             maturityTracker.reset()
+            autoMatchCounterTracker.reset()
             refreshPlanner.reset()
             snapshotRequested = false
             snapshotReason = ""
@@ -170,6 +173,12 @@ class NativeAutoCalMonitor(
 
         val previousProbe = synchronized(lock) { lastProbe }
         val probe = probe(currentSession) ?: return
+        val counterObservedAt = SystemClock.elapsedRealtime()
+        val autoMatchCounterEvent = autoMatchCounterTracker.observe(
+            currentSessionId = currentSession,
+            count = probe.autoMatchCount,
+            observedAtElapsedMs = counterObservedAt,
+        )
         val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
         val probeChanged = previousProbe != null && (
@@ -225,6 +234,7 @@ class NativeAutoCalMonitor(
                 .put("acquisitionRefresh", acquisitionRefresh != null)
                 .put("referenceRefresh", referenceRefresh != null)
                 .put("referenceRefreshDue", refreshDue.reference && referenceRefresh == null)
+                .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent != null)
             if (maturityEvents.isNotEmpty()) {
                 pendingMaturity = maturityEvents
                 snapshotRequested = true
@@ -237,7 +247,7 @@ class NativeAutoCalMonitor(
 
         val shouldSnapshot = synchronized(lock) { snapshotRequested }
         if (shouldSnapshot) {
-            readFullSnapshot(currentSession, probe, countIncreased)
+            readFullSnapshot(currentSession, probe, countIncreased, autoMatchCounterEvent)
         } else {
             onStateChanged()
         }
@@ -531,6 +541,7 @@ class NativeAutoCalMonitor(
         expectedSessionId: Long,
         probe: AutoCalProtocol.NativeStatus,
         countIncreased: Boolean,
+        autoMatchCounterEvent: NativeAutoMatchCounterTracker.Event?,
     ) {
         val reason = synchronized(lock) { snapshotReason }
         val started = System.currentTimeMillis()
@@ -576,6 +587,8 @@ class NativeAutoCalMonitor(
             .put("frozen", enabled == 0)
             .put("freshAcquisition", enabled == 1)
             .put("snapshotReason", reason)
+            .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent?.toJson() ?: JSONObject.NULL)
+            .put("nativeAutoMatchCounterEventObserved", autoMatchCounterEvent != null)
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
 
@@ -686,6 +699,7 @@ class NativeAutoCalMonitor(
                 .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
                 .put("nativeMaturityEventCount", maturityEvents.length())
+                .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent != null)
                 .put("snapshotHash", snapshot.snapshotHash)
         }
 
@@ -756,6 +770,18 @@ class NativeAutoCalMonitor(
     private fun ByteArray.toHex(): String = joinToString(separator = "") { byte ->
         "%02X".format(byte.toInt() and 0xFF)
     }
+
+    private fun NativeAutoMatchCounterTracker.Event.toJson(): JSONObject = JSONObject()
+        .put("eventType", eventType)
+        .put("source", SOURCE_NATIVE_AUTOCAL)
+        .put("sessionId", sessionId)
+        .put("observedAtElapsedMs", observedAtElapsedMs)
+        .put("beforeCount", beforeCount)
+        .put("afterCount", afterCount)
+        .put("delta", delta)
+        .put("mulActChangeConfirmed", mulActChangeConfirmed)
+        .put("appWritePerformed", false)
+        .put("appAutomaticWrite", false)
 
     private fun mulActRawFromSnapshot(snapshot: JSONObject?): String {
         val fields = snapshot?.optJSONArray("fields") ?: return ""
