@@ -107,11 +107,11 @@
         ? 'AutoMatch ainda sem contador válido'
         : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
           (maxAutoMatch === null ? '' : ' · limite configurado ' + Math.round(maxAutoMatch));
-      let nextAction = 'Consulte a ECU para receber o estado nativo.';
+      let nextAction = 'A leitura nativa é automática; aguardando o próximo estado confirmado.';
       if (acquisitionState === 'UNAVAILABLE') {
         nextAction = String(state.message || state.error || 'A projeção nativa do AutoCal está indisponível.') + ' · Nenhuma referência será escolhida pela interface.';
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
-        nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão e tente consultar novamente.';
+        nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão; o monitor tentará novamente automaticamente.';
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
       else if (enabled === 1 && gasMissingZones.length) nextAction = 'Aquisição habilitada. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
       else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
@@ -129,12 +129,12 @@
       if (state === 'CANCEL_REQUESTED') return { state, busy: true, cancelling: true, level: 'working', title: 'Cancelando leitura', detail: String(readerState.message || 'Cancelamento solicitado') + suffix, next: 'Aguarde a leitura encerrar com segurança.' };
       if (state === 'READY') return { state, busy: false, level: 'ok', title: 'Leitura concluída', detail: String(readerState.message || 'Todos os campos esperados foram processados.'), next: 'Dados prontos para inspeção.' };
       if (state === 'READY_PARTIAL') return { state, busy: false, level: 'warning', title: 'Leitura parcial', detail: String(readerState.message || 'Alguns campos não foram confirmados pela ECU.'), next: 'Veja os detalhes técnicos ou tente consultar novamente.' };
-      if (state === 'CANCELLED') return { state, busy: false, level: 'neutral', title: 'Leitura cancelada', detail: String(readerState.message || 'A leitura foi interrompida sem alterar a ECU.'), next: 'Consulte novamente quando quiser.' };
+      if (state === 'CANCELLED') return { state, busy: false, level: 'neutral', title: 'Leitura cancelada', detail: String(readerState.message || 'A leitura foi interrompida sem alterar a ECU.'), next: 'A próxima leitura será retomada automaticamente quando a sessão estiver pronta.' };
       if (state === 'DISCONNECTED') return { state, busy: false, level: 'error', title: 'ECU desconectada', detail: String(readerState.message || 'A conexão foi perdida.'), next: 'Reconecte a ECU e tente novamente.' };
-      if (state === 'STALE_SESSION') return { state, busy: false, level: 'error', title: 'Sessão mudou', detail: String(readerState.message || 'A sessão USB mudou durante a leitura.'), next: 'Faça uma nova consulta na sessão atual.' };
+      if (state === 'STALE_SESSION') return { state, busy: false, level: 'error', title: 'Sessão mudou', detail: String(readerState.message || 'A sessão USB mudou durante a leitura.'), next: 'A leitura automática será reiniciada na sessão atual.' };
       if (state === 'CALIBRATION_CONFLICT') return { state, busy: false, level: 'warning', title: 'Outra calibração está em uso', detail: String(readerState.message || 'A porta serial está ocupada por outra operação.'), next: 'Finalize a outra operação e tente novamente.' };
-      if (state === 'FAILED' || state === 'TIMEOUT' || state === 'UNAVAILABLE') return { state, busy: false, level: 'error', title: state === 'TIMEOUT' ? 'Tempo de leitura esgotado' : 'Leitura falhou', detail: String(readerState.error || readerState.message || 'A ECU não concluiu a leitura.'), next: 'Verifique a conexão e tente consultar novamente.' };
-      return { state, busy: false, level: 'neutral', title: 'Leitura pronta para iniciar', detail: 'Nenhuma consulta manual em andamento.', next: 'Use Consultar ECU para obter um snapshot completo.' };
+      if (state === 'FAILED' || state === 'TIMEOUT' || state === 'UNAVAILABLE') return { state, busy: false, level: 'error', title: state === 'TIMEOUT' ? 'Tempo de leitura esgotado' : 'Leitura falhou', detail: String(readerState.error || readerState.message || 'A ECU não concluiu a leitura.'), next: 'Verifique a conexão; o monitor tentará novamente automaticamente.' };
+      return { state, busy: false, level: 'neutral', title: 'Leitura pronta para iniciar', detail: 'Nenhuma consulta manual em andamento.', next: 'O monitor nativo atualiza o snapshot automaticamente.' };
     },
 
     sessionNarrative(status = {}) {
@@ -157,10 +157,10 @@
       const next = dropped > 0 || lastError.length > 0
         ? 'Há uma lacuna na gravação interna da evidência. Veja os detalhes antes de usar esta sessão.'
         : mirrorFailed
-          ? 'A sessão segue protegida na memória interna, mas Documentos/Omegas precisa de atenção.'
+          ? 'A sessão segue protegida na memória interna, mas Downloads/Omegas precisa de atenção.'
           : recording
-            ? 'Salvando em Documentos/Omegas automaticamente enquanto a sessão acontece.'
-            : 'Salvo em Documentos/Omegas. Abra Sessões apenas para revisar ou exportar.';
+            ? 'Salvando em Downloads/Omegas automaticamente enquanto a sessão acontece.'
+            : 'Salvo em Downloads/Omegas. Abra Sessões apenas para revisar ou exportar.';
       return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped, documentsMirror, mirrorFailed };
     },
 
@@ -467,7 +467,10 @@
                 <p id="autocalLiveNarrative" class="autocal-live-narrative" hidden>O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
               </div>
 
-              <details class="autocal-reset-menu">
+              <div class="autocal-focus-actions">
+                <span id="autocalNativeState" class="source-status">Aquisição: aguardando ECU</span>
+                <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
+                <details class="autocal-reset-menu">
                 <summary>Resetar aquisição</summary>
                 <div class="autocal-reset-popover" aria-label="Resets ProgBase">
                   <button type="button" data-autocal-action="RESET_PETROL">Reset gasolina</button>
@@ -476,7 +479,8 @@
                   <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Reset ALL</button>
                   <p>Comandos recuperados do código canônico do ProgBase. OMEGAS mantém confirmação humana e backup antes das mutações.</p>
                 </div>
-              </details>
+                </details>
+              </div>
             </header>
 
             <section class="autocal-reference-card" aria-label="CURVA DE AQUISIÇÃO · Gasolina × GNV">
@@ -495,24 +499,15 @@
               </div>
             </section>
 
-            <div class="autocal-secondary-rail" role="region" aria-label="Informações secundárias do AutoCal">
+            <details class="autocal-secondary-details">
+              <summary>Detalhes</summary>
+              <div class="autocal-secondary-rail" role="region" aria-label="Informações secundárias do AutoCal">
               <header class="autocal-hero autocal-secondary-card" aria-live="polite">
                 <div class="autocal-human-copy">
                   <small>ESTADO</small>
                   <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
                   <p id="autocalHumanProgress">Gasolina —/4 zonas · GNV —/4 zonas</p>
-                  <strong id="autocalHumanAction">Consulte a ECU para receber o estado nativo.</strong>
-                </div>
-                <div class="autocal-hero-actions">
-                  <span id="autocalNativeState" class="source-status">Aquisição: aguardando ECU</span>
-                  <span id="autocalReadState" class="source-status" data-level="neutral">Leitura pronta</span>
-                  <button type="button" data-autocal-read class="secondary">Consultar ECU</button>
-                  <button type="button" data-autocal-cancel-read class="secondary" hidden>Cancelar leitura</button>
-                </div>
-                <div class="autocal-read-context" data-autocal-read-context data-read-level="neutral" hidden>
-                  <b id="autocalReadTitle">Leitura pronta para iniciar</b>
-                  <span id="autocalReadDetail">Nenhuma consulta manual em andamento.</span>
-                  <p id="autocalReadNext">Use Consultar ECU para obter um snapshot completo.</p>
+                  <strong id="autocalHumanAction">A leitura nativa é automática; aguardando o próximo estado confirmado.</strong>
                 </div>
               </header>
 
@@ -523,7 +518,7 @@
                   <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
                 </div>
                 <div class="autocal-session-actions">
-                  <span id="autocalSessionState">Documentos/Omegas · persistência automática</span>
+                  <span id="autocalSessionState">Downloads/Omegas · persistência automática</span>
                   <button type="button" data-autocal-sessions class="secondary">Ver sessões</button>
                 </div>
               </section>
@@ -538,7 +533,6 @@
 
               <section class="autocal-command-bar autocal-secondary-card">
                 <div class="autocal-command-copy"><small>AQUISIÇÃO</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
-                <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
               </section>
 
               <details id="autocalTechnicalDetails" class="autocal-technical-details autocal-secondary-card">
@@ -565,7 +559,8 @@
                 <div class="autocal-section-head compact"><div><small>HISTÓRICO</small><h4>Sessões recentes</h4><p id="autocalSessionNext">As sessões são separadas pela geração física USB.</p></div></div>
                 <div id="autocalSessionList" class="autocal-session-list"></div>
               </section>
-            </div>
+              </div>
+            </details>
 
             <div id="autocalReview" class="autocal-review" hidden></div>
           </section>`;
@@ -577,8 +572,6 @@
     }
 
     bind() {
-      this.panel?.querySelector('[data-autocal-read]')?.addEventListener('click', () => this.requestRead());
-      this.panel?.querySelector('[data-autocal-cancel-read]')?.addEventListener('click', () => this.cancelRead());
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
         if (action) this.runOperational(action);
@@ -701,32 +694,6 @@
       this.renderSessionState();
     }
 
-    requestRead() {
-      if (!this.api?.available?.()) return;
-      const result = this.api.startRead();
-      this.readerState = result && typeof result === 'object'
-        ? result
-        : { state: 'UNAVAILABLE', error: 'Retorno da consulta AutoCal inválido.', reasonCode: 'AUTOCAL_PROJECTION_UNAVAILABLE' };
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Leitura AutoCal indisponível.' } });
-      } else {
-        this.store.patch({ alert: { level: 'ok', message: 'Consulta recebida. A tela acompanhará o reader até READY, parcial ou erro.' } });
-      }
-      this.renderReadState();
-      this.refresh();
-    }
-
-    cancelRead() {
-      if (!this.api?.available?.()) return;
-      const result = this.api.cancelRead();
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível cancelar a leitura.' } });
-      } else {
-        this.store.patch({ alert: { level: 'ok', message: 'Cancelamento da leitura solicitado. Nenhum dado foi gravado na ECU.' } });
-      }
-      this.refresh();
-    }
-
     runOperational(action) {
       if (!['ENABLE_AUTO_CAL', 'DISABLE_AUTO_CAL'].includes(action) || !this.api?.available?.()) return;
       const enable = action === 'ENABLE_AUTO_CAL';
@@ -807,7 +774,6 @@
       this.text('autocalReferenceSource', AutoCalUxModel.referenceSourceLabel(this.projection));
       this.text('autocalMaturityRaw', events.length);
       this.renderZoneMeter(human);
-      this.renderReadState();
       this.renderSessionState();
       this.renderLiveNarrative();
 
@@ -835,31 +801,6 @@
       this.renderActionState();
     }
 
-    renderReadState() {
-      const read = AutoCalUxModel.readNarrative(this.readerState || {});
-      this.text('autocalReadState', read.title);
-      this.text('autocalReadTitle', read.title);
-      this.text('autocalReadDetail', read.detail);
-      this.text('autocalReadNext', read.next);
-      const pill = document.getElementById('autocalReadState');
-      if (pill) pill.dataset.level = read.level;
-      const context = this.panel?.querySelector('[data-autocal-read-context]');
-      if (context) {
-        context.dataset.readLevel = read.level;
-        context.hidden = (read.level === 'neutral' || read.level === 'ok') && !read.busy;
-      }
-      const start = this.panel?.querySelector('[data-autocal-read]');
-      const cancel = this.panel?.querySelector('[data-autocal-cancel-read]');
-      if (start) {
-        start.disabled = read.busy;
-        start.textContent = read.busy ? 'Consultando ECU…' : 'Consultar ECU';
-      }
-      if (cancel) {
-        cancel.hidden = !read.busy;
-        cancel.disabled = !read.busy || read.cancelling === true;
-      }
-    }
-
     renderSessionState() {
       const narrative = AutoCalUxModel.sessionNarrative(this.sessionState || {});
       this.text('autocalSessionSummary', narrative.title);
@@ -868,7 +809,7 @@
         'autocalSessionState',
         narrative.mirrorFailed
           ? 'Protegido na memória interna'
-          : narrative.recording ? 'Salvando em Documentos/Omegas' : 'Salvo em Documentos/Omegas',
+          : narrative.recording ? 'Salvando em Downloads/Omegas' : 'Salvo em Downloads/Omegas',
       );
       this.text('autocalSessionNext', narrative.next);
       const strip = this.panel?.querySelector('.autocal-session-strip');
