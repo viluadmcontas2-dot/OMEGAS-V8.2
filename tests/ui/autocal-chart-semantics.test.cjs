@@ -21,7 +21,8 @@ assert.match(source, />SEM REFERÊNCIA</);
 assert.match(source, /REFERÊNCIA FORA DA JANELA/);
 assert.match(source, /referenceTimingSpanMs/);
 assert.match(source, /referenceTimingLimitMs/);
-assert.match(source, /Consulte a ECU novamente/);
+assert.doesNotMatch(source, /Consulte a ECU novamente/i, 'AutoCal não deve instruir refresh manual da ECU');
+assert.match(source, /Aguarde a próxima atualização automática da ECU/i);
 assert.match(source, /'limite ' \+ Math\.round\(timingLimitMs\) \+ ' ms'/);
 assert.equal(/\.concat\(live \? \[live\.mapBar\]/.test(source), false, 'AGORA não pode participar do domínio');
 
