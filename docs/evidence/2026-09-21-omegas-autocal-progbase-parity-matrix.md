@@ -15,7 +15,7 @@ That separation is a match worth preserving. The parity defects are narrower and
 
 | Behavior | Classification | What is actually different |
 |---|---|---|
-| RunPoint / AGORA XY | **MATCH** | Same live Petrol Inj. × MAP semantics, independently refreshed. OMEGAS keeps the global HMI scheduler at 200 ms and switches the same scheduler to 75 ms only while AutoCal is active, matching ProgBase's TimerDati presentation cadence without adding serial reads. |
+| RunPoint / AGORA XY | **MATCH** | Same live Petrol Inj. × MAP semantics, independently refreshed. OMEGAS keeps the global HMI scheduler at 200 ms and switches the same scheduler to 50 ms only while AutoCal is active. The physical data source is unchanged; this is a presentation-only responsiveness improvement over ProgBase's observed 75 ms TimerDati cadence and adds no serial reads. |
 | LEVELS RAW routing | **INTENTIONAL IMPROVEMENT** | LEVELS is global MP48 telemetry owned by Dashboard/AGORA. AutoCal projection and cockpit intentionally do not consume it. |
 | PetrolCurve / GasCurve identity | **MATCH** | Same common `PETR_INJ_TBP` X and petrol/gas RV vectors. |
 | PetrolCurve / GasCurve freshness | **MATCH — grouped reference refresh resolved** | The existing serial authority refreshes the reference family at ~4 s, matching the cadence class observed in ProgBase without duplicating serial ownership. |
@@ -30,11 +30,11 @@ That separation is a match worth preserving. The parity defects are narrower and
 
 ## 1. AGORA XY — preserve, do not rebuild
 
-`ResponseDrivenEcuEngine` continuously polls `48 01 49` when the serial queue is empty and polls telemetry after each queued secondary work item when `telemetryAfter=true`. The accepted frame updates `TelemetryStateStore`. `HubJavascriptBridge.getPresentSnapshot()` reads that latest-only state without serial work. The UI scheduler executes every 200 ms; on AutoCal, `refreshFast()` patches the global telemetry store before the AutoCal fast hook calls `renderLiveCursor()`.
+`ResponseDrivenEcuEngine` continuously polls `48 01 49` when the serial queue is empty and polls telemetry after each queued secondary work item when `telemetryAfter=true`. The accepted frame updates `TelemetryStateStore`. `HubJavascriptBridge.getPresentSnapshot()` reads that latest-only state without serial work. The UI scheduler executes every 200 ms globally and every 50 ms while AutoCal is active; `refreshFast()` patches the global telemetry store before the AutoCal fast hook calls `renderLiveCursor()`.
 
 Therefore AGORA XY is not coupled to `NativeAutoCalMonitor.latestSnapshot`. A rewrite that routes it through AutoCal snapshot state would be a regression.
 
-The 200 ms HMI cadence differs from ProgBase's 75 ms `TimerDati`, but this matrix does not label that difference a defect without render/performance evidence.
+Vehicle testing on 24/09/2026 reported perceptible AGORA lag. The AutoCal HMI cadence was therefore reduced from 75 ms to 50 ms without changing MP48 polling, native AutoCal refresh groups or serial ownership. This is a UI responsiveness change, not a faster ECU read claim.
 
 ## 2. LEVELS RAW — Dashboard/AGORA ownership; outside AutoCal
 
