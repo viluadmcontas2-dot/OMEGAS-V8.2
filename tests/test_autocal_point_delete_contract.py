@@ -40,7 +40,9 @@ for token in (
 assert "data-autocal-reacquire-point" in cockpit
 assert "preparePointDelete" in api
 assert "fun preparePointDelete" in bridge
-assert "READQUIRIR PONTO" in bridge
+assert "actionManager.execute(preparationId)" in bridge
+assert "AlertDialog" not in bridge
+assert "READQUIRIR PONTO" not in bridge
 assert "snapshot antes/depois" not in cockpit
 assert "writer existente com backup" not in bridge
 print('AUTOCAL_POINT_DELETE_CONTRACT=PASS')
