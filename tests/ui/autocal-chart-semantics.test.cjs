@@ -75,7 +75,7 @@ assert.equal(ref[1].gasEquivalentMs, 10.5);
 
 const freshTelemetry = {
   valid: true,
-  ageMs: 2500,
+  ageMs: 7500,
   live: { petrol_ms: 4.50, load_bar: 0.45, rpm: 900, level_raw: 173, fuel: 'GNV' },
 };
 const freshAutoCalPoint = model.livePoint(freshTelemetry);
@@ -88,7 +88,7 @@ assert.equal(
   'LEVELS pertence ao Dashboard/AGORA global e deve ser ignorado pelo modelo AutoCal',
 );
 assert.equal(
-  model.livePoint({ ...freshTelemetry, ageMs: 2501 }),
+  model.livePoint({ ...freshTelemetry, ageMs: 7501 }),
   null,
   'AGORA não pode continuar visível depois da janela de frescor adotada pela HMI',
 );
