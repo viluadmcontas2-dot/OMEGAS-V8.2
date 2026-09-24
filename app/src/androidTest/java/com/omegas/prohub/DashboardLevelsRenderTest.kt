@@ -541,7 +541,9 @@ class DashboardLevelsRenderTest {
               const live = document.querySelector('.autocal-live-layer');
               const currentBand = document.querySelector('[data-autocal-current-band]');
               const chart = document.getElementById('autocalReferenceChart')?.getBoundingClientRect();
-              const rail = document.querySelector('.autocal-live-strip')?.getBoundingClientRect();
+              const toolbar = document.querySelector('.autocal-focus-toolbar')?.getBoundingClientRect();
+              const screen = document.querySelector('[data-screen="autocal"]');
+              const details = document.querySelector('.autocal-secondary-details');
               return {
                 svg: document.querySelector('.autocal-reference-svg') !== null,
                 empty: document.querySelector('#autocalReferenceChart .chart-empty') !== null,
@@ -558,8 +560,15 @@ class DashboardLevelsRenderTest {
                 count: document.getElementById('autocalReferenceCount')?.textContent ?? '',
                 chartHeight: chart?.height ?? 0,
                 chartWidth: chart?.width ?? 0,
-                railBottom: rail?.bottom ?? 0,
+                chartTop: chart?.top ?? 0,
+                chartBottom: chart?.bottom ?? 0,
+                toolbarBottom: toolbar?.bottom ?? 0,
                 viewportHeight: window.innerHeight,
+                screenScrollWidth: screen?.scrollWidth ?? 0,
+                screenClientWidth: screen?.clientWidth ?? 0,
+                screenScrollHeight: screen?.scrollHeight ?? 0,
+                screenClientHeight: screen?.clientHeight ?? 0,
+                detailsOpen: details?.open === true,
                 progress: document.getElementById('autocalHumanProgress')?.textContent ?? '',
                 action: document.getElementById('autocalHumanAction')?.textContent ?? '',
                 petrolZoneStates: [...document.querySelectorAll('[data-autocal-zone-petrol]')].map(node => node.dataset.state ?? ''),
@@ -914,6 +923,11 @@ class DashboardLevelsRenderTest {
             val provenance = installVisualOnlySparseZoneFixture(scenario)
             activateAutocal(scenario)
             injectFresh(scenario, live, settleMs = 850L)
+            evalRaw(
+                scenario,
+                "document.querySelector('.autocal-secondary-details')?.setAttribute('open', ''); 'ok';",
+            )
+            SystemClock.sleep(120L)
             val dom = autocalReferenceDom(scenario)
             saveEvidence("autocal-sparse-zone-map", dom, scenario, provenance)
 
@@ -967,8 +981,11 @@ class DashboardLevelsRenderTest {
             )
             assertTrue("AGORA cursor must name its zone ON THE CHART", dom.getString("liveZoneLabel").contains("AGORA · Z"))
             assertTrue("Owner must have an enabled broad acquisition reset", dom.getBoolean("broadResetEnabled"))
-            assertTrue("Zone map must remain visible above the fold", dom.getDouble("zoneMeterBottom") <= dom.getDouble("viewportHeight"))
-            assertTrue("Acquisition chart must use the freed Custom-ROM viewport", dom.getDouble("chartHeight") >= 340.0)
+            assertTrue("Secondary information must expand in the same vertical flow", dom.getBoolean("detailsOpen"))
+            assertTrue("Zone map must follow the graph vertically instead of becoming a horizontal rail", dom.getDouble("zoneMeterBottom") > dom.getDouble("chartBottom"))
+            assertTrue("Expanded AutoCal must not create horizontal overflow", dom.getDouble("screenScrollWidth") <= dom.getDouble("screenClientWidth") + 1.0)
+            assertTrue("Expanded secondary content must use vertical page scrolling", dom.getDouble("screenScrollHeight") > dom.getDouble("screenClientHeight"))
+            assertTrue("Acquisition chart must dominate the Custom-ROM viewport", dom.getDouble("chartHeight") >= 420.0)
             assertTrue("Duplicated live narrative must not compete with the primary curve", !dom.getBoolean("liveNarrativeVisible"))
             assertTrue("AutoCal must not waste a full row on the global route header", !dom.getBoolean("workspaceHeadVisible"))
             assertEquals("AutoCal must not render a second page intro", 0, dom.getInt("autoCalPageIntroCount"))
@@ -992,15 +1009,18 @@ class DashboardLevelsRenderTest {
             assertTrue("Reference chart must not fall back to empty state", !dom.getBoolean("empty"))
             assertTrue("Gasoline reference line must have a drawable path", dom.getString("petrolPath").length > 20)
             assertTrue("GNV reference line must have a drawable path", dom.getString("gasPath").length > 20)
-            assertEquals("Complete render fixture must expose all 30 gasoline points", 30, dom.getInt("petrolPoints"))
-            assertEquals("Complete render fixture must expose all 30 GNV points", 30, dom.getInt("gasPoints"))
+            assertTrue("The original 30-point reference must remain preserved in the snapshot", dom.getString("count").contains("30 pontos nativos"))
+            assertEquals("Operational 0.154–1.15 bar envelope must render 22 gasoline points", 22, dom.getInt("petrolPoints"))
+            assertEquals("Operational 0.154–1.15 bar envelope must render 26 GNV points", 26, dom.getInt("gasPoints"))
             assertTrue("Fresh AGORA cursor must remain on the same chart", dom.getBoolean("liveVisible"))
             assertTrue("CurrentBand must render from original MNFLD_PRESS_THD plus live MAP", dom.getBoolean("currentBandVisible"))
             assertTrue("CurrentBand must have positive rendered height", dom.getDouble("currentBandHeight") > 0.0)
             assertTrue("CurrentBand must stay inside the SVG plot", dom.getDouble("currentBandY") >= 0.0)
-            assertTrue("Reference chart remains dominant", dom.getDouble("chartHeight") >= 300.0)
+            assertTrue("Reference chart remains dominant", dom.getDouble("chartHeight") >= 420.0)
             assertTrue("Reference chart remains wide", dom.getDouble("chartWidth") >= 760.0)
-            assertTrue("Live rail remains above the fold", dom.getDouble("railBottom") <= dom.getDouble("viewportHeight"))
+            assertTrue("Operational toolbar remains above the fold", dom.getDouble("toolbarBottom") <= dom.getDouble("viewportHeight"))
+            assertTrue("Collapsed AutoCal must not create horizontal overflow", dom.getDouble("screenScrollWidth") <= dom.getDouble("screenClientWidth") + 1.0)
+            assertTrue("Secondary details stay collapsed by default", !dom.getBoolean("detailsOpen"))
         } finally {
             scenario.close()
         }
@@ -1025,7 +1045,7 @@ class DashboardLevelsRenderTest {
             assertTrue("Horizontal same-pressure equivalence must render a drawable path", dom.getString("equivalentPath").length > 20)
             assertTrue("Horizontal same-pressure equivalence must expose multiple points", dom.getInt("equivalentPoints") >= 20)
             assertTrue("AGORA remains a live overlay, not acquired evidence", dom.getBoolean("liveVisible"))
-            assertTrue("Live rail remains above the fold", dom.getDouble("railBottom") <= dom.getDouble("viewportHeight"))
+            assertTrue("Operational toolbar remains above the fold", dom.getDouble("toolbarBottom") <= dom.getDouble("viewportHeight"))
         } finally {
             scenario.close()
         }
