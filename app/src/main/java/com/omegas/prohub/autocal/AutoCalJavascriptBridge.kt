@@ -1,7 +1,5 @@
 package com.omegas.prohub.autocal
 
-import android.app.AlertDialog
-import android.os.Build
 import android.webkit.JavascriptInterface
 import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
@@ -14,8 +12,8 @@ import java.io.File
  * Bridge modular do AutoMatch OMEGAS.
  *
  * Projeção, leitura manual e monitor nativo permanecem separados. As ações nativas
- * ficam numa superfície separada, sempre preparadas e confirmadas pelo operador
- * também em diálogo Android nativo, além da revisão crítica da WebView.
+ * ficam numa superfície separada: são preparadas, revisadas no OMEGAS e então
+ * executadas diretamente pelo manager canônico com ACK/readback.
  */
 class AutoCalJavascriptBridge(activity: MainActivity) {
     private val activityRef = java.lang.ref.WeakReference(activity)
@@ -102,7 +100,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             val now = System.currentTimeMillis()
             val preparationId = "KRESET-" + now
             synchronized(managerLock) {
-                if (kFactorResetPreparationId != null || nativeConfirmationPendingId != null) {
+                if (kFactorResetPreparationId != null) {
                     return localFailure("Já existe uma ação crítica preparada")
                 }
                 kFactorResetPreparationId = preparationId
@@ -172,12 +170,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     }
 
     /**
-     * Não executa a ação diretamente. Agenda um AlertDialog Android não
-     * cancelável por toque externo; somente o botão positivo chama o manager.
+     * Executa após a revisão crítica dentro do OMEGAS. Não abre confirmação Android
+     * redundante; os interlocks, ACK e readback continuam no manager canônico.
      */
     @JavascriptInterface
     fun executeNativeAction(preparationId: String): String {
-        val activity = activityRef.get() ?: return unavailable()
         val isKFactorReset = synchronized(managerLock) {
             val valid = preparationId == kFactorResetPreparationId &&
                 kFactorResetPreparedAtMs > 0L &&
@@ -188,7 +185,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             }
             valid
         }
-        if (isKFactorReset) return executeKFactorResetConfirmation(activity, preparationId)
+        if (isKFactorReset) return executeKFactorReset(preparationId)
+
         val actionManager = currentNativeManager() ?: return unavailable()
         val preparedStatus = actionManager.statusJson()
         if (preparedStatus.optString("state") != "PREPARED" ||
@@ -204,7 +202,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         }
         if (action.operationalToggle) {
             actionManager.clearPreparation()
-            return localFailure("Iniciar/Pausar não usa diálogo crítico; use a ação operacional de um toque")
+            return localFailure("Iniciar/Pausar não usa revisão crítica; use a ação operacional de um toque")
         }
         if (action !in setOf(
                 AutoCalNativeActionManager.Action.RESET_PETROL,
@@ -216,142 +214,50 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             actionManager.clearPreparation()
             return localFailure("Ação destrutiva não suportada")
         }
-        synchronized(managerLock) {
-            if (nativeConfirmationPendingId != null) {
-                return localFailure("Já existe uma confirmação Android aberta")
-            }
-            nativeConfirmationPendingId = preparationId
-        }
-        return try {
-            activity.runOnUiThread {
-                if (activity.isFinishing || (Build.VERSION.SDK_INT >= 17 && activity.isDestroyed)) {
-                    synchronized(managerLock) { nativeConfirmationPendingId = null }
-                    actionManager.clearPreparation()
-                    return@runOnUiThread
-                }
-                val commandHex = action.request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-                val effect = when (action) {
-                    AutoCalNativeActionManager.Action.RESET_PETROL ->
-                        "Readquirir gasolina usa a ação original dedicada Reset petrol point (modo 0x01). A Curva K usa outro caminho. O comando é enviado após sua confirmação e o estado é relido depois do ACK."
-                    AutoCalNativeActionManager.Action.RESET_GAS ->
-                        "Readquirir GNV usa a ação original dedicada Reset gas point (modo 0x02). A Curva K usa outro caminho. O comando é enviado após sua confirmação e o estado é relido depois do ACK."
-                    AutoCalNativeActionManager.Action.RESET_ALL ->
-                        "Nova aquisição completa usa a ação original Reset all (modo 0x04) e deve ser tratada como redefinição ampla."
-                    AutoCalNativeActionManager.Action.DELETE_POINT -> {
-                        val details = preparedStatus.optJSONObject("details") ?: JSONObject()
-                        val fuel = details.optString("fuelLabel", "aquisição")
-                        val point = details.optInt("point", 0)
-                        val zone = details.optInt("zone", 0)
-                        "Readquirir somente este ponto de $fuel (ponto $point · Z$zone). O original marca este índice para apagar e preserva os outros 17 pontos."
-                    }
-                    else -> action.description
-                }
-                AlertDialog.Builder(activity)
-                    .setTitle(action.label.uppercase() + " — ECU")
-                    .setMessage(
-                        effect + "\n\nComando: " + commandHex + "\n\n" +
-                            "Nenhum backup automático é criado. Se você quiser guardar a Curva K, use o backup manual antes.",
-                    )
-                    .setCancelable(false)
-                    .setNegativeButton("CANCELAR") { dialog, _ ->
-                        synchronized(managerLock) { nativeConfirmationPendingId = null }
-                        actionManager.clearPreparation()
-                        activity.refreshWebUi()
-                        dialog.dismiss()
-                    }
-                    .setPositiveButton(if (action == AutoCalNativeActionManager.Action.DELETE_POINT) "READQUIRIR PONTO" else "CONFIRMAR RESET") { dialog, _ ->
-                        synchronized(managerLock) { nativeConfirmationPendingId = null }
-                        val result = actionManager.execute(preparationId)
-                        if (!result.optBoolean("ok")) actionManager.clearPreparation()
-                        activity.refreshWebUi()
-                        dialog.dismiss()
-                    }
-                    .show()
-            }
-            JSONObject()
-                .put("ok", true)
-                .put("confirmationPending", true)
-                .put("nativeAndroidConfirmation", true)
-                .put("writesStarted", false)
-                .put("automatic", false)
-                .put("manualOnly", true)
-                .toString()
-        } catch (error: Exception) {
-            synchronized(managerLock) { nativeConfirmationPendingId = null }
-            actionManager.clearPreparation()
-            localFailure(error.message ?: "Não foi possível abrir a confirmação Android")
-        }
+
+        val result = actionManager.execute(preparationId)
+        if (!result.optBoolean("ok", false)) actionManager.clearPreparation()
+        return result
+            .put("confirmationPending", false)
+            .put("nativeAndroidConfirmation", false)
+            .put("writesStarted", result.optBoolean("ok", false))
+            .put("automatic", false)
+            .put("manualOnly", true)
+            .toString()
     }
 
     @JavascriptInterface
     fun clearNativeActionPreparation(): String {
         synchronized(managerLock) {
-            nativeConfirmationPendingId = null
             kFactorResetPreparationId = null
             kFactorResetPreparedAtMs = 0L
         }
         return currentNativeManager()?.clearPreparation()?.toString() ?: unavailable()
     }
 
-    private fun executeKFactorResetConfirmation(activity: MainActivity, preparationId: String): String {
+    private fun executeKFactorReset(preparationId: String): String {
+        val activity = activityRef.get() ?: return unavailable()
         synchronized(managerLock) {
-            if (nativeConfirmationPendingId != null) return localFailure("Já existe uma confirmação Android aberta")
-            nativeConfirmationPendingId = preparationId
+            if (preparationId != kFactorResetPreparationId) {
+                return localFailure("A preparação não corresponde à ação revisada")
+            }
+            kFactorResetPreparationId = null
+            kFactorResetPreparedAtMs = 0L
         }
         return try {
-            activity.runOnUiThread {
-                if (activity.isFinishing || (Build.VERSION.SDK_INT >= 17 && activity.isDestroyed)) {
-                    synchronized(managerLock) {
-                        nativeConfirmationPendingId = null
-                        kFactorResetPreparationId = null
-                        kFactorResetPreparedAtMs = 0L
-                    }
-                    return@runOnUiThread
-                }
-                AlertDialog.Builder(activity)
-                    .setTitle("RESET CURVA K — ECU")
-                    .setMessage(
-                        "ProgBase ActionResetKFactorExecute grava 1.0 em todos os MUL_ACT.\n\n" +
-                            "O OMEGAS fará a mesma transformação física usando o writer canônico da Curva K, " +
-                            "com ACK e readback ponto a ponto. Nenhum backup automático será criado; salvar a curva é uma ação manual separada.",
-                    )
-                    .setCancelable(false)
-                    .setNegativeButton("CANCELAR") { dialog, _ ->
-                        synchronized(managerLock) {
-                            nativeConfirmationPendingId = null
-                            kFactorResetPreparationId = null
-                            kFactorResetPreparedAtMs = 0L
-                        }
-                        activity.refreshWebUi()
-                        dialog.dismiss()
-                    }
-                    .setPositiveButton("RESETAR CURVA K") { dialog, _ ->
-                        synchronized(managerLock) {
-                            nativeConfirmationPendingId = null
-                            kFactorResetPreparationId = null
-                            kFactorResetPreparedAtMs = 0L
-                        }
-                        activity.serviceOrNull()?.startKFactorReset()
-                        activity.refreshWebUi()
-                        dialog.dismiss()
-                    }
-                    .show()
-            }
+            activity.serviceOrNull()?.startKFactorReset() ?: return unavailable()
+            activity.refreshWebUi()
             JSONObject()
                 .put("ok", true)
-                .put("confirmationPending", true)
-                .put("nativeAndroidConfirmation", true)
-                .put("writesStarted", false)
+                .put("action", "RESET_K_FACTOR")
+                .put("confirmationPending", false)
+                .put("nativeAndroidConfirmation", false)
+                .put("writesStarted", true)
                 .put("automatic", false)
                 .put("manualOnly", true)
                 .toString()
         } catch (error: Exception) {
-            synchronized(managerLock) {
-                nativeConfirmationPendingId = null
-                kFactorResetPreparationId = null
-                kFactorResetPreparedAtMs = 0L
-            }
-            localFailure(error.message ?: "Não foi possível abrir a confirmação Android")
+            localFailure(error.message ?: "Não foi possível iniciar o reset da Curva K")
         }
     }
 
@@ -365,7 +271,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("localDraft", false)
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
-        .put("nativeAndroidConfirmation", true)
+        .put("nativeAndroidConfirmation", false)
         .put("appAutomaticWrite", false)
         .put("nativeAutoMatchInsideEcu", true)
         .put("manualAutoMatchExposed", false)
@@ -380,7 +286,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             manager = null
             nativeActions = null
             managerService = null
-            nativeConfirmationPendingId = null
         }
     }
 
@@ -469,7 +374,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeActions?.close()
             manager = null
             nativeActions = null
-            nativeConfirmationPendingId = null
             kFactorResetPreparationId = null
             kFactorResetPreparedAtMs = 0L
             managerService = service
