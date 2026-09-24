@@ -186,6 +186,7 @@ class TelemetryForegroundService : Service() {
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
                 link.markDataChanged("escrita K factor confirmada")
             },
+            publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = runtime.serialScheduler(),
