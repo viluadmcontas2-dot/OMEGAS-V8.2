@@ -226,9 +226,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 val commandHex = action.request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
                 val effect = when (action) {
                     AutoCalNativeActionManager.Action.RESET_PETROL ->
-                        "Readquirir gasolina usa a ação original dedicada Reset petrol point (modo 0x01). A Curva K usa outro caminho. Após o ACK, o OMEGAS compara o snapshot antes/depois e avisa se observar mudança fora do escopo esperado."
+                        "Readquirir gasolina usa a ação original dedicada Reset petrol point (modo 0x01). A Curva K usa outro caminho. O comando é enviado após sua confirmação e o estado é relido depois do ACK."
                     AutoCalNativeActionManager.Action.RESET_GAS ->
-                        "Readquirir GNV usa a ação original dedicada Reset gas point (modo 0x02). A Curva K usa outro caminho. Após o ACK, o OMEGAS compara o snapshot antes/depois e avisa se observar mudança fora do escopo esperado."
+                        "Readquirir GNV usa a ação original dedicada Reset gas point (modo 0x02). A Curva K usa outro caminho. O comando é enviado após sua confirmação e o estado é relido depois do ACK."
                     AutoCalNativeActionManager.Action.RESET_ALL ->
                         "Nova aquisição completa usa a ação original Reset all (modo 0x04) e deve ser tratada como redefinição ampla."
                     else -> action.description
@@ -237,8 +237,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     .setTitle(action.label.uppercase() + " — ECU")
                     .setMessage(
                         effect + "\n\nComando: " + commandHex + "\n\n" +
-                            "Antes do envio, o OMEGAS exige snapshot completo e backup pré-mutação persistido e relido. " +
-                            "Se o backup falhar, nenhum comando é enviado.",
+                            "Nenhum backup automático é criado. Se você quiser guardar a Curva K, use o backup manual antes.",
                     )
                     .setCancelable(false)
                     .setNegativeButton("CANCELAR") { dialog, _ ->
@@ -301,7 +300,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     .setMessage(
                         "ProgBase ActionResetKFactorExecute grava 1.0 em todos os MUL_ACT.\n\n" +
                             "O OMEGAS fará a mesma transformação física usando o writer canônico da Curva K, " +
-                            "com backup automático antes da primeira escrita, ACK e readback ponto a ponto.",
+                            "com ACK e readback ponto a ponto. Nenhum backup automático será criado; salvar a curva é uma ação manual separada.",
                     )
                     .setCancelable(false)
                     .setNegativeButton("CANCELAR") { dialog, _ ->
