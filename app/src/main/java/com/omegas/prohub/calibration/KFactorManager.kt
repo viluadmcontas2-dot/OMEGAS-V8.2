@@ -22,8 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Autoridade Android da curva azul K factor.
  *
- * Toda escrita é iniciada pelo usuário, possui backup completo, ACK e readback
- * dos 30 pontos. Sugestões do aprendizado nunca chamam este gerenciador.
+ * Toda escrita é iniciada pelo usuário e confirmada por ACK + readback.
+ * Backup da Curva K é uma ação manual separada; não é pré-requisito para escrever.
+ * Sugestões do aprendizado nunca chamam este gerenciador.
  */
 class KFactorManager(
     private val paths: AppPaths,
@@ -64,7 +65,7 @@ class KFactorManager(
      * Reset da Curva K com a mesma semântica provada no ProgBase:
      * ActionResetKFactorExecute grava MUL_ACT[i] = 1.0 para todos os pontos.
      * A execução é delegada ao writer canônico do OMEGAS para preservar
-     * backup automático, ACK e readback completo.
+     * ACK e readback completo. Backup, quando desejado, é feito manualmente.
      */
     fun startResetToNeutral(reason: String = "Reset Curva K · ProgBase MUL_ACT=1.0"): JSONObject {
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
@@ -320,7 +321,8 @@ class KFactorManager(
                 .put("points", points)
                 .put("currentCurve", fresh)
                 .put("restoreUsesExistingWriter", true)
-                .put("preWriteBackupRequired", true)
+                .put("preWriteBackupRequired", false)
+                .put("automaticBackup", false)
         } catch (error: Exception) {
             error(error.message ?: "Backup da Curva K inválido")
         }
@@ -373,6 +375,7 @@ class KFactorManager(
             .put("points", normalized.length())
             .put("automatic", false)
             .put("humanConfirmationRequired", true)
+            .put("automaticBackup", false)
     }
 
     fun close() = executor.shutdownNow()
@@ -400,7 +403,6 @@ class KFactorManager(
             }
             val working = ecuBefore.copyOf()
             initialHash = hash(working)
-            createBackup(adjustmentId, cachedAxis, working, points, initialHash)
 
             repeat(points.length()) { pointPosition ->
                 val point = points.getJSONObject(pointPosition)
@@ -490,6 +492,7 @@ class KFactorManager(
                 .put("automatic", false)
                 .put("humanConfirmed", true)
                 .put("readbackValid", true)
+                .put("automaticBackup", false)
                 .put("confirmedAt", now)
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-FACTOR", "Curva confirmada; notificação falhou: ${error.message}")
@@ -585,26 +588,6 @@ class KFactorManager(
             .put("minimumFactor", MIN_SAFE_FACTOR)
             .put("maximumFactor", MAX_SAFE_FACTOR)
             .put("automatic", false)
-    }
-
-    private fun createBackup(
-        adjustmentId: String,
-        axisRaw: IntArray,
-        factorsRaw: IntArray,
-        points: JSONArray,
-        initialHash: String,
-    ) {
-        val backup = curveJson(axisRaw, factorsRaw)
-            .put("format", "omegas-k-factor-backup-v1")
-            .put("type", "PRE_WRITE")
-            .put("label", "Backup automático antes da escrita")
-            .put("adjustmentId", adjustmentId)
-            .put("createdAt", System.currentTimeMillis())
-            .put("hash", initialHash)
-            .put("changes", JSONArray(points.toString()))
-        atomicWrite(File(backupDir, "$adjustmentId.json"), backup.toString(2))
-        loadBackup("$adjustmentId.json")
-        pruneBackups()
     }
 
     private fun loadBackup(fileName: String): JSONObject {
