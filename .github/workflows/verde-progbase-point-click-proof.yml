@@ -268,6 +268,78 @@ jobs:
                   p+=1
           PY
 
+      - name: Prove TAebVector ECU persistence path
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "== UNDELPHI AEB VECTOR/PROTOCOL SYMBOLS =="
+            grep -Ein -C 8 '(TAebVector|SetDataInEcu|SetByAddress|SetVector|SetNumber|AebProtocol)' atlas-undelphi/undelphi.txt || true
+          } | tee point-proof/aeb-vector-symbols.txt
+
+          python3 - <<'PY' | tee point-proof/aeb-vector-writer-disasm.txt
+          from pathlib import Path
+          import re, pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+
+          data=Path("/tmp/ProgBase.exe").read_bytes()
+          pe=pefile.PE("/tmp/ProgBase.exe",fast_load=False)
+          image=int(pe.OPTIONAL_HEADER.ImageBase)
+
+          def va_to_off(va):
+              rva=va-image
+              for s in pe.sections:
+                  start=int(s.VirtualAddress); size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+                  if start<=rva<start+size:
+                      return int(s.PointerToRawData)+(rva-start)
+              return None
+
+          txt=Path("atlas-undelphi/undelphi.txt").read_text(encoding="utf-8",errors="ignore")
+          symbols={}
+          for m in re.finditer(r'0x([0-9a-fA-F]{8})\s+([A-Za-z_]\w*)',txt):
+              symbols[int(m.group(1),16)]=m.group(2)
+
+          md=Cs(CS_ARCH_X86,CS_MODE_32)
+          targets={
+              "TAebVector_SetData":0x00979534,
+              "TAebVector_SetDataInEcu":0x009796B8,
+              "TAebVector_SetDouble":0x00979EE8,
+              "TAebVector_Helper_975FD0":0x00975FD0,
+              "TAebVector_Helper_979D28":0x00979D28,
+          }
+          discovered=set()
+          for name,va in targets.items():
+              print(f"\n== {name} @ 0x{va:08X} symbol={symbols.get(va,'')} ==")
+              off=va_to_off(va)
+              if off is None:
+                  print("VA_NOT_MAPPED"); continue
+              for n,ins in enumerate(md.disasm(data[off:off+1800],va)):
+                  print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+                  if ins.mnemonic=="call":
+                      try:
+                          target=int(ins.op_str,0)
+                          if 0x00900000 <= target <= 0x00990000:
+                              discovered.add(target)
+                      except Exception:
+                          pass
+                  if ins.mnemonic.startswith("ret") or n>=450: break
+
+          print("\nDISCOVERED_AEB_CALLS",[
+              f"0x{x:08X}" + (f"={symbols[x]}" if x in symbols else "")
+              for x in sorted(discovered)
+          ])
+          for va in sorted(discovered - set(targets.values())):
+              label=symbols.get(va,"")
+              if not re.search(r'(aeb|protocol|set|write|data)',label,re.I):
+                  continue
+              print(f"\n== DISCOVERED 0x{va:08X} {label} ==")
+              off=va_to_off(va)
+              if off is None: continue
+              for n,ins in enumerate(md.disasm(data[off:off+1400],va)):
+                  print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+                  if ins.mnemonic.startswith("ret") or n>=350: break
+          PY
+
       - name: Publish targeted proof
         uses: actions/upload-artifact@v4
         with:
