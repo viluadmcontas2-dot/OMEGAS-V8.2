@@ -340,6 +340,80 @@ jobs:
                   if ins.mnemonic.startswith("ret") or n>=350: break
           PY
 
+      - name: Prove point-delete vector wire contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee point-proof/point-delete-wire-contract.txt
+          from pathlib import Path
+          import struct, re, pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+
+          exe=Path("/tmp/ProgBase.exe")
+          data=exe.read_bytes()
+          pe=pefile.PE(str(exe),fast_load=False)
+          image=int(pe.OPTIONAL_HEADER.ImageBase)
+
+          def va_to_off(va):
+              rva=va-image
+              for s in pe.sections:
+                  start=int(s.VirtualAddress); size=max(int(s.Misc_VirtualSize),int(s.SizeOfRawData))
+                  if start<=rva<start+size:
+                      return int(s.PointerToRawData)+(rva-start)
+              return None
+
+          def dword(va):
+              off=va_to_off(va)
+              return struct.unpack_from("<I",data,off)[0]
+
+          txt=Path("atlas-undelphi/undelphi.txt").read_text(encoding="utf-8",errors="ignore")
+          symbols={}
+          for m in re.finditer(r'0x([0-9a-fA-F]{8})\s+([A-Za-z_]\w*)',txt):
+              symbols[int(m.group(1),16)]=m.group(2)
+
+          # Delphi virtual slots exposed by undelphi begin at class_type_va.
+          vector_slots=0x00AC9BA8
+          print("TAEBVECTOR_VIRTUAL_BASE=0x%08X"%vector_slots)
+          for off in (0x90,0x94,0x98):
+              target=dword(vector_slots+off)
+              print("TAEBVECTOR_SLOT_%02X=0x%08X symbol=%s"%(off,target,symbols.get(target,"")))
+
+          md=Cs(CS_ARCH_X86,CS_MODE_32)
+          targets={
+              "ProtocolWrite_925D18":0x00925D18,
+              "ProtocolWrite_925F44":0x00925F44,
+              "ProtocolWrite_9265F8":0x009265F8,
+              "SerialHelper_921FE0":0x00921FE0,
+              "SendCommand_9244C8":0x009244C8,
+          }
+          for name,va in targets.items():
+              print(f"\n== {name} @ 0x{va:08X} symbol={symbols.get(va,'')} ==")
+              off=va_to_off(va)
+              if off is None:
+                  print("VA_NOT_MAPPED"); continue
+              for n,ins in enumerate(md.disasm(data[off:off+2200],va)):
+                  print(f"{ins.address:08X}: {ins.bytes.hex(' ').upper():<28} {ins.mnemonic:<8} {ins.op_str}")
+                  if ins.mnemonic.startswith("ret") or n>=520: break
+
+          print("\n== POINT DELETE DFM CONTRACT ==")
+          for name in ("GAS_POINT_2DELETE","PETROL_POINT_2DELETE"):
+              p=txt.find(f"<object TAebVector:{name}>")
+              if p<0:
+                  print(name,"NOT_FOUND"); continue
+              block=txt[p:txt.find("<object ",p+8) if txt.find("<object ",p+8)>0 else p+1800]
+              serial=re.search(r"SerialCode = (\d+)",block)
+              dim=re.search(r"ArrayDimension = (\d+)",block)
+              mask=re.search(r"DataMask = (\d+)",block)
+              dlen=re.search(r"DataLength = (\d+)",block)
+              print(name,{
+                  "SerialCode":int(serial.group(1)) if serial else None,
+                  "hex":f"0x{int(serial.group(1)):04X}" if serial else None,
+                  "ArrayDimension":int(dim.group(1)) if dim else None,
+                  "DataMask":int(mask.group(1)) if mask else None,
+                  "DataLength_explicit":int(dlen.group(1)) if dlen else None,
+              })
+          PY
+
       - name: Publish targeted proof
         uses: actions/upload-artifact@v4
         with:
