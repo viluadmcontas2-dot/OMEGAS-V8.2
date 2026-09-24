@@ -1548,10 +1548,14 @@
 
 /* 2026-09-24 — Premium cockpit final direction.
    Primary surface = graph. Secondary content stays collapsed below it in one vertical flow. */
-.autocal-cockpit-view {
+.screen.autocal-route-screen {
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
+  contain: layout style;
+}
+.autocal-cockpit-view {
+  overflow: visible;
 }
 .autocal-cockpit {
   position: relative;
