@@ -60,20 +60,20 @@ class AutoCalNativeActionManager(
         ),
         RESET_PETROL(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
-            "Reset gasolina",
-            "ProgBase 4.2.0.6: ActionResetPetrolExecute -> modo 0x01 -> quadro 02 24 04 01 2B. Identidade e quadro são provados pelo EXE canônico.",
+            "Readquirir gasolina",
+            "Usa a ação nativa dedicada Reset petrol point do ProgBase 4.2.0.6 (modo 0x01). A Curva K usa outro caminho. O OMEGAS registra snapshot antes/depois e sinaliza se observar mudança fora do escopo esperado.",
             true,
         ),
         RESET_GAS(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
-            "Reset GNV",
-            "ProgBase 4.2.0.6: ActionResetGasExecute -> modo 0x02 -> quadro 02 24 04 02 2C. Identidade e quadro são provados pelo EXE canônico.",
+            "Readquirir GNV",
+            "Usa a ação nativa dedicada Reset gas point do ProgBase 4.2.0.6 (modo 0x02). A Curva K usa outro caminho. O OMEGAS registra snapshot antes/depois e sinaliza se observar mudança fora do escopo esperado.",
             true,
         ),
         RESET_ALL(
             Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
-            "Reset ALL",
-            "ProgBase 4.2.0.6: ActionResetAllExecute -> modo 0x04 -> quadro 02 24 04 04 2E. O quadro também aparece no corpus original com efeito amplo.",
+            "Nova aquisição completa",
+            "Usa a ação nativa Reset all do ProgBase 4.2.0.6 (modo 0x04). É uma redefinição ampla e permanece separada da readquisição de um único combustível.",
             true,
         );
     }
@@ -239,7 +239,19 @@ class AutoCalNativeActionManager(
             val receipt = receipt(prepared, reply, before, after, startedAt, preMutationBackup)
             appendReceipt(receipt)
             try { onConfirmed(receipt) } catch (_: Exception) {}
-            update("CONFIRMED", "Ação confirmada por ACK e recibo antes/depois", 100, prepared, receipt)
+            val scope = receipt.optJSONObject("scopeAssessment") ?: JSONObject()
+            val scopeAttention = scope.optBoolean("requiresAttention", false)
+            update(
+                if (scopeAttention) "CONFIRMED_WITH_SCOPE_WARNING" else "CONFIRMED",
+                if (scopeAttention) {
+                    "ACK confirmado; o readback exige atenção ao escopo observado. Veja o recibo antes/depois."
+                } else {
+                    scope.optString("humanSummary", "Ação confirmada por ACK e recibo antes/depois")
+                },
+                100,
+                prepared,
+                receipt,
+            )
         } catch (error: Exception) {
             update("FAILED", error.message ?: "Ação AutoCal interrompida", 100, prepared)
         } finally {
@@ -314,6 +326,7 @@ class AutoCalNativeActionManager(
             .put("beforePartial", before.partial)
             .put("afterPartial", after.partial)
             .put("changedFields", changed)
+            .put("scopeAssessment", scopeAssessment(prepared.action, changed, before, after))
             .put("before", before.toJson())
             .put("after", after.toJson())
             .put("ecuMutation", true)
@@ -324,6 +337,65 @@ class AutoCalNativeActionManager(
             .put("readbackValid", true)
             .put("preMutationBackup", preMutationBackup ?: JSONObject.NULL)
             .put("automaticRollback", false)
+    }
+
+    private fun scopeAssessment(
+        action: Action,
+        changed: JSONArray,
+        before: AutoCalSnapshot,
+        after: AutoCalSnapshot,
+    ): JSONObject {
+        val changedKeys = buildSet {
+            for (index in 0 until changed.length()) {
+                changed.optJSONObject(index)?.optString("key")?.takeIf { it.isNotBlank() }?.let(::add)
+            }
+        }
+        val petrolChanged = changedKeys.any { it in PETROL_ACQUISITION_KEYS }
+        val gasChanged = changedKeys.any { it in GAS_ACQUISITION_KEYS }
+        val mulActChanged = AutoCalProtocol.MUL_ACT.key in changedKeys
+        val scopeConclusive = !before.partial && !after.partial
+
+        val intendedScope = when (action) {
+            Action.RESET_GAS -> "GNV_REACQUISITION"
+            Action.RESET_PETROL -> "PETROL_REACQUISITION"
+            Action.RESET_ALL -> "FULL_REACQUISITION"
+            else -> "OPERATIONAL_TOGGLE"
+        }
+        val broaderThanIntended = when (action) {
+            Action.RESET_GAS -> petrolChanged || mulActChanged
+            Action.RESET_PETROL -> gasChanged || mulActChanged
+            else -> false
+        }
+        val requiresAttention = !scopeConclusive || broaderThanIntended
+        val dedicatedScopeObserved = scopeConclusive && when (action) {
+            Action.RESET_GAS -> gasChanged && !petrolChanged && !mulActChanged
+            Action.RESET_PETROL -> petrolChanged && !gasChanged && !mulActChanged
+            else -> false
+        }
+        val humanSummary = when {
+            !scopeConclusive ->
+                "ACK confirmado, mas o snapshot posterior ficou parcial; o escopo da mudança não pôde ser fechado."
+            broaderThanIntended ->
+                "ACK confirmado, mas o snapshot posterior mostra mudança fora da readquisição solicitada."
+            action == Action.RESET_GAS && dedicatedScopeObserved ->
+                "GNV liberado para readquisição; neste readback, gasolina e Curva K permaneceram preservadas."
+            action == Action.RESET_PETROL && dedicatedScopeObserved ->
+                "Gasolina liberada para readquisição; neste readback, GNV e Curva K permaneceram preservados."
+            else ->
+                "Ação confirmada por ACK e snapshot antes/depois; nenhuma mudança fora do escopo esperado foi observada."
+        }
+
+        return JSONObject()
+            .put("intendedScope", intendedScope)
+            .put("scopeConclusive", scopeConclusive)
+            .put("petrolAcquisitionChanged", petrolChanged)
+            .put("gasAcquisitionChanged", gasChanged)
+            .put("mulActChanged", mulActChanged)
+            .put("broaderThanIntended", broaderThanIntended)
+            .put("dedicatedScopeObserved", dedicatedScopeObserved)
+            .put("requiresAttention", requiresAttention)
+            .put("changedKeys", JSONArray(changedKeys.sorted()))
+            .put("humanSummary", humanSummary)
     }
 
     private fun persistPreMutationBackup(
@@ -459,5 +531,23 @@ class AutoCalNativeActionManager(
     companion object {
         private const val PREPARATION_TTL_MS = 120_000L
         private const val MAX_RECEIPTS = 200
+
+        private val PETROL_ACQUISITION_KEYS = setOf(
+            AutoCalProtocol.NUM_BUF_UPD_PETR.key,
+            AutoCalProtocol.PETR_INJ_TBUF.key,
+            AutoCalProtocol.MNFLD_PRESS_BUF.key,
+            AutoCalProtocol.ACQUIRED_ZONES_PETROL.key,
+            AutoCalProtocol.PETR_MNFLD_PRESS_RV.key,
+        )
+
+        private val GAS_ACQUISITION_KEYS = setOf(
+            AutoCalProtocol.NUM_BUF_UPD_GAS.key,
+            AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV.key,
+            AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV.key,
+            AutoCalProtocol.PETR_INJ_TBUF_GAS.key,
+            AutoCalProtocol.MNFLD_PRESS_BUF_GAS.key,
+            AutoCalProtocol.ACQUIRED_ZONES_GAS.key,
+            AutoCalProtocol.GAS_MNFLD_PRESS_RV.key,
+        )
     }
 }
