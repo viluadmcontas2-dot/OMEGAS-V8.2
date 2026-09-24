@@ -23,3 +23,5 @@ Locked product requirements:
 - Curve K reset reaches the existing verified 1.0 writer;
 - write safety keeps USB/engine/fresh-telemetry interlocks, with no RPM-only threshold;
 - ECU writes retain ACK + readback.
+
+PR-triggered authorized APK gate retriggered after the manual-only canonical CI contract was restored.
