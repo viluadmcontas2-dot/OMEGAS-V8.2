@@ -29,8 +29,9 @@ assert 'update("READING_AFTER", "Atualizando estado da ECU"' in manager
 # UX says exactly what the operator asked for: backups are optional/manual.
 assert 'Backup da Curva K é manual' in cockpit
 assert 'Backup não é requisito' in cockpit
-assert 'Nenhum backup automático é criado' in bridge
-assert 'Nenhum backup automático será criado' in bridge
+assert 'Confirmar executa agora pelo OMEGAS' in cockpit
+assert 'AlertDialog' not in bridge
+assert 'nativeAndroidConfirmation", true' not in bridge
 assert 'backup pré-mutação' not in bridge.lower()
 
 print('AUTOCAL_REACQUISITION_NO_BACKUP_CONTRACT=PASS')
