@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '../..');
 const app = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/app.js'), 'utf8');
 const scheduler = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/scheduler.js'), 'utf8');
 assert.match(app, /intervalMs:\s*200/);
-assert.match(app, /setCadenceMs\(route === 'autocal' \? 75 : 200\)/);
+assert.match(app, /setCadenceMs\(route === 'autocal' \? 50 : 200\)/);
 assert.match(scheduler, /setCadenceMs\(intervalMs\)/);
 assert.match(scheduler, /statusElapsedMs/);
 assert.match(scheduler, /contextElapsedMs/);
