@@ -374,6 +374,10 @@
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Restauração real exige ECU conectada.' };
       return invoke(this.v7, 'startCurveRestorePrepare', [fileName || ''], { ok: false, error: 'Restauração da Curva K indisponível' });
     }
+    resetCurve() {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Reset real exige ECU conectada.' };
+      return invoke(this.v7, 'startCurveReset', [], { ok: false, error: 'Reset da Curva K indisponível' });
+    }
     curveOperation() {
       if (this.demo) return { ...this.demoCurveState, state: 'COMPLETED', busy: false };
       return invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });
@@ -398,12 +402,12 @@
       return invoke(this.v7, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
     }
 
-    sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 500, captureRawUsb: false, maxSessionMb: 64, keepSessions: 10 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
+    sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 250, captureRawUsb: false, maxSessionMb: 256, keepSessions: 20 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
     sessions() { return this.demo ? [] : invoke(this.native, 'listRecordedSessions', [], []); }
     setSessionSettings(settings) {
       const s = settings || {};
       if (this.demo) return { ok: true, settings: s, demo: true };
-      return invoke(this.native, 'setSessionRecorderSettings', [Number(s.telemetryEveryMs) || 500, Number(s.maxSessionMb) || 64, Number(s.keepSessions) || 10, s.autoStartOnUsb !== false, s.captureRawUsb === true], { ok: false });
+      return invoke(this.native, 'setSessionRecorderSettings', [Number(s.telemetryEveryMs) || 250, Number(s.maxSessionMb) || 256, Math.max(20, Number(s.keepSessions) || 20), s.autoStartOnUsb !== false, s.captureRawUsb === true], { ok: false });
     }
     startSession(reason) { return this.demo ? { ok: true, recording: true, demo: true } : invoke(this.native, 'startSessionRecording', [reason || 'manual'], { ok: false }); }
     stopSession(reason) { return this.demo ? { ok: true, recording: false, demo: true } : invoke(this.native, 'stopSessionRecording', [reason || 'manual'], { ok: false }); }
