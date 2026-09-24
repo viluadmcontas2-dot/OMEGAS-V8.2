@@ -18,13 +18,14 @@ test('AutoCal uses graph-first premium hierarchy', () => {
   assert.match(js, /id="autocalLiveZone"/);
   assert.doesNotMatch(js, /autocalLiveLevel/);
   assert.match(css, /\.autocal-focus-toolbar\s*\{/);
-  assert.match(css, /\.autocal-secondary-rail\s*\{[\s\S]*overflow-x:\s*auto/);
-  assert.match(css, /height:\s*clamp\(405px,\s*65vh,\s*515px\)/);
+  assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*grid-template-columns:\s*1fr/);
+  assert.match(css, /height:\s*clamp\(420px,\s*68vh,\s*520px\)/);
 });
 
-test('secondary state does not steal graph height', () => {
-  assert.match(css, /\.autocal-secondary-rail\s*\{[\s\S]*max-height:\s*98px/);
-  assert.match(css, /\.autocal-secondary-card\s*\{[\s\S]*height:\s*88px/);
+test('secondary state stays below the graph in one vertical flow', () => {
+  assert.match(css, /\.autocal-cockpit-view\s*\{[\s\S]*overflow-y:\s*auto/);
+  assert.match(css, /\.autocal-secondary-details\s*\{[\s\S]*position:\s*static/);
+  assert.match(css, /\.autocal-secondary-card\s*\{[\s\S]*width:\s*100%/);
   assert.match(css, /\.autocal-chart-inspector\s*\{[\s\S]*position:\s*absolute/);
   assert.match(css, /\.autocal-chart-legend\s*\{[\s\S]*position:\s*absolute/);
 });
