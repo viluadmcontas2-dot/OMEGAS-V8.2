@@ -42,162 +42,61 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `acao confirmada gera snapshot antes depois e recibo persistente`() {
-        val actionSent = AtomicBoolean(false)
+    fun `reset confirmado envia primeiro e so depois faz readback sem backup automatico`() {
+        val calls = java.util.concurrent.CopyOnWriteArrayList<String>()
         val confirmed = AtomicBoolean(false)
         val receiptFile = temporaryFile()
         val manager = manager(receiptFile = receiptFile, onConfirmed = { confirmed.set(true) }) { request, _, _, _ ->
-            when (request[0].toInt() and 0xFF) {
-                0x09, 0x29 -> reply(request, byteArrayOf(if (actionSent.get()) 1 else 0))
-                else -> {
-                    actionSent.set(true)
-                    reply(request, byteArrayOf())
-                }
+            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
+                calls += "RESET_GAS"
+                reply(request, byteArrayOf())
+            } else {
+                calls += "READBACK"
+                reply(request, byteArrayOf(1))
             }
         }
-        val prepared = manager.prepare("ENABLE_AUTO_CAL")
+
+        val prepared = manager.prepare("RESET_GAS")
         val started = manager.execute(prepared.getString("preparationId"))
         assertTrue(started.getBoolean("humanConfirmed"))
         awaitIdle(manager)
+
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
         assertTrue(confirmed.get())
-        val receipts = manager.receiptsJson()
-        assertEquals(1, receipts.length())
-        val receipt = receipts.getJSONObject(0)
-        assertEquals("ENABLE_AUTO_CAL", receipt.getString("action"))
-        assertEquals("12 4A 01 01 5E", receipt.getString("commandHex"))
+        assertEquals(listOf("RESET_GAS", "READBACK"), calls.toList())
+
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("RESET_GAS", receipt.getString("action"))
+        assertEquals("02 24 04 02 2C", receipt.getString("commandHex"))
         assertTrue(receipt.getBoolean("readbackValid"))
-        assertEquals(1, receipt.getJSONArray("changedFields").length())
-        assertFalse(receipt.getBoolean("automatic"))
-        assertFalse(receipt.getBoolean("automaticRollback"))
-        assertTrue(receiptFile.isFile)
+        assertFalse(receipt.getBoolean("automaticBackup"))
+        assertTrue(receipt.isNull("preMutationBackup"))
+        assertFalse(receipt.has("before"))
+        assertTrue(receipt.has("after"))
+        assertFalse(File(receiptFile.parentFile, "backups/autocal_pre_reset").exists())
         manager.close()
     }
 
     @Test
-    fun `reset persiste snapshot antes de enviar comando destrutivo`() {
+    fun `pasta de backup indisponivel nao bloqueia reset`() {
         val receiptFile = temporaryFile()
-        val backupExistedBeforeWrite = AtomicBoolean(false)
-        val manager = manager(receiptFile = receiptFile) { request, _, _, _ ->
-            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
-                val backupDir = File(receiptFile.parentFile, "backups/autocal_pre_reset")
-                val backup = backupDir.listFiles()?.singleOrNull { it.extension == "json" }
-                backupExistedBeforeWrite.set(
-                    backup != null &&
-                        org.json.JSONObject(backup.readText(Charsets.UTF_8))
-                            .getJSONObject("before")
-                            .getString("snapshotHash")
-                            .isNotBlank(),
-                )
-            }
-            reply(request, byteArrayOf(1))
-        }
-
-        val prepared = manager.prepare("RESET_GAS")
-        manager.execute(prepared.getString("preparationId"))
-        awaitIdle(manager)
-
-        assertTrue("Reset só pode sair depois de backup durável", backupExistedBeforeWrite.get())
-        manager.close()
-    }
-
-    @Test
-    fun `falha ao persistir backup bloqueia reset antes da usb`() {
-        val receiptFile = temporaryFile()
-        File(receiptFile.parentFile, "backups").writeText("bloqueia diretório de backup")
+        File(receiptFile.parentFile, "backups").writeText("bloqueia qualquer backup automatico")
         val resetCalls = AtomicInteger(0)
         val manager = manager(receiptFile = receiptFile) { request, _, _, _ ->
-            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
+            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_PETROL.request)) {
                 resetCalls.incrementAndGet()
-            }
-            reply(request, byteArrayOf(1))
-        }
-
-        val prepared = manager.prepare("RESET_GAS")
-        manager.execute(prepared.getString("preparationId"))
-        awaitIdle(manager)
-
-        assertEquals(0, resetCalls.get())
-        assertEquals("FAILED", manager.statusJson().getString("state"))
-        manager.close()
-    }
-
-    @Test
-    fun `reset gas registra escopo dedicado quando gasolina e curva k ficam intactas`() {
-        val actionSent = AtomicBoolean(false)
-        val fields = listOf(
-            AutoCalProtocol.ACQUIRED_ZONES_PETROL,
-            AutoCalProtocol.ACQUIRED_ZONES_GAS,
-            AutoCalProtocol.MUL_ACT,
-        )
-        val manager = manager(fieldsForReceipt = fields) { request, _, _, _ ->
-            when {
-                request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request) -> {
-                    actionSent.set(true)
-                    reply(request, byteArrayOf())
-                }
-                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_PETROL)) ->
-                    reply(request, byteArrayOf(1, 1, 1, 1))
-                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_GAS)) ->
-                    reply(request, if (actionSent.get()) byteArrayOf(0, 0, 0, 0) else byteArrayOf(1, 1, 1, 1))
-                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)) ->
-                    reply(request, q14Payload(16384))
-                else -> error("request inesperado")
+                reply(request, byteArrayOf())
+            } else {
+                reply(request, byteArrayOf(1))
             }
         }
 
-        val prepared = manager.prepare("RESET_GAS")
+        val prepared = manager.prepare("RESET_PETROL")
         manager.execute(prepared.getString("preparationId"))
         awaitIdle(manager)
 
+        assertEquals(1, resetCalls.get())
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
-        val scope = manager.receiptsJson().getJSONObject(0).getJSONObject("scopeAssessment")
-        assertEquals("GNV_REACQUISITION", scope.getString("intendedScope"))
-        assertTrue(scope.getBoolean("scopeConclusive"))
-        assertTrue(scope.getBoolean("gasAcquisitionChanged"))
-        assertFalse(scope.getBoolean("petrolAcquisitionChanged"))
-        assertFalse(scope.getBoolean("mulActChanged"))
-        assertFalse(scope.getBoolean("broaderThanIntended"))
-        assertTrue(scope.getBoolean("dedicatedScopeObserved"))
-        assertFalse(scope.getBoolean("requiresAttention"))
-        manager.close()
-    }
-
-    @Test
-    fun `reset gas alerta quando readback mostra gasolina ou curva k alteradas`() {
-        val actionSent = AtomicBoolean(false)
-        val fields = listOf(
-            AutoCalProtocol.ACQUIRED_ZONES_PETROL,
-            AutoCalProtocol.ACQUIRED_ZONES_GAS,
-            AutoCalProtocol.MUL_ACT,
-        )
-        val manager = manager(fieldsForReceipt = fields) { request, _, _, _ ->
-            when {
-                request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request) -> {
-                    actionSent.set(true)
-                    reply(request, byteArrayOf())
-                }
-                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_PETROL)) ->
-                    reply(request, if (actionSent.get()) byteArrayOf(0, 0, 0, 0) else byteArrayOf(1, 1, 1, 1))
-                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.ACQUIRED_ZONES_GAS)) ->
-                    reply(request, if (actionSent.get()) byteArrayOf(0, 0, 0, 0) else byteArrayOf(1, 1, 1, 1))
-                request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)) ->
-                    reply(request, q14Payload(if (actionSent.get()) 16000 else 16384))
-                else -> error("request inesperado")
-            }
-        }
-
-        val prepared = manager.prepare("RESET_GAS")
-        manager.execute(prepared.getString("preparationId"))
-        awaitIdle(manager)
-
-        assertEquals("CONFIRMED_WITH_SCOPE_WARNING", manager.statusJson().getString("state"))
-        val scope = manager.receiptsJson().getJSONObject(0).getJSONObject("scopeAssessment")
-        assertTrue(scope.getBoolean("petrolAcquisitionChanged"))
-        assertTrue(scope.getBoolean("mulActChanged"))
-        assertTrue(scope.getBoolean("broaderThanIntended"))
-        assertFalse(scope.getBoolean("dedicatedScopeObserved"))
-        assertTrue(scope.getBoolean("requiresAttention"))
         manager.close()
     }
 
@@ -265,13 +164,6 @@ class AutoCalNativeActionManagerTest {
         fieldsForReceipt = fieldsForReceipt,
         onConfirmed = onConfirmed,
     )
-
-    private fun q14Payload(value: Int): ByteArray = ByteArray(60).also { bytes ->
-        repeat(30) { index ->
-            bytes[index * 2] = (value and 0xFF).toByte()
-            bytes[index * 2 + 1] = ((value ushr 8) and 0xFF).toByte()
-        }
-    }
 
     private fun reply(request: ByteArray, payload: ByteArray) = UsbProtocolReply(
         ok = true,
