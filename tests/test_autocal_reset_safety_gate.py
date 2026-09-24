@@ -21,6 +21,25 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         self.assertIn("ensureSession(prepared)", text)
         self.assertIn("unsafeMutationReason()", text)
 
+    def test_ui_reset_buttons_route_to_progbase_actions(self):
+        ui = UI.read_text(encoding="utf-8")
+        api = (ROOT / "app/src/main/assets/ui/core/autocal-api.js").read_text(encoding="utf-8")
+        bridge = BRIDGE.read_text(encoding="utf-8")
+        manager = MANAGER.read_text(encoding="utf-8")
+        expected = {
+            "RESET_PETROL": "Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01))",
+            "RESET_GAS": "Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))",
+            "RESET_ALL": "Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04))",
+        }
+        for action, frame in expected.items():
+            self.assertIn(f'data-autocal-action="{action}"', ui)
+            self.assertIn(f"AutoCalNativeActionManager.Action.{action}", bridge)
+            self.assertIn(frame, manager)
+        self.assertIn("this.prepare(button.dataset.autocalAction)", ui)
+        self.assertIn("prepare: action => invoke('prepareNativeAction'", api)
+        self.assertIn("execute: preparationId => invoke('executeNativeAction'", api)
+        self.assertIn("val result = actionManager.execute(preparationId)", bridge)
+
     def test_curve_reset_uses_existing_verified_writer(self):
         text = KFACTOR.read_text(encoding="utf-8")
         self.assertIn("fun startResetToNeutral", text)
