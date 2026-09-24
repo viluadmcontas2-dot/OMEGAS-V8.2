@@ -1669,10 +1669,10 @@
   min-width: 172px;
   min-height: 50px;
   padding: 0 15px;
-  border: 1px solid rgba(255,93,105,.72);
+  border: 1px solid rgba(226,178,76,.52);
   border-radius: 10px;
-  color: #fff1f2;
-  background: linear-gradient(180deg, rgba(151,31,43,.88), rgba(112,20,31,.9));
+  color: #fff4cf;
+  background: linear-gradient(180deg, rgba(95,73,27,.88), rgba(67,50,20,.92));
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
@@ -1715,6 +1715,11 @@
   font-size: 9px;
   font-weight: 900;
   letter-spacing: .11em;
+}
+.autocal-reset-group[data-reset-scope="fuel"] button {
+  border-color: rgba(226,178,76,.32);
+  color: #f7e7b7;
+  background: rgba(104,78,26,.24);
 }
 .autocal-reset-popover p {
   margin: 1px 1px 0;
