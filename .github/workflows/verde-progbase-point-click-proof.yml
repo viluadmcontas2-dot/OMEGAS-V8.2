@@ -244,6 +244,30 @@ jobs:
                   if ins.mnemonic.startswith("ret") or n>=300: break
           PY
 
+      - name: Dump delete-mask resource bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee point-proof/delete-mask-bytes.txt
+          from pathlib import Path
+          data=Path("/tmp/ProgBase.exe").read_bytes()
+          for name in ("GAS_POINT_2DELETE","PETROL_POINT_2DELETE","ACQUIRED_ZONES_PETROL","ACQUIRED_ZONES_GAS"):
+              needle=name.encode()
+              print("\n==",name,"==")
+              p=0
+              while True:
+                  p=data.find(needle,p)
+                  if p<0: break
+                  print("OFFSET",hex(p))
+                  lo=max(0,p-192); hi=min(len(data),p+512)
+                  blob=data[lo:hi]
+                  for row in range(0,len(blob),16):
+                      chunk=blob[row:row+16]
+                      asc=''.join(chr(x) if 32<=x<127 else '.' for x in chunk)
+                      print(f"{lo+row:08X}  {' '.join(f'{x:02X}' for x in chunk):<47} {asc}")
+                  p+=1
+          PY
+
       - name: Publish targeted proof
         uses: actions/upload-artifact@v4
         with:
