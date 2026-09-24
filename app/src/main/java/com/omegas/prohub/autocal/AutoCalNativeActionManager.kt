@@ -347,7 +347,8 @@ class AutoCalNativeActionManager(
     ): JSONObject {
         val changedKeys = buildSet {
             for (index in 0 until changed.length()) {
-                changed.optJSONObject(index)?.optString("key")?.takeIf { it.isNotBlank() }?.let(::add)
+                val key = changed.optJSONObject(index)?.optString("key").orEmpty()
+                if (key.isNotBlank()) add(key)
             }
         }
         val petrolChanged = changedKeys.any { it in PETROL_ACQUISITION_KEYS }
