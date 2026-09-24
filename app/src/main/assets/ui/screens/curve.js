@@ -119,7 +119,7 @@
     resetCurve() {
       if (this.reading || this.writing || this.backupTask) return;
       const confirmed = window.confirm(
-        'Resetar a Curva K para 1.0? A curva atual será lida e um backup automático pré-escrita será preservado antes de qualquer alteração.'
+        'Resetar a Curva K para 1.0? Nenhum backup automático será criado. Se quiser guardar a curva atual, use Salvar curva antes.'
       );
       if (!confirmed) return;
       this.cancelRestorePreview('');
@@ -135,7 +135,7 @@
       this.root?.classList.remove('has-result');
       this.root?.classList.add('is-writing');
       text('curveOperationTitle', 'Resetando Curva K para 1.0');
-      text('curveOperationMessage', 'Backup pré-escrita → escrita → ACK → readback');
+      text('curveOperationMessage', 'Escrita → ACK → readback');
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
     }
