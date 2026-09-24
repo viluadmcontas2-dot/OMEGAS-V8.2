@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const AUTO_CAL_LIVE_STALE_MS = 2500;
+  const AUTO_CAL_LIVE_STALE_MS = 7500;
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
 
   function finite(value) {
@@ -909,7 +909,7 @@
         this.text('autocalLiveMap', '—');
         this.text('autocalLiveZone', '—');
         this.text('autocalLiveNarrative', stale
-          ? 'O último frame já passou de 2,5 s. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
+          ? 'O último frame passou da janela curta de telemetria. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
           : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
         return;
       }
