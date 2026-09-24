@@ -931,7 +931,8 @@ class DashboardLevelsRenderTest {
                 scenario,
                 "document.querySelector('.autocal-secondary-details')?.setAttribute('open', ''); 'ok';",
             )
-            SystemClock.sleep(120L)
+            // Once disclosed, prove the visible secondary orientation from a fresh MP48 frame.
+            injectFresh(scenario, live, settleMs = 300L)
             val expandedDom = autocalReferenceDom(scenario)
             saveEvidence("autocal-sparse-zone-map", expandedDom, scenario, provenance)
 
@@ -954,11 +955,11 @@ class DashboardLevelsRenderTest {
             assertTrue("Z2 must be visibly labelled FALTA", dom.getJSONArray("gasZoneLabels").getString(1).contains("FALTA"))
             assertTrue("Z3 must be visibly labelled OK", dom.getJSONArray("gasZoneLabels").getString(2).contains("OK"))
             assertEquals(
-                "Current MAP orientation must point to one physical zone for both fuels",
-                dom.getJSONArray("currentPetrolZones").toString(),
-                dom.getJSONArray("currentGasZones").toString(),
+                "Visible zone orientation must point to one physical zone for both fuels",
+                expandedDom.getJSONArray("currentPetrolZones").toString(),
+                expandedDom.getJSONArray("currentGasZones").toString(),
             )
-            assertEquals("Current MAP must identify exactly one zone", 1, dom.getJSONArray("currentGasZones").length())
+            assertEquals("Visible zone map must identify exactly one current zone", 1, expandedDom.getJSONArray("currentGasZones").length())
             assertEquals(
                 "Four physical zones must be painted ON THE CHART using the native thresholds",
                 4, dom.getJSONArray("zoneSurfaceLabels").length(),
@@ -979,9 +980,9 @@ class DashboardLevelsRenderTest {
             )
             assertEquals("AGORA must highlight exactly one zone on the chart", 1, dom.getJSONArray("currentChartZones").length())
             assertEquals(
-                "Chart highlight and native CurrentBand must identify the SAME zone",
-                dom.getJSONArray("currentGasZones").getInt(0),
-                dom.getJSONArray("currentChartZones").getInt(0),
+                "Chart highlight and disclosed zone map must identify the SAME zone",
+                expandedDom.getJSONArray("currentGasZones").getInt(0),
+                expandedDom.getJSONArray("currentChartZones").getInt(0),
             )
             assertTrue("AGORA cursor must name its zone ON THE CHART", dom.getString("liveZoneLabel").contains("AGORA · Z"))
             assertTrue("Owner must have an enabled broad acquisition reset", dom.getBoolean("broadResetEnabled"))
