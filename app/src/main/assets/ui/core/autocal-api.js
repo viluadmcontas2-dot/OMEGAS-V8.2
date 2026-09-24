@@ -33,6 +33,7 @@
     setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),
     prepare: action => invoke('prepareNativeAction', [String(action || '')], {}),
     prepareKFactorReset: () => invoke('prepareNativeAction', ['RESET_K_FACTOR'], {}),
+    preparePointDelete: (fuel, index) => invoke('preparePointDelete', [String(fuel || ''), Number(index)], {}),
     execute: preparationId => invoke('executeNativeAction', [String(preparationId || '')], {}),
     cancelPreparation: () => invoke('clearNativeActionPreparation', [], {}),
   };

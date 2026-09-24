@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.usb.UsbProtocolReply
@@ -97,6 +98,64 @@ class AutoCalNativeActionManagerTest {
 
         assertEquals(1, resetCalls.get())
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        manager.close()
+    }
+
+    @Test
+    fun `readquirir um ponto usa os 36 masks originais commit e so depois readback`() {
+        val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
+        val manager = manager { request, _, _, _ ->
+            requests += request.copyOf()
+            val opcode = request.firstOrNull()?.toInt()?.and(0xFF)
+            reply(request, if (opcode == AutoCalProtocol.READ_SCALAR || opcode == AutoCalProtocol.READ_VECTOR) byteArrayOf(1) else byteArrayOf())
+        }
+        val prepared = manager.preparePointDelete("GAS", 14)
+        assertTrue(prepared.getBoolean("prepared"))
+        assertEquals("DELETE_POINT", prepared.getString("action"))
+        assertEquals(4, prepared.getJSONObject("details").getInt("zone"))
+        assertFalse(prepared.getBoolean("automaticBackup"))
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        val expected = AutoCalPointDeleteProtocol.singlePointPlan(
+            AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, 14),
+        )
+        assertEquals(expected.size + 1, requests.size)
+        expected.forEachIndexed { index, frame -> assertArrayEquals(frame, requests[index]) }
+        assertArrayEquals(AutoCalProtocol.read(AutoCalProtocol.AUTO_CAL_ENABLE), requests.last())
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("DELETE_POINT", receipt.getString("action"))
+        assertEquals("GAS", receipt.getJSONObject("pointDelete").getString("fuel"))
+        assertEquals(14, receipt.getJSONObject("pointDelete").getInt("index"))
+        assertFalse(receipt.getBoolean("automaticBackup"))
+        manager.close()
+    }
+
+    @Test
+    fun `falha em mask pontual impede commit`() {
+        val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
+        val manager = manager { request, _, _, _ ->
+            requests += request.copyOf()
+            if (requests.size == 3) {
+                UsbProtocolReply(
+                    ok = false,
+                    status = -1,
+                    payload = byteArrayOf(),
+                    request = request,
+                    echo = byteArrayOf(),
+                    error = "mask rejeitado",
+                )
+            } else {
+                reply(request, byteArrayOf())
+            }
+        }
+        val prepared = manager.preparePointDelete("PETROL", 5)
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("FAILED", manager.statusJson().getString("state"))
+        assertEquals(3, requests.size)
+        assertFalse(requests.any { it.contentEquals(AutoCalPointDeleteProtocol.commit()) })
         manager.close()
     }
 

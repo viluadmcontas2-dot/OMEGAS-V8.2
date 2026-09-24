@@ -114,7 +114,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 .put("preparationId", preparationId)
                 .put("action", "RESET_K_FACTOR")
                 .put("label", "Reset Curva K")
-                .put("description", "ProgBase ActionResetKFactorExecute grava MUL_ACT[i] = 1.0 em toda a curva. O OMEGAS usa o writer existente com backup, ACK e readback.")
+                .put("description", "ProgBase ActionResetKFactorExecute grava MUL_ACT[i] = 1.0 em toda a curva. O OMEGAS usa o writer existente com ACK e readback; backup é manual e opcional.")
                 .put("commandHex", "MUL_ACT[0..29] = 1.0")
                 .put("sessionId", sessionId)
                 .put("ecuMutation", true)
@@ -137,12 +137,17 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.DELETE_POINT,
             )
         ) {
             return localFailure("Ação destrutiva não suportada")
         }
         return currentNativeManager()?.prepare(parsed.name)?.toString() ?: unavailable()
     }
+
+    @JavascriptInterface
+    fun preparePointDelete(fuel: String, index: Int): String =
+        currentNativeManager()?.preparePointDelete(fuel, index)?.toString() ?: unavailable()
 
     @JavascriptInterface
     fun setAcquisitionEnabled(enabled: Boolean): String {
@@ -205,6 +210,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.DELETE_POINT,
             )
         ) {
             actionManager.clearPreparation()
@@ -231,6 +237,13 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         "Readquirir GNV usa a ação original dedicada Reset gas point (modo 0x02). A Curva K usa outro caminho. O comando é enviado após sua confirmação e o estado é relido depois do ACK."
                     AutoCalNativeActionManager.Action.RESET_ALL ->
                         "Nova aquisição completa usa a ação original Reset all (modo 0x04) e deve ser tratada como redefinição ampla."
+                    AutoCalNativeActionManager.Action.DELETE_POINT -> {
+                        val details = preparedStatus.optJSONObject("details") ?: JSONObject()
+                        val fuel = details.optString("fuelLabel", "aquisição")
+                        val point = details.optInt("point", 0)
+                        val zone = details.optInt("zone", 0)
+                        "Readquirir somente este ponto de $fuel (ponto $point · Z$zone). O original marca este índice para apagar e preserva os outros 17 pontos."
+                    }
                     else -> action.description
                 }
                 AlertDialog.Builder(activity)
@@ -246,7 +259,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         activity.refreshWebUi()
                         dialog.dismiss()
                     }
-                    .setPositiveButton("CONFIRMAR RESET") { dialog, _ ->
+                    .setPositiveButton(if (action == AutoCalNativeActionManager.Action.DELETE_POINT) "READQUIRIR PONTO" else "CONFIRMAR RESET") { dialog, _ ->
                         synchronized(managerLock) { nativeConfirmationPendingId = null }
                         val result = actionManager.execute(preparationId)
                         if (!result.optBoolean("ok")) actionManager.clearPreparation()

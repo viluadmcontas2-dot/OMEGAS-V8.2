@@ -2030,3 +2030,42 @@
     padding: 0 10px;
   }
 }
+
+
+/* ProgBase-parity: only current acquired dots expose point reacquisition. */
+.autocal-chart-legend .acquired::before {
+  width: 9px;
+  height: 9px;
+  border: 2px solid rgba(240,196,92,.92);
+  border-radius: 50%;
+  background: transparent;
+}
+.autocal-acquired-hit {
+  fill: transparent;
+  cursor: pointer;
+  pointer-events: all;
+}
+.autocal-acquired-point {
+  pointer-events: none;
+  stroke: #071018;
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,.55));
+}
+.autocal-acquired-point.petrol { fill: #78b7ff; }
+.autocal-acquired-point.gas { fill: #5dd39e; }
+.autocal-acquired-hit.selected + .autocal-acquired-point {
+  stroke: #fff4cf;
+  stroke-width: 3.4;
+}
+.autocal-point-reacquire {
+  flex: 0 0 auto;
+  min-height: 38px;
+  margin-left: auto;
+  padding: 0 12px;
+  border-color: rgba(226,178,76,.38);
+  color: #fff0bf;
+  background: rgba(104,78,26,.28);
+  font-size: 11px;
+  font-weight: 850;
+}

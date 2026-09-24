@@ -239,14 +239,42 @@
       return points;
     },
 
-    referenceDomain(points = [], history = [], zoneSurface = []) {
+    acquiredPoints(snapshot = {}, fuel = 'gas') {
+      const normalized = String(fuel || '').toLowerCase();
+      const gas = normalized === 'gas' || normalized === 'gnv' || normalized === 'cng';
+      const xValues = physicalVector(snapshot, gas ? 'PETR_INJ_TBUF_GAS' : 'PETR_INJ_TBUF');
+      const yValues = physicalVector(snapshot, gas ? 'MNFLD_PRESS_BUF_GAS' : 'MNFLD_PRESS_BUF');
+      const counters = vector(snapshot, gas ? 'NUM_BUF_UPD_GAS' : 'NUM_BUF_UPD_PETR');
+      const count = Math.min(18, xValues.length, yValues.length, counters.length);
+      const points = [];
+      for (let index = 0; index < count; index += 1) {
+        const counter = finite(counters[index]) ?? 0;
+        const petrolMs = finite(xValues[index]);
+        const mapBar = finite(yValues[index]);
+        if (counter > 0 && petrolMs !== null && petrolMs > 0 && mapBar !== null) {
+          points.push({
+            fuel: gas ? 'GAS' : 'PETROL',
+            fuelLabel: gas ? 'GNV' : 'Gasolina',
+            index,
+            point: index + 1,
+            zone: zoneForBand(index) + 1,
+            counter,
+            petrolMs,
+            mapBar,
+          });
+        }
+      }
+      return points;
+    },
+
+    referenceDomain(points = [], history = [], zoneSurface = [], acquiredPoints = []) {
       const physicalFloor = Array.isArray(zoneSurface) && zoneSurface.length
         ? Math.max(0, finite(zoneSurface[0]?.lower) ?? 0)
         : 0;
       const yMin = Math.min(physicalFloor, AUTO_CAL_OPERATIONAL_MAP_MAX_BAR - 0.05);
       const yMax = AUTO_CAL_OPERATIONAL_MAP_MAX_BAR;
-      const all = [...points, ...history].filter(point =>
-        [finite(point?.petrolMapBar), finite(point?.gasMapBar)]
+      const all = [...points, ...history, ...acquiredPoints].filter(point =>
+        [finite(point?.petrolMapBar), finite(point?.gasMapBar), finite(point?.mapBar)]
           .some(value => value !== null && value >= yMin && value <= yMax));
       if (!all.length) return null;
       const xValues = all.flatMap(point => {
@@ -408,8 +436,10 @@
       this.chartScale = null;
       this.previousReferencePoints = [];
       this.currentReferencePoints = [];
+      this.currentAcquiredPoints = [];
       this.chartHistoryVisible = false;
       this.selectedReferenceIndex = null;
+      this.selectedAcquiredPoint = null;
       this.selectedBandIndex = null;
       this.inject();
       this.bind();
@@ -498,12 +528,13 @@
                 <div class="autocal-chart-legend">
                   <span class="petrol">Gasolina</span>
                   <span class="gas">GNV</span>
+                  <span class="acquired">Ponto adquirido</span>
                   <span class="current-band">Zona atual</span>
                   <span class="live">AGORA</span>
                   <span id="autocalReferenceCount">0 pontos nativos</span>
                 </div>
                 <button type="button" class="autocal-history-float" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
-                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Veja Petrol Inj. e MAP sem alterar a ECU.</span></aside>
+                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Linhas mostram referência; bolinhas adquiridas podem ser readquiridas individualmente.</span></aside>
               </div>
             </section>
 
@@ -607,8 +638,22 @@
         if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
         const band = event.target.closest('[data-autocal-band-index]');
         if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
+        const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
+        if (acquiredPoint) {
+          this.inspectAcquiredPoint(
+            acquiredPoint.dataset.autocalAcquiredFuel,
+            Number(acquiredPoint.dataset.autocalAcquiredIndex),
+          );
+        }
         const point = event.target.closest('[data-autocal-ref-index]');
         if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
+        const reacquire = event.target.closest('[data-autocal-reacquire-point]');
+        if (reacquire) {
+          this.requestPointReacquisition(
+            reacquire.dataset.autocalReacquireFuel,
+            Number(reacquire.dataset.autocalReacquireIndex),
+          );
+        }
         const exportButton = event.target.closest('[data-autocal-export-session]');
         if (exportButton?.dataset?.sessionId) this.api?.exportSession?.(exportButton.dataset.sessionId);
       });
@@ -685,7 +730,10 @@
       } else if (referenceTransition.referenceChanged) {
         this.previousReferencePoints = referenceTransition.previousPoints;
       }
-      if (referenceTransition.resetSelection) this.selectedReferenceIndex = null;
+      if (referenceTransition.resetSelection) {
+        this.selectedReferenceIndex = null;
+        this.selectedAcquiredPoint = null;
+      }
       this.snapshot = nextSnapshot || {};
       this.analysis = nextAnalysis;
       this.actionState = this.api.actionStatus() || {};
@@ -994,8 +1042,12 @@
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
       const points = AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
+      const acquiredPetrol = AutoCalUxModel.acquiredPoints(snapshot, 'petrol');
+      const acquiredGas = AutoCalUxModel.acquiredPoints(snapshot, 'gas');
+      const acquiredPoints = [...acquiredPetrol, ...acquiredGas];
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       this.currentReferencePoints = points;
+      this.currentAcquiredPoints = acquiredPoints;
       const timingKnown = this.projection?.referenceTimingKnown === true;
       const timingCoherent = this.projection?.referenceTimingCoherent === true;
       const timingSpanMs = finite(this.projection?.referenceTimingSpanMs);
@@ -1032,7 +1084,7 @@
       const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
       const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
       const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
-      const domain = AutoCalUxModel.referenceDomain(points, history, zoneSurface);
+      const domain = AutoCalUxModel.referenceDomain(points, history, zoneSurface, acquiredPoints);
       if (!domain) {
         this.chartScale = null;
         host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>';
@@ -1112,6 +1164,20 @@
           (equivalentX === null ? '' : '<circle class="autocal-equivalence-point" cx="' + equivalentX + '" cy="' + petrolY + '" r="4"></circle>');
       }).join('');
 
+      const acquiredMarkup = acquiredPoints.map(point => {
+        if (point.mapBar < yMin || point.mapBar > yMax || point.petrolMs < xMin || point.petrolMs > xMax) return '';
+        const x = xFor(point.petrolMs).toFixed(1);
+        const y = yFor(point.mapBar).toFixed(1);
+        const key = point.fuel + ':' + point.index;
+        const selected = this.selectedAcquiredPoint === key;
+        return '<circle class="autocal-acquired-hit' + (selected ? ' selected' : '') +
+          '" data-autocal-acquired-fuel="' + point.fuel +
+          '" data-autocal-acquired-index="' + point.index +
+          '" cx="' + x + '" cy="' + y + '" r="17"></circle>' +
+          '<circle class="autocal-acquired-point ' + (point.fuel === 'GAS' ? 'gas' : 'petrol') +
+          '" cx="' + x + '" cy="' + y + '" r="5.5"></circle>';
+      }).join('');
+
       const projectedLive = AutoCalUxModel.projectLive(live, scale);
       const liveMarkup = live && projectedLive
         ? '<g class="autocal-live-layer" data-out-of-range="' + (projectedLive.outOfRange ? 'true' : 'false') + '" aria-label="Posição atual do motor">' +
@@ -1131,12 +1197,57 @@
         previous + equivalencePath +
         '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
         '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
-        pointMarkup + liveMarkup +
+        pointMarkup + acquiredMarkup + liveMarkup +
         '</g></svg>';
 
-      const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
-      this.inspectReferencePoint(selected);
+      if (this.selectedAcquiredPoint) {
+        const [fuel, rawIndex] = this.selectedAcquiredPoint.split(':');
+        this.inspectAcquiredPoint(fuel, Number(rawIndex));
+      } else {
+        const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
+        this.inspectReferencePoint(selected);
+      }
       this.renderLiveCursor();
+    }
+
+    inspectAcquiredPoint(fuel, index) {
+      const host = document.getElementById('autocalChartInspector');
+      const point = this.currentAcquiredPoints.find(item =>
+        String(item.fuel) === String(fuel) && Number(item.index) === Number(index));
+      if (!host || !point) {
+        this.selectedAcquiredPoint = null;
+        return;
+      }
+      this.selectedAcquiredPoint = point.fuel + ':' + point.index;
+      this.selectedReferenceIndex = null;
+      host.innerHTML = '<b>' + point.fuelLabel + ' · ponto ' + point.point + ' · Z' + point.zone + '</b>' +
+        '<span>' + point.petrolMs.toFixed(2) + ' ms · MAP ' + point.mapBar.toFixed(3) + ' bar · ' +
+        Math.round(point.counter) + ' amostra' + (Math.round(point.counter) === 1 ? '' : 's') + '</span>' +
+        '<button type="button" class="autocal-point-reacquire" data-autocal-reacquire-point ' +
+        'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '">' +
+        'Readquirir este ponto</button>';
+      document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => {
+        const key = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
+        node.classList.toggle('selected', key === this.selectedAcquiredPoint);
+      });
+      document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => node.classList.remove('selected'));
+    }
+
+    requestPointReacquisition(fuel, index) {
+      if (!this.api?.available?.() || !Number.isInteger(index)) return;
+      const prepared = this.api.preparePointDelete?.(fuel, index) || { ok: false, error: 'Readquisição pontual indisponível.' };
+      if (!prepared?.ok || !prepared?.prepared) {
+        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar este ponto.' } });
+        return;
+      }
+      const result = this.api.execute(prepared.preparationId);
+      if (result?.ok === false) {
+        this.api?.cancelPreparation?.();
+        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível abrir a confirmação do ponto.' } });
+        return;
+      }
+      this.store.patch({ alert: { level: 'warning', message: 'Confirme no Android para readquirir somente este ponto. Nenhum backup automático será criado.' } });
+      this.refresh();
     }
 
     inspectReferencePoint(index) {
@@ -1144,6 +1255,7 @@
       const point = this.currentReferencePoints.find(item => Number(item.index) === Number(index));
       if (!host || !point) return;
       this.selectedReferenceIndex = point.index;
+      this.selectedAcquiredPoint = null;
       const mapDelta = point.gasMapBar - point.petrolMapBar;
       host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + point.petrolMs.toFixed(2) + ' ms</b>' +
         '<span>MAP gasolina ' + point.petrolMapBar.toFixed(3) + ' bar · MAP GNV ' + point.gasMapBar.toFixed(3) + ' bar' +
@@ -1152,6 +1264,7 @@
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
       });
+      document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => node.classList.remove('selected'));
     }
 
     renderBands(snapshot) {
@@ -1227,7 +1340,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre a confirmação Android. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>snapshot antes/depois · gasolina · GNV · Curva K</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre a confirmação Android. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
     }
 
     renderUnavailable() {
