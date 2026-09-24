@@ -483,6 +483,27 @@ class TelemetryForegroundService : Service() {
         }
     }
 
+    @Synchronized fun startKFactorReset(): String {
+        if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
+        if (kWriter.isBusy()) {
+            return JSONObject().put("ok", false).put("error", "Uma alteração do mapa K está em andamento").toString()
+        }
+        if (::link.isInitialized && !link.canWriteLocally()) {
+            return JSONObject().put("ok", false)
+                .put("error", "Este aparelho não possui o controle principal do MP48")
+                .toString()
+        }
+        CalibrationWriteSafetyPolicy.unsafeReason(status())?.let { reason ->
+            return JSONObject().put("ok", false).put("error", reason).toString()
+        }
+        return try {
+            learningArchive.saveInternalCheckpoint("Antes de resetar Curva K para 1.0")
+            kFactor.startResetToNeutral("Reset Curva K · ProgBase MUL_ACT=1.0").toString()
+        } catch (error: Exception) {
+            JSONObject().put("ok", false).put("error", error.message ?: "Reset da Curva K inválido").toString()
+        }
+    }
+
     @Synchronized fun startKFactorWrite(pointsJson: String, reason: String): String {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kWriter.isBusy()) {

@@ -57,6 +57,97 @@ class KFactorManager(
 
     fun historyJson(): String = loadHistory().toString()
 
+    /**
+     * Reset da Curva K com a mesma semântica provada no ProgBase:
+     * ActionResetKFactorExecute grava MUL_ACT[i] = 1.0 para todos os pontos.
+     * A execução é delegada ao writer canônico do OMEGAS para preservar
+     * backup automático, ACK e readback completo.
+     */
+    fun startResetToNeutral(reason: String = "Reset Curva K · ProgBase MUL_ACT=1.0"): JSONObject {
+        val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
+            return error(error.message ?: "USB desconectado")
+        }
+        if (!busy.compareAndSet(false, true)) return error("Outra operação de calibração está em andamento")
+        val resetId = "KRESET-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().take(8)
+        onBusyChanged(true)
+        update("RESET_READING", "Lendo Curva K antes do reset", 0, JSONObject().put("resetId", resetId))
+        executor.execute {
+            var delegated = false
+            try {
+                val axisRaw = readRawPoints(KFactorProtocol.readPetrolAxis(), "eixo Petrol Inj para reset K", expectedSessionId)
+                val factorsRaw = readRawPoints(KFactorProtocol.readFactors(), "Curva K antes do reset", expectedSessionId)
+                val now = System.currentTimeMillis()
+                val cache = curveJson(axisRaw, factorsRaw)
+                    .put("schema", "omegas-k-factor-cache-v1")
+                    .put("updatedAt", now)
+                    .put("complete", true)
+                    .put("sessionConfirmed", true)
+                    .put("sessionId", expectedSessionId)
+                    .put("source", "ECU_RESET_PRECHECK")
+                    .put("hash", hash(factorsRaw))
+                atomicWrite(cacheFile, cache.toString(2))
+
+                val targetRaw = KFactorProtocol.rawFromFactor(1.0)
+                val points = JSONArray()
+                repeat(KFactorProtocol.POINT_COUNT) { index ->
+                    val currentRaw = factorsRaw[index]
+                    if (currentRaw != targetRaw) {
+                        points.put(JSONObject()
+                            .put("index", index)
+                            .put("currentRaw", currentRaw)
+                            .put("targetRaw", targetRaw))
+                    }
+                }
+
+                if (points.length() == 0) {
+                    update(
+                        "RESET_CONFIRMED",
+                        "Curva K já está neutra em 1.0",
+                        100,
+                        JSONObject().put("resetId", resetId).put("changedPoints", 0),
+                    )
+                } else {
+                    // O writer canônico precisa adquirir o lock por conta própria.
+                    busy.set(false)
+                    onBusyChanged(false)
+                    synchronized(statusLock) { status.put("busy", false) }
+                    val started = startBatchWrite(points, reason)
+                    delegated = started.optBoolean("ok", false)
+                    if (!delegated) {
+                        update(
+                            "RESET_FAILED",
+                            started.optString("error", "Não foi possível iniciar o reset da Curva K"),
+                            100,
+                            JSONObject().put("resetId", resetId),
+                        )
+                    }
+                }
+            } catch (error: Exception) {
+                update(
+                    "RESET_FAILED",
+                    error.message ?: "Reset da Curva K interrompido",
+                    100,
+                    JSONObject().put("resetId", resetId),
+                )
+            } finally {
+                if (!delegated) {
+                    busy.set(false)
+                    onBusyChanged(false)
+                    synchronized(statusLock) { status.put("busy", false) }
+                }
+            }
+        }
+        return JSONObject()
+            .put("ok", true)
+            .put("started", true)
+            .put("action", "RESET_K_FACTOR")
+            .put("resetId", resetId)
+            .put("targetFactor", 1.0)
+            .put("targetRaw", KFactorProtocol.rawFromFactor(1.0))
+            .put("automatic", false)
+            .put("humanConfirmed", true)
+    }
+
     @Synchronized
     fun beginUsbSession(sessionId: Long) {
         val cache = loadCache()

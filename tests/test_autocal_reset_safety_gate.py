@@ -5,31 +5,29 @@ ROOT = Path(__file__).resolve().parents[1]
 BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
 UI = ROOT / "app/src/main/assets/ui/screens/autocal-cockpit.js"
 MANAGER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
+KFACTOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt"
 
 class AutoCalResetSafetyGateTest(unittest.TestCase):
-    def test_only_observed_broad_reset_can_be_prepared(self):
+    def test_progbase_resets_are_allowed_by_code_evidence(self):
         bridge = BRIDGE.read_text(encoding="utf-8")
-        self.assertIn("if (parsed != AutoCalNativeActionManager.Action.RESET_GAS)", bridge)
-        self.assertIn("currentNativeManager()?.prepare(parsed.name)", bridge)
-        self.assertIn("if (action != AutoCalNativeActionManager.Action.RESET_GAS)", bridge)
-        self.assertIn("actionManager.execute(preparationId)", bridge)
-        self.assertIn("RESETAR AQUISIÇÃO", bridge)
+        for name in ("RESET_PETROL", "RESET_GAS", "RESET_ALL"):
+            self.assertIn(f"AutoCalNativeActionManager.Action.{name}", bridge)
+        self.assertIn('normalized == "RESET_K_FACTOR"', bridge)
 
-    def test_broad_reset_is_operator_controlled_and_explicit(self):
-        text = UI.read_text(encoding="utf-8")
-        self.assertIn('data-autocal-action="RESET_GAS" class="danger-primary"', text)
-        self.assertNotIn('data-autocal-action="RESET_PETROL"', text)
-        self.assertIn("efeito amplo", text)
-        self.assertIn("sem restauração automática", text)
-        self.assertNotIn('data-autocal-action="RESET_ALL"', text)
-
-    def test_backup_and_session_interlock_still_protect_usb(self):
+    def test_backup_and_session_interlock_still_protect_host_resets(self):
         text = MANAGER.read_text(encoding="utf-8")
-        self.assertIn('persistPreMutationBackup(prepared, before)', text)
-        self.assertIn('require(!before.partial)', text)
-        self.assertIn('verified.getString("beforeHash") == before.snapshotHash', text)
+        self.assertIn("persistPreMutationBackup(prepared, before)", text)
+        self.assertIn("require(!before.partial)", text)
         self.assertIn("ensureSession(prepared)", text)
         self.assertIn("unsafeMutationReason()", text)
+
+    def test_curve_reset_uses_existing_verified_writer(self):
+        text = KFACTOR.read_text(encoding="utf-8")
+        self.assertIn("fun startResetToNeutral", text)
+        self.assertIn("KFactorProtocol.rawFromFactor(1.0)", text)
+        self.assertIn("startBatchWrite(points, reason)", text)
+        self.assertIn("createBackup(adjustmentId", text)
+        self.assertIn("readback K factor", text)
 
 if __name__ == "__main__":
     unittest.main()

@@ -32,6 +32,7 @@
     cancelRead: () => invoke('cancelRead', [], {}),
     setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),
     prepare: action => invoke('prepareNativeAction', [String(action || '')], {}),
+    prepareKFactorReset: () => invoke('prepareNativeAction', ['RESET_K_FACTOR'], {}),
     execute: preparationId => invoke('executeNativeAction', [String(preparationId || '')], {}),
     cancelPreparation: () => invoke('clearNativeActionPreparation', [], {}),
   };
