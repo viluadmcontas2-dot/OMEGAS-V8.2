@@ -222,12 +222,12 @@ assert.equal(source.includes('RESET_ALL'), true);
 assert.equal(source.includes('RESET_K_FACTOR'), true);
 assert.equal(source.includes('setInterval'), false);
 
-assert.equal(css.includes('overflow-x: auto'), true);
-assert.match(css, /\.autocal-secondary-rail\s*\{[\s\S]*overflow-x:\s*auto/s, 'informações secundárias devem rolar horizontalmente sem roubar altura do gráfico');
+assert.equal(css.includes('overflow-x: auto'), false, 'AutoCal não deve criar rolagem horizontal aninhada');
+assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*grid-template-columns:\s*1fr/s, 'informações secundárias devem seguir o mesmo fluxo vertical da página');
 assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
-assert.equal(css.includes('height: clamp(405px, 65vh, 515px)'), true);
+assert.equal(css.includes('height: clamp(420px, 68vh, 520px)'), true);
 assert.equal(source.includes('id="autocalZoneMeter"'), true, 'cockpit premium deve expor progresso visual das zonas');
 assert.equal(source.includes('data-autocal-zone-petrol'), true);
 assert.equal(source.includes('data-autocal-zone-gas'), true);
