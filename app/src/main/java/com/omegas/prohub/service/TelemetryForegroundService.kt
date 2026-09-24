@@ -499,7 +499,6 @@ class TelemetryForegroundService : Service() {
             return JSONObject().put("ok", false).put("error", reason).toString()
         }
         return try {
-            learningArchive.saveInternalCheckpoint("Antes de resetar Curva K para 1.0")
             kFactor.startResetToNeutral("Reset Curva K · ProgBase MUL_ACT=1.0").toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Reset da Curva K inválido").toString()
@@ -518,7 +517,6 @@ class TelemetryForegroundService : Service() {
         }
         return try {
             val points = JSONArray(pointsJson)
-            learningArchive.saveInternalCheckpoint("Antes de ajustar K factor: " + reason.take(100))
             kFactor.startBatchWrite(points, reason).toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Lote K factor inválido").toString()
