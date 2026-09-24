@@ -791,13 +791,13 @@
       if (!prepared?.preparationId) return;
       const result = this.api.execute(prepared.preparationId);
       if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'A confirmação Android não pôde ser aberta.' } });
+        this.store.patch({ alert: { level: 'warning', message: result.error || 'A ação AutoCal não pôde ser executada.' } });
         return;
       }
       this.prepared = null;
       const review = document.getElementById('autocalReview');
       if (review) { review.hidden = true; review.innerHTML = ''; }
-      this.store.patch({ alert: { level: 'warning', message: 'Confirmação Android aberta. O comando ainda não foi enviado até você confirmar lá.' } });
+      this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde ACK e readback.' } });
       this.refresh();
     }
 
@@ -1246,7 +1246,7 @@
         this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível abrir a confirmação do ponto.' } });
         return;
       }
-      this.store.patch({ alert: { level: 'warning', message: 'Confirme no Android para readquirir somente este ponto. Nenhum backup automático será criado.' } });
+      this.store.patch({ alert: { level: 'working', message: 'Readquisição enviada para a ECU. Aguarde ACK e readback deste ponto.' } });
       this.refresh();
     }
 
@@ -1340,7 +1340,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Continuar abre a confirmação Android. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Continuar para confirmação Android</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Confirmar executa agora pelo OMEGAS, com ACK e readback. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Executar agora</button></div></div>`;
     }
 
     renderUnavailable() {
