@@ -14,12 +14,16 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
             self.assertIn(f"AutoCalNativeActionManager.Action.{name}", bridge)
         self.assertIn('normalized == "RESET_K_FACTOR"', bridge)
 
-    def test_backup_and_session_interlock_still_protect_host_resets(self):
+    def test_session_and_mutation_interlocks_protect_host_resets_without_backup_gate(self):
         text = MANAGER.read_text(encoding="utf-8")
-        self.assertIn("persistPreMutationBackup(prepared, before)", text)
-        self.assertIn("require(!before.partial)", text)
         self.assertIn("ensureSession(prepared)", text)
         self.assertIn("unsafeMutationReason()", text)
+        self.assertIn('update("SENDING_ACTION"', text)
+        self.assertIn('update("READING_AFTER", "Atualizando estado da ECU"', text)
+        self.assertIn('.put("automaticBackup", false)', text)
+        self.assertNotIn("persistPreMutationBackup", text)
+        self.assertNotIn("PERSISTING_BACKUP", text)
+        self.assertNotIn("READING_BEFORE", text)
 
     def test_ui_reset_buttons_route_to_progbase_actions(self):
         ui = UI.read_text(encoding="utf-8")
@@ -45,7 +49,8 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         self.assertIn("fun startResetToNeutral", text)
         self.assertIn("KFactorProtocol.rawFromFactor(1.0)", text)
         self.assertIn("startBatchWrite(points, reason)", text)
-        self.assertIn("createBackup(adjustmentId", text)
+        self.assertNotIn("createBackup(adjustmentId", text)
+        self.assertIn('.put("automaticBackup", false)', text)
         self.assertIn("readback K factor", text)
 
 if __name__ == "__main__":
