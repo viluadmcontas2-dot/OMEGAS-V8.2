@@ -2,7 +2,7 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
-  # APK evidence trigger: 0310a7493bcb-autocal-ux-contract
+  # APK evidence trigger: 1ad07dcee856-final-autocal-render-apk
   push:
     branches: [OmegasVerde]
     paths:

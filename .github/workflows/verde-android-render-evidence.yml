@@ -2,7 +2,7 @@ name: OmegasVerde Android render evidence
 
 on:
   workflow_dispatch:
-  # Render evidence trigger: 27f7ea1-custom-rom-refine
+  # Render evidence trigger: 1ad07dcee856-final-autocal-visible-actions
   # Final APK/render evidence can be re-run against an exact SHA.
   push:
     branches: [OmegasVerde]
