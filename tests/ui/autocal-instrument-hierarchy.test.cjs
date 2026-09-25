@@ -19,7 +19,7 @@ test('AutoCal uses graph-first premium hierarchy', () => {
   assert.doesNotMatch(js, /autocalLiveLevel/);
   assert.match(css, /\.autocal-focus-toolbar\s*\{/);
   assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*grid-template-columns:\s*1fr/);
-  assert.match(css, /height:\s*clamp\(420px,\s*68vh,\s*520px\)/);
+  assert.match(css, /height:\s*clamp\(440px,\s*72vh,\s*540px\)/);
 });
 
 test('secondary state stays below the graph in one vertical flow', () => {

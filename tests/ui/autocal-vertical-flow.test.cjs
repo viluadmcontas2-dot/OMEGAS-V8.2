@@ -26,7 +26,7 @@ assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*?display:\s*grid;[\s\S]*
   'secondary information must stack vertically');
 assert.match(css, /\.autocal-secondary-card\s*\{[\s\S]*?width:\s*100%;[\s\S]*?overflow:\s*visible;/,
   'secondary cards must not create nested scroll containers');
-assert.match(css, /\.app-shell\.autocal-focus \.autocal-chart-host,[\s\S]*?height:\s*clamp\(420px,\s*68vh,\s*520px\)/,
+assert.match(css, /\.app-shell\.autocal-focus \.autocal-chart-host,[\s\S]*?height:\s*clamp\(440px,\s*72vh,\s*540px\)/,
   'graph must dominate the initial surface');
 
 console.log('AUTOCAL_VERTICAL_FLOW=PASS');

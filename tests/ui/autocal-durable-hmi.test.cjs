@@ -14,11 +14,11 @@ assert.ok(cockpit.includes('documentsMirror'), 'a UI deve consumir o estado real
 assert.ok(cockpit.includes('Salvo em Downloads/Omegas') || cockpit.includes('Salvando em Downloads/Omegas'),
   'copy principal precisa explicar persistência sem path técnico interno');
 
-// The graph is the primary driving surface. Secondary information is collapsed
-// below it and expands in the same vertical flow; no nested horizontal rail.
+// The graph is the primary driving surface. Secondary information is already
+// available below it in the same vertical flow; no nested horizontal rail.
 assert.match(css, /\.autocal-focus-metric b[\s\S]*font-size:\s*21px/);
 assert.match(css, /\.autocal-focus-zone b[\s\S]*font-size:\s*18px/);
-assert.match(css, /\.app-shell\.autocal-focus \.autocal-chart-host,[\s\S]*height:\s*clamp\(420px,\s*68vh,\s*520px\)/);
+assert.match(css, /\.app-shell\.autocal-focus \.autocal-chart-host,[\s\S]*height:\s*clamp\(440px,\s*72vh,\s*540px\)/);
 
 const primaryTiny = [
   ['.autocal-human-copy p', 11],

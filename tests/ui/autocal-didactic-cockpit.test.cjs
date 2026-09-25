@@ -227,7 +227,7 @@ assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*grid-template-columns:\s
 assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
-assert.equal(css.includes('height: clamp(420px, 68vh, 520px)'), true);
+assert.equal(css.includes('height: clamp(440px, 72vh, 540px)'), true);
 assert.equal(source.includes('id="autocalZoneMeter"'), true, 'cockpit premium deve expor progresso visual das zonas');
 assert.equal(source.includes('data-autocal-zone-petrol'), true);
 assert.equal(source.includes('data-autocal-zone-gas'), true);

@@ -310,6 +310,60 @@
       };
     },
 
+    liveLabelAnchor(projected, scale) {
+      if (!projected || !scale) return { x: 0, y: 0, textAnchor: 'start' };
+      const left = scale.xFor(scale.xMin);
+      const right = scale.xFor(scale.xMax);
+      const top = scale.yFor(scale.yMax);
+      const bottom = scale.yFor(scale.yMin);
+      const labelOnLeft = projected.x > right - 184;
+      const belowPoint = projected.y < top + 36;
+      const rawX = labelOnLeft ? projected.x - 12 : projected.x + 12;
+      const rawY = projected.y + (belowPoint ? 24 : -12);
+      return {
+        x: Math.max(left + 10, Math.min(right - 10, rawX)),
+        y: Math.max(top + 26, Math.min(bottom - 16, rawY)),
+        textAnchor: labelOnLeft ? 'end' : 'start',
+      };
+    },
+
+    referenceComparison(previousPoints = [], currentPoints = []) {
+      const previousByIndex = new Map((Array.isArray(previousPoints) ? previousPoints : [])
+        .map(point => [Number(point?.index), point]));
+      const rows = (Array.isArray(currentPoints) ? currentPoints : [])
+        .map(point => {
+          const previous = previousByIndex.get(Number(point?.index));
+          if (!previous) return null;
+          const mapDelta = finite(point.petrolMapBar) !== null && finite(previous.petrolMapBar) !== null
+            ? Number((point.petrolMapBar - previous.petrolMapBar).toFixed(3))
+            : null;
+          const gasDelta = finite(point.gasMapBar) !== null && finite(previous.gasMapBar) !== null
+            ? Number((point.gasMapBar - previous.gasMapBar).toFixed(3))
+            : null;
+          if (mapDelta === null && gasDelta === null) return null;
+          return { index: point.index, petrolMs: point.petrolMs, mapDelta, gasDelta };
+        })
+        .filter(Boolean);
+      if (!rows.length) {
+        return { available: false, count: 0, mapDeltaAvgBar: null, gasDeltaAvgBar: null, changedPoints: [] };
+      }
+      const avg = key => {
+        const values = rows.map(row => finite(row[key])).filter(value => value !== null);
+        if (!values.length) return null;
+        return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(3));
+      };
+      return {
+        available: true,
+        count: rows.length,
+        mapDeltaAvgBar: avg('mapDelta'),
+        gasDeltaAvgBar: avg('gasDelta'),
+        changedPoints: rows
+          .slice()
+          .sort((a, b) => Math.abs(finite(b.gasDelta) ?? 0) - Math.abs(finite(a.gasDelta) ?? 0))
+          .slice(0, 3),
+      };
+    },
+
     referenceTransition(previousProjection = {}, nextProjection = {}, previousSnapshot = {}, nextSnapshot = {}, previousAnalysis = {}) {
       const previousSession = String(previousProjection?.sessionId ?? '');
       const nextSession = String(nextProjection?.sessionId ?? '');
@@ -528,13 +582,14 @@
                   <span class="live">AGORA</span>
                   <span id="autocalReferenceCount">0 pontos nativos</span>
                 </div>
+                <div id="autocalResetComparison" class="autocal-reset-comparison" hidden aria-live="polite"></div>
                 <button type="button" class="autocal-history-float" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Linhas mostram referência; bolinhas adquiridas podem ser readquiridas individualmente.</span></aside>
               </div>
             </section>
 
-            <details class="autocal-secondary-details">
-              <summary>Mais informações</summary>
+            <details class="autocal-secondary-details" open>
+              <summary>Contexto da aquisição</summary>
               <div class="autocal-secondary-stack" role="region" aria-label="Informações secundárias do AutoCal">
               <header class="autocal-hero autocal-secondary-card" aria-live="polite">
                 <div class="autocal-human-copy">
@@ -966,11 +1021,10 @@
       });
       const label = this.panel?.querySelector('[data-autocal-live-label]');
       if (label) {
-        const maxLabelX = scale.xFor(scale.xMax) - 184;
-        const labelOnLeft = projected.x > maxLabelX;
-        label.setAttribute('x', (labelOnLeft ? projected.x - 12 : projected.x + 12).toFixed(1));
-        label.setAttribute('text-anchor', labelOnLeft ? 'end' : 'start');
-        label.setAttribute('y', (projected.y - 12).toFixed(1));
+        const anchor = AutoCalUxModel.liveLabelAnchor(projected, scale);
+        label.setAttribute('x', anchor.x.toFixed(1));
+        label.setAttribute('text-anchor', anchor.textAnchor);
+        label.setAttribute('y', anchor.y.toFixed(1));
         const zone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
         const human = AutoCalUxModel.humanState(this.snapshot || {}, this.state || {}, this.projection);
         const gnv = /gnv|gás|gas\b/i.test(live.fuel);
@@ -1174,11 +1228,12 @@
       }).join('');
 
       const projectedLive = AutoCalUxModel.projectLive(live, scale);
+      const liveAnchor = projectedLive ? AutoCalUxModel.liveLabelAnchor(projectedLive, scale) : null;
       const liveMarkup = live && projectedLive
         ? '<g class="autocal-live-layer" data-out-of-range="' + (projectedLive.outOfRange ? 'true' : 'false') + '" aria-label="Posição atual do motor">' +
             '<circle class="autocal-live-halo" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="13"></circle>' +
             '<circle class="autocal-live-point" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="6"></circle>' +
-            '<text class="autocal-live-label" data-autocal-live-label x="' + (projectedLive.x + 12).toFixed(1) + '" y="' + (projectedLive.y - 12).toFixed(1) + '">' +
+            '<text class="autocal-live-label" data-autocal-live-label x="' + liveAnchor.x.toFixed(1) + '" y="' + liveAnchor.y.toFixed(1) + '" text-anchor="' + liveAnchor.textAnchor + '">' +
               (projectedLive.outOfRange ? 'AGORA · fora da escala' : 'AGORA') + '</text>' +
           '</g>'
         : '';
@@ -1202,7 +1257,24 @@
         const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
         this.inspectReferencePoint(selected);
       }
+      this.renderResetComparison(points);
       this.renderLiveCursor();
+    }
+
+    renderResetComparison(points) {
+      const host = document.getElementById('autocalResetComparison');
+      if (!host) return;
+      const comparison = AutoCalUxModel.referenceComparison(this.previousReferencePoints, points);
+      if (!comparison.available) {
+        host.hidden = true;
+        host.innerHTML = '';
+        return;
+      }
+      const formatDelta = value => value === null ? '—' : (value > 0 ? '+' : '') + value.toFixed(3) + ' bar';
+      host.hidden = false;
+      host.innerHTML = '<div><small>ANTES × DEPOIS</small><b>' + comparison.count + ' pontos</b><span>Comparando a referência anterior com a nova leitura.</span></div>' +
+        '<div><small>GASOLINA</small><b>' + formatDelta(comparison.mapDeltaAvgBar) + '</b><span>média MAP após reset/aquisição</span></div>' +
+        '<div><small>GNV</small><b>' + formatDelta(comparison.gasDeltaAvgBar) + '</b><span>média MAP GNV após reset/aquisição</span></div>';
     }
 
     inspectAcquiredPoint(fuel, index) {
