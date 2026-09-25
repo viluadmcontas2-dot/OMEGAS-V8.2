@@ -2,7 +2,7 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
-  # APK evidence trigger: 79dc37695e98-autocal-multimedia-refine
+  # APK evidence trigger: 78d877192e68-autocal-backup-warning
   push:
     branches: [OmegasVerde]
     paths:

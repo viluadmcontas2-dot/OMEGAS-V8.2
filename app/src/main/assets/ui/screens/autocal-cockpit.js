@@ -509,7 +509,7 @@
                       <small>RESET PESADO</small>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>Use só para reiniciar curva ou aquisição inteira. Readquirir GNV/Gasolina fica visível acima para uso diário na multimídia.</p>
+                      <p>Use só para reiniciar curva ou aquisição inteira. Backup da Curva K é manual. Readquirir GNV/Gasolina fica visível acima para uso diário na multimídia.</p>
                     </section>
                   </div>
                 </details>
