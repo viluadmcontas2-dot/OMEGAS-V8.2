@@ -425,7 +425,11 @@ class KWriteManager(
                     lastConfirmed = stepValue
                     workingLine.put(column, stepValue)
                     workingRows.put(row, workingLine)
-                    updateCacheLine(row, workingLine, "ECU_WRITE_ACK_PENDING_FINAL_READBACK")
+                    updateCacheLine(
+                        row,
+                        ByteArray(COLUMN_COUNT) { index -> (workingLine.getInt(index) and 0xFF).toByte() },
+                        "ECU_WRITE_ACK_PENDING_FINAL_READBACK",
+                    )
                     if (pauseMs > 0 && stepIndex < ramp.lastIndex) Thread.sleep(pauseMs.toLong())
                 }
                 val event = JSONObject()
