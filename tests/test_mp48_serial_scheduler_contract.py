@@ -21,7 +21,7 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
                 offenders.append(path.relative_to(ROOT).as_posix())
         self.assertEqual([], offenders)
 
-    def test_known_clients_use_scheduler_and_atomic_write_readback_units(self):
+    def test_known_clients_use_scheduler_fast_ack_and_final_readback_units(self):
         kwrite = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt").read_text(encoding="utf-8")
         kfactor = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt").read_text(encoding="utf-8")
         bridge = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt").read_text(encoding="utf-8")
@@ -30,9 +30,21 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
         self.assertNotIn("protocolTransaction(", bridge)
         self.assertRegex(
             kwrite,
+            re.compile(r"serial\.unit\([\s\S]*?writeKCell\(", re.M),
+        )
+        self.assertIn("BATCH_VERIFYING_ROWS", kwrite)
+        self.assertIn("confirmação final K[$row]", kwrite)
+        self.assertNotRegex(
+            kwrite,
             re.compile(r"serial\.unit\([\s\S]*?writeKCell\([\s\S]*?readRow\(unit,", re.M),
         )
         self.assertRegex(
+            kfactor,
+            re.compile(r"serial\.unit\([\s\S]*?writeFactor\(", re.M),
+        )
+        self.assertIn("VERIFYING_FINAL", kfactor)
+        self.assertIn("confirmação final K factor", kfactor)
+        self.assertNotRegex(
             kfactor,
             re.compile(r"serial\.unit\([\s\S]*?writeFactor\([\s\S]*?readRawPoints\(unit,", re.M),
         )
