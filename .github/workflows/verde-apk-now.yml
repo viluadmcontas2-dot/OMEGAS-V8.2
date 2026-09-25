@@ -2,7 +2,7 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
-  # APK evidence trigger: 495698002b1e-fast-writer-ack
+  # APK evidence trigger: b39c10eeeb75-final-readback-wording
   push:
     branches: [OmegasVerde]
     paths:

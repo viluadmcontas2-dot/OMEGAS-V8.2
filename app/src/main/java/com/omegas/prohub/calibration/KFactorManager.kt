@@ -454,7 +454,7 @@ class KFactorManager(
                 confirmed.put(event)
             }
 
-            update("VERIFYING_FINAL", "Confirmando a curva completa", 90)
+            update("VERIFYING_FINAL", "Confirmando readback K factor final", 90)
             val finalReadback = readRawPoints(KFactorProtocol.readFactors(), "confirmação final K factor", expectedSessionId)
             if (!finalReadback.contentEquals(working)) {
                 throw IllegalStateException("A confirmação final da curva divergiu")
