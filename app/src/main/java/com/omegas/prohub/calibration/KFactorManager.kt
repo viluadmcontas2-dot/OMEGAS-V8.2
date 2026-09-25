@@ -419,12 +419,12 @@ class KFactorManager(
                     progress,
                     JSONObject().put("adjustmentId", adjustmentId).put("index", index),
                 )
-                val readback = serial.unit(
-                    reason = "escrita + readback K factor[$index]",
+                serial.unit(
+                    reason = "escrita ACK K factor[$index]",
                     expectedSessionId = expectedSessionId,
                     workClass = Mp48WorkClass.MANUAL_WRITE,
-                    telemetryAfter = true,
-                    waitTimeoutMs = 3_500L,
+                    telemetryAfter = false,
+                    waitTimeoutMs = 1_200L,
                 ) { unit ->
                     requireAck(
                         unit.transaction(
@@ -435,15 +435,6 @@ class KFactorManager(
                         ),
                         "escrita do ponto $index",
                     )
-                    readRawPoints(unit, KFactorProtocol.readFactors(), "readback K factor[$index]")
-                }
-                repeat(KFactorProtocol.POINT_COUNT) { other ->
-                    val expected = if (other == index) targetRaw else working[other]
-                    if (readback[other] != expected) {
-                        throw IllegalStateException(
-                            "Readback divergente no ponto $other: esperado $expected, ECU ${readback[other]}",
-                        )
-                    }
                 }
                 working[index] = targetRaw
                 val event = JSONObject()

@@ -19,9 +19,9 @@ import kotlin.math.min
 /**
  * Autoridade Android do mapa K.
  *
- * Toda operação serial passa pelo scheduler único da engine MP48. Leituras
- * cedem a porta para telemetria entre unidades; escrita + readback imediato
- * formam uma unidade indivisível. Nenhuma sugestão inicia este writer.
+ * Toda operação serial passa pelo scheduler único da engine MP48. Escritas
+ * manuais usam ACK rápido por comando e readback final por linha afetada.
+ * Nenhuma sugestão inicia este writer.
  */
 class KWriteManager(
     private val paths: AppPaths,
@@ -405,12 +405,12 @@ class KWriteManager(
                         JSONObject().put("adjustmentId", adjustmentId)
                             .put("row", row).put("column", column).put("target", target),
                     )
-                    val verifiedLine = serial.unit(
-                        reason = "escrita + readback MAP_K[$row,$column]",
+                    serial.unit(
+                        reason = "escrita ACK MAP_K[$row,$column]",
                         expectedSessionId = expectedSessionId,
                         workClass = Mp48WorkClass.MANUAL_WRITE,
-                        telemetryAfter = true,
-                        waitTimeoutMs = 3_000L,
+                        telemetryAfter = false,
+                        waitTimeoutMs = 1_200L,
                     ) { unit ->
                         requireAck(
                             unit.transaction(
@@ -421,21 +421,11 @@ class KWriteManager(
                             ),
                             "escrita K",
                         )
-                        readRow(unit, row, "readback K[$row,$column]")
-                    }
-                    repeat(COLUMN_COUNT) { other ->
-                        val verified = verifiedLine[other].toInt() and 0xFF
-                        val expectedOther = if (other == column) stepValue else workingLine.getInt(other)
-                        if (verified != expectedOther) {
-                            throw IllegalStateException(
-                                "Readback divergente [$row,$other]: esperado $expectedOther, ECU $verified",
-                            )
-                        }
                     }
                     lastConfirmed = stepValue
                     workingLine.put(column, stepValue)
                     workingRows.put(row, workingLine)
-                    updateCacheLine(row, verifiedLine, "ECU_READBACK_NATIVE")
+                    updateCacheLine(row, workingLine, "ECU_WRITE_ACK_PENDING_FINAL_READBACK")
                     if (pauseMs > 0 && stepIndex < ramp.lastIndex) Thread.sleep(pauseMs.toLong())
                 }
                 val event = JSONObject()
