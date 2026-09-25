@@ -1060,11 +1060,11 @@ class DashboardLevelsRenderTest {
             assertTrue("CurrentBand must render from original MNFLD_PRESS_THD plus live MAP", dom.getBoolean("currentBandVisible"))
             assertTrue("CurrentBand must have positive rendered height", dom.getDouble("currentBandHeight") > 0.0)
             assertTrue("CurrentBand must stay inside the SVG plot", dom.getDouble("currentBandY") >= 0.0)
-            assertTrue("Reference chart remains dominant", dom.getDouble("chartHeight") >= 420.0)
+            assertTrue("Reference chart remains dominant", dom.getDouble("chartHeight") >= 440.0)
             assertTrue("Reference chart remains wide", dom.getDouble("chartWidth") >= 760.0)
             assertTrue("Operational toolbar remains above the fold", dom.getDouble("toolbarBottom") <= dom.getDouble("viewportHeight"))
-            assertTrue("Collapsed AutoCal must not create horizontal overflow", dom.getDouble("screenScrollWidth") <= dom.getDouble("screenClientWidth") + 1.0)
-            assertTrue("Secondary details stay collapsed by default", !dom.getBoolean("detailsOpen"))
+            assertTrue("Open AutoCal context must not create horizontal overflow", dom.getDouble("screenScrollWidth") <= dom.getDouble("screenClientWidth") + 1.0)
+            assertTrue("Secondary context stays open by default for multimedia use", dom.getBoolean("detailsOpen"))
         } finally {
             scenario.close()
         }
