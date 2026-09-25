@@ -506,6 +506,23 @@ class DashboardLevelsRenderTest {
               petrol: document.getElementById('autocalLivePetrol')?.textContent ?? null,
               map: document.getElementById('autocalLiveMap')?.textContent ?? null,
               hasLevelsMetric: document.getElementById('autocalLiveLevel') !== null,
+              quickActions: (() => {
+                const gas = document.querySelector('.autocal-reacquire-action[data-autocal-action="RESET_GAS"]');
+                const petrol = document.querySelector('.autocal-reacquire-action[data-autocal-action="RESET_PETROL"]');
+                const advanced = document.querySelector('.autocal-reset-menu > summary');
+                const gasRect = gas?.getBoundingClientRect();
+                const petrolRect = petrol?.getBoundingClientRect();
+                const advancedRect = advanced?.getBoundingClientRect();
+                return {
+                  gasVisible: !!gas && gasRect.width >= 110 && gasRect.height >= 46 && gasRect.bottom <= window.innerHeight,
+                  petrolVisible: !!petrol && petrolRect.width >= 110 && petrolRect.height >= 46 && petrolRect.bottom <= window.innerHeight,
+                  advancedVisible: !!advanced && advancedRect.width >= 110 && advancedRect.height >= 46 && advancedRect.bottom <= window.innerHeight,
+                  fuelActionsHiddenInDetails: document.querySelector('.autocal-reset-menu [data-autocal-action="RESET_GAS"], .autocal-reset-menu [data-autocal-action="RESET_PETROL"]') !== null,
+                  gasLeft: gasRect?.left ?? 0,
+                  petrolLeft: petrolRect?.left ?? 0,
+                  advancedLeft: advancedRect?.left ?? 0
+                };
+              })(),
               geometry: (() => {
                 const chart = document.getElementById('autocalReferenceChart')?.getBoundingClientRect();
                 const toolbar = document.querySelector('.autocal-focus-toolbar')?.getBoundingClientRect();
@@ -912,6 +929,28 @@ class DashboardLevelsRenderTest {
             assertTrue("Point inspector must stay inside the graph surface", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartTop"))
             assertTrue("Point inspector must stay inside the graph surface", geometry.getDouble("inspectorBottom") <= geometry.getDouble("chartBottom"))
             assertTrue("Point inspector must remain contextual instead of narrowing the plot", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.35)
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
+    fun autocalVisibleReacquireActionsForMultimedia() {
+        val scenario = launch()
+        try {
+            val fixture = liveFixture()
+            activateAutocal(scenario)
+            injectFresh(scenario, fixture, settleMs = 700L)
+            val dom = autocalDom(scenario)
+            saveEvidence("autocal-visible-actions", dom, scenario)
+            val actions = dom.getJSONObject("quickActions")
+            assertTrue("AutoCal route must activate", dom.getBoolean("active"))
+            assertTrue("Readquirir GNV must be visible without opening a menu", actions.getBoolean("gasVisible"))
+            assertTrue("Readquirir gasolina must be visible without opening a menu", actions.getBoolean("petrolVisible"))
+            assertTrue("Reset avançado must remain visible as the heavy-action boundary", actions.getBoolean("advancedVisible"))
+            assertTrue("Daily fuel reacquire actions must not be hidden inside the advanced menu", !actions.getBoolean("fuelActionsHiddenInDetails"))
+            assertTrue("Fuel actions must appear before advanced reset", actions.getDouble("gasLeft") < actions.getDouble("advancedLeft"))
+            assertTrue("Fuel actions must appear before advanced reset", actions.getDouble("petrolLeft") < actions.getDouble("advancedLeft"))
         } finally {
             scenario.close()
         }

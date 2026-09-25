@@ -500,23 +500,18 @@
               <div class="autocal-focus-actions">
                 <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
                 <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
                 <details class="autocal-reset-menu">
-                <summary>Corrigir aquisição</summary>
-                <div class="autocal-reset-popover" aria-label="Corrigir aquisição AutoCal">
-                  <section class="autocal-reset-group" data-reset-scope="fuel">
-                    <small>READQUIRIR COMBUSTÍVEL</small>
-                    <button type="button" data-autocal-action="RESET_GAS">Readquirir GNV</button>
-                    <button type="button" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
-                    <p>Usa o comando dedicado do original para o combustível escolhido. A Curva K usa outro caminho. Depois do ACK, o OMEGAS relê a ECU para atualizar a tela. Backup da Curva K é manual.</p>
-                  </section>
-                  <details class="autocal-reset-advanced">
-                    <summary>Outras redefinições</summary>
-                    <div>
+                  <summary>Reset avançado</summary>
+                  <div class="autocal-reset-popover" aria-label="Reset avançado AutoCal">
+                    <section class="autocal-reset-group" data-reset-scope="advanced">
+                      <small>RESET PESADO</small>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                    </div>
-                  </details>
-                </div>
+                      <p>Use só para reiniciar curva ou aquisição inteira. Readquirir GNV/Gasolina fica visível acima para uso diário na multimídia.</p>
+                    </section>
+                  </div>
                 </details>
               </div>
             </header>

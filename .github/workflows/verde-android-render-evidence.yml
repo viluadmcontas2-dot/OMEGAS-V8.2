@@ -42,6 +42,8 @@ jobs:
             method: dashboardInvalidLevelsPlaceholder
           - scenario: autocal-fresh-control
             method: autocalFreshTelemetryControl
+          - scenario: autocal-visible-actions
+            method: autocalVisibleReacquireActionsForMultimedia
           - scenario: autocal-reference-curves
             method: autocalReferenceCurvesRenderFixture
           - scenario: autocal-sparse-zone-map
