@@ -39,6 +39,7 @@
       this.tools = document.getElementById('toolsDrawer');
       this.logLevel = 'ALL';
       this.logCategory = 'ALL';
+      this.sessionSettingsFeedback = '';
       this.ensureToolsExpansion();
       this.bind();
     }
@@ -79,9 +80,11 @@
       if (target.matches('[data-session-start]')) {
         const result = this.api.startSession('registro manual pela interface');
         this.notifyResult(result, 'Gravação de diagnóstico iniciada.');
+        this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-stop]')) {
         const result = this.api.stopSession('parada manual pela interface');
         this.notifyResult(result, 'Gravação de diagnóstico encerrada.');
+        this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
       } else if (target.matches('[data-export-session]')) {
@@ -108,6 +111,12 @@
       }
     }
 
+    refreshSessionStatus(result) {
+      if (!result || typeof result !== 'object' || result.ok === false) return;
+      this.store.patch({ sessionStatus: result });
+      this.renderTools(this.store.get());
+    }
+
     applySessionSettings() {
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
@@ -119,7 +128,14 @@
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
       const result = this.api.setSessionSettings(settings);
+      const applied = result?.settings || settings;
+      if (result?.ok === false) {
+        this.sessionSettingsFeedback = result.error || 'Política não aplicada.';
+      } else {
+        this.sessionSettingsFeedback = `Aplicado: ${applied.telemetryEveryMs || settings.telemetryEveryMs} ms · ${applied.maxSessionMb || settings.maxSessionMb} MB · ${applied.keepSessions || settings.keepSessions} sessões`;
+      }
       this.notifyResult(result, 'Política de logs atualizada.');
+      this.refreshSessionStatus(result);
     }
 
     render(state) {
@@ -165,13 +181,14 @@
       const panel = host?.querySelector('.diagnostic-settings');
       if (!panel) return false;
       const active = document.activeElement;
-      return panel.open === true || (active && panel.contains(active));
+      return !!(active && panel.contains(active) && ['INPUT', 'SELECT'].includes(active.tagName));
     }
 
     renderTools(state) {
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
       if (this.preserveSessionSettingsInteraction(host)) return;
+      const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
@@ -234,7 +251,7 @@
           </div>
         </section>
 
-        <details class="diagnostic-settings">
+        <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
           <summary>Retenção e tamanho dos logs</summary>
           <div class="diagnostic-settings-grid">
             <label><span>Telemetria salva</span><select data-session-telemetry>
@@ -247,6 +264,7 @@
           </div>
           <p>USB bruto aumenta bastante o tamanho. Use quando estiver investigando protocolo ou falha de comunicação.</p>
           <button type="button" class="secondary wide" data-session-settings>Aplicar política de logs</button>
+          ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
         </details>
 
         <section class="recorded-sessions">

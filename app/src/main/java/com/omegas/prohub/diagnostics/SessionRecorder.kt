@@ -469,9 +469,10 @@ class SessionRecorder(
 
             val line = item.toString() + "\n"
             val bytes = line.toByteArray(StandardCharsets.UTF_8).size.toLong()
-            val maxBytes = settings.sessionLogMaxMb.coerceAtLeast(512).toLong() * 1024L * 1024L
+            val effectiveLimitMb = settings.sessionLogMaxMb.coerceIn(64, 1_024)
+            val maxBytes = effectiveLimitMb.toLong() * 1024L * 1024L
             if (byteCount + bytes > maxBytes && type != "session_stopped") {
-                stopReason = "limite de ${settings.sessionLogMaxMb} MB atingido"
+                stopReason = "limite de $effectiveLimitMb MB atingido"
                 lastError = stopReason
                 recording = false
                 stoppedAt = now
