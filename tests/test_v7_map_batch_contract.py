@@ -84,7 +84,8 @@ class V8MapBatchContract(unittest.TestCase):
         for marker in (
             "createPreWriteBackup",
             "requireAck",
-            "ECU_READBACK_NATIVE",
+            "ECU_WRITE_ACK_PENDING_FINAL_READBACK",
+            "ECU_BATCH_VERIFIED_NATIVE",
             "BATCH_PARTIAL_FAILED",
             "SAFETY_LOCKED_INSERTION_UNKNOWN",
         ):

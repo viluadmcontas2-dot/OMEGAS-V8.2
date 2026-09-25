@@ -2,7 +2,7 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
-  # APK evidence trigger: 50e619a52d97-scheduler-fast-ack-contract
+  # APK evidence trigger: 136bffcdde03-map-fast-ack-contract
   push:
     branches: [OmegasVerde]
     paths:
