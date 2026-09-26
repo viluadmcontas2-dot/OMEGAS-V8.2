@@ -115,7 +115,8 @@ const oldReferenceSnapshot = {
 };
 const newReferenceSnapshot = {
   snapshotHash: 'new-reference',
-  fields: snapshot.fields,
+  fields: snapshot.fields.map(field => field.key === 'GAS_MNFLD_PRESS_RV'
+    ? { ...field, physicalValues: [0.36, 1.12] } : field),
 };
 
 const sameSessionTransition = model.referenceTransition(
@@ -151,8 +152,8 @@ const referenceLostTransition = model.referenceTransition(
 );
 assert.equal(referenceLostTransition.resetSelection, true,
   'perda da referência precisa invalidar seleção antiga mesmo sem novo hash');
-assert.equal(referenceLostTransition.clearHistory, true,
-  'histórico gráfico não pode sobreviver a um intervalo sem referência utilizável');
+assert.equal(referenceLostTransition.clearHistory, false,
+  'histórico permanece na mesma sessão; referência indisponível não é exibida como atual');
 
 const referenceRegainedTransition = model.referenceTransition(
   { sessionId: 101, referenceUsable: false },

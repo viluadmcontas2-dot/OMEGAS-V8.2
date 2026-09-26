@@ -401,10 +401,8 @@
       const nextUsable = nextProjection?.referenceUsable === true;
       const referenceLost = previousUsable && !nextUsable;
       const referenceRegained = !previousUsable && nextUsable;
-      const previousHash = String(previousSnapshot?.snapshotHash || '') ||
-        this.referenceFingerprint(previousSnapshot, previousAnalysis);
-      const nextHash = String(nextSnapshot?.snapshotHash || '') ||
-        this.referenceFingerprint(nextSnapshot, nextProjection?.analysis || {});
+      const previousHash = this.referenceFingerprint(previousSnapshot, previousAnalysis);
+      const nextHash = this.referenceFingerprint(nextSnapshot, nextProjection?.analysis || {});
       const referenceChanged = previousUsable && nextUsable &&
         !!(previousHash && nextHash && previousHash !== nextHash);
       return {
@@ -413,7 +411,7 @@
         referenceLost,
         referenceRegained,
         resetSelection: sessionChanged || referenceChanged || referenceLost || referenceRegained,
-        clearHistory: sessionChanged || referenceLost,
+        clearHistory: sessionChanged,
         previousPoints: !sessionChanged && referenceChanged
           ? this.referencePoints(previousSnapshot, previousAnalysis)
           : [],
@@ -520,6 +518,7 @@
       this.sessionDrawerOpen = false;
       this.chartScale = null;
       this.previousReferencePoints = [];
+      this.comparisonPinned = false;
       this.currentReferencePoints = [];
       this.currentAcquiredPoints = [];
       this.chartHistoryVisible = false;
@@ -705,6 +704,7 @@
       this.panel?.querySelector('[data-autocal-history]')?.addEventListener('click', () => {
         if (!this.previousReferencePoints.length) return;
         this.chartHistoryVisible = !this.chartHistoryVisible;
+        this.renderHistoryControl();
         this.renderReferenceChart(this.snapshot);
       });
       this.panel?.querySelector('[data-autocal-sessions]')?.addEventListener('click', event => {
@@ -807,8 +807,9 @@
       );
       if (referenceTransition.clearHistory) {
         this.previousReferencePoints = [];
+        this.comparisonPinned = false;
         this.chartHistoryVisible = false;
-      } else if (referenceTransition.referenceChanged) {
+      } else if (referenceTransition.referenceChanged && !this.comparisonPinned) {
         this.previousReferencePoints = referenceTransition.previousPoints;
       }
       if (referenceTransition.resetSelection) {
@@ -837,9 +838,9 @@
       this.operationalPending = true;
       this.render();
       const result = this.api.setAcquisitionEnabled?.(enable) || { ok: false, error: 'Ação operacional indisponível.' };
-      if (result?.ok === false) {
+      if (result?.ok !== true) {
         this.operationalPending = false;
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível alterar a aquisição AutoCal.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível alterar a aquisição AutoCal.' } });
       } else {
         this.store.patch({ alert: { level: 'ok', message: enable
           ? 'Início enviado. Confirmando ACK e leitura de volta da ECU…'
@@ -871,9 +872,14 @@
       const prepared = this.prepared;
       if (!prepared?.preparationId) return;
       const result = this.api.execute(prepared.preparationId);
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'A ação AutoCal não pôde ser executada.' } });
+      if (result?.ok !== true) {
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'A ação AutoCal não pôde ser executada.' } });
         return;
+      }
+      if (this.referenceUsable && String(prepared.action || '').startsWith('RESET_')) {
+        this.previousReferencePoints = AutoCalUxModel.referencePoints(this.snapshot, this.analysis);
+        this.comparisonPinned = this.previousReferencePoints.length > 0;
+        this.chartHistoryVisible = this.comparisonPinned;
       }
       this.prepared = null;
       const review = document.getElementById('autocalReview');
@@ -926,11 +932,7 @@
             : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
       }
 
-      const history = this.panel?.querySelector('[data-autocal-history]');
-      if (history) {
-        history.disabled = this.previousReferencePoints.length === 0;
-        history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Leitura anterior';
-      }
+      this.renderHistoryControl();
 
       this.renderReferenceChart(snapshot);
       this.renderBands(snapshot);
@@ -1134,6 +1136,8 @@
       const timingProblem = timingKnown && !timingCoherent;
 
       if (!points.length || this.referenceUsable === false) {
+        this.chartRenderKey = null;
+        this.renderResetComparison([]);
         this.chartScale = null;
         if (timingProblem) {
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
@@ -1163,6 +1167,14 @@
       const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
       const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
       const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
+      const chartRenderKey = JSON.stringify([
+        this.projection?.sessionId, points, acquiredPoints, history, zoneSurface, !!live,
+        this.previousReferencePoints, this.selectedReferenceIndex, this.selectedAcquiredPoint,
+      ]);
+      if (this.renderedChartHost === host && this.chartRenderKey === chartRenderKey) {
+        this.renderLiveCursor();
+        return;
+      }
       const domain = AutoCalUxModel.referenceDomain(points, history, zoneSurface, acquiredPoints);
       if (!domain) {
         this.chartScale = null;
@@ -1289,6 +1301,20 @@
       }
       this.renderResetComparison(points);
       this.renderLiveCursor();
+      this.renderedChartHost = host;
+      this.chartRenderKey = JSON.stringify([
+        this.projection?.sessionId, points, acquiredPoints, history, zoneSurface, !!live,
+        this.previousReferencePoints, this.selectedReferenceIndex, this.selectedAcquiredPoint,
+      ]);
+    }
+
+    renderHistoryControl() {
+      const history = this.panel?.querySelector('[data-autocal-history]');
+      if (!history) return;
+      history.disabled = this.previousReferencePoints.length === 0 || !this.referenceUsable;
+      history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Leitura anterior';
+      history.setAttribute('aria-pressed', String(this.chartHistoryVisible));
+      history.setAttribute('aria-label', this.chartHistoryVisible ? 'Ocultar leitura anterior' : 'Mostrar leitura anterior');
     }
 
     renderResetComparison(points) {
@@ -1303,8 +1329,8 @@
       const formatDelta = value => value === null ? '—' : (value > 0 ? '+' : '') + value.toFixed(3) + ' bar';
       host.hidden = false;
       host.innerHTML = '<div><small>ANTES × DEPOIS</small><b>' + comparison.count + ' pontos</b><span>Comparando a referência anterior com a nova leitura.</span></div>' +
-        '<div><small>GASOLINA</small><b>' + formatDelta(comparison.mapDeltaAvgBar) + '</b><span>média MAP após reset/aquisição</span></div>' +
-        '<div><small>GNV</small><b>' + formatDelta(comparison.gasDeltaAvgBar) + '</b><span>média MAP GNV após reset/aquisição</span></div>';
+        '<div><small>GASOLINA</small><b>' + formatDelta(comparison.mapDeltaAvgBar) + '</b><span>variação média de MAP</span></div>' +
+        '<div><small>GNV</small><b>' + formatDelta(comparison.gasDeltaAvgBar) + '</b><span>variação média de MAP</span></div>';
     }
 
     inspectAcquiredPoint(fuel, index) {
@@ -1338,9 +1364,9 @@
         return;
       }
       const result = this.api.execute(prepared.preparationId);
-      if (result?.ok === false) {
+      if (result?.ok !== true) {
         this.api?.cancelPreparation?.();
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível abrir a confirmação do ponto.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível abrir a confirmação do ponto.' } });
         return;
       }
       this.store.patch({ alert: { level: 'working', message: 'Readquisição enviada para a ECU. Aguarde ACK e readback deste ponto.' } });
@@ -1441,6 +1467,7 @@
     }
 
     renderUnavailable() {
+      this.chartRenderKey = null;
       this.text('autocalNativeState', 'BRIDGE INDISPONÍVEL');
       this.text('autocalHumanTitle', 'AutoCal indisponível');
       this.text('autocalHumanProgress', 'A tela não recebeu o bridge nativo.');
