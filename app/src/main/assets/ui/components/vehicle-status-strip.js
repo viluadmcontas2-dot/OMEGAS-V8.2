@@ -53,7 +53,6 @@
         <div data-vehicle-fact="ecu"><small>ECU</small><b>—</b></div>
         <div data-vehicle-fact="freshness"><small>FRESCOR</small><b>—</b></div>
         <div data-vehicle-fact="fuel"><small>COMBUSTÍVEL</small><b>—</b></div>
-        <div data-vehicle-fact="voltage"><small>VOLTAGEM</small><b>—</b></div>
         <div data-vehicle-fact="rpm"><small>RPM</small><b>—</b></div>
         <div data-vehicle-fact="petrol"><small>PETROL INJ.</small><b>—</b></div>`;
       header.appendChild(strip);
@@ -63,7 +62,6 @@
     render(state) {
       if (!this.node) return;
       const status = state.status || {};
-      const obd = state.obd || {};
       const telemetryRoot = state.telemetry || {};
       const telemetryValid = telemetryRoot.valid === true;
       const live = telemetryRoot.live || telemetryRoot.data || telemetryRoot;
@@ -73,15 +71,11 @@
       const petrol = telemetryValid ? finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs) : null;
       const age = finite(telemetryRoot.ageMs ?? telemetryRoot.telemetryAgeMs ?? status.directTelemetryAgeMs);
       const fuel = telemetryValid ? fuelLabel(live.fuel ?? live.state ?? status.fuelState) : "—";
-      const obdState = String(obd.connectionStage || obd.state || obd.status || "").toUpperCase();
-      const obdConnected = obd.connected === true || ['LIVE', 'CONNECTED', 'CONECTADO', 'REMOTO AO VIVO'].includes(obdState);
-      const voltage = obdConnected ? finite(obd.moduleVoltageV ?? obd.controlModuleVoltage ?? obd.voltage) : null;
 
       this.fact('service', serviceRunning ? 'ATIVO' : 'PARADO', serviceRunning ? 'online' : 'offline');
       this.fact('ecu', ecuOnline ? 'ONLINE' : 'OFFLINE', ecuOnline ? 'online' : 'offline');
       this.fact('freshness', ageLabel(age), age !== null && age >= 0 ? 'measured' : 'unknown');
       this.fact('fuel', fuel, fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
-      this.fact('voltage', voltage === null ? '—' : `${voltage.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} V`, voltage === null ? 'unknown' : 'measured');
       this.fact('rpm', rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR'), rpm === null ? 'unknown' : 'measured');
       this.fact('petrol', petrol === null ? '—' : `${petrol.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms`, petrol === null ? 'unknown' : 'measured');
     }
