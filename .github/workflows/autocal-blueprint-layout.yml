@@ -1,0 +1,35 @@
+name: AutoCal blueprint layout regression
+on:
+  push:
+    branches: [OmegasVerde]
+    paths:
+      - 'app/src/main/assets/ui/styles-autocal-cockpit.css'
+      - 'tools/ci/autocal_blueprint_layout.cjs'
+      - '.github/workflows/autocal-blueprint-layout.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser test runtime
+        run: |
+          npm install --prefix /tmp/omegas-ui-test playwright@1.56.1
+          /tmp/omegas-ui-test/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify baseline failure and corrected toolbar
+        env:
+          NODE_PATH: /tmp/omegas-ui-test/node_modules
+        run: node tools/ci/autocal_blueprint_layout.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: autocal-blueprint-layout
+          path: build/ui-evidence
