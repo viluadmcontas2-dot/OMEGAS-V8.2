@@ -176,6 +176,23 @@
       return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
     },
 
+    liveFuelState(value) {
+      const raw = String(value || '').trim().toUpperCase();
+      if (!raw || raw === '—' || raw === '--') return { kind: 'unknown', label: '—', active: false };
+      if (raw.includes('TRANS') || raw.includes('COMUT')) return { kind: 'transition', label: 'Transição', active: false };
+      if (raw.includes('CUTOFF')) return { kind: 'cutoff', label: 'Cutoff', active: false };
+      if (raw.includes('DESLIG') || raw.includes('SEM_MOTOR') || raw.includes('ENGINE_OFF')) {
+        return { kind: 'off', label: 'Desligado', active: false };
+      }
+      if (raw.includes('GNV') || raw.includes('CNG') || raw === 'GAS' || raw.includes('GAS_ATIVO')) {
+        return { kind: 'gas', label: 'GNV', active: true };
+      }
+      if (raw.includes('GASOLINA') || raw.includes('PETROL') || raw.includes('ETANOL')) {
+        return { kind: 'petrol', label: 'Gasolina', active: true };
+      }
+      return { kind: 'unknown', label: '—', active: false };
+    },
+
     currentBand(snapshot = {}, live = {}) {
       const thresholds = physicalVector(snapshot, 'MNFLD_PRESS_THD');
       const mapBar = finite(live?.mapBar ?? live?.load_bar ?? live?.map_bar);
@@ -364,6 +381,18 @@
       };
     },
 
+    referenceFingerprint(snapshot = {}, analysis = {}) {
+      const points = this.referencePoints(snapshot, analysis);
+      if (!points.length) return '';
+      return points.map(point => [
+        point.index,
+        finite(point.petrolMs) === null ? 'x' : Number(point.petrolMs).toFixed(4),
+        finite(point.petrolMapBar) === null ? 'x' : Number(point.petrolMapBar).toFixed(4),
+        finite(point.gasMapBar) === null ? 'x' : Number(point.gasMapBar).toFixed(4),
+        finite(point.gasEquivalentMs) === null ? 'x' : Number(point.gasEquivalentMs).toFixed(4),
+      ].join(':')).join('|');
+    },
+
     referenceTransition(previousProjection = {}, nextProjection = {}, previousSnapshot = {}, nextSnapshot = {}, previousAnalysis = {}) {
       const previousSession = String(previousProjection?.sessionId ?? '');
       const nextSession = String(nextProjection?.sessionId ?? '');
@@ -372,8 +401,10 @@
       const nextUsable = nextProjection?.referenceUsable === true;
       const referenceLost = previousUsable && !nextUsable;
       const referenceRegained = !previousUsable && nextUsable;
-      const previousHash = String(previousSnapshot?.snapshotHash || '');
-      const nextHash = String(nextSnapshot?.snapshotHash || '');
+      const previousHash = String(previousSnapshot?.snapshotHash || '') ||
+        this.referenceFingerprint(previousSnapshot, previousAnalysis);
+      const nextHash = String(nextSnapshot?.snapshotHash || '') ||
+        this.referenceFingerprint(nextSnapshot, nextProjection?.analysis || {});
       const referenceChanged = previousUsable && nextUsable &&
         !!(previousHash && nextHash && previousHash !== nextHash);
       return {
@@ -1027,15 +1058,14 @@
         label.setAttribute('y', anchor.y.toFixed(1));
         const zone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
         const human = AutoCalUxModel.humanState(this.snapshot || {}, this.state || {}, this.projection);
-        const gnv = /gnv|gás|gas\b/i.test(live.fuel);
-        const petrol = /gasolina|petrol|etanol/i.test(live.fuel);
-        const flags = gnv ? human.gasZoneFlags : petrol ? human.petrolZoneFlags : null;
-        const fuel = gnv ? 'GNV' : petrol ? 'Gasolina' : '';
+        const fuelState = AutoCalUxModel.liveFuelState(live.fuel);
+        const flags = fuelState.kind === 'gas' ? human.gasZoneFlags : fuelState.kind === 'petrol' ? human.petrolZoneFlags : null;
+        const fuel = fuelState.active ? fuelState.label : '';
         const state = zone !== null && Array.isArray(flags) && flags.length === 4
           ? flags[zone - 1] === true ? 'OK' : 'FALTA' : '—';
         label.textContent = projected.outOfRange ? 'AGORA · fora da escala'
           : zone === null ? 'AGORA · zona indisponível'
-            : 'AGORA · Z' + zone + (fuel ? ' · ' + fuel + ' ' + state : '');
+            : 'AGORA · Z' + zone + (fuel ? ' · ' + fuel + ' ' + state : fuelState.kind === 'unknown' ? '' : ' · ' + fuelState.label);
       }
     }
 

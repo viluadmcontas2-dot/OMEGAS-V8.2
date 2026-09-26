@@ -1734,7 +1734,7 @@
   position: relative;
   order: initial;
   min-height: 0;
-  padding: 0;
+  padding: 0 0 8px;
   overflow: hidden;
   border-radius: 10px;
   background: #07101a;
@@ -1751,31 +1751,38 @@
 }
 .autocal-chart-workspace {
   position: relative;
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
+  grid-template-areas:
+    "chart chart"
+    "legend inspector"
+    "compare inspector";
+  gap: 7px;
   height: 100%;
   min-height: 0;
+  padding: 0 8px;
 }
 .app-shell.autocal-focus .autocal-chart-host,
 .autocal-chart-host {
+  grid-area: chart;
   height: clamp(440px, 72vh, 540px);
   min-height: 440px;
   border-radius: 10px;
 }
 .autocal-chart-legend {
-  position: absolute;
-  right: 16px;
-  bottom: 10px;
-  z-index: 7;
+  position: static;
+  grid-area: legend;
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: flex-start;
   min-height: 32px;
   margin: 0;
   padding: 6px 10px;
   border: 1px solid rgba(80,170,220,.18);
-  border-radius: 999px;
-  background: rgba(4,13,22,.88);
-  backdrop-filter: blur(6px);
+  border-radius: 9px;
+  background: rgba(4,13,22,.78);
+  overflow: hidden;
 }
 .autocal-history-float {
   position: absolute;
@@ -1788,37 +1795,32 @@
   opacity: .84;
 }
 .autocal-chart-inspector {
-  position: absolute;
-  top: 54px;
-  right: 12px;
-  z-index: 7;
-  width: min(310px, 31%);
-  max-height: 82px;
+  position: static;
+  grid-area: inspector;
+  width: auto;
+  min-width: 0;
+  max-height: none;
   padding: 7px 9px;
   overflow: hidden;
   border: 1px solid rgba(70,203,231,.16);
   border-radius: 9px;
-  background: rgba(5,15,24,.84);
-  pointer-events: none;
+  background: rgba(5,15,24,.74);
+  pointer-events: auto;
 }
 .autocal-chart-inspector b,
 .autocal-chart-inspector span {
   font-size: 11px;
 }
 .autocal-reset-comparison {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 52px;
-  z-index: 7;
+  position: static;
+  grid-area: compare;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 7px;
   padding: 7px;
   border: 1px solid rgba(80,170,220,.18);
   border-radius: 11px;
-  background: rgba(4,13,22,.82);
-  backdrop-filter: blur(6px);
+  background: rgba(4,13,22,.74);
 }
 .autocal-reset-comparison[hidden] { display: none; }
 .autocal-reset-comparison > div {
@@ -2049,6 +2051,14 @@
   .autocal-reset-menu > summary {
     min-width: 132px;
     padding: 0 10px;
+  }
+  .autocal-chart-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "chart"
+      "legend"
+      "compare"
+      "inspector";
   }
 }
 
