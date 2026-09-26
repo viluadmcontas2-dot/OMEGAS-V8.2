@@ -2,7 +2,7 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
-  # APK evidence trigger: f3dadaaec5f8-autocal-multimedia-scan
+  # APK evidence trigger: 147fbac-autocal-cockpit-fix
   push:
     branches: [OmegasVerde]
     paths:
