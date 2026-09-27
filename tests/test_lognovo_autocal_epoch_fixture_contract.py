@@ -9,7 +9,9 @@ PROGBASE_SHA="8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
 def payload(row):
     request=bytes.fromhex(row["request"]); response=bytes.fromhex(row["response"])
     assert response.startswith(request); suffix=response[len(request):]; assert suffix[0]==0x53
-    size=suffix[1]; assert len(suffix)==size+3; return suffix[2:2+size]
+    size=suffix[1]; assert len(suffix)==size+3
+    assert (sum(suffix[:-1]) & 0xFF) == suffix[-1]
+    return suffix[2:2+size]
 
 def u16(row,signed=False):
     data=payload(row); assert len(data)%2==0
