@@ -12,8 +12,8 @@ class AutoCalAcquisitionTest {
     fun `ponto cru usa escalas e contador igual ao limiar fica valido`() {
         val snapshot = snapshot(
             field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
-            field("PETR_INJ_TBUF", intArrayOf(2000) + IntArray(17)),
-            field("MNFLD_PRESS_BUF", intArrayOf(500) + IntArray(17)),
+            field("PETR_INJ_TBUF", intArrayOf(2048) + IntArray(17)),
+            field("MNFLD_PRESS_BUF", intArrayOf(512) + IntArray(17)),
             field("NUM_BUF_UPD_PETR", intArrayOf(6) + IntArray(17)),
         )
         val point = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points").getJSONObject(0)
@@ -27,8 +27,8 @@ class AutoCalAcquisitionTest {
     fun `ponto abaixo do limiar aparece como coletando e nao e desenhado`() {
         val snapshot = snapshot(
             field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
-            field("PETR_INJ_TBUF", intArrayOf(2000) + IntArray(17)),
-            field("MNFLD_PRESS_BUF", intArrayOf(500) + IntArray(17)),
+            field("PETR_INJ_TBUF", intArrayOf(2048) + IntArray(17)),
+            field("MNFLD_PRESS_BUF", intArrayOf(512) + IntArray(17)),
             field("NUM_BUF_UPD_PETR", intArrayOf(3) + IntArray(17)),
         )
         val point = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points").getJSONObject(0)
