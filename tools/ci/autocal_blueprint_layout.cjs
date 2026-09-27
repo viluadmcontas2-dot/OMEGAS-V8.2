@@ -35,6 +35,7 @@ title:box(document.querySelector('.autocal-focus-title')),
 metrics:box(document.querySelector('.autocal-focus-metrics')),
 chart:box(document.querySelector('.autocal-chart-host')),
 inspector:box(document.querySelector('.autocal-chart-inspector')),
+history:box(document.querySelector('[data-autocal-history'])),
 actions:[...document.querySelectorAll('.autocal-focus-actions > button,.autocal-focus-actions > details > summary')].map(e=>({text:e.textContent,...box(e)}))};
 });
 await page.screenshot({path:'build/ui-evidence/'+(cssRef ? (cssRef===BASELINE?'before-overlap':'before-clipping') : 'after-'+height)+'.png'});
@@ -57,6 +58,8 @@ assert.equal(inside(result),true,'primary touch targets must fit the toolbar');
 assert.equal(clear(result),true,'primary controls must not cover telemetry or title');
 assert.equal(visibleInspector(result),true,'point information must remain below graph and inside viewport');
 assert.ok(result.chart.height>=420,'graph must remain dominant');
+assert.ok(result.history.y>=result.chart.bottom,'comparison control must not overlap the plot');
+assert.ok(result.history.height>=48,'comparison control must have a full touch target');
 }
 } finally { await browser.close(); }
 })().catch(e=>{console.error(e);process.exitCode=1;});

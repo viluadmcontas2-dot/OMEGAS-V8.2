@@ -1753,11 +1753,11 @@
 .autocal-chart-workspace {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
+  grid-template-columns: minmax(0, 1fr) auto minmax(260px, 30%);
   grid-template-areas:
-    "chart chart"
-    "legend inspector"
-    "compare inspector";
+    "chart chart chart"
+    "legend history inspector"
+    "compare compare inspector";
   gap: 7px;
   height: 100%;
   min-height: 0;
@@ -1788,9 +1788,9 @@
   overflow: hidden;
 }
 .autocal-history-float {
-  position: absolute;
-  top: 11px;
-  right: 12px;
+  position: static;
+  grid-area: history;
+  align-self: start;
   z-index: 7;
   min-height: 48px;
   padding: 0 10px;
@@ -2060,6 +2060,7 @@
     grid-template-areas:
       "chart"
       "legend"
+      "history"
       "compare"
       "inspector";
   }
