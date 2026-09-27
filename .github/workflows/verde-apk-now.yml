@@ -2,7 +2,7 @@ name: OMEGAS VERDE APK NOW
 
 on:
   workflow_dispatch:
-  # APK evidence trigger: autocal-blueprint-viewport-context-2026-09-27
+  # APK evidence trigger: autocal-blueprint-viewport-context-verified-2026-09-27
   push:
     branches: [OmegasVerde]
     paths:

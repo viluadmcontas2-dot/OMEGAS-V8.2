@@ -35,7 +35,7 @@ title:box(document.querySelector('.autocal-focus-title')),
 metrics:box(document.querySelector('.autocal-focus-metrics')),
 chart:box(document.querySelector('.autocal-chart-host')),
 inspector:box(document.querySelector('.autocal-chart-inspector')),
-history:box(document.querySelector('[data-autocal-history'])),
+history:box(document.querySelector('[data-autocal-history]')),
 actions:[...document.querySelectorAll('.autocal-focus-actions > button,.autocal-focus-actions > details > summary')].map(e=>({text:e.textContent,...box(e)}))};
 });
 await page.screenshot({path:'build/ui-evidence/'+(cssRef ? (cssRef===BASELINE?'before-overlap':'before-clipping') : 'after-'+height)+'.png'});
