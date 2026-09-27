@@ -19,8 +19,7 @@ assert.ok(cockpit.includes('liveLabelAnchor(projected'),
   'AGORA label must use a bounded anchor to avoid overlapping the curve at the top/right edge');
 assert.ok(cockpit.includes('liveFuelState('),
   'AutoCal must normalize MP48 fuel/state explicitly instead of guessing fuel in render code');
-assert.match(css, /\.app-shell\.autocal-focus \.autocal-chart-host,[\s\S]*height:\s*clamp\(440px,\s*72vh,\s*540px\)/,
-  'graph must reclaim more 1280x720 surface for multimedia use');
+// Actual graph size and visible point context are verified by the rendered layout gate.
 assert.match(css, /\.autocal-reset-comparison[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/,
   'before/after comparison must be compact, glanceable and not a new heavy panel');
 for (const selector of ['.autocal-chart-legend', '.autocal-chart-inspector', '.autocal-reset-comparison']) {

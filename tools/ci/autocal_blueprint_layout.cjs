@@ -6,12 +6,13 @@ const BASELINE='7a8fb479a342eca6aabf6296e33ffc86ce071658';
 fs.mkdirSync('build/ui-evidence',{recursive:true});
 (async()=>{
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
-async function render(baseline){
-const page=await browser.newPage({viewport:{width:1280,height:720}});
+try {
+async function render(cssRef, height=672){
+const page=await browser.newPage({viewport:{width:1280,height}});
 const ui=path.resolve('app/src/main/assets/ui');
 let html=fs.readFileSync(path.join(ui,'index.html'),'utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
 await page.setContent(html);
-for(const f of ['styles.css','styles-calibration-obd.css','styles-autocal-cockpit.css']) await page.addStyleTag({content:baseline && f==='styles-autocal-cockpit.css' ? execFileSync('git',['show',BASELINE+':app/src/main/assets/ui/'+f],{encoding:'utf8'}) : fs.readFileSync(path.join(ui,f),'utf8')});
+for(const f of ['styles.css','styles-calibration-obd.css','styles-autocal-cockpit.css']) await page.addStyleTag({content:cssRef && f==='styles-autocal-cockpit.css' ? execFileSync('git',['show',cssRef+':app/src/main/assets/ui/'+f],{encoding:'utf8'}) : fs.readFileSync(path.join(ui,f),'utf8')});
 await page.evaluate(()=>{
 document.querySelector('.app-shell').classList.add('autocal-focus');
 document.querySelectorAll('[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen==='autocal'));
@@ -28,16 +29,34 @@ window.cockpit.refresh();
 });
 const result=await page.evaluate(()=>{
 const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
-return {viewport:innerWidth,toolbar:box(document.querySelector('.autocal-focus-toolbar')),actions:[...document.querySelectorAll('.autocal-focus-actions button,.autocal-focus-actions summary')].filter(e=>e.getBoundingClientRect().width>0).map(e=>({text:e.textContent,...box(e)}))};
+return {viewport:innerWidth,height:innerHeight,
+toolbar:box(document.querySelector('.autocal-focus-toolbar')),
+title:box(document.querySelector('.autocal-focus-title')),
+metrics:box(document.querySelector('.autocal-focus-metrics')),
+chart:box(document.querySelector('.autocal-chart-host')),
+inspector:box(document.querySelector('.autocal-chart-inspector')),
+actions:[...document.querySelectorAll('.autocal-focus-actions > button,.autocal-focus-actions > details > summary')].map(e=>({text:e.textContent,...box(e)}))};
 });
-await page.screenshot({path:'build/ui-evidence/'+(baseline?'before':'after')+'.png'});
+await page.screenshot({path:'build/ui-evidence/'+(cssRef ? (cssRef===BASELINE?'before-overlap':'before-clipping') : 'after-'+height)+'.png'});
 await page.close();return result;
 }
-const before=await render(true), after=await render(false);
+const before=await render(BASELINE);
+const clipped=await render('67ceed128c2bf65f3554b09366e8cddd73a94ac2');
+const after=await render(null), fullHeight=await render(null,720);
 const inside=r=>r.actions.every(a=>a.x>=r.toolbar.x-1&&a.right<=r.toolbar.right+1&&a.right<=r.viewport+1&&a.height>=48);
-console.log(JSON.stringify({before,after},null,2));
-fs.writeFileSync('build/ui-evidence/geometry.json',JSON.stringify({before,after},null,2));
-assert.equal(inside(before),false,'baseline must reproduce clipped toolbar controls');
+const overlaps=(a,b)=>a.x<b.right-1&&a.right>b.x+1&&a.y<b.bottom-1&&a.bottom>b.y+1;
+const clear=r=>r.actions.every(a=>!overlaps(a,r.metrics)&&!overlaps(a,r.title));
+const visibleInspector=r=>r.inspector.y>=r.chart.bottom&&r.inspector.bottom<=r.height;
+console.log(JSON.stringify({before,clipped,after,fullHeight},null,2));
+fs.writeFileSync('build/ui-evidence/geometry.json',JSON.stringify({before,clipped,after,fullHeight},null,2));
+assert.equal(clear(before),false,'baseline must reproduce controls overlapping telemetry');
+assert.equal(visibleInspector(clipped),false,'prior toolbar fix must reproduce clipped point information');
 assert.equal(inside(after),true,'all primary controls must fit the viewport and have touch targets >=48px');
-await browser.close();
+for(const result of [after,fullHeight]) {
+assert.equal(inside(result),true,'primary touch targets must fit the toolbar');
+assert.equal(clear(result),true,'primary controls must not cover telemetry or title');
+assert.equal(visibleInspector(result),true,'point information must remain below graph and inside viewport');
+assert.ok(result.chart.height>=420,'graph must remain dominant');
+}
+} finally { await browser.close(); }
 })().catch(e=>{console.error(e);process.exitCode=1;});

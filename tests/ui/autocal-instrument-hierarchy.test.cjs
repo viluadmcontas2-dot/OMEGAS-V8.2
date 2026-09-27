@@ -19,15 +19,15 @@ test('AutoCal uses graph-first premium hierarchy', () => {
   assert.doesNotMatch(js, /autocalLiveLevel/);
   assert.match(css, /\.autocal-focus-toolbar\s*\{/);
   assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*grid-template-columns:\s*1fr/);
-  assert.match(css, /height:\s*clamp\(440px,\s*72vh,\s*540px\)/);
+// Actual graph size and visible point context are verified by the rendered layout gate.
 });
 
 test('secondary state stays below the graph in one vertical flow', () => {
   assert.match(css, /\.screen\.autocal-route-screen\s*\{[\s\S]*overflow-y:\s*auto/);
   assert.match(css, /\.autocal-secondary-details\s*\{[\s\S]*position:\s*static/);
   assert.match(css, /\.autocal-secondary-card\s*\{[\s\S]*width:\s*100%/);
-  assert.match(css, /\.autocal-chart-inspector\s*\{[\s\S]*position:\s*absolute/);
-  assert.match(css, /\.autocal-chart-legend\s*\{[\s\S]*position:\s*absolute/);
+  assert.match(css, /\.autocal-chart-inspector\s*\{[\s\S]*position:\s*static/);
+  assert.match(css, /\.autocal-chart-legend\s*\{[\s\S]*position:\s*static/);
 });
 
 test('AGORA is visually distinct but remains telemetry', () => {

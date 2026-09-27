@@ -1708,7 +1708,7 @@
   box-shadow: 0 18px 42px rgba(0,0,0,.45);
 }
 .autocal-reset-popover button {
-  min-height: 46px;
+  min-height: 48px;
   border-color: rgba(255,105,115,.24);
   color: #f3c8cc;
 }
@@ -1766,8 +1766,9 @@
 .app-shell.autocal-focus .autocal-chart-host,
 .autocal-chart-host {
   grid-area: chart;
-  height: clamp(440px, 72vh, 540px);
-  min-height: 440px;
+  /* Reserve the header and point context inside the actual WebView height. */
+  height: clamp(420px, calc(100vh - 252px), 540px);
+  min-height: 420px;
   border-radius: 10px;
 }
 .autocal-chart-legend {
@@ -1791,7 +1792,7 @@
   top: 11px;
   right: 12px;
   z-index: 7;
-  min-height: 38px;
+  min-height: 48px;
   padding: 0 10px;
   border-radius: 9px;
   opacity: .84;
@@ -2093,7 +2094,7 @@
 }
 .autocal-point-reacquire {
   flex: 0 0 auto;
-  min-height: 38px;
+  min-height: 48px;
   margin-left: auto;
   padding: 0 12px;
   border-color: rgba(226,178,76,.38);

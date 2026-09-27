@@ -926,8 +926,8 @@ class DashboardLevelsRenderTest {
             assertTrue("Operational toolbar must precede the chart", geometry.getDouble("toolbarBottom") <= geometry.getDouble("chartTop"))
             assertTrue("Secondary disclosure must follow the chart in reading order", geometry.getDouble("detailsTop") >= geometry.getDouble("chartBottom"))
             assertTrue("AutoCal must not create horizontal overflow", geometry.getDouble("screenScrollWidth") <= geometry.getDouble("screenClientWidth") + 1.0)
-            assertTrue("Point inspector must stay inside the graph surface", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartTop"))
-            assertTrue("Point inspector must stay inside the graph surface", geometry.getDouble("inspectorBottom") <= geometry.getDouble("chartBottom"))
+            assertTrue("Point inspector must not cover acquisition curves", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartBottom"))
+            assertTrue("Point inspector must remain visible without scrolling", geometry.getDouble("inspectorBottom") <= geometry.getDouble("viewportHeight"))
             assertTrue("Point inspector must remain contextual instead of narrowing the plot", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.35)
         } finally {
             scenario.close()
