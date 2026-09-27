@@ -1,0 +1,131 @@
+{
+  "schema": "omegas.mp48.lognovo-autocal-epochs.v1",
+  "classification": "ORIGINAL_DERIVED",
+  "description": "Exact original-byte brackets for the three ECU-native AutoMatch epochs after Reset All in PortmonLOGNOVO.LOG.",
+  "provenance": {
+    "sourceFamily": "Lognovo original / ProgBase original",
+    "sourceRawName": "PortmonLOGNOVO.LOG",
+    "sourceRawBytes": 149911521,
+    "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+    "sourceZipName": "PortmonLOGNOVO (1)(2).zip",
+    "sourceZipSha256": "6879fa2a7931d22c207cd7fa47dffb59e1df0fe1de216e34e3f11e0c08cc1c17",
+    "progBaseName": "Copy of ProgBase (3).exe",
+    "progBaseVersion": "4.2.0.6",
+    "progBaseSha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "extractor": "tools/omegas/extract_lognovo_autocal_epochs.py",
+    "scientificUse": "ECU-native AutoMatch epoch/rollover/MUL behavior. No OMEGAS-generated values are an oracle.",
+    "manualAutoMatchFrame": "02 24 04 08 32",
+    "manualAutoMatchFrameCount": 0,
+    "resetAllFrameCount": 1
+  },
+  "resetAll": {
+    "sequence": 1487,
+    "sourceWriteLine": 34971,
+    "request": "02 24 04 04 2E",
+    "response": "02 24 04 04 2E 53 00 53"
+  },
+  "staticConfigurationBeforeEpochs": {
+    "AXIS": {"sequence":20200,"sourceWriteLine":556102,"request":"29 4B 01 75","response":"29 4B 01 75 53 3C 00 01 00 02 00 03 00 04 00 05 00 06 00 07 00 08 00 09 00 0A 00 0B 00 0C 00 0D 00 0E 00 0F 00 10 00 11 00 12 00 13 00 14 00 16 00 18 00 1A 00 1C 00 1E 00 20 00 22 00 24 00 28 00 2C 9D"},
+    "PRESS": {"sequence":20199,"sourceWriteLine":556056,"request":"29 4C 01 76","response":"29 4C 01 76 53 24 9A 00 00 01 33 01 66 01 9A 01 CD 01 00 02 33 02 66 02 9A 02 CD 02 00 03 33 03 66 03 9A 03 CD 03 00 04 66 04 9D"},
+    "MAX": {"sequence":20203,"sourceWriteLine":556194,"request":"0A 65 01 02 72","response":"0A 65 01 02 72 53 01 03 57"},
+    "ENABLE": {"sequence":20201,"sourceWriteLine":556172,"request":"09 4A 01 54","response":"09 4A 01 54 53 01 01 55"},
+    "CAL": {"sequence":20216,"sourceWriteLine":556679,"request":"29 72 01 9C","response":"29 72 01 9C 53 0A 01 03 03 01 03 03 01 03 03 01 73"},
+    "COUNT": {"sequence":20219,"sourceWriteLine":556721,"request":"09 74 01 7E","response":"09 74 01 7E 53 01 00 54"}
+  },
+  "eepromEvidence": {
+    "preReset": {
+      "MUL_ACT_EE": {"sequence":368,"sourceWriteLine":6195,"request":"29 58 01 82","response":"29 58 01 82 53 3C B1 35 AE 35 A9 35 B6 33 6C 32 B3 32 77 34 80 37 2B 47 94 55 D3 54 40 53 8B 4E 99 4A 55 4C 59 50 01 50 5B 53 6E 53 A6 50 26 42 2B 3F B8 41 5E 42 91 45 91 45 91 45 91 45 91 45 91 45 44"},
+      "MUL_PREV_EE": {"sequence":369,"sourceWriteLine":6265,"request":"29 59 01 83","response":"29 59 01 83 53 3C 0C 3D 0C 3D 0C 3D 0C 3D 0C 3D 6A 3D 9B 3C C8 3C 2A 3D D7 43 D7 43 D7 43 D7 43 D7 43 D7 43 D7 43 8F 43 3C 43 E1 42 E6 41 A8 40 E0 3F E0 3F E0 3F E0 3F E0 3F E0 3F E0 3F E0 3F E0 3F 35"},
+      "MUL_UPD_CALL_CNTR_EE": {"sequence":370,"sourceWriteLine":6335,"request":"09 5A 01 64","response":"09 5A 01 64 53 01 03 57"}
+    },
+    "postResetBaseline": {
+      "MUL_ACT_EE": {"sequence":20238,"sourceWriteLine":557227,"request":"29 58 01 82","response":"29 58 01 82 53 3C 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 0F"},
+      "MUL_PREV_EE": {"sequence":20239,"sourceWriteLine":557297,"request":"29 59 01 83","response":"29 59 01 83 53 3C 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 0F"},
+      "MUL_UPD_CALL_CNTR_EE": {"sequence":20240,"sourceWriteLine":557367,"request":"09 5A 01 64","response":"09 5A 01 64 53 01 00 54"}
+    },
+    "note": "MUL_ACT_EE, MUL_PREV_EE and MUL_UPD_CALL_CNTR_EE prove persistent multiplier history/call-count state; exact firmware update formula remains unresolved."
+  },
+  "epochs": [
+    {
+      "epoch":1,"autoMatchCountBefore":0,"autoMatchCountAfter":1,
+      "statusBefore":{"sequence":24569,"sourceWriteLine":727733,"request":"48 0B 53","response":"48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 61"},
+      "gasCurrentBefore":{
+        "time":{"sequence":24591,"sourceWriteLine":728513,"request":"29 5F 01 89","response":"29 5F 01 89 53 24 CF 04 A6 05 A8 06 42 08 63 09 7A 0C 2E 0E F6 0F 08 10 29 13 01 15 D3 10 00 00 1B 16 00 00 00 00 00 00 00 00 9E"},
+        "map":{"sequence":24592,"sourceWriteLine":728559,"request":"29 60 01 8A","response":"29 60 01 8A 53 24 F7 00 14 01 47 01 7B 01 A9 01 E6 01 1C 02 4E 02 75 02 B6 02 E6 02 1E 03 00 00 78 03 00 00 00 00 00 00 00 00 F9"},
+        "counter":{"sequence":24593,"sourceWriteLine":728605,"request":"29 5C 01 86","response":"29 5C 01 86 53 24 0A 00 0A 00 09 00 0A 00 0A 00 0A 00 0A 00 0A 00 06 00 0A 00 0A 00 06 00 00 00 05 00 00 00 00 00 00 00 00 00 EB"}
+      },
+      "mulBefore":{"sequence":24597,"sourceWriteLine":728783,"request":"29 61 01 8B","response":"29 61 01 8B 53 3C 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 0F"},
+      "statusAfter":{"sequence":24622,"sourceWriteLine":729727,"request":"48 0B 53","response":"48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 01 62"},
+      "petrolContext":{
+        "time":{"sequence":24628,"sourceWriteLine":729971,"request":"29 62 01 8C","response":"29 62 01 8C 53 24 F4 04 B4 05 AC 06 BE 07 20 08 20 08 DA 08 7E 09 48 0B 8F 0B 10 0D E8 0E 00 00 C0 13 00 00 00 00 00 00 00 00 2B"},
+        "map":{"sequence":24629,"sourceWriteLine":730017,"request":"29 63 01 8D","response":"29 63 01 8D 53 24 D6 00 1A 01 48 01 72 01 B2 01 E3 01 1E 02 4F 02 88 02 B6 02 E7 02 21 03 00 00 6A 03 00 00 00 00 00 00 00 00 E8"},
+        "counter":{"sequence":24630,"sourceWriteLine":730063,"request":"29 5B 01 85","response":"29 5B 01 85 53 24 0A 00 0A 00 0A 00 0A 00 04 00 03 00 03 00 03 00 01 00 05 00 01 00 01 00 00 00 01 00 00 00 00 00 00 00 00 00 B5"}
+      },
+      "gasPreviousAfterRollover":{
+        "time":{"sequence":24634,"sourceWriteLine":730241,"request":"29 5D 01 87","response":"29 5D 01 87 53 24 CF 04 A6 05 A8 06 42 08 63 09 7A 0C 2E 0E F6 0F 08 10 29 13 01 15 D3 10 00 00 1B 16 00 00 00 00 00 00 00 00 9E"},
+        "map":{"sequence":24635,"sourceWriteLine":730287,"request":"29 5E 01 88","response":"29 5E 01 88 53 24 F7 00 14 01 47 01 7B 01 A9 01 E6 01 1C 02 4E 02 75 02 B6 02 E6 02 1E 03 00 00 78 03 00 00 00 00 00 00 00 00 F9"}
+      },
+      "gasCurrentAfterRollover":{
+        "time":{"sequence":24639,"sourceWriteLine":730465,"request":"29 5F 01 89","response":"29 5F 01 89 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 77"},
+        "map":{"sequence":24640,"sourceWriteLine":730511,"request":"29 60 01 8A","response":"29 60 01 8A 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 77"},
+        "counter":{"sequence":24641,"sourceWriteLine":730557,"request":"29 5C 01 86","response":"29 5C 01 86 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 77"}
+      },
+      "mulAfter":{"sequence":24645,"sourceWriteLine":730735,"request":"29 61 01 8B","response":"29 61 01 8B 53 3C 50 34 50 34 50 34 50 34 50 34 EA 3D C9 49 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 46 4D 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 5D"},
+      "explicitCountAfter":{"sequence":24671,"sourceWriteLine":731703,"request":"09 74 01 7E","response":"09 74 01 7E 53 01 01 55"}
+    },
+    {
+      "epoch":2,"autoMatchCountBefore":1,"autoMatchCountAfter":2,
+      "statusBefore":{"sequence":27781,"sourceWriteLine":853680,"request":"48 0B 53","response":"48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 01 62"},
+      "gasCurrentBefore":{
+        "time":{"sequence":27797,"sourceWriteLine":854374,"request":"29 5F 01 89","response":"29 5F 01 89 53 24 E6 03 CD 05 F3 05 00 00 00 00 6D 07 00 00 3A 08 00 00 09 0A 00 00 E2 0D A4 0F 00 00 7C 15 A8 17 00 00 00 00 E5"},
+        "map":{"sequence":27798,"sourceWriteLine":854420,"request":"29 60 01 8A","response":"29 60 01 8A 53 24 DB 00 30 01 3C 01 00 00 00 00 E6 01 00 00 44 02 00 00 B8 02 00 00 20 03 3E 03 00 00 A6 03 EA 03 00 00 00 00 A1"},
+        "counter":{"sequence":27799,"sourceWriteLine":854466,"request":"29 5C 01 86","response":"29 5C 01 86 53 24 02 00 03 00 04 00 00 00 00 00 03 00 00 00 02 00 00 00 07 00 00 00 02 00 02 00 00 00 01 00 03 00 00 00 00 00 94"}
+      },
+      "mulBefore":{"sequence":27802,"sourceWriteLine":854600,"request":"29 61 01 8B","response":"29 61 01 8B 53 3C 50 34 50 34 50 34 50 34 50 34 EA 3D C9 49 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 00 50 46 4D 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 70 4A 5D"},
+      "statusAfter":{"sequence":27828,"sourceWriteLine":855588,"request":"48 0B 53","response":"48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 02 63"},
+      "petrolContext":{
+        "time":{"sequence":27833,"sourceWriteLine":855788,"request":"29 62 01 8C","response":"29 62 01 8C 53 24 CD 04 B4 05 AC 06 BE 07 20 08 20 08 DA 08 7A 09 3E 0A 89 0B B3 0C BA 0E 00 00 C0 13 00 00 DA 17 00 00 00 00 54"},
+        "map":{"sequence":27834,"sourceWriteLine":855834,"request":"29 63 01 8D","response":"29 63 01 8D 53 24 C5 00 1A 01 48 01 72 01 B2 01 E3 01 1E 02 54 02 79 02 B8 02 E8 02 1B 03 00 00 6A 03 00 00 F0 03 00 00 00 00 BD"},
+        "counter":{"sequence":27835,"sourceWriteLine":855880,"request":"29 5B 01 85","response":"29 5B 01 85 53 24 0A 00 0A 00 0A 00 0A 00 04 00 03 00 03 00 04 00 04 00 06 00 08 00 04 00 00 00 01 00 00 00 01 00 00 00 00 00 C5"}
+      },
+      "gasPreviousAfterRollover":{
+        "time":{"sequence":27838,"sourceWriteLine":856014,"request":"29 5D 01 87","response":"29 5D 01 87 53 24 E6 03 CD 05 F3 05 00 00 00 00 6D 07 F4 07 3A 08 00 00 09 0A 00 00 E2 0D A4 0F 00 00 7C 15 A8 17 00 00 00 00 E0"},
+        "map":{"sequence":27839,"sourceWriteLine":856060,"request":"29 5E 01 88","response":"29 5E 01 88 53 24 DB 00 30 01 3C 01 00 00 00 00 E6 01 2E 02 44 02 00 00 B8 02 00 00 20 03 3E 03 00 00 A6 03 EA 03 00 00 00 00 D1"}
+      },
+      "gasCurrentAfterRollover":{
+        "time":{"sequence":27843,"sourceWriteLine":856238,"request":"29 5F 01 89","response":"29 5F 01 89 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 E4 08 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 63"},
+        "map":{"sequence":27844,"sourceWriteLine":856284,"request":"29 60 01 8A","response":"29 60 01 8A 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 38 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 B1"},
+        "counter":{"sequence":27845,"sourceWriteLine":856330,"request":"29 5C 01 86","response":"29 5C 01 86 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 78"}
+      },
+      "mulAfter":{"sequence":27854,"sourceWriteLine":856550,"request":"29 61 01 8B","response":"29 61 01 8B 53 3C 09 2E 09 2E 09 2E 09 2E 09 2E 7C 36 EE 40 66 46 66 46 07 47 66 46 DC 48 40 4A 80 49 FF 49 CF 49 DB 49 50 49 40 47 4B 47 F1 48 E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A 3D"},
+      "explicitCountAfter":{"sequence":27874,"sourceWriteLine":857432,"request":"09 74 01 7E","response":"09 74 01 7E 53 01 02 56"}
+    },
+    {
+      "epoch":3,"autoMatchCountBefore":2,"autoMatchCountAfter":3,
+      "statusBefore":{"sequence":30079,"sourceWriteLine":943875,"request":"48 0B 53","response":"48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 02 63"},
+      "gasCurrentBefore":{
+        "time":{"sequence":30050,"sourceWriteLine":942749,"request":"29 5F 01 89","response":"29 5F 01 89 53 24 00 00 68 06 6A 07 7C 08 00 00 00 00 00 00 17 09 CC 09 78 0A 98 0C 00 00 AF 12 FA 13 00 00 00 00 00 00 00 00 C3"},
+        "map":{"sequence":30051,"sourceWriteLine":942795,"request":"29 60 01 8A","response":"29 60 01 8A 53 24 00 00 32 01 5A 01 83 01 00 00 00 00 00 00 46 02 7D 02 9C 02 E0 02 00 00 50 03 6C 03 00 00 00 00 00 00 00 00 92"},
+        "counter":{"sequence":30052,"sourceWriteLine":942841,"request":"29 5C 01 86","response":"29 5C 01 86 53 24 00 00 01 00 06 00 03 00 00 00 00 00 00 00 07 00 09 00 01 00 01 00 00 00 08 00 03 00 00 00 00 00 00 00 00 00 9E"}
+      },
+      "mulBefore":{"sequence":30055,"sourceWriteLine":942975,"request":"29 61 01 8B","response":"29 61 01 8B 53 3C 09 2E 09 2E 09 2E 09 2E 09 2E 7C 36 EE 40 66 46 66 46 07 47 66 46 DC 48 40 4A 80 49 FF 49 CF 49 DB 49 50 49 40 47 4B 47 F1 48 E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A E1 4A 3D"},
+      "statusAfter":{"sequence":30125,"sourceWriteLine":945739,"request":"48 0B 53","response":"48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 03 64"},
+      "petrolContext":{
+        "time":{"sequence":30084,"sourceWriteLine":944075,"request":"29 62 01 8C","response":"29 62 01 8C 53 24 CD 04 B4 05 AC 06 BE 07 20 08 20 08 DA 08 7A 09 3E 0A 89 0B B3 0C BA 0E 00 00 C0 13 00 00 DA 17 00 00 00 00 54"},
+        "map":{"sequence":30085,"sourceWriteLine":944121,"request":"29 63 01 8D","response":"29 63 01 8D 53 24 C5 00 1A 01 48 01 72 01 B2 01 E3 01 1E 02 54 02 79 02 B8 02 E8 02 1B 03 00 00 6A 03 00 00 F0 03 00 00 00 00 BD"},
+        "counter":{"sequence":30086,"sourceWriteLine":944167,"request":"29 5B 01 85","response":"29 5B 01 85 53 24 0A 00 0A 00 0A 00 0A 00 04 00 03 00 03 00 04 00 04 00 06 00 08 00 04 00 00 00 01 00 00 00 01 00 00 00 00 00 C5"}
+      },
+      "gasPreviousAfterRollover":{
+        "time":{"sequence":30089,"sourceWriteLine":944301,"request":"29 5D 01 87","response":"29 5D 01 87 53 24 00 00 68 06 6A 07 7C 08 00 00 00 00 70 08 17 09 CC 09 78 0A 98 0C 00 00 AF 12 FA 13 00 00 00 00 00 00 00 00 3B"},
+        "map":{"sequence":30090,"sourceWriteLine":944347,"request":"29 5E 01 88","response":"29 5E 01 88 53 24 00 00 32 01 5A 01 83 01 00 00 00 00 1C 02 46 02 7D 02 9C 02 E0 02 00 00 50 03 6C 03 00 00 00 00 00 00 00 00 B0"}
+      },
+      "gasCurrentAfterRollover":{
+        "time":{"sequence":30094,"sourceWriteLine":944525,"request":"29 5F 01 89","response":"29 5F 01 89 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 77"},
+        "map":{"sequence":30095,"sourceWriteLine":944571,"request":"29 60 01 8A","response":"29 60 01 8A 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 77"},
+        "counter":{"sequence":30096,"sourceWriteLine":944617,"request":"29 5C 01 86","response":"29 5C 01 86 53 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 77"}
+      },
+      "mulAfter":{"sequence":30100,"sourceWriteLine":944795,"request":"29 61 01 8B","response":"29 61 01 8B 53 3C BB 30 BB 30 BB 30 BB 30 BB 30 AD 39 BB 44 77 46 C7 44 D4 45 BF 44 72 4A 32 4E D7 4C 67 4D 9A 4C E8 4C B9 4A FE 47 3E 49 EF 4A ED 4C ED 4C ED 4C ED 4C ED 4C ED 4C ED 4C ED 4C ED 4C 25"},
+      "explicitCountAfter":{"sequence":30178,"sourceWriteLine":947713,"request":"09 74 01 7E","response":"09 74 01 7E 53 01 03 57"}
+    }
+  ]
+}
