@@ -17,8 +17,10 @@ import java.security.MessageDigest
  * O serviço chama [tick] em uma cadência compartilhada; o monitor não possui
  * thread nem timer. Toda I/O passa pelo scheduler MP48 único. O probe 48 0B
  * acompanha status global; um grupo leve renova contadores/zonas em ~2 s e um
- * grupo de referência renova eixos/curvas/MUL_ACT em ~4 s. Snapshot completo
- * continua reservado a bootstrap/eventos científicos.
+ * grupo de referência renova eixos/curvas/MUL_ACT em ~4 s. Refreshes agrupados
+ * só são aceitos quando o status compacto antes/depois permanece na mesma época
+ * nativa, evitando misturar CURRENT/PREV/MUL durante um AutoMatch da ECU.
+ * Snapshot completo continua reservado a bootstrap/eventos científicos.
  * AutoMatch continua sendo executado exclusivamente pela ECU.
  */
 class NativeAutoCalMonitor(
@@ -191,7 +193,7 @@ class NativeAutoCalMonitor(
         val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
         val fullSnapshotAlreadyDue = synchronized(lock) { snapshotRequested } || probeChanged
         val acquisitionRefresh = if (!fullSnapshotAlreadyDue && thresholdsReady && refreshDue.acquisition) {
-            refreshAcquisitionGroup(currentSession)
+            refreshAcquisitionGroup(currentSession, probe)
         } else null
         val maturityEvents = acquisitionRefresh?.gasProbe?.let { observed ->
             maturityTracker.observe(
@@ -212,7 +214,7 @@ class NativeAutoCalMonitor(
         }
 
         val referenceRefresh = if (!fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference) {
-            refreshReferenceGroup(currentSession)
+            refreshReferenceGroup(currentSession, probe)
         } else null
         if (referenceRefresh != null) {
             mergeReferenceFields(
@@ -346,7 +348,10 @@ class NativeAutoCalMonitor(
         }
     }
 
-    private fun refreshAcquisitionGroup(expectedSessionId: Long): AcquisitionRefresh? {
+    private fun refreshAcquisitionGroup(
+        expectedSessionId: Long,
+        beforeEpoch: AutoCalProtocol.NativeStatus,
+    ): AcquisitionRefresh? {
         val startedAtMs = System.currentTimeMillis()
         val observations = mutableListOf<AutoCalReadObservation>()
 
@@ -388,6 +393,9 @@ class NativeAutoCalMonitor(
         if (!read(AutoCalProtocol.ACQUIRED_ZONES_PETROL, "AutoCal zonas gasolina")) return null
         if (!read(AutoCalProtocol.ACQUIRED_ZONES_GAS, "AutoCal zonas GNV")) return null
 
+        val afterEpoch = probe(expectedSessionId) ?: return null
+        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return null
+
         val finishedAtMs = System.currentTimeMillis()
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = observations,
@@ -405,7 +413,10 @@ class NativeAutoCalMonitor(
         )
     }
 
-    private fun refreshReferenceGroup(expectedSessionId: Long): ReferenceRefresh? {
+    private fun refreshReferenceGroup(
+        expectedSessionId: Long,
+        beforeEpoch: AutoCalProtocol.NativeStatus,
+    ): ReferenceRefresh? {
         val startedAtMs = System.currentTimeMillis()
         val observations = REFERENCE_REFRESH_FIELDS.map { field ->
             val reply = serial.transaction(
@@ -424,6 +435,9 @@ class NativeAutoCalMonitor(
                 error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
             )
         }
+        val afterEpoch = probe(expectedSessionId) ?: return null
+        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return null
+
         val finishedAtMs = System.currentTimeMillis()
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = observations,

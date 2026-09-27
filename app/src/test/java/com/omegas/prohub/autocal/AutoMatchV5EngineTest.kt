@@ -23,6 +23,9 @@ class AutoMatchV5EngineTest {
 
         assertTrue(result.complete)
         assertFalse(result.nativeFirmwareExact)
+        assertEquals("OMEGAS_INFERRED_HORIZONTAL_G0_60_S3_DB1_CAP12_MUL_Q14_V3", AutoMatchV5Engine.ALGORITHM)
+        assertEquals(0.60, AutoMatchV5Engine.GAIN, 0.0)
+        assertEquals(0.12, AutoMatchV5Engine.MAX_STEP_RATIO, 0.0)
         assertEquals(AutoMatchV5Engine.ALGORITHM, result.algorithm)
         assertEquals(14, result.validBandCount)
         assertArrayEquals(previous, result.points.map { it.factorRaw!! }.toIntArray())
@@ -90,7 +93,7 @@ class AutoMatchV5EngineTest {
     }
 
     @Test
-    fun `erro grande e limitado a cinco por cento por execucao`() {
+    fun `erro grande respeita limite atual de doze por cento por execucao`() {
         val petrol = recoveredPetrol()
         val gas = gasFromTimeScale(petrol, 1.30)
         val previous = IntArray(KFactorProtocol.POINT_COUNT) { KFactorProtocol.Q14_SCALE }
