@@ -6,15 +6,15 @@ import org.junit.Test
 
 class AutoCalScaleTest {
     @Test
-    fun `tempo AutoCal usa 500 counts por milissegundo`() {
-        assertEquals(5.0, AutoCalScale.injectionMs(2500), 0.000001)
-        assertEquals(0.5, AutoCalScale.injectionMs(250), 0.000001)
+    fun `tempo AutoCal usa 512 counts por milissegundo`() {
+        assertEquals(5.0, AutoCalScale.injectionMs(2560), 0.000001)
+        assertEquals(0.5, AutoCalScale.injectionMs(256), 0.000001)
     }
 
     @Test
-    fun `MAP AutoCal usa S16 por 1000 counts por bar`() {
-        assertEquals(1.0, AutoCalScale.mapBar(1000), 0.000001)
-        assertEquals(-0.5, AutoCalScale.mapBar(-500), 0.000001)
+    fun `MAP AutoCal usa S16 por 1024 counts por bar`() {
+        assertEquals(1.0, AutoCalScale.mapBar(1024), 0.000001)
+        assertEquals(-0.5, AutoCalScale.mapBar(-512), 0.000001)
     }
 
     @Test
