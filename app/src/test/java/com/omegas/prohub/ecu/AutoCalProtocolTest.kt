@@ -25,10 +25,6 @@ class AutoCalProtocolTest {
         assertArrayEquals(hex("09 87 01 91"), AutoCalProtocol.read(AutoCalProtocol.DIFF_PETR_TINJ_T_THD))
         assertArrayEquals(hex("09 88 01 92"), AutoCalProtocol.read(AutoCalProtocol.DELTA_PETR_INJ_T_THD))
         assertArrayEquals(hex("09 8B 01 95"), AutoCalProtocol.read(AutoCalProtocol.DISABLE_ACQ_BAND))
-        assertArrayEquals(
-            hex("37 64 0A 01 01 00 01 00 01 00 01 00 AA"),
-            AutoCalProtocol.resetKFactorEeprom(),
-        )
     }
 
     @Test
@@ -290,14 +286,29 @@ class AutoCalProtocolTest {
     }
 
     @Test
-    fun `finish autocal usa elemento indexado 1 para 0`() {
-        assertEquals(AutoCalProtocol.Shape.INDEXED, AutoCalProtocol.VECT_AUTOCAL_U8_0.shape)
-        assertEquals(0, AutoCalProtocol.VECT_AUTOCAL_U8_0.index)
-        assertEquals(1, AutoCalProtocol.VECT_AUTOCAL_U8_1.index)
+    fun `finish autocal grava max automatch no contador nativo`() {
+        assertEquals(0x0165, AutoCalProtocol.MAX_AUTOMATCH.address)
+        assertEquals(2, AutoCalProtocol.MAX_AUTOMATCH.index)
+        assertEquals(0x0174, AutoCalProtocol.NUM_AUTOMATCH_EXECUTED.address)
         assertArrayEquals(
-            hex("13 65 01 00 06 7F"),
-            AutoCalProtocol.finishAutoCalCommit(6),
+            hex("12 74 01 03 8A"),
+            AutoCalProtocol.finishAutoCalCommit(3, 1),
         )
+        assertArrayEquals(
+            hex("13 74 01 03 00 8B"),
+            AutoCalProtocol.finishAutoCalCommit(3, 2),
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            AutoCalProtocol.finishAutoCalCommit(3, 4)
+        }
+    }
+
+    @Test
+    fun `reset k progbase gera trinta writes mul act em q14 unity`() {
+        val frames = AutoCalProtocol.resetKFactorMulActFrames()
+        assertEquals(30, frames.size)
+        assertArrayEquals(hex("14 61 01 00 00 40 B6"), frames.first())
+        assertArrayEquals(hex("14 61 01 1D 00 40 D3"), frames.last())
     }
 
     @Test
