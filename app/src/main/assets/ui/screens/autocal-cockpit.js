@@ -574,7 +574,10 @@
           <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
             <header class="autocal-focus-toolbar" aria-label="AutoCal · Gasolina e GNV">
               <div class="autocal-focus-title">
-                <h3>AutoCal · Gasolina e GNV</h3>
+                <div class="autocal-title-line">
+                  <h3>AutoCal · Gasolina e GNV</h3>
+                  <span id="autocalLiveFuel" class="autocal-fuel-chip" data-fuel-state="unknown">—</span>
+                </div>
                 <p>Aquisição e ajuste da malha de injeção</p>
               </div>
 
@@ -596,7 +599,6 @@
                   <b id="autocalLiveZone">—</b>
                 </div>
                 <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
-                <span id="autocalLiveFuel" hidden>—</span>
                 <p id="autocalLiveNarrative" class="autocal-live-narrative" hidden>O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
               </div>
 
@@ -1020,6 +1022,8 @@
         const stale = telemetry.valid === true && ageMs !== null && ageMs > AUTO_CAL_LIVE_STALE_MS;
         this.text('autocalLiveTitle', stale ? 'Telemetria com atraso' : 'Aguardando telemetria válida');
         this.text('autocalLiveFuel', '—');
+        const fuelChip = document.getElementById('autocalLiveFuel');
+        if (fuelChip) fuelChip.dataset.fuelState = 'unknown';
         this.text('autocalLiveRpm', '—');
         this.text('autocalLivePetrol', '—');
         this.text('autocalLiveMap', '—');
@@ -1031,7 +1035,10 @@
       }
       const rpmLabel = live.rpm === null ? 'RPM —' : Math.round(live.rpm).toLocaleString('pt-BR') + ' RPM';
       this.text('autocalLiveTitle', 'Motor nesta região agora');
-      this.text('autocalLiveFuel', live.fuel);
+      const fuelState = AutoCalUxModel.liveFuelState(live.fuel);
+      this.text('autocalLiveFuel', fuelState.label);
+      const fuelChip = document.getElementById('autocalLiveFuel');
+      if (fuelChip) fuelChip.dataset.fuelState = fuelState.kind;
       this.text('autocalLiveRpm', live.rpm === null ? '—' : Math.round(live.rpm).toLocaleString('pt-BR'));
       this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
