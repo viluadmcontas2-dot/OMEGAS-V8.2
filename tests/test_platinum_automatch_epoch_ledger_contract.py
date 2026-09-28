@@ -8,7 +8,8 @@ SERVICE = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegrou
 def main():
     assert "onNativeAutoMatchObserved" in MONITOR
     assert '"eventType", "NATIVE_AUTOMATCH_EPOCH"' in MONITOR
-    assert '"evidence", autoMatchEvidence.toJson()' in MONITOR
+    assert '"evidence", epochEvidence' in MONITOR
+    assert '"EVIDENCE_NOT_AVAILABLE"' in MONITOR
     assert '"acquisition", acquisition' in MONITOR
     assert '"snapshotHash", snapshot.snapshotHash' in MONITOR
     assert "autoMatchCounterEvent != null" in MONITOR
