@@ -249,17 +249,43 @@ object AutoCalProtocol {
 
     /**
      * Canonical ProgBase 4.2.0.6:
-     * ActionFinishAutocalExecute / BtnFinishAutomatchClick read TAutoCalDM+0x7C
-     * and assign that scalar to TAutoCalDM+0xCC.
+     * ActionFinishAutocalExecute / BtnFinishAutomatchClick copy TAutoCalDM+0x7C
+     * into TAutoCalDM+0xCC.
      *
-     * Exact Delphi field RTTI in the canonical DUMP resolves:
-     * +0x7C = VECT_AUTOCAL_U8_1 (0x0165:index1)
-     * +0xCC = VECT_AUTOCAL_U8_0 (0x0165 scalar/default element)
+     * The exact TAUTOCALDM DFM component order plus the grid initializer at
+     * 0x00510DF8 resolves the instance layout:
+     * +0x6C MNFLD_PRESS_THD, +0x70 PETR_INJ_TBP, +0x74 AUTO_CAL_ENABLE,
+     * +0x78 VECT_AUTOCAL_U8_1, +0x7C VECT_AUTOCAL_U8_2/MAX_AUTOMATCH,
+     * ... +0xC8 VECT_AUTOCAL_U8_0, +0xCC NUM_ATUOMATCH_EXECUTED.
      *
-     * Finish AutoCal therefore commits row1 into the default scalar element.
+     * Finish therefore commits MAX_AUTOMATCH into NUM_AUTOMATCH_EXECUTED.
+     * The counter is observed as U8 on some ECUs and U16 on others, so the
+     * writer preserves the width read immediately before the commit.
      */
-    fun finishAutoCalCommit(valueFromRow1: Int): ByteArray =
-        frameWriteU8(VECT_AUTOCAL_U8_0.address, valueFromRow1)
+    fun finishAutoCalCommit(maxAutomatch: Int, counterWidthBytes: Int): ByteArray {
+        require(counterWidthBytes == 1 || counterWidthBytes == 2) {
+            "Largura do contador AutoMatch deve ser 1 ou 2 bytes"
+        }
+        return when (counterWidthBytes) {
+            1 -> frameWriteU8(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
+            2 -> frameWriteU16(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
+            else -> error("largura validada acima")
+        }
+    }
+
+    private fun frameWriteU16(address: Int, value: Int): ByteArray {
+        require(address in 0..0xFFFF)
+        require(value in 0..0xFFFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_U16.toByte(),
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+                (value and 0xFF).toByte(),
+                ((value ushr 8) and 0xFF).toByte(),
+            ),
+        )
+    }
 
     /** ProgBase/AEB SetVector: compacto até 5 bytes; 0x37 estendido acima disso. */
     fun writeVectorU8(address: Int, values: IntArray): ByteArray {
