@@ -14,6 +14,7 @@ class AutoCalProtocolTest {
         assertArrayEquals(hex("29 4C 01 76"), AutoCalProtocol.read(AutoCalProtocol.MNFLD_PRESS_THD))
         assertArrayEquals(hex("29 61 01 8B"), AutoCalProtocol.read(AutoCalProtocol.MUL_ACT))
         assertArrayEquals(hex("09 74 01 7E"), AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED))
+        assertArrayEquals(hex("29 64 01 8E"), AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE))
         assertArrayEquals(hex("09 83 01 8D"), AutoCalProtocol.read(AutoCalProtocol.DIFF_ENG_SPD_THD))
         assertArrayEquals(hex("09 84 01 8E"), AutoCalProtocol.read(AutoCalProtocol.DELTA_ENG_SPD_THD))
         assertArrayEquals(hex("09 85 01 8F"), AutoCalProtocol.read(AutoCalProtocol.DIFF_MNFLD_PRESS_THD))
@@ -122,6 +123,21 @@ class AutoCalProtocolTest {
         )
         assertEquals(0x4000, factor.rawValues.single())
         assertEquals(1.0, factor.physicalValues.single(), 0.0)
+    }
+
+    @Test
+    fun `vetor eeprom autocal e separado do mul act live`() {
+        val decoded = AutoCalProtocol.decode(
+            AutoCalProtocol.VECT_AUTOCAL_EE,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(1, 0, 2, 0, 3, 0, 4, 0),
+        )
+        assertEquals(4, decoded.elementCount)
+        assertArrayEquals(intArrayOf(1, 2, 3, 4), decoded.rawValues)
+        AutoCalProtocol.requireExpectedShape(decoded, null)
+        assertEquals(0x0164, AutoCalProtocol.VECT_AUTOCAL_EE.address)
+        assertEquals(0x0161, AutoCalProtocol.MUL_ACT.address)
+        assertEquals(30, AutoCalProtocol.MUL_ACT.expectedElementsHint)
     }
 
     @Test
