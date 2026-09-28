@@ -2,7 +2,9 @@ from pathlib import Path
 import json
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = json.loads((ROOT / "tests/fixtures/platinum-autocal-action-parity-v1.json").read_text(encoding="utf-8"))
+FIXTURE_PATH = ROOT / "tests/fixtures/platinum-autocal-action-parity-v1.json"
+FIXTURE_TEXT = FIXTURE_PATH.read_text(encoding="utf-8")
+FIXTURE = json.loads(FIXTURE_TEXT)
 PROTOCOL = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt").read_text(encoding="utf-8")
 POINTS = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalPointDeleteProtocol.kt").read_text(encoding="utf-8")
 MANAGER = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt").read_text(encoding="utf-8")
@@ -30,7 +32,7 @@ def test_exact_native_action_frames_remain_bound():
         "02 24 04 04 2E",
         "02 24 04 08 32",
     ):
-        assert frame in MANAGER or frame in FIXTURE.read_text() if False else True
+        assert frame in FIXTURE_TEXT, frame
 
     assert "setEnabled(true)" in MANAGER
     assert "setEnabled(false)" in MANAGER
