@@ -4,6 +4,7 @@ import android.os.SystemClock
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
+import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.learning.NativeAutoCalAnchorCorrelator
@@ -348,21 +349,62 @@ class NativeAutoCalMonitor(
         }
     }
 
+    private fun probe(unit: Mp48SerialUnit): AutoCalProtocol.NativeStatus? {
+        val compact = unit.transaction(
+            request = AutoCalProtocol.CMD_NATIVE_STATUS,
+            reason = "AutoCal status leve · unidade",
+            timeoutMs = 700,
+            purgeBefore = false,
+        )
+        if (compact.ok) {
+            try {
+                return AutoCalProtocol.decodeNativeStatus(compact.status, compact.payload)
+            } catch (_: Exception) {
+                // Fallback explícito abaixo.
+            }
+        }
+        val explicit = unit.transaction(
+            request = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
+            reason = "AutoCal fallback contador 0x0174 · unidade",
+            timeoutMs = 900,
+            purgeBefore = false,
+        )
+        if (!explicit.ok) return null
+        return try {
+            val decoded = AutoCalProtocol.decode(
+                AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+                explicit.status,
+                explicit.payload,
+            )
+            AutoCalProtocol.NativeStatus(
+                nativeFlag13 = -1,
+                autoMatchCount = decoded.rawValues.single(),
+                rawPayload = explicit.payload.copyOf(),
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private fun refreshAcquisitionGroup(
         expectedSessionId: Long,
         beforeEpoch: AutoCalProtocol.NativeStatus,
-    ): AcquisitionRefresh? {
+    ): AcquisitionRefresh? = serial.unit(
+        reason = "AutoCal aquisição operacional agrupada",
+        expectedSessionId = expectedSessionId,
+        workClass = Mp48WorkClass.READ_ONLY,
+        telemetryAfter = true,
+        waitTimeoutMs = 8_000L,
+    ) { unit ->
         val startedAtMs = System.currentTimeMillis()
         val observations = mutableListOf<AutoCalReadObservation>()
 
         fun read(field: AutoCalProtocol.Field, reason: String): Boolean {
-            val reply = serial.transaction(
+            val reply = unit.transaction(
                 request = AutoCalProtocol.read(field),
                 reason = reason,
                 timeoutMs = 900,
                 purgeBefore = false,
-                expectedSessionId = expectedSessionId,
-                workClass = Mp48WorkClass.READ_ONLY,
             )
             observations += AutoCalReadObservation(
                 field = field,
@@ -374,27 +416,45 @@ class NativeAutoCalMonitor(
             return reply.ok
         }
 
-        if (!read(AutoCalProtocol.PETR_INJ_TBUF, "AutoCal aquisição gasolina tempo")) return null
-        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF, "AutoCal aquisição gasolina MAP")) return null
-        if (!read(AutoCalProtocol.NUM_BUF_UPD_PETR, "AutoCal maturidade gasolina")) return null
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF, "AutoCal aquisição gasolina tempo")) return@unit null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF, "AutoCal aquisição gasolina MAP")) return@unit null
+        if (!read(AutoCalProtocol.NUM_BUF_UPD_PETR, "AutoCal maturidade gasolina")) return@unit null
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV, "AutoCal aquisição GNV anterior tempo")) return@unit null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV, "AutoCal aquisição GNV anterior MAP")) return@unit null
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS, "AutoCal aquisição GNV tempo")) return@unit null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, "AutoCal aquisição GNV MAP")) return@unit null
 
-        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV, "AutoCal aquisição GNV anterior tempo")) return null
-        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV, "AutoCal aquisição GNV anterior MAP")) return null
-        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS, "AutoCal aquisição GNV tempo")) return null
-        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, "AutoCal aquisição GNV MAP")) return null
-        val gasProbe = probeMaturityCounters(expectedSessionId) ?: return null
+        val gasReply = unit.transaction(
+            request = AutoCalProtocol.read(AutoCalProtocol.NUM_BUF_UPD_GAS),
+            reason = "AutoCal maturidade GNV",
+            timeoutMs = 900,
+            purgeBefore = false,
+        )
+        if (!gasReply.ok) return@unit null
+        val gasDecoded = try {
+            AutoCalProtocol.decode(AutoCalProtocol.NUM_BUF_UPD_GAS, gasReply.status, gasReply.payload)
+        } catch (_: Exception) {
+            return@unit null
+        }
+        val gasProbe = MaturityProbe(
+            counters = gasDecoded.rawValues.copyOf(),
+            payloadHex = gasReply.payload.toHex(),
+            observedAtElapsedMs = SystemClock.elapsedRealtime(),
+            status = gasReply.status,
+            payload = gasReply.payload.copyOf(),
+        )
         observations += AutoCalReadObservation(
             field = AutoCalProtocol.NUM_BUF_UPD_GAS,
-            status = gasProbe.status,
-            payload = gasProbe.payload.copyOf(),
+            status = gasReply.status,
+            payload = gasReply.payload.copyOf(),
             capturedAtMs = System.currentTimeMillis(),
         )
 
-        if (!read(AutoCalProtocol.ACQUIRED_ZONES_PETROL, "AutoCal zonas gasolina")) return null
-        if (!read(AutoCalProtocol.ACQUIRED_ZONES_GAS, "AutoCal zonas GNV")) return null
+        if (!read(AutoCalProtocol.ACQUIRED_ZONES_PETROL, "AutoCal zonas gasolina")) return@unit null
+        if (!read(AutoCalProtocol.ACQUIRED_ZONES_GAS, "AutoCal zonas GNV")) return@unit null
 
-        val afterEpoch = probe(expectedSessionId) ?: return null
-        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return null
+        val afterEpoch = probe(unit) ?: return@unit null
+        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return@unit null
 
         val finishedAtMs = System.currentTimeMillis()
         val snapshot = AutoCalSnapshotBuilder.build(
@@ -405,8 +465,8 @@ class NativeAutoCalMonitor(
             startedAtMs = startedAtMs,
             finishedAtMs = finishedAtMs,
         )
-        if (snapshot.partial || snapshot.validFieldCount != ACQUISITION_REFRESH_FIELDS.size) return null
-        return AcquisitionRefresh(
+        if (snapshot.partial || snapshot.validFieldCount != ACQUISITION_REFRESH_FIELDS.size) return@unit null
+        AcquisitionRefresh(
             snapshot = snapshot,
             gasProbe = gasProbe,
             observedAtElapsedMs = SystemClock.elapsedRealtime(),
@@ -416,16 +476,20 @@ class NativeAutoCalMonitor(
     private fun refreshReferenceGroup(
         expectedSessionId: Long,
         beforeEpoch: AutoCalProtocol.NativeStatus,
-    ): ReferenceRefresh? {
+    ): ReferenceRefresh? = serial.unit(
+        reason = "AutoCal referência agrupada",
+        expectedSessionId = expectedSessionId,
+        workClass = Mp48WorkClass.READ_ONLY,
+        telemetryAfter = true,
+        waitTimeoutMs = 6_000L,
+    ) { unit ->
         val startedAtMs = System.currentTimeMillis()
         val observations = REFERENCE_REFRESH_FIELDS.map { field ->
-            val reply = serial.transaction(
+            val reply = unit.transaction(
                 request = AutoCalProtocol.read(field),
                 reason = "AutoCal referência ${field.key}",
                 timeoutMs = 1_200,
                 purgeBefore = false,
-                expectedSessionId = expectedSessionId,
-                workClass = Mp48WorkClass.READ_ONLY,
             )
             AutoCalReadObservation(
                 field = field,
@@ -435,8 +499,8 @@ class NativeAutoCalMonitor(
                 error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
             )
         }
-        val afterEpoch = probe(expectedSessionId) ?: return null
-        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return null
+        val afterEpoch = probe(unit) ?: return@unit null
+        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return@unit null
 
         val finishedAtMs = System.currentTimeMillis()
         val snapshot = AutoCalSnapshotBuilder.build(
@@ -450,8 +514,8 @@ class NativeAutoCalMonitor(
         if (snapshot.partial ||
             snapshot.validFieldCount != REFERENCE_REFRESH_FIELDS.size ||
             !snapshot.temporalCoherent
-        ) return null
-        return ReferenceRefresh(
+        ) return@unit null
+        ReferenceRefresh(
             snapshot = snapshot,
             observedAtElapsedMs = SystemClock.elapsedRealtime(),
         )
