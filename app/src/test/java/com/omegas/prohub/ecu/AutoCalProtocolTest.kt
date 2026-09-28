@@ -14,6 +14,13 @@ class AutoCalProtocolTest {
         assertArrayEquals(hex("29 4C 01 76"), AutoCalProtocol.read(AutoCalProtocol.MNFLD_PRESS_THD))
         assertArrayEquals(hex("29 61 01 8B"), AutoCalProtocol.read(AutoCalProtocol.MUL_ACT))
         assertArrayEquals(hex("09 74 01 7E"), AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED))
+        assertArrayEquals(hex("09 83 01 8D"), AutoCalProtocol.read(AutoCalProtocol.DIFF_ENG_SPD_THD))
+        assertArrayEquals(hex("09 84 01 8E"), AutoCalProtocol.read(AutoCalProtocol.DELTA_ENG_SPD_THD))
+        assertArrayEquals(hex("09 85 01 8F"), AutoCalProtocol.read(AutoCalProtocol.DIFF_MNFLD_PRESS_THD))
+        assertArrayEquals(hex("09 86 01 90"), AutoCalProtocol.read(AutoCalProtocol.DELTA_MNFLD_PRESS_THD))
+        assertArrayEquals(hex("09 87 01 91"), AutoCalProtocol.read(AutoCalProtocol.DIFF_PETR_TINJ_T_THD))
+        assertArrayEquals(hex("09 88 01 92"), AutoCalProtocol.read(AutoCalProtocol.DELTA_PETR_INJ_T_THD))
+        assertArrayEquals(hex("09 8B 01 95"), AutoCalProtocol.read(AutoCalProtocol.DISABLE_ACQ_BAND))
     }
 
     @Test
@@ -115,6 +122,59 @@ class AutoCalProtocolTest {
         )
         assertEquals(0x4000, factor.rawValues.single())
         assertEquals(1.0, factor.physicalValues.single(), 0.0)
+    }
+
+    @Test
+    fun `thresholds progbase decodificam escala fisica exata`() {
+        val diffRpm = AutoCalProtocol.decode(
+            AutoCalProtocol.DIFF_ENG_SPD_THD,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x90.toByte(), 0x01),
+        )
+        assertEquals(400, diffRpm.rawValues.single())
+        assertEquals(400.0, diffRpm.physicalValues.single(), 0.0)
+
+        val deltaRpm = AutoCalProtocol.decode(
+            AutoCalProtocol.DELTA_ENG_SPD_THD,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0xC8.toByte(), 0x00),
+        )
+        assertEquals(200.0, deltaRpm.physicalValues.single(), 0.0)
+
+        val diffMap = AutoCalProtocol.decode(
+            AutoCalProtocol.DIFF_MNFLD_PRESS_THD,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x00, 0x02),
+        )
+        assertEquals(0.5, diffMap.physicalValues.single(), 0.0)
+
+        val deltaMap = AutoCalProtocol.decode(
+            AutoCalProtocol.DELTA_MNFLD_PRESS_THD,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x33, 0x00),
+        )
+        assertEquals(51.0 / 1024.0, deltaMap.physicalValues.single(), 0.0)
+
+        val diffInj = AutoCalProtocol.decode(
+            AutoCalProtocol.DIFF_PETR_TINJ_T_THD,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x00, 0x08),
+        )
+        assertEquals(4.0, diffInj.physicalValues.single(), 0.0)
+
+        val deltaInj = AutoCalProtocol.decode(
+            AutoCalProtocol.DELTA_PETR_INJ_T_THD,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x00, 0x02),
+        )
+        assertEquals(1.0, deltaInj.physicalValues.single(), 0.0)
+
+        val disabledBand = AutoCalProtocol.decode(
+            AutoCalProtocol.DISABLE_ACQ_BAND,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x01),
+        )
+        assertEquals(1, disabledBand.rawValues.single())
     }
 
     @Test
