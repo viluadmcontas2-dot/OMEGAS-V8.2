@@ -69,7 +69,7 @@ jobs:
           {
             echo "### AutoCal host-parity gate"
             echo
-            echo "- SHA: `$GITHUB_SHA`"
+            printf "%s\\n" "- SHA: $GITHUB_SHA"
             echo "- status: **$GATE_STATUS**"
             echo "- contracts: native protocol/Finish + 1 Hz grouped acquisition + cockpit"
             echo "- JVM: AutoCalProtocolTest + AutoCalNativeActionManagerTest"
