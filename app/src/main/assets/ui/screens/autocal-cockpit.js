@@ -718,7 +718,7 @@
 
               <section id="autocalAutoMatchEvidence" class="autocal-automatch-evidence autocal-secondary-card" data-state="WAITING" aria-live="polite">
                 <div>
-                  <small>AUTOMATCH ECU · EVIDÊNCIA CAUSAL</small>
+                  <small>AJUSTE NATIVO · EVIDÊNCIA CAUSAL</small>
                   <b id="autocalAutoMatchEvidenceTitle">Aguardando evento AutoMatch observável</b>
                   <span id="autocalAutoMatchEvidenceDetail">O OMEGAS só atribui mudança à ECU quando fecha o antes/depois da mesma época.</span>
                 </div>
