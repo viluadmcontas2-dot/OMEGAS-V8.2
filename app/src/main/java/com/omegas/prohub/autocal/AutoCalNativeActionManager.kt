@@ -68,13 +68,13 @@ class AutoCalNativeActionManager(
         FINISH_AUTOCAL(
             byteArrayOf(),
             "Finalizar AutoCal",
-            "Replica ActionFinishAutocalExecute: copia VECT_AUTOCAL_U8_1 para VECT_AUTOCAL_U8_0, aguarda 100 ms e exige readback antes de confirmar.",
+            "Replica ActionFinishAutocalExecute: confirma MAX_AUTOMATCH em NUM_AUTOMATCH_EXECUTED, aguarda 100 ms e exige readback antes de concluir.",
             false,
         ),
         FINISH_AUTOMATCH(
             byteArrayOf(),
             "Finalizar AutoMatch",
-            "Replica BtnFinishAutomatchClick: copia VECT_AUTOCAL_U8_1 para VECT_AUTOCAL_U8_0 e confirma por readback, sem substituir a lógica nativa da ECU.",
+            "Replica BtnFinishAutomatchClick: confirma MAX_AUTOMATCH em NUM_AUTOMATCH_EXECUTED sem o settle final do AutoCal completo.",
             false,
         ),
         RESET_K_FACTOR(
