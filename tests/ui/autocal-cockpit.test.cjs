@@ -43,6 +43,8 @@ assert.equal(cockpit.includes("data-autocal-action=\"RESET_GAS\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_K_FACTOR\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"MANUAL_AUTOMATCH\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOCAL\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOMATCH\""), true);
 assert.equal(cockpit.includes('<summary>Corrigir aquisição</summary>'), false);
 assert.equal(cockpit.includes('<summary>Ações avançadas</summary>'), true);
 assert.equal(cockpit.includes('autocal-reacquire-action'), true);
