@@ -9,7 +9,10 @@ cockpit = (ROOT / 'app/src/main/assets/ui/screens/autocal-cockpit.js').read_text
 # Host intent remains the proven ProgBase action. Curve K is a distinct path.
 assert 'RESET_GAS(' in manager
 assert 'ManualActionMode.RESET_GAS' in manager
-assert 'RESET_K_FACTOR' not in manager.split('enum class Action', 1)[1].split('// ProgBase', 1)[0]
+assert 'RESET_K_FACTOR(' in manager
+assert 'AutoCalProtocol.resetKFactorEeprom()' in manager
+assert 'VECT_AUTOCAL_EE 0x0164[4]' in manager
+assert 'NEUTRALIZE_LIVE_K' in bridge
 
 # Reset must not be gated by a pre-reset snapshot/backup.
 for forbidden in (
