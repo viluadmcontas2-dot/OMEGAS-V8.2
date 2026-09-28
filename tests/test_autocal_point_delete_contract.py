@@ -24,7 +24,10 @@ assert 'writeMaskVector(Fuel.GAS' in protocol
 assert 'writeMaskVector(Fuel.PETROL' in protocol
 assert 'writeMaskElement' not in protocol
 assert 'fun preparePointDelete' in manager
-assert 'AutoCalPointDeleteProtocol.singlePointPlan(target)' in manager
+assert 'fun preparePointDeletes' in manager
+assert 'fun multiPointPlan' in protocol
+assert 'fun singlePointPlan(target: Target): List<ByteArray> = multiPointPlan(listOf(target))' in protocol
+assert 'AutoCalPointDeleteProtocol.multiPointPlan(targets)' in manager
 assert 'maskFrames.forEachIndexed' in manager
 assert 'Thread.sleep(500L)' in manager
 assert 'automaticBackup", false' in manager
@@ -43,7 +46,9 @@ for token in (
     assert token in cockpit, token
 assert "data-autocal-reacquire-point" in cockpit
 assert "preparePointDelete" in api
+assert "preparePointDeleteBatch" in api
 assert "fun preparePointDelete" in bridge
+assert "fun preparePointDeleteBatch" in bridge
 assert "actionManager.execute(preparationId)" in bridge
 assert "AlertDialog" not in bridge
 assert "READQUIRIR PONTO" not in bridge
