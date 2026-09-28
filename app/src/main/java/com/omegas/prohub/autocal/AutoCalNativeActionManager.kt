@@ -46,33 +46,39 @@ class AutoCalNativeActionManager(
         ENABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(true),
             "Habilitar Auto Calibration",
-            "Permite que a própria ECU continue a aquisição por zonas e execute AutoMatch quando seus critérios forem atendidos.",
+            "Escreve AUTO_CAL_ENABLE=1 e confirma por readback. Aquisição e AutoMatch permanecem lógica nativa da ECU.",
             true,
             1,
             true,
         ),
         DISABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(false),
-            "Pausar Auto Calibration",
-            "Pausa a aquisição nativa sem apagar os buffers já coletados.",
+            "Desabilitar Auto Calibration",
+            "Escreve AUTO_CAL_ENABLE=0 e confirma por readback. Os buffers não são apagados por este comando; o efeito operacional mais amplo permanece nativo da ECU.",
             false,
             0,
             true,
         ),
+        MANUAL_AUTOMATCH(
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH),
+            "AutoMatch manual",
+            "Replica ActionAutoMatchExecute do ProgBase (modo 0x08). É uma ação explícita do operador e permanece separada do AutoMatch nativo observado automaticamente na ECU.",
+            true,
+        ),
         RESET_PETROL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL),
             "Readquirir gasolina",
             "Usa a ação nativa dedicada Reset petrol point do ProgBase 4.2.0.6 (modo 0x01). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
             true,
         ),
         RESET_GAS(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_GAS),
             "Readquirir GNV",
             "Usa a ação nativa dedicada Reset gas point do ProgBase 4.2.0.6 (modo 0x02). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
             true,
         ),
         RESET_ALL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_ALL),
             "Nova aquisição completa",
             "Usa a ação nativa Reset all do ProgBase 4.2.0.6 (modo 0x04). É uma redefinição ampla e permanece separada da readquisição de um único combustível.",
             true,
@@ -85,9 +91,9 @@ class AutoCalNativeActionManager(
         );
     }
 
-    // ProgBase 4.2.0.6 canônico, raw RTTI + wrappers (Atlas):
-    // 0x08 = Manual AutoMatch; 0x01 = Reset petrol; 0x02 = Reset gas; 0x04 = Reset all.
-    // Modify Map Refs e Reset K Factor são caminhos separados no código original.
+    // ProgBase canônico + forensics byte-grounded:
+    // command 0x24 / sub-op 0x04: 0x08=Manual AutoMatch, 0x01=Reset petrol,
+    // 0x02=Reset gas, 0x04=Reset all. Modify Map Refs e Reset K Factor são separados.
     // OMEGAS preserva confirmação humana, ACK e readback. Backup é uma ação manual separada.
     private data class Preparation(
         val id: String,
