@@ -95,8 +95,8 @@ object AutoCalProtocol {
     val GAS_MNFLD_PRESS_RV = Field("GAS_MNFLD_PRESS_RV", 0x018E, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
 
     /**
-     * Leitura somente observacional. MODULE_VERSION vem primeiro para que o
-     * snapshot consiga validar a forma dos quatro vetores dinâmicos.
+     * Leitura observacional. MODULE_VERSION continua sendo registrado como dado
+     * da ECU, mas não decide a dimensão dos vetores de referência/K.
      */
     val READ_ONLY_FIELDS: List<Field> = listOf(
         MODULE_VERSION,
