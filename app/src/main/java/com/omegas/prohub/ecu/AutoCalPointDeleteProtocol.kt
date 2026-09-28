@@ -45,9 +45,21 @@ object AutoCalPointDeleteProtocol {
     }
 
     fun maskFor(target: Target, fuel: Fuel): IntArray =
-        IntArray(POINT_COUNT) { index ->
-            if (fuel == target.fuel && index == target.index) DELETE else KEEP
-        }
+        maskForTargets(listOf(target), fuel)
+
+    /**
+     * ProgBase usa um mask por combustível. Isso permite apagar um ou vários
+     * pontos numa única transação lógica sem precisar repetir o commit 0x24/0x05.
+     * Pontos não selecionados permanecem KEEP=1.
+     */
+    fun maskForTargets(targets: Collection<Target>, fuel: Fuel): IntArray {
+        require(targets.isNotEmpty()) { "Selecione ao menos um ponto AutoCal" }
+        val selected = targets
+            .filter { it.fuel == fuel }
+            .map { it.index }
+            .toSet()
+        return IntArray(POINT_COUNT) { index -> if (index in selected) DELETE else KEEP }
+    }
 
     /**
      * ProgBase monta os 18 defaults em memória e chama ResetDefault(true),
@@ -59,11 +71,22 @@ object AutoCalPointDeleteProtocol {
         return AutoCalProtocol.writeVectorU8(fuel.address, values)
     }
 
-    fun singlePointPlan(target: Target): List<ByteArray> = listOf(
-        writeMaskVector(Fuel.GAS, maskFor(target, Fuel.GAS)),
-        writeMaskVector(Fuel.PETROL, maskFor(target, Fuel.PETROL)),
-        commit(),
-    )
+    fun singlePointPlan(target: Target): List<ByteArray> = multiPointPlan(listOf(target))
+
+    /**
+     * Um único plano pode combinar gasolina e GNV. Ambos os masks completos
+     * são sempre enviados antes do commit, exatamente preservando a semântica
+     * do ProgBase: 0=apagar/readquirir, 1=preservar.
+     */
+    fun multiPointPlan(targets: Collection<Target>): List<ByteArray> {
+        require(targets.isNotEmpty()) { "Selecione ao menos um ponto AutoCal" }
+        val normalized = targets.distinctBy { it.fuel to it.index }
+        return listOf(
+            writeMaskVector(Fuel.GAS, maskForTargets(normalized, Fuel.GAS)),
+            writeMaskVector(Fuel.PETROL, maskForTargets(normalized, Fuel.PETROL)),
+            commit(),
+        )
+    }
 
     fun commit(): ByteArray = Mp48Protocol.frame(byteArrayOf(0x01, 0x24, 0x05))
 }
