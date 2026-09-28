@@ -326,7 +326,7 @@ class AutoCalNativeActionManager(
             prepared,
             JSONObject()
                 .put("sourceIndex", 1)
-                .put("targetIndex", 0)
+                .put("targetElement", "default/no RowIndex")
                 .put("value", source)
                 .put("commandHex", commitFrame.hex()),
         )
@@ -519,7 +519,7 @@ class AutoCalNativeActionManager(
                 ?.rawValues
                 ?.singleOrNull()
             return value?.let { AutoCalProtocol.finishAutoCalCommit(it).hex() }
-                ?: "13 65 01 00 <readback-unavailable>"
+                ?: "12 65 01 <readback-unavailable>"
         }
         return prepared.action.request.hex()
     }
