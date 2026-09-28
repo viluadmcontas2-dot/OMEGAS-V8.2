@@ -6,44 +6,49 @@ import org.junit.Test
 
 class AutoCalPointDeleteProtocolTest {
     @Test
-    fun `quadros pontuais reproduzem writer U8 e commit do ProgBase`() {
-        assertArrayEquals(hex("13 6D 01 0E 00 8F"), AutoCalPointDeleteProtocol.writeMaskElement(
-            AutoCalPointDeleteProtocol.Fuel.PETROL, 14, AutoCalPointDeleteProtocol.DELETE,
-        ))
-        assertArrayEquals(hex("13 6E 01 0E 00 90"), AutoCalPointDeleteProtocol.writeMaskElement(
-            AutoCalPointDeleteProtocol.Fuel.GAS, 14, AutoCalPointDeleteProtocol.DELETE,
-        ))
+    fun `masks completos usam SetVector do ProgBase e commit final`() {
+        val target = AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, 14)
+        val gas = AutoCalPointDeleteProtocol.writeMaskVector(
+            AutoCalPointDeleteProtocol.Fuel.GAS,
+            AutoCalPointDeleteProtocol.maskFor(target, AutoCalPointDeleteProtocol.Fuel.GAS),
+        )
+        val petrol = AutoCalPointDeleteProtocol.writeMaskVector(
+            AutoCalPointDeleteProtocol.Fuel.PETROL,
+            AutoCalPointDeleteProtocol.maskFor(target, AutoCalPointDeleteProtocol.Fuel.PETROL),
+        )
+
+        assertArrayEquals(hex("37 6E 14 01"), gas.copyOfRange(0, 4))
+        assertArrayEquals(hex("37 6D 14 01"), petrol.copyOfRange(0, 4))
+        assertEquals(23, gas.size)
+        assertEquals(23, petrol.size)
+        assertEquals(0, gas[4 + 14].toInt() and 0xFF)
+        assertEquals(1, petrol[4 + 14].toInt() and 0xFF)
         assertArrayEquals(hex("01 24 05 2A"), AutoCalPointDeleteProtocol.commit())
     }
 
     @Test
-    fun `plano pontual reescreve masks completos antes do commit`() {
+    fun `plano pontual envia dois vetores completos antes do commit`() {
         val target = AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, 14)
         val plan = AutoCalPointDeleteProtocol.singlePointPlan(target)
-        assertEquals(37, plan.size)
-        for (index in 0 until 18) {
-            assertArrayEquals(
-                AutoCalPointDeleteProtocol.writeMaskElement(
-                    AutoCalPointDeleteProtocol.Fuel.GAS,
-                    index,
-                    if (index == 14) AutoCalPointDeleteProtocol.DELETE else AutoCalPointDeleteProtocol.KEEP,
-                ),
-                plan[index],
-            )
-        }
-        for (index in 0 until 18) {
-            assertArrayEquals(
-                AutoCalPointDeleteProtocol.writeMaskElement(
-                    AutoCalPointDeleteProtocol.Fuel.PETROL,
-                    index,
-                    AutoCalPointDeleteProtocol.KEEP,
-                ),
-                plan[18 + index],
-            )
-        }
+        assertEquals(3, plan.size)
+        assertArrayEquals(
+            AutoCalPointDeleteProtocol.writeMaskVector(
+                AutoCalPointDeleteProtocol.Fuel.GAS,
+                AutoCalPointDeleteProtocol.maskFor(target, AutoCalPointDeleteProtocol.Fuel.GAS),
+            ),
+            plan[0],
+        )
+        assertArrayEquals(
+            AutoCalPointDeleteProtocol.writeMaskVector(
+                AutoCalPointDeleteProtocol.Fuel.PETROL,
+                AutoCalPointDeleteProtocol.maskFor(target, AutoCalPointDeleteProtocol.Fuel.PETROL),
+            ),
+            plan[1],
+        )
         assertArrayEquals(AutoCalPointDeleteProtocol.commit(), plan.last())
         assertEquals(4, target.zone)
     }
 
-    private fun hex(value: String): ByteArray = value.split(' ').map { it.toInt(16).toByte() }.toByteArray()
+    private fun hex(value: String): ByteArray =
+        value.split(' ').map { it.toInt(16).toByte() }.toByteArray()
 }
