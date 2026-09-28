@@ -18,11 +18,29 @@ import java.util.concurrent.atomic.AtomicLong
 class AutoCalNativeActionManagerTest {
     @Test
     fun `quadros nativos conhecidos sao exatos`() {
+        assertArrayEquals(hex("02 24 04 08 32"), AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH.request)
         assertArrayEquals(hex("02 24 04 01 2B"), AutoCalNativeActionManager.Action.RESET_PETROL.request)
         assertArrayEquals(hex("02 24 04 02 2C"), AutoCalNativeActionManager.Action.RESET_GAS.request)
         assertArrayEquals(hex("02 24 04 04 2E"), AutoCalNativeActionManager.Action.RESET_ALL.request)
         assertArrayEquals(hex("12 4A 01 01 5E"), AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL.request)
         assertArrayEquals(hex("12 4A 01 00 5D"), AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL.request)
+    }
+
+    @Test
+    fun `automatch manual existe mas nunca executa sem confirmacao humana`() {
+        val calls = AtomicInteger(0)
+        val manager = manager { request, _, _, _ ->
+            calls.incrementAndGet()
+            reply(request, byteArrayOf(1))
+        }
+        val prepared = manager.prepare("MANUAL_AUTOMATCH")
+        assertTrue(prepared.getBoolean("prepared"))
+        assertTrue(prepared.getBoolean("requiresCriticalConfirmation"))
+        assertEquals("02 24 04 08 32", prepared.getString("commandHex"))
+        assertEquals(0, calls.get())
+        manager.clearPreparation()
+        assertEquals(0, calls.get())
+        manager.close()
     }
 
     @Test
