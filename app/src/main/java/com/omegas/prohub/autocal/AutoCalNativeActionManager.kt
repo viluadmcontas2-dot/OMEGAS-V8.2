@@ -47,7 +47,7 @@ class AutoCalNativeActionManager(
             AutoCalProtocol.setEnabled(true),
             "Habilitar Auto Calibration",
             "Escreve AUTO_CAL_ENABLE=1 e confirma por readback. Aquisição e AutoMatch permanecem lógica nativa da ECU.",
-            true,
+            false,
             1,
             true,
         ),
@@ -87,19 +87,19 @@ class AutoCalNativeActionManager(
             AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL),
             "Readquirir gasolina",
             "Usa a ação nativa dedicada Reset petrol point do ProgBase 4.2.0.6 (modo 0x01). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
-            true,
+            false,
         ),
         RESET_GAS(
             AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_GAS),
             "Readquirir GNV",
             "Usa a ação nativa dedicada Reset gas point do ProgBase 4.2.0.6 (modo 0x02). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
-            true,
+            false,
         ),
         RESET_ALL(
             AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_ALL),
             "Nova aquisição completa",
             "Usa a ação nativa Reset all do ProgBase 4.2.0.6 (modo 0x04). É uma redefinição ampla e permanece separada da readquisição de um único combustível.",
-            true,
+            false,
         ),
         DELETE_POINT(
             byteArrayOf(),
@@ -292,11 +292,15 @@ class AutoCalNativeActionManager(
     private fun executePrepared(prepared: Preparation) {
         val startedAt = System.currentTimeMillis()
         try {
+            val before = if (prepared.action.mayChangeMulAct) {
+                update("READING_BEFORE", "Capturando Curva K antes da ação", 4, prepared)
+                readMulActSnapshot(prepared)
+            } else null
             when (prepared.action) {
                 Action.DELETE_POINT -> executePointDelete(prepared, startedAt)
                 Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> executeFinish(prepared, startedAt)
-                Action.RESET_K_FACTOR -> executeResetKFactor(prepared, startedAt)
-                else -> executeFixedAction(prepared, startedAt)
+                Action.RESET_K_FACTOR -> executeResetKFactor(prepared, startedAt, before)
+                else -> executeFixedAction(prepared, startedAt, before)
             }
         } catch (error: Exception) {
             val message = error.message ?: "Ação AutoCal interrompida"
@@ -314,7 +318,11 @@ class AutoCalNativeActionManager(
         }
     }
 
-    private fun executeFixedAction(prepared: Preparation, startedAt: Long) {
+    private fun executeFixedAction(
+        prepared: Preparation,
+        startedAt: Long,
+        before: AutoCalSnapshot?,
+    ) {
         ensureSession(prepared)
         update("SENDING_ACTION", prepared.action.label, 18, prepared)
         val reply = transaction(
@@ -329,7 +337,7 @@ class AutoCalNativeActionManager(
         update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
         validateActionReadback(prepared.action, after)
-        confirm(prepared, reply, after, startedAt)
+        confirm(prepared, reply, after, startedAt, before = before)
     }
 
     private fun executeFinish(prepared: Preparation, startedAt: Long) {
@@ -431,7 +439,11 @@ class AutoCalNativeActionManager(
         )
     }
 
-    private fun executeResetKFactor(prepared: Preparation, startedAt: Long) {
+    private fun executeResetKFactor(
+        prepared: Preparation,
+        startedAt: Long,
+        before: AutoCalSnapshot?,
+    ) {
         val frames = AutoCalProtocol.resetKFactorMulActFrames()
         var lastReply: UsbProtocolReply? = null
         frames.forEachIndexed { index, frame ->
@@ -477,6 +489,7 @@ class AutoCalNativeActionManager(
                 .put("neutralRaw", 0x4000)
                 .put("neutralFactor", 1.0)
                 .put("readbackValid", true),
+            before = before,
         )
     }
 
@@ -526,8 +539,9 @@ class AutoCalNativeActionManager(
         after: AutoCalSnapshot,
         startedAt: Long,
         details: JSONObject = JSONObject(),
+        before: AutoCalSnapshot? = null,
     ) {
-        val receipt = receipt(prepared, reply, after, startedAt, details)
+        val receipt = receipt(prepared, reply, after, startedAt, details, before)
         appendReceipt(receipt)
         try { onConfirmed(receipt) } catch (_: Exception) {}
         val confirmedMessage = when {
@@ -560,6 +574,42 @@ class AutoCalNativeActionManager(
         require(reply.ok && reply.status == Mp48Protocol.STATUS_ACK) {
             reply.error.ifBlank { fallback }
         }
+    }
+
+    private fun readMulActSnapshot(prepared: Preparation): AutoCalSnapshot {
+        val started = System.currentTimeMillis()
+        ensureSession(prepared)
+        val field = AutoCalProtocol.MUL_ACT
+        val reply = transaction(
+            AutoCalProtocol.read(field),
+            "Recibo AutoCal MUL_ACT antes da ação",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(reply, "A ECU não confirmou MUL_ACT antes da ação")
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = listOf(
+                AutoCalReadObservation(
+                    field = field,
+                    status = reply.status,
+                    payload = reply.payload,
+                    capturedAtMs = System.currentTimeMillis(),
+                    error = null,
+                ),
+            ),
+            expectedFields = listOf(field),
+            sessionId = "${prepared.id}-BEFORE_MUL_ACT",
+            source = AutoCalSnapshotSource.ECU_READ,
+            startedAtMs = started,
+            finishedAtMs = System.currentTimeMillis(),
+        )
+        val raw = snapshot.field(field)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawValues
+        require(raw != null && raw.size == 30) {
+            "MUL_ACT antes da ação não retornou 30 fatores válidos"
+        }
+        return snapshot
     }
 
     private fun readSnapshot(prepared: Preparation, source: AutoCalSnapshotSource): AutoCalSnapshot {
@@ -596,6 +646,7 @@ class AutoCalNativeActionManager(
         after: AutoCalSnapshot,
         startedAt: Long,
         details: JSONObject = JSONObject(),
+        before: AutoCalSnapshot? = null,
     ): JSONObject = JSONObject()
         .put("id", "RECEIPT-${UUID.randomUUID()}")
         .put("preparationId", prepared.id)
@@ -614,6 +665,8 @@ class AutoCalNativeActionManager(
         .put("sessionId", prepared.sessionId)
         .put("startedAtMs", startedAt)
         .put("finishedAtMs", System.currentTimeMillis())
+        .put("beforeHash", before?.snapshotHash ?: JSONObject.NULL)
+        .put("before", before?.toJson() ?: JSONObject.NULL)
         .put("afterHash", after.snapshotHash)
         .put("afterPartial", after.partial)
         .put("after", after.toJson())
