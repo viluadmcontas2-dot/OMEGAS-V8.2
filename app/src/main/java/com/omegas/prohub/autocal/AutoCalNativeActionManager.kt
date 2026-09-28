@@ -509,6 +509,21 @@ class AutoCalNativeActionManager(
         .put("automaticRollback", false)
         .put("pointDelete", prepared.pointDeleteTarget?.let(::pointTargetJson) ?: JSONObject.NULL)
 
+    private fun receiptCommandHex(prepared: Preparation, after: AutoCalSnapshot): String {
+        if (prepared.pointDeleteTarget != null) {
+            return "MASK U8[18] GNV + gasolina → 01 24 05 2A"
+        }
+        if (prepared.action == Action.FINISH_AUTOCAL || prepared.action == Action.FINISH_AUTOMATCH) {
+            val value = after.field(AutoCalProtocol.VECT_AUTOCAL_U8_0)
+                ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+                ?.rawValues
+                ?.singleOrNull()
+            return value?.let { AutoCalProtocol.finishAutoCalCommit(it).hex() }
+                ?: "13 65 01 00 <readback-unavailable>"
+        }
+        return prepared.action.request.hex()
+    }
+
     private fun pointTargetJson(target: AutoCalPointDeleteProtocol.Target): JSONObject = JSONObject()
         .put("fuel", target.fuel.wireName)
         .put("fuelLabel", target.fuel.label)
