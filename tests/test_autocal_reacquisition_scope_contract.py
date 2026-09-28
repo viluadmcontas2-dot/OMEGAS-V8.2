@@ -13,7 +13,8 @@ assert 'RESET_K_FACTOR(' in manager
 assert 'AutoCalProtocol.resetKFactorMulActFrames()' in manager
 assert 'RESET_K_FACTOR MUL_ACT[$index]' in manager
 assert 'actual.all { it == 0x4000 }' in manager
-assert 'NEUTRALIZE_LIVE_K' not in bridge
+assert 'requested == "NEUTRALIZE_LIVE_K"' in bridge
+assert '"RESET_K_FACTOR" else requested' in bridge
 
 # Reset must not be gated by a pre-reset snapshot/backup.
 for forbidden in (
