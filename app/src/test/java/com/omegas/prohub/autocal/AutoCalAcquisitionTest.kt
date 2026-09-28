@@ -9,7 +9,7 @@ import org.junit.Test
 
 class AutoCalAcquisitionTest {
     @Test
-    fun `ponto cru usa escalas e contador igual ao limiar fica valido`() {
+    fun `ponto cru usa escalas e atividade nao inventa maturidade`() {
         val snapshot = snapshot(
             field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
             field("PETR_INJ_TBUF", intArrayOf(2048) + IntArray(17)),
@@ -19,12 +19,14 @@ class AutoCalAcquisitionTest {
         val point = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points").getJSONObject(0)
         assertEquals(4.0, point.getDouble("timeMs"), 0.0001)
         assertEquals(0.5, point.getDouble("mapBar"), 0.0001)
-        assertEquals("VALIDO", point.getString("state"))
+        assertEquals("ATIVIDADE", point.getString("state"))
         assertTrue(point.getBoolean("draw"))
+        assertTrue(point.isNull("threshold"))
+        assertEquals("UNRESOLVED_CALIBRATION_VAL_MAPPING", point.getString("thresholdSemantics"))
     }
 
     @Test
-    fun `ponto abaixo do limiar aparece como coletando e nao e desenhado`() {
+    fun `atividade parcial continua visivel sem classificar maturidade`() {
         val snapshot = snapshot(
             field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
             field("PETR_INJ_TBUF", intArrayOf(2048) + IntArray(17)),
@@ -32,17 +34,14 @@ class AutoCalAcquisitionTest {
             field("NUM_BUF_UPD_PETR", intArrayOf(3) + IntArray(17)),
         )
         val point = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points").getJSONObject(0)
-        assertEquals("COLETANDO", point.getString("state"))
-        assertFalse(point.getBoolean("draw"))
+        assertEquals("ATIVIDADE", point.getString("state"))
+        assertTrue(point.getBoolean("draw"))
+        assertFalse(point.getBoolean("zoneAcquired"))
     }
 
     @Test
-    fun `limiares distinguem baixa e normal por combustivel sem usar MaxAutomatch`() {
-        val calibration = IntArray(10).also {
-            it[2] = 7
-            it[5] = 4
-            it[8] = 9
-        }
+    fun `calibration val permanece diagnostico e zonas nativas sao autoridade visual`() {
+        val calibration = intArrayOf(1, 3, 3, 1, 3, 3, 1, 3, 3, 1)
         val petrolCounts = IntArray(18).also {
             it[0] = 2
             it[6] = 6
@@ -52,9 +51,11 @@ class AutoCalAcquisitionTest {
             it[6] = 8
         }
         val snapshot = snapshot(
-            field("VECT_AUTOCAL_U8_1", intArrayOf(2)),
+            field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
             field("VECT_AUTOCAL_U8_2", intArrayOf(1)),
             field("CALIBRATION_VAL_1", calibration),
+            field("ACQUIRED_ZONES_PETROL", intArrayOf(1, 0, 0, 0)),
+            field("ACQUIRED_ZONES_GAS", intArrayOf(1, 0, 0, 0)),
             field("PETR_INJ_TBUF", IntArray(18) { 2000 }),
             field("MNFLD_PRESS_BUF", IntArray(18) { 500 }),
             field("NUM_BUF_UPD_PETR", petrolCounts),
@@ -69,23 +70,25 @@ class AutoCalAcquisitionTest {
         val gasLow = points.getJSONObject(18)
         val gasNormal = points.getJSONObject(24)
 
-        assertEquals(2, petrolLow.getInt("threshold"))
-        assertEquals("VALIDO", petrolLow.getString("state"))
-        assertEquals(7, petrolNormal.getInt("threshold"))
-        assertEquals("COLETANDO", petrolNormal.getString("state"))
-        assertFalse(petrolNormal.getBoolean("draw"))
+        assertEquals("ZONA_ADQUIRIDA", petrolLow.getString("state"))
+        assertTrue(petrolLow.getBoolean("zoneAcquired"))
+        assertEquals("ATIVIDADE", petrolNormal.getString("state"))
+        assertFalse(petrolNormal.getBoolean("zoneAcquired"))
 
-        assertEquals(4, gasLow.getInt("threshold"))
-        assertEquals("VALIDO", gasLow.getString("state"))
-        assertTrue(gasLow.getBoolean("draw"))
-        assertEquals(9, gasNormal.getInt("threshold"))
-        assertEquals("COLETANDO", gasNormal.getString("state"))
-        assertFalse(gasNormal.getBoolean("draw"))
+        assertEquals("ZONA_ADQUIRIDA", gasLow.getString("state"))
+        assertTrue(gasLow.getBoolean("zoneAcquired"))
+        assertEquals("ATIVIDADE", gasNormal.getString("state"))
+        assertFalse(gasNormal.getBoolean("zoneAcquired"))
 
         val thresholds = result.getJSONObject("thresholds")
         assertEquals(1, thresholds.getInt("maxAutomatch"))
-        assertEquals(4, thresholds.getInt("gasLow"))
-        assertEquals(9, thresholds.getInt("gasNormal"))
+        assertEquals(6, thresholds.getInt("petrolIdleMinUpdate"))
+        assertTrue(thresholds.isNull("petrolLow"))
+        assertTrue(thresholds.isNull("petrolNormal"))
+        assertTrue(thresholds.isNull("gasLow"))
+        assertTrue(thresholds.isNull("gasNormal"))
+        assertEquals("UNRESOLVED_10_OF_12", thresholds.getString("calibrationValueMapping"))
+        assertFalse(thresholds.getBoolean("maturityThresholdsPromoted"))
     }
 
     private fun snapshot(vararg fields: JSONObject) = JSONObject().put("fields", JSONArray(fields.toList()))
