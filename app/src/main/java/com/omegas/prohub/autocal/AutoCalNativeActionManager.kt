@@ -191,7 +191,15 @@ class AutoCalNativeActionManager(
             .put("action", action.name)
             .put("label", label)
             .put("description", description)
-            .put("commandHex", if (pointDeleteTarget == null) action.request.hex() else "MASK U8[18] GNV + gasolina → 01 24 05 2A")
+            .put(
+                "commandHex",
+                when {
+                    pointDeleteTarget != null -> "MASK U8[18] GNV + gasolina → 01 24 05 2A"
+                    action == Action.FINISH_AUTOCAL || action == Action.FINISH_AUTOMATCH ->
+                        "READ 0x0165:1 → WRITE scalar 0x0165 → READBACK"
+                    else -> action.request.hex()
+                },
+            )
             .put("sessionId", sessionId)
             .put("expiresAtMs", prepared.expiresAtMs)
             .put("ecuMutation", true)
@@ -354,7 +362,19 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("READING_AFTER", "Finalização confirmada; atualizando AutoCal", 82, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-        confirm(prepared, writeReply, after, startedAt)
+        confirm(
+            prepared = prepared,
+            reply = writeReply,
+            after = after,
+            startedAt = startedAt,
+            details = JSONObject()
+                .put("finishSource", "VECT_AUTOCAL_U8_1")
+                .put("finishTarget", "VECT_AUTOCAL_U8_0")
+                .put("sourceValue", source)
+                .put("committedValue", committed)
+                .put("commandHex", commitFrame.hex())
+                .put("readbackValid", true),
+        )
     }
 
     private fun executePointDelete(prepared: Preparation, startedAt: Long) {
@@ -399,8 +419,9 @@ class AutoCalNativeActionManager(
         reply: UsbProtocolReply,
         after: AutoCalSnapshot,
         startedAt: Long,
+        details: JSONObject = JSONObject(),
     ) {
-        val receipt = receipt(prepared, reply, after, startedAt)
+        val receipt = receipt(prepared, reply, after, startedAt, details)
         appendReceipt(receipt)
         try { onConfirmed(receipt) } catch (_: Exception) {}
         update(
@@ -455,6 +476,7 @@ class AutoCalNativeActionManager(
         reply: UsbProtocolReply,
         after: AutoCalSnapshot,
         startedAt: Long,
+        details: JSONObject = JSONObject(),
     ): JSONObject = JSONObject()
         .put("id", "RECEIPT-${UUID.randomUUID()}")
         .put("preparationId", prepared.id)
@@ -462,9 +484,13 @@ class AutoCalNativeActionManager(
         .put("label", prepared.action.label)
         .put(
             "commandHex",
-            if (prepared.pointDeleteTarget == null) prepared.action.request.hex()
-            else "MASK U8[18] GNV + gasolina → 01 24 05 2A",
+            when {
+                details.optString("commandHex").isNotBlank() -> details.optString("commandHex")
+                prepared.pointDeleteTarget != null -> "MASK U8[18] GNV + gasolina → 01 24 05 2A"
+                else -> prepared.action.request.hex()
+            },
         )
+        .put("details", details)
         .put("ackStatus", reply.status)
         .put("sessionId", prepared.sessionId)
         .put("startedAtMs", startedAt)
