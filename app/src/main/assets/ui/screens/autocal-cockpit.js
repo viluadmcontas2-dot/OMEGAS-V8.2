@@ -29,7 +29,8 @@
       FINISH_AUTOMATCH: 'Finalizar AutoMatch',
       RESET_PETROL: 'Readquirir gasolina',
       RESET_GAS: 'Readquirir GNV',
-      RESET_K_FACTOR: 'Neutralizar K live (OMEGAS)',
+      RESET_K_FACTOR: 'Reset Curva K (ProgBase)',
+      NEUTRALIZE_LIVE_K: 'Neutralizar K live (OMEGAS)',
       RESET_ALL: 'Nova aquisição completa',
     })[action] || action;
   }
@@ -612,9 +613,10 @@
                       <small>CONTROLE MANUAL</small>
                       <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
                       <button type="button" data-autocal-action="FINISH_AUTOMATCH">Finalizar AutoMatch</button>
-                      <button type="button" data-autocal-action="RESET_K_FACTOR">Neutralizar K live (OMEGAS)</button>
+                      <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K (ProgBase)</button>
+                      <button type="button" data-autocal-action="NEUTRALIZE_LIVE_K">Neutralizar K live (OMEGAS)</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>AutoMatch manual e Finalizar AutoMatch replicam ações explícitas do ProgBase e exigem confirmação. Finalizar AutoCal fica na barra principal porque encerra o ciclo normal: MAX_AUTOMATCH é confirmado em NUM_AUTOMATCH_EXECUTED e o OMEGAS exige readback. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente.</p>
+                      <p>AutoMatch manual e Finalizar AutoMatch replicam ações explícitas do ProgBase e exigem confirmação. Finalizar AutoCal fica na barra principal porque encerra o ciclo normal: MAX_AUTOMATCH é confirmado em NUM_AUTOMATCH_EXECUTED e o OMEGAS exige readback. Reset Curva K original, neutralização live do OMEGAS e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente.</p>
                     </section>
                   </div>
                 </details>
