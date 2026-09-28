@@ -4,7 +4,14 @@ import com.omegas.prohub.ecu.AutoCalScale
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Pontos crus recebidos da ECU. Nenhuma suavização, interpolação ou correção é aplicada. */
+/**
+ * Pontos crus recebidos da ECU. Nenhuma suavização, interpolação ou correção é aplicada.
+ *
+ * CALIBRATION_VAL_1 tem 10 elementos no módulo observado enquanto a UI genérica
+ * do ProgBase expõe 12 conceitos. Até o mapeamento 10↔12 ser provado, o app não
+ * promove índices desse vetor a limiares de maturidade. Atividade e zonas
+ * adquiridas continuam visíveis por estado nativo direto.
+ */
 object AutoCalAcquisition {
     private data class Source(
         val fuel: String,
@@ -28,13 +35,12 @@ object AutoCalAcquisition {
                 }
             }
         }
-        val petrolLowThreshold = fields["VECT_AUTOCAL_U8_1"]?.rawValues()?.firstOrNull()
+        val petrolIdleMinUpdateThreshold = fields["VECT_AUTOCAL_U8_1"]?.rawValues()?.firstOrNull()
         val maxAutomatch = (fields["MAX_AUTOMATCH"] ?: fields["VECT_AUTOCAL_U8_2"])
             ?.rawValues()?.firstOrNull()
         val calibration = fields["CALIBRATION_VAL_1"]?.rawValues() ?: intArrayOf()
-        val petrolNormalThreshold = calibration.getOrNull(2)
-        val gasLowThreshold = calibration.getOrNull(5)
-        val gasNormalThreshold = calibration.getOrNull(8)
+        val petrolZones = fields["ACQUIRED_ZONES_PETROL"]?.rawValues() ?: intArrayOf()
+        val gasZones = fields["ACQUIRED_ZONES_GAS"]?.rawValues() ?: intArrayOf()
         val points = JSONArray()
         var valid = 0
         var collecting = 0
@@ -47,31 +53,35 @@ object AutoCalAcquisition {
                 val timeRaw = times.getOrNull(index)
                 val mapRaw = maps.getOrNull(index)
                 val count = counts.getOrNull(index)
-                val threshold = when {
-                    source.fuel == "GASOLINA" && index in 0..5 -> petrolLowThreshold
-                    source.fuel == "GASOLINA" -> petrolNormalThreshold
-                    index in 0..5 -> gasLowThreshold
-                    else -> gasNormalThreshold
+                val zoneIndex = zone(index)
+                val zoneFlag = when (source.fuel) {
+                    "GASOLINA" -> petrolZones.getOrNull(zoneIndex)
+                    "GNV" -> gasZones.getOrNull(zoneIndex)
+                    else -> null
                 }
+                val activityPresent = timeRaw != null && mapRaw != null && count != null &&
+                    (timeRaw != 0 || mapRaw != 0 || count > 0)
                 val state = when {
                     timeRaw == null || mapRaw == null || count == null -> "SEM_DADO"
-                    threshold == null -> "LIMIAR_NAO_LIDO"
-                    count >= threshold -> { valid++; "VALIDO" }
-                    count > 0 -> { collecting++; "COLETANDO" }
+                    source.previous && activityPresent -> { valid++; "ANTERIOR" }
+                    activityPresent && zoneFlag == 1 -> { valid++; "ZONA_ADQUIRIDA" }
+                    activityPresent -> { collecting++; "ATIVIDADE" }
                     else -> { unknown++; "AGUARDANDO" }
                 }
                 points.put(JSONObject()
                     .put("index", index)
-                    .put("zone", zone(index))
+                    .put("zone", zoneIndex)
                     .put("fuel", source.fuel)
                     .put("timeRaw", timeRaw ?: JSONObject.NULL)
                     .put("timeMs", timeRaw?.let { AutoCalScale.injectionMs(it) } ?: JSONObject.NULL)
                     .put("mapRaw", mapRaw ?: JSONObject.NULL)
                     .put("mapBar", mapRaw?.let { AutoCalScale.mapBar(it) } ?: JSONObject.NULL)
                     .put("counter", count ?: JSONObject.NULL)
-                    .put("threshold", threshold ?: JSONObject.NULL)
+                    .put("threshold", JSONObject.NULL)
+                    .put("thresholdSemantics", "UNRESOLVED_CALIBRATION_VAL_MAPPING")
+                    .put("zoneAcquired", zoneFlag == 1)
                     .put("state", state)
-                    .put("draw", state == "VALIDO")
+                    .put("draw", activityPresent)
                     .put("previous", source.previous)
                     .put("rawOnly", true))
             }
@@ -83,15 +93,16 @@ object AutoCalAcquisition {
             .put("collectingCount", collecting)
             .put("unknownCount", unknown)
             .put("thresholds", JSONObject()
-                .put("petrolUpdate", petrolLowThreshold ?: JSONObject.NULL)
-                .put("gasUpdate", gasLowThreshold ?: JSONObject.NULL)
-                .put("petrolLow", petrolLowThreshold ?: JSONObject.NULL)
-                .put("petrolNormal", petrolNormalThreshold ?: JSONObject.NULL)
-                .put("gasLow", gasLowThreshold ?: JSONObject.NULL)
-                .put("gasNormal", gasNormalThreshold ?: JSONObject.NULL)
+                .put("petrolIdleMinUpdate", petrolIdleMinUpdateThreshold ?: JSONObject.NULL)
+                .put("petrolLow", JSONObject.NULL)
+                .put("petrolNormal", JSONObject.NULL)
+                .put("gasLow", JSONObject.NULL)
+                .put("gasNormal", JSONObject.NULL)
                 .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                 .put("calibrationValues", JSONArray(calibration.toList()))
-                .put("source", "ECU"))
+                .put("calibrationValueMapping", "UNRESOLVED_10_OF_12")
+                .put("maturityThresholdsPromoted", false)
+                .put("source", "ECU_DUMP_BOUNDED"))
             .put("rawOnly", true)
             .put("noCorrectionApplied", true)
     }
