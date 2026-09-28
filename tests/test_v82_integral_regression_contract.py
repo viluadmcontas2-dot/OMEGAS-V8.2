@@ -76,6 +76,8 @@ class V82IntegralRegressionContract(unittest.TestCase):
         self.assertIn('readbackValid', actions)
         self.assertIn('ENABLE_AUTO_CAL', actions)
         self.assertIn('DISABLE_AUTO_CAL', actions)
+        self.assertIn('MANUAL_AUTOMATCH', actions)
+        self.assertIn('MANUAL_AUTOMATCH', cockpit)
         self.assertNotIn('NATIVE_AUTOMATCH', actions)
         self.assertNotIn('NATIVE_AUTOMATCH', cockpit)
         self.assertNotIn('Continuar para confirmação Android', cockpit)
