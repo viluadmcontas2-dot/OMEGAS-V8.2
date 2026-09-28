@@ -530,7 +530,7 @@
       this.selectedBandIndex = null;
       this.inject();
       this.bind();
-      this.unsubscribeContext = this.scheduler.addHook('context', () => {
+      this.unsubscribeStatus = this.scheduler.addHook('status', () => {
         if (this.store.get().route === 'autocal') this.refresh();
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
