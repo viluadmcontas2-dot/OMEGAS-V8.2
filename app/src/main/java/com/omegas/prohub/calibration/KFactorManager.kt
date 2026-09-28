@@ -62,12 +62,14 @@ class KFactorManager(
     fun historyJson(): String = loadHistory().toString()
 
     /**
-     * Reset da Curva K com a mesma semântica provada no ProgBase:
-     * ActionResetKFactorExecute grava MUL_ACT[i] = 1.0 para todos os pontos.
-     * A execução é delegada ao writer canônico do OMEGAS para preservar
-     * ACK e readback completo. Backup, quando desejado, é feito manualmente.
+     * Neutralização manual da curva live MUL_ACT do OMEGAS.
+     *
+     * NÃO é a réplica de ActionResetKFactorExecute do ProgBase: a prova DUMP
+     * atual mostra esse handler preenchendo TAutoCalDM_EE.VECT_AUTOCAL_EE
+     * (SerialCode 0x0164, 4 elementos) com 1.0. O write serial exato desse
+     * vetor EEPROM ainda precisa ser fechado antes de ser habilitado.
      */
-    fun startResetToNeutral(reason: String = "Reset Curva K · ProgBase MUL_ACT=1.0"): JSONObject {
+    fun startResetToNeutral(reason: String = "Neutralizar MUL_ACT live em 1.0 · OMEGAS"): JSONObject {
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
             return error(error.message ?: "USB desconectado")
         }
