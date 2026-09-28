@@ -27,7 +27,7 @@ assert 'update("SENDING_ACTION"' in manager
 assert 'update("READING_AFTER", "Atualizando estado da ECU"' in manager
 
 # UX says exactly what the operator asked for: backups are optional/manual.
-assert 'Backup da Curva K é manual' in cockpit
+assert 'salve manualmente' in cockpit
 assert 'Backup não é requisito' in cockpit
 assert 'Confirmar executa agora pelo OMEGAS' in cockpit
 assert 'AlertDialog' not in bridge
