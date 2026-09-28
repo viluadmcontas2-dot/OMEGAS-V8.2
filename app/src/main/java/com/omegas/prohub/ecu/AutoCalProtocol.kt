@@ -93,7 +93,21 @@ object AutoCalProtocol {
     val CALIBRATION_VAL_1 = Field("CALIBRATION_VAL_1", 0x0172, Encoding.U8, Shape.VECTOR, 10)
     val MODULE_VERSION = Field("MODULE_VERSION", 0x0173, Encoding.U8, Shape.SCALAR, 1)
     val NUM_AUTOMATCH_EXECUTED = Field("NUM_AUTOMATCH_EXECUTED", 0x0174, Encoding.U8_OR_U16_LE, Shape.SCALAR, 1)
-    val MAX_RPM_FOR_AUTOCAL = Field("MAX_RPM_FOR_AUTOCAL", 0x017A, Encoding.U16_LE, Shape.SCALAR, 1)
+    val MAX_RPM_FOR_AUTOCAL = Field("MAX_RPM_FOR_AUTOCAL", 0x017A, Encoding.U16_LE, Shape.SCALAR, 1, "RPM")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0183, DataLength 2, denominator 1. */
+    val DIFF_ENG_SPD_THD = Field("DIFF_ENG_SPD_THD", 0x0183, Encoding.U16_LE, Shape.SCALAR, 1, "RPM")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0184, DataLength 2, denominator 1. */
+    val DELTA_ENG_SPD_THD = Field("DELTA_ENG_SPD_THD", 0x0184, Encoding.U16_LE, Shape.SCALAR, 1, "RPM")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0185, DataLength 2, formula denominator 1024. */
+    val DIFF_MNFLD_PRESS_THD = Field("DIFF_MNFLD_PRESS_THD", 0x0185, Encoding.U16_LE, Shape.SCALAR, 1, "BAR")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0186, DataLength 2, formula denominator 1024. */
+    val DELTA_MNFLD_PRESS_THD = Field("DELTA_MNFLD_PRESS_THD", 0x0186, Encoding.U16_LE, Shape.SCALAR, 1, "BAR")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0187, DataLength 2, formula denominator 512. */
+    val DIFF_PETR_TINJ_T_THD = Field("DIFF_PETR_TINJ_T_THD", 0x0187, Encoding.U16_LE, Shape.SCALAR, 1, "MS")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0188, DataLength 2, formula denominator 512. */
+    val DELTA_PETR_INJ_T_THD = Field("DELTA_PETR_INJ_T_THD", 0x0188, Encoding.U16_LE, Shape.SCALAR, 1, "MS")
+    /** ProgBase TAUTOCALDM/TAUTOCALSETTINGS: "Disable highest acquisition band". */
+    val DISABLE_ACQ_BAND = Field("DISABLE_ACQ_BAND", 0x018B, Encoding.U8, Shape.SCALAR, 1)
     val PETR_MNFLD_PRESS_RV = Field("PETR_MNFLD_PRESS_RV", 0x018D, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
     val GAS_MNFLD_PRESS_RV = Field("GAS_MNFLD_PRESS_RV", 0x018E, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
 
@@ -125,6 +139,13 @@ object AutoCalProtocol {
         ACQUIRED_ZONES_GAS,
         NUM_AUTOMATCH_EXECUTED,
         MAX_RPM_FOR_AUTOCAL,
+        DIFF_ENG_SPD_THD,
+        DELTA_ENG_SPD_THD,
+        DIFF_MNFLD_PRESS_THD,
+        DELTA_MNFLD_PRESS_THD,
+        DIFF_PETR_TINJ_T_THD,
+        DELTA_PETR_INJ_T_THD,
+        DISABLE_ACQ_BAND,
     )
 
     fun expectedElements(field: Field, moduleVersion: Int?): Int? {
