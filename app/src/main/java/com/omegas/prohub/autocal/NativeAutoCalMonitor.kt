@@ -261,7 +261,7 @@ class NativeAutoCalMonitor(
             .put("snapshotRequested", snapshotRequested)
             .put("snapshotReason", snapshotReason)
             .put("appAutomaticWrite", false)
-            .put("manualAutoMatchExposed", false)
+            .put("manualAutoMatchExposed", true)
     }
 
     fun latestSnapshotJson(): JSONObject = synchronized(lock) { JSONObject(latestSnapshot.toString()) }
