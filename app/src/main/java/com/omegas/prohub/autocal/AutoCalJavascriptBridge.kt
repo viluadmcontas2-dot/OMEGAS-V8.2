@@ -137,6 +137,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
                 AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
+                AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
+                AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
                 AutoCalNativeActionManager.Action.DELETE_POINT,
             )
         ) {
@@ -211,6 +213,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
                 AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
+                AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
+                AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
                 AutoCalNativeActionManager.Action.DELETE_POINT,
             )
         ) {
