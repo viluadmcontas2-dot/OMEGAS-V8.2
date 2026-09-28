@@ -797,7 +797,11 @@
         this.referenceUsable = false;
         this.actionState = this.api.actionStatus() || {};
         this.operationalPending = this.actionState?.busy === true ||
-          ['QUEUED', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
+          [
+          'QUEUED', 'SENDING_ACTION', 'READING_AFTER',
+          'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
+          'RESETTING_K', 'VERIFYING_K_RESET',
+        ].includes(String(this.actionState?.state || ''));
         this.sessionState = this.api.sessionStatus?.() || {};
         this.render();
         return;
@@ -841,7 +845,11 @@
       this.analysis = nextAnalysis;
       this.actionState = this.api.actionStatus() || {};
       this.operationalPending = this.actionState?.busy === true ||
-        ['QUEUED', 'SENDING_ACTION', 'READING_AFTER'].includes(String(this.actionState?.state || ''));
+        [
+          'QUEUED', 'SENDING_ACTION', 'READING_AFTER',
+          'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
+          'RESETTING_K', 'VERIFYING_K_RESET',
+        ].includes(String(this.actionState?.state || ''));
       this.sessionState = this.api.sessionStatus?.() || {};
       this.render();
     }
@@ -952,6 +960,10 @@
             ? 'Pausar aquisição'
             : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
       }
+
+      this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
+        button.disabled = this.operationalPending;
+      });
 
       this.renderHistoryControl();
 
@@ -1479,7 +1491,11 @@
       const state = this.actionState || {};
       const name = String(state.state || 'IDLE').toUpperCase();
       const message = String(state.message || 'Nenhuma ação preparada.');
-      const working = ['PREPARED', 'QUEUED', 'SENDING_ACTION', 'READING_AFTER'].includes(name);
+      const working = [
+        'PREPARED', 'QUEUED', 'SENDING_ACTION', 'READING_AFTER',
+        'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
+        'RESETTING_K', 'VERIFYING_K_RESET',
+      ].includes(name);
       const failed = name === 'FAILED';
       host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
       host.textContent = name === 'IDLE' ? message
