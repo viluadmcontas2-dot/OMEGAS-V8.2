@@ -589,17 +589,17 @@
                 <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
+                <button type="button" class="autocal-finish-action" data-autocal-action="FINISH_AUTOCAL">Finalizar AutoCal</button>
                 <details class="autocal-reset-menu">
                   <summary>Ações avançadas</summary>
                   <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
                     <section class="autocal-reset-group" data-reset-scope="advanced">
                       <small>CONTROLE MANUAL</small>
                       <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
-                      <button type="button" data-autocal-action="FINISH_AUTOCAL">Finalizar AutoCal</button>
                       <button type="button" data-autocal-action="FINISH_AUTOMATCH">Finalizar AutoMatch</button>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Neutralizar K live (OMEGAS)</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>AutoMatch manual e Finalizar replicam ações explícitas do ProgBase e exigem confirmação. Finalizar só conclui após write + readback nativo; se a ECU não persistir o estado, o OMEGAS mostra falha. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente.</p>
+                      <p>AutoMatch manual e Finalizar AutoMatch replicam ações explícitas do ProgBase e exigem confirmação. Finalizar AutoCal fica na barra principal porque encerra o ciclo normal: MAX_AUTOMATCH é confirmado em NUM_AUTOMATCH_EXECUTED e o OMEGAS exige readback. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente.</p>
                     </section>
                   </div>
                 </details>
