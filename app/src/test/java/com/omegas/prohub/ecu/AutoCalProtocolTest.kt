@@ -263,6 +263,17 @@ class AutoCalProtocolTest {
     }
 
     @Test
+    fun `finish autocal usa elemento indexado 1 para 0`() {
+        assertEquals(AutoCalProtocol.Shape.INDEXED, AutoCalProtocol.VECT_AUTOCAL_U8_0.shape)
+        assertEquals(0, AutoCalProtocol.VECT_AUTOCAL_U8_0.index)
+        assertEquals(1, AutoCalProtocol.VECT_AUTOCAL_U8_1.index)
+        assertArrayEquals(
+            hex("13 65 01 00 06 7F"),
+            AutoCalProtocol.finishAutoCalCommit(6),
+        )
+    }
+
+    @Test
     fun `contador automatch aceita payload observado u8 e firmware u16`() {
         val oneByte = AutoCalProtocol.decode(
             AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
