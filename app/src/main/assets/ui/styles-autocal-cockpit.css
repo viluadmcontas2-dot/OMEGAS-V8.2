@@ -1644,6 +1644,41 @@
   font-size: 18px;
 }
 
+.autocal-title-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+.autocal-title-line h3 { min-width: 0; }
+.autocal-fuel-chip {
+  flex: 0 0 auto;
+  min-width: 62px;
+  padding: 5px 9px;
+  border: 1px solid rgba(151,169,185,.26);
+  border-radius: 999px;
+  color: #b7c6d2;
+  background: rgba(35,47,58,.45);
+  font-size: 10px;
+  font-weight: 900;
+  text-align: center;
+}
+.autocal-fuel-chip[data-fuel-state="gas"] {
+  border-color: rgba(93,211,158,.42);
+  color: #c9f7e3;
+  background: rgba(30,103,75,.32);
+}
+.autocal-fuel-chip[data-fuel-state="petrol"] {
+  border-color: rgba(120,183,255,.42);
+  color: #d6eaff;
+  background: rgba(37,82,128,.32);
+}
+.autocal-fuel-chip[data-fuel-state="transition"] {
+  border-color: rgba(226,178,76,.42);
+  color: #ffefbd;
+  background: rgba(104,78,26,.28);
+}
+
 .autocal-focus-actions {
   display: grid;
   grid-column: 1 / -1;
