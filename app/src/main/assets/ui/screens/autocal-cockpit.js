@@ -25,6 +25,8 @@
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
       DISABLE_AUTO_CAL: 'Desabilitar Auto Calibration',
       MANUAL_AUTOMATCH: 'AutoMatch manual',
+      FINISH_AUTOCAL: 'Finalizar AutoCal',
+      FINISH_AUTOMATCH: 'Finalizar AutoMatch',
       RESET_PETROL: 'Readquirir gasolina',
       RESET_GAS: 'Readquirir GNV',
       RESET_K_FACTOR: 'Reset Curva K',
@@ -593,9 +595,11 @@
                     <section class="autocal-reset-group" data-reset-scope="advanced">
                       <small>CONTROLE MANUAL</small>
                       <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
+                      <button type="button" data-autocal-action="FINISH_AUTOCAL">Finalizar AutoCal</button>
+                      <button type="button" data-autocal-action="FINISH_AUTOMATCH">Finalizar AutoMatch</button>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>AutoMatch manual replica a ação explícita do ProgBase e exige confirmação. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente. Backup da Curva K é manual. Readquirir GNV/Gasolina fica visível acima para uso diário.</p>
+                      <p>AutoMatch manual e Finalizar replicam ações explícitas do ProgBase e exigem confirmação. Finalizar só conclui após write + readback nativo; se a ECU não persistir o estado, o OMEGAS mostra falha. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente.</p>
                     </section>
                   </div>
                 </details>
