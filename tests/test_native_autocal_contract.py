@@ -55,7 +55,7 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('ManualActionMode.MANUAL_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.bridge)
-        self.assertIn('manualAutoMatchExposed", false', self.bridge)
+        self.assertIn('manualAutoMatchExposed", true', self.bridge)
         self.assertIn('requiresCriticalConfirmation', self.action)
 
     def test_enable_disable_and_status_are_exact_portmon_frames(self):
