@@ -42,11 +42,13 @@ assert.equal(cockpit.includes("data-autocal-action=\"DISABLE_AUTO_CAL\""), false
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_PETROL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_GAS\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_K_FACTOR\""), true);
+assert.equal(cockpit.includes("Resetar Curva K para 1.0"), true);
+assert.equal(cockpit.includes("data-autocal-action=\"NEUTRALIZE_LIVE_K\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"MANUAL_AUTOMATCH\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOCAL\""), true);
 assert.equal(cockpit.includes("class=\"autocal-finish-action\" data-autocal-action=\"FINISH_AUTOCAL\""), true);
-assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOMATCH\""), true);
+assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOMATCH\""), false);
 assert.equal(cockpit.indexOf('data-autocal-action="FINISH_AUTOCAL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'), true);
 assert.equal(cockpitCss.includes('.autocal-finish-action'), true);
 assert.equal(cockpit.includes('<summary>Corrigir aquisição</summary>'), false);
