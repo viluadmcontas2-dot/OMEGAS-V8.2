@@ -23,8 +23,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var managerService: TelemetryForegroundService? = null
     private var manager: AutoCalSnapshotManager? = null
     private var nativeActions: AutoCalNativeActionManager? = null
-    private var kFactorResetPreparationId: String? = null
-    private var kFactorResetPreparedAtMs: Long = 0L
 
     @JavascriptInterface
     fun getStatus(): String = currentManager()?.statusJson()?.toString() ?: unavailable()
@@ -301,8 +299,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeActions?.close()
             manager = null
             nativeActions = null
-            kFactorResetPreparationId = null
-            kFactorResetPreparedAtMs = 0L
             managerService = service
             return
         }
