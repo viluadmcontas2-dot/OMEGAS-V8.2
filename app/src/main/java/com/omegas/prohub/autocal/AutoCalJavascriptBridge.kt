@@ -112,6 +112,26 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         currentNativeManager()?.preparePointDelete(fuel, index)?.toString() ?: unavailable()
 
     @JavascriptInterface
+    fun preparePointDeleteBatch(targetsJson: String): String = try {
+        val array = org.json.JSONArray(targetsJson)
+        val targets = buildList {
+            repeat(array.length()) { index ->
+                val item = array.optJSONObject(index)
+                    ?: throw IllegalArgumentException("Seleção de ponto inválida")
+                add(
+                    com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Target(
+                        fuel = com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Fuel.parse(item.optString("fuel")),
+                        index = item.getInt("index"),
+                    ),
+                )
+            }
+        }
+        currentNativeManager()?.preparePointDeletes(targets)?.toString() ?: unavailable()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Seleção de pontos inválida")
+    }
+
+    @JavascriptInterface
     fun setAcquisitionEnabled(enabled: Boolean): String {
         val actionManager = currentNativeManager() ?: return unavailable()
         val action = if (enabled) {
