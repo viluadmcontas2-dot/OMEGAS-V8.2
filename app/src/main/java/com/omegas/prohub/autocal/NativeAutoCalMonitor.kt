@@ -17,7 +17,7 @@ import java.security.MessageDigest
  *
  * O serviço chama [tick] em uma cadência compartilhada; o monitor não possui
  * thread nem timer. Toda I/O passa pelo scheduler MP48 único. O probe 48 0B
- * acompanha status global; um grupo leve renova contadores/zonas em ~2 s e um
+ * acompanha status global; um grupo leve renova contadores/zonas em ~1 s e um
  * grupo de referência renova eixos/curvas/MUL_ACT em ~4 s. Refreshes agrupados
  * só são aceitos quando o status compacto antes/depois permanece na mesma época
  * nativa, evitando misturar CURRENT/PREV/MUL durante um AutoMatch da ECU.
