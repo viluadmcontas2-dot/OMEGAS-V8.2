@@ -2184,3 +2184,43 @@
   font-size: 11px;
   font-weight: 850;
 }
+
+/* Platina P-002: causal AutoMatch evidence, deterministic and read-only. */
+.autocal-automatch-evidence {
+  display: grid;
+  gap: 6px;
+  border-color: rgba(121, 169, 214, .16);
+  background: linear-gradient(135deg, rgba(45, 83, 116, .12), rgba(255,255,255,.018));
+}
+.autocal-automatch-evidence > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.autocal-automatch-evidence small {
+  color: #8fa8bd;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+.autocal-automatch-evidence b {
+  color: #e7f0f7;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.autocal-automatch-evidence span {
+  color: #9aaaba;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.autocal-automatch-evidence[data-state="FACTOR_CHANGE_CONFIRMED"] {
+  border-color: rgba(93, 211, 158, .28);
+  background: linear-gradient(135deg, rgba(48, 128, 93, .14), rgba(255,255,255,.018));
+}
+.autocal-automatch-evidence[data-state="NO_FACTOR_CHANGE_OBSERVED"] {
+  border-color: rgba(120, 183, 255, .22);
+}
+.autocal-automatch-evidence[data-state="INCONCLUSIVE"] {
+  border-color: rgba(240, 182, 94, .32);
+  background: linear-gradient(135deg, rgba(132, 91, 31, .13), rgba(255,255,255,.018));
+}
