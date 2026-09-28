@@ -50,12 +50,14 @@ Portmon:
 - leituras secundárias intercaladas com telemetria viva.
 
 Ações AutoCal recuperadas do ProgBase 4.2.0.6 original:
-- `ActionAutoCalRifExecute` = Modify map refs, modo `0x08`, frame `02 24 04 08 32`;
-- `ActionAutoMatchExecute` = Manual AutoMatch, modo `0x01`, frame `02 24 04 01 2B`;
-- `ActionResetPetrolExecute` = Reset petrol point, modo `0x02`, frame `02 24 04 02 2C`;
-- `ActionResetGasExecute` = Reset gas point, modo `0x04`, frame `02 24 04 04 2E`;
-- `ActionResetAllExecute` usa rota separada; sequência wire exata permanece não resolvida.
-- No Lognovo original, `Reset gas point` teve efeito amplo: zerou estado de aquisição gasolina/GNV, curvas de referência e `MUL_ACT`. OMEGAS não promete seletividade e mantém os resets destrutivos intertravados.
+- Fonte vinculante: `tests/fixtures/progbase-autocal-action-map-v1.json`, schema `omegas.progbase.autocal-action-map.v2`, classificação `ORIGINAL_DERIVED`.
+- `ActionAutoMatchExecute` = Manual AutoMatch, modo `0x08`, frame `02 24 04 08 32`;
+- `ActionResetPetrolExecute` = Reset petrol point, modo `0x01`, frame `02 24 04 01 2B`;
+- `ActionResetGasExecute` = Reset gas point, modo `0x02`, frame `02 24 04 02 2C`;
+- `ActionResetAllExecute` = Reset all, modo `0x04`, frame `02 24 04 04 2E`;
+- `ActionAutoCalRifExecute` = Modify map refs usa rota separada; não é wrapper simples `0x24`.
+- `ActionResetKFactorExecute` usa rota separada: escreve `MUL_ACT[i] = 1.0` via `TAebVector.SetDouble -> SetData -> SetDataInEcu`.
+- No Lognovo original, o frame `02 24 04 04 2E` teve efeito amplo: zerou estado de aquisição gasolina/GNV, curvas de referência e `MUL_ACT`. OMEGAS não promete seletividade e mantém resets destrutivos intertravados.
 
 Semântica live recuperada:
 - Petrol Injection raw: payload offset 8;
