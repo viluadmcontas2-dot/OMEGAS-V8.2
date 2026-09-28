@@ -807,6 +807,8 @@
         this.snapshot = { available: false, fields: [] };
         this.analysis = {};
         this.referenceUsable = false;
+        this.selectedAcquiredPoint = null;
+        this.selectedAcquiredPoints.clear();
         this.actionState = this.api.actionStatus() || {};
         this.operationalPending = this.actionState?.busy === true ||
           [
@@ -852,6 +854,7 @@
       if (referenceTransition.resetSelection) {
         this.selectedReferenceIndex = null;
         this.selectedAcquiredPoint = null;
+        this.selectedAcquiredPoints.clear();
       }
       this.snapshot = nextSnapshot || {};
       this.analysis = nextAnalysis;
