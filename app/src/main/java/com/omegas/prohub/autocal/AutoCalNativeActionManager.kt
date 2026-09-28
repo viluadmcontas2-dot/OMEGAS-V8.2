@@ -435,13 +435,23 @@ class AutoCalNativeActionManager(
         val receipt = receipt(prepared, reply, after, startedAt, details)
         appendReceipt(receipt)
         try { onConfirmed(receipt) } catch (_: Exception) {}
+        val confirmedMessage = when {
+            prepared.action == Action.DELETE_POINT ->
+                "Ponto liberado para nova aquisição; estado da ECU atualizado"
+            prepared.action == Action.FINISH_AUTOCAL || prepared.action == Action.FINISH_AUTOMATCH -> {
+                val max = details.optInt("maxAutomatch", -1)
+                val committed = details.optInt("committedValue", -1)
+                if (max >= 0 && committed >= 0) {
+                    "AutoCal finalizado · $committed/$max confirmado pela ECU"
+                } else {
+                    "AutoCal finalizado e confirmado pela ECU"
+                }
+            }
+            else -> "ACK confirmado; estado da ECU atualizado"
+        }
         update(
             "CONFIRMED",
-            if (prepared.action == Action.DELETE_POINT) {
-                "Ponto liberado para nova aquisição; estado da ECU atualizado"
-            } else {
-                "ACK confirmado; estado da ECU atualizado"
-            },
+            confirmedMessage,
             100,
             prepared,
             receipt,
