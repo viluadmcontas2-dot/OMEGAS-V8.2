@@ -2,9 +2,9 @@ name: OMEGAS VERDE CI
 
 on:
   push:
-    branches: [ OmegasVerde ]
+    branches: [ OmegasVerde, OmegasPlatina ]
   pull_request:
-    branches: [ OmegasVerde ]
+    branches: [ OmegasVerde, OmegasPlatina ]
   workflow_dispatch:
     inputs:
       build_apk:
