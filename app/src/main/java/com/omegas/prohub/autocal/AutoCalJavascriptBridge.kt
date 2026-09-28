@@ -75,54 +75,15 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun cancelRead(): String = currentManager()?.cancel()?.toString() ?: unavailable()
 
     @JavascriptInterface
-    fun getNativeActionStatus(): String {
-        val service = activityRef.get()?.serviceOrNull()
-        if (service != null) {
-            val kStatus = try { JSONObject(service.kFactor.statusJson()) } catch (_: Exception) { JSONObject() }
-            if (kStatus.optBoolean("busy", false)) {
-                return kStatus.put("action", "NEUTRALIZE_LIVE_K").put("manualOnly", true).toString()
-            }
-        }
-        return currentNativeManager()?.statusJson()?.toString() ?: unavailable()
-    }
+    fun getNativeActionStatus(): String =
+        currentNativeManager()?.statusJson()?.toString() ?: unavailable()
 
     @JavascriptInterface
     fun prepareNativeAction(action: String): String {
-        val normalized = action.trim().uppercase()
-        if (normalized == "NEUTRALIZE_LIVE_K") {
-            val activity = activityRef.get() ?: return unavailable()
-            val service = activity.serviceOrNull() ?: return unavailable()
-            if (service.kWriter.isBusy() || service.kFactor.isBusy() || currentNativeManager()?.isBusy() == true) {
-                return localFailure("Outra operação de calibração está em andamento")
-            }
-            CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return localFailure(it) }
-            val sessionId = service.runtime.serialScheduler().currentSessionId()
-            if (sessionId <= 0L) return localFailure("Sessão USB inválida")
-            val now = System.currentTimeMillis()
-            val preparationId = "KRESET-" + now
-            synchronized(managerLock) {
-                if (kFactorResetPreparationId != null) {
-                    return localFailure("Já existe uma ação crítica preparada")
-                }
-                kFactorResetPreparationId = preparationId
-                kFactorResetPreparedAtMs = now
-            }
-            return JSONObject()
-                .put("ok", true)
-                .put("prepared", true)
-                .put("preparationId", preparationId)
-                .put("action", "NEUTRALIZE_LIVE_K")
-                .put("label", "Neutralizar K live (OMEGAS)")
-                .put("description", "Ferramenta própria do OMEGAS: neutraliza MUL_ACT live 0x0161[30] em 1.0 com ACK e readback. O Reset Curva K original do ProgBase é uma ação separada em VECT_AUTOCAL_EE 0x0164[4].")
-                .put("commandHex", "OMEGAS: MUL_ACT 0x0161[0..29] = Q14(1.0)")
-                .put("sessionId", sessionId)
-                .put("ecuMutation", true)
-                .put("mayChangeMulAct", true)
-                .put("requiresCriticalConfirmation", true)
-                .put("automatic", false)
-                .put("manualOnly", true)
-                .toString()
-        }
+        val requested = action.trim().uppercase()
+        // Compatibilidade de chamadas antigas: a antiga ação OMEGAS de
+        // neutralização agora converge para o único Reset-K fiel ao ProgBase.
+        val normalized = if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR" else requested
 
         val parsed = try {
             AutoCalNativeActionManager.Action.valueOf(normalized)
@@ -180,18 +141,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
      */
     @JavascriptInterface
     fun executeNativeAction(preparationId: String): String {
-        val isKFactorReset = synchronized(managerLock) {
-            val valid = preparationId == kFactorResetPreparationId &&
-                kFactorResetPreparedAtMs > 0L &&
-                System.currentTimeMillis() - kFactorResetPreparedAtMs <= CRITICAL_PREPARATION_TTL_MS
-            if (!valid && preparationId == kFactorResetPreparationId) {
-                kFactorResetPreparationId = null
-                kFactorResetPreparedAtMs = 0L
-            }
-            valid
-        }
-        if (isKFactorReset) return executeKFactorReset(preparationId)
-
         val actionManager = currentNativeManager() ?: return unavailable()
         val preparedStatus = actionManager.statusJson()
         if (preparedStatus.optString("state") != "PREPARED" ||
@@ -236,39 +185,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun clearNativeActionPreparation(): String {
-        synchronized(managerLock) {
-            kFactorResetPreparationId = null
-            kFactorResetPreparedAtMs = 0L
-        }
-        return currentNativeManager()?.clearPreparation()?.toString() ?: unavailable()
-    }
-
-    private fun executeKFactorReset(preparationId: String): String {
-        val activity = activityRef.get() ?: return unavailable()
-        synchronized(managerLock) {
-            if (preparationId != kFactorResetPreparationId) {
-                return localFailure("A preparação não corresponde à ação revisada")
-            }
-            kFactorResetPreparationId = null
-            kFactorResetPreparedAtMs = 0L
-        }
-        return try {
-            activity.serviceOrNull()?.startKFactorReset() ?: return unavailable()
-            activity.refreshWebUi()
-            JSONObject()
-                .put("ok", true)
-                .put("action", "NEUTRALIZE_LIVE_K")
-                .put("confirmationPending", false)
-                .put("nativeAndroidConfirmation", false)
-                .put("writesStarted", true)
-                .put("automatic", false)
-                .put("manualOnly", true)
-                .toString()
-        } catch (error: Exception) {
-            localFailure(error.message ?: "Não foi possível iniciar o reset da Curva K")
-        }
-    }
+    fun clearNativeActionPreparation(): String =
+        currentNativeManager()?.clearPreparation()?.toString() ?: unavailable()
 
     @JavascriptInterface
     fun getIdentity(): String = JSONObject()
