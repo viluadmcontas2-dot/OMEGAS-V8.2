@@ -619,7 +619,7 @@ class AutoCalNativeActionManager(
         .put("preMutationBackup", JSONObject.NULL)
         .put("automaticBackup", false)
         .put("automaticRollback", false)
-        .put("pointDelete", if (prepared.pointDeleteTargets.isNotEmpty()) pointTargetsJson(prepared.pointDeleteTargets) else JSONObject.NULL)
+        .put("pointDelete", when (prepared.pointDeleteTargets.size) {\n            0 -> JSONObject.NULL\n            1 -> pointTargetJson(prepared.pointDeleteTargets.single())\n            else -> pointTargetsJson(prepared.pointDeleteTargets)\n        })
 
     private fun pointTargetsJson(targets: Collection<AutoCalPointDeleteProtocol.Target>): JSONObject {
         val normalized = targets.distinctBy { it.fuel to it.index }
