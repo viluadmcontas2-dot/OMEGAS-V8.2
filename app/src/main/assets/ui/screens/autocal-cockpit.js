@@ -107,6 +107,37 @@
       let progress = 'Gasolina ' + (petrolZones === null ? '—' : petrolZones) + '/4 zonas · GNV ' + (gasZones === null ? '—' : gasZones) + '/4 zonas';
       if (gasMissingZones.length) progress += ' · Faltam GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ');
       if (petrolMissingZones.length) progress += ' · Faltam gasolina: ' + petrolMissingZones.map(zone => 'Z' + zone).join(', ');
+      const evidence = nativeSnapshot.nativeAutoMatchEvidence || snapshot.nativeAutoMatchEvidence || null;
+      const evidenceState = String(evidence?.state || '');
+      const evidenceDeltas = Array.isArray(evidence?.pointDeltas) ? evidence.pointDeltas : [];
+      const evidenceBefore = finite(evidence?.beforeCount);
+      const evidenceAfter = finite(evidence?.afterCount);
+      const changedPoints = Math.max(0, Math.round(finite(evidence?.changedPointCount) ?? evidenceDeltas.length));
+      const largestDelta = evidenceDeltas
+        .slice()
+        .sort((a, b) => Math.abs(finite(b?.deltaFactor) ?? 0) - Math.abs(finite(a?.deltaFactor) ?? 0))[0] || null;
+      const largestIndex = finite(largestDelta?.index);
+      const largestBefore = finite(largestDelta?.beforeFactor);
+      const largestAfter = finite(largestDelta?.afterFactor);
+      const evidenceRange = evidenceBefore === null || evidenceAfter === null
+        ? ''
+        : Math.round(evidenceBefore) + '→' + Math.round(evidenceAfter);
+      let evidenceTitle = 'Aguardando evento AutoMatch observável';
+      let evidenceDetail = 'Quando o contador nativo avançar, o OMEGAS compara a Curva K estável antes e depois da mesma época da ECU.';
+      if (evidenceState === 'FACTOR_CHANGE_CONFIRMED') {
+        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K mudou ' + changedPoints + '/30';
+        evidenceDetail = largestIndex === null || largestBefore === null || largestAfter === null
+          ? 'Mudança da Curva K confirmada por readback na mesma época nativa.'
+          : 'Maior mudança observada: ponto ' + (Math.round(largestIndex) + 1) + ' · ' +
+            largestBefore.toFixed(4) + ' → ' + largestAfter.toFixed(4) + '.';
+      } else if (evidenceState === 'NO_FACTOR_CHANGE_OBSERVED') {
+        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K sem mudança';
+        evidenceDetail = 'O contador avançou, mas os 30 fatores MUL_ACT permaneceram iguais neste bracket.';
+      } else if (evidenceState === 'INCONCLUSIVE') {
+        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · bracket incompleto';
+        evidenceDetail = 'O contador avançou, mas não existe um par antes/depois da mesma época confiável: ' +
+          String(evidence?.reason || 'evidência insuficiente') + '.';
+      }
       const autoMatch = autoMatchCount === null
         ? 'AutoMatch ainda sem contador válido'
         : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
@@ -120,7 +151,14 @@
       else if (enabled === 1 && gasMissingZones.length) nextAction = 'Aquisição habilitada. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
       else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
       else if (enabled === 1) nextAction = 'Aquisição habilitada; aguardando a ECU publicar o mapa das quatro zonas.';
-      return { title, progress, autoMatch, nextAction, petrolZones, gasZones, petrolMissingZones, gasMissingZones, petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch };
+      return {
+        title, progress, autoMatch, nextAction,
+        autoMatchEvidenceState: evidenceState || 'WAITING',
+        autoMatchEvidenceTitle: evidenceTitle,
+        autoMatchEvidenceDetail: evidenceDetail,
+        petrolZones, gasZones, petrolMissingZones, gasMissingZones,
+        petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch,
+      };
     },
 
     readNarrative(readerState = {}) {
@@ -678,6 +716,14 @@
                 <div class="autocal-command-copy"><small>AQUISIÇÃO</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
               </section>
 
+              <section id="autocalAutoMatchEvidence" class="autocal-automatch-evidence autocal-secondary-card" data-state="WAITING" aria-live="polite">
+                <div>
+                  <small>AUTOMATCH ECU · EVIDÊNCIA CAUSAL</small>
+                  <b id="autocalAutoMatchEvidenceTitle">Aguardando evento AutoMatch observável</b>
+                  <span id="autocalAutoMatchEvidenceDetail">O OMEGAS só atribui mudança à ECU quando fecha o antes/depois da mesma época.</span>
+                </div>
+              </section>
+
               <details id="autocalTechnicalDetails" class="autocal-technical-details autocal-secondary-card">
                 <summary>Detalhes técnicos</summary>
                 <div class="autocal-tech-grid">
@@ -953,6 +999,10 @@
       this.text('autocalHumanProgress', human.progress);
       this.text('autocalHumanAction', human.nextAction);
       this.text('autocalHumanAutoMatch', human.autoMatch);
+      this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
+      this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
+      const autoMatchEvidence = document.getElementById('autocalAutoMatchEvidence');
+      if (autoMatchEvidence) autoMatchEvidence.dataset.state = human.autoMatchEvidenceState;
       this.text('autocalNativeState', 'Aquisição: ' + acquisitionLabel);
       this.text('autocalZoneSummary', human.gasZones === null ? 'Zonas GNV sem leitura' : human.gasZones + '/4 zonas GNV');
       this.text('autocalStateRaw', state.state || '—');
