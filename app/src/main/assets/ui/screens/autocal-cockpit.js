@@ -29,7 +29,7 @@
       FINISH_AUTOMATCH: 'Finalizar AutoMatch',
       RESET_PETROL: 'Readquirir gasolina',
       RESET_GAS: 'Readquirir GNV',
-      RESET_K_FACTOR: 'Reset Curva K',
+      RESET_K_FACTOR: 'Neutralizar K live (OMEGAS)',
       RESET_ALL: 'Nova aquisição completa',
     })[action] || action;
   }
@@ -597,7 +597,7 @@
                       <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
                       <button type="button" data-autocal-action="FINISH_AUTOCAL">Finalizar AutoCal</button>
                       <button type="button" data-autocal-action="FINISH_AUTOMATCH">Finalizar AutoMatch</button>
-                      <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
+                      <button type="button" data-autocal-action="RESET_K_FACTOR">Neutralizar K live (OMEGAS)</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
                       <p>AutoMatch manual e Finalizar replicam ações explícitas do ProgBase e exigem confirmação. Finalizar só conclui após write + readback nativo; se a ECU não persistir o estado, o OMEGAS mostra falha. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente.</p>
                     </section>
