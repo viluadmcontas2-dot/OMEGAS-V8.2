@@ -6,7 +6,7 @@ import org.junit.Test
 
 class NativeAutoCalRefreshPlannerTest {
     @Test
-    fun `full snapshot anchors one and four second cadences` {
+    fun `full snapshot anchors one and four second cadences`() {
         val planner = NativeAutoCalRefreshPlanner()
         planner.reset()
         planner.markFullSnapshot(10_000L)
