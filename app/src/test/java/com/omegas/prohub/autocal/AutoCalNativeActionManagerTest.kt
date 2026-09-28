@@ -19,7 +19,8 @@ class AutoCalNativeActionManagerTest {
     @Test
     fun `quadros nativos conhecidos sao exatos`() {
         assertArrayEquals(hex("02 24 04 08 32"), AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH.request)
-        assertArrayEquals(hex("37 64 0A 01 01 00 01 00 01 00 01 00 AA"), AutoCalNativeActionManager.Action.RESET_K_FACTOR.request)
+        assertEquals(0, AutoCalNativeActionManager.Action.RESET_K_FACTOR.request.size)
+        assertEquals(30, AutoCalProtocol.resetKFactorMulActFrames().size)
         assertArrayEquals(hex("02 24 04 01 2B"), AutoCalNativeActionManager.Action.RESET_PETROL.request)
         assertArrayEquals(hex("02 24 04 02 2C"), AutoCalNativeActionManager.Action.RESET_GAS.request)
         assertArrayEquals(hex("02 24 04 04 2E"), AutoCalNativeActionManager.Action.RESET_ALL.request)
@@ -45,43 +46,51 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `reset k progbase grava eeprom quatro elementos e exige readback exato`() {
+    fun `reset k progbase escreve trinta pontos mul act e exige readback exato`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
+        val readMul = AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)
+        val neutralPayload = ByteArray(60).also { bytes ->
+            repeat(30) { index ->
+                bytes[index * 2] = 0x00
+                bytes[index * 2 + 1] = 0x40
+            }
+        }
         val manager = manager(
-            fieldsForReceipt = listOf(AutoCalProtocol.VECT_AUTOCAL_EE),
+            fieldsForReceipt = listOf(AutoCalProtocol.MUL_ACT),
             transaction = { request, _, _, _ ->
                 requests += request.copyOf()
-                when {
-                    request.contentEquals(AutoCalNativeActionManager.Action.RESET_K_FACTOR.request) ->
-                        reply(request, byteArrayOf())
-                    request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE)) ->
-                        reply(request, byteArrayOf(1, 0, 1, 0, 1, 0, 1, 0))
-                    else -> reply(request, byteArrayOf())
-                }
+                if (request.contentEquals(readMul)) reply(request, neutralPayload)
+                else reply(request, byteArrayOf())
             },
         )
         val prepared = manager.prepare("RESET_K_FACTOR")
         assertTrue(prepared.getBoolean("prepared"))
-        assertEquals("37 64 0A 01 01 00 01 00 01 00 01 00 AA", prepared.getString("commandHex"))
         manager.execute(prepared.getString("preparationId"))
         awaitIdle(manager)
 
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
-        assertArrayEquals(AutoCalNativeActionManager.Action.RESET_K_FACTOR.request, requests.first())
-        assertArrayEquals(AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE), requests.last())
+        val resetFrames = AutoCalProtocol.resetKFactorMulActFrames()
+        assertEquals(31, requests.size)
+        resetFrames.forEachIndexed { index, frame -> assertArrayEquals(frame, requests[index]) }
+        assertArrayEquals(readMul, requests.last())
         manager.close()
     }
 
     @Test
-    fun `reset k progbase falha se eeprom nao confirmar quatro uns`() {
+    fun `reset k progbase falha se mul act nao voltar neutro`() {
+        val readMul = AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)
+        val badPayload = ByteArray(60).also { bytes ->
+            repeat(30) { index ->
+                bytes[index * 2] = 0x00
+                bytes[index * 2 + 1] = 0x40
+            }
+            bytes[0] = 0x01
+        }
         val manager = manager(
-            fieldsForReceipt = listOf(AutoCalProtocol.VECT_AUTOCAL_EE),
+            fieldsForReceipt = listOf(AutoCalProtocol.MUL_ACT),
             transaction = { request, _, _, _ ->
-                if (request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE))) {
-                    reply(request, byteArrayOf(1, 0, 1, 0, 0, 0, 1, 0))
-                } else {
-                    reply(request, byteArrayOf())
-                }
+                if (request.contentEquals(readMul)) reply(request, badPayload)
+                else reply(request, byteArrayOf())
             },
         )
         val prepared = manager.prepare("RESET_K_FACTOR")
@@ -168,20 +177,22 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `finish autocal copia row1 para row0 exige ack readback e persiste recibo`() {
+    fun `finish autocal copia max automatch para contador e confirma readback`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
-        val receiptFile = temporaryFile()
-        val sourceRead = AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_1)
-        val targetRead = AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_0)
-        val commit = AutoCalProtocol.finishAutoCalCommit(6)
+        val maxRead = AutoCalProtocol.read(AutoCalProtocol.MAX_AUTOMATCH)
+        val counterRead = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)
+        val commit = AutoCalProtocol.finishAutoCalCommit(3, 1)
+        var counterReads = 0
         val manager = manager(
-            receiptFile = receiptFile,
-            fieldsForReceipt = listOf(AutoCalProtocol.VECT_AUTOCAL_U8_0),
+            fieldsForReceipt = listOf(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
             transaction = { request, _, _, _ ->
                 requests += request.copyOf()
                 when {
-                    request.contentEquals(sourceRead) -> reply(request, byteArrayOf(6))
-                    request.contentEquals(targetRead) -> reply(request, byteArrayOf(6))
+                    request.contentEquals(maxRead) -> reply(request, byteArrayOf(3))
+                    request.contentEquals(counterRead) -> {
+                        counterReads += 1
+                        reply(request, byteArrayOf(if (counterReads == 1) 1 else 3))
+                    }
                     request.contentEquals(commit) -> reply(request, byteArrayOf())
                     else -> throw AssertionError("Frame inesperado: " + request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) })
                 }
@@ -194,21 +205,19 @@ class AutoCalNativeActionManagerTest {
         awaitIdle(manager)
 
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
-        assertEquals(4, requests.size)
-        assertArrayEquals(sourceRead, requests[0])
-        assertArrayEquals(hex("13 65 01 00 06 7F"), requests[1])
-        assertArrayEquals(targetRead, requests[2])
-        assertArrayEquals(targetRead, requests[3])
+        assertArrayEquals(maxRead, requests[0])
+        assertArrayEquals(counterRead, requests[1])
+        assertArrayEquals(commit, requests[2])
+        assertArrayEquals(counterRead, requests[3])
+        assertArrayEquals(counterRead, requests[4])
 
         val receipt = manager.receiptsJson().getJSONObject(0)
         assertEquals("FINISH_AUTOCAL", receipt.getString("action"))
-        assertEquals("13 65 01 00 06 7F", receipt.getString("commandHex"))
-        assertTrue(receipt.getBoolean("readbackValid"))
         val details = receipt.getJSONObject("details")
-        assertEquals("VECT_AUTOCAL_U8_1", details.getString("finishSource"))
-        assertEquals("VECT_AUTOCAL_U8_0", details.getString("finishTarget"))
-        assertEquals(6, details.getInt("sourceValue"))
-        assertEquals(6, details.getInt("committedValue"))
+        assertEquals("MAX_AUTOMATCH", details.getString("finishSource"))
+        assertEquals("NUM_AUTOMATCH_EXECUTED", details.getString("finishTarget"))
+        assertEquals(3, details.getInt("maxAutomatch"))
+        assertEquals(3, details.getInt("committedValue"))
         assertEquals(100, details.getInt("settleMs"))
         manager.close()
     }
