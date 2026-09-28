@@ -75,6 +75,16 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('Finish AutoCal não persistiu', self.action)
         self.assertIn('AutoCal finalizado · estado $committed confirmado pela ECU', self.action)
 
+    def test_legacy_k_reset_alias_converges_to_single_progbase_path(self):
+        self.assertIn('if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR"', self.bridge)
+        self.assertNotIn('startKFactorReset()', self.bridge)
+        self.assertNotIn('kFactorResetPreparationId', self.bridge)
+        self.assertGreaterEqual(
+            self.bridge.count('AutoCalNativeActionManager.Action.RESET_K_FACTOR'),
+            2,
+        )
+        self.assertIn('Action.RESET_K_FACTOR -> executeResetKFactor', self.action)
+
     def test_enable_disable_and_status_are_exact_portmon_frames(self):
         self.assertIn('CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)', self.protocol)
         self.assertIn('fun setEnabled(enabled: Boolean)', self.protocol)
