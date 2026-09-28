@@ -9,9 +9,11 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Bridge modular do AutoMatch OMEGAS.
+ * Bridge de paridade host-side AutoCal com o ProgBase.
  *
- * Projeção, leitura manual e monitor nativo permanecem separados. As ações nativas
+ * A ECU continua sendo a autoridade do AutoMatch automático. O bridge apenas
+ * reproduz operações host-side comprovadas do ProgBase; inteligência adicional
+ * do OMEGAS não substitui comandos/estados nativos. Projeção, leitura manual e monitor nativo permanecem separados. As ações nativas
  * ficam numa superfície separada: são preparadas, revisadas no OMEGAS e então
  * executadas diretamente pelo manager canônico com ACK/readback.
  */
@@ -134,6 +136,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.DELETE_POINT,
             )
         ) {
@@ -207,6 +210,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.DELETE_POINT,
             )
         ) {
