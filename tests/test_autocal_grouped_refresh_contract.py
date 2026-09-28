@@ -10,11 +10,11 @@ service = SERVICE.read_text("utf-8")
 monitor = MONITOR.read_text("utf-8")
 planner = PLANNER.read_text("utf-8")
 
-assert "ACQUISITION_INTERVAL_MS = 2_000L" in planner
+assert "ACQUISITION_INTERVAL_MS = 1_000L" in planner
 assert "REFERENCE_INTERVAL_MS = 4_000L" in planner
 assert "autoCalTask" in service
 assert "scheduleWithFixedDelay(::autoCalTick" in service
-assert "2_000L" in service
+assert "scheduleWithFixedDelay(::autoCalTick, 1_000L, 1_000L" in service
 assert "scheduleWithFixedDelay(::healthTick, 200L, 3000L" in service
 assert "refreshAcquisitionGroup" in monitor
 for key in [
