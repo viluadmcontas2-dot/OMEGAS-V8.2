@@ -205,6 +205,14 @@ class TelemetryForegroundService : Service() {
                 )
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
+            onNativeAutoMatchObserved = { payload ->
+                sessionRecorder.record(
+                    "autocal_native_automatch_epoch",
+                    "autocal",
+                    payload,
+                    force = true,
+                )
+            },
             onStateChanged = { stateChanged() },
         )
         // OBD é somente observacional: registra STFT/LTFT e nunca altera o motor de aprendizado.
