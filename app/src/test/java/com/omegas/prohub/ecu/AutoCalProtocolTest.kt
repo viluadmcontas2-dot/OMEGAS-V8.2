@@ -38,20 +38,21 @@ class AutoCalProtocolTest {
     }
 
     @Test
-    fun `module version quatro promove somente os quatro vetores dinamicos para trinta`() {
-        val dynamic = listOf(
+    fun `dimensao de vetor segue o objeto e nao module version`() {
+        val reference30 = listOf(
             AutoCalProtocol.PETR_INJ_TBP,
             AutoCalProtocol.MUL_ACT,
             AutoCalProtocol.PETR_MNFLD_PRESS_RV,
             AutoCalProtocol.GAS_MNFLD_PRESS_RV,
         )
-        dynamic.forEach { field ->
+        reference30.forEach { field ->
             assertEquals(30, AutoCalProtocol.expectedElements(field, 4))
-            assertEquals(18, AutoCalProtocol.expectedElements(field, 3))
-            assertEquals(null, AutoCalProtocol.expectedElements(field, null))
+            assertEquals(30, AutoCalProtocol.expectedElements(field, 3))
+            assertEquals(30, AutoCalProtocol.expectedElements(field, 100))
+            assertEquals(30, AutoCalProtocol.expectedElements(field, null))
         }
         assertEquals(18, AutoCalProtocol.expectedElements(AutoCalProtocol.NUM_BUF_UPD_PETR, 4))
-        assertEquals(18, AutoCalProtocol.expectedElements(AutoCalProtocol.NUM_BUF_UPD_GAS, 3))
+        assertEquals(18, AutoCalProtocol.expectedElements(AutoCalProtocol.NUM_BUF_UPD_GAS, 100))
     }
 
     @Test
@@ -67,13 +68,22 @@ class AutoCalProtocolTest {
             ByteArray(60),
         )
         AutoCalProtocol.requireExpectedShape(thirty, 4)
-        AutoCalProtocol.requireExpectedShape(eighteen, 3)
+        AutoCalProtocol.requireExpectedShape(thirty, 100)
+        AutoCalProtocol.requireExpectedShape(thirty, null)
         assertThrows(IllegalArgumentException::class.java) {
             AutoCalProtocol.requireExpectedShape(eighteen, 4)
         }
         assertThrows(IllegalArgumentException::class.java) {
-            AutoCalProtocol.requireExpectedShape(thirty, 3)
+            AutoCalProtocol.requireExpectedShape(eighteen, 100)
         }
+    }
+
+    @Test
+    fun `acoes manuais progbase geram frames exatos`() {
+        assertArrayEquals(hex("02 24 04 01 2B"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL))
+        assertArrayEquals(hex("02 24 04 02 2C"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_GAS))
+        assertArrayEquals(hex("02 24 04 04 2E"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_ALL))
+        assertArrayEquals(hex("02 24 04 08 32"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH))
     }
 
     @Test
