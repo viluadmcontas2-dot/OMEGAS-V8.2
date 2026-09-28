@@ -168,6 +168,52 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `finish autocal copia row1 para row0 exige ack readback e persiste recibo`() {
+        val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
+        val receiptFile = temporaryFile()
+        val sourceRead = AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_1)
+        val targetRead = AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_0)
+        val commit = AutoCalProtocol.finishAutoCalCommit(6)
+        val manager = manager(
+            receiptFile = receiptFile,
+            fieldsForReceipt = listOf(AutoCalProtocol.VECT_AUTOCAL_U8_0),
+            transaction = { request, _, _, _ ->
+                requests += request.copyOf()
+                when {
+                    request.contentEquals(sourceRead) -> reply(request, byteArrayOf(6))
+                    request.contentEquals(targetRead) -> reply(request, byteArrayOf(6))
+                    request.contentEquals(commit) -> reply(request, byteArrayOf())
+                    else -> throw AssertionError("Frame inesperado: " + request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) })
+                }
+            },
+        )
+
+        val prepared = manager.prepare("FINISH_AUTOCAL")
+        assertTrue(prepared.getBoolean("prepared"))
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertEquals(4, requests.size)
+        assertArrayEquals(sourceRead, requests[0])
+        assertArrayEquals(hex("13 65 01 00 06 7F"), requests[1])
+        assertArrayEquals(targetRead, requests[2])
+        assertArrayEquals(targetRead, requests[3])
+
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("FINISH_AUTOCAL", receipt.getString("action"))
+        assertEquals("13 65 01 00 06 7F", receipt.getString("commandHex"))
+        assertTrue(receipt.getBoolean("readbackValid"))
+        val details = receipt.getJSONObject("details")
+        assertEquals("VECT_AUTOCAL_U8_1", details.getString("finishSource"))
+        assertEquals("VECT_AUTOCAL_U8_0", details.getString("finishTarget"))
+        assertEquals(6, details.getInt("sourceValue"))
+        assertEquals(6, details.getInt("committedValue"))
+        assertEquals(100, details.getInt("settleMs"))
+        manager.close()
+    }
+
+    @Test
     fun `readquirir um ponto usa dois vetores completos commit e so depois readback`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
         val manager = manager { request, _, _, _ ->
