@@ -19,6 +19,7 @@ class AutoCalNativeActionManagerTest {
     @Test
     fun `quadros nativos conhecidos sao exatos`() {
         assertArrayEquals(hex("02 24 04 08 32"), AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH.request)
+        assertArrayEquals(hex("37 64 0A 01 01 00 01 00 01 00 01 00 AA"), AutoCalNativeActionManager.Action.RESET_K_FACTOR.request)
         assertArrayEquals(hex("02 24 04 01 2B"), AutoCalNativeActionManager.Action.RESET_PETROL.request)
         assertArrayEquals(hex("02 24 04 02 2C"), AutoCalNativeActionManager.Action.RESET_GAS.request)
         assertArrayEquals(hex("02 24 04 04 2E"), AutoCalNativeActionManager.Action.RESET_ALL.request)
@@ -40,6 +41,53 @@ class AutoCalNativeActionManagerTest {
         assertEquals(0, calls.get())
         manager.clearPreparation()
         assertEquals(0, calls.get())
+        manager.close()
+    }
+
+    @Test
+    fun `reset k progbase grava eeprom quatro elementos e exige readback exato`() {
+        val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
+        val manager = manager(
+            fieldsForReceipt = listOf(AutoCalProtocol.VECT_AUTOCAL_EE),
+            transaction = { request, _, _, _ ->
+                requests += request.copyOf()
+                when {
+                    request.contentEquals(AutoCalNativeActionManager.Action.RESET_K_FACTOR.request) ->
+                        reply(request, byteArrayOf())
+                    request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE)) ->
+                        reply(request, byteArrayOf(1, 0, 1, 0, 1, 0, 1, 0))
+                    else -> reply(request, byteArrayOf())
+                }
+            },
+        )
+        val prepared = manager.prepare("RESET_K_FACTOR")
+        assertTrue(prepared.getBoolean("prepared"))
+        assertEquals("37 64 0A 01 01 00 01 00 01 00 01 00 AA", prepared.getString("commandHex"))
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertArrayEquals(AutoCalNativeActionManager.Action.RESET_K_FACTOR.request, requests.first())
+        assertArrayEquals(AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE), requests.last())
+        manager.close()
+    }
+
+    @Test
+    fun `reset k progbase falha se eeprom nao confirmar quatro uns`() {
+        val manager = manager(
+            fieldsForReceipt = listOf(AutoCalProtocol.VECT_AUTOCAL_EE),
+            transaction = { request, _, _, _ ->
+                if (request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE))) {
+                    reply(request, byteArrayOf(1, 0, 1, 0, 0, 0, 1, 0))
+                } else {
+                    reply(request, byteArrayOf())
+                }
+            },
+        )
+        val prepared = manager.prepare("RESET_K_FACTOR")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("FAILED", manager.statusJson().getString("state"))
         manager.close()
     }
 
@@ -120,7 +168,7 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `readquirir um ponto usa os 36 masks originais commit e so depois readback`() {
+    fun `readquirir um ponto usa dois vetores completos commit e so depois readback`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
         val manager = manager { request, _, _, _ ->
             requests += request.copyOf()
@@ -155,7 +203,7 @@ class AutoCalNativeActionManagerTest {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
         val manager = manager { request, _, _, _ ->
             requests += request.copyOf()
-            if (requests.size == 3) {
+            if (requests.size == 2) {
                 UsbProtocolReply(
                     ok = false,
                     status = -1,
@@ -172,7 +220,7 @@ class AutoCalNativeActionManagerTest {
         manager.execute(prepared.getString("preparationId"))
         awaitIdle(manager)
         assertEquals("FAILED", manager.statusJson().getString("state"))
-        assertEquals(3, requests.size)
+        assertEquals(2, requests.size)
         assertFalse(requests.any { it.contentEquals(AutoCalPointDeleteProtocol.commit()) })
         manager.close()
     }
