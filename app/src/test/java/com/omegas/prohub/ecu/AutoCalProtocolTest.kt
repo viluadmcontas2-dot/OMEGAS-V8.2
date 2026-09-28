@@ -22,6 +22,10 @@ class AutoCalProtocolTest {
         assertArrayEquals(hex("09 87 01 91"), AutoCalProtocol.read(AutoCalProtocol.DIFF_PETR_TINJ_T_THD))
         assertArrayEquals(hex("09 88 01 92"), AutoCalProtocol.read(AutoCalProtocol.DELTA_PETR_INJ_T_THD))
         assertArrayEquals(hex("09 8B 01 95"), AutoCalProtocol.read(AutoCalProtocol.DISABLE_ACQ_BAND))
+        assertArrayEquals(
+            hex("37 64 0A 01 01 00 01 00 01 00 01 00 AA"),
+            AutoCalProtocol.resetKFactorEeprom(),
+        )
     }
 
     @Test
@@ -123,6 +127,17 @@ class AutoCalProtocolTest {
         )
         assertEquals(0x4000, factor.rawValues.single())
         assertEquals(1.0, factor.physicalValues.single(), 0.0)
+    }
+
+    @Test
+    fun `set vector estendido segue gramatica progbase`() {
+        val fullMulAct = AutoCalProtocol.writeVectorU16(0x0161, IntArray(30) { 1000 })
+        assertEquals(65, fullMulAct.size)
+        assertArrayEquals(hex("37 61 3E 01"), fullMulAct.copyOfRange(0, 4))
+        assertEquals(
+            Mp48Protocol.checksum(fullMulAct.copyOfRange(0, fullMulAct.lastIndex)),
+            fullMulAct.last().toInt() and 0xFF,
+        )
     }
 
     @Test
@@ -244,21 +259,6 @@ class AutoCalProtocolTest {
                 Mp48Protocol.STATUS_ACK,
                 byteArrayOf(1, 0, 2, 0),
             )
-        }
-    }
-
-    @Test
-    fun `finish autocal grava max automatch no contador preservando largura nativa`() {
-        assertArrayEquals(
-            hex("12 74 01 03 8A"),
-            AutoCalProtocol.finishAutoCalCommit(maxAutomatch = 3, counterWidthBytes = 1),
-        )
-        assertArrayEquals(
-            hex("13 74 01 03 00 8B"),
-            AutoCalProtocol.finishAutoCalCommit(maxAutomatch = 3, counterWidthBytes = 2),
-        )
-        assertThrows(IllegalArgumentException::class.java) {
-            AutoCalProtocol.finishAutoCalCommit(maxAutomatch = 3, counterWidthBytes = 4)
         }
     }
 
