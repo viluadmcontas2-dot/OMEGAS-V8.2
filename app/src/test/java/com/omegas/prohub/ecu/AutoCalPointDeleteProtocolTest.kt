@@ -2,6 +2,7 @@ package com.omegas.prohub.ecu
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AutoCalPointDeleteProtocolTest {
@@ -47,6 +48,36 @@ class AutoCalPointDeleteProtocolTest {
         )
         assertArrayEquals(AutoCalPointDeleteProtocol.commit(), plan.last())
         assertEquals(4, target.zone)
+    }
+
+    @Test
+    fun `plano multiponto combina gasolina e GNV em um único commit`() {
+        val targets = listOf(
+            AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.PETROL, 2),
+            AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.PETROL, 5),
+            AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, 7),
+        )
+        val petrol = AutoCalPointDeleteProtocol.maskForTargets(targets, AutoCalPointDeleteProtocol.Fuel.PETROL)
+        val gas = AutoCalPointDeleteProtocol.maskForTargets(targets, AutoCalPointDeleteProtocol.Fuel.GAS)
+        val plan = AutoCalPointDeleteProtocol.multiPointPlan(targets)
+
+        assertEquals(18, petrol.size)
+        assertEquals(18, gas.size)
+        assertEquals(0, petrol[2])
+        assertEquals(0, petrol[5])
+        assertEquals(0, gas[7])
+        assertTrue(petrol.withIndex().all { (index, value) -> index == 2 || index == 5 || value == 1 })
+        assertTrue(gas.withIndex().all { (index, value) -> index == 7 || value == 1 })
+        assertEquals(3, plan.size)
+        assertArrayEquals(AutoCalPointDeleteProtocol.commit(), plan.last())
+    }
+
+    @Test
+    fun `selecao duplicada nao cria segunda exclusao`() {
+        val target = AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, 4)
+        val gas = AutoCalPointDeleteProtocol.maskForTargets(listOf(target, target), AutoCalPointDeleteProtocol.Fuel.GAS)
+        assertEquals(1, gas.count { it == AutoCalPointDeleteProtocol.DELETE })
+        assertEquals(3, AutoCalPointDeleteProtocol.multiPointPlan(listOf(target, target)).size)
     }
 
     private fun hex(value: String): ByteArray =
