@@ -12,13 +12,16 @@ for token in (
     'PETROL_DELETE_ADDRESS = 0x016D',
     'GAS_DELETE_ADDRESS = 0x016E',
     'POINT_COUNT = 18',
-    'WRITE_VECTOR_U8 = 0x13',
     'KEEP = 1',
     'DELETE = 0',
     'Mp48Protocol.frame(byteArrayOf(0x01, 0x24, 0x05))',
 ):
     assert token in protocol, token
-assert 'for (fuel in listOf(Fuel.GAS, Fuel.PETROL))' in protocol
+assert 'fun writeMaskVector' in protocol
+assert 'AutoCalProtocol.writeVectorU8' in protocol
+assert 'writeMaskVector(Fuel.GAS' in protocol
+assert 'writeMaskVector(Fuel.PETROL' in protocol
+assert 'writeMaskElement' not in protocol
 assert 'fun preparePointDelete' in manager
 assert 'AutoCalPointDeleteProtocol.singlePointPlan(target)' in manager
 assert 'maskFrames.forEachIndexed' in manager
