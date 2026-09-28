@@ -265,13 +265,25 @@
       const xValues = physicalVector(snapshot, gas ? 'PETR_INJ_TBUF_GAS' : 'PETR_INJ_TBUF');
       const yValues = physicalVector(snapshot, gas ? 'MNFLD_PRESS_BUF_GAS' : 'MNFLD_PRESS_BUF');
       const counters = vector(snapshot, gas ? 'NUM_BUF_UPD_GAS' : 'NUM_BUF_UPD_PETR');
+      const calibration = vector(snapshot, 'CALIBRATION_VAL_1');
+      const petrolLow = finite(vector(snapshot, 'VECT_AUTOCAL_U8_1')[0]);
+      const petrolNormal = finite(calibration[2]);
+      const gasLow = finite(calibration[5]);
+      const gasNormal = finite(calibration[8]);
       const count = Math.min(18, xValues.length, yValues.length, counters.length);
       const points = [];
       for (let index = 0; index < count; index += 1) {
         const counter = finite(counters[index]) ?? 0;
         const petrolMs = finite(xValues[index]);
         const mapBar = finite(yValues[index]);
+        const threshold = gas
+          ? (index <= 5 ? gasLow : gasNormal)
+          : (index <= 5 ? petrolLow : petrolNormal);
         if (counter > 0 && petrolMs !== null && petrolMs > 0 && mapBar !== null) {
+          const acquired = threshold !== null && threshold > 0 && counter >= threshold;
+          const progress = threshold !== null && threshold > 0
+            ? Math.max(0, Math.min(1, counter / threshold))
+            : null;
           points.push({
             fuel: gas ? 'GAS' : 'PETROL',
             fuelLabel: gas ? 'GNV' : 'Gasolina',
@@ -279,6 +291,9 @@
             point: index + 1,
             zone: zoneForBand(index) + 1,
             counter,
+            threshold,
+            progress,
+            acquisitionState: acquired ? 'ACQUIRED' : 'COLLECTING',
             petrolMs,
             mapBar,
           });
@@ -1272,7 +1287,10 @@
           '" data-autocal-acquired-index="' + point.index +
           '" cx="' + x + '" cy="' + y + '" r="17"></circle>' +
           '<circle class="autocal-acquired-point ' + (point.fuel === 'GAS' ? 'gas' : 'petrol') +
-          '" cx="' + x + '" cy="' + y + '" r="5.5"></circle>';
+          ' ' + (point.acquisitionState === 'ACQUIRED' ? 'acquired' : 'collecting') +
+          '" data-acquisition-state="' + point.acquisitionState +
+          '" data-acquisition-progress="' + (finite(point.progress) ?? 0).toFixed(3) +
+          '" cx="' + x + '" cy="' + y + '" r="' + (point.acquisitionState === 'ACQUIRED' ? '6.0' : '4.6') + '"></circle>';
       }).join('');
 
       const projectedLive = AutoCalUxModel.projectLive(live, scale);
@@ -1349,9 +1367,15 @@
       }
       this.selectedAcquiredPoint = point.fuel + ':' + point.index;
       this.selectedReferenceIndex = null;
-      host.innerHTML = '<b>' + point.fuelLabel + ' · ponto ' + point.point + ' · Z' + point.zone + '</b>' +
+      const progressText = point.acquisitionState === 'ACQUIRED'
+        ? 'adquirido'
+        : finite(point.progress) !== null
+          ? 'coletando · ' + Math.round(point.progress * 100) + '%'
+          : 'coletando';
+      const thresholdText = finite(point.threshold) !== null ? ' / ' + Math.round(point.threshold) : '';
+      host.innerHTML = '<b>' + point.fuelLabel + ' · ponto ' + point.point + ' · Z' + point.zone + ' · ' + progressText + '</b>' +
         '<span>' + point.petrolMs.toFixed(2) + ' ms · MAP ' + point.mapBar.toFixed(3) + ' bar · ' +
-        Math.round(point.counter) + ' amostra' + (Math.round(point.counter) === 1 ? '' : 's') + '</span>' +
+        Math.round(point.counter) + thresholdText + ' amostras</span>' +
         '<button type="button" class="autocal-point-reacquire" data-autocal-reacquire-point ' +
         'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '">' +
         'Readquirir este ponto</button>';
