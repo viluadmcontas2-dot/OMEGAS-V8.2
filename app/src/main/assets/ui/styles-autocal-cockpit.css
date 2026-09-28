@@ -2096,6 +2096,14 @@
 }
 .autocal-acquired-point.petrol { fill: #78b7ff; }
 .autocal-acquired-point.gas { fill: #5dd39e; }
+.autocal-acquired-point.collecting {
+  fill-opacity: .34;
+  stroke-dasharray: 2.5 2.5;
+}
+.autocal-acquired-point.acquired {
+  fill-opacity: 1;
+  stroke-width: 2.6;
+}
 .autocal-acquired-hit.selected + .autocal-acquired-point {
   stroke: #fff4cf;
   stroke-width: 3.4;
