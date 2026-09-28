@@ -53,7 +53,7 @@ class NativeAutoCalRefreshPlanner {
     }
 
     companion object {
-        const val ACQUISITION_INTERVAL_MS = 2_000L
+        const val ACQUISITION_INTERVAL_MS = 1_000L
         const val REFERENCE_INTERVAL_MS = 4_000L
     }
 }
