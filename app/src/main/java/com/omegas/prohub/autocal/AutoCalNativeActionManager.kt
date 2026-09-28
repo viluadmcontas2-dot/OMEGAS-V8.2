@@ -65,6 +65,18 @@ class AutoCalNativeActionManager(
             "Replica ActionAutoMatchExecute do ProgBase (modo 0x08). É uma ação explícita do operador e permanece separada do AutoMatch nativo observado automaticamente na ECU.",
             true,
         ),
+        FINISH_AUTOCAL(
+            byteArrayOf(),
+            "Finalizar AutoCal",
+            "Replica ActionFinishAutocalExecute: copia VECT_AUTOCAL_U8_1 para VECT_AUTOCAL_U8_0, aguarda o settle nativo e exige readback antes de confirmar.",
+            false,
+        ),
+        FINISH_AUTOMATCH(
+            byteArrayOf(),
+            "Finalizar AutoMatch",
+            "Replica BtnFinishAutomatchClick: confirma VECT_AUTOCAL_U8_1 em VECT_AUTOCAL_U8_0 sem substituir a lógica nativa da ECU.",
+            false,
+        ),
         RESET_PETROL(
             AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL),
             "Readquirir gasolina",
@@ -249,10 +261,10 @@ class AutoCalNativeActionManager(
     private fun executePrepared(prepared: Preparation) {
         val startedAt = System.currentTimeMillis()
         try {
-            if (prepared.action == Action.DELETE_POINT) {
-                executePointDelete(prepared, startedAt)
-            } else {
-                executeFixedAction(prepared, startedAt)
+            when (prepared.action) {
+                Action.DELETE_POINT -> executePointDelete(prepared, startedAt)
+                Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> executeFinish(prepared, startedAt)
+                else -> executeFixedAction(prepared, startedAt)
             }
         } catch (error: Exception) {
             update("FAILED", error.message ?: "Ação AutoCal interrompida", 100, prepared)
@@ -279,6 +291,70 @@ class AutoCalNativeActionManager(
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
         validateActionReadback(prepared.action, after)
         confirm(prepared, reply, after, startedAt)
+    }
+
+    private fun executeFinish(prepared: Preparation, startedAt: Long) {
+        ensureSession(prepared)
+        update("READING_FINISH_SOURCE", "Lendo estado nativo antes de finalizar", 12, prepared)
+        val sourceReply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_1),
+            "AutoCal finish source row1",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(sourceReply, "A ECU não confirmou VECT_AUTOCAL_U8_1")
+        val source = AutoCalProtocol.decode(
+            AutoCalProtocol.VECT_AUTOCAL_U8_1,
+            sourceReply.status,
+            sourceReply.payload,
+        ).rawValues.single()
+
+        ensureSession(prepared)
+        val commitFrame = AutoCalProtocol.finishAutoCalCommit(source)
+        update(
+            "SENDING_FINISH_COMMIT",
+            "Gravando estado final nativo",
+            42,
+            prepared,
+            JSONObject()
+                .put("sourceIndex", 1)
+                .put("targetIndex", 0)
+                .put("value", source)
+                .put("commandHex", commitFrame.hex()),
+        )
+        val writeReply = transaction(
+            commitFrame,
+            "AutoCal \${prepared.action.name} commit",
+            1_500,
+            prepared.sessionId,
+        )
+        requireAck(writeReply, "A ECU não confirmou o commit de finalização")
+
+        if (prepared.action == Action.FINISH_AUTOCAL) {
+            Thread.sleep(100L)
+        }
+        ensureSession(prepared)
+        update("VERIFYING_FINISH", "Confirmando persistência do estado final", 68, prepared)
+        val targetReply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_0),
+            "AutoCal finish target row0 readback",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(targetReply, "A ECU não confirmou o readback de VECT_AUTOCAL_U8_0")
+        val committed = AutoCalProtocol.decode(
+            AutoCalProtocol.VECT_AUTOCAL_U8_0,
+            targetReply.status,
+            targetReply.payload,
+        ).rawValues.single()
+        require(committed == source) {
+            "Finish AutoCal não persistiu: origem=\$source, readback=\$committed"
+        }
+
+        ensureSession(prepared)
+        update("READING_AFTER", "Finalização confirmada; atualizando AutoCal", 82, prepared)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        confirm(prepared, writeReply, after, startedAt)
     }
 
     private fun executePointDelete(prepared: Preparation, startedAt: Long) {
