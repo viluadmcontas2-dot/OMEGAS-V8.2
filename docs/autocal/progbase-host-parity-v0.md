@@ -57,8 +57,8 @@ It must not replace a proven ProgBase operation with an inferred local algorithm
 | Delete/reacquire selected point | Chart selection + ActionDeleteSelectedPointsExecute | AutoCalPointDeleteProtocol + point UI | MATCH_STRUCTURAL_ONLY |
 | 18-point reference editor | TFormRifAutocal EditRifInj0..17 + EditRifMap0..17 | reference surface exists; full write lifecycle not frozen | NOT_FULLY_COMPARED |
 | 18/30 configuration | ProgBase mode/grid helpers | current field/grid handling | MATCH_STRUCTURAL_ONLY |
-| Finish AutoCal | ActionFinishAutocalExecute @ 0x0051A390 | host semantic parity still incomplete | BLOCKED_HOST_SEMANTICS |
-| Finish AutoMatch | BtnFinishAutomatchClick @ 0x0051A454 | host semantic parity still incomplete | BLOCKED_HOST_SEMANTICS |
+| Finish AutoCal | U8_1 -> U8_0; indexed U8 write 0x13; 100 ms; refresh tail | AutoCalNativeActionManager FINISH_AUTOCAL + readback + receipt + fresh snapshot | MATCH_PROVEN |
+| Finish AutoMatch | U8_1 -> U8_0 without FinishAutocal wait/UI tail | AutoCalNativeActionManager FINISH_AUTOMATCH + readback | MATCH_PROVEN |
 | ExportToK | ProgBase action exists | current K paths exist; exact action parity not frozen | NOT_FULLY_COMPARED |
 | Native AutoMatch equation | ECU behavior | observed only; no local replacement permitted | OUT_OF_SCOPE |
 
@@ -88,3 +88,23 @@ Fixed on OmegasVerde:
 6. Only then declare host-parity freeze.
 
 APK generation is outside this WU unless explicitly authorized.
+
+
+## 2026-09-28 closure — Finish + operational refresh
+
+Finish is now byte-grounded:
+- `VECT_AUTOCAL_U8_1 = 0x0165:index1`;
+- `VECT_AUTOCAL_U8_0 = 0x0165:index0`;
+- ProgBase one-index U8 setter emits `0x13`;
+- write body: `13 65 01 00 <value>` + additive checksum;
+- example value 6: `13 65 01 00 06 7F`;
+- Finish AutoCal preserves the observed 100 ms settle;
+- post-finish ProgBase tail is refresh/render, not another proved mutation.
+
+OmegasVerde now mirrors that with source read, indexed commit, ACK, target
+readback equality, native receipt persistence and fresh snapshot request.
+
+Operational acquisition refresh was also moved to a grouped READ_ONLY serial
+unit and a 1 Hz eligibility/tick. Reference/MUL refresh remains 4 s. The MP48
+scheduler remains the only serial authority and telemetry receives one handoff
+after each grouped refresh.
