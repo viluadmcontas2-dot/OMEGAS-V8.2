@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ORACLE = json.loads((ROOT / "tests/fixtures/progbase-autocal-action-map-v1.json").read_text(encoding="utf-8"))
 ACTION = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt").read_text(encoding="utf-8")
+PROTOCOL = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt").read_text(encoding="utf-8")
 STATUS = (ROOT / "STATUS.md").read_text(encoding="utf-8")
 
 assert ORACLE["classification"] == "ORIGINAL_DERIVED"
@@ -36,12 +37,19 @@ assert modify_refs["handler"] == "ActionAutoCalRifExecute"
 assert modify_refs["mode"] is None and modify_refs["frame"] is None
 assert "ActionAutoCalRifExecute` = Modify map refs usa rota separada" in STATUS
 
-for mode in ("0x01", "0x02", "0x04"):
-    assert f"Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, {mode}))" in ACTION
+assert "AUTOCAL_ACTION_COMMAND = 0x24" in PROTOCOL
+assert "AUTOCAL_ACTION_SUBOP_CONTROL = 0x04" in PROTOCOL
+for action, mode in (
+    ("MANUAL_AUTOMATCH", "0x08"),
+    ("RESET_PETROL", "0x01"),
+    ("RESET_GAS", "0x02"),
+    ("RESET_ALL", "0x04"),
+):
+    assert f"{action}({mode})" in PROTOCOL
+    assert f"ManualActionMode.{action}" in ACTION
 
-assert "MANUAL_AUTOMATCH" not in ACTION, (
-    "Manual AutoMatch must not appear as a casual native action until product "
-    "interlocks/readback policy are explicitly implemented."
-)
+assert "MANUAL_AUTOMATCH" in ACTION
+assert "requiresCriticalConfirmation" in ACTION
+assert '.put("automatic", false)' in ACTION
 
 print("PROGBASE_AUTOCAL_ACTION_ORACLE=PASS")
