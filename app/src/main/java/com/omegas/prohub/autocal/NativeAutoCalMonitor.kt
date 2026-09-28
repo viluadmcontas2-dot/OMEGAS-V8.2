@@ -196,9 +196,13 @@ class NativeAutoCalMonitor(
 
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
+        val acquisitionEnabled = thresholds.third == 1
         val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
         val fullSnapshotAlreadyDue = synchronized(lock) { snapshotRequested } || probeChanged
-        val acquisitionRefresh = if (!fullSnapshotAlreadyDue && thresholdsReady && refreshDue.acquisition) {
+        // Leitura operacional das 18 bandas não depende de semântica de maturidade.
+        // Mesmo com CALIBRATION_VAL_1 10↔12 ainda não resolvido, counters/points/zones
+        // continuam sendo evidência nativa útil e devem permanecer em tempo real.
+        val acquisitionRefresh = if (!fullSnapshotAlreadyDue && acquisitionEnabled && refreshDue.acquisition) {
             refreshAcquisitionGroup(currentSession, probe)
         } else null
         val maturityEvents = acquisitionRefresh?.gasProbe?.let { observed ->
