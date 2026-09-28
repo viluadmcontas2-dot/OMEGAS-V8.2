@@ -550,7 +550,7 @@
 
 .autocal-tech-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   padding: 0 10px 8px;
 }
@@ -1661,6 +1661,7 @@
 }
 .autocal-focus-actions .autocal-primary-action,
 .autocal-reacquire-action,
+.autocal-finish-action,
 .autocal-reset-menu > summary {
   min-height: 50px;
   padding: 0 12px;
@@ -1674,6 +1675,12 @@
   color: #f7e7b7;
   background: rgba(104,78,26,.24);
   font-weight: 800;
+}
+.autocal-finish-action {
+  border-color: rgba(70,232,165,.38);
+  color: #c8f7e2;
+  background: rgba(32,108,79,.28);
+  font-weight: 900;
 }
 .autocal-reset-menu {
   position: relative;
