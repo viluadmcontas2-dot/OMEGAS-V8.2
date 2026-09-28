@@ -83,8 +83,8 @@ Fixed on OmegasVerde:
 1. Prove exact Reset-K behavior end-to-end against the recovered ProgBase routine.
 2. Freeze point-delete masks/write sequence against ProgBase.
 3. Freeze reference-editor read/write lifecycle.
-4. Resolve FinishAutoCal / FinishAutoMatch host semantics.
-5. Resolve ExportToK host semantics.
+4. Resolve ExportToK host semantics.
+5. Verify Finish AutoCal/AutoMatch on CI and physical ECU capture.
 6. Only then declare host-parity freeze.
 
 APK generation is outside this WU unless explicitly authorized.
@@ -108,3 +108,45 @@ Operational acquisition refresh was also moved to a grouped READ_ONLY serial
 unit and a 1 Hz eligibility/tick. Reference/MUL refresh remains 4 s. The MP48
 scheduler remains the only serial authority and telemetry receives one handoff
 after each grouped refresh.
+
+
+## Finish AutoCal host proof — 2026-09-28
+
+Deterministic DUMP disassembly establishes:
+
+- `ActionFinishAutocalExecute @ 0x0051A390`
+  - confirmation;
+  - reads `TAutoCalDM +0x7C`;
+  - writes the value to `TAutoCalDM +0xCC`;
+  - waits 100 ms;
+  - calls host/UI tail `0x005162F8` with mode 1.
+- `BtnFinishAutomatchClick @ 0x0051A454`
+  - performs the same `+0x7C -> +0xCC` scalar copy;
+  - does not perform the 100 ms/tail path.
+
+The exact TAutoCalDM resource layout maps:
+- `+0x7C = VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH (0x0165:2)`;
+- `+0xCC = NUM_ATUOMATCH_EXECUTED (0x0174)`.
+
+Therefore the compatibility mutation is:
+
+```text
+MAX_AUTOMATCH -> NUM_AUTOMATCH_EXECUTED
+```
+
+It is not `VECT_AUTOCAL_U8_1 -> VECT_AUTOCAL_U8_0`.
+
+OmegasVerde implementation:
+- protocol commit: `aef8a539cc63f09bc3ac154355847ebbc5283fdf`;
+- manager correction: `fe849e02a985807d99c83b905d809291579d3ca4`;
+- primary Finish UX: `95b530beb98d1a6df333fece0e9efa5fec2aa391`;
+- Finish styling: `771f2935fae86df5d44790e616c3fb4aede3f208`;
+- frame/semantic/UI regression contracts:
+  `8b899c95c61aab2fd44f1121f323581734a902fb`,
+  `d0369516e6c3400c80e7bdd46d5b6c8f7a11a575`,
+  `a6b662d81d41d66a3367a6b0e7602bb52cfc241a`.
+
+The implementation reads the current counter first and preserves its observed
+1- or 2-byte width before issuing SetNumber to 0x0174, then requires ACK and
+readback equal to MAX_AUTOMATCH. This is a compatibility-preserving robustness
+improvement above the proven ProgBase scalar semantics.
