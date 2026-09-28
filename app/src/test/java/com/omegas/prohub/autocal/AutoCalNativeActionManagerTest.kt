@@ -177,18 +177,22 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `finish autocal copia row1 para row0 e confirma readback`() {
+    fun `finish autocal copia max automatch para contador e confirma readback`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
-        val sourceRead = AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_1)
-        val targetRead = AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_0)
-        val commit = AutoCalProtocol.finishAutoCalCommit(3)
+        val maxRead = AutoCalProtocol.read(AutoCalProtocol.MAX_AUTOMATCH)
+        val counterRead = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)
+        val commit = AutoCalProtocol.finishAutoCalCommit(3, 1)
+        var counterReads = 0
         val manager = manager(
-            fieldsForReceipt = listOf(AutoCalProtocol.VECT_AUTOCAL_U8_0),
+            fieldsForReceipt = listOf(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
             transaction = { request, _, _, _ ->
                 requests += request.copyOf()
                 when {
-                    request.contentEquals(sourceRead) -> reply(request, byteArrayOf(3))
-                    request.contentEquals(targetRead) -> reply(request, byteArrayOf(3))
+                    request.contentEquals(maxRead) -> reply(request, byteArrayOf(3))
+                    request.contentEquals(counterRead) -> {
+                        counterReads += 1
+                        reply(request, byteArrayOf(if (counterReads == 1) 1 else 3))
+                    }
                     request.contentEquals(commit) -> reply(request, byteArrayOf())
                     else -> throw AssertionError("Frame inesperado: " + request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) })
                 }
@@ -198,24 +202,25 @@ class AutoCalNativeActionManagerTest {
         val prepared = manager.prepare("FINISH_AUTOCAL")
         assertTrue(prepared.getBoolean("prepared"))
         assertEquals(
-            "READ VECT_AUTOCAL_U8_1 0x0165:1 → WRITE VECT_AUTOCAL_U8_0 0x0165 → READBACK",
+            "READ MAX_AUTOMATCH 0x0165:2 → WRITE NUM_AUTOMATCH_EXECUTED 0x0174 → READBACK",
             prepared.getString("commandHex"),
         )
         manager.execute(prepared.getString("preparationId"))
         awaitIdle(manager)
 
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
-        assertArrayEquals(sourceRead, requests[0])
-        assertArrayEquals(commit, requests[1])
-        assertArrayEquals(targetRead, requests[2])
-        assertArrayEquals(targetRead, requests[3])
+        assertArrayEquals(maxRead, requests[0])
+        assertArrayEquals(counterRead, requests[1])
+        assertArrayEquals(commit, requests[2])
+        assertArrayEquals(counterRead, requests[3])
 
         val receipt = manager.receiptsJson().getJSONObject(0)
         assertEquals("FINISH_AUTOCAL", receipt.getString("action"))
         val details = receipt.getJSONObject("details")
-        assertEquals("VECT_AUTOCAL_U8_1", details.getString("finishSource"))
-        assertEquals("VECT_AUTOCAL_U8_0", details.getString("finishTarget"))
-        assertEquals(3, details.getInt("sourceValue"))
+        assertEquals("MAX_AUTOMATCH", details.getString("finishSource"))
+        assertEquals("NUM_AUTOMATCH_EXECUTED", details.getString("finishTarget"))
+        assertEquals(1, details.getInt("beforeCounter"))
+        assertEquals(3, details.getInt("maxAutomatch"))
         assertEquals(3, details.getInt("committedValue"))
         assertEquals(100, details.getInt("settleMs"))
         manager.close()
