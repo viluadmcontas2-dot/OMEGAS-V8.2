@@ -6,7 +6,7 @@
 - WorkUnit: `OMEGAS-WU-006`
 - Epic: #81
 - Branch: `OmegasVerde`
-- Estado: `FINAL GATE — SAME-SHA REVALIDATION`
+- Estado: `AUTOCAL HOST-PARITY HARDENING — WU #104`
 
 Sempre resolver o HEAD remoto antes de agir. GitHub remoto é autoridade; este arquivo registra evidência e direção, não fixa o HEAD.
 
@@ -67,10 +67,16 @@ Semântica live recuperada:
 
 ## OMEGAS atual — correções provadas
 
+- Finish AutoCal usa o caminho host comprovado do ProgBase: `MAX_AUTOMATCH (0x0165:2) -> NUM_AUTOMATCH_EXECUTED (0x0174)`, com settle de 100 ms no Finish completo, ACK, readback e recibo. O Finish AutoMatch técnico permanece backend/avançado e não vira uma segunda decisão normal de UX.
+- O oracle do Finish é preso a três artefatos exatos do DUMP: código `0x0051A390/0x0051A454`, DFM `TAUTOCALDM` e grid initializer `0x00510DF8`; o gate falha se o layout de campos deslocar novamente.
+- A tela AutoCal atualiza aquisição/projeção em ~1 s sem criar segundo serial owner; o cursor live continua no scheduler rápido.
+- Bolinhas distinguem `COLETANDO` de `ADQUIRIDO` pelos contadores/limiares nativos e mostram progresso, sem alterar critérios da ECU.
+- O estado de combustível MP48 está visível no cabeçalho AutoCal; MAP, Petrol Inj., RPM e zona permanecem essenciais.
+
 - LEVELS do AutoCal usa telemetria live fresca.
 - Dashboard/Agora contém `LEVELS RAW`; emissão de `level_percentage` não calibrado foi removida.
 - `CurrentBand` reproduz o helper original: threshold[i] < MAP <= threshold[i+1], fora do domínio não seleciona faixa.
-- Refresh operacional ~2 s usa a autoridade serial existente e renova a unidade consumida por `AutoCalAcquisition`:
+- Refresh operacional ~1 s usa a autoridade serial existente e renova a unidade consumida por `AutoCalAcquisition`:
   - gasolina: tempo + MAP + contador;
   - GNV atual: tempo + MAP + contador;
   - GNV anterior: tempo + MAP;
@@ -80,7 +86,7 @@ Semântica live recuperada:
 - MAP live foi alinhado ao S16LE do oracle; fronteira `0xFFFF -> -1` fica implausível/fail-closed.
 - Nenhum segundo serial owner/thread foi criado; `telemetryAfter` permanece preservado.
 - Escrita automática na ECU continua proibida.
-- Reset gasolina seletivo não é prometido; reinício manual amplo via Reset gas point 0x04 fica disponível com aviso de perda de gasolina/GNV/referências/MUL_ACT, revisão humana, confirmação Android e backup completo pré-mutação persistido e relido. Sem restauração automática.
+- Reset gasolina, reset GNV e reset all permanecem operações distintas: modo 0x01 gasolina, 0x02 GNV e 0x04 reset all. Reset all é a ação ampla/destrutiva e permanece separado do Reset K. OMEGAS exige revisão humana, ACK e readback; não existe restauração automática inventada.
 - Ferramentas expõe exportação de backup completo; isso é proteção operacional, não autorização para escrever dados de volta sem protocolo original comprovado.
 - Zonas `0x016F/0x0170` preservam identidade Z1..Z4 na tela: `OK`, `FALTA` e marcador `AGORA`; não são mais reduzidas apenas a N/4.
 
