@@ -37,8 +37,8 @@ is not exposed as a second user-facing finish choice.
 | Reset gas | command 0x24 / sub-op 0x04 / mode 0x02 | native action + ACK/readback | MATCH_PROVEN |
 | Reset all acquisition | command 0x24 / sub-op 0x04 / mode 0x04 | native action + ACK/readback | MATCH_PROVEN |
 | Manual AutoMatch | ActionAutoMatchExecute -> mode 0x08 | advanced action only | MATCH_PROVEN |
-| Finish AutoCal | TAutoCalDM +0x7C (VECT_AUTOCAL_U8_1 / 0x0165:index1) -> +0xCC (VECT_AUTOCAL_U8_0 / 0x0165 scalar), Sleep(100), refresh tail | row1 -> row0 SetNumber, ACK/readback, fresh snapshot, receipt | MATCH_PROVEN_IMPLEMENTED |
-| Finish AutoMatch | same +0x7C -> +0xCC scalar copy, without 100 ms/UI tail | backend parity action, not exposed as normal UI choice | MATCH_PROVEN_IMPLEMENTED |
+| Finish AutoCal | TAutoCalDM +0x7C (VECT_AUTOCAL_U8_2 / MAX_AUTOMATCH) -> +0xCC (NUM_ATUOMATCH_EXECUTED), Sleep(100), refresh tail | MAX_AUTOMATCH -> 0x0174, width-preserving write, ACK/readback, fresh snapshot, receipt | MATCH_PROVEN_IMPLEMENTED |
+| Finish AutoMatch | same +0x7C -> +0xCC copy, without 100 ms/UI tail | backend parity action, not exposed as normal UI choice | MATCH_PROVEN_IMPLEMENTED |
 | Reset K | ActionResetKFactorExecute loops MUL_ACT and calls TAebVector_SetDouble(1.0) | 30 indexed writes of Q14 0x4000 + complete MUL_ACT readback | MATCH_PROVEN_IMPLEMENTED |
 | Delete/reacquire point | native masks + commit | point-level reacquisition + readback | MATCH_STRUCTURAL_ONLY |
 | Reference editor | TFormRifAutocal 18 Tinj + 18 MAP controls | read/display exists; exact mutation path not yet promoted | EVIDENCE_GATED |
@@ -60,32 +60,52 @@ establishes:
   - performs the same scalar copy;
   - omits the 100 ms/tail.
 
-The decisive evidence is the Delphi class field RTTI recovered from the same
-canonical DUMP. It maps the instance fields directly:
+The decisive mapping comes from **two independent exact DUMP anchors**:
 
-- `+0x7C = VECT_AUTOCAL_U8_1 = SerialCode 0x0165, RowIndex 1`;
-- `+0x80 = VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH = SerialCode 0x0165, RowIndex 2`;
-- `+0xCC = VECT_AUTOCAL_U8_0 = SerialCode 0x0165, default/scalar element`;
-- `+0xD0 = NUM_ATUOMATCH_EXECUTED = SerialCode 0x0174`.
+1. The `TAUTOCALDM` binary DFM lists the component fields in this exact order:
+   `MNFLD_PRESS_THD`, `PETR_INJ_TBP`, `AUTO_CAL_ENABLE`,
+   `VECT_AUTOCAL_U8_1`, `VECT_AUTOCAL_U8_2`, ...,
+   `MODULE_VERSION`, `VECT_AUTOCAL_U8_0`,
+   `NUM_ATUOMATCH_EXECUTED`.
+2. The grid initializer `0x00510DF8` anchors the first DFM vector at object
+   offset `+0x6C`, the second at `+0x70`, and independently accesses the
+   23rd component `MODULE_VERSION` at `+0xC4` before comparing it with 4.
+   This proves the contiguous four-byte component-pointer layout across the
+   range.
+
+The resolved layout is therefore:
+
+- `+0x6C = MNFLD_PRESS_THD`;
+- `+0x70 = PETR_INJ_TBP`;
+- `+0x74 = AUTO_CAL_ENABLE`;
+- `+0x78 = VECT_AUTOCAL_U8_1`;
+- `+0x7C = VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH`;
+- `+0xC4 = MODULE_VERSION`;
+- `+0xC8 = VECT_AUTOCAL_U8_0`;
+- `+0xCC = NUM_ATUOMATCH_EXECUTED`.
 
 Therefore the compatibility mutation is:
 
 ```text
-VECT_AUTOCAL_U8_1  ->  VECT_AUTOCAL_U8_0
-      0x0165:1             0x0165 scalar
+MAX_AUTOMATCH  ->  NUM_AUTOMATCH_EXECUTED
+  0x0165:2              0x0174
 ```
 
-A previous audit checkpoint incorrectly mapped `+0x7C/+0xCC` to
-`MAX_AUTOMATCH/NUM_AUTOMATCH_EXECUTED`. Exact Delphi field RTTI falsified that
-interpretation. That hypothesis is superseded and must not be reintroduced.
+A temporary audit branch incorrectly shifted the DFM field order by one pointer
+and produced a synthetic “RTTI” fixture that mapped `+0x7C/+0xCC` to
+row1/row0. That fixture has been deleted. The gate now uses the exact
+`TAUTOCALDM` resource plus the exact grid and Finish code slices, so that
+off-by-one interpretation cannot silently return.
 
 Omegas mirrors the proven host assignment, then requires:
 - write ACK;
-- readback of `VECT_AUTOCAL_U8_0` equal to the source row1 value;
+- readback of `NUM_AUTOMATCH_EXECUTED` equal to `MAX_AUTOMATCH`;
 - fresh native snapshot;
 - durable receipt.
 
-This adds fail-closed verification without changing the ProgBase mutation.
+For ECUs where the counter reads as U8 vs U16, OMEGAS preserves the observed
+physical width before writing. This is a fail-closed robustness improvement
+above the proven ProgBase scalar semantics.
 
 ## Reset K — canonical proof
 
