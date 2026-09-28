@@ -201,10 +201,10 @@ class NativeAutoCalContract(unittest.TestCase):
                     check(AutoCalProtocol.CMD_NATIVE_STATUS.hex() == "48 0B 53")
                     check(AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH).hex() == "02 24 04 08 32")
                     check(AutoCalProtocol.VECT_AUTOCAL_U8_0.address == 0x0165)
-                    check(AutoCalProtocol.VECT_AUTOCAL_U8_0.shape == AutoCalProtocol.Shape.SCALAR)
-                    check(AutoCalProtocol.VECT_AUTOCAL_U8_0.index == null)
+                    check(AutoCalProtocol.VECT_AUTOCAL_U8_0.shape == AutoCalProtocol.Shape.INDEXED)
+                    check(AutoCalProtocol.VECT_AUTOCAL_U8_0.index == 0)
                     check(AutoCalProtocol.VECT_AUTOCAL_U8_1.index == 1)
-                    check(AutoCalProtocol.finishAutoCalCommit(6).hex() == "12 65 01 06 7E")
+                    check(AutoCalProtocol.finishAutoCalCommit(6).hex() == "13 65 01 00 06 7F")
                     check(AutoCalProtocol.expectedElements(AutoCalProtocol.MUL_ACT, 100) == 30)
                     val payload = ByteArray(14)
                     payload[12] = 1
