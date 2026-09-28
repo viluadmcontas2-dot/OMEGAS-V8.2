@@ -88,6 +88,12 @@ object AutoCalProtocol {
     val MUL_ACT = Field("MUL_ACT", 0x0161, Encoding.Q14_U16_LE, Shape.VECTOR, 30, "FACTOR")
     val PETR_INJ_TBUF = Field("PETR_INJ_TBUF", 0x0162, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF = Field("MNFLD_PRESS_BUF", 0x0163, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
+    /**
+     * ProgBase TAUTOCALDM_EE: VECT_AUTOCAL_EE, SerialCode 0x0164,
+     * DataLength=2, ArrayDimension=4. É uma superfície EEPROM AutoCal distinta
+     * de MUL_ACT 0x0161[30]; o write/reset original permanece separado.
+     */
+    val VECT_AUTOCAL_EE = Field("VECT_AUTOCAL_EE", 0x0164, Encoding.U16_LE, Shape.VECTOR, 4)
     val ACQUIRED_ZONES_PETROL = Field("ACQUIRED_ZONES_PETROL", 0x016F, Encoding.U8, Shape.VECTOR, 4)
     val ACQUIRED_ZONES_GAS = Field("ACQUIRED_ZONES_GAS", 0x0170, Encoding.U8, Shape.VECTOR, 4)
     val CALIBRATION_VAL_1 = Field("CALIBRATION_VAL_1", 0x0172, Encoding.U8, Shape.VECTOR, 10)
@@ -134,6 +140,7 @@ object AutoCalProtocol {
         MNFLD_PRESS_BUF_GAS,
         PETR_INJ_TBUF,
         MNFLD_PRESS_BUF,
+        VECT_AUTOCAL_EE,
         CALIBRATION_VAL_1,
         ACQUIRED_ZONES_PETROL,
         ACQUIRED_ZONES_GAS,
