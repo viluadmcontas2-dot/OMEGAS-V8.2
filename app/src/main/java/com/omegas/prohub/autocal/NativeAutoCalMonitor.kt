@@ -53,6 +53,7 @@ class NativeAutoCalMonitor(
     private data class ReferenceRefresh(
         val snapshot: AutoCalSnapshot,
         val observedAtElapsedMs: Long,
+        val autoMatchCount: Int,
     )
 
     private val lock = Any()
@@ -67,6 +68,7 @@ class NativeAutoCalMonitor(
     private var sessionStartedAtElapsedMs = 0L
     private var lastProbe: AutoCalProtocol.NativeStatus? = null
     private var lastMulActHash = ""
+    private var lastStableMulAct: NativeAutoMatchEvidenceBracket.StableVector? = null
     private var snapshotRequested = false
     private var snapshotReason = ""
     private var gasLowThreshold: Int? = null
@@ -80,6 +82,7 @@ class NativeAutoCalMonitor(
             sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
             lastProbe = null
             lastMulActHash = ""
+            lastStableMulAct = null
             gasLowThreshold = null
             gasNormalThreshold = null
             autoCalEnabled = null
@@ -106,6 +109,7 @@ class NativeAutoCalMonitor(
             sessionStartedAtElapsedMs = 0L
             lastProbe = null
             lastMulActHash = ""
+            lastStableMulAct = null
             gasLowThreshold = null
             gasNormalThreshold = null
             autoCalEnabled = null
@@ -222,6 +226,17 @@ class NativeAutoCalMonitor(
                 patch = referenceRefresh.snapshot,
                 refreshedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
             )
+            stableMulAct(
+                snapshot = referenceRefresh.snapshot,
+                sessionId = currentSession,
+                autoMatchCount = referenceRefresh.autoMatchCount,
+                capturedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
+            )?.let { stable ->
+                synchronized(lock) {
+                    lastStableMulAct = stable
+                    if (stable.rawPayloadHex.isNotBlank()) lastMulActHash = stable.rawPayloadHex
+                }
+            }
             refreshPlanner.markReference(referenceRefresh.observedAtElapsedMs)
         }
 
@@ -518,6 +533,7 @@ class NativeAutoCalMonitor(
         ReferenceRefresh(
             snapshot = snapshot,
             observedAtElapsedMs = SystemClock.elapsedRealtime(),
+            autoMatchCount = beforeEpoch.autoMatchCount,
         )
     }
 
@@ -603,6 +619,24 @@ class NativeAutoCalMonitor(
         }
     }
 
+    private fun stableMulAct(
+        snapshot: AutoCalSnapshot,
+        sessionId: Long,
+        autoMatchCount: Int,
+        capturedAtElapsedMs: Long,
+    ): NativeAutoMatchEvidenceBracket.StableVector? {
+        val field = snapshot.field(AutoCalProtocol.MUL_ACT)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?: return null
+        return NativeAutoMatchEvidenceBracket.stable(
+            sessionId = sessionId,
+            autoMatchCount = autoMatchCount,
+            capturedAtElapsedMs = capturedAtElapsedMs,
+            rawValues = field.rawValues,
+            rawPayloadHex = field.rawPayloadHex,
+        )
+    }
+
     private fun incrementalReferenceRevision(
         previousHash: String,
         replacements: Map<String, JSONObject>,
@@ -657,6 +691,22 @@ class NativeAutoCalMonitor(
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
             ?.rawPayloadHex
             .orEmpty()
+        val mulActField = snapshot.field(AutoCalProtocol.MUL_ACT)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+        val afterMulActRaw = mulActField?.rawValues?.copyOf()
+        val afterMulActCapturedAtElapsedMs = SystemClock.elapsedRealtime()
+        val beforeStableMulAct = synchronized(lock) { lastStableMulAct }
+        val autoMatchEvidence = autoMatchCounterEvent?.let { event ->
+            NativeAutoMatchEvidenceBracket.evaluate(
+                event = event,
+                before = beforeStableMulAct,
+                afterSessionId = expectedSessionId,
+                afterAutoMatchCount = probe.autoMatchCount,
+                afterCapturedAtElapsedMs = afterMulActCapturedAtElapsedMs,
+                afterRaw = afterMulActRaw,
+                afterPayloadHex = mulActField?.rawPayloadHex.orEmpty(),
+            )
+        }
         val decorated = snapshot.toJson()
             .put("available", true)
             .put("nativeAutoCal", true)
@@ -670,6 +720,7 @@ class NativeAutoCalMonitor(
             .put("snapshotReason", reason)
             .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent?.toJson() ?: JSONObject.NULL)
             .put("nativeAutoMatchCounterEventObserved", autoMatchCounterEvent != null)
+            .put("nativeAutoMatchEvidence", autoMatchEvidence?.toJson() ?: JSONObject.NULL)
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
 
@@ -762,11 +813,18 @@ class NativeAutoCalMonitor(
         }
         decorated.put("nativeCorrelationState", correlationStateJson())
 
-        val previousMul = synchronized(lock) { lastMulActHash }
+        val stableAfter = NativeAutoMatchEvidenceBracket.stable(
+            sessionId = expectedSessionId,
+            autoMatchCount = probe.autoMatchCount,
+            capturedAtElapsedMs = afterMulActCapturedAtElapsedMs,
+            rawValues = afterMulActRaw,
+            rawPayloadHex = mulActField?.rawPayloadHex.orEmpty(),
+        )
         synchronized(lock) {
             latestSnapshot = decorated
             refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
+            if (stableAfter != null) lastStableMulAct = stableAfter
             gasLowThreshold = newGasLowThreshold
             gasNormalThreshold = newGasNormalThreshold
             autoCalEnabled = enabled
@@ -781,21 +839,25 @@ class NativeAutoCalMonitor(
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
                 .put("nativeMaturityEventCount", maturityEvents.length())
                 .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent != null)
+                .put("nativeAutoMatchEvidenceState", autoMatchEvidence?.state?.name ?: JSONObject.NULL)
+                .put("nativeAutoMatchChangedPoints", autoMatchEvidence?.changedPointCount ?: 0)
                 .put("snapshotHash", snapshot.snapshotHash)
         }
 
         if (enabled == 1) {
             try { onFreshSnapshot(decorated) } catch (_: Exception) {}
         }
-        if (countIncreased && previousMul.isNotBlank() && mulActHash.isNotBlank() && previousMul != mulActHash) {
+        if (countIncreased &&
+            autoMatchEvidence?.state == NativeAutoMatchEvidenceBracket.State.FACTOR_CHANGE_CONFIRMED
+        ) {
             try {
                 onNativeCalibrationObserved(
-                    JSONObject()
+                    autoMatchEvidence.toJson()
                         .put("source", SOURCE_NATIVE_AUTOCAL)
                         .put("calibrationType", "K_FACTOR")
                         .put("cause", "ECU_AUTOMATCH_COUNT_CHANGED")
-                        .put("oldHash", previousMul)
-                        .put("newHash", mulActHash)
+                        .put("oldHash", beforeStableMulAct?.rawPayloadHex ?: JSONObject.NULL)
+                        .put("newHash", mulActField?.rawPayloadHex ?: JSONObject.NULL)
                         .put("nativeAutoMatchCount", probe.autoMatchCount)
                         .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                         .put("nativeFlag13", probe.nativeFlag13)
@@ -804,7 +866,8 @@ class NativeAutoCalMonitor(
                         .put("ecuNativeObserved", true)
                         .put("appWritePerformed", false)
                         .put("ecuNativeAutomatic", true)
-                        .put("appAutomaticWrite", false),
+                        .put("appAutomaticWrite", false)
+                        .put("pointDeltas", autoMatchEvidence.toJson().getJSONArray("pointDeltas")),
                 )
             } catch (_: Exception) {}
         }
