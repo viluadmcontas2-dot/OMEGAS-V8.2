@@ -230,7 +230,7 @@ object AutoCalProtocol {
     }
 
     fun finishAutoCalCommit(valueFromRow1: Int): ByteArray =
-        writeIndexedU8(VECT_AUTOCAL_U8_0.address, VECT_AUTOCAL_U8_0.index!!, valueFromRow1)
+        frameWriteU8(VECT_AUTOCAL_U8_0.address, valueFromRow1)
 
     fun readScalar(address: Int): ByteArray = genericRead(READ_SCALAR, address)
     fun readVector(address: Int): ByteArray = genericRead(READ_VECTOR, address)
