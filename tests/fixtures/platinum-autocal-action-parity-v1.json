@@ -1,0 +1,121 @@
+{
+  "schema": "omegas.platinum.autocal-action-parity.v1",
+  "branch": "OmegasPlatina",
+  "authority": {
+    "progbase_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "sources": [
+      "OMEGAS/DUMP",
+      "authorized Portmon",
+      "progbase-forensics strict docs"
+    ]
+  },
+  "actions": [
+    {
+      "name": "ENABLE_AUTO_CAL",
+      "classification": "PROVEN",
+      "target": "AUTO_CAL_ENABLE 0x014A",
+      "wire": "12 4A 01 01 5E",
+      "readback": "AUTO_CAL_ENABLE == 1",
+      "automatic": false
+    },
+    {
+      "name": "DISABLE_AUTO_CAL",
+      "classification": "PROVEN",
+      "target": "AUTO_CAL_ENABLE 0x014A",
+      "wire": "12 4A 01 00 5D",
+      "readback": "AUTO_CAL_ENABLE == 0",
+      "automatic": false
+    },
+    {
+      "name": "RESET_PETROL",
+      "classification": "PROVEN",
+      "target": "native action 0x24/0x04 mode 0x01",
+      "wire": "02 24 04 01 2B",
+      "readback": "full AutoCal snapshot",
+      "automatic": false
+    },
+    {
+      "name": "RESET_GAS",
+      "classification": "PROVEN",
+      "target": "native action 0x24/0x04 mode 0x02",
+      "wire": "02 24 04 02 2C",
+      "readback": "full AutoCal snapshot",
+      "automatic": false
+    },
+    {
+      "name": "RESET_ALL",
+      "classification": "PROVEN",
+      "target": "native action 0x24/0x04 mode 0x04",
+      "wire": "02 24 04 04 2E",
+      "readback": "full AutoCal snapshot",
+      "automatic": false
+    },
+    {
+      "name": "MANUAL_AUTOMATCH",
+      "classification": "PROVEN",
+      "target": "native action 0x24/0x04 mode 0x08",
+      "wire": "02 24 04 08 32",
+      "readback": "full AutoCal snapshot",
+      "automatic": false
+    },
+    {
+      "name": "FINISH_AUTOCAL",
+      "classification": "PROVEN_HOST_BEHAVIOR",
+      "target": "MAX_AUTOMATCH 0x0165:2 -> NUM_AUTOMATCH_EXECUTED 0x0174",
+      "wire": "dynamic U8/U16 SetNumber matching counter width",
+      "settle_ms": 100,
+      "readback": "NUM_AUTOMATCH_EXECUTED == MAX_AUTOMATCH",
+      "automatic": false
+    },
+    {
+      "name": "FINISH_AUTOMATCH",
+      "classification": "PROVEN_HOST_BEHAVIOR",
+      "target": "MAX_AUTOMATCH 0x0165:2 -> NUM_AUTOMATCH_EXECUTED 0x0174",
+      "wire": "dynamic U8/U16 SetNumber matching counter width",
+      "settle_ms": 0,
+      "readback": "NUM_AUTOMATCH_EXECUTED == MAX_AUTOMATCH",
+      "automatic": false
+    },
+    {
+      "name": "RESET_K_FACTOR",
+      "classification": "PROVEN",
+      "target": "MUL_ACT 0x0161[30]",
+      "wire": "30 indexed U16 writes; raw 0x4000",
+      "readback": "all 30 MUL_ACT == 0x4000",
+      "automatic": false
+    },
+    {
+      "name": "DELETE_POINT_BATCH",
+      "classification": "PROVEN",
+      "target": "PETROL_POINT_2DELETE 0x016D[18] + GAS_POINT_2DELETE 0x016E[18]",
+      "wire": "two full U8 masks then 01 24 05 2A",
+      "readback": "full AutoCal snapshot",
+      "automatic": false
+    }
+  ],
+  "autonomous": [
+    {
+      "name": "NATIVE_AUTOMATCH",
+      "classification": "PROVEN_OBSERVED_AUTONOMOUS",
+      "host_write_allowed": false,
+      "evidence": "counter 0→1→2→3 with only read/poll PC traffic; causal MUL_ACT bracket is read-only"
+    }
+  ],
+  "non_blocking_unknowns": [
+    {
+      "name": "ECU_SAMPLE_ACCEPTANCE_INTERNALS",
+      "classification": "PARTIAL_NOT_BLOCKING",
+      "reason": "ECU is runtime authority; host does not reproduce acquisition filter"
+    },
+    {
+      "name": "ECU_18_TO_30_INTERNAL_REFERENCE_ALGORITHM",
+      "classification": "PARTIAL_NOT_BLOCKING",
+      "reason": "host consumes native reference vectors; does not synthesize them for writes"
+    },
+    {
+      "name": "ECU_AUTOMATCH_INTERNAL_FORMULA",
+      "classification": "PARTIAL_NOT_BLOCKING",
+      "reason": "reconstructed math remains analysis-only; native ECU performs AutoMatch"
+    }
+  ]
+}
