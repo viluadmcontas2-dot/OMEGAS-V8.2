@@ -332,7 +332,7 @@ class AutoCalNativeActionManager(
         )
         val writeReply = transaction(
             commitFrame,
-            "AutoCal \${prepared.action.name} commit",
+            "AutoCal ${prepared.action.name} commit",
             1_500,
             prepared.sessionId,
         )
@@ -356,7 +356,7 @@ class AutoCalNativeActionManager(
             targetReply.payload,
         ).rawValues.single()
         require(committed == source) {
-            "Finish AutoCal não persistiu: origem=\$source, readback=\$committed"
+            "Finish AutoCal não persistiu: origem=$source, readback=$committed"
         }
 
         ensureSession(prepared)
