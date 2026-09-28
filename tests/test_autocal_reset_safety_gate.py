@@ -13,7 +13,9 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         bridge = BRIDGE.read_text(encoding="utf-8")
         for name in ("RESET_PETROL", "RESET_GAS", "RESET_ALL"):
             self.assertIn(f"AutoCalNativeActionManager.Action.{name}", bridge)
-        self.assertIn('normalized == "RESET_K_FACTOR"', bridge)
+        self.assertIn("AutoCalNativeActionManager.Action.RESET_K_FACTOR", bridge)
+        self.assertIn('requested == "NEUTRALIZE_LIVE_K"', bridge)
+        self.assertIn('"RESET_K_FACTOR" else requested', bridge)
 
     def test_session_and_mutation_interlocks_protect_host_resets_without_backup_gate(self):
         text = MANAGER.read_text(encoding="utf-8")
