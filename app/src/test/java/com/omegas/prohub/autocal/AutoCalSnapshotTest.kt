@@ -33,7 +33,6 @@ class AutoCalSnapshotTest {
         assertEquals(1.0, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.physicalValues.single(), 0.0)
         assertEquals(AutoCalFieldStatus.UNAVAILABLE, snapshot.field(AutoCalProtocol.MUL_ACT)!!.status)
         assertTrue(snapshot.warnings.any { it.contains("MUL_ACT") })
-        assertTrue(snapshot.warnings.any { it.contains("MODULE_VERSION") })
         assertEquals(30L, snapshot.durationMs)
         assertFalse(snapshot.toJson().getBoolean("automatic"))
     }
@@ -117,7 +116,7 @@ class AutoCalSnapshotTest {
     }
 
     @Test
-    fun `versao anterior valida dezoito elementos nos vetores dinamicos`() {
+    fun `module version nao altera dimensao provada dos vetores`() {
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = listOf(
                 observation(AutoCalProtocol.MODULE_VERSION, byteArrayOf(3), 90L),
@@ -131,9 +130,9 @@ class AutoCalSnapshotTest {
             ),
         )
         assertEquals(3, snapshot.moduleVersion)
-        assertEquals(AutoCalFieldStatus.VALID, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.status)
-        assertEquals(AutoCalFieldStatus.INVALID, snapshot.field(AutoCalProtocol.MUL_ACT)!!.status)
-        assertTrue(snapshot.field(AutoCalProtocol.MUL_ACT)!!.error!!.contains("esperado 18"))
+        assertEquals(AutoCalFieldStatus.INVALID, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.status)
+        assertTrue(snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.error!!.contains("esperado 30"))
+        assertEquals(AutoCalFieldStatus.VALID, snapshot.field(AutoCalProtocol.MUL_ACT)!!.status)
     }
 
     @Test
