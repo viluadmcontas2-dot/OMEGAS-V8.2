@@ -15,6 +15,9 @@ class AutoCalProtocolTest {
         assertArrayEquals(hex("29 61 01 8B"), AutoCalProtocol.read(AutoCalProtocol.MUL_ACT))
         assertArrayEquals(hex("09 74 01 7E"), AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED))
         assertArrayEquals(hex("29 64 01 8E"), AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE))
+        assertArrayEquals(hex("0A 67 01 01 73"), AutoCalProtocol.read(AutoCalProtocol.EN_CDN_T_THD))
+        assertArrayEquals(hex("09 69 01 73"), AutoCalProtocol.read(AutoCalProtocol.LIMIT_PRESSURE_MIN))
+        assertArrayEquals(hex("09 6A 01 74"), AutoCalProtocol.read(AutoCalProtocol.LIMIT_PRESSURE_MAX))
         assertArrayEquals(hex("09 83 01 8D"), AutoCalProtocol.read(AutoCalProtocol.DIFF_ENG_SPD_THD))
         assertArrayEquals(hex("09 84 01 8E"), AutoCalProtocol.read(AutoCalProtocol.DELTA_ENG_SPD_THD))
         assertArrayEquals(hex("09 85 01 8F"), AutoCalProtocol.read(AutoCalProtocol.DIFF_MNFLD_PRESS_THD))
@@ -153,6 +156,30 @@ class AutoCalProtocolTest {
         assertEquals(0x0164, AutoCalProtocol.VECT_AUTOCAL_EE.address)
         assertEquals(0x0161, AutoCalProtocol.MUL_ACT.address)
         assertEquals(30, AutoCalProtocol.MUL_ACT.expectedElementsHint)
+    }
+
+    @Test
+    fun `dfm fecha en cdn indexado e limites de pressao signed raw`() {
+        val en = AutoCalProtocol.decode(
+            AutoCalProtocol.EN_CDN_T_THD,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x34, 0x12),
+        )
+        assertEquals(0x1234, en.rawValues.single())
+
+        val min = AutoCalProtocol.decode(
+            AutoCalProtocol.LIMIT_PRESSURE_MIN,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x00, 0xFC.toByte()),
+        )
+        assertEquals(-1024, min.rawValues.single())
+
+        val max = AutoCalProtocol.decode(
+            AutoCalProtocol.LIMIT_PRESSURE_MAX,
+            Mp48Protocol.STATUS_ACK,
+            byteArrayOf(0x00, 0x04),
+        )
+        assertEquals(1024, max.rawValues.single())
     }
 
     @Test
