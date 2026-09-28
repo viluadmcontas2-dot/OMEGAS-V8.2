@@ -250,36 +250,16 @@ object AutoCalProtocol {
     /**
      * Canonical ProgBase 4.2.0.6:
      * ActionFinishAutocalExecute / BtnFinishAutomatchClick read TAutoCalDM+0x7C
-     * (VECT_AUTOCAL_U8_2 / MaxAutomatch, 0x0165:index2) and assign that value
-     * to TAutoCalDM+0xCC (NUM_ATUOMATCH_EXECUTED, 0x0174).
+     * and assign that scalar to TAutoCalDM+0xCC.
      *
-     * Some ECU variants expose the counter as U8 and others as U16; preserve
-     * the width observed immediately before the commit.
+     * Exact Delphi field RTTI in the canonical DUMP resolves:
+     * +0x7C = VECT_AUTOCAL_U8_1 (0x0165:index1)
+     * +0xCC = VECT_AUTOCAL_U8_0 (0x0165 scalar/default element)
+     *
+     * Finish AutoCal therefore commits row1 into the default scalar element.
      */
-    fun finishAutoCalCommit(maxAutomatch: Int, counterWidthBytes: Int): ByteArray {
-        require(counterWidthBytes == 1 || counterWidthBytes == 2) {
-            "NUM_AUTOMATCH_EXECUTED width must be 1 or 2 bytes"
-        }
-        return if (counterWidthBytes == 1) {
-            frameWriteU8(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
-        } else {
-            frameWriteU16(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
-        }
-    }
-
-    private fun frameWriteU16(address: Int, value: Int): ByteArray {
-        require(address in 0..0xFFFF)
-        require(value in 0..0xFFFF)
-        return Mp48Protocol.frame(
-            byteArrayOf(
-                WRITE_U16.toByte(),
-                (address and 0xFF).toByte(),
-                ((address ushr 8) and 0xFF).toByte(),
-                (value and 0xFF).toByte(),
-                ((value ushr 8) and 0xFF).toByte(),
-            ),
-        )
-    }
+    fun finishAutoCalCommit(valueFromRow1: Int): ByteArray =
+        frameWriteU8(VECT_AUTOCAL_U8_0.address, valueFromRow1)
 
     /** ProgBase/AEB SetVector: compacto até 5 bytes; 0x37 estendido acima disso. */
     fun writeVectorU8(address: Int, values: IntArray): ByteArray {
