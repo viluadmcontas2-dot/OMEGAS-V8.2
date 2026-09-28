@@ -53,4 +53,5 @@ assert "nativeConfirmationPendingId" not in BRIDGE, "stale Android confirmation 
 assert '.put("nativeAndroidConfirmation", true)' not in BRIDGE
 assert '.put("nativeAndroidConfirmation", false)' in BRIDGE
 assert "actionManager.execute(preparationId)" in BRIDGE, "prepared AutoCal action must execute directly through canonical manager"
-assert "startKFactorReset()" in BRIDGE, "Curva K reset must start directly after OMEGAS review"
+assert "RESET_K_FACTOR" in BRIDGE, "Curva K reset must remain exposed through the canonical native action manager"
+assert "actionManager.execute(preparationId)" in BRIDGE, "Curva K reset and other reviewed actions must execute through the canonical manager"
