@@ -1621,10 +1621,14 @@
         'RESETTING_K', 'VERIFYING_K_RESET',
       ].includes(name);
       const failed = name === 'FAILED';
+      const recovery = state?.recovery && typeof state.recovery === 'object' ? state.recovery : null;
+      const recoveryNext = String(recovery?.nextAction || '').trim();
+      const recoveryCode = String(recovery?.reasonCode || state?.reasonCode || '');
       host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
+      host.dataset.reasonCode = recoveryCode;
       host.textContent = name === 'IDLE' ? message
         : name === 'CONFIRMED' ? 'Concluído · ' + message
-        : failed ? 'Não concluído · ' + message
+        : failed ? 'Não concluído · ' + message + (recoveryNext ? ' · Próximo: ' + recoveryNext : '')
         : 'Executando · ' + message;
     }
 
