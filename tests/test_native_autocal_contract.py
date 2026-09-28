@@ -100,8 +100,11 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('val MAX_AUTOMATCH = Field("MAX_AUTOMATCH", 0x0165', self.protocol)
         self.assertIn('val VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH', self.protocol)
         self.assertIn('fields["MAX_AUTOMATCH"] ?: fields["VECT_AUTOCAL_U8_2"]', self.acq)
-        threshold_section = self.acq.split('val threshold = when {', 1)[1].split('val state = when {', 1)[0]
-        self.assertNotIn('maxAutomatch', threshold_section)
+        self.assertIn('"maturityThresholdsPromoted", false', self.acq)
+        self.assertIn('"calibrationValueMapping", "UNRESOLVED_10_OF_12"', self.acq)
+        self.assertNotIn('calibration.getOrNull(2)', self.acq)
+        self.assertNotIn('calibration.getOrNull(5)', self.acq)
+        self.assertNotIn('calibration.getOrNull(8)', self.acq)
 
     def test_reset_k_matches_progbase_mul_act_loop(self):
         self.assertIn('resetKFactorMulActFrames', self.protocol)
