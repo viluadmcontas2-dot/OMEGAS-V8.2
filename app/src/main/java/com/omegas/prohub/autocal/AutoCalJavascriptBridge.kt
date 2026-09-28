@@ -316,10 +316,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("requiresReview", true)
         .toString()
 
-    companion object {
-        private const val CRITICAL_PREPARATION_TTL_MS = 120_000L
-    }
-
     private fun unavailable(): String = JSONObject()
         .put("ok", false)
         .put("error", "Serviço indisponível")
