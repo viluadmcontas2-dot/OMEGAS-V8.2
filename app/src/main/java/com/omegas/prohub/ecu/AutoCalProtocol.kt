@@ -76,9 +76,8 @@ object AutoCalProtocol {
     val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
     val NUM_BUF_UPD_PETR = Field("NUM_BUF_UPD_PETR", 0x015B, Encoding.U16_LE, Shape.VECTOR, 18)
     val NUM_BUF_UPD_GAS = Field("NUM_BUF_UPD_GAS", 0x015C, Encoding.U16_LE, Shape.VECTOR, 18)
-    /** ProgBase DFM: default element has no RowIndex; TAebNumber setter dispatches it through scalar SetNumber. */
     /** ProgBase DFM ntVectorElement: row/index 0. ActionFinish copies row 1 into row 0. */
-    val VECT_AUTOCAL_U8_0 = Field("VECT_AUTOCAL_U8_0", 0x0165, Encoding.U8, Shape.SCALAR, 1)
+    val VECT_AUTOCAL_U8_0 = Field("VECT_AUTOCAL_U8_0", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 0)
     val VECT_AUTOCAL_U8_1 = Field("VECT_AUTOCAL_U8_1", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 1)
     val MAX_AUTOMATCH = Field("MAX_AUTOMATCH", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 2)
     /** Alias de compatibilidade para snapshots/testes antigos; 0x0165:2 é MaxAutomatch. */
@@ -240,23 +239,18 @@ object AutoCalProtocol {
 
     /**
      * ProgBase ActionFinishAutocalExecute / BtnFinishAutomatchClick:
-     * MAX_AUTOMATCH (TAutoCalDM +0x7C, 0x0165:2) ->
-     * NUM_AUTOMATCH_EXECUTED (TAutoCalDM +0xCC, 0x0174).
+     * VECT_AUTOCAL_U8_1 (TAutoCalDM +0x7C, 0x0165:index1) ->
+     * VECT_AUTOCAL_U8_0 (TAutoCalDM +0xCC, 0x0165:index0).
      *
-     * O TAebNumber preserva a largura física do número; algumas ECUs devolvem
-     * o contador em U8 e outras em U16. OMEGAS espelha a largura observada no
-     * readback imediatamente anterior ao commit.
+     * Both are ntVectorElement objects. The one-index U8 generic setter emits
+     * opcode 0x13 with [addrLo, addrHi, index, value].
      */
-    fun finishAutoCalCommit(maxAutomatch: Int, counterWidthBytes: Int): ByteArray {
-        require(counterWidthBytes == 1 || counterWidthBytes == 2) {
-            "Largura do contador AutoMatch deve ser 1 ou 2 bytes"
-        }
-        return when (counterWidthBytes) {
-            1 -> frameWriteU8(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
-            2 -> frameWriteU16(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
-            else -> error("largura validada acima")
-        }
-    }
+    fun finishAutoCalCommit(valueFromRow1: Int): ByteArray =
+        writeIndexedU8(
+            VECT_AUTOCAL_U8_0.address,
+            VECT_AUTOCAL_U8_0.index!!,
+            valueFromRow1,
+        )
 
     private fun frameWriteU16(address: Int, value: Int): ByteArray {
         require(address in 0..0xFFFF)
