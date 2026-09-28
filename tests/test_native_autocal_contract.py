@@ -204,7 +204,7 @@ class NativeAutoCalContract(unittest.TestCase):
                     check(AutoCalProtocol.VECT_AUTOCAL_U8_0.shape == AutoCalProtocol.Shape.SCALAR)
                     check(AutoCalProtocol.VECT_AUTOCAL_U8_0.index == null)
                     check(AutoCalProtocol.VECT_AUTOCAL_U8_1.index == 1)
-                    check(AutoCalProtocol.finishAutoCalCommit(6).hex() == "13 65 01 00 06 7F")
+                    check(AutoCalProtocol.finishAutoCalCommit(6).hex() == "12 65 01 06 7E")
                     check(AutoCalProtocol.expectedElements(AutoCalProtocol.MUL_ACT, 100) == 30)
                     val payload = ByteArray(14)
                     payload[12] = 1
