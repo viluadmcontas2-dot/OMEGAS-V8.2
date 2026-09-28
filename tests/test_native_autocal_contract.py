@@ -72,6 +72,7 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertNotIn('finishTarget", "NUM_AUTOMATCH_EXECUTED', self.action)
         self.assertIn('Thread.sleep(100L)', self.action)
         self.assertIn('Finish AutoCal não persistiu', self.action)
+        self.assertIn('AutoCal finalizado · $committed/$max confirmado pela ECU', self.action)
 
     def test_enable_disable_and_status_are_exact_portmon_frames(self):
         self.assertIn('CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)', self.protocol)
