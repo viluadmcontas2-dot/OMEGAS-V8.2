@@ -43,16 +43,20 @@ class NativeAutoCalContract(unittest.TestCase):
         scale = SCALE.read_text('utf-8')
         self.assertIn('INJECTION_COUNTS_PER_MS = 512.0', scale)
         self.assertIn('MAP_COUNTS_PER_BAR = 1_024.0', scale)
-        # ProgBase 4.2.0.6 canonical RTTI + wrappers: AutoMatch=0x08, petrol=0x01, gas=0x02, all=0x04.
-        self.assertIn('RESET_PETROL(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01))', self.action)
-        self.assertIn('RESET_GAS(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))', self.action)
-        self.assertIn('RESET_ALL(\n            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04))', self.action)
+        # Clean forensics: command 0x24/sub-op 0x04, AutoMatch=0x08, petrol=0x01, gas=0x02, all=0x04.
+        self.assertIn('MANUAL_AUTOMATCH(', self.action)
+        self.assertIn('ManualActionMode.MANUAL_AUTOMATCH', self.action)
+        self.assertIn('ManualActionMode.RESET_PETROL', self.action)
+        self.assertIn('ManualActionMode.RESET_GAS', self.action)
+        self.assertIn('ManualActionMode.RESET_ALL', self.action)
 
-    def test_manual_automatch_route_is_removed(self):
+    def test_manual_automatch_is_human_confirmed_and_separate_from_native_epochs(self):
+        self.assertIn('MANUAL_AUTOMATCH', self.action)
+        self.assertIn('ManualActionMode.MANUAL_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.bridge)
-        self.assertNotIn('02 24 04 08 32', self.action)
         self.assertIn('manualAutoMatchExposed", false', self.bridge)
+        self.assertIn('requiresCriticalConfirmation', self.action)
 
     def test_enable_disable_and_status_are_exact_portmon_frames(self):
         self.assertIn('CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)', self.protocol)
@@ -184,6 +188,8 @@ class NativeAutoCalContract(unittest.TestCase):
                     check(AutoCalProtocol.setEnabled(true).hex() == "12 4A 01 01 5E")
                     check(AutoCalProtocol.setEnabled(false).hex() == "12 4A 01 00 5D")
                     check(AutoCalProtocol.CMD_NATIVE_STATUS.hex() == "48 0B 53")
+                    check(AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH).hex() == "02 24 04 08 32")
+                    check(AutoCalProtocol.expectedElements(AutoCalProtocol.MUL_ACT, 100) == 30)
                     val payload = ByteArray(14)
                     payload[12] = 1
                     payload[13] = 3
