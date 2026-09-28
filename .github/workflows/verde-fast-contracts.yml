@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - OmegasVerde
+      - OmegasPlatina
     paths:
       - ".github/workflows/verde-fast-contracts.yml"
       - "app/src/main/assets/ui/**"
