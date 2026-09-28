@@ -3,6 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 protocol = (ROOT / 'app/src/main/java/com/omegas/prohub/ecu/AutoCalPointDeleteProtocol.kt').read_text(encoding='utf-8')
+autocal_protocol = (ROOT / 'app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt').read_text(encoding='utf-8')
 manager = (ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt').read_text(encoding='utf-8')
 bridge = (ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt').read_text(encoding='utf-8')
 api = (ROOT / 'app/src/main/assets/ui/core/autocal-api.js').read_text(encoding='utf-8')
