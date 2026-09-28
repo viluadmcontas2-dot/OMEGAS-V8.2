@@ -57,6 +57,11 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertNotIn('NATIVE_AUTOMATCH', self.bridge)
         self.assertIn('manualAutoMatchExposed", true', self.bridge)
         self.assertIn('requiresCriticalConfirmation', self.action)
+        self.assertGreaterEqual(
+            self.bridge.count('AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH'),
+            2,
+            'Bridge must allow Manual AutoMatch in prepare and execute allowlists',
+        )
 
     def test_enable_disable_and_status_are_exact_portmon_frames(self):
         self.assertIn('CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)', self.protocol)
