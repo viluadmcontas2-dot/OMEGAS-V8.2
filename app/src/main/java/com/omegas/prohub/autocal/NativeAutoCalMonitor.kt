@@ -29,6 +29,7 @@ class NativeAutoCalMonitor(
     private val calibrationBusy: () -> Boolean,
     private val onFreshSnapshot: (JSONObject) -> Unit = {},
     private val onNativeCalibrationObserved: (JSONObject) -> Unit = {},
+    private val onNativeAutoMatchObserved: (JSONObject) -> Unit = {},
     private val onStateChanged: () -> Unit = {},
 ) {
     private data class PendingMaturity(
@@ -798,6 +799,30 @@ class NativeAutoCalMonitor(
         decorated
             .put("nativeMaturityEvents", maturityEvents)
             .put("nativeMaturityEventCount", maturityEvents.length())
+
+
+        if (autoMatchCounterEvent != null) {
+            val epoch = JSONObject()
+                .put("eventType", "NATIVE_AUTOMATCH_EPOCH")
+                .put("source", SOURCE_NATIVE_AUTOCAL)
+                .put("sessionId", expectedSessionId)
+                .put("snapshotId", decorated.optString("sessionId"))
+                .put("snapshotHash", snapshot.snapshotHash)
+                .put("observedAtElapsedMs", autoMatchCounterEvent.observedAtElapsedMs)
+                .put("beforeCount", autoMatchCounterEvent.beforeCount)
+                .put("afterCount", autoMatchCounterEvent.afterCount)
+                .put("counterDelta", autoMatchCounterEvent.delta)
+                .put("evidence", autoMatchEvidence.toJson())
+                .put("acquisition", acquisition)
+                .put("nativeStatus", JSONObject()
+                    .put("nativeFlag13", probe.nativeFlag13)
+                    .put("autoMatchCount", probe.autoMatchCount))
+                .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
+                .put("appWritePerformed", false)
+                .put("appAutomaticWrite", false)
+                .put("nativeFirmwareFormulaInferred", false)
+            try { onNativeAutoMatchObserved(epoch) } catch (_: Exception) {}
+        }
 
         val currentCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS)
         if (pending.isEmpty() || enabled != 1) {
