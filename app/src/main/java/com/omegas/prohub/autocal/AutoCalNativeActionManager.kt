@@ -77,6 +77,12 @@ class AutoCalNativeActionManager(
             "Replica BtnFinishAutomatchClick: copia VECT_AUTOCAL_U8_1 para VECT_AUTOCAL_U8_0 e confirma por readback, sem substituir a lógica nativa da ECU.",
             false,
         ),
+        RESET_K_FACTOR(
+            AutoCalProtocol.resetKFactorEeprom(),
+            "Reset Curva K (ProgBase)",
+            "Replica ActionResetKFactorExecute: grava VECT_AUTOCAL_EE 0x0164[4] = 1.0 pelo SetVector original e exige readback [1,1,1,1].",
+            true,
+        ),
         RESET_PETROL(
             AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL),
             "Readquirir gasolina",
@@ -523,6 +529,17 @@ class AutoCalNativeActionManager(
         .put("automaticBackup", false)
 
     private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
+        if (action == Action.RESET_K_FACTOR) {
+            val actual = after.field(AutoCalProtocol.VECT_AUTOCAL_EE)
+                ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+                ?.rawValues
+            require(actual != null && actual.contentEquals(intArrayOf(1, 1, 1, 1))) {
+                "Readback VECT_AUTOCAL_EE divergente após Reset K: " +
+                    (actual?.joinToString(prefix = "[", postfix = "]") ?: "sem dado")
+            }
+            return
+        }
+
         val expected = action.expectedEnableReadback ?: return
         val actual = after.field(AutoCalProtocol.AUTO_CAL_ENABLE)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
