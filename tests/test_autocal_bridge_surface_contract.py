@@ -23,7 +23,7 @@ for name in FORBIDDEN:
 assert "private var draft:" not in BRIDGE, "dead local draft state still retained"
 assert "private fun emptyDraft(" not in BRIDGE, "dead local draft helper still retained"
 assert '.put("localDraft", false)' in BRIDGE, "identity must report that local draft is not exposed"
-assert '.put("manualAutoMatchExposed", false)' in BRIDGE
+assert '.put("manualAutoMatchExposed", true)' in BRIDGE
 
 REQUIRED = [
     "getStatus",
