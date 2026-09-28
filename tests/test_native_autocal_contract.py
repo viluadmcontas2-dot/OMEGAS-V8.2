@@ -62,6 +62,12 @@ class NativeAutoCalContract(unittest.TestCase):
             2,
             'Bridge must allow Manual AutoMatch in prepare and execute allowlists',
         )
+        self.assertGreaterEqual(self.bridge.count('AutoCalNativeActionManager.Action.FINISH_AUTOCAL'), 2)
+        self.assertGreaterEqual(self.bridge.count('AutoCalNativeActionManager.Action.FINISH_AUTOMATCH'), 2)
+        self.assertIn('executeFinish(prepared, startedAt)', self.action)
+        self.assertIn('AutoCalProtocol.VECT_AUTOCAL_U8_1', self.action)
+        self.assertIn('AutoCalProtocol.VECT_AUTOCAL_U8_0', self.action)
+        self.assertIn('Finish AutoCal não persistiu', self.action)
 
     def test_enable_disable_and_status_are_exact_portmon_frames(self):
         self.assertIn('CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)', self.protocol)
@@ -194,6 +200,10 @@ class NativeAutoCalContract(unittest.TestCase):
                     check(AutoCalProtocol.setEnabled(false).hex() == "12 4A 01 00 5D")
                     check(AutoCalProtocol.CMD_NATIVE_STATUS.hex() == "48 0B 53")
                     check(AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH).hex() == "02 24 04 08 32")
+                    check(AutoCalProtocol.VECT_AUTOCAL_U8_0.address == 0x0165)
+                    check(AutoCalProtocol.VECT_AUTOCAL_U8_0.index == 0)
+                    check(AutoCalProtocol.VECT_AUTOCAL_U8_1.index == 1)
+                    check(AutoCalProtocol.finishAutoCalCommit(6).hex() == "13 65 01 00 06 7F")
                     check(AutoCalProtocol.expectedElements(AutoCalProtocol.MUL_ACT, 100) == 30)
                     val payload = ByteArray(14)
                     payload[12] = 1
