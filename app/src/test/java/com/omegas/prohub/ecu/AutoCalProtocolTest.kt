@@ -248,6 +248,21 @@ class AutoCalProtocolTest {
     }
 
     @Test
+    fun `finish autocal grava max automatch no contador preservando largura nativa`() {
+        assertArrayEquals(
+            hex("12 74 01 03 8A"),
+            AutoCalProtocol.finishAutoCalCommit(maxAutomatch = 3, counterWidthBytes = 1),
+        )
+        assertArrayEquals(
+            hex("13 74 01 03 00 8B"),
+            AutoCalProtocol.finishAutoCalCommit(maxAutomatch = 3, counterWidthBytes = 2),
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            AutoCalProtocol.finishAutoCalCommit(maxAutomatch = 3, counterWidthBytes = 4)
+        }
+    }
+
+    @Test
     fun `contador automatch aceita payload observado u8 e firmware u16`() {
         val oneByte = AutoCalProtocol.decode(
             AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
