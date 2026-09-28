@@ -27,8 +27,10 @@ def test_native_automatch_bracket_is_epoch_bound_and_read_only():
     assert "event.afterCount" in text
     assert "before.autoMatchCount" in text
     assert "afterAutoMatchCount" in text
-    assert "appWritePerformed" not in text
+    assert '.put("appWritePerformed", false)' in text
+    assert '.put("appAutomaticWrite", false)' in text
     assert "Mp48WorkClass.MANUAL_WRITE" not in text
+    assert "serial.transaction" not in text
 
     assert "NativeAutoMatchEvidenceBracket.evaluate" in monitor
     assert '"nativeAutoMatchEvidence"' in monitor
