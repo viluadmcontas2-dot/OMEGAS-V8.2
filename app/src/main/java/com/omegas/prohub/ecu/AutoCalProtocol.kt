@@ -3,15 +3,24 @@ package com.omegas.prohub.ecu
 /**
  * Contrato somente leitura dos objetos AutoCal já identificados.
  *
- * Não contém reset, ações, escrita ou acesso à porta USB.
- * O decoder interpreta bytes; a validação 18/30 usa MODULE_VERSION quando a
- * fotografia completa da ECU está disponível.
+ * O decoder interpreta bytes e gera somente frames AutoCal cuja forma foi
+ * provada. Dimensão de vetor é propriedade do objeto/protocolo observado; não
+ * é inferida de MODULE_VERSION.
  */
 object AutoCalProtocol {
     const val READ_SCALAR = 0x09
     const val READ_VECTOR = 0x29
     const val READ_INDEXED = 0x0A
     const val WRITE_U8 = 0x12
+    const val AUTOCAL_ACTION_COMMAND = 0x24
+    const val AUTOCAL_ACTION_SUBOP_CONTROL = 0x04
+
+    enum class ManualActionMode(val wireValue: Int) {
+        RESET_PETROL(0x01),
+        RESET_GAS(0x02),
+        RESET_ALL(0x04),
+        MANUAL_AUTOMATCH(0x08),
+    }
 
     /** Probe leve observado no ProgBase; payload de 14 bytes. */
     val CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)
@@ -85,13 +94,6 @@ object AutoCalProtocol {
     val PETR_MNFLD_PRESS_RV = Field("PETR_MNFLD_PRESS_RV", 0x018D, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
     val GAS_MNFLD_PRESS_RV = Field("GAS_MNFLD_PRESS_RV", 0x018E, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
 
-    private val moduleSizedFields = setOf(
-        PETR_INJ_TBP.identity,
-        MUL_ACT.identity,
-        PETR_MNFLD_PRESS_RV.identity,
-        GAS_MNFLD_PRESS_RV.identity,
-    )
-
     /**
      * Leitura somente observacional. MODULE_VERSION vem primeiro para que o
      * snapshot consiga validar a forma dos quatro vetores dinâmicos.
@@ -121,11 +123,9 @@ object AutoCalProtocol {
         MAX_RPM_FOR_AUTOCAL,
     )
 
-    fun expectedElements(field: Field, moduleVersion: Int?): Int? = when {
-        field.identity in moduleSizedFields && moduleVersion == null -> null
-        field.identity in moduleSizedFields && moduleVersion == 4 -> 30
-        field.identity in moduleSizedFields -> 18
-        else -> field.expectedElementsHint
+    fun expectedElements(field: Field, moduleVersion: Int?): Int? {
+        @Suppress("UNUSED_VARIABLE") val observedModuleVersion = moduleVersion
+        return field.expectedElementsHint
     }
 
     fun requireExpectedShape(decoded: Decoded, moduleVersion: Int?) {
@@ -144,6 +144,16 @@ object AutoCalProtocol {
 
     /** Frames confirmados no PortmonLOGNOVO: 12 4A 01 01 5E / 12 4A 01 00 5D. */
     fun setEnabled(enabled: Boolean): ByteArray = frameWriteU8(AUTO_CAL_ENABLE.address, if (enabled) 1 else 0)
+
+    /** ProgBase: command 0x24, payload [0x04, mode]. */
+    fun manualAction(mode: ManualActionMode): ByteArray = Mp48Protocol.frame(
+        byteArrayOf(
+            0x02,
+            AUTOCAL_ACTION_COMMAND.toByte(),
+            AUTOCAL_ACTION_SUBOP_CONTROL.toByte(),
+            mode.wireValue.toByte(),
+        ),
+    )
 
     fun decodeNativeStatus(status: Int, payload: ByteArray): NativeStatus {
         require(status == Mp48Protocol.STATUS_ACK) {
