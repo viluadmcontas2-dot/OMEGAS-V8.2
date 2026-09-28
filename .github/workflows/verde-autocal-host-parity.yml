@@ -1,0 +1,79 @@
+name: OmegasVerde AutoCal host parity
+
+on:
+  push:
+    branches:
+      - OmegasVerde
+    paths:
+      - '.github/workflows/verde-autocal-host-parity.yml'
+      - 'app/src/main/java/com/omegas/prohub/autocal/**'
+      - 'app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt'
+      - 'app/src/main/java/com/omegas/prohub/ecu/AutoCalScale.kt'
+      - 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'
+      - 'app/src/main/assets/ui/screens/autocal-cockpit.js'
+      - 'app/src/main/assets/ui/core/autocal-api.js'
+      - 'tests/test_native_autocal_contract.py'
+      - 'tests/test_autocal_realtime_contract.py'
+      - 'tests/ui/autocal-cockpit.test.cjs'
+      - 'app/src/test/java/com/omegas/prohub/autocal/**'
+      - 'docs/autocal/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: omegas-verde-autocal-host-parity
+  cancel-in-progress: true
+
+jobs:
+  host-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prove exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "AUTOCAL_PARITY_SHA=$GITHUB_SHA"
+          echo "AUTOCAL_PARITY_TREE=$(git rev-parse HEAD^{tree})"
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: gradle
+      - name: Fast host-parity contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tests/test_native_autocal_contract.py
+          python3 -B tests/test_autocal_realtime_contract.py
+          node tests/ui/autocal-cockpit.test.cjs
+      - name: Targeted JVM AutoCal tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest             --tests 'com.omegas.prohub.ecu.AutoCalProtocolTest'             --tests 'com.omegas.prohub.autocal.AutoCalNativeActionManagerTest'
+      - name: Publish canonical gate receipt to WU 104
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GATE_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "### AutoCal host-parity gate"
+            echo
+            echo "- SHA: `$GITHUB_SHA`"
+            echo "- status: **$GATE_STATUS**"
+            echo "- contracts: native protocol/Finish + 1 Hz grouped acquisition + cockpit"
+            echo "- JVM: AutoCalProtocolTest + AutoCalNativeActionManagerTest"
+            echo "- APK: **not generated**"
+            echo "- run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > /tmp/autocal-gate.md
+          gh issue comment 104 --repo "$GITHUB_REPOSITORY" --body-file /tmp/autocal-gate.md
