@@ -595,7 +595,7 @@
                       <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>AutoMatch manual replica a ação explícita do ProgBase e exige confirmação. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente. Backup da Curva K é manual.</p>
+                      <p>AutoMatch manual replica a ação explícita do ProgBase e exige confirmação. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente. Backup da Curva K é manual. Readquirir GNV/Gasolina fica visível acima para uso diário.</p>
                     </section>
                   </div>
                 </details>
