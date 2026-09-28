@@ -14,6 +14,7 @@ object AutoCalProtocol {
     const val WRITE_U8 = 0x12
     const val WRITE_INDEXED_U8 = 0x13
     const val WRITE_U16 = 0x13
+    const val WRITE_VECTOR_EXTENDED = 0x37
     const val AUTOCAL_ACTION_COMMAND = 0x24
     const val AUTOCAL_ACTION_SUBOP_CONTROL = 0x04
 
@@ -264,6 +265,34 @@ object AutoCalProtocol {
                 ((value ushr 8) and 0xFF).toByte(),
             ),
         )
+    }
+
+    /** ProgBase/AEB SetVector: compacto até 5 bytes; 0x37 estendido acima disso. */
+    fun writeVectorU8(address: Int, values: IntArray): ByteArray {
+        require(address in 0..0xFFFF)
+        require(values.isNotEmpty())
+        require(values.all { it in 0..0xFF })
+        val payload = values.map { it.toByte() }.toByteArray()
+        return if (payload.size <= 5) {
+            Mp48Protocol.frame(
+                byteArrayOf(
+                    (0x31 + payload.size).toByte(),
+                    (address and 0xFF).toByte(),
+                    ((address ushr 8) and 0xFF).toByte(),
+                ) + payload,
+            )
+        } else {
+            val blockLength = payload.size + 2
+            require(blockLength <= 0xFF)
+            Mp48Protocol.frame(
+                byteArrayOf(
+                    WRITE_VECTOR_EXTENDED.toByte(),
+                    (address and 0xFF).toByte(),
+                    blockLength.toByte(),
+                    ((address ushr 8) and 0xFF).toByte(),
+                ) + payload,
+            )
+        }
     }
 
     fun readScalar(address: Int): ByteArray = genericRead(READ_SCALAR, address)
