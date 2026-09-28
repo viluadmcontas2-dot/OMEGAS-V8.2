@@ -78,9 +78,9 @@ class AutoCalNativeActionManager(
             false,
         ),
         RESET_K_FACTOR(
-            AutoCalProtocol.resetKFactorEeprom(),
+            byteArrayOf(),
             "Reset Curva K (ProgBase)",
-            "Replica ActionResetKFactorExecute: grava VECT_AUTOCAL_EE 0x0164[4] = 1.0 pelo SetVector original e exige readback [1,1,1,1].",
+            "Replica ActionResetKFactorExecute: define os 30 elementos de MUL_ACT como 1.0 (Q14 0x4000), ponto a ponto, e exige readback completo.",
             true,
         ),
         RESET_PETROL(
@@ -203,6 +203,8 @@ class AutoCalNativeActionManager(
                     pointDeleteTarget != null -> "MASK U8[18] GNV + gasolina → 01 24 05 2A"
                     action == Action.FINISH_AUTOCAL || action == Action.FINISH_AUTOMATCH ->
                         "READ MAX_AUTOMATCH 0x0165:2 → WRITE NUM_AUTOMATCH_EXECUTED 0x0174 → READBACK"
+                    action == Action.RESET_K_FACTOR ->
+                        "30 × SetNumber MUL_ACT 0x0161[index] = 1.0 (Q14 0x4000) → READBACK"
                     else -> action.request.hex()
                 },
             )
@@ -278,6 +280,7 @@ class AutoCalNativeActionManager(
             when (prepared.action) {
                 Action.DELETE_POINT -> executePointDelete(prepared, startedAt)
                 Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> executeFinish(prepared, startedAt)
+                Action.RESET_K_FACTOR -> executeResetKFactor(prepared, startedAt)
                 else -> executeFixedAction(prepared, startedAt)
             }
         } catch (error: Exception) {
@@ -309,34 +312,52 @@ class AutoCalNativeActionManager(
 
     private fun executeFinish(prepared: Preparation, startedAt: Long) {
         ensureSession(prepared)
-        update("READING_FINISH_SOURCE", "Lendo estado nativo antes de finalizar", 12, prepared)
+        update("READING_FINISH_SOURCE", "Lendo máximo e contador AutoMatch antes de finalizar", 12, prepared)
 
-        val sourceReply = transaction(
-            AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_1),
-            "AutoCal finish source row1",
+        val maxReply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.MAX_AUTOMATCH),
+            "AutoCal finish MAX_AUTOMATCH",
             1_200,
             prepared.sessionId,
         )
-        requireAck(sourceReply, "A ECU não confirmou VECT_AUTOCAL_U8_1")
-        val source = AutoCalProtocol.decode(
-            AutoCalProtocol.VECT_AUTOCAL_U8_1,
-            sourceReply.status,
-            sourceReply.payload,
+        requireAck(maxReply, "A ECU não confirmou MAX_AUTOMATCH")
+        val maxAutomatch = AutoCalProtocol.decode(
+            AutoCalProtocol.MAX_AUTOMATCH,
+            maxReply.status,
+            maxReply.payload,
         ).rawValues.single()
 
         ensureSession(prepared)
-        val commitFrame = AutoCalProtocol.finishAutoCalCommit(source)
+        val counterReply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
+            "AutoCal finish contador antes",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(counterReply, "A ECU não confirmou NUM_AUTOMATCH_EXECUTED")
+        val beforeCounter = AutoCalProtocol.decode(
+            AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+            counterReply.status,
+            counterReply.payload,
+        ).rawValues.single()
+        val counterWidthBytes = counterReply.payload.size
+        require(counterWidthBytes == 1 || counterWidthBytes == 2) {
+            "NUM_AUTOMATCH_EXECUTED retornou largura inesperada: $counterWidthBytes"
+        }
+
+        ensureSession(prepared)
+        val commitFrame = AutoCalProtocol.finishAutoCalCommit(maxAutomatch, counterWidthBytes)
         update(
             "SENDING_FINISH_COMMIT",
-            "Gravando estado final nativo",
+            "Finalizando ciclo AutoMatch nativo",
             42,
             prepared,
             JSONObject()
-                .put("finishSource", "VECT_AUTOCAL_U8_1")
-                .put("finishTarget", "VECT_AUTOCAL_U8_0")
-                .put("sourceIndex", 1)
-                .put("targetIndex", 0)
-                .put("value", source)
+                .put("finishSource", "MAX_AUTOMATCH")
+                .put("finishTarget", "NUM_AUTOMATCH_EXECUTED")
+                .put("beforeCounter", beforeCounter)
+                .put("maxAutomatch", maxAutomatch)
+                .put("counterWidthBytes", counterWidthBytes)
                 .put("commandHex", commitFrame.hex()),
         )
         val writeReply = transaction(
@@ -350,21 +371,21 @@ class AutoCalNativeActionManager(
         if (prepared.action == Action.FINISH_AUTOCAL) Thread.sleep(100L)
 
         ensureSession(prepared)
-        update("VERIFYING_FINISH", "Confirmando estado final da ECU", 68, prepared)
+        update("VERIFYING_FINISH", "Confirmando contador final da ECU", 68, prepared)
         val targetReply = transaction(
-            AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_0),
-            "AutoCal finish target row0 readback",
+            AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
+            "AutoCal finish contador readback",
             1_200,
             prepared.sessionId,
         )
-        requireAck(targetReply, "A ECU não confirmou o readback de VECT_AUTOCAL_U8_0")
+        requireAck(targetReply, "A ECU não confirmou o readback de NUM_AUTOMATCH_EXECUTED")
         val committed = AutoCalProtocol.decode(
-            AutoCalProtocol.VECT_AUTOCAL_U8_0,
+            AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
             targetReply.status,
             targetReply.payload,
         ).rawValues.single()
-        require(committed == source) {
-            "Finish AutoCal não persistiu: origem=$source, readback=$committed"
+        require(committed == maxAutomatch) {
+            "Finish AutoCal não persistiu: MAX_AUTOMATCH=$maxAutomatch, contador=$committed"
         }
 
         ensureSession(prepared)
@@ -376,14 +397,63 @@ class AutoCalNativeActionManager(
             after = after,
             startedAt = startedAt,
             details = JSONObject()
-                .put("finishSource", "VECT_AUTOCAL_U8_1")
-                .put("finishTarget", "VECT_AUTOCAL_U8_0")
-                .put("sourceIndex", 1)
-                .put("targetIndex", 0)
-                .put("sourceValue", source)
+                .put("finishSource", "MAX_AUTOMATCH")
+                .put("finishTarget", "NUM_AUTOMATCH_EXECUTED")
+                .put("beforeCounter", beforeCounter)
+                .put("maxAutomatch", maxAutomatch)
                 .put("committedValue", committed)
+                .put("counterWidthBytes", counterWidthBytes)
                 .put("settleMs", if (prepared.action == Action.FINISH_AUTOCAL) 100 else 0)
                 .put("commandHex", commitFrame.hex())
+                .put("readbackValid", true),
+        )
+    }
+
+    private fun executeResetKFactor(prepared: Preparation, startedAt: Long) {
+        val frames = AutoCalProtocol.resetKFactorMulActFrames()
+        var lastReply: UsbProtocolReply? = null
+        frames.forEachIndexed { index, frame ->
+            ensureSession(prepared)
+            update(
+                "RESETTING_K",
+                "Neutralizando Curva K · ${index + 1}/${frames.size}",
+                8 + ((index + 1) * 62 / frames.size),
+                prepared,
+                JSONObject()
+                    .put("index", index)
+                    .put("valueRaw", 0x4000)
+                    .put("value", 1.0)
+                    .put("commandHex", frame.hex()),
+            )
+            val reply = transaction(
+                frame,
+                "AutoCal RESET_K_FACTOR MUL_ACT[$index]",
+                1_200,
+                prepared.sessionId,
+            )
+            requireAck(reply, "A ECU não confirmou o ponto K ${index + 1}/${frames.size}")
+            lastReply = reply
+        }
+
+        ensureSession(prepared)
+        update("VERIFYING_K_RESET", "Confirmando Curva K neutra na ECU", 78, prepared)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        val actual = after.field(AutoCalProtocol.MUL_ACT)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawValues
+        require(actual != null && actual.size == frames.size && actual.all { it == 0x4000 }) {
+            "Reset K não persistiu: MUL_ACT não retornou 30 fatores 1.0"
+        }
+        confirm(
+            prepared = prepared,
+            reply = requireNotNull(lastReply),
+            after = after,
+            startedAt = startedAt,
+            details = JSONObject()
+                .put("finishTarget", "MUL_ACT")
+                .put("pointCount", frames.size)
+                .put("neutralRaw", 0x4000)
+                .put("neutralFactor", 1.0)
                 .put("readbackValid", true),
         )
     }
@@ -539,17 +609,6 @@ class AutoCalNativeActionManager(
         .put("automaticBackup", false)
 
     private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
-        if (action == Action.RESET_K_FACTOR) {
-            val actual = after.field(AutoCalProtocol.VECT_AUTOCAL_EE)
-                ?.takeIf { it.status == AutoCalFieldStatus.VALID }
-                ?.rawValues
-            require(actual != null && actual.contentEquals(intArrayOf(1, 1, 1, 1))) {
-                "Readback VECT_AUTOCAL_EE divergente após Reset K: " +
-                    (actual?.joinToString(prefix = "[", postfix = "]") ?: "sem dado")
-            }
-            return
-        }
-
         val expected = action.expectedEnableReadback ?: return
         val actual = after.field(AutoCalProtocol.AUTO_CAL_ENABLE)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
