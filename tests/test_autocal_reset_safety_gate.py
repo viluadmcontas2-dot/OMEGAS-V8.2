@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
 UI = ROOT / "app/src/main/assets/ui/screens/autocal-cockpit.js"
 MANAGER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
+PROTOCOL = ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt"
 KFACTOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt"
 
 class AutoCalResetSafetyGateTest(unittest.TestCase):
@@ -30,15 +31,19 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         api = (ROOT / "app/src/main/assets/ui/core/autocal-api.js").read_text(encoding="utf-8")
         bridge = BRIDGE.read_text(encoding="utf-8")
         manager = MANAGER.read_text(encoding="utf-8")
+        protocol = PROTOCOL.read_text(encoding="utf-8")
         expected = {
-            "RESET_PETROL": "Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01))",
-            "RESET_GAS": "Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02))",
-            "RESET_ALL": "Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04))",
+            "RESET_PETROL": ("RESET_PETROL(0x01)", "ManualActionMode.RESET_PETROL"),
+            "RESET_GAS": ("RESET_GAS(0x02)", "ManualActionMode.RESET_GAS"),
+            "RESET_ALL": ("RESET_ALL(0x04)", "ManualActionMode.RESET_ALL"),
         }
-        for action, frame in expected.items():
+        self.assertIn("AUTOCAL_ACTION_COMMAND = 0x24", protocol)
+        self.assertIn("AUTOCAL_ACTION_SUBOP_CONTROL = 0x04", protocol)
+        for action, (mode, manager_route) in expected.items():
             self.assertIn(f'data-autocal-action="{action}"', ui)
             self.assertIn(f"AutoCalNativeActionManager.Action.{action}", bridge)
-            self.assertIn(frame, manager)
+            self.assertIn(mode, protocol)
+            self.assertIn(manager_route, manager)
         self.assertIn("this.prepare(button.dataset.autocalAction)", ui)
         self.assertIn("prepare: action => invoke('prepareNativeAction'", api)
         self.assertIn("execute: preparationId => invoke('executeNativeAction'", api)
