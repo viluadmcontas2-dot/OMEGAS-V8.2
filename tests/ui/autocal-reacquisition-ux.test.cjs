@@ -13,11 +13,11 @@ assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RES
 assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina<\/button>/,
   'Reset Petrol deve aparecer como intenção humana de readquirir gasolina');
 assert.ok(
-  cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Reset avançado</summary>'),
+  cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
   'reaquisição diária deve aparecer antes do reset pesado'
 );
 assert.match(cockpit, /<summary>Reset avançado<\/summary>/,
-  'Curva K e reset completo devem ficar em complexidade sob demanda');
+  'AutoMatch manual, Curva K e reset completo devem ficar em complexidade sob demanda');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
 assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Reset Curva K<\/button>/);
