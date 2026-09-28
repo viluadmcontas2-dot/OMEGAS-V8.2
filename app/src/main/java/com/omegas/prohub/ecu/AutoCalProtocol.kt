@@ -83,10 +83,16 @@ object AutoCalProtocol {
     val MAX_AUTOMATCH = Field("MAX_AUTOMATCH", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 2)
     /** Alias de compatibilidade para snapshots/testes antigos; 0x0165:2 é MaxAutomatch. */
     val VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH
+    /** ProgBase DFM: ntVectorElement, SerialCode 0x0167, DataLength=2, RowIndex=1. */
+    val EN_CDN_T_THD = Field("EN_CDN_T_THD", 0x0167, Encoding.U16_LE, Shape.INDEXED, 1, index = 1)
     val PETR_INJ_TBUF_GAS_PREV = Field("PETR_INJ_TBUF_GAS_PREV", 0x015D, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF_GAS_PREV = Field("MNFLD_PRESS_BUF_GAS_PREV", 0x015E, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
     val PETR_INJ_TBUF_GAS = Field("PETR_INJ_TBUF_GAS", 0x015F, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF_GAS = Field("MNFLD_PRESS_BUF_GAS", 0x0160, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
+    /** ProgBase DFM: signed 2-byte scalar. Transform retained RAW until coefficients are fully closed. */
+    val LIMIT_PRESSURE_MIN = Field("LIMIT_PRESSURE_MIN", 0x0169, Encoding.S16_LE, Shape.SCALAR, 1)
+    /** ProgBase DFM: signed 2-byte scalar. Transform retained RAW until coefficients are fully closed. */
+    val LIMIT_PRESSURE_MAX = Field("LIMIT_PRESSURE_MAX", 0x016A, Encoding.S16_LE, Shape.SCALAR, 1)
     val MUL_ACT = Field("MUL_ACT", 0x0161, Encoding.Q14_U16_LE, Shape.VECTOR, 30, "FACTOR")
     val PETR_INJ_TBUF = Field("PETR_INJ_TBUF", 0x0162, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF = Field("MNFLD_PRESS_BUF", 0x0163, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
@@ -136,10 +142,13 @@ object AutoCalProtocol {
         VECT_AUTOCAL_U8_0,
         VECT_AUTOCAL_U8_1,
         MAX_AUTOMATCH,
+        EN_CDN_T_THD,
         PETR_INJ_TBUF_GAS_PREV,
         MNFLD_PRESS_BUF_GAS_PREV,
         PETR_INJ_TBUF_GAS,
         MNFLD_PRESS_BUF_GAS,
+        LIMIT_PRESSURE_MIN,
+        LIMIT_PRESSURE_MAX,
         PETR_INJ_TBUF,
         MNFLD_PRESS_BUF,
         VECT_AUTOCAL_EE,
