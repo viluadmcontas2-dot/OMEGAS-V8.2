@@ -14,6 +14,9 @@ on:
       - 'app/src/main/assets/ui/core/autocal-api.js'
       - 'tests/test_native_autocal_contract.py'
       - 'tests/test_autocal_realtime_contract.py'
+      - 'tests/test_progbase_finish_rtti_oracle.py'
+      - 'tests/fixtures/progbase-finish-text-51a390.bin.b64'
+      - 'tests/fixtures/progbase-autocaldm-field-rtti.bin.b64'
       - 'tests/ui/autocal-cockpit.test.cjs'
       - 'app/src/test/java/com/omegas/prohub/autocal/**'
       - 'docs/autocal/**'
@@ -51,6 +54,7 @@ jobs:
           set -euo pipefail
           python3 -B tests/test_native_autocal_contract.py
           python3 -B tests/test_autocal_realtime_contract.py
+          python3 -B tests/test_progbase_finish_rtti_oracle.py
           node tests/ui/autocal-cockpit.test.cjs
       - name: Targeted JVM AutoCal tests
         shell: bash
