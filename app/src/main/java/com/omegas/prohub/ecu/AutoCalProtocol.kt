@@ -295,6 +295,32 @@ object AutoCalProtocol {
         }
     }
 
+    /** ProgBase/AEB SetVector U16 little-endian using the extended 0x37 grammar. */
+    fun writeVectorU16(address: Int, values: IntArray): ByteArray {
+        require(address in 0..0xFFFF)
+        require(values.isNotEmpty())
+        require(values.all { it in 0..0xFFFF })
+        val payload = ByteArray(values.size * 2)
+        values.forEachIndexed { index, value ->
+            payload[index * 2] = (value and 0xFF).toByte()
+            payload[index * 2 + 1] = ((value ushr 8) and 0xFF).toByte()
+        }
+        val blockLength = payload.size + 2
+        require(blockLength <= 0xFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_VECTOR_EXTENDED.toByte(),
+                (address and 0xFF).toByte(),
+                blockLength.toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+            ) + payload,
+        )
+    }
+
+    /** ProgBase ActionResetKFactorExecute persistent AutoCal vector: four U16 ones. */
+    fun resetKFactorEeprom(): ByteArray =
+        writeVectorU16(VECT_AUTOCAL_EE.address, intArrayOf(1, 1, 1, 1))
+
     fun readScalar(address: Int): ByteArray = genericRead(READ_SCALAR, address)
     fun readVector(address: Int): ByteArray = genericRead(READ_VECTOR, address)
 
