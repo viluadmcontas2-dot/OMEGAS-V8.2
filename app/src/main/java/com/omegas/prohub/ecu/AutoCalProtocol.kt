@@ -12,6 +12,7 @@ object AutoCalProtocol {
     const val READ_VECTOR = 0x29
     const val READ_INDEXED = 0x0A
     const val WRITE_U8 = 0x12
+    const val WRITE_INDEXED_U8 = 0x13
     const val AUTOCAL_ACTION_COMMAND = 0x24
     const val AUTOCAL_ACTION_SUBOP_CONTROL = 0x04
 
@@ -74,6 +75,8 @@ object AutoCalProtocol {
     val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
     val NUM_BUF_UPD_PETR = Field("NUM_BUF_UPD_PETR", 0x015B, Encoding.U16_LE, Shape.VECTOR, 18)
     val NUM_BUF_UPD_GAS = Field("NUM_BUF_UPD_GAS", 0x015C, Encoding.U16_LE, Shape.VECTOR, 18)
+    /** ProgBase DFM: row/default 0, AUTOCAL_IDLE_MIN_BUF_PETR_THD. Finish copies row 1 into row 0. */
+    val VECT_AUTOCAL_U8_0 = Field("VECT_AUTOCAL_U8_0", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 0)
     val VECT_AUTOCAL_U8_1 = Field("VECT_AUTOCAL_U8_1", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 1)
     val MAX_AUTOMATCH = Field("MAX_AUTOMATCH", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 2)
     /** Alias de compatibilidade para snapshots/testes antigos; 0x0165:2 é MaxAutomatch. */
@@ -108,6 +111,7 @@ object AutoCalProtocol {
         AUTO_CAL_ENABLE,
         NUM_BUF_UPD_PETR,
         NUM_BUF_UPD_GAS,
+        VECT_AUTOCAL_U8_0,
         VECT_AUTOCAL_U8_1,
         MAX_AUTOMATCH,
         PETR_INJ_TBUF_GAS_PREV,
@@ -187,6 +191,25 @@ object AutoCalProtocol {
         Shape.VECTOR -> readVector(field.address)
         Shape.INDEXED -> readIndexed(field.address, field.index!!)
     }
+
+    /** SetNumber com corpo [index,value]: 0x11 + 2 bytes = opcode 0x13. */
+    fun writeIndexedU8(address: Int, index: Int, value: Int): ByteArray {
+        require(address in 0..0xFFFF)
+        require(index in 0..0xFF)
+        require(value in 0..0xFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_INDEXED_U8.toByte(),
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+                index.toByte(),
+                value.toByte(),
+            ),
+        )
+    }
+
+    fun finishAutoCalCommit(valueFromRow1: Int): ByteArray =
+        writeIndexedU8(VECT_AUTOCAL_U8_0.address, VECT_AUTOCAL_U8_0.index!!, valueFromRow1)
 
     fun readScalar(address: Int): ByteArray = genericRead(READ_SCALAR, address)
     fun readVector(address: Int): ByteArray = genericRead(READ_VECTOR, address)
