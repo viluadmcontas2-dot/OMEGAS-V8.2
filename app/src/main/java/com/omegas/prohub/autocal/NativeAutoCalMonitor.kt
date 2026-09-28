@@ -802,6 +802,12 @@ class NativeAutoCalMonitor(
 
 
         if (autoMatchCounterEvent != null) {
+            val epochEvidence = autoMatchEvidence?.toJson() ?: JSONObject()
+                .put("state", NativeAutoMatchEvidenceBracket.State.INCONCLUSIVE.name)
+                .put("reason", "EVIDENCE_NOT_AVAILABLE")
+                .put("appWritePerformed", false)
+                .put("appAutomaticWrite", false)
+                .put("nativeFirmwareFormulaInferred", false)
             val epoch = JSONObject()
                 .put("eventType", "NATIVE_AUTOMATCH_EPOCH")
                 .put("source", SOURCE_NATIVE_AUTOCAL)
@@ -812,7 +818,7 @@ class NativeAutoCalMonitor(
                 .put("beforeCount", autoMatchCounterEvent.beforeCount)
                 .put("afterCount", autoMatchCounterEvent.afterCount)
                 .put("counterDelta", autoMatchCounterEvent.delta)
-                .put("evidence", autoMatchEvidence.toJson())
+                .put("evidence", epochEvidence)
                 .put("acquisition", acquisition)
                 .put("nativeStatus", JSONObject()
                     .put("nativeFlag13", probe.nativeFlag13)
