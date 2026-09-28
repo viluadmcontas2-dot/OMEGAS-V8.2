@@ -13,6 +13,7 @@ object AutoCalProtocol {
     const val READ_INDEXED = 0x0A
     const val WRITE_U8 = 0x12
     const val WRITE_INDEXED_U8 = 0x13
+    const val WRITE_U16 = 0x13
     const val AUTOCAL_ACTION_COMMAND = 0x24
     const val AUTOCAL_ACTION_SUBOP_CONTROL = 0x04
 
@@ -237,8 +238,39 @@ object AutoCalProtocol {
         )
     }
 
-    fun finishAutoCalCommit(valueFromRow1: Int): ByteArray =
-        frameWriteU8(VECT_AUTOCAL_U8_0.address, valueFromRow1)
+    /**
+     * ProgBase ActionFinishAutocalExecute / BtnFinishAutomatchClick:
+     * MAX_AUTOMATCH (TAutoCalDM +0x7C, 0x0165:2) ->
+     * NUM_AUTOMATCH_EXECUTED (TAutoCalDM +0xCC, 0x0174).
+     *
+     * O TAebNumber preserva a largura física do número; algumas ECUs devolvem
+     * o contador em U8 e outras em U16. OMEGAS espelha a largura observada no
+     * readback imediatamente anterior ao commit.
+     */
+    fun finishAutoCalCommit(maxAutomatch: Int, counterWidthBytes: Int): ByteArray {
+        require(counterWidthBytes == 1 || counterWidthBytes == 2) {
+            "Largura do contador AutoMatch deve ser 1 ou 2 bytes"
+        }
+        return when (counterWidthBytes) {
+            1 -> frameWriteU8(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
+            2 -> frameWriteU16(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
+            else -> error("largura validada acima")
+        }
+    }
+
+    private fun frameWriteU16(address: Int, value: Int): ByteArray {
+        require(address in 0..0xFFFF)
+        require(value in 0..0xFFFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_U16.toByte(),
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+                (value and 0xFF).toByte(),
+                ((value ushr 8) and 0xFF).toByte(),
+            ),
+        )
+    }
 
     fun readScalar(address: Int): ByteArray = genericRead(READ_SCALAR, address)
     fun readVector(address: Int): ByteArray = genericRead(READ_VECTOR, address)
