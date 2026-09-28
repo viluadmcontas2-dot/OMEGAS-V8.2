@@ -84,6 +84,7 @@ assert.equal(api.includes('executeNativeAction'), true);
 assert.equal(api.includes('preparePointDelete'), true);
 assert.equal(api.includes('preparePointDeleteBatch'), true);
 assert.equal(cockpit.includes('selectedAcquiredPoints = new Set()'), true);
+assert.equal(cockpit.includes('this.selectedAcquiredPoints.clear();'), true);
 assert.equal(cockpit.includes('data-autocal-toggle-point-selection'), true);
 assert.equal(cockpit.includes('data-autocal-reacquire-selected'), true);
 assert.equal(cockpit.includes('requestSelectedPointReacquisition()'), true);
