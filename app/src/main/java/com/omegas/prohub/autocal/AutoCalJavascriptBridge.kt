@@ -273,7 +273,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("nativeAndroidConfirmation", false)
         .put("appAutomaticWrite", false)
         .put("nativeAutoMatchInsideEcu", true)
-        .put("manualAutoMatchExposed", false)
+        .put("manualAutoMatchExposed", true)
         .put("obdIndependent", true)
         .toString()
 
