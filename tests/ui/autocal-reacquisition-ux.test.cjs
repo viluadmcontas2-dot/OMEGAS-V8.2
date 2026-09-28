@@ -16,16 +16,22 @@ assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
   'reaquisição diária deve aparecer antes do reset pesado'
 );
-assert.match(cockpit, /<summary>Reset avançado<\/summary>/,
-  'AutoMatch manual, Curva K e reset completo devem ficar em complexidade sob demanda');
+assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
+  'AutoMatch manual, Finish, Curva K e reset completo devem ficar em complexidade sob demanda');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
-assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Reset Curva K<\/button>/);
+assert.match(cockpit, /data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual<\/button>/);
+assert.match(cockpit, /data-autocal-action="FINISH_AUTOCAL">Finalizar AutoCal<\/button>/);
+assert.match(cockpit, /data-autocal-action="FINISH_AUTOMATCH">Finalizar AutoMatch<\/button>/);
+assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Neutralizar K live \(OMEGAS\)<\/button>/);
 assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Nova aquisição completa<\/button>/);
-assert.match(cockpit, /Backup da Curva K é manual/i,
+assert.match(cockpit, /Backup não é requisito/i,
   'backup deve ser opcional e manual, nunca um gate do reset');
-assert.match(cockpit, /Readquirir GNV\/Gasolina fica visível acima/i,
-  'a interface deve explicitar que a ação diária não está no avançado');
+assert.ok(
+  cockpit.indexOf('data-autocal-action="RESET_GAS"') < cockpit.indexOf('<summary>Ações avançadas</summary>') &&
+  cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
+  'a interface deve manter a readquisição diária fora do menu avançado'
+);
 assert.match(cockpit, /RESET_GAS:\s*'Readquirir GNV'/);
 assert.match(cockpit, /RESET_PETROL:\s*'Readquirir gasolina'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
