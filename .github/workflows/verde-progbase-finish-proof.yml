@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 214b795e11f50f767de77115e3e2c48a9eba733d
       - name: Verify canonical ProgBase
         shell: bash
         run: |
