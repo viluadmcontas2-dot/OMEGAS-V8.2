@@ -14,7 +14,6 @@ object AutoCalPointDeleteProtocol {
     const val DELETE = 0
     const val PETROL_DELETE_ADDRESS = 0x016D
     const val GAS_DELETE_ADDRESS = 0x016E
-    private const val WRITE_VECTOR_U8 = 0x13
 
     enum class Fuel(val wireName: String, val label: String, val address: Int) {
         PETROL("PETROL", "gasolina", PETROL_DELETE_ADDRESS),
@@ -45,30 +44,26 @@ object AutoCalPointDeleteProtocol {
         fun toLabel(): String = "${fuel.label} · ponto ${index + 1} · Z$zone"
     }
 
-    fun writeMaskElement(fuel: Fuel, index: Int, value: Int): ByteArray {
-        require(index in 0 until POINT_COUNT) { "Ponto AutoCal inválido: $index" }
-        require(value == KEEP || value == DELETE) { "Mask AutoCal inválido: $value" }
-        val address = fuel.address
-        return Mp48Protocol.frame(
-            byteArrayOf(
-                WRITE_VECTOR_U8.toByte(),
-                (address and 0xFF).toByte(),
-                ((address ushr 8) and 0xFF).toByte(),
-                index.toByte(),
-                value.toByte(),
-            ),
-        )
+    fun maskFor(target: Target, fuel: Fuel): IntArray =
+        IntArray(POINT_COUNT) { index ->
+            if (fuel == target.fuel && index == target.index) DELETE else KEEP
+        }
+
+    /**
+     * ProgBase monta os 18 defaults em memória e chama ResetDefault(true),
+     * que persiste o TAebVector inteiro via TAebProtocol::SetVector.
+     */
+    fun writeMaskVector(fuel: Fuel, values: IntArray): ByteArray {
+        require(values.size == POINT_COUNT)
+        require(values.all { it == KEEP || it == DELETE })
+        return AutoCalProtocol.writeVectorU8(fuel.address, values)
     }
 
-    fun singlePointPlan(target: Target): List<ByteArray> = buildList {
-        for (fuel in listOf(Fuel.GAS, Fuel.PETROL)) {
-            for (index in 0 until POINT_COUNT) {
-                val value = if (fuel == target.fuel && index == target.index) DELETE else KEEP
-                add(writeMaskElement(fuel, index, value))
-            }
-        }
-        add(commit())
-    }
+    fun singlePointPlan(target: Target): List<ByteArray> = listOf(
+        writeMaskVector(Fuel.GAS, maskFor(target, Fuel.GAS)),
+        writeMaskVector(Fuel.PETROL, maskFor(target, Fuel.PETROL)),
+        commit(),
+    )
 
     fun commit(): ByteArray = Mp48Protocol.frame(byteArrayOf(0x01, 0x24, 0x05))
 }
