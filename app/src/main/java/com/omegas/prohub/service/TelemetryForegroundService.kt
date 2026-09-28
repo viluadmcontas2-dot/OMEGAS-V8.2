@@ -266,7 +266,7 @@ class TelemetryForegroundService : Service() {
         }
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
-        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 2_000L, 2_000L, TimeUnit.MILLISECONDS)
+        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 1_000L, 1_000L, TimeUnit.MILLISECONDS)
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
