@@ -543,6 +543,7 @@
       this.chartHistoryVisible = false;
       this.selectedReferenceIndex = null;
       this.selectedAcquiredPoint = null;
+      this.selectedAcquiredPoints = new Set();
       this.selectedBandIndex = null;
       this.inject();
       this.bind();
@@ -758,6 +759,15 @@
             Number(reacquire.dataset.autocalReacquireIndex),
           );
         }
+        const togglePoint = event.target.closest('[data-autocal-toggle-point-selection]');
+        if (togglePoint) {
+          this.toggleAcquiredPointSelection(
+            togglePoint.dataset.autocalReacquireFuel,
+            Number(togglePoint.dataset.autocalReacquireIndex),
+          );
+        }
+        if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
+        if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
         const exportButton = event.target.closest('[data-autocal-export-session]');
         if (exportButton?.dataset?.sessionId) this.api?.exportSession?.(exportButton.dataset.sessionId);
       });
@@ -1301,7 +1311,8 @@
         const y = yFor(point.mapBar).toFixed(1);
         const key = point.fuel + ':' + point.index;
         const selected = this.selectedAcquiredPoint === key;
-        return '<circle class="autocal-acquired-hit' + (selected ? ' selected' : '') +
+        const batchSelected = this.selectedAcquiredPoints.has(key);
+        return '<circle class="autocal-acquired-hit' + (selected ? ' selected' : '') + (batchSelected ? ' batch-selected' : '') +
           '" data-autocal-acquired-fuel="' + point.fuel +
           '" data-autocal-acquired-index="' + point.index +
           '" cx="' + x + '" cy="' + y + '" r="17"></circle>' +
@@ -1392,15 +1403,29 @@
           ? 'coletando · ' + Math.round(point.progress * 100) + '%'
           : 'coletando';
       const thresholdText = finite(point.threshold) !== null ? ' / ' + Math.round(point.threshold) : '';
+      const key = point.fuel + ':' + point.index;
+      const inBatch = this.selectedAcquiredPoints.has(key);
+      const selectedCount = this.selectedAcquiredPoints.size;
+      const batchActions = selectedCount > 0
+        ? '<div class="autocal-point-batch" data-count="' + selectedCount + '">' +
+          '<span><b>' + selectedCount + '</b> selecionado' + (selectedCount === 1 ? '' : 's') + ' para readquirir</span>' +
+          '<button type="button" data-autocal-reacquire-selected>Readquirir selecionados</button>' +
+          '<button type="button" class="secondary" data-autocal-clear-point-selection>Limpar</button></div>'
+        : '';
       host.innerHTML = '<b>' + point.fuelLabel + ' · ponto ' + point.point + ' · Z' + point.zone + ' · ' + progressText + '</b>' +
         '<span>' + point.petrolMs.toFixed(2) + ' ms · MAP ' + point.mapBar.toFixed(3) + ' bar · ' +
         Math.round(point.counter) + thresholdText + ' amostras</span>' +
+        '<div class="autocal-point-actions">' +
+        '<button type="button" class="secondary" data-autocal-toggle-point-selection ' +
+        'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '" aria-pressed="' + (inBatch ? 'true' : 'false') + '">' +
+        (inBatch ? 'Remover da seleção' : 'Selecionar junto') + '</button>' +
         '<button type="button" class="autocal-point-reacquire" data-autocal-reacquire-point ' +
         'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '">' +
-        'Readquirir este ponto</button>';
+        'Readquirir este ponto</button></div>' + batchActions;
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => {
-        const key = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
-        node.classList.toggle('selected', key === this.selectedAcquiredPoint);
+        const nodeKey = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
+        node.classList.toggle('selected', nodeKey === this.selectedAcquiredPoint);
+        node.classList.toggle('batch-selected', this.selectedAcquiredPoints.has(nodeKey));
       });
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => node.classList.remove('selected'));
     }
@@ -1419,6 +1444,45 @@
         return;
       }
       this.store.patch({ alert: { level: 'working', message: 'Readquisição enviada para a ECU. Aguarde ACK e readback deste ponto.' } });
+      this.refresh();
+    }
+ 
+    toggleAcquiredPointSelection(fuel, index) {
+      if (!Number.isInteger(index)) return;
+      const key = String(fuel) + ':' + String(index);
+      if (this.selectedAcquiredPoints.has(key)) this.selectedAcquiredPoints.delete(key);
+      else this.selectedAcquiredPoints.add(key);
+      this.inspectAcquiredPoint(fuel, index);
+      this.renderReferenceChart(this.snapshot);
+    }
+
+    clearAcquiredPointSelection() {
+      this.selectedAcquiredPoints.clear();
+      const current = this.selectedAcquiredPoint?.split(':');
+      if (current?.length === 2) this.inspectAcquiredPoint(current[0], Number(current[1]));
+      this.renderReferenceChart(this.snapshot);
+    }
+
+    requestSelectedPointReacquisition() {
+      if (!this.api?.available?.() || this.selectedAcquiredPoints.size === 0) return;
+      const targets = Array.from(this.selectedAcquiredPoints).map(key => {
+        const [fuel, rawIndex] = key.split(':');
+        return { fuel, index: Number(rawIndex) };
+      }).filter(item => Number.isInteger(item.index));
+      const prepared = this.api.preparePointDeleteBatch?.(targets) || { ok: false, error: 'Readquisição múltipla indisponível.' };
+      if (!prepared?.ok || !prepared?.prepared) {
+        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar os pontos selecionados.' } });
+        return;
+      }
+      const result = this.api.execute(prepared.preparationId);
+      if (result?.ok !== true) {
+        this.api?.cancelPreparation?.();
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível iniciar a readquisição selecionada.' } });
+        return;
+      }
+      const count = targets.length;
+      this.selectedAcquiredPoints.clear();
+      this.store.patch({ alert: { level: 'working', message: count + ' ponto' + (count === 1 ? '' : 's') + ' liberado' + (count === 1 ? '' : 's') + ' para nova aquisição. Confirmando ACK e readback…' } });
       this.refresh();
     }
 
