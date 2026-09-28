@@ -80,7 +80,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         if (service != null) {
             val kStatus = try { JSONObject(service.kFactor.statusJson()) } catch (_: Exception) { JSONObject() }
             if (kStatus.optBoolean("busy", false)) {
-                return kStatus.put("action", "RESET_K_FACTOR").put("manualOnly", true).toString()
+                return kStatus.put("action", "NEUTRALIZE_LIVE_K").put("manualOnly", true).toString()
             }
         }
         return currentNativeManager()?.statusJson()?.toString() ?: unavailable()
@@ -89,7 +89,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun prepareNativeAction(action: String): String {
         val normalized = action.trim().uppercase()
-        if (normalized == "RESET_K_FACTOR") {
+        if (normalized == "NEUTRALIZE_LIVE_K") {
             val activity = activityRef.get() ?: return unavailable()
             val service = activity.serviceOrNull() ?: return unavailable()
             if (service.kWriter.isBusy() || service.kFactor.isBusy() || currentNativeManager()?.isBusy() == true) {
@@ -111,9 +111,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 .put("ok", true)
                 .put("prepared", true)
                 .put("preparationId", preparationId)
-                .put("action", "RESET_K_FACTOR")
+                .put("action", "NEUTRALIZE_LIVE_K")
                 .put("label", "Neutralizar K live (OMEGAS)")
-                .put("description", "Neutraliza MUL_ACT live 0x0161[30] em 1.0 usando o writer do OMEGAS com ACK e readback. Não é ActionResetKFactorExecute do ProgBase: o original atua em VECT_AUTOCAL_EE 0x0164[4], cujo write exato permanece bloqueado até a codificação serial ser provada.")
+                .put("description", "Ferramenta própria do OMEGAS: neutraliza MUL_ACT live 0x0161[30] em 1.0 com ACK e readback. O Reset Curva K original do ProgBase é uma ação separada em VECT_AUTOCAL_EE 0x0164[4].")
                 .put("commandHex", "OMEGAS: MUL_ACT 0x0161[0..29] = Q14(1.0)")
                 .put("sessionId", sessionId)
                 .put("ecuMutation", true)
@@ -136,6 +136,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.RESET_K_FACTOR,
                 AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
                 AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
@@ -212,6 +213,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
                 AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.RESET_K_FACTOR,
                 AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
                 AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
@@ -256,7 +258,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             activity.refreshWebUi()
             JSONObject()
                 .put("ok", true)
-                .put("action", "RESET_K_FACTOR")
+                .put("action", "NEUTRALIZE_LIVE_K")
                 .put("confirmationPending", false)
                 .put("nativeAndroidConfirmation", false)
                 .put("writesStarted", true)
