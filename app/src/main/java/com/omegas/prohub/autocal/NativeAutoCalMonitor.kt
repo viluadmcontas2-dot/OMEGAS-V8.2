@@ -576,6 +576,9 @@ class NativeAutoCalMonitor(
                 error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
             )
         }
+        val afterEpoch = probe(expectedSessionId) ?: return
+        if (!NativeAutoCalEpochGuard.sameEpoch(probe, afterEpoch)) return
+
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = observations,
             expectedFields = AutoCalProtocol.READ_ONLY_FIELDS,
