@@ -299,7 +299,14 @@ class AutoCalNativeActionManager(
                 else -> executeFixedAction(prepared, startedAt)
             }
         } catch (error: Exception) {
-            update("FAILED", error.message ?: "Ação AutoCal interrompida", 100, prepared)
+            val message = error.message ?: "Ação AutoCal interrompida"
+            val recovery = AutoCalRecoveryPolicy.classify(message)
+            update("FAILED", message, 100, prepared, recovery.toJson())
+            synchronized(lock) {
+                status
+                    .put("reasonCode", recovery.reasonCode)
+                    .put("recovery", recovery.toJson())
+            }
         } finally {
             busy.set(false)
             synchronized(lock) { status.put("busy", false) }
@@ -714,11 +721,16 @@ class AutoCalNativeActionManager(
         }
     }
 
-    private fun failure(message: String): JSONObject = JSONObject()
-        .put("ok", false)
-        .put("error", message)
-        .put("automatic", false)
-        .put("manualOnly", true)
+    private fun failure(message: String): JSONObject {
+        val recovery = AutoCalRecoveryPolicy.classify(message)
+        return JSONObject()
+            .put("ok", false)
+            .put("error", message)
+            .put("reasonCode", recovery.reasonCode)
+            .put("recovery", recovery.toJson())
+            .put("automatic", false)
+            .put("manualOnly", true)
+    }
 
     private fun ByteArray.hex(): String = joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
 
