@@ -23,7 +23,8 @@
   function actionLabel(action) {
     return ({
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
-      DISABLE_AUTO_CAL: 'Pausar Auto Calibration',
+      DISABLE_AUTO_CAL: 'Desabilitar Auto Calibration',
+      MANUAL_AUTOMATCH: 'AutoMatch manual',
       RESET_PETROL: 'Readquirir gasolina',
       RESET_GAS: 'Readquirir GNV',
       RESET_K_FACTOR: 'Reset Curva K',
@@ -587,13 +588,14 @@
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
                 <details class="autocal-reset-menu">
-                  <summary>Reset avançado</summary>
-                  <div class="autocal-reset-popover" aria-label="Reset avançado AutoCal">
+                  <summary>Ações avançadas</summary>
+                  <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
                     <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <small>RESET PESADO</small>
+                      <small>CONTROLE MANUAL</small>
+                      <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Reset Curva K</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>Use só para reiniciar curva ou aquisição inteira. Backup da Curva K é manual. Readquirir GNV/Gasolina fica visível acima para uso diário na multimídia.</p>
+                      <p>AutoMatch manual replica a ação explícita do ProgBase e exige confirmação. Reset Curva K e nova aquisição permanecem operações separadas; nenhuma delas roda automaticamente.</p>
                     </section>
                   </div>
                 </details>
