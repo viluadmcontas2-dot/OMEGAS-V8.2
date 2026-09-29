@@ -31,8 +31,15 @@ assert 'AutoCalPointDeleteProtocol.multiPointPlan(targets)' in manager
 assert 'maskFrames.forEachIndexed' in manager
 assert 'Thread.sleep(500L)' in manager
 assert 'automaticBackup", false' in manager
-for forbidden in ('persistPreMutationBackup', 'PERSISTING_BACKUP', 'READING_BEFORE'):
+for forbidden in ('persistPreMutationBackup', 'PERSISTING_BACKUP'):
     assert forbidden not in manager, forbidden
+
+point_delete_body = manager.split('private fun executePointDelete', 1)[1].split('private fun confirm', 1)[0]
+assert 'readMulActSnapshot' not in point_delete_body, 'point reacquisition must not add a K pre-read'
+assert 'READING_BEFORE' not in point_delete_body, 'point reacquisition remains mask -> commit -> readback'
+assert 'AutoCalPointDeleteProtocol.multiPointPlan(targets)' in point_delete_body
+assert 'maskFrames.forEachIndexed' in point_delete_body
+assert 'readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)' in point_delete_body
 for token in (
     "PETR_INJ_TBUF_GAS",
     "MNFLD_PRESS_BUF_GAS",
