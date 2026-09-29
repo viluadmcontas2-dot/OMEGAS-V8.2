@@ -19,7 +19,8 @@ Therefore the distilled DFM/resources below belong to the exact executable being
 ## Release-blocking facts
 
 - `VECT_AUTOCAL_U8_2` is bound by the original TAutoCalDM to `MaxAutomatch`; Platina maps 0x0165:2 to `MAX_AUTOMATCH`.
-- `VECT_AUTOCAL_U8_1` is bound to `!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD`; it is not MaxAutomatch and is not promoted to unrelated maturity thresholds.
+- `VECT_AUTOCAL_U8_1` is bound to `!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD`; it is not MaxAutomatch.
+- The exact executable independently closes the runtime maturity selectors at `0x00516F64`: bands `0..5` use petrol `VECT_AUTOCAL_U8_1` or gas `CALIBRATION_VAL_1[5]`; bands `6..17` use petrol `CALIBRATION_VAL_1[2]` or gas `CALIBRATION_VAL_1[8]`. The canonical static boundary bytes at `0x00A9DA1A` are `05 09 0D`, matching the four acquisition-zone boundaries `5/9/13`.
 - Normal `MUL_ACT` belongs to TAutoCalDM. `MUL_ACT_EE` and `VECT_AUTOCAL_EE` belong to the distinct TAutoCalDM_EE surface.
 - Reset K must continue to use normal `MUL_ACT 0x0161[30]` → Q14 `0x4000`, with readback. An EE field cannot silently replace it.
 - The DUMP proves the original UI owns enable, Manual AutoMatch, Finish AutoMatch, reset petrol/gas/all, Reset K, acquisition/live point series and Petrol/Gas reference curves. Platina may modernize presentation, but it may not change the underlying proven semantic identity.
