@@ -112,6 +112,14 @@ def test_dump_proven_acquisition_surfaces_are_preserved():
     assert "GAS_DELETE_ADDRESS = 0x016E" in POINT_DELETE
 
 
+def test_archived_gas_buffers_do_not_invent_previous_counter():
+    fields = set(FIXTURE["resources"]["TAutoCalDM"]["proven_fields"])
+    assert "PETR_INJ_TBUF_GAS_PREV" in fields
+    assert "MNFLD_PRESS_BUF_GAS_PREV" in fields
+    assert "NUM_BUF_UPD_GAS_PREV" not in fields
+    assert 'Source("GNV_ANTERIOR", "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV", null, previous = true)' in ACQ
+
+
 def test_native_automatch_remains_observational_on_host():
     assert 'nativeAutoMatchInsideEcu' in MONITOR
     assert '"appAutomaticWrite", false' in MONITOR
@@ -127,5 +135,6 @@ if __name__ == "__main__":
     test_indexed_u8_semantics_match_tautocaldm_dump()
     test_normal_and_ee_surfaces_stay_distinct()
     test_dump_proven_acquisition_surfaces_are_preserved()
+    test_archived_gas_buffers_do_not_invent_previous_counter()
     test_native_automatch_remains_observational_on_host()
     print("PLATINUM_DUMP_AUTOCAL_COHERENCE=PASS")
