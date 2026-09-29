@@ -57,7 +57,7 @@ assert.equal(staleSession.clear, true, 'troca de sessão invalida seleção pend
 assert.deepEqual(Array.from(staleSession.restore), []);
 assert.equal(staleSession.reason, 'SESSION_CHANGED');
 
-const requestStart = source.indexOf('requestSelectedPointReacquisition()');
+const requestStart = source.indexOf('\n    requestSelectedPointReacquisition() {');
 const requestEnd = source.indexOf('\n    inspectReferencePoint(index)', requestStart);
 const requestBody = source.slice(requestStart, requestEnd);
 assert.match(requestBody, /pendingPointReacquisitionKeys = new Set/);
