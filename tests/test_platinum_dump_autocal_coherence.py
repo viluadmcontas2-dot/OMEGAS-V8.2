@@ -34,7 +34,20 @@ def test_indexed_u8_semantics_match_tautocaldm_dump():
     assert 'petrolIdleMinUpdateThreshold' in ACQ
     assert '"petrolIdleMinUpdate"' in ACQ
     assert '"maxAutomatch"' in ACQ
-    assert '"maturityThresholdsPromoted", false' in ACQ
+    assert '"maturityThresholdsPromoted", maturityThresholdsAvailable' in ACQ
+    selectors = FIXTURE["resources"]["TAutoCalDM"]["runtime_maturity_selectors"]
+    assert selectors["low_band_max_index_inclusive"] == 5
+    assert selectors["zone_boundaries_inclusive"] == [5, 9, 13]
+    assert selectors["petrol_low"] == "VECT_AUTOCAL_U8_1"
+    assert selectors["petrol_normal"] == "CALIBRATION_VAL_1[2]"
+    assert selectors["gas_low"] == "CALIBRATION_VAL_1[5]"
+    assert selectors["gas_normal"] == "CALIBRATION_VAL_1[8]"
+    assert selectors["direct_disassembly"]["function_va"] == "0x00516F64"
+    assert selectors["direct_disassembly"]["static_boundary_bytes_hex"] == "05 09 0D"
+    assert 'val petrolNormalThreshold = calibration.getOrNull(2)' in ACQ
+    assert 'val gasLowThreshold = calibration.getOrNull(5)' in ACQ
+    assert 'val gasNormalThreshold = calibration.getOrNull(8)' in ACQ
+    assert '"runtimeSelectorBoundaryInclusive", LOW_BAND_MAX_INDEX' in ACQ
 
 
 def test_normal_and_ee_surfaces_stay_distinct():
