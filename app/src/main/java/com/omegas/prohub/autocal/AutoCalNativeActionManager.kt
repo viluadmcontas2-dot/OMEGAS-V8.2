@@ -68,7 +68,7 @@ class AutoCalNativeActionManager(
         FINISH_AUTOCAL(
             byteArrayOf(),
             "Finalizar AutoCal",
-            "Replica ActionFinishAutocalExecute: confirma MAX_AUTOMATCH em NUM_AUTOMATCH_EXECUTED, aguarda 100 ms e exige readback antes de concluir.",
+            "Replica ActionFinishAutocalExecute: confirma MAX_AUTOMATCH em NUM_AUTOMATCH_EXECUTED, aguarda 100 ms e exige readback. Finish não desabilita AUTO_CAL_ENABLE; para provar que a aquisição parou, use Pausar aquisição e confirme readback 0.",
             false,
         ),
         FINISH_AUTOMATCH(

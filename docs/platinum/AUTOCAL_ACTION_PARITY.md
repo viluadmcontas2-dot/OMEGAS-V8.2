@@ -10,7 +10,7 @@ This is the **product-facing completion boundary** for AutoCal. Forensics only c
 | Readquirir GNV | PROVEN | native mode `0x02`, explicit user action, ACK + gas acquisition readback |
 | Reset all acquisition | PROVEN | native mode `0x04`, explicit user action, ACK + petrol/gas acquisition + `MUL_ACT` readback; broad effect observed |
 | Manual AutoMatch | PROVEN | native mode `0x08`, explicit user action only + valid `MUL_ACT` before/after bracket |
-| Finish AutoCal | PROVEN_HOST_BEHAVIOR | copy MAX_AUTOMATCH to NUM_AUTOMATCH_EXECUTED, 100 ms settle, readback |
+| Finish AutoCal | PROVEN_HOST_BEHAVIOR | copy MAX_AUTOMATCH to NUM_AUTOMATCH_EXECUTED, 100 ms settle, readback; does **not** disable `AUTO_CAL_ENABLE` — pause/disable is the stop proof |
 | Finish AutoMatch | PROVEN_HOST_BEHAVIOR | same copy without final 100 ms settle |
 | Reset K | PROVEN | 30 × `MUL_ACT 0x0161[index] = 0x4000`, full readback |
 | Point reacquisition | PROVEN | complete petrol/gas 18-point masks + one `01 24 05 2A` commit + fuel-scoped acquisition readback |

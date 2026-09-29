@@ -10,6 +10,7 @@ POINTS = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalPointDeleteProt
 MANAGER = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt").read_text(encoding="utf-8")
 MONITOR = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt").read_text(encoding="utf-8")
 ANALYSIS = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoMatchSnapshotAnalysis.kt").read_text(encoding="utf-8")
+COCKPIT = (ROOT / "app/src/main/assets/ui/screens/autocal-cockpit.js").read_text(encoding="utf-8")
 
 
 def test_matrix_has_no_unclassified_host_mutation():
@@ -40,6 +41,13 @@ def test_exact_native_action_frames_remain_bound():
     assert "ManualActionMode.RESET_GAS" in MANAGER
     assert "ManualActionMode.RESET_ALL" in MANAGER
     assert "ManualActionMode.MANUAL_AUTOMATCH" in MANAGER
+
+
+def test_finish_is_not_misrepresented_as_acquisition_stop():
+    assert "Finish não desabilita AUTO_CAL_ENABLE" in MANAGER
+    assert "Finalizar AutoCal confirma o contador nativo de AutoMatch, mas não pausa a aquisição" in COCKPIT
+    assert "use Pausar aquisição e aguarde PAUSADA confirmada pela ECU" in COCKPIT
+    assert "setEnabled(false)" in MANAGER
 
 
 def test_reset_k_is_mul_act_30_q14_with_readback():
@@ -90,6 +98,7 @@ def test_predictor_and_v7_suggestion_path_is_manual_review_only():
 if __name__ == "__main__":
     test_matrix_has_no_unclassified_host_mutation()
     test_exact_native_action_frames_remain_bound()
+    test_finish_is_not_misrepresented_as_acquisition_stop()
     test_reset_k_is_mul_act_30_q14_with_readback()
     test_point_reacquisition_preserves_both_full_masks_and_single_commit()
     test_native_automatch_and_inferred_math_are_not_writers()

@@ -694,7 +694,7 @@
                       <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1.0</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>Estas são ferramentas técnicas. No uso normal, use Iniciar/Pausar, acompanhe as aquisições e toque em Finalizar AutoCal quando quiser encerrar o ciclo. Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa apaga a aquisição atual. Nada aqui roda automaticamente.</p>
+                      <p>Estas são ferramentas técnicas. Finalizar AutoCal confirma o contador nativo de AutoMatch, mas não pausa a aquisição. Para garantir que a coleta parou, use Pausar aquisição e aguarde PAUSADA confirmada pela ECU. Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa apaga a aquisição atual. Nada aqui roda automaticamente.</p>
                     </section>
                   </div>
                 </details>
