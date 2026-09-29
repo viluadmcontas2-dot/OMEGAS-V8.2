@@ -444,6 +444,7 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("READING_AFTER", "Finalização confirmada; atualizando AutoCal", 82, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        validateActionReadback(prepared.action, after)
         confirm(
             prepared = prepared,
             reply = writeReply,
@@ -495,6 +496,7 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("VERIFYING_K_RESET", "Confirmando Curva K neutra na ECU", 78, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        validateActionReadback(prepared.action, after)
         val actual = after.field(AutoCalProtocol.MUL_ACT)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
             ?.rawValues
@@ -553,6 +555,7 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando aquisição após o commit", 78, prepared, targetDetails)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        validateActionReadback(prepared.action, after)
         confirm(prepared, commitReply, after, startedAt, targetDetails)
     }
 
@@ -785,6 +788,20 @@ class AutoCalNativeActionManager(
         .put("automaticBackup", false)
 
     private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
+        // A whole snapshot may legitimately be partial on firmware variants, but an
+        // action cannot be called confirmed without its own ECU readback witness.
+        // This keeps unknown observational fields non-blocking while fail-closing
+        // the mutation when the authoritative state for that action was not read.
+        val witness = when (action) {
+            Action.RESET_K_FACTOR -> AutoCalProtocol.MUL_ACT
+            Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> AutoCalProtocol.NUM_AUTOMATCH_EXECUTED
+            else -> AutoCalProtocol.AUTO_CAL_ENABLE
+        }
+        val witnessValid = after.field(witness)?.status == AutoCalFieldStatus.VALID
+        require(witnessValid) {
+            "Readback obrigatorio ausente para ${action.label}: ${witness.key}"
+        }
+
         val expected = action.expectedEnableReadback ?: return
         val actual = after.field(AutoCalProtocol.AUTO_CAL_ENABLE)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }

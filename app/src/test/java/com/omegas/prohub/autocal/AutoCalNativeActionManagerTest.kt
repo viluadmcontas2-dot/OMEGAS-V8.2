@@ -388,6 +388,38 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `ack sem testemunha de readback nao confirma mutacao nativa`() {
+        val writes = AtomicInteger(0)
+        val manager = manager { request, _, _, _ ->
+            if ((request[0].toInt() and 0xFF) == 0x02) {
+                writes.incrementAndGet()
+                reply(request, byteArrayOf())
+            } else {
+                UsbProtocolReply(
+                    ok = false,
+                    status = -1,
+                    payload = byteArrayOf(),
+                    request = request,
+                    echo = byteArrayOf(),
+                    error = "readback indisponivel",
+                )
+            }
+        }
+
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertEquals(1, writes.get())
+        assertEquals("FAILED", manager.statusJson().getString("state"))
+        assertTrue(manager.statusJson().getString("message").contains("Readback obrigatorio"))
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertTrue(receipt.getBoolean("mutationMayHaveStarted"))
+        assertFalse(receipt.getBoolean("automaticRetry"))
+        manager.close()
+    }
+
+    @Test
     fun `confirmacao errada ou sessao alterada nao envia acao`() {
         val session = AtomicLong(7L)
         val actionCalls = AtomicInteger(0)
