@@ -21,8 +21,8 @@ class AutoCalAcquisitionTest {
         assertEquals(0.5, point.getDouble("mapBar"), 0.0001)
         assertEquals("ATIVIDADE", point.getString("state"))
         assertTrue(point.getBoolean("draw"))
-        assertTrue(point.isNull("threshold"))
-        assertEquals("UNRESOLVED_CALIBRATION_VAL_MAPPING", point.getString("thresholdSemantics"))
+        assertEquals(6, point.getInt("threshold"))
+        assertEquals("PROGBASE_DUMP_RUNTIME_SELECTOR", point.getString("thresholdSemantics"))
     }
 
     @Test
@@ -40,7 +40,7 @@ class AutoCalAcquisitionTest {
     }
 
     @Test
-    fun `calibration val permanece diagnostico e zonas nativas sao autoridade visual`() {
+    fun `dump promove seletores de maturidade sem substituir zonas nativas`() {
         val calibration = intArrayOf(1, 3, 3, 1, 3, 3, 1, 3, 3, 1)
         val petrolCounts = IntArray(18).also {
             it[0] = 2
@@ -83,12 +83,21 @@ class AutoCalAcquisitionTest {
         val thresholds = result.getJSONObject("thresholds")
         assertEquals(1, thresholds.getInt("maxAutomatch"))
         assertEquals(6, thresholds.getInt("petrolIdleMinUpdate"))
-        assertTrue(thresholds.isNull("petrolLow"))
-        assertTrue(thresholds.isNull("petrolNormal"))
-        assertTrue(thresholds.isNull("gasLow"))
-        assertTrue(thresholds.isNull("gasNormal"))
-        assertEquals("UNRESOLVED_10_OF_12", thresholds.getString("calibrationValueMapping"))
-        assertFalse(thresholds.getBoolean("maturityThresholdsPromoted"))
+        assertEquals(6, thresholds.getInt("petrolLow"))
+        assertEquals(3, thresholds.getInt("petrolNormal"))
+        assertEquals(3, thresholds.getInt("gasLow"))
+        assertEquals(3, thresholds.getInt("gasNormal"))
+        assertEquals("PROGBASE_DUMP_GRID_PROVEN", thresholds.getString("calibrationValueMapping"))
+        assertEquals(5, thresholds.getInt("runtimeSelectorBoundaryInclusive"))
+        assertEquals(listOf(5, 9, 13), buildList {
+            val values = thresholds.getJSONArray("zoneBoundariesInclusive")
+            repeat(values.length()) { add(values.getInt(it)) }
+        })
+        assertTrue(thresholds.getBoolean("maturityThresholdsPromoted"))
+        assertEquals(6, petrolLow.getInt("threshold"))
+        assertEquals(3, petrolNormal.getInt("threshold"))
+        assertEquals(3, gasLow.getInt("threshold"))
+        assertEquals(3, gasNormal.getInt("threshold"))
     }
 
     private fun snapshot(vararg fields: JSONObject) = JSONObject().put("fields", JSONArray(fields.toList()))
