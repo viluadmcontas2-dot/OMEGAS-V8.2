@@ -548,6 +548,45 @@
       return null;
     },
 
+    pointSelectionTransition(pendingKeys = [], actionState = {}, referenceTransition = {}) {
+      const pending = Array.isArray(pendingKeys)
+        ? pendingKeys.map(String).filter(Boolean)
+        : [];
+      const state = String(actionState?.state || '').toUpperCase();
+
+      if (referenceTransition?.sessionChanged === true) {
+        return { clear: true, preserve: false, restore: [], pending: [], reason: 'SESSION_CHANGED' };
+      }
+      if (!pending.length) {
+        return {
+          clear: referenceTransition?.resetSelection === true,
+          preserve: false,
+          restore: [],
+          pending: [],
+          reason: referenceTransition?.resetSelection === true ? 'REFERENCE_CHANGED' : 'IDLE',
+        };
+      }
+      if (state === 'CONFIRMED') {
+        return { clear: true, preserve: false, restore: [], pending: [], reason: 'CONFIRMED' };
+      }
+      if (state === 'FAILED') {
+        return {
+          clear: false,
+          preserve: true,
+          restore: pending,
+          pending: [],
+          reason: 'FAILED_RETAIN_INTENT',
+        };
+      }
+      return {
+        clear: false,
+        preserve: true,
+        restore: pending,
+        pending,
+        reason: 'IN_FLIGHT',
+      };
+    },
+
 
   };
 
@@ -582,6 +621,7 @@
       this.selectedReferenceIndex = null;
       this.selectedAcquiredPoint = null;
       this.selectedAcquiredPoints = new Set();
+      this.pendingPointReacquisitionKeys = new Set();
       this.selectedBandIndex = null;
       this.inject();
       this.bind();
@@ -890,6 +930,12 @@
         nextSnapshot,
         this.analysis,
       );
+      const nextActionState = this.api.actionStatus() || {};
+      const selectionTransition = AutoCalUxModel.pointSelectionTransition(
+        Array.from(this.pendingPointReacquisitionKeys || []),
+        nextActionState,
+        referenceTransition,
+      );
       if (referenceTransition.clearHistory) {
         this.previousReferencePoints = [];
         this.comparisonPinned = false;
@@ -897,14 +943,18 @@
       } else if (referenceTransition.referenceChanged && !this.comparisonPinned) {
         this.previousReferencePoints = referenceTransition.previousPoints;
       }
-      if (referenceTransition.resetSelection) {
+      if (referenceTransition.resetSelection || selectionTransition.clear) {
         this.selectedReferenceIndex = null;
         this.selectedAcquiredPoint = null;
-        this.selectedAcquiredPoints?.clear?.();
       }
+      if (selectionTransition.clear) this.selectedAcquiredPoints?.clear?.();
+      if (selectionTransition.restore.length) {
+        this.selectedAcquiredPoints = new Set(selectionTransition.restore);
+      }
+      this.pendingPointReacquisitionKeys = new Set(selectionTransition.pending);
       this.snapshot = nextSnapshot || {};
       this.analysis = nextAnalysis;
-      this.actionState = this.api.actionStatus() || {};
+      this.actionState = nextActionState;
       this.operationalPending = this.actionState?.busy === true ||
         [
           'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER',
@@ -1534,8 +1584,14 @@
         return;
       }
       const count = targets.length;
-      this.selectedAcquiredPoints.clear();
-      this.store.patch({ alert: { level: 'working', message: count + ' ponto' + (count === 1 ? '' : 's') + ' liberado' + (count === 1 ? '' : 's') + ' para nova aquisição. Confirmando ACK e readback…' } });
+      this.pendingPointReacquisitionKeys = new Set(targets.map(item => item.fuel + ':' + item.index));
+      this.store.patch({
+        alert: {
+          level: 'working',
+          message: count + ' ponto' + (count === 1 ? '' : 's') +
+            ' em readquisição. A seleção só será limpa após confirmação da ECU.',
+        },
+      });
       this.refresh();
     }
 
