@@ -78,7 +78,8 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('AutoCal finalizado · $committed/$max confirmado pela ECU', self.action)
 
     def test_legacy_k_reset_alias_converges_to_single_progbase_path(self):
-        self.assertIn('if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR"', self.bridge)
+        self.assertNotIn('if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR"', self.bridge)
+        self.assertIn('NEUTRALIZE_LIVE_K foi removido', self.bridge)
         self.assertNotIn('startKFactorReset()', self.bridge)
         self.assertNotIn('kFactorResetPreparationId', self.bridge)
         self.assertGreaterEqual(

@@ -79,12 +79,12 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun prepareNativeAction(action: String): String {
         val requested = action.trim().uppercase()
-        // Compatibilidade de chamadas antigas: a antiga ação OMEGAS de
-        // neutralização agora converge para o único Reset-K fiel ao ProgBase.
-        val normalized = if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR" else requested
+        if (requested == "NEUTRALIZE_LIVE_K") {
+            return localFailure("NEUTRALIZE_LIVE_K foi removido: use RESET_K_FACTOR, que executa o Reset K provado do ProgBase em MUL_ACT")
+        }
 
         val parsed = try {
-            AutoCalNativeActionManager.Action.valueOf(normalized)
+            AutoCalNativeActionManager.Action.valueOf(requested)
         } catch (_: Exception) {
             return localFailure("Ação nativa inválida")
         }

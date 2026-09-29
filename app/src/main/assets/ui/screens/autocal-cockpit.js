@@ -30,7 +30,6 @@
       RESET_PETROL: 'Readquirir gasolina',
       RESET_GAS: 'Readquirir GNV',
       RESET_K_FACTOR: 'Resetar Curva K para 1.0',
-      NEUTRALIZE_LIVE_K: 'Neutralizar K live (OMEGAS)',
       RESET_ALL: 'Nova aquisição completa',
     })[action] || action;
   }
