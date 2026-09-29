@@ -595,7 +595,9 @@ class AutoCalNativeActionManager(
 
     private fun requireAck(reply: UsbProtocolReply, fallback: String) {
         require(reply.ok && reply.status == Mp48Protocol.STATUS_ACK) {
-            reply.error.ifBlank { fallback }
+            reply.error.trim().takeIf { it.isNotBlank() }?.let { detail ->
+                "$fallback: $detail"
+            } ?: fallback
         }
     }
 
