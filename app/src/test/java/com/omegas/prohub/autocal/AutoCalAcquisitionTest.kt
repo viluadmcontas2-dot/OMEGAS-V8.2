@@ -40,6 +40,27 @@ class AutoCalAcquisitionTest {
     }
 
     @Test
+    fun `gas anterior nao herda contador do ciclo gnv atual`() {
+        val currentCounts = IntArray(18).also { it[3] = 9 }
+        val previousTimes = IntArray(18).also { it[3] = 2560 }
+        val previousMaps = IntArray(18).also { it[3] = 614 }
+        val snapshot = snapshot(
+            field("NUM_BUF_UPD_GAS", currentCounts),
+            field("PETR_INJ_TBUF_GAS_PREV", previousTimes),
+            field("MNFLD_PRESS_BUF_GAS_PREV", previousMaps),
+        )
+
+        val points = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points")
+        val previous = points.getJSONObject(36 + 3)
+        assertEquals("GNV_ANTERIOR", previous.getString("fuel"))
+        assertEquals("ANTERIOR", previous.getString("state"))
+        assertTrue(previous.getBoolean("draw"))
+        assertTrue(previous.isNull("counter"))
+        assertTrue(previous.isNull("threshold"))
+        assertEquals("HISTORICAL_BUFFER_NO_MATURITY_GATE", previous.getString("thresholdSemantics"))
+    }
+
+    @Test
     fun `dump promove seletores de maturidade sem substituir zonas nativas`() {
         val calibration = intArrayOf(1, 3, 3, 1, 3, 3, 1, 3, 3, 1)
         val petrolCounts = IntArray(18).also {
