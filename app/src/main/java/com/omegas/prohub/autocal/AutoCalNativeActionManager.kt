@@ -676,6 +676,7 @@ class AutoCalNativeActionManager(
             .put("preparationId", prepared.id)
             .put("action", prepared.action.name)
             .put("label", prepared.action.label)
+            .put("outcome", "CONFIRMED")
             .put(
                 "commandHex",
                 when {
