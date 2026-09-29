@@ -1680,11 +1680,16 @@
       const recovery = state?.recovery && typeof state.recovery === 'object' ? state.recovery : null;
       const recoveryNext = String(recovery?.nextAction || '').trim();
       const recoveryCode = String(recovery?.reasonCode || state?.reasonCode || '');
+      const mutationMayHaveStarted = state?.mutationMayHaveStarted === true;
+      const uncertainty = failed && mutationMayHaveStarted
+        ? ' · Estado incerto: a ECU pode ter mudado. Releia antes de repetir.'
+        : '';
       host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
       host.dataset.reasonCode = recoveryCode;
+      host.dataset.mutationUncertain = mutationMayHaveStarted ? 'true' : 'false';
       host.textContent = name === 'IDLE' ? message
         : name === 'CONFIRMED' ? 'Concluído · ' + message
-        : failed ? 'Não concluído · ' + message + (recoveryNext ? ' · Próximo: ' + recoveryNext : '')
+        : failed ? 'Não concluído · ' + message + uncertainty + (recoveryNext ? ' · Próximo: ' + recoveryNext : '')
         : 'Executando · ' + message;
     }
 
