@@ -127,6 +127,14 @@ class AutoCalNativeActionManagerTest {
         manager.execute(prepared.getString("preparationId"))
         awaitIdle(manager)
         assertEquals("FAILED", manager.statusJson().getString("state"))
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("FAILED", receipt.getString("outcome"))
+        assertEquals("RESET_K_FACTOR", receipt.getString("action"))
+        assertEquals("VERIFYING_K_RESET", receipt.getString("failedFromState"))
+        assertTrue(receipt.getBoolean("mutationMayHaveStarted"))
+        assertFalse(receipt.getBoolean("automaticRetry"))
+        assertEquals("READBACK_MISMATCH", receipt.getString("reasonCode"))
+        assertFalse(receipt.isNull("before"))
         manager.close()
     }
 
@@ -172,6 +180,7 @@ class AutoCalNativeActionManagerTest {
         assertEquals(listOf("RESET_GAS", "READBACK"), calls.toList())
 
         val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("CONFIRMED", receipt.getString("outcome"))
         assertEquals("RESET_GAS", receipt.getString("action"))
         assertEquals("02 24 04 02 2C", receipt.getString("commandHex"))
         assertTrue(receipt.getBoolean("readbackValid"))
@@ -311,6 +320,49 @@ class AutoCalNativeActionManagerTest {
         assertEquals("FAILED", manager.statusJson().getString("state"))
         assertEquals(2, requests.size)
         assertFalse(requests.any { it.contentEquals(AutoCalPointDeleteProtocol.commit()) })
+
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("FAILED", receipt.getString("outcome"))
+        assertEquals("DELETE_POINT", receipt.getString("action"))
+        assertEquals("SENDING_ACTION", receipt.getString("failedFromState"))
+        assertTrue(receipt.getBoolean("mutationMayHaveStarted"))
+        assertFalse(receipt.getBoolean("automaticRetry"))
+        assertEquals("ECU_ACK_MISSING", receipt.getString("reasonCode"))
+        assertEquals("PETROL", receipt.getJSONObject("pointDelete").getString("fuel"))
+        assertEquals(5, receipt.getJSONObject("pointDelete").getInt("index"))
+        manager.close()
+    }
+
+    @Test
+    fun `falha antes da primeira escrita fica auditada sem afirmar mutacao`() {
+        val readMul = AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)
+        val manager = manager(
+            fieldsForReceipt = listOf(AutoCalProtocol.MUL_ACT),
+            transaction = { request, _, _, _ ->
+                if (request.contentEquals(readMul)) {
+                    UsbProtocolReply(
+                        ok = false,
+                        status = -1,
+                        payload = byteArrayOf(),
+                        request = request,
+                        echo = byteArrayOf(),
+                        error = "A ECU não confirmou MUL_ACT antes da ação",
+                    )
+                } else reply(request, byteArrayOf())
+            },
+        )
+        val prepared = manager.prepare("RESET_K_FACTOR")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+
+        assertEquals("FAILED", manager.statusJson().getString("state"))
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("FAILED", receipt.getString("outcome"))
+        assertEquals("READING_BEFORE", receipt.getString("failedFromState"))
+        assertFalse(receipt.getBoolean("mutationMayHaveStarted"))
+        assertFalse(receipt.getBoolean("automaticRetry"))
+        assertEquals("ECU_ACK_MISSING", receipt.getString("reasonCode"))
+        assertFalse(receipt.has("before"))
         manager.close()
     }
 
