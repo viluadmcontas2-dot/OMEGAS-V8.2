@@ -13,6 +13,10 @@ import org.json.JSONObject
  * CALIBRATION_VAL_1[8]. A sequência de fronteiras 5/9/13 também está embutida
  * no executável original. Estes índices escolhem valores lidos da ECU; o host
  * não inventa limiares nem reproduz a aritmética interna do AutoMatch.
+ *
+ * O DUMP expõe buffers GAS_PREV de tempo/MAP, mas não um contador
+ * NUM_BUF_UPD_GAS_PREV. Por isso GNV_ANTERIOR nunca reutiliza o contador atual
+ * como se pertencesse ao ciclo arquivado.
  */
 object AutoCalAcquisition {
     private const val LOW_BAND_MAX_INDEX = 5
@@ -21,13 +25,13 @@ object AutoCalAcquisition {
         val fuel: String,
         val time: String,
         val map: String,
-        val count: String,
+        val count: String?,
         val previous: Boolean = false,
     )
     private val sources = listOf(
         Source("GASOLINA", "PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_UPD_PETR"),
         Source("GNV", "PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS", "NUM_BUF_UPD_GAS"),
-        Source("GNV_ANTERIOR", "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV", "NUM_BUF_UPD_GAS", previous = true),
+        Source("GNV_ANTERIOR", "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV", null, previous = true),
     )
 
     fun fromSnapshot(snapshot: JSONObject): JSONObject {
@@ -60,7 +64,7 @@ object AutoCalAcquisition {
         sources.forEach { source ->
             val times = fields[source.time]?.rawValues() ?: intArrayOf()
             val maps = fields[source.map]?.rawValues() ?: intArrayOf()
-            val counts = fields[source.count]?.rawValues() ?: intArrayOf()
+            val counts = source.count?.let { fields[it]?.rawValues() } ?: intArrayOf()
             repeat(18) { index ->
                 val timeRaw = times.getOrNull(index)
                 val mapRaw = maps.getOrNull(index)
@@ -85,11 +89,17 @@ object AutoCalAcquisition {
                     threshold != null -> "PROGBASE_DUMP_RUNTIME_SELECTOR"
                     else -> "RUNTIME_THRESHOLD_UNAVAILABLE"
                 }
-                val activityPresent = timeRaw != null && mapRaw != null && count != null &&
-                    (timeRaw != 0 || mapRaw != 0 || count > 0)
+                val activityPresent = when {
+                    timeRaw == null || mapRaw == null -> false
+                    source.previous -> timeRaw != 0 || mapRaw != 0
+                    count == null -> false
+                    else -> timeRaw != 0 || mapRaw != 0 || count > 0
+                }
                 val state = when {
-                    timeRaw == null || mapRaw == null || count == null -> "SEM_DADO"
+                    timeRaw == null || mapRaw == null -> "SEM_DADO"
                     source.previous && activityPresent -> { valid++; "ANTERIOR" }
+                    source.previous -> { unknown++; "AGUARDANDO" }
+                    count == null -> "SEM_DADO"
                     activityPresent && zoneFlag == 1 -> { valid++; "ZONA_ADQUIRIDA" }
                     activityPresent -> { collecting++; "ATIVIDADE" }
                     else -> { unknown++; "AGUARDANDO" }
