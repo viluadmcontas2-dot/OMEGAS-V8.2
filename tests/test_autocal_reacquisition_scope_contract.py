@@ -16,15 +16,24 @@ assert 'actual.all { it == 0x4000 }' in manager
 assert 'requested == "NEUTRALIZE_LIVE_K"' in bridge
 assert '"RESET_K_FACTOR" else requested' in bridge
 
-# Reset must not be gated by a pre-reset snapshot/backup.
+# Fuel/all reacquisition must not be gated by a pre-reset snapshot/backup.
+# READING_BEFORE is intentionally allowed only for direct K-changing actions
+# (Manual AutoMatch / Reset K), so this contract scopes the exclusion.
 for forbidden in (
     'PERSISTING_BACKUP',
     'persistPreMutationBackup',
     'autocal_pre_reset',
-    'READING_BEFORE',
     'CONFIRMED_WITH_SCOPE_WARNING',
 ):
     assert forbidden not in manager, forbidden
+
+assert 'RESET_GAS(' in manager and '"Readquirir GNV"' in manager
+assert 'RESET_PETROL(' in manager and '"Readquirir gasolina"' in manager
+assert 'RESET_ALL(' in manager and '"Nova aquisição completa"' in manager
+assert 'RESET_GAS(' in manager and 'false,' in manager.split('RESET_GAS(', 1)[1].split('),', 1)[0]
+assert 'RESET_PETROL(' in manager and 'false,' in manager.split('RESET_PETROL(', 1)[1].split('),', 1)[0]
+assert 'RESET_ALL(' in manager and 'false,' in manager.split('RESET_ALL(', 1)[1].split('),', 1)[0]
+assert 'if (prepared.action.mayChangeMulAct)' in manager
 
 assert '.put("automaticBackup", false)' in manager
 assert '.put("preMutationBackup", JSONObject.NULL)' in manager
