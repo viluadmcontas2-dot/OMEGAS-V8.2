@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 manager = (ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt').read_text(encoding='utf-8')
@@ -30,9 +31,13 @@ for forbidden in (
 assert 'RESET_GAS(' in manager and '"Readquirir GNV"' in manager
 assert 'RESET_PETROL(' in manager and '"Readquirir gasolina"' in manager
 assert 'RESET_ALL(' in manager and '"Nova aquisição completa"' in manager
-assert 'RESET_GAS(' in manager and 'false,' in manager.split('RESET_GAS(', 1)[1].split('),', 1)[0]
-assert 'RESET_PETROL(' in manager and 'false,' in manager.split('RESET_PETROL(', 1)[1].split('),', 1)[0]
-assert 'RESET_ALL(' in manager and 'false,' in manager.split('RESET_ALL(', 1)[1].split('),', 1)[0]
+for action, mode in (
+    ('RESET_GAS', 'RESET_GAS'),
+    ('RESET_PETROL', 'RESET_PETROL'),
+    ('RESET_ALL', 'RESET_ALL'),
+):
+    pattern = rf'{action}\([\s\S]*?ManualActionMode\.{mode}\)[\s\S]*?\n\s*false,\n\s*\),'
+    assert re.search(pattern, manager), f'{action} must remain a non-K-changing reacquisition action'
 assert 'if (prepared.action.mayChangeMulAct)' in manager
 
 assert '.put("automaticBackup", false)' in manager
