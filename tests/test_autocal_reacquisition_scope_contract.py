@@ -17,9 +17,9 @@ assert 'actual.all { it == 0x4000 }' in manager
 assert 'if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR"' not in bridge
 assert 'NEUTRALIZE_LIVE_K foi removido' in bridge
 
-# Fuel/all reacquisition must not be gated by a pre-reset snapshot/backup.
-# READING_BEFORE is intentionally allowed only for direct K-changing actions
-# (Manual AutoMatch / Reset K), so this contract scopes the exclusion.
+# Fuel-specific reacquisition remains free of a backup gate. Reset All is different:
+# canonical Portmon observed a broad effect including MUL_ACT, so a read-only K
+# before/after bracket is required evidence rather than an automatic rollback/backup.
 for forbidden in (
     'PERSISTING_BACKUP',
     'persistPreMutationBackup',
@@ -34,10 +34,12 @@ assert 'RESET_ALL(' in manager and '"Nova aquisição completa"' in manager
 for action, mode in (
     ('RESET_GAS', 'RESET_GAS'),
     ('RESET_PETROL', 'RESET_PETROL'),
-    ('RESET_ALL', 'RESET_ALL'),
 ):
     pattern = rf'{action}\([\s\S]*?ManualActionMode\.{mode}\)[\s\S]*?\n\s*false,\n\s*\),'
-    assert re.search(pattern, manager), f'{action} must remain a non-K-changing reacquisition action'
+    assert re.search(pattern, manager), f'{action} must remain a non-K-changing fuel reacquisition action'
+
+reset_all = r'RESET_ALL\([\s\S]*?ManualActionMode\.RESET_ALL\)[\s\S]*?\n\s*true,\n\s*\),'
+assert re.search(reset_all, manager), 'RESET_ALL must preserve the Portmon-proven possible MUL_ACT effect'
 assert 'if (prepared.action.mayChangeMulAct)' in manager
 
 assert '.put("automaticBackup", false)' in manager
