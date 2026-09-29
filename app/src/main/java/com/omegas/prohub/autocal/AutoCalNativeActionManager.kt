@@ -194,7 +194,11 @@ class AutoCalNativeActionManager(
                 "Apaga somente os pontos selecionados, inclusive entre gasolina e GNV, em um único par de masks nativos antes do commit."
             }
         } else action.description
-        val details = if (pointDeleteTargets.isNotEmpty()) pointTargetsJson(pointDeleteTargets) else JSONObject()
+        val details = when (pointDeleteTargets.size) {
+            0 -> JSONObject()
+            1 -> pointTargetJson(pointDeleteTargets.single())
+            else -> pointTargetsJson(pointDeleteTargets)
+        }
         synchronized(lock) {
             preparation = prepared
             status = baseStatus("PREPARED", label, 0)
@@ -647,46 +651,53 @@ class AutoCalNativeActionManager(
         startedAt: Long,
         details: JSONObject = JSONObject(),
         before: AutoCalSnapshot? = null,
-    ): JSONObject = JSONObject()
-        .put("id", "RECEIPT-${UUID.randomUUID()}")
-        .put("preparationId", prepared.id)
-        .put("action", prepared.action.name)
-        .put("label", prepared.action.label)
-        .put(
-            "commandHex",
-            when {
-                details.optString("commandHex").isNotBlank() -> details.optString("commandHex")
-                prepared.pointDeleteTargets.isNotEmpty() -> "MASK U8[18] GNV + gasolina → 01 24 05 2A"
-                else -> prepared.action.request.hex()
-            },
-        )
-        .put("details", details)
-        .put("ackStatus", reply.status)
-        .put("sessionId", prepared.sessionId)
-        .put("startedAtMs", startedAt)
-        .put("finishedAtMs", System.currentTimeMillis())
-        .put("beforeHash", before?.snapshotHash ?: JSONObject.NULL)
-        .put("before", before?.toJson() ?: JSONObject.NULL)
-        .put("afterHash", after.snapshotHash)
-        .put("afterPartial", after.partial)
-        .put("after", after.toJson())
-        .put("ecuMutation", true)
-        .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
-        .put("humanConfirmed", true)
-        .put("automatic", false)
-        .put("manualOnly", true)
-        .put("readbackValid", true)
-        .put("preMutationBackup", JSONObject.NULL)
-        .put("automaticBackup", false)
-        .put("automaticRollback", false)
-        .put(
-            "pointDelete",
-            when (prepared.pointDeleteTargets.size) {
-                0 -> JSONObject.NULL
-                1 -> pointTargetJson(prepared.pointDeleteTargets.single())
-                else -> pointTargetsJson(prepared.pointDeleteTargets)
-            },
-        )
+    ): JSONObject {
+        val receipt = JSONObject()
+            .put("id", "RECEIPT-${UUID.randomUUID()}")
+            .put("preparationId", prepared.id)
+            .put("action", prepared.action.name)
+            .put("label", prepared.action.label)
+            .put(
+                "commandHex",
+                when {
+                    details.optString("commandHex").isNotBlank() -> details.optString("commandHex")
+                    prepared.pointDeleteTargets.isNotEmpty() -> "MASK U8[18] GNV + gasolina → 01 24 05 2A"
+                    else -> prepared.action.request.hex()
+                },
+            )
+            .put("details", details)
+            .put("ackStatus", reply.status)
+            .put("sessionId", prepared.sessionId)
+            .put("startedAtMs", startedAt)
+            .put("finishedAtMs", System.currentTimeMillis())
+            .put("afterHash", after.snapshotHash)
+            .put("afterPartial", after.partial)
+            .put("after", after.toJson())
+            .put("ecuMutation", true)
+            .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
+            .put("humanConfirmed", true)
+            .put("automatic", false)
+            .put("manualOnly", true)
+            .put("readbackValid", true)
+            .put("preMutationBackup", JSONObject.NULL)
+            .put("automaticBackup", false)
+            .put("automaticRollback", false)
+            .put(
+                "pointDelete",
+                when (prepared.pointDeleteTargets.size) {
+                    0 -> JSONObject.NULL
+                    1 -> pointTargetJson(prepared.pointDeleteTargets.single())
+                    else -> pointTargetsJson(prepared.pointDeleteTargets)
+                },
+            )
+
+        if (before != null) {
+            receipt
+                .put("beforeHash", before.snapshotHash)
+                .put("before", before.toJson())
+        }
+        return receipt
+    }
 
     private fun pointTargetsJson(targets: Collection<AutoCalPointDeleteProtocol.Target>): JSONObject {
         val normalized = targets.distinctBy { it.fuel to it.index }
