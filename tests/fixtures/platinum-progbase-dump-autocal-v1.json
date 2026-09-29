@@ -68,7 +68,28 @@
         "GAS_MNFLD_PRESS_RV",
         "DELTA_MNFLD_PRESS_THD",
         "DIFF_MNFLD_PRESS_THD"
-      ]
+      ],
+      "runtime_maturity_selectors": {
+        "low_band_max_index_inclusive": 5,
+        "zone_boundaries_inclusive": [
+          5,
+          9,
+          13
+        ],
+        "petrol_low": "VECT_AUTOCAL_U8_1",
+        "petrol_normal": "CALIBRATION_VAL_1[2]",
+        "gas_low": "CALIBRATION_VAL_1[5]",
+        "gas_normal": "CALIBRATION_VAL_1[8]",
+        "direct_disassembly": {
+          "function_va": "0x00516F64",
+          "static_boundary_va": "0x00A9DA1A",
+          "static_boundary_bytes_hex": "05 09 0D",
+          "gas_low_element": 5,
+          "gas_normal_element": 8,
+          "petrol_low_object_offset_hex": "0x78",
+          "petrol_normal_element": 2
+        }
+      }
     },
     "TAutoCalSettings": {
       "sha256": "852de437e29e580936ff000aa49644289e455c1242d8ec9a64f35baa005e8f03",
@@ -102,6 +123,7 @@
   "release_invariants": [
     "VECT_AUTOCAL_U8_2_IS_MAX_AUTOMATCH",
     "VECT_AUTOCAL_U8_1_IS_IDLE_MIN_UPDATED_PETROL_BUFFER_THRESHOLD",
+    "MATURITY_SELECTORS_MATCH_DUMP_DISASSEMBLY",
     "NORMAL_MUL_ACT_IS_NOT_MUL_ACT_EE",
     "RESET_K_USES_NORMAL_MUL_ACT_30_Q14_0x4000",
     "NATIVE_AUTOMATCH_HAS_NO_HOST_AUTOMATIC_K_WRITE",
