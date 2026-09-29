@@ -169,9 +169,7 @@ class AutoCalNativeActionManager(
         require(!busy.get()) { "Outra ação AutoCal está em andamento" }
         require(isConnected()) { "USB desconectado" }
         require(!otherCalibrationBusy()) { "Outra operação de calibração está em andamento" }
-        if (!action.operationalToggle) {
-            unsafeMutationReason()?.let { throw IllegalStateException(it) }
-        }
+        unsafeMutationReason()?.let { throw IllegalStateException(it) }
         val sessionId = currentSessionId()
         require(sessionId > 0L) { "Sessão USB inválida" }
         val now = System.currentTimeMillis()
@@ -252,11 +250,9 @@ class AutoCalNativeActionManager(
                 return failure("A sessão USB mudou; prepare a ação novamente")
             }
             if (otherCalibrationBusy()) return failure("Outra operação de calibração está em andamento")
-            if (!current.action.operationalToggle) {
-                unsafeMutationReason()?.let {
-                    preparation = null
-                    return failure(it)
-                }
+            unsafeMutationReason()?.let {
+                preparation = null
+                return failure(it)
             }
             if (!busy.compareAndSet(false, true)) return failure("Outra ação AutoCal está em andamento")
             preparation = null
@@ -814,9 +810,7 @@ class AutoCalNativeActionManager(
         require(isConnected()) { "USB desconectado durante a ação AutoCal" }
         require(currentSessionId() == prepared.sessionId) { "Sessão USB mudou durante a ação AutoCal" }
         require(!otherCalibrationBusy()) { "Outra calibração assumiu a sessão" }
-        if (!prepared.action.operationalToggle) {
-            unsafeMutationReason()?.let { throw IllegalStateException(it) }
-        }
+        unsafeMutationReason()?.let { throw IllegalStateException(it) }
     }
 
     private fun update(

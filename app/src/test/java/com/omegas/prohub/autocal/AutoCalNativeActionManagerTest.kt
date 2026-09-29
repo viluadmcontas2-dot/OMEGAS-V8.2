@@ -388,6 +388,29 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `toggle operacional nao escreve durante comunicacao insegura`() {
+        val calls = AtomicInteger(0)
+        val manager = AutoCalNativeActionManager(
+            receiptFile = temporaryFile(),
+            isConnected = { true },
+            currentSessionId = { 1L },
+            otherCalibrationBusy = { false },
+            unsafeMutationReason = { "Telemetria não está atual; aguarde novos quadros antes de gravar" },
+            transaction = { request, _, _, _ ->
+                calls.incrementAndGet()
+                reply(request, byteArrayOf())
+            },
+            fieldsForReceipt = listOf(AutoCalProtocol.AUTO_CAL_ENABLE),
+        )
+
+        val result = manager.prepare("DISABLE_AUTO_CAL")
+        assertFalse(result.getBoolean("ok"))
+        assertTrue(result.getString("error").contains("Telemetria não está atual"))
+        assertEquals(0, calls.get())
+        manager.close()
+    }
+
+    @Test
     fun `ack sem testemunha de readback nao confirma mutacao nativa`() {
         val writes = AtomicInteger(0)
         val manager = manager { request, _, _, _ ->

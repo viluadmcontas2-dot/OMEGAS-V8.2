@@ -12,9 +12,12 @@ assert "this.runOperational(action)" in cockpit
 assert "this.api.setAcquisitionEnabled" in cockpit
 assert "if (parsed.operationalToggle)" in bridge
 assert "requiresCriticalConfirmation\", !action.operationalToggle" in manager
-assert "if (!action.operationalToggle)" in manager
-assert "if (!current.action.operationalToggle)" in manager
-assert "if (!prepared.action.operationalToggle)" in manager
+assert "unsafeMutationReason()?.let { throw IllegalStateException(it) }" in manager
+assert "unsafeMutationReason()?.let {" in manager
+assert manager.count("unsafeMutationReason()?.let") >= 3
+assert "if (!action.operationalToggle)" not in manager
+assert "if (!current.action.operationalToggle)" not in manager
+assert "if (!prepared.action.operationalToggle)" not in manager
 
 # Destructive resets are separate from the operational enable/pause toggle,
 # but they are intentionally present because the canonical ProgBase EXE proves them.
