@@ -77,9 +77,11 @@ object AutoCalProtocol {
     val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
     val NUM_BUF_UPD_PETR = Field("NUM_BUF_UPD_PETR", 0x015B, Encoding.U16_LE, Shape.VECTOR, 18)
     val NUM_BUF_UPD_GAS = Field("NUM_BUF_UPD_GAS", 0x015C, Encoding.U16_LE, Shape.VECTOR, 18)
-    /** ProgBase DFM: ntVectorElement with no RowIndex serialized (default/scalar identity). */
+    /** ProgBase TAutoCalDM: FileKeyName=AUTOCAL_IDLE_MIN_BUF_PETR_THD. */
     val VECT_AUTOCAL_U8_0 = Field("VECT_AUTOCAL_U8_0", 0x0165, Encoding.U8, Shape.SCALAR, 1)
+    /** ProgBase TAutoCalDM: FileKeyName=!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD. */
     val VECT_AUTOCAL_U8_1 = Field("VECT_AUTOCAL_U8_1", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 1)
+    /** ProgBase TAutoCalDM: VECT_AUTOCAL_U8_2, FileKeyName=MaxAutomatch. */
     val MAX_AUTOMATCH = Field("MAX_AUTOMATCH", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 2)
     /** Alias de compatibilidade para snapshots/testes antigos; 0x0165:2 é MaxAutomatch. */
     val VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH
