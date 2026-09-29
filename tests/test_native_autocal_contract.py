@@ -56,6 +56,7 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.bridge)
         self.assertIn('manualAutoMatchExposed", true', self.bridge)
+        self.assertIn('manualAutoMatchExposed", true', self.monitor)
         self.assertIn('requiresCriticalConfirmation', self.action)
         self.assertGreaterEqual(
             self.bridge.count('AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH'),
