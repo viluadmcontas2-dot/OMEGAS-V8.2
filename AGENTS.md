@@ -15,7 +15,7 @@
 `TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|DEVICE_WHEN_AUTHORIZED`
 
 Antes de escrita relevante e antes de concluir:
-1. resolver HEAD remoto de `OmegasVerde`;
+1. resolver HEAD remoto de `OmegasPlatina`;
 2. reconciliar movimento concorrente;
 3. nunca sobrescrever trabalho remoto alheio.
 
@@ -39,7 +39,7 @@ A cadeia alvo é:
 
 Viewport automotivo canônico: `1280x720`.
 
-## Invariantes OMEGAS Verde atuais
+## Invariantes OMEGAS Platina atuais
 
 - nenhuma escrita automática de Map K/Curve K;
 - escrita manual exige intenção explícita + ACK + readback;
@@ -51,13 +51,13 @@ Viewport automotivo canônico: `1280x720`.
 
 ## Fronteira SIL/CIU
 
-**SIL/CIU é independente. Não portar, copiar, cherry-pickar, mesclar ou usar código SIL/CIU como implementação do Verde sem autorização explícita do owner.**
+**SIL/CIU é independente. Não portar, copiar, cherry-pickar, mesclar ou usar código SIL/CIU como implementação da Platina sem autorização explícita do owner.**
 
-O programa ativo compara o OMEGAS Verde com o **ProgBase original e seus logs reais**.
+O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.
 
 ## Execução paralela
 
-AgentRed pode usar até 20 slots quando as tarefas forem realmente independentes.
+Execução paralela só quando explicitamente autorizada pelo owner ou por instrução aplicável quando as tarefas forem realmente independentes.
 - um owner por superfície de escrita;
 - scouts/falsificadores podem rodar em paralelo;
 - integração e promoção ficam serializadas;

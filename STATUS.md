@@ -1,40 +1,47 @@
-# OMEGAS Verde — Status
+# OMEGAS Platina — Status
 
 ## Active control surface
 
-- Spec Kit: `OMEGAS-SK-001`
-- WorkUnit: `OMEGAS-WU-006`
-- Epic: #81
-- Branch: `OmegasVerde`
-- Estado: `AUTOCAL HOST-PARITY HARDENING — WU #104`
+- Branch: `OmegasPlatina`
+- Estado: `FINAL PRODUCT HARDENING — READY FOR APK GENERATION, APK NOT GENERATED`
+- Autoridade: GitHub remoto no HEAD resolvido antes de qualquer escrita.
 
-Sempre resolver o HEAD remoto antes de agir. GitHub remoto é autoridade; este arquivo registra evidência e direção, não fixa o HEAD.
+Checkpoint remoto observado nesta missão:
+- HEAD inicial re-resolvido: `88b472ad293ad96671fa4368303d38148f75c3c3`
+- `OmegasVerde fast contracts` #36509175880: SUCCESS nesse SHA
+- `OMEGAS VERDE CI` #36509175891: SUCCESS nesse SHA
 
-## Evidência já fechada
+Esses nomes de workflow eram legados Verde; a Platina mantém a evidência, mas a autoridade ativa é a branch `OmegasPlatina`.
 
-- #82 ProgBase byte/consumer map: **CLOSED / COMPLETED**.
-- #83 OMEGAS parity matrix: **CLOSED / COMPLETED**.
-- #86 sessão canônica: **CLOSED / MATCH** — AutoCal usa o mesmo `SessionRecorder`, o mesmo diretório de sessão e o mesmo ZIP canônico.
-- #85 Dashboard LEVELS RAW: **CLOSED / GREEN** — fresh `177`, invalid/stale `—`, sem conversão física inventada.
-- #95 AutoCal parity/repair/render: **CLOSED / GREEN** no escopo determinístico; validação física em veículo continua separada.
-- #81 epic e #84 global real-log E2E permanecem **CLOSED / COMPLETED**; o refinamento posterior não reabre esses resultados.
-- #98 P0 de reset permanece aberto somente até a revalidação final same-SHA desta correção de segurança/UX.
-- Fixture real MP48: `tests/fixtures/portmon-autocal-cycle-v1.json`, origem #68 / Portmon real.
-- ProgBase original: `G:\Meu Drive\OMEGAS\Copy of ProgBase (3).exe`.
-- ProgBase SHA-256: `8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4`.
-- Forensic fan-out #13 (`35646095776`) no SHA `873550b1b13e594c9ffaba7229688f243de3ecaf`: **256 PASS / 0 RED / 0 BROKEN**.
-- Canonical CI #202 (`35647103096`) no SHA `28c119fbe34eec8ef6a2695e172cd4c9583b91a7`: **PASS**.
-- Fast contracts #133 (`35647103061`) no mesmo SHA: **PASS**.
+## Gating Platina
 
-### Evidência recente inspecionada
+- Não gerar APK nesta missão.
+- DUMP/Portmon/ECU prevalecem sobre documentação antiga.
+- `PARTIAL` ou `UNKNOWN` em comando de mutação bloqueia release.
+- AutoMatch nativo é observado/bracketado; o host não escreve K automaticamente.
+- Predictor/V7 é análise/revisão; escrita real só pelas telas manuais, com intenção explícita, ACK, readback e sessão.
+- Reset K provado usa `MUL_ACT 0x0161[30]` Q14, `1.0 = 0x4000`, com readback completo.
+- `TAutoCalDM_EE`/`VECT_AUTOCAL_EE` é superfície distinta e não substitui `MUL_ACT`.
+- GAS_PREV expõe Tinj/MAP prévios; contador/maturidade prévios ficam desconhecidos quando não há fonte própria.
 
-- Provenance audit: `docs/evidence/2026-09-22-autocal-fixture-provenance.md`.
-- Android render #61 (`35809110846`) no SHA `aee50900b907c44de2cb8c562ed998b8a5d39314`: **13/13 cenários PASS**, incluindo o novo `autocal-sparse-zone-map`; receipts e screenshot 1280×720 inspecionados.
-- O cenário de zonas preserva identidade espacial: gasolina `Z1/Z2 OK, Z3/Z4 FALTA`; GNV `Z1/Z3 OK, Z2/Z4 FALTA`; `AGORA` usa CurrentBand e o fixture é explicitamente `SYNTHETIC_NON_SCIENTIFIC / VISUAL_ONLY_NON_SCIENTIFIC` sobre geometria ORIGINAL_DERIVED.
-- Baseline imediatamente anterior ao gate final: Fast #197 (`35808579759`), CI #308 (`35808579735`), Forensic #50 (`35808579730`) e Global #72 (`35808579729`) **PASS** no SHA `b083153a59c478c2fae5d13de5592eee69746bd1`.
-- CI #309 (`35809110817`) também **PASS** no SHA do render #61.
-- RED real preservado: render #44 (`35754584631`) provou que Curve K offline ficava presa em “Lendo 30 pontos diretamente da ECU”; `87a4ffbd...` corrigiu o settle para “Curva não confirmada”.
-- Os commits posteriores ao SHA de produto alteraram apenas o workflow autorizado de APK; por isso o fechamento exige uma nova rodada CI + render + fan-out no HEAD atual.
+## Classificação atual de readiness AutoCal
+
+| Rotina | Status | Release | Critério |
+| --- | --- | --- | --- |
+| Enable/Disable AutoCal | PROVEN | non-blocking | `AUTO_CAL_ENABLE` com readback |
+| Reset petrol/gas/all | PROVEN | non-blocking | modos nativos `0x01/0x02/0x04`, ACK e snapshot |
+| Delete/readquire point | PROVEN | non-blocking | masks completos 18+18 e commit único |
+| Readquire multiple/mixed | PROVEN | non-blocking | seleção gasolina+GNV preserva pontos não selecionados |
+| Manual AutoMatch | PROVEN | non-blocking | modo nativo `0x08`, intenção explícita |
+| Finish AutoMatch/AutoCal | PROVEN | non-blocking | `MAX_AUTOMATCH -> NUM_AUTOMATCH_EXECUTED`, readback |
+| Reset K | PROVEN | non-blocking | 30 writes `MUL_ACT=0x4000`, readback dos 30 |
+| 18 bandas / 4 zonas | PROVEN | non-blocking | seletores `U8_1` e `CALIBRATION_VAL_1[2/5/8]`, fronteiras `5/9/13` |
+| Petrol current / Gas current | PROVEN | non-blocking | buffers atuais com contadores próprios |
+| Gas previous | PARTIAL | non-blocking | Tinj/MAP prévios provados; contador anterior UNKNOWN e não exibido como certo |
+| MUL_ACT | PROVEN | non-blocking | normal `0x0161`, distinto de EE |
+| Reference curves | PROVEN | non-blocking | refresh de referência separado e coerente |
+| AutoMatch before/after K | PROVEN/PARTIAL | non-blocking | bracket causal; `INCONCLUSIVE` nunca vira certeza |
+| Error/recovery/session loss | PROVEN | non-blocking | session fencing, interlock, recibo de falha, sem retry automático de mutação |
 
 ## ProgBase/original confirmado
 

@@ -1,13 +1,14 @@
-# Final same-SHA verification: AutoCal blueprint refinement 2026-09-27
-name: OMEGAS VERDE APK NOW
+# Platina APK readiness gate. This workflow never builds on push.
+name: OMEGAS PLATINA APK READY GATED
 
 on:
   workflow_dispatch:
-  # APK evidence trigger: autocal-blueprint-viewport-context-verified-2026-09-27
-  push:
-    branches: [OmegasVerde]
-    paths:
-      - '.github/workflows/verde-apk-now.yml'
+    inputs:
+      build_apk:
+        description: 'Gerar APK somente após autorização explícita do proprietário'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -16,11 +17,12 @@ env:
   PRODUCT_SHA: ${{ github.sha }}
 
 concurrency:
-  group: omegas-verde-apk-final-${{ github.sha }}
+  group: omegas-platina-apk-gated-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
   verify-build-publish:
+    if: ${{ inputs.build_apk == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -77,7 +79,7 @@ jobs:
           fi
 
           {
-            echo "OMEGAS_VERDE_APK=PASS"
+            echo "OMEGAS_PLATINA_APK=PASS"
             echo "SOURCE_SHA=$SOURCE_SHA"
             echo "SOURCE_TREE=$SOURCE_TREE"
             echo "OMEGAS_BUILD_COMMIT=$BUILD_COMMIT"
@@ -87,7 +89,7 @@ jobs:
             echo "APK_BYTES=$APK_BYTES"
             echo "APK_ZIP_INTEGRITY=PASS"
             echo "PHYSICAL_INSTALL_NOT_YET_CLAIMED=true"
-          } | tee build/evidence/omegas-verde-apk-evidence.txt
+          } | tee build/evidence/omegas-platina-apk-evidence.txt
 
           test "$SOURCE_SHA" = "$PRODUCT_SHA"
           if [ -n "$BUILD_COMMIT" ]; then
@@ -97,10 +99,10 @@ jobs:
       - name: Publish APK + evidence
         uses: actions/upload-artifact@v4
         with:
-          name: omegas-verde-final-${{ env.PRODUCT_SHA }}
+          name: omegas-platina-final-${{ env.PRODUCT_SHA }}
           path: |
             app/build/outputs/apk/debug/app-debug.apk
-            build/evidence/omegas-verde-apk-evidence.txt
+            build/evidence/omegas-platina-apk-evidence.txt
           if-no-files-found: error
           retention-days: 14
           compression-level: 0

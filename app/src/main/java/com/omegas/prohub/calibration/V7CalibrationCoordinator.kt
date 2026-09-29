@@ -36,7 +36,6 @@ class V7CalibrationCoordinator(
 ) {
     private val lock = Any()
     private val store = V7SessionFileStore(directory)
-    private val ecuWriter = ExistingCalibrationWriterV7(mapManager, factorManager)
     private val suggestionAdapter = AdvisorSuggestionAdapterV7()
     private var activeFileName = "sessao-atual"
     private var runtime: V7SessionRuntime? = loadLatest()
@@ -224,27 +223,23 @@ class V7CalibrationCoordinator(
         stateJsonLocked().put("ok", true)
     }
 
-    /** Deve ser chamado em thread de trabalho; aguarda ACK e readback reais. */
+    /**
+     * Platina mantém sugestões como análise/revisão.
+     * Escrita real só começa nas telas manuais de Mapa/Curva, com intenção
+     * explícita, ACK e readback dos managers. Este caminho não pode religar
+     * Predictor/V7 runtime a writer automático.
+     */
     fun applySuggestionToEcu(suggestionId: String): JSONObject = synchronized(lock) {
         val active = requireRuntime()
-        try {
-            val applied = active.applySuggestionToEcu(
-                suggestionId = suggestionId,
-                nowMs = System.currentTimeMillis(),
-                writer = ecuWriter,
-            )
-            persistLocked()
-            stateJsonLocked()
-                .put("ok", true)
-                .put("appliedRevision", revisionJson(applied.revision))
-                .put("writeMessage", active.state.lastWriteMessage)
-        } catch (error: Exception) {
-            persistLocked()
-            stateJsonLocked()
-                .put("ok", false)
-                .put("error", error.message ?: "Falha ao aplicar sugestão V7")
-                .put("writeMessage", active.state.lastWriteMessage)
-        }
+        require(suggestionId.isNotBlank()) { "Sugestão inválida" }
+        stateJsonLocked()
+            .put("ok", false)
+            .put("state", "MANUAL_REVIEW_REQUIRED")
+            .put("suggestionId", suggestionId)
+            .put("automaticWriteBlocked", true)
+            .put("writesStarted", false)
+            .put("message", "Sugestão não escreve diretamente. Abra o editor, revise a proposta e confirme manualmente.")
+            .put("writeMessage", active.state.lastWriteMessage)
     }
 
     fun stateJson(): JSONObject = synchronized(lock) { stateJsonLocked() }

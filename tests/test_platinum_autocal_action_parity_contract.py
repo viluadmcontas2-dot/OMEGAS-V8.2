@@ -74,10 +74,24 @@ def test_native_automatch_and_inferred_math_are_not_writers():
     assert FIXTURE["autonomous"][0]["host_write_allowed"] is False
 
 
+def test_predictor_and_v7_suggestion_path_is_manual_review_only():
+    coordinator = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt").read_text(encoding="utf-8")
+    writer = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt").read_text(encoding="utf-8")
+
+    assert "private val ecuWriter" not in coordinator
+    assert "active.applySuggestionToEcu(" not in coordinator
+    assert "MANUAL_REVIEW_REQUIRED" in coordinator
+    assert "automaticWriteBlocked" in coordinator
+    assert "writesStarted" in coordinator
+    assert "LAB_ONLY" in writer
+    assert "labOnlyWriterEnabled: Boolean = false" in writer
+
+
 if __name__ == "__main__":
     test_matrix_has_no_unclassified_host_mutation()
     test_exact_native_action_frames_remain_bound()
     test_reset_k_is_mul_act_30_q14_with_readback()
     test_point_reacquisition_preserves_both_full_masks_and_single_commit()
     test_native_automatch_and_inferred_math_are_not_writers()
+    test_predictor_and_v7_suggestion_path_is_manual_review_only()
     print("PLATINUM_AUTOCAL_ACTION_PARITY_CONTRACT=PASS")

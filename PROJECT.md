@@ -1,13 +1,13 @@
-# OMEGAS Verde — Projeto ativo
+# OMEGAS Platina — Projeto ativo
 
 ## Missão
 
-Entregar um OMEGAS Verde confiável no carro, com comportamento observado e testado a partir da realidade MP48 — não apenas por contratos de código.
+Entregar o OMEGAS Platina pronto para geração de APK, sem gerar APK nesta missão: AutoCal fiel ao ProgBase/ECU, moderno, claro, recuperável e seguro em multimídia 1280×720.
 
 ## Repositório e branch
 
 - Repositório: `viluadmcontas2-dot/OMEGAS-V8.2`
-- Branch autorizada: `OmegasVerde`
+- Branch autorizada: `OmegasPlatina`
 - Source authority: GitHub remoto
 
 ## Plataforma
@@ -16,18 +16,18 @@ Android landscape, WebView, alvo automotivo `1280x720`, MP48/OMEGAS.
 
 ## Programa atual
 
-**OMEGAS-SK-001 — ProgBase AutoCal parity + global reality gate**
+**OMEGAS-PLATINA-FINAL — AutoCal produto + paridade + segurança**
 
-- Epic: #81
-- ProgBase byte/consumer map: #82
-- OMEGAS parity matrix: #83
-- Global real-log rendered E2E: #84 (relacionada a #67/#68)
-- Dashboard LEVELS RAW: #85
-- Session unification: #86
+Escopo ativo:
+- fidelidade de protocolo e comportamento AutoCal contra DUMP/Portmon/ECU;
+- ECU como autoridade do AutoMatch nativo;
+- nenhuma escrita automática de K/Mapa por Predictor, AutoMatch ou sugestão;
+- mutações somente por intenção explícita, ACK, readback, sessão e recibo;
+- UX principal AutoCal superior ao ProgBase, com evidência técnica sob demanda.
 
 ## Princípio técnico
 
-O original ProgBase é referência comportamental para a rotina AutoCal. O objetivo não é copiar sua UI literalmente: é compreender produtores, comandos, cadência, séries, estados e consumers e então apresentar a mesma verdade operacional com UX melhor sob o crivo CUSTOMROM + OMEGA DEV.
+O ProgBase original é referência comportamental e semântica. O objetivo não é copiar a UI Delphi: é preservar comandos, produtores, cadência, séries, estados e consumers, apresentando a mesma verdade operacional com menos carga cognitiva e maior segurança.
 
 ## UX vinculante para este programa
 
@@ -42,6 +42,10 @@ O original ProgBase é referência comportamental para a rotina AutoCal. O objet
 - sem navegação/cliques desnecessários;
 - tela principal compreensível em cerca de 2 segundos.
 
-## NON-GOAL
+## NON-GOALS
 
-SIL/CIU não faz parte da implementação desta WorkUnit. Nenhum código dessa branch deve ser portado sem nova autorização explícita.
+- gerar APK nesta missão;
+- reimplementar AutoMatch nativo como writer host-side;
+- aplicar Predictor automaticamente;
+- copiar UI do ProgBase;
+- usar SIL/CIU sem autorização explícita.

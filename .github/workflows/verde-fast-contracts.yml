@@ -1,24 +1,30 @@
-# Final same-SHA verification: AutoCal blueprint refinement 2026-09-27
-name: OmegasVerde fast contracts
+# Platina same-SHA fast verification
+name: OmegasPlatina fast contracts
 
 on:
   push:
     branches:
-      - OmegasVerde
       - OmegasPlatina
     paths:
       - ".github/workflows/verde-fast-contracts.yml"
       - "app/src/main/assets/ui/**"
+      - "app/src/main/java/com/omegas/prohub/autocal/**"
+      - "app/src/main/java/com/omegas/prohub/calibration/**"
+      - "app/src/main/java/com/omegas/prohub/ecu/**"
       - "tests/**"
       - "tools/run_checks.py"
-      - "docs/superpowers/**"
+      - "docs/platinum/**"
+      - "docs/autocal/**"
+      - "PROJECT.md"
+      - "STATUS.md"
+      - "AGENTS.md"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: omegas-verde-fast-contracts
+  group: omegas-platina-fast-contracts-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
