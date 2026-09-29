@@ -4,6 +4,12 @@ import json
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT / "tests/fixtures/platinum-progbase-dump-autocal-v1.json"
 FIXTURE = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+RESOURCE_DEFAULTS = json.loads(
+    (ROOT / "tests/fixtures/progbase-autocal-resource-defaults-v1.json").read_text(encoding="utf-8")
+)
+SCALE_DFM = json.loads(
+    (ROOT / "tests/fixtures/progbase-autocal-scale-dfm-v1.json").read_text(encoding="utf-8")
+)
 PROTOCOL = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt").read_text(encoding="utf-8")
 POINT_DELETE = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalPointDeleteProtocol.kt").read_text(encoding="utf-8")
 ACTION = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt").read_text(encoding="utf-8")
@@ -20,6 +26,23 @@ def test_dump_identity_is_bound_to_canonical_progbase():
     assert identity["dump1_bin_sha256"] == expected
     assert identity["byte_identical"] is True
     assert expected in DOC
+
+
+def test_platinum_gate_matches_existing_distilled_oracles():
+    assert FIXTURE["distilled_oracles"]["resource_defaults"] == "tests/fixtures/progbase-autocal-resource-defaults-v1.json"
+    assert FIXTURE["distilled_oracles"]["scale_dfm"] == "tests/fixtures/progbase-autocal-scale-dfm-v1.json"
+
+    selectors = FIXTURE["resources"]["TAutoCalDM"]["runtime_maturity_selectors"]
+    canonical = RESOURCE_DEFAULTS["calibrationGrid"]["runtimeMaturitySelectors"]
+    assert selectors["zone_boundaries_inclusive"] == canonical["zoneBoundariesInclusive"]
+    assert selectors["petrol_low"] == canonical["petrolLow"]
+    assert selectors["petrol_normal"] == canonical["petrolNormal"]
+    assert selectors["gas_low"] == canonical["gasLow"]
+    assert selectors["gas_normal"] == canonical["gasNormal"]
+
+    canonical_sha = FIXTURE["identity"]["canonical_progbase_sha256"]
+    assert RESOURCE_DEFAULTS["sources"]["progbase"]["sha256"] == canonical_sha
+    assert SCALE_DFM["source"]["progbase"]["sha256"] == canonical_sha
 
 
 def test_indexed_u8_semantics_match_tautocaldm_dump():
@@ -100,6 +123,7 @@ def test_native_automatch_remains_observational_on_host():
 
 if __name__ == "__main__":
     test_dump_identity_is_bound_to_canonical_progbase()
+    test_platinum_gate_matches_existing_distilled_oracles()
     test_indexed_u8_semantics_match_tautocaldm_dump()
     test_normal_and_ee_surfaces_stay_distinct()
     test_dump_proven_acquisition_surfaces_are_preserved()
