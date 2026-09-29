@@ -355,7 +355,6 @@ class AutoCalNativeActionManager(
             prepared.sessionId,
         )
         requireAck(reply, "A ECU não confirmou ${prepared.action.label}")
-        Thread.sleep(250L)
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
@@ -551,7 +550,6 @@ class AutoCalNativeActionManager(
             prepared.sessionId,
         )
         requireAck(commitReply, "A ECU não confirmou o commit da readquisição")
-        Thread.sleep(500L)
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando aquisição após o commit", 78, prepared, targetDetails)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)

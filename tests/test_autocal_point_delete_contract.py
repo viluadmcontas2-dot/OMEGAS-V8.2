@@ -29,7 +29,7 @@ assert 'fun multiPointPlan' in protocol
 assert 'fun singlePointPlan(target: Target): List<ByteArray> = multiPointPlan(listOf(target))' in protocol
 assert 'AutoCalPointDeleteProtocol.multiPointPlan(targets)' in manager
 assert 'maskFrames.forEachIndexed' in manager
-assert 'Thread.sleep(500L)' in manager
+assert 'Thread.sleep(500L)' not in manager
 assert 'automaticBackup", false' in manager
 for forbidden in ('persistPreMutationBackup', 'PERSISTING_BACKUP'):
     assert forbidden not in manager, forbidden

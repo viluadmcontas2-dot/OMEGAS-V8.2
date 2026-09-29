@@ -74,6 +74,8 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertNotIn('finishTarget", "VECT_AUTOCAL_U8_0', self.action)
         self.assertIn('counterWidthBytes', self.action)
         self.assertIn('Thread.sleep(100L)', self.action)
+        self.assertNotIn('Thread.sleep(250L)', self.action)
+        self.assertNotIn('Thread.sleep(500L)', self.action)
         self.assertIn('Finish AutoCal não persistiu', self.action)
         self.assertIn('AutoCal finalizado · $committed/$max confirmado pela ECU', self.action)
 
