@@ -31,7 +31,7 @@
       "classification": "PROVEN",
       "target": "native action 0x24/0x04 mode 0x01",
       "wire": "02 24 04 01 2B",
-      "readback": "full AutoCal snapshot",
+      "readback": "NUM_BUF_UPD_PETR + PETR_INJ_TBUF + MNFLD_PRESS_BUF + ACQUIRED_ZONES_PETROL valid in the confirmed session",
       "automatic": false
     },
     {
@@ -39,7 +39,7 @@
       "classification": "PROVEN",
       "target": "native action 0x24/0x04 mode 0x02",
       "wire": "02 24 04 02 2C",
-      "readback": "full AutoCal snapshot",
+      "readback": "NUM_BUF_UPD_GAS + PETR_INJ_TBUF_GAS + MNFLD_PRESS_BUF_GAS + ACQUIRED_ZONES_GAS valid in the confirmed session",
       "automatic": false
     },
     {
@@ -47,15 +47,16 @@
       "classification": "PROVEN",
       "target": "native action 0x24/0x04 mode 0x04",
       "wire": "02 24 04 04 2E",
-      "readback": "full AutoCal snapshot",
-      "automatic": false
+      "readback": "petrol acquisition witnesses + gas acquisition witnesses + MUL_ACT valid in the confirmed session",
+      "automatic": false,
+      "k_state_caution": "canonical Portmon observed broad Reset All effect including MUL_ACT; host records before/after and does not infer universal selectivity"
     },
     {
       "name": "MANUAL_AUTOMATCH",
       "classification": "PROVEN",
       "target": "native action 0x24/0x04 mode 0x08",
       "wire": "02 24 04 08 32",
-      "readback": "full AutoCal snapshot",
+      "readback": "MUL_ACT valid after the explicit command; before/after K snapshots are recorded without requiring a change",
       "automatic": false
     },
     {
@@ -89,7 +90,7 @@
       "classification": "PROVEN",
       "target": "PETROL_POINT_2DELETE 0x016D[18] + GAS_POINT_2DELETE 0x016E[18]",
       "wire": "two full U8 masks then 01 24 05 2A",
-      "readback": "full AutoCal snapshot",
+      "readback": "fuel-scoped acquisition counters/buffers/zones valid after the single commit; no generic AUTO_CAL_ENABLE witness",
       "automatic": false
     }
   ],

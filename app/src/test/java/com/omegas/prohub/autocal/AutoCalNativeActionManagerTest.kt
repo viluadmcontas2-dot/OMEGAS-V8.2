@@ -29,14 +29,14 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `somente ações que escrevem K diretamente declaram mayChangeMulAct`() {
+    fun `ações com efeito K provado ou possível declaram mayChangeMulAct`() {
         assertTrue(AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH.mayChangeMulAct)
         assertTrue(AutoCalNativeActionManager.Action.RESET_K_FACTOR.mayChangeMulAct)
+        assertTrue(AutoCalNativeActionManager.Action.RESET_ALL.mayChangeMulAct)
         assertFalse(AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL.mayChangeMulAct)
         assertFalse(AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL.mayChangeMulAct)
         assertFalse(AutoCalNativeActionManager.Action.RESET_PETROL.mayChangeMulAct)
         assertFalse(AutoCalNativeActionManager.Action.RESET_GAS.mayChangeMulAct)
-        assertFalse(AutoCalNativeActionManager.Action.RESET_ALL.mayChangeMulAct)
         assertFalse(AutoCalNativeActionManager.Action.DELETE_POINT.mayChangeMulAct)
     }
 
@@ -160,13 +160,18 @@ class AutoCalNativeActionManagerTest {
         val calls = java.util.concurrent.CopyOnWriteArrayList<String>()
         val confirmed = AtomicBoolean(false)
         val receiptFile = temporaryFile()
-        val manager = manager(receiptFile = receiptFile, onConfirmed = { confirmed.set(true) }) { request, _, _, _ ->
+        val witnesses = gasReadbackFields()
+        val manager = manager(
+            receiptFile = receiptFile,
+            onConfirmed = { confirmed.set(true) },
+            fieldsForReceipt = witnesses,
+        ) { request, _, _, _ ->
             if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
                 calls += "RESET_GAS"
                 reply(request, byteArrayOf())
             } else {
                 calls += "READBACK"
-                reply(request, byteArrayOf(1))
+                reply(request, validReadPayload(request, witnesses))
             }
         }
 
@@ -177,13 +182,20 @@ class AutoCalNativeActionManagerTest {
 
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
         assertTrue(confirmed.get())
-        assertEquals(listOf("RESET_GAS", "READBACK"), calls.toList())
+        assertEquals("RESET_GAS", calls.first())
+        assertEquals(witnesses.size, calls.drop(1).count { it == "READBACK" })
 
         val receipt = manager.receiptsJson().getJSONObject(0)
         assertEquals("CONFIRMED", receipt.getString("outcome"))
         assertEquals("RESET_GAS", receipt.getString("action"))
         assertEquals("02 24 04 02 2C", receipt.getString("commandHex"))
         assertTrue(receipt.getBoolean("readbackValid"))
+        assertEquals(
+            witnesses.map { it.key },
+            receipt.getJSONArray("readbackWitnesses").let { array ->
+                List(array.length()) { index -> array.getString(index) }
+            },
+        )
         assertFalse(receipt.getBoolean("automaticBackup"))
         assertTrue(receipt.isNull("preMutationBackup"))
         assertFalse(receipt.has("before"))
@@ -197,12 +209,13 @@ class AutoCalNativeActionManagerTest {
         val receiptFile = temporaryFile()
         File(receiptFile.parentFile, "backups").writeText("bloqueia qualquer backup automatico")
         val resetCalls = AtomicInteger(0)
-        val manager = manager(receiptFile = receiptFile) { request, _, _, _ ->
+        val witnesses = petrolReadbackFields()
+        val manager = manager(receiptFile = receiptFile, fieldsForReceipt = witnesses) { request, _, _, _ ->
             if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_PETROL.request)) {
                 resetCalls.incrementAndGet()
                 reply(request, byteArrayOf())
             } else {
-                reply(request, byteArrayOf(1))
+                reply(request, validReadPayload(request, witnesses))
             }
         }
 
@@ -268,10 +281,11 @@ class AutoCalNativeActionManagerTest {
     @Test
     fun `readquirir um ponto usa dois vetores completos commit e so depois readback`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
-        val manager = manager { request, _, _, _ ->
+        val witnesses = gasReadbackFields()
+        val manager = manager(fieldsForReceipt = witnesses) { request, _, _, _ ->
             requests += request.copyOf()
-            val opcode = request.firstOrNull()?.toInt()?.and(0xFF)
-            reply(request, if (opcode == AutoCalProtocol.READ_SCALAR || opcode == AutoCalProtocol.READ_VECTOR) byteArrayOf(1) else byteArrayOf())
+            val readPayload = validReadPayloadOrNull(request, witnesses)
+            reply(request, readPayload ?: byteArrayOf())
         }
         val prepared = manager.preparePointDelete("GAS", 14)
         assertTrue(prepared.getBoolean("prepared"))
@@ -284,9 +298,11 @@ class AutoCalNativeActionManagerTest {
         val expected = AutoCalPointDeleteProtocol.singlePointPlan(
             AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, 14),
         )
-        assertEquals(expected.size + 1, requests.size)
+        assertEquals(expected.size + witnesses.size, requests.size)
         expected.forEachIndexed { index, frame -> assertArrayEquals(frame, requests[index]) }
-        assertArrayEquals(AutoCalProtocol.read(AutoCalProtocol.AUTO_CAL_ENABLE), requests.last())
+        witnesses.forEachIndexed { index, field ->
+            assertArrayEquals(AutoCalProtocol.read(field), requests[expected.size + index])
+        }
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
         val receipt = manager.receiptsJson().getJSONObject(0)
         assertEquals("DELETE_POINT", receipt.getString("action"))
@@ -411,21 +427,17 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `ack sem testemunha de readback nao confirma mutacao nativa`() {
+    fun `ack e readback generico nao confirmam reset gas`() {
         val writes = AtomicInteger(0)
-        val manager = manager { request, _, _, _ ->
+        val manager = manager(
+            fieldsForReceipt = listOf(AutoCalProtocol.AUTO_CAL_ENABLE),
+        ) { request, _, _, _ ->
             if ((request[0].toInt() and 0xFF) == 0x02) {
                 writes.incrementAndGet()
                 reply(request, byteArrayOf())
             } else {
-                UsbProtocolReply(
-                    ok = false,
-                    status = -1,
-                    payload = byteArrayOf(),
-                    request = request,
-                    echo = byteArrayOf(),
-                    error = "readback indisponivel",
-                )
+                // AUTO_CAL_ENABLE válido não é testemunha do efeito RESET_GAS.
+                reply(request, byteArrayOf(1))
             }
         }
 
@@ -435,10 +447,35 @@ class AutoCalNativeActionManagerTest {
 
         assertEquals(1, writes.get())
         assertEquals("FAILED", manager.statusJson().getString("state"))
-        assertTrue(manager.statusJson().getString("message").contains("Readback obrigatorio"))
+        assertTrue(manager.statusJson().getString("message").contains("NUM_BUF_UPD_GAS"))
         val receipt = manager.receiptsJson().getJSONObject(0)
         assertTrue(receipt.getBoolean("mutationMayHaveStarted"))
         assertFalse(receipt.getBoolean("automaticRetry"))
+        manager.close()
+    }
+
+    @Test
+    fun `preparacao publica testemunhas especificas por comando`() {
+        val manager = manager { request, _, _, _ -> reply(request, byteArrayOf()) }
+
+        fun witnesses(action: String): List<String> {
+            val prepared = manager.prepare(action)
+            val values = prepared.getJSONArray("readbackWitnesses")
+            manager.clearPreparation()
+            return List(values.length()) { index -> values.getString(index) }
+        }
+
+        assertEquals(gasReadbackFields().map { it.key }, witnesses("RESET_GAS"))
+        assertEquals(petrolReadbackFields().map { it.key }, witnesses("RESET_PETROL"))
+        assertEquals(
+            (petrolReadbackFields() + gasReadbackFields() + AutoCalProtocol.MUL_ACT)
+                .distinctBy { it.identity }
+                .map { it.key },
+            witnesses("RESET_ALL"),
+        )
+        assertEquals(listOf("MUL_ACT"), witnesses("MANUAL_AUTOMATCH"))
+        assertEquals(listOf("AUTO_CAL_ENABLE"), witnesses("ENABLE_AUTO_CAL"))
+        assertEquals(listOf("NUM_AUTOMATCH_EXECUTED"), witnesses("FINISH_AUTOCAL"))
         manager.close()
     }
 
@@ -467,6 +504,35 @@ class AutoCalNativeActionManagerTest {
         assertTrue(result.getString("error").contains("Outra operação"))
         manager.close()
     }
+
+    private fun petrolReadbackFields(): List<AutoCalProtocol.Field> = listOf(
+        AutoCalProtocol.NUM_BUF_UPD_PETR,
+        AutoCalProtocol.PETR_INJ_TBUF,
+        AutoCalProtocol.MNFLD_PRESS_BUF,
+        AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+    )
+
+    private fun gasReadbackFields(): List<AutoCalProtocol.Field> = listOf(
+        AutoCalProtocol.NUM_BUF_UPD_GAS,
+        AutoCalProtocol.PETR_INJ_TBUF_GAS,
+        AutoCalProtocol.MNFLD_PRESS_BUF_GAS,
+        AutoCalProtocol.ACQUIRED_ZONES_GAS,
+    )
+
+    private fun validReadPayloadOrNull(
+        request: ByteArray,
+        fields: List<AutoCalProtocol.Field>,
+    ): ByteArray? {
+        val field = fields.firstOrNull { AutoCalProtocol.read(it).contentEquals(request) } ?: return null
+        val count = field.expectedElementsHint ?: 1
+        val width = if (field.encoding == AutoCalProtocol.Encoding.U8_OR_U16_LE) 1 else field.encoding.bytesPerElement
+        return ByteArray(count * width)
+    }
+
+    private fun validReadPayload(request: ByteArray, fields: List<AutoCalProtocol.Field>): ByteArray =
+        requireNotNull(validReadPayloadOrNull(request, fields)) {
+            "Leitura inesperada: " + request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
+        }
 
     private fun manager(
         receiptFile: File = temporaryFile(),

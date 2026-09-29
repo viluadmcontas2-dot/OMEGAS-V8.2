@@ -1,5 +1,14 @@
 # AutoCal final — mapa byte a byte
 
+> **SUPERSEDED — NÃO USAR ESTE ARQUIVO COMO AUTORIDADE PARA O MAPA `0x24/0x04`.**
+> A versão histórica abaixo continha os subcomandos deslocados. A fonte canônica atual é
+> `tests/fixtures/progbase-autocal-action-map-v1.json` (`ORIGINAL_DERIVED`), amarrada ao
+> ProgBase SHA-256 `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4`.
+>
+> Mapa corrigido: Manual AutoMatch=`0x08`; Reset petrol=`0x01`; Reset gas=`0x02`;
+> Reset all=`0x04`. `ActionAutoCalRifExecute`/Modify map refs usa rota separada e não é
+> um wrapper simples do modo `0x24/0x04`.
+
 Fontes reconciliadas: `AutoCalProtocol.kt`, testes de protocolo, `byte-matrix.json` da deep audit, Portmon AutoCal e Portmon LogNovo já preparados. Escalas canônicas: injection **500 counts/ms**; MAP **1000 counts/bar**; Q14 **16384**.
 
 `CONFIRMADO` em “byte” significa endereço/request/encoding/shape sustentados pelo contrato de código/teste; Portmon informa observação no corpus. A confiança semântica é separada para não promover nome de campo a prova.
@@ -33,11 +42,11 @@ Fontes reconciliadas: `AutoCalProtocol.kt`, testes de protocolo, `byte-matrix.js
 
 - Enable AutoCal: `12 4A 01 01 5E`, observado no Lognovo.
 - Disable AutoCal: `12 4A 01 00 5D`, observado no Lognovo.
-- Modify map refs: `ActionAutoCalRifExecute@0x005189B4` → modo `0x08` → `02 24 04 08 32`; identidade provada pelo EXE, ausente nos Portmons fornecidos.
-- Manual AutoMatch: `ActionAutoMatchExecute@0x005189C0` → modo `0x01` → `02 24 04 01 2B`; identidade provada pelo EXE, ausente nos Portmons fornecidos e não exposto pelo OMEGAS.
-- Reset gasolina: `ActionResetPetrolExecute@0x005189CC` → modo `0x02` → `02 24 04 02 2C`; identidade provada pelo EXE, ausente nos Portmons fornecidos e intertravado no OMEGAS.
-- Reset GNV: `ActionResetGasExecute@0x005189D8` → modo `0x04` → `02 24 04 04 2E`; observado nos dois Portmons. No Lognovo, o efeito capturado foi amplo: zerou buffers/referências gasolina+GNV e retornou `MUL_ACT` a Q14 1.0. Não pode ser apresentado como “somente GNV”.
-- Reset all: `ActionResetAllExecute@0x005189E4` chama uma rotina diferente (`0x005185D4`); este corpus não fecha seu wire e o OMEGAS não o expõe.
+- Modify map refs: `ActionAutoCalRifExecute@0x005187A0` usa rota separada; não possui modo/frame simples `0x24/0x04`.
+- Manual AutoMatch: `ActionAutoMatchExecute@0x005189B4` → modo `0x08` → `02 24 04 08 32`.
+- Reset gasolina: `ActionResetPetrolExecute@0x005189C0` → modo `0x01` → `02 24 04 01 2B`.
+- Reset GNV: `ActionResetGasExecute@0x005189CC` → modo `0x02` → `02 24 04 02 2C`.
+- Reset all: `ActionResetAllExecute@0x005189D8` → modo `0x04` → `02 24 04 04 2E`; observado no Portmon canônico com efeito amplo sobre o estado AutoCal, inclusive `MUL_ACT`.
 
 O EXE prova identidade/handler/mode; Portmon prova tráfego e efeitos capturados. Nome de ação do ProgBase não autoriza inferir seletividade física.
 

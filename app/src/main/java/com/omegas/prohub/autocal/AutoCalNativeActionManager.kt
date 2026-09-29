@@ -98,8 +98,8 @@ class AutoCalNativeActionManager(
         RESET_ALL(
             AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_ALL),
             "Nova aquisição completa",
-            "Usa a ação nativa Reset all do ProgBase 4.2.0.6 (modo 0x04). É uma redefinição ampla e permanece separada da readquisição de um único combustível.",
-            false,
+            "Usa a ação nativa Reset all do ProgBase 4.2.0.6 (modo 0x04). O Portmon canônico observou efeito amplo, inclusive sobre MUL_ACT; o OMEGAS captura K antes/depois e não promete seletividade além do que a ECU confirma.",
+            true,
         ),
         DELETE_POINT(
             byteArrayOf(),
@@ -229,6 +229,7 @@ class AutoCalNativeActionManager(
             .put("expiresAtMs", prepared.expiresAtMs)
             .put("ecuMutation", true)
             .put("mayChangeMulAct", action.mayChangeMulAct)
+            .put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))
             .put("requiresCriticalConfirmation", !action.operationalToggle)
             .put("operationalOneTouch", action.operationalToggle)
             .put("details", details)
@@ -354,7 +355,7 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-        validateActionReadback(prepared.action, after)
+        validateActionReadback(prepared, after)
         confirm(prepared, reply, after, startedAt, before = before)
     }
 
@@ -439,7 +440,7 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("READING_AFTER", "Finalização confirmada; atualizando AutoCal", 82, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-        validateActionReadback(prepared.action, after)
+        validateActionReadback(prepared, after)
         confirm(
             prepared = prepared,
             reply = writeReply,
@@ -491,7 +492,7 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("VERIFYING_K_RESET", "Confirmando Curva K neutra na ECU", 78, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-        validateActionReadback(prepared.action, after)
+        validateActionReadback(prepared, after)
         val actual = after.field(AutoCalProtocol.MUL_ACT)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
             ?.rawValues
@@ -549,7 +550,7 @@ class AutoCalNativeActionManager(
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando aquisição após o commit", 78, prepared, targetDetails)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-        validateActionReadback(prepared.action, after)
+        validateActionReadback(prepared, after)
         confirm(prepared, commitReply, after, startedAt, targetDetails)
     }
 
@@ -579,7 +580,7 @@ class AutoCalNativeActionManager(
                     "AutoCal finalizado e confirmado pela ECU"
                 }
             }
-            else -> "ACK confirmado; estado da ECU atualizado"
+            else -> "ACK + readback específico confirmados pela ECU"
         }
         update(
             "CONFIRMED",
@@ -698,6 +699,7 @@ class AutoCalNativeActionManager(
             .put("automatic", false)
             .put("manualOnly", true)
             .put("readbackValid", true)
+            .put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))
             .put("preMutationBackup", JSONObject.NULL)
             .put("automaticBackup", false)
             .put("automaticRollback", false)
@@ -781,22 +783,61 @@ class AutoCalNativeActionManager(
         .put("zone", target.zone)
         .put("automaticBackup", false)
 
-    private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
-        // A whole snapshot may legitimately be partial on firmware variants, but an
-        // action cannot be called confirmed without its own ECU readback witness.
-        // This keeps unknown observational fields non-blocking while fail-closing
-        // the mutation when the authoritative state for that action was not read.
-        val witness = when (action) {
-            Action.RESET_K_FACTOR -> AutoCalProtocol.MUL_ACT
-            Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> AutoCalProtocol.NUM_AUTOMATCH_EXECUTED
-            else -> AutoCalProtocol.AUTO_CAL_ENABLE
+    private fun petrolAcquisitionReadbackFields(): List<AutoCalProtocol.Field> = listOf(
+        AutoCalProtocol.NUM_BUF_UPD_PETR,
+        AutoCalProtocol.PETR_INJ_TBUF,
+        AutoCalProtocol.MNFLD_PRESS_BUF,
+        AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+    )
+
+    private fun gasAcquisitionReadbackFields(): List<AutoCalProtocol.Field> = listOf(
+        AutoCalProtocol.NUM_BUF_UPD_GAS,
+        AutoCalProtocol.PETR_INJ_TBUF_GAS,
+        AutoCalProtocol.MNFLD_PRESS_BUF_GAS,
+        AutoCalProtocol.ACQUIRED_ZONES_GAS,
+    )
+
+    private fun actionReadbackWitnesses(prepared: Preparation): List<AutoCalProtocol.Field> {
+        val witnesses = when (prepared.action) {
+            Action.ENABLE_AUTO_CAL, Action.DISABLE_AUTO_CAL -> listOf(AutoCalProtocol.AUTO_CAL_ENABLE)
+            Action.RESET_PETROL -> petrolAcquisitionReadbackFields()
+            Action.RESET_GAS -> gasAcquisitionReadbackFields()
+            Action.RESET_ALL -> petrolAcquisitionReadbackFields() +
+                gasAcquisitionReadbackFields() +
+                AutoCalProtocol.MUL_ACT
+            Action.MANUAL_AUTOMATCH -> listOf(AutoCalProtocol.MUL_ACT)
+            Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> listOf(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)
+            Action.RESET_K_FACTOR -> listOf(AutoCalProtocol.MUL_ACT)
+            Action.DELETE_POINT -> {
+                val scoped = mutableListOf<AutoCalProtocol.Field>()
+                if (prepared.pointDeleteTargets.any { it.fuel == AutoCalPointDeleteProtocol.Fuel.PETROL }) {
+                    scoped += petrolAcquisitionReadbackFields()
+                }
+                if (prepared.pointDeleteTargets.any { it.fuel == AutoCalPointDeleteProtocol.Fuel.GAS }) {
+                    scoped += gasAcquisitionReadbackFields()
+                }
+                scoped
+            }
         }
-        val witnessValid = after.field(witness)?.status == AutoCalFieldStatus.VALID
-        require(witnessValid) {
-            "Readback obrigatorio ausente para ${action.label}: ${witness.key}"
+        return witnesses.distinctBy { it.identity }
+    }
+
+    private fun validateActionReadback(prepared: Preparation, after: AutoCalSnapshot) {
+        // Snapshot parcial continua permitido para observação, mas uma mutação só
+        // vira CONFIRMED quando as superfícies específicas daquela ação voltam
+        // válidas da mesma sessão. Não inferimos seletividade/zero quando o corpus
+        // original não prova esse pós-estado.
+        val witnesses = actionReadbackWitnesses(prepared)
+        require(witnesses.isNotEmpty()) {
+            "Readback obrigatório sem testemunha definida para ${prepared.action.label}"
+        }
+        val missing = witnesses.filter { after.field(it)?.status != AutoCalFieldStatus.VALID }
+        require(missing.isEmpty()) {
+            "Readback obrigatório ausente para ${prepared.action.label}: " +
+                missing.joinToString(", ") { it.key }
         }
 
-        val expected = action.expectedEnableReadback ?: return
+        val expected = prepared.action.expectedEnableReadback ?: return
         val actual = after.field(AutoCalProtocol.AUTO_CAL_ENABLE)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
             ?.rawValues
@@ -805,7 +846,6 @@ class AutoCalNativeActionManager(
             "Readback AUTO_CAL_ENABLE divergente: esperado $expected, ECU ${actual ?: "sem dado"}"
         }
     }
-
     private fun ensureSession(prepared: Preparation) {
         require(isConnected()) { "USB desconectado durante a ação AutoCal" }
         require(currentSessionId() == prepared.sessionId) { "Sessão USB mudou durante a ação AutoCal" }

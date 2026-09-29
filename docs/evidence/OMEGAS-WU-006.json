@@ -86,32 +86,33 @@
       "classification": "ORIGINAL_DERIVED",
       "modify_map_refs": {
         "handler": "ActionAutoCalRifExecute",
-        "mode": "0x08",
-        "frame": "02 24 04 08 32"
+        "mode": null,
+        "frame": null,
+        "path": "SEPARATE_COMPLEX_ROUTE_NOT_0x24_WRAPPER"
       },
       "manual_automatch": {
         "handler": "ActionAutoMatchExecute",
-        "mode": "0x01",
-        "frame": "02 24 04 01 2B"
+        "mode": "0x08",
+        "frame": "02 24 04 08 32"
       },
       "reset_petrol": {
         "handler": "ActionResetPetrolExecute",
-        "mode": "0x02",
-        "frame": "02 24 04 02 2C",
+        "mode": "0x01",
+        "frame": "02 24 04 01 2B",
         "operational_exposure": false
       },
       "reset_gas": {
         "handler": "ActionResetGasExecute",
-        "mode": "0x04",
-        "frame": "02 24 04 04 2E",
-        "operational_exposure": false,
-        "observed_effect": "BROAD_AUTOCAL_RESET_IN_LOGNOVO"
+        "mode": "0x02",
+        "frame": "02 24 04 02 2C",
+        "operational_exposure": false
       },
       "reset_all": {
         "handler": "ActionResetAllExecute",
-        "mode": null,
-        "frame": null,
-        "path": "SEPARATE_ROUTINE_WIRE_UNRESOLVED"
+        "mode": "0x04",
+        "frame": "02 24 04 04 2E",
+        "path": "CANONICAL_0x24_CONTROL_WRAPPER",
+        "observed_effect": "BROAD_AUTOCAL_RESET_IN_LOGNOVO_INCLUDING_MUL_ACT"
       }
     }
   },
@@ -404,10 +405,13 @@
   "p0_reset_safety": {
     "issue": 98,
     "original_authority": "tests/fixtures/progbase-autocal-action-map-v1.json",
-    "captured_reset_gas_effect": "broad AutoCal reset in Lognovo, including petrol/GNV acquisition, reference curves and MUL_ACT",
     "destructive_resets_exposed": false,
     "pre_mutation_backup_required": true,
     "backup_failure_policy": "FAIL_CLOSED_BEFORE_USB_WRITE",
-    "full_export_surface": true
-  }
+    "full_export_surface": true,
+    "captured_reset_all_effect": "broad AutoCal reset in Lognovo, including petrol/GNV acquisition, reference curves and MUL_ACT"
+  },
+  "document_status": "SUPERSEDED",
+  "superseded_by": "tests/fixtures/progbase-autocal-action-map-v1.json",
+  "superseded_reason": "Historical 0x24/0x04 action mapping was inverted; retained only as an audit artifact after correction."
 }
