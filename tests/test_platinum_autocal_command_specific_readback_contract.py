@@ -31,7 +31,9 @@ def test_parity_fixture_does_not_use_generic_snapshot_as_mutation_witness():
     assert "NUM_BUF_UPD_GAS" in actions["RESET_GAS"]["readback"]
     assert "MUL_ACT" in actions["RESET_ALL"]["readback"]
     assert actions["MANUAL_AUTOMATCH"]["readback"].startswith("MUL_ACT")
-    assert "AUTO_CAL_ENABLE" not in actions["DELETE_POINT_BATCH"]["readback"]
+    delete_readback = actions["DELETE_POINT_BATCH"]["readback"]
+    assert "fuel-scoped acquisition" in delete_readback
+    assert "full AutoCal snapshot" not in delete_readback
 
 
 def test_historical_inverted_action_docs_are_superseded_and_corrected():
