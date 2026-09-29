@@ -108,6 +108,18 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('source.fuel == "GASOLINA" && index <= LOW_BAND_MAX_INDEX', self.acq)
         self.assertIn('source.fuel == "GNV" && index <= LOW_BAND_MAX_INDEX', self.acq)
 
+    def test_dump_proven_gas_thresholds_are_wired_into_runtime_maturity_tracker(self):
+        self.assertIn('val acquisition = AutoCalAcquisition.fromSnapshot(decorated)', self.monitor)
+        self.assertIn('val thresholds = acquisition.optJSONObject("thresholds") ?: JSONObject()', self.monitor)
+        self.assertIn('val newGasLowThreshold = thresholds.nullableInt("gasLow")', self.monitor)
+        self.assertIn('val newGasNormalThreshold = thresholds.nullableInt("gasNormal")', self.monitor)
+        self.assertIn('gasLowThreshold = newGasLowThreshold', self.monitor)
+        self.assertIn('gasNormalThreshold = newGasNormalThreshold', self.monitor)
+        self.assertIn('gasLowThreshold = thresholds.first', self.monitor)
+        self.assertIn('gasNormalThreshold = thresholds.second', self.monitor)
+        self.assertNotIn('maxAutomatch = thresholds.first', self.monitor)
+        self.assertNotIn('maxAutomatch = thresholds.second', self.monitor)
+
     def test_reset_k_matches_progbase_mul_act_loop(self):
         self.assertIn('resetKFactorMulActFrames', self.protocol)
         self.assertIn('writeIndexedU16(MUL_ACT.address, index, 0x4000)', self.protocol)
