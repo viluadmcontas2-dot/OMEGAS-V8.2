@@ -199,9 +199,10 @@ class NativeAutoCalMonitor(
         val acquisitionEnabled = thresholds.third == 1
         val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
         val fullSnapshotAlreadyDue = synchronized(lock) { snapshotRequested } || probeChanged
-        // Leitura operacional das 18 bandas não depende de semântica de maturidade.
-        // Mesmo com CALIBRATION_VAL_1 10↔12 ainda não resolvido, counters/points/zones
-        // continuam sendo evidência nativa útil e devem permanecer em tempo real.
+        // Leitura operacional das 18 bandas permanece independente do disparo de maturidade.
+        // O DUMP canônico já fecha os seletores gasLow=CALIBRATION_VAL_1[5] e
+        // gasNormal=CALIBRATION_VAL_1[8]; counters/points/zones continuam vindo
+        // diretamente da ECU, sem sintetizar estado nativo no host.
         val acquisitionRefresh = if (!fullSnapshotAlreadyDue && acquisitionEnabled && refreshDue.acquisition) {
             refreshAcquisitionGroup(currentSession, probe)
         } else null
@@ -727,7 +728,7 @@ class NativeAutoCalMonitor(
             .put("nativeAutoMatchCounterEventObserved", autoMatchCounterEvent != null)
             .put("nativeAutoMatchEvidence", autoMatchEvidence?.toJson() ?: JSONObject.NULL)
             .put("appAutomaticWrite", false)
-            .put("manualAutoMatchExposed", false)
+            .put("manualAutoMatchExposed", true)
 
         val acquisition = AutoCalAcquisition.fromSnapshot(decorated)
         val thresholds = acquisition.optJSONObject("thresholds") ?: JSONObject()
