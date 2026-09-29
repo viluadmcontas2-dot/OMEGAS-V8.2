@@ -39,8 +39,8 @@ assert.match(cockpit, /RESET_PETROL:\s*'Readquirir gasolina'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
 assert.match(cockpit, /Backup não é requisito/);
-assert.doesNotMatch(cockpit, /READING_BEFORE/);
-assert.doesNotMatch(cockpit, /PERSISTING_BACKUP/);
+assert.doesNotMatch(cockpit, /PERSISTING_BACKUP/,
+  'reaquisição não pode depender de persistência de backup; READING_BEFORE pode existir como estado de leitura para ações que alteram K');
 assert.doesNotMatch(cockpit, /CONFIRMED_WITH_SCOPE_WARNING/);
 
 console.log('AUTOCAL_REACQUISITION_UX=PASS');
