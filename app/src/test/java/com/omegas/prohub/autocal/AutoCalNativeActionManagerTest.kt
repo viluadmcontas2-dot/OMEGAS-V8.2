@@ -29,6 +29,18 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `somente ações que escrevem K diretamente declaram mayChangeMulAct`() {
+        assertTrue(AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH.mayChangeMulAct)
+        assertTrue(AutoCalNativeActionManager.Action.RESET_K_FACTOR.mayChangeMulAct)
+        assertFalse(AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL.mayChangeMulAct)
+        assertFalse(AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL.mayChangeMulAct)
+        assertFalse(AutoCalNativeActionManager.Action.RESET_PETROL.mayChangeMulAct)
+        assertFalse(AutoCalNativeActionManager.Action.RESET_GAS.mayChangeMulAct)
+        assertFalse(AutoCalNativeActionManager.Action.RESET_ALL.mayChangeMulAct)
+        assertFalse(AutoCalNativeActionManager.Action.DELETE_POINT.mayChangeMulAct)
+    }
+
+    @Test
     fun `automatch manual existe mas nunca executa sem confirmacao humana`() {
         val calls = AtomicInteger(0)
         val manager = manager { request, _, _, _ ->
@@ -46,33 +58,51 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `reset k progbase escreve trinta pontos mul act e exige readback exato`() {
+    fun `reset k progbase escreve trinta pontos mul act e preserva before after no recibo`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
         val readMul = AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)
+        val beforePayload = ByteArray(60).also { bytes ->
+            repeat(30) { index ->
+                val raw = if (index == 10) 0x4CCC else 0x4000
+                bytes[index * 2] = (raw and 0xFF).toByte()
+                bytes[index * 2 + 1] = ((raw ushr 8) and 0xFF).toByte()
+            }
+        }
         val neutralPayload = ByteArray(60).also { bytes ->
             repeat(30) { index ->
                 bytes[index * 2] = 0x00
                 bytes[index * 2 + 1] = 0x40
             }
         }
+        var mulReads = 0
         val manager = manager(
             fieldsForReceipt = listOf(AutoCalProtocol.MUL_ACT),
             transaction = { request, _, _, _ ->
                 requests += request.copyOf()
-                if (request.contentEquals(readMul)) reply(request, neutralPayload)
-                else reply(request, byteArrayOf())
+                if (request.contentEquals(readMul)) {
+                    mulReads += 1
+                    reply(request, if (mulReads == 1) beforePayload else neutralPayload)
+                } else reply(request, byteArrayOf())
             },
         )
         val prepared = manager.prepare("RESET_K_FACTOR")
         assertTrue(prepared.getBoolean("prepared"))
+        assertTrue(prepared.getBoolean("mayChangeMulAct"))
         manager.execute(prepared.getString("preparationId"))
         awaitIdle(manager)
 
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
         val resetFrames = AutoCalProtocol.resetKFactorMulActFrames()
-        assertEquals(31, requests.size)
-        resetFrames.forEachIndexed { index, frame -> assertArrayEquals(frame, requests[index]) }
+        assertEquals(32, requests.size)
+        assertArrayEquals(readMul, requests.first())
+        resetFrames.forEachIndexed { index, frame -> assertArrayEquals(frame, requests[index + 1]) }
         assertArrayEquals(readMul, requests.last())
+
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("RESET_K_FACTOR", receipt.getString("action"))
+        assertFalse(receipt.isNull("before"))
+        assertTrue(receipt.getJSONObject("before").getJSONArray("fields").length() >= 1)
+        assertTrue(receipt.has("after"))
         manager.close()
     }
 
