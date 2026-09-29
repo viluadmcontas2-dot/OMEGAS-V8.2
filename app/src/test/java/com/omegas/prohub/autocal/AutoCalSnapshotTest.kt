@@ -12,7 +12,14 @@ class AutoCalSnapshotTest {
     @Test
     fun `snapshot parcial preserva campos validos e avisos`() {
         val observations = listOf(
-            observation(AutoCalProtocol.PETR_INJ_TBP, byteArrayOf(0x00, 0x02), 100L),
+            observation(
+                AutoCalProtocol.PETR_INJ_TBP,
+                ByteArray(60).also { bytes ->
+                    bytes[0] = 0x00
+                    bytes[1] = 0x02
+                },
+                100L,
+            ),
             AutoCalReadObservation(
                 field = AutoCalProtocol.MUL_ACT,
                 capturedAtMs = 110L,
@@ -30,7 +37,8 @@ class AutoCalSnapshotTest {
         assertTrue(snapshot.partial)
         assertEquals(1, snapshot.validFieldCount)
         assertEquals(2, snapshot.fields.size)
-        assertEquals(1.0, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.physicalValues.single(), 0.0)
+        assertEquals(30, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.physicalValues.size)
+        assertEquals(1.0, snapshot.field(AutoCalProtocol.PETR_INJ_TBP)!!.physicalValues.first(), 0.0)
         assertEquals(AutoCalFieldStatus.UNAVAILABLE, snapshot.field(AutoCalProtocol.MUL_ACT)!!.status)
         assertTrue(snapshot.warnings.any { it.contains("MUL_ACT") })
         assertEquals(30L, snapshot.durationMs)
