@@ -129,5 +129,10 @@
     "NATIVE_AUTOMATCH_HAS_NO_HOST_AUTOMATIC_K_WRITE",
     "PORTMON_OVERRIDES_STATIC_DUMP_FOR_RUNTIME_WIRE_ORDER",
     "STATIC_RUNTIME_CONFLICT_FAILS_CLOSED"
-  ]
+  ],
+  "distilled_oracles": {
+    "resource_defaults": "tests/fixtures/progbase-autocal-resource-defaults-v1.json",
+    "scale_dfm": "tests/fixtures/progbase-autocal-scale-dfm-v1.json",
+    "canonical_dfm_resource": "tests/fixtures/progbase-tautocaldm-dfm.bin.b64"
+  }
 }
