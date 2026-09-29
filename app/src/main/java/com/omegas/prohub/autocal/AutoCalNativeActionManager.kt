@@ -295,8 +295,9 @@ class AutoCalNativeActionManager(
 
     private fun executePrepared(prepared: Preparation) {
         val startedAt = System.currentTimeMillis()
+        var before: AutoCalSnapshot? = null
         try {
-            val before = if (prepared.action.mayChangeMulAct) {
+            before = if (prepared.action.mayChangeMulAct) {
                 update("READING_BEFORE", "Capturando Curva K antes da ação", 4, prepared)
                 readMulActSnapshot(prepared)
             } else null
@@ -309,11 +310,29 @@ class AutoCalNativeActionManager(
         } catch (error: Exception) {
             val message = error.message ?: "Ação AutoCal interrompida"
             val recovery = AutoCalRecoveryPolicy.classify(message)
-            update("FAILED", message, 100, prepared, recovery.toJson())
+            val failedFromState = synchronized(lock) { status.optString("state", "UNKNOWN") }
+            val mutationMayHaveStarted = failedFromState in MUTATION_MAY_HAVE_STARTED_STATES
+            val failureReceipt = failureReceipt(
+                prepared = prepared,
+                startedAt = startedAt,
+                failedFromState = failedFromState,
+                message = message,
+                recovery = recovery,
+                mutationMayHaveStarted = mutationMayHaveStarted,
+                before = before,
+            )
+            appendReceipt(failureReceipt)
+            update("FAILED", message, 100, prepared, recovery.toJson()
+                .put("failedFromState", failedFromState)
+                .put("mutationMayHaveStarted", mutationMayHaveStarted)
+                .put("receiptId", failureReceipt.getString("id")))
             synchronized(lock) {
                 status
                     .put("reasonCode", recovery.reasonCode)
                     .put("recovery", recovery.toJson())
+                    .put("failedFromState", failedFromState)
+                    .put("mutationMayHaveStarted", mutationMayHaveStarted)
+                    .put("receiptId", failureReceipt.getString("id"))
             }
         } finally {
             busy.set(false)
@@ -699,6 +718,51 @@ class AutoCalNativeActionManager(
         return receipt
     }
 
+    private fun failureReceipt(
+        prepared: Preparation,
+        startedAt: Long,
+        failedFromState: String,
+        message: String,
+        recovery: AutoCalRecoveryPolicy.Recovery,
+        mutationMayHaveStarted: Boolean,
+        before: AutoCalSnapshot?,
+    ): JSONObject {
+        val receipt = JSONObject()
+            .put("id", "RECEIPT-${UUID.randomUUID()}")
+            .put("preparationId", prepared.id)
+            .put("action", prepared.action.name)
+            .put("label", prepared.action.label)
+            .put("outcome", "FAILED")
+            .put("failureMessage", message)
+            .put("failedFromState", failedFromState)
+            .put("reasonCode", recovery.reasonCode)
+            .put("recovery", recovery.toJson())
+            .put("mutationMayHaveStarted", mutationMayHaveStarted)
+            .put("automaticRetry", false)
+            .put("sessionId", prepared.sessionId)
+            .put("startedAtMs", startedAt)
+            .put("finishedAtMs", System.currentTimeMillis())
+            .put("humanConfirmed", true)
+            .put("automatic", false)
+            .put("manualOnly", true)
+            .put("automaticRollback", false)
+            .put("automaticBackup", false)
+            .put(
+                "pointDelete",
+                when (prepared.pointDeleteTargets.size) {
+                    0 -> JSONObject.NULL
+                    1 -> pointTargetJson(prepared.pointDeleteTargets.single())
+                    else -> pointTargetsJson(prepared.pointDeleteTargets)
+                },
+            )
+        if (before != null) {
+            receipt
+                .put("beforeHash", before.snapshotHash)
+                .put("before", before.toJson())
+        }
+        return receipt
+    }
+
     private fun pointTargetsJson(targets: Collection<AutoCalPointDeleteProtocol.Target>): JSONObject {
         val normalized = targets.distinctBy { it.fuel to it.index }
         return JSONObject()
@@ -808,6 +872,13 @@ class AutoCalNativeActionManager(
     companion object {
         private const val PREPARATION_TTL_MS = 120_000L
         private const val MAX_RECEIPTS = 200
-
+        private val MUTATION_MAY_HAVE_STARTED_STATES = setOf(
+            "SENDING_ACTION",
+            "READING_AFTER",
+            "SENDING_FINISH_COMMIT",
+            "VERIFYING_FINISH",
+            "RESETTING_K",
+            "VERIFYING_K_RESET",
+        )
     }
 }
