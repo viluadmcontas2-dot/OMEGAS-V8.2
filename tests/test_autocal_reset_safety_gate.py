@@ -26,7 +26,13 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         self.assertIn('.put("automaticBackup", false)', text)
         self.assertNotIn("persistPreMutationBackup", text)
         self.assertNotIn("PERSISTING_BACKUP", text)
-        self.assertNotIn("READING_BEFORE", text)
+
+        # DUMP/runtime coherence: fuel/all reacquisition is mask/action -> readback.
+        # READING_BEFORE is reserved for direct K-changing manual actions only.
+        point_delete = text.split("private fun executePointDelete", 1)[1].split("private fun confirm", 1)[0]
+        self.assertNotIn("READING_BEFORE", point_delete)
+        self.assertNotIn("readMulActSnapshot", point_delete)
+        self.assertIn("if (prepared.action.mayChangeMulAct)", text)
 
     def test_ui_reset_buttons_route_to_progbase_actions(self):
         ui = UI.read_text(encoding="utf-8")
