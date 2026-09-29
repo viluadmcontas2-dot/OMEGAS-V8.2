@@ -1,59 +1,78 @@
-# Platina — correção de maturidade AutoCal baseada no DUMP
+# Platina — maturidade AutoCal: correção do limite epistemológico
 
-Data: 2026-09-28
+Data: 2026-09-28  
+Status: **CORRIGIDO / SUPERSEDE A LEITURA CONSERVADORA ANTERIOR**
 
-## Problema encontrado
+## Por que este documento mudou
 
-O código herdado promovia posições específicas de `CALIBRATION_VAL_1` a limiares de maturidade:
+Uma etapa anterior tratou o mapeamento de `CALIBRATION_VAL_1[2/5/8]` como não resolvido porque o módulo observado expõe 10 bytes enquanto a grade conceitual do ProgBase possui 12 linhas.
 
-- índice 2 → `petrolNormal`;
-- índice 5 → `gasLow`;
-- índice 8 → `gasNormal`.
+Essa cautela era válida antes da análise do consumidor original. Ela deixou de ser a melhor fonte de verdade quando o DUMP hash-bound e a desassemblagem do próprio ProgBase fecharam **quais campos o código original realmente seleciona em runtime**.
 
-Isso não é sustentado pela evidência canônica.
+O ponto importante é: não precisamos supor que os 10 bytes correspondem linearmente às 12 linhas. O executável original já diz diretamente quais índices usa.
 
-## Evidência
+## Evidência canônica
 
-O DUMP hash-bound do ProgBase prova simultaneamente:
+Autoridade binária:
 
-- `CALIBRATION_VAL_1` no `TAUTOCALDM` tem `ArrayDimension = 10` no módulo observado;
-- `TAUTOCALSETTINGS` expõe um editor conceitual de **12** linhas;
-- os 12 conceitos são Idle/Normal × Petrol/Gas × MinBuf/MinBufUpd/SumBuf;
-- ainda não existe prova da projeção exata desses 12 conceitos sobre os 10 bytes retornados pela ECU observada.
+`ProgBase SHA-256 8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4`
 
-A própria documentação forense remota registra explicitamente que **não é válido atribuir os dez bytes às primeiras dez linhas sem provar o mapeamento de módulo/handler**.
+Oráculo original-derived versionado:
 
-## Correção Platina
+`tests/fixtures/progbase-autocal-resource-defaults-v1.json`
 
-A Platina agora falha fechado:
+O consumidor recuperado em torno de `0x00516F64` fecha os seletores operacionais:
 
-- não promove `CALIBRATION_VAL_1[2/5/8]` a thresholds;
-- mantém o vetor bruto disponível em diagnóstico;
-- mantém `VECT_AUTOCAL_U8_1` apenas com seu significado diretamente provado: `AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD`;
-- mostra atividade real das 18 bandas por buffers/contadores;
-- mostra aquisição de zona somente pelos vetores nativos `ACQUIRED_ZONES_PETROL/GAS`;
-- não chama uma bolinha de madura/valida por uma regra não provada;
-- continua atualizando as 18 bandas em tempo real mesmo com maturidade semântica desconhecida.
+- bandas `0..5`, gasolina → `VECT_AUTOCAL_U8_1`;
+- bandas `6..17`, gasolina → `CALIBRATION_VAL_1[2]`;
+- bandas `0..5`, GNV → `CALIBRATION_VAL_1[5]`;
+- bandas `6..17`, GNV → `CALIBRATION_VAL_1[8]`.
 
-## Consequência
+A tabela estática em `0x00A9DA1A` contém `05 09 0D`, coerente com os limites inclusivos das quatro zonas: `5 / 9 / 13`.
 
-Isto remove uma falsa certeza sem perder informação operacional.
+O DFM também fecha que:
 
-A UI pode continuar mostrando:
-- ponto observado;
-- Tinj;
-- MAP;
-- contador;
-- combustível;
-- zona;
-- flag nativa de zona adquirida;
-- histórico GAS_PREV.
+- `VECT_AUTOCAL_U8_1` = `!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD`;
+- `VECT_AUTOCAL_U8_2` = `MaxAutomatch`.
 
-O que ela não pode afirmar ainda é:
-> “esta banda ficou madura porque count >= X”
+Portanto `Maxautomatch` **não** é threshold de maturidade.
 
-quando `X` depende do mapeamento 10↔12 não resolvido.
+## Consequência para a Platina
 
-## Stop condition
+A produção deve promover os seletores acima, lendo os valores reais da ECU e aplicando apenas a escolha de campo já provada pelo ProgBase.
 
-Maturidade per-band baseada em threshold só pode voltar a ser promovida quando o DUMP/Portmon/firmware fechar o binding exato dos thresholds para o módulo observado. Até lá, zona nativa e atividade bruta são a autoridade.
+Isto não autoriza o host a reproduzir a fórmula interna de AutoMatch. A separação continua:
+
+- aquisição/maturidade: observar buffers, contadores, zonas e thresholds provados;
+- AutoMatch nativo: ECU é a autoridade;
+- Curva K: host apenas observa automaticamente; escrita continua exclusivamente manual, confirmada e com readback.
+
+## Implementação vinculada
+
+`AutoCalAcquisition.kt` publica:
+
+- `petrolLow`;
+- `petrolNormal`;
+- `gasLow`;
+- `gasNormal`;
+- `calibrationValueMapping = PROGBASE_DUMP_GRID_PROVEN`.
+
+`NativeAutoCalMonitor.kt` consome `gasLow` e `gasNormal` e os entrega ao `NativeAutoCalMaturityTracker`.
+
+Os contratos que impedem regressão incluem:
+
+- `tests/test_platinum_autocal_maturity_boundary.py`;
+- `tests/test_native_autocal_contract.py`;
+- `tests/test_platinum_dump_autocal_coherence.py`;
+- `app/src/test/java/com/omegas/prohub/autocal/AutoCalAcquisitionTest.kt`;
+- `app/src/test/java/com/omegas/prohub/autocal/NativeAutoCalMaturityTrackerTest.kt`.
+
+## Limite epistemológico que permanece
+
+Ainda **não** está provada a aritmética interna do firmware que calcula uma nova `MUL_ACT` durante AutoMatch.
+
+Logo, o stop condition correto não é bloquear os thresholds já fechados. É bloquear qualquer tentativa de transformar observação em fórmula de escrita automática sem nova evidência direta do firmware/runtime.
+
+## Regra de regressão
+
+Se uma mudança futura voltar a marcar `CALIBRATION_VAL_1[2/5/8]` como “não resolvido” sem refutar o consumidor original acima, a mudança está regressando a evidência já destilada e deve falhar no gate Platina.
