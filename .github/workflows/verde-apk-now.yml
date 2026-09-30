@@ -1,4 +1,4 @@
-# Platina APK readiness gate. Push build is permitted only by an explicit [APK] release commit.
+# Platina APK readiness gate. This workflow never builds on push.
 name: OMEGAS PLATINA APK READY GATED
 
 on:
@@ -9,15 +9,6 @@ on:
         required: true
         default: false
         type: boolean
-  push:
-    branches: [OmegasPlatina]
-    paths:
-      - '.github/workflows/verde-apk-now.yml'
-      - 'app/src/main/assets/ui/**'
-      - 'app/src/main/java/com/omegas/prohub/autocal/**'
-      - 'tests/**'
-      - 'STATUS.md'
-
 permissions:
   contents: read
 
@@ -30,7 +21,7 @@ concurrency:
 
 jobs:
   verify-build-publish:
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[APK]')) }}
+    if: ${{ inputs.build_apk == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

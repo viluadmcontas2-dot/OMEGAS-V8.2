@@ -26,7 +26,7 @@ Esses nomes de workflow eram legados Verde; a Platina mantém a evidência, mas 
 
 ## Gating Platina
 
-- APK autorizado nesta missão pelo proprietário; só é entregue se o mesmo SHA passar CI, fast contracts, global reality, Android render e o build gate.
+- APK autorizado nesta missão pelo proprietário; o branch de produto continua sem build por push. Após o mesmo SHA passar CI, fast contracts, global reality e Android render, uma branch efêmera de build compila exatamente esse SHA e publica o artifact.
 - DUMP/Portmon/ECU prevalecem sobre documentação antiga.
 - `PARTIAL` ou `UNKNOWN` em comando de mutação bloqueia release.
 - AutoMatch nativo é observado/bracketado; o host não escreve K automaticamente.
