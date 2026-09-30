@@ -13,8 +13,6 @@ import java.io.File
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Autoridade Android do mapa K.
@@ -43,6 +41,8 @@ class KWriteManager(
         const val EXTRA_ROW = KMapPhysicalAxes.WRITABLE_ROWS
         const val TOTAL_ROW_COUNT = KMapPhysicalAxes.PROTOCOL_ROWS
         const val MIN_SAFE_K = 100
+        const val MAX_BATCH_CELLS = ROW_COUNT * COLUMN_COUNT
+        /** Compatibilidade de API; o writer direto não usa mais ramping. */
         const val MAX_SAFE_STEP = 25
         const val MAX_SAFE_PAUSE_MS = 2_000
     }
@@ -275,14 +275,12 @@ class KWriteManager(
 
     fun startBatchWrite(
         cells: JSONArray,
-        maxStep: Int,
-        pauseMs: Int,
+        @Suppress("UNUSED_PARAMETER") maxStep: Int,
+        @Suppress("UNUSED_PARAMETER") pauseMs: Int,
         reason: String = "Calibração manual",
     ): JSONObject {
         if (insertionStateUnknown.get()) return safetyError()
-        if (maxStep !in 1..MAX_SAFE_STEP) return error("Passo K deve estar entre 1 e $MAX_SAFE_STEP")
-        if (pauseMs !in 0..MAX_SAFE_PAUSE_MS) return error("Pausa K deve estar entre 0 e $MAX_SAFE_PAUSE_MS ms")
-        if (cells.length() !in 1..16) return error("Selecione entre 1 e 16 células")
+        if (cells.length() !in 1..MAX_BATCH_CELLS) return error("Selecione entre 1 e $MAX_BATCH_CELLS células")
         val normalized = JSONArray()
         val seen = linkedSetOf<String>()
         repeat(cells.length()) { index ->
@@ -311,7 +309,7 @@ class KWriteManager(
         update("BATCH_QUEUED", "Alteração enfileirada entre telemetrias", 0,
             JSONObject().put("adjustmentId", adjustmentId).put("cells", normalized))
         executor.execute {
-            executeBatch(adjustmentId, normalized, maxStep, pauseMs, reason, expectedSessionId)
+            executeBatch(adjustmentId, normalized, reason, expectedSessionId)
         }
         return JSONObject()
             .put("ok", true)
@@ -325,8 +323,6 @@ class KWriteManager(
     private fun executeBatch(
         adjustmentId: String,
         cells: JSONArray,
-        maxStep: Int,
-        pauseMs: Int,
         reason: String,
         expectedSessionId: Long,
     ) {
@@ -335,6 +331,7 @@ class KWriteManager(
         val affectedRows = linkedSetOf<Int>()
         var initialHash = ""
         var insertionEnabled = false
+        var historyPersisted = false
         try {
             update("BATCH_PREPARING", "Conferindo somente as linhas afetadas", 3,
                 JSONObject().put("adjustmentId", adjustmentId).put("cells", cells))
@@ -352,134 +349,143 @@ class KWriteManager(
             createPreWriteBackup(adjustmentId, cache, cells, initialHash)
             repeat(cells.length()) { affectedRows += cells.getJSONObject(it).getInt("row") }
 
-            affectedRows.forEachIndexed { index, row ->
-                update("BATCH_CHECKING_ROWS", "Conferindo linha ${index + 1} de ${affectedRows.size}",
-                    5 + ((index + 1) * 12 / affectedRows.size), JSONObject().put("row", row))
-                val ecuLine = readRow(row, "conferência antes da escrita K[$row]", expectedSessionId)
-                val cachedLine = workingRows.getJSONArray(row)
-                repeat(COLUMN_COUNT) { column ->
-                    val actual = ecuLine[column].toInt() and 0xFF
-                    val expected = cachedLine.getInt(column)
-                    if (actual != expected) {
-                        throw IllegalStateException(
-                            "A ECU mudou [$row,$column]: esperado $expected, encontrado $actual. Leia o mapa K novamente.",
-                        )
+            serial.unit(
+                reason = "conferência prévia Mapa K",
+                expectedSessionId = expectedSessionId,
+                workClass = Mp48WorkClass.READ_ONLY,
+                telemetryAfter = false,
+                waitTimeoutMs = 6_000L,
+            ) { unit ->
+                affectedRows.forEachIndexed { index, row ->
+                    update("BATCH_CHECKING_ROWS", "Conferindo linha ${index + 1} de ${affectedRows.size}",
+                        5 + ((index + 1) * 12 / affectedRows.size), JSONObject().put("row", row))
+                    val ecuLine = readRow(unit, row, "conferência antes da escrita K[$row]")
+                    val cachedLine = workingRows.getJSONArray(row)
+                    repeat(COLUMN_COUNT) { column ->
+                        val actual = ecuLine[column].toInt() and 0xFF
+                        val expected = cachedLine.getInt(column)
+                        if (actual != expected) {
+                            throw IllegalStateException(
+                                "A ECU mudou [$row,$column]: esperado $expected, encontrado $actual. Leia o mapa K novamente.",
+                            )
+                        }
                     }
                 }
             }
 
-            requireAck(
-                transaction(
-                    Mp48Protocol.kInsertionMode(true),
-                    "ativar K insertion",
-                    800,
-                    expectedSessionId,
-                    Mp48WorkClass.MANUAL_WRITE,
-                ),
-                "ativação K insertion",
-            )
-            insertionEnabled = true
-            // A trava é persistida antes da primeira escrita. Se o processo ou a
-            // alimentação cair, a próxima execução falha fechada até confirmar a saída.
-            setInsertionSafetyLock(true, "K insertion ativo durante $adjustmentId")
+            serial.unit(
+                reason = "escrita direta Mapa K",
+                expectedSessionId = expectedSessionId,
+                workClass = Mp48WorkClass.MANUAL_WRITE,
+                telemetryAfter = true,
+                waitTimeoutMs = 10_000L,
+            ) { unit ->
+                requireAck(
+                    unit.transaction(
+                        Mp48Protocol.kInsertionMode(true),
+                        "ativar K insertion",
+                        800,
+                        purgeBefore = false,
+                    ),
+                    "ativação K insertion",
+                )
+                insertionEnabled = true
+                setInsertionSafetyLock(true, "K insertion ativo durante $adjustmentId")
 
-            repeat(cells.length()) { cellIndex ->
-                val item = cells.getJSONObject(cellIndex)
-                val row = item.getInt("row")
-                val column = item.getInt("column")
-                val expected = item.getInt("current")
-                val target = item.getInt("target")
-                val workingLine = workingRows.getJSONArray(row)
-                if (workingLine.getInt(column) != expected) {
-                    throw IllegalStateException("O valor confirmado [$row,$column] não é $expected")
-                }
-                var lastConfirmed = expected
-                val ramp = buildRamp(expected, target, maxStep)
-                ramp.forEachIndexed { stepIndex, stepValue ->
-                    val progress = 18 + ((cellIndex.toDouble() + (stepIndex + 1.0) / ramp.size) /
-                        cells.length() * 65.0).toInt()
+                repeat(cells.length()) { cellIndex ->
+                    val item = cells.getJSONObject(cellIndex)
+                    val row = item.getInt("row")
+                    val column = item.getInt("column")
+                    val expected = item.getInt("current")
+                    val target = item.getInt("target")
+                    val workingLine = workingRows.getJSONArray(row)
+                    if (workingLine.getInt(column) != expected) {
+                        throw IllegalStateException("O valor confirmado [$row,$column] não é $expected")
+                    }
+                    val progress = 18 + ((cellIndex + 1) * 65 / cells.length())
                     update(
                         "BATCH_WRITING",
-                        "Célula ${cellIndex + 1}/${cells.length()} • $lastConfirmed → $stepValue",
+                        "Célula ${cellIndex + 1}/${cells.length()} • $expected → $target",
                         progress,
                         JSONObject().put("adjustmentId", adjustmentId)
                             .put("row", row).put("column", column).put("target", target),
                     )
-                    serial.unit(
-                        reason = "escrita ACK MAP_K[$row,$column]",
-                        expectedSessionId = expectedSessionId,
-                        workClass = Mp48WorkClass.MANUAL_WRITE,
-                        telemetryAfter = false,
-                        waitTimeoutMs = 1_200L,
-                    ) { unit ->
-                        requireAck(
-                            unit.transaction(
-                                Mp48Protocol.writeKCell(row, column, stepValue),
-                                "escrita MAP_K[$row,$column]=$stepValue",
-                                800,
-                                purgeBefore = false,
-                            ),
-                            "escrita K",
-                        )
-                    }
-                    lastConfirmed = stepValue
-                    workingLine.put(column, stepValue)
-                    workingRows.put(row, workingLine)
-                    updateCacheLine(
-                        row,
-                        ByteArray(COLUMN_COUNT) { index -> (workingLine.getInt(index) and 0xFF).toByte() },
-                        "ECU_WRITE_ACK_PENDING_FINAL_READBACK",
+                    requireAck(
+                        unit.transaction(
+                            Mp48Protocol.writeKCell(row, column, target),
+                            "escrita MAP_K[$row,$column]=$target",
+                            800,
+                            purgeBefore = false,
+                        ),
+                        "escrita K",
                     )
-                    if (pauseMs > 0 && stepIndex < ramp.lastIndex) Thread.sleep(pauseMs.toLong())
+                    workingLine.put(column, target)
+                    workingRows.put(row, workingLine)
+                    confirmed.put(
+                        JSONObject()
+                            .put("id", UUID.randomUUID().toString())
+                            .put("adjustmentId", adjustmentId)
+                            .put("timestamp", System.currentTimeMillis())
+                            .put("row", row).put("column", column)
+                            .put("axisSchema", KMapPhysicalAxes.SCHEMA)
+                            .put("axisLockSha256", KMapPhysicalAxes.LOCK_SHA256)
+                            .put("petrolMs", KMapPhysicalAxes.petrolBins()[row])
+                            .put("rpm", KMapPhysicalAxes.rpmBins()[column])
+                            .put("before", expected).put("after", target)
+                            .put("reason", reason)
+                            .put("acknowledged", true)
+                            .put("confirmed", false)
+                            .put("batchFinalized", false),
+                    )
                 }
-                val event = JSONObject()
-                    .put("id", UUID.randomUUID().toString())
-                    .put("adjustmentId", adjustmentId)
-                    .put("timestamp", System.currentTimeMillis())
-                    .put("row", row).put("column", column)
-                    .put("axisSchema", KMapPhysicalAxes.SCHEMA)
-                    .put("axisLockSha256", KMapPhysicalAxes.LOCK_SHA256)
-                    .put("petrolMs", KMapPhysicalAxes.petrolBins()[row])
-                    .put("rpm", KMapPhysicalAxes.rpmBins()[column])
-                    .put("before", expected).put("after", target)
-                    .put("reason", reason).put("confirmed", true)
-                    .put("readback", lastConfirmed).put("batchFinalized", false)
-                appendHistory(event)
-                confirmed.put(event)
-            }
 
-            requireAck(
-                transaction(
-                    Mp48Protocol.kInsertionMode(false),
-                    "desativar K insertion",
-                    800,
-                    expectedSessionId,
-                    Mp48WorkClass.SAFETY,
-                    telemetryAfter = false,
-                ),
-                "saída K insertion",
-            )
-            insertionEnabled = false
-            setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
+                requireAck(
+                    unit.transaction(
+                        Mp48Protocol.kInsertionMode(false),
+                        "desativar K insertion",
+                        800,
+                        purgeBefore = false,
+                    ),
+                    "saída K insertion",
+                )
+                insertionEnabled = false
+                setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
+            }
 
             update("BATCH_VERIFYING_ROWS", "Confirmando somente as linhas alteradas", 88,
                 JSONObject().put("adjustmentId", adjustmentId).put("rows", JSONArray(affectedRows.toList())))
-            affectedRows.forEach { row ->
-                val verified = readRow(row, "confirmação final K[$row]", expectedSessionId)
-                val expectedLine = workingRows.getJSONArray(row)
-                repeat(COLUMN_COUNT) { column ->
-                    val actual = verified[column].toInt() and 0xFF
-                    val expectedValue = expectedLine.getInt(column)
-                    if (actual != expectedValue) {
-                        throw IllegalStateException(
-                            "Confirmação final divergente [$row,$column]: esperado $expectedValue, ECU $actual",
-                        )
+            serial.unit(
+                reason = "readback final Mapa K",
+                expectedSessionId = expectedSessionId,
+                workClass = Mp48WorkClass.READ_ONLY,
+                telemetryAfter = true,
+                waitTimeoutMs = 6_000L,
+            ) { unit ->
+                affectedRows.forEach { row ->
+                    val verified = readRow(unit, row, "confirmação final K[$row]")
+                    val expectedLine = workingRows.getJSONArray(row)
+                    repeat(COLUMN_COUNT) { column ->
+                        val actual = verified[column].toInt() and 0xFF
+                        val expectedValue = expectedLine.getInt(column)
+                        if (actual != expectedValue) {
+                            throw IllegalStateException(
+                                "Confirmação final divergente [$row,$column]: esperado $expectedValue, ECU $actual",
+                            )
+                        }
                     }
                 }
-                updateCacheLine(row, verified, "ECU_BATCH_VERIFIED_NATIVE")
             }
 
             val finalHash = canonicalFullMapHash(workingRows, extraRow)
+            repeat(confirmed.length()) { index ->
+                confirmed.getJSONObject(index)
+                    .put("confirmed", true)
+                    .put("readback", confirmed.getJSONObject(index).getInt("after"))
+                    .put("batchFinalized", true)
+                    .put("finalMapHash", finalHash)
+            }
+            appendHistoryBatch(confirmed)
+            historyPersisted = true
             val now = System.currentTimeMillis()
             val allRows = JSONArray()
             repeat(ROW_COUNT) { allRows.put(JSONArray(workingRows.getJSONArray(it).toString())) }
@@ -514,14 +520,17 @@ class KWriteManager(
                 .put("humanConfirmed", true)
                 .put("readbackValid", true)
                 .put("confirmedAt", now)
-            markBatchEventsFinalized(adjustmentId, finalHash)
             try { onConfirmedWrite() } catch (_: Exception) {}
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-BATCH", "Lote confirmado; notificação falhou: ${error.message}")
             }
-            update("BATCH_CONFIRMED", "Alterações confirmadas sem parar a telemetria", 100, payload)
+            update("BATCH_CONFIRMED", "Alterações confirmadas por ACK e readback", 100, payload)
             log.add("INFO", "K-BATCH", "$adjustmentId confirmado • ${cells.length()} células")
         } catch (error: Exception) {
+            if (!historyPersisted && confirmed.length() > 0) {
+                try { appendHistoryBatch(confirmed) } catch (_: Exception) {}
+                historyPersisted = true
+            }
             if (insertionEnabled) {
                 try {
                     requireAck(
@@ -698,16 +707,6 @@ class KWriteManager(
         }
     }
 
-    private fun buildRamp(current: Int, target: Int, step: Int): List<Int> {
-        val out = mutableListOf<Int>()
-        var value = current
-        while (value != target && out.size < 255) {
-            value = if (target > value) min(target, value + step) else max(target, value - step)
-            out += value
-        }
-        return out
-    }
-
     private fun validCell(row: Int, column: Int): Boolean =
         row in 0 until ROW_COUNT && column in 0 until COLUMN_COUNT
 
@@ -749,22 +748,16 @@ class KWriteManager(
         if (historyFile.exists()) JSONArray(historyFile.readText()) else JSONArray()
     } catch (_: Exception) { JSONArray() }
 
-    private fun appendHistory(item: JSONObject) {
+    private fun appendHistoryBatch(items: JSONArray) {
+        if (items.length() == 0) return
         val history = loadHistory()
-        history.put(item)
-        atomicWrite(historyFile, history.toString(2))
-    }
-
-    private fun markBatchEventsFinalized(adjustmentId: String, finalHash: String) {
-        val history = loadHistory()
-        repeat(history.length()) { index ->
-            history.optJSONObject(index)?.let { item ->
-                if (item.optString("adjustmentId") == adjustmentId) {
-                    item.put("batchFinalized", true).put("finalMapHash", finalHash)
-                }
-            }
+        repeat(items.length()) { index ->
+            history.put(JSONObject(items.getJSONObject(index).toString()))
         }
-        atomicWrite(historyFile, history.toString(2))
+        val trimmed = JSONArray()
+        val start = (history.length() - 4_000).coerceAtLeast(0)
+        for (index in start until history.length()) trimmed.put(history.get(index))
+        atomicWrite(historyFile, trimmed.toString(2))
     }
 
     private fun loadCache(): JSONObject = try {
