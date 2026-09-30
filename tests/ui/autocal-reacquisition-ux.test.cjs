@@ -21,9 +21,12 @@ assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
 assert.match(cockpit, /data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual<\/button>/);
-assert.match(cockpit, /data-autocal-action="FINISH_AUTOCAL">Finalizar AutoCal<\/button>/);
+assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOCAL"/,
+  'Finish AutoCal original nasce desabilitado e não deve virar etapa diária');
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOMATCH"/,
-  'Finalizar AutoMatch é redundante na superfície diária; Finalizar AutoCal já fecha o ciclo comprovado');
+  'Finish AutoMatch pertence ao PanelDbg oculto do ProgBase e não deve aparecer na superfície diária');
+assert.match(cockpit, /O AutoMatch nativo é automático e decidido pela ECU\./,
+  'a UX deve explicar que o AutoMatch normal é ECU-owned, separado do AutoMatch manual');
 assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1\.0<\/button>/,
   'Reset K deve usar a semântica provada do ProgBase/MUL_ACT');
 assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Nova aquisição completa<\/button>/);
