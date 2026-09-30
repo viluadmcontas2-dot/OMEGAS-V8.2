@@ -6,13 +6,13 @@ import org.json.JSONArray
  * Planejamento puro da intenção manual de escrita do Mapa K.
  *
  * A UX pode preparar qualquer quantidade de células da grade física 12x12.
- * O writer legado continua recebendo blocos internos pequenos, preservando o
- * comportamento de ACK/readback já exercitado enquanto a capacidade maior
- * aguarda validação física.
+ * A intenção inteira segue como um único lote nativo: o writer entra uma vez
+ * em K insertion, grava diretamente os valores finais e confirma as linhas
+ * afetadas por readback antes de devolver sucesso.
  */
 object MapBatchPlan {
     const val MAX_USER_CELLS = KMapPhysicalAxes.WRITABLE_ROWS * KMapPhysicalAxes.COLUMNS
-    const val INTERNAL_CHUNK_CELLS = 16
+    const val INTERNAL_CHUNK_CELLS = MAX_USER_CELLS
 
     data class Plan(
         val totalCells: Int,
