@@ -261,6 +261,8 @@ class AutoCalNativeActionManagerTest {
         awaitIdle(manager)
 
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertTrue(manager.statusJson().getString("message").contains("aquisição não foi pausada"))
+        assertTrue(!manager.statusJson().getString("message").contains("AutoCal finalizado"))
         assertArrayEquals(maxRead, requests[0])
         assertArrayEquals(counterRead, requests[1])
         assertArrayEquals(commit, requests[2])
