@@ -57,7 +57,7 @@ for(const result of [after,fullHeight]) {
 assert.equal(inside(result),true,'primary touch targets must fit the toolbar');
 assert.equal(clear(result),true,'primary controls must not cover telemetry or title');
 assert.equal(visibleInspector(result),true,'point information must remain below graph and inside viewport');
-assert.ok(result.chart.height>=420,'graph must remain dominant');
+assert.ok(result.chart.height>=440,'graph must remain dominant in the 672px Android WebView');
 assert.ok(result.history.y>=result.chart.bottom,'comparison control must not overlap the plot');
 assert.ok(result.history.height>=48,'comparison control must have a full touch target');
 }
