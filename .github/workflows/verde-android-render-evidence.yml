@@ -6,7 +6,7 @@ on:
   # Render evidence trigger: 1ad07dcee856-final-autocal-visible-actions
   # Final APK/render evidence can be re-run against an exact SHA.
   push:
-    branches: [OmegasVerde]
+    branches: [OmegasVerde, OmegasPlatina]
     paths:
       - '.github/workflows/verde-android-render-evidence.yml'
       - 'app/build.gradle.kts'
