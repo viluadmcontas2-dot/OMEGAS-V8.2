@@ -333,7 +333,7 @@
         return;
       }
       if (!this.review?.items?.length) return;
-      const result = this.api.writeMap(this.review.items, 3, 150, 'Ajuste manual confirmado na UI clean-slate');
+      const result = this.api.writeMap(this.review.items, 0, 0, 'Ajuste manual confirmado na UI clean-slate');
       if (!result?.ok || !result?.started) {
         this.alert(result?.error || 'A escrita não iniciou.');
         this.review = null;
