@@ -77,7 +77,11 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertNotIn('Thread.sleep(250L)', self.action)
         self.assertNotIn('Thread.sleep(500L)', self.action)
         self.assertIn('Finish AutoCal não persistiu', self.action)
-        self.assertIn('AutoCal finalizado · $committed/$max confirmado pela ECU', self.action)
+        self.assertIn('Encerrar cota AutoMatch (técnico)', self.action)
+        self.assertIn('originalmente desabilitada no DFM', self.action)
+        self.assertIn('PanelDbg oculto do ProgBase', self.action)
+        self.assertIn('Cota AutoMatch ajustada · $committed/$max confirmado pela ECU · aquisição não foi pausada', self.action)
+        self.assertNotIn('AutoCal finalizado', self.action)
 
     def test_legacy_k_reset_alias_converges_to_single_progbase_path(self):
         self.assertNotIn('if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR"', self.bridge)

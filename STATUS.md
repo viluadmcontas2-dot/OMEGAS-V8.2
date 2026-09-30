@@ -3,7 +3,7 @@
 ## Active control surface
 
 - Branch: `OmegasPlatina`
-- Estado: `FINAL PRODUCT HARDENING — READY FOR APK GENERATION, APK NOT GENERATED`
+- Estado: `FINAL RELEASE CANDIDATE — PROGBASE HOST CONTRACT V2 LOCKED — SAME-SHA GATES + APK BUILD`
 - Autoridade: GitHub remoto no HEAD resolvido antes de qualquer escrita.
 
 Checkpoint remoto observado nesta missão:
@@ -13,9 +13,20 @@ Checkpoint remoto observado nesta missão:
 
 Esses nomes de workflow eram legados Verde; a Platina mantém a evidência, mas a autoridade ativa é a branch `OmegasPlatina`.
 
+## Checkpoint de fechamento AutoCal Host v2
+
+- A ECU é tratada como caixa-preta; a fidelidade exigida é ao comportamento observável do ProgBase 4.2.0.6 como host.
+- O contrato forense fechado classifica 53/53 handlers relevantes de AutoCal/Settings/Referências.
+- `NUM_AUTOMATCH_EXECUTED == MAX_AUTOMATCH` significa cota de AutoMatch atingida; não implica `AUTO_CAL_ENABLE=0`.
+- O Portmon original mostra nova aquisição GNV após 3/3; portanto a aquisição pode continuar com a cota de AutoMatch esgotada.
+- `FinishAutocal` permanece apenas compatibilidade técnica no backend; a Action original nasce desabilitada e não é CTA normal da Platina.
+- `BtnFinishAutomatch` original pertence ao `PanelDbg` oculto.
+- AutoMatch nativo é automático/ECU-owned; AutoMatch manual é intervenção separada.
+- A tela Curva K permanece a evolução moderna do editor manual K do ProgBase, com intenção humana, ACK e readback.
+
 ## Gating Platina
 
-- Não gerar APK nesta missão.
+- APK autorizado nesta missão pelo proprietário; só é entregue se o mesmo SHA passar CI, fast contracts, global reality, Android render e o build gate.
 - DUMP/Portmon/ECU prevalecem sobre documentação antiga.
 - `PARTIAL` ou `UNKNOWN` em comando de mutação bloqueia release.
 - AutoMatch nativo é observado/bracketado; o host não escreve K automaticamente.

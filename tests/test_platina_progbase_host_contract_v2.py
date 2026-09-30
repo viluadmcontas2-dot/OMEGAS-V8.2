@@ -16,6 +16,8 @@ def test_autocal_normal_surface_matches_closed_progbase_host_model():
     assert "autoMatchQuotaReached" in cockpit
     assert "AutoMatch automático " in cockpit
     assert "A aquisição continua habilitada e pode preencher novas zonas" in cockpit
+    assert "autoMatchQuotaReached" in cockpit
+    assert "AUTO_CAL_ENABLE" not in cockpit.split("autoMatchQuotaReached", 1)[0][-180:]
 
 def test_finish_remains_backend_compatibility_not_terminal_semantics():
     manager = read("app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt")
