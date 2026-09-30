@@ -442,8 +442,10 @@ class HubJavascriptBridge(activity: MainActivity) {
         val cells = try { JSONArray(cellsJson) } catch (_: Exception) {
             return JSONObject().put("ok", false).put("error", "Lote de células inválido").toString()
         }
-        if (cells.length() !in 1..16) {
-            return JSONObject().put("ok", false).put("error", "Esta ponte de baixo nível aceita apenas um bloco interno de 1 a 16 células").toString()
+        if (cells.length() !in 1..KWriteManager.MAX_BATCH_CELLS) {
+            return JSONObject().put("ok", false)
+                .put("error", "Selecione entre 1 e ${KWriteManager.MAX_BATCH_CELLS} células")
+                .toString()
         }
         repeat(cells.length()) { index ->
             val cell = cells.optJSONObject(index)
