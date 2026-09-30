@@ -23,7 +23,9 @@ class PredictorMapResidualContract(unittest.TestCase):
     def test_official_writer_keeps_special_row_outside_manual_surface(self):
         self.assertIn('const val ROW_COUNT = KMapPhysicalAxes.WRITABLE_ROWS', self.kwrite)
         self.assertIn('const val EXTRA_ROW = KMapPhysicalAxes.WRITABLE_ROWS', self.kwrite)
-        self.assertIn('cells.length() !in 1..16', self.kwrite)
+        self.assertIn('const val MAX_BATCH_CELLS = ROW_COUNT * COLUMN_COUNT', self.kwrite)
+        self.assertIn('row in 0 until ROW_COUNT && column in 0 until COLUMN_COUNT', self.kwrite)
+        self.assertNotIn('row in 0 until TOTAL_ROW_COUNT && column in 0 until COLUMN_COUNT', self.kwrite)
         self.assertIn('readback', self.kwrite.lower())
         self.assertIn('Mp48WorkClass.MANUAL_WRITE', self.kwrite)
         self.assertIn('Mp48WorkClass.SAFETY', self.kwrite)
