@@ -67,14 +67,14 @@ class AutoCalNativeActionManager(
         ),
         FINISH_AUTOCAL(
             byteArrayOf(),
-            "Finalizar AutoCal",
-            "Replica ActionFinishAutocalExecute: confirma MAX_AUTOMATCH em NUM_AUTOMATCH_EXECUTED, aguarda 100 ms e exige readback. Finish não desabilita AUTO_CAL_ENABLE; para provar que a aquisição parou, use Pausar aquisição e confirme readback 0.",
+            "Encerrar cota AutoMatch (técnico)",
+            "Replica a ActionFinishAutocalExecute originalmente desabilitada no DFM: copia MAX_AUTOMATCH para NUM_AUTOMATCH_EXECUTED, aguarda 100 ms e exige readback. É compatibilidade técnica, não etapa normal do AutoCal e não desabilita AUTO_CAL_ENABLE.",
             false,
         ),
         FINISH_AUTOMATCH(
             byteArrayOf(),
-            "Finalizar AutoMatch",
-            "Replica BtnFinishAutomatchClick: confirma MAX_AUTOMATCH em NUM_AUTOMATCH_EXECUTED sem o settle final do AutoCal completo.",
+            "Encerrar AutoMatch (debug)",
+            "Replica o BtnFinishAutomatchClick localizado no PanelDbg oculto do ProgBase: copia MAX_AUTOMATCH para NUM_AUTOMATCH_EXECUTED sem o settle de 100 ms.",
             false,
         ),
         RESET_K_FACTOR(
@@ -575,9 +575,9 @@ class AutoCalNativeActionManager(
                 val max = details.optInt("maxAutomatch", -1)
                 val committed = details.optInt("committedValue", -1)
                 if (max >= 0 && committed >= 0) {
-                    "AutoCal finalizado · $committed/$max confirmado pela ECU"
+                    "Cota AutoMatch ajustada · $committed/$max confirmado pela ECU · aquisição não foi pausada"
                 } else {
-                    "AutoCal finalizado e confirmado pela ECU"
+                    "Contador AutoMatch ajustado e confirmado pela ECU · aquisição não foi pausada"
                 }
             }
             else -> "ACK + readback específico confirmados pela ECU"
