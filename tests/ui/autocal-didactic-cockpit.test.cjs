@@ -34,15 +34,16 @@ const snapshot = {
 };
 
 const human = model.humanState(snapshot, { state: 'READY', autoCalEnabled: 1, latestSnapshot: snapshot });
-assert.equal(human.title, 'AutoCal adquirindo');
+assert.equal(human.title, 'AutoCal ativo · AutoMatch 3/3');
 assert.equal(human.petrolZones, 4);
 assert.equal(human.gasZones, 3);
 assert.equal(human.petrolZoneFlags.join(','), 'true,true,true,true');
 assert.equal(human.gasZoneFlags.join(','), 'true,true,true,false');
 assert.match(human.progress, /Gasolina 4\/4 zonas/);
 assert.match(human.progress, /GNV 3\/4 zonas/);
-assert.match(human.autoMatch, /3 AutoMatch executados/);
-assert.match(human.nextAction, /Aquisição habilitada/);
+assert.match(human.autoMatch, /AutoMatch automático 3\/3 · limite atingido/);
+assert.match(human.nextAction, /cota automática de AutoMatch foi atingida/i);
+assert.match(human.nextAction, /aquisição continua habilitada/i);
 
 const pausedNativeSnapshot = { ...snapshot, autoCalEnabled: 0 };
 const paused = model.humanState(snapshot, { state: 'PAUSED', autoCalEnabled: 0, latestSnapshot: pausedNativeSnapshot });
