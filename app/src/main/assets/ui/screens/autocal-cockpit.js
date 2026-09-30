@@ -93,7 +93,7 @@
       const nativeStatus = nativeSnapshot.nativeStatus || {};
       const autoMatchCount = finite(state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
       const maxAutoMatch = finite(state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
-      // RELEASE INVARIANT · ProgBase host v2: AutoMatch quota never implies AUTO_CAL_ENABLE=0.
+      // RELEASE INVARIANT · ProgBase host v2: quota reached and acquisition enabled remain independent observable states.
       const autoMatchQuotaReached = autoMatchCount !== null && maxAutoMatch !== null && maxAutoMatch > 0 && autoMatchCount >= maxAutoMatch;
       const acquisitionState = String(state.state || '').toUpperCase();
       const title = acquisitionState === 'UNAVAILABLE'

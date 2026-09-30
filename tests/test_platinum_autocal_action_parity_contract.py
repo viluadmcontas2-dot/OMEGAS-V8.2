@@ -44,9 +44,14 @@ def test_exact_native_action_frames_remain_bound():
 
 
 def test_finish_is_not_misrepresented_as_acquisition_stop():
-    assert "Finish não desabilita AUTO_CAL_ENABLE" in MANAGER
-    assert "Finalizar AutoCal confirma o contador nativo de AutoMatch, mas não pausa a aquisição" in COCKPIT
-    assert "use Pausar aquisição e aguarde PAUSADA confirmada pela ECU" in COCKPIT
+    assert "não desabilita AUTO_CAL_ENABLE" in MANAGER
+    assert "originalmente desabilitada no DFM" in MANAGER
+    assert "PanelDbg oculto do ProgBase" in MANAGER
+    assert 'data-autocal-action="FINISH_AUTOCAL"' not in COCKPIT
+    assert 'data-autocal-action="FINISH_AUTOMATCH"' not in COCKPIT
+    assert "O AutoMatch nativo é automático e decidido pela ECU." in COCKPIT
+    assert "A aquisição continua habilitada e pode preencher novas zonas" in COCKPIT
+    assert "Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0." in COCKPIT
     assert "setEnabled(false)" in MANAGER
 
 
