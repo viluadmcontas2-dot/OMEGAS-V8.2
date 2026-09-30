@@ -5,6 +5,7 @@ import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.KFactorManualPlanner
+import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.learning.LearningGridProjection
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
