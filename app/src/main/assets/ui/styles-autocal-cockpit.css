@@ -1802,8 +1802,8 @@
 .autocal-chart-host {
   grid-area: chart;
   /* Reserve the header and point context inside the actual WebView height. */
-  height: clamp(420px, calc(100vh - 252px), 540px);
-  min-height: 420px;
+  height: clamp(440px, calc(100vh - 252px), 540px);
+  min-height: 440px;
   border-radius: 10px;
 }
 .autocal-chart-legend {
