@@ -25,8 +25,8 @@
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
       DISABLE_AUTO_CAL: 'Desabilitar Auto Calibration',
       MANUAL_AUTOMATCH: 'AutoMatch manual',
-      FINISH_AUTOCAL: 'Finalizar AutoCal',
-      FINISH_AUTOMATCH: 'Finalizar AutoMatch',
+      FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
+      FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
       RESET_PETROL: 'Readquirir gasolina',
       RESET_GAS: 'Readquirir GNV',
       RESET_K_FACTOR: 'Resetar Curva K para 1.0',
@@ -93,6 +93,7 @@
       const nativeStatus = nativeSnapshot.nativeStatus || {};
       const autoMatchCount = finite(state.autoMatchCount ?? nativeStatus.autoMatchCount ?? scalarValue(nativeSnapshot, 'NUM_AUTOMATCH_EXECUTED'));
       const maxAutoMatch = finite(state.maxAutomatch ?? nativeSnapshot.maxAutomatch ?? scalarValue(nativeSnapshot, 'MAX_AUTOMATCH'));
+      const autoMatchQuotaReached = autoMatchCount !== null && maxAutoMatch !== null && maxAutoMatch > 0 && autoMatchCount >= maxAutoMatch;
       const acquisitionState = String(state.state || '').toUpperCase();
       const title = acquisitionState === 'UNAVAILABLE'
         ? 'AutoCal sem estado confiável'
@@ -100,9 +101,11 @@
           ? 'AutoCal com erro de leitura'
           : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
             ? 'Conectando à aquisição'
-            : enabled === 1 ? 'AutoCal adquirindo'
-            : enabled === 0 ? 'AutoCal pausado'
-            : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
+            : enabled === 1 && autoMatchQuotaReached
+              ? 'AutoCal ativo · AutoMatch ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch)
+              : enabled === 1 ? 'AutoCal adquirindo'
+              : enabled === 0 ? 'AutoCal pausado'
+              : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
       let progress = 'Gasolina ' + (petrolZones === null ? '—' : petrolZones) + '/4 zonas · GNV ' + (gasZones === null ? '—' : gasZones) + '/4 zonas';
       if (gasMissingZones.length) progress += ' · Faltam GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ');
       if (petrolMissingZones.length) progress += ' · Faltam gasolina: ' + petrolMissingZones.map(zone => 'Z' + zone).join(', ');
@@ -139,16 +142,20 @@
       }
       const autoMatch = autoMatchCount === null
         ? 'AutoMatch ainda sem contador válido'
-        : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'executado' : 'executados') +
-          (maxAutoMatch === null ? '' : ' · limite configurado ' + Math.round(maxAutoMatch));
+        : maxAutoMatch !== null && maxAutoMatch > 0
+          ? autoMatchQuotaReached
+            ? 'AutoMatch automático ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch) + ' · limite atingido'
+            : 'AutoMatch automático ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch) + ' · ECU decide quando executar'
+          : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'automático observado' : 'automáticos observados');
       let nextAction = 'A leitura nativa é automática; aguardando o próximo estado confirmado.';
       if (acquisitionState === 'UNAVAILABLE') {
         nextAction = String(state.message || state.error || 'A projeção nativa do AutoCal está indisponível.') + ' · Nenhuma referência será escolhida pela interface.';
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão; o monitor tentará novamente automaticamente.';
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
+      else if (enabled === 1 && autoMatchQuotaReached) nextAction = 'A cota automática de AutoMatch foi atingida. A aquisição continua habilitada e pode preencher novas zonas; pause somente se quiser interromper a coleta.';
       else if (enabled === 1 && gasMissingZones.length) nextAction = 'Aquisição habilitada. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
-      else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando sem resetar dados.';
+      else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando: o próximo AutoMatch é decisão nativa da ECU.';
       else if (enabled === 1) nextAction = 'Aquisição habilitada; aguardando a ECU publicar o mapa das quatro zonas.';
       return {
         title, progress, autoMatch, nextAction,
@@ -156,7 +163,7 @@
         autoMatchEvidenceTitle: evidenceTitle,
         autoMatchEvidenceDetail: evidenceDetail,
         petrolZones, gasZones, petrolMissingZones, gasMissingZones,
-        petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch,
+        petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch, autoMatchQuotaReached,
       };
     },
 
@@ -685,7 +692,6 @@
                 <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
-                <button type="button" class="autocal-finish-action" data-autocal-action="FINISH_AUTOCAL">Finalizar AutoCal</button>
                 <details class="autocal-reset-menu">
                   <summary>Ações avançadas</summary>
                   <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
@@ -694,7 +700,7 @@
                       <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1.0</button>
                       <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>Estas são ferramentas técnicas. Finalizar AutoCal confirma o contador nativo de AutoMatch, mas não pausa a aquisição. Para garantir que a coleta parou, use Pausar aquisição e aguarde PAUSADA confirmada pela ECU. Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa apaga a aquisição atual. Nada aqui roda automaticamente.</p>
+                      <p>O AutoMatch nativo é automático e decidido pela ECU. Estes botões são intervenções manuais: AutoMatch manual força uma execução; Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa reinicia a aquisição observada pelo comando amplo original. Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0.</p>
                     </section>
                   </div>
                 </details>
@@ -752,7 +758,7 @@
               </section>
 
               <section class="autocal-command-bar autocal-secondary-card">
-                <div class="autocal-command-copy"><small>AQUISIÇÃO</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
+                <div class="autocal-command-copy"><small>AUTOMATCH NATIVO</small><b id="autocalHumanAutoMatch">Ainda sem contador válido</b><span id="autocalActionStatus">Nenhuma ação preparada.</span></div>
               </section>
 
               <section id="autocalAutoMatchEvidence" class="autocal-automatch-evidence autocal-secondary-card" data-state="WAITING" aria-live="polite">
