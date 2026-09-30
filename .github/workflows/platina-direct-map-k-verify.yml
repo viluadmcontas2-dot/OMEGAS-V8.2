@@ -13,6 +13,7 @@ on:
       - "app/src/main/assets/ui/core/native-api.js"
       - "app/src/test/java/com/omegas/prohub/calibration/MapBatchPlanTest.kt"
       - "tests/test_v7_map_batch_contract.py"
+      - "tests/test_mp48_serial_scheduler_contract.py"
       - ".github/workflows/platina-direct-map-k-verify.yml"
 
 permissions:
