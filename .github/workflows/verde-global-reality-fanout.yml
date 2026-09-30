@@ -4,7 +4,7 @@ name: OmegasVerde global reality fanout
 on:
   workflow_dispatch:
   push:
-    branches: [OmegasVerde]
+    branches: [OmegasVerde, OmegasPlatina]
     paths:
       - '.github/workflows/verde-global-reality-fanout.yml'
       - 'tools/ci/global_reality_plan.py'
