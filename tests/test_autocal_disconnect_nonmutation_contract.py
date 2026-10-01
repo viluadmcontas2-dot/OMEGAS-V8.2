@@ -11,7 +11,7 @@ def body(source: str, start_token: str, end_token: str) -> str:
 
 
 def test_service_disconnect_does_not_explicitly_disable_or_reset_autocal():
-    disconnect = body(SERVICE, "fun disconnectUsb()", "fun reconnectUsb")
+    disconnect = body(SERVICE, "fun disconnectUsb()", "fun usbDevicesJson")
     destroy = body(SERVICE, "override fun onDestroy()", "override fun onBind")
     forbidden = (
         "DISABLE_AUTO_CAL",
