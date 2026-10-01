@@ -81,6 +81,11 @@ def test_point_reacquisition_preserves_both_full_masks_and_single_commit():
     assert "byteArrayOf(0x01, 0x24, 0x05)" in POINTS
 
 
+def test_point_reacquisition_preserves_progbase_half_second_settle():
+    assert "POINT_DELETE_SETTLE_MS = 500L" in MANAGER
+    assert "Thread.sleep(POINT_DELETE_SETTLE_MS)" in MANAGER
+
+
 def test_native_automatch_and_inferred_math_are_not_writers():
     for source in (MONITOR, ANALYSIS):
         assert "KFactorManager" not in source
