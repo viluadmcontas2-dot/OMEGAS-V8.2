@@ -46,10 +46,12 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
         )
         self.assertIn("VERIFYING_FINAL", kfactor)
         self.assertIn("confirmação final K factor", kfactor)
-        self.assertNotRegex(
-            kfactor,
-            re.compile(r"serial\.unit\([\s\S]*?writeFactor\([\s\S]*?readRawPoints\(unit,", re.M),
-        )
+        curve_start = kfactor.index('reason = "escrita direta Curva K"')
+        curve_end = kfactor.index("private fun readRawPoints(request:", curve_start)
+        curve_unit_body = kfactor[curve_start:curve_end]
+        self.assertIn("writeFactor(", curve_unit_body)
+        self.assertGreaterEqual(curve_unit_body.count("readRawPoints(unit,"), 2)
+        self.assertNotIn('reason = "escrita ACK K factor[', curve_unit_body)
 
     def test_engine_protects_telemetry_opportunity_and_definitive_mutation_wait(self):
         source = ENGINE.read_text(encoding="utf-8")
