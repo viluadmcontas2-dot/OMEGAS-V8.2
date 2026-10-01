@@ -360,7 +360,7 @@ class AutoCalNativeActionManager(
         }
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
-        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
         validateActionReadback(prepared, after)
         confirm(prepared, reply, after, startedAt, before = before)
     }
@@ -445,7 +445,7 @@ class AutoCalNativeActionManager(
 
         ensureSession(prepared)
         update("READING_AFTER", "Finalização confirmada; atualizando AutoCal", 82, prepared)
-        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
         validateActionReadback(prepared, after)
         confirm(
             prepared = prepared,
@@ -497,7 +497,7 @@ class AutoCalNativeActionManager(
 
         ensureSession(prepared)
         update("VERIFYING_K_RESET", "Confirmando Curva K neutra na ECU", 78, prepared)
-        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
         validateActionReadback(prepared, after)
         val actual = after.field(AutoCalProtocol.MUL_ACT)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
@@ -556,7 +556,7 @@ class AutoCalNativeActionManager(
         Thread.sleep(POINT_DELETE_SETTLE_MS)
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando aquisição após o commit", 78, prepared, targetDetails)
-        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
         validateActionReadback(prepared, after)
         confirm(prepared, commitReply, after, startedAt, targetDetails)
     }
@@ -642,9 +642,14 @@ class AutoCalNativeActionManager(
         return snapshot
     }
 
-    private fun readSnapshot(prepared: Preparation, source: AutoCalSnapshotSource): AutoCalSnapshot {
+    private fun readSnapshot(
+        prepared: Preparation,
+        source: AutoCalSnapshotSource,
+        fields: List<AutoCalProtocol.Field>,
+    ): AutoCalSnapshot {
         val started = System.currentTimeMillis()
-        val observations = fieldsForReceipt.distinctBy { it.identity }.map { field ->
+        val selectedFields = fields.distinctBy { it.identity }
+        val observations = selectedFields.map { field ->
             ensureSession(prepared)
             val reply = transaction(
                 AutoCalProtocol.read(field),
@@ -662,7 +667,7 @@ class AutoCalNativeActionManager(
         }
         return AutoCalSnapshotBuilder.build(
             observations = observations,
-            expectedFields = fieldsForReceipt,
+            expectedFields = selectedFields,
             sessionId = "${prepared.id}-${source.name}",
             source = source,
             startedAtMs = started,
