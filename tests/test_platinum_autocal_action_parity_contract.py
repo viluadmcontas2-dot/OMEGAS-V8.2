@@ -43,6 +43,12 @@ def test_exact_native_action_frames_remain_bound():
     assert "ManualActionMode.MANUAL_AUTOMATCH" in MANAGER
 
 
+def test_shared_progbase_actions_preserve_one_second_settle_before_readback():
+    assert "HOST_MODE_SETTLE_MS = 1_000L" in MANAGER
+    assert "MANUAL_AUTOMATCH, Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL" in MANAGER
+    assert "Thread.sleep(HOST_MODE_SETTLE_MS)" in MANAGER
+
+
 def test_finish_is_not_misrepresented_as_acquisition_stop():
     assert "não desabilita AUTO_CAL_ENABLE" in MANAGER
     assert "originalmente desabilitada no DFM" in MANAGER
