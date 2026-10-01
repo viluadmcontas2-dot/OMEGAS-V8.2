@@ -72,6 +72,8 @@ class SessionRecorder(
     @Volatile private var stopReason = ""
     @Volatile private var lastError = ""
     @Volatile private var lastDocumentsMirrorAt = 0L
+    @Volatile private var lastExportedSegment = 0
+    @Volatile private var lastExportBoundarySequence = 0L
 
     private var sessionDir: File? = null
     private var semanticLedger: SessionSemanticLedger? = null
@@ -100,6 +102,8 @@ class SessionRecorder(
             stopReason = ""
             lastError = ""
             lastDocumentsMirrorAt = 0L
+            lastExportedSegment = 0
+            lastExportBoundarySequence = 0L
             sequence.set(0L)
             droppedEvents.set(0L)
             petrolTicks = 0L
@@ -357,16 +361,39 @@ class SessionRecorder(
                         .put("appSettings", settings.toJson())
                         .put("files", files)
                         .put("immutableBoundary", snapshot.immutableBoundary)
+                        .put("exportMode", if (snapshot.incrementalEvents) "INCREMENTAL_ACTIVE" else "FULL_STOPPED")
+                        .put("exportStartSequenceExclusive", snapshot.exportStartSequenceExclusive)
+                        .put("exportEndSequenceInclusive", snapshot.exportedThroughSequence)
+                        .put(
+                            "exportedEventCount",
+                            (snapshot.exportedThroughSequence - snapshot.exportStartSequenceExclusive).coerceAtLeast(0L),
+                        )
                         .put("integrity", "SHA-256 calculado sobre os bytes exatos incluídos neste ZIP")
                     zip.putNextEntry(ZipEntry("export_summary.json"))
                     zip.write(summary.toString(2).toByteArray(StandardCharsets.UTF_8))
                     zip.closeEntry()
                 }
             } ?: return JSONObject().put("ok", false).put("error", "Destino de exportação indisponível")
+            if (snapshot.incrementalEvents) {
+                synchronized(this) {
+                    if (sessionId == snapshot.sessionId) {
+                        lastExportedSegment = maxOf(lastExportedSegment, snapshot.exportedThroughSegment)
+                        lastExportBoundarySequence = maxOf(
+                            lastExportBoundarySequence,
+                            snapshot.exportedThroughSequence,
+                        )
+                    }
+                }
+            }
             JSONObject()
                 .put("ok", true)
                 .put("sessionId", requested.name)
                 .put("events", snapshot.sessionStatus.optLong("events", 0L))
+                .put(
+                    "exportedEvents",
+                    (snapshot.exportedThroughSequence - snapshot.exportStartSequenceExclusive).coerceAtLeast(0L),
+                )
+                .put("exportMode", if (snapshot.incrementalEvents) "INCREMENTAL_ACTIVE" else "FULL_STOPPED")
                 .put("immutableBoundary", snapshot.immutableBoundary)
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Falha ao exportar sessão")
@@ -395,6 +422,9 @@ class SessionRecorder(
     }
 
     private fun createActiveExportSnapshot(dir: File): ExportSnapshot {
+        val exportStartSegment = lastExportedSegment + 1
+        val exportStartSequenceExclusive = lastExportBoundarySequence
+
         recordNow(
             "export_boundary",
             "native",
@@ -404,12 +434,30 @@ class SessionRecorder(
         writer?.close()
         writer = null
 
+        val boundarySegment = currentSegment
+        val boundarySequence = sequence.get()
         semanticLedger?.persist(recording = true)
+
+        // Exportações repetidas da MESMA sessão ativa são incrementais:
+        // cada events_XXXX.jsonl entra no máximo uma vez em exportações bem-sucedidas.
+        // Metadados pequenos continuam presentes em cada pacote para manter o lote
+        // autocontido e auditável.
         val closedFiles = dir.walkTopDown()
-            .filter { it.isFile && it.name != "manifest.json" }
+            .filter { file ->
+                if (!file.isFile || file.name == "manifest.json") {
+                    false
+                } else {
+                    val segment = eventSegmentNumber(file.name)
+                    segment == null || segment in exportStartSegment..boundarySegment
+                }
+            }
             .toList()
         val manifestBytes = manifestObject(recordingOverride = true)
-            .put("exportBoundarySequence", sequence.get())
+            .put("exportMode", "INCREMENTAL_ACTIVE")
+            .put("exportEventSegmentStart", exportStartSegment)
+            .put("exportEventSegmentEnd", boundarySegment)
+            .put("exportStartSequenceExclusive", exportStartSequenceExclusive)
+            .put("exportBoundarySequence", boundarySequence)
             .put("exportBoundaryAtMs", System.currentTimeMillis())
             .toString(2)
             .toByteArray(Charsets.UTF_8)
@@ -427,7 +475,16 @@ class SessionRecorder(
                 entries += ExportEntry(path, file = file)
             }
         }
-        return ExportSnapshot(entries, JSONObject(String(manifestBytes, Charsets.UTF_8)), true)
+        return ExportSnapshot(
+            entries = entries,
+            sessionStatus = JSONObject(String(manifestBytes, Charsets.UTF_8)),
+            immutableBoundary = true,
+            sessionId = sessionId,
+            incrementalEvents = true,
+            exportStartSequenceExclusive = exportStartSequenceExclusive,
+            exportedThroughSequence = boundarySequence,
+            exportedThroughSegment = boundarySegment,
+        )
     }
 
     private fun createStoppedExportSnapshot(dir: File): ExportSnapshot {
@@ -440,7 +497,21 @@ class SessionRecorder(
         } catch (_: Exception) {
             JSONObject().put("sessionId", dir.name)
         }
-        return ExportSnapshot(entries, manifest, true)
+        return ExportSnapshot(
+            entries = entries,
+            sessionStatus = manifest,
+            immutableBoundary = true,
+            sessionId = dir.name,
+            incrementalEvents = false,
+            exportStartSequenceExclusive = 0L,
+            exportedThroughSequence = manifest.optLong("events", 0L),
+            exportedThroughSegment = manifest.optInt("segments", 0),
+        )
+    }
+
+    private fun eventSegmentNumber(name: String): Int? {
+        if (!name.startsWith("events_") || !name.endsWith(".jsonl")) return null
+        return name.removePrefix("events_").removeSuffix(".jsonl").toIntOrNull()
     }
 
     @Volatile private var petrolTicks = 0L
@@ -687,6 +758,9 @@ Tipos principais:
 - k_*: leitura, escrita, ACK e confirmação do mapa K;
 - export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
 
+Exportação ativa é incremental: cada events_XXXX.jsonl já exportado com sucesso não
+volta a ser empacotado na exportação ativa seguinte. Sessão parada é exportada completa.
+
 O aprendizado deve ser avaliado por sample.state, sample.reason, learning.live,
 learning.session_summary e learning.memory. Transição, cutoff e verificação do novo
 combustível são observados, mas não alimentam a memória.
@@ -711,5 +785,10 @@ Unidades: RPM em rpm; tempos em ms; MAP/pressões em bar; temperaturas em °C.
         val entries: List<ExportEntry>,
         val sessionStatus: JSONObject,
         val immutableBoundary: Boolean,
+        val sessionId: String,
+        val incrementalEvents: Boolean,
+        val exportStartSequenceExclusive: Long,
+        val exportedThroughSequence: Long,
+        val exportedThroughSegment: Int,
     )
 }
