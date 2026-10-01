@@ -29,7 +29,8 @@ assert 'fun multiPointPlan' in protocol
 assert 'fun singlePointPlan(target: Target): List<ByteArray> = multiPointPlan(listOf(target))' in protocol
 assert 'AutoCalPointDeleteProtocol.multiPointPlan(targets)' in manager
 assert 'maskFrames.forEachIndexed' in manager
-assert 'Thread.sleep(500L)' not in manager
+assert 'POINT_DELETE_SETTLE_MS = 500L' in manager
+assert 'Thread.sleep(POINT_DELETE_SETTLE_MS)' in manager
 assert 'automaticBackup", false' in manager
 for forbidden in ('persistPreMutationBackup', 'PERSISTING_BACKUP'):
     assert forbidden not in manager, forbidden
@@ -39,7 +40,7 @@ assert 'readMulActSnapshot' not in point_delete_body, 'point reacquisition must 
 assert 'READING_BEFORE' not in point_delete_body, 'point reacquisition remains mask -> commit -> readback'
 assert 'AutoCalPointDeleteProtocol.multiPointPlan(targets)' in point_delete_body
 assert 'maskFrames.forEachIndexed' in point_delete_body
-assert 'readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)' in point_delete_body
+assert 'readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))' in point_delete_body
 for token in (
     "PETR_INJ_TBUF_GAS",
     "MNFLD_PRESS_BUF_GAS",
