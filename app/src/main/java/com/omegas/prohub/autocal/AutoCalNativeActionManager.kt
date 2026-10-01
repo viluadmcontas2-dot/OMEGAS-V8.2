@@ -352,6 +352,12 @@ class AutoCalNativeActionManager(
             prepared.sessionId,
         )
         requireAck(reply, "A ECU não confirmou ${prepared.action.label}")
+        if (prepared.action in setOf(
+                Action.MANUAL_AUTOMATCH, Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL,
+            )
+        ) {
+            Thread.sleep(HOST_MODE_SETTLE_MS)
+        }
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
@@ -923,6 +929,7 @@ class AutoCalNativeActionManager(
 
     companion object {
         private const val PREPARATION_TTL_MS = 120_000L
+        private const val HOST_MODE_SETTLE_MS = 1_000L
         private const val MAX_RECEIPTS = 200
         private val MUTATION_MAY_HAVE_STARTED_STATES = setOf(
             "SENDING_ACTION",
