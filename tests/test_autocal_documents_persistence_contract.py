@@ -63,6 +63,31 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
         self.assertIn('"documentsMirror"', RECORDER)
         self.assertIn('"Download/Omegas"', MIRROR_PATH.read_text(encoding="utf-8"))
 
+    def test_repeated_active_exports_do_not_repackage_prior_event_segments(self):
+        active = RECORDER[
+            RECORDER.index("private fun createActiveExportSnapshot"):
+            RECORDER.index("private fun createStoppedExportSnapshot")
+        ]
+        self.assertIn("exportStartSegment = lastExportedSegment + 1", active)
+        self.assertIn("exportStartSequenceExclusive = lastExportBoundarySequence", active)
+        self.assertIn("segment in exportStartSegment..boundarySegment", active)
+        self.assertIn('.put("exportMode", "INCREMENTAL_ACTIVE")', active)
+
+        export = RECORDER[RECORDER.index("fun exportSession("):RECORDER.index("fun recoverDocumentsMirrorAsync")]
+        self.assertIn("lastExportedSegment = maxOf", export)
+        self.assertIn("lastExportBoundarySequence = maxOf", export)
+        self.assertIn('"INCREMENTAL_ACTIVE"', export)
+        self.assertIn('"FULL_STOPPED"', export)
+
+    def test_stopped_export_remains_complete(self):
+        stopped = RECORDER[
+            RECORDER.index("private fun createStoppedExportSnapshot"):
+            RECORDER.index("private fun eventSegmentNumber")
+        ]
+        self.assertIn("dir.walkTopDown()", stopped)
+        self.assertIn(".filter { it.isFile }", stopped)
+        self.assertIn("incrementalEvents = false", stopped)
+
 
 if __name__ == "__main__":
     unittest.main()
