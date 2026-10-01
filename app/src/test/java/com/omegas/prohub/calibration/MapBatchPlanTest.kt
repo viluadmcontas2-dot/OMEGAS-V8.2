@@ -3,7 +3,6 @@ package com.omegas.prohub.calibration
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MapBatchPlanTest {
@@ -18,17 +17,16 @@ class MapBatchPlanTest {
     }
 
     @Test
-    fun `uma intenção pode conter todas as 144 células graváveis`() {
+    fun `uma intenção de mapa inteiro permanece um único lote serial`() {
         val plan = MapBatchPlan.build(cells(144))
         assertEquals(144, MapBatchPlan.MAX_USER_CELLS)
         assertEquals(144, plan.totalCells)
-        assertEquals(9, plan.chunks.size)
-        assertTrue(plan.chunks.all { it.length() in 1..16 })
-        assertEquals(144, plan.chunks.sumOf { it.length() })
+        assertEquals(1, plan.chunks.size)
+        assertEquals(144, plan.chunks.single().length())
     }
 
     @Test
-    fun `ordem e coordenadas são preservadas entre blocos internos`() {
+    fun `ordem e coordenadas são preservadas no lote direto`() {
         val plan = MapBatchPlan.build(cells(33))
         val flattened = mutableListOf<String>()
         plan.chunks.forEach { chunk ->
@@ -38,7 +36,7 @@ class MapBatchPlanTest {
             }
         }
         assertEquals((0 until 33).map { "${it / 12}:${it % 12}" }, flattened)
-        assertEquals(listOf(16, 16, 1), plan.chunks.map { it.length() })
+        assertEquals(listOf(33), plan.chunks.map { it.length() })
     }
 
     @Test(expected = IllegalArgumentException::class)

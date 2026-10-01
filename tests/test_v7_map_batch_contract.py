@@ -9,6 +9,7 @@ HUB = ROOT / "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt"
 AUTOCAL_BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
 AUTOCAL_ACTION = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
 WRITER = ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt"
+MAP_UI = ROOT / "app/src/main/assets/ui/screens/map.js"
 MANIFEST = ROOT / "config/omegas-release.json"
 
 
@@ -21,11 +22,12 @@ class V8MapBatchContract(unittest.TestCase):
         self.autocal_bridge = AUTOCAL_BRIDGE.read_text("utf-8")
         self.autocal_action = AUTOCAL_ACTION.read_text("utf-8")
         self.writer = WRITER.read_text("utf-8")
+        self.map_ui = MAP_UI.read_text("utf-8")
         self.manifest = MANIFEST.read_text("utf-8")
 
-    def test_user_intent_supports_full_writable_grid(self):
+    def test_user_intent_supports_full_writable_grid_as_one_native_batch(self):
         self.assertIn("MAX_USER_CELLS = KMapPhysicalAxes.WRITABLE_ROWS * KMapPhysicalAxes.COLUMNS", self.plan)
-        self.assertIn("INTERNAL_CHUNK_CELLS = 16", self.plan)
+        self.assertIn("INTERNAL_CHUNK_CELLS = MAX_USER_CELLS", self.plan)
         self.assertIn("fun startMapBatchWrite", self.bridge)
         self.assertIn("MapBatchPlan.build(cells)", self.bridge)
         self.assertIn("até 144 células", self.bridge)
@@ -36,10 +38,18 @@ class V8MapBatchContract(unittest.TestCase):
         self.assertIn('"automaticCalibration": false', self.manifest)
         self.assertIn('"checkpoint-ack-readback"', self.manifest)
 
-    def test_chunking_remains_native_not_javascript(self):
-        self.assertIn("service.startKBatchWrite", self.bridge)
-        self.assertIn("plan.chunks.forEachIndexed", self.bridge)
-        self.assertIn("cells.length() !in 1..16", self.writer)
+    def test_writer_is_direct_target_without_ramp_or_artificial_pause(self):
+        self.assertNotIn("buildRamp(", self.writer)
+        self.assertNotIn("Thread.sleep(pauseMs", self.writer)
+        self.assertIn("Mp48Protocol.writeKCell(row, column, target)", self.writer)
+        self.assertIn("cells.length() !in 1..MAX_BATCH_CELLS", self.writer)
+        self.assertIn("const val MAX_BATCH_CELLS = ROW_COUNT * COLUMN_COUNT", self.writer)
+        self.assertIn("serial.unit(", self.writer)
+        self.assertIn('"escrita direta Mapa K"', self.writer)
+
+    def test_ui_does_not_request_ramping(self):
+        self.assertIn("this.api.writeMap(this.review.items, 0, 0,", self.map_ui)
+        self.assertNotIn("this.api.writeMap(this.review.items, 3, 150,", self.map_ui)
 
     def test_success_requires_every_cell_confirmed(self):
         self.assertIn("failure == null && completedCells == plan.totalCells", self.bridge)
@@ -84,7 +94,6 @@ class V8MapBatchContract(unittest.TestCase):
         for marker in (
             "createPreWriteBackup",
             "requireAck",
-            "ECU_WRITE_ACK_PENDING_FINAL_READBACK",
             "ECU_BATCH_VERIFIED_NATIVE",
             "BATCH_PARTIAL_FAILED",
             "SAFETY_LOCKED_INSERTION_UNKNOWN",

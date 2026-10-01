@@ -336,9 +336,9 @@ class V7JavascriptBridge(activity: MainActivity) {
 
     /**
      * Uma única intenção humana pode conter toda a grade 12x12 (até 144 células).
-     * O writer continua recebendo blocos internos de até 16 células, preservando
-     * seu caminho exercitado de backup, ACK, readback e recuperação parcial.
-     * A divisão é detalhe nativo e nunca fica sob responsabilidade da UI.
+     * O plano preserva essa intenção como um único lote nativo: sem ramping e
+     * sem pausas artificiais, mantendo backup, ACK por write, insertion seguro
+     * e readback final das linhas afetadas.
      */
     @JavascriptInterface
     fun startMapBatchWrite(cellsJson: String, maxStep: Int, pauseMs: Int, reason: String): String {

@@ -34,10 +34,12 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
         )
         self.assertIn("BATCH_VERIFYING_ROWS", kwrite)
         self.assertIn("confirmação final K[$row]", kwrite)
-        self.assertNotRegex(
-            kwrite,
-            re.compile(r"serial\.unit\([\s\S]*?writeKCell\([\s\S]*?readRow\(unit,", re.M),
-        )
+        direct_start = kwrite.index('reason = "escrita direta Mapa K"')
+        readback_start = kwrite.index('reason = "readback final Mapa K"')
+        self.assertLess(direct_start, readback_start)
+        direct_unit_body = kwrite[direct_start:readback_start]
+        self.assertIn("writeKCell(", direct_unit_body)
+        self.assertNotIn("readRow(unit,", direct_unit_body)
         self.assertRegex(
             kfactor,
             re.compile(r"serial\.unit\([\s\S]*?writeFactor\(", re.M),
