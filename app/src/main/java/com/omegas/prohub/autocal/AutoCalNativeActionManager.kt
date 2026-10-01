@@ -553,6 +553,7 @@ class AutoCalNativeActionManager(
             prepared.sessionId,
         )
         requireAck(commitReply, "A ECU não confirmou o commit da readquisição")
+        Thread.sleep(POINT_DELETE_SETTLE_MS)
         ensureSession(prepared)
         update("READING_AFTER", "Atualizando aquisição após o commit", 78, prepared, targetDetails)
         val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
@@ -930,6 +931,7 @@ class AutoCalNativeActionManager(
     companion object {
         private const val PREPARATION_TTL_MS = 120_000L
         private const val HOST_MODE_SETTLE_MS = 1_000L
+        private const val POINT_DELETE_SETTLE_MS = 500L
         private const val MAX_RECEIPTS = 200
         private val MUTATION_MAY_HAVE_STARTED_STATES = setOf(
             "SENDING_ACTION",
