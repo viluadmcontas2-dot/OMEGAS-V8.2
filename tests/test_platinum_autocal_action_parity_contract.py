@@ -69,6 +69,13 @@ def test_reset_k_is_mul_act_30_q14_with_readback():
     assert "actual.all { it == 0x4000 }" in MANAGER
 
 
+def test_post_action_readback_is_scoped_to_command_witnesses():
+    assert "fields: List<AutoCalProtocol.Field>" in MANAGER
+    assert "val selectedFields = fields.distinctBy { it.identity }" in MANAGER
+    assert "readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))" in MANAGER
+    assert "expectedFields = selectedFields" in MANAGER
+
+
 def test_point_reacquisition_preserves_both_full_masks_and_single_commit():
     assert "POINT_COUNT = 18" in POINTS
     assert "PETROL_DELETE_ADDRESS = 0x016D" in POINTS
