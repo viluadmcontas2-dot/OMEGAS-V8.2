@@ -35,7 +35,7 @@ def test_engine_graceful_disconnect_is_session_disconnect_only():
 
 
 def test_manager_close_is_non_mutating():
-    close = MANAGER.split("fun close()", 1)[1].split("private fun runPrepared", 1)[0]
+    close = MANAGER.split("fun close()", 1)[1].split("private fun executePrepared", 1)[0]
     assert "executor.shutdownNow()" in close
     assert "transaction(" not in close
     assert "AUTO_CAL_ENABLE" not in close
