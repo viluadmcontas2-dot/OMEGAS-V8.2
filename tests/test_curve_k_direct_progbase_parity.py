@@ -11,7 +11,8 @@ def test_reset_k_truth_is_progbase_mul_act_one_not_ee_surface():
     assert "MUL_ACT" in KFACTOR
     assert "1.0" in KFACTOR
     assert "NÃO é a réplica" not in KFACTOR
-    assert "VECT_AUTOCAL_EE" not in KFACTOR
+    assert "preenchendo TAutoCalDM_EE.VECT_AUTOCAL_EE" not in KFACTOR
+    assert "VECT_AUTOCAL_EE é uma superfície distinta e não é o alvo deste reset." in KFACTOR
     assert 'writeIndexedU16(MUL_ACT.address, index, 0x4000)' in PROTOCOL
     assert "actual.all { it == 0x4000 }" in AUTOCAL
 
