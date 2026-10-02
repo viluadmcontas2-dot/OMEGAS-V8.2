@@ -133,7 +133,10 @@ object NativeAutoCalProgression {
                 counter = exactCounters?.get(index),
                 petrolTimeRaw = time,
                 mapRaw = map,
-                coordinateState = if (time != null && map != null) CoordinateState.POSITIONED else CoordinateState.UNPOSITIONED,
+                coordinateState = if (
+                    time != null && time > 0 && map != null && map > 0 &&
+                    (fuel == Fuel.GAS_PREVIOUS || (exactCounters?.get(index) ?: 0) > 0)
+                ) CoordinateState.POSITIONED else CoordinateState.UNPOSITIONED,
             )
         }
         val zones = List(ZONES) { index ->
