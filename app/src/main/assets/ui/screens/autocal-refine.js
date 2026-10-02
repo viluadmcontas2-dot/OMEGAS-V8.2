@@ -9,6 +9,7 @@
 
   const ORIGIN = {
     MEASURED: { label: 'Medido', tone: 'ok' },
+    SUPPORTED: { label: 'Medido', tone: 'ok' },
     BLENDED: { label: 'Transição', tone: 'accent' },
     SMOOTHED: { label: 'Anti-tranco', tone: 'warn' },
     HELD: { label: 'Mantido', tone: 'muted' },
@@ -80,7 +81,7 @@
     return `<div class="refine-pilot" data-tone="${PILOT_TONE[pilot.phase] || 'muted'}" data-phase="${escapeHtml(pilot.phase)}">
         <ol class="refine-pilot-steps">${steps}</ol>
         <p><b>${escapeHtml(pilot.headline || '')}</b> ${escapeHtml(pilot.next || '')}</p>
-        <small>${escapeHtml(facts)}${pilot.canDisconnect ? ' · <b>pode desconectar</b>' : ''}</small>
+        <details class="pilot-details"><summary>Detalhes técnicos</summary><small>${escapeHtml(facts)}</small></details>${pilot.canDisconnect ? '<b class="disconnect-ready">Pode desconectar</b>' : ''}
       </div>`;
   }
 
@@ -362,11 +363,11 @@
       const rejected = Array.isArray(a.rejectedBands) ? a.rejectedBands : [];
       this.host.innerHTML = `
         <section class="refine-card" data-tone="${head.tone}">
+          ${pilotHtml(this.equivalence)}
           <header class="refine-head">
             <div><small>EQUIVALÊNCIA GNV = GASOLINA</small><h3>${escapeHtml(head.title)}</h3><p>${escapeHtml(head.text)}</p></div>
-            <ol class="refine-steps">${steps}</ol>
+            ${this.equivalence?.autopilot?.phase ? '' : `<ol class="refine-steps">${steps}</ol>`}
           </header>
-          ${pilotHtml(this.equivalence)}
           ${a.available ? `<div class="refine-body">
             <div class="refine-chart-wrap">${chartSvg(a.points)}<div class="refine-legend"><span class="current">Atual</span><span class="refined">Refinada</span>${legend}</div></div>
             <dl class="refine-metrics">

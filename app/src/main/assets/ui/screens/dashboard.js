@@ -29,7 +29,8 @@
     return {
       tone: PILOT_TONE[pilot.phase] || 'muted',
       title: String(pilot.headline || ''),
-      detail: [String(pilot.next || ''), index].filter(Boolean).join(' · '),
+      detail: String(pilot.next || ''),
+      technical: index,
     };
   }
 
@@ -68,12 +69,12 @@
           <small>CONDIÇÃO DO MOTOR</small>
           <div class="hero-rpm"><strong id="dashHeroRpm">0</strong><em>RPM</em></div>
           <p id="dashHeroContext">Aguardando ECU</p>
-          <div class="hero-context-grid">
-            <div><small>PETROL INJ.</small><b id="dashPetrol">—</b></div>
+          <details class="dashboard-details"><summary>Detalhes técnicos</summary><div class="hero-context-grid">
+            <div><small>INJEÇÃO DE REFERÊNCIA</small><b id="dashPetrol">—</b></div>
             <div><small>MAP</small><b id="dashMap">—</b></div>
             <div><small>COMBUSTÍVEL</small><b id="dashFuel">—</b></div>
-            <div><small>CÉLULA</small><b id="dashCell">—</b></div>
-          </div>`;
+            <div><small>PONTO DO MAPA</small><b id="dashCell">—</b></div>
+          </div></details>`;
       }
       const health = this.root?.querySelector('#dashHealth');
       if (health && !document.getElementById('dashCalibration')) {
@@ -82,6 +83,8 @@
         card.className = 'calibration-pilot';
         card.hidden = true;
         card.setAttribute('role', 'button');
+        card.tabIndex = 0;
+        card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); } });
         card.setAttribute('aria-label', 'Abrir AutoCal');
         card.innerHTML = '<small>CALIBRAÇÃO</small><b></b><span></span>';
         card.addEventListener('click', () => root.OmegasApp?.router?.navigate('autocal'));
@@ -90,7 +93,7 @@
       const strip = this.root?.querySelector('.condition-strip');
       if (strip) {
         strip.innerHTML = `
-          <div class="diagnostic"><small>GAS INJ.</small><b><span id="dashGas">—</span> ms</b><span>pulso GNV · diagnóstico</span></div>
+          <details class="dashboard-details"><summary>Pulso de gás</summary><b><span id="dashGas">—</span> ms</b><span>diagnóstico técnico</span></details>
           <div><small>ECU</small><b id="dashEcuMini">offline</b></div>
           <div><small>TELEMETRIA</small><b id="dashAgeMini">—</b></div>`;
       }
@@ -127,7 +130,7 @@
       text('dashAge', ageLabel);
       text('dashAgeMini', ageLabel);
       text('dashHeroContext', connected
-        ? `${fuel} · Petrol Inj. ${fmt(petrol, 2)} ms · MAP ${fmt(map, 2)} bar`
+        ? `${fuel} · acompanhe a calibração abaixo`
         : 'Conecte a MP48 para iniciar a sessão');
 
       this.renderPilot();

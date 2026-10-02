@@ -132,7 +132,7 @@ test('piloto mostra a fase, os pontos da ECU e os nossos, e avisa quando pode de
   assert.match(host.innerHTML, /data-phase="ESTAVEL"/);
   assert.match(host.innerHTML, /automático ECU 3\/3/);
   assert.match(host.innerHTML, /80 pontos nossos/);
-  assert.match(host.innerHTML, /<b>pode desconectar<\/b>/);
+  assert.match(host.innerHTML, /<b class="disconnect-ready">Pode desconectar<\/b>/);
 });
 
 test('ECU ainda no automático: avisa que ela pode sobrescrever a curva', () => {
@@ -174,6 +174,7 @@ test('Agora: cartão da calibração resume fase e índice GNV ÷ gasolina', () 
   vm.runInNewContext(src, { window, globalThis: window, console });
   const card = window.OmegasUi.DashboardModel.pilotCard(pilotEquivalence('PROPOSTA_PRONTA'));
   assert.equal(card.tone, 'accent');
-  assert.match(card.detail, /\+6,0%/);
+  assert.equal(card.detail, 'faça algo');
+  assert.match(card.technical, /\+6,0%/);
   assert.equal(window.OmegasUi.DashboardModel.pilotCard({ autopilot: { phase: 'SEM_ECU' } }), null);
 });
