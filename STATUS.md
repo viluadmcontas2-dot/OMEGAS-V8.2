@@ -1,5 +1,19 @@
 # OMEGAS Platina — Status
 
+## APK Platina + Refino (candidato para teste no carro) — 2026-10-02
+
+- **Base:** a árvore da `OmegasPlatina` (`b185e80a`), acrescida do cérebro do refino, da aba Refino, da remoção do OBD, de Ferramentas e Sugestões corrigidas, e do balão flutuante que nunca cobre o app.
+- **Fonte:** `8331cc36e05e6c37ac6db4dc309cb1cedc12edc9`, branch `claude/brave-darwin-wuliyo`, que descende de `OmegasPlatina`.
+- **Workflow:** `verde-apk-now.yml` com `build_apk=true`; run `37071148942`; conclusão `success` (`clean testDebugUnitTest lintDebug assembleDebug`).
+- **Artifact:** `11254009286` / `omegas-platina-final-8331cc36…`, 4.763.006 bytes, digest `sha256:34a283505e171ef4b7cd796733dc1f39574b4099524d76b34185bd3048a4d844`. Expira em 2026-10-16.
+- **Provas locais no mesmo SHA:**
+  - `QUALITY_GATE_FAST=PASS`;
+  - JVM 540 OK (via kotlinc);
+  - paridade Kotlin↔Python OK;
+  - capturas 1280×720 com o snapshot real de 01/10 17:19.
+  - O único teste UI que falha, `learning-jvm-payload`, já falhava na Platina original.
+- `PHYSICAL_VALIDATION_CLAIMED=false`.
+
 ## Active control surface
 
 - Branch: `OmegasPlatina`
