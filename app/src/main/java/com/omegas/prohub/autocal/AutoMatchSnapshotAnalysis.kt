@@ -151,6 +151,121 @@ object AutoMatchSnapshotAnalysis {
         }
     }
 
+    /**
+     * Equivalência Refinada OMEGAS (ver [AutoMatchRefinedEngine]). Usa eixo, MUL_ACT
+     * e os buffers de aquisição atuais; sem buffers coerentes cai para o modo de
+     * polimento de coerência. Nunca grava na ECU.
+     */
+    fun analyzeRefined(snapshot: JSONObject): JSONObject {
+        val fields = fieldsByKey(snapshot.optJSONArray("fields") ?: JSONArray())
+        fun valid(field: AutoCalProtocol.Field, elements: Int): IntArray? {
+            val value = fields[field.key] ?: return null
+            if (value.optString("status") != AutoCalFieldStatus.VALID.name) return null
+            val raw = value.optJSONArray("rawValues") ?: return null
+            return if (raw.length() == elements) intArray(raw) else null
+        }
+        val base = JSONObject()
+            .put("mode", REFINED_MODE)
+            .put("algorithm", AutoMatchRefinedEngine.ALGORITHM)
+            .put("nativeFirmwareExact", false)
+            .put("automatic", false)
+            .put("manualOnly", true)
+            .put("snapshotHash", snapshot.optString("snapshotHash"))
+        val axis = valid(AutoCalProtocol.PETR_INJ_TBP, KFactorProtocol.POINT_COUNT)
+        val currentMul = valid(AutoCalProtocol.MUL_ACT, KFactorProtocol.POINT_COUNT)
+        if (axis == null || currentMul == null) {
+            return base.put("ok", true).put("available", false)
+                .put("reason", "EIXO_OU_MUL_ACT_INDISPONIVEL")
+                .put("message", "Leia o snapshot AutoCal com eixo e Curva K atual (MUL_ACT)")
+        }
+        val bands = AutoMatchV5Engine.PRESSURE_BAND_COUNT
+        val acquisitionGroup = coherenceGroup(snapshot, "ACQUISITION_CURRENT")
+        val buffersCoherent = acquisitionGroup?.optBoolean("coherent", false) ?: true
+        fun band(field: AutoCalProtocol.Field) = if (buffersCoherent) valid(field, bands) else null
+        return try {
+            val result = AutoMatchRefinedEngine.refine(
+                AutoMatchRefinedEngine.Input(
+                    axisRaw = axis,
+                    mulActRaw = currentMul,
+                    petrolTimeRaw = band(AutoCalProtocol.PETR_INJ_TBUF),
+                    petrolMapRaw = band(AutoCalProtocol.MNFLD_PRESS_BUF),
+                    petrolCounts = band(AutoCalProtocol.NUM_BUF_UPD_PETR),
+                    gasTimeRaw = band(AutoCalProtocol.PETR_INJ_TBUF_GAS),
+                    gasMapRaw = band(AutoCalProtocol.MNFLD_PRESS_BUF_GAS),
+                    gasCounts = band(AutoCalProtocol.NUM_BUF_UPD_GAS),
+                ),
+            )
+            if (!result.available) {
+                return base.put("ok", true).put("available", false).put("reason", result.reason)
+            }
+            refinedJson(base, result, buffersCoherent)
+        } catch (error: Exception) {
+            base.put("ok", false).put("available", false)
+                .put("error", error.message ?: "Não foi possível calcular a equivalência refinada")
+        }
+    }
+
+    private fun refinedJson(base: JSONObject, result: AutoMatchRefinedEngine.Result, buffersCoherent: Boolean): JSONObject {
+        val points = JSONArray()
+        result.refinedRaw.forEachIndexed { index, refinedRaw ->
+            val currentRaw = result.currentRaw[index]
+            points.put(JSONObject()
+                .put("index", index)
+                .put("referenceTimeMs", result.axisMs[index])
+                .put("currentRaw", currentRaw)
+                .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                .put("calculatedRaw", refinedRaw)
+                .put("calculatedFactor", KFactorProtocol.factorFromRaw(refinedRaw))
+                .put("deltaPercent", if (currentRaw > 0) (refinedRaw - currentRaw) * 100.0 / currentRaw else JSONObject.NULL)
+                .put("evidenceGain", result.gain[index])
+                .put("origin", result.origins[index].name))
+        }
+        val targets = JSONArray(result.targets.map { target ->
+            JSONObject()
+                .put("mapBar", target.mapBar)
+                .put("petrolMs", target.petrolMs)
+                .put("gasMs", target.gasMs)
+                .put("ratio", target.ratio)
+                .put("weight", target.weight)
+                .put("robustWeight", target.robustWeight)
+                .put("targetFactor", kotlin.math.exp(target.logTarget))
+        })
+        val rejected = JSONArray(result.rejectedBands.map { band ->
+            JSONObject().put("fuel", band.fuel).put("band", band.band).put("mapBar", band.mapBar).put("timeMs", band.timeMs)
+        })
+        return base
+            .put("ok", true)
+            .put("available", true)
+            .put("refinementMode", result.mode.name)
+            .put("equivalenceAvailable", result.equivalenceAvailable)
+            .put("reason", result.reason ?: JSONObject.NULL)
+            .put("buffersCoherent", buffersCoherent)
+            .put("matureCommonPoints", result.matureCommonPoints)
+            .put("minimumMatureCommonPoints", AutoMatchRefinedEngine.MIN_COMMON_MATURE)
+            .put("elasticityLimit", result.elasticityLimit)
+            .put("needsAnotherPass", result.needsAnotherPass)
+            .put("changedCount", points.let { array -> (0 until array.length()).count { array.getJSONObject(it).optInt("calculatedRaw") != array.getJSONObject(it).optInt("currentRaw") } })
+            .put("guards", JSONObject()
+                .put("maximumStepPercent", 15.0)
+                .put("maximumElasticity", AutoMatchRefinedEngine.E_MAX)
+                .put("minimumFactor", AutoMatchRefinedEngine.MIN_FACTOR))
+            .put("metricsBefore", metricsJson(result.metricsBefore))
+            .put("metricsAfter", metricsJson(result.metricsAfter))
+            .put("targets", targets)
+            .put("rejectedBands", rejected)
+            .put("points", points)
+    }
+
+    private fun metricsJson(metrics: AutoMatchRefinedEngine.Metrics?): Any = metrics?.let {
+        JSONObject()
+            .put("maxNeighborStep", it.maxNeighborStep)
+            .put("maxElasticity", it.maxElasticity)
+            .put("roughness", it.roughness)
+            .put("slopeSignChanges", it.slopeSignChanges)
+    } ?: JSONObject.NULL
+
+    const val REFINED_MODE = "EQUIVALENCIA_REFINADA_V1"
+
     private fun unavailableForTiming(
         acquisition: JSONObject,
         spanMs: Long,

@@ -85,7 +85,20 @@ object AutoMatchKFactorDraftPlanner {
     const val MIN_FACTOR = 0.60
     const val MAX_FACTOR = KFactorProtocol.MAX_FACTOR
 
-    fun create(analysis: JSONObject, nowMs: Long = System.currentTimeMillis()): AutoMatchKFactorDraft {
+    /** Origens pré-selecionadas no rascunho refinado (pontos com evidência ou correção de coerência). */
+    val REFINED_PRESELECTED_ORIGINS = setOf("MEASURED", "BLENDED", "SMOOTHED")
+
+    fun createRefined(analysis: JSONObject, nowMs: Long = System.currentTimeMillis()): AutoMatchKFactorDraft {
+        require(analysis.optString("mode") == AutoMatchSnapshotAnalysis.REFINED_MODE) { "Análise refinada esperada" }
+        return create(analysis, nowMs, idPrefix = "AMR", preselectedOrigins = REFINED_PRESELECTED_ORIGINS)
+    }
+
+    fun create(
+        analysis: JSONObject,
+        nowMs: Long = System.currentTimeMillis(),
+        idPrefix: String = "AMV5",
+        preselectedOrigins: Set<String> = emptySet(),
+    ): AutoMatchKFactorDraft {
         require(analysis.optBoolean("ok") && analysis.optBoolean("available")) {
             analysis.optString("error").ifBlank { "Análise AutoMatch indisponível" }
         }
@@ -101,18 +114,19 @@ object AutoMatchKFactorDraftPlanner {
             val suggestedRaw = raw.optInt("calculatedRaw", -1)
             require(currentRaw in 0..KFactorProtocol.MAX_RAW) { "Leia MUL_ACT atual antes de criar o rascunho" }
             require(suggestedRaw in safeRawRange()) { "Ponto $index fora do limite físico K factor" }
+            val origin = raw.optString("origin", "UNAVAILABLE")
             AutoMatchDraftPoint(
                 index = index,
                 petrolMs = raw.optDouble("referenceTimeMs", Double.NaN),
                 currentRaw = currentRaw,
                 suggestedRaw = suggestedRaw,
                 targetRaw = suggestedRaw,
-                selected = false,
-                origin = raw.optString("origin", "UNAVAILABLE"),
+                selected = origin in preselectedOrigins && suggestedRaw != currentRaw,
+                origin = origin,
             )
         }
         return AutoMatchKFactorDraft(
-            id = "AMV5-${nowMs}-${UUID.randomUUID().toString().take(8)}",
+            id = "$idPrefix-${nowMs}-${UUID.randomUUID().toString().take(8)}",
             snapshotHash = analysis.optString("snapshotHash"),
             createdAtMs = nowMs,
             points = points,
