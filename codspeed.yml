@@ -1,0 +1,16 @@
+$schema: https://raw.githubusercontent.com/CodSpeedHQ/codspeed/refs/heads/main/schemas/codspeed.schema.json
+
+# Executed by CodSpeed, not a source of ad-hoc performance figures.
+options:
+  warmup-time: "1s"
+  max-time: 10s
+
+benchmarks:
+  - name: "OMEGAS Learning: 12x12 / 120 comparisons"
+    exec: node benchmarks/learning-model-bench.cjs grid-regular
+  - name: "OMEGAS Learning: 12x12 / 1500 comparisons"
+    exec: node benchmarks/learning-model-bench.cjs grid-heavy
+  - name: "OMEGAS Platina AutoCal: reference fingerprint"
+    exec: node benchmarks/learning-model-bench.cjs autocal-reference
+  - name: "OMEGAS Platina AutoCal: 18 band strip"
+    exec: node benchmarks/learning-model-bench.cjs autocal-band-strip
