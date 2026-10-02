@@ -173,13 +173,17 @@ Uma tela, **sem rolagem** em 1280×644. Siga os tokens, a tipografia (valor prin
    | Demais fases | Nenhum botão primário |
 
    Se a análise refinada tiver mudança mas o piloto ainda estiver em `ECU_TRABALHANDO`: permita revisar, com o aviso "a ECU ainda está no automático e pode sobrescrever". **Não bloqueie.**
-4. **Gráfico "Nossa curva"**, ocupando a maior área livre:
-   - curva atual × refinada;
-   - os pontos de evidência da ECU, maiores (`targets`);
-   - **a nuvem dos nossos pontos**, ver §4.1;
-   - legenda das origens: Medido / Transição / Anti-tranco / Mantido.
+4. **Gráfico "Nossa curva"**, ocupando a maior área livre. É **uma cópia do gráfico original do AutoCal da ECU, com mais pontos**:
+   - **eixos iguais aos do original:** X = tempo de injeção gasolina, Tpet (ms); Y = MAP (bar);
+   - **duas famílias:** Gasolina e GNV, cada uma com a sua linha;
+   - **os 18 pontos da ECU por família,** como no original: válido cheio, coletando vazado, sem coordenada não plotado;
+   - **as nossas bandas densas** entre eles, em tamanho menor (ver §4.1).
 
-   Ao tocar num ponto, mostre os valores dele sem mover o layout.
+   A distância horizontal entre a linha GNV e a linha gasolina no mesmo MAP é o que o refino corrige. Mostre isso com uma faixa sombreada ou uma legenda curta: "afastamento GNV × gasolina".
+
+   Ao tocar num ponto, mostre os valores dele sem mover o layout: MAP, ms, amostras, RPM típico, ECU ou nosso.
+
+   O gráfico da **Curva K** (atual × refinada, com as origens Medido / Transição / Anti-tranco / Mantido) não some. Ele passa para o **painel de revisão antes de gravar**, que é onde se decide a mudança.
 5. **Métricas, no máximo 3:**
    - Puxada no GNV: `joltRiskBefore` → `joltRiskAfter`, e onde fica o degrau;
    - Mudança: N pontos, até ±X%;
@@ -190,12 +194,22 @@ Uma tela, **sem rolagem** em 1280×644. Siga os tokens, a tipografia (valor prin
 
 A revisão antes de gravar é um painel por cima, com botões grandes. Mantenha **intacto** o `runWrite`: reler a curva, comparar com o snapshot (se algo mudou, aborta), gravar e confirmar por readback.
 
-### 4.1 Dados da nossa curva (criar)
+### 4.1 Dados da nossa curva: bandas densas (criar)
 
-- **Ledger:** em `EquivalenceLedger`, crie `pairsJson(limit: Int = 400): JSONArray`. Só leitura. Traz os pares mais recentes `{petrolRefMs, gasPetrolMs, rpm, ratio}`, com `ratio = gasPetrolMs/petrolRefMs`. Aplique o mesmo filtro de condução do índice (rpm ≥ 1000, ≥ 3 ms) e marque `idle: true` para os que ficarem de fora, em vez de escondê-los.
-- **Bridge:** exponha o resultado em `getEquivalence` como `pairs`. Teste JVM.
-- **Plotagem:** cada par é o ponto (x = `petrolRefMs`, y = K_alvo), com `K_alvo = K_atual(gasPetrolMs) · gasPetrolMs / petrolRefMs`. É a mesma equivalência do motor. Calcule em **Kotlin**: crie uma função pura que recebe o snapshot e os pares e devolve `{x, y}`. Teste JVM e um teste de paridade simples contra `refined_oracle.telemetry_targets`. Não calcule na UI.
-- **Sem pares** → mostre "Ainda sem pontos próprios — rode na gasolina e no GNV". **Nunca simule.**
+A ECU tem 18 bandas de MAP por combustível. Nós criamos as nossas, mais densas, com as leituras estáveis que o `EquivalenceLedger` já guarda.
+
+- **Função:** em `EquivalenceLedger`, crie `denseBandsJson(binBar: Double = 0.025, minSamples: Int = 5): JSONObject`. Só leitura.
+- **Agrupamento:** por combustível (lane gasolina e lane GNV; o GNV só da época vigente da curva), agrupe as observações em faixas de MAP de 0,025 bar, o que dá ~40–50 bandas na faixa útil.
+- **Saída por faixa:** `{mapBar (centro), tpetMs (mediana), samples, rpmMedian, idleShare}`. Só entram faixas com ≥ `minSamples`.
+- **Bridge:** exponha em `getEquivalence` como `denseBands: {petrol:[…], gas:[…], binBar, minSamples}`. Teste JVM com dados sintéticos: mediana correta, faixa com poucas amostras omitida, GNV zerado após `resetGas`.
+
+**Honestidade sobre o que essas bandas são:**
+- **Na tela:** elas são para **ver** com mais detalhe onde GNV e gasolina se afastam.
+- **No cálculo:** o motor de refino **continua** usando os pares RPM×MAP (`telemetryTargets`), que no teste cego ganharam das bandas só por MAP (2,94%/5,41% contra 3,31%/5,55%).
+- **Não troque** a entrada do motor pelas bandas densas.
+- **Tooltip** do gráfico: "nossas bandas: mediana das leituras estáveis a cada 0,025 bar".
+
+**Sem dados:** sem leituras, mostre "Ainda sem pontos próprios — rode na gasolina e no GNV". **Nunca simule pontos.**
 
 ## 5. AutoCal (o da ECU): melhorias com evidência
 
@@ -269,14 +283,13 @@ Crie `docs/V82_REFINO_FIELD_TEST.md`, curto, em português simples para o dono. 
   - rota Refino;
   - cada fase do piloto;
   - estado sem dados;
-  - gráfico sem pares e com pares;
+  - gráfico sem bandas e com bandas;
   - notificação → rota;
   - Sugestões → Refino;
   - AutoCal com bandas rejeitadas;
   - level com e sem referências.
 - **Testes JVM:**
-  - `pairsJson`;
-  - a função de K_alvo dos pares;
+  - `denseBandsJson`;
   - a função "RPM×MAP típico por faixa";
   - `LevelEstimator`;
   - o placar.
@@ -292,7 +305,7 @@ Crie `docs/V82_REFINO_FIELD_TEST.md`, curto, em português simples para o dono. 
 
 1. **Um commit por bloco, nesta ordem:**
    1. navegação + Refino;
-   2. dados da nossa curva;
+   2. dados da nossa curva (bandas densas);
    3. AutoCal;
    4. Agora / notificação / Sugestões;
    5. levels;
@@ -313,7 +326,7 @@ Crie `docs/V82_REFINO_FIELD_TEST.md`, curto, em português simples para o dono. 
 ## 11. Pronto quando
 
 - **Refino separado do AutoCal**, na side-nav. O motorista entende a fase em ~2 s e tem uma ação clara.
-- **"Nossa curva"** mostra os pontos reais do ledger, os da ECU e a curva refinada, sem nada simulado.
+- **"Nossa curva"** é a cópia do gráfico MAP × Tpet da ECU: os 18 pontos dela, as nossas bandas densas por combustível e o afastamento GNV × gasolina. Nada simulado. A Curva K atual × refinada aparece na revisão.
 - **AutoCal** explica o degrau da curva da ECU, as bandas suspeitas e o que falta coletar, em linguagem de volante.
 - **Navegação:** a notificação e o cartão do Agora levam ao Refino.
 - **Level:** usa o filtro e as referências da ECU e anda de 1 em 1. O placar compara calibrações.
