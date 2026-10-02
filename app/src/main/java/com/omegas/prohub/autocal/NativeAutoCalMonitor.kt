@@ -961,6 +961,8 @@ class NativeAutoCalMonitor(
             .put("petrolPending", epoch.petrolPending)
             .put("gasPending", epoch.gasPending)
             .put("referencePending", epoch.referencePending)
+            .put("petrolReferencePending", epoch.petrolReferencePending)
+            .put("gasReferencePending", epoch.gasReferencePending)
             .put("petrolSamples", epoch.petrolSamples)
             .put("gasSamples", epoch.gasSamples)
             .put("comparisonAllowed", epoch.comparisonAllowed)
