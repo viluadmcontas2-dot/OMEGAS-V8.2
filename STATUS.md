@@ -1,5 +1,16 @@
 # Status do OMEGAS V8.2
 
+## Mais recente: passo 0 da WU-006, sem novo APK — 2026-10-02
+
+- **Source corrigido desta etapa:** `dcd601c5e645fce178b303ad6cdf586012777a97` (commits posteriores somente documentais não mudam essa atribuição); branch única `claude/brave-darwin-wuliyo`. Revisão e comandos em `docs/evidence/WU-006-STEP0-NO-APK-20261002.md`.
+- R-01: o proprietário havia corrigido a publicação final obsoleta em `91702dce`, com teste. Esta continuação acrescentou teste para início atrasado (`dda1ea6e`) e guard anterior a `READING` (`dcd601c5`). Fonte revisada remotamente; **execução JVM nova deste SHA pendente**.
+- **CI externo anterior**: run `37062464754`, job `111022139625`, source `91702dce4727ff06d5d9feec678c7630ecd4dc03`: `QUALITY_GATE_FAST=PASS`, Kotlin debug/test compilou, `testDebugUnitTest` executou; `lintDebug=FAIL` (1 `MissingPermission`, 37 avisos; alerta do piloto no serviço). `:app:assembleDebug` foi executado pelo run externo antes da falha, mas **`Inspect APK`/`Upload APK` foram pulados**; nenhum artifact foi publicado/baixado nesta continuação. https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/37062464754
+- Regressão do aviso adicionada ao gate em `b9845033`; correção candidata no source `d70fc735`: verifica `POST_NOTIFICATIONS` no Android 13+ antes de `notify`; recusa não interrompe o piloto. **O lint após o fix ainda não foi executado/provado.**
+- Última solicitação do proprietário: **não gerar APK**. Nenhum novo workflow foi disparado por esta continuação; o workflow existente inclui obrigatoriamente `assembleDebug`, e não foi adulterado para aparentar teste-only. Próximo gate necessário no SHA final: `python3 -B tools/run_checks.py` e `./gradlew clean testDebugUnitTest lintDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace` (sem `assembleDebug`), em executor Android apto.
+- Faltam capturas finais e revisão de UX; sensor continua **proxy explícito**, sem litros/LEDs nativos comprovados. Sem validação no veículo, consumo ou promessa de eliminação do tranco. `PHYSICAL_VALIDATION_CLAIMED=false`.
+
+## Checkpoint anterior do GPT (histórico, supersedido pela seção acima)
+
 ## WU-006 atual: continuação de 2026-10-02 (fonte canônica desta entrada)
 
 - Branch única: `claude/brave-darwin-wuliyo`; baseline do handoff `cdd8039535dba1ba6c72f64e6a9d44411f2025a0`, sem commits posteriores do proprietário na comparação remota inicial.
