@@ -133,17 +133,51 @@ class DocumentsSessionMirror(private val context: Context) {
     private fun syncScopedAt(source: File, relativePath: String) {
         val resolver = context.contentResolver
         val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        val projection = arrayOf(MediaStore.MediaColumns._ID, OpenableColumns.SIZE)
-        val selection = MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " +
-            MediaStore.MediaColumns.RELATIVE_PATH + "=?"
-        val args = arrayOf(source.name, relativePath)
+        val projection = arrayOf(
+            MediaStore.MediaColumns._ID,
+            OpenableColumns.SIZE,
+            MediaStore.MediaColumns.DISPLAY_NAME,
+        )
+        val appendable = isAppendable(source)
+        val selection = if (appendable) {
+            MediaStore.MediaColumns.RELATIVE_PATH + "=? AND (" +
+                MediaStore.MediaColumns.DISPLAY_NAME + "=? OR " +
+                MediaStore.MediaColumns.DISPLAY_NAME + " LIKE ?)"
+        } else {
+            MediaStore.MediaColumns.RELATIVE_PATH + "=? AND " +
+                MediaStore.MediaColumns.DISPLAY_NAME + "=?"
+        }
+        val args = if (appendable) {
+            // Builds antigos publicaram application/json para .jsonl e alguns
+            // providers materializaram nomes como events_0001.jsonl.json ou
+            // events_0001.jsonl (N).json. Reusar o maior candidato impede que
+            // cada sincronização crie outra cópia cumulativa.
+            arrayOf(relativePath, source.name, source.name + "%")
+        } else {
+            arrayOf(relativePath, source.name)
+        }
         var targetUri: android.net.Uri? = null
-        var targetSize = 0L
+        var targetSize = -1L
+        var exactName = false
         resolver.query(collection, projection, selection, args, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
-                targetSize = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE)).coerceAtLeast(0L)
-                targetUri = ContentUris.withAppendedId(collection, id)
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
+            val sizeColumn = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+            while (cursor.moveToNext()) {
+                val candidateSize = cursor.getLong(sizeColumn).coerceAtLeast(0L)
+                val candidateName = cursor.getString(nameColumn).orEmpty()
+                if (appendable && candidateSize > source.length()) continue
+                val candidateExact = candidateName == source.name
+                if (
+                    targetUri == null ||
+                    candidateSize > targetSize ||
+                    (candidateSize == targetSize && candidateExact && !exactName)
+                ) {
+                    val id = cursor.getLong(idColumn)
+                    targetUri = ContentUris.withAppendedId(collection, id)
+                    targetSize = candidateSize
+                    exactName = candidateExact
+                }
             }
         }
         if (targetUri == null) {
@@ -158,7 +192,7 @@ class DocumentsSessionMirror(private val context: Context) {
         }
 
         val uri = requireNotNull(targetUri)
-        if (isAppendable(source) && targetSize in 0..source.length()) {
+        if (appendable && targetSize in 0..source.length()) {
             if (targetSize == source.length()) return
             try {
                 resolver.openOutputStream(uri, if (targetSize == 0L) "wt" else "wa")?.use { output ->
@@ -204,7 +238,10 @@ class DocumentsSessionMirror(private val context: Context) {
         file.name.startsWith("events_") && file.name.endsWith(".jsonl")
 
     private fun mimeFor(file: File): String = when (file.extension.lowercase()) {
-        "json", "jsonl" -> "application/json"
+        "json" -> "application/json"
+        // application/json pode fazer alguns providers anexarem ".json" ao
+        // DISPLAY_NAME ".jsonl", quebrando a busca exata e multiplicando cópias.
+        "jsonl" -> "application/octet-stream"
         "txt" -> "text/plain"
         else -> "application/octet-stream"
     }
