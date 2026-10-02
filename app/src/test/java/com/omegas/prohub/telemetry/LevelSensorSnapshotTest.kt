@@ -19,6 +19,21 @@ class LevelSensorSnapshotTest {
         val result=sensor.read(7,{session}){session=8;UsbProtocolReply(true,0x53,byteArrayOf(0))}
         assertFalse(result.getBoolean("available"));assertFalse(result.getBoolean("ok"));sensor.resetForSession(8);assertTrue(sensor.json().isNull("percent"))
     }
+    @Test fun `leitura antiga iniciada apos troca nao regride sessao nova`() {
+        val sensor=LevelSensorSnapshot { 1000 }
+        sensor.resetForSession(8)
+        val current=sensor.read(8,{8}){UsbProtocolReply(true,0x53,byteArrayOf(1))}
+        assertEquals(8L,current.getLong("sessionId"))
+        assertEquals("READY",current.getString("state"))
+        val stale=sensor.read(7,{8}){
+            fail("A leitura atrasada não pode chegar ao transporte USB")
+            UsbProtocolReply(false)
+        }
+        assertEquals(8L,stale.getLong("sessionId"))
+        assertEquals("READY",stale.getString("state"))
+        assertTrue(stale.getBoolean("available"))
+        assertEquals(current.getJSONArray("fields").toString(),stale.getJSONArray("fields").toString())
+    }
     @Test fun `troca de sessao entre a ultima conferencia e a publicacao nao publica captura antiga`() {
         val sensor=LevelSensorSnapshot { 1000 };var answered=0;var resetDone=false
         // A troca de sessão chega por outra via (resetForSession) depois que a última conferência já passou.
