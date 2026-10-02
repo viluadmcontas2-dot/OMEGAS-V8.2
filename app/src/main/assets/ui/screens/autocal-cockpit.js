@@ -1278,6 +1278,57 @@
       });
     }
 
+    renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host) {
+      // Os pontos vêm da projeção de época, que mascara campos anteriores ao reset/AutoMatch.
+      // Nunca desenhar RV30 antigo nem chamar equivalência enquanto a leitura é readquirida.
+      this.chartScale = null;
+      this.chartRenderKey = null;
+      const petrolCount = acquiredPetrol.length;
+      const gasCount = acquiredGas.length;
+      const message = epoch.gasPending ? 'GNV reiniciado: aguardando readback da ECU'
+        : epoch.petrolPending ? 'Gasolina reiniciada: aguardando readback da ECU'
+          : epoch.referencePending ? 'Curvas de referência aguardando grupo novo da ECU'
+            : 'Aquisição corrente ainda sem suporte suficiente';
+      this.text('autocalReferenceCount', 'Gasolina ' + petrolCount + '/18 · GNV ' + gasCount + '/18 pontos correntes');
+      this.text('autocalChartInspector',
+        message + '. Contador AutoMatch ' + (finite(epoch.nativeAutoMatchCount) ?? '—') +
+        ' · época gasolina ' + (finite(epoch.petrolGeneration) ?? 0) +
+        ' · época GNV ' + (finite(epoch.gasGeneration) ?? 0) + '.');
+      const current = [...acquiredPetrol, ...acquiredGas];
+      const domain = AutoCalUxModel.referenceDomain([], [], [], current);
+      let chart = '';
+      if (domain) {
+        const width = 1000, height = 400, left = 64, right = 28, top = 22, bottom = 48;
+        const x = value => left + (value - domain.xMin) / (domain.xMax - domain.xMin) * (width - left - right);
+        const y = value => height - bottom -
+          (value - domain.yMin) / (domain.yMax - domain.yMin) * (height - top - bottom);
+        const present = list => list.filter(point =>
+          point.petrolMs >= domain.xMin && point.petrolMs <= domain.xMax &&
+          point.mapBar >= domain.yMin && point.mapBar <= domain.yMax)
+          .slice().sort((a, b) => a.petrolMs - b.petrolMs);
+        const curve = (list, fuel) => {
+          const items = present(list);
+          const line = items.map((point, index) =>
+            (index ? 'L' : 'M') + ' ' + x(point.petrolMs).toFixed(1) + ' ' + y(point.mapBar).toFixed(1)).join(' ');
+          const dots = items.map(point =>
+            '<circle class="autocal-acquired-point ' + fuel + '" cx="' +
+            x(point.petrolMs).toFixed(1) + '" cy="' + y(point.mapBar).toFixed(1) + '" r="5.5"></circle>').join('');
+          return (items.length >= 2
+            ? '<path class="autocal-reference-line ' + fuel + '" d="' + line + '"></path>' : '') + dots;
+        };
+        chart = '<svg class="autocal-reference-svg" viewBox="0 0 1000 400" role="img" ' +
+          'aria-label="Aquisição atual: pontos gasolina e GNV da ECU sem extrapolação">' +
+          '<path d="M64 22 V352 H972" fill="none" stroke="currentColor" opacity=".2"></path>' +
+          curve(acquiredPetrol, 'petrol') + curve(acquiredGas, 'gas') +
+          '<text class="autocal-axis-title x" x="518" y="395" text-anchor="middle">Petrol Inj. (ms)</text>' +
+          '<text class="autocal-axis-title y" x="14" y="200" text-anchor="middle" ' +
+          'transform="rotate(-90 14 200)">MAP (bar)</text></svg>';
+      }
+      host.innerHTML = chart + '<div class="chart-empty"><b>AQUISIÇÃO EM TEMPO REAL</b><span>' +
+        escapeHtml(message) + '. Somente pontos da época corrente; nenhuma equivalência é calculada agora.</span></div>';
+      this.renderLiveNarrative();
+    }
+
     renderReferenceChart(snapshot) {
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
@@ -1295,6 +1346,11 @@
       const timingProblem = timingKnown && !timingCoherent;
 
       if (!points.length || this.referenceUsable === false) {
+        const liveEpoch = this.projection?.liveAcquisitionEpoch || {};
+        if (liveEpoch.comparisonAllowed === false) {
+          this.renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, liveEpoch, host);
+          return;
+        }
         this.chartRenderKey = null;
         this.renderResetComparison([]);
         this.chartScale = null;
