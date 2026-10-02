@@ -43,3 +43,58 @@ jobs:
         with:
           mode: simulation
           run: pytest benchmarks --codspeed
+
+  python-walltime:
+    name: Portmon / offline contracts (walltime)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install benchmark dependencies
+        run: python3 -m pip install --disable-pip-version-check -r benchmarks/requirements.txt
+
+      - name: Verify offline Portmon payload parity
+        run: python3 -B tests/test_portmon_payload_lazy.py
+
+      # Hosted runners are noisy. This is a validation datapoint, not a
+      # controlled base/head proof; only compare like-for-like runner results.
+      - name: Run Python walltime benchmarks
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: walltime
+          run: pytest benchmarks --codspeed
+
+  js-benchmarks:
+    name: Learning / AutoCal isolated JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Correctness gate only: stdout checksums are NOT timing claims.
+      - name: Validate isolated production JavaScript scenarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check benchmarks/learning-model-bench.cjs
+          node --check app/src/main/assets/ui/core/learning-model.js
+          node --check app/src/main/assets/ui/screens/autocal-cockpit.js
+          for scenario in grid-regular grid-heavy autocal-reference autocal-band-strip; do
+            node benchmarks/learning-model-bench.cjs "$scenario" | grep "^BENCHMARK_OK $scenario checksum="
+          done
+
+      # Action >=v4.9 supports omitted run, loading four targets from codspeed.yml.
+      # Walltime on GitHub-hosted infrastructure is subject to runner noise.
+      - name: Measure Learning and AutoCal with CodSpeed
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: walltime
