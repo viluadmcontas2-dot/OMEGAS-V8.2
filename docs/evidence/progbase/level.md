@@ -1,14 +1,14 @@
 # Tema 6 — Level (nível do cilindro de GNV)
 
-Fontes: telemetria (`telemetria.md` byte 13), DFM `TSTREAMDATI`/`TFORMCONFIG` (offsets em `fontes/brave-darwin-FORMULAS-20261002.md` §2), desmontagem do `TFormConfig/GroupRifSensore` (`tests/fixtures/progbase-autocal-consumer-map-v1.json#levels`), Lognovo 63 MB (`LN seq`).
+Fontes: telemetria (`telemetria.md` byte 13), DFM do DUMP (`DUMP/RT_RCDATA(10)__TSTREAMDATI__0.bin`, `__TFORMCONFIG__0.bin`, `__TFORMVISUALIZZA__0.bin`; offsets em `fontes/parametros-dfm-inventario.json`), desmontagem de `TFormConfig/GroupRifSensore` (VAs de estudo anterior sobre `DUMP/ProgBase.exe.Dump.bin`, não reexecutados nesta branch: `lacunas.md` L-12) e LN.
 
 ## 6.1 Sinal vivo
 
 | Item | Valor | Selo | Fonte |
 |---|---|---|---|
-| Origem | byte 13 do payload de `48 01`, U8, **sem conversão** | PROVADO | consumer-map `levels.live_raw`; copiado para `TFormConfig+0x1800` pelo `TimerDatiTimer` |
-| Exibição no ProgBase | `TFormVisualizza.LabLivello` mostra o número bruto ("Livello 0") | PROVADO | DFM `RCDATA_TFORMVISUALIZZA_0.dfm.txt` (`LabLivello Caption='0'`) |
-| Valores reais | LN: 177 (0xB1) em quase toda a sessão; 21 num quadro com motor parado; `1.LOG` 251; `3.LOG` 252 | PROVADO | capturas |
+| Origem | byte 13 do payload de `48 01`, U8, **sem conversão** | PROVADO | desmontagem: copiado para `TFormConfig+0x1800` pelo `TimerDatiTimer` |
+| Exibição no ProgBase | `TFormVisualizza.LabLivello` mostra o número bruto ("Livello 0") | PROVADO | DFM `DUMP/RT_RCDATA(10)__TFORMVISUALIZZA__0.bin` (`LabLivello`, `Caption = '0'`) |
+| Valores reais | LN: 177 (0xB1) em quase toda a sessão (9.108 quadros); com a chave desligada (byte 11 = `00`, rpm 0) o raw decai 51 → 21 em dez quadros (seq 2055–2064) e fica em 21 (300 quadros) | PROVADO | LN |
 | Sentido | não provado (sensor pode ser direto ou invertido; ver `TIPO_SENSORE`) | DESCONHECIDO | — |
 
 ## 6.2 Parâmetros de configuração (valores desta ECU)
@@ -24,7 +24,7 @@ Fontes: telemetria (`telemetria.md` byte 13), DFM `TSTREAMDATI`/`TFORMCONFIG` (o
 
 ## 6.3 Como o ProgBase aprende as referências (`TFormConfig/GroupRifSensore`)
 
-`PROVADO` por desmontagem (VAs em `consumer-map#levels.calibration`):
+`PROVADO` por desmontagem (VAs de estudo anterior, `lacunas.md` L-12):
 
 1. O "canal" interno `0x0E` lê `TStreamDati+0x2BE4`, uma palavra cujo byte baixo é a referência mínima aprendida e o byte alto a máxima (getter `0x00434CC0`/caso `0x00435792`; setter `0x00436444`/caso `0x00436F07`).
 2. `ButtonMinLevelClick` (`0x004C598C`) substitui o byte baixo pelo LEVEL raw atual; `ButtonMaxLevelClick` (`0x004C5ADC`) substitui o byte alto.
@@ -37,7 +37,7 @@ Conferência com os valores desta ECU: `39 93 143 219` não são equidistantes (
 
 - Na tela de visualização, **não converte**: mostra o raw (6.1).
 - Nos LEDs do comutador (feitos pela ECU, não pelo PC): `INFERIDO` que a ECU compara o raw filtrado com as referências `RIF_SENSORE` para posicionar o nível em quartos e usa `SOGLIA_LED_1..4` (`10/37/62/90`, parecem percentuais) com histerese 3 para acender/apagar. Com raw 177 entre 143 (2/4) e 219 (3/4) a leitura ficaria entre meio e três quartos; raw 251 > 219 = cheio. Nenhuma fórmula de interpolação da ECU foi vista.
-- A regra do OMEGAS `floor((255 − raw) × 100 / 255)` (`Mp48TelemetryScale.levelPercentage`, hoje desligada em favor de `LEVELS RAW`) não tem origem no ProgBase (`PROVADO` por ausência).
+- Nenhuma fórmula de percentual (`raw/255`, `(255 − raw)/255` ou similar) existe no ProgBase: a tela mostra o raw e a ECU faz os LEDs (`PROVADO` por ausência no DFM e na desmontagem conhecida).
 
 ## 6.5 O que falta (ver `lacunas.md` L-08)
 

@@ -1,8 +1,8 @@
 {
  "schema": "omegas.evidence.progbase-original.registry.v1",
- "gerado_em": "2026-10-02",
+ "gerado_em": "2026-10-02 (revisão: fontes restritas a DUMP + LN)",
  "branch": "evidence/progbase-original",
- "fontes": "docs/evidence/progbase/fontes/INDICE-FONTES.md",
+ "fontes": "docs/evidence/progbase/fontes/INDICE-FONTES.md (somente DUMP + PortmonLOGNOVO (1).zip)",
  "selos": {
   "PROVADO": "fiação ou DUMP sem ambiguidade",
   "INFERIDO": "dedução forte com raciocínio no tema",
@@ -22,9 +22,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TFormVisualizza/TFormConfig.TimerDati/TAutoCalUI.RunPoint",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 9408x",
-    "1.LOG",
-    "PortmonAUTOCAL"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 9408x"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -42,8 +40,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TAutoCalUI",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 23x",
-    "portmon-lognovo-autocal-epochs-v1.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 23x",
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -61,7 +59,7 @@
    "rw": "R",
    "consumidor_no_progbase": "laço do ProgBase",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 3334x"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 3334x"
    ],
    "confianca": "PROVADO",
    "nota": "não suportado nesta ECU"
@@ -79,7 +77,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TAebNumber.GetData",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -97,7 +95,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TAebNumber ntVectorElement",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 0A 65 01 02"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 0A 65 01 02"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -115,7 +113,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TAebVector.GetData",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -133,7 +131,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TAebMatrix",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 36-48"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 36-48"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -151,7 +149,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TAebNumber.SetDataInEcu",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 12615/12691"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 12615/12691"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -185,8 +183,8 @@
    "rw": "W",
    "consumidor_no_progbase": "TAebVector.SetDouble / TAebMatrix",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 1054-1197, 7525-7548, 15226-15249",
-    "dump-contract-v2 (14 61 01)"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 1054-1197, 7525-7548, 15226-15249",
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -204,7 +202,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TAebVector",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 35 03 00 86 2C 51 10 seq 719"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 35 03 00 86 2C 51 10 seq 719"
    ],
    "confianca": "PROVADO",
    "nota": "regra geral inferida; n=4 provado"
@@ -222,7 +220,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TAebVector",
    "observado_em": [
-    "progbase-autocal-dump-contract-v1.json"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "INFERIDO",
    "nota": "desmontagem; não ocorre no LN"
@@ -240,8 +238,8 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionReset*/ActionAutoMatch",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 02 24 04 04 2E seq 1487",
-    "progbase-autocal-action-map-v1.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 02 24 04 04 2E seq 1487",
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO",
    "nota": "só modo 04 visto na fiação"
@@ -259,7 +257,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionDeleteSelectedPointsExecute",
    "observado_em": [
-    "dump-contract-v1.json"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "INFERIDO",
    "nota": ""
@@ -277,7 +275,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TAebProtocol.Connect",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 2,5,14"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 2,5,14"
    ],
    "confianca": "PROVADO",
    "nota": "semântica dos 4 bytes desconhecida"
@@ -295,7 +293,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TAebProtocol.Connect",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 3"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 3"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -313,7 +311,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TAebProtocol.Connect",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 4"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 4"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -331,7 +329,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TAebProtocol.Disconnect",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 7549, 19890"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 7549, 19890"
    ],
    "confianca": "INFERIDO",
    "nota": "sempre após blocos de escrita"
@@ -349,7 +347,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TAebProtocol.Disconnect",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 10, 7550, 19891"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 10, 7550, 19891"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -367,7 +365,7 @@
    "rw": "R",
    "consumidor_no_progbase": "TFormCalibra",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 4693x"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 4693x"
    ],
    "confianca": "PROVADO",
    "nota": "fora do produto"
@@ -385,8 +383,7 @@
    "rw": "",
    "consumidor_no_progbase": "",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "full-corpus-manifest.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -404,7 +401,7 @@
    "rw": "",
    "consumidor_no_progbase": "",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce 3499x em 56 requisições"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 3499x em 56 requisições"
    ],
    "confianca": "INFERIDO",
    "nota": "único não-ACK observado"
@@ -422,7 +419,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 719/1332"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 719/1332"
    ],
    "confianca": "INFERIDO",
    "nota": ""
@@ -440,9 +437,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabelGiri/ChartGiri",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -460,9 +456,8 @@
    "rw": "R",
    "consumidor_no_progbase": "não exibido",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "INFERIDO",
    "nota": "identidade inferida pelos dados"
@@ -480,9 +475,8 @@
    "rw": "R",
    "consumidor_no_progbase": "",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "DESCONHECIDO",
    "nota": ""
@@ -500,9 +494,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabTempoIniezioneGas",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": "escala INFERIDA via SC 121"
@@ -520,9 +513,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabTempoIniezioneBenzina; RunPoint.x",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": "escala INFERIDA via SC 121"
@@ -540,9 +532,8 @@
    "rw": "R",
    "consumidor_no_progbase": "",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "DESCONHECIDO",
    "nota": "valores 0/4/5"
@@ -560,9 +551,8 @@
    "rw": "R",
    "consumidor_no_progbase": "ícones Sotto chiave/Cutoff/Gas/Benzina",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": "bits INFERIDOS exceto 0x10"
@@ -575,14 +565,13 @@
    "encoding": "u8",
    "forma": "campo",
    "tamanho": 1,
-   "escala": "109 - raw (OMEGAS)",
+   "escala": "109 - raw (hipótese, não provada no original)",
    "unidade": "°C",
    "rw": "R",
    "consumidor_no_progbase": "LabTempMotore",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "INFERIDO",
    "nota": "escala não provada no original"
@@ -600,9 +589,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabLivello; TFormConfig+0x1800",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -615,14 +603,13 @@
    "encoding": "u16le",
    "forma": "campo",
    "tamanho": 2,
-   "escala": "raw/800 (OMEGAS)",
+   "escala": "raw/800 (hipótese, não provada no original)",
    "unidade": "bar",
    "rw": "R",
    "consumidor_no_progbase": "LabPressione",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "INFERIDO",
    "nota": "escala não provada no original"
@@ -635,14 +622,13 @@
    "encoding": "u8",
    "forma": "campo",
    "tamanho": 1,
-   "escala": "raw - 20 (OMEGAS)",
+   "escala": "raw - 20 (hipótese, não provada no original)",
    "unidade": "°C",
    "rw": "R",
    "consumidor_no_progbase": "LabTempRiduttore",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "INFERIDO",
    "nota": ""
@@ -660,9 +646,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabMap; RunPoint.y",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": "992 com motor parado"
@@ -680,9 +665,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabTensioneIniettori",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "INFERIDO",
    "nota": "0 em gasolina, 209-227 em GNV"
@@ -700,9 +684,8 @@
    "rw": "R",
    "consumidor_no_progbase": "",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "DESCONHECIDO",
    "nota": ""
@@ -720,9 +703,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabTempoIniezioneGas2",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -740,9 +722,8 @@
    "rw": "R",
    "consumidor_no_progbase": "",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "DESCONHECIDO",
    "nota": ""
@@ -760,9 +741,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LabTempoIniezioneBenzina2",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -780,9 +760,8 @@
    "rw": "R",
    "consumidor_no_progbase": "",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#live_telemetry",
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce",
-    "1.LOG/3.LOG"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
    ],
    "confianca": "DESCONHECIDO",
    "nota": ""
@@ -800,8 +779,8 @@
    "rw": "R",
    "consumidor_no_progbase": "sessão",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: AC"
@@ -819,8 +798,8 @@
    "rw": "R/W",
    "consumidor_no_progbase": "TFormConfig; bit 0x0800 edição Mapa K",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0x2486,0x1051"
@@ -838,8 +817,8 @@
    "rw": "R",
    "consumidor_no_progbase": "eixo do mapa de carburação",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 500..6000"
@@ -857,8 +836,8 @@
    "rw": "R",
    "consumidor_no_progbase": "família de telas",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 4"
@@ -876,8 +855,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "TFormConfig/GroupRifSensore",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0x81"
@@ -895,8 +874,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "GroupRifSensore (Riserva,1/4,2/4,3/4)",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 39 93 143 219"
@@ -914,11 +893,11 @@
    "rw": "R/w",
    "consumidor_no_progbase": "compensação temp. redutor",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0 38 50 58 67 77 83 88 100 255 (.lec)"
+   "nota": "valor nesta ECU: 0 38 50 58 67 77 83 88 100 255 (LN seq 129-130)"
   },
   {
    "id": "sc-043",
@@ -933,11 +912,11 @@
    "rw": "R/w",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 100 99 97 94 91 89 86 82 80 (.lec)"
+   "nota": "valor nesta ECU: 100 99 97 94 91 89 86 82 80 (LN seq 129-130)"
   },
   {
    "id": "sc-053",
@@ -952,8 +931,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "TFormConfig",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: '208 01 08 2'"
@@ -971,8 +950,8 @@
    "rw": "R/W",
    "consumidor_no_progbase": "eixo linhas Mapa K (TFormCentriCelleK)",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 781..7031 = 2,0..18,0 ms"
@@ -990,8 +969,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TFormDiagnosi",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1252"
@@ -1009,8 +988,8 @@
    "rw": "R/W",
    "consumidor_no_progbase": "eixo colunas Mapa K",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 850 1350 1850 2500..6500"
@@ -1028,8 +1007,8 @@
    "rw": "R",
    "consumidor_no_progbase": "emulação nível painel",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 41"
@@ -1047,8 +1026,8 @@
    "rw": "R",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 5"
@@ -1066,8 +1045,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "TFormConfig",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1000"
@@ -1085,8 +1064,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate de versão",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0x0401"
@@ -1104,8 +1083,8 @@
    "rw": "R",
    "consumidor_no_progbase": "injetores",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 781"
@@ -1123,8 +1102,8 @@
    "rw": "R",
    "consumidor_no_progbase": "injetores",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 977"
@@ -1142,8 +1121,8 @@
    "rw": "R(2A)/W(14)",
    "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 162..181; após escrita de 100: 149; depois 166"
@@ -1161,8 +1140,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TFormService",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 2703"
@@ -1180,8 +1159,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate de versão",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0x0401"
@@ -1199,8 +1178,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "compensação temp. gás",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0 24 38 50 67 88 113 155 195 255"
@@ -1218,8 +1197,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 107 105 103 101 100 98 97 94 92"
@@ -1237,8 +1216,8 @@
    "rw": "R",
    "consumidor_no_progbase": "compensação pressão coletor",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 299..1699"
@@ -1256,8 +1235,8 @@
    "rw": "R",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0 x15"
@@ -1275,8 +1254,8 @@
    "rw": "R",
    "consumidor_no_progbase": "cache TStreamDati+0x2980 (escala de todos os tempos)",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 2560"
@@ -1294,8 +1273,8 @@
    "rw": "R",
    "consumidor_no_progbase": "compensação pressão diferencial",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1250..2335"
@@ -1313,8 +1292,8 @@
    "rw": "R",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 2617..-1007 (0 em 2000 mbar)"
@@ -1332,8 +1311,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "injetores",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 234 = 0,60 ms"
@@ -1351,8 +1330,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "injetores",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 391 = 1,00 ms"
@@ -1370,8 +1349,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TFormConfig",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0"
@@ -1389,8 +1368,8 @@
    "rw": "-",
    "consumidor_no_progbase": "-",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: CA 01 10"
@@ -1408,8 +1387,8 @@
    "rw": "R",
    "consumidor_no_progbase": "?",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 85"
@@ -1427,8 +1406,8 @@
    "rw": "R",
    "consumidor_no_progbase": "compensação pressão absoluta",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 58..85"
@@ -1446,8 +1425,8 @@
    "rw": "R",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0..3420"
@@ -1465,8 +1444,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TStrategiaTempiMortiDM",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0 x10"
@@ -1484,8 +1463,8 @@
    "rw": "R",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0 x10"
@@ -1503,8 +1482,8 @@
    "rw": "R",
    "consumidor_no_progbase": "filtro nível",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 32768 (1,0); 4915 (0,15)"
@@ -1522,8 +1501,8 @@
    "rw": "R",
    "consumidor_no_progbase": "LEDs comutador",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 3 10 37 62 90"
@@ -1541,8 +1520,8 @@
    "rw": "-",
    "consumidor_no_progbase": "Landi Connect",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: CA 01 10 (não suportado)"
@@ -1560,8 +1539,8 @@
    "rw": "R/W",
    "consumidor_no_progbase": "CheckAutoCalEnable",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1; 12 4A 01 00/01"
@@ -1579,8 +1558,8 @@
    "rw": "R",
    "consumidor_no_progbase": "KLine.x, PetrolCurve.x, GasCurve.x",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,5..22"
@@ -1598,8 +1577,8 @@
    "rw": "R",
    "consumidor_no_progbase": "CurrentBand, AcqusitionAreas",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,150..1,10"
@@ -1617,8 +1596,8 @@
    "rw": "R",
    "consumidor_no_progbase": "maturidade gasolina",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 10..0"
@@ -1636,8 +1615,8 @@
    "rw": "R",
    "consumidor_no_progbase": "maturidade GNV",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 10..0"
@@ -1655,8 +1634,8 @@
    "rw": "R",
    "consumidor_no_progbase": "GasPointPrev.x",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -1674,8 +1653,8 @@
    "rw": "R",
    "consumidor_no_progbase": "GasPointPrev.y",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -1693,8 +1672,8 @@
    "rw": "R",
    "consumidor_no_progbase": "GasPoint.x",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -1712,8 +1691,8 @@
    "rw": "R",
    "consumidor_no_progbase": "GasPoint.y",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -1731,8 +1710,8 @@
    "rw": "R/W(14 61 01)",
    "consumidor_no_progbase": "KLine.y",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,840..1,087; 1,0 x30 após Reset All"
@@ -1750,8 +1729,8 @@
    "rw": "R",
    "consumidor_no_progbase": "PetrolPoint.x",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -1769,8 +1748,8 @@
    "rw": "R",
    "consumidor_no_progbase": "PetrolPoint.y",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -1788,8 +1767,8 @@
    "rw": "-",
    "consumidor_no_progbase": "-",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: CA 01 10"
@@ -1807,8 +1786,8 @@
    "rw": "R/w",
    "consumidor_no_progbase": "maturidade; Finish",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 3 3 3"
@@ -1826,8 +1805,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TAutoCalSettings",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1,0"
@@ -1845,8 +1824,8 @@
    "rw": "R",
    "consumidor_no_progbase": "CursorLimitMAP_MIN",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,150"
@@ -1864,8 +1843,8 @@
    "rw": "R",
    "consumidor_no_progbase": "CursorLimitMAP_MAX",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1,10"
@@ -1883,8 +1862,8 @@
    "rw": "w",
    "consumidor_no_progbase": "ActionDeleteSelectedPoints",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO (DFM)",
    "nota": "valor nesta ECU: nunca lido"
@@ -1902,8 +1881,8 @@
    "rw": "w",
    "consumidor_no_progbase": "idem",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO (DFM)",
    "nota": "valor nesta ECU: nunca lido"
@@ -1921,8 +1900,8 @@
    "rw": "R",
    "consumidor_no_progbase": "AcqusitionAreas",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1 1 1 1"
@@ -1940,8 +1919,8 @@
    "rw": "R",
    "consumidor_no_progbase": "AcqusitionAreas",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0 0 0 0 -> 1 1 0 0"
@@ -1959,8 +1938,8 @@
    "rw": "R",
    "consumidor_no_progbase": "seletores 0x00516F64",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1 3 3 1 3 3 1 3 3 1"
@@ -1978,8 +1957,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TAutoCalDM (18/30 pontos)",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 4"
@@ -1997,8 +1976,8 @@
    "rw": "R/w(Finish)",
    "consumidor_no_progbase": "Num automatch N/MaxAutomatch",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 3 -> 0 após Reset All"
@@ -2016,8 +1995,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TAutoCalSettings",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 3000"
@@ -2035,8 +2014,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate aquisição",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 400"
@@ -2054,8 +2033,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate aquisição",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 200"
@@ -2073,8 +2052,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate aquisição",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,50"
@@ -2092,8 +2071,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate aquisição",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,050"
@@ -2111,8 +2090,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate aquisição",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 4,0"
@@ -2130,8 +2109,8 @@
    "rw": "R",
    "consumidor_no_progbase": "gate aquisição",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 1,0"
@@ -2149,8 +2128,8 @@
    "rw": "R",
    "consumidor_no_progbase": "TAutoCalSettings",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0"
@@ -2168,8 +2147,8 @@
    "rw": "R",
    "consumidor_no_progbase": "PetrolCurve.y",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,010..1,456"
@@ -2187,8 +2166,8 @@
    "rw": "R",
    "consumidor_no_progbase": "GasCurve.y",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce dump de conexão seq 31-410",
-    "fontes/parametros-dfm-inventario.json"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
    ],
    "confianca": "PROVADO",
    "nota": "valor nesta ECU: 0,088..1,24"
@@ -2206,7 +2185,7 @@
    "rw": "W",
    "consumidor_no_progbase": "CheckAutoCalEnableBeforeSetData 0x0051A474",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 12691/12615"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 12691/12615"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -2224,7 +2203,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionResetPetrolExecute 0x005189C0",
    "observado_em": [
-    "progbase-autocal-action-map-v1.json"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO (frame)",
    "nota": "efeito não observado"
@@ -2242,7 +2221,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionResetGasExecute 0x005189CC",
    "observado_em": [
-    "action-map"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO (frame)",
    "nota": "efeito não observado"
@@ -2260,8 +2239,8 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionResetAllExecute 0x005189D8",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 1487-1502",
-    "epochs fixture"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 1487-1502",
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -2279,7 +2258,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionAutoMatchExecute 0x005189B4",
    "observado_em": [
-    "action-map"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO (frame)",
    "nota": "efeito não observado"
@@ -2297,8 +2276,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionResetKFactorExecute 0x0051A070",
    "observado_em": [
-    "dump-contract-v2",
-    "reset-k-factor-progbase-2026-09-28.md"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO (desmontagem)",
    "nota": "não visto na fiação"
@@ -2316,7 +2294,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionFinishAutocalExecute 0x0051A390 / BtnFinishAutomatchClick 0x0051A454",
    "observado_em": [
-    "progbase-host-parity-v0.md"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO (desmontagem)",
    "nota": "não visto na fiação"
@@ -2334,7 +2312,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ActionDeleteSelectedPointsExecute 0x00518E6C",
    "observado_em": [
-    "dump-contract-v1"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO (desmontagem)",
    "nota": "não visto na fiação"
@@ -2352,7 +2330,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 719, 1054-1197, 1332"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 719, 1054-1197, 1332"
    ],
    "confianca": "PROVADO",
    "nota": "valor lido depois != escrito"
@@ -2370,7 +2348,7 @@
    "rw": "W",
    "consumidor_no_progbase": "TFormCentriCelleK.ButtonOkClick",
    "observado_em": [
-    "PortmonLOGNOVO.LOG 63 MB sha256 341542e8…1ce seq 7525-7561, 15226-15249"
+    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 7525-7561, 15226-15249"
    ],
    "confianca": "PROVADO",
    "nota": ""
@@ -2388,7 +2366,7 @@
    "rw": "W",
    "consumidor_no_progbase": "ButtonMinLevelClick 0x004C598C / ButtonMaxLevelClick 0x004C5ADC / ButtonDoLevelClick 0x004C5C30",
    "observado_em": [
-    "progbase-autocal-consumer-map-v1.json#levels"
+    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO (desmontagem)",
    "nota": "escrita na ECU não capturada"

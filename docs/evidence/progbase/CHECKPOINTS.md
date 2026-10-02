@@ -82,3 +82,17 @@ Regra: depois de cada commit, este arquivo é atualizado com **feito / falta / p
 **Próxima ação exata (fora desta branch)**
 - Abrir WorkUnit de contraste OMEGAS × ProgBase a partir da lista do `README.md`, começando pelos pontos 1–5.
 - Para fechar lacunas: L-07 (uma célula do Mapa K escrita e relida na mesma sessão) e L-04 (desmontar `TFormVisualizza.Timer1Timer`) são as de maior retorno.
+
+## Commit 9 — restrição de fontes a DUMP + `PortmonLOGNOVO (1).zip` (parte 1, intermediário)
+
+**Decisão do owner (2026-10-02):** só a pasta DUMP e a captura `PortmonLOGNOVO (1).zip` valem como evidência. Nada do OMEGAS (sessões, fixtures, código, docs de outras branches), nenhum `.lec`, nenhuma outra captura Portmon.
+
+**Feito**
+- Verificado que o LOG de 63 MB já parseado é o **prefixo exato** do LOG de 149,9 MB do zip indicado (mesmas seq/idx); toda citação `LN seq/idx` já está na numeração do arquivo completo.
+- `protocolo.md`, `telemetria.md`, `parametros.md`, `autocal.md`, `curvas-mapas.md`, `level.md`, `lacunas.md`, `registry.json`, `fontes/INDICE-FONTES.md`: todas as citações a `1/2/3.LOG`, `PortmonAUTOCAL`, fixtures `tests/fixtures/*`, código Kotlin, `.lec`, `autocalcfg.ini`, docs de evidência do OMEGAS e DFM em texto de `reverse_report` foram substituídas por LN ou DUMP, ou rebaixadas (hipóteses de escala em `telemetria.md`; VAs de desmontagem marcados L-12).
+- Removidos de `fontes/`: `lec-208-pegeot-pos-cali.md` e os quatro `brave-darwin-*.md` (ficam no histórico do git).
+- Valores de SC 42/43 reencontrados no LN (seq 129–130).
+- Novas lacunas L-11 (zip de 14 MB excede o limite da ferramenta do Drive; HTTP bloqueado) e L-12 (`Seção_0_.text.bin` idem; VAs não reexecutados).
+
+**Falta (commit 10)**
+- Decodificar os DFM binários do DUMP (download em curso), regenerar `fontes/parametros-dfm-inventario.json` a partir deles, preencher SHA-256 em `INDICE-FONTES.md`, conferir offsets citados, atualizar `README.md`.
