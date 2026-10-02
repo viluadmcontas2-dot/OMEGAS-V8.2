@@ -75,9 +75,23 @@ São de 75 sessões do dono e da sessão de referência 2026-10-01 17:19.
 - O tempo de gás segue `gás ≈ gasolina × K × MapaK/100 + 0,99 ms`. O 0,99 ms é tempo morto, e o Mapa K é um multiplicador percentual.
 - O erro de equivalência depende da **carga, não do RPM**. Por isso o refino é na **Curva K**. Mapa K automático só entra se a medição provar dependência de RPM (fora do escopo agora).
 
-**Pontos e eixo de comparação:**
-- Pares RPM×MAP próprios do app (gasolina × GNV no mesmo ponto) melhoram o erro cego: 3,29% → 2,91% e 5,68% → 5,45%.
-- 36 bandas só por MAP não ganham nada. **RPM×MAP é o eixo certo.**
+**Hierarquia do refino (não inverter):**
+1. **Base = MAP × Tpet, igual à ECU.** O AutoMatch nativo compara as curvas gasolina e GNV de MAP × tempo de injeção (18 bandas por combustível) e calcula a Curva K. O `AutoMatchRefinedEngine` faz **a mesma equivalência** sobre os mesmos buffers da ECU (`K_alvo(T_p) = K(T_g)·T_g/T_p`), só que bem feita:
+   - descarta banda outlier;
+   - corrige banda invertida;
+   - suaviza sem degrau nem dente de serra;
+   - não copia borda chapada.
+
+   **Esta é a camada principal.** Ela sozinha já produz a proposta (modo `EQUIVALENCE`).
+2. **Nossas bandas densas, MAP × Tpet:** a mesma lógica com 40–50 bandas, usada para visualizar (§4.1).
+3. **Refino do refino, RPM × MAP:** pares gasolina × GNV no mesmo RPM e MAP (`telemetryTargets`).
+   - Entram com peso 0,4, só a partir de 3 ms, e **nunca habilitam a equivalência sozinhos**.
+   - Ajustam o que a camada 1 deixou.
+   - No teste cego, melhoraram o erro de 3,29% → 2,91% e de 5,68% → 5,45%.
+   - Como camada extra, ganharam de 36 bandas só por MAP.
+4. **Verificação em ciclo fechado:** `RefinementJournal`.
+
+Na UI e nos docs, apresente nessa ordem. A camada 3 é um complemento de precisão, não o motor.
 
 **Refino e consumo:**
 - Teste cego da curva refinada contra o que a condução em gasolina pede: 7,7% → 5,7% e 8,4% → 3,3%.
@@ -205,7 +219,7 @@ A ECU tem 18 bandas de MAP por combustível. Nós criamos as nossas, mais densas
 
 **Honestidade sobre o que essas bandas são:**
 - **Na tela:** elas são para **ver** com mais detalhe onde GNV e gasolina se afastam.
-- **No cálculo:** o motor de refino **continua** usando os pares RPM×MAP (`telemetryTargets`), que no teste cego ganharam das bandas só por MAP (2,94%/5,41% contra 3,31%/5,55%).
+- **No cálculo:** a base do motor continua sendo as 18 bandas nativas (camada 1). O refino do refino continua usando os pares RPM×MAP (`telemetryTargets`, camada 3), que no teste cego ganharam das bandas só por MAP (2,94%/5,41% contra 3,31%/5,55%).
 - **Não troque** a entrada do motor pelas bandas densas.
 - **Tooltip** do gráfico: "nossas bandas: mediana das leituras estáveis a cada 0,025 bar".
 
