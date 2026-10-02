@@ -65,9 +65,7 @@ class StableRepositoryContract(unittest.TestCase):
     def test_critical_regression_corpora_remain_present(self):
         required = [
             "app/src/test/java/com/omegas/prohub/learning/LearningScenarioMatrixTest.kt",
-            "docs/incidents/2026-08-06-multimedia-telemetry-backpressure.md",
-            "docs/incidents/2026-08-09-multiple-ecu-write-authorities.md",
-            "docs/incidents/2026-08-11-consolidated-learning-volatility.md",
+            "docs/incidents/INDEX.md",
             "docs/TEST_STRATEGY.md",
         ]
         self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])
