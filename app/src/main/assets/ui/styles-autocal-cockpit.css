@@ -2217,3 +2217,38 @@
   border-color: rgba(240, 182, 94, .32);
   background: linear-gradient(135deg, rgba(132, 91, 31, .13), rgba(255,255,255,.018));
 }
+/* DUMP/TAUTOCALUI: PetrolCurve != PetrolPoint/GasPoint != GasPointPrev.
+   Estilos distintos, sem mudar o significado dos vetores originais da ECU. */
+.autocal-reference-line.petrol.epoch-anchor {
+  stroke: #78b7ff;
+  stroke-width: 3.8;
+  opacity: .85;
+}
+.autocal-epoch-acquisition-line {
+  fill: none;
+  stroke-width: 2.1;
+  stroke-dasharray: 5 5;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  opacity: .72;
+}
+.autocal-epoch-acquisition-line.petrol { stroke: #78b7ff; }
+.autocal-epoch-acquisition-line.gas { stroke: #5dd39e; }
+.autocal-previous-gas-point {
+  fill: none;
+  stroke: #5dd39e;
+  stroke-width: 1.8;
+  stroke-dasharray: 2.5 2.5;
+  opacity: .42;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+.autocal-chart-legend .previous::before {
+  width: 9px;
+  height: 9px;
+  border: 1.5px dashed #5dd39e;
+  border-radius: 50%;
+  background: transparent;
+  opacity: .6;
+  vertical-align: middle;
+}
