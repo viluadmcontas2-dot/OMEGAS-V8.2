@@ -192,8 +192,15 @@
 
     refresh() {
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
-      this.analysis = this.api?.refinedAnalysis?.() || null;
-      this.equivalence = this.api?.equivalence?.() || null;
+      const eq = this.api?.equivalence?.() || null;
+      const snapshot = this.api?.snapshot?.() || null;
+      const signature = JSON.stringify([snapshot,eq?.gasEpochAt,eq?.samples,eq?.ratio,eq?.bands,eq?.refinement?.bandScale,eq?.denseBands]);
+      if (this.analysisSignature !== signature || !this.analysis) {
+        this.analysis = this.api?.refinedAnalysis?.() || null;
+        this.analysisSignature = signature;
+      }
+      this.snapshot = snapshot;
+      this.equivalence = eq;
       this.render();
     }
 
@@ -222,7 +229,7 @@
       this.review = review;
       this.reviewOpen = true;
       this.render();
-      this.host.querySelector?.('.refine-review')?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+      // Revisão é um overlay; o layout principal não se move.
     }
 
     closeReview() {
@@ -315,6 +322,9 @@
       const a = this.analysis || {};
       const flow = deriveFlow(a, this.operation);
       const head = headline(a, flow);
+      const pilot = this.equivalence?.autopilot;
+      if (pilot?.phase) { head.title = pilot.headline || head.title; head.text = pilot.next || head.text; }
+      if (pilot?.phase === 'SEM_ECU') { head.title = 'Sem ECU'; head.text = 'Conecte o cabo para observar a calibração.'; }
       const before = a.metricsBefore || {};
       const after = a.metricsAfter || {};
       const changed = this.changedPoints();
@@ -345,12 +355,17 @@
             : '<span class="refine-done">✓ Gravada e conferida</span><button type="button" data-refine-restore class="secondary">Restaurar curva anterior</button><button type="button" data-refine-dismiss class="secondary">Ok</button>';
         }
         if (op.phase === 'failed') return `<span class="refine-error">${escapeHtml(op.message)}</span><button type="button" data-refine-dismiss class="secondary">Entendi</button>`;
-        if (!a.available || !changed.length || this.reviewOpen) return '';
-        return `<button type="button" data-refine-review class="primary">Revisar e aplicar ${changed.length} ponto${changed.length === 1 ? '' : 's'}</button>`;
+        if (this.reviewOpen) return '';
+        if (pilot?.phase === 'ESTAVEL') return '<span class="refine-done">✓ Estável · pode desconectar</span>';
+        if (pilot?.phase === 'RESTAURAR_TRECHO' && this.equivalence?.restorePoints?.length) return '<button type="button" data-refine-restore-band class="danger-primary">Restaurar trecho que piorou</button>';
+        if (pilot?.phase && !['PROPOSTA_PRONTA','ECU_TRABALHANDO'].includes(pilot.phase)) return '';
+        if (!a.available || !changed.length) return '';
+        return `<button type="button" data-refine-review class="primary">${pilot?.phase ? 'Revisar e gravar' : `Revisar e aplicar ${changed.length} ponto${changed.length === 1 ? '' : 's'}`}</button>`;
       })();
       const legend = Object.entries(ORIGIN).map(([key, o]) => `<span data-origin="${key}">${o.label}</span>`).join('');
       const review = this.reviewOpen && this.review ? `<div class="refine-review" role="dialog" aria-label="Revisão da curva refinada">
           <header><div><small>REVISÃO · GRAVAÇÃO NA ECU</small><h4>${this.review.points.length} ponto(s) da Curva K</h4></div><button type="button" data-refine-cancel class="icon-close" aria-label="Cancelar">×</button></header>
+          <div class="refine-review-plot">${chartSvg(a.points)}<div class="refine-legend"><span class="current">Atual</span><span class="refined">Refinada</span>${legend}</div></div>
           <div class="refine-review-list">${this.review.points.map(p => {
             const point = (a.points || [])[p.index] || {};
             const delta = finite(p.currentFactor) ? (p.targetFactor / p.currentFactor - 1) * 100 : null;
@@ -369,10 +384,9 @@
             ${this.equivalence?.autopilot?.phase ? '' : `<ol class="refine-steps">${steps}</ol>`}
           </header>
           ${a.available ? `<div class="refine-body">
-            <div class="refine-chart-wrap">${chartSvg(a.points)}<div class="refine-legend"><span class="current">Atual</span><span class="refined">Refinada</span>${legend}</div></div>
+            <div class="refine-chart-wrap"><h4>Nossa curva</h4>${ns.OurCurvePlot?.html(this.snapshot,this.equivalence?.denseBands) || '<p class="our-curve-empty">Ainda sem pontos próprios — rode na gasolina e no GNV</p>'}<div class="our-curve-detail" aria-live="polite">Toque num ponto para conferir MAP, ms e amostras.</div></div>
             <dl class="refine-metrics">
               <div><dt>Puxada no GNV</dt><dd><b data-tone="${riskBefore[1]}">${riskBefore[0]}</b> → <b data-tone="${riskAfter[1]}">${riskAfter[0]}</b></dd><span>${escapeHtml(where)}</span></div>
-              <div><dt>Fidelidade à medição</dt><dd>${errBefore === null ? 'sem medição' : `${fmt(errBefore * 100, 1)}% → ${fmt(errAfter * 100, 1)}%`}</dd><span>diferença entre a curva e o que o GNV pede</span></div>
               <div><dt>Mudança</dt><dd>${changed.length} ponto${changed.length === 1 ? '' : 's'}</dd><span>${changed.length ? `até ±${fmt(maxChange, 1)}% (limite ±${fmt(a.guards?.maximumStepPercent, 0)}%)` : 'curva mantida'}</span></div>
               <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas ECU${finite(a.telemetryTargets) ? ` + ${fmt(a.telemetryTargets, 0)} nossos` : ''}</dd><span>pontos da ECU + pontos próprios GNV × gasolina no mesmo RPM e MAP</span></div>
             </dl>
@@ -381,7 +395,7 @@
           ${a.needsAnotherPass ? '<p class="refine-note">A curva atual tem degraus fortes demais para corrigir com segurança de uma vez (limite ±15%). Grave, rode alguns minutos e o app propõe a segunda passada.</p>' : ''}
           <div class="refine-actions">${primary}</div>
           ${review}
-          ${op.phase === 'idle' ? journalHtml(this.equivalence) : ''}
+          ${op.phase === 'idle' && this.equivalence?.refinement?.latest ? `<details class="refine-result"><summary>Resultado da última gravação</summary>${journalHtml(this.equivalence)}</details>` : ''}
           ${a.available ? `<details class="refine-details"><summary>Detalhes técnicos</summary>
             <p>Inclinação máx. |d ln K / d ln t|: ${fmt(before.maxElasticity, 2)} → ${fmt(after.maxElasticity, 2)} (limite ${fmt(a.elasticityLimit, 2)}; acima disso o gás deixa de seguir linearmente o pedido da gasolina — escolhido pelo teste cego com telemetria em gasolina).</p>
             <p>${escapeHtml(a.algorithm || '')} · modo ${escapeHtml(a.refinementMode || '')} · buffers ${a.buffersCoherent ? 'coerentes' : 'incoerentes'} · trava ±${fmt(a.guards?.maximumStepPercent, 0)}%/execução, |d ln K / d ln t| ≤ ${fmt(a.elasticityLimit, 2)}</p>

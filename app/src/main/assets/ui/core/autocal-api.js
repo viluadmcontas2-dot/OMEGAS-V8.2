@@ -16,6 +16,8 @@
     catch (error) { return { ok: false, error: error?.message || String(error), automatic: false, manualOnly: true }; }
   }
 
+  let equivalenceCache = { ok: false };
+  let equivalenceAt = -Infinity;
   ns.AutoCalApi = {
     available: () => !!root.OmegasAutoCal,
     identity: () => invoke('getIdentity', [], {}),
@@ -30,6 +32,11 @@
     createRefinedDraft: () => invoke('createRefinedDraft', [], { ok: false }),
     draftReview: () => invoke('getDraftReviewPayload', [], { ok: false }),
     clearDraft: () => invoke('clearDraft', [], {}),
-    equivalence: () => invoke('getEquivalence', [], { ok: false }),
+    equivalence: () => {
+      if (root.document?.hidden) return equivalenceCache;
+      const now = Date.now();
+      if (now - equivalenceAt >= 3000) { equivalenceAt = now; equivalenceCache = invoke('getEquivalence', [], { ok: false }); }
+      return equivalenceCache;
+    },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -43,16 +43,16 @@ class CleanUiContract(unittest.TestCase):
         # Navegação por intenção (decisão do proprietário 2026-10-02, WU-006):
         # AutoCal é destino de primeiro nível; Predictor e OBD foram removidos.
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'autocal', 'curve', 'map', 'suggestions', 'tools', 'learning']
+        expected = ['dashboard', 'autocal', 'refino', 'learning', 'curve', 'map', 'suggestions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'suggestions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['dashboard', 'autocal', 'refino', 'learning', 'curve', 'map', 'suggestions', 'tools']", self.router)
         self.assertNotIn("'predictor'", self.router)
         self.assertNotIn('screens/predictor.js', self.router)
         for label in ('Agora', 'AutoCal', 'Ajuste local', 'Ajuste global', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
-        self.assertIn('<b>Aprender</b>', self.html)
+        self.assertIn('<span>Aprender</span>', self.html)
         self.assertNotIn('<span>Predictor</span>', self.html)
         self.assertNotIn('<span>OBD</span>', self.html)
 

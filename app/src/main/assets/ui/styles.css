@@ -75,3 +75,27 @@ button, .side-nav button{min-height:48px}
 .refine-pilot{border-color:var(--accent);padding:16px}
 .refine-pilot-steps{font-size:13px}
 @media(max-width:1000px){:root{--rail-width:168px}.workspace-head{padding:0 14px}.screen{padding:12px}.now-grid{grid-template-columns:minmax(0,1fr) 260px}.hero-reading.refined-now{padding:16px}.refine-pilot-steps{font-size:11px}}
+
+/* Car Info Next: superficie 1280x644, targets de volante. */
+:root{--bg:#0b0f14;--surface:#141b24;--surface-2:#19222d;--surface-3:#202c39;--line:#2b3948;--text:#f6f8fb;--muted:#98a4b3;--accent:#5cc4ff;--ok:#68dba0;--warn:#ffc25c;--danger:#ff7474;--radius:16px}
+.side-nav{gap:2px;padding:8px 0}.side-nav button{min-height:56px}.side-nav button span{font-size:14px}
+.workspace-head h1{font-size:28px}.workspace-head small{font-size:12px}
+.refinement-screen{padding:12px 20px;position:relative}
+.refinement-screen .workflow-state{display:none}
+#refinementScreenHost{height:100%;min-height:0;position:relative}
+.refinement-screen .refine-card{height:100%;display:flex;flex-direction:column;gap:8px;margin:0;padding:12px 16px;overflow:hidden}
+.refinement-screen .refine-pilot{padding:0;border:0;background:transparent;flex:none}
+.refinement-screen .refine-pilot p,.refinement-screen .pilot-details,.refinement-screen .disconnect-ready{display:none}
+.refinement-screen .refine-head{padding:0;flex:none;min-height:64px}
+.refinement-screen .refine-head h3{font-size:28px;margin:0 0 4px}.refinement-screen .refine-head p{font-size:14px;line-height:1.3;margin:0}
+.refinement-screen .refine-pilot-steps{font-size:13px;min-height:32px}
+.refinement-screen .refine-body{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 220px;gap:16px}
+.refinement-screen .refine-chart-wrap{min-height:0;display:flex;flex-direction:column}.refinement-screen .refine-chart-wrap h4{margin:0;font-size:18px}
+.refinement-screen .refine-metrics{grid-template-columns:1fr;font-size:12px}.refinement-screen .refine-metrics dd{font-size:22px}.refinement-screen .refine-metrics dt,.refinement-screen .refine-metrics span{font-size:12px}
+.refinement-screen .refine-actions{order:2;flex:none}.refinement-screen button{min-height:56px;font-size:15px}
+.refinement-screen .refine-result,.refinement-screen .refine-details{flex:none;font-size:12px}.refinement-screen summary{font-size:12px;min-height:24px;cursor:pointer}
+.refinement-screen details[open]{position:absolute;inset:12px;z-index:4;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.refinement-screen .refine-review{position:absolute;inset:4px;z-index:5;overflow:auto;background:var(--surface);border:2px solid var(--danger);border-radius:16px;padding:16px}
+.refine-review-plot{max-height:180px}.refine-review-plot svg{height:150px;width:100%}
+.our-curve-detail{height:32px;flex:none;font-size:12px;line-height:1.4;color:var(--muted)}
+@media(max-width:1000px){.side-nav button{min-height:52px}.refinement-screen{padding:8px}.refinement-screen .refine-body{grid-template-columns:minmax(0,1fr) 180px}.refinement-screen .refine-head h3{font-size:24px}}

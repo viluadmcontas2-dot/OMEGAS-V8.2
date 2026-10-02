@@ -113,8 +113,6 @@
       } else {
         this.panel = stack?.querySelector('[data-curve-panel="autocal"]') || null;
       }
-      const refineHost = this.panel?.querySelector('#autocalRefine');
-      if (refineHost && ns.AutoCalRefinePanel && !this.refine) this.refine = new ns.AutoCalRefinePanel(refineHost, this.app, this.api);
     }
 
     bind() {
@@ -148,7 +146,7 @@
       this.snapshot = this.api.snapshot() || {};
       this.actionState = this.api.actionStatus() || {};
       this.render();
-      this.refine?.refresh();
+
     }
 
     requestRead() {

@@ -20,6 +20,8 @@
       <nav class="side-nav" aria-label="Áreas do aplicativo">
         <button type="button" data-route="dashboard" class="active"><i>01</i><span>Agora</span></button>
         <button type="button" data-route="autocal"><i>02</i><span>AutoCal</span></button>
+        <button type="button" data-route="refino"><i>03</i><span>Refino</span></button>
+        <button type="button" data-route="learning"><i>04</i><span>Aprender</span></button>
         <button type="button" data-route="curve"><i>03</i><span>Ajuste global</span></button>
         <button type="button" data-route="map"><i>04</i><span>Ajuste local</span></button>
         <div class="nav-divider"></div>
@@ -67,6 +69,8 @@
             </section>
           </div>
         </section>
+
+        <section class="screen refinement-screen" data-screen="refino" aria-label="Refino"><div id="refinementScreenHost"></div></section>
 
         <section class="screen autocal-screen" data-screen="autocal" aria-label="AutoCal">
           <div id="autocalScreenHost" class="autocal-screen-host"></div>
@@ -190,7 +194,6 @@
         <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
           <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Sistema, arquivos e diagnóstico</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
           <div class="tool-actions">
-            <button type="button" data-route="learning"><b>Aprender</b><span>Conferir os pontos coletados</span></button>
             <button id="toolExportLearning" type="button"><b>Exportar aprendizado</b><span>Salvar arquivo .omegas</span></button>
             <button id="toolImportLearning" type="button"><b>Importar aprendizado</b><span>Carregar arquivo validado</span></button>
             <button id="toolExportLogs" type="button"><b>Exportar logs</b><span>Preservar evidência de diagnóstico</span></button>

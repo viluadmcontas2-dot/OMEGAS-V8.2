@@ -6,6 +6,14 @@ Fontes lidas em 2026-10-02:
 
 Os blueprints são método de decisão, não template mobile a copiar. O handoff define a adaptação para multimídia landscape 1280×720 e largura 900.
 
+## Car Info Next: adaptação vinculante
+
+Fonte integral: https://app.notion.com/p/3b88ee52ac5481988c28db1600330335
+- Área segura 1280×644; Refino sem rolagem; conferir também 900 px.
+- Título 26–30 px; métricas 20–26 px; essencial ≥12 px; targets 56–68 px.
+- Tokens Car Info Next substituem a paleta inicial: fundo #0B0F14, superfícies #141B24/#19222D/#202C39, borda #2B3948, texto #F6F8FB/#98A4B3, accent #5CC4FF, verde #68DBA0, amarelo #FFC25C, vermelho #FF7474.
+- StatusPill, HeroValue, MetricRow, ActionChip, DisclosurePanel, EmptyState e WarningBlock: função antes de decoração; máximo três níveis de superfície; sem reconstrução contínua por telemetria.
+
 ## Tokens e componentes
 - Fundo #080c12; superfícies #101721/#161f2c/#1c2737; borda #293749.
 - Texto #f5f8fc, secundário #96a6bb; navegação #745cff.
@@ -15,7 +23,7 @@ Os blueprints são método de decisão, não template mobile a copiar. O handoff
 - Ícones e labels identificam intenção; estado selecionado persistente; sem animação decorativa ou progresso fabricado.
 
 ## Hierarquia e linguagem
-- [ ] Agora · AutoCal · Ajuste global · Ajuste local · Sugestões · Ferramentas; Aprender preservado como ação em Ferramentas.
+- [ ] Agora · AutoCal · Refino · Aprender · Ajuste global · Ajuste local · Sugestões · Ferramentas.
 - [ ] Uma ação primária por passo; operações perigosas com revisão e confirmação explícitas.
 - [ ] Linha do tempo AutoCal domina: ECU no automático → nossos pontos → refino → verificação → estável.
 - [ ] Agora usa o mesmo vocabulário do piloto; números técnicos não dominam o primeiro nível.

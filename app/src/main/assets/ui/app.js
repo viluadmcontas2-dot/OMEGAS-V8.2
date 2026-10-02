@@ -22,7 +22,8 @@
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
     learning: ['APRENDER', 'Aprender'],
-    autocal: ['CALIBRAR', 'AutoCal'],
+    autocal: ['AUTOMÁTICO DA ECU', 'AutoCal'],
+    refino: ['NOSSA CALIBRAÇÃO', 'Refino'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     suggestions: ['DECIDIR', 'Sugestões'],
@@ -372,6 +373,9 @@
       refreshFast();
       refreshContext();
     }
+    if (route === 'refino') {
+      root.OmegasApp?.refinementScreen?.refresh(true);
+    }
     if (route === 'curve') {
       ensureScreen('curve')?.onEnter(context || store.get().routeContext);
       refreshContext();
@@ -440,4 +444,5 @@
 
   root.OmegasApp = { api, store, router, scheduler, screens: instances };
   initialize();
+  root.dispatchEvent?.(new Event("omegas-ready"));
 })(typeof window !== 'undefined' ? window : globalThis);
