@@ -26,6 +26,33 @@ Therefore the distilled DFM/resources below belong to the exact executable being
 - The DUMP proves the original UI owns enable, Manual AutoMatch, Finish AutoMatch, reset petrol/gas/all, Reset K, acquisition/live point series and Petrol/Gas reference curves. Platina may modernize presentation, but it may not change the underlying proven semantic identity.
 - Native AutoMatch remains ECU-owned. The Android host may observe/bracket/log it, never trigger an automatic K write.
 
+## Didactic/runtime binding: what each original DUMP layer means
+
+Static authority: the matching TAutoCalUI, TAutoCalDM and TAutoCalSettings binary resources in Drive/DUMP. Component/field identities are proven, not the ECU firmware AutoMatch formula.
+
+| TAutoCalUI component | ECU/host source | On-screen meaning | Reset/AutoMatch handling |
+| --- | --- | --- | --- |
+| PetrolPoint / PetrolLine | PETR_INJ_TBUF, MNFLD_PRESS_BUF, NUM_BUF_UPD_PETR (18 bands) | CURRENT petrol acquisition, only bands with samples | RESET_PETROL clears petrol only; native GNV AutoMatch preserves it |
+| GasPoint / GasLine | PETR_INJ_TBUF_GAS, MNFLD_PRESS_BUF_GAS, NUM_BUF_UPD_GAS (18 bands) | CURRENT GNV acquisition, never an archived session | RESET_GAS and each observed AutoMatch start a new GNV generation; no exact zero-frame need be captured |
+| GasPointPrev | PETR_INJ_TBUF_GAS_PREV plus MNFLD_PRESS_BUF_GAS_PREV | PREVIOUS GNV as subdued context, not proof of current support | There is no NUM_BUF_UPD_GAS_PREV in TAutoCalDM; do not count it toward maturity or equivalence |
+| PetrolCurve | PETR_INJ_TBP plus PETR_MNFLD_PRESS_RV | ECU gasoline reference curve | Remains displayed when ONLY GNV resets, if timestamps are coherent; invalidated when petrol resets |
+| GasCurve | PETR_INJ_TBP plus GAS_MNFLD_PRESS_RV | ECU GNV reference curve | Ineligible for current equivalence until current GNV acquisition and a fresh coherent reference group |
+| RunPoint / CurrentBand | Live Petrol Inj., MAP plus native thresholds | NOW / active pressure region; telemetry is not acquisition | Never include live cursor in learned samples or chart domain |
+| KLine | Normal MUL_ACT, 30 factors | Independent K correction curve, not the 18 acquisition bands nor 2D Map K | Native AutoMatch can reshape K independently of buffer resets; acquisition reset must not be represented as K reset |
+| ChartPoint / NumGasPt | Native acquisition activity/counters | Support evidence, separate from PetrolCurve/GasCurve | Counter > 0 signals sample activity, not proof of ECU maturity |
+
+Per-fuel invariant: after RESET_GAS or native AutoMatch, invalidate only the CURRENT GNV acquisition and its GNV reference; preserve current petrol and PetrolCurve when their temporal provenance remains valid. Apply the converse after RESET_PETROL. RESET_ALL invalidates both. Archived GNV must remain clearly distinct. A manual-reader fallback must not resurrect stale RV or buffers.
+
+Didactic lifecycle: petrol acquiring -> petrol reference exists -> GNV acquiring -> native AutoMatch 1 (GNV reacquires) -> AutoMatch 2 (GNV reacquires) -> AutoMatch 3 (GNV reacquires) -> residual comparison once the current evidence permits it. AutoMatch 3/3 is a quota, NOT a command to end acquisition; AUTO_CAL_ENABLE remains independent.
+
+Data semantics: 0/18..18/18 counts bands with samples, not completion. Maturity requires applicable ECU-provided thresholds, low bands 0..5 and normal bands 6..17 with selectors documented above. MIN_COMMON_BANDS=3 in NativeAutoCalAcquisitionEpoch is a host geometric presentation guard, NOT a ProgBase/ECU maturity criterion. Equivalence needs overlapping supported acquisitions and coherent time provenance after each intervention.
+
+Concrete regression anchors:
+- NativeAutoCalAcquisitionEpoch.kt tracks petrolReferencePending and gasReferencePending independently, including counter changes, resets and USB generations.
+- AutoCalUiProjection.kt masks stale fields per fuel while preserving the original evidence snapshot.
+- autocal-cockpit.js distinguishes current points, separately preserved native PetrolCurve, ghosted GAS_PREV, live AGORA and independent K state.
+- NativeAutoCalAcquisitionEpochTest.kt, AutoCalUiProjectionTest.kt and tests/ui/autocal-live-epoch-gate.test.cjs cover these transitions.
+
 ## Exact resource hashes
 
 - TAutoCalUI: `449dda772b16b0d6a79c7bbd315754b37e4dbab26c129cb9346307daa2e954a7`
