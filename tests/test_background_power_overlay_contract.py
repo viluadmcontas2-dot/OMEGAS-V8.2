@@ -61,4 +61,14 @@ for marker in ["data-power-overlay-request", "data-power-overlay-enable", "data-
 for forbidden in ["writeMap", "writeCurve", "startKWrite", "startKFactorWrite"]:
     assert forbidden not in tools
 
+
+# Aviso opcional do piloto: Android 13+ exige permissão verificável.
+# Não silenciar lint ou pedir permissão automaticamente a partir do serviço.
+assert "android.permission.POST_NOTIFICATIONS" in manifest
+assert "Manifest.permission.POST_NOTIFICATIONS" in service
+assert "checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)" in service
+assert "PackageManager.PERMISSION_GRANTED" in service
+assert "Build.VERSION_CODES.TIRAMISU" in service
+assert '@SuppressLint("MissingPermission")' not in service
+
 print("BACKGROUND_POWER_OVERLAY_CONTRACT=PASS")
