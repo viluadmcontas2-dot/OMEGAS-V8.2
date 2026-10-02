@@ -10,7 +10,7 @@ Tudo o que os temas citam está aqui, com identificador do Drive, tamanho/SHA-25
 | `PortmonLOGNOVO.LOG` | `1SdGax-7xhA2TOAz-KonpEzgPkt8qoTMS` | 149.911.521 B | `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64` | Reset All, três épocas de AutoMatch nativo, leituras de referência, escritas K |
 | `PortmonAUTOCAL (1).zip` | `1mzuPeWlKbV2NX0J2FuIECFYzase5kso3` | 15.150.667 B | `a927795da5800baef53d498273f4e210bc814c2e0e3649572e6de42781073b47` (cópia `(1)(1)(1)`) | mesmo conteúdo compactado |
 | `PortmonLOGNOVO (1)(2).zip` | `15wBA16wiwY052wsgz0cUE-QtLI6I-O-v` | 14.170.842 B | `6879fa2a7931d22c207cd7fa47dffb59e1df0fe1de216e34e3f11e0c08cc1c17` | mesmo conteúdo compactado |
-| `PortmonLOGNOVO.zip` | `1idvIhV4eFGXv2VVNsU0CT6ewdtTBqNFp` | 6.029.222 B | ver `protocolo.md` | cópia menor usada nesta branch |
+| `PortmonLOGNOVO.zip` (contém `PortmonLOGNOVO.LOG` de 63.424.275 B) | `1idvIhV4eFGXv2VVNsU0CT6ewdtTBqNFp` | 6.029.222 B | zip `1e9c75fadc4eb6092502b60454b260a6a32afb9dbf57487e983e504758534a99`; LOG `341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce` | captura **distinta e menor** (20.288 transações, 1.117.269 linhas) parseada nesta branch; citada como `LN seq/idx` |
 | `1.LOG`, `2.LOG`, `3.LOG` | `1V9jL1Dx4RYvRw6yLDXOmdBq0NSakVPNp`, `1fBOKbzwo7m1_OnZo22kj_aOoLfLpIy2Z`, `19_Kt5V0AYgAr7zqHSdCUy4NkNd5hxVT_` | 33.370 / 23.326 / 19.978 B | ver `telemetria.md` | telemetria `48 01 49` com motor em GNV; timeouts seriais do ProgBase |
 | `logoff.LOG`, `SILVDOWN-58C615.LOG` | `1tXXXI4QUHK4dmGo0tBqsSxFDPxF7h5DS`, `1ZWmNngDhlC-O_5j-OVEzN1el0z2AJRIj` | 553.942 / 544.736 B | não lidos | candidatos a sequência de desconexão (ver `lacunas.md`) |
 
