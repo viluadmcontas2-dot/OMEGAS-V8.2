@@ -25,8 +25,14 @@ class LevelSensorSnapshot(private val clock:()->Long=System::currentTimeMillis) 
     private var session=0L
     fun resetForSession(id:Long)=synchronized(lock){if(id!=session){session=id;snapshot=JSONObject().put("state","UNKNOWN").put("available",false);reading=null}}
     fun read(sessionId:Long,currentSession:()->Long,transaction:(ByteArray)->UsbProtocolReply):JSONObject {
-        resetForSession(sessionId)
-        synchronized(lock){snapshot=JSONObject().put("state","READING").put("available",false).put("sessionId",sessionId)}
+        // Uma requisição que começa atrasada não pode reverter resetForSession da nova USB.
+        // A comparação com a geração publicada também cobre troca entre esta consulta e o lock.
+        val observedSession = try { currentSession() } catch (_: Exception) { return json() }
+        synchronized(lock) {
+            if (sessionId <= 0L || observedSession != sessionId || (session != 0L && session != sessionId)) return json()
+            if (session == 0L) session = sessionId
+            snapshot=JSONObject().put("state","READING").put("available",false).put("sessionId",sessionId)
+        }
         val fields=JSONArray();var received=0;var error:String?=null
         try {
             require(sessionId>0 && currentSession()==sessionId){"Sessão USB não confirmada"}
