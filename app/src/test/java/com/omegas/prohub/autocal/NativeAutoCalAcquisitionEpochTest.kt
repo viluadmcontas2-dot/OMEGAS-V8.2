@@ -71,6 +71,32 @@ class NativeAutoCalAcquisitionEpochTest {
         assertFalse(gate.view().gasPending)
     }
 
+    @Test fun gasResetPreservesPetrolReferenceAndBlocksOnlyGasReference() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(31L)
+        gate.nativeCounter(31L, 0)
+        gate.acquisitionGroup(31L, 0, filled(), filled())
+        gate.referenceGroup(31L, 0)
+        assertFalse(gate.view().petrolReferencePending)
+        assertFalse(gate.view().gasReferencePending)
+        gate.nativeCounter(31L, 1)
+        assertFalse(gate.view().petrolReferencePending)
+        assertTrue(gate.view().gasReferencePending)
+        assertTrue(gate.view().referencePending)
+    }
+
+    @Test fun petrolResetPreservesExistingGasReferenceButCannotCompare() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(32L)
+        gate.nativeCounter(32L, 0)
+        gate.acquisitionGroup(32L, 0, filled(), filled())
+        gate.referenceGroup(32L, 0)
+        assertTrue(gate.manualAction(32L, "RESET_PETROL"))
+        assertTrue(gate.view().petrolReferencePending)
+        assertFalse(gate.view().gasReferencePending)
+        assertFalse(gate.view().comparisonAllowed)
+    }
+
     @Test fun usbGenerationsAndCorruptedGroupsFailClosed() {
         val gate = NativeAutoCalAcquisitionEpoch()
         gate.reset(11L)
