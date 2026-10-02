@@ -3,9 +3,12 @@
 ## APK Platina + Refino (candidato para teste no carro) — 2026-10-02
 
 - **Base:** a árvore da `OmegasPlatina` (`b185e80a`), acrescida do cérebro do refino, da aba Refino, da remoção do OBD, de Ferramentas e Sugestões corrigidas, e do balão flutuante que nunca cobre o app.
-- **Fonte:** `8331cc36e05e6c37ac6db4dc309cb1cedc12edc9`, branch `claude/brave-darwin-wuliyo`, que descende de `OmegasPlatina`.
-- **Workflow:** `verde-apk-now.yml` com `build_apk=true`; run `37071148942`; conclusão `success` (`clean testDebugUnitTest lintDebug assembleDebug`).
-- **Artifact:** `11254009286` / `omegas-platina-final-8331cc36…`, 4.763.006 bytes, digest `sha256:34a283505e171ef4b7cd796733dc1f39574b4099524d76b34185bd3048a4d844`. Expira em 2026-10-16.
+- **Fonte:** `2c456bcab9ab0306d7f23daddb5f1b7c728ba4a0`, branch `claude/brave-darwin-wuliyo`, integrada em `OmegasPlatina`.
+- **Workflow:** `verde-apk-now.yml` com `build_apk=true`; run `37077178649`; conclusão `success` (`run_checks` + `clean testDebugUnitTest lintDebug assembleDebug`).
+- **Artifact:** `11257381786` / `omegas-platina-final-2c456bca…`, 4.782.450 bytes, digest `sha256:0cd6ebd022956a551196fb4320b6d97133759ea181f0ff6088eb22c5300a4054`. Expira em 2026-10-16.
+- **Conteúdo novo:** Refino com cursor AGORA, fases como estado, contagem Gas/GNV, apagões; Sugestões sem travar (`getRefinementPhase`); sessões em partes ZIP imutáveis.
+- **Classe de prova:** comportamento sintético (JVM/Node) + build/lint; UI conferida por print em navegador com fixtures. Sem replay real nem print do APK no emulador para o Refino; sem validação física.
+- **Anterior:** `8331cc36` / run `37071148942`.
 - **Provas locais no mesmo SHA:**
   - `QUALITY_GATE_FAST=PASS`;
   - JVM 540 OK (via kotlinc);
