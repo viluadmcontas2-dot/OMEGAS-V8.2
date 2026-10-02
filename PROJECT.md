@@ -7,8 +7,9 @@ Entregar um aplicativo Android automotivo pragmático para observar a equivalên
 ## Produto ativo
 
 - Dashboard/Agora: telemetria essencial e equivalência atual.
+- AutoCal: coleta nativa da ECU + Equivalência Refinada da Curva K (Gasolina → GNV → Revisar → Gravar e verificar).
 - Aprender: cobertura e evidência em `RPM × MAP`.
-- Predictor: diagnóstico com estados direto, previsto, desconhecido e abstention.
+- Predictor: código preservado, fora da navegação desde a WU-006.
 - Sugestões: tradução da evidência em propostas revisáveis.
 - Mapa K: célula física da ECU em `RPM × Petrol Inj.`.
 - Curva K: tendência global por tempo de injeção.
@@ -26,4 +27,4 @@ Android landscape, alvo físico 1280×720, ABI de release atual `armeabi-v7a`, J
 
 ## Governança
 
-Repo-first. Issue #5 e `docs/workunits/OMEGAS-WU-005.md` controlam a finalização funcional atual.
+Repo-first. `docs/workunits/OMEGAS-WU-006.md` controla o refinamento AutoCal atual; a WU-005 permanece como prova do último APK.

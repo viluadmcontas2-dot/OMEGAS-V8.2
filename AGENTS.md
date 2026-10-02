@@ -11,9 +11,10 @@
 ## Execução
 
 - Mutação de source ocorre pela API remota do GitHub. Runtime efêmero pode testar/buildar o SHA remoto exato.
-- UI/UX atual está congelada nesta WorkUnit. Não reinterpretar nem redesenhar sem nova decisão explícita do owner.
+- UI/UX evolui somente por decisão explícita do owner. Decisão de 2026-10-02 (WU-006): navegação por intenção (Agora · AutoCal · Aprender · Ajuste global · Ajuste local · Sugestões · Ferramentas), seguindo os blueprints CUSTOMROM/Omega Dev; Predictor e OBD fora da navegação, com o código preservado.
 - Escrita na ECU é sempre manual: preparar → revisar → confirmar → ACK → readback. Falha ou divergência nunca é sucesso.
-- Predictor é diagnóstico e deve falhar fechado/abster quando suporte ou confiança forem insuficientes.
+- O AutoCal é o centro do produto: a ECU coleta; o OMEGAS refina a equivalência GNV = gasolina (`AutoMatchRefinedEngine`), com ganho proporcional à evidência, trava de coerência (passo ≤ ±15%/execução, |Δ ln K/Δ ln t| ≤ 0,35) e falha fechada sem evidência.
+- Predictor (fora da navegação) continua diagnóstico e deve falhar fechado/abster quando suporte ou confiança forem insuficientes.
 - A equivalência científica primária é `RPM × MAP(bar) → Petrol Inj. (ms)`; `RPM × Petrol Inj.` localiza downstream a célula física do Mapa K.
 - Mapa K e Curva K permanecem separados. Nenhum aprendizado ou sugestão grava automaticamente na ECU.
 

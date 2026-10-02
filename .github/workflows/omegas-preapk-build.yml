@@ -54,13 +54,13 @@ jobs:
           python3 -B tools/phase06/test_equivalence_oracle.py
           python3 -B tests/test_runtime_predictor_router_soak.py
           python3 -B tests/test_predictor_map_residual_contract.py
+          # Rota/nav do Predictor removida por decisão do proprietário (WU-006);
+          # os contratos do código do Predictor continuam executando.
           node --test \
             tools/validation/step156_predictor_human_state_ui.test.js \
-            tools/validation/step158_predictor_route_store.test.js \
             tests/ui/predictor-consumer.test.cjs \
             tests/ui/predictor-live-cell.test.cjs \
-            tests/ui/predictor-pan-layout.test.cjs \
-            tests/ui/predictor-route.test.cjs
+            tests/ui/predictor-pan-layout.test.cjs
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4

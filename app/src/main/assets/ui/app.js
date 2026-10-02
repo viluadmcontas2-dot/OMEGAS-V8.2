@@ -22,7 +22,7 @@
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
     learning: ['APRENDER', 'Aprender'],
-    predictor: ['DECIDIR', 'Predictor'],
+    autocal: ['CALIBRAR', 'AutoCal'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     obd: ['OBSERVAR', 'OBD'],

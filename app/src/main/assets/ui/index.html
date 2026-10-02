@@ -7,6 +7,7 @@
   <title>OMEGAS V8</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles-calibration-obd.css">
+  <link rel="stylesheet" href="styles-autocal-cockpit.css">
 </head>
 <body>
   <div id="app" class="app-shell" aria-label="OMEGAS V8">
@@ -18,10 +19,10 @@
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
         <button type="button" data-route="dashboard" class="active"><i>01</i><span>Agora</span></button>
-        <button type="button" data-route="learning"><i>02</i><span>Aprender</span></button>
-        <button type="button" data-route="map"><i>03</i><span>Ajuste local</span></button>
+        <button type="button" data-route="autocal"><i>02</i><span>AutoCal</span></button>
+        <button type="button" data-route="learning"><i>03</i><span>Aprender</span></button>
         <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
-        <button type="button" data-route="obd"><i>05</i><span>OBD</span></button>
+        <button type="button" data-route="map"><i>05</i><span>Ajuste local</span></button>
         <div class="nav-divider"></div>
         <button type="button" data-route="suggestions"><i>06</i><span>Sugestões</span><em id="suggestionCount">0</em></button>
         <button type="button" data-route="tools"><i>07</i><span>Ferramentas</span></button>
@@ -73,6 +74,10 @@
               <div class="state-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashObdStatus">OBD offline</span><span id="dashAge">—</span></div>
             </section>
           </div>
+        </section>
+
+        <section class="screen autocal-screen" data-screen="autocal" aria-label="AutoCal">
+          <div id="autocalScreenHost" class="autocal-screen-host"></div>
         </section>
 
         <section class="screen" data-screen="learning" aria-labelledby="learningTitle">

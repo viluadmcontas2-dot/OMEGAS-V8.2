@@ -26,5 +26,9 @@
     prepare: action => invoke('prepareNativeAction', [String(action || '')], {}),
     execute: preparationId => invoke('executeNativeAction', [String(preparationId || '')], {}),
     cancelPreparation: () => invoke('clearNativeActionPreparation', [], {}),
+    refinedAnalysis: () => invoke('getRefinedAnalysis', [], { ok: false, available: false }),
+    createRefinedDraft: () => invoke('createRefinedDraft', [], { ok: false }),
+    draftReview: () => invoke('getDraftReviewPayload', [], { ok: false }),
+    clearDraft: () => invoke('clearDraft', [], {}),
   };
 })(typeof window !== 'undefined' ? window : globalThis);

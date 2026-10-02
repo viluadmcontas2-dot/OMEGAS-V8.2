@@ -1,6 +1,6 @@
 # OMEGAS V8.2
 
-Aplicativo Android para telemetria, aprendizado, Predictor e ajuste manual assistido de centrais OMEGAS/MP48.
+Aplicativo Android para telemetria, AutoCal com equivalência refinada GNV = gasolina, aprendizado e ajuste manual assistido de centrais OMEGAS/MP48.
 
 O repositório é a fonte canônica de engenharia. Comece por [PROJECT.md](PROJECT.md), [STATUS.md](STATUS.md) e pela WorkUnit ativa em [docs/workunits](docs/workunits).
 

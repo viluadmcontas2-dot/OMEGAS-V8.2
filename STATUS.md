@@ -1,10 +1,16 @@
 # Status do OMEGAS V8.2
 
-- WorkUnit ativa: `OMEGAS-WU-005`
+- WorkUnit ativa: `OMEGAS-WU-006` (AutoCal — Equivalência Refinada GNV = gasolina)
+- Branch: `claude/brave-darwin-wuliyo`
+- Estado WU-006: `LOCAL_PROVEN` (gate rápido, oráculo, paridade Kotlin↔Python, JUnit do motor); prova Android/APK pendente; `PHYSICAL_VALIDATION_CLAIMED=false`
+- Evidência WU-006: `docs/evidence/WU-006-refined-replay.md`
+- UI/UX: navegação por intenção (decisão do owner em 2026-10-02); Predictor e OBD fora da navegação
+
+## Último APK provado (WU-005)
+
 - Issue: #5
 - Branch de fechamento: `work/v8.2-functional-final-20260828`
 - Estado funcional: `RELEASE_PROVEN`
-- UI/UX: congelada
 - Governança: `REPO_FIRST_ENGINEERING=TRUE`
 - Política de custo: `ZERO_MONETARY_SPEND=ABSOLUTE`
 - Rota pelo PC do proprietário: proibida

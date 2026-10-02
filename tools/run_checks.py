@@ -28,6 +28,8 @@ commands = [
     [sys.executable, "-B", "tests/test_checkpoint_hot_path_contract.py"],
     [sys.executable, "-B", "tests/test_mp48_serial_scheduler_contract.py"],
     [sys.executable, "-B", "tests/test_native_autocal_contract.py"],
+    [sys.executable, "-B", "tests/test_refined_autocal_oracle.py"],
+    [sys.executable, "-B", "tests/test_refined_autocal_kotlin_parity.py"],
     ["node", "--test", "tests/ui/didactic-expansion.test.cjs"],
     ["node", "--test", "tests/ui/obd-independent-map.test.cjs"],
     ["node", "--test", "tests/ui/obd-runtime-controls.test.cjs"],
@@ -41,6 +43,7 @@ commands = [
     ["node", "--test", "tests/ui/learning-view.test.cjs"],
     ["node", "--test", "tests/ui/live-tracing-budget.test.cjs"],
     ["node", "--test", "tests/ui/suggestion-model.test.cjs"],
+    ["node", "--test", "tests/ui/autocal-refine.test.cjs"],
 ]
 
 for command in commands:

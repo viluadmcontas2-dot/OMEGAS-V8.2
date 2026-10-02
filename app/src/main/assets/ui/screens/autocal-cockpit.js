@@ -36,8 +36,12 @@
       this.inject();
       this.bind();
       this.unsubscribeContext = this.scheduler.addHook('context', () => {
-        if (this.store.get().route === 'curve' && this.active) this.refresh();
+        const route = this.store.get().route;
+        if (route === 'autocal' || (route === 'curve' && this.active)) this.refresh();
       });
+      this.unsubscribeRoute = this.store.subscribeSelected?.(state => state.route, route => {
+        if (route === 'autocal') this.refresh();
+      }, true);
     }
 
     inject() {
@@ -48,7 +52,9 @@
         link.dataset.autocalCockpitStyle = 'true';
         document.head.appendChild(link);
       }
-      const switcher = document.getElementById('curveViewSwitch');
+      // Aba própria de primeiro nível: o cockpit vive em [data-screen="autocal"].
+      const screenHost = document.getElementById('autocalScreenHost');
+      const switcher = screenHost ? null : document.getElementById('curveViewSwitch');
       if (switcher && !switcher.querySelector('[data-curve-view="autocal"]')) {
         const button = document.createElement('button');
         button.type = 'button';
@@ -60,15 +66,16 @@
         this.button = switcher?.querySelector('[data-curve-view="autocal"]') || null;
       }
 
-      const stack = document.querySelector('[data-screen="curve"] .curve-view-stack');
+      const stack = screenHost || document.querySelector('[data-screen="curve"] .curve-view-stack');
       if (stack && !stack.querySelector('[data-curve-panel="autocal"]')) {
         const panel = document.createElement('div');
-        panel.className = 'curve-view autocal-cockpit-view';
+        panel.className = screenHost ? 'autocal-cockpit-view active' : 'curve-view autocal-cockpit-view';
         panel.dataset.curvePanel = 'autocal';
         panel.innerHTML = `
+          <div id="autocalRefine" class="autocal-refine-host"></div>
           <section class="autocal-cockpit" aria-label="Cockpit Auto Calibration nativa">
             <header class="autocal-head">
-              <div><small>AUTO CALIBRATION NATIVA</small><h3>O que a ECU está aprendendo agora</h3><p>Observação e controle manual da aquisição nativa. AutoMatch continua dentro da ECU.</p></div>
+              <div><small>COLETA NATIVA DA ECU</small><h3>O que a ECU está aprendendo agora</h3><p>Bandas de carga coletadas pela própria ECU em gasolina e em GNV. É a evidência usada pela curva refinada.</p></div>
               <div class="autocal-head-actions"><span id="autocalNativeState" class="source-status">Aguardando ECU</span><button type="button" data-autocal-read class="secondary">Solicitar snapshot</button></div>
             </header>
             <div class="autocal-live-strip">
@@ -106,6 +113,8 @@
       } else {
         this.panel = stack?.querySelector('[data-curve-panel="autocal"]') || null;
       }
+      const refineHost = this.panel?.querySelector('#autocalRefine');
+      if (refineHost && ns.AutoCalRefinePanel && !this.refine) this.refine = new ns.AutoCalRefinePanel(refineHost, this.app, this.api);
     }
 
     bind() {
@@ -139,6 +148,7 @@
       this.snapshot = this.api.snapshot() || {};
       this.actionState = this.api.actionStatus() || {};
       this.render();
+      this.refine?.refresh();
     }
 
     requestRead() {

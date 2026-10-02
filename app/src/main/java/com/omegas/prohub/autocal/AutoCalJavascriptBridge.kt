@@ -121,6 +121,50 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Não foi possível criar o rascunho")
     }
 
+    /** Equivalência Refinada sobre o snapshot nativo mais recente (monitor ou leitura manual). */
+    @JavascriptInterface
+    fun getRefinedAnalysis(): String = try {
+        val snapshot = refinementSnapshot()
+        val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L)
+        synchronized(managerLock) {
+            refinedMemo?.takeIf { it.first == key }?.second
+                ?: AutoMatchSnapshotAnalysis.analyzeRefined(snapshot).toString().also { refinedMemo = key to it }
+        }
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Equivalência refinada indisponível")
+    }
+
+    /** Rascunho manual com os pontos medidos/coerência pré-selecionados; não grava. */
+    @JavascriptInterface
+    fun createRefinedDraft(): String = try {
+        val analysis = AutoMatchSnapshotAnalysis.analyzeRefined(refinementSnapshot())
+        require(analysis.optBoolean("available")) {
+            analysis.optString("message").ifBlank { "Equivalência refinada indisponível" }
+        }
+        val created = AutoMatchKFactorDraftPlanner.createRefined(analysis)
+        synchronized(managerLock) { draft = created }
+        created.toJson().put("refinementMode", analysis.optString("refinementMode")).toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Não foi possível criar o rascunho refinado")
+    }
+
+    /** Memo da análise refinada por snapshot: a UI consulta a cada 2 s sem recalcular. */
+    private var refinedMemo: Pair<String, String>? = null
+
+    private fun refinementSnapshot(): JSONObject {
+        val monitor = activityRef.get()?.serviceOrNull()?.let { service ->
+            try { JSONObject(service.nativeAutoCalSnapshotJson()) } catch (_: Exception) { null }
+        }
+        val manual = currentManager()?.latestSnapshotJson()
+        val monitorAt = monitor?.takeIf { (it.optJSONArray("fields")?.length() ?: 0) > 0 }?.optLong("capturedAtMs", 0L) ?: -1L
+        val manualAt = manual?.takeIf { (it.optJSONArray("fields")?.length() ?: 0) > 0 }?.optLong("capturedAtMs", 0L) ?: -1L
+        return when {
+            monitorAt < 0 && manualAt < 0 -> throw IllegalStateException("Nenhum snapshot AutoCal disponível")
+            monitorAt >= manualAt -> monitor!!
+            else -> manual!!
+        }
+    }
+
     @JavascriptInterface
     fun getDraft(): String = synchronized(managerLock) {
         val current = draft

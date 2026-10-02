@@ -41,17 +41,21 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn("refinementStyle.href = 'styles-refine.css'", self.app)
 
     def test_seven_human_destinations_are_first_class(self):
+        # Navegação por intenção (decisão do proprietário 2026-10-02, WU-006):
+        # AutoCal é destino de primeiro nível; Predictor e OBD saem da navegação
+        # (código preservado; rota OBD continua resolvível pelo Router).
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'learning', 'map', 'curve', 'obd', 'suggestions', 'tools']
+        expected = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'suggestions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        # Predictor is a later optional visual extension. It may add one route,
-        # but it must reuse the same Router/Store/Scheduler instead of changing
-        # the seven static destinations baked into the base HTML shell.
-        self.assertIn("const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'obd', 'suggestions', 'tools']", self.router)
-        for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'OBD', 'Sugestões', 'Ferramentas'):
+        self.assertIn("const ROUTES = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'obd', 'suggestions', 'tools']", self.router)
+        self.assertNotIn("'predictor'", self.router)
+        self.assertNotIn('screens/predictor.js', self.router)
+        for label in ('Agora', 'AutoCal', 'Aprender', 'Ajuste local', 'Ajuste global', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
+        self.assertNotIn('<span>Predictor</span>', self.html)
+        self.assertNotIn('<span>OBD</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
         self.assertIn('class Store', self.store)
