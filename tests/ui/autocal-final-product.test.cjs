@@ -19,8 +19,8 @@ const protocol = read('app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.k
 assert.match(router, /ROUTES\s*=\s*\[[^\]]*['"]autocal['"]/s,
   'AutoCal precisa ser uma rota top-level');
 assert.ok(index.indexOf('data-route="autocal"') >= 0, 'nav AutoCal ausente');
-assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="obd"'),
-  'AutoCal precisa ficar imediatamente antes de OBD');
+assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="refino"'),
+  'AutoCal precisa ficar imediatamente antes do Refino');
 assert.match(index, /data-screen="autocal"/, 'AutoCal precisa ter screen própria');
 assert.match(app, /autocal:\s*\[['"]AUTO-CAL['"],\s*['"]AutoCal['"]\]/,
   'shell precisa ter metadata própria do AutoCal');

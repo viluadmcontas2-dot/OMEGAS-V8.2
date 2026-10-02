@@ -1,6 +1,5 @@
 package com.omegas.prohub.link
 
-import com.omegas.prohub.obd.ObdAssistManager
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
@@ -36,7 +35,6 @@ class OmegasLinkManager(
     private val mergeLearning: (JSONObject) -> JSONObject,
     private val exportHistory: () -> JSONObject,
     private val mergeHistory: (JSONObject) -> JSONObject,
-    private val obd: ObdAssistManager?,
     private val onStateChanged: () -> Unit,
     private val exportAutoCalContext: () -> JSONObject = { JSONObject() },
     private val mergeAutoCalContext: (JSONObject) -> JSONObject = { JSONObject().put("ok", true).put("accepted", false).put("reason", "context-only") },
@@ -247,7 +245,7 @@ class OmegasLinkManager(
     private fun sendBeacon() {
         if (!running.get()) return
         val now = System.currentTimeMillis()
-        val localObd = try { JSONObject((obd?.statusJson() ?: "{}")).optBoolean("connected") } catch (_: Exception) { false }
+        val localObd = false
         val busy = usbConnected() || localObd || bestPeer() != null
         val minimumInterval = if (busy) 5_000L else 15_000L
         if (now - lastBeaconAt < minimumInterval) return
@@ -259,7 +257,7 @@ class OmegasLinkManager(
             .put("name", settings.deviceName)
             .put("port", settings.linkDataPort)
             .put("usb", usbConnected())
-            .put("obd", JSONObject((obd?.statusJson() ?: "{}")).optBoolean("connected"))
+            .put("obd", false)
             .put("role", activeRole)
             .put("controlEpoch", controlEpoch)
             .put("controlOwner", controlOwnerId)
@@ -313,13 +311,13 @@ class OmegasLinkManager(
 
     private fun liveIntervalMs(): Long {
         val peer = bestPeer() ?: return 10_000L
-        val localObd = try { JSONObject((obd?.statusJson() ?: "{}")).optBoolean("connected") } catch (_: Exception) { false }
+        val localObd = false
         return if (usbConnected() || localObd || peer.usb || peer.obdConnected) 1_000L else 10_000L
     }
 
     private fun sendLiveFrame() {
         val peer = bestPeer() ?: return
-        val obdConnected = try { JSONObject((obd?.statusJson() ?: "{}")).optBoolean("connected") } catch (_: Exception) { false }
+        val obdConnected = false
         if (!usbConnected() && !obdConnected && !peer.usb && !peer.obdConnected) return
         val payload = JSONObject()
             .put("type", "live")
@@ -329,7 +327,7 @@ class OmegasLinkManager(
             .put("usb", usbConnected())
             .put("role", activeRole)
             .put("core", coreTelemetry())
-            .put("obd", JSONObject((obd?.statusJson() ?: "{}")))
+            .put("obd", JSONObject())
         val response = sendMessage(peer, payload) ?: return
         applyIncoming(response, peer)
         lastLiveAt = System.currentTimeMillis()
@@ -338,7 +336,7 @@ class OmegasLinkManager(
     private fun syncBestPeer() {
         val peer = bestPeer() ?: return
         val activeSession = usbConnected() || peer.usb || peer.obdConnected ||
-            try { JSONObject((obd?.statusJson() ?: "{}")).optBoolean("connected") } catch (_: Exception) { false }
+            false
         val periodicDue = activeSession && System.currentTimeMillis() - lastSyncAt >= 60_000L
         if (pendingChanges || lastSyncAt == 0L || periodicDue) syncWith(peer)
     }
@@ -359,12 +357,12 @@ class OmegasLinkManager(
                 .put("epoch", controlEpoch)
                 .put("owner", controlOwnerId)
                 .put("syncManifest", syncManifest(learning, kHistory, peerKnownRevision))
-                .put("obdComponent", (obd?.exportLocalState(settings.deviceId) ?: org.json.JSONObject()))
+                .put("obdComponent", org.json.JSONObject())
                 .put("kHistory", kHistory)
                 .put("autoCalContext", exportAutoCalContext())
                 .put("nativeReceipts", exportNativeReceipts())
                 .put("core", coreTelemetry())
-                .put("obd", JSONObject((obd?.statusJson() ?: "{}")));
+                .put("obd", JSONObject());
             if (hadPendingChanges || peerAckedLocalRevision < localLearningRevision) request.put("learning", learning)
             val response = sendMessage(peer, request) ?: error("Sem resposta do companheiro")
             applyIncoming(response, peer)
@@ -402,12 +400,12 @@ class OmegasLinkManager(
                         val localLearning = exportLearning()
                         val response = baseResponse("sync-ack")
                             .put("syncManifest", syncManifest(localLearning, exportHistory(), requesterRevision).put("acknowledgedRequesterRevision", requesterRevision))
-                            .put("obdComponent", (obd?.exportLocalState(settings.deviceId) ?: org.json.JSONObject()))
+                            .put("obdComponent", org.json.JSONObject())
                             .put("kHistory", exportHistory())
                             .put("autoCalContext", exportAutoCalContext())
                             .put("nativeReceipts", exportNativeReceipts())
                             .put("core", coreTelemetry())
-                            .put("obd", JSONObject((obd?.statusJson() ?: "{}")));
+                            .put("obd", JSONObject());
                         if (requesterKnowsLocalRevision < localLearning.optLong("componentRevision", 0L)) response.put("learning", localLearning)
                         response
                     }
@@ -432,14 +430,11 @@ class OmegasLinkManager(
             peerLearningRevisions[peer.deviceId] = maxOf(peerLearningRevisions[peer.deviceId] ?: -1L, manifest.optLong("learningRevision", -1L))
             peerAckedLocalLearningRevisions[peer.deviceId] = maxOf(peerAckedLocalLearningRevisions[peer.deviceId] ?: -1L, manifest.optLong("acknowledgedRequesterRevision", -1L))
         }
-        root.optJSONObject("core")?.let { obd?.updateRemoteCoreTelemetry(it) }
-        root.optJSONObject("obd")?.let { obd?.acceptRemoteLive(it) }
         root.optJSONObject("learning")?.let {
             val result = mergeLearning(it)
             if (!result.optBoolean("ok")) log.add("WARN", "OMEGAS LINK", "Fusão recusada: ${result.optString("error")}")
             else if (peer != null) peerLearningRevisions[peer.deviceId] = it.optLong("componentRevision", 0L)
         }
-        root.optJSONObject("obdComponent")?.let { obd?.mergeRemoteState(it) }
         root.optJSONObject("kHistory")?.let { mergeHistory(it) }
         root.optJSONObject("autoCalContext")?.let { context ->
             val result = mergeAutoCalContext(context)

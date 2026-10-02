@@ -2252,3 +2252,38 @@
   opacity: .6;
   vertical-align: middle;
 }
+
+/* ── Refino OMEGAS: mesma linguagem do AutoCal, só o que é novo ── */
+.refino-cockpit .autocal-focus-actions { grid-template-columns: minmax(0, 1fr); }
+.refino-cockpit .autocal-primary-action { min-height: 56px; font-size: 14px; }
+.refino-cockpit .autocal-primary-action[data-kind="stable"] { border-color: rgba(93,211,158,.5); color: #c9f7e3; background: rgba(30,103,75,.32); }
+.refino-cockpit .autocal-primary-action[data-kind="restore"] { border-color: rgba(226,94,94,.55); background: #592329; color: #fff; }
+.autocal-fuel-chip[data-fuel-state="collecting"] { border-color: rgba(120,183,255,.42); color: #d6eaff; background: rgba(37,82,128,.32); }
+.autocal-fuel-chip[data-fuel-state="ready"] { border-color: rgba(226,178,76,.5); color: #ffefbd; background: rgba(104,78,26,.32); }
+.autocal-fuel-chip[data-fuel-state="ok"] { border-color: rgba(93,211,158,.5); color: #c9f7e3; background: rgba(30,103,75,.32); }
+.autocal-fuel-chip[data-fuel-state="problem"] { border-color: rgba(226,94,94,.55); color: #ffd2d2; background: rgba(110,32,38,.4); }
+.refino-steps { display: flex; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; flex-wrap: wrap; }
+.refino-steps li { min-height: 32px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #8f9daf; background: rgba(35,47,58,.45); border: 1px solid rgba(255,255,255,.06); }
+.refino-steps li[data-state="done"] { color: #5dd39e; }
+.refino-steps li[data-state="active"] { color: #fff; background: rgba(37,82,128,.6); border-color: rgba(120,183,255,.5); }
+.refino-steps li[data-problem="true"] { color: #fff; background: #592329; border-color: rgba(226,94,94,.55); }
+.refino-next { margin: 6px 0 8px; color: #c5d0db; font-size: 13px; }
+.refino-our-point { opacity: .85; }
+.refino-our-point.petrol { fill: #78b7ff; }
+.refino-our-point.gas { fill: #5dd39e; }
+.autocal-chart-legend .refino-ours-petrol::before { width: 7px; height: 7px; border-radius: 50%; background: #78b7ff; }
+.autocal-chart-legend .refino-ours-gas::before { width: 7px; height: 7px; border-radius: 50%; background: #5dd39e; }
+.refino-verdicts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin: 8px 0; }
+.refino-verdicts > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: rgba(35,47,58,.45); }
+.refino-verdicts span { color: #8f9daf; font-size: 11px; }
+.refino-verdicts b { color: #e0e8f1; font-variant-numeric: tabular-nums; }
+.refino-verdicts small { font-size: 12px; color: #b7c6d2; }
+.refino-verdicts [data-verdict="CONFIRMADA"] small { color: #5dd39e; }
+.refino-verdicts [data-verdict="PIOROU"] small { color: #ff8a8a; }
+.refino-verdicts [data-verdict="PASSOU"] small { color: #ffd27a; }
+.refino-note, .refino-journal p, .refino-tech dd, .refino-tech dt { font-size: 12px; color: #aab7c6; }
+.refino-tech dl > div { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+.refino-tech dd { margin: 0; color: #e0e8f1; }
+.refino-review-list { max-height: 260px; overflow-y: auto; }
+.refino-warning { padding: 9px 11px; border-radius: 10px; background: rgba(104,78,26,.32); color: #ffefbd; font-size: 12px; }
+.refino-route-screen { position: relative; }

@@ -26,7 +26,7 @@
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     autocal: ['AUTO-CAL', 'AutoCal'],
-    obd: ['OBSERVAR', 'OBD'],
+    refino: ['REFINO', 'Refino'],
     suggestions: ['DECIDIR', 'Sugestões'],
     tools: ['SISTEMA', 'Ferramentas'],
   };
@@ -116,7 +116,6 @@
     if (route === 'learning' && ui.LearningScreen) instances.learning = new ui.LearningScreen(store, router, api);
     if (route === 'map' && ui.MapScreen) instances.map = new ui.MapScreen(store, api, router);
     if (route === 'curve' && ui.CurveScreen) instances.curve = new ui.CurveScreen(store, api);
-    if (route === 'obd' && ui.ObdScreen) instances.obd = new ui.ObdScreen(store, api);
     return instances[route] || null;
   }
 
@@ -140,10 +139,8 @@
     }
 
     const status = state.status || {};
-    const obdStatus = state.obd || {};
-    const obdOnline = obdStatus.connected === true || ['CONNECTED', 'CONECTADO', 'REMOTO AO VIVO'].includes(String(obdStatus.state || obdStatus.status || '').toUpperCase());
     const fuel = fuelLabel(liveFrom(state).fuel || liveFrom(state).state || status.fuelState);
-    const globalSignature = `${status.usbConnected === true ? 1 : 0}:${obdOnline ? 1 : 0}:${fuel}`;
+    const globalSignature = `${status.usbConnected === true ? 1 : 0}:${fuel}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
       const ecu = byId('globalEcu');
@@ -151,11 +148,6 @@
         const online = status.usbConnected === true;
         ecu.dataset.online = online ? 'true' : 'false';
         setText('globalEcu', online ? 'ECU online' : 'ECU offline');
-      }
-      const obdNode = byId('globalObd');
-      if (obdNode) {
-        obdNode.dataset.online = obdOnline ? 'true' : 'false';
-        setText('globalObd', obdOnline ? 'OBD online' : 'OBD offline');
       }
       const fuelNode = byId('globalFuel');
       if (fuelNode) {
@@ -260,19 +252,14 @@
 
   function refreshStatus() {
     const status = api.status() || {};
-    const obdState = api.obd() || {};
     const route = store.get().route;
-    const obdDevices = route === 'obd' ? (api.obdDevices() || {}) : null;
-    const signature = JSON.stringify({ status, obdState, obdDevices, demo: api.isDemo() });
+    const signature = JSON.stringify({ status, demo: api.isDemo() });
     if (signature !== previousStatusSignature) {
       previousStatusSignature = signature;
-      const patch = { status, obd: obdState, demo: api.isDemo() };
-      if (obdDevices) patch.obdDevices = obdDevices;
-      store.patch(patch);
+      store.patch({ status, demo: api.isDemo() });
     }
     const state = store.get();
     if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
-    if (route === 'obd') ensureScreen('obd')?.render(state);
   }
 
   function toolsEditing() {
@@ -313,7 +300,6 @@
       patch.learningDecision = learningDecisionFromTelemetry(state.telemetry);
       patch.learningTolerance = api.learningToleranceSettings() || {};
     }
-    if (route === 'obd') patch.obdDevices = api.obdDevices() || {};
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
       patch.sessions = api.sessions() || [];
@@ -326,7 +312,6 @@
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
       if (curve.needsLearning?.()) curve.renderLearning(updated);
     }
-    if (route === 'obd') ensureScreen('obd')?.render(updated);
     if (route === 'suggestions') {
       utilities?.render(updated);
       renderPersistentSuggestions(updated);
@@ -354,11 +339,30 @@
     return 'observando';
   }
 
+  let lastSuggestionSignature = '';
+  /** Curva refinada pronta no Refino entra na fila de decisões (só leitura do piloto). */
+  function refinementSuggestion() {
+    const eq = (root.OmegasUi || ui).AutoCalApi?.equivalence?.();
+    const phase = eq?.autopilot?.phase;
+    if (phase === 'PROPOSTA_PRONTA') return { title: 'Curva refinada pronta', text: eq.autopilot.headline || 'O refino tem uma curva para revisar.' };
+    if (phase === 'RESTAURAR_TRECHO') return { title: 'Um trecho piorou depois da gravação', text: 'Restaure só esse trecho no Refino.' };
+    return null;
+  }
   function renderPersistentSuggestions(state) {
     const host = byId('suggestionList');
     const calibration = state.calibrationState || {};
     const items = Array.isArray(calibration.suggestionItems) ? calibration.suggestionItems : [];
-    if (!host || !items.length) return;
+    if (!host) return;
+    const refinement = refinementSuggestion();
+    // Redesenhar a lista a cada 2 s fazia o toque sumir sob o dedo: só redesenha se a fila mudou.
+    const signature = JSON.stringify([items.map(item => [item.id, item.lifecycle, item.actionable, item.confidence]), refinement]);
+    if (signature === lastSuggestionSignature && host.childElementCount) return;
+    lastSuggestionSignature = signature;
+    if (!items.length && !refinement) {
+      host.innerHTML = '<div class="drawer-empty"><b>Nenhuma decisão pendente</b><span>Quando houver curva refinada ou ajuste pronto para revisar, aparece aqui.</span></div>';
+      setText('suggestionCount', 0);
+      return;
+    }
     const current = items.filter(item => ['PENDING', 'OBSERVING'].includes(String(item.lifecycle || '')));
     const pendingMap = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'MAP_K' && item.actionable === true);
     const pendingCurve = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'CURVE_K' && item.actionable === true);
@@ -366,7 +370,7 @@
     const applied = items.filter(item => item.lifecycle === 'APPLIED').slice(-12).reverse();
     const validIds = new Set([...pendingMap, ...pendingCurve].map(item => item.id));
     [...selectedSuggestionIds].forEach(id => { if (!validIds.has(id)) selectedSuggestionIds.delete(id); });
-    setText('suggestionCount', pendingMap.length + pendingCurve.length);
+    setText('suggestionCount', pendingMap.length + pendingCurve.length + (refinement ? 1 : 0));
 
     const pendingRows = list => list.map(item => `
       <label class="suggestion-row" data-lifecycle="PENDING">
@@ -381,6 +385,7 @@
       </div>`).join('');
 
     host.innerHTML = `
+      ${refinement ? `<section class="suggestion-group" data-suggestion-group="REFINO"><header><div><small>REFINO</small><h3>${escapeHtml(refinement.title)}</h3><p>${escapeHtml(refinement.text)}</p></div><div class="suggestion-group-actions"><button type="button" class="primary" data-open-refino>Abrir Refino</button></div></header></section>` : ''}
       <div class="suggestion-queue-summary">
         <div><small>PENDENTES</small><b>${pendingMap.length + pendingCurve.length}</b></div>
         <div><small>OBSERVANDO</small><b>${observing.length}</b></div>
@@ -392,6 +397,7 @@
       ${applied.length ? `<section class="suggestion-group"><header><div><small>HISTÓRICO</small><h3>Aplicadas após readback</h3></div></header>${passiveRows(applied)}</section>` : ''}
     `;
 
+    host.querySelector('[data-open-refino]')?.addEventListener('click', () => router.navigate('refino'));
     host.querySelectorAll('[data-suggestion-select]').forEach(input => input.addEventListener('change', () => {
       if (input.checked) selectedSuggestionIds.add(input.dataset.suggestionSelect);
       else selectedSuggestionIds.delete(input.dataset.suggestionSelect);
@@ -400,6 +406,7 @@
       const target = button.dataset.selectReady;
       const list = target === 'MAP_K' ? pendingMap : pendingCurve;
       list.forEach(item => selectedSuggestionIds.add(item.id));
+      lastSuggestionSignature = '';
       renderPersistentSuggestions(store.get());
     }));
     host.querySelectorAll('[data-review-selected]').forEach(button => button.addEventListener('click', () => {
@@ -462,9 +469,8 @@
       });
       return;
     }
-    if (route === 'obd') {
-      ensureScreen('obd')?.render(store.get());
-      afterPaint(() => { refreshStatus(); refreshContext(); });
+    if (route === 'refino') {
+      afterPaint(() => root.OmegasApp?.refino?.refresh?.(true));
       return;
     }
     if (route === 'suggestions' || route === 'tools') {

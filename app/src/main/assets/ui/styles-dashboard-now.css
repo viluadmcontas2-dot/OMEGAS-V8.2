@@ -254,13 +254,13 @@ body[data-omegas-route="dashboard"] .rail-status {
   font-weight: 700;
 }
 
-.now-stft-card {
+.now-refino-card {
   border-color: rgba(70, 211, 190, .55);
   background:
     linear-gradient(145deg, rgba(7, 47, 63, .95), rgba(5, 27, 42, .92));
 }
 
-.now-stft-card small {
+.now-refino-card small {
   color: #52dfc8;
 }
 

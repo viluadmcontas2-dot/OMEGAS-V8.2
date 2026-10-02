@@ -126,41 +126,7 @@ test('tolerâncias semânticas são entregues ao Kotlin sem fórmula paralela', 
   });
 });
 
-test('OBD lista dispositivos e conecta exatamente ao endereço escolhido', () => {
-  const { api, calls } = buildApi({
-    listObdDevices: () => JSON.stringify({
-      permissionRequired: false,
-      enabled: true,
-      devices: [
-        { name: 'ELM327', address: 'AA:BB:CC:DD:EE:FF', bonded: true },
-      ],
-    }),
-  });
 
-  const devices = api.obdDevices();
-  assert.equal(devices.devices.length, 1);
-  assert.equal(devices.devices[0].address, 'AA:BB:CC:DD:EE:FF');
-
-  const result = api.connectObd('AA:BB:CC:DD:EE:FF');
-  assert.equal(result.ok, true);
-  assert.equal(result.address, 'AA:BB:CC:DD:EE:FF');
-  assert.deepEqual(calls, [['connectObd', 'AA:BB:CC:DD:EE:FF']]);
-});
-
-test('OBD entrega local/remote/off e combustível manual ao núcleo sem calibrar', () => {
-  const { api, calls } = buildApi();
-
-  assert.equal(api.setObdMode('remote').mode, 'remote');
-  assert.equal(api.setObdMode('off').mode, 'off');
-  const fuel = api.setObdManualFuel('GASOLINA');
-  assert.equal(fuel.ok, true);
-  assert.equal(fuel.manualFuel, 'GASOLINA');
-  assert.deepEqual(calls, [
-    ['setObdMode', 'remote'],
-    ['setObdMode', 'off'],
-    ['setObdManualFuel', 'GASOLINA'],
-  ]);
-});
 
 test('browser demo nunca transforma conexão ou tolerância em escrita de ECU', () => {
   const context = { console, Date, Math, JSON, Intl };
@@ -172,9 +138,6 @@ test('browser demo nunca transforma conexão ou tolerância em escrita de ECU', 
 
   assert.equal(api.isDemo(), true);
   assert.equal(api.setLearningToleranceControls({ rpm: 4 }).ok, true);
-  assert.equal(api.connectObd('demo').ok, true);
-  assert.equal(api.setObdMode('remote').ok, true);
-  assert.equal(api.setObdManualFuel('GNV').ok, true);
   assert.equal(api.writeMap([{ row: 0, column: 0, target: 120 }]).ok, false);
   assert.equal(api.writeCurve([{ index: 0, targetRaw: 1 }]).ok, false);
 });

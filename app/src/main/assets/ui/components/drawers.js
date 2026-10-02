@@ -89,16 +89,37 @@
         this.applySessionSettings();
       } else if (target.matches('[data-export-session]')) {
         this.api.exportSession(target.dataset.exportSession || '');
+      } else if (target.matches('[data-tool-battery-request]')) {
+        this.api.requestBatteryOptimizationExemption?.();
+        this.toolsSignature = '';
+      } else if (target.matches('[data-tool-overlay-request]')) {
+        this.api.requestOverlayPermissionAndEnable?.();
+        this.toolsSignature = '';
+      } else if (target.matches('[data-tool-overlay-enable]')) {
+        this.api.setTelemetryOverlayEnabled?.(true);
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+      } else if (target.matches('[data-tool-overlay-disable]')) {
+        this.api.setTelemetryOverlayEnabled?.(false);
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+      } else if (target.matches('[data-tool-export-logs]')) {
+        this.api.exportLogs();
+      } else if (target.matches('[data-tool-selftest]')) {
+        const result = this.api.selfTest();
+        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Autoteste concluído.' : (result?.error || 'Autoteste não concluído.') } });
       }
     }
 
     handleToolChange(event) {
       if (event.target.matches('[data-log-level]')) {
         this.logLevel = event.target.value || 'ALL';
+        this.toolsSignature = '';
         this.renderTools(this.store.get());
       }
       if (event.target.matches('[data-log-category]')) {
         this.logCategory = event.target.value || 'ALL';
+        this.toolsSignature = '';
         this.renderTools(this.store.get());
       }
     }
@@ -114,6 +135,7 @@
     refreshSessionStatus(result) {
       if (!result || typeof result !== 'object' || result.ok === false) return;
       this.store.patch({ sessionStatus: result });
+      this.toolsSignature = '';
       this.renderTools(this.store.get());
     }
 
@@ -142,10 +164,11 @@
       if (this.suggestions) this.suggestions.classList.toggle('open', state.suggestionsOpen === true);
       if (this.tools) this.tools.classList.toggle('open', state.toolsOpen === true);
       document.body.classList.toggle('drawer-open', state.suggestionsOpen === true || state.toolsOpen === true);
-      this.renderSuggestions(state);
+      // #suggestionList pertence à fila persistente (app.js). Dois donos reescrevendo a
+      // mesma lista a cada 2 s faziam o toque sumir e a aba Sugestões parecer travada.
       if (state.toolsOpen) this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
-      if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'APK/WebView · ponte nativa ativa';
+      if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup, sessões e saúde do app';
     }
 
     renderSuggestions(state) {
@@ -210,65 +233,54 @@
       const fullness = limitMb > 0 ? Math.min(100, mb / limitMb * 100) : 0;
       const serviceHealthy = appStatus.serviceRunning === true && appStatus.engineStuck !== true;
 
+      const battery = this.api.batteryOptimizationStatus?.() || {};
+      const overlay = this.api.overlayStatus?.() || {};
+      // Só redesenha quando algo visível mudou: redesenho a cada tick fechava seletores,
+      // resetava a rolagem e engolia toques (a aba parecia travada).
+      const signature = JSON.stringify([
+        appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
+        Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
+        status.recording, status.events, Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
+        settings, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
+        filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
+      ]);
+      if (signature === this.toolsSignature && host.childElementCount) return;
+      this.toolsSignature = signature;
+      const logsOpenBeforeRender = host.querySelector('.tool-logs')?.open === true;
+      const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
+        ? '<button type="button" class="secondary" data-tool-battery-request>Permitir</button>' : '';
+      const overlayAction = overlay.visible === true
+        ? '<button type="button" class="quiet-button" data-tool-overlay-disable>Desativar</button>'
+        : overlay.permissionGranted === true
+          ? '<button type="button" class="secondary" data-tool-overlay-enable>Ativar</button>'
+          : '<button type="button" class="secondary" data-tool-overlay-request>Autorizar</button>';
+
       host.innerHTML = `
         <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
-          <header><div><small>SEGUNDO PLANO</small><h3>${appStatus.serviceRunning ? 'Serviço Android ativo' : 'Serviço Android não está ativo'}</h3></div><span>${serviceHealthy ? 'MONITORANDO' : 'ATENÇÃO'}</span></header>
+          <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span>${serviceHealthy ? 'OK' : 'ATENÇÃO'}</span></header>
           <div class="background-health-grid">
-            <span>Engine <b>${appStatus.engineRunning ? 'ativa' : 'parada'}</b></span>
-            <span>USB <b>${appStatus.usbConnected ? 'conectado' : 'desconectado'}</b></span>
+            <span>ECU <b>${appStatus.usbConnected ? 'conectada' : 'desconectada'}</b></span>
+            <span>Leitura <b>${appStatus.engineRunning ? 'ativa' : 'parada'}</b></span>
             <span>Telemetria <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
-            <span>Foreground <b>connectedDevice</b></span>
           </div>
-          <p>Ao apagar a tela, a WebView para de redesenhar, mas o ForegroundService continua responsável por USB, OBD e aprendizado. O aplicativo não pede exclusão da otimização de bateria automaticamente.</p>
-          <small class="background-validation-note">Validação real ainda exige teste com tela apagada e política de bateria do aparelho.</small>
-        </section>
-
-        <section class="learning-portability-card">
-          <header><div><small>APRENDIZADO .OMEGAS</small><h3>O que será levado no arquivo</h3></div><span>época ${Number(learning.epoch || 1)}</span></header>
-          <div class="learning-portability-grid">
-            <span><b>${petrolCount}</b> regiões gasolina</span>
-            <span><b>${cngCount}</b> regiões GNV atuais</span>
-            <span><b>${comparisonCount}</b> comparações</span>
-            <span><b>${escapeHtml(learning.telemetryScaleSchema || 'MP48')}</b> escala</span>
+          <div class="tool-power-rows">
+            <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
+            <div class="tool-power-row"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b><span>Balão por cima de outros apps (mapa, música). Não aparece por cima do OMEGAS.</span></div>${overlayAction}</div>
           </div>
-          <p><b>Exportar</b> leva aprendizado, contexto OBD e histórico K confirmado. <b>Importar</b> valida formato/escala antes de aceitar qualquer componente.</p>
-          <div class="portability-policy"><b>Política live-only</b><span>Gasolina é a referência preservável. Evidência GNV retroativa não volta para a memória ativa da calibração atual.</span></div>
-          <small>Os botões Exportar/Importar acima apenas abrem o seletor de arquivo; nenhuma importação escreve na ECU.</small>
         </section>
 
         <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
-          <header><div><small>DIAGNÓSTICO ESTRUTURADO</small><h3>${recording ? 'Gravando sessão' : 'Gravador parado'}</h3></div><span>${recording ? 'ATIVO' : 'INATIVO'}</span></header>
+          <header><div><small>SESSÕES</small><h3>${recording ? 'Gravando esta sessão' : 'Gravação parada'}</h3></div><span>${recording ? 'GRAVANDO' : 'PARADA'}</span></header>
           <div class="recorder-metrics">
-            <span><b>${status.events || 0}</b> eventos</span>
-            <span><b>${fmt(mb, 1)} MB</b> usados</span>
-            <span><b>${status.droppedEvents || 0}</b> descartados</span>
             <span><b>${durationLabel(status.durationMs)}</b> duração</span>
+            <span><b>${fmt(mb, 1)} MB</b> usados</span>
+            <span><b>${status.events || 0}</b> eventos</span>
           </div>
           <div class="recorder-space"><i style="width:${fullness.toFixed(1)}%"></i></div>
           <div class="recorder-actions">
             <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Iniciar sessão</button>
             <button type="button" class="${recording ? 'secondary' : 'quiet-button'}" data-session-stop ${recording ? '' : 'disabled'}>Encerrar</button>
           </div>
-        </section>
-
-        <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
-          <summary>Retenção e tamanho dos logs</summary>
-          <div class="diagnostic-settings-grid">
-            <label><span>Telemetria salva</span><select data-session-telemetry>
-              ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
-            </select></label>
-            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
-            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
-            <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar MP48</span></label>
-            <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
-          </div>
-          <p>USB bruto aumenta bastante o tamanho. Use quando estiver investigando protocolo ou falha de comunicação.</p>
-          <button type="button" class="secondary wide" data-session-settings>Aplicar política de logs</button>
-          ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
-        </details>
-
-        <section class="recorded-sessions">
-          <header><div><small>SESSÕES</small><h3>${sessions.length} armazenada${sessions.length === 1 ? '' : 's'}</h3></div></header>
           <div class="recorded-session-list">
             ${sessions.length ? sessions.slice(0, 8).map(item => {
               const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
@@ -285,7 +297,7 @@
                   <span class="session-datetime">${readableDate}</span>
                 </div>
                 <div class="recorded-session-meta">
-                  <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · ativa' : ''}</span>
+                  <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · em andamento' : ''}${totalTicks > 0 ? ` · GNV ${gnvPercent}% · gasolina ${gasPercent}%` : ''}</span>
                 </div>
                 ${totalTicks > 0 ? `
                 <div class="session-fuel-bar" title="GNV: ${gnvPercent}% | Gasolina: ${gasPercent}%">
@@ -295,12 +307,42 @@
                 ` : ''}
                 <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
               </article>`;
-            }).join('') : '<p class="empty-copy">Nenhuma sessão gravada.</p>'}
+            }).join('') : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
           </div>
         </section>
 
-        <section class="live-log-console">
-          <header><div><small>LOG DE SISTEMA</small><h3>Últimos eventos</h3></div><span>${logs.length}</span></header>
+        <section class="learning-portability-card">
+          <header><div><small>APRENDIZADO</small><h3>O que vai no arquivo .omegas</h3></div></header>
+          <div class="learning-portability-grid">
+            <span><b>${petrolCount}</b> regiões gasolina</span>
+            <span><b>${cngCount}</b> regiões GNV</span>
+            <span><b>${comparisonCount}</b> comparações</span>
+          </div>
+          <p>Use <b>Exportar aprendizado</b> e <b>Importar aprendizado</b> acima. Importar confere o arquivo antes de aceitar e nunca grava na ECU. O GNV de uma calibração antiga não volta para a calibração atual.</p>
+        </section>
+
+        <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
+          <summary>Tamanho e retenção das sessões</summary>
+          <div class="diagnostic-settings-grid">
+            <label><span>Telemetria salva</span><select data-session-telemetry>
+              ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
+            </select></label>
+            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
+            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
+            <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar a ECU</span></label>
+            <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
+          </div>
+          <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
+          <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
+          ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
+        </details>
+
+        <details class="tool-logs live-log-console" ${logsOpenBeforeRender ? 'open' : ''}>
+          <summary>Detalhes técnicos · log do sistema (${logs.length})</summary>
+          <div class="recorder-actions">
+            <button type="button" class="secondary" data-tool-export-logs>Exportar logs</button>
+            <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>
+          </div>
           <div class="log-filters">
             <select data-log-level>
               ${['ALL', 'ERROR', 'WARN', 'INFO'].map(value => `<option value="${value}" ${this.logLevel === value ? 'selected' : ''}>${value === 'ALL' ? 'Todos níveis' : value}</option>`).join('')}
@@ -313,7 +355,7 @@
           <div class="log-lines">
             ${filteredLogs.length ? filteredLogs.map(item => `<div data-level="${escapeHtml(String(item.level || 'INFO').toLowerCase())}"><time>${escapeHtml(item.time || '')}</time><b>${escapeHtml(item.category || 'LOG')}</b><span>${escapeHtml(item.message || '')}</span></div>`).join('') : '<p class="empty-copy">Nenhum evento neste filtro.</p>'}
           </div>
-        </section>
+        </details>
       `;
     }
   }

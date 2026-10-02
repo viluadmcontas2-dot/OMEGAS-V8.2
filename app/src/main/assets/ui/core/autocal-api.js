@@ -37,5 +37,8 @@
     preparePointDeleteBatch: targets => invoke('preparePointDeleteBatch', [JSON.stringify(Array.isArray(targets) ? targets : [])], {}),
     execute: preparationId => invoke('executeNativeAction', [String(preparationId || '')], {}),
     cancelPreparation: () => invoke('clearNativeActionPreparation', [], {}),
+    // Refino OMEGAS (somente leitura; a gravação usa o fluxo da Curva K).
+    refinedAnalysis: () => invoke('getRefinedAnalysis', [], { ok: false, available: false }),
+    equivalence: () => invoke('getEquivalence', [], { ok: false }),
   };
 })(typeof window !== 'undefined' ? window : globalThis);

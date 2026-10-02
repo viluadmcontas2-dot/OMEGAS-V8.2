@@ -153,6 +153,10 @@ class MainActivity : AppCompatActivity() {
             service = (binder as TelemetryForegroundService.LocalBinder).service()
             bound = true
             refreshWebUi()
+            // App aberto: o balão flutuante não pode cobrir os botões do próprio OMEGAS.
+            if (activityResumed) {
+                service?.takeIf { it.overlayReady() }?.overlay?.setAppForeground(true)
+            }
             if (intent?.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
                 service?.connectUsb()
             }
@@ -207,9 +211,20 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    /** Tela do OMEGAS visível (entre onResume e onPause). */
+    private var activityResumed = false
+
     override fun onResume() {
         super.onResume()
+        activityResumed = true
         refreshWebUi()
+        serviceOrNull()?.let { if (it.overlayReady()) it.overlay.setAppForeground(true) }
+    }
+
+    override fun onPause() {
+        activityResumed = false
+        serviceOrNull()?.let { if (it.overlayReady()) it.overlay.setAppForeground(false) }
+        super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {

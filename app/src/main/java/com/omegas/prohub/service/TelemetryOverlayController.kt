@@ -61,6 +61,14 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         .put("closed", closed)
         .put("observationalOnly", true)
 
+    /** O balão nunca cobre o próprio OMEGAS: some com o app na tela e volta ao sair dele. */
+    @Volatile private var appForeground = false
+
+    fun setAppForeground(foreground: Boolean) {
+        appForeground = foreground
+        if (foreground) hide() else restoreIfAllowed()
+    }
+
     fun restoreIfAllowed() {
         if (!closed && requestedEnabled() && permissionGranted()) show()
     }
@@ -73,7 +81,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
             return statusJson().put("ok", true)
         }
         if (!permissionGranted()) return statusJson().put("ok", false).put("permissionRequired", true)
-        show()
+        show() // com o OMEGAS na tela, show() espera o app sair (appForeground)
         return statusJson().put("ok", true)
     }
 
@@ -88,7 +96,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
     }
 
     private fun show() {
-        if (closed || root != null || showPending || !permissionGranted()) return
+        if (closed || appForeground || root != null || showPending || !permissionGranted()) return
         val epoch = showEpoch.get()
         showPending = true
         main.post {

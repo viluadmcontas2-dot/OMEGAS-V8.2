@@ -6,6 +6,6 @@ matrix=json.loads(out)["include"]
 assert 1 <= len(matrix) <= 256
 ids=[x["id"] for x in matrix]
 assert len(ids)==len(set(ids))
-for surface in ("dashboard","learning","map","curve","obd","session","telemetry"):
+for surface in ("dashboard","learning","map","curve","autocal","session","telemetry"):
     assert any(surface in (x["id"]+" "+x["target"]).lower() for x in matrix), surface
 print(f"GLOBAL_REALITY_PLAN=PASS lanes={len(matrix)}")

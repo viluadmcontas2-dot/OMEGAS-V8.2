@@ -14,7 +14,7 @@ power_bridge = read("app/src/main/java/com/omegas/prohub/web/PowerJavascriptBrid
 overlay = read("app/src/main/java/com/omegas/prohub/service/TelemetryOverlayController.kt")
 service = read("app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt")
 api = read("app/src/main/assets/ui/core/native-api.js")
-obd = read("app/src/main/assets/ui/screens/obd.js")
+tools = read("app/src/main/assets/ui/components/drawers.js")  # bateria/flutuante moraram no OBD; agora em Ferramentas
 html = read("app/src/main/assets/ui/index.html")
 
 # Bateria: pedido explícito pelo fluxo oficial do Android, com prompt automático
@@ -25,7 +25,7 @@ assert "isIgnoringBatteryOptimizations" in activity
 assert "battery_optimization_prompted_v1" in activity
 assert "maybePromptBatteryOptimization" in activity
 assert "requestBatteryOptimizationExemption" in api
-assert "data-obd-battery-request" in obd
+assert "data-tool-battery-request" in tools
 
 # Overlay: permissão especial oficial, opcional e sempre sob decisão do usuário.
 assert "android.permission.SYSTEM_ALERT_WINDOW" in manifest
@@ -33,9 +33,9 @@ assert "Settings.ACTION_MANAGE_OVERLAY_PERMISSION" in power_bridge
 assert "Settings.canDrawOverlays" in power_bridge
 assert "requestOverlayPermissionAndEnable" in api
 assert "setTelemetryOverlayEnabled" in api
-assert "data-obd-overlay-request" in obd
-assert "data-obd-overlay-enable" in obd
-assert "data-obd-overlay-disable" in obd
+assert "data-tool-overlay-request" in tools
+assert "data-tool-overlay-enable" in tools
+assert "data-tool-overlay-disable" in tools
 
 # O flutuante mostra somente os quatro campos aprovados e não possui writers.
 for marker in ["CÉLULA", "STFT", "PETROL", "RPM"]:
@@ -57,26 +57,18 @@ assert "250L" in overlay
 assert "showPending" in overlay
 assert "@Volatile private var closed = false" in overlay
 assert "private val showEpoch = AtomicLong(0L)" in overlay
-assert "if (closed || root != null || showPending || !permissionGranted()) return" in overlay
+assert "if (closed || appForeground || root != null || showPending || !permissionGranted()) return" in overlay
+# O balão nunca cobre o próprio OMEGAS (cobriu o botão Gravar na ECU no carro).
+assert "fun setAppForeground(foreground: Boolean)" in overlay
+assert "setAppForeground(true)" in activity and "setAppForeground(false)" in activity
 assert "epoch != showEpoch.get()" in overlay
 assert "showEpoch.incrementAndGet()" in overlay
 assert "closed = true" in overlay
 assert "overlayWindowType" in overlay
 assert "TYPE_APPLICATION_OVERLAY" in overlay
 
-# A nova tela OBD mantém energia/conexão/PIDs na visão própria, sem reintroduzir
-# a página longa antiga e sem writer.
-for marker in [
-    'data-obd-view="setup"', 'id="obdConnectionCenter"', 'id="obdPowerCard"',
-    'id="obdSensorList"', 'data-obd-view="map"', 'id="obdIndependentMap"',
-]:
-    assert marker in html
-assert "renderConnection(state)" in obd
-assert "renderPower()" in obd
-assert "renderSensors(obd)" in obd
-assert "data-obd-cell-key" in obd
-assert "setInterval" not in obd
+# OBD removido do produto: nenhuma tela/rota OBD; energia e flutuante ficam em Ferramentas.
+assert 'data-route="obd"' not in html
+assert 'data-screen="obd"' not in html
 for forbidden in ["writeMap", "writeCurve", "startKWrite", "startKFactorWrite"]:
-    assert forbidden not in obd
-
-print("BACKGROUND_POWER_OVERLAY_CONTRACT=PASS")
+    assert forbidden not in tools

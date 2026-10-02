@@ -47,7 +47,7 @@ assert 'id="curveWriteButton"' not in index
 assert 'id="mapWriteButton"' not in index
 
 # AutoCal: uma única identificação de rota e 18 regiões fora da superfície primária.
-autocal_screen = index.split('data-screen="autocal"', 1)[1].split('data-screen="obd"', 1)[0]
+autocal_screen = index.split('data-screen="autocal"', 1)[1].split('data-screen="refino"', 1)[0]
 assert "page-intro" not in autocal_screen
 assert "autocal-focus" in app
 assert ".app-shell.autocal-focus .workspace-head" in base_css
