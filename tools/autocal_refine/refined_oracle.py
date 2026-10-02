@@ -45,6 +45,8 @@ E_MAX = 0.35                 # elasticidade máxima |d ln K / d ln t|
 IRLS_ITERATIONS = 6
 TUKEY_C = 4.685
 SMOOTH_TOLERANCE_LOG = 0.0025
+TELEMETRY_WEIGHT = 0.4       # peso de cada par GNV×gasolina da telemetria (validado em metade escondida)
+TELEMETRY_MIN_MS = 3.0       # abaixo disso a telemetria é dominada por transiente/corte (erro ~15%)
 
 NATIVE_MIN_RATIO = 0.75
 NATIVE_MAX_RATIO = 1.20
@@ -427,7 +429,20 @@ def inverse_first(target, xs, ys):
 
 # --------------------------------------------------------------- motor
 
-def refine(snapshot):
+def telemetry_targets(pairs, axis_ms, k_old):
+    """Pares (t_gasolina_ref, t_no_gnv) medidos no mesmo RPM×MAP → alvos de K."""
+    out = []
+    for tp, tg in pairs or []:
+        if tp < TELEMETRY_MIN_MS or tg <= 0 or tp > axis_ms[-1]:
+            continue
+        out.append({
+            "map": None, "tp": tp, "tg": tg, "w": TELEMETRY_WEIGHT, "ratio": tg / tp,
+            "y": math.log(interp(tg, axis_ms, k_old) * tg / tp), "source": "TELEMETRIA",
+        })
+    return out
+
+
+def refine(snapshot, telemetry_pairs=None):
     axis_raw = raw(snapshot, "PETR_INJ_TBP")
     k_raw = raw(snapshot, "MUL_ACT")
     if axis_raw is None or k_raw is None or len(axis_raw) != POINT_COUNT or len(k_raw) != POINT_COUNT:
@@ -452,6 +467,9 @@ def refine(snapshot):
             targets = equivalence_targets(petrol, gas, axis_ms, k_old)
     mature = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)]
     equivalence_available = len(mature) >= MIN_COMMON_MATURE
+    # A telemetria complementa as faixas nativas; nunca habilita a equivalência sozinha.
+    if equivalence_available and telemetry_pairs:
+        targets = targets + telemetry_targets(telemetry_pairs, axis_ms, k_old)
 
     observations = []
     if equivalence_available:

@@ -44,6 +44,18 @@ def stable_frames(telemetry, fuel, until_ms=None):
     return out
 
 
+def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
+    """Pares (t_gasolina mediano no mesmo RPM×MAP, t_no_GNV) de leituras estáveis."""
+    petrol = stable_frames(telemetry, "GASOLINA")
+    gas = stable_frames(telemetry, "GNV", until_ms)
+    out = []
+    for g in gas:
+        matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol)
+        if len(matches) >= 2:
+            out.append((matches[len(matches) // 2], g["t"]))
+    return out
+
+
 def blind_targets(fixture, sequence):
     with gzip.open(REAL / f"{fixture}.json.gz", "rt", encoding="utf-8") as handle:
         data = json.load(handle)

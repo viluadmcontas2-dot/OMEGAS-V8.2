@@ -99,6 +99,41 @@ class RefinedEquivalenceAcceptance(unittest.TestCase):
         self.assertEqual(result["refinedRaw"], result["currentRaw"])
 
 
+class TelemetryFusion(unittest.TestCase):
+    """Faixas da ECU + pares GNV×gasolina da telemetria, validado em metade escondida."""
+
+    def _held_out(self, train_first):
+        import datetime
+        with gzip.open(REAL / "ref_2026-10-01_1719.json.gz", "rt", encoding="utf-8") as handle:
+            data = json.load(handle)
+        snap = next(s for s in data["snapshots"] if s["sequence"] == 95)
+        end = datetime.datetime.fromisoformat(data["kFactorWrites"][0]["recordedAtUtc"].replace("Z", "+00:00")).timestamp() * 1000
+        pairs = [p for p in blind.telemetry_pairs(data["telemetry"], end) if p[0] >= oracle.TELEMETRY_MIN_MS]
+        half = len(pairs) // 2
+        train, test = (pairs[:half], pairs[half:]) if train_first else (pairs[half:], pairs[:half])
+        bands = oracle.refine(snap)
+        fused = oracle.refine(snap, train)
+        axis = bands["axisMs"]
+        current = factors(bands["currentRaw"])
+
+        def error(raw):
+            k = factors(raw)
+            sq = [(math.log(oracle.interp(tp, axis, k)) - math.log(oracle.interp(tg, axis, current) * tg / tp)) ** 2 for tp, tg in test]
+            return math.sqrt(sum(sq) / len(sq))
+
+        return error(bands["currentRaw"]), error(bands["refinedRaw"]), error(fused["refinedRaw"])
+
+    def test_fusion_beats_bands_only_on_unseen_half_both_ways(self):
+        for train_first in (True, False):
+            current, bands, fused = self._held_out(train_first)
+            self.assertLess(bands, current)
+            self.assertLess(fused, bands)
+
+    def test_telemetry_alone_never_enables_equivalence(self):
+        result = oracle.refine(AUTOMATCH[1401], [(5.0, 5.5)] * 50)
+        self.assertEqual(result["mode"], "POLISH")
+
+
 class FunctionalCalibration(unittest.TestCase):
     def test_refined_curve_predicts_unseen_bands_better_than_current_curve(self):
         """Validação cruzada: tirar uma faixa de GNV e prevê-la. Não é critério estético."""
