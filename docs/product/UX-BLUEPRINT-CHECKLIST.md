@@ -45,6 +45,30 @@ Fonte integral: https://app.notion.com/p/3b88ee52ac5481988c28db1600330335
 - [ ] Gate rápido → testes afetados → Android/JVM → lint → APK SHA-bound.
 - [ ] Insets, toque em multimídia, sensor e rodagem continuam exigindo validação física.
 
+## Resultado item a item na continuação (auditoria remota, 2026-10-02)
+
+Estados: **ESTÁTICO** = verificado no source remoto; **DRAFT VISUAL** = imagem com bridge falso 1280×720 inspecionada; **PENDENTE** = aceite não produzido. Nenhum dos itens abaixo constitui teste da multimídia Android.
+
+| Item do checklist acima, na mesma ordem | Resultado e prova atual | Falta para aceite |
+|---|---|---|
+| 1. Oito destinos | ESTÁTICO: `core/router.js` e `index.html` têm Agora, AutoCal, Refino, Aprender, Ajuste global, Ajuste local, Sugestões, Ferramentas | startup/volta real |
+| 2. Uma ação por passo; revisão manual | ESTÁTICO: `autocal-refine.js` tem revisão, comparação de snapshot e readback; DRAFT VISUAL: PROPOSTA_PRONTA e RESTAURAR_TRECHO | Android dialog + erro/ACK/readback divergente |
+| 3. Linha do tempo do piloto | DRAFT VISUAL: sete fases de Refino 1280×720 guardadas em `docs/evidence/ui-wu006/draft` | regenerar e auditar 1280×644 e 900 |
+| 4. Agora vocabulário compacto | DRAFT VISUAL: `agora-720.png` | montagem de app completo e navegação com Store |
+| 5. Vocabulário humano | ESTÁTICO: componentes Refino/AutoCal; “degrau que tira a linearidade da puxada”; sem promessa de sumiço | conferir todos os rótulos em tela real |
+| 6. Normalidade compacta, falha explicativa | ESTÁTICO: `autocal-evidence.js`; draft antigo “normal” tinha HIGH indevido | regenerar fixtures corrigidas em `capture-wu006.cjs`; inspecionar as duas imagens |
+| 7. Estados aplicáveis | DRAFT VISUAL: SEM_ECU, ECU_TRABALHANDO, COLETANDO_NOSSOS, PROPOSTA_PRONTA, VERIFICANDO, RESTAURAR_TRECHO, ESTAVEL | ler/gravar, falha e divergência, review aberto; viewport compacto |
+| 8. ACK não equivale a sucesso | ESTÁTICO: `autocal-refine.js` condiciona “Gravada e conferida” a BATCH_CONFIRMED + readbackValid | integração Android e testes negativos atuais |
+| 9. Contexto preservado | ESTÁTICO: `refinement-screen.js` controlador persistente; testes Node de histórico no handoff | teste integrado ida/volta com operação ativa |
+| 10. Screenshot 1280×720 e 900 | DRAFT VISUAL: 11 PNGs 1280×720, não E2E; script agora nomeia por dimensão sem sobregravar | 1280×720 final, 1280×644, 900, 1024×600, screenshots inspecionados e bounding boxes |
+| 11. Gate→JVM→lint→APK | Históricos do handoff são de SHAs anteriores; workflow `omegas-preapk-build.yml` contém etapas exigidas | gate/paridade e Gradle no SHA exato, digest/identidade do APK |
+| 12. Insets, toque, sensor, rodagem | PENDENTE físico. Sensor real permanece proxy explícito | carro/ECU e perfil nativo comprovado |
+| Car Info Next: cores, ≥12px, targets 56–68px, Refino sem rolagem | DRAFT VISUAL: paleta, sete fases 1280×720 e botão primário 56px registrados no handoff | imagens novas 644/900, clipping/overlap, foco, todos os targets e textos |
+
+**Achado de release fora do aspecto visual:** `LevelSensorSnapshot.read()` deve ganhar regressão RED→GREEN para impedir que captura USB antiga republique seu estado após troca de sessão. Detalhes em `docs/evidence/WU-006-FINAL-REVIEW-20261002.md`.
+
+Os checkboxes originais permanecem desmarcados onde o aceite completo não foi demonstrado. Captura de componentes com bridge falso não é teste E2E. `PHYSICAL_VALIDATION_CLAIMED=false`.
+
 PHYSICAL_VALIDATION_CLAIMED=false
 
 CSS removido nesta fatia (classes sem referência em HTML/JS):
