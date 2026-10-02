@@ -44,7 +44,30 @@ Faltam:
 7. Roteiro de teste de campo (`docs/V82_REFINO_FIELD_TEST.md`).
 8. Docs, CI (um disparo de `omegas-preapk-build.yml`), registro do digest e resposta ao dono.
 
+## Atualização final desta sessão (HEAD `103f5f1f`)
+
+O GPT entregou os blocos 4 a 7 e a documentação:
+- `51390ed6`: entradas do Refino;
+- `3ded2a1a`: level só leitura;
+- `59f6fc57`: placar;
+- `ded8cdea`: roteiro de campo;
+- `d1d2dc9f` a `103f5f1f`: docs e review.
+
+Ele **não rodou** testes nem CI: estava sem DNS para o github.com e o conector dele não tem `workflow_dispatch`.
+
+O Claude rodou no HEAD `103f5f1f`:
+- `QUALITY_GATE_FAST=PASS`;
+- JVM integral via kotlinc: **709 testes OK**;
+- paridade Kotlin↔Python: **OK**.
+
+Pendências reais registradas pelo GPT em `STATUS.md` e no WU-006:
+- **R-01:** `LevelSensorSnapshot.read()` pode publicar um snapshot antigo depois de uma troca de sessão USB. Escrever primeiro a regressão concorrente que falha (RED), depois corrigir pelo menor caminho (GREEN).
+- **Capturas e checklist:** as 11 capturas em `docs/evidence/ui-wu006/draft` são rascunho. Regenerar e conferir contra o checklist.
+- **CI:** nenhum CI rodou no SHA atual. O Claude dispara pelo MCP: `mcp__github__actions_run_trigger`, workflow `omegas-preapk-build.yml`, ref `claude/brave-darwin-wuliyo`.
+
 ## Próximos passos (próxima sessão do Claude)
+
+0. Corrigir o R-01 (RED→GREEN). Revisar os commits do GPT a partir de `eed795dd`, conforme o item 1 abaixo. Disparar o CI uma vez e registrar run, artifact e digest em `STATUS.md`.
 
 1. Quando o dono disser "o GPT terminou": `git pull` e revisar todos os commits do GPT a partir de `eed795dd`. Verificar:
    - a matemática não foi alterada; rodar paridade e o gate;
