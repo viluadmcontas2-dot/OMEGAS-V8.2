@@ -2,7 +2,6 @@ package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.learning.AssistedCalibrationAdvisor
-import com.omegas.prohub.physics.decoratePhysicsAuthority
 import com.omegas.v7.runtime.CalibrationRevisionV7
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
@@ -16,6 +15,7 @@ import com.omegas.v7.runtime.V7SessionFileStore
 import com.omegas.v7.runtime.V7SessionRuntime
 import com.omegas.v7.runtime.V7SessionState
 import com.omegas.v7.runtime.V7UiProjection
+import com.omegas.v7.runtime.calibrationTransitions
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -36,7 +36,6 @@ class V7CalibrationCoordinator(
 ) {
     private val lock = Any()
     private val store = V7SessionFileStore(directory)
-    private val ecuWriter = ExistingCalibrationWriterV7(mapManager, factorManager)
     private val suggestionAdapter = AdvisorSuggestionAdapterV7()
     private var activeFileName = "sessao-atual"
     private var runtime: V7SessionRuntime? = loadLatest()
@@ -102,7 +101,7 @@ class V7CalibrationCoordinator(
         val candidates = before.suggestions.filter { suggestion ->
             suggestion.expectedRevision == previousRevision &&
                 suggestion.target == target &&
-                suggestion.actionableAt(previousRevision)
+                suggestion.lifecycle == SuggestionLifecycleV7.PENDING
         }
 
         val sync = synchronizedFromEcu(activeFileName)
@@ -224,27 +223,23 @@ class V7CalibrationCoordinator(
         stateJsonLocked().put("ok", true)
     }
 
-    /** Deve ser chamado em thread de trabalho; aguarda ACK e readback reais. */
+    /**
+     * Platina mantém sugestões como análise/revisão.
+     * Escrita real só começa nas telas manuais de Mapa/Curva, com intenção
+     * explícita, ACK e readback dos managers. Este caminho não pode religar
+     * Predictor/V7 runtime a writer automático.
+     */
     fun applySuggestionToEcu(suggestionId: String): JSONObject = synchronized(lock) {
         val active = requireRuntime()
-        try {
-            val applied = active.applySuggestionToEcu(
-                suggestionId = suggestionId,
-                nowMs = System.currentTimeMillis(),
-                writer = ecuWriter,
-            )
-            persistLocked()
-            stateJsonLocked()
-                .put("ok", true)
-                .put("appliedRevision", revisionJson(applied.revision))
-                .put("writeMessage", active.state.lastWriteMessage)
-        } catch (error: Exception) {
-            persistLocked()
-            stateJsonLocked()
-                .put("ok", false)
-                .put("error", error.message ?: "Falha ao aplicar sugestão V7")
-                .put("writeMessage", active.state.lastWriteMessage)
-        }
+        require(suggestionId.isNotBlank()) { "Sugestão inválida" }
+        stateJsonLocked()
+            .put("ok", false)
+            .put("state", "MANUAL_REVIEW_REQUIRED")
+            .put("suggestionId", suggestionId)
+            .put("automaticWriteBlocked", true)
+            .put("writesStarted", false)
+            .put("message", "Sugestão não escreve diretamente. Abra o editor, revise a proposta e confirme manualmente.")
+            .put("writeMessage", active.state.lastWriteMessage)
     }
 
     fun stateJson(): JSONObject = synchronized(lock) { stateJsonLocked() }
@@ -280,7 +275,11 @@ class V7CalibrationCoordinator(
 
     private fun replaceAdvisorSuggestionsLocked(advice: JSONObject): List<LocalSuggestionV7> {
         val active = requireRuntime()
-        val generated = suggestionAdapter.adapt(advice, active.state.calibration)
+        val generated = suggestionAdapter.adapt(
+            advice = advice,
+            calibration = active.state.calibration,
+            causalTransitions = active.state.calibrationTransitions,
+        )
         active.replaceSuggestions(generated)
         return generated
     }
@@ -302,9 +301,7 @@ class V7CalibrationCoordinator(
         payload.optJSONObject("assistedCalibration")?.let { return it }
         payload.optJSONObject("assisted_calibration")?.let { return it }
         return if (payload.has("regions") || payload.has("comparisons")) {
-            AssistedCalibrationAdvisor.decoratePhysicsAuthority(
-                AssistedCalibrationAdvisor.analyze(payload),
-            )
+            AssistedCalibrationAdvisor.analyze(payload)
         } else {
             payload
         }
@@ -332,12 +329,8 @@ class V7CalibrationCoordinator(
             .put("files", listFiles())
         val state = active.state
         val ui = V7UiProjection.from(state)
-        val pending = state.suggestions.count { it.actionableAt(state.calibration.revision) }
-        val observing = state.suggestions.count {
-            it.expectedRevision == state.calibration.revision &&
-                it.lifecycle in setOf(SuggestionLifecycleV7.PENDING, SuggestionLifecycleV7.OBSERVING) &&
-                !it.actionableAt(state.calibration.revision)
-        }
+        val pending = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.PENDING && it.expectedRevision == state.calibration.revision }
+        val observing = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.OBSERVING && it.expectedRevision == state.calibration.revision }
         val applied = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.APPLIED }
         val superseded = state.suggestions.count { it.lifecycle == SuggestionLifecycleV7.SUPERSEDED }
         return JSONObject()
@@ -380,17 +373,6 @@ class V7CalibrationCoordinator(
         .put("consolidatedErrorPercent", value.consolidatedErrorPercent ?: JSONObject.NULL)
         .put("recentErrorPercent", value.recentErrorPercent ?: JSONObject.NULL)
         .put("rationale", value.rationale)
-        .put("magnitudeAuthority", value.physics.magnitudeAuthority.name)
-        .put("stepAuthority", value.physics.stepAuthority.name)
-        .put("correctionMechanism", value.physics.correctionMechanism.name)
-        .put("expectedEffectDirection", value.physics.effectDirection.name)
-        .put("expectedEffectAuthority", value.physics.effectAuthority.name)
-        .put("expectedEffectLowerBound", value.physics.lowerBound ?: JSONObject.NULL)
-        .put("expectedEffectUpperBound", value.physics.upperBound ?: JSONObject.NULL)
-        .put("expectedEffectAssumptions", JSONArray(value.physics.assumptions))
-        .put("expectedEffectFalsifier", value.physics.falsifier)
-        .put("mechanismEvidencePath", JSONArray(value.physics.evidencePath))
-        .put("idealTarget", value.physics.idealTarget)
         .put("curveChanges", JSONArray(value.curveChanges.map { change ->
             JSONObject()
                 .put("index", change.index)

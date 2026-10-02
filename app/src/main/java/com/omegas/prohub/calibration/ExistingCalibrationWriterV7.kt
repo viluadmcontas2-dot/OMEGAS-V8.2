@@ -10,11 +10,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Liga o runtime V7 aos dois writers Android já comprovados no aplicativo.
+ * Adaptador legado para laboratório.
  *
- * A chamada deve ocorrer fora da main thread. O retorno positivo acontece
- * somente depois que o manager real conclui ACK, readback e publica
- * BATCH_CONFIRMED. BATCH_QUEUED nunca avança a revisão V7.
+ * OMEGAS PLATINA não permite que Predictor, V7 runtime ou AutoMatch nativo
+ * iniciem escrita na ECU. A UI de Mapa/Curva continua usando os managers
+ * diretamente apenas depois de revisão e confirmação humana explícita.
+ * Este adaptador permanece compilável para testes de readback do runtime, mas
+ * falha fechado em produção se alguém tentar religar sugestão -> writer.
  */
 class ExistingCalibrationWriterV7(
     private val mapWriter: KWriteManager,
@@ -22,15 +24,24 @@ class ExistingCalibrationWriterV7(
     private val timeoutMs: Long = 120_000L,
     private val mapMaxStep: Int = KWriteManager.MAX_SAFE_STEP,
     private val mapPauseMs: Int = 0,
+    private val labOnlyWriterEnabled: Boolean = false,
 ) : CalibrationWriterV7 {
 
     override fun write(
         current: CalibrationStateV7,
         desired: CalibrationStateV7,
         suggestion: LocalSuggestionV7,
-    ): CalibrationWriteResultV7 = when (suggestion.target) {
-        SuggestionTargetV7.MAP_K -> writeMap(current, desired, suggestion)
-        SuggestionTargetV7.CURVE_K -> writeCurve(current, desired, suggestion)
+    ): CalibrationWriteResultV7 {
+        if (!labOnlyWriterEnabled) {
+            return CalibrationWriteResultV7(
+                success = false,
+                message = "LAB_ONLY: sugestão não pode iniciar escrita automática; revise no editor e confirme manualmente",
+            )
+        }
+        return when (suggestion.target) {
+            SuggestionTargetV7.MAP_K -> writeMap(current, desired, suggestion)
+            SuggestionTargetV7.CURVE_K -> writeCurve(current, desired, suggestion)
+        }
     }
 
     private fun writeMap(

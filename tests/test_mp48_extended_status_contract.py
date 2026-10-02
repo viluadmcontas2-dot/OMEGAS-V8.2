@@ -15,11 +15,13 @@ class Mp48ExtendedStatusContract(unittest.TestCase):
         self.reply = REPLY.read_text("utf-8")
         self.engine = ENGINE.read_text("utf-8")
 
-    def test_module_version_is_observed_but_vector_shape_belongs_to_field_identity(self):
+    def test_module_version_is_observed_but_does_not_select_vector_shape(self):
         self.assertIn('Field("MODULE_VERSION", 0x0173', self.protocol)
         self.assertIn('READ_ONLY_FIELDS: List<Field> = listOf(\n        MODULE_VERSION,', self.protocol)
         for field in ("PETR_INJ_TBP", "MUL_ACT", "PETR_MNFLD_PRESS_RV", "GAS_MNFLD_PRESS_RV"):
-            self.assertIn(field, self.protocol)
+            self.assertIn(f'Field("{field}"', self.protocol)
+            self.assertIn('Shape.VECTOR, 30', self.protocol.split(f'Field("{field}"', 1)[1].split('\n', 1)[0])
+        self.assertNotIn("moduleSizedFields", self.protocol)
         self.assertIn("return field.expectedElementsHint", self.protocol)
         self.assertIn("requireExpectedShape(decoded, moduleVersion)", self.snapshot)
         self.assertIn('put("moduleVersion"', self.snapshot)

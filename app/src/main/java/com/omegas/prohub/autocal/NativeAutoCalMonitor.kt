@@ -1,23 +1,27 @@
 package com.omegas.prohub.autocal
 
 import android.os.SystemClock
-import com.omegas.prohub.calibration.CalibrationIdentity
-import com.omegas.prohub.calibration.CompositeCalibrationReader
-import com.omegas.prohub.calibration.CompositeCalibrationSnapshot
 import com.omegas.prohub.ecu.AutoCalProtocol
+import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
+import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.learning.LearningToleranceSettings
-import com.omegas.prohub.usb.UsbProtocolReply
+import com.omegas.prohub.learning.NativeAutoCalAnchorCorrelator
+import org.json.JSONArray
 import org.json.JSONObject
+import java.security.MessageDigest
 
 /**
  * Observa a Auto Calibration nativa sem possuir timer, thread serial ou writer.
  *
- * O serviço chama [tick] em seu health tick já existente. Toda I/O passa pelo
- * scheduler MP48 único. O probe 48 0B acompanha status global; maturidade das
- * famílias gasolina e GNV é observada pelos contadores nativos de 18 bandas;
- * snapshot completo só é lido por evento material.
+ * O serviço chama [tick] em uma cadência compartilhada; o monitor não possui
+ * thread nem timer. Toda I/O passa pelo scheduler MP48 único. O probe 48 0B
+ * acompanha status global; um grupo leve renova contadores/zonas em ~1 s e um
+ * grupo de referência renova eixos/curvas/MUL_ACT em ~4 s. Refreshes agrupados
+ * só são aceitos quando o status compacto antes/depois permanece na mesma época
+ * nativa, evitando misturar CURRENT/PREV/MUL durante um AutoMatch da ECU.
+ * Snapshot completo continua reservado a bootstrap/eventos científicos.
  * AutoMatch continua sendo executado exclusivamente pela ECU.
  */
 class NativeAutoCalMonitor(
@@ -25,46 +29,75 @@ class NativeAutoCalMonitor(
     private val calibrationBusy: () -> Boolean,
     private val onFreshSnapshot: (JSONObject) -> Unit = {},
     private val onNativeCalibrationObserved: (JSONObject) -> Unit = {},
+    private val onNativeAutoMatchObserved: (JSONObject) -> Unit = {},
     private val onStateChanged: () -> Unit = {},
 ) {
+    private data class PendingMaturity(
+        val transition: NativeAutoCalMaturityTracker.Transition,
+        val counterPayloadHex: String,
+    )
+
+    private data class MaturityProbe(
+        val counters: IntArray,
+        val payloadHex: String,
+        val observedAtElapsedMs: Long,
+        val status: Int,
+        val payload: ByteArray,
+    )
+
+    private data class AcquisitionRefresh(
+        val snapshot: AutoCalSnapshot,
+        val gasProbe: MaturityProbe,
+        val observedAtElapsedMs: Long,
+    )
+
+    private data class ReferenceRefresh(
+        val snapshot: AutoCalSnapshot,
+        val observedAtElapsedMs: Long,
+        val autoMatchCount: Int,
+    )
+
     private val lock = Any()
-    private val dualMaturityObserver = NativeAutoCalDualFuelMaturityObserver(serial, SystemClock::elapsedRealtime)
+    private val maturityTracker = NativeAutoCalMaturityTracker()
     private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
-    private val calibrationBootstrapReader = CompositeCalibrationReader(serial)
-    private val probeMetrics = AutoCalProbeMetrics()
-    private val probeCadencePolicy = AutoCalProbeCadencePolicy()
+    private val refreshPlanner = NativeAutoCalRefreshPlanner()
+    private val acquisitionEpoch = NativeAutoCalAcquisitionEpoch()
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
     @Volatile private var state = baseState("IDLE", "AutoCal nativo aguardando ECU")
-    @Volatile private var calibrationIdentity: CalibrationIdentity? = null
-    @Volatile private var latestAutoMatchEvent: JSONObject? = null
 
     private var sessionStartedAtElapsedMs = 0L
-    private var calibrationBootstrapAttempted = false
     private var lastProbe: AutoCalProtocol.NativeStatus? = null
-    private var nextStatusProbeDueAtElapsedMs = 0L
     private var lastMulActHash = ""
+    private var lastStableMulAct: NativeAutoMatchEvidenceBracket.StableVector? = null
     private var snapshotRequested = false
     private var snapshotReason = ""
-    private var pendingMaturity = emptyList<NativeAutoCalDualFuelMaturityObserver.Event>()
+    private var gasLowThreshold: Int? = null
+    private var gasNormalThreshold: Int? = null
+    private var autoCalEnabled: Int? = null
+    private var pendingMaturity = emptyList<PendingMaturity>()
 
     fun beginUsbSession(newSessionId: Long) {
-        probeMetrics.reset()
-        autoMatchCounterTracker.reset()
-        dualMaturityObserver.reset()
         synchronized(lock) {
             sessionId = newSessionId
             sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
-            calibrationBootstrapAttempted = false
-            calibrationIdentity = null
             lastProbe = null
-            latestAutoMatchEvent = null
-            nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
+            lastStableMulAct = null
+            gasLowThreshold = null
+            gasNormalThreshold = null
+            autoCalEnabled = null
             pendingMaturity = emptyList()
-            snapshotRequested = false
-            snapshotReason = ""
+            maturityTracker.reset()
+            autoMatchCounterTracker.reset()
+            refreshPlanner.reset()
+            acquisitionEpoch.reset(newSessionId)
+            // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
+            // de qualquer leitura pesada. Assim o primeiro probe estável sempre
+            // produz um snapshot completo e a UI não fica presa sem thresholds.
+            snapshotRequested = newSessionId > 0L
+            snapshotReason = if (newSessionId > 0L) "SESSION_BOOTSTRAP" else ""
             latestSnapshot = JSONObject().put("available", false).put("sessionId", newSessionId)
             state = baseState("WAITING_TELEMETRY_SETTLE", "Aguardando telemetria estabilizar antes do AutoCal")
                 .put("sessionId", newSessionId)
@@ -74,19 +107,20 @@ class NativeAutoCalMonitor(
     }
 
     fun endUsbSession() {
-        probeMetrics.reset()
-        autoMatchCounterTracker.reset()
-        dualMaturityObserver.reset()
         synchronized(lock) {
             sessionId = 0L
             sessionStartedAtElapsedMs = 0L
-            calibrationBootstrapAttempted = false
-            calibrationIdentity = null
             lastProbe = null
-            latestAutoMatchEvent = null
-            nextStatusProbeDueAtElapsedMs = 0L
             lastMulActHash = ""
+            lastStableMulAct = null
+            gasLowThreshold = null
+            gasNormalThreshold = null
+            autoCalEnabled = null
             pendingMaturity = emptyList()
+            maturityTracker.reset()
+            autoMatchCounterTracker.reset()
+            refreshPlanner.reset()
+            acquisitionEpoch.reset(0L)
             snapshotRequested = false
             snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false)
@@ -103,11 +137,18 @@ class NativeAutoCalMonitor(
     }
 
     fun onManualActionConfirmed(receipt: JSONObject) {
-        synchronized(lock) { calibrationIdentity = null }
+        synchronized(lock) {
+            val receiptSessionId = receipt.optLong("sessionId", sessionId)
+            if (receiptSessionId == sessionId) {
+                acquisitionEpoch.manualAction(sessionId, receipt.optString("action"))
+            }
+        }
         requestSnapshot("ACTION_${receipt.optString("action", "UNKNOWN")}")
         val beforeMul = mulActRawFromSnapshot(receipt.optJSONObject("before"))
         val afterMul = mulActRawFromSnapshot(receipt.optJSONObject("after"))
-        if (beforeMul.isNotBlank() && afterMul.isNotBlank() && beforeMul != afterMul && receipt.optBoolean("readbackValid", false)) {
+        if (beforeMul.isNotBlank() && afterMul.isNotBlank() && beforeMul != afterMul &&
+            receipt.optBoolean("readbackValid", false)
+        ) {
             onNativeCalibrationObserved(
                 JSONObject()
                     .put("source", SOURCE_NATIVE_AUTOCAL)
@@ -135,8 +176,6 @@ class NativeAutoCalMonitor(
         if (currentSession != sessionId) beginUsbSession(currentSession)
         if (calibrationBusy()) return
 
-        resolvePendingTelemetryGap()
-
         val startedAt = synchronized(lock) { sessionStartedAtElapsedMs }
         val ageMs = if (startedAt > 0L) (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L) else Long.MAX_VALUE
         if (ageMs < SESSION_SETTLE_MS) {
@@ -149,195 +188,506 @@ class NativeAutoCalMonitor(
             return
         }
 
-        val shouldBootstrap = synchronized(lock) {
-            if (!calibrationBootstrapAttempted) {
-                calibrationBootstrapAttempted = true
-                true
-            } else false
-        }
-        if (shouldBootstrap) {
-            try {
-                val raw = calibrationBootstrapReader.readAtSessionStart(currentSession)
-                val composite = CompositeCalibrationSnapshot.promote(raw)
-                val identity = CalibrationIdentity.fromComposite(
-                    composite = composite,
-                    capturedAtMs = System.currentTimeMillis(),
-                    mapRevision = null,
-                    curveRevision = null,
-                )
-                synchronized(lock) {
-                    calibrationIdentity = identity
-                    state = baseState("CALIBRATION_READY", "Calibração física confirmada para esta sessão")
-                        .put("sessionId", currentSession)
-                        .put("calibrationFingerprint", identity.functionFingerprint)
-                        .put("calibrationCompleteness", identity.completeness.name)
-                        .put("calibrationFreshness", identity.freshness.name)
-                }
-            } catch (error: Exception) {
-                synchronized(lock) {
-                    calibrationIdentity = null
-                    state = baseState("CALIBRATION_BOOTSTRAP_FAILED", error.message ?: "Falha ao confirmar calibração física")
-                        .put("sessionId", currentSession)
-                }
-                onStateChanged()
-                return
-            }
-        }
-
-        val maturityBootstrapComplete = dualMaturityObserver.ensureBootstrap(currentSession)
-
         val previousProbe = synchronized(lock) { lastProbe }
-        val now = SystemClock.elapsedRealtime()
-        val statusProbeDue = previousProbe == null || synchronized(lock) {
-            nextStatusProbeDueAtElapsedMs <= 0L || now >= nextStatusProbeDueAtElapsedMs
-        }
-        val freshProbe = if (statusProbeDue) probe(currentSession) ?: return else null
-        val probe = freshProbe ?: previousProbe ?: return
-        val autoMatchEvent = freshProbe?.let {
-            autoMatchCounterTracker.observe(
-                currentSessionId = currentSession,
-                count = it.autoMatchCount,
-                observedAtElapsedMs = now,
-            )
-        }
-        val countIncreased = autoMatchEvent != null
-        val probeChanged = freshProbe != null && previousProbe != null && (
-            previousProbe.autoMatchCount != probe.autoMatchCount || previousProbe.nativeFlag13 != probe.nativeFlag13
+        val probe = probe(currentSession) ?: return
+        val counterObservedAt = SystemClock.elapsedRealtime()
+        val autoMatchCounterEvent = autoMatchCounterTracker.observe(
+            currentSessionId = currentSession,
+            count = probe.autoMatchCount,
+            observedAtElapsedMs = counterObservedAt,
         )
-        if (probeChanged) probeMetrics.markMaterialChange()
-        if (freshProbe != null) scheduleNextStatusProbe(SystemClock.elapsedRealtime())
+        synchronized(lock) {
+            acquisitionEpoch.nativeCounter(currentSession, probe.autoMatchCount)
+        }
+        val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
+        // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
+        val probeChanged = previousProbe != null && (
+            previousProbe.autoMatchCount != probe.autoMatchCount ||
+                previousProbe.nativeFlag13 != probe.nativeFlag13
+        )
 
-        val readiness = dualMaturityObserver.readiness()
-        val maturityObservation = if (maturityBootstrapComplete && (readiness.petrol || readiness.cng)) {
-            dualMaturityObserver.observe(currentSession)
+        val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
+        val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
+        val acquisitionEnabled = thresholds.third == 1
+        val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
+        val fullSnapshotAlreadyDue = synchronized(lock) { snapshotRequested } || probeChanged
+        // Leitura operacional das 18 bandas permanece independente do disparo de maturidade.
+        // O DUMP canônico já fecha os seletores gasLow=CALIBRATION_VAL_1[5] e
+        // gasNormal=CALIBRATION_VAL_1[8]; counters/points/zones continuam vindo
+        // diretamente da ECU, sem sintetizar estado nativo no host.
+        val acquisitionRefresh = if (!fullSnapshotAlreadyDue && acquisitionEnabled && refreshDue.acquisition) {
+            refreshAcquisitionGroup(currentSession, probe)
         } else null
-        val maturityEvents = maturityObservation?.events.orEmpty()
+        val maturityEvents = acquisitionRefresh?.gasProbe?.let { observed ->
+            maturityTracker.observe(
+                counters = observed.counters,
+                gasLowThreshold = thresholds.first,
+                gasNormalThreshold = thresholds.second,
+                enabled = true,
+                observedAtElapsedMs = observed.observedAtElapsedMs,
+            ).map { transition -> PendingMaturity(transition, observed.payloadHex) }
+        }.orEmpty()
+
+        if (acquisitionRefresh != null) {
+            mergeOperationalFields(
+                patch = acquisitionRefresh.snapshot,
+                refreshedAtElapsedMs = acquisitionRefresh.observedAtElapsedMs,
+            )
+            synchronized(lock) {
+                acquisitionEpoch.acquisitionGroup(
+                    currentSession,
+                    probe.autoMatchCount,
+                    vector(acquisitionRefresh.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR),
+                    vector(acquisitionRefresh.snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
+                )
+            }
+            refreshPlanner.markAcquisition(acquisitionRefresh.observedAtElapsedMs)
+        }
+
+        val referenceRefresh = if (!fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference) {
+            refreshReferenceGroup(currentSession, probe)
+        } else null
+        if (referenceRefresh != null) {
+            mergeReferenceFields(
+                patch = referenceRefresh.snapshot,
+                refreshedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
+            )
+            synchronized(lock) {
+                acquisitionEpoch.referenceGroup(currentSession, probe.autoMatchCount)
+            }
+            stableMulAct(
+                snapshot = referenceRefresh.snapshot,
+                sessionId = currentSession,
+                autoMatchCount = referenceRefresh.autoMatchCount,
+                capturedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
+            )?.let { stable ->
+                synchronized(lock) {
+                    lastStableMulAct = stable
+                    if (stable.rawPayloadHex.isNotBlank()) lastMulActHash = stable.rawPayloadHex
+                }
+            }
+            refreshPlanner.markReference(referenceRefresh.observedAtElapsedMs)
+        }
 
         synchronized(lock) {
-            if (freshProbe != null) lastProbe = probe
-            if (autoMatchEvent != null) latestAutoMatchEvent = autoMatchEventJson(autoMatchEvent)
+            lastProbe = probe
             state = baseState("MONITORING", "AutoCal nativo monitorado")
                 .put("sessionId", currentSession)
                 .put("nativeFlag13", probe.nativeFlag13)
                 .put("autoMatchCount", probe.autoMatchCount)
-                .put("latestAutoMatchEvent", latestAutoMatchEvent?.let { JSONObject(it.toString()) } ?: JSONObject.NULL)
                 .put("fallback", probe.nativeFlag13 < 0)
-                .put("freshStatusProbe", freshProbe != null)
-                .put("maturityBootstrapComplete", maturityBootstrapComplete)
-                .put("petrolMaturityReady", readiness.petrol)
-                .put("cngMaturityReady", readiness.cng)
-                .put("petrolMaturityProbe", maturityObservation?.petrolRead == true)
-                .put("cngMaturityProbe", maturityObservation?.cngRead == true)
-                .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
-                .put("calibrationFingerprint", calibrationIdentity?.functionFingerprint ?: JSONObject.NULL)
+                .put("thresholdsReady", thresholdsReady)
+                .put("maturityProbe", acquisitionRefresh != null)
+                .put("acquisitionRefresh", acquisitionRefresh != null)
+                .put("referenceRefresh", referenceRefresh != null)
+                .put("referenceRefreshDue", refreshDue.reference && referenceRefresh == null)
+                .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent != null)
             if (maturityEvents.isNotEmpty()) {
                 pendingMaturity = maturityEvents
                 snapshotRequested = true
-                snapshotReason = when {
-                    maturityEvents.all { it.sourceFuel.name == "PETROL" } -> "NATIVE_PETROL_BAND_MATURED"
-                    maturityEvents.all { it.sourceFuel.name == "CNG" } -> "NATIVE_CNG_BAND_MATURED"
-                    else -> "NATIVE_BAND_MATURED"
-                }
+                snapshotReason = "NATIVE_BAND_MATURED"
             } else if (probeChanged) {
                 snapshotRequested = true
-                snapshotReason = if (autoMatchEvent != null) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
-                calibrationIdentity = null
+                snapshotReason = if (countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
             }
         }
 
-        if (synchronized(lock) { snapshotRequested }) {
-            readFullSnapshot(currentSession, probe, countIncreased)
+        val shouldSnapshot = synchronized(lock) { snapshotRequested }
+        if (shouldSnapshot) {
+            readFullSnapshot(currentSession, probe, countIncreased, autoMatchCounterEvent)
         } else {
             onStateChanged()
         }
     }
 
     fun statusJson(): JSONObject = synchronized(lock) {
+        val liveEpoch = acquisitionEpochJson()
         JSONObject(state.toString())
-            .put("latestSnapshot", JSONObject(latestSnapshot.toString()))
+            .put("latestSnapshot", JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", liveEpoch))
+            .put("liveAcquisitionEpoch", liveEpoch)
             .put("snapshotRequested", snapshotRequested)
             .put("snapshotReason", snapshotReason)
-            .put("calibrationBootstrapAttempted", calibrationBootstrapAttempted)
-            .put("calibrationIdentityReady", calibrationIdentity?.materiallyUsable() == true)
-            .put("calibrationFingerprint", calibrationIdentity?.functionFingerprint ?: JSONObject.NULL)
-            .put("latestAutoMatchEvent", latestAutoMatchEvent?.let { JSONObject(it.toString()) } ?: JSONObject.NULL)
-            .put("probeMetrics", probeMetricsJson())
             .put("appAutomaticWrite", false)
-            .put("manualAutoMatchExposed", false)
+            .put("manualAutoMatchExposed", true)
     }
 
-    fun latestSnapshotJson(): JSONObject = synchronized(lock) { JSONObject(latestSnapshot.toString()) }
-
-    /** Leve, para o piloto do refino: contador vivo + MAX/habilitado do último snapshot. */
-    fun autoMatchProgressJson(): JSONObject = synchronized(lock) {
-        val count = state.optInt("autoMatchCount", -1).takeIf { state.has("autoMatchCount") && it >= 0 }
-        JSONObject()
-            .put("autoMatchCount", count ?: JSONObject.NULL)
-            .put("maxAutomatch", latestSnapshot.opt("maxAutomatch") ?: JSONObject.NULL)
-            .put("autoCalEnabled", latestSnapshot.opt("autoCalEnabled") ?: JSONObject.NULL)
+    fun latestSnapshotJson(): JSONObject = synchronized(lock) {
+        JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", acquisitionEpochJson())
     }
 
     private fun probe(expectedSessionId: Long): AutoCalProtocol.NativeStatus? {
-        val cycleStarted = SystemClock.elapsedRealtime()
-        val telemetryBefore = latestTelemetryElapsedMs(cycleStarted)
-        var requestBytes = 0
-        var responseBytes = 0
-        var serialElapsedMs = 0L
-        val compactRequest = AutoCalProtocol.CMD_NATIVE_STATUS
-        requestBytes += compactRequest.size
         val compact = serial.transaction(
-            request = compactRequest,
+            request = AutoCalProtocol.CMD_NATIVE_STATUS,
             reason = "AutoCal status leve",
             timeoutMs = 700,
             purgeBefore = false,
             expectedSessionId = expectedSessionId,
             workClass = Mp48WorkClass.READ_ONLY,
         )
-        responseBytes += responseByteCount(compact)
-        serialElapsedMs += compact.elapsedMs.coerceAtLeast(0L)
         if (compact.ok) {
             try {
-                val decoded = AutoCalProtocol.decodeNativeStatus(compact.status, compact.payload)
-                recordProbeCycle(cycleStarted, requestBytes, responseBytes, serialElapsedMs, true, false, telemetryBefore)
-                return decoded
-            } catch (_: Exception) {}
+                return AutoCalProtocol.decodeNativeStatus(compact.status, compact.payload)
+            } catch (_: Exception) {
+                // Fallback abaixo: não atribuir semântica a payload divergente.
+            }
         }
-        val explicitRequest = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)
-        requestBytes += explicitRequest.size
+
         val explicit = serial.transaction(
-            request = explicitRequest,
+            request = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
             reason = "AutoCal fallback contador 0x0174",
             timeoutMs = 900,
             purgeBefore = false,
             expectedSessionId = expectedSessionId,
             workClass = Mp48WorkClass.READ_ONLY,
         )
-        responseBytes += responseByteCount(explicit)
-        serialElapsedMs += explicit.elapsedMs.coerceAtLeast(0L)
         if (!explicit.ok) {
-            recordProbeCycle(cycleStarted, requestBytes, responseBytes, serialElapsedMs, false, true, telemetryBefore)
             synchronized(lock) {
-                state = baseState("PROBE_FAILED", explicit.error.ifBlank { "Status AutoCal indisponível" }).put("sessionId", expectedSessionId)
+                state = baseState("PROBE_FAILED", explicit.error.ifBlank { "Status AutoCal indisponível" })
+                    .put("sessionId", expectedSessionId)
             }
             onStateChanged()
             return null
         }
         return try {
-            val decoded = AutoCalProtocol.decode(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED, explicit.status, explicit.payload)
-            AutoCalProtocol.NativeStatus(-1, decoded.rawValues.single(), explicit.payload.copyOf()).also {
-                recordProbeCycle(cycleStarted, requestBytes, responseBytes, serialElapsedMs, true, true, telemetryBefore)
-            }
+            val decoded = AutoCalProtocol.decode(
+                AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+                explicit.status,
+                explicit.payload,
+            )
+            AutoCalProtocol.NativeStatus(
+                nativeFlag13 = -1,
+                autoMatchCount = decoded.rawValues.single(),
+                rawPayload = explicit.payload.copyOf(),
+            )
         } catch (error: Exception) {
-            recordProbeCycle(cycleStarted, requestBytes, responseBytes, serialElapsedMs, false, true, telemetryBefore)
             synchronized(lock) {
-                state = baseState("PROBE_FAILED", error.message ?: "Fallback AutoCal inválido").put("sessionId", expectedSessionId)
+                state = baseState("PROBE_FAILED", error.message ?: "Fallback AutoCal inválido")
+                    .put("sessionId", expectedSessionId)
             }
             onStateChanged()
             null
         }
     }
 
-    private fun readFullSnapshot(expectedSessionId: Long, probe: AutoCalProtocol.NativeStatus, countIncreased: Boolean) {
+    private fun probeMaturityCounters(expectedSessionId: Long): MaturityProbe? {
+        val reply = serial.transaction(
+            request = AutoCalProtocol.read(AutoCalProtocol.NUM_BUF_UPD_GAS),
+            reason = "AutoCal maturidade GNV",
+            timeoutMs = 900,
+            purgeBefore = false,
+            expectedSessionId = expectedSessionId,
+            workClass = Mp48WorkClass.READ_ONLY,
+        )
+        if (!reply.ok) return null
+        return try {
+            val decoded = AutoCalProtocol.decode(
+                AutoCalProtocol.NUM_BUF_UPD_GAS,
+                reply.status,
+                reply.payload,
+            )
+            MaturityProbe(
+                counters = decoded.rawValues.copyOf(),
+                payloadHex = reply.payload.toHex(),
+                observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                status = reply.status,
+                payload = reply.payload.copyOf(),
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun probe(unit: Mp48SerialUnit): AutoCalProtocol.NativeStatus? {
+        val compact = unit.transaction(
+            request = AutoCalProtocol.CMD_NATIVE_STATUS,
+            reason = "AutoCal status leve · unidade",
+            timeoutMs = 700,
+            purgeBefore = false,
+        )
+        if (compact.ok) {
+            try {
+                return AutoCalProtocol.decodeNativeStatus(compact.status, compact.payload)
+            } catch (_: Exception) {
+                // Fallback explícito abaixo.
+            }
+        }
+        val explicit = unit.transaction(
+            request = AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
+            reason = "AutoCal fallback contador 0x0174 · unidade",
+            timeoutMs = 900,
+            purgeBefore = false,
+        )
+        if (!explicit.ok) return null
+        return try {
+            val decoded = AutoCalProtocol.decode(
+                AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+                explicit.status,
+                explicit.payload,
+            )
+            AutoCalProtocol.NativeStatus(
+                nativeFlag13 = -1,
+                autoMatchCount = decoded.rawValues.single(),
+                rawPayload = explicit.payload.copyOf(),
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun refreshAcquisitionGroup(
+        expectedSessionId: Long,
+        beforeEpoch: AutoCalProtocol.NativeStatus,
+    ): AcquisitionRefresh? = serial.unit(
+        reason = "AutoCal aquisição operacional agrupada",
+        expectedSessionId = expectedSessionId,
+        workClass = Mp48WorkClass.READ_ONLY,
+        telemetryAfter = true,
+        waitTimeoutMs = 8_000L,
+    ) { unit ->
+        val startedAtMs = System.currentTimeMillis()
+        val observations = mutableListOf<AutoCalReadObservation>()
+
+        fun read(field: AutoCalProtocol.Field, reason: String): Boolean {
+            val reply = unit.transaction(
+                request = AutoCalProtocol.read(field),
+                reason = reason,
+                timeoutMs = 900,
+                purgeBefore = false,
+            )
+            observations += AutoCalReadObservation(
+                field = field,
+                status = reply.status.takeIf { it >= 0 },
+                payload = reply.payload.takeIf { it.isNotEmpty() },
+                capturedAtMs = System.currentTimeMillis(),
+                error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
+            )
+            return reply.ok
+        }
+
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF, "AutoCal aquisição gasolina tempo")) return@unit null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF, "AutoCal aquisição gasolina MAP")) return@unit null
+        if (!read(AutoCalProtocol.NUM_BUF_UPD_PETR, "AutoCal maturidade gasolina")) return@unit null
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV, "AutoCal aquisição GNV anterior tempo")) return@unit null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV, "AutoCal aquisição GNV anterior MAP")) return@unit null
+        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS, "AutoCal aquisição GNV tempo")) return@unit null
+        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, "AutoCal aquisição GNV MAP")) return@unit null
+
+        val gasReply = unit.transaction(
+            request = AutoCalProtocol.read(AutoCalProtocol.NUM_BUF_UPD_GAS),
+            reason = "AutoCal maturidade GNV",
+            timeoutMs = 900,
+            purgeBefore = false,
+        )
+        if (!gasReply.ok) return@unit null
+        val gasDecoded = try {
+            AutoCalProtocol.decode(AutoCalProtocol.NUM_BUF_UPD_GAS, gasReply.status, gasReply.payload)
+        } catch (_: Exception) {
+            return@unit null
+        }
+        val gasProbe = MaturityProbe(
+            counters = gasDecoded.rawValues.copyOf(),
+            payloadHex = gasReply.payload.toHex(),
+            observedAtElapsedMs = SystemClock.elapsedRealtime(),
+            status = gasReply.status,
+            payload = gasReply.payload.copyOf(),
+        )
+        observations += AutoCalReadObservation(
+            field = AutoCalProtocol.NUM_BUF_UPD_GAS,
+            status = gasReply.status,
+            payload = gasReply.payload.copyOf(),
+            capturedAtMs = System.currentTimeMillis(),
+        )
+
+        if (!read(AutoCalProtocol.ACQUIRED_ZONES_PETROL, "AutoCal zonas gasolina")) return@unit null
+        if (!read(AutoCalProtocol.ACQUIRED_ZONES_GAS, "AutoCal zonas GNV")) return@unit null
+
+        val afterEpoch = probe(unit) ?: return@unit null
+        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return@unit null
+
+        val finishedAtMs = System.currentTimeMillis()
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = observations,
+            expectedFields = ACQUISITION_REFRESH_FIELDS,
+            sessionId = "AUTOCAL-ACQ-$expectedSessionId-$finishedAtMs",
+            source = AutoCalSnapshotSource.ECU_READ,
+            startedAtMs = startedAtMs,
+            finishedAtMs = finishedAtMs,
+        )
+        if (snapshot.partial || snapshot.validFieldCount != ACQUISITION_REFRESH_FIELDS.size) return@unit null
+        AcquisitionRefresh(
+            snapshot = snapshot,
+            gasProbe = gasProbe,
+            observedAtElapsedMs = SystemClock.elapsedRealtime(),
+        )
+    }
+
+    private fun refreshReferenceGroup(
+        expectedSessionId: Long,
+        beforeEpoch: AutoCalProtocol.NativeStatus,
+    ): ReferenceRefresh? = serial.unit(
+        reason = "AutoCal referência agrupada",
+        expectedSessionId = expectedSessionId,
+        workClass = Mp48WorkClass.READ_ONLY,
+        telemetryAfter = true,
+        waitTimeoutMs = 6_000L,
+    ) { unit ->
+        val startedAtMs = System.currentTimeMillis()
+        val observations = REFERENCE_REFRESH_FIELDS.map { field ->
+            val reply = unit.transaction(
+                request = AutoCalProtocol.read(field),
+                reason = "AutoCal referência ${field.key}",
+                timeoutMs = 1_200,
+                purgeBefore = false,
+            )
+            AutoCalReadObservation(
+                field = field,
+                status = reply.status.takeIf { it >= 0 },
+                payload = reply.payload.takeIf { it.isNotEmpty() },
+                capturedAtMs = System.currentTimeMillis(),
+                error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
+            )
+        }
+        val afterEpoch = probe(unit) ?: return@unit null
+        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return@unit null
+
+        val finishedAtMs = System.currentTimeMillis()
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = observations,
+            expectedFields = REFERENCE_REFRESH_FIELDS,
+            sessionId = "AUTOCAL-REF-$expectedSessionId-$finishedAtMs",
+            source = AutoCalSnapshotSource.ECU_READ,
+            startedAtMs = startedAtMs,
+            finishedAtMs = finishedAtMs,
+        )
+        if (snapshot.partial ||
+            snapshot.validFieldCount != REFERENCE_REFRESH_FIELDS.size ||
+            !snapshot.temporalCoherent
+        ) return@unit null
+        ReferenceRefresh(
+            snapshot = snapshot,
+            observedAtElapsedMs = SystemClock.elapsedRealtime(),
+            autoMatchCount = beforeEpoch.autoMatchCount,
+        )
+    }
+
+    private fun mergeOperationalFields(
+        patch: AutoCalSnapshot,
+        refreshedAtElapsedMs: Long,
+    ) = mergeRefreshedFields(
+        patch = patch,
+        refreshedAtElapsedMs = refreshedAtElapsedMs,
+        group = "acquisition",
+        refreshTimestampKey = "acquisitionRefreshAtElapsedMs",
+        reviseSnapshotHashOnChange = false,
+    )
+
+    private fun mergeReferenceFields(
+        patch: AutoCalSnapshot,
+        refreshedAtElapsedMs: Long,
+    ) = mergeRefreshedFields(
+        patch = patch,
+        refreshedAtElapsedMs = refreshedAtElapsedMs,
+        group = "reference",
+        refreshTimestampKey = "referenceRefreshAtElapsedMs",
+        reviseSnapshotHashOnChange = true,
+    )
+
+    private fun mergeRefreshedFields(
+        patch: AutoCalSnapshot,
+        refreshedAtElapsedMs: Long,
+        group: String,
+        refreshTimestampKey: String,
+        reviseSnapshotHashOnChange: Boolean,
+    ) {
+        val patchFields = patch.toJson().optJSONArray("fields") ?: return
+        synchronized(lock) {
+            if (!latestSnapshot.optBoolean("available", false)) return
+            val current = JSONObject(latestSnapshot.toString())
+            val currentFields = current.optJSONArray("fields") ?: JSONArray()
+            val existingByKey = linkedMapOf<String, JSONObject>()
+            repeat(currentFields.length()) { index ->
+                val field = currentFields.optJSONObject(index) ?: return@repeat
+                existingByKey[field.optString("key")] = field
+            }
+            val replacements = linkedMapOf<String, JSONObject>()
+            repeat(patchFields.length()) { index ->
+                val field = patchFields.optJSONObject(index) ?: return@repeat
+                replacements[field.optString("key")] = JSONObject(field.toString())
+            }
+            val changed = replacements.any { (key, replacement) ->
+                val previous = existingByKey[key]
+                previous == null ||
+                    previous.optString("status") != replacement.optString("status") ||
+                    previous.optString("rawPayloadHex") != replacement.optString("rawPayloadHex")
+            }
+
+            val merged = JSONArray()
+            val seen = mutableSetOf<String>()
+            repeat(currentFields.length()) { index ->
+                val existing = currentFields.optJSONObject(index) ?: return@repeat
+                val key = existing.optString("key")
+                val replacement = replacements[key]
+                merged.put(if (replacement != null) JSONObject(replacement.toString()) else JSONObject(existing.toString()))
+                seen += key
+            }
+            replacements.forEach { (key, field) ->
+                if (key !in seen) merged.put(JSONObject(field.toString()))
+            }
+            current
+                .put("fields", merged)
+                .put("operationalUpdatedAtElapsedMs", refreshedAtElapsedMs)
+                .put(refreshTimestampKey, refreshedAtElapsedMs)
+                .put("incrementalRefreshGroup", group)
+                .put("operationalRefreshOnly", true)
+            if (reviseSnapshotHashOnChange && changed) {
+                current.put(
+                    "snapshotHash",
+                    incrementalReferenceRevision(
+                        previousHash = current.optString("snapshotHash", ""),
+                        replacements = replacements,
+                    ),
+                )
+            }
+            latestSnapshot = current
+        }
+    }
+
+    private fun stableMulAct(
+        snapshot: AutoCalSnapshot,
+        sessionId: Long,
+        autoMatchCount: Int,
+        capturedAtElapsedMs: Long,
+    ): NativeAutoMatchEvidenceBracket.StableVector? {
+        val field = snapshot.field(AutoCalProtocol.MUL_ACT)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?: return null
+        return NativeAutoMatchEvidenceBracket.stable(
+            sessionId = sessionId,
+            autoMatchCount = autoMatchCount,
+            capturedAtElapsedMs = capturedAtElapsedMs,
+            rawValues = field.rawValues,
+            rawPayloadHex = field.rawPayloadHex,
+        )
+    }
+
+    private fun incrementalReferenceRevision(
+        previousHash: String,
+        replacements: Map<String, JSONObject>,
+    ): String {
+        val canonical = replacements.toSortedMap().entries.joinToString("|") { (key, field) ->
+            "$key:${field.optString("status")}:${field.optString("rawPayloadHex")}"
+        }
+        return MessageDigest.getInstance("SHA-256")
+            .digest("$previousHash|reference|$canonical".toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+    }
+
+    private fun readFullSnapshot(
+        expectedSessionId: Long,
+        probe: AutoCalProtocol.NativeStatus,
+        countIncreased: Boolean,
+        autoMatchCounterEvent: NativeAutoMatchCounterTracker.Event?,
+    ) {
         val reason = synchronized(lock) { snapshotReason }
         val started = System.currentTimeMillis()
         val observations = AutoCalProtocol.READ_ONLY_FIELDS.distinctBy { it.identity }.map { field ->
@@ -349,59 +699,213 @@ class NativeAutoCalMonitor(
                 expectedSessionId = expectedSessionId,
                 workClass = Mp48WorkClass.READ_ONLY,
             )
-            AutoCalReadObservation(field, reply.status.takeIf { it >= 0 }, reply.payload.takeIf { it.isNotEmpty() }, System.currentTimeMillis(), if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" })
+            AutoCalReadObservation(
+                field = field,
+                status = reply.status.takeIf { it >= 0 },
+                payload = reply.payload.takeIf { it.isNotEmpty() },
+                capturedAtMs = System.currentTimeMillis(),
+                error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
+            )
         }
-        val snapshot = AutoCalSnapshotBuilder.build(observations, AutoCalProtocol.READ_ONLY_FIELDS, "AUTOCAL-$expectedSessionId-${System.currentTimeMillis()}", AutoCalSnapshotSource.ECU_READ, started, System.currentTimeMillis())
+        val afterEpoch = probe(expectedSessionId) ?: return
+        if (!NativeAutoCalEpochGuard.sameEpoch(probe, afterEpoch)) return
+
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = observations,
+            expectedFields = AutoCalProtocol.READ_ONLY_FIELDS,
+            sessionId = "AUTOCAL-$expectedSessionId-${System.currentTimeMillis()}",
+            source = AutoCalSnapshotSource.ECU_READ,
+            startedAtMs = started,
+            finishedAtMs = System.currentTimeMillis(),
+        )
         val enabled = scalar(snapshot, AutoCalProtocol.AUTO_CAL_ENABLE)
         val maxAutomatch = scalar(snapshot, AutoCalProtocol.MAX_AUTOMATCH)
-        val mulActHash = snapshot.field(AutoCalProtocol.MUL_ACT)?.takeIf { it.status == AutoCalFieldStatus.VALID }?.rawPayloadHex.orEmpty()
+        val mulActHash = snapshot.field(AutoCalProtocol.MUL_ACT)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawPayloadHex
+            .orEmpty()
+        val mulActField = snapshot.field(AutoCalProtocol.MUL_ACT)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+        val afterMulActRaw = mulActField?.rawValues?.copyOf()
+        val afterMulActCapturedAtElapsedMs = SystemClock.elapsedRealtime()
+        val beforeStableMulAct = synchronized(lock) { lastStableMulAct }
+        val autoMatchEvidence = autoMatchCounterEvent?.let { event ->
+            NativeAutoMatchEvidenceBracket.evaluate(
+                event = event,
+                before = beforeStableMulAct,
+                afterSessionId = expectedSessionId,
+                afterAutoMatchCount = probe.autoMatchCount,
+                afterCapturedAtElapsedMs = afterMulActCapturedAtElapsedMs,
+                afterRaw = afterMulActRaw,
+                afterPayloadHex = mulActField?.rawPayloadHex.orEmpty(),
+            )
+        }
         val decorated = snapshot.toJson()
             .put("available", true)
             .put("nativeAutoCal", true)
-            .put("nativeStatus", JSONObject().put("nativeFlag13", probe.nativeFlag13).put("autoMatchCount", probe.autoMatchCount))
+            .put("nativeStatus", JSONObject()
+                .put("nativeFlag13", probe.nativeFlag13)
+                .put("autoMatchCount", probe.autoMatchCount))
             .put("autoCalEnabled", enabled ?: JSONObject.NULL)
             .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
             .put("frozen", enabled == 0)
             .put("freshAcquisition", enabled == 1)
             .put("snapshotReason", reason)
+            .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent?.toJson() ?: JSONObject.NULL)
+            .put("nativeAutoMatchCounterEventObserved", autoMatchCounterEvent != null)
+            .put("nativeAutoMatchEvidence", autoMatchEvidence?.toJson() ?: JSONObject.NULL)
             .put("appAutomaticWrite", false)
-            .put("manualAutoMatchExposed", false)
+            .put("manualAutoMatchExposed", true)
 
         val acquisition = AutoCalAcquisition.fromSnapshot(decorated)
         val thresholds = acquisition.optJSONObject("thresholds") ?: JSONObject()
-        dualMaturityObserver.configure(
-            enabled = enabled == 1,
-            petrolLowThreshold = thresholds.nullableInt("petrolLow"),
-            petrolNormalThreshold = thresholds.nullableInt("petrolNormal"),
-            cngLowThreshold = thresholds.nullableInt("gasLow"),
-            cngNormalThreshold = thresholds.nullableInt("gasNormal"),
-        )
+        val newGasLowThreshold = thresholds.nullableInt("gasLow")
+        val newGasNormalThreshold = thresholds.nullableInt("gasNormal")
         val pending = synchronized(lock) { pendingMaturity.toList() }
-        val maturityEvents = if (enabled == 1) {
-            NativeAutoCalMaturityEventProjector.project(
-                pending = pending,
-                acquisition = acquisition,
-                telemetry = serial,
-                policy = LearningToleranceSettings.current,
-                sessionId = expectedSessionId,
-                snapshotId = decorated.optString("sessionId"),
-                snapshotHash = snapshot.snapshotHash,
-            )
-        } else org.json.JSONArray()
-        decorated.put("nativeMaturityEvents", maturityEvents).put("nativeMaturityEventCount", maturityEvents.length())
+        val maturityEvents = JSONArray()
+        if (enabled == 1) {
+            pending.forEach { pendingEvent ->
+                val transition = pendingEvent.transition
+                val point = acquisition.findCurrentGasPoint(transition.bandIndex)
+                val nativePetrolMs = point?.nullableDouble("timeMs")
+                val nativeMapBar = point?.nullableDouble("mapBar")
+                val frames = serial.recentTelemetryFrames(
+                    fromElapsedMs = transition.previousObservedAtElapsedMs,
+                    toElapsedMs = transition.observedAtElapsedMs,
+                )
+                val correlation = NativeAutoCalAnchorCorrelator.correlate(
+                    frames = frames,
+                    nativePetrolMs = nativePetrolMs,
+                    nativeMapBar = nativeMapBar,
+                    observedAtElapsedMs = transition.observedAtElapsedMs,
+                    policy = LearningToleranceSettings.current,
+                    sessionId = expectedSessionId,
+                )
+                maturityTracker.recordCorrelationResult(
+                    bandIndex = transition.bandIndex,
+                    correlated = correlation.state == "CORRELATED",
+                )
+                maturityEvents.put(
+                    JSONObject()
+                        .put("eventType", "NATIVE_BAND_MATURED")
+                        .put("source", SOURCE_NATIVE_AUTOCAL)
+                        .put("sessionId", expectedSessionId)
+                        .put("snapshotId", decorated.optString("sessionId"))
+                        .put("snapshotHash", snapshot.snapshotHash)
+                        .put("fuel", "GNV")
+                        .put("bandIndex", transition.bandIndex)
+                        .put("zone", transition.zone)
+                        .put("previousCounter", transition.previousCounter)
+                        .put("counter", transition.counter)
+                        .put("threshold", transition.threshold)
+                        .put("previousObservedAtElapsedMs", transition.previousObservedAtElapsedMs)
+                        .put("observedAtElapsedMs", transition.observedAtElapsedMs)
+                        .put("correlationRetry", transition.correlationRetry)
+                        .put("counterPayloadHex", pendingEvent.counterPayloadHex)
+                        .put("timeRaw", point?.opt("timeRaw") ?: JSONObject.NULL)
+                        .put("timeMs", nativePetrolMs ?: JSONObject.NULL)
+                        .put("mapRaw", point?.opt("mapRaw") ?: JSONObject.NULL)
+                        .put("mapBar", nativeMapBar ?: JSONObject.NULL)
+                        .put("nativeState", point?.optString("state") ?: "VALIDO_POR_CONTADOR")
+                        .put("nativeValidity", true)
+                        .put("correlationState", correlation.state)
+                        .put("correlationReason", correlation.reason)
+                        .put("correlationConfidence", correlation.confidence)
+                        .put("rpmConfidence", correlation.rpmConfidence)
+                        .put("rpm", correlation.rpm ?: JSONObject.NULL)
+                        .put("correlatedMapBar", correlation.mapBar ?: JSONObject.NULL)
+                        .put("correlatedPetrolMs", correlation.petrolMs ?: JSONObject.NULL)
+                        .put("correlatedGasMs", correlation.gasMsDiagnostic ?: JSONObject.NULL)
+                        .put("correlatedFuel", correlation.fuel ?: JSONObject.NULL)
+                        .put("correlatedFrameElapsedMs", correlation.correlatedFrameElapsedMs ?: JSONObject.NULL)
+                        .put("correlationLagMs", correlation.lagMs ?: JSONObject.NULL)
+                        .put("firstTelemetrySequence", correlation.firstSequence ?: JSONObject.NULL)
+                        .put("lastTelemetrySequence", correlation.lastSequence ?: JSONObject.NULL)
+                        .put("matchedTelemetryFrames", correlation.matchedFrames)
+                        .put("rawOnly", correlation.state != "CORRELATED")
+                        .put("appWritePerformed", false)
+                        .put("appAutomaticWrite", false),
+                )
+            }
+        }
+        decorated
+            .put("nativeMaturityEvents", maturityEvents)
+            .put("nativeMaturityEventCount", maturityEvents.length())
 
-        if (pending.isEmpty() || enabled != 1) {
-            dualMaturityObserver.baseline(
-                petrolCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR),
-                cngCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
-                observedAtElapsedMs = SystemClock.elapsedRealtime(),
-            )
+
+        if (autoMatchCounterEvent != null) {
+            val epochEvidence = autoMatchEvidence?.toJson() ?: JSONObject()
+                .put("state", NativeAutoMatchEvidenceBracket.State.INCONCLUSIVE.name)
+                .put("reason", "EVIDENCE_NOT_AVAILABLE")
+                .put("appWritePerformed", false)
+                .put("appAutomaticWrite", false)
+                .put("nativeFirmwareFormulaInferred", false)
+            val epoch = JSONObject()
+                .put("eventType", "NATIVE_AUTOMATCH_EPOCH")
+                .put("source", SOURCE_NATIVE_AUTOCAL)
+                .put("sessionId", expectedSessionId)
+                .put("snapshotId", decorated.optString("sessionId"))
+                .put("snapshotHash", snapshot.snapshotHash)
+                .put("observedAtElapsedMs", autoMatchCounterEvent.observedAtElapsedMs)
+                .put("beforeCount", autoMatchCounterEvent.beforeCount)
+                .put("afterCount", autoMatchCounterEvent.afterCount)
+                .put("counterDelta", autoMatchCounterEvent.delta)
+                .put("evidence", epochEvidence)
+                .put("acquisition", acquisition)
+                .put("nativeStatus", JSONObject()
+                    .put("nativeFlag13", probe.nativeFlag13)
+                    .put("autoMatchCount", probe.autoMatchCount))
+                .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
+                .put("appWritePerformed", false)
+                .put("appAutomaticWrite", false)
+                .put("nativeFirmwareFormulaInferred", false)
+            try { onNativeAutoMatchObserved(epoch) } catch (_: Exception) {}
         }
 
-        val previousMul = synchronized(lock) { lastMulActHash }
+        val currentCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS)
+        if (pending.isEmpty() || enabled != 1) {
+            currentCounters?.let {
+                maturityTracker.baseline(
+                    counters = it,
+                    observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                    gasLowThreshold = newGasLowThreshold,
+                    gasNormalThreshold = newGasNormalThreshold,
+                    enabled = enabled == 1,
+                )
+            }
+        }
+        decorated.put("nativeCorrelationState", correlationStateJson())
+
+        val stableAfter = NativeAutoMatchEvidenceBracket.stable(
+            sessionId = expectedSessionId,
+            autoMatchCount = probe.autoMatchCount,
+            capturedAtElapsedMs = afterMulActCapturedAtElapsedMs,
+            rawValues = afterMulActRaw,
+            rawPayloadHex = mulActField?.rawPayloadHex.orEmpty(),
+        )
         synchronized(lock) {
+            acquisitionEpoch.acquisitionGroup(
+                expectedSessionId,
+                probe.autoMatchCount,
+                vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR),
+                vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
+            )
+            if (listOf(
+                    AutoCalProtocol.PETR_INJ_TBP,
+                    AutoCalProtocol.PETR_MNFLD_PRESS_RV,
+                    AutoCalProtocol.GAS_MNFLD_PRESS_RV,
+                ).all { snapshot.field(it)?.status == AutoCalFieldStatus.VALID }
+            ) {
+                acquisitionEpoch.referenceGroup(expectedSessionId, probe.autoMatchCount)
+            }
+            decorated.put("liveAcquisitionEpoch", acquisitionEpochJson())
             latestSnapshot = decorated
+            refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
+            if (stableAfter != null) lastStableMulAct = stableAfter
+            gasLowThreshold = newGasLowThreshold
+            gasNormalThreshold = newGasNormalThreshold
+            autoCalEnabled = enabled
             pendingMaturity = emptyList()
             snapshotRequested = false
             snapshotReason = ""
@@ -409,22 +913,29 @@ class NativeAutoCalMonitor(
                 .put("sessionId", expectedSessionId)
                 .put("nativeFlag13", probe.nativeFlag13)
                 .put("autoMatchCount", probe.autoMatchCount)
-                .put("latestAutoMatchEvent", latestAutoMatchEvent?.let { JSONObject(it.toString()) } ?: JSONObject.NULL)
                 .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
                 .put("nativeMaturityEventCount", maturityEvents.length())
+                .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent != null)
+                .put("nativeAutoMatchEvidenceState", autoMatchEvidence?.state?.name ?: JSONObject.NULL)
+                .put("nativeAutoMatchChangedPoints", autoMatchEvidence?.changedPointCount ?: 0)
                 .put("snapshotHash", snapshot.snapshotHash)
         }
-        if (enabled == 1) try { onFreshSnapshot(decorated) } catch (_: Exception) {}
-        if (countIncreased && previousMul.isNotBlank() && mulActHash.isNotBlank() && previousMul != mulActHash) {
+
+        if (enabled == 1) {
+            try { onFreshSnapshot(decorated) } catch (_: Exception) {}
+        }
+        if (countIncreased &&
+            autoMatchEvidence?.state == NativeAutoMatchEvidenceBracket.State.FACTOR_CHANGE_CONFIRMED
+        ) {
             try {
                 onNativeCalibrationObserved(
-                    JSONObject()
+                    autoMatchEvidence.toJson()
                         .put("source", SOURCE_NATIVE_AUTOCAL)
                         .put("calibrationType", "K_FACTOR")
                         .put("cause", "ECU_AUTOMATCH_COUNT_CHANGED")
-                        .put("oldHash", previousMul)
-                        .put("newHash", mulActHash)
+                        .put("oldHash", beforeStableMulAct?.rawPayloadHex ?: JSONObject.NULL)
+                        .put("newHash", mulActField?.rawPayloadHex ?: JSONObject.NULL)
                         .put("nativeAutoMatchCount", probe.autoMatchCount)
                         .put("maxAutomatch", maxAutomatch ?: JSONObject.NULL)
                         .put("nativeFlag13", probe.nativeFlag13)
@@ -433,80 +944,125 @@ class NativeAutoCalMonitor(
                         .put("ecuNativeObserved", true)
                         .put("appWritePerformed", false)
                         .put("ecuNativeAutomatic", true)
-                        .put("appAutomaticWrite", false),
+                        .put("appAutomaticWrite", false)
+                        .put("pointDeltas", autoMatchEvidence.toJson().getJSONArray("pointDeltas")),
                 )
             } catch (_: Exception) {}
         }
         onStateChanged()
     }
 
-    private fun resolvePendingTelemetryGap() {
-        val now = SystemClock.elapsedRealtime()
-        probeMetrics.resolveTelemetryGap(serial.recentTelemetryFrames((now - PROBE_METRICS_WINDOW_MS).coerceAtLeast(0L), now).map { it.elapsedMs })
+    private fun acquisitionEpochJson(): JSONObject = acquisitionEpoch.view().let { epoch ->
+        JSONObject()
+            .put("usbSessionId", epoch.usbSessionId)
+            .put("nativeAutoMatchCount", epoch.nativeAutoMatchCount ?: JSONObject.NULL)
+            .put("petrolGeneration", epoch.petrolGeneration)
+            .put("gasGeneration", epoch.gasGeneration)
+            .put("petrolPending", epoch.petrolPending)
+            .put("gasPending", epoch.gasPending)
+            .put("referencePending", epoch.referencePending)
+            .put("petrolReferencePending", epoch.petrolReferencePending)
+            .put("gasReferencePending", epoch.gasReferencePending)
+            .put("petrolSamples", epoch.petrolSamples)
+            .put("gasSamples", epoch.gasSamples)
+            .put("comparisonAllowed", epoch.comparisonAllowed)
+            .put("reason", epoch.reason)
+            .put("appWritePerformed", false)
     }
 
-    private fun latestTelemetryElapsedMs(now: Long): Long? = serial.recentTelemetryFrames((now - PROBE_METRICS_WINDOW_MS).coerceAtLeast(0L), now).lastOrNull()?.elapsedMs
+    private fun correlationStateJson(): JSONObject = JSONObject()
+        .put("correlatedBands", intArrayJson(maturityTracker.correlatedBandIndexes()))
+        .put("retryableBands", intArrayJson(maturityTracker.retryableCorrelationBandIndexes()))
 
-    private fun recordProbeCycle(cycleStarted: Long, requestBytes: Int, responseBytes: Int, serialElapsedMs: Long, success: Boolean, fallbackUsed: Boolean, telemetryBefore: Long?) {
-        probeMetrics.recordCycle(cycleStarted, SystemClock.elapsedRealtime(), requestBytes, responseBytes, serialElapsedMs, success, fallbackUsed, telemetryBefore)
+    private fun intArrayJson(values: IntArray): JSONArray = JSONArray().apply {
+        values.forEach { put(it) }
     }
 
-    private fun scheduleNextStatusProbe(observedAtElapsedMs: Long) {
-        val recommended = probeCadencePolicy.recommend(probeMetrics.snapshot()).recommendedCadenceMs.coerceAtLeast(1L)
-        synchronized(lock) {
-            val phaseBase = nextStatusProbeDueAtElapsedMs.takeIf { it > 0L } ?: observedAtElapsedMs
-            val overdue = (observedAtElapsedMs - phaseBase).coerceAtLeast(0L)
-            val steps = overdue / recommended + 1L
-            nextStatusProbeDueAtElapsedMs = phaseBase + steps * recommended
+    private fun scalar(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): Int? =
+        snapshot.field(field)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawValues
+            ?.singleOrNull()
+
+    private fun vector(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): IntArray? =
+        snapshot.field(field)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawValues
+            ?.copyOf()
+
+    private fun JSONObject.findCurrentGasPoint(bandIndex: Int): JSONObject? {
+        val points = optJSONArray("points") ?: return null
+        repeat(points.length()) { index ->
+            val point = points.optJSONObject(index) ?: return@repeat
+            if (point.optString("fuel") == "GNV" && !point.optBoolean("previous", false) &&
+                point.optInt("index", -1) == bandIndex
+            ) return point
         }
+        return null
     }
 
-    private fun responseByteCount(reply: UsbProtocolReply): Int = reply.echo.size + reply.rawResponse.size
+    private fun JSONObject.nullableInt(key: String): Int? =
+        if (has(key) && !isNull(key)) optInt(key) else null
 
-    private fun autoMatchEventJson(event: NativeAutoMatchCounterTracker.Event): JSONObject = JSONObject()
-        .put("eventType", event.eventType).put("sessionId", event.sessionId).put("observedAtElapsedMs", event.observedAtElapsedMs)
-        .put("beforeCount", event.beforeCount).put("afterCount", event.afterCount).put("delta", event.delta)
-        .put("mulActChangeConfirmed", event.mulActChangeConfirmed).put("appWritePerformed", false).put("appAutomaticWrite", false)
+    private fun JSONObject.nullableDouble(key: String): Double? =
+        if (has(key) && !isNull(key)) optDouble(key).takeIf { it.isFinite() } else null
 
-    private fun probeMetricsJson(): JSONObject {
-        val metrics = probeMetrics.snapshot()
-        val cadence = probeCadencePolicy.recommend(metrics)
-        return JSONObject()
-            .put("schema", "autocal-probe-cost-v2").put("cycles", metrics.cycles).put("successfulCycles", metrics.successfulCycles)
-            .put("fallbackCycles", metrics.fallbackCycles).put("materialChanges", metrics.materialChanges).put("requestBytes", metrics.requestBytes)
-            .put("responseBytes", metrics.responseBytes).put("serialElapsedMs", metrics.serialElapsedMs).put("wallElapsedMs", metrics.wallElapsedMs)
-            .put("lastWallElapsedMs", metrics.lastWallElapsedMs).put("maxWallElapsedMs", metrics.maxWallElapsedMs).put("observationSpanMs", metrics.observationSpanMs)
-            .put("averageWallElapsedMs", metrics.averageWallElapsedMs ?: JSONObject.NULL).put("lastCadenceMs", metrics.lastCadenceMs ?: JSONObject.NULL)
-            .put("lastTelemetryGapMs", metrics.lastTelemetryGapMs ?: JSONObject.NULL).put("maxTelemetryGapMs", metrics.maxTelemetryGapMs ?: JSONObject.NULL)
-            .put("pendingTelemetryGap", metrics.pendingTelemetryGap).put("informationYield", metrics.informationYield).put("lastCostShare", metrics.lastCostShare ?: JSONObject.NULL)
-            .put("recommendedCadenceMs", cadence.recommendedCadenceMs).put("averageProbeCostMs", cadence.averageProbeCostMs)
-            .put("posteriorEventRatePerSecond", cadence.posteriorEventRatePerSecond).put("costRatioToPrior", cadence.costRatioToPrior)
-            .put("eventRateRatioToPrior", cadence.eventRateRatioToPrior).put("priorMeanCadenceMs", cadence.priorMeanCadenceMs)
-            .put("priorProvenance", cadence.priorProvenance).put("nextStatusProbeDueAtElapsedMs", nextStatusProbeDueAtElapsedMs.takeIf { it > 0L } ?: JSONObject.NULL)
-            .put("measurementAvailable", metrics.cycles > 0L).put("policyApplied", true).put("cadenceAuthority", "COST_INFORMATION_POLICY")
-            .put("opportunityClock", "SERVICE_HEALTH_TICK")
+    private fun ByteArray.toHex(): String = joinToString(separator = "") { byte ->
+        "%02X".format(byte.toInt() and 0xFF)
     }
 
-    private fun scalar(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): Int? = snapshot.field(field)?.takeIf { it.status == AutoCalFieldStatus.VALID }?.rawValues?.singleOrNull()
-    private fun vector(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): IntArray? = snapshot.field(field)?.takeIf { it.status == AutoCalFieldStatus.VALID }?.rawValues?.copyOf()
-    private fun JSONObject.nullableInt(key: String): Int? = if (has(key) && !isNull(key)) optInt(key) else null
+    private fun NativeAutoMatchCounterTracker.Event.toJson(): JSONObject = JSONObject()
+        .put("eventType", eventType)
+        .put("source", SOURCE_NATIVE_AUTOCAL)
+        .put("sessionId", sessionId)
+        .put("observedAtElapsedMs", observedAtElapsedMs)
+        .put("beforeCount", beforeCount)
+        .put("afterCount", afterCount)
+        .put("delta", delta)
+        .put("mulActChangeConfirmed", mulActChangeConfirmed)
+        .put("appWritePerformed", false)
+        .put("appAutomaticWrite", false)
 
     private fun mulActRawFromSnapshot(snapshot: JSONObject?): String {
         val fields = snapshot?.optJSONArray("fields") ?: return ""
         repeat(fields.length()) { index ->
             val field = fields.optJSONObject(index) ?: return@repeat
-            if (field.optString("key") == AutoCalProtocol.MUL_ACT.key && field.optString("status") == AutoCalFieldStatus.VALID.name) return field.optString("rawPayloadHex")
+            if (field.optString("key") == AutoCalProtocol.MUL_ACT.key && field.optString("status") == AutoCalFieldStatus.VALID.name) {
+                return field.optString("rawPayloadHex")
+            }
         }
         return ""
     }
 
     private fun baseState(name: String, message: String): JSONObject = JSONObject()
-        .put("state", name).put("message", message).put("updatedAt", System.currentTimeMillis())
-        .put("appAutomaticWrite", false).put("nativeAutoMatchInsideEcu", true)
+        .put("state", name)
+        .put("message", message)
+        .put("updatedAt", System.currentTimeMillis())
+        .put("appAutomaticWrite", false)
+        .put("nativeAutoMatchInsideEcu", true)
 
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
         private const val SESSION_SETTLE_MS = 8_000L
-        private const val PROBE_METRICS_WINDOW_MS = 10_000L
+        private val ACQUISITION_REFRESH_FIELDS = listOf(
+            // Unidade operacional consumida por AutoCalAcquisition: dados + MAP + contadores.
+            AutoCalProtocol.PETR_INJ_TBUF,
+            AutoCalProtocol.MNFLD_PRESS_BUF,
+            AutoCalProtocol.NUM_BUF_UPD_PETR,
+            AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV,
+            AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV,
+            AutoCalProtocol.PETR_INJ_TBUF_GAS,
+            AutoCalProtocol.MNFLD_PRESS_BUF_GAS,
+            AutoCalProtocol.NUM_BUF_UPD_GAS,
+            AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+            AutoCalProtocol.ACQUIRED_ZONES_GAS,
+        )
+        private val REFERENCE_REFRESH_FIELDS = listOf(
+            AutoCalProtocol.PETR_INJ_TBP,
+            AutoCalProtocol.MNFLD_PRESS_THD,
+            AutoCalProtocol.MUL_ACT,
+            AutoCalProtocol.PETR_MNFLD_PRESS_RV,
+            AutoCalProtocol.GAS_MNFLD_PRESS_RV,
+        )
     }
 }

@@ -39,6 +39,7 @@
       this.tools = document.getElementById('toolsDrawer');
       this.logLevel = 'ALL';
       this.logCategory = 'ALL';
+      this.sessionSettingsFeedback = '';
       this.ensureToolsExpansion();
       this.bind();
     }
@@ -61,6 +62,7 @@
       document.querySelectorAll('[data-close-drawer]').forEach(button => button.addEventListener('click', () => {
         this.store.patch({ suggestionsOpen: false, toolsOpen: false });
       }));
+      document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
       document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
       document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
       document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
@@ -78,20 +80,13 @@
       if (target.matches('[data-session-start]')) {
         const result = this.api.startSession('registro manual pela interface');
         this.notifyResult(result, 'Gravação de diagnóstico iniciada.');
+        this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-stop]')) {
         const result = this.api.stopSession('parada manual pela interface');
         this.notifyResult(result, 'Gravação de diagnóstico encerrada.');
+        this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
-      } else if (target.matches('[data-power-battery-request]')) {
-        this.api.requestBatteryOptimizationExemption();
-        this.renderTools(this.store.get());
-      } else if (target.matches('[data-power-overlay-request]')) {
-        this.api.requestOverlayPermissionAndEnable();
-        this.renderTools(this.store.get());
-      } else if (target.matches('[data-power-overlay-enable]') || target.matches('[data-power-overlay-disable]')) {
-        this.api.setTelemetryOverlayEnabled(target.matches('[data-power-overlay-enable]'));
-        this.renderTools(this.store.get());
       } else if (target.matches('[data-export-session]')) {
         this.api.exportSession(target.dataset.exportSession || '');
       }
@@ -116,26 +111,38 @@
       }
     }
 
+    refreshSessionStatus(result) {
+      if (!result || typeof result !== 'object' || result.ok === false) return;
+      this.store.patch({ sessionStatus: result });
+      this.renderTools(this.store.get());
+    }
+
     applySessionSettings() {
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
       const settings = {
-        telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 500),
-        maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 64),
-        keepSessions: Number(host.querySelector('[data-session-keep]')?.value || 10),
+        telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 250),
+        maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 256),
+        keepSessions: Math.max(20, Number(host.querySelector('[data-session-keep]')?.value || 20)),
         autoStartOnUsb: host.querySelector('[data-session-autostart]')?.checked === true,
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
       const result = this.api.setSessionSettings(settings);
+      const applied = result?.settings || settings;
+      if (result?.ok === false) {
+        this.sessionSettingsFeedback = result.error || 'Política não aplicada.';
+      } else {
+        this.sessionSettingsFeedback = `Aplicado: ${applied.telemetryEveryMs || settings.telemetryEveryMs} ms · ${applied.maxSessionMb || settings.maxSessionMb} MB · ${applied.keepSessions || settings.keepSessions} sessões`;
+      }
       this.notifyResult(result, 'Política de logs atualizada.');
+      this.refreshSessionStatus(result);
     }
 
     render(state) {
       if (this.suggestions) this.suggestions.classList.toggle('open', state.suggestionsOpen === true);
       if (this.tools) this.tools.classList.toggle('open', state.toolsOpen === true);
       document.body.classList.toggle('drawer-open', state.suggestionsOpen === true || state.toolsOpen === true);
-      // A lista #suggestionList pertence à fila persistente (app.js renderPersistentSuggestions).
-      // Dois donos reescrevendo a mesma lista a cada 2 s fazia o toque sumir e a aba "travar".
+      this.renderSuggestions(state);
       if (state.toolsOpen) this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
       if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'APK/WebView · ponte nativa ativa';
@@ -170,26 +177,18 @@
       });
     }
 
-    /** Bateria e telemetria flutuante (antes na tela OBD, removida na WU-006). */
-    powerControls() {
-      const battery = this.api.batteryOptimizationStatus?.() || {};
-      const overlay = this.api.overlayStatus?.() || {};
-      const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
-        ? '<button type="button" class="secondary" data-power-battery-request>Permitir</button>' : '';
-      const overlayAction = overlay.visible === true
-        ? '<button type="button" class="quiet-button" data-power-overlay-disable>Desativar</button>'
-        : overlay.permissionGranted === true
-          ? '<button type="button" class="secondary" data-power-overlay-enable>Ativar</button>'
-          : '<button type="button" class="secondary" data-power-overlay-request>Autorizar</button>';
-      return `<div class="power-controls">
-        <div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'Android pode limitar a sessão'}</b>${batteryAction}</div>
-        <div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b>${overlayAction}</div>
-      </div>`;
+    preserveSessionSettingsInteraction(host) {
+      const panel = host?.querySelector('.diagnostic-settings');
+      if (!panel) return false;
+      const active = document.activeElement;
+      return !!(active && panel.contains(active) && ['INPUT', 'SELECT'].includes(active.tagName));
     }
 
     renderTools(state) {
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
+      if (this.preserveSessionSettingsInteraction(host)) return;
+      const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
@@ -220,8 +219,7 @@
             <span>Telemetria <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
             <span>Foreground <b>connectedDevice</b></span>
           </div>
-          <p>Ao apagar a tela, a WebView para de redesenhar, mas o serviço continua responsável por USB, AutoCal e aprendizado. A exclusão da otimização de bateria só é pedida quando você toca em Permitir.</p>
-          ${this.powerControls()}
+          <p>Ao apagar a tela, a WebView para de redesenhar, mas o ForegroundService continua responsável por USB, OBD e aprendizado. O aplicativo não pede exclusão da otimização de bateria automaticamente.</p>
           <small class="background-validation-note">Validação real ainda exige teste com tela apagada e política de bateria do aparelho.</small>
         </section>
 
@@ -253,29 +251,51 @@
           </div>
         </section>
 
-        <details class="diagnostic-settings">
+        <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
           <summary>Retenção e tamanho dos logs</summary>
           <div class="diagnostic-settings-grid">
             <label><span>Telemetria salva</span><select data-session-telemetry>
-              ${[200, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
+              ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
             </select></label>
-            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="4" max="1024" step="4" value="${Number(settings.maxSessionMb || status.limitMb || 64)}"><small>MB</small></label>
-            <label><span>Manter sessões</span><input data-session-keep type="number" min="1" max="100" step="1" value="${Number(settings.keepSessions || 10)}"></label>
+            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
+            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
             <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar MP48</span></label>
             <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
           </div>
           <p>USB bruto aumenta bastante o tamanho. Use quando estiver investigando protocolo ou falha de comunicação.</p>
           <button type="button" class="secondary wide" data-session-settings>Aplicar política de logs</button>
+          ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
         </details>
 
         <section class="recorded-sessions">
           <header><div><small>SESSÕES</small><h3>${sessions.length} armazenada${sessions.length === 1 ? '' : 's'}</h3></div></header>
           <div class="recorded-session-list">
-            ${sessions.length ? sessions.slice(0, 8).map(item => `
-              <article>
-                <div><b>${escapeHtml(item.reason || 'Sessão')}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · ativa' : ''}</span></div>
+            ${sessions.length ? sessions.slice(0, 8).map(item => {
+              const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
+              const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
+              const pctCng = (finite(item.cngTicks) || 0);
+              const pctPet = (finite(item.petrolTicks) || 0);
+              const totalTicks = pctCng + pctPet;
+              const gnvPercent = totalTicks > 0 ? Math.round((pctCng / totalTicks) * 100) : 0;
+              const gasPercent = totalTicks > 0 ? 100 - gnvPercent : 0;
+              return `
+              <article class="recorded-session-item">
+                <div class="recorded-session-header">
+                  <b>${escapeHtml(item.reason || 'Sessão')}</b>
+                  <span class="session-datetime">${readableDate}</span>
+                </div>
+                <div class="recorded-session-meta">
+                  <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · ativa' : ''}</span>
+                </div>
+                ${totalTicks > 0 ? `
+                <div class="session-fuel-bar" title="GNV: ${gnvPercent}% | Gasolina: ${gasPercent}%">
+                  <div class="fuel-segment cng" style="width: ${gnvPercent}%;"></div>
+                  <div class="fuel-segment petrol" style="width: ${gasPercent}%;"></div>
+                </div>
+                ` : ''}
                 <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
-              </article>`).join('') : '<p class="empty-copy">Nenhuma sessão gravada.</p>'}
+              </article>`;
+            }).join('') : '<p class="empty-copy">Nenhuma sessão gravada.</p>'}
           </div>
         </section>
 

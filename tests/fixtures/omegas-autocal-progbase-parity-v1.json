@@ -1,0 +1,270 @@
+{
+  "schema": "omegas.autocal.progbase-parity.v1",
+  "baseline": {
+    "branch": "OmegasVerde",
+    "source_sha": "7e6e37ae42527621e20fdada0e55b7c1f03c97d2",
+    "progbase_matrix": "tests/fixtures/progbase-autocal-consumer-map-v1.json"
+  },
+  "classifications": [
+    {
+      "behavior": "RunPoint/AGORA XY",
+      "classification": "MATCH",
+      "dimensions": {
+        "source": "MATCH",
+        "independence_from_reference_snapshot": "MATCH",
+        "presentation_cadence": "MATCH_AFTER_FIX"
+      },
+      "progbase": "48 01 49 -> live cache -> TimerDati 75ms -> RunPoint",
+      "omegas": "TelemetryStateStore latest-only -> PresentSnapshot -> Store -> single scheduler uses 200ms base cadence and switches to 75ms only on AutoCal -> renderLiveCursor; cached HMI refresh matches ProgBase TimerDati without adding serial reads.",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/telemetry/TelemetryStateStore.kt",
+        "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
+        "app/src/main/assets/ui/app.js",
+        "app/src/main/assets/ui/core/scheduler.js",
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "action": "PRESERVE; do not route XY through AutoCal snapshots"
+    },
+    {
+      "behavior": "LEVELS RAW routing",
+      "classification": "INTENTIONAL_IMPROVEMENT",
+      "dimensions": {
+        "decode": "MATCH",
+        "backend_projection": "INTENTIONALLY_ABSENT",
+        "autocal_visible_surface": "INTENTIONAL_DIFFERENCE",
+        "dashboard_visible_surface": "MATCH_AFTER_FIX"
+      },
+      "progbase": "payload byte 13 is consumed on the live TimerDati path",
+      "omegas": "Telemetry store preserves live.level_raw and Dashboard/AGORA exposes LEVELS RAW; AutoCal projection and cockpit intentionally do not consume LEVELS.",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "app/src/main/assets/ui/core/scheduler.js"
+      ],
+      "red_id": "AUTOCAL_LEVELS_RAW_FAST_FRESHNESS",
+      "action": "PRESERVE raw decode and Dashboard visibility; keep LEVELS entirely outside AutoCal projection/HMI.",
+      "resolution": {
+        "baseline_sha": "89a06e2eb79220aa3a76beefad01487a95df349b",
+        "red_sha": "9df2a69b7f009fb7c8fb7301a778a27c4bd9fdf7",
+        "red_fast_run": {
+          "number": 115,
+          "id": 35631590908,
+          "conclusion": "failure"
+        },
+        "red_observed": [
+          "projection 91 overrode live 126",
+          "missing live raw reused stale projection 91"
+        ],
+        "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
+        "fix": "AutoCalUxModel.livePoint sources levelRaw from fresh telemetry live.level_raw/live.levelRaw",
+        "final_scope_fix": "AutoCal projection telemetry dependency removed; LEVELS retained only in global telemetry/Dashboard."
+      },
+      "scopeDecision": {
+        "status": "OWNER_PRODUCT_SCOPE",
+        "rationale": "AutoCal primary HMI is limited to acquisition-relevant RPM, Petrol Injection and MAP; LEVELS remains available on Dashboard/AGORA without reinterpretation",
+        "noScientificReinterpretation": true
+      }
+    },
+    {
+      "behavior": "PetrolCurve/GasCurve",
+      "classification": "MATCH",
+      "dimensions": {
+        "field_identity": "MATCH",
+        "physical_scaling": "MATCH",
+        "snapshot_safety": "INTENTIONAL_IMPROVEMENT",
+        "refresh_policy": "MATCH_AFTER_FIX"
+      },
+      "progbase": "PETR_INJ_TBP is common X; PETR_MNFLD_PRESS_RV/GAS_MNFLD_PRESS_RV are renewed by observed slow serial cycles (~4s for RV vectors)",
+      "omegas": "same three physical vectors drive the reference chart; NativeAutoCalRefreshPlanner refreshes the grouped reference family at ~4s through the existing MP48 serial authority and merges it into the current native snapshot.",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
+        "app/src/main/assets/ui/screens/autocal-cockpit.js",
+        "tests/test_native_autocal_contract.py",
+        "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt",
+        "tests/test_autocal_grouped_reference_refresh_contract.py"
+      ],
+      "red_id": "AUTOCAL_REFERENCE_PERIODIC_REFRESH",
+      "action": "PRESERVE grouped ~4s reference refresh on the existing serial scheduler; do not add a second timer/serial owner.",
+      "resolution": {
+        "state": "MATCH_AFTER_FIX",
+        "proof": "tests/test_autocal_grouped_reference_refresh_contract.py"
+      }
+    },
+    {
+      "behavior": "CurrentBand",
+      "classification": "MATCH",
+      "dimensions": {
+        "threshold_source": "MATCH",
+        "live_map": "MATCH",
+        "current_band_projection": "MATCH_AFTER_FIX",
+        "visual_highlight": "MATCH_AFTER_FIX",
+        "maturity_separation": "MATCH"
+      },
+      "progbase": "live MAP is located against MNFLD_PRESS_THD and CurrentBand THorizAreaSeries is updated from RunPoint path",
+      "omegas": "AutoCalUxModel.currentBand consumes physical MNFLD_PRESS_THD plus fresh live MAP; renderLiveCursor updates a dedicated horizontal band layer independently of the 18 maturity regions",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "red_id": "AUTOCAL_CURRENT_BAND_PRESENTATION",
+      "action": "PRESERVE fast live MAP + slow physical threshold geometry; do not merge CurrentBand with maturity/activity semantics",
+      "resolution": {
+        "baseline_sha": "9e0fcfde362805165609903e314f7b2e445a8bec",
+        "red_sha": "b05705e772835ebf0dec7206c3dffb1cbd35026e",
+        "red_fast_run": {
+          "number": 119,
+          "id": 35636142562,
+          "conclusion": "failure"
+        },
+        "red_observed": [
+          "AutoCalUxModel.currentBand undefined",
+          "original boundary rule absent",
+          "dedicated horizontal current-band layer absent"
+        ],
+        "first_fix_sha": "38ccb9ee38d833b911687ab1e1c5e87b23bf6959",
+        "original_rule": "threshold[i] < live MAP <= threshold[i+1], with global min/max excluded",
+        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_EVIDENCE_RECONCILIATION"
+      }
+    },
+    {
+      "behavior": "NUM_BUF maturity / acquisition activity",
+      "classification": "MATCH",
+      "dimensions": {
+        "gas_probe": "MATCH_AFTER_FIX",
+        "petrol_probe": "MATCH_AFTER_FIX",
+        "event_deduplication": "INTENTIONAL_IMPROVEMENT"
+      },
+      "progbase": "NUM_BUF_UPD_PETR and NUM_BUF_UPD_GAS are both observed in ~2s family",
+      "omegas": "NativeAutoCalMonitor now refreshes NUM_BUF_UPD_PETR and NUM_BUF_UPD_GAS in the grouped ~2s acquisition refresh while retaining deduplicated gas maturity events.",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt",
+        "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+        "tests/test_native_autocal_contract.py"
+      ],
+      "red_id": "AUTOCAL_PETROL_MATURITY_REFRESH",
+      "action": "PRESERVE grouped acquisition refresh on the existing serial scheduler; maturity-event semantics may remain richer than ProgBase.",
+      "resolution": {
+        "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
+        "red_fast_run": {
+          "number": 122,
+          "id": 35637404907,
+          "conclusion": "failure"
+        },
+        "red_observed": "refresh planner/grouped acquisition path absent",
+        "first_fix_sha": "714725f2e7417a847c19a94e4ddb70096b0af2e3",
+        "current_state": "FIX_APPLIED_AWAITING_GREEN_AFTER_PARITY_RECONCILIATION"
+      }
+    },
+    {
+      "behavior": "ACQUIRED_ZONES",
+      "classification": "MATCH",
+      "dimensions": {
+        "field_identity": "MATCH",
+        "session_precedence": "INTENTIONAL_IMPROVEMENT",
+        "freshness": "MATCH_AFTER_FIX"
+      },
+      "progbase": "petrol/gas acquired-zone vectors participate in recurring slow AutoCal polling",
+      "omegas": "ACQUIRED_ZONES_PETROL and ACQUIRED_ZONES_GAS are now refreshed together in the grouped ~2s acquisition path and merged into the current native snapshot.",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt"
+      ],
+      "action": "PRESERVE grouped native refresh; no UI polling.",
+      "resolution": {
+        "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
+        "first_fix_sha": "714725f2e7417a847c19a94e4ddb70096b0af2e3"
+      }
+    },
+    {
+      "behavior": "PollingPetrol/PollingGas",
+      "classification": "INTENTIONAL_IMPROVEMENT",
+      "dimensions": {
+        "literal_shapes": "NOT_REPRODUCED",
+        "operator_feedback": "PRESENT"
+      },
+      "progbase": "red/lime TShape polling indicators toggled by PostActionRefresh",
+      "omegas": "human-readable acquisition/read/probe states replace literal polling lights",
+      "evidence": [
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "action": "Do not recreate literal lights unless a later usability test demonstrates missing operator feedback"
+    },
+    {
+      "behavior": "Enable/disable acquisition",
+      "classification": "MATCH",
+      "dimensions": {
+        "wire_identity": "MATCH",
+        "manual_control": "MATCH",
+        "separate_pause_state": "NOT_REQUIRED"
+      },
+      "progbase": "CheckAutoCalEnable binds AUTO_CAL_ENABLE 0x014A; no separate pause control proven",
+      "omegas": "ENABLE_AUTO_CAL / DISABLE_AUTO_CAL use native action path with ACK/readback and present pause as disabled acquisition",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt",
+        "app/src/main/assets/ui/screens/autocal-cockpit.js"
+      ],
+      "action": "PRESERVE safety/readback"
+    },
+    {
+      "behavior": "Reference temporal coherence gate",
+      "classification": "INTENTIONAL_IMPROVEMENT",
+      "dimensions": {
+        "original_equivalent": "NOT_PROVEN",
+        "omegas_safety": "PRESENT"
+      },
+      "progbase": "no equivalent safety gate proven",
+      "omegas": "reference is usable only when three physical curve vectors are current-session and within 2s skew",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt",
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalSnapshot.kt",
+        "app/src/test/java/com/omegas/prohub/autocal/AutoCalUiProjectionTest.kt"
+      ],
+      "action": "PRESERVE unless real replay proves false rejection"
+    },
+    {
+      "behavior": "0x0165 subindex semantics",
+      "classification": "MATCH",
+      "dimensions": {
+        "original": "PROVEN_FROM_PROGBASE_DFM",
+        "omegas": "INDEX_2_MAX_AUTOMATCH_MATCH"
+      },
+      "progbase": "Original DFM binds VECT_AUTOCAL_U8_1 to !AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD and VECT_AUTOCAL_U8_2 to MaxAutomatch; Lognovo issues indexed reads 0A 65 01 01 71 and 0A 65 01 02 72.",
+      "omegas": "AutoCalProtocol maps index 1 to VECT_AUTOCAL_U8_1 and index 2 to MAX_AUTOMATCH.",
+      "evidence": [
+        "tests/fixtures/progbase-autocal-action-map-v1.json",
+        "tests/fixtures/progbase-autocal-consumer-map-v1.json",
+        "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt"
+      ],
+      "action": "PRESERVE index 2 as MAX_AUTOMATCH; do not infer additional semantics beyond the original DFM evidence."
+    },
+    {
+      "behavior": "Session ownership",
+      "classification": "INCONCLUSIVE",
+      "dimensions": {
+        "scope": "DELEGATED_TO_ISSUE_86"
+      },
+      "progbase": "not needed to decide current live/reference parity gaps",
+      "omegas": "AutoCal has native monitor snapshots, manual reader snapshots and canonical SessionRecorder paths",
+      "evidence": [
+        "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+        "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt"
+      ],
+      "action": "Resolve in #86; do not couple the current parity fix to session migration"
+    }
+  ],
+  "architecture_decision": {
+    "preferred": "GROUPED_INCREMENTAL_REFRESH_ON_EXISTING_MP48_SERIAL_AUTHORITY",
+    "rejected": [
+      "copy Delphi timers literally",
+      "add JS/native screen polling loops",
+      "second serial owner",
+      "periodic full READ_ONLY_FIELDS snapshot every ~2s",
+      "route live AGORA through slow AutoCal snapshot"
+    ],
+    "rationale": "Recover original observable freshness while preserving OMEGAS single-serial arbitration, telemetry-after-secondary-work, safety gates and operator-confirmed writes."
+  }
+}

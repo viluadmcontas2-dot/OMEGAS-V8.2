@@ -1,9 +1,5 @@
 package com.omegas.v7.runtime
 
-import com.omegas.prohub.physics.CorrectionMechanism
-import com.omegas.prohub.physics.EffectDirection
-import com.omegas.prohub.physics.MagnitudeAuthority
-
 enum class LearningReadinessV7 {
     EMPTY,
     PETROL_ONLY,
@@ -33,27 +29,11 @@ data class LearningUiStateV7(
     val explanation: String,
 )
 
-data class SuggestionAuthorityUiV7(
-    val suggestionId: String,
-    val magnitudeAuthority: MagnitudeAuthority,
-    val stepAuthority: MagnitudeAuthority,
-    val correctionMechanism: CorrectionMechanism,
-    val effectDirection: EffectDirection,
-    val effectAuthority: MagnitudeAuthority,
-    val lowerBound: Double?,
-    val upperBound: Double?,
-    val assumptions: List<String>,
-    val falsifier: String,
-    val evidencePath: List<String>,
-    val idealTarget: Boolean,
-)
-
 data class AdjustmentUiStateV7(
     val suggestionCount: Int,
     val checkpointCount: Int,
     val lastWriteMessage: String,
     val actionLabel: String,
-    val authorities: List<SuggestionAuthorityUiV7> = emptyList(),
 )
 
 data class V7UiState(
@@ -68,23 +48,7 @@ object V7UiProjection {
         val activeCng = state.activeCngEvidence().size
         val activeComparisons = state.activeComparisons().size
         val activePendingSuggestions = state.suggestions.count {
-            it.actionableAt(state.calibration.revision)
-        }
-        val activeAuthorities = state.activeSuggestions().map { suggestion ->
-            SuggestionAuthorityUiV7(
-                suggestionId = suggestion.id,
-                magnitudeAuthority = suggestion.physics.magnitudeAuthority,
-                stepAuthority = suggestion.physics.stepAuthority,
-                correctionMechanism = suggestion.physics.correctionMechanism,
-                effectDirection = suggestion.physics.effectDirection,
-                effectAuthority = suggestion.physics.effectAuthority,
-                lowerBound = suggestion.physics.lowerBound,
-                upperBound = suggestion.physics.upperBound,
-                assumptions = suggestion.physics.assumptions,
-                falsifier = suggestion.physics.falsifier,
-                evidencePath = suggestion.physics.evidencePath,
-                idealTarget = suggestion.physics.idealTarget,
-            )
+            it.expectedRevision == state.calibration.revision && it.lifecycle == SuggestionLifecycleV7.PENDING
         }
         val historicalComparisons = state.comparisons.size - activeComparisons
         val historicalCng = state.cngEvidenceByRevision
@@ -113,8 +77,8 @@ object V7UiProjection {
             petrol == 0 && activeCng == 0 -> "Nenhuma visita física foi consolidada nesta sessão."
             petrol == 0 -> "O GNV foi coletado primeiro e permanece salvo. A comparação nascerá quando uma referência gasolina equivalente aparecer."
             activeCng == 0 -> "A gasolina permanece como referência entre revisões. Falta GNV da revisão ativa."
-            activeComparisons == 0 -> "Existem dados dos dois combustíveis, mas ainda não na mesma vizinhança física de RPM e MAP."
-            else -> "$activeComparisons visita(s) GNV já foram comparadas à referência gasolina equivalente por RPM e MAP."
+            activeComparisons == 0 -> "Existem dados dos dois combustíveis, mas ainda não na mesma vizinhança física de RPM, MAP e temperatura."
+            else -> "$activeComparisons visita(s) GNV já foram comparadas à referência gasolina equivalente por RPM, MAP e temperatura."
         }
         return V7UiState(
             now = NowUiStateV7(
@@ -141,7 +105,6 @@ object V7UiProjection {
                 checkpointCount = state.checkpoints.size,
                 lastWriteMessage = state.lastWriteMessage,
                 actionLabel = "Revisar sugestão",
-                authorities = activeAuthorities,
             ),
         )
     }

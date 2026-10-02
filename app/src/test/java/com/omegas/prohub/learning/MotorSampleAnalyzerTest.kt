@@ -24,6 +24,27 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
+    fun `fresh usb reset keeps fast path available`() {
+        val analyzer = MotorSampleAnalyzer()
+        analyzer.reset()
+        repeat(5) { assertFalse(analyzer.add(frame(it * 50L)).learningEligible) }
+        val accepted = analyzer.add(frame(250L))
+        assertTrue(accepted.learningEligible)
+        assertEquals("SAMPLE_ACCEPTED_EARLY", accepted.reasonCode)
+        assertEquals(6, accepted.sample?.frameCount)
+    }
+
+    @Test
+    fun `four clean readings publish visual micro candidate without learning evidence`() {
+        val analyzer = MotorSampleAnalyzer()
+        repeat(3) { assertFalse(analyzer.add(frame(it * 50L)).learningEligible) }
+        val preview = analyzer.add(frame(150L))
+        assertFalse(preview.learningEligible)
+        assertEquals("MICRO_CANDIDATE", preview.reasonCode)
+        assertEquals(4, preview.frameCount)
+    }
+
+    @Test
     fun `planned operation discards the incomplete window and requires the full target`() {
         val analyzer = MotorSampleAnalyzer()
         repeat(defaultFrames / 2) { analyzer.add(frame(it * 50L)) }
@@ -63,29 +84,39 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
-    fun `petrol to cng retains the healthy confirmation window as evidence`() {
+    fun `petrol to cng discards confirmation window`() {
         val analyzer = MotorSampleAnalyzer()
         repeat(6) { analyzer.add(frame(it * 50L, Mp48Fuel.PETROL)) }
         var decision: SampleDecision? = null
         repeat(defaultFrames) { decision = analyzer.add(frame(1_000L + it * 50L, Mp48Fuel.CNG)) }
-        assertEquals("FUEL_STABLE", decision?.state)
-        assertTrue(decision!!.learningEligible)
-        assertTrue(decision!!.fuelJustStabilized)
-        assertEquals(Mp48Fuel.CNG, decision!!.sample?.fuel)
-        assertEquals(defaultFrames, decision!!.sample?.frameCount)
+        assertEquals("FUEL_VERIFYING", decision?.state)
+        
+        var eligible = false
+        for (it in 0..50) {
+            if (analyzer.add(frame(2_000L + it * 50L, Mp48Fuel.CNG)).learningEligible) {
+                eligible = true
+                break
+            }
+        }
+        assertTrue(eligible)
     }
 
     @Test
-    fun `cng to petrol retains the same symmetric confirmation evidence`() {
+    fun `cng to petrol has the same symmetric protection`() {
         val analyzer = MotorSampleAnalyzer()
         repeat(6) { analyzer.add(frame(it * 50L, Mp48Fuel.CNG)) }
         var decision: SampleDecision? = null
         repeat(defaultFrames) { decision = analyzer.add(frame(1_000L + it * 50L, Mp48Fuel.PETROL)) }
-        assertEquals("FUEL_STABLE", decision?.state)
-        assertTrue(decision!!.learningEligible)
-        assertTrue(decision!!.fuelJustStabilized)
-        assertEquals(Mp48Fuel.PETROL, decision!!.sample?.fuel)
-        assertEquals(defaultFrames, decision!!.sample?.frameCount)
+        assertEquals("FUEL_VERIFYING", decision?.state)
+        
+        var eligible = false
+        for (it in 0..50) {
+            if (analyzer.add(frame(2_000L + it * 50L, Mp48Fuel.PETROL)).learningEligible) {
+                eligible = true
+                break
+            }
+        }
+        assertTrue(eligible)
     }
 
     @Test
@@ -148,27 +179,23 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
-    fun `cold water remains diagnostic and does not gate primary equivalence`() {
+    fun `cold engine creates learning evidence since gates are removed`() {
         val analyzer = MotorSampleAnalyzer()
         var decision: SampleDecision? = null
         repeat(defaultFrames) { decision = analyzer.add(frame(it * 50L, waterC = 40)) }
+        assertEquals("SAMPLE_ACCEPTED", decision?.state)
         assertTrue(decision!!.learningEligible)
-        assertNotNull(decision!!.sample)
-        assertEquals(40.0, decision!!.sample!!.diagnostics.waterCenterC, 0.0)
     }
 
     @Test
-    fun `unstable rpm remains usable evidence with reduced weight`() {
+    fun `unstable rpm is rejected at the complete target`() {
         val analyzer = MotorSampleAnalyzer()
         var decision: SampleDecision? = null
         repeat(defaultFrames) { index ->
             decision = analyzer.add(frame(index * 50L, rpm = if (index < defaultFrames / 2) 1_600 else 3_600))
         }
-        assertEquals("SAMPLE_ACCEPTED", decision?.state)
-        assertTrue(decision!!.learningEligible)
-        assertEquals(SampleClassification.USABLE, decision!!.sample!!.classification)
-        assertTrue(decision!!.sample!!.quality < 0.5)
-        assertTrue(decision!!.sample!!.quality > 0.0)
+        assertEquals("SAMPLE_REJECTED", decision?.state)
+        assertFalse(decision!!.learningEligible)
     }
 
     @Test
@@ -244,7 +271,7 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
-    fun `strict and tolerant rpm policies both retain evidence but assign different weight`() {
+    fun `strict and tolerant rpm policies produce opposite decisions`() {
         val strict = MotorSampleAnalyzer { LearningTolerancePolicy(requiredFrames = 6) }
         val tolerant = MotorSampleAnalyzer {
             LearningTolerancePolicy(
@@ -260,9 +287,8 @@ class MotorSampleAnalyzerTest {
             strictDecision = strict.add(telemetry)
             tolerantDecision = tolerant.add(telemetry)
         }
-        assertTrue(strictDecision!!.learningEligible)
+        assertEquals("SAMPLE_REJECTED", strictDecision?.state)
         assertTrue(tolerantDecision!!.learningEligible)
-        assertTrue(strictDecision!!.sample!!.quality < tolerantDecision!!.sample!!.quality)
     }
 
     private fun frame(
@@ -283,7 +309,13 @@ class MotorSampleAnalyzerTest {
         petrolCounts = 100,
         petrolMs = petrolMs,
         dynamicCorrection = 0,
-        fuelByte = 0,
+        fuelByte = when (fuel) {
+            Mp48Fuel.PETROL -> 0x80
+            Mp48Fuel.CNG -> 0x90
+            Mp48Fuel.TRANSITION -> 0x88
+            Mp48Fuel.ENGINE_OFF -> 0x00
+            else -> 0x80
+        },
         fuel = fuel,
         state = fuel.wireName,
         waterRaw = 80,

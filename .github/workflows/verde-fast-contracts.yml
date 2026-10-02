@@ -1,0 +1,47 @@
+# Platina same-SHA fast verification
+name: OmegasPlatina fast contracts
+
+on:
+  push:
+    branches:
+      - OmegasPlatina
+    paths:
+      - ".github/workflows/verde-fast-contracts.yml"
+      - "app/src/main/assets/ui/**"
+      - "app/src/main/java/com/omegas/prohub/autocal/**"
+      - "app/src/main/java/com/omegas/prohub/calibration/**"
+      - "app/src/main/java/com/omegas/prohub/ecu/**"
+      - "tests/**"
+      - "tools/run_checks.py"
+      - "docs/platinum/**"
+      - "docs/autocal/**"
+      - "PROJECT.md"
+      - "STATUS.md"
+      - "AGENTS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-platina-fast-contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - name: Run fast contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/run_checks.py

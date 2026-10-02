@@ -1,0 +1,14 @@
+[
+  {
+    "name": "gnv_estavel_aceito", "sample": {"mp48_present": true, "obd_present": true, "mp48_at_ms": 1000, "obd_at_ms": 1094, "mp48_rpm": 1850, "obd_rpm": 1842, "fuel": "GNV", "gasoline_injection_ms": 4.5, "coolant_c": 89, "closed_loop": true, "fuel_transition": false, "stft": -15.0, "physical_cell": "4.5x1850"}, "accepted": true
+  },
+  {
+    "name": "malha_aberta_rejeitada", "sample": {"mp48_present": true, "obd_present": true, "mp48_at_ms": 1000, "obd_at_ms": 1020, "mp48_rpm": 1850, "obd_rpm": 1842, "fuel": "GNV", "gasoline_injection_ms": 4.5, "coolant_c": 89, "closed_loop": false, "fuel_transition": false, "stft": 0.0, "physical_cell": "4.5x1850"}, "accepted": false, "rejection": "REJECTED_OPEN_LOOP"
+  },
+  {
+    "name": "desvio_temporal_rejeitado", "sample": {"mp48_present": true, "obd_present": true, "mp48_at_ms": 1000, "obd_at_ms": 1300, "mp48_rpm": 1850, "obd_rpm": 1842, "fuel": "GNV", "gasoline_injection_ms": 4.5, "coolant_c": 89, "closed_loop": true, "fuel_transition": false, "stft": 8.2, "physical_cell": "4.5x1850"}, "accepted": false, "rejection": "REJECTED_TIME_SKEW"
+  },
+  {
+    "name": "acima_limite_legado", "sample": {"mp48_present": true, "obd_present": true, "mp48_at_ms": 1000, "obd_at_ms": 1030, "mp48_rpm": 3150, "obd_rpm": 3132, "fuel": "GNV", "gasoline_injection_ms": 5.5, "coolant_c": 90, "closed_loop": true, "fuel_transition": false, "stft": 2.0, "physical_cell": "5.5x3150"}, "accepted": true, "legacy_coverage": "ABOVE_PROGBASE_3000_RPM"
+  }
+]

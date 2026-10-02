@@ -1,6 +1,9 @@
 (function (root) {
   'use strict';
 
+  // FINAL_PRE_APK_SAME_SHA_GATE: no runtime behavior; forces all Verde evidence workflows onto one SHA.
+  // CURVE_K_RETENTION_FINAL_GATE_20260923: same-SHA proof, no runtime behavior.
+
   const ns = root.OmegasUi = root.OmegasUi || {};
   const PETROL_BINS = [2, 2.5, 3, 3.5, 4.5, 6, 8, 10, 12, 14, 16, 18];
   const RPM_BINS = [850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500];
@@ -127,7 +130,42 @@
     };
   }
 
-
+  function demoObdMaps() {
+    const gasoline = {};
+    const gnv = {};
+    const validation = {};
+    for (let column = 1; column < 8; column += 1) {
+      for (let row = 1; row < 8; row += 1) {
+        if ((column + row) % 2 !== 0) continue;
+        const key = `${column}:${row}`;
+        const petrol = ((column + row) % 5 - 2) * 0.7;
+        const gas = ((column * 3 + row) % 7 - 3) * 0.8;
+        const petrolSamples = 8 + ((column + row) % 7);
+        const gnvSamples = 9 + ((column * 2 + row) % 8);
+        gasoline[key] = { stft: { mean: petrol, physicalSamples: petrolSamples }, ltft: { mean: 0.5 }, speed: { mean: 48 }, coolant: { mean: 88 }, qualified: petrolSamples };
+        gnv[key] = { stft: { mean: gas, physicalSamples: gnvSamples }, ltft: { mean: 0.8 }, speed: { mean: 52 }, coolant: { mean: 89 }, qualified: gnvSamples };
+        validation[key] = {
+          gasoline: petrol, gnv: gas, gasolineSamples: petrolSamples, gnvSamples,
+          sameCell: true, sameEpoch: true, comparisonReady: true,
+          comparisonReason: 'MESMA_CELULA_E_EPOCA',
+          status: Math.abs(gas) <= 2 ? 'EQUIVALENTE' : gas > 0 ? 'AUMENTAR_GNV' : 'DIMINUIR_GNV',
+        };
+      }
+    }
+    const independentRpmBins = [750, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000, 5000, 6500];
+    const loadBins = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 85, 100];
+    return {
+      rpmBins: RPM_BINS.slice(), petrolMsBins: PETROL_BINS.slice(), gasoline, gnv, validation,
+      updatedAt: Date.now(),
+      independent: {
+        source: 'OBD_ONLY_LEGACY', observationalOnly: true, affectsLearning: false, affectsCalibration: false,
+        minimumSamplesPerCell: 6,
+        axes: { x: 'rpm', y: 'calculatedLoadPct', rpmBins: independentRpmBins, loadBins },
+        gasoline: {}, gnv: {}, validation: {}, updatedAt: Date.now(),
+      },
+      demo: true,
+    };
+  }
 
   function demoToleranceSettings() {
     const levels = ['Muito rigoroso', 'Rigoroso', 'Equilibrado', 'Flexível', 'Muito flexível'];
@@ -170,6 +208,7 @@
       this.demo = !this.native;
       this.demoMapState = demoMap();
       this.demoCurveState = demoCurve();
+      this.demoScienceRevision = 0;
     }
 
     isDemo() { return this.demo; }
@@ -182,6 +221,29 @@
         mapBar: demoTelemetry().live.load_bar, directTelemetryAgeMs: 42, wakeLockHeld: true, demo: true,
       };
       return invoke(this.native, 'getStatus', [], {});
+    }
+    presentSnapshot() {
+      if (this.demo) return { ok: true, revision: Date.now(), data: demoTelemetry(), demo: true };
+      return invoke(this.native, 'getPresentSnapshot', [], { ok: false, revision: 0, data: {} });
+    }
+    scienceSnapshotSince(revision) {
+      if (this.demo) {
+        this.demoScienceRevision += 1;
+        const learning = demoLearning();
+        return {
+          ok: true,
+          changed: true,
+          revision: this.demoScienceRevision,
+          refreshing: false,
+          data: {
+            learning,
+            calibrationState: { ready: true, suggestionItems: [], predictor: { ok: true, cells: [] } },
+            predictor: { ok: true, cells: [] },
+          },
+          demo: true,
+        };
+      }
+      return invoke(this.native, 'getScienceSnapshotSince', [Number(revision) || 0], { ok: false, changed: false, revision: Number(revision) || 0 });
     }
     telemetry() { return this.demo ? demoTelemetry() : invoke(this.native, 'getLiveTelemetry', [], {}); }
     fullSnapshot() { return this.demo ? demoTelemetry() : invoke(this.native, 'getFullEngineSnapshot', [], {}); }
@@ -222,6 +284,35 @@
     }
     resetLearningToleranceSettings() { return this.demo ? demoToleranceSettings() : invoke(this.native, 'resetLearningToleranceSettings', [], { ok: false }); }
 
+    obd() {
+      if (this.demo) return {
+        ok: true, connected: true, mode: 'local', state: 'CONECTADO', stft: -1.6, ltft: 0.8,
+        rpm: 2080, coolant: 88, load: 34, throttle: 18, speed: 52, mapKpa: 49,
+        intakeAirC: 31, mafGps: 10.8, fuelLevelPct: 63, fuelLevelSupported: true, moduleVoltageV: 13.92,
+        updatedAt: Date.now(), reason: 'Condição qualificada', learningState: 'QUALIFICADO', conditionState: 'FORMANDO 5/6',
+        independentEvidence: { accepted: true, reason: 'LEGACY_CONTEXT_ONLY', cellKey: '5:5', fuel: 'GNV', fuelSource: 'MP48_LABEL', axes: 'OBD_RPM_X_LOAD' },
+        diagnostic: {
+          protocolMode: 'ELM automático (ATSP0)', lastCycleMs: 210, pollRateHz: 3.2,
+          supportedStandardPids: ['0103', '0104', '0105', '0106', '0107', '010B', '010C', '010D', '010F', '0110', '0111', '012F', '0142'],
+          pids: [
+            { command: '0106', responded: true, latencyMs: 42 },
+            { command: '010C', responded: true, latencyMs: 39 },
+            { command: '012F', responded: true, latencyMs: 54 },
+          ],
+        }, demo: true,
+      };
+      return invoke(this.native, 'getObdStatus', [], {});
+    }
+    obdMaps() { return this.demo ? demoObdMaps() : invoke(this.native, 'getObdMaps', [], {}); }
+    obdDevices() {
+      if (this.demo) return { permissionRequired: false, enabled: true, devices: [{ name: 'ELM327 DEMO', address: '00:11:22:33:44:55', bonded: true, selected: true, connected: true }] };
+      return invoke(this.native, 'listObdDevices', [], { permissionRequired: false, enabled: false, devices: [] });
+    }
+    requestBluetoothPermission() { return this.demo ? true : invoke(this.native, 'requestBluetoothPermission', [], false); }
+    connectObd(address) { return this.demo ? { ok: true, state: 'CONECTANDO', address } : invoke(this.native, 'connectObd', [address || ''], { ok: false }); }
+    disconnectObd() { return this.demo ? { ok: true } : invoke(this.native, 'disconnectObd', [], { ok: false }); }
+    setObdMode(mode) { return this.demo ? { ok: true, mode } : invoke(this.native, 'setObdMode', [mode || 'off'], { ok: false }); }
+    setObdManualFuel(fuel) { return this.demo ? { ok: true, manualFuel: fuel } : invoke(this.native, 'setObdManualFuel', [fuel || ''], { ok: false }); }
 
     batteryOptimizationStatus() {
       return this.demo
@@ -263,13 +354,29 @@
     }
     writeMap(cells, maxStep, pauseMs, reason) {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
-      return invoke(this.v7, 'startMapBatchWrite', [JSON.stringify(cells || []), maxStep || 3, pauseMs || 150, reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
+      return invoke(this.v7, 'startMapBatchWrite', [JSON.stringify(cells || []), 0, 0, reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
     }
     mapWriteOperation() { return this.demo ? { ok: true, state: 'IDLE', busy: false, progress: 0 } : invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false }); }
 
     startCurveRead() {
       if (this.demo) return { ok: true, started: true, state: 'CURVE_READING' };
       return invoke(this.v7, 'startCurveRead', [], { ok: false, error: 'Ponte V7 indisponível' });
+    }
+    startCurveBackup(label) {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Backup real exige ECU conectada.' };
+      return invoke(this.v7, 'startCurveBackup', [label || 'Curva salva manualmente'], { ok: false, error: 'Backup da Curva K indisponível' });
+    }
+    curveBackups() {
+      if (this.demo) return [];
+      return invoke(this.v7, 'listCurveBackups', [], []);
+    }
+    prepareCurveRestore(fileName) {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Restauração real exige ECU conectada.' };
+      return invoke(this.v7, 'startCurveRestorePrepare', [fileName || ''], { ok: false, error: 'Restauração da Curva K indisponível' });
+    }
+    resetCurve() {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Reset real exige ECU conectada.' };
+      return invoke(this.v7, 'startCurveReset', [], { ok: false, error: 'Reset da Curva K indisponível' });
     }
     curveOperation() {
       if (this.demo) return { ...this.demoCurveState, state: 'COMPLETED', busy: false };
@@ -295,19 +402,19 @@
       return invoke(this.v7, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
     }
 
-    startLevelSensorRead() { return this.demo ? { ok: false, error: "Sem ECU: somente demonstração" } : invoke(this.native, "startLevelSensorRead", [], { ok: false, error: "Leitura indisponível" }); }
-    sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 500, captureRawUsb: false, maxSessionMb: 64, keepSessions: 10 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
+    sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 250, captureRawUsb: false, maxSessionMb: 256, keepSessions: 20 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
     sessions() { return this.demo ? [] : invoke(this.native, 'listRecordedSessions', [], []); }
     setSessionSettings(settings) {
       const s = settings || {};
       if (this.demo) return { ok: true, settings: s, demo: true };
-      return invoke(this.native, 'setSessionRecorderSettings', [Number(s.telemetryEveryMs) || 500, Number(s.maxSessionMb) || 64, Number(s.keepSessions) || 10, s.autoStartOnUsb !== false, s.captureRawUsb === true], { ok: false });
+      return invoke(this.native, 'setSessionRecorderSettings', [Number(s.telemetryEveryMs) || 250, Number(s.maxSessionMb) || 256, Math.max(20, Number(s.keepSessions) || 20), s.autoStartOnUsb !== false, s.captureRawUsb === true], { ok: false });
     }
     startSession(reason) { return this.demo ? { ok: true, recording: true, demo: true } : invoke(this.native, 'startSessionRecording', [reason || 'manual'], { ok: false }); }
     stopSession(reason) { return this.demo ? { ok: true, recording: false, demo: true } : invoke(this.native, 'stopSessionRecording', [reason || 'manual'], { ok: false }); }
     exportSession(sessionId) { return this.demo ? false : invoke(this.native, 'exportSession', [sessionId || ''], false); }
     logs() { return this.demo ? [] : invoke(this.native, 'getLogs', [], []); }
 
+    exportData() { return this.demo ? false : invoke(this.native, 'exportData', [], false); }
     exportLearning() { return this.demo ? false : invoke(this.native, 'exportLearningArchive', [], false); }
     importLearning() { return this.demo ? false : invoke(this.native, 'importLearningArchive', [], false); }
     exportLogs() { return this.demo ? false : invoke(this.native, 'exportLogs', [], false); }

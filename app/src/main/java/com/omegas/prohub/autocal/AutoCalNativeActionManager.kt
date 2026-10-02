@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.usb.UsbProtocolReply
@@ -40,47 +41,85 @@ class AutoCalNativeActionManager(
         val description: String,
         val mayChangeMulAct: Boolean,
         val expectedEnableReadback: Int? = null,
+        val operationalToggle: Boolean = false,
     ) {
         ENABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(true),
             "Habilitar Auto Calibration",
-            "Permite que a própria ECU continue a aquisição por zonas e execute AutoMatch quando seus critérios forem atendidos.",
-            true,
+            "Escreve AUTO_CAL_ENABLE=1 e confirma por readback. Aquisição e AutoMatch permanecem lógica nativa da ECU.",
+            false,
             1,
+            true,
         ),
         DISABLE_AUTO_CAL(
             AutoCalProtocol.setEnabled(false),
-            "Pausar Auto Calibration",
-            "Pausa a aquisição nativa sem apagar os buffers já coletados.",
+            "Desabilitar Auto Calibration",
+            "Escreve AUTO_CAL_ENABLE=0 e confirma por readback. Os buffers não são apagados por este comando; o efeito operacional mais amplo permanece nativo da ECU.",
             false,
             0,
+            true,
+        ),
+        MANUAL_AUTOMATCH(
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH),
+            "AutoMatch manual",
+            "Replica ActionAutoMatchExecute do ProgBase (modo 0x08). É uma ação explícita do operador e permanece separada do AutoMatch nativo observado automaticamente na ECU.",
+            true,
+        ),
+        FINISH_AUTOCAL(
+            byteArrayOf(),
+            "Encerrar cota AutoMatch (técnico)",
+            "Replica a ActionFinishAutocalExecute originalmente desabilitada no DFM: copia MAX_AUTOMATCH para NUM_AUTOMATCH_EXECUTED, aguarda 100 ms e exige readback. É compatibilidade técnica, não etapa normal do AutoCal e não desabilita AUTO_CAL_ENABLE.",
+            false,
+        ),
+        FINISH_AUTOMATCH(
+            byteArrayOf(),
+            "Encerrar AutoMatch (debug)",
+            "Replica o BtnFinishAutomatchClick localizado no PanelDbg oculto do ProgBase: copia MAX_AUTOMATCH para NUM_AUTOMATCH_EXECUTED sem o settle de 100 ms.",
+            false,
+        ),
+        RESET_K_FACTOR(
+            byteArrayOf(),
+            "Reset Curva K (ProgBase)",
+            "Replica ActionResetKFactorExecute: define os 30 elementos de MUL_ACT como 1.0 (Q14 0x4000), ponto a ponto, e exige readback completo.",
+            true,
         ),
         RESET_PETROL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x01)),
-            "Resetar aquisição gasolina",
-            "Apaga somente os dados AutoCal de gasolina.",
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL),
+            "Readquirir gasolina",
+            "Usa a ação nativa dedicada Reset petrol point do ProgBase 4.2.0.6 (modo 0x01). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
             false,
         ),
         RESET_GAS(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x02)),
-            "Resetar aquisição GNV",
-            "Apaga somente os dados AutoCal de GNV.",
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_GAS),
+            "Readquirir GNV",
+            "Usa a ação nativa dedicada Reset gas point do ProgBase 4.2.0.6 (modo 0x02). A Curva K usa outro caminho. Após o ACK, o OMEGAS relê a ECU para atualizar o estado. Nenhum backup automático é exigido.",
             false,
         ),
         RESET_ALL(
-            Mp48Protocol.frame(byteArrayOf(0x02, 0x24, 0x04, 0x04)),
-            "Começar nova aquisição AutoCal",
-            "Apaga as aquisições AutoCal de gasolina e GNV. Nunca é executado automaticamente.",
+            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_ALL),
+            "Nova aquisição completa",
+            "Usa a ação nativa Reset all do ProgBase 4.2.0.6 (modo 0x04). O Portmon canônico observou efeito amplo, inclusive sobre MUL_ACT; o OMEGAS captura K antes/depois e não promete seletividade além do que a ECU confirma.",
+            true,
+        ),
+        DELETE_POINT(
+            byteArrayOf(),
+            "Readquirir este ponto",
+            "Replica ChartDataClickSeries + ActionDeleteSelectedPointsExecute do ProgBase para um único ponto adquirido.",
             false,
         );
     }
 
+    // ProgBase canônico + forensics byte-grounded:
+    // command 0x24 / sub-op 0x04: 0x08=Manual AutoMatch, 0x01=Reset petrol,
+    // 0x02=Reset gas, 0x04=Reset all. Modify Map Refs e Reset K Factor são separados.
+    // OMEGAS preserva confirmação humana, ACK e readback. Backup é uma ação manual separada.
     private data class Preparation(
         val id: String,
         val action: Action,
         val sessionId: Long,
         val createdAtMs: Long,
         val expiresAtMs: Long,
+        val pointDeleteTargets: List<AutoCalPointDeleteProtocol.Target> = emptyList(),
     )
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
@@ -99,6 +138,34 @@ class AutoCalNativeActionManager(
 
     fun prepare(actionName: String): JSONObject = try {
         val action = Action.valueOf(actionName.trim().uppercase())
+        require(action != Action.DELETE_POINT) { "Readquirir ponto exige combustível e índice" }
+        prepareInternal(action, emptyList())
+    } catch (error: Exception) {
+        failure(error.message ?: "Ação AutoCal inválida")
+    }
+
+    fun preparePointDelete(fuelName: String, index: Int): JSONObject = try {
+        val target = AutoCalPointDeleteProtocol.Target(
+            fuel = AutoCalPointDeleteProtocol.Fuel.parse(fuelName),
+            index = index,
+        )
+        prepareInternal(Action.DELETE_POINT, listOf(target))
+    } catch (error: Exception) {
+        failure(error.message ?: "Ponto AutoCal inválido")
+    }
+
+    fun preparePointDeletes(targets: Collection<AutoCalPointDeleteProtocol.Target>): JSONObject = try {
+        val normalized = targets.distinctBy { it.fuel to it.index }
+        require(normalized.isNotEmpty()) { "Selecione ao menos um ponto AutoCal" }
+        prepareInternal(Action.DELETE_POINT, normalized)
+    } catch (error: Exception) {
+        failure(error.message ?: "Seleção AutoCal inválida")
+    }
+
+    private fun prepareInternal(
+        action: Action,
+        pointDeleteTargets: List<AutoCalPointDeleteProtocol.Target>,
+    ): JSONObject {
         require(!busy.get()) { "Outra ação AutoCal está em andamento" }
         require(isConnected()) { "USB desconectado" }
         require(!otherCalibrationBusy()) { "Outra operação de calibração está em andamento" }
@@ -112,33 +179,63 @@ class AutoCalNativeActionManager(
             sessionId = sessionId,
             createdAtMs = now,
             expiresAtMs = now + PREPARATION_TTL_MS,
+            pointDeleteTargets = pointDeleteTargets,
         )
+        val label = if (pointDeleteTargets.isNotEmpty()) {
+            if (pointDeleteTargets.size == 1) "Readquirir ${pointDeleteTargets.single().toLabel()}"
+            else "Readquirir ${pointDeleteTargets.size} pontos selecionados"
+        } else action.label
+        val description = if (pointDeleteTargets.isNotEmpty()) {
+            if (pointDeleteTargets.size == 1) {
+                "Apaga somente este ponto adquirido usando os masks nativos do ProgBase; os outros pontos ficam marcados para preservar."
+            } else {
+                "Apaga somente os pontos selecionados, inclusive entre gasolina e GNV, em um único par de masks nativos antes do commit."
+            }
+        } else action.description
+        val details = when (pointDeleteTargets.size) {
+            0 -> JSONObject()
+            1 -> pointTargetJson(pointDeleteTargets.single())
+            else -> pointTargetsJson(pointDeleteTargets)
+        }
         synchronized(lock) {
             preparation = prepared
-            status = baseStatus("PREPARED", action.label, 0)
+            status = baseStatus("PREPARED", label, 0)
                 .put("preparationId", prepared.id)
                 .put("action", action.name)
                 .put("sessionId", sessionId)
                 .put("expiresAtMs", prepared.expiresAtMs)
+                .put("details", details)
         }
         onStateChanged()
-        JSONObject()
+        return JSONObject()
             .put("ok", true)
             .put("prepared", true)
             .put("preparationId", prepared.id)
             .put("action", action.name)
-            .put("label", action.label)
-            .put("description", action.description)
-            .put("commandHex", action.request.hex())
+            .put("label", label)
+            .put("description", description)
+            .put(
+                "commandHex",
+                when {
+                    pointDeleteTargets.isNotEmpty() -> "MASK U8[18] GNV + gasolina → 01 24 05 2A"
+                    action == Action.FINISH_AUTOCAL || action == Action.FINISH_AUTOMATCH ->
+                        "READ MAX_AUTOMATCH 0x0165:2 → WRITE NUM_AUTOMATCH_EXECUTED 0x0174 → READBACK"
+                    action == Action.RESET_K_FACTOR ->
+                        "30 × SetNumber MUL_ACT 0x0161[index] = 1.0 (Q14 0x4000) → READBACK"
+                    else -> action.request.hex()
+                },
+            )
             .put("sessionId", sessionId)
             .put("expiresAtMs", prepared.expiresAtMs)
             .put("ecuMutation", true)
             .put("mayChangeMulAct", action.mayChangeMulAct)
-            .put("requiresCriticalConfirmation", true)
+            .put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))
+            .put("requiresCriticalConfirmation", !action.operationalToggle)
+            .put("operationalOneTouch", action.operationalToggle)
+            .put("details", details)
             .put("automatic", false)
             .put("manualOnly", true)
-    } catch (error: Exception) {
-        failure(error.message ?: "Ação AutoCal inválida")
+            .put("automaticBackup", false)
     }
 
     fun execute(preparationId: String): JSONObject {
@@ -162,7 +259,7 @@ class AutoCalNativeActionManager(
             preparation = null
             current
         }
-        update("QUEUED", "Ação confirmada; iniciando recibo antes/depois", 0, prepared)
+        update("QUEUED", "Ação confirmada; enviando para a ECU", 0, prepared)
         executor.execute { executePrepared(prepared) }
         return JSONObject()
             .put("ok", true)
@@ -195,34 +292,45 @@ class AutoCalNativeActionManager(
 
     private fun executePrepared(prepared: Preparation) {
         val startedAt = System.currentTimeMillis()
+        var before: AutoCalSnapshot? = null
         try {
-            ensureSession(prepared)
-            update("READING_BEFORE", "Lendo snapshot anterior", 8, prepared)
-            val before = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-            ensureSession(prepared)
-
-            update("SENDING_ACTION", prepared.action.label, 48, prepared)
-            val reply = transaction(
-                prepared.action.request,
-                "AutoCal ${prepared.action.name}",
-                1_500,
-                prepared.sessionId,
-            )
-            require(reply.ok && reply.status == Mp48Protocol.STATUS_ACK) {
-                reply.error.ifBlank { "A ECU não confirmou ${prepared.action.label}" }
+            before = if (prepared.action.mayChangeMulAct) {
+                update("READING_BEFORE", "Capturando Curva K antes da ação", 4, prepared)
+                readMulActSnapshot(prepared)
+            } else null
+            when (prepared.action) {
+                Action.DELETE_POINT -> executePointDelete(prepared, startedAt)
+                Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> executeFinish(prepared, startedAt)
+                Action.RESET_K_FACTOR -> executeResetKFactor(prepared, startedAt, before)
+                else -> executeFixedAction(prepared, startedAt, before)
             }
-
-            Thread.sleep(250L)
-            ensureSession(prepared)
-            update("READING_AFTER", "Lendo snapshot posterior", 70, prepared)
-            val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ)
-            validateActionReadback(prepared.action, after)
-            val receipt = receipt(prepared, reply, before, after, startedAt)
-            appendReceipt(receipt)
-            try { onConfirmed(receipt) } catch (_: Exception) {}
-            update("CONFIRMED", "Ação confirmada por ACK e recibo antes/depois", 100, prepared, receipt)
         } catch (error: Exception) {
-            update("FAILED", error.message ?: "Ação AutoCal interrompida", 100, prepared)
+            val message = error.message ?: "Ação AutoCal interrompida"
+            val recovery = AutoCalRecoveryPolicy.classify(message)
+            val failedFromState = synchronized(lock) { status.optString("state", "UNKNOWN") }
+            val mutationMayHaveStarted = failedFromState in MUTATION_MAY_HAVE_STARTED_STATES
+            val failureReceipt = failureReceipt(
+                prepared = prepared,
+                startedAt = startedAt,
+                failedFromState = failedFromState,
+                message = message,
+                recovery = recovery,
+                mutationMayHaveStarted = mutationMayHaveStarted,
+                before = before,
+            )
+            appendReceipt(failureReceipt)
+            update("FAILED", message, 100, prepared, recovery.toJson()
+                .put("failedFromState", failedFromState)
+                .put("mutationMayHaveStarted", mutationMayHaveStarted)
+                .put("receiptId", failureReceipt.getString("id")))
+            synchronized(lock) {
+                status
+                    .put("reasonCode", recovery.reasonCode)
+                    .put("recovery", recovery.toJson())
+                    .put("failedFromState", failedFromState)
+                    .put("mutationMayHaveStarted", mutationMayHaveStarted)
+                    .put("receiptId", failureReceipt.getString("id"))
+            }
         } finally {
             busy.set(false)
             synchronized(lock) { status.put("busy", false) }
@@ -230,9 +338,318 @@ class AutoCalNativeActionManager(
         }
     }
 
-    private fun readSnapshot(prepared: Preparation, source: AutoCalSnapshotSource): AutoCalSnapshot {
+    private fun executeFixedAction(
+        prepared: Preparation,
+        startedAt: Long,
+        before: AutoCalSnapshot?,
+    ) {
+        ensureSession(prepared)
+        update("SENDING_ACTION", prepared.action.label, 18, prepared)
+        val reply = transaction(
+            prepared.action.request,
+            "AutoCal ${prepared.action.name}",
+            1_500,
+            prepared.sessionId,
+        )
+        requireAck(reply, "A ECU não confirmou ${prepared.action.label}")
+        if (prepared.action in setOf(
+                Action.MANUAL_AUTOMATCH, Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL,
+            )
+        ) {
+            Thread.sleep(HOST_MODE_SETTLE_MS)
+        }
+        ensureSession(prepared)
+        update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
+        validateActionReadback(prepared, after)
+        confirm(prepared, reply, after, startedAt, before = before)
+    }
+
+    private fun executeFinish(prepared: Preparation, startedAt: Long) {
+        ensureSession(prepared)
+        update("READING_FINISH_SOURCE", "Lendo máximo e contador AutoMatch antes de finalizar", 12, prepared)
+
+        val maxReply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.MAX_AUTOMATCH),
+            "AutoCal finish MAX_AUTOMATCH",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(maxReply, "A ECU não confirmou MAX_AUTOMATCH")
+        val maxAutomatch = AutoCalProtocol.decode(
+            AutoCalProtocol.MAX_AUTOMATCH,
+            maxReply.status,
+            maxReply.payload,
+        ).rawValues.single()
+
+        ensureSession(prepared)
+        val beforeCounterReply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
+            "AutoCal finish contador antes",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(beforeCounterReply, "A ECU não confirmou NUM_AUTOMATCH_EXECUTED antes do Finish")
+        val beforeCounter = AutoCalProtocol.decode(
+            AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+            beforeCounterReply.status,
+            beforeCounterReply.payload,
+        ).rawValues.single()
+        val counterWidthBytes = beforeCounterReply.payload.size
+        require(counterWidthBytes == 1 || counterWidthBytes == 2) {
+            "Largura inesperada de NUM_AUTOMATCH_EXECUTED: $counterWidthBytes"
+        }
+
+        ensureSession(prepared)
+        val commitFrame = AutoCalProtocol.finishAutoCalCommit(maxAutomatch, counterWidthBytes)
+        update(
+            "SENDING_FINISH_COMMIT",
+            "Finalizando ciclo AutoMatch nativo",
+            42,
+            prepared,
+            JSONObject()
+                .put("finishSource", "MAX_AUTOMATCH")
+                .put("finishTarget", "NUM_AUTOMATCH_EXECUTED")
+                .put("beforeCounter", beforeCounter)
+                .put("maxAutomatch", maxAutomatch)
+                .put("counterWidthBytes", counterWidthBytes)
+                .put("commandHex", commitFrame.hex()),
+        )
+        val writeReply = transaction(
+            commitFrame,
+            "AutoCal ${prepared.action.name} commit",
+            1_500,
+            prepared.sessionId,
+        )
+        requireAck(writeReply, "A ECU não confirmou o commit de finalização")
+
+        if (prepared.action == Action.FINISH_AUTOCAL) Thread.sleep(100L)
+
+        ensureSession(prepared)
+        update("VERIFYING_FINISH", "Confirmando contador final da ECU", 68, prepared)
+        val targetReply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED),
+            "AutoCal finish contador readback",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(targetReply, "A ECU não confirmou o readback de NUM_AUTOMATCH_EXECUTED")
+        val committed = AutoCalProtocol.decode(
+            AutoCalProtocol.NUM_AUTOMATCH_EXECUTED,
+            targetReply.status,
+            targetReply.payload,
+        ).rawValues.single()
+        require(committed == maxAutomatch) {
+            "Finish AutoCal não persistiu: MAX_AUTOMATCH=$maxAutomatch, contador=$committed"
+        }
+
+        ensureSession(prepared)
+        update("READING_AFTER", "Finalização confirmada; atualizando AutoCal", 82, prepared)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
+        validateActionReadback(prepared, after)
+        confirm(
+            prepared = prepared,
+            reply = writeReply,
+            after = after,
+            startedAt = startedAt,
+            details = JSONObject()
+                .put("finishSource", "MAX_AUTOMATCH")
+                .put("finishTarget", "NUM_AUTOMATCH_EXECUTED")
+                .put("beforeCounter", beforeCounter)
+                .put("maxAutomatch", maxAutomatch)
+                .put("committedValue", committed)
+                .put("counterWidthBytes", counterWidthBytes)
+                .put("settleMs", if (prepared.action == Action.FINISH_AUTOCAL) 100 else 0)
+                .put("commandHex", commitFrame.hex())
+                .put("readbackValid", true),
+        )
+    }
+
+    private fun executeResetKFactor(
+        prepared: Preparation,
+        startedAt: Long,
+        before: AutoCalSnapshot?,
+    ) {
+        val frames = AutoCalProtocol.resetKFactorMulActFrames()
+        var lastReply: UsbProtocolReply? = null
+        frames.forEachIndexed { index, frame ->
+            ensureSession(prepared)
+            update(
+                "RESETTING_K",
+                "Neutralizando Curva K · ${index + 1}/${frames.size}",
+                8 + ((index + 1) * 62 / frames.size),
+                prepared,
+                JSONObject()
+                    .put("index", index)
+                    .put("valueRaw", 0x4000)
+                    .put("value", 1.0)
+                    .put("commandHex", frame.hex()),
+            )
+            val reply = transaction(
+                frame,
+                "AutoCal RESET_K_FACTOR MUL_ACT[$index]",
+                1_200,
+                prepared.sessionId,
+            )
+            requireAck(reply, "A ECU não confirmou o ponto K ${index + 1}/${frames.size}")
+            lastReply = reply
+        }
+
+        ensureSession(prepared)
+        update("VERIFYING_K_RESET", "Confirmando Curva K neutra na ECU", 78, prepared)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
+        validateActionReadback(prepared, after)
+        val actual = after.field(AutoCalProtocol.MUL_ACT)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawValues
+        require(actual != null && actual.size == frames.size && actual.all { it == 0x4000 }) {
+            "Reset K não persistiu: MUL_ACT não retornou 30 fatores 1.0"
+        }
+        confirm(
+            prepared = prepared,
+            reply = requireNotNull(lastReply),
+            after = after,
+            startedAt = startedAt,
+            details = JSONObject()
+                .put("finishTarget", "MUL_ACT")
+                .put("pointCount", frames.size)
+                .put("neutralRaw", 0x4000)
+                .put("neutralFactor", 1.0)
+                .put("readbackValid", true),
+            before = before,
+        )
+    }
+
+    private fun executePointDelete(prepared: Preparation, startedAt: Long) {
+        val targets = prepared.pointDeleteTargets
+        require(targets.isNotEmpty()) { "Pontos para readquirir não foram preparados" }
+        val plan = AutoCalPointDeleteProtocol.multiPointPlan(targets)
+        val maskFrames = plan.dropLast(1)
+        val targetDetails = pointTargetsJson(targets)
+        val actionLabel = if (targets.size == 1) targets.single().toLabel() else "${targets.size} pontos selecionados"
+        update("SENDING_ACTION", "Readquirindo $actionLabel", 8, prepared, targetDetails)
+        maskFrames.forEachIndexed { step, request ->
+            ensureSession(prepared)
+            val reply = transaction(
+                request,
+                "AutoCal point mask ${step + 1}/${maskFrames.size}",
+                1_200,
+                prepared.sessionId,
+            )
+            requireAck(reply, "A ECU não confirmou o mask ${step + 1}/${maskFrames.size}")
+            update(
+                "SENDING_ACTION",
+                "Preparando seleção na ECU",
+                8 + ((step + 1) * 54 / maskFrames.size),
+                prepared,
+                targetDetails,
+            )
+        }
+        ensureSession(prepared)
+        val commitReply = transaction(
+            plan.last(),
+            "AutoCal point delete commit",
+            1_500,
+            prepared.sessionId,
+        )
+        requireAck(commitReply, "A ECU não confirmou o commit da readquisição")
+        Thread.sleep(POINT_DELETE_SETTLE_MS)
+        ensureSession(prepared)
+        update("READING_AFTER", "Atualizando aquisição após o commit", 78, prepared, targetDetails)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
+        validateActionReadback(prepared, after)
+        confirm(prepared, commitReply, after, startedAt, targetDetails)
+    }
+
+    private fun confirm(
+        prepared: Preparation,
+        reply: UsbProtocolReply,
+        after: AutoCalSnapshot,
+        startedAt: Long,
+        details: JSONObject = JSONObject(),
+        before: AutoCalSnapshot? = null,
+    ) {
+        val receipt = receipt(prepared, reply, after, startedAt, details, before)
+        appendReceipt(receipt)
+        try { onConfirmed(receipt) } catch (_: Exception) {}
+        val confirmedMessage = when {
+            prepared.action == Action.DELETE_POINT -> {
+                val count = prepared.pointDeleteTargets.size
+                if (count <= 1) "Ponto liberado para nova aquisição; estado da ECU atualizado"
+                else "$count pontos liberados para nova aquisição; estado da ECU atualizado"
+            }
+            prepared.action == Action.FINISH_AUTOCAL || prepared.action == Action.FINISH_AUTOMATCH -> {
+                val max = details.optInt("maxAutomatch", -1)
+                val committed = details.optInt("committedValue", -1)
+                if (max >= 0 && committed >= 0) {
+                    "Cota AutoMatch ajustada · $committed/$max confirmado pela ECU · aquisição não foi pausada"
+                } else {
+                    "Contador AutoMatch ajustado e confirmado pela ECU · aquisição não foi pausada"
+                }
+            }
+            else -> "ACK + readback específico confirmados pela ECU"
+        }
+        update(
+            "CONFIRMED",
+            confirmedMessage,
+            100,
+            prepared,
+            receipt,
+        )
+    }
+
+    private fun requireAck(reply: UsbProtocolReply, fallback: String) {
+        require(reply.ok && reply.status == Mp48Protocol.STATUS_ACK) {
+            reply.error.trim().takeIf { it.isNotBlank() }?.let { detail ->
+                "$fallback: $detail"
+            } ?: fallback
+        }
+    }
+
+    private fun readMulActSnapshot(prepared: Preparation): AutoCalSnapshot {
         val started = System.currentTimeMillis()
-        val observations = fieldsForReceipt.distinctBy { it.identity }.map { field ->
+        ensureSession(prepared)
+        val field = AutoCalProtocol.MUL_ACT
+        val reply = transaction(
+            AutoCalProtocol.read(field),
+            "Recibo AutoCal MUL_ACT antes da ação",
+            1_200,
+            prepared.sessionId,
+        )
+        requireAck(reply, "A ECU não confirmou MUL_ACT antes da ação")
+        val snapshot = AutoCalSnapshotBuilder.build(
+            observations = listOf(
+                AutoCalReadObservation(
+                    field = field,
+                    status = reply.status,
+                    payload = reply.payload,
+                    capturedAtMs = System.currentTimeMillis(),
+                    error = null,
+                ),
+            ),
+            expectedFields = listOf(field),
+            sessionId = "${prepared.id}-BEFORE_MUL_ACT",
+            source = AutoCalSnapshotSource.ECU_READ,
+            startedAtMs = started,
+            finishedAtMs = System.currentTimeMillis(),
+        )
+        val raw = snapshot.field(field)
+            ?.takeIf { it.status == AutoCalFieldStatus.VALID }
+            ?.rawValues
+        require(raw != null && raw.size == 30) {
+            "MUL_ACT antes da ação não retornou 30 fatores válidos"
+        }
+        return snapshot
+    }
+
+    private fun readSnapshot(
+        prepared: Preparation,
+        source: AutoCalSnapshotSource,
+        fields: List<AutoCalProtocol.Field>,
+    ): AutoCalSnapshot {
+        val started = System.currentTimeMillis()
+        val selectedFields = fields.distinctBy { it.identity }
+        val observations = selectedFields.map { field ->
             ensureSession(prepared)
             val reply = transaction(
                 AutoCalProtocol.read(field),
@@ -250,7 +667,7 @@ class AutoCalNativeActionManager(
         }
         return AutoCalSnapshotBuilder.build(
             observations = observations,
-            expectedFields = fieldsForReceipt,
+            expectedFields = selectedFields,
             sessionId = "${prepared.id}-${source.name}",
             source = source,
             startedAtMs = started,
@@ -261,40 +678,32 @@ class AutoCalNativeActionManager(
     private fun receipt(
         prepared: Preparation,
         reply: UsbProtocolReply,
-        before: AutoCalSnapshot,
         after: AutoCalSnapshot,
         startedAt: Long,
+        details: JSONObject = JSONObject(),
+        before: AutoCalSnapshot? = null,
     ): JSONObject {
-        val changed = JSONArray()
-        fieldsForReceipt.distinctBy { it.identity }.sortedWith(compareBy<AutoCalProtocol.Field> { it.address }.thenBy { it.index ?: -1 }).forEach { field ->
-            val old = before.field(field)
-            val fresh = after.field(field)
-            if (old?.status != fresh?.status || old?.rawPayloadHex != fresh?.rawPayloadHex) {
-                changed.put(JSONObject()
-                    .put("key", field.key)
-                    .put("address", field.address)
-                    .put("beforeStatus", old?.status?.name ?: JSONObject.NULL)
-                    .put("afterStatus", fresh?.status?.name ?: JSONObject.NULL)
-                    .put("beforeRaw", old?.rawPayloadHex ?: "")
-                    .put("afterRaw", fresh?.rawPayloadHex ?: ""))
-            }
-        }
-        return JSONObject()
+        val receipt = JSONObject()
             .put("id", "RECEIPT-${UUID.randomUUID()}")
             .put("preparationId", prepared.id)
             .put("action", prepared.action.name)
             .put("label", prepared.action.label)
-            .put("commandHex", prepared.action.request.hex())
+            .put("outcome", "CONFIRMED")
+            .put(
+                "commandHex",
+                when {
+                    details.optString("commandHex").isNotBlank() -> details.optString("commandHex")
+                    prepared.pointDeleteTargets.isNotEmpty() -> "MASK U8[18] GNV + gasolina → 01 24 05 2A"
+                    else -> prepared.action.request.hex()
+                },
+            )
+            .put("details", details)
             .put("ackStatus", reply.status)
             .put("sessionId", prepared.sessionId)
             .put("startedAtMs", startedAt)
             .put("finishedAtMs", System.currentTimeMillis())
-            .put("beforeHash", before.snapshotHash)
             .put("afterHash", after.snapshotHash)
-            .put("beforePartial", before.partial)
             .put("afterPartial", after.partial)
-            .put("changedFields", changed)
-            .put("before", before.toJson())
             .put("after", after.toJson())
             .put("ecuMutation", true)
             .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
@@ -302,11 +711,145 @@ class AutoCalNativeActionManager(
             .put("automatic", false)
             .put("manualOnly", true)
             .put("readbackValid", true)
+            .put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))
+            .put("preMutationBackup", JSONObject.NULL)
+            .put("automaticBackup", false)
             .put("automaticRollback", false)
+            .put(
+                "pointDelete",
+                when (prepared.pointDeleteTargets.size) {
+                    0 -> JSONObject.NULL
+                    1 -> pointTargetJson(prepared.pointDeleteTargets.single())
+                    else -> pointTargetsJson(prepared.pointDeleteTargets)
+                },
+            )
+
+        if (before != null) {
+            receipt
+                .put("beforeHash", before.snapshotHash)
+                .put("before", before.toJson())
+        }
+        return receipt
     }
 
-    private fun validateActionReadback(action: Action, after: AutoCalSnapshot) {
-        val expected = action.expectedEnableReadback ?: return
+    private fun failureReceipt(
+        prepared: Preparation,
+        startedAt: Long,
+        failedFromState: String,
+        message: String,
+        recovery: AutoCalRecoveryPolicy.Recovery,
+        mutationMayHaveStarted: Boolean,
+        before: AutoCalSnapshot?,
+    ): JSONObject {
+        val receipt = JSONObject()
+            .put("id", "RECEIPT-${UUID.randomUUID()}")
+            .put("preparationId", prepared.id)
+            .put("action", prepared.action.name)
+            .put("label", prepared.action.label)
+            .put("outcome", "FAILED")
+            .put("failureMessage", message)
+            .put("failedFromState", failedFromState)
+            .put("reasonCode", recovery.reasonCode)
+            .put("recovery", recovery.toJson())
+            .put("mutationMayHaveStarted", mutationMayHaveStarted)
+            .put("automaticRetry", false)
+            .put("sessionId", prepared.sessionId)
+            .put("startedAtMs", startedAt)
+            .put("finishedAtMs", System.currentTimeMillis())
+            .put("humanConfirmed", true)
+            .put("automatic", false)
+            .put("manualOnly", true)
+            .put("automaticRollback", false)
+            .put("automaticBackup", false)
+            .put(
+                "pointDelete",
+                when (prepared.pointDeleteTargets.size) {
+                    0 -> JSONObject.NULL
+                    1 -> pointTargetJson(prepared.pointDeleteTargets.single())
+                    else -> pointTargetsJson(prepared.pointDeleteTargets)
+                },
+            )
+        if (before != null) {
+            receipt
+                .put("beforeHash", before.snapshotHash)
+                .put("before", before.toJson())
+        }
+        return receipt
+    }
+
+    private fun pointTargetsJson(targets: Collection<AutoCalPointDeleteProtocol.Target>): JSONObject {
+        val normalized = targets.distinctBy { it.fuel to it.index }
+        return JSONObject()
+            .put("count", normalized.size)
+            .put("petrolCount", normalized.count { it.fuel == AutoCalPointDeleteProtocol.Fuel.PETROL })
+            .put("gasCount", normalized.count { it.fuel == AutoCalPointDeleteProtocol.Fuel.GAS })
+            .put("targets", JSONArray(normalized.map(::pointTargetJson)))
+            .put("automaticBackup", false)
+    }
+
+    private fun pointTargetJson(target: AutoCalPointDeleteProtocol.Target): JSONObject = JSONObject()
+        .put("fuel", target.fuel.wireName)
+        .put("fuelLabel", target.fuel.label)
+        .put("index", target.index)
+        .put("point", target.index + 1)
+        .put("zone", target.zone)
+        .put("automaticBackup", false)
+
+    private fun petrolAcquisitionReadbackFields(): List<AutoCalProtocol.Field> = listOf(
+        AutoCalProtocol.NUM_BUF_UPD_PETR,
+        AutoCalProtocol.PETR_INJ_TBUF,
+        AutoCalProtocol.MNFLD_PRESS_BUF,
+        AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+    )
+
+    private fun gasAcquisitionReadbackFields(): List<AutoCalProtocol.Field> = listOf(
+        AutoCalProtocol.NUM_BUF_UPD_GAS,
+        AutoCalProtocol.PETR_INJ_TBUF_GAS,
+        AutoCalProtocol.MNFLD_PRESS_BUF_GAS,
+        AutoCalProtocol.ACQUIRED_ZONES_GAS,
+    )
+
+    private fun actionReadbackWitnesses(prepared: Preparation): List<AutoCalProtocol.Field> {
+        val witnesses = when (prepared.action) {
+            Action.ENABLE_AUTO_CAL, Action.DISABLE_AUTO_CAL -> listOf(AutoCalProtocol.AUTO_CAL_ENABLE)
+            Action.RESET_PETROL -> petrolAcquisitionReadbackFields()
+            Action.RESET_GAS -> gasAcquisitionReadbackFields()
+            Action.RESET_ALL -> petrolAcquisitionReadbackFields() +
+                gasAcquisitionReadbackFields() +
+                AutoCalProtocol.MUL_ACT
+            Action.MANUAL_AUTOMATCH -> listOf(AutoCalProtocol.MUL_ACT)
+            Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> listOf(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)
+            Action.RESET_K_FACTOR -> listOf(AutoCalProtocol.MUL_ACT)
+            Action.DELETE_POINT -> {
+                val scoped = mutableListOf<AutoCalProtocol.Field>()
+                if (prepared.pointDeleteTargets.any { it.fuel == AutoCalPointDeleteProtocol.Fuel.PETROL }) {
+                    scoped += petrolAcquisitionReadbackFields()
+                }
+                if (prepared.pointDeleteTargets.any { it.fuel == AutoCalPointDeleteProtocol.Fuel.GAS }) {
+                    scoped += gasAcquisitionReadbackFields()
+                }
+                scoped
+            }
+        }
+        return witnesses.distinctBy { it.identity }
+    }
+
+    private fun validateActionReadback(prepared: Preparation, after: AutoCalSnapshot) {
+        // Snapshot parcial continua permitido para observação, mas uma mutação só
+        // vira CONFIRMED quando as superfícies específicas daquela ação voltam
+        // válidas da mesma sessão. Não inferimos seletividade/zero quando o corpus
+        // original não prova esse pós-estado.
+        val witnesses = actionReadbackWitnesses(prepared)
+        require(witnesses.isNotEmpty()) {
+            "Readback obrigatório sem testemunha definida para ${prepared.action.label}"
+        }
+        val missing = witnesses.filter { after.field(it)?.status != AutoCalFieldStatus.VALID }
+        require(missing.isEmpty()) {
+            "Readback obrigatório ausente para ${prepared.action.label}: " +
+                missing.joinToString(", ") { it.key }
+        }
+
+        val expected = prepared.action.expectedEnableReadback ?: return
         val actual = after.field(AutoCalProtocol.AUTO_CAL_ENABLE)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
             ?.rawValues
@@ -315,7 +858,6 @@ class AutoCalNativeActionManager(
             "Readback AUTO_CAL_ENABLE divergente: esperado $expected, ECU ${actual ?: "sem dado"}"
         }
     }
-
     private fun ensureSession(prepared: Preparation) {
         require(isConnected()) { "USB desconectado durante a ação AutoCal" }
         require(currentSessionId() == prepared.sessionId) { "Sessão USB mudou durante a ação AutoCal" }
@@ -378,16 +920,31 @@ class AutoCalNativeActionManager(
         }
     }
 
-    private fun failure(message: String): JSONObject = JSONObject()
-        .put("ok", false)
-        .put("error", message)
-        .put("automatic", false)
-        .put("manualOnly", true)
+    private fun failure(message: String): JSONObject {
+        val recovery = AutoCalRecoveryPolicy.classify(message)
+        return JSONObject()
+            .put("ok", false)
+            .put("error", message)
+            .put("reasonCode", recovery.reasonCode)
+            .put("recovery", recovery.toJson())
+            .put("automatic", false)
+            .put("manualOnly", true)
+    }
 
     private fun ByteArray.hex(): String = joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
 
     companion object {
         private const val PREPARATION_TTL_MS = 120_000L
+        private const val HOST_MODE_SETTLE_MS = 1_000L
+        private const val POINT_DELETE_SETTLE_MS = 500L
         private const val MAX_RECEIPTS = 200
+        private val MUTATION_MAY_HAVE_STARTED_STATES = setOf(
+            "SENDING_ACTION",
+            "READING_AFTER",
+            "SENDING_FINISH_COMMIT",
+            "VERIFYING_FINISH",
+            "RESETTING_K",
+            "VERIFYING_K_RESET",
+        )
     }
 }

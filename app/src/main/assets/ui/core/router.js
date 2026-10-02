@@ -1,8 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  // Predictor saiu da navegação (decisão do proprietário 2026-10-02); o código permanece.
-  const ROUTES = ['dashboard', 'autocal', 'refino', 'learning', 'curve', 'map', 'suggestions', 'tools'];
+  const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
 
   function loadOptionalScript(src, onload) {
@@ -45,9 +44,10 @@
 
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/vehicle-status-strip.js');
-  loadOptionalScript('components/floating-telemetry.js');
+  loadOptionalScript('components/curve-prediction-state.js');
   loadOptionalScript('components/split-layout.js');
-  loadOptionalScript('core/autocal-api.js', () =>
-    loadOptionalScript('screens/our-curve.js', () => loadOptionalScript('screens/autocal-refine.js', () => loadOptionalScript('screens/refinement-screen.js', () => loadOptionalScript('screens/autocal-evidence.js', () => loadOptionalScript('screens/autocal-cockpit.js'))))),
+  loadOptionalScript('core/predictor-model.js', () =>
+    loadOptionalScript('screens/predictor.js', () => loadOptionalScript('components/predictor-current-cell.js')),
   );
+  loadOptionalScript('core/autocal-api.js', () => loadOptionalScript('screens/autocal-cockpit.js'));
 })(typeof window !== 'undefined' ? window : globalThis);

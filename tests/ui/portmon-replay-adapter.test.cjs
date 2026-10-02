@@ -5,7 +5,7 @@ const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { PortmonReplayAdapter, PortmonReplayError } = require('../support/portmon-replay-adapter.js');
+const { PortmonReplayAdapter, PortmonReplayError } = require('../../app/src/main/assets/ui/portmon-replay-adapter.js');
 const corpus = JSON.parse(fs.readFileSync(path.resolve('tests/fixtures/portmon-autocal-real-sample.json'), 'utf8'));
 
 function makeAdapter() {

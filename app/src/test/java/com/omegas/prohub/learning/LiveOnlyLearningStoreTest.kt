@@ -4,7 +4,6 @@ import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Telemetry
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,14 +15,8 @@ import java.io.File
 class LiveOnlyLearningStoreTest {
     @get:Rule val temporary = TemporaryFolder()
 
-    @After
-    fun clearCalibrationAuthority() {
-        LearningCalibrationAuthority.clear()
-    }
-
     @Test
     fun `confirmed calibration preserves petrol and clears cng comparisons and suggestions`() {
-        activateCalibration("before-reset", 1)
         val store = store()
         store.startSession()
         store.ingest(
@@ -98,8 +91,7 @@ class LiveOnlyLearningStoreTest {
     }
 
     @Test
-    fun `after reset cng waits for reconciled calibration then uses preserved petrol baseline`() {
-        activateCalibration("before-reset", 1)
+    fun `after reset new live cng immediately uses preserved petrol baseline`() {
         val store = store()
         store.startSession()
         store.ingest(
@@ -110,29 +102,68 @@ class LiveOnlyLearningStoreTest {
             telemetry(1_350L, Mp48Fuel.CNG, 5.0),
             accepted(sample("old-g", 800L, 1_350L, Mp48Fuel.CNG, 5.0)),
         )
-
-        // O runtime retira a identidade antiga antes de avisar o store sobre a
-        // mudança física. Telemetria segue, mas ciência GNV espera o readback/reconcile.
-        LearningCalibrationAuthority.clear()
         store.onCalibrationAdjustment(confirmedUpdate())
 
         val afterReset = store.export("test")
         assertTrue(afterReset.getJSONObject("summary").getInt("petrol_regions") > 0)
         assertEquals(0, afterReset.getJSONArray("comparisons").length())
 
-        val blocked = store.ingest(
-            telemetry(2_050L, Mp48Fuel.CNG, 5.2),
-            accepted(sample("pre-reconcile-g", 1_500L, 2_050L, Mp48Fuel.CNG, 5.2)),
-        )
-        assertEquals(LiveOnlyLearningStore.CALIBRATION_REQUIRED_REASON_CODE, blocked.getString("state"))
-        assertEquals(0, store.export("test").getJSONArray("comparisons").length())
-
-        activateCalibration("after-reset", 2)
         store.ingest(
-            telemetry(2_750L, Mp48Fuel.CNG, 5.2),
-            accepted(sample("new-live-g", 2_200L, 2_750L, Mp48Fuel.CNG, 5.2)),
+            telemetry(2_050L, Mp48Fuel.CNG, 5.2),
+            accepted(sample("new-live-g", 1_500L, 2_050L, Mp48Fuel.CNG, 5.2)),
         )
         assertTrue(store.export("test").getJSONArray("comparisons").length() > 0)
+    }
+
+    @Test
+    fun `gasoline remains collectable before cng after advice and after confirmed readback`() {
+        val store = store()
+        store.startSession()
+
+        store.ingest(
+            telemetry(650L, Mp48Fuel.PETROL, 4.0),
+            accepted(sample("petrol-before-cng", 100L, 650L, Mp48Fuel.PETROL, 4.0)),
+        )
+        val petrolOnly = store.export("petrol-only")
+        assertTrue(petrolOnly.getJSONObject("summary").getInt("petrol_regions") > 0)
+        assertEquals(0, petrolOnly.getJSONArray("comparisons").length())
+        val visitsBeforeCng = petrolVisitCount(petrolOnly)
+        assertTrue(visitsBeforeCng > 0)
+
+        store.ingest(
+            telemetry(1_350L, Mp48Fuel.CNG, 5.0),
+            accepted(sample("cng-after-petrol", 800L, 1_350L, Mp48Fuel.CNG, 5.0)),
+        )
+        val withCng = store.export("with-cng")
+        assertTrue(withCng.getJSONArray("comparisons").length() > 0)
+        val advice = AssistedCalibrationAdvisor.analyze(withCng)
+        assertFalse(advice.getBoolean("automatic"))
+        assertTrue(advice.getBoolean("humanConfirmationRequired"))
+
+        store.ingest(
+            telemetry(2_050L, Mp48Fuel.PETROL, 4.2),
+            accepted(sample("petrol-after-advice", 1_500L, 2_050L, Mp48Fuel.PETROL, 4.2)),
+        )
+        val afterAdvice = store.export("after-advice")
+        assertTrue(
+            "Nova gasolina deve continuar fortalecendo evidência mesmo com GNV/comparações existentes",
+            petrolVisitCount(afterAdvice) > visitsBeforeCng,
+        )
+
+        val reset = store.onCalibrationAdjustment(confirmedUpdate().put("adjustmentId", "flexible-petrol-reset"))
+        assertTrue(reset.getBoolean("resetPerformed"))
+        val visitsAfterReset = petrolVisitCount(store.export("after-readback"))
+
+        store.ingest(
+            telemetry(2_750L, Mp48Fuel.PETROL, 4.1),
+            accepted(sample("petrol-after-readback", 2_200L, 2_750L, Mp48Fuel.PETROL, 4.1)),
+        )
+        val finalState = store.export("final")
+        assertTrue(
+            "Readback/nova época não pode bloquear nova coleta gasolina",
+            petrolVisitCount(finalState) > visitsAfterReset,
+        )
+        assertTrue(finalState.getJSONObject("summary").getInt("petrol_regions") > 0)
     }
 
     @Test
@@ -219,18 +250,15 @@ class LiveOnlyLearningStoreTest {
         }
     }
 
-    private fun activateCalibration(label: String, generation: Int) {
-        LearningCalibrationAuthority.publish(
-            LearningCalibrationBinding(
-                calibrationFingerprint = "calibration-$label",
-                calibrationGeneration = generation,
-                geometryFingerprint = "geometry-$label",
-                usbSessionId = 1L,
-                mapHash = "map-$label",
-                petrolAxisMs = emptyList(),
-                rpmAxis = emptyList(),
-            ),
-        )
+    private fun petrolVisitCount(snapshot: JSONObject): Int {
+        val regions = snapshot.getJSONArray("regions")
+        var count = 0
+        repeat(regions.length()) { index ->
+            val region = regions.optJSONObject(index) ?: return@repeat
+            if (region.optString("fuel").uppercase() !in setOf("PETROL", "GASOLINA")) return@repeat
+            count += region.optJSONArray("visits")?.length() ?: 0
+        }
+        return count
     }
 
     private fun store() = LiveOnlyLearningStore(

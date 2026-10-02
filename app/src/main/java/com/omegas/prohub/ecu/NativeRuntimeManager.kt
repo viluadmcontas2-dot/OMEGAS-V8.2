@@ -1,30 +1,16 @@
 package com.omegas.prohub.ecu
 
 import android.os.SystemClock
-import com.omegas.prohub.adaptive.AdaptiveShadowObserver
-import com.omegas.prohub.calibration.CalibrationIdentity
-import com.omegas.prohub.calibration.CalibrationProvenance
-import com.omegas.prohub.calibration.CompositeCalibrationReader
-import com.omegas.prohub.calibration.CompositeCalibrationSnapshot
 import com.omegas.prohub.learning.DeferredLiveOnlyLearningStore
-import com.omegas.prohub.learning.LearningCalibrationAuthority
-import com.omegas.prohub.learning.LearningCalibrationBinding
 import com.omegas.prohub.learning.LiveOnlyLearningStore
 import com.omegas.prohub.learning.SampleDecision
 import com.omegas.prohub.storage.AppPaths
-import com.omegas.prohub.telemetry.CanonicalEvidence
-import com.omegas.prohub.telemetry.LatestOnlyState
-import com.omegas.prohub.telemetry.RuntimeTelemetryFrame
 import com.omegas.prohub.usb.UsbSerialManager
-import com.omegas.prohub.util.EvidenceWorkClass
-import com.omegas.prohub.util.EvidenceWorkClassifier
 import com.omegas.prohub.util.LatestOnlyBackgroundPipeline
 import com.omegas.prohub.util.RealtimeLearningBuffer
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
 import java.security.MessageDigest
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Runtime único do aplicativo.
@@ -32,9 +18,12 @@ import java.util.concurrent.atomic.AtomicBoolean
  * O ciclo de vida da conexão técnica acompanha a conexão física USB. Um
  * simples reinício do loop não cria outra sessão nem aumenta confiança.
  *
- * A thread da ECU publica um único CanonicalEvidence tipado e enfileira
- * consumidores bounded. JSON existe apenas na projeção de compatibilidade,
- * construída no worker de delivery depois que a thread ECU já foi liberada.
+ * A thread da ECU publica somente o quadro leve e volta imediatamente ao ciclo
+ * MP48. A entrega visual mantém somente o quadro mais recente enquanto o consumidor
+ * está ocupado. O aprendizado usa um
+ * buffer quente limitado por geração USB: amostras são preservadas em FIFO curto
+ * e quadros transitórios são coalescidos para a leitura mais recente. A sessão
+ * gravada permanece como backlog frio/durável para auditoria/exportação.
  */
 class NativeRuntimeManager(
     paths: AppPaths,
@@ -47,11 +36,9 @@ class NativeRuntimeManager(
     private val snapshotLock = Any()
     private val learningSessionLock = Any()
     private val learning = DeferredLiveOnlyLearningStore(paths.runtimeRoot, log)
-    private val adaptiveShadow = AdaptiveShadowObserver()
     private val telemetryDeliveryPipeline = LatestOnlyBackgroundPipeline(
         threadName = "omegas-telemetry-delivery",
         threadPriority = Thread.NORM_PRIORITY,
-        consumerName = "UI_PROJECTION",
         onFailure = { sequence, error ->
             log.add(
                 "ERROR",
@@ -60,23 +47,10 @@ class NativeRuntimeManager(
             )
         },
     )
-    private val adaptiveShadowPipeline = LatestOnlyBackgroundPipeline(
-        threadName = "omegas-adaptive-shadow",
-        threadPriority = Thread.NORM_PRIORITY - 1,
-        consumerName = "ADAPTIVE_SHADOW",
-        onFailure = { sequence, error ->
-            log.add(
-                "ERROR",
-                "ADAPTIVE-SHADOW",
-                "Falha ao observar CanonicalEvidence $sequence: ${error.message}",
-            )
-        },
-    )
     private val learningPipeline = RealtimeLearningBuffer(
         threadName = "omegas-learning-realtime",
         importantCapacity = 128,
         threadPriority = Thread.NORM_PRIORITY - 1,
-        consumerName = "CLASSIC_SCIENCE",
         onFailure = { sequence, error ->
             log.add(
                 "ERROR",
@@ -92,16 +66,6 @@ class NativeRuntimeManager(
         onStateChanged = ::consumeState,
     )
     private val serialAdmission = Mp48BackpressureScheduler(engine)
-    private val calibrationIdentityReader = CompositeCalibrationReader(serialAdmission)
-    private val calibrationIdentityExecutor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "omegas-calibration-identity").apply { isDaemon = true }
-    }
-    private val calibrationIdentityRefreshPending = AtomicBoolean(false)
-    private val postWriteRevalidationPending = AtomicBoolean(false)
-    private val latestCanonicalEvidence = LatestOnlyState<CanonicalEvidence>(
-        sequenceOf = { it.sequence },
-        generationOf = { it.usbSessionId },
-    )
 
     @Volatile private var latestLearningState = safeLearningStatus()
     @Volatile private var latestLearningSequence = 0L
@@ -110,11 +74,6 @@ class NativeRuntimeManager(
     @Volatile private var crashed = false
     @Volatile private var exitReported = false
     @Volatile private var currentUsbSessionId = 0L
-    @Volatile private var calibrationIdentityState = "UNKNOWN"
-    @Volatile private var calibrationIdentityFingerprint = ""
-    @Volatile private var calibrationIdentityGeometry = ""
-    @Volatile private var calibrationIdentityGeneration = -1
-    @Volatile private var calibrationIdentityError = ""
 
     @Volatile var running = false
         private set
@@ -131,23 +90,13 @@ class NativeRuntimeManager(
 
     /** Deve ser chamado somente quando uma nova conexão física USB é aberta. */
     fun beginUsbSession(sessionId: Long): JSONObject {
-        require(sessionId > 0L) { "Sessão USB inválida" }
-        LearningCalibrationAuthority.beginPhysicalSession()
-        calibrationIdentityState = "PENDING"
-        calibrationIdentityFingerprint = ""
-        calibrationIdentityGeometry = ""
-        calibrationIdentityGeneration = -1
-        calibrationIdentityError = ""
-        postWriteRevalidationPending.set(false)
-        val learningState = synchronized(learningSessionLock) {
-            currentUsbSessionId = sessionId
-            latestLearningSequence = 0L
-            learningPipeline.beginGeneration(sessionId)
-            learning.startSession()
-        }
-        latestCanonicalEvidence.beginGeneration(sessionId)
-        adaptiveShadow.beginSession(sessionId)
+        // Entrega visual pode terminar em paralelo; o aprendizado não carrega fila
+        // da sessão anterior. A nova geração invalida imediatamente o buffer velho.
+        currentUsbSessionId = sessionId
+        learningPipeline.beginGeneration(sessionId)
+        latestLearningSequence = 0L
         engine.beginUsbSession(sessionId)
+        val learningState = synchronized(learningSessionLock) { learning.startSession() }
         publishLearningState(0L, learningState)
         synchronized(snapshotLock) { latestSnapshot = emptySnapshot(sessionId, "INITIALIZING") }
         ready = false
@@ -157,17 +106,11 @@ class NativeRuntimeManager(
     /** Fecha somente a conexão física; a memória confirmada e a sessão gravada permanecem. */
     fun endUsbSession(reason: String): JSONObject {
         val endingSession = currentUsbSessionId
+        // Dá uma janela curta para o buffer saudável terminar. Depois disso a RAM
+        // não segura trabalho antigo: a sessão gravada continua disponível como
+        // evidência durável, mas não invade a próxima conexão.
         learningPipeline.flush(750L)
-        adaptiveShadowPipeline.flush(250L)
         currentUsbSessionId = 0L
-        LearningCalibrationAuthority.endPhysicalSession()
-        calibrationIdentityState = "UNKNOWN"
-        calibrationIdentityFingerprint = ""
-        calibrationIdentityGeometry = ""
-        calibrationIdentityGeneration = -1
-        postWriteRevalidationPending.set(false)
-        latestCanonicalEvidence.clear()
-        adaptiveShadow.endSession(endingSession)
         learningPipeline.endGeneration(endingSession, 1L)
         engine.endUsbSession()
         val learningState = synchronized(learningSessionLock) { learning.endSession(reason) }
@@ -192,11 +135,6 @@ class NativeRuntimeManager(
             lastError = "A engine Android nativa não iniciou"
         } else {
             log.add("INFO", "ECU-NATIVE", "Runtime Android iniciado")
-            scheduleCalibrationIdentityRefresh(
-                expectedSessionId = currentUsbSessionId,
-                provenance = CalibrationProvenance.FULL_ECU_READ,
-                force = false,
-            )
         }
         onStateChanged()
         return ok
@@ -240,28 +178,6 @@ class NativeRuntimeManager(
     /** Única autoridade serial disponibilizada aos managers Android. */
     fun serialScheduler(): Mp48SerialScheduler = serialAdmission
 
-    /** Estado vivo tipado derivado do envelope canônico, nunca reconstruído de JSON. */
-    fun currentTelemetryFrame(): RuntimeTelemetryFrame? = latestCanonicalEvidence.current()?.frame
-
-    fun telemetryStateMetricsJson(): JSONObject = latestCanonicalEvidence.metrics().let { metrics ->
-        JSONObject()
-            .put("schema", CanonicalEvidence.SCHEMA)
-            .put("generation", metrics.generation)
-            .put("published", metrics.published)
-            .put("replaced", metrics.replaced)
-            .put("rejected", metrics.rejected)
-    }
-
-    private fun calibrationIdentityStatusJson(): JSONObject = JSONObject()
-        .put("state", calibrationIdentityState)
-        .put("fingerprint", calibrationIdentityFingerprint.ifBlank { JSONObject.NULL })
-        .put("geometryFingerprint", calibrationIdentityGeometry.ifBlank { JSONObject.NULL })
-        .put("generation", if (calibrationIdentityGeneration >= 0) calibrationIdentityGeneration else JSONObject.NULL)
-        .put("usbSessionId", currentUsbSessionId)
-        .put("refreshPending", calibrationIdentityRefreshPending.get())
-        .put("postWriteRevalidationPending", postWriteRevalidationPending.get())
-        .apply { if (calibrationIdentityError.isNotBlank()) put("error", calibrationIdentityError) }
-
     fun statusJson(): JSONObject = engine.statusJson()
         .put("native", true)
         .put("running", running)
@@ -272,11 +188,7 @@ class NativeRuntimeManager(
         .put("learningScaleMigration", learning.migrationStatus())
         .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
         .put("learningPipeline", learningPipeline.metricsJson())
-        .put("adaptiveShadowPipeline", adaptiveShadowPipeline.metricsJson())
-        .put("adaptiveShadow", adaptiveShadow.metricsJson())
         .put("serialAdmission", serialAdmission.metricsJson())
-        .put("typedTelemetryState", telemetryStateMetricsJson())
-        .put("calibrationIdentity", calibrationIdentityStatusJson())
 
     fun fullSnapshotJson(): String = snapshotJson()
 
@@ -319,11 +231,6 @@ class NativeRuntimeManager(
             .put("writeCellFrame", hex(writeCell))
             .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learningPipeline", learningPipeline.metricsJson())
-            .put("adaptiveShadowPipeline", adaptiveShadowPipeline.metricsJson())
-            .put("adaptiveShadow", adaptiveShadow.metricsJson())
-            .put("serialAdmission", serialAdmission.metricsJson())
-            .put("typedTelemetryState", telemetryStateMetricsJson())
-            .put("calibrationIdentity", calibrationIdentityStatusJson())
             .toString()
     }
 
@@ -377,26 +284,12 @@ class NativeRuntimeManager(
             .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("scaleMigration", learning.migrationStatus())
             .put("pipeline", learningPipeline.metricsJson())
-            .put("calibrationIdentity", calibrationIdentityStatusJson())
     }
 
     fun notifyCalibrationAdjustment(payload: JSONObject): JSONObject {
         flushLearning("antes de registrar ajuste confirmado")
-        LearningCalibrationAuthority.clear()
-        calibrationIdentityState = "PENDING"
-        calibrationIdentityFingerprint = ""
-        calibrationIdentityGeometry = ""
-        calibrationIdentityGeneration = -1
-        calibrationIdentityError = ""
-        postWriteRevalidationPending.set(true)
         val result = learning.onCalibrationAdjustment(payload)
         publishLearningState(latestLearningSequence, safeLearningStatus())
-        val provenance = if (payload.optString("source") == "ECU_NATIVE_AUTOCAL") {
-            CalibrationProvenance.AUTOCAL_RECONCILE
-        } else {
-            CalibrationProvenance.POST_WRITE_READBACK
-        }
-        scheduleCalibrationIdentityRefresh(currentUsbSessionId, provenance, force = true)
         return result
     }
 
@@ -407,70 +300,11 @@ class NativeRuntimeManager(
 
     fun close() {
         stop(3)
-        LearningCalibrationAuthority.endPhysicalSession()
         flushPipelines("encerramento do runtime", 2_000L)
         try { telemetryDeliveryPipeline.close() } catch (_: Exception) {}
-        try { adaptiveShadowPipeline.close() } catch (_: Exception) {}
         try { learningPipeline.close() } catch (_: Exception) {}
         try { engine.close() } catch (_: Exception) {}
         try { learning.close() } catch (_: Exception) {}
-        calibrationIdentityExecutor.shutdownNow()
-    }
-
-    private fun scheduleCalibrationIdentityRefresh(
-        expectedSessionId: Long,
-        provenance: CalibrationProvenance,
-        force: Boolean,
-    ) {
-        if (expectedSessionId <= 0L || expectedSessionId != currentUsbSessionId || !usb.connected) return
-        val current = LearningCalibrationAuthority.snapshot()
-        if (!force && current != null && current.usbSessionId == expectedSessionId) return
-        if (!calibrationIdentityRefreshPending.compareAndSet(false, true)) return
-        calibrationIdentityState = "READING"
-        calibrationIdentityError = ""
-        calibrationIdentityExecutor.execute {
-            try {
-                if (expectedSessionId != currentUsbSessionId || !usb.connected) return@execute
-                val raw = calibrationIdentityReader.readAtSessionStart(expectedSessionId)
-                val composite = CompositeCalibrationSnapshot.promote(raw)
-                val identity = CalibrationIdentity.fromComposite(
-                    composite = composite,
-                    capturedAtMs = SystemClock.elapsedRealtime(),
-                    mapRevision = null,
-                    curveRevision = null,
-                    provenance = provenance,
-                )
-                if (expectedSessionId != currentUsbSessionId || !usb.connected) return@execute
-                val binding = LearningCalibrationBinding.fromIdentity(identity, composite.mapGeometry)
-                LearningCalibrationAuthority.publish(binding)
-                calibrationIdentityFingerprint = binding.calibrationFingerprint
-                calibrationIdentityGeometry = binding.geometryFingerprint
-                calibrationIdentityGeneration = binding.calibrationGeneration
-                calibrationIdentityState = "KNOWN"
-                calibrationIdentityError = ""
-                log.add(
-                    "INFO",
-                    "CALIBRATION-IDENTITY",
-                    "Identidade física reconciliada para ciência GNV • generation=${binding.calibrationGeneration}",
-                )
-            } catch (error: Exception) {
-                if (expectedSessionId == currentUsbSessionId) {
-                    LearningCalibrationAuthority.clear()
-                    calibrationIdentityState = "UNKNOWN"
-                    calibrationIdentityFingerprint = ""
-                    calibrationIdentityGeometry = ""
-                    calibrationIdentityGeneration = -1
-                    calibrationIdentityError = error.message ?: error.javaClass.simpleName
-                    log.add(
-                        "WARN",
-                        "CALIBRATION-IDENTITY",
-                        "GNV permanece fora da ciência ativa até nova identidade física válida: $calibrationIdentityError",
-                    )
-                }
-            } finally {
-                calibrationIdentityRefreshPending.set(false)
-            }
-        }
     }
 
     private fun consumeTelemetry(
@@ -480,74 +314,7 @@ class NativeRuntimeManager(
     ) {
         val sequence = metrics.telemetryFrames
         val generation = currentUsbSessionId
-        if (generation <= 0L) return
-        val evidence = CanonicalEvidence.from(
-            telemetry = telemetry,
-            decision = decision,
-            sequence = sequence,
-            usbSessionId = generation,
-        )
-        if (!latestCanonicalEvidence.publish(evidence)) return
-
-        running = true
-        ready = true
-        lastError = ""
-        if (!telemetryDeliveryPipeline.submit(sequence) {
-                projectTelemetryCompatibility(
-                    evidence = evidence,
-                    metrics = metrics,
-                    generation = generation,
-                )
-            }
-        ) {
-            log.add("WARN", "TELEMETRY-DELIVERY", "Quadro $sequence não aceito porque a fila está encerrando")
-        }
-
-        adaptiveShadowPipeline.submit(sequence) {
-            if (generation == currentUsbSessionId) adaptiveShadow.observe(evidence)
-        }
-
-        val workClass = EvidenceWorkClassifier.classify(
-            evidence = evidence,
-            postWriteRevalidating = postWriteRevalidationPending.get(),
-        )
-        val accepted = learningPipeline.submit(
-            generation = generation,
-            sequence = sequence,
-            workClass = workClass,
-        ) {
-            if (generation != currentUsbSessionId) return@submit
-            synchronized(learningSessionLock) {
-                if (generation != currentUsbSessionId) return@synchronized
-                val processed = learning.ingest(evidence.rawTelemetry, evidence.sampleDecision)
-                if (generation == currentUsbSessionId) publishLearningState(sequence, processed)
-            }
-        }
-        if (accepted && workClass == EvidenceWorkClass.POST_WRITE_REVALIDATION) {
-            postWriteRevalidationPending.compareAndSet(true, false)
-        }
-        if (!accepted && !workClass.diagnosticOnly && generation == currentUsbSessionId) {
-            log.add(
-                "WARN",
-                "LEARNING-BUFFER",
-                "Evidence $sequence (${workClass.name}) não coube no buffer científico bounded; sessão gravada preserva o frame.",
-            )
-        }
-    }
-
-    /**
-     * Projeção visual executada somente no worker de delivery. O mesmo
-     * CanonicalEvidence que alimenta State/Classic/Adaptive fornece os dados e a
-     * proveniência gravados pelo Recorder através deste evento de compatibilidade.
-     */
-    private fun projectTelemetryCompatibility(
-        evidence: CanonicalEvidence,
-        metrics: EngineMetrics,
-        generation: Long,
-    ) {
-        if (generation != currentUsbSessionId || evidence.usbSessionId != generation) return
-        val telemetry = evidence.rawTelemetry
-        val decision = evidence.sampleDecision
+        val learningState = learningLiveSummary()
         val live = telemetry.toJson()
             .put("session_id", generation)
             .put("version", "OMEGAS-NATIVE-CORE-5")
@@ -562,11 +329,14 @@ class NativeRuntimeManager(
             .put("sample", decision.toTelemetryJson())
             .put("learning_quality", decision.sample?.quality ?: 0.0)
             .put("stable_ms", decision.durationMs)
+            .put("surface_cell", learningState.optString("state", "OBSERVING_ENGINE"))
+            .put(
+                "current_cell_confidence",
+                learningState.optDouble("reference_confidence", learningState.optDouble("quality", 0.0)),
+            )
             .put("k_interpolated", 0.0)
             .put("k_suggested", JSONObject.NULL)
             .put("delta_k", JSONObject.NULL)
-            .put("canonical_evidence_schema", CanonicalEvidence.SCHEMA)
-            .put("canonical_provenance", evidence.provenance.toJson())
             .put("last_frame_at", System.currentTimeMillis() / 1000.0)
             .put("last_frame_age_ms", 0)
 
@@ -578,33 +348,48 @@ class NativeRuntimeManager(
             .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learning_pipeline", learningPipeline.metricsJson())
-            .put("adaptive_shadow_pipeline", adaptiveShadowPipeline.metricsJson())
-            .put("adaptive_shadow", adaptiveShadow.metricsJson())
-            .put("typed_telemetry_state", telemetryStateMetricsJson())
-            .put("calibration_identity", calibrationIdentityStatusJson())
 
-        val event = synchronized(snapshotLock) {
-            if (generation != currentUsbSessionId) return@synchronized null
-            val learningState = learningLiveSummary()
-            live.put("surface_cell", learningState.optString("state", "OBSERVING_ENGINE"))
-                .put(
-                    "current_cell_confidence",
-                    learningState.optDouble("reference_confidence", learningState.optDouble("quality", 0.0)),
+        val root = JSONObject()
+            .put("event", "telemetry")
+            .put("session_id", generation)
+            .put("version", "OMEGAS-NATIVE-CORE-5")
+            .put("live", live)
+            .put("runtime", runtime)
+            .put("learning_state", learningState)
+            .put("learning", learningState)
+
+        synchronized(snapshotLock) { latestSnapshot = root }
+        running = true
+        ready = true
+        lastError = ""
+
+        if (!telemetryDeliveryPipeline.submit(sequence) { onTelemetryEvent(root) }) {
+            log.add("WARN", "TELEMETRY-DELIVERY", "Quadro $sequence não aceito porque a fila está encerrando")
+        }
+
+        if (generation > 0L) {
+            val important = decision.sample != null
+            val accepted = learningPipeline.submit(
+                generation = generation,
+                sequence = sequence,
+                important = important,
+            ) {
+                if (generation != currentUsbSessionId) return@submit
+                synchronized(learningSessionLock) {
+                    if (generation != currentUsbSessionId) return@synchronized
+                    val processed = learning.ingest(telemetry, decision)
+                    if (generation == currentUsbSessionId) publishLearningState(sequence, processed)
+                }
+            }
+            if (!accepted && important && generation == currentUsbSessionId) {
+                val buffer = learningPipeline.metricsJson()
+                log.add(
+                    "WARN",
+                    "LEARNING-BUFFER",
+                    "Amostra $sequence não coube no buffer quente; sessão gravada preserva a evidência. pending=${buffer.optInt("pending")}",
                 )
-            val root = JSONObject()
-                .put("event", "telemetry")
-                .put("session_id", generation)
-                .put("version", "OMEGAS-NATIVE-CORE-5")
-                .put("canonical_evidence_schema", CanonicalEvidence.SCHEMA)
-                .put("canonical_provenance", evidence.provenance.toJson())
-                .put("live", live)
-                .put("runtime", runtime)
-                .put("learning_state", learningState)
-                .put("learning", learningState)
-            latestSnapshot = root
-            root
-        } ?: return
-        if (generation == currentUsbSessionId) onTelemetryEvent(event)
+            }
+        }
     }
 
     private fun publishLearningState(sequence: Long, source: JSONObject) {
@@ -668,10 +453,6 @@ class NativeRuntimeManager(
             .put("learning_state", learningLiveSummary())
             .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
             .put("learning_pipeline", learningPipeline.metricsJson())
-            .put("adaptive_shadow_pipeline", adaptiveShadowPipeline.metricsJson())
-            .put("adaptive_shadow", adaptiveShadow.metricsJson())
-            .put("typed_telemetry_state", telemetryStateMetricsJson())
-            .put("calibration_identity", calibrationIdentityStatusJson())
             .toString()
     }
 
@@ -686,7 +467,6 @@ class NativeRuntimeManager(
             .put("reference_confidence", state.optDouble("reference_confidence", 0.0))
             .put("quality", state.optDouble("quality", 0.0))
             .put("epoch", state.optInt("epoch", 1))
-            .put("calibration_identity_ready", state.optBoolean("calibration_identity_ready", false))
             .put("pipeline_pending", learningPipeline.metricsJson().optLong("pending", 0L))
     }
 
@@ -709,25 +489,22 @@ class NativeRuntimeManager(
 
     private fun flushPipelines(boundary: String, timeoutMs: Long = 10_000L): Boolean {
         val deliveryOk = telemetryDeliveryPipeline.flush(timeoutMs)
-        val adaptiveOk = adaptiveShadowPipeline.flush(timeoutMs.coerceAtMost(1_000L))
+        // Nunca permita que uma fronteira genérica espere indefinidamente por
+        // histórico em RAM. O buffer quente tem janela curta por definição.
         val learningOk = learningPipeline.flush(timeoutMs.coerceAtMost(2_000L))
         if (!deliveryOk) {
             log.add("WARN", "TELEMETRY-DELIVERY", "Fila não drenou em $boundary dentro de ${timeoutMs}ms")
         }
-        if (!adaptiveOk) {
-            log.add("WARN", "ADAPTIVE-SHADOW", "Fila não drenou em $boundary dentro de ${timeoutMs.coerceAtMost(1_000L)}ms")
-        }
         if (!learningOk) {
             log.add("WARN", "LEARNING-PIPELINE", "Buffer não drenou em $boundary dentro de ${timeoutMs.coerceAtMost(2_000L)}ms")
         }
-        return deliveryOk && adaptiveOk && learningOk
+        return deliveryOk && learningOk
     }
 
     private fun emptySnapshot(sessionId: Long = 0L, reason: String = "OFFLINE"): JSONObject = JSONObject()
         .put("version", "OMEGAS-NATIVE-CORE-5")
         .put("session_id", sessionId)
         .put("telemetry_valid", false)
-        .put("canonical_evidence_schema", CanonicalEvidence.SCHEMA)
         .put(
             "live",
             JSONObject()

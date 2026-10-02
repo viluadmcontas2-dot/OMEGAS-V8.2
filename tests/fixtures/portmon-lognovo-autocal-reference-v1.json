@@ -1,0 +1,55 @@
+{
+  "schema": "omegas.mp48.portmon-autocal-reference.v1",
+  "classification": "ORIGINAL_DERIVED",
+  "description": "Compact original-derived AutoCal reference scan from PortmonLOGNOVO.LOG. Raw request/response bytes are the oracle; decoded values are produced by the OMEGAS production decoder at test/runtime.",
+  "provenance": {
+    "sourceFamily": "Lognovo original / ProgBase original",
+    "sourceZipName": "PortmonLOGNOVO (1)(2).zip",
+    "sourceZipSha256": "6879fa2a7931d22c207cd7fa47dffb59e1df0fe1de216e34e3f11e0c08cc1c17",
+    "sourceRawName": "PortmonLOGNOVO.LOG",
+    "sourceRawBytes": 149911521,
+    "sourceRawSha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
+    "progBaseName": "Copy of ProgBase (3).exe",
+    "progBaseVersion": "4.2.0.6",
+    "progBaseSha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+    "extractionRule": "Select the first complete ACK transaction in PortmonLOGNOVO.LOG for each listed ProgBase read request, preserving request echo, ACK, payload-length byte, payload and trailing checksum byte exactly. All five transactions are from the same original ProgBase capture/session. Render harness assigns one synthetic capture timestamp only to exercise snapshot coherence; timing is not claimed as an original measurement.",
+    "scientificUse": "Reference curve byte/decoder/render parity only. Never derived from OMEGAS output."
+  },
+  "transactions": [
+    {
+      "key": "MNFLD_PRESS_THD",
+      "request": "29 4C 01 76",
+      "sourceWriteLine": 10050,
+      "sourceEvent": 5024,
+      "response": "29 4C 01 76 53 24 9A 00 00 01 33 01 66 01 9A 01 CD 01 00 02 33 02 66 02 9A 02 CD 02 00 03 33 03 66 03 9A 03 CD 03 00 04 66 04 9D"
+    },
+    {
+      "key": "PETR_INJ_TBP",
+      "request": "29 4B 01 75",
+      "sourceWriteLine": 10142,
+      "sourceEvent": 5070,
+      "response": "29 4B 01 75 53 3C 00 01 00 02 00 03 00 04 00 05 00 06 00 07 00 08 00 09 00 0A 00 0B 00 0C 00 0D 00 0E 00 0F 00 10 00 11 00 12 00 13 00 14 00 16 00 18 00 1A 00 1C 00 1E 00 20 00 22 00 24 00 28 00 2C 9D"
+    },
+    {
+      "key": "MUL_ACT",
+      "request": "29 61 01 8B",
+      "sourceWriteLine": 11016,
+      "sourceEvent": 5507,
+      "response": "29 61 01 8B 53 3C B1 35 AE 35 A9 35 B6 33 6C 32 B3 32 77 34 80 37 2B 47 94 55 D3 54 40 53 8B 4E 99 4A 55 4C 59 50 01 50 5B 53 6E 53 A6 50 26 42 2B 3F B8 41 5E 42 91 45 91 45 91 45 91 45 91 45 91 45 44"
+    },
+    {
+      "key": "PETR_MNFLD_PRESS_RV",
+      "request": "29 8D 01 B7",
+      "sourceWriteLine": 14264,
+      "sourceEvent": 7131,
+      "response": "29 8D 01 B7 53 3C 0A 00 29 00 68 00 A7 00 E6 00 34 01 56 01 7D 01 B1 01 EE 01 32 02 6A 02 AB 02 DF 02 FB 02 14 03 39 03 4C 03 5B 03 6C 03 A2 03 D5 03 08 04 3B 04 6E 04 A1 04 D4 04 07 05 6D 05 D3 05 09"
+    },
+    {
+      "key": "GAS_MNFLD_PRESS_RV",
+      "request": "29 8E 01 B8",
+      "sourceWriteLine": 14404,
+      "sourceEvent": 7201,
+      "response": "29 8E 01 B8 53 3C 5A 00 7E 00 A2 00 C6 00 EA 00 08 01 34 01 8A 01 AC 01 F9 01 2A 02 73 02 AF 02 E1 02 22 03 37 03 44 03 68 03 85 03 91 03 B1 03 CC 03 E7 03 02 04 1D 04 38 04 53 04 6E 04 A4 04 DA 04 AA"
+    }
+  ]
+}

@@ -1,28 +1,51 @@
-# Projeto OMEGAS V8.2
+# OMEGAS Platina — Projeto ativo
 
-## Objetivo
+## Missão
 
-Entregar um aplicativo Android automotivo pragmático para observar a equivalência entre gasolina e GNV, aprender com evidência real e orientar calibração manual segura.
+Entregar o OMEGAS Platina pronto para geração de APK, sem gerar APK nesta missão: AutoCal fiel ao ProgBase/ECU, moderno, claro, recuperável e seguro em multimídia 1280×720.
 
-## Produto ativo
+## Repositório e branch
 
-- Dashboard/Agora: telemetria essencial e equivalência atual.
-- AutoCal: coleta nativa da ECU + Equivalência Refinada da Curva K (Gasolina → GNV → Revisar → Gravar e verificar).
-- Aprender: cobertura e evidência em `RPM × MAP`.
-- Sugestões: tradução da evidência em propostas revisáveis.
-- Ajuste local (Mapa K): célula física da ECU em `RPM × Petrol Inj.`.
-- Ajuste global (Curva K): tendência global por tempo de injeção.
-- Ferramentas: sessão, logs e diagnóstico técnico.
-
-
-## Segurança
-
-Observação e aprendizado são passivos. Operações de ECU são manuais e separadas: preparar → revisar → gravar → verificar ACK/readback.
+- Repositório: `viluadmcontas2-dot/OMEGAS-V8.2`
+- Branch autorizada: `OmegasPlatina`
+- Source authority: GitHub remoto
 
 ## Plataforma
 
-Android landscape, alvo físico 1280×720, ABI de release atual `armeabi-v7a`, JDK 17, SDK Android 35.
+Android landscape, WebView, alvo automotivo `1280x720`, MP48/OMEGAS.
 
-## Governança
+## Programa atual
 
-Repo-first. `docs/workunits/OMEGAS-WU-006.md` controla o refinamento AutoCal atual; a WU-005 permanece como prova do último APK.
+**OMEGAS-PLATINA-FINAL — AutoCal produto + paridade + segurança**
+
+Escopo ativo:
+- fidelidade de protocolo e comportamento AutoCal contra DUMP/Portmon/ECU;
+- ECU como autoridade do AutoMatch nativo;
+- nenhuma escrita automática de K/Mapa por Predictor, AutoMatch ou sugestão;
+- mutações somente por intenção explícita, ACK, readback, sessão e recibo;
+- UX principal AutoCal superior ao ProgBase, com evidência técnica sob demanda.
+
+## Princípio técnico
+
+O ProgBase original é referência comportamental e semântica. O objetivo não é copiar a UI Delphi: é preservar comandos, produtores, cadência, séries, estados e consumers, apresentando a mesma verdade operacional com menos carga cognitiva e maior segurança.
+
+## UX vinculante para este programa
+
+- intenção humana > subsistema;
+- uma superfície dominante;
+- estado normal compacto;
+- problema ganha espaço só quando necessário;
+- contexto preservado;
+- detalhe técnico sob demanda;
+- feedback imediato;
+- ação principal óbvia;
+- sem navegação/cliques desnecessários;
+- tela principal compreensível em cerca de 2 segundos.
+
+## NON-GOALS
+
+- gerar APK nesta missão;
+- reimplementar AutoMatch nativo como writer host-side;
+- aplicar Predictor automaticamente;
+- copiar UI do ProgBase;
+- usar SIL/CIU sem autorização explícita.

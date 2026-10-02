@@ -1,0 +1,7 @@
+{
+  "opening_started_utc": "2026-09-15T14:22:54.257806+00:00",
+  "remote_freeze_commit": "946373c179a1ee313a3c66ecc90a3f53a0881324",
+  "frozen_gate_sha256": "4dcd64dc1681e34841b01c54f050b002efd7702ae68d693886496e1a414f4a76",
+  "preholdout_replay": "PASS",
+  "command": "python build_cache.py --holdout; python confidence_surface.py evaluate"
+}

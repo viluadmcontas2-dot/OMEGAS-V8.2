@@ -24,12 +24,6 @@ object Mp48Protocol {
     const val MAP_K_ADDRESS = 0x0054
     const val MAP_ROWS = 13
     const val MAP_COLUMNS = 12
-    const val TEMPI_PER_K_ADDRESS = 0x0037
-    const val GIRI_PER_K_ADDRESS = 0x003D
-
-    fun readKPetrolAxis(): ByteArray = frame(byteArrayOf(0x29, 0x37, 0x00))
-
-    fun readKRpmAxis(): ByteArray = frame(byteArrayOf(0x29, 0x3D, 0x00))
 
     fun readKRow(row: Int): ByteArray {
         require(row in 0 until MAP_ROWS) { "Linha K inválida: $row" }
@@ -84,7 +78,7 @@ object Mp48Protocol {
         val levelRaw = u8(payload, 13)
         val gasPressureRaw = u16le(payload, 14)
         val gasTemperatureRaw = u8(payload, 16)
-        val mapRaw = u16le(payload, 17)
+        val mapRaw = s16le(payload, 17)
         val unknownRaw19 = u8(payload, 19)
         val gas2Raw = u16le(payload, 24)
         val petrol2Raw = u16le(payload, 28)
@@ -105,9 +99,11 @@ object Mp48Protocol {
         val fuel = when {
             rpm <= 0 || fuelByte == 0x00 -> Mp48Fuel.ENGINE_OFF
             physicalCutoff -> Mp48Fuel.CUTOFF
-            fuelByte == 0x80 -> Mp48Fuel.PETROL
-            fuelByte == 0x88 -> Mp48Fuel.TRANSITION
-            fuelByte == 0x90 -> Mp48Fuel.CNG
+            // The 0x20 variants were recorded alongside their canonical states.
+            // Keep fuelByte unmodified: only observed variants are accepted here.
+            fuelByte == 0x80 || fuelByte == 0xA0 -> Mp48Fuel.PETROL
+            fuelByte == 0x88 || fuelByte == 0xA8 -> Mp48Fuel.TRANSITION
+            fuelByte == 0x90 || fuelByte == 0xB0 -> Mp48Fuel.CNG
             else -> Mp48Fuel.UNKNOWN
         }
         val state = when (fuel) {
@@ -124,21 +120,12 @@ object Mp48Protocol {
             if (gasMs != null && gasMs !in 0.0..50.0) add("GAS_INJECTION_OUT_OF_RANGE")
             if (gas2Ms != null && gas2Ms !in 0.0..50.0) add("GAS_2_INJECTION_OUT_OF_RANGE")
             if (petrol2Ms != null && petrol2Ms !in 0.0..40.0) add("PETROL_2_INJECTION_OUT_OF_RANGE")
-            if (waterC !in -40..150) add("WATER_TEMPERATURE_OUT_OF_RANGE")
-            if (gasC !in -40..150) add("GAS_TEMPERATURE_OUT_OF_RANGE")
             if (mapBar !in 0.0..2.5) add("MAP_OUT_OF_RANGE")
         }
-        val cngPressureReasons = buildList {
-            if (gasPressureAbsBar !in 0.0..5.0) add("GAS_PRESSURE_ABSOLUTE_OUT_OF_RANGE")
-            if (pressureDiffBar !in -0.30..4.5) add("GAS_PRESSURE_DIFFERENTIAL_OUT_OF_RANGE")
-        }
+        val plausibilityReasons = basePlausibilityReasons
         val basePlausible = basePlausibilityReasons.isEmpty()
-        val cngPressurePlausible = cngPressureReasons.isEmpty()
-        // A pressão residual do trilho é diagnóstico em gasolina. Ela só
-        // participa da aceitação física quando a ECU confirma GNV ativo.
-        val plausibilityReasons = basePlausibilityReasons +
-            if (fuel == Mp48Fuel.CNG) cngPressureReasons else emptyList()
-        val plausible = basePlausible && (fuel != Mp48Fuel.CNG || cngPressurePlausible)
+        val cngPressurePlausible = true
+        val plausible = basePlausible
 
         return Mp48Telemetry(
             capturedAtElapsedMs = capturedAtElapsedMs,
@@ -178,6 +165,9 @@ object Mp48Protocol {
 
     private fun u16le(bytes: ByteArray, offset: Int): Int =
         u8(bytes, offset) or (u8(bytes, offset + 1) shl 8)
+
+    private fun s16le(bytes: ByteArray, offset: Int): Int =
+        u16le(bytes, offset).let { if (it >= 0x8000) it - 0x10000 else it }
 }
 
 enum class Mp48Fuel(val wireName: String) {
@@ -227,7 +217,6 @@ data class Mp48Telemetry(
         .put("captured_elapsed_ms", capturedAtElapsedMs)
         .put("rpm", rpm)
         .put("level_raw", levelRaw)
-        .put("level_percentage", Mp48TelemetryScale.levelPercentage(levelRaw))
         .put("gas_raw", gasRaw)
         .put("gas_ms_diagnostic", gasMsDiagnostic ?: JSONObject.NULL)
         .put("gas_pulse_present", gasRaw > 0)

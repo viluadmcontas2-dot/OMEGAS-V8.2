@@ -1,0 +1,169 @@
+# Final same-SHA verification: AutoCal blueprint refinement 2026-09-27
+name: OmegasVerde global reality fanout
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [OmegasVerde, OmegasPlatina]
+    paths:
+      - '.github/workflows/verde-global-reality-fanout.yml'
+      - 'tools/ci/global_reality_plan.py'
+      - 'tools/ci/global_reality_lane.py'
+      - 'tools/ci/global_reality_status.py'
+      - 'app/src/main/**'
+      - 'app/src/test/**'
+      - 'tests/ui/**'
+      - 'tests/test_*.py'
+      - 'tests/fixtures/**'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: omegas-verde-global-reality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          MATRIX="$(python3 tools/ci/global_reality_plan.py)"
+          COUNT="$(python3 -c 'import json,sys; print(len(json.load(sys.stdin)["include"]))' <<< "$MATRIX")"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+  lane:
+    needs: plan
+    strategy:
+      fail-fast: false
+      max-parallel: 80
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        if: ${{ matrix.kind == 'jvm' || matrix.kind == 'jvm_node' }}
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Prepare
+        run: chmod +x gradlew
+      - name: Execute isolated product contract
+        id: execute
+        shell: bash
+        run: |
+          set +e
+          python3 tools/ci/global_reality_lane.py             --id "${{ matrix.id }}"             --kind "${{ matrix.kind }}"             --target "${{ matrix.target }}"             --receipt "global-reality/${{ matrix.id }}.json"
+          rc=$?
+          set -e
+          case "$rc" in
+            0) status=PASS ;;
+            1) status=RED ;;
+            2) status=BROKEN ;;
+            *) status=BROKEN ;;
+          esac
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "GLOBAL_REALITY_STEP_STATUS=$status"
+      - name: Fail RED product contract
+        if: ${{ steps.execute.outputs.status == 'RED' }}
+        run: exit 1
+      - name: Fail BROKEN infrastructure
+        if: ${{ steps.execute.outputs.status == 'BROKEN' }}
+        run: exit 2
+  aggregate:
+    if: always()
+    needs: [plan, lane]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate job truth from GitHub Actions API
+        shell: bash
+        env:
+          EXPECTED: ${{ needs.plan.outputs.count }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          repo=os.environ["GITHUB_REPOSITORY"]
+          run_id=os.environ["GITHUB_RUN_ID"]
+          expected=int(os.environ["EXPECTED"])
+          token=os.environ["GH_TOKEN"]
+
+          jobs=[]
+          page=1
+          while True:
+              url=f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100&page={page}"
+              req=urllib.request.Request(url,headers={
+                  "Authorization":f"Bearer {token}",
+                  "Accept":"application/vnd.github+json",
+                  "X-GitHub-Api-Version":"2022-11-28",
+              })
+              with urllib.request.urlopen(req) as response:
+                  data=json.load(response)
+              batch=data.get("jobs",[])
+              jobs.extend(batch)
+              if len(batch)<100: break
+              page+=1
+
+          lanes=[j for j in jobs if str(j.get("name","")).startswith("lane (")]
+          rows=[]
+          for job in lanes:
+              steps=job.get("steps") or []
+              execute=next((s for s in steps if s.get("name")=="Execute isolated product contract"),None)
+              red=next((s for s in steps if s.get("name")=="Fail RED product contract"),None)
+              broken=next((s for s in steps if s.get("name")=="Fail BROKEN infrastructure"),None)
+              conclusion=job.get("conclusion")
+              if conclusion=="success":
+                  status="PASS"
+              elif broken and broken.get("conclusion")=="failure":
+                  status="BROKEN"
+              elif red and red.get("conclusion")=="failure":
+                  status="RED"
+              else:
+                  status="BROKEN"
+              rows.append({
+                  "id":job.get("id"),
+                  "name":job.get("name"),
+                  "status":status,
+                  "conclusion":conclusion,
+                  "execute_conclusion":execute.get("conclusion") if execute else None,
+                  "red_conclusion":red.get("conclusion") if red else None,
+                  "broken_conclusion":broken.get("conclusion") if broken else None,
+                  "html_url":job.get("html_url"),
+              })
+
+          counts={k:sum(1 for r in rows if r["status"]==k) for k in ("PASS","RED","BROKEN")}
+          out={"expected":expected,"count":len(rows),"statuses":counts,"reds":[r for r in rows if r["status"]=="RED"],"broken":[r for r in rows if r["status"]=="BROKEN"]}
+          with open("global-reality-summary.json","w",encoding="utf-8") as f:
+              json.dump(out,f,indent=2,ensure_ascii=False); f.write("\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write(f"# Global reality fan-out\n\nExpected **{expected}**, jobs **{len(rows)}**, PASS **{counts['PASS']}**, RED **{counts['RED']}**, BROKEN **{counts['BROKEN']}**.\n")
+              for r in out["reds"]:
+                  f.write(f"- RED \`{r['name']}\`\n")
+              for r in out["broken"]:
+                  f.write(f"- BROKEN \`{r['name']}\`\n")
+          if len(rows)!=expected:
+              raise SystemExit(f"lane count mismatch {len(rows)} != {expected}")
+          if counts["BROKEN"]:
+              raise SystemExit(f"{counts['BROKEN']} global lanes BROKEN")
+          if counts["RED"]:
+              raise SystemExit(f"{counts['RED']} global lanes RED")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: global-reality-summary
+          path: global-reality-summary.json
+          retention-days: 5

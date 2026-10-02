@@ -1,22 +1,21 @@
 package com.omegas.prohub.autocal
 
-import android.app.AlertDialog
-import android.os.Build
 import android.webkit.JavascriptInterface
 import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.service.TelemetryForegroundService
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
 /**
- * Bridge modular do AutoMatch OMEGAS.
+ * Bridge de paridade host-side AutoCal com o ProgBase.
  *
- * Reconstrução, análise e rascunho permanecem somente leitura. As ações nativas
- * ficam numa superfície separada, sempre preparadas e confirmadas pelo operador
- * também em diálogo Android nativo, além da revisão crítica da WebView.
+ * A ECU continua sendo a autoridade do AutoMatch automático. O bridge apenas
+ * reproduz operações host-side comprovadas do ProgBase; inteligência adicional
+ * do OMEGAS não substitui comandos/estados nativos. Projeção, leitura manual e monitor nativo permanecem separados. As ações nativas
+ * ficam numa superfície separada: são preparadas, revisadas no OMEGAS e então
+ * executadas diretamente pelo manager canônico com ACK/readback.
  */
 class AutoCalJavascriptBridge(activity: MainActivity) {
     private val activityRef = java.lang.ref.WeakReference(activity)
@@ -24,9 +23,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var managerService: TelemetryForegroundService? = null
     private var manager: AutoCalSnapshotManager? = null
     private var nativeActions: AutoCalNativeActionManager? = null
-    private var draft: AutoMatchKFactorDraft? = null
-    private var nativeConfirmationPendingId: String? = null
-    private val projectionMemo = AutoCalProjectionMemo()
 
     @JavascriptInterface
     fun getStatus(): String = currentManager()?.statusJson()?.toString() ?: unavailable()
@@ -35,261 +31,134 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getSnapshot(): String = currentManager()?.latestSnapshotJson()?.toString() ?: unavailable()
 
     @JavascriptInterface
-    fun getNativeMonitorStatus(): String {
-        return try {
-            val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
-            val monitor = JSONObject(service.nativeAutoCalStatusJson())
-            monitor.put(
-                "stationaryCalibration",
-                StationaryCalibrationProjection.project(
-                    monitorStatus = monitor,
-                    frame = service.runtime.currentTelemetryFrame(),
-                ),
-            ).toString()
-        } catch (error: Exception) {
-            localFailure(error.message ?: "Estado AutoCal nativo indisponível")
-        }
-    }
+    fun getNativeMonitorStatus(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalStatusJson() ?: unavailable()
 
     @JavascriptInterface
-    fun getNativeMonitorSnapshot(): String {
-        return try {
-            val service = activityRef.get()?.serviceOrNull() ?: return unavailable()
-            val snapshot = JSONObject(service.nativeAutoCalSnapshotJson())
-            if (!snapshot.optBoolean("available", false)) return snapshot.toString()
-            val hash = snapshot.optString("snapshotHash")
-            val projection = synchronized(managerLock) {
-                projectionMemo.resolve(hash) {
-                    NativeAutoCalSnapshotHumanProjector.project(
-                        snapshot = snapshot,
-                        autoMatchRevalidating = snapshot.optString("snapshotReason") == "AUTOMATCH_COUNT_CHANGED",
-                    )
-                }
-            }
-            snapshot
-                .put("humanProjection", projection)
-                .put("humanProjectionSnapshotHash", hash)
-                .put("humanProjectionRecomputeCount", projectionMemo.recomputeCount)
-                .toString()
-        } catch (error: Exception) {
-            localFailure(error.message ?: "Projeção AutoCal indisponível")
-        }
-    }
+    fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
 
     @JavascriptInterface
-    fun importSnapshotIntoLearning(snapshotJson: String): String = try {
+    fun getUiProjection(): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        service.importNativeAutoCalSnapshot(snapshotJson)
+        val manual = currentManager()
+        val nativeStatus = JSONObject(service.nativeAutoCalStatusJson())
+        val nativeSnapshot = JSONObject(service.nativeAutoCalSnapshotJson())
+        val manualStatus = manual?.statusJson() ?: JSONObject()
+        val manualSnapshot = manual?.latestSnapshotJson() ?: JSONObject().put("available", false)
+        AutoCalUiProjection.project(
+            nativeStatus = nativeStatus,
+            nativeSnapshot = nativeSnapshot,
+            manualStatus = manualStatus,
+            manualSnapshot = manualSnapshot,
+        ).toString()
     } catch (error: Exception) {
-        localFailure(error.message ?: "Não foi possível importar o snapshot")
+        localFailure(error.message ?: "Projeção AutoCal indisponível")
     }
 
     @JavascriptInterface
-    fun getAnalysis(): String = currentManager()?.let { active ->
-        AutoMatchSnapshotAnalysis.analyze(active.latestSnapshotJson()).toString()
-    } ?: unavailable()
+    fun getSessionLedgerStatus(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderStatusJson() ?: unavailable()
 
     @JavascriptInterface
-    fun getResidualAnalysis(): String = try {
-        val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
-        val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        val active = currentManager() ?: throw IllegalStateException("Leitura AutoCal indisponível")
-        val analysis = AutoMatchSnapshotAnalysis.analyze(active.latestSnapshotJson())
-        val learning = service.runtime.exportLearning(service.settings.deviceId)
-        AutoMatchResidualPlanner.analyze(analysis, learning).toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Residual indisponível")
+    fun listAutoCalSessions(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderListJson() ?: "[]"
+
+    @JavascriptInterface
+    fun exportAutoCalSession(sessionId: String) {
+        activityRef.get()?.exportSession(sessionId)
     }
 
     @JavascriptInterface
-    fun startRead(): String {
-        synchronized(managerLock) { draft = null }
-        return currentManager()?.startRead()?.toString() ?: unavailable()
-    }
+    fun startRead(): String = currentManager()?.startRead()?.toString() ?: unavailable()
 
     @JavascriptInterface
     fun cancelRead(): String = currentManager()?.cancel()?.toString() ?: unavailable()
 
     @JavascriptInterface
-    fun createDraft(): String = try {
-        val active = currentManager() ?: throw IllegalStateException("Serviço indisponível")
-        val analysis = AutoMatchSnapshotAnalysis.analyze(active.latestSnapshotJson())
-        val created = AutoMatchKFactorDraftPlanner.create(analysis)
-        synchronized(managerLock) { draft = created }
-        created.toJson().toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Não foi possível criar o rascunho")
-    }
+    fun getNativeActionStatus(): String =
+        currentNativeManager()?.statusJson()?.toString() ?: unavailable()
 
-    /** Equivalência Refinada sobre o snapshot nativo mais recente (monitor ou leitura manual). */
     @JavascriptInterface
-    fun getRefinedAnalysis(): String = try {
-        val snapshot = refinementSnapshot()
-        val evidence = refinementEvidence(snapshot)
-        val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L) + "|" + evidence.signature
-        synchronized(managerLock) {
-            refinedMemo?.takeIf { it.first == key }?.second
-                ?: analyzeWithEvidence(snapshot, evidence).toString().also { refinedMemo = key to it }
+    fun prepareNativeAction(action: String): String {
+        val requested = action.trim().uppercase()
+        if (requested == "NEUTRALIZE_LIVE_K") {
+            return localFailure("NEUTRALIZE_LIVE_K foi removido: use RESET_K_FACTOR, que executa o Reset K provado do ProgBase em MUL_ACT")
         }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Equivalência refinada indisponível")
-    }
 
-    /** Rascunho manual com os pontos medidos/coerência pré-selecionados; não grava. */
-    @JavascriptInterface
-    fun createRefinedDraft(): String = try {
-        val snapshot = refinementSnapshot()
-        val analysis = analyzeWithEvidence(snapshot, refinementEvidence(snapshot))
-        require(analysis.optBoolean("available")) {
-            analysis.optString("message").ifBlank { "Equivalência refinada indisponível" }
+        val parsed = try {
+            AutoCalNativeActionManager.Action.valueOf(requested)
+        } catch (_: Exception) {
+            return localFailure("Ação nativa inválida")
         }
-        val created = AutoMatchKFactorDraftPlanner.createRefined(analysis)
-        synchronized(managerLock) { draft = created }
-        created.toJson().put("refinementMode", analysis.optString("refinementMode")).toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Não foi possível criar o rascunho refinado")
+        if (parsed.operationalToggle) {
+            return localFailure("Iniciar/Pausar usa a ação operacional de um toque")
+        }
+        if (parsed !in setOf(
+                AutoCalNativeActionManager.Action.RESET_PETROL,
+                AutoCalNativeActionManager.Action.RESET_GAS,
+                AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.RESET_K_FACTOR,
+                AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
+                AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
+                AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
+                AutoCalNativeActionManager.Action.DELETE_POINT,
+            )
+        ) {
+            return localFailure("Ação destrutiva não suportada")
+        }
+        return currentNativeManager()?.prepare(parsed.name)?.toString() ?: unavailable()
     }
 
-    /** Índice de equivalência da condução + ciclo fechado (verificação por faixa). */
     @JavascriptInterface
-    fun getEquivalence(): String = try {
-        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        service.equivalence.index()
-            .put("denseBands", service.equivalence.denseBandsJson())
-            .put("typicalBands", service.equivalence.typicalBandsJson())
-            .put("refinement", service.refinementJournal.json())
-            .put("restorePoints", service.refinementJournal.restorePoints())
-            .put("autopilot", service.refinementAutopilot.json())
-            .toString()
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Equivalência indisponível")
-    }
+    fun preparePointDelete(fuel: String, index: Int): String =
+        currentNativeManager()?.preparePointDelete(fuel, index)?.toString() ?: unavailable()
 
-    private class Evidence(val pairs: List<Pair<Double, Double>>, val gainScale: DoubleArray?, val signature: String)
-
-    /** Telemetria da curva vigente + ganho aprendido; alinha o acumulador à MUL_ACT lida da ECU. */
-    private fun refinementEvidence(snapshot: JSONObject): Evidence {
-        val service = activityRef.get()?.serviceOrNull() ?: return Evidence(emptyList(), null, "sem-servico")
-        val fields = snapshot.optJSONArray("fields")
-        var mulAct: String? = null
-        var axisMs: List<Double>? = null
-        if (fields != null) for (i in 0 until fields.length()) {
-            val field = fields.optJSONObject(i) ?: continue
-            val raw = field.optJSONArray("rawValues") ?: continue
-            if (field.optString("status") != AutoCalFieldStatus.VALID.name || raw.length() != 30) continue
-            when (field.optString("key")) {
-                "MUL_ACT" -> mulAct = raw.toString()
-                "PETR_INJ_TBP" -> axisMs = (0 until 30).map { raw.optInt(it) / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS }
+    @JavascriptInterface
+    fun preparePointDeleteBatch(targetsJson: String): String = try {
+        val array = org.json.JSONArray(targetsJson)
+        val targets = buildList {
+            repeat(array.length()) { index ->
+                val item = array.optJSONObject(index)
+                    ?: throw IllegalArgumentException("Seleção de ponto inválida")
+                add(
+                    com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Target(
+                        fuel = com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Fuel.parse(item.optString("fuel")),
+                        index = item.getInt("index"),
+                    ),
+                )
             }
         }
-        mulAct?.let { json ->
-            val raw = JSONArray(json)
-            service.equivalence.alignCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
-        }
-        val pairs = service.equivalence.pairs().map { it.petrolRefMs to it.gasPetrolMs }
-        val scale = axisMs?.let { service.refinementJournal.pointGainScale(it) }
-        return Evidence(pairs, scale, "${pairs.size}|${scale?.joinToString(",") { "%.3f".format(it) }}")
-    }
-
-    private fun analyzeWithEvidence(snapshot: JSONObject, evidence: Evidence): JSONObject =
-        AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, evidence.pairs, evidence.gainScale)
-
-    /** Memo da análise refinada por snapshot: a UI consulta a cada 2 s sem recalcular. */
-    private var refinedMemo: Pair<String, String>? = null
-
-    private fun refinementSnapshot(): JSONObject {
-        val monitor = activityRef.get()?.serviceOrNull()?.let { service ->
-            try { JSONObject(service.nativeAutoCalSnapshotJson()) } catch (_: Exception) { null }
-        }
-        val manual = currentManager()?.latestSnapshotJson()
-        val monitorAt = monitor?.takeIf { (it.optJSONArray("fields")?.length() ?: 0) > 0 }?.optLong("capturedAtMs", 0L) ?: -1L
-        val manualAt = manual?.takeIf { (it.optJSONArray("fields")?.length() ?: 0) > 0 }?.optLong("capturedAtMs", 0L) ?: -1L
-        return when {
-            monitorAt < 0 && manualAt < 0 -> throw IllegalStateException("Nenhum snapshot AutoCal disponível")
-            monitorAt >= manualAt -> monitor!!
-            else -> manual!!
-        }
-    }
-
-    @JavascriptInterface
-    fun getDraft(): String = synchronized(managerLock) {
-        val current = draft
-        if (current == null) emptyDraft().toString() else current.toJson().toString()
-    }
-
-    @JavascriptInterface
-    fun selectDraftPoint(index: Int, selected: Boolean): String = try {
-        synchronized(managerLock) {
-            val current = draft ?: throw IllegalStateException("Crie um rascunho local primeiro")
-            AutoMatchKFactorDraftPlanner.select(current, index, selected)
-                .also { draft = it }
-                .toJson()
-                .toString()
-        }
+        currentNativeManager()?.preparePointDeletes(targets)?.toString() ?: unavailable()
     } catch (error: Exception) {
-        localFailure(error.message ?: "Ponto inválido")
+        localFailure(error.message ?: "Seleção de pontos inválida")
     }
 
     @JavascriptInterface
-    fun setDraftTargetFactor(index: Int, factor: Double): String = try {
-        synchronized(managerLock) {
-            val current = draft ?: throw IllegalStateException("Crie um rascunho local primeiro")
-            AutoMatchKFactorDraftPlanner.setTargetFactor(current, index, factor)
-                .also { draft = it }
-                .toJson()
-                .toString()
+    fun setAcquisitionEnabled(enabled: Boolean): String {
+        val actionManager = currentNativeManager() ?: return unavailable()
+        val action = if (enabled) {
+            AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL
+        } else {
+            AutoCalNativeActionManager.Action.DISABLE_AUTO_CAL
         }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Fator inválido")
-    }
-
-    @JavascriptInterface
-    fun getDraftReviewPayload(): String = try {
-        synchronized(managerLock) {
-            (draft ?: throw IllegalStateException("Crie um rascunho local primeiro"))
-                .selectedPointsForReview()
-                .toString()
+        val prepared = actionManager.prepare(action.name)
+        if (!prepared.optBoolean("ok", false) || !prepared.optBoolean("prepared", false)) {
+            return prepared.toString()
         }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "Rascunho indisponível")
-    }
-
-    @JavascriptInterface
-    fun validateDraftReviewCurve(curveJson: String): String = try {
-        synchronized(managerLock) {
-            val current = draft ?: throw IllegalStateException("Crie um rascunho local primeiro")
-            AutoMatchDraftReviewValidator.validate(current, JSONObject(curveJson)).toString()
+        if (prepared.optBoolean("requiresCriticalConfirmation", true)) {
+            actionManager.clearPreparation()
+            return localFailure("Ação operacional foi classificada incorretamente como crítica")
         }
-    } catch (error: Exception) {
-        localFailure(error.message ?: "A Curva K não confirmou o rascunho")
+        return actionManager.execute(prepared.getString("preparationId"))
+            .put("operationalOneTouch", true)
+            .put("requestedEnabled", enabled)
+            .toString()
     }
-
-    @JavascriptInterface
-    fun clearDraft(): String = synchronized(managerLock) {
-        draft = null
-        emptyDraft().put("cleared", true).toString()
-    }
-
-    @JavascriptInterface
-    fun getNativeActionStatus(): String = currentNativeManager()?.statusJson()?.toString() ?: unavailable()
-
-    @JavascriptInterface
-    fun getNativeActionReceipts(): String = currentNativeManager()?.receiptsJson()?.toString() ?: "[]"
-
-    @JavascriptInterface
-    fun prepareNativeAction(action: String): String = currentNativeManager()
-        ?.prepare(action)
-        ?.toString()
-        ?: unavailable()
 
     /**
-     * Não executa a ação diretamente. Agenda um AlertDialog Android não
-     * cancelável por toque externo; somente o botão positivo chama o manager.
+     * Executa após a revisão crítica dentro do OMEGAS. Os interlocks, ACK e
+     * readback continuam no manager canônico.
      */
     @JavascriptInterface
     fun executeNativeAction(preparationId: String): String {
-        val activity = activityRef.get() ?: return unavailable()
         val actionManager = currentNativeManager() ?: return unavailable()
         val preparedStatus = actionManager.statusJson()
         if (preparedStatus.optString("state") != "PREPARED" ||
@@ -303,67 +172,39 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         } catch (_: Exception) {
             return localFailure("Ação nativa inválida")
         }
-        synchronized(managerLock) {
-            if (nativeConfirmationPendingId != null) {
-                return localFailure("Já existe uma confirmação Android aberta")
-            }
-            nativeConfirmationPendingId = preparationId
-        }
-        return try {
-            activity.runOnUiThread {
-                if (activity.isFinishing || (Build.VERSION.SDK_INT >= 17 && activity.isDestroyed)) {
-                    synchronized(managerLock) { nativeConfirmationPendingId = null }
-                    actionManager.clearPreparation()
-                    return@runOnUiThread
-                }
-                val commandHex = action.request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
-                val effect = if (action.mayChangeMulAct) {
-                    "A ECU pode alterar MUL_ACT internamente."
-                } else {
-                    "A ECU modificará buffers de aquisição AutoCal."
-                }
-                AlertDialog.Builder(activity)
-                    .setTitle("CONFIRMAÇÃO ANDROID — ECU")
-                    .setMessage(
-                        "${action.label}\n\n$effect\n\nComando: $commandHex\n\n" +
-                            "Esta ação nunca é automática e não possui rollback automático.",
-                    )
-                    .setCancelable(false)
-                    .setNegativeButton("CANCELAR") { dialog, _ ->
-                        synchronized(managerLock) { nativeConfirmationPendingId = null }
-                        actionManager.clearPreparation()
-                        activity.refreshWebUi()
-                        dialog.dismiss()
-                    }
-                    .setPositiveButton("ENVIAR COMANDO") { dialog, _ ->
-                        synchronized(managerLock) { nativeConfirmationPendingId = null }
-                        val result = actionManager.execute(preparationId)
-                        if (!result.optBoolean("ok")) actionManager.clearPreparation()
-                        activity.refreshWebUi()
-                        dialog.dismiss()
-                    }
-                    .show()
-            }
-            JSONObject()
-                .put("ok", true)
-                .put("confirmationPending", true)
-                .put("nativeAndroidConfirmation", true)
-                .put("writesStarted", false)
-                .put("automatic", false)
-                .put("manualOnly", true)
-                .toString()
-        } catch (error: Exception) {
-            synchronized(managerLock) { nativeConfirmationPendingId = null }
+        if (action.operationalToggle) {
             actionManager.clearPreparation()
-            localFailure(error.message ?: "Não foi possível abrir a confirmação Android")
+            return localFailure("Iniciar/Pausar não usa revisão crítica; use a ação operacional de um toque")
         }
+        if (action !in setOf(
+                AutoCalNativeActionManager.Action.RESET_PETROL,
+                AutoCalNativeActionManager.Action.RESET_GAS,
+                AutoCalNativeActionManager.Action.RESET_ALL,
+                AutoCalNativeActionManager.Action.RESET_K_FACTOR,
+                AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
+                AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
+                AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
+                AutoCalNativeActionManager.Action.DELETE_POINT,
+            )
+        ) {
+            actionManager.clearPreparation()
+            return localFailure("Ação destrutiva não suportada")
+        }
+
+        val result = actionManager.execute(preparationId)
+        if (!result.optBoolean("ok", false)) actionManager.clearPreparation()
+        return result
+            .put("confirmationPending", false)
+            .put("nativeAndroidConfirmation", false)
+            .put("writesStarted", result.optBoolean("ok", false))
+            .put("automatic", false)
+            .put("manualOnly", true)
+            .toString()
     }
 
     @JavascriptInterface
-    fun clearNativeActionPreparation(): String {
-        synchronized(managerLock) { nativeConfirmationPendingId = null }
-        return currentNativeManager()?.clearPreparation()?.toString() ?: unavailable()
-    }
+    fun clearNativeActionPreparation(): String =
+        currentNativeManager()?.clearPreparation()?.toString() ?: unavailable()
 
     @JavascriptInterface
     fun getIdentity(): String = JSONObject()
@@ -372,13 +213,13 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("nativeProtocolEvidenceExact", true)
         .put("readOnly", false)
         .put("readOnlyScope", "STATUS_AND_SNAPSHOT_ONLY")
-        .put("localDraft", true)
+        .put("localDraft", false)
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
-        .put("nativeAndroidConfirmation", true)
+        .put("nativeAndroidConfirmation", false)
         .put("appAutomaticWrite", false)
         .put("nativeAutoMatchInsideEcu", true)
-        .put("manualAutoMatchExposed", false)
+        .put("manualAutoMatchExposed", true)
         .put("obdIndependent", true)
         .toString()
 
@@ -390,9 +231,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             manager = null
             nativeActions = null
             managerService = null
-            draft = null
-            nativeConfirmationPendingId = null
-            projectionMemo.clear()
         }
     }
 
@@ -422,6 +260,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     onStateChanged = activity::refreshWebUi,
                     onSnapshotReady = { snapshot ->
                         service.runtime.importNativeAutoCalSnapshot(snapshot)
+                        service.sessionRecorder.record("autocal_manual_snapshot", "autocal", snapshot, force = true)
                     },
                 )
             }
@@ -462,7 +301,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         )
                     },
                     onConfirmed = { receipt ->
-                        synchronized(managerLock) { draft = null }
                         service.sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
                         service.nativeAutoCal.onManualActionConfirmed(receipt)
                         try { service.link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
@@ -481,21 +319,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeActions?.close()
             manager = null
             nativeActions = null
-            draft = null
-            nativeConfirmationPendingId = null
-            projectionMemo.clear()
             managerService = service
             return
         }
     }
-
-    private fun emptyDraft(): JSONObject = JSONObject()
-        .put("ok", true)
-        .put("available", false)
-        .put("selectedCount", 0)
-        .put("automatic", false)
-        .put("manualOnly", true)
-        .put("requiresReview", true)
 
     private fun localFailure(message: String): String = JSONObject()
         .put("ok", false)

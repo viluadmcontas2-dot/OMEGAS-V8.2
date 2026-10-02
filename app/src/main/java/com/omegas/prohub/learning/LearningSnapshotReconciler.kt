@@ -5,14 +5,15 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
 import java.util.UUID
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
  * Reconcilia a memória persistida usada pela interface.
  *
  * A coleta continua permissiva: regiões são preservadas mesmo sem par. Este
- * componente apenas revisita GNV da época ativa quando uma superfície de
- * gasolina fisicamente compatível passa a existir.
+ * componente apenas revisita GNV da época ativa quando uma referência de
+ * gasolina física ou adaptativa passa a estar disponível.
  */
 internal object LearningSnapshotReconciler {
     fun reconcile(snapshot: JSONObject): JSONObject {
@@ -22,6 +23,8 @@ internal object LearningSnapshotReconciler {
         val existing = root.optJSONArray("comparisons") ?: JSONArray()
         val output = JSONArray()
         val seen = linkedSetOf<String>()
+        val representedVisits = linkedSetOf<String>()
+        val refreshableAdaptiveIndexes = linkedMapOf<String, Int>()
 
         repeat(existing.length()) { index ->
             val item = existing.optJSONObject(index) ?: return@repeat
@@ -30,6 +33,15 @@ internal object LearningSnapshotReconciler {
             if (seen.add(key)) {
                 if (copy.optString("dedupe_key").isBlank()) copy.put("dedupe_key", key)
                 output.put(copy)
+                val visit = copy.optString("visit_id", copy.optString("visitId"))
+                if (visit.isNotBlank()) {
+                    val visitKey = "${copy.optInt("epoch", epoch)}:$visit"
+                    if (isRefreshableAdaptive(copy)) {
+                        refreshableAdaptiveIndexes[visitKey] = output.length() - 1
+                    } else {
+                        representedVisits += visitKey
+                    }
+                }
             }
         }
 
@@ -48,12 +60,6 @@ internal object LearningSnapshotReconciler {
                         petrolMs = petrolMs,
                         confidence = raw.optDouble("confidence", raw.optDouble("quality", 0.25)).coerceIn(0.0, 1.0),
                         sampleCount = raw.optInt("samples", 1).coerceAtLeast(1),
-                        updatedAtMs = raw.optLong("updated_at", 0L),
-                        environment = PetrolReferenceEnvironmentBridge.region(
-                            waterC = raw.optDouble("water_c", UNKNOWN_TEMPERATURE_C),
-                            gasTemperatureC = raw.optDouble("gas_c", UNKNOWN_TEMPERATURE_C),
-                            pressureDiffBar = raw.optDouble("pressure_diff_bar", Double.NaN),
-                        ),
                     ),
                 )
             }
@@ -61,27 +67,26 @@ internal object LearningSnapshotReconciler {
 
         var pending = 0
         var reconciled = 0
+        var adaptiveReferences = 0
+        var refreshedAdaptiveReferences = 0
         val rejectionCounts = linkedMapOf<String, Int>()
         repeat(regions.length()) { index ->
             val cng = regions.optJSONObject(index) ?: return@repeat
             if (!isFuel(cng, Mp48Fuel.CNG) || cng.optInt("epoch", epoch) != epoch) return@repeat
             val visits = visitIds(cng, index)
-            val requestEnvironment = PetrolReferenceEnvironmentBridge.request(
-                waterC = cng.optDouble("water_c", UNKNOWN_TEMPERATURE_C),
-                gasTemperatureC = cng.optDouble("gas_c", UNKNOWN_TEMPERATURE_C),
-                pressureDiffBar = cng.optDouble("pressure_diff_bar", Double.NaN),
-            )
-            val result = PetrolReferenceSelector.estimate(
+            val result = AdaptivePetrolReference.estimate(
                 regions = petrol,
                 request = PetrolReferenceSelector.Request(
                     rpm = cng.optDouble("rpm", 0.0),
                     mapBar = cng.optDouble("map_bar", 0.0),
                     waterC = cng.optDouble("water_c", UNKNOWN_TEMPERATURE_C),
-                    environment = requestEnvironment,
                 ),
             )
             if (!result.available) {
-                pending += visits.size
+                pending += visits.count { visitId ->
+                    val visitKey = "$epoch:$visitId"
+                    visitKey !in representedVisits && visitKey !in refreshableAdaptiveIndexes
+                }
                 rejectionCounts[result.reasonCode] = (rejectionCounts[result.reasonCode] ?: 0) + visits.size
                 return@repeat
             }
@@ -90,10 +95,22 @@ internal object LearningSnapshotReconciler {
             val petrolOnCng = cng.optDouble("petrol_ms", 0.0)
             if (!petrolOnCng.isFinite() || petrolOnCng <= 0.05) return@repeat
             visits.forEach { visitId ->
-                val referenceIds = result.regionIds.sorted()
-                val dedupe = "$epoch:RETROACTIVE_PERSISTED_SURFACE:$visitId:${referenceIds.joinToString(",")}" 
-                if (!seen.add(dedupe)) return@forEach
-                val comparison = comparisonJson(
+                val visitKey = "$epoch:$visitId"
+                val refreshIndex = refreshableAdaptiveIndexes[visitKey]
+
+                // Uma referência adaptativa persistida é uma projeção, não evidência física.
+                // Enquanto a melhor referência continuar adaptativa, preservamos o mesmo voto
+                // para manter idempotência. Se gasolina física surgir depois, substituímos o
+                // voto no mesmo índice em vez de criar uma segunda comparação para a visita.
+                if (refreshIndex != null && result.stage == "PRIOR_PLUS_RESIDUAL") {
+                    adaptiveReferences += 1
+                    return@forEach
+                }
+                if (refreshIndex == null && !representedVisits.add(visitKey)) return@forEach
+
+                val referenceIds = result.regionIds.sorted().joinToString(",")
+                val dedupe = "$epoch:RETROACTIVE_PERSISTED_SURFACE:$visitId:$referenceIds:${result.stage}"
+                val replacement = comparisonJson(
                     cng = cng,
                     epoch = epoch,
                     visitId = visitId,
@@ -102,17 +119,24 @@ internal object LearningSnapshotReconciler {
                     petrolTarget = petrolTarget,
                     petrolOnCng = petrolOnCng,
                     referenceQuality = result.quality,
-                    referenceContexts = result.selectedRegionContexts,
-                    requestEnvironment = result.requestEnvironment ?: requestEnvironment,
-                    extrapolated = result.extrapolated,
+                    referenceStage = result.stage,
+                    referenceReasonCode = result.reasonCode,
+                    referenceExtrapolated = result.extrapolated,
                 )
-                if (comparison == null) {
-                    pending += 1
-                    rejectionCounts["INVALID_EQUIVALENCE"] = (rejectionCounts["INVALID_EQUIVALENCE"] ?: 0) + 1
-                } else {
-                    output.put(comparison)
+
+                if (refreshIndex != null) {
+                    output.put(refreshIndex, replacement)
+                    refreshableAdaptiveIndexes.remove(visitKey)
+                    representedVisits += visitKey
+                    refreshedAdaptiveReferences += 1
                     reconciled += 1
+                    return@forEach
                 }
+
+                if (!seen.add(dedupe)) return@forEach
+                output.put(replacement)
+                if (result.stage == "PRIOR_PLUS_RESIDUAL") adaptiveReferences += 1
+                reconciled += 1
             }
         }
 
@@ -127,9 +151,12 @@ internal object LearningSnapshotReconciler {
                     .put("existing_comparisons", existing.length())
                     .put("preserved_existing_comparisons", output.length() - reconciled)
                     .put("reconciled_comparisons", reconciled)
+                    .put("adaptive_references", adaptiveReferences)
+                    .put("refreshed_adaptive_references", refreshedAdaptiveReferences)
                     .put("pending_cng_visits", pending)
                     .put("rejection_reasons", JSONObject(rejectionCounts as Map<*, *>))
-                    .put("temperature_unknown_is_neutral", true),
+                    .put("temperature_unknown_is_neutral", true)
+                    .put("predictions_are_evidence", false),
             )
     }
 
@@ -157,34 +184,30 @@ internal object LearningSnapshotReconciler {
         return "EXISTING_LEGACY:$digest"
     }
 
+    private fun isRefreshableAdaptive(item: JSONObject): Boolean =
+        item.optString("reference_stage") == "PRIOR_PLUS_RESIDUAL" ||
+            item.optString("reference_reason_code") == "ADAPTIVE_PRIOR_RESIDUAL"
+
     private fun comparisonJson(
         cng: JSONObject,
         epoch: Int,
         visitId: String,
-        referenceIds: List<String>,
+        referenceIds: String,
         dedupe: String,
         petrolTarget: Double,
         petrolOnCng: Double,
         referenceQuality: Double,
-        referenceContexts: List<PetrolReferenceSelector.SelectedRegionContext>,
-        requestEnvironment: PetrolReferenceSelector.EnvironmentalContext,
-        extrapolated: Boolean,
-    ): JSONObject? {
-        val equivalence = FuelEquivalenceObjective.evaluate(
-            referenceMs = petrolTarget,
-            petrolOnCngMs = petrolOnCng,
-            minimumReferenceMs = MotorLearningMemory.LEGACY_MIN_REFERENCE_MS,
-            policy = LearningToleranceSettings.current,
-        )
-        if (!equivalence.valid) return null
-        val difference = requireNotNull(equivalence.differenceMs)
-        val errorRatio = requireNotNull(equivalence.errorRatio)
-        val errorPct = requireNotNull(equivalence.errorPercent)
-        val direction = when (equivalence.state) {
-            FuelEquivalenceState.WITHIN_POLICY_DEADBAND -> "EQUIVALENT"
-            FuelEquivalenceState.PETROL_ON_CNG_ABOVE_REFERENCE -> "INCREASE_CNG_DELIVERY"
-            FuelEquivalenceState.PETROL_ON_CNG_BELOW_REFERENCE -> "DECREASE_CNG_DELIVERY"
-            FuelEquivalenceState.INVALID -> return null
+        referenceStage: String,
+        referenceReasonCode: String,
+        referenceExtrapolated: Boolean,
+    ): JSONObject {
+        val difference = petrolOnCng - petrolTarget
+        val errorPct = if (petrolTarget <= 0.05) 0.0 else difference / petrolTarget * 100.0
+        val direction = when {
+            abs(difference) <= LearningToleranceSettings.current.equivalenceDeadbandMs ||
+                abs(errorPct) <= LearningToleranceSettings.current.equivalenceDeadbandPercent -> "EQUIVALENT"
+            difference > 0.0 -> "INCREASE_CNG_DELIVERY"
+            else -> "DECREASE_CNG_DELIVERY"
         }
         val rpm = cng.optDouble("rpm", 0.0)
         val map = cng.optDouble("map_bar", 0.0)
@@ -192,23 +215,18 @@ internal object LearningSnapshotReconciler {
         val referenceCell = LearningGridProjection.cellFor(rpm, petrolTarget, map)
         val cngQuality = cng.optDouble("quality", cng.optDouble("confidence", 0.25)).coerceIn(0.0, 1.0)
         val quality = sqrt(referenceQuality.coerceIn(0.0, 1.0) * cngQuality).coerceIn(0.0, 1.0)
-        val capturedAt = cng.optLong("updated_at", System.currentTimeMillis())
-        val referenceUpdatedAt = referenceContexts.maxOfOrNull { it.updatedAtMs } ?: 0L
+        val referenceIsDirectEvidence = referenceStage != "PRIOR_PLUS_RESIDUAL" && !referenceExtrapolated
         return JSONObject()
             .put("id", UUID.randomUUID().toString())
             .put("dedupe_key", dedupe)
             .put("visit_id", visitId)
-            .put("reference_region_id", referenceIds.joinToString(","))
-            .put("reference_region_ids", JSONArray(referenceIds))
-            .put("reference_updated_at_wall_ms", if (referenceUpdatedAt > 0L) referenceUpdatedAt else JSONObject.NULL)
-            .put("reference_contexts", JSONArray(referenceContexts.map { it.toJson() }))
-            .put("request_environment", requestEnvironment.toJson())
+            .put("reference_region_id", referenceIds)
             .put("origin", "RETROACTIVE_PERSISTED_SURFACE")
-            .put("captured_at", capturedAt)
-            .put("comparison_captured_at_wall_ms", capturedAt)
-            .put("timestamp_domains", JSONObject()
-                .put("reference_updated_at_wall_ms", "wall_clock_ms")
-                .put("comparison_captured_at_wall_ms", "wall_clock_ms"))
+            .put("reference_stage", referenceStage)
+            .put("reference_reason_code", referenceReasonCode)
+            .put("reference_extrapolated", referenceExtrapolated)
+            .put("reference_is_direct_evidence", referenceIsDirectEvidence)
+            .put("captured_at", cng.optLong("updated_at", System.currentTimeMillis()))
             .put("rpm", rpm)
             .put("map_bar", map)
             .put("water_c", cng.optDouble("water_c", UNKNOWN_TEMPERATURE_C))
@@ -219,23 +237,12 @@ internal object LearningSnapshotReconciler {
             .put("reference_cell_row", referenceCell.getInt("row"))
             .put("reference_cell_column", referenceCell.getInt("column"))
             .put("continuous_cell_weights", cngCell.optJSONArray("continuousWeights") ?: JSONArray())
-            .put("equivalence_valid", true)
-            .put("equivalence_state", equivalence.state.name)
-            .put("equivalence_reason_code", equivalence.reasonCode)
             .put("petrol_target_ms", petrolTarget)
-            .put("reference_denominator_ms", petrolTarget)
             .put("petrol_on_cng_ms", petrolOnCng)
             .put("difference_ms", difference)
-            .put("error_ratio", errorRatio)
             .put("error_pct", errorPct)
-            .put("reference_unit", "ms")
-            .put("observed_unit", "ms")
-            .put("difference_unit", "ms")
-            .put("error_ratio_unit", "ratio")
-            .put("error_percent_unit", "percent")
             .put("direction", direction)
             .put("quality", quality)
-            .put("reference_extrapolated", extrapolated)
             .put("epoch", epoch)
             .put("observation_count", 1)
     }

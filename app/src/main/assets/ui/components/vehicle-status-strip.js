@@ -63,13 +63,14 @@
       if (!this.node) return;
       const status = state.status || {};
       const telemetryRoot = state.telemetry || {};
+      const telemetryValid = telemetryRoot.valid === true;
       const live = telemetryRoot.live || telemetryRoot.data || telemetryRoot;
       const serviceRunning = status.serviceRunning === true;
       const ecuOnline = status.usbConnected === true && status.engineReady !== false;
-      const rpm = finite(live.rpm ?? status.rpm);
-      const petrol = finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs);
+      const rpm = telemetryValid ? finite(live.rpm ?? status.rpm) : null;
+      const petrol = telemetryValid ? finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs) : null;
       const age = finite(telemetryRoot.ageMs ?? telemetryRoot.telemetryAgeMs ?? status.directTelemetryAgeMs);
-      const fuel = fuelLabel(live.fuel ?? live.state ?? status.fuelState);
+      const fuel = telemetryValid ? fuelLabel(live.fuel ?? live.state ?? status.fuelState) : "—";
 
       this.fact('service', serviceRunning ? 'ATIVO' : 'PARADO', serviceRunning ? 'online' : 'offline');
       this.fact('ecu', ecuOnline ? 'ONLINE' : 'OFFLINE', ecuOnline ? 'online' : 'offline');

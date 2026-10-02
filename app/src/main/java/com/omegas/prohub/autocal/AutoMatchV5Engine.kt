@@ -8,20 +8,20 @@ import kotlin.math.abs
  * Emulador determinístico da hipótese de referência do AutoMatch.
  *
  * A reconstrução usa as 18 bandas de pressão, compara horizontalmente as curvas
- * de gasolina e GNV, suaviza três bandas, aplica deadband de 1%, ganho de 1/3,
- * limita cada execução a ±5% e atualiza multiplicativamente o MUL_ACT anterior.
+ * de gasolina e GNV, suaviza três bandas, aplica deadband de 1%, ganho de 0,60,
+ * limita cada execução a ±12% e atualiza multiplicativamente o MUL_ACT anterior.
  *
  * Esta classe não acessa USB, não escreve na ECU e mantém
- * [AutoMatchV5Result.nativeFirmwareExact] como falso. A fórmula V6 foi fechada no
- * laboratório virtual do projeto; não é apresentada como prova da rotina OEM.
+ * [AutoMatchV5Result.nativeFirmwareExact] como falso. Esta é uma hipótese
+ * experimental do OMEGAS e não é apresentada como prova da rotina OEM.
  */
 object AutoMatchV5Engine {
-    const val ALGORITHM = "OMEGAS_INFERRED_HORIZONTAL_G1_3_S3_DB1_CAP5_MUL_Q14_V2"
+    const val ALGORITHM = "OMEGAS_INFERRED_HORIZONTAL_G0_60_S3_DB1_CAP12_MUL_Q14_V3"
     const val PRESSURE_BAND_COUNT = 18
     const val SMOOTHING_WINDOW = 3
-    const val GAIN = 1.0 / 3.0
+    const val GAIN = 0.60
     const val DEADBAND_RATIO = 0.01
-    const val MAX_STEP_RATIO = 0.05
+    const val MAX_STEP_RATIO = 0.12
     const val SUPPORT_MIN_MS = 2.785
     const val SUPPORT_MAX_MS = 12.791
     const val MIN_FACTOR = 0.60

@@ -70,27 +70,39 @@
         input.value = String((finite(input.value) || 0) + Number(button.dataset.mapNudge || 0));
         this.applyAdjustment();
       }));
-      document.getElementById('mapReviewButton')?.addEventListener('click', () => this.openReview());
-      document.getElementById('mapReviewBack')?.addEventListener('click', () => this.closeReview());
-      document.getElementById('mapWriteButton')?.addEventListener('click', () => this.writeReview());
-      document.getElementById('mapDismissResult')?.addEventListener('click', () => this.closeReview());
+      document.getElementById('mapReviewButton')?.addEventListener('click', () => this.writePrepared());
+      document.getElementById('mapDismissResult')?.addEventListener('click', () => this.dismissResult());
     }
 
     onEnter(context) {
       this.pendingContext = context || null;
       this.root?.classList.toggle('from-learning', context?.origin === 'learning');
       if (!this.editor.hasMap() && !this.reading) {
-        text('mapSourceStatus', 'Toque em Ler mapa K para consultar a ECU');
+        this.startRead(true);
         return;
       }
       if (this.editor.hasMap()) this.applyContext(this.pendingContext);
+    }
+
+    settleReadFailure(message) {
+      this.reading = false;
+      this.editor.reset();
+      this.cells.clear();
+      this.rowHeaders = [];
+      this.columnHeaders = [];
+      if (this.host) {
+        this.host.innerHTML = '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
+      }
+      text('mapSourceStatus', 'Mapa não confirmado');
+      this.store.patch({ map: { ...this.store.get().map, state: 'failed', data: null, selection: 0, review: null } });
+      if (message) this.alert(message);
     }
 
     startRead(automatic) {
       if (this.reading) return;
       const result = this.api.startMapRead();
       if (!result?.ok || !result?.started) {
-        this.alert(result?.error || 'Não foi possível iniciar a leitura do Mapa K.');
+        this.settleReadFailure(result?.error || 'Não foi possível iniciar a leitura do Mapa K.');
         return;
       }
       this.reading = true;
@@ -111,9 +123,7 @@
         if (!result?.busy && result?.state !== 'READING') {
           this.reading = false;
           if (!result?.ok || result?.state === 'FAILED') {
-            this.editor.reset();
-            this.alert(result?.error || 'Falha ao ler o Mapa K.');
-            text('mapSourceStatus', 'Mapa não confirmado');
+            this.settleReadFailure(result?.error || 'Falha ao ler o Mapa K.');
           } else {
             try {
               this.editor.load(result);
@@ -124,7 +134,7 @@
               this.store.patch({ map: { ...this.store.get().map, state: 'ready', data: result, selection: 0, review: null } });
               this.applyContext(this.pendingContext || this.store.get().routeContext);
             } catch (error) {
-              this.alert(error.message);
+              this.settleReadFailure(error.message);
             }
           }
         }
@@ -145,7 +155,7 @@
 
       const corner = document.createElement('div');
       corner.className = 'map-axis-corner';
-      corner.innerHTML = '<small>Petrol Inj.</small><b>ms \\ RPM</b>';
+      corner.innerHTML = '<small>INJEÇÃO</small><b>ms ↓ · RPM →</b>';
       table.appendChild(corner);
 
       for (let column = 0; column < 12; column += 1) {
@@ -153,7 +163,7 @@
         header.type = 'button';
         header.className = 'map-axis-header map-rpm-header';
         header.dataset.selectColumn = String(column);
-        header.innerHTML = `<small>RPM</small><b>${Math.round(snapshot.axes.rpmBins[column] || 0).toLocaleString('pt-BR')}</b>`;
+        header.innerHTML = `<b>${Math.round(snapshot.axes.rpmBins[column] || 0).toLocaleString('pt-BR')}</b>`;
         header.title = 'Selecionar ou desmarcar toda esta faixa de RPM';
         this.columnHeaders.push(header);
         table.appendChild(header);
@@ -164,7 +174,7 @@
         rowHeader.type = 'button';
         rowHeader.className = 'map-axis-header map-ms-header';
         rowHeader.dataset.selectRow = String(row);
-        rowHeader.innerHTML = `<small>Petrol Inj.</small><b>${fmt(snapshot.axes.petrolBins[row], 1)} ms</b>`;
+        rowHeader.innerHTML = `<b>${fmt(snapshot.axes.petrolBins[row], 1)} ms</b>`;
         rowHeader.title = 'Selecionar ou desmarcar toda esta faixa de Petrol Inj.';
         this.rowHeaders.push(rowHeader);
         table.appendChild(rowHeader);
@@ -296,7 +306,7 @@
       const button = document.getElementById('mapReviewButton');
       if (button) {
         button.disabled = count === 0;
-        button.textContent = count ? `Revisar ${count} alteração${count === 1 ? '' : 'ões'}` : 'Selecione células';
+        button.textContent = count ? `Gravar ${count} alteração${count === 1 ? '' : 'ões'} na ECU` : 'Selecione células';
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();
@@ -314,7 +324,7 @@
       text('mapLiveCell', cell);
     }
 
-    openReview() {
+    writePrepared() {
       try {
         if (this.editor.targetOverrides?.size !== this.editor.selectionCount()) this.applyAdjustment();
         this.review = this.editor.buildReview();
@@ -322,38 +332,25 @@
         this.alert(error.message);
         return;
       }
-      const reviewHost = document.getElementById('mapReviewList');
-      if (reviewHost) {
-        const first = this.review.items.slice(0, 16);
-        reviewHost.innerHTML = first.map(item => `<div><span>${fmt(item.petrolMs, 1)} ms · ${Math.round(item.rpm).toLocaleString('pt-BR')} RPM</span><b>${item.current} → ${item.target}</b></div>`).join('')
-          + (this.review.items.length > first.length ? `<p>+ ${this.review.items.length - first.length} alterações na mesma intenção humana</p>` : '');
-      }
-      text('mapReviewCount', `${this.review.count} alteração${this.review.count === 1 ? '' : 'ões'}`);
-      const write = document.getElementById('mapWriteButton');
-      if (write) write.textContent = `Gravar ${this.review.count} alteração${this.review.count === 1 ? '' : 'ões'} na ECU`;
-      this.root?.classList.add('is-reviewing');
-      this.store.patch({ map: { ...this.store.get().map, review: this.review } });
-    }
-
-    closeReview() {
-      this.root?.classList.remove('is-reviewing', 'is-writing', 'has-result');
-      this.review = null;
-      this.renderEditor();
-    }
-
-    writeReview() {
       if (!this.review?.items?.length) return;
-      const result = this.api.writeMap(this.review.items, 3, 150, 'Ajuste manual confirmado na UI clean-slate');
+      const result = this.api.writeMap(this.review.items, 0, 0, 'Ajuste manual confirmado na UI clean-slate');
       if (!result?.ok || !result?.started) {
         this.alert(result?.error || 'A escrita não iniciou.');
+        this.review = null;
+        this.renderEditor();
         return;
       }
-      this.root?.classList.remove('is-reviewing');
       this.root?.classList.add('is-writing');
       this.lastOperationState = '';
       text('mapOperationTitle', 'Escrita manual em andamento');
       text('mapOperationMessage', `0 de ${this.review.count} células confirmadas`);
-      this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result } });
+      this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result, review: this.review } });
+    }
+
+    dismissResult() {
+      this.root?.classList.remove('is-writing', 'has-result');
+      this.review = null;
+      this.renderEditor();
     }
 
     pollWrite() {

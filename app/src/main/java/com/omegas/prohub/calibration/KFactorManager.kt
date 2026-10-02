@@ -22,8 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Autoridade Android da curva azul K factor.
  *
- * Toda escrita é iniciada pelo usuário, possui backup completo, ACK e readback
- * dos 30 pontos. Sugestões do aprendizado nunca chamam este gerenciador.
+ * Toda escrita é iniciada pelo usuário e confirmada por ACK + readback.
+ * Backup da Curva K é uma ação manual separada; não é pré-requisito para escrever.
+ * Sugestões do aprendizado nunca chamam este gerenciador.
  */
 class KFactorManager(
     private val paths: AppPaths,
@@ -31,6 +32,9 @@ class KFactorManager(
     private val log: RingLog,
     private val onBusyChanged: (Boolean) -> Unit,
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
+    private val publishManualBackup: (File) -> JSONObject = {
+        JSONObject().put("ok", true).put("published", false)
+    },
 ) {
     companion object {
         const val MAX_BATCH_POINTS = KFactorProtocol.POINT_COUNT
@@ -56,6 +60,99 @@ class KFactorManager(
     fun statusJson(): String = synchronized(statusLock) { JSONObject(status.toString()).toString() }
 
     fun historyJson(): String = loadHistory().toString()
+
+    /**
+     * Réplica funcional do ActionResetKFactorExecute do ProgBase 4.2.0.6.
+     *
+     * A prova canônica em 0x0051A070 itera o vetor MUL_ACT e chama
+     * TAebVector.SetDouble com 1.0 em cada elemento. O OMEGAS preserva o
+     * mesmo alvo (MUL_ACT 0x0161, Q14 0x4000) e acrescenta ACK + readback.
+     * VECT_AUTOCAL_EE é uma superfície distinta e não é o alvo deste reset.
+     */
+    fun startResetToNeutral(reason: String = "Neutralizar MUL_ACT live em 1.0 · OMEGAS"): JSONObject {
+        val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
+            return error(error.message ?: "USB desconectado")
+        }
+        if (!busy.compareAndSet(false, true)) return error("Outra operação de calibração está em andamento")
+        val resetId = "KRESET-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().take(8)
+        onBusyChanged(true)
+        update("RESET_READING", "Lendo Curva K antes do reset", 0, JSONObject().put("resetId", resetId))
+        executor.execute {
+            var delegated = false
+            try {
+                val axisRaw = readRawPoints(KFactorProtocol.readPetrolAxis(), "eixo Petrol Inj para reset K", expectedSessionId)
+                val factorsRaw = readRawPoints(KFactorProtocol.readFactors(), "Curva K antes do reset", expectedSessionId)
+                val now = System.currentTimeMillis()
+                val cache = curveJson(axisRaw, factorsRaw)
+                    .put("schema", "omegas-k-factor-cache-v1")
+                    .put("updatedAt", now)
+                    .put("complete", true)
+                    .put("sessionConfirmed", true)
+                    .put("sessionId", expectedSessionId)
+                    .put("source", "ECU_RESET_PRECHECK")
+                    .put("hash", hash(factorsRaw))
+                atomicWrite(cacheFile, cache.toString(2))
+
+                val targetRaw = KFactorProtocol.rawFromFactor(1.0)
+                val points = JSONArray()
+                repeat(KFactorProtocol.POINT_COUNT) { index ->
+                    val currentRaw = factorsRaw[index]
+                    if (currentRaw != targetRaw) {
+                        points.put(JSONObject()
+                            .put("index", index)
+                            .put("currentRaw", currentRaw)
+                            .put("targetRaw", targetRaw))
+                    }
+                }
+
+                if (points.length() == 0) {
+                    update(
+                        "RESET_CONFIRMED",
+                        "Curva K já está neutra em 1.0",
+                        100,
+                        JSONObject().put("resetId", resetId).put("changedPoints", 0),
+                    )
+                } else {
+                    // O writer canônico precisa adquirir o lock por conta própria.
+                    busy.set(false)
+                    onBusyChanged(false)
+                    synchronized(statusLock) { status.put("busy", false) }
+                    val started = startBatchWrite(points, reason)
+                    delegated = started.optBoolean("ok", false)
+                    if (!delegated) {
+                        update(
+                            "RESET_FAILED",
+                            started.optString("error", "Não foi possível iniciar o reset da Curva K"),
+                            100,
+                            JSONObject().put("resetId", resetId),
+                        )
+                    }
+                }
+            } catch (error: Exception) {
+                update(
+                    "RESET_FAILED",
+                    error.message ?: "Reset da Curva K interrompido",
+                    100,
+                    JSONObject().put("resetId", resetId),
+                )
+            } finally {
+                if (!delegated) {
+                    busy.set(false)
+                    onBusyChanged(false)
+                    synchronized(statusLock) { status.put("busy", false) }
+                }
+            }
+        }
+        return JSONObject()
+            .put("ok", true)
+            .put("started", true)
+            .put("action", "RESET_K_FACTOR")
+            .put("resetId", resetId)
+            .put("targetFactor", 1.0)
+            .put("targetRaw", KFactorProtocol.rawFromFactor(1.0))
+            .put("automatic", false)
+            .put("humanConfirmed", true)
+    }
 
     @Synchronized
     fun beginUsbSession(sessionId: Long) {
@@ -98,6 +195,138 @@ class KFactorManager(
             busy.set(false)
             onBusyChanged(false)
             synchronized(statusLock) { status.put("busy", false) }
+        }
+    }
+
+    fun saveCurrentBackup(label: String = "Curva salva manualmente"): JSONObject {
+        val curve = readCurve()
+        if (!curve.optBoolean("ok", false)) return curve
+        return try {
+            val axisRaw = jsonIntArray(curve.optJSONArray("axisRaw"))
+            val factorsRaw = jsonIntArray(curve.optJSONArray("factorsRaw"))
+            require(axisRaw.size == KFactorProtocol.POINT_COUNT && factorsRaw.size == KFactorProtocol.POINT_COUNT) {
+                "Curva K incompleta; backup não salvo"
+            }
+            val createdAt = System.currentTimeMillis()
+            val curveHash = hash(factorsRaw)
+            val fileName = "MANUAL-$createdAt-${curveHash.take(8)}.json"
+            val backup = curveJson(axisRaw, factorsRaw)
+                .put("format", "omegas-k-factor-backup-v1")
+                .put("type", "MANUAL_SNAPSHOT")
+                .put("label", label.trim().take(80).ifBlank { "Curva salva manualmente" })
+                .put("createdAt", createdAt)
+                .put("hash", curveHash)
+                .put("changes", JSONArray())
+            val backupFile = File(backupDir, fileName)
+            atomicWrite(backupFile, backup.toString(2))
+            val verified = loadBackup(fileName)
+            require(verified.getString("hash") == curveHash) { "Hash do backup salvo divergiu" }
+            val publicCopy = try {
+                publishManualBackup(backupFile)
+            } catch (error: Exception) {
+                JSONObject().put("ok", false).put("error", error.message ?: "Falha ao publicar backup")
+            }
+            if (!publicCopy.optBoolean("ok", false)) {
+                return error("Backup interno validado, mas não foi possível salvar em Download/Omegas")
+                    .put("internalSaved", true)
+                    .put("fileName", fileName)
+                    .put("hash", curveHash)
+                    .put("publicError", publicCopy.optString("error", "Armazenamento público indisponível"))
+            }
+            pruneBackups()
+            JSONObject()
+                .put("ok", true)
+                .put("fileName", fileName)
+                .put("publicPath", publicCopy.optString("path", "Download/Omegas/$fileName"))
+                .put("publicCopy", publicCopy)
+                .put("createdAt", createdAt)
+                .put("hash", curveHash)
+                .put("type", "MANUAL_SNAPSHOT")
+                .put("label", backup.getString("label"))
+                .put("pointCount", KFactorProtocol.POINT_COUNT)
+                .put("curve", curve)
+        } catch (error: Exception) {
+            error(error.message ?: "Falha ao salvar backup da Curva K")
+        }
+    }
+
+    fun listBackups(): JSONArray {
+        val rows = KFactorBackupRetention.visibleFiles(backupDir.listFiles())
+            .mapNotNull { file ->
+                try {
+                    val backup = loadBackup(file.name)
+                    JSONObject()
+                        .put("fileName", file.name)
+                        .put("createdAt", backup.optLong("createdAt", file.lastModified()))
+                        .put("hash", backup.getString("hash"))
+                        .put("type", backup.optString("type", "PRE_WRITE"))
+                        .put("label", backup.optString("label", if (file.name.startsWith("MANUAL-")) "Curva salva" else "Backup automático"))
+                        .put("pointCount", KFactorProtocol.POINT_COUNT)
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            .sortedByDescending { it.optLong("createdAt", 0L) }
+        return JSONArray(rows)
+    }
+
+    fun prepareRestore(fileName: String): JSONObject {
+        return try {
+            val backup = loadBackup(fileName)
+            val targetAxis = jsonIntArray(backup.optJSONArray("axisRaw"))
+            val targetFactors = jsonIntArray(backup.optJSONArray("factorsRaw"))
+            val fresh = readCurve()
+            if (!fresh.optBoolean("ok", false)) return fresh
+            val currentAxis = jsonIntArray(fresh.optJSONArray("axisRaw"))
+            val currentFactors = jsonIntArray(fresh.optJSONArray("factorsRaw"))
+            if (!currentAxis.contentEquals(targetAxis)) {
+                return error("O eixo Petrol Inj. atual difere do backup; restauração bloqueada")
+                    .put("geometryMismatch", true)
+                    .put("fileName", fileName)
+            }
+            val minimumRaw = KFactorProtocol.rawFromFactor(MIN_SAFE_FACTOR)
+            val points = JSONArray()
+            repeat(KFactorProtocol.POINT_COUNT) { index ->
+                val currentRaw = currentFactors[index]
+                val targetRaw = targetFactors[index]
+                if (targetRaw !in minimumRaw..KFactorProtocol.MAX_RAW) {
+                    return error("O backup contém fator fora da faixa segura no ponto ${index + 1}")
+                        .put("unsafeBackup", true)
+                        .put("fileName", fileName)
+                }
+                if (currentRaw != targetRaw) {
+                    points.put(
+                        JSONObject()
+                            .put("index", index)
+                            .put("petrolMs", KFactorProtocol.petrolMsFromAxisRaw(currentAxis[index]))
+                            .put("currentRaw", currentRaw)
+                            .put("targetRaw", targetRaw)
+                            .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                            .put("targetFactor", KFactorProtocol.factorFromRaw(targetRaw))
+                            .put(
+                                "deltaPercent",
+                                if (currentRaw == 0) 0.0
+                                else (targetRaw.toDouble() / currentRaw.toDouble() - 1.0) * 100.0,
+                            ),
+                    )
+                }
+            }
+            JSONObject()
+                .put("ok", true)
+                .put("fileName", fileName)
+                .put("createdAt", backup.optLong("createdAt", 0L))
+                .put("hash", backup.getString("hash"))
+                .put("type", backup.optString("type", "PRE_WRITE"))
+                .put("label", backup.optString("label", "Backup Curva K"))
+                .put("currentHash", hash(currentFactors))
+                .put("changedPoints", points.length())
+                .put("points", points)
+                .put("currentCurve", fresh)
+                .put("restoreUsesExistingWriter", true)
+                .put("preWriteBackupRequired", false)
+                .put("automaticBackup", false)
+        } catch (error: Exception) {
+            error(error.message ?: "Backup da Curva K inválido")
         }
     }
 
@@ -148,6 +377,7 @@ class KFactorManager(
             .put("points", normalized.length())
             .put("automatic", false)
             .put("humanConfirmationRequired", true)
+            .put("automaticBackup", false)
     }
 
     fun close() = executor.shutdownNow()
@@ -156,6 +386,7 @@ class KFactorManager(
         val startedAt = System.currentTimeMillis()
         val confirmed = JSONArray()
         var initialHash = ""
+        var historyPersisted = false
         try {
             val cache = loadCache()
             val cachedAxis = jsonIntArray(cache.optJSONArray("axisRaw"))
@@ -168,37 +399,36 @@ class KFactorManager(
                 throw IllegalStateException("Leia a curva K factor nesta conexão antes de aplicar")
             }
 
-            update("VERIFYING_CURRENT", "Conferindo os 30 pontos antes da escrita", 8)
-            val ecuBefore = readRawPoints(KFactorProtocol.readFactors(), "conferência K factor", expectedSessionId)
-            if (!ecuBefore.contentEquals(cachedFactors)) {
-                throw IllegalStateException("A curva da ECU mudou. Leia novamente antes de aplicar")
-            }
-            val working = ecuBefore.copyOf()
-            initialHash = hash(working)
-            createBackup(adjustmentId, cachedAxis, working, points, initialHash)
-
-            repeat(points.length()) { pointPosition ->
-                val point = points.getJSONObject(pointPosition)
-                val index = point.getInt("index")
-                val currentRaw = point.getInt("currentRaw")
-                val targetRaw = point.getInt("targetRaw")
-                if (working[index] != currentRaw) {
-                    throw IllegalStateException("Ponto $index: esperado $currentRaw, encontrado ${working[index]}")
+            val working = serial.unit(
+                reason = "escrita direta Curva K",
+                expectedSessionId = expectedSessionId,
+                workClass = Mp48WorkClass.MANUAL_WRITE,
+                telemetryAfter = true,
+                waitTimeoutMs = 10_000L,
+            ) { unit ->
+                update("VERIFYING_CURRENT", "Conferindo os 30 pontos antes da escrita", 8)
+                val ecuBefore = readRawPoints(unit, KFactorProtocol.readFactors(), "conferência K factor")
+                if (!ecuBefore.contentEquals(cachedFactors)) {
+                    throw IllegalStateException("A curva da ECU mudou. Leia novamente antes de aplicar")
                 }
-                val progress = 15 + ((pointPosition + 1) * 65 / points.length())
-                update(
-                    "WRITING_POINT",
-                    "Ponto ${pointPosition + 1}/${points.length()} • ${formatFactor(currentRaw)} → ${formatFactor(targetRaw)}",
-                    progress,
-                    JSONObject().put("adjustmentId", adjustmentId).put("index", index),
-                )
-                val readback = serial.unit(
-                    reason = "escrita + readback K factor[$index]",
-                    expectedSessionId = expectedSessionId,
-                    workClass = Mp48WorkClass.MANUAL_WRITE,
-                    telemetryAfter = true,
-                    waitTimeoutMs = 3_500L,
-                ) { unit ->
+                val live = ecuBefore.copyOf()
+                initialHash = hash(live)
+
+                repeat(points.length()) { pointPosition ->
+                    val point = points.getJSONObject(pointPosition)
+                    val index = point.getInt("index")
+                    val currentRaw = point.getInt("currentRaw")
+                    val targetRaw = point.getInt("targetRaw")
+                    if (live[index] != currentRaw) {
+                        throw IllegalStateException("Ponto $index: esperado $currentRaw, encontrado ${live[index]}")
+                    }
+                    val progress = 15 + ((pointPosition + 1) * 65 / points.length())
+                    update(
+                        "WRITING_POINT",
+                        "Ponto ${pointPosition + 1}/${points.length()} • ${formatFactor(currentRaw)} → ${formatFactor(targetRaw)}",
+                        progress,
+                        JSONObject().put("adjustmentId", adjustmentId).put("index", index),
+                    )
                     requireAck(
                         unit.transaction(
                             KFactorProtocol.writeFactor(index, targetRaw),
@@ -208,40 +438,44 @@ class KFactorManager(
                         ),
                         "escrita do ponto $index",
                     )
-                    readRawPoints(unit, KFactorProtocol.readFactors(), "readback K factor[$index]")
+                    live[index] = targetRaw
+                    confirmed.put(
+                        JSONObject()
+                            .put("id", UUID.randomUUID().toString())
+                            .put("adjustmentId", adjustmentId)
+                            .put("timestamp", System.currentTimeMillis())
+                            .put("index", index)
+                            .put("petrolMs", KFactorProtocol.petrolMsFromAxisRaw(cachedAxis[index]))
+                            .put("beforeRaw", currentRaw)
+                            .put("afterRaw", targetRaw)
+                            .put("beforeFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                            .put("afterFactor", KFactorProtocol.factorFromRaw(targetRaw))
+                            .put("reason", reason.take(180))
+                            .put("acknowledged", true)
+                            .put("confirmed", false)
+                            .put("batchFinalized", false)
+                            .put("automatic", false),
+                    )
                 }
-                repeat(KFactorProtocol.POINT_COUNT) { other ->
-                    val expected = if (other == index) targetRaw else working[other]
-                    if (readback[other] != expected) {
-                        throw IllegalStateException(
-                            "Readback divergente no ponto $other: esperado $expected, ECU ${readback[other]}",
-                        )
-                    }
+
+                update("VERIFYING_FINAL", "Confirmando readback K factor final", 90)
+                val finalReadback = readRawPoints(unit, KFactorProtocol.readFactors(), "confirmação final K factor")
+                if (!finalReadback.contentEquals(live)) {
+                    throw IllegalStateException("A confirmação final da curva divergiu")
                 }
-                working[index] = targetRaw
-                val event = JSONObject()
-                    .put("id", UUID.randomUUID().toString())
-                    .put("adjustmentId", adjustmentId)
-                    .put("timestamp", System.currentTimeMillis())
-                    .put("index", index)
-                    .put("petrolMs", KFactorProtocol.petrolMsFromAxisRaw(cachedAxis[index]))
-                    .put("beforeRaw", currentRaw)
-                    .put("afterRaw", targetRaw)
-                    .put("beforeFactor", KFactorProtocol.factorFromRaw(currentRaw))
-                    .put("afterFactor", KFactorProtocol.factorFromRaw(targetRaw))
-                    .put("reason", reason.take(180))
-                    .put("confirmed", true)
-                    .put("automatic", false)
-                appendHistory(event)
-                confirmed.put(event)
+                live
             }
 
-            update("VERIFYING_FINAL", "Confirmando a curva completa", 90)
-            val finalReadback = readRawPoints(KFactorProtocol.readFactors(), "confirmação final K factor", expectedSessionId)
-            if (!finalReadback.contentEquals(working)) {
-                throw IllegalStateException("A confirmação final da curva divergiu")
-            }
             val finalHash = hash(working)
+            repeat(confirmed.length()) { index ->
+                confirmed.getJSONObject(index)
+                    .put("confirmed", true)
+                    .put("batchFinalized", true)
+                    .put("finalCurveHash", finalHash)
+            }
+            appendHistoryBatch(confirmed)
+            historyPersisted = true
+
             val now = System.currentTimeMillis()
             val finalCache = curveJson(cachedAxis, working)
                 .put("schema", "omegas-k-factor-cache-v1")
@@ -265,6 +499,7 @@ class KFactorManager(
                 .put("automatic", false)
                 .put("humanConfirmed", true)
                 .put("readbackValid", true)
+                .put("automaticBackup", false)
                 .put("confirmedAt", now)
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-FACTOR", "Curva confirmada; notificação falhou: ${error.message}")
@@ -272,6 +507,12 @@ class KFactorManager(
             update("BATCH_CONFIRMED", "K factor confirmado por ACK e readback", 100, payload)
             log.add("INFO", "K-FACTOR", "$adjustmentId confirmado • ${points.length()} pontos")
         } catch (error: Exception) {
+            if (!historyPersisted && confirmed.length() > 0) {
+                try {
+                    appendHistoryBatch(confirmed)
+                    historyPersisted = true
+                } catch (_: Exception) {}
+            }
             val stale = loadCache().put("sessionConfirmed", false)
             atomicWrite(cacheFile, stale.toString(2))
             update(
@@ -362,21 +603,26 @@ class KFactorManager(
             .put("automatic", false)
     }
 
-    private fun createBackup(
-        adjustmentId: String,
-        axisRaw: IntArray,
-        factorsRaw: IntArray,
-        points: JSONArray,
-        initialHash: String,
-    ) {
-        val backup = curveJson(axisRaw, factorsRaw)
-            .put("format", "omegas-k-factor-backup-v1")
-            .put("adjustmentId", adjustmentId)
-            .put("createdAt", System.currentTimeMillis())
-            .put("hash", initialHash)
-            .put("changes", JSONArray(points.toString()))
-        atomicWrite(File(backupDir, "$adjustmentId.json"), backup.toString(2))
-        backupDir.listFiles()?.sortedByDescending { it.lastModified() }?.drop(30)?.forEach { it.delete() }
+    private fun loadBackup(fileName: String): JSONObject {
+        require(fileName.isNotBlank() && File(fileName).name == fileName && !fileName.contains("..")) {
+            "Nome de backup inválido"
+        }
+        val file = File(backupDir, fileName)
+        require(file.isFile) { "Backup da Curva K não encontrado" }
+        val backup = JSONObject(file.readText(Charsets.UTF_8))
+        require(backup.optString("format") == "omegas-k-factor-backup-v1") { "Formato de backup inválido" }
+        val axisRaw = jsonIntArray(backup.optJSONArray("axisRaw"))
+        val factorsRaw = jsonIntArray(backup.optJSONArray("factorsRaw"))
+        require(axisRaw.size == KFactorProtocol.POINT_COUNT && factorsRaw.size == KFactorProtocol.POINT_COUNT) {
+            "Backup da Curva K incompleto"
+        }
+        val expectedHash = backup.optString("hash")
+        require(expectedHash.isNotBlank() && expectedHash == hash(factorsRaw)) { "Hash do backup da Curva K inválido" }
+        return backup
+    }
+
+    private fun pruneBackups() {
+        KFactorBackupRetention.pruneAutomatic(backupDir)
     }
 
     private fun loadCache(): JSONObject = try {
@@ -387,8 +633,12 @@ class KFactorManager(
         if (historyFile.isFile) JSONArray(historyFile.readText(Charsets.UTF_8)) else JSONArray()
     } catch (_: Exception) { JSONArray() }
 
-    private fun appendHistory(event: JSONObject) {
-        val history = loadHistory().put(event)
+    private fun appendHistoryBatch(items: JSONArray) {
+        if (items.length() == 0) return
+        val history = loadHistory()
+        repeat(items.length()) { index ->
+            history.put(JSONObject(items.getJSONObject(index).toString()))
+        }
         val trimmed = JSONArray()
         val start = (history.length() - 2_000).coerceAtLeast(0)
         for (index in start until history.length()) trimmed.put(history.get(index))

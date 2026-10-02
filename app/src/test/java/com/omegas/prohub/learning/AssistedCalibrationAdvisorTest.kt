@@ -189,6 +189,56 @@ class AssistedCalibrationAdvisorTest {
         }
     }
 
+    @Test
+    fun `passo manual inicial usa fracao cientifica fixa de setenta e cinco por cento`() {
+        val comparisons = JSONArray().put(comparison(
+            id = "first-independent-visit",
+            targetMs = 5.0,
+            observedMs = 6.0,
+            rpm = 2_200.0,
+            mapBar = 0.50,
+            row = 5,
+            column = 4,
+        ))
+
+        val point = pointAt(analyze(comparisons), 5.0)
+
+        assertEquals(20.0, point.getDouble("idealDeltaPercent"), 0.000001)
+        assertEquals("SCIENTIFIC_FIXED_075_MANUAL", point.getString("stepPolicy"))
+        assertEquals(0.75, point.getDouble("correctionFraction"), 0.000001)
+        assertEquals(15.0, point.getDouble("suggestedDeltaPercent"), 0.000001)
+        assertEquals(5.0, point.getDouble("estimatedResidualAfterPercent"), 0.000001)
+    }
+
+    @Test
+    fun `visitas repetidas nao escalam alem de setenta e cinco sem confirmacao causal de nova epoca`() {
+        val first = JSONArray().put(comparison(
+            id = "visit-1",
+            targetMs = 5.0,
+            observedMs = 6.0,
+            rpm = 2_000.0,
+            mapBar = 0.50,
+            row = 5,
+            column = 4,
+        ))
+        val repeated = buildComparisons(
+            count = 4,
+            targetMs = 5.0,
+            observedMs = 6.0,
+            row = 5,
+            column = 4,
+        )
+
+        val firstPoint = pointAt(analyze(first), 5.0)
+        val repeatedPoint = pointAt(analyze(repeated), 5.0)
+
+        assertEquals(0.75, firstPoint.getDouble("correctionFraction"), 0.000001)
+        assertEquals(0.75, repeatedPoint.getDouble("correctionFraction"), 0.000001)
+        assertEquals("SCIENTIFIC_FIXED_075_MANUAL", firstPoint.getString("stepPolicy"))
+        assertEquals(firstPoint.getString("stepPolicy"), repeatedPoint.getString("stepPolicy"))
+        assertTrue(repeatedPoint.getDouble("suggestedDeltaPercent") <= repeatedPoint.getDouble("idealDeltaPercent"))
+    }
+
     private fun analyze(comparisons: JSONArray): JSONObject =
         AssistedCalibrationAdvisor.analyze(JSONObject().put("comparisons", comparisons))
 

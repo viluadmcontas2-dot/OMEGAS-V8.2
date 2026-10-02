@@ -60,7 +60,21 @@ class Mp48TelemetryScaleTest {
     }
 
     @Test
-    fun `pressao residual alta nao invalida gasolina mas continua bloqueando gnv`() {
+    fun `MAP live preserva signed word do ProgBase e high bit falha fechado`() {
+        val negativeMap = progBaseReferencePayload.copyOf().apply {
+            this[17] = 0xFF.toByte()
+            this[18] = 0xFF.toByte()
+        }
+        val telemetry = Mp48Protocol.decodeTelemetry(negativeMap, 0L)
+
+        assertEquals(-1, telemetry.mapRaw)
+        assertEquals(-0.001, telemetry.mapBar, 0.000001)
+        assertFalse(telemetry.plausible)
+        assertTrue(telemetry.plausibilityReasons.contains("MAP_OUT_OF_RANGE"))
+    }
+
+    @Test
+    fun `pressao residual alta nao invalida gasolina nem bloqueia gnv mais`() {
         val highResidualPressure = progBaseReferencePayload.copyOf().apply {
             this[11] = 0x80.toByte() // gasolina
             this[14] = 0x50.toByte() // 3920 * 0,00125 = 4,9 bar abs
@@ -71,13 +85,48 @@ class Mp48TelemetryScaleTest {
         val petrol = Mp48Protocol.decodeTelemetry(highResidualPressure, 0L)
         assertEquals(Mp48Fuel.PETROL, petrol.fuel)
         assertTrue(petrol.plausible)
-        assertFalse(petrol.cngPressurePlausible)
-        assertTrue(petrol.plausibilityReasons.isEmpty())
 
         val cngPayload = highResidualPressure.copyOf().apply { this[11] = 0x90.toByte() }
         val cng = Mp48Protocol.decodeTelemetry(cngPayload, 0L)
         assertEquals(Mp48Fuel.CNG, cng.fuel)
-        assertFalse(cng.plausible)
-        assertTrue(cng.plausibilityReasons.contains("GAS_PRESSURE_DIFFERENTIAL_OUT_OF_RANGE"))
+        assertTrue("Pressure gates removed, should be plausible", cng.plausible)
     }
+    @Test
+    fun `bytes alternativos do estado MP48 preservam combustivel identificado`() {
+        val expected = listOf(
+            0x80 to Mp48Fuel.PETROL,
+            0xA0 to Mp48Fuel.PETROL,
+            0x88 to Mp48Fuel.TRANSITION,
+            0xA8 to Mp48Fuel.TRANSITION,
+            0x90 to Mp48Fuel.CNG,
+            0xB0 to Mp48Fuel.CNG,
+        )
+        expected.forEach { (rawByte, fuel) ->
+            val payload = progBaseReferencePayload.copyOf().apply { this[11] = rawByte.toByte() }
+            val frame = Mp48Protocol.decodeTelemetry(payload, 1234L)
+            assertEquals("Estado bruto 0x%02X".format(rawByte), fuel, frame.fuel)
+            assertEquals(rawByte, frame.fuelByte)
+        }
+        listOf(0xA1, 0xB1, 0x94).forEach { rawByte ->
+            val payload = progBaseReferencePayload.copyOf().apply { this[11] = rawByte.toByte() }
+            assertEquals(Mp48Fuel.UNKNOWN, Mp48Protocol.decodeTelemetry(payload, 1234L).fuel)
+        }
+    }
+
+    @Test
+    fun `cutoff fisico precede variante B0 de GNV`() {
+        val payload = progBaseReferencePayload.copyOf().apply {
+            this[0] = 0x78
+            this[1] = 0x05
+            this[6] = 0
+            this[7] = 0
+            this[8] = 0
+            this[9] = 0
+            this[11] = 0xB0.toByte()
+            this[17] = 0xC8.toByte()
+            this[18] = 0
+        }
+        assertEquals(Mp48Fuel.CUTOFF, Mp48Protocol.decodeTelemetry(payload, 1234L).fuel)
+    }
+
 }

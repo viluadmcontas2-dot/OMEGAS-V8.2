@@ -1,9 +1,7 @@
 package com.omegas.prohub.learning
 
-import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48Telemetry
-import com.omegas.prohub.physics.decoratePhysicsAuthority
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
@@ -59,10 +57,9 @@ class SignalLearningStore(
         target = evidenceStateFile,
         threadName = "omegas-learning-evidence-persist",
     )
-    private val persistenceGate = MaterialPersistenceGate()
     private var visibleDecision: SampleDecision? = null
     private var memoryDecision: SampleDecision? = null
-    private val lastRepresentedWindowEndByFuel = linkedMapOf<String, Long>()
+    private val sciencePublicationGate = SciencePublicationGate()
     private var independentSamples = 0L
     private var correlatedSamplesWeighted = 0L
     private var duplicateSamplesIgnored = 0L
@@ -75,9 +72,6 @@ class SignalLearningStore(
     private var lifetimeEligibleFramesEvaluated = 0L
     private var lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
     private val evidenceLock = Any()
-    private val equivalenceLock = Any()
-    private val equivalenceRuntime = PersistentEquivalenceRuntime(stateFile)
-    private var lastEquivalenceEstimate: EquivalenceRuntime.EquivalenceEstimate? = null
     private val nativeEvidence = linkedMapOf<String, NativeEcuEvidence>()
     private val nativeAnchors = NativeLearningAnchorRegistry(LearningEvidenceBudget.MAX_NATIVE_ANCHORS)
     private val visitAccumulators = linkedMapOf<String, VisitComparisonAccumulator>()
@@ -94,34 +88,43 @@ class SignalLearningStore(
     private val advisorRevisionGate = AdvisorRevisionGate()
     private val advisorRequestedRevision = AtomicLong(0L)
     private val advisorPublishedRevision = AtomicLong(0L)
-    @Volatile private var advisor = initialAdvisor()
+    @Volatile private var advisor = analyzeCurrentMemory()
 
-    init {
-        loadEvidenceState()
-        migrateLegacyPetrolReferences()
-        scheduleAdvisorRefresh(advisorRevisionGate.force())
-    }
+    init { loadEvidenceState() }
 
     fun startSession(): JSONObject {
         resetConnectionCounters()
         visibleDecision = null
         memoryDecision = null
+        sciencePublicationGate.reset()
         return decorate(delegate.startSession())
     }
 
     fun endSession(reason: String): JSONObject {
         visibleDecision = null
         memoryDecision = null
-        lastRepresentedWindowEndByFuel.clear()
+        sciencePublicationGate.reset()
         val result = decorate(delegate.endSession(reason))
-        persistEvidenceState(forceBoundary = true)
+        persistEvidenceState()
         evidenceStateWriter.flush(2_000L)
-        equivalenceRuntime.flush(2_000L)
         return result
     }
 
     fun ingest(telemetry: Mp48Telemetry, decision: SampleDecision): JSONObject {
         visibleDecision = decision
+        val physicalBoundary = decision.fuelJustStabilized ||
+            decision.continuityLost ||
+            decision.plannedOperation ||
+            decision.state in setOf(
+                "ENGINE_OFF",
+                "CUTOFF",
+                "FUEL_TRANSITION",
+                "FUEL_STABLE",
+                "TELEMETRY_GAP",
+                "WINDOW_TIMEOUT",
+            )
+        if (physicalBoundary) sciencePublicationGate.reset()
+
         val source = decision.sample
         val sequenceBefore = synchronized(evidenceLock) {
             performance = performance.copy(framesReceived = performance.framesReceived + 1L)
@@ -131,24 +134,37 @@ class SignalLearningStore(
         }
         val prepared = if (decision.learningEligible && source != null) {
             val fuelKey = source.fuel.wireName
-            val novelty = ContinuousWindowNovelty.calculate(
+            val publication = sciencePublicationGate.evaluate(
+                key = fuelKey,
                 startedAtElapsedMs = source.startedAtElapsedMs,
                 endedAtElapsedMs = source.endedAtElapsedMs,
                 frameCount = source.frameCount,
                 medianIntervalMs = source.diagnostics.medianIntervalMs,
-                previouslyRepresentedThroughElapsedMs = lastRepresentedWindowEndByFuel[fuelKey],
             )
+            val novelty = publication.novelty
+            lastNovelty = novelty
+            eligibleFramesEvaluated += novelty.totalFrames
+            lifetimeEligibleFramesEvaluated += novelty.totalFrames
+
             synchronized(evidenceLock) {
                 performance = performance.copy(
-                    validFrames = performance.validFrames + novelty.totalFrames,
+                    validFrames = performance.validFrames + if (publication.publish) novelty.totalFrames else 0,
                     windowsEvaluated = performance.windowsEvaluated + 1L,
                     earlySamplesAccepted = performance.earlySamplesAccepted + if (source.frameCount < 10) 1L else 0L,
-                    newFrames = performance.newFrames + novelty.newFrames,
-                    reusedFrames = performance.reusedFrames + (novelty.totalFrames - novelty.newFrames),
-                    usefulWeight = performance.usefulWeight + novelty.fraction * source.quality,
+                    newFrames = performance.newFrames + if (publication.publish) novelty.newFrames else 0,
+                    reusedFrames = performance.reusedFrames + if (publication.publish) {
+                        novelty.totalFrames - novelty.newFrames
+                    } else {
+                        0
+                    },
+                    usefulWeight = performance.usefulWeight + if (publication.publish) {
+                        novelty.fraction * source.quality
+                    } else {
+                        0.0
+                    },
                     firstEstimateAtMs = performance.firstEstimateAtMs ?: source.endedAtElapsedMs,
                 )
-                if (novelty.newFrames > 0) {
+                if (publication.publish) {
                     provenanceHistory.addLast(
                         EvidenceProvenance(
                             firstFrameSequence = sequenceBefore + 1L,
@@ -163,107 +179,60 @@ class SignalLearningStore(
                     }
                 }
             }
-            lastRepresentedWindowEndByFuel[fuelKey] = novelty.representedThroughElapsedMs
-            lastNovelty = novelty
-            eligibleFramesEvaluated += novelty.totalFrames
-            lifetimeEligibleFramesEvaluated += novelty.totalFrames
-            newFramesAbsorbed += novelty.newFrames
-            lifetimeNewFramesAbsorbed += novelty.newFrames
 
-            when {
-                novelty.duplicate -> {
+            if (!publication.publish) {
+                if (novelty.duplicate) {
                     duplicateSamplesIgnored += 1
                     lifetimeDuplicateSamplesIgnored += 1
-                    decision.copy(
-                        reason = "Janela já representada integralmente; nenhum quadro novo foi contabilizado.",
-                        sample = null,
-                        learningEligible = false,
-                        reasonCode = "DUPLICATE_WINDOW_IGNORED",
-                    )
                 }
-                !novelty.fullyNew -> {
-                    correlatedSamplesWeighted += 1
-                    lifetimeCorrelatedSamplesWeighted += 1
-                    decision.copy(
-                        reason = "Motor estável; ${novelty.newFrames}/${novelty.totalFrames} quadros novos absorvidos proporcionalmente.",
-                        sample = source.copy(
-                            quality = (source.quality * novelty.fraction).coerceIn(0.0, 1.0),
-                        ),
-                        learningEligible = true,
-                        reasonCode = "OVERLAPPING_WINDOW_WEIGHTED",
-                    )
-                }
-                else -> {
-                    independentSamples += 1
-                    lifetimeIndependentSamples += 1
-                    decision
+                decision.copy(
+                    reason = if (novelty.duplicate) {
+                        "Janela já representada integralmente; nenhum quadro novo foi contabilizado."
+                    } else {
+                        "Amostra válida mantida ao vivo; aguardando massa física nova antes de publicar ciência."
+                    },
+                    sample = null,
+                    learningEligible = false,
+                    reasonCode = if (novelty.duplicate) {
+                        "DUPLICATE_WINDOW_IGNORED"
+                    } else {
+                        "SCIENCE_PUBLICATION_COALESCED"
+                    },
+                )
+            } else {
+                newFramesAbsorbed += novelty.newFrames
+                lifetimeNewFramesAbsorbed += novelty.newFrames
+                when {
+                    !novelty.fullyNew -> {
+                        correlatedSamplesWeighted += 1
+                        lifetimeCorrelatedSamplesWeighted += 1
+                        decision.copy(
+                            reason = "Motor estável; ${novelty.newFrames}/${novelty.totalFrames} quadros novos absorvidos proporcionalmente.",
+                            sample = source.copy(
+                                quality = (source.quality * novelty.fraction).coerceIn(0.0, 1.0),
+                            ),
+                            learningEligible = true,
+                            reasonCode = "OVERLAPPING_WINDOW_WEIGHTED",
+                        )
+                    }
+                    else -> {
+                        independentSamples += 1
+                        lifetimeIndependentSamples += 1
+                        decision
+                    }
                 }
             }
         } else {
             decision
         }
         memoryDecision = prepared
-
-        var advisorEstimate: EquivalenceRuntime.EquivalenceEstimate? = null
-        var advisorRpm = Double.NaN
-        var advisorMap = Double.NaN
-        if (decision.learningEligible && source != null && lastNovelty.fraction > 0.0) {
-            val lane = when (source.fuel) {
-                Mp48Fuel.PETROL -> FuelLane.PETROL_REFERENCE
-                Mp48Fuel.CNG -> FuelLane.CNG_PETROL_OBSERVED
-                else -> null
-            }
-            if (lane != null) {
-                val stability = EquivalenceEvidenceWeight.from(source.diagnostics).stability
-                synchronized(equivalenceLock) {
-                    val observed = equivalenceRuntime.observe(
-                        lane = lane,
-                        rpm = source.rpm,
-                        mapBar = source.mapBar,
-                        petrolTinjMs = source.petrolMs,
-                        stability = stability,
-                        novelty = lastNovelty.fraction,
-                        materialRevision = frameSequence,
-                    )
-                    lastEquivalenceEstimate = observed.estimate
-                    if (observed.estimate != null) {
-                        advisorEstimate = observed.estimate
-                        advisorRpm = source.rpm
-                        advisorMap = source.mapBar
-                    }
-                }
-            }
-        }
-        if ((!decision.learningEligible || source == null) &&
-            CurrentEquivalenceStatusPolicy.allowsCachedEstimate(decision)
-        ) {
-            // Current status follows a bounded local query while the next sample forms.
-            // No history, JSON, disk or Advisor snapshot work enters the telemetry hot path.
-            synchronized(equivalenceLock) {
-                lastEquivalenceEstimate = equivalenceRuntime.estimate(
-                    rpm = telemetry.rpm.toDouble(),
-                    mapBar = telemetry.mapBar,
-                )
-            }
-        }
-        advisorEstimate?.let { requestAdvisorRefresh(it, advisorRpm, advisorMap) }
-
-        val nativePetrolPriors = if (prepared.learningEligible && prepared.sample?.fuel?.wireName in setOf("GNV", "CNG")) {
-            synchronized(evidenceLock) { nativeAnchors.snapshot().filter { it.sourceFuel == "PETROL" } }
-        } else {
-            emptyList()
-        }
-        val result = NativePetrolPriorScope.withAnchors(nativePetrolPriors) {
-            delegate.ingest(telemetry, prepared)
-        }
+        val result = delegate.ingest(telemetry, prepared)
         result.optJSONObject("comparison")?.let { comparison ->
             val visitId = comparison.optString("visit_id")
             val regionId = comparison.optString("reference_region_id")
             if (visitId.isNotBlank() && regionId.isNotBlank()) {
                 val key = "$visitId:$regionId"
-                val noveltyFraction = if (prepared.sample == null) 0.0 else {
-                    if (prepared.sample === source && lastNovelty.totalFrames > 0) lastNovelty.fraction else 1.0
-                }
+                val noveltyFraction = if (prepared.sample == null) 0.0 else lastNovelty.fraction
                 val weight = (comparison.optDouble("quality", 0.0) * noveltyFraction).coerceIn(0.0, 1.0)
                 val independent = noveltyFraction >= 0.999
                 synchronized(evidenceLock) {
@@ -278,10 +247,10 @@ class SignalLearningStore(
                 }
             }
         }
-        if (prepared.learningEligible && prepared.sample != null) {
-            persistenceGate.markMaterialChange()
-            persistEvidenceState()
-        }
+        requestAdvisorRefresh(result)
+        // O sidecar é uma fotografia substituível, não um log. Só uma publicação
+        // científica real solicita I/O; decisões intermediárias continuam ao vivo.
+        if (prepared.sample != null) persistEvidenceState()
         return decorate(result, includeAdvisor = false)
     }
 
@@ -309,8 +278,7 @@ class SignalLearningStore(
             .put("lifetimeEligibleFramesEvaluated", lifetimeEligibleFramesEvaluated)
             .put("cumulativeEvidencePreserved", true)
             .put("sessionMetadataPolicy", "timestamp-organization-only-cumulative-memory")
-            .put("equivalencePolicy", "rpm-map-petrol-tinj-continuous-v1")
-            .put("primaryEquivalence", primaryEquivalenceJson(camelCase = true))
+            .put("equivalencePolicy", "continuous-petrol-reference-surface")
             .put("assistedCalibration", advisor)
             .put("advisorRevision", advisorRequestedRevision.get())
             .put("advisorPublishedRevision", advisorPublishedRevision.get())
@@ -327,7 +295,7 @@ class SignalLearningStore(
             .put("evidenceBudget", evidenceBudgetJson(evidence))
             .put("adaptiveConfidence", adaptiveConfidenceJson())
             .put("performanceMetrics", evidence.performance.toJson())
-            .put("evidencePersistence", evidenceStateWriter.metricsJson().put("materialGate", persistenceGate.metricsJson()))
+            .put("evidencePersistence", evidenceStateWriter.metricsJson())
     }
 
     fun merge(payload: JSONObject, localDeviceId: String = ""): JSONObject {
@@ -347,9 +315,7 @@ class SignalLearningStore(
         val internalPayload = JSONObject(payload.toString())
             .put("format", MotorLearningMemory.FORMAT)
         val result = delegate.merge(internalPayload, localDeviceId)
-        if (migrateLegacyPetrolReferences() > 0) {
-            scheduleAdvisorRefresh(advisorRevisionGate.force())
-        }
+        scheduleAdvisorRefresh(advisorRevisionGate.force())
         return decorate(result)
     }
 
@@ -418,25 +384,15 @@ class SignalLearningStore(
             .put("calibrationEpoch", calibrationEpoch)
             .put("automaticCalibration", false)
             .put("manualOnly", true)
-            .also {
-                if (imported > 0 || anchorsImported > 0) {
-                    persistenceGate.markMaterialChange()
-                    persistEvidenceState()
-                }
-            }
+            .also { persistEvidenceState() }
     }
 
     fun onCalibrationAdjustment(payload: JSONObject): JSONObject {
         resetConnectionCounters()
         synchronized(evidenceLock) { nativeAnchors.clear() }
-        synchronized(equivalenceLock) {
-            equivalenceRuntime.clearCngForCalibrationAdjustment()
-            lastEquivalenceEstimate = null
-        }
         val result = delegate.onCalibrationAdjustment(payload)
         scheduleAdvisorRefresh(advisorRevisionGate.force())
-        persistenceGate.markMaterialChange()
-        persistEvidenceState(forceBoundary = true)
+        persistEvidenceState()
         return decorate(result)
     }
 
@@ -449,7 +405,7 @@ class SignalLearningStore(
         duplicateSamplesIgnored = 0L
         newFramesAbsorbed = 0L
         eligibleFramesEvaluated = 0L
-        lastRepresentedWindowEndByFuel.clear()
+        sciencePublicationGate.reset()
         lastNovelty = ContinuousWindowNovelty.Result(0, 1, 0.0, 0L)
     }
 
@@ -474,7 +430,8 @@ class SignalLearningStore(
             lastSeenAt = { it.lastSeenAt },
         )
         visitAccumulators.clear()
-        retained.forEach { item -> visitAccumulators[item.key] = item }
+        retained.forEach { item -> visitAccumulators[item.key] = item
+        }
         visitAccumulatorsEvicted += (before - visitAccumulators.size).coerceAtLeast(0)
     }
 
@@ -641,12 +598,11 @@ class SignalLearningStore(
         }
     }
 
-    private fun persistEvidenceState(forceBoundary: Boolean = false) {
-        if (!persistenceGate.shouldRequest(forceBoundary)) return
+    private fun persistEvidenceState() {
         try {
             val snapshot = evidenceSnapshot()
             evidenceStateWriter.request { buildEvidencePayload(snapshot) }
-        } catch (_: Exception) { }
+        } catch (_: Exception) { /* aprendizado principal continua funcionando sem o sidecar */ }
     }
 
     private fun adaptiveConfidenceJson(): JSONObject {
@@ -687,39 +643,43 @@ class SignalLearningStore(
             .put("confidenceBandHigh", target.confidenceBandHigh)
     }
 
-    private fun requestAdvisorRefresh(
-        estimate: EquivalenceRuntime.EquivalenceEstimate,
-        rpm: Double,
-        mapBar: Double,
-    ) {
-        advisorRevisionGate.revise(advisorScientificToken(estimate, rpm, mapBar))
-            ?.let(::scheduleAdvisorRefresh)
+    private fun requestAdvisorRefresh(result: JSONObject) {
+        val token = advisorScientificToken(result) ?: return
+        advisorRevisionGate.revise(token)?.let(::scheduleAdvisorRefresh)
     }
 
-    private fun advisorScientificToken(
-        estimate: EquivalenceRuntime.EquivalenceEstimate,
-        rpm: Double,
-        mapBar: Double,
-    ): String {
-        val supportMilestone = AdvisorRevisionGate.observationMilestone(
-            kotlin.math.min(estimate.petrolEffectiveSupport, estimate.cngEffectiveSupport)
-                .toInt()
-                .coerceAtLeast(1),
-        )
-        val rpmCell = kotlin.math.floor(rpm / 80.0).toInt()
-        val mapCell = kotlin.math.floor(mapBar / 0.02).toInt()
-        return listOf(
-            "EQ",
-            rpmCell,
-            mapCell,
-            AdvisorRevisionGate.quantize(estimate.referenceMs, 0.02),
-            AdvisorRevisionGate.quantize(estimate.cngMs, 0.02),
-            AdvisorRevisionGate.quantize(estimate.errorFraction, 0.0025),
-            AdvisorRevisionGate.quantize(estimate.uncertaintyFraction, 0.0025),
-            AdvisorRevisionGate.quantize(estimate.usefulMarginFraction, 0.0025),
-            estimate.actionable,
-            supportMilestone,
-        ).joinToString(":")
+    private fun advisorScientificToken(result: JSONObject): String? {
+        result.optJSONObject("comparison")?.let { comparison ->
+            val identity = comparison.optString("dedupe_key", comparison.optString("id"))
+            val observations = AdvisorRevisionGate.observationMilestone(
+                comparison.optInt("observation_count", 1),
+            )
+            val errorBucket = AdvisorRevisionGate.quantize(comparison.optDouble("error_pct", 0.0), 0.25)
+            val qualityBucket = AdvisorRevisionGate.quantize(comparison.optDouble("quality", 0.0), 0.05)
+            return listOf(
+                "CMP",
+                identity,
+                observations,
+                comparison.optString("direction"),
+                result.optString("comparison_stage"),
+                errorBucket,
+                qualityBucket,
+            ).joinToString(":")
+        }
+
+        result.optJSONObject("reference")?.let { reference ->
+            val petrolBucket = AdvisorRevisionGate.quantize(reference.optDouble("petrol_ms", 0.0), 0.02)
+            val confidenceBucket = AdvisorRevisionGate.quantize(reference.optDouble("confidence", 0.0), 0.05)
+            return listOf(
+                "PETROL",
+                reference.optString("id"),
+                reference.optInt("visit_count", 0),
+                reference.optString("stage"),
+                petrolBucket,
+                confidenceBucket,
+            ).joinToString(":")
+        }
+        return null
     }
 
     private fun refreshAdvisor(revision: Long) {
@@ -744,114 +704,21 @@ class SignalLearningStore(
         }
     }
 
-    private fun primaryEquivalenceJson(camelCase: Boolean): JSONObject = synchronized(equivalenceLock) {
-        val estimate = lastEquivalenceEstimate.takeIf {
-            CurrentEquivalenceStatusPolicy.allowsCachedEstimate(visibleDecision)
-        }
-        val root = JSONObject()
-            .put("schema", "omegas-primary-equivalence-v1")
-            .put(if (camelCase) "petrolWeight" else "petrol_weight", equivalenceRuntime.totalWeight(FuelLane.PETROL_REFERENCE))
-            .put(if (camelCase) "cngWeight" else "cng_weight", equivalenceRuntime.totalWeight(FuelLane.CNG_PETROL_OBSERVED))
-            .put(if (camelCase) "legacySeededRegions" else "legacy_seeded_regions", equivalenceRuntime.legacySeededRegions())
-            .put("comparable", estimate != null)
-            .put("runtimeAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
-            .put("environmentGates", false)
-            .put("persistenceRepresentation", EquivalenceSurfaceCodec.REPRESENTATION)
-            .put("persistence", equivalenceRuntime.metricsJson())
-        if (estimate != null) {
-            root
-                .put(if (camelCase) "referenceMs" else "reference_ms", estimate.referenceMs)
-                .put(if (camelCase) "cngMs" else "cng_ms", estimate.cngMs)
-                .put(if (camelCase) "deltaMs" else "delta_ms", estimate.deltaMs)
-                .put(if (camelCase) "errorFraction" else "error_fraction", estimate.errorFraction)
-                .put(if (camelCase) "uncertaintyFraction" else "uncertainty_fraction", estimate.uncertaintyFraction)
-                .put(if (camelCase) "usefulMarginFraction" else "useful_margin_fraction", estimate.usefulMarginFraction)
-                .put("actionable", estimate.actionable)
-                .put(if (camelCase) "petrolEffectiveSupport" else "petrol_effective_support", estimate.petrolEffectiveSupport)
-                .put(if (camelCase) "cngEffectiveSupport" else "cng_effective_support", estimate.cngEffectiveSupport)
-                .put(if (camelCase) "materialRevision" else "material_revision", estimate.materialRevision)
-        }
-        root
-    }
-
     fun close() {
-        persistEvidenceState(forceBoundary = true)
+        persistEvidenceState()
         evidenceStateWriter.flush(5_000L)
-        advisorExecutor.shutdownNow()
-        equivalenceRuntime.close()
         delegate.close()
+        advisorExecutor.shutdownNow()
         evidenceStateWriter.close()
     }
 
     private fun analyzeCurrentMemory(): JSONObject = try {
-        val epoch = delegate.statusJson().optInt("epoch", 1).coerceAtLeast(1)
-        val boundedInput = BoundedEquivalenceAdvisorSnapshot.build(
-            equivalenceRuntime.snapshotForAdvisor(),
-            epoch = epoch,
-        )
-        AssistedCalibrationAdvisor.decoratePhysicsAuthority(
-            AssistedCalibrationAdvisor.analyze(boundedInput),
-        )
-            .put("primaryAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
-            .put("inputSource", "BOUNDED_EQUIVALENCE_SURFACE")
-            .put("environmentGates", false)
-            .put("inputComparisonCount", boundedInput.optInt("comparisonCount", 0))
+        AssistedCalibrationAdvisor.analyze(delegate.advisorSnapshot())
     } catch (error: Exception) {
         JSONObject()
             .put("ok", false)
             .put("automatic", false)
-            .put("primaryAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
-            .put("inputSource", "BOUNDED_EQUIVALENCE_SURFACE")
-            .put("environmentGates", false)
             .put("error", error.message ?: "Análise assistida indisponível")
-    }
-
-    private fun initialAdvisor(): JSONObject = JSONObject()
-        .put("ok", true)
-        .put("automatic", false)
-        .put("mode", "CONTINUOUS_ADAPTIVE_MANUAL")
-        .put("comparisonCount", 0)
-        .put("primaryAuthority", BoundedEquivalenceAdvisorSnapshot.AUTHORITY)
-        .put("inputSource", "BOUNDED_EQUIVALENCE_SURFACE")
-        .put("environmentGates", false)
-
-    private fun migrateLegacyPetrolReferences(): Int {
-        if (equivalenceRuntime.totalWeight(FuelLane.PETROL_REFERENCE) > 0.0 ||
-            equivalenceRuntime.legacySeededRegions() > 0
-        ) return 0
-
-        val regions = delegate.advisorSnapshot().optJSONArray("regions") ?: return 0
-        val seeds = mutableListOf<PersistentEquivalenceRuntime.LegacyPetrolSeed>()
-        repeat(regions.length()) { index ->
-            val raw = regions.optJSONObject(index) ?: return@repeat
-            val fuel = raw.optString("fuel").uppercase()
-            if (fuel !in setOf("PETROL", "GASOLINA")) return@repeat
-            val rpm = raw.optDouble("rpm", Double.NaN)
-            val mapBar = raw.optDouble("map_bar", Double.NaN)
-            val mean = raw.optDouble("petrol_ms", Double.NaN)
-            if (!rpm.isFinite() || !mapBar.isFinite() || !mean.isFinite() || mean <= 0.05) return@repeat
-
-            val persistedSquaredMean = raw.optDouble("petrol_squared_mean", Double.NaN)
-            val persistedSpread = raw.optDouble("petrol_spread_ms", Double.NaN)
-            val variance = when {
-                persistedSpread.isFinite() && persistedSpread >= 0.0 -> persistedSpread * persistedSpread
-                persistedSquaredMean.isFinite() -> kotlin.math.max(0.0, persistedSquaredMean - mean * mean)
-                else -> 0.0
-            }
-            val quality = raw.optDouble("quality", raw.optDouble("confidence", 0.25)).coerceIn(0.0, 1.0)
-            val storedWeight = raw.optDouble("weight", Double.NaN)
-            val samples = raw.optInt("samples", 1).coerceAtLeast(1).toDouble()
-            val support = storedWeight.takeIf { it.isFinite() && it > 0.0 } ?: samples
-            seeds += PersistentEquivalenceRuntime.LegacyPetrolSeed(
-                rpm = rpm,
-                mapBar = mapBar,
-                meanTinjMs = mean,
-                varianceMs2 = variance,
-                quality = quality,
-                persistedSupport = support,
-            )
-        }
-        return equivalenceRuntime.seedLegacyPetrolIfEmpty(seeds)
     }
 
     private fun decorate(source: JSONObject, includeAdvisor: Boolean = true): JSONObject {
@@ -878,14 +745,13 @@ class SignalLearningStore(
             .put("last_novelty_fraction", lastNovelty.fraction)
             .put("cumulative_evidence_preserved", true)
             .put("session_metadata_policy", "timestamp-organization-only-cumulative-memory")
-            .put("equivalence_policy", "rpm-map-petrol-tinj-continuous-v1")
-            .put("primary_equivalence", primaryEquivalenceJson(camelCase = false))
+            .put("equivalence_policy", "continuous-petrol-reference-surface")
             .put("automatic_calibration", false)
             .put("real_sample_time_preserved", true)
             .put("gas_condition_preserved", true)
             .put("cross_fuel_gas_temperature", false)
             .put("performance_metrics", performanceSnapshot.toJson())
-            .put("evidence_persistence", evidenceStateWriter.metricsJson().put("materialGate", persistenceGate.metricsJson()))
+            .put("evidence_persistence", evidenceStateWriter.metricsJson())
 
         if (includeAdvisor) {
             val evidence = evidenceSnapshot()

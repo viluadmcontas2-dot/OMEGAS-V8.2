@@ -1,26 +1,30 @@
 # OMEGAS V8.2
 
-Aplicativo Android para telemetria, AutoCal com equivalência refinada GNV = gasolina, aprendizado e ajuste manual assistido de centrais OMEGAS/MP48.
+Aplicativo Android para leitura, aprendizado, diagnóstico e ajuste manual assistido de centrais OMEGAS/MP48.
 
-O repositório é a fonte canônica de engenharia. Comece por [PROJECT.md](PROJECT.md), [STATUS.md](STATUS.md) e pela WorkUnit ativa em [docs/workunits](docs/workunits).
+Esta linha usa governança **repo-first**: GitHub remoto, Issues, `PROJECT.md`, `STATUS.md`, Spec Kit e WorkUnit ativa formam a superfície canônica de continuidade. Notion é referência read-only quando explicitamente necessário para critérios de UX/produto.
 
-Produto: Agora · AutoCal (equivalência refinada GNV = gasolina) · Aprender · Ajuste global (Curva K) · Ajuste local (Mapa K) · Sugestões · Ferramentas.
+## Contratos duráveis do produto
 
-## Invariantes do produto
-
-- equivalência primária: `RPM × MAP(bar) → Petrol Inj. (ms)`;
-- aprendizado e sugestões são passivos;
-- nenhuma conexão, sugestão ou aprendizado grava automaticamente na ECU;
-- toda escrita segue preparar → revisar → confirmar → ACK → readback;
+- nenhuma sugestão ou conexão grava automaticamente na ECU;
+- toda escrita é iniciada manualmente e depende de revisão/confirmação, ACK e readback;
 - falha de ACK ou readback divergente não é sucesso;
-- Mapa K (`RPM × Petrol Inj.`) e Curva K permanecem separados;
+- OBD permanece observacional;
+- Mapa K e Curva K permanecem separados;
+- a linha técnica do Mapa K não é editável;
 - matemática e protocolo críticos permanecem no Kotlin.
 
-## Verificação
+## Verificação local
+
+Use testes proporcionais ao escopo. O gate rápido disponível nesta baseline é:
 
 ```bash
-python3 -B tools/run_checks.py
-./gradlew testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a
+python -B tools/run_checks.py
 ```
 
-O pipeline de release registra o SHA do source, o hash SHA-256 do APK e os limites da evidência.
+GitHub Actions não fazem parte deste bootstrap inicial.
+
+
+## Programa ativo — OMEGAS Verde
+
+O programa atual está indexado em `docs/spec-kits/OMEGAS-SK-001.md` e rastreado pela Issue #81. O foco é paridade observável do AutoCal com o ProgBase original, replay derivado de logs reais e gate visual/runtime. SIL/CIU permanece fora do escopo até autorização explícita.

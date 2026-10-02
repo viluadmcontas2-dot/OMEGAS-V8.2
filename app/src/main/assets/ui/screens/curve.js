@@ -28,6 +28,8 @@
       this.pendingSuggestion = null;
       this.reading = false;
       this.writing = false;
+      this.backupTask = null;
+      this.restoreContext = null;
       this.view = 'editor';
       this.learningSignature = '';
       this.bind();
@@ -35,26 +37,35 @@
 
     bind() {
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
+      document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
+      document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
+      document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.writeRestore());
+      document.getElementById('curveBackupSelect')?.addEventListener('change', event => {
+        const fileName = String(event.target?.value || '');
+        this.cancelRestorePreview('');
+        if (fileName) this.prepareRestore(fileName);
+      });
       document.getElementById('curvePreparePoint')?.addEventListener('click', () => this.prepareActivePoint());
       document.querySelectorAll('[data-curve-view]').forEach(button => button.addEventListener('click', () => this.setView(button.dataset.curveView || 'editor')));
       document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeActive(Number(button.dataset.curveNudge) || 0)));
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
+        this.cancelRestorePreview('Restauração descartada · nenhuma escrita enviada');
         this.proposals.clear(); this.renderChart(); this.renderProposalList();
       });
-      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.openReview());
-      document.getElementById('curveReviewBack')?.addEventListener('click', () => this.closeReview());
-      document.getElementById('curveWriteButton')?.addEventListener('click', () => this.writeReview());
-      document.getElementById('curveDismissResult')?.addEventListener('click', () => this.closeReview());
+      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
+      document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
     }
 
     needsLearning() { return this.view === 'learning'; }
 
     setView(view) {
-      this.view = view === 'learning' ? 'learning' : 'editor';
+      if (view !== 'learning' && view !== 'editor') return false;
+      this.view = view;
       document.querySelectorAll('[data-curve-view]').forEach(button => button.classList.toggle('active', button.dataset.curveView === this.view));
       document.querySelectorAll('[data-curve-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.curvePanel === this.view));
       if (this.view === 'learning') this.renderLearning(this.store.get());
       else this.renderChart();
+      return true;
     }
 
     onEnter(context) {
@@ -64,12 +75,127 @@
         this.setView('editor');
         this.renderSuggestionFocus(suggestion);
       }
-      if (!this.data && !this.reading) text('curveSourceStatus', 'Toque em Ler Curva K para consultar a ECU');
+      if (!this.data && !this.reading) this.startRead(true);
       if (this.data && suggestion) {
         this.focusSuggestion(suggestion);
         this.prepareSuggestion(suggestion, true);
       }
+      this.refreshBackups();
       if (this.view === 'learning') this.renderLearning(this.store.get());
+    }
+
+    refreshBackups() {
+      const select = document.getElementById('curveBackupSelect');
+      const restore = document.getElementById('curveBackupRestore');
+      if (!select) return;
+      const backups = this.api.curveBackups();
+      const rows = Array.isArray(backups) ? backups : [];
+      select.innerHTML = rows.length
+        ? '<option value="">Escolha um backup…</option>' + rows.map(item => {
+            const when = Number(item.createdAt) > 0 ? new Date(Number(item.createdAt)).toLocaleString('pt-BR') : 'data desconhecida';
+            const kind = item.type === 'MANUAL_SNAPSHOT' ? 'salvo' : 'automático';
+            return `<option value="${escapeHtml(item.fileName)}">${escapeHtml(item.label || 'Curva K')} · ${escapeHtml(when)} · ${kind}</option>`;
+          }).join('')
+        : '<option value="">Nenhum backup salvo</option>';
+      if (restore) {
+        restore.disabled = true;
+        restore.textContent = 'Restaurar backup';
+      }
+      if (rows.length) text('curveBackupStatus', `${rows.length} backup${rows.length === 1 ? '' : 's'} disponível${rows.length === 1 ? '' : 'is'} · escolha para pré-visualizar`);
+      else text('curveBackupStatus', 'Nenhum backup salvo');
+    }
+
+    saveBackup() {
+      if (this.reading || this.writing || this.backupTask) return;
+      const result = this.api.startCurveBackup('Curva salva manualmente');
+      if (!result?.ok || !result?.started) {
+        this.alert(result?.error || 'Não foi possível salvar a Curva K.');
+        return;
+      }
+      this.backupTask = 'save';
+      text('curveBackupStatus', 'Salvando curva atual…');
+    }
+
+    resetCurve() {
+      if (this.reading || this.writing || this.backupTask) return;
+      const confirmed = window.confirm(
+        'Resetar a Curva K para 1.0? Nenhum backup automático será criado. Se quiser guardar a curva atual, use Salvar curva antes.'
+      );
+      if (!confirmed) return;
+      this.cancelRestorePreview('');
+      this.proposals.clear();
+      this.renderChart();
+      this.renderProposalList();
+      const result = this.api.resetCurve();
+      if (!result?.ok || !result?.started) {
+        this.alert(result?.error || 'Não foi possível iniciar o reset da Curva K.');
+        return;
+      }
+      this.writing = true;
+      this.root?.classList.remove('has-result');
+      this.root?.classList.add('is-writing');
+      text('curveOperationTitle', 'Resetando Curva K para 1.0');
+      text('curveOperationMessage', 'Escrita → ACK → readback');
+      const bar = document.getElementById('curveOperationProgress');
+      if (bar) bar.style.width = '0%';
+    }
+
+    prepareRestore(fileName = String(document.getElementById('curveBackupSelect')?.value || '')) {
+      if (this.reading || this.writing || this.backupTask) return;
+      if (!fileName) return;
+      const restore = document.getElementById('curveBackupRestore');
+      if (restore) {
+        restore.disabled = true;
+        restore.textContent = 'Validando backup…';
+      }
+      this.restoreContext = null;
+      this.proposals.clear();
+      this.renderChart();
+      this.renderProposalList();
+      const result = this.api.prepareCurveRestore(fileName);
+      if (!result?.ok || !result?.started) {
+        const select = document.getElementById('curveBackupSelect');
+        if (select) select.value = '';
+        if (restore) {
+          restore.disabled = true;
+          restore.textContent = 'Restaurar backup';
+        }
+        this.alert(result?.error || 'Não foi possível preparar a restauração.');
+        return;
+      }
+      this.backupTask = 'restore-preview';
+      text('curveBackupStatus', 'Conferindo backup e curva atual…');
+    }
+
+    writeRestore() {
+      if (this.reading || this.writing || this.backupTask) return;
+      if (!this.restoreContext || !this.proposals.size) {
+        this.alert('Escolha um backup e aguarde a prévia antes de restaurar.');
+        return;
+      }
+      this.writePrepared();
+    }
+
+    cancelRestorePreview(message) {
+      if (!this.restoreContext) return;
+      this.restoreContext = null;
+      const select = document.getElementById('curveBackupSelect');
+      const restore = document.getElementById('curveBackupRestore');
+      if (select) select.value = '';
+      if (restore) {
+        restore.disabled = true;
+        restore.textContent = 'Restaurar backup';
+      }
+      if (message) text('curveBackupStatus', message);
+    }
+
+    settleReadFailure(message) {
+      this.reading = false;
+      this.data = null;
+      this.root?.classList.remove('is-reading');
+      text('curveSourceStatus', 'Curva não confirmada');
+      this.store.patch({ curve: { ...this.store.get().curve, state: 'failed', data: null, status: {} } });
+      if (message) this.alert(message);
     }
 
     startRead() {
@@ -88,15 +214,87 @@
     }
 
     poll() {
-      if (!this.reading && !this.writing) return;
+      if (!this.reading && !this.writing && !this.backupTask) return;
       const operation = this.api.curveOperation();
       if (!operation) return;
-      if (this.reading && !operation.busy && (operation.state === 'COMPLETED' || operation.demo)) {
+      if (this.backupTask && !operation.busy) {
+        const task = this.backupTask;
+        this.backupTask = null;
+        if (operation.state !== 'COMPLETED' || !operation.ok) {
+          this.restoreContext = null;
+          const select = document.getElementById('curveBackupSelect');
+          const restore = document.getElementById('curveBackupRestore');
+          if (select) select.value = '';
+          if (restore) {
+            restore.disabled = true;
+            restore.textContent = 'Restaurar backup';
+          }
+          text('curveBackupStatus', 'Backup indisponível');
+          this.alert(operation.error || 'Operação de backup da Curva K falhou.');
+          return;
+        }
+        if (task === 'save') {
+          if (operation.curve && Array.isArray(operation.curve.points) && operation.curve.points.length === 30) {
+            this.data = operation.curve;
+            this.renderChart();
+          }
+          text('curveBackupStatus', (operation.publicPath || 'Download/Omegas') + ' · ' + String(operation.hash || '').slice(0, 8));
+          this.refreshBackups();
+          return;
+        }
+        if (task === 'restore-preview') {
+          const points = Array.isArray(operation.points) ? operation.points : [];
+          if (operation.currentCurve && Array.isArray(operation.currentCurve.points)) {
+            this.data = operation.currentCurve;
+            this.renderChart();
+          }
+          if (!points.length) {
+            this.restoreContext = null;
+            const restore = document.getElementById('curveBackupRestore');
+            if (restore) {
+              restore.disabled = true;
+              restore.textContent = 'Já está igual';
+            }
+            text('curveBackupStatus', 'A ECU já está igual ao backup');
+            this.alert('A Curva K atual já é idêntica ao backup escolhido.');
+            return;
+          }
+          this.restoreContext = {
+            fileName: operation.fileName,
+            hash: operation.hash,
+            createdAt: operation.createdAt,
+            label: operation.label || 'Backup Curva K',
+          };
+          this.proposals.clear();
+          points.forEach(item => this.proposals.set(Number(item.index), {
+            index: Number(item.index),
+            petrolMs: Number(item.petrolMs),
+            currentRaw: Number(item.currentRaw),
+            targetRaw: Number(item.targetRaw),
+            currentFactor: Number(item.currentFactor),
+            targetFactor: Number(item.targetFactor),
+            deltaPercent: Number(item.deltaPercent),
+          }));
+          this.renderProposalList();
+          const restore = document.getElementById('curveBackupRestore');
+          if (restore) {
+            restore.disabled = false;
+            restore.textContent = `Restaurar ${points.length} ponto${points.length === 1 ? '' : 's'} na ECU`;
+          }
+          text('curveBackupStatus', 'Restauração pronta · confira o antes→depois e use o botão Restaurar');
+          return;
+        }
+      }
+
+      if (this.reading && !operation.busy) {
+        if (operation.state !== 'COMPLETED' && !operation.demo) {
+          this.settleReadFailure(operation.error || 'A leitura da Curva K não foi confirmada pela ECU.');
+          return;
+        }
         this.reading = false;
         this.root?.classList.remove('is-reading');
         if (!operation.ok || !Array.isArray(operation.points) || operation.points.length !== 30) {
-          this.alert(operation.error || 'A Curva K não retornou os 30 pontos válidos.');
-          text('curveSourceStatus', 'Curva não confirmada');
+          this.settleReadFailure(operation.error || 'A Curva K não retornou os 30 pontos válidos.');
           return;
         }
         this.data = operation;
@@ -134,6 +332,9 @@
             this.data = null;
             this.proposals.clear();
             this.pendingSuggestion = null;
+            if (this.restoreContext) text('curveBackupStatus', 'Backup restaurado e confirmado pela ECU');
+            this.restoreContext = null;
+            this.refreshBackups();
             this.startRead(true);
           } else {
             this.root?.classList.remove('is-writing');
@@ -145,6 +346,10 @@
               result.querySelector('span').textContent = operation.error || operation.message || 'A ECU não confirmou toda a operação. Releitura obrigatória.';
             }
             this.data = null;
+            if (this.restoreContext) text('curveBackupStatus', 'Restauração não confirmada · releitura obrigatória');
+            this.restoreContext = null;
+            this.proposals.clear();
+            this.renderProposalList();
           }
         }
       }
@@ -200,6 +405,10 @@
 
     prepareActivePoint() {
       if (this.activeIndex === null) return;
+      if (this.restoreContext) {
+        this.cancelRestorePreview('Prévia de restauração descartada por edição manual');
+        this.proposals.clear();
+      }
       const requested = finite(document.getElementById('curveTargetFactor')?.value);
       if (requested === null) { this.alert('Informe o fator K desejado.'); return; }
       const preview = this.api.previewCurvePoint(this.activeIndex, requested);
@@ -208,6 +417,10 @@
     }
 
     prepareSuggestion(suggestion = this.pendingSuggestion, silent = false) {
+      if (this.restoreContext) {
+        this.cancelRestorePreview('Prévia de restauração descartada por nova sugestão');
+        this.proposals.clear();
+      }
       if (!suggestion || !this.data) {
         if (!silent) this.alert('Aguarde a leitura da Curva K antes de preparar a sugestão.');
         return false;
@@ -381,7 +594,17 @@
       const items = [...this.proposals.values()].sort((a, b) => Number(a.index) - Number(b.index));
       host.innerHTML = items.length ? items.map(item => `<div><span>${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b><small>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</small></div>`).join('') : '<p>Nenhum ponto preparado.</p>';
       const review = document.getElementById('curveReviewButton');
-      if (review) { review.disabled = items.length === 0; review.textContent = items.length ? `Revisar ${items.length} ponto${items.length === 1 ? '' : 's'}` : 'Prepare pontos'; }
+      if (review) {
+        if (this.restoreContext) {
+          review.disabled = true;
+          review.textContent = 'Restauração pronta no botão acima';
+        } else {
+          review.disabled = items.length === 0;
+          review.textContent = items.length
+            ? `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`
+            : 'Prepare pontos';
+        }
+      }
     }
 
     renderEvidence(state) {
@@ -412,30 +635,37 @@
       host.querySelector('[data-curve-prepare-suggestion]')?.addEventListener('click', () => this.prepareSuggestion(suggestion));
     }
 
-    openReview() {
-      if (!this.proposals.size) return;
-      const host = document.getElementById('curveReviewList');
-      const items = [...this.proposals.values()].sort((a, b) => Number(a.index) - Number(b.index));
-      if (host) host.innerHTML = items.map(item => `<div><span>Ponto ${Number(item.index) + 1} · ${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b></div>`).join('');
-      text('curveReviewCount', `${items.length} ponto${items.length === 1 ? '' : 's'}`);
-      const button = document.getElementById('curveWriteButton');
-      if (button) button.textContent = `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`;
-      this.root?.classList.add('is-reviewing');
-    }
-
-    closeReview() { this.root?.classList.remove('is-reviewing', 'is-writing', 'has-result'); }
-
-    writeReview() {
-      const points = [...this.proposals.values()].map(item => ({ index: Number(item.index), currentRaw: Number(item.currentRaw), targetRaw: Number(item.targetRaw) }));
+    writePrepared() {
+      const points = [...this.proposals.values()].map(item => ({
+        index: Number(item.index),
+        currentRaw: Number(item.currentRaw),
+        targetRaw: Number(item.targetRaw),
+      }));
       if (!points.length) return;
-      const result = this.api.writeCurve(points, 'Ajuste manual confirmado na UI clean-slate');
-      if (!result?.ok || !result?.started) { this.alert(result?.error || 'A escrita da Curva K não iniciou.'); return; }
+      const restoring = this.restoreContext !== null;
+      const reason = restoring
+        ? `Restaurar backup Curva K ${this.restoreContext.fileName}`
+        : 'Ajuste manual confirmado na UI clean-slate';
+      const result = this.api.writeCurve(points, reason);
+      if (!result?.ok || !result?.started) {
+        if (restoring) {
+          this.restoreContext = null;
+          this.proposals.clear();
+          this.renderProposalList();
+          text('curveBackupStatus', 'Restauração não iniciada');
+        }
+        this.alert(result?.error || 'A escrita da Curva K não iniciou.');
+        return;
+      }
       this.writing = true;
-      this.root?.classList.remove('is-reviewing');
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', 'Escrita manual da Curva K');
+      text('curveOperationTitle', restoring ? 'Restaurando backup da Curva K' : 'Escrita manual da Curva K');
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
+    }
+
+    dismissResult() {
+      this.root?.classList.remove('is-writing', 'has-result');
     }
 
     alert(message) { this.store.patch({ alert: { level: 'warning', message: String(message || 'Operação indisponível') } }); }

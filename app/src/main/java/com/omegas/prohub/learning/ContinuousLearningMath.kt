@@ -25,27 +25,7 @@ object ContinuousLearningMath {
         val weight: Double,
     )
 
-    private data class CurrentAxes(
-        val rpm: DoubleArray,
-        val petrolMs: DoubleArray,
-    )
-
     val defaultMapBins = doubleArrayOf(0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00)
-
-    private fun currentAxesOrFixture(): CurrentAxes? {
-        val binding = LearningCalibrationAuthority.snapshot()
-        if (binding != null && binding.geometryKnown()) {
-            return CurrentAxes(
-                rpm = binding.rpmAxis.map(Int::toDouble).toDoubleArray(),
-                petrolMs = binding.petrolAxisMs.toDoubleArray(),
-            )
-        }
-        if (LearningCalibrationAuthority.requiresKnownGeometry()) return null
-        return CurrentAxes(
-            rpm = LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(),
-            petrolMs = LearningGridProjection.petrolBins,
-        )
-    }
 
     fun blend(values: DoubleArray, value: Double): AxisBlend {
         require(values.isNotEmpty()) { "Eixo sem pontos de controle" }
@@ -62,30 +42,9 @@ object ContinuousLearningMath {
         return AxisBlend(lower, upper, fraction)
     }
 
-    /**
-     * Todos os consumidores antigos deste overload também obedecem à geometria
-     * atual. Durante sessão física sem geometry KNOWN, não existe peso por célula.
-     */
     fun bilinearWeights(rpm: Double, petrolMs: Double): List<BilinearContribution> {
-        val axes = currentAxesOrFixture() ?: return emptyList()
-        return bilinearWeights(
-            rpm = rpm,
-            petrolMs = petrolMs,
-            rpmAxis = axes.rpm,
-            petrolAxisMs = axes.petrolMs,
-        )
-    }
-
-    fun bilinearWeights(
-        rpm: Double,
-        petrolMs: Double,
-        rpmAxis: DoubleArray,
-        petrolAxisMs: DoubleArray,
-    ): List<BilinearContribution> {
-        require(rpmAxis.size == 12) { "Eixo RPM exige 12 pontos" }
-        require(petrolAxisMs.size == 12) { "Eixo Tpet exige 12 pontos" }
-        val x = blend(rpmAxis, rpm)
-        val y = blend(petrolAxisMs, petrolMs)
+        val x = blend(LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(), rpm)
+        val y = blend(LearningGridProjection.petrolBins, petrolMs)
         val candidates = listOf(
             BilinearContribution(y.lower, x.lower, (1.0 - x.fraction) * (1.0 - y.fraction)),
             BilinearContribution(y.lower, x.upper, x.fraction * (1.0 - y.fraction)),
@@ -109,29 +68,8 @@ object ContinuousLearningMath {
         mapBar: Double,
         mapBins: DoubleArray = defaultMapBins,
     ): List<TrilinearContribution> {
-        val axes = currentAxesOrFixture() ?: return emptyList()
-        return trilinearWeights(
-            rpm = rpm,
-            petrolMs = petrolMs,
-            mapBar = mapBar,
-            rpmAxis = axes.rpm,
-            petrolAxisMs = axes.petrolMs,
-            mapBins = mapBins,
-        )
-    }
-
-    fun trilinearWeights(
-        rpm: Double,
-        petrolMs: Double,
-        mapBar: Double,
-        rpmAxis: DoubleArray,
-        petrolAxisMs: DoubleArray,
-        mapBins: DoubleArray = defaultMapBins,
-    ): List<TrilinearContribution> {
-        require(rpmAxis.size == 12) { "Eixo RPM exige 12 pontos" }
-        require(petrolAxisMs.size == 12) { "Eixo Tpet exige 12 pontos" }
-        val x = blend(rpmAxis, rpm)
-        val y = blend(petrolAxisMs, petrolMs)
+        val x = blend(LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(), rpm)
+        val y = blend(LearningGridProjection.petrolBins, petrolMs)
         val z = blend(mapBins, mapBar)
         val candidates = listOf(
             TrilinearContribution(y.lower, x.lower, z.lower, (1.0 - x.fraction) * (1.0 - y.fraction) * (1.0 - z.fraction)),
@@ -185,4 +123,22 @@ object ContinuousLearningMath {
         val total = valid.sumOf { it.second }
         return if (total <= 0.0) null else valid.sumOf { it.first * it.second } / total
     }
+
+    /**
+     * Kernel Gaussiano para propagação espacial do aprendizado.
+     * Permite que uma correção em (row, column) espalhe para vizinhos.
+     */
+    fun gaussianSpatialKernel(
+        centerRow: Int,
+        centerColumn: Int,
+        targetRow: Int,
+        targetColumn: Int,
+        sigmaCells: Double = 1.0
+    ): Double {
+        val rowDist = (targetRow - centerRow).toDouble()
+        val colDist = (targetColumn - centerColumn).toDouble()
+        val squaredDist = rowDist * rowDist + colDist * colDist
+        return exp(-squaredDist / (2.0 * sigmaCells * sigmaCells))
+    }
 }
+

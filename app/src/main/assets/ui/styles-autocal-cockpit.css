@@ -1,239 +1,614 @@
+
 .autocal-cockpit-view {
   min-width: 0;
+  max-width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  container-type: inline-size;
 }
 
 .autocal-cockpit {
   display: grid;
-  gap: 14px;
-}
-
-.autocal-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: flex-end;
-  padding: 14px 16px;
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 14px;
-  background: rgba(255,255,255,.018);
-}
-
-.autocal-head small,
-.autocal-section-head small {
-  color: var(--muted, #8793a4);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .10em;
-}
-
-.autocal-head h3,
-.autocal-section-head h4 {
-  margin: 2px 0 0;
-}
-
-.autocal-head p,
-.autocal-note {
-  margin: 5px 0 0;
-  color: var(--muted, #8793a4);
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.autocal-head-actions {
-  display: flex;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding-bottom: 10px;
+}
+
+.autocal-hero,
+.autocal-reference-card,
+.autocal-bands-card,
+.autocal-command-bar,
+.autocal-technical-details {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,.022);
+}
+
+.autocal-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
   align-items: center;
+  padding: 12px 14px;
+}
+
+.autocal-human-copy {
+  min-width: 0;
+}
+
+.autocal-human-copy small,
+.autocal-section-head small,
+.autocal-command-copy small,
+.autocal-tech-grid small {
+  display: block;
+  color: #8291a4;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.autocal-human-copy h3 {
+  margin: 3px 0 2px;
+  font-size: clamp(22px, 2.5cqw, 30px);
+  line-height: 1.05;
+}
+
+.autocal-human-copy p {
+  margin: 0;
+  color: #d5dee8;
+  font-size: 13px;
+}
+
+.autocal-zone-meter {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.autocal-zone-meter > div {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.autocal-zone-meter span {
+  color: #9aa8b8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.autocal-zone-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.autocal-zone-dots i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
+}
+
+.autocal-zone-meter .petrol i[data-active="true"] {
+  border-color: rgba(120,183,255,.72);
+  background: #78b7ff;
+  box-shadow: 0 0 0 3px rgba(120,183,255,.09);
+}
+
+.autocal-zone-meter .gas i[data-active="true"] {
+  border-color: rgba(93,211,158,.72);
+  background: #5dd39e;
+  box-shadow: 0 0 0 3px rgba(93,211,158,.09);
+}
+
+.autocal-human-copy strong {
+  display: block;
+  margin-top: 5px;
+  color: #9bd9c0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.autocal-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
-.autocal-live-strip {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 7px;
+.autocal-hero-actions button,
+.autocal-primary-action,
+.autocal-reset-actions button,
+.autocal-chart-tools button,
+.autocal-review-card button {
+  min-height: 56px;
 }
 
-.autocal-live-strip > div {
-  display: grid;
-  gap: 3px;
-  padding: 9px 10px;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 10px;
-  background: rgba(255,255,255,.02);
-}
-
-.autocal-live-strip small {
-  color: var(--muted, #8793a4);
-  font-size: 8px;
-  letter-spacing: .08em;
-}
-
-.autocal-live-strip b {
-  font-size: 14px;
-}
-
-.autocal-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(300px, .75fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.autocal-bands-card,
-.autocal-events-card,
-.autocal-actions-card {
-  padding: 14px;
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 14px;
-  background: rgba(255,255,255,.018);
+.autocal-reference-card {
+  padding: 10px 12px 8px;
 }
 
 .autocal-section-head {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  align-items: end;
-  margin-bottom: 10px;
+  gap: 14px;
+  min-width: 0;
+  margin-bottom: 7px;
+}
+
+.autocal-section-head.compact {
+  align-items: center;
+}
+
+.autocal-section-head h4 {
+  margin: 2px 0 0;
+  font-size: 17px;
+}
+
+.autocal-section-head p {
+  margin: 3px 0 0;
+  color: #8291a4;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .autocal-section-head > span {
-  color: var(--muted, #8793a4);
-  font-size: 9px;
-  text-transform: uppercase;
+  color: #aab7c6;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
-.autocal-bands {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(82px, 1fr));
-  gap: 7px;
-}
-
-.autocal-band {
-  --band-accent: #5b6775;
-  display: grid;
-  gap: 5px;
-  min-height: 72px;
-  padding: 8px;
-  border: 1px solid color-mix(in srgb, var(--band-accent) 35%, transparent);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--band-accent) 7%, #0a0e14);
-}
-
-.autocal-band[data-state="collecting"] { --band-accent: #4fa3ff; }
-.autocal-band[data-state="mature"] { --band-accent: #d8a93b; }
-.autocal-band[data-state="anchored"] { --band-accent: #2ebf82; }
-
-.autocal-band header {
+.autocal-chart-tools {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  gap: 6px;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
-.autocal-band header span {
-  color: var(--muted, #8793a4);
-  font-size: 9px;
+.autocal-chart-tools button {
+  min-width: 52px;
+  padding: 0 12px;
+  font-size: 13px;
 }
 
-.autocal-band header b {
-  font-size: 16px;
+.autocal-chart-legend {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 4px;
+  color: #8f9daf;
+  font-size: 11px;
 }
 
-.autocal-band > i,
-.autocal-action-status > i {
-  position: relative;
-  display: block;
+.autocal-chart-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
   height: 3px;
+  margin-right: 5px;
   border-radius: 99px;
-  background: rgba(255,255,255,.05);
+  vertical-align: middle;
+  background: #748294;
+}
+
+.autocal-chart-legend .petrol::before {
+  background: #78b7ff;
+}
+
+.autocal-chart-legend .gas::before {
+  background: #5dd39e;
+}
+
+.autocal-chart-legend .equivalence::before {
+  background: #f0c45c;
+}
+
+.autocal-chart-legend .current-band::before {
+  height: 8px;
+  border: 1px solid rgba(255,255,255,.26);
+  background: rgba(79,163,255,.16);
+}
+
+.autocal-chart-host {
+  position: relative;
+  width: 100%;
+  height: clamp(190px, 28vh, 238px);
+  min-height: 190px;
+  overflow: hidden;
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(255,255,255,.015), rgba(255,255,255,.015)),
+    #080d14;
+}
+
+.autocal-reference-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.autocal-grid-line {
+  stroke: rgba(255,255,255,.07);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.autocal-axis-label,
+.autocal-axis-tick-x,
+.autocal-axis-tick-y {
+  fill: #8fa0b3;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.autocal-axis-title {
+  fill: #cbd7e4;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  pointer-events: none;
+}
+
+.autocal-grid-line.vertical {
+  stroke: rgba(255,255,255,.045);
+}
+
+.autocal-reference-line {
+  fill: none;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.autocal-reference-line.petrol {
+  stroke: #78b7ff;
+}
+
+.autocal-reference-line.gas {
+  stroke: #5dd39e;
+}
+
+.autocal-reference-line.previous {
+  opacity: .26;
+  stroke-dasharray: 7 6;
+}
+
+.autocal-equivalence-line {
+  display: none;
+  fill: none;
+  stroke: rgba(240,196,92,.78);
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.autocal-equivalence-point {
+  display: none;
+  fill: #f0c45c;
+  stroke: #081018;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.autocal-reference-point {
+  opacity: 0;
+  stroke: #081018;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.autocal-reference-hit.selected + .autocal-reference-point {
+  opacity: 1;
+}
+
+.autocal-reference-point.petrol {
+  fill: #78b7ff;
+}
+
+.autocal-reference-point.gas {
+  fill: #5dd39e;
+}
+
+.autocal-reference-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.autocal-reference-hit.selected {
+  fill: rgba(255,255,255,.08);
+  stroke: rgba(255,255,255,.38);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-empty {
+  min-height: 100%;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  text-align: center;
+  color: #8190a2;
+  font-size: 11px;
+}
+
+.chart-empty b {
+  color: #d6e0ea;
+  font-size: 13px;
+}
+
+.autocal-inline-inspector {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.025);
+  font-size: 11px;
+}
+
+.autocal-inline-inspector b {
+  color: #dbe5ee;
+  white-space: nowrap;
+}
+
+.autocal-inline-inspector span {
+  min-width: 0;
+  color: #8e9caf;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocal-bands-card {
+  padding: 9px 11px;
+}
+
+.autocal-band-legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 1px 0 7px;
+  color: #98a6b7;
+  font-size: 10px;
+}
+
+.autocal-band-legend span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.autocal-band-legend span::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #505d6c;
+}
+
+.autocal-band-legend span[data-state="activity"]::before { background: #4fa3ff; }
+.autocal-band-legend span[data-state="mature"]::before { background: #d9aa3e; }
+.autocal-band-legend span[data-state="anchored"]::before { background: #36c28a; }
+
+.autocal-band-strip {
+  display: grid;
+  grid-template-columns: repeat(18, minmax(0, 1fr));
+  gap: 4px;
+  min-width: 0;
+}
+
+.autocal-band-segment {
+  --band-accent: #505d6c;
+  display: grid;
+  grid-template-rows: auto 3px auto;
+  gap: 4px;
+  align-content: center;
+  min-width: 0;
+  min-height: 56px;
+  padding: 5px 2px;
+  border: 1px solid color-mix(in srgb, var(--band-accent) 35%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--band-accent) 7%, #0a0e14);
+  color: #cdd7e1;
+  text-align: center;
+}
+
+.autocal-band-segment[data-state="activity"] { --band-accent: #4fa3ff; }
+.autocal-band-segment[data-state="mature"] { --band-accent: #d9aa3e; }
+.autocal-band-segment[data-state="anchored"] { --band-accent: #36c28a; }
+.autocal-band-segment[data-zone-acquired="true"] { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--band-accent) 70%, white); }
+
+.autocal-band-segment.selected {
+  border-color: rgba(255,255,255,.46);
+  outline: 2px solid rgba(255,255,255,.72);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(255,255,255,.05), inset 0 -2px 0 var(--band-accent);
+}
+
+.autocal-band-segment span,
+.autocal-band-segment small {
+  overflow: hidden;
+  font-size: 9px;
+  text-overflow: ellipsis;
+}
+
+.autocal-band-segment i {
+  display: block;
+  border-radius: 99px;
+  background: var(--band-accent);
+}
+
+.autocal-command-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, auto) minmax(130px, auto);
+  gap: 8px;
+  align-items: center;
+  padding: 9px 11px;
+}
+
+.autocal-command-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.autocal-command-copy b {
+  color: #e2eaf1;
+  font-size: 13px;
+}
+
+.autocal-command-copy span {
+  color: #8998aa;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocal-primary-action {
+  min-width: 170px;
+  font-weight: 800;
+}
+
+.autocal-more-actions {
+  position: relative;
+  min-width: 0;
+}
+
+.autocal-more-actions > summary,
+.autocal-technical-details > summary {
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  color: #c8d2dd;
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.autocal-more-actions > summary::-webkit-details-marker,
+.autocal-technical-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.autocal-more-actions[open] {
+  grid-column: 1 / -1;
+}
+
+.autocal-reset-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  margin-top: 7px;
+  padding: 9px;
+  border-radius: 10px;
+  background: rgba(218,84,84,.055);
+}
+
+.autocal-reset-actions button {
+  color: #f0c0c0;
+  border-color: rgba(226,94,94,.24);
+}
+
+.autocal-reset-actions p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #a79498;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.autocal-technical-details {
   overflow: hidden;
 }
 
-.autocal-band > i::after,
-.autocal-action-status > i::after {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: var(--progress, 0%);
-  background: var(--band-accent, #2ebf82);
+.autocal-technical-details > summary {
+  justify-items: start;
+  min-height: 48px;
+  border: 0;
+  border-radius: 0;
 }
 
-.autocal-band small {
-  color: color-mix(in srgb, var(--band-accent) 70%, #c5d0db);
-  font-size: 8px;
-  line-height: 1.2;
-}
-
-.autocal-side {
+.autocal-tech-grid {
   display: grid;
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 10px 8px;
+}
+
+.autocal-tech-grid > div {
+  min-width: 0;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.02);
+}
+
+.autocal-tech-grid b {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #d8e1e9;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .autocal-events {
   display: grid;
-  gap: 7px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 10px 10px;
 }
 
 .autocal-events article {
   display: grid;
-  gap: 4px;
-  padding: 8px 9px;
-  border-left: 2px solid #5d6875;
-  border-radius: 8px;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 8px;
+  border-left: 2px solid #566273;
+  border-radius: 7px;
   background: rgba(255,255,255,.018);
 }
 
 .autocal-events article[data-state="correlated"] {
-  border-left-color: #2ebf82;
+  border-left-color: #36c28a;
 }
 
 .autocal-events article > div {
   display: flex;
-  gap: 8px;
-  align-items: baseline;
-}
-
-.autocal-events article span,
-.autocal-events article small,
-.autocal-events article p {
-  color: var(--muted, #8793a4);
-  font-size: 9px;
-}
-
-.autocal-events article p {
-  margin: 0;
-  color: #c8d3df;
-}
-
-.autocal-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
 }
 
-.autocal-actions button {
-  min-height: 40px;
-  text-align: left;
+.autocal-events article p,
+.autocal-events article small,
+.autocal-events article span,
+.autocal-events .empty-copy {
+  margin: 0;
+  color: #8997a8;
+  font-size: 10px;
 }
 
-.autocal-actions .critical {
-  grid-column: 1 / -1;
-  color: #efb0b0;
-  border-color: rgba(226,94,94,.25);
-}
-
-.autocal-action-status {
-  display: grid;
-  gap: 4px;
-  margin-top: 10px;
-  padding: 8px;
-  border-radius: 8px;
-  background: rgba(255,255,255,.02);
-  color: var(--muted, #8793a4);
-  font-size: 9px;
-}
-
-.autocal-action-status b {
-  color: #dce6f0;
+.autocal-events article p {
+  color: #c5d0db;
 }
 
 .autocal-review {
@@ -241,9 +616,12 @@
   inset: 0;
   z-index: 30;
   display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(4,7,11,.82);
+  align-items: start;
+  justify-items: center;
+  padding: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(4,7,11,.84);
   backdrop-filter: blur(5px);
 }
 
@@ -256,12 +634,14 @@
 }
 
 .autocal-review-card {
-  width: min(600px, 100%);
+  width: min(620px, 100%);
+  max-height: none;
+  overflow: visible;
   padding: 18px;
-  border: 1px solid rgba(226,94,94,.25);
+  border: 1px solid rgba(226,94,94,.28);
   border-radius: 14px;
   background: #10151d;
-  box-shadow: 0 18px 48px rgba(0,0,0,.45);
+  box-shadow: 0 18px 48px rgba(0,0,0,.48);
 }
 
 .autocal-review-card header {
@@ -276,6 +656,25 @@
   font-size: 11px;
 }
 
+.autocal-review-tech {
+  margin: 12px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.autocal-review-tech > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  color: #aab7c6;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.autocal-review-tech > summary::-webkit-details-marker { display: none; }
+
 .autocal-review-card dl {
   display: grid;
   gap: 6px;
@@ -284,14 +683,14 @@
 
 .autocal-review-card dl > div {
   display: grid;
-  grid-template-columns: 150px 1fr;
+  grid-template-columns: 150px minmax(0, 1fr);
   gap: 8px;
   padding: 6px 0;
   border-bottom: 1px solid rgba(255,255,255,.05);
 }
 
 .autocal-review-card dt {
-  color: var(--muted, #8793a4);
+  color: #8793a4;
 }
 
 .autocal-review-card dd {
@@ -300,110 +699,1556 @@
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 1080px) {
-  .autocal-layout { grid-template-columns: 1fr; }
-  .autocal-bands { grid-template-columns: repeat(6, minmax(72px, 1fr)); }
+@container (max-width: 900px) {
+  .autocal-band-strip {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+
+  .autocal-command-bar {
+    grid-template-columns: minmax(0, 1fr) minmax(160px, auto);
+  }
+
+  .autocal-more-actions {
+    grid-column: 1 / -1;
+  }
+
+  .autocal-more-actions > summary {
+    min-height: 48px;
+  }
 }
 
-@media (max-width: 720px) {
-  .autocal-head { align-items: flex-start; flex-direction: column; }
-  .autocal-head-actions { justify-content: flex-start; }
+@container (max-width: 720px) {
+  .autocal-hero {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .autocal-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .autocal-section-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .autocal-chart-tools {
+    width: 100%;
+  }
+
+  .autocal-chart-tools button {
+    flex: 1 1 0;
+  }
+
+  .autocal-command-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .autocal-primary-action,
+  .autocal-more-actions {
+    width: 100%;
+  }
+
+  .autocal-tech-grid,
+  .autocal-events {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.autocal-hero {
+  background:
+    radial-gradient(circle at 0 0, rgba(93,211,158,.075), transparent 42%),
+    linear-gradient(180deg, rgba(255,255,255,.032), rgba(255,255,255,.018));
+}
+
+.autocal-reference-card,
+.autocal-bands-card {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.autocal-chart-host {
+  border: 1px solid rgba(255,255,255,.055);
+  box-shadow: inset 0 1px 18px rgba(0,0,0,.22);
+}
+
+.autocal-cockpit button:focus-visible,
+.autocal-cockpit summary:focus-visible {
+  outline: 3px solid rgba(120,183,255,.7);
+  outline-offset: 2px;
+}
+
+
+.autocal-route-screen {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.autocal-route-panel {
+  min-width: 0;
+}
+
+.autocal-read-context {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(220px, .8fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+}
+
+.autocal-read-context[hidden] {
+  display: none;
+}
+
+.autocal-read-context b,
+.autocal-read-context span {
+  display: block;
+}
+
+.autocal-read-context b {
+  color: #e0e8f1;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.autocal-read-context span,
+.autocal-read-context p {
+  color: #9dacbc;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.autocal-read-context p {
+  margin: 0;
+  text-align: right;
+}
+
+.autocal-live-strip {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.3fr) repeat(3, minmax(86px, .7fr));
+  gap: 6px;
+  align-items: stretch;
+  margin-bottom: 7px;
+}
+
+.autocal-live-summary,
+.autocal-live-metric {
+  min-width: 0;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.028);
+}
+
+.autocal-live-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-content: center;
+}
+
+.autocal-live-summary small {
+  grid-column: 1 / -1;
+}
+
+.autocal-live-summary b {
+  overflow: hidden;
+  color: #e4edf6;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocal-live-summary span {
+  align-self: center;
+  color: #9bd9c0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.autocal-live-summary small,
+.autocal-live-metric small {
+  display: block;
+  color: #8291a4;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.autocal-live-metric b {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #edf3f8;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocal-live-narrative {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0 3px;
+  color: #9dacbc;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.autocal-chart-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 24%);
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.autocal-chart-inspector {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  background: rgba(255,255,255,.025);
+}
+
+.autocal-chart-inspector b {
+  color: #dbe5ee;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.autocal-chart-inspector span {
+  color: #95a4b5;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.autocal-zone-surface { pointer-events: none; }
+.autocal-zone-background {
+  fill: rgba(123,146,167,.045);
+  stroke: rgba(154,180,203,.22);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-background { fill: rgba(58,208,149,.085); }
+.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-background { fill: rgba(242,177,79,.10); }
+.autocal-zone-surface[data-current="true"] .autocal-zone-background {
+  stroke: #f4f9ff;
+  stroke-width: 2;
+  fill-opacity: 1;
+}
+.autocal-zone-petrol-edge { fill: rgba(120,183,255,.24); }
+.autocal-zone-surface[data-petrol-state="acquired"] .autocal-zone-petrol-edge { fill: #78b7ff; }
+.autocal-zone-gas-edge { fill: rgba(177,191,199,.25); }
+.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-gas-edge { fill: #5dd39e; }
+.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-gas-edge { fill: #f0b65e; }
+.autocal-zone-label {
+  fill: #dbe7f2;
+  font-size: 12px;
+  font-weight: 750;
+  paint-order: stroke;
+  stroke: #07101a;
+  stroke-width: 3px;
+}
+.autocal-zone-surface[data-current="true"] .autocal-zone-label { fill: #ffffff; font-weight: 900; }
+
+.autocal-current-band-layer {
+  fill: rgba(79,163,255,.10);
+  stroke: rgba(120,183,255,.38);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.autocal-live-layer {
+  pointer-events: none;
+}
+
+.autocal-live-layer[data-out-of-range="true"] .autocal-live-halo {
+  stroke: #f0c45c;
+  stroke-dasharray: 3 2;
+}
+
+.autocal-live-layer[data-out-of-range="true"] .autocal-live-label {
+  fill: #f0c45c;
+}
+
+.autocal-live-halo {
+  fill: rgba(255,255,255,.08);
+  stroke: rgba(255,255,255,.55);
+  stroke-width: 2;
+}
+
+.autocal-live-point {
+  fill: #ffffff;
+  stroke: #071018;
+  stroke-width: 2;
+}
+
+.autocal-live-label {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  paint-order: stroke;
+  stroke: #071018;
+  stroke-width: 4px;
+}
+
+.autocal-chart-legend .live::before {
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.12);
+}
+
+.source-status[data-level="working"],
+.autocal-read-context[data-read-level="working"] {
+  border-color: rgba(120,183,255,.4);
+}
+
+.source-status[data-level="error"],
+.autocal-read-context[data-read-level="error"] {
+  border-color: rgba(255,119,119,.5);
+}
+
+@container (max-width: 900px) {
+  .autocal-chart-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .autocal-chart-inspector {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+  }
+
+  .autocal-live-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .autocal-live-summary {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 760px) {
+  .autocal-read-context {
+    grid-template-columns: 1fr;
+  }
+
+  .autocal-read-context p {
+    text-align: left;
+  }
+
+  .autocal-live-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .autocal-live-summary,
+  .autocal-live-narrative {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Sessão: contexto operacional compacto, sem competir com a curva. */
+.autocal-session-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,.018);
+}
+.autocal-session-strip[data-session-level="warning"] {
+  border-color: rgba(255,190,92,.5);
+}
+.autocal-session-copy small,
+.autocal-session-item small {
+  display: block;
+  color: #8291a4;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.autocal-session-copy b {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+}
+.autocal-session-copy span,
+.autocal-session-actions > span,
+.autocal-session-item span {
+  color: #9dacbc;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.autocal-session-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.autocal-session-drawer {
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 14px;
+  background: rgba(8,14,22,.68);
+}
+.autocal-session-list {
+  display: grid;
+  gap: 8px;
+}
+.autocal-session-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: rgba(255,255,255,.025);
+}
+.autocal-session-item[data-active="true"] {
+  box-shadow: inset 3px 0 0 rgba(93,211,158,.75);
+}
+.autocal-session-item b,
+.autocal-session-item span {
+  display: block;
+}
+.autocal-session-item b {
+  margin: 2px 0;
+  font-size: 13px;
+}
+.autocal-session-item button,
+.autocal-session-actions button {
+  min-height: 44px;
+}
+@container (max-width: 760px) {
+  .autocal-session-strip,
+  .autocal-session-item {
+    grid-template-columns: 1fr;
+  }
+  .autocal-session-actions {
+    justify-content: space-between;
+  }
+}
+
+/* HMI automotiva: texto operacional legível a aproximadamente um braço de distância. */
+.autocal-human-copy small,
+.autocal-section-head small,
+.autocal-command-copy small,
+.autocal-tech-grid small { font-size: 11px; }
+.autocal-human-copy p { font-size: 14px; }
+.autocal-zone-meter span { font-size: 12px; }
+.autocal-zone-dots i { width: 11px; height: 11px; }
+.autocal-human-copy strong { font-size: 14px; }
+.autocal-section-head h4 { font-size: 18px; }
+.autocal-section-head p { font-size: 13px; }
+.autocal-section-head > span { font-size: 13px; }
+.autocal-chart-tools button { font-size: 14px; }
+.autocal-chart-legend { font-size: 13px; }
+.autocal-axis-label { font-size: 12px; }
+.chart-empty { font-size: 13px; }
+.chart-empty b { font-size: 15px; }
+.autocal-inline-inspector { font-size: 13px; }
+.autocal-band-legend { font-size: 12px; }
+.autocal-band-segment span,
+.autocal-band-segment small { font-size: 11px; }
+.autocal-command-copy b { font-size: 15px; }
+.autocal-command-copy span { font-size: 13px; }
+.autocal-more-actions > summary,
+.autocal-technical-details > summary { font-size: 14px; }
+.autocal-reset-actions p { font-size: 12px; }
+.autocal-tech-grid b { font-size: 13px; }
+.autocal-events article p,
+.autocal-events article small,
+.autocal-events article span,
+.autocal-events .empty-copy { font-size: 12px; }
+.autocal-review-card p,
+.autocal-review-card dd,
+.autocal-review-card dt { font-size: 13px; }
+.autocal-review-tech > summary { font-size: 13px; }
+.autocal-live-summary small,
+.autocal-live-metric small { font-size: 11px; }
+.autocal-live-summary b { font-size: 15px; }
+.autocal-live-summary span { font-size: 13px; }
+.autocal-live-metric b { font-size: 18px; }
+.autocal-live-narrative { font-size: 13px; }
+.autocal-read-context b { font-size: 15px; }
+.autocal-read-context span,
+.autocal-read-context p { font-size: 13px; }
+.autocal-live-label { font-size: 13px; }
+.autocal-session-copy small,
+.autocal-session-item small { font-size: 11px; }
+.autocal-session-copy b { font-size: 16px; }
+.autocal-session-copy span { font-size: 13px; }
+.autocal-session-actions > span { font-size: 13px; }
+.autocal-session-item span { font-size: 13px; }
+.autocal-session-item b { font-size: 14px; }
+.autocal-session-item button,
+.autocal-session-actions button { min-height: 52px; font-size: 14px; }
+
+
+/* 2026-09-21 — hierarchy refinement: curve is the dominant instrument surface. */
+.autocal-cockpit {
+  gap: 7px;
+}
+
+.autocal-hero { order: 2; padding: 9px 12px; }
+.autocal-reference-card {
+  order: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 11px 12px 10px;
+  background:
+    radial-gradient(circle at 68% 14%, rgba(42, 207, 238, .055), transparent 34%),
+    linear-gradient(180deg, rgba(10,20,31,.96), rgba(6,12,20,.985));
+  border-color: rgba(77, 172, 218, .20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 16px 42px rgba(0,0,0,.16);
+}
+.autocal-session-strip { order: 3; }
+.autocal-session-drawer { order: 4; }
+.autocal-bands-card { order: 5; }
+.autocal-command-bar { order: 6; }
+.autocal-technical-details { order: 7; }
+.autocal-review { order: 8; }
+
+.autocal-reference-card .autocal-section-head { order: 0; }
+.autocal-reference-card .autocal-chart-legend { order: 1; }
+.autocal-reference-card .autocal-live-strip { order: 2; }
+.autocal-reference-card .autocal-chart-workspace { order: 3; }
+
+.autocal-section-head h4 {
+  font-size: 22px;
+  letter-spacing: -.015em;
+}
+.autocal-section-head p {
+  max-width: 760px;
+}
+.autocal-chart-legend {
+  min-height: 26px;
+  margin-bottom: 7px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.autocal-chart-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  min-width: 0;
+}
+.autocal-chart-host {
+  height: clamp(300px, 43vh, 390px);
+  min-height: 300px;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(74,118,154,.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74,118,154,.08) 1px, transparent 1px),
+    radial-gradient(circle at 50% 30%, rgba(13,59,86,.20), transparent 56%),
+    #07101a;
+  background-size: 11.111% 25%, 10% 100%, auto, auto;
+}
+.autocal-chart-inspector {
+  position: static;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: auto;
+  max-height: none;
+  overflow: hidden;
+  padding: 8px 10px;
+  border-color: rgba(70,203,231,.16);
+  background: rgba(7,16,26,.58);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.autocal-live-strip {
+  grid-template-columns: minmax(180px, 1.2fr) repeat(3, minmax(105px, .72fr));
+  gap: 8px;
+  margin: 9px 0 0;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,.055);
+}
+.autocal-live-summary,
+.autocal-live-metric {
+  min-height: 64px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255,255,255,.055);
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.018));
+}
+.autocal-live-summary {
+  border-color: rgba(31,213,239,.20);
+  box-shadow: inset 3px 0 0 rgba(31,213,239,.74);
+}
+.autocal-live-summary small,
+.autocal-live-metric small {
+  color: #7f96aa;
+  letter-spacing: .12em;
+}
+.autocal-live-summary b { font-size: 16px; }
+.autocal-live-metric b { font-size: 20px; }
+.autocal-live-narrative {
+  color: #8597a9;
+  font-size: 13px;
+}
+
+.autocal-live-halo {
+  fill: rgba(23,218,246,.14);
+  stroke: rgba(23,218,246,.55);
+  stroke-width: 2;
+}
+.autocal-live-point {
+  fill: #19daf4;
+  stroke: #dffcff;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 6px rgba(25,218,244,.75));
+}
+.autocal-live-label {
+  fill: #49e7fb;
+  stroke: #061019;
+}
+.autocal-chart-legend .live::before {
+  background: #19daf4;
+  box-shadow: 0 0 0 3px rgba(25,218,244,.14), 0 0 12px rgba(25,218,244,.28);
+}
+
+.autocal-hero {
+  grid-template-columns: minmax(0,1fr) minmax(390px, auto);
+}
+.autocal-human-copy h3 {
+  font-size: clamp(19px, 2cqw, 24px);
+}
+.autocal-zone-meter {
+  margin-top: 5px;
+}
+.autocal-human-copy strong {
+  margin-top: 3px;
+}
+.autocal-hero-actions button,
+.autocal-primary-action,
+.autocal-reset-actions button,
+.autocal-chart-tools button,
+.autocal-review-card button {
+  min-height: 48px;
+}
+
+.autocal-session-strip {
+  padding: 8px 11px;
+  border-radius: 11px;
+}
+
+@container (max-width: 900px) {
+  .autocal-chart-inspector {
+    position: static;
+    width: auto;
+    max-height: none;
+    margin-top: 8px;
+    backdrop-filter: none;
+  }
+  .autocal-chart-host {
+    height: clamp(270px, 40vh, 340px);
+    min-height: 270px;
+  }
+}
+
+@container (max-width: 760px) {
+  .autocal-hero { grid-template-columns: 1fr; }
   .autocal-live-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .autocal-bands { grid-template-columns: repeat(3, minmax(72px, 1fr)); }
+  .autocal-chart-host { min-height: 250px; }
 }
 
-/* ---- Aba AutoCal de primeiro nível + Equivalência Refinada ---------------- */
-.autocal-screen-host{display:grid;gap:14px;min-width:0}
-.autocal-screen .autocal-cockpit-view{display:grid;gap:14px}
-.autocal-refine-host{min-width:0}
-.refine-card{display:grid;gap:12px;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
-.refine-card[data-tone="danger"]{border-color:color-mix(in srgb,var(--danger) 55%,var(--line))}
-.refine-card[data-tone="warn"]{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
-.refine-card[data-tone="ok"]{border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
-.refine-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
-.refine-head h3{margin:3px 0 0;font-size:19px}
-.refine-head p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.45;max-width:520px}
-.refine-steps{display:flex;gap:6px;margin:0;padding:0;list-style:none}
-.refine-steps li{display:flex;gap:7px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--surface-2);color:var(--dim)}
-.refine-steps li i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;background:var(--surface-3)}
-.refine-steps li b{display:block;font-size:12px}.refine-steps li span{display:block;font-size:10px}
-.refine-steps li[data-state="active"]{background:var(--accent-soft);color:var(--text)}
-.refine-steps li[data-state="active"] i{background:var(--accent);color:#fff}
-.refine-steps li[data-state="done"]{color:var(--muted)}
-.refine-steps li[data-state="done"] i{background:color-mix(in srgb,var(--ok) 30%,transparent);color:var(--ok)}
-.refine-body{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(220px,1fr);gap:12px}
-.refine-chart-wrap{min-width:0;padding:8px;border:1px solid var(--line-soft);border-radius:10px;background:var(--surface-2)}
-.refine-chart{width:100%;height:auto;display:block}
-.refine-chart .grid{stroke:var(--line-soft);stroke-width:1}
-.refine-chart .tick{fill:var(--dim);font-size:10px}
-.refine-chart path{fill:none;stroke-width:2}
-.refine-chart path.current{stroke:var(--dim);stroke-dasharray:4 4}
-.refine-chart path.refined{stroke:var(--accent)}
-.refine-chart circle{fill:var(--dim)}
-.refine-chart circle[data-origin="MEASURED"]{fill:var(--ok)}
-.refine-chart circle[data-origin="BLENDED"]{fill:var(--accent)}
-.refine-chart circle[data-origin="SMOOTHED"]{fill:var(--warn)}
-.refine-legend{display:flex;flex-wrap:wrap;gap:10px;padding:6px 4px 0;font-size:10px;color:var(--muted)}
-.refine-legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:var(--dim);vertical-align:middle}
-.refine-legend .refined::before,.refine-legend [data-origin="BLENDED"]::before{background:var(--accent)}
-.refine-legend [data-origin="MEASURED"]::before{background:var(--ok)}
-.refine-legend [data-origin="SMOOTHED"]::before{background:var(--warn)}
-.refine-metrics{display:grid;gap:8px;margin:0}
-.refine-metrics div{padding:9px 11px;border:1px solid var(--line-soft);border-radius:10px;background:var(--surface-2)}
-.refine-metrics dt{font-size:10px;letter-spacing:.08em;color:var(--dim);font-weight:800;text-transform:uppercase}
-.refine-metrics dd{margin:3px 0 1px;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
-.refine-metrics span{font-size:10px;color:var(--muted)}
-.refine-metrics b[data-tone="ok"]{color:var(--ok)}.refine-metrics b[data-tone="warn"]{color:var(--warn)}.refine-metrics b[data-tone="danger"]{color:var(--danger)}
-.refine-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.refine-actions:empty{display:none}
-.refine-actions .primary{min-height:46px;padding:0 20px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}
-.refine-actions .secondary{min-height:42px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);cursor:pointer}
-.refine-done{color:var(--ok);font-weight:800}
-.refine-error{color:var(--danger);font-weight:700;max-width:560px}
-.refine-progress{flex:1 1 160px;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--accent) var(--progress),var(--surface-3) var(--progress))}
-.refine-note{margin:0;padding:9px 11px;border-radius:10px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--text);font-size:12px}
-.refine-review{display:grid;gap:10px;padding:14px;border:1px solid color-mix(in srgb,var(--danger) 45%,var(--line));border-radius:var(--radius);background:var(--surface-2)}
-.refine-review header{display:flex;justify-content:space-between;align-items:flex-start}
-.refine-review h4{margin:3px 0 0}
-.refine-review-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;max-height:220px;overflow:auto}
-.refine-review-list div{display:grid;gap:2px;padding:7px 9px;border-radius:8px;background:var(--surface-3)}
-.refine-review-list span{font-size:10px;color:var(--muted)}.refine-review-list b{font-variant-numeric:tabular-nums}
-.refine-contract{margin:0;font-size:12px;color:var(--muted)}.refine-contract b{color:var(--text)}
-.refine-details summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:700}
-.refine-details p{font-size:11px;color:var(--muted)}
-.refine-details table{width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}
-.refine-details th,.refine-details td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line-soft)}
-.refine-details tr.discounted td{color:var(--dim);text-decoration:line-through}
-/* Piloto do refino + diário de verificação */
-.refine-pilot{display:grid;gap:6px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface-2)}
-.refine-pilot[data-tone="ok"]{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
-.refine-pilot[data-tone="danger"]{border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
-.refine-pilot p{margin:0;font-size:13px}.refine-pilot small{color:var(--muted);font-size:11px}
-.refine-pilot-steps{display:flex;gap:4px;margin:0;padding:0;list-style:none;flex-wrap:wrap}
-.refine-pilot-steps li{padding:4px 9px;border-radius:999px;font-size:11px;background:var(--surface-3);color:var(--dim)}
-.refine-pilot-steps li[data-state="done"]{color:var(--ok)}
-.refine-pilot-steps li[data-state="active"]{background:var(--accent);color:#fff;font-weight:700}
-.refine-pilot[data-tone="ok"] .refine-pilot-steps li[data-state="active"]{background:var(--ok)}
-.refine-journal{display:grid;gap:8px;padding:12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface-2)}
-.refine-journal[data-status="PIOROU_EM_PARTE"]{border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
-.refine-journal header{display:grid;gap:2px}.refine-journal header small{color:var(--muted);font-size:10px}
-.refine-journal p{margin:0;font-size:12px}
-.refine-journal-bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
-.refine-journal-bands div{display:grid;gap:2px;padding:7px 9px;border-radius:8px;background:var(--surface-3)}
-.refine-journal-bands span{font-size:10px;color:var(--muted)}.refine-journal-bands b{font-variant-numeric:tabular-nums}
-.refine-journal-bands small[data-tone="ok"]{color:var(--ok)}.refine-journal-bands small[data-tone="warn"]{color:var(--warn)}
-.refine-journal-bands small[data-tone="danger"]{color:var(--danger)}.refine-journal-bands small[data-tone="accent"]{color:var(--accent)}
-.refine-journal-bands small[data-tone="muted"]{color:var(--dim)}
-.refine-journal .operation-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.refine-journal .secondary,.refine-journal .danger-primary{min-height:42px;padding:0 16px;border-radius:10px;cursor:pointer}
-.refine-journal .secondary{border:1px solid var(--line);background:var(--surface-3)}
-/* Agora: cartão da calibração */
-.calibration-pilot{display:grid;gap:4px;margin-top:10px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface-2);cursor:pointer}
-.calibration-pilot[hidden]{display:none}
-.calibration-pilot small{color:var(--muted);font-size:10px;letter-spacing:.04em}
-.calibration-pilot b{font-size:14px}.calibration-pilot span{font-size:12px;color:var(--muted)}
-.calibration-pilot[data-tone="ok"]{border-color:color-mix(in srgb,var(--ok) 50%,var(--line))}
-.calibration-pilot[data-tone="ok"] b{color:var(--ok)}
-.calibration-pilot[data-tone="accent"]{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
-.calibration-pilot[data-tone="danger"]{border-color:color-mix(in srgb,var(--danger) 50%,var(--line))}
-@media (max-width:900px){.refine-body{grid-template-columns:1fr}.refine-steps{flex-wrap:wrap}}
+
+/* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
+.autocal-reference-line.petrol:not(.previous) {
+  stroke-width: 4;
+  opacity: .62;
+}
+.autocal-reference-line.gas:not(.previous) {
+  stroke-width: 2.5;
+}
+.autocal-reference-point.petrol {
+  fill: #07101a;
+  stroke: #78b7ff;
+  stroke-width: 2.6;
+}
+.autocal-reference-point.gas {
+  fill: #5dd39e;
+  stroke: #d9fff0;
+  stroke-width: 1.2;
+}
+
+
+/* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */
+.autocal-chart-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+.autocal-zone-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.autocal-zone-meter > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.autocal-zone-fuel {
+  color: #90a2b4;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.autocal-zone-cells {
+  display: flex;
+  gap: 3px;
+}
+.autocal-zone-cell {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto;
+  place-items: center;
+  min-width: 34px;
+  min-height: 30px;
+  padding: 3px 4px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 7px;
+  background: rgba(255,255,255,.025);
+}
+.autocal-zone-cell b {
+  color: #dbe5ef;
+  font-size: 10px;
+  line-height: 1;
+}
+.autocal-zone-cell small {
+  margin-top: 2px;
+  color: #7f90a2;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] {
+  border-color: rgba(120,183,255,.52);
+  background: rgba(120,183,255,.13);
+}
+.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] small { color: #8dc5ff; }
+.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] {
+  border-color: rgba(93,211,158,.52);
+  background: rgba(93,211,158,.13);
+}
+.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] small { color: #79ddb0; }
+.autocal-zone-cell[data-state="missing"] {
+  border-color: rgba(240,196,92,.42);
+  border-style: dashed;
+  background: rgba(240,196,92,.06);
+}
+.autocal-zone-cell[data-state="missing"] small { color: #f0c45c; }
+.autocal-zone-cell[data-current="true"] {
+  outline: 2px solid #19daf4;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(25,218,244,.10);
+}
+.autocal-zone-cell[data-current="true"]::after {
+  content: 'AGORA';
+  position: absolute;
+  top: -8px;
+  right: -3px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: #19daf4;
+  color: #061019;
+  font-size: 6px;
+  font-weight: 950;
+  letter-spacing: .04em;
+}
+
+/* Preserve the 300px dominant plot while keeping AGORA visible at 1280x720. */
+.autocal-chart-inspector {
+  position: static;
+  width: auto;
+  max-height: none;
+  overflow: hidden;
+  gap: 6px;
+  padding: 3px 8px;
+  line-height: 1.2;
+}
+.autocal-live-strip {
+  gap: 6px;
+  margin: 2px 0 0;
+  padding-top: 4px;
+}
+.autocal-live-summary,
+.autocal-live-metric {
+  min-height: 56px;
+  padding: 7px 9px;
+}
+.autocal-live-narrative {
+  font-size: 13px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@container (max-width: 980px) {
+  .autocal-chart-head-actions {
+    flex-wrap: wrap;
+  }
+  .autocal-zone-fuel {
+    display: none;
+  }
+}
+
+
+/* Custom-ROM/1280x720 focus: use reclaimed chrome for the acquisition geometry. */
+.app-shell.autocal-focus .autocal-chart-host {
+  height: clamp(340px, 52vh, 430px);
+  min-height: 340px;
+}
+.autocal-bands-technical {
+  margin-top: 10px;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,.07);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+
+/* WebView-safe disclosure: engineering regions never leak into the driving surface. */
+.autocal-technical-details:not([open]) .autocal-bands-technical {
+  display: none;
+}
+
+
+/* 2026-09-23 — owner physical envelope: the vehicle does not use MAP above 1.15 bar.
+   No expanded-scale mode: spend the surface on Z1–Z4 and the live cursor. */
+.app-shell.autocal-focus .autocal-chart-host {
+  height: clamp(380px, 58vh, 460px);
+  min-height: 380px;
+}
+.autocal-reference-card .autocal-section-head p {
+  display: none;
+}
+.autocal-zone-meter {
+  display: none;
+}
+
+/* 2026-09-24 — Premium cockpit final direction.
+   Primary surface = graph. Secondary context stays below it in one vertical flow. */
+.screen.autocal-route-screen {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  contain: layout style;
+}
+.autocal-cockpit-view {
+  overflow: visible;
+}
+.autocal-cockpit {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
+  min-height: 0;
+  overflow: visible;
+  padding-bottom: 12px;
+}
+
+.autocal-focus-toolbar {
+  position: relative;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 66px;
+  padding: 5px 7px 5px 9px;
+}
+.autocal-focus-title h3 {
+  margin: 0;
+  color: #f2f7fb;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.autocal-focus-title p {
+  margin: 5px 0 0;
+  color: #8fa4b7;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.autocal-focus-metrics {
+  display: flex;
+  gap: 5px;
+  align-items: stretch;
+}
+.autocal-focus-metric,
+.autocal-focus-zone {
+  display: grid;
+  align-content: center;
+  min-width: 92px;
+  min-height: 54px;
+  padding: 6px 10px;
+  border: 1px solid rgba(80,170,220,.18);
+  border-radius: 10px;
+  background: rgba(9,21,33,.72);
+}
+.autocal-focus-metric small,
+.autocal-focus-zone small {
+  color: #8fa3b6;
+  font-size: 10px;
+  font-weight: 700;
+}
+.autocal-focus-metric b,
+.autocal-focus-zone b {
+  margin-top: 2px;
+  color: #f1f6fa;
+  font-size: 21px;
+  line-height: 1;
+}
+.autocal-focus-metric em {
+  margin-left: 3px;
+  color: #91a7b9;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+}
+.autocal-focus-zone {
+  min-width: 78px;
+  text-align: center;
+}
+.autocal-focus-zone b {
+  justify-self: center;
+  min-width: 52px;
+  padding: 4px 9px;
+  border: 1px solid rgba(70,232,165,.42);
+  border-radius: 999px;
+  color: #07130f;
+  background: #35d996;
+  font-size: 18px;
+}
+
+.autocal-title-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+.autocal-title-line h3 { min-width: 0; }
+.autocal-fuel-chip {
+  flex: 0 0 auto;
+  min-width: 62px;
+  padding: 5px 9px;
+  border: 1px solid rgba(151,169,185,.26);
+  border-radius: 999px;
+  color: #b7c6d2;
+  background: rgba(35,47,58,.45);
+  font-size: 10px;
+  font-weight: 900;
+  text-align: center;
+}
+.autocal-fuel-chip[data-fuel-state="gas"] {
+  border-color: rgba(93,211,158,.42);
+  color: #c9f7e3;
+  background: rgba(30,103,75,.32);
+}
+.autocal-fuel-chip[data-fuel-state="petrol"] {
+  border-color: rgba(120,183,255,.42);
+  color: #d6eaff;
+  background: rgba(37,82,128,.32);
+}
+.autocal-fuel-chip[data-fuel-state="transition"] {
+  border-color: rgba(226,178,76,.42);
+  color: #ffefbd;
+  background: rgba(104,78,26,.28);
+}
+
+.autocal-focus-actions {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+  align-items: stretch;
+  justify-content: end;
+  min-width: 0;
+}
+.autocal-focus-actions .source-status {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.autocal-focus-actions .autocal-primary-action,
+.autocal-reacquire-action,
+.autocal-reset-menu > summary {
+  min-height: 50px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.autocal-focus-actions .autocal-primary-action {
+  min-width: 0;
+}
+.autocal-reacquire-action {
+  border-color: rgba(226,178,76,.32);
+  color: #f7e7b7;
+  background: rgba(104,78,26,.24);
+  font-weight: 800;
+}
+.autocal-reset-menu {
+  position: relative;
+  min-width: 0;
+}
+.autocal-reset-menu > summary {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,105,115,.32);
+  border-radius: 10px;
+  color: #ffd7db;
+  background: rgba(80,26,32,.46);
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+  text-align: center;
+}
+.autocal-reset-menu > summary::-webkit-details-marker { display: none; }
+.autocal-reset-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  width: min(320px, calc(100vw - 230px));
+  padding: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,105,115,.26);
+  border-radius: 12px;
+  background: rgba(9,14,22,.98);
+  box-shadow: 0 18px 42px rgba(0,0,0,.45);
+}
+.autocal-reset-popover button {
+  min-height: 48px;
+  border-color: rgba(255,105,115,.24);
+  color: #f3c8cc;
+}
+.autocal-reset-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  min-width: 0;
+}
+.autocal-reset-group > small {
+  color: #9fb0c0;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .11em;
+}
+.autocal-reset-popover p {
+  margin: 1px 1px 0;
+  color: #a99ca4;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.autocal-reference-card {
+  position: relative;
+  order: initial;
+  min-height: 0;
+  padding: 0 0 8px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #07101a;
+}
+.autocal-plot-title {
+  position: absolute;
+  top: 7px;
+  left: 10px;
+  z-index: 6;
+  color: #dce8f1;
+  font-size: 12px;
+  font-weight: 800;
+  pointer-events: none;
+}
+.autocal-chart-workspace {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(260px, 30%);
+  grid-template-areas:
+    "chart chart chart"
+    "legend history inspector"
+    "compare compare inspector";
+  gap: 7px;
+  height: 100%;
+  min-height: 0;
+  padding: 0 8px;
+}
+.app-shell.autocal-focus .autocal-chart-host,
+.autocal-chart-host {
+  grid-area: chart;
+  /* Reserve the header and point context inside the actual WebView height. */
+  height: clamp(440px, calc(100vh - 252px), 540px);
+  min-height: 440px;
+  border-radius: 10px;
+}
+.autocal-chart-legend {
+  position: static;
+  grid-area: legend;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 32px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(80,170,220,.18);
+  border-radius: 9px;
+  background: rgba(4,13,22,.78);
+  overflow: hidden;
+}
+.autocal-history-float {
+  position: static;
+  grid-area: history;
+  align-self: start;
+  z-index: 7;
+  min-height: 48px;
+  padding: 0 10px;
+  border-radius: 9px;
+  opacity: .84;
+}
+.autocal-chart-inspector {
+  position: static;
+  grid-area: inspector;
+  width: auto;
+  min-width: 0;
+  max-height: none;
+  padding: 7px 9px;
+  overflow: hidden;
+  border: 1px solid rgba(70,203,231,.16);
+  border-radius: 9px;
+  background: rgba(5,15,24,.74);
+  pointer-events: auto;
+}
+.autocal-chart-inspector b,
+.autocal-chart-inspector span {
+  font-size: 11px;
+}
+.autocal-reset-comparison {
+  position: static;
+  grid-area: compare;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid rgba(80,170,220,.18);
+  border-radius: 11px;
+  background: rgba(4,13,22,.74);
+}
+.autocal-reset-comparison[hidden] { display: none; }
+.autocal-reset-comparison > div {
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.035);
+}
+.autocal-reset-comparison small,
+.autocal-reset-comparison b,
+.autocal-reset-comparison span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.autocal-reset-comparison small {
+  color: #8398aa;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .11em;
+}
+.autocal-reset-comparison b {
+  margin-top: 2px;
+  color: #e6f4ff;
+  font-size: 13px;
+}
+.autocal-reset-comparison span {
+  margin-top: 2px;
+  color: #91a4b4;
+  font-size: 9px;
+}
+
+.autocal-secondary-details {
+  position: static;
+  z-index: auto;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.autocal-secondary-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(80,170,220,.18);
+  border-radius: 10px;
+  color: #b9cad8;
+  background: rgba(9,19,29,.72);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+.autocal-secondary-details > summary::after {
+  content: '↓';
+  color: #71879a;
+  font-size: 14px;
+}
+.autocal-secondary-details[open] > summary::after { content: '↑'; }
+.autocal-secondary-details > summary::-webkit-details-marker { display: none; }
+.autocal-secondary-details:not([open]) .autocal-secondary-stack { display: none; }
+.autocal-secondary-details[open] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.autocal-secondary-details[open] > summary {
+  margin-bottom: 8px;
+}
+.autocal-secondary-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+.autocal-secondary-card {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 11px;
+  background: rgba(9,19,29,.82);
+}
+.autocal-hero.autocal-secondary-card {
+  display: grid;
+  grid-template-columns: minmax(0,1fr);
+  gap: 7px;
+  padding: 10px 12px;
+}
+.autocal-human-copy small { font-size: 9px; }
+.autocal-human-copy h3 {
+  margin: 2px 0;
+  font-size: 15px;
+}
+.autocal-human-copy p,
+.autocal-human-copy strong {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.autocal-read-context { display: none !important; }
+
+.autocal-session-strip.autocal-secondary-card {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.autocal-session-copy small { font-size: 9px; }
+.autocal-session-copy b { font-size: 14px; }
+.autocal-session-copy span { font-size: 11px; }
+.autocal-session-actions {
+  display: grid;
+  gap: 4px;
+  align-content: center;
+}
+.autocal-session-actions > span { display: none; }
+.autocal-session-actions button {
+  min-height: 40px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.autocal-zone-card {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+}
+.autocal-secondary-stack .autocal-zone-meter {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+.autocal-secondary-stack .autocal-zone-meter > div {
+  display: grid;
+  grid-template-columns: 72px minmax(0,1fr);
+  gap: 8px;
+  align-items: center;
+}
+.autocal-secondary-stack .autocal-zone-fuel {
+  width: auto;
+  font-size: 10px;
+}
+.autocal-secondary-stack .autocal-zone-cells {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.autocal-secondary-stack .autocal-zone-cell {
+  min-width: 0;
+  min-height: 34px;
+  padding: 4px 5px;
+}
+.autocal-zone-card > #autocalZoneSummary {
+  color: #8fa3b6;
+  font-size: 10px;
+}
+
+.autocal-command-bar.autocal-secondary-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  align-items: center;
+  padding: 10px 12px;
+}
+.autocal-command-copy small { font-size: 9px; }
+.autocal-command-copy b { font-size: 13px; }
+.autocal-command-copy span {
+  display: block;
+  max-width: none;
+  overflow: visible;
+  font-size: 10px;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.autocal-technical-details.autocal-secondary-card {
+  min-width: 0;
+}
+.autocal-technical-details > summary {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+.autocal-technical-details[open] {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+.autocal-tech-grid {
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  padding: 0 10px 10px;
+}
+.autocal-bands-technical,
+.autocal-events {
+  display: none;
+}
+.autocal-session-drawer.autocal-secondary-card {
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+@container (max-width: 980px) {
+  .autocal-focus-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+  .autocal-focus-metrics {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .autocal-focus-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+  .autocal-focus-metric { min-width: 78px; }
+  .autocal-focus-title p { display: none; }
+  .autocal-reset-menu > summary {
+    min-width: 132px;
+    padding: 0 10px;
+  }
+  .autocal-chart-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "chart"
+      "legend"
+      "history"
+      "compare"
+      "inspector";
+  }
+}
+
+
+/* ProgBase-parity: only current acquired dots expose point reacquisition. */
+.autocal-chart-legend .acquired::before {
+  width: 9px;
+  height: 9px;
+  border: 2px solid rgba(240,196,92,.92);
+  border-radius: 50%;
+  background: transparent;
+}
+.autocal-acquired-hit {
+  fill: transparent;
+  cursor: pointer;
+  pointer-events: all;
+}
+.autocal-acquired-point {
+  pointer-events: none;
+  stroke: #071018;
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,.55));
+}
+.autocal-acquired-point.petrol { fill: #78b7ff; }
+.autocal-acquired-point.gas { fill: #5dd39e; }
+.autocal-acquired-point.collecting {
+  fill-opacity: .34;
+  stroke-dasharray: 2.5 2.5;
+}
+.autocal-acquired-point.acquired {
+  fill-opacity: 1;
+  stroke-width: 2.6;
+}
+.autocal-acquired-hit.selected + .autocal-acquired-point {
+  stroke: #fff4cf;
+  stroke-width: 3.4;
+}
+.autocal-acquired-hit.batch-selected + .autocal-acquired-point {
+  stroke: #f0c45c;
+  stroke-width: 3.6;
+  filter: drop-shadow(0 0 7px rgba(240,196,92,.46));
+}
+.autocal-point-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+.autocal-point-batch {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto auto;
+  gap: 7px;
+  align-items: center;
+  margin-top: 2px;
+  padding: 8px;
+  border: 1px solid rgba(240,196,92,.2);
+  border-radius: 9px;
+  background: rgba(240,196,92,.065);
+}
+.autocal-point-batch span {
+  min-width: 0;
+  color: #d8e1e9;
+}
+.autocal-point-batch button {
+  min-height: 42px;
+  padding: 0 10px;
+}
+.autocal-point-reacquire {
+  flex: 0 0 auto;
+  min-height: 48px;
+  margin-left: auto;
+  padding: 0 12px;
+  border-color: rgba(226,178,76,.38);
+  color: #fff0bf;
+  background: rgba(104,78,26,.28);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+/* Platina P-002: causal AutoMatch evidence, deterministic and read-only. */
+.autocal-automatch-evidence {
+  display: grid;
+  gap: 6px;
+  border-color: rgba(121, 169, 214, .16);
+  background: linear-gradient(135deg, rgba(45, 83, 116, .12), rgba(255,255,255,.018));
+}
+.autocal-automatch-evidence > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.autocal-automatch-evidence small {
+  color: #8fa8bd;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+.autocal-automatch-evidence b {
+  color: #e7f0f7;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.autocal-automatch-evidence span {
+  color: #9aaaba;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.autocal-automatch-evidence[data-state="FACTOR_CHANGE_CONFIRMED"] {
+  border-color: rgba(93, 211, 158, .28);
+  background: linear-gradient(135deg, rgba(48, 128, 93, .14), rgba(255,255,255,.018));
+}
+.autocal-automatch-evidence[data-state="NO_FACTOR_CHANGE_OBSERVED"] {
+  border-color: rgba(120, 183, 255, .22);
+}
+.autocal-automatch-evidence[data-state="INCONCLUSIVE"] {
+  border-color: rgba(240, 182, 94, .32);
+  background: linear-gradient(135deg, rgba(132, 91, 31, .13), rgba(255,255,255,.018));
+}
+/* DUMP/TAUTOCALUI: PetrolCurve != PetrolPoint/GasPoint != GasPointPrev.
+   Estilos distintos, sem mudar o significado dos vetores originais da ECU. */
+.autocal-reference-line.petrol.epoch-anchor {
+  stroke: #78b7ff;
+  stroke-width: 3.8;
+  opacity: .85;
+}
+.autocal-epoch-acquisition-line {
+  fill: none;
+  stroke-width: 2.1;
+  stroke-dasharray: 5 5;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  opacity: .72;
+}
+.autocal-epoch-acquisition-line.petrol { stroke: #78b7ff; }
+.autocal-epoch-acquisition-line.gas { stroke: #5dd39e; }
+.autocal-previous-gas-point {
+  fill: none;
+  stroke: #5dd39e;
+  stroke-width: 1.8;
+  stroke-dasharray: 2.5 2.5;
+  opacity: .42;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+.autocal-chart-legend .previous::before {
+  width: 9px;
+  height: 9px;
+  border: 1.5px dashed #5dd39e;
+  border-radius: 50%;
+  background: transparent;
+  opacity: .6;
+  vertical-align: middle;
+}

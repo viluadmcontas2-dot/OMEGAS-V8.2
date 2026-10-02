@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.omegas.prohub.ui.NotificationRoute
 import com.omegas.prohub.MainActivity
 import com.omegas.prohub.R
 import com.omegas.prohub.model.HubStatus
@@ -17,8 +16,6 @@ class NotificationController(private val context: Context) {
     companion object {
         const val CHANNEL_ID = "omegas_telemetry_native"
         const val NOTIFICATION_ID = 4301
-        const val AUTOPILOT_CHANNEL_ID = "omegas_refinement"
-        const val AUTOPILOT_NOTIFICATION_ID = 4302
     }
 
     init {
@@ -34,37 +31,7 @@ class NotificationController(private val context: Context) {
                 setSound(null, null)
             }
             context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-            val refinement = NotificationChannel(
-                AUTOPILOT_CHANNEL_ID,
-                "Calibração OMEGAS",
-                NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply {
-                description = "Avisa quando a curva refinada está pronta, piorou ou ficou estável"
-                setShowBadge(true)
-            }
-            context.getSystemService(NotificationManager::class.java).createNotificationChannel(refinement)
         }
-    }
-
-    /** Aviso único por fase do refino (proposta pronta, restaurar trecho, estável). */
-    fun buildRefinementAlert(headline: String, next: String): Notification {
-        val openIntent = PendingIntent.getActivity(
-            context,
-            5,
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                .putExtra(NotificationRoute.EXTRA_UI_ROUTE, NotificationRoute.REFINEMENT),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        return NotificationCompat.Builder(context, AUTOPILOT_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_omegas)
-            .setContentTitle("OMEGAS — Calibração")
-            .setContentText(headline)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$headline\n$next"))
-            .setContentIntent(openIntent)
-            .setAutoCancel(true)
-            .setOnlyAlertOnce(true)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
-            .build()
     }
 
     fun build(status: HubStatus): Notification {
@@ -109,9 +76,7 @@ class NotificationController(private val context: Context) {
             "USB ${if (status.usbConnected) "conectado" else "desconectado"} • núcleo ${if (status.engineRunning) "ativo" else "parado"}"
         }
         val line2 = status.lastError.ifBlank {
-            if (status.engineReady && status.refinementHeadline.isNotBlank()) {
-                status.refinementHeadline
-            } else if (status.engineReady) {
+            if (status.engineReady) {
                 "MAP ${"%.3f".format(status.mapBar)} bar • resposta orientada pela ECU"
             } else {
                 "Android nativo • ${status.baudRate} ${status.serialFormat}"

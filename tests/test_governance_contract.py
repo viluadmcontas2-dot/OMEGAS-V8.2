@@ -11,23 +11,31 @@ class StableRepositoryContract(unittest.TestCase):
         self.assertTrue(agents_path.is_file())
         agents = agents_path.read_text("utf-8").lower()
         for marker in (
-            "este repositório é a fonte canônica de engenharia",
-            "github issue → uma branch → um pr",
-            "mutação de source ocorre pela api remota do github",
-            "runtime efêmero pode testar/buildar o sha remoto exato",
-            "github actions é último recurso",
-            "notion e linear",
-            "não são dependências de boot",
+            "github remoto é a autoridade técnica do omegas",
+            "boot obrigatório",
+            "project.md",
+            "status.md",
+            "spec kit ativo",
+            "workunit ativa",
+            "local_source_mutation=denied",
+            "runtime local/mmmachine pode testar ou inspecionar o sha remoto exato",
+            "gate global de realidade",
+            "sil/ciu é independente",
         ):
             self.assertIn(marker, agents)
-        for path in (
+        self.assertIn("@codex engineering guardrails", agents)
+
+    def test_repo_first_control_surface_is_present(self):
+        required = [
             "PROJECT.md",
             "STATUS.md",
-            "docs/workunits/OMEGAS-WU-005.md",
-            "docs/evidence/OMEGAS-WU-005.json",
-            "docs/governance/README.md",
-        ):
-            self.assertTrue((ROOT / path).is_file(), path)
+            "docs/spec-kits/OMEGAS-SK-001.md",
+            "docs/workunits/OMEGAS-WU-006.md",
+            "docs/evidence/OMEGAS-WU-006.json",
+            "docs/superpowers/specs/2026-09-21-omegas-verde-progbase-autocal-parity-design.md",
+            "docs/superpowers/plans/2026-09-21-omegas-verde-progbase-autocal-parity.md",
+        ]
+        self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])
 
     def test_core_product_surfaces_are_present(self):
         required = [
@@ -39,7 +47,7 @@ class StableRepositoryContract(unittest.TestCase):
             "app/src/main/assets/ui/screens/learning.js",
             "app/src/main/assets/ui/screens/map.js",
             "app/src/main/assets/ui/screens/curve.js",
-            "app/src/main/assets/ui/screens/autocal-refine.js",
+            "app/src/main/assets/ui/screens/obd.js",
             "tests/test_block1_session_contract.py",
             "tests/test_v7_map_batch_contract.py",
             "tests/test_mp48_extended_status_contract.py",
@@ -65,7 +73,9 @@ class StableRepositoryContract(unittest.TestCase):
     def test_critical_regression_corpora_remain_present(self):
         required = [
             "app/src/test/java/com/omegas/prohub/learning/LearningScenarioMatrixTest.kt",
-            "docs/incidents/INDEX.md",
+            "docs/incidents/2026-08-06-multimedia-telemetry-backpressure.md",
+            "docs/incidents/2026-08-09-multiple-ecu-write-authorities.md",
+            "docs/incidents/2026-08-11-consolidated-learning-volatility.md",
             "docs/TEST_STRATEGY.md",
         ]
         self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])

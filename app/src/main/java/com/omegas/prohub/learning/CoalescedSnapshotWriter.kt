@@ -28,11 +28,6 @@ internal class CoalescedSnapshotWriter(
     private val requests = AtomicLong(0L)
     private val writes = AtomicLong(0L)
     private val failures = AtomicLong(0L)
-    private val lastRequestedAtNanos = AtomicLong(0L)
-    private val lastQueueDelayMs = AtomicLong(0L)
-    private val maxQueueDelayMs = AtomicLong(0L)
-    private val lastWriteDurationMs = AtomicLong(0L)
-    private val maxWriteDurationMs = AtomicLong(0L)
 
     @Volatile private var latestPayloadProvider: (() -> String)? = null
     @Volatile private var lastError = ""
@@ -53,7 +48,6 @@ internal class CoalescedSnapshotWriter(
         if (!accepting.get()) return false
         latestPayloadProvider = payloadProvider
         requests.incrementAndGet()
-        lastRequestedAtNanos.set(System.nanoTime())
         dirty.set(true)
         scheduleDrain()
         return true
@@ -71,11 +65,6 @@ internal class CoalescedSnapshotWriter(
     private fun drain() {
         try {
             while (dirty.getAndSet(false)) {
-                val startedAt = System.nanoTime()
-                val queuedAt = lastRequestedAtNanos.get()
-                val queueDelayMs = if (queuedAt > 0L) nanosToMillis(startedAt - queuedAt) else 0L
-                lastQueueDelayMs.set(queueDelayMs)
-                updateMaximum(maxQueueDelayMs, queueDelayMs)
                 try {
                     val payload = latestPayloadProvider?.invoke() ?: continue
                     beforeWrite()
@@ -85,10 +74,6 @@ internal class CoalescedSnapshotWriter(
                 } catch (error: Throwable) {
                     failures.incrementAndGet()
                     lastError = error.message ?: error.javaClass.simpleName
-                } finally {
-                    val durationMs = nanosToMillis(System.nanoTime() - startedAt)
-                    lastWriteDurationMs.set(durationMs)
-                    updateMaximum(maxWriteDurationMs, durationMs)
                 }
             }
         } finally {
@@ -123,10 +108,6 @@ internal class CoalescedSnapshotWriter(
             .put("failures", failures.get())
             .put("dirty", dirty.get())
             .put("scheduled", scheduled.get())
-            .put("lastQueueDelayMs", lastQueueDelayMs.get())
-            .put("maxQueueDelayMs", maxQueueDelayMs.get())
-            .put("lastWriteDurationMs", lastWriteDurationMs.get())
-            .put("maxWriteDurationMs", maxWriteDurationMs.get())
             .put("lastError", lastError)
     }
 
@@ -150,16 +131,6 @@ internal class CoalescedSnapshotWriter(
         if (!temporary.renameTo(target)) {
             target.writeText(payload, Charsets.UTF_8)
             temporary.delete()
-        }
-    }
-
-    private fun nanosToMillis(value: Long): Long =
-        TimeUnit.NANOSECONDS.toMillis(value.coerceAtLeast(0L))
-
-    private fun updateMaximum(target: AtomicLong, candidate: Long) {
-        var current = target.get()
-        while (candidate > current && !target.compareAndSet(current, candidate)) {
-            current = target.get()
         }
     }
 }

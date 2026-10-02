@@ -21,24 +21,40 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
                 offenders.append(path.relative_to(ROOT).as_posix())
         self.assertEqual([], offenders)
 
-    def test_known_clients_use_scheduler_and_atomic_write_readback_units(self):
-        kwrite = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt").read_text()
-        kfactor = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt").read_text()
-        bridge = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt").read_text()
+    def test_known_clients_use_scheduler_fast_ack_and_final_readback_units(self):
+        kwrite = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt").read_text(encoding="utf-8")
+        kfactor = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt").read_text(encoding="utf-8")
+        bridge = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt").read_text(encoding="utf-8")
         self.assertNotIn("UsbSerialManager", kwrite)
         self.assertNotIn("UsbSerialManager", kfactor)
         self.assertNotIn("protocolTransaction(", bridge)
         self.assertRegex(
             kwrite,
-            re.compile(r"serial\.unit\([\s\S]*?writeKCell\([\s\S]*?readRow\(unit,", re.M),
+            re.compile(r"serial\.unit\([\s\S]*?writeKCell\(", re.M),
         )
+        self.assertIn("BATCH_VERIFYING_ROWS", kwrite)
+        self.assertIn("confirmação final K[$row]", kwrite)
+        direct_start = kwrite.index('reason = "escrita direta Mapa K"')
+        readback_start = kwrite.index('reason = "readback final Mapa K"')
+        self.assertLess(direct_start, readback_start)
+        direct_unit_body = kwrite[direct_start:readback_start]
+        self.assertIn("writeKCell(", direct_unit_body)
+        self.assertNotIn("readRow(unit,", direct_unit_body)
         self.assertRegex(
             kfactor,
-            re.compile(r"serial\.unit\([\s\S]*?writeFactor\([\s\S]*?readRawPoints\(unit,", re.M),
+            re.compile(r"serial\.unit\([\s\S]*?writeFactor\(", re.M),
         )
+        self.assertIn("VERIFYING_FINAL", kfactor)
+        self.assertIn("confirmação final K factor", kfactor)
+        curve_start = kfactor.index('reason = "escrita direta Curva K"')
+        curve_end = kfactor.index("private fun readRawPoints(request:", curve_start)
+        curve_unit_body = kfactor[curve_start:curve_end]
+        self.assertIn("writeFactor(", curve_unit_body)
+        self.assertGreaterEqual(curve_unit_body.count("readRawPoints(unit,"), 2)
+        self.assertNotIn('reason = "escrita ACK K factor[', curve_unit_body)
 
     def test_engine_protects_telemetry_opportunity_and_definitive_mutation_wait(self):
-        source = ENGINE.read_text()
+        source = ENGINE.read_text(encoding="utf-8")
         self.assertIn("PriorityBlockingQueue<QueuedSerialWork>", source)
         self.assertIn("thenBy { it.sequence }", source)
         self.assertRegex(

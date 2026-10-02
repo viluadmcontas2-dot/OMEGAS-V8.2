@@ -58,9 +58,8 @@ class LearningConsolidationContract(unittest.TestCase):
         self.assertIn("stability.mapBandCount >= 2", self.runtime)
 
     def test_schema_is_backward_compatible_and_persists_stability(self):
-        self.assertIn('private const val SCHEMA = "OMEGAS_V7_SESSION_7"', self.codec)
+        self.assertIn('private const val SCHEMA = "OMEGAS_V7_SESSION_6"', self.codec)
         for schema in (
-            "OMEGAS_V7_SESSION_6",
             "OMEGAS_V7_SESSION_5",
             "OMEGAS_V7_SESSION_4",
             "OMEGAS_V7_SESSION_3",
@@ -81,13 +80,22 @@ class LearningConsolidationContract(unittest.TestCase):
         self.assertIn('put("consolidatedErrorPercent"', self.coordinator)
         self.assertIn('put("recentErrorPercent"', self.coordinator)
 
-    def test_learning_ui_prefers_consolidated_and_keeps_recent_as_detail(self):
+    def test_learning_ui_uses_robust_stability_before_raw_comparison(self):
         self.assertIn("state.calibrationState?.learningStability?.map", self.learning_ui)
-        self.assertIn("consolidatedErrorPercent", self.learning_ui)
-        self.assertIn("recentErrorPercent", self.learning_ui)
+        self.assertIn("function stableComparisonError", self.learning_ui)
+        self.assertIn("const recent = finite(stable?.recentErrorPercent)", self.learning_ui)
+        self.assertIn("if (state === 'LEARNING') return recent ?? raw", self.learning_ui)
+        self.assertIn("if (state === 'CONSOLIDATED' || state === 'REVALIDATING') return consolidated ?? recent ?? raw", self.learning_ui)
+        self.assertIn("Diferença agora", self.learning_ui)
+        self.assertIn("Diferença estável", self.learning_ui)
+        self.assertIn("Tendência recente", self.learning_ui)
+        self.assertIn("differenceText(rawError, deadband)", self.learning_ui)
+        self.assertIn("differenceText(consolidatedError, deadband)", self.learning_ui)
+        self.assertIn("differenceText(recentError, deadband)", self.learning_ui)
+        self.assertGreaterEqual(self.learning_ui.count("stableComparisonError("), 3)
         self.assertIn("persistentMapSuggestions(state)", self.learning_ui)
         self.assertIn("revalidando", self.learning_ui.lower())
-        self.assertIn("Editar esta célula", self.learning_ui)
+        self.assertIn("Revisar no Mapa K", self.learning_ui)
         self.assertNotIn(".setTrace(", self.learning_ui)
 
     def test_live_tracing_visual_remains_removed(self):

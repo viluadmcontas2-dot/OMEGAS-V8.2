@@ -37,7 +37,5 @@ data class HubStatus(
     val lanEnabled: Boolean = false,
     val lanAddress: String = "",
     val directTelemetryAgeMs: Long = -1,
-    /** Frase do piloto do refino (fase da calibração) para a notificação. */
-    val refinementHeadline: String = "",
 )
 

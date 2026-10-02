@@ -1,35 +1,64 @@
-# OMEGAS V8.2 — contrato operacional
+# OMEGAS — contrato operacional estável
 
 ## Autoridade
 
-- Este repositório é a fonte canônica de engenharia: código, requisitos ativos, decisões, status, testes e evidências.
-- A leitura inicial é: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → WorkUnit ativa em `docs/workunits/`.
-- GitHub Issue → uma branch → um PR → checks/evidências → merge. Não criar branches de auditoria ou genealogias paralelas.
-- Notion e Linear podem guardar estratégia ou histórico, mas não são dependências de boot nem autoridades sobre estado técnico mutável.
-- Chat, Brainbase, MCP USE e executores são superfícies de operação, nunca fonte do projeto.
+- **GitHub remoto é a autoridade técnica do OMEGAS:** código, Issues, specs, planos, WorkUnits, STATUS e evidências versionadas.
+- Boot obrigatório: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → Spec Kit ativo → WorkUnit ativa → Issues ligadas.
+- Notion pode ser consultado **somente como referência read-only** de UX/produto quando o owner pedir (ex.: CUSTOMROM / OMEGA DEV). Notion/Linear não controlam esta execução OMEGAS.
+- Chat, Brainbase, AgentRed e MMMACHINE são superfícies de operação; nunca substituem o estado remoto versionado.
 
-## Execução
+## Superfície de trabalho
 
-- Mutação de source ocorre pela API remota do GitHub. Runtime efêmero pode testar/buildar o SHA remoto exato.
-- UI/UX evolui somente por decisão explícita do owner. Decisão de 2026-10-02 (WU-006): navegação por intenção (Agora · AutoCal · Aprender · Ajuste global · Ajuste local · Sugestões · Ferramentas), seguindo os blueprints CUSTOMROM/Omega Dev. Produto atual: Agora · AutoCal (equivalência refinada GNV = gasolina) · Aprender · Ajuste global (Curva K) · Ajuste local (Mapa K) · Sugestões · Ferramentas.
-- Escrita na ECU é sempre manual: preparar → revisar → confirmar → ACK → readback. Falha ou divergência nunca é sucesso.
-- O AutoCal é o centro do produto: a ECU coleta; o OMEGAS refina a equivalência GNV = gasolina (`AutoMatchRefinedEngine`), com ganho proporcional à evidência, trava de coerência (passo ≤ ±15%/execução, |Δ ln K/Δ ln t| ≤ 0,35) e falha fechada sem evidência.
-- A equivalência científica primária é `RPM × MAP(bar) → Petrol Inj. (ms)`; `RPM × Petrol Inj.` localiza downstream a célula física do Mapa K.
-- Mapa K e Curva K permanecem separados. Nenhum aprendizado ou sugestão grava automaticamente na ECU.
+`WORK_SURFACE=REMOTE`
+`SOURCE_MUTATION_TARGET=GITHUB_REMOTE_API`
+`LOCAL_SOURCE_MUTATION=DENIED`
+`TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|DEVICE_WHEN_AUTHORIZED`
 
-## Verificação e custo
+Antes de escrita relevante e antes de concluir:
+1. resolver HEAD remoto de `OmegasPlatina`;
+2. reconciliar movimento concorrente;
+3. nunca sobrescrever trabalho remoto alheio.
 
-- Ordem: gate rápido → testes afetados/simulações → suíte Android → lint → APK.
-- GitHub Actions é último recurso para prova Android/APK quando o executor não possui SDK; usar somente fluxo seletivo, cancelável e sem gasto monetário.
-- Mudanças apenas documentais não podem disparar build pesado.
-- `PROVEN` exige SHA, comandos, resultados e artifact/hash registrados em `docs/evidence/` e `STATUS.md`.
-- Sem validação física, declarar explicitamente o limite; nunca alegar ECU/veículo testados.
+Runtime local/MMMACHINE pode testar ou inspecionar o SHA remoto exato, mas não é fonte de autoridade.
 
-### Build/deploy discipline
+## Método obrigatório
 
-- `HOSTING_PROVIDER_IS_NOT_TDD_RUNNER = TRUE`.
-- RED→GREEN loops rodam na superfície válida mais barata; não exigem GitHub Actions, hosting, APK remoto ou publicação por commit.
-- Commits WIP/intermediários não devem disparar build/deploy externo pesado. Consolidar prova externa somente em gate material de integração, artifact/release ou pedido explícito do owner.
-- Docs/governança/status-only não justificam build externo.
-- Quota de CI/hosting nunca autoriza upgrade pago ou fallback pago.
-- Repo-first, TDD e evidência continuam obrigatórios; reduzir frequência de builds externos não reduz rigor.
+Engenharia: `@Codex Engineering Guardrails` + Superpowers aplicável.
+
+Mudança comportamental:
+`evidência -> RED válido -> correção mínima -> GREEN focado -> revisão do diff -> verificação ampla proporcional -> CI remota`.
+
+Não chamar teste de produto de PASS quando ele não exercitou o comportamento observado pelo operador.
+
+## Gate global de realidade
+
+Para qualquer superfície dependente de ECU/MP48/telemetria, contratos estáticos/unitários são apoio, não prova final.
+
+A cadeia alvo é:
+`corpus real -> replay determinístico -> runtime/bridge real aplicável -> WebView/app renderizado -> evidência visual/estado`.
+
+Viewport automotivo canônico: `1280x720`.
+
+## Invariantes OMEGAS Platina atuais
+
+- nenhuma escrita automática de Map K/Curve K;
+- escrita manual exige intenção explícita + ACK + readback;
+- `RESET_ALL` não é ação operacional exposta; somente Reset gas point 0x04, observado com efeito amplo, pode ser solicitado manualmente como reinício de aquisição com aviso explícito, confirmação Android e backup completo pré-mutação;
+- ciência/protocolo críticos permanecem Kotlin/native;
+- AGORA deve permanecer no mesmo contexto da referência AutoCal;
+- LEVELS permanece RAW até existir calibração física separada;
+- validação física só pode ser alegada com dispositivo/ECU real.
+
+## Fronteira SIL/CIU
+
+**SIL/CIU é independente. Não portar, copiar, cherry-pickar, mesclar ou usar código SIL/CIU como implementação da Platina sem autorização explícita do owner.**
+
+O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.
+
+## Execução paralela
+
+Execução paralela só quando explicitamente autorizada pelo owner ou por instrução aplicável quando as tarefas forem realmente independentes.
+- um owner por superfície de escrita;
+- scouts/falsificadores podem rodar em paralelo;
+- integração e promoção ficam serializadas;
+- relato de worker não é prova: verificar o estado integrado diretamente.

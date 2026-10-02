@@ -1,0 +1,15 @@
+test_deadband_is_evaluation_only (test_confidence_surface.ConfidenceTests.test_deadband_is_evaluation_only) ... ok
+test_distance_reduces_authority (test_confidence_surface.ConfidenceTests.test_distance_reduces_authority) ... ok
+test_f2_anchor (test_confidence_surface.ConfidenceTests.test_f2_anchor) ... ok
+test_frames_cannot_create_independent_sources (test_confidence_surface.ConfidenceTests.test_frames_cannot_create_independent_sources) ... ok
+test_jeffreys_conflict_blocks_trust (test_confidence_surface.ConfidenceTests.test_jeffreys_conflict_blocks_trust) ... ok
+test_mad_robust_to_one_large_source (test_confidence_surface.ConfidenceTests.test_mad_robust_to_one_large_source) ... ok
+test_reference_exists_without_action_authority (test_confidence_surface.ConfidenceTests.test_reference_exists_without_action_authority) ... ok
+test_source_balance_not_frame_balance (test_confidence_surface.ConfidenceTests.test_source_balance_not_frame_balance) ... ok
+test_tied_sign_is_not_consensus (test_confidence_surface.ConfidenceTests.test_tied_sign_is_not_consensus) ... ok
+test_wrong_direction_is_unsafe_above_deadband (test_confidence_surface.ConfidenceTests.test_wrong_direction_is_unsafe_above_deadband) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.133s
+
+OK

@@ -70,7 +70,7 @@ test('Scheduler cria um único intervalo e separa fast status e contexto', () =>
   const shell = bootCore();
   const calls = { fast: 0, status: 0, context: 0 };
   const scheduler = new shell.context.OmegasUi.Scheduler({
-    intervalMs: 200,
+    intervalMs: 100,
     onFast: () => { calls.fast += 1; },
     onStatus: () => { calls.status += 1; },
     onContext: () => { calls.context += 1; },
@@ -79,12 +79,37 @@ test('Scheduler cria um único intervalo e separa fast status e contexto', () =>
   scheduler.start();
   assert.equal(shell.intervalCount(), 1);
   assert.deepEqual(calls, { fast: 1, status: 1, context: 1 });
-  for (let index = 0; index < 10; index += 1) shell.fireInterval();
-  assert.equal(calls.fast, 11);
-  assert.equal(calls.status, 3);
-  assert.equal(calls.context, 2);
+  for (let index = 0; index < 20; index += 1) shell.fireInterval();
+  assert.equal(calls.fast, 21);
+  assert.equal(calls.status, 3, 'status permanece em ~1s apesar do fast a 100ms');
+  assert.equal(calls.context, 2, 'contexto permanece em ~2s apesar do fast a 100ms');
   scheduler.stop();
   assert.equal(shell.clearCount(), 1);
+});
+
+test('Scheduler troca 200ms por 75ms sem manter dois intervalos ativos', () => {
+  const shell = bootCore();
+  const scheduler = new shell.context.OmegasUi.Scheduler({ intervalMs: 200 });
+  scheduler.start();
+  assert.equal(shell.intervalCount(), 1);
+  assert.equal(shell.clearCount(), 0);
+  assert.equal(scheduler.intervalMs, 200);
+
+  scheduler.setCadenceMs(75);
+  assert.equal(scheduler.intervalMs, 75);
+  assert.equal(shell.intervalCount(), 2, 'troca cria apenas o intervalo substituto');
+  assert.equal(shell.clearCount(), 1, 'intervalo anterior precisa ser encerrado antes da troca');
+
+  scheduler.setCadenceMs(75);
+  assert.equal(shell.intervalCount(), 2, 'mesma cadência não recria timer');
+  assert.equal(shell.clearCount(), 1);
+
+  scheduler.setCadenceMs(200);
+  assert.equal(scheduler.intervalMs, 200);
+  assert.equal(shell.intervalCount(), 3);
+  assert.equal(shell.clearCount(), 2);
+  scheduler.stop();
+  assert.equal(shell.clearCount(), 3);
 });
 
 test('modo navegador é simulador visual e nunca escreve ECU', () => {

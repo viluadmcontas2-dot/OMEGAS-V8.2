@@ -1,0 +1,108 @@
+# Final same-SHA verification: AutoCal blueprint refinement 2026-09-27
+name: OmegasVerde Android render evidence
+
+on:
+  workflow_dispatch:
+  # Render evidence trigger: 1ad07dcee856-final-autocal-visible-actions
+  # Final APK/render evidence can be re-run against an exact SHA.
+  push:
+    branches: [OmegasVerde, OmegasPlatina]
+    paths:
+      - '.github/workflows/verde-android-render-evidence.yml'
+      - 'app/build.gradle.kts'
+      - 'app/src/androidTest/**'
+      - 'app/src/main/assets/ui/**'
+      - 'app/src/main/java/com/omegas/prohub/MainActivity.kt'
+      - 'app/src/main/java/com/omegas/prohub/web/**'
+      - 'app/src/main/java/com/omegas/prohub/telemetry/**'
+      - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
+      - 'app/src/main/java/com/omegas/prohub/ecu/KFactorProtocol.kt'
+      - 'tests/fixtures/portmon-autocal-cycle-v1.json'
+      - 'tests/fixtures/portmon-lognovo-autocal-reference-v1.json'
+      - 'tests/test_lognovo_autocal_reference_fixture_contract.py'
+      - 'fixtures/autocal/**'
+      - 'tools/ci/run_android_render_evidence.sh'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-verde-android-render-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - scenario: dashboard-fresh
+            method: dashboardFreshLevelsRaw
+          - scenario: dashboard-invalid
+            method: dashboardInvalidLevelsPlaceholder
+          - scenario: autocal-fresh-control
+            method: autocalFreshTelemetryControl
+          - scenario: autocal-visible-actions
+            method: autocalVisibleReacquireActionsForMultimedia
+          - scenario: autocal-reference-curves
+            method: autocalReferenceCurvesRenderFixture
+          - scenario: autocal-sparse-zone-map
+            method: autocalSparseZoneMapShowsExactMissingRegions
+          - scenario: autocal-equivalence-shifted
+            method: autocalShiftedEquivalenceRendersHorizontalProjection
+          - scenario: learning-fresh-context
+            method: learningFreshMp48ContextRender
+          - scenario: map-fresh-context
+            method: mapFreshMp48ContextRender
+          - scenario: curve-offline-honest
+            method: curveOfflineDoesNotFabricateEcuRead
+          - scenario: curve-original-lognovo
+            method: curveOriginalLognovoRendersThirtyDecodedPoints
+          - scenario: obd-offline-honest
+            method: obdOfflineIsHonest
+          - scenario: dashboard-session-invalidated
+            method: sessionChangeInvalidatesOldTelemetry
+          - scenario: dashboard-session-recovered
+            method: sessionReconnectRecoversFreshTelemetry
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Enable KVM
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          test -e /dev/kvm
+
+      - name: Run real Android WebView evidence
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          cores: 2
+          ram-size: 2048M
+          emulator-build: 15917651
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
+          disable-animations: true
+          script: bash tools/ci/run_android_render_evidence.sh "${{ matrix.scenario }}" "${{ matrix.method }}"
+
+      - name: Upload rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-render-${{ matrix.scenario }}
+          path: rendered-evidence
+          retention-days: 7
+          if-no-files-found: warn

@@ -19,7 +19,7 @@ checks = {
     "service destroy no longer builds portable checkpoint before shutdown": "Serviço encerrado" not in SERVICE and "saveInternalCheckpoint" not in destroy,
     "pre map cell write checkpoint preserved": 'saveInternalCheckpoint("Antes de ajustar célula K")' in SERVICE,
     "pre map batch write checkpoint preserved": 'saveInternalCheckpoint("Antes de ajustar mapa K: "' in SERVICE,
-    "pre k factor write checkpoint preserved": 'saveInternalCheckpoint("Antes de ajustar K factor: "' in SERVICE,
+    "pre k factor write checkpoint removed; backup is manual": 'saveInternalCheckpoint("Antes de ajustar K factor: "' not in SERVICE,
     "confirmed map checkpoint preserved": 'saveInternalCheckpoint("Após escrita K confirmada")' in SERVICE,
     "confirmed factor checkpoint preserved": 'saveInternalCheckpoint("Após escrita K factor confirmada")' in SERVICE,
     "runtime close still drains pipelines": 'flushPipelines("encerramento do runtime", 2_000L)' in RUNTIME,

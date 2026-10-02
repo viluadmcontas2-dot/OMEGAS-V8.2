@@ -8,12 +8,25 @@ BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
 POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt"
 
 
+def normalize_js_source(text: str) -> str:
+    text = re.sub(
+        r"\\x([0-9A-Fa-f]{2})",
+        lambda match: chr(int(match.group(1), 16)),
+        text,
+    )
+    return re.sub(
+        r"\\u([0-9A-Fa-f]{4})",
+        lambda match: chr(int(match.group(1), 16)),
+        text,
+    )
+
+
 class Block1SessionContract(unittest.TestCase):
     def setUp(self):
         self.html = (UI / "index.html").read_text("utf-8")
         self.app = (UI / "app.js").read_text("utf-8")
         self.scheduler = (UI / "core/scheduler.js").read_text("utf-8")
-        self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
+        self.dashboard = normalize_js_source((UI / "screens/dashboard.js").read_text("utf-8"))
         self.bridge = BRIDGE.read_text("utf-8")
         self.policy = POLICY.read_text("utf-8")
         self.css = (UI / "styles.css").read_text("utf-8")
@@ -22,21 +35,27 @@ class Block1SessionContract(unittest.TestCase):
         active = self.html + self.app
         for marker in ('workshopModeButton', 'workshopRequested', 'confirmWriteCheckbox', 'Ative o modo oficina'):
             self.assertNotIn(marker, active)
-        self.assertIn('Gravar alterações na ECU', self.html)
-        self.assertIn('Gravar pontos na ECU', self.html)
+        self.assertIn('id="mapReviewButton"', self.html)
+        self.assertIn('id="curveReviewButton"', self.html)
+        self.assertIn('Gravar é a única confirmação humana', self.html)
+        self.assertIn('Uma confirmação', self.html)
+        self.assertNotIn('id="mapWriteButton"', self.html)
+        self.assertNotIn('id="curveWriteButton"', self.html)
+        self.assertNotIn('id="mapReviewBack"', self.html)
+        self.assertNotIn('id="curveReviewBack"', self.html)
 
     def test_native_gate_rejects_unsafe_write_conditions(self):
         for marker in (
             'MAX_SAFE_TELEMETRY_AGE_MS = 2_500L',
-            'DRIVING_PROBABLE_RPM = 1_200',
             '!status.serviceRunning',
             '!status.usbConnected',
             'status.usbPermissionPending',
             '!status.engineRunning || !status.engineReady || status.engineStuck',
             'status.directTelemetryAgeMs < 0L || status.directTelemetryAgeMs > MAX_SAFE_TELEMETRY_AGE_MS',
-            'status.rpm >= DRIVING_PROBABLE_RPM',
         ):
             self.assertIn(marker, self.policy)
+        self.assertNotIn('DRIVING_PROBABLE_RPM', self.policy)
+        self.assertNotIn('status.rpm >=', self.policy)
         self.assertIn('CalibrationWriteSafetyPolicy.unsafeReason(service.status())', self.bridge)
         self.assertIn('.put("safetyBlocked", true)', self.bridge)
 

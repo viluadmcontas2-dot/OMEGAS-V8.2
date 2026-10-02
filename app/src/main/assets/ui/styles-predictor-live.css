@@ -1,0 +1,50 @@
+.predictor-live-toggle {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  color: #aab7c5;
+  background: rgba(255,255,255,.025);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.predictor-live-toggle[data-enabled="true"] {
+  color: #bdebd6;
+  border-color: rgba(46,191,130,.28);
+  background: rgba(46,191,130,.07);
+}
+
+.predictor-cell.trace-weight::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(220,232,245,.72);
+  border-radius: 6px;
+  background: rgba(220,232,245,.08);
+  pointer-events: none;
+  opacity: var(--trace-weight, 0);
+}
+
+.predictor-cell.current {
+  z-index: 3;
+  border-color: #f1f5f9;
+  box-shadow: 0 0 0 2px rgba(241,245,249,.28), 0 0 18px color-mix(in srgb, var(--state-accent) 48%, transparent);
+}
+
+.predictor-cell.current::after {
+  content: 'AGORA';
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  color: #071017;
+  background: #f1f5f9;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  line-height: 1;
+}

@@ -16,27 +16,26 @@
     catch (error) { return { ok: false, error: error?.message || String(error), automatic: false, manualOnly: true }; }
   }
 
-  let equivalenceCache = { ok: false };
-  let equivalenceAt = -Infinity;
   ns.AutoCalApi = {
     available: () => !!root.OmegasAutoCal,
     identity: () => invoke('getIdentity', [], {}),
-    status: () => invoke('getNativeMonitorStatus', [], { ok: false, error: 'AutoCal nativo indisponível' }),
-    snapshot: () => invoke('getNativeMonitorSnapshot', [], { available: false }),
+    readerStatus: () => invoke('getStatus', [], { ok: false, state: 'UNAVAILABLE', error: 'Reader AutoCal indisponível' }),
+    readerSnapshot: () => invoke('getSnapshot', [], { available: false }),
+    acquisitionStatus: () => invoke('getNativeMonitorStatus', [], { ok: false, state: 'UNAVAILABLE', error: 'Monitor AutoCal nativo indisponível' }),
+    acquisitionSnapshot: () => invoke('getNativeMonitorSnapshot', [], { available: false }),
+    projection: () => invoke('getUiProjection', [], { ok: false, source: 'NONE', referenceUsable: false, snapshot: { available: false } }),
+    sessionStatus: () => invoke('getSessionLedgerStatus', [], {}),
+    sessions: () => invoke('listAutoCalSessions', [], []),
+    exportSession: sessionId => invoke('exportAutoCalSession', [String(sessionId || '')], false),
     actionStatus: () => invoke('getNativeActionStatus', [], {}),
     startRead: () => invoke('startRead', [], {}),
+    cancelRead: () => invoke('cancelRead', [], {}),
+    setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),
     prepare: action => invoke('prepareNativeAction', [String(action || '')], {}),
+    prepareKFactorReset: () => invoke('prepareNativeAction', ['RESET_K_FACTOR'], {}),
+    preparePointDelete: (fuel, index) => invoke('preparePointDelete', [String(fuel || ''), Number(index)], {}),
+    preparePointDeleteBatch: targets => invoke('preparePointDeleteBatch', [JSON.stringify(Array.isArray(targets) ? targets : [])], {}),
     execute: preparationId => invoke('executeNativeAction', [String(preparationId || '')], {}),
     cancelPreparation: () => invoke('clearNativeActionPreparation', [], {}),
-    refinedAnalysis: () => invoke('getRefinedAnalysis', [], { ok: false, available: false }),
-    createRefinedDraft: () => invoke('createRefinedDraft', [], { ok: false }),
-    draftReview: () => invoke('getDraftReviewPayload', [], { ok: false }),
-    clearDraft: () => invoke('clearDraft', [], {}),
-    equivalence: () => {
-      if (root.document?.hidden) return equivalenceCache;
-      const now = Date.now();
-      if (now - equivalenceAt >= 3000) { equivalenceAt = now; equivalenceCache = invoke('getEquivalence', [], { ok: false }); }
-      return equivalenceCache;
-    },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

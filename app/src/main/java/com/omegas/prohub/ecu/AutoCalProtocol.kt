@@ -3,15 +3,27 @@ package com.omegas.prohub.ecu
 /**
  * Contrato somente leitura dos objetos AutoCal já identificados.
  *
- * Não contém reset, ações, escrita ou acesso à porta USB.
- * Shape é validado pela identidade física de cada field. MODULE_VERSION é
- * preservado como dado observado, mas não reescreve globalmente famílias 18/30.
+ * O decoder interpreta bytes e gera somente frames AutoCal cuja forma foi
+ * provada. Dimensão de vetor é propriedade do objeto/protocolo observado; não
+ * é inferida de MODULE_VERSION.
  */
 object AutoCalProtocol {
     const val READ_SCALAR = 0x09
     const val READ_VECTOR = 0x29
     const val READ_INDEXED = 0x0A
     const val WRITE_U8 = 0x12
+    const val WRITE_INDEXED_U8 = 0x13
+    const val WRITE_U16 = 0x13
+    const val WRITE_VECTOR_EXTENDED = 0x37
+    const val AUTOCAL_ACTION_COMMAND = 0x24
+    const val AUTOCAL_ACTION_SUBOP_CONTROL = 0x04
+
+    enum class ManualActionMode(val wireValue: Int) {
+        RESET_PETROL(0x01),
+        RESET_GAS(0x02),
+        RESET_ALL(0x04),
+        MANUAL_AUTOMATCH(0x08),
+    }
 
     /** Probe leve observado no ProgBase; payload de 14 bytes. */
     val CMD_NATIVE_STATUS = byteArrayOf(0x48, 0x0B, 0x53)
@@ -65,62 +77,59 @@ object AutoCalProtocol {
     val MNFLD_PRESS_THD = Field("MNFLD_PRESS_THD", 0x014C, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
     val NUM_BUF_UPD_PETR = Field("NUM_BUF_UPD_PETR", 0x015B, Encoding.U16_LE, Shape.VECTOR, 18)
     val NUM_BUF_UPD_GAS = Field("NUM_BUF_UPD_GAS", 0x015C, Encoding.U16_LE, Shape.VECTOR, 18)
+    /** ProgBase TAutoCalDM: FileKeyName=AUTOCAL_IDLE_MIN_BUF_PETR_THD. */
+    val VECT_AUTOCAL_U8_0 = Field("VECT_AUTOCAL_U8_0", 0x0165, Encoding.U8, Shape.SCALAR, 1)
+    /** ProgBase TAutoCalDM: FileKeyName=!AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD. */
     val VECT_AUTOCAL_U8_1 = Field("VECT_AUTOCAL_U8_1", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 1)
+    /** ProgBase TAutoCalDM: VECT_AUTOCAL_U8_2, FileKeyName=MaxAutomatch. */
     val MAX_AUTOMATCH = Field("MAX_AUTOMATCH", 0x0165, Encoding.U8, Shape.INDEXED, 1, index = 2)
     /** Alias de compatibilidade para snapshots/testes antigos; 0x0165:2 é MaxAutomatch. */
     val VECT_AUTOCAL_U8_2 = MAX_AUTOMATCH
+    /** ProgBase DFM: ntVectorElement, SerialCode 0x0167, DataLength=2, RowIndex=1. */
+    val EN_CDN_T_THD = Field("EN_CDN_T_THD", 0x0167, Encoding.U16_LE, Shape.INDEXED, 1, index = 1)
     val PETR_INJ_TBUF_GAS_PREV = Field("PETR_INJ_TBUF_GAS_PREV", 0x015D, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF_GAS_PREV = Field("MNFLD_PRESS_BUF_GAS_PREV", 0x015E, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
     val PETR_INJ_TBUF_GAS = Field("PETR_INJ_TBUF_GAS", 0x015F, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF_GAS = Field("MNFLD_PRESS_BUF_GAS", 0x0160, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
+    /** ProgBase DFM: signed 2-byte scalar. Transform retained RAW until coefficients are fully closed. */
+    val LIMIT_PRESSURE_MIN = Field("LIMIT_PRESSURE_MIN", 0x0169, Encoding.S16_LE, Shape.SCALAR, 1)
+    /** ProgBase DFM: signed 2-byte scalar. Transform retained RAW until coefficients are fully closed. */
+    val LIMIT_PRESSURE_MAX = Field("LIMIT_PRESSURE_MAX", 0x016A, Encoding.S16_LE, Shape.SCALAR, 1)
     val MUL_ACT = Field("MUL_ACT", 0x0161, Encoding.Q14_U16_LE, Shape.VECTOR, 30, "FACTOR")
     val PETR_INJ_TBUF = Field("PETR_INJ_TBUF", 0x0162, Encoding.U16_LE, Shape.VECTOR, 18, "MS")
     val MNFLD_PRESS_BUF = Field("MNFLD_PRESS_BUF", 0x0163, Encoding.S16_LE, Shape.VECTOR, 18, "BAR")
-
     /**
-     * CP161: TAebNumber, DataLength=2, DataMask=65535, SerialCode=0x0167,
-     * transformação raw/1024. Unidade/consumer/semântica física permanecem UNKNOWN.
+     * ProgBase TAUTOCALDM_EE: VECT_AUTOCAL_EE, SerialCode 0x0164,
+     * DataLength=2, ArrayDimension=4. É uma superfície EEPROM AutoCal distinta
+     * de MUL_ACT 0x0161[30]; o write/reset original permanece separado.
      */
-    val RAW_AUTOCAL_0167 = Field(
-        "RAW_AUTOCAL_0167",
-        0x0167,
-        Encoding.U16_LE,
-        Shape.SCALAR,
-        1,
-        "RAW_DIV_1024_UNKNOWN",
-    )
-
+    val VECT_AUTOCAL_EE = Field("VECT_AUTOCAL_EE", 0x0164, Encoding.U16_LE, Shape.VECTOR, 4)
     val ACQUIRED_ZONES_PETROL = Field("ACQUIRED_ZONES_PETROL", 0x016F, Encoding.U8, Shape.VECTOR, 4)
     val ACQUIRED_ZONES_GAS = Field("ACQUIRED_ZONES_GAS", 0x0170, Encoding.U8, Shape.VECTOR, 4)
     val CALIBRATION_VAL_1 = Field("CALIBRATION_VAL_1", 0x0172, Encoding.U8, Shape.VECTOR, 10)
     val MODULE_VERSION = Field("MODULE_VERSION", 0x0173, Encoding.U8, Shape.SCALAR, 1)
     val NUM_AUTOMATCH_EXECUTED = Field("NUM_AUTOMATCH_EXECUTED", 0x0174, Encoding.U8_OR_U16_LE, Shape.SCALAR, 1)
-    val MAX_RPM_FOR_AUTOCAL = Field("MAX_RPM_FOR_AUTOCAL", 0x017A, Encoding.U16_LE, Shape.SCALAR, 1)
+    val MAX_RPM_FOR_AUTOCAL = Field("MAX_RPM_FOR_AUTOCAL", 0x017A, Encoding.U16_LE, Shape.SCALAR, 1, "RPM")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0183, DataLength 2, denominator 1. */
+    val DIFF_ENG_SPD_THD = Field("DIFF_ENG_SPD_THD", 0x0183, Encoding.U16_LE, Shape.SCALAR, 1, "RPM")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0184, DataLength 2, denominator 1. */
+    val DELTA_ENG_SPD_THD = Field("DELTA_ENG_SPD_THD", 0x0184, Encoding.U16_LE, Shape.SCALAR, 1, "RPM")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0185, DataLength 2, formula denominator 1024. */
+    val DIFF_MNFLD_PRESS_THD = Field("DIFF_MNFLD_PRESS_THD", 0x0185, Encoding.U16_LE, Shape.SCALAR, 1, "BAR")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0186, DataLength 2, formula denominator 1024. */
+    val DELTA_MNFLD_PRESS_THD = Field("DELTA_MNFLD_PRESS_THD", 0x0186, Encoding.U16_LE, Shape.SCALAR, 1, "BAR")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0187, DataLength 2, formula denominator 512. */
+    val DIFF_PETR_TINJ_T_THD = Field("DIFF_PETR_TINJ_T_THD", 0x0187, Encoding.U16_LE, Shape.SCALAR, 1, "MS")
+    /** ProgBase TAUTOCALDM: SerialCode 0x0188, DataLength 2, formula denominator 512. */
+    val DELTA_PETR_INJ_T_THD = Field("DELTA_PETR_INJ_T_THD", 0x0188, Encoding.U16_LE, Shape.SCALAR, 1, "MS")
+    /** ProgBase TAUTOCALDM/TAUTOCALSETTINGS: "Disable highest acquisition band". */
+    val DISABLE_ACQ_BAND = Field("DISABLE_ACQ_BAND", 0x018B, Encoding.U8, Shape.SCALAR, 1)
     val PETR_MNFLD_PRESS_RV = Field("PETR_MNFLD_PRESS_RV", 0x018D, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
     val GAS_MNFLD_PRESS_RV = Field("GAS_MNFLD_PRESS_RV", 0x018E, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
 
-    val ACQUISITION_18_FIELDS: Set<String> = setOf(
-        NUM_BUF_UPD_PETR.identity,
-        NUM_BUF_UPD_GAS.identity,
-        PETR_INJ_TBUF_GAS_PREV.identity,
-        MNFLD_PRESS_BUF_GAS_PREV.identity,
-        PETR_INJ_TBUF_GAS.identity,
-        MNFLD_PRESS_BUF_GAS.identity,
-        PETR_INJ_TBUF.identity,
-        MNFLD_PRESS_BUF.identity,
-        MNFLD_PRESS_THD.identity,
-    )
-
-    val REFERENCE_30_FIELDS: Set<String> = setOf(
-        PETR_INJ_TBP.identity,
-        MUL_ACT.identity,
-        PETR_MNFLD_PRESS_RV.identity,
-        GAS_MNFLD_PRESS_RV.identity,
-    )
-
     /**
-     * Leitura somente observacional. MODULE_VERSION permanece primeiro apenas
-     * como provenance/version observada; shape é propriedade do field.
+     * Leitura observacional. MODULE_VERSION continua sendo registrado como dado
+     * da ECU, mas não decide a dimensão dos vetores de referência/K.
      */
     val READ_ONLY_FIELDS: List<Field> = listOf(
         MODULE_VERSION,
@@ -132,27 +141,33 @@ object AutoCalProtocol {
         AUTO_CAL_ENABLE,
         NUM_BUF_UPD_PETR,
         NUM_BUF_UPD_GAS,
+        VECT_AUTOCAL_U8_0,
         VECT_AUTOCAL_U8_1,
         MAX_AUTOMATCH,
+        EN_CDN_T_THD,
         PETR_INJ_TBUF_GAS_PREV,
         MNFLD_PRESS_BUF_GAS_PREV,
         PETR_INJ_TBUF_GAS,
         MNFLD_PRESS_BUF_GAS,
+        LIMIT_PRESSURE_MIN,
+        LIMIT_PRESSURE_MAX,
         PETR_INJ_TBUF,
         MNFLD_PRESS_BUF,
-        RAW_AUTOCAL_0167,
+        VECT_AUTOCAL_EE,
         CALIBRATION_VAL_1,
         ACQUIRED_ZONES_PETROL,
         ACQUIRED_ZONES_GAS,
         NUM_AUTOMATCH_EXECUTED,
         MAX_RPM_FOR_AUTOCAL,
+        DIFF_ENG_SPD_THD,
+        DELTA_ENG_SPD_THD,
+        DIFF_MNFLD_PRESS_THD,
+        DELTA_MNFLD_PRESS_THD,
+        DIFF_PETR_TINJ_T_THD,
+        DELTA_PETR_INJ_T_THD,
+        DISABLE_ACQ_BAND,
     )
 
-    /**
-     * Compatibilidade de assinatura: moduleVersion é deliberadamente ignorada
-     * para cardinalidade. O owner 103A fechou que 18/30 pertence à identidade
-     * física do field; o corpus real contém moduleVersion=100 com vetores 30 válidos.
-     */
     fun expectedElements(field: Field, moduleVersion: Int?): Int? {
         @Suppress("UNUSED_VARIABLE") val observedModuleVersion = moduleVersion
         return field.expectedElementsHint
@@ -161,9 +176,10 @@ object AutoCalProtocol {
     fun requireExpectedShape(decoded: Decoded, moduleVersion: Int?) {
         val expected = expectedElements(decoded.field, moduleVersion) ?: return
         require(decoded.elementCount == expected) {
-            "${decoded.field.key}: ${decoded.elementCount} elementos; esperado $expected pela identidade física do field; MODULE_VERSION observado=${moduleVersion ?: "UNKNOWN"}"
+            "${decoded.field.key}: ${decoded.elementCount} elementos; esperado $expected para MODULE_VERSION ${moduleVersion ?: "desconhecida"}"
         }
     }
+
 
     data class NativeStatus(
         val nativeFlag13: Int,
@@ -173,6 +189,16 @@ object AutoCalProtocol {
 
     /** Frames confirmados no PortmonLOGNOVO: 12 4A 01 01 5E / 12 4A 01 00 5D. */
     fun setEnabled(enabled: Boolean): ByteArray = frameWriteU8(AUTO_CAL_ENABLE.address, if (enabled) 1 else 0)
+
+    /** ProgBase: command 0x24, payload [0x04, mode]. */
+    fun manualAction(mode: ManualActionMode): ByteArray = Mp48Protocol.frame(
+        byteArrayOf(
+            0x02,
+            AUTOCAL_ACTION_COMMAND.toByte(),
+            AUTOCAL_ACTION_SUBOP_CONTROL.toByte(),
+            mode.wireValue.toByte(),
+        ),
+    )
 
     fun decodeNativeStatus(status: Int, payload: ByteArray): NativeStatus {
         require(status == Mp48Protocol.STATUS_ACK) {
@@ -205,6 +231,140 @@ object AutoCalProtocol {
         Shape.SCALAR -> readScalar(field.address)
         Shape.VECTOR -> readVector(field.address)
         Shape.INDEXED -> readIndexed(field.address, field.index!!)
+    }
+
+    /** SetNumber com corpo [index,value]: 0x11 + 2 bytes = opcode 0x13. */
+    fun writeIndexedU8(address: Int, index: Int, value: Int): ByteArray {
+        require(address in 0..0xFFFF)
+        require(index in 0..0xFF)
+        require(value in 0..0xFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_INDEXED_U8.toByte(),
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+                index.toByte(),
+                value.toByte(),
+            ),
+        )
+    }
+
+    /**
+     * Canonical ProgBase 4.2.0.6:
+     * ActionFinishAutocalExecute / BtnFinishAutomatchClick copy TAutoCalDM+0x7C
+     * into TAutoCalDM+0xCC.
+     *
+     * The exact TAUTOCALDM DFM component order plus the grid initializer at
+     * 0x00510DF8 resolves the instance layout:
+     * +0x6C MNFLD_PRESS_THD, +0x70 PETR_INJ_TBP, +0x74 AUTO_CAL_ENABLE,
+     * +0x78 VECT_AUTOCAL_U8_1, +0x7C VECT_AUTOCAL_U8_2/MAX_AUTOMATCH,
+     * ... +0xC8 VECT_AUTOCAL_U8_0, +0xCC NUM_ATUOMATCH_EXECUTED.
+     *
+     * Finish therefore commits MAX_AUTOMATCH into NUM_AUTOMATCH_EXECUTED.
+     * The counter is observed as U8 on some ECUs and U16 on others, so the
+     * writer preserves the width read immediately before the commit.
+     */
+    fun finishAutoCalCommit(maxAutomatch: Int, counterWidthBytes: Int): ByteArray {
+        require(counterWidthBytes == 1 || counterWidthBytes == 2) {
+            "Largura do contador AutoMatch deve ser 1 ou 2 bytes"
+        }
+        return when (counterWidthBytes) {
+            1 -> frameWriteU8(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
+            2 -> frameWriteU16(NUM_AUTOMATCH_EXECUTED.address, maxAutomatch)
+            else -> error("largura validada acima")
+        }
+    }
+
+    private fun frameWriteU16(address: Int, value: Int): ByteArray {
+        require(address in 0..0xFFFF)
+        require(value in 0..0xFFFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_U16.toByte(),
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+                (value and 0xFF).toByte(),
+                ((value ushr 8) and 0xFF).toByte(),
+            ),
+        )
+    }
+
+    /** ProgBase/AEB SetVector: compacto até 5 bytes; 0x37 estendido acima disso. */
+    fun writeVectorU8(address: Int, values: IntArray): ByteArray {
+        require(address in 0..0xFFFF)
+        require(values.isNotEmpty())
+        require(values.all { it in 0..0xFF })
+        val payload = values.map { it.toByte() }.toByteArray()
+        return if (payload.size <= 5) {
+            Mp48Protocol.frame(
+                byteArrayOf(
+                    (0x31 + payload.size).toByte(),
+                    (address and 0xFF).toByte(),
+                    ((address ushr 8) and 0xFF).toByte(),
+                ) + payload,
+            )
+        } else {
+            val blockLength = payload.size + 2
+            require(blockLength <= 0xFF)
+            Mp48Protocol.frame(
+                byteArrayOf(
+                    WRITE_VECTOR_EXTENDED.toByte(),
+                    (address and 0xFF).toByte(),
+                    blockLength.toByte(),
+                    ((address ushr 8) and 0xFF).toByte(),
+                ) + payload,
+            )
+        }
+    }
+
+    /** ProgBase/AEB SetVector U16 little-endian using the extended 0x37 grammar. */
+    fun writeVectorU16(address: Int, values: IntArray): ByteArray {
+        require(address in 0..0xFFFF)
+        require(values.isNotEmpty())
+        require(values.all { it in 0..0xFFFF })
+        val payload = ByteArray(values.size * 2)
+        values.forEachIndexed { index, value ->
+            payload[index * 2] = (value and 0xFF).toByte()
+            payload[index * 2 + 1] = ((value ushr 8) and 0xFF).toByte()
+        }
+        val blockLength = payload.size + 2
+        require(blockLength <= 0xFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                WRITE_VECTOR_EXTENDED.toByte(),
+                (address and 0xFF).toByte(),
+                blockLength.toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+            ) + payload,
+        )
+    }
+
+    /**
+     * ProgBase ActionResetKFactorExecute loops through MUL_ACT and calls the
+     * TAebVector double setter with 1.0 for every element. The native factor is
+     * Q14, therefore 1.0 == 0x4000. We mirror the per-index SetNumber writes.
+     */
+    fun resetKFactorMulActFrames(pointCount: Int = 30): List<ByteArray> {
+        require(pointCount > 0)
+        return List(pointCount) { index ->
+            writeIndexedU16(MUL_ACT.address, index, 0x4000)
+        }
+    }
+
+    fun writeIndexedU16(address: Int, index: Int, value: Int): ByteArray {
+        require(address in 0..0xFFFF)
+        require(index in 0..0xFF)
+        require(value in 0..0xFFFF)
+        return Mp48Protocol.frame(
+            byteArrayOf(
+                0x14,
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+                index.toByte(),
+                (value and 0xFF).toByte(),
+                ((value ushr 8) and 0xFF).toByte(),
+            ),
+        )
     }
 
     fun readScalar(address: Int): ByteArray = genericRead(READ_SCALAR, address)
@@ -273,7 +433,6 @@ object AutoCalProtocol {
                 "MS" -> AutoCalScale.injectionMs(raw[index])
                 "BAR" -> AutoCalScale.mapBar(raw[index])
                 "FACTOR" -> AutoCalScale.multiplierFromRaw(raw[index])
-                "RAW_DIV_1024_UNKNOWN" -> raw[index] / 1024.0
                 else -> raw[index].toDouble()
             }
         }

@@ -3,6 +3,30 @@
 ## Objetivo
 Transformar requisitos de segurança e produto em evidência executável. Um resultado verde significa somente que os comportamentos listados foram exercitados; nunca substitui validação no celular, na multimídia ou no veículo.
 
+## Gate global de realidade — obrigatório a partir de 21/09/2026
+
+Para qualquer comportamento dependente de ECU/MP48/telemetria, um teste estático, de string, DOM sintético, Node, Python ou JVM **não pode sozinho** promover o comportamento a PASS de produto.
+
+A prova deve subir pela maior parte aplicável desta cadeia:
+
+1. **corpus real versionado** — bytes/comandos/valores derivados de Portmon, sessões `.omegas`/ZIP ou CSVs reais;
+2. **replay determinístico** — sequência temporal reproduzível, com origem/hash documentados;
+3. **runtime de produção aplicável** — parser, scheduler, bridge/store ou projeção real, sem algoritmo científico paralelo criado só para teste;
+4. **WebView/app real** — mesmos assets/rotas/consumidores do produto;
+5. **renderização real** — baseline automotiva `1280x720`, com screenshot/estado/artifact quando a mudança é visual;
+6. **assertions humanas** — curva presente, AGORA presente quando fresco, dados não stale, ação alcançável, hierarquia legível e erro/next action coerentes;
+7. **hardware** — continua sendo camada separada e obrigatória para alegação física.
+
+O corpus inicial de AutoCal é `tests/fixtures/portmon-autocal-cycle-v1.json`, derivado do Portmon real e rastreado pela Issue #68.
+
+### Regra de regressão visual
+
+Se o defeito reportado é visual/runtime (por exemplo: curva sumiu, cursor AGORA não aparece, LEVELS não está na superfície principal), o RED deve reproduzir esse sintoma em render/runtime antes da correção. Contrato textual que apenas procura nomes de funções não fecha o defeito.
+
+### Regra de cobertura global
+
+O mesmo método deve ser aplicado proporcionalmente a Dashboard/Agora, AutoCal, Learning, Map, Curve, OBD e sessão/reconnect quando essas superfícies consomem telemetria.
+
 ## Pirâmide prática
 1. **Governança executável** — arquivos obrigatórios, invariantes, ausência de segredos e configuração da CI.
 2. **Testes focados** — reproduzem defeitos e regras críticas com execução rápida.

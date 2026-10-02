@@ -2,12 +2,12 @@ package com.omegas.prohub.calibration
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KMapPhysicalAxesTest {
     @Test
-    fun `historical axes preserve the observed MP48 fixture without claiming runtime authority`() {
+    fun `physical axes are locked to the observed MP48 map order`() {
         assertArrayEquals(
             intArrayOf(850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500),
             KMapPhysicalAxes.rpmBins(),
@@ -19,13 +19,11 @@ class KMapPhysicalAxesTest {
         )
         assertEquals("mp48-k-map-physical-axes-v1", KMapPhysicalAxes.SCHEMA)
         assertEquals("0cc7273171fbe47a8d28235be00f1af49889d0934f6fb3c73fca35ccd2fee7c7", KMapPhysicalAxes.LOCK_SHA256)
-        val json = KMapPhysicalAxes.json()
-        assertEquals("HISTORICAL_FIXTURE", json.getString("status"))
-        assertFalse(json.getBoolean("runtimeAuthority"))
+        assertTrue(KMapPhysicalAxes.json().getBoolean("immutablePhysicalContract"))
     }
 
     @Test
-    fun `callers cannot mutate the historical fixture arrays`() {
+    fun `callers cannot mutate the locked arrays`() {
         val rpm = KMapPhysicalAxes.rpmBins()
         val petrol = KMapPhysicalAxes.petrolBins()
         rpm[0] = 500

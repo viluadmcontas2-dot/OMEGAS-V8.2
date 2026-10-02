@@ -9,7 +9,7 @@ import org.junit.Test
 
 class AutoCalAcquisitionTest {
     @Test
-    fun `ponto cru usa escalas e contador igual ao limiar fica valido`() {
+    fun `ponto cru usa escalas e atividade nao inventa maturidade`() {
         val snapshot = snapshot(
             field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
             field("PETR_INJ_TBUF", intArrayOf(2048) + IntArray(17)),
@@ -19,12 +19,14 @@ class AutoCalAcquisitionTest {
         val point = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points").getJSONObject(0)
         assertEquals(4.0, point.getDouble("timeMs"), 0.0001)
         assertEquals(0.5, point.getDouble("mapBar"), 0.0001)
-        assertEquals("VALIDO", point.getString("state"))
+        assertEquals("ATIVIDADE", point.getString("state"))
         assertTrue(point.getBoolean("draw"))
+        assertEquals(6, point.getInt("threshold"))
+        assertEquals("PROGBASE_DUMP_RUNTIME_SELECTOR", point.getString("thresholdSemantics"))
     }
 
     @Test
-    fun `ponto abaixo do limiar aparece como coletando e nao e desenhado`() {
+    fun `atividade parcial continua visivel sem classificar maturidade`() {
         val snapshot = snapshot(
             field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
             field("PETR_INJ_TBUF", intArrayOf(2048) + IntArray(17)),
@@ -32,17 +34,35 @@ class AutoCalAcquisitionTest {
             field("NUM_BUF_UPD_PETR", intArrayOf(3) + IntArray(17)),
         )
         val point = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points").getJSONObject(0)
-        assertEquals("COLETANDO", point.getString("state"))
-        assertFalse(point.getBoolean("draw"))
+        assertEquals("ATIVIDADE", point.getString("state"))
+        assertTrue(point.getBoolean("draw"))
+        assertFalse(point.getBoolean("zoneAcquired"))
     }
 
     @Test
-    fun `limiares distinguem baixa e normal por combustivel sem usar MaxAutomatch`() {
-        val calibration = IntArray(10).also {
-            it[2] = 7
-            it[5] = 4
-            it[8] = 9
-        }
+    fun `gas anterior nao herda contador do ciclo gnv atual`() {
+        val currentCounts = IntArray(18).also { it[3] = 9 }
+        val previousTimes = IntArray(18).also { it[3] = 2560 }
+        val previousMaps = IntArray(18).also { it[3] = 614 }
+        val snapshot = snapshot(
+            field("NUM_BUF_UPD_GAS", currentCounts),
+            field("PETR_INJ_TBUF_GAS_PREV", previousTimes),
+            field("MNFLD_PRESS_BUF_GAS_PREV", previousMaps),
+        )
+
+        val points = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points")
+        val previous = points.getJSONObject(36 + 3)
+        assertEquals("GNV_ANTERIOR", previous.getString("fuel"))
+        assertEquals("ANTERIOR", previous.getString("state"))
+        assertTrue(previous.getBoolean("draw"))
+        assertTrue(previous.isNull("counter"))
+        assertTrue(previous.isNull("threshold"))
+        assertEquals("HISTORICAL_BUFFER_NO_MATURITY_GATE", previous.getString("thresholdSemantics"))
+    }
+
+    @Test
+    fun `dump promove seletores de maturidade sem substituir zonas nativas`() {
+        val calibration = intArrayOf(1, 3, 3, 1, 3, 3, 1, 3, 3, 1)
         val petrolCounts = IntArray(18).also {
             it[0] = 2
             it[6] = 6
@@ -52,14 +72,16 @@ class AutoCalAcquisitionTest {
             it[6] = 8
         }
         val snapshot = snapshot(
-            field("VECT_AUTOCAL_U8_1", intArrayOf(2)),
+            field("VECT_AUTOCAL_U8_1", intArrayOf(6)),
             field("VECT_AUTOCAL_U8_2", intArrayOf(1)),
             field("CALIBRATION_VAL_1", calibration),
-            field("PETR_INJ_TBUF", IntArray(18) { 2048 }),
-            field("MNFLD_PRESS_BUF", IntArray(18) { 512 }),
+            field("ACQUIRED_ZONES_PETROL", intArrayOf(1, 0, 0, 0)),
+            field("ACQUIRED_ZONES_GAS", intArrayOf(1, 0, 0, 0)),
+            field("PETR_INJ_TBUF", IntArray(18) { 2000 }),
+            field("MNFLD_PRESS_BUF", IntArray(18) { 500 }),
             field("NUM_BUF_UPD_PETR", petrolCounts),
-            field("PETR_INJ_TBUF_GAS", IntArray(18) { 2048 }),
-            field("MNFLD_PRESS_BUF_GAS", IntArray(18) { 512 }),
+            field("PETR_INJ_TBUF_GAS", IntArray(18) { 2000 }),
+            field("MNFLD_PRESS_BUF_GAS", IntArray(18) { 500 }),
             field("NUM_BUF_UPD_GAS", gasCounts),
         )
         val result = AutoCalAcquisition.fromSnapshot(snapshot)
@@ -69,46 +91,34 @@ class AutoCalAcquisitionTest {
         val gasLow = points.getJSONObject(18)
         val gasNormal = points.getJSONObject(24)
 
-        assertEquals(2, petrolLow.getInt("threshold"))
-        assertEquals("VALIDO", petrolLow.getString("state"))
-        assertEquals(7, petrolNormal.getInt("threshold"))
-        assertEquals("COLETANDO", petrolNormal.getString("state"))
-        assertFalse(petrolNormal.getBoolean("draw"))
+        assertEquals("ZONA_ADQUIRIDA", petrolLow.getString("state"))
+        assertTrue(petrolLow.getBoolean("zoneAcquired"))
+        assertEquals("ATIVIDADE", petrolNormal.getString("state"))
+        assertFalse(petrolNormal.getBoolean("zoneAcquired"))
 
-        assertEquals(4, gasLow.getInt("threshold"))
-        assertEquals("VALIDO", gasLow.getString("state"))
-        assertTrue(gasLow.getBoolean("draw"))
-        assertEquals(9, gasNormal.getInt("threshold"))
-        assertEquals("COLETANDO", gasNormal.getString("state"))
-        assertFalse(gasNormal.getBoolean("draw"))
+        assertEquals("ZONA_ADQUIRIDA", gasLow.getString("state"))
+        assertTrue(gasLow.getBoolean("zoneAcquired"))
+        assertEquals("ATIVIDADE", gasNormal.getString("state"))
+        assertFalse(gasNormal.getBoolean("zoneAcquired"))
 
         val thresholds = result.getJSONObject("thresholds")
         assertEquals(1, thresholds.getInt("maxAutomatch"))
-        assertEquals(4, thresholds.getInt("gasLow"))
-        assertEquals(9, thresholds.getInt("gasNormal"))
-    }
-
-    @Test
-    fun previousGasCannotInheritLiveGasCounterAndBecomeValidAfterAutoMatch() {
-        val calibration = IntArray(10).also { it[5] = 4; it[8] = 9 }
-        val state = snapshot(
-            field("CALIBRATION_VAL_1", calibration),
-            field("NUM_BUF_UPD_GAS", IntArray(18) { 12 }),
-            field("PETR_INJ_TBUF_GAS", IntArray(18) { 1800 }),
-            field("MNFLD_PRESS_BUF_GAS", IntArray(18) { 500 }),
-            field("PETR_INJ_TBUF_GAS_PREV", IntArray(18) { 1526 }),
-            field("MNFLD_PRESS_BUF_GAS_PREV", IntArray(18) { 342 }),
-        )
-        val result = AutoCalAcquisition.fromSnapshot(state).getJSONArray("points")
-        val current = result.getJSONObject(18)
-        val previous = result.getJSONObject(36)
-        assertEquals("VALIDO", current.getString("state"))
-        assertEquals(12, current.getInt("counter"))
-        assertEquals(1526, previous.getInt("timeRaw"))
-        assertTrue(previous.isNull("counter"))
-        assertTrue(previous.isNull("threshold"))
-        assertEquals("SEM_DADO", previous.getString("state"))
-        assertFalse(previous.getBoolean("draw"))
+        assertEquals(6, thresholds.getInt("petrolIdleMinUpdate"))
+        assertEquals(6, thresholds.getInt("petrolLow"))
+        assertEquals(3, thresholds.getInt("petrolNormal"))
+        assertEquals(3, thresholds.getInt("gasLow"))
+        assertEquals(3, thresholds.getInt("gasNormal"))
+        assertEquals("PROGBASE_DUMP_GRID_PROVEN", thresholds.getString("calibrationValueMapping"))
+        assertEquals(5, thresholds.getInt("runtimeSelectorBoundaryInclusive"))
+        assertEquals(listOf(5, 9, 13), buildList {
+            val values = thresholds.getJSONArray("zoneBoundariesInclusive")
+            repeat(values.length()) { add(values.getInt(it)) }
+        })
+        assertTrue(thresholds.getBoolean("maturityThresholdsPromoted"))
+        assertEquals(6, petrolLow.getInt("threshold"))
+        assertEquals(3, petrolNormal.getInt("threshold"))
+        assertEquals(3, gasLow.getInt("threshold"))
+        assertEquals(3, gasNormal.getInt("threshold"))
     }
 
     private fun snapshot(vararg fields: JSONObject) = JSONObject().put("fields", JSONArray(fields.toList()))

@@ -9,22 +9,21 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.pow
 
 /**
  * Analisa o motor pelas leituras reais.
  *
  * Não existe espera fixa depois da troca de combustível. A primeira amostra
- * completamente saudável confirma fisicamente o novo combustível e já pode ser
- * preservada como evidência; somente estados de combustível ainda não resolvidos
- * permanecem inelegíveis para aprendizado.
+ * completamente saudável confirma fisicamente o novo combustível, mas é
+ * descartada para aprendizado. Somente leituras novas podem formar a primeira
+ * evidência no combustível já confirmado.
  */
 class MotorSampleAnalyzer(
     private val policyProvider: () -> LearningTolerancePolicy = { LearningToleranceSettings.current },
 ) {
-    private var policySource: LearningTolerancePolicy = policyProvider()
-    private var activePolicy: LearningTolerancePolicy = policySource.normalized()
-    private var activePolicyJson: String = activePolicy.toJson().toString()
-    private val policy: LearningTolerancePolicy get() = activePolicy
+    private val fuelResolver = com.omegas.prohub.ecu.FuelStateResolver()
+    private val policy: LearningTolerancePolicy get() = policyProvider().normalized()
     private val minimumFrames: Int get() = AdaptiveSampleWindow.minimumFrames(policy.requiredFrames)
     private val desiredFrames: Int get() = policy.requiredFrames
     private val maximumAttemptMs: Long get() = policy.maximumAttemptMs
@@ -49,6 +48,7 @@ class MotorSampleAnalyzer(
     private var plannedOperationPending = false
     private var continuityLossPending = false
     private var fullWindowRequired = false
+    private var activePolicySignature = ""
 
     /** Uma operação conhecida nunca pode unir frames anteriores e posteriores. */
     fun markPlannedOperation() {
@@ -62,8 +62,23 @@ class MotorSampleAnalyzer(
         continuityLossPending = true
     }
 
+    /**
+     * Reset de uma sessão USB física recém-aberta. Não existe continuidade
+     * anterior para proteger, portanto o fast-path saudável pode ser usado.
+     * Fronteiras reais dentro de uma sessão usam [resetAfterPhysicalBoundary].
+     */
     fun reset() {
+        resetSamples()
+        fullWindowRequired = false
+        clearFuelState()
+    }
+
+    private fun resetAfterPhysicalBoundary() {
         resetSamples(requireFullWindow = true)
+        clearFuelState()
+    }
+
+    private fun clearFuelState() {
         stableFuel = null
         observedNormalFuel = null
         transitionTarget = null
@@ -73,27 +88,20 @@ class MotorSampleAnalyzer(
         frame: Mp48Telemetry,
         plannedGap: Boolean = false,
         toleratedGap: Boolean = false,
-    ): SampleDecision {
-        refreshPolicySnapshot()
-        return addInternal(frame, plannedGap, toleratedGap).withCell(frame)
-    }
-
-    private fun refreshPolicySnapshot() {
-        val latest = policyProvider()
-        if (latest == policySource) return
-        policySource = latest
-        activePolicy = latest.normalized()
-        activePolicyJson = activePolicy.toJson().toString()
-        resetSamples(requireFullWindow = true)
-    }
+    ): SampleDecision = addInternal(frame, plannedGap, toleratedGap).withCell(frame)
 
     private fun addInternal(
         frame: Mp48Telemetry,
         plannedGap: Boolean,
         toleratedGap: Boolean,
     ): SampleDecision {
+        val signature = policy.toJson().toString()
+        if (activePolicySignature.isNotEmpty() && activePolicySignature != signature) {
+            resetSamples(requireFullWindow = true)
+        }
+        activePolicySignature = signature
         if (plannedGap) markPlannedOperation()
-        if (!isPrimaryEquivalencePlausible(frame)) {
+        if (!frame.plausible) {
             resetSamples(requireFullWindow = true)
             return SampleDecision.invalid(
                 reason = "Leitura fisicamente implausível: ${frame.plausibilityReasons.joinToString().ifBlank { "motivo não informado" }}",
@@ -101,7 +109,9 @@ class MotorSampleAnalyzer(
             )
         }
 
-        if (frame.fuel == Mp48Fuel.CUTOFF || isPhysicalCutoff(frame)) {
+        val resolvedFuel = fuelResolver.resolve(frame)
+
+        if (resolvedFuel == Mp48Fuel.CUTOFF || isPhysicalCutoff(frame)) {
             resetSamples(requireFullWindow = true)
             return SampleDecision.transition(
                 state = "CUTOFF",
@@ -110,9 +120,9 @@ class MotorSampleAnalyzer(
             )
         }
 
-        when (frame.fuel) {
+        when (resolvedFuel) {
             Mp48Fuel.ENGINE_OFF -> {
-                reset()
+                resetAfterPhysicalBoundary()
                 return SampleDecision.transition(
                     state = "ENGINE_OFF",
                     reason = "Motor parado; aprendizado pausado",
@@ -139,7 +149,7 @@ class MotorSampleAnalyzer(
             Mp48Fuel.CUTOFF -> Unit
         }
 
-        val fuel = frame.fuel
+        val fuel = resolvedFuel
         if (observedNormalFuel != fuel) {
             observedNormalFuel = fuel
             if (stableFuel != null && stableFuel != fuel) beginTargetTransition(fuel)
@@ -188,10 +198,23 @@ class MotorSampleAnalyzer(
         } == true
 
         if (earlyWindow && !acceptedEarly) {
+            if (result.state == "ENGINE_WARMING") {
+                return result.copy(
+                    frameCount = result.frameCount.coerceAtMost(desiredFrames),
+                    gapMs = max(result.gapMs, collection.gapMs),
+                    fuelConfirmed = stableFuel?.wireName ?: fuel.wireName,
+                    learningEligible = false,
+                    largestGapMs = largestGapMs,
+                    toleratedGapCount = toleratedGapCount,
+                    windowAgeMs = result.durationMs,
+                    windowBudgetMs = effectiveWindowBudgetMs(),
+                    reasonCode = result.state,
+                )
+            }
             val reason = when {
                 fullWindowRequired -> "Janela completa obrigatória após transição ou perda de continuidade: ${sequence.size}/$desiredFrames leituras"
-                result.sample == null -> "Amostra mínima ainda inválida: ${result.reason}. Refinando até $desiredFrames leituras"
-                else -> "Amostra mínima válida com ${(result.sample.quality * 100.0).toInt()}% de peso; refinando até $desiredFrames leituras"
+                result.sample == null -> "Amostra mínima ainda instável: ${result.reason}. Refinando até $desiredFrames leituras"
+                else -> "Amostra mínima válida com ${(result.sample.quality * 100.0).toInt()}% de qualidade; refinando até $desiredFrames leituras"
             }
             return formingDecision(
                 reason = reason,
@@ -297,11 +320,11 @@ class MotorSampleAnalyzer(
         resetSamples(requireFullWindow = true)
         return SampleDecision.transition(
             state = "FUEL_STABLE",
-            reason = "${target.label()} confirmado por uma amostra válida; evidência preservada",
+            reason = "${target.label()} confirmado por uma amostra saudável; iniciando uma amostra nova",
             frameCount = confirmationSample.frameCount,
             diagnostics = confirmationSample.diagnostics,
             sample = confirmationSample,
-            learningEligible = true,
+            learningEligible = false,
             fuelConfirmed = target.wireName,
             verificationPasses = 1,
             verificationRequired = 1,
@@ -392,6 +415,7 @@ class MotorSampleAnalyzer(
                         crossedPlannedOperation -> "WINDOW_RESTARTED_AFTER_PLANNED_OPERATION"
                         restartedAfterLoss -> "WINDOW_RESTARTED_AFTER_TELEMETRY_LOSS"
                         warning > 0L -> "TOLERATED_TELEMETRY_DELAY"
+                        !fullWindowRequired && frames.size >= AdaptiveSampleWindow.MICRO_CANDIDATE_FRAMES -> "MICRO_CANDIDATE"
                         else -> "FORMING_SAMPLE"
                     },
                 ),
@@ -471,10 +495,37 @@ class MotorSampleAnalyzer(
             toleratedGapCount = toleratedGapCount,
         )
 
-        val primaryWeight = EquivalenceEvidenceWeight.from(diagnostics)
+        val rejection = when {
+            rpmCenterShift > rpmCenterLimit -> "RPM mudando continuamente"
+            rpmOscillation > rpmOscillationLimit -> "Oscilação de RPM acima do natural"
+            mapCenterShift > activePolicy.mapCenterBar -> "Carga do motor mudando"
+            mapOscillation > activePolicy.mapOscillationBar -> "Oscilação de MAP acima do natural"
+            petrolCenterShift > petrolCenterLimit -> "Tempo de injeção mudando"
+            petrolOscillationRatio > activePolicy.petrolOscillationPercent / 100.0 ->
+                "Oscilação do tempo de injeção acima do natural"
+            else -> null
+        }
+        if (rejection != null) {
+            return SampleDecision.transition(
+                state = "SAMPLE_REJECTED",
+                reason = rejection,
+                frameCount = sequence.size,
+                diagnostics = diagnostics,
+            )
+        }
+
+        val scores = mutableListOf(
+            quality(rpmCenterShift, rpmCenterLimit),
+            quality(rpmOscillation, rpmOscillationLimit),
+            quality(mapCenterShift, activePolicy.mapCenterBar),
+            quality(mapOscillation, activePolicy.mapOscillationBar),
+            quality(petrolCenterShift, petrolCenterLimit),
+            quality(petrolOscillationRatio, activePolicy.petrolOscillationPercent / 100.0),
+        )
+        val sampleQuality = scores.fold(1.0) { acc, value -> acc * value }
+            .pow(1.0 / scores.size)
         val classification = if (
             sequence.size >= desiredFrames &&
-            primaryWeight.stability >= 0.5 &&
             petrolOscillationRatio <= activePolicy.strongPetrolOscillationPercent / 100.0
         ) {
             SampleClassification.STRONG
@@ -494,31 +545,13 @@ class MotorSampleAnalyzer(
                 pressureDiffBar = pressure,
                 waterC = waterC,
                 gasC = gasC,
-                quality = primaryWeight.stability,
+                quality = sampleQuality.coerceIn(0.0, 1.0),
                 classification = classification,
                 frameCount = sequence.size,
                 diagnostics = diagnostics,
             ),
         )
     }
-
-    private fun isPrimaryEquivalencePlausible(frame: Mp48Telemetry): Boolean =
-        frame.rpm in 0..9_000 &&
-            frame.mapBar in 0.0..2.5 &&
-            frame.petrolMs in 0.0..40.0 &&
-            (
-                frame.petrolMs > 0.0 ||
-                    when (frame.fuel) {
-                        Mp48Fuel.ENGINE_OFF,
-                        Mp48Fuel.TRANSITION,
-                        Mp48Fuel.CUTOFF,
-                        Mp48Fuel.UNKNOWN,
-                        -> true
-                        Mp48Fuel.PETROL,
-                        Mp48Fuel.CNG,
-                        -> isPhysicalCutoff(frame)
-                    }
-                )
 
     private fun isPhysicalCutoff(frame: Mp48Telemetry): Boolean = policy.let { active ->
         frame.rpm >= active.cutoffMinimumRpm &&
@@ -560,6 +593,11 @@ class MotorSampleAnalyzer(
             durationMs = sequence.last().capturedAtElapsedMs - sequence.first().capturedAtElapsedMs,
             medianIntervalMs = median(intervals.map(Long::toDouble)).toLong(),
         )
+    }
+
+    private fun quality(measured: Double, limit: Double): Double {
+        val ratio = abs(measured) / max(1e-9, abs(limit))
+        return (1.0 - 0.85 * ratio).coerceIn(0.15, 1.0)
     }
 
     private fun robustCenter(values: List<Double>): Double {
@@ -605,14 +643,14 @@ class MotorSampleAnalyzer(
     }
 
     private fun SampleDecision.withCell(frame: Mp48Telemetry): SampleDecision {
-        val cell = LearningGridCellLocator.locate(frame.rpm.toDouble(), frame.petrolMs)
+        val cell = LearningGridProjection.cellFor(frame.rpm.toDouble(), frame.petrolMs)
         return copy(
             minimumFrames = this@MotorSampleAnalyzer.minimumFrames,
             desiredFrames = this@MotorSampleAnalyzer.desiredFrames,
-            cellKey = cell.key,
-            cellRow = cell.row,
-            cellColumn = cell.column,
-            tolerancePolicy = activePolicyJson,
+            cellKey = cell.optString("key"),
+            cellRow = cell.optInt("row"),
+            cellColumn = cell.optInt("column"),
+            tolerancePolicy = policy.toJson().toString(),
             windowAgeMs = if (windowAgeMs > 0L) windowAgeMs else durationMs,
             windowBudgetMs = if (windowBudgetMs > 0L) windowBudgetMs else effectiveWindowBudgetMs(),
         )

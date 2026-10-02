@@ -1,0 +1,33 @@
+name: OMEGAS PLATINA CI
+
+on:
+  push:
+    branches: [ OmegasPlatina ]
+  pull_request:
+    branches: [ OmegasPlatina ]
+  workflow_dispatch:
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prove source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - run: chmod +x gradlew
+      - name: Fast contracts
+        run: python3 -B tools/run_checks.py
+      - name: JVM unit tests
+        run: ./gradlew testDebugUnitTest
+      - name: Android lint
+        run: ./gradlew lintDebug

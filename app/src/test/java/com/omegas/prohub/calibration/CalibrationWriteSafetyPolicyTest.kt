@@ -38,7 +38,6 @@ class CalibrationWriteSafetyPolicyTest {
             safeStatus().copy(engineStuck = true) to "ENGINE_UNSAFE",
             safeStatus().copy(directTelemetryAgeMs = -1) to "TELEMETRY_STALE",
             safeStatus().copy(directTelemetryAgeMs = 2_501) to "TELEMETRY_STALE",
-            safeStatus().copy(rpm = 1_200) to "DRIVING_PROBABLE",
         )
         cases.forEach { (status, code) ->
             val decision = CalibrationWriteSafetyPolicy.evaluate(status)
@@ -49,9 +48,14 @@ class CalibrationWriteSafetyPolicyTest {
     }
 
     @Test
-    fun `limites seguros permanecem inclusivos onde definido`() {
-        assertTrue(CalibrationWriteSafetyPolicy.evaluate(
-            safeStatus().copy(rpm = 1_199, directTelemetryAgeMs = 2_500),
-        ).allowed)
+    fun `rpm nao bloqueia escrita quando a comunicacao esta saudavel`() {
+        for (rpm in listOf(0, 900, 1_200, 2_500, 6_500)) {
+            assertTrue(
+                "RPM $rpm não pode ser usado como proxy de veículo em movimento",
+                CalibrationWriteSafetyPolicy.evaluate(
+                    safeStatus().copy(rpm = rpm, directTelemetryAgeMs = 2_500),
+                ).allowed,
+            )
+        }
     }
 }

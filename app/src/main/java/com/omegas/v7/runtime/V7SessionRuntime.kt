@@ -101,7 +101,6 @@ data class LocalSuggestionV7(
     val stabilityState: String = "UNASSESSED",
     val consolidatedErrorPercent: Double? = null,
     val recentErrorPercent: Double? = null,
-    val physics: PhysicsSuggestionMetadataV7 = PhysicsSuggestionMetadataV7(),
 ) {
     init {
         require(id.isNotBlank())
@@ -129,7 +128,7 @@ data class LocalSuggestionV7(
             when (target) {
                 SuggestionTargetV7.CURVE_K -> curveChanges.isNotEmpty()
                 SuggestionTargetV7.MAP_K -> mapChanges.isNotEmpty()
-            } && (!id.startsWith("advisor-") || physics.authorizes(target))
+            }
 }
 
 data class CheckpointV7(
@@ -321,6 +320,9 @@ class V7SessionRuntime(
         }
         val applied = result.readBack ?: error("Writer confirmou sem readback da ECU")
         require(applied.revision == desired.revision) { "Readback retornou revisão inesperada" }
+        require(applied.materialFingerprint() == desired.materialFingerprint()) {
+            "Readback materialmente divergente da calibração solicitada"
+        }
 
         val oldRevision = state.calibration.revision
         val lifecycleUpdated = state.suggestions.map { item ->
@@ -395,7 +397,6 @@ class V7SessionRuntime(
                 recentErrorPercent = stability.recentErrorPercent,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Revalidando esta célula: o alvo anterior foi preservado, mas fica bloqueado até a tendência recente se confirmar ou desaparecer.",
-                physics = fresh.physics,
             )
         }
 
@@ -410,7 +411,6 @@ class V7SessionRuntime(
                     recentErrorPercent = stability.recentErrorPercent,
                     updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                     rationale = stability.reason,
-                    physics = fresh.physics,
                 )
             } else {
                 metadata.copy(lifecycle = SuggestionLifecycleV7.OBSERVING, mapChanges = emptyList(), rationale = stability.reason)
@@ -426,7 +426,6 @@ class V7SessionRuntime(
                 recentErrorPercent = null,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Consolidado preservado; a sugestão permanece estável até aplicação ou revalidação real.",
-                physics = fresh.physics,
             )
         }
         return metadata.copy(
@@ -474,7 +473,6 @@ class V7SessionRuntime(
                 recentErrorPercent = recentError,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Revalidando tendência global: a proposta anterior foi preservada, mas fica bloqueada enquanto a mudança recente é verificada.",
-                physics = fresh.physics,
             )
         }
 
@@ -490,7 +488,6 @@ class V7SessionRuntime(
                     recentErrorPercent = recentError,
                     updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                     rationale = "Tendência global preservada, mas ainda falta cobertura independente em RPM/MAP para liberar ajuste da Curva K.",
-                    physics = fresh.physics,
                 )
             } else {
                 fresh.copy(
@@ -516,7 +513,6 @@ class V7SessionRuntime(
                 recentErrorPercent = null,
                 updatedAtMs = maxOf(existing.updatedAtMs, nowMs),
                 rationale = "Tendência global consolidada preservada; a proposta não acompanha oscilações de cada nova amostra.",
-                physics = fresh.physics,
             )
         }
         return fresh.copy(

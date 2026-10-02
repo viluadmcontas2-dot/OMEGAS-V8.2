@@ -1,0 +1,417 @@
+{
+  "schema": "omegas.workunit.evidence.v1",
+  "workunit_id": "OMEGAS-WU-006",
+  "state": "FINAL_SAME_SHA_REVALIDATION",
+  "branch": "OmegasVerde",
+  "baseline_source_sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
+  "baseline_ci": {
+    "fast_contracts": {
+      "run": 164,
+      "run_id": 35755193972,
+      "conclusion": "success"
+    },
+    "canonical": {
+      "run": 263,
+      "run_id": 35755194006,
+      "conclusion": "success"
+    }
+  },
+  "issues": {
+    "epic": 81,
+    "progbase_map": 82,
+    "omegas_parity": 83,
+    "global_e2e": 84,
+    "levels_dashboard": 85,
+    "session_unification": 86,
+    "real_fixture": 68,
+    "prior_global_gate": 67,
+    "p0_reset": 98
+  },
+  "progbase": {
+    "path": "G:\\Meu Drive\\OMEGAS\\Copy of ProgBase (3).exe",
+    "sha256": "8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4",
+    "version": "4.2.0.6",
+    "observed_objects": [
+      "TAutoCalUI",
+      "TAutoCalDM",
+      "TFormRifAutocal",
+      "ChartData",
+      "PetrolCurve",
+      "GasCurve",
+      "RunPoint",
+      "CurrentBand",
+      "PollingPetrol",
+      "PollingGas"
+    ],
+    "consumer_matrix": {
+      "human_path": "docs/evidence/2026-09-21-progbase-autocal-byte-consumer-matrix.md",
+      "machine_path": "tests/fixtures/progbase-autocal-consumer-map-v1.json",
+      "contract_path": "tests/test_progbase_autocal_consumer_map_contract.py",
+      "status": "FALSIFIED_INDEPENDENTLY_AND_ACCEPTED",
+      "falsifier": {
+        "binary_sha256": "8A2D297C8C21FF3B4F7A47F7FE64593B0FEC9014DD938BD91022DC0C68AC36F4",
+        "checks": [
+          "DFM_TIMER_BYTES",
+          "RUNPOINT_XREF_AND_LIVE_OFFSETS",
+          "LEVELS_CHANNEL_0E_GET_SET"
+        ],
+        "result": "PASS"
+      }
+    },
+    "live_chain": {
+      "command": "48 01 49",
+      "payload_bytes": 34,
+      "stream_cache": "TStreamDati+0x293C",
+      "cache_getter_va": "0x004381FC",
+      "presentation_timer": "TimerDati",
+      "presentation_timer_interval_ms": 75,
+      "presentation_timer_resource_enabled": false,
+      "presentation_callback_va": "0x004A307C",
+      "runpoint_callback_va": "0x005158F4",
+      "runpoint_x_payload_offset": 8,
+      "runpoint_y_payload_offset": 17,
+      "levels_raw_payload_offset": 13
+    },
+    "levels": {
+      "live_raw": "48 payload byte 13",
+      "calibration_channel_index": "0x0E",
+      "calibration_word_cache": "TStreamDati+0x2BE4",
+      "calibration_word_low_byte": "minimum reference",
+      "calibration_word_high_byte": "maximum reference",
+      "find_levels_interpolation": "four thresholds at 1/5, 2/5, 3/5, 4/5 between learned extrema, reversed when sensor direction requires it",
+      "physical_conversion": "NOT_PROVEN_AND_NOT_ALLOWED"
+    },
+    "action_map": {
+      "path": "tests/fixtures/progbase-autocal-action-map-v1.json",
+      "classification": "ORIGINAL_DERIVED",
+      "modify_map_refs": {
+        "handler": "ActionAutoCalRifExecute",
+        "mode": null,
+        "frame": null,
+        "path": "SEPARATE_COMPLEX_ROUTE_NOT_0x24_WRAPPER"
+      },
+      "manual_automatch": {
+        "handler": "ActionAutoMatchExecute",
+        "mode": "0x08",
+        "frame": "02 24 04 08 32"
+      },
+      "reset_petrol": {
+        "handler": "ActionResetPetrolExecute",
+        "mode": "0x01",
+        "frame": "02 24 04 01 2B",
+        "operational_exposure": false
+      },
+      "reset_gas": {
+        "handler": "ActionResetGasExecute",
+        "mode": "0x02",
+        "frame": "02 24 04 02 2C",
+        "operational_exposure": false
+      },
+      "reset_all": {
+        "handler": "ActionResetAllExecute",
+        "mode": "0x04",
+        "frame": "02 24 04 04 2E",
+        "path": "CANONICAL_0x24_CONTROL_WRAPPER",
+        "observed_effect": "BROAD_AUTOCAL_RESET_IN_LOGNOVO_INCLUDING_MUL_ACT"
+      }
+    }
+  },
+  "portmon_observations": {
+    "live_telemetry_command": "48 01 49",
+    "live_telemetry_median_gap_ms": 46.57,
+    "autocal_family": "0x015B..0x0163",
+    "autocal_family_approx_period_ms": 2010,
+    "secondary_family": "0x018D/0x018E",
+    "secondary_family_approx_period_ms": 4050,
+    "live_telemetry_compact_fixture_median_gap_ms": 45.844,
+    "autocal_family_compact_fixture_period_ms": "~1.95-2.18s depending address/sample",
+    "secondary_family_compact_fixture_period_ms": "~3.92-3.93s median in sampled fixture"
+  },
+  "committed_fixture": {
+    "path": "tests/fixtures/portmon-autocal-cycle-v1.json",
+    "source_issue": 68
+  },
+  "non_goals": [
+    "NO_SIL_CIU_PORT",
+    "NO_AUTO_K_WRITE",
+    "NO_RESET_ALL",
+    "NO_INVENTED_LEVELS_PERCENT_OR_VOLUME"
+  ],
+  "note": "All timings are evidence observations from the captured ProgBase/Portmon corpus, not universal firmware guarantees. Binary-derived claims are tied to the recorded ProgBase SHA-256; unresolved symbolic/scaling details remain explicit rather than inferred.",
+  "executor_strategy": {
+    "primary": "GITHUB_ACTIONS",
+    "local_exception": [
+      "PROGBASE_BINARY_EXTRACTION",
+      "RAW_PORTMON_LOG_MINING",
+      "DRIVE_ONLY_EVIDENCE_ACQUISITION"
+    ],
+    "agentred_role": "OPTIONAL_LOCAL_EVIDENCE_EXECUTOR_NOT_CONTROL_PLANE",
+    "raw_log_policy": "DO_NOT_UPLOAD_HEAVY_RAW_BY_DEFAULT",
+    "fixture_policy": "VERSION_COMPACT_PROVENANCE_LINKED_REPLAY_DATA",
+    "rendered_gate": {
+      "viewport": "1280x720",
+      "artifacts": [
+        "screenshot",
+        "scenario_receipt"
+      ],
+      "required_for_user_visible_runtime_pass": true
+    }
+  },
+  "traceability": {
+    "control_plane": [
+      "GitHub Issues",
+      "Spec Kit OMEGAS-SK-001",
+      "WorkUnit OMEGAS-WU-006",
+      "spec",
+      "plan",
+      "STATUS.md",
+      "docs/evidence"
+    ],
+    "executor_independence": "Once a fixture is committed, its replay/render gate must not depend on MMMACHINE."
+  },
+  "omegas_parity": {
+    "issue": 83,
+    "human_path": "docs/evidence/2026-09-21-omegas-autocal-progbase-parity-matrix.md",
+    "machine_path": "tests/fixtures/omegas-autocal-progbase-parity-v1.json",
+    "status": "CORPUS_ORACLE_AND_ANDROID_RENDER_GREEN_FINAL_HEAD_REVALIDATION",
+    "confirmed_red_candidates": [],
+    "protected_matches": [
+      "LIVE_AGORA_TELEMETRY_SEPARATION",
+      "SINGLE_SERIAL_AUTHORITY",
+      "PETROL_GAS_REFERENCE_FIELD_IDENTITY",
+      "NO_AUTOMATIC_ECU_WRITE",
+      "ORIGINAL_PROGBASE_ACTION_IDENTITY"
+    ],
+    "evidence_debt": [
+      "vehicle-real behavior beyond the captured reset incident is not inferred from CI/emulator"
+    ],
+    "resolved_slices": {
+      "levels_raw_live": {
+        "red_sha": "9df2a69b7f009fb7c8fb7301a778a27c4bd9fdf7",
+        "red_fast_run": {
+          "number": 115,
+          "id": 35631590908,
+          "conclusion": "failure"
+        },
+        "first_fix_sha": "039f4e38989721f175119d9db18a76741158fd5b",
+        "current_state": "GREEN_CORPUS_CI_RENDER"
+      },
+      "current_band": {
+        "red_sha": "b05705e772835ebf0dec7206c3dffb1cbd35026e",
+        "red_fast_run": {
+          "number": 119,
+          "id": 35636142562,
+          "conclusion": "failure"
+        },
+        "first_fix_sha": "38ccb9ee38d833b911687ab1e1c5e87b23bf6959",
+        "original_rule": "threshold[i] < MAP <= threshold[i+1]; global min/max excluded",
+        "current_state": "GREEN_CORPUS_CI_RENDER"
+      },
+      "grouped_acquisition": {
+        "red_sha": "0dbeed2feb51263efc96374290134e345acff03a",
+        "red_fast_run": {
+          "number": 122,
+          "id": 35637404907,
+          "conclusion": "failure"
+        },
+        "first_fix_sha": "714725f2e7417a847c19a94e4ddb70096b0af2e3",
+        "fields": [
+          "PETR_INJ_TBUF",
+          "MNFLD_PRESS_BUF",
+          "NUM_BUF_UPD_PETR",
+          "PETR_INJ_TBUF_GAS_PREV",
+          "MNFLD_PRESS_BUF_GAS_PREV",
+          "PETR_INJ_TBUF_GAS",
+          "MNFLD_PRESS_BUF_GAS",
+          "NUM_BUF_UPD_GAS",
+          "ACQUIRED_ZONES_PETROL",
+          "ACQUIRED_ZONES_GAS"
+        ],
+        "cadence_ms": 2000,
+        "current_state": "GREEN_CORPUS_CI_RENDER"
+      },
+      "grouped_reference": {
+        "cadence_ms": 4000,
+        "fields": [
+          "PETR_INJ_TBP",
+          "MNFLD_PRESS_THD",
+          "MUL_ACT",
+          "PETR_MNFLD_PRESS_RV",
+          "GAS_MNFLD_PRESS_RV"
+        ],
+        "current_state": "GREEN_CORPUS_CI_RENDER",
+        "revision_policy": "byte-sensitive snapshot revision on coherent reference change"
+      },
+      "levels_dashboard": {
+        "raw_only": true,
+        "uncalibrated_percentage_removed": true,
+        "current_state": "GREEN_CORPUS_CI_RENDER",
+        "issue": 85
+      },
+      "map_signedness": {
+        "original_oracle": "S16LE payload offset 17",
+        "production": "S16LE",
+        "boundary_test": "0xFFFF -> -1 -> plausibility=false",
+        "real_fixture_high_bit_samples": 0,
+        "current_state": "GREEN_ORACLE_REPLAY"
+      }
+    },
+    "next_red_candidates": [],
+    "forensic_fanout": {
+      "workflow": ".github/workflows/verde-forensic-fanout.yml",
+      "lanes": 256,
+      "transaction_lanes": 243,
+      "meta_lanes": 13,
+      "max_parallel": 40,
+      "green_baseline": {
+        "run": 13,
+        "run_id": 35646095776,
+        "sha": "873550b1b13e594c9ffaba7229688f243de3ecaf",
+        "pass": 256,
+        "red": 0,
+        "broken": 0
+      }
+    }
+  },
+  "issues_state": {
+    "81": "CLOSED_COMPLETED",
+    "82": "CLOSED_COMPLETED",
+    "83": "CLOSED_COMPLETED",
+    "84": "CLOSED_COMPLETED",
+    "85": "CLOSED_COMPLETED",
+    "86": "CLOSED_MATCH",
+    "95": "CLOSED_COMPLETED",
+    "98": "OPEN_FINAL_SAME_SHA_REVALIDATION"
+  },
+  "session_unification": {
+    "issue": 86,
+    "state": "CLOSED_MATCH",
+    "contract": "tests/test_autocal_canonical_session_contract.py",
+    "introduced_sha": "5693c1d7858de0405adac87f6bca9db23ab645ac",
+    "verification": {
+      "fast": {
+        "run": 132,
+        "run_id": 35646916927,
+        "conclusion": "success"
+      },
+      "forensic": {
+        "run": 14,
+        "run_id": 35646916926,
+        "conclusion": "success"
+      },
+      "canonical": {
+        "run": 201,
+        "run_id": 35646916974,
+        "conclusion": "success"
+      }
+    },
+    "conclusion": "AutoCal evidence and exports use the canonical SessionRecorder/session ZIP; compatibility receipts are not a second session authority."
+  },
+  "global_reality_fanout": {
+    "workflow": ".github/workflows/verde-global-reality-fanout.yml",
+    "plan": "tools/ci/global_reality_plan.py",
+    "lane_runner": "tools/ci/global_reality_lane.py",
+    "max_parallel": 80,
+    "first_run_id": 35647103126,
+    "note": "Cross-runtime tests declare their JVM->Node prerequisite explicitly; RED is product/test contract failure, not missing upstream artifact.",
+    "latest_green": {
+      "run": 36,
+      "run_id": 35755194066,
+      "sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
+      "lanes": 159,
+      "pass": 159,
+      "red": 0,
+      "broken": 0,
+      "conclusion": "success"
+    }
+  },
+  "android_render_gate": {
+    "workflow": ".github/workflows/verde-android-render-evidence.yml",
+    "viewport": "1280x720",
+    "emulator": "reactivecircus/android-emulator-runner@v2; pinned emulator build 15917651",
+    "proven": [
+      "KVM",
+      "emulator boot",
+      "debug APK build",
+      "androidTest APK build",
+      "APK install",
+      "viewport configuration"
+    ],
+    "harness": "tools/ci/run_android_render_evidence.sh",
+    "pending_scenarios": [],
+    "state": "GREEN_13_SCENARIOS_PRE_FINAL_SAME_SHA_REVALIDATION",
+    "latest_green": {
+      "run": 61,
+      "run_id": 35809110846,
+      "sha": "aee50900b907c44de2cb8c562ed998b8a5d39314",
+      "scenarios": 13,
+      "conclusion": "success",
+      "artifacts_inspected": true,
+      "viewport": "1280x720"
+    },
+    "scenarios": [
+      "dashboard-fresh",
+      "dashboard-invalid",
+      "autocal-fresh-control",
+      "autocal-reference-curves",
+      "autocal-equivalence-shifted",
+      "autocal-sparse-zone-map",
+      "learning-fresh-context",
+      "map-fresh-context",
+      "curve-offline-honest",
+      "curve-original-lognovo",
+      "obd-offline-honest",
+      "dashboard-session-invalidated",
+      "dashboard-session-recovered"
+    ],
+    "provenance_policy": {
+      "autocal_reference_curves": "ORIGINAL_DERIVED_LOGNOVO_PROGBASE",
+      "curve_original_lognovo": "ORIGINAL_DERIVED_LOGNOVO_PROGBASE",
+      "autocal_equivalence_shifted": "SYNTHETIC_NON_SCIENTIFIC_VISUAL_ONLY",
+      "omegas_generated_scientific_oracle": "FORBIDDEN",
+      "autocal_sparse_zone_map": "SYNTHETIC_NON_SCIENTIFIC_VISUAL_ONLY_ON_ORIGINAL_DERIVED_BASE"
+    },
+    "curve_offline_repair": {
+      "red_sha": "c4650e8f2303d0e69ccba60835607a2e4e9b4cfc",
+      "red_run": 44,
+      "red_run_id": 35754584631,
+      "observed": "Lendo 30 pontos diretamente da ECU",
+      "fix_sha": "87a4ffbd91da1c01c2452b98dc83077eb83b093c",
+      "green_run": 45,
+      "green_run_id": 35755193960,
+      "expected": "Curva não confirmada",
+      "reading_state": false
+    },
+    "zone_map": {
+      "native_fields": [
+        "ACQUIRED_ZONES_PETROL_0x016F",
+        "ACQUIRED_ZONES_GAS_0x0170"
+      ],
+      "identity_preserved": "Z1_Z2_Z3_Z4",
+      "states": [
+        "OK",
+        "FALTA",
+        "AGORA"
+      ],
+      "sparse_visual_proof": "gas Z1/Z3 acquired; Z2/Z4 missing",
+      "current_zone_source": "CurrentBand from live MAP + MNFLD_PRESS_THD"
+    }
+  },
+  "final_gate_policy": {
+    "requirement": "CI + FAST + GLOBAL_REALITY + ANDROID_RENDER on the same final HEAD",
+    "run_ids_recorded_after_commit": "issues #84/#81",
+    "reason": "A commit cannot contain the run IDs it triggers without changing its own SHA."
+  },
+  "p0_reset_safety": {
+    "issue": 98,
+    "original_authority": "tests/fixtures/progbase-autocal-action-map-v1.json",
+    "destructive_resets_exposed": false,
+    "pre_mutation_backup_required": true,
+    "backup_failure_policy": "FAIL_CLOSED_BEFORE_USB_WRITE",
+    "full_export_surface": true,
+    "captured_reset_all_effect": "broad AutoCal reset in Lognovo, including petrol/GNV acquisition, reference curves and MUL_ACT"
+  },
+  "document_status": "SUPERSEDED",
+  "superseded_by": "tests/fixtures/progbase-autocal-action-map-v1.json",
+  "superseded_reason": "Historical 0x24/0x04 action mapping was inverted; retained only as an audit artifact after correction."
+}

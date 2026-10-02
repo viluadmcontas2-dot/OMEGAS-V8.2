@@ -85,20 +85,18 @@ object AutoMatchKFactorDraftPlanner {
     const val MIN_FACTOR = 0.60
     const val MAX_FACTOR = KFactorProtocol.MAX_FACTOR
 
-    /** Origens pré-selecionadas no rascunho refinado (pontos com evidência ou correção de coerência). */
     val REFINED_PRESELECTED_ORIGINS = setOf("MEASURED", "BLENDED", "SMOOTHED")
 
     fun createRefined(analysis: JSONObject, nowMs: Long = System.currentTimeMillis()): AutoMatchKFactorDraft {
         require(analysis.optString("mode") == AutoMatchSnapshotAnalysis.REFINED_MODE) { "Análise refinada esperada" }
-        return create(analysis, nowMs, idPrefix = "AMR", preselectedOrigins = REFINED_PRESELECTED_ORIGINS)
+        val draft = create(analysis, nowMs)
+        return draft.copy(
+            id = draft.id.replaceFirst("AMV5-", "AMR-"),
+            points = draft.points.map { it.copy(selected = it.origin in REFINED_PRESELECTED_ORIGINS && it.changed) },
+        )
     }
 
-    fun create(
-        analysis: JSONObject,
-        nowMs: Long = System.currentTimeMillis(),
-        idPrefix: String = "AMV5",
-        preselectedOrigins: Set<String> = emptySet(),
-    ): AutoMatchKFactorDraft {
+    fun create(analysis: JSONObject, nowMs: Long = System.currentTimeMillis()): AutoMatchKFactorDraft {
         require(analysis.optBoolean("ok") && analysis.optBoolean("available")) {
             analysis.optString("error").ifBlank { "Análise AutoMatch indisponível" }
         }
@@ -114,19 +112,18 @@ object AutoMatchKFactorDraftPlanner {
             val suggestedRaw = raw.optInt("calculatedRaw", -1)
             require(currentRaw in 0..KFactorProtocol.MAX_RAW) { "Leia MUL_ACT atual antes de criar o rascunho" }
             require(suggestedRaw in safeRawRange()) { "Ponto $index fora do limite físico K factor" }
-            val origin = raw.optString("origin", "UNAVAILABLE")
             AutoMatchDraftPoint(
                 index = index,
                 petrolMs = raw.optDouble("referenceTimeMs", Double.NaN),
                 currentRaw = currentRaw,
                 suggestedRaw = suggestedRaw,
                 targetRaw = suggestedRaw,
-                selected = origin in preselectedOrigins && suggestedRaw != currentRaw,
-                origin = origin,
+                selected = false,
+                origin = raw.optString("origin", "UNAVAILABLE"),
             )
         }
         return AutoMatchKFactorDraft(
-            id = "$idPrefix-${nowMs}-${UUID.randomUUID().toString().take(8)}",
+            id = "AMV5-${nowMs}-${UUID.randomUUID().toString().take(8)}",
             snapshotHash = analysis.optString("snapshotHash"),
             createdAtMs = nowMs,
             points = points,

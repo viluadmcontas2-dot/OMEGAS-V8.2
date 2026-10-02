@@ -75,6 +75,40 @@ class LearningSnapshotReconcilerTest {
     }
 
     @Test
+    fun `adaptive reference closes a spatial gap without manufacturing petrol evidence`() {
+        val regions = JSONArray()
+            .put(region("p-1", "PETROL", 0, 1_000.0, 0.30, 3.8, 0.92, 18))
+            .put(region("p-2", "PETROL", 0, 1_200.0, 0.35, 4.2, 0.91, 20))
+            .put(region("p-3", "PETROL", 0, 1_400.0, 0.40, 4.6, 0.93, 22))
+            .put(region("p-4", "PETROL", 0, 1_600.0, 0.45, 5.0, 0.90, 24))
+            .put(region("p-5", "PETROL", 0, 1_800.0, 0.50, 5.4, 0.89, 26))
+            .put(region("p-6", "PETROL", 0, 2_000.0, 0.55, 5.8, 0.90, 28))
+            .put(region("g-gap", "CNG", 1, 2_500.0, 0.70, 8.0, 0.86, 16)
+                .put("visits", JSONArray().put("gap-visit")))
+        val beforeSamples = (0 until 6).map { regions.getJSONObject(it).getInt("samples") }
+
+        val reconciled = LearningSnapshotReconciler.reconcile(
+            JSONObject()
+                .put("epoch", 1)
+                .put("regions", regions)
+                .put("comparisons", JSONArray()),
+        )
+
+        val comparisons = reconciled.getJSONArray("comparisons")
+        assertEquals("A superfície adaptativa deve produzir referência mesmo sem par discreto", 1, comparisons.length())
+        val comparison = comparisons.getJSONObject(0)
+        assertEquals("PRIOR_PLUS_RESIDUAL", comparison.getString("reference_stage"))
+        assertTrue(comparison.getDouble("petrol_target_ms") > 0.05)
+        assertTrue(comparison.getDouble("quality") in 0.0..1.0)
+        assertEquals(1, reconciled.getJSONObject("reconciliation").getInt("adaptive_references"))
+
+        val afterRegions = reconciled.getJSONArray("regions")
+        repeat(6) { index ->
+            assertEquals(beforeSamples[index], afterRegions.getJSONObject(index).getInt("samples"))
+        }
+    }
+
+    @Test
     fun `reconciliation is idempotent and does not duplicate visits`() {
         val snapshot = JSONObject()
             .put("epoch", 1)

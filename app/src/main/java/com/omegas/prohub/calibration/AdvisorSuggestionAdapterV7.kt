@@ -1,20 +1,19 @@
 package com.omegas.prohub.calibration
 
 import com.omegas.prohub.ecu.KFactorProtocol
-import com.omegas.prohub.physics.CorrectionMechanism
-import com.omegas.prohub.physics.EffectDirection
-import com.omegas.prohub.physics.MagnitudeAuthority
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
+import com.omegas.v7.runtime.CalibrationTransitionV7
+import com.omegas.v7.runtime.CausalTransitionStatusV7
 import com.omegas.v7.runtime.CurvePointChangeV7
 import com.omegas.v7.runtime.LocalSuggestionV7
 import com.omegas.v7.runtime.MapCellChangeV7
-import com.omegas.v7.runtime.PhysicsSuggestionMetadataV7
 import com.omegas.v7.runtime.SuggestionLifecycleV7
 import com.omegas.v7.runtime.SuggestionTargetV7
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -23,20 +22,22 @@ import kotlin.math.roundToInt
  * magnitude momentânea, permitindo que a mesma sugestão amadureça com a coleta.
  *
  * O adaptador nunca toca na ECU. Aplicação continua exclusivamente manual.
- * Uma magnitude numérica só pode virar alteração PENDING quando Physics declara
- * explicitamente target ideal, mecanismo causal correspondente e autoridade
- * física/empírica. Policy, UNKNOWN e candidate-lane permanecem observacionais.
  */
 class AdvisorSuggestionAdapterV7 {
+    companion object {
+        private const val CONFIRMED_CAUSAL_FRACTION = 0.90
+    }
+
     fun adapt(
         advice: JSONObject,
         calibration: CalibrationStateV7,
         nowMs: Long = System.currentTimeMillis(),
+        causalTransitions: List<CalibrationTransitionV7> = emptyList(),
     ): List<LocalSuggestionV7> {
         require(nowMs >= 0)
         val output = mutableListOf<LocalSuggestionV7>()
-        curveSuggestion(advice, calibration, nowMs)?.let(output::add)
-        output += mapSuggestions(advice, calibration, nowMs)
+        curveSuggestion(advice, calibration, nowMs, causalTransitions)?.let(output::add)
+        output += mapSuggestions(advice, calibration, nowMs, causalTransitions)
         return output.distinctBy { it.id }
     }
 
@@ -44,48 +45,72 @@ class AdvisorSuggestionAdapterV7 {
         advice: JSONObject,
         calibration: CalibrationStateV7,
         nowMs: Long,
+        causalTransitions: List<CalibrationTransitionV7>,
     ): LocalSuggestionV7? {
         val source = advice.optJSONArray("kFactorSuggestions") ?: JSONArray()
         if (source.length() == 0) return null
         val changes = linkedMapOf<Int, CurvePointChangeV7>()
         val confidences = mutableListOf<Double>()
         val reasons = linkedSetOf<String>()
-        val observedPhysics = mutableListOf<PhysicsSuggestionMetadataV7>()
-        val changedPhysics = mutableListOf<PhysicsSuggestionMetadataV7>()
+        val idealDeltas = mutableListOf<Double>()
+        val safeSteps = mutableListOf<Double>()
+        val estimatedResiduals = mutableListOf<Double>()
         var observed = false
+        var causal090Used = false
 
         repeat(source.length()) { position ->
             val item = source.optJSONObject(position) ?: return@repeat
             val index = item.optInt("index", -1)
             if (index !in 0 until CalibrationShapeV7.CURVE_K_POINTS) return@repeat
-            val itemPhysics = physicsMetadata(item)
-            observedPhysics += itemPhysics
             val readiness = item.optString("readiness", "")
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
             if (confidence > 0.0 || readiness.isNotBlank() && readiness != "NO_EVIDENCE") observed = true
             if (confidence > 0.0) confidences += confidence
             item.optString("decisionReason").takeIf(String::isNotBlank)?.let(reasons::add)
-            if (!authorizedForConcreteChange(item, CorrectionMechanism.CURVE_MUL_ACT)) return@repeat
-            val deltaPercent = finite(item, "suggestedDeltaPercent") ?: return@repeat
+            if (!item.optBoolean("actionable", false)) return@repeat
+            val baseDeltaPercent = finite(item, "suggestedDeltaPercent") ?: return@repeat
+            val idealDeltaPercent = finite(item, "idealDeltaPercent")
+            idealDeltaPercent?.let(idealDeltas::add)
+            val causallyConfirmed = causalTransitions.asSequence()
+                .filter { transition ->
+                    transition.target == SuggestionTargetV7.CURVE_K &&
+                        index in transition.curveIndexes
+                }
+                .maxByOrNull { it.appliedAtMs }
+                ?.status == CausalTransitionStatusV7.CONFIRMED
+            val deltaPercent = if (causallyConfirmed && idealDeltaPercent != null) {
+                causal090Used = true
+                idealDeltaPercent * CONFIRMED_CAUSAL_FRACTION
+            } else {
+                baseDeltaPercent
+            }
+            safeSteps += deltaPercent
+            finite(item, "estimatedResidualAfterPercent")?.let(estimatedResiduals::add)
             val before = calibration.curveK[index]
             val requested = before * (1.0 + deltaPercent / 100.0)
             val bounded = requested.coerceIn(KFactorManager.MIN_SAFE_FACTOR, KFactorManager.MAX_SAFE_FACTOR)
             val after = KFactorProtocol.factorFromRaw(KFactorProtocol.rawFromFactor(bounded))
             if (after == before) return@repeat
             changes[index] = CurvePointChangeV7(index, before, after)
-            changedPhysics += itemPhysics
         }
         if (!observed && changes.isEmpty()) return null
         val ordered = changes.values.sortedBy { it.index }
-        val authorizedPhysics = aggregatePhysics(changedPhysics)
-        val concreteAuthorized = ordered.isNotEmpty() && authorizedPhysics.authorizes(SuggestionTargetV7.CURVE_K)
-        val lifecycle = if (concreteAuthorized) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
-        val persistedChanges = if (concreteAuthorized) ordered else emptyList()
+        val lifecycle = if (ordered.isEmpty()) SuggestionLifecycleV7.OBSERVING else SuggestionLifecycleV7.PENDING
         val rationale = when {
-            lifecycle == SuggestionLifecycleV7.PENDING ->
-                "Target físico autorizado para ${persistedChanges.size} ponto(s) da Curva K; aplicação exclusivamente manual."
+            lifecycle == SuggestionLifecycleV7.PENDING -> {
+                val ideal = idealDeltas.averageOrNull()?.let(::formatSignedPercent) ?: "—"
+                val step = safeSteps.averageOrNull()?.let(::formatSignedPercent) ?: "—"
+                val residual = estimatedResiduals.averageOrNull()?.let(::formatSignedPercent) ?: "—"
+                val policy = if (causal090Used) {
+                    "resposta causal confirmada; passo 0,90"
+                } else {
+                    "primeiro passo científico conservador"
+                }
+                "Curva K · alvo ideal $ideal; passo seguro $step em ${ordered.size} ponto(s); " +
+                    "resíduo estimado $residual; $policy. Aplicação exclusivamente manual."
+            }
             reasons.isNotEmpty() -> reasons.first()
-            else -> "Tendência global preservada; Physics ainda não autorizou target numérico para aplicação."
+            else -> "Tendência global preservada; a evidência atual não justifica correção."
         }
         return LocalSuggestionV7(
             id = stableId("curve", calibration, "global"),
@@ -93,11 +118,10 @@ class AdvisorSuggestionAdapterV7 {
             updatedAtMs = nowMs,
             expectedRevision = calibration.revision,
             target = SuggestionTargetV7.CURVE_K,
-            curveChanges = persistedChanges,
+            curveChanges = ordered,
             rationale = rationale,
             lifecycle = lifecycle,
             confidence = confidences.averageOrZero(),
-            physics = if (concreteAuthorized) authorizedPhysics else aggregatePhysics(observedPhysics),
         )
     }
 
@@ -110,6 +134,7 @@ class AdvisorSuggestionAdapterV7 {
         advice: JSONObject,
         calibration: CalibrationStateV7,
         nowMs: Long,
+        causalTransitions: List<CalibrationTransitionV7>,
     ): List<LocalSuggestionV7> {
         val regionByCell = regionLabels(advice.optJSONArray("mapCorrectionRegions") ?: JSONArray())
         val residual = advice.optJSONArray("mapResidualSuggestions") ?: JSONArray()
@@ -123,10 +148,15 @@ class AdvisorSuggestionAdapterV7 {
             ) return@repeat
             val key = "$row:$column"
             val confidence = finite(item, "confidence")?.coerceIn(0.0, 1.0) ?: 0.0
-            val physics = physicsMetadata(item)
-            val authorized = authorizedForConcreteChange(item, CorrectionMechanism.MAP_LOCAL) &&
-                physics.authorizes(SuggestionTargetV7.MAP_K)
-            val change = if (authorized) mapChange(item, calibration) else null
+            val actionable = item.optBoolean("actionable", false)
+            val causalConfirmed = causalTransitions.asSequence()
+                .filter { transition ->
+                    transition.target == SuggestionTargetV7.MAP_K &&
+                        key in transition.mapCells
+                }
+                .maxByOrNull { it.appliedAtMs }
+                ?.status == CausalTransitionStatusV7.CONFIRMED
+            val change = if (actionable) mapChange(item, calibration, causalConfirmed) else null
             val lifecycle = if (change != null) SuggestionLifecycleV7.PENDING else SuggestionLifecycleV7.OBSERVING
             val reason = item.optString("decisionReason").takeIf(String::isNotBlank)
             val region = regionByCell[key]
@@ -138,92 +168,22 @@ class AdvisorSuggestionAdapterV7 {
                 target = SuggestionTargetV7.MAP_K,
                 mapChanges = listOfNotNull(change),
                 rationale = when {
+                    lifecycle == SuggestionLifecycleV7.PENDING && causalConfirmed && region != null ->
+                        "$region · resposta causal anterior confirmada; passo 0,90 para esta célula. Aplicação exclusivamente manual."
+                    lifecycle == SuggestionLifecycleV7.PENDING && causalConfirmed ->
+                        "Residual local com resposta causal anterior confirmada; passo 0,90. Aplicação exclusivamente manual."
                     lifecycle == SuggestionLifecycleV7.PENDING && region != null ->
-                        "$region · target físico autorizado para esta célula; aplicação exclusivamente manual."
+                        "$region · primeiro passo científico conservador para esta célula; aplicação exclusivamente manual."
                     lifecycle == SuggestionLifecycleV7.PENDING ->
-                        "Target físico autorizado para esta célula; aplicação exclusivamente manual."
+                        "Residual local no primeiro passo científico conservador; aplicação exclusivamente manual."
                     reason != null -> reason
-                    else -> "Sugestão preservada; Physics ainda não autorizou target numérico para aplicação."
+                    else -> "Sugestão preservada; a evidência atual ainda não justifica correção."
                 },
                 lifecycle = lifecycle,
                 confidence = confidence,
-                physics = physics,
             )
         }
         return output
-    }
-
-    private fun authorizedForConcreteChange(item: JSONObject, requiredMechanism: CorrectionMechanism): Boolean {
-        if (!item.optBoolean("actionable", false)) return false
-        if (!item.optBoolean("idealTarget", false)) return false
-        if (item.optString("correctionMechanism") != requiredMechanism.name) return false
-        val authority = runCatching {
-            MagnitudeAuthority.valueOf(item.optString("magnitudeAuthority"))
-        }.getOrNull() ?: return false
-        return authority == MagnitudeAuthority.PHYSICALLY_ANCHORED ||
-            authority == MagnitudeAuthority.EMPIRICALLY_BOUNDED
-    }
-
-    private fun physicsMetadata(item: JSONObject): PhysicsSuggestionMetadataV7 = PhysicsSuggestionMetadataV7(
-        magnitudeAuthority = enumOrDefault(
-            item.optString("magnitudeAuthority"),
-            MagnitudeAuthority.UNKNOWN,
-        ),
-        stepAuthority = enumOrDefault(
-            item.optString("stepAuthority"),
-            if (item.optString("magnitudeRole") == "STEP_POLICY_BASELINE") {
-                MagnitudeAuthority.POLICY_ONLY
-            } else {
-                MagnitudeAuthority.UNKNOWN
-            },
-        ),
-        correctionMechanism = enumOrDefault(
-            item.optString("correctionMechanism"),
-            CorrectionMechanism.UNKNOWN,
-        ),
-        effectDirection = enumOrDefault(
-            item.optString("expectedEffectDirection"),
-            legacyDirection(item),
-        ),
-        effectAuthority = enumOrDefault(
-            item.optString("expectedEffectAuthority"),
-            MagnitudeAuthority.UNKNOWN,
-        ),
-        lowerBound = finite(item, "expectedEffectLowerBound"),
-        upperBound = finite(item, "expectedEffectUpperBound"),
-        assumptions = jsonStrings(item.optJSONArray("expectedEffectAssumptions")),
-        falsifier = item.optString("expectedEffectFalsifier"),
-        evidencePath = jsonStrings(item.optJSONArray("mechanismEvidencePath")),
-        idealTarget = item.optBoolean("idealTarget", false),
-    )
-
-    private fun aggregatePhysics(items: List<PhysicsSuggestionMetadataV7>): PhysicsSuggestionMetadataV7 {
-        if (items.isEmpty()) return PhysicsSuggestionMetadataV7()
-        val first = items.first()
-        val sameAuthority = items.all {
-            it.magnitudeAuthority == first.magnitudeAuthority &&
-                it.stepAuthority == first.stepAuthority &&
-                it.correctionMechanism == first.correctionMechanism &&
-                it.effectDirection == first.effectDirection &&
-                it.effectAuthority == first.effectAuthority &&
-                it.idealTarget == first.idealTarget
-        }
-        val evidence = items.flatMap { it.evidencePath }.distinct()
-        val assumptions = items.flatMap { it.assumptions }.distinct()
-        if (!sameAuthority) {
-            return PhysicsSuggestionMetadataV7(
-                assumptions = assumptions,
-                falsifier = "mixed physics authority across aggregated suggestion",
-                evidencePath = evidence,
-            )
-        }
-        return first.copy(
-            lowerBound = first.lowerBound.takeIf { bound -> items.all { it.lowerBound == bound } },
-            upperBound = first.upperBound.takeIf { bound -> items.all { it.upperBound == bound } },
-            assumptions = assumptions,
-            falsifier = items.map { it.falsifier }.filter(String::isNotBlank).distinct().joinToString("; "),
-            evidencePath = evidence,
-        )
     }
 
     private fun regionLabels(regions: JSONArray): Map<String, String> {
@@ -244,10 +204,20 @@ class AdvisorSuggestionAdapterV7 {
         return out
     }
 
-    private fun mapChange(item: JSONObject, calibration: CalibrationStateV7): MapCellChangeV7? {
+    private fun mapChange(
+        item: JSONObject,
+        calibration: CalibrationStateV7,
+        causalConfirmed: Boolean,
+    ): MapCellChangeV7? {
         val row = item.optInt("row", -1)
         val column = item.optInt("column", -1)
-        val deltaPercent = finite(item, "suggestedDeltaPercent") ?: return null
+        val baseDeltaPercent = finite(item, "suggestedDeltaPercent") ?: return null
+        val idealResidualPercent = finite(item, "residualErrorPercent")
+        val deltaPercent = if (causalConfirmed && idealResidualPercent != null) {
+            idealResidualPercent * CONFIRMED_CAUSAL_FRACTION
+        } else {
+            baseDeltaPercent
+        }
         if (row !in 0 until CalibrationShapeV7.MAP_K_EDITABLE_ROWS ||
             column !in 0 until CalibrationShapeV7.MAP_K_COLUMNS
         ) return null
@@ -261,24 +231,6 @@ class AdvisorSuggestionAdapterV7 {
     private fun finite(source: JSONObject, key: String): Double? {
         if (!source.has(key) || source.isNull(key)) return null
         return source.optDouble(key, Double.NaN).takeIf(Double::isFinite)
-    }
-
-    private fun jsonStrings(values: JSONArray?): List<String> {
-        if (values == null) return emptyList()
-        return buildList {
-            repeat(values.length()) { index ->
-                values.optString(index).takeIf(String::isNotBlank)?.let(::add)
-            }
-        }
-    }
-
-    private inline fun <reified T : Enum<T>> enumOrDefault(value: String, default: T): T =
-        runCatching { enumValueOf<T>(value) }.getOrDefault(default)
-
-    private fun legacyDirection(item: JSONObject): EffectDirection = when (item.optString("direction")) {
-        "INCREASE_CNG_DELIVERY" -> EffectDirection.INCREASE
-        "DECREASE_CNG_DELIVERY" -> EffectDirection.DECREASE
-        else -> EffectDirection.UNKNOWN
     }
 
     private fun stableId(prefix: String, calibration: CalibrationStateV7, physicalTarget: String): String {
@@ -296,4 +248,9 @@ class AdvisorSuggestionAdapterV7 {
     }
 
     private fun List<Double>.averageOrZero(): Double = if (isEmpty()) 0.0 else average().coerceIn(0.0, 1.0)
+
+    private fun List<Double>.averageOrNull(): Double? = if (isEmpty()) null else average()
+
+    private fun formatSignedPercent(value: Double): String =
+        String.format(Locale.US, "%+.1f%%", value).replace('.', ',')
 }

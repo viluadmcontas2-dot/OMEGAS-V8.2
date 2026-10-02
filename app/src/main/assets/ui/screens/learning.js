@@ -60,6 +60,22 @@
   function comparisonError(item) {
     return finite(item?.errorPercent ?? item?.error_pct ?? item?.error_percent ?? item?.relativeErrorPercent ?? item?.deltaPercent ?? item?.differencePercent ?? item?.error);
   }
+  function stableComparisonError(stable, comparison) {
+    const state = String(stable?.state || '').toUpperCase();
+    const consolidated = finite(stable?.consolidatedErrorPercent);
+    const recent = finite(stable?.recentErrorPercent);
+    const raw = comparisonError(comparison);
+    if (state === 'CONSOLIDATED' || state === 'REVALIDATING') return consolidated ?? recent ?? raw;
+    if (state === 'LEARNING') return recent ?? raw;
+    return consolidated ?? recent ?? raw;
+  }
+  function differenceText(error, deadband) {
+    const value = finite(error);
+    if (value === null) return 'sem par equivalente válido';
+    const sign = value > 0 ? '+' : '';
+    if (Math.abs(value) <= deadband) return `${sign}${fmt(value, 1)}% · equivalente`;
+    return `${sign}${fmt(value, 1)}% · precisa ${value > 0 ? 'mais' : 'menos'} GNV`;
+  }
   function comparisonTargetMs(item) { return finite(item?.petrol_target_ms ?? item?.petrolTargetMs); }
   function comparisonObservedMs(item) { return finite(item?.petrol_on_cng_ms ?? item?.petrolOnCngMs); }
   function confidence(item) {
@@ -229,10 +245,8 @@
             tone = 'cng';
           }
         } else if (layer === 'comparison') {
-          source = comparisons.get(cellKey) || stable || null;
-          const consolidated = finite(stable?.consolidatedErrorPercent);
-          const rawError = comparisonError(comparisons.get(cellKey));
-          const error = consolidated ?? rawError;
+          source = stable || comparisons.get(cellKey) || null;
+          const error = stableComparisonError(stable, comparisons.get(cellKey));
           const stableState = String(stable?.state || '').toUpperCase();
           if (error !== null) {
             cellText = `${error > 0 ? '+' : ''}${fmt(error, 1)}%`;
@@ -423,7 +437,7 @@
       const rawError = comparisonError(comparison);
       const consolidatedError = finite(stability?.consolidatedErrorPercent);
       const recentError = finite(stability?.recentErrorPercent);
-      const displayError = consolidatedError ?? rawError;
+      const displayError = stableComparisonError(stability, comparison);
       const targetMs = comparisonTargetMs(comparison);
       const observedMs = comparisonObservedMs(comparison);
       const delta = mapSuggestionDelta(suggestion);
@@ -446,37 +460,87 @@
       const rpmLabel = finite(learned?.rpm) ?? axisRpm;
       const petrolLabel = finite(learned?.petrolMs) ?? axisPetrol;
       const stabilityState = String(stability?.state || 'NO_EVIDENCE').toUpperCase();
-      const comparisonText = displayError !== null && targetMs !== null && observedMs !== null
-        ? `${fmt(targetMs, 2)} → ${fmt(observedMs, 2)} ms · ${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%${consolidatedError !== null ? ' consolidado' : ''}`
-        : displayError !== null ? `${displayError > 0 ? '+' : ''}${fmt(displayError, 1)}%` : 'ainda não existe par equivalente válido';
-      const recentText = stabilityState === 'REVALIDATING' && recentError !== null
-        ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}% · ${Math.round(finite(stability?.recentUniqueVisits) || 0)} visita(s) nova(s)`
-        : stabilityState === 'CONSOLIDATED'
-          ? 'sem divergência recente relevante'
-          : recentError !== null ? `${recentError > 0 ? '+' : ''}${fmt(recentError, 1)}%` : '—';
+      const live = state.telemetry?.live || {};
+      let agora = String(live.fuel || '').toUpperCase();
+      if (agora.includes('TRANSITION')) agora = 'Transição';
+      else if (agora.includes('PETROL') || agora.includes('GASOLINA')) agora = 'Gasolina';
+      else if (agora.includes('CNG') || agora.includes('GNV') || agora === 'GAS') agora = 'GNV';
+      else if (agora === 'UNKNOWN' || agora === 'DESCONHECIDO' || !agora) agora = 'Sem telemetria';
+
+      const mapVal = cngMap !== null ? cngMap : (petrolMap !== null ? petrolMap : null);
+      const condicao = `${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · ${mapVal === null ? 'MAP —' : `MAP ${fmt(mapVal, 3)} bar`}`;
+
+      const gasolinaEsperada = targetMs !== null ? `${fmt(targetMs, 2)} ms` : 'sem evidência';
+      const noGnvAgora = observedMs !== null ? `${fmt(observedMs, 2)} ms` : 'sem evidência atual';
+
+      const deadband = finite(maps.tolerancePolicy?.equivalenceDeadbandPercent) ?? 2.5;
+      const differenceNow = differenceText(rawError, deadband);
+      const differenceStable = consolidatedError === null
+        ? 'ainda não consolidada'
+        : differenceText(consolidatedError, deadband);
+      const differenceTrend = recentError === null
+        ? 'sem tendência recente'
+        : differenceText(recentError, deadband) + (stabilityState === 'REVALIDATING' ? ' · revalidando' : '');
+
+      const confValue = Math.max(finite(stability?.confidence) || 0, Math.max(confidence(learned?.petrol || {}), confidence(learned?.cng || {})));
+      let confLevel = 'Baixa';
+      if (confValue >= 0.8) confLevel = 'Alta';
+      else if (confValue >= 0.4) confLevel = 'Média';
+      const visits = Math.max(finite(stability?.consolidatedUniqueVisits) || finite(stability?.recentUniqueVisits) || 0, Math.max(petrolVisits, cngVisits));
+      const confianca = `${confLevel} (${visits} visitas)`;
+
+      const kChange = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges[0] : null;
+      const targetK = finite(kChange?.after) !== null ? kChange.after : 'aguardando convergência';
+      const mapAddressRow = finite(kChange?.row);
+      const mapAddressColumn = finite(kChange?.column);
+      const mapAddressMs = mapAddressRow !== null && Number.isInteger(mapAddressRow)
+        ? finite(axes.petrolBins?.[mapAddressRow])
+        : null;
+      const mapAddressRpm = mapAddressColumn !== null && Number.isInteger(mapAddressColumn)
+        ? finite(axes.rpmBins?.[mapAddressColumn])
+        : null;
+      const mapAddress = mapAddressMs !== null && mapAddressRpm !== null
+        ? `${fmt(mapAddressMs, 1)} ms · ${Math.round(mapAddressRpm).toLocaleString('pt-BR')} RPM · condição GNV observada`
+        : 'aguardando endereço físico confiável';
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
-        <h3>${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · ${fmt(petrolLabel, 1)} ms</h3>
-        <p class="learning-reason"><b>${escapeHtml(stabilityLabel(stabilityState))}.</b> ${escapeHtml(stability?.reason || learned?.readinessReason || 'Sem evidência válida nesta região. Você ainda pode abrir a célula para ajuste manual.')}</p>
         <dl class="detail-list enhanced-detail-list">
-          <div><dt>Memória consolidada</dt><dd>${consolidatedError === null ? 'ainda não consolidada' : `${consolidatedError > 0 ? '+' : ''}${fmt(consolidatedError, 1)}% · confiança ${Math.round((finite(stability?.confidence) || 0) * 100)}% · ${Math.round(finite(stability?.consolidatedUniqueVisits) || 0)} visitas`}</dd></div>
-          <div><dt>Evidência recente</dt><dd>${recentText}</dd></div>
-          <div><dt>Gasolina — referência</dt><dd>${learned?.petrol ? `${fmt(petrolMeanMs, 2)} ms · ${petrolRpm === null ? 'RPM —' : `${Math.round(petrolRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(petrolMap, 3)} bar` : 'sem evidência'}</dd></div>
-          <div><dt>Evidência gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas · ${petrolSessions} sessões · confiança ${Math.round(confidence(learned.petrol) * 100)}%` : '—'}</dd></div>
-          <div><dt>GNV atual — Petrol Inj.</dt><dd>${learned?.cng ? `${fmt(cngMeanMs, 2)} ms · ${cngRpm === null ? 'RPM —' : `${Math.round(cngRpm).toLocaleString('pt-BR')} RPM`} · MAP ${fmt(cngMap, 3)} bar` : 'sem evidência atual'}</dd></div>
-          <div><dt>Evidência GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas · ${cngSessions} sessões · confiança ${Math.round(confidence(learned.cng) * 100)}% · época ${model?.epoch ?? '—'}` : '—'}</dd></div>
-          <div><dt>Equivalência</dt><dd>${comparisonText}</dd></div>
-          <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')} · somente consulta` : 'nenhum'}</dd></div>
-          <div><dt>Sugestão local</dt><dd>${delta === null ? 'nenhuma registrada' : `${delta > 0 ? '+' : ''}${fmt(delta, 1)}% · ${suggestion?.actionable === true ? 'pronta para revisar' : stabilityState === 'REVALIDATING' ? 'preservada enquanto revalida' : 'observando'}`}</dd></div>
+          <div><dt>Agora</dt><dd>${escapeHtml(agora)}</dd></div>
+          <div><dt>Condição</dt><dd>${escapeHtml(condicao)}</dd></div>
+          <div><dt>Gasolina esperada</dt><dd>${escapeHtml(gasolinaEsperada)}</dd></div>
+          <div><dt>No GNV agora</dt><dd>${escapeHtml(noGnvAgora)}</dd></div>
+          <div><dt>Diferença agora</dt><dd>${escapeHtml(differenceNow)}</dd></div>
+          <div><dt>Diferença estável</dt><dd>${escapeHtml(differenceStable)}</dd></div>
+          <div><dt>Tendência recente</dt><dd>${escapeHtml(differenceTrend)}</dd></div>
+          <div><dt>Endereço Mapa K</dt><dd>${escapeHtml(mapAddress)}</dd></div>
+          <div><dt>Novo valor K sugerido</dt><dd>${escapeHtml(targetK)}</dd></div>
+          <div><dt>Confiança</dt><dd>${escapeHtml(confianca)}</dd></div>
         </dl>
-        <button class="primary wide" type="button" data-edit-learning-cell>${suggestion?.actionable ? 'Editar esta célula com a sugestão' : 'Editar esta célula'}</button>
+        <button class="primary wide" type="button" data-edit-learning-cell ${suggestion?.actionable ? '' : 'disabled'}>
+          ${suggestion?.actionable ? 'Revisar no Mapa K' : 'Sem sugestão segura'}
+        </button>
+        <details class="technical-details" style="margin-top: 1rem;">
+          <summary>Diagnóstico técnico</summary>
+          <dl class="detail-list">
+            <div><dt>Status</dt><dd>${escapeHtml(stabilityLabel(stabilityState))}</dd></div>
+            <div><dt>Motivo</dt><dd>${escapeHtml(stability?.reason || learned?.readinessReason || '—')}</dd></div>
+            <div><dt>Evidência gasolina</dt><dd>${learned?.petrol ? `${Math.round(petrolSamples)} amostras · ${petrolVisits} visitas` : '—'}</dd></div>
+            <div><dt>Evidência GNV</dt><dd>${learned?.cng ? `${Math.round(cngSamples)} amostras · ${cngVisits} visitas` : '—'}</dd></div>
+            <div><dt>Histórico GNV</dt><dd>${historicalEpochs.length ? `épocas ${historicalEpochs.join(', ')}` : 'nenhum'}</dd></div>
+          </dl>
+        </details>
+        <small class="map-address-contract">A gasolina esperada é a referência da diferença; o Mapa K é endereçado pela condição GNV observada (RPM × Petrol Inj. no GNV).</small>
         <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>
       `;
       this.cellPane.querySelector('[data-edit-learning-cell]')?.addEventListener('click', () => {
         this.router.navigate('map', {
           origin: 'learning',
           cell: { row, column },
-          physical: { rpm: rpmLabel, petrolMs: petrolLabel },
+          physical: {
+            rpm: mapAddressRpm ?? rpmLabel,
+            petrolMs: mapAddressMs ?? petrolLabel,
+            basis: kChange ? 'CNG_OBSERVED_MAP_ADDRESS' : 'SELECTED_LEARNING_CELL',
+          },
           suggestion: suggestion?.actionable ? suggestion : null,
         });
       });

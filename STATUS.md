@@ -1,115 +1,152 @@
-# Status do OMEGAS V8.2
+# OMEGAS Platina — Status
 
+## Active control surface
 
-## APK WU-006 (candidato para teste no carro) — 2026-10-02
+- Branch: `OmegasPlatina`
+- Estado: `FINAL RELEASE CANDIDATE — PROGBASE HOST CONTRACT V2 LOCKED — SAME-SHA GATES + APK BUILD`
+- Autoridade: GitHub remoto no HEAD resolvido antes de qualquer escrita.
 
-- Fonte: `dcd601c5e645fce178b303ad6cdf586012777a97`.
-- Workflow: `omegas-preapk-build.yml`, evento `workflow_dispatch`, run `37063541243`, conclusão `success`. Inclui `testDebugUnitTest`, `lintDebug` e `assembleDebug`.
-- Artifact: `11252210747` / `omegas-v82-rc-dcd601c5e645fce178b303ad6cdf586012777a97`, 4.883.882 bytes, digest `sha256:59aad0f931079f441e85e837f772f2e1fd87c0defd9bed35d571a218d141dbf7`. Expira em 2026-10-09.
-- Antes do CI, local no mesmo SHA: `QUALITY_GATE_FAST=PASS`, JVM integral 711 OK, paridade Kotlin↔Python OK.
-- `PHYSICAL_VALIDATION_CLAIMED=false`. Aguarda o teste no carro (`docs/V82_REFINO_FIELD_TEST.md`).
+Checkpoint remoto observado nesta missão:
+- HEAD inicial re-resolvido: `88b472ad293ad96671fa4368303d38148f75c3c3`
+- `OmegasVerde fast contracts` #36509175880: SUCCESS nesse SHA
+- `OMEGAS VERDE CI` #36509175891: SUCCESS nesse SHA
 
-## Mais recente: passo 0 da WU-006, sem novo APK — 2026-10-02
+Esses nomes de workflow eram legados Verde; a Platina mantém a evidência, mas a autoridade ativa é a branch `OmegasPlatina`.
 
-- **Source corrigido desta etapa:** `dcd601c5e645fce178b303ad6cdf586012777a97` (commits posteriores somente documentais não mudam essa atribuição); branch única `claude/brave-darwin-wuliyo`. Revisão e comandos em `docs/evidence/WU-006-STEP0-NO-APK-20261002.md`.
-- R-01: o proprietário havia corrigido a publicação final obsoleta em `91702dce`, com teste. Esta continuação acrescentou teste para início atrasado (`dda1ea6e`) e guard anterior a `READING` (`dcd601c5`). Fonte revisada remotamente; **execução JVM nova deste SHA pendente**.
-- **CI externo anterior**: run `37062464754`, job `111022139625`, source `91702dce4727ff06d5d9feec678c7630ecd4dc03`: `QUALITY_GATE_FAST=PASS`, Kotlin debug/test compilou, `testDebugUnitTest` executou; `lintDebug=FAIL` (1 `MissingPermission`, 37 avisos; alerta do piloto no serviço). `:app:assembleDebug` foi executado pelo run externo antes da falha, mas **`Inspect APK`/`Upload APK` foram pulados**; nenhum artifact foi publicado/baixado nesta continuação. https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/37062464754
-- Regressão do aviso adicionada ao gate em `b9845033`; correção candidata no source `d70fc735`: verifica `POST_NOTIFICATIONS` no Android 13+ antes de `notify`; recusa não interrompe o piloto. **O lint após o fix ainda não foi executado/provado.**
-- Última solicitação do proprietário: **não gerar APK**. Nenhum novo workflow foi disparado por esta continuação; o workflow existente inclui obrigatoriamente `assembleDebug`, e não foi adulterado para aparentar teste-only. Próximo gate necessário no SHA final: `python3 -B tools/run_checks.py` e `./gradlew clean testDebugUnitTest lintDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace` (sem `assembleDebug`), em executor Android apto.
-- Faltam capturas finais e revisão de UX; sensor continua **proxy explícito**, sem litros/LEDs nativos comprovados. Sem validação no veículo, consumo ou promessa de eliminação do tranco. `PHYSICAL_VALIDATION_CLAIMED=false`.
+## Checkpoint de fechamento AutoCal Host v2
 
-## Checkpoint anterior do GPT (histórico, supersedido pela seção acima)
+- A ECU é tratada como caixa-preta; a fidelidade exigida é ao comportamento observável do ProgBase 4.2.0.6 como host.
+- O contrato forense fechado classifica 53/53 handlers relevantes de AutoCal/Settings/Referências.
+- `NUM_AUTOMATCH_EXECUTED == MAX_AUTOMATCH` significa cota de AutoMatch atingida; não implica `AUTO_CAL_ENABLE=0`.
+- O Portmon original mostra nova aquisição GNV após 3/3; portanto a aquisição pode continuar com a cota de AutoMatch esgotada.
+- `FinishAutocal` permanece apenas compatibilidade técnica no backend; a Action original nasce desabilitada e não é CTA normal da Platina.
+- `BtnFinishAutomatch` original pertence ao `PanelDbg` oculto.
+- AutoMatch nativo é automático/ECU-owned; AutoMatch manual é intervenção separada.
+- A tela Curva K permanece a evolução moderna do editor manual K do ProgBase, com intenção humana, ACK e readback.
 
-## WU-006 atual: continuação de 2026-10-02 (fonte canônica desta entrada)
+## Gating Platina
 
-- Branch única: `claude/brave-darwin-wuliyo`; baseline do handoff `cdd8039535dba1ba6c72f64e6a9d44411f2025a0`, sem commits posteriores do proprietário na comparação remota inicial.
-- Blocos 1–6: source de produto publicado no commit `59f6fc57443e3e3eb3298f5777ee322e702c5f98`, preservado. Bloco 7: roteiro de rodagem `docs/V82_REFINO_FIELD_TEST.md` publicado em `ded8cdea088a907e08082695e93a43e97e778629`. Gerador QA/fixtures corrigido em `267dbafab3c7b24d2f628b6b29898fdae23331bc`.
-- Revisão/evidência: `docs/evidence/WU-006-FINAL-REVIEW-20261002.md`; checklist item a item em `docs/product/UX-BLUEPRINT-CHECKLIST.md`. As 11 imagens em `docs/evidence/ui-wu006/draft` continuam RASCUNHOS (1280×720/bridge falso), não aceite final. Há R-01 importante em `LevelSensorSnapshot.read()`: possível publicação obsoleta depois de troca de sessão USB; falta regressão concorrente RED→GREEN.
-- Método científico vigente: **MAP × Tpet nativo da ECU** é a base; bandas densas **MAP × Tpet** são só visualização; RPM × MAP complementa (refino do refino); `RefinementJournal` verifica após gravação manual. Não há garantia de desaparecimento do tranco: degrau pode tirar a linearidade da puxada, hipótese de ciclo-limite descartada.
-- Nível: somente leitura SC36/37/276/300/313 índice 0; informação insuficiente para filtro/LEDs nativos, cinco âncoras/sentido/cheio. UI em **proxy explícito** sem litros. Placar é observacional, mínimo de 5 km por época e nível calibrado indisponível.
-- Prova desta continuação: verificação documental estrutural/inspeção estática remota e capturas antigas inspecionadas. **QUALITY_GATE_FAST atual, paridade atual, JVM integral atual, screenshots finais, review independente, Android Gradle, lint, APK e hashes do SHA final: PENDENTES/NÃO EXECUTADOS.** O executor não conseguiu resolver DNS de `github.com` para `git pull --ff-only`; a API autenticada mostrou o baseline canônico. O conector GitHub instalado não expõe `workflow_dispatch`: nenhuma rodada de CI foi criada aqui. Não usar o artifact histórico `b2df77bd` como APK da WU-006 atual.
-- Gatilho de release: resolver R-01 com teste; QA e review independentes; gate/paridade/JVM no SHA remoto; uma execução seletiva `.github/workflows/omegas-preapk-build.yml` na branch correta por superfície autenticada apta; inspecionar run/job, `SOURCE_SHA` e árvore, Gradle `testDebugUnitTest lintDebug assembleDebug`, ZIP/APK SHA-256, package, assinatura e ABI. Atualizar a evidência apenas depois do resultado. Sem push trigger, PR, gasto ou escrita automática em ECU.
-- `SIMULATED_ECU_ONLY=true`; `NO_INSTALL_PERFORMED=true`; `PHYSICAL_VALIDATION_CLAIMED=false`.
+- APK autorizado nesta missão pelo proprietário; o branch de produto continua sem build por push. Após o mesmo SHA passar CI, fast contracts, global reality e Android render, uma branch efêmera de build compila exatamente esse SHA e publica o artifact.
+- DUMP/Portmon/ECU prevalecem sobre documentação antiga.
+- `PARTIAL` ou `UNKNOWN` em comando de mutação bloqueia release.
+- AutoMatch nativo é observado/bracketado; o host não escreve K automaticamente.
+- Predictor/V7 é análise/revisão; escrita real só pelas telas manuais, com intenção explícita, ACK, readback e sessão.
+- Reset K provado usa `MUL_ACT 0x0161[30]` Q14, `1.0 = 0x4000`, com readback completo.
+- `TAutoCalDM_EE`/`VECT_AUTOCAL_EE` é superfície distinta e não substitui `MUL_ACT`.
+- GAS_PREV expõe Tinj/MAP prévios; contador/maturidade prévios ficam desconhecidos quando não há fonte própria.
 
-## Histórico preservado: evidência e estado anteriores a esta continuação
+## Classificação atual de readiness AutoCal
 
-- WorkUnit ativa: `OMEGAS-WU-006` (AutoCal — Equivalência Refinada GNV = gasolina)
-- Branch: `claude/brave-darwin-wuliyo`
-- Prova Android **histórica**, anterior ao source atual dos blocos 1–6: `ANDROID_PROVEN` no SHA `b2df77bd2c84be63e72d2595101395eeabf5efe4` (gate rápido, testes Android/JVM, lint e APK verdes **nesse SHA antigo**, não nesta árvore); `PHYSICAL_VALIDATION_CLAIMED=false`
-- Ciclo fechado do refino (ledger de pontos próprios + diário + piloto): `LOCAL_PROVEN`.
-  - gate rápido PASS;
-  - paridade Kotlin↔Python OK;
-  - suíte JVM integral (690 testes) via kotlinc.
-  - Prova Android/APK deste SHA pendente.
-- Evidência WU-006: `docs/evidence/WU-006-refined-replay.md`
+| Rotina | Status | Release | Critério |
+| --- | --- | --- | --- |
+| Enable/Disable AutoCal | PROVEN | non-blocking | `AUTO_CAL_ENABLE` com readback |
+| Reset petrol/gas/all | PROVEN | non-blocking | modos nativos `0x01/0x02/0x04`, ACK e snapshot |
+| Delete/readquire point | PROVEN | non-blocking | masks completos 18+18 e commit único |
+| Readquire multiple/mixed | PROVEN | non-blocking | seleção gasolina+GNV preserva pontos não selecionados |
+| Manual AutoMatch | PROVEN | non-blocking | modo nativo `0x08`, intenção explícita |
+| Finish AutoMatch/AutoCal | PROVEN | non-blocking | `MAX_AUTOMATCH -> NUM_AUTOMATCH_EXECUTED`, readback |
+| Reset K | PROVEN | non-blocking | 30 writes `MUL_ACT=0x4000`, readback dos 30 |
+| 18 bandas / 4 zonas | PROVEN | non-blocking | seletores `U8_1` e `CALIBRATION_VAL_1[2/5/8]`, fronteiras `5/9/13` |
+| Petrol current / Gas current | PROVEN | non-blocking | buffers atuais com contadores próprios |
+| Gas previous | PARTIAL | non-blocking | Tinj/MAP prévios provados; contador anterior UNKNOWN e não exibido como certo |
+| MUL_ACT | PROVEN | non-blocking | normal `0x0161`, distinto de EE |
+| Reference curves | PROVEN | non-blocking | refresh de referência separado e coerente |
+| AutoMatch before/after K | PROVEN/PARTIAL | non-blocking | bracket causal; `INCONCLUSIVE` nunca vira certeza |
+| Error/recovery/session loss | PROVEN | non-blocking | session fencing, interlock, recibo de falha, sem retry automático de mutação |
 
-## APK histórico provado (WU-005)
+## ProgBase/original confirmado
 
-- Issue: #5
-- Branch de fechamento: `work/v8.2-functional-final-20260828`
-- Estado funcional: `RELEASE_PROVEN`
-- Governança: `REPO_FIRST_ENGINEERING=TRUE`
-- Política de custo: `ZERO_MONETARY_SPEND=ABSOLUTE`
-- Rota pelo PC do proprietário: proibida
-- Fonte funcional do APK: `da8191416d4fbd3d9b7253b10bdbe438323e8822`
-- Árvore da fonte: `d052b6930ce3a20ab396dfbc4455ab25c8260f60`
+Estruturas VCL observadas:
+- `TAutoCalUI`, `TAutoCalDM`, `TFormRifAutocal`;
+- `ChartData`, `PetrolCurve`, `GasCurve`;
+- `RunPoint`, `CurrentBand`, `PollingPetrol`, `PollingGas`.
 
-## Construído e provado
+Portmon:
+- `48 01 49`: mediana ~46,57 ms;
+- família `0x015B..0x0163`: ~2,01 s;
+- família `0x018D/0x018E`: ~4,05 s;
+- leituras secundárias intercaladas com telemetria viva.
 
-- equivalência científica primária `RPM × MAP(bar) → Petrol Inj. (ms)`;
-- aprendizado persistente e reconciliação;
-- sugestões passivas e revisão humana obrigatória;
-- separação entre Mapa K e Curva K;
-- fluxo manual `Preparar → Revisar → Confirmar → ACK → Readback`;
-- simulador de ECU com sucesso, rejeição, timeout, falha de ACK e readback divergente;
-- proteção contra escrita automática na ECU.
+Ações AutoCal recuperadas do ProgBase 4.2.0.6 original:
+- Fonte vinculante: `tests/fixtures/progbase-autocal-action-map-v1.json`, schema `omegas.progbase.autocal-action-map.v2`, classificação `ORIGINAL_DERIVED`.
+- `ActionAutoMatchExecute` = Manual AutoMatch, modo `0x08`, frame `02 24 04 08 32`;
+- `ActionResetPetrolExecute` = Reset petrol point, modo `0x01`, frame `02 24 04 01 2B`;
+- `ActionResetGasExecute` = Reset gas point, modo `0x02`, frame `02 24 04 02 2C`;
+- `ActionResetAllExecute` = Reset all, modo `0x04`, frame `02 24 04 04 2E`;
+- `ActionAutoCalRifExecute` = Modify map refs usa rota separada; não é wrapper simples `0x24`.
+- `ActionResetKFactorExecute` usa rota separada: escreve `MUL_ACT[i] = 1.0` via `TAebVector.SetDouble -> SetData -> SetDataInEcu`.
+- No Lognovo original, o frame `02 24 04 04 2E` teve efeito amplo: zerou estado de aquisição gasolina/GNV, curvas de referência e `MUL_ACT`. OMEGAS não promete seletividade e mantém resets destrutivos intertravados.
 
-## Provas históricas da WU-005 (não representam a suíte atual)
+Semântica live recuperada:
+- Petrol Injection raw: payload offset 8;
+- LEVELS RAW: payload offset 13;
+- MAP raw: payload offset 17, **S16LE**;
+- nenhuma conversão física LEVELS→%/litros/m³ está autorizada.
 
-- gate rápido: `QUALITY_GATE_FAST=PASS`;
-- Android/JVM: `testDebugUnitTest=PASS`;
-- quantidade da suíte Android/JVM: `939` testes; a contagem vem do run anterior de 939 casos e o diff até o SHA verde altera somente fixtures/asserts dos três testes falhos, sem adicionar/remover testes;
-- `lintDebug=PASS`;
-- `assembleDebug=PASS`;
-- workflow run: `33191643201`;
-- job: `98918331139`;
-- artifact: `9694156687` / `omegas-v82-rc-da8191416d4fbd3d9b7253b10bdbe438323e8822`;
-- APK: `app-debug.apk`;
-- SHA-256 do APK: `e020afacf94e21eef085f36552f7f9bada4a67ee35bd0c3f631d43615adba07b`;
-- tamanho: `5126045` bytes;
-- pacote: `com.omegas.v7.test`;
-- assinatura debug: presente;
-- filtro de build solicitado: `armeabi-v7a`;
-- bibliotecas nativas empacotadas: nenhuma (`APK_NATIVE_ABIS` vazio / tarefas native libs `NO-SOURCE`).
+## OMEGAS atual — correções provadas
 
-O ZIP do artifact foi baixado e seu SHA-256 recalculado como `8d5339158307b78a8f4e415d510b0097455db20601e5a306d12752a86430ea5a`, igual ao digest publicado pelo GitHub. O SHA-256 do APK também foi recalculado fora do workflow e corresponde ao evidence emitido pelo build.
+- Finish AutoCal usa o caminho host comprovado do ProgBase: `MAX_AUTOMATCH (0x0165:2) -> NUM_AUTOMATCH_EXECUTED (0x0174)`, com settle de 100 ms no Finish completo, ACK, readback e recibo. O Finish AutoMatch técnico permanece backend/avançado e não vira uma segunda decisão normal de UX.
+- O oracle do Finish é preso a três artefatos exatos do DUMP: código `0x0051A390/0x0051A454`, DFM `TAUTOCALDM` e grid initializer `0x00510DF8`; o gate falha se o layout de campos deslocar novamente.
+- A tela AutoCal atualiza aquisição/projeção em ~1 s sem criar segundo serial owner; o cursor live continua no scheduler rápido.
+- Bolinhas distinguem `COLETANDO` de `ADQUIRIDO` pelos contadores/limiares nativos e mostram progresso, sem alterar critérios da ECU.
+- O estado de combustível MP48 está visível no cabeçalho AutoCal; MAP, Petrol Inj., RPM e zona permanecem essenciais.
 
-## Integração repo-first
+- LEVELS do AutoCal usa telemetria live fresca.
+- Dashboard/Agora contém `LEVELS RAW`; emissão de `level_percentage` não calibrado foi removida.
+- `CurrentBand` reproduz o helper original: threshold[i] < MAP <= threshold[i+1], fora do domínio não seleciona faixa.
+- Refresh operacional ~1 s usa a autoridade serial existente e renova a unidade consumida por `AutoCalAcquisition`:
+  - gasolina: tempo + MAP + contador;
+  - GNV atual: tempo + MAP + contador;
+  - GNV anterior: tempo + MAP;
+  - zonas gasolina/GNV.
+- Refresh de referência ~4 s renova atomicamente `PETR_INJ_TBP`, `MNFLD_PRESS_THD`, `MUL_ACT`, petrol RV e gas RV.
+- `MUL_ACT` permanece no grupo coerente de referência, não no grupo operacional.
+- MAP live foi alinhado ao S16LE do oracle; fronteira `0xFFFF -> -1` fica implausível/fail-closed.
+- Nenhum segundo serial owner/thread foi criado; `telemetryAfter` permanece preservado.
+- Escrita automática na ECU continua proibida.
+- Reset gasolina, reset GNV e reset all permanecem operações distintas: modo 0x01 gasolina, 0x02 GNV e 0x04 reset all. Reset all é a ação ampla/destrutiva e permanece separado do Reset K. OMEGAS exige revisão humana, ACK e readback; não existe restauração automática inventada.
+- Ferramentas expõe exportação de backup completo; isso é proteção operacional, não autorização para escrever dados de volta sem protocolo original comprovado.
+- Zonas `0x016F/0x0170` preservam identidade Z1..Z4 na tela: `OK`, `FALTA` e marcador `AGORA`; não são mais reduzidas apenas a N/4.
 
-A árvore completa aprovada permanece nesta mesma branch e deve entrar na `main` pela única linhagem da Issue #5 e por um único PR. O recibo de fechamento da Issue #5 registra o PR e o SHA final da `main`; este arquivo preserva o SHA exato que gerou o APK, portanto mudanças documentais ou de governança posteriores não reatribuem o artifact a outro commit.
+## Sessão
 
-Após o fechamento da Issue #5, novos agentes devem fazer boot técnico pela `main` e por `AGENTS.md`, `PROJECT.md`, `STATUS.md`, WorkUnit e manifesto de evidências.
+AutoCal não possui um segundo sistema de sessão:
+- snapshots nativos, snapshots manuais, epochs e ações confirmadas entram no `SessionRecorder` canônico;
+- aliases AutoCal de listar/exportar delegam para a sessão/ZIP canônicos;
+- `autocal_native_receipts.json` permanece apenas como compatibilidade/readback e não deve ser apagado sem provar readers/writers.
 
-## Limite físico
+## Execução paralela
 
-`SIMULATED_ECU_ONLY=true`, `NO_INSTALL_PERFORMED=true` e `PHYSICAL_VALIDATION_CLAIMED=false`.
+### Fan-out forense
+- workflow: `.github/workflows/verde-forensic-fanout.yml`;
+- matriz máxima: **256 lanes**;
+- 243 lanes = uma por transação Portmon;
+- 13 lanes meta = oracle, same-ECU JVM, UI, arquitetura, segurança, mutações, MAP, LEVELS, aquisição e revisão.
 
-Nenhuma escrita real em ECU, instalação no veículo ou validação física foi executada ou alegada nesta WorkUnit.
+### Fan-out global
+- workflow: `.github/workflows/verde-global-reality-fanout.yml`;
+- descobre e isola contratos de Dashboard, Learning, Map, Curve, OBD, sessão, reconnect, telemetry/runtime/bridges;
+- uma dependência JVM→Node do Learning foi tornada explícita; não era RED de produto.
 
-## Higiene atual — 2026-10-02
+### Render Android real
+Pipeline vinculante:
+`fixture real -> decoder/runtime/bridge reais -> MainActivity/WebView real -> 1280x720 -> DOM/assertions -> screenshot + receipt`.
 
-- Fonte inicial: `463a08d95680efa757059664e964f2d1d1df2d9d`.
-- Produto: Agora · AutoCal (equivalência refinada GNV = gasolina) · Aprender · Ajuste global (Curva K) · Ajuste local (Mapa K) · Sugestões · Ferramentas.
-- Gate rápido: `QUALITY_GATE_FAST=PASS`; suíte JVM integral sem SDK: `778 → 674`, todos OK; 104 casos removidos exclusivamente com código morto.
-- Relatório e reprodução: `docs/evidence/HYGIENE-20261002.md`.
-- Inventário remoto: `docs/governance/BRANCHES.md`; nenhuma branch remota apagada.
-- Estado da higiene: `PROVEN` — os três commits temáticos estão no SHA Android/APK provado abaixo.
-- Workflow final: `omegas-preapk-build.yml`, evento `workflow_dispatch`, run `37041514785`, job `110952524699`, conclusão `success`.
-- Fonte do APK: `b2df77bd2c84be63e72d2595101395eeabf5efe4`; árvore `80a2de2dc850335455b565f62455a211ae483aa3`.
-- Android: `./gradlew clean testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace` → `BUILD SUCCESSFUL in 4m 17s`.
-- Artifact: `11242364183` / `omegas-v82-rc-b2df77bd2c84be63e72d2595101395eeabf5efe4`, 4.812.072 bytes.
-- Digest do artifact: `sha256:5d31616999385d9585a11b200a7a1527377e5cb21dbb80d410eacbf6b0363334`; ZIP baixado pelo conector e hash recalculado, correspondente.
-- APK: `app-debug.apk`, 4.811.249 bytes; SHA-256 `9f06d6de3366f491696934da7832ebbe0f2c1b31405343ec0d5da6b4d18e59b8`, recalculado e correspondente ao recibo do build.
-- Evidência: `docs/evidence/HYGIENE-CI-20261002.json`; run: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/37041514785.
-- A prova do artifact pertence exclusivamente ao SHA acima. Em `68da5eec`, app, testes e workflow são idênticos ao SHA provado; documentos e `tools/autocal_refine/experiments.py` posteriores foram preservados e não são atribuídos a esse artifact.
-- `PHYSICAL_VALIDATION_CLAIMED=false`.
+O emulator, build e instalação dos APKs já foram provados no run #9; a falha desse run foi apenas sintaxe do wrapper shell. O run seguinte usa `tools/ci/run_android_render_evidence.sh` para executar os cenários dentro de Bash real.
+
+## Gate de fechamento
+
+Para fechar #84 e reconciliar #81, o HEAD corrente deve produzir, no mesmo SHA:
+
+- CI canônica verde;
+- fast contracts verdes;
+- global reality fan-out sem RED/BROKEN;
+- Android render com os 13 cenários verdes em 1280×720, incluindo o mapa esparso de zonas;
+- receipts e screenshots inspecionados, não apenas badge;
+- provenance ORIGINAL_DERIVED preservada para AutoCal/Curve K e `SYNTHETIC_NON_SCIENTIFIC` explícita no cenário visual shifted.
+
+Os run IDs do SHA final são registrados nos issues #84/#81 depois que Actions termina; não se cria outro commit apenas para registrar o próprio run ID.
+
+## NON-GOAL
+
+Nenhum port/cherry-pick/cópia SIL/CIU nesta WorkUnit.

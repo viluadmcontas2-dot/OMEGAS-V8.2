@@ -33,16 +33,7 @@ object Mp48TelemetryScale {
         return raw / GAS_PRESSURE_COUNTS_PER_BAR
     }
 
-    fun mapBar(raw: Int): Double {
-        require(raw >= 0) { "MAP bruto inválido: $raw" }
-        return raw / MAP_COUNTS_PER_BAR
-    }
+    fun mapBar(raw: Int): Double = raw / MAP_COUNTS_PER_BAR
 
-    fun levelPercentage(raw: Int): Int {
-        require(raw in 0..255) { "Nível de gás bruto inválido: $raw" }
-        // Sensores padrão Landi Renzo/AEB (ex: 1050) operam de forma invertida.
-        // ADC aumenta conforme a pressão/volume de gás diminui no cilindro.
-        return ((255 - raw) * 100) / 255
-    }
 }
 

@@ -1,13 +1,12 @@
 package com.omegas.prohub.calibration
 
-import com.omegas.prohub.physics.CorrectionMechanism
-import com.omegas.prohub.physics.EffectDirection
-import com.omegas.prohub.physics.MagnitudeAuthority
 import com.omegas.v7.runtime.CalibrationRevisionV7
 import com.omegas.v7.runtime.CalibrationShapeV7
 import com.omegas.v7.runtime.CalibrationStateV7
+import com.omegas.v7.runtime.CalibrationTransitionV7
 import com.omegas.v7.runtime.CalibrationWriteResultV7
 import com.omegas.v7.runtime.CalibrationWriterV7
+import com.omegas.v7.runtime.CausalTransitionStatusV7
 import com.omegas.v7.runtime.EvidenceV7
 import com.omegas.v7.runtime.FuelV7
 import com.omegas.v7.runtime.LearningStabilityStateV7
@@ -29,79 +28,6 @@ class AdvisorSuggestionAdapterV7Test {
             List(CalibrationShapeV7.MAP_K_COLUMNS) { 110 }
         },
     )
-
-    @Test
-    fun policy_only_unknown_map_advice_stays_observing_even_when_legacy_item_is_actionable() {
-        val advice = JSONObject()
-            .put("kFactorSuggestions", JSONArray())
-            .put("mapResidualSuggestions", JSONArray().put(
-                JSONObject()
-                    .put("row", 2)
-                    .put("column", 4)
-                    .put("actionable", true)
-                    .put("suggestedDeltaPercent", 12.0)
-                    .put("confidence", 0.9)
-                    .put("magnitudeAuthority", MagnitudeAuthority.POLICY_ONLY.name)
-                    .put("idealTarget", false)
-                    .put("correctionMechanism", CorrectionMechanism.UNKNOWN.name)
-                    .put("mechanismCandidateLane", CorrectionMechanism.MAP_LOCAL.name),
-            ))
-
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
-
-        assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
-        assertTrue(suggestion.mapChanges.isEmpty())
-    }
-
-    @Test
-    fun candidate_lane_alone_never_authorizes_a_curve_change() {
-        val advice = JSONObject()
-            .put("kFactorSuggestions", JSONArray().put(
-                JSONObject()
-                    .put("index", 3)
-                    .put("actionable", true)
-                    .put("suggestedDeltaPercent", 8.0)
-                    .put("confidence", 0.9)
-                    .put("readiness", "AVAILABLE")
-                    .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
-                    .put("idealTarget", true)
-                    .put("correctionMechanism", CorrectionMechanism.UNKNOWN.name)
-                    .put("mechanismCandidateLane", CorrectionMechanism.CURVE_MUL_ACT.name),
-            ))
-            .put("mapResidualSuggestions", JSONArray())
-
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
-
-        assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
-        assertTrue(suggestion.curveChanges.isEmpty())
-    }
-
-    @Test
-    fun unknown_expected_effect_authority_stays_observing() {
-        val item = mapItem(0, 0, 10.0)
-        item.remove("expectedEffectAuthority")
-        val advice = JSONObject()
-            .put("kFactorSuggestions", JSONArray())
-            .put("mapResidualSuggestions", JSONArray().put(item))
-
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
-
-        assertEquals(MagnitudeAuthority.UNKNOWN, suggestion.physics.effectAuthority)
-        assertEquals(SuggestionLifecycleV7.OBSERVING, suggestion.lifecycle)
-        assertTrue(suggestion.mapChanges.isEmpty())
-    }
-
-    @Test
-    fun explicit_ideal_empirical_target_with_matching_map_mechanism_can_be_pending() {
-        val advice = JSONObject()
-            .put("kFactorSuggestions", JSONArray())
-            .put("mapResidualSuggestions", JSONArray().put(mapItem(0, 0, 10.0)))
-
-        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100).single()
-
-        assertEquals(SuggestionLifecycleV7.PENDING, suggestion.lifecycle)
-        assertEquals(121, suggestion.mapChanges.single().after)
-    }
 
     @Test
     fun map_advice_becomes_one_persistent_entity_per_editable_cell() {
@@ -191,14 +117,7 @@ class AdvisorSuggestionAdapterV7Test {
                     .put("actionable", true)
                     .put("suggestedDeltaPercent", 8.0)
                     .put("confidence", 0.9)
-                    .put("readiness", "AVAILABLE")
-                    .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
-                    .put("idealTarget", true)
-                    .put("correctionMechanism", CorrectionMechanism.CURVE_MUL_ACT.name)
-                    .put("expectedEffectDirection", EffectDirection.INCREASE.name)
-                    .put("expectedEffectAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
-                    .put("expectedEffectFalsifier", "curve response fails to improve")
-                    .put("mechanismEvidencePath", JSONArray().put("broad coherent residual"))))
+                    .put("readiness", "AVAILABLE")))
             .put("mapResidualSuggestions", JSONArray())
             .put("mapCorrectionRegions", JSONArray())
 
@@ -210,6 +129,107 @@ class AdvisorSuggestionAdapterV7Test {
         assertEquals(1.0, change.before, 1e-12)
         assertEquals(1.08, change.after, 0.0001)
         assertEquals(SuggestionLifecycleV7.PENDING, suggestion.lifecycle)
+    }
+
+    @Test
+    fun global_curve_uses_bounded_step_and_explains_ideal_target_and_residual() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray()
+                .put(JSONObject()
+                    .put("index", 3)
+                    .put("actionable", true)
+                    .put("idealDeltaPercent", 20.0)
+                    .put("suggestedDeltaPercent", 10.0)
+                    .put("estimatedResidualAfterPercent", 10.0)
+                    .put("confidence", 0.9)
+                    .put("uniqueVisits", 2)
+                    .put("readiness", "AVAILABLE")))
+            .put("mapResidualSuggestions", JSONArray())
+            .put("mapCorrectionRegions", JSONArray())
+
+        val suggestion = AdvisorSuggestionAdapterV7().adapt(advice, calibration(), nowMs = 100)
+            .single { it.target == SuggestionTargetV7.CURVE_K }
+
+        assertEquals(1.10, suggestion.curveChanges.single().after, 0.0001)
+        assertTrue(suggestion.rationale.contains("alvo ideal +20,0%"))
+        assertTrue(suggestion.rationale.contains("passo seguro +10,0%"))
+        assertTrue(suggestion.rationale.contains("resíduo estimado +10,0%"))
+    }
+
+    @Test
+    fun confirmed_causal_response_allows_090_only_for_same_map_cell() {
+        val item = mapItem(3, 0, 7.5)
+            .put("residualErrorPercent", 10.0)
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray())
+            .put("mapResidualSuggestions", JSONArray().put(item))
+            .put("mapCorrectionRegions", JSONArray())
+
+        val confirmed = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(mapCells = listOf("3:0"))),
+        ).single()
+        val differentCell = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(mapCells = listOf("4:0"))),
+        ).single()
+        val contradicted = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(
+                mapCells = listOf("3:0"),
+                status = CausalTransitionStatusV7.CONTRADICTED,
+            )),
+        ).single()
+
+        // 110 × 1.09 = 119.9 -> 120. Sem confirmação, 110 × 1.075 -> 118.
+        assertEquals(120, confirmed.mapChanges.single().after)
+        assertEquals(118, differentCell.mapChanges.single().after)
+        assertEquals(118, contradicted.mapChanges.single().after)
+    }
+
+    @Test
+    fun confirmed_causal_response_allows_090_only_for_same_curve_point() {
+        val advice = JSONObject()
+            .put("kFactorSuggestions", JSONArray()
+                .put(JSONObject()
+                    .put("index", 3)
+                    .put("actionable", true)
+                    .put("idealDeltaPercent", 20.0)
+                    .put("suggestedDeltaPercent", 15.0)
+                    .put("estimatedResidualAfterPercent", 5.0)
+                    .put("confidence", 0.9)
+                    .put("readiness", "AVAILABLE")))
+            .put("mapResidualSuggestions", JSONArray())
+            .put("mapCorrectionRegions", JSONArray())
+
+        val confirmed = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(
+                target = SuggestionTargetV7.CURVE_K,
+                curveIndexes = listOf(3),
+            )),
+        ).single { it.target == SuggestionTargetV7.CURVE_K }
+        val awaiting = AdvisorSuggestionAdapterV7().adapt(
+            advice = advice,
+            calibration = calibration(),
+            nowMs = 100,
+            causalTransitions = listOf(transition(
+                target = SuggestionTargetV7.CURVE_K,
+                curveIndexes = listOf(3),
+                status = CausalTransitionStatusV7.AWAITING_POST_EVIDENCE,
+            )),
+        ).single { it.target == SuggestionTargetV7.CURVE_K }
+
+        assertEquals(1.18, confirmed.curveChanges.single().after, 0.0001)
+        assertEquals(1.15, awaiting.curveChanges.single().after, 0.0001)
     }
 
     @Test
@@ -280,17 +300,31 @@ class AdvisorSuggestionAdapterV7Test {
         assertEquals(LearningStabilityStateV7.CONSOLIDATED, runtime.mapStability(row, column).state)
     }
 
+    private fun transition(
+        target: SuggestionTargetV7 = SuggestionTargetV7.MAP_K,
+        mapCells: List<String> = emptyList(),
+        curveIndexes: List<Int> = emptyList(),
+        status: CausalTransitionStatusV7 = CausalTransitionStatusV7.CONFIRMED,
+    ) = CalibrationTransitionV7(
+        suggestionId = "prior-transition",
+        target = target,
+        appliedAtMs = 50,
+        beforeRevision = CalibrationRevisionV7(1, 4),
+        afterRevision = CalibrationRevisionV7(2, 5),
+        beforeFingerprint = "before",
+        afterFingerprint = "after",
+        preErrorPercent = 10.0,
+        postErrorPercent = 2.0,
+        responseGain = 0.8,
+        mapCells = mapCells,
+        curveIndexes = curveIndexes,
+        status = status,
+    )
+
     private fun mapItem(row: Int, column: Int, deltaPercent: Double): JSONObject = JSONObject()
         .put("row", row)
         .put("column", column)
         .put("actionable", true)
         .put("suggestedDeltaPercent", deltaPercent)
         .put("confidence", 0.90)
-        .put("magnitudeAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
-        .put("idealTarget", true)
-        .put("correctionMechanism", CorrectionMechanism.MAP_LOCAL.name)
-        .put("expectedEffectDirection", EffectDirection.INCREASE.name)
-        .put("expectedEffectAuthority", MagnitudeAuthority.EMPIRICALLY_BOUNDED.name)
-        .put("expectedEffectFalsifier", "map response fails to improve")
-        .put("mechanismEvidencePath", JSONArray().put("localized residual"))
 }

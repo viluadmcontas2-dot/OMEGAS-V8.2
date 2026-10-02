@@ -16,7 +16,7 @@ class SignalLearningStoreTest {
     @get:Rule val temporary = TemporaryFolder()
 
     @Test
-    fun `overlapping healthy windows remain visible and enter memory with reduced weight`() {
+    fun `overlapping healthy windows remain visible but science coalesces low novelty`() {
         val store = store()
         store.startSession()
         val first = store.ingest(telemetry(650L), accepted(sample("a", 100L, 650L)))
@@ -25,16 +25,16 @@ class SignalLearningStoreTest {
         val region = exported.getJSONArray("regions").getJSONObject(0)
 
         assertTrue(first.getBoolean("memory_sample_accepted"))
-        assertTrue(overlapping.getBoolean("memory_sample_accepted"))
-        assertEquals("OVERLAPPING_WINDOW_WEIGHTED", overlapping.getString("memory_reason_code"))
-        assertEquals(2, region.getInt("samples"))
-        assertTrue(region.getDouble("weight") < 2.0)
+        assertFalse(overlapping.getBoolean("memory_sample_accepted"))
+        assertEquals("SCIENCE_PUBLICATION_COALESCED", overlapping.getString("memory_reason_code"))
+        assertTrue(overlapping.has("signal_decision"))
+        assertEquals(1, region.getInt("samples"))
         assertEquals(1L, exported.getLong("independentSamples"))
-        assertEquals(1L, exported.getLong("correlatedSamplesWeighted"))
+        assertEquals(0L, exported.getLong("correlatedSamplesWeighted"))
     }
 
     @Test
-    fun `first non overlapping window after the previous end receives full new weight`() {
+    fun `first non overlapping window after the previous publication receives full new weight`() {
         val store = store()
         store.startSession()
         store.ingest(telemetry(650L), accepted(sample("a", 100L, 650L)))
@@ -43,13 +43,13 @@ class SignalLearningStoreTest {
         val exported = store.export("test")
 
         assertTrue(independent.getBoolean("memory_sample_accepted"))
-        assertEquals(3, exported.getJSONArray("regions").getJSONObject(0).getInt("samples"))
+        assertEquals(2, exported.getJSONArray("regions").getJSONObject(0).getInt("samples"))
         assertEquals(2L, exported.getLong("independentSamples"))
-        assertEquals(1L, exported.getLong("correlatedSamplesWeighted"))
+        assertEquals(0L, exported.getLong("correlatedSamplesWeighted"))
     }
 
     @Test
-    fun `projected cell change does not discard overlapping physical evidence`() {
+    fun `projected cell change does not bypass physical novelty gate`() {
         val store = store()
         store.startSession()
         store.ingest(telemetry(650L, petrolMs = 4.0), accepted(sample("a", 100L, 650L, petrolMs = 4.0)))
@@ -57,11 +57,11 @@ class SignalLearningStoreTest {
         val exported = store.export("test")
         val region = exported.getJSONArray("regions").getJSONObject(0)
 
-        assertTrue(otherCell.getBoolean("memory_sample_accepted"))
-        assertEquals("OVERLAPPING_WINDOW_WEIGHTED", otherCell.getString("memory_reason_code"))
-        assertEquals(2, region.getInt("samples"))
+        assertFalse(otherCell.getBoolean("memory_sample_accepted"))
+        assertEquals("SCIENCE_PUBLICATION_COALESCED", otherCell.getString("memory_reason_code"))
+        assertEquals(1, region.getInt("samples"))
         assertEquals(1L, exported.getLong("independentSamples"))
-        assertEquals(1L, exported.getLong("correlatedSamplesWeighted"))
+        assertEquals(0L, exported.getLong("correlatedSamplesWeighted"))
     }
 
     @Test
