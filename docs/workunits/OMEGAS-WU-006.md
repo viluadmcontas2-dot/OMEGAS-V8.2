@@ -100,8 +100,29 @@ Fixtures em `fixtures/autocal/real/*.json.gz`, extraídas das sessões do Drive 
 - Suíte JVM integral via kotlinc 2.0.21 + Robolectric android-all (API 35), sem Gradle: 690 testes OK. Inclui `EquivalenceLedgerTest` (6), `RefinementJournalTest` (4) e `RefinementAutopilotTest` (6).
 - `node --test tests/ui/autocal-refine.test.cjs` → 9/9. Cobre o piloto, o diário, o restaurar trecho com conferência e o cartão do Agora.
 
+## Continuação auditada em 2026-10-02: escopo, prova e lacunas
+
+**Estado: PARTIAL, sem APK desta nova árvore.** A versão 2 de `docs/handoff/PROMPT-GPT-WU-006-FINAL.md` e a hierarquia do §2.1 prevalecem sobre a formulação antiga de “tranco deve sumir”: o degrau pode tirar a linearidade da puxada; ciclo-limite descartado; melhora física só na rodagem.
+
+| Bloco §10 | Situação |
+|---|---|
+| 1–6 | Publicados antes do handoff; último source de produto `59f6fc57443e3e3eb3298f5777ee322e702c5f98`; não reconstruídos nesta continuação |
+| 7 | **Publicado:** `docs/V82_REFINO_FIELD_TEST.md`, commit `ded8cdea088a907e08082695e93a43e97e778629` |
+| QA visual | Gerador de evidência atualizado em `267dbafab3c7b24d2f628b6b29898fdae23331bc` para distinguir LOW/HIGH e usar `timeMs`, nomes por dimensão. As 11 capturas antigas 1280×720 seguem somente `draft/`. 1280×644, 900, 1024×600 e operação/falha/readback aguardam reprodução e inspeção |
+| 8. Docs/review | `docs/evidence/WU-006-FINAL-REVIEW-20261002.md` e checklist item a item publicados; revisão estática do próprio executor, revisão **independente** pendente |
+| 8. Prova | Gate/paridade/suíte JVM integral **não rerodados no HEAD atual**; Android `testDebugUnitTest lintDebug assembleDebug`, artifact/hash do APK também não. O APK histórico b2df77bd não pertence ao source da WU atual |
+
+**Achado de auditoria R-01 (importante):** `LevelSensorSnapshot.read()` pode publicar snapshot antigo após troca de sessão: conferir/resetar geração sob lock na publicação; primeiro escrever e executar regressão concorrente RED→GREEN, depois corrigir pelo menor caminho. O teste existente troca a geração no callback e reseta apenas após retorno, sem cobrir o interleaving de publicação. Não houve correção especulativa nem alegação de teste rodado.
+
+**Nível real nesta árvore:** bytes e metadados lidos passivamente de SC36,37,276,300,313 somente índice 0; não provados enum/direção, cheio, regra temporal FAST/SLOW ou semântica dos LEDs. O percentual segue `Mp48TelemetryScale.levelPercentage` rotulado **proxy, sem litros**. A variante sintética de `LevelEstimator` não é habilitada pelo leitor real. Placar observacional de gás/ar e GPS compara somente ≥5 km por época; queda por degrau indisponível sem nível calibrado.
+
+**Plano mínimo de fechamento:** (1) corrigir R-01 com regressão observada RED→GREEN; (2) executar gate real com kotlinc e `ORG_JSON_JAR`, paridade e testes JVM; (3) regenerar e inspecionar capturas por viewport, fluxos de revisão/restauração/falha, atualizar checklist; (4) obter code review independente e tratar achados materiais; (5) CI seletivo `omegas-preapk-build.yml` na única branch e SHA final; (6) registrar fonte/árvore/run/job/artifact/SHA-256 ZIP+APK, package/assinatura/ABI em `STATUS.md` e evidence. Git transport deste executor teve DNS indisponível e o conector GitHub atual não oferece `workflow_dispatch`; nenhum CI disparado. Sem alterar workflow, criar PR ou usar resultado antigo para simular entrega.
+
+**Validação de campo ainda necessária:** rodagem gasolina/GNV comparáveis, janelas 10/25 min, tolerância ±3%, degrau 8–9 ms, perfil do sensor/LEDs, insets e toque da multimídia. Nenhuma escrita na ECU foi realizada. `PHYSICAL_VALIDATION_CLAIMED=false`.
+
 ## Pendente
 
-- Prova Android (`testDebugUnitTest lintDebug assembleDebug`) num único CI seletivo, para compilar `AutoCalJavascriptBridge` e a suíte inteira.
+- Resolver R-01 e concluir QA visual/reviewer independente no source atual antes de promover a release.
+- Prova Android (`testDebugUnitTest lintDebug assembleDebug`) num único CI seletivo no SHA final, para compilar `AutoCalJavascriptBridge` e a suíte inteira; ainda não disparado.
 - Validação física: gravar a curva refinada, recoletar o GNV e medir o resíduo e a ausência de trancos.
 - `tests/ui/autocal-cockpit.test.cjs` já falhava na `main` antes desta WU e não faz parte do gate.
