@@ -155,8 +155,17 @@ object AutoCalUiProjection {
         val copy = copy(snapshot)
         val petrolPending = forceAll || epoch.optBoolean("petrolPending", false)
         val gasPending = forceAll || epoch.optBoolean("gasPending", false)
-        val referencePending = forceAll || epoch.optBoolean("referencePending", false) ||
+        // Cada combustível possui sua própria vida útil. Durante RESET_GAS ou
+        // AutoMatch a curva de gasolina preservada continua visível, mas não
+        // autoriza comparação com a curva antiga de GNV. Epochs legados, sem
+        // discriminação por combustível, falham fechados nas duas curvas RV.
+        val legacyReferencePending = epoch.optBoolean("referencePending", false) ||
             !epoch.optBoolean("comparisonAllowed", false)
+        val splitReferenceKnown = epoch.has("petrolReferencePending") && epoch.has("gasReferencePending")
+        val petrolReferencePending = forceAll || petrolPending ||
+            if (splitReferenceKnown) epoch.optBoolean("petrolReferencePending") else legacyReferencePending
+        val gasReferencePending = forceAll || gasPending ||
+            if (splitReferenceKnown) epoch.optBoolean("gasReferencePending") else legacyReferencePending
         val excluded = mutableSetOf<String>()
         if (petrolPending) excluded += listOf(
             AutoCalProtocol.PETR_INJ_TBUF.key,
@@ -170,8 +179,8 @@ object AutoCalUiProjection {
             AutoCalProtocol.NUM_BUF_UPD_GAS.key,
             AutoCalProtocol.ACQUIRED_ZONES_GAS.key,
         )
-        if (referencePending || petrolPending) excluded += AutoCalProtocol.PETR_MNFLD_PRESS_RV.key
-        if (referencePending || gasPending) excluded += AutoCalProtocol.GAS_MNFLD_PRESS_RV.key
+        if (petrolReferencePending) excluded += AutoCalProtocol.PETR_MNFLD_PRESS_RV.key
+        if (gasReferencePending) excluded += AutoCalProtocol.GAS_MNFLD_PRESS_RV.key
         val fields = copy.optJSONArray("fields") ?: return copy
         repeat(fields.length()) { index ->
             val field = fields.optJSONObject(index) ?: return@repeat
