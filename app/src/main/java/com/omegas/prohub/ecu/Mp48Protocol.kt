@@ -99,9 +99,11 @@ object Mp48Protocol {
         val fuel = when {
             rpm <= 0 || fuelByte == 0x00 -> Mp48Fuel.ENGINE_OFF
             physicalCutoff -> Mp48Fuel.CUTOFF
-            fuelByte == 0x80 -> Mp48Fuel.PETROL
-            fuelByte == 0x88 -> Mp48Fuel.TRANSITION
-            fuelByte == 0x90 -> Mp48Fuel.CNG
+            // The 0x20 variants were recorded alongside their canonical states.
+            // Keep fuelByte unmodified: only observed variants are accepted here.
+            fuelByte == 0x80 || fuelByte == 0xA0 -> Mp48Fuel.PETROL
+            fuelByte == 0x88 || fuelByte == 0xA8 -> Mp48Fuel.TRANSITION
+            fuelByte == 0x90 || fuelByte == 0xB0 -> Mp48Fuel.CNG
             else -> Mp48Fuel.UNKNOWN
         }
         val state = when (fuel) {
