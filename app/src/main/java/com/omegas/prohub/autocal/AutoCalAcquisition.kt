@@ -46,7 +46,8 @@ object AutoCalAcquisition {
             repeat(18) { index ->
                 val timeRaw = times.getOrNull(index)
                 val mapRaw = maps.getOrNull(index)
-                val count = counts.getOrNull(index)
+                // O buffer GAS_PREV não possui contador de maturidade próprio.
+                val count = if (source.previous) null else counts.getOrNull(index)
                 val threshold = when {
                     source.fuel == "GASOLINA" && index in 0..5 -> petrolLowThreshold
                     source.fuel == "GASOLINA" -> petrolNormalThreshold
