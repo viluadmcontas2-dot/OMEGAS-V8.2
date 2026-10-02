@@ -2,10 +2,10 @@
 
 - WorkUnit ativa: `OMEGAS-WU-006` (AutoCal — Equivalência Refinada GNV = gasolina)
 - Branch: `claude/brave-darwin-wuliyo`
-- Estado WU-006: `LOCAL_PROVEN` (gate rápido, oráculo, paridade Kotlin↔Python, JUnit do motor); prova Android/APK pendente; `PHYSICAL_VALIDATION_CLAIMED=false`
+- Estado WU-006: `ANDROID_PROVEN` no SHA `b2df77bd2c84be63e72d2595101395eeabf5efe4` (gate rápido, testes Android/JVM, lint e APK verdes); `PHYSICAL_VALIDATION_CLAIMED=false`
 - Evidência WU-006: `docs/evidence/WU-006-refined-replay.md`
 
-## Último APK provado (WU-005)
+## APK histórico provado (WU-005)
 
 - Issue: #5
 - Branch de fechamento: `work/v8.2-functional-final-20260828`
@@ -65,5 +65,13 @@ Nenhuma escrita real em ECU, instalação no veículo ou validação física foi
 - Gate rápido: `QUALITY_GATE_FAST=PASS`; suíte JVM integral sem SDK: `778 → 674`, todos OK; 104 casos removidos exclusivamente com código morto.
 - Relatório e reprodução: `docs/evidence/HYGIENE-20261002.md`.
 - Inventário remoto: `docs/governance/BRANCHES.md`; nenhuma branch remota apagada.
-- Workflow final `omegas-preapk-build.yml`: pendente; run id, artifact e digest ainda não comprovados.
+- Estado da higiene: `PROVEN` — os três commits temáticos estão no SHA Android/APK provado abaixo.
+- Workflow final: `omegas-preapk-build.yml`, evento `workflow_dispatch`, run `37041514785`, job `110952524699`, conclusão `success`.
+- Fonte do APK: `b2df77bd2c84be63e72d2595101395eeabf5efe4`; árvore `80a2de2dc850335455b565f62455a211ae483aa3`.
+- Android: `./gradlew clean testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace` → `BUILD SUCCESSFUL in 4m 17s`.
+- Artifact: `11242364183` / `omegas-v82-rc-b2df77bd2c84be63e72d2595101395eeabf5efe4`, 4.812.072 bytes.
+- Digest do artifact: `sha256:5d31616999385d9585a11b200a7a1527377e5cb21dbb80d410eacbf6b0363334`; ZIP baixado pelo conector e hash recalculado, correspondente.
+- APK: `app-debug.apk`, 4.811.249 bytes; SHA-256 `9f06d6de3366f491696934da7832ebbe0f2c1b31405343ec0d5da6b4d18e59b8`, recalculado e correspondente ao recibo do build.
+- Evidência: `docs/evidence/HYGIENE-CI-20261002.json`; run: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/37041514785.
+- A prova do artifact pertence exclusivamente ao SHA acima. Em `68da5eec`, app, testes e workflow são idênticos ao SHA provado; documentos e `tools/autocal_refine/experiments.py` posteriores foram preservados e não são atribuídos a esse artifact.
 - `PHYSICAL_VALIDATION_CLAIMED=false`.

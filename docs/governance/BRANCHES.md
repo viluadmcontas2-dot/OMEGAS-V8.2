@@ -2,7 +2,7 @@
 
 Inventário somente leitura de `git ls-remote --heads origin`, consultado em 2026-10-02. Propostas para decisão do proprietário; nenhuma branch ou tag remota foi alterada por este inventário.
 
-| Branch | Último commit (UTC) | SHA | Proposta |
+| Branch | Último commit (ISO 8601) | SHA | Proposta |
 |---|---|---|---|
 | `OMEGAS-SPEED` | 2026-10-01T23:14:56-03:00 | `0317951f7301325174ac39fd6470171119678d68` | arquivar como tag — após revisão do dono |
 | `OmegasAtlas` | 2026-09-23T01:08:31-03:00 | `2ba19ecc58a120385d68b9b296595f325d542d14` | arquivar como tag — após revisão do dono |
