@@ -81,11 +81,6 @@ sealed interface ProductEvent {
         override val scientificRevision: ScientificRevision,
     ) : ProductEvent
 
-    data class PredictorChanged(
-        override val occurredAtMs: Long,
-        override val scientificRevision: ScientificRevision,
-    ) : ProductEvent
-
     data class CalibrationChanged(
         override val occurredAtMs: Long,
         override val scientificRevision: ScientificRevision,
