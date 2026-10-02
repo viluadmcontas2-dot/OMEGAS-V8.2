@@ -39,18 +39,27 @@ object AutoCalUiProjection {
         val nativeSession = statusSessionId(nativeStatus)
         val manualSession = statusSessionId(manualStatus)
         val currentSession = nativeSession ?: manualSession
+        val epoch = nativeStatus.optJSONObject("liveAcquisitionEpoch")
+            ?: nativeSnapshot.optJSONObject("liveAcquisitionEpoch")
+        val epochSessionValid = epoch == null ||
+            (nativeSession != null && epoch.optLong("usbSessionId", -1L) == nativeSession)
+        val epochBlocked = epoch != null &&
+            (!epochSessionValid || !epoch.optBoolean("comparisonAllowed", false))
+        // Mascaramento apenas na PROJEÇÃO, preservando o snapshot bruto para auditoria.
+        val visibleNative = if (epochBlocked) maskedAcquisition(nativeSnapshot, epoch, !epochSessionValid) else nativeSnapshot
 
-        val nativeCurrent = snapshotAvailable(nativeSnapshot) && sameSession(nativeSession, currentSession)
+        val nativeCurrent = snapshotAvailable(visibleNative) && sameSession(nativeSession, currentSession)
         val manualReady = manualStatus.optString("state").uppercase() in setOf("READY", "READY_PARTIAL")
         val manualCurrent = snapshotAvailable(manualSnapshot) && manualReady && sameSession(manualSession, currentSession)
-        val nativeTiming = referenceTiming(nativeSnapshot)
+        val nativeTiming = referenceTiming(visibleNative)
         val manualTiming = referenceTiming(manualSnapshot)
         val nativeReference =
-            nativeCurrent && hasNativeReference(nativeSnapshot) && nativeTiming.coherent
+            nativeCurrent && !epochBlocked && hasNativeReference(visibleNative) && nativeTiming.coherent
         val manualReference =
-            manualCurrent && hasNativeReference(manualSnapshot) && manualTiming.coherent
+            manualCurrent && !epochBlocked && hasNativeReference(manualSnapshot) && manualTiming.coherent
 
         val source = when {
+            epochBlocked -> if (nativeCurrent) SOURCE_NATIVE else SOURCE_NONE
             nativeReference -> SOURCE_NATIVE
             manualReference -> SOURCE_MANUAL
             nativeCurrent -> SOURCE_NATIVE
@@ -58,7 +67,7 @@ object AutoCalUiProjection {
             else -> SOURCE_NONE
         }
         val selected = when (source) {
-            SOURCE_NATIVE -> copy(nativeSnapshot)
+            SOURCE_NATIVE -> copy(visibleNative)
             SOURCE_MANUAL -> copy(manualSnapshot)
             else -> emptySnapshot()
         }
@@ -93,7 +102,7 @@ object AutoCalUiProjection {
                     },
                 )
         }
-        val correlationSource = if (nativeCurrent) nativeSnapshot else selected
+        val correlationSource = if (nativeCurrent) visibleNative else selected
         val correlationState = correlationSource.optJSONObject("nativeCorrelationState")
             ?.let(::copy)
             ?: emptyCorrelationState()
@@ -126,13 +135,55 @@ object AutoCalUiProjection {
             .put("revision", selected.optString("snapshotHash", ""))
             .put("snapshot", selected)
             .put("analysis", analysis)
-            .put("acquisitionZones", acquisitionZones(nativeSnapshot.takeIf { nativeCurrent }, selected))
+            .put("liveAcquisitionEpoch", epoch?.let(::copy) ?: JSONObject().put("available", false))
+            .put("acquisitionZones", acquisitionZones(visibleNative.takeIf { nativeCurrent }, selected))
             .put("correlation", correlationEvents)
             .put("correlationState", correlationState)
             .put("nativeStatus", copy(nativeStatus))
-            .put("nativeSnapshot", copy(nativeSnapshot))
+            .put("nativeSnapshot", copy(visibleNative))
             .put("manualStatus", copy(manualStatus))
             .put("manualSnapshot", copy(manualSnapshot))
+    }
+
+    /**
+     * Remove apenas a elegibilidade de apresentação das famílias da época anterior.
+     * O histórico bruto, os recibos e os 30 valores originais continuam preservados.
+     */
+    private fun maskedAcquisition(snapshot: JSONObject, epoch: JSONObject, forceAll: Boolean): JSONObject {
+        val copy = copy(snapshot)
+        val petrolPending = forceAll || epoch.optBoolean("petrolPending", false)
+        val gasPending = forceAll || epoch.optBoolean("gasPending", false)
+        val referencePending = forceAll || epoch.optBoolean("referencePending", false) ||
+            !epoch.optBoolean("comparisonAllowed", false)
+        val excluded = mutableSetOf<String>()
+        if (petrolPending) excluded += listOf(
+            AutoCalProtocol.PETR_INJ_TBUF.key,
+            AutoCalProtocol.MNFLD_PRESS_BUF.key,
+            AutoCalProtocol.NUM_BUF_UPD_PETR.key,
+            AutoCalProtocol.ACQUIRED_ZONES_PETROL.key,
+        )
+        if (gasPending) excluded += listOf(
+            AutoCalProtocol.PETR_INJ_TBUF_GAS.key,
+            AutoCalProtocol.MNFLD_PRESS_BUF_GAS.key,
+            AutoCalProtocol.NUM_BUF_UPD_GAS.key,
+            AutoCalProtocol.ACQUIRED_ZONES_GAS.key,
+        )
+        if (referencePending || petrolPending) excluded += AutoCalProtocol.PETR_MNFLD_PRESS_RV.key
+        if (referencePending || gasPending) excluded += AutoCalProtocol.GAS_MNFLD_PRESS_RV.key
+        val fields = copy.optJSONArray("fields") ?: return copy
+        repeat(fields.length()) { index ->
+            val field = fields.optJSONObject(index) ?: return@repeat
+            if (field.optString("key") in excluded) {
+                field.put("status", "STALE_EPOCH")
+                field.put("rawValues", JSONArray())
+                field.put("physicalValues", JSONArray())
+            }
+        }
+        if (gasPending) {
+            copy.put("nativeMaturityEvents", JSONArray())
+            copy.put("nativeCorrelationState", emptyCorrelationState())
+        }
+        return copy
     }
 
     private fun acquisitionZones(nativeCurrent: JSONObject?, selected: JSONObject): JSONObject = JSONObject()
