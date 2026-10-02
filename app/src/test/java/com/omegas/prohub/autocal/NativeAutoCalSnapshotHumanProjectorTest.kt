@@ -112,6 +112,24 @@ class NativeAutoCalSnapshotHumanProjectorTest {
         assertEquals(NativeAutoCalProgression.ShapeState.KNOWN, previous.shapeState)
     }
 
+    @Test
+    fun freshlyResetCurrentAndPreviousGasDoNotShowZeroZeroAsPhysicalPoints() {
+        val state = snapshot().apply {
+            replaceField("NUM_BUF_UPD_GAS", IntArray(18))
+            replaceField("ACQUIRED_ZONES_GAS", intArrayOf(0, 0, 0, 0))
+            replaceField("PETR_INJ_TBUF_GAS", IntArray(18))
+            replaceField("MNFLD_PRESS_BUF_GAS", IntArray(18))
+            replaceField("PETR_INJ_TBUF_GAS_PREV", IntArray(18))
+            replaceField("MNFLD_PRESS_BUF_GAS_PREV", IntArray(18))
+        }
+        val points = NativeAutoCalSnapshotHumanProjector.project(state).getJSONArray("acquisitionPoints")
+        for (fuel in listOf("GAS", "GAS_PREVIOUS")) {
+            val empty = pointsFor(points, fuel)
+            assertTrue(empty.all { !it.getBoolean("positioned") })
+            assertTrue(empty.all { it.isNull("tPetrolMs") && it.isNull("mapBar") })
+        }
+    }
+
     private fun snapshot(): JSONObject = JSONObject()
         .put("fields", JSONArray().apply {
             put(field("NUM_BUF_UPD_PETR", IntArray(18) { 8 }))
