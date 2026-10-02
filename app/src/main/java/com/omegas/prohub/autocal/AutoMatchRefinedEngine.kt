@@ -14,8 +14,10 @@ import kotlin.math.roundToInt
  *  - o AutoMatch nativo aplica ganho total ponto a ponto sobre curvas RV montadas
  *    com bandas de 1–2 amostras, sem suavização, limitado a [0,75; 1,20] — gera
  *    dentes de serra;
- *  - degraus de K com elasticidade |d ln K / d ln t| ≈ 1,9 produzem ciclo-limite do
- *    laço fechado em GNV (trancos medidos 8,0↔8,9 ms na sessão de referência).
+ *  - degraus de K (|d ln K / d ln t| ≈ 1,9 entre 8 e 9 ms na curva de referência) fazem
+ *    o GNV entregar gás de forma não linear ao pedido da gasolina (puxada com trancos);
+ *  - teste cego com a telemetria em gasolina no mesmo RPM×MAP (não usada pelo motor)
+ *    prefere a curva refinada e a trava de inclinação [E_MAX] (blind_telemetry_test.py).
  *
  * Pipeline: evidência por banda (buffers + contagem) → ajuste isotônico robusto de
  * T(MAP) por combustível → equivalência exata K_alvo(T_p) = K(T_g)·T_g/T_p →
@@ -42,7 +44,8 @@ object AutoMatchRefinedEngine {
     const val MIN_COMMON_MATURE = 4
     const val OUTLIER_MIN_LOG = 0.05
     const val OUTLIER_MAD_K = 3.0
-    const val LAMBDA = 0.1
+    /** Rigidez escolhida por validação cruzada nas sessões reais (prever faixa omitida), não por estética. */
+    const val LAMBDA = 0.3
     const val PRIOR_SUPPORTED = 0.05
     const val PRIOR_UNSUPPORTED = 1.0
     const val EVIDENCE_REF = 0.5
@@ -111,6 +114,9 @@ object AutoMatchRefinedEngine {
         val rejectedBands: List<RejectedBand>,
         val metricsBefore: Metrics?,
         val metricsAfter: Metrics?,
+        /** Erro médio ponderado entre o K pedido pela medição e a curva (fração); null sem equivalência. */
+        val evidenceErrorBefore: Double? = null,
+        val evidenceErrorAfter: Double? = null,
     ) {
         val equivalenceAvailable: Boolean get() = mode == Mode.EQUIVALENCE
         val available: Boolean get() = mode != Mode.UNAVAILABLE
@@ -195,7 +201,16 @@ object AutoMatchRefinedEngine {
             rejectedBands = rejected,
             metricsBefore = metrics(kOld, axisMs),
             metricsAfter = metrics(outRaw.map { it / Q14 }, axisMs),
+            evidenceErrorBefore = evidenceError(if (equivalence) targets.filter { it.weight >= matureWeight } else emptyList(), axisMs, kOld),
+            evidenceErrorAfter = evidenceError(if (equivalence) targets.filter { it.weight >= matureWeight } else emptyList(), axisMs, outRaw.map { it / Q14 }),
         )
+    }
+
+    private fun evidenceError(targets: List<Target>, axisMs: List<Double>, factors: List<Double>): Double? {
+        if (targets.isEmpty()) return null
+        val total = targets.sumOf { it.weight }
+        val sq = targets.sumOf { t -> val d = ln(interp(t.petrolMs, axisMs, factors)) - t.logTarget; t.weight * d * d }
+        return exp(kotlin.math.sqrt(sq / total)) - 1.0
     }
 
     fun metrics(factors: List<Double>, axisMs: List<Double>, lo: Int = 2, hi: Int = 22): Metrics {

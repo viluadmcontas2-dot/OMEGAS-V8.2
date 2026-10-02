@@ -69,7 +69,7 @@ test('fluxo humano: estados e mensagem principal derivados da análise Kotlin', 
   assert.equal(model.deriveFlow(analysis()).state, 'ready');
   assert.equal(model.headline(analysis(), model.deriveFlow(analysis())).title, 'Curva refinada pronta para revisão');
   const polish = { available: true, refinementMode: 'POLISH', changedCount: 4, matureCommonPoints: 1, minimumMatureCommonPoints: 4 };
-  assert.match(model.headline(polish, model.deriveFlow(polish)).title, /trancos/);
+  assert.match(model.headline(polish, model.deriveFlow(polish)).title, /linearidade/);
 });
 
 test('painel mostra uma ação primária e detalhes técnicos sob demanda', () => {
@@ -78,6 +78,8 @@ test('painel mostra uma ação primária e detalhes técnicos sob demanda', () =
   assert.match(host.innerHTML, /Revisar e aplicar 15 pontos/);
   assert.match(host.innerHTML, /<details class="refine-details">/);
   assert.match(host.innerHTML, /GASOLINA B10/);
+  assert.match(host.innerHTML, /Puxada no GNV/);
+  assert.doesNotMatch(host.innerHTML, /Serrilhado/);
   assert.equal((host.innerHTML.match(/class="primary"/g) || []).length, 1);
 });
 

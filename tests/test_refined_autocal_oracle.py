@@ -12,7 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools/autocal_refine"))
 
-import closed_loop_sim as sim  # noqa: E402
+import calibrate  # noqa: E402
+import blind_telemetry_test as blind  # noqa: E402
 import refined_oracle as oracle  # noqa: E402
 
 REAL = ROOT / "fixtures/autocal/real"
@@ -58,8 +59,9 @@ class RefinedEquivalenceAcceptance(unittest.TestCase):
         after = result["metricsAfter"]
         before = result["metricsBefore"]
         self.assertLessEqual(after["maxElasticity"], oracle.E_MAX + 0.01)
-        self.assertLess(after["roughness"], before["roughness"] * 0.1)
-        self.assertLessEqual(after["maxNeighborStep"], 0.05)
+        self.assertGreater(before["maxElasticity"], 1.5)
+        # funcional: a curva nova segue melhor o que a medição de GNV pede
+        self.assertLess(result["evidenceErrorAfter"], result["evidenceErrorBefore"] * 0.5)
         # nível da curva boa preservado na faixa usada em GNV (índices 4–18)
         deviation = sum(abs(n / o - 1.0) for n, o in zip(new[4:19], old[4:19])) / 15
         self.assertLess(deviation, 0.04)
@@ -87,7 +89,7 @@ class RefinedEquivalenceAcceptance(unittest.TestCase):
     def test_sawtooth_after_native_automatch_is_flagged_for_second_pass(self):
         result = oracle.refine(AUTOMATCH[2262])
         self.assertTrue(result["needsAnotherPass"])
-        self.assertLess(result["metricsAfter"]["roughness"], result["metricsBefore"]["roughness"] * 0.2)
+        self.assertLess(result["metricsAfter"]["maxElasticity"], result["metricsBefore"]["maxElasticity"] * 0.25)
         old = factors(result["currentRaw"])
         new = factors(result["refinedRaw"])
         self.assertTrue(all(abs(n / o - 1.0) <= 0.1501 for n, o in zip(new, old)))
@@ -97,21 +99,43 @@ class RefinedEquivalenceAcceptance(unittest.TestCase):
         self.assertEqual(result["refinedRaw"], result["currentRaw"])
 
 
-class ClosedLoopEvidence(unittest.TestCase):
-    def test_reference_curve_reproduces_jerk_and_refined_curve_is_stable(self):
-        result = oracle.refine(REF[95])
-        axis = result["axisMs"]
-        old = factors(result["currentRaw"])
-        new = factors(result["refinedRaw"])
-        for delay in (0, 1):
-            alpha = sim.calibrate_alpha(axis, old, delay)
-            self.assertIsNotNone(alpha)
-            old_osc = [a for _, a in sim.oscillation_profile(axis, old, alpha, delay, 1.5, 12.0, 0.25) if a > 0.1]
-            new_osc = [a for _, a in sim.oscillation_profile(axis, new, alpha * 1.5, delay, 1.5, 12.0, 0.25) if a > 0.1]
-            self.assertTrue(old_osc)
-            self.assertEqual(new_osc, [])
-        _, tail = sim.simulate(axis, old, 8.3, sim.calibrate_alpha(axis, old, 0), 0)
-        self.assertGreater(max(tail) - min(tail), 0.5)
+class FunctionalCalibration(unittest.TestCase):
+    def test_refined_curve_predicts_unseen_bands_better_than_current_curve(self):
+        """Validação cruzada: tirar uma faixa de GNV e prevê-la. Não é critério estético."""
+        refined, count = calibrate.held_out_error()
+        current, _ = calibrate.held_out_error(no_correction=True)
+        self.assertGreaterEqual(count, 20)
+        self.assertLess(refined, current * 0.6)  # medido: 3,2% vs 6,0%
+
+    def test_blind_telemetry_prefers_refined_curve_and_the_slope_guard(self):
+        """Teste cego: telemetria em gasolina no mesmo RPM×MAP (não usada pelo motor) julga a curva."""
+        guarded = calibrate.blind_errors()
+        loose = calibrate.blind_errors(e_max=9.0)
+        for (name, count, current, refined), (_, _, _, refined_loose) in zip(guarded, loose):
+            self.assertGreaterEqual(count, 40, name)
+            self.assertLess(refined, current * 0.8, name)
+            self.assertLessEqual(refined, refined_loose + 1e-9, name)
+
+    def test_petrol_itself_zigzags_so_alternation_is_not_the_jolt(self):
+        """A alternância 8,0↔8,9 ms também existe na gasolina: não é assinatura de tranco."""
+        with gzip.open(REAL / "ref_2026-10-01_1719.json.gz", "rt", encoding="utf-8") as handle:
+            telemetry = json.load(handle)["telemetry"]
+        zig = total = 0
+        for a, b, c in zip(telemetry, telemetry[1:], telemetry[2:]):
+            if not (a["fuel"] == b["fuel"] == c["fuel"] == "GASOLINA"):
+                continue
+            if any(not f["petrol_ms"] or f["petrol_ms"] < 7.5 for f in (a, b, c)):
+                continue
+            if c["t"] - a["t"] > 1200 or max(f["rpm"] for f in (a, b, c)) - min(f["rpm"] for f in (a, b, c)) > 120:
+                continue
+            if max(f["load_bar"] for f in (a, b, c)) - min(f["load_bar"] for f in (a, b, c)) > 0.03:
+                continue
+            d1 = math.log(b["petrol_ms"] / a["petrol_ms"])
+            d2 = math.log(c["petrol_ms"] / b["petrol_ms"])
+            total += 1
+            zig += d1 * d2 < 0 and min(abs(d1), abs(d2)) > 0.04
+        self.assertGreater(total, 50)
+        self.assertGreater(zig / total, 0.2)
 
 
 if __name__ == "__main__":

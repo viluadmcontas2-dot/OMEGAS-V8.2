@@ -249,11 +249,27 @@ object AutoMatchSnapshotAnalysis {
                 .put("maximumStepPercent", 15.0)
                 .put("maximumElasticity", AutoMatchRefinedEngine.E_MAX)
                 .put("minimumFactor", AutoMatchRefinedEngine.MIN_FACTOR))
+            .put("evidenceErrorBefore", result.evidenceErrorBefore ?: JSONObject.NULL)
+            .put("evidenceErrorAfter", result.evidenceErrorAfter ?: JSONObject.NULL)
+            .put("joltRiskBefore", joltRisk(result.metricsBefore?.maxElasticity))
+            .put("joltRiskAfter", joltRisk(result.metricsAfter?.maxElasticity))
             .put("metricsBefore", metricsJson(result.metricsBefore))
             .put("metricsAfter", metricsJson(result.metricsAfter))
             .put("targets", targets)
             .put("rejectedBands", rejected)
             .put("points", points)
+    }
+
+    /**
+     * Linearidade da puxada pela inclinação |d ln K / d ln t|: acima de [AutoMatchRefinedEngine.E_MAX]
+     * o gás entregue deixa de acompanhar linearmente o pedido da gasolina. O limite foi
+     * escolhido pelo teste cego de telemetria (tools/autocal_refine/blind_telemetry_test.py).
+     */
+    private fun joltRisk(elasticity: Double?): String = when {
+        elasticity == null -> "UNKNOWN"
+        elasticity <= AutoMatchRefinedEngine.E_MAX + 0.02 -> "LOW"
+        elasticity <= 1.0 -> "ATTENTION"
+        else -> "HIGH"
     }
 
     private fun metricsJson(metrics: AutoMatchRefinedEngine.Metrics?): Any = metrics?.let {

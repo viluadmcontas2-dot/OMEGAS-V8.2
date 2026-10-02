@@ -13,8 +13,9 @@ Princípios (ver docs/workunits/OMEGAS-WU-006.md):
   3. Equivalência exata: na banda com suporte nos dois combustíveis,
      K_alvo(T_p) = K_atual(T_g) · T_g / T_p.
   4. Ajuste Whittaker robusto em log K sobre u = ln(t) dos 30 nós do eixo.
-  5. Trava de coerência: |Δ ln K / Δ ln t| ≤ E_MAX entre nós vizinhos (evita o
-     ciclo-limite de laço fechado que gera trancos no GNV) e passo ≤ ±15%/execução.
+  5. Trava de coerência: |Δ ln K / Δ ln t| ≤ E_MAX entre nós vizinhos (o gás segue
+     linearmente o pedido da gasolina; validado no teste cego de telemetria) e
+     passo ≤ ±15%/execução.
   6. Ganho proporcional à evidência; sem evidência o ponto só recebe polimento de
      coerência; nada é gravado automaticamente.
 """
@@ -35,7 +36,7 @@ BAND_MATURE_COUNT = 3        # CALIBRATION_VAL_1 MinBufUpd*Thd observado = 3
 MIN_COMMON_MATURE = 4        # falha fechada abaixo disso
 OUTLIER_MIN_LOG = 0.05       # rejeição mínima absoluta (≈5%) de banda fora da curva
 OUTLIER_MAD_K = 3.0
-LAMBDA = 0.1                 # rigidez (2ª derivada em u=ln t), escolhida por varredura
+LAMBDA = 0.3                 # rigidez escolhida por validação cruzada (tirar uma faixa e prevê-la); ver calibrate.py
 PRIOR_SUPPORTED = 0.05       # peso do K atual em nó com evidência
 PRIOR_UNSUPPORTED = 1.0      # peso do K atual em nó sem evidência
 EVIDENCE_REF = 0.5           # massa de evidência que libera ganho 1
@@ -311,7 +312,7 @@ def coherence_feasible(x0, u, e):
 
 
 def effective_elasticity(x0, u):
-    """E_MAX quando viável; senão o menor limite viável (curva atual muito serrilhada
+    """E_MAX quando viável; senão o menor limite viável (curva atual com degraus fortes demais
     para ser corrigida em uma execução dentro de ±15%)."""
     if coherence_feasible(x0, u, E_MAX):
         return E_MAX
@@ -373,6 +374,15 @@ def metrics(factors, axis_ms, lo=2, hi=22):
         "roughness": round(rough, 6),
         "slopeSignChanges": sign_changes,
     }
+
+
+def evidence_error(targets, axis_ms, factors):
+    """Erro médio ponderado (fração) entre o K que a medição pede e a curva: métrica funcional."""
+    if not targets:
+        return None
+    total = sum(t["w"] for t in targets)
+    sq = sum(t["w"] * (math.log(interp(t["tp"], axis_ms, factors)) - t["y"]) ** 2 for t in targets)
+    return round(math.exp(math.sqrt(sq / total)) - 1.0, 5)
 
 
 # ------------------------------------------------------------- AutoMatch nativo
@@ -484,7 +494,10 @@ def refine(snapshot):
             origins.append("HELD")
             out_raw[j] = k_raw[j]  # sem evidência e sem anomalia: preserva o valor gravado
     out_factors = [r / Q14 for r in out_raw]
+    mature_targets = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)] if equivalence_available else []
     return {
+        "evidenceErrorBefore": evidence_error(mature_targets, axis_ms, k_old),
+        "evidenceErrorAfter": evidence_error(mature_targets, axis_ms, out_factors),
         "available": True,
         "mode": "EQUIVALENCE" if equivalence_available else "POLISH",
         "equivalenceAvailable": equivalence_available,

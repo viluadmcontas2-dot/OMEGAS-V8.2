@@ -60,4 +60,4 @@ Política sugerida: arquivar como tag e apagar `verify/*`/`build/*` após 7 dias
 - Keystore de release e Play Console. O manifesto exige USB host.
 - Assinatura via Play Billing com verificação offline e período de carência, porque no carro muitas vezes não há rede. Licença por instalador ou por veículo.
 - Crash reporting opt-in, extração de textos para i18n (pt-BR, depois es-AR e es-CO), termos de uso e responsabilidade sobre a gravação na ECU.
-- Diferencial vendável: "a ECU calibra, o OMEGAS refina". Mostrar o antes e depois mensurável (trancos, serrilhado, resíduo) e um relatório exportável.
+- Diferencial vendável: "a ECU calibra, o OMEGAS refina". Mostrar o antes e depois mensurável (linearidade da puxada, fidelidade à medição, resíduo) e um relatório exportável.

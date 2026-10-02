@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Reduz uma sessão `omegas-session-log-v1` (JSONL) a uma fixture AutoCal compacta.
 
-Mantém apenas o que o motor de Equivalência Refinada e o simulador de laço
-fechado consomem: snapshots nativos AutoCal (campos do AutoMatch) e frames de
+Mantém apenas o que o motor de Equivalência Refinada e o teste cego de
+telemetria consomem: snapshots nativos AutoCal (campos do AutoMatch) e frames de
 telemetria essenciais. Uso:
 
     python3 tools/autocal_refine/extract_session.py <events.jsonl> <saida.json.gz> <rótulo>

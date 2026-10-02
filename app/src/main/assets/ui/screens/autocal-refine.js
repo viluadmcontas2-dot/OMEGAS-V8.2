@@ -10,7 +10,7 @@
   const ORIGIN = {
     MEASURED: { label: 'Medido', tone: 'ok' },
     BLENDED: { label: 'Transição', tone: 'accent' },
-    SMOOTHED: { label: 'Suavizado', tone: 'warn' },
+    SMOOTHED: { label: 'Anti-tranco', tone: 'warn' },
     HELD: { label: 'Mantido', tone: 'muted' },
   };
   const POLL_MS = 300;
@@ -30,6 +30,23 @@
   function pct(value, digits = 1) {
     const number = finite(value);
     return number === null ? '—' : `${number > 0 ? '+' : ''}${fmt(number, digits)}%`;
+  }
+
+  const RISK = { LOW: ['Linear', 'ok'], ATTENTION: ['Pouco linear', 'warn'], HIGH: ['Com trancos', 'danger'], UNKNOWN: ['—', 'muted'] };
+
+  /** Trecho (em ms) onde a curva é mais íngreme — é onde a ECU oscila e dá o tranco. */
+  function steepestSpan(points, key) {
+    let best = null;
+    for (let i = 2; i < Math.min(points.length - 1, 22); i += 1) {
+      const a = points[i];
+      const b = points[i + 1];
+      const ka = finite(a?.[key]);
+      const kb = finite(b?.[key]);
+      if (!ka || !kb || !finite(a.referenceTimeMs) || !finite(b.referenceTimeMs)) continue;
+      const e = Math.abs(Math.log(kb / ka) / Math.log(b.referenceTimeMs / a.referenceTimeMs));
+      if (!best || e > best.e) best = { e, from: a.referenceTimeMs, to: b.referenceTimeMs };
+    }
+    return best;
   }
 
   /** Estado humano do fluxo a partir da análise Kotlin (puro, testável). */
@@ -57,11 +74,11 @@
     const need = finite(a.minimumMatureCommonPoints) ?? 4;
     if (a.refinementMode !== 'EQUIVALENCE') {
       return Number(a.changedCount) > 0
-        ? { tone: 'warn', title: 'Curva atual tem degraus que causam trancos', text: `Dá para suavizar já. Para a equivalência completa faltam ${Math.max(0, need - mature)} faixa(s) de carga com gasolina e GNV.` }
+        ? { tone: 'warn', title: 'A curva atual tem degraus que tiram a linearidade do GNV', text: `Dá para corrigir os degraus agora sem mudar o nível da curva. Para igualar o GNV à gasolina faltam ${Math.max(0, need - mature)} faixa(s) de carga coletadas nos dois combustíveis.` }
         : { tone: 'muted', title: 'Coletando gasolina e GNV', text: `Faixas comparáveis: ${mature} de ${need} necessárias. Rode variando a carga com o motor quente.` };
     }
     if (Number(a.changedCount) === 0) return { tone: 'ok', title: 'GNV equivalente à gasolina', text: 'A curva atual já está dentro da tolerância medida.' };
-    return { tone: 'accent', title: 'Curva refinada pronta para revisão', text: `${a.changedCount} ponto(s) ajustados com evidência de ${mature} faixa(s) comparáveis.` };
+    return { tone: 'accent', title: 'Curva refinada pronta para revisão', text: `O GNV passa a seguir o que a gasolina pede em ${mature} faixas medidas. O formato medido é mantido; só os degraus que tiram a linearidade da puxada são limitados.` };
   }
 
   function chartSvg(points) {
@@ -209,11 +226,13 @@
       const before = a.metricsBefore || {};
       const after = a.metricsAfter || {};
       const changed = this.changedPoints();
-      const roughCut = finite(before.roughness) && finite(after.roughness) !== null && before.roughness > 0
-        ? Math.round((1 - after.roughness / before.roughness) * 100) : null;
-      const riskBefore = finite(before.maxElasticity);
-      const riskAfter = finite(after.maxElasticity);
-      const risk = v => v === null ? 'muted' : v > 1 ? 'danger' : v > 0.5 ? 'warn' : 'ok';
+      const riskBefore = RISK[a.joltRiskBefore] || RISK.UNKNOWN;
+      const riskAfter = RISK[a.joltRiskAfter] || RISK.UNKNOWN;
+      const span = steepestSpan(a.points || [], 'currentFactor');
+      const where = a.joltRiskBefore && a.joltRiskBefore !== 'LOW' && span ? `degrau hoje em ${fmt(span.from, 1)}–${fmt(span.to, 1)} ms` : 'gás acompanha a gasolina';
+      const errBefore = finite(a.evidenceErrorBefore);
+      const errAfter = finite(a.evidenceErrorAfter);
+      const maxChange = changed.reduce((m, p) => Math.max(m, Math.abs(finite(p.deltaPercent) || 0)), 0);
       const steps = [
         ['Gasolina', 'faixas coletadas'],
         ['GNV', 'mesmas faixas no GNV'],
@@ -259,16 +278,17 @@
           ${a.available ? `<div class="refine-body">
             <div class="refine-chart-wrap">${chartSvg(a.points)}<div class="refine-legend"><span class="current">Atual</span><span class="refined">Refinada</span>${legend}</div></div>
             <dl class="refine-metrics">
-              <div><dt>Risco de tranco</dt><dd><b data-tone="${risk(riskBefore)}">${fmt(riskBefore, 2)}</b> → <b data-tone="${risk(riskAfter)}">${fmt(riskAfter, 2)}</b></dd><span>inclinação máx. da curva (seguro ≤ ${fmt(a.guards?.maximumElasticity, 2)})</span></div>
-              <div><dt>Serrilhado</dt><dd>${roughCut === null ? '—' : `−${roughCut}%`}</dd><span>rugosidade removida</span></div>
-              <div><dt>Maior degrau</dt><dd>${fmt((before.maxNeighborStep || 0) * 100, 1)}% → ${fmt((after.maxNeighborStep || 0) * 100, 1)}%</dd><span>entre pontos vizinhos</span></div>
-              <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas</dd><span>gasolina × GNV comparáveis</span></div>
+              <div><dt>Puxada no GNV</dt><dd><b data-tone="${riskBefore[1]}">${riskBefore[0]}</b> → <b data-tone="${riskAfter[1]}">${riskAfter[0]}</b></dd><span>${escapeHtml(where)}</span></div>
+              <div><dt>Fidelidade à medição</dt><dd>${errBefore === null ? 'sem medição' : `${fmt(errBefore * 100, 1)}% → ${fmt(errAfter * 100, 1)}%`}</dd><span>diferença entre a curva e o que o GNV pede</span></div>
+              <div><dt>Mudança</dt><dd>${changed.length} ponto${changed.length === 1 ? '' : 's'}</dd><span>${changed.length ? `até ±${fmt(maxChange, 1)}% (limite ±${fmt(a.guards?.maximumStepPercent, 0)}%)` : 'curva mantida'}</span></div>
+              <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas</dd><span>gasolina × GNV medidas pela ECU</span></div>
             </dl>
           </div>` : ''}
-          ${a.needsAnotherPass ? '<p class="refine-note">A curva atual está muito serrilhada: esta passada respeita o limite de ±15% e uma segunda passada termina o ajuste.</p>' : ''}
+          ${a.needsAnotherPass ? '<p class="refine-note">A curva atual tem degraus fortes demais para corrigir com segurança de uma vez (limite ±15%). Grave, rode alguns minutos e o app propõe a segunda passada.</p>' : ''}
           <div class="refine-actions">${primary}</div>
           ${review}
           ${a.available ? `<details class="refine-details"><summary>Detalhes técnicos</summary>
+            <p>Inclinação máx. |d ln K / d ln t|: ${fmt(before.maxElasticity, 2)} → ${fmt(after.maxElasticity, 2)} (limite ${fmt(a.elasticityLimit, 2)}; acima disso o gás deixa de seguir linearmente o pedido da gasolina — escolhido pelo teste cego com telemetria em gasolina).</p>
             <p>${escapeHtml(a.algorithm || '')} · modo ${escapeHtml(a.refinementMode || '')} · buffers ${a.buffersCoherent ? 'coerentes' : 'incoerentes'} · trava ±${fmt(a.guards?.maximumStepPercent, 0)}%/execução, |d ln K / d ln t| ≤ ${fmt(a.elasticityLimit, 2)}</p>
             ${targets.length ? `<table><thead><tr><th>MAP</th><th>T gasolina</th><th>T no GNV</th><th>Razão</th><th>Peso</th><th>K alvo</th></tr></thead><tbody>${targets.map(t => `<tr${finite(t.robustWeight) !== null && t.robustWeight < 0.3 ? ' class="discounted"' : ''}><td>${fmt(t.mapBar, 3)}</td><td>${fmt(t.petrolMs, 2)}</td><td>${fmt(t.gasMs, 2)}</td><td>${fmt(t.ratio, 3)}</td><td>${fmt(t.weight, 2)}</td><td>${fmt(t.targetFactor, 3)}</td></tr>`).join('')}</tbody></table>` : ''}
             ${rejected.length ? `<p>Bandas descartadas por fugirem da curva física: ${rejected.map(r => `${escapeHtml(r.fuel)} B${Number(r.band) + 1} (${fmt(r.mapBar, 2)} bar, ${fmt(r.timeMs, 2)} ms)`).join(' · ')}</p>` : ''}
