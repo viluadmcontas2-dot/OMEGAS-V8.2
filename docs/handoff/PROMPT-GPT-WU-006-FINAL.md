@@ -63,8 +63,10 @@ São de 75 sessões do dono e da sessão de referência 2026-10-01 17:19.
 - Ele cria **dente de serra**, picos e topo chapado. Também reage a bandas outlier: a banda 9 com razão 0,824, contra vizinhas de ~1,05.
 
 **Tranco no GNV:**
-- O tranco é **ciclo-limite**. Onde a Curva K é íngreme (|d lnK/d ln t| > ~0,35), a ECU oscila 8↔9 ms a cada quadro.
-- O fator observado é 1,18, igual ao degrau da curva.
+- O degrau da curva de referência entre 8 e 9 ms (K 0,925 → 1,087, fator 1,18) coincide com a região onde o dono sente o tranco. Degrau forte entre vizinhos (|d lnK/d ln t| > 0,35) tira a linearidade da puxada.
+- **A hipótese de "ciclo-limite" foi DESCARTADA.** A alternância 8,0↔8,9 ms acontece também na gasolina, então é ruído da ECU e não prova de oscilação causada pela curva. O simulador foi removido.
+- Por isso o critério é **funcional**: a curva só muda quando aproxima o GNV do que a gasolina pede (teste cego). A trava de 0,35 foi escolhida por ser a variante de menor erro cego, não por estética.
+- Na UI, fale em "degrau que tira a linearidade da puxada". Não fale em "ciclo-limite" nem prometa que o tranco some: isso só a rodagem no carro prova.
 
 **Leitura estável (`EquivalenceLedger`):**
 - O zigue-zague 8↔9 ms existe até na gasolina.
