@@ -44,10 +44,28 @@ def stable_frames(telemetry, fuel, until_ms=None):
     return out
 
 
+CELL_CAP = 30
+
+
+def cap_cells(obs, cell_cap=CELL_CAP):
+    """Mesma retenção do EquivalenceLedger: cada região RPM×MAP (150 rpm × 0,02 bar) guarda
+    só as cell_cap leituras mais recentes; a ordem de chegada é preservada."""
+    import math
+    from collections import deque
+    cells = {}
+    for seq, o in enumerate(obs):
+        key = (math.floor(int(o["rpm"]) / 150), math.floor(int(o["map"] * 1000) / 20))
+        q = cells.setdefault(key, deque())
+        q.append((seq, o))
+        if len(q) > cell_cap:
+            q.popleft()
+    return [o for _, o in sorted((item for q in cells.values() for item in q), key=lambda x: x[0])]
+
+
 def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
     """Pares (t_gasolina mediano no mesmo RPM×MAP, t_no_GNV) de leituras estáveis."""
-    petrol = stable_frames(telemetry, "GASOLINA")
-    gas = stable_frames(telemetry, "GNV", until_ms)
+    petrol = cap_cells(stable_frames(telemetry, "GASOLINA"))
+    gas = cap_cells(stable_frames(telemetry, "GNV", until_ms))
     out = []
     for g in gas:
         matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol)

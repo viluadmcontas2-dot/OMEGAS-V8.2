@@ -126,4 +126,17 @@ class EquivalenceLedgerTest {
             assertEquals(e.second, a.second, 1e-9)
         }
     }
+
+    @Test
+    fun `uma regiao muito visitada nao apaga as outras regioes`() {
+        val ledger = EquivalenceLedger(null)
+        var t = drive(ledger, "GASOLINA", 3000.0, 0.80, 8.0, 0, 6)
+        // marcha lenta / cruzeiro repetido por muito tempo na mesma região
+        t = drive(ledger, "GASOLINA", 2000.0, 0.60, 5.0, t + 5_000, 3_000)
+        val index = ledger.index()
+        assertTrue(index.getInt("petrolObservations") <= 2 * EquivalenceLedger.CELL_CAP)
+        val dense = ledger.denseBandsJson(0.025, 1).getJSONArray("petrol")
+        assertTrue((0 until dense.length()).any { abs(dense.getJSONObject(it).getDouble("tpetMs") - 8.0) < 1e-9 })
+    }
 }
+

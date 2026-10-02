@@ -211,10 +211,18 @@ object AutoMatchSnapshotAnalysis {
         }
     }
 
+    /** Abaixo disso (ms de Petrol Inj.) o refino não reduz K: protege contra o motor apagar. */
+    const val LOW_GUARD_MS = 3.5
+
     private fun refinedJson(base: JSONObject, result: AutoMatchRefinedEngine.Result, buffersCoherent: Boolean): JSONObject {
         val points = JSONArray()
-        result.refinedRaw.forEachIndexed { index, refinedRaw ->
+        result.refinedRaw.forEachIndexed { index, engineRaw ->
             val currentRaw = result.currentRaw[index]
+            // Trava da baixa: marcha lenta, desaceleração e embreagem (Petrol Inj. < LOW_GUARD_MS)
+            // é onde o motor apaga no GNV quando a curva fica pobre. O refino nunca empobrece
+            // essa região; só mantém ou enriquece.
+            val lowGuard = result.axisMs[index] < LOW_GUARD_MS && engineRaw < currentRaw
+            val refinedRaw = if (lowGuard) currentRaw else engineRaw
             points.put(JSONObject()
                 .put("index", index)
                 .put("referenceTimeMs", result.axisMs[index])
@@ -224,7 +232,7 @@ object AutoMatchSnapshotAnalysis {
                 .put("calculatedFactor", KFactorProtocol.factorFromRaw(refinedRaw))
                 .put("deltaPercent", if (currentRaw > 0) (refinedRaw - currentRaw) * 100.0 / currentRaw else JSONObject.NULL)
                 .put("evidenceGain", result.gain[index])
-                .put("origin", result.origins[index].name))
+                .put("origin", if (lowGuard) "LOW_GUARD" else result.origins[index].name))
         }
         val targets = JSONArray(result.targets.filter { it.mapBar.isFinite() }.map { target ->
             JSONObject()
@@ -255,7 +263,8 @@ object AutoMatchSnapshotAnalysis {
             .put("guards", JSONObject()
                 .put("maximumStepPercent", 15.0)
                 .put("maximumElasticity", AutoMatchRefinedEngine.E_MAX)
-                .put("minimumFactor", AutoMatchRefinedEngine.MIN_FACTOR))
+                .put("minimumFactor", AutoMatchRefinedEngine.MIN_FACTOR)
+                .put("lowGuardMs", LOW_GUARD_MS))
             .put("evidenceErrorBefore", result.evidenceErrorBefore ?: JSONObject.NULL)
             .put("evidenceErrorAfter", result.evidenceErrorAfter ?: JSONObject.NULL)
             .put("joltRiskBefore", joltRisk(result.metricsBefore?.maxElasticity))

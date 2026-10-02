@@ -15,9 +15,17 @@ class RefinementAutopilotTest {
     private fun monitor(count: Int, max: Int? = 3, enabled: Int? = 1) = JSONObject()
         .put("autoMatchCount", count).put("maxAutomatch", max ?: JSONObject.NULL).put("autoCalEnabled", enabled ?: JSONObject.NULL)
 
-    private fun acquisition(petrolValid: Int, gasValid: Int) = JSONObject().put("points", JSONArray().apply {
-        repeat(18) { put(JSONObject().put("fuel", "GASOLINA").put("state", if (it < petrolValid) "VALIDO" else "COLETANDO")) }
-        repeat(18) { put(JSONObject().put("fuel", "GNV").put("state", if (it < gasValid) "VALIDO" else "COLETANDO")) }
+    private fun zone(index: Int) = when (index) { in 0..5 -> 0; in 6..9 -> 1; in 10..13 -> 2; else -> 3 }
+
+    /** Formato da Platina (AutoCalAcquisition): ZONA_ADQUIRIDA/ATIVIDADE/AGUARDANDO + zoneAcquired por zona. */
+    private fun acquisition(petrolAcquired: Int, gasAcquired: Int) = JSONObject().put("points", JSONArray().apply {
+        listOf("GASOLINA" to petrolAcquired, "GNV" to gasAcquired).forEach { (fuel, acquired) ->
+            repeat(18) { i ->
+                val zoneDone = (0..17).filter { zone(it) == zone(i) }.all { it < acquired }
+                put(JSONObject().put("fuel", fuel).put("zone", zone(i)).put("zoneAcquired", zoneDone)
+                    .put("state", if (i < acquired && zoneDone) "ZONA_ADQUIRIDA" else if (i < acquired) "ATIVIDADE" else "AGUARDANDO"))
+            }
+        }
     })
 
     private fun index(vararg bands: Pair<Double?, Int>) = JSONObject().put("samples", bands.sumOf { it.second })
@@ -85,5 +93,16 @@ class RefinementAutopilotTest {
         val r = p.observe(true, monitor(3), acquisition(18, 18), index(null to 2, 1.1 to 3, null to 0, null to 0, null to 0), noJournal, 0)
         assertEquals("COLETANDO_NOSSOS", r.getString("phase"))
         assertTrue(r.getString("next").contains("ms"))
+    }
+
+    @Test
+    fun `conta os pontos da ECU pelos estados da Platina e zonas adquiridas`() {
+        val p = pilot()
+        val r = p.observe(true, monitor(2), acquisition(8, 6), offIndex, noJournal, 0)
+        assertEquals(8, r.getInt("petrolValid"))
+        assertEquals(6, r.getInt("gasValid"))
+        assertEquals(1, r.getInt("petrolZones"))
+        assertEquals(1, r.getInt("gasZones"))
+        assertEquals("ECU_TRABALHANDO", r.getString("phase"))
     }
 }

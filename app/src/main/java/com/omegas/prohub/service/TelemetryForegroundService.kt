@@ -14,6 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.RefinementAutopilot
 import com.omegas.prohub.autocal.RefinementJournal
+import com.omegas.prohub.autocal.StallWatch
 import androidx.core.app.ServiceCompat
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
@@ -111,6 +112,9 @@ class TelemetryForegroundService : Service() {
     /** Fase do refino (ECU no automático → nossa vez → verificando → estável); só observa e avisa. */
     lateinit var refinementAutopilot: RefinementAutopilot
         private set
+    /** Onde o motor apagou no GNV (desaceleração/embreagem): só observa, mostra no Refino. */
+    lateinit var stallWatch: StallWatch
+        private set
     private lateinit var learningTemperature: LearningTemperatureSettings
     private lateinit var learningTolerances: LearningToleranceSettings
 
@@ -146,6 +150,7 @@ class TelemetryForegroundService : Service() {
         equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
         refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
         refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"))
+        stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
         sessionRecorder.recoverDocumentsMirrorAsync()
@@ -856,6 +861,19 @@ class TelemetryForegroundService : Service() {
                 gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
             ),
         )
+
+        stallWatch.accept(
+            StallWatch.Frame(
+                t = accepted.optLong("timestamp", System.currentTimeMillis()),
+                fuel = live.optString("fuel").uppercase(),
+                rpm = live.optDouble("rpm", 0.0),
+                map = live.optDouble("load_bar", 0.0),
+                petrolMs = live.optDouble("petrol_ms", 0.0),
+            ),
+        )?.let { event ->
+            sessionRecorder.record("engine_stall", "autocal", event, force = true)
+            log.add("WARN", "REFINO", "Motor apagou no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
+        }
 
         sessionRecorder.record("telemetry", "mp48", live)
         sessionRecorder.record("engine_event", "native", root, force = false)

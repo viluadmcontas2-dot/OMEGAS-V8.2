@@ -29,8 +29,14 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         const val MATCH_RPM = 150.0
         const val MATCH_MAP = 0.02
         const val MIN_PETROL_MS = 1.0
-        const val MAX_PETROL_OBS = 4_000
-        const val MAX_GAS_OBS = 1_500
+        /** Teto por região RPM×MAP (célula = janela de casamento 150 rpm × 0,02 bar). */
+        const val CELL_CAP = 30
+        /** Teto de segurança por combustível; acima dele sai a leitura mais antiga da região mais cheia. */
+        const val MAX_PETROL_OBS = 20_000
+        const val MAX_GAS_OBS = 10_000
+
+        fun cellKey(rpm: Double, map: Double): Long = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
+            Math.floorDiv((map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
         /** Abaixo disso a ECU tem estratégia de lenta própria: fora do índice de condução. */
         const val DRIVING_MIN_RPM = 1_000.0
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
@@ -48,8 +54,36 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     private val lock = Any()
     private val window = ArrayDeque<Frame>(3)
-    private val petrol = ArrayDeque<Obs>()
-    private val gas = ArrayDeque<Obs>()
+    /**
+     * Leituras guardadas por região RPM×MAP. Antes era uma fila única: com telemetria a ~80 ms
+     * ela se renovava em poucos minutos e regiões inteiras sumiam só por passar o tempo
+     * (o operador via "nossos pontos" 36 → 18 → 22). Agora cada região guarda as suas
+     * CELL_CAP leituras mais recentes e não perde lugar para outra.
+     */
+    private class CellLane(private val cap: Int) : AbstractCollection<Obs>() {
+        private val cells = LinkedHashMap<Long, ArrayDeque<Pair<Long, Obs>>>()
+        private var seq = 0L
+        private var count = 0
+        private var flat: List<Obs>? = null
+        override val size: Int get() = count
+        override fun iterator(): Iterator<Obs> = flatten().iterator()
+        fun add(obs: Obs) {
+            val cell = cells.getOrPut(cellKey(obs.rpm, obs.map)) { ArrayDeque() }
+            cell.addLast(seq++ to obs)
+            count++
+            if (cell.size > CELL_CAP) { cell.removeFirst(); count-- }
+            while (count > cap) {
+                val fullest = cells.values.maxByOrNull { it.size } ?: break
+                fullest.removeFirst(); count--
+            }
+            flat = null
+        }
+        fun clear() { cells.clear(); count = 0; flat = null }
+        private fun flatten(): List<Obs> = flat ?: cells.values.flatten().sortedBy { it.first }.map { it.second }.also { flat = it }
+    }
+
+    private val petrol = CellLane(MAX_PETROL_OBS)
+    private val gas = CellLane(MAX_GAS_OBS)
     private var gasEpochReason = "INICIO"
     private var gasEpochAt = 0L
     private var curveFingerprint: String? = null
@@ -79,10 +113,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             while (window.size > 3) window.removeFirst()
             obs = stableObservation()
             if (obs != null) {
-                val lane = if (frame.fuel == "GASOLINA") petrol else gas
-                lane.addLast(obs)
-                val cap = if (frame.fuel == "GASOLINA") MAX_PETROL_OBS else MAX_GAS_OBS
-                while (lane.size > cap) lane.removeFirst()
+                (if (frame.fuel == "GASOLINA") petrol else gas).add(obs)
                 dirty = true
                 cachedIndex = null
         cachedDense = null
@@ -272,11 +303,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         try {
             val root = JSONObject(source.readText())
             if (root.optString("format") != FORMAT) return
-            fun lane(array: JSONArray?, into: ArrayDeque<Obs>) {
+            fun lane(array: JSONArray?, into: CellLane) {
                 if (array == null) return
                 for (i in 0 until array.length()) {
                     val row = array.optJSONArray(i) ?: continue
-                    into.addLast(Obs(row.optLong(0), row.optDouble(1), row.optDouble(2), row.optDouble(3)))
+                    into.add(Obs(row.optLong(0), row.optDouble(1), row.optDouble(2), row.optDouble(3)))
                 }
             }
             lane(root.optJSONArray("petrol"), petrol)

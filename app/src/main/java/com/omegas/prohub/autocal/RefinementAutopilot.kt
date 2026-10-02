@@ -30,7 +30,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         const val QUIET_MS = 10 * 60_000L
         /** Sem aquisição completa (faixas que o motorista nunca visita), espera mais. */
         const val QUIET_PARTIAL_MS = 25 * 60_000L
-        const val PARTIAL_MIN_VALID = 12
+        const val PARTIAL_MIN_ZONES = 3
         /** ±3%: abaixo disso GNV e gasolina já pedem o mesmo (ruído de medição ~2%). */
         val TOLERANCE_LOG = ln(1.03)
         const val MIN_BAND_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
@@ -75,14 +75,17 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 if (lastCount != count) dirty = true
                 lastCount = count
             }
-            val petrolValid = validCount(acquisition, "GASOLINA")
-            val gasValid = validCount(acquisition, "GNV")
-            val complete = petrolValid >= 18 && gasValid >= 18
+            // Pontos da ECU com atividade (os que o gráfico desenha) e zonas que a ECU deu como adquiridas.
+            val petrolValid = activeCount(acquisition, "GASOLINA")
+            val gasValid = activeCount(acquisition, "GNV")
+            val petrolZones = acquiredZones(acquisition, "GASOLINA")
+            val gasZones = acquiredZones(acquisition, "GNV")
+            val complete = petrolZones >= 4 && gasZones >= 4
             val fresh = when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
                 complete && quietMs >= QUIET_MS -> "AQUISICAO_COMPLETA"
-                petrolValid >= PARTIAL_MIN_VALID && gasValid >= PARTIAL_MIN_VALID && quietMs >= QUIET_PARTIAL_MS -> "SEM_AUTOMATICO_NOVO"
+                petrolZones >= PARTIAL_MIN_ZONES && gasZones >= PARTIAL_MIN_ZONES && quietMs >= QUIET_PARTIAL_MS -> "SEM_AUTOMATICO_NOVO"
                 else -> null
             }
             if (fresh != null && fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
@@ -94,6 +97,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
                 .put("petrolValid", petrolValid)
                 .put("gasValid", gasValid)
+                .put("petrolZones", petrolZones)
+                .put("gasZones", gasZones)
                 .put("quietMinutes", quietMs / 60_000.0)
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
@@ -156,14 +161,30 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     fun json(): JSONObject = synchronized(lock) { JSONObject(last.toString()) }
 
-    private fun validCount(acquisition: JSONObject?, fuel: String): Int {
+    /** Estados de banda com dado real (Platina: ZONA_ADQUIRIDA/ATIVIDADE; formato antigo: VALIDO/COLETANDO). */
+    private val activeStates = setOf("ZONA_ADQUIRIDA", "ATIVIDADE", "VALIDO", "COLETANDO")
+
+    private fun activeCount(acquisition: JSONObject?, fuel: String): Int {
         val points = acquisition?.optJSONArray("points") ?: return 0
         var n = 0
         for (i in 0 until points.length()) {
             val p = points.optJSONObject(i) ?: continue
-            if (p.optString("fuel") == fuel && p.optString("state") == "VALIDO") n++
+            if (p.optString("fuel") == fuel && p.optString("state") in activeStates) n++
         }
         return n
+    }
+
+    /** Zonas (0..3) que a ECU marcou como adquiridas para o combustível. */
+    private fun acquiredZones(acquisition: JSONObject?, fuel: String): Int {
+        val points = acquisition?.optJSONArray("points") ?: return 0
+        val zones = HashSet<Int>()
+        for (i in 0 until points.length()) {
+            val p = points.optJSONObject(i) ?: continue
+            if (p.optString("fuel") != fuel) continue
+            if (p.optBoolean("zoneAcquired") || p.optString("state") == "VALIDO") zones += p.optInt("zone", -1)
+        }
+        zones.remove(-1)
+        return zones.size
     }
 
     private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject): String = when (phase) {
@@ -181,7 +202,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
-        "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. Bandas da ECU: gasolina $petrolValid/18, GNV $gasValid/18."
+        "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
         "COLETANDO_NOSSOS", "VERIFICANDO" -> {
             val wanted = (0 until missing.length()).mapNotNull { missing.optJSONObject(it) }
                 .joinToString(", ") { "%.1f–%.1f ms".format(it.optDouble("fromMs"), it.optDouble("toMs")) }

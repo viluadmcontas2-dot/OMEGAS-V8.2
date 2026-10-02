@@ -95,4 +95,19 @@ class AutoMatchRefinedEngineTest {
         assertEquals("POLISH", analysis.getString("refinementMode"))
         assertFalse(analysis.getBoolean("buffersCoherent"))
     }
+
+    @Test
+    fun `refino nunca empobrece a baixa onde o motor apaga`() {
+        for ((name, seq) in listOf("ref_2026-10-01_1719" to 95)) {
+            val points = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot(name, seq)).getJSONArray("points")
+            for (i in 0 until points.length()) {
+                val p = points.getJSONObject(i)
+                if (p.getDouble("referenceTimeMs") < AutoMatchSnapshotAnalysis.LOW_GUARD_MS) {
+                    assertTrue("ponto ${p.getDouble("referenceTimeMs")} ms empobreceu",
+                        p.getInt("calculatedRaw") >= p.getInt("currentRaw"))
+                }
+            }
+        }
+    }
 }
+
