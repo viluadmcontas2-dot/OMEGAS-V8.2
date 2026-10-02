@@ -26,7 +26,7 @@ async def main():
             PlatinaSameShaGate.run, args.max_checks,
             id=WORKFLOW_ID, task_queue=QUEUE,
         )
-        print(json.dumps({"workflow_id": handle.id, "run_id": handle.first_execution_run_id}))
+        print(json.dumps({"workflow_id": handle.id, "status": "started"}))
     else:
         handle = client.get_workflow_handle(WORKFLOW_ID)
         if args.action == "status":
