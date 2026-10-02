@@ -14,6 +14,8 @@ class NativeAutoCalAcquisitionEpoch {
         val petrolPending: Boolean,
         val gasPending: Boolean,
         val referencePending: Boolean,
+        val petrolReferencePending: Boolean,
+        val gasReferencePending: Boolean,
         val petrolSamples: Int,
         val gasSamples: Int,
         val reason: String,
@@ -29,7 +31,9 @@ class NativeAutoCalAcquisitionEpoch {
     private var gasGeneration = 0
     private var petrolPending = true
     private var gasPending = true
-    private var referencePending = true
+    private var petrolReferencePending = true
+    private var gasReferencePending = true
+    private val referencePending: Boolean get() = petrolReferencePending || gasReferencePending
     private var petrolSamples = 0
     private var gasSamples = 0
     private var previousPetrol: IntArray? = null
@@ -43,7 +47,8 @@ class NativeAutoCalAcquisitionEpoch {
         gasGeneration = 0
         petrolPending = true
         gasPending = true
-        referencePending = true
+        petrolReferencePending = true
+        gasReferencePending = true
         petrolSamples = 0
         gasSamples = 0
         previousPetrol = null
@@ -60,7 +65,7 @@ class NativeAutoCalAcquisitionEpoch {
         if (before == null || before == count) return false
         gasGeneration++
         gasPending = true
-        referencePending = true
+        gasReferencePending = true
         gasSamples = 0
         previousGas = null
         reason = if (count > before) "NATIVE_AUTOMATCH" else "AUTOMATCH_COUNTER_RESTART"
@@ -74,12 +79,14 @@ class NativeAutoCalAcquisitionEpoch {
             "RESET_PETROL" -> {
                 petrolGeneration++
                 petrolPending = true
+                petrolReferencePending = true
                 petrolSamples = 0
                 previousPetrol = null
             }
             "RESET_GAS", "MANUAL_AUTOMATCH" -> {
                 gasGeneration++
                 gasPending = true
+                gasReferencePending = true
                 gasSamples = 0
                 previousGas = null
                 nativeCount = null // o contador pode voltar a 0: novo baseline, sem duplicar época
@@ -89,6 +96,8 @@ class NativeAutoCalAcquisitionEpoch {
                 gasGeneration++
                 petrolPending = true
                 gasPending = true
+                petrolReferencePending = true
+                gasReferencePending = true
                 petrolSamples = 0
                 gasSamples = 0
                 previousPetrol = null
@@ -97,7 +106,6 @@ class NativeAutoCalAcquisitionEpoch {
             }
             else -> return false // RESET_K_FACTOR, pausa, Finish etc. NÃO resetam aquisição
         }
-        referencePending = true
         reason = action
         return true
     }
@@ -111,12 +119,12 @@ class NativeAutoCalAcquisitionEpoch {
 
         if (!petrolPending && previousPetrol?.any { it > 0 } == true && petrol.all { it == 0 }) {
             petrolGeneration++
-            referencePending = true
+            petrolReferencePending = true
             reason = "PETROL_COUNTER_RESTART"
         }
         if (!gasPending && previousGas?.any { it > 0 } == true && gas.all { it == 0 }) {
             gasGeneration++
-            referencePending = true
+            gasReferencePending = true
             reason = "GAS_COUNTER_RESTART"
         }
         previousPetrol = petrol.copyOf()
@@ -132,7 +140,8 @@ class NativeAutoCalAcquisitionEpoch {
     fun referenceGroup(sessionId: Long, count: Int): Boolean {
         if (sessionId != usbSessionId || nativeCount != count || petrolPending || gasPending ||
             petrolSamples < MIN_COMMON_BANDS || gasSamples < MIN_COMMON_BANDS) return false
-        referencePending = false
+        petrolReferencePending = false
+        gasReferencePending = false
         return true
     }
 
@@ -144,6 +153,8 @@ class NativeAutoCalAcquisitionEpoch {
         petrolPending = petrolPending,
         gasPending = gasPending,
         referencePending = referencePending,
+        petrolReferencePending = petrolReferencePending,
+        gasReferencePending = gasReferencePending,
         petrolSamples = petrolSamples,
         gasSamples = gasSamples,
         reason = reason,
