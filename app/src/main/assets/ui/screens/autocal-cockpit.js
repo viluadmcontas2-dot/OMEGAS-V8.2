@@ -714,9 +714,10 @@
               <div class="autocal-chart-workspace">
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
                 <div class="autocal-chart-legend">
-                  <span class="petrol">Gasolina</span>
-                  <span class="gas">GNV</span>
-                  <span class="acquired">Ponto adquirido</span>
+                  <span class="petrol">Curva gasolina (ECU)</span>
+                  <span class="gas">Curva GNV (ECU)</span>
+                  <span class="acquired">Pontos da aquisição corrente</span>
+                  <span class="previous">GNV anterior (contexto)</span>
                   <span class="current-band">Zona atual</span>
                   <span class="live">AGORA</span>
                   <span id="autocalReferenceCount">0 pontos nativos</span>
@@ -1280,22 +1281,86 @@
     }
 
     renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host) {
-      // Os pontos vêm da projeção de época, que mascara campos anteriores ao reset/AutoMatch.
-      // Nunca desenhar RV30 antigo nem chamar equivalência enquanto a leitura é readquirida.
+      // ProgBase DUMP/TAutoCalUI separates PetrolCurve (native RV), PetrolPoint,
+      // GasPoint, GasPointPrev and KLine. Do not collapse them into one reference.
       this.chartScale = null;
       this.chartRenderKey = null;
+      const snapshot = this.snapshot || {};
       const petrolCount = acquiredPetrol.length;
       const gasCount = acquiredGas.length;
-      const message = epoch.gasPending ? 'GNV reiniciado: aguardando readback da ECU'
-        : epoch.petrolPending ? 'Gasolina reiniciada: aguardando readback da ECU'
-          : epoch.referencePending ? 'Curvas de referência aguardando grupo novo da ECU'
-            : 'Aquisição corrente ainda sem suporte suficiente';
-      this.text('autocalReferenceCount', 'Gasolina ' + petrolCount + '/18 · GNV ' + gasCount + '/18 pontos correntes');
+      const automatch = finite(epoch.nativeAutoMatchCount);
+      const quota = finite(this.state?.maxAutomatch ?? snapshot.maxAutomatch);
+      const step = automatch === null ? '—' : String(automatch) + (quota !== null ? '/' + quota : '');
+      const restartBoth = epoch.petrolPending === true && epoch.gasPending === true;
+      const petrolRestart = epoch.petrolPending === true;
+      const gasRestart = epoch.gasPending === true;
+      const stage = restartBoth
+        ? 'Aguardando novas aquisições de gasolina e GNV'
+        : petrolRestart
+          ? 'Gasolina reiniciada: a referência anterior não é a atual'
+          : gasRestart
+            ? 'GNV reiniciado: gasolina preservada; aguardando leitura nova da ECU'
+            : epoch.referencePending
+              ? 'GNV atual sendo adquirido: aguardando novo grupo de curvas da ECU'
+              : 'Coleta em andamento; ainda sem suporte para comparação';
+
+      // A referência gasolina sobrevive ao RESET_GAS e ao AutoMatch, mas jamais
+      // ao RESET_PETROL/RESET_ALL. Verifique também coerência temporal do PAR
+      // PETR_INJ_TBP + PETR_MNFLD_PRESS_RV sem exigir a curva GNV reiniciada.
+      const petrolCurve = [];
+      if (epoch.petrolPending !== true && epoch.petrolReferencePending === false) {
+        const axisField = field(snapshot, 'PETR_INJ_TBP');
+        const rvField = field(snapshot, 'PETR_MNFLD_PRESS_RV');
+        const axisAt = finite(axisField?.capturedAtMs);
+        const rvAt = finite(rvField?.capturedAtMs);
+        const skewLimit = finite(this.projection?.referenceTimingLimitMs);
+        const coherent = String(snapshot.source || '') !== 'ECU_READ' ||
+          (axisAt !== null && rvAt !== null && skewLimit !== null &&
+            Math.abs(axisAt - rvAt) <= skewLimit);
+        const xs = physicalVector(snapshot, 'PETR_INJ_TBP');
+        const ys = physicalVector(snapshot, 'PETR_MNFLD_PRESS_RV');
+        if (coherent && xs.length === 30 && ys.length === 30) {
+          for (let i = 0; i < 30; i += 1) {
+            const x = finite(xs[i]), y = finite(ys[i]);
+            if (x !== null && x >= 0 && y !== null) {
+              petrolCurve.push({ petrolMs: x, petrolMapBar: y });
+            }
+          }
+        }
+      }
+
+      // GAS_PREV has its own native buffer pair but NO native counter. Present
+      // only as a subdued historical layer; never count it as current GNV.
+      const previousGas = [];
+      if (finite(epoch.gasGeneration) > 0 && !restartBoth) {
+        const xs = physicalVector(snapshot, 'PETR_INJ_TBUF_GAS_PREV');
+        const ys = physicalVector(snapshot, 'MNFLD_PRESS_BUF_GAS_PREV');
+        for (let i = 0; i < Math.min(18, xs.length, ys.length); i += 1) {
+          const x = finite(xs[i]), y = finite(ys[i]);
+          if (x !== null && x > 0 && y !== null && y > 0) {
+            previousGas.push({ petrolMs: x, mapBar: y });
+          }
+        }
+      }
+
+      this.text('autocalReferenceCount',
+        'Gasolina ' + petrolCount + '/18 · GNV ' + gasCount + '/18 faixas com amostra');
+      const kValues = physicalVector(snapshot, 'MUL_ACT');
+      const kNarrative = kValues.length === 30
+        ? 'Curva K: 30 fatores nativos; observador não altera a ECU.'
+        : 'Curva K: aguardando leitura nativa.';
+      const sourceNarrative = petrolCurve.length
+        ? 'Linha contínua = referência gasolina da ECU preservada. '
+        : 'Sem curva gasolina temporalmente válida nesta etapa. ';
+      const previousNarrative = previousGas.length
+        ? 'Círculos esmaecidos = GNV anterior sem contador atual. ' : '';
       this.text('autocalChartInspector',
-        message + '. Contador AutoMatch ' + (finite(epoch.nativeAutoMatchCount) ?? '—') +
-        ' · época gasolina ' + (finite(epoch.petrolGeneration) ?? 0) +
-        ' · época GNV ' + (finite(epoch.gasGeneration) ?? 0) + '.');
-      const current = [...acquiredPetrol, ...acquiredGas];
+        'AutoMatch ' + step + '. ' + stage + '. ' +
+        sourceNarrative + previousNarrative +
+        'Bolinhas = faixas com amostra, não maturidade automática. ' +
+        'Comparação gasolina/GNV suspensa até novo grupo coerente. ' + kNarrative);
+
+      const current = [...acquiredPetrol, ...acquiredGas, ...petrolCurve, ...previousGas];
       const domain = AutoCalUxModel.referenceDomain([], [], [], current);
       let chart = '';
       if (domain) {
@@ -1303,30 +1368,54 @@
         const x = value => left + (value - domain.xMin) / (domain.xMax - domain.xMin) * (width - left - right);
         const y = value => height - bottom -
           (value - domain.yMin) / (domain.yMax - domain.yMin) * (height - top - bottom);
-        const present = list => list.filter(point =>
-          point.petrolMs >= domain.xMin && point.petrolMs <= domain.xMax &&
-          point.mapBar >= domain.yMin && point.mapBar <= domain.yMax)
-          .slice().sort((a, b) => a.petrolMs - b.petrolMs);
-        const curve = (list, fuel) => {
-          const items = present(list);
-          const line = items.map((point, index) =>
-            (index ? 'L' : 'M') + ' ' + x(point.petrolMs).toFixed(1) + ' ' + y(point.mapBar).toFixed(1)).join(' ');
+        const within = point => point.petrolMs >= domain.xMin && point.petrolMs <= domain.xMax &&
+          (point.mapBar ?? point.petrolMapBar) >= domain.yMin &&
+          (point.mapBar ?? point.petrolMapBar) <= domain.yMax;
+        const ordered = list => list.filter(within).slice().sort((a, b) => a.petrolMs - b.petrolMs);
+        const lineFor = (list, valueKey) => ordered(list).map((point, index) =>
+          (index ? 'L' : 'M') + ' ' + x(point.petrolMs).toFixed(1) + ' ' +
+          y(point[valueKey]).toFixed(1)).join(' ');
+        const acquisition = (list, fuel) => {
+          const items = ordered(list);
+          const line = items.length >= 2
+            ? '<path class="autocal-epoch-acquisition-line ' + fuel + '" d="' +
+              lineFor(items, 'mapBar') + '"></path>' : '';
           const dots = items.map(point =>
-            '<circle class="autocal-acquired-point ' + fuel + '" cx="' +
-            x(point.petrolMs).toFixed(1) + '" cy="' + y(point.mapBar).toFixed(1) + '" r="5.5"></circle>').join('');
-          return (items.length >= 2
-            ? '<path class="autocal-reference-line ' + fuel + '" d="' + line + '"></path>' : '') + dots;
+            '<circle class="autocal-acquired-point ' + fuel + ' ' +
+            (point.acquisitionState === 'ACQUIRED' ? 'acquired' : 'collecting') +
+            '" cx="' + x(point.petrolMs).toFixed(1) +
+            '" cy="' + y(point.mapBar).toFixed(1) + '" r="5.5"></circle>').join('');
+          return line + dots;
         };
+        const reference = petrolCurve.length >= 2
+          ? '<path class="autocal-reference-line petrol epoch-anchor" d="' +
+            lineFor(petrolCurve, 'petrolMapBar') + '"></path>' : '';
+        const oldGas = previousGas.filter(within).map(point =>
+          '<circle class="autocal-previous-gas-point" cx="' + x(point.petrolMs).toFixed(1) +
+          '" cy="' + y(point.mapBar).toFixed(1) + '" r="4.5"></circle>').join('');
+
+        const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
+        const inDomain = live && live.petrolMs >= domain.xMin && live.petrolMs <= domain.xMax &&
+          live.mapBar >= domain.yMin && live.mapBar <= domain.yMax;
+        const liveMarkup = inDomain
+          ? '<circle class="autocal-live-point" cx="' + x(live.petrolMs).toFixed(1) +
+            '" cy="' + y(live.mapBar).toFixed(1) + '" r="6"></circle>' +
+            '<text class="autocal-live-label" x="' + (x(live.petrolMs) + 10).toFixed(1) +
+            '" y="' + (y(live.mapBar) - 8).toFixed(1) + '">AGORA</text>' : '';
+
         chart = '<svg class="autocal-reference-svg" viewBox="0 0 1000 400" role="img" ' +
-          'aria-label="Aquisição atual: pontos gasolina e GNV da ECU sem extrapolação">' +
+          'aria-label="Aquisição atual da ECU; referência gasolina independente; sem equivalência durante reset">' +
+          '<title>AQUISIÇÃO EM TEMPO REAL · gasolina e GNV por época nativa</title>' +
           '<path d="M64 22 V352 H972" fill="none" stroke="currentColor" opacity=".2"></path>' +
-          curve(acquiredPetrol, 'petrol') + curve(acquiredGas, 'gas') +
-          '<text class="autocal-axis-title x" x="518" y="395" text-anchor="middle">' + AUTO_CAL_X_AXIS_LABEL + '</text>' +
+          reference + oldGas +
+          acquisition(acquiredPetrol, 'petrol') + acquisition(acquiredGas, 'gas') + liveMarkup +
+          '<text class="autocal-axis-title x" x="518" y="395" text-anchor="middle">' +
+          AUTO_CAL_X_AXIS_LABEL + '</text>' +
           '<text class="autocal-axis-title y" x="14" y="200" text-anchor="middle" ' +
           'transform="rotate(-90 14 200)">MAP (bar)</text></svg>';
       }
-      host.innerHTML = chart + '<div class="chart-empty"><b>AQUISIÇÃO EM TEMPO REAL</b><span>' +
-        escapeHtml(message) + '. Somente pontos da época corrente; nenhuma equivalência é calculada agora.</span></div>';
+      host.innerHTML = chart || '<div class="chart-empty"><b>AQUISIÇÃO EM TEMPO REAL</b><span>' +
+        escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span></div>';
       this.renderLiveNarrative();
     }
 
