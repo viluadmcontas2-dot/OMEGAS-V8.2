@@ -93,3 +93,13 @@ Pendências reais registradas pelo GPT em `STATUS.md` e no WU-006:
 - **UI:** seguir os blueprints do Notion (CUSTOMROM, Omega Dev 4.0, Car Info Next 1280×720). Nada de tela que muda conforme o carro anda ou para.
 - **Hierarquia do refino:** a base é MAP × Tpet, como na ECU; RPM × MAP é o refino do refino; o Mapa K só é ajustado se a medição provar dependência de RPM.
 - **Comunicação:** em português simples. O dono é leigo e quer funcionalidade, não teoria.
+
+## APK entregue e próxima rodada (pedidos do dono)
+
+- APK de teste: run `37063541243`, SHA `dcd601c5`, artifact digest `sha256:59aad0f9…`. Próximo passo: o teste no carro; o PR só depois do teste.
+- Próxima rodada, **sem mudar o foco** (igualar GNV e gasolina):
+  1. **Sessões em ZIP:** um `.zip` por sessão, já gravado automaticamente em Downloads, com os dados brutos e um resumo inteligente legível (tempo em cada combustível, fases do piloto, GNV÷gasolina por faixa, gravações e vereditos, avisos).
+  2. **O app aprende com as sessões antigas:** importar os ZIPs ou sessões para alimentar o `EquivalenceLedger` e o diário, respeitando a época da curva (GNV de curva antiga não vale).
+  3. **Ferramentas:** refazer a navegação e a organização, que hoje está bagunçada e com bugs, seguindo os blueprints.
+  4. **Limpeza das 35 branches remotas:** listar em manter / apagar / dúvida, o dono aprova, e só então apagar, depois do merge.
+- O GPT empurrou commits depois de dizer que tinha parado: na próxima rodada, deixar explícito quem pode dar push.

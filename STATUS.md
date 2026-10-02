@@ -1,5 +1,14 @@
 # Status do OMEGAS V8.2
 
+
+## APK WU-006 (candidato para teste no carro) — 2026-10-02
+
+- Fonte: `dcd601c5e645fce178b303ad6cdf586012777a97`.
+- Workflow: `omegas-preapk-build.yml`, evento `workflow_dispatch`, run `37063541243`, conclusão `success`. Inclui `testDebugUnitTest`, `lintDebug` e `assembleDebug`.
+- Artifact: `11252210747` / `omegas-v82-rc-dcd601c5e645fce178b303ad6cdf586012777a97`, 4.883.882 bytes, digest `sha256:59aad0f931079f441e85e837f772f2e1fd87c0defd9bed35d571a218d141dbf7`. Expira em 2026-10-09.
+- Antes do CI, local no mesmo SHA: `QUALITY_GATE_FAST=PASS`, JVM integral 711 OK, paridade Kotlin↔Python OK.
+- `PHYSICAL_VALIDATION_CLAIMED=false`. Aguarda o teste no carro (`docs/V82_REFINO_FIELD_TEST.md`).
+
 ## Mais recente: passo 0 da WU-006, sem novo APK — 2026-10-02
 
 - **Source corrigido desta etapa:** `dcd601c5e645fce178b303ad6cdf586012777a97` (commits posteriores somente documentais não mudam essa atribuição); branch única `claude/brave-darwin-wuliyo`. Revisão e comandos em `docs/evidence/WU-006-STEP0-NO-APK-20261002.md`.
