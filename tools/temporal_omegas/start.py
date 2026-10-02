@@ -26,11 +26,17 @@ async def main():
             PlatinaSameShaGate.run, args.max_checks,
             id=WORKFLOW_ID, task_queue=QUEUE,
         )
-        print(json.dumps({"workflow_id": handle.id, "run_id": handle.result_run_id}))
+        print(json.dumps({"workflow_id": handle.id, "run_id": handle.first_execution_run_id}))
     else:
         handle = client.get_workflow_handle(WORKFLOW_ID)
         if args.action == "status":
-            print(json.dumps(await handle.query(PlatinaSameShaGate.status), indent=2))
+            try:
+                result = await handle.query(PlatinaSameShaGate.status)
+            except Exception:
+                # Queries are for running workflows. A completed execution keeps
+                # its final result in Temporal history, rather than vanishing.
+                result = await handle.result()
+            print(json.dumps(result, indent=2))
         else:
             await handle.signal(PlatinaSameShaGate.stop)
             print("Stop requested")
