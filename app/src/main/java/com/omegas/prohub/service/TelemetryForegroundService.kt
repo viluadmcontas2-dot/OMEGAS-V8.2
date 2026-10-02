@@ -24,7 +24,6 @@ import com.omegas.prohub.learning.LearningToleranceSettings
 import com.omegas.prohub.link.OmegasLinkManager
 import com.omegas.prohub.model.HubStatus
 import com.omegas.prohub.network.LanPanelServer
-import com.omegas.prohub.obd.ObdAssistManager
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.storage.DataArchiveManager
@@ -91,8 +90,6 @@ class TelemetryForegroundService : Service() {
     lateinit var kFactor: KFactorManager
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
-        private set
-    var obd: ObdAssistManager? = null
         private set
     lateinit var link: OmegasLinkManager
         private set
@@ -165,7 +162,6 @@ class TelemetryForegroundService : Service() {
             },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
-                obd?.recordConfirmedAdjustment("MAP_K", payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
                 link.markDataChanged("escrita K confirmada")
@@ -178,7 +174,6 @@ class TelemetryForegroundService : Service() {
             onBusyChanged = { stateChanged() },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true)
-                obd?.recordConfirmedAdjustment("K_FACTOR", payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
                 link.markDataChanged("escrita K factor confirmada")
@@ -203,19 +198,7 @@ class TelemetryForegroundService : Service() {
             },
             onStateChanged = { stateChanged() },
         )
-        // OBD é somente observacional: registra STFT/LTFT e nunca altera o motor de aprendizado.
-        obd = ObdAssistManager(
-            context = this,
-            paths = paths,
-            settings = settings,
-            log = log,
-            localCoreProvider = ::coreTelemetryForLink,
-            onStateChanged = ::stateChanged,
-            onLiveSample = { sample ->
-                sessionRecorder.record("obd", "obd", sample, force = true)
-            },
-        )
-        learningArchive = LearningArchiveManager(paths, settings, runtime, obd, kWriter, log)
+        learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
         link = OmegasLinkManager(
             settings = settings,
             log = log,
@@ -225,7 +208,6 @@ class TelemetryForegroundService : Service() {
             mergeLearning = { payload -> runtime.mergeLearning(payload, settings.deviceId) },
             exportHistory = { kWriter.exportHistoryComponent(settings.deviceId) },
             mergeHistory = { payload -> kWriter.mergeHistoryComponent(payload) },
-            obd = obd,
             onStateChanged = ::stateChanged,
             exportAutoCalContext = {
                 JSONObject()
@@ -257,9 +239,6 @@ class TelemetryForegroundService : Service() {
         }
         if (settings.lanServerEnabled) lanServer.start(settings.lanServerPort, settings.lanAccessToken)
         if (settings.linkEnabled) link.start()
-        if (settings.obdMode == "local" && settings.obdAutoConnect && settings.obdDeviceAddress.isNotBlank()) {
-            obd?.connect(settings.obdDeviceAddress)
-        }
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
         updateOverlay(force = true)
@@ -292,7 +271,6 @@ class TelemetryForegroundService : Service() {
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
         try { usb.disconnect() } catch (_: Exception) {}
         try { link.close() } catch (_: Exception) {}
-        try { obd?.close() } catch (_: Exception) {}
         try { lanServer.close() } catch (_: Exception) {}
         try { gps.stop() } catch (_: Exception) {}
         try { overlay.close() } catch (_: Exception) {}
@@ -397,7 +375,6 @@ class TelemetryForegroundService : Service() {
             .put("k_write", try { JSONObject(kWriter.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("k_factor", try { JSONObject(kFactor.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("session_recorder", try { JSONObject(sessionRecorder.statusJson()) } catch (_: Exception) { JSONObject() })
-            .put("obd", try { JSONObject(obd?.statusJson() ?: "{}") } catch (_: Exception) { JSONObject() })
             .put("link_status", try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("consumption", consumptionTracker.buildTelemetryJson(settings.gnvCylinderCapacityM3.toFloat()))
             .put("native_updated_at", System.currentTimeMillis())
@@ -550,17 +527,6 @@ class TelemetryForegroundService : Service() {
         return JSONObject().put("ok", ok).put("enabled", lanServer.running)
             .put("address", if (lanServer.running) lanServer.address() else "")
             .apply { if (!ok) put("error", lanServer.lastError) }
-    }
-
-    fun obdDevicesJson(): String = obd?.pairedDevicesJson() ?: "[]"
-    fun obdStatusJson(): String = obd?.statusJson() ?: "{}"
-    fun obdMapsJson(): String = obd?.mapsJson() ?: "{}"
-    fun setObdMode(mode: String): String = obd?.setMode(mode)?.toString() ?: "{}"
-    fun setObdManualFuel(fuel: String): String = obd?.setManualFuel(fuel)?.toString() ?: "{}"
-    fun connectObd(address: String): String = obd?.connect(address)?.toString() ?: "{}"
-    fun disconnectObd(): String {
-        obd?.disconnect()
-        return JSONObject().put("ok", true).toString()
     }
 
     fun overlayStatusJson(): String = if (::overlay.isInitialized) overlay.statusJson().toString() else "{}"
@@ -782,17 +748,12 @@ class TelemetryForegroundService : Service() {
         if (!::overlay.isInitialized || (!overlay.requestedEnabled() && !overlay.visible())) return
         if (!overlayAdmission.tryAcquire(SystemClock.elapsedRealtime(), force)) return
         val hub = status()
-        val obdLive = try { JSONObject(obd?.statusJson() ?: "{}") } catch (_: Exception) { JSONObject() }
-        val evidence = obdLive.optJSONObject("independentEvidence") ?: JSONObject()
-        val cell = evidence.optString("cellKey", "").takeIf { it.isNotBlank() } ?: "—"
-        val stft = if (obdLive.has("stft") && !obdLive.isNull("stft")) obdLive.optDouble("stft") else null
-        val obdRpm = if (obdLive.has("rpm") && !obdLive.isNull("rpm")) obdLive.optDouble("rpm") else null
         overlay.update(
             TelemetryOverlayController.Snapshot(
-                cell = cell,
-                stft = stft,
+                cell = "—",
+                stft = null,
                 petrolMs = hub.petrolMs.takeIf { it > 0.0 },
-                rpm = obdRpm?.takeIf { it > 0.0 } ?: hub.rpm.toDouble().takeIf { it > 0.0 },
+                rpm = hub.rpm.toDouble().takeIf { it > 0.0 },
             ),
         )
     }

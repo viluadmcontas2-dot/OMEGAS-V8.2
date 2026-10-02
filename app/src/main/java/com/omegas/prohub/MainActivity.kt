@@ -133,15 +133,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val bluetoothPermission = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { grants ->
-        val granted = Build.VERSION.SDK_INT < 31 ||
-            grants[Manifest.permission.BLUETOOTH_CONNECT] == true
-        toast(if (granted) "Bluetooth autorizado" else "Permissão Bluetooth não concedida", !granted)
-        refreshWebUi()
-    }
-
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             service = (binder as TelemetryForegroundService.LocalBinder).service()
@@ -357,18 +348,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    fun requestBluetoothPermission() = runOnUiThread {
-        if (Build.VERSION.SDK_INT >= 31) {
-            bluetoothPermission.launch(
-                arrayOf(
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.BLUETOOTH_SCAN,
-                ),
-            )
-        } else {
-            toast("Bluetooth disponível")
-        }
-    }
 
     fun batteryOptimizationStatusJson(): String {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {

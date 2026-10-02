@@ -17,14 +17,6 @@
     const telemetry = state.telemetry || {};
     return telemetry.live || telemetry.data || telemetry;
   }
-  function obdValue(obd, names) {
-    for (const name of names) {
-      const value = obd && obd[name];
-      if (finite(value) !== null) return finite(value);
-    }
-    return null;
-  }
-
   class DashboardScreen {
     constructor() {
       this.root = document.querySelector('[data-screen="dashboard"]');
@@ -52,7 +44,6 @@
         strip.innerHTML = `
           <div class="diagnostic"><small>GAS INJ.</small><b><span id="dashGas">—</span> ms</b><span>pulso GNV · diagnóstico</span></div>
           <div><small>ECU</small><b id="dashEcuMini">offline</b></div>
-          <div><small>OBD</small><b id="dashObdMini">offline</b></div>
           <div><small>TELEMETRIA</small><b id="dashAgeMini">—</b></div>`;
       }
     }
@@ -61,7 +52,6 @@
       if (!this.root) return;
       const data = live(state);
       const status = state.status || {};
-      const obd = state.obd || {};
       const interpolation = state.telemetry?.interpolation || {};
       const cell = interpolation.cell || {};
       const rpm = finite(data.rpm ?? status.rpm) || 0;
@@ -69,11 +59,8 @@
       const gas = data.gas_ms_diagnostic ?? data.gasMs ?? status.gasMs;
       const map = data.load_bar ?? data.map_bar ?? data.mapBar ?? status.mapBar;
       const fuel = String(data.fuel || data.state || status.fuelState || '—').replace('PETROL', 'GASOLINA').replace('CNG', 'GNV');
-      const stft = obdValue(obd, ['stft', 'shortTermFuelTrim', 'short_term_fuel_trim']);
-      const ltft = obdValue(obd, ['ltft', 'longTermFuelTrim', 'long_term_fuel_trim']);
       const age = finite(state.telemetry?.telemetryAgeMs ?? state.telemetry?.ageMs ?? status.directTelemetryAgeMs);
       const connected = status.usbConnected === true;
-      const obdConnected = obd.connected === true || ['CONNECTED', 'CONECTADO'].includes(String(obd.state || obd.status || '').toUpperCase());
       const stale = connected && age !== null && age > 2500;
       const expired = connected && age !== null && age > 8000;
       const stuck = status.engineStuck === true;
@@ -84,14 +71,10 @@
       text('dashPetrol', `${fmt(petrol, 2)} ms`);
       text('dashGas', fmt(gas, 2));
       text('dashMap', `${fmt(map, 2)} bar`);
-      text('dashStft', stft === null ? '—' : `${stft > 0 ? '+' : ''}${fmt(stft, 1)}%`);
-      text('dashLtft', ltft === null ? '—' : `${ltft > 0 ? '+' : ''}${fmt(ltft, 1)}%`);
       text('dashFuel', fuel);
       text('dashCell', row !== null && column !== null ? `${row + 1}×${column + 1}` : '—');
       text('dashEcuStatus', connected ? 'ECU online' : 'ECU offline');
-      text('dashObdStatus', obdConnected ? 'OBD online' : 'OBD offline');
       text('dashEcuMini', connected ? 'online' : 'offline');
-      text('dashObdMini', obdConnected ? 'online' : 'offline');
       const ageLabel = age === null ? '—' : age < 1000 ? `${Math.round(age)} ms` : `${fmt(age / 1000, 1)} s`;
       text('dashAge', ageLabel);
       text('dashAgeMini', ageLabel);

@@ -25,7 +25,6 @@
     autocal: ['CALIBRAR', 'AutoCal'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
-    obd: ['OBSERVAR', 'OBD'],
     suggestions: ['DECIDIR', 'Sugestões'],
     tools: ['SISTEMA', 'Ferramentas'],
   };
@@ -89,7 +88,6 @@
     if (route === 'learning' && ui.LearningScreen) instances.learning = new ui.LearningScreen(store, router, api);
     if (route === 'map' && ui.MapScreen) instances.map = new ui.MapScreen(store, api, router);
     if (route === 'curve' && ui.CurveScreen) instances.curve = new ui.CurveScreen(store, api);
-    if (route === 'obd' && ui.ObdScreen) instances.obd = new ui.ObdScreen(store, api);
     return instances[route] || null;
   }
 
@@ -112,10 +110,8 @@
     }
 
     const status = state.status || {};
-    const obdStatus = state.obd || {};
-    const obdOnline = obdStatus.connected === true || ['CONNECTED', 'CONECTADO', 'REMOTO AO VIVO'].includes(String(obdStatus.state || obdStatus.status || '').toUpperCase());
     const fuel = fuelLabel(status.fuelState || liveFrom(state).fuel || liveFrom(state).state);
-    const globalSignature = `${status.usbConnected === true ? 1 : 0}:${obdOnline ? 1 : 0}:${fuel}`;
+    const globalSignature = `${status.usbConnected === true ? 1 : 0}:${fuel}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
       const ecu = byId('globalEcu');
@@ -123,11 +119,6 @@
         const online = status.usbConnected === true;
         ecu.dataset.online = online ? 'true' : 'false';
         setText('globalEcu', online ? 'ECU online' : 'ECU offline');
-      }
-      const obdNode = byId('globalObd');
-      if (obdNode) {
-        obdNode.dataset.online = obdOnline ? 'true' : 'false';
-        setText('globalObd', obdOnline ? 'OBD online' : 'OBD offline');
       }
       const fuelNode = byId('globalFuel');
       if (fuelNode) {
@@ -222,19 +213,15 @@
 
   function refreshStatus() {
     const status = api.status() || {};
-    const obdState = api.obd() || {};
     const route = store.get().route;
-    const obdDevices = route === 'obd' ? (api.obdDevices() || {}) : null;
-    const signature = JSON.stringify({ status, obdState, obdDevices, demo: api.isDemo() });
-    if (signature !== previousStatusSignature) {
+    const signature = JSON.stringify({ status, demo: api.isDemo() });
+    const changed = signature !== previousStatusSignature;
+    if (changed) {
       previousStatusSignature = signature;
-      const patch = { status, obd: obdState, demo: api.isDemo() };
-      if (obdDevices) patch.obdDevices = obdDevices;
-      store.patch(patch);
+      store.patch({ status, demo: api.isDemo() });
     }
-    const state = store.get();
-    if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
-    if (route === 'obd') ensureScreen('obd')?.render(state);
+    // Dashboard só re-renderiza quando o estado muda (antes: a cada 1 s sem mudança).
+    if (changed && route === 'dashboard') ensureScreen('dashboard')?.render(store.get());
   }
 
   function toolsEditing() {
@@ -260,7 +247,6 @@
     if (route === 'learning' || route === 'suggestions' || route === 'map' || route === 'curve') {
       patch.calibrationState = readCalibrationState();
     }
-    if (route === 'obd') patch.obdDevices = api.obdDevices() || {};
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
       patch.sessions = api.sessions() || [];
@@ -273,7 +259,6 @@
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
       if (curve.needsLearning?.()) curve.renderLearning(updated);
     }
-    if (route === 'obd') ensureScreen('obd')?.render(updated);
     if (route === 'suggestions') {
       utilities?.render(updated);
       renderPersistentSuggestions(updated);
@@ -388,11 +373,6 @@
     }
     if (route === 'curve') {
       ensureScreen('curve')?.onEnter(context || store.get().routeContext);
-      refreshContext();
-    }
-    if (route === 'obd') {
-      ensureScreen('obd');
-      refreshStatus();
       refreshContext();
     }
     if (route === 'suggestions' || route === 'tools') {

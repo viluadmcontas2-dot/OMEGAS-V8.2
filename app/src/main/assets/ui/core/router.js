@@ -2,7 +2,7 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
   // Predictor saiu da navegação (decisão do proprietário 2026-10-02); o código permanece.
-  const ROUTES = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'obd', 'suggestions', 'tools'];
+  const ROUTES = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'suggestions', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
 
   function loadOptionalScript(src, onload) {

@@ -66,8 +66,6 @@
       learningDecision: {},
       learningTolerance: {},
       learningLayer: 'comparison',
-      obd: {},
-      obdDevices: {},
       map: { state: 'idle', data: null, selection: 0, activeCell: null, review: null, operation: null },
       curve: { state: 'idle', data: null, activePoint: null, proposal: null, status: {} },
       sessionStatus: {},

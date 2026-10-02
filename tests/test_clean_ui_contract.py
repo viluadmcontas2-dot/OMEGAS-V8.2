@@ -12,8 +12,7 @@ class CleanUiContract(unittest.TestCase):
         self.html = (UI / "index.html").read_text("utf-8")
         self.css = (UI / "styles.css").read_text("utf-8")
         self.refine_css = (UI / "styles-refine.css").read_text("utf-8")
-        self.obd_css = (UI / "styles-obd-evidence.css").read_text("utf-8")
-        self.calibration_obd_css = (UI / "styles-calibration-obd.css").read_text("utf-8")
+        self.curve_css = (UI / "styles-curve.css").read_text("utf-8")
         self.app = (UI / "app.js").read_text("utf-8")
         self.store = (UI / "core/store.js").read_text("utf-8")
         self.router = (UI / "core/router.js").read_text("utf-8")
@@ -24,7 +23,6 @@ class CleanUiContract(unittest.TestCase):
         self.map_screen = (UI / "screens/map.js").read_text("utf-8")
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
         self.learning_screen = (UI / "screens/learning.js").read_text("utf-8")
-        self.obd_screen = (UI / "screens/obd.js").read_text("utf-8")
         self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
 
     def test_only_clean_ui_is_active(self):
@@ -37,19 +35,19 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('rpm-gauge', self.html)
         self.assertNotIn('styles-expansion.css', self.html)
         self.assertNotIn('styles-expansion-panels.css', self.html)
-        self.assertIn('styles-calibration-obd.css', self.html)
+        self.assertIn('styles-curve.css', self.html)
+        self.assertNotIn('styles-calibration-obd.css', self.html)
         self.assertIn("refinementStyle.href = 'styles-refine.css'", self.app)
 
     def test_seven_human_destinations_are_first_class(self):
         # Navegação por intenção (decisão do proprietário 2026-10-02, WU-006):
-        # AutoCal é destino de primeiro nível; Predictor e OBD saem da navegação
-        # (código preservado; rota OBD continua resolvível pelo Router).
+        # AutoCal é destino de primeiro nível; Predictor e OBD foram removidos.
         routes = re.findall(r'data-route="([^"]+)"', self.html)
         expected = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'suggestions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'obd', 'suggestions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['dashboard', 'autocal', 'learning', 'curve', 'map', 'suggestions', 'tools']", self.router)
         self.assertNotIn("'predictor'", self.router)
         self.assertNotIn('screens/predictor.js', self.router)
         for label in ('Agora', 'AutoCal', 'Aprender', 'Ajuste local', 'Ajuste global', 'Sugestões', 'Ferramentas'):
@@ -63,7 +61,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('class Scheduler', self.scheduler)
         self.assertEqual(1, self.scheduler.count('setInterval('))
         self.assertNotIn('setInterval(', self.app)
-        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.learning_screen + self.grid + self.obd_screen
+        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.learning_screen + self.grid
         self.assertNotIn('MutationObserver', active_sources)
         self.assertNotIn('.onclick', active_sources)
         self.assertNotIn('tick:', self.store)
@@ -73,13 +71,13 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('--rail-width:202px', self.css)
         self.assertIn('grid-template-columns:var(--rail-width) minmax(0,1fr)', self.css)
         self.assertIn('contain:layout paint style', self.css)
-        combined_css = self.css + self.obd_css + self.calibration_obd_css + self.refine_css
+        combined_css = self.css + self.curve_css + self.refine_css
         for forbidden in ('backdrop-filter', '@keyframes', 'filter:brightness', 'linear-gradient', 'radial-gradient'):
             self.assertNotIn(forbidden, combined_css)
-        self.assertNotRegex(self.calibration_obd_css, r'animation:(?!none)')
-        self.assertNotRegex(self.calibration_obd_css, r'transition:(?!none)')
-        self.assertIn('animation:none!important', self.calibration_obd_css)
-        self.assertIn('filter:none!important', self.calibration_obd_css)
+        self.assertNotRegex(self.curve_css, r'animation:(?!none)')
+        self.assertNotRegex(self.curve_css, r'transition:(?!none)')
+        self.assertIn('animation:none!important', self.curve_css)
+        self.assertIn('filter:none!important', self.curve_css)
         self.assertNotIn('--rpm-ratio', self.app)
         self.assertNotIn('--rpm-ratio', self.css)
 
@@ -112,15 +110,13 @@ class CleanUiContract(unittest.TestCase):
         for marker in ('dashPetrol', 'dashMap', 'dashFuel', 'dashCell'):
             self.assertIn(marker, self.dashboard)
         self.assertIn('dashGas', self.dashboard)
-        self.assertIn('dashStft', self.html)
-        self.assertIn('dashLtft', self.html)
 
     def test_learning_map_curve_and_obd_have_expected_contracts(self):
         for layer in ('petrol', 'cng', 'comparison', 'suggestion'):
             self.assertIn(f'data-learning-layer="{layer}"', self.html)
         self.assertIn('id="mapSelectAll"', self.html)
         self.assertIn('id="curveChart"', self.html)
-        self.assertIn('OBD é somente observação', self.html)
+        self.assertNotIn('data-screen="obd"', self.html)
 
     def test_map_k_has_axes_now_and_bulk_selection_without_second_writer(self):
         self.assertIn('map-k-grid-with-axes', self.map_screen)
@@ -150,25 +146,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('this.api.previewCurvePoint', self.curve_screen)
         self.assertIn('this.api.writeCurve', self.curve_screen)
         self.assertIn('Gasolina × GNV por MAP', self.curve_screen)
-
-    def test_obd_is_three_compact_views_on_rpm_petrol_axes(self):
-        for view in ('observe', 'map', 'setup'):
-            self.assertIn(f'data-obd-view="{view}"', self.html)
-            self.assertIn(f'data-obd-panel="{view}"', self.html)
-        self.assertIn('id="obdPetrol"', self.html)
-        self.assertIn('PETROL INJ. ↓', self.html)
-        self.assertIn('maps?.rpmBins', self.obd_screen)
-        self.assertIn('maps?.petrolMsBins', self.obd_screen)
-        self.assertNotIn('loadBins', self.obd_screen)
-        self.assertNotIn('calculatedLoadPct', self.obd_screen)
-        self.assertIn('GNV direto · alvo STFT 0%', self.obd_screen)
-        self.assertIn('Bluetooth', self.obd_screen)
-        self.assertIn('ELM327', self.obd_screen)
-        self.assertIn('Protocolo', self.obd_screen)
-        self.assertIn('Sensores', self.obd_screen)
-        self.assertNotIn('setInterval(', self.obd_screen)
-        for forbidden in ('writeMap', 'writeCurve', 'startKWrite', 'startKBatchWrite', 'startKFactorWrite'):
-            self.assertNotIn(forbidden, self.obd_screen)
 
     def test_persistent_suggestions_are_review_only(self):
         self.assertIn('suggestionItems', self.app)

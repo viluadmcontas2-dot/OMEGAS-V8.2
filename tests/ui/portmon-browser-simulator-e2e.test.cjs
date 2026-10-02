@@ -7,11 +7,11 @@ function loadBench() {
   delete globalThis.OmegasNative;
   delete globalThis.OmegasPortmonReplay;
   for (const path of [
-    '../../app/src/main/assets/ui/portmon-replay-adapter.js',
-    '../../app/src/main/assets/ui/portmon-browser-simulator.js',
+    '../support/portmon-replay-adapter.js',
+    '../support/portmon-browser-simulator.js',
   ]) delete require.cache[require.resolve(path)];
-  globalThis.OmegasPortmonReplay = require('../../app/src/main/assets/ui/portmon-replay-adapter.js');
-  require('../../app/src/main/assets/ui/portmon-browser-simulator.js');
+  globalThis.OmegasPortmonReplay = require('../support/portmon-replay-adapter.js');
+  require('../support/portmon-browser-simulator.js');
   return globalThis.OmegasNative;
 }
 

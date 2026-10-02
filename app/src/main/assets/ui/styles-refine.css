@@ -113,3 +113,7 @@
   .physical-grid-with-axes{grid-template-columns:48px repeat(12,minmax(0,1fr))}
   .map-k-grid-with-axes{grid-template-columns:58px repeat(12,minmax(0,1fr))}
 }
+.power-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.power-controls>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 10px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2)}
+.power-controls small{flex-basis:100%}
+.power-controls b{flex:1;font-size:12px}

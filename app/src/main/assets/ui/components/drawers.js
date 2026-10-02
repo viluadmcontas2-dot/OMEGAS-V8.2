@@ -83,6 +83,15 @@
         this.notifyResult(result, 'Gravação de diagnóstico encerrada.');
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
+      } else if (target.matches('[data-power-battery-request]')) {
+        this.api.requestBatteryOptimizationExemption();
+        this.renderTools(this.store.get());
+      } else if (target.matches('[data-power-overlay-request]')) {
+        this.api.requestOverlayPermissionAndEnable();
+        this.renderTools(this.store.get());
+      } else if (target.matches('[data-power-overlay-enable]') || target.matches('[data-power-overlay-disable]')) {
+        this.api.setTelemetryOverlayEnabled(target.matches('[data-power-overlay-enable]'));
+        this.renderTools(this.store.get());
       } else if (target.matches('[data-export-session]')) {
         this.api.exportSession(target.dataset.exportSession || '');
       }
@@ -160,6 +169,23 @@
       });
     }
 
+    /** Bateria e telemetria flutuante (antes na tela OBD, removida na WU-006). */
+    powerControls() {
+      const battery = this.api.batteryOptimizationStatus?.() || {};
+      const overlay = this.api.overlayStatus?.() || {};
+      const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
+        ? '<button type="button" class="secondary" data-power-battery-request>Permitir</button>' : '';
+      const overlayAction = overlay.visible === true
+        ? '<button type="button" class="quiet-button" data-power-overlay-disable>Desativar</button>'
+        : overlay.permissionGranted === true
+          ? '<button type="button" class="secondary" data-power-overlay-enable>Ativar</button>'
+          : '<button type="button" class="secondary" data-power-overlay-request>Autorizar</button>';
+      return `<div class="power-controls">
+        <div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'Android pode limitar a sessão'}</b>${batteryAction}</div>
+        <div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b>${overlayAction}</div>
+      </div>`;
+    }
+
     renderTools(state) {
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
@@ -193,7 +219,8 @@
             <span>Telemetria <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
             <span>Foreground <b>connectedDevice</b></span>
           </div>
-          <p>Ao apagar a tela, a WebView para de redesenhar, mas o ForegroundService continua responsável por USB, OBD e aprendizado. O aplicativo não pede exclusão da otimização de bateria automaticamente.</p>
+          <p>Ao apagar a tela, a WebView para de redesenhar, mas o serviço continua responsável por USB, AutoCal e aprendizado. A exclusão da otimização de bateria só é pedida quando você toca em Permitir.</p>
+          ${this.powerControls()}
           <small class="background-validation-note">Validação real ainda exige teste com tela apagada e política de bateria do aparelho.</small>
         </section>
 

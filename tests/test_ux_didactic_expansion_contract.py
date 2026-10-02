@@ -18,7 +18,6 @@ physical_grid = read("app/src/main/assets/ui/components/physical-grid.js")
 app = read("app/src/main/assets/ui/app.js")
 styles = read("app/src/main/assets/ui/styles.css")
 refine_styles = read("app/src/main/assets/ui/styles-refine.css")
-obd = read("app/src/main/assets/ui/screens/obd.js")
 scheduler = read("app/src/main/assets/ui/core/scheduler.js")
 
 # Segundo plano nativo permanece intacto.
@@ -81,15 +80,6 @@ assert "this.router.navigate('map'" in learning
 assert "origin: 'learning'" in learning
 assert "Abrir o editor não escreve na ECU" in learning
 
-# OBD continua observacional e usa a mesma autoridade temporal da aplicação.
-assert "obdDevices" in api
-assert "listObdDevices" in api
-assert "connectObd" in obd
-assert "obdDevices" in obd
-assert "data-obd-connect" in obd
-assert "setInterval" not in obd
-assert "writeMap" not in obd
-assert "writeCurve" not in obd
 
 assert scheduler.count("setInterval") == 1
 
