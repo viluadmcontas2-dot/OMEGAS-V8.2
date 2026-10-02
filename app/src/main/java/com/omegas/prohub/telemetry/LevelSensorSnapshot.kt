@@ -55,7 +55,8 @@ class LevelSensorSnapshot(private val clock:()->Long=System::currentTimeMillis) 
             }
             require(currentSession()==sessionId){"Sessão USB mudou"}
         }catch(e:Exception){error=e.message}
-        synchronized(lock){snapshot=JSONObject().put("ok",error==null).put("state",if(error!=null)"UNKNOWN" else if(received==5)"READY" else "PARTIAL")
+        // R-01: a sessão pode ter mudado depois da última conferência; só publica se ainda for a mesma.
+        synchronized(lock){if(session!=sessionId)return json();snapshot=JSONObject().put("ok",error==null).put("state",if(error!=null)"UNKNOWN" else if(received==5)"READY" else "PARTIAL")
             .put("available",received>0 && error==null).put("sessionId",sessionId).put("fields",fields)
             .put("error",error ?: JSONObject.NULL).put("modelVerified",false)}
         return json()

@@ -239,7 +239,8 @@
     const curve = route === 'curve' ? ensureScreen('curve') : null;
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    if (route === 'learning' || curveNeedsLearning || route === 'suggestions' || route === 'tools') {
+    // Sugestões lê só a fila persistente (getState); o aprendizado inteiro é pesado e não é usado ali.
+    if (route === 'learning' || curveNeedsLearning || route === 'tools') {
       patch.learning = api.learning() || {};
       patch.learningStatus = api.learningStatus() || {};
     }
@@ -263,10 +264,7 @@
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
       if (curve.needsLearning?.()) curve.renderLearning(updated);
     }
-    if (route === 'suggestions') {
-      utilities?.render(updated);
-      renderPersistentSuggestions(updated);
-    }
+    if (route === 'suggestions') renderPersistentSuggestions(updated);
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
   }
 
@@ -290,13 +288,21 @@
     return 'observando';
   }
 
+  let lastSuggestionSignature = '';
   function renderPersistentSuggestions(state) {
     const host = byId('suggestionList');
     const calibration = state.calibrationState || {};
     const items = Array.isArray(calibration.suggestionItems) ? calibration.suggestionItems : [];
     if (!host) return;
     const refinement = ns.RefinementLaunch?.suggestion(ns.AutoCalApi?.equivalence?.());
-    if (!items.length && !refinement) return;
+    const signature = JSON.stringify([items.map(item => [item.id, item.lifecycle, item.actionable, item.confidence]), !!refinement]);
+    if (signature === lastSuggestionSignature && host.childElementCount) return;
+    lastSuggestionSignature = signature;
+    if (!items.length && !refinement) {
+      host.innerHTML = '<div class="drawer-empty"><b>Nenhuma decisão pendente</b><span>Quando houver curva refinada ou ajuste pronto para revisar, aparece aqui.</span></div>';
+      setText('suggestionCount', 0);
+      return;
+    }
     const current = items.filter(item => ['PENDING', 'OBSERVING'].includes(String(item.lifecycle || '')));
     const pendingMap = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'MAP_K' && item.actionable === true);
     const pendingCurve = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'CURVE_K' && item.actionable === true);
@@ -340,6 +346,7 @@
       const target = button.dataset.selectReady;
       const list = target === 'MAP_K' ? pendingMap : pendingCurve;
       list.forEach(item => selectedSuggestionIds.add(item.id));
+      lastSuggestionSignature = '';
       renderPersistentSuggestions(store.get());
     }));
     host.querySelectorAll('[data-review-selected]').forEach(button => button.addEventListener('click', () => {

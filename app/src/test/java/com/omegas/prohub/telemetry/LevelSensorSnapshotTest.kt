@@ -19,4 +19,13 @@ class LevelSensorSnapshotTest {
         val result=sensor.read(7,{session}){session=8;UsbProtocolReply(true,0x53,byteArrayOf(0))}
         assertFalse(result.getBoolean("available"));assertFalse(result.getBoolean("ok"));sensor.resetForSession(8);assertTrue(sensor.json().isNull("percent"))
     }
+    @Test fun `troca de sessao entre a ultima conferencia e a publicacao nao publica captura antiga`() {
+        val sensor=LevelSensorSnapshot { 1000 };var answered=0;var resetDone=false
+        // A troca de sessão chega por outra via (resetForSession) depois que a última conferência já passou.
+        val currentSession:()->Long={ if(answered==5 && !resetDone){resetDone=true;sensor.resetForSession(8)};7L }
+        sensor.read(7,currentSession){answered++;UsbProtocolReply(true,0x53,byteArrayOf(1))}
+        val now=sensor.json()
+        assertNotEquals("READY",now.optString("state"));assertNotEquals(7L,now.optLong("sessionId",-1));assertFalse(now.getBoolean("available"))
+    }
 }
+

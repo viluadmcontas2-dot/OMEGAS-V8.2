@@ -134,7 +134,8 @@
       if (this.suggestions) this.suggestions.classList.toggle('open', state.suggestionsOpen === true);
       if (this.tools) this.tools.classList.toggle('open', state.toolsOpen === true);
       document.body.classList.toggle('drawer-open', state.suggestionsOpen === true || state.toolsOpen === true);
-      this.renderSuggestions(state);
+      // A lista #suggestionList pertence à fila persistente (app.js renderPersistentSuggestions).
+      // Dois donos reescrevendo a mesma lista a cada 2 s fazia o toque sumir e a aba "travar".
       if (state.toolsOpen) this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
       if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'APK/WebView · ponte nativa ativa';
