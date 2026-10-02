@@ -37,12 +37,9 @@ jobs:
         run: |
           set -euo pipefail
           MATRIX="$(python3 tools/ci/global_reality_plan.py)"
+          COUNT="$(python3 -c 'import json,sys; print(len(json.load(sys.stdin)["include"]))' <<< "$MATRIX")"
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json, subprocess
-          x=json.loads(subprocess.check_output(["python3","tools/ci/global_reality_plan.py"],text=True))
-          print("count="+str(len(x["include"])))
-          PY
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
 
   lane:
     needs: plan
