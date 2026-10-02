@@ -44,6 +44,8 @@ commands = [
     ["node", "--test", "tests/ui/ux-states.test.cjs"],
     ["node", "--test", "tests/ui/refino-route.test.cjs"],
     ["node", "--test", "tests/ui/our-curve.test.cjs"],
+    ["node", "--test", "tests/ui/autocal-evidence.test.cjs"],
+    ["node", "--test", "tests/ui/refino-phases.test.cjs"],
 ]
 
 for command in commands:

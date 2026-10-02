@@ -157,6 +157,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
         service.equivalence.index()
             .put("denseBands", service.equivalence.denseBandsJson())
+            .put("typicalBands", service.equivalence.typicalBandsJson())
             .put("refinement", service.refinementJournal.json())
             .put("restorePoints", service.refinementJournal.restorePoints())
             .put("autopilot", service.refinementAutopilot.json())

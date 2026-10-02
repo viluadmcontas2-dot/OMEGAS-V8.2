@@ -3,6 +3,7 @@
   const ns = root.OmegasUi = root.OmegasUi || {};
 
   function finite(value) {
+    if (value === null || value === undefined) return null;
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }
@@ -85,9 +86,10 @@
               <div><small>MÁX. AUTOMATCH</small><b id="autocalMaxMatch">—</b></div>
               <div><small>EVENTOS MADUROS</small><b id="autocalMatureCount">0</b></div>
             </div>
+            <div id="autocalEvidence"></div>
             <div class="autocal-layout">
               <section class="autocal-bands-card">
-                <div class="autocal-section-head"><div><small>MAP × TPET · 18 BANDAS POR FAMÍLIA</small><h4>Gasolina · GNV atual · GNV anterior</h4></div><span>Kotlin é a autoridade</span></div>
+                <div class="autocal-section-head"><div><small>MAP × TPET · 18 BANDAS POR FAMÍLIA</small><h4>Gasolina · GNV atual</h4></div><span>Kotlin é a autoridade</span></div>
                 <div id="autocalBands" class="autocal-bands"></div>
                 <p class="autocal-note">X = tempo de injeção gasolina (Tpet); Y = MAP. Ponto sem coordenada física permanece sem posição. Os 30 pontos de Curva K/referência não viram bolinhas de aquisição.</p>
               </section>
@@ -125,6 +127,7 @@
         button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
       });
       this.panel?.addEventListener('click', event => {
+        if (event.target.closest('[data-autocal-refino]')) this.app.router.navigate('refino');
         if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
         if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
       });
@@ -138,6 +141,7 @@
     }
 
     refresh() {
+      if (this.store.get().visible === false || document.hidden) return;
       if (!this.api?.available?.()) {
         this.renderUnavailable();
         return;
@@ -145,6 +149,9 @@
       this.state = this.api.status() || {};
       this.snapshot = this.api.snapshot() || {};
       this.actionState = this.api.actionStatus() || {};
+      this.equivalence = this.api.equivalence() || {};
+      const signature = JSON.stringify([this.snapshot,this.equivalence.gasEpochAt,this.equivalence.samples,this.equivalence.refinement?.bandScale]);
+      if (signature !== this.analysisSignature) { this.analysisSignature=signature;this.analysis=this.api.refinedAnalysis() || {}; }
       this.render();
 
     }
@@ -209,6 +216,8 @@
       this.text('autocalMatchCount', autoMatchCount ?? '—');
       this.text('autocalMaxMatch', maxAutoMatch ?? '—');
       this.text('autocalMatureCount', events.length);
+      const evidence=document.getElementById("autocalEvidence");
+      if(evidence)evidence.innerHTML=ns.AutoCalEvidence.html(this.analysis,this.equivalence,snapshot,state);
       this.renderBands(projection);
       this.renderEvents(events);
       this.renderActionState();
@@ -223,7 +232,7 @@
         return;
       }
       const families = ['PETROL', 'GAS', 'GAS_PREVIOUS'];
-      host.innerHTML = families.map(fuel => {
+      const cardsHtml = families.map(fuel => {
         const family = points.filter(point => String(point.fuel || '') === fuel);
         if (!family.length) return '';
         const cards = family.map(point => {
@@ -239,6 +248,7 @@
         }).join('');
         return `<div class="autocal-family" data-fuel="${fuel}"><div class="autocal-family-title"><b>${escapeHtml(fuelLabel(fuel))}</b><span>18 bandas · ${escapeHtml(projection.xAxis || 'TPET_MS')} × ${escapeHtml(projection.yAxis || 'MAP_BAR')}</span></div>${cards}</div>`;
       }).join('');
+      host.innerHTML = `<div class="autocal-native-plot">${ns.OurCurvePlot.html(this.snapshot, null).replace(/<p class="our-curve-empty">.*?<\/p>/,'')}</div><details><summary>Bandas e aquisição anterior</summary>${cardsHtml}</details>`;
     }
 
     renderEvents(events) {
@@ -288,7 +298,6 @@
   function boot() {
     const app = root.OmegasApp;
     if (!app?.store || !app?.scheduler || !ns.AutoCalApi) {
-      root.setTimeout(boot, 25);
       return;
     }
     if (app.autoCalCockpit) return;
@@ -296,5 +305,6 @@
   }
 
   ns.AutoCalCockpit = AutoCalCockpit;
+  root.addEventListener?.('omegas-ready',boot,{once:true});
   boot();
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -85,7 +85,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                 while (lane.size > cap) lane.removeFirst()
                 dirty = true
                 cachedIndex = null
-                cachedDense = null
+        cachedDense = null
             }
         }
         if (obs != null) maybeSave()
@@ -112,7 +112,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         gasEpochAt = clock()
         dirty = true
         cachedIndex = null
-                cachedDense = null
+        cachedDense = null
     }.also { maybeSave(force = true) }
 
     /** O próprio app gravou esta curva: adota sem descartar o GNV medido com ela. */
@@ -195,6 +195,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     }
 
     fun gasPerAir(): Double? = synchronized(lock) { if (airRpmBar > 0) gasUsefulRpmMs / airRpmBar else null }
+
+    fun typicalBandsJson(): JSONArray = TypicalInjectionBands.json(synchronized(lock) { petrol.toList() })
 
     /** Consulta visual: não alimenta o motor de equivalência. Cache invalidado com as observações. */
     fun denseBandsJson(binBar: Double = 0.025, minSamples: Int = 5): JSONObject = synchronized(lock) {

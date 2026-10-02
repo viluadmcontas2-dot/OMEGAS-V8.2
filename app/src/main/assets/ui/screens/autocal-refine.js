@@ -322,7 +322,7 @@
     alert(message) { this.store.patch({ alert: { level: 'warning', message: String(message) } }); }
 
     render() {
-      const a = this.analysis || {};
+      const a = this.equivalence?.autopilot?.phase === 'SEM_ECU' ? {} : this.analysis || {};
       const flow = deriveFlow(a, this.operation);
       const head = headline(a, flow);
       const pilot = this.equivalence?.autopilot;
@@ -334,7 +334,7 @@
       const riskBefore = RISK[a.joltRiskBefore] || RISK.UNKNOWN;
       const riskAfter = RISK[a.joltRiskAfter] || RISK.UNKNOWN;
       const span = steepestSpan(a.points || [], 'currentFactor');
-      const where = a.joltRiskBefore && a.joltRiskBefore !== 'LOW' && span ? `degrau hoje em ${fmt(span.from, 1)}–${fmt(span.to, 1)} ms` : 'gás acompanha a gasolina';
+      const where = a.joltRiskBefore && a.joltRiskBefore !== 'LOW' && span ? `degrau hoje em ${fmt(span.from, 1)}–${fmt(span.to, 1)} ms` : a.joltRiskBefore === 'LOW' ? 'sem degrau importante na análise' : 'análise ainda indisponível';
       const errBefore = finite(a.evidenceErrorBefore);
       const errAfter = finite(a.evidenceErrorAfter);
       const maxChange = changed.reduce((m, p) => Math.max(m, Math.abs(finite(p.deltaPercent) || 0)), 0);
@@ -374,6 +374,7 @@
             const delta = finite(p.currentFactor) ? (p.targetFactor / p.currentFactor - 1) * 100 : null;
             return `<div><span>${fmt(point.referenceTimeMs, 1)} ms</span><b>${fmt(p.currentFactor, 3)} → ${fmt(p.targetFactor, 3)}</b><small data-origin="${escapeHtml(point.origin)}">${pct(delta)} · ${escapeHtml(ORIGIN[point.origin]?.label || '')}</small></div>`;
           }).join('')}</div>
+          ${pilot?.phase === 'ECU_TRABALHANDO' ? '<p class="problem">A ECU ainda está no automático e pode sobrescrever.</p>' : ''}
           <p class="refine-contract"><b>Ainda nada foi enviado.</b> O app relê a curva, confere que nada mudou, grava ponto a ponto e confirma por readback. A curva anterior fica guardada para restaurar.</p>
           <div class="operation-actions"><button type="button" data-refine-cancel class="secondary">Cancelar</button><button type="button" data-refine-apply class="danger-primary">Gravar na ECU</button></div>
         </div>` : '';
@@ -387,7 +388,7 @@
             ${this.equivalence?.autopilot?.phase ? '' : `<ol class="refine-steps">${steps}</ol>`}
           </header>
           ${a.available ? `<div class="refine-body">
-            <div class="refine-chart-wrap"><h4>Nossa curva</h4>${ns.OurCurvePlot?.html(this.snapshot,this.equivalence?.denseBands) || '<p class="our-curve-empty">Ainda sem pontos próprios — rode na gasolina e no GNV</p>'}<div class="our-curve-detail" aria-live="polite">${escapeHtml(this.curveDetail || 'Toque num ponto para conferir MAP, ms e amostras.')}</div></div>
+            <div class="refine-chart-wrap"><h4>Nossa curva</h4>${ns.OurCurvePlot?.html(pilot?.phase === 'SEM_ECU' ? null : this.snapshot,pilot?.phase === 'SEM_ECU' ? null : this.equivalence?.denseBands) || '<p class="our-curve-empty">Ainda sem pontos próprios — rode na gasolina e no GNV</p>'}<div class="our-curve-detail" aria-live="polite">${escapeHtml(this.curveDetail || 'Toque num ponto para conferir MAP, ms e amostras.')}</div></div>
             <dl class="refine-metrics">
               <div><dt>Puxada no GNV</dt><dd><b data-tone="${riskBefore[1]}">${riskBefore[0]}</b> → <b data-tone="${riskAfter[1]}">${riskAfter[0]}</b></dd><span>${escapeHtml(where)}</span></div>
               <div><dt>Mudança</dt><dd>${changed.length} ponto${changed.length === 1 ? '' : 's'}</dd><span>${changed.length ? `até ±${fmt(maxChange, 1)}% (limite ±${fmt(a.guards?.maximumStepPercent, 0)}%)` : 'curva mantida'}</span></div>

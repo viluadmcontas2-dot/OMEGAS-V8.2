@@ -48,6 +48,6 @@
   loadOptionalScript('components/floating-telemetry.js');
   loadOptionalScript('components/split-layout.js');
   loadOptionalScript('core/autocal-api.js', () =>
-    loadOptionalScript('screens/our-curve.js', () => loadOptionalScript('screens/autocal-refine.js', () => loadOptionalScript('screens/refinement-screen.js', () => loadOptionalScript('screens/autocal-cockpit.js')))),
+    loadOptionalScript('screens/our-curve.js', () => loadOptionalScript('screens/autocal-refine.js', () => loadOptionalScript('screens/refinement-screen.js', () => loadOptionalScript('screens/autocal-evidence.js', () => loadOptionalScript('screens/autocal-cockpit.js'))))),
   );
 })(typeof window !== 'undefined' ? window : globalThis);
