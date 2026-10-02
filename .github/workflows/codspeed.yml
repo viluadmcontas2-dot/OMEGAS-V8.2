@@ -2,13 +2,29 @@ name: CodSpeed Benchmarks
 
 on:
   push:
-    branches: [ OMEGAS-SPEED ]
-    paths-ignore:
-      - 'docs/**'
-      - '**.md'
-  # SPEED-only integration: no unrelated PR or main branch CI work.
-  # `workflow_dispatch` allows CodSpeed to trigger backtest
-  # performance analysis in order to generate initial data.
+    branches: [ OMEGAS-SPEED, OmegasPlatina ]
+    paths:
+      - '.github/workflows/codspeed.yml'
+      - 'codspeed.yml'
+      - 'benchmarks/**'
+      - 'scripts/omegas/portmon_parser.py'
+      - 'lab/contracts/**'
+      - 'tests/adaptive_fast_learning_harness.py'
+      - 'tests/test_portmon_payload_lazy.py'
+      - 'app/src/main/assets/ui/core/learning-model.js'
+      - 'app/src/main/assets/ui/screens/autocal-cockpit.js'
+  pull_request:
+    branches: [ OmegasPlatina ]
+    paths:
+      - '.github/workflows/codspeed.yml'
+      - 'codspeed.yml'
+      - 'benchmarks/**'
+      - 'scripts/omegas/portmon_parser.py'
+      - 'lab/contracts/**'
+      - 'tests/adaptive_fast_learning_harness.py'
+      - 'tests/test_portmon_payload_lazy.py'
+      - 'app/src/main/assets/ui/core/learning-model.js'
+      - 'app/src/main/assets/ui/screens/autocal-cockpit.js'
   workflow_dispatch:
 
 permissions:
