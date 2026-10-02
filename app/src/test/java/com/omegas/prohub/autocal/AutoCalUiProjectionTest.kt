@@ -203,6 +203,8 @@ class AutoCalUiProjectionTest {
             .put("petrolPending", false)
             .put("gasPending", true)
             .put("referencePending", true)
+            .put("petrolReferencePending", false)
+            .put("gasReferencePending", true)
             .put("comparisonAllowed", false)
         val projected = AutoCalUiProjection.project(
             nativeStatus = status("MONITORING", 42L).put("liveAcquisitionEpoch", epoch),
