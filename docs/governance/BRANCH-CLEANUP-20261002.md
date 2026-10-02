@@ -1,6 +1,6 @@
 # Limpeza de branches — plano aprovado pelo dono (2026-10-02)
 
-O dono pediu uma limpeza incisiva. **Ficam só `main` (padrão) e `claude/brave-darwin-wuliyo` (trabalho atual).** As outras 33 são arquivadas como tag `archive/<nome>` no mesmo SHA e depois apagadas. Com isso nada se perde: para recuperar uma branch, basta criá-la a partir da tag.
+O dono pediu uma limpeza incisiva. **Ficam só `main` (padrão), `claude/brave-darwin-wuliyo` (trabalho atual) e `OmegasPlatina` (linha Platina, mantida por decisão do dono).** As outras 32 são arquivadas como tag `archive/<nome>` no mesmo SHA e depois apagadas. Com isso nada se perde: para recuperar uma branch, basta criá-la a partir da tag.
 
 A sessão do Claude só pode dar push na própria branch (403 ao criar tags ou apagar outras). Quem executa é o GPT, pela API do GitHub.
 
@@ -9,10 +9,10 @@ A sessão do Claude só pode dar push na própria branch (403 ao criar tags ou a
 1. **Criar a tag:** `POST /repos/viluadmcontas2-dot/OMEGAS-V8.2/git/refs` com `{"ref":"refs/tags/archive/<branch>","sha":"<sha>"}`. Se a tag já existir com o mesmo SHA, seguir em frente.
 2. **Conferir:** a tag precisa existir com exatamente esse SHA. Se o SHA atual da branch for diferente do SHA da tabela, **não apague**: registre e pule.
 3. **Apagar a branch:** `DELETE /repos/viluadmcontas2-dot/OMEGAS-V8.2/git/refs/heads/<branch>`.
-4. **PRs abertos:** os PRs abertos cujo head ou base é uma dessas branches (#105–#111, #116, #117, #118) fecham sozinhos quando a branch é apagada. Isso é esperado: eram verificações e experimentos antigos, e o #118 já foi incorporado na branch de trabalho (merge `8be3892d`).
-5. **Registro:** no fim, registre neste arquivo o resultado de cada linha (arquivada/apagada/pulada) e a contagem final de branches (esperado: 2).
+4. **PRs abertos:** os PRs abertos cujo head ou base é uma dessas branches (#105–#111, #116, #117, #118; o #117 fecha porque o head `OMEGAS-SPEED` some, mesmo com a base `OmegasPlatina` mantida) fecham sozinhos quando a branch é apagada. Isso é esperado: eram verificações e experimentos antigos, e o #118 já foi incorporado na branch de trabalho (merge `8be3892d`).
+5. **Registro:** no fim, registre neste arquivo o resultado de cada linha (arquivada/apagada/pulada) e a contagem final de branches (esperado: 3).
 
-**Nunca** apagar `main` nem `claude/brave-darwin-wuliyo`. Não apagar nenhuma tag.
+**Nunca** apagar `main`, `claude/brave-darwin-wuliyo` nem `OmegasPlatina`. Não apagar nenhuma tag.
 
 | Branch | SHA |
 |---|---|
@@ -20,7 +20,6 @@ A sessão do Claude só pode dar push na própria branch (403 ao criar tags ou a
 | `OmegasAtlas` | `2ba19ecc58a120385d68b9b296595f325d542d14` |
 | `OmegasModular` | `48cb5688bc1eca27f6e7c7fbcae4c6ca3b2fa0cc` |
 | `OmegasOuro` | `68a4ac7841179cafb57e74f2c872cebceda15718` |
-| `OmegasPlatina` | `b185e80ab68e203e65a79806983bf4210310582c` |
 | `OmegasVerde` | `76bed5b1f0f4ab0d18ea5baea3147f58edef2d0d` |
 | `build/platina-apk-ac837954` | `515f2158a95241073151f9d0e40f0a4850ad002f` |
 | `build/platina-final-75289b7` | `8e8811b5da9b0e6c746cf3076357a160eb8c7989` |

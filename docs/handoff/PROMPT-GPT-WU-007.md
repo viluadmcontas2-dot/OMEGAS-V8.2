@@ -57,11 +57,11 @@ Level, consumo e Ferramentas são **bônus**. Nunca podem bloquear, atrasar ou p
 ### Bloco 0 — Limpeza das branches (aprovada pelo dono)
 
 Execute `docs/governance/BRANCH-CLEANUP-20261002.md` à risca:
-1. Para cada uma das 33 branches, crie a tag `archive/<nome>` no SHA da tabela.
+1. Para cada uma das 32 branches, crie a tag `archive/<nome>` no SHA da tabela.
 2. Confira a tag.
 3. Só então apague a branch.
 
-**Ficam somente `main` e `claude/brave-darwin-wuliyo`.** Se o SHA atual de uma branch não bater com o da tabela, pule essa branch e registre.
+**Ficam somente `main`, `claude/brave-darwin-wuliyo` e `OmegasPlatina`.** Se o SHA atual de uma branch não bater com o da tabela, pule essa branch e registre.
 
 No fim, registre o resultado no próprio arquivo e faça um commit só de documentação, sem CI.
 
