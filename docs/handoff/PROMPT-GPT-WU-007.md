@@ -9,8 +9,7 @@ Você é o executor do OMEGAS V8.2: app Android para a ECU MP48 / Omega Platinum
 - Repositório: `viluadmcontas2-dot/OMEGAS-V8.2`.
 - Branch: `claude/brave-darwin-wuliyo`, a partir do HEAD atual.
 - A WU-006 está fechada com APK verde: run `37063541243`, SHA `dcd601c5`.
-- Não crie branch e não abra PR.
-- A **única** remoção de branch permitida é a do Bloco 0, exatamente como está em `docs/governance/BRANCH-CLEANUP-20261002.md`.
+- Não crie branch, não abra PR e **não mexa em outras branches nem tags**. A limpeza de branches é com o Claude, não com você.
 
 ## 0. Leitura obrigatória
 
@@ -26,6 +25,34 @@ Você é o executor do OMEGAS V8.2: app Android para a ECU MP48 / Omega Platinum
    - "Método aplicado — Omega Dev 4.0 Premium UI/UX";
    - "18 — Blueprint Car Info Next — Método OMEGAS + CUSTOMROM".
 3. Abra `docs/workunits/OMEGAS-WU-007.md` com o escopo abaixo antes de codar.
+
+## 0b. Postura: CEO-engenheiro, investigação fio a fio
+
+Você não é um executor de checklist. Você é o dono técnico do produto e precisa raciocinar como alguém que vai vender este app e responder pelo carro de um cliente.
+
+1. **Antes de mudar qualquer coisa, entenda o fio inteiro.**
+   - Para cada tela ou recurso que tocar, siga o caminho completo: toque na UI → JS → bridge (`AutoCalJavascriptBridge` / `NativeApi`) → Kotlin → serviço → ECU/USB → resposta → estado → tela.
+   - Leia o código de verdade, não o nome do arquivo.
+   - Registre o mapa desse fio em `docs/workunits/OMEGAS-WU-007.md`: arquivos e funções, quem chama quem, em que thread e com que frequência.
+2. **Caçar causa raiz, não sintoma.** Para cada bug, pergunte:
+   - Por que acontece?
+   - Onde mais o mesmo padrão existe?
+   - Qual teste falharia antes da correção?
+
+   Exemplo real já resolvido: Sugestões "travava" porque dois renderizadores reescreviam a mesma lista a cada 2 s e a rota puxava o aprendizado inteiro. Procure esse mesmo padrão em todas as abas.
+3. **Desconfiar do que parece pronto.** Para cada recurso existente, verifique:
+   - se ele funciona com a ECU desconectada;
+   - com dados vazios;
+   - com sessão USB trocando no meio;
+   - com o app reiniciado;
+   - com a multimídia lenta.
+
+   Liste o que quebra.
+4. **Pensar no motorista.** A tela é lida a um braço de distância, com o carro ligado. Cada tela precisa responder em 2 segundos: onde estou, o que está acontecendo, o que faço agora. Se não responde, redesenhe seguindo os blueprints.
+5. **Propor além do pedido, com critério.**
+   - Achou algo que melhora o foco do produto (igualar GNV e gasolina) com evidência? Implemente, se for pequeno e seguro. Se for grande, escreva a proposta com custo e benefício em `docs/product/PROPOSTAS-WU-007.md`.
+   - Nunca adicione complexidade sem ganho claro.
+6. **Ser honesto.** Diga o que foi provado, o que é hipótese e o que só o carro prova. Não declare "pronto" sem teste.
 
 ## 1. Foco do produto (não inverter)
 
@@ -53,17 +80,6 @@ Level, consumo e Ferramentas são **bônus**. Nunca podem bloquear, atrasar ou p
 - **Quando parar:** quando o dono ou o Claude mandar parar, **não faça mais push**. Isso já aconteceu uma vez e não pode repetir.
 
 ## 3. Blocos (nesta ordem)
-
-### Bloco 0 — Limpeza das branches (aprovada pelo dono)
-
-Execute `docs/governance/BRANCH-CLEANUP-20261002.md` à risca:
-1. Para cada uma das 32 branches, crie a tag `archive/<nome>` no SHA da tabela.
-2. Confira a tag.
-3. Só então apague a branch.
-
-**Ficam somente `main`, `claude/brave-darwin-wuliyo` e `OmegasPlatina`.** Se o SHA atual de uma branch não bater com o da tabela, pule essa branch e registre.
-
-No fim, registre o resultado no próprio arquivo e faça um commit só de documentação, sem CI.
 
 ### Bloco A — Sessão vira um ZIP inteligente
 
