@@ -95,7 +95,8 @@ object NativeAutoCalProgression {
         val families = listOf(
             family(Fuel.PETROL, petrolCounters, petrolTimes, petrolMaps, petrolZoneFlags),
             family(Fuel.GAS, gasCounters, gasTimes, gasMaps, gasZoneFlags),
-            family(Fuel.GAS_PREVIOUS, gasCounters, previousGasTimes, previousGasMaps, gasZoneFlags),
+            // A ECU expõe Tpet/MAP anteriores, não contadores nem flags de zona anteriores.
+            family(Fuel.GAS_PREVIOUS, null, previousGasTimes, previousGasMaps, null),
         )
         val references = reference30.map { (key, values) ->
             val exact = values?.takeIf { it.size == REFERENCE_POINTS }?.copyOf()
@@ -119,7 +120,8 @@ object NativeAutoCalProgression {
         val exactTimes = times?.takeIf { it.size == ACQUISITION_BANDS }
         val exactMaps = maps?.takeIf { it.size == ACQUISITION_BANDS }
         val exactZones = zoneFlags?.takeIf { it.size == ZONES }
-        val shapeKnown = exactCounters != null && exactTimes != null && exactMaps != null
+        val shapeKnown = exactTimes != null && exactMaps != null &&
+            (fuel == Fuel.GAS_PREVIOUS || exactCounters != null)
 
         val bands = List(ACQUISITION_BANDS) { index ->
             val time = exactTimes?.get(index)
@@ -131,7 +133,10 @@ object NativeAutoCalProgression {
                 counter = exactCounters?.get(index),
                 petrolTimeRaw = time,
                 mapRaw = map,
-                coordinateState = if (time != null && map != null) CoordinateState.POSITIONED else CoordinateState.UNPOSITIONED,
+                coordinateState = if (
+                    time != null && time > 0 && map != null && map > 0 &&
+                    (fuel == Fuel.GAS_PREVIOUS || (exactCounters?.get(index) ?: 0) > 0)
+                ) CoordinateState.POSITIONED else CoordinateState.UNPOSITIONED,
             )
         }
         val zones = List(ZONES) { index ->

@@ -69,6 +69,67 @@ class NativeAutoCalSnapshotHumanProjectorTest {
         assertEquals(54, projection.getJSONArray("acquisitionPoints").length())
     }
 
+    @Test
+    fun previousGasCoordinatesSurviveAutoMatchWithoutBorrowingCurrentGasMaturity() {
+        val state = snapshot().apply {
+            replaceField("NUM_BUF_UPD_GAS", IntArray(18))
+            replaceField("ACQUIRED_ZONES_GAS", intArrayOf(0, 0, 0, 0))
+            replaceField("PETR_INJ_TBUF_GAS", IntArray(18))
+            replaceField("MNFLD_PRESS_BUF_GAS", IntArray(18))
+            replaceField("PETR_INJ_TBUF_GAS_PREV", IntArray(18) { if (it == 2) 1526 else 0 })
+            replaceField("MNFLD_PRESS_BUF_GAS_PREV", IntArray(18) { if (it == 2) 342 else 0 })
+        }
+        val points = NativeAutoCalSnapshotHumanProjector.project(state).getJSONArray("acquisitionPoints")
+        val previous = pointsFor(points, "GAS_PREVIOUS").single { it.getInt("bandIndex") == 2 }
+        val current = pointsFor(points, "GAS").single { it.getInt("bandIndex") == 2 }
+
+        assertTrue(previous.getBoolean("positioned"))
+        assertEquals(1526.0 / 512.0, previous.getDouble("tPetrolMs"), 0.000001)
+        assertEquals(342.0 / 1024.0, previous.getDouble("mapBar"), 0.000001)
+        assertEquals("NOT_ACQUIRED", current.getString("maturity"))
+        assertEquals("UNKNOWN", previous.getString("maturity"))
+    }
+
+    @Test
+    fun previousGasFamilyHasNoCurrentGasCountersOrZoneFlags() {
+        val progression = NativeAutoCalProgression.evaluate(
+            petrolCounters = IntArray(18) { 8 },
+            petrolTimes = IntArray(18) { 1800 },
+            petrolMaps = IntArray(18) { 600 },
+            petrolZoneFlags = intArrayOf(1, 1, 1, 1),
+            gasCounters = IntArray(18) { 9 },
+            gasTimes = IntArray(18) { 1600 },
+            gasMaps = IntArray(18) { 500 },
+            gasZoneFlags = intArrayOf(1, 1, 1, 1),
+            previousGasTimes = IntArray(18) { 1526 },
+            previousGasMaps = IntArray(18) { 342 },
+        )
+        val current = progression.acquisition18.single { it.fuel == NativeAutoCalProgression.Fuel.GAS }
+        val previous = progression.acquisition18.single { it.fuel == NativeAutoCalProgression.Fuel.GAS_PREVIOUS }
+        assertEquals(9, current.bands[2].counter)
+        assertNull(previous.bands[2].counter)
+        assertEquals(NativeAutoCalProgression.ZoneState.UNKNOWN, previous.zones[0].state)
+        assertEquals(NativeAutoCalProgression.ShapeState.KNOWN, previous.shapeState)
+    }
+
+    @Test
+    fun freshlyResetCurrentAndPreviousGasDoNotShowZeroZeroAsPhysicalPoints() {
+        val state = snapshot().apply {
+            replaceField("NUM_BUF_UPD_GAS", IntArray(18))
+            replaceField("ACQUIRED_ZONES_GAS", intArrayOf(0, 0, 0, 0))
+            replaceField("PETR_INJ_TBUF_GAS", IntArray(18))
+            replaceField("MNFLD_PRESS_BUF_GAS", IntArray(18))
+            replaceField("PETR_INJ_TBUF_GAS_PREV", IntArray(18))
+            replaceField("MNFLD_PRESS_BUF_GAS_PREV", IntArray(18))
+        }
+        val points = NativeAutoCalSnapshotHumanProjector.project(state).getJSONArray("acquisitionPoints")
+        for (fuel in listOf("GAS", "GAS_PREVIOUS")) {
+            val empty = pointsFor(points, fuel)
+            assertTrue(empty.all { !it.getBoolean("positioned") })
+            assertTrue(empty.all { it.isNull("tPetrolMs") && it.isNull("mapBar") })
+        }
+    }
+
     private fun snapshot(): JSONObject = JSONObject()
         .put("fields", JSONArray().apply {
             put(field("NUM_BUF_UPD_PETR", IntArray(18) { 8 }))

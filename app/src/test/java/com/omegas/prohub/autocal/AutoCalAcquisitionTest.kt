@@ -88,6 +88,29 @@ class AutoCalAcquisitionTest {
         assertEquals(9, thresholds.getInt("gasNormal"))
     }
 
+    @Test
+    fun previousGasCannotInheritLiveGasCounterAndBecomeValidAfterAutoMatch() {
+        val calibration = IntArray(10).also { it[5] = 4; it[8] = 9 }
+        val state = snapshot(
+            field("CALIBRATION_VAL_1", calibration),
+            field("NUM_BUF_UPD_GAS", IntArray(18) { 12 }),
+            field("PETR_INJ_TBUF_GAS", IntArray(18) { 1800 }),
+            field("MNFLD_PRESS_BUF_GAS", IntArray(18) { 500 }),
+            field("PETR_INJ_TBUF_GAS_PREV", IntArray(18) { 1526 }),
+            field("MNFLD_PRESS_BUF_GAS_PREV", IntArray(18) { 342 }),
+        )
+        val result = AutoCalAcquisition.fromSnapshot(state).getJSONArray("points")
+        val current = result.getJSONObject(18)
+        val previous = result.getJSONObject(36)
+        assertEquals("VALIDO", current.getString("state"))
+        assertEquals(12, current.getInt("counter"))
+        assertEquals(1526, previous.getInt("timeRaw"))
+        assertTrue(previous.isNull("counter"))
+        assertTrue(previous.isNull("threshold"))
+        assertEquals("SEM_DADO", previous.getString("state"))
+        assertFalse(previous.getBoolean("draw"))
+    }
+
     private fun snapshot(vararg fields: JSONObject) = JSONObject().put("fields", JSONArray(fields.toList()))
 
     private fun field(key: String, raw: IntArray) = JSONObject()
