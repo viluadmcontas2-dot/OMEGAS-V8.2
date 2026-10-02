@@ -292,7 +292,9 @@
     const host = byId('suggestionList');
     const calibration = state.calibrationState || {};
     const items = Array.isArray(calibration.suggestionItems) ? calibration.suggestionItems : [];
-    if (!host || !items.length) return;
+    if (!host) return;
+    const refinement = ns.RefinementLaunch?.suggestion(ns.AutoCalApi?.equivalence?.());
+    if (!items.length && !refinement) return;
     const current = items.filter(item => ['PENDING', 'OBSERVING'].includes(String(item.lifecycle || '')));
     const pendingMap = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'MAP_K' && item.actionable === true);
     const pendingCurve = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'CURVE_K' && item.actionable === true);
@@ -300,7 +302,7 @@
     const applied = items.filter(item => item.lifecycle === 'APPLIED').slice(-12).reverse();
     const validIds = new Set([...pendingMap, ...pendingCurve].map(item => item.id));
     [...selectedSuggestionIds].forEach(id => { if (!validIds.has(id)) selectedSuggestionIds.delete(id); });
-    setText('suggestionCount', pendingMap.length + pendingCurve.length);
+    setText('suggestionCount', pendingMap.length + pendingCurve.length + (refinement ? 1 : 0));
 
     const pendingRows = list => list.map(item => `
       <label class="suggestion-row" data-lifecycle="PENDING">
@@ -315,8 +317,9 @@
       </div>`).join('');
 
     host.innerHTML = `
+      ${refinement ? '<section class="suggestion-group"><header><div><small>REFINO</small><h3>Curva refinada pronta</h3></div><button type="button" class="primary" data-refinement-review>Revisar no Refino</button></header></section>' : ''}
       <div class="suggestion-queue-summary">
-        <div><small>PENDENTES</small><b>${pendingMap.length + pendingCurve.length}</b></div>
+        <div><small>PENDENTES</small><b>${pendingMap.length + pendingCurve.length + (refinement ? 1 : 0)}</b></div>
         <div><small>OBSERVANDO</small><b>${observing.length}</b></div>
         <div><small>APLICADAS</small><b>${applied.length}</b></div>
       </div>
@@ -326,6 +329,7 @@
       ${applied.length ? `<section class="suggestion-group"><header><div><small>HISTÓRICO</small><h3>Aplicadas após readback</h3></div></header>${passiveRows(applied)}</section>` : ''}
     `;
 
+    host.querySelector('[data-refinement-review]')?.addEventListener('click', () => router.navigate(refinement.route, refinement.context));
     host.querySelectorAll('[data-suggestion-select]').forEach(input => input.addEventListener('change', () => {
       if (input.checked) selectedSuggestionIds.add(input.dataset.suggestionSelect);
       else selectedSuggestionIds.delete(input.dataset.suggestionSelect);
@@ -439,6 +443,7 @@
     refreshStatus();
     const route = router.restore();
     activateRoute(route, null);
+    ns.consumeLaunchRoute?.(root, router);
     scheduler.start();
   }
 

@@ -2,7 +2,7 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  function finite(value) { return value != null && Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
     return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -51,7 +51,7 @@
       const api = ns.AutoCalApi;
       if (!node || !api || typeof api.equivalence !== 'function') return;
       const card = pilotCard(api.equivalence());
-      const signature = card ? `${card.tone}|${card.title}|${card.detail}` : '';
+      const signature = card ? `${card.tone}|${card.title}|${card.detail}|${card.technical}` : '';
       if (signature === this.lastPilotSignature) return;
       this.lastPilotSignature = signature;
       node.hidden = !card;
@@ -59,6 +59,7 @@
       node.dataset.tone = card.tone;
       node.querySelector('b').textContent = card.title;
       node.querySelector('span').textContent = card.detail;
+      node.querySelector('[data-pilot-ratio]').textContent = card.technical;
     }
 
     ensureLayout() {
@@ -85,9 +86,9 @@
         card.setAttribute('role', 'button');
         card.tabIndex = 0;
         card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); } });
-        card.setAttribute('aria-label', 'Abrir AutoCal');
-        card.innerHTML = '<small>CALIBRAÇÃO</small><b></b><span></span>';
-        card.addEventListener('click', () => root.OmegasApp?.router?.navigate('autocal'));
+        card.setAttribute('aria-label', 'Abrir Refino');
+        card.innerHTML = '<small>CALIBRAÇÃO</small><b></b><span></span><span data-pilot-ratio></span>';
+        card.addEventListener('click', () => root.OmegasApp?.router?.navigate('refino'));
         health.insertAdjacentElement('afterend', card);
       }
       const strip = this.root?.querySelector('.condition-strip');

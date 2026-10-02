@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import com.omegas.prohub.ui.NotificationRoute
 import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.HubJavascriptBridge
 import com.omegas.prohub.web.PowerJavascriptBridge
@@ -36,6 +37,8 @@ import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
+    private var pendingUiRoute: String? = null
+    private var uiPageReady = false
     private lateinit var webView: WebView
     private var service: TelemetryForegroundService? = null
     private var bound = false
@@ -152,6 +155,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        receiveUiRoute(intent)
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         val prefs = getSharedPreferences("crash_logs", Context.MODE_PRIVATE)
@@ -199,9 +203,27 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        receiveUiRoute(intent)
         if (intent.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
             runWithService { it.connectUsb() }
         }
+    }
+
+    private fun receiveUiRoute(intent: Intent?) {
+        val route = NotificationRoute.fromExtra(intent?.getStringExtra(NotificationRoute.EXTRA_UI_ROUTE)) ?: return
+        intent?.removeExtra(NotificationRoute.EXTRA_UI_ROUTE)
+        pendingUiRoute = route
+        openPendingUiRoute()
+    }
+
+    private fun openPendingUiRoute() {
+        val route = pendingUiRoute ?: return
+        if (!uiPageReady || !::webView.isInitialized) return
+        pendingUiRoute = null
+        webView.evaluateJavascript(
+            "window.omegasPendingRoute=${JSONObject.quote(route)};window.OmegasUi?.consumeLaunchRoute(window,window.OmegasApp?.router);",
+            null,
+        )
     }
 
     override fun onDestroy() {
@@ -279,6 +301,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                if (url?.startsWith("file:///android_asset/ui/index.html") == true) {
+                    uiPageReady = true
+                    openPendingUiRoute()
+                }
+            }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return true
                 return uri.scheme != "file"

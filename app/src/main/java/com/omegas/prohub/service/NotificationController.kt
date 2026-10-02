@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.omegas.prohub.ui.NotificationRoute
 import com.omegas.prohub.MainActivity
 import com.omegas.prohub.R
 import com.omegas.prohub.model.HubStatus
@@ -50,7 +51,8 @@ class NotificationController(private val context: Context) {
         val openIntent = PendingIntent.getActivity(
             context,
             5,
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(NotificationRoute.EXTRA_UI_ROUTE, NotificationRoute.REFINEMENT),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(context, AUTOPILOT_CHANNEL_ID)

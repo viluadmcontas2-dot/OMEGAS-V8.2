@@ -107,7 +107,7 @@
       </div>`;
   }
 
-  const RISK = { LOW: ['Linear', 'ok'], ATTENTION: ['Pouco linear', 'warn'], HIGH: ['Com trancos', 'danger'], UNKNOWN: ['—', 'muted'] };
+  const RISK = { LOW: ['Sem degrau importante', 'ok'], ATTENTION: ['Degrau', 'warn'], HIGH: ['Degrau acentuado', 'danger'], UNKNOWN: ['—', 'muted'] };
 
   /** Trecho (em ms) onde a curva é mais íngreme — é onde a ECU oscila e dá o tranco. */
   function steepestSpan(points, key) {
@@ -192,7 +192,7 @@
     }
 
     refresh() {
-      if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
+      if (this.reviewOpen || this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       const eq = this.api?.equivalence?.() || null;
       const snapshot = this.api?.snapshot?.() || null;
       const signature = JSON.stringify([snapshot,eq?.gasEpochAt,eq?.samples,eq?.ratio,eq?.bands,eq?.refinement?.bandScale,eq?.denseBands]);
@@ -230,6 +230,13 @@
         return;
       }
       this.review = review;
+      this.reviewPoints = (this.analysis?.points || []).map((point, index) => {
+        const prepared = review.points.find(p => Number(p.index) === index);
+        if (!prepared) return { ...point, calculatedRaw: point.currentRaw, calculatedFactor: point.currentFactor, origin: 'HELD' };
+        return { ...point, currentRaw: prepared.currentRaw, currentFactor: prepared.currentFactor,
+          calculatedRaw: prepared.targetRaw, calculatedFactor: prepared.targetFactor,
+          referenceTimeMs: prepared.petrolMs ?? point.referenceTimeMs };
+      });
       this.reviewOpen = true;
       this.render();
       // Revisão é um overlay; o layout principal não se move.
@@ -368,9 +375,9 @@
       const legend = Object.entries(ORIGIN).map(([key, o]) => `<span data-origin="${key}">${o.label}</span>`).join('');
       const review = this.reviewOpen && this.review ? `<div class="refine-review" role="dialog" aria-label="Revisão da curva refinada">
           <header><div><small>REVISÃO · GRAVAÇÃO NA ECU</small><h4>${this.review.points.length} ponto(s) da Curva K</h4></div><button type="button" data-refine-cancel class="icon-close" aria-label="Cancelar">×</button></header>
-          <div class="refine-review-plot">${chartSvg(a.points)}<div class="refine-legend"><span class="current">Atual</span><span class="refined">Refinada</span>${legend}</div></div>
+          <div class="refine-review-plot">${chartSvg(this.reviewPoints)}<div class="refine-legend"><span class="current">Atual</span><span class="refined">Refinada</span>${legend}</div></div>
           <div class="refine-review-list">${this.review.points.map(p => {
-            const point = (a.points || [])[p.index] || {};
+            const point = (this.reviewPoints || [])[p.index] || {};
             const delta = finite(p.currentFactor) ? (p.targetFactor / p.currentFactor - 1) * 100 : null;
             return `<div><span>${fmt(point.referenceTimeMs, 1)} ms</span><b>${fmt(p.currentFactor, 3)} → ${fmt(p.targetFactor, 3)}</b><small data-origin="${escapeHtml(point.origin)}">${pct(delta)} · ${escapeHtml(ORIGIN[point.origin]?.label || '')}</small></div>`;
           }).join('')}</div>
@@ -390,7 +397,7 @@
           ${a.available ? `<div class="refine-body">
             <div class="refine-chart-wrap"><h4>Nossa curva</h4>${ns.OurCurvePlot?.html(pilot?.phase === 'SEM_ECU' ? null : this.snapshot,pilot?.phase === 'SEM_ECU' ? null : this.equivalence?.denseBands) || '<p class="our-curve-empty">Ainda sem pontos próprios — rode na gasolina e no GNV</p>'}<div class="our-curve-detail" aria-live="polite">${escapeHtml(this.curveDetail || 'Toque num ponto para conferir MAP, ms e amostras.')}</div></div>
             <dl class="refine-metrics">
-              <div><dt>Puxada no GNV</dt><dd><b data-tone="${riskBefore[1]}">${riskBefore[0]}</b> → <b data-tone="${riskAfter[1]}">${riskAfter[0]}</b></dd><span>${escapeHtml(where)}</span></div>
+              <div><dt>Linearidade da puxada</dt><dd><b data-tone="${riskBefore[1]}">${riskBefore[0]}</b> → <b data-tone="${riskAfter[1]}">${riskAfter[0]}</b></dd><span>${escapeHtml(where)}</span></div>
               <div><dt>Mudança</dt><dd>${changed.length} ponto${changed.length === 1 ? '' : 's'}</dd><span>${changed.length ? `até ±${fmt(maxChange, 1)}% (limite ±${fmt(a.guards?.maximumStepPercent, 0)}%)` : 'curva mantida'}</span></div>
               <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas ECU${finite(a.telemetryTargets) ? ` + ${fmt(a.telemetryTargets, 0)} nossos` : ''}</dd><span>Base: MAP × Tpet da ECU; complemento: nossos pares RPM × MAP</span></div>
             </dl>
