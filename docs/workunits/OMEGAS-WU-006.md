@@ -1,5 +1,13 @@
 # OMEGAS-WU-006 — AutoCal: Equivalência Refinada GNV = gasolina
 
+## Passo 0 de continuidade — modo sem APK (2026-10-02)
+
+- Revisão de `eed795dd` até `91702dce` e correção pontual do R-01: guard final do proprietário mais guard na entrada para leitura de sessão USB antiga; regressões em `LevelSensorSnapshotTest`. Source exato após alterações funcionais: `dcd601c5e645fce178b303ad6cdf586012777a97`. Execução JVM nova desse SHA ainda necessária.
+- Gate/Android externos de `91702dce`: gate rápido passou; `testDebugUnitTest` executou; lint falhou em `MissingPermission` na notificação de fase. Regra de permissão Android 13+ e regressão de contrato publicadas (`d70fc735`/`b9845033`). Não foi rodada outra prova Android após a correção.
+- A execução externa `37062464754` chegou a fazer `assembleDebug` antes de falhar no lint; não teve artifact publicado. Esta continuação **não acionou novo workflow, não baixou APK nem o aceitou como release** em cumprimento à instrução final do proprietário.
+- Prova e achados de revisão: `docs/evidence/WU-006-STEP0-NO-APK-20261002.md`. O workflow existente não é test-only. Com essa restrição, a próxima confirmação é gate + `testDebugUnitTest lintDebug` em executor SDK35 **sem** `assembleDebug`.
+- Estado: correções de source publicadas, gate Android final **PENDENTE**; screenshots, sensor físico/LEDs e rodagem pendentes. A equivalência MAP × Tpet é a base; RPM × MAP é complemento; sem promessa de desaparecimento do tranco. `PHYSICAL_VALIDATION_CLAIMED=false`.
+
 - Objetivo humano: fazer o tempo de injeção no GNV igualar o da gasolina, a partir da calibração automática nativa da ECU, com curvas sem anomalias (sem dente de serra, sem trancos).
 - Branch: `claude/brave-darwin-wuliyo`
 - Decisões do proprietário (2026-10-02):
