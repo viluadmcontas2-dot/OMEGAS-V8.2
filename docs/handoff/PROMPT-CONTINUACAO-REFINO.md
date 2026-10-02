@@ -56,7 +56,7 @@ Meta desta fase: os comportamentos críticos precisam ter um teste da classe 3 *
 - **Nossos pontos:** `EquivalenceLedger` com retenção por célula RPM×MAP (`CELL_CAP=30`). O GNV recomeça quando a curva muda (AutoMatch nativo ou gravação), e a tela mostra o motivo.
 - **Apagão no GNV:** o `StallWatch` registra onde o motor apagou e marca ✕ no gráfico. O refino nunca empobrece abaixo de 3,5 ms (`LOW_GUARD_MS`).
 - **Sugestões / Agora:** usam `getRefinementPhase()`, que é leve. A causa do travamento foi o `getEquivalence` pesado sendo chamado a cada 2 s.
-- **Sessões:** um único `Download/Omegas/<sessão>.zip`, publicado no fim. Uma sessão interrompida é publicada na próxima abertura.
+- **Sessões:** partes ZIP imutáveis `Download/Omegas/<sessão>/<sessão>_parte_NNNN.zip` a cada 2 min (15 s após evento do AutoCal), só com bytes novos até a última linha completa; fsync local; parte final ao parar ou na próxima abertura. Corte de energia perde no máximo ~2 min. Prova: `SessionPartPlannerTest` (classe 2). Falta: prova classe 4 no emulador matando o processo no meio da sessão.
 - **Escrita na ECU:** sempre manual (revisar → confirmar → ACK → readback). A decisão entre **A** semiautomático e **B** automático com travas está **pendente do dono**. Não implemente B sem a resposta dele.
 
 ## Trabalho a fazer (ordem de prioridade)
@@ -81,7 +81,7 @@ Meta desta fase: os comportamentos críticos precisam ter um teste da classe 3 *
    - o inspector explica o ponto tocado (de quem é, quando foi medido, por que conta);
    - uma ação principal por fase;
    - o histórico de gravações traz o veredito em linguagem simples.
-6. **Sessão inteligente:** colocar no ZIP um `RESUMO.md` com as fases, os apagões, as gravações e os veredictos. Depois, o app passa a aprender com sessões antigas.
+6. **Sessão inteligente:** colocar na parte final um `RESUMO.md` com as fases, os apagões, as gravações e os veredictos. Depois, o app passa a aprender com sessões antigas.
 7. **Sugestões e Aprender:** o dono não sabe se ficam. Proponha manter, fundir ou remover, com o motivo, e **não** remova sem o aval dele.
 
 ## Invariantes (nunca violar)
