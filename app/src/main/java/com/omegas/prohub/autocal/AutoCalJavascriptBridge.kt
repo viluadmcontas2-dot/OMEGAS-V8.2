@@ -258,6 +258,15 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Equivalência indisponível")
     }
 
+    /** Só a fase do piloto (Agora e Sugestões a cada 2–3 s): não recalcula pares nem bandas. */
+    @JavascriptInterface
+    fun getRefinementPhase(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        JSONObject().put("ok", true).put("autopilot", service.refinementAutopilot.json()).toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Refino indisponível")
+    }
+
     private class Evidence(val pairs: List<Pair<Double, Double>>, val gainScale: DoubleArray?, val signature: String)
 
     @Volatile private var refinedMemo: Pair<String, String>? = null

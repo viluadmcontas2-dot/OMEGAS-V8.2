@@ -407,6 +407,9 @@ class SessionRecorder(
             paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
                 ?.sortedBy { it.lastModified() }
                 ?.forEach { dir ->
+                    // Já publicada (ZIP ou espelho antigo) ou ainda gravando: não toca.
+                    if (documentsMirrorMarker(dir).isFile) return@forEach
+                    if (synchronized(this) { recording && sessionDir?.absolutePath == dir.absolutePath }) return@forEach
                     try {
                         val result = mirror.sync(dir, dir.name)
                         if (result.optBoolean("ok")) markDocumentsMirrored(dir)
@@ -686,6 +689,9 @@ class SessionRecorder(
             writer?.flush()
             updateManifest()
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
+            // Durante a gravação só garante o disco local; o ZIP público sai uma vez, no fim
+            // (ou na próxima abertura, se o app morreu no meio). Reescrever no meio duplicava no Drive.
+            if (recording) return
             val result = mirror.sync(dir, sessionId)
             if (result.optBoolean("ok")) markDocumentsMirrored(dir)
         } finally {

@@ -342,7 +342,7 @@
   let lastSuggestionSignature = '';
   /** Curva refinada pronta no Refino entra na fila de decisões (só leitura do piloto). */
   function refinementSuggestion() {
-    const eq = (root.OmegasUi || ui).AutoCalApi?.equivalence?.();
+    const eq = (root.OmegasUi || ui).AutoCalApi?.refinementPhase?.();
     const phase = eq?.autopilot?.phase;
     if (phase === 'PROPOSTA_PRONTA') return { title: 'Curva refinada pronta', text: eq.autopilot.headline || 'O refino tem uma curva para revisar.' };
     if (phase === 'RESTAURAR_TRECHO') return { title: 'Um trecho piorou depois da gravação', text: 'Restaure só esse trecho no Refino.' };

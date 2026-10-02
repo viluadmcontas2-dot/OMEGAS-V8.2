@@ -63,12 +63,22 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
         self.assertIn('"documentsMirror"', RECORDER)
         self.assertIn('"Download/Omegas"', MIRROR_PATH.read_text(encoding="utf-8"))
 
-    def test_documents_mirror_reuses_legacy_jsonl_aliases_instead_of_creating_copies(self):
+    def test_session_is_published_once_as_single_zip_without_duplicates(self):
         mirror = MIRROR_PATH.read_text(encoding="utf-8")
-        self.assertIn('source.name + "%"', mirror)
-        self.assertIn("candidateSize > targetSize", mirror)
-        self.assertIn('"jsonl" -> "application/octet-stream"', mirror)
-        self.assertNotIn('"json", "jsonl" -> "application/json"', mirror)
+        sync = mirror[mirror.index("fun sync("):mirror.index("fun publishRootFile(")]
+        self.assertIn('".zip"', mirror)
+        self.assertIn('"application/zip"', mirror)
+        # Reaproveita o mesmo arquivo (inclusive pendente) em vez de criar "(1).zip".
+        self.assertIn("MediaStore.MATCH_INCLUDE", sync)
+        self.assertIn("IS_PENDING", sync)
+        self.assertIn('"rwt"', sync)
+        # Nada de arquivos soltos por sessão no armazenamento público.
+        self.assertNotIn("syncScopedAt(", sync)
+        self.assertNotIn("syncLegacyAt(", sync)
+        recorder_sync = RECORDER[RECORDER.index("private fun syncDocumentsMirror"):RECORDER.index("private fun documentsMirrorMarker")]
+        self.assertIn("if (recording) return", recorder_sync)
+        recover = RECORDER[RECORDER.index("fun recoverDocumentsMirrorAsync"):RECORDER.index("fun close()")]
+        self.assertIn("documentsMirrorMarker(dir).isFile", recover)
 
     def test_repeated_active_exports_do_not_repackage_prior_event_segments(self):
         active = RECORDER[

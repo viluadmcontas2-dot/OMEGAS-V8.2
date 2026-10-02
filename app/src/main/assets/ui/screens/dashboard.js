@@ -62,7 +62,7 @@
         if (this.refinoAt && now - this.refinoAt < 3e3) return;
         this.refinoAt = now;
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
-        const eq = api && typeof api.equivalence === "function" ? api.equivalence() : null;
+        const eq = api && typeof api.refinementPhase === "function" ? api.refinementPhase() : null;
         const pilot = eq && eq.autopilot || {};
         const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU auto", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel" };
         text("dashRefino", labels[pilot.phase] || "\u2014");
