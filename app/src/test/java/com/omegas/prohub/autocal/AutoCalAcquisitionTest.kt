@@ -106,6 +106,7 @@ class AutoCalAcquisitionTest {
         assertEquals(12, current.getInt("counter"))
         assertEquals(1526, previous.getInt("timeRaw"))
         assertTrue(previous.isNull("counter"))
+        assertTrue(previous.isNull("threshold"))
         assertEquals("SEM_DADO", previous.getString("state"))
         assertFalse(previous.getBoolean("draw"))
     }
