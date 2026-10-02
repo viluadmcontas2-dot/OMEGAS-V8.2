@@ -1354,8 +1354,10 @@
         : 'Sem curva gasolina temporalmente válida nesta etapa. ';
       const previousNarrative = previousGas.length
         ? 'Círculos esmaecidos = GNV anterior sem contador atual. ' : '';
+      const quotaNarrative = automatch !== null && quota !== null && automatch >= quota
+        ? ' Cota AutoMatch atingida; a aquisição NÃO terminou.' : '';
       this.text('autocalChartInspector',
-        'AutoMatch ' + step + '. ' + stage + '. ' +
+        'Contador AutoMatch da ECU: ' + step + '.' + quotaNarrative + ' ' + stage + '. ' +
         sourceNarrative + previousNarrative +
         'Bolinhas = faixas com amostra, não maturidade automática. ' +
         'Comparação gasolina/GNV suspensa até novo grupo coerente. ' + kNarrative);
