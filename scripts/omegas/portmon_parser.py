@@ -57,13 +57,15 @@ def iter_events(lines: Iterable[str]) -> Iterator[SerialEvent]:
         line = raw.rstrip("\r\n")
         event = EVENT_RE.match(line)
         if event:
-            pending = (int(event.group("index")), float(event.group("time")), event.group("op"), extract_payload(event.group("detail")))
+            # Defer decoding the event detail: a SUCCESS READ usually contains its own
+            # payload, so extracting both would do duplicate work.
+            pending = (int(event.group("index")), float(event.group("time")), event.group("op"), event.group("detail"))
             continue
         success = SUCCESS_RE.match(line)
         if success and pending is not None:
-            index, timestamp, operation, request_payload = pending
+            index, timestamp, operation, request_detail = pending
             if int(success.group("index")) == index:
-                payload = extract_payload(success.group("detail")) or request_payload
+                payload = extract_payload(success.group("detail")) or extract_payload(request_detail)
                 yield SerialEvent(index, timestamp, float(success.group("duration")), operation, payload)
             pending = None
 
