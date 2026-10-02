@@ -3,6 +3,11 @@
 - WorkUnit ativa: `OMEGAS-WU-006` (AutoCal — Equivalência Refinada GNV = gasolina)
 - Branch: `claude/brave-darwin-wuliyo`
 - Estado WU-006: `ANDROID_PROVEN` no SHA `b2df77bd2c84be63e72d2595101395eeabf5efe4` (gate rápido, testes Android/JVM, lint e APK verdes); `PHYSICAL_VALIDATION_CLAIMED=false`
+- Ciclo fechado do refino (ledger de pontos próprios + diário + piloto): `LOCAL_PROVEN`.
+  - gate rápido PASS;
+  - paridade Kotlin↔Python OK;
+  - suíte JVM integral (690 testes) via kotlinc.
+  - Prova Android/APK deste SHA pendente.
 - Evidência WU-006: `docs/evidence/WU-006-refined-replay.md`
 
 ## APK histórico provado (WU-005)

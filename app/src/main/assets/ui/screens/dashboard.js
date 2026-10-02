@@ -17,11 +17,47 @@
     const telemetry = state.telemetry || {};
     return telemetry.live || telemetry.data || telemetry;
   }
+  const PILOT_TONE = { COLETANDO_NOSSOS: 'accent', PROPOSTA_PRONTA: 'accent', VERIFICANDO: 'accent', RESTAURAR_TRECHO: 'danger', ESTAVEL: 'ok' };
+  const PILOT_POLL_MS = 3000;
+
+  /** Cartão "Calibração" do Agora: fase do piloto do refino + índice GNV ÷ gasolina (puro). */
+  function pilotCard(eq) {
+    const pilot = eq && eq.autopilot;
+    if (!pilot || !pilot.phase || pilot.phase === 'SEM_ECU') return null;
+    const ratio = finite(eq.ratio);
+    const index = ratio === null ? 'GNV ÷ gasolina: medindo' : `GNV ÷ gasolina: ${ratio >= 1 ? '+' : ''}${fmt((ratio - 1) * 100, 1)}% (${fmt(eq.samples, 0)} leituras de condução)`;
+    return {
+      tone: PILOT_TONE[pilot.phase] || 'muted',
+      title: String(pilot.headline || ''),
+      detail: [String(pilot.next || ''), index].filter(Boolean).join(' · '),
+    };
+  }
+
   class DashboardScreen {
     constructor() {
       this.root = document.querySelector('[data-screen="dashboard"]');
       this.lastHealthSignature = '';
+      this.lastPilotAt = 0;
+      this.lastPilotSignature = '';
       this.ensureLayout();
+    }
+
+    renderPilot() {
+      const now = Date.now();
+      if (now - this.lastPilotAt < PILOT_POLL_MS) return;
+      this.lastPilotAt = now;
+      const node = document.getElementById('dashCalibration');
+      const api = ns.AutoCalApi;
+      if (!node || !api || typeof api.equivalence !== 'function') return;
+      const card = pilotCard(api.equivalence());
+      const signature = card ? `${card.tone}|${card.title}|${card.detail}` : '';
+      if (signature === this.lastPilotSignature) return;
+      this.lastPilotSignature = signature;
+      node.hidden = !card;
+      if (!card) return;
+      node.dataset.tone = card.tone;
+      node.querySelector('b').textContent = card.title;
+      node.querySelector('span').textContent = card.detail;
     }
 
     ensureLayout() {
@@ -38,6 +74,18 @@
             <div><small>COMBUSTÍVEL</small><b id="dashFuel">—</b></div>
             <div><small>CÉLULA</small><b id="dashCell">—</b></div>
           </div>`;
+      }
+      const health = this.root?.querySelector('#dashHealth');
+      if (health && !document.getElementById('dashCalibration')) {
+        const card = document.createElement('section');
+        card.id = 'dashCalibration';
+        card.className = 'calibration-pilot';
+        card.hidden = true;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', 'Abrir AutoCal');
+        card.innerHTML = '<small>CALIBRAÇÃO</small><b></b><span></span>';
+        card.addEventListener('click', () => root.OmegasApp?.router?.navigate('autocal'));
+        health.insertAdjacentElement('afterend', card);
       }
       const strip = this.root?.querySelector('.condition-strip');
       if (strip) {
@@ -82,6 +130,7 @@
         ? `${fuel} · Petrol Inj. ${fmt(petrol, 2)} ms · MAP ${fmt(map, 2)} bar`
         : 'Conecte a MP48 para iniciar a sessão');
 
+      this.renderPilot();
       const health = document.getElementById('dashHealth');
       if (health) {
         let level = 'ok';
@@ -105,4 +154,5 @@
   }
 
   ns.DashboardScreen = DashboardScreen;
+  ns.DashboardModel = { pilotCard };
 })(typeof window !== 'undefined' ? window : globalThis);

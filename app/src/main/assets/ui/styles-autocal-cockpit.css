@@ -374,4 +374,36 @@
 .refine-details table{width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}
 .refine-details th,.refine-details td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line-soft)}
 .refine-details tr.discounted td{color:var(--dim);text-decoration:line-through}
+/* Piloto do refino + diário de verificação */
+.refine-pilot{display:grid;gap:6px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface-2)}
+.refine-pilot[data-tone="ok"]{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.refine-pilot[data-tone="danger"]{border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
+.refine-pilot p{margin:0;font-size:13px}.refine-pilot small{color:var(--muted);font-size:11px}
+.refine-pilot-steps{display:flex;gap:4px;margin:0;padding:0;list-style:none;flex-wrap:wrap}
+.refine-pilot-steps li{padding:4px 9px;border-radius:999px;font-size:11px;background:var(--surface-3);color:var(--dim)}
+.refine-pilot-steps li[data-state="done"]{color:var(--ok)}
+.refine-pilot-steps li[data-state="active"]{background:var(--accent);color:#fff;font-weight:700}
+.refine-pilot[data-tone="ok"] .refine-pilot-steps li[data-state="active"]{background:var(--ok)}
+.refine-journal{display:grid;gap:8px;padding:12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface-2)}
+.refine-journal[data-status="PIOROU_EM_PARTE"]{border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
+.refine-journal header{display:grid;gap:2px}.refine-journal header small{color:var(--muted);font-size:10px}
+.refine-journal p{margin:0;font-size:12px}
+.refine-journal-bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.refine-journal-bands div{display:grid;gap:2px;padding:7px 9px;border-radius:8px;background:var(--surface-3)}
+.refine-journal-bands span{font-size:10px;color:var(--muted)}.refine-journal-bands b{font-variant-numeric:tabular-nums}
+.refine-journal-bands small[data-tone="ok"]{color:var(--ok)}.refine-journal-bands small[data-tone="warn"]{color:var(--warn)}
+.refine-journal-bands small[data-tone="danger"]{color:var(--danger)}.refine-journal-bands small[data-tone="accent"]{color:var(--accent)}
+.refine-journal-bands small[data-tone="muted"]{color:var(--dim)}
+.refine-journal .operation-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.refine-journal .secondary,.refine-journal .danger-primary{min-height:42px;padding:0 16px;border-radius:10px;cursor:pointer}
+.refine-journal .secondary{border:1px solid var(--line);background:var(--surface-3)}
+/* Agora: cartão da calibração */
+.calibration-pilot{display:grid;gap:4px;margin-top:10px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface-2);cursor:pointer}
+.calibration-pilot[hidden]{display:none}
+.calibration-pilot small{color:var(--muted);font-size:10px;letter-spacing:.04em}
+.calibration-pilot b{font-size:14px}.calibration-pilot span{font-size:12px;color:var(--muted)}
+.calibration-pilot[data-tone="ok"]{border-color:color-mix(in srgb,var(--ok) 50%,var(--line))}
+.calibration-pilot[data-tone="ok"] b{color:var(--ok)}
+.calibration-pilot[data-tone="accent"]{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.calibration-pilot[data-tone="danger"]{border-color:color-mix(in srgb,var(--danger) 50%,var(--line))}
 @media (max-width:900px){.refine-body{grid-template-columns:1fr}.refine-steps{flex-wrap:wrap}}

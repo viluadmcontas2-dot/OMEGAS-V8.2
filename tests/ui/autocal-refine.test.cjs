@@ -37,7 +37,7 @@ function analysis(overrides = {}) {
   };
 }
 
-function harness(curveFactors) {
+function harness(curveFactors, equivalence) {
   const { ui, flush } = load();
   const calls = [];
   const host = { innerHTML: '', addEventListener() {} };
@@ -48,6 +48,7 @@ function harness(curveFactors) {
     createRefinedDraft: () => { calls.push('draft'); return { ok: true }; },
     draftReview: () => review,
     clearDraft: () => calls.push('clear'),
+    equivalence: () => equivalence || { ok: false },
   };
   let op = { busy: false, state: 'IDLE' };
   const native = {
@@ -107,4 +108,72 @@ test('curva da ECU diferente do snapshot aborta sem gravar (falha fechada)', () 
   flush();
   assert.ok(!calls.some(c => Array.isArray(c) && c[0] === 'write'));
   assert.match(host.innerHTML, /curva da ECU mudou/);
+});
+
+function pilotEquivalence(phase, extra = {}) {
+  const before = Array(30).fill(16384);
+  const after = before.map((v, i) => (i >= 20 && i <= 23 ? 18000 : v));
+  return {
+    ok: true, ratio: 1.06, samples: 80,
+    autopilot: { phase, headline: `fase ${phase}`, next: 'faça algo', autoMatchCount: 3, maxAutomatch: 3, petrolValid: 18, gasValid: 16, ourPoints: 80, canDisconnect: phase === 'ESTAVEL' },
+    refinement: { latest: { status: 'PIOROU_EM_PARTE', beforeRaw: before, afterRaw: after, bands: [
+      { fromMs: 3, toMs: 4.5, verdict: 'PASSOU', ratioBefore: 1.05, ratioAfter: 0.96 },
+      { fromMs: 7.5, toMs: 9, verdict: 'PIOROU', ratioBefore: 1.02, ratioAfter: 1.09 },
+      { fromMs: 9, toMs: 12, verdict: 'NAO_ALTERADA' },
+    ] } },
+    restorePoints: [{ index: 20, currentRaw: 18000, targetRaw: 16384 }, { index: 21, currentRaw: 18000, targetRaw: 16384 }],
+    ...extra,
+  };
+}
+
+test('piloto mostra a fase, os pontos da ECU e os nossos, e avisa quando pode desconectar', () => {
+  const { panel, host } = harness(Array(30).fill(15000), pilotEquivalence('ESTAVEL'));
+  panel.refresh();
+  assert.match(host.innerHTML, /data-phase="ESTAVEL"/);
+  assert.match(host.innerHTML, /automático ECU 3\/3/);
+  assert.match(host.innerHTML, /80 pontos nossos/);
+  assert.match(host.innerHTML, /<b>pode desconectar<\/b>/);
+});
+
+test('ECU ainda no automático: avisa que ela pode sobrescrever a curva', () => {
+  const { panel, host } = harness(Array(30).fill(15000), pilotEquivalence('ECU_TRABALHANDO'));
+  panel.refresh();
+  assert.match(host.innerHTML, /ainda está no automático e pode sobrescrever/);
+});
+
+test('diário: veredito por faixa e restaurar só o trecho que piorou (com conferência e readback)', () => {
+  const factors = Array(30).fill(15000);
+  factors[20] = 18000;
+  factors[21] = 18000;
+  const { panel, host, calls, flush } = harness(factors, pilotEquivalence('RESTAURAR_TRECHO'));
+  panel.refresh();
+  assert.match(host.innerHTML, /Um trecho piorou/);
+  assert.match(host.innerHTML, /passou do ponto/);
+  assert.doesNotMatch(host.innerHTML, /NAO_ALTERADA/);
+  assert.match(host.innerHTML, /Restaurar trecho que piorou \(2 pontos\)/);
+  panel.restoreBand();
+  flush();
+  const write = calls.find(c => Array.isArray(c) && c[0] === 'write');
+  assert.ok(write);
+  assert.equal(write[1], 2);
+  assert.match(write[2], /trecho que piorou/);
+});
+
+test('desfazer a última gravação usa antes/depois do diário', () => {
+  const { ui } = load();
+  const points = ui.AutoCalRefineModel.undoPoints(pilotEquivalence('VERIFICANDO').refinement.latest);
+  assert.equal(points.length, 4);
+  assert.equal(JSON.stringify(points[0]), JSON.stringify({ index: 20, currentRaw: 18000, targetRaw: 16384 }));
+  assert.equal(ui.AutoCalRefineModel.undoPoints({}).length, 0);
+});
+
+test('Agora: cartão da calibração resume fase e índice GNV ÷ gasolina', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/dashboard.js'), 'utf8');
+  const window = {};
+  window.window = window;
+  vm.runInNewContext(src, { window, globalThis: window, console });
+  const card = window.OmegasUi.DashboardModel.pilotCard(pilotEquivalence('PROPOSTA_PRONTA'));
+  assert.equal(card.tone, 'accent');
+  assert.match(card.detail, /\+6,0%/);
+  assert.equal(window.OmegasUi.DashboardModel.pilotCard({ autopilot: { phase: 'SEM_ECU' } }), null);
 });

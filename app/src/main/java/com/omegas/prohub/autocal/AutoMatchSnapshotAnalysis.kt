@@ -156,7 +156,11 @@ object AutoMatchSnapshotAnalysis {
      * e os buffers de aquisição atuais; sem buffers coerentes cai para o modo de
      * polimento de coerência. Nunca grava na ECU.
      */
-    fun analyzeRefined(snapshot: JSONObject): JSONObject {
+    fun analyzeRefined(
+        snapshot: JSONObject,
+        telemetryPairs: List<Pair<Double, Double>> = emptyList(),
+        pointGainScale: DoubleArray? = null,
+    ): JSONObject {
         val fields = fieldsByKey(snapshot.optJSONArray("fields") ?: JSONArray())
         fun valid(field: AutoCalProtocol.Field, elements: Int): IntArray? {
             val value = fields[field.key] ?: return null
@@ -193,6 +197,8 @@ object AutoMatchSnapshotAnalysis {
                     gasTimeRaw = band(AutoCalProtocol.PETR_INJ_TBUF_GAS),
                     gasMapRaw = band(AutoCalProtocol.MNFLD_PRESS_BUF_GAS),
                     gasCounts = band(AutoCalProtocol.NUM_BUF_UPD_GAS),
+                    telemetryPairs = telemetryPairs,
+                    pointGainScale = pointGainScale,
                 ),
             )
             if (!result.available) {
@@ -220,7 +226,7 @@ object AutoMatchSnapshotAnalysis {
                 .put("evidenceGain", result.gain[index])
                 .put("origin", result.origins[index].name))
         }
-        val targets = JSONArray(result.targets.map { target ->
+        val targets = JSONArray(result.targets.filter { it.mapBar.isFinite() }.map { target ->
             JSONObject()
                 .put("mapBar", target.mapBar)
                 .put("petrolMs", target.petrolMs)
@@ -241,6 +247,7 @@ object AutoMatchSnapshotAnalysis {
             .put("reason", result.reason ?: JSONObject.NULL)
             .put("buffersCoherent", buffersCoherent)
             .put("matureCommonPoints", result.matureCommonPoints)
+            .put("telemetryTargets", result.telemetryTargetCount)
             .put("minimumMatureCommonPoints", AutoMatchRefinedEngine.MIN_COMMON_MATURE)
             .put("elasticityLimit", result.elasticityLimit)
             .put("needsAnotherPass", result.needsAnotherPass)

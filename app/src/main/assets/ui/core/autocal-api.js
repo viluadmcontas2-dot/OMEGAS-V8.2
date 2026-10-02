@@ -30,5 +30,6 @@
     createRefinedDraft: () => invoke('createRefinedDraft', [], { ok: false }),
     draftReview: () => invoke('getDraftReviewPayload', [], { ok: false }),
     clearDraft: () => invoke('clearDraft', [], {}),
+    equivalence: () => invoke('getEquivalence', [], { ok: false }),
   };
 })(typeof window !== 'undefined' ? window : globalThis);

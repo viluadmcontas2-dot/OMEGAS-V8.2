@@ -63,12 +63,42 @@ Fixtures em `fixtures/autocal/real/*.json.gz`, extraídas das sessões do Drive 
 - Se a curva da ECU mudou desde o snapshot, a gravação é abortada.
 - Depois de gravar, aparecem "Restaurar curva anterior" e a recomendação de recoletar o GNV.
 
+## Ciclo fechado: pontos próprios, diário e piloto
+
+- **`EquivalenceLedger`**: junta pontos próprios a partir da telemetria. Cada leitura estável (3 quadros em ≤1,2 s, RPM ±150, MAP ±0,03) entra como média.
+  - A gasolina vira referência por RPM×MAP e persiste.
+  - O GNV vale só para a curva vigente e é descartado quando a Curva K ou o Mapa K mudam.
+  - Os pares (t_gasolina no mesmo RPM±150/MAP±0,02, t_no_GNV) entram no motor como alvos extras, com peso 0,4, a partir de 3 ms. Sozinhos nunca habilitam a equivalência.
+  - Teste cego na metade oculta: 3,29% → 2,91% e 5,68% → 5,45%.
+  - 36 bandas só por MAP ficam em ~3,31%/5,55%; os pares RPM×MAP, em 2,94%/5,41%.
+  - Índice de condução (≥1000 rpm, ≥3 ms) por faixa e "gás por ar" (gás útil − 0,99 ms de tempo morto, por MAP×RPM).
+- **`RefinementJournal`**: cada gravação de Curva K confirmada vira um experimento com o índice de antes. Depois, por faixa, o resultado é CONFIRMADA, PASSOU, CURTA ou PIOROU.
+  - O ganho por faixa aprende com o resultado: PASSOU ×0,7, PIOROU ×0,5, CURTA ×1,15, CONFIRMADA volta para 1. O motor usa esse ganho na próxima proposta.
+  - Restaurar só o trecho que piorou, ou desfazer a última gravação.
+  - Mapa K gravado ou AutoMatch nativo interrompe a verificação.
+- **`RefinementAutopilot`**: decide a fase sozinho, nesta ordem:
+  - **ECU no automático**: o OMEGAS só observa e junta pontos.
+  - **A ECU parou**, por uma de três razões: MAX_AUTOMATCH atingido; AutoCal desligado; ou aquisição 18/18 em gasolina e GNV sem novo automático há 10 min de ECU online (25 min com ≥12/18). Daí em diante:
+    - **nossos pontos**;
+    - **proposta pronta**: alguma faixa fora de ±3%;
+    - **verificando**;
+    - **restaurar trecho**;
+    - **estável**: ≥3 faixas dentro de ±3%, e então o motorista pode desconectar.
+  - A trava "ECU parou" vale até o contador de automáticos mudar.
+  - Avisa uma vez por fase numa notificação, no canal "Calibração OMEGAS", e a linha da notificação contínua mostra a fase.
+  - Nunca grava. A gravação continua manual: revisar → confirmar → ACK → readback.
+- **UI**:
+  - AutoCal: faixa do piloto, evidência "N faixas ECU + M nossos", diário por faixa com Restaurar trecho / Desfazer;
+  - Agora: cartão "Calibração".
+
 ## Provas locais
 
 - `python3 -B tools/run_checks.py` → `QUALITY_GATE_FAST=PASS`. Inclui o oráculo, o teste de paridade (pulado quando não há kotlinc) e `tests/ui/autocal-refine.test.cjs`.
 - `KOTLINC=… python3 -B tests/test_refined_autocal_kotlin_parity.py` → OK. Os 30 snapshots reais dão diferença de no máximo 1 LSB, com modo e origens idênticos.
 - `AutoMatchRefinedEngineTest` (JUnit 4) → 4/4 OK, compilado com kotlinc 2.0.21 e org.json 20240303 fora do Gradle. O Android SDK não está disponível neste executor porque o proxy bloqueia dl.google.com.
 - Replay completo: `docs/evidence/WU-006-refined-replay.md`.
+- Suíte JVM integral via kotlinc 2.0.21 + Robolectric android-all (API 35), sem Gradle: 690 testes OK. Inclui `EquivalenceLedgerTest` (6), `RefinementJournalTest` (4) e `RefinementAutopilotTest` (6).
+- `node --test tests/ui/autocal-refine.test.cjs` → 9/9. Cobre o piloto, o diário, o restaurar trecho com conferência e o cartão do Agora.
 
 ## Pendente
 

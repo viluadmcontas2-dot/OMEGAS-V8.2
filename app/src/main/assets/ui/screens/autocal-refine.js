@@ -32,6 +32,80 @@
     return number === null ? '—' : `${number > 0 ? '+' : ''}${fmt(number, digits)}%`;
   }
 
+  // Piloto do refino (Kotlin RefinementAutopilot): ECU no automático → nossos pontos → refino → verificação → estável.
+  const PILOT = [
+    ['ECU_TRABALHANDO', 'ECU no automático'],
+    ['COLETANDO_NOSSOS', 'Nossos pontos'],
+    ['PROPOSTA_PRONTA', 'Refino'],
+    ['VERIFICANDO', 'Verificação'],
+    ['ESTAVEL', 'Estável'],
+  ];
+  const PILOT_TONE = { SEM_ECU: 'muted', ECU_TRABALHANDO: 'muted', COLETANDO_NOSSOS: 'accent', PROPOSTA_PRONTA: 'accent', VERIFICANDO: 'accent', RESTAURAR_TRECHO: 'danger', ESTAVEL: 'ok' };
+  const VERDICT = {
+    CONFIRMADA: ['chegou na gasolina', 'ok'],
+    PASSOU: ['passou do ponto · próxima mais suave', 'warn'],
+    CURTA: ['faltou · próxima mais firme', 'accent'],
+    PIOROU: ['piorou', 'danger'],
+    COLETANDO: ['medindo…', 'muted'],
+    SEM_ANTES: ['sem medição anterior', 'muted'],
+  };
+  const JOURNAL_STATUS = { VERIFICANDO: 'Verificando a curva gravada', VERIFICADO: 'Curva gravada verificada', PIOROU_EM_PARTE: 'Um trecho piorou', INTERROMPIDO: 'Verificação interrompida (outra alteração na ECU)' };
+
+  /** Pontos para desfazer a última gravação inteira (antes ← depois), a partir do diário. */
+  function undoPoints(latest) {
+    const before = latest?.beforeRaw;
+    const after = latest?.afterRaw;
+    if (!Array.isArray(before) || !Array.isArray(after) || before.length !== 30 || after.length !== 30) return [];
+    const out = [];
+    for (let i = 0; i < 30; i += 1) if (Number(before[i]) !== Number(after[i])) out.push({ index: i, currentRaw: Number(after[i]), targetRaw: Number(before[i]) });
+    return out;
+  }
+
+  function pilotHtml(eq) {
+    const pilot = eq?.autopilot;
+    if (!pilot?.phase) return '';
+    const phase = pilot.phase === 'RESTAURAR_TRECHO' ? 'VERIFICANDO' : pilot.phase;
+    const at = PILOT.findIndex(([key]) => key === phase);
+    const steps = PILOT.map(([key, label], i) => {
+      const state = at < 0 ? 'pending' : i < at ? 'done' : i === at ? 'active' : 'pending';
+      return `<li data-state="${state}" data-phase="${key}">${escapeHtml(label)}</li>`;
+    }).join('');
+    const count = finite(pilot.autoMatchCount);
+    const max = finite(pilot.maxAutomatch);
+    const facts = [
+      count !== null ? `automático ECU ${count}${max !== null ? `/${max}` : ''}` : null,
+      `bandas ECU gasolina ${fmt(pilot.petrolValid, 0)}/18 · GNV ${fmt(pilot.gasValid, 0)}/18`,
+      `${fmt(pilot.ourPoints, 0)} pontos nossos (RPM×MAP)`,
+    ].filter(Boolean).join(' · ');
+    return `<div class="refine-pilot" data-tone="${PILOT_TONE[pilot.phase] || 'muted'}" data-phase="${escapeHtml(pilot.phase)}">
+        <ol class="refine-pilot-steps">${steps}</ol>
+        <p><b>${escapeHtml(pilot.headline || '')}</b> ${escapeHtml(pilot.next || '')}</p>
+        <small>${escapeHtml(facts)}${pilot.canDisconnect ? ' · <b>pode desconectar</b>' : ''}</small>
+      </div>`;
+  }
+
+  function journalHtml(eq) {
+    const latest = eq?.refinement?.latest;
+    if (!latest || !latest.status) return '';
+    const bands = (Array.isArray(latest.bands) ? latest.bands : []).filter(b => VERDICT[b.verdict]);
+    const rows = bands.map(b => {
+      const [label, tone] = VERDICT[b.verdict];
+      const before = finite(b.ratioBefore);
+      const after = finite(b.ratioAfter);
+      const ratio = before === null ? '' : `${pct((before - 1) * 100)}${after === null ? '' : ` → ${pct((after - 1) * 100)}`}`;
+      return `<div><span>${fmt(b.fromMs, 1)}–${fmt(b.toMs, 1)} ms</span><b>${ratio}</b><small data-tone="${tone}">${label}</small></div>`;
+    }).join('');
+    const restore = Array.isArray(eq.restorePoints) && eq.restorePoints.length
+      ? `<button type="button" data-refine-restore-band class="danger-primary">Restaurar trecho que piorou (${eq.restorePoints.length} ponto${eq.restorePoints.length === 1 ? '' : 's'})</button>` : '';
+    const undo = undoPoints(latest).length ? '<button type="button" data-refine-undo class="secondary">Desfazer última gravação</button>' : '';
+    return `<div class="refine-journal" data-status="${escapeHtml(latest.status)}">
+        <header><small>DEPOIS DA GRAVAÇÃO · GNV ÷ GASOLINA POR FAIXA</small><b>${escapeHtml(JOURNAL_STATUS[latest.status] || latest.status)}</b></header>
+        ${rows ? `<div class="refine-journal-bands">${rows}</div>` : '<p>Dirija normalmente no GNV; o app compara cada faixa com a gasolina no mesmo RPM e MAP.</p>'}
+        <p class="refine-contract">O resultado de cada faixa ajusta o ganho da próxima proposta: passou do ponto → mais suave; faltou → mais firme.</p>
+        ${restore || undo ? `<div class="operation-actions">${undo}${restore}</div>` : ''}
+      </div>`;
+  }
+
   const RISK = { LOW: ['Linear', 'ok'], ATTENTION: ['Pouco linear', 'warn'], HIGH: ['Com trancos', 'danger'], UNKNOWN: ['—', 'muted'] };
 
   /** Trecho (em ms) onde a curva é mais íngreme — é onde a ECU oscila e dá o tranco. */
@@ -118,6 +192,7 @@
     refresh() {
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       this.analysis = this.api?.refinedAnalysis?.() || null;
+      this.equivalence = this.api?.equivalence?.() || null;
       this.render();
     }
 
@@ -126,6 +201,8 @@
       if (event.target.closest('[data-refine-cancel]')) this.closeReview();
       if (event.target.closest('[data-refine-apply]')) this.apply();
       if (event.target.closest('[data-refine-restore]')) this.restore();
+      if (event.target.closest('[data-refine-restore-band]')) this.restoreBand();
+      if (event.target.closest('[data-refine-undo]')) this.undoLast();
       if (event.target.closest('[data-refine-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(); }
     }
 
@@ -165,6 +242,20 @@
       if (!this.lastApplied?.length) return;
       const points = this.lastApplied.map(p => ({ index: p.index, currentRaw: p.targetRaw, targetRaw: p.currentRaw }));
       this.runWrite(points, 'Restaurar curva anterior (antes da equivalência refinada)', false);
+    }
+
+    /** Restaura só os pontos das faixas que pioraram (diário do refino). */
+    restoreBand() {
+      const points = (this.equivalence?.restorePoints || []).map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.targetRaw) }));
+      if (!points.length) return;
+      this.runWrite(points, 'Restaurar trecho que piorou (verificação do refino OMEGAS)', false);
+    }
+
+    /** Desfaz a última gravação de Curva K registrada no diário (sobrevive a reinício do app). */
+    undoLast() {
+      const points = undoPoints(this.equivalence?.refinement?.latest);
+      if (!points.length) return;
+      this.runWrite(points, 'Desfazer última gravação da Curva K (diário do refino OMEGAS)', false);
     }
 
     /** Lê a curva nesta conexão, confere com o snapshot e só então grava (ACK + readback no Kotlin). */
@@ -275,18 +366,21 @@
             <div><small>EQUIVALÊNCIA GNV = GASOLINA</small><h3>${escapeHtml(head.title)}</h3><p>${escapeHtml(head.text)}</p></div>
             <ol class="refine-steps">${steps}</ol>
           </header>
+          ${pilotHtml(this.equivalence)}
           ${a.available ? `<div class="refine-body">
             <div class="refine-chart-wrap">${chartSvg(a.points)}<div class="refine-legend"><span class="current">Atual</span><span class="refined">Refinada</span>${legend}</div></div>
             <dl class="refine-metrics">
               <div><dt>Puxada no GNV</dt><dd><b data-tone="${riskBefore[1]}">${riskBefore[0]}</b> → <b data-tone="${riskAfter[1]}">${riskAfter[0]}</b></dd><span>${escapeHtml(where)}</span></div>
               <div><dt>Fidelidade à medição</dt><dd>${errBefore === null ? 'sem medição' : `${fmt(errBefore * 100, 1)}% → ${fmt(errAfter * 100, 1)}%`}</dd><span>diferença entre a curva e o que o GNV pede</span></div>
               <div><dt>Mudança</dt><dd>${changed.length} ponto${changed.length === 1 ? '' : 's'}</dd><span>${changed.length ? `até ±${fmt(maxChange, 1)}% (limite ±${fmt(a.guards?.maximumStepPercent, 0)}%)` : 'curva mantida'}</span></div>
-              <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas</dd><span>gasolina × GNV medidas pela ECU</span></div>
+              <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas ECU${finite(a.telemetryTargets) ? ` + ${fmt(a.telemetryTargets, 0)} nossos` : ''}</dd><span>pontos da ECU + pontos próprios GNV × gasolina no mesmo RPM e MAP</span></div>
             </dl>
           </div>` : ''}
+          ${this.equivalence?.autopilot?.phase === 'ECU_TRABALHANDO' && changed.length ? '<p class="refine-note">A ECU ainda está no automático e pode sobrescrever a curva. O melhor momento para gravar é quando ela terminar — o app avisa.</p>' : ''}
           ${a.needsAnotherPass ? '<p class="refine-note">A curva atual tem degraus fortes demais para corrigir com segurança de uma vez (limite ±15%). Grave, rode alguns minutos e o app propõe a segunda passada.</p>' : ''}
           <div class="refine-actions">${primary}</div>
           ${review}
+          ${op.phase === 'idle' ? journalHtml(this.equivalence) : ''}
           ${a.available ? `<details class="refine-details"><summary>Detalhes técnicos</summary>
             <p>Inclinação máx. |d ln K / d ln t|: ${fmt(before.maxElasticity, 2)} → ${fmt(after.maxElasticity, 2)} (limite ${fmt(a.elasticityLimit, 2)}; acima disso o gás deixa de seguir linearmente o pedido da gasolina — escolhido pelo teste cego com telemetria em gasolina).</p>
             <p>${escapeHtml(a.algorithm || '')} · modo ${escapeHtml(a.refinementMode || '')} · buffers ${a.buffersCoherent ? 'coerentes' : 'incoerentes'} · trava ±${fmt(a.guards?.maximumStepPercent, 0)}%/execução, |d ln K / d ln t| ≤ ${fmt(a.elasticityLimit, 2)}</p>
@@ -298,5 +392,5 @@
   }
 
   ns.AutoCalRefinePanel = AutoCalRefinePanel;
-  ns.AutoCalRefineModel = { deriveFlow, headline };
+  ns.AutoCalRefineModel = { deriveFlow, headline, undoPoints, pilotHtml, journalHtml };
 })(typeof window !== 'undefined' ? window : globalThis);

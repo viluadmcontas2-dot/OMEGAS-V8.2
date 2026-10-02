@@ -7,6 +7,7 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.service.TelemetryForegroundService
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
@@ -125,10 +126,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getRefinedAnalysis(): String = try {
         val snapshot = refinementSnapshot()
-        val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L)
+        val evidence = refinementEvidence(snapshot)
+        val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L) + "|" + evidence.signature
         synchronized(managerLock) {
             refinedMemo?.takeIf { it.first == key }?.second
-                ?: AutoMatchSnapshotAnalysis.analyzeRefined(snapshot).toString().also { refinedMemo = key to it }
+                ?: analyzeWithEvidence(snapshot, evidence).toString().also { refinedMemo = key to it }
         }
     } catch (error: Exception) {
         localFailure(error.message ?: "Equivalência refinada indisponível")
@@ -137,7 +139,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     /** Rascunho manual com os pontos medidos/coerência pré-selecionados; não grava. */
     @JavascriptInterface
     fun createRefinedDraft(): String = try {
-        val analysis = AutoMatchSnapshotAnalysis.analyzeRefined(refinementSnapshot())
+        val snapshot = refinementSnapshot()
+        val analysis = analyzeWithEvidence(snapshot, refinementEvidence(snapshot))
         require(analysis.optBoolean("available")) {
             analysis.optString("message").ifBlank { "Equivalência refinada indisponível" }
         }
@@ -147,6 +150,48 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     } catch (error: Exception) {
         localFailure(error.message ?: "Não foi possível criar o rascunho refinado")
     }
+
+    /** Índice de equivalência da condução + ciclo fechado (verificação por faixa). */
+    @JavascriptInterface
+    fun getEquivalence(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.equivalence.index()
+            .put("refinement", service.refinementJournal.json())
+            .put("restorePoints", service.refinementJournal.restorePoints())
+            .put("autopilot", service.refinementAutopilot.json())
+            .toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Equivalência indisponível")
+    }
+
+    private class Evidence(val pairs: List<Pair<Double, Double>>, val gainScale: DoubleArray?, val signature: String)
+
+    /** Telemetria da curva vigente + ganho aprendido; alinha o acumulador à MUL_ACT lida da ECU. */
+    private fun refinementEvidence(snapshot: JSONObject): Evidence {
+        val service = activityRef.get()?.serviceOrNull() ?: return Evidence(emptyList(), null, "sem-servico")
+        val fields = snapshot.optJSONArray("fields")
+        var mulAct: String? = null
+        var axisMs: List<Double>? = null
+        if (fields != null) for (i in 0 until fields.length()) {
+            val field = fields.optJSONObject(i) ?: continue
+            val raw = field.optJSONArray("rawValues") ?: continue
+            if (field.optString("status") != AutoCalFieldStatus.VALID.name || raw.length() != 30) continue
+            when (field.optString("key")) {
+                "MUL_ACT" -> mulAct = raw.toString()
+                "PETR_INJ_TBP" -> axisMs = (0 until 30).map { raw.optInt(it) / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS }
+            }
+        }
+        mulAct?.let { json ->
+            val raw = JSONArray(json)
+            service.equivalence.alignCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
+        }
+        val pairs = service.equivalence.pairs().map { it.petrolRefMs to it.gasPetrolMs }
+        val scale = axisMs?.let { service.refinementJournal.pointGainScale(it) }
+        return Evidence(pairs, scale, "${pairs.size}|${scale?.joinToString(",") { "%.3f".format(it) }}")
+    }
+
+    private fun analyzeWithEvidence(snapshot: JSONObject, evidence: Evidence): JSONObject =
+        AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, evidence.pairs, evidence.gainScale)
 
     /** Memo da análise refinada por snapshot: a UI consulta a cada 2 s sem recalcular. */
     private var refinedMemo: Pair<String, String>? = null

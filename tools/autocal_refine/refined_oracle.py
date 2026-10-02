@@ -442,7 +442,7 @@ def telemetry_targets(pairs, axis_ms, k_old):
     return out
 
 
-def refine(snapshot, telemetry_pairs=None):
+def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
     axis_raw = raw(snapshot, "PETR_INJ_TBP")
     k_raw = raw(snapshot, "MUL_ACT")
     if axis_raw is None or k_raw is None or len(axis_raw) != POINT_COUNT or len(k_raw) != POINT_COUNT:
@@ -492,6 +492,8 @@ def refine(snapshot, telemetry_pairs=None):
     fitted, robust = whittaker(u, observations, x0, prior_w, LAMBDA)
     for t, r in zip(targets, robust):
         t["robustWeight"] = round(r, 4)
+    if point_gain_scale is not None and len(point_gain_scale) == POINT_COUNT:
+        fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
     e_eff = effective_elasticity(x0, u)
     final = enforce_coherence(fitted, x0, u, e_eff)
 

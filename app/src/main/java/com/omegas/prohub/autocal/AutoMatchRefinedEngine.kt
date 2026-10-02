@@ -54,6 +54,10 @@ object AutoMatchRefinedEngine {
     const val IRLS_ITERATIONS = 6
     const val TUKEY_C = 4.685
     const val SMOOTH_TOLERANCE_LOG = 0.0025
+    /** Peso de cada par GNV×gasolina da telemetria (validado em metade escondida da volta). */
+    const val TELEMETRY_WEIGHT = 0.4
+    /** Abaixo disso a telemetria é dominada por transiente/corte (erro ~15%). */
+    const val TELEMETRY_MIN_MS = 3.0
 
     data class Input(
         val axisRaw: IntArray,
@@ -64,6 +68,10 @@ object AutoMatchRefinedEngine {
         val gasTimeRaw: IntArray?,
         val gasMapRaw: IntArray?,
         val gasCounts: IntArray?,
+        /** Pares (t_gasolina de referência, t_no_GNV) da condução, medidos com a curva vigente. */
+        val telemetryPairs: List<kotlin.Pair<Double, Double>> = emptyList(),
+        /** Ganho aprendido por ponto (RefinementJournal): <1 suaviza, >1 firma a correção. */
+        val pointGainScale: DoubleArray? = null,
     )
 
     enum class Mode { EQUIVALENCE, POLISH, UNAVAILABLE }
@@ -112,6 +120,8 @@ object AutoMatchRefinedEngine {
         val needsAnotherPass: Boolean,
         val targets: List<Target>,
         val rejectedBands: List<RejectedBand>,
+        /** Quantos alvos vieram da telemetria da condução (além das faixas nativas). */
+        val telemetryTargetCount: Int = 0,
         val metricsBefore: Metrics?,
         val metricsAfter: Metrics?,
         /** Erro médio ponderado entre o K pedido pela medição e a curva (fração); null sem equivalência. */
@@ -153,6 +163,14 @@ object AutoMatchRefinedEngine {
         val matureWeight = BAND_MATURE_COUNT.toDouble() / BAND_FULL_COUNT
         val mature = targets.count { it.weight >= matureWeight }
         val equivalence = mature >= MIN_COMMON_MATURE
+        // A telemetria complementa as faixas nativas; nunca habilita a equivalência sozinha.
+        val bandTargetCount = targets.size
+        if (equivalence && input.telemetryPairs.isNotEmpty()) {
+            targets = targets + input.telemetryPairs.mapNotNull { (tp, tg) ->
+                if (tp < TELEMETRY_MIN_MS || tg <= 0.0 || tp > axisMs.last()) return@mapNotNull null
+                Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT, tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
+            }
+        }
 
         val observations = if (equivalence) {
             targets.map { Observation(axisWeights(it.petrolMs, axisMs), it.logTarget, it.weight) }
@@ -169,8 +187,10 @@ object AutoMatchRefinedEngine {
         val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
         val (fitted, robust) = whittaker(u, observations, x0, priorWeights, LAMBDA)
         if (equivalence) targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
+        val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
+        val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
         val eEff = effectiveElasticity(x0, u)
-        val final = enforceCoherence(fitted, x0, u, eEff)
+        val final = enforceCoherence(scaled, x0, u, eEff)
 
         val origins = List(POINT_COUNT) { j ->
             when {
@@ -199,6 +219,7 @@ object AutoMatchRefinedEngine {
             needsAnotherPass = eEff > E_MAX + 1e-9,
             targets = targets,
             rejectedBands = rejected,
+            telemetryTargetCount = targets.size - bandTargetCount,
             metricsBefore = metrics(kOld, axisMs),
             metricsAfter = metrics(outRaw.map { it / Q14 }, axisMs),
             evidenceErrorBefore = evidenceError(if (equivalence) targets.filter { it.weight >= matureWeight } else emptyList(), axisMs, kOld),

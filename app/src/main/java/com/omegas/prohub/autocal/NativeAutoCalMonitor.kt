@@ -268,6 +268,15 @@ class NativeAutoCalMonitor(
 
     fun latestSnapshotJson(): JSONObject = synchronized(lock) { JSONObject(latestSnapshot.toString()) }
 
+    /** Leve, para o piloto do refino: contador vivo + MAX/habilitado do último snapshot. */
+    fun autoMatchProgressJson(): JSONObject = synchronized(lock) {
+        val count = state.optInt("autoMatchCount", -1).takeIf { state.has("autoMatchCount") && it >= 0 }
+        JSONObject()
+            .put("autoMatchCount", count ?: JSONObject.NULL)
+            .put("maxAutomatch", latestSnapshot.opt("maxAutomatch") ?: JSONObject.NULL)
+            .put("autoCalEnabled", latestSnapshot.opt("autoCalEnabled") ?: JSONObject.NULL)
+    }
+
     private fun probe(expectedSessionId: Long): AutoCalProtocol.NativeStatus? {
         val cycleStarted = SystemClock.elapsedRealtime()
         val telemetryBefore = latestTelemetryElapsedMs(cycleStarted)

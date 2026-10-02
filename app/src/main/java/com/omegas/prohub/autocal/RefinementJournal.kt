@@ -1,0 +1,220 @@
+package com.omegas.prohub.autocal
+
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+import kotlin.math.abs
+import kotlin.math.ln
+import kotlin.math.max
+import kotlin.math.min
+
+/**
+ * Ciclo fechado da Curva K: cada gravação confirmada vira um experimento.
+ *
+ * Antes: o índice de equivalência por faixa (t_no_GNV / t_gasolina, condução ≥1000 rpm)
+ * medido com a curva antiga. Depois: o mesmo índice medido com a curva nova, conforme o
+ * motorista roda. Por faixa o resultado é CONFIRMADO (chegou perto da gasolina),
+ * PASSOU (inverteu o sinal além do ruído), CURTO (mesmo sinal, pouca melhora) ou
+ * PIOROU (ficou mais longe). Isso ajusta o ganho de cada faixa para a próxima proposta
+ * (aprendizado pela própria correção) e, se piorou, permite restaurar só aquele trecho.
+ *
+ * Nunca grava na ECU: só registra, avalia e informa a UI/motor.
+ */
+class RefinementJournal(private val file: File? = null, private val clock: () -> Long = System::currentTimeMillis) {
+    companion object {
+        const val FORMAT = "omegas-refinement-journal-v1"
+        /** Amostras por faixa (antes e depois) para julgar uma faixa. */
+        const val MIN_BAND_SAMPLES = 8
+        /** Diferença abaixo disso é ruído de medição (~2%). */
+        const val NOISE_LOG = 0.02
+        const val MIN_SCALE = 0.4
+        const val MAX_SCALE = 1.3
+        const val MAX_EXPERIMENTS = 40
+        val BANDS = EquivalenceLedger.BANDS
+    }
+
+    private val lock = Any()
+    private val experiments = ArrayList<JSONObject>()
+    private val bandScale = DoubleArray(BANDS.size) { 1.0 }
+
+    init { load() }
+
+    /** Registra uma gravação de Curva K confirmada (antes/depois + índice medido com a curva antiga). */
+    fun recordCurveWrite(beforeRaw: IntArray, afterRaw: IntArray, axisRaw: IntArray, indexBefore: JSONObject, source: String) {
+        synchronized(lock) {
+            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }
+                ?.put("status", "INTERROMPIDO")?.put("closedAt", clock())
+            experiments += JSONObject()
+                .put("id", "EXP-${clock()}")
+                .put("appliedAt", clock())
+                .put("source", source)
+                .put("axisRaw", JSONArray(axisRaw.toList()))
+                .put("beforeRaw", JSONArray(beforeRaw.toList()))
+                .put("afterRaw", JSONArray(afterRaw.toList()))
+                .put("indexBefore", indexBefore)
+                .put("status", "VERIFICANDO")
+            while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
+        }
+        save()
+    }
+
+    /** Algo mudou o motor por fora (Mapa K, AutoMatch nativo): a verificação perde validade. */
+    fun interrupt(reason: String) {
+        synchronized(lock) {
+            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }
+                ?.put("status", "INTERROMPIDO")?.put("interruptReason", reason)?.put("closedAt", clock())
+        }
+        save()
+    }
+
+    /** Avalia o experimento em verificação com o índice atual (curva nova). Retorna true se mudou. */
+    fun evaluate(indexNow: JSONObject): Boolean {
+        val changed = synchronized(lock) {
+            val exp = experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" } ?: return false
+            val before = exp.optJSONObject("indexBefore")?.optJSONArray("bands") ?: JSONArray()
+            val after = indexNow.optJSONArray("bands") ?: JSONArray()
+            val verdicts = JSONArray()
+            var judged = 0
+            var worse = 0
+            var pending = 0
+            for (i in BANDS.indices) {
+                val b = before.optJSONObject(i) ?: JSONObject()
+                val a = after.optJSONObject(i) ?: JSONObject()
+                val nb = b.optInt("samples", 0)
+                val na = a.optInt("samples", 0)
+                val rb = b.optDouble("ratio", Double.NaN)
+                val ra = a.optDouble("ratio", Double.NaN)
+                val verdict = JSONObject().put("fromMs", BANDS[i].first).put("toMs", BANDS[i].second)
+                    .put("samplesBefore", nb).put("samplesAfter", na)
+                    .put("ratioBefore", if (rb.isFinite()) rb else JSONObject.NULL)
+                    .put("ratioAfter", if (ra.isFinite()) ra else JSONObject.NULL)
+                val touched = bandTouched(exp, BANDS[i])
+                when {
+                    !touched -> verdict.put("verdict", "NAO_ALTERADA")
+                    nb < MIN_BAND_SAMPLES || !rb.isFinite() -> verdict.put("verdict", "SEM_ANTES")
+                    na < MIN_BAND_SAMPLES || !ra.isFinite() -> { verdict.put("verdict", "COLETANDO"); pending++ }
+                    else -> {
+                        val e0 = ln(rb)
+                        val e1 = ln(ra)
+                        val v = when {
+                            abs(e1) <= NOISE_LOG || abs(e1) <= abs(e0) * 0.35 -> "CONFIRMADA"
+                            abs(e1) > abs(e0) + NOISE_LOG -> "PIOROU"
+                            e0 * e1 < 0 -> "PASSOU"
+                            else -> "CURTA"
+                        }
+                        verdict.put("verdict", v)
+                        judged++
+                        if (v == "PIOROU") worse++
+                    }
+                }
+                verdicts.put(verdict)
+            }
+            exp.put("bands", verdicts).put("indexAfter", indexNow).put("evaluatedAt", clock())
+            if (pending == 0 && judged > 0) {
+                exp.put("status", if (worse > 0) "PIOROU_EM_PARTE" else "VERIFICADO").put("closedAt", clock())
+                learn(verdicts)
+            }
+            true
+        }
+        if (changed) save()
+        return changed
+    }
+
+    private fun bandTouched(exp: JSONObject, band: kotlin.Pair<Double, Double>): Boolean {
+        val axis = exp.optJSONArray("axisRaw") ?: return true
+        val before = exp.optJSONArray("beforeRaw") ?: return true
+        val after = exp.optJSONArray("afterRaw") ?: return true
+        for (i in 0 until axis.length()) {
+            val ms = axis.optInt(i) / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS
+            if (ms >= band.first - 0.5 && ms < band.second + 0.5 && before.optInt(i) != after.optInt(i)) return true
+        }
+        return false
+    }
+
+    /** Ganho por faixa para a próxima proposta: passou → mais suave; curta → mais firme. */
+    private fun learn(verdicts: JSONArray) {
+        for (i in 0 until min(verdicts.length(), bandScale.size)) {
+            bandScale[i] = when (verdicts.optJSONObject(i)?.optString("verdict")) {
+                "PASSOU" -> max(MIN_SCALE, bandScale[i] * 0.7)
+                "PIOROU" -> max(MIN_SCALE, bandScale[i] * 0.5)
+                "CURTA" -> min(MAX_SCALE, bandScale[i] * 1.15)
+                "CONFIRMADA" -> bandScale[i] + (1.0 - bandScale[i]) * 0.2
+                else -> bandScale[i]
+            }
+        }
+    }
+
+    /** Escala de ganho por ponto do eixo (1,0 fora das faixas de condução). */
+    fun pointGainScale(axisMs: List<Double>): DoubleArray = synchronized(lock) {
+        DoubleArray(axisMs.size) { j ->
+            val band = BANDS.indexOfFirst { axisMs[j] >= it.first && axisMs[j] < it.second }
+            if (band < 0) 1.0 else bandScale[band]
+        }
+    }
+
+    /** Pontos a restaurar do último experimento: só os das faixas que pioraram. */
+    fun restorePoints(): JSONArray = synchronized(lock) {
+        val exp = experiments.lastOrNull { it.optString("status") == "PIOROU_EM_PARTE" } ?: return JSONArray()
+        val axis = exp.optJSONArray("axisRaw") ?: return JSONArray()
+        val before = exp.optJSONArray("beforeRaw") ?: return JSONArray()
+        val after = exp.optJSONArray("afterRaw") ?: return JSONArray()
+        val bad = (0 until (exp.optJSONArray("bands")?.length() ?: 0))
+            .mapNotNull { exp.optJSONArray("bands")?.optJSONObject(it) }
+            .filter { it.optString("verdict") == "PIOROU" }
+            .map { it.optDouble("fromMs") to it.optDouble("toMs") }
+        val out = JSONArray()
+        for (i in 0 until axis.length()) {
+            val ms = axis.optInt(i) / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS
+            if (bad.any { ms >= it.first - 0.5 && ms < it.second + 0.5 } && before.optInt(i) != after.optInt(i)) {
+                out.put(JSONObject().put("index", i).put("currentRaw", after.optInt(i)).put("targetRaw", before.optInt(i)))
+            }
+        }
+        out
+    }
+
+    fun json(): JSONObject = synchronized(lock) {
+        JSONObject()
+            .put("ok", true)
+            .put("format", FORMAT)
+            .put("bandScale", JSONArray(bandScale.toList()))
+            .put("bands", JSONArray(BANDS.map { JSONObject().put("fromMs", it.first).put("toMs", it.second) }))
+            .put("latest", experiments.lastOrNull()?.let { JSONObject(it.toString()).apply { remove("axisRaw") } } ?: JSONObject.NULL)
+            .put("count", experiments.size)
+            .put("history", JSONArray(experiments.takeLast(10).map { e ->
+                JSONObject().put("id", e.optString("id")).put("appliedAt", e.optLong("appliedAt"))
+                    .put("status", e.optString("status")).put("source", e.optString("source"))
+                    .put("ratioBefore", e.optJSONObject("indexBefore")?.opt("ratio") ?: JSONObject.NULL)
+                    .put("ratioAfter", e.optJSONObject("indexAfter")?.opt("ratio") ?: JSONObject.NULL)
+            }))
+            .put("automatic", false)
+    }
+
+    private fun save() {
+        val target = file ?: return
+        val payload = synchronized(lock) {
+            JSONObject().put("format", FORMAT)
+                .put("bandScale", JSONArray(bandScale.toList()))
+                .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
+        }
+        try {
+            val tmp = File(target.parentFile, target.name + ".tmp")
+            tmp.writeText(payload.toString())
+            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun load() {
+        val source = file?.takeIf { it.isFile } ?: return
+        try {
+            val root = JSONObject(source.readText())
+            if (root.optString("format") != FORMAT) return
+            root.optJSONArray("bandScale")?.let { a ->
+                for (i in 0 until min(a.length(), bandScale.size)) bandScale[i] = a.optDouble(i, 1.0).coerceIn(MIN_SCALE, MAX_SCALE)
+            }
+            root.optJSONArray("experiments")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(experiments::add) }
+        } catch (_: Exception) {
+            experiments.clear()
+        }
+    }
+}
