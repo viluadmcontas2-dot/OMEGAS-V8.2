@@ -72,7 +72,7 @@
         panel.className = screenHost ? 'autocal-cockpit-view active' : 'curve-view autocal-cockpit-view';
         panel.dataset.curvePanel = 'autocal';
         panel.innerHTML = `
-          <div id="autocalRefine" class="autocal-refine-host"></div>
+
           <section class="autocal-cockpit" aria-label="Cockpit Auto Calibration nativa">
             <header class="autocal-head">
               <div><small>COLETA NATIVA DA ECU</small><h3>O que a ECU está aprendendo agora</h3><p>Bandas de carga coletadas pela própria ECU em gasolina e em GNV. É a evidência usada pela curva refinada.</p></div>

@@ -188,6 +188,7 @@
       this.lastApplied = null;
       this.reviewOpen = false;
       this.host.addEventListener('click', event => this.onClick(event));
+      this.host.addEventListener('keydown', event => {if((event.key==='Enter'||event.key===' ')&&event.target.closest('[data-curve-detail]')){event.preventDefault();this.onClick(event);}});
     }
 
     refresh() {
@@ -205,6 +206,8 @@
     }
 
     onClick(event) {
+      const point=event.target.closest('[data-curve-detail]');
+      if(point){this.curveDetail=point.dataset.curveDetail;const detail=this.host.querySelector('.our-curve-detail');if(detail)detail.textContent=this.curveDetail;return;}
       if (event.target.closest('[data-refine-review]')) this.openReview();
       if (event.target.closest('[data-refine-cancel]')) this.closeReview();
       if (event.target.closest('[data-refine-apply]')) this.apply();
@@ -384,11 +387,11 @@
             ${this.equivalence?.autopilot?.phase ? '' : `<ol class="refine-steps">${steps}</ol>`}
           </header>
           ${a.available ? `<div class="refine-body">
-            <div class="refine-chart-wrap"><h4>Nossa curva</h4>${ns.OurCurvePlot?.html(this.snapshot,this.equivalence?.denseBands) || '<p class="our-curve-empty">Ainda sem pontos próprios — rode na gasolina e no GNV</p>'}<div class="our-curve-detail" aria-live="polite">Toque num ponto para conferir MAP, ms e amostras.</div></div>
+            <div class="refine-chart-wrap"><h4>Nossa curva</h4>${ns.OurCurvePlot?.html(this.snapshot,this.equivalence?.denseBands) || '<p class="our-curve-empty">Ainda sem pontos próprios — rode na gasolina e no GNV</p>'}<div class="our-curve-detail" aria-live="polite">${escapeHtml(this.curveDetail || 'Toque num ponto para conferir MAP, ms e amostras.')}</div></div>
             <dl class="refine-metrics">
               <div><dt>Puxada no GNV</dt><dd><b data-tone="${riskBefore[1]}">${riskBefore[0]}</b> → <b data-tone="${riskAfter[1]}">${riskAfter[0]}</b></dd><span>${escapeHtml(where)}</span></div>
               <div><dt>Mudança</dt><dd>${changed.length} ponto${changed.length === 1 ? '' : 's'}</dd><span>${changed.length ? `até ±${fmt(maxChange, 1)}% (limite ±${fmt(a.guards?.maximumStepPercent, 0)}%)` : 'curva mantida'}</span></div>
-              <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas ECU${finite(a.telemetryTargets) ? ` + ${fmt(a.telemetryTargets, 0)} nossos` : ''}</dd><span>pontos da ECU + pontos próprios GNV × gasolina no mesmo RPM e MAP</span></div>
+              <div><dt>Evidência</dt><dd>${fmt(a.matureCommonPoints, 0)} faixas ECU${finite(a.telemetryTargets) ? ` + ${fmt(a.telemetryTargets, 0)} nossos` : ''}</dd><span>Base: MAP × Tpet da ECU; complemento: nossos pares RPM × MAP</span></div>
             </dl>
           </div>` : ''}
           ${this.equivalence?.autopilot?.phase === 'ECU_TRABALHANDO' && changed.length ? '<p class="refine-note">A ECU ainda está no automático e pode sobrescrever a curva. O melhor momento para gravar é quando ela terminar — o app avisa.</p>' : ''}

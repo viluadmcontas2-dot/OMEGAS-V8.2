@@ -14,13 +14,20 @@ Fonte integral: https://app.notion.com/p/3b88ee52ac5481988c28db1600330335
 - Tokens Car Info Next substituem a paleta inicial: fundo #0B0F14, superfícies #141B24/#19222D/#202C39, borda #2B3948, texto #F6F8FB/#98A4B3, accent #5CC4FF, verde #68DBA0, amarelo #FFC25C, vermelho #FF7474.
 - StatusPill, HeroValue, MetricRow, ActionChip, DisclosurePanel, EmptyState e WarningBlock: função antes de decoração; máximo três níveis de superfície; sem reconstrução contínua por telemetria.
 
-## Tokens e componentes
+## Tokens iniciais (histórico; substituídos pelo Car Info Next acima)
 - Fundo #080c12; superfícies #101721/#161f2c/#1c2737; borda #293749.
 - Texto #f5f8fc, secundário #96a6bb; navegação #745cff.
 - Verde #38d39f: leitura/análise/saudável; amarelo #f7b955: rascunho/recoleta; vermelho #ff6b6b: gravação/falha.
 - Espaços 4/8/12/16/24 px; raio de superfície 12 px, controles 9 px; pills arredondadas.
 - Tipografia por função: título 20–22 px, corpo 14 px, status 13 px; técnico sob demanda. Targets 48 px; foco visível.
 - Ícones e labels identificam intenção; estado selecionado persistente; sem animação decorativa ou progresso fabricado.
+
+## Hierarquia do refino — contrato do §2.1
+
+1. Base: equivalência MAP × Tpet das 18 bandas nativas por combustível; produz a proposta EQUIVALENCE, descartando outliers e limitando degraus.
+2. Nossas bandas densas MAP × Tpet: consulta visual das leituras estáveis; não entram no motor.
+3. Refino do refino: pares RPM × MAP com peso 0,4 a partir de 3 ms; complementam a base e nunca habilitam equivalência sozinhos.
+4. Verificação por faixa: RefinementJournal, após gravação manual confirmada.
 
 ## Hierarquia e linguagem
 - [ ] Agora · AutoCal · Refino · Aprender · Ajuste global · Ajuste local · Sugestões · Ferramentas.

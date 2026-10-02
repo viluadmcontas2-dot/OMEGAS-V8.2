@@ -58,6 +58,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private var airRpmBar = 0.0
     private var dirty = false
     @Volatile private var cachedIndex: JSONObject? = null
+    private var cachedDense: Triple<Double, Int, JSONObject>? = null
 
     init { load() }
 
@@ -84,6 +85,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                 while (lane.size > cap) lane.removeFirst()
                 dirty = true
                 cachedIndex = null
+                cachedDense = null
             }
         }
         if (obs != null) maybeSave()
@@ -110,6 +112,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         gasEpochAt = clock()
         dirty = true
         cachedIndex = null
+                cachedDense = null
     }.also { maybeSave(force = true) }
 
     /** O próprio app gravou esta curva: adota sem descartar o GNV medido com ela. */
@@ -192,6 +195,35 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     }
 
     fun gasPerAir(): Double? = synchronized(lock) { if (airRpmBar > 0) gasUsefulRpmMs / airRpmBar else null }
+
+    /** Consulta visual: não alimenta o motor de equivalência. Cache invalidado com as observações. */
+    fun denseBandsJson(binBar: Double = 0.025, minSamples: Int = 5): JSONObject = synchronized(lock) {
+        require(binBar.isFinite() && binBar > 0.0 && minSamples > 0)
+        cachedDense?.takeIf { it.first == binBar && it.second == minSamples }?.let {
+            return@synchronized JSONObject(it.third.toString())
+        }
+        fun lane(observations: Collection<Obs>): JSONArray {
+            val bins = linkedMapOf<Long, MutableList<Obs>>()
+            observations.forEach { o ->
+                if (o.map.isFinite() && o.rpm.isFinite() && o.petrolMs.isFinite()) {
+                    val key = kotlin.math.floor(o.map / binBar + 1e-10).toLong()
+                    bins.getOrPut(key) { mutableListOf() }.add(o)
+                }
+            }
+            return JSONArray().apply {
+                bins.forEach { (key, values) -> if (values.size >= minSamples) put(JSONObject()
+                    .put("mapBar", (key + 0.5) * binBar)
+                    .put("tpetMs", PresentationMedian.of(values.map { it.petrolMs }))
+                    .put("samples", values.size)
+                    .put("rpmMedian", PresentationMedian.of(values.map { it.rpm }))
+                    .put("idleShare", values.count { it.rpm < DRIVING_MIN_RPM }.toDouble() / values.size)) }
+            }
+        }
+        val result = JSONObject().put("petrol", lane(petrol)).put("gas", lane(gas))
+            .put("binBar", binBar).put("minSamples", minSamples)
+        cachedDense = Triple(binBar, minSamples, result)
+        JSONObject(result.toString())
+    }
 
     // ------------------------------------------------------------ persistência
 
