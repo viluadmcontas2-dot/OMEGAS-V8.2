@@ -1,0 +1,405 @@
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_governance_contract.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.018s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_clean_ui_contract.py
+..................
+----------------------------------------------------------------------
+Ran 18 tests in 0.168s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_block1_session_contract.py
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.003s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_block3_suggestion_ui_contract.py
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.025s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_v7_map_batch_contract.py
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.002s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_mp48_k_map_axes_contract.py
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_mp48_extended_status_contract.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.002s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_multimedia_telemetry_backpressure_contract.py
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_ux_didactic_expansion_contract.py
+UX_DIDACTIC_EXPANSION_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_usb_permission_identity_contract.py
+USB_PERMISSION_IDENTITY_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_background_power_overlay_contract.py
+BACKGROUND_POWER_OVERLAY_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_curve_kotlin_math_authority_contract.py
+CURVE_KOTLIN_MATH_AUTHORITY_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_map_kotlin_math_authority_contract.py
+MAP_KOTLIN_MATH_AUTHORITY_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_suggestion_readback_lifecycle_contract.py
+SUGGESTION_READBACK_LIFECYCLE_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_learning_consolidation_contract.py
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.021s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_startup_learning_restore_contract.py
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.001s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_learning_evidence_budget_contract.py
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_learning_memory_budget_contract.py
+OK: region visit provenance bounded
+OK: region session provenance bounded
+OK: main-state byte target explicit
+OK: scientific policy explicit
+OK: exact visit counts persist apart from ids
+OK: exact session counts persist apart from ids
+OK: legacy exact counts survive restore
+OK: persistence copies under lock only
+OK: json build occurs after lock copy
+OK: persisted regions are primary science only
+OK: persisted payload omits derived cell projection
+OK: compact json persisted
+OK: advisor uses bounded equivalence snapshot
+OK: advisor snapshot excludes heavy ui projections
+OK: grid never fabricates legacy visit ids
+OK: grid retains exact count floor
+OK: byte pressure only compacts provenance
+OK: persisted JSON build is outside the locked snapshot expression
+OK: Kotlin memory budget behavior harness
+LEARNING_MEMORY_BUDGET_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_advisor_revision_budget_contract.py
+OK: no advisor timer introduced
+OK: ingest requests semantic refresh
+OK: raw eligible sample no longer refreshes unconditionally
+OK: equivalence token uses observation milestone
+OK: equivalence token quantizes scientific change
+OK: petrol reference feeds bounded equivalence runtime
+OK: export does not recompute advisor synchronously
+OK: advisor derived state exposes revision freshness
+OK: calibration and merge force revisions
+OK: advisor remains manual only
+OK: AdvisorRevisionGate Kotlin behavior
+ADVISOR_REVISION_BUDGET_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_checkpoint_hot_path_contract.py
+OK: first telemetry no longer creates portable checkpoint
+OK: service destroy no longer builds portable checkpoint before shutdown
+OK: pre map cell write checkpoint preserved
+OK: pre map batch write checkpoint preserved
+OK: pre k factor write checkpoint preserved
+OK: confirmed map checkpoint preserved
+OK: confirmed factor checkpoint preserved
+OK: runtime close still drains pipelines
+OK: learning primary state still persists asynchronously
+CHECKPOINT_HOT_PATH_CONTRACT=PASS
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_mp48_serial_scheduler_contract.py
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.027s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_native_autocal_contract.py
+...........
+----------------------------------------------------------------------
+Ran 11 tests in 8.881s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_refined_autocal_oracle.py
+...........
+----------------------------------------------------------------------
+Ran 11 tests in 0.521s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B tests/test_refined_autocal_kotlin_parity.py
+.
+----------------------------------------------------------------------
+Ran 1 test in 18.273s
+
+OK
++ node --test tests/ui/didactic-expansion.test.cjs
+✔ learningDecision normaliza somente o snapshot produzido pelo núcleo (10.756158ms)
+✔ tolerâncias semânticas são entregues ao Kotlin sem fórmula paralela (3.439555ms)
+✔ browser demo nunca transforma conexão ou tolerância em escrita de ECU (10.207184ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 220.950763
++ node --test tests/ui/map-editor-flow.test.cjs
+✔ revisão exige alvos exatos da prévia nativa e não escreve por si só (2.90111ms)
+✔ seleção suporta todas as 144 células graváveis sem limite artificial de 16 (0.416742ms)
+✔ seleção por faixa, linha e coluna preserva apenas células graváveis (0.440362ms)
+✔ toque no cabeçalho RPM alterna a coluna inteira sem tocar linha técnica (0.695245ms)
+✔ toque no cabeçalho Petrol Inj alterna a linha inteira (0.497398ms)
+✔ sugestões persistentes podem preparar alvos exatos distintos numa única revisão (0.319979ms)
+✔ prévia nativa incompleta é recusada (0.249099ms)
+✔ uma intenção humana envia as 144 células em uma única chamada do adaptador V7 (1.444593ms)
+✔ cancelar antes da chamada mantém a interface sem escrita (5.643758ms)
+✔ a linha técnica não faz parte do modelo editável 12 × 12 (0.554717ms)
+✔ reset invalida mapa, seleção, eixos e overrides antes de uma nova leitura (0.489213ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 171.211643
++ node --test tests/ui/app-shell-runtime.test.cjs
+✔ Store é a autoridade única e notifica mudanças sem duplicar estado (4.769962ms)
+✔ Router aceita sete destinos humanos e limpa contexto antigo ao navegar (1.914273ms)
+✔ Scheduler cria um único intervalo e separa fast status e contexto (1.649664ms)
+✔ modo navegador é simulador visual e nunca escreve ECU (1.789045ms)
+✔ APK usa OmegasV7 para uma única intenção de mapa e curva (1.6114ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 128.210835
++ node --test tests/ui/map-workflow-e2e.test.cjs
+✔ abrir Mapa K inicia leitura automática e leitura nunca chama writer (1.406326ms)
+✔ fluxo visual é selecionar, pedir prévia Kotlin, revisar e só então gravar (0.369457ms)
+✔ não existe modo oficina nem checkbox de confirmação no fluxo ativo (0.262509ms)
+✔ uma grade completa produz revisão de 144 células após a prévia nativa e antes de qualquer envio (2.226953ms)
+✔ cancelar revisão não possui caminho de escrita (0.221486ms)
+✔ resultado só é sucesso com BATCH_CONFIRMED e readbackValid (0.243781ms)
+✔ frontend envia uma única intenção ao coordenador V7, sem chunking na escrita (0.458641ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.979828
++ node --test tests/ui/map-ecu-simulator-e2e.test.cjs
+✔ ECU simulada fecha leitura edição revisão ACK e readback (8.348163ms)
+✔ todas as 144 células formam uma única intenção e voltam no readback (3.434414ms)
+✔ linha técnica permanece fora das 144 células editáveis (1.263166ms)
+✔ cancelamento antes do envio mantém ECU intacta (0.759267ms)
+✔ falha de ACK não vira sucesso nem altera mapa (2.724037ms)
+✔ readback divergente invalida sucesso mesmo após ACK (1.970038ms)
+✔ recusa imediata da ECU aparece como erro (0.841176ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 238.036515
++ node --test tests/ui/portmon-replay-adapter.test.cjs
+✔ reproduz respostas reais em ordem e reinicia deterministicamente (1.975383ms)
+✔ mantém proveniência pelos hashes do corpus completo (0.236739ms)
+✔ comandos diferentes conservam suas próprias posições (0.148119ms)
+✔ comando ausente falha fechado (0.491133ms)
+✔ timeout não devolve resposta nem avança a sequência (0.288552ms)
+✔ truncamento e corrupção são reproduzíveis e não alteram o corpus (0.372666ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.424088
++ node --test tests/ui/portmon-browser-simulator-e2e.test.cjs
+✔ fluxo de um bloco interno escreve frame byte a byte recebe ACK e confirma readback (6.189637ms)
+✔ leitura do mapa gera 13 requests com checksum correto (1.335464ms)
+✔ timeout de ACK não altera a memória simulada (1.492123ms)
+✔ ACK rejeitado não altera a memória simulada (2.399468ms)
+✔ readback divergente nunca aparece como sucesso (1.169774ms)
+✔ bloco interno de 16 células produz 16 frames e uma única operação do writer (1.38105ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 144.77299
++ node --test tests/ui/portmon-frame-decoder.test.cjs
+✔ decodifica resposta real 48 01 49 e valida checksum sem somar eco (1.202747ms)
+✔ rejeita resposta curta sem eco completo (0.277783ms)
+✔ detecta corrupção de um byte (0.136343ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.25515
++ node --test tests/ui/learning-view.test.cjs
+✔ classifica vazio, gasolina, GNV e comparável sem inventar prontidão (4.584347ms)
+✔ GNV antigo fica histórico e não contamina a época atual (2.636317ms)
+✔ gasolina permanece referência ao mudar a época (2.026935ms)
+✔ ordem dos dados não altera classificação nem contagens (8.186737ms)
+✔ dados inválidos não criam células prontas (0.742884ms)
+✔ modelo aceita listas petrol e cng atuais sem depender do instalador antigo (0.954428ms)
+✔ preserva RPM MAP e tempo medio reais de gasolina e GNV para a camada didatica (1.753509ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 203.442262
++ node --test tests/ui/live-tracing-budget.test.cjs
+✔ aprendizado rapido nao persegue pesos bilineares no DOM (1.100779ms)
+✔ grade fisica nao conserva implementacao visual antiga de tracing (0.405588ms)
+✔ ciclo rapido quantiza somente texto leve de rpm e petrol inj (0.175722ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 113.336984
++ node --test tests/ui/suggestion-model.test.cjs
+✔ separa tendência global de erro residual local (1.247508ms)
+✔ sugestão global nunca vira correção de célula local (0.448128ms)
+✔ sugestão residual abre apenas o editor do Mapa K (0.262326ms)
+✔ abrir uma sugestão para revisão nunca escreve na ECU (0.180657ms)
+✔ dados inválidos ou insuficientes não viram ação (0.203344ms)
+✔ confiança é explicada sem autorizar aplicação (0.163348ms)
+✔ ordem final depende da confiança, não da ordem recebida (0.758387ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 118.286119
++ node --test tests/ui/autocal-refine.test.cjs
+✔ fluxo humano: estados e mensagem principal derivados da análise Kotlin (11.680513ms)
+✔ painel mostra uma ação primária e detalhes técnicos sob demanda (48.00457ms)
+✔ aplicar relê a curva, confere, grava com readback e oferece restaurar (21.073963ms)
+✔ curva da ECU diferente do snapshot aborta sem gravar (falha fechada) (29.7952ms)
+✔ piloto mostra a fase, os pontos da ECU e os nossos, e avisa quando pode desconectar (7.4327ms)
+✔ ECU ainda no automático: avisa que ela pode sobrescrever a curva (5.329374ms)
+✔ diário: veredito por faixa e restaurar só o trecho que piorou (com conferência e readback) (10.382621ms)
+✔ desfazer a última gravação usa antes/depois do diário (1.369046ms)
+✔ Agora: cartão da calibração resume fase e índice GNV ÷ gasolina (2.472776ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 320.414754
++ node --test tests/ui/level-panel.test.cjs
+✔ missing level has no zero or fabricated volume (3.507945ms)
+✔ actual zero stays visible and raw unknown metadata remains explicit (1.041704ms)
+✔ read-only integration never requests SC313 index one or writes sensor (0.376728ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.274588
++ node --test tests/ui/ux-states.test.cjs
+✔ todas as telas mostram desconexão sem aproveitar sucesso antigo (5.581154ms)
+✔ ACK sem readback e readback divergente nunca viram verificado (2.713132ms)
+✔ piloto apresenta coleta, falta de dados, proposta e verificação sem percentual inventado (2.632499ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 173.340721
++ node --test tests/ui/refino-route.test.cjs
+✔ Refino está no router e rota salva inválida cai em Agora (3.435717ms)
+✔ há host próprio e Aprender é preservado na navegação (1.004757ms)
+✔ montagem tardia desenha imediatamente, preserva revisão e usa scheduler central (0.743839ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 118.013756
++ node --test tests/ui/our-curve.test.cjs
+✔ no observations produces instructions and no fabricated points (3.039297ms)
+✔ native coordinates are authoritative; hollow collecting and full acquired; previous gas excluded (1.606519ms)
+✔ dense lanes stay separate, smaller markers and fixed point details carry provenance (1.209854ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 128.712362
++ node --test tests/ui/autocal-evidence.test.cjs
+✔ native step and rejected bands explain impact without reusing a raw zero for unknown (20.324639ms)
+✔ missing bands use petrol medians and unknown remains explicit (1.44454ms)
+✔ failure and stopped collection show next step; normal stays compact (1.935545ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 136.596992
++ node --test tests/ui/refino-phases.test.cjs
+✔ only proposal and native-auto-with-changes allow review; restore and stable have their own actions (51.983612ms)
+✔ offline never presents a cached curve as current; each phase keeps headline and next step (46.909921ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 276.269178
++ node --test tests/ui/refinement-launch.test.cjs
+✔ notification route survives cold mount then opens Refino once; unknown route does nothing (13.110985ms)
+✔ ready suggestion opens existing review; other phases never create a write (1.946774ms)
+✔ Android cold/warm intents and UI entrypoints are wired without a timer or auto-write (1.723505ms)
+✔ language never promises physical elimination of a jolt (1.451712ms)
+✔ an open review keeps its chart and context across refresh (33.314623ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 264.24507
+QUALITY_GATE_FAST=PASS

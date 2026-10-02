@@ -1,0 +1,25 @@
+✔ missing level has no zero or fabricated volume (2.961022ms)
+✔ actual zero stays visible and raw unknown metadata remains explicit (0.92305ms)
+✔ read-only integration never requests SC313 index one or writes sensor (0.389874ms)
+✖ scoreboard gates comparison and missing level stays unknown (1.35131ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 424.360824
+
+✖ failing tests:
+
+test at tests/ui/level-panel.test.cjs:7:1
+✖ scoreboard gates comparison and missing level stays unknown (1.35131ms)
+  TypeError: moduleUnderTest(...).scoreHtml is not a function
+      at TestContext.<anonymous> (/workspace/scratch/76646e3208c5/omegas/tests/ui/level-panel.test.cjs:7:99)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
