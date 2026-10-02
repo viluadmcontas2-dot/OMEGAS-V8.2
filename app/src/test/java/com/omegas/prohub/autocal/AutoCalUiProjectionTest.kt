@@ -222,7 +222,7 @@ class AutoCalUiProjectionTest {
             return "MISSING"
         }
         assertEquals("STALE_EPOCH", fieldStatus("GAS_MNFLD_PRESS_RV"))
-        assertEquals("STALE_EPOCH", fieldStatus("PETR_MNFLD_PRESS_RV"))
+        assertEquals("VALID", fieldStatus("PETR_MNFLD_PRESS_RV")) // gasolina NÃO reinicia ao readquirir GNV
         assertEquals("STALE_EPOCH", fieldStatus("ACQUIRED_ZONES_GAS"))
         assertEquals("VALID", fieldStatus("ACQUIRED_ZONES_PETROL"))
         assertEquals(0, projected.getJSONObject("acquisitionZones").getJSONArray("gas").length())
