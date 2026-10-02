@@ -63,22 +63,18 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
         self.assertIn('"documentsMirror"', RECORDER)
         self.assertIn('"Download/Omegas"', MIRROR_PATH.read_text(encoding="utf-8"))
 
-    def test_session_is_published_once_as_single_zip_without_duplicates(self):
+    def test_session_is_published_as_immutable_zip_parts(self):
+        # Contrato de texto (apoio); a prova de comportamento é SessionPartPlannerTest (JVM).
         mirror = MIRROR_PATH.read_text(encoding="utf-8")
-        sync = mirror[mirror.index("fun sync("):mirror.index("fun publishRootFile(")]
-        self.assertIn('".zip"', mirror)
-        self.assertIn('"application/zip"', mirror)
-        # Reaproveita o mesmo arquivo (inclusive pendente) em vez de criar "(1).zip".
-        self.assertIn("MediaStore.MATCH_INCLUDE", sync)
-        self.assertIn("IS_PENDING", sync)
-        self.assertIn('"rwt"', sync)
-        # Nada de arquivos soltos por sessão no armazenamento público.
-        self.assertNotIn("syncScopedAt(", sync)
-        self.assertNotIn("syncLegacyAt(", sync)
+        publish = mirror[mirror.index("fun publishPart("):mirror.index("fun publishRootFile(")]
+        self.assertIn('"application/zip"', publish)
+        self.assertIn("MediaStore.MATCH_INCLUDE", publish)
+        self.assertIn("IS_PENDING", publish)
         recorder_sync = RECORDER[RECORDER.index("private fun syncDocumentsMirror"):RECORDER.index("private fun documentsMirrorMarker")]
-        self.assertIn("if (recording) return", recorder_sync)
+        self.assertIn("fd?.sync()", recorder_sync)
+        self.assertIn("SessionPartPlanner.commit", recorder_sync)
         recover = RECORDER[RECORDER.index("fun recoverDocumentsMirrorAsync"):RECORDER.index("fun close()")]
-        self.assertIn("documentsMirrorMarker(dir).isFile", recover)
+        self.assertIn("final = true", recover)
 
     def test_repeated_active_exports_do_not_repackage_prior_event_segments(self):
         active = RECORDER[

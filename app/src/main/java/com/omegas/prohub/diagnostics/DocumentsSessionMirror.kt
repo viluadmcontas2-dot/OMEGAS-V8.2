@@ -18,23 +18,19 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.OutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 /**
  * Cópia durável das sessões OMEGAS fora do sandbox do aplicativo.
  *
- * Cada sessão encerrada vira UM arquivo `Download/Omegas/<sessão>.zip`, escrito uma vez
- * (oculto enquanto é gravado) e reaproveitado se já existir: nada de arquivos soltos
- * reescritos durante a direção, que o sincronizador do Drive multiplicava em
- * "events_0001.jsonl (31).json". A captura continua pertencendo ao SessionRecorder;
+ * Cada sessão sai em partes ZIP imutáveis (`Download/Omegas/<sessão>/<sessão>_parte_NNNN.zip`,
+ * ver SessionPartPlanner): escritas uma vez, ocultas enquanto gravam, nunca reescritas.
+ * Arquivos soltos reescritos durante a direção eram multiplicados pelo Drive em
+ * "events_0001.jsonl (31).json"; um ZIP só no fim perdia a sessão num corte de energia. A captura continua pertencendo ao SessionRecorder;
  * esta classe não cria polling, captura paralela, pruning ou autoridade científica.
  */
 class DocumentsSessionMirror(private val context: Context) {
     companion object {
         const val PUBLIC_ROOT = "Download/Omegas"
-
-        fun zipName(sessionId: String): String = safeName(sessionId) + ".zip"
 
         fun safeName(raw: String): String =
             raw.trim().replace(Regex("[^A-Za-z0-9._-]+"), "_").take(96).ifBlank { "session" }
@@ -44,22 +40,6 @@ class DocumentsSessionMirror(private val context: Context) {
             .filter { it.isFile && !it.name.startsWith(".") }
             .sortedBy { it.relativeTo(sessionDir).path }
             .toList()
-
-        /** ZIP determinístico: `<sessão>/<arquivo>` para cada arquivo da pasta. */
-        fun writeZip(sessionDir: File, sessionId: String, output: OutputStream): Int {
-            val files = sessionFiles(sessionDir)
-            val prefix = safeName(sessionId)
-            ZipOutputStream(output.buffered()).use { zip ->
-                files.forEach { file ->
-                    val entry = ZipEntry(prefix + "/" + file.relativeTo(sessionDir).invariantSeparatorsPath)
-                    entry.time = file.lastModified()
-                    zip.putNextEntry(entry)
-                    file.inputStream().use { it.copyTo(zip, 64 * 1024) }
-                    zip.closeEntry()
-                }
-            }
-            return files.size
-        }
     }
 
     @Volatile private var lastSyncAtMs = 0L
@@ -68,10 +48,13 @@ class DocumentsSessionMirror(private val context: Context) {
     @Volatile private var lastSessionId = ""
     @Volatile private var lastFileCount = 0
 
-    /** Publica a sessão ENCERRADA como um único ZIP. Chamar de novo substitui o mesmo arquivo. */
+    /**
+     * Publica UMA parte imutável da sessão em `Download/Omegas/<sessão>/<sessão>_parte_NNNN.zip`.
+     * Se a mesma parte já existir (queda entre publicar e registrar), o mesmo arquivo é
+     * reaproveitado: nunca nasce "(1).zip".
+     */
     @Synchronized
-    fun sync(sessionDir: File, sessionId: String): JSONObject {
-        if (!sessionDir.isDirectory) return fail(sessionId, "Sessão local não encontrada")
+    fun publishPart(sessionId: String, plan: SessionPartPlanner.Plan): JSONObject {
         if (!isAvailable()) {
             return fail(
                 sessionId,
@@ -84,25 +67,25 @@ class DocumentsSessionMirror(private val context: Context) {
         }
         return try {
             val safeSession = safeName(sessionId)
-            val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) publishZipScoped(sessionDir, safeSession)
-            else publishZipLegacy(sessionDir, safeSession)
+            val name = SessionPartPlanner.partName(sessionId, plan.part)
+            val write: (OutputStream) -> Int = { SessionPartPlanner.writeZip(plan, sessionId, it) }
+            val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) publishZipScoped("$PUBLIC_ROOT/$safeSession/", name, write)
+            else publishZipLegacy(safeSession, name, write)
             lastSyncAtMs = System.currentTimeMillis()
             lastSyncOk = true
             lastError = ""
             lastSessionId = safeSession
             lastFileCount = count
-            statusObject().put("ok", true).put("path", "$PUBLIC_ROOT/${zipName(safeSession)}")
+            statusObject().put("ok", true).put("path", "$PUBLIC_ROOT/$safeSession/$name").put("part", plan.part)
         } catch (error: Exception) {
             fail(sessionId, error.message ?: error.javaClass.simpleName)
         }
     }
 
     @TargetApi(Build.VERSION_CODES.Q)
-    private fun publishZipScoped(sessionDir: File, safeSession: String): Int {
+    private fun publishZipScoped(relativePath: String, name: String, write: (OutputStream) -> Int): Int {
         val resolver = context.contentResolver
         val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        val name = zipName(safeSession)
-        val relativePath = "$PUBLIC_ROOT/"
         // Inclui itens ainda pendentes (gravação interrompida): reaproveita em vez de criar "(1).zip".
         val selection = MediaStore.MediaColumns.RELATIVE_PATH + "=? AND " + MediaStore.MediaColumns.DISPLAY_NAME + "=?"
         val args = arrayOf(relativePath, name)
@@ -128,18 +111,18 @@ class DocumentsSessionMirror(private val context: Context) {
             put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
             put(MediaStore.MediaColumns.IS_PENDING, 1)
         }) ?: error("Não foi possível criar $name em Download/Omegas")
-        val count = resolver.openOutputStream(uri, "rwt")?.use { writeZip(sessionDir, safeSession, it) }
+        val count = resolver.openOutputStream(uri, "rwt")?.use { write(it) }
             ?: error("Destino público indisponível")
         resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
         return count
     }
 
     @Suppress("DEPRECATION")
-    private fun publishZipLegacy(sessionDir: File, safeSession: String): Int {
-        val root = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Omegas").apply { mkdirs() }
-        val target = File(root, zipName(safeSession))
-        val tmp = File(root, ".${target.name}.tmp")
-        val count = FileOutputStream(tmp).use { writeZip(sessionDir, safeSession, it) }
+    private fun publishZipLegacy(safeSession: String, name: String, write: (OutputStream) -> Int): Int {
+        val root = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Omegas/$safeSession").apply { mkdirs() }
+        val target = File(root, name)
+        val tmp = File(root, ".$name.tmp")
+        val count = FileOutputStream(tmp).use { write(it) }
         if (!tmp.renameTo(target)) { tmp.copyTo(target, overwrite = true); tmp.delete() }
         return count
     }
