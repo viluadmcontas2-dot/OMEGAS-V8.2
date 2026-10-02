@@ -83,6 +83,12 @@ assert.match(host.innerHTML, /autocal-reference-line petrol epoch-anchor/,
 assert.match(labels.autocalReferenceCount, /Gasolina 8\/18 · GNV 18\/18/);
 assert.equal(fake.chartScale, null, 'aquisição parcial não deve reutilizar escala/equivalência RV30');
 
+fake.state = { maxAutomatch: 3 };
+fake.projection.liveAcquisitionEpoch.nativeAutoMatchCount = 3;
+proto.renderReferenceChart.call(fake, fake.snapshot);
+assert.match(labels.autocalChartInspector, /Cota AutoMatch atingida; a aquisição NÃO terminou/,
+  '3/3 não encerra a coleta viva de GNV');
+
 fake.projection.liveAcquisitionEpoch.petrolPending = true;
 fake.projection.liveAcquisitionEpoch.petrolReferencePending = true;
 for (const field of fake.snapshot.fields) {
