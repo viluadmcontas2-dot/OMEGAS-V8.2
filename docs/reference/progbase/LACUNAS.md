@@ -26,3 +26,18 @@
 - **Leitura passiva (parcialmente fechada):** metadados DFM para os dez SC estão em `FORMULAS.md`. `AutoCalProtocol.kt` define 0x09 escalar, 0x29 vetor, 0x0A indexado; `Mp48Protocol.kt` lê as 13 linhas de SC 84 por 0x2A. Estender por analogia os comandos aos demais SC é **INFERIDO**, especialmente nos subcampos `RowIndex` de SC 276/300/313. Não habilitar escrita por dedução.
 
 **Tentativas de desmontagem executadas:** download PE autenticado, validação SHA-256, `objdump -h`, `objdump -p`, `objdump -d -Mintel` em VA 0x009818F0–0x00981960, 0x00925258–0x00925570, 0x00924994 e 0x00523B4C. A seção de código foi acessível; o limite atual é atribuição semântica das rotinas, não impossibilidade de ler o arquivo. Não foi inventado endereço para fórmula ECU não localizada. Condição de parada atingida para equações não comprovadas.
+
+## Lacunas adicionais descobertas na escavação dirigida (2026-10-02)
+
+Estudo detalhado e evidência específica: [ACHADOS-DIRIGIDOS-20261002.md](ACHADOS-DIRIGIDOS-20261002.md).
+
+1. **Superfície de injetor SC 316–318:** forma física 4×5 e transformações de exibição identificadas, mas faltam a identidade/unidade dos dois eixos, a função de interpolação da ECU, a localização da tabela no firmware e a confirmação da família ativa na ECU do proprietário. `NORM_TEMP` SC 314 com default UI 293 não basta para declarar Kelvin. Captura necessária: resposta de leitura e firmware, seguida de análise de dependência com `ΔP`/`T_gás`; nenhuma escrita.
+2. **Três conceitos de tempo morto:** não fundir SC 125/126 escalares, SC 242/243 vetoriais e SC 316–318 de superfície. A unidade física e a precedência no cálculo de pulso ainda são **ABERTAS**. O +0,99 ms da regressão não resolve a ambiguidade.
+3. **Famílias 95/96, 123/124 e 223/224:** seus nomes/tipos diferem; não foi comprovado quando cada uma atua, como faz interpolação ou quais normalizações usa. SC 92/93 têm cardinalidades 10/9, exigindo compreender segmentos e não fazer pareamento ingênuo.
+4. **Gates AutoCal 361/362, 387–392:** defaults e escalas de UI identificados em `TAUTOCALDM`, mas não os valores ativos, precedência, janela temporal ou aplicação por firmware. A lista `AutoCalProtocol.READ_ONLY_FIELDS` e o `CompositeCalibrationReader` não os incluem nesta revisão. Prioridade: captura passiva para comparar critérios de aceitação por zona antes de propor refino.
+5. **Nível e consumo:** `levelPercentage` atual é linear invertido e independente de perfil, enquanto DFM apresenta SC 36/37/276/300. Necessários pares raw/LED oficial e dados de abastecimento, inclusive versões invertidas; SC 313 `TANK_VOL` não demonstra litros efetivamente consumidos.
+6. **MGLEV 325–328:** verificar disponibilidade do firmware e semântica de pressão do cilindro versus pressão de trilho. Não promover códigos de erro sem enumeração ou captura.
+7. **Origem física do K1/128:** código e teste do OMEGAS tratam 128 como neutro, mas DFM apenas comprova representação visual U8 e não a regra física. Vincular prova E4 a captura concreta e família de firmware.
+8. **Validade da regressão dos 609 pontos:** sem corpus bruto neste estudo, não repetir R² como verificação independente. Comparar hipóteses com holdout por sessão/calibração, estados físicos pareados e medição de economia distinta da equivalência de injeção.
+
+**Regra geral:** qualquer leitura futura de novo SC deve ser opcional, serializada no scheduler MP48, com ACK, comprimento, shape, endianness, versão, timestamp e sessão; NACK/mismatch implica `UNKNOWN`, nunca retry especulativo nem escrita na ECU.
