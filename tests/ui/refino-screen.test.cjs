@@ -54,9 +54,12 @@ test('uma ação principal por fase do piloto', () => {
   assert.equal(m.primaryAction({ autopilot: { phase: 'PROPOSTA_PRONTA' } }, ready).kind, 'review');
   assert.equal(m.primaryAction({ autopilot: { phase: 'ESTAVEL' } }, ready).kind, 'stable');
   assert.equal(m.primaryAction({ autopilot: { phase: 'RESTAURAR_TRECHO' }, restorePoints: [{ index: 1 }] }, ready).kind, 'restore');
-  const early = m.primaryAction({ autopilot: { phase: 'ECU_TRABALHANDO' } }, ready);
-  assert.equal(early.kind, 'review');
-  assert.equal(early.early, true);
+  // Durante o automático da ECU o refino calcula, mas não oferece gravar (a ECU sobrescreveria).
+  const early = m.primaryAction({ autopilot: { phase: 'ECU_TRABALHANDO', autoMatchCount: 2, maxAutomatch: 3 } }, ready);
+  assert.equal(early.kind, 'waiting');
+  assert.match(early.label, /2 de 3/);
+  assert.equal(m.primaryAction({ autopilot: { phase: 'VERIFICANDO' } }, ready).kind, 'waiting');
+  assert.equal(m.primaryAction({ autopilot: { phase: 'COLETANDO_NOSSOS' } }, ready).kind, 'review');
   assert.equal(m.primaryAction({ autopilot: { phase: 'COLETANDO_NOSSOS' } }, analysis([])).kind, 'none');
 });
 
