@@ -2,7 +2,7 @@ name: CodSpeed Benchmarks
 
 on:
   push:
-    branches: [ OMEGAS-SPEED, OmegasPlatina ]
+    branches: [ OmegasPlatina ]
     paths:
       - '.github/workflows/codspeed.yml'
       - 'codspeed.yml'
