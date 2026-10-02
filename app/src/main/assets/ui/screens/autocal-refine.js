@@ -11,7 +11,7 @@
     MEASURED: { label: 'Medido', tone: 'ok' },
     SUPPORTED: { label: 'Medido', tone: 'ok' },
     BLENDED: { label: 'Transição', tone: 'accent' },
-    SMOOTHED: { label: 'Anti-tranco', tone: 'warn' },
+    SMOOTHED: { label: 'Degrau limitado', tone: 'warn' },
     HELD: { label: 'Mantido', tone: 'muted' },
   };
   const POLL_MS = 300;
@@ -107,9 +107,9 @@
       </div>`;
   }
 
-  const RISK = { LOW: ['Sem degrau importante', 'ok'], ATTENTION: ['Degrau', 'warn'], HIGH: ['Degrau acentuado', 'danger'], UNKNOWN: ['—', 'muted'] };
+  const RISK = { LOW: ['Baixo', 'ok'], ATTENTION: ['Degrau', 'warn'], HIGH: ['Acentuado', 'danger'], UNKNOWN: ['—', 'muted'] };
 
-  /** Trecho (em ms) onde a curva é mais íngreme — é onde a ECU oscila e dá o tranco. */
+  /** Trecho (em ms) onde a curva é mais íngreme — pode tirar a linearidade da puxada; rodagem confirma o efeito. */
   function steepestSpan(points, key) {
     let best = null;
     for (let i = 2; i < Math.min(points.length - 1, 22); i += 1) {

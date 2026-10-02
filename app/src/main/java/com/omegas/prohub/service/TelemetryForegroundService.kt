@@ -32,6 +32,7 @@ import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.storage.DataArchiveManager
 import com.omegas.prohub.telemetry.LevelSensorSnapshot
+import com.omegas.prohub.telemetry.CalibrationScoreboard
 import com.omegas.prohub.telemetry.ConsumptionTracker
 import com.omegas.prohub.telemetry.TelemetryStateStore
 import com.omegas.prohub.usb.UsbSerialManager
@@ -83,6 +84,8 @@ class TelemetryForegroundService : Service() {
     lateinit var telemetryStore: TelemetryStateStore
         private set
     val levelSensor = LevelSensorSnapshot()
+    lateinit var calibrationScoreboard: CalibrationScoreboard
+        private set
     lateinit var consumptionTracker: ConsumptionTracker
         private set
     lateinit var sessionRecorder: SessionRecorder
@@ -143,6 +146,7 @@ class TelemetryForegroundService : Service() {
         archives = DataArchiveManager(paths, log)
         telemetryStore = TelemetryStateStore()
         consumptionTracker = ConsumptionTracker(this)
+        calibrationScoreboard = CalibrationScoreboard(File(paths.runtimeRoot, "calibration_scoreboard.json"))
         equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
         refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
         refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"))
@@ -180,7 +184,9 @@ class TelemetryForegroundService : Service() {
             },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
+                closeCalibrationEpoch(payload,"MAP_K")
                 equivalence.resetGas("MAPA_K_GRAVADO")
+                calibrationScoreboard.bindEpoch(equivalence.gasEpochToken())
                 refinementJournal.interrupt("MAPA_K_GRAVADO")
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
@@ -215,6 +221,7 @@ class TelemetryForegroundService : Service() {
                     JSONObject(payload.toString()).put("learningResult", result),
                     force = true,
                 )
+                calibrationScoreboard.interrupt("AUTOMATCH_NATIVO")
                 equivalence.resetGas("AUTOMATCH_NATIVO")
                 refinementJournal.interrupt("AUTOMATCH_NATIVO")
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
@@ -298,6 +305,7 @@ class TelemetryForegroundService : Service() {
         try { gps.stop() } catch (_: Exception) {}
         try { overlay.close() } catch (_: Exception) {}
         try { equivalence.flush() } catch (_: Exception) {}
+        if (::calibrationScoreboard.isInitialized) calibrationScoreboard.save()
         try { sessionRecorder.close() } catch (_: Exception) {}
         try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
         try { kFactor.close() } catch (_: Exception) {}
@@ -403,12 +411,13 @@ class TelemetryForegroundService : Service() {
             .put("link_status", try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("consumption", consumptionTracker.buildTelemetryJson(settings.gnvCylinderCapacityM3.toFloat()))
             .put("levelSensor",levelSensor.json())
+            .put("calibrationScoreboard",calibrationScoreboard.json())
             .put("native_updated_at", System.currentTimeMillis())
             .put("telemetry_age_ms", telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it })
         return root.toString()
     }
 
-    fun levelObservationJson(): JSONObject = JSONObject().put("levelSensor",levelSensor.json())
+    fun levelObservationJson(): JSONObject = JSONObject().put("levelSensor",levelSensor.json()).put("calibrationScoreboard",calibrationScoreboard.json())
 
     fun readLevelSensor(): JSONObject {
         if (kWriter.isBusy() || kFactor.isBusy()) return JSONObject().put("ok",false).put("error","Aguarde a operação de calibração")
@@ -421,6 +430,20 @@ class TelemetryForegroundService : Service() {
         sessionRecorder.record("level_sensor_snapshot","mp48",result,force=true)
         stateChanged()
         return result
+    }
+
+    private fun closeCalibrationEpoch(payload:JSONObject,target:String) {
+        calibrationScoreboard.confirm(payload.optString("adjustmentId"),target,payload.optBoolean("humanConfirmed"),
+            payload.optBoolean("readbackValid"),payload.optLong("confirmedAt",System.currentTimeMillis()),equivalence.gasPerAir())
+    }
+
+    private fun observeCalibration(gasActive:Boolean,at:Long) {
+        val gpsData=gps.json()
+        val fresh=gpsData.optBoolean("enabled") && at-gpsData.optLong("timestamp") in 0L..15_000L && gpsData.optDouble("accuracyM",Double.MAX_VALUE) in 0.0..100.0
+        val distance=if(fresh)gpsData.optDouble("distanceKm",Double.NaN).takeIf { it.isFinite() } else null
+        val level=levelSensor.json()
+        val position=if(!level.optBoolean("proxy",true)) level.optDouble("position",Double.NaN).takeIf { it.isFinite() } else null
+        calibrationScoreboard.observe(equivalence.gasPerAir(),distance,position,gasActive,at,equivalence.gasEpochToken())
     }
 
     fun engineMetricsJson(): String = runtime.metricsJson()
@@ -711,7 +734,9 @@ class TelemetryForegroundService : Service() {
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Experimento não registrado: ${error.message}")
         } finally {
+            closeCalibrationEpoch(payload,"CURVE_K")
             equivalence.resetGas("CURVA_K_GRAVADA")
+            calibrationScoreboard.bindEpoch(equivalence.gasEpochToken())
             payload.optJSONObject("curve")?.optJSONArray("factorsRaw")?.takeIf { it.length() == 30 }?.let { raw ->
                 equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
             }
@@ -800,6 +825,7 @@ class TelemetryForegroundService : Service() {
         )
         levelSensor.accept(live.optInt("level_raw", -1), accepted.optLong("timestamp", System.currentTimeMillis()))
         val cngActive = live.optString("fuel").uppercase() == "GNV"
+        observeCalibration(cngActive,accepted.optLong("timestamp",System.currentTimeMillis()))
         if (cngActive) {
             consumptionTracker.update(
                 timestampMs = accepted.optLong("timestamp", System.currentTimeMillis()),

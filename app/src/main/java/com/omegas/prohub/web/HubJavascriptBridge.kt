@@ -283,6 +283,7 @@ class HubJavascriptBridge(activity: MainActivity) {
         )
         val observation=service.levelObservationJson()
         root.put("levelSensor",observation.optJSONObject("levelSensor"))
+            .put("calibrationScoreboard",observation.optJSONObject("calibrationScoreboard"))
             .put("k_factor",JSONObject(service.kFactorStatusJson()))
             .put("k_write",JSONObject(service.kWriteStatusJson()))
             .put("ok", true)

@@ -194,6 +194,9 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         return JSONObject(result.toString())
     }
 
+    /** Identidade observacional da época, sem tocar no acumulador. */
+    fun gasEpochToken(): String = synchronized(lock) { "$gasEpochAt:$gasEpochReason" }
+
     fun gasPerAir(): Double? = synchronized(lock) { if (airRpmBar > 0) gasUsefulRpmMs / airRpmBar else null }
 
     fun typicalBandsJson(): JSONArray = TypicalInjectionBands.json(synchronized(lock) { petrol.toList() })
