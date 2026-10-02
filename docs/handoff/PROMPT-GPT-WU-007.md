@@ -9,7 +9,8 @@ Você é o executor do OMEGAS V8.2: app Android para a ECU MP48 / Omega Platinum
 - Repositório: `viluadmcontas2-dot/OMEGAS-V8.2`.
 - Branch: `claude/brave-darwin-wuliyo`, a partir do HEAD atual.
 - A WU-006 está fechada com APK verde: run `37063541243`, SHA `dcd601c5`.
-- Não crie branch, não abra PR e não apague branches. A limpeza de branches já foi feita pelo Claude e está registrada em `docs/governance/BRANCHES.md`.
+- Não crie branch e não abra PR.
+- A **única** remoção de branch permitida é a do Bloco 0, exatamente como está em `docs/governance/BRANCH-CLEANUP-20261002.md`.
 
 ## 0. Leitura obrigatória
 
@@ -52,6 +53,17 @@ Level, consumo e Ferramentas são **bônus**. Nunca podem bloquear, atrasar ou p
 - **Quando parar:** quando o dono ou o Claude mandar parar, **não faça mais push**. Isso já aconteceu uma vez e não pode repetir.
 
 ## 3. Blocos (nesta ordem)
+
+### Bloco 0 — Limpeza das branches (aprovada pelo dono)
+
+Execute `docs/governance/BRANCH-CLEANUP-20261002.md` à risca:
+1. Para cada uma das 33 branches, crie a tag `archive/<nome>` no SHA da tabela.
+2. Confira a tag.
+3. Só então apague a branch.
+
+**Ficam somente `main` e `claude/brave-darwin-wuliyo`.** Se o SHA atual de uma branch não bater com o da tabela, pule essa branch e registre.
+
+No fim, registre o resultado no próprio arquivo e faça um commit só de documentação, sem CI.
 
 ### Bloco A — Sessão vira um ZIP inteligente
 
