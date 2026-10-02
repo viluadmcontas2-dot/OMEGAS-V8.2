@@ -1,11 +1,13 @@
 package com.omegas.prohub.service
 
+import android.Manifest
 import android.app.Service
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.RefinementJournal
 import com.omegas.prohub.autocal.RefinementAutopilot
 import com.omegas.prohub.autocal.AutoCalAcquisition
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Binder
@@ -763,10 +765,18 @@ class TelemetryForegroundService : Service() {
                 stateChanged()
             }
             refinementAutopilot.takeAlert()?.let { alert ->
-                NotificationManagerCompat.from(this).notify(
-                    NotificationController.AUTOPILOT_NOTIFICATION_ID,
-                    notifications.buildRefinementAlert(alert.optString("headline"), alert.optString("next")),
-                )
+                // Android 13+: avisos opcionais só após permissão concedida.
+                // O piloto continua operando mesmo quando o motorista nega notificações.
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    NotificationManagerCompat.from(this).notify(
+                        NotificationController.AUTOPILOT_NOTIFICATION_ID,
+                        notifications.buildRefinementAlert(alert.optString("headline"), alert.optString("next")),
+                    )
+                } else {
+                    log.add("INFO", "REFINO", "Aviso omitido: permissão de notificações não concedida")
+                }
             }
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Piloto do refino: ${error.message}")
