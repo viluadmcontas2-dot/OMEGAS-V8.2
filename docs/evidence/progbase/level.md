@@ -39,6 +39,6 @@ Conferência com os valores desta ECU: `39 93 143 219` não são equidistantes (
 - Nos LEDs do comutador (feitos pela ECU, não pelo PC): `INFERIDO` que a ECU compara o raw filtrado com as referências `RIF_SENSORE` para posicionar o nível em quartos e usa `SOGLIA_LED_1..4` (`10/37/62/90`, parecem percentuais) com histerese 3 para acender/apagar. Com raw 177 entre 143 (2/4) e 219 (3/4) a leitura ficaria entre meio e três quartos; raw 251 > 219 = cheio. Nenhuma fórmula de interpolação da ECU foi vista.
 - A regra do OMEGAS `floor((255 − raw) × 100 / 255)` (`Mp48TelemetryScale.levelPercentage`, hoje desligada em favor de `LEVELS RAW`) não tem origem no ProgBase (`PROVADO` por ausência).
 
-## 6.5 O que falta (ver `lacunas.md` L-07/L-08)
+## 6.5 O que falta (ver `lacunas.md` L-08)
 
 Enum de `TIPO_SENSORE` (índice da UI → valor; significado do bit 7), equação do filtro (`FAST`/`SLOW`, quando cada um atua), regra exata dos LEDs e do "cheio". Como provar: captura Portmon ao trocar o tipo no `ComboSensore` e ao abastecer (raw vs LEDs físicos), e desmontagem de `ComboSensoreKeyPress`/`CheckRiconoscimentoPienoClick`.
