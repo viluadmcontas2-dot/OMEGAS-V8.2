@@ -105,6 +105,15 @@ Use `git show origin/claude/brave-darwin-wuliyo:<caminho>`.
 3. **Linguagem:** didática e humana (blueprints Notion CUSTOMROM / Omega Dev 4.0 / Car Info Next). Sem jargão no primeiro nível.
 4. **O resto da Platina não muda.** No máximo, uma linha no Agora com a fase do piloto, se couber sem quebrar nada.
 
+## 3b. Balão flutuante ("TELEMETRIA GNV +")
+
+O balão é o overlay nativo (`TelemetryOverlayController`). No carro, ele **cobriu o botão "Gravar na ECU"** da revisão.
+
+- **Regra:** o balão **nunca** aparece por cima do próprio OMEGAS. Ele fica oculto enquanto o app está em primeiro plano e só aparece quando o motorista está em outro app (mapa, música).
+- **Padrão:** desligado. O motorista liga em Ferramentas.
+- **Testes:** verifique na Platina como isso é controlado e cubra com teste.
+- **Botões das ações perigosas** (Gravar, Restaurar): nada pode sobrepor esses botões.
+
 ## 4. Verificação e entrega
 
 1. **Gate:** o gate rápido da Platina (`python3 -B tools/run_checks.py`) tem que passar, com os testes novos.
