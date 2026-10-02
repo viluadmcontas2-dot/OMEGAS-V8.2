@@ -46,7 +46,9 @@ object AutoCalUiProjection {
         val epochBlocked = epoch != null &&
             (!epochSessionValid || !epoch.optBoolean("comparisonAllowed", false))
         // Mascaramento apenas na PROJEÇÃO, preservando o snapshot bruto para auditoria.
-        val visibleNative = if (epochBlocked) maskedAcquisition(nativeSnapshot, epoch, !epochSessionValid) else nativeSnapshot
+        val visibleNative = if (epochBlocked && epoch != null) {
+            maskedAcquisition(nativeSnapshot, epoch, !epochSessionValid)
+        } else nativeSnapshot
 
         val nativeCurrent = snapshotAvailable(visibleNative) && sameSession(nativeSession, currentSession)
         val manualReady = manualStatus.optString("state").uppercase() in setOf("READY", "READY_PARTIAL")
