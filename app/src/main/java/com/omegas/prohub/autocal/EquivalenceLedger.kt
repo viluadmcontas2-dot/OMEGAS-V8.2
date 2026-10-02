@@ -131,11 +131,23 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     /** Pares (t_gasolina de referência, t_no_GNV) para a curva vigente. */
     fun pairs(): List<EvidencePair> = synchronized(lock) {
-        val ref = petrol.toList()
+        // Grade RPM×MAP com célula = janela de casamento: só as 3×3 células vizinhas podem casar.
+        // Mesmo resultado da busca exaustiva, sem 4000×1500 comparações por recálculo na multimídia.
+        fun cell(rpm: Double, map: Double) = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
+            Math.floorDiv((map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
+        val grid = HashMap<Long, MutableList<Obs>>()
+        petrol.forEach { grid.getOrPut(cell(it.rpm, it.map)) { ArrayList() }.add(it) }
+        val matches = ArrayList<Double>()
         gas.mapNotNull { g ->
-            val matches = ref.filter { abs(it.rpm - g.rpm) <= MATCH_RPM && abs(it.map - g.map) <= MATCH_MAP }
-                .map { it.petrolMs }.sorted()
-            if (matches.size < 2) null else EvidencePair(matches[matches.size / 2], g.petrolMs, g.rpm)
+            matches.clear()
+            val r0 = Math.floorDiv(g.rpm.toLong(), MATCH_RPM.toLong())
+            val m0 = Math.floorDiv((g.map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
+            for (dr in -1L..1L) for (dm in -1L..1L) {
+                grid[(r0 + dr) * 1_000_003L + (m0 + dm)]?.forEach {
+                    if (abs(it.rpm - g.rpm) <= MATCH_RPM && abs(it.map - g.map) <= MATCH_MAP) matches += it.petrolMs
+                }
+            }
+            if (matches.size < 2) null else { matches.sort(); EvidencePair(matches[matches.size / 2], g.petrolMs, g.rpm) }
         }
     }
 

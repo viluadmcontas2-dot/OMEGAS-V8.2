@@ -90,4 +90,40 @@ class EquivalenceLedgerTest {
         assertEquals(EquivalenceLedger.FORMAT, JSONObject(file.readText()).getString("format"))
         dir.deleteRecursively()
     }
+
+    @Test
+    fun `busca em grade da o mesmo resultado da busca exaustiva`() {
+        val ledger = EquivalenceLedger(null)
+        val rnd = java.util.Random(7)
+        val petrol = ArrayList<DoubleArray>()
+        var t = 0L
+        repeat(1200) {
+            val rpm = 900.0 + rnd.nextDouble() * 3600
+            val map = 0.25 + rnd.nextDouble() * 0.7
+            val ms = 2.0 + map * 10 + rnd.nextDouble()
+            repeat(3) { ledger.accept(EquivalenceLedger.Frame(t, "GASOLINA", rpm, map, ms)); t += 100 }
+            petrol += doubleArrayOf(rpm, map, ms)
+            t += 5_000
+        }
+        val gas = ArrayList<DoubleArray>()
+        repeat(400) {
+            val rpm = 900.0 + rnd.nextDouble() * 3600
+            val map = 0.25 + rnd.nextDouble() * 0.7
+            val ms = 2.0 + map * 11
+            repeat(3) { ledger.accept(EquivalenceLedger.Frame(t, "GNV", rpm, map, ms)); t += 100 }
+            gas += doubleArrayOf(rpm, map, ms)
+            t += 5_000
+        }
+        val expected = gas.mapNotNull { g ->
+            val m = petrol.filter { abs(it[0] - g[0]) <= 150.0 && abs(it[1] - g[1]) <= 0.02 }.map { it[2] }.sorted()
+            if (m.size < 2) null else m[m.size / 2] to g[2]
+        }
+        val actual = ledger.pairs().map { it.petrolRefMs to it.gasPetrolMs }
+        assertTrue(expected.size > 50)
+        assertEquals(expected.size, actual.size)
+        expected.zip(actual).forEach { (e, a) ->
+            assertEquals(e.first, a.first, 1e-9)
+            assertEquals(e.second, a.second, 1e-9)
+        }
+    }
 }

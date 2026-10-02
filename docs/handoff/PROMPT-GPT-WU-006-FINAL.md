@@ -223,6 +223,11 @@ A ECU tem 18 bandas de MAP por combustível. Nós criamos as nossas, mais densas
 - **Não troque** a entrada do motor pelas bandas densas.
 - **Tooltip** do gráfico: "nossas bandas: mediana das leituras estáveis a cada 0,025 bar".
 
+**Desempenho.** A multimídia é fraca e esta função roda a cada ~3 s enquanto se dirige:
+- `denseBandsJson` precisa ser O(n): uma passada, com agrupamento por chave de faixa;
+- memoize com o mesmo `cachedIndex`, invalidado só quando entra observação nova;
+- nunca use busca exaustiva gasolina × GNV (`pairs()` já usa grade RPM×MAP por esse motivo).
+
 **Sem dados:** sem leituras, mostre "Ainda sem pontos próprios — rode na gasolina e no GNV". **Nunca simule pontos.**
 
 ## 5. AutoCal (o da ECU): melhorias com evidência
@@ -279,6 +284,11 @@ Leia, **somente leitura**, pelo caminho do snapshot existente:
 - **Precisão:** com menos de N km (defina N e justifique), o placar diz "dados insuficientes" em vez de comparar.
 
 Só observação. Nenhuma ação automática.
+
+**Não duplique o que existe:**
+- O `gasPerAir` do `EquivalenceLedger` **já zera** em cada gravação de Curva K ou Mapa K (`resetGas`), então ele já é a métrica da época vigente.
+- O placar só **arquiva** o valor da época que fecha. Faça isso no mesmo ponto onde o serviço chama `resetGas`, junto com km e nível, e compara.
+- Não crie um segundo acumulador de consumo.
 
 ## 8. Roteiro de teste no carro
 
