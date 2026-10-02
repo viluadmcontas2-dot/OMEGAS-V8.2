@@ -72,3 +72,16 @@ Ordenadas por valor potencial de informação, não por ganhos de consumo já de
 - Risco: Risco: falsos positivos por pacote incompleto.
 - Fonte: DUMP/RT_RCDATA(10)__TSTREAMDATI__0.bin: offset 0x3319; componente GIRI_TEMPO_CUTOFF; propriedade SerialCode ; DUMP/RT_RCDATA(10)__TSTREAMDATI__0.bin: offset 0x37D3; componente TEMPO_INIEZIONE_CONTINUA; propriedade SerialCode.
 
+
+## Novas oportunidades fundamentadas — escavação dirigida de 2026-10-02
+
+Ver [**ACHADOS-DIRIGIDOS-20261002.md**](ACHADOS-DIRIGIDOS-20261002.md). Esta seção complementa, sem recatalogar, as dez oportunidades iniciais. A ordem representa **potencial de esclarecimento**, não economia comprovada.
+
+1. **Caracterização do injetor e intercepto de pulso:** SC 125/126 (tempos mortos escalares), SC 242/243 (vetores de offsets) e SC 313–318 (fluxo, normalização e superfície 4×5). Priorizar entendimento de **unidades/eixos** antes de qualquer regressão física. Evidence: `TSTREAMDATI` @`0x7A53`/`0x7B2E`, @`0x1981B`–`0x19CFB`; `TSTRATEGIATEMPIMORTIDM` e §1 do novo estudo.
+2. **Envoltória nativa de qualidade do AutoCal:** seis limiares SC 387–392 e pressão SC 361/362. Confrontar com gates OMEGAS e avaliar eventos de aquisição por zona, sem substituir critérios operacionais. Evidence: `TAUTOCALDM` @`0x30A2`–`0x3726`; ausentes de `AutoCalProtocol.READ_ONLY_FIELDS` e `CompositeCalibrationReader` **nas rotas inspecionadas**.
+3. **Atribuição ambiental sem confusão causal:** curvas separadas de temperatura SC 92/93, pressão coletor SC 95/96, pressão diferencial SC 123/124 e absoluta SC 223/224. Cruzar observações com a condição real e reportar incerteza; K2/K4 continuam candidatos estáticos, não live. Evidence: `TSTREAMDATI` @`0x55EE`–`0xFDB0`; `CalibrationPhysicsFoundation.kt`.
+4. **Nível por perfil e diagnóstico próprio do tanque:** parametrização SC 36/37/276/300 e canais MGLEV SC 325–328. Hoje `Mp48TelemetryScale.levelPercentage` é um mapeamento linear invertido de um byte de telemetria. Identificar perfil antes de alegar volume ou economia; não usar pressão do trilho como pressão do cilindro.
+5. **Reconciliar neutralidade do Mapa K com a origem da prova:** `CalibrationPhysicsFoundation.kt` já modela `raw/128` (128 neutro), enquanto o DFM de `MAP_K` apenas exibe raw em 13×12. Recuperar captura E4 por firmware para impedir que o número 100 seja presumido neutro em recomendações futuras.
+6. **Economia como desfecho independente:** testar o modelo de 609 observações com validação por sessão retida e condicionamento ambiental, mas manter equivalência `RPM×MAP → Petrol Inj.` distinta de medição de consumo. R² alto, por si só, não identifica deadtime nem ganho econômico.
+
+**Critério de promoção de qualquer novidade:** fonte/offset ou transação oficial → decodificação por versão → fixtures offline → ganho fora da amostra ou comportamento reproduzido → revisão humana. Falha no shape, falta de evidência ou ECU incompatível: `UNKNOWN`; sem escrita automática.
