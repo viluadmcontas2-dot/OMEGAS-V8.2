@@ -3,6 +3,7 @@
   const ns = root.OmegasUi = root.OmegasUi || {};
   const AUTO_CAL_LIVE_STALE_MS = 7500;
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
+  const AUTO_CAL_X_AXIS_LABEL = 'Petrol Inj. (ms)';
 
   function finite(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -1320,7 +1321,7 @@
           'aria-label="Aquisição atual: pontos gasolina e GNV da ECU sem extrapolação">' +
           '<path d="M64 22 V352 H972" fill="none" stroke="currentColor" opacity=".2"></path>' +
           curve(acquiredPetrol, 'petrol') + curve(acquiredGas, 'gas') +
-          '<text class="autocal-axis-title x" x="518" y="395" text-anchor="middle">Petrol Inj. (ms)</text>' +
+          '<text class="autocal-axis-title x" x="518" y="395" text-anchor="middle">' + AUTO_CAL_X_AXIS_LABEL + '</text>' +
           '<text class="autocal-axis-title y" x="14" y="200" text-anchor="middle" ' +
           'transform="rotate(-90 14 200)">MAP (bar)</text></svg>';
       }
@@ -1501,7 +1502,7 @@
 
       host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV, equivalência nativa e posição AGORA por Petrol Inj. e MAP">' +
         grid + zoneMarkup +
-        '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">Petrol Inj. (ms)</text>' +
+        '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">' + AUTO_CAL_X_AXIS_LABEL + '</text>' +
         '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
         '<g>' +
         '<rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>' +
