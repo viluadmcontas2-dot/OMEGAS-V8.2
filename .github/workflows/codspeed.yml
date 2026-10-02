@@ -1,0 +1,41 @@
+name: CodSpeed Benchmarks
+
+on:
+  push:
+    branches: [ OMEGAS-SPEED ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  # SPEED-only integration: no unrelated PR or main branch CI work.
+  # `workflow_dispatch` allows CodSpeed to trigger backtest
+  # performance analysis in order to generate initial data.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC authentication with CodSpeed
+
+concurrency:
+  group: codspeed-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install benchmark dependencies
+        run: python3 -m pip install --disable-pip-version-check -r benchmarks/requirements.txt
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: simulation
+          run: pytest benchmarks --codspeed
