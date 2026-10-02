@@ -9,13 +9,11 @@ Entregar um aplicativo Android automotivo pragmático para observar a equivalên
 - Dashboard/Agora: telemetria essencial e equivalência atual.
 - AutoCal: coleta nativa da ECU + Equivalência Refinada da Curva K (Gasolina → GNV → Revisar → Gravar e verificar).
 - Aprender: cobertura e evidência em `RPM × MAP`.
-- Predictor: código preservado, fora da navegação desde a WU-006.
 - Sugestões: tradução da evidência em propostas revisáveis.
-- Mapa K: célula física da ECU em `RPM × Petrol Inj.`.
-- Curva K: tendência global por tempo de injeção.
+- Ajuste local (Mapa K): célula física da ECU em `RPM × Petrol Inj.`.
+- Ajuste global (Curva K): tendência global por tempo de injeção.
 - Ferramentas: sessão, logs e diagnóstico técnico.
 
-OBD não é requisito de evolução desta versão. Código legado pode permanecer até remoção explícita e testada, mas não deve gerar trabalho novo nem competir com o fluxo principal.
 
 ## Segurança
 

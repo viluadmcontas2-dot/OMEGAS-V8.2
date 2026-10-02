@@ -4,10 +4,11 @@ Aplicativo Android para telemetria, AutoCal com equivalência refinada GNV = gas
 
 O repositório é a fonte canônica de engenharia. Comece por [PROJECT.md](PROJECT.md), [STATUS.md](STATUS.md) e pela WorkUnit ativa em [docs/workunits](docs/workunits).
 
+Produto: Agora · AutoCal (equivalência refinada GNV = gasolina) · Aprender · Ajuste global (Curva K) · Ajuste local (Mapa K) · Sugestões · Ferramentas.
+
 ## Invariantes do produto
 
 - equivalência primária: `RPM × MAP(bar) → Petrol Inj. (ms)`;
-- Predictor é diagnóstico, separa medido/previsto/desconhecido e se abstém sem suporte;
 - aprendizado e sugestões são passivos;
 - nenhuma conexão, sugestão ou aprendizado grava automaticamente na ECU;
 - toda escrita segue preparar → revisar → confirmar → ACK → readback;

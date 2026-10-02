@@ -4,7 +4,6 @@
 - Branch: `claude/brave-darwin-wuliyo`
 - Estado WU-006: `LOCAL_PROVEN` (gate rápido, oráculo, paridade Kotlin↔Python, JUnit do motor); prova Android/APK pendente; `PHYSICAL_VALIDATION_CLAIMED=false`
 - Evidência WU-006: `docs/evidence/WU-006-refined-replay.md`
-- UI/UX: navegação por intenção (decisão do owner em 2026-10-02); Predictor e OBD fora da navegação
 
 ## Último APK provado (WU-005)
 
@@ -21,17 +20,15 @@
 
 - equivalência científica primária `RPM × MAP(bar) → Petrol Inj. (ms)`;
 - aprendizado persistente e reconciliação;
-- Predictor tipado com confiança, incerteza e abstention/fail-closed;
 - sugestões passivas e revisão humana obrigatória;
 - separação entre Mapa K e Curva K;
 - fluxo manual `Preparar → Revisar → Confirmar → ACK → Readback`;
 - simulador de ECU com sucesso, rejeição, timeout, falha de ACK e readback divergente;
 - proteção contra escrita automática na ECU.
 
-## Provas da WorkUnit
+## Provas históricas da WU-005 (não representam a suíte atual)
 
 - gate rápido: `QUALITY_GATE_FAST=PASS`;
-- simulações/contratos do Predictor: `PASS`;
 - Android/JVM: `testDebugUnitTest=PASS`;
 - quantidade da suíte Android/JVM: `939` testes; a contagem vem do run anterior de 939 casos e o diff até o SHA verde altera somente fixtures/asserts dos três testes falhos, sem adicionar/remover testes;
 - `lintDebug=PASS`;
@@ -60,3 +57,13 @@ Após o fechamento da Issue #5, novos agentes devem fazer boot técnico pela `ma
 `SIMULATED_ECU_ONLY=true`, `NO_INSTALL_PERFORMED=true` e `PHYSICAL_VALIDATION_CLAIMED=false`.
 
 Nenhuma escrita real em ECU, instalação no veículo ou validação física foi executada ou alegada nesta WorkUnit.
+
+## Higiene atual — 2026-10-02
+
+- Fonte inicial: `463a08d95680efa757059664e964f2d1d1df2d9d`.
+- Produto: Agora · AutoCal (equivalência refinada GNV = gasolina) · Aprender · Ajuste global (Curva K) · Ajuste local (Mapa K) · Sugestões · Ferramentas.
+- Gate rápido: `QUALITY_GATE_FAST=PASS`; suíte JVM integral sem SDK: `778 → 674`, todos OK; 104 casos removidos exclusivamente com código morto.
+- Relatório e reprodução: `docs/evidence/HYGIENE-20261002.md`.
+- Inventário remoto: `docs/governance/BRANCHES.md`; nenhuma branch remota apagada.
+- Workflow final `omegas-preapk-build.yml`: pendente; run id, artifact e digest ainda não comprovados.
+- `PHYSICAL_VALIDATION_CLAIMED=false`.
