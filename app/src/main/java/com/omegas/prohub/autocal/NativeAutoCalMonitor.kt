@@ -61,6 +61,7 @@ class NativeAutoCalMonitor(
     private val maturityTracker = NativeAutoCalMaturityTracker()
     private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
     private val refreshPlanner = NativeAutoCalRefreshPlanner()
+    private val acquisitionEpoch = NativeAutoCalAcquisitionEpoch()
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
@@ -91,6 +92,7 @@ class NativeAutoCalMonitor(
             maturityTracker.reset()
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
+            acquisitionEpoch.reset(newSessionId)
             // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
             // de qualquer leitura pesada. Assim o primeiro probe estável sempre
             // produz um snapshot completo e a UI não fica presa sem thresholds.
@@ -118,6 +120,7 @@ class NativeAutoCalMonitor(
             maturityTracker.reset()
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
+            acquisitionEpoch.reset(0L)
             snapshotRequested = false
             snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false)
@@ -134,6 +137,12 @@ class NativeAutoCalMonitor(
     }
 
     fun onManualActionConfirmed(receipt: JSONObject) {
+        synchronized(lock) {
+            val receiptSessionId = receipt.optLong("sessionId", sessionId)
+            if (receiptSessionId == sessionId) {
+                acquisitionEpoch.manualAction(sessionId, receipt.optString("action"))
+            }
+        }
         requestSnapshot("ACTION_${receipt.optString("action", "UNKNOWN")}")
         val beforeMul = mulActRawFromSnapshot(receipt.optJSONObject("before"))
         val afterMul = mulActRawFromSnapshot(receipt.optJSONObject("after"))
@@ -187,6 +196,9 @@ class NativeAutoCalMonitor(
             count = probe.autoMatchCount,
             observedAtElapsedMs = counterObservedAt,
         )
+        synchronized(lock) {
+            acquisitionEpoch.nativeCounter(currentSession, probe.autoMatchCount)
+        }
         val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
         val probeChanged = previousProbe != null && (
@@ -221,6 +233,14 @@ class NativeAutoCalMonitor(
                 patch = acquisitionRefresh.snapshot,
                 refreshedAtElapsedMs = acquisitionRefresh.observedAtElapsedMs,
             )
+            synchronized(lock) {
+                acquisitionEpoch.acquisitionGroup(
+                    currentSession,
+                    probe.autoMatchCount,
+                    vector(acquisitionRefresh.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR),
+                    vector(acquisitionRefresh.snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
+                )
+            }
             refreshPlanner.markAcquisition(acquisitionRefresh.observedAtElapsedMs)
         }
 
@@ -232,6 +252,9 @@ class NativeAutoCalMonitor(
                 patch = referenceRefresh.snapshot,
                 refreshedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
             )
+            synchronized(lock) {
+                acquisitionEpoch.referenceGroup(currentSession, probe.autoMatchCount)
+            }
             stableMulAct(
                 snapshot = referenceRefresh.snapshot,
                 sessionId = currentSession,
@@ -278,15 +301,19 @@ class NativeAutoCalMonitor(
     }
 
     fun statusJson(): JSONObject = synchronized(lock) {
+        val liveEpoch = acquisitionEpochJson()
         JSONObject(state.toString())
-            .put("latestSnapshot", JSONObject(latestSnapshot.toString()))
+            .put("latestSnapshot", JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", liveEpoch))
+            .put("liveAcquisitionEpoch", liveEpoch)
             .put("snapshotRequested", snapshotRequested)
             .put("snapshotReason", snapshotReason)
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", true)
     }
 
-    fun latestSnapshotJson(): JSONObject = synchronized(lock) { JSONObject(latestSnapshot.toString()) }
+    fun latestSnapshotJson(): JSONObject = synchronized(lock) {
+        JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", acquisitionEpochJson())
+    }
 
     private fun probe(expectedSessionId: Long): AutoCalProtocol.NativeStatus? {
         val compact = serial.transaction(
@@ -857,6 +884,21 @@ class NativeAutoCalMonitor(
             rawPayloadHex = mulActField?.rawPayloadHex.orEmpty(),
         )
         synchronized(lock) {
+            acquisitionEpoch.acquisitionGroup(
+                expectedSessionId,
+                probe.autoMatchCount,
+                vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR),
+                vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
+            )
+            if (listOf(
+                    AutoCalProtocol.PETR_INJ_TBP,
+                    AutoCalProtocol.PETR_MNFLD_PRESS_RV,
+                    AutoCalProtocol.GAS_MNFLD_PRESS_RV,
+                ).all { snapshot.field(it)?.status == AutoCalFieldStatus.VALID }
+            ) {
+                acquisitionEpoch.referenceGroup(expectedSessionId, probe.autoMatchCount)
+            }
+            decorated.put("liveAcquisitionEpoch", acquisitionEpochJson())
             latestSnapshot = decorated
             refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
@@ -908,6 +950,22 @@ class NativeAutoCalMonitor(
             } catch (_: Exception) {}
         }
         onStateChanged()
+    }
+
+    private fun acquisitionEpochJson(): JSONObject = acquisitionEpoch.view().let { epoch ->
+        JSONObject()
+            .put("usbSessionId", epoch.usbSessionId)
+            .put("nativeAutoMatchCount", epoch.nativeAutoMatchCount ?: JSONObject.NULL)
+            .put("petrolGeneration", epoch.petrolGeneration)
+            .put("gasGeneration", epoch.gasGeneration)
+            .put("petrolPending", epoch.petrolPending)
+            .put("gasPending", epoch.gasPending)
+            .put("referencePending", epoch.referencePending)
+            .put("petrolSamples", epoch.petrolSamples)
+            .put("gasSamples", epoch.gasSamples)
+            .put("comparisonAllowed", epoch.comparisonAllowed)
+            .put("reason", epoch.reason)
+            .put("appWritePerformed", false)
     }
 
     private fun correlationStateJson(): JSONObject = JSONObject()
