@@ -191,6 +191,87 @@ class AutoCalUiProjectionTest {
         assertFalse(projection.getBoolean("referenceUsable"))
     }
 
+    @Test
+    fun `pending GNV cannot be resurrected from an old manual reference` () {
+        val native = usableReference("native-before-reset").apply {
+            getJSONArray("fields")
+                .put(zoneField("ACQUIRED_ZONES_PETROL", intArrayOf(1, 0, 1, 0)))
+                .put(zoneField("ACQUIRED_ZONES_GAS", intArrayOf(1, 1, 0, 0)))
+        }
+        val epoch = JSONObject()
+            .put("usbSessionId", 42L)
+            .put("petrolPending", false)
+            .put("gasPending", true)
+            .put("referencePending", true)
+            .put("comparisonAllowed", false)
+        val projected = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L).put("liveAcquisitionEpoch", epoch),
+            nativeSnapshot = native,
+            manualStatus = status("READY", 42L),
+            manualSnapshot = usableReference("manual-before-reset"),
+        )
+        assertEquals("NATIVE_MONITOR", projected.getString("source"))
+        assertFalse(projected.getBoolean("referenceUsable"))
+        assertFalse(projected.getBoolean("referenceAvailable"))
+        val fields = projected.getJSONObject("nativeSnapshot").getJSONArray("fields")
+        fun fieldStatus(key: String): String {
+            repeat(fields.length()) { index ->
+                val field = fields.getJSONObject(index)
+                if (field.getString("key") == key) return field.getString("status")
+            }
+            return "MISSING"
+        }
+        assertEquals("STALE_EPOCH", fieldStatus("GAS_MNFLD_PRESS_RV"))
+        assertEquals("STALE_EPOCH", fieldStatus("PETR_MNFLD_PRESS_RV"))
+        assertEquals("STALE_EPOCH", fieldStatus("ACQUIRED_ZONES_GAS"))
+        assertEquals("VALID", fieldStatus("ACQUIRED_ZONES_PETROL"))
+        assertEquals(0, projected.getJSONObject("acquisitionZones").getJSONArray("gas").length())
+        assertEquals(
+            listOf(true, false, true, false),
+            booleanList(projected.getJSONObject("acquisitionZones").getJSONArray("petrol")),
+        )
+        // Projeção é uma cópia: nenhuma mutação destrói a evidência bruta da ECU.
+        assertEquals("VALID", native.getJSONArray("fields").getJSONObject(2).getString("status"))
+    }
+
+    @Test
+    fun `coherent new generation can restore native comparison` () {
+        val epoch = JSONObject()
+            .put("usbSessionId", 42L)
+            .put("petrolPending", false)
+            .put("gasPending", false)
+            .put("referencePending", false)
+            .put("comparisonAllowed", true)
+        val projected = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L).put("liveAcquisitionEpoch", epoch),
+            nativeSnapshot = usableReference("current-epoch"),
+            manualStatus = status("READY", 42L),
+            manualSnapshot = usableReference("manual"),
+        )
+        assertEquals("NATIVE_MONITOR", projected.getString("source"))
+        assertTrue(projected.getBoolean("referenceUsable"))
+        assertTrue(projected.getJSONObject("liveAcquisitionEpoch").getBoolean("comparisonAllowed"))
+    }
+
+    @Test
+    fun `epoch from previous USB session fails closed` () {
+        val staleEpoch = JSONObject()
+            .put("usbSessionId", 41L)
+            .put("petrolPending", false)
+            .put("gasPending", false)
+            .put("referencePending", false)
+            .put("comparisonAllowed", true)
+        val projected = AutoCalUiProjection.project(
+            nativeStatus = status("MONITORING", 42L).put("liveAcquisitionEpoch", staleEpoch),
+            nativeSnapshot = usableReference("old-session-data"),
+            manualStatus = status("READY", 42L),
+            manualSnapshot = usableReference("old-manual-data"),
+        )
+        assertEquals("NATIVE_MONITOR", projected.getString("source"))
+        assertFalse(projected.getBoolean("referenceUsable"))
+        assertFalse(projected.getBoolean("referenceAvailable"))
+    }
+
     private fun status(state: String, sessionId: Long) = JSONObject()
         .put("state", state)
         .put("sessionId", sessionId)
