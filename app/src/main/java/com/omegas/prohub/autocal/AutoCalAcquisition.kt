@@ -49,6 +49,7 @@ object AutoCalAcquisition {
                 // O buffer GAS_PREV não possui contador de maturidade próprio.
                 val count = if (source.previous) null else counts.getOrNull(index)
                 val threshold = when {
+                    source.previous -> null // O limiar vigente não comprova maturidade do buffer anterior.
                     source.fuel == "GASOLINA" && index in 0..5 -> petrolLowThreshold
                     source.fuel == "GASOLINA" -> petrolNormalThreshold
                     index in 0..5 -> gasLowThreshold
