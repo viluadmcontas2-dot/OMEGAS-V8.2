@@ -1,5 +1,7 @@
 # OMEGAS V8.2
 
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/viluadmcontas2-dot/OMEGAS-V8.2?utm_source=badge)
+
 Aplicativo Android para telemetria, aprendizado, Predictor e ajuste manual assistido de centrais OMEGAS/MP48.
 
 O repositório é a fonte canônica de engenharia. Comece por [PROJECT.md](PROJECT.md), [STATUS.md](STATUS.md) e pela WorkUnit ativa em [docs/workunits](docs/workunits).
@@ -23,3 +25,12 @@ python3 -B tools/run_checks.py
 ```
 
 O pipeline de release registra o SHA do source, o hash SHA-256 do APK e os limites da evidência.
+
+## Benchmarks
+
+Os benchmarks de desempenho ficam em `benchmarks/` e rodam no CI com o [CodSpeed](https://codspeed.io):
+
+```bash
+python3 -m pip install -r benchmarks/requirements.txt
+pytest benchmarks --codspeed
+```
