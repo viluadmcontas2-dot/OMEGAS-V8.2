@@ -340,7 +340,10 @@
       const model = ns.AutoCalUxModel;
       if (!host || !model) return;
       const snapshot = this.snapshot || {};
+      // Curva RV zerada (ECU ainda sem aquisição daquele combustível) não vira linha no zero.
       const reference = model.referencePoints(snapshot, {});
+      const hasPetrolRv = reference.some(p => finite(p.petrolMapBar) > 0);
+      const hasGasRv = reference.some(p => finite(p.gasMapBar) > 0);
       const acquired = [...model.acquiredPoints(snapshot, 'petrol'), ...model.acquiredPoints(snapshot, 'gas')];
       const dense = this.eq?.denseBands || {};
       const ours = [
@@ -353,10 +356,15 @@
         host.innerHTML = '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Rode na gasolina e no GNV com a ECU conectada. Os pontos da ECU e os nossos aparecem aqui.</span></div>';
         return;
       }
-      const xs = [...reference.map(p => p.petrolMs), ...acquired.map(p => p.petrolMs), ...ours.map(p => p.tpetMs)].filter(v => v > 0);
-      const ys = [...reference.flatMap(p => [p.petrolMapBar, p.gasMapBar]), ...acquired.map(p => p.mapBar), ...ours.map(p => p.mapBar)].filter(v => Number.isFinite(v));
+      // Escala focada onde há pontos medidos (ECU + nossos); a RV só completa o contexto.
+      const measuredXs = [...acquired.map(p => p.petrolMs), ...ours.map(p => p.tpetMs)].filter(v => v > 0);
+      const xs = measuredXs.length ? measuredXs : reference.map(p => p.petrolMs).filter(v => v > 0);
       const xMin = 0;
-      const xMax = Math.max(4, Math.ceil(Math.max(...xs) * 1.05));
+      const xMax = Math.max(4, Math.ceil(Math.max(...xs) * 1.25));
+      const ys = [
+        ...reference.filter(p => p.petrolMs <= xMax).flatMap(p => [hasPetrolRv ? p.petrolMapBar : null, hasGasRv ? p.gasMapBar : null]),
+        ...acquired.map(p => p.mapBar), ...ours.map(p => p.mapBar),
+      ].filter(v => Number.isFinite(v) && v > 0);
       const yMin = Math.max(0, Math.floor(Math.min(...ys) * 20) / 20 - 0.05);
       const yMax = Math.ceil(Math.max(...ys) * 20) / 20 + 0.05;
       const width = 1000; const height = 400; const padLeft = 64; const padRight = 28; const padTop = 22; const padBottom = 48;
@@ -366,14 +374,14 @@
       const yTicks = Array.from({ length: 5 }, (_, i) => yMin + i * (yMax - yMin) / 4);
       const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 4).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`).join('') +
         xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - 23}" text-anchor="middle">${v.toFixed(1)}</text>`).join('');
-      const path = key => reference.filter(p => finite(p[key]) !== null && p[key] >= yMin && p[key] <= yMax)
+      const path = key => reference.filter(p => finite(p[key]) !== null && p[key] > 0 && p[key] >= yMin && p[key] <= yMax && p.petrolMs <= xMax)
         .map((p, i) => `${i ? 'L' : 'M'} ${xFor(p.petrolMs).toFixed(1)} ${yFor(p[key]).toFixed(1)}`).join(' ');
       const acquiredMarkup = acquired.map((p, i) => `<circle class="autocal-acquired-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'} ${p.acquisitionState === 'ACQUIRED' ? 'acquired' : 'collecting'}" data-refino-dot="ecu:${i}" cx="${xFor(p.petrolMs).toFixed(1)}" cy="${yFor(p.mapBar).toFixed(1)}" r="${p.acquisitionState === 'ACQUIRED' ? '6.0' : '4.6'}"></circle>`).join('');
       const oursMarkup = ours.map((p, i) => `<circle class="refino-our-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'}" data-refino-dot="our:${i}" cx="${xFor(p.tpetMs).toFixed(1)}" cy="${yFor(p.mapBar).toFixed(1)}" r="3.2"></circle>`).join('');
       host.innerHTML = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Nossa curva: Petrol Inj. por MAP, gasolina e GNV, pontos da ECU e nossos">${grid}` +
         `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 5}" text-anchor="middle">Petrol Inj. (ms)</text>` +
         `<text class="autocal-axis-title y" x="14" y="${height / 2}" text-anchor="middle" transform="rotate(-90 14 ${height / 2})">MAP (bar)</text>` +
-        `<g><path class="autocal-reference-line petrol" d="${path('petrolMapBar')}"></path><path class="autocal-reference-line gas" d="${path('gasMapBar')}"></path>${oursMarkup}${acquiredMarkup}</g></svg>`;
+        `<g>${hasPetrolRv ? `<path class="autocal-reference-line petrol" d="${path('petrolMapBar')}"></path>` : ''}${hasGasRv ? `<path class="autocal-reference-line gas" d="${path('gasMapBar')}"></path>` : ''}${oursMarkup}${acquiredMarkup}</g></svg>`;
     }
 
     inspect(token) {

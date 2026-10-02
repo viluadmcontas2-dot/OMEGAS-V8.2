@@ -64,7 +64,7 @@
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const eq = api && typeof api.equivalence === "function" ? api.equivalence() : null;
         const pilot = eq && eq.autopilot || {};
-        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU no autom\xE1tico", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Curva pronta", VERIFICANDO: "Verificando", RESTAURAR_TRECHO: "Trecho piorou", ESTAVEL: "Est\xE1vel" };
+        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU auto", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel" };
         text("dashRefino", labels[pilot.phase] || "\u2014");
         text("dashRefinoNext", pilot.phase === "ESTAVEL" ? "pode desconectar" : pilot.phase === "PROPOSTA_PRONTA" ? "toque para revisar" : "toque para abrir");
       }

@@ -376,3 +376,7 @@ body[data-omegas-route="dashboard"] .rail-status {
     min-height: 68px;
   }
 }
+
+/* Cartão REFINO: o valor é uma palavra (fase), não um número — fonte menor para caber. */
+.now-refino-card { cursor: pointer; }
+.now-refino-card b { font-size: 30px; line-height: 1.15; white-space: normal; overflow-wrap: anywhere; }
