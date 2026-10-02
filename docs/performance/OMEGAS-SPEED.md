@@ -34,3 +34,40 @@ CodSpeed reports four improved benchmarks and 11 unchanged:
 ## Safety and scope
 
 This optimization concerns the passive/offline Python Portmon parser. It does not measure Android frame pacing, Kotlin/USB latency, actual ECU traffic or AutoCal responsiveness on a device. The Node Learning/AutoCal scenarios remain a separate baseline to execute. No changes to Predictor abstention, ECU authority, scientific parity, ACK/readback requirements or automatic ECU writes have been made. No new branch beyond OMEGAS-SPEED, no paid runner and no server are required by this change.
+
+
+## Complete matrix and controlled comparator (PR #117)
+
+- Full Python matrix: **17** benchmark tests each in CodSpeed CPU Simulation and CodSpeed WallTime (15 original wizard benchmarks + 2 matched-run Portmon implementations).
+- Actual JavaScript matrix: **4** walltime exec targets from `codspeed.yml` (two LearningModel grid workloads and two AutoCalUxModel projection algorithms). All four were executed first as non-timed correctness smoke tests via Node 22.
+- Total: **38** instrument results in one CodSpeed run, https://app.codspeed.io/viluadmcontas2-dot/OMEGAS-V8.2/runs/6abf13354408cbe43cda1374. This run completed with all three CodSpeed jobs green: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/36954508140 .
+
+The paired benchmark in `benchmarks/test_bench_portmon_pair.py` includes the exact pre-optimization `iter_events` implementation (function renamed only), loaded beside the current production function. Both consume identical 2,000-transaction synthetic log lines, and collection aborts if their event arrays differ. Crucially, the baseline and optimized variants are measured in the **same CodSpeed job and the same runner**, for each instrument:
+
+| Matched-run Portmon event parser | Original | Optimized | Reduction in modeled/measured time |
+| --- | ---: | ---: | ---: |
+| Simulation | 469.4 ms | 360.7 ms | approximately **23.2%** |
+| WallTime | 50.3 ms | 38.9 ms | approximately **22.7%** |
+
+The paired numbers substantiate a reduction **for this CPU-bound offline parser workload**, not a physical AutoCal/ECU or WebView latency improvement. Walltime on regular GitHub-hosted runners remains subject to scheduling variance; the same-run design eliminates the previously noted cross-CPU baseline/head confounder in this particular comparison.
+
+### Isolated Learning/AutoCal instrumentation
+
+First completed four-target script walltime measurement in CodSpeed run https://app.codspeed.io/viluadmcontas2-dot/OMEGAS-V8.2/runs/6abf127fa0c264d9f80d73b3 :
+
+| Complete exec script | Walltime |
+| --- | ---: |
+| 12×12 Learning grid, 120 comparisons | 199.1 ms |
+| 12×12 Learning grid, 1,500 comparisons | 201.9 ms |
+| AutoCal 18-band strip, 30,000 iterations | 738.6 ms |
+| AutoCal 18-point reference fingerprint, 30,000 iterations | 2.3 s |
+
+These are **entire process-script timings** including Node VM/startup and repeated calls, not single-refresh user latency. The later 38-result run has different reported absolute JS values under another hosted runner, illustrating why per-run environment provenance matters. JavaScript product code was not changed.
+
+### CI compatibility and promotion
+
+The current Platina branch removed its inherited APK-generation workflow while retaining an earlier test that assumed gated APK build steps must exist. The scoped adjustment in `tests/ui/autocal-ci-no-apk.test.cjs` recognizes either safe configuration: no APK build configuration at all (and rejects hidden assemble/bundle commands), or the historical three named APK stages explicitly gated by `workflow_dispatch && inputs.build_apk == true`. This is **test-only** and adds no APK build path.
+
+The performance workflow checks relevant PRs targeting `OmegasPlatina` and post-merge performance-related pushes to that branch. The canonical Platina source branch is not directly edited, and promotion is via reviewed PR #117: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/pull/117 .
+
+No same-SHA Android device render, physical ECU readback, real host bridge, or UI frame-pacing claim is included in this offline performance tranche.
