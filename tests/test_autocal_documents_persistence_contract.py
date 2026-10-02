@@ -63,6 +63,13 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
         self.assertIn('"documentsMirror"', RECORDER)
         self.assertIn('"Download/Omegas"', MIRROR_PATH.read_text(encoding="utf-8"))
 
+    def test_documents_mirror_reuses_legacy_jsonl_aliases_instead_of_creating_copies(self):
+        mirror = MIRROR_PATH.read_text(encoding="utf-8")
+        self.assertIn('source.name + "%"', mirror)
+        self.assertIn("candidateSize > targetSize", mirror)
+        self.assertIn('"jsonl" -> "application/octet-stream"', mirror)
+        self.assertNotIn('"json", "jsonl" -> "application/json"', mirror)
+
     def test_repeated_active_exports_do_not_repackage_prior_event_segments(self):
         active = RECORDER[
             RECORDER.index("private fun createActiveExportSnapshot"):
