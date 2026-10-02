@@ -1,5 +1,22 @@
 # OMEGAS Platina — Status
 
+## APK Platina + Refino (candidato para teste no carro) — 2026-10-02
+
+- **Base:** a árvore da `OmegasPlatina` (`b185e80a`), acrescida do cérebro do refino, da aba Refino, da remoção do OBD, de Ferramentas e Sugestões corrigidas, e do balão flutuante que nunca cobre o app.
+- **Fonte:** `2c456bcab9ab0306d7f23daddb5f1b7c728ba4a0`, branch `claude/brave-darwin-wuliyo`, integrada em `OmegasPlatina`.
+- **Workflow:** `verde-apk-now.yml` com `build_apk=true`; run `37077178649`; conclusão `success` (`run_checks` + `clean testDebugUnitTest lintDebug assembleDebug`).
+- **Artifact:** `11257381786` / `omegas-platina-final-2c456bca…`, 4.782.450 bytes, digest `sha256:0cd6ebd022956a551196fb4320b6d97133759ea181f0ff6088eb22c5300a4054`. Expira em 2026-10-16.
+- **Conteúdo novo:** Refino com cursor AGORA, fases como estado, contagem Gas/GNV, apagões; Sugestões sem travar (`getRefinementPhase`); sessões em partes ZIP imutáveis.
+- **Classe de prova:** comportamento sintético (JVM/Node) + build/lint; UI conferida por print em navegador com fixtures. Sem replay real nem print do APK no emulador para o Refino; sem validação física.
+- **Anterior:** `8331cc36` / run `37071148942`.
+- **Provas locais no mesmo SHA:**
+  - `QUALITY_GATE_FAST=PASS`;
+  - JVM 540 OK (via kotlinc);
+  - paridade Kotlin↔Python OK;
+  - capturas 1280×720 com o snapshot real de 01/10 17:19.
+  - O único teste UI que falha, `learning-jvm-payload`, já falhava na Platina original.
+- `PHYSICAL_VALIDATION_CLAIMED=false`.
+
 ## Active control surface
 
 - Branch: `OmegasPlatina`

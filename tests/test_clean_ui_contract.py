@@ -12,7 +12,7 @@ class CleanUiContract(unittest.TestCase):
         self.html = (UI / "index.html").read_text("utf-8")
         self.css = (UI / "styles.css").read_text("utf-8")
         self.refine_css = (UI / "styles-refine.css").read_text("utf-8")
-        self.obd_css = (UI / "styles-obd-evidence.css").read_text("utf-8")
+        self.obd_css = ""  # OBD removido do produto (decisão do dono)
         self.calibration_obd_css = (UI / "styles-calibration-obd.css").read_text("utf-8")
         self.app = (UI / "app.js").read_text("utf-8")
         self.store = (UI / "core/store.js").read_text("utf-8")
@@ -24,7 +24,7 @@ class CleanUiContract(unittest.TestCase):
         self.map_screen = (UI / "screens/map.js").read_text("utf-8")
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
         self.learning_screen = (UI / "screens/learning.js").read_text("utf-8")
-        self.obd_screen = (UI / "screens/obd.js").read_text("utf-8")
+        self.refino_screen = (UI / "screens/refino.js").read_text("utf-8")
         self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
         self.suggestion_model = (UI / "suggestion-model.js").read_text("utf-8")
 
@@ -41,15 +41,17 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('styles-calibration-obd.css', self.html)
         self.assertIn("refinementStyle.href = 'styles-refine.css'", self.app)
 
-    def test_eight_static_human_destinations_include_autocal_above_obd(self):
+    def test_eight_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools']
+        expected = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools']", self.router)
-        self.assertLess(routes.index('autocal'), routes.index('obd'))
-        for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'AutoCal', 'OBD', 'Sugestões', 'Ferramentas'):
+        self.assertIn("const ROUTES = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']", self.router)
+        self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
+        self.assertNotIn('data-route="obd"', self.html)
+        self.assertNotIn("predictor-model.js", self.router)
+        for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'AutoCal', 'Refino', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
@@ -58,7 +60,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('class Scheduler', self.scheduler)
         self.assertEqual(1, self.scheduler.count('setInterval('))
         self.assertNotIn('setInterval(', self.app)
-        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.learning_screen + self.grid + self.obd_screen
+        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.learning_screen + self.grid + self.refino_screen
         self.assertNotIn('MutationObserver', active_sources)
         self.assertNotIn('.onclick', active_sources)
         self.assertNotIn('tick:', self.store)
@@ -111,7 +113,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('PETROL INJECTION', self.dashboard)
         self.assertIn('dashHeroPetrol', self.dashboard)
         self.assertIn('now-dashboard-shell', self.dashboard)
-        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashStft', 'dashCell'):
+        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashRefino', 'dashCell'):
             self.assertIn(marker, self.dashboard)
         self.assertIn('LEVELS RAW', self.dashboard)
         self.assertIn('level_raw', self.dashboard)
@@ -124,7 +126,6 @@ class CleanUiContract(unittest.TestCase):
             self.assertIn(f'data-learning-layer="{layer}"', self.html)
         self.assertIn('id="mapSelectAll"', self.html)
         self.assertIn('id="curveChart"', self.html)
-        self.assertIn('OBD é somente observação', self.html)
 
     def test_map_k_has_axes_and_single_human_write_confirmation(self):
         self.assertIn('id="mapActiveCell"', self.html)
@@ -160,10 +161,12 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('window.Android', self.curve_screen)
         self.assertNotIn('protocolTransaction', self.curve_screen)
 
-    def test_obd_is_observation_only(self):
-        self.assertIn('OBD é somente observação', self.html)
-        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite('):
-            self.assertNotIn(forbidden, self.obd_screen)
+    def test_refino_never_writes_without_review_and_readback(self):
+        self.assertNotIn('writeMap(', self.refino_screen)
+        self.assertNotIn('startKBatchWrite(', self.refino_screen)
+        self.assertIn("data-refino-confirm", self.refino_screen)
+        self.assertIn("state === 'BATCH_CONFIRMED' && done.readbackValid === true", self.refino_screen)
+        self.assertIn('A Curva K da ECU mudou', self.refino_screen)
 
     def test_native_api_is_single_bridge_surface(self):
         self.assertIn('class NativeApi', self.native_api)

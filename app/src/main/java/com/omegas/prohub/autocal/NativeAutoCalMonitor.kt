@@ -311,6 +311,27 @@ class NativeAutoCalMonitor(
             .put("manualAutoMatchExposed", true)
     }
 
+    private var acquisitionMemo: Pair<JSONObject, JSONObject>? = null
+
+    /**
+     * Leve, para o piloto do refino (a cada tick do serviço): contador vivo de AutoMatch,
+     * MAX/habilitado do último snapshot e a aquisição por banda, recalculada só quando o
+     * snapshot muda (evita copiar o snapshot inteiro a cada 3 s).
+     */
+    fun autoMatchProgressJson(): JSONObject = synchronized(lock) {
+        val count = state.optInt("autoMatchCount", -1).takeIf { state.has("autoMatchCount") && it >= 0 }
+        val snapshot = latestSnapshot
+        val acquisition = if (snapshot.has("fields")) {
+            acquisitionMemo?.takeIf { it.first === snapshot }?.second
+                ?: AutoCalAcquisition.fromSnapshot(snapshot).also { acquisitionMemo = snapshot to it }
+        } else null
+        JSONObject()
+            .put("autoMatchCount", count ?: JSONObject.NULL)
+            .put("maxAutomatch", snapshot.opt("maxAutomatch") ?: JSONObject.NULL)
+            .put("autoCalEnabled", snapshot.opt("autoCalEnabled") ?: JSONObject.NULL)
+            .put("acquisition", acquisition ?: JSONObject.NULL)
+    }
+
     fun latestSnapshotJson(): JSONObject = synchronized(lock) {
         JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", acquisitionEpochJson())
     }

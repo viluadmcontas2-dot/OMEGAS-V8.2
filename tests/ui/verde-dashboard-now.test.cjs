@@ -42,7 +42,7 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
     'dashMap',
     'dashFuel',
     'dashLevelsRaw',
-    'dashStft',
+    'dashRefino',
     'dashCell',
     'dashHealth',
   ]) {
@@ -53,7 +53,7 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
   assert.equal(occurrences(dashboard, '>MAP<'), 1);
   assert.equal(occurrences(dashboard, '>COMBUSTÍVEL<'), 1);
   assert.equal(occurrences(dashboard, '>LEVELS RAW<'), 1);
-  assert.equal(occurrences(dashboard, '>STFT<'), 1);
+  assert.equal(occurrences(dashboard, '>REFINO<'), 1);
   assert.equal(occurrences(dashboard, '>CÉLULA<'), 1);
   assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft|GAS INJ\./);
 });
@@ -72,7 +72,7 @@ test('dashboard é consumidor Red ou Verde e não carrega Blue', () => {
     /Blue|Causal|writeMap|writeCurve|startKWrite|startKBatchWrite|startKFactorWrite/,
   );
   assert.doesNotMatch(dashboard, /\?\.|\?\?|replaceAll\(/);
-  assert.match(dashboard, /const obd = state\.obd \|\| \{\}/);
+  assert.match(dashboard, /renderRefino\(\)/);
   assert.match(dashboard, /styles-dashboard-now\.css/);
 });
 

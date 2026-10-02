@@ -63,12 +63,18 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
         self.assertIn('"documentsMirror"', RECORDER)
         self.assertIn('"Download/Omegas"', MIRROR_PATH.read_text(encoding="utf-8"))
 
-    def test_documents_mirror_reuses_legacy_jsonl_aliases_instead_of_creating_copies(self):
+    def test_session_is_published_as_immutable_zip_parts(self):
+        # Contrato de texto (apoio); a prova de comportamento é SessionPartPlannerTest (JVM).
         mirror = MIRROR_PATH.read_text(encoding="utf-8")
-        self.assertIn('source.name + "%"', mirror)
-        self.assertIn("candidateSize > targetSize", mirror)
-        self.assertIn('"jsonl" -> "application/octet-stream"', mirror)
-        self.assertNotIn('"json", "jsonl" -> "application/json"', mirror)
+        publish = mirror[mirror.index("fun publishPart("):mirror.index("fun publishRootFile(")]
+        self.assertIn('"application/zip"', publish)
+        self.assertIn("MediaStore.MATCH_INCLUDE", publish)
+        self.assertIn("IS_PENDING", publish)
+        recorder_sync = RECORDER[RECORDER.index("private fun syncDocumentsMirror"):RECORDER.index("private fun documentsMirrorMarker")]
+        self.assertIn("fd?.sync()", recorder_sync)
+        self.assertIn("SessionPartPlanner.commit", recorder_sync)
+        recover = RECORDER[RECORDER.index("fun recoverDocumentsMirrorAsync"):RECORDER.index("fun close()")]
+        self.assertIn("final = true", recover)
 
     def test_repeated_active_exports_do_not_repackage_prior_event_segments(self):
         active = RECORDER[

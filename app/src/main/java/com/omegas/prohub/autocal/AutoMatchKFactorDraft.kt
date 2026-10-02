@@ -85,6 +85,17 @@ object AutoMatchKFactorDraftPlanner {
     const val MIN_FACTOR = 0.60
     const val MAX_FACTOR = KFactorProtocol.MAX_FACTOR
 
+    val REFINED_PRESELECTED_ORIGINS = setOf("MEASURED", "BLENDED", "SMOOTHED")
+
+    fun createRefined(analysis: JSONObject, nowMs: Long = System.currentTimeMillis()): AutoMatchKFactorDraft {
+        require(analysis.optString("mode") == AutoMatchSnapshotAnalysis.REFINED_MODE) { "Análise refinada esperada" }
+        val draft = create(analysis, nowMs)
+        return draft.copy(
+            id = draft.id.replaceFirst("AMV5-", "AMR-"),
+            points = draft.points.map { it.copy(selected = it.origin in REFINED_PRESELECTED_ORIGINS && it.changed) },
+        )
+    }
+
     fun create(analysis: JSONObject, nowMs: Long = System.currentTimeMillis()): AutoMatchKFactorDraft {
         require(analysis.optBoolean("ok") && analysis.optBoolean("available")) {
             analysis.optString("error").ifBlank { "Análise AutoMatch indisponível" }

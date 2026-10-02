@@ -151,6 +151,153 @@ object AutoMatchSnapshotAnalysis {
         }
     }
 
+    /**
+     * Equivalência Refinada OMEGAS (ver [AutoMatchRefinedEngine]). Usa eixo, MUL_ACT
+     * e os buffers de aquisição atuais; sem buffers coerentes cai para o modo de
+     * polimento de coerência. Nunca grava na ECU.
+     */
+    fun analyzeRefined(
+        snapshot: JSONObject,
+        telemetryPairs: List<Pair<Double, Double>> = emptyList(),
+        pointGainScale: DoubleArray? = null,
+    ): JSONObject {
+        val fields = fieldsByKey(snapshot.optJSONArray("fields") ?: JSONArray())
+        fun valid(field: AutoCalProtocol.Field, elements: Int): IntArray? {
+            val value = fields[field.key] ?: return null
+            if (value.optString("status") != AutoCalFieldStatus.VALID.name) return null
+            val raw = value.optJSONArray("rawValues") ?: return null
+            return if (raw.length() == elements) intArray(raw) else null
+        }
+        val base = JSONObject()
+            .put("mode", REFINED_MODE)
+            .put("algorithm", AutoMatchRefinedEngine.ALGORITHM)
+            .put("nativeFirmwareExact", false)
+            .put("automatic", false)
+            .put("manualOnly", true)
+            .put("snapshotHash", snapshot.optString("snapshotHash"))
+        val axis = valid(AutoCalProtocol.PETR_INJ_TBP, KFactorProtocol.POINT_COUNT)
+        val currentMul = valid(AutoCalProtocol.MUL_ACT, KFactorProtocol.POINT_COUNT)
+        if (axis == null || currentMul == null) {
+            return base.put("ok", true).put("available", false)
+                .put("reason", "EIXO_OU_MUL_ACT_INDISPONIVEL")
+                .put("message", "Leia o snapshot AutoCal com eixo e Curva K atual (MUL_ACT)")
+        }
+        val bands = AutoMatchV5Engine.PRESSURE_BAND_COUNT
+        val acquisitionGroup = coherenceGroup(snapshot, "ACQUISITION_CURRENT")
+        val buffersCoherent = acquisitionGroup?.optBoolean("coherent", false) ?: true
+        fun band(field: AutoCalProtocol.Field) = if (buffersCoherent) valid(field, bands) else null
+        return try {
+            val result = AutoMatchRefinedEngine.refine(
+                AutoMatchRefinedEngine.Input(
+                    axisRaw = axis,
+                    mulActRaw = currentMul,
+                    petrolTimeRaw = band(AutoCalProtocol.PETR_INJ_TBUF),
+                    petrolMapRaw = band(AutoCalProtocol.MNFLD_PRESS_BUF),
+                    petrolCounts = band(AutoCalProtocol.NUM_BUF_UPD_PETR),
+                    gasTimeRaw = band(AutoCalProtocol.PETR_INJ_TBUF_GAS),
+                    gasMapRaw = band(AutoCalProtocol.MNFLD_PRESS_BUF_GAS),
+                    gasCounts = band(AutoCalProtocol.NUM_BUF_UPD_GAS),
+                    telemetryPairs = telemetryPairs,
+                    pointGainScale = pointGainScale,
+                ),
+            )
+            if (!result.available) {
+                return base.put("ok", true).put("available", false).put("reason", result.reason)
+            }
+            refinedJson(base, result, buffersCoherent)
+        } catch (error: Exception) {
+            base.put("ok", false).put("available", false)
+                .put("error", error.message ?: "Não foi possível calcular a equivalência refinada")
+        }
+    }
+
+    /** Abaixo disso (ms de Petrol Inj.) o refino não reduz K: protege contra o motor apagar. */
+    const val LOW_GUARD_MS = 3.5
+
+    private fun refinedJson(base: JSONObject, result: AutoMatchRefinedEngine.Result, buffersCoherent: Boolean): JSONObject {
+        val points = JSONArray()
+        result.refinedRaw.forEachIndexed { index, engineRaw ->
+            val currentRaw = result.currentRaw[index]
+            // Trava da baixa: marcha lenta, desaceleração e embreagem (Petrol Inj. < LOW_GUARD_MS)
+            // é onde o motor apaga no GNV quando a curva fica pobre. O refino nunca empobrece
+            // essa região; só mantém ou enriquece.
+            val lowGuard = result.axisMs[index] < LOW_GUARD_MS && engineRaw < currentRaw
+            val refinedRaw = if (lowGuard) currentRaw else engineRaw
+            points.put(JSONObject()
+                .put("index", index)
+                .put("referenceTimeMs", result.axisMs[index])
+                .put("currentRaw", currentRaw)
+                .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
+                .put("calculatedRaw", refinedRaw)
+                .put("calculatedFactor", KFactorProtocol.factorFromRaw(refinedRaw))
+                .put("deltaPercent", if (currentRaw > 0) (refinedRaw - currentRaw) * 100.0 / currentRaw else JSONObject.NULL)
+                .put("evidenceGain", result.gain[index])
+                .put("origin", if (lowGuard) "LOW_GUARD" else result.origins[index].name))
+        }
+        val targets = JSONArray(result.targets.filter { it.mapBar.isFinite() }.map { target ->
+            JSONObject()
+                .put("mapBar", target.mapBar)
+                .put("petrolMs", target.petrolMs)
+                .put("gasMs", target.gasMs)
+                .put("ratio", target.ratio)
+                .put("weight", target.weight)
+                .put("robustWeight", target.robustWeight)
+                .put("targetFactor", kotlin.math.exp(target.logTarget))
+        })
+        val rejected = JSONArray(result.rejectedBands.map { band ->
+            JSONObject().put("fuel", band.fuel).put("band", band.band).put("mapBar", band.mapBar).put("timeMs", band.timeMs)
+        })
+        return base
+            .put("ok", true)
+            .put("available", true)
+            .put("refinementMode", result.mode.name)
+            .put("equivalenceAvailable", result.equivalenceAvailable)
+            .put("reason", result.reason ?: JSONObject.NULL)
+            .put("buffersCoherent", buffersCoherent)
+            .put("matureCommonPoints", result.matureCommonPoints)
+            .put("telemetryTargets", result.telemetryTargetCount)
+            .put("minimumMatureCommonPoints", AutoMatchRefinedEngine.MIN_COMMON_MATURE)
+            .put("elasticityLimit", result.elasticityLimit)
+            .put("needsAnotherPass", result.needsAnotherPass)
+            .put("changedCount", points.let { array -> (0 until array.length()).count { array.getJSONObject(it).optInt("calculatedRaw") != array.getJSONObject(it).optInt("currentRaw") } })
+            .put("guards", JSONObject()
+                .put("maximumStepPercent", 15.0)
+                .put("maximumElasticity", AutoMatchRefinedEngine.E_MAX)
+                .put("minimumFactor", AutoMatchRefinedEngine.MIN_FACTOR)
+                .put("lowGuardMs", LOW_GUARD_MS))
+            .put("evidenceErrorBefore", result.evidenceErrorBefore ?: JSONObject.NULL)
+            .put("evidenceErrorAfter", result.evidenceErrorAfter ?: JSONObject.NULL)
+            .put("joltRiskBefore", joltRisk(result.metricsBefore?.maxElasticity))
+            .put("joltRiskAfter", joltRisk(result.metricsAfter?.maxElasticity))
+            .put("metricsBefore", metricsJson(result.metricsBefore))
+            .put("metricsAfter", metricsJson(result.metricsAfter))
+            .put("targets", targets)
+            .put("rejectedBands", rejected)
+            .put("points", points)
+    }
+
+    /**
+     * Linearidade da puxada pela inclinação |d ln K / d ln t|: acima de [AutoMatchRefinedEngine.E_MAX]
+     * o gás entregue deixa de acompanhar linearmente o pedido da gasolina. O limite foi
+     * escolhido pelo teste cego de telemetria (tools/autocal_refine/blind_telemetry_test.py).
+     */
+    private fun joltRisk(elasticity: Double?): String = when {
+        elasticity == null -> "UNKNOWN"
+        elasticity <= AutoMatchRefinedEngine.E_MAX + 0.02 -> "LOW"
+        elasticity <= 1.0 -> "ATTENTION"
+        else -> "HIGH"
+    }
+
+    private fun metricsJson(metrics: AutoMatchRefinedEngine.Metrics?): Any = metrics?.let {
+        JSONObject()
+            .put("maxNeighborStep", it.maxNeighborStep)
+            .put("maxElasticity", it.maxElasticity)
+            .put("roughness", it.roughness)
+            .put("slopeSignChanges", it.slopeSignChanges)
+    } ?: JSONObject.NULL
+
+    const val REFINED_MODE = "EQUIVALENCIA_REFINADA_V1"
+
     private fun unavailableForTiming(
         acquisition: JSONObject,
         spanMs: Long,

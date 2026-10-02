@@ -153,6 +153,10 @@ class MainActivity : AppCompatActivity() {
             service = (binder as TelemetryForegroundService.LocalBinder).service()
             bound = true
             refreshWebUi()
+            // App aberto: o balão flutuante não pode cobrir os botões do próprio OMEGAS.
+            if (activityResumed) {
+                service?.takeIf { it.overlayReady() }?.overlay?.setAppForeground(true)
+            }
             if (intent?.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
                 service?.connectUsb()
             }
@@ -207,17 +211,37 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    /** Tela do OMEGAS visível (entre onResume e onPause). */
+    private var activityResumed = false
+
     override fun onResume() {
         super.onResume()
+        activityResumed = true
         refreshWebUi()
+        serviceOrNull()?.let { if (it.overlayReady()) it.overlay.setAppForeground(true) }
+    }
+
+    override fun onPause() {
+        activityResumed = false
+        serviceOrNull()?.let { if (it.overlayReady()) it.overlay.setAppForeground(false) }
+        super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        openRouteFromIntent(intent)
         if (intent.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) {
             runWithService { it.connectUsb() }
         }
+    }
+
+    /** Abre a rota pedida pelo Intent (aviso do refino → aba Refino). Só rotas simples. */
+    private fun openRouteFromIntent(intent: Intent?) {
+        val route = intent?.getStringExtra(com.omegas.prohub.service.NotificationController.EXTRA_ROUTE) ?: return
+        if (!route.matches(Regex("[a-z]{2,24}")) || !::webView.isInitialized) return
+        intent.removeExtra(com.omegas.prohub.service.NotificationController.EXTRA_ROUTE)
+        webView.evaluateJavascript("window.OmegasApp&&OmegasApp.router&&OmegasApp.router.navigate('$route')", null)
     }
 
     override fun onDestroy() {
@@ -295,6 +319,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                // Notificação do refino abriu o app a frio: navega depois que a UI montar.
+                webView.postDelayed({ openRouteFromIntent(intent) }, 800L)
+            }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return true
                 return uri.scheme != "file"

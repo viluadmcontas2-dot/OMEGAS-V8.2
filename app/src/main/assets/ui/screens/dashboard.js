@@ -20,13 +20,6 @@
       const telemetry = state.telemetry || {};
       return telemetry.live || telemetry.data || telemetry;
     }
-    function obdValue(obd, names) {
-      for (const name of names) {
-        const value = obd && obd[name];
-        if (finite(value) !== null) return finite(value);
-      }
-      return null;
-    }
     function fuelLabel(raw) {
       const value = String(raw || "\u2014").toUpperCase();
       if (value.includes("PETROL") || value.includes("GASOLINA")) return "GASOLINA";
@@ -52,7 +45,28 @@
       installLayout() {
         if (!this.root) return;
         this.root.classList.add("multimedia-now-screen");
-        this.root.innerHTML = '\n        <div class="now-page-intro">\n          <div><small>AGORA</small><h2>O que o motor est\xE1 fazendo</h2></div>\n          <p>Informa\xE7\xE3o essencial, grande e sem repeti\xE7\xE3o.</p>\n        </div>\n\n        <div class="now-dashboard-shell">\n          <section class="now-hero-card" aria-label="Leitura principal">\n            <div class="now-hero-copy">\n              <small class="now-hero-label">PETROL INJECTION</small>\n              <p id="dashHeroStatus" class="now-hero-status">Aguardando ECU</p>\n              <div class="now-hero-value"><strong id="dashHeroPetrol">\u2014</strong><em>ms</em></div>\n              <span class="now-hero-note">Leitura em tempo real da MP48 \xB7 sem duplicar telemetria</span>\n            </div>\n            <div class="now-hero-visual" aria-hidden="true"><span></span><i></i></div>\n          </section>\n\n          <section class="now-metric-grid" aria-label="Telemetria essencial">\n            <article class="now-metric-card"><small>RPM</small><b id="dashRpm">\u2014</b><span>rota\xE7\xE3o</span></article>\n            <article class="now-metric-card"><small>MAP</small><b id="dashMap">\u2014</b><span>bar</span></article>\n            <article class="now-metric-card"><small>COMBUST\xCDVEL</small><b id="dashFuel">\u2014</b><span>MP48</span></article>\n            <article class="now-metric-card"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b><span>MP48 bruto \xB7 sem %</span></article>\n            <article class="now-metric-card now-stft-card"><small>STFT</small><b id="dashStft">\u2014</b><span id="dashStftState">OBD offline</span></article>\n            <article class="now-metric-card"><small>C\xC9LULA</small><b id="dashCell">\u2014</b><span>posi\xE7\xE3o atual</span></article>\n          </section>\n\n          <section id="dashHealth" class="now-session-card" data-level="offline">\n            <span class="state-indicator"></span>\n            <div class="now-session-copy"><small>SESS\xC3O</small><b>MP48 desconectado</b><p data-health-detail>Conecte a ECU para iniciar a sess\xE3o</p></div>\n            <div class="now-session-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashObdStatus">OBD offline</span><span id="dashAge">\u2014</span></div>\n          </section>\n        </div>';
+        if (!this.refinoClickBound) {
+          this.refinoClickBound = true;
+          this.root.addEventListener("click", (event) => {
+            if (event.target.closest && event.target.closest("[data-dash-refino]")) {
+              const app = root.OmegasApp;
+              if (app && app.router) app.router.navigate("refino");
+            }
+          });
+        }
+        this.root.innerHTML = '\n        <div class="now-page-intro">\n          <div><small>AGORA</small><h2>O que o motor est\xE1 fazendo</h2></div>\n          <p>Informa\xE7\xE3o essencial, grande e sem repeti\xE7\xE3o.</p>\n        </div>\n\n        <div class="now-dashboard-shell">\n          <section class="now-hero-card" aria-label="Leitura principal">\n            <div class="now-hero-copy">\n              <small class="now-hero-label">PETROL INJECTION</small>\n              <p id="dashHeroStatus" class="now-hero-status">Aguardando ECU</p>\n              <div class="now-hero-value"><strong id="dashHeroPetrol">\u2014</strong><em>ms</em></div>\n              <span class="now-hero-note">Leitura em tempo real da MP48 \xB7 sem duplicar telemetria</span>\n            </div>\n            <div class="now-hero-visual" aria-hidden="true"><span></span><i></i></div>\n          </section>\n\n          <section class="now-metric-grid" aria-label="Telemetria essencial">\n            <article class="now-metric-card"><small>RPM</small><b id="dashRpm">\u2014</b><span>rota\xE7\xE3o</span></article>\n            <article class="now-metric-card"><small>MAP</small><b id="dashMap">\u2014</b><span>bar</span></article>\n            <article class="now-metric-card"><small>COMBUST\xCDVEL</small><b id="dashFuel">\u2014</b><span>MP48</span></article>\n            <article class="now-metric-card"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b><span>MP48 bruto \xB7 sem %</span></article>\n            <article class="now-metric-card now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b><span id="dashRefinoNext">toque para abrir</span></article>\n            <article class="now-metric-card"><small>C\xC9LULA</small><b id="dashCell">\u2014</b><span>posi\xE7\xE3o atual</span></article>\n          </section>\n\n          <section id="dashHealth" class="now-session-card" data-level="offline">\n            <span class="state-indicator"></span>\n            <div class="now-session-copy"><small>SESS\xC3O</small><b>MP48 desconectado</b><p data-health-detail>Conecte a ECU para iniciar a sess\xE3o</p></div>\n            <div class="now-session-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashAge">\u2014</span></div>\n          </section>\n        </div>';
+      }
+      /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
+      renderRefino() {
+        const now = Date.now();
+        if (this.refinoAt && now - this.refinoAt < 3e3) return;
+        this.refinoAt = now;
+        const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
+        const eq = api && typeof api.refinementPhase === "function" ? api.refinementPhase() : null;
+        const pilot = eq && eq.autopilot || {};
+        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU auto", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel" };
+        text("dashRefino", labels[pilot.phase] || "\u2014");
+        text("dashRefinoNext", pilot.phase === "ESTAVEL" ? "pode desconectar" : pilot.phase === "PROPOSTA_PRONTA" ? "toque para revisar" : "toque para abrir");
       }
       render(state) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
@@ -61,7 +75,6 @@
         const telemetryRoot = state.telemetry || {};
         const telemetryValid = telemetryRoot.valid === true;
         const status = state.status || {};
-        const obd = state.obd || {};
         const interpolation = ((_a = state.telemetry) == null ? void 0 : _a.interpolation) || {};
         const interpolationValid = interpolation.valid === true;
         const cell = interpolation.cell || {};
@@ -70,12 +83,8 @@
         const map = telemetryValid ? ((_g = (_f = (_e = data.load_bar) != null ? _e : data.map_bar) != null ? _f : data.mapBar) != null ? _g : status.mapBar) : null;
         const fuel = telemetryValid ? fuelLabel(data.fuel || data.state || status.fuelState) : "\u2014";
         const levelsRaw = telemetryValid ? finite(data.level_raw != null ? data.level_raw : data.levelRaw) : null;
-        const rawStft = obdValue(obd, ["stft", "shortTermFuelTrim", "short_term_fuel_trim"]);
         const age = finite((_k = (_j = (_h = state.telemetry) == null ? void 0 : _h.telemetryAgeMs) != null ? _j : (_i = state.telemetry) == null ? void 0 : _i.ageMs) != null ? _k : status.directTelemetryAgeMs);
         const connected = status.usbConnected === true;
-        const obdState = String(obd.connectionStage || obd.state || obd.status || "").toUpperCase();
-        const obdConnected = obd.connected === true || ["LIVE", "CONNECTED", "CONECTADO", "REMOTO AO VIVO"].includes(obdState);
-        const stft = obdConnected ? rawStft : null;
         const stale = connected && age !== null && age > 2500;
         const expired = connected && age !== null && age > 8e3;
         const stuck = status.engineStuck === true;
@@ -86,11 +95,9 @@
         text("dashMap", fmt(map, 2));
         text("dashFuel", fuel);
         text("dashLevelsRaw", levelsRaw === null ? "\u2014" : Math.round(levelsRaw).toLocaleString("pt-BR"));
-        text("dashStft", stft === null ? "\u2014" : "".concat(stft > 0 ? "+" : "").concat(fmt(stft, 1), "%"));
-        text("dashStftState", obdConnected ? stft === null ? "aguardando 0106" : "Bank 1 \xB7 0106" : "OBD offline");
+        this.renderRefino();
         text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");
         text("dashEcuStatus", connected ? "ECU online" : "ECU offline");
-        text("dashObdStatus", obdConnected ? "OBD online" : "OBD offline");
         const ageLabel = age === null || age < 0 ? "\u2014" : age < 1e3 ? "".concat(Math.round(age), " ms") : "".concat(fmt(age / 1e3, 1), " s");
         text("dashAge", ageLabel);
         let heroStatus = "Conecte a MP48 para iniciar a sess\xE3o";
@@ -103,7 +110,7 @@
         if (health) {
           let level = "ok";
           let message = "Leitura em tempo real";
-          let detail = obdConnected ? "ECU, telemetria principal e witness OBD dispon\xEDveis" : "ECU e telemetria principal atualizadas \xB7 OBD opcional";
+          let detail = "ECU e telemetria principal atualizadas";
           if (!connected) {
             level = "offline";
             message = "MP48 desconectado";

@@ -519,16 +519,6 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun exportLogs() = activity?.exportLogs()
     @JavascriptInterface fun exportData() = activity?.exportData()
 
-    @JavascriptInterface fun getObdStatus(): String = activity?.serviceOrNull()?.obdStatusJson() ?: "{}"
-    @JavascriptInterface fun getObdMaps(): String = activity?.serviceOrNull()?.obdMapsJson() ?: "{}"
-    @JavascriptInterface fun setObdMode(mode: String): String = activity?.serviceOrNull()?.setObdMode(mode) ?: unavailable()
-    @JavascriptInterface fun setObdManualFuel(fuel: String): String = activity?.serviceOrNull()?.setObdManualFuel(fuel) ?: unavailable()
-    @JavascriptInterface fun listObdDevices(): String = activity?.serviceOrNull()?.obdDevicesJson() ?: "{}"
-    @JavascriptInterface fun connectObd(address: String): String = activity?.serviceOrNull()?.connectObd(address) ?: unavailable()
-    @JavascriptInterface fun disconnectObd(): String {
-        activity?.serviceOrNull()?.disconnectObd()
-        return JSONObject().put("ok", true).toString()
-    }
     @JavascriptInterface fun requestBluetoothPermission() = activity?.requestBluetoothPermission()
 
     @JavascriptInterface fun getLinkStatus(): String = activity?.serviceOrNull()?.linkStatusJson() ?: "{}"

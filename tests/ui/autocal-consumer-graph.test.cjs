@@ -42,7 +42,7 @@ assert.ok(cockpit.includes('MAP (bar)'), 'eixo Y físico precisa permanecer expl
 assert.ok(cockpit.includes('data-autocal-history'), 'histórico de leitura continua sendo o controle gráfico permitido');
 
 assert.ok(index.includes('data-route="autocal"'), 'rota AutoCal ausente');
-assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="obd"'), 'AutoCal deve preceder OBD');
+assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="refino"'), 'AutoCal deve preceder o Refino');
 assert.equal(cockpit.includes('data-curve-view="autocal"'), false, 'subview legada não pode voltar');
 assert.equal(cockpit.includes('data-curve-panel="autocal"'), false, 'painel legado não pode voltar');
 

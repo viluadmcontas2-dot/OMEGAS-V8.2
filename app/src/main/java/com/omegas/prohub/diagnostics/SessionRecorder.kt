@@ -39,7 +39,10 @@ class SessionRecorder(
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
-        private const val DOCUMENTS_MIRROR_INTERVAL_MS = 30_000L
+        /** Parte pública imutável a cada 2 min: num corte de energia perde-se no máximo isso. */
+        private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
+        /** Evento do AutoCal antecipa a parte, sem gerar uma parte por evento. */
+        private const val DURABLE_EVENT_MIN_GAP_MS = 15_000L
     }
 
     private val droppedEvents = AtomicLong(0L)
@@ -79,6 +82,7 @@ class SessionRecorder(
     private var semanticLedger: SessionSemanticLedger? = null
     private var writer: BufferedWriter? = null
     private var segmentFile: File? = null
+    private var segmentStream: FileOutputStream? = null
     private var segmentBytes = 0L
 
     @Synchronized
@@ -290,8 +294,8 @@ class SessionRecorder(
         paths.sessionLogsRoot.listFiles { file -> file.isDirectory }?.forEach { dir ->
             if (recording && dir.absolutePath == sessionDir?.absolutePath) return@forEach
             if (documentsMirror != null && !documentsMirrorMarker(dir).isFile) {
-                val result = try { documentsMirror.sync(dir, dir.name) } catch (_: Exception) { JSONObject().put("ok", false) }
-                if (result.optBoolean("ok")) markDocumentsMirrored(dir) else {
+                val published = try { publishParts(dir, dir.name, final = true) } catch (_: Exception) { false }
+                if (!published) {
                     preserved += 1
                     return@forEach
                 }
@@ -401,15 +405,18 @@ class SessionRecorder(
     }
 
     fun recoverDocumentsMirrorAsync() {
-        val mirror = documentsMirror ?: return
+        if (documentsMirror == null) return
         if (worker.isShutdown) return
         worker.execute {
             paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
                 ?.sortedBy { it.lastModified() }
                 ?.forEach { dir ->
+                    // Já publicada (ZIP ou espelho antigo) ou ainda gravando: não toca.
+                    if (documentsMirrorMarker(dir).isFile) return@forEach
+                    if (synchronized(this) { recording && sessionDir?.absolutePath == dir.absolutePath }) return@forEach
                     try {
-                        val result = mirror.sync(dir, dir.name)
-                        if (result.optBoolean("ok")) markDocumentsMirrored(dir)
+                        // Sessão interrompida (energia cortada): publica o que faltou como parte final.
+                        publishParts(dir, dir.name, final = true)
                     } catch (_: Exception) {}
                 }
         }
@@ -566,6 +573,7 @@ class SessionRecorder(
                 "k_batch_confirmed",
             )
             if (eventCount % 32L == 0L || critical) writer?.flush()
+            if (critical) syncToDisk()
             eventCount += 1L
             byteCount += bytes
             segmentBytes += bytes
@@ -594,8 +602,11 @@ class SessionRecorder(
                 "autocal_native_calibration_epoch",
             )
             val periodicCandidate = type == "telemetry" || type == "full_snapshot"
-            if (durableAutoCalEvent || (periodicCandidate && now - lastDocumentsMirrorAt >= DOCUMENTS_MIRROR_INTERVAL_MS)) {
-                syncDocumentsMirror(force = durableAutoCalEvent)
+            val sinceLast = now - lastDocumentsMirrorAt
+            if ((durableAutoCalEvent && sinceLast >= DURABLE_EVENT_MIN_GAP_MS) ||
+                (periodicCandidate && sinceLast >= DOCUMENTS_MIRROR_INTERVAL_MS)
+            ) {
+                syncDocumentsMirror(force = true)
             }
         } catch (error: Exception) {
             lastError = error.message ?: error.javaClass.simpleName
@@ -609,16 +620,17 @@ class SessionRecorder(
         val dir = sessionDir ?: error("Sessão não inicializada")
         val file = File(dir, "events_${currentSegment.toString().padStart(4, '0')}.jsonl")
         segmentFile = file
-        writer = BufferedWriter(
-            OutputStreamWriter(FileOutputStream(file, true), StandardCharsets.UTF_8),
-            64 * 1024,
-        )
+        val stream = FileOutputStream(file, true)
+        segmentStream = stream
+        writer = BufferedWriter(OutputStreamWriter(stream, StandardCharsets.UTF_8), 64 * 1024)
     }
 
     private fun closeWriter() {
         try { writer?.flush() } catch (_: Exception) {}
+        syncToDisk()
         try { writer?.close() } catch (_: Exception) {}
         writer = null
+        segmentStream = null
     }
 
     private fun writeManifestBase(dir: File, now: Long, reason: String, metadata: JSONObject) {
@@ -678,19 +690,42 @@ class SessionRecorder(
     }
 
     private fun syncDocumentsMirror(force: Boolean) {
-        val mirror = documentsMirror ?: return
         val dir = sessionDir ?: return
         val now = System.currentTimeMillis()
         if (!force && now - lastDocumentsMirrorAt < DOCUMENTS_MIRROR_INTERVAL_MS) return
         try {
             writer?.flush()
+            syncToDisk()
             updateManifest()
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
-            val result = mirror.sync(dir, sessionId)
-            if (result.optBoolean("ok")) markDocumentsMirrored(dir)
+            publishParts(dir, sessionId, final = !recording)
         } finally {
             lastDocumentsMirrorAt = now
         }
+    }
+
+    /** Garante no flash o que já foi escrito (carro pode ser desligado a qualquer instante). */
+    private fun syncToDisk() {
+        try { writer?.flush() } catch (_: Exception) {}
+        try { segmentStream?.fd?.sync() } catch (_: Exception) {}
+    }
+
+    /**
+     * Publica a próxima parte imutável com o que é novo. Os offsets só avançam depois da
+     * parte publicada; se o app morrer no meio, a mesma parte é refeita com o mesmo nome.
+     */
+    private fun publishParts(dir: File, id: String, final: Boolean): Boolean {
+        val mirror = documentsMirror ?: return false
+        val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
+        if (plan == null) {
+            if (final) markDocumentsMirrored(dir)
+            return true
+        }
+        val result = mirror.publishPart(id, plan)
+        if (!result.optBoolean("ok")) return false
+        try { SessionPartPlanner.commit(dir, plan) } catch (_: Exception) { return false }
+        if (final) markDocumentsMirrored(dir)
+        return true
     }
 
     private fun documentsMirrorMarker(dir: File): File = File(dir, ".documents_mirrored")

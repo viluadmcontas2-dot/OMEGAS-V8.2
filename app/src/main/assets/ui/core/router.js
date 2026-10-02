@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const ROUTES = ['dashboard', 'learning', 'predictor', 'map', 'curve', 'autocal', 'obd', 'suggestions', 'tools'];
+  const ROUTES = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
 
   function loadOptionalScript(src, onload) {
@@ -46,8 +46,7 @@
   loadOptionalScript('components/vehicle-status-strip.js');
   loadOptionalScript('components/curve-prediction-state.js');
   loadOptionalScript('components/split-layout.js');
-  loadOptionalScript('core/predictor-model.js', () =>
-    loadOptionalScript('screens/predictor.js', () => loadOptionalScript('components/predictor-current-cell.js')),
-  );
-  loadOptionalScript('core/autocal-api.js', () => loadOptionalScript('screens/autocal-cockpit.js'));
+  // Predictor fora do produto (decisão do dono): não é carregado nem aparece na navegação.
+  loadOptionalScript('core/autocal-api.js', () =>
+    loadOptionalScript('screens/autocal-cockpit.js', () => loadOptionalScript('screens/refino.js')));
 })(typeof window !== 'undefined' ? window : globalThis);
