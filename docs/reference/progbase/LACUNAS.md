@@ -10,3 +10,6 @@
 8. **Sensores/consumo**: identificar a detecção de tanque cheio, escala de sensor, cálculo de autonomia e integração de consumo via capturas antes/depois de abastecimento e filtragem de ruído.
 
 **Critério de fechamento:** evidência de DFM + endereço de rotina ou captura identificável, comparação cruzada com implementação Kotlin, testes em fixtures offline; nenhuma escrita em ECU.
+
+9. **Divergência de cardinalidade AutoCal**: o recurso `RT_RCDATA(10)__TAUTOCALDM__0.bin`, componente `MUL_ACT` em aproximadamente `0x1861`, declara uma dimensão estática distinta da cardinalidade de 30 pontos aplicada pelo `KFactorProtocol.kt` com base em frames observados. `PETR_INJ_TBP` apresenta situação análoga. Não converter essas dimensões do DFM em contrato universal; correlacionar versionamento, RowCount/ArrayDimension e payloads reais por identidade de field. O inventário distingue metadados declarados de shapes empiricamente medidos.
+10. **Endereço compartilhado por subcampos**: SC 276 (FAST/SLOW), 300 (LEDs/histerese) e 313 (TANK_VOL/INJR_GAS_FLOW) aparecem com nomes diferentes. Inspecionar propriedades de índice, FileKeyName e seleção de perfil antes de concluir que são campos independentes no fio. Não autorizar qualquer escrita com base apenas no endereço.
