@@ -5,10 +5,15 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Binder
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationManagerCompat
+import com.omegas.prohub.autocal.EquivalenceLedger
+import com.omegas.prohub.autocal.RefinementAutopilot
+import com.omegas.prohub.autocal.RefinementJournal
 import androidx.core.app.ServiceCompat
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
@@ -100,6 +105,15 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var overlay: TelemetryOverlayController
         private set
+    /** Pontos próprios GNV × gasolina (RPM×MAP); alimenta o refino e o gráfico do Refino. */
+    lateinit var equivalence: EquivalenceLedger
+        private set
+    /** Ciclo fechado: cada gravação de Curva K vira experimento verificado por faixa. */
+    lateinit var refinementJournal: RefinementJournal
+        private set
+    /** Fase do refino (ECU no automático → nossa vez → verificando → estável); só observa e avisa. */
+    lateinit var refinementAutopilot: RefinementAutopilot
+        private set
     private lateinit var learningTemperature: LearningTemperatureSettings
     private lateinit var learningTolerances: LearningToleranceSettings
 
@@ -132,6 +146,9 @@ class TelemetryForegroundService : Service() {
         archives = DataArchiveManager(paths, log)
         telemetryStore = TelemetryStateStore()
         consumptionTracker = ConsumptionTracker(this)
+        equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
+        refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
+        refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"))
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
         sessionRecorder.recoverDocumentsMirrorAsync()
@@ -168,6 +185,9 @@ class TelemetryForegroundService : Service() {
             },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
+                // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação da curva perde validade.
+                equivalence.resetGas("MAPA_K_GRAVADO")
+                refinementJournal.interrupt("MAPA_K_GRAVADO")
                 obd?.recordConfirmedAdjustment("MAP_K", payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
@@ -181,6 +201,7 @@ class TelemetryForegroundService : Service() {
             onBusyChanged = { stateChanged() },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true)
+                recordCurveExperiment(payload)
                 obd?.recordConfirmedAdjustment("K_FACTOR", payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
@@ -203,6 +224,9 @@ class TelemetryForegroundService : Service() {
                     JSONObject(payload.toString()).put("learningResult", result),
                     force = true,
                 )
+                // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
+                equivalence.resetGas("AUTOMATCH_NATIVO")
+                refinementJournal.interrupt("AUTOMATCH_NATIVO")
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
             onNativeAutoMatchObserved = { payload ->
@@ -299,6 +323,7 @@ class TelemetryForegroundService : Service() {
     override fun onDestroy() {
         if (stopping) return
         stopping = true
+        try { equivalence.flush() } catch (_: Exception) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
         scheduler.shutdownNow()
@@ -728,9 +753,80 @@ class TelemetryForegroundService : Service() {
         return ok
     }
 
+    /** Gravação de Curva K confirmada → experimento com o índice medido com a curva antiga. */
+    private fun recordCurveExperiment(payload: JSONObject) {
+        try {
+            val curve = payload.optJSONObject("curve") ?: return
+            val axis = curve.optJSONArray("axisRaw") ?: return
+            val after = curve.optJSONArray("factorsRaw") ?: return
+            if (axis.length() != 30 || after.length() != 30) return
+            val afterRaw = IntArray(30) { after.optInt(it) }
+            val beforeRaw = afterRaw.copyOf()
+            val points = payload.optJSONArray("points")
+            if (points != null) for (i in 0 until points.length()) {
+                val point = points.optJSONObject(i) ?: continue
+                val index = point.optInt("index", -1)
+                if (index in 0 until 30) beforeRaw[index] = point.optInt("currentRaw", beforeRaw[index])
+            }
+            refinementJournal.recordCurveWrite(
+                beforeRaw = beforeRaw,
+                afterRaw = afterRaw,
+                axisRaw = IntArray(30) { axis.optInt(it) },
+                indexBefore = equivalence.index(),
+                source = payload.optString("adjustmentId", "K_FACTOR"),
+            )
+        } catch (error: Exception) {
+            log.add("WARN", "REFINO", "Experimento não registrado: ${error.message}")
+        } finally {
+            // Curva nova: o GNV medido com a antiga sai; a gasolina (referência) fica.
+            equivalence.resetGas("CURVA_K_GRAVADA")
+            payload.optJSONObject("curve")?.optJSONArray("factorsRaw")?.takeIf { it.length() == 30 }?.let { raw ->
+                equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
+            }
+        }
+    }
+
+    /** Piloto do refino: decide a fase e avisa uma vez por fase. Nunca grava na ECU. */
+    private fun observeRefinement() {
+        try {
+            val progress = if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson() else null
+            val before = refinementAutopilot.json().optString("phase")
+            val decided = refinementAutopilot.observe(
+                ecuOnline = usb.connected && runtime.ready,
+                monitor = progress,
+                acquisition = progress?.optJSONObject("acquisition"),
+                index = equivalence.index(),
+                journal = refinementJournal.json(),
+                restoreCount = refinementJournal.restorePoints().length(),
+            )
+            if (decided.optString("phase") != before) {
+                sessionRecorder.record("refinement_phase", "autocal", decided, force = true)
+                stateChanged()
+            }
+            refinementAutopilot.takeAlert()?.let { alert ->
+                // Android 13+: sem permissão o aviso é omitido; a fase continua na tela e na sessão.
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    try {
+                        NotificationManagerCompat.from(this).notify(
+                            NotificationController.REFINEMENT_NOTIFICATION_ID,
+                            notifications.buildRefinementAlert(alert.optString("headline"), alert.optString("next")),
+                        )
+                    } catch (_: SecurityException) {
+                    }
+                }
+            }
+        } catch (error: Exception) {
+            log.add("WARN", "REFINO", "Piloto do refino: ${error.message}")
+        }
+    }
+
     private fun healthTick() {
         if (stopping) return
         try {
+            if (refinementJournal.evaluate(equivalence.index())) stateChanged()
+            observeRefinement()
             handleUsbTransition()
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
                 connectUsb()
@@ -781,6 +877,17 @@ class TelemetryForegroundService : Service() {
                 rawLevel = live.optInt("level_raw", -1),
             )
         }
+
+        equivalence.accept(
+            EquivalenceLedger.Frame(
+                t = accepted.optLong("timestamp", System.currentTimeMillis()),
+                fuel = live.optString("fuel").uppercase(),
+                rpm = live.optDouble("rpm", 0.0),
+                map = live.optDouble("load_bar", 0.0),
+                petrolMs = live.optDouble("petrol_ms", 0.0),
+                gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
+            ),
+        )
 
         sessionRecorder.record("telemetry", "mp48", live)
         sessionRecorder.record("engine_event", "native", root, force = false)

@@ -5,6 +5,7 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.service.TelemetryForegroundService
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
@@ -222,6 +223,79 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("manualAutoMatchExposed", true)
         .put("obdIndependent", true)
         .toString()
+
+    /**
+     * Equivalência Refinada (o "cérebro" do refino) sobre o snapshot nativo mais recente.
+     * Memoizada por snapshot + evidência: a tela consulta periodicamente sem recalcular.
+     */
+    @JavascriptInterface
+    fun getRefinedAnalysis(): String = try {
+        val snapshot = refinementSnapshot()
+        val evidence = refinementEvidence(snapshot)
+        val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L) + "|" + evidence.signature
+        synchronized(managerLock) {
+            refinedMemo?.takeIf { it.first == key }?.second
+                ?: AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, evidence.pairs, evidence.gainScale)
+                    .toString().also { refinedMemo = key to it }
+        }
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Equivalência refinada indisponível")
+    }
+
+    /** Pontos próprios + diário + piloto, para a aba Refino. Só leitura. */
+    @JavascriptInterface
+    fun getEquivalence(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.equivalence.index()
+            .put("denseBands", service.equivalence.denseBandsJson())
+            .put("typicalBands", service.equivalence.typicalBandsJson())
+            .put("refinement", service.refinementJournal.json())
+            .put("restorePoints", service.refinementJournal.restorePoints())
+            .put("autopilot", service.refinementAutopilot.json())
+            .toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Equivalência indisponível")
+    }
+
+    private class Evidence(val pairs: List<Pair<Double, Double>>, val gainScale: DoubleArray?, val signature: String)
+
+    @Volatile private var refinedMemo: Pair<String, String>? = null
+
+    /** Telemetria da curva vigente + ganho aprendido; alinha o acumulador à MUL_ACT lida da ECU. */
+    private fun refinementEvidence(snapshot: JSONObject): Evidence {
+        val service = activityRef.get()?.serviceOrNull() ?: return Evidence(emptyList(), null, "sem-servico")
+        val fields = snapshot.optJSONArray("fields")
+        var mulAct: JSONArray? = null
+        var axisMs: List<Double>? = null
+        if (fields != null) for (i in 0 until fields.length()) {
+            val field = fields.optJSONObject(i) ?: continue
+            val raw = field.optJSONArray("rawValues") ?: continue
+            if (field.optString("status") != AutoCalFieldStatus.VALID.name || raw.length() != 30) continue
+            when (field.optString("key")) {
+                "MUL_ACT" -> mulAct = raw
+                "PETR_INJ_TBP" -> axisMs = (0 until 30).map { raw.optInt(it) / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS }
+            }
+        }
+        mulAct?.let { raw -> service.equivalence.alignCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) })) }
+        val pairs = service.equivalence.pairs().map { it.petrolRefMs to it.gasPetrolMs }
+        val scale = axisMs?.let { service.refinementJournal.pointGainScale(it) }
+        return Evidence(pairs, scale, "${pairs.size}|${service.equivalence.gasEpochToken()}|${scale?.joinToString(",") { "%.3f".format(it) }}")
+    }
+
+    /** Snapshot mais recente entre o monitor nativo e a leitura manual. */
+    private fun refinementSnapshot(): JSONObject {
+        val monitor = activityRef.get()?.serviceOrNull()?.let { service ->
+            try { JSONObject(service.nativeAutoCalSnapshotJson()) } catch (_: Exception) { null }
+        }
+        val manual = currentManager()?.latestSnapshotJson()
+        val monitorAt = monitor?.takeIf { (it.optJSONArray("fields")?.length() ?: 0) > 0 }?.optLong("capturedAtMs", 0L) ?: -1L
+        val manualAt = manual?.takeIf { (it.optJSONArray("fields")?.length() ?: 0) > 0 }?.optLong("capturedAtMs", 0L) ?: -1L
+        return when {
+            monitorAt < 0 && manualAt < 0 -> throw IllegalStateException("Nenhuma leitura AutoCal da ECU ainda")
+            monitorAt >= manualAt -> monitor!!
+            else -> manual!!
+        }
+    }
 
     fun destroy() {
         synchronized(managerLock) {

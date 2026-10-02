@@ -16,6 +16,10 @@ class NotificationController(private val context: Context) {
     companion object {
         const val CHANNEL_ID = "omegas_telemetry_native"
         const val NOTIFICATION_ID = 4301
+        const val REFINEMENT_CHANNEL_ID = "omegas_refinement"
+        const val REFINEMENT_NOTIFICATION_ID = 4302
+        /** Extra do Intent: rota da WebView a abrir (o toque no aviso do refino abre o Refino). */
+        const val EXTRA_ROUTE = "com.omegas.prohub.ROUTE"
     }
 
     init {
@@ -31,7 +35,34 @@ class NotificationController(private val context: Context) {
                 setSound(null, null)
             }
             context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            val refinement = NotificationChannel(
+                REFINEMENT_CHANNEL_ID,
+                "Calibração OMEGAS",
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply { description = "Avisa quando a curva refinada está pronta, piorou ou ficou estável" }
+            context.getSystemService(NotificationManager::class.java).createNotificationChannel(refinement)
         }
+    }
+
+    /** Aviso único por fase do refino; o toque abre o app direto na aba Refino. */
+    fun buildRefinementAlert(headline: String, next: String): Notification {
+        val openIntent = PendingIntent.getActivity(
+            context,
+            5,
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(EXTRA_ROUTE, "refino"),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Builder(context, REFINEMENT_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_omegas)
+            .setContentTitle("OMEGAS — Calibração")
+            .setContentText(headline)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$headline\n$next"))
+            .setContentIntent(openIntent)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .build()
     }
 
     fun build(status: HubStatus): Notification {
