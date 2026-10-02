@@ -1,8 +1,21 @@
 # Status do OMEGAS V8.2
 
+## WU-006 atual: continuação de 2026-10-02 (fonte canônica desta entrada)
+
+- Branch única: `claude/brave-darwin-wuliyo`; baseline do handoff `cdd8039535dba1ba6c72f64e6a9d44411f2025a0`, sem commits posteriores do proprietário na comparação remota inicial.
+- Blocos 1–6: source de produto publicado no commit `59f6fc57443e3e3eb3298f5777ee322e702c5f98`, preservado. Bloco 7: roteiro de rodagem `docs/V82_REFINO_FIELD_TEST.md` publicado em `ded8cdea088a907e08082695e93a43e97e778629`. Gerador QA/fixtures corrigido em `267dbafab3c7b24d2f628b6b29898fdae23331bc`.
+- Revisão/evidência: `docs/evidence/WU-006-FINAL-REVIEW-20261002.md`; checklist item a item em `docs/product/UX-BLUEPRINT-CHECKLIST.md`. As 11 imagens em `docs/evidence/ui-wu006/draft` continuam RASCUNHOS (1280×720/bridge falso), não aceite final. Há R-01 importante em `LevelSensorSnapshot.read()`: possível publicação obsoleta depois de troca de sessão USB; falta regressão concorrente RED→GREEN.
+- Método científico vigente: **MAP × Tpet nativo da ECU** é a base; bandas densas **MAP × Tpet** são só visualização; RPM × MAP complementa (refino do refino); `RefinementJournal` verifica após gravação manual. Não há garantia de desaparecimento do tranco: degrau pode tirar a linearidade da puxada, hipótese de ciclo-limite descartada.
+- Nível: somente leitura SC36/37/276/300/313 índice 0; informação insuficiente para filtro/LEDs nativos, cinco âncoras/sentido/cheio. UI em **proxy explícito** sem litros. Placar é observacional, mínimo de 5 km por época e nível calibrado indisponível.
+- Prova desta continuação: verificação documental estrutural/inspeção estática remota e capturas antigas inspecionadas. **QUALITY_GATE_FAST atual, paridade atual, JVM integral atual, screenshots finais, review independente, Android Gradle, lint, APK e hashes do SHA final: PENDENTES/NÃO EXECUTADOS.** O executor não conseguiu resolver DNS de `github.com` para `git pull --ff-only`; a API autenticada mostrou o baseline canônico. O conector GitHub instalado não expõe `workflow_dispatch`: nenhuma rodada de CI foi criada aqui. Não usar o artifact histórico `b2df77bd` como APK da WU-006 atual.
+- Gatilho de release: resolver R-01 com teste; QA e review independentes; gate/paridade/JVM no SHA remoto; uma execução seletiva `.github/workflows/omegas-preapk-build.yml` na branch correta por superfície autenticada apta; inspecionar run/job, `SOURCE_SHA` e árvore, Gradle `testDebugUnitTest lintDebug assembleDebug`, ZIP/APK SHA-256, package, assinatura e ABI. Atualizar a evidência apenas depois do resultado. Sem push trigger, PR, gasto ou escrita automática em ECU.
+- `SIMULATED_ECU_ONLY=true`; `NO_INSTALL_PERFORMED=true`; `PHYSICAL_VALIDATION_CLAIMED=false`.
+
+## Histórico preservado: evidência e estado anteriores a esta continuação
+
 - WorkUnit ativa: `OMEGAS-WU-006` (AutoCal — Equivalência Refinada GNV = gasolina)
 - Branch: `claude/brave-darwin-wuliyo`
-- Estado WU-006: `ANDROID_PROVEN` no SHA `b2df77bd2c84be63e72d2595101395eeabf5efe4` (gate rápido, testes Android/JVM, lint e APK verdes); `PHYSICAL_VALIDATION_CLAIMED=false`
+- Prova Android **histórica**, anterior ao source atual dos blocos 1–6: `ANDROID_PROVEN` no SHA `b2df77bd2c84be63e72d2595101395eeabf5efe4` (gate rápido, testes Android/JVM, lint e APK verdes **nesse SHA antigo**, não nesta árvore); `PHYSICAL_VALIDATION_CLAIMED=false`
 - Ciclo fechado do refino (ledger de pontos próprios + diário + piloto): `LOCAL_PROVEN`.
   - gate rápido PASS;
   - paridade Kotlin↔Python OK;
