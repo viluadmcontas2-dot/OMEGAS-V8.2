@@ -31,6 +31,7 @@ import com.omegas.prohub.network.LanPanelServer
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.storage.DataArchiveManager
+import com.omegas.prohub.telemetry.LevelSensorSnapshot
 import com.omegas.prohub.telemetry.ConsumptionTracker
 import com.omegas.prohub.telemetry.TelemetryStateStore
 import com.omegas.prohub.usb.UsbSerialManager
@@ -81,6 +82,7 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var telemetryStore: TelemetryStateStore
         private set
+    val levelSensor = LevelSensorSnapshot()
     lateinit var consumptionTracker: ConsumptionTracker
         private set
     lateinit var sessionRecorder: SessionRecorder
@@ -400,9 +402,25 @@ class TelemetryForegroundService : Service() {
             .put("session_recorder", try { JSONObject(sessionRecorder.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("link_status", try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("consumption", consumptionTracker.buildTelemetryJson(settings.gnvCylinderCapacityM3.toFloat()))
+            .put("levelSensor",levelSensor.json())
             .put("native_updated_at", System.currentTimeMillis())
             .put("telemetry_age_ms", telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it })
         return root.toString()
+    }
+
+    fun levelObservationJson(): JSONObject = JSONObject().put("levelSensor",levelSensor.json())
+
+    fun readLevelSensor(): JSONObject {
+        if (kWriter.isBusy() || kFactor.isBusy()) return JSONObject().put("ok",false).put("error","Aguarde a operação de calibração")
+        val serial=runtime.serialScheduler()
+        val session=serial.currentSessionId()
+        val result=levelSensor.read(session,serial::currentSessionId) { request ->
+            serial.transaction(request,"Sensor de nível somente leitura",1_200,purgeBefore=false,expectedSessionId=session,
+                workClass=com.omegas.prohub.ecu.Mp48WorkClass.READ_ONLY)
+        }
+        sessionRecorder.record("level_sensor_snapshot","mp48",result,force=true)
+        stateChanged()
+        return result
     }
 
     fun engineMetricsJson(): String = runtime.metricsJson()
@@ -617,6 +635,7 @@ class TelemetryForegroundService : Service() {
         val wasConnected = lastUsbConnected
         lastUsbConnected = connected
         lastUsbSessionId = sessionId
+        levelSensor.resetForSession(sessionId)
 
         if (connected) {
             val generationChanged = transition == UsbSessionTransition.GENERATION_CHANGED
@@ -779,6 +798,7 @@ class TelemetryForegroundService : Service() {
                 gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
             ),
         )
+        levelSensor.accept(live.optInt("level_raw", -1), accepted.optLong("timestamp", System.currentTimeMillis()))
         val cngActive = live.optString("fuel").uppercase() == "GNV"
         if (cngActive) {
             consumptionTracker.update(

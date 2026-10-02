@@ -295,6 +295,7 @@
       return invoke(this.v7, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
     }
 
+    startLevelSensorRead() { return this.demo ? { ok: false, error: "Sem ECU: somente demonstração" } : invoke(this.native, "startLevelSensorRead", [], { ok: false, error: "Leitura indisponível" }); }
     sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 500, captureRawUsb: false, maxSessionMb: 64, keepSessions: 10 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
     sessions() { return this.demo ? [] : invoke(this.native, 'listRecordedSessions', [], []); }
     setSessionSettings(settings) {

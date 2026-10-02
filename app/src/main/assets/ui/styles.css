@@ -105,3 +105,11 @@ button, .side-nav button{min-height:48px}
 .autocal-evidence{padding:12px 16px;border:1px solid var(--line);border-radius:16px;display:grid;gap:6px;background:var(--surface)}.autocal-evidence[data-tone="warn"]{border-color:var(--warn)}.autocal-evidence p{margin:0;font-size:13px}.autocal-evidence .problem{padding:8px;border-left:3px solid var(--warn);background:var(--surface-2)}.autocal-evidence button{min-height:56px;font-size:14px;width:max-content;max-width:100%}.autocal-evidence summary{font-size:13px}.autocal-native-plot{height:250px;display:flex;flex-direction:column}.autocal-native-plot svg{min-height:100px}.autocal-screen .autocal-cockpit{gap:12px}.autocal-screen .autocal-bands{display:block}.autocal-screen button{min-height:56px}
 
 .refinement-screen .refine-pilot-steps li{font-size:13px}.refinement-screen .refine-actions button,.refinement-screen .refine-review button{min-height:56px;min-width:56px}.side-nav button.active{background:rgba(92,196,255,.14)}.calibration-pilot small{font-size:12px}.calibration-pilot [data-pilot-ratio]{font-size:13px}
+
+.level-observation{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;font-size:13px;margin-top:10px}
+.level-observation header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.level-observation p{margin:8px 0;color:var(--muted);line-height:1.4}
+.level-observation progress{width:100%;height:12px;accent-color:var(--ok)}
+.level-observation pre{max-height:180px;overflow:auto;white-space:pre-wrap;font-size:12px}
+[data-screen="tools"]{overflow:auto}
+.level-observation button{min-height:56px}

@@ -257,6 +257,16 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun disconnectUsb() = activity?.serviceOrNull()?.disconnectUsb()
     @JavascriptInterface fun listUsbDevices(): String = activity?.serviceOrNull()?.usbDevicesJson() ?: "[]"
 
+    @JavascriptInterface
+    fun startLevelSensorRead(): String {
+        val service=activity?.serviceOrNull() ?: return unavailable()
+        if (!mapReadBusy.compareAndSet(false,true)) return JSONObject().put("ok",false).put("error","Outra leitura em andamento").toString()
+        try {
+            mapReadExecutor.execute { try { service.readLevelSensor() } finally { mapReadBusy.set(false) } }
+        } catch (e:Exception) { mapReadBusy.set(false);return JSONObject().put("ok",false).put("error",e.message).toString() }
+        return JSONObject().put("ok",true).put("started",true).toString()
+    }
+
     @JavascriptInterface fun getFullEngineSnapshot(): String = activity?.serviceOrNull()?.fullEngineSnapshotJson() ?: "{}"
 
     @JavascriptInterface
@@ -271,7 +281,11 @@ class HubJavascriptBridge(activity: MainActivity) {
             updatedAt = root.optLong("updatedAt", 0L),
             telemetryValid = root.optBoolean("valid", false),
         )
-        root.put("ok", true)
+        val observation=service.levelObservationJson()
+        root.put("levelSensor",observation.optJSONObject("levelSensor"))
+            .put("k_factor",JSONObject(service.kFactorStatusJson()))
+            .put("k_write",JSONObject(service.kWriteStatusJson()))
+            .put("ok", true)
             .put("telemetryAgeMs", root.optLong("ageMs", -1L))
             .put("interpolation", interpolation)
             .toString()

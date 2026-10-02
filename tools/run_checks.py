@@ -41,6 +41,7 @@ commands = [
     ["node", "--test", "tests/ui/live-tracing-budget.test.cjs"],
     ["node", "--test", "tests/ui/suggestion-model.test.cjs"],
     ["node", "--test", "tests/ui/autocal-refine.test.cjs"],
+    ["node", "--test", "tests/ui/level-panel.test.cjs"],
     ["node", "--test", "tests/ui/ux-states.test.cjs"],
     ["node", "--test", "tests/ui/refino-route.test.cjs"],
     ["node", "--test", "tests/ui/our-curve.test.cjs"],

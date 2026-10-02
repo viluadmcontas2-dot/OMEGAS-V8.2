@@ -93,6 +93,7 @@
   }
 
   function renderShell(state) {
+    ui.LevelPanel?.render(state);
     ui.WorkflowPresentation?.render(state, ui.AutoCalApi?.equivalence?.());
     if (state.route !== renderedRoute) {
       renderedRoute = state.route;
@@ -250,6 +251,7 @@
       patch.calibrationState = readCalibrationState();
     }
     if (route === 'tools') {
+      patch.telemetry = api.telemetry() || {};
       patch.sessionStatus = api.sessionStatus() || {};
       patch.sessions = api.sessions() || [];
       patch.logs = api.logs() || [];
