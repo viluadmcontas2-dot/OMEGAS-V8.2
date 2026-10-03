@@ -65,10 +65,9 @@ jobs:
           cat app/build/perf/equivalence-view.txt
 
       # Testes Node que leem o resultado do JVM (precisam rodar DEPOIS do testDebugUnitTest).
-      # Diagnóstico: o resultado é impresso e gravado; a falha, se houver, aparece no log e no resumo.
+      # Gate de verdade: falhou aqui, o APK não é publicado (provado verde no run do SHA fbfc857).
       - name: Testes Node que dependem do resultado do JVM
         id: gradle_ui
-        continue-on-error: true
         shell: bash
         run: |
           set -uo pipefail
