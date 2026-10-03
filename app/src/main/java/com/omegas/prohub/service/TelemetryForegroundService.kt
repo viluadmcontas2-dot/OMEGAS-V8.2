@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
 import androidx.core.app.NotificationManagerCompat
 import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
@@ -156,7 +157,7 @@ class TelemetryForegroundService : Service() {
         consumptionTracker = ConsumptionTracker(this)
         equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
         refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
-        refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"))
+        refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
@@ -831,6 +832,8 @@ class TelemetryForegroundService : Service() {
     }
 
     /** Piloto do refino: decide a fase e avisa uma vez por fase. Nunca grava na ECU. */
+    private var lastRefinementDecision = ""
+
     private fun observeRefinement() {
         try {
             val progress = if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson() else null
@@ -847,6 +850,19 @@ class TelemetryForegroundService : Service() {
                 journal = refinementJournal.json(),
                 restoreCount = refinementJournal.restorePoints().length(),
             )
+            // Registra mudanças de decisão, não cada tick da telemetria. Números completos
+            // ficam no evento curto e no RESUMO; timeout nunca vira recibo de gravação.
+            val numbers = decided.optJSONObject("diagnostic") ?: JSONObject()
+            val decisionKey = listOf(decided.optString("phase"), decided.optString("reasonCode"),
+                decided.optString("failureDomain"), numbers.optInt("bandsMeasured"),
+                numbers.optInt("bandsOff"), numbers.opt("autoMatchCount"), numbers.optString("journalStatus")).joinToString("|")
+            if (decisionKey != lastRefinementDecision) {
+                lastRefinementDecision = decisionKey
+                sessionRecorder.record(
+                    if (decided.optBoolean("watchdogExpired")) "refinement_diagnostic" else "refinement_decision",
+                    "autocal", decided, force = true,
+                )
+            }
             if (decided.optString("phase") != before) {
                 sessionRecorder.record("refinement_phase", "autocal", decided, force = true)
                 stateChanged()

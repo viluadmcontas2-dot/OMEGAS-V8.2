@@ -1,0 +1,34 @@
+# Caixa-preta — RED confirmado em Actions
+Base produto: 323a0f3aa99244bbb415a79f2f6bf77ffe0fef15.
+Contrato #121 integrado em 78d4eda57a5fa80978aa8f732d669888a70c5bb1.
+Testes: head 366ee061a2990aaf7efc1d3957ac149ad3decdcd; merge checkout 9bbfd89a141672bef04bae941360b983d7a6832b.
+Run 37105089434, job 111151912069. Classe 2, sem físico.
+Fast contracts PASS. JVM compila e executa: **605 testes, 5 falhas novas**:
+- offlineNeverPresentsLastStableStateAsCurrent: ComparisonFailure, linha 24.
+- readingWithoutAnyEcuResponseExpiresInThirtySeconds: ComparisonFailure, linha 36.
+- automaticWaitHasCeilingWithoutDeclaringEcuDone: ComparisonFailure, linha 69.
+- everyPhaseDecisionExplainsNumbersAndCause: JSONException por reasonCode ausente, linha 56.
+- watchdogIsVisibleAndDoesNotBecomeSuccess: AssertionError, linha 17.
+Nenhum teste existente falhou. failureThenCureProgressesWithoutUserReset já passava: é caracterização, não RED.
+Log fonte: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/37105089434
+
+## Correção mínima em avaliação
+- Offline vence fase, contador e autorização nativa antigos.
+- Teto de tentativa por fase, duração monotônica no serviço, diagnóstico com elapsed/budget, razão e domínio.
+- Tentativa expirada não oferece proposta antiga. Evidência nova retoma sem reset manual.
+- Eventos de decisão/timeout separados da telemetria; worker da sessão faz flush/fsync.
+- RESUMO reconstrói decisões/anomalias a partir do mesmo JSONL após kill.
+- Journal, ciência do motor, limites estatísticos e writer não foram corrigidos nesta fatia.
+
+## Radar 1–11 desta fatia
+1. Frase de etapa expirada e próximo passo automático; render pendente.
+2. Timeout não declara que writer parou, não escreve e não declara AutoMatch concluído.
+3. Leitura 30s; automático/coleta/verificação 40min; revisão/restauração 30min; offline/estável são terminais observacionais.
+4. Offline contador atual null; ratio histórico ainda demanda auditoria da tela.
+5. Política numérica D2/D3 pendente; timers numa tabela PHASE_BUDGET_MS.
+6. Relógio monotônico em produção; duração acumulada persiste, autorização de ECU relida. Teste de restart completo pendente.
+7. Classe 2 por funções de produção; ponte/serviço/render integrado pendente.
+8. Cada alteração ligada LC01/LC08/LC10; sem estética ou refatoração adicional.
+9. Journal offline, monitor/source freshness, writers globais e publish continuam lacunas registradas.
+10. Retoma com evidência nova, sem adicionar botão/chave.
+11. Falsificação seguinte: timestamp extremo, antigo latch mesmo contador, timeout com proposta velha, kill no instante do diagnóstico, falha-e-cura.

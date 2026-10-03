@@ -1,5 +1,17 @@
 # OMEGAS Platina — Status
 
+## Missão ciclo de vida / caixa-preta — 2026-10-03
+- Base reconciliada: OmegasPlatina `78d4eda57a5fa80978aa8f732d669888a70c5bb1` (contrato #121).
+- PR #122 / branch `work/platina-refino-blackbox-20261003`: em execução, **não pronta para carro**.
+- RED classe 2: run `37105089434`, merge SHA `9bbfd89a141672bef04bae941360b983d7a6832b`, 605 testes JVM / 5 falhas novas; contratos rápidos passaram. Testes anteriores intactos.
+- RED UI classe 2: run `37105417857`, watchdog encerrado ainda oferece revisão de proposta antiga (`review != none`).
+- Correção mínima submetida: offline vence estado antigo; teto da tentativa por fase; motivos/números/domínio; anomalias no RESUMO e recuperação com dados novos. GREEN integrado, mutantes e render/APK **pendentes**.
+- D1/D2/D3, simulador fechado, D4/D6/D5, rolagem horizontal e demais módulos **não concluídos**.
+- Falso “piorou”, detecção de piora real, passos até estável e performance desta missão: **não medidos**.
+- Classe 4/5 desta missão: nenhuma. APK anterior abaixo não prova a mudança atual.
+- Detalhes: `docs/autocal/CICLO-DE-VIDA.md` e `docs/autocal/CAIXA-PRETA-RED.md`.
+
+
 ## APK Platina + Refino v2 (provas de corpus real, render e sessão) — 2026-10-03
 
 - **Fonte:** `4a6965b3837f7bc0f212bcd84f6e60575523c4a4`, branch `ccr-745c77c3-dvvqn0`, base `OmegasPlatina` `fbee28c`.
