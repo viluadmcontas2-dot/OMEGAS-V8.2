@@ -282,6 +282,52 @@ class RefinoRenderTest {
 
 
     @Test
+    fun refinoJournalTransitionsReachSessionBeforeNextTick() {
+        val scenario = launch()
+        var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null
+        try {
+            val service = service(scenario)
+            recorder = service.sessionRecorder
+            assertTrue(recorder.start("EVIDENCE_BETWEEN_TICKS").optBoolean("ok"))
+            synth(service, "GASOLINA")
+            synth(service, "GNV", ratio = 1.12)
+            val axis = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
+            service.refinementJournal.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 },
+                axis, service.equivalence.index(), "SIMULATED_CONFIRMED_WRITE_ONE")
+            service.refinementJournal.interrupt("NATIVE_AUTOMATCH")
+            service.refinementJournal.recordCurveWrite(IntArray(30) { 17000 }, IntArray(30) { 18000 },
+                axis, service.equivalence.index(), "SIMULATED_CONFIRMED_WRITE_TWO")
+            service.equivalence.resetGas("SIMULATED_WRITE")
+            synth(service, "GNV")
+            service.refinementJournal.evaluate(service.equivalence.index())
+            // Nenhum registrador/healthTick é invocado: parar antes do tick não pode perder decisões.
+            val stopped = recorder.stop("EVIDENCE_DONE_BEFORE_TICK")
+            val directory = File(stopped.getString("directory"))
+            val events = directory.listFiles()?.filter { it.name.startsWith("events_") && it.name.endsWith(".jsonl") }
+                .orEmpty().flatMap { it.readLines() }.mapNotNull { runCatching { JSONObject(it) }.getOrNull() }
+            val decisions = events.filter { it.optString("type") in setOf("refinement_decision", "refinement_diagnostic") &&
+                it.optJSONObject("data")?.optString("component") == "JOURNAL" }
+            val verdicts = events.filter { it.optString("type") == "refinement_verdict" }
+            val reasons = decisions.map { it.getJSONObject("data").getString("reasonCode") }
+            val md = File(directory, "RESUMO.md").readText()
+            service.refinementAutopilot.observe(true,
+                JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
+                null, service.equivalence.index(), service.refinementJournal.json(), 0)
+            openRefino(scenario)
+            val dom = refinoDom(scenario).put("decisionReasons", JSONArray(reasons))
+                .put("sessionVerdictCount", verdicts.size).put("resumo", md)
+            saveEvidence("refino-decisoes-entre-ticks", dom, scenario,
+                provenance("SYNTHETIC_NON_SCIENTIFIC", "none", "Journal real→service→worker→JSONL antes do healthTick; nenhuma USB/escrita"))
+            assertEquals(listOf("MANUAL_WRITE_CONFIRMED", "EXPERIMENT_INVALIDATED",
+                "MANUAL_WRITE_CONFIRMED", "BAND_VERIFICATION_COMPLETE"), reasons)
+            assertEquals("dois encerramentos distintos precisam sobreviver", 2, verdicts.size)
+            assertEquals(listOf("INTERROMPIDO", "VERIFICADO"), verdicts.map { it.getJSONObject("data").getString("status") })
+            assertTrue(md, md.contains("EXPERIMENT_INVALIDATED"))
+            assertTrue(md, md.contains("O que aconteceu de estranho"))
+        } finally { recorder?.stop("EVIDENCE_CLEANUP"); scenario.close() }
+    }
+
+    @Test
     fun refinoFirstVerdictReachesSessionWorkerAndResumo() {
         val scenario = launch()
         var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null

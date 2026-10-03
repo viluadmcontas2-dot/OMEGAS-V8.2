@@ -1,28 +1,17 @@
 # OMEGAS Platina — Status
 
-## Missão ciclo de vida / caixa-preta — 2026-10-03
-- RED integrado `37108136313`: primeiro veredito perdido (0/1) e razão histórica −4,8% offline em vez de —. Correções LC08/LC10 submetidas; GREEN pendente.
-- APK RED fonte `4aef0d66fbe9`: 4.830.796 bytes, SHA-256 `0d27324a2904be54c3eb42c06d4088acb747e4e40104b46dd929b8bf543a5ee5`, artifact `11269265181`, ZIP digest `ad39792bb789759e29d82fa73e654742f036b7a692238f5b651769af671bd08b`. Origem conferida, 8/8 mutantes detectados; não entrega para carro.
-- Render timeout honesto passou em classe 4 no mesmo run; primeiro veredito/offline falharam. Inspeção manual das imagens indisponível: ambiente de arquivos desconectado.
-- AF1 isolado `c96345afb844`: teste antigo de SIGKILL exigia melhora confirmada com bands=[]; prova/justificativa no documento. ZIP, integridade, ordem e recuperação preservados.
-- Infraestrutura #123 integrada em `8197d9ca631711b116b474342062c14e96285b7f`; produto inalterado.
-- Prova da infraestrutura: fonte `85b90304e631d4fbdde0ae8d685451a8bafe0877`, CI `37106396745`; gate APK+26 renders `37106396948` (27/27 jobs success, classe 2/4).
-- Artifact `11268149281`, APK 4.824.552 bytes; SHA-256 `fec651131dd2f00822219ff3c85d2c81871f4a049d13ea6619dbd98028216d7c`; ZIP digest `7225963b8db51a1364c05deeab2582ffb4d27b2eccf188770c4c17cae4bb5174`. Não prova correções da PR #122.
-- Gate `37107664004`: 15/15 testes focados antes/depois, 8/8 mutantes mortos, 0 sobreviventes; código restaurado limpo. Publicação bloqueada pela identidade de BuildConfig regenerada nos mutantes. Corrigido ambiente de origem, mantendo comparação estrita; render ainda não executado.
-- PR #122: contratos/JVM/lint verdes em `37107213513`, fonte `a5595656bcc90a811c48e3a2176465a46f919834`.
-- Mutantes em `37107213575`: 8/8 detectados por RED comportamental; baseline restaurada passou, gate falhou por permissão de gradlew alterada pelo build. APK/render desta fonte bloqueados; verificador corrigido sem relaxar assertivas.
-- Tetos do host provados em classe 2: leitura 30 s; proposta/rollback 30 min; aquisição/automático/verificação 40 min. Não são prova de término da ECU, nem limites de outros módulos.
-- Reinício/saltos de calendário/falha-cura/separação transporte–funcional e operandos Journal: classe 2; silêncio jamais autoriza conclusão nativa.
-- Base reconciliada: OmegasPlatina `78d4eda57a5fa80978aa8f732d669888a70c5bb1` (contrato #121).
-- PR #122 / branch `work/platina-refino-blackbox-20261003`: em execução, **não pronta para carro**.
-- RED classe 2: run `37105089434`, merge SHA `9bbfd89a141672bef04bae941360b983d7a6832b`, 605 testes JVM / 5 falhas novas; contratos rápidos passaram. Testes anteriores intactos.
-- RED UI classe 2: run `37105417857`, watchdog encerrado ainda oferece revisão de proposta antiga (`review != none`).
-- Correção mínima submetida: offline vence estado antigo; teto da tentativa por fase; motivos/números/domínio; anomalias no RESUMO e recuperação com dados novos. GREEN integrado, mutantes e render/APK **pendentes**.
-- D1/D2/D3, simulador fechado, D4/D6/D5, rolagem horizontal e demais módulos **não concluídos**.
-- Falso “piorou”, detecção de piora real, passos até estável e performance desta missão: **não medidos**.
-- Classe 4/5 desta missão: nenhuma. APK anterior abaixo não prova a mudança atual.
-- Detalhes: `docs/autocal/CICLO-DE-VIDA.md` e `docs/autocal/CAIXA-PRETA-RED.md`.
-
+## Missão AutoCal/Refino — checkpoint vigente 2026-10-03
+- Fase0 contrato integrado #121; infraestrutura #123 integrada na Platina `8197d9ca631711b116b474342062c14e96285b7f`.
+- PR#122 caixa-preta em execução; **não liberar merge nem dizer missão concluída**.
+- Fonte de produto testada `de12f9ac53e1e609fb7a626dbd9e7f67e68d33a4`; CI `37109036435` success; gate `37109036557`: **30/30 jobs success** (APK+29 cenários).
+- APK4.831.148 bytes, SHA256 `e7bb3c2d7053e4b8c634af5409efa1fe9efe1a8b4e5ba5f63b043d03ddc13942`; artifact `11269136496`, ZIPdigest `60724ae92d69208c0bfc9f61d0212e9630bd3111dc79d7b0aad721792c965d71`.
+- Classe2: host lendo30s; proposta/rollback30min; aquisição/automático/verificação40min; silêncio não autoriza conclusão. Baselines15/15 antes/depois; mutantes8/8 detectados, 0 sobreviventes.
+- Classe4: primeiro veredito→worker→JSONL→RESUMO, razão offline —, timeout honesto e SIGKILL; RED→GREEN em logs integrados. 29 cenários não equivalem aos 11 estados novos de cada tela.
+- Inspeção manual das imagens indisponível: download local bloqueado por ambiente desconectado409. Não alegar classe5.
+- Revisão achou: decisões intermediárias entre ticks perdidas e assinatura visual muda só por tempo; identidade por relógio também pode colidir. Novos testes RED submetidos; corrigir antes de fechar#122.
+- Performance classe3 (corpus histórico em JVM/CI): frio mediana18,64ms/p9545,79ms; cache0,00019ms. Alvo frio30ms **não cumprido nesta medição**; bridge completa/aparelho não provados.
+- Política/simulador fechado, frescor/geração nativa, teto absoluto Journal, D4/D6/D5/rolagem horizontal e demais módulos **pendentes**. Falso “piorou”, detecção real, passos até estável: **não medidos**.
+- REDs/AF1 isolados/falhas anteriores/radar detalhados em `docs/autocal/CAIXA-PRETA-RED.md`. Provas antigas abaixo são arquivo histórico e não provam este código.
 
 ## APK Platina + Refino v2 (provas de corpus real, render e sessão) — 2026-10-03
 

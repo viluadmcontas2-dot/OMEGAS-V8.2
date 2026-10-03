@@ -73,6 +73,9 @@ jobs:
             method: sessionChangeInvalidatesOldTelemetry
           - scenario: dashboard-session-recovered
             method: sessionReconnectRecoversFreshTelemetry
+          - scenario: refino-decisoes-entre-ticks
+            method: refinoJournalTransitionsReachSessionBeforeNextTick
+            class: RefinoRenderTest
           - scenario: refino-primeiro-veredito-sessao
             method: refinoFirstVerdictReachesSessionWorkerAndResumo
             class: RefinoRenderTest

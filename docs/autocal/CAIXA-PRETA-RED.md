@@ -141,3 +141,22 @@ GREEN desta fonte e revisão independente pendentes. Lacuna irmã encontrada: le
 histórica VERIFICADO na UI ainda diz "Chegou na gasolina"; precisa RED próprio em D5.
 Download para inspeção visual local bloqueado: ambiente de execução desconectado (409).
 Não alegar inspeção humana das imagens; os testes Android e seus logs são a prova obtida.
+
+
+## GREEN integrado anterior e falsificação independente
+Fonte de12f9ac53e1e609fb7a626dbd9e7f67e68d33a4:
+CI37109036435 success; gate37109036557 30/30 jobs success (APK + 29 cenários Android).
+Root conferiu diretamente lista completa de jobs e logs de primeiro veredito111164109831,
+offline111164109804 e SIGKILL111164110683, cada SCENARIO_RESULT=PASS.
+APK4.831.148 bytes, SHA256 e7bb3c2d7053e4b8c634af5409efa1fe9efe1a8b4e5ba5f63b043d03ddc13942;
+artifact11269136496, ZIP60724ae92d69208c0bfc9f61d0212e9630bd3111dc79d7b0aad721792c965d71.
+Baseline15/15 antes/depois; mutantes8 mortos/0 sobreviventes. Não libera toda Fase1:
+revisão independente encontrou Journal lendo somente latest a cada tick, perdendo transições
+write1→interrupt→write2 antes da próxima checagem, e onlineMs dentro da assinatura visual.
+Há também identidade EXP-clock duplicada com calendário repetido: outro latch por relógio.
+Novo RED antes do código: 2 testes JVM (identidade repetida, tick sem dado) e
+1 integração Android (quatro motivos/dois encerramentos no JSONL antes de parar a sessão).
+Nenhum oráculo antigo alterado neste commit. PRIMEIRO coletar RED JVM; depois fix mínimo
+identidade/assinatura e executar RED Android; somente então corrigir transporte de decisões.
+Performance observada: cold median18,64ms/p9545,79ms; cache0,00019ms. Alvo30ms frio não
+cumprido neste run; não mascarar por cache ou medição anterior23,96ms. P6 pendente.

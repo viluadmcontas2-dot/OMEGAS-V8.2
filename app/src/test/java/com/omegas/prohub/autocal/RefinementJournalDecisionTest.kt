@@ -40,4 +40,29 @@ class RefinementJournalDecisionTest {
         assertEquals("FUNCTIONAL", latest.getString("failureDomain"))
         assertEquals("NATIVE_AUTOMATCH", latest.getString("interruptReason"))
     }
+    @Test fun elapsedTimeAloneDoesNotRepublishVisibleDecision() {
+        var now = 1_000L
+        val j = RefinementJournal(null) { now }
+        j.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 }, axis, index(1.12), "manual-test")
+        val after = index(1.0)
+        for (i in 1 until EquivalenceLedger.BANDS.size) {
+            after.getJSONArray("bands").getJSONObject(i).put("samples", 0).put("ratio", JSONObject.NULL)
+        }
+        assertTrue(j.evaluate(after))
+        assertEquals("VERIFICANDO", j.json().getJSONObject("latest").getString("status"))
+        now += 3_000L
+        assertFalse("sem amostra/veredito novo não há mudança visual", j.evaluate(after))
+        assertEquals("tempo diagnóstico continua medido", 3_000L, j.json().getJSONObject("latest").getLong("onlineMs"))
+    }
+
+    @Test fun confirmedWritesHaveDistinctIdentityEvenWhenClockIsFrozen() {
+        val j = RefinementJournal(null) { 1_000L }
+        j.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 }, axis, index(1.12), "first-confirmed")
+        val first = j.json().getJSONObject("latest").getString("id")
+        j.interrupt("NATIVE_AUTOMATCH")
+        j.recordCurveWrite(IntArray(30) { 17000 }, IntArray(30) { 18000 }, axis, index(1.12), "second-confirmed")
+        val second = j.json().getJSONObject("latest").getString("id")
+        assertNotEquals("relógio repetido não pode confundir experimentos", first, second)
+    }
+
 }
