@@ -205,3 +205,11 @@ Correção de prova: BuildConfig recebe a fonte exata; HOME do emulador efêmero
 isolado antes dos testes; saveEvidence exige janela ativa do próprio app, e rejeita
 qualquer diálogo externo em vez de aceitá-lo como prova. Nenhum assert antigo removido.
 APK anterior mantém identidade exata; render anterior não libera fechamento visual.
+
+
+## Leitura da janela ativa — falha do instrumento
+Run37132189220/job111230110282: assert de janela falhou com rootInActiveWindow=null.
+Não prova ausência do app: a raiz de acessibilidade não é fonte confiável nesse runner.
+Mantém assertEquals(package do app, package em foco), agora obtido de dumpsys window
+(mCurrentFocus). Não aceita null, não tolera diálogo externo, não remove a verificação.
+O launcher foi isolado com disabled-user no log. Nova prova remota obrigatória.
