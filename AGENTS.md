@@ -26,12 +26,12 @@ Também: `applicationId` continua `com.omegas.v7.test`. Validação física (cla
 
 ## Como trabalhar (enxuto — R12 do índice)
 
-- Base `OmegasPlatina`; branch `work/platina-<assunto>`; PR com `Fecha #131` só ao fim de cada lote grande; merge com `build_and_test` verde no SHA do PR.
-- Acompanhamento: épico #131 (uma checklist). Sem rótulos, portões ou arquivos de binding.
-- Faça o máximo de mudança coerente antes de testar. Teste só quando o resultado decide algo: Python/JS rodam na sessão quando necessário; Kotlin e o portão completo rodam no CI do PR.
-- Sem emulador. Um APK só, no fim (`verde-apk-now.yml`, `build_apk=true`), com SHA-256.
-- Cada PR diz o que mudou, a classe de prova (1 contrato · 2 sintético · 3 replay real · 5 físico) e o que ficou não provado.
-- Plano não bate com o código: decida, registre no épico em uma linha e siga. Se muda o que o dono vê ou o que a ECU recebe, pare e pergunte.
+- Base `OmegasPlatina`; uma branch de trabalho por vez (`work/platina-<assunto>`), apagada no merge; PR agrupa fatias e entra com `build_and_test` verde no SHA.
+- Issues simples: uma por fatia (`F<N> · …`, #132–#140); PR fecha com `Fecha #n`; épico #131 mapeia fatias e branches.
+- Custo decide onde: escrever e testar local ou direto no GitHub, o que gastar menos tokens. Máximo de mudança antes de testar; teste só quando decide algo.
+- Emulador só no fechamento de UI/UX (F7/F8). Um APK só, no fim (`verde-apk-now.yml`), com SHA-256.
+- Cada PR diz o que mudou, a classe de prova (1 contrato · 2 sintético · 3 replay real · 4 emulador · 5 físico) e o que ficou não provado.
+- Plano não bate com o código: decida, registre na Issue da fatia em uma linha e siga. Se muda o que o dono vê ou o que a ECU recebe, pare e pergunte.
 
 ## Ordem
 
