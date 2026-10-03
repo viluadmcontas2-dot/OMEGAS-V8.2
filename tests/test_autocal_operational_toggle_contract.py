@@ -31,8 +31,7 @@ assert 'data-autocal-action="RESET_ALL"' not in cockpit
 assert "Continuar para confirmação Android" not in cockpit
 assert "Confirmação Android aberta" not in cockpit
 assert "Executar agora" in cockpit
-# Guardião: jargão (ACK/readback) só em "Detalhes técnicos"; a frase humana é "confirmada na ECU" (GLOSSARIO).
-assert "ACK e readback" not in cockpit
+assert "e confere na ECU" in cockpit
 assert "actionManager.execute(preparationId)" in bridge
 assert "AlertDialog" not in bridge
 

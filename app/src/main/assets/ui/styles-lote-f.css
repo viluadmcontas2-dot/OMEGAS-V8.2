@@ -358,7 +358,9 @@ html body .sr-only { font-size: 16px; }
 
 html body .utility-screen :is(small, span, p, dd, dt, li, label, em, i) { font-size: 16px; }
 html body .utility-screen :is(h2, h3) { font-size: var(--text-critical); line-height: 1.15; }
-html body .utility-screen :is(b, strong) { font-size: var(--text-critical); line-height: 1.15; }
+html body .utility-screen :is(b, strong) { font-size: 16px; line-height: 1.2; }
+html body .utility-screen :is(.tool-actions b, .recorded-session-header b, .recorder-metrics b, .background-health-grid b, .tool-power-row b, .diagnostic-recorder-card b) { font-size: var(--text-critical); }
+html body .utility-screen .background-health-grid > span, html body .utility-screen .recorder-metrics > span { display: grid; align-content: start; gap: 0; }
 html body .utility-screen .page-intro p, html body .utility-screen .page-intro small { font-size: 16px; }
 html body .utility-screen .session-datetime, html body .utility-screen .recorded-session-meta span { font-size: 16px; }
 html body .utility-screen .tool-actions span { font-size: 16px; }
@@ -396,3 +398,11 @@ html body .diagnostic-settings-grid .check-setting:has(input:checked)::after {
 #globalEcu[data-link="connecting"] { color: var(--state-warn); }
 #globalEcu[data-link="nocable"], #globalEcu[data-link="stopped"] { color: var(--state-error); }
 .vehicle-status-strip [data-state="connecting"] b { color: var(--state-warn); }
+
+/* Cartão de operação: botões com respiro e resultado ocupando a linha toda. */
+.operation-card.compact-operation { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.operation-card.compact-operation > .operation-result { flex: 1 1 100%; }
+.operation-card.compact-operation > small, .operation-card.compact-operation > h3, .operation-card.compact-operation > p, .operation-card.compact-operation > .progress-track, .operation-card.compact-operation > .operation-sequence { flex: 1 1 100%; margin-top: 0; margin-bottom: 0; }
+
+.utility-screen .page-intro p:empty { display: none; }
+html body .utility-screen .background-health-grid { display: flex; flex-wrap: wrap; gap: 4px 32px; }

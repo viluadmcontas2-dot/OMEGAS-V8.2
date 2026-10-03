@@ -10,11 +10,7 @@
   const EASE_MS = 50;          // constante de tempo: ~150 ms até chegar ao alvo
   const NARRATIVE_MS = 500;    // texto do cursor: no máximo 2 Hz, ou na hora quando muda região/combustível
 
-  function finite(value) {
-    if (value === null || value === undefined || value === '' || typeof value === 'boolean') return null;
-    const number = Number(value);
-    return Number.isFinite(number) ? number : null;
-  }
+  const { finite } = ns.DisplayRules;
 
   /** Ponto vivo (Petrol Inj. × MAP) ou null quando o quadro está vencido/ausente. grey = atrasado (> 1,5 s). */
   function point(telemetry) {

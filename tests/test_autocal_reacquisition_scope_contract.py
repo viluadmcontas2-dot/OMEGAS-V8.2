@@ -49,6 +49,7 @@ assert 'update("READING_AFTER", "Atualizando estado da ECU"' in manager
 
 # UX says exactly what the operator asked for: backups are optional/manual.
 assert 'Salvar uma foto antes é opcional' in cockpit
+assert 'Salvar uma foto antes é opcional' in cockpit
 assert 'Confirmar executa agora pelo OMEGAS' in cockpit
 assert 'AlertDialog' not in bridge
 assert 'nativeAndroidConfirmation", true' not in bridge

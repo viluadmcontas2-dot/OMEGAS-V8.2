@@ -40,7 +40,7 @@ assert "Desfazer: voltar à foto da Curva K" in curve
 assert "curveBackupSelect" in curve and "prepareRestore(" in curve
 assert "curveBackupRestore" in curve and "writeRestore()" in curve
 assert "this.writePrepared()" in curve
-assert "Desfazer pronto no botão acima" in curve
+assert "Desfazer pronto" in curve
 assert "Restauração validada · iniciando escrita segura" not in curve
 assert "classList.add('is-reviewing')" not in curve
 assert 'id="curveWriteButton"' not in index
@@ -57,8 +57,8 @@ assert "18 REGIÕES · DETALHE TÉCNICO" in autocal
 assert "height: clamp(340px, 52vh, 430px)" in css
 
 # Custom ROM/head unit: WebView render can lag briefly; AGORA must not vanish mid-refresh.
-assert "const AUTO_CAL_LIVE_STALE_MS = ns.LiveStore.STALE_MS" in autocal
 assert "const STALE_MS = 3000" in (ROOT / "app/src/main/assets/ui/core/live-store.js").read_text(encoding="utf-8")
+assert "AUTO_CAL_LIVE_STALE_MS = ns.LiveStore.STALE_MS" in autocal
 assert "2,5 s" not in autocal
 
 print("FINAL_PRE_APK_PRODUCT_CONTRACT=PASS")

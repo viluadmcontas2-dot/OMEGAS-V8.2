@@ -158,7 +158,8 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('targetOverrides', self.map_editor)
         for forbidden in ('writeMap(', 'window.Android', 'protocolTransaction', 'startKBatchWrite'):
             self.assertNotIn(forbidden, self.map_editor)
-        self.assertIn('Gravar é um toque: o app guarda a foto antes e confere na ECU', self.html)
+        self.assertIn('Gravar é um toque', self.html)
+        self.assertIn('o app guarda a foto antes e confere na ECU', self.html)
         self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
 

@@ -79,6 +79,7 @@
         this.backupTask = null;
         this.resetPhotoFile = '';
         text('curveBackupStatus', 'Reset cancelado: a foto não foi confirmada. Toque em Resetar de novo.');
+        this.root?.classList.remove('is-writing');
       }
       if (context && context.subpage) this.setView(context.subpage);
       // Vindo do AutoCal: o toque lá já foi o do dono. O reset roda aqui (foto antes, depois zera)
@@ -141,6 +142,13 @@
       }
       this.backupTask = 'reset-photo';
       text('curveBackupStatus', 'Salvando a foto da curva antes de zerar…');
+      // A foto antes aparece como etapa do cartão de operação, não como linha de status miúda.
+      this.root?.classList.remove('has-result');
+      this.root?.classList.add('is-writing');
+      text('curveOperationTitle', 'Foto antes · salvando a Curva K atual');
+      this.setStep(0);
+      const photoBar = document.getElementById('curveOperationProgress');
+      if (photoBar) photoBar.style.width = '8%';
     }
 
     /** Os 30 pontos lidos já valem 1.0 (raw 16384): nada a zerar. */
@@ -165,10 +173,16 @@
       this.writing = true;
       this.root?.classList.remove('has-result');
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', 'Gravando na ECU… Curva K em 1.0');
+      text('curveOperationTitle', 'Gravando na ECU… Curva K em 1,000');
+      this.setStep(1);
       text('curveOperationMessage', RESET_NOTE);
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
+    }
+
+    /** Etapa visível da operação (Foto antes → Gravando → Conferindo na ECU): a foto antes é um passo de verdade. */
+    setStep(index) {
+      document.querySelectorAll('#curveOperationSteps span').forEach((node, i) => { node.dataset.state = i < index ? 'done' : i === index ? 'active' : 'pending'; });
     }
 
     prepareRestore(fileName = String(document.getElementById('curveBackupSelect')?.value || '')) {
@@ -262,6 +276,7 @@
             restore.textContent = 'Desfazer (voltar à foto)';
           }
           text('curveBackupStatus', 'Foto indisponível');
+          this.root?.classList.remove('is-writing');
           this.alert(failureText(operation, 'O app não conseguiu salvar ou ler a foto da Curva K.'));
           return;
         }
@@ -269,6 +284,7 @@
           // Só a operação de foto devolve hash e caminho; uma leitura qualquer não autoriza o reset.
           if (!operation.hash || !operation.publicPath || !operation.fileName) {
             text('curveBackupStatus', 'Reset cancelado: a foto da curva não foi confirmada.');
+            this.root?.classList.remove('is-writing');
             this.alert('A foto da Curva K não foi confirmada; nada foi zerado.');
             return;
           }
@@ -360,7 +376,9 @@
         const progress = Math.max(0, Math.min(100, finite(operation.progress) || finite(operation.writerProgress) || 0));
         const bar = document.getElementById('curveOperationProgress');
         if (bar) bar.style.width = `${progress}%`;
-        text('curveOperationTitle', operation.message || operation.writerMessage || wording().stages.join(' · '));
+        // Texto da etapa é nosso (a mensagem do escritor pode ter jargão): Gravando → Conferindo na ECU.
+        this.setStep(progress >= 90 ? 2 : 1);
+        text('curveOperationTitle', progress >= 90 ? wording().stages[2] + '…' : `${wording().writing.replace('…', '')} ${Math.round(progress)}%`);
         if (!operation.busy) {
           this.writing = false;
           if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
@@ -606,6 +624,7 @@
       this.writing = true;
       this.root?.classList.add('is-writing');
       text('curveOperationTitle', restoring ? 'Gravando na ECU… voltando à foto da Curva K' : wording().writing);
+      this.setStep(1);
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
     }

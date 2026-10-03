@@ -324,6 +324,7 @@
         return;
       }
       this.root?.classList.add('is-writing');
+      this.setStep(0);
       this.lastOperationState = '';
       this.undoId = '';
       this.restorePhase = '';
@@ -395,13 +396,17 @@
       this.restorePhase = 'writing';
       this.lastOperationState = '';
       text('mapOperationTitle', wording().writing);
-      text('mapOperationMessage', `0 de ${cells.length} células confirmadas`);
+      text('mapOperationMessage', `0 de ${D().plural(cells.length, 'célula', 'células')} confirmadas`);
+    }
+
+    setStep(index) {
+      document.querySelectorAll('#mapOperationSteps span').forEach((node, i) => { node.dataset.state = i < index ? 'done' : i === index ? 'active' : 'pending'; });
     }
 
     settleWriteFailure(operation, fallback) {
       this.root?.classList.remove('is-writing');
       this.root?.classList.add('has-result');
-      // Falha no meio do lote: células já receberam ACK, então a ECU pode estar parcialmente alterada.
+      // Falha no meio do lote: células já foram gravadas, então a ECU pode estar parcialmente alterada.
       const partial = operation.ecuPartiallyChanged === true || operation.partial === true;
       const done = Number(operation.confirmedCells) || 0;
       const result = document.getElementById('mapOperationResult');
@@ -410,7 +415,7 @@
         result.querySelector('b').textContent = partial ? 'ECU parcialmente alterada' : wording().failedTitle;
         const why = failureText(operation, fallback || 'Releitura obrigatória.');
         result.querySelector('span').textContent = partial
-          ? `${done} célula${done === 1 ? '' : 's'} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${why} Releia a ECU para ver o estado real.`
+          ? `${D().plural(done, 'célula', 'células')} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${why} Releia a ECU para ver o estado real.`
           : why;
       }
       const lastId = Array.isArray(operation.adjustmentIds) ? String(operation.adjustmentIds[operation.adjustmentIds.length - 1] || '') : String(operation.backupId || '');
@@ -431,10 +436,12 @@
       const progress = Math.max(0, Math.min(100, finite(operation.progress) || 0));
       const bar = document.getElementById('mapOperationProgress');
       if (bar) bar.style.width = `${progress}%`;
-      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
+      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${D().plural(operation.totalCells || this.review?.count || 0, 'célula', 'células')} confirmadas`);
 
       if (operation.busy) {
-        text('mapOperationTitle', operation.writerMessage || wording().stages.join(' · '));
+        // Etapa visível (Foto antes → Gravando → Conferindo na ECU); o texto é nosso, não o do escritor.
+        this.setStep(progress >= 90 ? 2 : progress > 0 ? 1 : 0);
+        text('mapOperationTitle', progress >= 90 ? wording().stages[2] + '…' : progress > 0 ? `${wording().writing.replace('…', '')} ${Math.round(progress)}%` : 'Foto antes · guardando o Mapa K atual');
         return;
       }
       if (this.restorePhase === 'preparing') {
@@ -467,28 +474,7 @@
 
     applyContext(context) {
       if (!context || !this.editor.hasMap()) return;
-      const suggestion = context.suggestion;
-      const changes = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges : [];
       try {
-        if (changes.length) {
-          this.editor.setTargetOverrides(changes);
-          const first = changes[0];
-          this.renderGrid();
-          this.renderEditor(Number(first.row), Number(first.column));
-          return;
-        }
-        if (suggestion) {
-          const row = Number(suggestion.row);
-          const column = Number(suggestion.column);
-          if (Number.isInteger(row) && Number.isInteger(column)) {
-            this.editor.selectOnly(row, column);
-            document.getElementById('mapAdjustmentMode').value = 'percent';
-            document.getElementById('mapAdjustmentValue').value = String(Number(suggestion.deltaPercent || 0));
-            this.applyAdjustment();
-            this.renderEditor(row, column);
-            return;
-          }
-        }
         const row = Number(context.cell?.row ?? context.row);
         const column = Number(context.cell?.column ?? context.column);
         if (Number.isInteger(row) && Number.isInteger(column)) {
