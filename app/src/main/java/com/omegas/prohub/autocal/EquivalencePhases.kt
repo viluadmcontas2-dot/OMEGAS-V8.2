@@ -1,9 +1,14 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.EquivalencePoint
+import com.omegas.prohub.equivalence.EquivalenceTolerances
+import com.omegas.prohub.equivalence.PointState
+import com.omegas.prohub.equivalence.ProofOutcome
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.ln
 
 /**
@@ -23,6 +28,10 @@ import kotlin.math.ln
  *    - VERIFICANDO: curva nova gravada; medindo se chegou na gasolina.
  *    - RESTAURAR_TRECHO: uma faixa piorou; restaurar só aquele trecho.
  *    - ESTAVEL: todas as faixas medidas dentro de ±3%: pode desconectar.
+ *
+ * Prova por ponto (F4): cada ponto da Curva K ajustado entra em EM_PROVA e fecha em CONFIRMADO, CONTESTADO ou
+ * INCONCLUSIVO conforme as leituras novas dele; o veredito fica até nova prova do ponto. Arquivo antigo sem
+ * `proofs` abre sem provas.
  *
  * Nunca grava na ECU. Só observa, decide a fase e avisa (notificação/UI).
  */
@@ -45,6 +54,10 @@ class EquivalencePhases(
         const val MIN_BAND_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
         const val MIN_STABLE_BANDS = 3
         private const val MAX_TICK_MS = 10_000L
+        /** Leituras novas no ponto para julgar a prova (= faixa do diário). */
+        const val PROOF_MIN_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
+        /** Condução online sem leitura suficiente: a prova fecha INCONCLUSIVO. */
+        const val PROOF_TIMEBOX_ONLINE_MS = RefinementJournal.VERIFY_PARTIAL_ONLINE_MS
         /** Tetos da tentativa do host; nunca representam conclusão do AutoMatch na ECU. */
         val PHASE_BUDGET_MS = mapOf(
             "LENDO_ECU" to 30_000L,
@@ -74,6 +87,20 @@ class EquivalencePhases(
     private var dirty = false
     private var lastSaveAt = Long.MIN_VALUE / 2
     private var last: JSONObject = JSONObject().put("phase", phase)
+
+    /** Prova de um ponto da Curva K; [verdict] nulo = aberta (EM_PROVA). */
+    private class Proof(
+        val index: Int,
+        var verdict: PointState?,
+        var onlineMs: Long,
+        val mixtureBefore: Double?,
+        val roughBefore: Double?,
+        val nearBefore: Double?,
+        var mixtureNow: Double?,
+    )
+
+    private val proofs = LinkedHashMap<Int, Proof>()
+    private var lastJudgeAt: Long? = null
 
     init { load() }
 
@@ -267,7 +294,140 @@ class EquivalencePhases(
         JSONObject(last.toString())
     }.also { if (it != null) save() }
 
-    fun json(): JSONObject = synchronized(lock) { JSONObject(last.toString()) }
+    fun json(): JSONObject = synchronized(lock) { JSONObject(last.toString()).put("proofs", proofsJson()) }
+
+    private fun proofsJson(): JSONArray {
+        val array = JSONArray()
+        for (p in proofs.values) {
+            array.put(
+                JSONObject().put("index", p.index).put("state", (p.verdict ?: PointState.EM_PROVA).name)
+                    .put("onlineMs", p.onlineMs)
+                    .put("mixtureBefore", p.mixtureBefore ?: JSONObject.NULL)
+                    .put("mixtureNow", p.mixtureNow ?: JSONObject.NULL)
+                    .put("roughBefore", p.roughBefore ?: JSONObject.NULL)
+                    .put("nearBefore", p.nearBefore ?: JSONObject.NULL),
+            )
+        }
+        return array
+    }
+
+    // ----------------------------------------------------------- prova por ponto (F4)
+
+    /** Quantas provas estão abertas (o relógio delas anda a cada avaliação). */
+    fun openProofCount(): Int = synchronized(lock) { proofs.values.count { it.verdict == null } }
+
+    /** Pontos da Curva K que o dono acabou de ajustar entram em prova; substitui a prova anterior do mesmo ponto. */
+    fun beginProof(pointIndexes: List<Int>, baseline: List<EquivalencePoint>) {
+        synchronized(lock) {
+            for (index in pointIndexes) {
+                val base = baseline.firstOrNull { it.index == index }
+                proofs[index] = Proof(index, null, 0L, base?.mixture, base?.roughnessRatio, base?.nearStallRatio, base?.mixture)
+            }
+            dirty = true
+            lastSaveAt = Long.MIN_VALUE / 2
+        }
+        save()
+    }
+
+    /**
+     * Julga as provas abertas com os pontos atuais do cérebro. [ecuOnline] decide se o relógio de condução anda
+     * (teto de 10 s por chamada, como [observe]). Devolve os estados a sobrepor e os minutos que faltam.
+     */
+    fun judgePoints(points: List<EquivalencePoint>, ecuOnline: Boolean): ProofOutcome {
+        val outcome = synchronized(lock) {
+            var changed = false
+            val durationNow = durationClock?.invoke() ?: clock()
+            val elapsed = lastJudgeAt?.let { (durationNow - it).coerceAtLeast(0L) } ?: 0L
+            lastJudgeAt = durationNow
+            val dt = elapsed.coerceAtMost(MAX_TICK_MS)
+            val states = HashMap<Int, PointState>()
+            var remaining: Int? = null
+            val iterator = proofs.values.iterator()
+            while (iterator.hasNext()) {
+                val proof = iterator.next()
+                val closed = proof.verdict
+                if (closed != null) {
+                    states[proof.index] = closed
+                    continue
+                }
+                if (ecuOnline && dt > 0L) {
+                    proof.onlineMs += dt
+                    dirty = true
+                }
+                val point = points.firstOrNull { it.index == proof.index }
+                if (point?.mixture != null) proof.mixtureNow = point.mixture
+                val mixture = point?.mixture
+                if (point == null || mixture == null || point.samples < PROOF_MIN_SAMPLES) {
+                    if (proof.onlineMs >= PROOF_TIMEBOX_ONLINE_MS) {
+                        proof.verdict = PointState.INCONCLUSIVO
+                        states[proof.index] = PointState.INCONCLUSIVO
+                        changed = true
+                    } else {
+                        states[proof.index] = PointState.EM_PROVA
+                        val left = ceil((PROOF_TIMEBOX_ONLINE_MS - proof.onlineMs) / 60_000.0).toInt()
+                        remaining = maxOf(remaining ?: 0, left)
+                    }
+                    continue
+                }
+                val worse = experienceWorse(proof.roughBefore, point.roughnessRatio) ||
+                    experienceWorse(proof.nearBefore, point.nearStallRatio)
+                val before = proof.mixtureBefore
+                val improved = before != null && abs(mixture) < abs(before)
+                when {
+                    abs(mixture) <= point.tolerance && !worse -> {
+                        proof.verdict = PointState.CONFIRMADO
+                        states[proof.index] = PointState.CONFIRMADO
+                        changed = true
+                    }
+                    improved && worse -> {
+                        proof.verdict = PointState.CONTESTADO
+                        states[proof.index] = PointState.CONTESTADO
+                        changed = true
+                    }
+                    else -> {
+                        // Fecha sem sobreposição: o ponto volta ao estado base e a próxima ação propõe de novo.
+                        iterator.remove()
+                        changed = true
+                    }
+                }
+            }
+            if (changed) {
+                dirty = true
+                lastSaveAt = Long.MIN_VALUE / 2
+            }
+            ProofOutcome(states, remaining)
+        }
+        save()
+        return outcome
+    }
+
+    /** Piorou = ln(agora) − ln(antes) > WORSE_DELTA **e** ln(agora) > WORSE_ERROR; sem base ou sem leitura nova não contesta. */
+    private fun experienceWorse(before: Double?, now: Double?): Boolean {
+        if (before == null || now == null || before <= 0.0 || now <= 0.0) return false
+        return ln(now) - ln(before) > EquivalenceTolerances.WORSE_DELTA && ln(now) > EquivalenceTolerances.WORSE_ERROR
+    }
+
+    /** Referência trocada: as provas abertas recomeçam do zero (o veredito dependia da Referência antiga). */
+    @Suppress("UNUSED_PARAMETER")
+    fun restartProofs(reason: String) {
+        synchronized(lock) {
+            proofs.values.filter { it.verdict == null }.forEach { it.onlineMs = 0L }
+            dirty = true
+            lastSaveAt = Long.MIN_VALUE / 2
+        }
+        save()
+    }
+
+    /** Mapa K gravado ou AutoMatch nativo: as provas abertas deixam de valer (não viram veredito). */
+    @Suppress("UNUSED_PARAMETER")
+    fun interruptProofs(reason: String) {
+        synchronized(lock) {
+            proofs.values.removeAll { it.verdict == null }
+            dirty = true
+            lastSaveAt = Long.MIN_VALUE / 2
+        }
+        save()
+    }
 
     /** Estados de banda com dado real (Platina: ZONA_ADQUIRIDA/ATIVIDADE; formato antigo: VALIDO/COLETANDO). */
     private val activeStates = setOf("ZONA_ADQUIRIDA", "ATIVIDADE", "VALIDO", "COLETANDO")
@@ -375,6 +535,7 @@ class EquivalencePhases(
                 .put("durationMonotonic", durationClock != null)
                 .put("durationAt", lastDurationAt ?: JSONObject.NULL)
                 .put("expiredEvidence", expiredEvidence ?: JSONObject.NULL).put("timeoutReason", timeoutReason)
+                .put("proofs", proofsJson())
         }
         try {
             val tmp = File(target.parentFile, target.name + ".tmp")
@@ -407,7 +568,32 @@ class EquivalencePhases(
             ecuDoneLatch = null
             lastCount = null
             quietMs = 0L
+            loadProofs(root.optJSONArray("proofs"))
         } catch (_: Exception) {
+        }
+    }
+
+    /** Arquivo antigo sem `proofs` (ou com lixo) abre sem provas. */
+    private fun loadProofs(array: JSONArray?) {
+        proofs.clear()
+        if (array == null) return
+        for (i in 0 until array.length()) {
+            try {
+                val o = array.optJSONObject(i) ?: continue
+                val index = o.optInt("index", -1)
+                if (index !in 0 until 30) continue
+                val state = runCatching { PointState.valueOf(o.optString("state")) }.getOrNull()
+                val verdict = state?.takeIf {
+                    it == PointState.CONFIRMADO || it == PointState.CONTESTADO || it == PointState.INCONCLUSIVO
+                }
+                fun number(key: String): Double? =
+                    if (o.isNull(key)) null else o.optDouble(key, Double.NaN).takeIf { it.isFinite() }
+                proofs[index] = Proof(
+                    index, verdict, o.optLong("onlineMs", 0L).coerceIn(0L, PROOF_TIMEBOX_ONLINE_MS),
+                    number("mixtureBefore"), number("roughBefore"), number("nearBefore"), number("mixtureNow"),
+                )
+            } catch (_: Exception) {
+            }
         }
     }
 }
