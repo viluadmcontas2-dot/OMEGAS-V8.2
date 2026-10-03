@@ -112,3 +112,15 @@ Regra: depois de cada commit, este arquivo é atualizado com **feito / falta / p
 
 **Próxima ação exata**
 - Conferir LN completo com eco/len/checksum, obter últimos/primeiros buffers de cada mudança de K e contador; depois publicar os resultados no tema AutoCal com limites de polling.
+
+## Commit 11 — LN completo e três épocas nativas
+
+**Feito**
+- Validador passivo executado no LOG com SHA exato: 39.517 grupos; 39.515 respostas válidas; 36.016 ACK, 3.499 CA com payload 10; request checksums sem falhas. Sonda e resposta truncada EOF explicitamente excluídas.
+- Preservados trechos mínimos, seq/idx, brackets sequenciais e vetores das três épocas em fontes/ln-validacao-completa.json. Nenhum AutoMatch manual ou writer host MUL_ACT encontrado.
+- Demonstrada aquisição GNV após 3/3. Corrigida alegação de byte 12 = enable: SC 330=1 e byte 12=0 divergem; nova L-13. Reset All não prova disable sem leitura imediata SC 330.
+- Corrigida cadência: timestamp de requisição é 0 no arquivo; somas de durações não provam intervalo de parede. Contrato de framing e contagens integralmente atualizados.
+
+**Falta / próxima ação exata**
+- Publicar desmontagem já reaberta de Timer1Timer 0x0050B408: pressão S16 /10, ring de dez amostras e exibição com ramo por configuração; temperaturas por helpers 0x0042A52C/0x0042A788; tensão por 0x00480908. Atualizar telemetria/registry/L-04 sem inventar tabelas ainda não recuperadas.
+- Depois rastrear produtor e consumidor de 48 0B (L-13); mantém-se fora do app nesta missão.

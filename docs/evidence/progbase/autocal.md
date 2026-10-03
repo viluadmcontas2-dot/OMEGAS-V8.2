@@ -46,22 +46,37 @@ Os defaults do DFM `TAUTOCALDM` (400/200/0,5/0,05/4,0/1,0/0,05/0,95) coincidem c
 
 | Ação | Handler (VA) | Frame | Efeito observado | Selo | Fonte |
 |---|---|---|---|---|---|
-| Ligar/desligar AutoCal | `CheckAutoCalEnableBeforeSetData` `0x0051A474` | `12 4A 01 01 5E` / `12 4A 01 00 5D` → `53 00` | byte 12 de `48 0B` acompanha | PROVADO | LN seq 12691 / 12615 |
+| Ligar/desligar AutoCal | `CheckAutoCalEnableBeforeSetData` `0x0051A474` | `12 4A 01 01 5E` / `12 4A 01 00 5D` → `53 00` | ACK observado; byte 12 compacto não equivale comprovadamente ao enable (4.4) | PROVADO | LN seq 12691 / 12615 |
 | Reset gasolina | `ActionResetPetrolExecute` `0x005189C0` | `02 24 04 01 2B` | — | PROVADO (frame, desmontagem) / DESCONHECIDO (efeito) | desmontagem (L-12); nunca enviado no prefixo do LN |
 | Reset GNV | `ActionResetGasExecute` `0x005189CC` | `02 24 04 02 2C` | — | idem | idem |
-| **Reset all** | `ActionResetAllExecute` `0x005189D8` | `02 24 04 04 2E` → `53 00` | imediatamente: `PETR_INJ_TBUF`, `MNFLD_PRESS_BUF`, `NUM_BUF_UPD_*`, `*_GAS_PREV`, zonas → zeros; `MUL_ACT` → `0x4000` ×30 (seq 1496); `NUM_ATUOMATCH_EXECUTED` 3 → 0 (seq 1502); `48 0B` byte 12 `01` → `00` (AutoCal fica **desligado**); curvas `*_RV` zeradas (seq 12614 ainda zerada) | PROVADO | LN seq 1487–1502 |
+| **Reset all** | `ActionResetAllExecute` `0x005189D8` | `02 24 04 04 2E` → `53 00` | imediatamente: `PETR_INJ_TBUF`, `MNFLD_PRESS_BUF`, `NUM_BUF_UPD_*`, `*_GAS_PREV`, zonas → zeros; `MUL_ACT` → `0x4000` ×30 (seq 1496); `NUM_ATUOMATCH_EXECUTED` 3 → 0 (seq 1502); `48 0B` byte 12 `01` → `00`; **não prova `AUTO_CAL_ENABLE=0`** (4.4); curvas `*_RV` zeradas (seq 12614 ainda zerada) | PROVADO | LN seq 1487–1502 |
 | AutoMatch manual | `ActionAutoMatchExecute` `0x005189B4` | `02 24 04 08 32` | — | PROVADO (frame, desmontagem) / DESCONHECIDO (efeito; nunca enviado no prefixo do LN) | desmontagem (L-12) |
 | Reset Curva K (K factor) | `ActionResetKFactorExecute` `0x0051A070` | 30 × `14 61 01 i 00 40 cs` (`MUL_ACT[i] = 1,0`) | — | PROVADO (desmontagem: IEEE `1.0` → `SetDouble` em `TAutoCalDM+0xA0` = `MUL_ACT`, contador `0x00513208`) / não visto na fiação | desmontagem (L-12) |
 | Finish AutoCal / Finish AutoMatch | `ActionFinishAutocalExecute` `0x0051A390` / `BtnFinishAutomatchClick` `0x0051A454` | copia `MaxAutomatch` (0x0165:2) para `NUM_ATUOMATCH_EXECUTED` (0x0174) via `SetNumber` (`12 74 01 v` ou 2 bytes); Finish AutoCal dorme 100 ms e refaz a tela | — | PROVADO (desmontagem + layout `0x00510DF8`) / não visto na fiação | desmontagem (L-12) |
 | Apagar pontos selecionados | `ActionDeleteSelectedPointsExecute` `0x00518E6C` | `SetVector` de `GAS_POINT_2DELETE` (18 bytes) + `PETROL_POINT_2DELETE` (18 bytes) + `01 24 05 2A` | — | PROVADO (desmontagem) / não visto na fiação | desmontagem (L-12) |
 | Editar referências (`TFormRifAutocal`) e ExportToK | `ActionAutoCalRifExecute` `0x005187A0`, `ActionExportToKExecute` `0x00518514` | sem `SendCommand` direto nos handlers | só matemática no PC (`0x00512708` bracket, `0x0051280C` interpolação linear) | PROVADO (host-only) | desmontagem (L-12) |
 
-## 4.4 AutoMatch nativo: o que a fiação mostra
+## 4.4 AutoMatch nativo: três épocas reabertas no LN completo
 
-- `PROVADO` (LN, prefixo): antes do Reset All a ECU já tinha `NUM_ATUOMATCH_EXECUTED` = 3 e `MUL_UPD_CALL_CNTR_EE` = 3 com `MUL_ACT` ≠ 1,0 e `MUL_PREV_EE` ≠ `MUL_ACT` (seq 342, 368–370): três AutoMatch já haviam ocorrido com o PC apenas lendo (nenhum `02 24 04 08` em todo o prefixo). As três épocas **seguintes** ao Reset All (contador 0→1→2→3, rolagem dos buffers `*_GAS` para `*_GAS_PREV`, novo `MUL_ACT`) estão depois da seq 20.288 e ficam `DESCONHECIDO` nesta branch até o LOG completo ser parseado (`lacunas.md` L-06/L-11).
-- `PROVADO` (LN): `NUM_BUF_UPD_GAS` continua a crescer após o contador chegar a 3 (aquisição não para na cota).
-- `INFERIDO`: `MUL_ACT[i]` novo = função de (`PETR_INJ_TBUF`, `MNFLD_PRESS_BUF`) × (`PETR_INJ_TBUF_GAS`, `MNFLD_PRESS_BUF_GAS`) nas mesmas bandas de MAP — as duas curvas de referência são MAP(Tinj gasolina) e MAP(Tinj GNV) sobre o mesmo eixo `PETR_INJ_TBP`, e o nome `MUL_ACT` ("multiplicador atual") mais a convenção 1,0 = neutro apontam para `K = Tinj_gasolina_equivalente / Tinj_atual` por banda. A aritmética exata está no firmware: `DESCONHECIDO` (o PC não a contém; ver `lacunas.md` L-05).
-- `PROVADO`: `MUL_PREV_EE` guarda o `MUL_ACT` da época anterior; `MUL_UPD_CALL_CNTR_EE` = número de AutoMatch executados.
+Fonte: `fontes/ln-validacao-completa.json`, produzido pelo validador passivo sobre o SHA-256 exato do LN. Todas as leituras abaixo têm eco, len e checksum válidos.
+
+| Evento | Último K anterior (seq / idx) | Primeiro K novo (seq / idx) | Contador compacto primeiro novo | Readback SC 372 |
+|---|---|---|---|---|
+| 0→1 | 24597 / 728783 | 24645 / 730735 | 24622 / 729727 | seq 24671 = 1 |
+| 1→2 | 27802 / 854600 | 27854 / 856550 | 27828 / 855588 | seq 27874 = 2 |
+| 2→3 | 30055 / 942975 | 30100 / 944795 | 30125 / 945739 | seq 30178 = 3 |
+
+`PROVADO`: são três mudanças de MUL_ACT acompanhadas de avanço do contador. **Nenhum** `02 24 04 08` (AutoMatch manual) e nenhuma escrita host `14 61 01` aparecem nas 39.517 transações. Logo a atualização observada não foi enviada pelo PC como escrita de MUL_ACT nem como solicitação manual de AutoMatch. A determinação do instante e aritmética interna permanece desconhecida.
+
+`PROVADO` no polling: primeira época copia os vetores GNV lidos nas seq 24591/24592 para GAS_PREV (24634/24635), zera os atuais (24639/24640) e contadores (24641), e atualiza K (24645). Na segunda, GAS_PREV muda em 27838/27839 e os contadores atuais já mostram nova coleta em 27845. Na terceira, GAS_PREV muda em 30089/30090, atuais/contadores estão zerados em 30094–30096, e **nova aquisição aparece após 3/3**: contadores GNV seq 30149 = [0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0]; seq 31483 = [5,1,0,0,0,1,1,1,0,0,0,0,1,0,0,2,0,0].
+
+Os snapshots são sequenciais: na segunda/terceira época existem pontos adquiridos entre dois polls. Não exigir igualdade integral com um vetor anterior desatualizado e não inventar uma operação atômica a partir deles.
+
+**Correção do byte 12 de 48 0B:** a equivalência `b12 = AUTO_CAL_ENABLE` não é sustentada. SC 330 foi lido como **1** na seq 20201, enquanto b12 permanece **0** em 20579 e durante as três épocas; o último enable escrito antes desses eventos é `12 4A 01 01`, seq 12863. O byte 12 compacto só muda para 1 na seq 32238, depois do contador 3. `PROVADO` são os bytes e a divergência; sua semântica final é `DESCONHECIDO` (L-13). Não dizer que Reset All desligou o enable sem readback SC 330 imediatamente após a ação.
+
+O log inicia com contador 3 já existente. Isso não registra como os três eventos anteriores ocorreram. Nomes e valores de MUL_PREV_EE sugerem estado anterior, mas sua atualização por época não é observada no restante desta captura.
+
+`DESCONHECIDO`: algoritmo do AutoMatch, critérios internos, limites, ganho/amortecimento e interpretação física de cada ajuste (L-05). A hipótese de razão entre tempos equivalentes continua `INFERIDA`, sem fórmula promovida a fato. Não deduzir eficiência ou consumo a partir da variação de K.
 
 ## 4.5 O gráfico `ChartData` do `TAutoCalUI`: camadas e origem
 

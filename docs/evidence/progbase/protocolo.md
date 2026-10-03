@@ -2,7 +2,7 @@
 
 Selos: `PROVADO` = visto na fiação (LN) ou no DUMP sem ambiguidade; `INFERIDO` = dedução com raciocínio em uma linha; `DESCONHECIDO` = lacuna, com o que provaria. Fontes e notação em `fontes/INDICE-FONTES.md`. Comandos AutoCal em `autocal.md`; Mapa K/Curva K em `curvas-mapas.md`; nível em `level.md`.
 
-Notação: `LN seq N / idx M` = transação N (ordem das escritas `IRP_MJ_WRITE` com resposta) e índice IRP M do `PortmonLOGNOVO.LOG` contido em `PortmonLOGNOVO (1).zip`. Nesta branch foi parseado o **prefixo** do LOG (63.424.275 B, 1.117.269 linhas, 20.288 transações, idx ≤ 558.633); a numeração é a do arquivo completo (ver índice de fontes). `DUMP/<arquivo>` = arquivo da pasta DUMP do Drive; `@0x…` = offset zero-based dentro do recurso; `VA` = endereço virtual em `DUMP/ProgBase.exe.Dump.bin` (ImageBase `0x00400000`).
+Notação: `LN seq N / idx M` = transação N (ordem das escritas `IRP_MJ_WRITE` com resposta) e índice IRP M do `PortmonLOGNOVO.LOG` contido em `PortmonLOGNOVO (1).zip`. O LOG completo foi parseado: 149.911.521 B, 2.631.711 linhas e 39.517 transações. Seq 1 é sonda sem quadro; seq 39517 é resposta incompleta no EOF. As contagens históricas abaixo, quando não marcadas como completas, referem-se ao prefixo seq 1–20288. Resultado integral em 1.8. `DUMP/<arquivo>` = arquivo da pasta DUMP do Drive; `@0x…` = offset zero-based dentro do recurso; `VA` = endereço virtual em `DUMP/ProgBase.exe.Dump.bin` (ImageBase `0x00400000`).
 
 ## 1.1 Transporte
 
@@ -18,9 +18,9 @@ Notação: `LN seq N / idx M` = transação N (ordem das escritas `IRP_MJ_WRITE`
 
 ## 1.2 Formato do quadro
 
-**Requisição** = `cmd arg… cs`, `cs = soma(bytes anteriores) mod 256`. `PROVADO`: 20.287/20.287 requisições multi-byte do LN fecham a soma.
+**Requisição** = `cmd arg… cs`, `cs = soma(bytes anteriores) mod 256`. `PROVADO`: 39.516/39.516 requisições multi-byte do LN completo fecham a soma.
 
-**Resposta** = `eco literal da requisição` + `status` + `len` + `payload[len]` + `cs`, `cs = (status + len + soma(payload)) mod 256`. `PROVADO`: 20.287/20.287 no LN. Exemplo: `29 1D 00 46 | 53 05 00 00 00 00 00 | 58`.
+**Resposta** = `eco literal da requisição` + `status` + `len` + `payload[len]` + `cs`, `cs = (status + len + soma(payload)) mod 256`. `PROVADO`: 39.515/39.515 respostas enquadradas no LN completo (sonda e EOF excluídos). Exemplo: `29 1D 00 46 | 53 05 00 00 00 00 00 | 58`.
 
 Status observados: **só `53` (ACK) e `CA`** (ver 1.5). Nenhum outro byte de status existe no LN.
 
@@ -33,7 +33,7 @@ Todo parâmetro tem um `SerialCode` (SC) de 16 bits, enviado **little-endian** (
 | Operação | Corpo (sem checksum) | Payload da resposta | Selo | Fonte |
 |---|---|---|---|---|
 | Telemetria ao vivo | `48 01` | 34 bytes (`telemetria.md`) | PROVADO | 9.408× no LN |
-| Status compacto AutoCal | `48 0B` | 14 bytes: byte 12 = `AUTO_CAL_ENABLE`, byte 13 = contador AutoMatch | PROVADO | LN seq 410 (`53 0E 00×12 01 03`: AutoCal ligado, 3 AutoMatch); `00 00` após Reset All (seq 1487–1502) |
+| Status compacto AutoCal | `48 0B` | 14 bytes: byte 12 de semântica **DESCONHECIDA** (L-13); byte 13 acompanha contador AutoMatch | PROVADO | LN seq 410 (`53 0E 00×12 01 03`: AutoCal ligado, 3 AutoMatch); `00 00` após Reset All (seq 1487–1502); isso não prova enable desligado |
 | Status secundário | `48 08` | **sempre `CA 01 10`** nesta ECU (3.334×) | PROVADO | LN seq 444 em diante; o ProgBase insiste nele intercalado com `48 01` |
 | Ler escalar (`GetNumber`) | `09 lo hi` | 1 ou 2 bytes (`DataLength`) | PROVADO | `09 79 00 82 → 53 02 00 0A` (LN seq 28); `09 21 00 2A → 53 01 00` |
 | Ler elemento de vetor | `0A lo hi idx` | 1 elemento | PROVADO | `0A 73 01 00 7E → 53 01 04` (LN seq 19, `MODULE_VERSION`=4); `0A 2C 01 00..04` (seq 298–302) |
@@ -73,7 +73,7 @@ Sequência real, `PROVADO` (LN seq 2–30, repetida em cada reconexão nas seq 7
 
 Depois disso o ProgBase lê **todos** os parâmetros do modelo (seq 31–410: 365 requisições distintas, 236 SC diferentes, inclusive as 13 linhas do Mapa K) e só então começa a telemetria `48 01` (seq 411 / idx 7295). O mesmo dump completo se repete a cada reconexão.
 
-Desconexão (`PROVADO`): `01 12 00 13 → 53 00`, `00 01 01 → 53 00`, `IRP_MJ_CLEANUP/CLOSE` (LN seq 7549–7550 e 19890–19891). Na primeira sessão (sem escrita) só `00 01 01`. `INFERIDO`: `01 12 00` é "encerrar programação/gravar" e só é enviado quando houve escrita de parâmetro na sessão (as duas ocorrências vêm logo após blocos `14 3D 00`/`14 37 00`). O prefixo parseado termina no meio da telemetria.
+Desconexão (`PROVADO`): `01 12 00 13 → 53 00`, `00 01 01 → 53 00`, `IRP_MJ_CLEANUP/CLOSE` (LN seq 7549–7550 e 19890–19891). Na primeira sessão (sem escrita) só `00 01 01`. `INFERIDO`: `01 12 00` é "encerrar programação/gravar" e só é enviado quando houve escrita de parâmetro na sessão (as duas ocorrências vêm logo após blocos `14 3D 00`/`14 37 00`). O arquivo completo termina no meio da última resposta de telemetria (seq 39517).
 
 ## 1.5 Status `CA`: o que significa de verdade
 
@@ -95,8 +95,20 @@ Conclusão: `INFERIDO` com força: `CA 01 10` = "objeto/comando não suportado p
 |---|---|---|---|
 | Timer de apresentação | `Timer1.Interval = 75` ms em `TFormVisualizza`; `TimerDati` em `TFormConfig` | PROVADO (DFM) | `DUMP/RT_RCDATA(10)__TFORMVISUALIZZA__0.bin`, `__TFORMCONFIG__0.bin` (offsets em `telemetria.md` 2.1) |
 | Laço serial em regime | `48 01` alternado 1:1 com `48 08` (ou com `00 14` quando a calibração clássica está aberta); leituras secundárias intercaladas | PROVADO | LN seq 715–723, 1905–1909 |
-| Família de aquisição AutoCal (`0x015B…0x0163`, `0x016F/0x0170`) | ~2,0 s (LN: `29 5B 01` 2,04 s; `29 61 01` 2,05 s) | PROVADO | LN |
-| Família de referência (`0x018D/0x018E`) | ~4,0 s (LN 4,05 s) | PROVADO | LN |
+| Família de aquisição AutoCal (`0x015B…0x0163`, `0x016F/0x0170`) | estimativa histórica ~2 s por soma de durações de IRP; **tempo de parede não provado** | INFERIDO | request_timestamp é 0 em todo o LN; confirmar no scheduler DUMP |
+| Família de referência (`0x018D/0x018E`) | estimativa histórica ~4 s por durações de IRP; **tempo de parede não provado** | INFERIDO | confirmar scheduler DUMP |
 | Escrita em bloco | 144 escritas `14 54 00` consecutivas sem nenhuma telemetria entre elas; 24 escritas de eixo idem | PROVADO | LN seq 1054–1197, 7525–7548, 15226–15249 |
 | Retries | nenhuma requisição repetida após falta de resposta; só 3 TIMEOUT em todo o prefixo e todos na sondagem `Serial1` | PROVADO (ausência) | LN |
 | Readback após escrita | não há releitura imediata depois do bloco K nem depois de `12 4A 01`; o ProgBase volta à telemetria e relê os objetos no ciclo normal | PROVADO | LN seq 1198, 12616 |
+
+## 1.8 Conferência integral do LN
+
+- 39.517 grupos de escrita; 39.516 requisições multi-byte com checksum válido.
+- 39.515 respostas com eco literal, len exato e checksum válido: **36.016 ACK 53** e **3.499 CA**, todos CA com payload `10`.
+- Excluídas do formato: sonda seq 1 / idx 34 (`00 → 80`) e EOF seq 39517 / idx 1315820 (`48 01 49`, apenas `48` recebido). EOF não prova timeout/retry nem defeito da ECU.
+- Telemetria: 20.451 requisições, 20.450 respostas completas. Status compacto: 434 leituras; K: 439; contador GNV: 440.
+- Nenhum status adicional entre respostas completas. Isso fecha a busca no **corpus**, não o espaço de status possíveis do protocolo.
+- `request_timestamp` do parser é 0.0 para todas as escritas deste arquivo. Durações de IRP não incluem necessariamente pausas do host: não calcular cadência de parede a partir delas.
+- Métodos e estatísticas reproduzíveis: `python docs/evidence/progbase/fontes/validar-ln.py PortmonLOGNOVO.LOG --parser scripts/omegas/portmon_parser.py`; SHA do parser de retomada `17252b0a06e6091ae77d0d44843a8902c32d2172` (Git blob).
+
+Resultado e trechos mínimos: `fontes/ln-validacao-completa.json`; limites e exclusões fazem parte da evidência.

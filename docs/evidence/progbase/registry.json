@@ -1,6 +1,6 @@
 {
  "schema": "omegas.evidence.progbase-original.registry.v1",
- "gerado_em": "2026-10-02 (revisão: fontes restritas a DUMP + LN)",
+ "gerado_em": "2026-10-03 UTC (continuação da sessão 2026-10-02 BRT; LN completo e DFM reextraídos)",
  "branch": "evidence/progbase-original",
  "fontes": "docs/evidence/progbase/fontes/INDICE-FONTES.md (somente DUMP + PortmonLOGNOVO (1).zip)",
  "selos": {
@@ -34,17 +34,16 @@
    "nome": "status compacto AutoCal",
    "encoding": "",
    "forma": "",
-   "tamanho": "14 bytes; b12=AUTO_CAL_ENABLE, b13=NUM_AUTOMATCH",
+   "tamanho": "14 bytes; b12 semântica DESCONHECIDA, b13 acompanha NUM_AUTOMATCH",
    "escala": "",
    "unidade": "",
    "rw": "R",
    "consumidor_no_progbase": "TAutoCalUI",
    "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 23x",
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+    "LN completo: 434 leituras; autocal.md 4.4 e fontes/ln-validacao-completa.json"
    ],
    "confianca": "PROVADO",
-   "nota": ""
+   "nota": "Não equivale comprovadamente a AUTO_CAL_ENABLE; L-13."
   },
   {
    "id": "cmd-48-08",
@@ -2188,7 +2187,7 @@
     "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 12691/12615"
    ],
    "confianca": "PROVADO",
-   "nota": ""
+   "nota": "Escrita e ACK provados; b12 compacto não é readback equivalente do SC 330."
   },
   {
    "id": "acao-reset-petrol",
@@ -2230,7 +2229,7 @@
    "id": "acao-reset-all",
    "tipo": "acao",
    "endereco_ou_offset": "02 24 04 04 2E",
-   "nome": "reset all: buffers e zonas zerados, MUL_ACT=1,0, contador 3->0, AutoCal desligado, RV zeradas",
+   "nome": "reset all: buffers/zonas zerados, MUL_ACT=1,0, contador 3->0, RV zeradas",
    "encoding": "",
    "forma": "",
    "tamanho": "",
@@ -2243,7 +2242,7 @@
     "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
    ],
    "confianca": "PROVADO",
-   "nota": ""
+   "nota": "b12 compacto 1->0 não prova enable desligado; sem readback imediato SC 330."
   },
   {
    "id": "acao-automatch-manual",

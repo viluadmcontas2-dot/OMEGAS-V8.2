@@ -17,20 +17,20 @@ Um ACK prova resposta ao comando, não seu efeito completo. Valores de polling n
 
 | Tema | Arquivo | Estado |
 |---|---|---|
-| Transporte | protocolo.md | prefixo documentado; extensão ao LN completo em análise |
+| Transporte | protocolo.md | LN completo validado; política de falha/retry ainda parcial |
 | Telemetria | telemetria.md | escalas e offsets sob revalidação no código original |
 | Parâmetros | parametros.md | inventário DFM regenerado; consumidores e unidades ainda têm lacunas |
-| AutoCal | autocal.md | três épocas do LN completo em análise; aritmética ECU desconhecida |
+| AutoCal | autocal.md | três épocas e aquisição pós-3/3 provadas; b12 compacto desconhecido |
 | Curvas e mapas | curvas-mapas.md | observações preservadas; mecanismo do readback ainda desconhecido |
 | Level | level.md | referências e DFM; filtro/enum/conversão ainda parciais |
-| Lacunas | lacunas.md | L-01…L-12; acompanhar resolução parcial |
+| Lacunas | lacunas.md | L-01…L-13; acompanhar resolução parcial |
 | Registro | registry.json | 126 entradas; atualização de provas no checkpoint seguinte |
 
 `fontes/parametros-dfm-inventario.json`: **364 componentes SerialCode**, extraídos de quatro DFM originais, com classe, propriedades explícitas, offset de propriedade/valor e hash por fonte. Substitui o inventário herdado de 344 entradas; propriedades ausentes não são defaults provados. `fontes/dfm2txt.py` e `fontes/fontes-manifest.json` permitem reprodução.
 
 ## Retomada
 
-Leia `CHECKPOINTS.md`, depois a lacuna e o tema indicado. O commit 10 conclui a reextração DFM e acesso às fontes completas; próximo passo: publicar conferência integral LN e desmontagem dirigida de Timer1Timer.
+Leia `CHECKPOINTS.md`, depois a lacuna e o tema indicado. Commits 10/11: DFM reextraído, fontes completas, três épocas e LN validados. Próximo passo: destilar desmontagem dirigida de Timer1Timer e revisar escalas.
 
 ## Agenda de contraste posterior
 
