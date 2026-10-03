@@ -761,6 +761,7 @@ class TelemetryForegroundService : Service() {
             kFactor.beginUsbSession(sessionId)
             nativeAutoCal.beginUsbSession(sessionId)
             if (!wasConnected) enginePausedByUser = false
+            // A gravação é sempre automática ao conectar a ECU; não depende de preferência.
             if (!sessionRecorder.statusObject().optBoolean("recording")) {
                 startJournalSession(
                     "MP48 conectado",
