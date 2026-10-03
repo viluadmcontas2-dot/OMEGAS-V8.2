@@ -478,17 +478,19 @@ class RefinoRenderTest {
             }
             checkNotNull(b) { "não foi possível variar o Petrol Inj. do quadro real (base $basePetrol ms)" }
             service.telemetryStore.beginSession(9001L)
-            injectLive(service, a, 9001L)
             openRefino(scenario)
-            SystemClock.sleep(900L)
+            // A tela esconde a bolinha de telemetria velha: cada quadro é injetado logo antes da leitura.
+            injectLive(service, a, 9001L)
+            scenario.onActivity { it.refreshWebUi() }
+            SystemClock.sleep(500L)
             val first = refinoDom(scenario)
             injectLive(service, b, 9001L)
             scenario.onActivity { it.refreshWebUi() }
-            SystemClock.sleep(1_200L)
+            SystemClock.sleep(500L)
             val second = refinoDom(scenario)
             saveEvidence("refino-agora-acompanha", second, scenario, provenance("REAL_REPLAY+SYNTHETIC_VARIATION", "portmon-autocal-cycle-v1", "um quadro MP48 real e o mesmo quadro com o contador de Petrol Inj. alterado").put("firstCx", first.opt("liveCx")).put("secondCx", second.opt("liveCx")))
             assertClean(second)
-            assertTrue("bolinha AGORA visível com telemetria fresca", first.getBoolean("liveVisible"))
+            assertTrue("bolinha AGORA visível com telemetria fresca (liveVisible=${first.opt("liveVisible")} cx=${first.opt("liveCx")} chip=${first.opt("chip")} headline=${first.opt("headline")})", first.getBoolean("liveVisible"))
             assertNotEquals("a bolinha AGORA do Refino precisa mexer quando a telemetria muda", first.optDouble("liveCx"), second.optDouble("liveCx"), 0.5)
         } finally { scenario.close() }
     }
