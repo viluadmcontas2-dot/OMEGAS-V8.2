@@ -79,6 +79,69 @@ defect('DEFECT-16', 'Curva K: fator desconhecido (null) aparece como "0,0000" em
   a.destroy();
   return bad;
 });
+// DEFECT-17: toque duplo em "Gravar" do Mapa K (ECU ocupada) chama startMapBatchWrite duas vezes.
+defect('DEFECT-17', 'Mapa K: toque duplo em "Gravar" envia a escrita duas vezes (writePrepared sem guarda de ocupado)', () => {
+  const a = S.mapApp({ opPolls: 8 }); a.settle(12);
+  const cell = (r, c) => a.$(`.map-k-cell[data-row="${r}"][data-column="${c}"]`);
+  [[2, 3], [2, 4]].forEach(([r, c]) => { const e = cell(r, c); e.dispatchEvent(new a.win.Event('pointerdown', { bubbles: true, pointerId: 1 })); e.dispatchEvent(new a.win.Event('pointerup', { bubbles: true, pointerId: 1 })); e.click(); });
+  const mode = a.byId('mapAdjustmentMode'); mode.value = 'target'; mode.dispatchEvent(new a.win.Event('change', { bubbles: true }));
+  const input = a.byId('mapAdjustmentValue'); input.value = '150'; input.dispatchEvent(new a.win.Event('input', { bubbles: true }));
+  const mark = a.world.mark();
+  a.byId('mapReviewButton').click(); a.byId('mapReviewButton').click(); a.flush();
+  const n = a.world.since(mark).filter(c => c.method === 'startMapBatchWrite').length;
+  a.destroy();
+  return n > 1;
+});
+// DEFECT-18: eixo/valor desconhecido do Mapa K vira "0,0 ms" (map.js finite(null) === 0).
+defect('DEFECT-18', 'Mapa K: bin de Petrol Inj. desconhecido (null) aparece como "0,0 ms" em vez de —', () => {
+  const w = new World();
+  w.mutateResponse = (b, m, obj) => { if (m === 'getKMapReadResult' && obj.axes) obj.axes.petrolBins[2] = null; return obj; };
+  const a = boot({ world: w });
+  a.go('map'); a.settle(4);
+  const bad = /^\s*0([.,]0+)?\s*ms/.test(a.$('[data-select-row="2"]').textContent);
+  a.destroy();
+  return bad;
+});
+// DEFECT-19: se listRecordedSessions falha, a aba Sessões fica em "Lendo as sessões salvas…" para sempre.
+defect('DEFECT-19', 'Sessões: falha ao listar vira "Lendo as sessões salvas…" eterno (sem erro legível nem próxima ação)', () => {
+  const w = new World();
+  w.throwOn.add('listRecordedSessions');
+  const a = boot({ world: w });
+  a.go('sessions'); a.advance(10000); a.settle(4);
+  const stuck = /Lendo as sess/i.test(a.doc.querySelector('[data-screen="sessions"]').textContent);
+  a.destroy();
+  return stuck;
+});
+// DEFECT-20: plural errado: "1 apagõo" (sessions.js monta 'apagõ' + 'o').
+defect('DEFECT-20', 'Sessões: singular escrito "1 apagõo" em vez de "1 apagão"', () => {
+  const w = new World();
+  w.sessions = [{ id: 'session_2026-10-02_10-00-00', reason: 'USB', durationMs: 60000, bytes: 10, cngTicks: 1, petrolTicks: 1, semanticSummary: { blackouts: 1 } }];
+  const a = boot({ world: w });
+  a.go('sessions'); a.settle(6);
+  const bad = /apagõo/.test(a.doc.querySelector('[data-screen="sessions"]').textContent);
+  a.destroy();
+  return bad;
+});
+// DEFECT-21: configuração de sessão não numérica vira "NaN"/"Infinity" no campo e no texto de Ferramentas.
+defect('DEFECT-21', 'Ferramentas: retenção de sessões não numérica (keepSessions/maxSessionMb) aparece como NaN/Infinity', () => {
+  const w = new World();
+  w.sessionStatus = { ...w.sessionStatus, settings: { telemetryEveryMs: 250, maxSessionMb: 256, keepSessions: 'abc' } };
+  const a = boot({ world: w });
+  a.go('tools'); a.settle(6);
+  const bad = /NaN|Infinity/.test(a.doc.querySelector('[data-screen="tools"]').textContent);
+  a.destroy();
+  return bad;
+});
+// DEFECT-22: getRefinedAnalysis.points que não é lista derruba a renderização do Refino (TypeError em refino.js:482).
+defect('DEFECT-22', 'Refino: análise com points não-lista lança TypeError ao renderizar (refino.js:482)', () => {
+  const w = new World();
+  w.refined = { ok: true, available: true, points: 'abc' };
+  const a = boot({ world: w });
+  a.go('refino'); a.settle(4);
+  const hit = a.errors.some(e => /map is not a function/.test(e));
+  a.destroy();
+  return hit;
+});
 defect('DEFECT-14', 'Curva K: toque duplo em "Gravar" envia a escrita duas vezes (writePrepared sem guarda de ocupado)', () => {
   const a = S.curveApp({ opPolls: 8 }); a.settle(12); S.editPoint(a, 9);
   const mark = a.world.mark();

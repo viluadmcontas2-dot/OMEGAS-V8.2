@@ -2,10 +2,10 @@
 // M1 · conexão: sem cabo / conectando / conectado / telemetria velha (> 1.5 s) / ECU muda.
 // Falha quando o app se comporta mal EM USO: botão congelado, número 0 no lugar de "—", exceção, estado indistinguível.
 const test = require('node:test');
-const L = require('./lib.cjs');
+const L = require('./wiring/lib.cjs');
 const { assert } = L;
-const { todo } = require('./registry.cjs');
-const { realFrames } = require('./world.cjs');
+const { todo } = require('./wiring/registry.cjs');
+const { realFrames } = require('./wiring/world.cjs');
 
 const FRAMES = realFrames('ref_', f => f.fuel === 'GASOLINA' && f.petrol_ms > 2);
 
@@ -44,7 +44,7 @@ function prepared(name, route = 'dashboard') {
 
 const ZERO = /^\s*0([.,]0+)?\s*(ms|bar)?\s*$/;
 /** Valores numéricos do Agora que NÃO podem mostrar 0 quando a fonte é desconhecida (ids estáveis do dashboard, se existirem). */
-const UNKNOWN_NUMBER_IDS = ['dashHeroPetrol', 'dashPetrol', 'dashRpm', 'dashMap', 'dashGas', 'dashLevelsRaw', 'dashCell'];
+const UNKNOWN_NUMBER_IDS = ['dashHeroPetrol', 'dashPetrol', 'dashRpm', 'dashMap', 'dashGas', 'dashLevelsRaw', 'dashCell', 'dashAge'];
 
 for (const name of STATES) {
   test(`M1 ${name}: tela limpa, sem exceção e com o estado certo no trilho`, () => {

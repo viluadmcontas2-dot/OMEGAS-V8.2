@@ -4,10 +4,10 @@
 // o app mede a última gravação não se oferece gravar; "Revisar e gravar" só existe com proposta;
 // só há UMA ação principal; o Desfazer fica visível FORA do <details>.
 const test = require('node:test');
-const L = require('./lib.cjs');
+const L = require('./wiring/lib.cjs');
 const { assert } = L;
-const { todo } = require('./registry.cjs');
-const W = require('./world.cjs');
+const { todo } = require('./wiring/registry.cjs');
+const W = require('./wiring/world.cjs');
 
 const D9 = todo('DEFECT-9');
 const WRITE_CALLS = ['startCurveBatchWrite', 'startCurveRestoreWrite', 'startCurveReset', 'startMapBatchWrite'];
@@ -137,4 +137,46 @@ test('M4 fuzz de equivalência/análise refinada/projeção: nunca exceção/NaN
   assert.ok(effective > cases * 0.2, `fuzz inócuo ${effective}/${cases}`);
   assert.ok(cases > 300, `casos ${cases}`);
   assert.deepEqual(failures.slice(0, 6), [], `${failures.length}/${cases}`);
+});
+
+test('M4 desconhecido nunca vira 0: razão GNV÷gasolina, pontos da ECU e nossos pontos ausentes mostram —', D9, () => {
+  for (const mutate of [eq => { eq.ratio = null; }, eq => { delete eq.ratio; }, eq => { eq.ratio = ''; }]) {
+    const w = new W.World();
+    w.equivalence = W.equivalenceFor('COLETANDO_NOSSOS');
+    mutate(w.equivalence);
+    w.equivalence.autopilot.petrolValid = null; w.equivalence.autopilot.gasValid = null;
+    delete w.equivalence.denseBands;
+    w.refined = W.refinedAnalysis(false, w.curve);
+    const app = L.boot({ world: w });
+    app.go('refino'); app.settle(4);
+    assert.equal(app.byId('refinoRatio').textContent.trim(), '—', `razão desconhecida apareceu como "${app.byId('refinoRatio').textContent}"`);
+    assert.equal(app.byId('refinoEcuPoints').textContent.trim(), '—');
+    assert.equal(app.byId('refinoOurPoints').textContent.trim(), '—');
+    app.destroy();
+  }
+});
+
+test('M4 Agora: índice de equivalência desconhecido mostra — (nunca 0%); índice medido 0 é 0%', () => {
+  const unknown = new W.World();
+  unknown.equivalence = { ok: true, available: true, index: null, autopilot: { phase: 'COLETANDO_NOSSOS' } };
+  const a = L.boot({ world: unknown });
+  a.settle(8);
+  const node = a.byId('dashIndex');
+  if (node) assert.equal(node.textContent.trim(), '—', `índice null apareceu como "${node.textContent}"`);
+  const zero = new W.World();
+  zero.equivalence = { ok: true, available: true, index: 0, coverage: 0.1, autopilot: { phase: 'COLETANDO_NOSSOS' } };
+  const b = L.boot({ world: zero });
+  b.settle(8);
+  const z = b.byId('dashIndex');
+  if (z) assert.equal(z.textContent.trim(), '0%', 'índice medido 0 deve aparecer como 0%');
+  L.assertClean(a, 'M4/agora índice'); L.assertClean(b, 'M4/agora índice 0');
+});
+
+test('M4 análise refinada com points inválido (não é lista) não derruba o Refino', todo('DEFECT-22'), () => {
+  const w = new W.World();
+  w.equivalence = W.equivalenceFor('COLETANDO_NOSSOS');
+  w.refined = { ok: true, available: true, points: 'abc' };
+  const app = L.boot({ world: w });
+  app.go('refino'); app.settle(4);
+  assert.deepEqual(app.errors.filter(e => !/agreed/.test(e)), []);
 });

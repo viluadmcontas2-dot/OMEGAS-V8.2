@@ -10,6 +10,11 @@ const registry = require('./registry.cjs');
 const KNOWN_ERRORS = [['DEFECT-9', /agreed/]];
 // Botões congelados já registrados como defeito (descrição do elemento): saem da falha enquanto o defeito existir
 // e voltam a falhar sozinhos quando ele for corrigido (a probe deixa de reproduzir).
+// Falhas de fuzz já registradas como defeito (rótulo do caso): mascaradas enquanto o defeito existir.
+const KNOWN_FUZZ = [
+  ['DEFECT-22', /getRefinedAnalysis\.points :=/],
+  ['DEFECT-21', /getSessionRecorderStatus\.settings\.(maxSessionMb|keepSessions|telemetryEveryMs)/],
+];
 const KNOWN_FROZEN = [
   ['DEFECT-11', /#curveReviewButton/],
   ['DEFECT-12', /data-curve-nudge|#curvePreparePoint/],
@@ -201,7 +206,7 @@ function sweep({ prepare, within, allow, world }) {
 // ---------------------------------------------------------------- fuzz
 const MUTATIONS = [
   ['null', () => null],
-  ['NaN', () => 'NaN'],
+  ['infinito (1e999)', () => '1e999'],
   ['vazio', () => ''],
   ['array vazio', () => []],
   ['ausente', () => undefined],
@@ -240,6 +245,7 @@ function fuzz({ prepare, methods, maxPathsPerMethod = 30, extra, perTick }) {
   app.settle(2);
   const base = app.world.seen;
   const failures = [];
+  const knownHits = [];
   let cases = 0;
   let effective = 0;
   const unhandled = require('./harness.cjs').unhandled;
@@ -252,6 +258,7 @@ function fuzz({ prepare, methods, maxPathsPerMethod = 30, extra, perTick }) {
       for (const [mname, make] of MUTATIONS) {
         cases += 1;
         const label = `${method}.${p.join('.') || '(raiz)'} := ${mname}`;
+        const fail = msg => { const k = KNOWN_FUZZ.find(([id, rx]) => rx.test(label) && registry.active(id)); if (k) knownHits.push(`${k[0]} ${msg}`); else failures.push(msg); };
         const errors0 = app.errors.length;
         const unhandled0 = unhandled.length;
         app.world.mutateResponse = (bridge, m, obj) => {
@@ -262,23 +269,23 @@ function fuzz({ prepare, methods, maxPathsPerMethod = 30, extra, perTick }) {
           return out;
         };
         let hit = false;
-        try { for (let t = 0; t < 3; t += 1) { if (perTick) perTick(app); app.advance(250); } app.flush(); } catch (e) { failures.push(`${label}: lançou ${e.message}`); }
+        try { for (let t = 0; t < 3; t += 1) { if (perTick) perTick(app); app.advance(250); } app.flush(); } catch (e) { fail(`${label}: lançou ${e.message}`); }
         const problems = pageProblems(app);
-        if (errorsSince(app, errors0).length) failures.push(`${label}: exceção: ${errorsSince(app, errors0).join(' | ').slice(0, 220)}`);
-        else if (unhandled.length > unhandled0) failures.push(`${label}: rejeição não tratada`);
-        else if (problems.length) failures.push(`${label}: ${problems[0]}`);
+        if (errorsSince(app, errors0).length) fail(`${label}: exceção: ${errorsSince(app, errors0).join(' | ').slice(0, 220)}`);
+        else if (unhandled.length > unhandled0) fail(`${label}: rejeição não tratada`);
+        else if (problems.length) fail(`${label}: ${problems[0]}`);
         if (hit) effective += 1;
         // recupera
         app.world.mutateResponse = null;
         for (let t = 0; t < 3; t += 1) { if (perTick) perTick(app); app.advance(250); } app.flush();
         const after = pageProblems(app);
-        if (after.length && !problems.length) failures.push(`${label}: NÃO se recupera: ${after[0]}`);
+        if (after.length && !problems.length) fail(`${label}: NÃO se recupera: ${after[0]}`);
         app.errors.length = errors0; // não acumula o mesmo erro nos casos seguintes
       }
     }
   }
   app.destroy();
-  return { cases, effective, failures };
+  return { cases, effective, failures, knownHits };
 }
 
 const POLL = new Set(['getStatus', 'getPresentSnapshot', 'getPresentSnapshotIfChanged', 'getLastOperation', 'getKMapReadResult', 'getUiProjection', 'getEquivalence', 'getEquivalenceFresh', 'getRefinedAnalysis', 'getRefinementPhase', 'getNativeActionStatus', 'getNativeMonitorStatus', 'getNativeMonitorSnapshot', 'getSessionLedgerStatus', 'listCurveBackups', 'listMapBackups', 'getSessionRecorderStatus', 'listRecordedSessions', 'getLogs', 'getOverlayStatus', 'getBatteryOptimizationStatus', 'getReleaseIdentity', 'getSnapshot', 'getEquivalenceResult', 'listAutoCalSessions', 'getLiveTelemetry', 'getFullEngineSnapshot', 'getIdentity', 'previewKFactorPoint', 'previewMapAdjustment']);

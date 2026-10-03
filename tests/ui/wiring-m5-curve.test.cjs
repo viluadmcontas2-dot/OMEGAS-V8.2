@@ -2,15 +2,15 @@
 // M5 · Curva K: ler / editar / salvar foto / gravar OK / falha de cabo / NACK da ECU / falha parcial / reset / desfazer / restaurar.
 // O mundo fake mantém a curva da ECU: o teste confere o ESTADO FINAL da ECU, não só o texto da tela.
 const test = require('node:test');
-const L = require('./lib.cjs');
+const L = require('./wiring/lib.cjs');
 const { assert } = L;
-const W = require('./world.cjs');
+const W = require('./wiring/world.cjs');
 
 const SCREEN = '[data-screen="curve"]';
 const WRITES = ['startCurveBatchWrite', 'startCurveRestoreWrite', 'startCurveReset'];
 
-const { curveApp, editPoint, tapReview } = require('./scenarios.cjs');
-const { todo } = require('./registry.cjs');
+const { curveApp, editPoint, tapReview } = require('./wiring/scenarios.cjs');
+const { todo } = require('./wiring/registry.cjs');
 const result = app => ({
   level: app.byId('curveOperationResult').dataset.level,
   title: app.byId('curveOperationResult').querySelector('b').textContent,

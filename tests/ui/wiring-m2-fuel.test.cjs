@@ -1,9 +1,9 @@
 'use strict';
 // M2 · combustível: gasolina / GNV / cutoff / desconhecido (+ transição e desligado), com QUADROS REAIS gravados.
 const test = require('node:test');
-const L = require('./lib.cjs');
+const L = require('./wiring/lib.cjs');
 const { assert } = L;
-const { realFrames } = require('./world.cjs');
+const { realFrames } = require('./wiring/world.cjs');
 
 const SESSIONS = ['ref_', 'automatch_', 'gnv_only_'];
 const byFuel = {};

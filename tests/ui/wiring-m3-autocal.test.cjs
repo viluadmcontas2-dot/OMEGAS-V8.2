@@ -1,9 +1,9 @@
 'use strict';
 // M3 · AutoCal: pausado / monitorando / snapshot parcial / leitura atrasada / época nova (snapshots REAIS gravados).
 const test = require('node:test');
-const L = require('./lib.cjs');
+const L = require('./wiring/lib.cjs');
 const { assert } = L;
-const { realProjection, realSession, realFrames } = require('./world.cjs');
+const { realProjection, realSession, realFrames } = require('./wiring/world.cjs');
 
 const SESSION = 'automatch_';
 const lastSnap = () => realSession(SESSION).snapshots.length - 1;

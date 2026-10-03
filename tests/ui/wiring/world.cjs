@@ -242,6 +242,7 @@ class World {
           cells.forEach(c => { this.map.rows[c.row][c.column] = c.target; });
           return { ok: true, state: 'BATCH_CONFIRMED', busy: false, progress: 100, readbackValid: true, confirmedCells: cells.length, totalCells: cells.length, adjustmentIds: [id] };
         }
+        if (out === 'partial') { const before = this.map.rows.map(r => r.slice()); this.map.photos.unshift({ id, before }); cells.slice(0, 2).forEach(c => { this.map.rows[c.row][c.column] = c.target; }); }
         if (out === 'partial') return { ok: false, state: 'BATCH_PARTIAL_FAILED', busy: false, partial: true, ecuPartiallyChanged: true, confirmedCells: 2, totalCells: cells.length, adjustmentIds: [id], failureKind: 'TRANSPORTE', error: 'USB desconectado' };
         return { ok: false, state: 'BATCH_PARTIAL_FAILED', busy: false, confirmedCells: 0, totalCells: cells.length, ...(out === 'nack' ? { failureKind: 'ECU', error: 'ECU retornou status 0xCA' } : { failureKind: 'TRANSPORTE', error: 'USB desconectado' }) };
       }
