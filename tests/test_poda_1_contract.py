@@ -83,8 +83,9 @@ EPOCH = AUTOCAL + "NativeAutoCalAcquisitionEpoch.kt"
 
 
 def test_manual_automatch_only_in_log_readers():
-    assert hits(r"MANUAL_AUTOMATCH", ("app/src/main",), allow=(EPOCH,)) == []
-    assert '"RESET_GAS", "MANUAL_AUTOMATCH" ->' in read(EPOCH)
+    # Guardião: o ramo morto saiu também da época; nenhum código de app/src/main cita a ação aposentada.
+    assert hits(r"MANUAL_AUTOMATCH", ("app/src/main",)) == []
+    assert '"RESET_GAS" ->' in read(EPOCH)
     assert '"MANUAL_AUTOMATCH":"02 24 04 08 32"' in read("tools/omegas/extract_lognovo_autocal_epochs.py")
     assert "RESET_ALL(0x04)" in read("app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt")
     assert "RESET_ALL(" in read(AUTOCAL + "AutoCalNativeActionManager.kt")

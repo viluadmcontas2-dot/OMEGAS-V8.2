@@ -45,6 +45,7 @@ import com.omegas.prohub.telemetry.TelemetryStateStore
 import com.omegas.prohub.usb.UsbSerialManager
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
+import com.omegas.prohub.util.Units
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.Executors
@@ -1310,7 +1311,7 @@ class TelemetryForegroundService : Service() {
             try { equivalenceRuntime.onStall(event) } catch (_: Exception) {}
             sessionRecorder.record("engine_stall", "autocal", event, force = true)
             val verb = if (event.optString("kind") == StallWatch.KIND_NEAR) "Motor quase apagou" else "Motor apagou"
-            log.add("WARN", "REFINO", "$verb no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
+            log.add("WARN", "REFINO", "$verb no GNV em ${Units.msUnit(event.optDouble("petrolMs"))} · MAP ${Units.mapUnit(event.optDouble("mapBar"))}")
         }
         recordStallAnnotations()
 

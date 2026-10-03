@@ -16,6 +16,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.omegas.prohub.util.Units
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.abs
@@ -292,11 +293,11 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
 
     private fun render(snapshot: Snapshot) {
         val live = snapshot.live
-        rpmText?.text = if (live) snapshot.rpm?.let { "%,.0f".format(java.util.Locale.forLanguageTag("pt-BR"), it) } ?: "—" else "—"
-        petrolText?.text = if (live) snapshot.petrolMs?.let { "%.2f ms".format(java.util.Locale.forLanguageTag("pt-BR"), it) } ?: "—" else "—"
-        mapText?.text = if (live) snapshot.mapBar?.let { "%.2f bar".format(java.util.Locale.forLanguageTag("pt-BR"), it) } ?: "—" else "—"
+        rpmText?.text = if (live) Units.rpm(snapshot.rpm) else "—"
+        petrolText?.text = if (live) Units.msUnit(snapshot.petrolMs) else "—"
+        mapText?.text = if (live) Units.mapUnit(snapshot.mapBar) else "—"
         val onGas = live && snapshot.fuel == "GNV"
-        gasText?.text = if (onGas) snapshot.gasMs?.let { "%.2f ms".format(java.util.Locale.forLanguageTag("pt-BR"), it) } ?: "—" else "—"
+        gasText?.text = if (onGas) Units.msUnit(snapshot.gasMs) else "—"
         gasBlock?.alpha = if (onGas) 1f else 0.45f
         val label = if (live) snapshot.fuel ?: "—" else "SEM DADO"
         fuelChip?.text = label
@@ -335,7 +336,6 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         return block to value
     }
 
-    private fun signed(value: Double): String = (if (value > 0) "+" else "") + "%.1f%%".format(value)
     private fun dp(value: Int): Int = (value * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
     private fun dp(value: Float): Int = (value * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
     private fun rounded(fill: Int, radiusDp: Float, stroke: Int): GradientDrawable = GradientDrawable().apply {

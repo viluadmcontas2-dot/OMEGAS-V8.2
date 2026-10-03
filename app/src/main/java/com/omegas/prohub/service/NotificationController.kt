@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import com.omegas.prohub.MainActivity
 import com.omegas.prohub.R
 import com.omegas.prohub.model.HubStatus
+import com.omegas.prohub.util.Units
 
 class NotificationController(private val context: Context) {
     companion object {
@@ -56,7 +57,7 @@ class NotificationController(private val context: Context) {
         )
         return NotificationCompat.Builder(context, REFINEMENT_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_omegas)
-            .setContentTitle("OMEGAS — Calibração")
+            .setContentTitle("OMEGAS — Refino")
             .setContentText(headline)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$headline\n$next"))
             .setContentIntent(openIntent)
@@ -120,13 +121,13 @@ class NotificationController(private val context: Context) {
             else -> "OMEGAS — AGUARDANDO MP48"
         }
         val line1 = if (status.engineReady) {
-            "${status.rpm} RPM • ${status.fuelState} • ${"%.3f".format(status.petrolMs)} ms"
+            "${Units.rpm(status.rpm)} RPM • ${status.fuelState} • ${Units.msUnit(status.petrolMs)}"
         } else {
             "USB ${if (status.usbConnected) "conectado" else "desconectado"} • núcleo ${if (status.engineRunning) "ativo" else "parado"}"
         }
         val line2 = status.lastError.ifBlank {
             if (status.engineReady) {
-                "MAP ${"%.3f".format(status.mapBar)} bar • resposta orientada pela ECU"
+                "MAP ${Units.mapUnit(status.mapBar)} • resposta orientada pela ECU"
             } else {
                 "Android nativo • ${status.baudRate} ${status.serialFormat}"
             }

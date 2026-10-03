@@ -83,7 +83,7 @@ class NativeAutoCalAcquisitionEpoch {
                 petrolSamples = 0
                 previousPetrol = null
             }
-            "RESET_GAS", "MANUAL_AUTOMATCH" -> {
+            "RESET_GAS" -> {
                 gasGeneration++
                 gasPending = true
                 gasReferencePending = true

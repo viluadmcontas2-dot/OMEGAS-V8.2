@@ -85,5 +85,5 @@ test('A8: nenhum texto manda "sem sua confirmação" nem para "AutoCal → Refin
   const kotlin = read('app/src/main/java/com/omegas/prohub/autocal/EquivalencePhases.kt');
   assert.doesNotMatch(kotlin, /sem sua confirmação/);
   assert.doesNotMatch(kotlin, /AutoCal → Refinar curva/);
-  assert.match(kotlin, /na aba Refino/);
+  assert.match(kotlin, /Abra o Refino e toque em Revisar e gravar/);
 });
