@@ -26,7 +26,12 @@ import kotlin.math.roundToInt
  *
  * Puro: não acessa USB nem grava na ECU. O oráculo de referência é
  * `tools/autocal_refine/refined_oracle.py`; a paridade é testada por
- * `tests/test_refined_autocal_contract.py`.
+ * `tests/test_refined_autocal_kotlin_parity.py`.
+ *
+ * Segurança da proposta (Fatia H-evidência): sem evidência suficiente NÃO há proposta (a curva fica
+ * como está); faixa nativa fina (< 3 amostras) não é evidência; a condução sozinha exige ≥ 3 faixas
+ * com ≥ 8 pares e descarta faixa com razão GNV/gasolina fora de [0,6; 1,6]; K novo limitado ao
+ * intervalo do AutoMatch nativo [0,75; 1,20]; MUL_ACT fora de [0,5; 2,0] é rejeitado.
  */
 object AutoMatchRefinedEngine {
     const val ALGORITHM = "OMEGAS_REFINED_EQUIVALENCE_V1"
@@ -36,10 +41,23 @@ object AutoMatchRefinedEngine {
     const val MAP_COUNTS_PER_BAR = 1024.0
     const val Q14 = 16384.0
     const val MAX_RAW = 65535
-    const val MIN_FACTOR = 0.60
-    const val MAX_FACTOR = MAX_RAW / Q14
+    /**
+     * Faixa de PROPOSTA = faixa do AutoMatch nativo (clamp(T_g/T, 0,75..1,20) observado na ECU).
+     * O K novo de todo ponto alterado fica em [MIN_FACTOR, MAX_FACTOR]; ponto cujo K atual já está fora
+     * da faixa e não entra nela dentro do passo de ±15% é mantido (e contado em outOfRangePoints).
+     */
+    const val MIN_RAW_PROPOSAL = 12288
+    const val MAX_RAW_PROPOSAL = 19661
+    const val MIN_FACTOR = MIN_RAW_PROPOSAL / Q14
+    const val MAX_FACTOR = MAX_RAW_PROPOSAL / Q14
+    /** Entrada sã: MUL_ACT fora disto é lixo de leitura/valor de fábrica (ex.: 4,0), não curva a refinar. */
+    const val INPUT_MIN_FACTOR = 0.50
+    const val INPUT_MAX_FACTOR = 2.00
+    const val REASON_NO_EVIDENCE = "SEM_EVIDENCIA_SUFICIENTE"
+    const val MESSAGE_NO_EVIDENCE = "sem evidência suficiente"
 
     const val BAND_FULL_COUNT = 6
+    /** Faixa nativa com menos amostras que isto NÃO é evidência (entra no desenho de T(MAP), peso de evidência 0). */
     const val BAND_MATURE_COUNT = 3
     const val MIN_COMMON_MATURE = 4
     const val OUTLIER_MIN_LOG = 0.05
@@ -65,7 +83,10 @@ object AutoMatchRefinedEngine {
      * pares cada. Sem isso falha fechado (POLISH, nada muda).
      */
     const val TELEMETRY_ONLY_BAND_PAIRS = 8
-    const val TELEMETRY_ONLY_MIN_BANDS = 2
+    const val TELEMETRY_ONLY_MIN_BANDS = 3
+    /** Razão mediana GNV/gasolina de uma faixa fora disto é erro de medida: a faixa inteira é descartada. */
+    const val TELEMETRY_RATIO_MIN = 0.6
+    const val TELEMETRY_RATIO_MAX = 1.6
 
     data class Input(
         val axisRaw: IntArray,
@@ -94,6 +115,8 @@ object AutoMatchRefinedEngine {
         val weight: Double,
         val count: Int,
         val fitTimeMs: Double = timeMs,
+        /** Peso de EVIDÊNCIA: 0 em faixa fina (< [BAND_MATURE_COUNT] amostras). O peso de ajuste é [weight]. */
+        val evidenceWeight: Double = weight,
     )
 
     data class Target(
@@ -137,6 +160,15 @@ object AutoMatchRefinedEngine {
         /** Erro médio ponderado entre o K pedido pela medição e a curva (fração); null sem equivalência. */
         val evidenceErrorBefore: Double? = null,
         val evidenceErrorAfter: Double? = null,
+        /** Faixas nativas com dado mas MAP/tempo inválido (bit 0x8000, ≤ 0): contadas, nunca silenciosas. */
+        val invalidEvidenceBands: Int = 0,
+        val thinBandsIgnored: Int = 0,
+        /** Faixas de condução descartadas por razão GNV/gasolina implausível. */
+        val telemetryOutlierBands: Int = 0,
+        val telemetryPairsUsed: Int = 0,
+        /** Pontos com K atual fora de [MIN_FACTOR, MAX_FACTOR] (mantidos se não entram na faixa). */
+        val outOfRangePoints: Int = 0,
+        val message: String? = null,
     ) {
         val equivalenceAvailable: Boolean get() = mode == Mode.EQUIVALENCE
         val available: Boolean get() = mode != Mode.UNAVAILABLE
@@ -154,18 +186,22 @@ object AutoMatchRefinedEngine {
         }
         val kOld = kRaw.map { it / Q14 }
         if (kOld.any { it <= 0.0 }) return unavailable("MUL_ACT_INVALIDO")
+        // K fora da faixa sã (ex.: 4,0 de fábrica/lixo): rejeita e sinaliza em vez de "manter".
+        val insane = kOld.count { it < INPUT_MIN_FACTOR || it > INPUT_MAX_FACTOR }
+        if (insane > 0) return unavailable("MUL_ACT_FORA_DA_FAIXA", outOfRangePoints = insane)
         val u = axisMs.map { ln(it) }
         val x0 = kOld.map { ln(it) }
 
         var targets: List<Target> = emptyList()
         val rejected = mutableListOf<RejectedBand>()
+        val stats = BandStats()
         if (input.petrolTimeRaw != null && input.petrolMapRaw != null && input.petrolCounts != null &&
             input.gasTimeRaw != null && input.gasMapRaw != null && input.gasCounts != null &&
             listOf(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, input.gasTimeRaw, input.gasMapRaw, input.gasCounts)
                 .all { it.size == BAND_COUNT }
         ) {
-            val (petrol, rp) = monotoneFit(bandPoints(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts))
-            val (gas, rg) = monotoneFit(bandPoints(input.gasTimeRaw, input.gasMapRaw, input.gasCounts))
+            val (petrol, rp) = monotoneFit(bandPoints(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, stats))
+            val (gas, rg) = monotoneFit(bandPoints(input.gasTimeRaw, input.gasMapRaw, input.gasCounts, stats))
             rp.forEach { rejected += RejectedBand("GASOLINA", it.band, it.mapBar, it.timeMs) }
             rg.forEach { rejected += RejectedBand("GNV", it.band, it.mapBar, it.timeMs) }
             if (petrol.size >= 2 && gas.size >= 2) targets = equivalenceTargets(petrol, gas, axisMs, kOld)
@@ -173,8 +209,9 @@ object AutoMatchRefinedEngine {
         val matureWeight = BAND_MATURE_COUNT.toDouble() / BAND_FULL_COUNT
         val mature = targets.count { it.weight >= matureWeight }
         val nativeEquivalence = mature >= MIN_COMMON_MATURE
-        val usablePairs = input.telemetryPairs.filter { (tp, tg) -> tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last() }
-        // A condução sozinha só habilita a equivalência com cobertura real em mais de uma faixa.
+        val candidates = input.telemetryPairs.filter { (tp, tg) -> tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last() }
+        val (usablePairs, outlierBands) = plausiblePairs(candidates)
+        // A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
         val telemetryOnly = !nativeEquivalence && telemetryCovers(usablePairs)
         val equivalence = nativeEquivalence || telemetryOnly
         val bandTargetCount = targets.size
@@ -191,37 +228,58 @@ object AutoMatchRefinedEngine {
 
         val evidence = DoubleArray(POINT_COUNT)
         observations.forEach { o -> o.a.forEach { (j, a) -> evidence[j] += o.w * a } }
-        val gain = List(POINT_COUNT) { j ->
+        var gain = List(POINT_COUNT) { j ->
             var spread = 0.5 * evidence[j]
             if (j > 0) spread += 0.25 * evidence[j - 1]
             if (j < POINT_COUNT - 1) spread += 0.25 * evidence[j + 1]
             min(1.0, spread / EVIDENCE_REF)
         }
-        val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
-        val (fitted, robust) = whittaker(u, observations, x0, priorWeights, LAMBDA)
-        if (equivalence) targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
-        val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
-        val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
-        val eEff = effectiveElasticity(x0, u)
-        val final = enforceCoherence(scaled, x0, u, eEff)
+        val lnLo = ln(MIN_FACTOR)
+        val lnHi = ln(MAX_FACTOR)
+        val outOfRange = x0.count { it < lnLo - 1e-12 || it > lnHi + 1e-12 }
+        var eEff = E_MAX
+        val box: List<Pair<Double, Double>>
+        val final: List<Double>
+        if (equivalence) {
+            val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
+            val (fitted, robust) = whittaker(u, observations, x0, priorWeights, LAMBDA)
+            targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
+            val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
+            val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
+            box = proposalBox(x0, gain)
+            eEff = effectiveElasticity(box, u)
+            final = enforceCoherence(scaled, box, u, eEff)
+        } else {
+            // Sem evidência suficiente NÃO existe proposta: a curva fica exatamente como está.
+            box = proposalBox(x0, gain)
+            final = x0
+            gain = List(POINT_COUNT) { 0.0 }
+        }
 
-        val origins = List(POINT_COUNT) { j ->
-            when {
+        val origins = ArrayList<Origin>(POINT_COUNT)
+        val outRaw = ArrayList<Int>(POINT_COUNT)
+        for (j in 0 until POINT_COUNT) {
+            // Sem evidência, ou ponto fora da faixa nativa que não entra nela: mantido exatamente.
+            if (!equivalence || box[j].first == box[j].second) {
+                origins += Origin.HELD
+                outRaw += kRaw[j]
+                continue
+            }
+            val origin = when {
                 gain[j] >= 0.5 -> Origin.MEASURED
                 gain[j] > 0.0 -> Origin.BLENDED
                 abs(final[j] - x0[j]) > SMOOTH_TOLERANCE_LOG -> Origin.SMOOTHED
                 else -> Origin.HELD
             }
-        }
-        val outRaw = final.mapIndexed { j, z ->
+            origins += origin
             // Sem evidência e sem anomalia: preserva exatamente o valor gravado.
-            if (origins[j] == Origin.HELD) return@mapIndexed kRaw[j]
-            val factor = exp(z).coerceIn(MIN_FACTOR, MAX_FACTOR)
-            (factor * Q14).roundToInt().coerceIn(0, MAX_RAW)
+            outRaw += if (origin == Origin.HELD) kRaw[j]
+            else (exp(final[j]) * Q14).roundToInt().coerceIn(MIN_RAW_PROPOSAL, MAX_RAW_PROPOSAL)
         }
         return Result(
             mode = if (equivalence) Mode.EQUIVALENCE else Mode.POLISH,
-            reason = if (equivalence) null else "BANDAS_COMUNS_MADURAS_INSUFICIENTES",
+            reason = if (equivalence) null else REASON_NO_EVIDENCE,
+            message = if (equivalence) null else MESSAGE_NO_EVIDENCE,
             telemetryOnly = telemetryOnly,
             matureCommonPoints = mature,
             axisMs = axisMs,
@@ -238,7 +296,61 @@ object AutoMatchRefinedEngine {
             metricsAfter = metrics(outRaw.map { it / Q14 }, axisMs),
             evidenceErrorBefore = evidenceError(judgedTargets(equivalence, telemetryOnly, targets, matureWeight), axisMs, kOld),
             evidenceErrorAfter = evidenceError(judgedTargets(equivalence, telemetryOnly, targets, matureWeight), axisMs, outRaw.map { it / Q14 }),
+            invalidEvidenceBands = stats.invalid,
+            thinBandsIgnored = stats.thin,
+            telemetryOutlierBands = outlierBands,
+            telemetryPairsUsed = if (equivalence) usablePairs.size else 0,
+            outOfRangePoints = outOfRange,
         )
+    }
+
+    /** Contadores da leitura das faixas nativas (evidência inválida/fina nunca é silenciosa). */
+    internal class BandStats { var invalid = 0; var thin = 0 }
+
+    /** MAP bruto S16 com bit 0x8000 (ou negativo) não é pressão: é evidência inválida. */
+    internal fun mapRawInvalid(value: Int): Boolean = value < 0 || (value and 0x8000) != 0
+
+    /** Índice da faixa de Petrol Inj. do livro; ≥ 12 ms cai numa faixa de cauda (nunca conta cobertura). */
+    private fun ledgerBand(tp: Double): Int? {
+        EquivalenceLedger.BANDS.forEachIndexed { i, (lo, hi) -> if (tp >= lo && tp < hi) return i }
+        return if (tp >= EquivalenceLedger.BANDS.last().second) EquivalenceLedger.BANDS.size else null
+    }
+
+    /**
+     * Descarta a faixa inteira cuja razão mediana GNV/gasolina é implausível ([TELEMETRY_RATIO_MIN]..[TELEMETRY_RATIO_MAX])
+     * e a faixa fina (< [BAND_MATURE_COUNT] pares). Retorna (pares válidos, nº de faixas outlier).
+     */
+    internal fun plausiblePairs(pairs: List<kotlin.Pair<Double, Double>>): kotlin.Pair<List<kotlin.Pair<Double, Double>>, Int> {
+        val groups = sortedMapOf<Int, MutableList<kotlin.Pair<Double, Double>>>()
+        pairs.forEach { pair -> ledgerBand(pair.first)?.let { groups.getOrPut(it) { ArrayList() }.add(pair) } }
+        val kept = ArrayList<kotlin.Pair<Double, Double>>()
+        var outliers = 0
+        groups.values.forEach { group ->
+            val ratios = group.map { (tp, tg) -> tg / tp }.sorted()
+            val median = ratios[ratios.size / 2]
+            if (median < TELEMETRY_RATIO_MIN || median > TELEMETRY_RATIO_MAX) {
+                outliers++
+            } else if (group.size >= BAND_MATURE_COUNT) {
+                kept += group
+            }
+        }
+        return kept to outliers
+    }
+
+    /**
+     * Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20]. Ponto que não alcança a faixa
+     * (K atual fora dela e fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0.
+     */
+    internal fun proposalBox(x0: List<Double>, gain: List<Double>): List<Pair<Double, Double>> {
+        val loRange = ln(MIN_FACTOR)
+        val hiRange = ln(MAX_FACTOR)
+        return x0.mapIndexed { j, x ->
+            var lo = max(x - MAX_STEP_LOG, loRange)
+            var hi = min(x + MAX_STEP_LOG, hiRange)
+            val outside = x < loRange - 1e-12 || x > hiRange + 1e-12
+            if (lo > hi + 1e-12 || (outside && gain[j] <= 0.0)) { lo = x; hi = x }
+            lo to hi
+        }
     }
 
     /** Alvos que julgam o erro: faixas nativas maduras; na condução-só, todos os pares da medição. */
@@ -248,9 +360,8 @@ object AutoMatchRefinedEngine {
         else -> targets.filter { it.weight >= matureWeight }
     }
 
-    /** Cobertura mínima da condução: [TELEMETRY_ONLY_MIN_BANDS] faixas com [TELEMETRY_ONLY_BAND_PAIRS] pares. */
+    /** Cobertura mínima da condução: [TELEMETRY_ONLY_MIN_BANDS] faixas distintas com [TELEMETRY_ONLY_BAND_PAIRS] pares válidos. */
     private fun telemetryCovers(pairs: List<kotlin.Pair<Double, Double>>): Boolean {
-        if (pairs.size < TELEMETRY_ONLY_BAND_PAIRS * TELEMETRY_ONLY_MIN_BANDS) return false
         val covered = EquivalenceLedger.BANDS.count { (lo, hi) ->
             pairs.count { (tp, _) -> tp >= lo && tp < hi } >= TELEMETRY_ONLY_BAND_PAIRS
         }
@@ -291,16 +402,25 @@ object AutoMatchRefinedEngine {
 
     // ------------------------------------------------------------- evidência
 
-    internal fun bandPoints(timeRaw: IntArray, mapRaw: IntArray, counts: IntArray): List<BandPoint> =
+    internal fun bandPoints(timeRaw: IntArray, mapRaw: IntArray, counts: IntArray, stats: BandStats? = null): List<BandPoint> =
         (0 until BAND_COUNT).mapNotNull { band ->
             val n = counts[band]
-            if (n <= 0 || timeRaw[band] <= 0 || mapRaw[band] <= 0) return@mapNotNull null
+            if (n <= 0) return@mapNotNull null
+            if (mapRawInvalid(mapRaw[band]) || timeRaw[band] <= 0 || mapRaw[band] <= 0) {
+                stats?.let { it.invalid++ }
+                return@mapNotNull null
+            }
+            // Faixa fina (< BAND_MATURE_COUNT): ajuda a desenhar T(MAP), mas não vale como alvo (peso de evidência 0).
+            val thin = n < BAND_MATURE_COUNT
+            if (thin) stats?.let { it.thin++ }
+            val weight = min(n, BAND_FULL_COUNT).toDouble() / BAND_FULL_COUNT
             BandPoint(
                 band = band,
                 mapBar = mapRaw[band] / MAP_COUNTS_PER_BAR,
                 timeMs = timeRaw[band] / AXIS_COUNTS_PER_MS,
-                weight = min(n, BAND_FULL_COUNT).toDouble() / BAND_FULL_COUNT,
+                weight = weight,
                 count = n,
+                evidenceWeight = if (thin) 0.0 else weight,
             )
         }.sortedBy { it.mapBar }
 
@@ -360,10 +480,10 @@ object AutoMatchRefinedEngine {
     ): List<Target> {
         val pm = petrol.map { it.mapBar }
         val pt = petrol.map { it.fitTimeMs }
-        val pw = petrol.map { it.weight }
+        val pw = petrol.map { it.evidenceWeight }
         val gm = gas.map { it.mapBar }
         val gt = gas.map { it.fitTimeMs }
-        val gw = gas.map { it.weight }
+        val gw = gas.map { it.evidenceWeight }
         val lo = max(pm.first(), gm.first())
         val hi = min(pm.last(), gm.last())
         val grid = (pm + gm).filter { it in lo..hi }.distinct().sorted()
@@ -475,39 +595,39 @@ object AutoMatchRefinedEngine {
 
     // ---------------------------------------------------- trava de coerência
 
-    internal fun coherenceFeasible(x0: List<Double>, u: List<Double>, e: Double): Boolean {
-        val n = x0.size
+    internal fun coherenceFeasible(box: List<Pair<Double, Double>>, u: List<Double>, e: Double): Boolean {
+        val n = box.size
         for (j in 0 until n) {
             var hi = Double.MAX_VALUE
             var lo = -Double.MAX_VALUE
             for (k in 0 until n) {
-                hi = min(hi, x0[k] + MAX_STEP_LOG + e * abs(u[j] - u[k]))
-                lo = max(lo, x0[k] - MAX_STEP_LOG - e * abs(u[j] - u[k]))
+                hi = min(hi, box[k].second + e * abs(u[j] - u[k]))
+                lo = max(lo, box[k].first - e * abs(u[j] - u[k]))
             }
             if (lo > hi + 1e-12) return false
         }
         return true
     }
 
-    internal fun effectiveElasticity(x0: List<Double>, u: List<Double>): Double {
-        if (coherenceFeasible(x0, u, E_MAX)) return E_MAX
+    internal fun effectiveElasticity(box: List<Pair<Double, Double>>, u: List<Double>): Double {
+        if (coherenceFeasible(box, u, E_MAX)) return E_MAX
         var lo = E_MAX
         var hi = 8.0
         repeat(40) {
             val mid = (lo + hi) / 2.0
-            if (coherenceFeasible(x0, u, mid)) hi = mid else lo = mid
+            if (coherenceFeasible(box, u, mid)) hi = mid else lo = mid
         }
         return hi
     }
 
-    internal fun enforceCoherence(z0: List<Double>, x0: List<Double>, u: List<Double>, e: Double): List<Double> {
+    internal fun enforceCoherence(z0: List<Double>, box: List<Pair<Double, Double>>, u: List<Double>, e: Double): List<Double> {
         val z = z0.toDoubleArray()
         val n = z.size
         for (iteration in 0 until 20000) {
             var changed = false
             for (j in 0 until n) {
-                val lo = x0[j] - MAX_STEP_LOG
-                val hi = x0[j] + MAX_STEP_LOG
+                val lo = box[j].first
+                val hi = box[j].second
                 if (z[j] < lo - 1e-12 || z[j] > hi + 1e-12) {
                     z[j] = min(max(z[j], lo), hi)
                     changed = true
@@ -567,7 +687,7 @@ object AutoMatchRefinedEngine {
         return pairs.last().first
     }
 
-    private fun unavailable(reason: String) = Result(
+    private fun unavailable(reason: String, outOfRangePoints: Int = 0) = Result(
         mode = Mode.UNAVAILABLE,
         reason = reason,
         matureCommonPoints = 0,
@@ -582,5 +702,6 @@ object AutoMatchRefinedEngine {
         rejectedBands = emptyList(),
         metricsBefore = null,
         metricsAfter = null,
+        outOfRangePoints = outOfRangePoints,
     )
 }

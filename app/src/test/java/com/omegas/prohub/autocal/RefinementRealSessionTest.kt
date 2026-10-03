@@ -42,9 +42,10 @@ class RefinementRealSessionTest {
 
         val snapshot = RealSessionReplaySupport.snapshot(RealSessionReplaySupport.fixture(AUTOMATCH), 1716)
         val feedAll = asPairs(all.filter { it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS })
-        // O que o código antigo entregava ao motor: com a lenta, "fabrica" uma proposta.
+        // O que o código antigo entregava ao motor: com a lenta, "fabrica" uma proposta. Com o gate de
+        // cobertura (≥ 3 faixas distintas com ≥ 8 pares) nem alimentando tudo isso vira proposta.
         val oldBehaviour = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, feedAll)
-        assertTrue("a lenta sozinha habilitava a proposta (o bug)", oldBehaviour.getBoolean("telemetryOnly"))
+        assertFalse("a lenta sozinha não cobre 3 faixas: não habilita proposta", oldBehaviour.getBoolean("telemetryOnly"))
         // O que entrega agora: só condução. Cobertura insuficiente → falha fechado, igual a não ter pares.
         val fixed = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, asPairs(driving))
         val none = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot)

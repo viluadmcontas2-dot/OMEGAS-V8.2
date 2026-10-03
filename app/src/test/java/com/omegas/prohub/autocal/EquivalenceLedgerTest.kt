@@ -65,16 +65,132 @@ class EquivalenceLedgerTest {
     }
 
     @Test
-    fun `curva alterada por fora do app descarta GNV mas a gravada pelo app nao`() {
+    fun `curva alterada por fora do app descarta o GNV medido com a curva antiga`() {
+        val ledger = EquivalenceLedger(null)
+        var t = drive(ledger, "GASOLINA", 2000.0, 0.6, 5.0, 0, 10)
+        ledger.alignCurve("A")
+        drive(ledger, "GNV", 2000.0, 0.6, 5.5, t + 1_000, 10)
+        assertEquals(8, ledger.index().getInt("gasObservations"))
+        ledger.alignCurve("C")
+        assertEquals(0, ledger.index().getInt("gasObservations"))
+        assertEquals(8, ledger.index().getInt("petrolObservations"))
+    }
+
+    @Test
+    fun `curva gravada pelo app tambem descarta o GNV medido com a curva anterior mas nao o medido depois`() {
         val ledger = EquivalenceLedger(null)
         var t = drive(ledger, "GASOLINA", 2000.0, 0.6, 5.0, 0, 10)
         ledger.alignCurve("A")
         t = drive(ledger, "GNV", 2000.0, 0.6, 5.5, t + 1_000, 10)
+        assertEquals(8, ledger.index().getInt("gasObservations"))
+        // Quem grava esqueceu o resetGas: adoptCurve descarta, de forma explícita, o GNV medido sob o K antigo.
+        ledger.adoptCurve("B")
+        assertEquals(0, ledger.index().getInt("gasObservations"))
+        assertEquals("CURVA_K_GRAVADA_PELO_APP", ledger.index().getString("gasEpochReason"))
+        assertTrue(ledger.pairs().isEmpty())
+        assertEquals(8, ledger.index().getInt("petrolObservations"))
+        // O GNV medido DEPOIS, já com a curva B, vale; e re-adotar a mesma curva não apaga nada.
+        drive(ledger, "GNV", 2000.0, 0.6, 5.6, t + 1_000, 10)
         ledger.adoptCurve("B")
         ledger.alignCurve("B")
         assertEquals(8, ledger.index().getInt("gasObservations"))
-        ledger.alignCurve("C")
+    }
+
+    @Test
+    fun `fluxo do servico resetGas e depois adoptCurve preserva a causa do reset`() {
+        val ledger = EquivalenceLedger(null)
+        var t = drive(ledger, "GASOLINA", 2000.0, 0.6, 5.0, 0, 10)
+        ledger.alignCurve("A")
+        drive(ledger, "GNV", 2000.0, 0.6, 5.5, t + 1_000, 10)
+        ledger.resetGas("CURVA_K_GRAVADA")
+        ledger.adoptCurve("B")
+        assertEquals("CURVA_K_GRAVADA", ledger.index().getString("gasEpochReason"))
+    }
+
+    @Test
+    fun `indice so e recalculado com revisao nova e ao menos 1 s depois, e mudanca estrutural fura`() {
+        var now = 1_000_000L
+        val ledger = EquivalenceLedger(null) { now }
+        var t = drive(ledger, "GASOLINA", 2000.0, 0.6, 5.0, 0, 10)
+        t = drive(ledger, "GNV", 2000.0, 0.6, 5.5, t + 1_000, 10)
+        val first = ledger.index()
+        assertEquals(8, first.getInt("gasObservations"))
+        // Mais leituras estáveis dentro de 1 s: o índice devolvido é o mesmo (nada de reordenar tudo a cada janela).
+        t = drive(ledger, "GNV", 2000.0, 0.6, 5.5, t + 1_000, 10)
+        assertTrue(ledger.revision() > first.getLong("revision"))
+        now += 500
+        assertEquals(first.getInt("gasObservations"), ledger.index().getInt("gasObservations"))
+        assertEquals(first.getLong("revision"), ledger.index().getLong("revision"))
+        // Passou 1 s e a revisão mudou: recalcula.
+        now += 600
+        val second = ledger.index()
+        assertTrue(second.getInt("gasObservations") > first.getInt("gasObservations"))
+        assertEquals(ledger.revision(), second.getLong("revision"))
+        // Sem revisão nova, nunca recalcula (mesmo passado muito tempo).
+        now += 60_000
+        assertEquals(second.getLong("revision"), ledger.index().getLong("revision"))
+        // Mudança estrutural (reset do GNV) vale na hora, sem esperar 1 s.
+        drive(ledger, "GNV", 2000.0, 0.6, 5.5, t + 1_000, 10)
+        ledger.resetGas("TESTE")
         assertEquals(0, ledger.index().getInt("gasObservations"))
+    }
+
+    @Test
+    fun `arquivo no formato antigo de um array por leitura ainda carrega`() {
+        val dir = Files.createTempDirectory("ledger-legacy").toFile()
+        val file = File(dir, "equivalence_ledger.json")
+        val petrol = org.json.JSONArray()
+        val gas = org.json.JSONArray()
+        for (i in 0 until 6) {
+            petrol.put(org.json.JSONArray().put(1_000L + i * 400).put(2000.0).put(0.6).put(5.0))
+            gas.put(org.json.JSONArray().put(9_000L + i * 400).put(2000.0).put(0.6).put(5.5))
+        }
+        file.writeText(JSONObject().put("format", EquivalenceLedger.FORMAT).put("curveFingerprint", "abc")
+            .put("gasEpochReason", "ANTIGO").put("gasEpochAt", 42L).put("gasUsefulRpmMs", 12.5).put("airRpmBar", 3.0)
+            .put("petrol", petrol).put("gas", gas).toString())
+        val loaded = EquivalenceLedger(file)
+        val index = loaded.index()
+        assertEquals(6, index.getInt("petrolObservations"))
+        assertEquals(6, index.getInt("gasObservations"))
+        assertEquals("ANTIGO", index.getString("gasEpochReason"))
+        assertEquals(6, loaded.pairs().size)
+        assertTrue(loaded.pairs().all { abs(it.petrolRefMs - 5.0) < 1e-9 && abs(it.gasPetrolMs - 5.5) < 1e-9 })
+        assertEquals(12.5 / 3.0, loaded.gasPerAir()!!, 1e-9)
+        // Salvar de novo grava o formato plano e ele volta igual.
+        loaded.alignCurve("abc")
+        loaded.flush()
+        val saved = JSONObject(file.readText())
+        assertEquals(EquivalenceLedger.LAYOUT_FLAT, saved.getString("layout"))
+        assertEquals(6, saved.getJSONObject("petrol").getJSONArray("t").length())
+        assertEquals(6, EquivalenceLedger(file).pairs().size)
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `salvar e compacto e o arquivo plano volta com os mesmos pares`() {
+        val dir = Files.createTempDirectory("ledger-flat").toFile()
+        val file = File(dir, "equivalence_ledger.json")
+        val ledger = EquivalenceLedger(file)
+        val rnd = java.util.Random(11)
+        var t = 0L
+        repeat(600) {
+            val rpm = 1100.0 + rnd.nextDouble() * 3000
+            val map = 0.25 + rnd.nextDouble() * 0.7
+            repeat(3) { ledger.accept(EquivalenceLedger.Frame(t, "GASOLINA", rpm, map, 2.0 + map * 10 + 1.0 / 3.0)); t += 100 }
+            t += 5_000
+        }
+        ledger.flush()
+        val text = file.readText()
+        val flatSize = text.length
+        val saved = JSONObject(text)
+        val n = saved.getJSONObject("petrol").getJSONArray("t").length()
+        assertEquals(n, saved.getJSONObject("petrol").getJSONArray("ms").length())
+        assertTrue("sem arrays aninhados", !text.contains("[["))
+        // Cada leitura ocupa bem menos que as 4 doubles de 17 dígitos do formato antigo (~75 bytes).
+        assertTrue("bytes por leitura ${flatSize / n}", flatSize / n < 50)
+        val reloaded = EquivalenceLedger(file)
+        assertEquals(ledger.index().getInt("petrolObservations"), reloaded.index().getInt("petrolObservations"))
+        dir.deleteRecursively()
     }
 
     @Test
