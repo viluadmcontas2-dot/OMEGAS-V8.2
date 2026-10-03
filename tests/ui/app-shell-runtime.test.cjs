@@ -127,7 +127,7 @@ test('modo navegador é simulador visual e nunca escreve ECU', () => {
 test('APK usa OmegasCalibration para curva e mapa', () => {
   const { context } = bootCore();
   const calls = [];
-  context.OmegasNative = { getStatus: () => '{}', getLiveTelemetry: () => '{}', getLearningMaps: () => '{}', getLearningSyncStatus: () => '{}', getObdStatus: () => '{}' };
+  context.OmegasNative = { getStatus: () => '{}', getLiveTelemetry: () => '{}', getObdStatus: () => '{}' };
   const ok = type => (...args) => { calls.push({ type, args }); return JSON.stringify({ ok: true, started: true }); };
   context.OmegasCalibration = {
     startMapBatchWrite: ok('map'), startCurveBatchWrite: ok('curve'), startCurveRead: ok('read'),

@@ -24,12 +24,12 @@ import com.omegas.prohub.calibration.KFactorManager
 import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.autocal.NativeAutoCalMonitor
 import com.omegas.prohub.diagnostics.DocumentsSessionMirror
+import com.omegas.prohub.diagnostics.LegacyDataSweeper
 import com.omegas.prohub.diagnostics.SessionRecorder
 import com.omegas.prohub.ecu.NativeRuntimeManager
 import com.omegas.prohub.gps.GpsTelemetryManager
-import com.omegas.prohub.learning.LearningArchiveManager
-import com.omegas.prohub.learning.LearningTemperatureSettings
-import com.omegas.prohub.learning.LearningToleranceSettings
+import com.omegas.prohub.ecu.LearningTemperatureSettings
+import com.omegas.prohub.ecu.LearningToleranceSettings
 import com.omegas.prohub.link.OmegasLinkManager
 import com.omegas.prohub.model.HubStatus
 import com.omegas.prohub.network.LanPanelServer
@@ -101,8 +101,6 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var link: OmegasLinkManager
         private set
-    lateinit var learningArchive: LearningArchiveManager
-        private set
     lateinit var overlay: TelemetryOverlayController
         private set
     /** Pontos próprios GNV × gasolina (RPM×MAP); alimenta o refino e o gráfico do Refino. */
@@ -138,6 +136,8 @@ class TelemetryForegroundService : Service() {
     private var engineRestarts = 0
     private var healthFailures = 0
     @Volatile private var stopping = false
+    /** O que a limpeza única do aprendizado antigo apagou; vai para os metadados da primeira sessão gravada. */
+    @Volatile private var legacySweepRemoved: List<String> = emptyList()
 
     /**
      * Só para a evidência de render no emulador: congela o piloto/diário do Refino para o teste
@@ -175,6 +175,13 @@ class TelemetryForegroundService : Service() {
         log.setListener { item ->
             sessionRecorder.record("app_log", "native", item, force = true)
         }
+        // Limpeza única dos arquivos do aprendizado antigo, fora da thread principal.
+        scheduler.execute {
+            legacySweepRemoved = LegacyDataSweeper.sweep(paths.runtimeRoot, paths.runtimeBackupsRoot)
+            if (legacySweepRemoved.isNotEmpty()) {
+                log.add("INFO", "LIMPEZA", "Dados do aprendizado antigo removidos: " + legacySweepRemoved.joinToString())
+            }
+        }
         notifications = NotificationController(this)
         overlay = TelemetryOverlayController(this)
         gps = GpsTelemetryManager(this, log, ::consumeGpsUpdate)
@@ -197,9 +204,6 @@ class TelemetryForegroundService : Service() {
             onBusyChanged = { stateChanged() },
             onConfirmedWrite = {
                 scheduler.execute {
-                    if (::learningArchive.isInitialized) {
-                        learningArchive.saveInternalCheckpoint("Mapa K confirmado")
-                    }
                     if (::link.isInitialized) link.markDataChanged("mapa K confirmado")
                 }
             },
@@ -208,8 +212,6 @@ class TelemetryForegroundService : Service() {
                 // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação da curva perde validade.
                 equivalence.resetGas("MAPA_K_GRAVADO")
                 refinementJournal.interrupt("MAPA_K_GRAVADO")
-                runtime.notifyCalibrationAdjustment(payload)
-                learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
                 link.markDataChanged("escrita K confirmada")
             },
         )
@@ -221,8 +223,6 @@ class TelemetryForegroundService : Service() {
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true)
                 recordCurveExperiment(payload)
-                runtime.notifyCalibrationAdjustment(payload)
-                learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
                 link.markDataChanged("escrita K factor confirmada")
             },
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
@@ -231,15 +231,13 @@ class TelemetryForegroundService : Service() {
             serial = runtime.serialScheduler(),
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
             onFreshSnapshot = { snapshot ->
-                runtime.importNativeAutoCalSnapshot(snapshot)
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
             },
             onNativeCalibrationObserved = { payload ->
-                val result = runtime.notifyCalibrationAdjustment(payload)
                 sessionRecorder.record(
                     "autocal_native_calibration_epoch",
                     "autocal",
-                    JSONObject(payload.toString()).put("learningResult", result),
+                    payload,
                     force = true,
                 )
                 // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
@@ -257,14 +255,11 @@ class TelemetryForegroundService : Service() {
             },
             onStateChanged = { stateChanged() },
         )
-        learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
         link = OmegasLinkManager(
             settings = settings,
             log = log,
             usbConnected = { usb.connected },
             coreTelemetry = ::coreTelemetryForLink,
-            exportLearning = { runtime.exportLearning(settings.deviceId) },
-            mergeLearning = { payload -> runtime.mergeLearning(payload, settings.deviceId) },
             exportHistory = { kWriter.exportHistoryComponent(settings.deviceId) },
             mergeHistory = { payload -> kWriter.mergeHistoryComponent(payload) },
             onStateChanged = ::stateChanged,
@@ -272,7 +267,6 @@ class TelemetryForegroundService : Service() {
                 JSONObject()
                     .put("schema", "landi-autocal-18x30-v2")
                     .put("source", "ECU_NATIVE")
-                    .put("nativeEcuEvidence", runtime.exportLearning(settings.deviceId).optJSONArray("nativeEcuEvidence") ?: org.json.JSONArray())
                     .put("automaticCalibration", false)
                     .put("manualOnly", true)
             },
@@ -352,7 +346,6 @@ class TelemetryForegroundService : Service() {
 
     fun status(): HubStatus {
         val live = telemetryStore.telemetryCopy()
-        val learning = try { runtime.learningStatus() } catch (_: Exception) { JSONObject() }
         val parityLetter = settings.parity.firstOrNull()?.uppercaseChar() ?: 'N'
         return HubStatus(
             serviceRunning = true,
@@ -378,8 +371,6 @@ class TelemetryForegroundService : Service() {
             gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
             mapBar = live.optDouble("load_bar", live.optDouble("map_bar", 0.0)),
             gasPressureBar = live.optDouble("pressure_diff_bar", live.optDouble("gas_pressure_abs_bar", 0.0)),
-            currentCell = learning.optString("state", "--"),
-            confidence = learning.optDouble("reference_confidence", 0.0) * 100.0,
             lastError = runtime.lastError,
             wakeLockHeld = wakeLock?.isHeld == true,
             uptimeSeconds = ((System.currentTimeMillis() - startedAt) / 1_000L).coerceAtLeast(0L),
@@ -449,7 +440,6 @@ class TelemetryForegroundService : Service() {
     fun engineMetricsJson(): String = runtime.metricsJson()
     fun engineSelfTestJson(): String = runtime.selfTestJson()
     fun protocolLabJson(): String = runtime.protocolJson()
-    fun learningSyncStatusJson(): String = runtime.learningStatus().toString()
 
     @Synchronized fun readKCell(row: Int, column: Int): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readCell(row, column).toString()
@@ -459,7 +449,6 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readFullMap().toString()
     @Synchronized fun recoverKInsertionState(): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.recoverInsertionState().toString()
-    fun previewKMapCell(row: Int, column: Int, targetValue: Int): String = runtime.previewKWrite(row, column, targetValue).toString()
     fun kWriteStatusJson(): String = kWriter.statusJson()
     fun kWriteHistoryJson(): String = kWriter.historyJson()
 
@@ -493,7 +482,6 @@ class TelemetryForegroundService : Service() {
                 .put("error", "Este aparelho não possui o controle principal do MP48")
                 .toString()
         }
-        learningArchive.saveInternalCheckpoint("Antes de ajustar célula K")
         return kWriter.startWrite(row, column, current, target, maxStep, pauseMs).toString()
     }
 
@@ -513,7 +501,6 @@ class TelemetryForegroundService : Service() {
                 .toString()
         }
         return try {
-            learningArchive.saveInternalCheckpoint("Antes de ajustar mapa K: " + reason.take(100))
             kWriter.startBatchWrite(JSONArray(cellsJson), maxStep, pauseMs, reason).toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Lote de células inválido").toString()
@@ -563,15 +550,6 @@ class TelemetryForegroundService : Service() {
         .put("error", "Uma operação de $operation está em andamento")
         .toString()
 
-    fun importLearningArchive(uri: Uri): String = learningArchive.import(contentResolver, uri).toString()
-    fun exportLearningArchive(uri: Uri): String = learningArchive.export(contentResolver, uri).toString()
-    fun importNativeAutoCalSnapshot(payload: String): String = try {
-        runtime.importNativeAutoCalSnapshot(JSONObject(payload)).toString()
-    } catch (error: Exception) {
-        JSONObject().put("ok", false).put("error", error.message ?: "Snapshot AutoCal inválido").toString()
-    }
-    fun learningCheckpointStatusJson(): String = learningArchive.checkpointStatus().toString()
-
     fun sessionRecorderStatusJson(): String = sessionRecorder.statusJson()
     // A lista de sessões lê pastas e, se preciso, reconstrói resumos: nunca na thread da WebView.
     // Devolve a última lista pronta na hora ("null" até a primeira ficar pronta) e atualiza em segundo plano.
@@ -614,6 +592,7 @@ class TelemetryForegroundService : Service() {
     private fun startJournalSession(reason: String, metadata: JSONObject): JSONObject {
         val started = sessionRecorder.start(reason, metadata)
         if (started.optBoolean("ok")) {
+            legacySweepRemoved = emptyList()
             refinementJournal.setDecisionListener(::recordJournalTransition)
             journalTransitionsObserved = true
         }
@@ -636,7 +615,8 @@ class TelemetryForegroundService : Service() {
         JSONObject()
             .put("appVersion", BuildConfig.VERSION_NAME)
             .put("native", true)
-            .put("usbSessionId", if (usb.connected) usb.connectionSessionId else 0L),
+            .put("usbSessionId", if (usb.connected) usb.connectionSessionId else 0L)
+            .put("legacySweep", JSONArray(legacySweepRemoved)),
     ).toString()
     fun stopSessionRecording(reason: String): String = stopJournalSession(reason.ifBlank { "manual" }).toString()
     fun exportSession(uri: Uri, sessionId: String): String = sessionRecorder.exportSession(contentResolver, uri, sessionId).toString()
@@ -768,7 +748,8 @@ class TelemetryForegroundService : Service() {
                     JSONObject()
                         .put("appVersion", BuildConfig.VERSION_NAME)
                         .put("usb", usb.deviceLabel)
-                        .put("usbSessionId", sessionId),
+                        .put("usbSessionId", sessionId)
+                        .put("legacySweep", JSONArray(legacySweepRemoved)),
                 )
             }
             if (settings.autoStartEngine && !enginePausedByUser) {

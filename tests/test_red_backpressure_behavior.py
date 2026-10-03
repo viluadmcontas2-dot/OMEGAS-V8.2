@@ -34,8 +34,8 @@ class RedBackpressureBehaviorTest(unittest.TestCase):
                     package com.omegas.prohub.usb
                     data class UsbProtocolReply(val ok: Boolean, val elapsedMs: Long = 0L)
                 ''',
-                "com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt": r'''
-                    package com.omegas.prohub.learning
+                "com/omegas/prohub/ecu/NativeAnchorTelemetryWindow.kt": r'''
+                    package com.omegas.prohub.ecu
                     object NativeAnchorTelemetryWindow { data class Frame(val id: Long = 0L) }
                 ''',
                 "Harness.kt": r'''

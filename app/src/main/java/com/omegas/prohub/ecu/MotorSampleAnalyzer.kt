@@ -1,9 +1,5 @@
 package com.omegas.prohub.ecu
 
-import com.omegas.prohub.learning.AdaptiveSampleWindow
-import com.omegas.prohub.learning.LearningTemperatureSettings
-import com.omegas.prohub.learning.LearningTolerancePolicy
-import com.omegas.prohub.learning.LearningToleranceSettings
 import org.json.JSONObject
 import java.util.ArrayDeque
 import java.util.UUID
@@ -686,23 +682,7 @@ data class MotorSample(
     val classification: SampleClassification,
     val frameCount: Int,
     val diagnostics: SampleDiagnostics,
-) {
-    fun toJson(): JSONObject = JSONObject()
-        .put("id", id)
-        .put("started_at_elapsed_ms", startedAtElapsedMs)
-        .put("ended_at_elapsed_ms", endedAtElapsedMs)
-        .put("fuel", fuel.wireName)
-        .put("rpm", rpm)
-        .put("map_bar", mapBar)
-        .put("petrol_ms", petrolMs)
-        .put("pressure_diff_bar", pressureDiffBar)
-        .put("water_c", waterC)
-        .put("gas_c", gasC)
-        .put("quality", quality)
-        .put("classification", classification.name)
-        .put("frame_count", frameCount)
-        .put("diagnostics", diagnostics.toJson())
-}
+)
 
 data class SampleDiagnostics(
     val frameCount: Int,
@@ -728,32 +708,7 @@ data class SampleDiagnostics(
     val pressureOscillationLimit: Double,
     val largestGapMs: Long = 0L,
     val toleratedGapCount: Int = 0,
-) {
-    fun toJson(): JSONObject = JSONObject()
-        .put("frame_count", frameCount)
-        .put("duration_ms", durationMs)
-        .put("median_interval_ms", medianIntervalMs)
-        .put("water_center_c", waterCenterC)
-        .put("minimum_water_c", minimumWaterC)
-        .put("rpm_center_shift", rpmCenterShift)
-        .put("rpm_center_limit", rpmCenterLimit)
-        .put("rpm_oscillation", rpmOscillation)
-        .put("rpm_oscillation_limit", rpmOscillationLimit)
-        .put("map_center_shift", mapCenterShift)
-        .put("map_center_limit", mapCenterLimit)
-        .put("map_oscillation", mapOscillation)
-        .put("map_oscillation_limit", mapOscillationLimit)
-        .put("petrol_center_shift", petrolCenterShift)
-        .put("petrol_center_limit", petrolCenterLimit)
-        .put("petrol_oscillation_ratio", petrolOscillationRatio)
-        .put("petrol_oscillation_limit", petrolOscillationLimit)
-        .put("pressure_center_shift", pressureCenterShift)
-        .put("pressure_center_limit", pressureCenterLimit)
-        .put("pressure_oscillation", pressureOscillation)
-        .put("pressure_oscillation_limit", pressureOscillationLimit)
-        .put("largest_gap_ms", largestGapMs)
-        .put("tolerated_gap_count", toleratedGapCount)
-}
+)
 
 data class SampleTiming(val durationMs: Long, val medianIntervalMs: Long)
 
@@ -812,39 +767,6 @@ data class SampleDecision(
         .put("cell_row", cellRow)
         .put("cell_column", cellColumn)
         .put("quality", sample?.quality ?: 0.0)
-
-    fun toJson(): JSONObject = JSONObject()
-        .put("state", state)
-        .put("reason", reason)
-        .put("classification", classification.name)
-        .put("frame_count", frameCount.coerceAtMost(desiredFrames))
-        .put("minimum_frames", minimumFrames)
-        .put("desired_frames", desiredFrames)
-        .put("duration_ms", durationMs)
-        .put("median_interval_ms", medianIntervalMs)
-        .put("gap_ms", gapMs)
-        .put("blocked_remaining_ms", blockedRemainingMs)
-        .put("learning_eligible", learningEligible)
-        .put("fuel_confirmed", fuelConfirmed ?: JSONObject.NULL)
-        .put("transition_target", transitionTarget ?: JSONObject.NULL)
-        .put("verification_passes", verificationPasses)
-        .put("verification_required", verificationRequired)
-        .put("fuel_just_stabilized", fuelJustStabilized)
-        .put("largest_gap_ms", largestGapMs)
-        .put("tolerated_gap_count", toleratedGapCount)
-        .put("planned_operation", plannedOperation)
-        .put("continuity_lost", continuityLost)
-        .put("reason_code", reasonCode)
-        .put("window_age_ms", windowAgeMs)
-        .put("window_budget_ms", windowBudgetMs)
-        .put("frames_evicted", framesEvicted)
-        .put("plausibility_reasons", org.json.JSONArray(plausibilityReasons))
-        .put("cell_key", cellKey)
-        .put("cell_row", cellRow)
-        .put("cell_column", cellColumn)
-        .put("tolerance_policy", try { JSONObject(tolerancePolicy) } catch (_: Exception) { JSONObject() })
-        .put("sample", sample?.toJson() ?: JSONObject.NULL)
-        .put("diagnostics", diagnostics?.toJson() ?: JSONObject.NULL)
 
     companion object {
         fun forming(

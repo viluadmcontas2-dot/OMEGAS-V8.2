@@ -13,8 +13,6 @@ service = read("app/src/main/java/com/omegas/prohub/service/TelemetryForegroundS
 runtime = read("app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt")
 api = read("app/src/main/assets/ui/core/native-api.js")
 index = read("app/src/main/assets/ui/index.html")
-learning_model = read("app/src/main/assets/ui/core/learning-model.js")
-physical_grid = read("app/src/main/assets/ui/components/physical-grid.js")
 app = read("app/src/main/assets/ui/app.js")
 styles = read("app/src/main/assets/ui/styles.css")
 refine_styles = read("app/src/main/assets/ui/styles-refine.css")
@@ -34,32 +32,10 @@ assert 'android:stopWithTask="false"' in manifest
 assert "sample_reason" in runtime
 assert "learningDecision" in api
 assert "this.fullSnapshot()" in api
-assert "learningToleranceSettings" in api
-assert "setLearningToleranceControls" in api
-assert "resetLearningToleranceSettings" in api
-# As quatro camadas humanas atuais vivem no shell da tela e o detalhe continua
-# separando explicitamente referência gasolina, observação GNV e diferença.
-assert "mapBar" in learning_model
-assert "petrolMs" in learning_model
-assert "rpm" in learning_model
-
-# Na multimídia fraca, app.js/Learning não perseguem pesos bilineares no DOM.
-# PhysicalGrid conserva apenas o tracing temporal limitado aprovado em #46,
-# sem timer próprio e sem qualquer rota de escrita ECU.
-assert "learning.grid.setTrace" not in app
-assert "setTrace(" in physical_grid
-assert "traceTrailMs = 1400" in physical_grid
-assert "traceTrailMax = 16" in physical_grid
-assert "live-contributor" in physical_grid
-assert "live-nearest" in physical_grid
-assert "live-trail" in physical_grid
-assert "setInterval" not in physical_grid
-assert "setTimeout" not in physical_grid
-assert "writeMap" not in physical_grid
-assert "protocolTransaction" not in physical_grid
+# Tolerâncias do cérebro 2 saíram da ponte JS na F3 (vivem só nas SharedPreferences do Kotlin).
+assert "learningToleranceSettings" not in api
+assert "setLearningToleranceControls" not in api
 assert "function renderLightLiveContext" in app
-assert "physical-grid-with-axes" in physical_grid
-assert "setAxes(rpmBins, petrolBins)" in physical_grid
 assert ".cell-value{font-size:13px" in styles
 assert ".cell-subvalue" in styles
 assert ".physical-grid-with-axes" in refine_styles

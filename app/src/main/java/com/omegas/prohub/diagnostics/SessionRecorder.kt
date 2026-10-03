@@ -829,9 +829,7 @@ Tipos principais:
 Exportação ativa é incremental: cada events_XXXX.jsonl já exportado com sucesso não
 volta a ser empacotado na exportação ativa seguinte. Sessão parada é exportada completa.
 
-O aprendizado deve ser avaliado por sample.state, sample.reason, learning.live,
-learning.session_summary e learning.memory. Transição, cutoff e verificação do novo
-combustível são observados, mas não alimentam a memória.
+A validade de cada amostra está em live.sample.state e live.sample.reason (confirmação de combustível e janela estável). Transição, cutoff e verificação do novo combustível são observados e não viram amostra.
 
 O export_summary.json lista os bytes e SHA-256 exatos de cada arquivo incluído.
 droppedEvents maior que zero indica lacuna de gravação para proteger a comunicação.

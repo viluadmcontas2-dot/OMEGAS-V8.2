@@ -19,13 +19,11 @@ class CleanUiContract(unittest.TestCase):
         self.router = (UI / "core/router.js").read_text("utf-8")
         self.scheduler = (UI / "core/scheduler.js").read_text("utf-8")
         self.native_api = (UI / "core/native-api.js").read_text("utf-8")
-        self.grid = (UI / "components/physical-grid.js").read_text("utf-8")
         self.map_editor = (UI / "map-editor.js").read_text("utf-8")
         self.map_screen = (UI / "screens/map.js").read_text("utf-8")
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
         self.refino_screen = (UI / "screens/refino.js").read_text("utf-8")
         self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
-        self.suggestion_model = (UI / "suggestion-model.js").read_text("utf-8")
 
     def test_only_clean_ui_is_active(self):
         main = MAIN.read_text("utf-8")
@@ -59,7 +57,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('class Scheduler', self.scheduler)
         self.assertEqual(1, self.scheduler.count('setInterval('))
         self.assertNotIn('setInterval(', self.app)
-        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.grid + self.refino_screen
+        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.refino_screen
         self.assertNotIn('MutationObserver', active_sources)
         self.assertNotIn('.onclick', active_sources)
         self.assertNotIn('tick:', self.store)
@@ -79,27 +77,12 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('--rpm-ratio', self.app)
         self.assertNotIn('--rpm-ratio', self.css)
 
-    def test_learning_fast_path_has_bounded_visual_trace_without_weight_chasing(self):
+    def test_live_fast_path_has_no_weight_chasing(self):
         self.assertNotIn('setTrace(', self.app)
-        self.assertNotIn('TRACE_MAX_CONTRIBUTORS', self.grid)
-        self.assertNotIn('TRACE_WEIGHT_STEPS', self.grid)
-        self.assertIn('setTrace(', self.grid)
-        self.assertIn('traceTrailMs = 1400', self.grid)
-        self.assertIn('traceTrailMax = 16', self.grid)
-        self.assertIn('live-contributor', self.grid)
-        self.assertIn('live-nearest', self.grid)
-        self.assertIn('live-trail', self.grid)
-        self.assertNotIn('setInterval(', self.grid)
-        self.assertNotIn('setTimeout(', self.grid)
-        self.assertNotRegex(self.grid, r'writeMap|startMapBatchWrite|protocolTransaction')
         self.assertIn('function renderLightLiveContext', self.app)
         # O pump de telemetria só roda nas rotas ao vivo (lista única no roteador; Refino incluído).
         self.assertIn("const LIVE_ROUTES = ['dashboard', 'map', 'autocal', 'refino']", self.router)
         self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot()", self.app)
-
-    def test_grid_has_physical_axes(self):
-        self.assertIn('physical-grid-with-axes', self.grid)
-        self.assertIn('setAxes(rpmBins, petrolBins)', self.grid)
 
     def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
         self.assertIn('PETROL INJECTION', self.dashboard)
@@ -165,7 +148,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('window.Android.', self.curve_screen)
 
     def test_no_runtime_ui_uses_legacy_hub_assets(self):
-        active_sources = self.html + self.app + self.store + self.router + self.scheduler + self.grid + self.map_screen + self.curve_screen
+        active_sources = self.html + self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen
         for marker in ('android_asset/hub/', '/hub/', 'hub/index.html'):
             self.assertNotIn(marker, active_sources)
 
@@ -183,8 +166,6 @@ class CleanUiContract(unittest.TestCase):
     def test_suggestions_route_is_review_navigation_not_auto_apply(self):
         self.assertIn('data-screen="suggestions"', self.html)
         self.assertIn('Abrir nunca escreve.', self.html)
-        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'autoApply', 'protocolTransaction'):
-            self.assertNotIn(forbidden, self.suggestion_model)
 
     def test_map_and_curve_share_router_state(self):
         self.assertIn("route === 'map'", self.app)
@@ -193,12 +174,6 @@ class CleanUiContract(unittest.TestCase):
 
     def test_scheduler_has_single_timer_budget(self):
         self.assertEqual(1, self.scheduler.count('setInterval('))
-        self.assertNotIn('setInterval(', self.grid)
-        self.assertNotIn('setTimeout(', self.grid)
-
-    def test_grid_selection_does_not_create_second_state_store(self):
-        self.assertNotIn('new Store(', self.grid)
-        self.assertNotIn('localStorage', self.grid)
 
     def test_no_opacity_or_filter_animation_in_active_grid(self):
         combined_css = self.css + self.refine_css + self.obd_css + self.calibration_obd_css

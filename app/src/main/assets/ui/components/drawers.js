@@ -49,8 +49,6 @@
         this.store.patch({ suggestionsOpen: false, toolsOpen: false });
       }));
       document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
-      document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
-      document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
       document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
       document.getElementById('toolSelfTest')?.addEventListener('click', () => {
         const result = this.api.selfTest();
@@ -171,11 +169,6 @@
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
-      const learning = state.learning || {};
-      // Aprendizado que ainda não respondeu é desconhecido ("—"), não "0 regiões".
-      const petrolCount = Array.isArray(learning.petrol) ? learning.petrol.length : null;
-      const cngCount = Array.isArray(learning.cng) ? learning.cng.length : null;
-      const comparisonCount = finite(learning.comparisonCount) ?? (Array.isArray(learning.comparisons) ? learning.comparisons.length : null);
       const categories = [...new Set(logs.map(item => String(item.category || 'OUTROS').toUpperCase()))].sort();
       const filteredLogs = logs.filter(item => {
         const level = String(item.level || '').toUpperCase();
@@ -196,7 +189,7 @@
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
         Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
         status.recording, status.events, mb === null ? null : Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
-        settings, sessionsLoading, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
+        settings, sessionsLoading, sessions.map(item => [item.id, item.bytes, item.active]),
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
@@ -265,16 +258,6 @@
               </article>`;
             }).join('') : sessionsLoading ? '<p class="empty-copy">Lendo as sessões salvas…</p>' : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
           </div>
-        </section>
-
-        <section class="learning-portability-card">
-          <header><div><small>APRENDIZADO</small><h3>O que vai no arquivo .omegas</h3></div></header>
-          <div class="learning-portability-grid">
-            <span><b>${rules().count(petrolCount)}</b> regiões gasolina</span>
-            <span><b>${rules().count(cngCount)}</b> regiões GNV</span>
-            <span><b>${rules().count(comparisonCount)}</b> comparações</span>
-          </div>
-          <p>Use <b>Exportar aprendizado</b> e <b>Importar aprendizado</b> acima. Importar confere o arquivo antes de aceitar e nunca grava na ECU. O GNV de uma calibração antiga não volta para a calibração atual.</p>
         </section>
 
         <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>

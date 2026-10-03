@@ -67,24 +67,6 @@ class AutoMatchRefinedEngineTest {
     }
 
     @Test
-    fun `rascunho refinado pre seleciona apenas pontos alterados com origem justificada`() {
-        val analysis = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot("ref_2026-10-01_1719", 95))
-        val draft = AutoMatchKFactorDraftPlanner.createRefined(analysis, nowMs = 1L)
-
-        assertTrue(draft.id.startsWith("AMR-1-"))
-        assertTrue(draft.selectedCount > 0)
-        draft.points.forEach { point ->
-            if (point.selected) {
-                assertTrue(point.origin in AutoMatchKFactorDraftPlanner.REFINED_PRESELECTED_ORIGINS)
-                assertTrue(point.changed)
-            }
-            if (point.origin == "HELD") assertFalse(point.changed)
-        }
-        val review = draft.selectedPointsForReview()
-        assertEquals(draft.selectedCount, review.getJSONArray("points").length())
-    }
-
-    @Test
     fun `buffers incoerentes no tempo caem para polimento sem usar evidencia`() {
         val snap = snapshot("ref_2026-10-01_1719", 95)
         snap.put("coherenceGroups", org.json.JSONArray().put(

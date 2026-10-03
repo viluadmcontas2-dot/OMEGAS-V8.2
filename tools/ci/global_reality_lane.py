@@ -46,7 +46,7 @@ else:
 attempt_count=0
 infra_retry_recovered=False
 if args.kind=="jvm_node":
-    prerequisite=["./gradlew","testDebugUnitTest","--tests","com.omegas.prohub.LearningLatencyContractTest","--stacktrace"]
+    prerequisite=["./gradlew","testDebugUnitTest","--tests","com.omegas.prohub.ecu.SampleTelemetryContractTest","--stacktrace"]
     rc1,seconds1,out1,status1,attempts1,recovered1=run_with_broken_retry(prerequisite)
     attempt_count+=attempts1
     infra_retry_recovered=infra_retry_recovered or recovered1

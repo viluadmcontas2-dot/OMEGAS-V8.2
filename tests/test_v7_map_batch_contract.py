@@ -76,10 +76,9 @@ class V8MapBatchContract(unittest.TestCase):
         self.assertNotIn("DRIVING_PROBABLE_RPM", self.policy)
         self.assertNotIn("status.rpm >=", self.policy)
         self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.calibration)
-        self.assertGreaterEqual(
-            self.hub.count("CalibrationWriteSafetyPolicy.unsafeReason(service.status())"),
-            3,
-        )
+        # A ponte OmegasNative não escreve mais na ECU (F3): nenhuma escrita sem a política fica nela.
+        self.assertNotIn("fun startKWrite(", self.hub)
+        self.assertNotIn("fun startKFactorWrite(", self.hub)
         self.assertIn("unsafeMutationReason =", self.autocal_bridge)
         self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.autocal_bridge)
         self.assertGreaterEqual(self.autocal_action.count("unsafeMutationReason()"), 3)

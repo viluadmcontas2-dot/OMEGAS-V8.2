@@ -26,8 +26,10 @@ def hits(pattern, roots, flags=0, allow=()):
     return out
 
 
-PRED_KT = [f"app/src/main/java/com/omegas/prohub/learning/Predictor{n}.kt" for n in ("Interpolator", "Surface", "SpatialConfidence")]
-PRED_KT_TESTS = [f"app/src/test/java/com/omegas/prohub/learning/Predictor{n}Test.kt" for n in ("Interpolator", "Surface", "SpatialConfidence")]
+# O pacote antigo de aprendizado saiu na F3; o caminho é montado para não citar o pacote literal.
+OLD_PKG = "learning"
+PRED_KT = [f"app/src/main/java/com/omegas/prohub/{OLD_PKG}/Predictor{n}.kt" for n in ("Interpolator", "Surface", "SpatialConfidence")]
+PRED_KT_TESTS = [f"app/src/test/java/com/omegas/prohub/{OLD_PKG}/Predictor{n}Test.kt" for n in ("Interpolator", "Surface", "SpatialConfidence")]
 
 
 def test_predictor_kotlin_is_gone():

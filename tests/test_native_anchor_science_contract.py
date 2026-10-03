@@ -2,19 +2,15 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CORRELATOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeAutoCalAnchorCorrelator.kt'
-ANCHOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeLearningAnchor.kt'
-SIGNAL = ROOT / 'app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt'
+CORRELATOR = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/NativeAutoCalAnchorCorrelator.kt'
 MONITOR = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt'
 ENGINE = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt'
-WINDOW = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt'
+WINDOW = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/NativeAnchorTelemetryWindow.kt'
 
 
 class NativeAnchorScienceContract(unittest.TestCase):
     def setUp(self):
         self.correlator = CORRELATOR.read_text('utf-8')
-        self.anchor = ANCHOR.read_text('utf-8')
-        self.signal = SIGNAL.read_text('utf-8')
         self.monitor = MONITOR.read_text('utf-8')
         self.engine = ENGINE.read_text('utf-8')
         self.window = WINDOW.read_text('utf-8')
@@ -50,27 +46,8 @@ class NativeAnchorScienceContract(unittest.TestCase):
             self.assertIn(reason, self.correlator)
         self.assertIn('.put("correlationReason", correlation.reason)', self.monitor)
 
-    def test_anchor_requires_real_correlated_gnv_context(self):
-        self.assertIn('if (event.optString("correlationState") != "CORRELATED") return null', self.anchor)
-        self.assertIn('sessionId <= 0L', self.anchor)
-        self.assertIn('fuel != "GNV"', self.anchor)
-        self.assertIn('matchedFrames < 2', self.anchor)
-        self.assertIn('correlatedFrameElapsedMs', self.anchor)
-        self.assertIn('lagMs', self.anchor)
-        self.assertIn('.put("comparisonVote", false)', self.anchor)
-        self.assertIn('.put("automaticWrite", false)', self.anchor)
-
-    def test_new_physical_fingerprint_revises_once_and_persists_through_store(self):
-        self.assertIn('if (anchors.containsKey(anchor.fingerprint)) return false', self.anchor)
-        self.assertIn('nextRevision += 1L', self.anchor)
-        self.assertIn('scientificRevision', self.anchor)
-        self.assertIn('nativeLearningAnchors', self.signal)
-        self.assertIn('nativeAnchors.upsert(anchor)', self.signal)
-        self.assertIn('NativeLearningAnchor.fromJson', self.signal)
-        self.assertIn('nativeAnchors.replaceAll', self.signal)
-
     def test_anchor_path_has_no_writer_or_second_serial_authority(self):
-        for source in (self.anchor, self.correlator, self.window):
+        for source in (self.correlator, self.window):
             self.assertNotIn('Mp48WorkClass.MANUAL_WRITE', source)
             self.assertNotIn('protocolTransaction(', source)
             self.assertNotIn('KWriteManager', source)
@@ -78,10 +55,6 @@ class NativeAnchorScienceContract(unittest.TestCase):
             self.assertNotIn('Executors.', source)
             self.assertNotIn('Thread(', source)
         self.assertIn('nativeTelemetryWindow.record(', self.engine)
-        import_section = self.signal.split('fun importNativeSnapshot', 1)[1].split('fun onCalibrationAdjustment', 1)[0]
-        self.assertNotIn('scheduleAdvisorRefresh', import_section)
-        self.assertNotIn('delegate.ingest', import_section)
-        self.assertNotIn('MANUAL_WRITE', import_section)
 
 
 if __name__ == '__main__':

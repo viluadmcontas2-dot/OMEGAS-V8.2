@@ -37,7 +37,6 @@
   let toastTimer = null;
   let routeButtons = [];
   let screenNodes = [];
-  let scienceRevision = 0;
 
   function byId(id) { return document.getElementById(id); }
   function setText(id, value) {
@@ -272,26 +271,13 @@
       ['INPUT', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName);
   }
 
-  /** Único pump de ScienceSnapshot; rebuild pesado acontece fora da WebView no Android. */
+  /** Contexto lento da rota (sessões, logs, Sugestões); a telemetria viva vem do presentSnapshot. */
   function refreshContext() {
     const state = store.get();
     const route = state.route;
     const curve = route === 'curve' ? ensureScreen('curve') : null;
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    const needsScience = route === 'suggestions' || route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
-
-    if (needsScience) {
-      const science = api.scienceSnapshotSince(scienceRevision) || {};
-      const nextRevision = Number(science.revision || scienceRevision || 0);
-      patch.scienceRefreshing = science.refreshing === true;
-      if (science.changed === true && science.data && typeof science.data === 'object') {
-        scienceRevision = nextRevision;
-        const data = science.data;
-        if (data.learning) patch.learning = data.learning;
-        patch.scienceRevision = scienceRevision;
-      }
-    }
 
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};

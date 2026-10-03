@@ -16,12 +16,6 @@ function buildApi(nativeOverrides = {}) {
   const native = {
     getReleaseIdentity: () => JSON.stringify({ product: 'OMEGAS', generation: 'V7' }),
     getFullEngineSnapshot: () => JSON.stringify({}),
-    getLearningToleranceSettings: () => JSON.stringify({ ok: true }),
-    setLearningToleranceSettings: payload => {
-      calls.push(['setLearningToleranceSettings', payload]);
-      return JSON.stringify({ ok: true, received: JSON.parse(payload) });
-    },
-    resetLearningToleranceSettings: () => JSON.stringify({ ok: true, reset: true }),
     listObdDevices: () => JSON.stringify({ permissionRequired: false, enabled: true, devices: [] }),
     connectObd: address => {
       calls.push(['connectObd', address]);
@@ -99,35 +93,6 @@ test('learningDecision normaliza somente o snapshot produzido pelo núcleo', () 
   assert.equal(decision.quality, 0.82);
 });
 
-test('tolerâncias semânticas são entregues ao Kotlin sem fórmula paralela', () => {
-  const { api, calls } = buildApi();
-  const result = api.setLearningToleranceControls({
-    rpm: 3,
-    map: 2,
-    petrol: 1,
-    pressure: 2,
-    collection: 3,
-    minimumWaterC: 65,
-  });
-
-  assert.equal(result.ok, true);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], 'setLearningToleranceSettings');
-  const payload = JSON.parse(calls[0][1]);
-  assert.deepEqual(JSON.parse(JSON.stringify(payload)), {
-    semanticControls: {
-      rpm: 3,
-      map: 2,
-      petrol: 1,
-      pressure: 2,
-      collection: 3,
-      minimumWaterC: 65,
-    },
-  });
-});
-
-
-
 test('browser demo nunca transforma conexão ou tolerância em escrita de ECU', () => {
   const context = { console, Date, Math, JSON, Intl };
   context.window = context;
@@ -137,7 +102,6 @@ test('browser demo nunca transforma conexão ou tolerância em escrita de ECU', 
   const api = new context.OmegasUi.NativeApi();
 
   assert.equal(api.isDemo(), true);
-  assert.equal(api.setLearningToleranceControls({ rpm: 4 }).ok, true);
   assert.equal(api.writeMap([{ row: 0, column: 0, target: 120 }]).ok, false);
   assert.equal(api.writeCurve([{ index: 0, targetRaw: 1 }]).ok, false);
 });

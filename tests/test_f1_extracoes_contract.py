@@ -14,13 +14,11 @@ class T11LiveCellProjection(unittest.TestCase):
         hub = read(K / "web/HubJavascriptBridge.kt")
         self.assertEqual(hub.count("LiveCellProjection.liveInterpolationJson("), 2)
         self.assertNotIn("LearningGridProjection.liveInterpolationJson(", hub)
-        clm = read(K / "learning/ContinuousLearningMath.kt")
+        # F3: ContinuousLearningMath mora em calibration/ e a projeção antiga do aprendizado saiu.
+        clm = read(K / "calibration/ContinuousLearningMath.kt")
         self.assertNotIn("LearningGridProjection", clm)
         self.assertIn("KMapPhysicalAxes", clm)
-        lgp = read(K / "learning/LearningGridProjection.kt")
-        self.assertIn("LiveCellProjection.cellFor(", lgp)
-        self.assertIn("LiveCellProjection.liveInterpolationJson(", lgp)
-        self.assertNotIn("ContinuousLearningMath.bilinearWeights", lgp)
+        self.assertFalse((K / "learning/LearningGridProjection.kt").exists())
 
 
 class T12SampleAnalyzerInEcu(unittest.TestCase):
@@ -31,10 +29,8 @@ class T12SampleAnalyzerInEcu(unittest.TestCase):
         for must in ("class MotorSampleAnalyzer(", "data class SampleDecision(", "LiveCellProjection.cellFor("):
             self.assertIn(must, src)
         self.assertNotIn("LearningGridProjection", src)
-        for path in (ROOT / "app/src").rglob("*.kt"):
-            text = read(path)
-            self.assertNotIn("import com.omegas.prohub.learning.MotorSampleAnalyzer", text, path)
-            self.assertNotIn("import com.omegas.prohub.learning.SampleDecision", text, path)
+        # O pacote de aprendizado inteiro saiu na F3 (tests/test_poda_2_contract.py).
+        self.assertFalse((K / "learning").exists())
         runtime = read(K / "ecu/NativeRuntimeManager.kt")
         self.assertIn('.put("sample_state", decision.state)', runtime)
         self.assertIn('.put("sample", decision.toTelemetryJson())', runtime)

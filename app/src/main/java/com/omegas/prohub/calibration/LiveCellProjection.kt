@@ -1,6 +1,5 @@
 package com.omegas.prohub.calibration
 
-import com.omegas.prohub.learning.ContinuousLearningMath
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.abs

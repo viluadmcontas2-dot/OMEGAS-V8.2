@@ -2,7 +2,6 @@ package com.omegas.prohub.runtime
 
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -18,25 +17,6 @@ class RuntimeSnapshotBusTest {
         assertEquals(1_200, first.getJSONObject("data").getInt("rpm"))
         assertEquals(2_400, second.getJSONObject("data").getInt("rpm"))
         assertTrue(second.getLong("revision") > first.getLong("revision"))
-    }
-
-    @Test
-    fun `science revision changes only when token changes`() {
-        val bus = RuntimeSnapshotBus()
-        bus.publishScience(JSONObject().put("cells", 10), "rev-a")
-        val first = bus.scienceJsonSince(0L)
-        val revision = first.getLong("revision")
-
-        bus.publishScience(JSONObject().put("cells", 99), "rev-a")
-        val unchanged = bus.scienceJsonSince(revision)
-        assertFalse(unchanged.getBoolean("changed"))
-        assertEquals(revision, unchanged.getLong("revision"))
-
-        bus.publishScience(JSONObject().put("cells", 11), "rev-b")
-        val changed = bus.scienceJsonSince(revision)
-        assertTrue(changed.getBoolean("changed"))
-        assertEquals(11, changed.getJSONObject("data").getInt("cells"))
-        assertTrue(changed.getLong("revision") > revision)
     }
 
     @Test

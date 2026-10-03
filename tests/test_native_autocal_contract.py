@@ -16,11 +16,8 @@ ACQ = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AutoCalAcquisition.kt'
 MONITOR = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt'
 MATURITY = ROOT / 'app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMaturityTracker.kt'
 SERVICE = ROOT / 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'
-LEARNING = ROOT / 'app/src/main/java/com/omegas/prohub/learning/LiveOnlyLearningStore.kt'
-SIGNAL = ROOT / 'app/src/main/java/com/omegas/prohub/learning/SignalLearningStore.kt'
-WINDOW = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt'
-CORRELATOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeAutoCalAnchorCorrelator.kt'
-ANCHOR = ROOT / 'app/src/main/java/com/omegas/prohub/learning/NativeLearningAnchor.kt'
+WINDOW = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/NativeAnchorTelemetryWindow.kt'
+CORRELATOR = ROOT / 'app/src/main/java/com/omegas/prohub/ecu/NativeAutoCalAnchorCorrelator.kt'
 
 class NativeAutoCalContract(unittest.TestCase):
     def setUp(self):
@@ -31,13 +28,10 @@ class NativeAutoCalContract(unittest.TestCase):
         self.monitor = MONITOR.read_text('utf-8')
         self.maturity = MATURITY.read_text('utf-8')
         self.service = SERVICE.read_text('utf-8')
-        self.learning = LEARNING.read_text('utf-8')
         self.scheduler = SCHEDULER.read_text('utf-8')
         self.engine = ENGINE.read_text('utf-8')
-        self.signal = SIGNAL.read_text('utf-8')
         self.window = WINDOW.read_text('utf-8')
         self.correlator = CORRELATOR.read_text('utf-8')
-        self.anchor = ANCHOR.read_text('utf-8')
 
     def test_native_autocal_scale_and_action_identity_matches_recovered_progbase(self):
         scale = SCALE.read_text('utf-8')
@@ -194,39 +188,6 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('correlatedGasMs', self.monitor)
         self.assertIn('correlatedFuel', self.monitor)
         self.assertIn('correlatedFrameElapsedMs', self.monitor)
-
-    def test_native_learning_anchor_requires_reliable_correlation_and_has_no_writer(self):
-        self.assertIn('if (event.optString("correlationState") != "CORRELATED") return null', self.anchor)
-        self.assertIn('require(fuel == "GNV")', self.anchor)
-        self.assertIn('.put("comparisonVote", false)', self.anchor)
-        self.assertIn('.put("automaticWrite", false)', self.anchor)
-        self.assertIn('scientificRevision', self.anchor)
-        self.assertIn('if (anchors.containsKey(anchor.fingerprint)) return false', self.anchor)
-        self.assertIn('nextRevision += 1L', self.anchor)
-        self.assertNotIn('protocolTransaction(', self.anchor)
-        self.assertNotIn('Mp48WorkClass.MANUAL_WRITE', self.anchor)
-        self.assertNotIn('KWriteManager', self.anchor)
-        self.assertNotIn('KFactorManager', self.anchor)
-
-    def test_anchor_propagates_only_through_learning_sidecar_without_double_vote(self):
-        self.assertIn('nativeLearningAnchors', self.signal)
-        self.assertIn('NativeLearningAnchor.fromMaturityEvent', self.signal)
-        self.assertIn('nativeAnchors.upsert(anchor)', self.signal)
-        self.assertIn('nativeAnchors.clear()', self.signal)
-        import_section = self.signal.split('fun importNativeSnapshot', 1)[1].split('fun onCalibrationAdjustment', 1)[0]
-        self.assertNotIn('scheduleAdvisorRefresh', import_section)
-        self.assertNotIn('delegate.ingest', import_section)
-        self.assertNotIn('previewKWrite', import_section)
-        self.assertNotIn('MANUAL_WRITE', import_section)
-
-    def test_paused_snapshot_is_not_fresh_learning_and_native_epoch_requires_readback(self):
-        self.assertIn('AUTOCAL_PAUSED_SNAPSHOT', self.learning)
-        self.assertIn('enabled == 0', self.learning)
-        self.assertIn('payload.optString("source") == "ECU_NATIVE_AUTOCAL"', self.learning)
-        self.assertIn('payload.optBoolean("ecuNativeObserved", false)', self.learning)
-        self.assertIn('!payload.optBoolean("appWritePerformed", true)', self.learning)
-        self.assertIn('readbackValid', self.learning)
-        self.assertIn('ECU_NATIVE_AUTOCAL_EPOCH', self.learning)
 
     def test_actual_protocol_kotlin_frames_and_status_decoder(self):
         kotlinc = shutil.which('kotlinc')

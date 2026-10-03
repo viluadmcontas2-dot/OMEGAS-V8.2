@@ -1,6 +1,5 @@
 package com.omegas.prohub.ecu
 
-import com.omegas.prohub.learning.LearningTolerancePolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

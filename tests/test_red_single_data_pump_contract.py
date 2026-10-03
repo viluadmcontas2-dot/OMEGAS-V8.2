@@ -9,19 +9,14 @@ APP = (UI / "app.js").read_text(encoding="utf-8")
 
 
 class RedSingleDataPumpContractTest(unittest.TestCase):
-    def test_native_api_exposes_snapshot_seams(self):
+    def test_native_api_exposes_only_the_present_seam(self):
         self.assertIn("presentSnapshot()", NATIVE_API)
-        self.assertIn("scienceSnapshotSince(revision)", NATIVE_API)
         self.assertIn("getPresentSnapshot", NATIVE_API)
-        self.assertIn("getScienceSnapshotSince", NATIVE_API)
-
-    def test_app_scheduler_is_the_only_snapshot_pump(self):
-        self.assertIn("api.presentSnapshot()", APP)
-        self.assertIn("api.scienceSnapshotSince", APP)
+        self.assertNotIn("getScienceSnapshotSince", NATIVE_API)
 
     def test_route_navigation_does_not_call_heavy_learning_api_directly(self):
+        self.assertIn("api.presentSnapshot()", APP)
         self.assertNotIn("api.learning()", APP)
-        self.assertNotIn("api.v7.getState()", APP)
 
 
 if __name__ == "__main__":

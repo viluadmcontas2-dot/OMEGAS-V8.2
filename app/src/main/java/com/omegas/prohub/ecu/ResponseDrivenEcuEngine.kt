@@ -1,8 +1,6 @@
 package com.omegas.prohub.ecu
 
 import android.os.SystemClock
-import com.omegas.prohub.learning.LearningToleranceSettings
-import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.usb.UsbProtocolReply
 import com.omegas.prohub.usb.UsbProtocolStatusClass
 import com.omegas.prohub.usb.UsbSerialManager

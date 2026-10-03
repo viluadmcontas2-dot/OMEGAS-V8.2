@@ -377,7 +377,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     },
                     onStateChanged = activity::refreshWebUi,
                     onSnapshotReady = { snapshot ->
-                        service.runtime.importNativeAutoCalSnapshot(snapshot)
                         service.sessionRecorder.record("autocal_manual_snapshot", "autocal", snapshot, force = true)
                     },
                 )

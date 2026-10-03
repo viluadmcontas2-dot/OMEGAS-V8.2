@@ -3,24 +3,11 @@ package com.omegas.prohub.web
 import android.webkit.JavascriptInterface
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.MainActivity
-import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.KFactorManualPlanner
-import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.calibration.LiveCellProjection
-import com.omegas.prohub.ecu.KFactorProtocol
-import com.omegas.prohub.learning.LearningGridProjection
-import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
-import com.omegas.prohub.learning.LearningTemperatureSettings
-import com.omegas.prohub.learning.LearningToleranceSettings
-import com.omegas.prohub.learning.LearningUiSnapshotAssembler
-import com.omegas.prohub.learning.SignalLearningStore
 import com.omegas.prohub.runtime.RuntimeSnapshotBus
-import com.omegas.prohub.service.TelemetryForegroundService
-import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
-import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -29,15 +16,11 @@ class HubJavascriptBridge(activity: MainActivity) {
     private val activityRef = java.lang.ref.WeakReference(activity)
     private val activity: MainActivity? get() = activityRef.get()
     private val appContext: android.content.Context = activityRef.get()!!.applicationContext
-    private val learningTemperature = LearningTemperatureSettings(appContext)
-    private val learningTolerances = LearningToleranceSettings(appContext)
     private val mapReadExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-web-k-map-read").apply { isDaemon = true }
     }
     private val mapReadBusy = AtomicBoolean(false)
-    private val scienceRefreshBusy = AtomicBoolean(false)
     private val uiSnapshots = RuntimeSnapshotBus()
-    @Volatile private var publishedScienceSignature = ""
 
     fun destroy() {
         mapReadExecutor.shutdownNow()
@@ -51,12 +34,6 @@ class HubJavascriptBridge(activity: MainActivity) {
     private fun unavailable(): String = JSONObject()
         .put("ok", false)
         .put("error", "Serviço indisponível")
-        .toString()
-
-    private fun safetyBlocked(reason: String): String = JSONObject()
-        .put("ok", false)
-        .put("safetyBlocked", true)
-        .put("error", reason)
         .toString()
 
     private fun releaseIdentity(): JSONObject = JSONObject()
@@ -103,58 +80,6 @@ class HubJavascriptBridge(activity: MainActivity) {
         uiSnapshots.presentJson().toString()
     } ?: unavailable()
 
-    /**
-     * ScienceSnapshot nunca reconstrói ciência na thread da WebView. A chamada
-     * compara somente metadados de arquivos e, se necessário, agenda um prewarm
-     * no executor que já pertence à bridge. Até o prewarm terminar, devolve o
-     * último snapshot válido em RAM.
-     */
-    @JavascriptInterface
-    fun getScienceSnapshotSince(lastRevision: Long): String {
-        val service = activity?.serviceOrNull() ?: return unavailable()
-        val signature = scienceSignature(service)
-        if (signature != publishedScienceSignature && scienceRefreshBusy.compareAndSet(false, true)) {
-            mapReadExecutor.execute {
-                try {
-                    val learning = try { JSONObject(getLearningMaps()) } catch (error: Exception) {
-                        JSONObject().put("ok", false).put("error", error.message ?: "Learning indisponível")
-                    }
-                    val science = JSONObject()
-                        .put("learning", learning)
-                        .put("generatedAt", System.currentTimeMillis())
-                        .put("signature", signature)
-                    uiSnapshots.publishScience(science, signature)
-                    publishedScienceSignature = signature
-                } catch (_: Exception) {
-                    // Mantém a última ciência válida; a próxima chamada tentará novamente.
-                } finally {
-                    scienceRefreshBusy.set(false)
-                }
-            }
-        }
-        return uiSnapshots.scienceJsonSince(lastRevision)
-            .put("refreshing", scienceRefreshBusy.get())
-            .put("pendingSignature", signature != publishedScienceSignature)
-            .toString()
-    }
-
-    private fun scienceSignature(service: TelemetryForegroundService): String {
-        val root = service.paths.runtimeRoot
-        val files = listOf(
-            File(root, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE),
-            File(root, "learning_v6_evidence.json"),
-            File(root, "k_map_cache.json"),
-            File(root, "k_factor_cache.json"),
-        )
-        return files.joinToString("|") { file ->
-            if (file.exists()) {
-                "${file.name}:${file.lastModified()}:${if (file.isFile) file.length() else 0L}"
-            } else {
-                "${file.name}:missing"
-            }
-        }
-    }
-
     @JavascriptInterface
     fun getStatus(): String = activity?.serviceOrNull()?.let { service ->
         val status = service.status()
@@ -195,149 +120,18 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("kFactorState", factorStatus.optString("state", "IDLE"))
             .put("kFactorMessage", factorStatus.optString("message", ""))
             .put("kFactorProgress", factorStatus.optInt("progress", 0))
-            .put("learningMinimumWaterC", learningTemperature.minimumWaterC())
-            .put("learningTolerancePolicy", LearningToleranceSettings.current.toJson())
-            .put("learningScaleMigration", LearningTelemetrySchemaMigration.status(service.paths.runtimeRoot))
             .put("appVersion", BuildConfig.VERSION_NAME)
             .put("release", releaseIdentity())
             .toString()
     } ?: JSONObject()
         .put("serviceRunning", false)
-        .put("learningMinimumWaterC", learningTemperature.minimumWaterC())
-        .put("learningTolerancePolicy", LearningToleranceSettings.current.toJson())
-        .put("learningScaleMigration", LearningTelemetrySchemaMigration.status(AppPaths(appContext).runtimeRoot))
         .put("appVersion", BuildConfig.VERSION_NAME)
         .put("release", releaseIdentity())
         .toString()
 
-    @JavascriptInterface
-    fun getLearningCheckpointStatus(): String = activity?.serviceOrNull()?.learningCheckpointStatusJson() ?: "{}"
-
-    @JavascriptInterface
-    fun getLearningMaps(): String {
-        val status = activity?.serviceOrNull()?.status()
-        val file = File(AppPaths(appContext).runtimeRoot, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
-        val root = try {
-            val raw = if (file.isFile) JSONObject(file.readText(Charsets.UTF_8)) else JSONObject()
-            LearningUiSnapshotAssembler.assemble(raw)
-        } catch (error: Exception) {
-            return JSONObject()
-                .put("ok", false)
-                .put("error", "Não foi possível reconciliar a memória: ${error.message}")
-                .toString()
-        }
-        val source = root.optJSONArray("regions") ?: JSONArray()
-        val petrol = JSONArray()
-        val cngCurrent = JSONArray()
-        val cngPrevious = JSONArray()
-        val epoch = root.optInt("epoch", 1)
-        repeat(source.length()) { index ->
-            val region = LearningGridProjection.enrichRegion(source.optJSONObject(index) ?: return@repeat)
-            when (region.optString("fuel").uppercase()) {
-                "PETROL", "GASOLINA" -> petrol.put(region)
-                "CNG", "GNV" -> if (region.optInt("epoch", epoch) == epoch) {
-                    cngCurrent.put(region)
-                } else {
-                    cngPrevious.put(region)
-                }
-            }
-        }
-        val projectedCells = root.optJSONArray("cells") ?: LearningGridProjection.project(source, epoch)
-        val comparisons = root.optJSONArray("comparisons") ?: JSONArray()
-        val integrity = root.optJSONObject("integrity")
-            ?: LearningGridProjection.integrity(
-                regions = source,
-                cells = projectedCells,
-                comparisons = comparisons,
-                epoch = epoch,
-                mapHash = root.optString("mapHash", root.optString("map_hash", "")),
-            )
-        val currentCell = LearningGridProjection.cellFor(
-            rpm = (status?.rpm ?: 0).toDouble(),
-            petrolMs = status?.petrolMs ?: 0.0,
-        )
-        return JSONObject()
-            .put("ok", true)
-            .put("source", LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
-            .put("format", SignalLearningStore.FORMAT)
-            .put("internalFormat", root.optString("format", ""))
-            .put("telemetryScaleSchema", BuildConfig.OMEGAS_TELEMETRY_SCHEMA)
-            .put("scaleMigration", LearningTelemetrySchemaMigration.status(AppPaths(appContext).runtimeRoot))
-            .put("epoch", epoch)
-            .put("grid", root.optJSONObject("grid") ?: LearningGridProjection.gridJson())
-            .put("cells", projectedCells)
-            .put("integrity", integrity)
-            .put("mapHash", root.optString("mapHash", root.optString("map_hash", "")))
-            .put("petrol", petrol)
-            .put("cng", cngCurrent)
-            .put("cngPreviousEpochs", cngPrevious)
-            .put("comparisons", comparisons)
-            .put("comparisonCount", comparisons.length())
-            .put("assistedCalibration", root.optJSONObject("assistedCalibration") ?: JSONObject())
-            .put("assisted_calibration", root.optJSONObject("assisted_calibration") ?: JSONObject())
-            .put("reconciliation", root.optJSONObject("reconciliation") ?: JSONObject())
-            .put("summary", root.optJSONObject("summary") ?: JSONObject())
-            .put("uiPipeline", root.optString("uiPipeline", "PERSISTED_REGIONS_RECONCILED_ADVISOR"))
-            .put("revalidation", root.optJSONObject("revalidation") ?: JSONObject())
-            .put("current", JSONObject()
-                .put("fuel", status?.fuelState ?: "--")
-                .put("rpm", status?.rpm ?: 0)
-                .put("petrolMs", status?.petrolMs ?: 0.0)
-                .put("mapBar", status?.mapBar ?: 0.0)
-                .put("cell", currentCell))
-            .toString()
-    }
-
-    @JavascriptInterface
-    fun getLearningTemperatureSettings(): String = learningTemperature.toJson().toString()
-
-    @JavascriptInterface
-    fun setLearningMinimumWaterC(value: Int): String {
-        val applied = learningTemperature.setMinimumWaterC(value)
-        activity?.serviceOrNull()?.let { service ->
-            service.log.add("INFO", "LEARNING-NATIVE", "Temperatura mínima Landi ajustada para $applied °C")
-            service.sessionRecorder.record(
-                "settings_changed",
-                "learning",
-                JSONObject().put("minimumLandiWaterC", applied).put("source", "LANDI_ECU"),
-                force = true,
-            )
-        }
-        return learningTemperature.toJson().put("applied", applied).toString()
-    }
-
-    @JavascriptInterface
-    fun getLearningToleranceSettings(): String = learningTolerances.toJson().toString()
-
-    @JavascriptInterface
-    fun setLearningToleranceSettings(payload: String): String = try {
-        val applied = learningTolerances.update(JSONObject(payload))
-        activity?.serviceOrNull()?.let { service ->
-            service.log.add("INFO", "LEARNING-NATIVE", "Tolerâncias de aprendizado atualizadas")
-            service.sessionRecorder.record(
-                "settings_changed",
-                "learning_tolerances",
-                JSONObject().put("policy", applied.toJson()),
-                force = true,
-            )
-        }
-        learningTolerances.toJson().put("applied", applied.toJson()).toString()
-    } catch (error: Exception) {
-        JSONObject().put("ok", false).put("error", error.message ?: "Política inválida").toString()
-    }
-
-    @JavascriptInterface
-    fun resetLearningToleranceSettings(): String {
-        val applied = learningTolerances.reset()
-        activity?.serviceOrNull()?.log?.add("INFO", "LEARNING-NATIVE", "Tolerâncias restauradas para o padrão seguro")
-        return learningTolerances.toJson().put("applied", applied.toJson()).toString()
-    }
-
-    @JavascriptInterface fun restartEngine(): Boolean = activity?.serviceOrNull()?.restartEngine() ?: false
     @JavascriptInterface fun connectUsb(deviceName: String): Boolean =
         activity?.serviceOrNull()?.connectUsb(deviceName.ifBlank { null }, userInitiated = true) ?: false
     @JavascriptInterface fun disconnectUsb() = activity?.serviceOrNull()?.disconnectUsb()
-    @JavascriptInterface fun listUsbDevices(): String = activity?.serviceOrNull()?.usbDevicesJson() ?: "[]"
 
     @JavascriptInterface fun getFullEngineSnapshot(): String = activity?.serviceOrNull()?.fullEngineSnapshotJson() ?: "{}"
 
@@ -359,13 +153,7 @@ class HubJavascriptBridge(activity: MainActivity) {
             .toString()
     } ?: unavailable()
 
-    @JavascriptInterface fun getEngineMetrics(): String = activity?.serviceOrNull()?.engineMetricsJson() ?: unavailable()
     @JavascriptInterface fun runEngineSelfTests(): String = activity?.serviceOrNull()?.engineSelfTestJson() ?: unavailable()
-    @JavascriptInterface fun runProtocolLab(): String = activity?.serviceOrNull()?.protocolLabJson() ?: unavailable()
-
-    @JavascriptInterface fun readKCell(row: Int, column: Int): String = activity?.serviceOrNull()?.readKCell(row, column) ?: unavailable()
-    @JavascriptInterface fun readKLine(row: Int): String = activity?.serviceOrNull()?.readKLine(row) ?: unavailable()
-    @JavascriptInterface fun readKMap(): String = activity?.serviceOrNull()?.readKMap() ?: unavailable()
 
     /**
      * Inicia a leitura completa fora da thread JavaScript. A WebView continua
@@ -414,82 +202,8 @@ class HubJavascriptBridge(activity: MainActivity) {
         .put("busy", mapReadBusy.get())
         .toString()
 
-    @JavascriptInterface fun previewKMapCell(row: Int, column: Int, targetValue: Int): String =
-        activity?.serviceOrNull()?.previewKMapCell(row, column, targetValue) ?: unavailable()
-
-    @JavascriptInterface
-    fun startKWrite(row: Int, column: Int, current: Int, target: Int, maxStep: Int, pauseMs: Int): String {
-        val service = activity?.serviceOrNull() ?: return unavailable()
-        CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }
-        if (target < 100) {
-            return JSONObject()
-                .put("ok", false)
-                .put("error", "O valor mínimo de segurança do mapa K é 100")
-                .toString()
-        }
-        return service.startKWrite(row, column, current, target, maxStep, pauseMs)
-    }
-
-    @JavascriptInterface
-    fun startKBatchWrite(cellsJson: String, maxStep: Int, pauseMs: Int, reason: String): String {
-        val service = activity?.serviceOrNull() ?: return unavailable()
-        CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }
-        val cells = try { JSONArray(cellsJson) } catch (_: Exception) {
-            return JSONObject().put("ok", false).put("error", "Lote de células inválido").toString()
-        }
-        if (cells.length() !in 1..KWriteManager.MAX_BATCH_CELLS) {
-            return JSONObject().put("ok", false)
-                .put("error", "Selecione entre 1 e ${KWriteManager.MAX_BATCH_CELLS} células")
-                .toString()
-        }
-        repeat(cells.length()) { index ->
-            val cell = cells.optJSONObject(index)
-                ?: return JSONObject().put("ok", false).put("error", "Célula inválida no lote").toString()
-            if (cell.optInt("target", -1) < 100) {
-                return JSONObject()
-                    .put("ok", false)
-                    .put("error", "O valor mínimo de segurança do mapa K é 100")
-                    .toString()
-            }
-        }
-        return service.startKBatchWrite(cells.toString(), maxStep, pauseMs, reason)
-    }
-
-    @JavascriptInterface fun getKWriteStatus(): String = activity?.serviceOrNull()?.kWriteStatusJson() ?: "{}"
-    @JavascriptInterface fun getKWriteHistory(): String = activity?.serviceOrNull()?.kWriteHistoryJson() ?: "[]"
-    @JavascriptInterface fun recoverKInsertionState(): String =
-        activity?.serviceOrNull()?.recoverKInsertionState() ?: unavailable()
-
-    @JavascriptInterface fun readKFactorCurve(): String = activity?.serviceOrNull()?.readKFactorCurve() ?: unavailable()
     @JavascriptInterface fun previewKFactorPoint(index: Int, targetFactor: Double): String =
         KFactorManualPlanner.preview(AppPaths(appContext).runtimeRoot, index, targetFactor).toString()
-
-    @JavascriptInterface
-    fun startKFactorWrite(pointsJson: String, reason: String): String {
-        val service = activity?.serviceOrNull() ?: return unavailable()
-        CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }
-        val minimumRaw = KFactorProtocol.rawFromFactor(0.60)
-        val points = try { JSONArray(pointsJson) } catch (error: Exception) {
-            return JSONObject().put("ok", false).put("error", "Lote K factor inválido").toString()
-        }
-        repeat(points.length()) { index ->
-            val targetRaw = points.optJSONObject(index)?.optInt("targetRaw", -1) ?: -1
-            if (targetRaw < minimumRaw) {
-                return JSONObject()
-                    .put("ok", false)
-                    .put("error", "O fator K mínimo de segurança é 0,60 (Q14 $minimumRaw)")
-                    .toString()
-            }
-        }
-        return service.startKFactorWrite(points.toString(), reason)
-    }
-
-    @JavascriptInterface fun getKFactorStatus(): String = activity?.serviceOrNull()?.kFactorStatusJson() ?: "{}"
-    @JavascriptInterface fun getKFactorHistory(): String = activity?.serviceOrNull()?.kFactorHistoryJson() ?: "[]"
-
-    @JavascriptInterface fun getLearningSyncStatus(): String = activity?.serviceOrNull()?.learningSyncStatusJson() ?: "{}"
-    @JavascriptInterface fun importLearningArchive() = activity?.importLearningArchive()
-    @JavascriptInterface fun exportLearningArchive() = activity?.exportLearningArchive()
 
     @JavascriptInterface fun getSessionRecorderStatus(): String = activity?.serviceOrNull()?.sessionRecorderStatusJson() ?: "{}"
     @JavascriptInterface fun listRecordedSessions(): String = activity?.serviceOrNull()?.sessionRecorderListJson() ?: "[]"
@@ -512,30 +226,4 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun getLogs(): String = activity?.serviceOrNull()?.logsJson() ?: "[]"
     @JavascriptInterface fun exportLogs() = activity?.exportLogs()
     @JavascriptInterface fun exportData() = activity?.exportData()
-
-    @JavascriptInterface fun requestBluetoothPermission() = activity?.requestBluetoothPermission()
-
-    @JavascriptInterface fun getLinkStatus(): String = activity?.serviceOrNull()?.linkStatusJson() ?: "{}"
-    @JavascriptInterface
-    fun configureOmegasLink(enabled: Boolean, pairCode: String): String =
-        activity?.serviceOrNull()?.configureOmegasLink(enabled, pairCode) ?: unavailable()
-    @JavascriptInterface fun claimLinkMain(): String = activity?.serviceOrNull()?.claimLinkMain() ?: unavailable()
-    @JavascriptInterface fun releaseLinkMain(): String = activity?.serviceOrNull()?.releaseLinkMain() ?: unavailable()
-    @JavascriptInterface fun syncLinkNow(): String = activity?.serviceOrNull()?.syncLinkNow() ?: unavailable()
-
-    @JavascriptInterface fun setGpsEnabled(enabled: Boolean) = activity?.setGpsEnabled(enabled)
-    @JavascriptInterface fun setLanEnabled(enabled: Boolean): String = activity?.serviceOrNull()?.setLanEnabled(enabled)?.toString() ?: unavailable()
-    @JavascriptInterface fun openAppSettings() = activity?.openAppSettings()
-    @JavascriptInterface
-    fun registerRefuel(addedM3: Double, distanceKm: Double): String {
-        val service = activity?.serviceOrNull() ?: return unavailable()
-        val capacity = AppSettings(appContext).gnvCylinderCapacityM3
-        return service.consumptionTracker.registerRefuel(addedM3, distanceKm, capacity).toString()
-    }
-
-    @JavascriptInterface
-    fun setGnvSettings(capacityM3: Float): String {
-        AppSettings(appContext).gnvCylinderCapacityM3 = capacityM3
-        return JSONObject().put("ok", true).toString()
-    }
 }

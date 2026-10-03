@@ -6,8 +6,8 @@ import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
-import com.omegas.prohub.learning.LearningToleranceSettings
-import com.omegas.prohub.learning.NativeAutoCalAnchorCorrelator
+import com.omegas.prohub.ecu.LearningToleranceSettings
+import com.omegas.prohub.ecu.NativeAutoCalAnchorCorrelator
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
