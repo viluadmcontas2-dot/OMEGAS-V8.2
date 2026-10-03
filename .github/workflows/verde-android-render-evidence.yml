@@ -15,6 +15,9 @@ on:
       - 'app/src/main/java/com/omegas/prohub/MainActivity.kt'
       - 'app/src/main/java/com/omegas/prohub/web/**'
       - 'app/src/main/java/com/omegas/prohub/telemetry/**'
+      - 'app/src/main/java/com/omegas/prohub/autocal/**'
+      - 'app/src/main/java/com/omegas/prohub/service/**'
+      - 'app/src/main/java/com/omegas/prohub/diagnostics/**'
       - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
       - 'app/src/main/java/com/omegas/prohub/ecu/KFactorProtocol.kt'
       - 'tests/fixtures/portmon-autocal-cycle-v1.json'
@@ -34,7 +37,7 @@ jobs:
   render:
     strategy:
       fail-fast: false
-      max-parallel: 12
+      max-parallel: 16
       matrix:
         include:
           - scenario: dashboard-fresh
@@ -59,12 +62,48 @@ jobs:
             method: curveOfflineDoesNotFabricateEcuRead
           - scenario: curve-original-lognovo
             method: curveOriginalLognovoRendersThirtyDecodedPoints
-          - scenario: obd-offline-honest
-            method: obdOfflineIsHonest
+          - scenario: obd-removed
+            method: obdRouteWasRemoved
           - scenario: dashboard-session-invalidated
             method: sessionChangeInvalidatesOldTelemetry
           - scenario: dashboard-session-recovered
             method: sessionReconnectRecoversFreshTelemetry
+          - scenario: refino-ecu-automatico
+            method: refinoEcuNoAutomatico
+            class: RefinoRenderTest
+          - scenario: refino-coletando
+            method: refinoColetando
+            class: RefinoRenderTest
+          - scenario: refino-curva-pronta
+            method: refinoCurvaPronta
+            class: RefinoRenderTest
+          - scenario: refino-app-novo-ecu-pronta
+            method: refinoAppNovoEcuPronta
+            class: RefinoRenderTest
+          - scenario: ferramentas-balao-prompt
+            method: ferramentasEBalaoFlutuante
+            class: RefinoRenderTest
+          - scenario: refino-verificando
+            method: refinoVerificando
+            class: RefinoRenderTest
+          - scenario: refino-estavel
+            method: refinoEstavel
+            class: RefinoRenderTest
+          - scenario: refino-restaurar-trecho
+            method: refinoRestaurarTrecho
+            class: RefinoRenderTest
+          - scenario: refino-apagoes
+            method: refinoApagoes
+            class: RefinoRenderTest
+          - scenario: refino-agora-acompanha
+            method: refinoAgoraAcompanhaATelemetria
+            class: RefinoRenderTest
+          - scenario: refino-latencia-da-ponte
+            method: refinoLatenciaDaPonte
+            class: RefinoRenderTest
+          - scenario: session-kill-recovery
+            method: killProof
+            class: SessionKillRecoveryTest
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -96,7 +135,7 @@ jobs:
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
           disable-animations: true
-          script: bash tools/ci/run_android_render_evidence.sh "${{ matrix.scenario }}" "${{ matrix.method }}"
+          script: bash tools/ci/run_android_render_evidence.sh "${{ matrix.scenario }}" "${{ matrix.method }}" "${{ matrix.class || 'DashboardLevelsRenderTest' }}"
 
       - name: Upload rendered evidence
         if: always()

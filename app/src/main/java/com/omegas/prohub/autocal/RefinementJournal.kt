@@ -31,11 +31,24 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val MAX_SCALE = 1.3
         const val MAX_EXPERIMENTS = 40
         val BANDS = EquivalenceLedger.BANDS
+        /**
+         * Tempo de ECU online (condução) depois da gravação. Passado isso a verificação fecha com o
+         * que já deu para julgar: faixa que o motorista não visita não pode segurar o refino para sempre.
+         */
+        const val VERIFY_PARTIAL_ONLINE_MS = 15 * 60_000L
+        /** Sem nenhuma faixa julgável depois disso: INCONCLUSIVO, e o refino segue medindo do zero. */
+        const val VERIFY_GIVE_UP_ONLINE_MS = 40 * 60_000L
+        private const val MAX_TICK_MS = 10_000L
+        private const val SAVE_EVERY_MS = 60_000L
+        /** Estados em que o experimento ainda espera dados. */
+        const val STATUS_VERIFYING = "VERIFICANDO"
     }
 
     private val lock = Any()
     private val experiments = ArrayList<JSONObject>()
     private val bandScale = DoubleArray(BANDS.size) { 1.0 }
+    private var lastEvaluateAt = 0L
+    private var lastSaveAt = 0L
 
     init { load() }
 
@@ -52,6 +65,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 .put("beforeRaw", JSONArray(beforeRaw.toList()))
                 .put("afterRaw", JSONArray(afterRaw.toList()))
                 .put("indexBefore", indexBefore)
+                .put("onlineMs", 0L)
                 .put("status", "VERIFICANDO")
             while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
         }
@@ -67,16 +81,34 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         save()
     }
 
-    /** Avalia o experimento em verificação com o índice atual (curva nova). Retorna true se mudou. */
-    fun evaluate(indexNow: JSONObject): Boolean {
+    /**
+     * Avalia o experimento em verificação com o índice atual (curva nova). Retorna true se algo
+     * visível mudou (veredito, estado). [ecuOnline] conta o tempo de condução da verificação.
+     *
+     * Fecha de três jeitos, nunca fica eterno:
+     *  - todas as faixas tocadas julgadas → VERIFICADO / PIOROU_EM_PARTE;
+     *  - nenhuma faixa tocada tem medição de antes → SEM_BASE (a curva nova vira a base e o refino segue);
+     *  - passou [VERIFY_PARTIAL_ONLINE_MS] de condução: fecha com o que foi julgado (faixas sem dado
+     *    ficam SEM_DADOS); sem nenhuma julgada em [VERIFY_GIVE_UP_ONLINE_MS] → INCONCLUSIVO.
+     */
+    fun evaluate(indexNow: JSONObject, ecuOnline: Boolean = true): Boolean {
+        var needsSave = false
         val changed = synchronized(lock) {
-            val exp = experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" } ?: return false
+            val now = clock()
+            val dt = if (lastEvaluateAt == 0L) 0L else (now - lastEvaluateAt).coerceIn(0L, MAX_TICK_MS)
+            lastEvaluateAt = now
+            val exp = experiments.lastOrNull()?.takeIf { it.optString("status") == STATUS_VERIFYING } ?: return false
+            if (ecuOnline) exp.put("onlineMs", exp.optLong("onlineMs", 0L) + dt)
+            val onlineMs = exp.optLong("onlineMs", 0L)
             val before = exp.optJSONObject("indexBefore")?.optJSONArray("bands") ?: JSONArray()
             val after = indexNow.optJSONArray("bands") ?: JSONArray()
             val verdicts = JSONArray()
+            var touchedBands = 0
             var judged = 0
             var worse = 0
             var pending = 0
+            var withoutBase = 0
+            val timeboxed = onlineMs >= VERIFY_PARTIAL_ONLINE_MS
             for (i in BANDS.indices) {
                 val b = before.optJSONObject(i) ?: JSONObject()
                 val a = after.optJSONObject(i) ?: JSONObject()
@@ -89,10 +121,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     .put("ratioBefore", if (rb.isFinite()) rb else JSONObject.NULL)
                     .put("ratioAfter", if (ra.isFinite()) ra else JSONObject.NULL)
                 val touched = bandTouched(exp, BANDS[i])
+                if (touched) touchedBands++
                 when {
                     !touched -> verdict.put("verdict", "NAO_ALTERADA")
-                    nb < MIN_BAND_SAMPLES || !rb.isFinite() -> verdict.put("verdict", "SEM_ANTES")
-                    na < MIN_BAND_SAMPLES || !ra.isFinite() -> { verdict.put("verdict", "COLETANDO"); pending++ }
+                    nb < MIN_BAND_SAMPLES || !rb.isFinite() -> { verdict.put("verdict", "SEM_ANTES"); withoutBase++ }
+                    na < MIN_BAND_SAMPLES || !ra.isFinite() -> {
+                        if (timeboxed) verdict.put("verdict", "SEM_DADOS") else { verdict.put("verdict", "COLETANDO"); pending++ }
+                    }
                     else -> {
                         val e0 = ln(rb)
                         val e1 = ln(ra)
@@ -109,14 +144,29 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 }
                 verdicts.put(verdict)
             }
-            exp.put("bands", verdicts).put("indexAfter", indexNow).put("evaluatedAt", clock())
-            if (pending == 0 && judged > 0) {
-                exp.put("status", if (worse > 0) "PIOROU_EM_PARTE" else "VERIFICADO").put("closedAt", clock())
-                learn(verdicts)
+            val signature = verdicts.toString()
+            val visibleChange = signature != exp.optString("verdictSignature")
+            exp.put("verdictSignature", signature)
+            exp.put("bands", verdicts).put("indexAfter", indexNow).put("evaluatedAt", now)
+            val closedStatus: String? = when {
+                pending == 0 && judged > 0 -> if (worse > 0) "PIOROU_EM_PARTE" else "VERIFICADO"
+                // Nada a esperar e nada julgável: não há medição de antes nas faixas tocadas.
+                pending == 0 && touchedBands > 0 && withoutBase == touchedBands -> "SEM_BASE"
+                pending == 0 && touchedBands == 0 -> "SEM_BASE"
+                timeboxed && judged > 0 -> if (worse > 0) "PIOROU_EM_PARTE" else "VERIFICADO"
+                onlineMs >= VERIFY_GIVE_UP_ONLINE_MS -> "INCONCLUSIVO"
+                else -> null
             }
-            true
+            if (closedStatus != null) {
+                exp.put("status", closedStatus).put("closedAt", now)
+                if (judged > 0) learn(verdicts)
+                needsSave = true
+            } else if (now - lastSaveAt >= SAVE_EVERY_MS) {
+                needsSave = true
+            }
+            visibleChange || closedStatus != null
         }
-        if (changed) save()
+        if (needsSave) save()
         return changed
     }
 
@@ -178,7 +228,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("format", FORMAT)
             .put("bandScale", JSONArray(bandScale.toList()))
             .put("bands", JSONArray(BANDS.map { JSONObject().put("fromMs", it.first).put("toMs", it.second) }))
-            .put("latest", experiments.lastOrNull()?.let { JSONObject(it.toString()).apply { remove("axisRaw") } } ?: JSONObject.NULL)
+            .put("verifyBudgetMs", VERIFY_PARTIAL_ONLINE_MS)
+            .put("giveUpBudgetMs", VERIFY_GIVE_UP_ONLINE_MS)
+            .put("latest", experiments.lastOrNull()?.let { JSONObject(it.toString()).apply { remove("axisRaw"); remove("verdictSignature") } } ?: JSONObject.NULL)
             .put("count", experiments.size)
             .put("history", JSONArray(experiments.takeLast(10).map { e ->
                 JSONObject().put("id", e.optString("id")).put("appliedAt", e.optLong("appliedAt"))
@@ -192,6 +244,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     private fun save() {
         val target = file ?: return
         val payload = synchronized(lock) {
+            lastSaveAt = clock()
             JSONObject().put("format", FORMAT)
                 .put("bandScale", JSONArray(bandScale.toList()))
                 .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))

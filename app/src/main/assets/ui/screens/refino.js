@@ -16,7 +16,7 @@
     ['ESTAVEL', 'Estável'],
   ];
   const PHASE_TONE = {
-    SEM_ECU: 'unknown', ECU_TRABALHANDO: 'unknown', COLETANDO_NOSSOS: 'collecting',
+    SEM_ECU: 'unknown', LENDO_ECU: 'unknown', ECU_TRABALHANDO: 'unknown', COLETANDO_NOSSOS: 'collecting',
     PROPOSTA_PRONTA: 'ready', VERIFICANDO: 'collecting', RESTAURAR_TRECHO: 'problem', ESTAVEL: 'ok',
   };
   const VERDICT = {
@@ -26,6 +26,13 @@
     PIOROU: 'piorou',
     COLETANDO: 'medindo…',
     SEM_ANTES: 'sem medição anterior',
+    SEM_DADOS: 'poucas leituras · não deu para julgar',
+  };
+  // O que cada fechamento do diário significa, em linguagem simples.
+  const JOURNAL_NOTE = {
+    SEM_BASE: 'As faixas alteradas não tinham medição de antes. A medição de agora vira a base e o refino segue sozinho.',
+    INCONCLUSIVO: 'Poucas leituras nas faixas alteradas: não deu para julgar. O refino segue medindo do zero.',
+    INTERROMPIDO: 'A ECU mudou a curva por fora (AutoMatch/Mapa K) durante a verificação, então o resultado perdeu validade.',
   };
   const ORIGIN = { MEASURED: 'Medido', BLENDED: 'Transição', SMOOTHED: 'Anti-tranco', HELD: 'Mantido' };
   const POLL_MS = 300;
@@ -49,6 +56,64 @@
     if (r === null) return '—';
     const p = (r - 1) * 100;
     return `${p > 0 ? '+' : ''}${fmt(p, 1)}%`;
+  }
+
+  /** "agora", "há 12 s", "há 3 min", "há 2 h". Sem data conhecida: "—" (nunca "há 0 s"). */
+  function ageText(atMs, nowMs) {
+    const at = finite(atMs);
+    const now = finite(nowMs);
+    if (at === null || at <= 0 || now === null) return '—';
+    const s = Math.max(0, Math.round((now - at) / 1000));
+    if (s < 5) return 'agora';
+    if (s < 90) return `há ${s} s`;
+    if (s < 5400) return `há ${Math.round(s / 60)} min`;
+    return `há ${Math.round(s / 3600)} h`;
+  }
+
+  /** Resultado do experimento em linguagem simples (histórico). */
+  const STATUS_WORDS = {
+    VERIFICADO: 'Chegou na gasolina',
+    PIOROU_EM_PARTE: 'Piorou em parte — dá para restaurar só o trecho',
+    VERIFICANDO: 'Medindo…',
+    SEM_BASE: 'Sem medição anterior: a medição de agora virou a base',
+    INCONCLUSIVO: 'Poucas leituras: não deu para julgar',
+    INTERROMPIDO: 'A ECU mudou a curva no meio (AutoMatch ou Mapa K)',
+  };
+
+  /**
+   * O que o ponto tocado é: de quem, quando foi medido e por que conta (ou não) para a curva.
+   * kind = 'our' (dos pontos densos do OMEGAS) ou 'ecu' (ponto adquirido pelo AutoCal nativo).
+   */
+  function explainPoint(kind, point, ctx) {
+    const now = ctx?.now;
+    if (kind === 'our') {
+      const gas = point.fuel === 'GAS';
+      const idle = (finite(point.idleShare) ?? 0) >= 0.5 || (finite(point.rpmMedian) ?? Infinity) < 1000;
+      const lines = [
+        'De quem é: medido pelo OMEGAS na sua condução (leitura estável = 3 quadros seguidos).',
+        `MAP ${fmt(point.mapBar, 3)} bar · ${fmt(point.tpetMs, 2)} ms · ${fmt(point.samples, 0)} leituras · RPM típico ${fmt(point.rpmMedian, 0)}`,
+        `Quando: última leitura ${ageText(point.lastAtMs, now)}.`,
+      ];
+      lines.push(idle
+        ? 'Por que conta: NÃO conta. É marcha lenta: aparece no gráfico, mas não corrige a curva (a ECU trata a lenta à parte).'
+        : gas
+          ? 'Por que conta: forma par com a gasolina no mesmo RPM e MAP. Só vale para a curva atual: se a curva mudar, recomeça.'
+          : 'Por que conta: é a referência da gasolina. O GNV é comparado com ela no mesmo RPM e MAP.');
+      return { title: `Nosso ponto · ${gas ? 'GNV' : 'Gasolina'}`, lines, counts: !idle };
+    }
+    const gas = point.fuel === 'GAS';
+    const rejected = (ctx?.rejected || []).some(r => (r.fuel === 'GNV') === gas && Number(r.band) === Number(point.index));
+    const acquired = point.acquisitionState === 'ACQUIRED';
+    const progress = finite(point.counter) === null ? '' : ` (${fmt(point.counter, 0)}${finite(point.threshold) === null ? '' : '/' + fmt(point.threshold, 0)})`;
+    const lines = [
+      'De quem é: medido pela ECU (AutoCal nativo), não pelo OMEGAS.',
+      `MAP ${fmt(point.mapBar, 3)} bar · ${fmt(point.petrolMs, 2)} ms · ${acquired ? 'adquirido' : 'coletando'}${progress}`,
+      `Quando: leitura da ECU ${ageText(ctx?.capturedAtMs, now)}.`,
+    ];
+    if (rejected) lines.push('Por que conta: NÃO conta. Foi descartado como anomalia: fora da tendência das outras faixas (típico de marcha lenta puxando a curva).');
+    else if (acquired) lines.push('Por que conta: faixa adquirida pela ECU; entra no cálculo junto com os nossos pontos.');
+    else lines.push('Por que conta: ainda coletando; só conta quando a ECU terminar de adquirir esta faixa.');
+    return { title: `Ponto da ECU · ${point.fuelLabel} B${point.point}`, lines, counts: acquired && !rejected };
   }
 
   /** Pontos que a revisão propõe gravar (puro, testável). */
@@ -78,7 +143,7 @@
     if (phase === 'ESTAVEL') return { kind: 'stable', label: '✓ Estável · pode desconectar' };
     // Enquanto a ECU faz o automático ela pode sobrescrever qualquer curva: o refino calcula e
     // mostra, mas a gravação só libera quando a ECU terminar.
-    if (phase === 'SEM_ECU' || phase === 'ECU_TRABALHANDO') {
+    if (phase === 'SEM_ECU' || phase === 'LENDO_ECU' || phase === 'ECU_TRABALHANDO') {
       const p = eq?.autopilot || {};
       const progress = finite(p.autoMatchCount) !== null ? ` (${p.autoMatchCount}${finite(p.maxAutomatch) !== null ? ' de ' + p.maxAutomatch : ''})` : '';
       return proposal ? { kind: 'waiting', label: `Aguardando a ECU terminar o automático${progress}` } : { kind: 'none', label: '' };
@@ -144,18 +209,18 @@
           <div class="refino-stalls" id="refinoStalls" hidden></div>
           <section class="autocal-reference-card" aria-label="NOSSA CURVA · Gasolina × GNV">
             <span class="autocal-plot-title">NOSSA CURVA · Gasolina × GNV</span>
+            <div class="autocal-chart-legend" id="refinoLegend" aria-label="Legenda do gráfico">
+              <span class="petrol">Curva gasolina (ECU)</span>
+              <span class="gas">Curva GNV (ECU)</span>
+              <span class="acquired">Pontos da ECU</span>
+              <span class="refino-ours-petrol">Nossos · gasolina</span>
+              <span class="refino-ours-gas">Nossos · GNV</span>
+              <span class="refino-stall-legend">Motor apagou</span>
+              <span class="live">AGORA</span>
+            </div>
             <div class="autocal-chart-workspace">
               <div id="refinoChart" class="autocal-chart-host"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
-              <div class="autocal-chart-legend">
-                <span class="petrol">Curva gasolina (ECU)</span>
-                <span class="gas">Curva GNV (ECU)</span>
-                <span class="acquired">Pontos da ECU</span>
-                <span class="refino-ours-petrol">Nossos · gasolina</span>
-                <span class="refino-ours-gas">Nossos · GNV</span>
-                <span class="refino-stall-legend">Motor apagou</span>
-                <span class="live">AGORA</span>
-              </div>
-              <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU (azul gasolina, verde GNV). Quadradinhos: nossos pontos (laranja gasolina, roxo GNV), um a cada 0,025 bar.</span></aside>
+              <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU (azul gasolina, verde GNV). Quadradinhos: nossos pontos (laranja gasolina, roxo GNV), um a cada 0,025 bar. Ao tocar eu digo de quem é, quando foi medido e se conta para a curva.</span></aside>
             </div>
           </section>
           <details class="autocal-secondary-details" id="refinoResultDetails">
@@ -171,10 +236,11 @@
       host.addEventListener('click', event => this.onClick(event));
     }
 
-    refresh(force) {
+    refresh(force, fresh) {
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       if (!this.api?.available?.()) { this.renderUnavailable(); return; }
-      this.eq = this.api.equivalence?.() || null;
+      // O Kotlin já deixa o resultado pronto em segundo plano; "fresco" só depois de gravar/desfazer.
+      this.eq = (fresh === true ? this.api.equivalenceFresh?.() : this.api.equivalence?.()) || null;
       this.analysis = this.api.refinedAnalysis?.() || null;
       const projection = this.api.projection?.() || {};
       this.snapshot = projection.ok === true ? (projection.snapshot || {}) : {};
@@ -182,7 +248,7 @@
     }
 
     onClick(event) {
-      if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true); return; }
+      if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true, true); return; }
       if (event.target.closest('[data-refino-primary]')) this.primary();
       if (event.target.closest('[data-refino-cancel]')) this.closeReview();
       if (event.target.closest('[data-refino-confirm]')) this.confirm();
@@ -309,7 +375,7 @@
       this.lastRenderKey = key;
 
       const chip = document.getElementById('refinoPhaseChip');
-      if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Trecho piorou' : 'Sem ECU'])[1]; }
+      if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Trecho piorou' : phase === 'LENDO_ECU' ? 'Lendo a ECU' : 'Sem ECU'])[1]; }
       const headline = op.phase === 'done' ? 'Curva gravada e conferida pela ECU.'
         : op.phase === 'failed' ? op.message
           : pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
@@ -317,23 +383,31 @@
         : op.phase === 'failed' ? 'Nada foi dado como gravado. Toque em "Entendi" e tente de novo quando a ECU estabilizar.'
           : pilot.next || '';
       setText('refinoHeadline', headline);
-      const gasReason = { AUTOMATCH_NATIVO: 'a ECU trocou a curva no automático', CURVA_K_GRAVADA: 'a Curva K foi gravada', MAPA_K_GRAVADO: 'o Mapa K foi gravado', CURVA_K_MUDOU_FORA_DO_APP: 'a curva mudou fora do app' }[eq.gasEpochReason];
-      const gasSince = finite(eq.gasEpochAt) ? new Date(eq.gasEpochAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-      const resetNote = gasReason && op.phase === 'idle' ? ` Nossos pontos de GNV recomeçaram às ${gasSince} porque ${gasReason} (o GNV medido com a curva antiga não vale para a nova).` : '';
+      const resetText = op.phase === 'idle' ? ns.DisplayRules?.gasResetNote(eq.gasEpochReason, eq.gasEpochAt) || '' : '';
+      const resetNote = resetText ? ` ${resetText}` : '';
       setText('refinoNext', next + resetNote);
       setText('refinoRatio', pct(eq.ratio));
-      const ecuPoints = (finite(pilot.petrolValid) ?? 0) + (finite(pilot.gasValid) ?? 0);
-      setText('refinoEcuPoints', pilot.petrolValid === undefined ? '—' : `Gas ${fmt(pilot.petrolValid, 0)} · GNV ${fmt(pilot.gasValid, 0)}`);
+      // Sem leitura da ECU o número é desconhecido: mostra "—", nunca 0.
+      const ecuKnown = finite(pilot.petrolValid) !== null && finite(pilot.gasValid) !== null;
+      setText('refinoEcuPoints', ecuKnown ? `Gas ${fmt(pilot.petrolValid, 0)} · GNV ${fmt(pilot.gasValid, 0)}` : '—');
       const dense = eq.denseBands || {};
-      const oursPetrol = Array.isArray(dense.petrol) ? dense.petrol.length : 0;
-      const oursGas = Array.isArray(dense.gas) ? dense.gas.length : 0;
-      setText('refinoOurPoints', `Gas ${oursPetrol} · GNV ${oursGas}`);
+      const oursKnown = eq.ok !== false && Array.isArray(dense.petrol) && Array.isArray(dense.gas);
+      setText('refinoOurPoints', oursKnown ? `Gas ${dense.petrol.length} · GNV ${dense.gas.length}` : '—');
       const stalls = eq.stalls || {};
       const stallNode = document.getElementById('refinoStalls');
       if (stallNode) {
         const region = Array.isArray(stalls.regions) ? stalls.regions[0] : null;
-        stallNode.hidden = !(finite(stalls.count) > 0);
-        stallNode.innerHTML = region ? `<b>O motor apagou ${fmt(stalls.count, 0)} vez${stalls.count === 1 ? '' : 'es'} no GNV</b><span>Mais vezes perto de ${fmt(region.fromMs, 1)}–${fmt(region.toMs, 1)} ms · MAP ${fmt(region.mapBar, 2)} bar (desaceleração/embreagem). O refino nunca empobrece abaixo de ${fmt(this.analysis?.guards?.lowGuardMs ?? 3.5, 1)} ms; se continuar, enriqueça essa região no Ajuste global.</span>` : '';
+        const real = finite(stalls.count) ?? 0;
+        const near = finite(stalls.nearCount) ?? 0;
+        stallNode.hidden = !(real > 0 || near > 0);
+        const plural = n => (n === 1 ? 'vez' : 'vezes');
+        const parts = [];
+        if (real > 0) parts.push(`apagou ${fmt(real, 0)} ${plural(real)}${finite(stalls.restartedCount) ? ` (religou ${fmt(stalls.restartedCount, 0)})` : ''}`);
+        if (near > 0) parts.push(`quase apagou ${fmt(near, 0)} ${plural(near)}`);
+        const title = parts.length ? `O motor ${parts.join(' e ')} no GNV` : '';
+        const where = region ? `Mais perto de ${fmt(region.fromMs, 1)}–${fmt(region.toMs, 1)} ms · MAP ${fmt(region.mapBar, 2)} bar (desaceleração/embreagem). ` : '';
+        const guard = fmt(this.analysis?.guards?.lowGuardMs, 1);
+        stallNode.innerHTML = title ? `<b>${escapeHtml(title)}</b><span>${escapeHtml(where)}${guard === '—' ? '' : `O refino nunca empobrece abaixo de ${escapeHtml(guard)} ms; `}se continuar, enriqueça essa região no Ajuste global. Desligar o carro na lenta não conta.</span>` : '';
       }
 
       const steps = document.getElementById('refinoSteps');
@@ -436,15 +510,22 @@
       const index = Number(raw);
       const inspector = document.getElementById('refinoInspector');
       if (!inspector) return;
+      const now = Date.now();
+      let explained = null;
       if (kind === 'our') {
         const p = (this.ours || [])[index];
-        if (!p) return;
-        inspector.innerHTML = `<b>Nosso ponto · ${p.fuel === 'GAS' ? 'GNV' : 'Gasolina'}</b><span>MAP ${fmt(p.mapBar, 3)} bar · ${fmt(p.tpetMs, 2)} ms · ${fmt(p.samples, 0)} leituras estáveis · RPM típico ${fmt(p.rpmMedian, 0)}</span>`;
+        if (p) explained = explainPoint('our', p, { now });
       } else {
         const p = (this.acquired || [])[index];
-        if (!p) return;
-        inspector.innerHTML = `<b>Ponto da ECU · ${escapeHtml(p.fuelLabel)} B${p.point}</b><span>MAP ${fmt(p.mapBar, 3)} bar · ${fmt(p.petrolMs, 2)} ms · ${p.acquisitionState === 'ACQUIRED' ? 'adquirido' : 'coletando'} (${fmt(p.counter, 0)}/${fmt(p.threshold, 0)})</span>`;
+        if (p) {
+          const key = p.fuel === 'GAS' ? 'PETR_INJ_TBUF_GAS' : 'PETR_INJ_TBUF';
+          const field = (Array.isArray(this.snapshot?.fields) ? this.snapshot.fields : []).find(f => f && f.key === key && f.status === 'VALID');
+          explained = explainPoint('ecu', p, { now, capturedAtMs: field?.capturedAtMs, rejected: this.analysis?.rejectedBands });
+        }
       }
+      if (!explained) return;
+      inspector.dataset.counts = explained.counts ? 'true' : 'false';
+      inspector.innerHTML = `<b>${escapeHtml(explained.title)}</b>${explained.lines.map(line => `<span>${escapeHtml(line)}</span>`).join('')}`;
     }
 
     renderJournal() {
@@ -455,7 +536,13 @@
       const bands = (Array.isArray(latest.bands) ? latest.bands : []).filter(b => VERDICT[b.verdict]);
       const rows = bands.map(b => `<div data-verdict="${escapeHtml(b.verdict)}"><span>${fmt(b.fromMs, 1)}–${fmt(b.toMs, 1)} ms</span><b>${pct(b.ratioBefore)}${finite(b.ratioAfter) === null ? '' : ' → ' + pct(b.ratioAfter)}</b><small>${escapeHtml(VERDICT[b.verdict])}</small></div>`).join('');
       const undo = undoPoints(latest).length ? '<button type="button" class="secondary" data-refino-undo>Desfazer última gravação</button>' : '';
-      host.innerHTML = `${rows ? `<div class="refino-verdicts">${rows}</div>` : '<p>Dirija no GNV: o app compara cada faixa com a gasolina no mesmo RPM e MAP.</p>'}<p class="refino-note">Cada resultado ajusta a força da próxima correção naquela faixa.</p>${undo}`;
+      const closing = JOURNAL_NOTE[latest.status] ? `<p class="refino-note">${escapeHtml(JOURNAL_NOTE[latest.status])}</p>` : '';
+      const history = (Array.isArray(this.eq?.refinement?.history) ? this.eq.refinement.history : []).slice().reverse().map(item => {
+        const when = finite(item.appliedAt) ? new Date(item.appliedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+        const ratios = finite(item.ratioBefore) === null ? '' : ` · GNV÷gasolina ${pct(item.ratioBefore)}${finite(item.ratioAfter) === null ? '' : ' → ' + pct(item.ratioAfter)}`;
+        return `<li data-status="${escapeHtml(item.status)}"><b>${escapeHtml(when)}</b> ${escapeHtml(STATUS_WORDS[item.status] || 'Resultado desconhecido')}${escapeHtml(ratios)}</li>`;
+      }).join('');
+      host.innerHTML = `${rows ? `<div class="refino-verdicts">${rows}</div>` : '<p>Dirija no GNV: o app compara cada faixa com a gasolina no mesmo RPM e MAP.</p>'}${closing}<p class="refino-note">Cada resultado ajusta a força da próxima correção naquela faixa.</p>${undo}${history ? `<h4 class="refino-history-title">Histórico de gravações</h4><ol class="refino-history">${history}</ol>` : ''}`;
     }
 
     renderTech() {
@@ -465,7 +552,10 @@
       const pilot = this.eq?.autopilot || {};
       host.innerHTML = `<dl>
         <div><dt>Modo</dt><dd>${escapeHtml(a.refinementMode || '—')} · ${a.available ? 'disponível' : escapeHtml(a.message || 'aguardando evidência')}</dd></div>
+        <div><dt>Gasolina de referência</dt><dd>${escapeHtml({ ECU: 'curva de gasolina que a ECU já tem', PROPRIA: 'gasolina medida por este app', MISTA: 'medida por este app + curva da ECU', NENHUMA: 'ainda sem referência: rode na gasolina' }[this.eq?.petrolReference] || '—')}</dd></div>
+        <div><dt>De onde vem a proposta</dt><dd>${escapeHtml({ ECU_E_CONDUCAO: 'faixas da ECU + sua condução', CONDUCAO: 'só a sua condução (a ECU ainda não tem faixas maduras)', NENHUMA: 'sem evidência suficiente: nada muda' }[a.evidenceSource] || '—')}</dd></div>
         <div><dt>Bandas comuns maduras</dt><dd>${fmt(a.matureCommonPoints, 0)} de ${fmt(a.minimumMatureCommonPoints, 0)} necessárias · ${fmt(a.telemetryTargets, 0)} alvos dos nossos pontos</dd></div>
+        <div><dt>Pontos da ECU descartados</dt><dd>${Array.isArray(a.rejectedBands) && a.rejectedBands.length ? a.rejectedBands.map(r => `${escapeHtml(r.fuel === 'GNV' ? 'GNV' : 'Gasolina')} B${Number(r.band) + 1} (${fmt(r.timeMs, 1)} ms · ${fmt(r.mapBar, 2)} bar)`).join(', ') + ' — fora da tendência; não entram no cálculo' : 'nenhum'}</dd></div>
         <div><dt>Trava</dt><dd>±${fmt(a.guards?.maximumStepPercent, 0)}% por gravação · |Δ ln K/Δ ln t| ≤ ${fmt(a.elasticityLimit, 2)}</dd></div>
         <div><dt>Automático da ECU</dt><dd>${fmt(pilot.autoMatchCount, 0)} de ${fmt(pilot.maxAutomatch, 0)} · ${escapeHtml(pilot.ecuDoneReason || 'ainda trabalhando')}</dd></div>
       </dl>`;
@@ -487,7 +577,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction };
+  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, explainPoint, ageText, STATUS_WORDS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

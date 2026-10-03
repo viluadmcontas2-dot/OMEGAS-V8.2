@@ -10,24 +10,13 @@
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
-  function bytesLabel(bytes) {
-    const n = finite(bytes) || 0;
-    if (n >= 1024 * 1024) return `${fmt(n / 1024 / 1024, 1)} MB`;
-    if (n >= 1024) return `${fmt(n / 1024, 0)} KB`;
-    return `${Math.round(n)} B`;
-  }
-  function durationLabel(ms) {
-    const value = Math.max(0, finite(ms) || 0);
-    const minutes = Math.floor(value / 60000);
-    const seconds = Math.floor((value % 60000) / 1000);
-    if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-    return `${minutes}m ${seconds}s`;
-  }
+  // Regras únicas de exibição (core/display-rules.js): desconhecido mostra "—", nunca 0.
+  const rules = () => root.OmegasUi.DisplayRules;
+  function bytesLabel(bytes) { return rules().bytesLabel(bytes); }
+  function durationLabel(ms) { return rules().durationLabel(ms); }
   function ageLabel(ms) {
-    const value = finite(ms);
-    if (value === null || value < 0) return 'sem telemetria';
-    if (value < 1000) return `${Math.round(value)} ms`;
-    return `${fmt(value / 1000, 1)} s`;
+    const label = rules().ageLabel(ms);
+    return label === rules().DASH ? 'sem telemetria' : label;
   }
 
   class Drawers {
@@ -97,6 +86,10 @@
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-enable]')) {
         this.api.setTelemetryOverlayEnabled?.(true);
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+      } else if (target.matches('[data-tool-overlay-scale]')) {
+        this.api.setOverlayScale?.(Number(target.dataset.toolOverlayScale));
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-disable]')) {
@@ -178,8 +171,6 @@
       const model = root.OmegasSuggestionModel;
       const split = model?.split ? model.split(maps.assistedCalibration || maps.assisted_calibration || {}) : { actionable: [], insufficient: [] };
       const items = split.actionable || [];
-      const count = document.getElementById('suggestionCount');
-      if (count) count.textContent = String(items.length);
       const button = document.getElementById('suggestionsButton');
       if (button) button.classList.toggle('has-items', items.length > 0);
       host.innerHTML = items.length ? items.map((item, index) => `
@@ -214,13 +205,15 @@
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
+      const sessionsLoading = !Array.isArray(state.sessions);
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
       const learning = state.learning || {};
-      const petrolCount = Array.isArray(learning.petrol) ? learning.petrol.length : 0;
-      const cngCount = Array.isArray(learning.cng) ? learning.cng.length : 0;
-      const comparisonCount = finite(learning.comparisonCount) ?? (Array.isArray(learning.comparisons) ? learning.comparisons.length : 0);
+      // Aprendizado que ainda não respondeu é desconhecido ("—"), não "0 regiões".
+      const petrolCount = Array.isArray(learning.petrol) ? learning.petrol.length : null;
+      const cngCount = Array.isArray(learning.cng) ? learning.cng.length : null;
+      const comparisonCount = finite(learning.comparisonCount) ?? (Array.isArray(learning.comparisons) ? learning.comparisons.length : null);
       const categories = [...new Set(logs.map(item => String(item.category || 'OUTROS').toUpperCase()))].sort();
       const filteredLogs = logs.filter(item => {
         const level = String(item.level || '').toUpperCase();
@@ -228,9 +221,9 @@
         return (this.logLevel === 'ALL' || level === this.logLevel) && (this.logCategory === 'ALL' || category === this.logCategory);
       }).slice(-24).reverse();
       const recording = status.recording === true;
-      const mb = finite(status.megabytes) || 0;
+      const mb = finite(status.megabytes);
       const limitMb = finite(status.limitMb ?? settings.maxSessionMb) || 0;
-      const fullness = limitMb > 0 ? Math.min(100, mb / limitMb * 100) : 0;
+      const fullness = limitMb > 0 && mb !== null ? Math.min(100, mb / limitMb * 100) : 0;
       const serviceHealthy = appStatus.serviceRunning === true && appStatus.engineStuck !== true;
 
       const battery = this.api.batteryOptimizationStatus?.() || {};
@@ -240,8 +233,8 @@
       const signature = JSON.stringify([
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
         Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
-        status.recording, status.events, Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
-        settings, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
+        status.recording, status.events, mb === null ? null : Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
+        settings, sessionsLoading, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
@@ -249,11 +242,16 @@
       const logsOpenBeforeRender = host.querySelector('.tool-logs')?.open === true;
       const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
         ? '<button type="button" class="secondary" data-tool-battery-request>Permitir</button>' : '';
-      const overlayAction = overlay.visible === true
+      const overlayInfo = rules().overlayState(overlay);
+      const overlayAction = overlayInfo.key === 'on'
         ? '<button type="button" class="quiet-button" data-tool-overlay-disable>Desativar</button>'
-        : overlay.permissionGranted === true
+        : overlayInfo.key === 'off'
           ? '<button type="button" class="secondary" data-tool-overlay-enable>Ativar</button>'
-          : '<button type="button" class="secondary" data-tool-overlay-request>Autorizar</button>';
+          : overlayInfo.key === 'needs-permission'
+            ? '<button type="button" class="primary" data-tool-overlay-request>Autorizar</button>' : '';
+      const overlaySizes = overlayInfo.key === 'on'
+        ? `<div class="overlay-size" role="group" aria-label="Tamanho do balão">${[['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
+          `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'secondary' : 'quiet-button'}" data-tool-overlay-scale="${value}">${label}</button>`).join('')}</div>` : '';
 
       host.innerHTML = `
         <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
@@ -265,7 +263,7 @@
           </div>
           <div class="tool-power-rows">
             <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
-            <div class="tool-power-row"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b><span>Balão por cima de outros apps (mapa, música). Não aparece por cima do OMEGAS.</span></div>${overlayAction}</div>
+            <div class="tool-power-row tool-overlay-row" data-overlay-state="${overlayInfo.key}"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlayInfo.title}</b><span>${overlayInfo.help}</span>${overlaySizes}</div>${overlayAction}</div>
           </div>
         </section>
 
@@ -273,8 +271,8 @@
           <header><div><small>SESSÕES</small><h3>${recording ? 'Gravando esta sessão' : 'Gravação parada'}</h3></div><span>${recording ? 'GRAVANDO' : 'PARADA'}</span></header>
           <div class="recorder-metrics">
             <span><b>${durationLabel(status.durationMs)}</b> duração</span>
-            <span><b>${fmt(mb, 1)} MB</b> usados</span>
-            <span><b>${status.events || 0}</b> eventos</span>
+            <span><b>${rules().megabytesLabel(mb)}</b> usados</span>
+            <span><b>${rules().count(status.events)}</b> eventos</span>
           </div>
           <div class="recorder-space"><i style="width:${fullness.toFixed(1)}%"></i></div>
           <div class="recorder-actions">
@@ -284,7 +282,7 @@
           <div class="recorded-session-list">
             ${sessions.length ? sessions.slice(0, 8).map(item => {
               const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
-              const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
+              const readableDate = rules().sessionDate(item);
               const pctCng = (finite(item.cngTicks) || 0);
               const pctPet = (finite(item.petrolTicks) || 0);
               const totalTicks = pctCng + pctPet;
@@ -307,16 +305,16 @@
                 ` : ''}
                 <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
               </article>`;
-            }).join('') : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
+            }).join('') : sessionsLoading ? '<p class="empty-copy">Lendo as sessões salvas…</p>' : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
           </div>
         </section>
 
         <section class="learning-portability-card">
           <header><div><small>APRENDIZADO</small><h3>O que vai no arquivo .omegas</h3></div></header>
           <div class="learning-portability-grid">
-            <span><b>${petrolCount}</b> regiões gasolina</span>
-            <span><b>${cngCount}</b> regiões GNV</span>
-            <span><b>${comparisonCount}</b> comparações</span>
+            <span><b>${rules().count(petrolCount)}</b> regiões gasolina</span>
+            <span><b>${rules().count(cngCount)}</b> regiões GNV</span>
+            <span><b>${rules().count(comparisonCount)}</b> comparações</span>
           </div>
           <p>Use <b>Exportar aprendizado</b> e <b>Importar aprendizado</b> acima. Importar confere o arquivo antes de aceitar e nunca grava na ECU. O GNV de uma calibração antiga não volta para a calibração atual.</p>
         </section>
@@ -332,6 +330,7 @@
             <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar a ECU</span></label>
             <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
           </div>
+          <p>Cada sessão vira <b>um só arquivo ZIP</b> em <b>Download/Omegas</b>, pronto quando ela termina (ou na próxima abertura do app, se ele fechar no meio). O app guarda as ${Math.max(20, Number(settings.keepSessions || 20))} sessões mais recentes e nunca apaga uma que ainda não foi copiada para essa pasta.</p>
           <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
           <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
           ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}

@@ -256,6 +256,12 @@ object AutoMatchSnapshotAnalysis {
             .put("buffersCoherent", buffersCoherent)
             .put("matureCommonPoints", result.matureCommonPoints)
             .put("telemetryTargets", result.telemetryTargetCount)
+            .put("telemetryOnly", result.telemetryOnly)
+            .put("evidenceSource", when {
+                !result.equivalenceAvailable -> "NENHUMA"
+                result.telemetryOnly -> "CONDUCAO"
+                else -> "ECU_E_CONDUCAO"
+            })
             .put("minimumMatureCommonPoints", AutoMatchRefinedEngine.MIN_COMMON_MATURE)
             .put("elasticityLimit", result.elasticityLimit)
             .put("needsAnotherPass", result.needsAnotherPass)

@@ -95,7 +95,9 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('setTimeout(', self.grid)
         self.assertNotRegex(self.grid, r'writeMap|startMapBatchWrite|protocolTransaction')
         self.assertIn('function renderLightLiveContext', self.app)
-        self.assertIn("route === 'dashboard' || route === 'learning' || route === 'map'", self.app)
+        # O pump de telemetria só roda nas rotas ao vivo (lista única no roteador; Refino incluído).
+        self.assertIn("const LIVE_ROUTES = ['dashboard', 'learning', 'map', 'autocal', 'refino']", self.router)
+        self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot()", self.app)
         self.assertIn("if (route === 'learning') setText('learningLiveLabel'", self.app)
         self.assertIn('A interpolação bilinear continua no Kotlin', self.learning_screen)
 

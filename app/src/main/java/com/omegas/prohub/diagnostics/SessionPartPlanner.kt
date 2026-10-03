@@ -10,10 +10,15 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
- * Sessão publicada em PARTES imutáveis: cada parte leva só os bytes novos dos
- * `events_*.jsonl` (até a última linha completa) e os arquivos pequenos que mudaram.
- * Uma parte publicada nunca é reescrita (sem duplicata no Drive); um corte de energia
- * perde no máximo o que veio depois da última parte. Puro: sem Android.
+ * Publicação de sessão em ZIP imutável.
+ *
+ * Regra normal: UMA sessão = UM ZIP (`<sessão>.zip`), publicado quando a sessão fecha ou, se o app
+ * morreu no meio, na próxima abertura (recuperação). Durante a gravação nada vai para o Drive:
+ * os dados ficam no armazenamento do app, descarregados no disco a cada poucos eventos.
+ *
+ * O mecanismo de partes continua aqui para sessões antigas que já têm partes publicadas: cada parte
+ * leva só os bytes novos dos `events_*.jsonl` (até a última linha completa) e os arquivos pequenos
+ * que mudaram, e uma parte publicada nunca é reescrita (sem duplicata no Drive). Puro: sem Android.
  */
 object SessionPartPlanner {
     const val STATE_FILE = ".public_parts.json"
@@ -27,10 +32,17 @@ object SessionPartPlanner {
         val files: List<File>,
         val final: Boolean,
         internal val nextState: JSONObject,
-    )
+    ) {
+        /** Primeira publicação já final: é a sessão inteira, vira um ZIP só com nomes simples. */
+        val single: Boolean get() = part == 1 && final
+    }
 
     fun partName(sessionId: String, part: Int): String =
         DocumentsSessionMirror.safeName(sessionId) + "_parte_" + part.toString().padStart(4, '0') + ".zip"
+
+    /** Nome do arquivo publicado: `<sessão>.zip` quando é a sessão inteira, `_parte_NNNN` nas demais. */
+    fun fileName(sessionId: String, plan: Plan): String =
+        if (plan.single) DocumentsSessionMirror.safeName(sessionId) + ".zip" else partName(sessionId, plan.part)
 
     private fun readState(dir: File): JSONObject = try {
         File(dir, STATE_FILE).takeIf { it.isFile }?.let { JSONObject(it.readText()) } ?: JSONObject()
@@ -98,7 +110,7 @@ object SessionPartPlanner {
         val listing = JSONArray()
         ZipOutputStream(output.buffered()).use { zip ->
             plan.slices.forEach { slice ->
-                val entryName = slice.name.removeSuffix(".jsonl") + ".from_" + slice.from + ".jsonl"
+                val entryName = if (plan.single) slice.name else slice.name.removeSuffix(".jsonl") + ".from_" + slice.from + ".jsonl"
                 zip.putNextEntry(ZipEntry("$prefix/$entryName"))
                 val digest = MessageDigest.getInstance("SHA-256")
                 RandomAccessFile(slice.file, "r").use { raf ->
@@ -126,8 +138,9 @@ object SessionPartPlanner {
             }
             zip.putNextEntry(ZipEntry("$prefix/parte.json"))
             zip.write(JSONObject().put("format", FORMAT).put("sessionId", sessionId).put("part", plan.part)
-                .put("final", plan.final).put("createdAtMs", System.currentTimeMillis())
-                .put("howToJoin", "Concatene os events_NNNN.from_*.jsonl de todas as partes em ordem de byte.")
+                .put("final", plan.final).put("single", plan.single).put("createdAtMs", System.currentTimeMillis())
+                .put("howToJoin", if (plan.single) "Sessão inteira neste ZIP: nada a juntar."
+                    else "Concatene os events_NNNN.from_*.jsonl de todas as partes em ordem de byte.")
                 .put("entries", listing).toString(2).toByteArray(Charsets.UTF_8))
             zip.closeEntry()
         }

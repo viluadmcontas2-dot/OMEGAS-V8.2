@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationManagerCompat
+import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.RefinementAutopilot
 import com.omegas.prohub.autocal.RefinementJournal
@@ -136,6 +137,12 @@ class TelemetryForegroundService : Service() {
     private var engineRestarts = 0
     private var healthFailures = 0
     @Volatile private var stopping = false
+
+    /**
+     * Só para a evidência de render no emulador: congela o piloto/diário do Refino para o teste
+     * conduzir o estado (replay real) sem corrida com o relógio do serviço. Nunca é ligado em produção.
+     */
+    @Volatile var refinementFrozenForRender = false
 
     override fun onCreate() {
         super.onCreate()
@@ -553,7 +560,30 @@ class TelemetryForegroundService : Service() {
     fun learningCheckpointStatusJson(): String = learningArchive.checkpointStatus().toString()
 
     fun sessionRecorderStatusJson(): String = sessionRecorder.statusJson()
-    fun sessionRecorderListJson(): String = sessionRecorder.listSessionsJson()
+    // A lista de sessões lê pastas e, se preciso, reconstrói resumos: nunca na thread da WebView.
+    // Devolve a última lista pronta na hora ("null" até a primeira ficar pronta) e atualiza em segundo plano.
+    private val sessionListExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "omegas-session-list").apply { isDaemon = true }
+    }
+    private val sessionListBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var sessionListJson = "null"
+    @Volatile private var sessionListAt = -1L
+
+    fun sessionRecorderListJson(): String {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if ((sessionListAt < 0L || now - sessionListAt > 3_000L) && sessionListBusy.compareAndSet(false, true)) {
+            sessionListExecutor.execute {
+                try {
+                    sessionListJson = sessionRecorder.listSessionsJson()
+                    sessionListAt = android.os.SystemClock.elapsedRealtime()
+                } catch (_: Exception) {
+                } finally {
+                    sessionListBusy.set(false)
+                }
+            }
+        }
+        return sessionListJson
+    }
     fun updateSessionRecorderSettings(
         telemetryEveryMs: Long,
         maxSessionMb: Int,
@@ -609,6 +639,13 @@ class TelemetryForegroundService : Service() {
     fun setTelemetryOverlayEnabled(enabled: Boolean): String {
         if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
         val result = overlay.setEnabled(enabled)
+        updateOverlay()
+        return result.toString()
+    }
+
+    fun setTelemetryOverlayScale(scale: Double): String {
+        if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
+        val result = overlay.setScale(scale)
         updateOverlay()
         return result.toString()
     }
@@ -759,10 +796,48 @@ class TelemetryForegroundService : Service() {
         }
     }
 
+    /** O que veio depois de cada apagão (religou, telemetria parou, sem religar) entra na sessão. */
+    private fun recordStallAnnotations() {
+        for (note in stallWatch.drainAnnotations()) sessionRecorder.record("engine_stall_after", "autocal", note, force = true)
+    }
+
+    private var verdictBaselineSet = false
+    private var lastVerdictRecordedId = ""
+
+    /**
+     * Veredito de cada gravação entra na sessão uma única vez, quando a verificação fecha.
+     * O veredito que já estava fechado quando o app abriu pertence a outra sessão e não é repetido.
+     */
+    private fun recordVerdictIfClosed() {
+        val latest = refinementJournal.json().optJSONObject("latest") ?: return
+        val id = latest.optString("id")
+        val status = latest.optString("status")
+        if (!verdictBaselineSet) {
+            verdictBaselineSet = true
+            if (status != "VERIFICANDO") lastVerdictRecordedId = id
+            return
+        }
+        if (status == "VERIFICANDO" || id.isBlank() || id == lastVerdictRecordedId) return
+        lastVerdictRecordedId = id
+        sessionRecorder.record(
+            "refinement_verdict", "autocal",
+            JSONObject().put("id", id).put("status", status)
+                .put("appliedAt", latest.optLong("appliedAt")).put("closedAt", latest.optLong("closedAt"))
+                .put("ratioBefore", latest.optJSONObject("indexBefore")?.opt("ratio") ?: JSONObject.NULL)
+                .put("ratioAfter", latest.optJSONObject("indexAfter")?.opt("ratio") ?: JSONObject.NULL)
+                .put("bands", latest.optJSONArray("bands") ?: org.json.JSONArray()),
+            force = true,
+        )
+    }
+
     /** Piloto do refino: decide a fase e avisa uma vez por fase. Nunca grava na ECU. */
     private fun observeRefinement() {
         try {
             val progress = if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson() else null
+            // A curva de gasolina que a ECU já tem vira referência (app recém-instalado, outra versão,
+            // outra sessão: a ECU guarda e entrega ao conectar).
+            // Offline mantém a última referência lida: a fase não pode oscilar só porque o cabo saiu.
+            if (usb.connected) equivalence.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(progress?.optJSONObject("acquisition")))
             val before = refinementAutopilot.json().optString("phase")
             val decided = refinementAutopilot.observe(
                 ecuOnline = usb.connected && runtime.ready,
@@ -798,8 +873,14 @@ class TelemetryForegroundService : Service() {
     private fun healthTick() {
         if (stopping) return
         try {
-            if (refinementJournal.evaluate(equivalence.index())) stateChanged()
-            observeRefinement()
+            if (!refinementFrozenForRender) {
+                if (refinementJournal.evaluate(equivalence.index(), ecuOnline = usb.connected && runtime.ready)) stateChanged()
+                // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
+                stallWatch.tick(System.currentTimeMillis())
+                recordStallAnnotations()
+                recordVerdictIfClosed()
+                observeRefinement()
+            }
             handleUsbTransition()
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
                 connectUsb()
@@ -862,6 +943,11 @@ class TelemetryForegroundService : Service() {
             ),
         )
 
+        // Velocidade do GPS (se ligado) entra no evento: motor morrendo com o carro andando é apagão,
+        // sem telemetria depois e parado é a chave desligada.
+        val gpsSpeedKmh = if (::gps.isInitialized && gps.running) {
+            gps.json().optDouble("speedKmh", -1.0).takeIf { it >= 0.0 }
+        } else null
         stallWatch.accept(
             StallWatch.Frame(
                 t = accepted.optLong("timestamp", System.currentTimeMillis()),
@@ -869,11 +955,14 @@ class TelemetryForegroundService : Service() {
                 rpm = live.optDouble("rpm", 0.0),
                 map = live.optDouble("load_bar", 0.0),
                 petrolMs = live.optDouble("petrol_ms", 0.0),
+                speedKmh = gpsSpeedKmh,
             ),
         )?.let { event ->
             sessionRecorder.record("engine_stall", "autocal", event, force = true)
-            log.add("WARN", "REFINO", "Motor apagou no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
+            val verb = if (event.optString("kind") == StallWatch.KIND_NEAR) "Motor quase apagou" else "Motor apagou"
+            log.add("WARN", "REFINO", "$verb no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
         }
+        recordStallAnnotations()
 
         sessionRecorder.record("telemetry", "mp48", live)
         sessionRecorder.record("engine_event", "native", root, force = false)
@@ -931,12 +1020,19 @@ class TelemetryForegroundService : Service() {
     private fun updateOverlay() {
         if (!::overlay.isInitialized || (!overlay.requestedEnabled() && !overlay.visible())) return
         val hub = status()
+        // Telemetria fresca (≤ 3 s) com a ECU conectada; senão o balão mostra "—" em vez do último número.
+        val live = hub.usbConnected && hub.directTelemetryAgeMs in 0L..3_000L
+        val fuel = hub.fuelState.trim().uppercase().takeIf { it.isNotEmpty() && it != "--" }
         overlay.update(
             TelemetryOverlayController.Snapshot(
                 cell = "—",
                 stft = null,
                 petrolMs = hub.petrolMs.takeIf { it > 0.0 },
                 rpm = hub.rpm.toDouble().takeIf { it > 0.0 },
+                fuel = fuel,
+                mapBar = hub.mapBar.takeIf { it > 0.0 },
+                gasMs = hub.gasMs.takeIf { it > 0.0 },
+                live = live,
             ),
         )
     }

@@ -37,15 +37,21 @@ class SessionRecorder(
 ) {
     companion object {
         private const val FORMAT = "omegas-session-log-v1"
+        private const val LIST_CACHE_MS = 4_000L
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
-        /** Parte pública imutável a cada 2 min: num corte de energia perde-se no máximo isso. */
-        private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
-        /** Evento do AutoCal antecipa a parte, sem gerar uma parte por evento. */
-        private const val DURABLE_EVENT_MIN_GAP_MS = 15_000L
+        // Sem publicação no meio da gravação: uma sessão vira um ZIP só, ao fechar ou na recuperação.
+        // Um corte de energia não perde nada: os eventos ficam no armazenamento do app (descarregados a
+        // cada poucos eventos) e a próxima abertura do app publica o ZIP da sessão que ficou aberta.
     }
 
     private val droppedEvents = AtomicLong(0L)
+    private val summaryCache = java.util.concurrent.ConcurrentHashMap<String, Pair<String, JSONObject>>()
+    @Volatile private var listCache: Pair<Long, String>? = null
+    /** Publicação no Drive em fila própria: nunca segura o bloqueio do gravador nem a tela. */
+    private val publisher = java.util.concurrent.Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "omegas-session-publisher").apply { isDaemon = true }
+    }
     private val worker = ThreadPoolExecutor(
         1,
         1,
@@ -80,6 +86,7 @@ class SessionRecorder(
 
     private var sessionDir: File? = null
     private var semanticLedger: SessionSemanticLedger? = null
+    private var resumo: SessionResumo? = null
     private var writer: BufferedWriter? = null
     private var segmentFile: File? = null
     private var segmentStream: FileOutputStream? = null
@@ -120,8 +127,10 @@ class SessionRecorder(
                 startedAtMs = now,
                 startReason = reason,
             )
+            resumo = SessionResumo(id, now)
             openNextSegment()
             recording = true
+            listCache = null
             writeManifestBase(dir, now, reason, metadata)
             File(dir, "README_PARA_IA.txt").writeText(aiReadme(), Charsets.UTF_8)
             recordNow(
@@ -129,11 +138,6 @@ class SessionRecorder(
                 "native",
                 JSONObject().put("reason", reason).put("metadata", metadata),
             )
-            worker.execute {
-                synchronized(this) {
-                    if (recording && sessionId == id) syncDocumentsMirror(force = true)
-                }
-            }
             statusObject().put("ok", true)
         } catch (error: Exception) {
             recording = false
@@ -250,8 +254,16 @@ class SessionRecorder(
         JSONArray(preview.map { JSONObject(it.toString()) }).toString()
     }
 
-    @Synchronized
+    /**
+     * Lista de sessões para a tela de Ferramentas. NÃO pega o bloqueio do gravador (antes pegava, e uma
+     * reconstrução de resumo lendo arquivos de eventos inteiros parava a gravação e congelava a tela) e
+     * é lembrada por poucos segundos e por sessão parada (o resumo só é refeito se os arquivos mudarem).
+     */
     fun listSessionsJson(): String {
+        val clock = System.currentTimeMillis()
+        listCache?.takeIf { clock - it.first in 0 until LIST_CACHE_MS }?.let { return it.second }
+        val activeDir = sessionDir
+        val isRecording = recording
         val array = JSONArray()
         paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
             ?.sortedByDescending { it.lastModified() }
@@ -263,13 +275,16 @@ class SessionRecorder(
                 }
                 val size = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
                 val createdAt = manifest.optLong("createdAtMs", dir.lastModified())
-                val active = dir.absolutePath == sessionDir?.absolutePath && recording
+                val active = dir.absolutePath == activeDir?.absolutePath && isRecording
                 val stoppedAt = manifest.optLong("stoppedAtMs", 0L)
                 val durationEnd = if (active) System.currentTimeMillis() else stoppedAt.takeIf { it > 0L } ?: dir.lastModified()
                 val semantic = if (active) {
                     semanticLedger?.snapshot(true) ?: JSONObject()
                 } else {
-                    try { SessionSemanticLedger.loadOrRebuild(dir) } catch (_: Exception) { JSONObject() }
+                    val signature = "$size:${File(dir, "manifest.json").lastModified()}"
+                    summaryCache[dir.name]?.takeIf { it.first == signature }?.second
+                        ?: (try { SessionSemanticLedger.loadOrRebuild(dir) } catch (_: Exception) { JSONObject() })
+                            .also { summaryCache[dir.name] = signature to it }
                 }
                 array.put(
                     JSONObject()
@@ -285,10 +300,13 @@ class SessionRecorder(
                         .put("semanticSummary", semantic),
                 )
             }
-        return array.toString()
+        val result = array.toString()
+        listCache = System.currentTimeMillis() to result
+        return result
     }
 
     fun clearStoppedSessions(): JSONObject {
+        listCache = null
         var deleted = 0
         var preserved = 0
         paths.sessionLogsRoot.listFiles { file -> file.isDirectory }?.forEach { dir ->
@@ -426,6 +444,9 @@ class SessionRecorder(
     fun close() {
         if (recording) stop("serviço encerrado")
         worker.shutdownNow()
+        // Dá uma folga curta para o ZIP da sessão sair; se não der, a próxima abertura do app publica.
+        publisher.shutdown()
+        try { publisher.awaitTermination(3, TimeUnit.SECONDS) } catch (_: Exception) {}
     }
 
     private fun createActiveExportSnapshot(dir: File): ExportSnapshot {
@@ -557,6 +578,8 @@ class SessionRecorder(
                 closeWriter()
                 updateManifest()
                 semanticLedger?.finish(stoppedAt, stopReason)
+                resumo?.observe("session_stopped", JSONObject().put("reason", stopReason), now)
+                writeResumo()
                 syncDocumentsMirror(force = true)
                 return
             }
@@ -584,6 +607,8 @@ class SessionRecorder(
                 data = data,
                 recordedAtMs = now,
             )
+            // Só eventos raros mexem no resumo; a telemetria nunca chega aqui.
+            if (type in SessionResumo.TRACKED && resumo?.observe(type, data, now) == true) writeResumo()
             synchronized(previewLock) {
                 preview.addLast(
                     JSONObject()
@@ -595,22 +620,16 @@ class SessionRecorder(
                 )
                 while (preview.size > PREVIEW_LIMIT) preview.removeFirst()
             }
-            val durableAutoCalEvent = type in setOf(
-                "autocal_native_snapshot",
-                "autocal_manual_snapshot",
-                "autocal_native_action",
-                "autocal_native_calibration_epoch",
-            )
-            val periodicCandidate = type == "telemetry" || type == "full_snapshot"
-            val sinceLast = now - lastDocumentsMirrorAt
-            if ((durableAutoCalEvent && sinceLast >= DURABLE_EVENT_MIN_GAP_MS) ||
-                (periodicCandidate && sinceLast >= DOCUMENTS_MIRROR_INTERVAL_MS)
-            ) {
-                syncDocumentsMirror(force = true)
-            }
         } catch (error: Exception) {
             lastError = error.message ?: error.javaClass.simpleName
         }
+    }
+
+    /** RESUMO.md vai junto em toda parte publicada; escrita pequena e atômica, só em evento raro. */
+    private fun writeResumo() {
+        val dir = sessionDir ?: return
+        val current = resumo ?: return
+        try { SessionResumo.write(dir, current.markdown()) } catch (_: Exception) {}
     }
 
     private fun openNextSegment() {
@@ -692,15 +711,18 @@ class SessionRecorder(
     private fun syncDocumentsMirror(force: Boolean) {
         val dir = sessionDir ?: return
         val now = System.currentTimeMillis()
-        if (!force && now - lastDocumentsMirrorAt < DOCUMENTS_MIRROR_INTERVAL_MS) return
         try {
             writer?.flush()
             syncToDisk()
             updateManifest()
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
-            publishParts(dir, sessionId, final = !recording)
+            val id = sessionId
+            val final = !recording
+            // O ZIP da sessão inteira pode levar segundos: sai numa fila própria, fora do bloqueio do gravador.
+            publisher.execute { try { publishParts(dir, id, final) } catch (_: Exception) {} }
         } finally {
             lastDocumentsMirrorAt = now
+            listCache = null
         }
     }
 
@@ -716,6 +738,9 @@ class SessionRecorder(
      */
     private fun publishParts(dir: File, id: String, final: Boolean): Boolean {
         val mirror = documentsMirror ?: return false
+        // Sessão que morreu sem fechar (app morto, energia cortada) ganha o RESUMO.md reconstruído
+        // dos eventos, para a parte final já levar fases, apagões, gravações e veredictos.
+        if (final) try { SessionResumo.rebuildIfOpen(dir) } catch (_: Exception) {}
         val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
         if (plan == null) {
             if (final) markDocumentsMirrored(dir)
@@ -753,7 +778,8 @@ class SessionRecorder(
             }
         }
 
-        val keep = settings.sessionKeepCount.coerceAtLeast(25)
+        // A tela de Ferramentas promete exatamente este número (mínimo 20, já garantido pelas configurações).
+        val keep = settings.sessionKeepCount
         validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old ->
             if (documentsMirror == null || documentsMirrorMarker(old).isFile) old.deleteRecursively()
         }
@@ -791,7 +817,10 @@ Tipos principais:
 - obd: fonte opcional e isolada;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;
-- export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
+- export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa;
+- refinement_phase, engine_stall, engine_stall_after, refinement_verdict: o piloto do Refino,
+  apagões do motor (e o que veio depois) e o veredito de cada gravação. RESUMO.md conta isso
+  em português; ele é reconstruído dos eventos quando o app morre antes de fechar a sessão.
 
 Exportação ativa é incremental: cada events_XXXX.jsonl já exportado com sucesso não
 volta a ser empacotado na exportação ativa seguinte. Sessão parada é exportada completa.

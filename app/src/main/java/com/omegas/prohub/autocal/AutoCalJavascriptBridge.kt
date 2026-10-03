@@ -8,6 +8,9 @@ import com.omegas.prohub.service.TelemetryForegroundService
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 /**
  * Bridge de paridade host-side AutoCal com o ProgBase.
@@ -25,6 +28,21 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var manager: AutoCalSnapshotManager? = null
     private var nativeActions: AutoCalNativeActionManager? = null
 
+    // Resultados prontos para a WebView: o cálculo pesado roda em segundo plano enquanto a tela
+    // está aberta e a chamada devolve o último valor na hora (a bridge bloqueia o JavaScript).
+    private val projectionMemo = BackgroundMemo(refreshMs = 1_000L, staleMs = 2_500L) { computeUiProjection() }
+    private val equivalenceMemo = BackgroundMemo(refreshMs = 2_000L, staleMs = 6_000L) { computeEquivalence() }
+    private val refinedAnalysisMemo = BackgroundMemo(refreshMs = 2_000L, staleMs = 6_000L) { computeRefinedAnalysis() }
+    private val warmer: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread(runnable, "omegas-autocal-warm").apply { isDaemon = true; priority = Thread.NORM_PRIORITY - 1 }
+    }.also { executor ->
+        executor.scheduleWithFixedDelay({
+            try { projectionMemo.refreshIfWatched() } catch (_: Throwable) {}
+            try { equivalenceMemo.refreshIfWatched() } catch (_: Throwable) {}
+            try { refinedAnalysisMemo.refreshIfWatched() } catch (_: Throwable) {}
+        }, 300L, 300L, TimeUnit.MILLISECONDS)
+    }
+
     @JavascriptInterface
     fun getStatus(): String = currentManager()?.statusJson()?.toString() ?: unavailable()
 
@@ -38,7 +56,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
 
     @JavascriptInterface
-    fun getUiProjection(): String = try {
+    fun getUiProjection(): String = projectionMemo.get()
+
+    private fun computeUiProjection(): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
         val manual = currentManager()
@@ -60,7 +80,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getSessionLedgerStatus(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderStatusJson() ?: unavailable()
 
     @JavascriptInterface
-    fun listAutoCalSessions(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderListJson() ?: "[]"
+    fun listAutoCalSessions(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderListJson()?.takeIf { it != "null" } ?: "[]"
 
     @JavascriptInterface
     fun exportAutoCalSession(sessionId: String) {
@@ -68,7 +88,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun startRead(): String = currentManager()?.startRead()?.toString() ?: unavailable()
+    fun startRead(): String {
+        projectionMemo.invalidate()
+        return currentManager()?.startRead()?.toString() ?: unavailable()
+    }
 
     @JavascriptInterface
     fun cancelRead(): String = currentManager()?.cancel()?.toString() ?: unavailable()
@@ -148,10 +171,12 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             actionManager.clearPreparation()
             return localFailure("Ação operacional foi classificada incorretamente como crítica")
         }
-        return actionManager.execute(prepared.getString("preparationId"))
+        val executed = actionManager.execute(prepared.getString("preparationId"))
             .put("operationalOneTouch", true)
             .put("requestedEnabled", enabled)
             .toString()
+        invalidateAnalysis()
+        return executed
     }
 
     /**
@@ -193,6 +218,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         }
 
         val result = actionManager.execute(preparationId)
+        invalidateAnalysis()
         if (!result.optBoolean("ok", false)) actionManager.clearPreparation()
         return result
             .put("confirmationPending", false)
@@ -226,10 +252,12 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     /**
      * Equivalência Refinada (o "cérebro" do refino) sobre o snapshot nativo mais recente.
-     * Memoizada por snapshot + evidência: a tela consulta periodicamente sem recalcular.
+     * Pronta em segundo plano; recalcula só quando o snapshot ou a evidência mudam.
      */
     @JavascriptInterface
-    fun getRefinedAnalysis(): String = try {
+    fun getRefinedAnalysis(): String = refinedAnalysisMemo.get()
+
+    private fun computeRefinedAnalysis(): String = try {
         val snapshot = refinementSnapshot()
         val evidence = refinementEvidence(snapshot)
         val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L) + "|" + evidence.signature
@@ -242,18 +270,26 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Equivalência refinada indisponível")
     }
 
-    /** Pontos próprios + diário + piloto, para a aba Refino. Só leitura. */
+    /** Pontos próprios + diário + piloto, para a aba Refino. Só leitura; resposta pronta em segundo plano. */
     @JavascriptInterface
-    fun getEquivalence(): String = try {
+    fun getEquivalence(): String = equivalenceMemo.get()
+
+    /** Igual a [getEquivalence], mas descarta o valor guardado (depois de gravar, desfazer, restaurar). */
+    @JavascriptInterface
+    fun getEquivalenceFresh(): String {
+        invalidateAnalysis()
+        return equivalenceMemo.get()
+    }
+
+    private fun invalidateAnalysis() {
+        projectionMemo.invalidate()
+        equivalenceMemo.invalidate()
+        refinedAnalysisMemo.invalidate()
+    }
+
+    private fun computeEquivalence(): String = try {
         val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        service.equivalence.index()
-            .put("denseBands", service.equivalence.denseBandsJson())
-            .put("typicalBands", service.equivalence.typicalBandsJson())
-            .put("refinement", service.refinementJournal.json())
-            .put("restorePoints", service.refinementJournal.restorePoints())
-            .put("autopilot", service.refinementAutopilot.json())
-            .put("stalls", service.stallWatch.json())
-            .toString()
+        EquivalenceView.build(service.equivalence, service.refinementJournal, service.refinementAutopilot, service.stallWatch).toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Equivalência indisponível")
     }
@@ -287,9 +323,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             }
         }
         mulAct?.let { raw -> service.equivalence.alignCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) })) }
-        val pairs = service.equivalence.pairs().map { it.petrolRefMs to it.gasPetrolMs }
+        // Só condução: a marcha lenta (~870 rpm) tem estratégia própria da ECU e criava degrau em ~4,5 ms.
+        val pairs = service.equivalence.drivingPairs().map { it.petrolRefMs to it.gasPetrolMs }
         val scale = axisMs?.let { service.refinementJournal.pointGainScale(it) }
-        return Evidence(pairs, scale, "${pairs.size}|${service.equivalence.gasEpochToken()}|${scale?.joinToString(",") { "%.3f".format(it) }}")
+        return Evidence(pairs, scale, "${service.equivalence.revision()}|${service.equivalence.gasEpochToken()}|${scale?.joinToString(",") { "%.3f".format(it) }}")
     }
 
     /** Snapshot mais recente entre o monitor nativo e a leitura manual. */
@@ -308,6 +345,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     }
 
     fun destroy() {
+        warmer.shutdownNow()
         synchronized(managerLock) {
             manager?.close()
             nativeActions?.clearPreparation()

@@ -22,8 +22,10 @@ import java.io.OutputStream
 /**
  * Cópia durável das sessões OMEGAS fora do sandbox do aplicativo.
  *
- * Cada sessão sai em partes ZIP imutáveis (`Download/Omegas/<sessão>/<sessão>_parte_NNNN.zip`,
- * ver SessionPartPlanner): escritas uma vez, ocultas enquanto gravam, nunca reescritas.
+ * Cada sessão sai em UM ZIP imutável (`Download/Omegas/<sessão>/<sessão>.zip`, ver
+ * SessionPartPlanner), publicado ao fechar a sessão ou, se o app morreu, na próxima abertura.
+ * Escrito uma vez, oculto enquanto grava, nunca reescrito. Sessões antigas com partes seguem em
+ * `_parte_NNNN.zip`.
  * Arquivos soltos reescritos durante a direção eram multiplicados pelo Drive em
  * "events_0001.jsonl (31).json"; um ZIP só no fim perdia a sessão num corte de energia. A captura continua pertencendo ao SessionRecorder;
  * esta classe não cria polling, captura paralela, pruning ou autoridade científica.
@@ -67,7 +69,7 @@ class DocumentsSessionMirror(private val context: Context) {
         }
         return try {
             val safeSession = safeName(sessionId)
-            val name = SessionPartPlanner.partName(sessionId, plan.part)
+            val name = SessionPartPlanner.fileName(sessionId, plan)
             val write: (OutputStream) -> Int = { SessionPartPlanner.writeZip(plan, sessionId, it) }
             val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) publishZipScoped("$PUBLIC_ROOT/$safeSession/", name, write)
             else publishZipLegacy(safeSession, name, write)

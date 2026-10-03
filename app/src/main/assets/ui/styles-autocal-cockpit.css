@@ -2301,3 +2301,24 @@
 .refino-review-list { max-height: 260px; overflow-y: auto; }
 .refino-warning { padding: 9px 11px; border-radius: 10px; background: rgba(104,78,26,.32); color: #ffefbd; font-size: 12px; }
 .refino-route-screen { position: relative; }
+
+/* Refino: inspector explica o ponto (de quem, quando, por que conta) e histórico em palavras */
+.refino-cockpit .autocal-chart-inspector { display: grid; align-items: start; gap: 4px; }
+.refino-cockpit .autocal-chart-inspector[data-counts="false"] b { color: #ffd27a; }
+.refino-cockpit .autocal-chart-legend { margin-bottom: 6px; }
+.refino-history-title { margin: 12px 0 4px; font-size: 13px; color: #c5d0db; }
+.refino-history { margin: 0; padding-left: 18px; font-size: 12px; color: #aab7c6; }
+.refino-history li { margin: 2px 0; }
+.refino-history li[data-status="PIOROU_EM_PARTE"] { color: #ff9b9b; }
+.refino-history li[data-status="VERIFICADO"] { color: #8fe3bd; }
+
+/* O texto de contexto do ponto nunca empurra o inspector para fora da tela 1280x720:
+   passa a rolar dentro da própria caixa (nada é cortado, só deixa de crescer a página). */
+.autocal-chart-inspector {
+  align-self: start;
+  max-height: 68px;
+  overflow-y: auto;
+}
+.refino-cockpit .autocal-chart-inspector {
+  max-height: 96px;
+}

@@ -120,6 +120,7 @@ android {
     sourceSets.getByName("androidTest").assets.srcDirs(
         rootProject.file("tests/fixtures"),
         rootProject.file("fixtures/autocal"),
+        rootProject.file("fixtures/autocal/real"),
     )
 
     packaging {

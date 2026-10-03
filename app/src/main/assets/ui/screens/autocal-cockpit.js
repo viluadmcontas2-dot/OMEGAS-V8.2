@@ -116,7 +116,8 @@
       const evidenceDeltas = Array.isArray(evidence?.pointDeltas) ? evidence.pointDeltas : [];
       const evidenceBefore = finite(evidence?.beforeCount);
       const evidenceAfter = finite(evidence?.afterCount);
-      const changedPoints = Math.max(0, Math.round(finite(evidence?.changedPointCount) ?? evidenceDeltas.length));
+      const changedRaw = finite(evidence?.changedPointCount) ?? (evidenceDeltas.length ? evidenceDeltas.length : null);
+      const changedPoints = changedRaw === null ? null : Math.max(0, Math.round(changedRaw));
       const largestDelta = evidenceDeltas
         .slice()
         .sort((a, b) => Math.abs(finite(b?.deltaFactor) ?? 0) - Math.abs(finite(a?.deltaFactor) ?? 0))[0] || null;
@@ -129,7 +130,7 @@
       let evidenceTitle = 'Aguardando evento AutoMatch observável';
       let evidenceDetail = 'Quando o contador nativo avançar, o OMEGAS compara a Curva K estável antes e depois da mesma época da ECU.';
       if (evidenceState === 'FACTOR_CHANGE_CONFIRMED') {
-        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K mudou ' + changedPoints + '/30';
+        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K mudou ' + (changedPoints === null ? '—' : changedPoints) + '/30';
         evidenceDetail = largestIndex === null || largestBefore === null || largestAfter === null
           ? 'Mudança da Curva K confirmada por readback na mesma época nativa.'
           : 'Maior mudança observada: ponto ' + (Math.round(largestIndex) + 1) + ' · ' +
@@ -191,19 +192,22 @@
       const summary = status?.semanticSummary && typeof status.semanticSummary === 'object' ? status.semanticSummary : {};
       const autocal = summary?.autocal && typeof summary.autocal === 'object' ? summary.autocal : {};
       const recording = status.recording === true;
-      const durationMs = Math.max(0, finite(status.durationMs ?? summary.durationMs) ?? 0);
+      const durationRaw = finite(status.durationMs ?? summary.durationMs);
+      const durationMs = Math.max(0, durationRaw ?? 0);
       const minutes = Math.floor(durationMs / 60000);
-      const regions = Array.isArray(autocal.correlatedRegions) ? autocal.correlatedRegions.length : 0;
-      const gasZones = Math.max(0, Math.min(4, Math.round(finite(autocal.gasZones) ?? 0)));
+      const regionsKnown = Array.isArray(autocal.correlatedRegions);
+      const regions = regionsKnown ? autocal.correlatedRegions.length : 0;
+      const gasZonesRaw = finite(autocal.gasZones);
+      const gasZones = Math.max(0, Math.min(4, Math.round(gasZonesRaw ?? 0)));
       const dropped = Math.max(0, Math.round(finite(status.droppedEvents) ?? 0));
       const lastError = String(status.lastError || '');
       const documentsMirror = status?.documentsMirror && typeof status.documentsMirror === 'object' ? status.documentsMirror : {};
       const mirrorFailed = documentsMirror.available === false || documentsMirror.lastSyncOk === false;
       const warning = dropped > 0 || lastError.length > 0 || mirrorFailed;
       const title = recording ? 'Sessão atual' : summary?.sessionId ? 'Última sessão' : 'Sessões prontas';
-      const detail = (recording ? minutes + ' min' : 'histórico preservado') +
-        ' · ' + regions + ' ' + (regions === 1 ? 'região correlacionada' : 'regiões correlacionadas') +
-        ' · GNV ' + gasZones + '/4';
+      const detail = (recording ? (durationRaw === null ? '—' : minutes) + ' min' : 'histórico preservado') +
+        ' · ' + (regionsKnown ? regions : '—') + ' ' + (regions === 1 && regionsKnown ? 'região correlacionada' : 'regiões correlacionadas') +
+        ' · GNV ' + (gasZonesRaw === null ? '—' : gasZones) + '/4';
       const next = dropped > 0 || lastError.length > 0
         ? 'Há uma lacuna na gravação interna da evidência. Veja os detalhes antes de usar esta sessão.'
         : mirrorFailed
@@ -720,7 +724,7 @@
                   <span class="previous">GNV anterior (contexto)</span>
                   <span class="current-band">Zona atual</span>
                   <span class="live">AGORA</span>
-                  <span id="autocalReferenceCount">0 pontos nativos</span>
+                  <span id="autocalReferenceCount">—</span>
                 </div>
                 <div id="autocalResetComparison" class="autocal-reset-comparison" hidden aria-live="polite"></div>
                 <button type="button" class="autocal-history-float" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
@@ -757,7 +761,7 @@
                   <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
                   <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
                 </div>
-                <span id="autocalZoneSummary">0/4 zonas GNV</span>
+                <span id="autocalZoneSummary">—</span>
               </section>
 
               <section class="autocal-command-bar autocal-secondary-card">
@@ -779,7 +783,7 @@
                   <div><small>AQUISIÇÃO</small><b id="autocalEnableRaw">—</b></div>
                   <div><small>SNAPSHOT</small><b id="autocalSnapshotHash">—</b></div>
                   <div><small>FONTE DA REFERÊNCIA</small><b id="autocalReferenceSource">—</b></div>
-                  <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">0</b></div>
+                  <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">—</b></div>
                 </div>
                 <section class="autocal-bands-card autocal-bands-technical">
                   <div class="autocal-section-head compact"><div><small>18 REGIÕES · DETALHE TÉCNICO</small><h4>Atividade nativa por região</h4></div></div>
@@ -1122,10 +1126,12 @@
         const autocal = summary?.autocal && typeof summary.autocal === 'object' ? summary.autocal : {};
         const when = finite(item.createdAt);
         const date = when === null ? 'Data indisponível' : new Date(when).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-        const duration = Math.max(0, finite(item.durationMs ?? summary.durationMs) ?? 0);
-        const minutes = Math.max(0, Math.floor(duration / 60000));
-        const regions = Array.isArray(autocal.correlatedRegions) ? autocal.correlatedRegions.length : 0;
-        const gasZones = Math.max(0, Math.min(4, Math.round(finite(autocal.gasZones) ?? 0)));
+        const durationRaw = finite(item.durationMs ?? summary.durationMs);
+        const minutes = durationRaw === null ? '—' : Math.max(0, Math.floor(durationRaw / 60000));
+        const regionsKnown = Array.isArray(autocal.correlatedRegions);
+        const regions = regionsKnown ? autocal.correlatedRegions.length : '—';
+        const gasZonesRaw = finite(autocal.gasZones);
+        const gasZones = gasZonesRaw === null ? '—' : Math.max(0, Math.min(4, Math.round(gasZonesRaw)));
         const active = item.active === true;
         const id = escapeHtml(item.id || '');
         return '<article class="autocal-session-item" data-active="' + (active ? 'true' : 'false') + '">' +
@@ -1343,8 +1349,11 @@
         }
       }
 
+      // Durante o reset de um combustível o 0 é medida (recomeçou); sem reset e sem resposta da ECU é desconhecido.
+      const petrolKnown = epoch.petrolPending === true || vector(snapshot, 'NUM_BUF_UPD_PETR').length > 0;
+      const gasKnown = epoch.gasPending === true || vector(snapshot, 'NUM_BUF_UPD_GAS').length > 0;
       this.text('autocalReferenceCount',
-        'Gasolina ' + petrolCount + '/18 · GNV ' + gasCount + '/18 faixas com amostra');
+        'Gasolina ' + (petrolKnown ? petrolCount : '—') + '/18 · GNV ' + (gasKnown ? gasCount : '—') + '/18 faixas com amostra');
       const kValues = physicalVector(snapshot, 'MUL_ACT');
       const kNarrative = kValues.length === 30
         ? 'Curva K: 30 fatores nativos; observador não altera a ECU.'
@@ -1814,8 +1823,10 @@
       host.innerHTML = events.slice(-6).reverse().map(event => {
         const correlated = String(event.correlationState || '') === 'CORRELATED';
         const rpm = finite(event.rpm);
-        const confidence = Math.round((finite(event.correlationConfidence) || 0) * 100);
-        return `<article data-state="${correlated ? 'correlated' : 'raw'}"><div><b>B${Number(event.bandIndex) + 1}</b><span>${escapeHtml(event.zone || 'zona')}</span></div><p>${correlated ? `${rpm === null ? 'RPM —' : `${Math.round(rpm).toLocaleString('pt-BR')} RPM`} · confiança ${confidence}%` : escapeHtml(event.correlationReason || 'NO_RELIABLE_CORRELATION')}</p><small>contador ${finite(event.counter) ?? '—'} · limiar ${finite(event.threshold) ?? '—'}</small></article>`;
+        const confidenceRaw = finite(event.correlationConfidence);
+        const confidence = confidenceRaw === null ? '—' : Math.round(confidenceRaw * 100);
+        const bandIndex = finite(event.bandIndex);
+        return `<article data-state="${correlated ? 'correlated' : 'raw'}"><div><b>${bandIndex === null ? 'B—' : 'B' + (bandIndex + 1)}</b><span>${escapeHtml(event.zone || 'zona')}</span></div><p>${correlated ? `${rpm === null ? 'RPM —' : `${Math.round(rpm).toLocaleString('pt-BR')} RPM`} · confiança ${confidence}${confidence === '—' ? '' : '%'}` : escapeHtml(event.correlationReason || 'NO_RELIABLE_CORRELATION')}</p><small>contador ${finite(event.counter) ?? '—'} · limiar ${finite(event.threshold) ?? '—'}</small></article>`;
       }).join('');
     }
 
@@ -1861,6 +1872,9 @@
       this.text('autocalHumanTitle', 'AutoCal indisponível');
       this.text('autocalHumanProgress', 'A tela não recebeu o bridge nativo.');
       this.text('autocalHumanAction', 'Reconecte o serviço antes de tentar qualquer ação.');
+      this.text('autocalZoneSummary', '—');
+      this.text('autocalReferenceCount', '—');
+      this.text('autocalMaturityRaw', '—');
       const host = document.getElementById('autocalReferenceChart');
       if (host) host.innerHTML = '<div class="chart-empty"><b>Sem ligação com a ECU</b><span>Nenhum dado foi inventado para preencher o gráfico.</span></div>';
     }
