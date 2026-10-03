@@ -16,7 +16,7 @@
     ['ESTAVEL', 'Estável'],
   ];
   const PHASE_TONE = {
-    SEM_ECU: 'unknown', ECU_TRABALHANDO: 'unknown', COLETANDO_NOSSOS: 'collecting',
+    SEM_ECU: 'unknown', LENDO_ECU: 'unknown', ECU_TRABALHANDO: 'unknown', COLETANDO_NOSSOS: 'collecting',
     PROPOSTA_PRONTA: 'ready', VERIFICANDO: 'collecting', RESTAURAR_TRECHO: 'problem', ESTAVEL: 'ok',
   };
   const VERDICT = {
@@ -143,7 +143,7 @@
     if (phase === 'ESTAVEL') return { kind: 'stable', label: '✓ Estável · pode desconectar' };
     // Enquanto a ECU faz o automático ela pode sobrescrever qualquer curva: o refino calcula e
     // mostra, mas a gravação só libera quando a ECU terminar.
-    if (phase === 'SEM_ECU' || phase === 'ECU_TRABALHANDO') {
+    if (phase === 'SEM_ECU' || phase === 'LENDO_ECU' || phase === 'ECU_TRABALHANDO') {
       const p = eq?.autopilot || {};
       const progress = finite(p.autoMatchCount) !== null ? ` (${p.autoMatchCount}${finite(p.maxAutomatch) !== null ? ' de ' + p.maxAutomatch : ''})` : '';
       return proposal ? { kind: 'waiting', label: `Aguardando a ECU terminar o automático${progress}` } : { kind: 'none', label: '' };
@@ -375,7 +375,7 @@
       this.lastRenderKey = key;
 
       const chip = document.getElementById('refinoPhaseChip');
-      if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Trecho piorou' : 'Sem ECU'])[1]; }
+      if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Trecho piorou' : phase === 'LENDO_ECU' ? 'Lendo a ECU' : 'Sem ECU'])[1]; }
       const headline = op.phase === 'done' ? 'Curva gravada e conferida pela ECU.'
         : op.phase === 'failed' ? op.message
           : pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
@@ -552,6 +552,7 @@
       const pilot = this.eq?.autopilot || {};
       host.innerHTML = `<dl>
         <div><dt>Modo</dt><dd>${escapeHtml(a.refinementMode || '—')} · ${a.available ? 'disponível' : escapeHtml(a.message || 'aguardando evidência')}</dd></div>
+        <div><dt>Gasolina de referência</dt><dd>${escapeHtml({ ECU: 'curva de gasolina que a ECU já tem', PROPRIA: 'gasolina medida por este app', MISTA: 'medida por este app + curva da ECU', NENHUMA: 'ainda sem referência: rode na gasolina' }[this.eq?.petrolReference] || '—')}</dd></div>
         <div><dt>De onde vem a proposta</dt><dd>${escapeHtml({ ECU_E_CONDUCAO: 'faixas da ECU + sua condução', CONDUCAO: 'só a sua condução (a ECU ainda não tem faixas maduras)', NENHUMA: 'sem evidência suficiente: nada muda' }[a.evidenceSource] || '—')}</dd></div>
         <div><dt>Bandas comuns maduras</dt><dd>${fmt(a.matureCommonPoints, 0)} de ${fmt(a.minimumMatureCommonPoints, 0)} necessárias · ${fmt(a.telemetryTargets, 0)} alvos dos nossos pontos</dd></div>
         <div><dt>Pontos da ECU descartados</dt><dd>${Array.isArray(a.rejectedBands) && a.rejectedBands.length ? a.rejectedBands.map(r => `${escapeHtml(r.fuel === 'GNV' ? 'GNV' : 'Gasolina')} B${Number(r.band) + 1} (${fmt(r.timeMs, 1)} ms · ${fmt(r.mapBar, 2)} bar)`).join(', ') + ' — fora da tendência; não entram no cálculo' : 'nenhum'}</dd></div>

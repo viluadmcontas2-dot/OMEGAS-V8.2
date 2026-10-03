@@ -9,6 +9,9 @@ import kotlin.math.ln
 /**
  * Piloto do refino: decide em que fase a calibração está, sem ninguém olhar a tela.
  *
+ * 0. SEM_ECU / LENDO_ECU — sem cabo, ou conectou e a ECU ainda não entregou o AutoMatch e a curva.
+ *    O estado vem sempre da ECU (ela guarda o AutoMatch e as curvas); o app recém-instalado lê e segue.
+ *    A gasolina de referência vem das leituras do app OU da curva de gasolina que a ECU já tem.
  * 1. ECU_TRABALHANDO — o AutoCal nativo ainda está no automático 1, 2, 3… e pedindo
  *    aquisição. O OMEGAS só observa e junta pontos próprios (RPM×MAP) em paralelo:
  *    gravar agora seria sobrescrito pelo próximo automático da ECU.
@@ -26,6 +29,8 @@ import kotlin.math.ln
 class RefinementAutopilot(private val file: File? = null, private val clock: () -> Long = System::currentTimeMillis) {
     companion object {
         const val FORMAT = "omegas-refinement-autopilot-v1"
+        /** Faixa cuja gasolina veio majoritariamente da curva da ECU é mais grossa: tolerância ±6%. */
+        val TOLERANCE_LOG_ECU_REF = ln(1.06)
         /** ECU online sem automático novo, com aquisição completa, por este tempo = ECU parou. */
         const val QUIET_MS = 10 * 60_000L
         /** Sem aquisição completa (faixas que o motorista nunca visita), espera mais. */
@@ -69,6 +74,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val enabled = monitor?.optInt("autoCalEnabled", -1)?.takeIf { monitor.has("autoCalEnabled") && !monitor.isNull("autoCalEnabled") }
             val count = monitor?.optInt("autoMatchCount", -1)?.takeIf { it >= 0 }
             val max = monitor?.optInt("maxAutomatch", -1)?.takeIf { it > 0 && !monitor.isNull("maxAutomatch") }
+                ?: acquisition?.optJSONObject("thresholds")?.takeIf { !it.isNull("maxAutomatch") }?.optInt("maxAutomatch", -1)?.takeIf { it > 0 }
             if (ecuOnline && count != null) {
                 if (lastCount != null && count != lastCount) { quietMs = 0L; ecuDoneLatch = null; dirty = true }
                 else { quietMs += dt; if (dt > 0) dirty = true }
@@ -82,6 +88,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val gasValid = gasKnown ?: 0
             val petrolZones = acquiredZones(acquisition, "GASOLINA")
             val gasZones = acquiredZones(acquisition, "GNV")
+            // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
+            val ecuRead = count != null || acquisition != null
             val complete = petrolZones >= 4 && gasZones >= 4
             val fresh = when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
@@ -105,6 +113,9 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("quietMinutes", quietMs / 60_000.0)
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
+                .put("ecuRead", ecuRead)
+                .put("petrolReference", index.optString("petrolReference", "NENHUMA"))
+                .put("ecuPetrolPoints", index.optInt("ecuPetrolPoints", 0))
                 .put("ourPoints", index.optInt("samples", 0))
                 .put("petrolObservations", index.optInt("petrolObservations", 0))
                 .put("gasObservations", index.optInt("gasObservations", 0))
@@ -121,7 +132,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                     .put("samples", b.optInt("samples")).put("ratio", if (r.isFinite()) r else JSONObject.NULL)
                 if (b.optInt("samples") >= MIN_BAND_SAMPLES && r.isFinite() && r > 0) {
                     measured += label
-                    if (abs(ln(r)) > TOLERANCE_LOG) off.put(label)
+                    val tolerance = if (b.optDouble("ecuShare", 0.0) >= 0.5) TOLERANCE_LOG_ECU_REF else TOLERANCE_LOG
+                    if (abs(ln(r)) > tolerance) off.put(label)
                 } else missing.put(label)
             }
             out.put("bandsMeasured", measured.size).put("bandsOff", off).put("bandsMissing", missing)
@@ -132,6 +144,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             if (verification != null) out.put("verification", verification)
             val next = when {
                 !ecuOnline && lastCount == null -> "SEM_ECU"
+                // Conectou mas a ECU ainda não entregou nada: não afirma "no automático" nem "terminou".
+                ecuOnline && !ecuRead -> "LENDO_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
                 latestStatus == "VERIFICANDO" -> "VERIFICANDO"
                 latestStatus == "PIOROU_EM_PARTE" && restoreCount > 0 -> "RESTAURAR_TRECHO"
@@ -210,10 +224,13 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
+        "LENDO_ECU" -> "Lendo o estado da ECU: AutoMatch e curvas."
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
             (if (count != null) " ${count}" + (if (max != null) " de $max" else "") else "") +
             ". O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
-        "COLETANDO_NOSSOS" -> "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
+        "COLETANDO_NOSSOS" -> if (out.optString("petrolReference") == "ECU")
+            "A ECU terminou e já tem a curva de gasolina. O OMEGAS só precisa medir o GNV rodando."
+        else "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
         "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina. Revise e grave."
         "VERIFICANDO" -> "Curva nova gravada. O OMEGAS mede faixa por faixa se o GNV chegou na gasolina" +
             (verification?.let { " (%d de %d min de condução)".format(Math.floor(it.optDouble("onlineMinutes")).toInt(), Math.round(it.optDouble("budgetMinutes")).toInt()) } ?: "") + "."
@@ -224,6 +241,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
+        "LENDO_ECU" -> "Aguarde alguns segundos. A ECU guarda o AutoMatch e as curvas e entrega tudo ao conectar."
         "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
         "VERIFICANDO" -> {
             val waiting = verification?.optJSONArray("waitingBands")
@@ -235,8 +253,11 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         "COLETANDO_NOSSOS" -> {
             val wanted = (0 until missing.length()).mapNotNull { missing.optJSONObject(it) }
                 .joinToString(", ") { "%.1f–%.1f ms".format(it.optDouble("fromMs"), it.optDouble("toMs")) }
+            val reference = index.optString("petrolReference", "NENHUMA")
             when {
-                index.optInt("petrolObservations") < 40 -> "Rode alguns minutos na gasolina para criar a referência."
+                // Só pede gasolina quando nem o app nem a ECU têm referência de gasolina.
+                reference == "NENHUMA" && index.optInt("petrolObservations") < 40 ->
+                    "A ECU ainda não tem curva de gasolina madura. Rode alguns minutos na gasolina para criar a referência."
                 wanted.isNotEmpty() -> "Rode no GNV passando por cargas de injeção $wanted."
                 else -> "Continue rodando no GNV."
             }

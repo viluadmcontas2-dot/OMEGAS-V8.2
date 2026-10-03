@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationManagerCompat
+import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.RefinementAutopilot
 import com.omegas.prohub.autocal.RefinementJournal
@@ -803,6 +804,10 @@ class TelemetryForegroundService : Service() {
     private fun observeRefinement() {
         try {
             val progress = if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson() else null
+            // A curva de gasolina que a ECU já tem vira referência (app recém-instalado, outra versão,
+            // outra sessão: a ECU guarda e entrega ao conectar).
+            // Offline mantém a última referência lida: a fase não pode oscilar só porque o cabo saiu.
+            if (usb.connected) equivalence.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(progress?.optJSONObject("acquisition")))
             val before = refinementAutopilot.json().optString("phase")
             val decided = refinementAutopilot.observe(
                 ecuOnline = usb.connected && runtime.ready,

@@ -141,3 +141,10 @@ test('a legenda fica ACIMA do gráfico, fora do bloco que rola junto', () => {
   assert.ok(source.indexOf('id="refinoLegend"') < source.indexOf('class="autocal-chart-workspace"'), 'legenda antes do gráfico');
   assert.equal([...source.matchAll(/class="autocal-chart-legend"/g)].length, 1, 'uma legenda só');
 });
+
+test('LENDO_ECU não oferece ação nem afirma estado: a ECU ainda não entregou nada', () => {
+  const m = model();
+  const action = m.primaryAction({ autopilot: { phase: 'LENDO_ECU' } }, null);
+  assert.equal(action.kind, 'none');
+  assert.equal(action.label, '');
+});
