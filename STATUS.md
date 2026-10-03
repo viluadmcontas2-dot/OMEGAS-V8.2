@@ -1,3 +1,21 @@
+## Refino — #122 reconciliada na #127, ciclo de vida e caixa-preta — 2026-10-03
+
+- Integração: PR#127 mesclada em `021e536727dddaa597623f6512530b92236576b2`; árvore exatamente igual à fonte testada. main avançada sem force; #122 encerrada como substituída, conteúdo incorporado, não merge da base antiga. #128 intacta.
+- Fonte de produto: `e895751fd158cafd8221cd9569bc237799001b38`. Base reconciliada `9691b5f9708fbcc016ff13be5ea0b15ff54cb5d9`; conteúdo útil dos20 caminhos da#122 auditado na#127. Sessão automática, remoção da tela Aprender e D1 preservados. #128 continua futura.
+- APK: artifact11277955529,4.822.137bytes, SHA256 `e52b157b82ec27cda11d66b4dae8161ad9778690fb7cd4a2a66f8abbd33ef64e`; ZIP digest `7baabbb025f1d2e6cfb6d7187faeca272f4fb6180451fc6bc388bbd4b79576e7`. Bytes baixados e hash conferido independentemente.
+- Classe3: corpus671 observações gasolina/1171GNV,1run; consulta fria mediana11,62ms,p9522,16ms; cache0,00020ms. Não equivale a orçamento físico garantido.
+- CI principal: run37133472095. Evidência exata (APK +31cenários Android1280×720): run37133472236. Ambos SUCCESS,32jobs/32success/0falhas (APK +31cenários).
+- Classe2: baseline19 testes antes/depois;13 mutantes de comportamento detectados,0 sobreviventes. REDs e AF1 isolados em docs/autocal/CAIXA-PRETA-RED.md.
+- Classe2: host limita leitura30s, automático/coleta/verificação40min e revisão/restauração30min; silêncio não confirma finalização nativa; offline não apresenta sucesso histórico como atual. São tetos implementados/testados, não tempos medidos no carro.
+- Classe4: serviço→worker→JSONL→RESUMO exercitado para primeiro veredito, transições entre ticks, ordem/interrupção/substituição e parada/reabertura nos cenários focados; recuperação após SIGKILL. Não prova todos os interleavings nem durabilidade diante de falha de disco.
+- Inspeção independente: artifact11278525033, imagem1280×720 e receipt `sourceSha=e895751fd158`; WindowManager confirma MainActivity em foco, sem diálogo externo. Legenda do gráfico sobreposta continua achado da#128, sem alegação de UX integral pronta.
+- Honestidade da prova: fontec3bdcac tinha screenshot coberto pelo ANR do launcher; PASS do DOM não liberou integração. Isolado HOME somente no emulador efêmero, exigido foco do próprio app antes de captura e fornecida identidade exata ao BuildConfig. A primeira API retornou null; substituída por mCurrentFocus do WindowManager, mantendo o assert e sem aceitar null.
+- Limites abertos: política única D2, histerese/simulador completo D3, D4–D7, resíduos por MAP/ms, falso-piorou/taxa de detecção/tempo até estável NÃO medidos nesta fatia. Rolagem horizontal e UX da#128 não integradas. Classe5 nunca alegada; USB/ECU/equivalência física/balão sobre outros apps dependem do carro.
+- Auditoria: nenhuma escrita automáticaK/Map, nenhuma mudança de writer, RAWLEVELS e protocolo Kotlin preservados. Sem framework novo ou refatoração estética.
+
+
+- Inspeções adicionais: artifacts11278575330 e11278046409, offline/timeout, valor atual— e retomada automática; sem alerta externo. Não certifica11estados de todas as telas nem completa aderência visual ao blueprint.
+
 ## APK Platina — Refino base única, gravação automática, "piorou" sem travar — 2026-10-03
 
 - **Branch/SHA:** `ccr-745c77c3-dvvqn0` @ `623986c` (reconciliado com `OmegasPlatina` 8197d9c), mesclado em `OmegasPlatina` por PR #124 → `eb4ec26`. `main` avançada (fast-forward) para `eb4ec26`; `main` deixa de ser um ramo morto.
@@ -10,12 +28,6 @@
 - **Não provado:** classe 5. O relato do dono (04:49) de AGORA à esquerda da curva GNV entre 0,40 e 0,65 bar segue em investigação (adendo D7 entregue ao executor).
 
 # OMEGAS Platina — Status
-
-## Refino — reconciliação de ciclo de sessão em andamento — 2026-10-03
-
-- Base remota: `OmegasPlatina` `9691b5f`; preserva a tela duplicada removida, sessão automática e D1 já integrados.
-- Próximo gate: RED remoto específico para corrida parar/iniciar sessão. Sem GREEN novo e sem alegação física.
-
 
 ## APK Platina + Refino v2 (provas de corpus real, render e sessão) — 2026-10-03
 
