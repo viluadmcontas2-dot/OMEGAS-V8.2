@@ -73,6 +73,9 @@ jobs:
             method: sessionChangeInvalidatesOldTelemetry
           - scenario: dashboard-session-recovered
             method: sessionReconnectRecoversFreshTelemetry
+          - scenario: refino-parada-durante-transicao
+            method: stopSessionWaitsForTransitionAlreadyInProgress
+            class: RefinoRenderTest
           - scenario: refino-decisoes-entre-ticks
             method: refinoJournalTransitionsReachSessionBeforeNextTick
             class: RefinoRenderTest

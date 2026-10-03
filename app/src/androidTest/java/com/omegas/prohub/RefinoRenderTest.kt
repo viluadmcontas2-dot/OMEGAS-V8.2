@@ -30,6 +30,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.GZIPInputStream
 
 /**
@@ -280,6 +281,55 @@ class RefinoRenderTest {
     // ------------------------------------------------------------------ cenários (uma fase do piloto por print)
 
 
+
+    @Test
+    fun stopSessionWaitsForTransitionAlreadyInProgress() {
+        val scenario = launch()
+        var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null
+        try {
+            val service = service(scenario)
+            recorder = service.sessionRecorder
+            assertTrue(recorder.start("EVIDENCE_STOP_RACE").optBoolean("ok"))
+            synth(service, "GASOLINA")
+            synth(service, "GNV", ratio = 1.12)
+            val journalLock = TelemetryForegroundService::class.java.getDeclaredField("journalRecordingLock").apply {
+                isAccessible = true
+            }.get(service)
+            val axis = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
+            val enteredJournal = CountDownLatch(1)
+            val transition = Thread {
+                enteredJournal.countDown()
+                service.refinementJournal.recordCurveWrite(
+                    IntArray(30) { 16384 }, IntArray(30) { 17000 }, axis,
+                    service.equivalence.index(), "SIMULATED_WRITE_DURING_STOP",
+                )
+            }
+            val stopFinished = AtomicBoolean(false)
+            val stop = Thread {
+                service.stopSessionRecording("EVIDENCE_STOP")
+                stopFinished.set(true)
+            }
+            synchronized(journalLock) {
+                transition.start()
+                assertTrue("transição deve iniciar", enteredJournal.await(1, TimeUnit.SECONDS))
+                waitFor(1_000L) { transition.state == Thread.State.BLOCKED }
+                stop.start()
+                SystemClock.sleep(250L)
+                assertTrue("parada não pode fechar a sessão enquanto a transição anterior espera", !stopFinished.get())
+            }
+            transition.join(5_000L)
+            stop.join(5_000L)
+            assertTrue("parada deve completar após entregar a transição", stopFinished.get())
+            val stopped = recorder.statusObject()
+            val directory = File(stopped.getString("directory"))
+            val events = directory.listFiles()?.filter { it.name.startsWith("events_") && it.name.endsWith(".jsonl") }
+                .orEmpty().flatMap { it.readLines() }.mapNotNull { runCatching { JSONObject(it) }.getOrNull() }
+            assertTrue("decisão iniciada antes da parada deve sobreviver", events.any {
+                it.optString("type") == "refinement_decision" &&
+                    it.optJSONObject("data")?.optString("reasonCode") == "MANUAL_WRITE_CONFIRMED"
+            })
+        } finally { recorder?.stop("EVIDENCE_CLEANUP"); scenario.close() }
+    }
 
     @Test
     fun refinoJournalTransitionsReachSessionBeforeNextTick() {
