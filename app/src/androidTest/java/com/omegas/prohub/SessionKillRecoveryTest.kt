@@ -147,8 +147,10 @@ class SessionKillRecoveryTest {
         for (needle in listOf(
             SessionResumo.OPEN_MARK, "ECU trabalhando no automático", "coletando os pontos do OMEGAS", "verificando a última gravação",
             "Apagou: 1 (religou: 1). Quase apagou: 1.", "depois: o motor religou em 1,8 s", "Curva K: 30 pontos, ajuste KF-PROVA",
-            "melhorou e foi confirmada", "Último registro",
+            "verificação concluída", "Último registro",
         )) assertTrue("RESUMO.md precisa conter '$needle':\n$resumo", resumo.contains(needle))
+
+        assertFalse("sem faixas confirmadas não há melhora comprovada", resumo.contains("melhorou e foi confirmada"))
 
         File(evidenceDir, "session-kill-recovery-RESUMO.md").writeText(resumo)
         File(evidenceDir, "session-kill-recovery.json").writeText(

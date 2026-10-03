@@ -60,11 +60,12 @@ class RefinementAutopilotTest {
     }
 
     @Test
-    fun `aquisicao completa e silencio da ECU contam como ECU parou e novo automatico volta a esperar`() {
+    fun `aquisicao completa sem confirmacao nativa continua esperando e acompanha novo contador`() {
         val p = pilot()
         p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0)
         repeat(220) { now += 3_000; p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0) }
-        assertEquals("PROPOSTA_PRONTA", p.json().getString("phase"))
+        assertEquals("ECU_TRABALHANDO", p.json().getString("phase"))
+        assertFalse(p.json().getBoolean("ecuDone"))
         now += 3_000
         val r = p.observe(true, monitor(2, max = null), acquisition(18, 18), offIndex, noJournal, 0)
         assertEquals("ECU_TRABALHANDO", r.getString("phase"))

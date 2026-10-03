@@ -11,6 +11,12 @@
 
 # OMEGAS Platina — Status
 
+## Refino — reconciliação de ciclo de sessão em andamento — 2026-10-03
+
+- Base remota: `OmegasPlatina` `9691b5f`; preserva a tela duplicada removida, sessão automática e D1 já integrados.
+- Próximo gate: RED remoto específico para corrida parar/iniciar sessão. Sem GREEN novo e sem alegação física.
+
+
 ## APK Platina + Refino v2 (provas de corpus real, render e sessão) — 2026-10-03
 
 - **Fonte:** `4a6965b3837f7bc0f212bcd84f6e60575523c4a4`, branch `ccr-745c77c3-dvvqn0`, base `OmegasPlatina` `fbee28c`.

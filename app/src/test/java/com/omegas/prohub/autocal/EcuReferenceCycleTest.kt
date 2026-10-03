@@ -114,12 +114,19 @@ class EcuReferenceCycleTest {
     }
 
     @Test
-    fun `sem cabo nada afirma estado novo e o que a ECU entregou antes continua valendo`() {
+    fun `sem cabo preserva historico mas nao autoriza proposta como estado atual`() {
         ledger.setEcuPetrolReference(ecuCurve)
         gas(1.12)
         assertEquals("PROPOSTA_PRONTA", observe().getString("phase"))
+        val before = ledger.index()
         val offline = observe(count = null, online = false, acquisition = null)
-        assertEquals("PROPOSTA_PRONTA", offline.getString("phase"))
+        assertEquals("SEM_ECU", offline.getString("phase"))
         assertFalse(offline.getBoolean("ecuOnline"))
+        assertFalse(offline.getBoolean("ecuDone"))
+        assertFalse(offline.getBoolean("canDisconnect"))
+        assertTrue(offline.isNull("autoMatchCount"))
+        assertEquals(before.getInt("samples"), ledger.index().getInt("samples"))
+        assertEquals(before.getString("petrolReference"), ledger.index().getString("petrolReference"))
+        assertEquals("PROPOSTA_PRONTA", observe().getString("phase"))
     }
 }

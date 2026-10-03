@@ -3,6 +3,13 @@ set -u
 chmod +x gradlew
 ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace || exit 2
 
+# O launcher do emulador gerou ANR sobre uma captura que antes passava pelo DOM.
+# Isolar somente o HOME deste aparelho efêmero; o app e seus erros não são ocultados.
+launcher="$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME | tr -d '\r' | tail -n 1)"
+launcher_package="${launcher%%/*}"
+if [[ "$launcher" == */* && "$launcher_package" != com.omegas.* ]]; then
+  adb shell pm disable-user --user 0 "$launcher_package" || exit 2
+fi
 adb shell wm size 1280x720 || exit 2
 adb shell wm density 160 || exit 2
 adb install -r app/build/outputs/apk/debug/app-debug.apk || exit 2
