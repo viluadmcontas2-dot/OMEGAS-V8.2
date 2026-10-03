@@ -58,15 +58,18 @@ class RefinoRenderTest {
         return checkNotNull(service) { "service unavailable" }
     }
 
+    /**
+     * O empacotamento do APK de teste tira o ".gz" do nome do asset (a listagem mostrou
+     * "automatch_....json"); por isso tenta os nomes com e sem ".gz" e decide por gzip pelo
+     * conteúdo (bytes 1f 8b), não pelo nome.
+     */
     private fun corpus(name: String): JSONObject {
         val assets = instrumentation.context.assets
-        val candidates = listOf("$name.json.gz", "real/$name.json.gz")
-        val opened = candidates.firstNotNullOfOrNull { path -> runCatching { assets.open(path) }.getOrNull() }
-            ?: error(
-                "corpus real ausente no APK de teste: $candidates; raiz=${assets.list("")?.sorted()}; " +
-                    "real=${assets.list("real")?.sorted()}"
-            )
-        val bytes = opened.use { GZIPInputStream(it).readBytes() }
+        val candidates = listOf("$name.json.gz", "$name.json", "real/$name.json.gz", "real/$name.json")
+        val raw = candidates.firstNotNullOfOrNull { path -> runCatching { assets.open(path).use { it.readBytes() } }.getOrNull() }
+            ?: error("corpus real ausente no APK de teste: $candidates; raiz=${assets.list("")?.sorted()}; real=${assets.list("real")?.sorted()}")
+        val gzipped = raw.size > 2 && raw[0] == 0x1f.toByte() && raw[1] == 0x8b.toByte()
+        val bytes = if (gzipped) GZIPInputStream(raw.inputStream()).use { it.readBytes() } else raw
         return JSONObject(String(bytes, Charsets.UTF_8))
     }
 
