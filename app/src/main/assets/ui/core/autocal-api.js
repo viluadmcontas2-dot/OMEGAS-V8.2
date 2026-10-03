@@ -44,5 +44,9 @@
     equivalenceFresh: () => invoke('getEquivalenceFresh', [], { ok: false }),
     // Só a fase do piloto: barata, para Agora e Sugestões (equivalence() recalcula milhares de pontos).
     refinementPhase: () => invoke('getRefinementPhase', [], { ok: false }),
+    // Cérebro único: resultado completo, congelar a Referência (toque do dono, sem escrita na ECU) e o Desfazer dele.
+    equivalenceResult: () => invoke('getEquivalenceResult', [], { ok: false, available: false }),
+    freezeReference: () => invoke('freezeReference', [], { ok: false }),
+    restorePreviousReference: () => invoke('restorePreviousReference', [], { ok: false }),
   };
 })(typeof window !== 'undefined' ? window : globalThis);
