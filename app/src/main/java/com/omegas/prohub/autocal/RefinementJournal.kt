@@ -53,11 +53,25 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
 
     init { load() }
 
+    private var decisionListener: ((JSONObject) -> Unit)? = null
+
+    /** Entrega a transição no momento em que ocorre; o consumidor apenas enfileira o registro. */
+    fun setDecisionListener(listener: ((JSONObject) -> Unit)?) = synchronized(lock) {
+        decisionListener = listener
+    }
+
+    private fun publishDecision(exp: JSONObject) {
+        decisionListener?.invoke(JSONObject(exp.toString()))
+    }
+
     /** Registra uma gravação de Curva K confirmada (antes/depois + índice medido com a curva antiga). */
     fun recordCurveWrite(beforeRaw: IntArray, afterRaw: IntArray, axisRaw: IntArray, indexBefore: JSONObject, source: String) {
         synchronized(lock) {
-            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }
-                ?.put("status", "INTERROMPIDO")?.put("reasonCode", "SUPERSEDED_BY_CONFIRMED_WRITE")?.put("failureDomain", "FUNCTIONAL")?.put("closedAt", clock())
+            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }?.let {
+                it.put("status", "INTERROMPIDO").put("reasonCode", "SUPERSEDED_BY_CONFIRMED_WRITE")
+                    .put("failureDomain", "FUNCTIONAL").put("closedAt", clock())
+                publishDecision(it)
+            }
             experimentSequence += 1L
             experiments += JSONObject()
                 .put("id", "EXP-${clock()}-$experimentSequence")
@@ -70,6 +84,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 .put("onlineMs", 0L)
                 .put("status", "VERIFICANDO").put("reasonCode", "MANUAL_WRITE_CONFIRMED").put("failureDomain", "NONE")
             while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
+            publishDecision(experiments.last())
         }
         save()
     }
@@ -77,8 +92,11 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     /** Algo mudou o motor por fora (Mapa K, AutoMatch nativo): a verificação perde validade. */
     fun interrupt(reason: String) {
         synchronized(lock) {
-            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }
-                ?.put("status", "INTERROMPIDO")?.put("reasonCode", "EXPERIMENT_INVALIDATED")?.put("failureDomain", "FUNCTIONAL")?.put("interruptReason", reason)?.put("closedAt", clock())
+            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }?.let {
+                it.put("status", "INTERROMPIDO").put("reasonCode", "EXPERIMENT_INVALIDATED")
+                    .put("failureDomain", "FUNCTIONAL").put("interruptReason", reason).put("closedAt", clock())
+                publishDecision(it)
+            }
         }
         save()
     }
@@ -195,7 +213,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             } else if (now - lastSaveAt >= SAVE_EVERY_MS) {
                 needsSave = true
             }
-            visibleChange || closedStatus != null
+            (visibleChange || closedStatus != null).also { if (it) publishDecision(exp) }
         }
         if (needsSave) save()
         return changed

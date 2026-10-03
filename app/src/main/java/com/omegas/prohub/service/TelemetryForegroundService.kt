@@ -164,10 +164,13 @@ class TelemetryForegroundService : Service() {
         lastVerdictRecordedId = loadedExperiment?.takeIf { it.optString("status") != "VERIFICANDO" }
             ?.optString("id").orEmpty()
         verdictBaselineSet = true
+        if (lastVerdictRecordedId.isNotBlank()) recordedVerdictIds.add(lastVerdictRecordedId)
         refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
+        refinementJournal.setDecisionListener(::recordJournalTransition)
+        journalTransitionsObserved = true
         sessionRecorder.recoverDocumentsMirrorAsync()
         log.setListener { item ->
             sessionRecorder.record("app_log", "native", item, force = true)
@@ -322,6 +325,7 @@ class TelemetryForegroundService : Service() {
     override fun onDestroy() {
         if (stopping) return
         stopping = true
+        refinementJournal.setDecisionListener(null)
         try { equivalence.flush() } catch (_: Exception) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
@@ -811,6 +815,15 @@ class TelemetryForegroundService : Service() {
 
     private var verdictBaselineSet = false
     private var lastVerdictRecordedId = ""
+    @Volatile private var journalTransitionsObserved = false
+    private val journalRecordingLock = Any()
+    private val recordedVerdictIds = LinkedHashSet<String>()
+
+    /** Um instantâneo por transição, em ordem; nenhuma releitura pode substituir evento intermediário. */
+    private fun recordJournalTransition(latest: JSONObject) = synchronized(journalRecordingLock) {
+        recordJournalDecisionSnapshot(latest)
+        recordVerdictSnapshot(latest)
+    }
 
     /**
      * Veredito de cada gravação entra na sessão uma única vez, quando a verificação fecha.
@@ -827,7 +840,12 @@ class TelemetryForegroundService : Service() {
     }
 
     private fun recordJournalDecision() {
+        if (journalTransitionsObserved) return
         val latest = refinementJournal.json().optJSONObject("latest") ?: return
+        synchronized(journalRecordingLock) { recordJournalDecisionSnapshot(latest) }
+    }
+
+    private fun recordJournalDecisionSnapshot(latest: JSONObject) {
         val signature = journalDecisionSignature(latest)
         if (signature == lastJournalDecisionSignature) return
         lastJournalDecisionSignature = signature
@@ -857,12 +875,21 @@ class TelemetryForegroundService : Service() {
     }
 
     private fun recordVerdictIfClosed() {
+        if (journalTransitionsObserved) return
         val latest = refinementJournal.json().optJSONObject("latest") ?: return
+        synchronized(journalRecordingLock) { recordVerdictSnapshot(latest) }
+    }
+
+    private fun recordVerdictSnapshot(latest: JSONObject) {
         val id = latest.optString("id")
         val status = latest.optString("status")
         verdictBaselineSet = true
-        if (status == "VERIFICANDO" || id.isBlank() || id == lastVerdictRecordedId) return
+        if (status == "VERIFICANDO" || id.isBlank() || id == lastVerdictRecordedId || id in recordedVerdictIds) return
         lastVerdictRecordedId = id
+        recordedVerdictIds.add(id)
+        while (recordedVerdictIds.size > RefinementJournal.MAX_EXPERIMENTS) {
+            recordedVerdictIds.remove(recordedVerdictIds.first())
+        }
         sessionRecorder.record(
             "refinement_verdict", "autocal",
             JSONObject().put("id", id).put("status", status)

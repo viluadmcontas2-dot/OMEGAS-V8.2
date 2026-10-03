@@ -65,4 +65,34 @@ class RefinementJournalDecisionTest {
         assertNotEquals("relógio repetido não pode confundir experimentos", first, second)
     }
 
+    @Test fun transitionsAreDeliveredInOrderWithoutPollingAndSnapshotsAreIndependent() {
+        val j = RefinementJournal(null) { 1_000L }
+        val events = ArrayList<JSONObject>()
+        j.setDecisionListener { events.add(it) }
+        j.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 }, axis, index(1.12), "first")
+        j.interrupt("NATIVE_AUTOMATCH")
+        j.recordCurveWrite(IntArray(30) { 17000 }, IntArray(30) { 18000 }, axis, index(1.12), "second")
+        j.evaluate(index(1.0))
+        assertEquals(listOf("MANUAL_WRITE_CONFIRMED", "EXPERIMENT_INVALIDATED",
+            "MANUAL_WRITE_CONFIRMED", "BAND_VERIFICATION_COMPLETE"), events.map { it.getString("reasonCode") })
+        assertEquals("VERIFICANDO", events.first().getString("status"))
+        events.last().put("status", "CONSUMER_CHANGED_COPY")
+        assertEquals("VERIFICADO", j.json().getJSONObject("latest").getString("status"))
+        j.setDecisionListener(null)
+        j.recordCurveWrite(IntArray(30) { 18000 }, IntArray(30) { 19000 }, axis, index(1.12), "detached")
+        assertEquals(4, events.size)
+    }
+
+    @Test fun supersededVerificationIsDeliveredBeforeReplacement() {
+        val j = RefinementJournal(null) { 1_000L }
+        val events = ArrayList<JSONObject>()
+        j.setDecisionListener { events.add(it) }
+        j.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 }, axis, index(1.12), "first")
+        j.recordCurveWrite(IntArray(30) { 17000 }, IntArray(30) { 18000 }, axis, index(1.12), "second")
+        assertEquals(listOf("MANUAL_WRITE_CONFIRMED", "SUPERSEDED_BY_CONFIRMED_WRITE",
+            "MANUAL_WRITE_CONFIRMED"), events.map { it.getString("reasonCode") })
+        assertEquals("INTERROMPIDO", events[1].getString("status"))
+        assertEquals(events[0].getString("id"), events[1].getString("id"))
+        assertNotEquals(events[1].getString("id"), events[2].getString("id"))
+    }
 }

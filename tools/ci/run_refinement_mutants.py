@@ -20,6 +20,12 @@ COMMAND = ["bash", "./gradlew", "testDebugUnitTest", "--console=plain"]
 for name in CLASSES:
     COMMAND += ["--tests", name]
 MUTANTS = [
+    ("decision-observer-disabled", JOURNAL, 'decisionListener?.invoke(JSONObject(exp.toString()))',
+     'Unit', "transitionsAreDeliveredInOrderWithoutPollingAndSnapshotsAreIndependent"),
+    ("decision-snapshot-is-mutable-state", JOURNAL, 'decisionListener?.invoke(JSONObject(exp.toString()))',
+     'decisionListener?.invoke(exp)', "transitionsAreDeliveredInOrderWithoutPollingAndSnapshotsAreIndependent"),
+    ("superseded-decision-is-lost", JOURNAL, 'publishDecision(it)\n            }\n            experimentSequence',
+     'Unit\n            }\n            experimentSequence', "supersededVerificationIsDeliveredBeforeReplacement"),
     ("clock-only-experiment-id", JOURNAL, '.put("id", "EXP-${clock()}-$experimentSequence")',
      '.put("id", "EXP-${clock()}")', "confirmedWritesHaveDistinctIdentityEvenWhenClockIsFrozen"),
     ("elapsed-time-is-visible-change", JOURNAL, 'it.optJSONObject("decision")?.remove("onlineMs")',

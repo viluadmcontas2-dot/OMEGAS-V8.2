@@ -186,3 +186,11 @@ Não declarar "rico" somente por posição visual, nem remover proteção por op
 Aceites adicionais: S1–S8 do dono no gêmeo digital real fechado, mutantes de projeção/trava,
 renders1280×720 de AGORA estável/transiente/divergência, relatório≤12linhas com limites.
 Temperatura/corte/embreagem/frescor desconhecidos são lacunas de entrada; não inventar.
+
+## Transições entre ticks — RED Android válido e correção mínima
+- Fonte antiga `a4b3461d05d949abe0d7779d86d0b485588ef4c3`, CI `37110568906` verde; APK gate `37110569079`: 17 testes focados antes/depois, **10 mutantes mortos / 0 sobreviventes**, identidade exata verificada.
+- Classe4: job `111168345115`, APK instalado no emulador1280×720. `refinoJournalTransitionsReachSessionBeforeNextTick` esperava quatro motivos em ordem e recebeu **[]**; 1 teste/1 falha comportamental. Não é falha de compilação.
+- Correção: Journal publica cópia independente da transição; serviço enfileira decisão/veredito imediatamente no worker existente. Sem I/O no listener, sem espera por healthTick, sem escrita ECU. Histórico carregado não é repetido. Deduplicação dos encerramentos limitada aos40 experimentos do Journal preserva idempotência do fallback e do primeiro veredito.
+- Contratos novos exercitam ordem, interrupção, substituição sem evento externo, cópia independente e desligamento do listener. Mutantes removem listener/cópia/evento de substituição; resultado ainda pendente até CI.
+- Radar11: frase/ação existente preservada; pior caso perda de causa tratada por entrega imediata; nenhum novo estado de espera; números vêm do snapshot; mesma fonte Journal; IDs resistem relógio repetido; reinício/versão velha preservados pelos testes anteriores, SIGKILL após enqueue não equivale a garantia de durabilidade; classe2+4, nunca5; mudança justificada LC02/LC08; não cobrir falha de disco silenciosa permanece achado; nenhuma pergunta/chave nova; falsificação com callbacks em sequência e polling repetido, sem tocar oráculos congelados.
+- GREEN deste ajuste, APK/digest e revisão independente **pendentes**; missão/D7/performance continuam abertos.
