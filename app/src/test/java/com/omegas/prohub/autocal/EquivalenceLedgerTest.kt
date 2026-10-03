@@ -256,5 +256,18 @@ class EquivalenceLedgerTest {
         val dense = ledger.denseBandsJson(0.025, 1).getJSONArray("petrol")
         assertTrue((0 until dense.length()).any { abs(dense.getJSONObject(it).getDouble("tpetMs") - 8.0) < 1e-9 })
     }
-}
 
+    @Test
+    fun `observacoes por combustivel saem na ordem de chegada e o resetGas limpa so o GNV`() {
+        val ledger = EquivalenceLedger(null)
+        val t = drive(ledger, "GASOLINA", 2000.0, 0.50, 5.0, 0, 6)
+        drive(ledger, "GNV", 2000.0, 0.50, 5.5, t + 5_000, 6)
+        assertEquals(4, ledger.petrolObservations().size)
+        assertEquals(4, ledger.gasObservations().size)
+        assertTrue(ledger.petrolObservations().zipWithNext().all { (a, b) -> a.t < b.t })
+        assertTrue(ledger.gasObservations().all { abs(it.petrolMs - 5.5) < 1e-9 })
+        ledger.resetGas("TESTE")
+        assertEquals(4, ledger.petrolObservations().size)
+        assertEquals(0, ledger.gasObservations().size)
+    }
+}

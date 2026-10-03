@@ -511,7 +511,7 @@ object AutoMatchRefinedEngine {
 
     // ---------------------------------------------------------------- ajuste
 
-    private class Observation(val a: List<Pair<Int, Double>>, val y: Double, val w: Double)
+    internal class Observation(val a: List<Pair<Int, Double>>, val y: Double, val w: Double)
 
     private fun secondDifferenceRows(u: List<Double>): List<DoubleArray> = (1 until u.size - 1).map { j ->
         val h0 = u[j] - u[j - 1]
@@ -526,7 +526,7 @@ object AutoMatchRefinedEngine {
         }
     }
 
-    private fun whittaker(
+    internal fun whittaker(
         u: List<Double>,
         observations: List<Observation>,
         prior: List<Double>,

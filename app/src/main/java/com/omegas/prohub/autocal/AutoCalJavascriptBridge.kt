@@ -285,9 +285,41 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     private fun computeEquivalence(): String = try {
         val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        EquivalenceView.build(service.equivalence, service.refinementJournal, service.equivalencePhases, service.stallWatch).toString()
+        // O resultado do cérebro único já foi calculado no tique do serviço; aqui só se lê (sem cálculo na thread da WebView).
+        val brain = try { JSONObject(service.equivalenceResultJson()).takeIf { it.optBoolean("ok", false) } } catch (_: Exception) { null }
+        EquivalenceView.build(service.equivalence, service.refinementJournal, service.equivalencePhases, service.stallWatch, brain).toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Equivalência indisponível")
+    }
+
+    /** Resultado completo do cérebro único (índice, próxima ação, pontos, Curvas Próprias, proposta). Só leitura. */
+    @JavascriptInterface
+    fun getEquivalenceResult(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.equivalenceResultJson()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Resultado do cérebro indisponível")
+    }
+
+    /**
+     * Toque do dono: congela a gasolina madura da ECU como Referência. Não grava na ECU; o Desfazer é
+     * [restorePreviousReference]. Provisório até a fila de operações (F5) assumir este verbo.
+     */
+    @JavascriptInterface
+    fun freezeReference(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.freezeReference().also { invalidateAnalysis() }
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Não foi possível congelar a referência")
+    }
+
+    /** Desfazer do congelamento: volta à Referência anterior desta sessão. */
+    @JavascriptInterface
+    fun restorePreviousReference(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.restorePreviousReference().also { invalidateAnalysis() }
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Não foi possível restaurar a referência")
     }
 
     /** Só a fase do piloto (Agora e Sugestões a cada 2–3 s): não recalcula pares nem bandas. */

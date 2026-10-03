@@ -42,9 +42,21 @@ REQUIRED = [
     "executeNativeAction",
     "clearNativeActionPreparation",
     "getIdentity",
+    "getEquivalenceResult",
+    "freezeReference",
+    "restorePreviousReference",
 ]
 for name in REQUIRED:
     assert f"fun {name}(" in BRIDGE, f"live AutoCal bridge method was removed: {name}"
+
+# F4: o cérebro único chega à UI pela mesma ponte (somente leitura + congelar pelo toque do dono).
+API = (ROOT / "app/src/main/assets/ui/core/autocal-api.js").read_text(encoding="utf-8")
+for name in ("getEquivalenceResult", "freezeReference", "restorePreviousReference"):
+    assert f"invoke('{name}'" in API, f"autocal-api.js must wrap {name}"
+assert "equivalenceResultJson()" in BRIDGE and "freezeReference()" in BRIDGE
+# O freeze não escreve na ECU: o corpo dele na ponte só chama o serviço.
+freeze_body = BRIDGE[BRIDGE.index("fun freezeReference()"):BRIDGE.index("fun restorePreviousReference()")]
+assert "actionManager" not in freeze_body and "execute" not in freeze_body
 
 print("AUTOCAL_BRIDGE_SURFACE_CONTRACT=PASS")
 

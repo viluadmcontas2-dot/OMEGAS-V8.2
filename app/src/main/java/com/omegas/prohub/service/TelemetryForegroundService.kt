@@ -17,6 +17,7 @@ import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.EquivalencePhases
 import com.omegas.prohub.autocal.RefinementJournal
 import com.omegas.prohub.autocal.StallWatch
+import com.omegas.prohub.equivalence.EquivalenceRuntime
 import androidx.core.app.ServiceCompat
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
@@ -116,6 +117,9 @@ class TelemetryForegroundService : Service() {
     /** Onde o motor apagou no GNV (desaceleração/embreagem): só observa, mostra no Refino. */
     lateinit var stallWatch: StallWatch
         private set
+    /** Cérebro único (Referência, Curvas Próprias, índice, próxima ação): só observa, nunca fala com a ECU. */
+    lateinit var equivalenceRuntime: EquivalenceRuntime
+        private set
     private lateinit var learningTemperature: LearningTemperatureSettings
     private lateinit var learningTolerances: LearningToleranceSettings
 
@@ -168,6 +172,7 @@ class TelemetryForegroundService : Service() {
         if (lastVerdictRecordedId.isNotBlank()) recordedVerdictIds.add(lastVerdictRecordedId)
         equivalencePhases = EquivalencePhases(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
+        equivalenceRuntime = EquivalenceRuntime(paths.runtimeRoot)
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
         refinementJournal.setDecisionListener(::recordJournalTransition)
@@ -212,6 +217,7 @@ class TelemetryForegroundService : Service() {
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
                 // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação da curva perde validade.
                 equivalence.resetGas("MAPA_K_GRAVADO")
+                equivalenceRuntime.onGasReset("MAPA_K_GRAVADO", equivalencePhases)
                 refinementJournal.interrupt("MAPA_K_GRAVADO")
                 link.markDataChanged("escrita K confirmada")
             },
@@ -243,6 +249,7 @@ class TelemetryForegroundService : Service() {
                 )
                 // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
                 equivalence.resetGas("AUTOMATCH_NATIVO")
+                equivalenceRuntime.onGasReset("AUTOMATCH_NATIVO", equivalencePhases)
                 refinementJournal.interrupt("AUTOMATCH_NATIVO")
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
@@ -323,6 +330,7 @@ class TelemetryForegroundService : Service() {
         refinementJournal.setDecisionListener(null)
         journalTransitionsObserved = false
         try { equivalence.flush() } catch (_: Exception) {}
+        try { equivalenceRuntime.flush() } catch (_: Exception) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
         scheduler.shutdownNow()
@@ -762,6 +770,13 @@ class TelemetryForegroundService : Service() {
         val wasConnected = lastUsbConnected
         lastUsbConnected = connected
         lastUsbSessionId = sessionId
+        // Fim da sessão USB: a foto do Desfazer da Referência vai embora e os medidores gravam em disco.
+        try {
+            equivalenceRuntime.references.endSession()
+            equivalenceRuntime.flush()
+        } catch (error: Exception) {
+            log.add("WARN", "EQUIVALENCIA", "Fim de sessão: ${error.message}")
+        }
 
         if (connected) {
             val generationChanged = transition == UsbSessionTransition.GENERATION_CHANGED
@@ -842,11 +857,14 @@ class TelemetryForegroundService : Service() {
                 indexBefore = equivalence.index(),
                 source = payload.optString("adjustmentId", "K_FACTOR"),
             )
+            // Cada ponto que o dono acabou de mudar entra em prova no cérebro único.
+            equivalenceRuntime.onCurveWritten(beforeRaw, afterRaw, equivalencePhases)
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Experimento não registrado: ${error.message}")
         } finally {
             // Curva nova: o GNV medido com a antiga sai; a gasolina (referência) fica.
             equivalence.resetGas("CURVA_K_GRAVADA")
+            try { equivalenceRuntime.onGasReset("CURVA_K_GRAVADA", equivalencePhases) } catch (_: Exception) {}
             payload.optJSONObject("curve")?.optJSONArray("factorsRaw")?.takeIf { it.length() == 30 }?.let { raw ->
                 equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
             }
@@ -957,7 +975,14 @@ class TelemetryForegroundService : Service() {
             // A curva de gasolina que a ECU já tem vira referência (app recém-instalado, outra versão,
             // outra sessão: a ECU guarda e entrega ao conectar).
             // Offline mantém a última referência lida: a fase não pode oscilar só porque o cabo saiu.
-            if (usb.connected) equivalence.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(progress?.optJSONObject("acquisition")))
+            val acquisition = progress?.optJSONObject("acquisition")
+            val frozenReference = equivalenceRuntime.references.current()
+            if (frozenReference != null) {
+                // Referência congelada pelo dono: vale ela, não a curva viva da ECU (que ela pode reaprender).
+                equivalence.setEcuPetrolReference(frozenReference.points.map { it.mapBar to it.petrolMs })
+            } else if (usb.connected) {
+                equivalence.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(acquisition))
+            }
             val before = equivalencePhases.json().optString("phase")
             val decided = equivalencePhases.observe(
                 ecuOnline = usb.connected && runtime.ready,
@@ -967,6 +992,7 @@ class TelemetryForegroundService : Service() {
                 journal = refinementJournal.json(),
                 restoreCount = refinementJournal.restorePoints().length(),
             )
+            observeEquivalenceBrain(acquisition)
             // Registra mudanças de decisão, não cada tick da telemetria. Números completos
             // ficam no evento curto e no RESUMO; timeout nunca vira recibo de gravação.
             val numbers = decided.optJSONObject("diagnostic") ?: JSONObject()
@@ -1001,6 +1027,70 @@ class TelemetryForegroundService : Service() {
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Piloto do refino: ${error.message}")
         }
+    }
+
+    private var lastEquivalenceKey = ""
+
+    /**
+     * Cérebro único: reavalia no executor do serviço (tique de 3 s) e grava na sessão só quando o resultado
+     * muda (índice guardado por sessão). Só observa: zero comandos à ECU.
+     */
+    private fun observeEquivalenceBrain(acquisition: JSONObject?) {
+        try {
+            val snapshot = try { JSONObject(nativeAutoCalSnapshotJson()) } catch (_: Exception) { null }
+            val result = equivalenceRuntime.evaluate(
+                equivalence, equivalencePhases, snapshot, acquisition,
+                usb.connected && runtime.ready, refinementJournal::pointGainScale,
+            ) ?: return
+            val index = result.index?.let { Math.round(it * 1000.0) / 1000.0 }
+            val key = listOf(index, result.coverage, result.nextAction.kind.name, result.provisional).joinToString("|")
+            if (key != lastEquivalenceKey) {
+                lastEquivalenceKey = key
+                val payload = JSONObject().put("index", index ?: JSONObject.NULL).put("coverage", result.coverage)
+                    .put("provisional", result.provisional)
+                    .put("nextAction", JSONObject().put("kind", result.nextAction.kind.name).put("text", result.nextAction.text))
+                sessionRecorder.record("equivalence_result", "autocal", payload, force = true)
+            }
+        } catch (error: Exception) {
+            log.add("WARN", "EQUIVALENCIA", "Cérebro: ${error.message}")
+        }
+    }
+
+    /** Aquisição de pontos que a ECU entregou por último (nula antes da primeira leitura). */
+    private fun latestAcquisition(): JSONObject? =
+        if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson().optJSONObject("acquisition") else null
+
+    /** O dono tocou "Congelar": a gasolina madura da ECU vira a Referência. Não toca a ECU. */
+    fun freezeReference(): String = try {
+        val reference = equivalenceRuntime.freeze(latestAcquisition(), equivalencePhases)
+        val frozenPayload = JSONObject().put("id", reference.id).put("frozenAt", reference.frozenAt).put("points", reference.points.size)
+        sessionRecorder.record("reference_frozen", "autocal", frozenPayload, force = true)
+        JSONObject().put("ok", true).put("reference", equivalenceRuntime.json(latestAcquisition()).optJSONObject("reference")).toString()
+    } catch (error: IllegalStateException) {
+        JSONObject().put("ok", false).put("reason", error.message ?: "AQUISICAO_IMATURA")
+            .put("message", "A ECU ainda não tem curva de gasolina madura para congelar.").toString()
+    } catch (error: Exception) {
+        JSONObject().put("ok", false).put("reason", "ERRO").put("message", error.message ?: "Falha ao congelar a referência").toString()
+    }
+
+    /** Desfazer do congelamento: volta à Referência anterior desta sessão. */
+    fun restorePreviousReference(): String = try {
+        val back = equivalenceRuntime.restorePreviousReference(equivalencePhases)
+        if (back == null) {
+            JSONObject().put("ok", false).put("reason", "SEM_REFERENCIA_ANTERIOR")
+                .put("message", "Não há referência anterior nesta sessão.").toString()
+        } else {
+            sessionRecorder.record("reference_restored", "autocal", JSONObject().put("id", back.id), force = true)
+            JSONObject().put("ok", true).put("reference", equivalenceRuntime.json(latestAcquisition()).optJSONObject("reference")).toString()
+        }
+    } catch (error: Exception) {
+        JSONObject().put("ok", false).put("reason", "ERRO").put("message", error.message ?: "Falha ao restaurar a referência").toString()
+    }
+
+    fun equivalenceResultJson(): String = try {
+        equivalenceRuntime.json(latestAcquisition()).toString()
+    } catch (error: Exception) {
+        JSONObject().put("ok", false).put("error", error.message ?: "Resultado indisponível").toString()
     }
 
     private fun healthTick() {
@@ -1076,6 +1166,18 @@ class TelemetryForegroundService : Service() {
                 gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
             ),
         )
+        try {
+            equivalenceRuntime.onFrame(
+                accepted.optLong("timestamp", System.currentTimeMillis()),
+                live.optString("fuel").uppercase(),
+                live.optDouble("rpm", 0.0),
+                live.optDouble("load_bar", 0.0),
+                live.optDouble("petrol_ms", 0.0),
+                if (usb.connected) usb.connectionSessionId else 0L,
+            )
+        } catch (error: Exception) {
+            log.add("WARN", "EQUIVALENCIA", "Quadro não entrou no cérebro: ${error.message}")
+        }
 
         // Velocidade do GPS (se ligado) entra no evento: motor morrendo com o carro andando é apagão,
         // sem telemetria depois e parado é a chave desligada.
@@ -1092,6 +1194,7 @@ class TelemetryForegroundService : Service() {
                 speedKmh = gpsSpeedKmh,
             ),
         )?.let { event ->
+            try { equivalenceRuntime.onStall(event) } catch (_: Exception) {}
             sessionRecorder.record("engine_stall", "autocal", event, force = true)
             val verb = if (event.optString("kind") == StallWatch.KIND_NEAR) "Motor quase apagou" else "Motor apagou"
             log.add("WARN", "REFINO", "$verb no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
