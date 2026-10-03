@@ -11,6 +11,7 @@ import com.omegas.prohub.autocal.AutoCalReadObservation
 import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
 import com.omegas.prohub.autocal.AutoCalSnapshotSource
 import com.omegas.prohub.autocal.EcuPetrolReference
+import com.omegas.prohub.autocal.RefinementAutopilot
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.NativeAutoCalAcquisitionEpoch
 import com.omegas.prohub.autocal.StallWatch
@@ -219,6 +220,15 @@ class RefinoRenderTest {
             active: !!screen && screen.classList.contains('active'),
             chip: q('#refinoPhaseChip')?.textContent ?? null,
             headline: q('#refinoHeadline')?.textContent ?? null,
+            headlineVisible: (() => {
+              const e = q('#refinoHeadline'); const r = e?.getBoundingClientRect();
+              return !!r && r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+            })(),
+            headlineFont: Number.parseFloat(getComputedStyle(q('#refinoHeadline')).fontSize),
+            nextVisible: (() => {
+              const e = q('#refinoNext'); const r = e?.getBoundingClientRect();
+              return !!r && r.width > 0 && r.height > 0 && r.bottom <= window.innerHeight;
+            })(),
             next: q('#refinoNext')?.textContent ?? null,
             ratio: q('#refinoRatio')?.textContent ?? null,
             ecuPoints: q('#refinoEcuPoints')?.textContent ?? null,
@@ -268,6 +278,62 @@ class RefinoRenderTest {
         .put("physicalValidationClaimed", false)
 
     // ------------------------------------------------------------------ cenários (uma fase do piloto por print)
+
+
+    @Test
+    fun refinoWatchdogHonest() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            var duration = 1_000L
+            val p = RefinementAutopilot(null, durationClock = { duration }, clock = { 1_000_000L })
+            val empty = JSONObject().put("samples", 0).put("bands", JSONArray())
+            val noJournal = JSONObject().put("latest", JSONObject.NULL)
+            p.observe(true, null, null, empty, noJournal, 0)
+            duration += 30_000L
+            val expired = p.observe(true, null, null, empty, noJournal, 0)
+            assertEquals("TENTATIVA_ENCERRADA", expired.getString("phase"))
+            TelemetryForegroundService::class.java.getDeclaredField("refinementAutopilot").apply {
+                isAccessible = true; set(service, p)
+            }
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-watchdog-honesto", dom, scenario,
+                provenance("SYNTHETIC_NON_SCIENTIFIC", "none", "watchdog real, prazo simulado 30000 ms, nenhuma escrita"))
+            assertClean(dom)
+            assertEquals("Etapa pausada", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("não respondeu a tempo"))
+            assertTrue("frase da falha precisa ser visível", dom.getBoolean("headlineVisible"))
+            assertTrue("texto essencial >=12px", dom.getDouble("headlineFont") >= 12.0)
+            assertTrue("próximo passo precisa estar visível", dom.getBoolean("nextVisible"))
+            assertTrue("sem proposta vencida", dom.getBoolean("primaryHidden"))
+            assertEquals("—", dom.getString("ratio"))
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoOfflineRetainsHistoryWithoutCurrentSuccess() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val snapshot = prepareCurvaPronta(service)
+            service.refinementAutopilot.observe(false,
+                JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
+                AutoCalAcquisition.fromSnapshot(snapshot), service.equivalence.index(),
+                service.refinementJournal.json(), service.refinementJournal.restorePoints().length())
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-offline-honesto", dom, scenario,
+                provenance("REAL_REPLAY_WITH_SYNTHETIC_DISCONNECTION", "ref_2026-10-01_1719",
+                    "medições reais preservadas, offline injetado, não valida ECU/carros"))
+            assertClean(dom)
+            assertEquals("Sem ECU", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("Conecte a ECU"))
+            assertTrue("estado sem conexão visível", dom.getBoolean("headlineVisible"))
+            assertEquals("valor antigo não é equivalência atual", "—", dom.getString("ratio"))
+            assertTrue("sem ação de gravação offline", dom.optString("primaryKind") != "review")
+        } finally { scenario.close() }
+    }
 
     @Test
     fun refinoEcuNoAutomatico() {

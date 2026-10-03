@@ -2,6 +2,11 @@
 name: OmegasVerde Android render evidence
 
 on:
+  workflow_call:
+    inputs:
+      source_sha:
+        required: true
+        type: string
   workflow_dispatch:
   # Render evidence trigger: 1ad07dcee856-final-autocal-visible-actions
   # Final APK/render evidence can be re-run against an exact SHA.
@@ -68,6 +73,12 @@ jobs:
             method: sessionChangeInvalidatesOldTelemetry
           - scenario: dashboard-session-recovered
             method: sessionReconnectRecoversFreshTelemetry
+          - scenario: refino-watchdog-honesto
+            method: refinoWatchdogHonest
+            class: RefinoRenderTest
+          - scenario: refino-offline-honesto
+            method: refinoOfflineRetainsHistoryWithoutCurrentSuccess
+            class: RefinoRenderTest
           - scenario: refino-ecu-automatico
             method: refinoEcuNoAutomatico
             class: RefinoRenderTest
@@ -108,6 +119,16 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+      - name: Prove exact render source
+        env:
+          PRODUCT_SHA: ${{ inputs.source_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$PRODUCT_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
+          echo "RENDER_SOURCE_SHA=$PRODUCT_SHA"
       - uses: actions/setup-java@v5
         with:
           distribution: temurin

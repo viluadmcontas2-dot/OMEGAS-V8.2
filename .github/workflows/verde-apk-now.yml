@@ -2,6 +2,15 @@
 name: OMEGAS PLATINA APK READY GATED
 
 on:
+  workflow_call:
+    inputs:
+      build_apk:
+        required: false
+        default: false
+        type: boolean
+      source_sha:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       build_apk:
@@ -13,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  PRODUCT_SHA: ${{ github.sha }}
+  PRODUCT_SHA: ${{ inputs.source_sha || github.sha }}
 
 concurrency:
   group: omegas-platina-apk-gated-${{ github.sha }}
@@ -34,6 +43,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          [[ "$PRODUCT_SHA" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
           echo "SOURCE_SHA=$(git rev-parse HEAD)"
 
@@ -78,6 +88,11 @@ jobs:
           done
           echo "GRADLE_DEPENDENT_UI_TESTS_EXIT=$status"
           exit $status
+
+      - name: Refino behavioral mutation probes
+        if: ${{ hashFiles('tools/ci/run_refinement_mutants.py') != '' }}
+        shell: bash
+        run: python3 tools/ci/run_refinement_mutants.py
 
       - name: Verify and hash APK
         id: apk
@@ -124,6 +139,7 @@ jobs:
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             build/evidence/omegas-platina-apk-evidence.txt
+            build/evidence/refinement-mutants.json
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
