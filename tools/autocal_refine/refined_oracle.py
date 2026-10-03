@@ -6,7 +6,7 @@ Implementação pura em Python (sem numpy) usada para:
   * gerar vetores de paridade Kotlin↔Python;
   * reproduzir o AutoMatch nativo observado na ECU (evidência de 2026-10-01 16:10Z).
 
-Princípios (ver docs/workunits/OMEGAS-WU-006.md):
+Princípios (ver docs/archive/workunits/OMEGAS-WU-006.md):
   1. Evidência por banda vem dos buffers nativos (tempo médio, MAP médio, contagem).
   2. T(MAP) é fisicamente não decrescente: ajuste isotônico ponderado com rejeição
      robusta de banda outlier.
