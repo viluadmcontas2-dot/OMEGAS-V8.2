@@ -1,6 +1,6 @@
 # OMEGAS Platina — Status
 
-Programa ativo: **Norte Único** (épico #131). Fatia em execução: NORTE-WU-00 (#132, PR #130).
+Programa ativo: **Norte Único** (épico #131). Fatia em execução: NORTE-WU-00 (#132, PR #141).
 Histórico completo até 2026-10-03: `docs/archive/STATUS-ate-2026-10-03.md`.
 
 ## Último APK conhecido — Refino #122 reconciliada na #127 (2026-10-03)

@@ -8,7 +8,7 @@
 - Spec: `docs/superpowers/specs/2026-10-03-omegas-platina-norte-unico-design.md`
 - Plano: `docs/superpowers/plans/2026-10-03-00-norte-unico-index.md`
 - Branch: `work/platina-f0-norte`
-- PR: (novo, substitui #130)
+- PR: #141 (substitui #130)
 - Depende de: —
 - Commits levam no corpo: `NORTE-WU-00 · Tarefa 0.<M>`
 - GitHub remoto é autoridade.

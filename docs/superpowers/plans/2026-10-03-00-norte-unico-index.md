@@ -200,7 +200,7 @@ Issues: épico #131; NORTE-WU-00…08 = #132…#140.
 - saem de vez: `LEARNING_RULES.md`, `docs/BLOCK_*.md`, `docs/decisions/`, `docs/spec-kits/`, `docs/handoff/`, `docs/incidents/` (exceto o abaixo), `docs/MODELO_EQUIVALENCIA_CAUSAL.md`, `docs/OBD_*.md`, `docs/PENTE_FINO_VERDE.md`, `docs/MIGRATION.md`, as specs e planos anteriores ao Norte Único e as Work Units antigas (`OMEGAS-WU-006`, `PLATINA-REFINO`);
 - `docs/archive/` guarda só o que um teste ainda lê como prova de protocolo: `STATUS-ate-2026-10-03.md` e `incidents/2026-09-19-autocal-final-byte-matrix.md`; a fatia que apagar o teste apaga o arquivo;
 - Issues e PRs legados (anteriores ao épico #131) são fechados como "não planejado", com a lista registrada no épico;
-- a Fatia 0 roda na branch nova `work/platina-f0-norte` (PR novo); a `work/platina-f0-docs-laco` e o PR #130 ficam substituídos.
+- a Fatia 0 roda na branch nova `work/platina-f0-norte` (PR #141); a `work/platina-f0-docs-laco` e o PR #130 ficam substituídos.
 
 ## Questões abertas para o dono (não bloqueiam F0–F3)
 
