@@ -6,6 +6,7 @@ import com.omegas.prohub.MainActivity
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.KFactorManualPlanner
 import com.omegas.prohub.calibration.KWriteManager
+import com.omegas.prohub.calibration.LiveCellProjection
 import com.omegas.prohub.ecu.KFactorProtocol
 import com.omegas.prohub.learning.LearningGridProjection
 import com.omegas.prohub.learning.LearningTelemetrySchemaMigration
@@ -88,7 +89,7 @@ class HubJavascriptBridge(activity: MainActivity) {
     fun getPresentSnapshot(): String = activity?.serviceOrNull()?.let { service ->
         val root = try { JSONObject(service.telemetryStore.liveJson()) } catch (_: Exception) { JSONObject() }
         val live = root.optJSONObject("live") ?: JSONObject()
-        val interpolation = LearningGridProjection.liveInterpolationJson(
+        val interpolation = LiveCellProjection.liveInterpolationJson(
             rpm = live.optDouble("rpm", 0.0),
             petrolMs = live.optDouble("petrol_ms", live.optDouble("petrolMs", 0.0)),
             mapBar = live.optDouble("load_bar", live.optDouble("map_bar", 0.0)),
@@ -351,7 +352,7 @@ class HubJavascriptBridge(activity: MainActivity) {
     fun getLiveTelemetry(): String = activity?.serviceOrNull()?.let { service ->
         val root = JSONObject(service.telemetryStore.liveJson())
         val live = root.optJSONObject("live") ?: JSONObject()
-        val interpolation = LearningGridProjection.liveInterpolationJson(
+        val interpolation = LiveCellProjection.liveInterpolationJson(
             rpm = live.optDouble("rpm", 0.0),
             petrolMs = live.optDouble("petrol_ms", live.optDouble("petrolMs", 0.0)),
             mapBar = live.optDouble("load_bar", live.optDouble("map_bar", 0.0)),

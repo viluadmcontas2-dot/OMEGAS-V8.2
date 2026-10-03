@@ -1,7 +1,6 @@
-package com.omegas.prohub.learning
+package com.omegas.prohub.ecu
 
-import com.omegas.prohub.ecu.Mp48Fuel
-import com.omegas.prohub.ecu.Mp48Telemetry
+import com.omegas.prohub.learning.LearningTolerancePolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -289,6 +288,27 @@ class MotorSampleAnalyzerTest {
         }
         assertEquals("SAMPLE_REJECTED", strictDecision?.state)
         assertTrue(tolerantDecision!!.learningEligible)
+    }
+
+    @Test
+    fun `celula do quadro vem da projecao ao vivo`() {
+        val d = MotorSampleAnalyzer().add(frame(0L, rpm = 2_000, petrolMs = 4.2))
+        assertEquals("4:2", d.cellKey)
+        assertEquals(4, d.cellRow)
+        assertEquals(2, d.cellColumn)
+    }
+
+    @Test
+    fun `evento de telemetria mantem as mesmas 20 chaves`() {
+        val keys = SampleDecision.transition(state = "CUTOFF", reason = "cutoff").toTelemetryJson().keys().asSequence().toSet()
+        assertEquals(
+            setOf(
+                "state", "reason", "classification", "frame_count", "minimum_frames", "desired_frames", "duration_ms",
+                "median_interval_ms", "gap_ms", "learning_eligible", "fuel_confirmed", "reason_code", "window_age_ms",
+                "window_budget_ms", "frames_evicted", "plausibility_reasons", "cell_key", "cell_row", "cell_column", "quality",
+            ),
+            keys,
+        )
     }
 
     private fun frame(

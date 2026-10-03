@@ -1,10 +1,10 @@
 package com.omegas.prohub.learning
 
 import com.omegas.prohub.calibration.KMapPhysicalAxes
+import com.omegas.prohub.calibration.LiveCellProjection
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
-import kotlin.math.abs
 import kotlin.math.max
 
 /**
@@ -13,9 +13,9 @@ import kotlin.math.max
  * localizar essa evidência no mesmo mapa K que o usuário lê e escreve.
  */
 object LearningGridProjection {
-    val rpmBins = KMapPhysicalAxes.rpmBins()
-    val petrolBins = KMapPhysicalAxes.petrolBins()
-    val mapBins = doubleArrayOf(0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00)
+    val rpmBins = LiveCellProjection.rpmBins
+    val petrolBins = LiveCellProjection.petrolBins
+    val mapBins = LiveCellProjection.mapBins
 
     fun gridJson(): JSONObject = JSONObject()
         .put("rows", petrolBins.size)
@@ -33,41 +33,10 @@ object LearningGridProjection {
         .put("learningModel", "CONTINUOUS_MULTIVARIATE_CONTROL_POINTS")
         .put("validEvidencePolicy", "PONDERED_NOT_DISCARDED")
 
-    fun cellFor(rpm: Double, petrolMs: Double, mapBar: Double = 0.60): JSONObject {
-        val row = nearest(petrolBins, petrolMs)
-        val column = nearest(rpmBins.map { it.toDouble() }.toDoubleArray(), rpm)
-        val mapIndex = nearest(mapBins, mapBar)
-        return JSONObject()
-            .put("row", row)
-            .put("column", column)
-            .put("key", "$row:$column")
-            .put("rpmBin", rpmBins[column])
-            .put("petrolBin", petrolBins[row])
-            .put("mapBin", mapBins[mapIndex])
-            .put("continuousWeights", JSONArray(
-                ContinuousLearningMath.bilinearWeights(rpm, petrolMs).map {
-                    JSONObject()
-                        .put("row", it.row)
-                        .put("column", it.column)
-                        .put("weight", it.weight)
-                },
-            ))
-            .put("trilinearWeights", JSONArray(
-                ContinuousLearningMath.trilinearWeights(rpm, petrolMs, mapBar, mapBins).map {
-                    JSONObject()
-                        .put("row", it.row)
-                        .put("column", it.column)
-                        .put("mapIndex", it.mapIndex)
-                        .put("weight", it.weight)
-                },
-            ))
-    }
+    fun cellFor(rpm: Double, petrolMs: Double, mapBar: Double = 0.60): JSONObject =
+        LiveCellProjection.cellFor(rpm, petrolMs, mapBar)
 
-    /**
-     * Pacote leve para explicar, em tempo real, a mesma interpolação bilinear
-     * usada pelo aprendizado. É estritamente observacional: não altera memória,
-     * sugestões nem escrita K.
-     */
+    /** Delegação: a célula ao vivo vive em [LiveCellProjection]. */
     fun liveInterpolationJson(
         rpm: Double,
         petrolMs: Double,
@@ -75,33 +44,7 @@ object LearningGridProjection {
         sequence: Long,
         updatedAt: Long,
         telemetryValid: Boolean,
-    ): JSONObject {
-        val physicallyValid = telemetryValid && rpm > 0.0 && petrolMs > 0.0 &&
-            rpm.isFinite() && petrolMs.isFinite() && mapBar.isFinite()
-        val safeRpm = if (rpm.isFinite()) rpm.coerceAtLeast(0.0) else 0.0
-        val safePetrolMs = if (petrolMs.isFinite()) petrolMs.coerceAtLeast(0.0) else 0.0
-        val safeMapBar = if (mapBar.isFinite()) mapBar.coerceAtLeast(0.0) else 0.0
-        val cell = cellFor(safeRpm, safePetrolMs, safeMapBar)
-        val weights = cell.optJSONArray("continuousWeights") ?: JSONArray()
-        val totalWeight = (0 until weights.length()).sumOf { index ->
-            weights.optJSONObject(index)?.optDouble("weight", 0.0) ?: 0.0
-        }
-        return JSONObject()
-            .put("valid", physicallyValid)
-            .put("educationalOnly", true)
-            .put("affectsLearning", false)
-            .put("affectsCalibration", false)
-            .put("method", "BILINEAR_RPM_X_PETROL_MS")
-            .put("axisSchema", KMapPhysicalAxes.SCHEMA)
-            .put("axisLockSha256", KMapPhysicalAxes.LOCK_SHA256)
-            .put("sequence", sequence)
-            .put("updatedAt", updatedAt)
-            .put("rpm", rpm)
-            .put("petrolMs", petrolMs)
-            .put("mapBar", mapBar)
-            .put("totalWeight", totalWeight)
-            .put("cell", cell)
-    }
+    ): JSONObject = LiveCellProjection.liveInterpolationJson(rpm, petrolMs, mapBar, sequence, updatedAt, telemetryValid)
 
     fun sameCell(rpmA: Double, petrolA: Double, rpmB: Double, petrolB: Double): Boolean {
         val a = cellFor(rpmA, petrolA)
@@ -262,19 +205,6 @@ object LearningGridProjection {
         "PETROL", "GASOLINA" -> "PETROL"
         "CNG", "GNV" -> "CNG"
         else -> "UNKNOWN"
-    }
-
-    private fun nearest(values: DoubleArray, value: Double): Int {
-        var bestIndex = 0
-        var bestDistance = Double.POSITIVE_INFINITY
-        values.forEachIndexed { index, candidate ->
-            val distance = abs(candidate - value)
-            if (distance < bestDistance) {
-                bestIndex = index
-                bestDistance = distance
-            }
-        }
-        return bestIndex
     }
 
     private fun strongerStage(a: String, b: String): String =

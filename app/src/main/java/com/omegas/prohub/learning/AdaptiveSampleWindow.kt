@@ -1,5 +1,7 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.ecu.MotorSample
+
 /** Regras puras da janela adaptativa; não altera as tolerâncias físicas. */
 object AdaptiveSampleWindow {
     const val EARLY_QUALITY_MINIMUM = 0.85

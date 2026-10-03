@@ -37,10 +37,8 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                         fun put(key: String, value: Any?): JSONObject = this
                     }
                 ''',
-                "com/omegas/prohub/learning/Stubs.kt": r'''
-                    package com.omegas.prohub.learning
-                    import com.omegas.prohub.ecu.Mp48Telemetry
-                    import org.json.JSONObject
+                "com/omegas/prohub/ecu/SampleStubs.kt": r'''
+                    package com.omegas.prohub.ecu
                     data class SampleDecision(val state: String = "OK")
                     class MotorSampleAnalyzer {
                         fun reset() {}
@@ -48,6 +46,10 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                         fun markContinuityLost() {}
                         fun add(t: Mp48Telemetry, plannedGap: Boolean, toleratedGap: Boolean): SampleDecision = SampleDecision()
                     }
+                ''',
+                "com/omegas/prohub/learning/Stubs.kt": r'''
+                    package com.omegas.prohub.learning
+                    import org.json.JSONObject
                     data class Tolerances(
                         val toleratedSerialFailures: Int = 2,
                         val hardRecoveryFailures: Int = 5,
