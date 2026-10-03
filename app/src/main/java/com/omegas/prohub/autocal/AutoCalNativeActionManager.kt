@@ -59,12 +59,6 @@ class AutoCalNativeActionManager(
             0,
             true,
         ),
-        MANUAL_AUTOMATCH(
-            AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH),
-            "AutoMatch manual",
-            "Replica ActionAutoMatchExecute do ProgBase (modo 0x08). É uma ação explícita do operador e permanece separada do AutoMatch nativo observado automaticamente na ECU.",
-            true,
-        ),
         FINISH_AUTOCAL(
             byteArrayOf(),
             "Encerrar cota AutoMatch (técnico)",
@@ -353,7 +347,7 @@ class AutoCalNativeActionManager(
         )
         requireAck(reply, "A ECU não confirmou ${prepared.action.label}")
         if (prepared.action in setOf(
-                Action.MANUAL_AUTOMATCH, Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL,
+                Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL,
             )
         ) {
             Thread.sleep(HOST_MODE_SETTLE_MS)
@@ -817,7 +811,6 @@ class AutoCalNativeActionManager(
             Action.RESET_ALL -> petrolAcquisitionReadbackFields() +
                 gasAcquisitionReadbackFields() +
                 AutoCalProtocol.MUL_ACT
-            Action.MANUAL_AUTOMATCH -> listOf(AutoCalProtocol.MUL_ACT)
             Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> listOf(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)
             Action.RESET_K_FACTOR -> listOf(AutoCalProtocol.MUL_ACT)
             Action.DELETE_POINT -> {

@@ -45,10 +45,15 @@ for action, mode in (
     ("RESET_GAS", "0x02"),
     ("RESET_ALL", "0x04"),
 ):
+    if action == "MANUAL_AUTOMATCH":
+        # Aposentado na F2 (spec §2.2): fica no oráculo do ProgBase, sai do protocolo e do manager.
+        assert f"{action}({mode})" not in PROTOCOL
+        assert f"ManualActionMode.{action}" not in ACTION
+        continue
     assert f"{action}({mode})" in PROTOCOL
     assert f"ManualActionMode.{action}" in ACTION
 
-assert "MANUAL_AUTOMATCH" in ACTION
+assert "MANUAL_AUTOMATCH" not in ACTION
 assert "requiresCriticalConfirmation" in ACTION
 assert '.put("automatic", false)' in ACTION
 

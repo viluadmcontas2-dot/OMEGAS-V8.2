@@ -17,11 +17,9 @@
   const router = new ui.Router(store);
   const instances = {};
   const utilities = ui.Drawers ? new ui.Drawers(store, router, api) : null;
-  const selectedSuggestionIds = new Set();
 
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
-    predictor: ['DECIDIR', 'Predictor'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     autocal: ['AUTO-CAL', 'AutoCal'],
@@ -281,8 +279,7 @@
     const curve = route === 'curve' ? ensureScreen('curve') : null;
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    const needsScience = route === 'predictor' || route === 'suggestions' ||
-      route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
+    const needsScience = route === 'suggestions' || route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
 
     if (needsScience) {
       const science = api.scienceSnapshotSince(scienceRevision) || {};
@@ -292,11 +289,6 @@
         scienceRevision = nextRevision;
         const data = science.data;
         if (data.learning) patch.learning = data.learning;
-        if (data.calibrationState) patch.calibrationState = data.calibrationState;
-        const predictor = data.predictor || data.calibrationState?.predictor;
-        if (predictor) {
-          patch.predictor = { ...(state.predictor || {}), state: predictor.ok === false ? 'error' : 'ready', data: predictor };
-        }
         patch.scienceRevision = scienceRevision;
       }
     }
@@ -321,26 +313,6 @@
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
   }
 
-  function suggestionTargetLabel(item) {
-    if (item.target === 'CURVE_K') return 'Curva K';
-    const change = Array.isArray(item.mapChanges) ? item.mapChanges[0] : null;
-    return change ? `Mapa K · célula ${Number(change.row) + 1}×${Number(change.column) + 1}` : 'Mapa K';
-  }
-
-  function suggestionMagnitude(item) {
-    const mapChange = Array.isArray(item.mapChanges) ? item.mapChanges[0] : null;
-    if (mapChange && Number.isFinite(Number(mapChange.before)) && Number(mapChange.before) !== 0) {
-      const pct = (Number(mapChange.after) / Number(mapChange.before) - 1) * 100;
-      return `${pct >= 0 ? '+' : ''}${pct.toFixed(1).replace('.', ',')}%`;
-    }
-    const curve = Array.isArray(item.curveChanges) ? item.curveChanges : [];
-    if (curve.length) {
-      const mean = curve.reduce((sum, change) => sum + ((Number(change.after) / Number(change.before) - 1) * 100), 0) / curve.length;
-      return `${mean >= 0 ? '+' : ''}${mean.toFixed(1).replace('.', ',')}%`;
-    }
-    return 'observando';
-  }
-
   let lastSuggestionSignature = '';
   /** Curva refinada pronta no Refino entra na fila de decisões (só leitura do piloto). */
   let refinementPhaseCache = { at: 0, value: null };
@@ -356,7 +328,7 @@
   function updateSuggestionBadge(state) {
     const rules = (root.OmegasUi || ui).DisplayRules;
     if (!rules) return;
-    const count = rules.pendingSuggestionCount(state?.calibrationState?.suggestionItems, Boolean(refinementSuggestion()));
+    const count = rules.pendingSuggestionCount([], Boolean(refinementSuggestion()));
     const node = byId('suggestionCount');
     if (!node || count === null) return;
     setText('suggestionCount', count);
@@ -371,80 +343,21 @@
   }
   function renderPersistentSuggestions(state) {
     const host = byId('suggestionList');
-    const calibration = state.calibrationState || {};
-    const items = Array.isArray(calibration.suggestionItems) ? calibration.suggestionItems : [];
     if (!host) return;
     const refinement = refinementSuggestion();
-    // Redesenhar a lista a cada 2 s fazia o toque sumir sob o dedo: só redesenha se a fila mudou.
-    const signature = JSON.stringify([items.map(item => [item.id, item.lifecycle, item.actionable, item.confidence]), refinement]);
+    // Redesenhar a lista a cada 2 s fazia o toque sumir sob o dedo: só redesenha se o card mudou.
+    const signature = JSON.stringify(refinement);
     if (signature === lastSuggestionSignature && host.childElementCount) return;
     lastSuggestionSignature = signature;
-    if (!items.length && !refinement) {
-      host.innerHTML = '<div class="drawer-empty"><b>Nenhuma decisão pendente</b><span>Quando houver curva refinada ou ajuste pronto para revisar, aparece aqui.</span></div>';
-      updateSuggestionBadge(state);
+    updateSuggestionBadge(state);
+    if (!refinement) {
+      host.innerHTML = '<div class="drawer-empty"><b>Nenhuma decisão pendente</b><span>Quando o Refino tiver curva pronta ou trecho a restaurar, aparece aqui.</span></div>';
       return;
     }
-    const current = items.filter(item => ['PENDING', 'OBSERVING'].includes(String(item.lifecycle || '')));
-    const pendingMap = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'MAP_K' && item.actionable === true);
-    const pendingCurve = current.filter(item => item.lifecycle === 'PENDING' && item.target === 'CURVE_K' && item.actionable === true);
-    const observing = current.filter(item => item.lifecycle === 'OBSERVING');
-    const applied = items.filter(item => item.lifecycle === 'APPLIED').slice(-12).reverse();
-    const validIds = new Set([...pendingMap, ...pendingCurve].map(item => item.id));
-    [...selectedSuggestionIds].forEach(id => { if (!validIds.has(id)) selectedSuggestionIds.delete(id); });
-    updateSuggestionBadge(state);
-
-    const pendingRows = list => list.map(item => `
-      <label class="suggestion-row" data-lifecycle="PENDING">
-        <input type="checkbox" data-suggestion-select="${escapeHtml(item.id)}" ${selectedSuggestionIds.has(item.id) ? 'checked' : ''}>
-        <span class="suggestion-row-main"><b>${escapeHtml(suggestionTargetLabel(item))}</b><span>${escapeHtml(item.rationale || 'Sugestão pronta para revisão humana.')}</span></span>
-        <span class="suggestion-row-meta"><b>${escapeHtml(suggestionMagnitude(item))}</b><small>${Math.round(Number(item.confidence || 0) * 100)}% confiança</small></span>
-      </label>`).join('');
-    const passiveRows = list => list.map(item => `
-      <div class="suggestion-row" data-lifecycle="${escapeHtml(item.lifecycle)}">
-        <span></span><span class="suggestion-row-main"><b>${escapeHtml(suggestionTargetLabel(item))}</b><span>${escapeHtml(item.rationale || '')}</span></span>
-        <span class="suggestion-row-meta"><b>${item.lifecycle === 'APPLIED' ? 'aplicada' : 'observando'}</b><small>${Math.round(Number(item.confidence || 0) * 100)}% confiança</small></span>
-      </div>`).join('');
-
     host.innerHTML = `
-      ${refinement ? `<section class="suggestion-group" data-suggestion-group="REFINO"><header><div><small>REFINO</small><h3>${escapeHtml(refinement.title)}</h3><p>${escapeHtml(refinement.text)}</p></div><div class="suggestion-group-actions"><button type="button" class="primary" data-open-refino>Abrir Refino</button></div></header></section>` : ''}
-      <div class="suggestion-queue-summary">
-        <div><small>PENDENTES</small><b>${pendingMap.length + pendingCurve.length}</b></div>
-        <div><small>OBSERVANDO</small><b>${observing.length}</b></div>
-        <div><small>APLICADAS</small><b>${applied.length}</b></div>
-      </div>
-      ${pendingMap.length ? `<section class="suggestion-group" data-suggestion-group="MAP_K"><header><div><small>AJUSTE LOCAL</small><h3>Mapa K · ${pendingMap.length} prontas</h3></div><div class="suggestion-group-actions"><button type="button" class="quiet-button" data-select-ready="MAP_K">Selecionar prontas</button><button type="button" class="primary" data-review-selected="MAP_K">Revisar selecionadas</button></div></header>${pendingRows(pendingMap)}</section>` : ''}
-      ${pendingCurve.length ? `<section class="suggestion-group" data-suggestion-group="CURVE_K"><header><div><small>AJUSTE GLOBAL</small><h3>Curva K · ${pendingCurve.length} pronta${pendingCurve.length === 1 ? '' : 's'}</h3></div><div class="suggestion-group-actions"><button type="button" class="quiet-button" data-select-ready="CURVE_K">Selecionar prontas</button><button type="button" class="primary" data-review-selected="CURVE_K">Revisar selecionadas</button></div></header>${pendingRows(pendingCurve)}</section>` : ''}
-      ${observing.length ? `<section class="suggestion-group"><header><div><small>OBSERVANDO</small><h3>Persistem sem valor antigo aplicável</h3></div></header>${passiveRows(observing)}</section>` : ''}
-      ${applied.length ? `<section class="suggestion-group"><header><div><small>HISTÓRICO</small><h3>Aplicadas após readback</h3></div></header>${passiveRows(applied)}</section>` : ''}
+      <section class="suggestion-group" data-suggestion-group="REFINO"><header><div><small>REFINO</small><h3>${escapeHtml(refinement.title)}</h3><p>${escapeHtml(refinement.text)}</p></div><div class="suggestion-group-actions"><button type="button" class="primary" data-open-refino>Abrir Refino</button></div></header></section>
     `;
-
     host.querySelector('[data-open-refino]')?.addEventListener('click', () => router.navigate('refino'));
-    host.querySelectorAll('[data-suggestion-select]').forEach(input => input.addEventListener('change', () => {
-      if (input.checked) selectedSuggestionIds.add(input.dataset.suggestionSelect);
-      else selectedSuggestionIds.delete(input.dataset.suggestionSelect);
-    }));
-    host.querySelectorAll('[data-select-ready]').forEach(button => button.addEventListener('click', () => {
-      const target = button.dataset.selectReady;
-      const list = target === 'MAP_K' ? pendingMap : pendingCurve;
-      list.forEach(item => selectedSuggestionIds.add(item.id));
-      lastSuggestionSignature = '';
-      renderPersistentSuggestions(store.get());
-    }));
-    host.querySelectorAll('[data-review-selected]').forEach(button => button.addEventListener('click', () => {
-      const target = button.dataset.reviewSelected;
-      const list = (target === 'MAP_K' ? pendingMap : pendingCurve).filter(item => selectedSuggestionIds.has(item.id));
-      if (!list.length) {
-        showAlert({ level: 'warning', message: 'Selecione ao menos uma sugestão pronta.' });
-        return;
-      }
-      if (target === 'MAP_K') {
-        const mapChanges = list.flatMap(item => Array.isArray(item.mapChanges) ? item.mapChanges : []);
-        router.navigate('map', { origin: 'suggestions', suggestionIds: list.map(item => item.id), suggestion: { target: 'MAP_K', mapChanges } });
-      } else {
-        const curveChanges = list.flatMap(item => Array.isArray(item.curveChanges) ? item.curveChanges : []);
-        router.navigate('curve', { origin: 'suggestions', suggestionIds: list.map(item => item.id), suggestion: { target: 'CURVE_K', curveChanges } });
-      }
-    }));
   }
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
@@ -455,11 +368,6 @@
       previousTelemetrySignature = '';
       ensureScreen('dashboard')?.render(store.get());
       afterPaint(refreshFast);
-      return;
-    }
-    if (route === 'predictor') {
-      previousTelemetrySignature = '';
-      afterPaint(() => { refreshFast(); refreshContext(); });
       return;
     }
     if (route === 'map') {

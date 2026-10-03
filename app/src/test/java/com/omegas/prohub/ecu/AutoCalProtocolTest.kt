@@ -94,7 +94,7 @@ class AutoCalProtocolTest {
         assertArrayEquals(hex("02 24 04 01 2B"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL))
         assertArrayEquals(hex("02 24 04 02 2C"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_GAS))
         assertArrayEquals(hex("02 24 04 04 2E"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_ALL))
-        assertArrayEquals(hex("02 24 04 08 32"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH))
+        assertEquals(listOf("RESET_PETROL", "RESET_GAS", "RESET_ALL"), AutoCalProtocol.ManualActionMode.entries.map { it.name })
     }
 
     @Test

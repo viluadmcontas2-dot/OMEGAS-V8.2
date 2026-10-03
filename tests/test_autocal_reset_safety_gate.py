@@ -11,8 +11,9 @@ KFACTOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager
 class AutoCalResetSafetyGateTest(unittest.TestCase):
     def test_progbase_resets_are_allowed_by_code_evidence(self):
         bridge = BRIDGE.read_text(encoding="utf-8")
-        for name in ("RESET_PETROL", "RESET_GAS", "RESET_ALL"):
+        for name in ("RESET_PETROL", "RESET_GAS"):
             self.assertIn(f"AutoCalNativeActionManager.Action.{name}", bridge)
+        self.assertNotIn("AutoCalNativeActionManager.Action.RESET_ALL", bridge)
         self.assertIn("AutoCalNativeActionManager.Action.RESET_K_FACTOR", bridge)
         self.assertNotIn('if (requested == "NEUTRALIZE_LIVE_K") "RESET_K_FACTOR"', bridge)
         self.assertIn('NEUTRALIZE_LIVE_K foi removido', bridge)
@@ -43,7 +44,6 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         expected = {
             "RESET_PETROL": ("RESET_PETROL(0x01)", "ManualActionMode.RESET_PETROL"),
             "RESET_GAS": ("RESET_GAS(0x02)", "ManualActionMode.RESET_GAS"),
-            "RESET_ALL": ("RESET_ALL(0x04)", "ManualActionMode.RESET_ALL"),
         }
         self.assertIn("AUTOCAL_ACTION_COMMAND = 0x24", protocol)
         self.assertIn("AUTOCAL_ACTION_SUBOP_CONTROL = 0x04", protocol)
@@ -52,6 +52,11 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
             self.assertIn(f"AutoCalNativeActionManager.Action.{action}", bridge)
             self.assertIn(mode, protocol)
             self.assertIn(manager_route, manager)
+        # RESET_ALL fica no protocolo e no manager (modo 0x04 provado), sem botão e fora da ponte.
+        self.assertIn("RESET_ALL(0x04)", protocol)
+        self.assertIn("ManualActionMode.RESET_ALL", manager)
+        self.assertNotIn('data-autocal-action="RESET_ALL"', ui)
+        self.assertNotIn("AutoCalNativeActionManager.Action.RESET_ALL", bridge)
         self.assertIn("this.prepare(button.dataset.autocalAction)", ui)
         self.assertIn("prepare: action => invoke('prepareNativeAction'", api)
         self.assertIn("execute: preparationId => invoke('executeNativeAction'", api)

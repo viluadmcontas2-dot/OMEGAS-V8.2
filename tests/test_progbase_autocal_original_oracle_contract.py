@@ -13,4 +13,6 @@ assert a['RESET_ALL']['mode']=='0x04'
 assert o['separateActions']['modifyMapRefs']['mode'] is None
 assert o['separateActions']['resetKFactor']['operation'].endswith('MUL_ACT[i] = 1.0')
 assert 'RESET_ALL(' in m
+assert a['MANUAL_AUTOMATCH']['omegasExposed'] is False and a['RESET_ALL']['omegasExposed'] is False
+assert 'MANUAL_AUTOMATCH(' not in m
 print('PROGBASE_AUTOCAL_ORIGINAL_ORACLE=PASS')

@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicLong
 class AutoCalNativeActionManagerTest {
     @Test
     fun `quadros nativos conhecidos sao exatos`() {
-        assertArrayEquals(hex("02 24 04 08 32"), AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH.request)
         assertEquals(0, AutoCalNativeActionManager.Action.RESET_K_FACTOR.request.size)
         assertEquals(30, AutoCalProtocol.resetKFactorMulActFrames().size)
         assertArrayEquals(hex("02 24 04 01 2B"), AutoCalNativeActionManager.Action.RESET_PETROL.request)
@@ -30,7 +29,6 @@ class AutoCalNativeActionManagerTest {
 
     @Test
     fun `ações com efeito K provado ou possível declaram mayChangeMulAct`() {
-        assertTrue(AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH.mayChangeMulAct)
         assertTrue(AutoCalNativeActionManager.Action.RESET_K_FACTOR.mayChangeMulAct)
         assertTrue(AutoCalNativeActionManager.Action.RESET_ALL.mayChangeMulAct)
         assertFalse(AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL.mayChangeMulAct)
@@ -41,19 +39,14 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
-    fun `automatch manual existe mas nunca executa sem confirmacao humana`() {
+    fun `automatch manual foi aposentado e preparar falha sem tocar a ECU`() {
         val calls = AtomicInteger(0)
-        val manager = manager { request, _, _, _ ->
-            calls.incrementAndGet()
-            reply(request, byteArrayOf(1))
-        }
+        val manager = manager { request, _, _, _ -> calls.incrementAndGet(); reply(request, byteArrayOf(1)) }
         val prepared = manager.prepare("MANUAL_AUTOMATCH")
-        assertTrue(prepared.getBoolean("prepared"))
-        assertTrue(prepared.getBoolean("requiresCriticalConfirmation"))
-        assertEquals("02 24 04 08 32", prepared.getString("commandHex"))
+        assertFalse(prepared.optBoolean("ok", true))
+        assertFalse(prepared.optBoolean("prepared", false))
         assertEquals(0, calls.get())
-        manager.clearPreparation()
-        assertEquals(0, calls.get())
+        assertFalse(AutoCalNativeActionManager.Action.entries.any { it.name == "MANUAL_AUTOMATCH" })
         manager.close()
     }
 
@@ -475,7 +468,6 @@ class AutoCalNativeActionManagerTest {
                 .map { it.key },
             witnesses("RESET_ALL"),
         )
-        assertEquals(listOf("MUL_ACT"), witnesses("MANUAL_AUTOMATCH"))
         assertEquals(listOf("AUTO_CAL_ENABLE"), witnesses("ENABLE_AUTO_CAL"))
         assertEquals(listOf("NUM_AUTOMATCH_EXECUTED"), witnesses("FINISH_AUTOCAL"))
         manager.close()

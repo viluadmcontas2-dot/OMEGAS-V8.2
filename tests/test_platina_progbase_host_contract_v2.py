@@ -39,7 +39,8 @@ def test_modern_curve_screen_preserves_progbase_manual_k_capability():
 
 def test_host_actions_remain_distinct_and_manual():
     manager = read("app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt")
-    for action in ("MANUAL_AUTOMATCH", "RESET_PETROL", "RESET_GAS", "RESET_ALL", "RESET_K_FACTOR", "DELETE_POINT"):
+    for action in ("RESET_PETROL", "RESET_GAS", "RESET_ALL", "RESET_K_FACTOR", "DELETE_POINT"):
         assert action in manager
+    assert "MANUAL_AUTOMATCH(" not in manager
     assert '"automatic", false' in manager
     assert '"manualOnly", true' in manager

@@ -25,7 +25,8 @@
       "handlerVa": "0x005189B4",
       "mode": "0x08",
       "frame": "02 24 04 08 32",
-      "evidence": "canonical EXE raw RTTI + wrapper disassembly"
+      "evidence": "canonical EXE raw RTTI + wrapper disassembly",
+      "omegasExposed": false
     },
     {
       "action": "RESET_PETROL",
@@ -34,7 +35,8 @@
       "handlerVa": "0x005189C0",
       "mode": "0x01",
       "frame": "02 24 04 01 2B",
-      "evidence": "canonical EXE raw RTTI + wrapper disassembly"
+      "evidence": "canonical EXE raw RTTI + wrapper disassembly",
+      "omegasExposed": true
     },
     {
       "action": "RESET_GAS",
@@ -43,7 +45,8 @@
       "handlerVa": "0x005189CC",
       "mode": "0x02",
       "frame": "02 24 04 02 2C",
-      "evidence": "canonical EXE raw RTTI + wrapper disassembly"
+      "evidence": "canonical EXE raw RTTI + wrapper disassembly",
+      "omegasExposed": true
     },
     {
       "action": "RESET_ALL",
@@ -52,7 +55,8 @@
       "handlerVa": "0x005189D8",
       "mode": "0x04",
       "frame": "02 24 04 04 2E",
-      "evidence": "canonical EXE raw RTTI + wrapper disassembly; frame observed in canonical Portmon"
+      "evidence": "canonical EXE raw RTTI + wrapper disassembly; frame observed in canonical Portmon",
+      "omegasExposed": false
     }
   ],
   "separateActions": {

@@ -30,7 +30,7 @@ object TelemetryVisualLifecyclePolicy {
 
     /**
      * Campos operacionais que devem permanecer no caminho visual prioritário.
-     * Gráficos, superfícies e Predictor são trabalho secundário.
+     * Gráficos e superfícies são trabalho secundário.
      */
     val primaryTelemetryFields: Set<String> = setOf(
         "rpm",

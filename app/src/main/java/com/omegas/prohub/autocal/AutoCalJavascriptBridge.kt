@@ -118,9 +118,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         if (parsed !in setOf(
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
-                AutoCalNativeActionManager.Action.RESET_ALL,
                 AutoCalNativeActionManager.Action.RESET_K_FACTOR,
-                AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
                 AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
                 AutoCalNativeActionManager.Action.DELETE_POINT,
@@ -205,9 +203,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         if (action !in setOf(
                 AutoCalNativeActionManager.Action.RESET_PETROL,
                 AutoCalNativeActionManager.Action.RESET_GAS,
-                AutoCalNativeActionManager.Action.RESET_ALL,
                 AutoCalNativeActionManager.Action.RESET_K_FACTOR,
-                AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH,
                 AutoCalNativeActionManager.Action.FINISH_AUTOCAL,
                 AutoCalNativeActionManager.Action.FINISH_AUTOMATCH,
                 AutoCalNativeActionManager.Action.DELETE_POINT,
@@ -246,7 +242,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("nativeAndroidConfirmation", false)
         .put("appAutomaticWrite", false)
         .put("nativeAutoMatchInsideEcu", true)
-        .put("manualAutoMatchExposed", true)
+        .put("manualAutoMatchExposed", false)
         .put("obdIndependent", true)
         .toString()
 

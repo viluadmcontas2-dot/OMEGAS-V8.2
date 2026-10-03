@@ -44,25 +44,19 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('INJECTION_COUNTS_PER_MS = 512.0', scale)
         self.assertIn('MAP_COUNTS_PER_BAR = 1_024.0', scale)
         # Clean forensics: command 0x24/sub-op 0x04, AutoMatch=0x08, petrol=0x01, gas=0x02, all=0x04.
-        self.assertIn('MANUAL_AUTOMATCH(', self.action)
-        self.assertIn('ManualActionMode.MANUAL_AUTOMATCH', self.action)
+        self.assertNotIn('MANUAL_AUTOMATCH', self.action)
         self.assertIn('ManualActionMode.RESET_PETROL', self.action)
         self.assertIn('ManualActionMode.RESET_GAS', self.action)
         self.assertIn('ManualActionMode.RESET_ALL', self.action)
 
     def test_manual_automatch_is_human_confirmed_and_separate_from_native_epochs(self):
-        self.assertIn('MANUAL_AUTOMATCH', self.action)
-        self.assertIn('ManualActionMode.MANUAL_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.action)
         self.assertNotIn('NATIVE_AUTOMATCH', self.bridge)
-        self.assertIn('manualAutoMatchExposed", true', self.bridge)
-        self.assertIn('manualAutoMatchExposed", true', self.monitor)
+        self.assertIn('manualAutoMatchExposed", false', self.bridge)
+        self.assertIn('manualAutoMatchExposed", false', self.monitor)
+        self.assertNotIn('manualAutoMatchExposed", true', self.bridge + self.monitor)
         self.assertIn('requiresCriticalConfirmation', self.action)
-        self.assertGreaterEqual(
-            self.bridge.count('AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH'),
-            2,
-            'Bridge must allow Manual AutoMatch in prepare and execute allowlists',
-        )
+        self.assertEqual(self.bridge.count('AutoCalNativeActionManager.Action.MANUAL_AUTOMATCH'), 0)
         self.assertGreaterEqual(self.bridge.count('AutoCalNativeActionManager.Action.FINISH_AUTOCAL'), 2)
         self.assertGreaterEqual(self.bridge.count('AutoCalNativeActionManager.Action.FINISH_AUTOMATCH'), 2)
         self.assertIn('executeFinish(prepared, startedAt)', self.action)
@@ -107,7 +101,6 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('Action.RESET_PETROL -> petrolAcquisitionReadbackFields()', self.action)
         self.assertIn('Action.RESET_GAS -> gasAcquisitionReadbackFields()', self.action)
         self.assertIn('Action.RESET_ALL -> petrolAcquisitionReadbackFields() +', self.action)
-        self.assertIn('Action.MANUAL_AUTOMATCH -> listOf(AutoCalProtocol.MUL_ACT)', self.action)
         self.assertIn('Action.RESET_K_FACTOR -> listOf(AutoCalProtocol.MUL_ACT)', self.action)
         self.assertIn('Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> listOf(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)', self.action)
         self.assertIn('.put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))', self.action)
@@ -257,7 +250,7 @@ class NativeAutoCalContract(unittest.TestCase):
                     check(AutoCalProtocol.setEnabled(true).hex() == "12 4A 01 01 5E")
                     check(AutoCalProtocol.setEnabled(false).hex() == "12 4A 01 00 5D")
                     check(AutoCalProtocol.CMD_NATIVE_STATUS.hex() == "48 0B 53")
-                    check(AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.MANUAL_AUTOMATCH).hex() == "02 24 04 08 32")
+                    check(AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_GAS).hex() == "02 24 04 02 2C")
                     check(AutoCalProtocol.MAX_AUTOMATCH.address == 0x0165)
                     check(AutoCalProtocol.MAX_AUTOMATCH.index == 2)
                     check(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED.address == 0x0174)

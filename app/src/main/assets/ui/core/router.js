@@ -48,9 +48,7 @@
 
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/vehicle-status-strip.js');
-  loadOptionalScript('components/curve-prediction-state.js');
   loadOptionalScript('components/split-layout.js');
-  // Predictor fora do produto (decisão do dono): não é carregado nem aparece na navegação.
   loadOptionalScript('core/autocal-api.js', () =>
     loadOptionalScript('screens/autocal-cockpit.js', () => loadOptionalScript('screens/refino.js')));
 })(typeof window !== 'undefined' ? window : globalThis);

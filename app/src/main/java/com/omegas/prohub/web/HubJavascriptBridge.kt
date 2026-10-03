@@ -16,7 +16,6 @@ import com.omegas.prohub.learning.LearningUiSnapshotAssembler
 import com.omegas.prohub.learning.SignalLearningStore
 import com.omegas.prohub.runtime.RuntimeSnapshotBus
 import com.omegas.prohub.service.TelemetryForegroundService
-import com.omegas.prohub.service.v7CalibrationStateJson
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import org.json.JSONArray
@@ -120,13 +119,8 @@ class HubJavascriptBridge(activity: MainActivity) {
                     val learning = try { JSONObject(getLearningMaps()) } catch (error: Exception) {
                         JSONObject().put("ok", false).put("error", error.message ?: "Learning indisponível")
                     }
-                    val calibration = try { JSONObject(service.v7CalibrationStateJson()) } catch (error: Exception) {
-                        JSONObject().put("ok", false).put("error", error.message ?: "Estado V7 indisponível")
-                    }
                     val science = JSONObject()
                         .put("learning", learning)
-                        .put("calibrationState", calibration)
-                        .put("predictor", calibration.optJSONObject("predictor") ?: JSONObject())
                         .put("generatedAt", System.currentTimeMillis())
                         .put("signature", signature)
                     uiSnapshots.publishScience(science, signature)
@@ -151,7 +145,6 @@ class HubJavascriptBridge(activity: MainActivity) {
             File(root, "learning_v6_evidence.json"),
             File(root, "k_map_cache.json"),
             File(root, "k_factor_cache.json"),
-            File(root, "v7_sessions"),
         )
         return files.joinToString("|") { file ->
             if (file.exists()) {

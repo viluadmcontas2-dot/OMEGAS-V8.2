@@ -42,9 +42,6 @@
     }
 
     bind() {
-      document.getElementById('suggestionsButton')?.addEventListener('click', () => {
-        this.store.patch({ suggestionsOpen: !this.store.get().suggestionsOpen, toolsOpen: false });
-      });
       document.getElementById('toolsButton')?.addEventListener('click', () => {
         this.store.patch({ toolsOpen: !this.store.get().toolsOpen, suggestionsOpen: false });
       });
@@ -154,33 +151,6 @@
       if (state.toolsOpen) this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
       if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup, sessões e saúde do app';
-    }
-
-    renderSuggestions(state) {
-      const host = document.getElementById('suggestionList');
-      if (!host) return;
-      const maps = state.learning || {};
-      const model = root.OmegasSuggestionModel;
-      const split = model?.split ? model.split(maps.assistedCalibration || maps.assisted_calibration || {}) : { actionable: [], insufficient: [] };
-      const items = split.actionable || [];
-      const button = document.getElementById('suggestionsButton');
-      if (button) button.classList.toggle('has-items', items.length > 0);
-      host.innerHTML = items.length ? items.map((item, index) => `
-        <article class="suggestion-item" data-suggestion-index="${index}">
-          <div class="suggestion-scope">${item.scope === 'global' ? 'GLOBAL · CURVA K' : 'LOCAL · MAPA K'}</div>
-          <div class="suggestion-main"><b>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</b><span>confiança ${escapeHtml(item.confidenceLabel)}</span></div>
-          <p>${escapeHtml(item.reason)}</p>
-          <button type="button" class="secondary compact">Revisar em ${escapeHtml(item.destination)}</button>
-        </article>`).join('') : '<div class="drawer-empty"><b>Nenhuma sugestão pronta</b><span>O aprendizado continua coletando evidência.</span></div>';
-      host.querySelectorAll('[data-suggestion-index]').forEach(card => {
-        card.querySelector('button')?.addEventListener('click', () => {
-          const item = items[Number(card.dataset.suggestionIndex)];
-          const action = model?.reviewAction ? model.reviewAction(item) : { allowed: false };
-          if (!action.allowed || action.writesEcu === true) return;
-          this.store.patch({ suggestionsOpen: false });
-          this.router.navigate(item.type === 'curve' ? 'curve' : 'map', { suggestion: item });
-        });
-      });
     }
 
     preserveSessionSettingsInteraction(host) {

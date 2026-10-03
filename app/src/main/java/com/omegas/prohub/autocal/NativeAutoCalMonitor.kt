@@ -308,7 +308,7 @@ class NativeAutoCalMonitor(
             .put("snapshotRequested", snapshotRequested)
             .put("snapshotReason", snapshotReason)
             .put("appAutomaticWrite", false)
-            .put("manualAutoMatchExposed", true)
+            .put("manualAutoMatchExposed", false)
     }
 
     private var acquisitionMemo: Pair<JSONObject, JSONObject>? = null
@@ -776,7 +776,7 @@ class NativeAutoCalMonitor(
             .put("nativeAutoMatchCounterEventObserved", autoMatchCounterEvent != null)
             .put("nativeAutoMatchEvidence", autoMatchEvidence?.toJson() ?: JSONObject.NULL)
             .put("appAutomaticWrite", false)
-            .put("manualAutoMatchExposed", true)
+            .put("manualAutoMatchExposed", false)
 
         val acquisition = AutoCalAcquisition.fromSnapshot(decorated)
         val thresholds = acquisition.optJSONObject("thresholds") ?: JSONObject()

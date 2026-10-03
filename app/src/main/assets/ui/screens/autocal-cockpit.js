@@ -25,7 +25,6 @@
     return ({
       ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
       DISABLE_AUTO_CAL: 'Desabilitar Auto Calibration',
-      MANUAL_AUTOMATCH: 'AutoMatch manual',
       FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
       FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
       RESET_PETROL: 'Readquirir gasolina',
@@ -703,10 +702,8 @@
                   <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
                     <section class="autocal-reset-group" data-reset-scope="advanced">
                       <small>CONTROLE MANUAL</small>
-                      <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1.0</button>
-                      <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>O AutoMatch nativo é automático e decidido pela ECU. Estes botões são intervenções manuais: AutoMatch manual força uma execução; Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa reinicia a aquisição observada pelo comando amplo original. Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0.</p>
+                      <p>O AutoMatch nativo é automático e decidido pela ECU. Resetar Curva K coloca toda a curva em 1.0. Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0.</p>
                     </section>
                   </div>
                 </details>
