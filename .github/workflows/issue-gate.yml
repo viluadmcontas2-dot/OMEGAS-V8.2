@@ -1,0 +1,55 @@
+name: Issue gate
+
+# Todo PR para OmegasPlatina precisa estar amarrado a uma Work Unit
+# (NORTE-WU-0<N>). Regras em tools/ci/issue_gate.py e no índice (Task 0.0, R10).
+on:
+  pull_request:
+    branches: [ OmegasPlatina ]
+    types: [ opened, edited, synchronize, reopened ]
+  # Reavalia o PR quando uma caixa da Issue é marcada. O GitHub só dispara
+  # `issues` com o workflow presente na branch padrão do repositório.
+  issues:
+    types: [ edited, labeled, unlabeled ]
+
+permissions:
+  actions: write
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  gate:
+    name: Issue gate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Check Work Unit binding
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 -B tools/ci/issue_gate.py "${{ github.event.pull_request.number }}"
+
+  rerun:
+    name: Reavaliar PR da Issue
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rerun the Issue gate of open PRs that close this Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          prs=$(gh pr list --base OmegasPlatina --state open --json number,body \
+                  --jq '.[] | "\(.number)\t\(.body | gsub("\\s+"; " "))"' \
+                | grep -iE "(fecha|closes?|fix(es)?|resolves?) #${ISSUE}([^0-9]|$)" | cut -f1 || true)
+          for pr in $prs; do
+            head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+            run=$(gh run list --workflow issue-gate.yml --commit "$head" --event pull_request -L1 \
+                    --json databaseId --jq '.[0].databaseId // empty')
+            if [ -n "$run" ]; then gh run rerun "$run"; echo "REAVALIADO_PR=$pr RUN=$run"; fi
+          done
