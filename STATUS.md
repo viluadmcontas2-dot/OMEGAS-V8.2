@@ -11,6 +11,21 @@
 
 # OMEGAS Platina — Status
 
+## Missão AutoCal/Refino — checkpoint vigente 2026-10-03
+- Fase0 contrato integrado #121; infraestrutura #123 integrada na Platina `8197d9ca631711b116b474342062c14e96285b7f`.
+- PR#122 caixa-preta em execução; **não liberar merge nem dizer missão concluída**.
+- Fonte de produto testada `de12f9ac53e1e609fb7a626dbd9e7f67e68d33a4`; CI `37109036435` success; gate `37109036557`: **30/30 jobs success** (APK+29 cenários).
+- APK4.831.148 bytes, SHA256 `e7bb3c2d7053e4b8c634af5409efa1fe9efe1a8b4e5ba5f63b043d03ddc13942`; artifact `11269136496`, ZIPdigest `60724ae92d69208c0bfc9f61d0212e9630bd3111dc79d7b0aad721792c965d71`.
+- Classe2: host lendo30s; proposta/rollback30min; aquisição/automático/verificação40min; silêncio não autoriza conclusão. Baselines15/15 antes/depois; mutantes8/8 detectados, 0 sobreviventes.
+- Classe4: primeiro veredito→worker→JSONL→RESUMO, razão offline —, timeout honesto e SIGKILL; RED→GREEN em logs integrados. 29 cenários não equivalem aos 11 estados novos de cada tela.
+- Inspeção manual das imagens indisponível: download local bloqueado por ambiente desconectado409. Não alegar classe5.
+- RED `37110275413`: 616 testes / 2 falhas novas (id por relógio repetido e atualização visual sem dado); GREEN `37110568906`, gate APK `37110569079`: 17 testes focados antes/depois e 10 mutantes mortos,0 sobreviventes.
+- RED Android job `111168345115` no mesmo SHA `a4b3461d05d949abe0d7779d86d0b485588ef4c3`: quatro decisões esperadas / zero gravadas antes do tick. Correção por snapshots imediatos submetida; GREEN/revisão/artefato deste ajuste pendentes. Não fechar#122.
+- D7 incorporado após os blocos anteriores: relato físico do dono preservado; H1–H7 ainda inconclusivas, sem replay/resíduo medido. Contrato de coerência deverá preceder qualquer correção D7.
+- Performance classe3 (corpus histórico em JVM/CI): frio mediana18,64ms/p9545,79ms; cache0,00019ms. Alvo frio30ms **não cumprido nesta medição**; bridge completa/aparelho não provados.
+- Política/simulador fechado, frescor/geração nativa, teto absoluto Journal, D4/D6/D5/rolagem horizontal e demais módulos **pendentes**. Falso “piorou”, detecção real, passos até estável: **não medidos**.
+- REDs/AF1 isolados/falhas anteriores/radar detalhados em `docs/autocal/CAIXA-PRETA-RED.md`. Provas antigas abaixo são arquivo histórico e não provam este código.
+
 ## APK Platina + Refino v2 (provas de corpus real, render e sessão) — 2026-10-03
 
 - **Fonte:** `4a6965b3837f7bc0f212bcd84f6e60575523c4a4`, branch `ccr-745c77c3-dvvqn0`, base `OmegasPlatina` `fbee28c`.

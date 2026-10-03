@@ -594,6 +594,10 @@ class SessionRecorder(
                 "k_read_map",
                 "k_write_requested",
                 "k_batch_confirmed",
+                "refinement_phase",
+                "refinement_decision",
+                "refinement_diagnostic",
+                "refinement_verdict",
             )
             if (eventCount % 32L == 0L || critical) writer?.flush()
             if (critical) syncToDisk()

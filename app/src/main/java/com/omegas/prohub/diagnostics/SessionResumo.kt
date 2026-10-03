@@ -28,7 +28,7 @@ class SessionResumo(
 
         /** Eventos que mudam o resumo; o resto da telemetria nunca o toca. */
         val TRACKED = setOf(
-            "refinement_phase", "engine_stall", "engine_stall_after", "refinement_verdict",
+            "refinement_phase", "refinement_decision", "refinement_diagnostic", "engine_stall", "engine_stall_after", "refinement_verdict",
             "k_batch_confirmed", "k_factor_batch_confirmed", "autocal_native_action",
             "session_started", "session_stopped",
         )
@@ -38,6 +38,8 @@ class SessionResumo(
 
         private val PHASE_WORDS = mapOf(
             "SEM_ECU" to "sem ECU conectada",
+            "LENDO_ECU" to "lendo a ECU",
+            "TENTATIVA_ENCERRADA" to "tentativa encerrada, aguardando dados novos",
             "ECU_TRABALHANDO" to "ECU trabalhando no automático",
             "COLETANDO_NOSSOS" to "coletando os pontos do OMEGAS",
             "PROPOSTA_PRONTA" to "curva pronta para revisar",
@@ -51,7 +53,7 @@ class SessionResumo(
             "SEM_RELIGAR" to "o motor não religou",
         )
         private val VERDICT_WORDS = mapOf(
-            "VERIFICADO" to "melhorou e foi confirmada",
+            "VERIFICADO" to "verificação concluída (resultado por faixa abaixo)",
             "PIOROU_EM_PARTE" to "piorou em parte (trecho a restaurar)",
             "SEM_BASE" to "sem medida anterior para comparar",
             "INCONCLUSIVO" to "inconclusiva (pouca condução)",
@@ -113,6 +115,8 @@ class SessionResumo(
     private val writes = ArrayList<Write>()
     private val verdicts = ArrayList<Verdict>()
     private val actions = LinkedHashMap<String, Int>()
+    private val diagnostics = ArrayList<Pair<Long, JSONObject>>()
+    private val decisions = ArrayList<Pair<Long, JSONObject>>()
     private var stopped = false
     private var stoppedAtMs = 0L
     private var stopReason = ""
@@ -136,6 +140,13 @@ class SessionResumo(
                 val phase = data.optString("phase")
                 if (phase.isBlank() || phases.lastOrNull()?.phase == phase) return false
                 phases += Phase(atMs, phase, data.optString("headline"))
+            }
+            "refinement_decision", "refinement_diagnostic" -> {
+                val entry = atMs to JSONObject(data.toString())
+                if (type == "refinement_diagnostic") diagnostics += entry else decisions += entry
+                // O JSONL mantém o histórico completo; o resumo tem orçamento de memória.
+                if (diagnostics.size > 100) diagnostics.removeAt(0)
+                if (decisions.size > 200) decisions.removeAt(0)
             }
             "engine_stall" -> {
                 val kind = data.optString("kind")
@@ -232,6 +243,19 @@ class SessionResumo(
         }
         out.appendLine()
 
+        out.appendLine("## Decisões do Refino (motivos e números)")
+        if (decisions.isEmpty()) out.appendLine("- Nenhuma decisão registrada nesta sessão.")
+        decisions.forEach { (at, d) ->
+            out.appendLine("- ${clock(at)} ${d.optString("reasonCode")} — ${d.optString("headline")}; números: ${d.optJSONObject("diagnostic") ?: JSONObject()}")
+        }
+        out.appendLine()
+        out.appendLine("## O que aconteceu de estranho")
+        if (diagnostics.isEmpty()) out.appendLine("- Nenhuma anomalia registrada nesta sessão.")
+        diagnostics.forEach { (at, d) ->
+            val domain = if (d.optString("failureDomain") == "TRANSPORT") "transporte USB/ECU" else "avaliação funcional"
+            out.appendLine("- ${clock(at)} ${d.optString("headline")} [${d.optString("reasonCode")}, $domain]; números: ${d.optJSONObject("diagnostic") ?: JSONObject()}")
+        }
+        out.appendLine()
         out.appendLine("## Ações da ECU observadas")
         if (actions.isEmpty()) out.appendLine("- Nenhuma ação nativa registrada.")
         actions.forEach { (action, count) -> out.appendLine("- $action: $count") }

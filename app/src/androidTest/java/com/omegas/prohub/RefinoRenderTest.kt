@@ -11,6 +11,7 @@ import com.omegas.prohub.autocal.AutoCalReadObservation
 import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
 import com.omegas.prohub.autocal.AutoCalSnapshotSource
 import com.omegas.prohub.autocal.EcuPetrolReference
+import com.omegas.prohub.autocal.RefinementAutopilot
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.NativeAutoCalAcquisitionEpoch
 import com.omegas.prohub.autocal.StallWatch
@@ -219,6 +220,15 @@ class RefinoRenderTest {
             active: !!screen && screen.classList.contains('active'),
             chip: q('#refinoPhaseChip')?.textContent ?? null,
             headline: q('#refinoHeadline')?.textContent ?? null,
+            headlineVisible: (() => {
+              const e = q('#refinoHeadline'); const r = e?.getBoundingClientRect();
+              return !!r && r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+            })(),
+            headlineFont: Number.parseFloat(getComputedStyle(q('#refinoHeadline')).fontSize),
+            nextVisible: (() => {
+              const e = q('#refinoNext'); const r = e?.getBoundingClientRect();
+              return !!r && r.width > 0 && r.height > 0 && r.bottom <= window.innerHeight;
+            })(),
             next: q('#refinoNext')?.textContent ?? null,
             ratio: q('#refinoRatio')?.textContent ?? null,
             ecuPoints: q('#refinoEcuPoints')?.textContent ?? null,
@@ -268,6 +278,165 @@ class RefinoRenderTest {
         .put("physicalValidationClaimed", false)
 
     // ------------------------------------------------------------------ cenários (uma fase do piloto por print)
+
+
+
+    @Test
+    fun refinoJournalTransitionsReachSessionBeforeNextTick() {
+        val scenario = launch()
+        var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null
+        try {
+            val service = service(scenario)
+            recorder = service.sessionRecorder
+            assertTrue(recorder.start("EVIDENCE_BETWEEN_TICKS").optBoolean("ok"))
+            synth(service, "GASOLINA")
+            synth(service, "GNV", ratio = 1.12)
+            val axis = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
+            service.refinementJournal.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 },
+                axis, service.equivalence.index(), "SIMULATED_CONFIRMED_WRITE_ONE")
+            service.refinementJournal.interrupt("NATIVE_AUTOMATCH")
+            service.refinementJournal.recordCurveWrite(IntArray(30) { 17000 }, IntArray(30) { 18000 },
+                axis, service.equivalence.index(), "SIMULATED_CONFIRMED_WRITE_TWO")
+            service.equivalence.resetGas("SIMULATED_WRITE")
+            synth(service, "GNV")
+            service.refinementJournal.evaluate(service.equivalence.index())
+            // Nenhum registrador/healthTick é invocado: parar antes do tick não pode perder decisões.
+            val stopped = recorder.stop("EVIDENCE_DONE_BEFORE_TICK")
+            val directory = File(stopped.getString("directory"))
+            val events = directory.listFiles()?.filter { it.name.startsWith("events_") && it.name.endsWith(".jsonl") }
+                .orEmpty().flatMap { it.readLines() }.mapNotNull { runCatching { JSONObject(it) }.getOrNull() }
+            val decisions = events.filter { it.optString("type") in setOf("refinement_decision", "refinement_diagnostic") &&
+                it.optJSONObject("data")?.optString("component") == "JOURNAL" }
+            val verdicts = events.filter { it.optString("type") == "refinement_verdict" }
+            val reasons = decisions.map { it.getJSONObject("data").getString("reasonCode") }
+            val md = File(directory, "RESUMO.md").readText()
+            service.refinementAutopilot.observe(true,
+                JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
+                null, service.equivalence.index(), service.refinementJournal.json(), 0)
+            openRefino(scenario)
+            val dom = refinoDom(scenario).put("decisionReasons", JSONArray(reasons))
+                .put("sessionVerdictCount", verdicts.size).put("resumo", md)
+            saveEvidence("refino-decisoes-entre-ticks", dom, scenario,
+                provenance("SYNTHETIC_NON_SCIENTIFIC", "none", "Journal real→service→worker→JSONL antes do healthTick; nenhuma USB/escrita"))
+            assertEquals(listOf("MANUAL_WRITE_CONFIRMED", "EXPERIMENT_INVALIDATED",
+                "MANUAL_WRITE_CONFIRMED", "BAND_VERIFICATION_COMPLETE"), reasons)
+            assertEquals("dois encerramentos distintos precisam sobreviver", 2, verdicts.size)
+            assertEquals(listOf("INTERROMPIDO", "VERIFICADO"), verdicts.map { it.getJSONObject("data").getString("status") })
+            assertTrue(md, md.contains("EXPERIMENT_INVALIDATED"))
+            assertTrue(md, md.contains("O que aconteceu de estranho"))
+        } finally { recorder?.stop("EVIDENCE_CLEANUP"); scenario.close() }
+    }
+
+    @Test
+    fun refinoFirstVerdictReachesSessionWorkerAndResumo() {
+        val scenario = launch()
+        var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null
+        try {
+            val service = service(scenario)
+            recorder = service.sessionRecorder
+            val started = recorder.start("EVIDENCE_FIRST_EXPERIMENT")
+            assertTrue(started.toString(), started.optBoolean("ok"))
+            synth(service, "GASOLINA")
+            synth(service, "GNV", ratio = 1.12)
+            val axis = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
+            service.refinementJournal.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 },
+                axis, service.equivalence.index(), "SIMULATED_CONFIRMED_MANUAL_WRITE")
+            service.equivalence.resetGas("SIMULATED_WRITE")
+            synth(service, "GNV")
+            service.refinementJournal.evaluate(service.equivalence.index())
+            assertEquals("VERIFICADO", service.refinementJournal.json().getJSONObject("latest").getString("status"))
+            // Evento encerrou antes do primeiro healthTick: reproduz o latch de baseline antigo.
+            TelemetryForegroundService::class.java.getDeclaredField("verdictBaselineSet").apply {
+                isAccessible = true; setBoolean(service, false)
+            }
+            TelemetryForegroundService::class.java.getDeclaredField("lastVerdictRecordedId").apply {
+                isAccessible = true; set(service, "")
+            }
+            TelemetryForegroundService::class.java.getDeclaredMethod("recordJournalDecision").apply {
+                isAccessible = true; invoke(service)
+            }
+            TelemetryForegroundService::class.java.getDeclaredMethod("recordVerdictIfClosed").apply {
+                isAccessible = true; invoke(service)
+            }
+            val stopped = recorder.stop("EVIDENCE_DONE")
+            val directory = File(stopped.getString("directory"))
+            val events = directory.listFiles()?.filter { it.name.startsWith("events_") && it.name.endsWith(".jsonl") }
+                .orEmpty().flatMap { it.readLines() }.mapNotNull { line -> runCatching { JSONObject(line) }.getOrNull() }
+            val verdicts = events.filter { it.optString("type") == "refinement_verdict" }
+            val md = File(directory, "RESUMO.md").readText()
+            service.refinementAutopilot.observe(true,
+                JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
+                null, service.equivalence.index(), service.refinementJournal.json(), 0)
+            openRefino(scenario)
+            val dom = refinoDom(scenario).put("sessionVerdictCount", verdicts.size)
+                .put("sessionHasReason", verdicts.firstOrNull()?.optJSONObject("data")?.optString("reasonCode").orEmpty())
+                .put("resumo", md)
+            saveEvidence("refino-primeiro-veredito-sessao", dom, scenario,
+                provenance("SYNTHETIC_NON_SCIENTIFIC", "none", "service→session worker→JSONL→RESUMO real; nenhuma USB/escrita"))
+            assertEquals("primeiro veredito não pode sumir no baseline", 1, verdicts.size)
+            assertEquals("BAND_VERIFICATION_COMPLETE", verdicts.single().getJSONObject("data").getString("reasonCode"))
+            assertTrue(md, md.contains("verificação concluída"))
+            assertTrue("números da decisão na sessão", events.any {
+                it.optString("type") == "refinement_decision" &&
+                    it.optJSONObject("data")?.optString("component") == "JOURNAL"
+            })
+        } finally { recorder?.stop("EVIDENCE_CLEANUP"); scenario.close() }
+    }
+
+    @Test
+    fun refinoWatchdogHonest() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            var duration = 1_000L
+            val p = RefinementAutopilot(null, durationClock = { duration }, clock = { 1_000_000L })
+            val empty = JSONObject().put("samples", 0).put("bands", JSONArray())
+            val noJournal = JSONObject().put("latest", JSONObject.NULL)
+            p.observe(true, null, null, empty, noJournal, 0)
+            duration += 30_000L
+            val expired = p.observe(true, null, null, empty, noJournal, 0)
+            assertEquals("TENTATIVA_ENCERRADA", expired.getString("phase"))
+            TelemetryForegroundService::class.java.getDeclaredField("refinementAutopilot").apply {
+                isAccessible = true; set(service, p)
+            }
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-watchdog-honesto", dom, scenario,
+                provenance("SYNTHETIC_NON_SCIENTIFIC", "none", "watchdog real, prazo simulado 30000 ms, nenhuma escrita"))
+            assertClean(dom)
+            assertEquals("Etapa pausada", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("não respondeu a tempo"))
+            assertTrue("frase da falha precisa ser visível", dom.getBoolean("headlineVisible"))
+            assertTrue("texto essencial >=12px", dom.getDouble("headlineFont") >= 12.0)
+            assertTrue("próximo passo precisa estar visível", dom.getBoolean("nextVisible"))
+            assertTrue("sem proposta vencida", dom.getBoolean("primaryHidden"))
+            assertEquals("—", dom.getString("ratio"))
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoOfflineRetainsHistoryWithoutCurrentSuccess() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val snapshot = prepareCurvaPronta(service)
+            service.refinementAutopilot.observe(false,
+                JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
+                AutoCalAcquisition.fromSnapshot(snapshot), service.equivalence.index(),
+                service.refinementJournal.json(), service.refinementJournal.restorePoints().length())
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-offline-honesto", dom, scenario,
+                provenance("REAL_REPLAY_WITH_SYNTHETIC_DISCONNECTION", "ref_2026-10-01_1719",
+                    "medições reais preservadas, offline injetado, não valida ECU/carros"))
+            assertClean(dom)
+            assertEquals("Sem ECU", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("Conecte a ECU"))
+            assertTrue("estado sem conexão visível", dom.getBoolean("headlineVisible"))
+            assertEquals("valor antigo não é equivalência atual", "—", dom.getString("ratio"))
+            assertTrue("sem ação de gravação offline", dom.optString("primaryKind") != "review")
+        } finally { scenario.close() }
+    }
 
     @Test
     fun refinoEcuNoAutomatico() {

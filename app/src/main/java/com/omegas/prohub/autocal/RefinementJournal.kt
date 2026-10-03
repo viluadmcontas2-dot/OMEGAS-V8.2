@@ -54,18 +54,34 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     private val lock = Any()
     private val experiments = ArrayList<JSONObject>()
     private val bandScale = DoubleArray(BANDS.size) { 1.0 }
+    private var experimentSequence = 0L
     private var lastEvaluateAt = 0L
     private var lastSaveAt = 0L
 
     init { load() }
 
+    private var decisionListener: ((JSONObject) -> Unit)? = null
+
+    /** Entrega a transição no momento em que ocorre; o consumidor apenas enfileira o registro. */
+    fun setDecisionListener(listener: ((JSONObject) -> Unit)?) = synchronized(lock) {
+        decisionListener = listener
+    }
+
+    private fun publishDecision(exp: JSONObject) {
+        decisionListener?.invoke(JSONObject(exp.toString()))
+    }
+
     /** Registra uma gravação de Curva K confirmada (antes/depois + índice medido com a curva antiga). */
     fun recordCurveWrite(beforeRaw: IntArray, afterRaw: IntArray, axisRaw: IntArray, indexBefore: JSONObject, source: String) {
         synchronized(lock) {
-            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }
-                ?.put("status", "INTERROMPIDO")?.put("closedAt", clock())
+            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }?.let {
+                it.put("status", "INTERROMPIDO").put("reasonCode", "SUPERSEDED_BY_CONFIRMED_WRITE")
+                    .put("failureDomain", "FUNCTIONAL").put("closedAt", clock())
+                publishDecision(it)
+            }
+            experimentSequence += 1L
             experiments += JSONObject()
-                .put("id", "EXP-${clock()}")
+                .put("id", "EXP-${clock()}-$experimentSequence")
                 .put("appliedAt", clock())
                 .put("source", source)
                 .put("axisRaw", JSONArray(axisRaw.toList()))
@@ -73,8 +89,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 .put("afterRaw", JSONArray(afterRaw.toList()))
                 .put("indexBefore", indexBefore)
                 .put("onlineMs", 0L)
-                .put("status", "VERIFICANDO")
+                .put("status", "VERIFICANDO").put("reasonCode", "MANUAL_WRITE_CONFIRMED").put("failureDomain", "NONE")
             while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
+            publishDecision(experiments.last())
         }
         save()
     }
@@ -82,8 +99,11 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     /** Algo mudou o motor por fora (Mapa K, AutoMatch nativo): a verificação perde validade. */
     fun interrupt(reason: String) {
         synchronized(lock) {
-            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }
-                ?.put("status", "INTERROMPIDO")?.put("interruptReason", reason)?.put("closedAt", clock())
+            experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }?.let {
+                it.put("status", "INTERROMPIDO").put("reasonCode", "EXPERIMENT_INVALIDATED")
+                    .put("failureDomain", "FUNCTIONAL").put("interruptReason", reason).put("closedAt", clock())
+                publishDecision(it)
+            }
         }
         save()
     }
@@ -149,9 +169,31 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                         if (v == "PIOROU") worse++
                     }
                 }
+                val code = when (verdict.optString("verdict")) {
+                    "NAO_ALTERADA" -> "UNCHANGED_BAND"
+                    "SEM_ANTES" -> "BASELINE_MISSING"
+                    "SEM_DADOS" -> "COVERAGE_TIMEOUT"
+                    "COLETANDO" -> "POST_WRITE_SAMPLES_PENDING"
+                    "CONFIRMADA" -> "WITHIN_NOISE_OR_RELATIVE_IMPROVEMENT"
+                    "PIOROU" -> "ERROR_INCREASE_EXCEEDS_MARGIN"
+                    "PASSOU" -> "ERROR_SIGN_REVERSED"
+                    else -> "REMAINING_ERROR_SAME_DIRECTION"
+                }
+                verdict.put("reasonCode", code).put("decision", JSONObject()
+                    .put("errorBeforeLog", if (rb.isFinite() && rb > 0) ln(rb) else JSONObject.NULL)
+                    .put("errorAfterLog", if (ra.isFinite() && ra > 0) ln(ra) else JSONObject.NULL)
+                    .put("worseMarginLog", NOISE_LOG).put("okAfterLog", NOISE_LOG)
+                    .put("relativeImprovementFactor", 0.35)
+                    .put("samplesBefore", nb).put("samplesAfter", na)
+                    .put("minSamples", MIN_BAND_SAMPLES).put("onlineMs", onlineMs))
                 verdicts.put(verdict)
             }
-            val signature = verdicts.toString()
+            // Tempo segue no diagnóstico, mas não é uma mudança da decisão visível.
+            val signature = JSONArray((0 until verdicts.length()).map { i ->
+                JSONObject(verdicts.getJSONObject(i).toString()).also {
+                    it.optJSONObject("decision")?.remove("onlineMs")
+                }
+            }).toString()
             val visibleChange = signature != exp.optString("verdictSignature")
             exp.put("verdictSignature", signature)
             exp.put("bands", verdicts).put("indexAfter", indexNow).put("evaluatedAt", now)
@@ -166,12 +208,19 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             }
             if (closedStatus != null) {
                 exp.put("status", closedStatus).put("closedAt", now)
+                    .put("reasonCode", when (closedStatus) {
+                        "PIOROU_EM_PARTE" -> "WORSE_BANDS_DETECTED"
+                        "VERIFICADO" -> "BAND_VERIFICATION_COMPLETE"
+                        "SEM_BASE" -> "BASELINE_MISSING"
+                        else -> "VERIFICATION_COVERAGE_TIMEOUT"
+                    })
+                    .put("failureDomain", if (closedStatus in setOf("PIOROU_EM_PARTE", "INCONCLUSIVO")) "FUNCTIONAL" else "NONE")
                 if (judged > 0) learn(verdicts)
                 needsSave = true
             } else if (now - lastSaveAt >= SAVE_EVERY_MS) {
                 needsSave = true
             }
-            visibleChange || closedStatus != null
+            (visibleChange || closedStatus != null).also { if (it) publishDecision(exp) }
         }
         if (needsSave) save()
         return changed
@@ -256,6 +305,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             lastSaveAt = clock()
             JSONObject().put("format", FORMAT)
                 .put("bandScale", JSONArray(bandScale.toList()))
+                .put("experimentSequence", experimentSequence)
                 .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
         }
         try {
@@ -275,6 +325,11 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 for (i in 0 until min(a.length(), bandScale.size)) bandScale[i] = a.optDouble(i, 1.0).coerceIn(MIN_SCALE, MAX_SCALE)
             }
             root.optJSONArray("experiments")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(experiments::add) }
+            val loadedSequence = experiments.mapNotNull {
+                it.optString("id").takeIf { id -> id.count { c -> c == '-' } >= 2 }
+                    ?.substringAfterLast('-')?.toLongOrNull()
+            }.maxOrNull() ?: 0L
+            experimentSequence = max(root.optLong("experimentSequence", 0L), loadedSequence).coerceAtLeast(0L)
         } catch (_: Exception) {
             experiments.clear()
         }

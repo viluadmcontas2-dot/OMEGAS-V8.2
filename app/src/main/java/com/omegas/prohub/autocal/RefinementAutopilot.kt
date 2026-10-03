@@ -15,8 +15,8 @@ import kotlin.math.ln
  * 1. ECU_TRABALHANDO — o AutoCal nativo ainda está no automático 1, 2, 3… e pedindo
  *    aquisição. O OMEGAS só observa e junta pontos próprios (RPM×MAP) em paralelo:
  *    gravar agora seria sobrescrito pelo próximo automático da ECU.
- * 2. A ECU parou (atingiu MAX_AUTOMATCH, AutoCal desligado/congelado, ou aquisição
- *    completa e sem automático novo há [QUIET_MS] de ECU online): é a nossa vez.
+ * 2. A ECU confirmou contador no MAX_AUTOMATCH ou AutoCal desligado: é a nossa vez.
+ *    Aquisição completa/silêncio não confirmam finalização; timeout encerra só a tentativa do host.
  *    - COLETANDO_NOSSOS: faltam leituras GNV/gasolina no mesmo RPM×MAP.
  *    - PROPOSTA_PRONTA: alguma faixa de condução está fora de ±[TOLERANCE_LOG]; o
  *      refino (pontos da ECU + nossos pontos) tem o que corrigir. Gravação manual.
@@ -26,14 +26,18 @@ import kotlin.math.ln
  *
  * Nunca grava na ECU. Só observa, decide a fase e avisa (notificação/UI).
  */
-class RefinementAutopilot(private val file: File? = null, private val clock: () -> Long = System::currentTimeMillis) {
+class RefinementAutopilot(
+    private val file: File? = null,
+    private val durationClock: (() -> Long)? = null,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
     companion object {
         const val FORMAT = "omegas-refinement-autopilot-v1"
         /** Faixa cuja gasolina veio majoritariamente da curva da ECU é mais grossa: tolerância ±6%. */
         val TOLERANCE_LOG_ECU_REF = ln(1.06)
-        /** ECU online sem automático novo, com aquisição completa, por este tempo = ECU parou. */
+        /** Legado de diagnóstico; silêncio não é prova de conclusão nativa. */
         const val QUIET_MS = 10 * 60_000L
-        /** Sem aquisição completa (faixas que o motorista nunca visita), espera mais. */
+        /** Legado de diagnóstico; prazos operacionais vêm de PHASE_BUDGET_MS. */
         const val QUIET_PARTIAL_MS = 25 * 60_000L
         const val PARTIAL_MIN_ZONES = 3
         /** ±3%: abaixo disso GNV e gasolina já pedem o mesmo (ruído de medição ~2%). */
@@ -41,6 +45,15 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         const val MIN_BAND_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
         const val MIN_STABLE_BANDS = 3
         private const val MAX_TICK_MS = 10_000L
+        /** Tetos da tentativa do host; nunca representam conclusão do AutoMatch na ECU. */
+        val PHASE_BUDGET_MS = mapOf(
+            "LENDO_ECU" to 30_000L,
+            "ECU_TRABALHANDO" to 40 * 60_000L,
+            "COLETANDO_NOSSOS" to 40 * 60_000L,
+            "PROPOSTA_PRONTA" to 30 * 60_000L,
+            "VERIFICANDO" to 40 * 60_000L,
+            "RESTAURAR_TRECHO" to 30 * 60_000L,
+        )
         /** Fases que merecem avisar o motorista uma vez. */
         val ALERT_PHASES = setOf("PROPOSTA_PRONTA", "RESTAURAR_TRECHO", "ESTAVEL")
     }
@@ -49,9 +62,14 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     private var lastCount: Int? = null
     private var quietMs = 0L
     private var lastTickAt = 0L
+    private var lastDurationAt: Long? = null
+    private var watchedPhase = ""
+    private var phaseElapsedMs = 0L
+    private var expiredEvidence: String? = null
+    private var timeoutReason = ""
     private var phase = "SEM_ECU"
     private var alertedPhase = ""
-    /** A ECU parou de fazer automático: vale até ela fazer outro (contador muda). */
+    /** Conclusão nativa da observação atual; ausente/ambígua não autoriza o refino. */
     private var ecuDoneLatch: String? = null
     private var dirty = false
     private var lastSaveAt = Long.MIN_VALUE / 2
@@ -69,12 +87,21 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     fun observe(ecuOnline: Boolean, monitor: JSONObject?, acquisition: JSONObject?, index: JSONObject, journal: JSONObject, restoreCount: Int): JSONObject {
         val result = synchronized(lock) {
             val now = clock()
-            val dt = if (lastTickAt == 0L) 0L else (now - lastTickAt).coerceIn(0L, MAX_TICK_MS)
+            val durationNow = durationClock?.invoke() ?: now
+            val elapsed = lastDurationAt?.let { (durationNow - it).coerceAtLeast(0L) } ?: 0L
+            lastDurationAt = durationNow
+            val dt = elapsed.coerceAtMost(MAX_TICK_MS)
             lastTickAt = now
-            val enabled = monitor?.optInt("autoCalEnabled", -1)?.takeIf { monitor.has("autoCalEnabled") && !monitor.isNull("autoCalEnabled") }
-            val count = monitor?.optInt("autoMatchCount", -1)?.takeIf { it >= 0 }
-            val max = monitor?.optInt("maxAutomatch", -1)?.takeIf { it > 0 && !monitor.isNull("maxAutomatch") }
-                ?: acquisition?.optJSONObject("thresholds")?.takeIf { !it.isNull("maxAutomatch") }?.optInt("maxAutomatch", -1)?.takeIf { it > 0 }
+            // Offline invalida autorização de fase/contador; leituras antigas só são histórico.
+            if (!ecuOnline && (ecuDoneLatch != null || lastCount != null || quietMs != 0L)) {
+                ecuDoneLatch = null; lastCount = null; quietMs = 0L; dirty = true
+            }
+            val liveMonitor = monitor.takeIf { ecuOnline }
+            val liveAcquisition = acquisition.takeIf { ecuOnline }
+            val enabled = liveMonitor?.optInt("autoCalEnabled", -1)?.takeIf { liveMonitor.has("autoCalEnabled") && !liveMonitor.isNull("autoCalEnabled") }
+            val count = liveMonitor?.optInt("autoMatchCount", -1)?.takeIf { it >= 0 }
+            val max = liveMonitor?.optInt("maxAutomatch", -1)?.takeIf { it > 0 && !liveMonitor.isNull("maxAutomatch") }
+                ?: liveAcquisition?.optJSONObject("thresholds")?.takeIf { !it.isNull("maxAutomatch") }?.optInt("maxAutomatch", -1)?.takeIf { it > 0 }
             if (ecuOnline && count != null) {
                 if (lastCount != null && count != lastCount) { quietMs = 0L; ecuDoneLatch = null; dirty = true }
                 else { quietMs += dt; if (dt > 0) dirty = true }
@@ -82,23 +109,20 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 lastCount = count
             }
             // Pontos da ECU com atividade (os que o gráfico desenha) e zonas que a ECU deu como adquiridas.
-            val petrolKnown = activeCount(acquisition, "GASOLINA")
-            val gasKnown = activeCount(acquisition, "GNV")
+            val petrolKnown = activeCount(liveAcquisition, "GASOLINA")
+            val gasKnown = activeCount(liveAcquisition, "GNV")
             val petrolValid = petrolKnown ?: 0
             val gasValid = gasKnown ?: 0
-            val petrolZones = acquiredZones(acquisition, "GASOLINA")
-            val gasZones = acquiredZones(acquisition, "GNV")
+            val petrolZones = acquiredZones(liveAcquisition, "GASOLINA")
+            val gasZones = acquiredZones(liveAcquisition, "GNV")
             // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
-            val ecuRead = count != null || acquisition != null
-            val complete = petrolZones >= 4 && gasZones >= 4
-            val fresh = when {
+            val ecuRead = count != null || liveAcquisition != null
+            val fresh = if (!ecuOnline) null else when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
-                complete && quietMs >= QUIET_MS -> "AQUISICAO_COMPLETA"
-                petrolZones >= PARTIAL_MIN_ZONES && gasZones >= PARTIAL_MIN_ZONES && quietMs >= QUIET_PARTIAL_MS -> "SEM_AUTOMATICO_NOVO"
                 else -> null
             }
-            if (fresh != null && fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
+            if (fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
             val ecuReason = ecuDoneLatch
             val out = JSONObject()
                 .put("ecuOnline", ecuOnline)
@@ -142,8 +166,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val latestStatus = latest?.optString("status").orEmpty()
             val verification = if (latestStatus == "VERIFICANDO") verificationProgress(latest!!, journal) else null
             if (verification != null) out.put("verification", verification)
-            val next = when {
-                !ecuOnline && lastCount == null -> "SEM_ECU"
+            val candidate = when {
+                !ecuOnline -> "SEM_ECU"
                 // Conectou mas a ECU ainda não entregou nada: não afirma "no automático" nem "terminou".
                 ecuOnline && !ecuRead -> "LENDO_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
@@ -153,7 +177,58 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 off.length() > 0 && measured.size >= 2 -> "PROPOSTA_PRONTA"
                 else -> "COLETANDO_NOSSOS"
             }
+            // O prazo pertence à tentativa, não ao tick, ao calendário ou ao serviço USB.
+            // Evidência nova depois de um timeout inicia outra tentativa automaticamente.
+            val evidence = listOf(count, max, enabled, measured.size, off.length(),
+                index.optLong("revision", -1L), latest?.optString("id"), latestStatus).joinToString("|")
+            if (candidate != watchedPhase || (expiredEvidence != null && evidence != expiredEvidence)) {
+                watchedPhase = candidate
+                phaseElapsedMs = 0L
+                expiredEvidence = null
+                timeoutReason = ""
+                dirty = true
+            } else if (candidate in PHASE_BUDGET_MS && expiredEvidence == null) {
+                phaseElapsedMs = (phaseElapsedMs + elapsed.coerceAtMost(PHASE_BUDGET_MS.getValue(candidate)))
+                    .coerceAtMost(PHASE_BUDGET_MS.getValue(candidate))
+                if (elapsed > 0) dirty = true
+            }
+            val budget = PHASE_BUDGET_MS[candidate]
+            if (budget != null && phaseElapsedMs >= budget && expiredEvidence == null) {
+                expiredEvidence = evidence
+                timeoutReason = when (candidate) {
+                    "LENDO_ECU" -> "ECU_READ_TIMEOUT"
+                    "ECU_TRABALHANDO" -> "ECU_PROGRESS_TIMEOUT"
+                    else -> "REFINEMENT_PHASE_TIMEOUT"
+                }
+                lastSaveAt = Long.MIN_VALUE / 2
+            }
+            val next = if (expiredEvidence != null) "TENTATIVA_ENCERRADA" else candidate
+            val reason = if (expiredEvidence != null) timeoutReason else when (candidate) {
+                "SEM_ECU" -> "ECU_OFFLINE"
+                "LENDO_ECU" -> "ECU_STATE_PENDING"
+                "ECU_TRABALHANDO" -> "ECU_AUTOMATCH_PENDING"
+                "VERIFICANDO" -> "WRITE_VERIFICATION_PENDING"
+                "RESTAURAR_TRECHO" -> "LAST_EXPERIMENT_WORSE"
+                "ESTAVEL" -> "MEASURED_BANDS_WITHIN_TOLERANCE"
+                "PROPOSTA_PRONTA" -> "MEASURED_BANDS_OFF"
+                else -> "MEASUREMENT_COVERAGE_PENDING"
+            }
+            val domain = when {
+                reason == "ECU_READ_TIMEOUT" || reason == "ECU_OFFLINE" -> "TRANSPORT"
+                expiredEvidence != null -> "FUNCTIONAL"
+                else -> "NONE"
+            }
             if (next != phase) { phase = next; dirty = true; lastSaveAt = Long.MIN_VALUE / 2 }
+            out.put("reasonCode", reason).put("failureDomain", domain)
+                .put("watchdogExpired", expiredEvidence != null)
+                .put("diagnostic", JSONObject()
+                    .put("observedPhase", candidate).put("elapsedMs", phaseElapsedMs)
+                    .put("budgetMs", budget ?: JSONObject.NULL)
+                    .put("bandsMeasured", measured.size).put("bandsOff", off.length())
+                    .put("samples", index.optInt("samples"))
+                    .put("autoMatchCount", count ?: JSONObject.NULL)
+                    .put("maxAutomatch", max ?: JSONObject.NULL)
+                    .put("journalStatus", latestStatus))
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL")
                 .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification))
@@ -239,6 +314,9 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
         "LENDO_ECU" -> "Lendo o estado da ECU: AutoMatch e curvas."
+        "TENTATIVA_ENCERRADA" -> if (out.optString("reasonCode") == "ECU_READ_TIMEOUT")
+            "A ECU não respondeu a tempo. O app continua tentando ler, sem gravar."
+        else "Não houve dados suficientes para concluir esta etapa. Nada foi gravado automaticamente."
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
             (if (count != null) " ${count}" + (if (max != null) " de $max" else "") else "") +
             ". O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
@@ -255,6 +333,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
+        "TENTATIVA_ENCERRADA" -> "A próxima leitura válida retoma o acompanhamento automaticamente."
         "LENDO_ECU" -> "Aguarde alguns segundos. A ECU guarda o AutoMatch e as curvas e entrega tudo ao conectar."
         "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
         "VERIFICANDO" -> {
@@ -292,6 +371,10 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
                 .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
                 .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
+                .put("watchedPhase", watchedPhase).put("phaseElapsedMs", phaseElapsedMs)
+                .put("durationMonotonic", durationClock != null)
+                .put("durationAt", lastDurationAt ?: JSONObject.NULL)
+                .put("expiredEvidence", expiredEvidence ?: JSONObject.NULL).put("timeoutReason", timeoutReason)
         }
         try {
             val tmp = File(target.parentFile, target.name + ".tmp")
@@ -311,7 +394,19 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             quietMs = root.optLong("quietMs", 0L)
             phase = root.optString("phase", "SEM_ECU")
             alertedPhase = root.optString("alertedPhase", "")
-            ecuDoneLatch = if (root.isNull("ecuDoneLatch")) null else root.optString("ecuDoneLatch").takeIf { it.isNotBlank() }
+            watchedPhase = root.optString("watchedPhase")
+            // elapsedRealtime atravessa reinício do processo; após reboot, delta negativo vale zero.
+            // Formato antigo/relógio incompatível não inventa tempo nem autorização.
+            if (root.optBoolean("durationMonotonic") == (durationClock != null) && !root.isNull("durationAt")) {
+                lastDurationAt = root.optLong("durationAt").takeIf { it >= 0L }
+            }
+            phaseElapsedMs = root.optLong("phaseElapsedMs", 0L).coerceIn(0L, 40 * 60_000L)
+            expiredEvidence = root.optString("expiredEvidence").takeIf { !root.isNull("expiredEvidence") && it.isNotBlank() }
+            timeoutReason = root.optString("timeoutReason")
+            // Revalidar autorização nativa nesta conexão; o resultado anterior é só contexto.
+            ecuDoneLatch = null
+            lastCount = null
+            quietMs = 0L
         } catch (_: Exception) {
         }
     }
