@@ -29,9 +29,12 @@ class EcuReferenceCycleTest {
     private val emptyAcquisition = JSONObject().put("points", JSONArray())
     private var t = 0L
 
+    // Três passagens por célula, separadas por lacuna > 3 s: cada faixa precisa de 3 episódios (E3), não só de 8 pares.
     private fun gas(ratio: Double) = cells.forEach { (rpm, map, ms) ->
-        repeat(10) { ledger.accept(EquivalenceLedger.Frame(t, "GNV", rpm, map, ms * ratio)); t += 280 }
-        t += 5_000
+        repeat(3) {
+            repeat(10) { ledger.accept(EquivalenceLedger.Frame(t, "GNV", rpm, map, ms * ratio)); t += 280 }
+            t += 5_000
+        }
     }
 
     private fun observe(count: Int? = 3, online: Boolean = true, acquisition: JSONObject? = emptyAcquisition, stepMs: Long = 3_000L): JSONObject {
