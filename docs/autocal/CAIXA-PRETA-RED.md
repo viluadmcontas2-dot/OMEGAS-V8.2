@@ -194,3 +194,14 @@ Temperatura/corte/embreagem/frescor desconhecidos são lacunas de entrada; não 
 - Contratos novos exercitam ordem, interrupção, substituição sem evento externo, cópia independente e desligamento do listener. Mutantes removem listener/cópia/evento de substituição; resultado ainda pendente até CI.
 - Radar11: frase/ação existente preservada; pior caso perda de causa tratada por entrega imediata; nenhum novo estado de espera; números vêm do snapshot; mesma fonte Journal; IDs resistem relógio repetido; reinício/versão velha preservados pelos testes anteriores, SIGKILL após enqueue não equivale a garantia de durabilidade; classe2+4, nunca5; mudança justificada LC02/LC08; não cobrir falha de disco silenciosa permanece achado; nenhuma pergunta/chave nova; falsificação com callbacks em sequência e polling repetido, sem tocar oráculos congelados.
 - GREEN deste ajuste, APK/digest e revisão independente **pendentes**; missão/D7/performance continuam abertos.
+
+
+## Inspeção visual independente — gate incompleto
+Fonte c3bdcac, gate37131229122, artifact11276967322: captura1280×720 de
+refino-decisoes-entre-ticks coberta por ANR do Pixel Launcher apesar de PASS do DOM.
+Isso é RED visual classe4 do pipeline, não diagnóstico de travamento do OMEGAS.
+Receipt também dizia83c67d8 (merge de workflow), embora checkout logassec3bdcac.
+Correção de prova: BuildConfig recebe a fonte exata; HOME do emulador efêmero é
+isolado antes dos testes; saveEvidence exige janela ativa do próprio app, e rejeita
+qualquer diálogo externo em vez de aceitá-lo como prova. Nenhum assert antigo removido.
+APK anterior mantém identidade exata; render anterior não libera fechamento visual.

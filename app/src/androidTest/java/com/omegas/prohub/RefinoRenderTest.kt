@@ -918,6 +918,8 @@ class RefinoRenderTest {
                 .put("displayWidth", metrics.widthPixels).put("displayHeight", metrics.heightPixels).put("densityDpi", metrics.densityDpi)
                 .put("dom", dom).put("webView", web).put("fixtureProvenance", provenance).toString(2),
         )
+        val foreground = instrumentation.uiAutomation.rootInActiveWindow?.packageName?.toString()
+        assertEquals("a captura deve mostrar o app, sem diálogo externo cobrindo a evidência", instrumentation.targetContext.packageName, foreground)
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
         FileOutputStream(File(dir, "$name.png")).use { check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
     }

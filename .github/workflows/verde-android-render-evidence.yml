@@ -155,6 +155,8 @@ jobs:
           test -e /dev/kvm
 
       - name: Run real Android WebView evidence
+        env:
+          OMEGAS_SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
