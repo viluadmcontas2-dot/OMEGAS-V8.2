@@ -71,3 +71,23 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Primeiro uso: pergunta sobre a telemetria flutuante (uma vez) */
+.overlay-prompt {
+  position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
+  background: rgba(3, 8, 14, .72); padding: 16px;
+}
+.overlay-prompt-card {
+  max-width: 560px; padding: 20px 22px; border-radius: 16px;
+  background: #0d1624; border: 1px solid rgba(79, 142, 247, .45); color: #e4eaf3;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .55);
+}
+.overlay-prompt-card small { color: #8fb4ff; letter-spacing: .08em; font-weight: 700; }
+.overlay-prompt-card h3 { margin: 6px 0 10px; font-size: 22px; }
+.overlay-prompt-card p { margin: 0 0 10px; font-size: 15px; line-height: 1.45; color: #c5d0db; }
+.overlay-prompt-actions { display: flex; gap: 12px; margin-top: 14px; }
+.overlay-prompt-actions button { min-height: 52px; padding: 0 22px; font-size: 16px; }
+
+/* Ferramentas: tamanho do balão flutuante */
+.overlay-size { display: flex; gap: 8px; margin-top: 10px; }
+.overlay-size button { min-height: 44px; padding: 0 16px; }

@@ -113,6 +113,24 @@
     return now - at > (finite(maxMs) ?? OFF_ROUTE_TELEMETRY_MAX_MS);
   }
 
+  /**
+   * Telemetria flutuante: o balão só aparece fora do OMEGAS, então "visível" é quase sempre falso com o
+   * app aberto. O estado que importa é: sem autorização, desligada ou ligada (aparece ao sair do app).
+   */
+  function overlayState(status) {
+    const s = status || {};
+    if (s.supported === false) return { key: 'unsupported', title: 'Indisponível neste Android', help: 'Este Android não permite balão sobre outros apps.' };
+    if (s.permissionGranted !== true) return { key: 'needs-permission', title: 'Precisa de autorização', help: 'O balão mostra combustível, RPM, Petrol Inj., MAP e gás por cima de outros apps (mapa, música). Toque em Autorizar: o Android abre a tela certa, marque o OMEGAS e volte.' };
+    if (s.requestedEnabled === true) return { key: 'on', title: 'Ligada', help: 'Aparece quando você sai do OMEGAS e nunca cobre o app. Arraste para mover e toque no Ω para abrir ou fechar.' };
+    return { key: 'off', title: 'Desligada', help: 'Autorizada. Toque em Ativar para mostrar o balão quando você sair do OMEGAS.' };
+  }
+
+  /** Pergunta uma única vez, no primeiro uso, se quer ligar o balão; quem já decidiu não é incomodado. */
+  function shouldPromptOverlay(status, alreadyPrompted) {
+    const s = status || {};
+    return alreadyPrompted !== true && s.testHarness !== true && s.supported === true && s.permissionGranted !== true && s.requestedEnabled !== true;
+  }
+
   /** Explica por que os pontos do GNV recomeçaram (a causa vem do Kotlin, em código). */
   const GAS_RESET_REASON = {
     AUTOMATCH_NATIVO: 'a ECU trocou a curva no automático',
@@ -133,6 +151,6 @@
   ns.DisplayRules = {
     DASH, finite, number, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
     ageLabel, sessionDate, pendingSuggestionCount, gasResetNote, GAS_RESET_REASON,
-    offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS,
+    offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

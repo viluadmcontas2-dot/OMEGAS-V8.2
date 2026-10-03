@@ -80,6 +80,9 @@ jobs:
           - scenario: refino-app-novo-ecu-pronta
             method: refinoAppNovoEcuPronta
             class: RefinoRenderTest
+          - scenario: ferramentas-balao-prompt
+            method: ferramentasEBalaoFlutuante
+            class: RefinoRenderTest
           - scenario: refino-verificando
             method: refinoVerificando
             class: RefinoRenderTest

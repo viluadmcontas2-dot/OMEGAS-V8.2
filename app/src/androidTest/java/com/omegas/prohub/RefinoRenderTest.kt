@@ -562,6 +562,86 @@ class RefinoRenderTest {
         } finally { scenario.close() }
     }
 
+    // ------------------------------------------------------------------ Ferramentas e balão flutuante
+
+    /**
+     * O carro mostrou a tela de Ferramentas congelada. Aqui há 25 sessões salvas sem resumo (a pior hora:
+     * cada uma precisa ser lida por inteiro) e a tela precisa responder na hora, ler a lista em segundo
+     * plano e explicar a retenção. Também prova a pergunta de primeiro uso do balão flutuante.
+     */
+    @Test
+    fun ferramentasEBalaoFlutuante() {
+        val scenario = launch()
+        val sessionsRoot = com.omegas.prohub.storage.AppPaths(instrumentation.targetContext).sessionLogsRoot
+        val fakes = ArrayList<File>()
+        try {
+            repeat(25) { i ->
+                val dir = File(sessionsRoot, "session_2026-09-%02d_10-00-00_fake%02d".format(1 + i % 28, i)).apply { mkdirs() }
+                fakes += dir
+                val start = 1_790_000_000_000L + i * 3_600_000L
+                File(dir, "manifest.json").writeText(JSONObject().put("sessionId", dir.name).put("createdAtMs", start)
+                    .put("stoppedAtMs", start + 1_800_000L).put("reason", "sessão de teste").toString())
+                File(dir, "events_0001.jsonl").bufferedWriter().use { w ->
+                    repeat(8_000) { n ->
+                        w.write(JSONObject().put("sequence", n + 1L).put("recordedAtMs", start + n * 220L).put("type", "telemetry")
+                            .put("source", "mp48").put("data", JSONObject().put("rpm", 1_500 + n % 300).put("fuel", if (n % 2 == 0) "GNV" else "GASOLINA")).toString())
+                        w.newLine()
+                    }
+                }
+                File(dir, ".documents_mirrored").writeText("1") // já copiada: o teste não publica nem apaga nada
+            }
+            // A primeira chamada da lista não pode esperar a leitura das 25 sessões.
+            val first = evalJson(scenario, "JSON.stringify((() => { const t = performance.now(); const r = window.OmegasApp.api.sessions(); return { ms: performance.now() - t, kind: r === null ? 'null' : Array.isArray(r) ? 'array' : typeof r }; })())")
+            evalRaw(scenario, "document.querySelector('[data-route=\"tools\"]')?.click(); 'ok';")
+            waitFor(90_000L) { evalRaw(scenario, "Array.isArray(window.OmegasApp.store.get().sessions) && window.OmegasApp.store.get().sessions.length >= 8").trim() == "true" }
+            SystemClock.sleep(1_500L)
+            val latency = evalJson(scenario, "JSON.stringify((() => { const t = []; for (let i = 0; i < 30; i += 1) { const s = performance.now(); window.OmegasApp.api.sessions(); window.OmegasApp.api.sessionStatus(); t.push(performance.now() - s); } t.sort((a, b) => a - b); return { median: t[15], max: t[29] }; })())")
+            evalRaw(scenario, "window.OmegasApp.promptOverlay(true); 'ok';")
+            SystemClock.sleep(500L)
+            val dom = evalJson(
+                scenario,
+                """
+                JSON.stringify((() => {
+                  const rect = n => { const r = n ? n.getBoundingClientRect() : null; return r ? { top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height } : null; };
+                  const prompt = document.getElementById('overlayPrompt');
+                  const row = document.querySelector('[data-overlay-state]');
+                  return {
+                    sessionItems: document.querySelectorAll('.recorded-session-item').length,
+                    retentionText: document.querySelector('.diagnostic-settings')?.textContent ?? '',
+                    overlayState: row ? row.dataset.overlayState : null,
+                    overlayTitle: row ? row.querySelector('b')?.textContent : null,
+                    authorizeButton: rect(document.querySelector('[data-tool-overlay-request]')),
+                    promptVisible: !!prompt,
+                    promptCard: rect(document.querySelector('.overlay-prompt-card')),
+                    promptYes: rect(document.querySelector('[data-overlay-prompt="yes"]')),
+                    promptNo: rect(document.querySelector('[data-overlay-prompt="no"]')),
+                    viewportHeight: window.innerHeight, viewportWidth: window.innerWidth,
+                    bodyHasNaN: /NaN/.test(document.body.innerText)
+                  };
+                })())
+                """.trimIndent(),
+            )
+            saveEvidence("ferramentas-balao-prompt", JSONObject().put("tools", dom).put("firstSessionsCall", first).put("bridgeLatencyMs", latency).put("active", true)
+                .put("steps", JSONArray()).put("screenScrollWidth", 0).put("screenClientWidth", 0), scenario,
+                provenance("SYNTHETIC_NON_SCIENTIFIC", "25 sessões salvas de teste", "prova a tela de Ferramentas com 25 sessões sem resumo e a pergunta de primeiro uso do balão"))
+            assertTrue("a primeira leitura da lista volta na hora (${first.getDouble("ms")} ms) e ainda sem lista (${first.getString("kind")})", first.getDouble("ms") < 100.0)
+            assertTrue("lista + estado respondem pronto: mediana ${latency.getDouble("median")} ms", latency.getDouble("median") < 30.0)
+            assertTrue("a lista apareceu na tela", dom.getInt("sessionItems") >= 8)
+            assertTrue("a retenção diz onde fica o ZIP", dom.getString("retentionText").contains("um só arquivo ZIP") && dom.getString("retentionText").contains("Download/Omegas"))
+            assertEquals("sem autorização o estado diz isso", "needs-permission", dom.getString("overlayState"))
+            assertTrue("botão Autorizar existe e é grande", dom.getJSONObject("authorizeButton").getDouble("height") >= 44.0)
+            assertTrue("a pergunta de primeiro uso aparece", dom.getBoolean("promptVisible"))
+            assertTrue("pergunta dentro da tela", dom.getJSONObject("promptCard").getDouble("bottom") <= dom.getDouble("viewportHeight") && dom.getJSONObject("promptCard").getDouble("right") <= dom.getDouble("viewportWidth"))
+            assertTrue("botões da pergunta grandes", dom.getJSONObject("promptYes").getDouble("height") >= 48.0 && dom.getJSONObject("promptNo").getDouble("height") >= 48.0)
+            assertTrue("sem NaN", !dom.getBoolean("bodyHasNaN"))
+            evalRaw(scenario, "document.querySelector('[data-overlay-prompt=\"no\"]')?.click(); 'ok';")
+            assertEquals("Agora não fecha a pergunta", "false", evalRaw(scenario, "String(!!document.getElementById('overlayPrompt'))").trim('"'))
+        } finally {
+            scenario.close()
+            fakes.forEach { it.deleteRecursively() }
+        }
+    }
+
     // ------------------------------------------------------------------ utilitários
 
     private fun saveEvidence(name: String, dom: JSONObject, scenario: ActivityScenario<MainActivity>, provenance: JSONObject) {

@@ -33,6 +33,8 @@ class PowerJavascriptBridge(activity: MainActivity) {
             .put("ok", true)
             .put("supported", Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             .put("permissionGranted", permission)
+            // Sob teste instrumentado a pergunta de primeiro uso não aparece por cima dos prints.
+            .put("testHarness", runCatching { Class.forName("androidx.test.platform.app.InstrumentationRegistry"); true }.getOrDefault(false))
             .toString()
     }
 
@@ -72,6 +74,13 @@ class PowerJavascriptBridge(activity: MainActivity) {
                 .put("error", error.message ?: "Não foi possível abrir a autorização do flutuante")
                 .toString()
         }
+    }
+
+    @JavascriptInterface
+    fun setOverlayScale(scale: Double): String {
+        val service = activityRef.get()?.serviceOrNull()
+            ?: return JSONObject().put("ok", false).put("error", "Serviço ainda iniciando").toString()
+        return service.setTelemetryOverlayScale(scale)
     }
 
     @JavascriptInterface

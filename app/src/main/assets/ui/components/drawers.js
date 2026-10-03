@@ -88,6 +88,10 @@
         this.api.setTelemetryOverlayEnabled?.(true);
         this.toolsSignature = '';
         this.renderTools(this.store.get());
+      } else if (target.matches('[data-tool-overlay-scale]')) {
+        this.api.setOverlayScale?.(Number(target.dataset.toolOverlayScale));
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-disable]')) {
         this.api.setTelemetryOverlayEnabled?.(false);
         this.toolsSignature = '';
@@ -201,6 +205,7 @@
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
+      const sessionsLoading = !Array.isArray(state.sessions);
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
@@ -229,7 +234,7 @@
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
         Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
         status.recording, status.events, mb === null ? null : Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
-        settings, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
+        settings, sessionsLoading, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
@@ -237,11 +242,16 @@
       const logsOpenBeforeRender = host.querySelector('.tool-logs')?.open === true;
       const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
         ? '<button type="button" class="secondary" data-tool-battery-request>Permitir</button>' : '';
-      const overlayAction = overlay.visible === true
+      const overlayInfo = rules().overlayState(overlay);
+      const overlayAction = overlayInfo.key === 'on'
         ? '<button type="button" class="quiet-button" data-tool-overlay-disable>Desativar</button>'
-        : overlay.permissionGranted === true
+        : overlayInfo.key === 'off'
           ? '<button type="button" class="secondary" data-tool-overlay-enable>Ativar</button>'
-          : '<button type="button" class="secondary" data-tool-overlay-request>Autorizar</button>';
+          : overlayInfo.key === 'needs-permission'
+            ? '<button type="button" class="primary" data-tool-overlay-request>Autorizar</button>' : '';
+      const overlaySizes = overlayInfo.key === 'on'
+        ? `<div class="overlay-size" role="group" aria-label="Tamanho do balão">${[['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
+          `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'secondary' : 'quiet-button'}" data-tool-overlay-scale="${value}">${label}</button>`).join('')}</div>` : '';
 
       host.innerHTML = `
         <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
@@ -253,7 +263,7 @@
           </div>
           <div class="tool-power-rows">
             <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
-            <div class="tool-power-row"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b><span>Balão por cima de outros apps (mapa, música). Não aparece por cima do OMEGAS.</span></div>${overlayAction}</div>
+            <div class="tool-power-row tool-overlay-row" data-overlay-state="${overlayInfo.key}"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlayInfo.title}</b><span>${overlayInfo.help}</span>${overlaySizes}</div>${overlayAction}</div>
           </div>
         </section>
 
@@ -295,7 +305,7 @@
                 ` : ''}
                 <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
               </article>`;
-            }).join('') : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
+            }).join('') : sessionsLoading ? '<p class="empty-copy">Lendo as sessões salvas…</p>' : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
           </div>
         </section>
 
@@ -320,6 +330,7 @@
             <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar a ECU</span></label>
             <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
           </div>
+          <p>Cada sessão vira <b>um só arquivo ZIP</b> em <b>Download/Omegas</b>, pronto quando ela termina (ou na próxima abertura do app, se ele fechar no meio). O app guarda as ${Math.max(20, Number(settings.keepSessions || 20))} sessões mais recentes e nunca apaga uma que ainda não foi copiada para essa pasta.</p>
           <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
           <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
           ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}

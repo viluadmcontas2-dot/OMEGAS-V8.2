@@ -80,7 +80,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getSessionLedgerStatus(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderStatusJson() ?: unavailable()
 
     @JavascriptInterface
-    fun listAutoCalSessions(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderListJson() ?: "[]"
+    fun listAutoCalSessions(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderListJson()?.takeIf { it != "null" } ?: "[]"
 
     @JavascriptInterface
     fun exportAutoCalSession(sessionId: String) {

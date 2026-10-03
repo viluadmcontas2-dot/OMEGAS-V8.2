@@ -53,9 +53,11 @@ class RedHotfixContractTest(unittest.TestCase):
 
     def test_official_overlay_is_legible_and_stays_observational(self):
         overlay = read("app/src/main/java/com/omegas/prohub/service/TelemetryOverlayController.kt")
-        self.assertIn('minWidth = dp(56)', overlay)
-        self.assertIn('minHeight = dp(56)', overlay)
-        self.assertRegex(overlay, r'textSize\s*=\s*13f')
+        # Alvo de toque do Ω de pelo menos 48 dp e números grandes (pedido do proprietário: balão maior).
+        self.assertIn('minWidth = dp(48)', overlay)
+        self.assertIn('minHeight = dp(48)', overlay)
+        self.assertRegex(overlay, r'metricBlock\("RPM",\s*30f\s*\*\s*k')
+        self.assertRegex(overlay, r'DEFAULT_SCALE\s*=\s*1\.25f')
         self.assertIn('now - lastDrawAt < 250L', overlay, "não remover throttling de desenho")
         self.assertIn('observationalOnly', overlay)
         for forbidden in ("KWriteManager", "ExistingCalibrationWriter", "writeKCell(", "writeKFactor"):

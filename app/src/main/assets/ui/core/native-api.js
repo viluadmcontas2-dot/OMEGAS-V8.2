@@ -268,6 +268,11 @@
         ? { ok: true, supported: true, permissionGranted: true, requestedEnabled: true, visible: true, observationalOnly: true, demo: true }
         : invoke(this.power, 'requestOverlayPermissionAndEnable', [], { ok: false, error: 'Controle do flutuante indisponível' });
     }
+    setOverlayScale(scale) {
+      return this.demo
+        ? { ok: true, scale: Number(scale) || 1.25, demo: true }
+        : invoke(this.power, 'setOverlayScale', [Number(scale) || 1.25], { ok: false, error: 'Controle do flutuante indisponível' });
+    }
     setTelemetryOverlayEnabled(enabled) {
       return this.demo
         ? { ok: true, supported: true, permissionGranted: true, requestedEnabled: enabled === true, visible: enabled === true, observationalOnly: true, demo: true }

@@ -560,7 +560,30 @@ class TelemetryForegroundService : Service() {
     fun learningCheckpointStatusJson(): String = learningArchive.checkpointStatus().toString()
 
     fun sessionRecorderStatusJson(): String = sessionRecorder.statusJson()
-    fun sessionRecorderListJson(): String = sessionRecorder.listSessionsJson()
+    // A lista de sessões lê pastas e, se preciso, reconstrói resumos: nunca na thread da WebView.
+    // Devolve a última lista pronta na hora ("null" até a primeira ficar pronta) e atualiza em segundo plano.
+    private val sessionListExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "omegas-session-list").apply { isDaemon = true }
+    }
+    private val sessionListBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var sessionListJson = "null"
+    @Volatile private var sessionListAt = -1L
+
+    fun sessionRecorderListJson(): String {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if ((sessionListAt < 0L || now - sessionListAt > 3_000L) && sessionListBusy.compareAndSet(false, true)) {
+            sessionListExecutor.execute {
+                try {
+                    sessionListJson = sessionRecorder.listSessionsJson()
+                    sessionListAt = android.os.SystemClock.elapsedRealtime()
+                } catch (_: Exception) {
+                } finally {
+                    sessionListBusy.set(false)
+                }
+            }
+        }
+        return sessionListJson
+    }
     fun updateSessionRecorderSettings(
         telemetryEveryMs: Long,
         maxSessionMb: Int,
@@ -616,6 +639,13 @@ class TelemetryForegroundService : Service() {
     fun setTelemetryOverlayEnabled(enabled: Boolean): String {
         if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
         val result = overlay.setEnabled(enabled)
+        updateOverlay()
+        return result.toString()
+    }
+
+    fun setTelemetryOverlayScale(scale: Double): String {
+        if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
+        val result = overlay.setScale(scale)
         updateOverlay()
         return result.toString()
     }
@@ -990,12 +1020,19 @@ class TelemetryForegroundService : Service() {
     private fun updateOverlay() {
         if (!::overlay.isInitialized || (!overlay.requestedEnabled() && !overlay.visible())) return
         val hub = status()
+        // Telemetria fresca (≤ 3 s) com a ECU conectada; senão o balão mostra "—" em vez do último número.
+        val live = hub.usbConnected && hub.directTelemetryAgeMs in 0L..3_000L
+        val fuel = hub.fuelState.trim().uppercase().takeIf { it.isNotEmpty() && it != "--" }
         overlay.update(
             TelemetryOverlayController.Snapshot(
                 cell = "—",
                 stft = null,
                 petrolMs = hub.petrolMs.takeIf { it > 0.0 },
                 rpm = hub.rpm.toDouble().takeIf { it > 0.0 },
+                fuel = fuel,
+                mapBar = hub.mapBar.takeIf { it > 0.0 },
+                gasMs = hub.gasMs.takeIf { it > 0.0 },
+                live = live,
             ),
         )
     }

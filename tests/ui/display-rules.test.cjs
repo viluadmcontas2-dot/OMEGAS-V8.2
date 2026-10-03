@@ -144,3 +144,20 @@ test('telemetria fora das rotas ao vivo vence em 3 s e vira desconhecida', () =>
   assert.equal(R.offRouteTelemetryExpired(false, false, now - 60_000, now), false);
   assert.equal(R.offRouteTelemetryExpired(false, undefined, now - 60_000, now), false);
 });
+
+test('telemetria flutuante: estado em palavras e pergunta de primeiro uso uma vez só', () => {
+  const R = rules;
+  assert.equal(R.overlayState({ supported: true, permissionGranted: false }).key, 'needs-permission');
+  assert.match(R.overlayState({ supported: true, permissionGranted: false }).help, /Autorizar/);
+  assert.equal(R.overlayState({ supported: true, permissionGranted: true, requestedEnabled: false }).key, 'off');
+  // Ligada mesmo com o app aberto (o balão fica escondido de propósito): não diz "Desativada".
+  assert.equal(R.overlayState({ supported: true, permissionGranted: true, requestedEnabled: true, visible: false }).key, 'on');
+  assert.equal(R.overlayState({ supported: false }).key, 'unsupported');
+  const fresh = { supported: true, permissionGranted: false, requestedEnabled: false };
+  assert.equal(R.shouldPromptOverlay(fresh, false), true);
+  assert.equal(R.shouldPromptOverlay(fresh, true), false, 'já perguntou');
+  assert.equal(R.shouldPromptOverlay({ ...fresh, requestedEnabled: true }, false), false, 'já tentou ligar');
+  assert.equal(R.shouldPromptOverlay({ ...fresh, permissionGranted: true }, false), false, 'já autorizado');
+  assert.equal(R.shouldPromptOverlay({ ...fresh, supported: false }, false), false);
+  assert.equal(R.shouldPromptOverlay({ ...fresh, testHarness: true }, false), false, 'teste instrumentado não vê a pergunta');
+});

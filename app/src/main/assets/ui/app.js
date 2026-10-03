@@ -317,7 +317,9 @@
     }
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
-      patch.sessions = api.sessions() || [];
+      // null = a lista ainda está sendo lida (a tela diz isso; não afirma "nenhuma sessão").
+      const listed = api.sessions();
+      patch.sessions = Array.isArray(listed) ? listed : null;
       patch.logs = api.logs() || [];
     }
     if (Object.keys(patch).length) store.patch(patch);
@@ -576,6 +578,49 @@
     });
   }
 
-  root.OmegasApp = { api, store, router, scheduler, screens: instances };
+  /**
+   * Primeiro uso: oferece ligar a telemetria flutuante e, se aceitar, abre direto a tela do Android onde
+   * se autoriza (a pergunta aparece uma única vez; depois fica em Ferramentas).
+   */
+  const OVERLAY_PROMPT_KEY = 'omegas-overlay-prompt-v1';
+  function maybePromptOverlay(force) {
+    try {
+      if (api.isDemo() && force !== true) return;
+      const rules = (root.OmegasUi || ui).DisplayRules;
+      let prompted = false;
+      try { prompted = root.localStorage.getItem(OVERLAY_PROMPT_KEY) === '1'; } catch (_) {}
+      if (force !== true && !rules?.shouldPromptOverlay(api.overlayStatus?.() || {}, prompted)) return;
+      if (document.getElementById('overlayPrompt')) return;
+      try { root.localStorage.setItem(OVERLAY_PROMPT_KEY, '1'); } catch (_) {}
+      const box = document.createElement('div');
+      box.id = 'overlayPrompt';
+      box.className = 'overlay-prompt';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-modal', 'true');
+      box.innerHTML = `<div class="overlay-prompt-card">
+        <small>TELEMETRIA FLUTUANTE</small>
+        <h3>Ver a telemetria por cima de outros apps?</h3>
+        <p>Um balão com combustível, RPM, Petrol Inj., MAP e gás aparece quando você usa o mapa ou a música, e nunca cobre o OMEGAS. Só mostra números: não mexe na ECU.</p>
+        <p>Ao tocar em <b>Autorizar agora</b>, o Android abre a tela certa: marque o OMEGAS e volte.</p>
+        <div class="overlay-prompt-actions">
+          <button type="button" class="primary" data-overlay-prompt="yes">Autorizar agora</button>
+          <button type="button" class="quiet-button" data-overlay-prompt="no">Agora não</button>
+        </div>
+      </div>`;
+      box.addEventListener('click', event => {
+        const choice = event.target.closest('[data-overlay-prompt]')?.dataset.overlayPrompt;
+        if (!choice) return;
+        box.remove();
+        if (choice === 'yes') api.requestOverlayPermissionAndEnable?.();
+      });
+      document.body.appendChild(box);
+    } catch (error) {
+      console.error('[OMEGAS overlay prompt]', error);
+    }
+  }
+
+  root.OmegasApp = { api, store, router, scheduler, screens: instances, promptOverlay: maybePromptOverlay };
   initialize();
+  // Depois do primeiro desenho, sem competir com a abertura do app.
+  root.setTimeout(() => maybePromptOverlay(false), 5000);
 })(typeof window !== 'undefined' ? window : globalThis);
