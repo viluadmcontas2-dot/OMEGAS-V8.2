@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
 import androidx.core.app.NotificationManagerCompat
 import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
@@ -156,10 +157,20 @@ class TelemetryForegroundService : Service() {
         consumptionTracker = ConsumptionTracker(this)
         equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
         refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
-        refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"))
+        val loadedExperiment = refinementJournal.json().optJSONObject("latest")
+        lastJournalDecisionSignature = journalDecisionSignature(loadedExperiment)
+        // Só o experimento já fechado no disco pertence ao histórico de outra sessão.
+        // A primeira checagem pode chegar depois que um experimento novo já terminou.
+        lastVerdictRecordedId = loadedExperiment?.takeIf { it.optString("status") != "VERIFICANDO" }
+            ?.optString("id").orEmpty()
+        verdictBaselineSet = true
+        if (lastVerdictRecordedId.isNotBlank()) recordedVerdictIds.add(lastVerdictRecordedId)
+        refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
+        refinementJournal.setDecisionListener(::recordJournalTransition)
+        journalTransitionsObserved = true
         sessionRecorder.recoverDocumentsMirrorAsync()
         log.setListener { item ->
             sessionRecorder.record("app_log", "native", item, force = true)
@@ -314,6 +325,8 @@ class TelemetryForegroundService : Service() {
     override fun onDestroy() {
         if (stopping) return
         stopping = true
+        refinementJournal.setDecisionListener(null)
+        journalTransitionsObserved = false
         try { equivalence.flush() } catch (_: Exception) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
@@ -598,14 +611,34 @@ class TelemetryForegroundService : Service() {
         settings.sessionCaptureRawUsb = captureRawUsb
         return sessionRecorder.statusObject().put("ok", true).toString()
     }
-    fun startSessionRecording(reason: String): String = sessionRecorder.start(
+    private fun startJournalSession(reason: String, metadata: JSONObject): JSONObject {
+        val started = sessionRecorder.start(reason, metadata)
+        if (started.optBoolean("ok")) {
+            refinementJournal.setDecisionListener(::recordJournalTransition)
+            journalTransitionsObserved = true
+        }
+        return started
+    }
+
+    /**
+     * Fecha a entrega do Journal antes de drenar o worker: uma decisão que já entrou no Journal
+     * termina de enfileirar antes do recibo da sessão ser fechado. A transição posterior ao
+     * desligamento pertence à próxima sessão, não pode reabrir a anterior.
+     */
+    private fun stopJournalSession(reason: String): JSONObject {
+        refinementJournal.setDecisionListener(null)
+        journalTransitionsObserved = false
+        return sessionRecorder.stop(reason)
+    }
+
+    fun startSessionRecording(reason: String): String = startJournalSession(
         reason.ifBlank { "manual" },
         JSONObject()
             .put("appVersion", BuildConfig.VERSION_NAME)
             .put("native", true)
             .put("usbSessionId", if (usb.connected) usb.connectionSessionId else 0L),
     ).toString()
-    fun stopSessionRecording(reason: String): String = sessionRecorder.stop(reason.ifBlank { "manual" }).toString()
+    fun stopSessionRecording(reason: String): String = stopJournalSession(reason.ifBlank { "manual" }).toString()
     fun exportSession(uri: Uri, sessionId: String): String = sessionRecorder.exportSession(contentResolver, uri, sessionId).toString()
 
     fun setGpsEnabled(enabled: Boolean): JSONObject {
@@ -713,7 +746,7 @@ class TelemetryForegroundService : Service() {
             monitoringPausedByUser = false
             if (generationChanged) {
                 if (sessionRecorder.statusObject().optBoolean("recording")) {
-                    sessionRecorder.stop("USB_SESSION_REPLACED")
+                    stopJournalSession("USB_SESSION_REPLACED")
                 }
                 runtime.endUsbSession("USB_SESSION_REPLACED")
                 nativeAutoCal.endUsbSession()
@@ -726,9 +759,10 @@ class TelemetryForegroundService : Service() {
             kFactor.beginUsbSession(sessionId)
             nativeAutoCal.beginUsbSession(sessionId)
             if (!wasConnected) enginePausedByUser = false
-            // A gravação é sempre automática: não depende de botão nem de preferência.
-            if (!sessionRecorder.statusObject().optBoolean("recording")) {
-                sessionRecorder.start(
+            if (settings.sessionRecorderEnabled && settings.sessionRecorderAutoStartOnUsb &&
+                !sessionRecorder.statusObject().optBoolean("recording")
+            ) {
+                startJournalSession(
                     "MP48 conectado",
                     JSONObject()
                         .put("appVersion", BuildConfig.VERSION_NAME)
@@ -745,7 +779,7 @@ class TelemetryForegroundService : Service() {
             nativeAutoCal.endUsbSession()
             telemetryStore.invalidate("USB_DISCONNECTED")
             if (sessionRecorder.statusObject().optBoolean("recording")) {
-                sessionRecorder.stop("MP48 desconectado")
+                stopJournalSession("MP48 desconectado")
             }
             if (monitoringPausedByUser || !settings.autoReconnectUsb) {
                 stopSelf()
@@ -802,25 +836,86 @@ class TelemetryForegroundService : Service() {
 
     private var verdictBaselineSet = false
     private var lastVerdictRecordedId = ""
+    @Volatile private var journalTransitionsObserved = false
+    private val journalRecordingLock = Any()
+    private val recordedVerdictIds = LinkedHashSet<String>()
+
+    /** Um instantâneo por transição, em ordem; nenhuma releitura pode substituir evento intermediário. */
+    private fun recordJournalTransition(latest: JSONObject) = synchronized(journalRecordingLock) {
+        recordJournalDecisionSnapshot(latest)
+        recordVerdictSnapshot(latest)
+    }
 
     /**
      * Veredito de cada gravação entra na sessão uma única vez, quando a verificação fecha.
      * O veredito que já estava fechado quando o app abriu pertence a outra sessão e não é repetido.
      */
-    private fun recordVerdictIfClosed() {
+    private var lastJournalDecisionSignature = ""
+
+    /** Amostras novas não são decisão nova: somente mudança de veredito/estado entra na sessão. */
+    private fun journalDecisionSignature(latest: JSONObject?): String {
+        if (latest == null) return ""
+        val bands = latest.optJSONArray("bands") ?: org.json.JSONArray()
+        return latest.optString("id") + "|" + latest.optString("status") + "|" +
+            (0 until bands.length()).joinToString(",") { bands.optJSONObject(it)?.optString("verdict").orEmpty() }
+    }
+
+    private fun recordJournalDecision() {
+        if (journalTransitionsObserved) return
         val latest = refinementJournal.json().optJSONObject("latest") ?: return
+        synchronized(journalRecordingLock) { recordJournalDecisionSnapshot(latest) }
+    }
+
+    private fun recordJournalDecisionSnapshot(latest: JSONObject) {
+        val signature = journalDecisionSignature(latest)
+        if (signature == lastJournalDecisionSignature) return
+        lastJournalDecisionSignature = signature
+        val status = latest.optString("status")
+        val anomaly = status in setOf("PIOROU_EM_PARTE", "INCONCLUSIVO", "INTERROMPIDO")
+        val headline = when (status) {
+            "PIOROU_EM_PARTE" -> "A comparação detectou piora em parte das faixas medidas."
+            "INCONCLUSIVO" -> "Faltou condução suficiente para concluir a comparação."
+            "INTERROMPIDO" -> "A comparação foi interrompida porque a calibração mudou."
+            "SEM_BASE" -> "Faltou medição anterior para comparar a curva."
+            "VERIFICADO" -> "A comparação terminou; o resultado está separado por faixa."
+            else -> "A curva gravada está sendo comparada nas faixas medidas."
+        }
+        sessionRecorder.record(
+            if (anomaly) "refinement_diagnostic" else "refinement_decision", "autocal",
+            JSONObject().put("component", "JOURNAL").put("phase", refinementAutopilot.json().optString("phase"))
+                .put("reasonCode", latest.optString("reasonCode", "POST_WRITE_SAMPLES_PENDING"))
+                .put("failureDomain", latest.optString("failureDomain", "NONE")).put("headline", headline)
+                .put("diagnostic", JSONObject().put("experimentId", latest.optString("id"))
+                    .put("status", status).put("onlineMs", latest.optLong("onlineMs"))
+                    .put("interruptReason", latest.opt("interruptReason") ?: JSONObject.NULL)
+                    .put("ratioBefore", latest.optJSONObject("indexBefore")?.opt("ratio") ?: JSONObject.NULL)
+                    .put("ratioAfter", latest.optJSONObject("indexAfter")?.opt("ratio") ?: JSONObject.NULL)
+                    .put("bands", latest.optJSONArray("bands") ?: org.json.JSONArray())),
+            force = true,
+        )
+    }
+
+    private fun recordVerdictIfClosed() {
+        if (journalTransitionsObserved) return
+        val latest = refinementJournal.json().optJSONObject("latest") ?: return
+        synchronized(journalRecordingLock) { recordVerdictSnapshot(latest) }
+    }
+
+    private fun recordVerdictSnapshot(latest: JSONObject) {
         val id = latest.optString("id")
         val status = latest.optString("status")
-        if (!verdictBaselineSet) {
-            verdictBaselineSet = true
-            if (status != "VERIFICANDO") lastVerdictRecordedId = id
-            return
-        }
-        if (status == "VERIFICANDO" || id.isBlank() || id == lastVerdictRecordedId) return
+        verdictBaselineSet = true
+        if (status == "VERIFICANDO" || id.isBlank() || id == lastVerdictRecordedId || id in recordedVerdictIds) return
         lastVerdictRecordedId = id
+        recordedVerdictIds.add(id)
+        while (recordedVerdictIds.size > RefinementJournal.MAX_EXPERIMENTS) {
+            recordedVerdictIds.remove(recordedVerdictIds.first())
+        }
         sessionRecorder.record(
             "refinement_verdict", "autocal",
             JSONObject().put("id", id).put("status", status)
+                .put("reasonCode", latest.optString("reasonCode")).put("failureDomain", latest.optString("failureDomain"))
+                .put("onlineMs", latest.optLong("onlineMs"))
                 .put("appliedAt", latest.optLong("appliedAt")).put("closedAt", latest.optLong("closedAt"))
                 .put("ratioBefore", latest.optJSONObject("indexBefore")?.opt("ratio") ?: JSONObject.NULL)
                 .put("ratioAfter", latest.optJSONObject("indexAfter")?.opt("ratio") ?: JSONObject.NULL)
@@ -830,6 +925,8 @@ class TelemetryForegroundService : Service() {
     }
 
     /** Piloto do refino: decide a fase e avisa uma vez por fase. Nunca grava na ECU. */
+    private var lastRefinementDecision = ""
+
     private fun observeRefinement() {
         try {
             val progress = if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson() else null
@@ -846,6 +943,19 @@ class TelemetryForegroundService : Service() {
                 journal = refinementJournal.json(),
                 restoreCount = refinementJournal.restorePoints().length(),
             )
+            // Registra mudanças de decisão, não cada tick da telemetria. Números completos
+            // ficam no evento curto e no RESUMO; timeout nunca vira recibo de gravação.
+            val numbers = decided.optJSONObject("diagnostic") ?: JSONObject()
+            val decisionKey = listOf(decided.optString("phase"), decided.optString("reasonCode"),
+                decided.optString("failureDomain"), numbers.optInt("bandsMeasured"),
+                numbers.optInt("bandsOff"), numbers.opt("autoMatchCount"), numbers.optString("journalStatus")).joinToString("|")
+            if (decisionKey != lastRefinementDecision) {
+                lastRefinementDecision = decisionKey
+                sessionRecorder.record(
+                    if (decided.optBoolean("watchdogExpired")) "refinement_diagnostic" else "refinement_decision",
+                    "autocal", decided, force = true,
+                )
+            }
             if (decided.optString("phase") != before) {
                 sessionRecorder.record("refinement_phase", "autocal", decided, force = true)
                 stateChanged()
@@ -877,6 +987,7 @@ class TelemetryForegroundService : Service() {
                 // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
                 stallWatch.tick(System.currentTimeMillis())
                 recordStallAnnotations()
+                recordJournalDecision()
                 recordVerdictIfClosed()
                 observeRefinement()
             }

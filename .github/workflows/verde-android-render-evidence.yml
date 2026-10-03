@@ -71,6 +71,21 @@ jobs:
             method: sessionChangeInvalidatesOldTelemetry
           - scenario: dashboard-session-recovered
             method: sessionReconnectRecoversFreshTelemetry
+          - scenario: refino-parada-durante-transicao
+            method: stopSessionWaitsForTransitionAlreadyInProgress
+            class: RefinoRenderTest
+          - scenario: refino-decisoes-entre-ticks
+            method: refinoJournalTransitionsReachSessionBeforeNextTick
+            class: RefinoRenderTest
+          - scenario: refino-primeiro-veredito-sessao
+            method: refinoFirstVerdictReachesSessionWorkerAndResumo
+            class: RefinoRenderTest
+          - scenario: refino-watchdog-honesto
+            method: refinoWatchdogHonest
+            class: RefinoRenderTest
+          - scenario: refino-offline-honesto
+            method: refinoOfflineRetainsHistoryWithoutCurrentSuccess
+            class: RefinoRenderTest
           - scenario: refino-ecu-automatico
             method: refinoEcuNoAutomatico
             class: RefinoRenderTest

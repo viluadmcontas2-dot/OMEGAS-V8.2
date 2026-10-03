@@ -16,7 +16,7 @@
     ['ESTAVEL', 'Estável'],
   ];
   const PHASE_TONE = {
-    SEM_ECU: 'unknown', LENDO_ECU: 'unknown', ECU_TRABALHANDO: 'unknown', COLETANDO_NOSSOS: 'collecting',
+    SEM_ECU: 'unknown', LENDO_ECU: 'unknown', TENTATIVA_ENCERRADA: 'problem', ECU_TRABALHANDO: 'unknown', COLETANDO_NOSSOS: 'collecting',
     PROPOSTA_PRONTA: 'ready', VERIFICANDO: 'collecting', RESTAURAR_TRECHO: 'problem', ESTAVEL: 'ok',
   };
   const VERDICT = {
@@ -137,6 +137,7 @@
   /** Ação principal conforme a fase do piloto (uma só por vez). */
   function primaryAction(eq, analysis) {
     const phase = eq?.autopilot?.phase || 'SEM_ECU';
+    if (phase === 'TENTATIVA_ENCERRADA') return { kind: 'none', label: '' };
     const restore = Array.isArray(eq?.restorePoints) ? eq.restorePoints.length : 0;
     const proposal = proposedPoints(analysis).length;
     if (phase === 'RESTAURAR_TRECHO' && restore) return { kind: 'restore', label: `Restaurar trecho que piorou (${restore} ponto${restore === 1 ? '' : 's'})` };
@@ -375,7 +376,7 @@
       this.lastRenderKey = key;
 
       const chip = document.getElementById('refinoPhaseChip');
-      if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Trecho piorou' : phase === 'LENDO_ECU' ? 'Lendo a ECU' : 'Sem ECU'])[1]; }
+      if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Trecho piorou' : phase === 'LENDO_ECU' ? 'Lendo a ECU' : phase === 'TENTATIVA_ENCERRADA' ? 'Etapa pausada' : 'Sem ECU'])[1]; }
       const headline = op.phase === 'done' ? 'Curva gravada e conferida pela ECU.'
         : op.phase === 'failed' ? op.message
           : pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
@@ -386,7 +387,9 @@
       const resetText = op.phase === 'idle' ? ns.DisplayRules?.gasResetNote(eq.gasEpochReason, eq.gasEpochAt) || '' : '';
       const resetNote = resetText ? ` ${resetText}` : '';
       setText('refinoNext', next + resetNote);
-      setText('refinoRatio', pct(eq.ratio));
+      // Histórico continua no gráfico/diário; o destaque atual exige uma fase com fonte conhecida.
+      const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
+      setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));
       // Sem leitura da ECU o número é desconhecido: mostra "—", nunca 0.
       const ecuKnown = finite(pilot.petrolValid) !== null && finite(pilot.gasValid) !== null;
       setText('refinoEcuPoints', ecuKnown ? `Gas ${fmt(pilot.petrolValid, 0)} · GNV ${fmt(pilot.gasValid, 0)}` : '—');
