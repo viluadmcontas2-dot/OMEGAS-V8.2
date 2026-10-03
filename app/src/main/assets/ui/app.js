@@ -45,7 +45,6 @@
   const startedAt = Date.now();
   let overlayPromptPending = true;
   let toastUntil = 0;
-  let previousEquivalenceSignature = '';
   let routeButtons = [];
   let screenNodes = [];
 
@@ -268,15 +267,6 @@
     if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
   }
 
-  /** Cérebro de equivalência: null até o Kotlin expor `getEquivalence`; o Agora só mostra, nunca executa. */
-  function refreshEquivalence() {
-    const eq = api.equivalence ? api.equivalence() : null;
-    const signature = JSON.stringify(eq);
-    if (signature === previousEquivalenceSignature) return;
-    previousEquivalenceSignature = signature;
-    store.patch({ equivalence: eq });
-  }
-
   function toolsEditing() {
     const host = byId('toolDiagnosticsWorkspace');
     return !!host && !!document.activeElement && host.contains(document.activeElement) &&
@@ -291,7 +281,6 @@
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
 
-    if (route === 'dashboard') refreshEquivalence();
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
       patch.logs = api.logs() || [];
@@ -317,7 +306,6 @@
     scheduler.setCadenceMs(route === 'autocal' ? AUTOCAL_CADENCE_MS : 200);
     if (route === 'dashboard') {
       resetPresentCursor();
-      refreshEquivalence();
       ensureScreen('dashboard')?.render(store.get());
       afterPaint(refreshFast);
       return;

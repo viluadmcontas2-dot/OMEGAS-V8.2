@@ -180,6 +180,31 @@
     return null;
   }
 
+  const ROUTE_NAMES = { map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Refino', sessions: 'Sessões', tools: 'Ferramentas' };
+  /** Índice de equivalência: fração 0..1 (percentual = ×100). Sem número válido: null (nunca 0 %). */
+  function indexPercent(eq) {
+    const value = finite(eq?.index?.value);
+    return value === null ? null : Math.round(Math.max(0, Math.min(1, value)) * 100);
+  }
+  /**
+   * Faixa discreta do Refino (D1): "GNV ≈ gasolina em N %" + UMA próxima ação + o botão de um toque quando a ação
+   * aponta para outra aba. Só mostra e leva; nunca executa. Sem dado nenhum: null (faixa oculta).
+   */
+  function equivalenceStrip(eq, routes) {
+    const percent = indexPercent(eq);
+    const action = eq?.nextAction || null;
+    const text = action && action.text ? String(action.text) : '';
+    if (percent === null && !text) return null;
+    const route = action && action.route && action.route !== 'refino' && (!routes || routes.includes(action.route)) ? String(action.route) : '';
+    return {
+      indexText: percent === null ? 'GNV ≈ gasolina em —' : `GNV ≈ gasolina em ${percent} %${eq.index.provisional === true ? ' (provisório)' : ''}`,
+      nextText: text || 'Nada a fazer agora.',
+      route,
+      subpage: route ? String(action.subpage || '') : '',
+      routeLabel: route ? `Ir para ${ROUTE_NAMES[route] || route}` : '',
+    };
+  }
+
   /** Ação principal conforme a fase do piloto (uma só por vez). */
   function primaryAction(eq, analysis) {
     const phase = eq?.autopilot?.phase || 'SEM_ECU';
@@ -265,6 +290,7 @@
           </header>
           <ol class="refino-steps" id="refinoSteps" aria-label="Fases do refino"></ol>
           <p class="refino-next" id="refinoNext"></p>
+          <div class="refino-eq" id="refinoEq" aria-label="Equivalência com a gasolina" hidden><b id="refinoEqIndex">—</b><span id="refinoEqNext"></span><button type="button" class="secondary" id="refinoEqGo" data-refino-go hidden></button></div>
           <div class="refino-undo" id="refinoUndo" hidden></div>
           <div class="refino-stalls" id="refinoStalls" hidden></div>
           <section class="autocal-reference-card" aria-label="NOSSA CURVA · Gasolina × GNV">
@@ -308,6 +334,8 @@
     }
 
     onClick(event) {
+      const go = event.target.closest('[data-refino-go]');
+      if (go) { if (go.dataset.route) this.app.router?.open(go.dataset.route, go.dataset.subpage || ''); return; }
       if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true, true); return; }
       if (event.target.closest('[data-refino-primary]')) this.primary();
       if (event.target.closest('[data-refino-cancel]')) this.closeReview();
@@ -485,10 +513,10 @@
 
       const chip = document.getElementById('refinoPhaseChip');
       if (chip) { chip.dataset.fuelState = (phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'PROPOSTA_PRONTA' ? 'ready' : PHASE_TONE[phase]) || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Trecho piorou' : phase === 'LENDO_ECU' ? 'Lendo a ECU' : phase === 'TENTATIVA_ENCERRADA' ? (pilot.expiredFrom === 'PROPOSTA_PRONTA' ? 'Proposta válida' : 'Etapa pausada') : 'Sem ECU'])[1]; }
+      const agreed = op.phase === 'idle' ? agreedTexts(eq, this.analysis) : null;
       const headline = op.phase === 'done' ? 'Curva gravada e conferida pela ECU.'
         : op.phase === 'failed' ? op.message
           : (agreed ? agreed.headline : pilot.headline) || 'Conecte a ECU para acompanhar a calibração.';
-      const agreed = op.phase === 'idle' ? agreedTexts(eq, this.analysis) : null;
       const next = op.phase === 'done' ? 'Dirija normalmente: o app mede se o GNV chegou na gasolina, faixa por faixa.'
         : op.phase === 'failed'
           ? (op.partial
@@ -544,10 +572,28 @@
           button.dataset.kind = action.kind;
         }
       }
+      this.renderEquivalenceStrip();
       this.renderUndo();
       this.renderChart();
       this.renderJournal();
       this.renderTech();
+    }
+
+    renderEquivalenceStrip() {
+      const host = document.getElementById('refinoEq');
+      if (!host) return;
+      const strip = equivalenceStrip(this.eq, ns.ROUTES);
+      host.hidden = !strip;
+      if (!strip) return;
+      setText('refinoEqIndex', strip.indexText);
+      setText('refinoEqNext', strip.nextText);
+      const go = document.getElementById('refinoEqGo');
+      if (go) {
+        go.hidden = !strip.route;
+        go.dataset.route = strip.route;
+        go.dataset.subpage = strip.subpage;
+        setText('refinoEqGo', strip.routeLabel);
+      }
     }
 
     /** Desfazer fora do <details> recolhido: sempre à vista quando há para onde voltar (foto ou antes/depois). */
@@ -714,7 +760,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { proposedPoints, undoPoints, undoSource, agreedTexts, primaryAction, explainPoint, ageText, safeMin, safeMax, STATUS_WORDS };
+  ns.RefinoModel = { equivalenceStrip, indexPercent, proposedPoints, undoPoints, undoSource, agreedTexts, primaryAction, explainPoint, ageText, safeMin, safeMax, STATUS_WORDS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

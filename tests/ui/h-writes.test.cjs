@@ -352,19 +352,6 @@ test('equivalência: lê pela ponte AutoCal e, sem nextAction, deriva a ação d
   assert.equal(nativeApi({ OmegasNative: {} }).equivalence(), null);
 });
 
-test('Agora mostra o cartão com "—" quando só há a ação do piloto', () => {
-  const { document, node } = fakeDom();
-  const dash = loadInto({ console, document, OmegasApp: { router: { open() {} } } }, ['core/router.js']);
-  vm.runInContext(read('screens/dashboard.js'), dash, { filename: 'screens/dashboard.js' });
-  const screen = Object.create(dash.OmegasUi.DashboardScreen.prototype);
-  const eq = { index: { value: null, coverage: null, provisional: false }, nextAction: { kind: 'REVIEW', text: 'A curva refinada está pronta.', route: 'refino', subpage: '', pointIndexes: [] } };
-  screen.renderEquivalence(eq);
-  assert.equal(node('dashEquivalence').hidden, false);
-  assert.equal(node('dashIndex').textContent, '—');
-  assert.equal(node('dashNextText').textContent, 'A curva refinada está pronta.');
-  assert.equal(node('dashNextButton').dataset.route, 'refino');
-});
-
 // ---------------------------------------------------------------- 5. CSS sem filtros caros
 function walk(dir, out = []) {
   for (const name of fs.readdirSync(dir)) {

@@ -76,10 +76,10 @@ test('Sessões: tela própria com duração, apagões, índice início → fim e
   const ctx = loadInto({ console }, ['core/display-rules.js', 'screens/sessions.js']);
   const row = ctx.OmegasUi.SessionsModel.sessionRow({
     id: 'session_2026-10-01_16-10-00', reason: 'USB', durationMs: 3600000, bytes: 1000, cngTicks: 30, petrolTicks: 10,
-    semanticSummary: { blackouts: 2, index: { start: 40, end: 71 } },
+    semanticSummary: { blackouts: 2, index: { start: 0.4, end: 0.71 } },
   });
   assert.equal(row.blackouts, 2);
-  assert.deepEqual({ ...row.index }, { start: 40, end: 71 });
+  assert.deepEqual({ ...row.index }, { start: 0.4, end: 0.71 });
   assert.equal(row.gnvPercent, 75);
   const bare = ctx.OmegasUi.SessionsModel.sessionRow({ id: 'x', durationMs: 5 });
   assert.equal(bare.blackouts, null, 'sem dado não vira 0');
@@ -122,57 +122,45 @@ test('NativeApi.equivalence(): null até o Kotlin expor getEquivalence; fixture 
   assert.equal(new none.OmegasUi.NativeApi().equivalence(), null);
 });
 
-function fakeDashboardContext() {
-  const nodes = new Map();
-  const shell = { classes: new Set(), classList: { add(c) { shell.classes.add(c); }, remove(c) { shell.classes.delete(c); } } };
-  const node = id => {
-    if (!nodes.has(id)) nodes.set(id, { id, textContent: '', hidden: true, dataset: {}, parentElement: shell });
-    return nodes.get(id);
-  };
-  const document = {
-    getElementById: node,
-    querySelector: () => null,
-    createElement: () => ({ dataset: {} }),
-    head: { appendChild() {} },
-  };
-  const navigations = [];
-  const context = {
-    console, document,
-    OmegasApp: { router: { open(route, subpage) { navigations.push([route, subpage]); return true; } } },
-  };
-  loadInto(context, ['core/router.js']);
-  return { context, node, shell, navigations };
-}
-
-test('Agora sem cérebro: bloco oculto e layout atual intacto; com fixture: índice grande + UMA ação com UM botão', () => {
-  const { context, node, shell, navigations } = fakeDashboardContext();
-  vm.runInContext(read('screens/dashboard.js'), context, { filename: 'screens/dashboard.js' });
-  const screen = Object.create(context.OmegasUi.DashboardScreen.prototype);
-  screen.renderEquivalence(null);
-  assert.equal(node('dashEquivalence').hidden, true);
-  assert.equal(shell.classes.has('has-equivalence'), false);
-
-  node('dashEquivalence');
-  screen.renderEquivalence(EQUIVALENCE_FIXTURE);
-  assert.equal(node('dashEquivalence').hidden, false);
-  assert.equal(node('dashIndex').textContent, '62%');
-  assert.equal(node('dashIndexNote').hidden, false, 'provisório aparece');
-  assert.equal(node('dashNextText').textContent, 'Rode no GNV em plano para eu medir');
-  const button = node('dashNextButton');
-  assert.equal(button.hidden, false);
-  assert.equal(button.dataset.route, 'refino');
-  assert.equal(button.dataset.subpage, 'pontos');
-  assert.equal(button.textContent, 'Ir para Refino');
-  assert.equal(shell.classes.has('has-equivalence'), true);
-
-  // sem route válida: sem botão (não inventa destino)
-  screen.renderEquivalence({ ...EQUIVALENCE_FIXTURE, nextAction: { kind: 'WAIT', text: 'Tudo certo', route: '', subpage: '', pointIndexes: [] } });
-  assert.equal(button.hidden, true);
-  assert.equal(navigations.length, 0, 'renderizar nunca navega nem executa');
-
+test('Agora é para dirigir (D1): sem cartão de equivalência, só 4 valores grandes + faixa quieta', () => {
   const source = read('screens/dashboard.js');
-  assert.match(source, /app\.router\.open\(next\.dataset\.route/);
+  for (const dead of ['dashEquivalence', 'dashIndex', 'dashNextText', 'dashNextButton', 'renderEquivalence', 'Ir para Refino', 'PRÓXIMA AÇÃO', 'próxima ação']) {
+    assert.ok(!source.includes(dead), `Agora não tem mais ${dead}`);
+  }
+  for (const id of ['dashHeroPetrol', 'dashRpm', 'dashMap', 'dashFuel']) assert.ok(source.includes(`id="${id}"`), id);
+  assert.doesNotMatch(read('app.js'), /refreshEquivalence/, 'o Agora não consulta a equivalência');
   assert.doesNotMatch(source, /startCurve|writeCurve|writeMap|startKBatchWrite|api\.(?:write|start|reset)/, 'Agora nunca executa');
+});
+
+test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de um toque (índice é fração 0..1)', () => {
+  const ctx = loadInto({ console }, ['core/display-rules.js', 'core/autocal-api.js', 'screens/refino.js']);
+  const strip = ctx.OmegasUi.RefinoModel.equivalenceStrip;
+  const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
+  assert.equal(strip(null, routes), null, 'sem dado a faixa some');
+  const eq = { ...EQUIVALENCE_FIXTURE, nextAction: { kind: 'COLLECT', text: 'Rode no GNV em plano para eu medir', route: 'curve', subpage: 'editor', pointIndexes: [3, 4] } };
+  const shown = strip(eq, routes);
+  assert.equal(shown.indexText, 'GNV ≈ gasolina em 62 % (provisório)');
+  assert.equal(shown.nextText, 'Rode no GNV em plano para eu medir');
+  assert.equal(shown.route, 'curve');
+  assert.equal(shown.subpage, 'editor');
+  assert.equal(shown.routeLabel, 'Ir para Curva K');
+  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, 'GNV ≈ gasolina em 1 %', 'fração 0,01 = 1 %, nunca 0 %');
+  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, 'GNV ≈ gasolina em 100 %');
+  assert.equal(strip({ ...eq, index: { value: null } }, routes).indexText, 'GNV ≈ gasolina em —');
+  assert.equal(strip(EQUIVALENCE_FIXTURE, routes).route, '', 'aponta para o próprio Refino: sem botão');
+  assert.equal(strip({ ...eq, nextAction: { text: 'Tudo certo', route: '' } }, routes).route, '');
+  const source = read('screens/refino.js');
+  assert.match(source, /router\?\.open\(go\.dataset\.route/);
+  assert.match(source, /id="refinoEq"/);
+});
+
+test('Sessões: índice é fração 0..1 e aparece em % (0,01 = 1 %, nunca "0%")', () => {
+  const ctx = loadInto({ console }, ['core/display-rules.js', 'screens/sessions.js']);
+  const pt = ctx.OmegasUi.SessionsModel.percentText;
+  assert.equal(pt(0.01), '1%');
+  assert.equal(pt(0.41), '41%');
+  assert.equal(pt(1), '100%');
+  assert.equal(pt(null), '—');
 });
 
 // ---------------------------------------------------------------- 3. Detalhes técnicos

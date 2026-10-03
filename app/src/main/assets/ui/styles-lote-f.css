@@ -1,0 +1,62 @@
+/* OMEGAS · Lote F: acabamento visual medido em render real (1280×720). Carrega por último. Só tokens. */
+
+/* F3.1 · faixa de condição: altura pelo conteúdo, sem corte; o título da tela aparece uma vez (na própria tela). */
+.workspace { grid-template-rows: auto minmax(0, 1fr); }
+.workspace-head {
+  display: block;
+  position: relative;
+  padding: 6px 18px;
+  contain: none;
+}
+.workspace-head > div:first-child,
+.workspace-head > p {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.workspace-head .vehicle-status-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 0;
+  border-top: 0;
+}
+.workspace-head .vehicle-status-strip > div {
+  gap: 0;
+  padding: 3px 10px 4px;
+}
+.workspace-head .vehicle-status-strip small {
+  font-size: 16px;
+  line-height: 1.1;
+  letter-spacing: .04em;
+}
+.workspace-head .vehicle-status-strip b {
+  font-size: var(--text-critical);
+  line-height: 1.1;
+}
+
+/* No Agora os números grandes já são rpm, ms e combustível: a faixa fica só com serviço, ECU e frescor. */
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-vehicle-fact="fuel"],
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-vehicle-fact="rpm"],
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-vehicle-fact="petrol"] { display: none; }
+
+/* F1 · equivalência no Refino: faixa discreta, não maior que os cartões de status. */
+.refino-eq {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--touch-min);
+  margin: 0 0 8px;
+  padding: 4px var(--space-4);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.refino-eq[hidden] { display: none; }
+.refino-eq b { color: var(--text); font-size: var(--text-critical); line-height: 1.15; white-space: nowrap; }
+.refino-eq span { color: var(--muted); font-size: var(--text-critical); line-height: 1.15; }
