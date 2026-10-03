@@ -1,5 +1,27 @@
 # OMEGAS Platina — Status
 
+## APK Platina + Refino v2 (provas de corpus real, render e sessão) — 2026-10-03
+
+- **Fonte:** `4a6965b3837f7bc0f212bcd84f6e60575523c4a4`, branch `ccr-745c77c3-dvvqn0`, base `OmegasPlatina` `fbee28c`.
+- **Workflows no mesmo SHA, todos `success`:** `verde-apk-now.yml` (`build_apk=true`) run `37093254242`; `verde-android-render-evidence.yml` run `37093252571` (26 cenários, 1280×720); `verde-fast-contracts.yml` run `37093255494`.
+- **APK:** artifact `11263742408` / `omegas-platina-final-4a6965b3…`, 4.824.552 bytes, `APK_SHA256=45665a7b8c1586b14c0dd798bfdc26be09b82533da3751c5f5d65cae4ac93788`, digest do zip `baed47a7eb665ab0584580dbcc4a8bdfea632b88d4bf432c9ff12e961156c539`. Expira em 14 dias.
+- **O que mudou, com a classe de prova** (1 contrato de texto, 2 sintético, 3 replay de sessão real, 4 APK renderizado no emulador, 5 físico):
+  - Refino conclui a verificação (timebox, sem base, inconclusivo) em vez de medir para sempre: classe 2 e 3.
+  - Marcha lenta não vira correção; Refino propõe só com a condução depois do 3º AutoMatch: classe 2 e 3, espelhado no oráculo Python.
+  - **Estado vem da ECU.** Fase nova `LENDO_ECU`; 3 de 3 reconhecido pelo contador e pelo máximo lido; a curva de gasolina que a ECU já tem vira referência onde o app não mediu gasolina (gasolina própria tem precedência; faixa apoiada na ECU usa tolerância de 6%). Validação com a sessão real de 01/10: referência da ECU contra gasolina medida na mesma sessão, mediana 1,000, 80% dos pontos dentro de 2,3%. Ciclo completo num app recém-instalado, curva que chega depois, que some, AutoMatch novo, sem cabo: classe 2 e 3; cenário de render `refino-app-novo-ecu-pronta` com replay real: classe 4.
+  - Apagão com antes, durante e depois, quase-apagão, religou, telemetria parou: classe 2 e 3 (5, 6 e 3 quase-apagões e 0 apagões nas três sessões reais).
+  - Gráfico e AGORA ao vivo, resposta pronta em segundo plano: classe 2. Consulta fria do Refino com mediana 12,08 ms e p95 20,93 ms no corpus real inteiro, medida no CI: classe 3. Latência da ponte dentro da WebView e AGORA acompanhando a telemetria: classe 4.
+  - Número desconhecido nunca vira 0; barra de status não congela fora das rotas ao vivo: classe 2 e 4.
+  - **Sessão = um ZIP só** (`<sessão>.zip`), publicado ao fechar ou na próxima abertura do app; nada vai ao Drive durante a gravação (uma sessão de 3,5 h tinha gerado mais de 105 ZIPs pequenos). `RESUMO.md` dentro do ZIP: fases, apagões e o que veio depois, gravações, veredictos; sessão morta sem fechar é reconstruída dos eventos. Classe 2 (`SessionPartPlannerTest`, `SessionResumoTest`) e classe 4 (`session-kill-recovery`: SIGKILL no meio, nada no Drive antes, um ZIP sem perda nem duplicata depois).
+  - **Ferramentas e balão flutuante:** lista de sessões não pega o bloqueio do gravador e sai em segundo plano (antes relia arquivos inteiros a cada 2 s e congelava a tela); retenção usa o número mostrado na tela (a poda usava 25 e a tela dizia 20); balão maior com combustível, RPM, Petrol Inj., MAP e gás, três tamanhos e telemetria velha como "—"; pergunta de primeiro uso que abre direto a tela de autorização. Classe 4 (`ferramentas-balao-prompt` com 25 sessões salvas: primeira leitura < 100 ms, mediana < 30 ms). O balão em si (janela do Android sobre outros apps) não tem print: só o físico prova.
+  - Inspector do AutoCal rola dentro da própria caixa (passava de 720 px com a época coerente): classe 4. Teste Node que lê o resultado do JVM é gate de verdade.
+- **Não provado:** curva incoerente entre Refino e AutoCal nativo (falta a sessão do dia para reproduzir); o gráfico de época do AutoCal após o AutoMatch (decisão de UI do proprietário); balão sobre outros apps; qualquer coisa na ECU ou no carro.
+- **Fora da regra de teste remoto:** o autor rodou localmente o oráculo Python, `node --test` (display-rules, refino-screen, sensibilidade), `tools/run_checks.py` e a análise dos corpos reais. Nada foi compilado nem testado em Kotlin ou Gradle localmente.
+- **Fora de `LOCAL_SOURCE_MUTATION=DENIED`:** o código foi editado no clone da sessão e enviado por `git push` para a branch de trabalho, não pela API remota do GitHub.
+- **Proposta, sem remover nada:** `docs/decisions/PROPOSTA-ABAS-SUGESTOES-APRENDER.md`.
+- **Decisão pendente do proprietário:** gravação semiautomática (A) ou automática com travas (B). Nada foi implementado.
+- `PHYSICAL_VALIDATION_CLAIMED=false`.
+
 ## APK Platina + Refino (candidato para teste no carro) — 2026-10-02
 
 - **Base:** a árvore da `OmegasPlatina` (`b185e80a`), acrescida do cérebro do refino, da aba Refino, da remoção do OBD, de Ferramentas e Sugestões corrigidas, e do balão flutuante que nunca cobre o app.
