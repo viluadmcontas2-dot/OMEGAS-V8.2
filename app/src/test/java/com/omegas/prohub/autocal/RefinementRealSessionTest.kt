@@ -161,7 +161,7 @@ class RefinementRealSessionTest {
         var cursor = 0
         val ledger = EquivalenceLedger(null)
         var now = 0L
-        val pilot = RefinementAutopilot(null) { now }
+        val pilot = EquivalencePhases(null) { now }
         val journal = RefinementJournal(null) { now }
         val phases = ArrayList<Pair<Int, String>>()
         val counts = ArrayList<Int>()

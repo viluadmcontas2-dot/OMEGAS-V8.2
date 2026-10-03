@@ -17,7 +17,7 @@ class EcuReferenceCycleTest {
     private var now = 1_000_000L
     private val ledger = EquivalenceLedger(null) { now }
     private val journal = RefinementJournal(null) { now }
-    private val pilot = RefinementAutopilot(null) { now }
+    private val pilot = EquivalencePhases(null) { now }
 
     private val cells = listOf(
         Triple(2_000.0, 0.40, 3.6), Triple(2_200.0, 0.50, 5.0), Triple(2_500.0, 0.60, 6.5),

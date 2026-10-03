@@ -289,7 +289,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     private fun computeEquivalence(): String = try {
         val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        EquivalenceView.build(service.equivalence, service.refinementJournal, service.refinementAutopilot, service.stallWatch).toString()
+        EquivalenceView.build(service.equivalence, service.refinementJournal, service.equivalencePhases, service.stallWatch).toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Equivalência indisponível")
     }
@@ -298,7 +298,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getRefinementPhase(): String = try {
         val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-        JSONObject().put("ok", true).put("autopilot", service.refinementAutopilot.json()).toString()
+        JSONObject().put("ok", true).put("autopilot", service.equivalencePhases.json()).toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Refino indisponível")
     }

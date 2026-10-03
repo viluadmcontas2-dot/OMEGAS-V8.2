@@ -14,7 +14,7 @@ import android.os.SystemClock
 import androidx.core.app.NotificationManagerCompat
 import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
-import com.omegas.prohub.autocal.RefinementAutopilot
+import com.omegas.prohub.autocal.EquivalencePhases
 import com.omegas.prohub.autocal.RefinementJournal
 import com.omegas.prohub.autocal.StallWatch
 import androidx.core.app.ServiceCompat
@@ -112,7 +112,7 @@ class TelemetryForegroundService : Service() {
     lateinit var refinementJournal: RefinementJournal
         private set
     /** Fase do refino (ECU no automático → nossa vez → verificando → estável); só observa e avisa. */
-    lateinit var refinementAutopilot: RefinementAutopilot
+    lateinit var equivalencePhases: EquivalencePhases
         private set
     /** Onde o motor apagou no GNV (desaceleração/embreagem): só observa, mostra no Refino. */
     lateinit var stallWatch: StallWatch
@@ -165,7 +165,7 @@ class TelemetryForegroundService : Service() {
             ?.optString("id").orEmpty()
         verdictBaselineSet = true
         if (lastVerdictRecordedId.isNotBlank()) recordedVerdictIds.add(lastVerdictRecordedId)
-        refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
+        equivalencePhases = EquivalencePhases(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
@@ -883,7 +883,7 @@ class TelemetryForegroundService : Service() {
         }
         sessionRecorder.record(
             if (anomaly) "refinement_diagnostic" else "refinement_decision", "autocal",
-            JSONObject().put("component", "JOURNAL").put("phase", refinementAutopilot.json().optString("phase"))
+            JSONObject().put("component", "JOURNAL").put("phase", equivalencePhases.json().optString("phase"))
                 .put("reasonCode", latest.optString("reasonCode", "POST_WRITE_SAMPLES_PENDING"))
                 .put("failureDomain", latest.optString("failureDomain", "NONE")).put("headline", headline)
                 .put("diagnostic", JSONObject().put("experimentId", latest.optString("id"))
@@ -935,8 +935,8 @@ class TelemetryForegroundService : Service() {
             // outra sessão: a ECU guarda e entrega ao conectar).
             // Offline mantém a última referência lida: a fase não pode oscilar só porque o cabo saiu.
             if (usb.connected) equivalence.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(progress?.optJSONObject("acquisition")))
-            val before = refinementAutopilot.json().optString("phase")
-            val decided = refinementAutopilot.observe(
+            val before = equivalencePhases.json().optString("phase")
+            val decided = equivalencePhases.observe(
                 ecuOnline = usb.connected && runtime.ready,
                 monitor = progress,
                 acquisition = progress?.optJSONObject("acquisition"),
@@ -961,7 +961,7 @@ class TelemetryForegroundService : Service() {
                 sessionRecorder.record("refinement_phase", "autocal", decided, force = true)
                 stateChanged()
             }
-            refinementAutopilot.takeAlert()?.let { alert ->
+            equivalencePhases.takeAlert()?.let { alert ->
                 // Android 13+: sem permissão o aviso é omitido; a fase continua na tela e na sessão.
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                     checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
