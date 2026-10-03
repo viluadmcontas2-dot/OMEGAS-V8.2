@@ -80,6 +80,7 @@ class SessionRecorder(
 
     private var sessionDir: File? = null
     private var semanticLedger: SessionSemanticLedger? = null
+    private var resumo: SessionResumo? = null
     private var writer: BufferedWriter? = null
     private var segmentFile: File? = null
     private var segmentStream: FileOutputStream? = null
@@ -120,6 +121,7 @@ class SessionRecorder(
                 startedAtMs = now,
                 startReason = reason,
             )
+            resumo = SessionResumo(id, now)
             openNextSegment()
             recording = true
             writeManifestBase(dir, now, reason, metadata)
@@ -186,6 +188,19 @@ class SessionRecorder(
                 if (!recording) return@synchronized
                 recordNow(type, source, copy)
             }
+        }
+    }
+
+    /**
+     * Publica agora a parte pendente em Download/Omegas (o que já foi gravado vira ZIP imutável).
+     * Usado pela prova de queda do app no emulador; o ritmo normal continua sendo o de 2 min.
+     */
+    fun publishNow(): Boolean {
+        awaitPendingWrites()
+        return synchronized(this) {
+            if (!recording) return@synchronized false
+            syncDocumentsMirror(force = true)
+            documentsMirror?.statusObject()?.optBoolean("lastSyncOk") ?: false
         }
     }
 
@@ -557,6 +572,8 @@ class SessionRecorder(
                 closeWriter()
                 updateManifest()
                 semanticLedger?.finish(stoppedAt, stopReason)
+                resumo?.observe("session_stopped", JSONObject().put("reason", stopReason), now)
+                writeResumo()
                 syncDocumentsMirror(force = true)
                 return
             }
@@ -584,6 +601,8 @@ class SessionRecorder(
                 data = data,
                 recordedAtMs = now,
             )
+            // Só eventos raros mexem no resumo; a telemetria nunca chega aqui.
+            if (type in SessionResumo.TRACKED && resumo?.observe(type, data, now) == true) writeResumo()
             synchronized(previewLock) {
                 preview.addLast(
                     JSONObject()
@@ -611,6 +630,13 @@ class SessionRecorder(
         } catch (error: Exception) {
             lastError = error.message ?: error.javaClass.simpleName
         }
+    }
+
+    /** RESUMO.md vai junto em toda parte publicada; escrita pequena e atômica, só em evento raro. */
+    private fun writeResumo() {
+        val dir = sessionDir ?: return
+        val current = resumo ?: return
+        try { SessionResumo.write(dir, current.markdown()) } catch (_: Exception) {}
     }
 
     private fun openNextSegment() {
@@ -716,6 +742,9 @@ class SessionRecorder(
      */
     private fun publishParts(dir: File, id: String, final: Boolean): Boolean {
         val mirror = documentsMirror ?: return false
+        // Sessão que morreu sem fechar (app morto, energia cortada) ganha o RESUMO.md reconstruído
+        // dos eventos, para a parte final já levar fases, apagões, gravações e veredictos.
+        if (final) try { SessionResumo.rebuildIfOpen(dir) } catch (_: Exception) {}
         val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
         if (plan == null) {
             if (final) markDocumentsMirrored(dir)
@@ -791,7 +820,10 @@ Tipos principais:
 - obd: fonte opcional e isolada;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;
-- export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
+- export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa;
+- refinement_phase, engine_stall, engine_stall_after, refinement_verdict: o piloto do Refino,
+  apagões do motor (e o que veio depois) e o veredito de cada gravação. RESUMO.md conta isso
+  em português; ele é reconstruído dos eventos quando o app morre antes de fechar a sessão.
 
 Exportação ativa é incremental: cada events_XXXX.jsonl já exportado com sucesso não
 volta a ser empacotado na exportação ativa seguinte. Sessão parada é exportada completa.

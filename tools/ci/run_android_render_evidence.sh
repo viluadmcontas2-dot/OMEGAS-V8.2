@@ -38,9 +38,41 @@ run_case() {
   fi
 }
 
+# Prova de queda do app: fase 1 grava e morre (SIGKILL), fase 2 roda em processo novo e recupera.
+run_kill_case() {
+  local scenario="$1"
+  local klass="com.omegas.prohub.SessionKillRecoveryTest"
+  local runner="com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner"
+  set +e
+  adb shell am instrument -w -r -e class "${klass}#faseUmGravaEMorre" "$runner" \
+    > "rendered-evidence/${scenario}-fase1.txt" 2>&1
+  cat "rendered-evidence/${scenario}-fase1.txt"
+  sleep 3
+  adb shell am instrument -w -r -e class "${klass}#faseDoisRecupera" "$runner" \
+    > "rendered-evidence/${scenario}-fase2.txt" 2>&1
+  local rc=$?
+  set -e
+  cat "rendered-evidence/${scenario}-fase2.txt"
+  adb pull /sdcard/Android/data/com.omegas.v7.test/files/omegas-evidence/. rendered-evidence/ || true
+  if grep -q 'OK (1 test)' "rendered-evidence/${scenario}-fase1.txt"; then
+    echo "A fase 1 terminou sem a queda: a prova não vale."
+    echo "SCENARIO_RESULT=${scenario}:FAIL"
+    overall=1
+  elif [ "$rc" -ne 0 ] || ! grep -q 'OK (1 test)' "rendered-evidence/${scenario}-fase2.txt"; then
+    echo "SCENARIO_RESULT=${scenario}:FAIL"
+    overall=1
+  else
+    echo "SCENARIO_RESULT=${scenario}:PASS"
+  fi
+}
+
 set -e
 if [ "$#" -ge 2 ]; then
-  run_case "$1" "$2" "${3:-DashboardLevelsRenderTest}"
+  if [ "$2" = "killProof" ]; then
+    run_kill_case "$1"
+  else
+    run_case "$1" "$2" "${3:-DashboardLevelsRenderTest}"
+  fi
   exit "$overall"
 fi
 
@@ -64,4 +96,5 @@ run_case "refino-restaurar-trecho" "refinoRestaurarTrecho" RefinoRenderTest
 run_case "refino-apagoes" "refinoApagoes" RefinoRenderTest
 run_case "refino-agora-acompanha" "refinoAgoraAcompanhaATelemetria" RefinoRenderTest
 run_case "refino-latencia-da-ponte" "refinoLatenciaDaPonte" RefinoRenderTest
+run_kill_case "session-kill-recovery"
 exit "$overall"

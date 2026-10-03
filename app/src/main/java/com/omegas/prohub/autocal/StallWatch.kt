@@ -78,8 +78,17 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
     private var idleShutdowns = 0
     private var cutShutdowns = 0
     private val revisionCounter = AtomicLong(0L)
+    /** O que veio depois de cada apagão confirmado, esperando o serviço gravar na sessão. */
+    private val annotations = ArrayList<JSONObject>()
 
     init { load() }
+
+    /** Entrega (uma vez) as anotações de "depois" para a sessão gravar como `engine_stall_after`. */
+    fun drainAnnotations(): List<JSONObject> = synchronized(lock) {
+        val copy = annotations.map { JSONObject(it.toString()) }
+        annotations.clear()
+        copy
+    }
 
     /** Muda a cada evento novo, religada ou descarte: serve de chave de cache para a UI. */
     fun revision(): Long = revisionCounter.get()
@@ -95,6 +104,8 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
                 openEvent?.let { open ->
                     open.put("religou", true).put("depois", AFTER_RESTARTED)
                         .put("religouEmS", (frame.t - open.optLong("at")) / 1000.0)
+                    annotations += JSONObject().put("at", open.optLong("at")).put("depois", AFTER_RESTARTED)
+                        .put("religou", true).put("religouEmS", open.optDouble("religouEmS"))
                     openEvent = null
                     revisionCounter.incrementAndGet()
                 }
@@ -164,6 +175,8 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
     private fun closeWithoutRestart(open: JSONObject, telemetryStopped: Boolean) {
         open.put("religou", false)
         open.put("depois", if (telemetryStopped) AFTER_TELEMETRY_STOPPED else AFTER_NO_RESTART)
+        annotations += JSONObject().put("at", open.optLong("at"))
+            .put("depois", if (telemetryStopped) AFTER_TELEMETRY_STOPPED else AFTER_NO_RESTART).put("religou", false)
         openEvent = null
         revisionCounter.incrementAndGet()
     }

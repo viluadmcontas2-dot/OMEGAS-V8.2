@@ -17,6 +17,7 @@ on:
       - 'app/src/main/java/com/omegas/prohub/telemetry/**'
       - 'app/src/main/java/com/omegas/prohub/autocal/**'
       - 'app/src/main/java/com/omegas/prohub/service/**'
+      - 'app/src/main/java/com/omegas/prohub/diagnostics/**'
       - 'app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt'
       - 'app/src/main/java/com/omegas/prohub/ecu/KFactorProtocol.kt'
       - 'tests/fixtures/portmon-autocal-cycle-v1.json'
@@ -94,6 +95,9 @@ jobs:
           - scenario: refino-latencia-da-ponte
             method: refinoLatenciaDaPonte
             class: RefinoRenderTest
+          - scenario: session-kill-recovery
+            method: killProof
+            class: SessionKillRecoveryTest
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:

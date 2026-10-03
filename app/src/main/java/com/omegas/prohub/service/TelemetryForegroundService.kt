@@ -765,6 +765,40 @@ class TelemetryForegroundService : Service() {
         }
     }
 
+    /** O que veio depois de cada apagão (religou, telemetria parou, sem religar) entra na sessão. */
+    private fun recordStallAnnotations() {
+        for (note in stallWatch.drainAnnotations()) sessionRecorder.record("engine_stall_after", "autocal", note, force = true)
+    }
+
+    private var verdictBaselineSet = false
+    private var lastVerdictRecordedId = ""
+
+    /**
+     * Veredito de cada gravação entra na sessão uma única vez, quando a verificação fecha.
+     * O veredito que já estava fechado quando o app abriu pertence a outra sessão e não é repetido.
+     */
+    private fun recordVerdictIfClosed() {
+        val latest = refinementJournal.json().optJSONObject("latest") ?: return
+        val id = latest.optString("id")
+        val status = latest.optString("status")
+        if (!verdictBaselineSet) {
+            verdictBaselineSet = true
+            if (status != "VERIFICANDO") lastVerdictRecordedId = id
+            return
+        }
+        if (status == "VERIFICANDO" || id.isBlank() || id == lastVerdictRecordedId) return
+        lastVerdictRecordedId = id
+        sessionRecorder.record(
+            "refinement_verdict", "autocal",
+            JSONObject().put("id", id).put("status", status)
+                .put("appliedAt", latest.optLong("appliedAt")).put("closedAt", latest.optLong("closedAt"))
+                .put("ratioBefore", latest.optJSONObject("indexBefore")?.opt("ratio") ?: JSONObject.NULL)
+                .put("ratioAfter", latest.optJSONObject("indexAfter")?.opt("ratio") ?: JSONObject.NULL)
+                .put("bands", latest.optJSONArray("bands") ?: org.json.JSONArray()),
+            force = true,
+        )
+    }
+
     /** Piloto do refino: decide a fase e avisa uma vez por fase. Nunca grava na ECU. */
     private fun observeRefinement() {
         try {
@@ -808,6 +842,8 @@ class TelemetryForegroundService : Service() {
                 if (refinementJournal.evaluate(equivalence.index(), ecuOnline = usb.connected && runtime.ready)) stateChanged()
                 // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
                 stallWatch.tick(System.currentTimeMillis())
+                recordStallAnnotations()
+                recordVerdictIfClosed()
                 observeRefinement()
             }
             handleUsbTransition()
@@ -891,6 +927,7 @@ class TelemetryForegroundService : Service() {
             val verb = if (event.optString("kind") == StallWatch.KIND_NEAR) "Motor quase apagou" else "Motor apagou"
             log.add("WARN", "REFINO", "$verb no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
         }
+        recordStallAnnotations()
 
         sessionRecorder.record("telemetry", "mp48", live)
         sessionRecorder.record("engine_event", "native", root, force = false)
