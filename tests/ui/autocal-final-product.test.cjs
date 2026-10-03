@@ -16,7 +16,7 @@ const projection = read('app/src/main/java/com/omegas/prohub/autocal/AutoCalUiPr
 const monitor = read('app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt');
 const protocol = read('app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt');
 
-assert.match(router, /ROUTES\s*=\s*\[[^\]]*['"]autocal['"]/s,
+assert.match(router, /const ROUTES\s*=\s*\[[^\]]*['"]autocal['"]/s,
   'AutoCal precisa ser uma rota top-level');
 assert.ok(index.indexOf('data-route="autocal"') >= 0, 'nav AutoCal ausente');
 assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="refino"'),
