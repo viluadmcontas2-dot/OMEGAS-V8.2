@@ -1,3 +1,14 @@
+## APK Platina — Refino base única, gravação automática, "piorou" sem travar — 2026-10-03
+
+- **Branch/SHA:** `ccr-745c77c3-dvvqn0` @ `623986c` (reconciliado com `OmegasPlatina` 8197d9c), mesclado em `OmegasPlatina` por PR #124 → `eb4ec26`. `main` avançada (fast-forward) para `eb4ec26`; `main` deixa de ser um ramo morto.
+- **Workflows no SHA `623986c`, todos `success`:** `ci.yml` run `37120961904`; `verde-apk-now.yml` (`build_apk=true`) run `37120961291`; `verde-android-render-evidence.yml` run `37120962939`.
+- **APK:** artifact `11273825037` / `omegas-platina-final-623986cb…`, 4.813.736 bytes, digest do zip `e58e6f3d459e88382195bcaef444e0f514948c556748d52883e2771cb8fb8267`. Expira em 14 dias.
+- **O que mudou, com a classe de prova** (1 contrato de texto, 2 sintético, 3 replay real, 4 APK no emulador, 5 físico):
+  - Aba Aprender removida; o Refino é a base única; menu com 7 destinos (classe 1 + 4).
+  - Gravação de sessão sempre automática ao conectar a ECU; sem botões Iniciar/Encerrar nem chave (classe 1; o emulador não exercita USB real).
+  - Refino não fica preso em "trecho piorou": PIOROU exige piora > 4% e erro > 5%; só o último experimento oferece restauração; oferta expira em 30 min; o piloto só pede restaurar se a faixa ainda está fora da tolerância (classe 2: `RefinementJournalTest`, `RefinementAutopilotTest`).
+- **Não provado:** classe 5. O relato do dono (04:49) de AGORA à esquerda da curva GNV entre 0,40 e 0,65 bar segue em investigação (adendo D7 entregue ao executor).
+
 # OMEGAS Platina — Status
 
 ## APK Platina + Refino v2 (provas de corpus real, render e sessão) — 2026-10-03
