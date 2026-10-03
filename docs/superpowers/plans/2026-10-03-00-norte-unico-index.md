@@ -196,6 +196,12 @@ Onde um plano de fatia usar outro caminho (ex.: F7 `now.mapK`, F6 `session.curve
 
 Issues: épico #131; NORTE-WU-00…08 = #132…#140.
 
+**R11. Legado apagado, não arquivado** (decisão do dono, 2026-10-03). Onde a spec §5 e a Task 0.3 dizem "arquivar", vale **apagar** (o histórico git guarda tudo):
+- saem de vez: `LEARNING_RULES.md`, `docs/BLOCK_*.md`, `docs/decisions/`, `docs/spec-kits/`, `docs/handoff/`, `docs/incidents/` (exceto o abaixo), `docs/MODELO_EQUIVALENCIA_CAUSAL.md`, `docs/OBD_*.md`, `docs/PENTE_FINO_VERDE.md`, `docs/MIGRATION.md`, as specs e planos anteriores ao Norte Único e as Work Units antigas (`OMEGAS-WU-006`, `PLATINA-REFINO`);
+- `docs/archive/` guarda só o que um teste ainda lê como prova de protocolo: `STATUS-ate-2026-10-03.md` e `incidents/2026-09-19-autocal-final-byte-matrix.md`; a fatia que apagar o teste apaga o arquivo;
+- Issues e PRs legados (anteriores ao épico #131) são fechados como "não planejado", com a lista registrada no épico;
+- a Fatia 0 roda na branch nova `work/platina-f0-norte` (PR novo); a `work/platina-f0-docs-laco` e o PR #130 ficam substituídos.
+
 ## Questões abertas para o dono (não bloqueiam F0–F3)
 
 1. **A Referência da ECU contra a gasolina medida.** Na F4, o planejador mediu por cima, nas sessões reais, a curva da ECU 10–16% fora da gasolina lida pela telemetria na mesma sessão. O STATUS antigo dizia "mediana 1,000, 80% dentro de 2,3%". Pode ser diferença de método (célula vs. banda). A Task de validação cruzada da F4 vai medir de verdade; se a diferença se confirmar, é mais um motivo para a Curva Própria existir, e o resultado vai para o STATUS.
@@ -205,7 +211,7 @@ Issues: épico #131; NORTE-WU-00…08 = #132…#140.
 
 ## Fatia 0: docs do zero + laço de teste remoto
 
-Branch: `work/platina-f0-docs-laco`.
+Branch: `work/platina-f0-norte` (R11).
 
 **Rastreabilidade (vale para todas as fatias):** Épico `Norte Único — GNV equivalente à gasolina` (label `epico`) + uma Issue por fatia com label `wu` e título `WU-0<N> · <nome humano>` (lista no prompt de execução e em `docs/superpowers/plans/README-issues.md`, criado nesta task). Cada Issue lista as Tasks do plano como caixas. Todo commit leva no corpo `WU-0<N> · Tarefa <N>.<M>`. Todo PR leva `Fecha #<n>`.
 

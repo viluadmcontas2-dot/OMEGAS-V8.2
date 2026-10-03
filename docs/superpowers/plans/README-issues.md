@@ -4,7 +4,7 @@
 
 | Work Unit | Issue | Título | Plano | Branch | Binding |
 |---|---|---|---|---|---|
-| NORTE-WU-00 | #132 | Base do projeto: regras novas, docs limpos e teste no GitHub | `2026-10-03-00-norte-unico-index.md` | `work/platina-f0-docs-laco` | `docs/workunits/NORTE-WU-00.md` |
+| NORTE-WU-00 | #132 | Base do projeto: regras novas, docs limpos e teste no GitHub | `2026-10-03-00-norte-unico-index.md` | `work/platina-f0-norte` | `docs/workunits/NORTE-WU-00.md` |
 | NORTE-WU-01 | #133 | Separar o que fica antes de apagar | `2026-10-03-f1-extracoes.md` | `work/platina-f1-extracoes` | `docs/workunits/NORTE-WU-01.md` |
 | NORTE-WU-02 | #134 | Tirar o Predictor, o AutoMatch manual e o cérebro V7 | `2026-10-03-f2-poda-1.md` | `work/platina-f2-poda-1` | `docs/workunits/NORTE-WU-02.md` |
 | NORTE-WU-03 | #135 | Tirar o aprendizado antigo e limpar o aparelho | `2026-10-03-f3-poda-2.md` | `work/platina-f3-poda-2` | `docs/workunits/NORTE-WU-03.md` |
