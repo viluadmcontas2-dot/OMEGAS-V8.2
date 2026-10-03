@@ -10,7 +10,7 @@ import kotlin.math.roundToInt
 /**
  * Equivalência Refinada OMEGAS da Curva K (MUL_ACT).
  *
- * Evidência que motivou o motor (docs/workunits/OMEGAS-WU-006.md):
+ * Evidência que motivou o motor (docs/archive/workunits/OMEGAS-WU-006.md):
  *  - o AutoMatch nativo aplica ganho total ponto a ponto sobre curvas RV montadas
  *    com bandas de 1–2 amostras, sem suavização, limitado a [0,75; 1,20] — gera
  *    dentes de serra;

@@ -4,7 +4,7 @@ import json
 ROOT = Path(__file__).resolve().parents[1]
 MANAGER = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt").read_text(encoding="utf-8")
 FIXTURE = json.loads((ROOT / "tests/fixtures/platinum-autocal-action-parity-v1.json").read_text(encoding="utf-8"))
-OLD_DOC = (ROOT / "docs/incidents/2026-09-19-autocal-final-byte-matrix.md").read_text(encoding="utf-8")
+OLD_DOC = (ROOT / "docs/archive/incidents/2026-09-19-autocal-final-byte-matrix.md").read_text(encoding="utf-8")
 OLD_WU = json.loads((ROOT / "docs/evidence/OMEGAS-WU-006.json").read_text(encoding="utf-8"))
 
 
