@@ -1,125 +1,31 @@
-# OMEGAS V8 — Estratégia de testes e qualidade
+# Estratégia de testes — OMEGAS Platina (Norte Único)
 
-## Objetivo
-Transformar requisitos de segurança e produto em evidência executável. Um resultado verde significa somente que os comportamentos listados foram exercitados; nunca substitui validação no celular, na multimídia ou no veículo.
+## Onde roda (R12)
 
-## Gate global de realidade — obrigatório a partir de 21/09/2026
+- Na sessão, só quando decide algo: `python3 -B tests/<arquivo>` e `node --test tests/ui/<arquivo>`.
+- No PR para `OmegasPlatina`: `ci.yml` (`build_and_test`: `tools/run_checks.py`, `testDebugUnitTest`, `lintDebug`). É o portão; Kotlin roda aqui.
+- APK único no fim do programa: `verde-apk-now.yml` (`build_apk=true`), com SHA-256.
+- Sem emulador: render e androidTest não são executados neste programa; o que só eles provariam fica como "não provado" no PR.
+- `ci.yml` e `tools/run_checks.py` descobrem testes por glob (`tests/test_*.py`, `tests/ui/*.test.cjs`).
 
-Para qualquer comportamento dependente de ECU/MP48/telemetria, um teste estático, de string, DOM sintético, Node, Python ou JVM **não pode sozinho** promover o comportamento a PASS de produto.
+## Método
 
-A prova deve subir pela maior parte aplicável desta cadeia:
+Evidência → teste RED válido → correção mínima → GREEN focado → revisão do diff → portão completo → CI no SHA do PR. Teste de produto não é PASS se não exercitou o que o dono vê.
 
-1. **corpus real versionado** — bytes/comandos/valores derivados de Portmon, sessões `.omegas`/ZIP ou CSVs reais;
-2. **replay determinístico** — sequência temporal reproduzível, com origem/hash documentados;
-3. **runtime de produção aplicável** — parser, scheduler, bridge/store ou projeção real, sem algoritmo científico paralelo criado só para teste;
-4. **WebView/app real** — mesmos assets/rotas/consumidores do produto;
-5. **renderização real** — baseline automotiva `1280x720`, com screenshot/estado/artifact quando a mudança é visual;
-6. **assertions humanas** — curva presente, AGORA presente quando fresco, dados não stale, ação alcançável, hierarquia legível e erro/next action coerentes;
-7. **hardware** — continua sendo camada separada e obrigatória para alegação física.
+## Classes de prova
 
-O corpus inicial de AutoCal é `tests/fixtures/portmon-autocal-cycle-v1.json`, derivado do Portmon real e rastreado pela Issue #68.
+1 contrato de texto · 2 sintético · 3 replay de sessão real · 5 físico (classe 4, emulador, não é usada) (só o dono, no carro, por `docs/V82_PHYSICAL_VALIDATION_PROTOCOL.md`). Nenhum PR chama algo de "validado" sem classe 5.
 
-### Regra de regressão visual
+## Gates da estrutura nova (spec §4.6)
 
-Se o defeito reportado é visual/runtime (por exemplo: curva sumiu, cursor AGORA não aparece, LEVELS não está na superfície principal), o RED deve reproduzir esse sintoma em render/runtime antes da correção. Contrato textual que apenas procura nomes de funções não fecha o defeito.
+- índice sobe nas sessões reais depois de ajuste (replay);
+- paridade Kotlin ↔ Python do índice e das fases;
+- fila: uma mutação por vez; cabo caído → `✗` sem crash; Desfazer = foto byte a byte;
+- ponte: nenhum método sem chamador; nenhum intent sem handler;
+- DOM: alvo ≥ 76 px (Mapa K ≥ 44 px, R7), texto crítico ≥ 24 px;
+- APK novo sobre dados antigos abre sem crash e limpa os órfãos;
+- SIGKILL no meio da sessão → um ZIP, sem perda.
 
-### Regra de cobertura global
+## Testes que morrem ou mudam
 
-O mesmo método deve ser aplicado proporcionalmente a Dashboard/Agora, AutoCal, Learning, Map, Curve, OBD e sessão/reconnect quando essas superfícies consomem telemetria.
-
-## Pirâmide prática
-1. **Governança executável** — arquivos obrigatórios, invariantes, ausência de segredos e configuração da CI.
-2. **Testes focados** — reproduzem defeitos e regras críticas com execução rápida.
-3. **Contratos de interface** — ponte WebView/Kotlin, formatos, consumidores e fronteiras de escrita.
-4. **Testes de componente** — Kotlin/JVM e JavaScript por comportamento público.
-5. **Lint/análise estática** — Android, recursos e integrações frágeis.
-6. **Build debug** — somente quando a fronteira APK/build estiver explicitamente autorizada.
-7. **Integração Android** — WebView, serviço, ciclo de vida, USB simulado e persistência.
-8. **Dispositivo/veículo** — multimídia, celular, MP48, ACK, readback, desempenho contínuo e operação física.
-
-## Portões
-### Gate rápido — sempre
-- governança;
-- contratos Python;
-- testes JavaScript;
-- sintaxe JavaScript;
-- segredos;
-- contrato de que snapshots substituíveis podem ser coalescidos sem converter isso em descarte de evidência;
-- contrato executável da consolidação: visita/comparação imutáveis, estados `LEARNING/CONSOLIDATED/REVALIDATING`, sugestão estável e Live Tracing visual ausente.
-
-### Gate Android sem APK — mudanças Android normais
-- `testDebugUnitTest`;
-- `lintDebug`;
-- teste JVM do persistidor coalescido e fechamento/flush da fotografia mais nova;
-- testes determinísticos do motor de estabilidade e persistência V7;
-- relatórios;
-- **não executa `assembleDebug` em push/PR**.
-
-### Gate build/APK — fronteira separada
-Somente depois de autorização explícita e execução apropriada via `workflow_dispatch`:
-- `assembleDebug`;
-- APK de teste;
-- SHA-256;
-- artifact ligado ao commit.
-
-Gerar APK não autoriza release, publicação, instalação ou validação física.
-
-### Gate profundo do aprendizado
-Antes de aceitar mudança em memória, advisor, sugestões ou projeção, provar:
-- `visitId` já conhecido não pode ser reinterpretado por snapshot agregado posterior;
-- a primeira comparação válida de uma visita GNV permanece imutável; gasolina nova pode resolver visita ainda pendente, não reescrever comparação antiga;
-- comparação usa timestamp físico da visita;
-- visitas repetíveis promovem `CONSOLIDATED`;
-- outlier isolado produz `REVALIDATING` sem mover o consolidado;
-- mudança contraditória repetível pode promover nova geração;
-- a mesma coleção de evidências em outra ordem produz o mesmo estado;
-- influência bilinear conserva o peso físico e não cria visitas independentes artificiais;
-- volume acima da fila histórica bruta não derruba a memória consolidada;
-- sugestão fica com magnitude estável enquanto a mesma geração consolidada vigora;
-- durante `REVALIDATING`, sugestão permanece visível porém não acionável;
-- Curva K global exige cobertura em mais de uma condição de RPM e MAP; evidência localizada permanece no Mapa K;
-- snapshot atual persiste metadados de estabilidade e continua lendo versões anteriores sem migração destrutiva;
-- nenhuma dessas regras afrouxa equivalência RPM/MAP/temperatura nem altera writer/ACK/readback.
-
-### Gate físico
-Obrigatório antes de declarar pronto para uso real:
-- instalação/atualização no aparelho;
-- multimídia horizontal e celular vertical;
-- suspensão, retomada e execução prolongada;
-- conexão/desconexão/reconexão USB;
-- durante sessão prolongada, `learningPipeline.pending` não pode crescer continuamente nem produzir defasagem de minutos;
-- persistência auxiliar deve permanecer assíncrona/coalescida sem perder a fotografia final;
-- Gasolina/GNV devem exibir `Petrol Inj.` médio, RPM e MAP coerentes com a evidência real da sessão;
-- **Live Tracing visual deve permanecer removido**; a WebView não persegue halo/trail/pesos bilineares, enquanto a interpolação científica continua no Kotlin;
-- contexto rápido deve mostrar apenas RPM + Petrol Inj. + célula atual sem degradar fluidez;
-- célula consolidada deve permanecer estável sob ruído/passagem casual;
-- mudança real deve aparecer como `REVALIDATING` e eventualmente consolidar sem demora excessiva;
-- reiniciar o app deve preservar o mesmo consolidado e o mesmo estado de sugestão;
-- comparação deve aparecer quando o núcleo possuir par equivalente, sem afrouxar RPM/MAP ou tolerâncias para ganhar velocidade;
-- leitura real do Mapa K;
-- intenção de 1–144 células e blocos internos;
-- cancelamento sem escrita;
-- falha de ACK;
-- readback divergente;
-- falha parcial explícita;
-- Curva K preparada por sugestão;
-- confirmação apenas por readback real.
-
-## Estados oficiais
-- **PASSOU AUTOMATIZADO:** todos os gates automatizados **autorizados e aplicáveis** ao commit passaram.
-- **PARCIAL:** uma camada relevante aplicável ainda não foi executada/autorizada.
-- **FALHOU:** evidência direta mostra quebra de requisito.
-- **AGUARDANDO CELULAR:** automação aplicável passou, mas falta aparelho.
-- **AGUARDANDO VEÍCULO:** falta MP48/ECU/OBD ou validação física.
-
-## Evidência mínima
-- repositório, branch e commit;
-- data e ambiente;
-- comandos/jobs executados;
-- resultados por camada;
-- arquivos alterados;
-- artifact e SHA-256 somente quando houver APK autorizado;
-- limitações e validações pendentes.
-
-## Regressão
-Todo defeito confirmado deve produzir teste que falhe pelo motivo correto antes da correção, quando tecnicamente viável. O incidente só fecha com causa, correção, teste, documentação e validação necessária.
+A lista exata, por fatia, está na spec §4.6 e em cada plano. Teste que morre sai no mesmo PR do código que ele cobria; nunca é pulado ou desligado para ficar verde.

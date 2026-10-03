@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ORACLE = json.loads((ROOT / "tests/fixtures/progbase-autocal-action-map-v1.json").read_text(encoding="utf-8"))
 ACTION = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt").read_text(encoding="utf-8")
 PROTOCOL = (ROOT / "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt").read_text(encoding="utf-8")
-STATUS = (ROOT / "STATUS.md").read_text(encoding="utf-8")
+STATUS = (ROOT / "docs/archive/STATUS-ate-2026-10-03.md").read_text(encoding="utf-8")
 
 assert ORACLE["classification"] == "ORIGINAL_DERIVED"
 assert ORACLE["schema"] == "omegas.progbase.autocal-action-map.v2"
@@ -23,8 +23,8 @@ for name, values in expected.items():
     row = rows[name]
     assert (row["handler"], row["handlerVa"], row["mode"], row["frame"]) == values, (name, row)
     handler, _va, mode, frame = values
-    assert f"{handler}`" in STATUS, f"STATUS.md lost {handler}"
-    assert f"modo `{mode}`, frame `{frame}`" in STATUS, f"STATUS.md contradicts {name}"
+    assert f"{handler}`" in STATUS, f"STATUS arquivado lost {handler}"
+    assert f"modo `{mode}`, frame `{frame}`" in STATUS, f"STATUS arquivado contradicts {name}"
 
 rk = ORACLE["separateActions"]["resetKFactor"]
 assert rk["handler"] == "ActionResetKFactorExecute"
