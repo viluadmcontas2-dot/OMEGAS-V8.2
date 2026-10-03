@@ -67,3 +67,18 @@ Commit isolado troca a expectativa por ECU_TRABALHANDO/ecuDone=false, mantém ac
 do contador novo. Acrescenta testes independentes contra aquisição completa silenciosa e latch
 de conclusão sobrevivendo à perda do contador. Ambos têm de falhar na fonte 2677823 antes do fix.
 Nem tolerâncias/vereditos, nem ACK/readback são relaxados. Classe 1 contrato; RED classe 2 pendente.
+
+
+## RED Journal e conclusão nativa
+Silêncio/latch: run 37106470438, job 111155878452, 612 testes / 3 falhas
+nos dois novos adversariais e no contrato de silêncio corrigido isoladamente.
+Journal: run 37106640121, job 111156353700, 614 testes / 5 falhas:
+as três anteriores e as duas novas exigindo código/operandos na saída pública existente.
+Correção: confirmação nativa precisa ser sustentada nesta observação; silêncio/tempo
+não afirmam AutoMatch concluído. Contador ausente remove autorização anterior.
+Journal grava operandos exatos de cada comparação, limiares atuais e motivo; serviço
+registra somente mudança de veredito/estado, separa anomalias funcionais de transporte.
+Não altera matemática nesta PR: os limiares atuais ainda serão unificados em D2/D3.
+Arquivo/sessão antigos são contexto, não evento novo: assinatura inicial impede replay
+de veredito antigo como decisão desta sessão. Eventos persistem no worker, fora da main.
+GREEN amplo, mutantes, APK/render desta fonte pendentes.

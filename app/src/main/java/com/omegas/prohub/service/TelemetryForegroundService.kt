@@ -157,6 +157,7 @@ class TelemetryForegroundService : Service() {
         consumptionTracker = ConsumptionTracker(this)
         equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
         refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
+        lastJournalDecisionSignature = journalDecisionSignature(refinementJournal.json().optJSONObject("latest"))
         refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
@@ -809,6 +810,46 @@ class TelemetryForegroundService : Service() {
      * Veredito de cada gravação entra na sessão uma única vez, quando a verificação fecha.
      * O veredito que já estava fechado quando o app abriu pertence a outra sessão e não é repetido.
      */
+    private var lastJournalDecisionSignature = ""
+
+    /** Amostras novas não são decisão nova: somente mudança de veredito/estado entra na sessão. */
+    private fun journalDecisionSignature(latest: JSONObject?): String {
+        if (latest == null) return ""
+        val bands = latest.optJSONArray("bands") ?: org.json.JSONArray()
+        return latest.optString("id") + "|" + latest.optString("status") + "|" +
+            (0 until bands.length()).joinToString(",") { bands.optJSONObject(it)?.optString("verdict").orEmpty() }
+    }
+
+    private fun recordJournalDecision() {
+        val latest = refinementJournal.json().optJSONObject("latest") ?: return
+        val signature = journalDecisionSignature(latest)
+        if (signature == lastJournalDecisionSignature) return
+        lastJournalDecisionSignature = signature
+        val status = latest.optString("status")
+        val anomaly = status in setOf("PIOROU_EM_PARTE", "INCONCLUSIVO", "INTERROMPIDO")
+        val headline = when (status) {
+            "PIOROU_EM_PARTE" -> "A comparação detectou piora em parte das faixas medidas."
+            "INCONCLUSIVO" -> "Faltou condução suficiente para concluir a comparação."
+            "INTERROMPIDO" -> "A comparação foi interrompida porque a calibração mudou."
+            "SEM_BASE" -> "Faltou medição anterior para comparar a curva."
+            "VERIFICADO" -> "A comparação terminou; o resultado está separado por faixa."
+            else -> "A curva gravada está sendo comparada nas faixas medidas."
+        }
+        sessionRecorder.record(
+            if (anomaly) "refinement_diagnostic" else "refinement_decision", "autocal",
+            JSONObject().put("component", "JOURNAL").put("phase", refinementAutopilot.json().optString("phase"))
+                .put("reasonCode", latest.optString("reasonCode", "POST_WRITE_SAMPLES_PENDING"))
+                .put("failureDomain", latest.optString("failureDomain", "NONE")).put("headline", headline)
+                .put("diagnostic", JSONObject().put("experimentId", latest.optString("id"))
+                    .put("status", status).put("onlineMs", latest.optLong("onlineMs"))
+                    .put("interruptReason", latest.opt("interruptReason") ?: JSONObject.NULL)
+                    .put("ratioBefore", latest.optJSONObject("indexBefore")?.opt("ratio") ?: JSONObject.NULL)
+                    .put("ratioAfter", latest.optJSONObject("indexAfter")?.opt("ratio") ?: JSONObject.NULL)
+                    .put("bands", latest.optJSONArray("bands") ?: org.json.JSONArray())),
+            force = true,
+        )
+    }
+
     private fun recordVerdictIfClosed() {
         val latest = refinementJournal.json().optJSONObject("latest") ?: return
         val id = latest.optString("id")
@@ -823,6 +864,8 @@ class TelemetryForegroundService : Service() {
         sessionRecorder.record(
             "refinement_verdict", "autocal",
             JSONObject().put("id", id).put("status", status)
+                .put("reasonCode", latest.optString("reasonCode")).put("failureDomain", latest.optString("failureDomain"))
+                .put("onlineMs", latest.optLong("onlineMs"))
                 .put("appliedAt", latest.optLong("appliedAt")).put("closedAt", latest.optLong("closedAt"))
                 .put("ratioBefore", latest.optJSONObject("indexBefore")?.opt("ratio") ?: JSONObject.NULL)
                 .put("ratioAfter", latest.optJSONObject("indexAfter")?.opt("ratio") ?: JSONObject.NULL)
@@ -894,6 +937,7 @@ class TelemetryForegroundService : Service() {
                 // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
                 stallWatch.tick(System.currentTimeMillis())
                 recordStallAnnotations()
+                recordJournalDecision()
                 recordVerdictIfClosed()
                 observeRefinement()
             }

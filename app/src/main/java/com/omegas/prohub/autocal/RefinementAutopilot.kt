@@ -15,8 +15,8 @@ import kotlin.math.ln
  * 1. ECU_TRABALHANDO — o AutoCal nativo ainda está no automático 1, 2, 3… e pedindo
  *    aquisição. O OMEGAS só observa e junta pontos próprios (RPM×MAP) em paralelo:
  *    gravar agora seria sobrescrito pelo próximo automático da ECU.
- * 2. A ECU parou (atingiu MAX_AUTOMATCH, AutoCal desligado/congelado, ou aquisição
- *    completa e sem automático novo há [QUIET_MS] de ECU online): é a nossa vez.
+ * 2. A ECU confirmou contador no MAX_AUTOMATCH ou AutoCal desligado: é a nossa vez.
+ *    Aquisição completa/silêncio não confirmam finalização; timeout encerra só a tentativa do host.
  *    - COLETANDO_NOSSOS: faltam leituras GNV/gasolina no mesmo RPM×MAP.
  *    - PROPOSTA_PRONTA: alguma faixa de condução está fora de ±[TOLERANCE_LOG]; o
  *      refino (pontos da ECU + nossos pontos) tem o que corrigir. Gravação manual.
@@ -35,9 +35,9 @@ class RefinementAutopilot(
         const val FORMAT = "omegas-refinement-autopilot-v1"
         /** Faixa cuja gasolina veio majoritariamente da curva da ECU é mais grossa: tolerância ±6%. */
         val TOLERANCE_LOG_ECU_REF = ln(1.06)
-        /** ECU online sem automático novo, com aquisição completa, por este tempo = ECU parou. */
+        /** Legado de diagnóstico; silêncio não é prova de conclusão nativa. */
         const val QUIET_MS = 10 * 60_000L
-        /** Sem aquisição completa (faixas que o motorista nunca visita), espera mais. */
+        /** Legado de diagnóstico; prazos operacionais vêm de PHASE_BUDGET_MS. */
         const val QUIET_PARTIAL_MS = 25 * 60_000L
         const val PARTIAL_MIN_ZONES = 3
         /** ±3%: abaixo disso GNV e gasolina já pedem o mesmo (ruído de medição ~2%). */
@@ -69,7 +69,7 @@ class RefinementAutopilot(
     private var timeoutReason = ""
     private var phase = "SEM_ECU"
     private var alertedPhase = ""
-    /** A ECU parou de fazer automático: vale até ela fazer outro (contador muda). */
+    /** Conclusão nativa da observação atual; ausente/ambígua não autoriza o refino. */
     private var ecuDoneLatch: String? = null
     private var dirty = false
     private var lastSaveAt = Long.MIN_VALUE / 2
@@ -117,15 +117,12 @@ class RefinementAutopilot(
             val gasZones = acquiredZones(liveAcquisition, "GNV")
             // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
             val ecuRead = count != null || liveAcquisition != null
-            val complete = petrolZones >= 4 && gasZones >= 4
             val fresh = if (!ecuOnline) null else when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
-                complete && quietMs >= QUIET_MS -> "AQUISICAO_COMPLETA"
-                petrolZones >= PARTIAL_MIN_ZONES && gasZones >= PARTIAL_MIN_ZONES && quietMs >= QUIET_PARTIAL_MS -> "SEM_AUTOMATICO_NOVO"
                 else -> null
             }
-            if (fresh != null && fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
+            if (fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
             val ecuReason = ecuDoneLatch
             val out = JSONObject()
                 .put("ecuOnline", ecuOnline)
