@@ -7,10 +7,14 @@
     return;
   }
 
-  const refinementStyle = document.createElement('link');
-  refinementStyle.rel = 'stylesheet';
-  refinementStyle.href = 'styles-refine.css';
-  document.head.appendChild(refinementStyle);
+  // As folhas de estilo são estáticas no index.html (ordem fixa: o acabamento do Lote F vem por último).
+  if (!document.querySelector('link[data-refine-style]')) {
+    const refinementStyle = document.createElement('link');
+    refinementStyle.rel = 'stylesheet';
+    refinementStyle.href = 'styles-refine.css';
+    refinementStyle.dataset.refineStyle = 'true';
+    document.head.appendChild(refinementStyle);
+  }
 
   const api = new ui.NativeApi();
   const store = new ui.Store(ui.createInitialState());
@@ -55,15 +59,12 @@
     const next = value == null ? '—' : String(value);
     if (node.textContent !== next) node.textContent = next;
   }
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  const { finite, escapeHtml } = ui.DisplayRules;
   function rounded(value, digits) {
     const number = finite(value);
     if (number === null) return '—';
     const factor = 10 ** digits;
     return String(Math.round(number * factor) / factor);
-  }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
   function fuelLabel(raw) {
     // Combustível desconhecido ("--" do Kotlin, vazio) mostra "—"; regra única em core/display-rules.js.
@@ -125,14 +126,16 @@
 
     const status = state.status || {};
     const fuel = fuelLabel(liveFrom(state).fuel || liveFrom(state).state || status.fuelState);
-    const globalSignature = `${status.usbConnected === true ? 1 : 0}:${fuel}`;
+    const link = (root.OmegasUi || ui).DisplayRules.connectionState(status);
+    const globalSignature = `${link.key}:${fuel}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
       const ecu = byId('globalEcu');
       if (ecu) {
-        const online = status.usbConnected === true;
-        ecu.dataset.online = online ? 'true' : 'false';
-        setText('globalEcu', online ? 'ECU online' : 'ECU offline');
+        ecu.dataset.online = link.online ? 'true' : 'false';
+        ecu.dataset.link = link.key;
+        setText('globalEcu', link.label);
+        ecu.title = link.hint;
       }
       const fuelNode = byId('globalFuel');
       if (fuelNode) {

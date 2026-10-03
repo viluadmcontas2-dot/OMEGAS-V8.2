@@ -9,9 +9,8 @@ const read = relative => fs.readFileSync(path.join(ROOT, relative), 'utf8');
 const SOURCE = read('app/src/main/assets/ui/screens/refino.js');
 
 function model() {
-  const window = { setTimeout: () => 0 };
-  window.window = window;
-  vm.runInNewContext(SOURCE, { window, globalThis: window, console });
+  const window = require('./_support.cjs').freshContext({ console });
+  vm.runInContext(SOURCE, window);
   return window.OmegasUi.RefinoModel;
 }
 
@@ -45,15 +44,17 @@ test('A1/A2: o prazo vencido não apaga a proposta: o botão "Revisar e gravar" 
   assert.match(SOURCE, /pilot\.phase === 'TENTATIVA_ENCERRADA' \? pilot\.expiredFrom : pilot\.phase/);
 });
 
-test('A8: fase e proposta concordam nos textos', () => {
+test('P1: uma fala só por tela: o texto do cérebro (nextAction); sem ele, aviso neutro e nenhuma ação derivada da fase', () => {
   const m = model();
-  const none = m.agreedTexts({ autopilot: { phase: 'PROPOSTA_PRONTA' } }, analysis([]));
-  assert.match(none.headline, /ainda não há uma correção segura/);
-  assert.doesNotMatch(none.headline + none.next, /Revise e grave|Revisar e gravar/);
-  const measuring = m.agreedTexts({ autopilot: { phase: 'COLETANDO_NOSSOS' } }, analysis([4]));
-  assert.match(measuring.headline, /Revisar e gravar/);
-  assert.doesNotMatch(measuring.headline, /medindo/i);
-  assert.equal(m.agreedTexts({ autopilot: { phase: 'PROPOSTA_PRONTA' } }, analysis([4])), null);
+  assert.equal(m.agreedTexts, undefined, 'a tabela de textos por fase saiu');
+  const eq = { autopilot: { phase: 'PROPOSTA_PRONTA', headline: 'texto velho do piloto', next: 'outro texto velho' }, nextAction: { text: 'Revise e grave a curva pronta', route: 'refino' } };
+  const strip = m.equivalenceStrip(eq, ['refino']);
+  assert.equal(strip.nextText, 'Revise e grave a curva pronta');
+  assert.doesNotMatch(strip.nextText, /velho/);
+  const none = m.equivalenceStrip({ autopilot: { phase: 'PROPOSTA_PRONTA', headline: 'x', next: 'y' } }, ['refino']);
+  assert.equal(none.nextText, 'Aguardando dados da ECU');
+  assert.equal(none.route, '', 'sem cérebro, sem botão');
+  assert.doesNotMatch(SOURCE, /pilot\.headline|pilot\.next/, 'o texto do piloto não é mais renderizado');
 });
 
 test('A3/A4: Desfazer sai do <details>, vem do diário e falha parcial não diz "nada foi gravado"', () => {
@@ -75,10 +76,11 @@ test('A5: mínimo e máximo nunca devolvem infinito para lista vazia', () => {
   assert.doesNotMatch(SOURCE, /Math\.(min|max)\(\.\.\.(xs|ys)\)/);
 });
 
-test('A6: pontos da ECU e nossos pontos têm alvo de toque', () => {
-  const hits = [...SOURCE.matchAll(/class="autocal-acquired-hit" data-refino-dot="(ecu|our):/g)].map(m => m[1]);
+test('A6: pontos da ECU e marcadores do OMEGAS têm alvo de toque (círculo invisível de 44 px no desenho compartilhado)', () => {
+  const chart = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/components/curve-chart.js'), 'utf8');
+  const hits = [...chart.matchAll(/class="autocal-acquired-hit[^"]*"[^>]*data-refino-dot="(ecu|our\$\{tag\}):/g)].map(m => m[1].startsWith('our') ? 'our' : m[1]);
   assert.deepEqual(hits.sort(), ['ecu', 'our']);
-  assert.match(SOURCE, /r="22"/);
+  assert.match(chart, /r="22"/);
 });
 
 test('A8: nenhum texto manda "sem sua confirmação" nem para "AutoCal → Refinar curva"', () => {

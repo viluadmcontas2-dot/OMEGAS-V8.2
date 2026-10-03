@@ -6,8 +6,8 @@ const path = require('node:path');
 const source = fs.readFileSync(path.resolve(__dirname, '../../app/src/main/assets/ui/screens/refino.js'), 'utf8');
 
 test('watchdog encerrado bloqueia revisão de proposta antiga', () => {
-  const window = { setTimeout() {} }; window.window = window;
-  vm.runInNewContext(source, { window, console });
+  const window = require('./_support.cjs').freshContext({ console });
+  vm.runInContext(source, window);
   const action = window.OmegasUi.RefinoModel.primaryAction(
     { autopilot: { phase: 'TENTATIVA_ENCERRADA' } },
     { available: true, points: [{ index: 1, origin: 'MEASURED', currentRaw: 16384, calculatedRaw: 17000 }] }

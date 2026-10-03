@@ -50,8 +50,8 @@ test('não existe modo oficina, checkbox nem segunda confirmação no fluxo ativ
   const active = MAP_SCREEN + HTML;
   assert.doesNotMatch(active, /workshopModeButton|workshopRequested|confirmWriteCheckbox|mapWriteButton|mapReviewBack/);
   assert.match(HTML, /Gravar é um toque/);
-  assert.match(HTML, /foto antes, ACK e conferência na ECU são automáticos/);
-  assert.match(MAP_SCREEN, /Gravar \$\{count\} alteração/);
+  assert.match(HTML, /o app guarda a foto antes e confere na ECU\. Desfazer volta à foto/);
+  assert.match(MAP_SCREEN, /Gravar \$\{D\(\)\.plural\(count, 'alteração', 'alterações'\)\}/);
 });
 
 test('uma grade completa produz revisão de 144 células após a prévia nativa e antes de qualquer envio', () => {

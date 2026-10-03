@@ -2,14 +2,8 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function finite(value) {
-    if (value === null || value === undefined || value === '') return null;
-    return Number.isFinite(Number(value)) ? Number(value) : null;
-  }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
-  }
   const rules = () => root.OmegasUi.DisplayRules;
+  const { finite, escapeHtml } = root.OmegasUi.DisplayRules;
 
   /** Índice de equivalência no início e no fim da sessão, se o dado existir (senão null: a tela não inventa). */
   function indexRange(item) {

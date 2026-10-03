@@ -194,6 +194,21 @@
     return alreadyPrompted !== true && s.testHarness !== true && s.supported === true && s.permissionGranted !== true && s.requestedEnabled !== true;
   }
 
+  /**
+   * Conexão com a ECU em quatro palavras que o motorista entende, cada uma com a próxima ação:
+   * online · Conectando… (permissão USB pendente) · Sem cabo · Serviço parado. Usa só o que o status já traz.
+   */
+  function connectionState(status) {
+    const s = status || {};
+    if (s.usbConnected === true) {
+      if (s.engineStuck === true) return { key: 'attention', label: 'ECU sem resposta', hint: 'Aguarde ou reconecte o cabo USB', online: true };
+      return { key: 'online', label: 'ECU online', hint: '', online: true };
+    }
+    if (s.usbPermissionPending === true) return { key: 'connecting', label: 'Conectando…', hint: 'Toque em Permitir no aviso de USB do Android', online: false };
+    if (s.serviceRunning === false) return { key: 'stopped', label: 'Serviço parado', hint: 'Abra o OMEGAS de novo para iniciar o serviço', online: false };
+    return { key: 'nocable', label: 'Sem cabo', hint: 'Conecte o cabo USB na ECU', online: false };
+  }
+
   /** Rótulos únicos das fases do Refino (Refino, Agora e qualquer outro lugar que fale da fase). */
   const PHASE_LABELS = {
     SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo o GNV',
@@ -223,7 +238,7 @@
   }
 
   ns.DisplayRules = {
-    DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, phaseLabel, PHASE_LABELS, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
+    DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, phaseLabel, PHASE_LABELS, connectionState, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
     ageLabel, sessionDate, OPERATION_WORDING, failureKind, failureText, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };

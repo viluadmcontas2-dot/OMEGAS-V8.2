@@ -211,7 +211,7 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .autocal-route-panel .autocal-focus-metric em { font-size: 16px; }
 .autocal-route-panel .autocal-focus-actions { flex: 1 1 100%; display: flex; gap: 8px; }
 .autocal-route-panel .autocal-focus-actions > *, .autocal-route-panel .autocal-focus-actions .autocal-reset-menu { flex: 1 1 0; min-width: 0; }
-.autocal-route-panel .autocal-focus-actions button, .autocal-route-panel .autocal-focus-actions summary { width: 100%; font-size: 20px !important; padding: 0 8px; }
+.autocal-route-panel .autocal-focus-actions button, .autocal-route-panel .autocal-focus-actions summary { width: 100%; font-size: var(--text-critical) !important; padding: 0 8px; line-height: 1.1; }
 
 .autocal-route-panel .autocal-chart-card {
   display: flex;
@@ -228,7 +228,7 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .autocal-chart-card .autocal-chart-inspector { grid-area: inspector; max-height: none; overflow: auto; padding: 8px 10px; }
 .autocal-chart-card .autocal-chart-inspector b, .autocal-chart-card .autocal-chart-inspector span { font-size: 16px; line-height: 1.3; }
 .autocal-chart-card .autocal-reset-comparison { grid-area: compare; }
-.autocal-chart-card .autocal-history-float { grid-area: history; position: static; width: 100%; font-size: 20px; }
+.autocal-chart-card .autocal-history-float { grid-area: history; position: static; width: 100%; }
 
 /* F3.11 · UM estilo de ação primária (accent); vermelho/âmbar só para perigo e atenção. */
 .primary,
@@ -350,3 +350,49 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 
 .curve-prepare-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
 .curve-screen .curve-editor-panel .proposal-list { flex: 1 1 auto; }
+
+/* ---------------------------------------------------------------- Pisos de texto (F3.9): corpo/microtexto >= 16 px; o que carrega valor ou ação >= 24 px */
+html body .curve-chart-shared text { font-size: 16px; }
+html body .curve-chart-shared text.autocal-zone-label { font-size: 16px; }
+html body .sr-only { font-size: 16px; }
+
+html body .utility-screen :is(small, span, p, dd, dt, li, label, em, i) { font-size: 16px; }
+html body .utility-screen :is(h2, h3) { font-size: var(--text-critical); line-height: 1.15; }
+html body .utility-screen :is(b, strong) { font-size: var(--text-critical); line-height: 1.15; }
+html body .utility-screen .page-intro p, html body .utility-screen .page-intro small { font-size: 16px; }
+html body .utility-screen .session-datetime, html body .utility-screen .recorded-session-meta span { font-size: 16px; }
+html body .utility-screen .tool-actions span { font-size: 16px; }
+html body .utility-screen .diagnostic-recorder-card header span { font-size: 16px; }
+
+/* Refino: diário, histórico e etapas */
+html body .refino-cockpit :is(small, span, dd, dt, li, p, h4, i) { font-size: 16px; }
+html body .refino-cockpit .refino-steps li { font-size: 16px; }
+html body .refino-cockpit .refino-steps li i { font-size: 16px; }
+html body .refino-cockpit .refino-eq span, html body .refino-cockpit .refino-eq b { font-size: var(--text-critical); }
+html body .refino-cockpit .refino-journal :is(span, small, b, p, h4, li) { font-size: 16px; }
+
+/* AutoCal: contexto da aquisição */
+html body .autocal-route-panel :is(small, span, p, dd, dt, li, em, i, h4) { font-size: 16px; }
+html body .autocal-route-panel .autocal-focus-metric b, html body .autocal-route-panel .autocal-focus-zone b { font-size: var(--text-critical); }
+html body .autocal-route-panel .autocal-reset-popover p { font-size: 16px; }
+
+/* Mapa K */
+html body .map-screen .map-live-condition, html body .map-screen .sr-only { font-size: 16px; }
+
+/* Alvos de toque: a caixa de marcar cobre o rótulo inteiro (>= 76 px); o desenho da chave é do próprio rótulo. */
+html body .diagnostic-settings-grid .check-setting { position: relative; min-height: var(--touch-min); }
+html body .diagnostic-settings-grid .check-setting input[type="checkbox"] {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; background: none;
+}
+html body .diagnostic-settings-grid .check-setting::after {
+  content: ""; order: 2; flex: 0 0 auto; width: 56px; height: 32px; border-radius: 999px; pointer-events: none;
+  background: radial-gradient(circle at 16px 16px, var(--tone-d9e2ec) 12px, transparent 13px), var(--tone-25313d);
+}
+html body .diagnostic-settings-grid .check-setting:has(input:checked)::after {
+  background: radial-gradient(circle at 40px 16px, var(--tone-ffffff) 12px, transparent 13px), var(--accent);
+}
+
+/* F3.5 · Conectando… (permissão USB) é diferente de Sem cabo: cor de atenção só para o que ainda pode resolver sozinho. */
+#globalEcu[data-link="connecting"] { color: var(--state-warn); }
+#globalEcu[data-link="nocable"], #globalEcu[data-link="stopped"] { color: var(--state-error); }
+.vehicle-status-strip [data-state="connecting"] b { color: var(--state-warn); }

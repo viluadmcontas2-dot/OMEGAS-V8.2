@@ -7,16 +7,18 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+const chartSource = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/components/curve-chart.js'), 'utf8');
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
 context.globalThis = context;
 vm.createContext(context);
+require('./_support.cjs').preload(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 const model = context.OmegasUi.AutoCalUxModel;
 
-assert.match(source, /Petrol Inj\. \(ms\)/);
-assert.match(source, /MAP \(bar\)/);
-assert.match(source, /autocal-axis-tick-x/);
-assert.match(source, /autocal-axis-tick-y/);
+assert.match(chartSource, /Petrol Inj\. \(ms\)/);
+assert.match(chartSource, /MAP \(bar\)/);
+assert.match(chartSource, /autocal-axis-tick-x/);
+assert.match(chartSource, /autocal-axis-tick-y/);
 assert.match(source, />SEM REFERÊNCIA</);
 assert.match(source, /REFERÊNCIA FORA DA JANELA/);
 assert.match(source, /referenceTimingSpanMs/);

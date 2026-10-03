@@ -9,6 +9,7 @@ const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/a
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
 context.globalThis = context;
 vm.createContext(context);
+require('./_support.cjs').preload(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 const model = context.OmegasUi.AutoCalUxModel;
 

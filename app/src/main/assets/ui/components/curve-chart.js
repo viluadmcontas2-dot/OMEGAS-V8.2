@@ -21,7 +21,7 @@
   ];
   const STALL_LEGEND = { key: 'stall', label: 'Motor apagou' };
 
-  // ------------------------------------------------------------------ assinatura barata (sem JSON.stringify)
+  // ------------------------------------------------------------------ assinatura barata (sem serializar pontos)
   function mixNumber(hash, value) {
     const n = Number.isFinite(value) ? Math.round(value * 10000) | 0 : 0x7fffffff;
     return Math.imul(hash ^ n, 16777619) >>> 0;
@@ -93,6 +93,10 @@
     const sorted = values.slice().sort((a, b) => a - b);
     const mid = sorted.length >> 1;
     return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  function weightedMean(values, weights) {
+    const total = weights.reduce((a, b) => a + b, 0) || 1;
+    return values.reduce((acc, v, i) => acc + v * weights[i], 0) / total;
   }
   function weightedMedian(values, weights) {
     const pairs = values.map((v, i) => [v, weights[i]]).sort((a, b) => a[0] - b[0]);
@@ -177,7 +181,10 @@
       const spread = Math.max(...ys) - Math.min(...ys);
       const bandHeight = Number.isFinite(slots[slot].upperBar - slots[slot].lowerBar) ? slots[slot].upperBar - slots[slot].lowerBar : ySpan / ECU_BAND_COUNT;
       bins.push({
-        fuel: members[0].fuel, slot, tpetMs: weightedMedian(members.map(m => m.tpetMs), weights), mapBar: weightedMedian(ys, weights),
+        fuel: members[0].fuel, slot, kind: slots[slot].kind,
+        // Entre limiares (Refino): centro ponderado das leituras da faixa; nas faixas da ECU (AutoCal): mediana.
+        tpetMs: (c.kind === 'between' ? weightedMean : weightedMedian)(members.map(m => m.tpetMs), weights),
+        mapBar: (c.kind === 'between' ? weightedMean : weightedMedian)(ys, weights),
         samples: n, episodes: members.reduce((a, m) => a + (finite(m.episodes) ?? 1), 0), count: members.length,
         rpmMedian: weightedMedian(members.map(m => finite(m.rpmMedian) ?? 0), weights),
         idleShare: members.reduce((a, m, i) => a + (finite(m.idleShare) ?? 0) * weights[i], 0) / n,

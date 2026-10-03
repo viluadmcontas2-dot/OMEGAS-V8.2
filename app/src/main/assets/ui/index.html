@@ -8,6 +8,11 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles-calibration-obd.css">
+  <link rel="stylesheet" href="styles-refine.css" data-refine-style>
+  <link rel="stylesheet" href="styles-autocal-cockpit.css" data-autocal-cockpit-style="true">
+  <link rel="stylesheet" href="styles-dashboard-now.css" data-dashboard-now="true">
+  <link rel="stylesheet" href="styles-shell-status.css" data-vehicle-strip-style="true">
+  <link rel="stylesheet" href="styles-split-layout.css" data-split-layout-style="true">
   <link rel="stylesheet" href="styles-floors.css">
   <link rel="stylesheet" href="styles-lote-f.css">
 </head>
@@ -30,7 +35,7 @@
       </nav>
 
       <div class="rail-status">
-        <span id="globalEcu" data-online="false">ECU offline</span>
+        <span id="globalEcu" data-online="false" data-link="nocable">Sem cabo</span>
         <b id="globalFuel" data-fuel="—">—</b>
       </div>
     </aside>
@@ -42,34 +47,7 @@
       </header>
 
       <main class="screen-host">
-        <section class="screen active" data-screen="dashboard" aria-labelledby="dashboardTitle">
-          <div class="page-intro">
-            <div><small>AGORA</small><h2 id="dashboardTitle">O que o motor está fazendo</h2></div>
-            <p>O essencial da sessão em tempo real. Sem gráficos decorativos.</p>
-          </div>
-
-          <div class="now-grid">
-            <section class="hero-reading">
-              <small>PETROL INJ.</small>
-              <div><strong id="dashPetrol">—</strong><em>ms</em></div>
-              <p id="dashPetrolContext">referência atual em gasolina</p>
-            </section>
-
-            <section class="condition-strip" aria-label="Condição física atual">
-              <div><small>RPM</small><b id="dashRpm">0</b></div>
-              <div><small>MAP</small><b><span id="dashMap">—</span> bar</b></div>
-              <div><small>COMBUSTÍVEL</small><b id="dashFuel">—</b></div>
-              <div class="diagnostic"><small>GAS INJ.</small><b><span id="dashGas">—</span> ms</b><span>pulso GNV · diagnóstico</span></div>
-            </section>
-
-
-            <section id="dashHealth" class="session-state" data-level="offline">
-              <span class="state-indicator"></span>
-              <div><small>SESSÃO</small><b>Aguardando ECU</b><p data-health-detail>Conecte a ECU para iniciar a sessão</p></div>
-              <div class="state-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashAge">—</span></div>
-            </section>
-          </div>
-        </section>
+        <section class="screen active" data-screen="dashboard" aria-label="Agora"></section>
 
         <section class="screen map-screen" data-screen="map" aria-labelledby="mapTitle">
           <div class="map-workspace">
@@ -175,12 +153,12 @@
     <div id="alertToast" class="alert-toast" role="status" aria-live="polite"><b></b><button type="button" aria-label="Fechar">×</button></div>
   </div>
 
+  <script src="core/display-rules.js" defer></script>
   <script src="map-editor.js" defer></script>
   <script src="core/native-api.js" defer></script>
   <script src="core/store.js" defer></script>
   <script src="core/router.js" defer></script>
   <script src="core/scheduler.js" defer></script>
-  <script src="core/display-rules.js" defer></script>
   <script src="core/live-store.js" defer></script>
   <script src="components/drawers.js" defer></script>
   <script src="screens/dashboard.js" defer></script>

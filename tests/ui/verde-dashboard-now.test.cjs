@@ -76,5 +76,6 @@ test('dashboard é consumidor Red ou Verde e não carrega Blue', () => {
 
 
 test('dashboard não converte ausência de telemetria em zero físico', () => {
-  assert.match(dashboard, /value === null \|\| value === undefined \|\| value === ""/);
+  assert.match(dashboard, /const finite = rules\.finite/);
+  assert.doesNotMatch(dashboard, /function finite\(/);
 });

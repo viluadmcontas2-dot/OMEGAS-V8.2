@@ -10,6 +10,7 @@ const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/a
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
 context.globalThis = context;
 vm.createContext(context);
+require('./_support.cjs').preload(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 
 const model = context.OmegasUi?.AutoCalUxModel;
@@ -63,6 +64,6 @@ const requestBody = source.slice(requestStart, requestEnd);
 assert.match(requestBody, /pendingPointReacquisitionKeys = new Set/);
 assert.doesNotMatch(requestBody, /selectedAcquiredPoints\.clear\(\)/,
   'início assíncrono não pode apagar a seleção antes do resultado final');
-assert.match(source, /A seleção só será limpa após confirmação da ECU/);
+assert.match(source, /A seleção só é limpa depois que a ECU confirmar/);
 
 console.log('AUTOCAL_BATCH_RECOVERY_INTENT=PASS');

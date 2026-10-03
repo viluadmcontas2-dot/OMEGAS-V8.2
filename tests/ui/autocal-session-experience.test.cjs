@@ -43,6 +43,7 @@ assert.match(css, /\.autocal-session-drawer\s*\{/);
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
 context.globalThis = context;
 vm.createContext(context);
+require('./_support.cjs').preload(context);
 vm.runInContext(cockpit, context, { filename: 'autocal-cockpit.js' });
 const model = context.OmegasUi.AutoCalUxModel;
 
