@@ -4,16 +4,19 @@ ROOT = Path(__file__).resolve().parents[1]
 MONITOR = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt").read_text(encoding="utf-8")
 
 
+PLANNER = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt").read_text(encoding="utf-8")
+
+
 def test_pause_gates_acquisition_refresh_but_not_reference_k_refresh():
-    assert "acquisitionEnabled && refreshDue.acquisition" in MONITOR
-    reference_line = next(line for line in MONITOR.splitlines() if "val referenceRefresh = if" in line)
-    assert "acquisitionEnabled" not in reference_line
-    assert "refreshDue.reference" in reference_line
+    # Lote D: o gate mora no planner; a pausa fecha só a família de aquisição, a referência segue.
+    assert "val acquisition = acquisitionEnabled && due.acquisition" in PLANNER
+    assert "val reference = due.reference" in PLANNER
+    assert "acquisitionEnabled = synchronized(lock) { autoCalEnabled } == 1" in MONITOR
 
 
 def test_mul_act_remains_in_reference_refresh_group():
-    start = MONITOR.index("private val REFERENCE_REFRESH_FIELDS")
-    block = MONITOR[start:start + 600]
+    start = PLANNER.index("G5_MUL_ACT(")
+    block = PLANNER[start:start + 700]
     assert "AutoCalProtocol.MUL_ACT" in block
     assert "AutoCalProtocol.PETR_INJ_TBP" in block
     assert "AutoCalProtocol.GAS_MNFLD_PRESS_RV" in block

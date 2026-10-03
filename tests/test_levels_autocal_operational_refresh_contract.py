@@ -12,7 +12,10 @@ protocol = PROTOCOL.read_text(encoding="utf-8")
 scale = SCALE.read_text(encoding="utf-8")
 dashboard = DASHBOARD.read_text(encoding="utf-8")
 
-section = monitor.split("private fun refreshAcquisitionGroup", 1)[1].split("private fun refreshReferenceGroup", 1)[0]
+# Lote D: os campos de aquisição moram nos grupos G2/G3/G4/G6 do planner (<= 3 leituras cada).
+PLANNER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt"
+planner = PLANNER.read_text(encoding="utf-8")
+section = planner.split("G2_PETROL_BUFFERS(", 1)[1].split("G5_MUL_ACT(", 1)[0]
 required = [
     "PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_UPD_PETR",
     "PETR_INJ_TBUF_GAS_PREV", "MNFLD_PRESS_BUF_GAS_PREV",

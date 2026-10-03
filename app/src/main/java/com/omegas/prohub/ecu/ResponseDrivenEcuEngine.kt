@@ -126,6 +126,11 @@ class ResponseDrivenEcuEngine(
     override fun currentSessionId(): Long =
         physicalSessionId.takeIf { usb.connected && it > 0L } ?: 0L
 
+    override fun liveFrameCount(): Long = telemetryFrames
+
+    override fun liveFrameAgeMs(): Long =
+        lastValidTelemetryAtMs.takeIf { it > 0L }?.let { SystemClock.elapsedRealtime() - it } ?: -1L
+
     override fun recentTelemetryFrames(
         fromElapsedMs: Long,
         toElapsedMs: Long,
