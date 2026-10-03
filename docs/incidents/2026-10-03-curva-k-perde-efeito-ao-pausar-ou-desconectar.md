@@ -49,7 +49,7 @@ Consequências diretas:
    - para cada uma das 12 colunas: `novo = clamp(trunc(atual × f_r), 0, 255)`. O arredondamento é **truncamento** (modo de arredondamento da FPU em corte) e a escrita satura em 0 e 255. Como `f` é um multiplicador puro, **não há valor neutro do mapa envolvido** (100 ou 128 não importam), o que fecha esse ponto aberto;
    - a célula é gravada pelo `TAebMatrix.SetData` normal; com a ECU conectada isso é a escrita `14 54 00 rr cc vv` (144 frames como no LN);
    - **ao final o ProgBase zera a curva na mesma operação:** a última instrução da rotina chama `MUL_ACT.ResetDefault(true)` (`TAebVector::ResetDefault`, slot `0x94` da vtable). Ela devolve cada ponto ao valor padrão do DFM (`MUL_ACT` = 1,0 nos 30 pontos) e grava o vetor inteiro na ECU. Assim o ganho não vale duas vezes. Um "Consolidar" do app deve manter essa garantia, com a escrita de 30 pontos como etapa visível no preview e no readback (o fluxo de reset da Curva K já existe);
-   - a unidade, as dimensões e o estado final do reset estão provados (seção do EXE). Resta validar por replay offline com dados reais, porque o Export to K nunca foi executado. **Nenhuma escrita é implementada sem essa validação e sem a decisão do proprietário.**
+   - a unidade, as dimensões e o estado final do reset estão provados (seção do EXE). O replay offline com dados reais foi feito (ver acima). Falta a validação física no carro. **Nenhuma escrita é implementada sem a decisão do proprietário.**
 4. **`01 12 00` antes de `00 01 01`:** manter como lacuna documentada; não há evidência de que explique o sintoma e sua semântica continua `DESCONHECIDO`. Só promover a paridade depois de desmontar `TAebProtocol.Disconnect` (a exportação `TAebProtocol.CheckEEpromWrite` no DUMP sugere que o protocolo tem noção de gravação em EEPROM, mas nada liga isso a este frame).
 
 ## Pergunta do proprietário: o ProgBase tem "salvar/gravar a configuração" na ECU?
@@ -103,7 +103,27 @@ A "linha azul" é o gráfico `ChartKLine`/`KLine` (a Curva K, `MUL_ACT`). Isto �
 | Frame do reset final | Com `RowIndex = -1` e o flag de escrita por elemento desligado (padrão do construtor, `0x00978898`), `TAebVector::SetDataInEcu(int*)` cai em `TAebProtocol::SetVector`: um frame de vetor longo para os 30 pontos, não 30 frames indexados. Pelo código do `SetVector` o formato é `37 61 3E 01` + 60 bytes de dado + checksum (opcode `0x30|min(len,7)`, SC lo, `len+1` quando `len ≥ 7`, SC hi, dados em little-endian). O formato longo nunca apareceu no LN. | INFERIDO (código, sem captura) |
 | Efeito do reset | Estado final igual ao do Reset K por ponto (`14 61 01 ii 00 40`, 30 vezes): `MUL_ACT = 1,0`. O app pode usar o reset por ponto que já existe e já tem ACK e readback; o frame do ProgBase não precisa ser replicado. | PROVADO (estado final) |
 
-**Ainda em aberto:** nunca houve uma execução real do Export to K (código morto), logo não existe captura do Mapa K antes e depois. A única prova possível é um replay offline: aplicar o algoritmo acima ao Mapa K e à `MUL_ACT` reais do LN e do app, e inspecionar o resultado antes de qualquer escrita.
+**Replay offline com dados reais (feito).** `python3 tools/omegas/export_to_k_replay.py PortmonLOGNOVO.LOG` aplica o algoritmo ao Mapa K e à `MUL_ACT` reais do log, sem tocar na ECU. Resultado no mapa original do carro (leitura seq 36, valores 162 a 181) com a curva aprendida pelo carro (seq 342, fatores 0,788 a 1,337):
+
+| Linha | ref (ms) | fator | exemplo (1ª coluna) |
+|---|---|---|---|
+| 0 | 2,00 | 0,808 | 162 → 130 |
+| 1 | 2,50 | 0,788 | 162 → 127 |
+| 4 | 4,50 | 1,112 | 167 → 185 |
+| 5 | 6,00 | 1,301 | 166 → 215 |
+| 6 | 8,00 | 1,255 | 172 → 215 |
+| 8 | 12,0 | 0,987 | 168 → 165 |
+| 11 | 18,0 | 1,087 | 165 → 179 |
+
+- As 12 linhas caem dentro do eixo, as 144 células mudam, nenhuma satura em 0 ou 255, e a 13ª linha fica intacta.
+- A interpolação confere com a leitura direta da curva (por exemplo, 2,501 ms fica entre os pontos de 2,5 e 3,0 ms e dá 0,788).
+- Divergência entre ponto flutuante e racional exato: 0 células. O risco do x87 do ProgBase contra o `double` do Python não aparece nestes dados.
+- Um segundo export com a curva já em 1,0 não altera nenhuma célula, então o reset final torna a operação idempotente.
+- Com a curva neutra (seq 1496, depois do Reset All) o mapa não muda.
+- Estresse com as 9 capturas de curva do app (4 curvas distintas, fatores de 0,865 a 1,500): nenhuma saturação, nenhuma linha pulada.
+- Os mesmos 144 cálculos rodam nas três leituras do Mapa K do log (162/165, 149 e 166). A diferença entre as leituras é o problema L-07, não do algoritmo.
+
+**O que o replay não prova:** que o resultado seja o que a ECU aplica como correção física. Isso só se fecha no carro. O Export to K nunca foi executado (código morto), então não há resultado do ProgBase para comparar. Por isso a escrita no app continua dependendo da decisão do proprietário e de uma validação física.
 
 **3. Alcançabilidade.** Nenhuma chamada direta ao handler, nenhuma referência ao campo da ação (`+0x324`) no código do `TAutoCalUI` e nenhum menu ou botão no DFM: o Export to K não é executável pela interface desta build.
 
@@ -135,6 +155,8 @@ python3 tools/omegas/portmon_session_boundary_report.py PortmonLOGNOVO.LOG
 python3 tools/omegas/portmon_session_boundary_report.py PortmonLOGNOVO.LOG --json > boundary-report.json
 # mensagens do fabricante e índices empilhados pelo TAutoCalUI (ProgBase.exe.Dump.bin da pasta DUMP)
 python3 tools/omegas/progbase_exe_messages.py ProgBase.exe.Dump.bin
+# replay offline do Export to K com o Mapa K e a Curva K reais do log
+python3 tools/omegas/export_to_k_replay.py PortmonLOGNOVO.LOG
 ```
 
 Sessões do app usadas (Drive do proprietário, somente leitura): `events_0001.jsonl (31).json` (sessão de 01/10 18:49 UTC, 1 snapshot nativo) e `session_2026-10-02_20-57-58_ec1b2fd9_parte_0002/0003/0008/0029/0030/0035/0055/0100/0105/0107.zip` (summary por parte: `actionReceipts` 0→1→3, `autoMatchExecuted` 2→3→0→1→3, `autoCalEnabled` sempre 1; `MUL_ACT` extraído dos eventos `autocal_native_snapshot`). O que extrair de cada uma está descrito nos itens 1 e 2 da seção "O que a ECU faz com a curva".
