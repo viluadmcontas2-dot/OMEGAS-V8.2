@@ -16,7 +16,7 @@ CLASSES = [
     "com.omegas.prohub.autocal.RefinementJournalDecisionTest",
     "com.omegas.prohub.diagnostics.SessionResumoDiagnosticTest",
 ]
-COMMAND = ["./gradlew", "testDebugUnitTest", "--console=plain"]
+COMMAND = ["bash", "./gradlew", "testDebugUnitTest", "--console=plain"]
 for name in CLASSES:
     COMMAND += ["--tests", name]
 MUTANTS = [
@@ -58,6 +58,15 @@ def run_case():
     return run.returncode, failures, len(cases), round(time.monotonic() - started, 3)
 
 def main():
+    # Build canonical chama chmod +x; isso não é mutação de código. Verificar bytes
+    # antes de restaurar só o modo registrado, sem dispensar git diff --exit-code.
+    wrapper = ROOT / "gradlew"
+    expected_wrapper = subprocess.check_output(["git", "show", "HEAD:gradlew"], cwd=ROOT)
+    if wrapper.read_bytes() != expected_wrapper:
+        raise RuntimeError("gradlew mudou conteúdo antes da mutação")
+    wrapper_mode = int(subprocess.check_output(
+        ["git", "ls-files", "-s", "--", "gradlew"], cwd=ROOT).split()[0], 8) & 0o777
+    wrapper.chmod(wrapper_mode)
     originals = {file: file.read_text() for _, file, _, _, _ in MUTANTS}
     receipt = {"class": 2, "physicalValidationClaimed": False, "mutants": []}
     try:

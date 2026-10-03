@@ -1,6 +1,13 @@
 # OMEGAS Platina — Status
 
 ## Missão ciclo de vida / caixa-preta — 2026-10-03
+- Infraestrutura #123 integrada em `8197d9ca631711b116b474342062c14e96285b7f`; produto inalterado.
+- Prova da infraestrutura: fonte `85b90304e631d4fbdde0ae8d685451a8bafe0877`, CI `37106396745`; gate APK+26 renders `37106396948` (27/27 jobs success, classe 2/4).
+- Artifact `11268149281`, APK 4.824.552 bytes; SHA-256 `fec651131dd2f00822219ff3c85d2c81871f4a049d13ea6619dbd98028216d7c`; ZIP digest `7225963b8db51a1364c05deeab2582ffb4d27b2eccf188770c4c17cae4bb5174`. Não prova correções da PR #122.
+- PR #122: contratos/JVM/lint verdes em `37107213513`, fonte `a5595656bcc90a811c48e3a2176465a46f919834`.
+- Mutantes em `37107213575`: 8/8 detectados por RED comportamental; baseline restaurada passou, gate falhou por permissão de gradlew alterada pelo build. APK/render desta fonte bloqueados; verificador corrigido sem relaxar assertivas.
+- Tetos do host provados em classe 2: leitura 30 s; proposta/rollback 30 min; aquisição/automático/verificação 40 min. Não são prova de término da ECU, nem limites de outros módulos.
+- Reinício/saltos de calendário/falha-cura/separação transporte–funcional e operandos Journal: classe 2; silêncio jamais autoriza conclusão nativa.
 - Base reconciliada: OmegasPlatina `78d4eda57a5fa80978aa8f732d669888a70c5bb1` (contrato #121).
 - PR #122 / branch `work/platina-refino-blackbox-20261003`: em execução, **não pronta para carro**.
 - RED classe 2: run `37105089434`, merge SHA `9bbfd89a141672bef04bae941360b983d7a6832b`, 605 testes JVM / 5 falhas novas; contratos rápidos passaram. Testes anteriores intactos.

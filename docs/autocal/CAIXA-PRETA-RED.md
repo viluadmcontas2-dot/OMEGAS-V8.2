@@ -82,3 +82,16 @@ Não altera matemática nesta PR: os limiares atuais ainda serão unificados em 
 Arquivo/sessão antigos são contexto, não evento novo: assinatura inicial impede replay
 de veredito antigo como decisão desta sessão. Eventos persistem no worker, fora da main.
 GREEN amplo, mutantes, APK/render desta fonte pendentes.
+
+
+## Passada de falsificação — mutantes de comportamento
+Run 37107213575, job 111157984399, fonte a5595656: os 8 mutantes produziram
+o RED esperado em relatórios JUnit compilados; nenhum sobreviveu. Baseline restaurada
+passou; gate final falhou por gradlew 100644→100755, causado pelo chmod do build anterior.
+APK/render deste run não foram publicados/executados; não alegar prontidão.
+Correção do executor preserva git diff --exit-code integral: confere bytes de gradlew
+contra HEAD antes de restaurar somente o modo registrado; invoca wrapper por bash.
+Não afrouxa nenhum oráculo, não ignora diff de fonte, não mascara conteúdo.
+Primeiro veredito pode sumir no baseline antes do primeiro healthTick: novo teste de
+render integra service→SessionRecorder worker→JSONL→RESUMO, sem mock de persistência;
+deve demonstrar RED antes da correção do latch. UI offline/timeout também aguarda RED.

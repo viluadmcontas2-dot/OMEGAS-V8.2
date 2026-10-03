@@ -280,6 +280,63 @@ class RefinoRenderTest {
     // ------------------------------------------------------------------ cenários (uma fase do piloto por print)
 
 
+
+    @Test
+    fun refinoFirstVerdictReachesSessionWorkerAndResumo() {
+        val scenario = launch()
+        var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null
+        try {
+            val service = service(scenario)
+            recorder = service.sessionRecorder
+            val started = recorder.start("EVIDENCE_FIRST_EXPERIMENT")
+            assertTrue(started.toString(), started.optBoolean("ok"))
+            synth(service, "GASOLINA")
+            synth(service, "GNV", ratio = 1.12)
+            val axis = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
+            service.refinementJournal.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 },
+                axis, service.equivalence.index(), "SIMULATED_CONFIRMED_MANUAL_WRITE")
+            service.equivalence.resetGas("SIMULATED_WRITE")
+            synth(service, "GNV")
+            service.refinementJournal.evaluate(service.equivalence.index())
+            assertEquals("VERIFICADO", service.refinementJournal.json().getJSONObject("latest").getString("status"))
+            // Evento encerrou antes do primeiro healthTick: reproduz o latch de baseline antigo.
+            TelemetryForegroundService::class.java.getDeclaredField("verdictBaselineSet").apply {
+                isAccessible = true; setBoolean(service, false)
+            }
+            TelemetryForegroundService::class.java.getDeclaredField("lastVerdictRecordedId").apply {
+                isAccessible = true; set(service, "")
+            }
+            TelemetryForegroundService::class.java.getDeclaredMethod("recordJournalDecision").apply {
+                isAccessible = true; invoke(service)
+            }
+            TelemetryForegroundService::class.java.getDeclaredMethod("recordVerdictIfClosed").apply {
+                isAccessible = true; invoke(service)
+            }
+            val stopped = recorder.stop("EVIDENCE_DONE")
+            val directory = File(stopped.getString("directory"))
+            val events = directory.listFiles()?.filter { it.name.startsWith("events_") && it.name.endsWith(".jsonl") }
+                .orEmpty().flatMap { it.readLines() }.mapNotNull { line -> runCatching { JSONObject(line) }.getOrNull() }
+            val verdicts = events.filter { it.optString("type") == "refinement_verdict" }
+            val md = File(directory, "RESUMO.md").readText()
+            service.refinementAutopilot.observe(true,
+                JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
+                null, service.equivalence.index(), service.refinementJournal.json(), 0)
+            openRefino(scenario)
+            val dom = refinoDom(scenario).put("sessionVerdictCount", verdicts.size)
+                .put("sessionHasReason", verdicts.firstOrNull()?.optJSONObject("data")?.optString("reasonCode").orEmpty())
+                .put("resumo", md)
+            saveEvidence("refino-primeiro-veredito-sessao", dom, scenario,
+                provenance("SYNTHETIC_NON_SCIENTIFIC", "none", "service→session worker→JSONL→RESUMO real; nenhuma USB/escrita"))
+            assertEquals("primeiro veredito não pode sumir no baseline", 1, verdicts.size)
+            assertEquals("BAND_VERIFICATION_COMPLETE", verdicts.single().getJSONObject("data").getString("reasonCode"))
+            assertTrue(md, md.contains("verificação concluída"))
+            assertTrue("números da decisão na sessão", events.any {
+                it.optString("type") == "refinement_decision" &&
+                    it.optJSONObject("data")?.optString("component") == "JOURNAL"
+            })
+        } finally { recorder?.stop("EVIDENCE_CLEANUP"); scenario.close() }
+    }
+
     @Test
     fun refinoWatchdogHonest() {
         val scenario = launch()

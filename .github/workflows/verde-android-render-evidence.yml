@@ -73,6 +73,9 @@ jobs:
             method: sessionChangeInvalidatesOldTelemetry
           - scenario: dashboard-session-recovered
             method: sessionReconnectRecoversFreshTelemetry
+          - scenario: refino-primeiro-veredito-sessao
+            method: refinoFirstVerdictReachesSessionWorkerAndResumo
+            class: RefinoRenderTest
           - scenario: refino-watchdog-honesto
             method: refinoWatchdogHonest
             class: RefinoRenderTest
