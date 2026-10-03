@@ -75,6 +75,61 @@ class RefinementLifecycleRegressionTest {
         assertFalse(out.getBoolean("automatic"))
     }
 
+    @Test fun reopeningAppCannotResetReadingDeadline() {
+        val dir = java.nio.file.Files.createTempDirectory("refino-restart").toFile()
+        try {
+            val file = java.io.File(dir, "pilot.json")
+            val empty = JSONObject().put("samples", 0).put("bands", JSONArray())
+            var p = RefinementAutopilot(file, durationClock = { now }, clock = { 7_000L })
+            p.observe(true, null, null, empty, noJournal, 0)
+            repeat(3) {
+                now += 10_000L
+                p = RefinementAutopilot(file, durationClock = { now }, clock = { 7_000L })
+                p.observe(true, null, null, empty, noJournal, 0)
+            }
+            assertEquals("TENTATIVA_ENCERRADA", p.json().getString("phase"))
+            assertEquals(30_000L, p.json().getJSONObject("diagnostic").getLong("elapsedMs"))
+        } finally { dir.deleteRecursively() }
+    }
+
+    @Test fun calendarJumpDoesNotChangeDeadlineOrDecision() {
+        var wall = 1_000_000L
+        val p = RefinementAutopilot(null, durationClock = { now }, clock = { wall })
+        val empty = JSONObject().put("samples", 0).put("bands", JSONArray())
+        p.observe(true, null, null, empty, noJournal, 0)
+        repeat(9) {
+            now += 3_000L
+            wall += if (it % 2 == 0) 86_400_000L else -172_800_000L
+            assertEquals("LENDO_ECU", p.observe(true, null, null, empty, noJournal, 0).getString("phase"))
+        }
+        now += 3_000L
+        assertEquals("TENTATIVA_ENCERRADA", p.observe(true, null, null, empty, noJournal, 0).getString("phase"))
+    }
+
+    @Test fun everyWaitingPhaseHasAnIndependentExitAndRecoversOnNewEvidence() {
+        val cases = listOf("COLETANDO_NOSSOS", "PROPOSTA_PRONTA", "VERIFICANDO", "RESTAURAR_TRECHO")
+        for (phase in cases) {
+            now = 1_000L
+            val p = RefinementAutopilot(null) { now }
+            val idx = if (phase == "COLETANDO_NOSSOS") JSONObject().put("samples", 0).put("bands", JSONArray()) else index(1.12)
+            val journal = when (phase) {
+                "VERIFICANDO" -> JSONObject().put("latest", JSONObject().put("id", "e").put("status", "VERIFICANDO"))
+                "RESTAURAR_TRECHO" -> JSONObject().put("latest", JSONObject().put("id", "e").put("status", "PIOROU_EM_PARTE"))
+                else -> noJournal
+            }
+            val restore = if (phase == "RESTAURAR_TRECHO") 3 else 0
+            assertEquals(phase, p.observe(true, done(), null, idx, journal, restore).getString("phase"))
+            val budget = RefinementAutopilot.PHASE_BUDGET_MS.getValue(phase)
+            now += budget
+            val expired = p.observe(true, done(), null, idx, journal, restore)
+            assertEquals(phase, "TENTATIVA_ENCERRADA", expired.getString("phase"))
+            assertEquals(budget, expired.getJSONObject("diagnostic").getLong("elapsedMs"))
+            now += 3_000L
+            val recovered = p.observe(true, done(), null, index(), noJournal, 0)
+            assertEquals(phase, "ESTAVEL", recovered.getString("phase"))
+        }
+    }
+
     @Test fun automaticWaitHasCeilingWithoutDeclaringEcuDone() {
         val p = RefinementAutopilot(null) { now }
         val working = JSONObject().put("autoMatchCount", 0).put("maxAutomatch", 3).put("autoCalEnabled", 1)

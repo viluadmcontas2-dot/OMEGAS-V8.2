@@ -7,6 +7,18 @@ import java.util.TimeZone
 
 /** Classe 2: o mesmo evento do serviço precisa virar texto de diagnóstico. */
 class SessionResumoDiagnosticTest {
+    @Test fun verifiedWithoutConfirmedBandsDoesNotInventImprovement() {
+        val resumo = SessionResumo("s", 1_000L, TimeZone.getTimeZone("UTC"))
+        resumo.observe("refinement_verdict", JSONObject()
+            .put("id", "e").put("status", "VERIFICADO")
+            .put("ratioBefore", 1.12).put("ratioAfter", 1.10)
+            .put("bands", org.json.JSONArray(listOf(JSONObject()
+                .put("fromMs", 3.0).put("toMs", 4.5).put("verdict", "CURTA")))), 2_000L)
+        val md = resumo.markdown()
+        assertFalse("VERIFICADO só significa comparação concluída, não curva equivalente", md.contains("melhorou e foi confirmada"))
+        assertTrue(md, md.contains("verificação concluída"))
+    }
+
     @Test fun watchdogIsVisibleAndDoesNotBecomeSuccess() {
         val resumo = SessionResumo("s", 1_000L, TimeZone.getTimeZone("UTC"))
         val changed = resumo.observe("refinement_diagnostic", JSONObject()
