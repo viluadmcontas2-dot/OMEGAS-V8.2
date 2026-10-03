@@ -59,7 +59,14 @@ class RefinoRenderTest {
     }
 
     private fun corpus(name: String): JSONObject {
-        val bytes = instrumentation.context.assets.open("real/$name.json.gz").use { GZIPInputStream(it).readBytes() }
+        val assets = instrumentation.context.assets
+        val candidates = listOf("$name.json.gz", "real/$name.json.gz")
+        val opened = candidates.firstNotNullOfOrNull { path -> runCatching { assets.open(path) }.getOrNull() }
+            ?: error(
+                "corpus real ausente no APK de teste: $candidates; raiz=${assets.list("")?.sorted()}; " +
+                    "real=${assets.list("real")?.sorted()}"
+            )
+        val bytes = opened.use { GZIPInputStream(it).readBytes() }
         return JSONObject(String(bytes, Charsets.UTF_8))
     }
 

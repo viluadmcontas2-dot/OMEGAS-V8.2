@@ -2311,3 +2311,14 @@
 .refino-history li { margin: 2px 0; }
 .refino-history li[data-status="PIOROU_EM_PARTE"] { color: #ff9b9b; }
 .refino-history li[data-status="VERIFICADO"] { color: #8fe3bd; }
+
+/* O texto de contexto do ponto nunca empurra o inspector para fora da tela 1280x720:
+   passa a rolar dentro da própria caixa (nada é cortado, só deixa de crescer a página). */
+.autocal-chart-inspector {
+  align-self: start;
+  max-height: 68px;
+  overflow-y: auto;
+}
+.refino-cockpit .autocal-chart-inspector {
+  max-height: 96px;
+}
