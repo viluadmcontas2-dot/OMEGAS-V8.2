@@ -355,8 +355,8 @@ class EquivalencePhases(
                     dirty = true
                 }
                 val point = points.firstOrNull { it.index == proof.index }
-                if (point?.mixture != null) proof.mixtureNow = point.mixture
                 val mixture = point?.mixture
+                if (mixture != null) proof.mixtureNow = mixture
                 if (point == null || mixture == null || point.samples < PROOF_MIN_SAMPLES) {
                     if (proof.onlineMs >= PROOF_TIMEBOX_ONLINE_MS) {
                         proof.verdict = PointState.INCONCLUSIVO

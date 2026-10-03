@@ -73,10 +73,7 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
     ): EquivalenceResult? {
         val curve = EquivalenceEngine.curveFromSnapshot(snapshot) ?: return null
         val (axisRaw, mulActRaw) = curve
-        // O GNV medido com outra curva não vale: alinha o livro à curva lida (já era feito pela tela do Refino).
-        val epochBefore = ledger.gasEpochToken()
-        ledger.alignCurve(EquivalenceLedger.fingerprint(mulActRaw))
-        if (ledger.gasEpochToken() != epochBefore) experience.resetGas("CURVA_K_MUDOU_FORA_DO_APP")
+        // Só lê: o alinhamento do livro à curva da ECU continua com a ponte e com os avisos do monitor nativo.
         val reference = references.current()
         val provisional = if (reference == null) references.provisional(acquisition) else null
         val scale = gainScale(axisRaw.map { it / com.omegas.prohub.autocal.AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS })
