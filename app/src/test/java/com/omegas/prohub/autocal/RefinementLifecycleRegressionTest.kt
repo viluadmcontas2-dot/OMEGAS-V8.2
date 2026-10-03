@@ -27,6 +27,21 @@ class RefinementLifecycleRegressionTest {
         assertTrue(out.isNull("autoMatchCount"))
     }
 
+    @Test fun offlineCannotReuseStaleGasAcquisition() {
+        val p = RefinementAutopilot(null) { now }
+        val acquisition = JSONObject().put("points", JSONArray(listOf(
+            JSONObject().put("fuel", "GNV").put("state", "VALIDO").put("zone", 0).put("zoneAcquired", true),
+            JSONObject().put("fuel", "GASOLINA").put("state", "VALIDO").put("zone", 0).put("zoneAcquired", true)
+        )))
+        p.observe(true, done(), acquisition, index(), noJournal, 0)
+        now += 3_000
+        val offline = p.observe(false, done(), acquisition, index(), noJournal, 0)
+        assertTrue("gasValid antigo não é medição atual", offline.isNull("gasValid"))
+        assertTrue("petrolValid antigo não é medição atual", offline.isNull("petrolValid"))
+        assertEquals(0, offline.getInt("gasZones"))
+        assertEquals(0, offline.getInt("petrolZones"))
+    }
+
     @Test fun readingWithoutAnyEcuResponseExpiresInThirtySeconds() {
         val p = RefinementAutopilot(null) { now }
         val empty = JSONObject().put("samples", 0).put("bands", JSONArray())

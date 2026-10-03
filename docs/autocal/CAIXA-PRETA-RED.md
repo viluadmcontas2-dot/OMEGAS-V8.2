@@ -32,3 +32,17 @@ Log fonte: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/371050
 9. Journal offline, monitor/source freshness, writers globais e publish continuam lacunas registradas.
 10. Retoma com evidência nova, sem adicionar botão/chave.
 11. Falsificação seguinte: timestamp extremo, antigo latch mesmo contador, timeout com proposta velha, kill no instante do diagnóstico, falha-e-cura.
+
+
+## AF1 — correção isolada de contrato antigo
+CI 37105574334, job 111153295465, fonte e66c0f06: 605 testes, 1 falha.
+O teste EcuReferenceCycleTest exigia PROPOSTA_PRONTA sem ECU (linha 122).
+Prova de contrato errado, classe 1: blueprint vinculante exige estado antes da ação,
+sem falso sucesso visual e estado sem conexão; invariantes exigem intenção, ACK/readback.
+Prova comportamental, classe 2: novo offlineNeverPresentsLastStableStateAsCurrent falhou
+no código antigo (37105089434) e passou na correção. Histórico permanece no ledger.
+Troca em commit só de teste/documentação: SEM_ECU, sem autorização nem contador atual,
+mesma amostragem/referência preservada, proposta retomada após reconexão.
+Não relaxa a matemática, os limites ou os oráculos de veredito.
+Novo adversarial offlineCannotReuseStaleGasAcquisition deve falhar no código atual:
+a revisão encontrou gasValid e gasZones lendo a aquisição velha; ainda sem correção.
