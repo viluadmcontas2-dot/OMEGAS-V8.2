@@ -49,7 +49,7 @@ Consequências diretas:
    - para cada uma das 12 colunas: `novo = clamp(trunc(atual × f_r), 0, 255)`. O arredondamento é **truncamento** (modo de arredondamento da FPU em corte) e a escrita satura em 0 e 255. Como `f` é um multiplicador puro, **não há valor neutro do mapa envolvido** (100 ou 128 não importam), o que fecha esse ponto aberto;
    - a célula é gravada pelo `TAebMatrix.SetData` normal; com a ECU conectada isso é a escrita `14 54 00 rr cc vv` (144 frames como no LN);
    - **ao final o ProgBase zera a curva na mesma operação:** a última instrução da rotina chama `MUL_ACT.ResetDefault(true)` (`TAebVector::ResetDefault`, slot `0x94` da vtable). Ela devolve cada ponto ao valor padrão do DFM (`MUL_ACT` = 1,0 nos 30 pontos) e grava o vetor inteiro na ECU. Assim o ganho não vale duas vezes. Um "Consolidar" do app deve manter essa garantia, com a escrita de 30 pontos como etapa visível no preview e no readback (o fluxo de reset da Curva K já existe);
-   - pontos que ainda dependem de medida: a conversão de unidade entre a referência da linha (`TEMPI_PER_K` bruto × escala do ProgBase) e o eixo `PETR_INJ_TBP` (/512 ms) e a conferência com um Export to K real. **Não implementar escrita antes dessas provas e da decisão do proprietário.**
+   - a unidade, as dimensões e o estado final do reset estão provados (seção do EXE). Resta validar por replay offline com dados reais, porque o Export to K nunca foi executado. **Nenhuma escrita é implementada sem essa validação e sem a decisão do proprietário.**
 4. **`01 12 00` antes de `00 01 01`:** manter como lacuna documentada; não há evidência de que explique o sintoma e sua semântica continua `DESCONHECIDO`. Só promover a paridade depois de desmontar `TAebProtocol.Disconnect` (a exportação `TAebProtocol.CheckEEpromWrite` no DUMP sugere que o protocolo tem noção de gravação em EEPROM, mas nada liga isso a este frame).
 
 ## Pergunta do proprietário: o ProgBase tem "salvar/gravar a configuração" na ECU?
@@ -93,7 +93,17 @@ A "linha azul" é o gráfico `ChartKLine`/`KLine` (a Curva K, `MUL_ACT`). Isto �
 
 **Correção registrada:** uma versão anterior deste doc dizia que o Export to K não zerava `MUL_ACT`. Estava errado: eu não tinha resolvido a chamada virtual final. A leitura da vtable mostra que ela é o reset.
 
-**O que ainda não está provado no Export to K:** (a) a conversão de unidade entre a referência da linha (valor bruto × escala do ProgBase, `1e-6` × um fator lido de um objeto global) e o eixo `PETR_INJ_TBP` (/512 ms); (b) o frame exato do `SetDataInEcu` do vetor inteiro (o Reset K por ponto usa `14 61 01 ii lo hi`); (c) o número de linhas e colunas do laço (assumido 12×12 pelas 144 escritas do LN); (d) caso de borda: se dois pontos consecutivos do eixo forem iguais, a interpolação devolve 0 e a linha seria zerada; (e) nunca houve execução real, então não existe captura nem replay para comparar.
+**Pontos que estavam em aberto e foram fechados lendo o EXE e o LOG:**
+
+| Ponto | Resultado | Selo |
+|---|---|---|
+| Unidade da referência de linha | `x_ms = bruto × BASE_TEMPI_GLOBALE × 1e-6` (getter `0x0042EE14`; a escala vem de `0x00433FFC`). No LN, `BASE_TEMPI_GLOBALE` = `0x0A00` = 2560 e os 12 brutos de `TEMPI_PER_K` (781, 977, 1172, 1367, 1758, 2344, 3125, 3906, 4687, 5469, 6250, 7031) dão 2,00 / 2,50 / 3,00 / 3,50 / 4,50 / 6,00 / 8,00 / 10,0 / 12,0 / 14,0 / 16,0 / 18,0 ms, as mesmas faixas de `KMapPhysicalAxes`. O eixo `PETR_INJ_TBP` está em ms (bruto/512) e tem 30 pontos de 0,5 a 22,0 ms, estritamente crescente. Mesma unidade, e as 12 linhas caem dentro da faixa. | PROVADO (código + LN) |
+| Dimensões do laço | O construtor do objeto do Mapa K fixa 12 linhas e 12 colunas (`mov [+0xCF8], 0xC` e `mov [+0xCFC], 0xC` em `0x0042AE4C/58`). O DFM do `MAP_K` declara 13 linhas por 12 colunas; a 13ª não entra no laço. | PROVADO (código + DFM) |
+| Borda `x1 == x0` | `0x0051280C` devolve 0,0 se os dois pontos do eixo coincidem. O eixo da ECU é estritamente crescente, então não ocorre aqui. O app deve recusar um eixo com pontos repetidos em vez de zerar a linha. | PROVADO (código) |
+| Frame do reset final | Com `RowIndex = -1` e o flag de escrita por elemento desligado (padrão do construtor, `0x00978898`), `TAebVector::SetDataInEcu(int*)` cai em `TAebProtocol::SetVector`: um frame de vetor longo para os 30 pontos, não 30 frames indexados. Pelo código do `SetVector` o formato é `37 61 3E 01` + 60 bytes de dado + checksum (opcode `0x30|min(len,7)`, SC lo, `len+1` quando `len ≥ 7`, SC hi, dados em little-endian). O formato longo nunca apareceu no LN. | INFERIDO (código, sem captura) |
+| Efeito do reset | Estado final igual ao do Reset K por ponto (`14 61 01 ii 00 40`, 30 vezes): `MUL_ACT = 1,0`. O app pode usar o reset por ponto que já existe e já tem ACK e readback; o frame do ProgBase não precisa ser replicado. | PROVADO (estado final) |
+
+**Ainda em aberto:** nunca houve uma execução real do Export to K (código morto), logo não existe captura do Mapa K antes e depois. A única prova possível é um replay offline: aplicar o algoritmo acima ao Mapa K e à `MUL_ACT` reais do LN e do app, e inspecionar o resultado antes de qualquer escrita.
 
 **3. Alcançabilidade.** Nenhuma chamada direta ao handler, nenhuma referência ao campo da ação (`+0x324`) no código do `TAutoCalUI` e nenhum menu ou botão no DFM: o Export to K não é executável pela interface desta build.
 
