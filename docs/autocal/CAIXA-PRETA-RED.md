@@ -95,3 +95,13 @@ Não afrouxa nenhum oráculo, não ignora diff de fonte, não mascara conteúdo.
 Primeiro veredito pode sumir no baseline antes do primeiro healthTick: novo teste de
 render integra service→SessionRecorder worker→JSONL→RESUMO, sem mock de persistência;
 deve demonstrar RED antes da correção do latch. UI offline/timeout também aguarda RED.
+
+
+## Identidade do build após mutação
+Run 37107664004, job 111159268243, fonte 11d9baeca929:
+baseline 15/15 antes/depois; 8/8 mutantes detectados, 0 sobreviventes; git diff integral limpo.
+Gate de identidade corretamente bloqueou publicação: BuildConfig foi regenerado durante
+os testes de mutantes com GITHUB_SHA do merge (6d70b82ced77), não PRODUCT_SHA (11d9baeca929).
+Não afrouxar conferência: fornecer OMEGAS_SOURCE_SHA=PRODUCT_SHA também na etapa mutante,
+como já acontece na etapa de build canônico. APK/render deste run não são entrega verde.
+Falha é do pipeline de prova, separada dos vereditos funcionais e do transporte.

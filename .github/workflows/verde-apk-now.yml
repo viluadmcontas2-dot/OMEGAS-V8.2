@@ -91,6 +91,8 @@ jobs:
 
       - name: Refino behavioral mutation probes
         if: ${{ hashFiles('tools/ci/run_refinement_mutants.py') != '' }}
+        env:
+          OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
         shell: bash
         run: python3 tools/ci/run_refinement_mutants.py
 
