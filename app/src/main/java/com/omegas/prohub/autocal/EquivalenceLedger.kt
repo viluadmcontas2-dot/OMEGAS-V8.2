@@ -252,6 +252,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         computed
     }
 
+    /** Cópias das leituras estáveis, na ordem de chegada (o cérebro ajusta as Curvas Próprias sobre elas). */
+    fun petrolObservations(): List<Obs> = synchronized(lock) { petrol.toList() }
+
+    fun gasObservations(): List<Obs> = synchronized(lock) { gas.toList() }
+
     /**
      * Pares que podem corrigir a Curva K: só condução (RPM ≥ [DRIVING_MIN_RPM]) e Petrol Inj. acima
      * do piso da telemetria. A marcha lenta (~870 rpm, ~4,5 ms) tem estratégia própria da ECU e,
