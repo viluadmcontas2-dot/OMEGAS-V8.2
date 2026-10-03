@@ -62,8 +62,8 @@ def test_cockpit_exposes_no_manual_automatch_nor_reset_all():
     assert "MANUAL_AUTOMATCH" not in c
     assert 'data-autocal-action="RESET_ALL"' not in c
     for keep in ('data-autocal-action="RESET_GAS"', 'data-autocal-action="RESET_PETROL"',
-                 'data-autocal-action="RESET_K_FACTOR"', "O AutoMatch nativo é automático e decidido pela ECU.",
-                 "Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0."):
+                 'data-autocal-action="RESET_K_FACTOR"', "O AutoMatch é automático e decidido pela ECU.",
+                 "Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU."):
         assert keep in c, keep
 
 

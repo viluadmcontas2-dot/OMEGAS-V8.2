@@ -133,7 +133,7 @@
     getRefinedAnalysis: () => J(refined()), getEquivalence: () => J(eq()), getEquivalenceFresh: () => J(eq()), getRefinementPhase: () => J({ ok: true, phase: 'COLETANDO_NOSSOS' }),
   };
   const power = { getBatteryOptimizationStatus: () => J({ supported: true, ignoringOptimizations: true }), getOverlayStatus: () => J({ ok: true, supported: true, permissionGranted: true, requestedEnabled: false, visible: false }) };
-  window.OmegasNative = native; window.OmegasV7 = v7; window.OmegasAutoCal = autocal; window.OmegasPower = power; window.OmegasCalibration = calibration;
+  window.OmegasNative = native; window.OmegasAutoCal = autocal; window.OmegasPower = power; window.OmegasCalibration = calibration;
   window.__mockCalls = {};
   [['N', native], ['C', calibration], ['A', autocal], ['P', power]].forEach(([n, o]) => Object.keys(o).forEach(k => { const fn = o[k]; o[k] = function () { window.__mockCalls[n + '.' + k] = (window.__mockCalls[n + '.' + k] || 0) + 1; return fn.apply(this, arguments); }; }));
 })();

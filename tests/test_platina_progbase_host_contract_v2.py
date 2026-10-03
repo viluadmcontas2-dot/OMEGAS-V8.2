@@ -11,7 +11,7 @@ def test_autocal_normal_surface_matches_closed_progbase_host_model():
     assert 'data-autocal-action="FINISH_AUTOCAL"' not in cockpit
     assert 'data-autocal-action="FINISH_AUTOMATCH"' not in cockpit
     assert ".autocal-finish-action" not in css
-    assert "O AutoMatch nativo é automático e decidido pela ECU." in cockpit
+    assert "O AutoMatch é automático e decidido pela ECU." in cockpit
     assert "Nada aqui roda automaticamente." not in cockpit
     assert "autoMatchQuotaReached" in cockpit
     assert "AutoMatch automático " in cockpit
