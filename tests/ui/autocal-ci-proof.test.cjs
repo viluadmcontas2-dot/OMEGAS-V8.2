@@ -1,0 +1,26 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const read = name => fs.readFileSync(path.resolve(__dirname, '../../.github/workflows/' + name), 'utf8');
+test('APK autorizado e render podem provar exatamente o HEAD da PR sem build no push', () => {
+  const apk = read('verde-apk-now.yml');
+  assert.match(apk, /workflow_call:/, 'capacidade reutilizável ausente');
+  assert.match(apk, /build_apk:[\s\S]*?default: false/);
+  assert.match(apk, /inputs\.build_apk == true/);
+  assert.doesNotMatch(apk, /^  push:/m);
+  assert.match(apk, /PRODUCT_SHA:.*inputs\.source_sha/);
+  const render = read('verde-android-render-evidence.yml');
+  assert.match(render, /workflow_call:/);
+  assert.match(render, /ref:.*inputs\.source_sha/);
+  const caller = read('autocal-mission-evidence.yml');
+  assert.match(caller, /pull_request:/);
+  assert.doesNotMatch(caller, /pull_request_target:|^  push:/m);
+  assert.match(caller, /head\.repo\.full_name == github\.repository/);
+  assert.match(caller, /contents: read/);
+  assert.match(caller, /uses: \.\/\.github\/workflows\/verde-apk-now\.yml/);
+  assert.match(caller, /build_apk: true/);
+  assert.match(caller, /source_sha:.*pull_request\.head\.sha/);
+  assert.match(caller, /needs: apk/);
+});

@@ -1,0 +1,30 @@
+name: AutoCal mission exact-SHA evidence
+# Owner authorized APK + render per relevant mission PR (2026-10-03).
+# No push trigger. No fork execution or privileged pull_request_target.
+on:
+  pull_request:
+    branches: [OmegasPlatina]
+    paths:
+      - '.github/workflows/**'
+      - 'app/**'
+      - 'tests/**'
+      - 'tools/**'
+permissions:
+  contents: read
+concurrency:
+  group: autocal-mission-evidence-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  apk:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'work/platina-')
+    uses: ./.github/workflows/verde-apk-now.yml
+    with:
+      build_apk: true
+      source_sha: ${{ github.event.pull_request.head.sha }}
+  render:
+    needs: apk
+    uses: ./.github/workflows/verde-android-render-evidence.yml
+    with:
+      source_sha: ${{ github.event.pull_request.head.sha }}
