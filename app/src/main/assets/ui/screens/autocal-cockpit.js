@@ -369,8 +369,10 @@
         return values.filter(value => value !== null);
       });
       if (!xValues.length) return null;
-      let xMin = Math.min(...xValues);
-      let xMax = Math.max(...xValues);
+      // Lista já filtrada por finite() e não vazia; o reduce evita ±Infinity/NaN mesmo se isso mudar.
+      let xMin = xValues.reduce((best, value) => (value < best ? value : best), xValues[0]);
+      let xMax = xValues.reduce((best, value) => (value > best ? value : best), xValues[0]);
+      if (!Number.isFinite(xMin) || !Number.isFinite(xMax)) return null;
       if (xMax - xMin < 0.01) {
         const pad = Math.max(0.25, Math.abs(xMin) * 0.08);
         xMin -= pad; xMax += pad;

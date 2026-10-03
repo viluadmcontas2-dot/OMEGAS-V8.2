@@ -111,9 +111,11 @@
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const eq = api && typeof api.refinementPhase === "function" ? api.refinementPhase() : null;
         const pilot = eq && eq.autopilot || {};
-        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU auto", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel" };
-        text("dashRefino", labels[pilot.phase] || "\u2014");
-        text("dashRefinoNext", pilot.phase === "ESTAVEL" ? "pode desconectar" : pilot.phase === "PROPOSTA_PRONTA" ? "toque para revisar" : "toque para abrir");
+        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU auto", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel", LENDO_ECU: "Lendo ECU", TENTATIVA_ENCERRADA: "Pausado" };
+        // Prazo vencido com proposta pronta: a proposta continua válida (o botão no Refino continua).
+        const expiredReady = pilot.phase === "TENTATIVA_ENCERRADA" && pilot.expiredFrom === "PROPOSTA_PRONTA";
+        text("dashRefino", expiredReady ? "Pronta" : labels[pilot.phase] || "\u2014");
+        text("dashRefinoNext", pilot.phase === "ESTAVEL" ? "pode desconectar" : pilot.phase === "PROPOSTA_PRONTA" || expiredReady ? "toque para revisar" : "toque para abrir");
       }
       render(state) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;

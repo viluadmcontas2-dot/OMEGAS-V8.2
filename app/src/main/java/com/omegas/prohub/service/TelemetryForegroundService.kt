@@ -238,6 +238,7 @@ class TelemetryForegroundService : Service() {
                 recordCurveExperiment(payload)
                 link.markDataChanged("escrita K factor confirmada")
             },
+            onFailedBatch = { payload -> recordFailedCurveWrite(payload) },
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
         nativeAutoCal = NativeAutoCalMonitor(
@@ -877,12 +878,36 @@ class TelemetryForegroundService : Service() {
                 axisRaw = IntArray(30) { axis.optInt(it) },
                 indexBefore = indexBefore ?: JSONObject(),
                 source = payload.optString("adjustmentId", "K_FACTOR"),
+                photoFile = payload.optString("photoFile", ""),
             )
             // Cada ponto que o dono acabou de mudar entra em prova no cérebro único.
             equivalenceRuntime.onCurveWritten(beforeRaw, afterRaw, equivalencePhases)
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Experimento não registrado: ${error.message}")
         }
+    }
+
+    /**
+     * Escrita da Curva K falhou depois de começar: a ECU pode ter mudado. O GNV medido não vale mais e o diário
+     * guarda a foto de antes para o Desfazer aparecer (fora do <details>). Só observa; nada vai à ECU.
+     */
+    private fun recordFailedCurveWrite(payload: JSONObject) {
+        EvidenceInvalidation.run(
+            invalidate = listOf(
+                "resetGas" to { equivalence.resetGas("CURVA_K_FALHA_PARCIAL") },
+                "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_FALHA_PARCIAL", equivalencePhases) },
+                "journal" to {
+                    refinementJournal.recordFailedWrite(
+                        photoFile = payload.optString("photoFile", ""),
+                        source = payload.optString("adjustmentId", "K_FACTOR"),
+                        partial = payload.optBoolean("partial", false),
+                    )
+                },
+            ),
+            record = { sessionRecorder.record("k_factor_batch_failed", "k_factor", payload, force = true) },
+            warn = { log.add("WARN", "EVIDENCIA", it) },
+        )
+        link.markDataChanged("escrita K factor falhou")
     }
 
     /** O que veio depois de cada apagão (religou, telemetria parou, sem religar) entra na sessão. */
@@ -1111,7 +1136,14 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         try {
             if (!refinementFrozenForRender) {
-                if (refinementJournal.evaluate(equivalence.index(), ecuOnline = usb.connected && runtime.ready)) stateChanged()
+                // O orçamento da verificação conta só condução: rpm ≥ 1000 numa faixa alterada (quadro fresco).
+                val frameFresh = System.currentTimeMillis() - lastDriveFrameAt < 3_500L
+                if (refinementJournal.evaluate(
+                        equivalence.index(), ecuOnline = usb.connected && runtime.ready,
+                        rpm = if (frameFresh) lastDriveRpm else 0.0,
+                        petrolMs = if (frameFresh) lastDrivePetrolMs else null,
+                    )
+                ) stateChanged()
                 // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
                 stallWatch.tick(System.currentTimeMillis())
                 recordStallAnnotations()
@@ -1159,9 +1191,16 @@ class TelemetryForegroundService : Service() {
         }
     }
 
+    @Volatile private var lastDriveRpm = 0.0
+    @Volatile private var lastDrivePetrolMs = 0.0
+    @Volatile private var lastDriveFrameAt = 0L
+
     private fun consumeEngineEvent(root: JSONObject) {
         val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
         val live = root.optJSONObject("live") ?: root.optJSONObject("data") ?: JSONObject()
+        lastDriveRpm = live.optDouble("rpm", 0.0)
+        lastDrivePetrolMs = live.optDouble("petrol_ms", 0.0)
+        lastDriveFrameAt = System.currentTimeMillis()
         val cngActive = live.optString("fuel").uppercase() == "GNV"
         if (cngActive) {
             consumptionTracker.update(

@@ -553,8 +553,11 @@
       }
       const width = 920; const height = 350; const padX = 42; const padY = 34;
       const factors = points.map(item => finite(this.proposals.get(Number(item.index))?.targetFactor ?? item.factor) || 0);
-      const min = Math.max(0.55, Math.min(...factors, ...points.map(item => finite(item.factor) || 0)) - 0.08);
-      const max = Math.max(min + 0.2, Math.max(...factors, ...points.map(item => finite(item.factor) || 0)) + 0.08);
+      const factorList = [...factors, ...points.map(item => finite(item.factor) || 0)].filter(Number.isFinite);
+      const lowFactor = factorList.length ? Math.min(...factorList) : 1;
+      const highFactor = factorList.length ? Math.max(...factorList) : 1;
+      const min = Math.max(0.55, lowFactor - 0.08);
+      const max = Math.max(min + 0.2, highFactor + 0.08);
       const xFor = index => padX + (index / Math.max(1, points.length - 1)) * (width - padX * 2);
       const yFor = factor => height - padY - ((factor - min) / (max - min)) * (height - padY * 2);
       const actualPath = points.map((point, index) => `${index ? 'L' : 'M'} ${xFor(index).toFixed(1)} ${yFor(Number(point.factor)).toFixed(1)}`).join(' ');

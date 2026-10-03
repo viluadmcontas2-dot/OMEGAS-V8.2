@@ -41,6 +41,13 @@
     const pilot = raw && raw.autopilot && typeof raw.autopilot === 'object' ? raw.autopilot : null;
     const phase = pilot && pilot.phase ? String(pilot.phase) : '';
     if (!phase) return null;
+    // Prazo vencido não apaga a proposta: ela continua válida e o botão do Refino continua.
+    if (phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'PROPOSTA_PRONTA') {
+      return { kind: 'REVIEW', text: 'Proposta ainda válida: grave quando quiser, no Refino.', route: 'refino', subpage: '', pointIndexes: [] };
+    }
+    if (phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'ECU_TRABALHANDO') {
+      return { kind: 'REVIEW', text: 'A ECU não terminou o automático no prazo. Revise e grave no Refino, se quiser.', route: 'refino', subpage: '', pointIndexes: [] };
+    }
     const known = PHASE_NEXT_ACTION[phase];
     if (known) return { kind: known[0], text: known[1], route: known[2], subpage: '', pointIndexes: [] };
     const fallback = pilot.next ? String(pilot.next) : '';
