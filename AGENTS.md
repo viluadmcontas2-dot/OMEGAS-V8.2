@@ -26,7 +26,7 @@ Também: `applicationId` continua `com.omegas.v7.test`. Validação física (cla
 
 ## Como trabalhar (enxuto — R12 do índice)
 
-- Base `OmegasPlatina`; uma branch de trabalho por vez (`work/platina-<assunto>`), apagada no merge; PR agrupa fatias e entra com `build_and_test` verde no SHA.
+- Base `OmegasDiamante` (canônica); uma branch de trabalho por vez (`work/platina-<assunto>`), apagada no merge; PR agrupa fatias e entra com `build_and_test` verde no SHA.
 - Issues simples: uma por fatia (`F<N> · …`, #132–#140); PR fecha com `Fecha #n`; épico #131 mapeia fatias e branches.
 - Custo decide onde: escrever e testar local ou direto no GitHub, o que gastar menos tokens. Máximo de mudança antes de testar; teste só quando decide algo.
 - Emulador só no fechamento de UI/UX (F7/F8). Um APK só, no fim (`verde-apk-now.yml`), com SHA-256.

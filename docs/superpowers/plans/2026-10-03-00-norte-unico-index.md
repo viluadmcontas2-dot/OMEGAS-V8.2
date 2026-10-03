@@ -210,6 +210,8 @@ Issues: épico #131; NORTE-WU-00…08 = #132…#140.
 - **Custo decide onde:** escrita e teste local ou direto no GitHub, o que gastar menos tokens. Faça o máximo de mudança coerente antes de testar; teste só quando o resultado decide algo (Python/JS na sessão; Kotlin e o portão completo no CI do PR).
 - PRs agrupam fatias; todo PR entra com `build_and_test` verde no SHA.
 
+**R13. Branch canônica `OmegasDiamante`** (decisão do dono, 2026-10-03). Criada de `OmegasPlatina` @ `a125436` (F0 mesclada). Onde um plano disser `OmegasPlatina` como base ou alvo de PR, leia `OmegasDiamante`. Tudo que estiver verde é mesclado nela na hora. `OmegasPlatina` fica congelada como histórico.
+
 ## Questões abertas para o dono (não bloqueiam F0–F3)
 
 1. **A Referência da ECU contra a gasolina medida.** Na F4, o planejador mediu por cima, nas sessões reais, a curva da ECU 10–16% fora da gasolina lida pela telemetria na mesma sessão. O STATUS antigo dizia "mediana 1,000, 80% dentro de 2,3%". Pode ser diferença de método (célula vs. banda). A Task de validação cruzada da F4 vai medir de verdade; se a diferença se confirmar, é mais um motivo para a Curva Própria existir, e o resultado vai para o STATUS.

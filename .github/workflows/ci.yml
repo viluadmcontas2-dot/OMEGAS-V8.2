@@ -2,9 +2,9 @@ name: OMEGAS PLATINA CI
 
 on:
   push:
-    branches: [ OmegasPlatina ]
+    branches: [ OmegasDiamante, OmegasPlatina ]
   pull_request:
-    branches: [ OmegasPlatina ]
+    branches: [ OmegasDiamante, OmegasPlatina ]
   workflow_dispatch:
 
 jobs:

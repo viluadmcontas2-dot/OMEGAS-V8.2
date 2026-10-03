@@ -1,6 +1,6 @@
 # OMEGAS Platina — Status
 
-Programa ativo: **Norte Único** (épico #131). Execução enxuta (R12): fatias F1–F8 em lotes; APK único no fim.
+Branch canônica: `OmegasDiamante` (criada de `OmegasPlatina` @ `a125436`). Programa ativo: **Norte Único** (épico #131). Execução enxuta (R12): fatias F1–F8 em lotes; APK único no fim.
 Histórico completo até 2026-10-03: `docs/archive/STATUS-ate-2026-10-03.md`.
 
 ## Último APK conhecido — Refino #122 reconciliada na #127 (2026-10-03)
