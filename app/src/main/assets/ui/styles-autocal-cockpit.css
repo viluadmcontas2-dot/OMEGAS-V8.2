@@ -131,6 +131,8 @@
 .autocal-zone-surface[data-current="true"] .autocal-zone-label { fill: var(--tone-ffffff); font-weight: 900; }
 .autocal-current-band-layer { fill: rgba(var(--rgb-79-163-255),.10); stroke: rgba(var(--rgb-120-183-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
 .autocal-live-layer { pointer-events: none; }
+.autocal-live-layer[data-stale="true"] { opacity: .5; }
+.autocal-live-layer[data-stale="true"] .autocal-live-point { fill: var(--tone-8fa0b3); }
 .autocal-live-layer[data-out-of-range="true"] .autocal-live-halo { stroke: var(--tone-f0c45c); stroke-dasharray: 3 2; }
 .autocal-live-layer[data-out-of-range="true"] .autocal-live-label { fill: var(--tone-f0c45c); }
 .autocal-live-halo { fill: var(--veil-08); stroke: rgba(var(--rgb-255-255-255),.55); stroke-width: 2; }

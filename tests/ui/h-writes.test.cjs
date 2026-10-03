@@ -325,11 +325,11 @@ test('presentSnapshot: sem mudança usa getPresentSnapshotIfChanged e nunca mont
   assert.equal(api.presentSnapshot(3).data.sequence, 8);
 });
 
-test('app.js: pede o quadro com a última sequência, reaproveita o anterior quando nada mudou e AutoCal roda a 200 ms', () => {
+test('app.js: pede o quadro com a última sequência, reaproveita o anterior quando nada mudou e AutoCal faz poll de 50 ms (caminho sem mudança quase de graça)', () => {
   const app = read('app.js');
   assert.match(app, /api\.presentSnapshot\(lastPresentSequence\)/);
   assert.match(app, /envelope\.changed === false/);
-  assert.match(app, /const AUTOCAL_CADENCE_MS = 200;/);
+  assert.match(app, /const AUTOCAL_CADENCE_MS = 50;/);
   assert.match(app, /setCadenceMs\(route === 'autocal' \? AUTOCAL_CADENCE_MS : 200\)/);
   assert.doesNotMatch(app, /\? 50 : 200/);
 });

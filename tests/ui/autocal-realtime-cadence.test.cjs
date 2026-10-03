@@ -7,7 +7,7 @@ const app = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/app.js'), 'u
 const scheduler = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/scheduler.js'), 'utf8');
 assert.match(app, /intervalMs:\s*200/);
 assert.match(app, /setCadenceMs\(route === 'autocal' \? AUTOCAL_CADENCE_MS : 200\)/);
-assert.match(app, /AUTOCAL_CADENCE_MS = 200/);
+assert.match(app, /AUTOCAL_CADENCE_MS = 50/);
 assert.match(scheduler, /setCadenceMs\(intervalMs\)/);
 assert.match(scheduler, /statusElapsedMs/);
 assert.match(scheduler, /contextElapsedMs/);

@@ -15,6 +15,9 @@
       this.onContext = opts.onContext || null;
       this.hooks = { fast: new Set(), status: new Set(), context: new Set() };
       this.timer = null;
+      // Quadros de animação (requestAnimationFrame): não é timer; só roda enquanto houver quem peça.
+      this.frameHooks = new Set();
+      this.frameHandle = null;
       this.tick = 0;
       this.running = false;
     }
@@ -23,6 +26,23 @@
       if (!set || typeof listener !== 'function') return () => {};
       set.add(listener);
       return () => set.delete(listener);
+    }
+    /** Registra um desenhista de quadro (ts em ms). Devolve quem cancela. O laço para quando não sobra ninguém. */
+    addFrameHook(listener) {
+      if (typeof listener !== 'function') return () => {};
+      this.frameHooks.add(listener);
+      this.armFrame();
+      return () => this.frameHooks.delete(listener);
+    }
+    armFrame() {
+      if (this.frameHandle !== null || !this.frameHooks.size || typeof root.requestAnimationFrame !== 'function') return;
+      this.frameHandle = root.requestAnimationFrame(timestamp => {
+        this.frameHandle = null;
+        this.frameHooks.forEach(listener => {
+          try { listener(timestamp); } catch (error) { console.error('[OMEGAS scheduler frame hook]', error); }
+        });
+        this.armFrame();
+      });
     }
     armTimer() {
       if (!this.running || this.timer) return;
@@ -49,6 +69,8 @@
       this.armTimer();
     }
     stop() {
+      if (this.frameHandle !== null && typeof root.cancelAnimationFrame === 'function') root.cancelAnimationFrame(this.frameHandle);
+      this.frameHandle = null;
       if (this.timer) root.clearInterval(this.timer);
       this.timer = null;
       this.running = false;

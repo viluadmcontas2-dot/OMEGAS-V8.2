@@ -39,8 +39,9 @@
   // Sem timer de UI: o aviso some quando o relógio do scheduler (refreshStatus) vê o prazo vencido.
   const TOAST_MS = 3600;
   const OVERLAY_PROMPT_DELAY_MS = 5000;
-  // O AutoCal não precisa de mais que 5 Hz: a telemetria chega a 4–12 Hz e cada tick custa uma ida à ponte.
-  const AUTOCAL_CADENCE_MS = 200;
+  // Na aba AutoCal o poll é de 50 ms: o caminho "nada mudou" de getPresentSnapshotIfChanged é quase de graça
+  // (só devolve a idade) e o cursor suave precisa do quadro novo assim que ele chega. Nas outras abas, 200 ms.
+  const AUTOCAL_CADENCE_MS = 50;
   const startedAt = Date.now();
   let overlayPromptPending = true;
   let toastUntil = 0;
