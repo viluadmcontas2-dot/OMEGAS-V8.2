@@ -7,9 +7,9 @@
   // assinatura da EVIDÊNCIA muda (D2). As telas apenas montam o nó no seu quadro. O cursor AGORA é uma camada
   // fina que cada tela move no próprio quadro de animação, sem redesenhar nada.
 
-  const R = () => ns.DisplayRules || {};
-  const finite = value => R().finite ? R().finite(value) : (Number.isFinite(Number(value)) && value !== null && value !== '' ? Number(value) : null);
-  const esc = value => R().escapeHtml ? R().escapeHtml(value) : String(value === null || value === undefined ? '' : value);
+  // Utilitários únicos (core/display-rules.js, carregado antes).
+  const { finite, escapeHtml: esc, number } = ns.DisplayRules;
+  const tick = (v, digits) => number(v, digits);
 
   /** No máximo 4 séries semânticas (+ AGORA), todas com nome humano. "Motor apagou" só aparece quando houve. */
   const LEGEND = [
@@ -264,8 +264,8 @@
 
     const xTicks = Array.from({ length: 6 }, (_, i) => xMin + i * (xMax - xMin) / 5);
     const yTicks = Array.from({ length: 5 }, (_, i) => yMin + i * (yMax - yMin) / 4);
-    const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${v.toFixed(2).replace('.', ',')}</text>`).join('') +
-      xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - padBottom + 20}" text-anchor="middle">${v.toFixed(1).replace('.', ',')}</text>`).join('');
+    const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${tick(v, 2)}</text>`).join('') +
+      xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - padBottom + 20}" text-anchor="middle">${tick(v, 1)}</text>`).join('');
 
     const zoneMarkup = (model.zones || []).map(zone => {
       const lower = Math.max(zone.lower, yMin);

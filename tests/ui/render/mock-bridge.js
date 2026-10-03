@@ -126,14 +126,13 @@
     getKMapReadResult: () => J({ ok: true, state: 'COMPLETED', rows: mapRows, extraRow: Array(12).fill(0), axes: { petrolBins: PB, rpmBins: RB }, hash: 'synthetic', writableCells: 144, sessionConfirmed: true }),
     previewKFactorPoint: () => J({ ok: false }), connectUsb: () => 'true', disconnectUsb: () => 'true', runEngineSelfTests: () => J({ ok: true }),
   };
-  const v7 = {};
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),
     getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J({}),
     getRefinedAnalysis: () => J(refined()), getEquivalence: () => J(eq()), getEquivalenceFresh: () => J(eq()), getRefinementPhase: () => J({ ok: true, phase: 'COLETANDO_NOSSOS' }),
   };
   const power = { getBatteryOptimizationStatus: () => J({ supported: true, ignoringOptimizations: true }), getOverlayStatus: () => J({ ok: true, supported: true, permissionGranted: true, requestedEnabled: false, visible: false }) };
-  window.OmegasNative = native; window.OmegasV7 = v7; window.OmegasAutoCal = autocal; window.OmegasPower = power; window.OmegasCalibration = calibration;
+  window.OmegasNative = native; window.OmegasAutoCal = autocal; window.OmegasPower = power; window.OmegasCalibration = calibration;
   window.__mockCalls = {};
   [['N', native], ['C', calibration], ['A', autocal], ['P', power]].forEach(([n, o]) => Object.keys(o).forEach(k => { const fn = o[k]; o[k] = function () { window.__mockCalls[n + '.' + k] = (window.__mockCalls[n + '.' + k] || 0) + 1; return fn.apply(this, arguments); }; }));
 })();

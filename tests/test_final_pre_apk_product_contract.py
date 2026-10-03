@@ -33,14 +33,14 @@ assert "prepareCurveRestore(" in api
 assert 'id="curveBackupSave"' in index
 assert 'id="curveBackupSelect"' in index
 assert 'id="curveBackupRestore"' in index
-assert "Restaurar backup" in index
+assert "Desfazer (voltar à foto)" in index
 assert "backupTask" in curve
 assert "restoreContext" in curve
-assert "Restaurar backup Curva K" in curve
+assert "Desfazer: voltar à foto da Curva K" in curve
 assert "curveBackupSelect" in curve and "prepareRestore(" in curve
 assert "curveBackupRestore" in curve and "writeRestore()" in curve
 assert "this.writePrepared()" in curve
-assert "Restauração pronta" in curve
+assert "Desfazer pronto" in curve
 assert "Restauração validada · iniciando escrita segura" not in curve
 assert "classList.add('is-reviewing')" not in curve
 assert 'id="curveWriteButton"' not in index
@@ -57,7 +57,8 @@ assert "18 REGIÕES · DETALHE TÉCNICO" in autocal
 assert "height: clamp(340px, 52vh, 430px)" in css
 
 # Custom ROM/head unit: WebView render can lag briefly; AGORA must not vanish mid-refresh.
-assert "const AUTO_CAL_LIVE_STALE_MS = 3000" in autocal
+assert "const STALE_MS = 3000" in (ROOT / "app/src/main/assets/ui/core/live-store.js").read_text(encoding="utf-8")
+assert "AUTO_CAL_LIVE_STALE_MS = ns.LiveStore.STALE_MS" in autocal
 assert "2,5 s" not in autocal
 
 print("FINAL_PRE_APK_PRODUCT_CONTRACT=PASS")

@@ -1,6 +1,6 @@
 /* Refino integrado 10/08/2026 — somente UI; sem matemática/protocolo. */
 
-/* Aprendizado: eixos explícitos e nenhuma dependência de live tracing visual. */
+/* Mapa K: eixos explícitos e nenhuma dependência de live tracing visual. */
 
 /* Mapa K: eixo é controle. Cabeçalho RPM seleciona coluna; ms seleciona linha. */
 .map-k-grid-with-axes{

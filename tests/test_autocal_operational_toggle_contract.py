@@ -31,7 +31,7 @@ assert 'data-autocal-action="RESET_ALL"' not in cockpit
 assert "Continuar para confirmação Android" not in cockpit
 assert "Confirmação Android aberta" not in cockpit
 assert "Executar agora" in cockpit
-assert "ACK e readback" in cockpit
+assert "e confere na ECU" in cockpit
 assert "actionManager.execute(preparationId)" in bridge
 assert "AlertDialog" not in bridge
 

@@ -38,7 +38,7 @@ class Block1SessionContract(unittest.TestCase):
         self.assertIn('id="mapReviewButton"', self.html)
         self.assertIn('id="curveReviewButton"', self.html)
         self.assertIn('Gravar é um toque', self.html)
-        self.assertIn('Um toque', self.html)
+        self.assertIn('Gravar é um toque', self.html)
         self.assertNotIn('id="mapWriteButton"', self.html)
         self.assertNotIn('id="curveWriteButton"', self.html)
         self.assertNotIn('id="mapReviewBack"', self.html)

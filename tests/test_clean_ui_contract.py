@@ -126,7 +126,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn("const reason = restoring", self.curve_screen)
         self.assertIn("this.api.writeCurve(points, reason)", self.curve_screen)
         self.assertIn("Ajuste manual confirmado na UI clean-slate", self.curve_screen)
-        self.assertIn("Restaurar backup Curva K", self.curve_screen)
+        self.assertIn("Desfazer: voltar à foto da Curva K", self.curve_screen)
         self.assertNotIn("classList.add('is-reviewing')", self.curve_screen)
         self.assertNotIn('id="curveWriteButton"', self.html)
         self.assertNotIn('id="curveReviewBack"', self.html)
@@ -158,8 +158,8 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('targetOverrides', self.map_editor)
         for forbidden in ('writeMap(', 'window.Android', 'protocolTransaction', 'startKBatchWrite'):
             self.assertNotIn(forbidden, self.map_editor)
-        self.assertIn('Prévia somente', self.html)
-        self.assertIn('foto antes, ACK e conferência na ECU', self.html)
+        self.assertIn('Gravar é um toque', self.html)
+        self.assertIn('o app guarda a foto antes e confere na ECU', self.html)
         self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
 

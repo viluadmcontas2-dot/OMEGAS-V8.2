@@ -121,7 +121,7 @@
     render(state) {
       this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
-      if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup e saúde do app';
+      if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : '';
     }
 
     preserveSessionSettingsInteraction(host) {
