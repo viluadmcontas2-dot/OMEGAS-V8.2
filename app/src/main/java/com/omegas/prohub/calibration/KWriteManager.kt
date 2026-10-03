@@ -12,6 +12,7 @@ import org.json.JSONObject
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -31,6 +32,8 @@ class KWriteManager(
     private val onBusyChanged: (Boolean) -> Unit,
     private val onConfirmedWrite: () -> Unit = {},
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
+    /** Trava única da serial: escrita K e ação AutoCal nunca rodam juntas. */
+    private val guard: SerialWriteGuard = SerialWriteGuard.shared,
 ) {
     companion object {
         const val MAP_K_ADDRESS = 0x0054
@@ -238,7 +241,7 @@ class KWriteManager(
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
             return error(error.message ?: "USB desconectado")
         }
-        return runSynchronous("RECOVERING_INSERTION", "Confirmando saída do modo K insertion") {
+        return runSynchronous("RECOVERING_INSERTION", "Confirmando saída do modo K insertion", mutating = true) {
             requireAck(
                 transaction(
                     Mp48Protocol.kInsertionMode(false),
@@ -278,6 +281,7 @@ class KWriteManager(
         @Suppress("UNUSED_PARAMETER") maxStep: Int,
         @Suppress("UNUSED_PARAMETER") pauseMs: Int,
         reason: String = "Calibração manual",
+        allowBelowFloor: Boolean = false,
     ): JSONObject {
         if (insertionStateUnknown.get()) return safetyError()
         if (cells.length() !in 1..MAX_BATCH_CELLS) return error("Selecione entre 1 e $MAX_BATCH_CELLS células")
@@ -290,8 +294,10 @@ class KWriteManager(
             val current = item.optInt("current", -1)
             val target = item.optInt("target", -1)
             if (!validCell(row, column)) return error("Célula [$row,$column] inválida")
-            if (current !in 0..255 || target !in MIN_SAFE_K..255) {
-                return error("Valor K alvo deve estar entre $MIN_SAFE_K e 255")
+            // O piso vale só para alvos NOVOS; restaurar um valor que a ECU já teve é permitido.
+            val floor = if (allowBelowFloor) 0 else MIN_SAFE_K
+            if (current !in 0..255 || target !in floor..255) {
+                return error("Valor K alvo deve estar entre $floor e 255")
             }
             if (current == target) return error("A célula [$row,$column] não possui alteração")
             if (!seen.add("$row:$column")) return error("Célula [$row,$column] repetida")
@@ -304,18 +310,118 @@ class KWriteManager(
             busy.set(false)
             return error(error.message ?: "USB desconectado")
         }
+        if (!guard.tryAcquire(SerialWriteGuard.OWNER_K_MAP)) {
+            busy.set(false)
+            return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento")
+        }
         val adjustmentId = "ADJ-${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
         onBusyChanged(true)
         update("BATCH_QUEUED", "Alteração enfileirada entre telemetrias", 0,
             JSONObject().put("adjustmentId", adjustmentId).put("cells", normalized))
-        executor.execute {
-            executeBatch(adjustmentId, normalized, reason, expectedSessionId)
+        try {
+            executor.execute {
+                executeBatch(adjustmentId, normalized, reason, expectedSessionId)
+            }
+        } catch (_: RejectedExecutionException) {
+            guard.release(SerialWriteGuard.OWNER_K_MAP)
+            busy.set(false)
+            try { onBusyChanged(false) } catch (_: Throwable) {}
+            synchronized(statusLock) { status.put("busy", false) }
+            return error("O escritor do Mapa K foi encerrado; reabra o aplicativo")
         }
         return JSONObject()
             .put("ok", true)
             .put("started", true)
             .put("adjustmentId", adjustmentId)
             .put("cells", normalized.length())
+    }
+
+    /**
+     * Lista as fotos do Mapa K (uma por escrita) para o Desfazer. Só lê arquivos locais.
+     */
+    fun listMapBackups(): JSONArray {
+        val rows = kBackupDir.listFiles()
+            .orEmpty()
+            .filter { it.isFile && it.extension.equals("json", ignoreCase = true) }
+            .mapNotNull { file ->
+                try {
+                    val backup = JSONObject(file.readText(Charsets.UTF_8))
+                    if (backup.optString("format") != "omegas-k-backup-v1") return@mapNotNull null
+                    JSONObject()
+                        .put("adjustmentId", file.nameWithoutExtension)
+                        .put("createdAt", backup.optLong("createdAt", file.lastModified()))
+                        .put("cells", backup.optJSONArray("cells")?.length() ?: 0)
+                } catch (_: Exception) { null }
+            }
+            .sortedByDescending { it.optLong("createdAt", 0L) }
+        return JSONArray(rows)
+    }
+
+    /**
+     * Prepara a restauração de uma escrita do Mapa K: relê o mapa da ECU (somente leitura) e devolve,
+     * para cada célula da foto cujo valor atual difere do original, {row, column, current, target=original}.
+     * Nada é gravado aqui; a escrita é o toque seguinte, pelo mesmo escritor em lote.
+     */
+    fun prepareRestore(adjustmentId: String): JSONObject {
+        val backup = try { loadMapBackup(adjustmentId) } catch (error: Exception) {
+            return error(error.message ?: "Foto do Mapa K inválida")
+        }
+        val fresh = readFullMap()
+        if (!fresh.optBoolean("ok", false)) return fresh
+        val rows = fresh.optJSONArray("rows") ?: return error("Leitura do Mapa K incompleta")
+        val originals = backup.optJSONArray("cells") ?: JSONArray()
+        val cells = JSONArray()
+        repeat(originals.length()) { index ->
+            val item = originals.optJSONObject(index) ?: return@repeat
+            val row = item.optInt("row", -1)
+            val column = item.optInt("column", -1)
+            val original = item.optInt("current", -1)
+            if (!validCell(row, column) || original !in 0..255) return@repeat
+            val now = rows.optJSONArray(row)?.optInt(column, -1) ?: -1
+            if (now in 0..255 && now != original) {
+                cells.put(JSONObject()
+                    .put("row", row).put("column", column)
+                    .put("current", now).put("target", original))
+            }
+        }
+        return JSONObject()
+            .put("ok", true)
+            .put("adjustmentId", adjustmentId)
+            .put("createdAt", backup.optLong("createdAt", 0L))
+            .put("changedCells", cells.length())
+            .put("cells", cells)
+    }
+
+    /** Escreve de volta SOMENTE os valores originais da foto (confere cada alvo contra o arquivo). */
+    fun startRestoreWrite(cells: JSONArray, adjustmentId: String, reason: String): JSONObject {
+        val backup = try { loadMapBackup(adjustmentId) } catch (error: Exception) {
+            return error(error.message ?: "Foto do Mapa K inválida")
+        }
+        val originals = hashMapOf<String, Int>()
+        val saved = backup.optJSONArray("cells") ?: JSONArray()
+        repeat(saved.length()) { index ->
+            val item = saved.optJSONObject(index) ?: return@repeat
+            originals["${item.optInt("row")}:${item.optInt("column")}"] = item.optInt("current", -1)
+        }
+        repeat(cells.length()) { index ->
+            val item = cells.optJSONObject(index) ?: return error("Célula ${index + 1} inválida")
+            val key = "${item.optInt("row", -1)}:${item.optInt("column", -1)}"
+            if (originals[key] != item.optInt("target", -2)) {
+                return error("A restauração não confere com a foto escolhida; refaça a prévia")
+            }
+        }
+        return startBatchWrite(cells, 0, 0, reason, allowBelowFloor = true)
+    }
+
+    private fun loadMapBackup(adjustmentId: String): JSONObject {
+        require(adjustmentId.isNotBlank() && File(adjustmentId).name == adjustmentId && !adjustmentId.contains("..")) {
+            "Nome de foto inválido"
+        }
+        val file = File(kBackupDir, "$adjustmentId.json")
+        require(file.isFile) { "Foto do Mapa K não encontrada" }
+        val backup = JSONObject(file.readText(Charsets.UTF_8))
+        require(backup.optString("format") == "omegas-k-backup-v1") { "Formato de foto inválido" }
+        return backup
     }
 
     fun close() = executor.shutdownNow()
@@ -332,6 +438,7 @@ class KWriteManager(
         var initialHash = ""
         var insertionEnabled = false
         var historyPersisted = false
+        var writeStarted = false
         try {
             update("BATCH_PREPARING", "Conferindo somente as linhas afetadas", 3,
                 JSONObject().put("adjustmentId", adjustmentId).put("cells", cells))
@@ -410,6 +517,7 @@ class KWriteManager(
                         JSONObject().put("adjustmentId", adjustmentId)
                             .put("row", row).put("column", column).put("target", target),
                     )
+                    writeStarted = true
                     requireAck(
                         unit.transaction(
                             Mp48Protocol.writeKCell(row, column, target),
@@ -519,6 +627,7 @@ class KWriteManager(
                 .put("elapsedMs", System.currentTimeMillis() - startedAt)
                 .put("humanConfirmed", true)
                 .put("readbackValid", true)
+                .put("backupId", adjustmentId)
                 .put("confirmedAt", now)
             try { onConfirmedWrite() } catch (_: Exception) {}
             try { onConfirmedBatch(payload) } catch (error: Exception) {
@@ -526,7 +635,7 @@ class KWriteManager(
             }
             update("BATCH_CONFIRMED", "Alterações confirmadas por ACK e readback", 100, payload)
             log.add("INFO", "K-BATCH", "$adjustmentId confirmado • ${cells.length()} células")
-        } catch (error: Exception) {
+        } catch (error: Throwable) {
             if (!historyPersisted && confirmed.length() > 0) {
                 try { appendHistoryBatch(confirmed) } catch (_: Exception) {}
                 historyPersisted = true
@@ -561,13 +670,18 @@ class KWriteManager(
                     } catch (_: Exception) {}
                 }
             }
-            val stale = loadCache().put("sessionConfirmed", false)
-            atomicWrite(cacheFile, stale.toString(2))
+            try {
+                val stale = loadCache().put("sessionConfirmed", false)
+                atomicWrite(cacheFile, stale.toString(2))
+            } catch (_: Exception) {}
             update("BATCH_PARTIAL_FAILED", error.message ?: "Lote interrompido", 100,
                 JSONObject().put("adjustmentId", adjustmentId)
                     .put("oldHash", initialHash)
                     .put("confirmedEvents", confirmed)
                     .put("partial", confirmed.length() > 0)
+                    .put("mutationMayHaveStarted", writeStarted)
+                    .put("backupId", adjustmentId)
+                    .put("failureKind", FailureKind.of(error))
                     .put("recoveryRows", recovery))
             log.add("ERROR", "K-BATCH", "$adjustmentId interrompido: ${error.message}")
         } finally {
@@ -597,16 +711,22 @@ class KWriteManager(
                     )
                 }
             }
+            guard.release(SerialWriteGuard.OWNER_K_MAP)
             busy.set(false)
             onBusyChanged(false)
             synchronized(statusLock) { status.put("busy", false) }
         }
     }
 
-    private fun <T> runSynchronous(state: String, message: String, block: () -> T): T {
+    private fun <T> runSynchronous(state: String, message: String, mutating: Boolean = false, block: () -> T): T {
         if (!busy.compareAndSet(false, true)) {
             @Suppress("UNCHECKED_CAST")
             return error("Outra operação K está em andamento") as T
+        }
+        if (mutating && !guard.tryAcquire(SerialWriteGuard.OWNER_K_MAP)) {
+            busy.set(false)
+            @Suppress("UNCHECKED_CAST")
+            return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento") as T
         }
         onBusyChanged(true)
         update(state, message, 5)
@@ -617,6 +737,7 @@ class KWriteManager(
             @Suppress("UNCHECKED_CAST")
             error(error.message ?: "Falha na operação K") as T
         } finally {
+            if (mutating) guard.release(SerialWriteGuard.OWNER_K_MAP)
             busy.set(false)
             onBusyChanged(false)
             synchronized(statusLock) { status.put("busy", false) }
@@ -648,9 +769,9 @@ class KWriteManager(
     }
 
     private fun decodeRow(reply: UsbProtocolReply): ByteArray {
-        if (!reply.ok) throw IllegalStateException(reply.error.ifBlank { "ECU não confirmou a leitura" })
+        if (!reply.ok) throw CalibrationFailure(reply.error.ifBlank { "ECU não confirmou a leitura" }, FailureKind.ofReply(reply))
         if (reply.status != Mp48Protocol.STATUS_ACK) {
-            throw IllegalStateException("Resposta inesperada 0x%02X".format(reply.status))
+            throw CalibrationFailure("Resposta inesperada 0x%02X".format(reply.status), FailureKind.ECU)
         }
         if (reply.payload.size < COLUMN_COUNT) {
             throw IllegalStateException("Linha incompleta: ${reply.payload.size}/$COLUMN_COUNT")
@@ -703,7 +824,7 @@ class KWriteManager(
 
     private fun requireAck(reply: UsbProtocolReply, action: String) {
         if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) {
-            throw IllegalStateException(reply.error.ifBlank { "ACK inválido em $action" })
+            throw CalibrationFailure(reply.error.ifBlank { "ACK inválido em $action" }, FailureKind.ofReply(reply))
         }
     }
 

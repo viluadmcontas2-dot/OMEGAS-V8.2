@@ -70,7 +70,9 @@
       renderEquivalence(eq) {
         const block = document.getElementById("dashEquivalence");
         if (!block) return;
-        const valid = eq && eq.index && Number.isFinite(Number(eq.index.value));
+        // Sem índice (o Kotlin ainda não manda) mas com a ação do piloto, o bloco aparece com "—" no lugar do número.
+        const hasIndex = !!(eq && eq.index && eq.index.value !== null && eq.index.value !== undefined && Number.isFinite(Number(eq.index.value)));
+        const valid = hasIndex || !!(eq && eq.nextAction && eq.nextAction.text);
         if (!valid) {
           if (!block.hidden) block.hidden = true;
           block.parentElement && block.parentElement.classList.remove("has-equivalence");
@@ -78,10 +80,14 @@
         }
         block.hidden = false;
         block.parentElement && block.parentElement.classList.add("has-equivalence");
-        const percent = Math.max(0, Math.min(100, Math.round(Number(eq.index.value) * (Number(eq.index.value) <= 1 ? 100 : 1))));
-        text("dashIndex", percent + "%");
+        if (hasIndex) {
+          const percent = Math.max(0, Math.min(100, Math.round(Number(eq.index.value) * (Number(eq.index.value) <= 1 ? 100 : 1))));
+          text("dashIndex", percent + "%");
+        } else {
+          text("dashIndex", "\u2014");
+        }
         const note = document.getElementById("dashIndexNote");
-        if (note) note.hidden = eq.index.provisional !== true;
+        if (note) note.hidden = !hasIndex || eq.index.provisional !== true;
         const action = eq.nextAction || null;
         text("dashNextText", action && action.text ? action.text : "Nada a fazer agora.");
         const button = document.getElementById("dashNextButton");

@@ -13,7 +13,7 @@ def test_curve_failed_read_settles_instead_of_sticking_in_reading():
     assert "text('curveSourceStatus', 'Curva não confirmada');" in source
     assert "if (this.reading && !operation.busy)" in source
     assert "operation.state !== 'COMPLETED' && !operation.demo" in source
-    assert "this.settleReadFailure(operation.error || 'A leitura da Curva K não foi confirmada pela ECU.');" in source
+    assert "this.settleReadFailure(failureText(operation, 'A leitura da Curva K não foi confirmada pela ECU.'));" in source
 
 
 def test_android_webview_gate_requires_offline_curve_to_settle():

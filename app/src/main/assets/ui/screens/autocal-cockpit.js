@@ -1001,8 +1001,17 @@
       this.refresh();
     }
 
+    /** Um toque: abre a Curva K, que tira a foto e só então zera. Sem a tela Curva K cai no fluxo antigo. */
+    resetViaCurve() {
+      const router = this.app?.router || root.OmegasApp?.router;
+      if (!router || typeof router.open !== 'function') return false;
+      return router.open('curve', 'editor', { resetNow: true }) === true;
+    }
+
     prepare(action) {
       if (!action || !this.api?.available?.()) return;
+      // Resetar a Curva K tem UM caminho: o da aba Curva K (foto antes, zera, readback, Desfazer).
+      if (action === 'RESET_K_FACTOR' && this.resetViaCurve()) return;
       const result = this.api.prepare(action);
       if (!result?.ok || !result?.prepared) {
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'A ação AutoCal não pôde ser preparada.' } });
@@ -1179,6 +1188,17 @@
     }
 
     renderLiveCursor() {
+      // Telemetria nova chega a 4–12 Hz e o tick roda a 5 Hz: sem quadro novo (e sem gráfico, snapshot
+      // ou estado novos) não há nada a repintar.
+      const telemetry = this.store.get().telemetry || {};
+      const point = AutoCalUxModel.livePoint(telemetry, this.projection);
+      const key = point
+        ? [point.sequence, point.petrolMs, point.mapBar, point.rpm, point.fuel].join('|')
+        : ['none', telemetry.valid === true, finite(telemetry.telemetryAgeMs ?? telemetry.ageMs) > AUTO_CAL_LIVE_STALE_MS].join('|');
+      const seen = this.cursorSeen;
+      if (seen && seen.key === key && seen.snapshot === this.snapshot && seen.state === this.state &&
+          seen.projection === this.projection && seen.scale === this.chartScale) return;
+      this.cursorSeen = { key, snapshot: this.snapshot, state: this.state, projection: this.projection, scale: this.chartScale };
       this.renderLiveNarrative();
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       this.renderZoneCursor(live);

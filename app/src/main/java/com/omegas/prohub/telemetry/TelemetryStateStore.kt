@@ -144,6 +144,9 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             .toString()
     }
 
+    /** Sequência atual do estado (sobe a cada evento, início/fim de sessão e GPS): barata, sem serializar. */
+    fun sequenceNow(): Long = sequence.get()
+
     fun telemetryCopy(): JSONObject = synchronized(lock) {
         if (valid) JSONObject(telemetry.toString()) else JSONObject()
     }

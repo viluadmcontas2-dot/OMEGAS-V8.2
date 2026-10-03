@@ -21,6 +21,7 @@ class HubJavascriptBridge(activity: MainActivity) {
     }
     private val mapReadBusy = AtomicBoolean(false)
     private val uiSnapshots = RuntimeSnapshotBus()
+    @Volatile private var interpolationCache: Pair<Long, JSONObject>? = null
 
     fun destroy() {
         mapReadExecutor.shutdownNow()
@@ -65,20 +66,43 @@ class HubJavascriptBridge(activity: MainActivity) {
     fun getPresentSnapshot(): String = activity?.serviceOrNull()?.let { service ->
         val root = try { JSONObject(service.telemetryStore.liveJson()) } catch (_: Exception) { JSONObject() }
         val live = root.optJSONObject("live") ?: JSONObject()
-        val interpolation = LiveCellProjection.liveInterpolationJson(
-            rpm = live.optDouble("rpm", 0.0),
-            petrolMs = live.optDouble("petrol_ms", live.optDouble("petrolMs", 0.0)),
-            mapBar = live.optDouble("load_bar", live.optDouble("map_bar", 0.0)),
-            sequence = root.optLong("sequence", 0L),
-            updatedAt = root.optLong("updatedAt", 0L),
-            telemetryValid = root.optBoolean("valid", false),
-        )
+        // A interpolação só muda quando o quadro muda: guardada por sequência (o tick da UI é mais
+        // rápido que a telemetria).
+        val sequence = root.optLong("sequence", 0L)
+        val cached = interpolationCache
+        val interpolation = if (cached != null && cached.first == sequence) {
+            cached.second
+        } else {
+            LiveCellProjection.liveInterpolationJson(
+                rpm = live.optDouble("rpm", 0.0),
+                petrolMs = live.optDouble("petrol_ms", live.optDouble("petrolMs", 0.0)),
+                mapBar = live.optDouble("load_bar", live.optDouble("map_bar", 0.0)),
+                sequence = sequence,
+                updatedAt = root.optLong("updatedAt", 0L),
+                telemetryValid = root.optBoolean("valid", false),
+            ).also { interpolationCache = sequence to it }
+        }
         root.put("ok", true)
             .put("telemetryAgeMs", root.optLong("ageMs", -1L))
             .put("interpolation", interpolation)
         uiSnapshots.publishPresent(root)
         uiSnapshots.presentJson().toString()
     } ?: unavailable()
+
+    /**
+     * Igual a [getPresentSnapshot], mas a UI informa a última sequência que já pintou. Se nada mudou,
+     * devolve só `{changed:false}` com a idade (sem montar nem serializar o quadro).
+     */
+    @JavascriptInterface
+    fun getPresentSnapshotIfChanged(lastSequence: Long): String {
+        val service = activity?.serviceOrNull() ?: return unavailable()
+        val sequence = service.telemetryStore.sequenceNow()
+        if (lastSequence >= 0L && sequence == lastSequence) {
+            val age = service.telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it }
+            return "{\"ok\":true,\"changed\":false,\"sequence\":$sequence,\"telemetryAgeMs\":$age}"
+        }
+        return getPresentSnapshot()
+    }
 
     @JavascriptInterface
     fun getStatus(): String = activity?.serviceOrNull()?.let { service ->
