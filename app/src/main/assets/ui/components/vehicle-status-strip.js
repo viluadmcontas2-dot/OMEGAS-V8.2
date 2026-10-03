@@ -94,7 +94,7 @@
   function boot() {
     const app = root.OmegasApp;
     if (!app?.store) {
-      root.setTimeout(boot, 25);
+      if (typeof root.addEventListener === 'function') root.addEventListener('omegas-app-ready', boot, { once: true });
       return;
     }
     if (app.vehicleStatusStrip) return;

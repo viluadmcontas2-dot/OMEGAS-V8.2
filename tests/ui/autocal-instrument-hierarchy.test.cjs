@@ -31,7 +31,7 @@ test('secondary state stays below the graph in one vertical flow', () => {
 });
 
 test('AGORA is visually distinct but remains telemetry', () => {
-  assert.match(css, /\.autocal-live-point\s*\{[\s\S]*#19daf4/);
+  assert.match(css, /\.autocal-live-point\s*\{[\s\S]*var\(--tone-19daf4\)/);
   assert.match(js, /Ele nunca vira evidência adquirida/);
   assert.match(js, /id="autocalLiveNarrative"[^>]*hidden/);
   assert.match(js, /ageMs > AUTO_CAL_LIVE_STALE_MS/);
@@ -40,6 +40,6 @@ test('AGORA is visually distinct but remains telemetry', () => {
 test('overlapping petrol and GNV curves remain distinguishable without geometric offset', () => {
   assert.match(css, /\.autocal-reference-line\.petrol:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*4/);
   assert.match(css, /\.autocal-reference-line\.gas:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*2\.5/);
-  assert.match(css, /\.autocal-reference-point\.petrol\s*\{[\s\S]*fill:\s*#07101a[\s\S]*stroke:\s*#78b7ff/);
+  assert.match(css, /\.autocal-reference-point\.petrol\s*\{[\s\S]*fill:\s*var\(--tone-07101a\)[\s\S]*stroke:\s*var\(--tone-78b7ff\)/);
   assert.match(js, /ΔMAP/);
 });

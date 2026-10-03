@@ -2,6 +2,8 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
+  // Palavras únicas de toda escrita na ECU (core/display-rules.js).
+  function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
@@ -47,14 +49,14 @@
         back.id = 'mapBackToLearning';
         back.type = 'button';
         back.className = 'quiet-button';
-        back.textContent = 'Voltar ao aprendizado';
+        back.textContent = 'Voltar à Curva K';
         actions.prepend(back);
       }
     }
 
     bind() {
       document.getElementById('mapReadButton')?.addEventListener('click', () => this.startRead());
-      document.getElementById('mapBackToLearning')?.addEventListener('click', () => this.router?.navigate('learning'));
+      document.getElementById('mapBackToLearning')?.addEventListener('click', () => this.router?.open('curve', 'learning'));
       document.getElementById('mapSelectAll')?.addEventListener('click', () => {
         try { this.editor.selectAll(); this.review = null; this.renderEditor(); this.refreshSelectionPreview(); }
         catch (error) { this.alert(error.message); }
@@ -342,7 +344,7 @@
       }
       this.root?.classList.add('is-writing');
       this.lastOperationState = '';
-      text('mapOperationTitle', 'Escrita manual em andamento');
+      text('mapOperationTitle', wording().writing);
       text('mapOperationMessage', `0 de ${this.review.count} células confirmadas`);
       this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result, review: this.review } });
     }
@@ -364,7 +366,7 @@
       text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
 
       if (operation.busy) {
-        text('mapOperationTitle', operation.writerMessage || 'Checkpoint · escrita · ACK · readback');
+        text('mapOperationTitle', operation.writerMessage || wording().stages.join(' · '));
         return;
       }
       if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
@@ -373,8 +375,8 @@
         const result = document.getElementById('mapOperationResult');
         if (result) {
           result.dataset.level = 'ok';
-          result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações confirmadas pela ECU`;
-          result.querySelector('span').textContent = 'ACK e readback concluídos. O mapa será relido para atualizar a tela.';
+          result.querySelector('b').textContent = wording().doneTitle(`${operation.confirmedCells || operation.totalCells} célula(s)`);
+          result.querySelector('span').textContent = wording().doneDetail;
         }
         this.editor.reset();
         this.startRead(true);
@@ -385,7 +387,7 @@
         const result = document.getElementById('mapOperationResult');
         if (result) {
           result.dataset.level = 'critical';
-          result.querySelector('b').textContent = 'A ECU não confirmou toda a operação';
+          result.querySelector('b').textContent = wording().failedTitle;
           result.querySelector('span').textContent = `${operation.confirmedCells || 0} células foram confirmadas antes da falha. ${failure.error || operation.error || 'Releitura obrigatória.'}`;
         }
         this.editor.reset();

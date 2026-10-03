@@ -86,17 +86,19 @@
   }
 
   /**
-   * Quantas decisões pendentes mostrar no menu. null = ainda não dá para saber (a ciência não
-   * respondeu e não há aviso do refino): a tela não mexe no número, não escreve 0.
-   * Pendente = ajuste acionável de Mapa K/Curva K + 1 se o refino tem curva pronta ou trecho a restaurar.
+   * Palavras únicas de toda escrita na ECU (spec §3.1): etapa → resultado humano → Desfazer/Voltar.
+   * "Gravado" só depois do readback (regra 3).
    */
-  function pendingSuggestionCount(items, refinementReady) {
-    const refinement = refinementReady ? 1 : 0;
-    if (!Array.isArray(items)) return refinement > 0 ? refinement : null;
-    const actionable = items.filter(item => item && item.lifecycle === 'PENDING' && item.actionable === true &&
-      (item.target === 'MAP_K' || item.target === 'CURVE_K')).length;
-    return actionable + refinement;
-  }
+  const OPERATION_WORDING = {
+    stages: ['Foto antes', 'Escrita', 'ACK', 'Conferindo na ECU'],
+    writing: 'Gravando na ECU…',
+    doneTitle: what => `Gravado · ${what} conferido na ECU`,
+    doneDetail: 'A ECU confirmou a gravação (ACK e readback). A tela será relida.',
+    failedTitle: 'Não foi gravado',
+    failedDetail: 'A ECU não confirmou toda a operação. Releitura obrigatória.',
+    back: 'Voltar',
+    undo: 'Desfazer',
+  };
 
   /**
    * Telemetria só é atualizada nas rotas ao vivo. Numa rota sem pump (Ajuste global, Sugestões,
@@ -150,7 +152,7 @@
 
   ns.DisplayRules = {
     DASH, finite, number, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
-    ageLabel, sessionDate, pendingSuggestionCount, gasResetNote, GAS_RESET_REASON,
+    ageLabel, sessionDate, OPERATION_WORDING, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

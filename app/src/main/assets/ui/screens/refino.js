@@ -177,14 +177,17 @@
         if (this.ticks % DATA_EVERY_TICKS === 0) this.refresh();
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
-        if (this.store.get().route === 'refino') this.renderLive();
+        this.tickJob();
+        if (this.store.get().route !== 'refino') return;
+        if (this.enterRefreshPending) { this.enterRefreshPending = false; this.refresh(true); }
+        this.renderLive();
       });
       // Ao entrar na aba, desenha na hora (sem esperar o próximo tick).
       let lastRoute = null;
       this.store.subscribe(state => {
         if (state.route === lastRoute) return;
         lastRoute = state.route;
-        if (state.route === 'refino') root.setTimeout(() => this.refresh(true), 0);
+        if (state.route === 'refino') this.enterRefreshPending = true;
       }, true);
     }
 
@@ -252,7 +255,7 @@
       if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true, true); return; }
       if (event.target.closest('[data-refino-primary]')) this.primary();
       if (event.target.closest('[data-refino-cancel]')) this.closeReview();
-      if (event.target.closest('[data-refino-confirm]')) this.confirm();
+      if (event.target.closest('[data-refino-confirm]')) this.commitReview();
       if (event.target.closest('[data-refino-undo]')) this.openReview('undo');
       const dot = event.target.closest('[data-refino-dot]');
       if (dot) this.inspect(dot.dataset.refinoDot);
@@ -294,7 +297,7 @@
       if (review) { review.hidden = true; review.innerHTML = ''; }
     }
 
-    confirm() {
+    commitReview() {
       const pending = this.reviewPoints;
       this.closeReview();
       if (!pending?.points?.length) return;
@@ -328,20 +331,26 @@
       });
     }
 
+    /** Acompanha a operação da ECU pelo gancho 'fast' do scheduler (sem timer próprio). */
     poll(onFinish) {
-      const started = Date.now();
-      const tick = () => {
-        const status = this.native.curveOperation() || {};
-        if (status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
-          if (Date.now() - started > OPERATION_TIMEOUT_MS) { this.fail('Tempo limite aguardando a ECU.'); return; }
-          if (this.operation.phase === 'writing') { this.operation.progress = finite(status.progress); this.renderOperation(); }
-          root.setTimeout(tick, POLL_MS);
-          return;
-        }
-        if (status.ok === false || /FAILED|TIMEOUT/.test(String(status.state || ''))) { this.fail(status.error || 'A ECU recusou a operação.'); return; }
-        onFinish(status);
-      };
-      root.setTimeout(tick, POLL_MS);
+      this.job = { started: Date.now(), lastAt: 0, onFinish };
+    }
+
+    tickJob() {
+      const job = this.job;
+      if (!job) return;
+      const now = Date.now();
+      if (now - job.lastAt < POLL_MS) return;
+      job.lastAt = now;
+      const status = this.native.curveOperation() || {};
+      if (status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
+        if (now - job.started > OPERATION_TIMEOUT_MS) { this.job = null; this.fail('Tempo limite aguardando a ECU.'); return; }
+        if (this.operation.phase === 'writing') { this.operation.progress = finite(status.progress); this.renderOperation(); }
+        return;
+      }
+      this.job = null;
+      if (status.ok === false || /FAILED|TIMEOUT/.test(String(status.state || ''))) { this.fail(status.error || 'A ECU recusou a operação.'); return; }
+      job.onFinish(status);
     }
 
     fail(message) {
@@ -573,7 +582,7 @@
   function boot() {
     const app = root.OmegasApp;
     if (!app?.store || !app?.scheduler || !app?.api || !ns.AutoCalApi || !ns.AutoCalUxModel) {
-      root.setTimeout(boot, 50);
+      if (typeof root.addEventListener === 'function') root.addEventListener('omegas-app-ready', boot, { once: true });
       return;
     }
     if (app.refino) return;

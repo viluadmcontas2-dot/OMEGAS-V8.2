@@ -21,6 +21,30 @@
     catch (error) { return { ok: false, error: error && error.message ? error.message : String(error) }; }
   }
 
+  /** Aceita o formato aninhado (`index:{value,coverage,provisional}`) e o plano do Kotlin (`index`, `coverage`, `provisional` na raiz). */
+  function normalizeEquivalence(raw) {
+    if (!raw || typeof raw !== 'object' || raw.ok === false || raw.available === false) return null;
+    const nested = raw.index && typeof raw.index === 'object';
+    const value = Number(nested ? raw.index.value : raw.index);
+    if (raw.index === null || raw.index === undefined || !Number.isFinite(value)) return null;
+    const coverage = Number(nested ? raw.index.coverage : raw.coverage);
+    const provisional = (nested ? raw.index.provisional : raw.provisional) === true;
+    const action = raw.nextAction && typeof raw.nextAction === 'object' ? raw.nextAction : null;
+    const reference = raw.reference && typeof raw.reference === 'object' ? raw.reference : null;
+    return {
+      index: { value, coverage: Number.isFinite(coverage) ? coverage : null, provisional },
+      nextAction: action ? {
+        kind: String(action.kind || ''),
+        text: String(action.text || ''),
+        route: action.route ? String(action.route) : '',
+        subpage: action.subpage ? String(action.subpage) : '',
+        pointIndexes: Array.isArray(action.pointIndexes) ? action.pointIndexes.map(Number).filter(Number.isFinite) : [],
+      } : null,
+      points: Array.isArray(raw.points) ? raw.points : [],
+      reference: { frozen: !!reference && (reference.frozen === true || reference.frozenAt != null), canFreeze: !!reference && reference.canFreeze === true },
+    };
+  }
+
   function demoTelemetry() {
     const phase = (Date.now() / 1000) % 12;
     const rpm = Math.round(1700 + Math.sin(phase) * 620);
@@ -235,6 +259,17 @@
       return invoke(this.calibration, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
     }
 
+    /**
+     * Cérebro de equivalência (Kotlin `EquivalenceJson`): { index:{value,coverage,provisional},
+     * nextAction:{kind,text,route,subpage,pointIndexes}, points:[{index,axisMs,state,mixture}],
+     * reference:{frozen,canFreeze} }. null enquanto o Kotlin não expõe `getEquivalence` (ou se o JSON
+     * não tem a forma esperada): a tela mostra o layout atual, nunca um número inventado.
+     */
+    equivalence() {
+      if (this.demo || !this.native || typeof this.native.getEquivalence !== 'function') return null;
+      return normalizeEquivalence(invoke(this.native, 'getEquivalence', [], null));
+    }
+
     sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 250, captureRawUsb: false, maxSessionMb: 256, keepSessions: 20 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
     sessions() { return this.demo ? [] : invoke(this.native, 'listRecordedSessions', [], []); }
     setSessionSettings(settings) {
@@ -254,4 +289,5 @@
 
   ns.NativeApi = NativeApi;
   ns.nativeParse = parse;
+  ns.normalizeEquivalence = normalizeEquivalence;
 })(typeof window !== 'undefined' ? window : globalThis);

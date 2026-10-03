@@ -11,7 +11,7 @@
   grid-template-columns: repeat(6, minmax(90px, 1fr));
   gap: 6px;
   padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,.06);
+  border-top: 1px solid var(--veil-06);
 }
 
 .vehicle-status-strip > div {
@@ -19,13 +19,13 @@
   gap: 2px;
   min-width: 0;
   padding: 7px 9px;
-  border: 1px solid rgba(255,255,255,.055);
+  border: 1px solid var(--veil-055);
   border-radius: 9px;
-  background: rgba(255,255,255,.02);
+  background: var(--veil-02);
 }
 
 .vehicle-status-strip small {
-  color: var(--muted, #8793a4);
+  color: var(--muted, var(--tone-8793a4));
   font-size: 8px;
   font-weight: 700;
   letter-spacing: .10em;
@@ -33,7 +33,7 @@
 
 .vehicle-status-strip b {
   overflow: hidden;
-  color: #e6eef7;
+  color: var(--tone-e6eef7);
   font-size: 12px;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -42,19 +42,19 @@
 
 .vehicle-status-strip [data-state="online"] b,
 .vehicle-status-strip [data-state="measured"] b {
-  color: #bdebd6;
+  color: var(--tone-bdebd6);
 }
 
 .vehicle-status-strip [data-state="offline"] b {
-  color: #e79595;
+  color: var(--tone-e79595);
 }
 
 .vehicle-status-strip [data-state="cng"] b {
-  color: #79c7ff;
+  color: var(--tone-79c7ff);
 }
 
 .vehicle-status-strip [data-state="petrol"] b {
-  color: #f1c77b;
+  color: var(--tone-f1c77b);
 }
 
 @media (max-width: 1080px) {
@@ -75,16 +75,16 @@
 /* Primeiro uso: pergunta sobre a telemetria flutuante (uma vez) */
 .overlay-prompt {
   position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
-  background: rgba(3, 8, 14, .72); padding: 16px;
+  background: rgba(var(--rgb-3-8-14),.72); padding: 16px;
 }
 .overlay-prompt-card {
   max-width: 560px; padding: 20px 22px; border-radius: 16px;
-  background: #0d1624; border: 1px solid rgba(79, 142, 247, .45); color: #e4eaf3;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, .55);
+  background: var(--tone-0d1624); border: 1px solid rgba(var(--rgb-79-142-247),.45); color: var(--tone-e4eaf3);
+  box-shadow: 0 18px 48px var(--tint-0-0-0-55);
 }
-.overlay-prompt-card small { color: #8fb4ff; letter-spacing: .08em; font-weight: 700; }
+.overlay-prompt-card small { color: var(--tone-8fb4ff); letter-spacing: .08em; font-weight: 700; }
 .overlay-prompt-card h3 { margin: 6px 0 10px; font-size: 22px; }
-.overlay-prompt-card p { margin: 0 0 10px; font-size: 15px; line-height: 1.45; color: #c5d0db; }
+.overlay-prompt-card p { margin: 0 0 10px; font-size: 15px; line-height: 1.45; color: var(--tone-c5d0db); }
 .overlay-prompt-actions { display: flex; gap: 12px; margin-top: 14px; }
 .overlay-prompt-actions button { min-height: 52px; padding: 0 22px; font-size: 16px; }
 

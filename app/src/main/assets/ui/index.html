@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#070a0f">
   <title>OMEGAS V8</title>
+  <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles-calibration-obd.css">
+  <link rel="stylesheet" href="styles-floors.css">
 </head>
 <body>
   <div id="app" class="app-shell" aria-label="OMEGAS V8">
@@ -18,12 +20,11 @@
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
         <button type="button" data-route="dashboard" class="active"><i>01</i><span>Agora</span></button>
-        <button type="button" data-route="map"><i>02</i><span>Ajuste local</span></button>
-        <button type="button" data-route="curve"><i>03</i><span>Ajuste global</span></button>
+        <button type="button" data-route="map"><i>02</i><span>Mapa K</span></button>
+        <button type="button" data-route="curve"><i>03</i><span>Curva K</span></button>
         <button type="button" data-route="autocal"><i>04</i><span>AutoCal</span></button>
         <button type="button" data-route="refino"><i>05</i><span>Refino</span></button>
-        <div class="nav-divider"></div>
-        <button type="button" data-route="suggestions"><i>06</i><span>Sugestões</span><em id="suggestionCount" style="display:none">0</em></button>
+        <button type="button" data-route="sessions"><i>06</i><span>Sessões</span></button>
         <button type="button" data-route="tools"><i>07</i><span>Ferramentas</span></button>
       </nav>
 
@@ -71,7 +72,7 @@
 
         <section class="screen map-screen" data-screen="map" aria-labelledby="mapTitle">
           <div class="page-intro action-intro">
-            <div><small>AJUSTE LOCAL</small><h2 id="mapTitle">Mapa K</h2><p>Corrija regiões específicas sem misturar tendência global.</p></div>
+            <div><small>MAPA K</small><h2 id="mapTitle">Mapa K</h2><p>Corrija regiões específicas sem misturar tendência global.</p></div>
             <div class="inline-actions"><span id="mapSourceStatus" class="source-status">Mapa não lido</span><button id="mapReadButton" type="button" class="secondary">Reler ECU</button></div>
           </div>
 
@@ -85,18 +86,18 @@
               <label class="field-label"><span>Como ajustar</span><select id="mapAdjustmentMode"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select></label>
               <label class="field-label"><span>Valor</span><input id="mapAdjustmentValue" type="number" inputmode="decimal" step="1" value="0"></label>
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
-              <div class="safety-copy"><b>Prévia somente</b><span>Confira atual→alvo no mapa. Gravar é a única confirmação humana; Checkpoint, ACK e readback são automáticos.</span></div>
+              <div class="safety-copy"><b>Prévia somente</b><span>Confira atual→alvo no mapa. Gravar é um toque; foto antes, ACK e conferência na ECU são automáticos.</span></div>
               <button id="mapReviewButton" type="button" class="primary wide" disabled>Selecione células</button>
             </aside>
           </div>
 
-          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Escrita manual em andamento</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Checkpoint</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
-          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="mapOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="mapDismissResult" type="button" class="secondary">Voltar ao mapa</button></div></div>
+          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Gravando na ECU…</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Foto antes</span><span>Escrita</span><span>ACK</span><span>Conferindo na ECU</span></div></div></div>
+          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="mapOperationResult" class="operation-result" data-level="ok"><b>Gravado</b><span>Resultado da ECU.</span></div><button id="mapDismissResult" type="button" class="secondary">Voltar</button></div></div>
         </section>
 
         <section class="screen curve-screen" data-screen="curve" aria-labelledby="curveTitle">
           <div class="page-intro action-intro">
-            <div><small>AJUSTE GLOBAL</small><h2 id="curveTitle">Curva K</h2><p>Aprenda a tendência global e edite cada ponto individualmente.</p></div>
+            <div><small>CURVA K</small><h2 id="curveTitle">Curva K</h2><p>Aprenda a tendência global e edite cada ponto individualmente.</p></div>
             <div class="route-actions-stack">
               <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
                 <button type="button" data-curve-view="learning">Aprendizado global</button>
@@ -132,7 +133,7 @@
                   <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque em qualquer um dos 30 pontos</span></div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
                   <div class="curve-axis">Petrol Inj. →</div>
-                  <details class="evidence-disclosure"><summary><span><small>CONTEXTO</small><b>Evidência técnica</b></span><em>abrir</em></summary><div id="curveEvidenceList" class="evidence-grid"></div></details>
+                  <details class="evidence-disclosure"><summary><span><small>EVIDÊNCIA</small><b>Detalhes técnicos</b></span><em>abrir</em></summary><div id="curveEvidenceList" class="evidence-grid"></div></details>
                 </section>
                 <aside class="inspector-panel curve-editor-panel">
                   <div class="editor-heading"><div><small>PONTO ATIVO</small><h3 id="curveActivePoint">Selecione um ponto</h3></div></div>
@@ -144,15 +145,15 @@
                   <div class="context-separator"></div>
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
                   <div id="curveProposalList" class="proposal-list"><p>Nenhum ponto preparado.</p></div>
-                  <div class="safety-copy"><b>Uma confirmação</b><span>Confira antes→depois acima. Gravar inicia backup, escrita, ACK e readback sem outro “tem certeza?”.</span></div>
+                  <div class="safety-copy"><b>Um toque</b><span>Confira antes→depois acima. Gravar guarda a foto da curva, escreve e confere na ECU; Desfazer volta à foto.</span></div>
                   <button id="curveReviewButton" type="button" class="primary wide" disabled>Prepare pontos</button>
                 </aside>
               </div>
             </div>
           </div>
 
-          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Backup</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
-          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
+          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Gravando na ECU…</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Foto antes</span><span>Escrita</span><span>ACK</span><span>Conferindo na ECU</span></div></div></div>
+          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Gravado</b><span>Resultado da ECU.</span></div><button id="curveUndoButton" type="button" class="secondary" hidden>Desfazer</button><button id="curveDismissResult" type="button" class="secondary">Voltar</button></div></div>
         </section>
 
         <section class="screen autocal-route-screen" data-screen="autocal" aria-label="AutoCal">
@@ -163,13 +164,13 @@
           <div id="refinoScreenHost" class="autocal-cockpit-view" aria-live="polite"></div>
         </section>
 
-        <section id="suggestionDrawer" class="screen utility-screen" data-screen="suggestions" aria-labelledby="suggestionsTitle">
-          <div class="page-intro"><div><small>SUGESTÕES</small><h2 id="suggestionsTitle">Decisões prontas para revisar</h2></div><p>Global vai para Curva K. Local vai para Mapa K. Abrir nunca escreve.</p></div>
-          <div id="suggestionList" class="suggestion-list"><div class="detail-empty"><b>Nenhuma sugestão pronta</b><span>O aprendizado continua coletando evidência.</span></div></div>
+        <section id="sessionsScreen" class="screen utility-screen sessions-screen" data-screen="sessions" aria-labelledby="sessionsTitle">
+          <div class="page-intro"><div><small>SESSÕES</small><h2 id="sessionsTitle">O que aconteceu em cada condução</h2></div><p>Cada sessão é gravada sozinha ao conectar a ECU. Exportar nunca altera nada.</p></div>
+          <div id="sessionsHost" class="sessions-host"><p class="empty-copy">Lendo as sessões salvas…</p></div>
         </section>
 
         <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
-          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Backup, sessões e saúde do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
+          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Backup e saúde do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
           <div class="tool-actions">
             <button id="toolExportData" type="button"><b>Exportar backup completo</b><span>Tudo do app: calibrações salvas e sessões</span></button>
           </div>
@@ -189,6 +190,7 @@
   <script src="components/drawers.js" defer></script>
   <script src="screens/dashboard.js" defer></script>
   <script src="screens/map.js" defer></script>
+  <script src="screens/sessions.js" defer></script>
   <script src="screens/curve.js" defer></script>
   <script src="app.js" defer></script>
 </body>

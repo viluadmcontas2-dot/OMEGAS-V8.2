@@ -2,6 +2,9 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
+  // Palavras únicas de toda escrita na ECU (core/display-rules.js).
+  function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
+  const RESET_NOTE = 'Resetar a Curva K para 1.0 · Nenhum backup automático será criado. Para voltar, restaure um backup salvo antes.';
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
@@ -54,6 +57,7 @@
       });
       document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
       document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
+      document.getElementById('curveUndoButton')?.addEventListener('click', () => this.undoLast());
     }
 
     needsLearning() { return this.view === 'learning'; }
@@ -69,6 +73,7 @@
     }
 
     onEnter(context) {
+      if (context && context.subpage) this.setView(context.subpage);
       const suggestion = context && context.suggestion;
       if (suggestion) {
         this.pendingSuggestion = suggestion;
@@ -116,12 +121,9 @@
       text('curveBackupStatus', 'Salvando curva atual…');
     }
 
+    /** Um toque, sem diálogo. Nenhum backup automático: quem quiser voltar salva antes e usa Desfazer/Restaurar. */
     resetCurve() {
       if (this.reading || this.writing || this.backupTask) return;
-      const confirmed = window.confirm(
-        'Resetar a Curva K para 1.0? Nenhum backup automático será criado. Se quiser guardar a curva atual, use Salvar curva antes.'
-      );
-      if (!confirmed) return;
       this.cancelRestorePreview('');
       this.proposals.clear();
       this.renderChart();
@@ -134,8 +136,8 @@
       this.writing = true;
       this.root?.classList.remove('has-result');
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', 'Resetando Curva K para 1.0');
-      text('curveOperationMessage', 'Escrita → ACK → readback');
+      text('curveOperationTitle', 'Gravando na ECU… Curva K em 1.0');
+      text('curveOperationMessage', RESET_NOTE);
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
     }
@@ -317,7 +319,7 @@
         const progress = Math.max(0, Math.min(100, finite(operation.progress) || finite(operation.writerProgress) || 0));
         const bar = document.getElementById('curveOperationProgress');
         if (bar) bar.style.width = `${progress}%`;
-        text('curveOperationTitle', operation.message || operation.writerMessage || 'Backup · escrita · ACK · readback');
+        text('curveOperationTitle', operation.message || operation.writerMessage || wording().stages.join(' · '));
         if (!operation.busy) {
           this.writing = false;
           if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
@@ -326,8 +328,9 @@
             const result = document.getElementById('curveOperationResult');
             if (result) {
               result.dataset.level = 'ok';
-              result.querySelector('b').textContent = 'Curva K confirmada pela ECU';
-              result.querySelector('span').textContent = 'ACK e readback completos. A curva será relida.';
+              result.querySelector('b').textContent = wording().doneTitle('Curva K');
+              result.querySelector('span').textContent = wording().doneDetail;
+              this.showUndo(true);
             }
             this.data = null;
             this.proposals.clear();
@@ -342,8 +345,9 @@
             const result = document.getElementById('curveOperationResult');
             if (result) {
               result.dataset.level = 'critical';
-              result.querySelector('b').textContent = 'A Curva K não foi confirmada';
-              result.querySelector('span').textContent = operation.error || operation.message || 'A ECU não confirmou toda a operação. Releitura obrigatória.';
+              result.querySelector('b').textContent = wording().failedTitle;
+              this.showUndo(false);
+              result.querySelector('span').textContent = operation.error || operation.message || wording().failedDetail;
             }
             this.data = null;
             if (this.restoreContext) text('curveBackupStatus', 'Restauração não confirmada · releitura obrigatória');
@@ -616,13 +620,32 @@
       }
       this.writing = true;
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', restoring ? 'Restaurando backup da Curva K' : 'Escrita manual da Curva K');
+      text('curveOperationTitle', restoring ? 'Gravando na ECU… backup da Curva K' : wording().writing);
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
     }
 
     dismissResult() {
       this.root?.classList.remove('is-writing', 'has-result');
+    }
+
+    /** Desfazer = abrir a prévia de restauração da foto mais recente; gravar de volta é o toque seguinte. */
+    showUndo(visible) {
+      const button = document.getElementById('curveUndoButton');
+      if (button) button.hidden = !visible || !this.latestBackupFile();
+    }
+
+    latestBackupFile() {
+      const rows = this.api.curveBackups();
+      const list = Array.isArray(rows) ? rows.filter(item => item && item.fileName) : [];
+      list.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+      return list.length ? String(list[0].fileName) : '';
+    }
+
+    undoLast() {
+      const fileName = this.latestBackupFile();
+      this.dismissResult();
+      if (fileName) this.prepareRestore(fileName);
     }
 
     alert(message) { this.store.patch({ alert: { level: 'warning', message: String(message || 'Operação indisponível') } }); }

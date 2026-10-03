@@ -1,11 +1,13 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools'];
+  const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
   // Rotas que mostram o AGORA ao vivo: só elas recebem o pump de telemetria (Refino incluído:
   // sem isso a bolinha AGORA do Refino ficava congelada no último valor da rota anterior).
   const LIVE_ROUTES = ['dashboard', 'map', 'autocal', 'refino'];
+  // Subpáginas (tablist) por rota: o Agora leva o dono já posicionado, sem executar nada.
+  const SUBPAGES = { curve: ['learning', 'editor'] };
 
   function loadOptionalScript(src, onload) {
     if (typeof document === 'undefined') return;
@@ -33,6 +35,13 @@
       if (typeof this.onNavigate === 'function') this.onNavigate(route, previous, context);
       return true;
     }
+    /** Abre `route` já na subpágina pedida (ex.: curve › editor). Só navega; nunca executa. */
+    open(route, subpage, extra) {
+      const known = SUBPAGES[route] || [];
+      const context = Object.assign({}, extra || {});
+      if (subpage && known.includes(subpage)) context.subpage = subpage;
+      return this.navigate(route, Object.keys(context).length ? context : undefined);
+    }
     restore() {
       let saved = 'dashboard';
       try { saved = root.localStorage.getItem(STORAGE_KEY) || saved; } catch (_) {}
@@ -45,6 +54,7 @@
   ns.Router = Router;
   ns.ROUTES = ROUTES;
   ns.LIVE_ROUTES = LIVE_ROUTES;
+  ns.SUBPAGES = SUBPAGES;
 
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/vehicle-status-strip.js');

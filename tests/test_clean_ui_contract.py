@@ -40,15 +40,15 @@ class CleanUiContract(unittest.TestCase):
 
     def test_seven_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']
+        expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        for label in ('Agora', 'Ajuste local', 'Ajuste global', 'AutoCal', 'Refino', 'Sugestões', 'Ferramentas'):
+        for label in ('Agora', 'Mapa K', 'Curva K', 'AutoCal', 'Refino', 'Sessões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
@@ -64,7 +64,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('store.patch({ telemetry, tick })', self.app)
 
     def test_low_end_1280x720_design_budget(self):
-        self.assertIn('--rail-width:202px', self.css)
+        self.assertIn('--rail-width:260px', (UI / 'tokens.css').read_text('utf-8'))
         self.assertIn('grid-template-columns:var(--rail-width) minmax(0,1fr)', self.css)
         self.assertIn('contain:layout paint style', self.css)
         combined_css = self.css + self.obd_css + self.calibration_obd_css + self.refine_css
@@ -113,7 +113,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn("classList.add('is-reviewing')", self.map_screen)
         self.assertNotIn('id="mapWriteButton"', self.html)
         self.assertNotIn('id="mapReviewBack"', self.html)
-        self.assertIn('ACK e readback', self.map_screen)
+        self.assertIn('wording().doneDetail', self.map_screen)
         self.assertNotIn('window.Android', self.map_screen)
         self.assertNotIn('protocolTransaction', self.map_screen)
 
@@ -130,7 +130,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn("classList.add('is-reviewing')", self.curve_screen)
         self.assertNotIn('id="curveWriteButton"', self.html)
         self.assertNotIn('id="curveReviewBack"', self.html)
-        self.assertIn('ACK e readback', self.curve_screen)
+        self.assertIn('wording().doneDetail', self.curve_screen)
         self.assertNotIn('window.Android', self.curve_screen)
         self.assertNotIn('protocolTransaction', self.curve_screen)
 
@@ -159,13 +159,14 @@ class CleanUiContract(unittest.TestCase):
         for forbidden in ('writeMap(', 'window.Android', 'protocolTransaction', 'startKBatchWrite'):
             self.assertNotIn(forbidden, self.map_editor)
         self.assertIn('Prévia somente', self.html)
-        self.assertIn('Checkpoint, ACK e readback', self.html)
+        self.assertIn('foto antes, ACK e conferência na ECU', self.html)
         self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
 
-    def test_suggestions_route_is_review_navigation_not_auto_apply(self):
-        self.assertIn('data-screen="suggestions"', self.html)
-        self.assertIn('Abrir nunca escreve.', self.html)
+    def test_sessions_route_replaces_suggestions(self):
+        self.assertNotIn('data-screen="suggestions"', self.html)
+        self.assertIn('data-screen="sessions"', self.html)
+        self.assertIn('Exportar nunca altera nada.', self.html)
 
     def test_map_and_curve_share_router_state(self):
         self.assertIn("route === 'map'", self.app)

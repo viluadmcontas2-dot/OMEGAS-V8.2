@@ -39,7 +39,8 @@
   function boot() {
     const app = root.OmegasApp;
     if (!app?.store || !app?.router) {
-      root.setTimeout(boot, 25);
+      // Sem timer: espera o app.js anunciar que o shell existe.
+      if (typeof root.addEventListener === 'function') root.addEventListener('omegas-app-ready', boot, { once: true });
       return;
     }
     if (app.splitLayout) return;
