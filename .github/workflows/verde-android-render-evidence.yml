@@ -73,6 +73,9 @@ jobs:
             method: sessionChangeInvalidatesOldTelemetry
           - scenario: dashboard-session-recovered
             method: sessionReconnectRecoversFreshTelemetry
+          - scenario: refino-inicio-durante-parada
+            method: startWaitsForStopThatIsSealingJournalDelivery
+            class: RefinoRenderTest
           - scenario: refino-parada-durante-transicao
             method: stopSessionWaitsForTransitionAlreadyInProgress
             class: RefinoRenderTest
