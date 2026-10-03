@@ -440,7 +440,7 @@ class DashboardLevelsRenderTest {
         waitFor(10_000L) {
             var idle = false
             scenario.onActivity { activity ->
-                val bridge = getPrivateField(activity, "v7Bridge")
+                val bridge = getPrivateField(activity, "calibrationBridge")
                 if (bridge != null) {
                     val getLastOperation = bridge.javaClass.getMethod("getLastOperation")
                     val current = JSONObject(getLastOperation.invoke(bridge) as String)
@@ -450,8 +450,8 @@ class DashboardLevelsRenderTest {
             idle
         }
         scenario.onActivity { activity ->
-            val bridge = checkNotNull(getPrivateField(activity, "v7Bridge")) {
-                "V7 bridge unavailable"
+            val bridge = checkNotNull(getPrivateField(activity, "calibrationBridge")) {
+                "Calibration bridge unavailable"
             }
             setPrivateField(bridge, "lastOperation", JSONObject(fixture.operation.toString()))
             activity.refreshWebUi()

@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 manager = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt").read_text(encoding="utf-8")
 service = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt").read_text(encoding="utf-8")
-bridge = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text(encoding="utf-8")
+bridge = (ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationOperationsBridge.kt").read_text(encoding="utf-8")
 api = (ROOT / "app/src/main/assets/ui/core/native-api.js").read_text(encoding="utf-8")
 curve = (ROOT / "app/src/main/assets/ui/screens/curve.js").read_text(encoding="utf-8")
 index = (ROOT / "app/src/main/assets/ui/index.html").read_text(encoding="utf-8")

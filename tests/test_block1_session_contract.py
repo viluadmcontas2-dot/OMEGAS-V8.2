@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 UI = ROOT / "app/src/main/assets/ui"
-BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
+BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationOperationsBridge.kt"
 POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt"
 
 
