@@ -76,6 +76,22 @@ Equivalente já existente no app (`PROVADO`, branch do APK): na tela **Curva K**
 
 Conclusão para a pergunta: não há rotina de "gravar configuração" a acrescentar ao ciclo. O único frame de encerramento que o ProgBase envia e o app não (`01 12 00`) tem ocorrência provada e semântica desconhecida, e a persistência de `MUL_ACT` e do enable já foi observada sem ele (seção "O que a ECU faz com a curva", item 1). Ele entra no protocolo físico abaixo como P4 para fechar a lacuna, não como correção presumida.
 
+## Evidência documental do fabricante (a obter)
+
+Observação do proprietário (2026-10-03): no ProgBase, desmarcar *Abilita autocalibrazione* também **para a aquisição de pontos**. Isso bate com o item 4 da seção "O que a ECU faz com a curva" (buffers e `MUL_ACT` congelam com `AUTO_CAL_ENABLE = 0`) e com H1: o flag desliga o módulo inteiro, aquisição e correção juntas.
+
+A busca por manuais da Landi Renzo/AEB nesta sessão localizou as fontes abaixo, mas **nenhuma pôde ser lida**: o proxy de rede do ambiente bloqueia os domínios (landi.pl, lpgtech.ua, hybridsupply.uk/.de, aeb.it, landirenzo.com, scribd.com, pdfcoffee.com, coursehero.com) e o Drive do proprietário não contém manuais do Omegas. Caminho operacional: baixar o PDF e colocá-lo na pasta DUMP do Drive (abaixo de 10 MB) para leitura pelo conector.
+
+| Fonte | O que procurar |
+|---|---|
+| Landi Renzo, *Software manual LR Omegas* 2.16.4 C (landi.pl `MANUALE_SW_2164C_gb1.pdf`) | capítulo de autocalibração: o que acontece ao desabilitar; se a correção aprendida permanece aplicada; procedimento de "K insertion"; salvar/carregar configuração |
+| Landi Renzo, boletim *LR Omegas software program version 4.2.0.85* (hybridsupply.uk `hsd-49504-...pdf`) | mesma geração 4.2.0.x do ProgBase do DUMP; "linear autocalibration", acquisition, automatch, Export to K |
+| Landi Renzo, *Manuale software 4.1.0 S* (coursehero) e *Software manual for LRE 184/188/194/198/EVO* (pdfcoffee) | idem, versões 4.x |
+| Landi Renzo, *OMEGAS PLUS software manual* (scribd `BLUE-GB`) e *User Manual Omegas Software* (scribd) | definição do coeficiente K (128 = mesmo tempo gasolina/gás), mapa, autocalibração |
+| AEB, *AEB software manual* (lpgautosupplies.co.uk) e folha *MP48 OBD* (aeb.it) | lado AEB da mesma família MP48: autocalibração, "self-mapping", memorização |
+
+Evidência mais barata e mais direta: **o texto do aviso que o próprio ProgBase mostra ao desmarcar o checkbox** (`CheckAutoCalEnableBeforeSetData`). Ele é a declaração do fabricante sobre o que o flag faz e não está nos DFMs (é resourcestring do EXE; o `Strings` do DUMP tem 11,8 MB e não baixa). Um print da caixa de diálogo, anexado ao Drive, fecha isso sem desmontagem.
+
 ## Protocolo de validação física (classe 5, barato, pelo proprietário)
 
 Registrar tudo com a sessão do app gravando (`telemetry` já traz `gas_ms_diagnostic`, `petrol_ms`, `rpm`, `load_bar`).
