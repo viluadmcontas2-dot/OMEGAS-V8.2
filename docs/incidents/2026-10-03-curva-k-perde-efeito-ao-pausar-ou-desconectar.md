@@ -84,7 +84,6 @@ Registrar tudo com a sessão do app gravando (`telemetry` já traz `gas_ms_diagn
 - **P2 (H2):** religar AutoCal. Na mesma faixa, anotar a razão. Clicar **Pausar** da notificação (sessão fechada com `00 01 01`, nada de AutoCal). Repetir a faixa lendo o consumo pelo instrumento do carro ou reconectando logo depois. Repetir com o cabo removido. Razão mudou nos dois casos → H2 confirmada.
 - **P3 (persistência):** ao reconectar após P2, pedir snapshot e conferir `MUL_ACT`, `AUTO_CAL_ENABLE` e contador iguais aos anteriores. Diferentes → reabrir a hipótese de reversão.
 - **P4 (lacuna `01 12 00`):** com a curva não neutra lida no snapshot inicial, fechar a sessão pelo **Pausar** da notificação (só `00 01 01`), desligar e religar a ignição, reconectar e reler `MUL_ACT` e `AUTO_CAL_ENABLE`. Igual ao snapshot ⇒ `01 12 00` não é necessário para persistir a curva nem o enable; diferente ⇒ reabrir a hipótese de commit e capturar uma desconexão do ProgBase após escrita de curva para comparar.
-
 - Nenhum desses passos escreve na ECU além do toggle já existente; nenhum resultado aqui pode ser alegado como `PROVADO` sem a sessão gravada.
 
 ## Bônus: evidência nova para a lacuna L-07 (Mapa K lido ≠ escrito)
