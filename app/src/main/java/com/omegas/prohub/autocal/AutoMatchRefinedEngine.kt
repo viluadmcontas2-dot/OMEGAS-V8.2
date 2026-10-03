@@ -58,6 +58,14 @@ object AutoMatchRefinedEngine {
     const val TELEMETRY_WEIGHT = 0.4
     /** Abaixo disso a telemetria é dominada por transiente/corte (erro ~15%). */
     const val TELEMETRY_MIN_MS = 3.0
+    /**
+     * A ECU pode não ter faixas maduras (AutoMatch acabou de zerar os buffers, ou o motorista
+     * não passa por elas). Então a condução sozinha pode propor, mas só com cobertura de verdade:
+     * pelo menos [TELEMETRY_ONLY_MIN_BANDS] faixas de Petrol Inj. com [TELEMETRY_ONLY_BAND_PAIRS]
+     * pares cada. Sem isso falha fechado (POLISH, nada muda).
+     */
+    const val TELEMETRY_ONLY_BAND_PAIRS = 8
+    const val TELEMETRY_ONLY_MIN_BANDS = 2
 
     data class Input(
         val axisRaw: IntArray,
@@ -122,6 +130,8 @@ object AutoMatchRefinedEngine {
         val rejectedBands: List<RejectedBand>,
         /** Quantos alvos vieram da telemetria da condução (além das faixas nativas). */
         val telemetryTargetCount: Int = 0,
+        /** A equivalência veio só da condução (a ECU não tinha faixas maduras em comum). */
+        val telemetryOnly: Boolean = false,
         val metricsBefore: Metrics?,
         val metricsAfter: Metrics?,
         /** Erro médio ponderado entre o K pedido pela medição e a curva (fração); null sem equivalência. */
@@ -162,12 +172,15 @@ object AutoMatchRefinedEngine {
         }
         val matureWeight = BAND_MATURE_COUNT.toDouble() / BAND_FULL_COUNT
         val mature = targets.count { it.weight >= matureWeight }
-        val equivalence = mature >= MIN_COMMON_MATURE
-        // A telemetria complementa as faixas nativas; nunca habilita a equivalência sozinha.
+        val nativeEquivalence = mature >= MIN_COMMON_MATURE
+        val usablePairs = input.telemetryPairs.filter { (tp, tg) -> tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last() }
+        // A condução sozinha só habilita a equivalência com cobertura real em mais de uma faixa.
+        val telemetryOnly = !nativeEquivalence && telemetryCovers(usablePairs)
+        val equivalence = nativeEquivalence || telemetryOnly
         val bandTargetCount = targets.size
-        if (equivalence && input.telemetryPairs.isNotEmpty()) {
-            targets = targets + input.telemetryPairs.mapNotNull { (tp, tg) ->
-                if (tp < TELEMETRY_MIN_MS || tg <= 0.0 || tp > axisMs.last()) return@mapNotNull null
+        if (telemetryOnly) targets = emptyList() // faixas nativas imaturas não entram: só a medição própria
+        if (equivalence && usablePairs.isNotEmpty()) {
+            targets = targets + usablePairs.map { (tp, tg) ->
                 Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT, tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
             }
         }
@@ -209,6 +222,7 @@ object AutoMatchRefinedEngine {
         return Result(
             mode = if (equivalence) Mode.EQUIVALENCE else Mode.POLISH,
             reason = if (equivalence) null else "BANDAS_COMUNS_MADURAS_INSUFICIENTES",
+            telemetryOnly = telemetryOnly,
             matureCommonPoints = mature,
             axisMs = axisMs,
             currentRaw = kRaw.toList(),
@@ -219,12 +233,28 @@ object AutoMatchRefinedEngine {
             needsAnotherPass = eEff > E_MAX + 1e-9,
             targets = targets,
             rejectedBands = rejected,
-            telemetryTargetCount = targets.size - bandTargetCount,
+            telemetryTargetCount = if (telemetryOnly) targets.size else targets.size - bandTargetCount,
             metricsBefore = metrics(kOld, axisMs),
             metricsAfter = metrics(outRaw.map { it / Q14 }, axisMs),
-            evidenceErrorBefore = evidenceError(if (equivalence) targets.filter { it.weight >= matureWeight } else emptyList(), axisMs, kOld),
-            evidenceErrorAfter = evidenceError(if (equivalence) targets.filter { it.weight >= matureWeight } else emptyList(), axisMs, outRaw.map { it / Q14 }),
+            evidenceErrorBefore = evidenceError(judgedTargets(equivalence, telemetryOnly, targets, matureWeight), axisMs, kOld),
+            evidenceErrorAfter = evidenceError(judgedTargets(equivalence, telemetryOnly, targets, matureWeight), axisMs, outRaw.map { it / Q14 }),
         )
+    }
+
+    /** Alvos que julgam o erro: faixas nativas maduras; na condução-só, todos os pares da medição. */
+    private fun judgedTargets(equivalence: Boolean, telemetryOnly: Boolean, targets: List<Target>, matureWeight: Double): List<Target> = when {
+        !equivalence -> emptyList()
+        telemetryOnly -> targets
+        else -> targets.filter { it.weight >= matureWeight }
+    }
+
+    /** Cobertura mínima da condução: [TELEMETRY_ONLY_MIN_BANDS] faixas com [TELEMETRY_ONLY_BAND_PAIRS] pares. */
+    private fun telemetryCovers(pairs: List<kotlin.Pair<Double, Double>>): Boolean {
+        if (pairs.size < TELEMETRY_ONLY_BAND_PAIRS * TELEMETRY_ONLY_MIN_BANDS) return false
+        val covered = EquivalenceLedger.BANDS.count { (lo, hi) ->
+            pairs.count { (tp, _) -> tp >= lo && tp < hi } >= TELEMETRY_ONLY_BAND_PAIRS
+        }
+        return covered >= TELEMETRY_ONLY_MIN_BANDS
     }
 
     private fun evidenceError(targets: List<Target>, axisMs: List<Double>, factors: List<Double>): Double? {

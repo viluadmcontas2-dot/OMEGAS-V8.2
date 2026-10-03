@@ -57,6 +57,29 @@ jobs:
             --no-daemon \
             --stacktrace
 
+      - name: Medição de desempenho do Refino (corpus real)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app/build/perf/equivalence-view.txt
+          cat app/build/perf/equivalence-view.txt
+
+      # Testes Node que leem o resultado do JVM (precisam rodar DEPOIS do testDebugUnitTest).
+      # Diagnóstico: o resultado é impresso e gravado; a falha, se houver, aparece no log e no resumo.
+      - name: Testes Node que dependem do resultado do JVM
+        id: gradle_ui
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -uo pipefail
+          status=0
+          for t in $(grep -l '@requires-gradle-test-results' tests/ui/*.test.cjs); do
+            echo "+ node --test $t"
+            node --test "$t" || status=$?
+          done
+          echo "GRADLE_DEPENDENT_UI_TESTS_EXIT=$status"
+          exit $status
+
       - name: Verify and hash APK
         id: apk
         shell: bash

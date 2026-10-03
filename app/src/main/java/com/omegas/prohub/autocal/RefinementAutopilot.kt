@@ -76,8 +76,10 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 lastCount = count
             }
             // Pontos da ECU com atividade (os que o gráfico desenha) e zonas que a ECU deu como adquiridas.
-            val petrolValid = activeCount(acquisition, "GASOLINA")
-            val gasValid = activeCount(acquisition, "GNV")
+            val petrolKnown = activeCount(acquisition, "GASOLINA")
+            val gasKnown = activeCount(acquisition, "GNV")
+            val petrolValid = petrolKnown ?: 0
+            val gasValid = gasKnown ?: 0
             val petrolZones = acquiredZones(acquisition, "GASOLINA")
             val gasZones = acquiredZones(acquisition, "GNV")
             val complete = petrolZones >= 4 && gasZones >= 4
@@ -95,8 +97,9 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("autoMatchCount", count ?: JSONObject.NULL)
                 .put("maxAutomatch", max ?: JSONObject.NULL)
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
-                .put("petrolValid", petrolValid)
-                .put("gasValid", gasValid)
+                // Sem leitura da ECU o número é desconhecido (null → "—"), nunca 0.
+                .put("petrolValid", petrolKnown ?: JSONObject.NULL)
+                .put("gasValid", gasKnown ?: JSONObject.NULL)
                 .put("petrolZones", petrolZones)
                 .put("gasZones", gasZones)
                 .put("quietMinutes", quietMs / 60_000.0)
@@ -125,6 +128,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
             val latest = journal.optJSONObject("latest")
             val latestStatus = latest?.optString("status").orEmpty()
+            val verification = if (latestStatus == "VERIFICANDO") verificationProgress(latest!!, journal) else null
+            if (verification != null) out.put("verification", verification)
             val next = when {
                 !ecuOnline && lastCount == null -> "SEM_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
@@ -137,8 +142,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             if (next != phase) { phase = next; dirty = true; lastSaveAt = Long.MIN_VALUE / 2 }
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL")
-                .put("headline", headline(phase, count, max, measured.size, off.length(), out))
-                .put("next", nextStep(phase, petrolValid, gasValid, missing, index))
+                .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification))
+                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification))
             if (latest != null) out.put("journalStatus", latestStatus)
             last = out
             out
@@ -164,8 +169,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     /** Estados de banda com dado real (Platina: ZONA_ADQUIRIDA/ATIVIDADE; formato antigo: VALIDO/COLETANDO). */
     private val activeStates = setOf("ZONA_ADQUIRIDA", "ATIVIDADE", "VALIDO", "COLETANDO")
 
-    private fun activeCount(acquisition: JSONObject?, fuel: String): Int {
-        val points = acquisition?.optJSONArray("points") ?: return 0
+    private fun activeCount(acquisition: JSONObject?, fuel: String): Int? {
+        val points = acquisition?.optJSONArray("points") ?: return null
         var n = 0
         for (i in 0 until points.length()) {
             val p = points.optJSONObject(i) ?: continue
@@ -187,23 +192,47 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         return zones.size
     }
 
-    private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject): String = when (phase) {
+    /** Quanto da verificação já passou e quais faixas ainda esperam leituras (para a tela explicar). */
+    private fun verificationProgress(latest: JSONObject, journal: JSONObject): JSONObject {
+        val budget = journal.optLong("verifyBudgetMs", RefinementJournal.VERIFY_PARTIAL_ONLINE_MS).coerceAtLeast(1L)
+        val online = latest.optLong("onlineMs", 0L)
+        val waiting = JSONArray()
+        val bands = latest.optJSONArray("bands") ?: JSONArray()
+        for (i in 0 until bands.length()) {
+            val b = bands.optJSONObject(i) ?: continue
+            if (b.optString("verdict") == "COLETANDO") {
+                waiting.put(JSONObject().put("fromMs", b.optDouble("fromMs")).put("toMs", b.optDouble("toMs"))
+                    .put("samples", b.optInt("samplesAfter")).put("needed", RefinementJournal.MIN_BAND_SAMPLES))
+            }
+        }
+        return JSONObject().put("onlineMinutes", online / 60_000.0).put("budgetMinutes", budget / 60_000.0).put("waitingBands", waiting)
+    }
+
+    private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
             (if (count != null) " ${count}" + (if (max != null) " de $max" else "") else "") +
             ". O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
         "COLETANDO_NOSSOS" -> "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
         "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina. Revise e grave."
-        "VERIFICANDO" -> "Curva nova gravada. Dirija normalmente: o OMEGAS mede se o GNV chegou na gasolina."
+        "VERIFICANDO" -> "Curva nova gravada. O OMEGAS mede faixa por faixa se o GNV chegou na gasolina" +
+            (verification?.let { " (%d de %d min de condução)".format(Math.floor(it.optDouble("onlineMinutes")).toInt(), Math.round(it.optDouble("budgetMinutes")).toInt()) } ?: "") + "."
         "RESTAURAR_TRECHO" -> "Um trecho piorou com a curva nova. Restaure só esse trecho."
         "ESTAVEL" -> "GNV equivalente à gasolina em $measured faixas (±3%). Pode desconectar."
         else -> ""
     }
 
-    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject): String = when (phase) {
+    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
-        "COLETANDO_NOSSOS", "VERIFICANDO" -> {
+        "VERIFICANDO" -> {
+            val waiting = verification?.optJSONArray("waitingBands")
+            val wanted = (0 until (waiting?.length() ?: 0)).mapNotNull { waiting?.optJSONObject(it) }
+                .joinToString(", ") { "%.1f–%.1f ms".format(it.optDouble("fromMs"), it.optDouble("toMs")) }
+            if (wanted.isNotEmpty()) "Rode no GNV passando por $wanted. Se não passar por lá, o OMEGAS fecha a verificação com o que mediu."
+            else "Continue rodando: faltam poucas leituras para fechar o resultado."
+        }
+        "COLETANDO_NOSSOS" -> {
             val wanted = (0 until missing.length()).mapNotNull { missing.optJSONObject(it) }
                 .joinToString(", ") { "%.1f–%.1f ms".format(it.optDouble("fromMs"), it.optDouble("toMs")) }
             when {

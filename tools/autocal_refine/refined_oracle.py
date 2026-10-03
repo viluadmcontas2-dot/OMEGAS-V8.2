@@ -47,6 +47,11 @@ TUKEY_C = 4.685
 SMOOTH_TOLERANCE_LOG = 0.0025
 TELEMETRY_WEIGHT = 0.4       # peso de cada par GNV×gasolina da telemetria (validado em metade escondida)
 TELEMETRY_MIN_MS = 3.0       # abaixo disso a telemetria é dominada por transiente/corte (erro ~15%)
+# A condução sozinha só habilita a equivalência (sem faixas nativas maduras) com cobertura real:
+# pelo menos TELEMETRY_ONLY_MIN_BANDS faixas de Petrol Inj. com TELEMETRY_ONLY_BAND_PAIRS pares cada.
+TELEMETRY_ONLY_BAND_PAIRS = 8
+TELEMETRY_ONLY_MIN_BANDS = 2
+LEDGER_BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]  # = EquivalenceLedger.BANDS
 
 NATIVE_MIN_RATIO = 0.75
 NATIVE_MAX_RATIO = 1.20
@@ -442,6 +447,14 @@ def telemetry_targets(pairs, axis_ms, k_old):
     return out
 
 
+def telemetry_covers(pairs):
+    """Cobertura mínima da condução para propor sem faixas nativas maduras (espelho do Kotlin)."""
+    if len(pairs) < TELEMETRY_ONLY_BAND_PAIRS * TELEMETRY_ONLY_MIN_BANDS:
+        return False
+    covered = sum(1 for lo, hi in LEDGER_BANDS if sum(1 for tp, _ in pairs if lo <= tp < hi) >= TELEMETRY_ONLY_BAND_PAIRS)
+    return covered >= TELEMETRY_ONLY_MIN_BANDS
+
+
 def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
     axis_raw = raw(snapshot, "PETR_INJ_TBP")
     k_raw = raw(snapshot, "MUL_ACT")
@@ -466,10 +479,15 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
         if len(petrol) >= 2 and len(gas) >= 2:
             targets = equivalence_targets(petrol, gas, axis_ms, k_old)
     mature = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)]
-    equivalence_available = len(mature) >= MIN_COMMON_MATURE
-    # A telemetria complementa as faixas nativas; nunca habilita a equivalência sozinha.
-    if equivalence_available and telemetry_pairs:
-        targets = targets + telemetry_targets(telemetry_pairs, axis_ms, k_old)
+    native_equivalence = len(mature) >= MIN_COMMON_MATURE
+    usable = [(tp, tg) for tp, tg in (telemetry_pairs or []) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
+    # A condução sozinha só habilita a equivalência com cobertura real em mais de uma faixa.
+    telemetry_only = (not native_equivalence) and telemetry_covers(usable)
+    equivalence_available = native_equivalence or telemetry_only
+    if telemetry_only:
+        targets = []  # faixas nativas imaturas não entram: só a medição própria
+    if equivalence_available and usable:
+        targets = targets + telemetry_targets(usable, axis_ms, k_old)
 
     observations = []
     if equivalence_available:
@@ -514,13 +532,19 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
             origins.append("HELD")
             out_raw[j] = k_raw[j]  # sem evidência e sem anomalia: preserva o valor gravado
     out_factors = [r / Q14 for r in out_raw]
-    mature_targets = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)] if equivalence_available else []
+    if not equivalence_available:
+        mature_targets = []
+    elif telemetry_only:
+        mature_targets = targets
+    else:
+        mature_targets = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)]
     return {
         "evidenceErrorBefore": evidence_error(mature_targets, axis_ms, k_old),
         "evidenceErrorAfter": evidence_error(mature_targets, axis_ms, out_factors),
         "available": True,
         "mode": "EQUIVALENCE" if equivalence_available else "POLISH",
         "equivalenceAvailable": equivalence_available,
+        "telemetryOnly": telemetry_only,
         "reason": None if equivalence_available else "BANDAS_COMUNS_MADURAS_INSUFICIENTES",
         "matureCommonPoints": len(mature),
         "axisMs": axis_ms,

@@ -798,7 +798,9 @@ class TelemetryForegroundService : Service() {
     private fun healthTick() {
         if (stopping) return
         try {
-            if (refinementJournal.evaluate(equivalence.index())) stateChanged()
+            if (refinementJournal.evaluate(equivalence.index(), ecuOnline = usb.connected && runtime.ready)) stateChanged()
+            // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
+            stallWatch.tick(System.currentTimeMillis())
             observeRefinement()
             handleUsbTransition()
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
@@ -862,6 +864,11 @@ class TelemetryForegroundService : Service() {
             ),
         )
 
+        // Velocidade do GPS (se ligado) entra no evento: motor morrendo com o carro andando é apagão,
+        // sem telemetria depois e parado é a chave desligada.
+        val gpsSpeedKmh = if (::gps.isInitialized && gps.running) {
+            gps.json().optDouble("speedKmh", -1.0).takeIf { it >= 0.0 }
+        } else null
         stallWatch.accept(
             StallWatch.Frame(
                 t = accepted.optLong("timestamp", System.currentTimeMillis()),
@@ -869,10 +876,12 @@ class TelemetryForegroundService : Service() {
                 rpm = live.optDouble("rpm", 0.0),
                 map = live.optDouble("load_bar", 0.0),
                 petrolMs = live.optDouble("petrol_ms", 0.0),
+                speedKmh = gpsSpeedKmh,
             ),
         )?.let { event ->
             sessionRecorder.record("engine_stall", "autocal", event, force = true)
-            log.add("WARN", "REFINO", "Motor apagou no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
+            val verb = if (event.optString("kind") == StallWatch.KIND_NEAR) "Motor quase apagou" else "Motor apagou"
+            log.add("WARN", "REFINO", "$verb no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
         }
 
         sessionRecorder.record("telemetry", "mp48", live)

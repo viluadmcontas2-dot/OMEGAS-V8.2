@@ -6,6 +6,7 @@ import java.io.File
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.exp
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Acumulador de equivalência GNV × gasolina a partir da telemetria MP48.
@@ -93,6 +94,18 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private var dirty = false
     @Volatile private var cachedIndex: JSONObject? = null
     private var cachedDense: Triple<Double, Int, JSONObject>? = null
+    private var cachedPairs: Pair<Long, List<EvidencePair>>? = null
+    private val revisionCounter = AtomicLong(0L)
+
+    /** Muda quando qualquer leitura entra, a época do GNV recomeça ou o arquivo é carregado. */
+    fun revision(): Long = revisionCounter.get()
+
+    private fun touched() {
+        revisionCounter.incrementAndGet()
+        cachedIndex = null
+        cachedDense = null
+        cachedPairs = null
+    }
 
     init { load() }
 
@@ -115,8 +128,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             if (obs != null) {
                 (if (frame.fuel == "GASOLINA") petrol else gas).add(obs)
                 dirty = true
-                cachedIndex = null
-        cachedDense = null
+                touched()
             }
         }
         if (obs != null) maybeSave()
@@ -142,8 +154,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         gasEpochReason = reason
         gasEpochAt = clock()
         dirty = true
-        cachedIndex = null
-        cachedDense = null
+        touched()
     }.also { maybeSave(force = true) }
 
     /** O próprio app gravou esta curva: adota sem descartar o GNV medido com ela. */
@@ -165,6 +176,22 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     /** Pares (t_gasolina de referência, t_no_GNV) para a curva vigente. */
     fun pairs(): List<EvidencePair> = synchronized(lock) {
+        val revision = revisionCounter.get()
+        cachedPairs?.takeIf { it.first == revision }?.let { return@synchronized it.second }
+        val computed = computePairs()
+        cachedPairs = revision to computed
+        computed
+    }
+
+    /**
+     * Pares que podem corrigir a Curva K: só condução (RPM ≥ [DRIVING_MIN_RPM]) e Petrol Inj. acima
+     * do piso da telemetria. A marcha lenta (~870 rpm, ~4,5 ms) tem estratégia própria da ECU e,
+     * se entrasse aqui, puxava a curva da faixa de 4,5 ms para baixo e criava um degrau.
+     */
+    fun drivingPairs(): List<EvidencePair> =
+        pairs().filter { it.rpm >= DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS }
+
+    private fun computePairs(): List<EvidencePair> {
         // Grade RPM×MAP com célula = janela de casamento: só as 3×3 células vizinhas podem casar.
         // Mesmo resultado da busca exaustiva, sem 4000×1500 comparações por recálculo na multimídia.
         fun cell(rpm: Double, map: Double) = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
@@ -172,7 +199,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val grid = HashMap<Long, MutableList<Obs>>()
         petrol.forEach { grid.getOrPut(cell(it.rpm, it.map)) { ArrayList() }.add(it) }
         val matches = ArrayList<Double>()
-        gas.mapNotNull { g ->
+        return gas.mapNotNull { g ->
             matches.clear()
             val r0 = Math.floorDiv(g.rpm.toLong(), MATCH_RPM.toLong())
             val m0 = Math.floorDiv((g.map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
@@ -191,7 +218,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
      */
     fun index(): JSONObject {
         cachedIndex?.let { return JSONObject(it.toString()).put("gasPerAir", gasPerAir() ?: JSONObject.NULL) }
-        val all = pairs().filter { it.rpm >= DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS }
+        val revisionAtStart = revisionCounter.get()
+        val all = drivingPairs()
         fun median(values: List<Double>): Double? = values.sorted().let { if (it.isEmpty()) null else it[it.size / 2] }
         val bands = JSONArray()
         BANDS.forEach { (lo, hi) ->
@@ -216,12 +244,14 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             .put("gasEpochReason", reason)
             .put("gasEpochAt", at)
             .put("drivingMinRpm", DRIVING_MIN_RPM)
+            .put("revision", revisionAtStart)
             // Gás útil (tempo de gás − tempo morto) por unidade de ar admitido (MAP×RPM), condução em GNV:
             // independe do trânsito; compara calibrações no mesmo carro. Unidade relativa.
             .put("gasPerAir", gasPerAir() ?: JSONObject.NULL)
             .put("bands", bands)
             .put("automatic", false)
-        cachedIndex = result
+        // Uma leitura que entrou durante o cálculo invalida o resultado: não guardar índice velho.
+        if (revisionCounter.get() == revisionAtStart) cachedIndex = result
         return JSONObject(result.toString())
     }
 
@@ -317,6 +347,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             gasEpochAt = root.optLong("gasEpochAt", 0L)
             gasUsefulRpmMs = root.optDouble("gasUsefulRpmMs", 0.0)
             airRpmBar = root.optDouble("airRpmBar", 0.0)
+            touched()
         } catch (_: Exception) {
             petrol.clear()
             gas.clear()
