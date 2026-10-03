@@ -1,0 +1,44 @@
+name: Task check
+
+# Laço de teste remoto do Norte Único (Task 0.1). Disparado por
+# tools/ci/remote-test.sh em qualquer branch; nunca roda em push.
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: gradle | node | python | checks
+        required: true
+        type: choice
+        options: [ gradle, node, python, checks ]
+      target:
+        description: Teste ou arquivo alvo (ignorado em checks)
+        required: false
+        default: ''
+
+jobs:
+  task:
+    name: Task check (${{ inputs.kind }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          echo "SOURCE_SHA=$(git rev-parse HEAD)"
+          case "${{ inputs.kind }}" in
+            gradle) ./gradlew testDebugUnitTest --tests "${{ inputs.target }}" ;;
+            node)   node --test ${{ inputs.target }} ;;
+            python) python3 -B ${{ inputs.target }} ;;
+            checks) python3 -B tools/run_checks.py && ./gradlew testDebugUnitTest lintDebug ;;
+            *) echo "kind desconhecido: ${{ inputs.kind }}"; exit 2 ;;
+          esac
