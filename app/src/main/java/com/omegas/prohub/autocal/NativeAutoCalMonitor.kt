@@ -287,9 +287,13 @@ class NativeAutoCalMonitor(
             refreshPlanner.markAcquisition(acquisitionRefresh.observedAtElapsedMs)
         }
 
-        val referenceAttempted = !fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference
-        val referenceRefresh = if (referenceAttempted) refreshReferenceGroup(currentSession, probe) else null
-        if (referenceAttempted && referenceRefresh == null) refreshPlanner.markReferenceFailure(SystemClock.elapsedRealtime())
+        val referenceRefresh = if (!fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference) {
+            refreshReferenceGroup(currentSession, probe)
+        } else null
+        // Mesma condição da tentativa: sem resposta válida, recua em vez de repetir a cada tick.
+        if (!fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference && referenceRefresh == null) {
+            refreshPlanner.markReferenceFailure(SystemClock.elapsedRealtime())
+        }
         if (referenceRefresh != null) {
             mergeReferenceFields(
                 patch = referenceRefresh.snapshot,
@@ -340,11 +344,10 @@ class NativeAutoCalMonitor(
             // Evidência de uma tentativa anterior abortada (época mudou no meio / transporte) entra junto.
             val (event, increased) = synchronized(lock) {
                 val carried = pendingCounterEvent
-                val merged = when {
-                    carried == null -> autoMatchCounterEvent
-                    autoMatchCounterEvent == null -> carried
-                    else -> autoMatchCounterEvent.copy(beforeCount = carried.beforeCount, delta = autoMatchCounterEvent.afterCount - carried.beforeCount)
-                }
+                val current = autoMatchCounterEvent
+                val merged = if (carried != null && current != null) {
+                    current.copy(beforeCount = carried.beforeCount, delta = current.afterCount - carried.beforeCount)
+                } else carried ?: current
                 merged to (countIncreased || pendingCountIncreased)
             }
             readFullSnapshot(currentSession, probe, increased, event)
