@@ -71,6 +71,8 @@ class RefinedEngineKotlinParity(unittest.TestCase):
                 data = json.load(handle)
             pairs = blind.telemetry_pairs(data["telemetry"])
             for snap in data["snapshots"]:
+                if snap.get("temporalCoherent") is False:
+                    continue  # o filtro de coerência temporal vive em AutoMatchSnapshotAnalysis, fora do motor
                 stem = path.name[:-8]
                 cases.append((f"{stem}#{snap['sequence']}", snap, None, None))
                 cases.append((f"{stem}#{snap['sequence']}+tel", snap, pairs, None))

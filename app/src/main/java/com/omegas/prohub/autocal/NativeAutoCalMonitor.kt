@@ -72,6 +72,9 @@ class NativeAutoCalMonitor(
     private var lastMulActHash = ""
     private var lastStableMulAct: NativeAutoMatchEvidenceBracket.StableVector? = null
     private var snapshotRequested = false
+    /** ECU muda: falhas de transporte seguidas do snapshot completo adiam o próximo pedido (exponencial, com teto). */
+    private var snapshotFailures = 0
+    private var snapshotBackoffUntilElapsedMs = 0L
     private var snapshotReason = ""
     private var gasLowThreshold: Int? = null
     private var gasNormalThreshold: Int? = null
@@ -97,6 +100,8 @@ class NativeAutoCalMonitor(
             // de qualquer leitura pesada. Assim o primeiro probe estável sempre
             // produz um snapshot completo e a UI não fica presa sem thresholds.
             snapshotRequested = newSessionId > 0L
+            snapshotFailures = 0
+            snapshotBackoffUntilElapsedMs = 0L
             snapshotReason = if (newSessionId > 0L) "SESSION_BOOTSTRAP" else ""
             latestSnapshot = JSONObject().put("available", false).put("sessionId", newSessionId)
             state = baseState("WAITING_TELEMETRY_SETTLE", "Aguardando telemetria estabilizar antes do AutoCal")
@@ -122,6 +127,8 @@ class NativeAutoCalMonitor(
             refreshPlanner.reset()
             acquisitionEpoch.reset(0L)
             snapshotRequested = false
+            snapshotFailures = 0
+            snapshotBackoffUntilElapsedMs = 0L
             snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false)
             state = baseState("DISCONNECTED", "USB desconectado")
@@ -132,6 +139,9 @@ class NativeAutoCalMonitor(
     fun requestSnapshot(reason: String) {
         synchronized(lock) {
             snapshotRequested = true
+            // Pedido explícito (dono/ação confirmada): fura o recuo.
+            snapshotFailures = 0
+            snapshotBackoffUntilElapsedMs = 0L
             snapshotReason = reason.take(80)
         }
     }
@@ -210,7 +220,7 @@ class NativeAutoCalMonitor(
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
         val acquisitionEnabled = thresholds.third == 1
         val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
-        val fullSnapshotAlreadyDue = synchronized(lock) { snapshotRequested } || probeChanged
+        val fullSnapshotAlreadyDue = synchronized(lock) { snapshotDue() } || probeChanged
         // Leitura operacional das 18 bandas permanece independente do disparo de maturidade.
         // O DUMP canônico já fecha os seletores gasLow=CALIBRATION_VAL_1[5] e
         // gasNormal=CALIBRATION_VAL_1[8]; counters/points/zones continuam vindo
@@ -292,7 +302,7 @@ class NativeAutoCalMonitor(
             }
         }
 
-        val shouldSnapshot = synchronized(lock) { snapshotRequested }
+        val shouldSnapshot = synchronized(lock) { snapshotDue() }
         if (shouldSnapshot) {
             readFullSnapshot(currentSession, probe, countIncreased, autoMatchCounterEvent)
         } else {
@@ -703,6 +713,19 @@ class NativeAutoCalMonitor(
             .joinToString("") { "%02x".format(it) }
     }
 
+    /** Pedido pendente e fora do recuo. Chamar sob [lock]. */
+    private fun snapshotDue(): Boolean =
+        snapshotRequested && SystemClock.elapsedRealtime() >= snapshotBackoffUntilElapsedMs
+
+    /** Falha de transporte no snapshot completo: recuo exponencial (2 s, 4 s, ... teto 60 s). */
+    private fun backOffSnapshot() {
+        synchronized(lock) {
+            snapshotFailures = (snapshotFailures + 1).coerceAtMost(SNAPSHOT_BACKOFF_MAX_EXPONENT)
+            val delayMs = (SNAPSHOT_BACKOFF_BASE_MS shl (snapshotFailures - 1)).coerceAtMost(SNAPSHOT_BACKOFF_CAP_MS)
+            snapshotBackoffUntilElapsedMs = SystemClock.elapsedRealtime() + delayMs
+        }
+    }
+
     private fun readFullSnapshot(
         expectedSessionId: Long,
         probe: AutoCalProtocol.NativeStatus,
@@ -711,7 +734,9 @@ class NativeAutoCalMonitor(
     ) {
         val reason = synchronized(lock) { snapshotReason }
         val started = System.currentTimeMillis()
-        val observations = AutoCalProtocol.READ_ONLY_FIELDS.distinctBy { it.identity }.map { field ->
+        val observations = ArrayList<AutoCalReadObservation>()
+        var consecutiveTimeouts = 0
+        for (field in AutoCalProtocol.READ_ONLY_FIELDS.distinctBy { it.identity }) {
             val reply = serial.transaction(
                 request = AutoCalProtocol.read(field),
                 reason = "AutoCal snapshot ${field.key}",
@@ -720,16 +745,28 @@ class NativeAutoCalMonitor(
                 expectedSessionId = expectedSessionId,
                 workClass = Mp48WorkClass.READ_ONLY,
             )
-            AutoCalReadObservation(
+            observations += AutoCalReadObservation(
                 field = field,
                 status = reply.status.takeIf { it >= 0 },
                 payload = reply.payload.takeIf { it.isNotEmpty() },
                 capturedAtMs = System.currentTimeMillis(),
                 error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
             )
+            // Só silêncio de transporte (sem quadro algum) conta; resposta da ECU, mesmo recusa, não.
+            consecutiveTimeouts = if (!reply.ok && reply.status < 0) consecutiveTimeouts + 1 else 0
+            if (consecutiveTimeouts >= SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS) break
         }
-        val afterEpoch = probe(expectedSessionId) ?: return
-        if (!NativeAutoCalEpochGuard.sameEpoch(probe, afterEpoch)) return
+        if (consecutiveTimeouts >= SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS) {
+            // ECU muda: não monta snapshot parcial nem repete a varredura inteira a cada segundo.
+            backOffSnapshot()
+            onStateChanged()
+            return
+        }
+        val afterEpoch = probe(expectedSessionId)
+        if (afterEpoch == null || !NativeAutoCalEpochGuard.sameEpoch(probe, afterEpoch)) {
+            backOffSnapshot()
+            return
+        }
 
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = observations,
@@ -929,6 +966,8 @@ class NativeAutoCalMonitor(
             autoCalEnabled = enabled
             pendingMaturity = emptyList()
             snapshotRequested = false
+            snapshotFailures = 0
+            snapshotBackoffUntilElapsedMs = 0L
             snapshotReason = ""
             state = baseState(if (enabled == 0) "PAUSED" else "READY", if (enabled == 0) "AutoCal pausado; dados congelados" else "AutoCal nativo acompanhado")
                 .put("sessionId", expectedSessionId)
@@ -1065,6 +1104,11 @@ class NativeAutoCalMonitor(
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
         private const val SESSION_SETTLE_MS = 8_000L
+        /** ECU silenciosa: 2 timeouts de transporte seguidos abortam a varredura do snapshot completo. */
+        private const val SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS = 2
+        private const val SNAPSHOT_BACKOFF_BASE_MS = 2_000L
+        private const val SNAPSHOT_BACKOFF_CAP_MS = 60_000L
+        private const val SNAPSHOT_BACKOFF_MAX_EXPONENT = 6
         private val ACQUISITION_REFRESH_FIELDS = listOf(
             // Unidade operacional consumida por AutoCalAcquisition: dados + MAP + contadores.
             AutoCalProtocol.PETR_INJ_TBUF,
