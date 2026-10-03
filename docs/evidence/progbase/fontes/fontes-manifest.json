@@ -1,0 +1,104 @@
+[
+  {
+    "title": "RT_RCDATA(10)__TAUTOCALDM__0.bin",
+    "id": "1RFMYjmAQRnF1XdSrecIiKEjAt_UdZBkk",
+    "bytes": 14428,
+    "sha256": "96ba3d934bf66593f919e22e37e2a90a171be5c765530e39d484ecfc16c1ee86"
+  },
+  {
+    "title": "ProgBase.exe.ExportFunctions.txt",
+    "id": "1Mx8J0vwTmxdwplhiYPr-fsKD59QJ4y7Q",
+    "bytes": 82854,
+    "sha256": "c9356a8775d37dff5f7722723d4cb49601efe3fd79d851448ce9b9cf017f357e"
+  },
+  {
+    "title": "ProgBase.exe.Resources_StringTable.txt",
+    "id": "1npbIYSwHk31EwOP3ozqyBcP-_jGRiHOU",
+    "bytes": 21806,
+    "sha256": "7f42578ea6fcd41c732404a1f7f059d3842ce4592b5a8d5fcd0c69f637a40912"
+  },
+  {
+    "title": "Strings.txt",
+    "id": "1GGw8QjV9NvIjbzw3lLIId8WxTjOEhid_",
+    "bytes": 41408,
+    "sha256": "f58de14751f352039bcaa501a6db024a1bda5279c83d79b1d5ded49d994c72a5"
+  },
+  {
+    "title": "RT_RCDATA(10)__TAUTOCALUI__0.bin",
+    "id": "1_9M_BHpXXqjeMnhrP8HGyLopB3N4SMvu",
+    "bytes": 184604,
+    "sha256": "449dda772b16b0d6a79c7bbd315754b37e4dbab26c129cb9346307daa2e954a7"
+  },
+  {
+    "title": "RT_RCDATA(10)__TAUTOCALSETTINGS__0.bin",
+    "id": "1z-C2DQz_VP1tCWAVJHBXTlC2p2HjKgha",
+    "bytes": 59366,
+    "sha256": "852de437e29e580936ff000aa49644289e455c1242d8ec9a64f35baa005e8f03"
+  },
+  {
+    "title": "RT_RCDATA(10)__TSTREAMDATI__0.bin",
+    "id": "1Zofwv5SgIIAl1fqfovkrlTKbsmoH2Tmz",
+    "bytes": 109011,
+    "sha256": "d55e310ec32e2154297c84ecc986f085647cd491c9d3ff2293c0de5b595b2250"
+  },
+  {
+    "title": "RT_RCDATA(10)__TSTRATEGIATEMPIMORTIDM__0.bin",
+    "id": "1rOUwebnPzo-UAZyBCRz9Prt6ZJwP_AS2",
+    "bytes": 890,
+    "sha256": "7d95a63dfe34469e7bd3e371176b2c22f8934e097681fb89feb27c129a790fbc"
+  },
+  {
+    "title": "RT_RCDATA(10)__TFORMVISUALIZZA__0.bin",
+    "id": "1fOwCidv2LbelVPOBmZawTPxMTiUkI7Nh",
+    "bytes": 84613,
+    "sha256": "a4f17519474258c01b3325666909f88d05db7a40f5bbd7c19d35c1a97df33e2f"
+  },
+  {
+    "title": "RT_RCDATA(10)__TFORMRIFAUTOCAL__0.bin",
+    "id": "1_GMhUzdxByV3-jEMMm5ajjj2vnHGKYHX",
+    "bytes": 11172,
+    "sha256": "52598aa3b6d4966167278dde5d35bedcb5eb90ecf47b12c5e0e0613d63a05e03"
+  },
+  {
+    "title": "RT_RCDATA(10)__TFORMCONFIG__0.bin",
+    "id": "1xfJWknmzO6D8uY_yAC7usyljjoE9YRZ_",
+    "bytes": 334188,
+    "sha256": "a09f4cb6780f1a9737b7ef2b2d0c3328640c34f092648fc96fe47b026afe80f0"
+  },
+  {
+    "title": "RT_RCDATA(10)__TFORMCENTRICELLEK__0.bin",
+    "id": "1HpSEPwiitYh6zoVqYvwRxeBicRgJXBgC",
+    "bytes": 7616,
+    "sha256": "e11be58cd4096186e52e6a53fd26a2e0e523a9dbc7a8e7c063047a74f270c7f2"
+  },
+  {
+    "title": "RT_RCDATA(10)__TAUTOCALDM_EE__0.bin",
+    "id": "1u9BPccpFmsrN7p4_3AOEBrjryvgfwxiE",
+    "bytes": 6179,
+    "sha256": "985db334af7211c5136404444131606445ef37831f9fe3ec0d512c81128d2a10"
+  },
+  {
+    "title": "ProgBase.exe.Seções.txt",
+    "id": "1DBR5jvWSc5ouJNW__a-53L3gWNDrghJ3",
+    "bytes": 907,
+    "sha256": "8cdec9c270b30300499a6c145c8ef5a9fef5a276ebe36ed4ef6ff09bd10a405e"
+  },
+  {
+    "title": "ProgBase.exe.Dump.bin",
+    "id": "1mnya31-24dyInxs77KcVRla24kRptzdP",
+    "bytes": 12643840,
+    "sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+  },
+  {
+    "title": "Seção_0_.text.bin",
+    "id": "1MexhE01dT3atJTTA4dE9CEU6hAJT33uJ",
+    "bytes": 6618624,
+    "sha256": "979aef013c6b507cf3153c9f7d374261a93ad1c1fa3592de033681d79bccc772"
+  },
+  {
+    "title": "Seção_1_.data.bin",
+    "id": "1stWWHUe1xKB1TlfpDf6jUn9KmLwr421n",
+    "bytes": 638464,
+    "sha256": "4ef7cfe00254f2ff80533da88dd0633d33a0a761f903dff3c5249ef2e5e9d9b0"
+  }
+]

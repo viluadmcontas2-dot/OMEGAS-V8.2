@@ -96,3 +96,19 @@ Regra: depois de cada commit, este arquivo é atualizado com **feito / falta / p
 
 **Falta (commit 10)**
 - Decodificar os DFM binários do DUMP (download em curso), regenerar `fontes/parametros-dfm-inventario.json` a partir deles, preencher SHA-256 em `INDICE-FONTES.md`, conferir offsets citados, atualizar `README.md`.
+
+## Commit 10 — reextração DFM e acesso completo às fontes
+
+**Feito (continuação iniciada em 2026-10-02, execução UTC 2026-10-03)**
+- Retomado HEAD remoto `9c6d33bcf7e2669fcf80a234de33f1aae7d6c327`; escopo somente evidência nesta branch. Platina lida para fencing (`fbee28c`), não alterada.
+- Download autenticado completo supera os bloqueios de L-11/L-12: ZIP 14.170.842 B, LOG 149.911.521 B, Dump.bin 12.643.840 B e .text 6.618.624 B.
+- SHA-256 do Dump.bin confirmado `8a2d297c…36f4`; .text coincide byte a byte com seção do PE; prefixo LN coincide com hash anterior.
+- Dez DFM decodificados até EOF; inventário regenerado com **364** componentes (313+35+14+2), propriedades e offsets explícitos. Não inferir DataLength/default quando omitidos.
+- Hashes preenchidos, manifest de fontes e listagem remota preservados; parser DFM passivo publicado. README reconciliado com restrição atual e investigação aberta.
+
+**Falta**
+- Publicar validação integral LN e três épocas; não presumir significado do byte 12 de 48 0B.
+- Destilar desmontagem de Timer1Timer (VA 0x0050B408 recuperado da tabela de métodos original), conferir pressão e temperaturas; atualizar registry e lacunas.
+
+**Próxima ação exata**
+- Conferir LN completo com eco/len/checksum, obter últimos/primeiros buffers de cada mudança de K e contador; depois publicar os resultados no tema AutoCal com limites de polling.
