@@ -187,6 +187,15 @@ Onde um plano de fatia usar outro caminho (ex.: F7 `now.mapK`, F6 `session.curve
 
 **R9. Linhas citadas nos planos** são da `OmegasPlatina` de 2026-10-03, antes da F1. Sempre que um plano dá uma âncora de texto, a âncora vale mais que o número.
 
+**R10. Work Units: nome `NORTE-WU-0<N>` e binding versionado** (decisão do dono, 2026-10-03). O repo já usa `docs/workunits/` (ex.: `OMEGAS-WU-006`), então "WU-0<N>" sozinho colide. Onde um plano disser `WU-0<N>`, leia `NORTE-WU-0<N>`:
+- título da Issue começa com `NORTE-WU-0<N> · `; label `wu` continua (Work Unit);
+- cada fatia tem binding `docs/workunits/NORTE-WU-0<N>.md` (épico, Issue, plano, branch, PR, estado); a Issue é a checklist autoritativa, o arquivo é a ligação versionada;
+- commits levam no corpo `NORTE-WU-0<N> · Tarefa <N>.<M>`;
+- o portão (Task 0.0) exige, além das regras do índice, que o binding exista na head do PR e cite `#<issue>` e a branch;
+- a Task 0.3 **não** arquiva `docs/workunits/` inteira: move só `OMEGAS-WU-006.md` e `PLATINA-REFINO.md` para `docs/archive/workunits/`; a pasta continua viva com as `NORTE-WU-*`.
+
+Issues: épico #131; NORTE-WU-00…08 = #132…#140.
+
 ## Questões abertas para o dono (não bloqueiam F0–F3)
 
 1. **A Referência da ECU contra a gasolina medida.** Na F4, o planejador mediu por cima, nas sessões reais, a curva da ECU 10–16% fora da gasolina lida pela telemetria na mesma sessão. O STATUS antigo dizia "mediana 1,000, 80% dentro de 2,3%". Pode ser diferença de método (célula vs. banda). A Task de validação cruzada da F4 vai medir de verdade; se a diferença se confirmar, é mais um motivo para a Curva Própria existir, e o resultado vai para o STATUS.
