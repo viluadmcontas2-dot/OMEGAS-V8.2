@@ -105,3 +105,17 @@ os testes de mutantes com GITHUB_SHA do merge (6d70b82ced77), não PRODUCT_SHA (
 Não afrouxar conferência: fornecer OMEGAS_SOURCE_SHA=PRODUCT_SHA também na etapa mutante,
 como já acontece na etapa de build canônico. APK/render deste run não são entrega verde.
 Falha é do pipeline de prova, separada dos vereditos funcionais e do transporte.
+
+
+## AF1 — recuperação não inventa confirmação por faixa
+Fonte 4aef0d66fbe9, run 37108136313, job 111161423744: recuperação real após SIGKILL
+executou publicação e comparou ZIP/eventos; falhou somente na frase antiga de sucesso.
+O fixture grava status VERIFICADO e bands=[]; razão global 1,06→1,01 não prova tolerância
+por faixa. Journal fecha VERIFICADO também com CURTA/PASSOU: verificação encerrada não
+é melhora confirmada. Prova independente: SessionResumoDiagnosticTest
+verifiedWithoutConfirmedBandsDoesNotInventImprovement falhou antes do fix em 37106082688
+e passou em 37106319388; mutante false-summary-confirmation foi morto em 37108136313.
+Blueprint proíbe falso sucesso. Commit isolado corrige SOMENTE este oráculo textual e
+acrescenta assertFalse para confirmação inventada. Fixture, SIGKILL, processo novo,
+ZIP único, digest byte a byte, sequências contíguas e ausência de duplicata ficam intactos.
+Não ajusta tolerância ou matemática; classe 4 limitada à recuperação em emulador sem ECU.
