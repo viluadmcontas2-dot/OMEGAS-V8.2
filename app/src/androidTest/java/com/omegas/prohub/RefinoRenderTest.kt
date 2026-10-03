@@ -1,0 +1,568 @@
+package com.omegas.prohub
+
+import android.graphics.Bitmap
+import android.os.SystemClock
+import android.webkit.WebView
+import androidx.test.core.app.ActivityScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.omegas.prohub.autocal.AutoCalAcquisition
+import com.omegas.prohub.autocal.AutoCalReadObservation
+import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
+import com.omegas.prohub.autocal.AutoCalSnapshotSource
+import com.omegas.prohub.autocal.EquivalenceLedger
+import com.omegas.prohub.autocal.NativeAutoCalAcquisitionEpoch
+import com.omegas.prohub.autocal.StallWatch
+import com.omegas.prohub.ecu.AutoCalProtocol
+import com.omegas.prohub.ecu.Mp48Protocol
+import com.omegas.prohub.service.TelemetryForegroundService
+import org.json.JSONArray
+import org.json.JSONObject
+import org.json.JSONTokener
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.File
+import java.io.FileOutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPInputStream
+
+/**
+ * Evidência de render do Refino (classe 4: o APK real, WebView real, 1280×720, com print).
+ *
+ * Cada fase do piloto é conduzida pelos objetos reais do serviço (livro de pontos, diário, piloto,
+ * detector de apagão) alimentados pelo REPLAY das sessões reais do proprietário (fixtures/autocal/real).
+ * Onde o corpus não tem a situação (estável, restaurar trecho, apagão completo), o recibo diz
+ * SYNTHETIC_NON_SCIENTIFIC. Nada aqui valida ECU ou veículo.
+ */
+@RunWith(AndroidJUnit4::class)
+class RefinoRenderTest {
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
+
+    // ------------------------------------------------------------------ infraestrutura
+
+    private fun launch(): ActivityScenario<MainActivity> {
+        val scenario = ActivityScenario.launch(MainActivity::class.java)
+        waitFor(12_000L) { var ready = false; scenario.onActivity { ready = it.serviceOrNull() != null }; ready }
+        SystemClock.sleep(2_500L)
+        scenario.onActivity { it.serviceOrNull()!!.refinementFrozenForRender = true }
+        return scenario
+    }
+
+    private fun service(scenario: ActivityScenario<MainActivity>): TelemetryForegroundService {
+        var service: TelemetryForegroundService? = null
+        scenario.onActivity { service = it.serviceOrNull() }
+        return checkNotNull(service) { "service unavailable" }
+    }
+
+    private fun corpus(name: String): JSONObject {
+        val bytes = instrumentation.context.assets.open("real/$name.json.gz").use { GZIPInputStream(it).readBytes() }
+        return JSONObject(String(bytes, Charsets.UTF_8))
+    }
+
+    private fun feedLedger(service: TelemetryForegroundService, root: JSONObject, onlyFuel: String? = null) {
+        val telemetry = root.getJSONArray("telemetry")
+        for (i in 0 until telemetry.length()) {
+            val f = telemetry.getJSONObject(i)
+            val fuel = f.optString("fuel", "")
+            if (onlyFuel != null && fuel != onlyFuel) continue
+            service.equivalence.accept(
+                EquivalenceLedger.Frame(
+                    f.getLong("t"), fuel, f.optDouble("rpm", 0.0), f.optDouble("load_bar", 0.0),
+                    f.optDouble("petrol_ms", 0.0), f.optDouble("gas_ms_diagnostic", 0.0),
+                ),
+            )
+        }
+    }
+
+    private fun feedStalls(service: TelemetryForegroundService, root: JSONObject): Long {
+        val telemetry = root.getJSONArray("telemetry")
+        var last = 0L
+        for (i in 0 until telemetry.length()) {
+            val f = telemetry.getJSONObject(i)
+            last = f.getLong("t")
+            service.stallWatch.accept(
+                StallWatch.Frame(last, f.optString("fuel", ""), f.optDouble("rpm", 0.0), f.optDouble("load_bar", 0.0), f.optDouble("petrol_ms", 0.0)),
+            )
+        }
+        return last
+    }
+
+    /** Frames sintéticos (rotulados no recibo): condução estável por faixa, para estados que o corpus não tem. */
+    private val cells = listOf(
+        Triple(2_000.0, 0.40, 3.6), Triple(2_200.0, 0.50, 5.0), Triple(2_500.0, 0.60, 6.5),
+        Triple(2_800.0, 0.70, 8.0), Triple(3_200.0, 0.85, 10.0),
+    )
+    private var synthT = 5_000_000_000_000L
+
+    private fun synth(service: TelemetryForegroundService, fuel: String, ratio: Double = 1.0) {
+        cells.forEach { (rpm, map, ms) ->
+            repeat(10) {
+                service.equivalence.accept(EquivalenceLedger.Frame(synthT, fuel, rpm, map, ms * ratio))
+                synthT += 280
+            }
+            synthT += 5_000
+        }
+    }
+
+    private fun payloadFor(field: AutoCalProtocol.Field, values: IntArray): ByteArray = when (field.encoding) {
+        AutoCalProtocol.Encoding.U8 -> ByteArray(values.size) { values[it].toByte() }
+        else -> ByteArray(values.size * 2).also { payload ->
+            values.forEachIndexed { index, value ->
+                val raw = value and 0xFFFF
+                payload[index * 2] = (raw and 0xFF).toByte()
+                payload[index * 2 + 1] = ((raw ushr 8) and 0xFF).toByte()
+            }
+        }
+    }
+
+    private fun setPrivateField(target: Any, name: String, value: Any?) {
+        val field = target.javaClass.getDeclaredField(name)
+        field.isAccessible = true
+        field.set(target, value)
+    }
+
+    private fun getPrivateField(target: Any, name: String): Any? {
+        val field = target.javaClass.getDeclaredField(name)
+        field.isAccessible = true
+        return field.get(target)
+    }
+
+    /** Publica o snapshot nativo real do corpus pelo decodificador de produção e libera a época de aquisição. */
+    private fun publishSnapshot(service: TelemetryForegroundService, root: JSONObject, sequence: Int, sessionId: Long = 9001L): JSONObject {
+        val snapshots = root.getJSONArray("snapshots")
+        var reduced: JSONObject? = null
+        for (i in 0 until snapshots.length()) if (snapshots.getJSONObject(i).getInt("sequence") == sequence) reduced = snapshots.getJSONObject(i)
+        val source = checkNotNull(reduced) { "snapshot $sequence ausente" }
+        val fields = source.getJSONArray("fields")
+        val now = System.currentTimeMillis()
+        val observations = ArrayList<AutoCalReadObservation>()
+        val expected = ArrayList<AutoCalProtocol.Field>()
+        for (i in 0 until fields.length()) {
+            val f = fields.getJSONObject(i)
+            val descriptor = AutoCalProtocol.READ_ONLY_FIELDS.firstOrNull { it.key == f.getString("key") } ?: continue
+            if (descriptor.encoding == AutoCalProtocol.Encoding.U8_OR_U16_LE || f.optString("status") != "VALID") continue
+            val raw = f.getJSONArray("rawValues")
+            observations += AutoCalReadObservation(descriptor, Mp48Protocol.STATUS_ACK, payloadFor(descriptor, IntArray(raw.length()) { raw.getInt(it) }), now)
+            expected += descriptor
+        }
+        val snapshot = AutoCalSnapshotBuilder.build(observations, expected, "AUTOCAL-$sessionId-REFINO", AutoCalSnapshotSource.REPLAY, now, now)
+        val decorated = snapshot.toJson()
+            .put("available", true)
+            .put("nativeAutoCal", true)
+            .put("autoCalEnabled", 1)
+            .put("maxAutomatch", 3)
+            .put("nativeMaturityEvents", JSONArray())
+            .put("nativeCorrelationState", JSONObject().put("correlatedBands", JSONArray()).put("retryableBands", JSONArray()))
+        val state = JSONObject().put("state", "READY").put("message", "Replay real do corpus").put("sessionId", sessionId)
+            .put("autoCalEnabled", 1).put("autoMatchCount", 0).put("appAutomaticWrite", false)
+        setPrivateField(service.nativeAutoCal, "latestSnapshot", decorated)
+        setPrivateField(service.nativeAutoCal, "state", state)
+        // Época de aquisição coerente com o snapshot publicado (sem isso a projeção mascara a referência).
+        val epoch = getPrivateField(service.nativeAutoCal, "acquisitionEpoch") as NativeAutoCalAcquisitionEpoch
+        epoch.reset(sessionId)
+        epoch.nativeCounter(sessionId, 0)
+        epoch.acquisitionGroup(sessionId, 0, IntArray(18) { if (it < 6) 5 else 0 }, IntArray(18) { if (it < 6) 5 else 0 })
+        epoch.referenceGroup(sessionId, 0)
+        return decorated
+    }
+
+    private fun observe(service: TelemetryForegroundService, snapshot: JSONObject, count: Int?, max: Int = 3): JSONObject =
+        service.refinementAutopilot.observe(
+            ecuOnline = true,
+            monitor = JSONObject().put("autoMatchCount", count ?: JSONObject.NULL).put("maxAutomatch", max).put("autoCalEnabled", 1),
+            acquisition = AutoCalAcquisition.fromSnapshot(snapshot),
+            index = service.equivalence.index(),
+            journal = service.refinementJournal.json(),
+            restoreCount = service.refinementJournal.restorePoints().length(),
+        )
+
+    private fun openRefino(scenario: ActivityScenario<MainActivity>) {
+        evalRaw(scenario, "document.querySelector('[data-route=\"refino\"]')?.click(); 'ok';")
+        SystemClock.sleep(700L)
+        refreshRefino(scenario)
+    }
+
+    private fun refreshRefino(scenario: ActivityScenario<MainActivity>) {
+        evalRaw(scenario, "window.OmegasApp?.refino?.refresh?.(true, true); 'ok';")
+        SystemClock.sleep(900L)
+    }
+
+    private fun refinoDom(scenario: ActivityScenario<MainActivity>): JSONObject = evalJson(
+        scenario,
+        """
+        JSON.stringify((() => {
+          const q = s => document.querySelector(s);
+          const screen = q('[data-screen="refino"]');
+          const primary = q('[data-refino-primary]');
+          const legend = q('.refino-cockpit .autocal-chart-legend');
+          const legendRect = legend ? legend.getBoundingClientRect() : null;
+          const live = q('[data-refino-live]');
+          const liveCircle = live ? live.querySelector('circle') : null;
+          const stalls = q('#refinoStalls');
+          const body = screen ? screen.innerText : '';
+          return {
+            active: !!screen && screen.classList.contains('active'),
+            chip: q('#refinoPhaseChip')?.textContent ?? null,
+            headline: q('#refinoHeadline')?.textContent ?? null,
+            next: q('#refinoNext')?.textContent ?? null,
+            ratio: q('#refinoRatio')?.textContent ?? null,
+            ecuPoints: q('#refinoEcuPoints')?.textContent ?? null,
+            ourPoints: q('#refinoOurPoints')?.textContent ?? null,
+            steps: [...document.querySelectorAll('#refinoSteps li')].map(li => li.dataset.state + (li.dataset.problem ? '!' : '')),
+            primaryHidden: primary ? primary.hidden : null,
+            primaryText: primary ? primary.textContent : null,
+            primaryKind: primary ? primary.dataset.kind ?? null : null,
+            stallsVisible: !!stalls && !stalls.hidden,
+            stallsText: stalls ? stalls.innerText : '',
+            journalText: q('#refinoJournal')?.innerText ?? '',
+            techText: q('#refinoTech')?.innerText ?? '',
+            ourSquares: document.querySelectorAll('.refino-our-point').length,
+            ecuDots: document.querySelectorAll('#refinoChart .autocal-acquired-point').length,
+            stallMarks: document.querySelectorAll('.refino-stall-mark').length,
+            referenceLines: document.querySelectorAll('#refinoChart .autocal-reference-line').length,
+            svg: !!q('#refinoChart .autocal-reference-svg'),
+            liveVisible: !!live && !live.hasAttribute('hidden'),
+            liveCx: liveCircle ? Number(liveCircle.getAttribute('cx')) : null,
+            liveCy: liveCircle ? Number(liveCircle.getAttribute('cy')) : null,
+            legendInViewport: !!legendRect && legendRect.width > 0 && legendRect.bottom <= window.innerHeight,
+            legendBottom: legendRect ? legendRect.bottom : null,
+            viewportHeight: window.innerHeight,
+            screenScrollWidth: screen ? screen.scrollWidth : 0,
+            screenClientWidth: screen ? screen.clientWidth : 0,
+            bodyHasNaN: /\bNaN\b/.test(body),
+            bodyHasUndefined: /\bundefined\b/i.test(body)
+          };
+        })())
+        """.trimIndent(),
+    )
+
+    private fun assertClean(dom: JSONObject) {
+        assertTrue("Refino precisa estar ativo", dom.getBoolean("active"))
+        assertTrue("sem NaN na tela", !dom.getBoolean("bodyHasNaN"))
+        assertTrue("sem undefined na tela", !dom.getBoolean("bodyHasUndefined"))
+        assertTrue(
+            "sem rolagem horizontal (scroll=${dom.getInt("screenScrollWidth")} client=${dom.getInt("screenClientWidth")})",
+            dom.getInt("screenScrollWidth") <= dom.getInt("screenClientWidth") + 1,
+        )
+    }
+
+    private fun provenance(kind: String, corpus: String, note: String) = JSONObject()
+        .put("classification", kind)
+        .put("corpus", corpus)
+        .put("note", note)
+        .put("physicalValidationClaimed", false)
+
+    // ------------------------------------------------------------------ cenários (uma fase do piloto por print)
+
+    @Test
+    fun refinoEcuNoAutomatico() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("automatch_2026-10-01_1301")
+            feedLedger(service, root)
+            val snap = publishSnapshot(service, root, 1716)
+            observe(service, snap, count = 1)
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-ecu-automatico", dom, scenario, provenance("REAL_REPLAY", "automatch_2026-10-01_1301", "contador 1 de 3, snapshot 1716"))
+            assertClean(dom)
+            assertEquals("ECU no automático", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("automático 1 de 3"))
+            assertEquals("active", dom.getJSONArray("steps").getString(0))
+            assertTrue("não oferece gravar enquanto a ECU trabalha", dom.optString("primaryKind") != "review")
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoColetando() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("ref_2026-10-01_1719")
+            feedLedger(service, root, onlyFuel = "GASOLINA")
+            val snap = publishSnapshot(service, root, 962)
+            observe(service, snap, count = 3)
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-coletando", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "só a gasolina da sessão; GNV ainda não medido"))
+            assertClean(dom)
+            assertEquals("Nossos pontos", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("A ECU terminou"))
+            assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").startsWith("Gas "))
+        } finally { scenario.close() }
+    }
+
+    private fun prepareCurvaPronta(service: TelemetryForegroundService): JSONObject {
+        val root = corpus("ref_2026-10-01_1719")
+        feedLedger(service, root)
+        val snap = publishSnapshot(service, root, 962)
+        observe(service, snap, count = 3)
+        return snap
+    }
+
+    @Test
+    fun refinoCurvaPronta() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            prepareCurvaPronta(service)
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-curva-pronta", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "snapshot 962 (ECU sem faixas maduras) + pares reais de condução"))
+            assertClean(dom)
+            assertEquals("Curva pronta", dom.getString("chip"))
+            assertEquals("review", dom.getString("primaryKind"))
+            assertTrue(dom.getString("primaryText"), Regex("Revisar e gravar \\d+ ponto").containsMatchIn(dom.getString("primaryText")))
+            assertTrue("a proposta diz de onde vem", dom.getString("techText").contains("sua condução"))
+            assertTrue("nossos pontos aparecem no gráfico", dom.getInt("ourSquares") > 0)
+            assertTrue("curva da ECU desenhada", dom.getInt("referenceLines") >= 1)
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoVerificando() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val snap = prepareCurvaPronta(service)
+            // O proprietário gravou a curva proposta (aqui o diário recebe o antes/depois, sem escrever na ECU).
+            openRefino(scenario)
+            val analysis = JSONObject(evalRaw(scenario, "OmegasAutoCal.getRefinedAnalysis()").let { JSONTokener(it).nextValue() as String })
+            val points = analysis.getJSONArray("points")
+            val axis = IntArray(30) { (points.getJSONObject(it).getDouble("referenceTimeMs") * 512.0).toInt() }
+            val before = IntArray(30) { points.getJSONObject(it).getInt("currentRaw") }
+            val after = IntArray(30) { points.getJSONObject(it).getInt("calculatedRaw") }
+            service.refinementJournal.recordCurveWrite(before, after, axis, service.equivalence.index(), "RENDER_REPLAY")
+            service.equivalence.resetGas("CURVA_K_GRAVADA")
+            observe(service, snap, count = 3)
+            refreshRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-verificando", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "diário recebeu antes/depois da proposta real; nada foi escrito na ECU"))
+            assertClean(dom)
+            assertEquals("Verificando", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("min de condução"))
+            assertEquals("waiting", dom.getString("primaryKind"))
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoEstavel() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("ref_2026-10-01_1719")
+            synth(service, "GASOLINA"); synth(service, "GNV", ratio = 1.0)
+            val snap = publishSnapshot(service, root, 962)
+            observe(service, snap, count = 3)
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-estavel", dom, scenario, provenance("SYNTHETIC_NON_SCIENTIFIC", "ref_2026-10-01_1719", "o corpus não tem sessão estável; pares sintéticos GNV = gasolina em 5 faixas"))
+            assertClean(dom)
+            assertEquals("Estável", dom.getString("chip"))
+            assertEquals("stable", dom.getString("primaryKind"))
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoRestaurarTrecho() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("ref_2026-10-01_1719")
+            synth(service, "GASOLINA"); synth(service, "GNV", ratio = 1.08)
+            val snap = publishSnapshot(service, root, 962)
+            val axis = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
+            service.refinementJournal.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { if (it in 5..23) 17000 else 16384 }, axis, service.equivalence.index(), "RENDER_SYNTH")
+            service.equivalence.resetGas("CURVA_K_GRAVADA")
+            synth(service, "GNV", ratio = 1.25) // depois da gravação o GNV ficou mais longe da gasolina
+            service.refinementJournal.evaluate(service.equivalence.index(), ecuOnline = true)
+            observe(service, snap, count = 3)
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-restaurar-trecho", dom, scenario, provenance("SYNTHETIC_NON_SCIENTIFIC", "ref_2026-10-01_1719", "o corpus não tem gravação que piorou; antes/depois sintéticos"))
+            assertClean(dom)
+            assertEquals("Trecho piorou", dom.getString("chip"))
+            assertEquals("restore", dom.getString("primaryKind"))
+            assertTrue(dom.getString("primaryText"), dom.getString("primaryText").contains("Restaurar trecho que piorou"))
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoApagoes() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("ref_2026-10-01_1719")
+            feedLedger(service, root)
+            var t = feedStalls(service, root) + 10_000L
+            // O corpus real só tem quase-apagões; um apagão completo é sintético e vem rotulado.
+            repeat(25) { i -> service.stallWatch.accept(StallWatch.Frame(t, "GNV", 1_800.0 - i * 40.0, 0.30, 2.1, 22.0)); t += 100 }
+            repeat(12) { service.stallWatch.accept(StallWatch.Frame(t, "GNV", 0.0, 0.9, 0.0, 15.0)); t += 100 }
+            repeat(6) { service.stallWatch.accept(StallWatch.Frame(t, "GNV", 900.0, 0.4, 3.0, 5.0)); t += 100 }
+            val snap = publishSnapshot(service, root, 962)
+            observe(service, snap, count = 3)
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-apagoes", dom, scenario, provenance("REAL_REPLAY+SYNTHETIC", "ref_2026-10-01_1719", "3 quase-apagões reais do corpus + 1 apagão sintético que religou"))
+            assertClean(dom)
+            assertTrue("painel de apagões visível", dom.getBoolean("stallsVisible"))
+            assertTrue(dom.getString("stallsText"), dom.getString("stallsText").contains("quase apagou 3 vezes"))
+            assertTrue(dom.getString("stallsText"), dom.getString("stallsText").contains("apagou 1 vez"))
+            assertTrue(dom.getString("stallsText"), dom.getString("stallsText").contains("religou 1"))
+            assertTrue("marcas ✕ no gráfico", dom.getInt("stallMarks") >= 1)
+        } finally { scenario.close() }
+    }
+
+    // ------------------------------------------------------------------ o bug do carro: AGORA do Refino congelado
+
+    private fun injectLive(service: TelemetryForegroundService, payload: ByteArray, session: Long) {
+        val captured = SystemClock.elapsedRealtime()
+        val live = Mp48Protocol.decodeTelemetry(payload, captured).toJson().put("session_id", session).put("captured_elapsed_ms", captured)
+        check(service.telemetryStore.updateFromEngineEvent(JSONObject().put("event", "telemetry").put("session_id", session).put("data", live)) != null) {
+            "TelemetryStateStore rejected replay"
+        }
+    }
+
+    private fun livePayloads(): List<ByteArray> {
+        val raw = instrumentation.context.assets.open("portmon-autocal-cycle-v1.json").bufferedReader().use { it.readText() }
+        val rows = JSONObject(raw).getJSONArray("transactions")
+        val out = ArrayList<ByteArray>()
+        for (i in 0 until rows.length()) {
+            val tx = rows.getJSONObject(i)
+            if (tx.getString("request") != "48 01 49") continue
+            val request = hex(tx.getString("request"))
+            val response = hex(tx.getString("response"))
+            val size = response[request.size + 1].toInt() and 0xFF
+            out += response.copyOfRange(request.size + 2, request.size + 2 + size)
+        }
+        return out
+    }
+
+    @Test
+    fun refinoAgoraAcompanhaATelemetria() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("ref_2026-10-01_1719")
+            feedLedger(service, root)
+            val snap = publishSnapshot(service, root, 962)
+            observe(service, snap, count = 3)
+            val frames = livePayloads()
+            val decoded = frames.map { Mp48Protocol.decodeTelemetry(it, 1L).toJson() }
+            val a = frames[0]
+            val bIndex = decoded.indexOfFirst { kotlin.math.abs(it.getDouble("petrol_ms") - decoded[0].getDouble("petrol_ms")) > 0.4 }
+            check(bIndex > 0) { "o corpus portmon precisa de dois quadros com Petrol Inj. diferente" }
+            val b = frames[bIndex]
+            service.telemetryStore.beginSession(9001L)
+            injectLive(service, a, 9001L)
+            openRefino(scenario)
+            SystemClock.sleep(900L)
+            val first = refinoDom(scenario)
+            injectLive(service, b, 9001L)
+            scenario.onActivity { it.refreshWebUi() }
+            SystemClock.sleep(1_200L)
+            val second = refinoDom(scenario)
+            saveEvidence("refino-agora-acompanha", second, scenario, provenance("REAL_REPLAY", "portmon-autocal-cycle-v1", "dois quadros MP48 reais com Petrol Inj. diferente").put("firstCx", first.opt("liveCx")).put("secondCx", second.opt("liveCx")))
+            assertClean(second)
+            assertTrue("bolinha AGORA visível com telemetria fresca", first.getBoolean("liveVisible"))
+            assertNotEquals("a bolinha AGORA do Refino precisa mexer quando a telemetria muda", first.optDouble("liveCx"), second.optDouble("liveCx"), 0.5)
+        } finally { scenario.close() }
+    }
+
+    @Test
+    fun refinoLatenciaDaPonte() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("ref_2026-10-01_1719")
+            feedLedger(service, root)
+            val snap = publishSnapshot(service, root, 962)
+            observe(service, snap, count = 3)
+            openRefino(scenario)
+            // Aquecimento: a primeira chamada calcula; as seguintes devolvem o valor pronto.
+            evalRaw(scenario, "OmegasAutoCal.getEquivalence(); OmegasAutoCal.getUiProjection(); OmegasAutoCal.getRefinedAnalysis(); 'ok';")
+            SystemClock.sleep(1_500L)
+            val stats = evalJson(
+                scenario,
+                """
+                JSON.stringify((() => {
+                  const times = [];
+                  for (let i = 0; i < 40; i += 1) {
+                    const start = performance.now();
+                    OmegasAutoCal.getEquivalence();
+                    OmegasAutoCal.getUiProjection();
+                    OmegasAutoCal.getRefinedAnalysis();
+                    times.push(performance.now() - start);
+                  }
+                  times.sort((a, b) => a - b);
+                  return { median: times[20], p95: times[37], max: times[39] };
+                })())
+                """.trimIndent(),
+            )
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-latencia-da-ponte", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "3 chamadas da ponte por iteração, 40 iterações, medidas dentro da WebView do emulador").put("bridgeLatencyMs", stats))
+            assertClean(dom)
+            assertTrue("mediana da ponte ${stats.getDouble("median")} ms (limite 30)", stats.getDouble("median") < 30.0)
+            assertTrue("p95 da ponte ${stats.getDouble("p95")} ms (limite 100)", stats.getDouble("p95") < 100.0)
+        } finally { scenario.close() }
+    }
+
+    // ------------------------------------------------------------------ utilitários
+
+    private fun saveEvidence(name: String, dom: JSONObject, scenario: ActivityScenario<MainActivity>, provenance: JSONObject) {
+        var web = JSONObject()
+        scenario.onActivity { activity ->
+            val view = activity.findViewById<WebView>(R.id.hubWebView)
+            web = JSONObject().put("webViewWidth", view.width).put("webViewHeight", view.height)
+        }
+        val metrics = instrumentation.targetContext.resources.displayMetrics
+        val dir = File(instrumentation.targetContext.getExternalFilesDir(null), "omegas-evidence")
+        check(dir.mkdirs() || dir.isDirectory)
+        File(dir, "$name.json").writeText(
+            JSONObject().put("scenario", name).put("sourceSha", BuildConfig.OMEGAS_BUILD_COMMIT)
+                .put("displayWidth", metrics.widthPixels).put("displayHeight", metrics.heightPixels).put("densityDpi", metrics.densityDpi)
+                .put("dom", dom).put("webView", web).put("fixtureProvenance", provenance).toString(2),
+        )
+        val bitmap = instrumentation.uiAutomation.takeScreenshot()
+        FileOutputStream(File(dir, "$name.png")).use { check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
+    }
+
+    private fun evalJson(scenario: ActivityScenario<MainActivity>, script: String): JSONObject {
+        val raw = evalRaw(scenario, script)
+        return when (val value = JSONTokener(raw).nextValue()) {
+            is String -> JSONObject(value)
+            is JSONObject -> value
+            else -> error("unexpected JS result: $raw")
+        }
+    }
+
+    private fun evalRaw(scenario: ActivityScenario<MainActivity>, script: String): String {
+        val latch = CountDownLatch(1)
+        var result = "null"
+        scenario.onActivity { activity ->
+            activity.findViewById<WebView>(R.id.hubWebView).evaluateJavascript(script) {
+                result = it ?: "null"
+                latch.countDown()
+            }
+        }
+        check(latch.await(15, TimeUnit.SECONDS)) { "JavaScript evaluation timeout" }
+        return result
+    }
+
+    private fun waitFor(timeoutMs: Long, condition: () -> Boolean) {
+        val deadline = SystemClock.elapsedRealtime() + timeoutMs
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (condition()) return
+            SystemClock.sleep(100L)
+        }
+        error("condition timeout")
+    }
+
+    private fun hex(value: String): ByteArray =
+        value.trim().split(Regex("\\s+")).filter(String::isNotBlank).map { it.toInt(16).toByte() }.toByteArray()
+}

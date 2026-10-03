@@ -16,9 +16,10 @@ overall=0
 run_case() {
   local scenario="$1"
   local method="$2"
+  local klass="${3:-DashboardLevelsRenderTest}"
   set +e
   adb shell am instrument -w -r \
-    -e class "com.omegas.prohub.DashboardLevelsRenderTest#${method}" \
+    -e class "com.omegas.prohub.${klass}#${method}" \
     com.omegas.v7.test.test/androidx.test.runner.AndroidJUnitRunner \
     > "rendered-evidence/${scenario}-instrumentation.txt" 2>&1
   local rc=$?
@@ -39,7 +40,7 @@ run_case() {
 
 set -e
 if [ "$#" -ge 2 ]; then
-  run_case "$1" "$2"
+  run_case "$1" "$2" "${3:-DashboardLevelsRenderTest}"
   exit "$overall"
 fi
 
@@ -51,7 +52,16 @@ run_case "autocal-equivalence-shifted" "autocalShiftedEquivalenceRendersHorizont
 run_case "learning-fresh-context" "learningFreshMp48ContextRender"
 run_case "map-fresh-context" "mapFreshMp48ContextRender"
 run_case "curve-offline-honest" "curveOfflineDoesNotFabricateEcuRead"
-run_case "obd-offline-honest" "obdOfflineIsHonest"
+run_case "obd-removed" "obdRouteWasRemoved"
 run_case "dashboard-session-invalidated" "sessionChangeInvalidatesOldTelemetry"
 run_case "dashboard-session-recovered" "sessionReconnectRecoversFreshTelemetry"
+run_case "refino-ecu-automatico" "refinoEcuNoAutomatico" RefinoRenderTest
+run_case "refino-coletando" "refinoColetando" RefinoRenderTest
+run_case "refino-curva-pronta" "refinoCurvaPronta" RefinoRenderTest
+run_case "refino-verificando" "refinoVerificando" RefinoRenderTest
+run_case "refino-estavel" "refinoEstavel" RefinoRenderTest
+run_case "refino-restaurar-trecho" "refinoRestaurarTrecho" RefinoRenderTest
+run_case "refino-apagoes" "refinoApagoes" RefinoRenderTest
+run_case "refino-agora-acompanha" "refinoAgoraAcompanhaATelemetria" RefinoRenderTest
+run_case "refino-latencia-da-ponte" "refinoLatenciaDaPonte" RefinoRenderTest
 exit "$overall"

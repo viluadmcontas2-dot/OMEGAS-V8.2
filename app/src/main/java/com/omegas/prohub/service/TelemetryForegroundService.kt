@@ -137,6 +137,12 @@ class TelemetryForegroundService : Service() {
     private var healthFailures = 0
     @Volatile private var stopping = false
 
+    /**
+     * Só para a evidência de render no emulador: congela o piloto/diário do Refino para o teste
+     * conduzir o estado (replay real) sem corrida com o relógio do serviço. Nunca é ligado em produção.
+     */
+    @Volatile var refinementFrozenForRender = false
+
     override fun onCreate() {
         super.onCreate()
         paths = AppPaths(this)
@@ -798,10 +804,12 @@ class TelemetryForegroundService : Service() {
     private fun healthTick() {
         if (stopping) return
         try {
-            if (refinementJournal.evaluate(equivalence.index(), ecuOnline = usb.connected && runtime.ready)) stateChanged()
-            // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
-            stallWatch.tick(System.currentTimeMillis())
-            observeRefinement()
+            if (!refinementFrozenForRender) {
+                if (refinementJournal.evaluate(equivalence.index(), ecuOnline = usb.connected && runtime.ready)) stateChanged()
+                // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
+                stallWatch.tick(System.currentTimeMillis())
+                observeRefinement()
+            }
             handleUsbTransition()
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
                 connectUsb()

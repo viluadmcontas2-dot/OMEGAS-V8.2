@@ -328,6 +328,14 @@ class DashboardLevelsRenderTest {
             val service = activity.serviceOrNull() ?: error("service unavailable")
             setPrivateField(service.nativeAutoCal, "latestSnapshot", decorated)
             setPrivateField(service.nativeAutoCal, "state", state)
+            // Desde "show only current acquired points during epoch reacquisition" a projeção só
+            // usa a referência quando a época de aquisição da ECU está coerente com a sessão: o
+            // fixture precisa declarar isso, como a ECU declararia depois de uma aquisição completa.
+            val epoch = getPrivateField(service.nativeAutoCal, "acquisitionEpoch") as com.omegas.prohub.autocal.NativeAutoCalAcquisitionEpoch
+            epoch.reset(sessionId)
+            epoch.nativeCounter(sessionId, 0)
+            epoch.acquisitionGroup(sessionId, 0, IntArray(18) { if (it < 6) 5 else 0 }, IntArray(18) { if (it < 6) 5 else 0 })
+            epoch.referenceGroup(sessionId, 0)
             activity.refreshWebUi()
         }
     }
@@ -780,19 +788,25 @@ class DashboardLevelsRenderTest {
     }
 
     @Test
-    fun obdOfflineIsHonest() {
+    fun obdRouteWasRemoved() {
         val scenario = launch()
         try {
-            activateRoute(scenario, "obd", settleMs = 850L)
-            val dom = globalRouteDom(scenario, "obd")
-            saveEvidence("obd-offline-honest", dom, scenario)
-            assertTrue("OBD route must activate", dom.getBoolean("active"))
-            assertEquals("OBD offline", dom.optString("obdStatus"))
-            assertEquals("—", dom.optString("obdStft"))
-            assertEquals("Offline MP48/OBD must not masquerade as measured zero RPM", "—", dom.optString("obdRpm"))
-            assertTrue("OBD connection copy must remain disconnected without ELM hardware", dom.optString("obdConnection").contains("desconectado", ignoreCase = true))
-            assertTrue("OBD must never render NaN", !dom.getBoolean("bodyHasNaN"))
-            assertTrue("OBD must never render undefined", !dom.getBoolean("bodyHasUndefined"))
+            val dom = evalJson(
+                scenario,
+                """
+                JSON.stringify({
+                  navButtons: [...document.querySelectorAll('.side-nav [data-route]')].map(b => b.dataset.route),
+                  hasObdScreen: !!document.querySelector('[data-screen="obd"]'),
+                  hasObdStatus: !!document.getElementById('globalObd'),
+                  refinoButton: !!document.querySelector('.side-nav [data-route="refino"]')
+                })
+                """.trimIndent(),
+            )
+            saveEvidence("obd-removed", dom, scenario)
+            assertTrue("OBD saiu do produto (decisão do proprietário): sem botão", !dom.getJSONArray("navButtons").toString().contains("obd"))
+            assertTrue("sem tela OBD", !dom.getBoolean("hasObdScreen"))
+            assertTrue("sem indicador OBD na barra", !dom.getBoolean("hasObdStatus"))
+            assertTrue("o Refino ocupou o lugar", dom.getBoolean("refinoButton"))
         } finally {
             scenario.close()
         }
@@ -926,8 +940,8 @@ class DashboardLevelsRenderTest {
             assertTrue("Operational toolbar must precede the chart", geometry.getDouble("toolbarBottom") <= geometry.getDouble("chartTop"))
             assertTrue("Secondary disclosure must follow the chart in reading order", geometry.getDouble("detailsTop") >= geometry.getDouble("chartBottom"))
             assertTrue("AutoCal must not create horizontal overflow", geometry.getDouble("screenScrollWidth") <= geometry.getDouble("screenClientWidth") + 1.0)
-            assertTrue("Point inspector must not cover acquisition curves", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartBottom"))
-            assertTrue("Point inspector must remain visible without scrolling", geometry.getDouble("inspectorBottom") <= geometry.getDouble("viewportHeight"))
+            assertTrue("Point inspector must not cover acquisition curves (inspectorTop=${geometry.getDouble("inspectorTop")} chartBottom=${geometry.getDouble("chartBottom")})", geometry.getDouble("inspectorTop") >= geometry.getDouble("chartBottom"))
+            assertTrue("Point inspector must remain visible without scrolling (inspectorBottom=${geometry.getDouble("inspectorBottom")} viewportHeight=${geometry.getDouble("viewportHeight")} chartTop=${geometry.getDouble("chartTop")} chartHeight=${geometry.getDouble("chartHeight")})", geometry.getDouble("inspectorBottom") <= geometry.getDouble("viewportHeight"))
             assertTrue("Point inspector must remain contextual instead of narrowing the plot", geometry.getDouble("inspectorWidth") <= geometry.getDouble("chartWidth") * 0.35)
         } finally {
             scenario.close()

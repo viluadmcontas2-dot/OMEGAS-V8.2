@@ -91,11 +91,12 @@ class StallWatchTest {
     @Test
     fun `apagao confirmado nunca some, so ganha a anotacao do que veio depois`() {
         var now = 0L
-        // Sem religar, sem GPS.
+        // Sem religar, sem GPS: o motor segue morto por 62 s com a telemetria viva (chave ligada).
         val w = StallWatch(null) { now }
         val (t, event) = feed(w, 0, "GNV", decel + List(12) { 0.0 })
         assertNotNull(event)
-        now = t + StallWatch.RESTART_WINDOW_MS + 1_000
+        val (tAlive, _) = feed(w, t, "GNV", List(620) { 0.0 })
+        now = tAlive + 500
         w.tick(now)
         assertEquals(1, w.json().getInt("count"))
         val stored = w.json().getJSONArray("events").getJSONObject(0)
