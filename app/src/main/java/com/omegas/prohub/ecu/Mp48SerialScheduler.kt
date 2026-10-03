@@ -42,6 +42,15 @@ interface Mp48SerialScheduler : Mp48TelemetryWindowSource {
     fun isConnected(): Boolean
     fun currentSessionId(): Long
 
+    /**
+     * Quadros vivos válidos aceitos desde que a engine subiu (contador monotônico); -1 = não informado.
+     * Somente leitura de estado: o árbitro de fatias conta quadros vivos entre dois grupos AutoCal.
+     */
+    fun liveFrameCount(): Long = -1L
+
+    /** Idade (ms) do último quadro vivo válido; -1 = desconhecida. */
+    fun liveFrameAgeMs(): Long = -1L
+
     /** Uma transação é uma unidade; a telemetria recebe oportunidade depois dela. */
     fun transaction(
         request: ByteArray,

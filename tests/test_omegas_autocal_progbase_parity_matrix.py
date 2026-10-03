@@ -45,8 +45,9 @@ assert "probeMaturityCounters" in monitor
 assert "refreshAcquisitionGroup" in monitor
 assert "AutoCalProtocol.NUM_BUF_UPD_PETR" in monitor
 assert "AutoCalProtocol.NUM_BUF_UPD_GAS" in monitor
-assert "AutoCalProtocol.ACQUIRED_ZONES_PETROL" in monitor
-assert "AutoCalProtocol.ACQUIRED_ZONES_GAS" in monitor
+planner = (ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefreshPlanner.kt").read_text(encoding="utf-8")
+assert "AutoCalProtocol.ACQUIRED_ZONES_PETROL" in planner  # Lote D: campos nos grupos do planner
+assert "AutoCalProtocol.ACQUIRED_ZONES_GAS" in planner
 assert "addHook('fast'" in cockpit
 assert "renderLiveCursor()" in cockpit
 assert "LEVELS RAW" not in cockpit

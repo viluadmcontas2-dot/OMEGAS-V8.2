@@ -15,14 +15,20 @@ import java.security.MessageDigest
 /**
  * Observa a Auto Calibration nativa sem possuir timer, thread serial ou writer.
  *
- * O serviço chama [tick] em uma cadência compartilhada; o monitor não possui
+ * O serviço chama [tick] em cadência curta (~100 ms); o monitor não possui
  * thread nem timer. Toda I/O passa pelo scheduler MP48 único. O probe 48 0B
- * acompanha status global; um grupo leve renova contadores/zonas em ~1 s e um
- * grupo de referência renova eixos/curvas/MUL_ACT em ~4 s. Refreshes agrupados
- * só são aceitos quando o status compacto antes/depois permanece na mesma época
- * nativa, evitando misturar CURRENT/PREV/MUL durante um AutoMatch da ECU.
- * Snapshot completo continua reservado a bootstrap/eventos científicos.
- * AutoMatch continua sendo executado exclusivamente pela ECU.
+ * acompanha status global. Lote D: a aquisição deixou de ser uma unidade inseparável
+ * de ~10 leituras (~0,5 s com a porta presa): cada tick lê no máximo UM grupo de <= 3
+ * leituras (G2 gasolina, G3 GNV anterior, G4 GNV, G6 zonas; referência G5 MUL_ACT/eixos,
+ * G7/G8 curvas RV) e o [SlotArbiter] exige >= 3 quadros vivos entre dois grupos. A
+ * rodada operacional dura ~2 s; a referência vem a cada 2ª rodada (~4 s) ou já em evento.
+ * Cada grupo só é aceito quando o status compacto ANTES/DEPOIS (probe de confirmação no
+ * slot seguinte) permanece na mesma época nativa: um grupo com época diferente é descartado,
+ * nunca misturado. Snapshot completo continua reservado a bootstrap/eventos científicos
+ * (também fatiado em grupos de 3). AutoMatch continua sendo executado exclusivamente pela ECU.
+ *
+ * Instrumentação: [statusJson] ganhou `acquisitionTiming` (idade do vivo, idade/duração por grupo,
+ * fatia de barramento estimada), `slotArbiter` e `tablesRevision`.
  */
 class NativeAutoCalMonitor(
     private val serial: Mp48SerialScheduler,
@@ -31,6 +37,9 @@ class NativeAutoCalMonitor(
     private val onNativeCalibrationObserved: (JSONObject) -> Unit = {},
     private val onNativeAutoMatchObserved: (JSONObject) -> Unit = {},
     private val onStateChanged: () -> Unit = {},
+    /** Dispara (fora do lock) quando uma tabela AutoCal realmente mudou (resposta diferente da em cache). */
+    private val onTablesChanged: () -> Unit = {},
+    private val clockMs: () -> Long = { SystemClock.elapsedRealtime() },
 ) {
     private data class PendingMaturity(
         val transition: NativeAutoCalMaturityTracker.Transition,
@@ -45,16 +54,24 @@ class NativeAutoCalMonitor(
         val payload: ByteArray,
     )
 
-    private data class AcquisitionRefresh(
+    /** Grupo lido (<= 3 leituras) que ainda espera o probe de confirmação de época do slot seguinte. */
+    private data class GroupRead(
+        val group: NativeAutoCalRefreshPlanner.Group,
         val snapshot: AutoCalSnapshot,
-        val gasProbe: MaturityProbe,
+        val gasProbe: MaturityProbe?,
         val observedAtElapsedMs: Long,
     )
 
-    private data class ReferenceRefresh(
-        val snapshot: AutoCalSnapshot,
-        val observedAtElapsedMs: Long,
-        val autoMatchCount: Int,
+    private data class PendingGroup(
+        val read: GroupRead,
+        val beforeEpoch: AutoCalProtocol.NativeStatus,
+        val sessionId: Long,
+    )
+
+    private data class ProbeObservation(
+        val counterEvent: NativeAutoMatchCounterTracker.Event?,
+        val countIncreased: Boolean,
+        val changed: Boolean,
     )
 
     private val lock = Any()
@@ -62,6 +79,19 @@ class NativeAutoCalMonitor(
     private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
     private val refreshPlanner = NativeAutoCalRefreshPlanner()
     private val acquisitionEpoch = NativeAutoCalAcquisitionEpoch()
+    private val arbiter = SlotArbiter(
+        clock = clockMs,
+        liveFrames = { serial.liveFrameCount() },
+    )
+    private val duty = AcquisitionDuty(clockMs)
+    private val stepper = SliceStepper(refreshPlanner, arbiter, duty)
+    private var pendingGroup: PendingGroup? = null
+    private var roundPetrolCounters: IntArray? = null
+    /** Grupos de referência (G5, G7, G8) já confirmados, retidos até o round fechar: a curva entra atômica ou não entra. */
+    private val referenceHold = ArrayList<GroupRead>(3)
+    private var lastProbeAtElapsedMs = 0L
+    /** Revisão das tabelas: só sobe quando uma resposta difere da guardada (hash de status+payload por campo). */
+    @Volatile private var tablesRevisionValue = 0L
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
@@ -103,6 +133,7 @@ class NativeAutoCalMonitor(
             maturityTracker.reset()
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
+            resetRoundState()
             acquisitionEpoch.reset(newSessionId)
             // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
             // de qualquer leitura pesada. Assim o primeiro probe estável sempre
@@ -135,6 +166,7 @@ class NativeAutoCalMonitor(
             maturityTracker.reset()
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
+            resetRoundState()
             acquisitionEpoch.reset(0L)
             snapshotRequested = false
             snapshotFailures = 0
@@ -144,6 +176,16 @@ class NativeAutoCalMonitor(
             state = baseState("DISCONNECTED", "USB desconectado")
         }
         onStateChanged()
+    }
+
+    /** Sob [lock]: zera o round em voo, o árbitro e a instrumentação (sessão USB nova/encerrada). */
+    private fun resetRoundState() {
+        pendingGroup = null
+        roundPetrolCounters = null
+        referenceHold.clear()
+        lastProbeAtElapsedMs = 0L
+        arbiter.reset()
+        duty.reset()
     }
 
     fun requestSnapshot(reason: String) {
@@ -230,112 +272,52 @@ class NativeAutoCalMonitor(
             return
         }
 
-        val previousProbe = synchronized(lock) { lastProbe }
-        val probe = probe(currentSession) ?: return
-        val counterObservedAt = SystemClock.elapsedRealtime()
-        val autoMatchCounterEvent = autoMatchCounterTracker.observe(
-            currentSessionId = currentSession,
-            count = probe.autoMatchCount,
-            observedAtElapsedMs = counterObservedAt,
+        // Decisão pura (SliceStepper): confirmar o grupo anterior, ler UM grupo (SlotArbiter), ou só o probe.
+        val pending = synchronized(lock) { pendingGroup }
+        val snapshotWanted = synchronized(lock) { snapshotDue() }
+        val nowMs = clockMs()
+        val (knownProbe, probeAt) = synchronized(lock) { lastProbe to lastProbeAtElapsedMs }
+        val decision = stepper.decide(
+            nowMs = nowMs,
+            hasPending = pending != null,
+            snapshotWanted = snapshotWanted,
+            // Pausa (AutoCal desabilitado) fecha só a aquisição; a referência segue (MUL_ACT/Curva K).
+            acquisitionEnabled = synchronized(lock) { autoCalEnabled } == 1,
+            probeAgeMs = if (knownProbe != null && probeAt > 0L) nowMs - probeAt else -1L,
         )
-        synchronized(lock) {
-            acquisitionEpoch.nativeCounter(currentSession, probe.autoMatchCount)
+        when (decision.step) {
+            SliceStepper.Step.CONFIRM_PROBE -> {
+                if (pending != null) confirmPendingGroup(currentSession, pending)
+                return
+            }
+            SliceStepper.Step.RUN_GROUP -> {
+                val group = decision.group
+                if (group != null && knownProbe != null) {
+                    runGroup(currentSession, group, knownProbe)
+                } else {
+                    arbiter.end() // defensivo: slot reservado sem grupo/probe
+                }
+                return
+            }
+            SliceStepper.Step.IDLE -> return
+            SliceStepper.Step.PROBE -> Unit
         }
-        val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
-        // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
-        val probeChanged = previousProbe != null && (
-            previousProbe.autoMatchCount != probe.autoMatchCount ||
-                previousProbe.nativeFlag13 != probe.nativeFlag13
-        )
 
+        // 3) Probe (status leve 48 0B): contador AutoMatch/flag; muda → snapshot completo.
+        val probe = probe(currentSession) ?: return
+        val observed = observeProbe(currentSession, probe)
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
-        val acquisitionEnabled = thresholds.third == 1
-        val refreshDue = refreshPlanner.due(SystemClock.elapsedRealtime())
-        val fullSnapshotAlreadyDue = synchronized(lock) { snapshotDue() } || probeChanged
-        // Leitura operacional das 18 bandas permanece independente do disparo de maturidade.
-        // O DUMP canônico já fecha os seletores gasLow=CALIBRATION_VAL_1[5] e
-        // gasNormal=CALIBRATION_VAL_1[8]; counters/points/zones continuam vindo
-        // diretamente da ECU, sem sintetizar estado nativo no host.
-        val acquisitionAttempted = !fullSnapshotAlreadyDue && acquisitionEnabled && refreshDue.acquisition
-        val acquisitionRefresh = if (acquisitionAttempted) refreshAcquisitionGroup(currentSession, probe) else null
-        // Leitura que falha recua (exponencial, com teto): uma ECU/cabo ruim não é reperguntada a cada tick.
-        if (acquisitionAttempted && acquisitionRefresh == null) refreshPlanner.markAcquisitionFailure(SystemClock.elapsedRealtime())
-        val maturityEvents = acquisitionRefresh?.gasProbe?.let { observed ->
-            maturityTracker.observe(
-                counters = observed.counters,
-                gasLowThreshold = thresholds.first,
-                gasNormalThreshold = thresholds.second,
-                enabled = true,
-                observedAtElapsedMs = observed.observedAtElapsedMs,
-            ).map { transition -> PendingMaturity(transition, observed.payloadHex) }
-        }.orEmpty()
-
-        if (acquisitionRefresh != null) {
-            mergeOperationalFields(
-                patch = acquisitionRefresh.snapshot,
-                refreshedAtElapsedMs = acquisitionRefresh.observedAtElapsedMs,
-            )
-            synchronized(lock) {
-                acquisitionEpoch.acquisitionGroup(
-                    currentSession,
-                    probe.autoMatchCount,
-                    vector(acquisitionRefresh.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR),
-                    vector(acquisitionRefresh.snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
-                )
-            }
-            refreshPlanner.markAcquisition(acquisitionRefresh.observedAtElapsedMs)
-        }
-
-        val referenceRefresh = if (!fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference) {
-            refreshReferenceGroup(currentSession, probe)
-        } else null
-        // Mesma condição da tentativa: sem resposta válida, recua em vez de repetir a cada tick.
-        if (!fullSnapshotAlreadyDue && maturityEvents.isEmpty() && refreshDue.reference && referenceRefresh == null) {
-            refreshPlanner.markReferenceFailure(SystemClock.elapsedRealtime())
-        }
-        if (referenceRefresh != null) {
-            mergeReferenceFields(
-                patch = referenceRefresh.snapshot,
-                refreshedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
-            )
-            synchronized(lock) {
-                acquisitionEpoch.referenceGroup(currentSession, probe.autoMatchCount)
-            }
-            stableMulAct(
-                snapshot = referenceRefresh.snapshot,
-                sessionId = currentSession,
-                autoMatchCount = referenceRefresh.autoMatchCount,
-                capturedAtElapsedMs = referenceRefresh.observedAtElapsedMs,
-            )?.let { stable ->
-                synchronized(lock) {
-                    lastStableMulAct = stable
-                    if (stable.rawPayloadHex.isNotBlank()) lastMulActHash = stable.rawPayloadHex
-                }
-            }
-            refreshPlanner.markReference(referenceRefresh.observedAtElapsedMs)
-        }
-
+        val referenceDue = refreshPlanner.due(clockMs()).reference
         synchronized(lock) {
-            lastProbe = probe
-            state = baseState("MONITORING", "AutoCal nativo monitorado")
-                .put("sessionId", currentSession)
-                .put("nativeFlag13", probe.nativeFlag13)
-                .put("autoMatchCount", probe.autoMatchCount)
-                .put("fallback", probe.nativeFlag13 < 0)
-                .put("thresholdsReady", thresholdsReady)
-                .put("maturityProbe", acquisitionRefresh != null)
-                .put("acquisitionRefresh", acquisitionRefresh != null)
-                .put("referenceRefresh", referenceRefresh != null)
-                .put("referenceRefreshDue", refreshDue.reference && referenceRefresh == null)
-                .put("nativeAutoMatchCounterEvent", autoMatchCounterEvent != null)
-            if (maturityEvents.isNotEmpty()) {
-                pendingMaturity = maturityEvents
+            state = monitoringState(
+                currentSession, probe, thresholdsReady,
+                acquisitionRefresh = false, referenceRefresh = false,
+                referenceDue = referenceDue, counterEvent = observed.counterEvent != null,
+            )
+            if (observed.changed) {
                 snapshotRequested = true
-                snapshotReason = "NATIVE_BAND_MATURED"
-            } else if (probeChanged) {
-                snapshotRequested = true
-                snapshotReason = if (countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
+                snapshotReason = if (observed.countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
             }
         }
 
@@ -344,16 +326,259 @@ class NativeAutoCalMonitor(
             // Evidência de uma tentativa anterior abortada (época mudou no meio / transporte) entra junto.
             val (event, increased) = synchronized(lock) {
                 val carried = pendingCounterEvent
-                val current = autoMatchCounterEvent
+                val current = observed.counterEvent
                 val merged = if (carried != null && current != null) {
                     current.copy(beforeCount = carried.beforeCount, delta = current.afterCount - carried.beforeCount)
                 } else carried ?: current
-                merged to (countIncreased || pendingCountIncreased)
+                merged to (observed.countIncreased || pendingCountIncreased)
             }
             readFullSnapshot(currentSession, probe, increased, event)
         } else {
             onStateChanged()
         }
+    }
+
+    /** Registra um probe: contador nativo, época de aquisição e "mudou?" frente ao probe anterior. */
+    private fun observeProbe(currentSession: Long, probe: AutoCalProtocol.NativeStatus): ProbeObservation {
+        val previousProbe = synchronized(lock) { lastProbe }
+        val observedAt = SystemClock.elapsedRealtime()
+        val counterEvent = autoMatchCounterTracker.observe(
+            currentSessionId = currentSession,
+            count = probe.autoMatchCount,
+            observedAtElapsedMs = observedAt,
+        )
+        synchronized(lock) {
+            acquisitionEpoch.nativeCounter(currentSession, probe.autoMatchCount)
+            lastProbe = probe
+            lastProbeAtElapsedMs = clockMs()
+        }
+        val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
+        // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
+        val changed = previousProbe != null && (
+            previousProbe.autoMatchCount != probe.autoMatchCount ||
+                previousProbe.nativeFlag13 != probe.nativeFlag13
+        )
+        return ProbeObservation(counterEvent, countIncreased, changed)
+    }
+
+    private fun monitoringState(
+        currentSession: Long,
+        probe: AutoCalProtocol.NativeStatus,
+        thresholdsReady: Boolean,
+        acquisitionRefresh: Boolean,
+        referenceRefresh: Boolean,
+        referenceDue: Boolean,
+        counterEvent: Boolean,
+    ): JSONObject = baseState("MONITORING", "AutoCal nativo monitorado")
+        .put("sessionId", currentSession)
+        .put("nativeFlag13", probe.nativeFlag13)
+        .put("autoMatchCount", probe.autoMatchCount)
+        .put("fallback", probe.nativeFlag13 < 0)
+        .put("thresholdsReady", thresholdsReady)
+        .put("maturityProbe", acquisitionRefresh)
+        .put("acquisitionRefresh", acquisitionRefresh)
+        .put("referenceRefresh", referenceRefresh)
+        .put("referenceRefreshDue", referenceDue && !referenceRefresh)
+        .put("nativeAutoMatchCounterEvent", counterEvent)
+
+    /** Lê UM grupo (<= 3 leituras) segurando a porta só por ele; o slot do árbitro já foi reservado. */
+    private fun runGroup(
+        currentSession: Long,
+        group: NativeAutoCalRefreshPlanner.Group,
+        beforeEpoch: AutoCalProtocol.NativeStatus,
+    ) {
+        val startedAt = clockMs()
+        var read: GroupRead? = null
+        var error = ""
+        try {
+            read = if (group.family == NativeAutoCalRefreshPlanner.Family.ACQUISITION) {
+                refreshAcquisitionGroup(currentSession, group)
+            } else {
+                refreshReferenceGroup(currentSession, group)
+            }
+        } catch (interrupted: InterruptedException) {
+            throw interrupted // desligamento do serviço: sobe para o autoCalTick (o finally libera o slot)
+        } catch (failure: Exception) {
+            // Falha de transporte/admissão não derruba o monitor: o grupo é pulado e recua (B4).
+            error = failure.message ?: failure.javaClass.simpleName
+        } finally {
+            arbiter.end()
+        }
+        val groupRead = read
+        duty.record(group.label, startedAt, clockMs() - startedAt, groupRead != null, error)
+        if (groupRead == null) {
+            failGroup(group)
+            return
+        }
+        synchronized(lock) { pendingGroup = PendingGroup(groupRead, beforeEpoch, currentSession) }
+    }
+
+    /** Grupo falhou/descartado: recuo do tipo (B4) e, se era referência, a retenção do round morre junto. */
+    private fun failGroup(group: NativeAutoCalRefreshPlanner.Group) {
+        refreshPlanner.groupFailed(group, clockMs())
+        if (group.family == NativeAutoCalRefreshPlanner.Family.REFERENCE) {
+            synchronized(lock) { referenceHold.clear() }
+        }
+    }
+
+    /**
+     * Fecha o round de referência: exige G5+G7+G8 retidos e lidos dentro do limite de coerência das curvas
+     * (o mesmo `MAX_AUTOMATCH_GROUP_SKEW_MS` do snapshot). Só então mescla (MUL_ACT estável incluído).
+     */
+    private fun commitReferenceRound(currentSession: Long, probe: AutoCalProtocol.NativeStatus): Boolean {
+        val held = synchronized(lock) { referenceHold.toList().also { referenceHold.clear() } }
+        val complete = NativeAutoCalRefreshPlanner.Group.values()
+            .filter { it.family == NativeAutoCalRefreshPlanner.Family.REFERENCE }
+            .all { wanted -> held.any { it.group == wanted } }
+        val span = (held.maxOfOrNull { it.observedAtElapsedMs } ?: 0L) - (held.minOfOrNull { it.observedAtElapsedMs } ?: 0L)
+        if (!complete || span > AutoCalSnapshotBuilder.MAX_AUTOMATCH_GROUP_SKEW_MS) {
+            refreshPlanner.groupFailed(NativeAutoCalRefreshPlanner.Group.G8_GAS_RV, clockMs())
+            return false
+        }
+        held.forEach { read ->
+            mergeReferenceFields(
+                patch = read.snapshot,
+                refreshedAtElapsedMs = read.observedAtElapsedMs,
+                slice = read.group.label,
+            )
+            if (read.group == NativeAutoCalRefreshPlanner.Group.G5_MUL_ACT) {
+                stableMulAct(
+                    snapshot = read.snapshot,
+                    sessionId = currentSession,
+                    autoMatchCount = probe.autoMatchCount,
+                    capturedAtElapsedMs = read.observedAtElapsedMs,
+                )?.let { stable ->
+                    synchronized(lock) {
+                        lastStableMulAct = stable
+                        if (stable.rawPayloadHex.isNotBlank()) lastMulActHash = stable.rawPayloadHex
+                    }
+                }
+            }
+        }
+        // Conjunto RV30 deste round (todo sob a mesma época confirmada) está fresco.
+        synchronized(lock) { acquisitionEpoch.referenceGroup(currentSession, probe.autoMatchCount) }
+        return true
+    }
+
+    /** Probe de confirmação: mesma época antes/depois aceita o grupo; qualquer divergência o DESCARTA. */
+    private fun confirmPendingGroup(currentSession: Long, pending: PendingGroup) {
+        val group = pending.read.group
+        if (pending.sessionId != currentSession ||
+            clockMs() - pending.read.observedAtElapsedMs > PENDING_GROUP_MAX_AGE_MS
+        ) {
+            synchronized(lock) { pendingGroup = null }
+            refreshPlanner.abandonRound() // sessão trocou ou o dado envelheceu: não é falha da ECU
+            return
+        }
+        val probe = probe(currentSession)
+        synchronized(lock) { pendingGroup = null }
+        if (probe == null) {
+            failGroup(group)
+            return
+        }
+        val observed = observeProbe(currentSession, probe)
+        if (observed.changed) {
+            synchronized(lock) {
+                snapshotRequested = true
+                snapshotReason = if (observed.countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
+            }
+        }
+        if (observed.counterEvent != null || observed.countIncreased) {
+            carryEvidence(observed.counterEvent, observed.countIncreased)
+        }
+        if (!NativeAutoCalEpochGuard.sameEpoch(pending.beforeEpoch, probe)) {
+            // Época diferente: este grupo nunca é misturado ao snapshot; recua como falha do tipo.
+            failGroup(group)
+            onStateChanged()
+            return
+        }
+        commitGroup(currentSession, pending.read, probe, observed.counterEvent != null)
+    }
+
+    private fun commitGroup(
+        currentSession: Long,
+        read: GroupRead,
+        probe: AutoCalProtocol.NativeStatus,
+        counterEvent: Boolean,
+    ) {
+        val group = read.group
+        val acquisition = group.family == NativeAutoCalRefreshPlanner.Family.ACQUISITION
+        var maturityEvents = emptyList<PendingMaturity>()
+        var roundRejected = false
+        if (acquisition) {
+            mergeOperationalFields(
+                patch = read.snapshot,
+                refreshedAtElapsedMs = read.observedAtElapsedMs,
+                slice = group.label,
+            )
+            when (group) {
+                NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS -> synchronized(lock) {
+                    roundPetrolCounters = vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR)
+                }
+                NativeAutoCalRefreshPlanner.Group.G4_GAS -> {
+                    val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
+                    synchronized(lock) {
+                        acquisitionEpoch.acquisitionGroup(
+                            currentSession,
+                            probe.autoMatchCount,
+                            roundPetrolCounters,
+                            vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
+                        )
+                    }
+                    maturityEvents = read.gasProbe?.let { observed ->
+                        maturityTracker.observe(
+                            counters = observed.counters,
+                            gasLowThreshold = thresholds.first,
+                            gasNormalThreshold = thresholds.second,
+                            enabled = true,
+                            observedAtElapsedMs = observed.observedAtElapsedMs,
+                        ).map { transition -> PendingMaturity(transition, observed.payloadHex) }
+                    }.orEmpty()
+                }
+                else -> Unit
+            }
+        } else {
+            // Referência: retém G5/G7/G8 (todos sob a mesma época, cada um confirmado) e publica o round inteiro de uma vez.
+            synchronized(lock) {
+                if (group == NativeAutoCalRefreshPlanner.Group.G5_MUL_ACT) referenceHold.clear()
+                referenceHold += read
+            }
+            if (group == NativeAutoCalRefreshPlanner.Group.G8_GAS_RV) {
+                roundRejected = !commitReferenceRound(currentSession, probe)
+            }
+        }
+
+        if (maturityEvents.isNotEmpty()) {
+            // Banda maturou: o snapshot completo (que carrega o evento) passa à frente; o round em voo morre.
+            synchronized(lock) {
+                pendingMaturity = maturityEvents
+                snapshotRequested = true
+                snapshotReason = "NATIVE_BAND_MATURED"
+            }
+            refreshPlanner.abandonRound()
+            synchronized(lock) {
+                roundPetrolCounters = null
+                referenceHold.clear()
+            }
+        } else if (!roundRejected) {
+            refreshPlanner.groupDone(group) // (round rejeitado já recuou via groupFailed: não zerar o recuo)
+        }
+        val roundClosed = !refreshPlanner.roundInProgress()
+        if (roundClosed) {
+            synchronized(lock) { roundPetrolCounters = null }
+            duty.roundCompleted(clockMs())
+        }
+        val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
+        val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
+        val referenceDue = refreshPlanner.due(clockMs()).reference
+        synchronized(lock) {
+            state = monitoringState(
+                currentSession, probe, thresholdsReady,
+                acquisitionRefresh = acquisition, referenceRefresh = !acquisition,
+                referenceDue = referenceDue, counterEvent = counterEvent,
+            )
+        }
+        if (roundClosed || maturityEvents.isNotEmpty()) onStateChanged()
     }
 
     fun statusJson(): JSONObject = synchronized(lock) {
@@ -363,9 +588,19 @@ class NativeAutoCalMonitor(
             .put("liveAcquisitionEpoch", liveEpoch)
             .put("snapshotRequested", snapshotRequested)
             .put("snapshotReason", snapshotReason)
+            .put("tablesRevision", tablesRevisionValue)
+            .put("acquisitionTiming", duty.json(serial.liveFrameAgeMs(), serial.liveFrameCount()))
+            .put("slotArbiter", arbiter.json())
+            .put("roundRemaining", JSONArray().also { array -> refreshPlanner.roundRemaining().forEach { array.put(it.label) } })
             .put("appAutomaticWrite", false)
             .put("manualAutoMatchExposed", false)
     }
+
+    /**
+     * Revisão das tabelas AutoCal (campos de aquisição/referência/snapshot completo): só sobe quando
+     * uma resposta da ECU difere da que já estava em cache (status + payload por campo).
+     */
+    fun tablesRevision(): Long = tablesRevisionValue
 
     private var acquisitionMemo: Pair<JSONObject, JSONObject>? = null
 
@@ -513,22 +748,47 @@ class NativeAutoCalMonitor(
 
     private fun refreshAcquisitionGroup(
         expectedSessionId: Long,
-        beforeEpoch: AutoCalProtocol.NativeStatus,
-    ): AcquisitionRefresh? = serial.unit(
+        group: NativeAutoCalRefreshPlanner.Group,
+    ): GroupRead? = serial.unit(
         reason = "AutoCal aquisição operacional agrupada",
         expectedSessionId = expectedSessionId,
         workClass = Mp48WorkClass.READ_ONLY,
         telemetryAfter = true,
-        waitTimeoutMs = 8_000L,
+        waitTimeoutMs = GROUP_WAIT_MS,
     ) { unit ->
-        val startedAtMs = System.currentTimeMillis()
-        val observations = mutableListOf<AutoCalReadObservation>()
+        readGroupFields(unit, group, expectedSessionId, label = "AutoCal aquisição", timeoutMs = 900, idPrefix = "AUTOCAL-ACQ")
+    }
 
-        fun read(field: AutoCalProtocol.Field, reason: String): Boolean {
+    private fun refreshReferenceGroup(
+        expectedSessionId: Long,
+        group: NativeAutoCalRefreshPlanner.Group,
+    ): GroupRead? = serial.unit(
+        reason = "AutoCal referência agrupada",
+        expectedSessionId = expectedSessionId,
+        workClass = Mp48WorkClass.READ_ONLY,
+        telemetryAfter = true,
+        waitTimeoutMs = GROUP_WAIT_MS,
+    ) { unit ->
+        readGroupFields(unit, group, expectedSessionId, label = "AutoCal referência", timeoutMs = 1_200, idPrefix = "AUTOCAL-REF")
+    }
+
+    /** As leituras do grupo (mesmos comandos de sempre, mesma ordem) dentro da unidade; sem probe aqui. */
+    private fun readGroupFields(
+        unit: Mp48SerialUnit,
+        group: NativeAutoCalRefreshPlanner.Group,
+        expectedSessionId: Long,
+        label: String,
+        timeoutMs: Int,
+        idPrefix: String,
+    ): GroupRead? {
+        val startedAtMs = System.currentTimeMillis()
+        val observations = ArrayList<AutoCalReadObservation>(group.fields.size)
+        var gasProbe: MaturityProbe? = null
+        for (field in group.fields) {
             val reply = unit.transaction(
                 request = AutoCalProtocol.read(field),
-                reason = reason,
-                timeoutMs = 900,
+                reason = "$label ${field.key}",
+                timeoutMs = timeoutMs,
                 purgeBefore = false,
             )
             observations += AutoCalReadObservation(
@@ -538,121 +798,50 @@ class NativeAutoCalMonitor(
                 capturedAtMs = System.currentTimeMillis(),
                 error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
             )
-            return reply.ok
+            if (!reply.ok) return null
+            if (field == AutoCalProtocol.NUM_BUF_UPD_GAS) {
+                val decoded = try {
+                    AutoCalProtocol.decode(AutoCalProtocol.NUM_BUF_UPD_GAS, reply.status, reply.payload)
+                } catch (_: Exception) {
+                    return null
+                }
+                gasProbe = MaturityProbe(
+                    counters = decoded.rawValues.copyOf(),
+                    payloadHex = reply.payload.toHex(),
+                    observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                    status = reply.status,
+                    payload = reply.payload.copyOf(),
+                )
+            }
         }
-
-        if (!read(AutoCalProtocol.PETR_INJ_TBUF, "AutoCal aquisição gasolina tempo")) return@unit null
-        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF, "AutoCal aquisição gasolina MAP")) return@unit null
-        if (!read(AutoCalProtocol.NUM_BUF_UPD_PETR, "AutoCal maturidade gasolina")) return@unit null
-        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV, "AutoCal aquisição GNV anterior tempo")) return@unit null
-        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV, "AutoCal aquisição GNV anterior MAP")) return@unit null
-        if (!read(AutoCalProtocol.PETR_INJ_TBUF_GAS, "AutoCal aquisição GNV tempo")) return@unit null
-        if (!read(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, "AutoCal aquisição GNV MAP")) return@unit null
-
-        val gasReply = unit.transaction(
-            request = AutoCalProtocol.read(AutoCalProtocol.NUM_BUF_UPD_GAS),
-            reason = "AutoCal maturidade GNV",
-            timeoutMs = 900,
-            purgeBefore = false,
-        )
-        if (!gasReply.ok) return@unit null
-        val gasDecoded = try {
-            AutoCalProtocol.decode(AutoCalProtocol.NUM_BUF_UPD_GAS, gasReply.status, gasReply.payload)
-        } catch (_: Exception) {
-            return@unit null
-        }
-        val gasProbe = MaturityProbe(
-            counters = gasDecoded.rawValues.copyOf(),
-            payloadHex = gasReply.payload.toHex(),
-            observedAtElapsedMs = SystemClock.elapsedRealtime(),
-            status = gasReply.status,
-            payload = gasReply.payload.copyOf(),
-        )
-        observations += AutoCalReadObservation(
-            field = AutoCalProtocol.NUM_BUF_UPD_GAS,
-            status = gasReply.status,
-            payload = gasReply.payload.copyOf(),
-            capturedAtMs = System.currentTimeMillis(),
-        )
-
-        if (!read(AutoCalProtocol.ACQUIRED_ZONES_PETROL, "AutoCal zonas gasolina")) return@unit null
-        if (!read(AutoCalProtocol.ACQUIRED_ZONES_GAS, "AutoCal zonas GNV")) return@unit null
-
-        val afterEpoch = probe(unit) ?: return@unit null
-        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return@unit null
-
         val finishedAtMs = System.currentTimeMillis()
         val snapshot = AutoCalSnapshotBuilder.build(
             observations = observations,
-            expectedFields = ACQUISITION_REFRESH_FIELDS,
-            sessionId = "AUTOCAL-ACQ-$expectedSessionId-$finishedAtMs",
+            expectedFields = group.fields,
+            sessionId = "$idPrefix-$expectedSessionId-$finishedAtMs-${group.label}",
             source = AutoCalSnapshotSource.ECU_READ,
             startedAtMs = startedAtMs,
             finishedAtMs = finishedAtMs,
         )
-        if (snapshot.partial || snapshot.validFieldCount != ACQUISITION_REFRESH_FIELDS.size) return@unit null
-        AcquisitionRefresh(
+        if (snapshot.partial || snapshot.validFieldCount != group.fields.size) return null
+        // A coerência temporal das curvas de referência (<= 2 s) é exigida no ROUND (G5+G7+G8), não por grupo:
+        // um grupo isolado traz só parte dos campos e o construtor o marcaria "incoerente" por construção.
+        return GroupRead(
+            group = group,
             snapshot = snapshot,
             gasProbe = gasProbe,
             observedAtElapsedMs = SystemClock.elapsedRealtime(),
         )
     }
 
-    private fun refreshReferenceGroup(
-        expectedSessionId: Long,
-        beforeEpoch: AutoCalProtocol.NativeStatus,
-    ): ReferenceRefresh? = serial.unit(
-        reason = "AutoCal referência agrupada",
-        expectedSessionId = expectedSessionId,
-        workClass = Mp48WorkClass.READ_ONLY,
-        telemetryAfter = true,
-        waitTimeoutMs = 6_000L,
-    ) { unit ->
-        val startedAtMs = System.currentTimeMillis()
-        val observations = REFERENCE_REFRESH_FIELDS.map { field ->
-            val reply = unit.transaction(
-                request = AutoCalProtocol.read(field),
-                reason = "AutoCal referência ${field.key}",
-                timeoutMs = 1_200,
-                purgeBefore = false,
-            )
-            AutoCalReadObservation(
-                field = field,
-                status = reply.status.takeIf { it >= 0 },
-                payload = reply.payload.takeIf { it.isNotEmpty() },
-                capturedAtMs = System.currentTimeMillis(),
-                error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
-            )
-        }
-        val afterEpoch = probe(unit) ?: return@unit null
-        if (!NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)) return@unit null
-
-        val finishedAtMs = System.currentTimeMillis()
-        val snapshot = AutoCalSnapshotBuilder.build(
-            observations = observations,
-            expectedFields = REFERENCE_REFRESH_FIELDS,
-            sessionId = "AUTOCAL-REF-$expectedSessionId-$finishedAtMs",
-            source = AutoCalSnapshotSource.ECU_READ,
-            startedAtMs = startedAtMs,
-            finishedAtMs = finishedAtMs,
-        )
-        if (snapshot.partial ||
-            snapshot.validFieldCount != REFERENCE_REFRESH_FIELDS.size ||
-            !snapshot.temporalCoherent
-        ) return@unit null
-        ReferenceRefresh(
-            snapshot = snapshot,
-            observedAtElapsedMs = SystemClock.elapsedRealtime(),
-            autoMatchCount = beforeEpoch.autoMatchCount,
-        )
-    }
-
     private fun mergeOperationalFields(
         patch: AutoCalSnapshot,
         refreshedAtElapsedMs: Long,
+        slice: String,
     ) = mergeRefreshedFields(
         patch = patch,
         refreshedAtElapsedMs = refreshedAtElapsedMs,
+        slice = slice,
         group = "acquisition",
         refreshTimestampKey = "acquisitionRefreshAtElapsedMs",
         reviseSnapshotHashOnChange = false,
@@ -661,9 +850,11 @@ class NativeAutoCalMonitor(
     private fun mergeReferenceFields(
         patch: AutoCalSnapshot,
         refreshedAtElapsedMs: Long,
+        slice: String,
     ) = mergeRefreshedFields(
         patch = patch,
         refreshedAtElapsedMs = refreshedAtElapsedMs,
+        slice = slice,
         group = "reference",
         refreshTimestampKey = "referenceRefreshAtElapsedMs",
         reviseSnapshotHashOnChange = true,
@@ -672,11 +863,13 @@ class NativeAutoCalMonitor(
     private fun mergeRefreshedFields(
         patch: AutoCalSnapshot,
         refreshedAtElapsedMs: Long,
+        slice: String,
         group: String,
         refreshTimestampKey: String,
         reviseSnapshotHashOnChange: Boolean,
     ) {
         val patchFields = patch.toJson().optJSONArray("fields") ?: return
+        var tablesChanged = false
         synchronized(lock) {
             if (!latestSnapshot.optBoolean("available", false)) return
             val current = JSONObject(latestSnapshot.toString())
@@ -715,6 +908,7 @@ class NativeAutoCalMonitor(
                 .put("operationalUpdatedAtElapsedMs", refreshedAtElapsedMs)
                 .put(refreshTimestampKey, refreshedAtElapsedMs)
                 .put("incrementalRefreshGroup", group)
+                .put("incrementalRefreshSlice", slice)
                 .put("operationalRefreshOnly", true)
             if (reviseSnapshotHashOnChange && changed) {
                 current.put(
@@ -726,6 +920,13 @@ class NativeAutoCalMonitor(
                 )
             }
             latestSnapshot = current
+            if (changed) {
+                tablesRevisionValue += 1
+                tablesChanged = true
+            }
+        }
+        if (tablesChanged) {
+            try { onTablesChanged() } catch (_: Exception) {}
         }
     }
 
@@ -790,25 +991,46 @@ class NativeAutoCalMonitor(
         val started = System.currentTimeMillis()
         val observations = ArrayList<AutoCalReadObservation>()
         var consecutiveTimeouts = 0
-        for (field in AutoCalProtocol.READ_ONLY_FIELDS.distinctBy { it.identity }) {
-            val reply = serial.transaction(
-                request = AutoCalProtocol.read(field),
-                reason = "AutoCal snapshot ${field.key}",
-                timeoutMs = 1_200,
-                purgeBefore = false,
-                expectedSessionId = expectedSessionId,
-                workClass = Mp48WorkClass.READ_ONLY,
-            )
-            observations += AutoCalReadObservation(
-                field = field,
-                status = reply.status.takeIf { it >= 0 },
-                payload = reply.payload.takeIf { it.isNotEmpty() },
-                capturedAtMs = System.currentTimeMillis(),
-                error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
-            )
-            // Só silêncio de transporte (sem quadro algum) conta; resposta da ECU, mesmo recusa, não.
-            consecutiveTimeouts = if (!reply.ok && reply.status < 0) consecutiveTimeouts + 1 else 0
-            if (consecutiveTimeouts >= SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS) break
+        // Também fatiado: grupos de <= 3 leituras, cada um precedido do slot do árbitro (>= 3 quadros vivos antes).
+        var sliceReads = 0
+        var sliceOpen = false
+        var sliceOwned = false
+        try {
+            for (field in AutoCalProtocol.READ_ONLY_FIELDS.distinctBy { it.identity }) {
+                if (!sliceOpen) {
+                    // Se o árbitro não abrir a tempo (vivo parado), lê mesmo assim: o snapshot não pode travar.
+                    sliceOwned = arbiter.awaitSlot(SNAPSHOT_SLICE_MAX_WAIT_MS)
+                    sliceOpen = true
+                    sliceReads = 0
+                }
+                val reply = serial.transaction(
+                    request = AutoCalProtocol.read(field),
+                    reason = "AutoCal snapshot ${field.key}",
+                    timeoutMs = 1_200,
+                    purgeBefore = false,
+                    expectedSessionId = expectedSessionId,
+                    workClass = Mp48WorkClass.READ_ONLY,
+                )
+                observations += AutoCalReadObservation(
+                    field = field,
+                    status = reply.status.takeIf { it >= 0 },
+                    payload = reply.payload.takeIf { it.isNotEmpty() },
+                    capturedAtMs = System.currentTimeMillis(),
+                    error = if (reply.ok) null else reply.error.ifBlank { "Campo não confirmado" },
+                )
+                // Só silêncio de transporte (sem quadro algum) conta; resposta da ECU, mesmo recusa, não.
+                consecutiveTimeouts = if (!reply.ok && reply.status < 0) consecutiveTimeouts + 1 else 0
+                if (consecutiveTimeouts >= SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS) break
+                sliceReads += 1
+                if (sliceReads >= SNAPSHOT_SLICE_READS) {
+                    if (sliceOwned) arbiter.end()
+                    sliceOwned = false
+                    sliceOpen = false
+                    sliceReads = 0
+                }
+            }
+        } finally {
+            if (sliceOpen && sliceOwned) arbiter.end()
         }
         if (consecutiveTimeouts >= SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS) {
             // ECU muda: não monta snapshot parcial nem repete a varredura inteira a cada segundo.
@@ -1010,6 +1232,7 @@ class NativeAutoCalMonitor(
             rawValues = afterMulActRaw,
             rawPayloadHex = mulActField?.rawPayloadHex.orEmpty(),
         )
+        var tablesChangedByFullSnapshot = false
         synchronized(lock) {
             acquisitionEpoch.acquisitionGroup(
                 expectedSessionId,
@@ -1026,7 +1249,14 @@ class NativeAutoCalMonitor(
                 acquisitionEpoch.referenceGroup(expectedSessionId, probe.autoMatchCount)
             }
             decorated.put("liveAcquisitionEpoch", acquisitionEpochJson())
+            if (tableDigest(latestSnapshot) != tableDigest(decorated)) {
+                tablesRevisionValue += 1
+                tablesChangedByFullSnapshot = true
+            }
             latestSnapshot = decorated
+            roundPetrolCounters = null
+            referenceHold.clear()
+            pendingGroup = null
             refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
             if (stableAfter != null) lastStableMulAct = stableAfter
@@ -1053,6 +1283,9 @@ class NativeAutoCalMonitor(
                 .put("snapshotHash", snapshot.snapshotHash)
         }
 
+        if (tablesChangedByFullSnapshot) {
+            try { onTablesChanged() } catch (_: Exception) {}
+        }
         if (enabled == 1) {
             try { onFreshSnapshot(decorated) } catch (_: Exception) {}
         }
@@ -1081,6 +1314,18 @@ class NativeAutoCalMonitor(
             } catch (_: Exception) {}
         }
         onStateChanged()
+    }
+
+    /** Resumo (chave:status:payload por campo) para detectar se alguma tabela realmente mudou. */
+    private fun tableDigest(snapshot: JSONObject): String {
+        val fields = snapshot.optJSONArray("fields") ?: return ""
+        val entries = ArrayList<String>(fields.length())
+        repeat(fields.length()) { index ->
+            val field = fields.optJSONObject(index) ?: return@repeat
+            entries += field.optString("key") + ":" + field.optString("status") + ":" + field.optString("rawPayloadHex")
+        }
+        entries.sort()
+        return entries.joinToString("|")
     }
 
     private fun acquisitionEpochJson(): JSONObject = acquisitionEpoch.view().let { epoch ->
@@ -1182,25 +1427,12 @@ class NativeAutoCalMonitor(
         private const val SNAPSHOT_BACKOFF_BASE_MS = 2_000L
         private const val SNAPSHOT_BACKOFF_CAP_MS = 60_000L
         private const val SNAPSHOT_BACKOFF_MAX_EXPONENT = 6
-        private val ACQUISITION_REFRESH_FIELDS = listOf(
-            // Unidade operacional consumida por AutoCalAcquisition: dados + MAP + contadores.
-            AutoCalProtocol.PETR_INJ_TBUF,
-            AutoCalProtocol.MNFLD_PRESS_BUF,
-            AutoCalProtocol.NUM_BUF_UPD_PETR,
-            AutoCalProtocol.PETR_INJ_TBUF_GAS_PREV,
-            AutoCalProtocol.MNFLD_PRESS_BUF_GAS_PREV,
-            AutoCalProtocol.PETR_INJ_TBUF_GAS,
-            AutoCalProtocol.MNFLD_PRESS_BUF_GAS,
-            AutoCalProtocol.NUM_BUF_UPD_GAS,
-            AutoCalProtocol.ACQUIRED_ZONES_PETROL,
-            AutoCalProtocol.ACQUIRED_ZONES_GAS,
-        )
-        private val REFERENCE_REFRESH_FIELDS = listOf(
-            AutoCalProtocol.PETR_INJ_TBP,
-            AutoCalProtocol.MNFLD_PRESS_THD,
-            AutoCalProtocol.MUL_ACT,
-            AutoCalProtocol.PETR_MNFLD_PRESS_RV,
-            AutoCalProtocol.GAS_MNFLD_PRESS_RV,
-        )
+        /** Grupo lido que não obteve o probe de confirmação nesse prazo é descartado (dado velho não entra). */
+        private const val PENDING_GROUP_MAX_AGE_MS = 3_000L
+        /** Espera máxima pela fila do scheduler para uma unidade de <= 3 leituras. */
+        private const val GROUP_WAIT_MS = 4_000L
+        /** Snapshot completo fatiado: de quantas em quantas leituras o árbitro é consultado. */
+        private const val SNAPSHOT_SLICE_READS = 3
+        private const val SNAPSHOT_SLICE_MAX_WAIT_MS = 600L
     }
 }
