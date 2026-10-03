@@ -746,7 +746,9 @@ class TelemetryForegroundService : Service() {
             monitoringPausedByUser = false
             if (generationChanged) {
                 if (sessionRecorder.statusObject().optBoolean("recording")) {
-                    stopJournalSession("USB_SESSION_REPLACED")
+                    refinementJournal.setDecisionListener(null)
+                    journalTransitionsObserved = false
+                    sessionRecorder.stop("USB_SESSION_REPLACED")
                 }
                 runtime.endUsbSession("USB_SESSION_REPLACED")
                 nativeAutoCal.endUsbSession()
@@ -759,9 +761,7 @@ class TelemetryForegroundService : Service() {
             kFactor.beginUsbSession(sessionId)
             nativeAutoCal.beginUsbSession(sessionId)
             if (!wasConnected) enginePausedByUser = false
-            if (settings.sessionRecorderEnabled && settings.sessionRecorderAutoStartOnUsb &&
-                !sessionRecorder.statusObject().optBoolean("recording")
-            ) {
+            if (!sessionRecorder.statusObject().optBoolean("recording")) {
                 startJournalSession(
                     "MP48 conectado",
                     JSONObject()
