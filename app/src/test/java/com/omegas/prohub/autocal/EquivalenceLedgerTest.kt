@@ -78,7 +78,8 @@ class EquivalenceLedgerTest {
 
     @Test
     fun `curva gravada pelo app tambem descarta o GNV medido com a curva anterior mas nao o medido depois`() {
-        val ledger = EquivalenceLedger(null)
+        var now = 0L
+        val ledger = EquivalenceLedger(null) { now }
         var t = drive(ledger, "GASOLINA", 2000.0, 0.6, 5.0, 0, 10)
         ledger.alignCurve("A")
         t = drive(ledger, "GNV", 2000.0, 0.6, 5.5, t + 1_000, 10)
@@ -93,6 +94,7 @@ class EquivalenceLedgerTest {
         drive(ledger, "GNV", 2000.0, 0.6, 5.6, t + 1_000, 10)
         ledger.adoptCurve("B")
         ledger.alignCurve("B")
+        now += EquivalenceLedger.INDEX_MIN_INTERVAL_MS + 1 // o índice só recalcula depois do intervalo mínimo
         assertEquals(8, ledger.index().getInt("gasObservations"))
     }
 
