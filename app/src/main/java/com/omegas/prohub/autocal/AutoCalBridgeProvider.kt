@@ -58,7 +58,7 @@ class AutoCalBridgeProvider : ContentProvider() {
      * Registra a ponte ANTES do `loadUrl`: a página já nasce com `OmegasAutoCal` e o attach tardio
      * não precisa recarregar a WebView (o que perdia o estado da UI na partida a frio).
      */
-    private fun attachBeforeLoad(main: MainActivity) = attach(main)
+    private fun attachEarly(main: MainActivity) = attach(main)
 
     private fun attach(main: MainActivity) {
         val webView = main.findViewById<WebView>(R.id.hubWebView) ?: return
@@ -92,7 +92,7 @@ class AutoCalBridgeProvider : ContentProvider() {
         /** Chamado pelo MainActivity antes de carregar a página. */
         @JvmStatic
         fun attachBeforeLoad(main: MainActivity) {
-            instance?.attachBeforeLoad(main)
+            instance?.attachEarly(main)
         }
     }
 }
