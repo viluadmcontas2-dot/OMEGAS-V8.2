@@ -45,7 +45,7 @@ assert.equal(baselineRun.status, 0, 'baseline do meta-teste precisa estar verde'
 const mutants = [
   ['route-removed', 'app/src/main/assets/ui/core/router.js', "'curve', 'autocal', 'refino'", "'curve', 'refino'"],
   ['nav-reordered', 'app/src/main/assets/ui/index.html',
-    'data-route="autocal"><i>05</i><span>AutoCal</span></button>\n        <button type="button" data-route="refino"',
+    'data-route="autocal"><i>04</i><span>AutoCal</span></button>\n        <button type="button" data-route="refino"',
     'data-route="refino"><i>05</i><span>Refino</span></button>\n        <button type="button" data-route="autocal"'],
   ['reader-status-miswired', 'app/src/main/assets/ui/core/autocal-api.js',
     "readerStatus: () => invoke('getStatus'", "readerStatus: () => invoke('getNativeMonitorStatus'"],

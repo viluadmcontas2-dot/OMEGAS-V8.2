@@ -148,7 +148,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 ecuOnline && !ecuRead -> "LENDO_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
                 latestStatus == "VERIFICANDO" -> "VERIFICANDO"
-                latestStatus == "PIOROU_EM_PARTE" && restoreCount > 0 -> "RESTAURAR_TRECHO"
+                latestStatus == "PIOROU_EM_PARTE" && restoreCount > 0 && worseStillOff(latest, off) -> "RESTAURAR_TRECHO"
                 measured.size >= MIN_STABLE_BANDS && off.length() == 0 -> "ESTAVEL"
                 off.length() > 0 && measured.size >= 2 -> "PROPOSTA_PRONTA"
                 else -> "COLETANDO_NOSSOS"
@@ -164,6 +164,20 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         }
         save()
         return JSONObject(result.toString())
+    }
+
+    /** O trecho que piorou ainda está fora da tolerância agora? Se já voltou, não há o que restaurar. */
+    private fun worseStillOff(latest: JSONObject?, off: JSONArray): Boolean {
+        val verdicts = latest?.optJSONArray("bands") ?: return true
+        for (i in 0 until verdicts.length()) {
+            val v = verdicts.optJSONObject(i) ?: continue
+            if (v.optString("verdict") != "PIOROU") continue
+            for (j in 0 until off.length()) {
+                val o = off.optJSONObject(j) ?: continue
+                if (o.optDouble("fromMs") == v.optDouble("fromMs")) return true
+            }
+        }
+        return false
     }
 
     /** Fase atual quer avisar e ainda não avisou? Marca como avisada. */

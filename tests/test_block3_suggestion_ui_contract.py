@@ -9,7 +9,6 @@ class Block3SuggestionUiContract(unittest.TestCase):
     def setUp(self):
         self.html = (UI / "index.html").read_text("utf-8")
         self.app = (UI / "app.js").read_text("utf-8")
-        self.learning = (UI / "screens/learning.js").read_text("utf-8")
         self.map_screen = (UI / "screens/map.js").read_text("utf-8")
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
         self.runtime = (ROOT / "app/src/main/java/com/omegas/v7/runtime/V7SessionRuntime.kt").read_text("utf-8")
@@ -47,12 +46,7 @@ class Block3SuggestionUiContract(unittest.TestCase):
         self.assertIn('Sugestão não escreve diretamente', self.bridge)
         self.assertIn('MANUAL_REVIEW_REQUIRED', self.bridge)
 
-    def test_learning_cell_can_open_same_map_editor_without_writing(self):
-        self.assertIn('data-edit-learning-cell', self.learning)
-        self.assertIn("this.router.navigate('map'", self.learning)
-        self.assertIn("origin: 'learning'", self.learning)
-        self.assertIn('cell: { row, column }', self.learning)
-        self.assertNotIn('writeMap(', self.learning)
+    def test_map_screen_accepts_editor_context_without_writing(self):
         self.assertIn('applyContext(context)', self.map_screen)
         self.assertIn('this.editor.selectOnly(row, column)', self.map_screen)
 

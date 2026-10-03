@@ -21,7 +21,6 @@
 
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
-    learning: ['APRENDER', 'Aprender'],
     predictor: ['DECIDIR', 'Predictor'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
@@ -37,7 +36,6 @@
   let telemetryPatchedAt = 0;
   let previousStatusSignature = '';
   let previousAlert = null;
-  let previousLearningLayer = null;
   let toastTimer = null;
   let routeButtons = [];
   let screenNodes = [];
@@ -66,7 +64,7 @@
     return rules ? rules.fuelLabel(raw) : String(raw || '—').toUpperCase();
   }
   function isLiveRoute(route) {
-    return ((root.OmegasUi || ui).LIVE_ROUTES || ['dashboard', 'learning', 'map', 'autocal', 'refino']).includes(route);
+    return ((root.OmegasUi || ui).LIVE_ROUTES || ['dashboard', 'map', 'autocal', 'refino']).includes(route);
   }
   function liveFrom(state) {
     const telemetry = state.telemetry || {};
@@ -115,7 +113,6 @@
   function ensureScreen(route) {
     if (instances[route]) return instances[route];
     if (route === 'dashboard' && ui.DashboardScreen) instances.dashboard = new ui.DashboardScreen(store, api);
-    if (route === 'learning' && ui.LearningScreen) instances.learning = new ui.LearningScreen(store, router, api);
     if (route === 'map' && ui.MapScreen) instances.map = new ui.MapScreen(store, api, router);
     if (route === 'curve' && ui.CurveScreen) instances.curve = new ui.CurveScreen(store, api);
     return instances[route] || null;
@@ -159,11 +156,6 @@
     }
 
     updateSuggestionBadge(state);
-
-    if (state.learningLayer !== previousLearningLayer && state.route === 'learning') {
-      previousLearningLayer = state.learningLayer;
-      ensureScreen('learning')?.render(state);
-    }
 
     if (state.alert && state.alert !== previousAlert) {
       previousAlert = state.alert;
@@ -226,7 +218,6 @@
     const label = interpolationValid && rpm !== null && petrolMs !== null
       ? `${Math.round(rpm).toLocaleString('pt-BR')} RPM · ${petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms${position}`
       : 'Aguardando condição válida';
-    if (route === 'learning') setText('learningLiveLabel', label);
     if (route === 'map') ensureScreen('map')?.renderLiveContext?.({ rpm, petrolMs, row, column, label });
   }
 
@@ -248,7 +239,7 @@
         store.patch({ telemetry, presentRevision: Number(envelope.revision || 0) });
         const state = store.get();
         if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
-        if (route === 'learning' || route === 'map') renderLightLiveContext(state, route);
+        if (route === 'map') renderLightLiveContext(state, route);
       }
     }
 
@@ -290,7 +281,7 @@
     const curve = route === 'curve' ? ensureScreen('curve') : null;
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    const needsScience = route === 'learning' || route === 'predictor' || route === 'suggestions' ||
+    const needsScience = route === 'predictor' || route === 'suggestions' ||
       route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
 
     if (needsScience) {
@@ -310,11 +301,6 @@
       }
     }
 
-    if (route === 'learning') {
-      patch.learningStatus = api.learningStatus() || {};
-      patch.learningDecision = learningDecisionFromTelemetry(state.telemetry);
-      patch.learningTolerance = api.learningToleranceSettings() || {};
-    }
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
       // null = a lista ainda está sendo lida (a tela diz isso; não afirma "nenhuma sessão").
@@ -324,7 +310,6 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if (route === 'learning') ensureScreen('learning')?.render(updated);
     if (curveNeedsLearning && curve) {
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
       if (curve.needsLearning?.()) curve.renderLearning(updated);
@@ -470,13 +455,6 @@
       previousTelemetrySignature = '';
       ensureScreen('dashboard')?.render(store.get());
       afterPaint(refreshFast);
-      return;
-    }
-    if (route === 'learning') {
-      previousTelemetrySignature = '';
-      ensureScreen('learning')?.render(store.get());
-      renderLightLiveContext(store.get(), 'learning');
-      afterPaint(() => { refreshFast(); refreshContext(); });
       return;
     }
     if (route === 'predictor') {

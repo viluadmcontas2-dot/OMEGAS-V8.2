@@ -701,25 +701,6 @@ class DashboardLevelsRenderTest {
     )
 
     @Test
-    fun learningFreshMp48ContextRender() {
-        val scenario = launch()
-        try {
-            val fixture = liveFixture()
-            activateRoute(scenario, "learning")
-            injectFresh(scenario, fixture, settleMs = 900L)
-            val dom = globalRouteDom(scenario, "learning")
-            saveEvidence("learning-fresh-context", dom, scenario)
-            assertTrue("Learning route must activate", dom.getBoolean("active"))
-            assertTrue("Learning must receive live RPM through PresentSnapshot", dom.optString("learningLive").contains("869 RPM"))
-            assertTrue("Learning must receive live Petrol Injection through PresentSnapshot", dom.optString("learningLive").contains("4,54 ms"))
-            assertTrue("Learning must never render NaN", !dom.getBoolean("bodyHasNaN"))
-            assertTrue("Learning must never render undefined", !dom.getBoolean("bodyHasUndefined"))
-        } finally {
-            scenario.close()
-        }
-    }
-
-    @Test
     fun mapFreshMp48ContextRender() {
         val scenario = launch()
         try {

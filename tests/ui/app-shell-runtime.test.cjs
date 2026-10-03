@@ -45,8 +45,8 @@ test('Store é a autoridade única e notifica mudanças sem duplicar estado', ()
   const snapshots = [];
   store.subscribe(state => snapshots.push({ ...state }), true);
   store.patch({ value: 2 });
-  store.update('route', 'learning');
-  assert.deepEqual(JSON.parse(JSON.stringify(store.get())), { route: 'learning', value: 2 });
+  store.update('route', 'refino');
+  assert.deepEqual(JSON.parse(JSON.stringify(store.get())), { route: 'refino', value: 2 });
   assert.equal(snapshots.length, 3);
 });
 
