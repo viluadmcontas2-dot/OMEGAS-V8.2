@@ -123,4 +123,16 @@ class NativeAutoCalAcquisitionEpochTest {
         assertEquals("GAS_COUNTER_RESTART", gate.view().reason)
         assertFalse(gate.view().comparisonAllowed)
     }
+
+    @Test fun legacyManualAutomatchReceiptStillRestartsOnlyGas() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(9L); gate.nativeCounter(9L, 3)
+        gate.acquisitionGroup(9L, 3, filled(), filled()); gate.referenceGroup(9L, 3)
+        val baseline = gate.view()
+        assertTrue(gate.manualAction(9L, "MANUAL_AUTOMATCH"))
+        assertEquals(baseline.gasGeneration + 1, gate.view().gasGeneration)
+        assertEquals(baseline.petrolGeneration, gate.view().petrolGeneration)
+        assertTrue(gate.view().gasPending)
+        assertFalse(gate.view().petrolPending)
+    }
 }

@@ -31,8 +31,6 @@ class OmegasLinkManager(
     private val log: RingLog,
     private val usbConnected: () -> Boolean,
     private val coreTelemetry: () -> JSONObject,
-    private val exportLearning: () -> JSONObject,
-    private val mergeLearning: (JSONObject) -> JSONObject,
     private val exportHistory: () -> JSONObject,
     private val mergeHistory: (JSONObject) -> JSONObject,
     private val onStateChanged: () -> Unit,
@@ -55,8 +53,7 @@ class OmegasLinkManager(
     private val running = AtomicBoolean(false)
     private val executor = Executors.newScheduledThreadPool(5) { r -> Thread(r, "omegas-link").apply { isDaemon = true } }
     private val peers = ConcurrentHashMap<String, Peer>()
-    private val peerLearningRevisions = ConcurrentHashMap<String, Long>()
-    private val peerAckedLocalLearningRevisions = ConcurrentHashMap<String, Long>()
+    private val warnedOldPeers = ConcurrentHashMap.newKeySet<String>()
     private var server: ServerSocket? = null
     private var discoverySocket: DatagramSocket? = null
     private var beaconTask: ScheduledFuture<*>? = null
@@ -142,7 +139,6 @@ class OmegasLinkManager(
             .put("automaticHandoff", true)
             .put("idleTrafficReduced", true)
             .put("incrementalSync", true)
-            .put("peerLearningRevision", peer?.let { peerLearningRevisions[it.deviceId] } ?: 0L)
             .toString()
     }
 
@@ -251,7 +247,7 @@ class OmegasLinkManager(
         if (now - lastBeaconAt < minimumInterval) return
         lastBeaconAt = now
         val payload = JSONObject()
-            .put("protocol", "OMEGAS_LINK_V1")
+            .put("protocol", LinkProtocol.CURRENT)
             .put("pairHash", pairHash())
             .put("deviceId", settings.deviceId)
             .put("name", settings.deviceName)
@@ -272,7 +268,17 @@ class OmegasLinkManager(
 
     private fun receiveBeacon(text: String, address: InetAddress) {
         val json = try { JSONObject(text) } catch (_: Exception) { return }
-        if (json.optString("protocol") != "OMEGAS_LINK_V1" || json.optString("pairHash") != pairHash()) return
+        val protocol = json.optString("protocol")
+        if (LinkProtocol.isOldPeer(protocol)) {
+            if (json.optString("pairHash") != pairHash()) return
+            val oldId = json.optString("deviceId")
+            if (oldId.isBlank() || oldId == settings.deviceId) return
+            if (warnedOldPeers.add(oldId)) log.add("WARN", "OMEGAS LINK", LinkProtocol.OLD_PEER_MESSAGE)
+            lastError = LinkProtocol.OLD_PEER_MESSAGE
+            onStateChanged()
+            return
+        }
+        if (protocol != LinkProtocol.CURRENT || json.optString("pairHash") != pairHash()) return
         val id = json.optString("deviceId")
         if (id.isBlank() || id == settings.deviceId) return
         val trusted = settings.linkTrustedPeerId
@@ -343,12 +349,7 @@ class OmegasLinkManager(
 
     private fun syncWith(peer: Peer) {
         try {
-            val hadPendingChanges = pendingChanges
             pendingChanges = true
-            val learning = exportLearning()
-            val localLearningRevision = learning.optLong("componentRevision", 0L)
-            val peerKnownRevision = peerLearningRevisions[peer.deviceId] ?: -1L
-            val peerAckedLocalRevision = peerAckedLocalLearningRevisions[peer.deviceId] ?: -1L
             val kHistory = exportHistory()
             val request = JSONObject()
                 .put("type", "sync")
@@ -356,14 +357,13 @@ class OmegasLinkManager(
                 .put("name", settings.deviceName)
                 .put("epoch", controlEpoch)
                 .put("owner", controlOwnerId)
-                .put("syncManifest", syncManifest(learning, kHistory, peerKnownRevision))
+                .put("syncManifest", syncManifest(kHistory))
                 .put("obdComponent", org.json.JSONObject())
                 .put("kHistory", kHistory)
                 .put("autoCalContext", exportAutoCalContext())
                 .put("nativeReceipts", exportNativeReceipts())
                 .put("core", coreTelemetry())
                 .put("obd", JSONObject());
-            if (hadPendingChanges || peerAckedLocalRevision < localLearningRevision) request.put("learning", learning)
             val response = sendMessage(peer, request) ?: error("Sem resposta do companheiro")
             applyIncoming(response, peer)
             lastSyncAt = System.currentTimeMillis(); pendingChanges = false; lastError = ""
@@ -379,6 +379,9 @@ class OmegasLinkManager(
         socket.use { client ->
             try {
                 val request = readFrame(client) ?: return
+                if (request.optString("protocol") != LinkProtocol.CURRENT) {
+                    writeFrame(client, LinkProtocol.oldPeerResponse()); return
+                }
                 if (request.optString("pairHash") != pairHash()) {
                     writeFrame(client, JSONObject().put("ok", false).put("error", "Código de pareamento inválido")); return
                 }
@@ -395,19 +398,14 @@ class OmegasLinkManager(
                     "live" -> { applyIncoming(request, peer); baseResponse("live-ack") }
                     "sync" -> {
                         applyIncoming(request, peer)
-                        val requesterRevision = request.optJSONObject("syncManifest")?.optLong("learningRevision", -1L) ?: -1L
-                        val requesterKnowsLocalRevision = request.optJSONObject("syncManifest")?.optLong("knownPeerLearningRevision", -1L) ?: -1L
-                        val localLearning = exportLearning()
-                        val response = baseResponse("sync-ack")
-                            .put("syncManifest", syncManifest(localLearning, exportHistory(), requesterRevision).put("acknowledgedRequesterRevision", requesterRevision))
+                        baseResponse("sync-ack")
+                            .put("syncManifest", syncManifest(exportHistory()))
                             .put("obdComponent", org.json.JSONObject())
                             .put("kHistory", exportHistory())
                             .put("autoCalContext", exportAutoCalContext())
                             .put("nativeReceipts", exportNativeReceipts())
                             .put("core", coreTelemetry())
-                            .put("obd", JSONObject());
-                        if (requesterKnowsLocalRevision < localLearning.optLong("componentRevision", 0L)) response.put("learning", localLearning)
-                        response
+                            .put("obd", JSONObject())
                     }
                     else -> {
                         val err = JSONObject()
@@ -426,15 +424,6 @@ class OmegasLinkManager(
     private fun applyIncoming(root: JSONObject, peer: Peer?) {
         if (!root.optBoolean("ok", true)) return
         adoptControl(root.optLong("epoch", 0L), root.optString("owner"))
-        if (peer != null) root.optJSONObject("syncManifest")?.let { manifest ->
-            peerLearningRevisions[peer.deviceId] = maxOf(peerLearningRevisions[peer.deviceId] ?: -1L, manifest.optLong("learningRevision", -1L))
-            peerAckedLocalLearningRevisions[peer.deviceId] = maxOf(peerAckedLocalLearningRevisions[peer.deviceId] ?: -1L, manifest.optLong("acknowledgedRequesterRevision", -1L))
-        }
-        root.optJSONObject("learning")?.let {
-            val result = mergeLearning(it)
-            if (!result.optBoolean("ok")) log.add("WARN", "OMEGAS LINK", "Fusão recusada: ${result.optString("error")}")
-            else if (peer != null) peerLearningRevisions[peer.deviceId] = it.optLong("componentRevision", 0L)
-        }
         root.optJSONObject("kHistory")?.let { mergeHistory(it) }
         root.optJSONObject("autoCalContext")?.let { context ->
             val result = mergeAutoCalContext(context)
@@ -451,12 +440,8 @@ class OmegasLinkManager(
         .put("ok", true).put("type", type).put("from", settings.deviceId).put("name", settings.deviceName)
         .put("epoch", controlEpoch).put("owner", controlOwnerId).put("role", activeRole).put("usb", usbConnected())
 
-    private fun syncManifest(learning: JSONObject, history: JSONObject, knownPeerRevision: Long): JSONObject = JSONObject()
-        .put("schema", "omegas-link-v6")
-        .put("learningSchema", learning.optString("format", "omegas-learning-v6-mp48-v4"))
-        .put("learningRevision", learning.optLong("componentRevision", 0L))
-        .put("knownPeerLearningRevision", knownPeerRevision)
-        .put("learningEpoch", learning.optInt("epoch", 0))
+    private fun syncManifest(history: JSONObject): JSONObject = JSONObject()
+        .put("schema", LinkProtocol.SYNC_SCHEMA)
         .put("mapHash", history.optString("mapHash", history.optString("map_hash", "")))
         .put("curveHash", history.optString("curveHash", history.optString("curve_hash", "")))
         .put("controlEpoch", controlEpoch)
@@ -465,7 +450,7 @@ class OmegasLinkManager(
     private fun sendMessage(peer: Peer, payload: JSONObject): JSONObject? = try {
         Socket().use { socket ->
             socket.connect(InetSocketAddress(peer.address, peer.port), 1800); socket.soTimeout = 8_000
-            payload.put("protocol", "OMEGAS_LINK_V1").put("pairHash", pairHash()).put("from", settings.deviceId)
+            payload.put("protocol", LinkProtocol.CURRENT).put("pairHash", pairHash()).put("from", settings.deviceId)
             writeFrame(socket, payload)
             readFrame(socket)
         }

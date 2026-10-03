@@ -124,11 +124,10 @@ test('modo navegador é simulador visual e nunca escreve ECU', () => {
   assert.equal(api.writeCurve([{ index: 0, currentRaw: 100, targetRaw: 101 }]).simulationOnly, true);
 });
 
-test('APK usa OmegasCalibration para curva e mapa e nunca OmegasV7', () => {
+test('APK usa OmegasCalibration para curva e mapa', () => {
   const { context } = bootCore();
-  const calls = []; const v7Touched = [];
-  context.OmegasNative = { getStatus: () => '{}', getLiveTelemetry: () => '{}', getLearningMaps: () => '{}', getLearningSyncStatus: () => '{}', getObdStatus: () => '{}' };
-  context.OmegasV7 = new Proxy({}, { get: (_, key) => { v7Touched.push(String(key)); return undefined; } });
+  const calls = [];
+  context.OmegasNative = { getStatus: () => '{}', getLiveTelemetry: () => '{}', getObdStatus: () => '{}' };
   const ok = type => (...args) => { calls.push({ type, args }); return JSON.stringify({ ok: true, started: true }); };
   context.OmegasCalibration = {
     startMapBatchWrite: ok('map'), startCurveBatchWrite: ok('curve'), startCurveRead: ok('read'),
@@ -148,5 +147,4 @@ test('APK usa OmegasCalibration para curva e mapa e nunca OmegasV7', () => {
   assert.deepEqual(calls[0].args.slice(1), [0, 0, 'teste']);
   assert.equal(JSON.parse(calls[0].args[0]).length, 1);
   assert.deepEqual(calls[7].args.slice(1), ['percent', 2]);
-  assert.deepEqual(v7Touched, []);
 });

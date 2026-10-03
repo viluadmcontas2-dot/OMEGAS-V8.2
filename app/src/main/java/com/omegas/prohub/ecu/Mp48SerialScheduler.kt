@@ -1,6 +1,5 @@
 package com.omegas.prohub.ecu
 
-import com.omegas.prohub.learning.NativeAnchorTelemetryWindow
 import com.omegas.prohub.usb.UsbProtocolReply
 
 /**

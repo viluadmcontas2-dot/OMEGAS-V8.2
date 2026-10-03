@@ -29,7 +29,6 @@ import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.CalibrationOperationsBridge
 import com.omegas.prohub.web.HubJavascriptBridge
 import com.omegas.prohub.web.PowerJavascriptBridge
-import com.omegas.prohub.web.V7JavascriptBridge
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -43,7 +42,6 @@ class MainActivity : AppCompatActivity() {
     private var pendingSessionExportId = ""
     private var jsBridge: HubJavascriptBridge? = null
     private var calibrationBridge: CalibrationOperationsBridge? = null
-    private var v7Bridge: V7JavascriptBridge? = null
     private var powerBridge: PowerJavascriptBridge? = null
 
     private val exportDataLauncher = registerForActivityResult(
@@ -86,33 +84,6 @@ class MainActivity : AppCompatActivity() {
                 !result.optBoolean("ok"),
             )
             refreshWebUi()
-        }
-    }
-
-    private val importLearningLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument(),
-    ) { uri: Uri? ->
-        if (uri == null) return@registerForActivityResult
-        runWithServiceAsync { svc ->
-            val result = JSONObject(svc.importLearningArchive(uri))
-            toast(
-                if (result.optBoolean("ok")) "Aprendizado nativo importado" else "Falha: ${result.optString("error")}",
-                !result.optBoolean("ok"),
-            )
-            refreshWebUi()
-        }
-    }
-
-    private val exportLearningLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/vnd.omegas.learning+json"),
-    ) { uri: Uri? ->
-        if (uri == null) return@registerForActivityResult
-        runWithServiceAsync { svc ->
-            val result = JSONObject(svc.exportLearningArchive(uri))
-            toast(
-                if (result.optBoolean("ok")) "Arquivo .omegas exportado" else "Falha: ${result.optString("error")}",
-                !result.optBoolean("ok"),
-            )
         }
     }
 
@@ -255,12 +226,10 @@ class MainActivity : AppCompatActivity() {
         jsBridge = null
         calibrationBridge?.destroy()
         calibrationBridge = null
-        v7Bridge = null
         powerBridge = null
         if (::webView.isInitialized) {
             try { webView.removeJavascriptInterface("OmegasNative") } catch (_: Exception) {}
             try { webView.removeJavascriptInterface(CalibrationOperationsBridge.JS_NAME) } catch (_: Exception) {}
-            try { webView.removeJavascriptInterface("OmegasV7") } catch (_: Exception) {}
             try { webView.removeJavascriptInterface("OmegasPower") } catch (_: Exception) {}
             try { webView.destroy() } catch (_: Exception) {}
         }
@@ -310,11 +279,9 @@ class MainActivity : AppCompatActivity() {
         }
         jsBridge = HubJavascriptBridge(this)
         calibrationBridge = CalibrationOperationsBridge(this)
-        v7Bridge = V7JavascriptBridge(this, calibrationBridge!!)
         powerBridge = PowerJavascriptBridge(this)
         webView.addJavascriptInterface(jsBridge!!, "OmegasNative")
         webView.addJavascriptInterface(calibrationBridge!!, CalibrationOperationsBridge.JS_NAME)
-        webView.addJavascriptInterface(v7Bridge!!, "OmegasV7")
         webView.addJavascriptInterface(powerBridge!!, "OmegasPower")
         webView.webChromeClient = object : WebChromeClient() {
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
@@ -349,21 +316,6 @@ class MainActivity : AppCompatActivity() {
     fun exportSession(sessionId: String) = runOnUiThread {
         pendingSessionExportId = sessionId.trim()
         exportSessionLauncher.launch("OMEGAS_Sessao_${sessionStamp(pendingSessionExportId)}.zip")
-    }
-
-    fun importLearningArchive() = runOnUiThread {
-        importLearningLauncher.launch(
-            arrayOf(
-                "application/vnd.omegas.learning+json",
-                "application/json",
-                "text/plain",
-                "application/octet-stream",
-            ),
-        )
-    }
-
-    fun exportLearningArchive() = runOnUiThread {
-        exportLearningLauncher.launch("OMEGAS_Aprendizado_${exportStamp()}.omegas")
     }
 
     private fun exportStamp(timeMs: Long = System.currentTimeMillis()): String =

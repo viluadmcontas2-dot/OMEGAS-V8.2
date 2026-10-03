@@ -4,7 +4,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "app/src/main/java/com/omegas/prohub/calibration/MapBatchPlan.kt"
 POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt"
-BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
 CALIBRATION = ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationOperationsBridge.kt"
 HUB = ROOT / "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt"
 AUTOCAL_BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
@@ -18,7 +17,6 @@ class V8MapBatchContract(unittest.TestCase):
     def setUp(self):
         self.plan = PLAN.read_text("utf-8")
         self.policy = POLICY.read_text("utf-8")
-        self.bridge = BRIDGE.read_text("utf-8")
         self.calibration = CALIBRATION.read_text("utf-8")
         self.hub = HUB.read_text("utf-8")
         self.autocal_bridge = AUTOCAL_BRIDGE.read_text("utf-8")
@@ -78,19 +76,12 @@ class V8MapBatchContract(unittest.TestCase):
         self.assertNotIn("DRIVING_PROBABLE_RPM", self.policy)
         self.assertNotIn("status.rpm >=", self.policy)
         self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.calibration)
-        self.assertGreaterEqual(
-            self.hub.count("CalibrationWriteSafetyPolicy.unsafeReason(service.status())"),
-            3,
-        )
+        # A ponte OmegasNative não escreve mais na ECU (F3): nenhuma escrita sem a política fica nela.
+        self.assertNotIn("fun startKWrite(", self.hub)
+        self.assertNotIn("fun startKFactorWrite(", self.hub)
         self.assertIn("unsafeMutationReason =", self.autocal_bridge)
         self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.autocal_bridge)
         self.assertGreaterEqual(self.autocal_action.count("unsafeMutationReason()"), 3)
-
-    def test_legacy_apply_suggestion_is_prepare_only(self):
-        self.assertIn("fun applySuggestion", self.bridge)
-        self.assertIn('"MANUAL_REVIEW_REQUIRED"', self.bridge)
-        self.assertIn('.put("writesStarted", false)', self.bridge)
-        self.assertNotIn("v7ApplySuggestion", self.bridge)
 
     def test_writer_safety_boundaries_remain_present(self):
         for marker in (

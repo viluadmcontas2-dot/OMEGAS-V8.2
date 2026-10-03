@@ -17,10 +17,10 @@ assert.ok(
   'reaquisição diária deve aparecer antes do reset pesado'
 );
 assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
-  'AutoMatch manual, Curva K e reset completo devem ficar em complexidade sob demanda');
+  'Curva K fica em complexidade sob demanda');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
-assert.match(cockpit, /data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual<\/button>/);
+assert.doesNotMatch(cockpit, /data-autocal-action="MANUAL_AUTOMATCH"/);
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOCAL"/,
   'Finish AutoCal original nasce desabilitado e não deve virar etapa diária');
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOMATCH"/,
@@ -29,7 +29,7 @@ assert.match(cockpit, /O AutoMatch nativo é automático e decidido pela ECU\./,
   'a UX deve explicar que o AutoMatch normal é ECU-owned, separado do AutoMatch manual');
 assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1\.0<\/button>/,
   'Reset K deve usar a semântica provada do ProgBase/MUL_ACT');
-assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Nova aquisição completa<\/button>/);
+assert.doesNotMatch(cockpit, /data-autocal-action="RESET_ALL"/);
 assert.match(cockpit, /Backup não é requisito/i,
   'backup deve ser opcional e manual, nunca um gate do reset');
 assert.ok(

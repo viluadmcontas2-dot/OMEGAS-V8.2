@@ -33,18 +33,6 @@ def test_apk_workflow_is_manual_gated_and_not_push_triggered():
     assert "assembleDebug" in text
 
 
-def test_v7_predictor_suggestion_cannot_start_writer():
-    coordinator = read("app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt")
-    writer = read("app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt")
-    assert "active.applySuggestionToEcu(" not in coordinator
-    assert "MANUAL_REVIEW_REQUIRED" in coordinator
-    assert "automaticWriteBlocked" in coordinator
-    assert "writesStarted" in coordinator
-    assert "private val ecuWriter" not in coordinator
-    assert "LAB_ONLY" in writer
-    assert "labOnlyWriterEnabled: Boolean = false" in writer
-
-
 def test_status_keeps_gap_classification_fail_closed():
     status = read("docs/archive/STATUS-ate-2026-10-03.md")
     assert "PARTIAL" in status
@@ -57,6 +45,5 @@ if __name__ == "__main__":
     test_active_authority_is_omegas_platina()
     test_active_push_workflows_target_platina_only()
     test_apk_workflow_is_manual_gated_and_not_push_triggered()
-    test_v7_predictor_suggestion_cannot_start_writer()
     test_status_keeps_gap_classification_fail_closed()
     print("PLATINA_FINAL_MISSION_CONTRACT=PASS")

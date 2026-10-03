@@ -14,13 +14,11 @@ class T11LiveCellProjection(unittest.TestCase):
         hub = read(K / "web/HubJavascriptBridge.kt")
         self.assertEqual(hub.count("LiveCellProjection.liveInterpolationJson("), 2)
         self.assertNotIn("LearningGridProjection.liveInterpolationJson(", hub)
-        clm = read(K / "learning/ContinuousLearningMath.kt")
+        # F3: ContinuousLearningMath mora em calibration/ e a projeção antiga do aprendizado saiu.
+        clm = read(K / "calibration/ContinuousLearningMath.kt")
         self.assertNotIn("LearningGridProjection", clm)
         self.assertIn("KMapPhysicalAxes", clm)
-        lgp = read(K / "learning/LearningGridProjection.kt")
-        self.assertIn("LiveCellProjection.cellFor(", lgp)
-        self.assertIn("LiveCellProjection.liveInterpolationJson(", lgp)
-        self.assertNotIn("ContinuousLearningMath.bilinearWeights", lgp)
+        self.assertFalse((K / "learning/LearningGridProjection.kt").exists())
 
 
 class T12SampleAnalyzerInEcu(unittest.TestCase):
@@ -31,10 +29,8 @@ class T12SampleAnalyzerInEcu(unittest.TestCase):
         for must in ("class MotorSampleAnalyzer(", "data class SampleDecision(", "LiveCellProjection.cellFor("):
             self.assertIn(must, src)
         self.assertNotIn("LearningGridProjection", src)
-        for path in (ROOT / "app/src").rglob("*.kt"):
-            text = read(path)
-            self.assertNotIn("import com.omegas.prohub.learning.MotorSampleAnalyzer", text, path)
-            self.assertNotIn("import com.omegas.prohub.learning.SampleDecision", text, path)
+        # O pacote de aprendizado inteiro saiu na F3 (tests/test_poda_2_contract.py).
+        self.assertFalse((K / "learning").exists())
         runtime = read(K / "ecu/NativeRuntimeManager.kt")
         self.assertIn('.put("sample_state", decision.state)', runtime)
         self.assertIn('.put("sample", decision.toTelemetryJson())', runtime)
@@ -89,7 +85,7 @@ class T14CalibrationBridge(unittest.TestCase):
         self.assertIn("addJavascriptInterface(calibrationBridge!!, CalibrationOperationsBridge.JS_NAME)", main)
         self.assertIn("removeJavascriptInterface(CalibrationOperationsBridge.JS_NAME)", main)
         self.assertIn("calibrationBridge?.destroy()", main)
-        self.assertLess(main.index("calibrationBridge = CalibrationOperationsBridge(this)"), main.index("V7JavascriptBridge(this"))
+        self.assertIn("calibrationBridge = CalibrationOperationsBridge(this)", main)
 
     def test_no_ui_reads_suggestion_reconciliation(self):
         for path in (ROOT / "app/src/main/assets/ui").rglob("*.js"):
@@ -97,24 +93,16 @@ class T14CalibrationBridge(unittest.TestCase):
 
 
 class T15OnlyCalibrationWrites(unittest.TestCase):
-    def test_v7_has_no_write_endpoint_and_ui_never_calls_it(self):
-        v7 = read(K / "web/V7JavascriptBridge.kt")
-        for name in NINE:
-            self.assertNotRegex(v7, r"fun %s\(" % name, name)
-        for gone in ("MapBatchPlan", "CalibrationWriteSafetyPolicy", "v7ReconcileConfirmedManualWrite", "Executors", "AtomicBoolean"):
-            self.assertNotIn(gone, v7)
-        self.assertIn('operations.startOperation("SYNCHRONIZING_ECU")', v7)
+    def test_only_calibration_bridge_writes_and_ui_calls_it(self):
+        # A ponte de compatibilidade antiga foi apagada na F2 (tests/test_poda_1_contract.py).
         api = read(ROOT / "app/src/main/assets/ui/core/native-api.js")
         self.assertIn("root.OmegasCalibration", api)
         self.assertNotIn("this.v7", api)
         for name in NINE:
             self.assertIn("invoke(this.calibration, '%s'" % name, api)
-        for path in (ROOT / "app/src/main/assets/ui").rglob("*.js"):
-            self.assertNotIn("OmegasV7", read(path), path)
         self.assertFalse((ROOT / "tests/test_suggestion_readback_lifecycle_contract.py").exists())
         android = read(ROOT / "app/src/androidTest/java/com/omegas/prohub/DashboardLevelsRenderTest.kt")
         self.assertIn('"calibrationBridge"', android)
-        self.assertNotIn('"v7Bridge"', android)
 
 
 if __name__ == "__main__":

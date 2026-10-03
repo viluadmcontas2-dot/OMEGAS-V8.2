@@ -42,9 +42,6 @@
     }
 
     bind() {
-      document.getElementById('suggestionsButton')?.addEventListener('click', () => {
-        this.store.patch({ suggestionsOpen: !this.store.get().suggestionsOpen, toolsOpen: false });
-      });
       document.getElementById('toolsButton')?.addEventListener('click', () => {
         this.store.patch({ toolsOpen: !this.store.get().toolsOpen, suggestionsOpen: false });
       });
@@ -52,8 +49,6 @@
         this.store.patch({ suggestionsOpen: false, toolsOpen: false });
       }));
       document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
-      document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
-      document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
       document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
       document.getElementById('toolSelfTest')?.addEventListener('click', () => {
         const result = this.api.selfTest();
@@ -156,33 +151,6 @@
       if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup, sessões e saúde do app';
     }
 
-    renderSuggestions(state) {
-      const host = document.getElementById('suggestionList');
-      if (!host) return;
-      const maps = state.learning || {};
-      const model = root.OmegasSuggestionModel;
-      const split = model?.split ? model.split(maps.assistedCalibration || maps.assisted_calibration || {}) : { actionable: [], insufficient: [] };
-      const items = split.actionable || [];
-      const button = document.getElementById('suggestionsButton');
-      if (button) button.classList.toggle('has-items', items.length > 0);
-      host.innerHTML = items.length ? items.map((item, index) => `
-        <article class="suggestion-item" data-suggestion-index="${index}">
-          <div class="suggestion-scope">${item.scope === 'global' ? 'GLOBAL · CURVA K' : 'LOCAL · MAPA K'}</div>
-          <div class="suggestion-main"><b>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</b><span>confiança ${escapeHtml(item.confidenceLabel)}</span></div>
-          <p>${escapeHtml(item.reason)}</p>
-          <button type="button" class="secondary compact">Revisar em ${escapeHtml(item.destination)}</button>
-        </article>`).join('') : '<div class="drawer-empty"><b>Nenhuma sugestão pronta</b><span>O aprendizado continua coletando evidência.</span></div>';
-      host.querySelectorAll('[data-suggestion-index]').forEach(card => {
-        card.querySelector('button')?.addEventListener('click', () => {
-          const item = items[Number(card.dataset.suggestionIndex)];
-          const action = model?.reviewAction ? model.reviewAction(item) : { allowed: false };
-          if (!action.allowed || action.writesEcu === true) return;
-          this.store.patch({ suggestionsOpen: false });
-          this.router.navigate(item.type === 'curve' ? 'curve' : 'map', { suggestion: item });
-        });
-      });
-    }
-
     preserveSessionSettingsInteraction(host) {
       const panel = host?.querySelector('.diagnostic-settings');
       if (!panel) return false;
@@ -201,11 +169,6 @@
       const sessions = Array.isArray(state.sessions) ? state.sessions : [];
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
-      const learning = state.learning || {};
-      // Aprendizado que ainda não respondeu é desconhecido ("—"), não "0 regiões".
-      const petrolCount = Array.isArray(learning.petrol) ? learning.petrol.length : null;
-      const cngCount = Array.isArray(learning.cng) ? learning.cng.length : null;
-      const comparisonCount = finite(learning.comparisonCount) ?? (Array.isArray(learning.comparisons) ? learning.comparisons.length : null);
       const categories = [...new Set(logs.map(item => String(item.category || 'OUTROS').toUpperCase()))].sort();
       const filteredLogs = logs.filter(item => {
         const level = String(item.level || '').toUpperCase();
@@ -226,7 +189,7 @@
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
         Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
         status.recording, status.events, mb === null ? null : Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
-        settings, sessionsLoading, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
+        settings, sessionsLoading, sessions.map(item => [item.id, item.bytes, item.active]),
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
@@ -295,16 +258,6 @@
               </article>`;
             }).join('') : sessionsLoading ? '<p class="empty-copy">Lendo as sessões salvas…</p>' : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
           </div>
-        </section>
-
-        <section class="learning-portability-card">
-          <header><div><small>APRENDIZADO</small><h3>O que vai no arquivo .omegas</h3></div></header>
-          <div class="learning-portability-grid">
-            <span><b>${rules().count(petrolCount)}</b> regiões gasolina</span>
-            <span><b>${rules().count(cngCount)}</b> regiões GNV</span>
-            <span><b>${rules().count(comparisonCount)}</b> comparações</span>
-          </div>
-          <p>Use <b>Exportar aprendizado</b> e <b>Importar aprendizado</b> acima. Importar confere o arquivo antes de aceitar e nunca grava na ECU. O GNV de uma calibração antiga não volta para a calibração atual.</p>
         </section>
 
         <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>

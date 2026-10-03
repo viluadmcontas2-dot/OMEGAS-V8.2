@@ -27,7 +27,7 @@ assert "RESET_ALL(" in manager
 assert 'data-autocal-action="RESET_PETROL"' in cockpit
 assert 'data-autocal-action="RESET_GAS"' in cockpit
 assert 'data-autocal-action="RESET_K_FACTOR"' in cockpit
-assert 'data-autocal-action="RESET_ALL"' in cockpit
+assert 'data-autocal-action="RESET_ALL"' not in cockpit
 assert "Continuar para confirmação Android" not in cockpit
 assert "Confirmação Android aberta" not in cockpit
 assert "Executar agora" in cockpit

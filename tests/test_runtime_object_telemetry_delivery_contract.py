@@ -6,7 +6,7 @@ SERVICE = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegrou
 STORE = (ROOT / "app/src/main/java/com/omegas/prohub/telemetry/TelemetryStateStore.kt").read_text("utf-8")
 
 consume_start = RUNTIME.index("    private fun consumeTelemetry(")
-consume_end = RUNTIME.index("\n    private fun publishLearningState", consume_start)
+consume_end = RUNTIME.index("\n    private fun consumeState", consume_start)
 consume = RUNTIME[consume_start:consume_end]
 
 service_start = SERVICE.index("    private fun consumeEngineEvent(")

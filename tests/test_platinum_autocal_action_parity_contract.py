@@ -17,7 +17,7 @@ def test_matrix_has_no_unclassified_host_mutation():
     actions = {item["name"]: item for item in FIXTURE["actions"]}
     expected = {
         "ENABLE_AUTO_CAL", "DISABLE_AUTO_CAL", "RESET_PETROL", "RESET_GAS",
-        "RESET_ALL", "MANUAL_AUTOMATCH", "FINISH_AUTOCAL", "FINISH_AUTOMATCH",
+        "RESET_ALL", "FINISH_AUTOCAL", "FINISH_AUTOMATCH",
         "RESET_K_FACTOR", "DELETE_POINT_BATCH",
     }
     assert set(actions) == expected
@@ -31,21 +31,21 @@ def test_exact_native_action_frames_remain_bound():
         "02 24 04 01 2B",
         "02 24 04 02 2C",
         "02 24 04 04 2E",
-        "02 24 04 08 32",
     ):
         assert frame in FIXTURE_TEXT, frame
+    assert FIXTURE["retired"][0]["wire"] == "02 24 04 08 32"
 
     assert "setEnabled(true)" in MANAGER
     assert "setEnabled(false)" in MANAGER
     assert "ManualActionMode.RESET_PETROL" in MANAGER
     assert "ManualActionMode.RESET_GAS" in MANAGER
     assert "ManualActionMode.RESET_ALL" in MANAGER
-    assert "ManualActionMode.MANUAL_AUTOMATCH" in MANAGER
+    assert "ManualActionMode.MANUAL_AUTOMATCH" not in MANAGER
 
 
 def test_shared_progbase_actions_preserve_one_second_settle_before_readback():
     assert "HOST_MODE_SETTLE_MS = 1_000L" in MANAGER
-    assert "MANUAL_AUTOMATCH, Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL" in MANAGER
+    assert "Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL," in MANAGER
     assert "Thread.sleep(HOST_MODE_SETTLE_MS)" in MANAGER
 
 
@@ -105,19 +105,6 @@ def test_native_automatch_and_inferred_math_are_not_writers():
     assert FIXTURE["autonomous"][0]["host_write_allowed"] is False
 
 
-def test_predictor_and_v7_suggestion_path_is_manual_review_only():
-    coordinator = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt").read_text(encoding="utf-8")
-    writer = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt").read_text(encoding="utf-8")
-
-    assert "private val ecuWriter" not in coordinator
-    assert "active.applySuggestionToEcu(" not in coordinator
-    assert "MANUAL_REVIEW_REQUIRED" in coordinator
-    assert "automaticWriteBlocked" in coordinator
-    assert "writesStarted" in coordinator
-    assert "LAB_ONLY" in writer
-    assert "labOnlyWriterEnabled: Boolean = false" in writer
-
-
 if __name__ == "__main__":
     test_matrix_has_no_unclassified_host_mutation()
     test_exact_native_action_frames_remain_bound()
@@ -125,5 +112,4 @@ if __name__ == "__main__":
     test_reset_k_is_mul_act_30_q14_with_readback()
     test_point_reacquisition_preserves_both_full_masks_and_single_commit()
     test_native_automatch_and_inferred_math_are_not_writers()
-    test_predictor_and_v7_suggestion_path_is_manual_review_only()
     print("PLATINUM_AUTOCAL_ACTION_PARITY_CONTRACT=PASS")

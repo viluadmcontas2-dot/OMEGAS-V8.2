@@ -22,7 +22,6 @@ object AutoCalProtocol {
         RESET_PETROL(0x01),
         RESET_GAS(0x02),
         RESET_ALL(0x04),
-        MANUAL_AUTOMATCH(0x08),
     }
 
     /** Probe leve observado no ProgBase; payload de 14 bytes. */

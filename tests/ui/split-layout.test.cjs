@@ -15,7 +15,7 @@ assert.equal(source.includes('new Router'), false);
 assert.equal(source.includes('store.patch'), false);
 assert.equal(source.includes('router.navigate'), false);
 assert.equal(source.includes("dataset.layout = compact ? 'split-compact' : 'full-width'"), true);
-for (const selector of ['.map-workspace', '.curve-workspace', '.predictor-workspace', '.autocal-layout']) {
+for (const selector of ['.map-workspace', '.curve-workspace', '.autocal-layout']) {
   assert.equal(style.includes(selector), true, `missing split reflow for ${selector}`);
 }
 console.log('SPLIT_LAYOUT_CONTRACT=PASS');

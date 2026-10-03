@@ -74,83 +74,6 @@
     return { ok: true, demo: true, points, pointCount: 30, minimumFactor: 0.60, maximumFactor: 3.99 };
   }
 
-  function demoLearning() {
-    const cells = [];
-    for (let row = 0; row < 12; row += 1) {
-      for (let column = 0; column < 12; column += 1) {
-        if ((row + column) % 3 === 0) {
-          cells.push({
-            row, column, key: `${row}:${column}`, samples: 12 + ((row * 7 + column * 5) % 55),
-            visits: 2 + ((row + column) % 4), sessions: 1 + ((row + column) % 2),
-            confidence: 0.55 + (((row + column) % 5) * 0.09), stage: 'ACCEPTED',
-          });
-        }
-      }
-    }
-    const petrolCurve = Array.from({ length: 18 }, (_, index) => ({
-      mapBar: 0.20 + index * 0.05,
-      petrolMs: 2.0 + index * 0.24,
-      confidence: 0.72,
-      confidenceStage: 'ACCEPTED',
-      uniqueVisits: 4,
-      effectiveSamples: 18,
-      series: 'PETROL',
-    }));
-    const cngCurve = petrolCurve.map((item, index) => ({
-      ...item,
-      petrolMs: item.petrolMs * (1 + 0.035 * Math.sin(index / 4)),
-      confidence: 0.68,
-      series: 'CNG',
-    }));
-    const kFactorSuggestions = Array.from({ length: 30 }, (_, index) => ({
-      index,
-      petrolMs: 1.5 + index * 0.35,
-      actionable: index % 4 === 0,
-      confidence: 0.70,
-      confidenceStage: 'ACCEPTED',
-      suggestedDeltaPercent: index % 8 === 0 ? 1.2 : -0.8,
-      decisionReason: 'Demonstração de tendência global',
-    }));
-    return {
-      ok: true, demo: true,
-      grid: { rows: 12, columns: 12, petrolBins: PETROL_BINS, rpmBins: RPM_BINS },
-      cells,
-      petrol: cells.map(item => ({ ...item, fuel: 'PETROL' })),
-      cng: cells.map(item => ({ ...item, fuel: 'CNG', epoch: 1 })),
-      comparisons: cells.map((item, index) => ({ ...item, errorPercent: ((index % 9) - 4) * 0.9 })),
-      assistedCalibration: {
-        comparisonCount: cells.length,
-        uniqueVisitCount: 18,
-        petrolCurve,
-        cngCurve,
-        kFactorSuggestions,
-        reconciliation: { pending_cng_visits: 0 },
-      },
-      current: { fuel: 'GNV', rpm: 2100, petrolMs: 4.2, mapBar: 0.56, cell: { row: 4, column: 3 } },
-    };
-  }
-
-
-  function demoToleranceSettings() {
-    const levels = ['Muito rigoroso', 'Rigoroso', 'Equilibrado', 'Flexível', 'Muito flexível'];
-    const controls = [
-      ['rpm', 'Estabilidade da rotação', 'Quanto a rotação pode variar durante uma medição.'],
-      ['map', 'Estabilidade da carga', 'Quanto o MAP pode variar durante uma medição.'],
-      ['petrol', 'Estabilidade do Petrol Inj.', 'Quanto o tempo comandado pela ECU pode oscilar.'],
-      ['pressure', 'Estabilidade da pressão GNV', 'Quanto a pressão diferencial pode variar.'],
-      ['collection', 'Ritmo da coleta', 'Quanto tempo o aplicativo observa antes de formar uma evidência.'],
-    ].map(([id, title, description]) => ({ id, title, description, selected: 2, selectedLabel: levels[2], actualValues: {} }));
-    return {
-      ok: true,
-      policy: {
-        requiredFrames: 10, rpmOscillationMinimum: 40, rpmOscillationPercent: 1.5,
-        mapOscillationBar: 0.035, petrolOscillationPercent: 10,
-        pressureOscillationBar: 0.04, minimumWaterC: 60,
-      },
-      controlModel: { ok: true, minimumWaterC: 60, levels, controls },
-    };
-  }
-
   function demoMapAdjustment(cells, mode, adjustment) {
     const minimumK = 100;
     const maximumK = 255;
@@ -172,7 +95,6 @@
       this.demo = !this.native;
       this.demoMapState = demoMap();
       this.demoCurveState = demoCurve();
-      this.demoScienceRevision = 0;
     }
 
     isDemo() { return this.demo; }
@@ -190,29 +112,8 @@
       if (this.demo) return { ok: true, revision: Date.now(), data: demoTelemetry(), demo: true };
       return invoke(this.native, 'getPresentSnapshot', [], { ok: false, revision: 0, data: {} });
     }
-    scienceSnapshotSince(revision) {
-      if (this.demo) {
-        this.demoScienceRevision += 1;
-        const learning = demoLearning();
-        return {
-          ok: true,
-          changed: true,
-          revision: this.demoScienceRevision,
-          refreshing: false,
-          data: {
-            learning,
-            calibrationState: { ready: true, suggestionItems: [], predictor: { ok: true, cells: [] } },
-            predictor: { ok: true, cells: [] },
-          },
-          demo: true,
-        };
-      }
-      return invoke(this.native, 'getScienceSnapshotSince', [Number(revision) || 0], { ok: false, changed: false, revision: Number(revision) || 0 });
-    }
     telemetry() { return this.demo ? demoTelemetry() : invoke(this.native, 'getLiveTelemetry', [], {}); }
     fullSnapshot() { return this.demo ? demoTelemetry() : invoke(this.native, 'getFullEngineSnapshot', [], {}); }
-    learning() { return this.demo ? demoLearning() : invoke(this.native, 'getLearningMaps', [], {}); }
-    learningStatus() { return this.demo ? { live: { state: 'DEMO', reason: 'Dados simulados para validar interface.' } } : invoke(this.native, 'getLearningSyncStatus', [], {}); }
     learningDecision() {
       const snapshot = this.fullSnapshot() || {};
       const live = snapshot.live || snapshot.data || {};
@@ -241,13 +142,6 @@
         live,
       };
     }
-    learningToleranceSettings() { return this.demo ? demoToleranceSettings() : invoke(this.native, 'getLearningToleranceSettings', [], {}); }
-    setLearningToleranceControls(semanticControls) {
-      if (this.demo) return { ...demoToleranceSettings(), applied: semanticControls || {}, demo: true };
-      return invoke(this.native, 'setLearningToleranceSettings', [JSON.stringify({ semanticControls: semanticControls || {} })], { ok: false });
-    }
-    resetLearningToleranceSettings() { return this.demo ? demoToleranceSettings() : invoke(this.native, 'resetLearningToleranceSettings', [], { ok: false }); }
-
     batteryOptimizationStatus() {
       return this.demo
         ? { supported: true, ignoringOptimizations: true, promptedAutomatically: true, demo: true }
@@ -354,8 +248,6 @@
     logs() { return this.demo ? [] : invoke(this.native, 'getLogs', [], []); }
 
     exportData() { return this.demo ? false : invoke(this.native, 'exportData', [], false); }
-    exportLearning() { return this.demo ? false : invoke(this.native, 'exportLearningArchive', [], false); }
-    importLearning() { return this.demo ? false : invoke(this.native, 'importLearningArchive', [], false); }
     exportLogs() { return this.demo ? false : invoke(this.native, 'exportLogs', [], false); }
     selfTest() { return this.demo ? { ok: true, demo: true } : invoke(this.native, 'runEngineSelfTests', [], {}); }
   }

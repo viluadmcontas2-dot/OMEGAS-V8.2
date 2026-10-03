@@ -12,7 +12,6 @@ def test_each_mutation_has_action_scoped_readback_witnesses():
     required = (
         "Action.RESET_PETROL -> petrolAcquisitionReadbackFields()",
         "Action.RESET_GAS -> gasAcquisitionReadbackFields()",
-        "Action.MANUAL_AUTOMATCH -> listOf(AutoCalProtocol.MUL_ACT)",
         "Action.FINISH_AUTOCAL, Action.FINISH_AUTOMATCH -> listOf(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED)",
         "Action.RESET_K_FACTOR -> listOf(AutoCalProtocol.MUL_ACT)",
         "Action.DELETE_POINT ->",
@@ -20,6 +19,7 @@ def test_each_mutation_has_action_scoped_readback_witnesses():
     )
     for token in required:
         assert token in MANAGER
+    assert "Action.MANUAL_AUTOMATCH" not in MANAGER
     assert "Action.RESET_ALL -> petrolAcquisitionReadbackFields() +" in MANAGER
     assert "gasAcquisitionReadbackFields() +" in MANAGER
     assert '.put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))' in MANAGER
@@ -30,7 +30,7 @@ def test_parity_fixture_does_not_use_generic_snapshot_as_mutation_witness():
     assert "NUM_BUF_UPD_PETR" in actions["RESET_PETROL"]["readback"]
     assert "NUM_BUF_UPD_GAS" in actions["RESET_GAS"]["readback"]
     assert "MUL_ACT" in actions["RESET_ALL"]["readback"]
-    assert actions["MANUAL_AUTOMATCH"]["readback"].startswith("MUL_ACT")
+    assert "MANUAL_AUTOMATCH" not in actions
     delete_readback = actions["DELETE_POINT_BATCH"]["readback"]
     assert "fuel-scoped acquisition" in delete_readback
     assert "full AutoCal snapshot" not in delete_readback

@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt"
 SCHEDULER = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48SerialScheduler.kt"
-ANCHOR_WINDOW = ROOT / "app/src/main/java/com/omegas/prohub/learning/NativeAnchorTelemetryWindow.kt"
+ANCHOR_WINDOW = ROOT / "app/src/main/java/com/omegas/prohub/ecu/NativeAnchorTelemetryWindow.kt"
 
 
 class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
@@ -47,8 +47,8 @@ class Mp48SerialSchedulerBehaviorTest(unittest.TestCase):
                         fun add(t: Mp48Telemetry, plannedGap: Boolean, toleratedGap: Boolean): SampleDecision = SampleDecision()
                     }
                 ''',
-                "com/omegas/prohub/learning/Stubs.kt": r'''
-                    package com.omegas.prohub.learning
+                "com/omegas/prohub/ecu/LearningStubs.kt": r'''
+                    package com.omegas.prohub.ecu
                     import org.json.JSONObject
                     data class Tolerances(
                         val toleratedSerialFailures: Int = 2,
