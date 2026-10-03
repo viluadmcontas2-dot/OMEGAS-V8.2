@@ -1,2374 +1,2374 @@
 {
- "schema": "omegas.evidence.progbase-original.registry.v1",
- "gerado_em": "2026-10-03 UTC (continuação da sessão 2026-10-02 BRT; LN completo e DFM reextraídos)",
- "branch": "evidence/progbase-original",
- "fontes": "docs/evidence/progbase/fontes/INDICE-FONTES.md (somente DUMP + PortmonLOGNOVO (1).zip)",
- "selos": {
-  "PROVADO": "fiação ou DUMP sem ambiguidade",
-  "INFERIDO": "dedução forte com raciocínio no tema",
-  "DESCONHECIDO": "lacuna (ver lacunas.md)"
- },
- "entradas": [
-  {
-   "id": "cmd-48-01",
-   "tipo": "comando",
-   "endereco_ou_offset": "48 01",
-   "nome": "telemetria ao vivo",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "34 bytes",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TFormVisualizza/TFormConfig.TimerDati/TAutoCalUI.RunPoint",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 9408x"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-48-0B",
-   "tipo": "comando",
-   "endereco_ou_offset": "48 0B",
-   "nome": "status compacto AutoCal",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "14 bytes; b12 semântica DESCONHECIDA, b13 acompanha NUM_AUTOMATCH",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAutoCalUI",
-   "observado_em": [
-    "LN completo: 434 leituras; autocal.md 4.4 e fontes/ln-validacao-completa.json"
-   ],
-   "confianca": "PROVADO",
-   "nota": "Não equivale comprovadamente a AUTO_CAL_ENABLE; L-13."
-  },
-  {
-   "id": "cmd-48-08",
-   "tipo": "comando",
-   "endereco_ou_offset": "48 08",
-   "nome": "status secundário",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "sempre CA 01 10 nesta ECU",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "laço do ProgBase",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 3334x"
-   ],
-   "confianca": "PROVADO",
-   "nota": "não suportado nesta ECU"
-  },
-  {
-   "id": "cmd-09",
-   "tipo": "comando",
-   "endereco_ou_offset": "09 lo hi",
-   "nome": "GetNumber (escalar 1-2 bytes)",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "DataLength",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAebNumber.GetData",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-0A",
-   "tipo": "comando",
-   "endereco_ou_offset": "0A lo hi idx",
-   "nome": "GetNumber indexado (elemento de vetor)",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "1 elemento",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAebNumber ntVectorElement",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 0A 65 01 02"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-29",
-   "tipo": "comando",
-   "endereco_ou_offset": "29 lo hi",
-   "nome": "GetVector",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "n x DataLength LE",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAebVector.GetData",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-2A",
-   "tipo": "comando",
-   "endereco_ou_offset": "2A lo hi row",
-   "nome": "GetMatrix linha",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "12 bytes para MAP_K",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAebMatrix",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 36-48"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-12",
-   "tipo": "comando",
-   "endereco_ou_offset": "12 lo hi v",
-   "nome": "SetNumber U8",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebNumber.SetDataInEcu",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 12615/12691"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-13",
-   "tipo": "comando",
-   "endereco_ou_offset": "13 lo hi b0 b1",
-   "nome": "SetNumber 2 bytes",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebNumber",
-   "observado_em": [],
-   "confianca": "INFERIDO",
-   "nota": "opcode = 0x11 + bytes; não ocorre no LN"
-  },
-  {
-   "id": "cmd-14",
-   "tipo": "comando",
-   "endereco_ou_offset": "14 lo hi i lo hi | 14 lo hi row col v",
-   "nome": "SetNumber 3 bytes: elemento U16 indexado ou célula de matriz",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebVector.SetDouble / TAebMatrix",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 1054-1197, 7525-7548, 15226-15249",
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-31-35",
-   "tipo": "comando",
-   "endereco_ou_offset": "(31+n) lo hi dado[n]",
-   "nome": "SetVector curto (<=5 bytes)",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebVector",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 35 03 00 86 2C 51 10 seq 719"
-   ],
-   "confianca": "PROVADO",
-   "nota": "regra geral inferida; n=4 provado"
-  },
-  {
-   "id": "cmd-37",
-   "tipo": "comando",
-   "endereco_ou_offset": "37 lo (n+2) hi dado[n]",
-   "nome": "SetVector longo",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebVector",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "INFERIDO",
-   "nota": "desmontagem; não ocorre no LN"
-  },
-  {
-   "id": "cmd-02-24-04",
-   "tipo": "comando",
-   "endereco_ou_offset": "02 24 04 modo",
-   "nome": "ação AutoCal (01 gasolina, 02 GNV, 04 reset all, 08 automatch)",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "53 00",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionReset*/ActionAutoMatch",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 02 24 04 04 2E seq 1487",
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "só modo 04 visto na fiação"
-  },
-  {
-   "id": "cmd-01-24-05",
-   "tipo": "comando",
-   "endereco_ou_offset": "01 24 05",
-   "nome": "commit apagar pontos",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "53 00",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionDeleteSelectedPointsExecute",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "INFERIDO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-00-02",
-   "tipo": "comando",
-   "endereco_ou_offset": "00 02",
-   "nome": "init 1 (identidade/versão)",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "4 bytes FE 4F 45 0B",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAebProtocol.Connect",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 2,5,14"
-   ],
-   "confianca": "PROVADO",
-   "nota": "semântica dos 4 bytes desconhecida"
-  },
-  {
-   "id": "cmd-01-00-3A",
-   "tipo": "comando",
-   "endereco_ou_offset": "01 00 3A",
-   "nome": "init 2",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "53 00",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebProtocol.Connect",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 3"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-00-25",
-   "tipo": "comando",
-   "endereco_ou_offset": "00 25",
-   "nome": "identificação",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "1 byte = 02",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAebProtocol.Connect",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 4"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-01-12-00",
-   "tipo": "comando",
-   "endereco_ou_offset": "01 12 00",
-   "nome": "encerrar programação (antes de desconectar, após escritas)",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "53 00",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebProtocol.Disconnect",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 7549, 19890"
-   ],
-   "confianca": "INFERIDO",
-   "nota": "sempre após blocos de escrita"
-  },
-  {
-   "id": "cmd-00-01",
-   "tipo": "comando",
-   "endereco_ou_offset": "00 01",
-   "nome": "desconexão",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "53 00",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TAebProtocol.Disconnect",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 10, 7550, 19891"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "cmd-00-13-14",
-   "tipo": "comando",
-   "endereco_ou_offset": "00 13 / 00 14",
-   "nome": "calibração clássica TFormCalibra: início e poll",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "00 14 -> 53 02 sel 00",
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TFormCalibra",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 4693x"
-   ],
-   "confianca": "PROVADO",
-   "nota": "fora do produto"
-  },
-  {
-   "id": "status-53",
-   "tipo": "comando",
-   "endereco_ou_offset": "53",
-   "nome": "ACK",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "",
-   "consumidor_no_progbase": "",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "status-CA-01-10",
-   "tipo": "comando",
-   "endereco_ou_offset": "CA 01 10",
-   "nome": "objeto/comando não suportado; sessão continua",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "",
-   "consumidor_no_progbase": "",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 3499x em 56 requisições"
-   ],
-   "confianca": "INFERIDO",
-   "nota": "único não-ACK observado"
-  },
-  {
-   "id": "flag-conf1-bit-0800",
-   "tipo": "comando",
-   "endereco_ou_offset": "SC 3 bit 0x0800",
-   "nome": "modo de edição/inserção do Mapa K",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 719/1332"
-   ],
-   "confianca": "INFERIDO",
-   "nota": ""
-  },
-  {
-   "id": "tel-00",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[0]",
-   "nome": "RPM",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "1 rpm/cont",
-   "unidade": "rpm",
-   "rw": "R",
-   "consumidor_no_progbase": "LabelGiri/ChartGiri",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "tel-02",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[2]",
-   "nome": "MAP bruto do sensor",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "MAP_mbar ~ 100 + raw/26,2",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "não exibido",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "INFERIDO",
-   "nota": "identidade inferida pelos dados"
-  },
-  {
-   "id": "tel-04",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[4]",
-   "nome": "sempre 0",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "DESCONHECIDO",
-   "nota": ""
-  },
-  {
-   "id": "tel-06",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[6]",
-   "nome": "tempo injeção gás banco 1",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "raw x BASE_TEMPI_GLOBALE x 1e-6 (= x0,00256)",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "LabTempoIniezioneGas",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "escala INFERIDA via SC 121"
-  },
-  {
-   "id": "tel-08",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[8]",
-   "nome": "tempo injeção gasolina banco 1",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "idem",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "LabTempoIniezioneBenzina; RunPoint.x",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "escala INFERIDA via SC 121"
-  },
-  {
-   "id": "tel-10",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[10]",
-   "nome": "bits desconhecidos",
-   "encoding": "u8",
-   "forma": "campo",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "DESCONHECIDO",
-   "nota": "valores 0/4/5"
-  },
-  {
-   "id": "tel-11",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[11]",
-   "nome": "estado combustível (bitfield)",
-   "encoding": "u8",
-   "forma": "campo",
-   "tamanho": 1,
-   "escala": "0x80 motor ligado?, 0x10 gás, 0x08 comutando, 0x04 cutoff",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "ícones Sotto chiave/Cutoff/Gas/Benzina",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "bits INFERIDOS exceto 0x10"
-  },
-  {
-   "id": "tel-12",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[12]",
-   "nome": "temperatura água",
-   "encoding": "u8",
-   "forma": "campo",
-   "tamanho": 1,
-   "escala": "109 - raw (hipótese, não provada no original)",
-   "unidade": "°C",
-   "rw": "R",
-   "consumidor_no_progbase": "LabTempMotore",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "INFERIDO",
-   "nota": "escala não provada no original"
-  },
-  {
-   "id": "tel-13",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[13]",
-   "nome": "LEVEL raw",
-   "encoding": "u8",
-   "forma": "campo",
-   "tamanho": 1,
-   "escala": "nenhuma",
-   "unidade": "raw",
-   "rw": "R",
-   "consumidor_no_progbase": "LabLivello; TFormConfig+0x1800",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "tel-14",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[14]",
-   "nome": "pressão do gás",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "raw/800 (hipótese, não provada no original)",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "LabPressione",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "INFERIDO",
-   "nota": "escala não provada no original"
-  },
-  {
-   "id": "tel-16",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[16]",
-   "nome": "temperatura do gás",
-   "encoding": "u8",
-   "forma": "campo",
-   "tamanho": 1,
-   "escala": "raw - 20 (hipótese, não provada no original)",
-   "unidade": "°C",
-   "rw": "R",
-   "consumidor_no_progbase": "LabTempRiduttore",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "INFERIDO",
-   "nota": ""
-  },
-  {
-   "id": "tel-17",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[17]",
-   "nome": "MAP",
-   "encoding": "s16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "trunc(raw/10) x 0,01 = raw/1000",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "LabMap; RunPoint.y",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "992 com motor parado"
-  },
-  {
-   "id": "tel-19",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[19]",
-   "nome": "tensão injetores gás",
-   "encoding": "u8",
-   "forma": "campo",
-   "tamanho": 1,
-   "escala": "raw/16 ?",
-   "unidade": "V",
-   "rw": "R",
-   "consumidor_no_progbase": "LabTensioneIniettori",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "INFERIDO",
-   "nota": "0 em gasolina, 209-227 em GNV"
-  },
-  {
-   "id": "tel-20",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[20]",
-   "nome": "sempre 0",
-   "encoding": "",
-   "forma": "campo",
-   "tamanho": 4,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "DESCONHECIDO",
-   "nota": ""
-  },
-  {
-   "id": "tel-24",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[24]",
-   "nome": "tempo injeção gás banco 2",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "idem off 6",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "LabTempoIniezioneGas2",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "tel-26",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[26]",
-   "nome": "sempre 0",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "DESCONHECIDO",
-   "nota": ""
-  },
-  {
-   "id": "tel-28",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[28]",
-   "nome": "tempo injeção gasolina banco 2",
-   "encoding": "u16le",
-   "forma": "campo",
-   "tamanho": 2,
-   "escala": "idem off 8",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "LabTempoIniezioneBenzina2",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "tel-30",
-   "tipo": "campo_telemetria",
-   "endereco_ou_offset": "payload[30]",
-   "nome": "sempre 0",
-   "encoding": "",
-   "forma": "campo",
-   "tamanho": 4,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)",
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
-   ],
-   "confianca": "DESCONHECIDO",
-   "nota": ""
-  },
-  {
-   "id": "sc-002",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 2 (0x0002)",
-   "nome": "REGISTRO_EE",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "sessão",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: AC"
-  },
-  {
-   "id": "sc-003",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 3 (0x0003)",
-   "nome": "FLAG_CONF1",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 2,
-   "escala": "bitfield",
-   "unidade": "",
-   "rw": "R/W",
-   "consumidor_no_progbase": "TFormConfig; bit 0x0800 edição Mapa K",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0x2486,0x1051"
-  },
-  {
-   "id": "sc-012",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 12 (0x000C)",
-   "nome": "RIF_GIRI",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 12,
-   "escala": "",
-   "unidade": "rpm",
-   "rw": "R",
-   "consumidor_no_progbase": "eixo do mapa de carburação",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 500..6000"
-  },
-  {
-   "id": "sc-021",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 21 (0x0015)",
-   "nome": "MODELLO_HARDWARE",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "enum",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "família de telas",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 4"
-  },
-  {
-   "id": "sc-036",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 36 (0x0024)",
-   "nome": "TIPO_SENSORE",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "enum ComboSensore",
-   "unidade": "",
-   "rw": "R/w",
-   "consumidor_no_progbase": "TFormConfig/GroupRifSensore",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0x81"
-  },
-  {
-   "id": "sc-037",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 37 (0x0025)",
-   "nome": "RIF_SENSORE",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 4,
-   "escala": "raw sensor",
-   "unidade": "",
-   "rw": "R/w",
-   "consumidor_no_progbase": "GroupRifSensore (Riserva,1/4,2/4,3/4)",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 39 93 143 219"
-  },
-  {
-   "id": "sc-042",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 42 (0x002A)",
-   "nome": "RIF_TEMP_RID",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 10,
-   "escala": "raw temp",
-   "unidade": "",
-   "rw": "R/w",
-   "consumidor_no_progbase": "compensação temp. redutor",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0 38 50 58 67 77 83 88 100 255 (LN seq 129-130)"
-  },
-  {
-   "id": "sc-043",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 43 (0x002B)",
-   "nome": "COEFF_TEMP_RID",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 9,
-   "escala": "percentual, 100 neutro",
-   "unidade": "%",
-   "rw": "R/w",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 100 99 97 94 91 89 86 82 80 (LN seq 129-130)"
-  },
-  {
-   "id": "sc-053",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 53 (0x0035)",
-   "nome": "IDENTIFICATIVO",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 30,
-   "escala": "ASCII",
-   "unidade": "",
-   "rw": "R/w",
-   "consumidor_no_progbase": "TFormConfig",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: '208 01 08 2'"
-  },
-  {
-   "id": "sc-055",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 55 (0x0037)",
-   "nome": "TEMPI_PER_K",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 12,
-   "escala": "x BASE_TEMPI/1e6",
-   "unidade": "ms",
-   "rw": "R/W",
-   "consumidor_no_progbase": "eixo linhas Mapa K (TFormCentriCelleK)",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 781..7031 = 2,0..18,0 ms"
-  },
-  {
-   "id": "sc-059",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 59 (0x003B)",
-   "nome": "TEMPO_GAS",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "h?",
-   "rw": "R",
-   "consumidor_no_progbase": "TFormDiagnosi",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1252"
-  },
-  {
-   "id": "sc-061",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 61 (0x003D)",
-   "nome": "GIRI_PER_K",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 12,
-   "escala": "",
-   "unidade": "rpm",
-   "rw": "R/W",
-   "consumidor_no_progbase": "eixo colunas Mapa K",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 850 1350 1850 2500..6500"
-  },
-  {
-   "id": "sc-071",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 71 (0x0047)",
-   "nome": "LIVELLO_EMUL_ALTO",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "raw",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "emulação nível painel",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 41"
-  },
-  {
-   "id": "sc-072",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 72 (0x0048)",
-   "nome": "LIVELLO_EMUL_BASSO",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "raw",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 5"
-  },
-  {
-   "id": "sc-075",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 75 (0x004B)",
-   "nome": "CILINDRATA",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "cc",
-   "rw": "R/w",
-   "consumidor_no_progbase": "TFormConfig",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1000"
-  },
-  {
-   "id": "sc-076",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 76 (0x004C)",
-   "nome": "MINIMA_VERSIONE_INTERFACCIA",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "gate de versão",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0x0401"
-  },
-  {
-   "id": "sc-082",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 82 (0x0052)",
-   "nome": "TEMPO_CHIUSURA_INIETTORE",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "tempo",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "injetores",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 781"
-  },
-  {
-   "id": "sc-083",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 83 (0x0053)",
-   "nome": "TEMPO_APERTURA_INIETTORE",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "tempo",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "injetores",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 977"
-  },
-  {
-   "id": "sc-084",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 84 (0x0054)",
-   "nome": "MAP_K",
-   "encoding": "U8",
-   "forma": "matriz",
-   "tamanho": "13x12",
-   "escala": "identidade; neutro 100 INFERIDO",
-   "unidade": "",
-   "rw": "R(2A)/W(14)",
-   "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 162..181; após escrita de 100: 149; depois 166"
-  },
-  {
-   "id": "sc-085",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 85 (0x0055)",
-   "nome": "TEMPO_GAS_PARZIALE",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "h?",
-   "rw": "R",
-   "consumidor_no_progbase": "TFormService",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 2703"
-  },
-  {
-   "id": "sc-091",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 91 (0x005B)",
-   "nome": "WARNING_VERSIONE_INTERFACCIA",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "gate de versão",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0x0401"
-  },
-  {
-   "id": "sc-092",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 92 (0x005C)",
-   "nome": "RIF_TEMP_GAS",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 10,
-   "escala": "raw temp (= byte 16 telemetria)",
-   "unidade": "",
-   "rw": "R/w",
-   "consumidor_no_progbase": "compensação temp. gás",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0 24 38 50 67 88 113 155 195 255"
-  },
-  {
-   "id": "sc-093",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 93 (0x005D)",
-   "nome": "COEFF_TEMP_GAS",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 9,
-   "escala": "percentual, 100 neutro",
-   "unidade": "%",
-   "rw": "R/w",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 107 105 103 101 100 98 97 94 92"
-  },
-  {
-   "id": "sc-095",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 95 (0x005F)",
-   "nome": "RIF_PRESS_COLL",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 15,
-   "escala": "",
-   "unidade": "mbar",
-   "rw": "R",
-   "consumidor_no_progbase": "compensação pressão coletor",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 299..1699"
-  },
-  {
-   "id": "sc-096",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 96 (0x0060)",
-   "nome": "COEFF_PRESS_COLL",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 15,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0 x15"
-  },
-  {
-   "id": "sc-121",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 121 (0x0079)",
-   "nome": "BASE_TEMPI_GLOBALE",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "1e-6 ms/cont",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "cache TStreamDati+0x2980 (escala de todos os tempos)",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 2560"
-  },
-  {
-   "id": "sc-123",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 123 (0x007B)",
-   "nome": "RIF_PRESS_DIFF",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 15,
-   "escala": "",
-   "unidade": "mbar",
-   "rw": "R",
-   "consumidor_no_progbase": "compensação pressão diferencial",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1250..2335"
-  },
-  {
-   "id": "sc-124",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 124 (0x007C)",
-   "nome": "COEFF_PRESS_DIFF",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 15,
-   "escala": "/8192 ou /10000 ?",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 2617..-1007 (0 em 2000 mbar)"
-  },
-  {
-   "id": "sc-125",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 125 (0x007D)",
-   "nome": "TEMPO_MORTO_INIETTORI_BENZINA",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "tempo (x0,00256)",
-   "unidade": "ms",
-   "rw": "R/w",
-   "consumidor_no_progbase": "injetores",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 234 = 0,60 ms"
-  },
-  {
-   "id": "sc-126",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 126 (0x007E)",
-   "nome": "TEMPO_MORTO_INIETTORI_GAS",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "tempo (x0,00256)",
-   "unidade": "ms",
-   "rw": "R/w",
-   "consumidor_no_progbase": "injetores",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 391 = 1,00 ms"
-  },
-  {
-   "id": "sc-134",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 134 (0x0086)",
-   "nome": "TIPO_SENSORE_TEMPERATURA",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "enum",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TFormConfig",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0"
-  },
-  {
-   "id": "sc-181",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 181 (0x00B5)",
-   "nome": "TIPO_CARBURANTE",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "",
-   "rw": "-",
-   "consumidor_no_progbase": "-",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: CA 01 10"
-  },
-  {
-   "id": "sc-188",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 188 (0x00BC)",
-   "nome": "K_MAPPA_NEUTRO",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "?",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 85"
-  },
-  {
-   "id": "sc-223",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 223 (0x00DF)",
-   "nome": "RIF_PRESS_ASS",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 15,
-   "escala": "",
-   "unidade": "?",
-   "rw": "R",
-   "consumidor_no_progbase": "compensação pressão absoluta",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 58..85"
-  },
-  {
-   "id": "sc-224",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 224 (0x00E0)",
-   "nome": "COEFF_PRESS_ASS",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 15,
-   "escala": "?",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0..3420"
-  },
-  {
-   "id": "sc-242",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 242 (0x00F2)",
-   "nome": "ADV_OFFSET_INJ_PETROL",
-   "encoding": "S8",
-   "forma": "vetor",
-   "tamanho": 10,
-   "escala": "identidade",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TStrategiaTempiMortiDM",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0 x10"
-  },
-  {
-   "id": "sc-243",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 243 (0x00F3)",
-   "nome": "ADV_OFFSET_INJ_GAS",
-   "encoding": "S8",
-   "forma": "vetor",
-   "tamanho": 10,
-   "escala": "identidade",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0 x10"
-  },
-  {
-   "id": "sc-276",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 276 (0x0114)",
-   "nome": "LO_PASS_FILT_CON_FAST/SLOW",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 2,
-   "escala": "raw/32768",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "filtro nível",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 32768 (1,0); 4915 (0,15)"
-  },
-  {
-   "id": "sc-300",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 300 (0x012C)",
-   "nome": "ISTERESI_RIACCENSIONE+SOGLIA_LED_1..4",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 5,
-   "escala": "identidade",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "LEDs comutador",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 3 10 37 62 90"
-  },
-  {
-   "id": "sc-313",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 313 (0x0139)",
-   "nome": "TANK_VOL/INJR_GAS_FLOW",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 2,
-   "escala": "",
-   "unidade": "",
-   "rw": "-",
-   "consumidor_no_progbase": "Landi Connect",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: CA 01 10 (não suportado)"
-  },
-  {
-   "id": "sc-330",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 330 (0x014A)",
-   "nome": "AUTO_CAL_ENABLE",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "0/1",
-   "unidade": "",
-   "rw": "R/W",
-   "consumidor_no_progbase": "CheckAutoCalEnable",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1; 12 4A 01 00/01"
-  },
-  {
-   "id": "sc-331",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 331 (0x014B)",
-   "nome": "PETR_INJ_TBP",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 30,
-   "escala": "/512",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "KLine.x, PetrolCurve.x, GasCurve.x",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,5..22"
-  },
-  {
-   "id": "sc-332",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 332 (0x014C)",
-   "nome": "MNFLD_PRESS_THD",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "CurrentBand, AcqusitionAreas",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,150..1,10"
-  },
-  {
-   "id": "sc-347",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 347 (0x015B)",
-   "nome": "NUM_BUF_UPD_PETR",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "contagem (satura 10)",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "maturidade gasolina",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 10..0"
-  },
-  {
-   "id": "sc-348",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 348 (0x015C)",
-   "nome": "NUM_BUF_UPD_GAS",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "contagem (satura 10)",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "maturidade GNV",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 10..0"
-  },
-  {
-   "id": "sc-349",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 349 (0x015D)",
-   "nome": "PETR_INJ_TBUF_GAS_PREV",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "/512",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "GasPointPrev.x",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "sc-350",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 350 (0x015E)",
-   "nome": "MNFLD_PRESS_BUF_GAS_PREV",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "GasPointPrev.y",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "sc-351",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 351 (0x015F)",
-   "nome": "PETR_INJ_TBUF_GAS",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "/512",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "GasPoint.x",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "sc-352",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 352 (0x0160)",
-   "nome": "MNFLD_PRESS_BUF_GAS",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "GasPoint.y",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "sc-353",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 353 (0x0161)",
-   "nome": "MUL_ACT",
-   "encoding": "U16 Q14",
-   "forma": "vetor",
-   "tamanho": 30,
-   "escala": "/16384",
-   "unidade": "fator",
-   "rw": "R/W(14 61 01)",
-   "consumidor_no_progbase": "KLine.y",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,840..1,087; 1,0 x30 após Reset All"
-  },
-  {
-   "id": "sc-354",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 354 (0x0162)",
-   "nome": "PETR_INJ_TBUF",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "/512",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "PetrolPoint.x",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "sc-355",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 355 (0x0163)",
-   "nome": "MNFLD_PRESS_BUF",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "PetrolPoint.y",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "sc-356",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 356 (0x0164)",
-   "nome": "VECT_AUTOCAL_EE",
-   "encoding": "U16",
-   "forma": "vetor",
-   "tamanho": 4,
-   "escala": "",
-   "unidade": "",
-   "rw": "-",
-   "consumidor_no_progbase": "-",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: CA 01 10"
-  },
-  {
-   "id": "sc-357",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 357 (0x0165)",
-   "nome": "VECT_AUTOCAL_U8_0/1/2",
-   "encoding": "U8",
-   "forma": "vetor indexado",
-   "tamanho": 3,
-   "escala": "idx1 limiar maturidade idle gasolina; idx2 MaxAutomatch",
-   "unidade": "",
-   "rw": "R/w",
-   "consumidor_no_progbase": "maturidade; Finish",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 3 3 3"
-  },
-  {
-   "id": "sc-359",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 359 (0x0167)",
-   "nome": "EN_CDN_T_THD",
-   "encoding": "U16",
-   "forma": "elemento idx1",
-   "tamanho": 1,
-   "escala": "/1024",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAutoCalSettings",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1,0"
-  },
-  {
-   "id": "sc-361",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 361 (0x0169)",
-   "nome": "LIMIT_PRESSURE_MIN",
-   "encoding": "S16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "CursorLimitMAP_MIN",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,150"
-  },
-  {
-   "id": "sc-362",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 362 (0x016A)",
-   "nome": "LIMIT_PRESSURE_MAX",
-   "encoding": "S16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "CursorLimitMAP_MAX",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1,10"
-  },
-  {
-   "id": "sc-365",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 365 (0x016D)",
-   "nome": "PETROL_POINT_2DELETE",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "0 apagar/1 manter",
-   "unidade": "",
-   "rw": "w",
-   "consumidor_no_progbase": "ActionDeleteSelectedPoints",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO (DFM)",
-   "nota": "valor nesta ECU: nunca lido"
-  },
-  {
-   "id": "sc-366",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 366 (0x016E)",
-   "nome": "GAS_POINT_2DELETE",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 18,
-   "escala": "0 apagar/1 manter",
-   "unidade": "",
-   "rw": "w",
-   "consumidor_no_progbase": "idem",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO (DFM)",
-   "nota": "valor nesta ECU: nunca lido"
-  },
-  {
-   "id": "sc-367",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 367 (0x016F)",
-   "nome": "ACQUIRED_ZONES_PETROL",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 4,
-   "escala": "1 = zona adquirida",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "AcqusitionAreas",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1 1 1 1"
-  },
-  {
-   "id": "sc-368",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 368 (0x0170)",
-   "nome": "ACQUIRED_ZONES_GAS",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 4,
-   "escala": "idem",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "AcqusitionAreas",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0 0 0 0 -> 1 1 0 0"
-  },
-  {
-   "id": "sc-370",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 370 (0x0172)",
-   "nome": "CALIBRATION_VAL_1",
-   "encoding": "U8",
-   "forma": "vetor",
-   "tamanho": 10,
-   "escala": "limiares maturidade [2]/[5]/[8]",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "seletores 0x00516F64",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1 3 3 1 3 3 1 3 3 1"
-  },
-  {
-   "id": "sc-371",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 371 (0x0173)",
-   "nome": "MODULE_VERSION",
-   "encoding": "U8",
-   "forma": "elemento idx0",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAutoCalDM (18/30 pontos)",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 4"
-  },
-  {
-   "id": "sc-372",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 372 (0x0174)",
-   "nome": "NUM_ATUOMATCH_EXECUTED",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "contagem",
-   "unidade": "",
-   "rw": "R/w(Finish)",
-   "consumidor_no_progbase": "Num automatch N/MaxAutomatch",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 3 -> 0 após Reset All"
-  },
-  {
-   "id": "sc-378",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 378 (0x017A)",
-   "nome": "MAX_RPM_FOR_AUTOCAL",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "rpm",
-   "rw": "R",
-   "consumidor_no_progbase": "TAutoCalSettings",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 3000"
-  },
-  {
-   "id": "sc-387",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 387 (0x0183)",
-   "nome": "DIFF_ENG_SPD_THD",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "rpm",
-   "rw": "R",
-   "consumidor_no_progbase": "gate aquisição",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 400"
-  },
-  {
-   "id": "sc-388",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 388 (0x0184)",
-   "nome": "DELTA_ENG_SPD_THD",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "",
-   "unidade": "rpm",
-   "rw": "R",
-   "consumidor_no_progbase": "gate aquisição",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 200"
-  },
-  {
-   "id": "sc-389",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 389 (0x0185)",
-   "nome": "DIFF_MNFLD_PRESS_THD",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "gate aquisição",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,50"
-  },
-  {
-   "id": "sc-390",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 390 (0x0186)",
-   "nome": "DELTA_MNFLD_PRESS_THD",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "gate aquisição",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,050"
-  },
-  {
-   "id": "sc-391",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 391 (0x0187)",
-   "nome": "DIFF_PETR_TINJ_T_THD",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "/512",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "gate aquisição",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 4,0"
-  },
-  {
-   "id": "sc-392",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 392 (0x0188)",
-   "nome": "DELTA_PETR_INJ_T_THD",
-   "encoding": "U16",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "/512",
-   "unidade": "ms",
-   "rw": "R",
-   "consumidor_no_progbase": "gate aquisição",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 1,0"
-  },
-  {
-   "id": "sc-395",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 395 (0x018B)",
-   "nome": "DISABLE_ACQ_BAND",
-   "encoding": "U8",
-   "forma": "escalar",
-   "tamanho": 1,
-   "escala": "0/1",
-   "unidade": "",
-   "rw": "R",
-   "consumidor_no_progbase": "TAutoCalSettings",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0"
-  },
-  {
-   "id": "sc-397",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 397 (0x018D)",
-   "nome": "PETR_MNFLD_PRESS_RV",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 30,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "PetrolCurve.y",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,010..1,456"
-  },
-  {
-   "id": "sc-398",
-   "tipo": "parametro",
-   "endereco_ou_offset": "SC 398 (0x018E)",
-   "nome": "GAS_MNFLD_PRESS_RV",
-   "encoding": "S16",
-   "forma": "vetor",
-   "tamanho": 30,
-   "escala": "/1024",
-   "unidade": "bar",
-   "rw": "R",
-   "consumidor_no_progbase": "GasCurve.y",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
-    "DUMP DFM (fontes/parametros-dfm-inventario.json)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor nesta ECU: 0,088..1,24"
-  },
-  {
-   "id": "acao-enable",
-   "tipo": "acao",
-   "endereco_ou_offset": "12 4A 01 01 5E / 12 4A 01 00 5D",
-   "nome": "ligar/desligar AutoCal",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "CheckAutoCalEnableBeforeSetData 0x0051A474",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 12691/12615"
-   ],
-   "confianca": "PROVADO",
-   "nota": "Escrita e ACK provados; b12 compacto não é readback equivalente do SC 330."
-  },
-  {
-   "id": "acao-reset-petrol",
-   "tipo": "acao",
-   "endereco_ou_offset": "02 24 04 01 2B",
-   "nome": "reset gasolina",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionResetPetrolExecute 0x005189C0",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO (frame)",
-   "nota": "efeito não observado"
-  },
-  {
-   "id": "acao-reset-gas",
-   "tipo": "acao",
-   "endereco_ou_offset": "02 24 04 02 2C",
-   "nome": "reset GNV",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionResetGasExecute 0x005189CC",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO (frame)",
-   "nota": "efeito não observado"
-  },
-  {
-   "id": "acao-reset-all",
-   "tipo": "acao",
-   "endereco_ou_offset": "02 24 04 04 2E",
-   "nome": "reset all: buffers/zonas zerados, MUL_ACT=1,0, contador 3->0, RV zeradas",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionResetAllExecute 0x005189D8",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 1487-1502",
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO",
-   "nota": "b12 compacto 1->0 não prova enable desligado; sem readback imediato SC 330."
-  },
-  {
-   "id": "acao-automatch-manual",
-   "tipo": "acao",
-   "endereco_ou_offset": "02 24 04 08 32",
-   "nome": "AutoMatch manual",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionAutoMatchExecute 0x005189B4",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO (frame)",
-   "nota": "efeito não observado"
-  },
-  {
-   "id": "acao-reset-k",
-   "tipo": "acao",
-   "endereco_ou_offset": "14 61 01 ii 00 40 cs x30",
-   "nome": "Reset Curva K (MUL_ACT=1,0)",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionResetKFactorExecute 0x0051A070",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO (desmontagem)",
-   "nota": "não visto na fiação"
-  },
-  {
-   "id": "acao-finish",
-   "tipo": "acao",
-   "endereco_ou_offset": "SetNumber 0x0174 <- 0x0165:2 (+100 ms no Finish AutoCal)",
-   "nome": "Finish AutoCal / Finish AutoMatch",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionFinishAutocalExecute 0x0051A390 / BtnFinishAutomatchClick 0x0051A454",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO (desmontagem)",
-   "nota": "não visto na fiação"
-  },
-  {
-   "id": "acao-delete-points",
-   "tipo": "acao",
-   "endereco_ou_offset": "SetVector 0x016E[18] + 0x016D[18] + 01 24 05 2A",
-   "nome": "apagar/readquirir pontos",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ActionDeleteSelectedPointsExecute 0x00518E6C",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO (desmontagem)",
-   "nota": "não visto na fiação"
-  },
-  {
-   "id": "acao-mapk-write",
-   "tipo": "acao",
-   "endereco_ou_offset": "35 03 00 86 2C 51 10 … 144x 14 54 00 r c v … 35 03 00 86 24 51 10",
-   "nome": "escrita do Mapa K completo",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 719, 1054-1197, 1332"
-   ],
-   "confianca": "PROVADO",
-   "nota": "valor lido depois != escrito"
-  },
-  {
-   "id": "acao-axes-write",
-   "tipo": "acao",
-   "endereco_ou_offset": "12x 14 3D 00 i lo hi + 12x 14 37 00 i lo hi + 01 12 00 + 00 01 + reconexão",
-   "nome": "edição dos eixos do Mapa K",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "TFormCentriCelleK.ButtonOkClick",
-   "observado_em": [
-    "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 7525-7561, 15226-15249"
-   ],
-   "confianca": "PROVADO",
-   "nota": ""
-  },
-  {
-   "id": "acao-level-minmax-find",
-   "tipo": "acao",
-   "endereco_ou_offset": "canal interno 0x0E (TStreamDati+0x2BE4); RIF_SENSORE <- min + |max-min|*0,2*{1,2,3,4}",
-   "nome": "aprender referências de nível",
-   "encoding": "",
-   "forma": "",
-   "tamanho": "",
-   "escala": "",
-   "unidade": "",
-   "rw": "W",
-   "consumidor_no_progbase": "ButtonMinLevelClick 0x004C598C / ButtonMaxLevelClick 0x004C5ADC / ButtonDoLevelClick 0x004C5C30",
-   "observado_em": [
-    "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
-   ],
-   "confianca": "PROVADO (desmontagem)",
-   "nota": "escrita na ECU não capturada"
-  }
- ]
+  "schema": "omegas.evidence.progbase-original.registry.v1",
+  "gerado_em": "2026-10-03 UTC (continuação da sessão 2026-10-02 BRT; LN completo e DFM reextraídos)",
+  "branch": "evidence/progbase-original",
+  "fontes": "docs/evidence/progbase/fontes/INDICE-FONTES.md (somente DUMP + PortmonLOGNOVO (1).zip)",
+  "selos": {
+    "PROVADO": "fiação ou DUMP sem ambiguidade",
+    "INFERIDO": "dedução forte com raciocínio no tema",
+    "DESCONHECIDO": "lacuna (ver lacunas.md)"
+  },
+  "entradas": [
+    {
+      "id": "cmd-48-01",
+      "tipo": "comando",
+      "endereco_ou_offset": "48 01",
+      "nome": "telemetria ao vivo",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "34 bytes",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TFormVisualizza/TFormConfig.TimerDati/TAutoCalUI.RunPoint",
+      "observado_em": [
+        "LN completo: 20.451 requisições, 20.450 respostas completas"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-48-0B",
+      "tipo": "comando",
+      "endereco_ou_offset": "48 0B",
+      "nome": "status compacto AutoCal",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "14 bytes; b12 semântica DESCONHECIDA, b13 acompanha NUM_AUTOMATCH",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAutoCalUI",
+      "observado_em": [
+        "LN completo: 434 leituras; autocal.md 4.4 e fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Não equivale comprovadamente a AUTO_CAL_ENABLE; L-13."
+    },
+    {
+      "id": "cmd-48-08",
+      "tipo": "comando",
+      "endereco_ou_offset": "48 08",
+      "nome": "status secundário",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "sempre CA 01 10 nesta ECU",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "laço do ProgBase",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 3334x"
+      ],
+      "confianca": "PROVADO",
+      "nota": "não suportado nesta ECU"
+    },
+    {
+      "id": "cmd-09",
+      "tipo": "comando",
+      "endereco_ou_offset": "09 lo hi",
+      "nome": "GetNumber (escalar 1-2 bytes)",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "DataLength",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAebNumber.GetData",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-0A",
+      "tipo": "comando",
+      "endereco_ou_offset": "0A lo hi idx",
+      "nome": "GetNumber indexado (elemento de vetor)",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "1 elemento",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAebNumber ntVectorElement",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 0A 65 01 02"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-29",
+      "tipo": "comando",
+      "endereco_ou_offset": "29 lo hi",
+      "nome": "GetVector",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "n x DataLength LE",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAebVector.GetData",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-2A",
+      "tipo": "comando",
+      "endereco_ou_offset": "2A lo hi row",
+      "nome": "GetMatrix linha",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "12 bytes para MAP_K",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAebMatrix",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 36-48"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-12",
+      "tipo": "comando",
+      "endereco_ou_offset": "12 lo hi v",
+      "nome": "SetNumber U8",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebNumber.SetDataInEcu",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 12615/12691"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-13",
+      "tipo": "comando",
+      "endereco_ou_offset": "13 lo hi b0 b1",
+      "nome": "SetNumber 2 bytes",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebNumber",
+      "observado_em": [],
+      "confianca": "INFERIDO",
+      "nota": "opcode = 0x11 + bytes; não ocorre no LN"
+    },
+    {
+      "id": "cmd-14",
+      "tipo": "comando",
+      "endereco_ou_offset": "14 lo hi i lo hi | 14 lo hi row col v",
+      "nome": "SetNumber 3 bytes: elemento U16 indexado ou célula de matriz",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebVector.SetDouble / TAebMatrix",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 1054-1197, 7525-7548, 15226-15249",
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-31-35",
+      "tipo": "comando",
+      "endereco_ou_offset": "(31+n) lo hi dado[n]",
+      "nome": "SetVector curto (<=5 bytes)",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebVector",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 35 03 00 86 2C 51 10 seq 719"
+      ],
+      "confianca": "PROVADO",
+      "nota": "regra geral inferida; n=4 provado"
+    },
+    {
+      "id": "cmd-37",
+      "tipo": "comando",
+      "endereco_ou_offset": "37 lo (n+2) hi dado[n]",
+      "nome": "SetVector longo",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebVector",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "INFERIDO",
+      "nota": "desmontagem; não ocorre no LN"
+    },
+    {
+      "id": "cmd-02-24-04",
+      "tipo": "comando",
+      "endereco_ou_offset": "02 24 04 modo",
+      "nome": "ação AutoCal (01 gasolina, 02 GNV, 04 reset all, 08 automatch)",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "53 00",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionReset*/ActionAutoMatch",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 02 24 04 04 2E seq 1487",
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "só modo 04 visto na fiação"
+    },
+    {
+      "id": "cmd-01-24-05",
+      "tipo": "comando",
+      "endereco_ou_offset": "01 24 05",
+      "nome": "commit apagar pontos",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "53 00",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionDeleteSelectedPointsExecute",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "INFERIDO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-00-02",
+      "tipo": "comando",
+      "endereco_ou_offset": "00 02",
+      "nome": "init 1 (identidade/versão)",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "4 bytes FE 4F 45 0B",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAebProtocol.Connect",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 2,5,14"
+      ],
+      "confianca": "PROVADO",
+      "nota": "semântica dos 4 bytes desconhecida"
+    },
+    {
+      "id": "cmd-01-00-3A",
+      "tipo": "comando",
+      "endereco_ou_offset": "01 00 3A",
+      "nome": "init 2",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "53 00",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebProtocol.Connect",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 3"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-00-25",
+      "tipo": "comando",
+      "endereco_ou_offset": "00 25",
+      "nome": "identificação",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "1 byte = 02",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAebProtocol.Connect",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 4"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-01-12-00",
+      "tipo": "comando",
+      "endereco_ou_offset": "01 12 00",
+      "nome": "encerrar programação (antes de desconectar, após escritas)",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "53 00",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebProtocol.Disconnect",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 7549, 19890"
+      ],
+      "confianca": "INFERIDO",
+      "nota": "sempre após blocos de escrita"
+    },
+    {
+      "id": "cmd-00-01",
+      "tipo": "comando",
+      "endereco_ou_offset": "00 01",
+      "nome": "desconexão",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "53 00",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TAebProtocol.Disconnect",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 10, 7550, 19891"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "cmd-00-13-14",
+      "tipo": "comando",
+      "endereco_ou_offset": "00 13 / 00 14",
+      "nome": "calibração clássica TFormCalibra: início e poll",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "00 14 -> 53 02 sel 00",
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TFormCalibra",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 4693x"
+      ],
+      "confianca": "PROVADO",
+      "nota": "fora do produto"
+    },
+    {
+      "id": "status-53",
+      "tipo": "comando",
+      "endereco_ou_offset": "53",
+      "nome": "ACK",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "",
+      "consumidor_no_progbase": "",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "status-CA-01-10",
+      "tipo": "comando",
+      "endereco_ou_offset": "CA 01 10",
+      "nome": "objeto/comando não suportado; sessão continua",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "",
+      "consumidor_no_progbase": "",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) 3499x em 56 requisições"
+      ],
+      "confianca": "INFERIDO",
+      "nota": "único não-ACK observado"
+    },
+    {
+      "id": "flag-conf1-bit-0800",
+      "tipo": "comando",
+      "endereco_ou_offset": "SC 3 bit 0x0800",
+      "nome": "modo de edição/inserção do Mapa K",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 719/1332"
+      ],
+      "confianca": "INFERIDO",
+      "nota": ""
+    },
+    {
+      "id": "tel-00",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[0]",
+      "nome": "RPM",
+      "encoding": "u16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "1 rpm/cont",
+      "unidade": "rpm",
+      "rw": "R",
+      "consumidor_no_progbase": "LabelGiri/ChartGiri",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "tel-02",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[2]",
+      "nome": "canal normalizado, identidade física desconhecida",
+      "encoding": "u8",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "raw x 5/255",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "Visualizza+0x508",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Leitura e transformação provadas; agrupar bytes 2–3 como MAP U16 não descreve o consumidor original."
+    },
+    {
+      "id": "tel-04",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[4]",
+      "nome": "terceiro tempo de injeção, identidade do canal desconhecida",
+      "encoding": "u16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "raw x BASE_TEMPI_GLOBALE x 1e-6",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "Timer1Timer 0x50B604–0x50B656",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "DESCONHECIDO",
+      "nota": "Leitura/escala provadas; identidade e suporte desconhecidos."
+    },
+    {
+      "id": "tel-06",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[6]",
+      "nome": "tempo injeção gás banco 1",
+      "encoding": "u16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "raw x BASE_TEMPI_GLOBALE x 1e-6 ms",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "LabTempoIniezioneGas",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Vínculo SC 121 ao cache +0x2980 e escala de Timer1 provados. Consumidor AutoCal distinto."
+    },
+    {
+      "id": "tel-08",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[8]",
+      "nome": "tempo injeção gasolina banco 1",
+      "encoding": "u16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "raw x BASE_TEMPI_GLOBALE x 1e-6 ms",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "LabTempoIniezioneBenzina; RunPoint.x",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Vínculo SC 121 ao cache +0x2980 e escala de Timer1 provados. Consumidor AutoCal distinto."
+    },
+    {
+      "id": "tel-10",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[10]",
+      "nome": "canal de semântica desconhecida",
+      "encoding": "s8/u8 por consumidor",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "S8 identidade; U8 x5/255",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TimerDati +0x1700/+0x1718",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "DESCONHECIDO",
+      "nota": "Leituras provadas, finalidade desconhecida."
+    },
+    {
+      "id": "tel-11",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[11]",
+      "nome": "estado combustível (bitfield)",
+      "encoding": "u8",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "testes 0x80/0x04/0x10; nomes parcialmente inferidos",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "ícones Sotto chiave/Cutoff/Gas/Benzina",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Leitura e testes provados; nomes finais e bits0x08/0x01 ainda abertos."
+    },
+    {
+      "id": "tel-12",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[12]",
+      "nome": "canal de temperatura A",
+      "encoding": "u8",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "helpers 0x42A52C/0x42A788 e tabelas inicializadas; despacho por +0x80D",
+      "unidade": "°C",
+      "rw": "R",
+      "consumidor_no_progbase": "LabTempRiduttore ou LabTempMotore por configuração",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "DESCONHECIDO",
+      "nota": "Despacho provado; tabela/tipo de sensor e escala final abertos L-04. Hipóteses 109-raw/raw-20 retiradas."
+    },
+    {
+      "id": "tel-13",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[13]",
+      "nome": "LEVEL raw",
+      "encoding": "u8",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "nenhuma",
+      "unidade": "raw",
+      "rw": "R",
+      "consumidor_no_progbase": "LabLivello; TFormConfig+0x1800",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "tel-14",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[14]",
+      "nome": "pressão do gás",
+      "encoding": "s16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "trunc(sum(10 amostras de trunc(raw/10))/10) x0,01; ramo aditivo inclui trunc(MAP/10)",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "LabPressione",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Média é soma/10 com truncagem inteira; +0x80D seleciona ramo. Semântica absoluta/diferencial pendente. /800 retirado."
+    },
+    {
+      "id": "tel-16",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[16]",
+      "nome": "canal de temperatura B",
+      "encoding": "u8",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "helpers 0x42A52C/0x42A788 e tabelas inicializadas; despacho por +0x80D",
+      "unidade": "°C",
+      "rw": "R",
+      "consumidor_no_progbase": "LabTempRiduttore ou LabTempMotore por configuração",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "DESCONHECIDO",
+      "nota": "Despacho provado; tabela/tipo de sensor e escala final abertos L-04. Hipóteses 109-raw/raw-20 retiradas."
+    },
+    {
+      "id": "tel-17",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[17]",
+      "nome": "MAP",
+      "encoding": "s16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "trunc(raw/10) x0,01",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "LabMap; RunPoint.y",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Quantização do display; não equivale exatamente a raw/1000."
+    },
+    {
+      "id": "tel-19",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[19]",
+      "nome": "tensão injetores gás",
+      "encoding": "u8",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "raw<80:0; raw>=80: raw x5 x133 x0,00011883541295306001 (tipos5D/5E), demais raw x5 x147 x0,00008343763037129746",
+      "unidade": "V",
+      "rw": "R",
+      "consumidor_no_progbase": "LabTensioneIniettori",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Identidade e dois ramos provados; SC do seletor +0x271D e ramo efetivo da ECU desconhecidos; raw/16 retirado."
+    },
+    {
+      "id": "tel-20",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[20]",
+      "nome": "canal de semântica desconhecida",
+      "encoding": "s8/u8 por consumidor",
+      "forma": "campo",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TimerDati +0x17FC/+0x1738",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "DESCONHECIDO",
+      "nota": "Leituras provadas; bytes21–23 não pertencem a um bloco zero identificado."
+    },
+    {
+      "id": "tel-24",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[24]",
+      "nome": "tempo injeção gás banco 2",
+      "encoding": "u16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "raw x BASE_TEMPI_GLOBALE x 1e-6 ms",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "LabTempoIniezioneGas2",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Vínculo SC 121 ao cache +0x2980 e escala de Timer1 provados. Consumidor AutoCal distinto."
+    },
+    {
+      "id": "tel-26",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[26]",
+      "nome": "terceiro tempo do banco adicional; identidade desconhecida",
+      "encoding": "u16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "raw x BASE_TEMPI_GLOBALE x1e-6",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "Timer1Timer 0x50B8F2–0x50B944",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "DESCONHECIDO",
+      "nota": "Leitura/escala provadas; identidade física desconhecida."
+    },
+    {
+      "id": "tel-28",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[28]",
+      "nome": "tempo injeção gasolina banco 2",
+      "encoding": "u16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "raw x BASE_TEMPI_GLOBALE x 1e-6 ms",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "LabTempoIniezioneBenzina2",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Vínculo SC 121 ao cache +0x2980 e escala de Timer1 provados. Consumidor AutoCal distinto."
+    },
+    {
+      "id": "tel-30",
+      "tipo": "campo_telemetria",
+      "endereco_ou_offset": "payload[30]",
+      "nome": "canal de semântica desconhecida",
+      "encoding": "s16le",
+      "forma": "campo",
+      "tamanho": 2,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TimerDati +0x1820",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "DESCONHECIDO",
+      "nota": "Leitura provada; bytes32–33 não identificados."
+    },
+    {
+      "id": "sc-002",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 2 (0x0002)",
+      "nome": "REGISTRO_EE",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "sessão",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: AC"
+    },
+    {
+      "id": "sc-003",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 3 (0x0003)",
+      "nome": "FLAG_CONF1",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 2,
+      "escala": "bitfield",
+      "unidade": "",
+      "rw": "R/W",
+      "consumidor_no_progbase": "TFormConfig; bit 0x0800 edição Mapa K",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0x2486,0x1051"
+    },
+    {
+      "id": "sc-012",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 12 (0x000C)",
+      "nome": "RIF_GIRI",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 12,
+      "escala": "",
+      "unidade": "rpm",
+      "rw": "R",
+      "consumidor_no_progbase": "eixo do mapa de carburação",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 500..6000"
+    },
+    {
+      "id": "sc-021",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 21 (0x0015)",
+      "nome": "MODELLO_HARDWARE",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "enum",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "família de telas",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 4"
+    },
+    {
+      "id": "sc-036",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 36 (0x0024)",
+      "nome": "TIPO_SENSORE",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "enum ComboSensore",
+      "unidade": "",
+      "rw": "R/w",
+      "consumidor_no_progbase": "TFormConfig/GroupRifSensore",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0x81"
+    },
+    {
+      "id": "sc-037",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 37 (0x0025)",
+      "nome": "RIF_SENSORE",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 4,
+      "escala": "raw sensor",
+      "unidade": "",
+      "rw": "R/w",
+      "consumidor_no_progbase": "GroupRifSensore (Riserva,1/4,2/4,3/4)",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 39 93 143 219"
+    },
+    {
+      "id": "sc-042",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 42 (0x002A)",
+      "nome": "RIF_TEMP_RID",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 10,
+      "escala": "raw temp",
+      "unidade": "",
+      "rw": "R/w",
+      "consumidor_no_progbase": "compensação temp. redutor",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0 38 50 58 67 77 83 88 100 255 (LN seq 129-130)"
+    },
+    {
+      "id": "sc-043",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 43 (0x002B)",
+      "nome": "COEFF_TEMP_RID",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 9,
+      "escala": "percentual, 100 neutro",
+      "unidade": "%",
+      "rw": "R/w",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 100 99 97 94 91 89 86 82 80 (LN seq 129-130)"
+    },
+    {
+      "id": "sc-053",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 53 (0x0035)",
+      "nome": "IDENTIFICATIVO",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 30,
+      "escala": "ASCII",
+      "unidade": "",
+      "rw": "R/w",
+      "consumidor_no_progbase": "TFormConfig",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: '208 01 08 2'"
+    },
+    {
+      "id": "sc-055",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 55 (0x0037)",
+      "nome": "TEMPI_PER_K",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 12,
+      "escala": "x BASE_TEMPI/1e6",
+      "unidade": "ms",
+      "rw": "R/W",
+      "consumidor_no_progbase": "eixo linhas Mapa K (TFormCentriCelleK)",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 781..7031 = 2,0..18,0 ms"
+    },
+    {
+      "id": "sc-059",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 59 (0x003B)",
+      "nome": "TEMPO_GAS",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "h?",
+      "rw": "R",
+      "consumidor_no_progbase": "TFormDiagnosi",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1252"
+    },
+    {
+      "id": "sc-061",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 61 (0x003D)",
+      "nome": "GIRI_PER_K",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 12,
+      "escala": "",
+      "unidade": "rpm",
+      "rw": "R/W",
+      "consumidor_no_progbase": "eixo colunas Mapa K",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 850 1350 1850 2500..6500"
+    },
+    {
+      "id": "sc-071",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 71 (0x0047)",
+      "nome": "LIVELLO_EMUL_ALTO",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "raw",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "emulação nível painel",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 41"
+    },
+    {
+      "id": "sc-072",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 72 (0x0048)",
+      "nome": "LIVELLO_EMUL_BASSO",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "raw",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 5"
+    },
+    {
+      "id": "sc-075",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 75 (0x004B)",
+      "nome": "CILINDRATA",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "cc",
+      "rw": "R/w",
+      "consumidor_no_progbase": "TFormConfig",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1000"
+    },
+    {
+      "id": "sc-076",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 76 (0x004C)",
+      "nome": "MINIMA_VERSIONE_INTERFACCIA",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "gate de versão",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0x0401"
+    },
+    {
+      "id": "sc-082",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 82 (0x0052)",
+      "nome": "TEMPO_CHIUSURA_INIETTORE",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "tempo",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "injetores",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 781"
+    },
+    {
+      "id": "sc-083",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 83 (0x0053)",
+      "nome": "TEMPO_APERTURA_INIETTORE",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "tempo",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "injetores",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 977"
+    },
+    {
+      "id": "sc-084",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 84 (0x0054)",
+      "nome": "MAP_K",
+      "encoding": "U8",
+      "forma": "matriz",
+      "tamanho": "13x12",
+      "escala": "identidade; neutro 100 INFERIDO",
+      "unidade": "",
+      "rw": "R(2A)/W(14)",
+      "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 162..181; após escrita de 100: 149; depois 166"
+    },
+    {
+      "id": "sc-085",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 85 (0x0055)",
+      "nome": "TEMPO_GAS_PARZIALE",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "h?",
+      "rw": "R",
+      "consumidor_no_progbase": "TFormService",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 2703"
+    },
+    {
+      "id": "sc-091",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 91 (0x005B)",
+      "nome": "WARNING_VERSIONE_INTERFACCIA",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "gate de versão",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0x0401"
+    },
+    {
+      "id": "sc-092",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 92 (0x005C)",
+      "nome": "RIF_TEMP_GAS",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 10,
+      "escala": "raw temp (= byte 16 telemetria)",
+      "unidade": "",
+      "rw": "R/w",
+      "consumidor_no_progbase": "compensação temp. gás",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0 24 38 50 67 88 113 155 195 255"
+    },
+    {
+      "id": "sc-093",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 93 (0x005D)",
+      "nome": "COEFF_TEMP_GAS",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 9,
+      "escala": "percentual, 100 neutro",
+      "unidade": "%",
+      "rw": "R/w",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 107 105 103 101 100 98 97 94 92"
+    },
+    {
+      "id": "sc-095",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 95 (0x005F)",
+      "nome": "RIF_PRESS_COLL",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 15,
+      "escala": "",
+      "unidade": "mbar",
+      "rw": "R",
+      "consumidor_no_progbase": "compensação pressão coletor",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 299..1699"
+    },
+    {
+      "id": "sc-096",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 96 (0x0060)",
+      "nome": "COEFF_PRESS_COLL",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 15,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0 x15"
+    },
+    {
+      "id": "sc-121",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 121 (0x0079)",
+      "nome": "BASE_TEMPI_GLOBALE",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "1e-6 ms/cont",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "cache TStreamDati+0x2980 (escala de todos os tempos)",
+      "observado_em": [
+        "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
+        "LN completo: fontes/ln-validacao-completa.json"
+      ],
+      "confianca": "PROVADO",
+      "nota": "LN seq28=2560; DFM SC121, RTTI+0x214, loader43B602 e getter433FFC fecham cache+0x2980. Fallback2560 explícito; condição completa pendente."
+    },
+    {
+      "id": "sc-123",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 123 (0x007B)",
+      "nome": "RIF_PRESS_DIFF",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 15,
+      "escala": "",
+      "unidade": "mbar",
+      "rw": "R",
+      "consumidor_no_progbase": "compensação pressão diferencial",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1250..2335"
+    },
+    {
+      "id": "sc-124",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 124 (0x007C)",
+      "nome": "COEFF_PRESS_DIFF",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 15,
+      "escala": "/8192 ou /10000 ?",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 2617..-1007 (0 em 2000 mbar)"
+    },
+    {
+      "id": "sc-125",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 125 (0x007D)",
+      "nome": "TEMPO_MORTO_INIETTORI_BENZINA",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "tempo (x0,00256)",
+      "unidade": "ms",
+      "rw": "R/w",
+      "consumidor_no_progbase": "injetores",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 234 = 0,60 ms"
+    },
+    {
+      "id": "sc-126",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 126 (0x007E)",
+      "nome": "TEMPO_MORTO_INIETTORI_GAS",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "tempo (x0,00256)",
+      "unidade": "ms",
+      "rw": "R/w",
+      "consumidor_no_progbase": "injetores",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 391 = 1,00 ms"
+    },
+    {
+      "id": "sc-134",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 134 (0x0086)",
+      "nome": "TIPO_SENSORE_TEMPERATURA",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "enum",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TFormConfig",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0"
+    },
+    {
+      "id": "sc-181",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 181 (0x00B5)",
+      "nome": "TIPO_CARBURANTE",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "",
+      "rw": "-",
+      "consumidor_no_progbase": "-",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: CA 01 10"
+    },
+    {
+      "id": "sc-188",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 188 (0x00BC)",
+      "nome": "K_MAPPA_NEUTRO",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "?",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 85"
+    },
+    {
+      "id": "sc-223",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 223 (0x00DF)",
+      "nome": "RIF_PRESS_ASS",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 15,
+      "escala": "",
+      "unidade": "?",
+      "rw": "R",
+      "consumidor_no_progbase": "compensação pressão absoluta",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 58..85"
+    },
+    {
+      "id": "sc-224",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 224 (0x00E0)",
+      "nome": "COEFF_PRESS_ASS",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 15,
+      "escala": "?",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0..3420"
+    },
+    {
+      "id": "sc-242",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 242 (0x00F2)",
+      "nome": "ADV_OFFSET_INJ_PETROL",
+      "encoding": "S8",
+      "forma": "vetor",
+      "tamanho": 10,
+      "escala": "identidade",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TStrategiaTempiMortiDM",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0 x10"
+    },
+    {
+      "id": "sc-243",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 243 (0x00F3)",
+      "nome": "ADV_OFFSET_INJ_GAS",
+      "encoding": "S8",
+      "forma": "vetor",
+      "tamanho": 10,
+      "escala": "identidade",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0 x10"
+    },
+    {
+      "id": "sc-276",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 276 (0x0114)",
+      "nome": "LO_PASS_FILT_CON_FAST/SLOW",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 2,
+      "escala": "raw/32768",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "filtro nível",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 32768 (1,0); 4915 (0,15)"
+    },
+    {
+      "id": "sc-300",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 300 (0x012C)",
+      "nome": "ISTERESI_RIACCENSIONE+SOGLIA_LED_1..4",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 5,
+      "escala": "identidade",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "LEDs comutador",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 3 10 37 62 90"
+    },
+    {
+      "id": "sc-313",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 313 (0x0139)",
+      "nome": "TANK_VOL/INJR_GAS_FLOW",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 2,
+      "escala": "",
+      "unidade": "",
+      "rw": "-",
+      "consumidor_no_progbase": "Landi Connect",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: CA 01 10 (não suportado)"
+    },
+    {
+      "id": "sc-330",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 330 (0x014A)",
+      "nome": "AUTO_CAL_ENABLE",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "0/1",
+      "unidade": "",
+      "rw": "R/W",
+      "consumidor_no_progbase": "CheckAutoCalEnable",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1; 12 4A 01 00/01"
+    },
+    {
+      "id": "sc-331",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 331 (0x014B)",
+      "nome": "PETR_INJ_TBP",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 30,
+      "escala": "/512",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "KLine.x, PetrolCurve.x, GasCurve.x",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,5..22"
+    },
+    {
+      "id": "sc-332",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 332 (0x014C)",
+      "nome": "MNFLD_PRESS_THD",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "CurrentBand, AcqusitionAreas",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,150..1,10"
+    },
+    {
+      "id": "sc-347",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 347 (0x015B)",
+      "nome": "NUM_BUF_UPD_PETR",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "contagem (satura 10)",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "maturidade gasolina",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 10..0"
+    },
+    {
+      "id": "sc-348",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 348 (0x015C)",
+      "nome": "NUM_BUF_UPD_GAS",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "contagem (satura 10)",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "maturidade GNV",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 10..0"
+    },
+    {
+      "id": "sc-349",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 349 (0x015D)",
+      "nome": "PETR_INJ_TBUF_GAS_PREV",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "/512",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "GasPointPrev.x",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "sc-350",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 350 (0x015E)",
+      "nome": "MNFLD_PRESS_BUF_GAS_PREV",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "GasPointPrev.y",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "sc-351",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 351 (0x015F)",
+      "nome": "PETR_INJ_TBUF_GAS",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "/512",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "GasPoint.x",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "sc-352",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 352 (0x0160)",
+      "nome": "MNFLD_PRESS_BUF_GAS",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "GasPoint.y",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "sc-353",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 353 (0x0161)",
+      "nome": "MUL_ACT",
+      "encoding": "U16 Q14",
+      "forma": "vetor",
+      "tamanho": 30,
+      "escala": "/16384",
+      "unidade": "fator",
+      "rw": "R/W(14 61 01)",
+      "consumidor_no_progbase": "KLine.y",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,840..1,087; 1,0 x30 após Reset All"
+    },
+    {
+      "id": "sc-354",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 354 (0x0162)",
+      "nome": "PETR_INJ_TBUF",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "/512",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "PetrolPoint.x",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "sc-355",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 355 (0x0163)",
+      "nome": "MNFLD_PRESS_BUF",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "PetrolPoint.y",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "sc-356",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 356 (0x0164)",
+      "nome": "VECT_AUTOCAL_EE",
+      "encoding": "U16",
+      "forma": "vetor",
+      "tamanho": 4,
+      "escala": "",
+      "unidade": "",
+      "rw": "-",
+      "consumidor_no_progbase": "-",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: CA 01 10"
+    },
+    {
+      "id": "sc-357",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 357 (0x0165)",
+      "nome": "VECT_AUTOCAL_U8_0/1/2",
+      "encoding": "U8",
+      "forma": "vetor indexado",
+      "tamanho": 3,
+      "escala": "idx1 limiar maturidade idle gasolina; idx2 MaxAutomatch",
+      "unidade": "",
+      "rw": "R/w",
+      "consumidor_no_progbase": "maturidade; Finish",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 3 3 3"
+    },
+    {
+      "id": "sc-359",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 359 (0x0167)",
+      "nome": "EN_CDN_T_THD",
+      "encoding": "U16",
+      "forma": "elemento idx1",
+      "tamanho": 1,
+      "escala": "/1024",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAutoCalSettings",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1,0"
+    },
+    {
+      "id": "sc-361",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 361 (0x0169)",
+      "nome": "LIMIT_PRESSURE_MIN",
+      "encoding": "S16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "CursorLimitMAP_MIN",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,150"
+    },
+    {
+      "id": "sc-362",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 362 (0x016A)",
+      "nome": "LIMIT_PRESSURE_MAX",
+      "encoding": "S16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "CursorLimitMAP_MAX",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1,10"
+    },
+    {
+      "id": "sc-365",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 365 (0x016D)",
+      "nome": "PETROL_POINT_2DELETE",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "0 apagar/1 manter",
+      "unidade": "",
+      "rw": "w",
+      "consumidor_no_progbase": "ActionDeleteSelectedPoints",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO (DFM)",
+      "nota": "valor nesta ECU: nunca lido"
+    },
+    {
+      "id": "sc-366",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 366 (0x016E)",
+      "nome": "GAS_POINT_2DELETE",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 18,
+      "escala": "0 apagar/1 manter",
+      "unidade": "",
+      "rw": "w",
+      "consumidor_no_progbase": "idem",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO (DFM)",
+      "nota": "valor nesta ECU: nunca lido"
+    },
+    {
+      "id": "sc-367",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 367 (0x016F)",
+      "nome": "ACQUIRED_ZONES_PETROL",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 4,
+      "escala": "1 = zona adquirida",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "AcqusitionAreas",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1 1 1 1"
+    },
+    {
+      "id": "sc-368",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 368 (0x0170)",
+      "nome": "ACQUIRED_ZONES_GAS",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 4,
+      "escala": "idem",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "AcqusitionAreas",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0 0 0 0 -> 1 1 0 0"
+    },
+    {
+      "id": "sc-370",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 370 (0x0172)",
+      "nome": "CALIBRATION_VAL_1",
+      "encoding": "U8",
+      "forma": "vetor",
+      "tamanho": 10,
+      "escala": "limiares maturidade [2]/[5]/[8]",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "seletores 0x00516F64",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1 3 3 1 3 3 1 3 3 1"
+    },
+    {
+      "id": "sc-371",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 371 (0x0173)",
+      "nome": "MODULE_VERSION",
+      "encoding": "U8",
+      "forma": "elemento idx0",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAutoCalDM (18/30 pontos)",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 4"
+    },
+    {
+      "id": "sc-372",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 372 (0x0174)",
+      "nome": "NUM_ATUOMATCH_EXECUTED",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "contagem",
+      "unidade": "",
+      "rw": "R/w(Finish)",
+      "consumidor_no_progbase": "Num automatch N/MaxAutomatch",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 3 -> 0 após Reset All"
+    },
+    {
+      "id": "sc-378",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 378 (0x017A)",
+      "nome": "MAX_RPM_FOR_AUTOCAL",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "rpm",
+      "rw": "R",
+      "consumidor_no_progbase": "TAutoCalSettings",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 3000"
+    },
+    {
+      "id": "sc-387",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 387 (0x0183)",
+      "nome": "DIFF_ENG_SPD_THD",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "rpm",
+      "rw": "R",
+      "consumidor_no_progbase": "gate aquisição",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 400"
+    },
+    {
+      "id": "sc-388",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 388 (0x0184)",
+      "nome": "DELTA_ENG_SPD_THD",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "",
+      "unidade": "rpm",
+      "rw": "R",
+      "consumidor_no_progbase": "gate aquisição",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 200"
+    },
+    {
+      "id": "sc-389",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 389 (0x0185)",
+      "nome": "DIFF_MNFLD_PRESS_THD",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "gate aquisição",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,50"
+    },
+    {
+      "id": "sc-390",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 390 (0x0186)",
+      "nome": "DELTA_MNFLD_PRESS_THD",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "gate aquisição",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,050"
+    },
+    {
+      "id": "sc-391",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 391 (0x0187)",
+      "nome": "DIFF_PETR_TINJ_T_THD",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "/512",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "gate aquisição",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 4,0"
+    },
+    {
+      "id": "sc-392",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 392 (0x0188)",
+      "nome": "DELTA_PETR_INJ_T_THD",
+      "encoding": "U16",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "/512",
+      "unidade": "ms",
+      "rw": "R",
+      "consumidor_no_progbase": "gate aquisição",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 1,0"
+    },
+    {
+      "id": "sc-395",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 395 (0x018B)",
+      "nome": "DISABLE_ACQ_BAND",
+      "encoding": "U8",
+      "forma": "escalar",
+      "tamanho": 1,
+      "escala": "0/1",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "TAutoCalSettings",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0"
+    },
+    {
+      "id": "sc-397",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 397 (0x018D)",
+      "nome": "PETR_MNFLD_PRESS_RV",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 30,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "PetrolCurve.y",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,010..1,456"
+    },
+    {
+      "id": "sc-398",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 398 (0x018E)",
+      "nome": "GAS_MNFLD_PRESS_RV",
+      "encoding": "S16",
+      "forma": "vetor",
+      "tamanho": 30,
+      "escala": "/1024",
+      "unidade": "bar",
+      "rw": "R",
+      "consumidor_no_progbase": "GasCurve.y",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
+        "DUMP DFM (fontes/parametros-dfm-inventario.json)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor nesta ECU: 0,088..1,24"
+    },
+    {
+      "id": "acao-enable",
+      "tipo": "acao",
+      "endereco_ou_offset": "12 4A 01 01 5E / 12 4A 01 00 5D",
+      "nome": "ligar/desligar AutoCal",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "CheckAutoCalEnableBeforeSetData 0x0051A474",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 12691/12615"
+      ],
+      "confianca": "PROVADO",
+      "nota": "Escrita e ACK provados; b12 compacto não é readback equivalente do SC 330."
+    },
+    {
+      "id": "acao-reset-petrol",
+      "tipo": "acao",
+      "endereco_ou_offset": "02 24 04 01 2B",
+      "nome": "reset gasolina",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionResetPetrolExecute 0x005189C0",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO (frame)",
+      "nota": "efeito não observado"
+    },
+    {
+      "id": "acao-reset-gas",
+      "tipo": "acao",
+      "endereco_ou_offset": "02 24 04 02 2C",
+      "nome": "reset GNV",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionResetGasExecute 0x005189CC",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO (frame)",
+      "nota": "efeito não observado"
+    },
+    {
+      "id": "acao-reset-all",
+      "tipo": "acao",
+      "endereco_ou_offset": "02 24 04 04 2E",
+      "nome": "reset all: buffers/zonas zerados, MUL_ACT=1,0, contador 3->0, RV zeradas",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionResetAllExecute 0x005189D8",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 1487-1502",
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO",
+      "nota": "b12 compacto 1->0 não prova enable desligado; sem readback imediato SC 330."
+    },
+    {
+      "id": "acao-automatch-manual",
+      "tipo": "acao",
+      "endereco_ou_offset": "02 24 04 08 32",
+      "nome": "AutoMatch manual",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionAutoMatchExecute 0x005189B4",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO (frame)",
+      "nota": "efeito não observado"
+    },
+    {
+      "id": "acao-reset-k",
+      "tipo": "acao",
+      "endereco_ou_offset": "14 61 01 ii 00 40 cs x30",
+      "nome": "Reset Curva K (MUL_ACT=1,0)",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionResetKFactorExecute 0x0051A070",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO (desmontagem)",
+      "nota": "não visto na fiação"
+    },
+    {
+      "id": "acao-finish",
+      "tipo": "acao",
+      "endereco_ou_offset": "SetNumber 0x0174 <- 0x0165:2 (+100 ms no Finish AutoCal)",
+      "nome": "Finish AutoCal / Finish AutoMatch",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionFinishAutocalExecute 0x0051A390 / BtnFinishAutomatchClick 0x0051A454",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO (desmontagem)",
+      "nota": "não visto na fiação"
+    },
+    {
+      "id": "acao-delete-points",
+      "tipo": "acao",
+      "endereco_ou_offset": "SetVector 0x016E[18] + 0x016D[18] + 01 24 05 2A",
+      "nome": "apagar/readquirir pontos",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ActionDeleteSelectedPointsExecute 0x00518E6C",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO (desmontagem)",
+      "nota": "não visto na fiação"
+    },
+    {
+      "id": "acao-mapk-write",
+      "tipo": "acao",
+      "endereco_ou_offset": "35 03 00 86 2C 51 10 … 144x 14 54 00 r c v … 35 03 00 86 24 51 10",
+      "nome": "escrita do Mapa K completo",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TFormCentriCelleK/TAebGrid",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 719, 1054-1197, 1332"
+      ],
+      "confianca": "PROVADO",
+      "nota": "valor lido depois != escrito"
+    },
+    {
+      "id": "acao-axes-write",
+      "tipo": "acao",
+      "endereco_ou_offset": "12x 14 3D 00 i lo hi + 12x 14 37 00 i lo hi + 01 12 00 + 00 01 + reconexão",
+      "nome": "edição dos eixos do Mapa K",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "TFormCentriCelleK.ButtonOkClick",
+      "observado_em": [
+        "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) seq 7525-7561, 15226-15249"
+      ],
+      "confianca": "PROVADO",
+      "nota": ""
+    },
+    {
+      "id": "acao-level-minmax-find",
+      "tipo": "acao",
+      "endereco_ou_offset": "canal interno 0x0E (TStreamDati+0x2BE4); RIF_SENSORE <- min + |max-min|*0,2*{1,2,3,4}",
+      "nome": "aprender referências de nível",
+      "encoding": "",
+      "forma": "",
+      "tamanho": "",
+      "escala": "",
+      "unidade": "",
+      "rw": "W",
+      "consumidor_no_progbase": "ButtonMinLevelClick 0x004C598C / ButtonMaxLevelClick 0x004C5ADC / ButtonDoLevelClick 0x004C5C30",
+      "observado_em": [
+        "desmontagem DUMP/ProgBase.exe.Dump.bin (VA de estudo anterior, lacunas L-12)"
+      ],
+      "confianca": "PROVADO (desmontagem)",
+      "nota": "escrita na ECU não capturada"
+    }
+  ]
 }

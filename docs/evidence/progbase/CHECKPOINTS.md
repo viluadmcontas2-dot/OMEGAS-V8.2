@@ -124,3 +124,17 @@ Regra: depois de cada commit, este arquivo é atualizado com **feito / falta / p
 **Falta / próxima ação exata**
 - Publicar desmontagem já reaberta de Timer1Timer 0x0050B408: pressão S16 /10, ring de dez amostras e exibição com ramo por configuração; temperaturas por helpers 0x0042A52C/0x0042A788; tensão por 0x00480908. Atualizar telemetria/registry/L-04 sem inventar tabelas ainda não recuperadas.
 - Depois rastrear produtor e consumidor de 48 0B (L-13); mantém-se fora do app nesta missão.
+
+## Commit 12 — telemetria reaberta no código original
+
+**Feito**
+- Timer1Timer VA0x0050B408 e TimerDatiTimer VA0x004A307C recuperados das tabelas do PE e reabertos no .text exato. Publicados trechos mínimos, constantes, offsets RTTI e verificador passivo com hashes.
+- Pressão S16: quantização /10, ring de dez amostras, média inteira e ramo aditivo MAP. Tensão dos injetores: payload19 e dois ramos, limiar80. MAP preserva truncagem antes de escala. Bytes2/3 consumidos separadamente U8.
+- SC121→campo+0x214→cache+0x2980→escala de Timer1 fechado. Fallback2560 observado; gatilho completo pendente.
+- Temperaturas usam helpers/tabelas e troca de canais por +0x80D; não há fórmula universal 109−raw/raw−20 nestes caminhos. Hipóteses antigas retiradas; registry, parâmetros e lacunas sincronizados. Ausência de consultas MGLEV deixa de significar inexistência de hardware.
+
+**Falta / próxima ação exata**
+1. Rastrear leituras/escritas TStreamDati+0x80D e +0x271D e ligar a nomes/SC pelo DFM/RTTI; não presumir ramo ativo no LN.
+2. Reabrir inicializadores a partir de 0x430A46 e helpers0x42A52C/0x42A788; recuperar tabelas numéricas e seletor de sensor, extremidades e sentinelas (zero float0,0 já conferido).
+3. Rastrear produtor/consumidor do compacto48 0B e relação, se houver, com SC330 (L-13). Depois revalidar VAs históricos restantes de AutoCal/mapas/level (L-12).
+- AutoMatch aritmético da ECU (L-05) não é dedutível só do PC; efeitos de ações ausentes/readback (L-06/L-07) seguem abertos. Nenhuma mudança de app ou operação em ECU nesta missão.
