@@ -18,14 +18,13 @@
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
         <button type="button" data-route="dashboard" class="active"><i>01</i><span>Agora</span></button>
-        <button type="button" data-route="learning"><i>02</i><span>Aprender</span></button>
-        <button type="button" data-route="map"><i>03</i><span>Ajuste local</span></button>
-        <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
-        <button type="button" data-route="autocal"><i>05</i><span>AutoCal</span></button>
-        <button type="button" data-route="refino"><i>06</i><span>Refino</span></button>
+        <button type="button" data-route="map"><i>02</i><span>Ajuste local</span></button>
+        <button type="button" data-route="curve"><i>03</i><span>Ajuste global</span></button>
+        <button type="button" data-route="autocal"><i>04</i><span>AutoCal</span></button>
+        <button type="button" data-route="refino"><i>05</i><span>Refino</span></button>
         <div class="nav-divider"></div>
-        <button type="button" data-route="suggestions"><i>07</i><span>Sugestões</span><em id="suggestionCount" style="display:none">0</em></button>
-        <button type="button" data-route="tools"><i>08</i><span>Ferramentas</span></button>
+        <button type="button" data-route="suggestions"><i>06</i><span>Sugestões</span><em id="suggestionCount" style="display:none">0</em></button>
+        <button type="button" data-route="tools"><i>07</i><span>Ferramentas</span></button>
       </nav>
 
       <div class="rail-status">
@@ -67,35 +66,6 @@
               <div><small>SESSÃO</small><b>Aguardando ECU</b><p data-health-detail>Conecte a ECU para iniciar a sessão</p></div>
               <div class="state-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashAge">—</span></div>
             </section>
-          </div>
-        </section>
-
-        <section class="screen" data-screen="learning" aria-labelledby="learningTitle">
-          <div class="page-intro learning-intro">
-            <div><small>APRENDER</small><h2 id="learningTitle">Evidência por condição física</h2></div>
-            <div class="live-condition"><small>AGORA</small><b id="learningLiveLabel">Aguardando condição válida</b><span>marcação visual leve · não altera o aprendizado</span></div>
-          </div>
-
-          <div class="learning-controls">
-            <div class="layer-tabs" role="tablist" aria-label="Camada do aprendizado">
-              <button type="button" data-learning-layer="petrol">Referência</button>
-              <button type="button" data-learning-layer="cng">No GNV</button>
-              <button type="button" data-learning-layer="comparison" class="active">Diferença</button>
-              <button type="button" data-learning-layer="suggestion">Sugestão</button>
-            </div>
-            <div class="coverage-copy"><span id="learningCoverageSummary">0 gasolina · 0 GNV · 0 prontas</span><span id="learningSuggestionSummary">0 global · 0 local</span></div>
-          </div>
-
-          <div class="learning-workspace">
-            <section class="learning-map-surface">
-              <div class="axis-top">RPM →</div>
-              <div id="learningGrid" class="physical-grid-host" aria-label="Mapa de aprendizado"></div>
-              <div class="axis-side">PETROL INJ. ↓</div>
-              <div class="trace-note"><span class="trace-sample nearest"></span>célula atual <span class="trace-sample contributor"></span>até 4 contribuintes · sem trilha/fade</div>
-            </section>
-            <aside id="learningCellDetail" class="inspector-panel">
-              <div class="detail-empty"><b>Coleta em andamento</b><span>Toque em uma célula para ver evidência, equivalência e próximo passo.</span></div>
-            </aside>
           </div>
         </section>
 
@@ -223,7 +193,6 @@
   <script src="components/physical-grid.js" defer></script>
   <script src="components/drawers.js" defer></script>
   <script src="screens/dashboard.js" defer></script>
-  <script src="screens/learning.js" defer></script>
   <script src="screens/map.js" defer></script>
   <script src="screens/curve.js" defer></script>
   <script src="app.js" defer></script>

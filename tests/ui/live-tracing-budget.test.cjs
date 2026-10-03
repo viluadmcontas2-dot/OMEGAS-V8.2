@@ -20,7 +20,6 @@ test('aprendizado rapido nao persegue pesos bilineares no DOM', () => {
   assert.doesNotMatch(appSource, /continuousWeights\.slice/);
   assert.match(appSource, /function renderLightLiveContext\(state, route\)/);
   assert.match(appSource, /célula \$\{row \+ 1\}×\$\{column \+ 1\}/);
-  assert.match(appSource, /route === 'learning' \|\| route === 'map'/);
 });
 
 test('grade fisica conserva tracing temporal limitado sem timer nem writer', () => {

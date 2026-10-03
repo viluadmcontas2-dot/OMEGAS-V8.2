@@ -23,7 +23,6 @@ class CleanUiContract(unittest.TestCase):
         self.map_editor = (UI / "map-editor.js").read_text("utf-8")
         self.map_screen = (UI / "screens/map.js").read_text("utf-8")
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
-        self.learning_screen = (UI / "screens/learning.js").read_text("utf-8")
         self.refino_screen = (UI / "screens/refino.js").read_text("utf-8")
         self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
         self.suggestion_model = (UI / "suggestion-model.js").read_text("utf-8")
@@ -41,17 +40,17 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('styles-calibration-obd.css', self.html)
         self.assertIn("refinementStyle.href = 'styles-refine.css'", self.app)
 
-    def test_eight_static_human_destinations_with_refino_below_autocal(self):
+    def test_seven_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']
+        expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'AutoCal', 'Refino', 'Sugestões', 'Ferramentas'):
+        for label in ('Agora', 'Ajuste local', 'Ajuste global', 'AutoCal', 'Refino', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
@@ -60,7 +59,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('class Scheduler', self.scheduler)
         self.assertEqual(1, self.scheduler.count('setInterval('))
         self.assertNotIn('setInterval(', self.app)
-        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.learning_screen + self.grid + self.refino_screen
+        active_sources = self.app + self.store + self.router + self.scheduler + self.map_screen + self.curve_screen + self.grid + self.refino_screen
         self.assertNotIn('MutationObserver', active_sources)
         self.assertNotIn('.onclick', active_sources)
         self.assertNotIn('tick:', self.store)
@@ -84,7 +83,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('setTrace(', self.app)
         self.assertNotIn('TRACE_MAX_CONTRIBUTORS', self.grid)
         self.assertNotIn('TRACE_WEIGHT_STEPS', self.grid)
-        self.assertNotIn('continuousWeights', self.learning_screen)
         self.assertIn('setTrace(', self.grid)
         self.assertIn('traceTrailMs = 1400', self.grid)
         self.assertIn('traceTrailMax = 16', self.grid)
@@ -96,20 +94,12 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotRegex(self.grid, r'writeMap|startMapBatchWrite|protocolTransaction')
         self.assertIn('function renderLightLiveContext', self.app)
         # O pump de telemetria só roda nas rotas ao vivo (lista única no roteador; Refino incluído).
-        self.assertIn("const LIVE_ROUTES = ['dashboard', 'learning', 'map', 'autocal', 'refino']", self.router)
+        self.assertIn("const LIVE_ROUTES = ['dashboard', 'map', 'autocal', 'refino']", self.router)
         self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot()", self.app)
-        self.assertIn("if (route === 'learning') setText('learningLiveLabel'", self.app)
-        self.assertIn('A interpolação bilinear continua no Kotlin', self.learning_screen)
 
-    def test_learning_grid_has_physical_axes_and_direct_edit_entrypoint(self):
+    def test_grid_has_physical_axes(self):
         self.assertIn('physical-grid-with-axes', self.grid)
         self.assertIn('setAxes(rpmBins, petrolBins)', self.grid)
-        self.assertIn('data-edit-learning-cell', self.learning_screen)
-        self.assertIn("this.router.navigate('map'", self.learning_screen)
-        self.assertIn("origin: 'learning'", self.learning_screen)
-        self.assertIn('Abrir o editor não escreve na ECU', self.learning_screen)
-        for forbidden in ('writeMap(', 'startKBatchWrite(', 'writeCurve('):
-            self.assertNotIn(forbidden, self.learning_screen)
 
     def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
         self.assertIn('PETROL INJECTION', self.dashboard)
@@ -123,9 +113,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('dashHeroRpm', self.dashboard)
         self.assertNotIn('dashGas', self.dashboard)
 
-    def test_learning_map_curve_and_obd_have_expected_contracts(self):
-        for layer in ('petrol', 'cng', 'comparison', 'suggestion'):
-            self.assertIn(f'data-learning-layer="{layer}"', self.html)
+    def test_map_curve_have_expected_contracts(self):
         self.assertIn('id="mapSelectAll"', self.html)
         self.assertIn('id="curveChart"', self.html)
 
@@ -175,10 +163,9 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('window.Android.', self.app)
         self.assertNotIn('window.Android.', self.map_screen)
         self.assertNotIn('window.Android.', self.curve_screen)
-        self.assertNotIn('window.Android.', self.learning_screen)
 
     def test_no_runtime_ui_uses_legacy_hub_assets(self):
-        active_sources = self.html + self.app + self.store + self.router + self.scheduler + self.grid + self.map_screen + self.curve_screen + self.learning_screen
+        active_sources = self.html + self.app + self.store + self.router + self.scheduler + self.grid + self.map_screen + self.curve_screen
         for marker in ('android_asset/hub/', '/hub/', 'hub/index.html'):
             self.assertNotIn(marker, active_sources)
 
@@ -192,10 +179,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('Checkpoint, ACK e readback', self.html)
         self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
-
-    def test_learning_route_never_calls_writer(self):
-        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'protocolTransaction'):
-            self.assertNotIn(forbidden, self.learning_screen)
 
     def test_suggestions_route_is_review_navigation_not_auto_apply(self):
         self.assertIn('data-screen="suggestions"', self.html)

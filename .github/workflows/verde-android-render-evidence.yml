@@ -54,8 +54,6 @@ jobs:
             method: autocalSparseZoneMapShowsExactMissingRegions
           - scenario: autocal-equivalence-shifted
             method: autocalShiftedEquivalenceRendersHorizontalProjection
-          - scenario: learning-fresh-context
-            method: learningFreshMp48ContextRender
           - scenario: map-fresh-context
             method: mapFreshMp48ContextRender
           - scenario: curve-offline-honest

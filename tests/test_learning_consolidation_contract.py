@@ -7,7 +7,6 @@ STABILITY = ROOT / "app/src/main/java/com/omegas/v7/runtime/LearningStabilityV7.
 EQUIVALENCE = ROOT / "app/src/main/java/com/omegas/v7/runtime/V7EquivalenceEngine.kt"
 COORDINATOR = ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt"
 CODEC = ROOT / "app/src/main/java/com/omegas/v7/runtime/V7SessionSnapshotCodec.kt"
-LEARNING_UI = ROOT / "app/src/main/assets/ui/screens/learning.js"
 LIVE_BUDGET = ROOT / "tests/ui/live-tracing-budget.test.cjs"
 
 
@@ -18,7 +17,6 @@ class LearningConsolidationContract(unittest.TestCase):
         self.equivalence = EQUIVALENCE.read_text("utf-8")
         self.coordinator = COORDINATOR.read_text("utf-8")
         self.codec = CODEC.read_text("utf-8")
-        self.learning_ui = LEARNING_UI.read_text("utf-8")
         self.live_budget = LIVE_BUDGET.read_text("utf-8")
 
     def test_visit_and_first_comparison_are_immutable_and_use_physical_time(self):
@@ -80,23 +78,6 @@ class LearningConsolidationContract(unittest.TestCase):
         self.assertIn('put("consolidatedErrorPercent"', self.coordinator)
         self.assertIn('put("recentErrorPercent"', self.coordinator)
 
-    def test_learning_ui_uses_robust_stability_before_raw_comparison(self):
-        self.assertIn("state.calibrationState?.learningStability?.map", self.learning_ui)
-        self.assertIn("function stableComparisonError", self.learning_ui)
-        self.assertIn("const recent = finite(stable?.recentErrorPercent)", self.learning_ui)
-        self.assertIn("if (state === 'LEARNING') return recent ?? raw", self.learning_ui)
-        self.assertIn("if (state === 'CONSOLIDATED' || state === 'REVALIDATING') return consolidated ?? recent ?? raw", self.learning_ui)
-        self.assertIn("Diferença agora", self.learning_ui)
-        self.assertIn("Diferença estável", self.learning_ui)
-        self.assertIn("Tendência recente", self.learning_ui)
-        self.assertIn("differenceText(rawError, deadband)", self.learning_ui)
-        self.assertIn("differenceText(consolidatedError, deadband)", self.learning_ui)
-        self.assertIn("differenceText(recentError, deadband)", self.learning_ui)
-        self.assertGreaterEqual(self.learning_ui.count("stableComparisonError("), 3)
-        self.assertIn("persistentMapSuggestions(state)", self.learning_ui)
-        self.assertIn("revalidando", self.learning_ui.lower())
-        self.assertIn("Revisar no Mapa K", self.learning_ui)
-        self.assertNotIn(".setTrace(", self.learning_ui)
 
     def test_live_tracing_visual_remains_removed(self):
         self.assertIn("aprendizado rapido nao persegue pesos bilineares no DOM", self.live_budget)

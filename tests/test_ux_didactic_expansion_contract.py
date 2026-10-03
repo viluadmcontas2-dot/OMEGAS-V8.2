@@ -13,7 +13,6 @@ service = read("app/src/main/java/com/omegas/prohub/service/TelemetryForegroundS
 runtime = read("app/src/main/java/com/omegas/prohub/ecu/NativeRuntimeManager.kt")
 api = read("app/src/main/assets/ui/core/native-api.js")
 index = read("app/src/main/assets/ui/index.html")
-learning = read("app/src/main/assets/ui/screens/learning.js")
 learning_model = read("app/src/main/assets/ui/core/learning-model.js")
 physical_grid = read("app/src/main/assets/ui/components/physical-grid.js")
 app = read("app/src/main/assets/ui/app.js")
@@ -38,36 +37,16 @@ assert "this.fullSnapshot()" in api
 assert "learningToleranceSettings" in api
 assert "setLearningToleranceControls" in api
 assert "resetLearningToleranceSettings" in api
-assert "learningDecision" in learning
-assert "reason_code" in learning
-assert "frame_count" in learning
-assert "LIMITES CONFIGURADOS" in learning
 # As quatro camadas humanas atuais vivem no shell da tela e o detalhe continua
 # separando explicitamente referência gasolina, observação GNV e diferença.
-assert ">Referência<" in index
-assert ">No GNV<" in index
-assert ">Diferença<" in index
-assert ">Sugestão<" in index
-assert "Gasolina esperada" in learning
-assert "No GNV agora" in learning
-assert "<dt>Diferença agora</dt>" in learning
-assert "<dt>Diferença estável</dt>" in learning
-assert "<dt>Tendência recente</dt>" in learning
-assert "comparisonTargetMs" in learning
-assert "comparisonObservedMs" in learning
-assert "source.petrolMs" in learning
 assert "mapBar" in learning_model
 assert "petrolMs" in learning_model
 assert "rpm" in learning_model
-assert "setInterval" not in learning
-assert "writeMap" not in learning
-assert "writeCurve" not in learning
 
 # Na multimídia fraca, app.js/Learning não perseguem pesos bilineares no DOM.
 # PhysicalGrid conserva apenas o tracing temporal limitado aprovado em #46,
 # sem timer próprio e sem qualquer rota de escrita ECU.
 assert "learning.grid.setTrace" not in app
-assert "continuousWeights" not in learning
 assert "setTrace(" in physical_grid
 assert "traceTrailMs = 1400" in physical_grid
 assert "traceTrailMax = 16" in physical_grid
@@ -79,10 +58,6 @@ assert "setTimeout" not in physical_grid
 assert "writeMap" not in physical_grid
 assert "protocolTransaction" not in physical_grid
 assert "function renderLightLiveContext" in app
-assert "learningLiveLabel" in app
-assert "célula ${row + 1}×${column + 1}" in app
-assert "A posição ao vivo é mostrada apenas como texto" in learning
-assert "A interpolação bilinear continua no Kotlin" in learning
 assert "physical-grid-with-axes" in physical_grid
 assert "setAxes(rpmBins, petrolBins)" in physical_grid
 assert ".cell-value{font-size:13px" in styles
@@ -90,10 +65,6 @@ assert ".cell-subvalue" in styles
 assert ".physical-grid-with-axes" in refine_styles
 
 # Tocar no mapa aprendido pode abrir a mesma autoridade do Mapa K, sem escrita.
-assert "data-edit-learning-cell" in learning
-assert "this.router.navigate('map'" in learning
-assert "origin: 'learning'" in learning
-assert "Abrir o editor não escreve na ECU" in learning
 
 # OBD removido do produto (decisão do dono): a API não expõe mais OBD.
 assert "connectObd" not in api
