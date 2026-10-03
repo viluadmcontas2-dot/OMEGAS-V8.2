@@ -283,6 +283,47 @@ class RefinoRenderTest {
 
 
     @Test
+    fun startWaitsForStopThatIsSealingJournalDelivery() {
+        val scenario = launch()
+        var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null
+        try {
+            val service = service(scenario)
+            recorder = service.sessionRecorder
+            assertTrue(recorder.start("EVIDENCE_START_STOP_RACE").optBoolean("ok"))
+            synth(service, "GASOLINA")
+            synth(service, "GNV", ratio = 1.12)
+            val journalLock = TelemetryForegroundService::class.java.getDeclaredField("journalRecordingLock").apply {
+                isAccessible = true
+            }.get(service)
+            val axis = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
+            val transition = Thread {
+                service.refinementJournal.recordCurveWrite(
+                    IntArray(30) { 16384 }, IntArray(30) { 17000 }, axis,
+                    service.equivalence.index(), "SIMULATED_WRITE_DURING_START_STOP",
+                )
+            }
+            val stopped = AtomicBoolean(false)
+            val restarted = AtomicBoolean(false)
+            val stop = Thread { service.stopSessionRecording("EVIDENCE_STOP"); stopped.set(true) }
+            val start = Thread { service.startSessionRecording("EVIDENCE_RESTART"); restarted.set(true) }
+            synchronized(journalLock) {
+                transition.start()
+                waitFor(1_000L) { transition.state == Thread.State.BLOCKED }
+                stop.start()
+                waitFor(1_000L) { stop.state == Thread.State.BLOCKED }
+                start.start()
+                SystemClock.sleep(250L)
+                assertTrue("novo início não pode atravessar uma parada que ainda sela o Journal", !restarted.get())
+            }
+            transition.join(5_000L)
+            stop.join(5_000L)
+            start.join(5_000L)
+            assertTrue(stopped.get())
+            assertTrue(restarted.get())
+        } finally { recorder?.stop("EVIDENCE_CLEANUP"); scenario.close() }
+    }
+
+    @Test
     fun stopSessionWaitsForTransitionAlreadyInProgress() {
         val scenario = launch()
         var recorder: com.omegas.prohub.diagnostics.SessionRecorder? = null
