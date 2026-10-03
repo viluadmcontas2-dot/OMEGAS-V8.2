@@ -56,3 +56,14 @@ Correção preserva durationAt e clock domain no estado v1 compatível; versão 
 tentativa segura e exige nova ECU; delta negativo após reboot não inventa duração.
 VERIFICADO significa comparação encerrada: somente CONFIRMADA por faixa afirma tolerância.
 Classe 2 até GREEN remoto; P5 completo de todos os módulos e corpus fechado ainda pendentes.
+
+
+## AF1 — silêncio não confirma protocolo
+Contrato CICLO-DE-VIDA já integrado em #121 exige que o host jamais conclua AutoMatch por silêncio.
+AGENTS e blueprint exigem presunção crítica; contador abaixo do máximo, sem máximo lido,
+aquisição completa e ausência de evento não provam finalização nem bloqueiam nova escrita nativa.
+O teste legado "aquisição completa e silêncio contam como ECU parou" codificava essa presunção.
+Commit isolado troca a expectativa por ECU_TRABALHANDO/ecuDone=false, mantém acompanhamento
+do contador novo. Acrescenta testes independentes contra aquisição completa silenciosa e latch
+de conclusão sobrevivendo à perda do contador. Ambos têm de falhar na fonte 2677823 antes do fix.
+Nem tolerâncias/vereditos, nem ACK/readback são relaxados. Classe 1 contrato; RED classe 2 pendente.

@@ -75,6 +75,30 @@ class RefinementLifecycleRegressionTest {
         assertFalse(out.getBoolean("automatic"))
     }
 
+    @Test fun acquisitionSilenceNeverConfirmsNativeCompletion() {
+        val p = RefinementAutopilot(null) { now }
+        val acquired = JSONObject().put("points", JSONArray().apply {
+            for (fuel in listOf("GNV", "GASOLINA")) for (zone in 0..3)
+                put(JSONObject().put("fuel", fuel).put("zone", zone).put("zoneAcquired", true).put("state", "VALIDO"))
+        })
+        val working = JSONObject().put("autoMatchCount", 1).put("maxAutomatch", JSONObject.NULL).put("autoCalEnabled", 1)
+        p.observe(true, working, acquired, index(1.12), noJournal, 0)
+        repeat(220) { now += 3_000L; p.observe(true, working, acquired, index(1.12), noJournal, 0) }
+        assertEquals("ECU_TRABALHANDO", p.json().getString("phase"))
+        assertFalse(p.json().getBoolean("ecuDone"))
+    }
+
+    @Test fun nativeCompletionCannotOutliveMissingCounter() {
+        val p = RefinementAutopilot(null) { now }
+        val acquired = JSONObject().put("points", JSONArray())
+        assertEquals("ESTAVEL", p.observe(true, done(), acquired, index(), noJournal, 0).getString("phase"))
+        now += 3_000L
+        val missing = JSONObject().put("autoCalEnabled", 1)
+        val after = p.observe(true, missing, acquired, index(), noJournal, 0)
+        assertFalse("contador anterior não autoriza outra observação", after.getBoolean("ecuDone"))
+        assertEquals("ECU_TRABALHANDO", after.getString("phase"))
+    }
+
     @Test fun reopeningAppCannotResetReadingDeadline() {
         val dir = java.nio.file.Files.createTempDirectory("refino-restart").toFile()
         try {
