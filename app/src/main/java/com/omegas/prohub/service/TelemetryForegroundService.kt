@@ -726,9 +726,8 @@ class TelemetryForegroundService : Service() {
             kFactor.beginUsbSession(sessionId)
             nativeAutoCal.beginUsbSession(sessionId)
             if (!wasConnected) enginePausedByUser = false
-            if (settings.sessionRecorderEnabled && settings.sessionRecorderAutoStartOnUsb &&
-                !sessionRecorder.statusObject().optBoolean("recording")
-            ) {
+            // A gravação é sempre automática: não depende de botão nem de preferência.
+            if (!sessionRecorder.statusObject().optBoolean("recording")) {
                 sessionRecorder.start(
                     "MP48 conectado",
                     JSONObject()

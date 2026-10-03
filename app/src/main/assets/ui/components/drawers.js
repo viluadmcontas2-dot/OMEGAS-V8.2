@@ -66,15 +66,7 @@
     handleToolClick(event) {
       const target = event.target.closest('button');
       if (!target) return;
-      if (target.matches('[data-session-start]')) {
-        const result = this.api.startSession('registro manual pela interface');
-        this.notifyResult(result, 'Gravação de diagnóstico iniciada.');
-        this.refreshSessionStatus(result);
-      } else if (target.matches('[data-session-stop]')) {
-        const result = this.api.stopSession('parada manual pela interface');
-        this.notifyResult(result, 'Gravação de diagnóstico encerrada.');
-        this.refreshSessionStatus(result);
-      } else if (target.matches('[data-session-settings]')) {
+      if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
       } else if (target.matches('[data-export-session]')) {
         this.api.exportSession(target.dataset.exportSession || '');
@@ -139,7 +131,7 @@
         telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 250),
         maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 256),
         keepSessions: Math.max(20, Number(host.querySelector('[data-session-keep]')?.value || 20)),
-        autoStartOnUsb: host.querySelector('[data-session-autostart]')?.checked === true,
+        autoStartOnUsb: true,
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
       const result = this.api.setSessionSettings(settings);
@@ -268,17 +260,13 @@
         </section>
 
         <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
-          <header><div><small>SESSÕES</small><h3>${recording ? 'Gravando esta sessão' : 'Gravação parada'}</h3></div><span>${recording ? 'GRAVANDO' : 'PARADA'}</span></header>
+          <header><div><small>SESSÕES</small><h3>${recording ? 'Gravando esta sessão' : 'Começa sozinha ao conectar a ECU'}</h3></div><span>${recording ? 'GRAVANDO' : 'AUTOMÁTICA'}</span></header>
           <div class="recorder-metrics">
             <span><b>${durationLabel(status.durationMs)}</b> duração</span>
             <span><b>${rules().megabytesLabel(mb)}</b> usados</span>
             <span><b>${rules().count(status.events)}</b> eventos</span>
           </div>
           <div class="recorder-space"><i style="width:${fullness.toFixed(1)}%"></i></div>
-          <div class="recorder-actions">
-            <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Iniciar sessão</button>
-            <button type="button" class="${recording ? 'secondary' : 'quiet-button'}" data-session-stop ${recording ? '' : 'disabled'}>Encerrar</button>
-          </div>
           <div class="recorded-session-list">
             ${sessions.length ? sessions.slice(0, 8).map(item => {
               const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
@@ -327,7 +315,6 @@
             </select></label>
             <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
             <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
-            <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar a ECU</span></label>
             <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
           </div>
           <p>Cada sessão vira <b>um só arquivo ZIP</b> em <b>Download/Omegas</b>, pronto quando ela termina (ou na próxima abertura do app, se ele fechar no meio). O app guarda as ${Math.max(20, Number(settings.keepSessions || 20))} sessões mais recentes e nunca apaga uma que ainda não foi copiada para essa pasta.</p>
