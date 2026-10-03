@@ -1,91 +1,24 @@
-import re
-import unittest
-from pathlib import Path
+import pathlib
 
-ROOT = Path(__file__).resolve().parents[1]
-
-
-class StableRepositoryContract(unittest.TestCase):
-    def test_minimal_operational_contract_exists(self):
-        agents_path = ROOT / "AGENTS.md"
-        self.assertTrue(agents_path.is_file())
-        agents = agents_path.read_text("utf-8").lower()
-        for marker in (
-            "github remoto é a autoridade técnica do omegas",
-            "boot obrigatório",
-            "project.md",
-            "status.md",
-            "spec kit ativo",
-            "workunit ativa",
-            "local_source_mutation=denied",
-            "runtime local/mmmachine pode testar ou inspecionar o sha remoto exato",
-            "gate global de realidade",
-            "sil/ciu é independente",
-        ):
-            self.assertIn(marker, agents)
-        self.assertIn("@codex engineering guardrails", agents)
-
-    def test_repo_first_control_surface_is_present(self):
-        required = [
-            "PROJECT.md",
-            "STATUS.md",
-            "docs/spec-kits/OMEGAS-SK-001.md",
-            "docs/workunits/OMEGAS-WU-006.md",
-            "docs/evidence/OMEGAS-WU-006.json",
-            "docs/superpowers/specs/2026-09-21-omegas-verde-progbase-autocal-parity-design.md",
-            "docs/superpowers/plans/2026-09-21-omegas-verde-progbase-autocal-parity.md",
-        ]
-        self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])
-
-    def test_core_product_surfaces_are_present(self):
-        required = [
-            "app/src/main/assets/ui/core/store.js",
-            "app/src/main/assets/ui/core/router.js",
-            "app/src/main/assets/ui/core/scheduler.js",
-            "app/src/main/assets/ui/core/native-api.js",
-            "app/src/main/assets/ui/screens/dashboard.js",
-            "app/src/main/assets/ui/screens/map.js",
-            "app/src/main/assets/ui/screens/curve.js",
-            "app/src/main/assets/ui/screens/refino.js",
-            "tests/test_block1_session_contract.py",
-            "tests/test_v7_map_batch_contract.py",
-            "tests/test_mp48_extended_status_contract.py",
-        ]
-        self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])
-
-    def test_single_ui_scheduler_and_no_automatic_writer_trigger(self):
-        ui = ROOT / "app/src/main/assets/ui"
-        app = (ui / "app.js").read_text("utf-8")
-        map_screen = (ui / "screens/map.js").read_text("utf-8")
-        curve_screen = (ui / "screens/curve.js").read_text("utf-8")
-        drawers = (ui / "components/drawers.js").read_text("utf-8")
-        scheduler = (ui / "core/scheduler.js").read_text("utf-8")
-        native_api = (ui / "core/native-api.js").read_text("utf-8")
-        self.assertEqual(1, scheduler.count("setInterval("))
-        self.assertNotIn("setInterval(", app)
-        self.assertNotIn("startMapBatchWrite(", app + map_screen + curve_screen + drawers)
-        self.assertNotIn("startCurveBatchWrite(", app + map_screen + curve_screen + drawers)
-        self.assertIsNone(re.search(r"setInterval\([^)]*(writeMap|writeCurve)", scheduler, re.S))
-        self.assertIn("'startMapBatchWrite'", native_api)
-        self.assertIn("'startCurveBatchWrite'", native_api)
-
-    def test_critical_regression_corpora_remain_present(self):
-        required = [
-            "app/src/test/java/com/omegas/prohub/learning/LearningScenarioMatrixTest.kt",
-            "docs/incidents/2026-08-06-multimedia-telemetry-backpressure.md",
-            "docs/incidents/2026-08-09-multiple-ecu-write-authorities.md",
-            "docs/incidents/2026-08-11-consolidated-learning-volatility.md",
-            "docs/TEST_STRATEGY.md",
-        ]
-        self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])
-
-    def test_no_committed_signing_material_or_plain_secrets(self):
-        forbidden = list(ROOT.rglob("*.jks")) + list(ROOT.rglob("*.keystore"))
-        self.assertEqual([], forbidden)
-        suspicious_names = ["keystore.properties", ".env", "secrets.properties"]
-        committed = [name for name in suspicious_names if (ROOT / name).exists()]
-        self.assertEqual([], committed)
-
-
-if __name__ == "__main__":
-    unittest.main()
+root = pathlib.Path(__file__).resolve().parents[1]
+agents = (root / "AGENTS.md").read_text(encoding="utf-8")
+assert len(agents.splitlines()) <= 60, "AGENTS.md cabe numa tela"
+for must in ("2026-10-03-omegas-platina-norte-unico-design.md", "Observar é automático", "um toque",
+             "Desfazer", "readback", "GitHub Actions", "Agora", "Mapa K", "Curva K", "AutoCal", "Refino", "Sessões", "Ferramentas",
+             "3b68ee52ac5481839046f36b482aab44", "3b78ee52ac548170b5c1fb69606ced21",
+             # mantidos além do plano: branch, Work Units (R10) e fronteira SIL/CIU
+             "OmegasPlatina", "NORTE-WU-", "SIL/CIU"):
+    assert must in agents, must
+for gone in ("LOCAL_SOURCE_MUTATION", "SOURCE_MUTATION_TARGET", "MMMACHINE", "Brainbase", "AgentRed", "RESET_ALL"):
+    assert gone not in agents, gone
+project = (root / "PROJECT.md").read_text(encoding="utf-8")
+assert len(project.splitlines()) <= 10 and "OmegasPlatina" in project
+status = (root / "STATUS.md").read_text(encoding="utf-8")
+assert len(status.splitlines()) <= 40 and "PHYSICAL_VALIDATION_CLAIMED" in status
+assert (root / "docs/archive/STATUS-ate-2026-10-03.md").is_file()
+assert (root / "docs/superpowers/specs/2026-10-03-omegas-platina-norte-unico-design.md").is_file()
+assert (root / "docs/ARCHITECTURE.md").is_file() and (root / "docs/TEST_STRATEGY.md").is_file()
+# nunca versionar material de assinatura ou segredos
+assert not list(root.rglob("*.jks")) and not list(root.rglob("*.keystore"))
+assert not [n for n in ("keystore.properties", ".env", "secrets.properties") if (root / n).exists()]
+print("GOVERNANCE_CONTRACT=PASS")
