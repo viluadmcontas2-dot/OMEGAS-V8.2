@@ -286,6 +286,22 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     fun drivingPairs(): List<EvidencePair> =
         pairs().filter { it.rpm >= DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS }
 
+    private var cachedFine: Pair<Long, List<FineBins.Bin>>? = null
+
+    /**
+     * Lote H: os 54 bins finos da condução (derivados dos pares, que já persistem: nada novo no arquivo). Cache por
+     * revisão; a leitura estável nova só avança a revisão e o recálculo é O(pares), uma vez por consulta.
+     */
+    fun fineBins(): List<FineBins.Bin> {
+        synchronized(lock) {
+            val revision = revisionCounter.get()
+            cachedFine?.takeIf { it.first == revision }?.let { return it.second }
+            val computed = FineBins.aggregate(drivingPairs())
+            cachedFine = revision to computed
+            return computed
+        }
+    }
+
     private fun computePairs(): List<EvidencePair> {
         // Grade RPM×MAP com célula = janela de casamento: só as 3×3 células vizinhas podem casar.
         // Mesmo resultado da busca exaustiva, sem 4000×1500 comparações por recálculo na multimídia.
@@ -337,6 +353,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                 .put("ecuShare", if (sel.isEmpty()) 0.0 else sel.count { it.ecuRef }.toDouble() / sel.size))
         }
         val global = median(all.map { ln(it.gasPetrolMs / it.petrolRefMs) })?.let(::exp)
+        val fine = FineBins.aggregate(all)
         val petrolCount: Int
         val gasCount: Int
         val reason: String
@@ -372,6 +389,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             // independe do trânsito; compara calibrações no mesmo carro. Unidade relativa.
             .put("gasPerAir", gasPerAir() ?: JSONObject.NULL)
             .put("bands", bands)
+            // Lote H: as 18 faixas da ECU (agregadas de 54 bins finos) e os intervalos ENTRE os pontos da ECU.
+            .put("bands18", FineBins.bands18Json(fine))
+            .put("betweenBands", FineBins.betweenJson(fine))
+            .put("fineGrid", JSONObject().put("count", FineBins.FINE_COUNT).put("perBand", FineBins.FINE_PER_BAND)
+                .put("fromMs", FineBins.GRID_LO_MS).put("toMs", FineBins.GRID_HI_MS).put("reservoir", FineBins.RESERVOIR))
             .put("coverageGuidance", coverageGuidance(bands) ?: JSONObject.NULL)
             .put("automatic", false)
         // Mudança estrutural durante o cálculo invalida o resultado; leitura nova só o deixa "velho" (revisão).

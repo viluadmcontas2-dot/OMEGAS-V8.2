@@ -162,6 +162,7 @@ object AutoMatchSnapshotAnalysis {
         pointGainScale: DoubleArray? = null,
         telemetryEpisodes: List<Int> = emptyList(),
         holdMinStepLog: Double = 0.0,
+        fineBins: List<FineBins.Bin>? = null,
     ): JSONObject {
         val fields = fieldsByKey(snapshot.optJSONArray("fields") ?: JSONArray())
         fun valid(field: AutoCalProtocol.Field, elements: Int): IntArray? {
@@ -210,6 +211,7 @@ object AutoMatchSnapshotAnalysis {
                     pointGainScale = pointGainScale,
                     telemetryEpisodes = telemetryEpisodes,
                     holdMinStepLog = holdMinStepLog,
+                    fineBins = fineBins,
                 ),
             )
             if (!result.available) {
