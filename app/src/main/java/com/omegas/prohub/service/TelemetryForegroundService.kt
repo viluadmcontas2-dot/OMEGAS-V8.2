@@ -14,6 +14,7 @@ import android.os.SystemClock
 import androidx.core.app.NotificationManagerCompat
 import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
+import com.omegas.prohub.autocal.EvidenceInvalidation
 import com.omegas.prohub.autocal.EquivalencePhases
 import com.omegas.prohub.autocal.RefinementJournal
 import com.omegas.prohub.autocal.StallWatch
@@ -214,11 +215,17 @@ class TelemetryForegroundService : Service() {
                 }
             },
             onConfirmedBatch = { payload ->
-                sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
-                // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação da curva perde validade.
-                equivalence.resetGas("MAPA_K_GRAVADO")
-                equivalenceRuntime.onGasReset("MAPA_K_GRAVADO", equivalencePhases)
-                refinementJournal.interrupt("MAPA_K_GRAVADO")
+                // Mapa K mudou o gás: o GNV medido antes não vale mais. Invalida PRIMEIRO; gravar a sessão
+                // (que pode falhar por disco cheio) só depois.
+                EvidenceInvalidation.run(
+                    invalidate = listOf(
+                        "resetGas" to { equivalence.resetGas("MAPA_K_GRAVADO") },
+                        "cerebro" to { equivalenceRuntime.onGasReset("MAPA_K_GRAVADO", equivalencePhases) },
+                        "journal" to { refinementJournal.interrupt("MAPA_K_GRAVADO") },
+                    ),
+                    record = { sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true) },
+                    warn = { log.add("WARN", "EVIDENCIA", it) },
+                )
                 link.markDataChanged("escrita K confirmada")
             },
         )
@@ -228,7 +235,6 @@ class TelemetryForegroundService : Service() {
             log = log,
             onBusyChanged = { stateChanged() },
             onConfirmedBatch = { payload ->
-                sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true)
                 recordCurveExperiment(payload)
                 link.markDataChanged("escrita K factor confirmada")
             },
@@ -837,6 +843,21 @@ class TelemetryForegroundService : Service() {
 
     /** Gravação de Curva K confirmada → experimento com o índice medido com a curva antiga. */
     private fun recordCurveExperiment(payload: JSONObject) {
+        // O índice "antes" precisa ser lido antes de a evidência ser invalidada.
+        val indexBefore = try { equivalence.index() } catch (_: Throwable) { null }
+        val rawNow = payload.optJSONObject("curve")?.optJSONArray("factorsRaw")?.takeIf { it.length() == 30 }
+        // Curva nova: o GNV medido com a antiga sai; a gasolina (referência) fica. Invalida PRIMEIRO.
+        EvidenceInvalidation.run(
+            invalidate = listOf(
+                "resetGas" to { equivalence.resetGas("CURVA_K_GRAVADA") },
+                "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_GRAVADA", equivalencePhases) },
+                "adoptCurve" to {
+                    rawNow?.let { raw -> equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) })) }
+                },
+            ),
+            record = { sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true) },
+            warn = { log.add("WARN", "EVIDENCIA", it) },
+        )
         try {
             val curve = payload.optJSONObject("curve") ?: return
             val axis = curve.optJSONArray("axisRaw") ?: return
@@ -854,20 +875,13 @@ class TelemetryForegroundService : Service() {
                 beforeRaw = beforeRaw,
                 afterRaw = afterRaw,
                 axisRaw = IntArray(30) { axis.optInt(it) },
-                indexBefore = equivalence.index(),
+                indexBefore = indexBefore ?: JSONObject(),
                 source = payload.optString("adjustmentId", "K_FACTOR"),
             )
             // Cada ponto que o dono acabou de mudar entra em prova no cérebro único.
             equivalenceRuntime.onCurveWritten(beforeRaw, afterRaw, equivalencePhases)
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Experimento não registrado: ${error.message}")
-        } finally {
-            // Curva nova: o GNV medido com a antiga sai; a gasolina (referência) fica.
-            equivalence.resetGas("CURVA_K_GRAVADA")
-            try { equivalenceRuntime.onGasReset("CURVA_K_GRAVADA", equivalencePhases) } catch (_: Exception) {}
-            payload.optJSONObject("curve")?.optJSONArray("factorsRaw")?.takeIf { it.length() == 30 }?.let { raw ->
-                equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
-            }
         }
     }
 
