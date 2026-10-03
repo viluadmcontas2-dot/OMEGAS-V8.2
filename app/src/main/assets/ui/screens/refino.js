@@ -325,9 +325,8 @@
         : op.phase === 'failed' ? 'Nada foi dado como gravado. Toque em "Entendi" e tente de novo quando a ECU estabilizar.'
           : pilot.next || '';
       setText('refinoHeadline', headline);
-      const gasReason = { AUTOMATCH_NATIVO: 'a ECU trocou a curva no automático', CURVA_K_GRAVADA: 'a Curva K foi gravada', MAPA_K_GRAVADO: 'o Mapa K foi gravado', CURVA_K_MUDOU_FORA_DO_APP: 'a curva mudou fora do app' }[eq.gasEpochReason];
-      const gasSince = finite(eq.gasEpochAt) ? new Date(eq.gasEpochAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-      const resetNote = gasReason && op.phase === 'idle' ? ` Nossos pontos de GNV recomeçaram às ${gasSince} porque ${gasReason} (o GNV medido com a curva antiga não vale para a nova).` : '';
+      const resetText = op.phase === 'idle' ? ns.DisplayRules?.gasResetNote(eq.gasEpochReason, eq.gasEpochAt) || '' : '';
+      const resetNote = resetText ? ` ${resetText}` : '';
       setText('refinoNext', next + resetNote);
       setText('refinoRatio', pct(eq.ratio));
       // Sem leitura da ECU o número é desconhecido: mostra "—", nunca 0.
