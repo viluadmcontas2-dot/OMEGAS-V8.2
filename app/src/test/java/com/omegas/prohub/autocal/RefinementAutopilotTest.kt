@@ -88,6 +88,16 @@ class RefinementAutopilotTest {
     }
 
     @Test
+    fun `trecho que piorou mas ja voltou para a tolerancia nao trava em restaurar`() {
+        val p = pilot()
+        val worse = JSONObject().put("latest", JSONObject().put("status", "PIOROU_EM_PARTE").put("bands", JSONArray().put(
+            JSONObject().put("fromMs", EquivalenceLedger.BANDS[0].first).put("verdict", "PIOROU"))))
+        val okNow = index(1.01 to 20, 1.0 to 20, 1.0 to 20, null to 0, null to 0)
+        assertEquals("ESTAVEL", p.observe(true, monitor(3), acquisition(18, 18), okNow, worse, 4).getString("phase"))
+        assertEquals("RESTAURAR_TRECHO", p.observe(true, monitor(3), acquisition(18, 18), offIndex, worse, 4).getString("phase"))
+    }
+
+    @Test
     fun `sem pares suficientes pede os pontos que faltam`() {
         val p = pilot()
         val r = p.observe(true, monitor(3), acquisition(18, 18), index(null to 2, 1.1 to 3, null to 0, null to 0, null to 0), noJournal, 0)

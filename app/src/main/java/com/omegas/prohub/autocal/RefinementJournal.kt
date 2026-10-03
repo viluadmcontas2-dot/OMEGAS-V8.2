@@ -27,6 +27,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val MIN_BAND_SAMPLES = 8
         /** Diferença abaixo disso é ruído de medição (~2%). */
         const val NOISE_LOG = 0.02
+        /** Dentro de ±3% depois da correção é "ok": a mesma tolerância do piloto. */
+        const val OK_AFTER_LOG = 0.0296
+        /** Só "piorou" se ficou mais de ~4% pior E acima de ~5% de erro. Menos que isso é ruído. */
+        const val WORSE_MARGIN_LOG = 0.04
+        const val WORSE_MIN_ERROR_LOG = 0.05
+        /** A oferta de restaurar vale por um tempo; depois o refino segue sozinho (nunca trava). */
+        const val RESTORE_OFFER_MS = 30 * 60_000L
         const val MIN_SCALE = 0.4
         const val MAX_SCALE = 1.3
         const val MAX_EXPERIMENTS = 40
@@ -132,8 +139,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                         val e0 = ln(rb)
                         val e1 = ln(ra)
                         val v = when {
-                            abs(e1) <= NOISE_LOG || abs(e1) <= abs(e0) * 0.35 -> "CONFIRMADA"
-                            abs(e1) > abs(e0) + NOISE_LOG -> "PIOROU"
+                            abs(e1) <= max(NOISE_LOG, OK_AFTER_LOG) || abs(e1) <= abs(e0) * 0.35 -> "CONFIRMADA"
+                            abs(e1) > abs(e0) + WORSE_MARGIN_LOG && abs(e1) > WORSE_MIN_ERROR_LOG -> "PIOROU"
                             e0 * e1 < 0 -> "PASSOU"
                             else -> "CURTA"
                         }
@@ -204,7 +211,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
 
     /** Pontos a restaurar do último experimento: só os das faixas que pioraram. */
     fun restorePoints(): JSONArray = synchronized(lock) {
-        val exp = experiments.lastOrNull { it.optString("status") == "PIOROU_EM_PARTE" } ?: return JSONArray()
+        // Só o último experimento conta, e só por um tempo: oferta velha não prende o refino.
+        val exp = experiments.lastOrNull()?.takeIf { it.optString("status") == "PIOROU_EM_PARTE" } ?: return JSONArray()
+        if (clock() - exp.optLong("closedAt", 0L) > RESTORE_OFFER_MS) return JSONArray()
         val axis = exp.optJSONArray("axisRaw") ?: return JSONArray()
         val before = exp.optJSONArray("beforeRaw") ?: return JSONArray()
         val after = exp.optJSONArray("afterRaw") ?: return JSONArray()

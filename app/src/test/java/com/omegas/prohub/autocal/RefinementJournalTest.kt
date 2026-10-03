@@ -59,6 +59,40 @@ class RefinementJournalTest {
     }
 
     @Test
+    fun `diferenca de poucos por cento nao e piorou`() {
+        val journal = RefinementJournal(null)
+        val before = IntArray(30) { 16384 }
+        val after = before.copyOf().also { for (i in 5..29) it[i] = 17000 }
+        write(journal, before, after, index(1.02 to 20, 1.02 to 20, 1.02 to 20, 1.02 to 20, 1.02 to 20))
+        journal.evaluate(index(1.045 to 12, 1.04 to 12, 1.045 to 12, 1.05 to 12, 1.04 to 12))
+        val latest = journal.json().getJSONObject("latest")
+        assertEquals("VERIFICADO", latest.getString("status"))
+        for (i in 0 until latest.getJSONArray("bands").length()) {
+            assertTrue(latest.getJSONArray("bands").getJSONObject(i).getString("verdict") != "PIOROU")
+        }
+        assertEquals(0, journal.restorePoints().length())
+    }
+
+    @Test
+    fun `oferta de restaurar expira e so vale para o ultimo experimento`() {
+        var now = 1_000L
+        val journal = RefinementJournal(null) { now }
+        val before = IntArray(30) { 16384 }
+        val after = before.copyOf().also { for (i in 5..29) it[i] = 18000 }
+        write(journal, before, after, index(1.05 to 20, 1.06 to 20, 1.05 to 20, 1.02 to 20, 1.03 to 20))
+        journal.evaluate(index(0.96 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 10, 1.0 to 10))
+        assertTrue(journal.restorePoints().length() > 0)
+        now += RefinementJournal.RESTORE_OFFER_MS + 1
+        assertEquals(0, journal.restorePoints().length())
+        now = 2_000L
+        val journal2 = RefinementJournal(null) { now }
+        write(journal2, before, after, index(1.05 to 20, 1.06 to 20, 1.05 to 20, 1.02 to 20, 1.03 to 20))
+        journal2.evaluate(index(0.96 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 10, 1.0 to 10))
+        write(journal2, after, after.copyOf().also { it[6] = 18100 }, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.0 to 20, 1.0 to 20))
+        assertEquals(0, journal2.restorePoints().length())
+    }
+
+    @Test
     fun `mapa K ou AutoMatch nativo no meio interrompe a verificacao`() {
         val journal = RefinementJournal(null)
         write(journal, IntArray(30) { 16384 }, IntArray(30) { 17000 }, index(1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20))
