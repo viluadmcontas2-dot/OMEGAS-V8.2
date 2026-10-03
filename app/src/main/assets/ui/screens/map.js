@@ -2,6 +2,9 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
+  // Palavras únicas de toda escrita na ECU (core/display-rules.js).
+  function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
+  function failureText(operation, fallback) { return root.OmegasUi.DisplayRules.failureText(operation, fallback); }
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
@@ -25,6 +28,9 @@
       this.dragStart = null;
       this.review = null;
       this.lastOperationState = '';
+      // Desfazer do Mapa K: id da foto (= id da escrita) e etapa ('' | 'preparing' | 'writing').
+      this.undoId = '';
+      this.restorePhase = '';
       this.pendingContext = null;
       this.liveContext = null;
       this.ensureContextChrome();
@@ -47,14 +53,14 @@
         back.id = 'mapBackToLearning';
         back.type = 'button';
         back.className = 'quiet-button';
-        back.textContent = 'Voltar ao aprendizado';
+        back.textContent = 'Voltar à Curva K';
         actions.prepend(back);
       }
     }
 
     bind() {
       document.getElementById('mapReadButton')?.addEventListener('click', () => this.startRead());
-      document.getElementById('mapBackToLearning')?.addEventListener('click', () => this.router?.navigate('learning'));
+      document.getElementById('mapBackToLearning')?.addEventListener('click', () => this.router?.open('curve', 'learning'));
       document.getElementById('mapSelectAll')?.addEventListener('click', () => {
         try { this.editor.selectAll(); this.review = null; this.renderEditor(); this.refreshSelectionPreview(); }
         catch (error) { this.alert(error.message); }
@@ -72,10 +78,14 @@
       }));
       document.getElementById('mapReviewButton')?.addEventListener('click', () => this.writePrepared());
       document.getElementById('mapDismissResult')?.addEventListener('click', () => this.dismissResult());
+      document.getElementById('mapUndoButton')?.addEventListener('click', () => this.undoLast());
+      document.getElementById('mapRereadButton')?.addEventListener('click', () => { this.dismissResult(); this.startRead(); });
     }
 
     onEnter(context) {
       this.pendingContext = context || null;
+      // O slot "última operação" é compartilhado com a Curva K/Refino: nunca herdar o estado de outra tela.
+      if (this.store.get().map?.state !== 'writing') this.lastOperationState = '';
       this.root?.classList.toggle('from-learning', context?.origin === 'learning');
       if (!this.editor.hasMap() && !this.reading) {
         this.startRead(true);
@@ -335,14 +345,17 @@
       if (!this.review?.items?.length) return;
       const result = this.api.writeMap(this.review.items, 0, 0, 'Ajuste manual confirmado na UI clean-slate');
       if (!result?.ok || !result?.started) {
-        this.alert(result?.error || 'A escrita não iniciou.');
+        this.alert(failureText(result, 'A escrita não iniciou.'));
         this.review = null;
         this.renderEditor();
         return;
       }
       this.root?.classList.add('is-writing');
       this.lastOperationState = '';
-      text('mapOperationTitle', 'Escrita manual em andamento');
+      this.undoId = '';
+      this.restorePhase = '';
+      this.showResultButtons(false, false);
+      text('mapOperationTitle', wording().writing);
       text('mapOperationMessage', `0 de ${this.review.count} células confirmadas`);
       this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result, review: this.review } });
     }
@@ -353,7 +366,91 @@
       this.renderEditor();
     }
 
+    /** Botões do cartão de resultado: Desfazer (foto desta escrita) e Reler ECU (depois de falha parcial). */
+    showResultButtons(undo, reread) {
+      const undoButton = document.getElementById('mapUndoButton');
+      if (undoButton) undoButton.hidden = !(undo && this.undoId);
+      const rereadButton = document.getElementById('mapRereadButton');
+      if (rereadButton) rereadButton.hidden = !reread;
+    }
+
+    /**
+     * Desfazer do Mapa K (um toque): relê o mapa (somente leitura), calcula o que volta ao valor da
+     * foto desta escrita e grava de volta pelo mesmo escritor em lote, com readback.
+     */
+    undoLast() {
+      if (!this.undoId || this.reading || this.store.get().map?.state === 'writing') return;
+      const prepared = this.api.prepareMapRestore(this.undoId);
+      if (!prepared?.ok || !prepared?.started) {
+        this.alert(failureText(prepared, 'Não foi possível preparar o Desfazer do Mapa K.'));
+        return;
+      }
+      this.restorePhase = 'preparing';
+      this.lastOperationState = '';
+      this.root?.classList.remove('has-result');
+      this.root?.classList.add('is-writing');
+      text('mapOperationTitle', 'Relendo o Mapa K da ECU…');
+      text('mapOperationMessage', 'Somente leitura: nada foi enviado à ECU.');
+      this.store.patch({ map: { ...this.store.get().map, state: 'writing' } });
+    }
+
+    finishRestoreStep(operation) {
+      this.restorePhase = '';
+      if (!operation.ok || operation.state !== 'COMPLETED') {
+        this.settleWriteFailure({ ...operation, ok: false }, 'Não foi possível preparar o Desfazer.');
+        return;
+      }
+      const cells = Array.isArray(operation.cells) ? operation.cells : [];
+      if (!cells.length) {
+        this.root?.classList.remove('is-writing');
+        this.root?.classList.add('has-result');
+        const result = document.getElementById('mapOperationResult');
+        if (result) {
+          result.dataset.level = 'ok';
+          result.querySelector('b').textContent = 'Nada a desfazer';
+          result.querySelector('span').textContent = 'A ECU já está igual à foto de antes da gravação.';
+        }
+        this.showResultButtons(false, false);
+        this.store.patch({ map: { ...this.store.get().map, state: 'ready' } });
+        return;
+      }
+      const started = this.api.restoreMap(cells, this.undoId);
+      if (!started?.ok || !started?.started) {
+        this.settleWriteFailure({ ...started, ok: false }, 'A restauração do Mapa K não iniciou.');
+        return;
+      }
+      this.restorePhase = 'writing';
+      this.lastOperationState = '';
+      text('mapOperationTitle', wording().writing);
+      text('mapOperationMessage', `0 de ${cells.length} células confirmadas`);
+    }
+
+    settleWriteFailure(operation, fallback) {
+      this.root?.classList.remove('is-writing');
+      this.root?.classList.add('has-result');
+      // Falha no meio do lote: células já receberam ACK, então a ECU pode estar parcialmente alterada.
+      const partial = operation.ecuPartiallyChanged === true || operation.partial === true;
+      const done = Number(operation.confirmedCells) || 0;
+      const result = document.getElementById('mapOperationResult');
+      if (result) {
+        result.dataset.level = 'critical';
+        result.querySelector('b').textContent = partial ? 'ECU parcialmente alterada' : wording().failedTitle;
+        const why = failureText(operation, fallback || 'Releitura obrigatória.');
+        result.querySelector('span').textContent = partial
+          ? `${done} célula${done === 1 ? '' : 's'} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${why} Releia a ECU para ver o estado real.`
+          : why;
+      }
+      const lastId = Array.isArray(operation.adjustmentIds) ? String(operation.adjustmentIds[operation.adjustmentIds.length - 1] || '') : String(operation.backupId || '');
+      if (partial && lastId) this.undoId = lastId;
+      this.showResultButtons(partial, true);
+      this.editor.reset();
+      this.store.patch({ map: { ...this.store.get().map, state: 'failed' } });
+    }
+
     pollWrite() {
+      // Só quem está gravando lê o slot compartilhado: um BATCH_CONFIRMED velho da Curva K/Refino
+      // nunca vira "Gravado" no Mapa.
+      if (this.store.get().map?.state !== 'writing') return;
       const operation = this.api.mapWriteOperation();
       if (!operation || operation.state === 'IDLE' || operation.state === 'UNAVAILABLE') return;
       if (operation.state === this.lastOperationState && !operation.busy) return;
@@ -364,31 +461,34 @@
       text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
 
       if (operation.busy) {
-        text('mapOperationTitle', operation.writerMessage || 'Checkpoint · escrita · ACK · readback');
+        text('mapOperationTitle', operation.writerMessage || wording().stages.join(' · '));
+        return;
+      }
+      if (this.restorePhase === 'preparing') {
+        // A prévia do Desfazer não é uma gravação: só leva ao passo seguinte.
+        this.finishRestoreStep(operation);
         return;
       }
       if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
         this.root?.classList.remove('is-writing');
         this.root?.classList.add('has-result');
+        const restored = this.restorePhase === 'writing';
+        this.restorePhase = '';
         const result = document.getElementById('mapOperationResult');
         if (result) {
           result.dataset.level = 'ok';
-          result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações confirmadas pela ECU`;
-          result.querySelector('span').textContent = 'ACK e readback concluídos. O mapa será relido para atualizar a tela.';
+          result.querySelector('b').textContent = wording().doneTitle(`${operation.confirmedCells || operation.totalCells} célula(s)`);
+          result.querySelector('span').textContent = wording().doneDetail;
         }
+        // O Desfazer desta escrita é a foto que o Kotlin guardou antes dela (o id da escrita).
+        const ids = Array.isArray(operation.adjustmentIds) ? operation.adjustmentIds : [];
+        this.undoId = restored ? '' : String(ids[ids.length - 1] || '');
+        this.showResultButtons(!restored, false);
         this.editor.reset();
         this.startRead(true);
       } else if (operation.state === 'BATCH_PARTIAL_FAILED' || operation.ok === false) {
-        this.root?.classList.remove('is-writing');
-        this.root?.classList.add('has-result');
-        const failure = operation.failure || {};
-        const result = document.getElementById('mapOperationResult');
-        if (result) {
-          result.dataset.level = 'critical';
-          result.querySelector('b').textContent = 'A ECU não confirmou toda a operação';
-          result.querySelector('span').textContent = `${operation.confirmedCells || 0} células foram confirmadas antes da falha. ${failure.error || operation.error || 'Releitura obrigatória.'}`;
-        }
-        this.editor.reset();
+        this.restorePhase = '';
+        this.settleWriteFailure(operation, 'Releitura obrigatória.');
       }
     }
 

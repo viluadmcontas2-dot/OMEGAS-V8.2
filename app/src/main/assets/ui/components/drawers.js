@@ -12,8 +12,6 @@
   }
   // Regras únicas de exibição (core/display-rules.js): desconhecido mostra "—", nunca 0.
   const rules = () => root.OmegasUi.DisplayRules;
-  function bytesLabel(bytes) { return rules().bytesLabel(bytes); }
-  function durationLabel(ms) { return rules().durationLabel(ms); }
   function ageLabel(ms) {
     const label = rules().ageLabel(ms);
     return label === rules().DASH ? 'sem telemetria' : label;
@@ -24,7 +22,6 @@
       this.store = store;
       this.router = router;
       this.api = api;
-      this.suggestions = document.getElementById('suggestionDrawer');
       this.tools = document.getElementById('toolsDrawer');
       this.logLevel = 'ALL';
       this.logCategory = 'ALL';
@@ -42,18 +39,8 @@
     }
 
     bind() {
-      document.getElementById('toolsButton')?.addEventListener('click', () => {
-        this.store.patch({ toolsOpen: !this.store.get().toolsOpen, suggestionsOpen: false });
-      });
-      document.querySelectorAll('[data-close-drawer]').forEach(button => button.addEventListener('click', () => {
-        this.store.patch({ suggestionsOpen: false, toolsOpen: false });
-      }));
       document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
-      document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
-      document.getElementById('toolSelfTest')?.addEventListener('click', () => {
-        const result = this.api.selfTest();
-        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Autoteste concluído.' : (result?.error || 'Autoteste não concluído.') } });
-      });
+      // Exportar logs e autoteste são os botões data-tool-export-logs / data-tool-selftest, tratados em handleToolClick.
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('click', event => this.handleToolClick(event));
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('change', event => this.handleToolChange(event));
     }
@@ -63,8 +50,6 @@
       if (!target) return;
       if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
-      } else if (target.matches('[data-export-session]')) {
-        this.api.exportSession(target.dataset.exportSession || '');
       } else if (target.matches('[data-tool-battery-request]')) {
         this.api.requestBatteryOptimizationExemption?.();
         this.toolsSignature = '';
@@ -141,14 +126,9 @@
     }
 
     render(state) {
-      if (this.suggestions) this.suggestions.classList.toggle('open', state.suggestionsOpen === true);
-      if (this.tools) this.tools.classList.toggle('open', state.toolsOpen === true);
-      document.body.classList.toggle('drawer-open', state.suggestionsOpen === true || state.toolsOpen === true);
-      // #suggestionList pertence à fila persistente (app.js). Dois donos reescrevendo a
-      // mesma lista a cada 2 s faziam o toque sumir e a aba Sugestões parecer travada.
-      if (state.toolsOpen) this.renderTools(state);
+      this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
-      if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup, sessões e saúde do app';
+      if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup e saúde do app';
     }
 
     preserveSessionSettingsInteraction(host) {
@@ -165,8 +145,6 @@
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
-      const sessionsLoading = !Array.isArray(state.sessions);
-      const sessions = Array.isArray(state.sessions) ? state.sessions : [];
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
       const categories = [...new Set(logs.map(item => String(item.category || 'OUTROS').toUpperCase()))].sort();
@@ -175,10 +153,6 @@
         const category = String(item.category || 'OUTROS').toUpperCase();
         return (this.logLevel === 'ALL' || level === this.logLevel) && (this.logCategory === 'ALL' || category === this.logCategory);
       }).slice(-24).reverse();
-      const recording = status.recording === true;
-      const mb = finite(status.megabytes);
-      const limitMb = finite(status.limitMb ?? settings.maxSessionMb) || 0;
-      const fullness = limitMb > 0 && mb !== null ? Math.min(100, mb / limitMb * 100) : 0;
       const serviceHealthy = appStatus.serviceRunning === true && appStatus.engineStuck !== true;
 
       const battery = this.api.batteryOptimizationStatus?.() || {};
@@ -188,8 +162,7 @@
       const signature = JSON.stringify([
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
         Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
-        status.recording, status.events, mb === null ? null : Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
-        settings, sessionsLoading, sessions.map(item => [item.id, item.bytes, item.active]),
+        settings,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
@@ -222,46 +195,8 @@
           </div>
         </section>
 
-        <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
-          <header><div><small>SESSÕES</small><h3>${recording ? 'Gravando esta sessão' : 'Começa sozinha ao conectar a ECU'}</h3></div><span>${recording ? 'GRAVANDO' : 'AUTOMÁTICA'}</span></header>
-          <div class="recorder-metrics">
-            <span><b>${durationLabel(status.durationMs)}</b> duração</span>
-            <span><b>${rules().megabytesLabel(mb)}</b> usados</span>
-            <span><b>${rules().count(status.events)}</b> eventos</span>
-          </div>
-          <div class="recorder-space"><i style="width:${fullness.toFixed(1)}%"></i></div>
-          <div class="recorded-session-list">
-            ${sessions.length ? sessions.slice(0, 8).map(item => {
-              const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
-              const readableDate = rules().sessionDate(item);
-              const pctCng = (finite(item.cngTicks) || 0);
-              const pctPet = (finite(item.petrolTicks) || 0);
-              const totalTicks = pctCng + pctPet;
-              const gnvPercent = totalTicks > 0 ? Math.round((pctCng / totalTicks) * 100) : 0;
-              const gasPercent = totalTicks > 0 ? 100 - gnvPercent : 0;
-              return `
-              <article class="recorded-session-item">
-                <div class="recorded-session-header">
-                  <b>${escapeHtml(item.reason || 'Sessão')}</b>
-                  <span class="session-datetime">${readableDate}</span>
-                </div>
-                <div class="recorded-session-meta">
-                  <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · em andamento' : ''}${totalTicks > 0 ? ` · GNV ${gnvPercent}% · gasolina ${gasPercent}%` : ''}</span>
-                </div>
-                ${totalTicks > 0 ? `
-                <div class="session-fuel-bar" title="GNV: ${gnvPercent}% | Gasolina: ${gasPercent}%">
-                  <div class="fuel-segment cng" style="width: ${gnvPercent}%;"></div>
-                  <div class="fuel-segment petrol" style="width: ${gasPercent}%;"></div>
-                </div>
-                ` : ''}
-                <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
-              </article>`;
-            }).join('') : sessionsLoading ? '<p class="empty-copy">Lendo as sessões salvas…</p>' : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
-          </div>
-        </section>
-
         <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
-          <summary>Tamanho e retenção das sessões</summary>
+          <summary>Retenção das sessões</summary>
           <div class="diagnostic-settings-grid">
             <label><span>Telemetria salva</span><select data-session-telemetry>
               ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
@@ -277,7 +212,7 @@
         </details>
 
         <details class="tool-logs live-log-console" ${logsOpenBeforeRender ? 'open' : ''}>
-          <summary>Detalhes técnicos · log do sistema (${logs.length})</summary>
+          <summary>Detalhes técnicos (${logs.length} eventos do sistema)</summary>
           <div class="recorder-actions">
             <button type="button" class="secondary" data-tool-export-logs>Exportar logs</button>
             <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>

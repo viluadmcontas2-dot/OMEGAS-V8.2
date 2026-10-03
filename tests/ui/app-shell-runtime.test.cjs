@@ -60,7 +60,7 @@ test('Router aceita sete destinos humanos e limpa contexto antigo ao navegar', (
   assert.equal(router.navigate('curve'), true);
   assert.equal(store.get().route, 'curve');
   assert.equal(store.get().routeContext, null);
-  assert.equal(router.navigate('suggestions'), true);
+  assert.equal(router.navigate('sessions'), true);
   assert.equal(router.navigate('tools'), true);
   assert.equal(router.navigate('adjust'), false);
   assert.equal(storage.get('omegas-v8-route'), 'tools');

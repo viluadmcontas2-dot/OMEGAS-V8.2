@@ -20,21 +20,31 @@
 
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
-    map: ['AJUSTE LOCAL', 'Ajuste local'],
-    curve: ['AJUSTE GLOBAL', 'Ajuste global'],
+    map: ['MAPA K', 'Mapa K'],
+    curve: ['CURVA K', 'Curva K'],
     autocal: ['AUTO-CAL', 'AutoCal'],
     refino: ['REFINO', 'Refino'],
-    suggestions: ['DECIDIR', 'Sugestões'],
+    sessions: ['SESSÕES', 'Sessões'],
     tools: ['SISTEMA', 'Ferramentas'],
   };
 
   let renderedRoute = null;
   let previousGlobalSignature = '';
   let previousTelemetrySignature = '';
+  // Sequência do último quadro pintado: a ponte responde {changed:false} sem serializar se nada mudou.
+  let lastPresentSequence = -1;
   let telemetryPatchedAt = 0;
   let previousStatusSignature = '';
   let previousAlert = null;
-  let toastTimer = null;
+  // Sem timer de UI: o aviso some quando o relógio do scheduler (refreshStatus) vê o prazo vencido.
+  const TOAST_MS = 3600;
+  const OVERLAY_PROMPT_DELAY_MS = 5000;
+  // O AutoCal não precisa de mais que 5 Hz: a telemetria chega a 4–12 Hz e cada tick custa uma ida à ponte.
+  const AUTOCAL_CADENCE_MS = 200;
+  const startedAt = Date.now();
+  let overlayPromptPending = true;
+  let toastUntil = 0;
+  let previousEquivalenceSignature = '';
   let routeButtons = [];
   let screenNodes = [];
 
@@ -60,6 +70,11 @@
     const rules = (root.OmegasUi || ui).DisplayRules;
     return rules ? rules.fuelLabel(raw) : String(raw || '—').toUpperCase();
   }
+  /** Esquece o último quadro: o próximo tick pede e pinta o quadro inteiro. */
+  function resetPresentCursor() {
+    previousTelemetrySignature = '';
+    lastPresentSequence = -1;
+  }
   function isLiveRoute(route) {
     return ((root.OmegasUi || ui).LIVE_ROUTES || ['dashboard', 'map', 'autocal', 'refino']).includes(route);
   }
@@ -70,41 +85,13 @@
   function curveEvidenceVisible() {
     return document.querySelector('[data-screen="curve"] .evidence-disclosure')?.open === true;
   }
+  /** Depois de um quadro pintado, sem timer: dois requestAnimationFrame seguidos. */
   function afterPaint(task) {
     if (typeof root.requestAnimationFrame === 'function') {
-      root.requestAnimationFrame(() => root.setTimeout(task, 0));
+      root.requestAnimationFrame(() => root.requestAnimationFrame(task));
     } else {
-      root.setTimeout(task, 0);
+      task();
     }
-  }
-
-  function learningDecisionFromTelemetry(telemetry) {
-    const source = telemetry || {};
-    const live = source.live || source.data || source;
-    const sample = live.sample && typeof live.sample === 'object' ? live.sample : {};
-    return {
-      ok: source.ok !== false,
-      state: sample.state || live.sample_state || 'OBSERVING_ENGINE',
-      reason: sample.reason || live.sample_reason || 'Observando o motor',
-      reason_code: sample.reason_code || sample.reasonCode || live.sample_state || 'OBSERVING_ENGINE',
-      frame_count: Number(sample.frame_count ?? live.sample_frame_count ?? 0),
-      minimum_frames: Number(sample.minimum_frames ?? live.sample_minimum_frames ?? 0),
-      desired_frames: Number(sample.desired_frames ?? live.sample_desired_frames ?? 0),
-      duration_ms: Number(sample.duration_ms ?? live.sample_duration_ms ?? 0),
-      median_interval_ms: Number(sample.median_interval_ms ?? 0),
-      gap_ms: Number(sample.gap_ms ?? 0),
-      learning_eligible: sample.learning_eligible === true,
-      fuel_confirmed: sample.fuel_confirmed ?? live.fuel ?? null,
-      window_age_ms: Number(sample.window_age_ms ?? sample.duration_ms ?? 0),
-      window_budget_ms: Number(sample.window_budget_ms ?? 0),
-      frames_evicted: Number(sample.frames_evicted ?? 0),
-      cell_key: sample.cell_key || '',
-      cell_row: Number(sample.cell_row ?? -1),
-      cell_column: Number(sample.cell_column ?? -1),
-      quality: Number(sample.quality ?? live.learning_quality ?? 0),
-      plausibility_reasons: Array.isArray(sample.plausibility_reasons) ? sample.plausibility_reasons : [],
-      live,
-    };
   }
 
   function ensureScreen(route) {
@@ -112,6 +99,7 @@
     if (route === 'dashboard' && ui.DashboardScreen) instances.dashboard = new ui.DashboardScreen(store, api);
     if (route === 'map' && ui.MapScreen) instances.map = new ui.MapScreen(store, api, router);
     if (route === 'curve' && ui.CurveScreen) instances.curve = new ui.CurveScreen(store, api);
+    if (route === 'sessions' && ui.SessionsScreen) instances.sessions = new ui.SessionsScreen(store, api);
     return instances[route] || null;
   }
 
@@ -120,6 +108,7 @@
       renderedRoute = state.route;
       const meta = routeMeta[state.route] || routeMeta.dashboard;
       document.getElementById('app')?.classList.toggle('autocal-focus', state.route === 'autocal' || state.route === 'refino');
+      document.body.dataset.omegasRoute = state.route;
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
       routeButtons.forEach(button => {
@@ -152,8 +141,6 @@
       }
     }
 
-    updateSuggestionBadge(state);
-
     if (state.alert && state.alert !== previousAlert) {
       previousAlert = state.alert;
       showAlert(state.alert);
@@ -168,8 +155,7 @@
     const message = alert.message || String(alert);
     if (label && label.textContent !== message) label.textContent = message;
     toast.classList.add('show');
-    if (toastTimer) root.clearTimeout(toastTimer);
-    toastTimer = root.setTimeout(() => toast.classList.remove('show'), 3600);
+    toastUntil = Date.now() + TOAST_MS;
   }
 
   function telemetryVisualSignature(telemetry, route) {
@@ -222,13 +208,21 @@
   function refreshFast() {
     const route = store.get().route;
     if (isLiveRoute(route)) {
-      const envelope = api.presentSnapshot() || {};
-      const telemetry = envelope.data || {};
+      const envelope = api.presentSnapshot(lastPresentSequence) || {};
+      let telemetry = envelope.data || {};
+      if (envelope.changed === false && envelope.ok !== false) {
+        // Nada novo no Kotlin: reaproveita o último quadro e atualiza só a idade.
+        const age = Number(envelope.telemetryAgeMs);
+        telemetry = Object.assign({}, store.get().telemetry || {}, Number.isFinite(age) ? { telemetryAgeMs: age, ageMs: age } : {});
+      }
       const signature = `${route}:${telemetryVisualSignature(telemetry, route)}`;
       if (envelope.ok === false && store.get().telemetry?.valid !== false) {
         // A ponte falhou: o último valor não pode continuar com cara de ao vivo.
-        previousTelemetrySignature = '';
+        resetPresentCursor();
         store.patch({ telemetry: { valid: false, ageMs: -1, telemetryAgeMs: -1 } });
+      }
+      if (envelope.ok !== false && envelope.changed !== false) {
+        lastPresentSequence = Number.isFinite(Number(telemetry.sequence)) ? Number(telemetry.sequence) : -1;
       }
       if (envelope.ok !== false && signature !== previousTelemetrySignature) {
         previousTelemetrySignature = signature;
@@ -240,17 +234,17 @@
       }
     }
 
-    // Rota sem pump (Ajuste global, Sugestões, Ferramentas): o último valor não pode ficar na barra
+    // Rota sem pump (Curva K, Sessões, Ferramentas): o último valor não pode ficar na barra
     // de status e no painel flutuante como se fosse de agora. Vencido, vira desconhecido (—).
     const rules = (root.OmegasUi || ui).DisplayRules;
     if (rules?.offRouteTelemetryExpired(isLiveRoute(route), store.get().telemetry?.valid, telemetryPatchedAt, Date.now())) {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
       store.patch({ telemetry: { valid: false, ageMs: -1, telemetryAgeMs: -1 } });
     }
 
     const state = store.get();
     if (route === 'map' && instances.map && (state.map?.state === 'writing' || state.map?.state === 'reading')) instances.map.poll();
-    if (route === 'curve' && instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
+    if (route === 'curve' && instances.curve && (instances.curve.reading || instances.curve.writing || instances.curve.backupTask)) instances.curve.poll();
   }
 
   function refreshStatus() {
@@ -261,8 +255,25 @@
       previousStatusSignature = signature;
       store.patch({ status, demo: api.isDemo() });
     }
+    if (toastUntil && Date.now() >= toastUntil) {
+      toastUntil = 0;
+      byId('alertToast')?.classList.remove('show');
+    }
+    if (overlayPromptPending && Date.now() - startedAt >= OVERLAY_PROMPT_DELAY_MS) {
+      overlayPromptPending = false;
+      maybePromptOverlay(false);
+    }
     const state = store.get();
     if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
+  }
+
+  /** Cérebro de equivalência: null até o Kotlin expor `getEquivalence`; o Agora só mostra, nunca executa. */
+  function refreshEquivalence() {
+    const eq = api.equivalence ? api.equivalence() : null;
+    const signature = JSON.stringify(eq);
+    if (signature === previousEquivalenceSignature) return;
+    previousEquivalenceSignature = signature;
+    store.patch({ equivalence: eq });
   }
 
   function toolsEditing() {
@@ -279,12 +290,16 @@
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
 
+    if (route === 'dashboard') refreshEquivalence();
     if (route === 'tools') {
+      patch.sessionStatus = api.sessionStatus() || {};
+      patch.logs = api.logs() || [];
+    }
+    if (route === 'sessions') {
       patch.sessionStatus = api.sessionStatus() || {};
       // null = a lista ainda está sendo lida (a tela diz isso; não afirma "nenhuma sessão").
       const listed = api.sessions();
       patch.sessions = Array.isArray(listed) ? listed : null;
-      patch.logs = api.logs() || [];
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
@@ -292,72 +307,22 @@
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
       if (curve.needsLearning?.()) curve.renderLearning(updated);
     }
-    if (route === 'suggestions') {
-      utilities?.render(updated);
-      renderPersistentSuggestions(updated);
-    }
+    if (route === 'sessions') ensureScreen('sessions')?.render(updated);
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
-  }
-
-  let lastSuggestionSignature = '';
-  /** Curva refinada pronta no Refino entra na fila de decisões (só leitura do piloto). */
-  let refinementPhaseCache = { at: 0, value: null };
-  function refinementPhaseCached() {
-    // O piloto muda a cada minutos: uma consulta a cada 3 s basta (o menu é atualizado a cada tick).
-    const now = Date.now();
-    if (now - refinementPhaseCache.at >= 3000) {
-      refinementPhaseCache = { at: now, value: (root.OmegasUi || ui).AutoCalApi?.refinementPhase?.() || null };
-    }
-    return refinementPhaseCache.value;
-  }
-  /** Um só dono do número do menu: ajustes acionáveis + curva do refino pronta. Desconhecido não vira 0. */
-  function updateSuggestionBadge(state) {
-    const rules = (root.OmegasUi || ui).DisplayRules;
-    if (!rules) return;
-    const count = rules.pendingSuggestionCount([], Boolean(refinementSuggestion()));
-    const node = byId('suggestionCount');
-    if (!node || count === null) return;
-    setText('suggestionCount', count);
-    node.style.display = count === 0 ? 'none' : '';
-  }
-  function refinementSuggestion() {
-    const eq = refinementPhaseCached();
-    const phase = eq?.autopilot?.phase;
-    if (phase === 'PROPOSTA_PRONTA') return { title: 'Curva refinada pronta', text: eq.autopilot.headline || 'O refino tem uma curva para revisar.' };
-    if (phase === 'RESTAURAR_TRECHO') return { title: 'Um trecho piorou depois da gravação', text: 'Restaure só esse trecho no Refino.' };
-    return null;
-  }
-  function renderPersistentSuggestions(state) {
-    const host = byId('suggestionList');
-    if (!host) return;
-    const refinement = refinementSuggestion();
-    // Redesenhar a lista a cada 2 s fazia o toque sumir sob o dedo: só redesenha se o card mudou.
-    const signature = JSON.stringify(refinement);
-    if (signature === lastSuggestionSignature && host.childElementCount) return;
-    lastSuggestionSignature = signature;
-    updateSuggestionBadge(state);
-    if (!refinement) {
-      host.innerHTML = '<div class="drawer-empty"><b>Nenhuma decisão pendente</b><span>Quando o Refino tiver curva pronta ou trecho a restaurar, aparece aqui.</span></div>';
-      return;
-    }
-    host.innerHTML = `
-      <section class="suggestion-group" data-suggestion-group="REFINO"><header><div><small>REFINO</small><h3>${escapeHtml(refinement.title)}</h3><p>${escapeHtml(refinement.text)}</p></div><div class="suggestion-group-actions"><button type="button" class="primary" data-open-refino>Abrir Refino</button></div></header></section>
-    `;
-    host.querySelector('[data-open-refino]')?.addEventListener('click', () => router.navigate('refino'));
   }
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
-    scheduler.setCadenceMs(route === 'autocal' ? 50 : 200);
-    store.patch({ suggestionsOpen: route === 'suggestions', toolsOpen: route === 'tools' });
+    scheduler.setCadenceMs(route === 'autocal' ? AUTOCAL_CADENCE_MS : 200);
     if (route === 'dashboard') {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
+      refreshEquivalence();
       ensureScreen('dashboard')?.render(store.get());
       afterPaint(refreshFast);
       return;
     }
     if (route === 'map') {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
       ensureScreen('map')?.onEnter(context || store.get().routeContext);
       renderLightLiveContext(store.get(), 'map');
       afterPaint(() => { refreshFast(); refreshContext(); });
@@ -369,7 +334,7 @@
       return;
     }
     if (route === 'autocal') {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
       root.OmegasApp?.autoCalCockpit?.enter?.();
       afterPaint(() => {
         refreshFast();
@@ -381,9 +346,13 @@
       afterPaint(() => root.OmegasApp?.refino?.refresh?.(true));
       return;
     }
-    if (route === 'suggestions' || route === 'tools') {
-      if (route === 'suggestions') renderPersistentSuggestions(store.get());
-      if (route === 'tools' && !toolsEditing()) utilities?.render(store.get());
+    if (route === 'sessions') {
+      ensureScreen('sessions')?.render(store.get());
+      afterPaint(refreshContext);
+      return;
+    }
+    if (route === 'tools') {
+      if (!toolsEditing()) utilities?.render(store.get());
       afterPaint(refreshContext);
     }
   }
@@ -424,7 +393,7 @@
         refreshContext();
         const route = store.get().route;
         if (isLiveRoute(route)) {
-          previousTelemetrySignature = '';
+          resetPresentCursor();
           refreshFast();
         }
         if (route === 'map') instances.map?.poll();
@@ -493,6 +462,6 @@
 
   root.OmegasApp = { api, store, router, scheduler, screens: instances, promptOverlay: maybePromptOverlay };
   initialize();
-  // Depois do primeiro desenho, sem competir com a abertura do app.
-  root.setTimeout(() => maybePromptOverlay(false), 5000);
+  // Extensões carregadas depois (AutoCal, Refino, faixa de status) assinam este evento em vez de sondar com timer.
+  try { root.dispatchEvent(new root.Event('omegas-app-ready')); } catch (_) {}
 })(typeof window !== 'undefined' ? window : globalThis);

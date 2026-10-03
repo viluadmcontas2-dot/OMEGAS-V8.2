@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.calibration.SerialWriteGuard
 import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
@@ -34,6 +35,8 @@ class AutoCalNativeActionManager(
     private val fieldsForReceipt: List<AutoCalProtocol.Field> = AutoCalProtocol.READ_ONLY_FIELDS,
     private val onConfirmed: (JSONObject) -> Unit = {},
     private val onStateChanged: () -> Unit = {},
+    /** Trava única da serial: ação AutoCal e escrita K nunca rodam juntas. */
+    private val guard: SerialWriteGuard = SerialWriteGuard.shared,
 ) {
     enum class Action(
         val request: ByteArray,
@@ -120,6 +123,7 @@ class AutoCalNativeActionManager(
         Thread(runnable, "omegas-autocal-native-action").apply { isDaemon = true }
     }
     private val busy = AtomicBoolean(false)
+    @Volatile private var safetyCheckedPreparationId: String? = null
     private val lock = Any()
     private var preparation: Preparation? = null
     @Volatile private var status = baseStatus("IDLE", "Nenhuma ação nativa preparada", 0)
@@ -250,11 +254,22 @@ class AutoCalNativeActionManager(
                 return failure(it)
             }
             if (!busy.compareAndSet(false, true)) return failure("Outra ação AutoCal está em andamento")
+            if (!guard.tryAcquire(SerialWriteGuard.OWNER_AUTOCAL)) {
+                busy.set(false)
+                return failure("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento")
+            }
             preparation = null
             current
         }
         update("QUEUED", "Ação confirmada; enviando para a ECU", 0, prepared)
-        executor.execute { executePrepared(prepared) }
+        try {
+            executor.execute { executePrepared(prepared) }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            guard.release(SerialWriteGuard.OWNER_AUTOCAL)
+            busy.set(false)
+            synchronized(lock) { status.put("busy", false) }
+            return failure("O executor do AutoCal foi encerrado; reabra o aplicativo")
+        }
         return JSONObject()
             .put("ok", true)
             .put("started", true)
@@ -281,7 +296,9 @@ class AutoCalNativeActionManager(
 
     fun close() {
         synchronized(lock) { preparation = null }
-        executor.shutdownNow()
+        // Nunca interrompe uma ação em andamento (o reset K intercala 30 transações): com a ação
+        // ativa o executor só deixa de aceitar trabalho novo e termina a que já começou.
+        if (busy.get()) executor.shutdown() else executor.shutdownNow()
     }
 
     private fun executePrepared(prepared: Preparation) {
@@ -326,6 +343,7 @@ class AutoCalNativeActionManager(
                     .put("receiptId", failureReceipt.getString("id"))
             }
         } finally {
+            guard.release(SerialWriteGuard.OWNER_AUTOCAL)
             busy.set(false)
             synchronized(lock) { status.put("busy", false) }
             onStateChanged()
@@ -581,7 +599,10 @@ class AutoCalNativeActionManager(
                     "Contador AutoMatch ajustado e confirmado pela ECU · aquisição não foi pausada"
                 }
             }
-            else -> "ACK + readback específico confirmados pela ECU"
+            prepared.action.expectedEnableReadback != null || prepared.action == Action.RESET_K_FACTOR ->
+                "ACK + readback específico confirmados pela ECU"
+            // Reset de aquisição só confere campos-testemunha; contadores e zonas não são comparados.
+            else -> "A ECU respondeu (ACK) e o estado foi relido"
         }
         update(
             "CONFIRMED",
@@ -855,7 +876,12 @@ class AutoCalNativeActionManager(
         require(isConnected()) { "USB desconectado durante a ação AutoCal" }
         require(currentSessionId() == prepared.sessionId) { "Sessão USB mudou durante a ação AutoCal" }
         require(!otherCalibrationBusy()) { "Outra calibração assumiu a sessão" }
-        unsafeMutationReason()?.let { throw IllegalStateException(it) }
+        // A segurança (idade da telemetria etc.) é conferida UMA vez, antes do primeiro quadro.
+        // Depois que o lote começou, abortar entre quadros deixaria a ECU pela metade.
+        if (safetyCheckedPreparationId != prepared.id) {
+            unsafeMutationReason()?.let { throw IllegalStateException(it) }
+            safetyCheckedPreparationId = prepared.id
+        }
     }
 
     private fun update(

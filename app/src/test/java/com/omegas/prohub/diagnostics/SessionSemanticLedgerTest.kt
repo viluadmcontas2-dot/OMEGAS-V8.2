@@ -14,6 +14,23 @@ class SessionSemanticLedgerTest {
     @get:Rule val temporary = TemporaryFolder()
 
     @Test
+    fun `apagoes do motor sao contados para a tela de Sessoes`() {
+        val dir = temporary.newFolder("session_stalls")
+        val ledger = SessionSemanticLedger(
+            sessionDir = dir,
+            sessionId = "session_stalls",
+            physicalUsbSessionId = 1L,
+            startedAtMs = 1_000L,
+            startReason = "MP48 conectado",
+        )
+        assertEquals(0, ledger.snapshot(recording = true).getInt("blackouts"))
+        ledger.observe(1L, "engine_stall", "autocal", JSONObject().put("stalled", true), 2_000L)
+        ledger.observe(2L, "engine_stall", "autocal", JSONObject().put("stalled", true), 3_000L)
+        ledger.observe(3L, "engine_stall_after", "autocal", JSONObject(), 4_000L)
+        assertEquals(2, ledger.snapshot(recording = true).getInt("blackouts"))
+    }
+
+    @Test
     fun `snapshot nativo vira resumo util sem criar autoridade de calibracao`() {
         val dir = temporary.newFolder("session_case")
         val ledger = SessionSemanticLedger(

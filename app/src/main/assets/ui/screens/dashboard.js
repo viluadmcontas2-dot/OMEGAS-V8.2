@@ -48,13 +48,60 @@
         if (!this.refinoClickBound) {
           this.refinoClickBound = true;
           this.root.addEventListener("click", (event) => {
+            const next = event.target.closest && event.target.closest("[data-dash-next]");
+            if (next) {
+              // "Agora" só leva: abre a aba certa já posicionada; nunca executa nada.
+              const app = root.OmegasApp;
+              if (app && app.router && next.dataset.route) app.router.open(next.dataset.route, next.dataset.subpage || "");
+              return;
+            }
             if (event.target.closest && event.target.closest("[data-dash-refino]")) {
               const app = root.OmegasApp;
               if (app && app.router) app.router.navigate("refino");
             }
           });
         }
-        this.root.innerHTML = '\n        <div class="now-page-intro">\n          <div><small>AGORA</small><h2>O que o motor est\xE1 fazendo</h2></div>\n          <p>Informa\xE7\xE3o essencial, grande e sem repeti\xE7\xE3o.</p>\n        </div>\n\n        <div class="now-dashboard-shell">\n          <section class="now-hero-card" aria-label="Leitura principal">\n            <div class="now-hero-copy">\n              <small class="now-hero-label">PETROL INJECTION</small>\n              <p id="dashHeroStatus" class="now-hero-status">Aguardando ECU</p>\n              <div class="now-hero-value"><strong id="dashHeroPetrol">\u2014</strong><em>ms</em></div>\n              <span class="now-hero-note">Leitura em tempo real da MP48 \xB7 sem duplicar telemetria</span>\n            </div>\n            <div class="now-hero-visual" aria-hidden="true"><span></span><i></i></div>\n          </section>\n\n          <section class="now-metric-grid" aria-label="Telemetria essencial">\n            <article class="now-metric-card"><small>RPM</small><b id="dashRpm">\u2014</b><span>rota\xE7\xE3o</span></article>\n            <article class="now-metric-card"><small>MAP</small><b id="dashMap">\u2014</b><span>bar</span></article>\n            <article class="now-metric-card"><small>COMBUST\xCDVEL</small><b id="dashFuel">\u2014</b><span>MP48</span></article>\n            <article class="now-metric-card"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b><span>MP48 bruto \xB7 sem %</span></article>\n            <article class="now-metric-card now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b><span id="dashRefinoNext">toque para abrir</span></article>\n            <article class="now-metric-card"><small>C\xC9LULA</small><b id="dashCell">\u2014</b><span>posi\xE7\xE3o atual</span></article>\n          </section>\n\n          <section id="dashHealth" class="now-session-card" data-level="offline">\n            <span class="state-indicator"></span>\n            <div class="now-session-copy"><small>SESS\xC3O</small><b>MP48 desconectado</b><p data-health-detail>Conecte a ECU para iniciar a sess\xE3o</p></div>\n            <div class="now-session-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashAge">\u2014</span></div>\n          </section>\n        </div>';
+        this.root.innerHTML = '\n        <div class="now-page-intro">\n          <div><small>AGORA</small><h2>O que o motor est\xE1 fazendo</h2></div>\n          <p>Informa\xE7\xE3o essencial, grande e sem repeti\xE7\xE3o.</p>\n        </div>\n\n        <div class="now-dashboard-shell">\n          <section id="dashEquivalence" class="now-equivalence-card" aria-label="Equivalência com a gasolina" hidden>\n            <div class="now-index"><strong id="dashIndex">\u2014</strong><span>da sua condu\xE7\xE3o equivalente \xE0 gasolina</span><em id="dashIndexNote" hidden>provis\xF3rio</em></div>\n            <div class="now-next"><small>PR\xD3XIMA A\xC7\xC3O</small><p id="dashNextText">\u2014</p><button type="button" id="dashNextButton" class="primary" data-dash-next hidden>Abrir</button></div>\n          </section>\n          <section class="now-hero-card" aria-label="Leitura principal">\n            <div class="now-hero-copy">\n              <small class="now-hero-label">PETROL INJECTION</small>\n              <p id="dashHeroStatus" class="now-hero-status">Aguardando ECU</p>\n              <div class="now-hero-value"><strong id="dashHeroPetrol">\u2014</strong><em>ms</em></div>\n              <span class="now-hero-note">Leitura em tempo real da MP48 \xB7 sem duplicar telemetria</span>\n            </div>\n            <div class="now-hero-visual" aria-hidden="true"><span></span><i></i></div>\n          </section>\n\n          <section class="now-metric-grid" aria-label="Telemetria essencial">\n            <article class="now-metric-card"><small>RPM</small><b id="dashRpm">\u2014</b><span>rota\xE7\xE3o</span></article>\n            <article class="now-metric-card"><small>MAP</small><b id="dashMap">\u2014</b><span>bar</span></article>\n            <article class="now-metric-card"><small>COMBUST\xCDVEL</small><b id="dashFuel">\u2014</b><span>MP48</span></article>\n            <article class="now-metric-card"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b><span>MP48 bruto \xB7 sem %</span></article>\n            <article class="now-metric-card now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b><span id="dashRefinoNext">toque para abrir</span></article>\n            <article class="now-metric-card"><small>C\xC9LULA</small><b id="dashCell">\u2014</b><span>posi\xE7\xE3o atual</span></article>\n          </section>\n\n          <section id="dashHealth" class="now-session-card" data-level="offline">\n            <span class="state-indicator"></span>\n            <div class="now-session-copy"><small>SESS\xC3O</small><b>MP48 desconectado</b><p data-health-detail>Conecte a ECU para iniciar a sess\xE3o</p></div>\n            <div class="now-session-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashAge">\u2014</span></div>\n          </section>\n        </div>';
+      }
+      /**
+       * Bloco do cérebro de equivalência. Sem dado (eq == null) o bloco fica oculto e o Agora é o layout de sempre.
+       * Lê só o que o Kotlin entregou; não calcula índice nem decide ação.
+       */
+      renderEquivalence(eq) {
+        const block = document.getElementById("dashEquivalence");
+        if (!block) return;
+        // Sem índice (o Kotlin ainda não manda) mas com a ação do piloto, o bloco aparece com "—" no lugar do número.
+        const hasIndex = !!(eq && eq.index && eq.index.value !== null && eq.index.value !== undefined && Number.isFinite(Number(eq.index.value)));
+        const valid = hasIndex || !!(eq && eq.nextAction && eq.nextAction.text);
+        if (!valid) {
+          if (!block.hidden) block.hidden = true;
+          block.parentElement && block.parentElement.classList.remove("has-equivalence");
+          return;
+        }
+        block.hidden = false;
+        block.parentElement && block.parentElement.classList.add("has-equivalence");
+        if (hasIndex) {
+          const percent = Math.max(0, Math.min(100, Math.round(Number(eq.index.value) * (Number(eq.index.value) <= 1 ? 100 : 1))));
+          text("dashIndex", percent + "%");
+        } else {
+          text("dashIndex", "\u2014");
+        }
+        const note = document.getElementById("dashIndexNote");
+        if (note) note.hidden = !hasIndex || eq.index.provisional !== true;
+        const action = eq.nextAction || null;
+        text("dashNextText", action && action.text ? action.text : "Nada a fazer agora.");
+        const button = document.getElementById("dashNextButton");
+        if (!button) return;
+        const routes = (root.OmegasUi && root.OmegasUi.ROUTES) || [];
+        const ok = !!(action && action.route && action.route !== "dashboard" && routes.includes(action.route));
+        button.hidden = !ok;
+        if (ok) {
+          const names = { map: "Mapa K", curve: "Curva K", autocal: "AutoCal", refino: "Refino", sessions: "Sess\xF5es", tools: "Ferramentas" };
+          button.dataset.route = action.route;
+          button.dataset.subpage = action.subpage || "";
+          const label = "Ir para " + (names[action.route] || action.route);
+          if (button.textContent !== label) button.textContent = label;
+        }
       }
       /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
       renderRefino() {
@@ -96,6 +143,7 @@
         text("dashFuel", fuel);
         text("dashLevelsRaw", levelsRaw === null ? "\u2014" : Math.round(levelsRaw).toLocaleString("pt-BR"));
         this.renderRefino();
+        this.renderEquivalence(state.equivalence || null);
         text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");
         text("dashEcuStatus", connected ? "ECU online" : "ECU offline");
         const ageLabel = age === null || age < 0 ? "\u2014" : age < 1e3 ? "".concat(Math.round(age), " ms") : "".concat(fmt(age / 1e3, 1), " s");

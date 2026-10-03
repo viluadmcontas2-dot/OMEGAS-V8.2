@@ -21,6 +21,62 @@
     catch (error) { return { ok: false, error: error && error.message ? error.message : String(error) }; }
   }
 
+  /**
+   * Próxima ação em português a partir da fase do piloto, para quando o Kotlin ainda não manda
+   * `nextAction`. O botão sempre leva ao Refino (a única tela onde se age sobre essas fases);
+   * sem ECU não há para onde ir. Quando o Kotlin passar a mandar `nextAction`, ele prevalece.
+   */
+  const PHASE_NEXT_ACTION = {
+    SEM_ECU: ['WAIT', 'Conecte a ECU para começar.', ''],
+    LENDO_ECU: ['WAIT', 'Lendo a ECU. Aguarde alguns segundos.', ''],
+    ECU_TRABALHANDO: ['WAIT', 'A ECU está no automático. Aguarde ela terminar antes de gravar.', 'refino'],
+    COLETANDO_NOSSOS: ['COLLECT', 'Dirija no GNV: o app está medindo cada faixa contra a gasolina.', 'refino'],
+    PROPOSTA_PRONTA: ['REVIEW', 'A curva refinada está pronta. Revise e grave no Refino.', 'refino'],
+    VERIFICANDO: ['WAIT', 'Medindo a última gravação. Dirija normalmente.', 'refino'],
+    RESTAURAR_TRECHO: ['RESTORE', 'Um trecho piorou. Abra o Refino para restaurá-lo.', 'refino'],
+    ESTAVEL: ['DONE', 'Estável. Pode desconectar.', 'refino'],
+    TENTATIVA_ENCERRADA: ['WAIT', 'Etapa pausada. Veja o motivo no Refino.', 'refino'],
+  };
+  function nextActionFromPhase(raw) {
+    const pilot = raw && raw.autopilot && typeof raw.autopilot === 'object' ? raw.autopilot : null;
+    const phase = pilot && pilot.phase ? String(pilot.phase) : '';
+    if (!phase) return null;
+    const known = PHASE_NEXT_ACTION[phase];
+    if (known) return { kind: known[0], text: known[1], route: known[2], subpage: '', pointIndexes: [] };
+    const fallback = pilot.next ? String(pilot.next) : '';
+    return fallback ? { kind: 'WAIT', text: fallback, route: 'refino', subpage: '', pointIndexes: [] } : null;
+  }
+
+  /**
+   * Aceita o formato aninhado (`index:{value,coverage,provisional}`) e o plano do Kotlin (`index`,
+   * `coverage`, `provisional` na raiz). Sem índice mas com o piloto (`autopilot.phase`), devolve o
+   * índice vazio (a tela mostra "—", nunca um número inventado) e a ação derivada da fase.
+   */
+  function normalizeEquivalence(raw) {
+    if (!raw || typeof raw !== 'object' || raw.ok === false || raw.available === false) return null;
+    const nested = raw.index && typeof raw.index === 'object';
+    const value = Number(nested ? raw.index.value : raw.index);
+    const hasIndex = raw.index !== null && raw.index !== undefined && Number.isFinite(value);
+    const derived = nextActionFromPhase(raw);
+    if (!hasIndex && !derived) return null;
+    const coverage = Number(nested ? raw.index.coverage : raw.coverage);
+    const provisional = (nested ? raw.index.provisional : raw.provisional) === true;
+    const action = raw.nextAction && typeof raw.nextAction === 'object' ? raw.nextAction : null;
+    const reference = raw.reference && typeof raw.reference === 'object' ? raw.reference : null;
+    return {
+      index: { value: hasIndex ? value : null, coverage: Number.isFinite(coverage) ? coverage : null, provisional },
+      nextAction: action ? {
+        kind: String(action.kind || ''),
+        text: String(action.text || ''),
+        route: action.route ? String(action.route) : '',
+        subpage: action.subpage ? String(action.subpage) : '',
+        pointIndexes: Array.isArray(action.pointIndexes) ? action.pointIndexes.map(Number).filter(Number.isFinite) : [],
+      } : derived,
+      points: Array.isArray(raw.points) ? raw.points : [],
+      reference: { frozen: !!reference && (reference.frozen === true || reference.frozenAt != null), canFreeze: !!reference && reference.canFreeze === true },
+    };
+  }
+
   function demoTelemetry() {
     const phase = (Date.now() / 1000) % 12;
     const rpm = Math.round(1700 + Math.sin(phase) * 620);
@@ -108,8 +164,16 @@
       };
       return invoke(this.native, 'getStatus', [], {});
     }
-    presentSnapshot() {
+    /**
+     * `lastSequence` = sequência do último quadro que a tela já pintou. Se nada mudou, o Kotlin
+     * responde `{changed:false}` sem montar nem serializar o quadro (a tela só atualiza a idade).
+     */
+    presentSnapshot(lastSequence) {
       if (this.demo) return { ok: true, revision: Date.now(), data: demoTelemetry(), demo: true };
+      const seen = Number(lastSequence);
+      if (Number.isFinite(seen) && seen >= 0 && this.native && typeof this.native.getPresentSnapshotIfChanged === 'function') {
+        return invoke(this.native, 'getPresentSnapshotIfChanged', [seen], { ok: false, revision: 0, data: {} });
+      }
       return invoke(this.native, 'getPresentSnapshot', [], { ok: false, revision: 0, data: {} });
     }
     telemetry() { return this.demo ? demoTelemetry() : invoke(this.native, 'getLiveTelemetry', [], {}); }
@@ -211,6 +275,25 @@
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Reset real exige ECU conectada.' };
       return invoke(this.calibration, 'startCurveReset', [], { ok: false, error: 'Reset da Curva K indisponível' });
     }
+    /** Desfazer da Curva K: grava SOMENTE os valores da foto `fileName` (o Kotlin confere cada alvo). */
+    restoreCurve(points, fileName) {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
+      return invoke(this.calibration, 'startCurveRestoreWrite', [JSON.stringify(points || []), String(fileName || '')], { ok: false, error: 'Restauração da Curva K indisponível' });
+    }
+    mapBackups() {
+      if (this.demo) return [];
+      return invoke(this.calibration, 'listMapBackups', [], []);
+    }
+    /** Desfazer do Mapa K, passo 1: relê o mapa (somente leitura) e lista o que voltaria. */
+    prepareMapRestore(adjustmentId) {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Restauração real exige ECU conectada.' };
+      return invoke(this.calibration, 'startMapRestorePrepare', [String(adjustmentId || '')], { ok: false, error: 'Restauração do Mapa K indisponível' });
+    }
+    /** Desfazer do Mapa K, passo 2 (toque do dono): mesmo escritor em lote, com foto e readback. */
+    restoreMap(cells, adjustmentId) {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
+      return invoke(this.calibration, 'startMapRestoreWrite', [JSON.stringify(cells || []), String(adjustmentId || '')], { ok: false, error: 'Restauração do Mapa K indisponível' });
+    }
     curveOperation() {
       if (this.demo) return { ...this.demoCurveState, state: 'COMPLETED', busy: false };
       return invoke(this.calibration, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });
@@ -235,6 +318,27 @@
       return invoke(this.calibration, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
     }
 
+    /**
+     * Cérebro de equivalência. `getEquivalence` existe só na ponte AutoCal (`OmegasAutoCal`), não em
+     * `OmegasNative`: lê pela mesma ponte que o Refino usa (`OmegasUi.AutoCalApi.equivalence()`).
+     * Formato: { index:{value,coverage,provisional}, nextAction:{kind,text,route,subpage,pointIndexes},
+     * autopilot:{phase}, points:[...], reference:{frozen,canFreeze} }. Sem `nextAction` a ação vem da fase
+     * do piloto. null se nada utilizável: a tela mostra o layout atual, nunca um número inventado.
+     */
+    equivalence() {
+      if (this.demo) return null;
+      const autocal = ns.AutoCalApi;
+      if (autocal && typeof autocal.equivalence === 'function' && typeof autocal.available === 'function' && autocal.available()) {
+        return normalizeEquivalence(autocal.equivalence());
+      }
+      // autocal-api.js carrega sob demanda (router.js): antes disso, lê direto da mesma ponte.
+      if (root.OmegasAutoCal && typeof root.OmegasAutoCal.getEquivalence === 'function') {
+        return normalizeEquivalence(invoke(root.OmegasAutoCal, 'getEquivalence', [], null));
+      }
+      if (!this.native || typeof this.native.getEquivalence !== 'function') return null;
+      return normalizeEquivalence(invoke(this.native, 'getEquivalence', [], null));
+    }
+
     sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 250, captureRawUsb: false, maxSessionMb: 256, keepSessions: 20 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
     sessions() { return this.demo ? [] : invoke(this.native, 'listRecordedSessions', [], []); }
     setSessionSettings(settings) {
@@ -254,4 +358,5 @@
 
   ns.NativeApi = NativeApi;
   ns.nativeParse = parse;
+  ns.normalizeEquivalence = normalizeEquivalence;
 })(typeof window !== 'undefined' ? window : globalThis);

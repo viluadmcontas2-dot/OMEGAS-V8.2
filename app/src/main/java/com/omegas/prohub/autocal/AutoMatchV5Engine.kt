@@ -24,8 +24,11 @@ object AutoMatchV5Engine {
     const val MAX_STEP_RATIO = 0.12
     const val SUPPORT_MIN_MS = 2.785
     const val SUPPORT_MAX_MS = 12.791
-    const val MIN_FACTOR = 0.60
-    const val MAX_FACTOR = KFactorProtocol.MAX_FACTOR
+    /** Faixa do K proposto = a do AutoMatch nativo (clamp 0,75..1,20 observado na ECU). */
+    const val MIN_RAW_PROPOSAL = 12288
+    const val MAX_RAW_PROPOSAL = 19661
+    const val MIN_FACTOR = MIN_RAW_PROPOSAL / KFactorProtocol.Q14_ONE
+    const val MAX_FACTOR = MAX_RAW_PROPOSAL / KFactorProtocol.Q14_ONE
 
     fun calculate(
         petrol: AutoMatchCurve30,
@@ -88,8 +91,7 @@ object AutoMatchV5Engine {
             val step = interpolateConstantEdges(referenceRaw.toDouble(), bandTimes, bandSteps)
             val currentRaw = previousFactorsRaw[index]
             val currentFactor = KFactorProtocol.factorFromRaw(currentRaw)
-            val calculatedFactor = (currentFactor * (1.0 + step)).coerceIn(MIN_FACTOR, MAX_FACTOR)
-            val calculatedRaw = KFactorProtocol.rawFromFactor(calculatedFactor)
+            val calculatedRaw = proposedRaw(currentRaw, currentFactor * (1.0 + step))
             val gasEquivalentRaw = inverseTimeRaw(petrol.mapRaw[index], gas)?.toInt()
             val origin = when {
                 referenceRaw < firstSupportRaw -> AutoMatchPointOrigin.EXTENDED_LEFT
@@ -131,6 +133,21 @@ object AutoMatchV5Engine {
             supportEndMs = lastSupportRaw / KFactorProtocol.AXIS_COUNTS_PER_MS,
             warnings = warnings,
         )
+    }
+
+    /**
+     * K proposto limitado a [MIN_FACTOR]..[MAX_FACTOR]. Ponto sem passo, ou com K atual fora da faixa que o
+     * passo não traz para dentro dela, fica exatamente como está (nunca é empurrado nem "cortado").
+     */
+    internal fun proposedRaw(currentRaw: Int, calculatedFactor: Double): Int {
+        val inRange = currentRaw in MIN_RAW_PROPOSAL..MAX_RAW_PROPOSAL
+        val raw = KFactorProtocol.rawFromFactor(calculatedFactor)
+        return when {
+            raw == currentRaw -> currentRaw
+            raw in MIN_RAW_PROPOSAL..MAX_RAW_PROPOSAL -> raw
+            inRange -> raw.coerceIn(MIN_RAW_PROPOSAL, MAX_RAW_PROPOSAL)
+            else -> currentRaw
+        }
     }
 
     private fun unavailable(

@@ -23,6 +23,7 @@ class AutoCalBridgeProvider : ContentProvider() {
     private val attached = WeakHashMap<MainActivity, Boolean>()
 
     override fun onCreate(): Boolean {
+        instance = this
         val application = context?.applicationContext as? Application ?: return false
         application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, state: Bundle?) {
@@ -53,6 +54,12 @@ class AutoCalBridgeProvider : ContentProvider() {
         return true
     }
 
+    /**
+     * Registra a ponte ANTES do `loadUrl`: a página já nasce com `OmegasAutoCal` e o attach tardio
+     * não precisa recarregar a WebView (o que perdia o estado da UI na partida a frio).
+     */
+    private fun attachEarly(main: MainActivity) = attach(main)
+
     private fun attach(main: MainActivity) {
         val webView = main.findViewById<WebView>(R.id.hubWebView) ?: return
         val bridge = bridges.getOrPut(main) { AutoCalJavascriptBridge(main) }
@@ -61,6 +68,7 @@ class AutoCalBridgeProvider : ContentProvider() {
 
         // addJavascriptInterface passa a existir para o JavaScript no próximo carregamento.
         // Uma única recarga local no primeiro attach substitui as antigas reinjeções hub/*.
+        // Se o MainActivity já registrou a ponte antes do loadUrl, firstAttach é falso aqui e não recarrega.
         if (firstAttach && !webView.url.isNullOrBlank()) webView.reload()
     }
 
@@ -79,5 +87,12 @@ class AutoCalBridgeProvider : ContentProvider() {
 
     companion object {
         const val INTERFACE_NAME = "OmegasAutoCal"
+        @Volatile private var instance: AutoCalBridgeProvider? = null
+
+        /** Chamado pelo MainActivity antes de carregar a página. */
+        @JvmStatic
+        fun attachBeforeLoad(main: MainActivity) {
+            instance?.attachEarly(main)
+        }
     }
 }

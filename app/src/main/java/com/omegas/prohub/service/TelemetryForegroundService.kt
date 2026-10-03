@@ -22,6 +22,7 @@ import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.KFactorManager
 import com.omegas.prohub.calibration.KWriteManager
+import com.omegas.prohub.calibration.SerialWriteGuard
 import com.omegas.prohub.autocal.NativeAutoCalMonitor
 import com.omegas.prohub.diagnostics.DocumentsSessionMirror
 import com.omegas.prohub.diagnostics.LegacyDataSweeper
@@ -429,7 +430,6 @@ class TelemetryForegroundService : Service() {
         root.put("gps", gpsData)
             .put("k_write", try { JSONObject(kWriter.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("k_factor", try { JSONObject(kFactor.statusJson()) } catch (_: Exception) { JSONObject() })
-            .put("session_recorder", try { JSONObject(sessionRecorder.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("link_status", try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("consumption", consumptionTracker.buildTelemetryJson(settings.gnvCylinderCapacityM3.toFloat()))
             .put("native_updated_at", System.currentTimeMillis())
@@ -477,6 +477,7 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração K factor está em andamento").toString()
         }
+        writerConflict(SerialWriteGuard.OWNER_K_MAP)?.let { return it }
         if (::link.isInitialized && !link.canWriteLocally()) {
             return JSONObject().put("ok", false)
                 .put("error", "Este aparelho não possui o controle principal do MP48")
@@ -495,6 +496,7 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração K factor está em andamento").toString()
         }
+        writerConflict(SerialWriteGuard.OWNER_K_MAP)?.let { return it }
         if (::link.isInitialized && !link.canWriteLocally()) {
             return JSONObject().put("ok", false)
                 .put("error", "Este aparelho não possui o controle principal do MP48")
@@ -507,11 +509,37 @@ class TelemetryForegroundService : Service() {
         }
     }
 
+    fun listKMapBackups(): String = kWriter.listMapBackups().toString()
+
+    /** Prévia do Desfazer do Mapa K: relê o mapa (somente leitura) e lista o que voltaria. */
+    @Synchronized fun prepareKMapRestore(adjustmentId: String): String =
+        if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.prepareRestore(adjustmentId).toString()
+
+    /** Desfazer do Mapa K: o mesmo escritor em lote (foto antes, ACK por célula, readback). */
+    @Synchronized fun startKMapRestoreWrite(cellsJson: String, adjustmentId: String, reason: String): String {
+        if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
+        if (kFactor.isBusy()) {
+            return JSONObject().put("ok", false).put("error", "Uma alteração K factor está em andamento").toString()
+        }
+        writerConflict(SerialWriteGuard.OWNER_K_MAP)?.let { return it }
+        if (::link.isInitialized && !link.canWriteLocally()) {
+            return JSONObject().put("ok", false)
+                .put("error", "Este aparelho não possui o controle principal do MP48")
+                .toString()
+        }
+        return try {
+            kWriter.startRestoreWrite(JSONArray(cellsJson), adjustmentId, reason).toString()
+        } catch (error: Exception) {
+            JSONObject().put("ok", false).put("error", error.message ?: "Restauração do Mapa K inválida").toString()
+        }
+    }
+
     @Synchronized fun startKFactorReset(): String {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kWriter.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração do mapa K está em andamento").toString()
         }
+        writerConflict(SerialWriteGuard.OWNER_K_FACTOR)?.let { return it }
         if (::link.isInitialized && !link.canWriteLocally()) {
             return JSONObject().put("ok", false)
                 .put("error", "Este aparelho não possui o controle principal do MP48")
@@ -527,11 +555,16 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    @Synchronized fun startKFactorWrite(pointsJson: String, reason: String): String {
+    /**
+     * Lote da Curva K. Com [restoreFile], é a restauração de uma foto: os alvos são conferidos contra
+     * o arquivo e o piso 0.60 (só para alvos novos) não se aplica a valores que a ECU já teve.
+     */
+    @Synchronized fun startKFactorWrite(pointsJson: String, reason: String, restoreFile: String = ""): String {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kWriter.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração do mapa K está em andamento").toString()
         }
+        writerConflict(SerialWriteGuard.OWNER_K_FACTOR)?.let { return it }
         if (::link.isInitialized && !link.canWriteLocally()) {
             return JSONObject().put("ok", false)
                 .put("error", "Este aparelho não possui o controle principal do MP48")
@@ -539,11 +572,20 @@ class TelemetryForegroundService : Service() {
         }
         return try {
             val points = JSONArray(pointsJson)
-            kFactor.startBatchWrite(points, reason).toString()
+            if (restoreFile.isNotBlank()) kFactor.startRestoreWrite(points, restoreFile, reason).toString()
+            else kFactor.startBatchWrite(points, reason).toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Lote K factor inválido").toString()
         }
     }
+
+    /** Outra operação que MUDA a ECU (AutoCal ou o outro escritor K) já detém a serial? Devolve o aviso humano. */
+    private fun writerConflict(self: String): String? =
+        SerialWriteGuard.shared.holder()?.takeIf { it != self }?.let {
+            JSONObject().put("ok", false)
+                .put("error", "Aguarde: ${SerialWriteGuard.label(it)} em andamento")
+                .toString()
+        }
 
     private fun calibrationBusy(operation: String): String = JSONObject()
         .put("ok", false)
@@ -725,7 +767,7 @@ class TelemetryForegroundService : Service() {
             val generationChanged = transition == UsbSessionTransition.GENERATION_CHANGED
             monitoringPausedByUser = false
             if (generationChanged) {
-                if (sessionRecorder.statusObject().optBoolean("recording")) {
+                if (sessionRecorder.isRecording()) {
                     refinementJournal.setDecisionListener(null)
                     journalTransitionsObserved = false
                     sessionRecorder.stop("USB_SESSION_REPLACED")
@@ -742,7 +784,7 @@ class TelemetryForegroundService : Service() {
             nativeAutoCal.beginUsbSession(sessionId)
             if (!wasConnected) enginePausedByUser = false
             // A gravação é sempre automática ao conectar a ECU; não depende de preferência.
-            if (!sessionRecorder.statusObject().optBoolean("recording")) {
+            if (!sessionRecorder.isRecording()) {
                 startJournalSession(
                     "MP48 conectado",
                     JSONObject()
@@ -760,7 +802,7 @@ class TelemetryForegroundService : Service() {
             runtime.endUsbSession("USB_DISCONNECTED")
             nativeAutoCal.endUsbSession()
             telemetryStore.invalidate("USB_DISCONNECTED")
-            if (sessionRecorder.statusObject().optBoolean("recording")) {
+            if (sessionRecorder.isRecording()) {
                 stopJournalSession("MP48 desconectado")
             }
             if (monitoringPausedByUser || !settings.autoReconnectUsb) {
@@ -984,7 +1026,7 @@ class TelemetryForegroundService : Service() {
                 startEngine("recuperação automática do núcleo")
             }
             if (!usb.connected && runtime.running) runtime.stop(2)
-            if (sessionRecorder.statusObject().optBoolean("recording")) {
+            if (sessionRecorder.isRecording()) {
                 sessionRecorder.record(
                     "full_snapshot",
                     "native",
@@ -1110,7 +1152,7 @@ class TelemetryForegroundService : Service() {
     }
 
     private fun updateOverlay() {
-        if (!::overlay.isInitialized || (!overlay.requestedEnabled() && !overlay.visible())) return
+        if (!::overlay.isInitialized || !overlay.wantsUpdate()) return
         val hub = status()
         // Telemetria fresca (≤ 3 s) com a ECU conectada; senão o balão mostra "—" em vez do último número.
         val live = hub.usbConnected && hub.directTelemetryAgeMs in 0L..3_000L
@@ -1160,13 +1202,20 @@ class TelemetryForegroundService : Service() {
         lastNotificationAt = System.currentTimeMillis()
     }
 
+    private var lastNotificationContent: NotificationController.Content? = null
+
     private fun updateNotification() {
         val now = System.currentTimeMillis()
         if (now - lastNotificationAt < 900L) return
+        // Só reposta quando título/texto/ações mudaram: montar e postar a mesma notificação a cada
+        // segundo gasta CPU e bateria sem mostrar nada de novo.
+        val content = notifications.content(status())
+        if (content == lastNotificationContent) return
         lastNotificationAt = now
         try {
             NotificationManagerCompat.from(this)
-                .notify(NotificationController.NOTIFICATION_ID, notifications.build(status()))
+                .notify(NotificationController.NOTIFICATION_ID, notifications.build(content))
+            lastNotificationContent = content
         } catch (_: SecurityException) {
         }
     }

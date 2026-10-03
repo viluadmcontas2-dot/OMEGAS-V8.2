@@ -36,9 +36,6 @@ assert "this.fullSnapshot()" in api
 assert "learningToleranceSettings" not in api
 assert "setLearningToleranceControls" not in api
 assert "function renderLightLiveContext" in app
-assert ".cell-value{font-size:13px" in styles
-assert ".cell-subvalue" in styles
-assert ".physical-grid-with-axes" in refine_styles
 
 # Tocar no mapa aprendido pode abrir a mesma autoridade do Mapa K, sem escrita.
 

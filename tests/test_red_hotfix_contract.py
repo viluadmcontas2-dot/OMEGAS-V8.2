@@ -78,18 +78,14 @@ class RedHotfixContractTest(unittest.TestCase):
 
     def test_tools_heavy_payloads_remain_route_gated(self):
         app = read("app/src/main/assets/ui/app.js")
-        match = re.search(
-            r"if \(route === 'tools'\) \{(?P<body>.*?)\n\s*\}",
-            app,
-            flags=re.DOTALL,
-        )
-        self.assertIsNotNone(match, "Tools deve possuir bloco de contexto dedicado")
-        body = match.group("body")
-        self.assertIn("api.sessions()", body)
-        self.assertIn("api.logs()", body)
-        outside = app[: match.start()] + app[match.end() :]
-        self.assertNotIn("api.sessions()", outside)
-        self.assertNotIn("api.logs()", outside)
+        tools = re.search(r"if \(route === 'tools'\) \{(?P<body>.*?)\n\s*\}", app, flags=re.DOTALL)
+        sessions = re.search(r"if \(route === 'sessions'\) \{(?P<body>.*?)\n\s*\}", app, flags=re.DOTALL)
+        self.assertIsNotNone(tools, "Tools deve possuir bloco de contexto dedicado")
+        self.assertIsNotNone(sessions, "Sessões deve possuir bloco de contexto dedicado")
+        self.assertIn("api.logs()", tools.group("body"))
+        self.assertIn("api.sessions()", sessions.group("body"))
+        for needle in ("api.sessions()", "api.logs()"):
+            self.assertEqual(1, app.count(needle), needle + " só é lido dentro do bloco da própria rota")
 
 
 if __name__ == "__main__":

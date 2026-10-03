@@ -104,16 +104,17 @@ def test_curve_reads_no_suggestion_nor_advisor():
     assert "A UI só desenha alvos K exatos vindos do Kotlin" in curve
 
 
-def test_suggestions_tab_is_refino_card_or_empty():
+def test_suggestions_tab_is_gone_and_sessions_took_its_place():
     app, drawers = read(UI + "app.js"), read(UI + "components/drawers.js")
-    for token in ("suggestionItems", "calibrationState", "selectedSuggestionIds", "data-review-selected"):
+    for token in ("suggestionItems", "calibrationState", "selectedSuggestionIds", "data-review-selected",
+                  "renderPersistentSuggestions", "updateSuggestionBadge", "suggestionCount"):
         assert token not in app, token
-    for token in ("renderSuggestions", "suggestionsButton", "assistedCalibration"):
+    for token in ("renderSuggestions", "suggestionsButton", "toolsButton", "suggestionDrawer", "assistedCalibration"):
         assert token not in drawers, token
     assert "calibrationState" not in read(UI + "core/native-api.js")
-    assert "rules.pendingSuggestionCount([], " in app
-    assert "Nenhuma decisão pendente" in app and "data-open-refino" in app
-    assert "'suggestions'" in read(UI + "core/router.js")
+    router = read(UI + "core/router.js")
+    assert "'suggestions'" not in router and "'sessions'" in router
+    assert "suggestionCount" not in read(UI + "index.html")
     gone(["tests/test_block3_suggestion_ui_contract.py"])
 
 

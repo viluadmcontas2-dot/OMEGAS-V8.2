@@ -86,16 +86,37 @@
   }
 
   /**
-   * Quantas decisões pendentes mostrar no menu. null = ainda não dá para saber (a ciência não
-   * respondeu e não há aviso do refino): a tela não mexe no número, não escreve 0.
-   * Pendente = ajuste acionável de Mapa K/Curva K + 1 se o refino tem curva pronta ou trecho a restaurar.
+   * Palavras únicas de toda escrita na ECU (spec §3.1): etapa → resultado humano → Desfazer/Voltar.
+   * "Gravado" só depois do readback (regra 3).
    */
-  function pendingSuggestionCount(items, refinementReady) {
-    const refinement = refinementReady ? 1 : 0;
-    if (!Array.isArray(items)) return refinement > 0 ? refinement : null;
-    const actionable = items.filter(item => item && item.lifecycle === 'PENDING' && item.actionable === true &&
-      (item.target === 'MAP_K' || item.target === 'CURVE_K')).length;
-    return actionable + refinement;
+  const OPERATION_WORDING = {
+    stages: ['Foto antes', 'Escrita', 'ACK', 'Conferindo na ECU'],
+    writing: 'Gravando na ECU…',
+    doneTitle: what => `Gravado · ${what} conferido na ECU`,
+    doneDetail: 'A ECU confirmou a gravação (ACK e readback). A tela será relida.',
+    failedTitle: 'Não foi gravado',
+    failedDetail: 'A ECU não confirmou toda a operação. Releitura obrigatória.',
+    back: 'Voltar',
+    undo: 'Desfazer',
+  };
+
+  /**
+   * Regra 7: erro de transporte (cabo/USB) não é erro da ECU. O Kotlin classifica a falha em
+   * `failureKind` (TRANSPORTE / ECU / APP) onde lê `reply.error`; a tela mostra textos distintos.
+   */
+  function failureKind(operation) {
+    const raw = operation && (operation.failureKind || (operation.failure && operation.failure.failureKind));
+    const kind = String(raw || '').toUpperCase();
+    return kind === 'TRANSPORTE' || kind === 'ECU' ? kind : 'APP';
+  }
+  function failureText(operation, fallback) {
+    const op = operation || {};
+    const failure = op.failure || {};
+    const message = String(op.error || failure.error || failure.message || op.message || op.writerMessage || fallback || '').trim();
+    const kind = failureKind(op);
+    if (kind === 'TRANSPORTE') return `Cabo/USB: ${message || 'a comunicação com a ECU falhou'}`;
+    if (kind === 'ECU') return `A ECU recusou: ${message || 'o comando não foi aceito'}`;
+    return message;
   }
 
   /**
@@ -150,7 +171,7 @@
 
   ns.DisplayRules = {
     DASH, finite, number, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
-    ageLabel, sessionDate, pendingSuggestionCount, gasResetNote, GAS_RESET_REASON,
+    ageLabel, sessionDate, OPERATION_WORDING, failureKind, failureText, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

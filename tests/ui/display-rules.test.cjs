@@ -70,23 +70,13 @@ test('data da sessão: sem data conhecida não vira 31/12/1969', () => {
   assert.notEqual(rules.sessionDate({ id: 'x', createdAt: 1_790_000_000_000 }), '—');
 });
 
-test('número do menu de sugestões: desconhecido não mexe, e o refino pronto soma 1', () => {
-  const pending = (target, lifecycle = 'PENDING', actionable = true) => ({ target, lifecycle, actionable });
-  assert.equal(rules.pendingSuggestionCount(undefined, false), null, 'ciência não respondeu: não escreve 0');
-  assert.equal(rules.pendingSuggestionCount(null, false), null);
-  assert.equal(rules.pendingSuggestionCount(undefined, true), 1, 'sem ciência mas com curva do refino pronta');
-  assert.equal(rules.pendingSuggestionCount([], false), 0, 'ciência respondeu e não há nada: 0 de verdade');
-  assert.equal(rules.pendingSuggestionCount([pending('MAP_K'), pending('CURVE_K')], false), 2);
-  assert.equal(rules.pendingSuggestionCount([pending('MAP_K'), pending('CURVE_K')], true), 3);
-  assert.equal(rules.pendingSuggestionCount([pending('MAP_K', 'OBSERVING'), pending('MAP_K', 'PENDING', false), pending('OUTRO')], false), 0);
-});
-
-test('o número do menu não oscila entre duas fórmulas: os 3 escritores antigos viraram 1', () => {
-  const app = fs.readFileSync(UI('app.js'), 'utf8');
-  const drawers = fs.readFileSync(UI('components/drawers.js'), 'utf8');
-  const writers = [...app.matchAll(/setText\('suggestionCount'/g)].length;
-  assert.equal(writers, 1, 'só updateSuggestionBadge escreve o número');
-  assert.doesNotMatch(drawers, /getElementById\('suggestionCount'\)/);
+test('palavras únicas de toda escrita na ECU: etapa, resultado humano, Desfazer/Voltar', () => {
+  const w = rules.OPERATION_WORDING;
+  assert.deepEqual(Array.from(w.stages), ['Foto antes', 'Escrita', 'ACK', 'Conferindo na ECU']);
+  assert.equal(w.doneTitle('Curva K'), 'Gravado · Curva K conferido na ECU', '"Gravado" só depois do readback');
+  assert.equal(w.undo, 'Desfazer');
+  assert.equal(w.back, 'Voltar');
+  assert.equal(typeof rules.pendingSuggestionCount, 'undefined', 'a aba Sugestões saiu do produto');
 });
 
 test('motivo da queda dos pontos do GNV aparece com a hora; causa desconhecida não inventa motivo', () => {

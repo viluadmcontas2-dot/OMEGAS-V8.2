@@ -59,7 +59,8 @@ assert "MNFLD_PRESS_THD" in cockpit
 assert "currentBand(snapshot = {}, live = {})" in cockpit
 assert "data-autocal-current-band" in cockpit
 assert "intervalMs: 200" in app
-assert "setCadenceMs(route === 'autocal' ? 50 : 200)" in app
+assert "setCadenceMs(route === 'autocal' ? AUTOCAL_CADENCE_MS : 200)" in app
+assert "AUTOCAL_CADENCE_MS = 200" in app
 assert "setCadenceMs(intervalMs)" in scheduler
 assert "statusElapsedMs" in scheduler
 assert "contextElapsedMs" in scheduler

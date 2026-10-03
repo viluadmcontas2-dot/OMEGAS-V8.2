@@ -49,8 +49,8 @@ test('fluxo visual é selecionar, pedir prévia Kotlin e usar uma única confirm
 test('não existe modo oficina, checkbox nem segunda confirmação no fluxo ativo', () => {
   const active = MAP_SCREEN + HTML;
   assert.doesNotMatch(active, /workshopModeButton|workshopRequested|confirmWriteCheckbox|mapWriteButton|mapReviewBack/);
-  assert.match(HTML, /Gravar é a única confirmação humana/);
-  assert.match(HTML, /Checkpoint, ACK e readback são automáticos/);
+  assert.match(HTML, /Gravar é um toque/);
+  assert.match(HTML, /foto antes, ACK e conferência na ECU são automáticos/);
   assert.match(MAP_SCREEN, /Gravar \$\{count\} alteração/);
 });
 
@@ -73,7 +73,7 @@ test('não existe modal intermediário de revisão que exija um segundo clique',
 test('resultado só é sucesso com BATCH_CONFIRMED e readbackValid', () => {
   assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && operation\.readbackValid === true/);
   assert.match(MAP_SCREEN, /BATCH_PARTIAL_FAILED/);
-  assert.match(MAP_SCREEN, /A ECU não confirmou toda a operação/);
+  assert.match(MAP_SCREEN, /wording\(\)\.failedTitle/);
 });
 
 test('frontend envia uma única intenção ao coordenador V7, sem chunking na escrita', () => {

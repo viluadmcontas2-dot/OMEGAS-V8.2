@@ -114,6 +114,13 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         return statusJson().put("ok", true)
     }
 
+    /**
+     * `true` só se o balão está na tela E já passou o intervalo de 250 ms desde o último desenho.
+     * O serviço consulta isto ANTES de montar o status (que não é barato) para não gastar à toa.
+     */
+    fun wantsUpdate(): Boolean =
+        !closed && visible() && SystemClock.elapsedRealtime() - lastDrawAt >= 250L
+
     fun update(snapshot: Snapshot) {
         if (closed) return
         lastSnapshot = snapshot

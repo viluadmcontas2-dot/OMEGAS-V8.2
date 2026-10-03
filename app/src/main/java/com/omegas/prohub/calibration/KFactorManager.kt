@@ -17,6 +17,7 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -35,6 +36,8 @@ class KFactorManager(
     private val publishManualBackup: (File) -> JSONObject = {
         JSONObject().put("ok", true).put("published", false)
     },
+    /** Trava única da serial: escrita K e ação AutoCal nunca rodam juntas. */
+    private val guard: SerialWriteGuard = SerialWriteGuard.shared,
 ) {
     companion object {
         const val MAX_BATCH_POINTS = KFactorProtocol.POINT_COUNT
@@ -74,74 +77,70 @@ class KFactorManager(
             return error(error.message ?: "USB desconectado")
         }
         if (!busy.compareAndSet(false, true)) return error("Outra operação de calibração está em andamento")
+        if (!guard.tryAcquire(SerialWriteGuard.OWNER_K_FACTOR)) {
+            busy.set(false)
+            return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento")
+        }
         val resetId = "KRESET-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().take(8)
         onBusyChanged(true)
         update("RESET_READING", "Lendo Curva K antes do reset", 0, JSONObject().put("resetId", resetId))
-        executor.execute {
-            var delegated = false
-            try {
-                val axisRaw = readRawPoints(KFactorProtocol.readPetrolAxis(), "eixo Petrol Inj para reset K", expectedSessionId)
-                val factorsRaw = readRawPoints(KFactorProtocol.readFactors(), "Curva K antes do reset", expectedSessionId)
-                val now = System.currentTimeMillis()
-                val cache = curveJson(axisRaw, factorsRaw)
-                    .put("schema", "omegas-k-factor-cache-v1")
-                    .put("updatedAt", now)
-                    .put("complete", true)
-                    .put("sessionConfirmed", true)
-                    .put("sessionId", expectedSessionId)
-                    .put("source", "ECU_RESET_PRECHECK")
-                    .put("hash", hash(factorsRaw))
-                atomicWrite(cacheFile, cache.toString(2))
+        try {
+            executor.execute {
+                // O reset segue para o escritor canônico NA MESMA execução, sem soltar `busy` nem a
+                // trava da serial entre a leitura e a escrita (executeBatch libera ambos no fim).
+                var delegated = false
+                try {
+                    val axisRaw = readRawPoints(KFactorProtocol.readPetrolAxis(), "eixo Petrol Inj para reset K", expectedSessionId)
+                    val factorsRaw = readRawPoints(KFactorProtocol.readFactors(), "Curva K antes do reset", expectedSessionId)
+                    val now = System.currentTimeMillis()
+                    val cache = curveJson(axisRaw, factorsRaw)
+                        .put("schema", "omegas-k-factor-cache-v1")
+                        .put("updatedAt", now)
+                        .put("complete", true)
+                        .put("sessionConfirmed", true)
+                        .put("sessionId", expectedSessionId)
+                        .put("source", "ECU_RESET_PRECHECK")
+                        .put("hash", hash(factorsRaw))
+                    atomicWrite(cacheFile, cache.toString(2))
 
-                val targetRaw = KFactorProtocol.rawFromFactor(1.0)
-                val points = JSONArray()
-                repeat(KFactorProtocol.POINT_COUNT) { index ->
-                    val currentRaw = factorsRaw[index]
-                    if (currentRaw != targetRaw) {
-                        points.put(JSONObject()
-                            .put("index", index)
-                            .put("currentRaw", currentRaw)
-                            .put("targetRaw", targetRaw))
+                    val targetRaw = KFactorProtocol.rawFromFactor(1.0)
+                    val points = JSONArray()
+                    repeat(KFactorProtocol.POINT_COUNT) { index ->
+                        val currentRaw = factorsRaw[index]
+                        if (currentRaw != targetRaw) {
+                            points.put(JSONObject()
+                                .put("index", index)
+                                .put("currentRaw", currentRaw)
+                                .put("targetRaw", targetRaw))
+                        }
                     }
-                }
 
-                if (points.length() == 0) {
-                    update(
-                        "RESET_CONFIRMED",
-                        "Curva K já está neutra em 1.0",
-                        100,
-                        JSONObject().put("resetId", resetId).put("changedPoints", 0),
-                    )
-                } else {
-                    // O writer canônico precisa adquirir o lock por conta própria.
-                    busy.set(false)
-                    onBusyChanged(false)
-                    synchronized(statusLock) { status.put("busy", false) }
-                    val started = startBatchWrite(points, reason)
-                    delegated = started.optBoolean("ok", false)
-                    if (!delegated) {
+                    if (points.length() == 0) {
                         update(
-                            "RESET_FAILED",
-                            started.optString("error", "Não foi possível iniciar o reset da Curva K"),
+                            "RESET_CONFIRMED",
+                            "Curva K já está neutra em 1.0",
                             100,
-                            JSONObject().put("resetId", resetId),
+                            JSONObject().put("resetId", resetId).put("changedPoints", 0),
                         )
+                    } else {
+                        val normalized = normalizePoints(points, allowBelowFloor = false)
+                        delegated = true
+                        executeBatch(resetId, normalized, reason, expectedSessionId)
                     }
-                }
-            } catch (error: Exception) {
-                update(
-                    "RESET_FAILED",
-                    error.message ?: "Reset da Curva K interrompido",
-                    100,
-                    JSONObject().put("resetId", resetId),
-                )
-            } finally {
-                if (!delegated) {
-                    busy.set(false)
-                    onBusyChanged(false)
-                    synchronized(statusLock) { status.put("busy", false) }
+                } catch (error: Throwable) {
+                    update(
+                        "RESET_FAILED",
+                        error.message ?: "Reset da Curva K interrompido",
+                        100,
+                        JSONObject().put("resetId", resetId).put("failureKind", FailureKind.of(error)),
+                    )
+                } finally {
+                    if (!delegated) releaseWriter()
                 }
             }
+        } catch (_: RejectedExecutionException) {
+            releaseWriter()
+            return error("O escritor da Curva K foi encerrado; reabra o aplicativo")
         }
         return JSONObject()
             .put("ok", true)
@@ -152,6 +151,14 @@ class KFactorManager(
             .put("targetRaw", KFactorProtocol.rawFromFactor(1.0))
             .put("automatic", false)
             .put("humanConfirmed", true)
+    }
+
+    /** Solta `busy` e a trava da serial exatamente uma vez por operação de escrita. */
+    private fun releaseWriter() {
+        busy.set(false)
+        guard.release(SerialWriteGuard.OWNER_K_FACTOR)
+        try { onBusyChanged(false) } catch (_: Throwable) {}
+        synchronized(statusLock) { status.put("busy", false) }
     }
 
     @Synchronized
@@ -207,20 +214,11 @@ class KFactorManager(
             require(axisRaw.size == KFactorProtocol.POINT_COUNT && factorsRaw.size == KFactorProtocol.POINT_COUNT) {
                 "Curva K incompleta; backup não salvo"
             }
-            val createdAt = System.currentTimeMillis()
-            val curveHash = hash(factorsRaw)
-            val fileName = "MANUAL-$createdAt-${curveHash.take(8)}.json"
-            val backup = curveJson(axisRaw, factorsRaw)
-                .put("format", "omegas-k-factor-backup-v1")
-                .put("type", "MANUAL_SNAPSHOT")
-                .put("label", label.trim().take(80).ifBlank { "Curva salva manualmente" })
-                .put("createdAt", createdAt)
-                .put("hash", curveHash)
-                .put("changes", JSONArray())
+            val photo = writeManualPhoto(axisRaw, factorsRaw, label)
+            val fileName = photo.fileName
+            val curveHash = photo.hash
+            val createdAt = photo.createdAt
             val backupFile = File(backupDir, fileName)
-            atomicWrite(backupFile, backup.toString(2))
-            val verified = loadBackup(fileName)
-            require(verified.getString("hash") == curveHash) { "Hash do backup salvo divergiu" }
             val publicCopy = try {
                 publishManualBackup(backupFile)
             } catch (error: Exception) {
@@ -242,12 +240,36 @@ class KFactorManager(
                 .put("createdAt", createdAt)
                 .put("hash", curveHash)
                 .put("type", "MANUAL_SNAPSHOT")
-                .put("label", backup.getString("label"))
+                .put("label", photo.label)
                 .put("pointCount", KFactorProtocol.POINT_COUNT)
                 .put("curve", curve)
         } catch (error: Exception) {
             error(error.message ?: "Falha ao salvar backup da Curva K")
         }
+    }
+
+    private class ManualPhoto(val fileName: String, val hash: String, val createdAt: Long, val label: String)
+
+    /**
+     * Foto MANUAL- da curva: só disco (a curva já foi lida), validada por hash antes de devolver.
+     * Usada pelo botão "Salvar curva" e, antes do primeiro ACK, por toda escrita em lote.
+     */
+    private fun writeManualPhoto(axisRaw: IntArray, factorsRaw: IntArray, label: String): ManualPhoto {
+        val createdAt = System.currentTimeMillis()
+        val curveHash = hash(factorsRaw)
+        val fileName = "MANUAL-$createdAt-${curveHash.take(8)}.json"
+        val cleanLabel = label.trim().take(80).ifBlank { "Curva salva manualmente" }
+        val backup = curveJson(axisRaw, factorsRaw)
+            .put("format", "omegas-k-factor-backup-v1")
+            .put("type", "MANUAL_SNAPSHOT")
+            .put("label", cleanLabel)
+            .put("createdAt", createdAt)
+            .put("hash", curveHash)
+            .put("changes", JSONArray())
+        atomicWrite(File(backupDir, fileName), backup.toString(2))
+        val verified = loadBackup(fileName)
+        require(verified.getString("hash") == curveHash) { "Hash do backup salvo divergiu" }
+        return ManualPhoto(fileName, curveHash, createdAt, cleanLabel)
     }
 
     fun listBackups(): JSONArray {
@@ -284,13 +306,14 @@ class KFactorManager(
                     .put("geometryMismatch", true)
                     .put("fileName", fileName)
             }
-            val minimumRaw = KFactorProtocol.rawFromFactor(MIN_SAFE_FACTOR)
+            // O piso 0.60 vale só para alvos NOVOS. Restaurar um valor que a ECU já teve
+            // (ex.: a foto de uma curva com fator baixo) é permitido; o readback confirma.
             val points = JSONArray()
             repeat(KFactorProtocol.POINT_COUNT) { index ->
                 val currentRaw = currentFactors[index]
                 val targetRaw = targetFactors[index]
-                if (targetRaw !in minimumRaw..KFactorProtocol.MAX_RAW) {
-                    return error("O backup contém fator fora da faixa segura no ponto ${index + 1}")
+                if (targetRaw !in 0..KFactorProtocol.MAX_RAW) {
+                    return error("O backup contém fator fora do formato da ECU no ponto ${index + 1}")
                         .put("unsafeBackup", true)
                         .put("fileName", fileName)
                 }
@@ -323,6 +346,7 @@ class KFactorManager(
                 .put("points", points)
                 .put("currentCurve", fresh)
                 .put("restoreUsesExistingWriter", true)
+                .put("restoreFile", fileName)
                 .put("preWriteBackupRequired", false)
                 .put("automaticBackup", false)
         } catch (error: Exception) {
@@ -330,25 +354,27 @@ class KFactorManager(
         }
     }
 
-    fun startBatchWrite(points: JSONArray, reason: String = "Ajuste manual assistido"): JSONObject {
-        if (points.length() !in 1..MAX_BATCH_POINTS) {
-            return error("Selecione entre 1 e $MAX_BATCH_POINTS pontos")
-        }
+    /**
+     * Valida e normaliza o lote. [allowBelowFloor] só é verdadeiro na restauração de uma foto:
+     * o piso 0.60 vale para alvos novos, não para valores que a ECU já tinha.
+     */
+    private fun normalizePoints(points: JSONArray, allowBelowFloor: Boolean): JSONArray {
+        require(points.length() in 1..MAX_BATCH_POINTS) { "Selecione entre 1 e $MAX_BATCH_POINTS pontos" }
         val normalized = JSONArray()
         val seen = linkedSetOf<Int>()
-        val minimumRaw = KFactorProtocol.rawFromFactor(MIN_SAFE_FACTOR)
+        val minimumRaw = if (allowBelowFloor) 0 else KFactorProtocol.rawFromFactor(MIN_SAFE_FACTOR)
         val maximumRaw = KFactorProtocol.MAX_RAW
         repeat(points.length()) { position ->
-            val point = points.optJSONObject(position) ?: return error("Ponto ${position + 1} inválido")
+            val point = points.optJSONObject(position) ?: throw IllegalArgumentException("Ponto ${position + 1} inválido")
             val index = point.optInt("index", -1)
             val currentRaw = point.optInt("currentRaw", -1)
             val targetRaw = point.optInt("targetRaw", -1)
-            if (index !in 0 until KFactorProtocol.POINT_COUNT) return error("Índice inválido: $index")
-            if (currentRaw !in 0..KFactorProtocol.MAX_RAW || targetRaw !in minimumRaw..maximumRaw) {
-                return error("K factor alvo deve estar entre %.2f e %.4f".format(MIN_SAFE_FACTOR, MAX_SAFE_FACTOR))
+            require(index in 0 until KFactorProtocol.POINT_COUNT) { "Índice inválido: $index" }
+            require(currentRaw in 0..KFactorProtocol.MAX_RAW && targetRaw in minimumRaw..maximumRaw) {
+                "K factor alvo deve estar entre %.2f e %.4f".format(MIN_SAFE_FACTOR, MAX_SAFE_FACTOR)
             }
-            if (currentRaw == targetRaw) return error("O ponto $index não possui alteração")
-            if (!seen.add(index)) return error("Ponto $index repetido")
+            require(currentRaw != targetRaw) { "O ponto $index não possui alteração" }
+            require(seen.add(index)) { "Ponto $index repetido" }
             normalized.put(JSONObject()
                 .put("index", index)
                 .put("currentRaw", currentRaw)
@@ -356,10 +382,40 @@ class KFactorManager(
                 .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
                 .put("targetFactor", KFactorProtocol.factorFromRaw(targetRaw)))
         }
+        return normalized
+    }
+
+    /**
+     * Restauração de uma foto: cada alvo precisa ser exatamente o valor guardado na foto.
+     * Reusa o escritor em lote (foto antes, ACK por ponto, readback final).
+     */
+    fun startRestoreWrite(points: JSONArray, fileName: String, reason: String): JSONObject {
+        val backup = try { loadBackup(fileName) } catch (error: Exception) {
+            return error(error.message ?: "Backup da Curva K inválido")
+        }
+        val target = jsonIntArray(backup.optJSONArray("factorsRaw"))
+        repeat(points.length()) { position ->
+            val point = points.optJSONObject(position) ?: return error("Ponto ${position + 1} inválido")
+            val index = point.optInt("index", -1)
+            if (index !in target.indices || point.optInt("targetRaw", -1) != target[index]) {
+                return error("A restauração não confere com a foto escolhida; releia a prévia")
+            }
+        }
+        return startBatchWrite(points, reason, allowBelowFloor = true)
+    }
+
+    fun startBatchWrite(points: JSONArray, reason: String = "Ajuste manual assistido", allowBelowFloor: Boolean = false): JSONObject {
+        val normalized = try { normalizePoints(points, allowBelowFloor) } catch (invalid: IllegalArgumentException) {
+            return error(invalid.message ?: "Lote de pontos inválido")
+        }
         if (!busy.compareAndSet(false, true)) return error("Outra operação de calibração está em andamento")
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
             busy.set(false)
             return error(error.message ?: "USB desconectado")
+        }
+        if (!guard.tryAcquire(SerialWriteGuard.OWNER_K_FACTOR)) {
+            busy.set(false)
+            return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento")
         }
         val adjustmentId = "KF-${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
         onBusyChanged(true)
@@ -369,7 +425,12 @@ class KFactorManager(
             0,
             JSONObject().put("adjustmentId", adjustmentId).put("points", normalized),
         )
-        executor.execute { executeBatch(adjustmentId, normalized, reason, expectedSessionId) }
+        try {
+            executor.execute { executeBatch(adjustmentId, normalized, reason, expectedSessionId) }
+        } catch (_: RejectedExecutionException) {
+            releaseWriter()
+            return error("O escritor da Curva K foi encerrado; reabra o aplicativo")
+        }
         return JSONObject()
             .put("ok", true)
             .put("started", true)
@@ -387,6 +448,8 @@ class KFactorManager(
         val confirmed = JSONArray()
         var initialHash = ""
         var historyPersisted = false
+        var photoFile = ""
+        var writeStarted = false
         try {
             val cache = loadCache()
             val cachedAxis = jsonIntArray(cache.optJSONArray("axisRaw"))
@@ -414,6 +477,17 @@ class KFactorManager(
                 val live = ecuBefore.copyOf()
                 initialHash = hash(live)
 
+                // Foto antes do primeiro ACK: a curva que acabou de ser lida e conferida vai para o
+                // disco (nenhum comando novo à ECU). Sem foto validada, a escrita não começa.
+                val photo = writeManualPhoto(cachedAxis, ecuBefore, "Antes de gravar")
+                photoFile = photo.fileName
+                update(
+                    "PHOTO_SAVED",
+                    "Foto da curva salva antes de gravar",
+                    12,
+                    JSONObject().put("adjustmentId", adjustmentId).put("photoFile", photoFile),
+                )
+
                 repeat(points.length()) { pointPosition ->
                     val point = points.getJSONObject(pointPosition)
                     val index = point.getInt("index")
@@ -429,6 +503,7 @@ class KFactorManager(
                         progress,
                         JSONObject().put("adjustmentId", adjustmentId).put("index", index),
                     )
+                    writeStarted = true
                     requireAck(
                         unit.transaction(
                             KFactorProtocol.writeFactor(index, targetRaw),
@@ -500,21 +575,21 @@ class KFactorManager(
                 .put("humanConfirmed", true)
                 .put("readbackValid", true)
                 .put("automaticBackup", false)
+                .put("photoFile", photoFile)
                 .put("confirmedAt", now)
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-FACTOR", "Curva confirmada; notificação falhou: ${error.message}")
             }
             update("BATCH_CONFIRMED", "K factor confirmado por ACK e readback", 100, payload)
             log.add("INFO", "K-FACTOR", "$adjustmentId confirmado • ${points.length()} pontos")
-        } catch (error: Exception) {
+        } catch (error: Throwable) {
             if (!historyPersisted && confirmed.length() > 0) {
                 try {
                     appendHistoryBatch(confirmed)
                     historyPersisted = true
-                } catch (_: Exception) {}
+                } catch (_: Throwable) {}
             }
-            val stale = loadCache().put("sessionConfirmed", false)
-            atomicWrite(cacheFile, stale.toString(2))
+            // O estado terminal vem primeiro: nada que falhe depois pode deixar a UI esperando.
             update(
                 "BATCH_FAILED",
                 error.message ?: "Alteração K factor interrompida",
@@ -523,13 +598,18 @@ class KFactorManager(
                     .put("adjustmentId", adjustmentId)
                     .put("oldHash", initialHash)
                     .put("confirmedEvents", confirmed)
-                    .put("partial", confirmed.length() > 0),
+                    .put("partial", confirmed.length() > 0)
+                    .put("mutationMayHaveStarted", writeStarted)
+                    .put("photoFile", photoFile)
+                    .put("failureKind", FailureKind.of(error)),
             )
-            log.add("ERROR", "K-FACTOR", "$adjustmentId interrompido: ${error.message}")
+            try {
+                val stale = loadCache().put("sessionConfirmed", false)
+                atomicWrite(cacheFile, stale.toString(2))
+            } catch (_: Throwable) {}
+            try { log.add("ERROR", "K-FACTOR", "$adjustmentId interrompido: ${error.message}") } catch (_: Throwable) {}
         } finally {
-            busy.set(false)
-            onBusyChanged(false)
-            synchronized(statusLock) { status.put("busy", false) }
+            releaseWriter()
         }
     }
 
@@ -545,9 +625,9 @@ class KFactorManager(
         )
 
     private fun decodeRawPoints(reply: UsbProtocolReply, reason: String): IntArray {
-        if (!reply.ok) throw IllegalStateException(reply.error.ifBlank { "ECU não confirmou $reason" })
+        if (!reply.ok) throw CalibrationFailure(reply.error.ifBlank { "ECU não confirmou $reason" }, FailureKind.ofReply(reply))
         if (reply.status != Mp48Protocol.STATUS_ACK) {
-            throw IllegalStateException("Resposta inesperada 0x%02X em $reason".format(reply.status))
+            throw CalibrationFailure("Resposta inesperada 0x%02X em $reason".format(reply.status), FailureKind.ECU)
         }
         return KFactorProtocol.decodeRawPoints(reply.payload)
     }
@@ -577,7 +657,7 @@ class KFactorManager(
 
     private fun requireAck(reply: UsbProtocolReply, action: String) {
         if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) {
-            throw IllegalStateException(reply.error.ifBlank { "ACK inválido em $action" })
+            throw CalibrationFailure(reply.error.ifBlank { "ACK inválido em $action" }, FailureKind.ofReply(reply))
         }
     }
 

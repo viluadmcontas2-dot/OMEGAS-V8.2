@@ -65,35 +65,53 @@ class NotificationController(private val context: Context) {
             .build()
     }
 
-    fun build(status: HubStatus): Notification {
-        val openIntent = PendingIntent.getActivity(
+    // Os quatro PendingIntents são sempre os mesmos: criados uma vez, não a cada postagem.
+    private val openIntent: PendingIntent by lazy {
+        PendingIntent.getActivity(
             context,
             1,
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val toggleIntent = PendingIntent.getService(
+    }
+    private val toggleIntent: PendingIntent by lazy {
+        PendingIntent.getService(
             context,
             2,
             Intent(context, TelemetryForegroundService::class.java)
                 .setAction(TelemetryForegroundService.ACTION_TOGGLE_ENGINE),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val disconnectIntent = PendingIntent.getService(
+    }
+    private val disconnectIntent: PendingIntent by lazy {
+        PendingIntent.getService(
             context,
             3,
             Intent(context, TelemetryForegroundService::class.java)
                 .setAction(TelemetryForegroundService.ACTION_DISCONNECT_USB),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val stopIntent = PendingIntent.getService(
+    }
+    private val stopIntent: PendingIntent by lazy {
+        PendingIntent.getService(
             context,
             4,
             Intent(context, TelemetryForegroundService::class.java)
                 .setAction(TelemetryForegroundService.ACTION_STOP_SERVICE),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+    }
 
+    /** Tudo que a notificação mostra; o serviço só posta de novo quando isto muda. */
+    data class Content(
+        val title: String,
+        val line1: String,
+        val line2: String,
+        val pauseLabel: String,
+        val usbLabel: String,
+    )
+
+    fun content(status: HubStatus): Content {
         val title = when {
             status.engineStuck -> "OMEGAS — NÚCLEO BLOQUEADO"
             status.engineReady -> "OMEGAS — ECU ONLINE"
@@ -113,22 +131,31 @@ class NotificationController(private val context: Context) {
                 "Android nativo • ${status.baudRate} ${status.serialFormat}"
             }
         }.take(140)
+        return Content(
+            title = title,
+            line1 = line1,
+            line2 = line2,
+            pauseLabel = if (status.engineRunning) "Pausar" else "Retomar",
+            usbLabel = if (status.usbConnected) "Desconectar" else "Conectar",
+        )
+    }
 
-        return NotificationCompat.Builder(context, CHANNEL_ID)
+    fun build(status: HubStatus): Notification = build(content(status))
+
+    fun build(content: Content): Notification =
+        NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_omegas)
-            .setContentTitle(title)
-            .setContentText(line1)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$line1\n$line2"))
+            .setContentTitle(content.title)
+            .setContentText(content.line1)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("${content.line1}\n${content.line2}"))
             .setContentIntent(openIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .addAction(0, if (status.engineRunning) "Pausar" else "Retomar", toggleIntent)
-            .addAction(0, if (status.usbConnected) "Desconectar" else "Conectar", disconnectIntent)
+            .addAction(0, content.pauseLabel, toggleIntent)
+            .addAction(0, content.usbLabel, disconnectIntent)
             .addAction(0, "Parar", stopIntent)
             .build()
-    }
 }
-

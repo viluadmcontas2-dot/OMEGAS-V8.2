@@ -640,11 +640,13 @@
         if (this.store.get().route === 'autocal') this.refresh();
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
-        if (this.store.get().route === 'autocal') this.renderLiveCursor();
+        if (this.store.get().route !== 'autocal') return;
+        if (this.firstRefreshPending) { this.firstRefreshPending = false; this.refresh(); }
+        this.renderLiveCursor();
       });
       if (this.store.get().route === 'autocal') {
         this.active = true;
-        root.setTimeout(() => this.refresh(), 0);
+        this.firstRefreshPending = true;
       }
     }
 
@@ -773,6 +775,12 @@
                 </div>
               </section>
 
+
+              <section id="autocalSessionDrawer" class="autocal-session-drawer autocal-secondary-card" hidden aria-label="Histórico de sessões AutoCal">
+                <div class="autocal-section-head compact"><div><small>HISTÓRICO</small><h4>Sessões recentes</h4><p id="autocalSessionNext">As sessões são separadas pela geração física USB.</p></div></div>
+                <div id="autocalSessionList" class="autocal-session-list"></div>
+              </section>
+
               <details id="autocalTechnicalDetails" class="autocal-technical-details autocal-secondary-card">
                 <summary>Detalhes técnicos</summary>
                 <div class="autocal-tech-grid">
@@ -792,11 +800,6 @@
                 </section>
                 <div id="autocalEvents" class="autocal-events"></div>
               </details>
-
-              <section id="autocalSessionDrawer" class="autocal-session-drawer autocal-secondary-card" hidden aria-label="Histórico de sessões AutoCal">
-                <div class="autocal-section-head compact"><div><small>HISTÓRICO</small><h4>Sessões recentes</h4><p id="autocalSessionNext">As sessões são separadas pela geração física USB.</p></div></div>
-                <div id="autocalSessionList" class="autocal-session-list"></div>
-              </section>
               </div>
             </details>
 
@@ -998,8 +1001,17 @@
       this.refresh();
     }
 
+    /** Um toque: abre a Curva K, que tira a foto e só então zera. Sem a tela Curva K cai no fluxo antigo. */
+    resetViaCurve() {
+      const router = this.app?.router || root.OmegasApp?.router;
+      if (!router || typeof router.open !== 'function') return false;
+      return router.open('curve', 'editor', { resetNow: true }) === true;
+    }
+
     prepare(action) {
       if (!action || !this.api?.available?.()) return;
+      // Resetar a Curva K tem UM caminho: o da aba Curva K (foto antes, zera, readback, Desfazer).
+      if (action === 'RESET_K_FACTOR' && this.resetViaCurve()) return;
       const result = this.api.prepare(action);
       if (!result?.ok || !result?.prepared) {
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'A ação AutoCal não pôde ser preparada.' } });
@@ -1176,6 +1188,17 @@
     }
 
     renderLiveCursor() {
+      // Telemetria nova chega a 4–12 Hz e o tick roda a 5 Hz: sem quadro novo (e sem gráfico, snapshot
+      // ou estado novos) não há nada a repintar.
+      const telemetry = this.store.get().telemetry || {};
+      const point = AutoCalUxModel.livePoint(telemetry, this.projection);
+      const key = point
+        ? [point.sequence, point.petrolMs, point.mapBar, point.rpm, point.fuel].join('|')
+        : ['none', telemetry.valid === true, finite(telemetry.telemetryAgeMs ?? telemetry.ageMs) > AUTO_CAL_LIVE_STALE_MS].join('|');
+      const seen = this.cursorSeen;
+      if (seen && seen.key === key && seen.snapshot === this.snapshot && seen.state === this.state &&
+          seen.projection === this.projection && seen.scale === this.chartScale) return;
+      this.cursorSeen = { key, snapshot: this.snapshot, state: this.state, projection: this.projection, scale: this.chartScale };
       this.renderLiveNarrative();
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       this.renderZoneCursor(live);
@@ -1860,7 +1883,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Confirmar executa agora pelo OMEGAS, com ACK e readback. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos da ação</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Executar agora</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Confirmar executa agora pelo OMEGAS, com ACK e readback. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Executar agora</button></div></div>`;
     }
 
     renderUnavailable() {
@@ -1885,7 +1908,7 @@
   function boot() {
     const app = root.OmegasApp;
     if (!app?.store || !app?.scheduler || !ns.AutoCalApi) {
-      root.setTimeout(boot, 25);
+      if (typeof root.addEventListener === 'function') root.addEventListener('omegas-app-ready', boot, { once: true });
       return;
     }
     if (app.autoCalCockpit) return;

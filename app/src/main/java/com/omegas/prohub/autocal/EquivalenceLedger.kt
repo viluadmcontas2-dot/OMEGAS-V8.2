@@ -42,6 +42,10 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         const val DRIVING_MIN_RPM = 1_000.0
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
         private const val SAVE_INTERVAL_MS = 60_000L
+        /** O índice só é recalculado se algo mudou E passou ao menos isto desde o último cálculo (mudança estrutural fura). */
+        const val INDEX_MIN_INTERVAL_MS = 1_000L
+        /** Arquivo compacto: vetores paralelos em vez de um array por leitura. O formato antigo continua sendo lido. */
+        const val LAYOUT_FLAT = "flat-v1"
 
         /** Impressão digital da Curva K (mesma forma usada pela bridge sobre o snapshot da ECU). */
         fun fingerprint(mulActRaw: IntArray): String = JSONArray(mulActRaw.toList()).toString().hashCode().toString(16)
@@ -100,6 +104,10 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private var airRpmBar = 0.0
     private var dirty = false
     @Volatile private var cachedIndex: JSONObject? = null
+    private var cachedIndexRevision = -1L
+    private var cachedIndexAt = 0L
+    /** Muda só em mudança estrutural (reset do GNV, carga, curva da ECU): invalida o índice na hora. */
+    private val structuralCounter = AtomicLong(0L)
     private var cachedDense: Triple<Double, Int, JSONObject>? = null
     private var cachedPairs: Pair<Long, List<EvidencePair>>? = null
     private val revisionCounter = AtomicLong(0L)
@@ -113,9 +121,17 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     /** Muda quando qualquer leitura entra, a época do GNV recomeça ou o arquivo é carregado. */
     fun revision(): Long = revisionCounter.get()
 
-    private fun touched() {
+    /**
+     * [structural] = reset do GNV, carga do arquivo, curva da ECU: o índice cacheado deixa de valer já.
+     * Leitura estável nova só avança a revisão; o índice é recalculado quando passar [INDEX_MIN_INTERVAL_MS]
+     * (antes cada janela estável, ~2×/3 s, jogava fora o índice e reordenava até 30 mil leituras).
+     */
+    private fun touched(structural: Boolean = false) {
         revisionCounter.incrementAndGet()
-        cachedIndex = null
+        if (structural) {
+            structuralCounter.incrementAndGet()
+            cachedIndex = null
+        }
         cachedDense = null
         cachedPairs = null
     }
@@ -136,7 +152,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         synchronized(lock) {
             if (usable == ecuPetrolRef) return
             ecuPetrolRef = usable
-            touched()
+            touched(structural = true)
         }
     }
 
@@ -197,13 +213,23 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         gasEpochReason = reason
         gasEpochAt = clock()
         dirty = true
-        touched()
+        touched(structural = true)
     }.also { maybeSave(force = true) }
 
-    /** O próprio app gravou esta curva: adota sem descartar o GNV medido com ela. */
+    /**
+     * O próprio app gravou esta curva. O GNV medido com a curva ANTERIOR não vale para a nova (o alvo é
+     * K_alvo = K(t_gnv)·t_gnv/t_gas, medido sob o K que valia na hora): se a curva muda e ainda há GNV,
+     * ele é descartado aqui, de forma explícita, mesmo que quem gravou esqueça o resetGas. A gasolina fica.
+     * Curva igual à já adotada (ou primeira adoção, sem referência) não descarta nada.
+     */
     fun adoptCurve(fingerprint: String) {
-        synchronized(lock) { curveFingerprint = fingerprint; dirty = true }
-        maybeSave(force = true)
+        val stale = synchronized(lock) {
+            val previous = curveFingerprint
+            curveFingerprint = fingerprint
+            dirty = true
+            previous != null && previous != fingerprint && gas.size > 0
+        }
+        if (stale) resetGas("CURVA_K_GRAVADA_PELO_APP") else maybeSave(force = true)
     }
 
     /** Alinha à Curva K lida da ECU; se mudou por fora do app (ProgBase, AutoMatch), descarta o GNV. */
@@ -262,8 +288,14 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
      * 1,00 = GNV pede exatamente o que a gasolina pede. >1 = GNV pobre (ECU compensa somando).
      */
     fun index(): JSONObject {
-        cachedIndex?.let { return JSONObject(it.toString()).put("gasPerAir", gasPerAir() ?: JSONObject.NULL) }
+        cachedIndex?.let { cached ->
+            val unchanged = cachedIndexRevision == revisionCounter.get()
+            if (unchanged || clock() - cachedIndexAt < INDEX_MIN_INTERVAL_MS) {
+                return JSONObject(cached.toString()).put("gasPerAir", gasPerAir() ?: JSONObject.NULL)
+            }
+        }
         val revisionAtStart = revisionCounter.get()
+        val structuralAtStart = structuralCounter.get()
         val all = drivingPairs()
         fun median(values: List<Double>): Double? = values.sorted().let { if (it.isEmpty()) null else it[it.size / 2] }
         val bands = JSONArray()
@@ -312,8 +344,12 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             .put("gasPerAir", gasPerAir() ?: JSONObject.NULL)
             .put("bands", bands)
             .put("automatic", false)
-        // Uma leitura que entrou durante o cálculo invalida o resultado: não guardar índice velho.
-        if (revisionCounter.get() == revisionAtStart) cachedIndex = result
+        // Mudança estrutural durante o cálculo invalida o resultado; leitura nova só o deixa "velho" (revisão).
+        if (structuralCounter.get() == structuralAtStart) {
+            cachedIndex = result
+            cachedIndexRevision = revisionAtStart
+            cachedIndexAt = clock()
+        }
         return JSONObject(result.toString())
     }
 
@@ -363,12 +399,12 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             if (!dirty || (!force && now - lastSaveAt < SAVE_INTERVAL_MS)) return
             lastSaveAt = now
             dirty = false
-            toJson()
+            toJsonText()
         }
         try {
             val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
+            tmp.writeText(payload)
+            if (!tmp.renameTo(target)) { target.writeText(payload); tmp.delete() }
         } catch (_: Exception) {
             synchronized(lock) { dirty = true }
         }
@@ -376,19 +412,44 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     fun flush() = maybeSave(force = true)
 
-    private fun toJson(): JSONObject {
-        fun lane(values: Collection<Obs>) = JSONArray().apply {
-            values.forEach { put(JSONArray().put(it.t).put(it.rpm).put(it.map).put(it.petrolMs)) }
-        }
-        return JSONObject()
-            .put("format", FORMAT)
-            .put("curveFingerprint", curveFingerprint ?: JSONObject.NULL)
-            .put("gasEpochReason", gasEpochReason)
-            .put("gasEpochAt", gasEpochAt)
-            .put("gasUsefulRpmMs", gasUsefulRpmMs)
-            .put("airRpmBar", airRpmBar)
-            .put("petrol", lane(petrol))
-            .put("gas", lane(gas))
+    /** Número finito e curto: o arquivo guardava ~2 MB de doubles com 17 dígitos. */
+    private fun num(builder: StringBuilder, value: Double, scale: Double) {
+        val v = if (value.isFinite()) Math.round(value * scale) / scale else 0.0
+        builder.append(v)
+    }
+
+    private fun appendLane(builder: StringBuilder, name: String, values: Collection<Obs>) {
+        builder.append('"').append(name).append("\":{\"t\":[")
+        var first = true
+        values.forEach { if (!first) builder.append(','); builder.append(it.t); first = false }
+        builder.append("],\"rpm\":[")
+        first = true
+        values.forEach { if (!first) builder.append(','); num(builder, it.rpm, 10.0); first = false }
+        builder.append("],\"map\":[")
+        first = true
+        values.forEach { if (!first) builder.append(','); num(builder, it.map, 10_000.0); first = false }
+        builder.append("],\"ms\":[")
+        first = true
+        values.forEach { if (!first) builder.append(','); num(builder, it.petrolMs, 10_000.0); first = false }
+        builder.append("]}")
+    }
+
+    /** Layout plano: quatro vetores paralelos por combustível (sem um JSONArray por leitura). */
+    private fun toJsonText(): String {
+        val b = StringBuilder(64 + (petrol.size + gas.size) * 36)
+        b.append("{\"format\":").append(JSONObject.quote(FORMAT))
+            .append(",\"layout\":").append(JSONObject.quote(LAYOUT_FLAT))
+            .append(",\"curveFingerprint\":").append(curveFingerprint?.let { JSONObject.quote(it) } ?: "null")
+            .append(",\"gasEpochReason\":").append(JSONObject.quote(gasEpochReason))
+            .append(",\"gasEpochAt\":").append(gasEpochAt)
+            .append(",\"gasUsefulRpmMs\":").append(if (gasUsefulRpmMs.isFinite()) gasUsefulRpmMs else 0.0)
+            .append(",\"airRpmBar\":").append(if (airRpmBar.isFinite()) airRpmBar else 0.0)
+            .append(',')
+        appendLane(b, "petrol", petrol)
+        b.append(',')
+        appendLane(b, "gas", gas)
+        b.append('}')
+        return b.toString()
     }
 
     private fun load() {
@@ -396,21 +457,32 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         try {
             val root = JSONObject(source.readText())
             if (root.optString("format") != FORMAT) return
-            fun lane(array: JSONArray?, into: CellLane) {
-                if (array == null) return
+            // Lê os dois formatos: plano (vetores paralelos t/rpm/map/ms) e o antigo (um array [t,rpm,map,ms] por leitura).
+            fun lane(name: String, into: CellLane) {
+                val flat = root.optJSONObject(name)
+                if (flat != null) {
+                    val t = flat.optJSONArray("t") ?: return
+                    val rpm = flat.optJSONArray("rpm") ?: return
+                    val map = flat.optJSONArray("map") ?: return
+                    val ms = flat.optJSONArray("ms") ?: return
+                    val n = minOf(t.length(), rpm.length(), map.length(), ms.length())
+                    for (i in 0 until n) into.add(Obs(t.optLong(i), rpm.optDouble(i), map.optDouble(i), ms.optDouble(i)))
+                    return
+                }
+                val array = root.optJSONArray(name) ?: return
                 for (i in 0 until array.length()) {
                     val row = array.optJSONArray(i) ?: continue
                     into.add(Obs(row.optLong(0), row.optDouble(1), row.optDouble(2), row.optDouble(3)))
                 }
             }
-            lane(root.optJSONArray("petrol"), petrol)
-            lane(root.optJSONArray("gas"), gas)
+            lane("petrol", petrol)
+            lane("gas", gas)
             curveFingerprint = root.optString("curveFingerprint").takeIf { it.isNotBlank() && it != "null" }
             gasEpochReason = root.optString("gasEpochReason", "CARREGADO")
             gasEpochAt = root.optLong("gasEpochAt", 0L)
             gasUsefulRpmMs = root.optDouble("gasUsefulRpmMs", 0.0)
             airRpmBar = root.optDouble("airRpmBar", 0.0)
-            touched()
+            touched(structural = true)
         } catch (_: Exception) {
             petrol.clear()
             gas.clear()

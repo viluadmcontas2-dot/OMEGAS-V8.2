@@ -175,6 +175,13 @@ object AutoMatchSnapshotAnalysis {
             .put("automatic", false)
             .put("manualOnly", true)
             .put("snapshotHash", snapshot.optString("snapshotHash"))
+        // Snapshot incoerente no tempo (grupos lidos em instantes incompatíveis) não é base de proposta.
+        // `partial` é true em todo snapshot real: NÃO é critério.
+        if (snapshot.has("temporalCoherent") && !snapshot.optBoolean("temporalCoherent", true)) {
+            return base.put("ok", true).put("available", false)
+                .put("reason", SNAPSHOT_INCOHERENT_REASON)
+                .put("message", "Snapshot lido em instantes incompatíveis; releia antes de propor")
+        }
         val axis = valid(AutoCalProtocol.PETR_INJ_TBP, KFactorProtocol.POINT_COUNT)
         val currentMul = valid(AutoCalProtocol.MUL_ACT, KFactorProtocol.POINT_COUNT)
         if (axis == null || currentMul == null) {
@@ -203,6 +210,7 @@ object AutoMatchSnapshotAnalysis {
             )
             if (!result.available) {
                 return base.put("ok", true).put("available", false).put("reason", result.reason)
+                    .put("outOfRangePoints", result.outOfRangePoints)
             }
             refinedJson(base, result, buffersCoherent)
         } catch (error: Exception) {
@@ -213,6 +221,8 @@ object AutoMatchSnapshotAnalysis {
 
     /** Abaixo disso (ms de Petrol Inj.) o refino não reduz K: protege contra o motor apagar. */
     const val LOW_GUARD_MS = 3.5
+
+    const val SNAPSHOT_INCOHERENT_REASON = "SNAPSHOT_INCOERENTE_NO_TEMPO"
 
     private fun refinedJson(base: JSONObject, result: AutoMatchRefinedEngine.Result, buffersCoherent: Boolean): JSONObject {
         val points = JSONArray()
@@ -253,6 +263,14 @@ object AutoMatchSnapshotAnalysis {
             .put("refinementMode", result.mode.name)
             .put("equivalenceAvailable", result.equivalenceAvailable)
             .put("reason", result.reason ?: JSONObject.NULL)
+            // Sem evidência suficiente a proposta está ausente: pontos = curva atual, changedCount 0.
+            .put("proposalAvailable", result.equivalenceAvailable)
+            .put("message", result.message ?: JSONObject.NULL)
+            .put("invalidEvidenceBands", result.invalidEvidenceBands)
+            .put("thinBandsIgnored", result.thinBandsIgnored)
+            .put("telemetryOutlierBands", result.telemetryOutlierBands)
+            .put("telemetryPairsUsed", result.telemetryPairsUsed)
+            .put("outOfRangePoints", result.outOfRangePoints)
             .put("buffersCoherent", buffersCoherent)
             .put("matureCommonPoints", result.matureCommonPoints)
             .put("telemetryTargets", result.telemetryTargetCount)
@@ -270,6 +288,7 @@ object AutoMatchSnapshotAnalysis {
                 .put("maximumStepPercent", 15.0)
                 .put("maximumElasticity", AutoMatchRefinedEngine.E_MAX)
                 .put("minimumFactor", AutoMatchRefinedEngine.MIN_FACTOR)
+                .put("maximumFactor", AutoMatchRefinedEngine.MAX_FACTOR)
                 .put("lowGuardMs", LOW_GUARD_MS))
             .put("evidenceErrorBefore", result.evidenceErrorBefore ?: JSONObject.NULL)
             .put("evidenceErrorAfter", result.evidenceErrorAfter ?: JSONObject.NULL)

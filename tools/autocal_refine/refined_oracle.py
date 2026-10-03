@@ -16,8 +16,11 @@ Princípios (Work Unit OMEGAS-WU-006, removida; ver histórico git e docs/eviden
   5. Trava de coerência: |Δ ln K / Δ ln t| ≤ E_MAX entre nós vizinhos (o gás segue
      linearmente o pedido da gasolina; validado no teste cego de telemetria) e
      passo ≤ ±15%/execução.
-  6. Ganho proporcional à evidência; sem evidência o ponto só recebe polimento de
-     coerência; nada é gravado automaticamente.
+  6. Ganho proporcional à evidência; SEM evidência suficiente não há proposta (a curva
+     fica exatamente como está); nada é gravado automaticamente.
+  7. Faixa nativa com < BAND_MATURE_COUNT amostras não é evidência; MAP bruto com bit
+     0x8000 é evidência inválida (contada); snapshot incoerente no tempo é ignorado;
+     proposta limitada à faixa do AutoMatch nativo [0,75; 1,20] (novo K).
 """
 import math
 
@@ -27,12 +30,23 @@ AXIS_COUNTS_PER_MS = 512.0
 MAP_COUNTS_PER_BAR = 1024.0
 Q14 = 16384.0
 MAX_RAW = 65535
-MIN_FACTOR = 0.60
-MAX_FACTOR = MAX_RAW / Q14
+# Faixa de PROPOSTA = faixa do AutoMatch nativo (clamp(T_g/T, 0,75..1,20) observado na ECU).
+# O K novo de qualquer ponto alterado fica em [0,75; 1,20]; ponto cujo K atual já está fora da
+# faixa e não consegue entrar nela dentro do passo de ±15% é mantido (e sinalizado), nunca empurrado.
+MIN_RAW_PROPOSAL = 12288     # 0,75 em Q14
+MAX_RAW_PROPOSAL = 19661     # 1,20 em Q14 (teto observado na ECU)
+MIN_FACTOR = MIN_RAW_PROPOSAL / Q14
+MAX_FACTOR = MAX_RAW_PROPOSAL / Q14
+# Entrada sã: MUL_ACT fora disto é lixo de leitura/valor de fábrica, não curva a refinar.
+INPUT_MIN_FACTOR = 0.50
+INPUT_MAX_FACTOR = 2.00
+SNAPSHOT_REASON_INCOHERENT = "SNAPSHOT_INCOERENTE_NO_TEMPO"
+REASON_NO_EVIDENCE = "SEM_EVIDENCIA_SUFICIENTE"
+MESSAGE_NO_EVIDENCE = "sem evidência suficiente"
 
 # Constantes congeladas (calibradas por tools/autocal_refine/calibrate.py).
 BAND_FULL_COUNT = 6          # contagem que dá peso 1 à banda
-BAND_MATURE_COUNT = 3        # CALIBRATION_VAL_1 MinBufUpd*Thd observado = 3
+BAND_MATURE_COUNT = 3        # CALIBRATION_VAL_1 MinBufUpd*Thd observado = 3; faixa com menos amostras NÃO é evidência
 MIN_COMMON_MATURE = 4        # falha fechada abaixo disso
 OUTLIER_MIN_LOG = 0.05       # rejeição mínima absoluta (≈5%) de banda fora da curva
 OUTLIER_MAD_K = 3.0
@@ -50,7 +64,11 @@ TELEMETRY_MIN_MS = 3.0       # abaixo disso a telemetria é dominada por transie
 # A condução sozinha só habilita a equivalência (sem faixas nativas maduras) com cobertura real:
 # pelo menos TELEMETRY_ONLY_MIN_BANDS faixas de Petrol Inj. com TELEMETRY_ONLY_BAND_PAIRS pares cada.
 TELEMETRY_ONLY_BAND_PAIRS = 8
-TELEMETRY_ONLY_MIN_BANDS = 2
+TELEMETRY_ONLY_MIN_BANDS = 3
+# Plausibilidade: a razão mediana GNV/gasolina de uma faixa fora disto não é equivalência, é erro de
+# medida (outra curva, outro combustível, transiente): a faixa inteira é descartada como outlier.
+TELEMETRY_RATIO_MIN = 0.6
+TELEMETRY_RATIO_MAX = 1.6
 LEDGER_BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]  # = EquivalenceLedger.BANDS
 
 NATIVE_MIN_RATIO = 0.75
@@ -148,18 +166,36 @@ def pava(xs, ys, ws):
     return out
 
 
-def band_points(time_raw, map_raw, counts):
-    """(MAP bar, T ms, peso, contagem, banda) das bandas com dado."""
+def map_raw_invalid(value):
+    """MAP bruto S16 com bit 0x8000 (ou negativo) não é pressão: é evidência inválida."""
+    return value < 0 or (value & 0x8000) != 0
+
+
+def band_points(time_raw, map_raw, counts, stats=None):
+    """(MAP bar, T ms, peso, contagem, banda) das bandas com evidência.
+
+    Banda com menos de BAND_MATURE_COUNT amostras (fina) entra no desenho de T(MAP) mas tem peso de
+    evidência 0: nenhum alvo que dependa dela existe (nem conta, nem muda curva). Banda com dado mas MAP
+    inválido (bit 0x8000) ou tempo/MAP não positivo é contada em stats["invalid"]."""
     points = []
     for band in range(BAND_COUNT):
         n = counts[band]
-        if n <= 0 or time_raw[band] <= 0 or map_raw[band] <= 0:
+        if n <= 0:
             continue
+        if map_raw_invalid(map_raw[band]) or time_raw[band] <= 0 or map_raw[band] <= 0:
+            if stats is not None:
+                stats["invalid"] = stats.get("invalid", 0) + 1
+            continue
+        thin = n < BAND_MATURE_COUNT
+        if thin and stats is not None:
+            stats["thin"] = stats.get("thin", 0) + 1
         points.append({
             "band": band,
             "map": map_raw[band] / MAP_COUNTS_PER_BAR,
             "t": time_raw[band] / AXIS_COUNTS_PER_MS,
             "w": min(n, BAND_FULL_COUNT) / float(BAND_FULL_COUNT),
+            # peso de EVIDÊNCIA: faixa fina ajuda a desenhar T(MAP) mas não vale como alvo (ew = 0)
+            "ew": 0.0 if thin else min(n, BAND_FULL_COUNT) / float(BAND_FULL_COUNT),
             "n": n,
         })
     points.sort(key=lambda p: p["map"])
@@ -207,7 +243,7 @@ def monotone_fit(points):
 
 def fuel_curve(points):
     """Funções T(MAP) e peso(MAP) a partir do ajuste monótono."""
-    return [p["map"] for p in points], [p["fit_t"] for p in points], [p["w"] for p in points]
+    return [p["map"] for p in points], [p["fit_t"] for p in points], [p["ew"] for p in points]
 
 
 def equivalence_targets(petrol, gas, axis_ms, k_old):
@@ -307,40 +343,40 @@ def tukey(z):
     return (1.0 - z * z) ** 2
 
 
-def coherence_feasible(x0, u, e):
-    """Existe curva com |z−x0| ≤ passo e |Δz/Δu| ≤ e? (envelopes Lipschitz)."""
-    n = len(x0)
+def coherence_feasible(box, u, e):
+    """Existe curva z em `box` (limites por ponto) com |Δz/Δu| ≤ e? (envelopes Lipschitz)."""
+    n = len(box)
     for j in range(n):
-        hi = min(x0[k] + MAX_STEP_LOG + e * abs(u[j] - u[k]) for k in range(n))
-        lo = max(x0[k] - MAX_STEP_LOG - e * abs(u[j] - u[k]) for k in range(n))
+        hi = min(box[k][1] + e * abs(u[j] - u[k]) for k in range(n))
+        lo = max(box[k][0] - e * abs(u[j] - u[k]) for k in range(n))
         if lo > hi + 1e-12:
             return False
     return True
 
 
-def effective_elasticity(x0, u):
+def effective_elasticity(box, u):
     """E_MAX quando viável; senão o menor limite viável (curva atual com degraus fortes demais
-    para ser corrigida em uma execução dentro de ±15%)."""
-    if coherence_feasible(x0, u, E_MAX):
+    para ser corrigida em uma execução dentro de ±15% e da faixa nativa)."""
+    if coherence_feasible(box, u, E_MAX):
         return E_MAX
     lo, hi = E_MAX, 8.0
     for _ in range(40):
         mid = (lo + hi) / 2.0
-        if coherence_feasible(x0, u, mid):
+        if coherence_feasible(box, u, mid):
             hi = mid
         else:
             lo = mid
     return hi
 
 
-def enforce_coherence(z, x0, u, e):
-    """Projeções alternadas (POCS): passo ≤ MAX_STEP_LOG e |Δz/Δu| ≤ e."""
+def enforce_coherence(z, box, u, e):
+    """Projeções alternadas (POCS): z dentro de `box` e |Δz/Δu| ≤ e."""
     z = z[:]
     n = len(z)
     for _ in range(20000):
         changed = False
         for j in range(n):
-            lo, hi = x0[j] - MAX_STEP_LOG, x0[j] + MAX_STEP_LOG
+            lo, hi = box[j]
             if z[j] < lo - 1e-12 or z[j] > hi + 1e-12:
                 z[j] = min(max(z[j], lo), hi)
                 changed = True
@@ -447,41 +483,101 @@ def telemetry_targets(pairs, axis_ms, k_old):
     return out
 
 
+def ledger_band(tp):
+    """Índice da faixa de Petrol Inj. do livro; ≥ 12 ms cai numa faixa de cauda (nunca conta cobertura)."""
+    for i, (lo, hi) in enumerate(LEDGER_BANDS):
+        if lo <= tp < hi:
+            return i
+    return len(LEDGER_BANDS) if tp >= LEDGER_BANDS[-1][1] else None
+
+
+def plausible_pairs(pairs):
+    """Descarta faixa inteira cuja razão mediana GNV/gasolina é implausível e faixa fina (< 3 pares).
+
+    Retorna (pares_validos, faixas_outlier). Espelho de AutoMatchRefinedEngine.plausiblePairs."""
+    groups = {}
+    for tp, tg in pairs:
+        groups.setdefault(ledger_band(tp), []).append((tp, tg))
+    kept, outliers = [], 0
+    for band in sorted(g for g in groups if g is not None):
+        group = groups[band]
+        ratios = sorted(tg / tp for tp, tg in group)
+        median = ratios[len(ratios) // 2]
+        if not (TELEMETRY_RATIO_MIN <= median <= TELEMETRY_RATIO_MAX):
+            outliers += 1
+            continue
+        if len(group) < BAND_MATURE_COUNT:
+            continue
+        kept.extend(group)
+    return kept, outliers
+
+
 def telemetry_covers(pairs):
-    """Cobertura mínima da condução para propor sem faixas nativas maduras (espelho do Kotlin)."""
-    if len(pairs) < TELEMETRY_ONLY_BAND_PAIRS * TELEMETRY_ONLY_MIN_BANDS:
-        return False
+    """Cobertura mínima da condução para propor sem faixas nativas maduras (espelho do Kotlin):
+    TELEMETRY_ONLY_MIN_BANDS faixas distintas de Petrol Inj., cada uma com TELEMETRY_ONLY_BAND_PAIRS pares válidos."""
     covered = sum(1 for lo, hi in LEDGER_BANDS if sum(1 for tp, _ in pairs if lo <= tp < hi) >= TELEMETRY_ONLY_BAND_PAIRS)
     return covered >= TELEMETRY_ONLY_MIN_BANDS
 
 
+def proposal_box(x0, gain):
+    """Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20]. Ponto que não alcança a faixa
+    (K atual fora dela e fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0."""
+    lo_rng, hi_rng = math.log(MIN_FACTOR), math.log(MAX_FACTOR)
+    box = []
+    for j, x in enumerate(x0):
+        lo, hi = max(x - MAX_STEP_LOG, lo_rng), min(x + MAX_STEP_LOG, hi_rng)
+        outside = x < lo_rng - 1e-12 or x > hi_rng + 1e-12
+        if lo > hi + 1e-12 or (outside and gain[j] <= 0.0):
+            lo = hi = x
+        box.append((lo, hi))
+    return box
+
+
+def unavailable(reason, **extra):
+    out = {"available": False, "mode": "UNAVAILABLE", "reason": reason, "equivalenceAvailable": False,
+           "telemetryOnly": False, "matureCommonPoints": 0, "needsAnotherPass": False,
+           "currentRaw": [], "refinedRaw": [], "origins": [], "targets": [], "rejectedBands": []}
+    out.update(extra)
+    return out
+
+
 def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
+    # Snapshot incoerente no tempo (grupos de leitura em instantes incompatíveis) não é base de proposta.
+    # `partial` é true em todo snapshot real: NÃO é critério.
+    if snapshot.get("temporalCoherent") is False:
+        return unavailable(SNAPSHOT_REASON_INCOHERENT)
     axis_raw = raw(snapshot, "PETR_INJ_TBP")
     k_raw = raw(snapshot, "MUL_ACT")
     if axis_raw is None or k_raw is None or len(axis_raw) != POINT_COUNT or len(k_raw) != POINT_COUNT:
-        return {"available": False, "reason": "EIXO_OU_MUL_ACT_INDISPONIVEL"}
+        return unavailable("EIXO_OU_MUL_ACT_INDISPONIVEL")
     axis_ms = [v / AXIS_COUNTS_PER_MS for v in axis_raw]
     if any(axis_ms[i + 1] <= axis_ms[i] for i in range(POINT_COUNT - 1)) or axis_ms[0] <= 0:
-        return {"available": False, "reason": "EIXO_NAO_CRESCENTE"}
+        return unavailable("EIXO_NAO_CRESCENTE")
     k_old = [v / Q14 for v in k_raw]
     if any(k <= 0 for k in k_old):
-        return {"available": False, "reason": "MUL_ACT_INVALIDO"}
+        return unavailable("MUL_ACT_INVALIDO")
+    # K fora da faixa sã (ex.: 4,0 de fábrica/lixo): rejeita e sinaliza em vez de "manter".
+    insane = [i for i, k in enumerate(k_old) if not INPUT_MIN_FACTOR <= k <= INPUT_MAX_FACTOR]
+    if insane:
+        return unavailable("MUL_ACT_FORA_DA_FAIXA", outOfRangePoints=len(insane))
     u = [math.log(t) for t in axis_ms]
     x0 = [math.log(k) for k in k_old]
 
     petrol_raw = [raw(snapshot, k) for k in ("PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_UPD_PETR")]
     gas_raw = [raw(snapshot, k) for k in ("PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS", "NUM_BUF_UPD_GAS")]
     targets, rejected, petrol, gas = [], [], [], []
+    stats = {}
     if all(v is not None for v in petrol_raw + gas_raw):
-        petrol, rp = monotone_fit(band_points(*petrol_raw))
-        gas, rg = monotone_fit(band_points(*gas_raw))
+        petrol, rp = monotone_fit(band_points(*petrol_raw, stats=stats))
+        gas, rg = monotone_fit(band_points(*gas_raw, stats=stats))
         rejected = [dict(r, fuel="GASOLINA") for r in rp] + [dict(r, fuel="GNV") for r in rg]
         if len(petrol) >= 2 and len(gas) >= 2:
             targets = equivalence_targets(petrol, gas, axis_ms, k_old)
     mature = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)]
     native_equivalence = len(mature) >= MIN_COMMON_MATURE
-    usable = [(tp, tg) for tp, tg in (telemetry_pairs or []) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
-    # A condução sozinha só habilita a equivalência com cobertura real em mais de uma faixa.
+    candidate = [(tp, tg) for tp, tg in (telemetry_pairs or []) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
+    usable, outlier_bands = plausible_pairs(candidate)
+    # A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
     telemetry_only = (not native_equivalence) and telemetry_covers(usable)
     equivalence_available = native_equivalence or telemetry_only
     if telemetry_only:
@@ -504,23 +600,35 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
             if 0 <= k < POINT_COUNT:
                 spread[j] += kern * evidence[k]
     gain = [min(1.0, s / EVIDENCE_REF) for s in spread]
-    # Peso do K atual cai continuamente com a evidência: o ganho proporcional
-    # nasce do próprio balanço evidência × K atual, sem degraus entre nós.
-    prior_w = [PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g for g in gain]
-    fitted, robust = whittaker(u, observations, x0, prior_w, LAMBDA)
-    for t, r in zip(targets, robust):
-        t["robustWeight"] = round(r, 4)
-    if point_gain_scale is not None and len(point_gain_scale) == POINT_COUNT:
-        fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
-    e_eff = effective_elasticity(x0, u)
-    final = enforce_coherence(fitted, x0, u, e_eff)
+    out_of_range = sum(1 for x in x0 if x < math.log(MIN_FACTOR) - 1e-12 or x > math.log(MAX_FACTOR) + 1e-12)
+    e_eff = E_MAX
+    if equivalence_available:
+        # Peso do K atual cai continuamente com a evidência: o ganho proporcional
+        # nasce do próprio balanço evidência × K atual, sem degraus entre nós.
+        prior_w = [PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g for g in gain]
+        fitted, robust = whittaker(u, observations, x0, prior_w, LAMBDA)
+        for t, r in zip(targets, robust):
+            t["robustWeight"] = round(r, 4)
+        if point_gain_scale is not None and len(point_gain_scale) == POINT_COUNT:
+            fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
+        box = proposal_box(x0, gain)
+        e_eff = effective_elasticity(box, u)
+        final = enforce_coherence(fitted, box, u, e_eff)
+    else:
+        # Sem evidência suficiente NÃO existe proposta: a curva fica exatamente como está.
+        box = proposal_box(x0, gain)
+        final = x0[:]
+        gain = [0.0] * POINT_COUNT
 
     out_raw = []
     origins = []
     for j in range(POINT_COUNT):
-        factor = min(max(math.exp(final[j]), MIN_FACTOR), MAX_FACTOR)
-        r = int(round(factor * Q14))
-        r = min(max(r, 0), MAX_RAW)
+        if not equivalence_available or box[j][0] == box[j][1]:
+            out_raw.append(k_raw[j])  # sem evidência, ou ponto fora da faixa nativa que não entra nela: mantido
+            origins.append("HELD")
+            continue
+        r = int(round(math.exp(final[j]) * Q14))
+        r = min(max(r, MIN_RAW_PROPOSAL), MAX_RAW_PROPOSAL)
         out_raw.append(r)
         if gain[j] >= 0.5:
             origins.append("MEASURED")
@@ -545,8 +653,14 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
         "mode": "EQUIVALENCE" if equivalence_available else "POLISH",
         "equivalenceAvailable": equivalence_available,
         "telemetryOnly": telemetry_only,
-        "reason": None if equivalence_available else "BANDAS_COMUNS_MADURAS_INSUFICIENTES",
+        "reason": None if equivalence_available else REASON_NO_EVIDENCE,
+        "message": None if equivalence_available else MESSAGE_NO_EVIDENCE,
         "matureCommonPoints": len(mature),
+        "invalidEvidenceBands": stats.get("invalid", 0),
+        "thinBandsIgnored": stats.get("thin", 0),
+        "telemetryOutlierBands": outlier_bands,
+        "telemetryPairsUsed": len(usable) if equivalence_available else 0,
+        "outOfRangePoints": out_of_range,
         "axisMs": axis_ms,
         "currentRaw": k_raw,
         "refinedRaw": out_raw,
