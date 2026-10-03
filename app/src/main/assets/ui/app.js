@@ -34,6 +34,7 @@
   let renderedRoute = null;
   let previousGlobalSignature = '';
   let previousTelemetrySignature = '';
+  let telemetryPatchedAt = 0;
   let previousStatusSignature = '';
   let previousAlert = null;
   let previousLearningLayer = null;
@@ -243,11 +244,20 @@
       }
       if (envelope.ok !== false && signature !== previousTelemetrySignature) {
         previousTelemetrySignature = signature;
+        telemetryPatchedAt = Date.now();
         store.patch({ telemetry, presentRevision: Number(envelope.revision || 0) });
         const state = store.get();
         if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
         if (route === 'learning' || route === 'map') renderLightLiveContext(state, route);
       }
+    }
+
+    // Rota sem pump (Ajuste global, Sugestões, Ferramentas): o último valor não pode ficar na barra
+    // de status e no painel flutuante como se fosse de agora. Vencido, vira desconhecido (—).
+    const rules = (root.OmegasUi || ui).DisplayRules;
+    if (rules?.offRouteTelemetryExpired(isLiveRoute(route), store.get().telemetry?.valid, telemetryPatchedAt, Date.now())) {
+      previousTelemetrySignature = '';
+      store.patch({ telemetry: { valid: false, ageMs: -1, telemetryAgeMs: -1 } });
     }
 
     const state = store.get();

@@ -98,6 +98,21 @@
     return actionable + refinement;
   }
 
+  /**
+   * Telemetria só é atualizada nas rotas ao vivo. Numa rota sem pump (Ajuste global, Sugestões,
+   * Ferramentas) o último valor ficava na barra de status como se fosse de agora. Depois de maxMs
+   * sem renovar, vale "desconhecido" (—), nunca o último RPM com cara de ao vivo.
+   * Instante da última renovação desconhecido também conta como vencido.
+   */
+  const OFF_ROUTE_TELEMETRY_MAX_MS = 3000;
+  function offRouteTelemetryExpired(isLiveRoute, telemetryValid, patchedAtMs, nowMs, maxMs) {
+    if (isLiveRoute === true || telemetryValid !== true) return false;
+    const at = finite(patchedAtMs);
+    const now = finite(nowMs);
+    if (at === null || at <= 0 || now === null) return true;
+    return now - at > (finite(maxMs) ?? OFF_ROUTE_TELEMETRY_MAX_MS);
+  }
+
   /** Explica por que os pontos do GNV recomeçaram (a causa vem do Kotlin, em código). */
   const GAS_RESET_REASON = {
     AUTOMATCH_NATIVO: 'a ECU trocou a curva no automático',
@@ -118,5 +133,6 @@
   ns.DisplayRules = {
     DASH, finite, number, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
     ageLabel, sessionDate, pendingSuggestionCount, gasResetNote, GAS_RESET_REASON,
+    offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

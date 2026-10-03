@@ -128,3 +128,19 @@ test('faixa de status: null não vira "0 ms" nem "0 rpm"', () => {
   const source = fs.readFileSync(UI('components/vehicle-status-strip.js'), 'utf8');
   assert.match(source, /value === null \|\| value === undefined \|\| value === ''/);
 });
+
+test('telemetria fora das rotas ao vivo vence em 3 s e vira desconhecida', () => {
+  const R = rules;
+  const now = 1_000_000;
+  // Rota ao vivo: o pump renova; esta regra nunca invalida.
+  assert.equal(R.offRouteTelemetryExpired(true, true, now - 60_000, now), false);
+  // Fora das rotas ao vivo: dentro de 3 s vale, depois vence.
+  assert.equal(R.offRouteTelemetryExpired(false, true, now - 2_900, now), false);
+  assert.equal(R.offRouteTelemetryExpired(false, true, now - 3_100, now), true);
+  // Instante desconhecido não é frescor.
+  assert.equal(R.offRouteTelemetryExpired(false, true, 0, now), true);
+  assert.equal(R.offRouteTelemetryExpired(false, true, null, now), true);
+  // Já inválida não precisa invalidar de novo (evita laço de patch).
+  assert.equal(R.offRouteTelemetryExpired(false, false, now - 60_000, now), false);
+  assert.equal(R.offRouteTelemetryExpired(false, undefined, now - 60_000, now), false);
+});
