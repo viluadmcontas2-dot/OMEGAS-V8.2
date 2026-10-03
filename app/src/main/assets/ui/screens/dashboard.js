@@ -2,14 +2,9 @@
   (function(root) {
     "use strict";
     const ns = root.OmegasUi = root.OmegasUi || {};
-    function finite(value) {
-      if (value === null || value === undefined || value === "") return null;
-      return Number.isFinite(Number(value)) ? Number(value) : null;
-    }
-    function fmt(value, digits) {
-      const n = finite(value);
-      return n === null ? "\u2014" : n.toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    }
+    const rules = ns.DisplayRules;
+    const finite = rules.finite;
+    const fmt = rules.fmt;
     function text(id, value) {
       const node = document.getElementById(id);
       if (!node) return;
@@ -20,13 +15,7 @@
       const telemetry = state.telemetry || {};
       return telemetry.live || telemetry.data || telemetry;
     }
-    function fuelLabel(raw) {
-      const value = String(raw || "\u2014").toUpperCase();
-      if (value.includes("PETROL") || value.includes("GASOLINA")) return "GASOLINA";
-      if (value.includes("CNG") || value.includes("GNV") || value === "GAS") return "GNV";
-      if (value.includes("CUTOFF")) return "CUTOFF";
-      return value || "\u2014";
-    }
+    const fuelLabel = rules.fuelLabel;
     function ensureStyles() {
       if (document.querySelector("link[data-dashboard-now]")) return;
       const link = document.createElement("link");
@@ -65,10 +54,7 @@
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const eq = api && typeof api.refinementPhase === "function" ? api.refinementPhase() : null;
         const pilot = eq && eq.autopilot || {};
-        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU auto", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel", LENDO_ECU: "Lendo ECU", TENTATIVA_ENCERRADA: "Pausado" };
-        // Prazo vencido com proposta pronta: a proposta continua válida (o botão no Refino continua).
-        const expiredReady = pilot.phase === "TENTATIVA_ENCERRADA" && pilot.expiredFrom === "PROPOSTA_PRONTA";
-        text("dashRefino", expiredReady ? "Pronta" : labels[pilot.phase] || "\u2014");
+        text("dashRefino", rules.phaseLabel(pilot.phase, pilot.expiredFrom));
       }
       render(state) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
@@ -92,16 +78,16 @@
         const stuck = status.engineStuck === true;
         const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
         const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
-        text("dashHeroPetrol", fmt(petrol, 2));
-        text("dashRpm", rpm === null ? "\u2014" : Math.round(rpm).toLocaleString("pt-BR"));
-        text("dashMap", fmt(map, 2));
+        text("dashHeroPetrol", rules.ms(petrol));
+        text("dashRpm", rules.rpm(rpm));
+        text("dashMap", rules.bar(map));
         text("dashFuel", fuel);
         text("dashLevelsRaw", levelsRaw === null ? "\u2014" : Math.round(levelsRaw).toLocaleString("pt-BR"));
         this.renderRefino();
         text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");
         const tiles = this.root.querySelector(".now-tile-grid");
         if (tiles) {
-          const staleTiles = connected && telemetryValid && age !== null && age > 1500 ? "true" : "false";
+          const staleTiles = connected && telemetryValid && age !== null && age > ns.LiveStore.GREY_MS ? "true" : "false";
           if (tiles.dataset.stale !== staleTiles) tiles.dataset.stale = staleTiles;
         }
         const health = document.getElementById("dashHealth");

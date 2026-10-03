@@ -278,7 +278,7 @@
     const state = store.get();
     const route = state.route;
     const curve = route === 'curve' ? ensureScreen('curve') : null;
-    const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
+    const curveNeedsOverview = route === 'curve' && (curveEvidenceVisible() || curve?.needsOverview?.());
     const patch = {};
 
     if (route === 'tools') {
@@ -293,9 +293,9 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if (curveNeedsLearning && curve) {
+    if (curveNeedsOverview && curve) {
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
-      if (curve.needsLearning?.()) curve.renderLearning(updated);
+      if (curve.needsOverview?.()) curve.renderOverview(updated);
     }
     if (route === 'sessions') ensureScreen('sessions')?.render(updated);
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);

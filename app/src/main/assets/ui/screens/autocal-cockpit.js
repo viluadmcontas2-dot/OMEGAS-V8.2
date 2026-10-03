@@ -2,12 +2,11 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
   // Mesma régua do Agora: cinza com 1,5 s sem quadro novo, some com 3 s (antes vivia 7,5 s com quadro velho).
-  const AUTO_CAL_LIVE_GREY_MS = 1500;
-  const AUTO_CAL_LIVE_STALE_MS = 3000;
+  const AUTO_CAL_LIVE_GREY_MS = ns.LiveStore.GREY_MS;
+  const AUTO_CAL_LIVE_STALE_MS = ns.LiveStore.STALE_MS;
   // Suavização do cursor: ~150 ms para chegar ao alvo (sem extrapolar o que o motor fará).
-  const AUTO_CAL_CURSOR_EASE_MS = 50;
   // Texto da narrativa: no máximo 2 Hz, ou na hora quando muda região/combustível/estado.
-  const AUTO_CAL_NARRATIVE_MS = 500;
+  const AUTO_CAL_NARRATIVE_MS = ns.LiveStore.NARRATIVE_MS;
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
   const AUTO_CAL_X_AXIS_LABEL = 'Petrol Inj. (ms)';
 
@@ -223,17 +222,8 @@
       return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped, documentsMirror, mirrorFailed };
     },
 
-    livePoint(telemetry = {}, projection = {}) {
-      const source = telemetry || {};
-      const ageMs = finite(source.telemetryAgeMs ?? source.ageMs);
-      if (source.valid !== true || ageMs === null || ageMs < 0 || ageMs > AUTO_CAL_LIVE_STALE_MS) return null;
-      const live = source.live || source.data || source;
-      const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
-      const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
-      const rpm = finite(live.rpm);
-      if (petrolMs === null || mapBar === null) return null;
-      return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs, grey: ageMs > AUTO_CAL_LIVE_GREY_MS };
-    },
+    // Leitura viva única (core/live-store.js): cinza em 1,5 s, some em 3 s.
+    livePoint(telemetry = {}) { return ns.LiveStore.point(telemetry); },
 
     /**
      * Onde o MAP vivo cai nos 18 limiares da ECU. Cada faixa i é (THD[i], THD[i+1]] (confirmado em 740 de 740
@@ -665,6 +655,7 @@
       this.sessions = [];
       this.sessionDrawerOpen = false;
       this.chartScale = null;
+      this.cursor = new ns.LiveStore.EaseCursor(() => this.panel?.querySelector('.autocal-live-layer'));
       this.previousReferencePoints = [];
       this.comparisonPinned = false;
       this.currentReferencePoints = [];
@@ -760,22 +751,17 @@
               </div>
             </header>
 
-            <section class="autocal-reference-card" aria-label="CURVA DE AQUISIÇÃO · Gasolina × GNV">
-              <span class="autocal-plot-title">CURVA DE AQUISIÇÃO · Gasolina × GNV</span>
+            <section class="autocal-reference-card autocal-chart-card" aria-label="Curva de aquisição · Gasolina × GNV">
+              <div class="refino-chart-head">
+                <span class="autocal-plot-title">Curva de aquisição · Gasolina × GNV</span>
+                <span id="autocalReferenceCount" class="refino-counts">—</span>
+                <div class="autocal-chart-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
+              </div>
               <div class="autocal-chart-workspace">
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
-                <div class="autocal-chart-legend">
-                  <span class="petrol">Curva gasolina (ECU)</span>
-                  <span class="gas">Curva GNV (ECU)</span>
-                  <span class="acquired">Pontos da aquisição corrente</span>
-                  <span class="previous">GNV anterior (contexto)</span>
-                  <span class="current-band">Zona atual</span>
-                  <span class="live">AGORA</span>
-                  <span id="autocalReferenceCount">—</span>
-                </div>
+                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um marcador</b><span>As linhas mostram a referência da ECU; os pontos lidos podem ser lidos de novo, um a um.</span></aside>
                 <div id="autocalResetComparison" class="autocal-reset-comparison" hidden aria-live="polite"></div>
                 <button type="button" class="autocal-history-float" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
-                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Linhas mostram referência; bolinhas adquiridas podem ser readquiridas individualmente.</span></aside>
               </div>
             </section>
 
@@ -896,6 +882,8 @@
             Number(acquiredPoint.dataset.autocalAcquiredIndex),
           );
         }
+        const ours = event.target.closest('[data-chart-our]');
+        if (ours) this.inspectOurBin(Number(String(ours.getAttribute('data-chart-our')).split(':')[1]));
         const point = event.target.closest('[data-autocal-ref-index]');
         if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
         const reacquire = event.target.closest('[data-autocal-reacquire-point]');
@@ -1267,8 +1255,7 @@
       if (!live) {
         if (layer) layer.setAttribute('display', 'none');
         if (bandLayer) bandLayer.setAttribute('display', 'none');
-        this.cursorTarget = null;
-        this.cursorPos = null;
+        this.cursor.clear();
         return;
       }
       if (scale && bandLayer) {
@@ -1297,15 +1284,9 @@
       layer.removeAttribute('display');
       layer.setAttribute('data-out-of-range', projected.outOfRange ? 'true' : 'false');
       layer.setAttribute('data-stale', live.grey ? 'true' : 'false');
-      // O alvo muda a cada quadro novo; quem move o círculo é o quadro de animação (ease ~150 ms).
-      this.cursorTarget = { x: projected.x, y: projected.y, outOfRange: projected.outOfRange, scale };
-      if (!this.cursorPos || typeof this.scheduler?.addFrameHook !== 'function') {
-        this.cursorPos = { x: projected.x, y: projected.y };
-        this.paintCursor();
-      } else if (seen?.scale !== this.chartScale) {
-        // Gráfico redesenhado: os nós novos nascem no alvo; recoloca-os na posição suavizada.
-        this.paintCursor();
-      }
+      // O alvo muda a cada quadro novo; quem move o ponto é o quadro de animação (CSS transform, ease ~150 ms).
+      this.cursor.setTarget(projected.x, projected.y, scale, projected.outOfRange);
+      if (typeof this.scheduler?.addFrameHook !== 'function' || seen?.scale !== this.chartScale) this.cursor.paint();
       const label = this.panel?.querySelector('[data-autocal-live-label]');
       if (label) {
         const zone = region.zone;
@@ -1326,42 +1307,8 @@
       }
     }
 
-    /** Pinta o círculo e o rótulo na posição suavizada atual. */
-    paintCursor() {
-      const pos = this.cursorPos;
-      const target = this.cursorTarget;
-      if (!pos || !target) return;
-      this.panel?.querySelectorAll('[data-autocal-live-point]').forEach(node => {
-        node.setAttribute('cx', pos.x.toFixed(1));
-        node.setAttribute('cy', pos.y.toFixed(1));
-      });
-      const label = this.panel?.querySelector('[data-autocal-live-label]');
-      if (label) {
-        const anchor = AutoCalUxModel.liveLabelAnchor({ x: pos.x, y: pos.y, outOfRange: target.outOfRange }, target.scale);
-        label.setAttribute('x', anchor.x.toFixed(1));
-        label.setAttribute('text-anchor', anchor.textAnchor);
-        label.setAttribute('y', anchor.y.toFixed(1));
-      }
-    }
-
-    /** Quadro de animação (rAF do scheduler): aproxima o cursor do alvo; sem extrapolar, sem timer próprio. */
-    animateCursor(timestamp) {
-      const target = this.cursorTarget;
-      const pos = this.cursorPos;
-      if (!target || !pos) { this.cursorFrameAt = null; return; }
-      const dt = this.cursorFrameAt === null || this.cursorFrameAt === undefined ? 16 : Math.max(0, Math.min(100, timestamp - this.cursorFrameAt));
-      this.cursorFrameAt = timestamp;
-      const dx = target.x - pos.x;
-      const dy = target.y - pos.y;
-      if (Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05) {
-        if (dx !== 0 || dy !== 0) { pos.x = target.x; pos.y = target.y; this.paintCursor(); }
-        return;
-      }
-      const k = 1 - Math.exp(-dt / AUTO_CAL_CURSOR_EASE_MS);
-      pos.x += dx * k;
-      pos.y += dy * k;
-      this.paintCursor();
-    }
+    /** Quadro de animação (rAF do scheduler): o cursor compartilhado só move a camada com CSS transform. */
+    animateCursor(timestamp) { this.cursor.frame(timestamp); }
 
     renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');
@@ -1412,6 +1359,8 @@
     }
 
     renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host) {
+      ns.CurveChart?.release(host);
+      this.chartSignature = null;
       // ProgBase DUMP/TAutoCalUI separates PetrolCurve (native RV), PetrolPoint,
       // GasPoint, GasPointPrev and KLine. Do not collapse them into one reference.
       this.chartScale = null;
@@ -1578,6 +1527,8 @@
           return;
         }
         this.chartRenderKey = null;
+        this.chartSignature = null;
+        ns.CurveChart?.release(host);
         this.renderResetComparison([]);
         this.chartScale = null;
         if (timingProblem) {
@@ -1599,158 +1550,58 @@
 
       this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
 
-      const width = 1000;
-      const height = 400;
-      const padLeft = 64;
-      const padRight = 28;
-      const padTop = 22;
-      const padBottom = 48;
+      const chart = ns.CurveChart;
       const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
-      const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
-      const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
-      const chartRenderKey = JSON.stringify([
-        this.projection?.sessionId, points, acquiredPoints, history, zoneSurface, !!live,
-        this.previousReferencePoints, this.selectedReferenceIndex, this.selectedAcquiredPoint,
-      ]);
-      if (this.renderedChartHost === host && this.chartRenderKey === chartRenderKey) {
+      // Armazém único da evidência: busca eq/análise só quando a tabela da ECU muda ou no vigia de 5 s.
+      chart.updateEvidence(this.api, this.projection, Date.now(), false);
+      const width = Math.round(host.clientWidth) || 1000;
+      const height = Math.round(host.clientHeight) || 400;
+      const store = chart.evidence;
+      const signature = chart.evidenceSignature({
+        snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
+        extra: `${Math.round(width / 16)}x${Math.round(height / 16)}`,
+      });
+      const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.shared.node) !== false;
+      if (alreadyShown) {
         this.renderLiveCursor();
         return;
       }
-      const domain = AutoCalUxModel.referenceDomain(points, history, zoneSurface, acquiredPoints);
-      if (!domain) {
-        this.chartScale = null;
-        host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>';
+      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history };
+      chart.mount(host, signature, () => {
+        const model = chart.buildModel(input);
+        if (!model || !model.domain) {
+          return { html: '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>', scale: null, model: null };
+        }
+        return { ...chart.buildSvg(model, { width, height }), model };
+      }, 'ecu18');
+      const shown = chart.shared;
+      const model = shown.model;
+      this.chartScale = shown.scale;
+      if (!model || !shown.scale) {
+        this.renderedChartHost = null;
+        this.chartSignature = null;
         return;
       }
-      const { xMin, xMax, yMin, yMax } = domain;
-      const xFor = value => padLeft + ((value - xMin) / (xMax - xMin)) * (width - padLeft - padRight);
-      const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
-      const scale = { xMin, xMax, yMin, yMax, xFor, yFor };
-      this.chartScale = scale;
-      const pathFor = (items, yKey, xKey = 'petrolMs') => items
-        .filter(point => {
-          const xValue = finite(point?.[xKey]);
-          const yValue = finite(point?.[yKey]);
-          return xValue !== null && yValue !== null && yValue >= yMin && yValue <= yMax;
-        })
-        .map((point, index) => (index ? 'L' : 'M') + ' ' + xFor(point[xKey]).toFixed(1) + ' ' + yFor(point[yKey]).toFixed(1))
-        .join(' ');
-
-      const xTicks = Array.from({ length: 6 }, (_, index) => xMin + index * (xMax - xMin) / 5);
-      const yTicks = Array.from({ length: 5 }, (_, index) => yMin + index * (yMax - yMin) / 4);
-      const grid = yTicks.map(value => {
-        const y = yFor(value);
-        return '<line class="autocal-grid-line" x1="' + padLeft + '" y1="' + y.toFixed(1) + '" x2="' + (width - padRight) + '" y2="' + y.toFixed(1) + '"></line>' +
-          '<text class="autocal-axis-tick-y" x="' + (padLeft - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + value.toFixed(2) + '</text>';
-      }).join('') + xTicks.map(value => {
-        const x = xFor(value);
-        return '<line class="autocal-grid-line vertical" x1="' + x.toFixed(1) + '" y1="' + padTop + '" x2="' + x.toFixed(1) + '" y2="' + (height - padBottom) + '"></line>' +
-          '<text class="autocal-axis-tick-x" x="' + x.toFixed(1) + '" y="' + (height - 23) + '" text-anchor="middle">' + value.toFixed(1) + '</text>';
-      }).join('');
-
-      const zoneMarkup = zoneSurface.map(zone => {
-        const lower = Math.max(zone.lower, yMin);
-        const upper = Math.min(zone.upper, yMax);
-        if (upper <= lower) return '';
-        const top = Math.min(yFor(lower), yFor(upper));
-        const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
-        const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
-        const caption = 'Z' + zone.zone + ' · Gasolina ' + label(zone.petrolState) + ' · GNV ' + label(zone.gasState);
-        return '<g class="autocal-zone-surface" data-autocal-zone-surface="' + zone.zone +
-          '" data-gas-state="' + zone.gasState + '" data-petrol-state="' + zone.petrolState + '" data-current="false" aria-label="' + caption + '">' +
-          '<rect class="autocal-zone-background" x="' + padLeft + '" y="' + top.toFixed(1) +
-          '" width="' + (width - padLeft - padRight) + '" height="' + zoneHeight.toFixed(1) + '"></rect>' +
-          '<rect class="autocal-zone-petrol-edge" x="' + (padLeft + 2) + '" y="' + top.toFixed(1) +
-          '" width="5" height="' + zoneHeight.toFixed(1) + '"></rect>' +
-          '<rect class="autocal-zone-gas-edge" x="' + (padLeft + 9) + '" y="' + top.toFixed(1) +
-          '" width="5" height="' + zoneHeight.toFixed(1) + '"></rect>' +
-          '<text class="autocal-zone-label" data-autocal-zone-label data-base-label="' + caption +
-          '" x="' + (width - padRight - 10) + '" y="' + (top + zoneHeight / 2 + 4).toFixed(1) +
-          '" text-anchor="end">' + caption + '</text></g>';
-      }).join('');
-
-      const previous = history.length
-        ? '<path class="autocal-reference-line previous petrol" d="' + pathFor(history, 'petrolMapBar') + '"></path>' +
-          '<path class="autocal-reference-line previous gas" d="' + pathFor(history, 'gasMapBar') + '"></path>'
-        : '';
-      const equivalent = points.filter(point => finite(point.gasEquivalentMs) !== null);
-      const equivalencePath = equivalent.length > 1
-        ? '<path class="autocal-equivalence-line" d="' + pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs') + '"></path>'
-        : '';
-
-      const pointMarkup = points.map(point => {
-        const x = xFor(point.petrolMs).toFixed(1);
-        const petrolVisible = point.petrolMapBar >= yMin && point.petrolMapBar <= yMax;
-        const gasVisible = point.gasMapBar >= yMin && point.gasMapBar <= yMax;
-        const petrolY = petrolVisible ? yFor(point.petrolMapBar).toFixed(1) : null;
-        const gasY = gasVisible ? yFor(point.gasMapBar).toFixed(1) : null;
-        const equivalentX = petrolVisible && finite(point.gasEquivalentMs) !== null ? xFor(point.gasEquivalentMs).toFixed(1) : null;
-        return (petrolVisible
-          ? '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="22"></circle>' +
-            '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="6.5"></circle>'
-          : '') +
-          (gasVisible
-            ? '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
-              '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="4.2"></circle>'
-            : '') +
-          (equivalentX === null ? '' : '<circle class="autocal-equivalence-point" cx="' + equivalentX + '" cy="' + petrolY + '" r="4"></circle>');
-      }).join('');
-
-      const acquiredMarkup = acquiredPoints.map(point => {
-        if (point.mapBar < yMin || point.mapBar > yMax || point.petrolMs < xMin || point.petrolMs > xMax) return '';
-        const x = xFor(point.petrolMs).toFixed(1);
-        const y = yFor(point.mapBar).toFixed(1);
-        const key = point.fuel + ':' + point.index;
-        const selected = this.selectedAcquiredPoint === key;
-        const batchSelected = this.selectedAcquiredPoints.has(key);
-        return '<circle class="autocal-acquired-hit' + (selected ? ' selected' : '') + (batchSelected ? ' batch-selected' : '') +
-          '" data-autocal-acquired-fuel="' + point.fuel +
-          '" data-autocal-acquired-index="' + point.index +
-          '" cx="' + x + '" cy="' + y + '" r="17"></circle>' +
-          '<circle class="autocal-acquired-point ' + (point.fuel === 'GAS' ? 'gas' : 'petrol') +
-          ' ' + (point.acquisitionState === 'ACQUIRED' ? 'acquired' : 'collecting') +
-          '" data-acquisition-state="' + point.acquisitionState +
-          '" data-acquisition-progress="' + (finite(point.progress) ?? 0).toFixed(3) +
-          '" cx="' + x + '" cy="' + y + '" r="' + (point.acquisitionState === 'ACQUIRED' ? '6.0' : '4.6') + '"></circle>';
-      }).join('');
-
-      const projectedLive = AutoCalUxModel.projectLive(live, scale);
-      const liveAnchor = projectedLive ? AutoCalUxModel.liveLabelAnchor(projectedLive, scale) : null;
-      const liveMarkup = live && projectedLive
-        ? '<g class="autocal-live-layer" data-out-of-range="' + (projectedLive.outOfRange ? 'true' : 'false') + '" aria-label="Posição atual do motor">' +
-            '<circle class="autocal-live-halo" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="13"></circle>' +
-            '<circle class="autocal-live-point" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="6"></circle>' +
-            '<text class="autocal-live-label" data-autocal-live-label x="' + liveAnchor.x.toFixed(1) + '" y="' + liveAnchor.y.toFixed(1) + '" text-anchor="' + liveAnchor.textAnchor + '">' +
-              (projectedLive.outOfRange ? 'AGORA · fora da escala' : 'AGORA') + '</text>' +
-          '</g>'
-        : '';
-
-      host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV, equivalência nativa e posição AGORA por Petrol Inj. e MAP">' +
-        grid + zoneMarkup +
-        '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">' + AUTO_CAL_X_AXIS_LABEL + '</text>' +
-        '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
-        '<g>' +
-        '<rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>' +
-        previous + equivalencePath +
-        '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
-        '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
-        pointMarkup + acquiredMarkup + liveMarkup +
-        '</g></svg>';
-
+      this.currentReferencePoints = model.reference;
+      this.currentAcquiredPoints = model.ecu;
+      const legend = document.getElementById('autocalLegend');
+      const legendKey = `${model.proposal.length > 0}|${model.stalls.length > 0}|${history.length > 0}`;
+      if (legend && legend.dataset?.key !== legendKey) {
+        legend.dataset.key = legendKey;
+        legend.innerHTML = chart.legendHtml({ mode: 'ecu18', proposal: model.proposal.length > 0, stall: model.stalls.length > 0 }) + (history.length ? '<span class="previous" data-legend="previous">Leitura anterior</span>' : '');
+      }
+      chart.applySelection({ ref: this.selectedReferenceIndex, ecu: this.selectedAcquiredPoint, batch: this.selectedAcquiredPoints });
       if (this.selectedAcquiredPoint) {
         const [fuel, rawIndex] = this.selectedAcquiredPoint.split(':');
         this.inspectAcquiredPoint(fuel, Number(rawIndex));
-      } else {
-        const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
+      } else if (model.reference.length) {
+        const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : model.reference[0].index;
         this.inspectReferencePoint(selected);
       }
-      this.renderResetComparison(points);
+      this.renderResetComparison(model.reference);
       this.renderLiveCursor();
       this.renderedChartHost = host;
-      this.chartRenderKey = JSON.stringify([
-        this.projection?.sessionId, points, acquiredPoints, history, zoneSurface, !!live,
-        this.previousReferencePoints, this.selectedReferenceIndex, this.selectedAcquiredPoint,
-      ]);
+      this.chartSignature = signature;
     }
 
     renderHistoryControl() {
@@ -1883,6 +1734,16 @@
       this.refresh();
     }
 
+    /** Marcador "O que medimos": a mesma explicação do Refino (de quem é, quando, se conta para a curva). */
+    inspectOurBin(index) {
+      const host = document.getElementById('autocalChartInspector');
+      const bin = (ns.CurveChart?.shared.model?.ours || [])[index];
+      const explain = ns.RefinoModel?.explainPoint;
+      if (!host || !bin || !explain) return;
+      const explained = explain('our', bin, { now: Date.now() });
+      host.innerHTML = '<b>' + escapeHtml(explained.title) + '</b>' + explained.lines.map(line => '<span>' + escapeHtml(line) + '</span>').join('');
+    }
+
     inspectReferencePoint(index) {
       const host = document.getElementById('autocalChartInspector');
       const point = this.currentReferencePoints.find(item => Number(item.index) === Number(index));
@@ -1897,12 +1758,17 @@
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
       });
+      ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints });
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => node.classList.remove('selected'));
     }
 
     renderBands(snapshot) {
       const host = document.getElementById('autocalBands');
       if (!host) return;
+      // Evidência: só redesenha quando a tabela da ECU mudou (D2), não a cada leitura do relógio.
+      const bandsKey = (ns.CurveChart ? ns.CurveChart.tableSignature(snapshot) : '') + '|' + this.selectedBandIndex + '|' + host.childElementCount;
+      if (this.bandsKey === bandsKey) return;
+      this.bandsKey = bandsKey;
       const bands = AutoCalUxModel.bandStrip(snapshot, this.projection);
       host.innerHTML = bands.map(band => {
         const stateLabel = band.state === 'anchored' ? 'correlacionada'
@@ -1941,6 +1807,10 @@
     renderEvents(events) {
       const host = document.getElementById('autocalEvents');
       if (!host) return;
+      const last = events.length ? events[events.length - 1] : {};
+      const eventsKey = [events.length, last.counter, last.bandIndex, last.correlationState, last.rpm].join('|');
+      if (this.eventsKey === eventsKey) return;
+      this.eventsKey = eventsKey;
       if (!events.length) {
         host.innerHTML = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
         return;

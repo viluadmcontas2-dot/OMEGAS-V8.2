@@ -98,28 +98,10 @@ const EQUIVALENCE_FIXTURE = {
   reference: { frozen: false, canFreeze: true },
 };
 
-test('NativeApi.equivalence(): null até o Kotlin expor getEquivalence; fixture válida passa', () => {
-  const absent = loadInto({ console, OmegasNative: {} }, ['core/native-api.js']);
-  assert.equal(new absent.OmegasUi.NativeApi().equivalence(), null);
-  const demo = loadInto({ console }, ['core/native-api.js']);
-  assert.equal(new demo.OmegasUi.NativeApi().equivalence(), null);
-
-  const nested = loadInto({ console, OmegasNative: { getEquivalence: () => JSON.stringify(EQUIVALENCE_FIXTURE) } }, ['core/native-api.js']);
-  const eq = new nested.OmegasUi.NativeApi().equivalence();
-  assert.equal(eq.index.value, 0.62);
-  assert.equal(eq.index.provisional, true);
-  assert.equal(eq.nextAction.route, 'refino');
-  assert.equal(eq.nextAction.subpage, 'pontos');
-  assert.deepEqual(Array.from(eq.nextAction.pointIndexes), [3, 4]);
-
-  const flat = loadInto({ console, OmegasNative: { getEquivalence: () => JSON.stringify({ ok: true, available: true, index: 0.5, coverage: 4, provisional: false, nextAction: { kind: 'WAIT', text: 'ok', route: null, subpage: null, pointIndexes: [] }, points: [], reference: null }) } }, ['core/native-api.js']);
-  const eqFlat = new flat.OmegasUi.NativeApi().equivalence();
-  assert.equal(eqFlat.index.value, 0.5);
-  assert.equal(eqFlat.index.coverage, 4);
-  assert.equal(eqFlat.nextAction.route, '');
-
-  const none = loadInto({ console, OmegasNative: { getEquivalence: () => JSON.stringify({ ok: true, available: false, reason: 'CURVA_K_NAO_LIDA' }) } }, ['core/native-api.js']);
-  assert.equal(new none.OmegasUi.NativeApi().equivalence(), null);
+test('a UI não deriva ação da fase: o cérebro (nextAction) é a única fonte', () => {
+  const api = read('core/native-api.js');
+  for (const dead of ['PHASE_NEXT_ACTION', 'nextActionFromPhase', 'normalizeEquivalence', 'equivalence()']) assert.ok(!api.includes(dead), dead);
+  assert.ok(!api.includes("generation: 'V7'"));
 });
 
 test('Agora é para dirigir (D1): sem cartão de equivalência, só 4 valores grandes + faixa quieta', () => {
