@@ -24,10 +24,13 @@ import java.util.zip.ZipInputStream
 /**
  * Prova de queda do app no emulador (classe 4, sem ECU: só o caminho de gravação e publicação).
  *
- * Fase 1 grava uma sessão de verdade com o SessionRecorder real, publica a parte 1 em
- * Download/Omegas, grava mais eventos só em disco e MORRE (SIGKILL, como um force-stop).
- * Fase 2 roda num processo novo, recupera a sessão órfã e prova: parte final publicada, nenhum
- * evento perdido ou duplicado, e o RESUMO.md da parte final conta fases, apagões, gravação e veredito.
+ * Regra do produto: UMA sessão = UM ZIP, publicado ao fechar ou na recuperação. Nada no Drive
+ * enquanto grava.
+ * Fase 1 grava uma sessão de verdade com o SessionRecorder real, confirma que NADA foi publicado
+ * em Download/Omegas e MORRE (SIGKILL, como um force-stop).
+ * Fase 2 roda num processo novo, recupera a sessão órfã e prova: exatamente um ZIP, com a sessão
+ * inteira, nenhum evento perdido ou duplicado, e o RESUMO.md dentro dele conta fases, apagões,
+ * gravação e veredito.
  * O script de CI roda as duas fases em chamadas separadas de `am instrument`.
  */
 @RunWith(AndroidJUnit4::class)
@@ -48,7 +51,6 @@ class SessionKillRecoveryTest {
         assertTrue(recorder.start("prova de queda do app").optBoolean("ok"))
         val sessionId = JSONObject(recorder.statusJson()).getString("sessionId")
 
-        // Lote 1: vai para a parte 1.
         telemetry(recorder, 300, 1_500)
         recorder.record("refinement_phase", "autocal", JSONObject().put("phase", "ECU_TRABALHANDO").put("headline", "A ECU está no automático"), force = true)
         recorder.record("refinement_phase", "autocal", JSONObject().put("phase", "COLETANDO_NOSSOS").put("headline", "Dirija para medir"), force = true)
@@ -56,9 +58,6 @@ class SessionKillRecoveryTest {
             .put("rpmBefore", 1_200.0).put("rpmMin", 0.0).put("speedKmh", 24.0), force = true)
         recorder.record("engine_stall_after", "autocal", JSONObject().put("at", 1_000L).put("depois", "RELIGOU").put("religou", true).put("religouEmS", 1.8), force = true)
         recorder.record("k_factor_batch_confirmed", "k_factor", JSONObject().put("adjustmentId", "KF-PROVA").put("points", JSONArray(List(30) { it })), force = true)
-        assertTrue("parte 1 publicada em Download/Omegas", recorder.publishNow())
-
-        // Lote 2: só em disco quando o app morrer.
         telemetry(recorder, 200, 1_700)
         recorder.record("refinement_phase", "autocal", JSONObject().put("phase", "VERIFICANDO").put("headline", "Verificando a gravação"), force = true)
         recorder.record("engine_stall", "autocal", JSONObject().put("kind", "QUASE_APAGOU").put("at", 50_000L).put("petrolMs", 3.1).put("mapBar", 0.40)
@@ -72,6 +71,7 @@ class SessionKillRecoveryTest {
         while (SystemClock.elapsedRealtime() < deadline && !(events.isFile && events.readText().contains("lote 2 no disco"))) SystemClock.sleep(100L)
         assertTrue("lote 2 chegou ao disco antes da queda", events.readText().contains("lote 2 no disco"))
 
+        assertEquals("nada vai para o Drive enquanto a sessão grava", 0, readParts(sessionId).size)
         expectedFile.writeText(JSONObject().put("sessionId", sessionId).put("killedAtMs", System.currentTimeMillis()).toString(2))
         // SIGKILL: sem fechar a sessão, sem hook de desligamento. É o que um force-stop ou a energia faz.
         android.os.Process.killProcess(android.os.Process.myPid())
@@ -122,32 +122,28 @@ class SessionKillRecoveryTest {
         assertTrue("a recuperação publicou a parte final", marker.isFile)
 
         val parts = readParts(sessionId)
-        assertTrue("parte 1 (antes da queda) e parte final (depois): ${parts.map { it.name }}", parts.size >= 2)
-        val first = JSONObject(String(parts.first().entries.entries.first { it.key.endsWith("/parte.json") }.value))
-        val last = JSONObject(String(parts.last().entries.entries.first { it.key.endsWith("/parte.json") }.value))
-        assertFalse("parte 1 não é final", first.getBoolean("final"))
-        assertTrue("a última parte é final", last.getBoolean("final"))
+        val safe = DocumentsSessionMirror.safeName(sessionId)
+        assertEquals("exatamente um ZIP para a sessão: ${parts.map { it.name }}", listOf("$safe.zip"), parts.map { it.name })
+        val zip = parts.single()
+        val info = JSONObject(String(zip.entries.getValue("$safe/parte.json")))
+        assertTrue("o ZIP único é final", info.getBoolean("final"))
+        assertTrue("o ZIP único é a sessão inteira", info.getBoolean("single"))
 
-        // Sem perda e sem duplicata: as fatias de todas as partes, em ordem de byte, são o arquivo do disco.
-        val slices = parts.flatMap { part ->
-            part.entries.filter { Regex(".*/events_0001\\.from_\\d+\\.jsonl").matches(it.key) }
-                .map { (name, bytes) -> Regex("from_(\\d+)").find(name)!!.groupValues[1].toLong() to bytes }
-        }.sortedBy { it.first }
-        val joined = slices.fold(ByteArray(0)) { acc, (_, bytes) -> acc + bytes }
+        // Sem perda e sem duplicata: o arquivo de eventos dentro do ZIP é o arquivo do disco, byte a byte.
         val onDisk = File(dir, "events_0001.jsonl")
         val complete = SessionPartPlanner.completeLength(onDisk)
         val diskBytes = onDisk.readBytes().copyOf(complete.toInt())
         fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
-        assertEquals("partes concatenadas = arquivo da sessão (sem perda e sem duplicata)", sha(diskBytes), sha(joined))
+        val joined = zip.entries.getValue("$safe/events_0001.jsonl")
+        assertEquals("ZIP = arquivo da sessão (sem perda e sem duplicata)", sha(diskBytes), sha(joined))
         val sequences = String(joined).lines().filter { it.isNotBlank() }.map { JSONObject(it).getLong("sequence") }
         assertEquals("sequências contíguas", (1L..sequences.size.toLong()).toList(), sequences)
-        fun eventsOf(part: Part) = part.entries.filter { it.key.contains("/events_0001.from_") }.values.joinToString("") { String(it) }
-        assertTrue("o lote 2 (só em disco na hora da queda) saiu na parte final", eventsOf(parts.last()).contains("lote 2 no disco"))
-        assertTrue("o lote 1 já estava publicado antes da queda", parts.dropLast(1).any { eventsOf(it).contains("KF-PROVA") })
-        assertFalse("o lote 2 não aparece em parte anterior", parts.dropLast(1).any { eventsOf(it).contains("lote 2 no disco") })
+        val text = String(joined)
+        assertTrue("lote 1 dentro do ZIP", text.contains("KF-PROVA"))
+        assertTrue("lote 2 dentro do ZIP", text.contains("lote 2 no disco"))
 
         // RESUMO.md na parte final.
-        val resumo = String(parts.last().entries.entries.first { e -> e.key.endsWith("/RESUMO.md") }.value)
+        val resumo = String(zip.entries.getValue("$safe/RESUMO.md"))
         for (needle in listOf(
             SessionResumo.OPEN_MARK, "ECU trabalhando no automático", "coletando os pontos do OMEGAS", "verificando a última gravação",
             "Apagou: 1 (religou: 1). Quase apagou: 1.", "depois: o motor religou em 1,8 s", "Curva K: 30 pontos, ajuste KF-PROVA",
@@ -156,7 +152,7 @@ class SessionKillRecoveryTest {
 
         File(evidenceDir, "session-kill-recovery-RESUMO.md").writeText(resumo)
         File(evidenceDir, "session-kill-recovery.json").writeText(
-            JSONObject().put("sessionId", sessionId).put("parts", JSONArray(parts.map { it.name }))
+            JSONObject().put("sessionId", sessionId).put("zips", JSONArray(parts.map { it.name }))
                 .put("eventsOnDisk", sequences.size).put("sha256", sha(joined)).put("provenance", "EMULATOR_KILL_RECOVERY_NO_ECU")
                 .put("killedAtMs", expected.getLong("killedAtMs")).toString(2),
         )

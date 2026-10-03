@@ -39,10 +39,9 @@ class SessionRecorder(
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
-        /** Parte pública imutável a cada 2 min: num corte de energia perde-se no máximo isso. */
-        private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
-        /** Evento do AutoCal antecipa a parte, sem gerar uma parte por evento. */
-        private const val DURABLE_EVENT_MIN_GAP_MS = 15_000L
+        // Sem publicação no meio da gravação: uma sessão vira um ZIP só, ao fechar ou na recuperação.
+        // Um corte de energia não perde nada: os eventos ficam no armazenamento do app (descarregados a
+        // cada poucos eventos) e a próxima abertura do app publica o ZIP da sessão que ficou aberta.
     }
 
     private val droppedEvents = AtomicLong(0L)
@@ -131,11 +130,6 @@ class SessionRecorder(
                 "native",
                 JSONObject().put("reason", reason).put("metadata", metadata),
             )
-            worker.execute {
-                synchronized(this) {
-                    if (recording && sessionId == id) syncDocumentsMirror(force = true)
-                }
-            }
             statusObject().put("ok", true)
         } catch (error: Exception) {
             recording = false
@@ -188,19 +182,6 @@ class SessionRecorder(
                 if (!recording) return@synchronized
                 recordNow(type, source, copy)
             }
-        }
-    }
-
-    /**
-     * Publica agora a parte pendente em Download/Omegas (o que já foi gravado vira ZIP imutável).
-     * Usado pela prova de queda do app no emulador; o ritmo normal continua sendo o de 2 min.
-     */
-    fun publishNow(): Boolean {
-        awaitPendingWrites()
-        return synchronized(this) {
-            if (!recording) return@synchronized false
-            syncDocumentsMirror(force = true)
-            documentsMirror?.statusObject()?.optBoolean("lastSyncOk") ?: false
         }
     }
 
@@ -614,19 +595,6 @@ class SessionRecorder(
                 )
                 while (preview.size > PREVIEW_LIMIT) preview.removeFirst()
             }
-            val durableAutoCalEvent = type in setOf(
-                "autocal_native_snapshot",
-                "autocal_manual_snapshot",
-                "autocal_native_action",
-                "autocal_native_calibration_epoch",
-            )
-            val periodicCandidate = type == "telemetry" || type == "full_snapshot"
-            val sinceLast = now - lastDocumentsMirrorAt
-            if ((durableAutoCalEvent && sinceLast >= DURABLE_EVENT_MIN_GAP_MS) ||
-                (periodicCandidate && sinceLast >= DOCUMENTS_MIRROR_INTERVAL_MS)
-            ) {
-                syncDocumentsMirror(force = true)
-            }
         } catch (error: Exception) {
             lastError = error.message ?: error.javaClass.simpleName
         }
@@ -718,7 +686,6 @@ class SessionRecorder(
     private fun syncDocumentsMirror(force: Boolean) {
         val dir = sessionDir ?: return
         val now = System.currentTimeMillis()
-        if (!force && now - lastDocumentsMirrorAt < DOCUMENTS_MIRROR_INTERVAL_MS) return
         try {
             writer?.flush()
             syncToDisk()

@@ -33,20 +33,21 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
         self.assertIn("SessionRecorder(paths, settings, documentsMirror)", SERVICE)
         self.assertEqual(1, SERVICE.count("SessionRecorder("))
 
-    def test_recorder_mirrors_active_autocal_without_creating_second_capture_loop(self):
+    def test_recorder_publishes_one_zip_per_session_and_never_during_recording(self):
+        # Contrato de texto (apoio); a prova de comportamento é SessionPartPlannerTest (JVM) e o
+        # cenário de emulador session-kill-recovery.
         self.assertIn("documentsMirror", RECORDER)
         self.assertIn("syncDocumentsMirror", RECORDER)
-        for event in (
-            "autocal_native_snapshot",
-            "autocal_manual_snapshot",
-            "autocal_native_action",
-            "autocal_native_calibration_epoch",
-        ):
-            self.assertIn(event, RECORDER)
-        self.assertIn("DOCUMENTS_MIRROR_INTERVAL_MS", RECORDER)
+        # Nada de publicação periódica nem por evento: era isso que gerava 100+ ZIPs por sessão.
+        self.assertNotIn("DOCUMENTS_MIRROR_INTERVAL_MS", RECORDER)
+        self.assertNotIn("DURABLE_EVENT_MIN_GAP_MS", RECORDER)
+        self.assertNotIn("durableAutoCalEvent", RECORDER)
+        record_now = RECORDER[RECORDER.index("private fun recordNow"):RECORDER.index("private fun writeResumo")]
+        self.assertNotIn("syncDocumentsMirror", record_now.replace("syncDocumentsMirror(force = true)\n                return", ""))
         mirror = MIRROR_PATH.read_text(encoding="utf-8")
         self.assertNotIn("ScheduledExecutor", mirror)
         self.assertNotIn("ThreadPoolExecutor", mirror)
+        self.assertIn("SessionPartPlanner.fileName", mirror)
 
     def test_stopped_session_is_forced_to_documents_and_public_archive_is_not_pruned(self):
         stop = RECORDER[RECORDER.index("fun stop("):RECORDER.index("fun record(", RECORDER.index("fun stop("))]

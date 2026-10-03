@@ -75,4 +75,51 @@ class SessionPartPlannerTest {
         assertEquals("s_1_parte_0007.zip", SessionPartPlanner.partName("s 1", 7))
         dir.deleteRecursively()
     }
+
+    @Test
+    fun `sessao fechada sem parte antes vira um ZIP so com a sessao inteira`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        val log = File(dir, "events_0001.jsonl")
+        val log2 = File(dir, "events_0002.jsonl")
+        File(dir, "manifest.json").writeText("{\"v\":1}")
+        File(dir, "RESUMO.md").writeText("# resumo")
+        log.writeText("{\"seq\":1}\n{\"seq\":2}\n")
+        log2.writeText("{\"seq\":3}\n")
+
+        val plan = SessionPartPlanner.plan(dir, final = true)!!
+        assertTrue(plan.single)
+        assertEquals("s_1.zip", SessionPartPlanner.fileName("s 1", plan))
+        val out = ByteArrayOutputStream()
+        SessionPartPlanner.writeZip(plan, "s 1", out)
+        val zip = unzip(out.toByteArray())
+        assertArrayEquals(log.readBytes(), zip.getValue("s_1/events_0001.jsonl"))
+        assertArrayEquals(log2.readBytes(), zip.getValue("s_1/events_0002.jsonl"))
+        assertTrue(zip.containsKey("s_1/RESUMO.md"))
+        assertTrue(zip.containsKey("s_1/manifest.json"))
+        val info = JSONObject(String(zip.getValue("s_1/parte.json")))
+        assertTrue(info.getBoolean("single"))
+        assertTrue(info.getBoolean("final"))
+        assertTrue("nenhum nome 'from_' no ZIP único", zip.keys.none { it.contains(".from_") })
+
+        // Depois de publicado e registrado não sobra nada para publicar.
+        SessionPartPlanner.commit(dir, plan)
+        assertNull(SessionPartPlanner.plan(dir, final = true))
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `sessao antiga que ja tem parte publicada continua em partes`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        val log = File(dir, "events_0001.jsonl")
+        log.writeText("{\"seq\":1}\n")
+        val first = SessionPartPlanner.plan(dir, final = false)!!
+        assertEquals(false, first.single)
+        assertEquals("s_1_parte_0001.zip", SessionPartPlanner.fileName("s 1", first))
+        SessionPartPlanner.commit(dir, first)
+        log.appendText("{\"seq\":2}\n")
+        val last = SessionPartPlanner.plan(dir, final = true)!!
+        assertEquals("a última parte de sessão antiga não vira ZIP único", false, last.single)
+        assertEquals("s_1_parte_0002.zip", SessionPartPlanner.fileName("s 1", last))
+        dir.deleteRecursively()
+    }
 }
