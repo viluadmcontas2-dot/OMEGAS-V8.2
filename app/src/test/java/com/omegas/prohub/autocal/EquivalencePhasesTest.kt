@@ -6,11 +6,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
-class RefinementAutopilotTest {
+class EquivalencePhasesTest {
+    @get:Rule
+    val tmp = TemporaryFolder()
+
     private var now = 0L
-    private fun pilot() = RefinementAutopilot(null) { now }
+    private fun pilot() = EquivalencePhases(null) { now }
 
     private fun monitor(count: Int, max: Int? = 3, enabled: Int? = 1) = JSONObject()
         .put("autoMatchCount", count).put("maxAutomatch", max ?: JSONObject.NULL).put("autoCalEnabled", enabled ?: JSONObject.NULL)
@@ -115,5 +120,36 @@ class RefinementAutopilotTest {
         assertEquals(1, r.getInt("petrolZones"))
         assertEquals(1, r.getInt("gasZones"))
         assertEquals("ECU_TRABALHANDO", r.getString("phase"))
+    }
+
+    private fun oldFile(body: String) = tmp.newFile("refinement_autopilot.json").apply { writeText(body) }
+
+    @Test
+    fun `arquivo do APK antigo no formato v1 e lido e o aviso ja dado nao se repete`() {
+        val f = oldFile("""{"format":"omegas-refinement-autopilot-v1","lastCount":3,"quietMs":0,"phase":"PROPOSTA_PRONTA","alertedPhase":"PROPOSTA_PRONTA","ecuDoneLatch":"MAX_AUTOMATCH","campoFuturo":true}""")
+        val p = EquivalencePhases(f) { now }
+        assertEquals("PROPOSTA_PRONTA", p.observe(true, monitor(3), acquisition(18, 15), offIndex, noJournal, 0).getString("phase"))
+        assertNull(p.takeAlert())
+    }
+
+    @Test
+    fun `formato desconhecido e ignorado e JSON quebrado nao derruba`() {
+        val p1 = EquivalencePhases(oldFile("""{"format":"omegas-x-v9","alertedPhase":"PROPOSTA_PRONTA"}""")) { now }
+        p1.observe(true, monitor(3), acquisition(18, 15), offIndex, noJournal, 0)
+        assertTrue(p1.takeAlert() != null)
+        tmp.root.resolve("refinement_autopilot.json").writeText("{")
+        val p2 = EquivalencePhases(tmp.root.resolve("refinement_autopilot.json")) { now }
+        assertEquals("SEM_ECU", p2.json().getString("phase"))
+    }
+
+    @Test
+    fun `gravacao continua no formato v1 com o mesmo nome de arquivo`() {
+        val f = tmp.root.resolve("refinement_autopilot.json")
+        val p = EquivalencePhases(f) { now }
+        p.observe(true, monitor(3), acquisition(18, 15), offIndex, noJournal, 0)
+        p.takeAlert()
+        val saved = JSONObject(f.readText())
+        assertEquals("omegas-refinement-autopilot-v1", saved.getString("format"))
+        assertEquals("PROPOSTA_PRONTA", saved.getString("alertedPhase"))
     }
 }

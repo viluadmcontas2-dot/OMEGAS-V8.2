@@ -19,7 +19,7 @@ class RefinementCycleScenarioTest {
     private var now = 1_000_000L
     private val ledger = EquivalenceLedger(null) { now }
     private val journal = RefinementJournal(null) { now }
-    private val pilot = RefinementAutopilot(null) { now }
+    private val pilot = EquivalencePhases(null) { now }
 
     /** Faixas de Petrol Inj. de condução: (rpm, MAP, ms de gasolina). Células distintas no RPM×MAP. */
     private val cells = listOf(

@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "app/src/main/java/com/omegas/prohub/calibration/MapBatchPlan.kt"
 POLICY = ROOT / "app/src/main/java/com/omegas/prohub/calibration/CalibrationWriteSafetyPolicy.kt"
 BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt"
+CALIBRATION = ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationOperationsBridge.kt"
 HUB = ROOT / "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt"
 AUTOCAL_BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
 AUTOCAL_ACTION = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
@@ -18,6 +19,7 @@ class V8MapBatchContract(unittest.TestCase):
         self.plan = PLAN.read_text("utf-8")
         self.policy = POLICY.read_text("utf-8")
         self.bridge = BRIDGE.read_text("utf-8")
+        self.calibration = CALIBRATION.read_text("utf-8")
         self.hub = HUB.read_text("utf-8")
         self.autocal_bridge = AUTOCAL_BRIDGE.read_text("utf-8")
         self.autocal_action = AUTOCAL_ACTION.read_text("utf-8")
@@ -28,9 +30,9 @@ class V8MapBatchContract(unittest.TestCase):
     def test_user_intent_supports_full_writable_grid_as_one_native_batch(self):
         self.assertIn("MAX_USER_CELLS = KMapPhysicalAxes.WRITABLE_ROWS * KMapPhysicalAxes.COLUMNS", self.plan)
         self.assertIn("INTERNAL_CHUNK_CELLS = MAX_USER_CELLS", self.plan)
-        self.assertIn("fun startMapBatchWrite", self.bridge)
-        self.assertIn("MapBatchPlan.build(cells)", self.bridge)
-        self.assertIn("até 144 células", self.bridge)
+        self.assertIn("fun startMapBatchWrite", self.calibration)
+        self.assertIn("MapBatchPlan.build(cells)", self.calibration)
+        self.assertIn("até 144 células", self.calibration)
 
     def test_release_manifest_matches_144_cell_user_contract(self):
         self.assertIn('"mapa-k-intencao-unica-ate-144-celulas"', self.manifest)
@@ -52,15 +54,15 @@ class V8MapBatchContract(unittest.TestCase):
         self.assertNotIn("this.api.writeMap(this.review.items, 3, 150,", self.map_ui)
 
     def test_success_requires_every_cell_confirmed(self):
-        self.assertIn("failure == null && completedCells == plan.totalCells", self.bridge)
-        self.assertIn('.put("state", "BATCH_CONFIRMED")', self.bridge)
-        self.assertIn('.put("readbackValid", true)', self.bridge)
-        self.assertIn('.put("humanConfirmed", true)', self.bridge)
+        self.assertIn("failure == null && completedCells == plan.totalCells", self.calibration)
+        self.assertIn('.put("state", "BATCH_CONFIRMED")', self.calibration)
+        self.assertIn('.put("readbackValid", true)', self.calibration)
+        self.assertIn('.put("humanConfirmed", true)', self.calibration)
 
     def test_partial_failure_is_explicit(self):
-        self.assertIn('.put("state", "BATCH_PARTIAL_FAILED")', self.bridge)
-        self.assertIn('.put("confirmedCells", completedCells)', self.bridge)
-        self.assertIn('.put("partial", completedCells > 0)', self.bridge)
+        self.assertIn('.put("state", "BATCH_PARTIAL_FAILED")', self.calibration)
+        self.assertIn('.put("confirmedCells", completedCells)', self.calibration)
+        self.assertIn('.put("partial", completedCells > 0)', self.calibration)
 
     def test_single_native_safety_policy_covers_all_mutating_bridges(self):
         for marker in (
@@ -75,7 +77,7 @@ class V8MapBatchContract(unittest.TestCase):
 
         self.assertNotIn("DRIVING_PROBABLE_RPM", self.policy)
         self.assertNotIn("status.rpm >=", self.policy)
-        self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.bridge)
+        self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.calibration)
         self.assertGreaterEqual(
             self.hub.count("CalibrationWriteSafetyPolicy.unsafeReason(service.status())"),
             3,

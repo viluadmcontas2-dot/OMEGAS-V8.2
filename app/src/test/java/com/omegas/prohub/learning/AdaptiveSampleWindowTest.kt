@@ -1,5 +1,8 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.ecu.MotorSample
+import com.omegas.prohub.ecu.SampleClassification
+import com.omegas.prohub.ecu.SampleDiagnostics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

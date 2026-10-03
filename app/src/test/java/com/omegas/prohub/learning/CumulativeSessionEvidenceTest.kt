@@ -1,7 +1,11 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.ecu.MotorSample
 import com.omegas.prohub.ecu.Mp48Fuel
 import com.omegas.prohub.ecu.Mp48Telemetry
+import com.omegas.prohub.ecu.SampleClassification
+import com.omegas.prohub.ecu.SampleDecision
+import com.omegas.prohub.ecu.SampleDiagnostics
 import com.omegas.prohub.util.RingLog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

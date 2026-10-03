@@ -6,7 +6,7 @@ settings = (ROOT / "app/src/main/java/com/omegas/prohub/settings/AppSettings.kt"
 mirror = (ROOT / "app/src/main/java/com/omegas/prohub/diagnostics/DocumentsSessionMirror.kt").read_text(encoding="utf-8")
 manager = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorManager.kt").read_text(encoding="utf-8")
 service = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt").read_text(encoding="utf-8")
-bridge = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text(encoding="utf-8")
+bridge = (ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationOperationsBridge.kt").read_text(encoding="utf-8")
 api = (ROOT / "app/src/main/assets/ui/core/native-api.js").read_text(encoding="utf-8")
 drawers = (ROOT / "app/src/main/assets/ui/components/drawers.js").read_text(encoding="utf-8")
 curve = (ROOT / "app/src/main/assets/ui/screens/curve.js").read_text(encoding="utf-8")

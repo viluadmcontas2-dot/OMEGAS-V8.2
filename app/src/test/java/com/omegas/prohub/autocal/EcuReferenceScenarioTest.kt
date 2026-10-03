@@ -133,7 +133,7 @@ class EcuReferenceScenarioTest {
     fun `app recem-instalado com AutoMatch 3 de 3 na ECU nao espera AutoMatch nem pede gasolina`() {
         val ledger = ledger(onlyGnv = true, withEcuReference = true) // nenhuma gasolina medida por este app
         assertEquals(0, ledger.index().getInt("petrolObservations"))
-        val pilot = RefinementAutopilot(null)
+        val pilot = EquivalencePhases(null)
         val out = pilot.observe(true, monitor(3), ecuAcquisition, ledger.index(), RefinementJournal(null).json(), 0)
         assertTrue("a ECU já tinha terminado: sem esperar", out.getBoolean("ecuDone"))
         assertEquals("MAX_AUTOMATCH", out.getString("ecuDoneReason"))
@@ -149,13 +149,13 @@ class EcuReferenceScenarioTest {
         val ledger = ledger(onlyGnv = true, withEcuReference = true)
         val acquisitionWithMax = JSONObject(ecuAcquisition.toString())
         acquisitionWithMax.getJSONObject("thresholds").put("maxAutomatch", 3)
-        val out = RefinementAutopilot(null).observe(true, monitor(3, max = null), acquisitionWithMax, ledger.index(), RefinementJournal(null).json(), 0)
+        val out = EquivalencePhases(null).observe(true, monitor(3, max = null), acquisitionWithMax, ledger.index(), RefinementJournal(null).json(), 0)
         assertEquals("MAX_AUTOMATCH", out.getString("ecuDoneReason"))
     }
 
     @Test
     fun `conectou e a ECU ainda nao entregou nada, o piloto diz que esta lendo`() {
-        val pilot = RefinementAutopilot(null)
+        val pilot = EquivalencePhases(null)
         val reading = pilot.observe(true, monitor(null, null), null, EquivalenceLedger(null).index(), RefinementJournal(null).json(), 0)
         assertEquals("LENDO_ECU", reading.getString("phase"))
         assertFalse(reading.getBoolean("ecuRead"))
@@ -164,7 +164,7 @@ class EcuReferenceScenarioTest {
         assertEquals("ECU_TRABALHANDO", read.getString("phase"))
         assertTrue(read.getString("headline").contains("automático 1 de 3"))
         // Sem cabo e sem nada lido: sem ECU.
-        val offline = RefinementAutopilot(null).observe(false, monitor(null, null), null, EquivalenceLedger(null).index(), RefinementJournal(null).json(), 0)
+        val offline = EquivalencePhases(null).observe(false, monitor(null, null), null, EquivalenceLedger(null).index(), RefinementJournal(null).json(), 0)
         assertEquals("SEM_ECU", offline.getString("phase"))
     }
 
@@ -172,7 +172,7 @@ class EcuReferenceScenarioTest {
     fun `sem gasolina do app e sem curva de gasolina na ECU, so ai pede gasolina`() {
         val ledger = EquivalenceLedger(null)
         drive(ledger, "GNV", 2_200.0, 0.60, 5.0)
-        val out = RefinementAutopilot(null).observe(true, monitor(3), JSONObject().put("points", org.json.JSONArray()), ledger.index(), RefinementJournal(null).json(), 0)
+        val out = EquivalencePhases(null).observe(true, monitor(3), JSONObject().put("points", org.json.JSONArray()), ledger.index(), RefinementJournal(null).json(), 0)
         assertEquals("COLETANDO_NOSSOS", out.getString("phase"))
         assertTrue(out.getString("next"), out.getString("next").contains("Rode alguns minutos na gasolina"))
     }

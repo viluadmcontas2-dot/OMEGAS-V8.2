@@ -7,7 +7,7 @@ import kotlin.math.abs
 import kotlin.math.ln
 
 /**
- * Piloto do refino: decide em que fase a calibração está, sem ninguém olhar a tela.
+ * Fases da equivalência: decide em que fase a calibração está, sem ninguém olhar a tela.
  *
  * 0. SEM_ECU / LENDO_ECU — sem cabo, ou conectou e a ECU ainda não entregou o AutoMatch e a curva.
  *    O estado vem sempre da ECU (ela guarda o AutoMatch e as curvas); o app recém-instalado lê e segue.
@@ -26,7 +26,7 @@ import kotlin.math.ln
  *
  * Nunca grava na ECU. Só observa, decide a fase e avisa (notificação/UI).
  */
-class RefinementAutopilot(
+class EquivalencePhases(
     private val file: File? = null,
     private val durationClock: (() -> Long)? = null,
     private val clock: () -> Long = System::currentTimeMillis,

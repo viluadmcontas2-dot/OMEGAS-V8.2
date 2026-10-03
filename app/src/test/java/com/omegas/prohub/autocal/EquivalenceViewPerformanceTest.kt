@@ -32,7 +32,7 @@ class EquivalenceViewPerformanceTest {
     fun `consulta fria do Refino com o corpus real fica abaixo de 30 ms e a pronta custa quase nada`() {
         val ledger = corpus()
         val journal = RefinementJournal(null)
-        val pilot = RefinementAutopilot(null)
+        val pilot = EquivalencePhases(null)
         val stalls = StallWatch(null)
         RealSessionReplaySupport.telemetry(RealSessionReplaySupport.fixture(REFERENCE))
             .forEach { stalls.accept(RealSessionReplaySupport.stallFrame(it)) }

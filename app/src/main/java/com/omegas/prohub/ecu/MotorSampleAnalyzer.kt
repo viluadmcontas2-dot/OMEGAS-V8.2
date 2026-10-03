@@ -1,7 +1,9 @@
-package com.omegas.prohub.learning
+package com.omegas.prohub.ecu
 
-import com.omegas.prohub.ecu.Mp48Fuel
-import com.omegas.prohub.ecu.Mp48Telemetry
+import com.omegas.prohub.learning.AdaptiveSampleWindow
+import com.omegas.prohub.learning.LearningTemperatureSettings
+import com.omegas.prohub.learning.LearningTolerancePolicy
+import com.omegas.prohub.learning.LearningToleranceSettings
 import org.json.JSONObject
 import java.util.ArrayDeque
 import java.util.UUID
@@ -643,7 +645,7 @@ class MotorSampleAnalyzer(
     }
 
     private fun SampleDecision.withCell(frame: Mp48Telemetry): SampleDecision {
-        val cell = LearningGridProjection.cellFor(frame.rpm.toDouble(), frame.petrolMs)
+        val cell = com.omegas.prohub.calibration.LiveCellProjection.cellFor(frame.rpm.toDouble(), frame.petrolMs)
         return copy(
             minimumFrames = this@MotorSampleAnalyzer.minimumFrames,
             desiredFrames = this@MotorSampleAnalyzer.desiredFrames,

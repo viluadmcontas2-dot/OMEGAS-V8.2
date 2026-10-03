@@ -124,33 +124,29 @@ test('modo navegador é simulador visual e nunca escreve ECU', () => {
   assert.equal(api.writeCurve([{ index: 0, currentRaw: 100, targetRaw: 101 }]).simulationOnly, true);
 });
 
-test('APK usa OmegasV7 para uma única intenção de mapa e curva', () => {
+test('APK usa OmegasCalibration para curva e mapa e nunca OmegasV7', () => {
   const { context } = bootCore();
-  const calls = [];
-  context.OmegasNative = {
-    getStatus: () => '{}',
-    getLiveTelemetry: () => '{}',
-    getLearningMaps: () => '{}',
-    getLearningSyncStatus: () => '{}',
-    getObdStatus: () => '{}',
-  };
-  context.OmegasV7 = {
-    startMapBatchWrite(payload, maxStep, pauseMs, reason) {
-      calls.push({ type: 'map', payload: JSON.parse(payload), maxStep, pauseMs, reason });
-      return JSON.stringify({ ok: true, started: true });
-    },
-    startCurveBatchWrite(payload, reason) {
-      calls.push({ type: 'curve', payload: JSON.parse(payload), reason });
-      return JSON.stringify({ ok: true, started: true });
-    },
+  const calls = []; const v7Touched = [];
+  context.OmegasNative = { getStatus: () => '{}', getLiveTelemetry: () => '{}', getLearningMaps: () => '{}', getLearningSyncStatus: () => '{}', getObdStatus: () => '{}' };
+  context.OmegasV7 = new Proxy({}, { get: (_, key) => { v7Touched.push(String(key)); return undefined; } });
+  const ok = type => (...args) => { calls.push({ type, args }); return JSON.stringify({ ok: true, started: true }); };
+  context.OmegasCalibration = {
+    startMapBatchWrite: ok('map'), startCurveBatchWrite: ok('curve'), startCurveRead: ok('read'),
+    startCurveBackup: ok('backup'), startCurveRestorePrepare: ok('restore'), startCurveReset: ok('reset'),
+    previewMapAdjustment: ok('preview'),
+    listCurveBackups: (...args) => { calls.push({ type: 'list', args }); return '[]'; },
+    getLastOperation: (...args) => { calls.push({ type: 'last', args }); return JSON.stringify({ ok: true, state: 'IDLE', busy: false }); },
   };
   const api = new context.OmegasUi.NativeApi();
   assert.equal(api.isDemo(), false);
   api.writeMap([{ row: 0, column: 0, current: 120, target: 125 }], 3, 150, 'teste');
   api.writeCurve([{ index: 0, currentRaw: 12000, targetRaw: 12100 }], 'teste curva');
-  assert.equal(calls.length, 2);
-  assert.equal(calls[0].type, 'map');
-  assert.equal(calls[0].payload.length, 1);
-  assert.equal(calls[1].type, 'curve');
-  assert.equal(calls[1].payload.length, 1);
+  api.startCurveRead(); api.startCurveBackup('b1'); api.curveBackups(); api.prepareCurveRestore('k.json');
+  api.resetCurve(); api.previewMapAdjustment([{ row: 0, column: 0, current: 120 }], 'percent', 2);
+  assert.equal(api.curveOperation().state, 'IDLE'); assert.equal(api.mapWriteOperation().state, 'IDLE');
+  assert.deepEqual(calls.map(c => c.type), ['map', 'curve', 'read', 'backup', 'list', 'restore', 'reset', 'preview', 'last', 'last']);
+  assert.deepEqual(calls[0].args.slice(1), [0, 0, 'teste']);
+  assert.equal(JSON.parse(calls[0].args[0]).length, 1);
+  assert.deepEqual(calls[7].args.slice(1), ['percent', 2]);
+  assert.deepEqual(v7Touched, []);
 });

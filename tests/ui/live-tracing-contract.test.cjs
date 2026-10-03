@@ -5,7 +5,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const visual = read('app/src/main/assets/ui/components/predictor-current-cell.js');
-const projection = read('app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt');
+const projection = read('app/src/main/java/com/omegas/prohub/calibration/LiveCellProjection.kt');
 const bridge = read('app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt');
 
 // O fast path do Predictor reutiliza o Store/Scheduler do app; não cria relógio próprio.
@@ -20,7 +20,7 @@ assert.equal(projection.includes('ContinuousLearningMath.bilinearWeights'), true
 assert.equal(projection.includes('.put("continuousWeights"'), true);
 assert.equal(projection.includes('.put("affectsLearning", false)'), true);
 assert.equal(projection.includes('.put("affectsCalibration", false)'), true);
-assert.equal(bridge.includes('LearningGridProjection.liveInterpolationJson('), true);
+assert.equal(bridge.includes('LiveCellProjection.liveInterpolationJson('), true);
 assert.equal(bridge.includes('.put("interpolation", interpolation)'), true);
 assert.equal(visual.includes('cell.continuousWeights'), true);
 assert.equal(visual.includes('bilinear'), false);

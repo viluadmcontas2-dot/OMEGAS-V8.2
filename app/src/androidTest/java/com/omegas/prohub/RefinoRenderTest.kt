@@ -11,7 +11,7 @@ import com.omegas.prohub.autocal.AutoCalReadObservation
 import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
 import com.omegas.prohub.autocal.AutoCalSnapshotSource
 import com.omegas.prohub.autocal.EcuPetrolReference
-import com.omegas.prohub.autocal.RefinementAutopilot
+import com.omegas.prohub.autocal.EquivalencePhases
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.NativeAutoCalAcquisitionEpoch
 import com.omegas.prohub.autocal.StallWatch
@@ -184,7 +184,7 @@ class RefinoRenderTest {
     }
 
     private fun observe(service: TelemetryForegroundService, snapshot: JSONObject, count: Int?, max: Int = 3): JSONObject =
-        service.refinementAutopilot.observe(
+        service.equivalencePhases.observe(
             ecuOnline = true,
             monitor = JSONObject().put("autoMatchCount", count ?: JSONObject.NULL).put("maxAutomatch", max).put("autoCalEnabled", 1),
             acquisition = AutoCalAcquisition.fromSnapshot(snapshot),
@@ -401,7 +401,7 @@ class RefinoRenderTest {
             val verdicts = events.filter { it.optString("type") == "refinement_verdict" }
             val reasons = decisions.map { it.getJSONObject("data").getString("reasonCode") }
             val md = File(directory, "RESUMO.md").readText()
-            service.refinementAutopilot.observe(true,
+            service.equivalencePhases.observe(true,
                 JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
                 null, service.equivalence.index(), service.refinementJournal.json(), 0)
             openRefino(scenario)
@@ -455,7 +455,7 @@ class RefinoRenderTest {
                 .orEmpty().flatMap { it.readLines() }.mapNotNull { line -> runCatching { JSONObject(line) }.getOrNull() }
             val verdicts = events.filter { it.optString("type") == "refinement_verdict" }
             val md = File(directory, "RESUMO.md").readText()
-            service.refinementAutopilot.observe(true,
+            service.equivalencePhases.observe(true,
                 JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
                 null, service.equivalence.index(), service.refinementJournal.json(), 0)
             openRefino(scenario)
@@ -480,14 +480,14 @@ class RefinoRenderTest {
         try {
             val service = service(scenario)
             var duration = 1_000L
-            val p = RefinementAutopilot(null, durationClock = { duration }, clock = { 1_000_000L })
+            val p = EquivalencePhases(null, durationClock = { duration }, clock = { 1_000_000L })
             val empty = JSONObject().put("samples", 0).put("bands", JSONArray())
             val noJournal = JSONObject().put("latest", JSONObject.NULL)
             p.observe(true, null, null, empty, noJournal, 0)
             duration += 30_000L
             val expired = p.observe(true, null, null, empty, noJournal, 0)
             assertEquals("TENTATIVA_ENCERRADA", expired.getString("phase"))
-            TelemetryForegroundService::class.java.getDeclaredField("refinementAutopilot").apply {
+            TelemetryForegroundService::class.java.getDeclaredField("equivalencePhases").apply {
                 isAccessible = true; set(service, p)
             }
             openRefino(scenario)
@@ -511,7 +511,7 @@ class RefinoRenderTest {
         try {
             val service = service(scenario)
             val snapshot = prepareCurvaPronta(service)
-            service.refinementAutopilot.observe(false,
+            service.equivalencePhases.observe(false,
                 JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
                 AutoCalAcquisition.fromSnapshot(snapshot), service.equivalence.index(),
                 service.refinementJournal.json(), service.refinementJournal.restorePoints().length())

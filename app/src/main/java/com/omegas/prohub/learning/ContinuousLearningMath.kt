@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.calibration.KMapPhysicalAxes
 import kotlin.math.exp
 
 /**
@@ -25,6 +26,9 @@ object ContinuousLearningMath {
         val weight: Double,
     )
 
+    private val rpmAxis: DoubleArray = KMapPhysicalAxes.rpmBins().map(Int::toDouble).toDoubleArray()
+    private val petrolAxis: DoubleArray = KMapPhysicalAxes.petrolBins()
+
     val defaultMapBins = doubleArrayOf(0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00)
 
     fun blend(values: DoubleArray, value: Double): AxisBlend {
@@ -43,8 +47,8 @@ object ContinuousLearningMath {
     }
 
     fun bilinearWeights(rpm: Double, petrolMs: Double): List<BilinearContribution> {
-        val x = blend(LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(), rpm)
-        val y = blend(LearningGridProjection.petrolBins, petrolMs)
+        val x = blend(rpmAxis, rpm)
+        val y = blend(petrolAxis, petrolMs)
         val candidates = listOf(
             BilinearContribution(y.lower, x.lower, (1.0 - x.fraction) * (1.0 - y.fraction)),
             BilinearContribution(y.lower, x.upper, x.fraction * (1.0 - y.fraction)),
@@ -68,8 +72,8 @@ object ContinuousLearningMath {
         mapBar: Double,
         mapBins: DoubleArray = defaultMapBins,
     ): List<TrilinearContribution> {
-        val x = blend(LearningGridProjection.rpmBins.map(Int::toDouble).toDoubleArray(), rpm)
-        val y = blend(LearningGridProjection.petrolBins, petrolMs)
+        val x = blend(rpmAxis, rpm)
+        val y = blend(petrolAxis, petrolMs)
         val z = blend(mapBins, mapBar)
         val candidates = listOf(
             TrilinearContribution(y.lower, x.lower, z.lower, (1.0 - x.fraction) * (1.0 - y.fraction) * (1.0 - z.fraction)),

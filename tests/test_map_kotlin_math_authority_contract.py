@@ -6,7 +6,7 @@ EDITOR = (ROOT / "app/src/main/assets/ui/map-editor.js").read_text("utf-8")
 SCREEN = (ROOT / "app/src/main/assets/ui/screens/map.js").read_text("utf-8")
 API = (ROOT / "app/src/main/assets/ui/core/native-api.js").read_text("utf-8")
 PLANNER = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/MapKManualPlanner.kt").read_text("utf-8")
-BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/V7JavascriptBridge.kt").read_text("utf-8")
+BRIDGE = (ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationOperationsBridge.kt").read_text("utf-8")
 
 # Produção: seleção e revisão ficam na UI; transformação percentual/delta/target
 # em valor K exato fica no Kotlin.
@@ -23,7 +23,7 @@ assert "current * (1 +" not in SCREEN
 assert "current + this.adjustment" not in SCREEN
 
 assert "previewMapAdjustment(cells, mode, adjustment)" in API
-assert "invoke(this.v7, 'previewMapAdjustment'" in API
+assert "invoke(this.calibration, 'previewMapAdjustment'" in API
 assert "simulationOnly: true" in API  # cálculo JS restante pertence apenas ao adaptador demo/Netlify.
 
 assert "object MapKManualPlanner" in PLANNER

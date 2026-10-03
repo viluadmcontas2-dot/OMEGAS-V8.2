@@ -167,7 +167,7 @@
   class NativeApi {
     constructor() {
       this.native = root.OmegasNative || null;
-      this.v7 = root.OmegasV7 || null;
+      this.calibration = root.OmegasCalibration || null;
       this.power = root.OmegasPower || null;
       this.demo = !this.native;
       this.demoMapState = demoMap();
@@ -289,37 +289,37 @@
     mapReadResult() { return this.demo ? this.demoMapState : invoke(this.native, 'getKMapReadResult', [], { ok: false, state: 'FAILED', error: 'Leitura indisponível' }); }
     previewMapAdjustment(cells, mode, adjustment) {
       if (this.demo) return demoMapAdjustment(cells, mode, adjustment);
-      return invoke(this.v7, 'previewMapAdjustment', [JSON.stringify(cells || []), mode || 'percent', Number(adjustment)], { ok: false, error: 'Prévia Kotlin do Mapa K indisponível' });
+      return invoke(this.calibration, 'previewMapAdjustment', [JSON.stringify(cells || []), mode || 'percent', Number(adjustment)], { ok: false, error: 'Prévia Kotlin do Mapa K indisponível' });
     }
     writeMap(cells, maxStep, pauseMs, reason) {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
-      return invoke(this.v7, 'startMapBatchWrite', [JSON.stringify(cells || []), 0, 0, reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
+      return invoke(this.calibration, 'startMapBatchWrite', [JSON.stringify(cells || []), 0, 0, reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
     }
-    mapWriteOperation() { return this.demo ? { ok: true, state: 'IDLE', busy: false, progress: 0 } : invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false }); }
+    mapWriteOperation() { return this.demo ? { ok: true, state: 'IDLE', busy: false, progress: 0 } : invoke(this.calibration, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false }); }
 
     startCurveRead() {
       if (this.demo) return { ok: true, started: true, state: 'CURVE_READING' };
-      return invoke(this.v7, 'startCurveRead', [], { ok: false, error: 'Ponte V7 indisponível' });
+      return invoke(this.calibration, 'startCurveRead', [], { ok: false, error: 'Ponte V7 indisponível' });
     }
     startCurveBackup(label) {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Backup real exige ECU conectada.' };
-      return invoke(this.v7, 'startCurveBackup', [label || 'Curva salva manualmente'], { ok: false, error: 'Backup da Curva K indisponível' });
+      return invoke(this.calibration, 'startCurveBackup', [label || 'Curva salva manualmente'], { ok: false, error: 'Backup da Curva K indisponível' });
     }
     curveBackups() {
       if (this.demo) return [];
-      return invoke(this.v7, 'listCurveBackups', [], []);
+      return invoke(this.calibration, 'listCurveBackups', [], []);
     }
     prepareCurveRestore(fileName) {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Restauração real exige ECU conectada.' };
-      return invoke(this.v7, 'startCurveRestorePrepare', [fileName || ''], { ok: false, error: 'Restauração da Curva K indisponível' });
+      return invoke(this.calibration, 'startCurveRestorePrepare', [fileName || ''], { ok: false, error: 'Restauração da Curva K indisponível' });
     }
     resetCurve() {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Reset real exige ECU conectada.' };
-      return invoke(this.v7, 'startCurveReset', [], { ok: false, error: 'Reset da Curva K indisponível' });
+      return invoke(this.calibration, 'startCurveReset', [], { ok: false, error: 'Reset da Curva K indisponível' });
     }
     curveOperation() {
       if (this.demo) return { ...this.demoCurveState, state: 'COMPLETED', busy: false };
-      return invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });
+      return invoke(this.calibration, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });
     }
     previewCurvePoint(index, targetFactor) {
       if (this.demo) {
@@ -338,7 +338,7 @@
     }
     writeCurve(points, reason) {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
-      return invoke(this.v7, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
+      return invoke(this.calibration, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
     }
 
     sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 250, captureRawUsb: false, maxSessionMb: 256, keepSessions: 20 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }

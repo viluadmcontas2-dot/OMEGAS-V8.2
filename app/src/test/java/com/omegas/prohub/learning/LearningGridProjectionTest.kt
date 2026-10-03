@@ -1,5 +1,6 @@
 package com.omegas.prohub.learning
 
+import com.omegas.prohub.calibration.LiveCellProjection
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -8,6 +9,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LearningGridProjectionTest {
+    @Test
+    fun `delegacao produz exatamente a mesma celula ao vivo`() {
+        assertEquals(
+            LiveCellProjection.liveInterpolationJson(2_000.0, 4.2, 0.62, 42L, 1_000L, true).toString(),
+            LearningGridProjection.liveInterpolationJson(2_000.0, 4.2, 0.62, 42L, 1_000L, true).toString(),
+        )
+        assertEquals(
+            LiveCellProjection.cellFor(2_500.0, 4.0).toString(),
+            LearningGridProjection.cellFor(2_500.0, 4.0).toString(),
+        )
+    }
+
     @Test
     fun `physical grid has 144 cells and protocol keeps the special thirteenth row`() {
         val grid = LearningGridProjection.gridJson()

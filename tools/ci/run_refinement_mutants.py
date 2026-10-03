@@ -7,7 +7,7 @@ import time
 import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-PILOT = ROOT / "app/src/main/java/com/omegas/prohub/autocal/RefinementAutopilot.kt"
+PILOT = ROOT / "app/src/main/java/com/omegas/prohub/autocal/EquivalencePhases.kt"
 JOURNAL = ROOT / "app/src/main/java/com/omegas/prohub/autocal/RefinementJournal.kt"
 RESUMO = ROOT / "app/src/main/java/com/omegas/prohub/diagnostics/SessionResumo.kt"
 RESULTS = ROOT / "app/build/test-results/testDebugUnitTest"

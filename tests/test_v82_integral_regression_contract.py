@@ -119,7 +119,7 @@ class V82IntegralRegressionContract(unittest.TestCase):
             self.assertNotIn('new Router', source)
 
     def test_live_interpolation_is_kotlin_owned_and_visual_only(self):
-        projection = read('app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt')
+        projection = read('app/src/main/java/com/omegas/prohub/calibration/LiveCellProjection.kt')
         bridge = read('app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt')
         tracing = read('app/src/main/assets/ui/components/predictor-current-cell.js')
         self.assertIn('fun liveInterpolationJson(', projection)
@@ -127,7 +127,7 @@ class V82IntegralRegressionContract(unittest.TestCase):
         self.assertIn('.put("continuousWeights"', projection)
         self.assertIn('.put("affectsLearning", false)', projection)
         self.assertIn('.put("affectsCalibration", false)', projection)
-        self.assertIn('LearningGridProjection.liveInterpolationJson(', bridge)
+        self.assertIn('LiveCellProjection.liveInterpolationJson(', bridge)
         self.assertIn('cell.continuousWeights', tracing)
         self.assertNotIn('bilinear', tracing)
         self.assertIn('liveTracingEnabled', tracing)
