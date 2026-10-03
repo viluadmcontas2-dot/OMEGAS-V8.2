@@ -28,9 +28,18 @@ KEYS = ("PETR_INJ_TBP", "MUL_ACT", "PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_
 HARNESS = """
 import com.omegas.prohub.autocal.AutoMatchRefinedEngine
 import com.omegas.prohub.autocal.EquivalenceLedger
+import com.omegas.prohub.autocal.FineBins
 import java.io.File
 
 fun main(args: Array<String>) {
+    // Acumulador primeiro: os bins finos da sessão inteira alimentam o caminho fino do motor (Lote H).
+    val frames = File(args[1]).readLines().filter { it.isNotBlank() }
+    val ledger = EquivalenceLedger(null)
+    frames.forEach { line ->
+        val p = line.split(" ")
+        ledger.accept(EquivalenceLedger.Frame(p[0].toLong(), p[1], p[2].toDouble(), p[3].toDouble(), p[4].toDouble()))
+    }
+    val fine = ledger.fineBins()
     val lines = File(args[0]).readLines().filter { it.isNotBlank() }
     var i = 0
     while (i < lines.size) {
@@ -45,14 +54,14 @@ fun main(args: Array<String>) {
         val r = AutoMatchRefinedEngine.refine(input)
         println(id + "|" + r.mode + "|" + r.refinedRaw.joinToString(" ") + "|" +
             r.origins.joinToString("") { it.name.take(1) } + "|" + r.matureCommonPoints + "|" + r.needsAnotherPass)
+        val f = AutoMatchRefinedEngine.refine(AutoMatchRefinedEngine.Input(base[0]!!, base[1]!!, base[2], base[3], base[4], base[5], base[6], base[7], fineBins = fine))
+        println("FINE|" + id + "|" + f.mode + "|" + f.refinedRaw.joinToString(" ") + "|" + f.origins.joinToString("") { it.name.take(1) })
     }
     // Paridade do acumulador: quadros "t fuel rpm map petrol" → pares
-    val frames = File(args[1]).readLines().filter { it.isNotBlank() }
-    val ledger = EquivalenceLedger(null)
-    frames.forEach { line ->
-        val p = line.split(" ")
-        ledger.accept(EquivalenceLedger.Frame(p[0].toLong(), p[1], p[2].toDouble(), p[3].toDouble(), p[4].toDouble()))
-    }
+    println("BANDS18|" + FineBins.bands18Json(fine).let { a -> (0 until a.length()).joinToString(" ") { i ->
+        val o = a.getJSONObject(i); o.getInt("samples").toString() + "," + o.opt("ratio") + "," + o.opt("episodes") } })
+    println("BETWEEN|" + FineBins.betweenJson(fine).let { a -> (0 until a.length()).joinToString(" ") { i ->
+        val o = a.getJSONObject(i); o.getInt("samples").toString() + "," + o.opt("ratio") + "," + o.opt("episodes") } })
     println("PAIRS|" + ledger.pairs().joinToString(" ") { "%.5f,%.5f".format(java.util.Locale.ROOT, it.petrolRefMs, it.gasPetrolMs) })
 }
 """
@@ -97,13 +106,14 @@ class RefinedEngineKotlinParity(unittest.TestCase):
             ) + "\n", "utf-8")
             (tmp / "Main.kt").write_text(HARNESS, "utf-8")
             jar = tmp / "parity.jar"
-            sources = [str(ENGINE), str(LEDGER), str(LEDGER.with_name("PresentationMedian.kt")), str(LEDGER.with_name("TypicalInjectionBands.kt")), str(tmp / "Main.kt")]
+            sources = [str(ENGINE), str(LEDGER), str(LEDGER.with_name("PresentationMedian.kt")), str(LEDGER.with_name("TypicalInjectionBands.kt")), str(LEDGER.with_name("FineBins.kt")), str(tmp / "Main.kt")]
             subprocess.run([kotlinc(), *sources, "-cp", JSON_JAR, "-include-runtime", "-d", str(jar)],
                            check=True, capture_output=True, text=True, timeout=900)
             out = subprocess.run(["java", "-cp", f"{jar}:{JSON_JAR}", "MainKt", str(tmp / "input.txt"), str(tmp / "frames.txt")],
                                  check=True, capture_output=True, text=True, timeout=300).stdout
         lines = out.strip().splitlines()
-        kotlin = {line.split("|")[0]: line.split("|")[1:] for line in lines if not line.startswith("PAIRS|")}
+        kotlin = {line.split("|")[0]: line.split("|")[1:] for line in lines if not line.startswith(("PAIRS|", "FINE|", "BANDS18|", "BETWEEN|"))}
+        kotlin_fine = {line.split("|")[1]: line.split("|")[2:] for line in lines if line.startswith("FINE|")}
         self.assertEqual(len(kotlin), len(cases))
         for case_id, snap, pairs, scale in cases:
             expected = oracle.refine(snap, pairs, scale)
@@ -115,8 +125,39 @@ class RefinedEngineKotlinParity(unittest.TestCase):
             self.assertEqual(origins, "".join(o[0] for o in expected["origins"]), case_id)
             self.assertEqual(int(mature), expected["matureCommonPoints"], case_id)
             self.assertEqual(again == "true", expected["needsAnotherPass"], case_id)
+        # Lote H: caminho fino e bands18/betweenBands do Kotlin == oráculo, sobre os bins da sessão inteira
+        import fine_bins as fb
+        bins = fb.aggregate([(p[0], p[1], p[2], p[3]) for p in fb.ledger_pairs(telemetry)])
+        for case_id, snap, pairs, scale in cases:
+            if pairs is not None or scale is not None:
+                continue
+            expected = oracle.refine(snap, fine_bins=bins)
+            mode, raw, origins = kotlin_fine[case_id]
+            self.assertEqual(mode, expected["mode"], "fino " + case_id)
+            worst = max(abs(a - b) for a, b in zip((int(v) for v in raw.split()), expected["refinedRaw"]))
+            self.assertLessEqual(worst, 1, f"fino {case_id}: diferença {worst} LSB")
+            self.assertEqual(origins, "".join(o[0] for o in expected["origins"]), "fino " + case_id)
+
+        def cells(entries):
+            return [(e["samples"], e["ratio"], e["episodes"]) for e in entries]
+
+        def parse(line):
+            out = []
+            for item in line.split("|", 1)[1].split():
+                n, ratio, episodes = item.split(",")
+                out.append((int(n), None if ratio == "null" else float(ratio), None if episodes == "null" else int(episodes)))
+            return out
+        for tag, expected in (("BANDS18|", fb.bands18_json(bins)), ("BETWEEN|", fb.between_json(bins))):
+            got = parse(next(line for line in lines if line.startswith(tag)))
+            want = cells(expected)
+            self.assertEqual(len(got), len(want), tag)
+            for (gn, gr, ge), (wn, wr, we) in zip(got, want):
+                self.assertEqual((gn, ge), (wn, we), tag)
+                self.assertTrue((gr is None) == (wr is None), tag)
+                if gr is not None:
+                    self.assertAlmostEqual(gr, wr, delta=2e-5, msg=tag)
         # acumulador Kotlin == pares do script validado
-        kotlin_pairs = [tuple(float(x) for x in p.split(",")) for p in lines[-1].split("|", 1)[1].split()]
+        kotlin_pairs = [tuple(float(x) for x in p.split(",")) for p in next(line for line in lines if line.startswith("PAIRS|")).split("|", 1)[1].split()]
         python_pairs = blind.telemetry_pairs(telemetry)
         self.assertEqual(len(kotlin_pairs), len(python_pairs))
         for (ka, kb), (pa, pb) in zip(kotlin_pairs, python_pairs):
