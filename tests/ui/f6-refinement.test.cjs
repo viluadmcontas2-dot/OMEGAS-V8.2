@@ -309,3 +309,16 @@ test('operação na ECU: mesma fala (etapa → resultado → Desfazer/Voltar) e 
   }
   assert.match(read('screens/refino.js'), /commitReview\(\)/);
 });
+
+test('reset da Curva K salva a foto antes e só zera depois dela', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/screens/curve.js'), 'utf8');
+  const reset = src.slice(src.indexOf('    resetCurve() {'), src.indexOf('    startResetWrite() {'));
+  assert.ok(reset.includes("startCurveBackup('Antes do reset')"), 'foto antes do reset');
+  assert.ok(!reset.includes('api.resetCurve()'), 'o primeiro toque não zera direto');
+  const write = src.slice(src.indexOf('    startResetWrite() {'), src.indexOf('    prepareRestore('));
+  assert.ok(write.includes('api.resetCurve()'), 'a segunda etapa zera');
+  assert.ok(src.includes("task === 'reset-photo'") && src.includes('this.startResetWrite()'), 'zera só após a foto concluir');
+  assert.ok(!src.includes('confirm('), 'sem diálogo de confirmação');
+});

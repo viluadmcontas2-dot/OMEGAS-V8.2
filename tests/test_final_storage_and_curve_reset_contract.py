@@ -38,10 +38,10 @@ assert "fun startCurveReset()" in bridge
 assert "curveResetButton" in curve
 assert "Resetar a Curva K para 1.0" in curve
 
-# Backup da Curva K é manual: reset/escrita não podem criar backup/checkpoint automático.
+# Reset da Curva K: foto antes (leitura salva em disco) e só então zera; escrita comum não cria backup automático.
 assert "createBackup(adjustmentId" not in manager
 assert '.put("automaticBackup", false)' in manager
-assert "Nenhum backup automático será criado" in curve
+assert "startCurveBackup('Antes do reset')" in curve and "startResetWrite" in curve and "reset-photo" in curve
 assert 'saveInternalCheckpoint("Antes de resetar Curva K' not in service
 assert 'saveInternalCheckpoint("Antes de ajustar K factor' not in service
 

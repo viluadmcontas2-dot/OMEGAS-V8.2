@@ -4,7 +4,7 @@
 
   // Palavras únicas de toda escrita na ECU (core/display-rules.js).
   function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
-  const RESET_NOTE = 'Resetar a Curva K para 1.0 · Nenhum backup automático será criado. Para voltar, restaure um backup salvo antes.';
+  const RESET_NOTE = 'Resetar a Curva K para 1.0 · A foto da curva atual foi salva antes. Use Desfazer para voltar.';
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
     const n = finite(value);
@@ -121,9 +121,20 @@
       text('curveBackupStatus', 'Salvando curva atual…');
     }
 
-    /** Um toque, sem diálogo. Nenhum backup automático: quem quiser voltar salva antes e usa Desfazer/Restaurar. */
+    /** Um toque, sem diálogo. Foto antes: salva a curva atual (só leitura) e só então zera; se a foto falhar, nada é zerado. */
     resetCurve() {
       if (this.reading || this.writing || this.backupTask) return;
+      const photo = this.api.startCurveBackup('Antes do reset');
+      if (!photo?.ok || !photo?.started) {
+        this.alert(photo?.error || 'Não foi possível salvar a foto da Curva K; nada foi zerado.');
+        return;
+      }
+      this.backupTask = 'reset-photo';
+      text('curveBackupStatus', 'Salvando a foto da curva antes de zerar…');
+    }
+
+    /** Segunda etapa do reset: só roda depois que a foto foi gravada em disco. */
+    startResetWrite() {
       this.cancelRestorePreview('');
       this.proposals.clear();
       this.renderChart();
@@ -233,6 +244,11 @@
           }
           text('curveBackupStatus', 'Backup indisponível');
           this.alert(operation.error || 'Operação de backup da Curva K falhou.');
+          return;
+        }
+        if (task === 'reset-photo') {
+          this.refreshBackups();
+          this.startResetWrite();
           return;
         }
         if (task === 'save') {
