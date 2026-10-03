@@ -5,11 +5,7 @@
   // Palavras únicas de toda escrita na ECU (core/display-rules.js).
   function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
   function failureText(operation, fallback) { return root.OmegasUi.DisplayRules.failureText(operation, fallback); }
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
-  function fmt(value, digits) {
-    const n = finite(value);
-    return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  }
+  const { finite, fmt } = root.OmegasUi.DisplayRules;
   const D = () => root.OmegasUi.DisplayRules;
   const signed = value => (value > 0 ? '+' : value < 0 ? '−' : '') + Math.abs(value);
   function text(id, value) { const node = document.getElementById(id); if (node) node.textContent = value == null ? '—' : String(value); }
@@ -145,6 +141,7 @@
 
       const corner = document.createElement('div');
       corner.className = 'map-axis-corner';
+      corner.title = 'Linha técnica 0C protegida: visível ao protocolo, fora da seleção em massa e da escrita manual.';
       corner.innerHTML = '<small>ms ↓</small><b>RPM →</b>';
       table.appendChild(corner);
 

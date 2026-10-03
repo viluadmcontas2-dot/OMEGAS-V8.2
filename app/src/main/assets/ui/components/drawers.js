@@ -2,16 +2,9 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
-  function fmt(value, digits) {
-    const n = finite(value);
-    return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
-  }
   // Regras únicas de exibição (core/display-rules.js): desconhecido mostra "—", nunca 0.
   const rules = () => root.OmegasUi.DisplayRules;
+  const { finite, fmt, escapeHtml } = root.OmegasUi.DisplayRules;
   function ageLabel(ms) {
     const label = rules().ageLabel(ms);
     return label === rules().DASH ? 'sem telemetria' : label;

@@ -10,7 +10,7 @@ const css = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/styles-autoc
 
 test('AutoCal uses graph-first premium hierarchy', () => {
   assert.match(js, /AutoCal · Gasolina e GNV/);
-  assert.match(js, /CURVA DE AQUISIÇÃO · Gasolina × GNV/);
+  assert.match(js, /Leitura da ECU · Gasolina × GNV/);
   assert.match(js, /id="autocalReferenceChart"/);
   assert.match(js, /id="autocalLiveRpm"/);
   assert.match(js, /id="autocalLivePetrol"/);
@@ -32,7 +32,7 @@ test('secondary state stays below the graph in one vertical flow', () => {
 
 test('AGORA is visually distinct but remains telemetry', () => {
   assert.match(css, /\.autocal-live-point\s*\{[\s\S]*var\(--tone-19daf4\)/);
-  assert.match(js, /Ele nunca vira evidência adquirida/);
+  assert.match(js, /Ele nunca vira ponto lido pela ECU/);
   assert.match(js, /id="autocalLiveNarrative"[^>]*hidden/);
   assert.match(js, /ageMs > AUTO_CAL_LIVE_STALE_MS/);
 });

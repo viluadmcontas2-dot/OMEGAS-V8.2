@@ -26,7 +26,8 @@ function loadInto(context, files) {
   vm.createContext(context);
   context.window = context;
   context.globalThis = context;
-  for (const file of files) vm.runInContext(read(file), context, { filename: file });
+  const PRE = ['core/display-rules.js', 'core/live-store.js', 'components/curve-chart.js'];
+  for (const file of [...PRE, ...files.filter(file => !PRE.includes(file))]) vm.runInContext(read(file), context, { filename: file });
   return context;
 }
 
@@ -56,7 +57,7 @@ test('Sugestões removida por inteiro (rota, botão, contador, render, CSS)', ()
 test('bugs de navegação do §3.1: rota learning, routeMeta.predictor e data-omegas-route', () => {
   const app = read('app.js');
   assert.doesNotMatch(read('screens/map.js'), /navigate\('learning'\)/);
-  assert.match(read('screens/map.js'), /router\?\.open\('curve', 'learning'\)/);
+  assert.doesNotMatch(read('screens/map.js'), /learning/, 'o Mapa K não volta mais para a Aprendizado global');
   assert.doesNotMatch(app, /predictor/i);
   assert.match(app, /document\.body\.dataset\.omegasRoute = state\.route/);
   const ctx = loadInto({ console, localStorage: { getItem() { return null; }, setItem() {} } }, ['core/store.js', 'core/router.js']);
@@ -118,16 +119,19 @@ test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de 
   const ctx = loadInto({ console }, ['core/display-rules.js', 'core/autocal-api.js', 'screens/refino.js']);
   const strip = ctx.OmegasUi.RefinoModel.equivalenceStrip;
   const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
-  assert.equal(strip(null, routes), null, 'sem dado a faixa some');
+  const empty = strip(null, routes);
+  assert.equal(empty.nextText, 'Aguardando dados da ECU', 'sem cérebro: aviso neutro, nunca ação derivada da fase');
+  assert.equal(empty.route, '');
+  assert.equal(empty.hasAction, false);
   const eq = { ...EQUIVALENCE_FIXTURE, nextAction: { kind: 'COLLECT', text: 'Rode no GNV em plano para eu medir', route: 'curve', subpage: 'editor', pointIndexes: [3, 4] } };
   const shown = strip(eq, routes);
-  assert.equal(shown.indexText, 'GNV ≈ gasolina em 62 % (provisório)');
+  assert.equal(shown.indexText, 'GNV ≈ gasolina em 62% (provisório)');
   assert.equal(shown.nextText, 'Rode no GNV em plano para eu medir');
   assert.equal(shown.route, 'curve');
   assert.equal(shown.subpage, 'editor');
   assert.equal(shown.routeLabel, 'Ir para Curva K');
-  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, 'GNV ≈ gasolina em 1 %', 'fração 0,01 = 1 %, nunca 0 %');
-  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, 'GNV ≈ gasolina em 100 %');
+  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, 'GNV ≈ gasolina em 1%', 'fração 0,01 = 1 %, nunca 0 %');
+  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, 'GNV ≈ gasolina em 100%');
   assert.equal(strip({ ...eq, index: { value: null } }, routes).indexText, 'GNV ≈ gasolina em —');
   assert.equal(strip(EQUIVALENCE_FIXTURE, routes).route, '', 'aponta para o próprio Refino: sem botão');
   assert.equal(strip({ ...eq, nextAction: { text: 'Tudo certo', route: '' } }, routes).route, '');
@@ -269,7 +273,7 @@ test('operação na ECU: mesma fala (etapa → resultado → Desfazer/Voltar) e 
     assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /window\.(?:confirm|alert|prompt)\(|(?<![\w.$])(?:confirm|prompt)\(/, path.relative(UI, file));
   }
   assert.doesNotMatch(html, /onclick=|confirm\(/);
-  assert.match(html, /<span>Foto antes<\/span><span>Escrita<\/span><span>ACK<\/span><span>Conferindo na ECU<\/span>/);
+  assert.match(html, /<span>Foto antes<\/span><span>Gravando<\/span><span>Conferindo na ECU<\/span>/);
   assert.match(html, /id="curveUndoButton"[^>]*>Desfazer</);
   assert.equal([...html.matchAll(/id="(?:map|curve)DismissResult"[^>]*>Voltar</g)].length, 2);
   for (const file of ['screens/map.js', 'screens/curve.js']) {

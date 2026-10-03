@@ -44,7 +44,7 @@
           });
         }
         // Agora e para dirigir (D1): 4 valores de peso igual, lidos a bra\xe7o esticado; o resto \xe9 uma faixa fina embaixo.
-        this.root.innerHTML = '\n        <div class="now-dashboard-shell">\n          <section class="now-tile-grid" aria-label="Leitura principal">\n            <article class="now-tile" data-tile="petrol"><small>PETROL INJECTION</small><b><span id="dashHeroPetrol">\u2014</span><em>ms</em></b></article>\n            <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">\u2014</span><em>rpm</em></b></article>\n            <article class="now-tile" data-tile="map"><small>MAP</small><b><span id="dashMap">\u2014</span><em>bar</em></b></article>\n            <article class="now-tile" data-tile="fuel"><small>COMBUST\xcdVEL</small><b><span id="dashFuel">\u2014</span></b></article>\n          </section>\n\n          <section class="now-quiet-row" aria-label="Condi\xe7\xe3o e apoio">\n            <div id="dashHealth" class="now-session-card" data-level="offline">\n              <span class="state-indicator"></span>\n              <div class="now-session-copy"><b>MP48 desconectado</b><p data-health-detail>Conecte a ECU para iniciar a sess\xe3o</p></div>\n            </div>\n            <article class="now-quiet-tile"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b></article>\n            <article class="now-quiet-tile"><small>C\xc9LULA</small><b id="dashCell">\u2014</b></article>\n            <article class="now-quiet-tile now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b></article>\n          </section>\n        </div>';
+        this.root.innerHTML = '\n        <div class="now-dashboard-shell">\n          <section class="now-tile-grid" aria-label="Leitura principal">\n            <article class="now-tile" data-tile="petrol"><small>PETROL INJECTION</small><b><span id="dashHeroPetrol">\u2014</span><em>ms</em></b></article>\n            <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">\u2014</span><em>rpm</em></b></article>\n            <article class="now-tile" data-tile="map"><small>MAP</small><b><span id="dashMap">\u2014</span><em>bar</em></b></article>\n            <article class="now-tile" data-tile="fuel"><small>COMBUST\xcdVEL</small><b><span id="dashFuel">\u2014</span></b></article>\n          </section>\n\n          <section class="now-quiet-row" aria-label="Condi\xe7\xe3o e apoio">\n            <div id="dashHealth" class="now-session-card" data-level="offline">\n              <span class="state-indicator"></span>\n              <div class="now-session-copy"><b>Sem cabo</b><p data-health-detail>Conecte o cabo USB na ECU</p></div>\n            </div>\n            <article class="now-quiet-tile"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b></article>\n            <article class="now-quiet-tile"><small>C\xc9LULA</small><b id="dashCell">\u2014</b></article>\n            <article class="now-quiet-tile now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b></article>\n          </section>\n        </div>';
       }
       /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
       renderRefino() {
@@ -72,6 +72,7 @@
         const fuel = telemetryValid ? fuelLabel(data.fuel || data.state || status.fuelState) : "\u2014";
         const levelsRaw = telemetryValid ? finite(data.level_raw != null ? data.level_raw : data.levelRaw) : null;
         const age = finite((_k = (_j = (_h = state.telemetry) == null ? void 0 : _h.telemetryAgeMs) != null ? _j : (_i = state.telemetry) == null ? void 0 : _i.ageMs) != null ? _k : status.directTelemetryAgeMs);
+        const link = rules.connectionState(status);
         const connected = status.usbConnected === true;
         const stale = connected && age !== null && age > 2500;
         const expired = connected && age !== null && age > 8e3;
@@ -96,9 +97,9 @@
           let message = "Leitura em tempo real";
           let detail = "ECU e telemetria principal atualizadas";
           if (!connected) {
-            level = "offline";
-            message = "MP48 desconectado";
-            detail = "Conecte a ECU para iniciar a sess\xE3o";
+            level = link.key === "connecting" ? "warning" : "offline";
+            message = link.label;
+            detail = link.hint;
           } else if (stuck) {
             level = "critical";
             message = "Comunica\xE7\xE3o travada";

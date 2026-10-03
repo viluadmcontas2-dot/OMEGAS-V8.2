@@ -111,7 +111,7 @@
       `Quando: leitura da ECU ${ageText(ctx?.capturedAtMs, now)}.`,
     ];
     if (rejected) lines.push('Por que conta: NÃO conta. Foi descartado como anomalia: fora da tendência das outras faixas (típico de marcha lenta puxando a curva).');
-    else if (acquired) lines.push('Por que conta: faixa lida pela ECU; entra no cálculo junto com os nossos pontos.');
+    else if (acquired) lines.push('Por que conta: faixa lida pela ECU; entra no cálculo junto com os pontos do OMEGAS.');
     else lines.push('Por que conta: ainda lendo; só conta quando a ECU terminar esta faixa.');
     return { title: `Ponto da ECU · ${point.fuelLabel} faixa ${point.point}`, lines, counts: acquired && !rejected };
   }
@@ -613,7 +613,7 @@
       const legend = document.getElementById('refinoLegend');
       const flags = { mode: 'between', proposal: !!(this.model && this.model.proposal.length), stall: !!(this.model && this.model.stalls.length) };
       const legendKey = `between|${flags.proposal}|${flags.stall}`;
-      if (legend && legend.dataset.key !== legendKey) { legend.dataset.key = legendKey; legend.innerHTML = chart.legendHtml(flags); }
+      if (legend && this.legendKey !== legendKey) { this.legendKey = legendKey; legend.innerHTML = chart.legendHtml(flags); }
     }
 
     /** Cursor AGORA: só calcula o alvo a partir da leitura viva única (LiveStore); quem move é o quadro de animação. */

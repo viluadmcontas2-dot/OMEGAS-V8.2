@@ -36,7 +36,6 @@
 .autocal-reference-line.gas { stroke: var(--tone-5dd39e); }
 .autocal-reference-line.previous { opacity: .26; stroke-dasharray: 7 6; }
 .autocal-equivalence-line { display: none; fill: none; stroke: rgba(var(--rgb-240-196-92),.78); stroke-width: 2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
-.autocal-equivalence-point { display: none; fill: var(--tone-f0c45c); stroke: var(--tone-081018); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .autocal-reference-point { opacity: 0; stroke: var(--tone-081018); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; transition: opacity 120ms ease; }
 .autocal-reference-hit.selected + .autocal-reference-point { opacity: 1; }
 .autocal-reference-point.petrol { fill: var(--tone-78b7ff); }
@@ -416,9 +415,6 @@
 .refino-steps li[data-problem="true"] { color: var(--tone-ff9b9b); }
 .refino-steps li[data-problem="true"] i { background: var(--tone-e25e5e); color: var(--tone-ffffff); }
 .refino-next { margin: 6px 0 8px; color: var(--tone-c5d0db); font-size: 13px; }
-.refino-our-point { opacity: .9; stroke: rgba(var(--rgb-6-18-31),.7); stroke-width: 1; }
-.refino-our-point.petrol { fill: var(--tone-ffb547); }
-.refino-our-point.gas { fill: var(--tone-c38bff); }
 .autocal-chart-legend .refino-ours-petrol::before { width: 8px; height: 8px; border-radius: 2px; background: var(--tone-ffb547); }
 .autocal-chart-legend .refino-ours-gas::before { width: 8px; height: 8px; border-radius: 2px; background: var(--tone-c38bff); }
 .refino-stall-mark { stroke: var(--danger); stroke-width: 3; stroke-linecap: round; fill: none; }
@@ -429,7 +425,6 @@
 .refino-stalls span { color: var(--tone-f1c7c7); font-size: 12px; }
 .refino-cockpit .autocal-primary-action[data-kind="waiting"] { color: var(--tone-c5d0db); background: rgba(var(--rgb-35-47-58),.6); border-color: rgba(var(--rgb-255-255-255),.1); cursor: default; }
 .refino-cockpit .autocal-primary-action[data-kind="review"] { background: var(--tone-2d6fd1); border-color: var(--tone-4a8be8); color: var(--tone-ffffff); }
-.refino-split { font-size: 17px !important; white-space: nowrap; }
 .refino-verdicts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin: 8px 0; }
 .refino-verdicts > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--tint-35-47-58-45); }
 .refino-verdicts span { color: var(--tone-8f9daf); font-size: 11px; }

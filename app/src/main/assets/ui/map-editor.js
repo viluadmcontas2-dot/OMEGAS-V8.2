@@ -11,8 +11,9 @@
   const MIN_K = 100;
   const MAX_K = 255;
 
-  const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
-  const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
+  // Utilitários únicos: core/display-rules.js (no Node dos testes, carrega o mesmo arquivo).
+  if (typeof require === 'function' && typeof module === 'object' && !(globalThis.OmegasUi && globalThis.OmegasUi.DisplayRules)) require('./core/display-rules.js');
+  const { finite, clamp } = globalThis.OmegasUi.DisplayRules;
 
   function exactTarget(value, label) {
     const numeric = finite(value);
