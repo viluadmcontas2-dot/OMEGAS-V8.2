@@ -24,28 +24,17 @@ Também: `applicationId` continua `com.omegas.v7.test`. Validação física (cla
 
 01 Agora · 02 Mapa K · 03 Curva K · 04 AutoCal · 05 Refino · 06 Sessões · 07 Ferramentas. Viewport 1280×720; toque ≥ 76 px; texto crítico ≥ 24 px.
 
-## Como trabalhar
+## Como trabalhar (enxuto — R12 do índice)
 
-- Base `OmegasPlatina`; uma branch `work/platina-f<N>-<slug>` e um PR por fatia; merge só com `build_and_test` e `Issue gate` verdes no SHA do PR.
-- Work Unit = Issue `NORTE-WU-0<N>` (label `wu`, épico #131) + binding `docs/workunits/NORTE-WU-0<N>.md`. Tabela: `docs/superpowers/plans/README-issues.md`.
-- Todo commit leva no corpo `NORTE-WU-0<N> · Tarefa <N>.<M>`; todo PR leva `Fecha #<issue>`.
-- Teste antes do código. Rodar no GitHub: `tools/ci/remote-test.sh <gradle|node|python|checks|android> <alvo>` → `REMOTE_TEST=PASS|FAIL`.
-- Cada PR diz o que mudou, a classe de prova (1 contrato · 2 sintético · 3 replay real · 4 APK no emulador · 5 físico) e o que ficou não provado.
-- Plano não bate com o código: comente na Issue o que viu e decidiu. Se muda o que o dono vê ou o que a ECU recebe, pare e pergunte.
-- Achado fora da fatia: Issue nova com label `achado`, ligada ao épico. Não consertar de carona.
+- Base `OmegasPlatina`; branch `work/platina-<assunto>`; PR com `Fecha #131` só ao fim de cada lote grande; merge com `build_and_test` verde no SHA do PR.
+- Acompanhamento: épico #131 (uma checklist). Sem rótulos, portões ou arquivos de binding.
+- Faça o máximo de mudança coerente antes de testar. Teste só quando o resultado decide algo: Python/JS rodam na sessão quando necessário; Kotlin e o portão completo rodam no CI do PR.
+- Sem emulador. Um APK só, no fim (`verde-apk-now.yml`, `build_apk=true`), com SHA-256.
+- Cada PR diz o que mudou, a classe de prova (1 contrato · 2 sintético · 3 replay real · 5 físico) e o que ficou não provado.
+- Plano não bate com o código: decida, registre no épico em uma linha e siga. Se muda o que o dono vê ou o que a ECU recebe, pare e pergunte.
 
-## Ordem das fatias
+## Ordem
 
-| # | Plano | Work Unit |
-|---|---|---|
-| 0 | `2026-10-03-00-norte-unico-index.md` | NORTE-WU-00 #132 |
-| 1 | `2026-10-03-f1-extracoes.md` | NORTE-WU-01 #133 |
-| 2 | `2026-10-03-f2-poda-1.md` | NORTE-WU-02 #134 |
-| 3 | `2026-10-03-f3-poda-2.md` | NORTE-WU-03 #135 |
-| 4 | `2026-10-03-f4-cerebro-unico.md` | NORTE-WU-04 #136 |
-| 5 | `2026-10-03-f5-autoridade-unica.md` | NORTE-WU-05 #137 |
-| 6 | `2026-10-03-f6-ui-agora-curva-refino.md` | NORTE-WU-06 #138 |
-| 7 | `2026-10-03-f7-ui-autocal-mapa-sessoes-ferramentas.md` | NORTE-WU-07 #139 |
-| 8 | `2026-10-03-f8-acabamento.md` | NORTE-WU-08 #140 |
+Planos em `docs/superpowers/plans/` (índice `2026-10-03-00-norte-unico-index.md` + F1–F8), executados em sequência, agrupados em poucos PRs.
 
 Estado do último APK: `STATUS.md`. Arquitetura: `docs/ARCHITECTURE.md`. Testes: `docs/TEST_STRATEGY.md`. Histórico: `docs/archive/`.

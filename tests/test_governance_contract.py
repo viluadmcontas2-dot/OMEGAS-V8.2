@@ -6,8 +6,8 @@ assert len(agents.splitlines()) <= 60, "AGENTS.md cabe numa tela"
 for must in ("2026-10-03-omegas-platina-norte-unico-design.md", "Observar é automático", "um toque",
              "Desfazer", "readback", "GitHub Actions", "Agora", "Mapa K", "Curva K", "AutoCal", "Refino", "Sessões", "Ferramentas",
              "3b68ee52ac5481839046f36b482aab44", "3b78ee52ac548170b5c1fb69606ced21",
-             # mantidos além do plano: branch, Work Units (R10) e fronteira SIL/CIU
-             "OmegasPlatina", "NORTE-WU-", "SIL/CIU"):
+             # mantidos além do plano: branch, épico e fronteira SIL/CIU
+             "OmegasPlatina", "SIL/CIU", "#131"):
     assert must in agents, must
 for gone in ("LOCAL_SOURCE_MUTATION", "SOURCE_MUTATION_TARGET", "MMMACHINE", "Brainbase", "AgentRed", "RESET_ALL"):
     assert gone not in agents, gone

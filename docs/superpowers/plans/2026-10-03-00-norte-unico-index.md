@@ -202,6 +202,13 @@ Issues: épico #131; NORTE-WU-00…08 = #132…#140.
 - Issues e PRs legados (anteriores ao épico #131) são fechados como "não planejado", com a lista registrada no épico;
 - a Fatia 0 roda na branch nova `work/platina-f0-norte` (PR #141); a `work/platina-f0-docs-laco` e o PR #130 ficam substituídos.
 
+**R12. Execução enxuta** (decisão do dono, 2026-10-03; prevalece sobre R6, R10, as Tasks 0.0/0.1 e todo passo de teste por Task):
+- sem rótulo `wu`, sem portão de Issues, sem binding por fatia, sem `task-check.yml`/`remote-test.sh`; acompanhamento só no épico #131. R10 fica revogada; as Issues #132–#140 foram fechadas;
+- sem emulador: passos `remote-test.sh android`, render e androidTest **não são executados**; o que só eles provariam vai para "não provado";
+- um APK só, ao fim da F8 (os APKs das F3 e F5 caem);
+- cada passo "Run ... Expected FAIL/PASS" vira opcional: faça o máximo de mudança coerente, teste localmente (Python/JS) só quando decide algo, e deixe Kotlin + portão completo para o CI do PR;
+- PRs agrupam várias fatias; todo PR fecha com `build_and_test` verde no SHA.
+
 ## Questões abertas para o dono (não bloqueiam F0–F3)
 
 1. **A Referência da ECU contra a gasolina medida.** Na F4, o planejador mediu por cima, nas sessões reais, a curva da ECU 10–16% fora da gasolina lida pela telemetria na mesma sessão. O STATUS antigo dizia "mediana 1,000, 80% dentro de 2,3%". Pode ser diferença de método (célula vs. banda). A Task de validação cruzada da F4 vai medir de verdade; se a diferença se confirmar, é mais um motivo para a Curva Própria existir, e o resultado vai para o STATUS.
