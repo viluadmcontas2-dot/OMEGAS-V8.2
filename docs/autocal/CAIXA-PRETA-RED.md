@@ -213,3 +213,8 @@ Não prova ausência do app: a raiz de acessibilidade não é fonte confiável n
 Mantém assertEquals(package do app, package em foco), agora obtido de dumpsys window
 (mCurrentFocus). Não aceita null, não tolera diálogo externo, não remove a verificação.
 O launcher foi isolado com disabled-user no log. Nova prova remota obrigatória.
+
+Run37132817716/job111232125498: consulta restrita `dumpsys window windows` não inclui
+o foco do display no Android35. Hipótese do instrumento: seleção da seção errada.
+Consulta completa e dump bruto no artifact antes da asserção; mesma exigência de package.
+Se voltar a falhar, investigar o dump antes de qualquer alteração de expectativa.

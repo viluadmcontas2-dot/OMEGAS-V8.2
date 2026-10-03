@@ -919,11 +919,12 @@ class RefinoRenderTest {
                 .put("dom", dom).put("webView", web).put("fixtureProvenance", provenance).toString(2),
         )
         val windows = android.os.ParcelFileDescriptor.AutoCloseInputStream(
-            instrumentation.uiAutomation.executeShellCommand("dumpsys window windows"),
+            instrumentation.uiAutomation.executeShellCommand("dumpsys window"),
         ).bufferedReader().use { it.readText() }
+        File(dir, "$name-window-manager.txt").writeText(windows)
         val focusedWindow = windows.lineSequence().firstOrNull { it.contains("mCurrentFocus=") }.orEmpty()
         val foreground = Regex("""mCurrentFocus=Window\{[^}]*\s([^\s/]+)/""").find(focusedWindow)?.groupValues?.get(1)
-        assertEquals("a captura deve mostrar o app, sem diálogo externo cobrindo a evidência", instrumentation.targetContext.packageName, foreground)
+        assertEquals("a captura deve mostrar o app, sem diálogo externo cobrindo a evidência: $focusedWindow", instrumentation.targetContext.packageName, foreground)
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
         FileOutputStream(File(dir, "$name.png")).use { check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
     }
