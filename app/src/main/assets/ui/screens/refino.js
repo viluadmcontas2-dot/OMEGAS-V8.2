@@ -26,6 +26,13 @@
     PIOROU: 'piorou',
     COLETANDO: 'medindo…',
     SEM_ANTES: 'sem medição anterior',
+    SEM_DADOS: 'poucas leituras · não deu para julgar',
+  };
+  // O que cada fechamento do diário significa, em linguagem simples.
+  const JOURNAL_NOTE = {
+    SEM_BASE: 'As faixas alteradas não tinham medição de antes. A medição de agora vira a base e o refino segue sozinho.',
+    INCONCLUSIVO: 'Poucas leituras nas faixas alteradas: não deu para julgar. O refino segue medindo do zero.',
+    INTERROMPIDO: 'A ECU mudou a curva por fora (AutoMatch/Mapa K) durante a verificação, então o resultado perdeu validade.',
   };
   const ORIGIN = { MEASURED: 'Medido', BLENDED: 'Transição', SMOOTHED: 'Anti-tranco', HELD: 'Mantido' };
   const POLL_MS = 300;
@@ -171,10 +178,11 @@
       host.addEventListener('click', event => this.onClick(event));
     }
 
-    refresh(force) {
+    refresh(force, fresh) {
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       if (!this.api?.available?.()) { this.renderUnavailable(); return; }
-      this.eq = this.api.equivalence?.() || null;
+      // O Kotlin já deixa o resultado pronto em segundo plano; "fresco" só depois de gravar/desfazer.
+      this.eq = (fresh === true ? this.api.equivalenceFresh?.() : this.api.equivalence?.()) || null;
       this.analysis = this.api.refinedAnalysis?.() || null;
       const projection = this.api.projection?.() || {};
       this.snapshot = projection.ok === true ? (projection.snapshot || {}) : {};
@@ -182,7 +190,7 @@
     }
 
     onClick(event) {
-      if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true); return; }
+      if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true, true); return; }
       if (event.target.closest('[data-refino-primary]')) this.primary();
       if (event.target.closest('[data-refino-cancel]')) this.closeReview();
       if (event.target.closest('[data-refino-confirm]')) this.confirm();
@@ -322,18 +330,27 @@
       const resetNote = gasReason && op.phase === 'idle' ? ` Nossos pontos de GNV recomeçaram às ${gasSince} porque ${gasReason} (o GNV medido com a curva antiga não vale para a nova).` : '';
       setText('refinoNext', next + resetNote);
       setText('refinoRatio', pct(eq.ratio));
-      const ecuPoints = (finite(pilot.petrolValid) ?? 0) + (finite(pilot.gasValid) ?? 0);
-      setText('refinoEcuPoints', pilot.petrolValid === undefined ? '—' : `Gas ${fmt(pilot.petrolValid, 0)} · GNV ${fmt(pilot.gasValid, 0)}`);
+      // Sem leitura da ECU o número é desconhecido: mostra "—", nunca 0.
+      const ecuKnown = finite(pilot.petrolValid) !== null && finite(pilot.gasValid) !== null;
+      setText('refinoEcuPoints', ecuKnown ? `Gas ${fmt(pilot.petrolValid, 0)} · GNV ${fmt(pilot.gasValid, 0)}` : '—');
       const dense = eq.denseBands || {};
-      const oursPetrol = Array.isArray(dense.petrol) ? dense.petrol.length : 0;
-      const oursGas = Array.isArray(dense.gas) ? dense.gas.length : 0;
-      setText('refinoOurPoints', `Gas ${oursPetrol} · GNV ${oursGas}`);
+      const oursKnown = eq.ok !== false && Array.isArray(dense.petrol) && Array.isArray(dense.gas);
+      setText('refinoOurPoints', oursKnown ? `Gas ${dense.petrol.length} · GNV ${dense.gas.length}` : '—');
       const stalls = eq.stalls || {};
       const stallNode = document.getElementById('refinoStalls');
       if (stallNode) {
         const region = Array.isArray(stalls.regions) ? stalls.regions[0] : null;
-        stallNode.hidden = !(finite(stalls.count) > 0);
-        stallNode.innerHTML = region ? `<b>O motor apagou ${fmt(stalls.count, 0)} vez${stalls.count === 1 ? '' : 'es'} no GNV</b><span>Mais vezes perto de ${fmt(region.fromMs, 1)}–${fmt(region.toMs, 1)} ms · MAP ${fmt(region.mapBar, 2)} bar (desaceleração/embreagem). O refino nunca empobrece abaixo de ${fmt(this.analysis?.guards?.lowGuardMs ?? 3.5, 1)} ms; se continuar, enriqueça essa região no Ajuste global.</span>` : '';
+        const real = finite(stalls.count) ?? 0;
+        const near = finite(stalls.nearCount) ?? 0;
+        stallNode.hidden = !(real > 0 || near > 0);
+        const plural = n => (n === 1 ? 'vez' : 'vezes');
+        const parts = [];
+        if (real > 0) parts.push(`apagou ${fmt(real, 0)} ${plural(real)}${finite(stalls.restartedCount) ? ` (religou ${fmt(stalls.restartedCount, 0)})` : ''}`);
+        if (near > 0) parts.push(`quase apagou ${fmt(near, 0)} ${plural(near)}`);
+        const title = parts.length ? `O motor ${parts.join(' e ')} no GNV` : '';
+        const where = region ? `Mais perto de ${fmt(region.fromMs, 1)}–${fmt(region.toMs, 1)} ms · MAP ${fmt(region.mapBar, 2)} bar (desaceleração/embreagem). ` : '';
+        const guard = fmt(this.analysis?.guards?.lowGuardMs, 1);
+        stallNode.innerHTML = title ? `<b>${escapeHtml(title)}</b><span>${escapeHtml(where)}${guard === '—' ? '' : `O refino nunca empobrece abaixo de ${escapeHtml(guard)} ms; `}se continuar, enriqueça essa região no Ajuste global. Desligar o carro na lenta não conta.</span>` : '';
       }
 
       const steps = document.getElementById('refinoSteps');
@@ -455,7 +472,8 @@
       const bands = (Array.isArray(latest.bands) ? latest.bands : []).filter(b => VERDICT[b.verdict]);
       const rows = bands.map(b => `<div data-verdict="${escapeHtml(b.verdict)}"><span>${fmt(b.fromMs, 1)}–${fmt(b.toMs, 1)} ms</span><b>${pct(b.ratioBefore)}${finite(b.ratioAfter) === null ? '' : ' → ' + pct(b.ratioAfter)}</b><small>${escapeHtml(VERDICT[b.verdict])}</small></div>`).join('');
       const undo = undoPoints(latest).length ? '<button type="button" class="secondary" data-refino-undo>Desfazer última gravação</button>' : '';
-      host.innerHTML = `${rows ? `<div class="refino-verdicts">${rows}</div>` : '<p>Dirija no GNV: o app compara cada faixa com a gasolina no mesmo RPM e MAP.</p>'}<p class="refino-note">Cada resultado ajusta a força da próxima correção naquela faixa.</p>${undo}`;
+      const closing = JOURNAL_NOTE[latest.status] ? `<p class="refino-note">${escapeHtml(JOURNAL_NOTE[latest.status])}</p>` : '';
+      host.innerHTML = `${rows ? `<div class="refino-verdicts">${rows}</div>` : '<p>Dirija no GNV: o app compara cada faixa com a gasolina no mesmo RPM e MAP.</p>'}${closing}<p class="refino-note">Cada resultado ajusta a força da próxima correção naquela faixa.</p>${undo}`;
     }
 
     renderTech() {
@@ -465,6 +483,7 @@
       const pilot = this.eq?.autopilot || {};
       host.innerHTML = `<dl>
         <div><dt>Modo</dt><dd>${escapeHtml(a.refinementMode || '—')} · ${a.available ? 'disponível' : escapeHtml(a.message || 'aguardando evidência')}</dd></div>
+        <div><dt>De onde vem a proposta</dt><dd>${escapeHtml({ ECU_E_CONDUCAO: 'faixas da ECU + sua condução', CONDUCAO: 'só a sua condução (a ECU ainda não tem faixas maduras)', NENHUMA: 'sem evidência suficiente: nada muda' }[a.evidenceSource] || '—')}</dd></div>
         <div><dt>Bandas comuns maduras</dt><dd>${fmt(a.matureCommonPoints, 0)} de ${fmt(a.minimumMatureCommonPoints, 0)} necessárias · ${fmt(a.telemetryTargets, 0)} alvos dos nossos pontos</dd></div>
         <div><dt>Trava</dt><dd>±${fmt(a.guards?.maximumStepPercent, 0)}% por gravação · |Δ ln K/Δ ln t| ≤ ${fmt(a.elasticityLimit, 2)}</dd></div>
         <div><dt>Automático da ECU</dt><dd>${fmt(pilot.autoMatchCount, 0)} de ${fmt(pilot.maxAutomatch, 0)} · ${escapeHtml(pilot.ecuDoneReason || 'ainda trabalhando')}</dd></div>

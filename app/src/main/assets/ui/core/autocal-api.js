@@ -40,6 +40,8 @@
     // Refino OMEGAS (somente leitura; a gravação usa o fluxo da Curva K).
     refinedAnalysis: () => invoke('getRefinedAnalysis', [], { ok: false, available: false }),
     equivalence: () => invoke('getEquivalence', [], { ok: false }),
+    // Descarta o valor pronto: depois de gravar, desfazer ou restaurar o Refino lê o estado novo.
+    equivalenceFresh: () => invoke('getEquivalenceFresh', [], { ok: false }),
     // Só a fase do piloto: barata, para Agora e Sugestões (equivalence() recalcula milhares de pontos).
     refinementPhase: () => invoke('getRefinementPhase', [], { ok: false }),
   };
