@@ -39,7 +39,6 @@
   const POLL_MS = 300;
   // O gráfico é do componente compartilhado; a ponte da ECU entrega o estado em ciclos de 2 leituras do relógio.
   const OPERATION_TIMEOUT_MS = 90000;
-  const DATA_EVERY_TICKS = 2;
 
   const D = ns.DisplayRules;
   const finite = D.finite;
@@ -214,15 +213,20 @@
       this.lastRenderKey = '';
       this.cursor = new ns.LiveStore.EaseCursor(() => document.querySelector('[data-chart-live]'));
       this.inject();
+      // Evidência, tabelas e sessão só são relidas quando a revisão do tipo andou (ou o vigia vence); ocupado relê sempre.
+      const revisions = ns.Revisions;
+      this.dataGate = revisions ? revisions.gate(revisions.SLOW_KINDS, revisions.WATCHDOG_MS) : { due: () => true, mark() {} };
+      this.dataDirty = false;
+      this.unsubscribeRevisions = revisions ? revisions.subscribe(kind => { if (kind !== 'live') this.dataDirty = true; }) : () => {};
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
         if (this.store.get().route !== 'refino') return;
-        this.ticks += 1;
-        if (this.ticks % DATA_EVERY_TICKS === 0) this.refresh();
+        if (this.dataGate.due(false)) { this.refresh(); this.dataGate.mark(); }
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
         this.tickJob();
         if (this.store.get().route !== 'refino') return;
-        if (this.enterRefreshPending) { this.enterRefreshPending = false; this.refresh(true); }
+        if (this.enterRefreshPending) { this.enterRefreshPending = false; this.refresh(true); this.dataGate.mark(); this.dataDirty = false; }
+        else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
       });
       // O cursor AGORA anda no quadro de animação (rAF do scheduler), sem redesenhar o gráfico.
       this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateLive(timestamp));

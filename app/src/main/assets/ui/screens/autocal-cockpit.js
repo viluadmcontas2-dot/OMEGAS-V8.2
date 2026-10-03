@@ -663,8 +663,15 @@
       this.selectedBandIndex = null;
       this.inject();
       this.bind();
+      // Releitura por revisão: evidência, tabelas e sessão só quando andaram (ou o vigia vence);
+      // com operação ou releitura de ponto em curso, relê sempre (o progresso não tem revisão própria).
+      const revisions = ns.Revisions;
+      this.dataGate = revisions ? revisions.gate(revisions.SLOW_KINDS, revisions.WATCHDOG_MS) : { due: () => true, mark() {} };
+      this.dataDirty = false;
+      this.unsubscribeRevisions = revisions ? revisions.subscribe(kind => { if (kind !== 'live') this.dataDirty = true; }) : () => {};
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
-        if (this.store.get().route === 'autocal') this.refresh();
+        if (this.store.get().route !== 'autocal') return;
+        if (this.dataGate.due(this.refreshBusy())) { this.refresh(); this.dataGate.mark(); }
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
         if (this.store.get().route !== 'autocal') {
@@ -675,7 +682,8 @@
         if (!this.unsubscribeFrame && typeof this.scheduler.addFrameHook === 'function') {
           this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateCursor(timestamp));
         }
-        if (this.firstRefreshPending) { this.firstRefreshPending = false; this.refresh(); }
+        if (this.firstRefreshPending) { this.firstRefreshPending = false; this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
+        else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
         this.renderLiveCursor();
       });
       if (this.store.get().route === 'autocal') {
@@ -905,6 +913,13 @@
     enter() {
       this.active = true;
       this.refresh();
+      this.dataGate.mark();
+    }
+
+    /** Há operação na ECU ou releitura de ponto em andamento: o progresso não tem revisão, então relê sempre. */
+    refreshBusy() {
+      return this.operationalPending === true || this.actionState?.busy === true ||
+        (this.pendingPointReacquisitionKeys?.size || 0) > 0;
     }
 
     refresh() {

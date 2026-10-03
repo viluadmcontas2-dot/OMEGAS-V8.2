@@ -212,6 +212,8 @@
     const route = store.get().route;
     if (isLiveRoute(route)) {
       const envelope = api.presentSnapshot(lastPresentSequence) || {};
+      // Revisões por tipo vêm em todo quadro (e por empurrão): evidência/tabelas/sessão só são relidas quando andam.
+      ui.Revisions?.noteAll(envelope.revisions || envelope.data?.revisions);
       let telemetry = envelope.data || {};
       if (envelope.changed === false && envelope.ok !== false) {
         // Nada novo no Kotlin: reaproveita o último quadro e atualiza só a idade.
