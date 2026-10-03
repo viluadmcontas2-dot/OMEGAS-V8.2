@@ -281,6 +281,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     .put("mapBar", (key + 0.5) * binBar)
                     .put("tpetMs", PresentationMedian.of(values.map { it.petrolMs }))
                     .put("samples", values.size)
+                    .put("lastAtMs", values.maxOf { it.t })
                     .put("rpmMedian", PresentationMedian.of(values.map { it.rpm }))
                     .put("idleShare", values.count { it.rpm < DRIVING_MIN_RPM }.toDouble() / values.size)) }
             }

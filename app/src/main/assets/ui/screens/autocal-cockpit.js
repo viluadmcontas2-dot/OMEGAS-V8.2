@@ -1349,8 +1349,9 @@
         }
       }
 
-      const petrolKnown = vector(snapshot, 'NUM_BUF_UPD_PETR').length > 0;
-      const gasKnown = vector(snapshot, 'NUM_BUF_UPD_GAS').length > 0;
+      // Durante o reset de um combustível o 0 é medida (recomeçou); sem reset e sem resposta da ECU é desconhecido.
+      const petrolKnown = epoch.petrolPending === true || vector(snapshot, 'NUM_BUF_UPD_PETR').length > 0;
+      const gasKnown = epoch.gasPending === true || vector(snapshot, 'NUM_BUF_UPD_GAS').length > 0;
       this.text('autocalReferenceCount',
         'Gasolina ' + (petrolKnown ? petrolCount : '—') + '/18 · GNV ' + (gasKnown ? gasCount : '—') + '/18 faixas com amostra');
       const kValues = physicalVector(snapshot, 'MUL_ACT');

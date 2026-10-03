@@ -58,6 +58,64 @@
     return `${p > 0 ? '+' : ''}${fmt(p, 1)}%`;
   }
 
+  /** "agora", "há 12 s", "há 3 min", "há 2 h". Sem data conhecida: "—" (nunca "há 0 s"). */
+  function ageText(atMs, nowMs) {
+    const at = finite(atMs);
+    const now = finite(nowMs);
+    if (at === null || at <= 0 || now === null) return '—';
+    const s = Math.max(0, Math.round((now - at) / 1000));
+    if (s < 5) return 'agora';
+    if (s < 90) return `há ${s} s`;
+    if (s < 5400) return `há ${Math.round(s / 60)} min`;
+    return `há ${Math.round(s / 3600)} h`;
+  }
+
+  /** Resultado do experimento em linguagem simples (histórico). */
+  const STATUS_WORDS = {
+    VERIFICADO: 'Chegou na gasolina',
+    PIOROU_EM_PARTE: 'Piorou em parte — dá para restaurar só o trecho',
+    VERIFICANDO: 'Medindo…',
+    SEM_BASE: 'Sem medição anterior: a medição de agora virou a base',
+    INCONCLUSIVO: 'Poucas leituras: não deu para julgar',
+    INTERROMPIDO: 'A ECU mudou a curva no meio (AutoMatch ou Mapa K)',
+  };
+
+  /**
+   * O que o ponto tocado é: de quem, quando foi medido e por que conta (ou não) para a curva.
+   * kind = 'our' (dos pontos densos do OMEGAS) ou 'ecu' (ponto adquirido pelo AutoCal nativo).
+   */
+  function explainPoint(kind, point, ctx) {
+    const now = ctx?.now;
+    if (kind === 'our') {
+      const gas = point.fuel === 'GAS';
+      const idle = (finite(point.idleShare) ?? 0) >= 0.5 || (finite(point.rpmMedian) ?? Infinity) < 1000;
+      const lines = [
+        'De quem é: medido pelo OMEGAS na sua condução (leitura estável = 3 quadros seguidos).',
+        `MAP ${fmt(point.mapBar, 3)} bar · ${fmt(point.tpetMs, 2)} ms · ${fmt(point.samples, 0)} leituras · RPM típico ${fmt(point.rpmMedian, 0)}`,
+        `Quando: última leitura ${ageText(point.lastAtMs, now)}.`,
+      ];
+      lines.push(idle
+        ? 'Por que conta: NÃO conta. É marcha lenta: aparece no gráfico, mas não corrige a curva (a ECU trata a lenta à parte).'
+        : gas
+          ? 'Por que conta: forma par com a gasolina no mesmo RPM e MAP. Só vale para a curva atual: se a curva mudar, recomeça.'
+          : 'Por que conta: é a referência da gasolina. O GNV é comparado com ela no mesmo RPM e MAP.');
+      return { title: `Nosso ponto · ${gas ? 'GNV' : 'Gasolina'}`, lines, counts: !idle };
+    }
+    const gas = point.fuel === 'GAS';
+    const rejected = (ctx?.rejected || []).some(r => (r.fuel === 'GNV') === gas && Number(r.band) === Number(point.index));
+    const acquired = point.acquisitionState === 'ACQUIRED';
+    const progress = finite(point.counter) === null ? '' : ` (${fmt(point.counter, 0)}${finite(point.threshold) === null ? '' : '/' + fmt(point.threshold, 0)})`;
+    const lines = [
+      'De quem é: medido pela ECU (AutoCal nativo), não pelo OMEGAS.',
+      `MAP ${fmt(point.mapBar, 3)} bar · ${fmt(point.petrolMs, 2)} ms · ${acquired ? 'adquirido' : 'coletando'}${progress}`,
+      `Quando: leitura da ECU ${ageText(ctx?.capturedAtMs, now)}.`,
+    ];
+    if (rejected) lines.push('Por que conta: NÃO conta. Foi descartado como anomalia: fora da tendência das outras faixas (típico de marcha lenta puxando a curva).');
+    else if (acquired) lines.push('Por que conta: faixa adquirida pela ECU; entra no cálculo junto com os nossos pontos.');
+    else lines.push('Por que conta: ainda coletando; só conta quando a ECU terminar de adquirir esta faixa.');
+    return { title: `Ponto da ECU · ${point.fuelLabel} B${point.point}`, lines, counts: acquired && !rejected };
+  }
+
   /** Pontos que a revisão propõe gravar (puro, testável). */
   function proposedPoints(analysis) {
     const points = Array.isArray(analysis?.points) ? analysis.points : [];
@@ -151,18 +209,18 @@
           <div class="refino-stalls" id="refinoStalls" hidden></div>
           <section class="autocal-reference-card" aria-label="NOSSA CURVA · Gasolina × GNV">
             <span class="autocal-plot-title">NOSSA CURVA · Gasolina × GNV</span>
+            <div class="autocal-chart-legend" id="refinoLegend" aria-label="Legenda do gráfico">
+              <span class="petrol">Curva gasolina (ECU)</span>
+              <span class="gas">Curva GNV (ECU)</span>
+              <span class="acquired">Pontos da ECU</span>
+              <span class="refino-ours-petrol">Nossos · gasolina</span>
+              <span class="refino-ours-gas">Nossos · GNV</span>
+              <span class="refino-stall-legend">Motor apagou</span>
+              <span class="live">AGORA</span>
+            </div>
             <div class="autocal-chart-workspace">
               <div id="refinoChart" class="autocal-chart-host"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
-              <div class="autocal-chart-legend">
-                <span class="petrol">Curva gasolina (ECU)</span>
-                <span class="gas">Curva GNV (ECU)</span>
-                <span class="acquired">Pontos da ECU</span>
-                <span class="refino-ours-petrol">Nossos · gasolina</span>
-                <span class="refino-ours-gas">Nossos · GNV</span>
-                <span class="refino-stall-legend">Motor apagou</span>
-                <span class="live">AGORA</span>
-              </div>
-              <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU (azul gasolina, verde GNV). Quadradinhos: nossos pontos (laranja gasolina, roxo GNV), um a cada 0,025 bar.</span></aside>
+              <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU (azul gasolina, verde GNV). Quadradinhos: nossos pontos (laranja gasolina, roxo GNV), um a cada 0,025 bar. Ao tocar eu digo de quem é, quando foi medido e se conta para a curva.</span></aside>
             </div>
           </section>
           <details class="autocal-secondary-details" id="refinoResultDetails">
@@ -452,15 +510,22 @@
       const index = Number(raw);
       const inspector = document.getElementById('refinoInspector');
       if (!inspector) return;
+      const now = Date.now();
+      let explained = null;
       if (kind === 'our') {
         const p = (this.ours || [])[index];
-        if (!p) return;
-        inspector.innerHTML = `<b>Nosso ponto · ${p.fuel === 'GAS' ? 'GNV' : 'Gasolina'}</b><span>MAP ${fmt(p.mapBar, 3)} bar · ${fmt(p.tpetMs, 2)} ms · ${fmt(p.samples, 0)} leituras estáveis · RPM típico ${fmt(p.rpmMedian, 0)}</span>`;
+        if (p) explained = explainPoint('our', p, { now });
       } else {
         const p = (this.acquired || [])[index];
-        if (!p) return;
-        inspector.innerHTML = `<b>Ponto da ECU · ${escapeHtml(p.fuelLabel)} B${p.point}</b><span>MAP ${fmt(p.mapBar, 3)} bar · ${fmt(p.petrolMs, 2)} ms · ${p.acquisitionState === 'ACQUIRED' ? 'adquirido' : 'coletando'} (${fmt(p.counter, 0)}/${fmt(p.threshold, 0)})</span>`;
+        if (p) {
+          const key = p.fuel === 'GAS' ? 'PETR_INJ_TBUF_GAS' : 'PETR_INJ_TBUF';
+          const field = (Array.isArray(this.snapshot?.fields) ? this.snapshot.fields : []).find(f => f && f.key === key && f.status === 'VALID');
+          explained = explainPoint('ecu', p, { now, capturedAtMs: field?.capturedAtMs, rejected: this.analysis?.rejectedBands });
+        }
       }
+      if (!explained) return;
+      inspector.dataset.counts = explained.counts ? 'true' : 'false';
+      inspector.innerHTML = `<b>${escapeHtml(explained.title)}</b>${explained.lines.map(line => `<span>${escapeHtml(line)}</span>`).join('')}`;
     }
 
     renderJournal() {
@@ -472,7 +537,12 @@
       const rows = bands.map(b => `<div data-verdict="${escapeHtml(b.verdict)}"><span>${fmt(b.fromMs, 1)}–${fmt(b.toMs, 1)} ms</span><b>${pct(b.ratioBefore)}${finite(b.ratioAfter) === null ? '' : ' → ' + pct(b.ratioAfter)}</b><small>${escapeHtml(VERDICT[b.verdict])}</small></div>`).join('');
       const undo = undoPoints(latest).length ? '<button type="button" class="secondary" data-refino-undo>Desfazer última gravação</button>' : '';
       const closing = JOURNAL_NOTE[latest.status] ? `<p class="refino-note">${escapeHtml(JOURNAL_NOTE[latest.status])}</p>` : '';
-      host.innerHTML = `${rows ? `<div class="refino-verdicts">${rows}</div>` : '<p>Dirija no GNV: o app compara cada faixa com a gasolina no mesmo RPM e MAP.</p>'}${closing}<p class="refino-note">Cada resultado ajusta a força da próxima correção naquela faixa.</p>${undo}`;
+      const history = (Array.isArray(this.eq?.refinement?.history) ? this.eq.refinement.history : []).slice().reverse().map(item => {
+        const when = finite(item.appliedAt) ? new Date(item.appliedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+        const ratios = finite(item.ratioBefore) === null ? '' : ` · GNV÷gasolina ${pct(item.ratioBefore)}${finite(item.ratioAfter) === null ? '' : ' → ' + pct(item.ratioAfter)}`;
+        return `<li data-status="${escapeHtml(item.status)}"><b>${escapeHtml(when)}</b> ${escapeHtml(STATUS_WORDS[item.status] || 'Resultado desconhecido')}${escapeHtml(ratios)}</li>`;
+      }).join('');
+      host.innerHTML = `${rows ? `<div class="refino-verdicts">${rows}</div>` : '<p>Dirija no GNV: o app compara cada faixa com a gasolina no mesmo RPM e MAP.</p>'}${closing}<p class="refino-note">Cada resultado ajusta a força da próxima correção naquela faixa.</p>${undo}${history ? `<h4 class="refino-history-title">Histórico de gravações</h4><ol class="refino-history">${history}</ol>` : ''}`;
     }
 
     renderTech() {
@@ -484,6 +554,7 @@
         <div><dt>Modo</dt><dd>${escapeHtml(a.refinementMode || '—')} · ${a.available ? 'disponível' : escapeHtml(a.message || 'aguardando evidência')}</dd></div>
         <div><dt>De onde vem a proposta</dt><dd>${escapeHtml({ ECU_E_CONDUCAO: 'faixas da ECU + sua condução', CONDUCAO: 'só a sua condução (a ECU ainda não tem faixas maduras)', NENHUMA: 'sem evidência suficiente: nada muda' }[a.evidenceSource] || '—')}</dd></div>
         <div><dt>Bandas comuns maduras</dt><dd>${fmt(a.matureCommonPoints, 0)} de ${fmt(a.minimumMatureCommonPoints, 0)} necessárias · ${fmt(a.telemetryTargets, 0)} alvos dos nossos pontos</dd></div>
+        <div><dt>Pontos da ECU descartados</dt><dd>${Array.isArray(a.rejectedBands) && a.rejectedBands.length ? a.rejectedBands.map(r => `${escapeHtml(r.fuel === 'GNV' ? 'GNV' : 'Gasolina')} B${Number(r.band) + 1} (${fmt(r.timeMs, 1)} ms · ${fmt(r.mapBar, 2)} bar)`).join(', ') + ' — fora da tendência; não entram no cálculo' : 'nenhum'}</dd></div>
         <div><dt>Trava</dt><dd>±${fmt(a.guards?.maximumStepPercent, 0)}% por gravação · |Δ ln K/Δ ln t| ≤ ${fmt(a.elasticityLimit, 2)}</dd></div>
         <div><dt>Automático da ECU</dt><dd>${fmt(pilot.autoMatchCount, 0)} de ${fmt(pilot.maxAutomatch, 0)} · ${escapeHtml(pilot.ecuDoneReason || 'ainda trabalhando')}</dd></div>
       </dl>`;
@@ -505,7 +576,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction };
+  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, explainPoint, ageText, STATUS_WORDS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);
