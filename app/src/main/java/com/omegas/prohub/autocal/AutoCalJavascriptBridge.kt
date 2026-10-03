@@ -259,7 +259,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L) + "|" + evidence.signature
         synchronized(managerLock) {
             refinedMemo?.takeIf { it.first == key }?.second
-                ?: AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, evidence.pairs, evidence.gainScale)
+                ?: AutoMatchSnapshotAnalysis.analyzeRefined(
+                    snapshot, evidence.pairs, evidence.gainScale, evidence.episodes, AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG,
+                )
                     .toString().also { refinedMemo = key to it }
         }
     } catch (error: Exception) {
@@ -331,7 +333,12 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Refino indisponível")
     }
 
-    private class Evidence(val pairs: List<Pair<Double, Double>>, val gainScale: DoubleArray?, val signature: String)
+    private class Evidence(
+        val pairs: List<Pair<Double, Double>>,
+        val gainScale: DoubleArray?,
+        val signature: String,
+        val episodes: List<Int> = emptyList(),
+    )
 
     @Volatile private var refinedMemo: Pair<String, String>? = null
 
@@ -352,9 +359,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         }
         mulAct?.let { raw -> service.equivalence.alignCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) })) }
         // Só condução: a marcha lenta (~870 rpm) tem estratégia própria da ECU e criava degrau em ~4,5 ms.
-        val pairs = service.equivalence.drivingPairs().map { it.petrolRefMs to it.gasPetrolMs }
+        val driving = service.equivalence.drivingPairs()
+        val pairs = driving.map { it.petrolRefMs to it.gasPetrolMs }
+        val episodes = driving.map { it.episode }
         val scale = axisMs?.let { service.refinementJournal.pointGainScale(it) }
-        return Evidence(pairs, scale, "${service.equivalence.revision()}|${service.equivalence.gasEpochToken()}|${scale?.joinToString(",") { "%.3f".format(it) }}")
+        return Evidence(pairs, scale, "${service.equivalence.revision()}|${service.equivalence.gasEpochToken()}|${scale?.joinToString(",") { "%.3f".format(it) }}", episodes)
     }
 
     /** Snapshot mais recente entre o monitor nativo e a leitura manual. */

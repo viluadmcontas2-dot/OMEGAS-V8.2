@@ -90,6 +90,7 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
             EquivalenceInput(
                 axisRaw, mulActRaw, reference, provisional, ledger.petrolObservations(), ledger.gasObservations(),
                 experience.reading(), usage.reading(), null, scale,
+                com.omegas.prohub.autocal.AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG,
             ),
         ) { points -> phases.judgePoints(points, ecuOnline) }
         synchronized(lock) {

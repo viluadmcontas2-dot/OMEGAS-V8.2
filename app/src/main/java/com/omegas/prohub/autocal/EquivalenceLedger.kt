@@ -57,12 +57,26 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         const val ECU_REF_MIN_SPAN_BAR = 0.20
         /** Quanto fora da faixa da curva da ECU ainda vale (bar). */
         const val ECU_REF_MARGIN_BAR = 0.03
+        /** Lacuna maior que isto entre leituras estáveis de GNV abre outro episódio de condução. */
+        const val EPISODE_GAP_MS = 3_000L
+        /** Episódios distintos que uma faixa precisa ter para puxar proposta (= AutoMatchRefinedEngine.MIN_BAND_EPISODES). */
+        const val MIN_BAND_EPISODES = AutoMatchRefinedEngine.MIN_BAND_EPISODES
     }
 
     data class Frame(val t: Long, val fuel: String, val rpm: Double, val map: Double, val petrolMs: Double, val gasMs: Double = 0.0)
-    data class Obs(val t: Long, val rpm: Double, val map: Double, val petrolMs: Double)
+    /** [episode] = trecho de condução em GNV (leituras estáveis separadas por no máximo [EPISODE_GAP_MS]); -1 = desconhecido. */
+    data class Obs(val t: Long, val rpm: Double, val map: Double, val petrolMs: Double, val episode: Int = -1)
     /** [ecuRef] = a referência de gasolina veio da curva de gasolina da ECU (MAP), não de leituras próprias. */
-    data class EvidencePair(val petrolRefMs: Double, val gasPetrolMs: Double, val rpm: Double, val ecuRef: Boolean = false)
+    data class EvidencePair(
+        val petrolRefMs: Double,
+        val gasPetrolMs: Double,
+        val rpm: Double,
+        val ecuRef: Boolean = false,
+        /** Episódio da leitura de GNV do par (-1 = desconhecido). */
+        val episode: Int = -1,
+        /** MAP médio da leitura de GNV do par (NaN = desconhecido). */
+        val map: Double = Double.NaN,
+    )
 
     private val lock = Any()
     private val window = ArrayDeque<Frame>(3)
@@ -102,6 +116,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private var lastSaveAt = 0L
     private var gasUsefulRpmMs = 0.0
     private var airRpmBar = 0.0
+    private var episodeCounter = 0
+    private var lastGasObsAt = Long.MIN_VALUE
     private var dirty = false
     @Volatile private var cachedIndex: JSONObject? = null
     private var cachedIndexRevision = -1L
@@ -183,7 +199,12 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             if (window.isNotEmpty() && window.last().fuel != frame.fuel) window.clear()
             window.addLast(frame)
             while (window.size > 3) window.removeFirst()
-            obs = stableObservation()
+            val stable = stableObservation()
+            obs = if (stable != null && frame.fuel == "GNV") {
+                if (lastGasObsAt == Long.MIN_VALUE || stable.t - lastGasObsAt > EPISODE_GAP_MS) episodeCounter++
+                lastGasObsAt = stable.t
+                stable.copy(episode = episodeCounter)
+            } else stable
             if (obs != null) {
                 (if (frame.fuel == "GASOLINA") petrol else gas).add(obs)
                 dirty = true
@@ -283,8 +304,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     if (abs(it.rpm - g.rpm) <= MATCH_RPM && abs(it.map - g.map) <= MATCH_MAP) matches += it.petrolMs
                 }
             }
-            if (matches.size >= 2) { matches.sort(); EvidencePair(matches[matches.size / 2], g.petrolMs, g.rpm) }
-            else ecuReferenceAt(g.map, ecuRef)?.let { EvidencePair(it, g.petrolMs, g.rpm, ecuRef = true) }
+            if (matches.size >= 2) { matches.sort(); EvidencePair(matches[matches.size / 2], g.petrolMs, g.rpm, episode = g.episode, map = g.map) }
+            else ecuReferenceAt(g.map, ecuRef)?.let { EvidencePair(it, g.petrolMs, g.rpm, ecuRef = true, episode = g.episode, map = g.map) }
         }
     }
 
@@ -307,7 +328,10 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         BANDS.forEach { (lo, hi) ->
             val sel = all.filter { it.petrolRefMs >= lo && it.petrolRefMs < hi }
             val ratio = median(sel.map { ln(it.gasPetrolMs / it.petrolRefMs) })?.let(::exp)
+            val episodes = sel.map { it.episode }
+            val episodeCount = if (sel.isNotEmpty() && episodes.all { it >= 0 }) episodes.toSet().size else null
             bands.put(JSONObject().put("fromMs", lo).put("toMs", hi).put("samples", sel.size)
+                .put("episodes", episodeCount ?: JSONObject.NULL)
                 .put("ratio", ratio ?: JSONObject.NULL)
                 // Fração dos pares da faixa cuja gasolina veio da curva da ECU (mais grossa que a própria).
                 .put("ecuShare", if (sel.isEmpty()) 0.0 else sel.count { it.ecuRef }.toDouble() / sel.size))
@@ -348,6 +372,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             // independe do trânsito; compara calibrações no mesmo carro. Unidade relativa.
             .put("gasPerAir", gasPerAir() ?: JSONObject.NULL)
             .put("bands", bands)
+            .put("coverageGuidance", coverageGuidance(bands) ?: JSONObject.NULL)
             .put("automatic", false)
         // Mudança estrutural durante o cálculo invalida o resultado; leitura nova só o deixa "velho" (revisão).
         if (structuralCounter.get() == structuralAtStart) {
@@ -356,6 +381,54 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             cachedIndexAt = clock()
         }
         return JSONObject(result.toString())
+    }
+
+    /**
+     * Faixa de MAP (p10–p90, bar) em que a gasolina anda nesta faixa de Petrol Inj.: onde dirigir no GNV para cobri-la.
+     * Vem das leituras de gasolina da condução; sem elas, da curva de gasolina da ECU; senão, desconhecida.
+     */
+    private fun bandMapRange(lo: Double, hi: Double): Pair<Double, Double>? {
+        val maps = synchronized(lock) { petrol.filter { it.rpm >= DRIVING_MIN_RPM && it.petrolMs >= lo && it.petrolMs < hi }.map { it.map } }.sorted()
+        if (maps.size >= 3) return maps[((maps.size - 1) * 0.1).toInt()] to maps[Math.round((maps.size - 1) * 0.9).toInt()]
+        val ref = ecuPetrolRef
+        if (ref.size >= 2) {
+            fun mapAt(ms: Double): Double? {
+                for (i in 0 until ref.size - 1) {
+                    val (m0, t0) = ref[i]
+                    val (m1, t1) = ref[i + 1]
+                    if (ms >= t0 && ms <= t1 && t1 > t0) return m0 + (m1 - m0) * (ms - t0) / (t1 - t0)
+                }
+                return null
+            }
+            val a = mapAt(lo)
+            val b = mapAt(hi)
+            if (a != null && b != null) return minOf(a, b) to maxOf(a, b)
+        }
+        return null
+    }
+
+    /**
+     * Guia de cobertura em linguagem do dono: a faixa de Petrol Inj. com mais evidência que ainda não vale
+     * (menos de [MIN_BAND_EPISODES] trechos ou de 8 pares), com o MAP em que dirigir. Nulo quando todas valem.
+     */
+    private fun coverageGuidance(bands: JSONArray): String? {
+        var pick: JSONObject? = null
+        for (i in 0 until bands.length()) {
+            val b = bands.optJSONObject(i) ?: continue
+            val samples = b.optInt("samples")
+            val episodes = if (b.isNull("episodes")) null else b.optInt("episodes")
+            val lacking = samples < RefinementJournal.MIN_BAND_SAMPLES || (episodes != null && episodes < MIN_BAND_EPISODES)
+            if (lacking && (pick == null || samples > pick.optInt("samples"))) pick = b
+        }
+        val band = pick ?: return null
+        val br = java.util.Locale("pt", "BR")
+        val from = band.optDouble("fromMs")
+        val to = band.optDouble("toMs")
+        val range = bandMapRange(from, to)
+        val where = if (range != null) " entre %.2f e %.2f bar".format(br, range.first, range.second) else " nessa faixa de injeção"
+        val episodes = if (band.isNull("episodes")) 0 else band.optInt("episodes")
+        val progress = " (%d de %d trechos)".format(br, episodes, MIN_BAND_EPISODES)
+        return "Falta dado na faixa %.1f–%.1f ms: dirija no GNV%s%s.".format(br, from, to, where, progress)
     }
 
     /** Identidade observacional da época, sem tocar no acumulador. */
@@ -436,6 +509,9 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         builder.append("],\"ms\":[")
         first = true
         values.forEach { if (!first) builder.append(','); num(builder, it.petrolMs, 10_000.0); first = false }
+        builder.append("],\"ep\":[")
+        first = true
+        values.forEach { if (!first) builder.append(','); builder.append(it.episode); first = false }
         builder.append("]}")
     }
 
@@ -457,6 +533,26 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         return b.toString()
     }
 
+    /**
+     * Arquivo antigo (sem episódios): deriva-os da lacuna entre leituras de GNV. Com episódios gravados, só
+     * recoloca o contador depois do maior id para o próximo trecho abrir um episódio novo.
+     */
+    private fun relabelEpisodes() {
+        val list = gas.toList()
+        if (list.isEmpty()) return
+        if (list.all { it.episode >= 0 }) { episodeCounter = list.maxOf { it.episode }; return }
+        var episode = 0
+        var last = Long.MIN_VALUE
+        val relabeled = list.sortedBy { it.t }.map { o ->
+            if (last != Long.MIN_VALUE && o.t - last > EPISODE_GAP_MS) episode++
+            last = o.t
+            o.copy(episode = episode)
+        }
+        gas.clear()
+        relabeled.forEach { gas.add(it) }
+        episodeCounter = episode
+    }
+
     private fun load() {
         val source = file?.takeIf { it.isFile } ?: return
         try {
@@ -471,7 +567,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     val map = flat.optJSONArray("map") ?: return
                     val ms = flat.optJSONArray("ms") ?: return
                     val n = minOf(t.length(), rpm.length(), map.length(), ms.length())
-                    for (i in 0 until n) into.add(Obs(t.optLong(i), rpm.optDouble(i), map.optDouble(i), ms.optDouble(i)))
+                    val ep = flat.optJSONArray("ep")?.takeIf { it.length() >= n }
+                    for (i in 0 until n) into.add(Obs(t.optLong(i), rpm.optDouble(i), map.optDouble(i), ms.optDouble(i), ep?.optInt(i, -1) ?: -1))
                     return
                 }
                 val array = root.optJSONArray(name) ?: return
@@ -482,6 +579,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             }
             lane("petrol", petrol)
             lane("gas", gas)
+            relabelEpisodes()
             curveFingerprint = root.optString("curveFingerprint").takeIf { it.isNotBlank() && it != "null" }
             gasEpochReason = root.optString("gasEpochReason", "CARREGADO")
             gasEpochAt = root.optLong("gasEpochAt", 0L)
