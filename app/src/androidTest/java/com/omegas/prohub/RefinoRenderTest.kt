@@ -229,7 +229,7 @@ class RefinoRenderTest {
             stallsVisible: !!stalls && !stalls.hidden,
             stallsText: stalls ? stalls.innerText : '',
             journalText: q('#refinoJournal')?.innerText ?? '',
-            techText: q('#refinoTech')?.innerText ?? '',
+            techText: q('#refinoTech')?.textContent ?? '',
             ourSquares: document.querySelectorAll('.refino-our-point').length,
             ecuDots: document.querySelectorAll('#refinoChart .autocal-acquired-point').length,
             stallMarks: document.querySelectorAll('.refino-stall-mark').length,
@@ -328,7 +328,7 @@ class RefinoRenderTest {
             assertEquals("Curva pronta", dom.getString("chip"))
             assertEquals("review", dom.getString("primaryKind"))
             assertTrue(dom.getString("primaryText"), Regex("Revisar e gravar \\d+ ponto").containsMatchIn(dom.getString("primaryText")))
-            assertTrue("a proposta diz de onde vem", dom.getString("techText").contains("sua condução"))
+            assertTrue("a proposta diz de onde vem: ${dom.getString("techText")}", dom.getString("techText").contains("sua condução"))
             assertTrue("nossos pontos aparecem no gráfico", dom.getInt("ourSquares") > 0)
             assertTrue("curva da ECU desenhada", dom.getInt("referenceLines") >= 1)
         } finally { scenario.close() }
@@ -465,9 +465,18 @@ class RefinoRenderTest {
             val frames = livePayloads()
             val decoded = frames.map { Mp48Protocol.decodeTelemetry(it, 1L).toJson() }
             val a = frames[0]
-            val bIndex = decoded.indexOfFirst { kotlin.math.abs(it.getDouble("petrol_ms") - decoded[0].getDouble("petrol_ms")) > 0.4 }
-            check(bIndex > 0) { "o corpus portmon precisa de dois quadros com Petrol Inj. diferente" }
-            val b = frames[bIndex]
+            val basePetrol = decoded[0].getDouble("petrol_ms")
+            // Os quadros reais do portmon são todos da mesma condição (marcha lenta): o segundo quadro é o
+            // real com o contador de Petrol Inj. alterado (variação sintética rotulada no recibo).
+            val b = (0..a.size - Mp48Protocol.TELEMETRY_PAYLOAD_SIZE).firstNotNullOfOrNull { i ->
+                val copy = a.copyOf()
+                val raw = (copy[i + 8].toInt() and 0xFF) or ((copy[i + 9].toInt() and 0xFF) shl 8)
+                val bumped = (raw * 3 / 2 + 1_200).coerceAtMost(0xFFFF)
+                copy[i + 8] = bumped.toByte(); copy[i + 9] = (bumped shr 8).toByte()
+                val d = runCatching { Mp48Protocol.decodeTelemetry(copy, 1L).toJson() }.getOrNull()
+                if (d != null && kotlin.math.abs(d.getDouble("petrol_ms") - basePetrol) > 0.4) copy else null
+            }
+            checkNotNull(b) { "não foi possível variar o Petrol Inj. do quadro real (base $basePetrol ms)" }
             service.telemetryStore.beginSession(9001L)
             injectLive(service, a, 9001L)
             openRefino(scenario)
@@ -477,7 +486,7 @@ class RefinoRenderTest {
             scenario.onActivity { it.refreshWebUi() }
             SystemClock.sleep(1_200L)
             val second = refinoDom(scenario)
-            saveEvidence("refino-agora-acompanha", second, scenario, provenance("REAL_REPLAY", "portmon-autocal-cycle-v1", "dois quadros MP48 reais com Petrol Inj. diferente").put("firstCx", first.opt("liveCx")).put("secondCx", second.opt("liveCx")))
+            saveEvidence("refino-agora-acompanha", second, scenario, provenance("REAL_REPLAY+SYNTHETIC_VARIATION", "portmon-autocal-cycle-v1", "um quadro MP48 real e o mesmo quadro com o contador de Petrol Inj. alterado").put("firstCx", first.opt("liveCx")).put("secondCx", second.opt("liveCx")))
             assertClean(second)
             assertTrue("bolinha AGORA visível com telemetria fresca", first.getBoolean("liveVisible"))
             assertNotEquals("a bolinha AGORA do Refino precisa mexer quando a telemetria muda", first.optDouble("liveCx"), second.optDouble("liveCx"), 0.5)
