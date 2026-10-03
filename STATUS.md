@@ -8,7 +8,8 @@
 - Classe2: host lendo30s; proposta/rollback30min; aquisição/automático/verificação40min; silêncio não autoriza conclusão. Baselines15/15 antes/depois; mutantes8/8 detectados, 0 sobreviventes.
 - Classe4: primeiro veredito→worker→JSONL→RESUMO, razão offline —, timeout honesto e SIGKILL; RED→GREEN em logs integrados. 29 cenários não equivalem aos 11 estados novos de cada tela.
 - Inspeção manual das imagens indisponível: download local bloqueado por ambiente desconectado409. Não alegar classe5.
-- Revisão achou: decisões intermediárias entre ticks perdidas e assinatura visual muda só por tempo; identidade por relógio também pode colidir. Novos testes RED submetidos; corrigir antes de fechar#122.
+- RED `37110275413`: 616 testes / 2 falhas novas (id por relógio repetido e atualização visual sem dado). Correção mínima submetida; RED Android de decisões entre ticks ainda pendente. Não fechar#122.
+- D7 incorporado após os blocos anteriores: relato físico do dono preservado; H1–H7 ainda inconclusivas, sem replay/resíduo medido. Contrato de coerência deverá preceder qualquer correção D7.
 - Performance classe3 (corpus histórico em JVM/CI): frio mediana18,64ms/p9545,79ms; cache0,00019ms. Alvo frio30ms **não cumprido nesta medição**; bridge completa/aparelho não provados.
 - Política/simulador fechado, frescor/geração nativa, teto absoluto Journal, D4/D6/D5/rolagem horizontal e demais módulos **pendentes**. Falso “piorou”, detecção real, passos até estável: **não medidos**.
 - REDs/AF1 isolados/falhas anteriores/radar detalhados em `docs/autocal/CAIXA-PRETA-RED.md`. Provas antigas abaixo são arquivo histórico e não provam este código.

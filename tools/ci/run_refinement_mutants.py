@@ -20,6 +20,10 @@ COMMAND = ["bash", "./gradlew", "testDebugUnitTest", "--console=plain"]
 for name in CLASSES:
     COMMAND += ["--tests", name]
 MUTANTS = [
+    ("clock-only-experiment-id", JOURNAL, '.put("id", "EXP-${clock()}-$experimentSequence")',
+     '.put("id", "EXP-${clock()}")', "confirmedWritesHaveDistinctIdentityEvenWhenClockIsFrozen"),
+    ("elapsed-time-is-visible-change", JOURNAL, 'it.optJSONObject("decision")?.remove("onlineMs")',
+     'it.optJSONObject("decision")?.remove("notAnOperand")', "elapsedTimeAloneDoesNotRepublishVisibleDecision"),
     ("no-phase-ceiling", PILOT, "val budget = PHASE_BUDGET_MS[candidate]", "val budget: Long? = null",
      "automaticWaitHasCeilingWithoutDeclaringEcuDone"),
     ("false-offline-stable", PILOT, '!ecuOnline -> "SEM_ECU"', '!ecuOnline -> "ESTAVEL"',

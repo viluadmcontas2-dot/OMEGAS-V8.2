@@ -160,3 +160,29 @@ Nenhum oráculo antigo alterado neste commit. PRIMEIRO coletar RED JVM; depois f
 identidade/assinatura e executar RED Android; somente então corrigir transporte de decisões.
 Performance observada: cold median18,64ms/p9545,79ms; cache0,00019ms. Alvo30ms frio não
 cumprido neste run; não mascarar por cache ou medição anterior23,96ms. P6 pendente.
+
+
+## RED válido — identidade e apresentação
+Fonte32d24f630e1664af2b48193fc5be44fb1fb5e946, CI37110275413/job111166653375:
+616 testes compilados/executados, exatamente2 falhas novas:
+elapsedTimeAloneDoesNotRepublishVisibleDecision e
+confirmedWritesHaveDistinctIdentityEvenWhenClockIsFrozen.
+Correção mínima: sequência do experimento persistida compatível com v1 (calendário não
+identifica sozinho); assinatura visual exclui somente onlineMs, que permanece no
+diagnóstico e no tempo global. Sem mudar matemática/vereditos/oráculos.
+Dois mutantes reais reintroduzem id por relógio e assinatura por tempo; baseline agora17.
+RED Android entre ticks ainda pendente; listener de decisões NÃO implementado neste commit.
+
+## Adendo D7 aceito — ordem e limite de prova
+Pedido do dono às04:49/2026-10-03 (America/Sao_Paulo): AGORA fora da curva em3,5–4,3ms,
+MAP0,40–0,65bar, "GNV OK", restauração8pontos e apagões2,5–3,0ms/0,26bar.
+Isso é RELATO FÍSICO DO DONO, não medição física realizada pelo executor.
+Manter objetivo anterior e ordem dos slices; depois executar D7: contrato COERENCIA.md
+com campos/unidades/filtros/referências/precedência, regime estável explícito, resíduos
+por MAP e por ms. Investigar H1visual/H2transiente/H3estado/H4proteção/H5projeção/
+H6curva antiga/H7referência; cada conclusão precisa número e classe, aceita múltiplas causas.
+Ainda INCONCLUSIVAS: nenhum replay D7 executado, nenhum resíduo desta região medido.
+Não declarar "rico" somente por posição visual, nem remover proteção por opinião.
+Aceites adicionais: S1–S8 do dono no gêmeo digital real fechado, mutantes de projeção/trava,
+renders1280×720 de AGORA estável/transiente/divergência, relatório≤12linhas com limites.
+Temperatura/corte/embreagem/frescor desconhecidos são lacunas de entrada; não inventar.

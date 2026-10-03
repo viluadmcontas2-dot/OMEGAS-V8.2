@@ -47,6 +47,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     private val lock = Any()
     private val experiments = ArrayList<JSONObject>()
     private val bandScale = DoubleArray(BANDS.size) { 1.0 }
+    private var experimentSequence = 0L
     private var lastEvaluateAt = 0L
     private var lastSaveAt = 0L
 
@@ -57,8 +58,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         synchronized(lock) {
             experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }
                 ?.put("status", "INTERROMPIDO")?.put("reasonCode", "SUPERSEDED_BY_CONFIRMED_WRITE")?.put("failureDomain", "FUNCTIONAL")?.put("closedAt", clock())
+            experimentSequence += 1L
             experiments += JSONObject()
-                .put("id", "EXP-${clock()}")
+                .put("id", "EXP-${clock()}-$experimentSequence")
                 .put("appliedAt", clock())
                 .put("source", source)
                 .put("axisRaw", JSONArray(axisRaw.toList()))
@@ -161,7 +163,12 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     .put("minSamples", MIN_BAND_SAMPLES).put("onlineMs", onlineMs))
                 verdicts.put(verdict)
             }
-            val signature = verdicts.toString()
+            // Tempo segue no diagnóstico, mas não é uma mudança da decisão visível.
+            val signature = JSONArray((0 until verdicts.length()).map { i ->
+                JSONObject(verdicts.getJSONObject(i).toString()).also {
+                    it.optJSONObject("decision")?.remove("onlineMs")
+                }
+            }).toString()
             val visibleChange = signature != exp.optString("verdictSignature")
             exp.put("verdictSignature", signature)
             exp.put("bands", verdicts).put("indexAfter", indexNow).put("evaluatedAt", now)
@@ -271,6 +278,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             lastSaveAt = clock()
             JSONObject().put("format", FORMAT)
                 .put("bandScale", JSONArray(bandScale.toList()))
+                .put("experimentSequence", experimentSequence)
                 .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
         }
         try {
@@ -290,6 +298,11 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 for (i in 0 until min(a.length(), bandScale.size)) bandScale[i] = a.optDouble(i, 1.0).coerceIn(MIN_SCALE, MAX_SCALE)
             }
             root.optJSONArray("experiments")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(experiments::add) }
+            val loadedSequence = experiments.mapNotNull {
+                it.optString("id").takeIf { id -> id.count { c -> c == '-' } >= 2 }
+                    ?.substringAfterLast('-')?.toLongOrNull()
+            }.maxOrNull() ?: 0L
+            experimentSequence = max(root.optLong("experimentSequence", 0L), loadedSequence).coerceAtLeast(0L)
         } catch (_: Exception) {
             experiments.clear()
         }
