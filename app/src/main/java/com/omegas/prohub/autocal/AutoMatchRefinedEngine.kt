@@ -98,6 +98,21 @@ object AutoMatchRefinedEngine {
     const val TELEMETRY_RATIO_MIN = 0.6
     const val TELEMETRY_RATIO_MAX = 1.6
 
+    /**
+     * Lote H: a condução como evidência em 54 bins finos (FineBins), em vez de um alvo por par. A produção só passa
+     * `fineBins` ao motor quando isto é verdadeiro; o motor usa o caminho fino sempre que `Input.fineBins` vier.
+     * Valor decidido pela validação cruzada nas sessões reais (tools/autocal_refine/fine_bins_cv.py).
+     */
+    const val FINE_BINS_ENABLED = false
+    /** Rigidez do perfil ln(razão) × ln(ms) sobre os 54 bins (escolhida por validação cruzada). */
+    const val FINE_LAMBDA = 0.3
+    /** Pares de um bin que contam para o peso (como [BAND_FULL_COUNT]). */
+    const val FINE_WEIGHT_CAP = 6
+    /** Massa de evidência máxima de um nó do eixo (em "pares de bin"). */
+    const val FINE_NODE_CAP = 8.0
+    /** Âncora fraca do perfil: só impede o sistema de ficar singular. */
+    const val FINE_PRIOR = 1e-3
+
     data class Input(
         val axisRaw: IntArray,
         val mulActRaw: IntArray,
@@ -115,6 +130,8 @@ object AutoMatchRefinedEngine {
         val telemetryEpisodes: List<Int> = emptyList(),
         /** 0 = sem histerese. */
         val holdMinStepLog: Double = 0.0,
+        /** Lote H: bins finos da condução (54). Quando presente, substitui [telemetryPairs] como evidência da condução. */
+        val fineBins: List<FineBins.Bin>? = null,
     )
 
     enum class Mode { EQUIVALENCE, POLISH, UNAVAILABLE }
@@ -223,20 +240,37 @@ object AutoMatchRefinedEngine {
         val matureWeight = BAND_MATURE_COUNT.toDouble() / BAND_FULL_COUNT
         val mature = targets.count { it.weight >= matureWeight }
         val nativeEquivalence = mature >= MIN_COMMON_MATURE
-        val episodesKnown = input.telemetryEpisodes.size == input.telemetryPairs.size
-        val keptPairs = input.telemetryPairs.indices.filter { i ->
-            val (tp, tg) = input.telemetryPairs[i]
-            tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last()
+        val fine = input.fineBins?.takeIf { it.size == FineBins.FINE_COUNT }
+        var fineValid: BooleanArray? = null
+        var usablePairs: List<kotlin.Pair<Double, Double>> = emptyList()
+        var outlierBands = 0
+        var usedCount = 0
+        if (fine != null) {
+            // Lote H: bins finos. Bin fino (< 3 pares) não é evidência; a faixa de 18 precisa de ≥ 3 episódios.
+            val gate = FineBins.gate(fine)
+            fineValid = gate.valid
+            outlierBands = gate.outlierBands
+            usedCount = fine.indices.filter { gate.valid[it] }.sumOf { fine[it].n }
+        } else {
+            val episodesKnown = input.telemetryEpisodes.size == input.telemetryPairs.size
+            val keptPairs = input.telemetryPairs.indices.filter { i ->
+                val (tp, tg) = input.telemetryPairs[i]
+                tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last()
+            }
+            val candidates = keptPairs.map { input.telemetryPairs[it] }
+            val (pairs, outliers) = plausiblePairs(candidates, if (episodesKnown) keptPairs.map { input.telemetryEpisodes[it] } else null)
+            usablePairs = pairs
+            outlierBands = outliers
+            usedCount = pairs.size
         }
-        val candidates = keptPairs.map { input.telemetryPairs[it] }
-        val (usablePairs, outlierBands) = plausiblePairs(candidates, if (episodesKnown) keptPairs.map { input.telemetryEpisodes[it] } else null)
         // A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
-        val telemetryOnly = !nativeEquivalence && telemetryCovers(usablePairs)
+        val telemetryOnly = !nativeEquivalence && (if (fine != null) fineCovers(fine, fineValid!!) else telemetryCovers(usablePairs))
         val equivalence = nativeEquivalence || telemetryOnly
         val bandTargetCount = targets.size
         if (telemetryOnly) targets = emptyList() // faixas nativas imaturas não entram: só a medição própria
-        if (equivalence && usablePairs.isNotEmpty()) {
-            targets = targets + usablePairs.map { (tp, tg) ->
+        if (equivalence && usedCount > 0) {
+            targets = targets + if (fine != null) fineTargets(fine, fineValid!!, axisMs, kOld)
+            else usablePairs.map { (tp, tg) ->
                 Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT, tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
             }
         }
@@ -325,7 +359,7 @@ object AutoMatchRefinedEngine {
             invalidEvidenceBands = stats.invalid,
             thinBandsIgnored = stats.thin,
             telemetryOutlierBands = outlierBands,
-            telemetryPairsUsed = if (equivalence) usablePairs.size else 0,
+            telemetryPairsUsed = if (equivalence) usedCount else 0,
             outOfRangePoints = outOfRange,
         )
     }
@@ -373,6 +407,82 @@ object AutoMatchRefinedEngine {
             }
         }
         return kept to outliers
+    }
+
+
+    // ------------------------------------------------------- evidência fina (Lote H)
+
+    /**
+     * Perfil robusto ln(razão) × ln(ms) nos 54 bins: Whittaker (2ª diferença) + Tukey sobre as medianas dos bins
+     * válidos, peso min(n, [FINE_WEIGHT_CAP]). Sem âncora ao K: só suaviza a medição. Retorna (ajustado, tukey por bin).
+     * Espelho de refined_oracle.fine_profile.
+     */
+    internal fun fineProfile(bins: List<FineBins.Bin>, valid: BooleanArray, lambda: Double = FINE_LAMBDA): Pair<List<Double>, DoubleArray> {
+        val n = FineBins.FINE_COUNT
+        val u = bins.map { it.centerLn }
+        val idx = (0 until n).filter { valid[it] }
+        val ys = idx.map { bins[it].medianLn!! }
+        val ws = idx.map { min(bins[it].n, FINE_WEIGHT_CAP).toDouble() }
+        val anchor = if (ys.isEmpty()) 0.0 else ys.sorted()[ys.size / 2]
+        val d2 = secondDifferenceRows(u)
+        var robust = List(idx.size) { 1.0 }
+        var x: List<Double> = List(n) { anchor }
+        repeat(IRLS_ITERATIONS) {
+            val m = Array(n) { DoubleArray(n) }
+            val v = DoubleArray(n)
+            d2.forEach { row ->
+                val nz = row.indices.filter { row[it] != 0.0 }
+                nz.forEach { j -> nz.forEach { k -> m[j][k] += lambda * row[j] * row[k] } }
+            }
+            for (j in 0 until n) { m[j][j] += FINE_PRIOR; v[j] += FINE_PRIOR * anchor }
+            idx.forEachIndexed { pos, i ->
+                val w = ws[pos] * robust[pos]
+                m[i][i] += w
+                v[i] += w * ys[pos]
+            }
+            x = solve(m, v)
+            val res = idx.mapIndexed { pos, i -> ys[pos] - x[i] }
+            val scale = if (res.isEmpty()) 0.01 else max(res.map { abs(it) }.sorted()[res.size / 2] * 1.4826, 0.01)
+            robust = res.map { tukey(it / (TUKEY_C * scale)) }
+        }
+        val tukeyAll = DoubleArray(n)
+        idx.forEachIndexed { pos, i -> tukeyAll[i] = robust[pos] }
+        return x to tukeyAll
+    }
+
+    /**
+     * Amostra o perfil fino nos nós do eixo K. Um nó tem alvo só se houver bin válido na sua célula (entre os pontos
+     * médios, em ln ms, até os nós vizinhos): fora disso não há evidência inventada. Alvo = o da equivalência por par,
+     * y = ln(K(tg)·tg/tp), com tp = ms do nó e tg = tp·razão(tp). Peso = [TELEMETRY_WEIGHT]·min(massa, [FINE_NODE_CAP]).
+     */
+    internal fun fineTargets(bins: List<FineBins.Bin>, valid: BooleanArray, axisMs: List<Double>, kOld: List<Double>): List<Target> {
+        val uAxis = axisMs.map { ln(it) }
+        val u = bins.map { it.centerLn }
+        val (fitted, tukeyW) = fineProfile(bins, valid)
+        val n = uAxis.size
+        val out = ArrayList<Target>()
+        for (j in 0 until n) {
+            val lo = if (j > 0) 0.5 * (uAxis[j - 1] + uAxis[j]) else uAxis[j] - 0.5 * (uAxis[1] - uAxis[0])
+            val hi = if (j < n - 1) 0.5 * (uAxis[j] + uAxis[j + 1]) else uAxis[j] + 0.5 * (uAxis[j] - uAxis[j - 1])
+            val members = u.indices.filter { valid[it] && u[it] >= lo && u[it] < hi }
+            if (members.isEmpty()) continue
+            val mass = members.sumOf { min(bins[it].n, FINE_WEIGHT_CAP) * tukeyW[it] }
+            if (mass <= 0.0) continue
+            val r = exp(interp(uAxis[j], u, fitted))
+            val tp = axisMs[j]
+            val tg = tp * r
+            out += Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT * min(mass, FINE_NODE_CAP), r, ln(interp(tg, axisMs, kOld) * r))
+        }
+        return out
+    }
+
+    /** Mesma cobertura mínima da condução, contada em pares dos bins válidos por faixa grossa do livro. */
+    internal fun fineCovers(bins: List<FineBins.Bin>, valid: BooleanArray): Boolean {
+        val covered = EquivalenceLedger.BANDS.count { (lo, hi) ->
+            bins.indices.filter { valid[it] && kotlin.math.sqrt(bins[it].fromMs * bins[it].toMs).let { c -> c >= lo && c < hi } }
+                .sumOf { bins[it].n } >= TELEMETRY_ONLY_BAND_PAIRS
+        }
+        return covered >= TELEMETRY_ONLY_MIN_BANDS
     }
 
     /**
