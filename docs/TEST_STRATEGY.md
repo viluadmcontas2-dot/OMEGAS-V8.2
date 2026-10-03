@@ -5,7 +5,7 @@
 - Na sessão, só quando decide algo: `python3 -B tests/<arquivo>` e `node --test tests/ui/<arquivo>`.
 - No PR para `OmegasPlatina`: `ci.yml` (`build_and_test`: `tools/run_checks.py`, `testDebugUnitTest`, `lintDebug`). É o portão; Kotlin roda aqui.
 - APK único no fim do programa: `verde-apk-now.yml` (`build_apk=true`), com SHA-256.
-- Sem emulador: render e androidTest não são executados neste programa; o que só eles provariam fica como "não provado" no PR.
+- Emulador (render 1280×720, androidTest) só no fechamento de UI/UX (F7/F8); antes disso, o que só ele provaria fica "não provado".
 - `ci.yml` e `tools/run_checks.py` descobrem testes por glob (`tests/test_*.py`, `tests/ui/*.test.cjs`).
 
 ## Método
@@ -14,7 +14,7 @@ Evidência → teste RED válido → correção mínima → GREEN focado → rev
 
 ## Classes de prova
 
-1 contrato de texto · 2 sintético · 3 replay de sessão real · 5 físico (classe 4, emulador, não é usada) (só o dono, no carro, por `docs/V82_PHYSICAL_VALIDATION_PROTOCOL.md`). Nenhum PR chama algo de "validado" sem classe 5.
+1 contrato de texto · 2 sintético · 3 replay de sessão real · 4 emulador (só no fechamento de UI/UX) · 5 físico (só o dono, no carro, por `docs/V82_PHYSICAL_VALIDATION_PROTOCOL.md`). Nenhum PR chama algo de "validado" sem classe 5.
 
 ## Gates da estrutura nova (spec §4.6)
 
