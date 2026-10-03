@@ -73,6 +73,11 @@
     }
 
     onEnter(context) {
+      if (this.backupTask === 'reset-photo') {
+        // Voltou à aba com um reset pendente: o toque já passou, não zera. O dono toca de novo se ainda quiser.
+        this.backupTask = null;
+        text('curveBackupStatus', 'Reset cancelado: a foto não foi confirmada. Toque em Resetar de novo.');
+      }
       if (context && context.subpage) this.setView(context.subpage);
       const suggestion = context && context.suggestion;
       if (suggestion) {
@@ -212,6 +217,7 @@
     }
 
     startRead() {
+      if (this.backupTask) return;
       if (this.reading || this.writing) return;
       const result = this.api.startCurveRead();
       if (!result?.ok || !result?.started) {
@@ -247,6 +253,12 @@
           return;
         }
         if (task === 'reset-photo') {
+          // Só a operação de foto devolve hash e caminho; uma leitura qualquer não autoriza o reset.
+          if (!operation.hash || !operation.publicPath) {
+            text('curveBackupStatus', 'Reset cancelado: a foto da curva não foi confirmada.');
+            this.alert('A foto da Curva K não foi confirmada; nada foi zerado.');
+            return;
+          }
           this.refreshBackups();
           this.startResetWrite();
           return;

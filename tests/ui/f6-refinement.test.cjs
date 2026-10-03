@@ -322,3 +322,15 @@ test('reset da Curva K salva a foto antes e só zera depois dela', () => {
   assert.ok(src.includes("task === 'reset-photo'") && src.includes('this.startResetWrite()'), 'zera só após a foto concluir');
   assert.ok(!src.includes('confirm('), 'sem diálogo de confirmação');
 });
+
+test('reset: a foto precisa ser confirmada, o poll acompanha a foto e voltar à aba cancela o reset pendente', () => {
+  const root = path.join(__dirname, '../../app/src/main/assets/ui');
+  const curve = fs.readFileSync(path.join(root, 'screens/curve.js'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.ok(app.includes('instances.curve.backupTask'), 'o poll roda enquanto a foto está pendente');
+  assert.ok(curve.includes('!operation.hash || !operation.publicPath'), 'só a operação de foto autoriza o reset');
+  const enter = curve.slice(curve.indexOf('    onEnter(context) {'), curve.indexOf('    refreshBackups() {'));
+  assert.ok(enter.includes("this.backupTask === 'reset-photo'") && !enter.slice(0, 400).includes('startResetWrite'), 'voltar à aba não zera');
+  const read = curve.slice(curve.indexOf('    startRead() {'), curve.indexOf('    startRead() {') + 120);
+  assert.ok(read.includes('if (this.backupTask) return;'), 'leitura não rouba a foto');
+});
