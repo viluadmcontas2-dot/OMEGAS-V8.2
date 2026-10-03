@@ -1,6 +1,10 @@
 # OMEGAS Platina — Status
 
 ## Missão ciclo de vida / caixa-preta — 2026-10-03
+- RED integrado `37108136313`: primeiro veredito perdido (0/1) e razão histórica −4,8% offline em vez de —. Correções LC08/LC10 submetidas; GREEN pendente.
+- APK RED fonte `4aef0d66fbe9`: 4.830.796 bytes, SHA-256 `0d27324a2904be54c3eb42c06d4088acb747e4e40104b46dd929b8bf543a5ee5`, artifact `11269265181`, ZIP digest `ad39792bb789759e29d82fa73e654742f036b7a692238f5b651769af671bd08b`. Origem conferida, 8/8 mutantes detectados; não entrega para carro.
+- Render timeout honesto passou em classe 4 no mesmo run; primeiro veredito/offline falharam. Inspeção manual das imagens indisponível: ambiente de arquivos desconectado.
+- AF1 isolado `c96345afb844`: teste antigo de SIGKILL exigia melhora confirmada com bands=[]; prova/justificativa no documento. ZIP, integridade, ordem e recuperação preservados.
 - Infraestrutura #123 integrada em `8197d9ca631711b116b474342062c14e96285b7f`; produto inalterado.
 - Prova da infraestrutura: fonte `85b90304e631d4fbdde0ae8d685451a8bafe0877`, CI `37106396745`; gate APK+26 renders `37106396948` (27/27 jobs success, classe 2/4).
 - Artifact `11268149281`, APK 4.824.552 bytes; SHA-256 `fec651131dd2f00822219ff3c85d2c81871f4a049d13ea6619dbd98028216d7c`; ZIP digest `7225963b8db51a1364c05deeab2582ffb4d27b2eccf188770c4c17cae4bb5174`. Não prova correções da PR #122.

@@ -157,7 +157,13 @@ class TelemetryForegroundService : Service() {
         consumptionTracker = ConsumptionTracker(this)
         equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
         refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
-        lastJournalDecisionSignature = journalDecisionSignature(refinementJournal.json().optJSONObject("latest"))
+        val loadedExperiment = refinementJournal.json().optJSONObject("latest")
+        lastJournalDecisionSignature = journalDecisionSignature(loadedExperiment)
+        // Só o experimento já fechado no disco pertence ao histórico de outra sessão.
+        // A primeira checagem pode chegar depois que um experimento novo já terminou.
+        lastVerdictRecordedId = loadedExperiment?.takeIf { it.optString("status") != "VERIFICANDO" }
+            ?.optString("id").orEmpty()
+        verdictBaselineSet = true
         refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
@@ -854,11 +860,7 @@ class TelemetryForegroundService : Service() {
         val latest = refinementJournal.json().optJSONObject("latest") ?: return
         val id = latest.optString("id")
         val status = latest.optString("status")
-        if (!verdictBaselineSet) {
-            verdictBaselineSet = true
-            if (status != "VERIFICANDO") lastVerdictRecordedId = id
-            return
-        }
+        verdictBaselineSet = true
         if (status == "VERIFICANDO" || id.isBlank() || id == lastVerdictRecordedId) return
         lastVerdictRecordedId = id
         sessionRecorder.record(

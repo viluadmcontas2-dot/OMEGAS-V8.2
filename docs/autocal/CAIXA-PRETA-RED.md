@@ -119,3 +119,25 @@ Blueprint proíbe falso sucesso. Commit isolado corrige SOMENTE este oráculo te
 acrescenta assertFalse para confirmação inventada. Fixture, SIGKILL, processo novo,
 ZIP único, digest byte a byte, sequências contíguas e ausência de duplicata ficam intactos.
 Não ajusta tolerância ou matemática; classe 4 limitada à recuperação em emulador sem ECU.
+
+
+## RED integrado — sessão e destaque desconectado
+Fonte 4aef0d66fbe95ce6f9a3e430a1bd10618e1cfd32, run 37108136313:
+- job 111161422918: AndroidTest compilado/instalado, service→worker→JSONL→RESUMO;
+  primeiro veredito fechado antes do primeiro healthTick esperado=1, encontrado=0.
+- job 111161422943: WebView real 1280×720; SEM_ECU correto, mas destaque da razão
+  mostra -4,8% histórico quando deveria mostrar —. Sem mock do render.
+- job 111161423002: timeout honesto passou (frase visível ≥12px, próximo passo, sem CTA antigo).
+- APK/mutação job 111160579045: baseline 15 antes/depois, 8 mortos/0 sobreviventes,
+  fonte/BuildConfig exatos; APK 4.830.796 bytes, sha256
+  0d27324a2904be54c3eb42c06d4088acb747e4e40104b46dd929b8bf543a5ee5.
+  Artifact 11269265181, ZIP digest ad39792bb789759e29d82fa73e654742f036b7a692238f5b651769af671bd08b.
+  Este APK é evidência RED da UI/sessão, NÃO entrega verde desta PR.
+Correção mínima LC08: registrar como histórico somente o id já fechado quando o arquivo
+foi carregado; primeira checagem nunca apaga o primeiro experimento novo.
+Correção mínima LC10: destaque da razão desconhecido sem ECU/leitura/tentativa encerrada;
+gráfico e diário continuam preservados. Não muda matemática, escrita ou tolerâncias.
+GREEN desta fonte e revisão independente pendentes. Lacuna irmã encontrada: legenda
+histórica VERIFICADO na UI ainda diz "Chegou na gasolina"; precisa RED próprio em D5.
+Download para inspeção visual local bloqueado: ambiente de execução desconectado (409).
+Não alegar inspeção humana das imagens; os testes Android e seus logs são a prova obtida.

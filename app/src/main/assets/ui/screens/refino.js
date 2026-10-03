@@ -387,7 +387,9 @@
       const resetText = op.phase === 'idle' ? ns.DisplayRules?.gasResetNote(eq.gasEpochReason, eq.gasEpochAt) || '' : '';
       const resetNote = resetText ? ` ${resetText}` : '';
       setText('refinoNext', next + resetNote);
-      setText('refinoRatio', pct(eq.ratio));
+      // Histórico continua no gráfico/diário; o destaque atual exige uma fase com fonte conhecida.
+      const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
+      setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));
       // Sem leitura da ECU o número é desconhecido: mostra "—", nunca 0.
       const ecuKnown = finite(pilot.petrolValid) !== null && finite(pilot.gasValid) !== null;
       setText('refinoEcuPoints', ecuKnown ? `Gas ${fmt(pilot.petrolValid, 0)} · GNV ${fmt(pilot.gasValid, 0)}` : '—');
