@@ -326,6 +326,7 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         stopping = true
         refinementJournal.setDecisionListener(null)
+        journalTransitionsObserved = false
         try { equivalence.flush() } catch (_: Exception) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
@@ -610,14 +611,34 @@ class TelemetryForegroundService : Service() {
         settings.sessionCaptureRawUsb = captureRawUsb
         return sessionRecorder.statusObject().put("ok", true).toString()
     }
-    fun startSessionRecording(reason: String): String = sessionRecorder.start(
+    private fun startJournalSession(reason: String, metadata: JSONObject): JSONObject {
+        val started = sessionRecorder.start(reason, metadata)
+        if (started.optBoolean("ok")) {
+            refinementJournal.setDecisionListener(::recordJournalTransition)
+            journalTransitionsObserved = true
+        }
+        return started
+    }
+
+    /**
+     * Fecha a entrega do Journal antes de drenar o worker: uma decisão que já entrou no Journal
+     * termina de enfileirar antes do recibo da sessão ser fechado. A transição posterior ao
+     * desligamento pertence à próxima sessão, não pode reabrir a anterior.
+     */
+    private fun stopJournalSession(reason: String): JSONObject {
+        refinementJournal.setDecisionListener(null)
+        journalTransitionsObserved = false
+        return sessionRecorder.stop(reason)
+    }
+
+    fun startSessionRecording(reason: String): String = startJournalSession(
         reason.ifBlank { "manual" },
         JSONObject()
             .put("appVersion", BuildConfig.VERSION_NAME)
             .put("native", true)
             .put("usbSessionId", if (usb.connected) usb.connectionSessionId else 0L),
     ).toString()
-    fun stopSessionRecording(reason: String): String = sessionRecorder.stop(reason.ifBlank { "manual" }).toString()
+    fun stopSessionRecording(reason: String): String = stopJournalSession(reason.ifBlank { "manual" }).toString()
     fun exportSession(uri: Uri, sessionId: String): String = sessionRecorder.exportSession(contentResolver, uri, sessionId).toString()
 
     fun setGpsEnabled(enabled: Boolean): JSONObject {
@@ -725,7 +746,7 @@ class TelemetryForegroundService : Service() {
             monitoringPausedByUser = false
             if (generationChanged) {
                 if (sessionRecorder.statusObject().optBoolean("recording")) {
-                    sessionRecorder.stop("USB_SESSION_REPLACED")
+                    stopJournalSession("USB_SESSION_REPLACED")
                 }
                 runtime.endUsbSession("USB_SESSION_REPLACED")
                 nativeAutoCal.endUsbSession()
@@ -741,7 +762,7 @@ class TelemetryForegroundService : Service() {
             if (settings.sessionRecorderEnabled && settings.sessionRecorderAutoStartOnUsb &&
                 !sessionRecorder.statusObject().optBoolean("recording")
             ) {
-                sessionRecorder.start(
+                startJournalSession(
                     "MP48 conectado",
                     JSONObject()
                         .put("appVersion", BuildConfig.VERSION_NAME)
@@ -758,7 +779,7 @@ class TelemetryForegroundService : Service() {
             nativeAutoCal.endUsbSession()
             telemetryStore.invalidate("USB_DISCONNECTED")
             if (sessionRecorder.statusObject().optBoolean("recording")) {
-                sessionRecorder.stop("MP48 desconectado")
+                stopJournalSession("MP48 desconectado")
             }
             if (monitoringPausedByUser || !settings.autoReconnectUsb) {
                 stopSelf()
