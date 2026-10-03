@@ -110,11 +110,11 @@ class RefinementAutopilot(
             }
             // Pontos da ECU com atividade (os que o gráfico desenha) e zonas que a ECU deu como adquiridas.
             val petrolKnown = activeCount(liveAcquisition, "GASOLINA")
-            val gasKnown = activeCount(acquisition, "GNV")
+            val gasKnown = activeCount(liveAcquisition, "GNV")
             val petrolValid = petrolKnown ?: 0
             val gasValid = gasKnown ?: 0
             val petrolZones = acquiredZones(liveAcquisition, "GASOLINA")
-            val gasZones = acquiredZones(acquisition, "GNV")
+            val gasZones = acquiredZones(liveAcquisition, "GNV")
             // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
             val ecuRead = count != null || liveAcquisition != null
             val complete = petrolZones >= 4 && gasZones >= 4
@@ -361,6 +361,8 @@ class RefinementAutopilot(
                 .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
                 .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
                 .put("watchedPhase", watchedPhase).put("phaseElapsedMs", phaseElapsedMs)
+                .put("durationMonotonic", durationClock != null)
+                .put("durationAt", lastDurationAt ?: JSONObject.NULL)
                 .put("expiredEvidence", expiredEvidence ?: JSONObject.NULL).put("timeoutReason", timeoutReason)
         }
         try {
@@ -382,6 +384,11 @@ class RefinementAutopilot(
             phase = root.optString("phase", "SEM_ECU")
             alertedPhase = root.optString("alertedPhase", "")
             watchedPhase = root.optString("watchedPhase")
+            // elapsedRealtime atravessa reinício do processo; após reboot, delta negativo vale zero.
+            // Formato antigo/relógio incompatível não inventa tempo nem autorização.
+            if (root.optBoolean("durationMonotonic") == (durationClock != null) && !root.isNull("durationAt")) {
+                lastDurationAt = root.optLong("durationAt").takeIf { it >= 0L }
+            }
             phaseElapsedMs = root.optLong("phaseElapsedMs", 0L).coerceIn(0L, 40 * 60_000L)
             expiredEvidence = root.optString("expiredEvidence").takeIf { !root.isNull("expiredEvidence") && it.isNotBlank() }
             timeoutReason = root.optString("timeoutReason")

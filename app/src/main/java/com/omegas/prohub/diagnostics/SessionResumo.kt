@@ -53,7 +53,7 @@ class SessionResumo(
             "SEM_RELIGAR" to "o motor não religou",
         )
         private val VERDICT_WORDS = mapOf(
-            "VERIFICADO" to "melhorou e foi confirmada",
+            "VERIFICADO" to "verificação concluída (resultado por faixa abaixo)",
             "PIOROU_EM_PARTE" to "piorou em parte (trecho a restaurar)",
             "SEM_BASE" to "sem medida anterior para comparar",
             "INCONCLUSIVO" to "inconclusiva (pouca condução)",

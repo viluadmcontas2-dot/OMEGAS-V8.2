@@ -46,3 +46,13 @@ mesma amostragem/referência preservada, proposta retomada após reconexão.
 Não relaxa a matemática, os limites ou os oráculos de veredito.
 Novo adversarial offlineCannotReuseStaleGasAcquisition deve falhar no código atual:
 a revisão encontrou gasValid e gasZones lendo a aquisição velha; ainda sem correção.
+
+
+## RED adicional — reinício e relato honesto
+Fonte 5012d2c77e22, run 37106082688, job 111154763346: 610 testes / 3 falhas novas;
+somente stale gas, prazo zerado ao reabrir e VERIFICADO apresentado como melhora confirmada.
+Saltos de calendário com relógio monotônico e falha-cura nas quatro fases extras passaram.
+Correção preserva durationAt e clock domain no estado v1 compatível; versão antiga inicia
+tentativa segura e exige nova ECU; delta negativo após reboot não inventa duração.
+VERIFICADO significa comparação encerrada: somente CONFIRMADA por faixa afirma tolerância.
+Classe 2 até GREEN remoto; P5 completo de todos os módulos e corpus fechado ainda pendentes.
