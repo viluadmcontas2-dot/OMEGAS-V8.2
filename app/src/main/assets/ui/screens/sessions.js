@@ -23,8 +23,9 @@
     const summary = item && typeof item.semanticSummary === 'object' && item.semanticSummary ? item.semanticSummary : {};
     return finite(item?.blackouts ?? summary.blackouts ?? summary.stalls);
   }
+  /** O índice é fração 0..1 (percentual = ×100); sem dado: "—", nunca 0%. */
   function percentText(value) {
-    return value === null ? '—' : `${Math.round(value)}%`;
+    return value === null ? '—' : `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
   }
 
   /** Modelo puro de uma linha da lista (testável sem DOM). */
@@ -98,5 +99,5 @@
   }
 
   ns.SessionsScreen = SessionsScreen;
-  ns.SessionsModel = { sessionRow, indexRange, blackoutCount };
+  ns.SessionsModel = { sessionRow, indexRange, blackoutCount, percentText };
 })(typeof window !== 'undefined' ? window : globalThis);

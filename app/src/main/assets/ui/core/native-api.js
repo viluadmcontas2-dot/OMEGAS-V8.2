@@ -21,69 +21,6 @@
     catch (error) { return { ok: false, error: error && error.message ? error.message : String(error) }; }
   }
 
-  /**
-   * Próxima ação em português a partir da fase do piloto, para quando o Kotlin ainda não manda
-   * `nextAction`. O botão sempre leva ao Refino (a única tela onde se age sobre essas fases);
-   * sem ECU não há para onde ir. Quando o Kotlin passar a mandar `nextAction`, ele prevalece.
-   */
-  const PHASE_NEXT_ACTION = {
-    SEM_ECU: ['WAIT', 'Conecte a ECU para começar.', ''],
-    LENDO_ECU: ['WAIT', 'Lendo a ECU. Aguarde alguns segundos.', ''],
-    ECU_TRABALHANDO: ['WAIT', 'A ECU está no automático. Aguarde ela terminar antes de gravar.', 'refino'],
-    COLETANDO_NOSSOS: ['COLLECT', 'Dirija no GNV: o app está medindo cada faixa contra a gasolina.', 'refino'],
-    PROPOSTA_PRONTA: ['REVIEW', 'A curva refinada está pronta. Revise e grave no Refino.', 'refino'],
-    VERIFICANDO: ['WAIT', 'Medindo a última gravação. Dirija normalmente.', 'refino'],
-    RESTAURAR_TRECHO: ['RESTORE', 'Um trecho piorou. Abra o Refino para restaurá-lo.', 'refino'],
-    ESTAVEL: ['DONE', 'Estável. Pode desconectar.', 'refino'],
-    TENTATIVA_ENCERRADA: ['WAIT', 'Etapa pausada. Veja o motivo no Refino.', 'refino'],
-  };
-  function nextActionFromPhase(raw) {
-    const pilot = raw && raw.autopilot && typeof raw.autopilot === 'object' ? raw.autopilot : null;
-    const phase = pilot && pilot.phase ? String(pilot.phase) : '';
-    if (!phase) return null;
-    // Prazo vencido não apaga a proposta: ela continua válida e o botão do Refino continua.
-    if (phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'PROPOSTA_PRONTA') {
-      return { kind: 'REVIEW', text: 'Proposta ainda válida: grave quando quiser, no Refino.', route: 'refino', subpage: '', pointIndexes: [] };
-    }
-    if (phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'ECU_TRABALHANDO') {
-      return { kind: 'REVIEW', text: 'A ECU não terminou o automático no prazo. Revise e grave no Refino, se quiser.', route: 'refino', subpage: '', pointIndexes: [] };
-    }
-    const known = PHASE_NEXT_ACTION[phase];
-    if (known) return { kind: known[0], text: known[1], route: known[2], subpage: '', pointIndexes: [] };
-    const fallback = pilot.next ? String(pilot.next) : '';
-    return fallback ? { kind: 'WAIT', text: fallback, route: 'refino', subpage: '', pointIndexes: [] } : null;
-  }
-
-  /**
-   * Aceita o formato aninhado (`index:{value,coverage,provisional}`) e o plano do Kotlin (`index`,
-   * `coverage`, `provisional` na raiz). Sem índice mas com o piloto (`autopilot.phase`), devolve o
-   * índice vazio (a tela mostra "—", nunca um número inventado) e a ação derivada da fase.
-   */
-  function normalizeEquivalence(raw) {
-    if (!raw || typeof raw !== 'object' || raw.ok === false || raw.available === false) return null;
-    const nested = raw.index && typeof raw.index === 'object';
-    const value = Number(nested ? raw.index.value : raw.index);
-    const hasIndex = raw.index !== null && raw.index !== undefined && Number.isFinite(value);
-    const derived = nextActionFromPhase(raw);
-    if (!hasIndex && !derived) return null;
-    const coverage = Number(nested ? raw.index.coverage : raw.coverage);
-    const provisional = (nested ? raw.index.provisional : raw.provisional) === true;
-    const action = raw.nextAction && typeof raw.nextAction === 'object' ? raw.nextAction : null;
-    const reference = raw.reference && typeof raw.reference === 'object' ? raw.reference : null;
-    return {
-      index: { value: hasIndex ? value : null, coverage: Number.isFinite(coverage) ? coverage : null, provisional },
-      nextAction: action ? {
-        kind: String(action.kind || ''),
-        text: String(action.text || ''),
-        route: action.route ? String(action.route) : '',
-        subpage: action.subpage ? String(action.subpage) : '',
-        pointIndexes: Array.isArray(action.pointIndexes) ? action.pointIndexes.map(Number).filter(Number.isFinite) : [],
-      } : derived,
-      points: Array.isArray(raw.points) ? raw.points : [],
-      reference: { frozen: !!reference && (reference.frozen === true || reference.frozenAt != null), canFreeze: !!reference && reference.canFreeze === true },
-    };
-  }
-
   function demoTelemetry() {
     const phase = (Date.now() / 1000) % 12;
     const rpm = Math.round(1700 + Math.sin(phase) * 620);
@@ -161,7 +98,7 @@
     }
 
     isDemo() { return this.demo; }
-    releaseIdentity() { return invoke(this.native, 'getReleaseIdentity', [], { product: 'OMEGAS', generation: 'V7', versionName: 'demo' }); }
+    releaseIdentity() { return invoke(this.native, 'getReleaseIdentity', [], { product: 'OMEGAS', generation: 'V8', versionName: 'demo' }); }
     status() {
       if (this.demo) return {
         serviceRunning: true, engineRunning: true, engineReady: true, engineStuck: false,
@@ -325,27 +262,6 @@
       return invoke(this.calibration, 'startCurveBatchWrite', [JSON.stringify(points || []), reason || 'Ajuste manual Curva K'], { ok: false, error: 'Ponte V7 indisponível' });
     }
 
-    /**
-     * Cérebro de equivalência. `getEquivalence` existe só na ponte AutoCal (`OmegasAutoCal`), não em
-     * `OmegasNative`: lê pela mesma ponte que o Refino usa (`OmegasUi.AutoCalApi.equivalence()`).
-     * Formato: { index:{value,coverage,provisional}, nextAction:{kind,text,route,subpage,pointIndexes},
-     * autopilot:{phase}, points:[...], reference:{frozen,canFreeze} }. Sem `nextAction` a ação vem da fase
-     * do piloto. null se nada utilizável: a tela mostra o layout atual, nunca um número inventado.
-     */
-    equivalence() {
-      if (this.demo) return null;
-      const autocal = ns.AutoCalApi;
-      if (autocal && typeof autocal.equivalence === 'function' && typeof autocal.available === 'function' && autocal.available()) {
-        return normalizeEquivalence(autocal.equivalence());
-      }
-      // autocal-api.js carrega sob demanda (router.js): antes disso, lê direto da mesma ponte.
-      if (root.OmegasAutoCal && typeof root.OmegasAutoCal.getEquivalence === 'function') {
-        return normalizeEquivalence(invoke(root.OmegasAutoCal, 'getEquivalence', [], null));
-      }
-      if (!this.native || typeof this.native.getEquivalence !== 'function') return null;
-      return normalizeEquivalence(invoke(this.native, 'getEquivalence', [], null));
-    }
-
     sessionStatus() { return this.demo ? { recording: false, events: 0, megabytes: 0, settings: { autoStartOnUsb: true, telemetryEveryMs: 250, captureRawUsb: false, maxSessionMb: 256, keepSessions: 20 } } : invoke(this.native, 'getSessionRecorderStatus', [], {}); }
     sessions() { return this.demo ? [] : invoke(this.native, 'listRecordedSessions', [], []); }
     setSessionSettings(settings) {
@@ -365,5 +281,4 @@
 
   ns.NativeApi = NativeApi;
   ns.nativeParse = parse;
-  ns.normalizeEquivalence = normalizeEquivalence;
 })(typeof window !== 'undefined' ? window : globalThis);

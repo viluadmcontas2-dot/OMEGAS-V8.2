@@ -35,9 +35,8 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
   for (const marker of [
     'multimedia-now-screen',
     'now-dashboard-shell',
-    'now-hero-card',
+    'now-tile-grid',
     'dashHeroPetrol',
-    'dashHeroStatus',
     'dashRpm',
     'dashMap',
     'dashFuel',
@@ -59,9 +58,8 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
 });
 
 test('CSS contém somente o recorte Agora', () => {
-  assert.match(styles, /grid-template-columns:\s*repeat\(6/);
-  assert.match(styles, /\.now-hero-value strong[\s\S]*font-size:\s*118px/);
-  assert.match(styles, /@media \(max-width:\s*1050px\), \(max-height:\s*650px\)/);
+  assert.match(styles, /\.now-tile-grid[\s\S]*grid-template-columns:\s*repeat\(2/);
+  assert.match(styles, /\.now-tile b[\s\S]*font-size:\s*112px/);
   assert.doesNotMatch(styles, /witness-|multimedia-obd|map-screen|curve-screen|learning-screen/);
   assert.doesNotMatch(styles, /@keyframes|animation:|backdrop-filter/);
 });
