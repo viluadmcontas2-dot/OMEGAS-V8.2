@@ -31,12 +31,16 @@
   let renderedRoute = null;
   let previousGlobalSignature = '';
   let previousTelemetrySignature = '';
+  // Sequência do último quadro pintado: a ponte responde {changed:false} sem serializar se nada mudou.
+  let lastPresentSequence = -1;
   let telemetryPatchedAt = 0;
   let previousStatusSignature = '';
   let previousAlert = null;
   // Sem timer de UI: o aviso some quando o relógio do scheduler (refreshStatus) vê o prazo vencido.
   const TOAST_MS = 3600;
   const OVERLAY_PROMPT_DELAY_MS = 5000;
+  // O AutoCal não precisa de mais que 5 Hz: a telemetria chega a 4–12 Hz e cada tick custa uma ida à ponte.
+  const AUTOCAL_CADENCE_MS = 200;
   const startedAt = Date.now();
   let overlayPromptPending = true;
   let toastUntil = 0;
@@ -65,6 +69,11 @@
     // Combustível desconhecido ("--" do Kotlin, vazio) mostra "—"; regra única em core/display-rules.js.
     const rules = (root.OmegasUi || ui).DisplayRules;
     return rules ? rules.fuelLabel(raw) : String(raw || '—').toUpperCase();
+  }
+  /** Esquece o último quadro: o próximo tick pede e pinta o quadro inteiro. */
+  function resetPresentCursor() {
+    previousTelemetrySignature = '';
+    lastPresentSequence = -1;
   }
   function isLiveRoute(route) {
     return ((root.OmegasUi || ui).LIVE_ROUTES || ['dashboard', 'map', 'autocal', 'refino']).includes(route);
@@ -199,13 +208,21 @@
   function refreshFast() {
     const route = store.get().route;
     if (isLiveRoute(route)) {
-      const envelope = api.presentSnapshot() || {};
-      const telemetry = envelope.data || {};
+      const envelope = api.presentSnapshot(lastPresentSequence) || {};
+      let telemetry = envelope.data || {};
+      if (envelope.changed === false && envelope.ok !== false) {
+        // Nada novo no Kotlin: reaproveita o último quadro e atualiza só a idade.
+        const age = Number(envelope.telemetryAgeMs);
+        telemetry = Object.assign({}, store.get().telemetry || {}, Number.isFinite(age) ? { telemetryAgeMs: age, ageMs: age } : {});
+      }
       const signature = `${route}:${telemetryVisualSignature(telemetry, route)}`;
       if (envelope.ok === false && store.get().telemetry?.valid !== false) {
         // A ponte falhou: o último valor não pode continuar com cara de ao vivo.
-        previousTelemetrySignature = '';
+        resetPresentCursor();
         store.patch({ telemetry: { valid: false, ageMs: -1, telemetryAgeMs: -1 } });
+      }
+      if (envelope.ok !== false && envelope.changed !== false) {
+        lastPresentSequence = Number.isFinite(Number(telemetry.sequence)) ? Number(telemetry.sequence) : -1;
       }
       if (envelope.ok !== false && signature !== previousTelemetrySignature) {
         previousTelemetrySignature = signature;
@@ -221,7 +238,7 @@
     // de status e no painel flutuante como se fosse de agora. Vencido, vira desconhecido (—).
     const rules = (root.OmegasUi || ui).DisplayRules;
     if (rules?.offRouteTelemetryExpired(isLiveRoute(route), store.get().telemetry?.valid, telemetryPatchedAt, Date.now())) {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
       store.patch({ telemetry: { valid: false, ageMs: -1, telemetryAgeMs: -1 } });
     }
 
@@ -296,16 +313,16 @@
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
-    scheduler.setCadenceMs(route === 'autocal' ? 50 : 200);
+    scheduler.setCadenceMs(route === 'autocal' ? AUTOCAL_CADENCE_MS : 200);
     if (route === 'dashboard') {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
       refreshEquivalence();
       ensureScreen('dashboard')?.render(store.get());
       afterPaint(refreshFast);
       return;
     }
     if (route === 'map') {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
       ensureScreen('map')?.onEnter(context || store.get().routeContext);
       renderLightLiveContext(store.get(), 'map');
       afterPaint(() => { refreshFast(); refreshContext(); });
@@ -317,7 +334,7 @@
       return;
     }
     if (route === 'autocal') {
-      previousTelemetrySignature = '';
+      resetPresentCursor();
       root.OmegasApp?.autoCalCockpit?.enter?.();
       afterPaint(() => {
         refreshFast();
@@ -376,7 +393,7 @@
         refreshContext();
         const route = store.get().route;
         if (isLiveRoute(route)) {
-          previousTelemetrySignature = '';
+          resetPresentCursor();
           refreshFast();
         }
         if (route === 'map') instances.map?.poll();

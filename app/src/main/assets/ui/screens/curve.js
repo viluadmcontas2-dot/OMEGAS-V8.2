@@ -4,6 +4,8 @@
 
   // Palavras únicas de toda escrita na ECU (core/display-rules.js).
   function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
+  function failureText(operation, fallback) { return root.OmegasUi.DisplayRules.failureText(operation, fallback); }
+  const NEUTRAL_RAW = 16384; // 1.0 em Q14
   const RESET_NOTE = 'Resetar a Curva K para 1.0 · A foto da curva atual foi salva antes. Use Desfazer para voltar.';
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
@@ -33,6 +35,11 @@
       this.writing = false;
       this.backupTask = null;
       this.restoreContext = null;
+      // A foto que o Desfazer restaura: a que o Kotlin guardou ANTES desta escrita, nunca "a mais nova".
+      this.undoFile = '';
+      this.resetPhotoFile = '';
+      this.writeKind = '';
+      this.pendingReset = false;
       this.view = 'editor';
       this.learningSignature = '';
       this.bind();
@@ -76,6 +83,7 @@
       if (this.backupTask === 'reset-photo') {
         // Voltou à aba com um reset pendente: o toque já passou, não zera. O dono toca de novo se ainda quiser.
         this.backupTask = null;
+        this.resetPhotoFile = '';
         text('curveBackupStatus', 'Reset cancelado: a foto não foi confirmada. Toque em Resetar de novo.');
       }
       if (context && context.subpage) this.setView(context.subpage);
@@ -85,7 +93,14 @@
         this.setView('editor');
         this.renderSuggestionFocus(suggestion);
       }
+      // Vindo do AutoCal: o toque lá já foi o do dono. O reset roda aqui (foto antes, depois zera)
+      // assim que a curva estiver lida; só uma vez.
+      if (context && context.resetNow === true) this.pendingReset = true;
       if (!this.data && !this.reading) this.startRead(true);
+      if (this.pendingReset && this.data && !this.reading) {
+        this.pendingReset = false;
+        this.resetCurve();
+      }
       if (this.data && suggestion) {
         this.focusSuggestion(suggestion);
         this.prepareSuggestion(suggestion, true);
@@ -129,6 +144,12 @@
     /** Um toque, sem diálogo. Foto antes: salva a curva atual (só leitura) e só então zera; se a foto falhar, nada é zerado. */
     resetCurve() {
       if (this.reading || this.writing || this.backupTask) return;
+      // Curva já neutra: não há o que zerar e uma foto dela sobrescreveria o ponto de Desfazer útil.
+      if (this.curveIsNeutral()) {
+        text('curveBackupStatus', 'A Curva K já está em 1.0 · nada a zerar.');
+        return;
+      }
+      this.resetPhotoFile = '';
       const photo = this.api.startCurveBackup('Antes do reset');
       if (!photo?.ok || !photo?.started) {
         this.alert(photo?.error || 'Não foi possível salvar a foto da Curva K; nada foi zerado.');
@@ -136,6 +157,12 @@
       }
       this.backupTask = 'reset-photo';
       text('curveBackupStatus', 'Salvando a foto da curva antes de zerar…');
+    }
+
+    /** Os 30 pontos lidos já valem 1.0 (raw 16384): nada a zerar. */
+    curveIsNeutral() {
+      const points = this.points();
+      return points.length === 30 && points.every(item => Number(item.factorRaw) === NEUTRAL_RAW);
     }
 
     /** Segunda etapa do reset: só roda depois que a foto foi gravada em disco. */
@@ -146,9 +173,11 @@
       this.renderProposalList();
       const result = this.api.resetCurve();
       if (!result?.ok || !result?.started) {
-        this.alert(result?.error || 'Não foi possível iniciar o reset da Curva K.');
+        this.alert(failureText(result, 'Não foi possível iniciar o reset da Curva K.'));
         return;
       }
+      this.writeKind = 'reset';
+      this.undoFile = '';
       this.writing = true;
       this.root?.classList.remove('has-result');
       this.root?.classList.add('is-writing');
@@ -210,6 +239,7 @@
     settleReadFailure(message) {
       this.reading = false;
       this.data = null;
+      this.pendingReset = false;
       this.root?.classList.remove('is-reading');
       text('curveSourceStatus', 'Curva não confirmada');
       this.store.patch({ curve: { ...this.store.get().curve, state: 'failed', data: null, status: {} } });
@@ -249,16 +279,18 @@
             restore.textContent = 'Restaurar backup';
           }
           text('curveBackupStatus', 'Backup indisponível');
-          this.alert(operation.error || 'Operação de backup da Curva K falhou.');
+          this.alert(failureText(operation, 'Operação de backup da Curva K falhou.'));
           return;
         }
         if (task === 'reset-photo') {
           // Só a operação de foto devolve hash e caminho; uma leitura qualquer não autoriza o reset.
-          if (!operation.hash || !operation.publicPath) {
+          if (!operation.hash || !operation.publicPath || !operation.fileName) {
             text('curveBackupStatus', 'Reset cancelado: a foto da curva não foi confirmada.');
             this.alert('A foto da Curva K não foi confirmada; nada foi zerado.');
             return;
           }
+          // O Desfazer deste reset restaura EXATAMENTE esta foto (um segundo reset não a substitui).
+          this.resetPhotoFile = String(operation.fileName);
           this.refreshBackups();
           this.startResetWrite();
           return;
@@ -318,19 +350,23 @@
 
       if (this.reading && !operation.busy) {
         if (operation.state !== 'COMPLETED' && !operation.demo) {
-          this.settleReadFailure(operation.error || 'A leitura da Curva K não foi confirmada pela ECU.');
+          this.settleReadFailure(failureText(operation, 'A leitura da Curva K não foi confirmada pela ECU.'));
           return;
         }
         this.reading = false;
         this.root?.classList.remove('is-reading');
         if (!operation.ok || !Array.isArray(operation.points) || operation.points.length !== 30) {
-          this.settleReadFailure(operation.error || 'A Curva K não retornou os 30 pontos válidos.');
+          this.settleReadFailure(failureText(operation, 'A Curva K não retornou os 30 pontos válidos.'));
           return;
         }
         this.data = operation;
         text('curveSourceStatus', 'ECU confirmada · 30 pontos');
         this.renderChart();
         this.renderEvidence(this.store.get());
+        if (this.pendingReset) {
+          this.pendingReset = false;
+          this.resetCurve();
+        }
         if (this.pendingSuggestion) {
           this.renderSuggestionFocus(this.pendingSuggestion);
           this.focusSuggestion(this.pendingSuggestion);
@@ -353,6 +389,10 @@
           if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
             this.root?.classList.remove('is-writing');
             this.root?.classList.add('has-result');
+            // Desfazer = a foto desta operação. Reset: a foto tirada antes dele; escrita/restauração: a que o
+            // Kotlin guardou antes do primeiro ACK (`photoFile`). Sem foto (ou sem nada alterado) não há Desfazer.
+            const unchanged = operation.details && Number(operation.details.changedPoints) === 0;
+            this.undoFile = unchanged ? '' : String((this.writeKind === 'reset' && this.resetPhotoFile) || operation.photoFile || '');
             const result = document.getElementById('curveOperationResult');
             if (result) {
               result.dataset.level = 'ok';
@@ -370,12 +410,17 @@
           } else {
             this.root?.classList.remove('is-writing');
             this.root?.classList.add('has-result');
+            // Falha com a ECU possivelmente alterada (parcial): o Desfazer volta à foto tirada antes.
+            const mayHaveChanged = operation.partial === true || operation.mutationMayHaveStarted === true;
+            this.undoFile = mayHaveChanged
+              ? String((this.writeKind === 'reset' && this.resetPhotoFile) || operation.photoFile || '')
+              : '';
             const result = document.getElementById('curveOperationResult');
             if (result) {
               result.dataset.level = 'critical';
-              result.querySelector('b').textContent = wording().failedTitle;
-              this.showUndo(false);
-              result.querySelector('span').textContent = operation.error || operation.message || wording().failedDetail;
+              result.querySelector('b').textContent = mayHaveChanged ? 'ECU parcialmente alterada' : wording().failedTitle;
+              this.showUndo(mayHaveChanged);
+              result.querySelector('span').textContent = failureText(operation, wording().failedDetail);
             }
             this.data = null;
             if (this.restoreContext) text('curveBackupStatus', 'Restauração não confirmada · releitura obrigatória');
@@ -635,7 +680,9 @@
       const reason = restoring
         ? `Restaurar backup Curva K ${this.restoreContext.fileName}`
         : 'Ajuste manual confirmado na UI clean-slate';
-      const result = this.api.writeCurve(points, reason);
+      const result = restoring
+        ? this.api.restoreCurve(points, this.restoreContext.fileName)
+        : this.api.writeCurve(points, reason);
       if (!result?.ok || !result?.started) {
         if (restoring) {
           this.restoreContext = null;
@@ -643,9 +690,11 @@
           this.renderProposalList();
           text('curveBackupStatus', 'Restauração não iniciada');
         }
-        this.alert(result?.error || 'A escrita da Curva K não iniciou.');
+        this.alert(failureText(result, 'A escrita da Curva K não iniciou.'));
         return;
       }
+      this.writeKind = restoring ? 'restore' : 'write';
+      this.undoFile = '';
       this.writing = true;
       this.root?.classList.add('is-writing');
       text('curveOperationTitle', restoring ? 'Gravando na ECU… backup da Curva K' : wording().writing);
@@ -657,21 +706,14 @@
       this.root?.classList.remove('is-writing', 'has-result');
     }
 
-    /** Desfazer = abrir a prévia de restauração da foto mais recente; gravar de volta é o toque seguinte. */
+    /** Desfazer = abrir a prévia de restauração da foto DESTA operação; gravar de volta é o toque seguinte. */
     showUndo(visible) {
       const button = document.getElementById('curveUndoButton');
-      if (button) button.hidden = !visible || !this.latestBackupFile();
-    }
-
-    latestBackupFile() {
-      const rows = this.api.curveBackups();
-      const list = Array.isArray(rows) ? rows.filter(item => item && item.fileName) : [];
-      list.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
-      return list.length ? String(list[0].fileName) : '';
+      if (button) button.hidden = !visible || !this.undoFile;
     }
 
     undoLast() {
-      const fileName = this.latestBackupFile();
+      const fileName = this.undoFile;
       this.dismissResult();
       if (fileName) this.prepareRestore(fileName);
     }

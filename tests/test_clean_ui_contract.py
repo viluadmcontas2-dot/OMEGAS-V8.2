@@ -82,7 +82,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('function renderLightLiveContext', self.app)
         # O pump de telemetria só roda nas rotas ao vivo (lista única no roteador; Refino incluído).
         self.assertIn("const LIVE_ROUTES = ['dashboard', 'map', 'autocal', 'refino']", self.router)
-        self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot()", self.app)
+        self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot(lastPresentSequence)", self.app)
 
     def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
         self.assertIn('PETROL INJECTION', self.dashboard)

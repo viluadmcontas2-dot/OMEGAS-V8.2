@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.calibration.SerialWriteGuard
 import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
@@ -412,6 +413,7 @@ class AutoCalNativeActionManagerTest {
                 reply(request, byteArrayOf())
             },
             fieldsForReceipt = listOf(AutoCalProtocol.AUTO_CAL_ENABLE),
+            guard = SerialWriteGuard(),
         )
 
         val result = manager.prepare("DISABLE_AUTO_CAL")
@@ -499,6 +501,98 @@ class AutoCalNativeActionManagerTest {
         manager.close()
     }
 
+
+    @Test
+    fun `acao AutoCal nao inicia com a trava da serial ocupada por escrita K`() {
+        val guard = SerialWriteGuard()
+        assertTrue(guard.tryAcquire(SerialWriteGuard.OWNER_K_FACTOR))
+        val calls = AtomicInteger(0)
+        val manager = manager(guard = guard) { request, _, _, _ ->
+            calls.incrementAndGet()
+            reply(request, byteArrayOf(1))
+        }
+        val prepared = manager.prepare("RESET_GAS")
+        val result = manager.execute(prepared.getString("preparationId"))
+        assertFalse(result.getBoolean("ok"))
+        assertTrue(result.getString("error").contains("Aguarde"))
+        assertEquals(0, calls.get())
+        assertFalse(manager.isBusy())
+        assertEquals(SerialWriteGuard.OWNER_K_FACTOR, guard.holder())
+        manager.close()
+    }
+
+    @Test
+    fun `trava da serial e liberada quando a acao termina e a mensagem nao promete readback especifico`() {
+        val guard = SerialWriteGuard()
+        val witnesses = gasReadbackFields()
+        val manager = manager(guard = guard, fieldsForReceipt = witnesses) { request, _, _, _ ->
+            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
+                reply(request, byteArrayOf())
+            } else {
+                reply(request, validReadPayload(request, witnesses))
+            }
+        }
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertEquals(null, guard.holder())
+        val message = manager.statusJson().getString("message")
+        assertTrue(message, message.contains("ECU respondeu"))
+        assertFalse(message, message.contains("readback"))
+        manager.close()
+    }
+
+    @Test
+    fun `seguranca e conferida antes do primeiro quadro e nao entre os trinta quadros do reset K`() {
+        val readMul = AutoCalProtocol.read(AutoCalProtocol.MUL_ACT)
+        val neutralPayload = ByteArray(60).also { bytes ->
+            repeat(30) { index ->
+                bytes[index * 2] = 0x00
+                bytes[index * 2 + 1] = 0x40
+            }
+        }
+        val sent = AtomicInteger(0)
+        val manager = manager(
+            fieldsForReceipt = listOf(AutoCalProtocol.MUL_ACT),
+            // Segura no começo; "expira" depois de alguns quadros. Abortar no meio deixaria a Curva K pela metade.
+            unsafeMutationReason = { if (sent.get() > 3) "Telemetria não está atual" else null },
+            transaction = { request, _, _, _ ->
+                sent.incrementAndGet()
+                if (request.contentEquals(readMul)) reply(request, neutralPayload) else reply(request, byteArrayOf())
+            },
+        )
+        val prepared = manager.prepare("RESET_K_FACTOR")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertEquals(32, sent.get())
+        manager.close()
+    }
+
+    @Test
+    fun `close nao interrompe uma acao em andamento`() {
+        val started = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val witnesses = gasReadbackFields()
+        val manager = manager(fieldsForReceipt = witnesses) { request, _, _, _ ->
+            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) {
+                started.countDown()
+                release.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                reply(request, byteArrayOf())
+            } else {
+                reply(request, validReadPayload(request, witnesses))
+            }
+        }
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        assertTrue(started.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        manager.close()
+        release.countDown()
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+    }
+
     private fun petrolReadbackFields(): List<AutoCalProtocol.Field> = listOf(
         AutoCalProtocol.NUM_BUF_UPD_PETR,
         AutoCalProtocol.PETR_INJ_TBUF,
@@ -535,15 +629,19 @@ class AutoCalNativeActionManagerTest {
         otherBusy: AtomicBoolean = AtomicBoolean(false),
         onConfirmed: (org.json.JSONObject) -> Unit = {},
         fieldsForReceipt: List<AutoCalProtocol.Field> = listOf(AutoCalProtocol.AUTO_CAL_ENABLE),
+        guard: SerialWriteGuard = SerialWriteGuard(),
+        unsafeMutationReason: () -> String? = { null },
         transaction: (ByteArray, String, Int, Long) -> UsbProtocolReply,
     ) = AutoCalNativeActionManager(
         receiptFile = receiptFile,
         isConnected = connected::get,
         currentSessionId = session::get,
         otherCalibrationBusy = otherBusy::get,
+        unsafeMutationReason = unsafeMutationReason,
         transaction = transaction,
         fieldsForReceipt = fieldsForReceipt,
         onConfirmed = onConfirmed,
+        guard = guard,
     )
 
     private fun reply(request: ByteArray, payload: ByteArray) = UsbProtocolReply(

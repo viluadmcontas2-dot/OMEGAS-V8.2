@@ -44,6 +44,10 @@
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }
+  function failureText(operation, fallback) {
+    const rules = ns.DisplayRules;
+    return rules && typeof rules.failureText === 'function' ? rules.failureText(operation, fallback) : String((operation && operation.error) || fallback || '');
+  }
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
@@ -169,6 +173,8 @@
       this.ticks = 0;
       this.operation = { phase: 'idle' };
       this.reviewPoints = null;
+      // Foto que o Kotlin guardou ANTES da última gravação do Refino: o Desfazer restaura exatamente ela.
+      this.lastPhotoFile = '';
       this.lastRenderKey = '';
       this.inject();
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
@@ -256,7 +262,7 @@
       if (event.target.closest('[data-refino-primary]')) this.primary();
       if (event.target.closest('[data-refino-cancel]')) this.closeReview();
       if (event.target.closest('[data-refino-confirm]')) this.commitReview();
-      if (event.target.closest('[data-refino-undo]')) this.openReview('undo');
+      if (event.target.closest('[data-refino-undo]')) this.openUndo();
       const dot = event.target.closest('[data-refino-dot]');
       if (dot) this.inspect(dot.dataset.refinoDot);
     }
@@ -274,8 +280,33 @@
       if (kind === 'apply') { points = proposedPoints(this.analysis); title = 'Gravar curva refinada'; reason = 'Refino OMEGAS: curva refinada confirmada'; }
       if (kind === 'restore') { points = (this.eq?.restorePoints || []).map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.targetRaw) })); title = 'Restaurar trecho que piorou'; reason = 'Refino OMEGAS: restaurar trecho que piorou'; }
       if (kind === 'undo') { points = undoPoints(this.eq?.refinement?.latest); title = 'Desfazer última gravação'; reason = 'Refino OMEGAS: desfazer última gravação'; }
+      this.showReview(points, title, reason, '', kind === 'apply' ? this.eq?.autopilot?.phase : '');
+    }
+
+    /**
+     * Desfazer: com a foto desta sessão, a prévia vem dela (o Kotlin relê a curva e lista o que volta);
+     * sem foto (app reaberto), cai no diário (antes ← depois). Em ambos o dono confirma com um toque.
+     */
+    openUndo() {
+      const file = this.lastPhotoFile;
+      if (!file || typeof this.native?.prepareCurveRestore !== 'function') { this.openReview('undo'); return; }
+      const prep = this.native.prepareCurveRestore(file);
+      if (!prep?.ok || !prep?.started) { this.fail(failureText(prep, 'Não foi possível preparar o Desfazer.')); return; }
+      this.operation = { phase: 'reading' };
+      this.render(true);
+      this.poll(result => {
+        this.operation = { phase: 'idle' };
+        const points = (Array.isArray(result.points) ? result.points : [])
+          .map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.targetRaw) }));
+        if (!points.length) { this.fail('Nada a desfazer: a ECU já está igual à foto de antes da gravação.'); return; }
+        this.render(true);
+        this.showReview(points, 'Desfazer última gravação', 'Refino OMEGAS: desfazer última gravação', file);
+      });
+    }
+
+    showReview(points, title, reason, restoreFile, phase) {
       if (!points.length) return;
-      this.reviewPoints = { points, reason };
+      this.reviewPoints = { points, reason, restoreFile: restoreFile || '' };
       const byIndex = new Map((this.analysis?.points || []).map(p => [Number(p.index), p]));
       const rows = points.map(p => {
         const ref = byIndex.get(p.index) || {};
@@ -283,7 +314,7 @@
         const after = p.targetRaw / 16384;
         return `<div><dt>${fmt(ref.referenceTimeMs, 1)} ms</dt><dd><b>${fmt(before, 3)} → ${fmt(after, 3)}</b> · ${pct(after / before)}${ref.origin ? ' · ' + escapeHtml(ORIGIN[ref.origin] || ref.origin) : ''}</dd></div>`;
       }).join('');
-      const early = kind === 'apply' && this.eq?.autopilot?.phase === 'ECU_TRABALHANDO'
+      const early = phase === 'ECU_TRABALHANDO'
         ? '<p class="refino-warning">A ECU ainda está no automático e pode sobrescrever esta curva. O ideal é gravar quando ela terminar — o app avisa.</p>' : '';
       const review = document.getElementById('refinoReview');
       if (!review) return;
@@ -301,31 +332,35 @@
       const pending = this.reviewPoints;
       this.closeReview();
       if (!pending?.points?.length) return;
-      this.runWrite(pending.points, pending.reason);
+      this.runWrite(pending.points, pending.reason, pending.restoreFile || '');
     }
 
     /** Lê a Curva K nesta conexão, confere com o snapshot e só então grava (ACK + readback no Kotlin). */
-    runWrite(points, reason) {
+    runWrite(points, reason, restoreFile) {
       const read = this.native?.startCurveRead?.();
       if (!read?.ok || !read?.started) { this.fail(read?.error || 'A leitura da Curva K não iniciou.'); return; }
       this.operation = { phase: 'reading' };
       this.render(true);
       this.poll(result => {
         const list = Array.isArray(result.points) ? result.points : [];
-        if (result.state !== 'COMPLETED' || list.length !== 30) { this.fail(result.error || 'A ECU não devolveu os 30 pontos da Curva K.'); return; }
+        if (result.state !== 'COMPLETED' || list.length !== 30) { this.fail(failureText(result, 'A ECU não devolveu os 30 pontos da Curva K.')); return; }
         const factors = new Map(list.map((p, i) => [Number(p.index ?? i), Number(p.factorRaw)]));
         const stale = points.find(p => factors.get(p.index) !== p.currentRaw);
         if (stale) { this.fail('A Curva K da ECU mudou desde a última leitura. Aguarde a próxima atualização e revise de novo.'); return; }
-        const write = this.native.writeCurve(points, reason);
-        if (!write?.ok || !write?.started) { this.fail(write?.error || 'A gravação não iniciou.'); return; }
+        const write = restoreFile && typeof this.native.restoreCurve === 'function'
+          ? this.native.restoreCurve(points, restoreFile)
+          : this.native.writeCurve(points, reason);
+        if (!write?.ok || !write?.started) { this.fail(failureText(write, 'A gravação não iniciou.')); return; }
         this.operation = { phase: 'writing', total: points.length };
         this.render(true);
         this.poll(done => {
           if (done.state === 'BATCH_CONFIRMED' && done.readbackValid === true) {
+            // O próximo Desfazer volta à foto tirada antes DESTA gravação (nunca a uma foto antiga qualquer).
+            this.lastPhotoFile = String(done.photoFile || '');
             this.operation = { phase: 'done' };
             this.render(true);
           } else {
-            this.fail(done.error || 'O readback não confirmou a gravação. A ECU manteve a curva anterior.');
+            this.fail(failureText(done, 'O readback não confirmou a gravação. A ECU manteve a curva anterior.'));
           }
         });
       });
@@ -349,7 +384,14 @@
         return;
       }
       this.job = null;
-      if (status.ok === false || /FAILED|TIMEOUT/.test(String(status.state || ''))) { this.fail(status.error || 'A ECU recusou a operação.'); return; }
+      if (status.ok === false || /FAILED|TIMEOUT/.test(String(status.state || ''))) {
+        // Falha com a ECU possivelmente alterada: o Desfazer continua disponível, com a foto de antes.
+        const mayHaveChanged = status.partial === true || status.mutationMayHaveStarted === true;
+        if (mayHaveChanged && status.photoFile) this.lastPhotoFile = String(status.photoFile);
+        const text = failureText(status, 'A ECU recusou a operação.');
+        this.fail(mayHaveChanged ? `ECU parcialmente alterada. ${text}` : text);
+        return;
+      }
       job.onFinish(status);
     }
 
@@ -547,7 +589,7 @@
       if (!latest || !latest.status) { host.innerHTML = '<p>Nenhuma gravação feita pelo refino ainda.</p>'; return; }
       const bands = (Array.isArray(latest.bands) ? latest.bands : []).filter(b => VERDICT[b.verdict]);
       const rows = bands.map(b => `<div data-verdict="${escapeHtml(b.verdict)}"><span>${fmt(b.fromMs, 1)}–${fmt(b.toMs, 1)} ms</span><b>${pct(b.ratioBefore)}${finite(b.ratioAfter) === null ? '' : ' → ' + pct(b.ratioAfter)}</b><small>${escapeHtml(VERDICT[b.verdict])}</small></div>`).join('');
-      const undo = undoPoints(latest).length ? '<button type="button" class="secondary" data-refino-undo>Desfazer última gravação</button>' : '';
+      const undo = (this.lastPhotoFile || undoPoints(latest).length) ? '<button type="button" class="secondary" data-refino-undo>Desfazer última gravação</button>' : '';
       const closing = JOURNAL_NOTE[latest.status] ? `<p class="refino-note">${escapeHtml(JOURNAL_NOTE[latest.status])}</p>` : '';
       const history = (Array.isArray(this.eq?.refinement?.history) ? this.eq.refinement.history : []).slice().reverse().map(item => {
         const when = finite(item.appliedAt) ? new Date(item.appliedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';

@@ -40,11 +40,7 @@
 
     bind() {
       document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
-      document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
-      document.getElementById('toolSelfTest')?.addEventListener('click', () => {
-        const result = this.api.selfTest();
-        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Autoteste concluído.' : (result?.error || 'Autoteste não concluído.') } });
-      });
+      // Exportar logs e autoteste são os botões data-tool-export-logs / data-tool-selftest, tratados em handleToolClick.
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('click', event => this.handleToolClick(event));
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('change', event => this.handleToolChange(event));
     }

@@ -104,6 +104,8 @@ class SessionSemanticLedger(
     private var partialSnapshotCount = 0
     private var actionReceipts = 0
     private var calibrationEpochs = 0
+    /** Apagões do motor (eventos `engine_stall` do StallWatch já gravados na sessão). */
+    private var blackouts = 0
     private var lastSnapshotAtMs = 0L
     private var lastSnapshotHash = ""
     private var autoCalEnabled: Int? = null
@@ -134,6 +136,7 @@ class SessionSemanticLedger(
             "autocal_native_snapshot", "autocal_manual_snapshot" -> observeAutoCalSnapshot(type, data, recordedAtMs)
             "autocal_native_action" -> actionReceipts += 1
             "autocal_native_calibration_epoch" -> calibrationEpochs += 1
+            "engine_stall" -> blackouts += 1
             "session_stopped" -> observedStopReason = data.optString("reason", observedStopReason)
         }
 
@@ -174,7 +177,8 @@ class SessionSemanticLedger(
             type == "export_boundary" ||
             type.startsWith("autocal_") ||
             type == "k_batch_confirmed" ||
-            type == "k_factor_batch_confirmed"
+            type == "k_factor_batch_confirmed" ||
+            type == "engine_stall"
 
     private fun observeTelemetry(data: JSONObject) {
         telemetrySamples += 1L
@@ -259,6 +263,7 @@ class SessionSemanticLedger(
             .put("telemetrySamples", telemetrySamples)
             .put("petrolTicks", petrolTicks)
             .put("cngTicks", cngTicks)
+            .put("blackouts", blackouts)
             .put("autocal", autocal)
             .put("recovered", recovered)
             .put("rebuildParseErrors", rebuildParseErrors)

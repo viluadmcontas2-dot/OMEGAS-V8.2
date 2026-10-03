@@ -59,8 +59,10 @@ class V8MapBatchContract(unittest.TestCase):
 
     def test_partial_failure_is_explicit(self):
         self.assertIn('.put("state", "BATCH_PARTIAL_FAILED")', self.calibration)
-        self.assertIn('.put("confirmedCells", completedCells)', self.calibration)
-        self.assertIn('.put("partial", completedCells > 0)', self.calibration)
+        # Falha no meio do lote: as células com ACK vêm dos eventos confirmados do escritor, não só dos blocos fechados.
+        self.assertIn('.put("confirmedCells", reportedCells)', self.calibration)
+        self.assertIn('confirmedEvents', self.calibration)
+        self.assertIn('.put("partial", ecuPartiallyChanged)', self.calibration)
 
     def test_single_native_safety_policy_covers_all_mutating_bridges(self):
         for marker in (

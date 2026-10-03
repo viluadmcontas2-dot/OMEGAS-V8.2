@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import com.omegas.prohub.autocal.AutoCalBridgeProvider
 import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.CalibrationOperationsBridge
 import com.omegas.prohub.web.HubJavascriptBridge
@@ -302,6 +303,8 @@ class MainActivity : AppCompatActivity() {
                 return uri.scheme != "file"
             }
         }
+        // A ponte AutoCal entra antes do loadUrl: a página já nasce com ela e não precisa recarregar.
+        AutoCalBridgeProvider.attachBeforeLoad(this)
         webView.loadUrl("file:///android_asset/ui/index.html")
     }
 

@@ -215,7 +215,7 @@
 .autocal-chart-inspector { position: static; display: flex; align-items: baseline; gap: 8px; width: auto; max-height: none; overflow: hidden; padding: 8px 10px; border-color: var(--tint-70-203-231-16); background: rgba(var(--rgb-7-16-26),.58); box-shadow: none; }
 .autocal-live-narrative { color: var(--tone-8597a9); font-size: 13px; }
 .autocal-live-halo { fill: rgba(var(--rgb-23-218-246),.14); stroke: rgba(var(--rgb-23-218-246),.55); stroke-width: 2; }
-.autocal-live-point { fill: var(--tone-19daf4); stroke: var(--tone-dffcff); stroke-width: 1.5; filter: drop-shadow(0 0 6px rgba(var(--rgb-25-218-244),.75)); }
+.autocal-live-point { fill: var(--tone-19daf4); stroke: var(--tone-dffcff); stroke-width: 1.5; }
 .autocal-live-label { fill: var(--tone-49e7fb); stroke: var(--tone-061019); }
 .autocal-chart-legend .live::before { background: var(--tone-19daf4); box-shadow: 0 0 0 3px rgba(var(--rgb-25-218-244),.14), 0 0 12px rgba(var(--rgb-25-218-244),.28); }
 .autocal-hero { grid-template-columns: minmax(0,1fr) minmax(390px, auto); }
@@ -366,13 +366,13 @@
 /* ProgBase-parity: only current acquired dots expose point reacquisition. */
 .autocal-chart-legend .acquired::before { width: 9px; height: 9px; border: 2px solid rgba(var(--rgb-240-196-92),.92); border-radius: 50%; background: transparent; }
 .autocal-acquired-hit { fill: transparent; cursor: pointer; pointer-events: all; }
-.autocal-acquired-point { pointer-events: none; stroke: var(--tone-071018); stroke-width: 2.2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 4px var(--tint-0-0-0-55)); }
+.autocal-acquired-point { pointer-events: none; stroke: var(--tone-071018); stroke-width: 2.2; vector-effect: non-scaling-stroke; }
 .autocal-acquired-point.petrol { fill: var(--tone-78b7ff); }
 .autocal-acquired-point.gas { fill: var(--tone-5dd39e); }
 .autocal-acquired-point.collecting { fill-opacity: .34; stroke-dasharray: 2.5 2.5; }
 .autocal-acquired-point.acquired { fill-opacity: 1; stroke-width: 2.6; }
 .autocal-acquired-hit.selected + .autocal-acquired-point { stroke: var(--tone-fff4cf); stroke-width: 3.4; }
-.autocal-acquired-hit.batch-selected + .autocal-acquired-point { stroke: var(--tone-f0c45c); stroke-width: 3.6; filter: drop-shadow(0 0 7px rgba(var(--rgb-240-196-92),.46)); }
+.autocal-acquired-hit.batch-selected + .autocal-acquired-point { stroke: var(--tone-f0c45c); stroke-width: 3.6; }
 .autocal-point-actions { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
 .autocal-point-batch { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 7px; align-items: center; margin-top: 2px; padding: 8px; border: 1px solid rgba(var(--rgb-240-196-92),.2); border-radius: 9px; background: rgba(var(--rgb-240-196-92),.065); }
 .autocal-point-batch span { min-width: 0; color: var(--tone-d8e1e9); }

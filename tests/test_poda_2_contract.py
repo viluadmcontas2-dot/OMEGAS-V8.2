@@ -65,7 +65,8 @@ class Poda2Contract(unittest.TestCase):
             self.assertNotIn(gone, html + drawers, gone)
         self.assertIn('id="toolExportData"', html)
         self.assertIn("Tudo do app: calibrações salvas e sessões", html)
-        self.assertIn("toolExportLogs", drawers)
+        self.assertIn("data-tool-export-logs", drawers)
+        self.assertNotIn("getElementById('toolExportLogs')", drawers)
 
     def test_3_3_js_sem_bomba_de_ciencia(self):
         api = read(UI / "core/native-api.js")
@@ -75,8 +76,8 @@ class Poda2Contract(unittest.TestCase):
                      "resetLearningToleranceSettings", "exportLearningArchive", "importLearningArchive",
                      "demoLearning", "demoToleranceSettings"):
             self.assertNotIn(gone, api + app, gone)
-        self.assertIn("presentSnapshot()", api)
-        self.assertIn("api.presentSnapshot()", app)
+        self.assertIn("presentSnapshot(", api)
+        self.assertIn("api.presentSnapshot(", app)
 
     REMOVED_BRIDGE = (
         "getScienceSnapshotSince", "getLearningCheckpointStatus", "getLearningMaps", "getLearningTemperatureSettings",

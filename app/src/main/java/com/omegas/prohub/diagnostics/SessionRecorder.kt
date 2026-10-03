@@ -67,7 +67,8 @@ class SessionRecorder(
     private val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
-    private val fileStamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US)
+    private val fileStamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS", Locale.US)
+    private val sessionCounter = AtomicLong(0L)
 
     @Volatile private var recording = false
     @Volatile private var sessionId = ""
@@ -91,6 +92,11 @@ class SessionRecorder(
     private var segmentFile: File? = null
     private var segmentStream: FileOutputStream? = null
     private var segmentBytes = 0L
+    private var lastStartMetadata = JSONObject()
+    private var rollingOver = false
+
+    /** Leitura barata (sem montar JSON nem pegar o bloqueio) para o monitor do serviço. */
+    fun isRecording(): Boolean = recording
 
     @Synchronized
     fun start(reason: String, metadata: JSONObject = JSONObject()): JSONObject {
@@ -98,8 +104,12 @@ class SessionRecorder(
         return try {
             pruneOldSessions()
             val now = System.currentTimeMillis()
-            val id = "session_${fileStamp.format(Date(now))}_${settings.deviceId.take(8)}"
+            var id = SessionIdFormat.build(fileStamp.format(Date(now)), settings.deviceId, sessionCounter.incrementAndGet())
+            while (File(paths.sessionLogsRoot, id).exists()) {
+                id = SessionIdFormat.build(fileStamp.format(Date(now)), settings.deviceId, sessionCounter.incrementAndGet())
+            }
             val dir = File(paths.sessionLogsRoot, id).apply { mkdirs() }
+            lastStartMetadata = JSONObject(metadata.toString())
             sessionId = id
             sessionDir = dir
             startedAt = now
@@ -440,8 +450,13 @@ class SessionRecorder(
         }
     }
 
-    @Synchronized
+    /**
+     * Sem `@Synchronized`: o gravador em segundo plano precisa do mesmo bloqueio para esvaziar a fila,
+     * e esperar por ele segurando-o travava o `onDestroy` do serviço (até 5 s na thread principal).
+     * Primeiro esvazia a fila SEM o bloqueio; `stop()` pega o bloqueio só para fechar.
+     */
     fun close() {
+        awaitPendingWrites(2_000L)
         if (recording) stop("serviço encerrado")
         worker.shutdownNow()
         // Dá uma folga curta para o ZIP da sessão sair; se não der, a próxima abertura do app publica.
@@ -571,16 +586,7 @@ class SessionRecorder(
             val effectiveLimitMb = settings.sessionLogMaxMb.coerceIn(64, 1_024)
             val maxBytes = effectiveLimitMb.toLong() * 1024L * 1024L
             if (byteCount + bytes > maxBytes && type != "session_stopped") {
-                stopReason = "limite de $effectiveLimitMb MB atingido"
-                lastError = stopReason
-                recording = false
-                stoppedAt = now
-                closeWriter()
-                updateManifest()
-                semanticLedger?.finish(stoppedAt, stopReason)
-                resumo?.observe("session_stopped", JSONObject().put("reason", stopReason), now)
-                writeResumo()
-                syncDocumentsMirror(force = true)
+                rollOverAfterCap(type, source, data, effectiveLimitMb, now)
                 return
             }
             if (segmentBytes + bytes > SEGMENT_LIMIT_BYTES) openNextSegment()
@@ -634,6 +640,38 @@ class SessionRecorder(
         val dir = sessionDir ?: return
         val current = resumo ?: return
         try { SessionResumo.write(dir, current.markdown()) } catch (_: Exception) {}
+    }
+
+    /**
+     * O limite de tamanho fecha a sessão (publicada como ZIP, como em qualquer parada) e NÃO deixa o
+     * registro parado em silêncio: abre uma nova sessão (novo segmento) e grava nela o evento que não
+     * coube. `rollingOver` evita laço se uma linha sozinha for maior que o limite.
+     */
+    private fun rollOverAfterCap(type: String, source: String, data: JSONObject, effectiveLimitMb: Int, now: Long) {
+        val previousId = sessionId
+        stopReason = "limite de $effectiveLimitMb MB atingido"
+        lastError = stopReason
+        recording = false
+        stoppedAt = now
+        closeWriter()
+        updateManifest()
+        semanticLedger?.finish(stoppedAt, stopReason)
+        resumo?.observe("session_stopped", JSONObject().put("reason", stopReason), now)
+        writeResumo()
+        syncDocumentsMirror(force = true)
+        if (rollingOver) return
+        rollingOver = true
+        try {
+            val resumed = start(
+                "continuação após o limite de $effectiveLimitMb MB",
+                JSONObject(lastStartMetadata.toString())
+                    .put("continuesFrom", previousId)
+                    .put("rolledOver", true),
+            )
+            if (resumed.optBoolean("ok", false) && recording) recordNow(type, source, data)
+        } finally {
+            rollingOver = false
+        }
     }
 
     private fun openNextSegment() {
@@ -786,6 +824,21 @@ class SessionRecorder(
         val keep = settings.sessionKeepCount
         validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old ->
             if (documentsMirror == null || documentsMirrorMarker(old).isFile) old.deleteRecursively()
+        }
+
+        // Teto de espaço: sem o espelho em Documentos nada acima poda, e o armazenamento do app
+        // encheria. Passou de 1,5 GB, apaga a sessão fechada mais antiga, com ou sem marcador.
+        val activeDir = if (recording) sessionDir?.absolutePath else null
+        val remaining = paths.sessionLogsRoot.listFiles { file -> file.isDirectory }.orEmpty().map { dir ->
+            SessionByteCap.Info(
+                name = dir.name,
+                bytes = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() },
+                modifiedAtMs = dir.lastModified(),
+                active = dir.absolutePath == activeDir,
+            )
+        }
+        SessionByteCap.select(remaining, SessionByteCap.TOTAL_BYTES_CAP).forEach { name ->
+            File(paths.sessionLogsRoot, name).deleteRecursively()
         }
     }
 

@@ -101,6 +101,25 @@
   };
 
   /**
+   * Regra 7: erro de transporte (cabo/USB) não é erro da ECU. O Kotlin classifica a falha em
+   * `failureKind` (TRANSPORTE / ECU / APP) onde lê `reply.error`; a tela mostra textos distintos.
+   */
+  function failureKind(operation) {
+    const raw = operation && (operation.failureKind || (operation.failure && operation.failure.failureKind));
+    const kind = String(raw || '').toUpperCase();
+    return kind === 'TRANSPORTE' || kind === 'ECU' ? kind : 'APP';
+  }
+  function failureText(operation, fallback) {
+    const op = operation || {};
+    const failure = op.failure || {};
+    const message = String(op.error || failure.error || failure.message || op.message || op.writerMessage || fallback || '').trim();
+    const kind = failureKind(op);
+    if (kind === 'TRANSPORTE') return `Cabo/USB: ${message || 'a comunicação com a ECU falhou'}`;
+    if (kind === 'ECU') return `A ECU recusou: ${message || 'o comando não foi aceito'}`;
+    return message;
+  }
+
+  /**
    * Telemetria só é atualizada nas rotas ao vivo. Numa rota sem pump (Ajuste global, Sugestões,
    * Ferramentas) o último valor ficava na barra de status como se fosse de agora. Depois de maxMs
    * sem renovar, vale "desconhecido" (—), nunca o último RPM com cara de ao vivo.
@@ -152,7 +171,7 @@
 
   ns.DisplayRules = {
     DASH, finite, number, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
-    ageLabel, sessionDate, OPERATION_WORDING, gasResetNote, GAS_RESET_REASON,
+    ageLabel, sessionDate, OPERATION_WORDING, failureKind, failureText, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
