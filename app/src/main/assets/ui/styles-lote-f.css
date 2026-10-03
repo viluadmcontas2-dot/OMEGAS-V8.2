@@ -257,7 +257,7 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .map-screen .map-k-cell span { font-size: 16px !important; line-height: 1 !important; }
 .map-screen .map-k-cell { padding: 0 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-.map-screen .map-editor-panel { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; overflow: hidden; }
+.map-screen .map-editor-panel { display: flex; flex-direction: column; gap: 4px; padding: 4px 8px; overflow: hidden; }
 .map-source-row { display: flex; align-items: center; gap: 8px; }
 .map-source-row .source-status { flex: 1 1 auto; min-width: 0; min-height: 0; padding: 4px 8px; font-size: 16px; line-height: 1.15; white-space: normal; }
 .map-source-row button { flex: 0 0 auto; }
