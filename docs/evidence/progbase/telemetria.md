@@ -20,10 +20,10 @@ Fontes permitidas: LN completo e DUMP. Revisão dirigida desta continuação: Ti
 | 8–9 | U16LE | Petrol Inj. banco 1; também RunPoint.x | PROVADO em 0x50B5A4–0x50B5F6; consumidor AutoCal anterior ainda sujeito ao checklist L-12 |
 | 10 | S8 / U8 conforme consumidor | TimerDati lê S8 para campo +0x1700 e U8 normalizado ×5/255 para +0x1718 | PROVADO em 0x4A3100–0x4A3137; nome/finalidade desconhecidos |
 | 11 | U8 bitfield | flags de apresentação; ver 2.4 | PROVADO em 0x50B664–0x50B66E |
-| 12 | U8 | canal de temperatura A; destino/conversão dependem do ramo de configuração, 2.5 | PROVADO leitura; escala física final não fechada |
+| 12 | U8 | canal de temperatura A; destino/conversão dependem do ramo de configuração, 2.5 | PROVADO caminho estático: tabelas/seletores/legendas em temperaturas.md; calibração física não validada |
 | 13 | U8 | LEVEL raw; sem unidade física no quadro | PROVADO em 0x50B67C–0x50B686 e 0x4A3239–0x4A3243; level.md |
 | 14–15 | **S16LE** | pressão: quantização /10, ring de 10 amostras, média inteira; display base ×0,01 ou base + MAP (2.5) | PROVADO em 0x50B4D4–0x50B536 e 0x50C0FA–0x50C291 |
-| 16 | U8 | canal de temperatura B, ramo dependente (2.5) | PROVADO leitura; escala física final não fechada |
+| 16 | U8 | canal de temperatura B, ramo dependente (2.5) | PROVADO caminho estático: tabelas/seletores/legendas em temperaturas.md; calibração física não validada |
 | 17–18 | **S16LE** | MAP mostrado = `trunc(raw/10)×0,01` bar; resolução centésimos | PROVADO em 0x50B789–0x50B79A e 0x50BAB4–0x50BAC0 |
 | 19 | U8 | tensão dos injetores; conversão condicional por tipo, 2.6 | PROVADO: helper 0x480908 lê +0x294F = payload+19; Timer1 alimenta LabTensioneIniettori |
 | 20 | S8 / U8 | TimerDati lê S8 para +0x17FC e U8 para +0x1738 | PROVADO em 0x4A3148 e 0x4A32E7; semântica desconhecida |
@@ -56,27 +56,29 @@ Os vetores AutoCal usam representação distinta (/512 ms, /1024 bar): autocal.m
 
 ## 2.5 Pressão e temperaturas: dependem da configuração
 
-**Pressão PROVADA como processamento de apresentação:** `q=trunc(S16LE(payload[14:16])/10)`; Timer1 guarda q no ring +0x548 com índice módulo 10 (+0x570), soma os dez e faz outra divisão inteira por 10 para +0x53C. Quando flag TStreamDati+0x80D é não zero, LabPressione (+0x408 na tabela de campos, offset PE 0x6999EA) recebe `média×0,01`. Quando zero, recebe `(média + trunc(MAP_raw/10))×0,01`. A identificação da flag e a semântica absoluta/diferencial permanecem abertas.
+**Pressão PROVADA como processamento de apresentação:** `q=trunc(S16LE(payload[14:16])/10)`; Timer1 guarda q no ring +0x548 com índice módulo 10 (+0x570), soma os dez e faz outra divisão inteira por 10 para +0x53C. Quando flag TStreamDati+0x80D é não zero, LabPressione (+0x408 na tabela de campos, offset PE 0x6999EA) recebe `média×0,01`. Quando zero, recebe `(média + trunc(MAP_raw/10))×0,01`. Flag +0x80D deriva do byte1 de GetIdentification (temperaturas.md 1); semântica física absoluta/diferencial permanece aberta. LN tipo4F prevê ramo aditivo após conexão.
 
 Exemplo reproduzível de dez amostras iguais ao raw **1767** do LN seq 6109: q=176, média=176, display base **1,76 bar**; com MAP raw492 e ramo aditivo, **2,25 bar**. **/800 não é o processamento encontrado no original.** O exemplo calcula regime estável; não promete a leitura exata da tela no instante da captura nem o estado inicial do ring.
 
-**Temperaturas PROVADAS como despacho, conversão final ainda parcial:** Timer1 usa helpers **0x42A52C** e **0x42A788**, que interpolam tabelas em memória e tratam extremidades. Tabelas são inicializadas em rotinas a partir de 0x430A46; não usar o snapshot de zeros em .data como tabela válida em execução.
+**Temperaturas: despacho, tabelas e legenda reabertos.** [temperaturas.md](temperaturas.md) fecha SC134→seletores, FLAG_CONF1[1] bit04→custom, identificação→flag e os dez casos numéricos. Os helpers0x42A52C/0x42A788 interpolam tabelas reconstruídas da .data; não usar o snapshot de zeros do array de destino como tabela válida em execução.
 
 | Flag +0x80D | LabTempRiduttore (+0x454) | LabTempMotore (+0x45C) |
 |---|---|---|
-| não zero | helper 0x42A52C(byte12) | helper 0x42A788(byte16) |
-| zero | helper 0x42A52C(byte16) | helper 0x42A788(byte12) |
+| não zero | helper0x42A52C(byte12) | helper0x42A788(byte16) |
+| zero | helper0x42A52C(byte16) | helper0x42A788(byte12) |
 
-Raw zero recebe sentinela float VA 0x50D214 e cai no texto de ausência; valor **0,0** conferido nos bytes; as bordas da interpolação ainda devem ser preservadas antes de portar. **109−raw e raw−20 ficam retirados como fórmulas do original**, pois não representam esses caminhos. A tabela escolhida por tipo de sensor e os valores numéricos precisam da próxima desmontagem (L-04).
+Raw0 pula helper e recebe0,0. Caption compara a zero antes de Trunc: zero bruto **e zero convertido** usam ausência; demais finitos usam inteiro truncado. Tabela padrão raw195→0°C também vira ausência; raw255 no helper extrapola−70°C. Nomes físicos dos sensores, precisão final x87/Double, locale e outros consumidores permanecem limitados. 109−raw/raw−20 retirados como fórmulas do original.
+
+LN SC134=0, identificação byte1=4F e bit custom desligado: previsão estática seq6109 reducer49,5/motor67,5°C, projeção inteira49/67. Isso não afirma snapshot da tela.
 
 ## 2.6 Tensão dos injetores: identidade fechada, dois ramos
 
 Cadeia PROVADA: Timer1 0x50B7A9 → helper **0x480908** → campo +0x530 → formatação → LabTensioneIniettori (+0x47C, tabela de campos em offset PE 0x699C2A).
 
-O helper lê U8 TStreamDati+0x294F (=payload19), retorna 0 para raw<80; para raw≥80, testa byte TStreamDati+0x271D. Tipos 0x5D/0x5E usam raw×5×133×0,00011883541295306001; demais usam raw×5×147×0,00008343763037129746. Nome/SC do seletor ainda desconhecidos.
+O helper lê U8 TStreamDati+0x294F (=payload19), retorna 0 para raw<80; para raw≥80, testa byte TStreamDati+0x271D. Tipos 0x5D/0x5E usam raw×5×133×0,00011883541295306001; demais usam raw×5×147×0,00008343763037129746. Seletor = byte1 da resposta GetIdentification (00 02 02), não SC; temperaturas.md 1.
 
-Constantes: VA 0x480988=80 (float), 0x480994=5, 0x480998=133, 0x48099C=coeficiente extended80 especial; 0x4809A8=147, 0x4809AC=coeficiente extended80 normal. LN seq 6073 raw221 → **13,55319 V** no ramo normal, **17,46465 V** no especial. A leitura raw é observada; o ramo efetivo desta ECU não foi provado. Não manter a aproximação raw/16 como fórmula original.
+Constantes: VA 0x480988=80 (float), 0x480994=5, 0x480998=133, 0x48099C=coeficiente extended80 especial; 0x4809A8=147, 0x4809AC=coeficiente extended80 normal. LN seq 6073 raw221 → **13,55319 V** no ramo normal, **17,46465 V** no especial. A leitura raw é observada; identificação4F prevê ramo normal após carregamento, sem snapshot de memória/UI. Não manter a aproximação raw/16 como fórmula original.
 
 ## Próxima ação dirigida
 
-Identificar +0x80D e +0x271D; reconstruir as tabelas inicializadas e o tipo de sensor que escolhe cada uma; revalidar offsets/consumidores restantes e a política de sentinelas. Estes são gaps de DUMP, não exigem modificar OMEGAS ou escrever na ECU.
+Rastrear produtor/consumidor de48 0B (L-13). Revalidar consumidores restantes e nomes físicos L-04/L-12; identificação, seletores e tabelas deste recorte estão registrados em temperaturas.md. Nenhuma mudança de app ou escrita em ECU necessária.

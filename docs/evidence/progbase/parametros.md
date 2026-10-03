@@ -56,7 +56,9 @@ Família `0x014A…0x018E` do `TAutoCalDM`: `AUTO_CAL_ENABLE` 330, `PETR_INJ_TBP
 | 95 / 96 | 0x005F / 0x0060 | `RIF_PRESS_COLL` / `COEFF_PRESS_COLL` | U16 / S16 | vetor | 15 | mbar de MAP / coeficiente | R | compensação por pressão do coletor | `299 400 500 599 699 800 900 1000 1100 1199 1300 1399 1500 1600 1699` / todos `0` (seq 159–160) | PROVADO (valor; eixo em mbar bate com MAP/1000) |
 | 123 / 124 | 0x007B / 0x007C | `RIF_PRESS_DIFF` / `COEFF_PRESS_DIFF` | U16 / S16 | vetor | 15 | mbar de ΔP / coeficiente com sinal | R | compensação por pressão diferencial do gás | `1250 1324 1399 1475 1550 1625 1699 1774 1850 1925 2000 2083 2167 2251 2335` / `2617 2325 2041 1765 1495 1232 975 724 477 236 0 -259 -513 -762 -1007` (seq 191–193) | PROVADO (valor) / DESCONHECIDO (escala do coeficiente: `/8192` ou `/10000` são candidatos; zero em 2000 mbar) |
 | 223 / 224 | 0x00DF / 0x00E0 | `RIF_PRESS_ASS` / `COEFF_PRESS_ASS` | U8 / S16 | vetor | 15 | raw / coeficiente | R | compensação por pressão absoluta | `58 61 65 68 70 72 73 76 78 80 81 82 83 84 85` / `0 140 270 459 621 819 1050 1319 1650 2039 2260 2500 2780 3100 3420` (seq 266–267) | PROVADO (valor) / DESCONHECIDO (unidades) |
-| 134 | 0x0086 | `TIPO_SENSORE_TEMPERATURA` | U8 | escalar | 1 | enum | R | `TFormConfig` | `0` | PROVADO |
+| 134 | 0x0086 | `TIPO_SENSORE_TEMPERATURA` | U8 | escalar | 1 | bits0…4 redutor; bits5…7 motor/gás | R | cache+0x272C; inicializadores0x430A0C/430DFC | `0` (seq29/7558/19899) | PROVADO estático; temperaturas.md |
+| 138 | 0x008A | `PARAMETRI_TEMP` | 5 bytes; signed explícito no DFM | vetor | 5 | parâmetros da tabela custom | R | cache int32+0x2848; 0x430E12 | `12 5C 05 EC 1E` →18,92,5,-20,30 | PROVADO; DataLength omitido não prova default |
+| 139 | 0x008B | `ECU_TEMP` | U8 na fiação observada | vetor | 30 | nós da tabela custom | R | cache int32+0x285C; 0x430E77 | 231…8; seq31/7560/19901 | PROVADO; receber não prova seleção |
 | 59 / 85 | 0x003B / 0x0055 | `TEMPO_GAS` / `TEMPO_GAS_PARZIALE` | U16 | escalar | 1 | horas? (unidade não provada) | R | `TFormDiagnosi` "Tempo a gas" / `TFormService` | `1252` / `2703` | PROVADO (valor) / DESCONHECIDO (unidade) |
 
 ## 3.6 Não suportados por esta ECU (resposta `CA 01 10` a toda leitura)
@@ -65,8 +67,14 @@ SC 181 `TIPO_CARBURANTE`, 313 `TANK_VOL`/`INJR_GAS_FLOW`, 314 `NORM_TEMP`, 315 `
 
 ## 3.7 Ignorados de propósito (só nomes)
 
-Lambda: SC 4–11, 103, 111/112, 130–133, 167/171, 176. Comutação/partida/cutoff: 6, 13–17, 50/51, 54, 56, 60, 62, 73, 78, 100, 106–116, 135–137, 160–163, 178/179, 203–215, 221, 226, 268. Avanço/anticipo: 38/39, 44/45, 238. Diagnóstico e estados: 1, 18–20, 23–25, 28–35, 49, 57/58, 81, 97, 139, 153/154, 377. Serviço/tagliandi/licença: 30, 51, 64–66, 88, 237. Mapas de carburação e adaptatividade: 46/47, 113–116, 120, 127, 129, 131, 140–152, 158, 170, 173/174, 180, 182, 185, 189, 194, 198–201, 216, 230–236, 239–241, 248–250, 299, 301, 303, 306–308, 312. OBD/Landi Connect/MGLEV/DHLP: 116, 187, 190, 269, 291–295, 319–329, 373. Perfis `*_LR` (família Landi Renzo antiga, mesma SC com semântica diferente): todos. Calibração clássica `TFormCalibra` (`00 13`/`00 14`): fora do produto.
+Lambda: SC 4–11, 103, 111/112, 130–133, 167/171, 176. Comutação/partida/cutoff: 6, 13–17, 50/51, 54, 56, 60, 62, 73, 78, 100, 106–116, 135–137, 160–163, 178/179, 203–215, 221, 226, 268. Avanço/anticipo: 38/39, 44/45, 238. Diagnóstico e estados: 1, 18–20, 23–25, 28–35, 49, 57/58, 81, 97, 153/154, 377. Serviço/tagliandi/licença: 30, 51, 64–66, 88, 237. Mapas de carburação e adaptatividade: 46/47, 113–116, 120, 127, 129, 131, 140–152, 158, 170, 173/174, 180, 182, 185, 189, 194, 198–201, 216, 230–236, 239–241, 248–250, 299, 301, 303, 306–308, 312. OBD/Landi Connect/MGLEV/DHLP: 116, 187, 190, 269, 291–295, 319–329, 373. Perfis `*_LR` (família Landi Renzo antiga, mesma SC com semântica diferente): todos. Calibração clássica `TFormCalibra` (`00 13`/`00 14`): fora do produto.
 
 ## 3.8 Revalidação dirigida nesta continuação
 
 Inventário reextraído de quatro DFM: 364 componentes, propriedades explícitas e offsets; não assumir defaults quando omitidos. O vínculo SC121→cache→escala de Timer1 está fechado, mas isso não promove automaticamente as escalas de eixos, tempos mortos ou outros consumidores. Pressão de apresentação e tensão dos injetores foram reabertas em telemetria.md; os coeficientes SC123/124/223/224 continuam sem unidade física fechada (L-09).
+
+## 3.9 Seletores e tabela de temperatura
+
+[temperaturas.md](temperaturas.md) liga SC134 ao seletor dividido em dois grupos de bits, e SC138/139 à tabela custom. Gate custom é **segundo elemento U16 de FLAG_CONF1, bit0x0004**: vetor expandido em int32, por isso +0x2988 não é offset equivalente no pacote. Leituras/escritas observadas mantêm segundo valor0x1051, gate desligado. Unidade física do parâmetro combinado18×256+92=4700 não fechada. Identificação byte1=4F é outro seletor, recebido por00 02 02; não confundir com SC21.
+
+As tabelas internas e seus 256 valores por caso foram reconstituídos, inclusive sentinelas e truncagem das legendas; isso não valida fisicamente compensações SC42/43/92/93 nem transfere escala a consumidores ainda não reabertos.

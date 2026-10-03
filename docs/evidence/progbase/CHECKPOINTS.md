@@ -138,3 +138,24 @@ Regra: depois de cada commit, este arquivo é atualizado com **feito / falta / p
 2. Reabrir inicializadores a partir de 0x430A46 e helpers0x42A52C/0x42A788; recuperar tabelas numéricas e seletor de sensor, extremidades e sentinelas (zero float0,0 já conferido).
 3. Rastrear produtor/consumidor do compacto48 0B e relação, se houver, com SC330 (L-13). Depois revalidar VAs históricos restantes de AutoCal/mapas/level (L-12).
 - AutoMatch aritmético da ECU (L-05) não é dedutível só do PC; efeitos de ações ausentes/readback (L-06/L-07) seguem abertos. Nenhuma mudança de app ou operação em ECU nesta missão.
+
+## Commit 13 — seletores, tabelas e legendas de temperatura
+
+**Feito (UTC 2026-10-03)**
+- Retomado remoto60461a1. Somente DUMP+LN, hashes integrais reconferidos; Platina fbee28c usada para fencing.
+- GetIdentification byte1→+0x271D→família+0x80D fechado; tipo4F no LN prevê flag0 e tensão normal após carga, sem snapshot UI.
+- SC134→cache+0x272C e seletores divididos (redutor baixo5 bits, motor alto3) fechados. Casos redutor6…31 preservam tabela anterior.
+- FLAG_CONF1[1] bit04 custom: expansão U16→int32 stride4 provada, cache+0x2988; observado0x1051 em reads/writes, bit desligado.
+- SC138/139→caches→tabela custom30 nós fechado, igual aos defaults .data; igualdade e recebimento não provam seleção.
+- Nove casos internos,335 nós e um caso custom30 nós. Preservados nós completos, mapeamento racional de raw0…255 e projeções inteiras/null por caso, hashes das fontes/arrays/spans e âncoras mínimas:31 trechos/1.145 bytes conferidos.
+- Caption finito: zero bruto bypass; resultado0 também ausência; demais Trunc. Default raw195→0°C vira ausência; extremos e pares repetidos preservados.
+- Verificador passivo: 2.560 conversões +2.560 projeções, monotonia/identidades de nós, racional vs float64 na construção inteira; LN completo39.517 reparseado,37 trechos de enquadramento conferidos. Parser exige blob exato remoto17252b0…; cache com newline adicional foi descartado.
+- **PASS_STATIC_RECONSTRUCTION_ONLY**. Sonda ELF32 não executável neste runtime (Exec format error); sem replay nativo, calibração física, NaN/exception, locale ou extensão automática a gráficos.
+- README/telemetria/parâmetros/registry128/lacunas reconciliados. Nenhuma mudança de produto ou operação em ECU.
+
+**Falta / próxima ação exata**
+1. L-13: recuperar consumidor do compacto48 0B, localizar byte12 no objeto de aquisição/AutoCal e ligar à UI/estado. Manter separado do SC330 enquanto não existir relação de código provada.
+2. Correlacionar seus testes com os brackets das três épocas e coleta pós-3/3 já preservados; polling não é snapshot atômico.
+3. Continuar L-12 nos consumidores históricos de AutoCal/mapas/level; L-04 mantém nomes físicos/enum, precisão final/locale e demais canais. L-05 depende de firmware/experimento separado, L-06/L-07 ainda sem ações/readback suficientes.
+
+**Retomada:** temperaturas.md; fontes/reconstruir-temperaturas.py, temperaturas-reconstrucao.json e temperaturas-trechos.json. Usar fontes originais com hashes, não documentação do produto como prova.

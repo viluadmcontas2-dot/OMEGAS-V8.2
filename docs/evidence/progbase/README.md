@@ -18,19 +18,20 @@ Um ACK prova resposta ao comando, não seu efeito completo. Valores de polling n
 | Tema | Arquivo | Estado |
 |---|---|---|
 | Transporte | protocolo.md | LN completo validado; política de falha/retry ainda parcial |
-| Telemetria | telemetria.md | Timer1 reaberto: pressão/tensão/injeção provadas; tabelas de temperatura pendentes |
+| Telemetria | telemetria.md | Timer1 reaberto: pressão/tensão/injeção provadas; seletores/tabelas/legendas de temperatura reabertos; limites físicos explícitos |
+| Temperaturas | temperaturas.md | dez casos; domínio0…255; zero/Trunc e custom reconstruídos |
 | Parâmetros | parametros.md | inventário DFM regenerado; consumidores e unidades ainda têm lacunas |
 | AutoCal | autocal.md | três épocas e aquisição pós-3/3 provadas; b12 compacto desconhecido |
 | Curvas e mapas | curvas-mapas.md | observações preservadas; mecanismo do readback ainda desconhecido |
 | Level | level.md | referências e DFM; filtro/enum/conversão ainda parciais |
 | Lacunas | lacunas.md | L-01…L-13; acompanhar resolução parcial |
-| Registro | registry.json | 126 entradas; provas e limites sincronizados com a revisão de telemetria |
+| Registro | registry.json | 128 entradas; provas e limites sincronizados com a revisão de telemetria |
 
 `fontes/parametros-dfm-inventario.json`: **364 componentes SerialCode**, extraídos de quatro DFM originais, com classe, propriedades explícitas, offset de propriedade/valor e hash por fonte. Substitui o inventário herdado de 344 entradas; propriedades ausentes não são defaults provados. `fontes/dfm2txt.py` e `fontes/fontes-manifest.json` permitem reprodução.
 
 ## Retomada
 
-Leia `CHECKPOINTS.md`, depois a lacuna e o tema indicado. Commits 10–12: DFM reextraído, fontes completas, três épocas/LN validados e Timer1 reaberto. Próximo passo: identificar seletores +0x80D/+0x271D e recuperar tabelas de temperatura; depois rastrear 48 0B (L-13).
+Leia `CHECKPOINTS.md`, depois a lacuna e o tema indicado. Commits 10–13: DFM reextraído, fontes completas, três épocas/LN validados e Timer1 reaberto. Seletores/tabelas e legenda fechados no recorte do commit13. Próximo passo: rastrear produtor/consumidor48 0B (L-13), com foco no byte12 e independência do SC330.
 
 ## Agenda de contraste posterior
 

@@ -41,6 +41,7 @@ O prefixo anteriormente analisado (63.424.275 B) foi conferido no arquivo permit
 
 - `dfm2txt.py`: decodificador passivo de streams TPF0; saída JSON com offsets e EOF obrigatório. Uso: `python dfm2txt.py arquivo.bin`.
 - `scripts/omegas/portmon_parser.py` no SHA de retomada `9c6d33b`: numeração LN (`seq` = escritas agrupadas, inclusive a sonda; `idx` = IRP da escrita). O código do app não é evidência do original.
+- `reconstruir-temperaturas.py`: reconstrução passiva do DUMP, verificação integral opcional LN e âncoras; resultados em `temperaturas-reconstrucao.json` e `temperaturas-trechos.json`. 10 casos/2.560 inputs; somente validação estática, detalhes/limites em `../temperaturas.md`.
 - `dump-listing.tsv`: snapshot da listagem remota da pasta, sem conteúdo binário.
 
 Estudos antigos, sessões OMEGAS, fixtures, .lec, outras capturas e reverse_report/dfm_text não sustentam novas provas.

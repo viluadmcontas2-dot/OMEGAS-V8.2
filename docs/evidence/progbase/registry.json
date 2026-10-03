@@ -564,16 +564,17 @@
       "encoding": "u8",
       "forma": "campo",
       "tamanho": 1,
-      "escala": "helpers 0x42A52C/0x42A788 e tabelas inicializadas; despacho por +0x80D",
+      "escala": "interpolação por tabelas SC134; custom motor por FLAG_CONF1[1]&04 e SC138/139",
       "unidade": "°C",
       "rw": "R",
       "consumidor_no_progbase": "LabTempRiduttore ou LabTempMotore por configuração",
       "observado_em": [
         "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
-        "LN completo: fontes/ln-validacao-completa.json"
+        "LN completo: fontes/ln-validacao-completa.json",
+        "temperaturas.md; fontes/temperaturas-reconstrucao.json; fontes/temperaturas-trechos.json"
       ],
-      "confianca": "DESCONHECIDO",
-      "nota": "Despacho provado; tabela/tipo de sensor e escala final abertos L-04. Hipóteses 109-raw/raw-20 retiradas."
+      "confianca": "PROVADO (caminho estático)",
+      "nota": "Seletores, tabelas e caption Trunc reabertos em temperaturas.md. Raw0 ou resultado0 usa ausência; identificação byte1 define troca. Precisão x87/Double final e calibração física não validadas."
     },
     {
       "id": "tel-13",
@@ -611,7 +612,7 @@
         "LN completo: fontes/ln-validacao-completa.json"
       ],
       "confianca": "PROVADO",
-      "nota": "Média é soma/10 com truncagem inteira; +0x80D seleciona ramo. Semântica absoluta/diferencial pendente. /800 retirado."
+      "nota": "Flag +0x80D deriva de GetIdentification byte1; tipo4F observado prevê ramo aditivo após conexão. Média e transformação provadas, semântica absoluta/diferencial física pendente."
     },
     {
       "id": "tel-16",
@@ -621,16 +622,17 @@
       "encoding": "u8",
       "forma": "campo",
       "tamanho": 1,
-      "escala": "helpers 0x42A52C/0x42A788 e tabelas inicializadas; despacho por +0x80D",
+      "escala": "interpolação por tabelas SC134; custom motor por FLAG_CONF1[1]&04 e SC138/139",
       "unidade": "°C",
       "rw": "R",
       "consumidor_no_progbase": "LabTempRiduttore ou LabTempMotore por configuração",
       "observado_em": [
         "DUMP reaberto nesta continuação: telemetria.md; fontes/desmontagem-dirigida.json",
-        "LN completo: fontes/ln-validacao-completa.json"
+        "LN completo: fontes/ln-validacao-completa.json",
+        "temperaturas.md; fontes/temperaturas-reconstrucao.json; fontes/temperaturas-trechos.json"
       ],
-      "confianca": "DESCONHECIDO",
-      "nota": "Despacho provado; tabela/tipo de sensor e escala final abertos L-04. Hipóteses 109-raw/raw-20 retiradas."
+      "confianca": "PROVADO (caminho estático)",
+      "nota": "Seletores, tabelas e caption Trunc reabertos em temperaturas.md. Raw0 ou resultado0 usa ausência; identificação byte1 define troca. Precisão x87/Double final e calibração física não validadas."
     },
     {
       "id": "tel-17",
@@ -668,7 +670,7 @@
         "LN completo: fontes/ln-validacao-completa.json"
       ],
       "confianca": "PROVADO",
-      "nota": "Identidade e dois ramos provados; SC do seletor +0x271D e ramo efetivo da ECU desconhecidos; raw/16 retirado."
+      "nota": "Seletor +0x271D é GetIdentification byte1, recebido por00 02 02. Tipo4F observado prevê ramo normal após conexão; sem snapshot de memória/UI."
     },
     {
       "id": "tel-20",
@@ -801,7 +803,7 @@
         "DUMP DFM (fontes/parametros-dfm-inventario.json)"
       ],
       "confianca": "PROVADO",
-      "nota": "valor nesta ECU: 0x2486,0x1051"
+      "nota": "valor nesta ECU: 0x2486,0x1051; segundo elemento bit0x0004 escolhe custom SC138/139, observado desligado; temperaturas.md. Vetor de destino int32 stride4."
     },
     {
       "id": "sc-012",
@@ -1343,16 +1345,16 @@
       "encoding": "U8",
       "forma": "escalar",
       "tamanho": 1,
-      "escala": "enum",
+      "escala": "bits0…4 redutor; bits5…7 motor/gás",
       "unidade": "",
       "rw": "R",
-      "consumidor_no_progbase": "TFormConfig",
+      "consumidor_no_progbase": "cache+0x272C; 0x430A0C/0x430DFC",
       "observado_em": [
         "LN (PortmonLOGNOVO (1).zip, prefixo seq 1-20288) dump de conexão seq 31-410",
         "DUMP DFM (fontes/parametros-dfm-inventario.json)"
       ],
       "confianca": "PROVADO",
-      "nota": "valor nesta ECU: 0"
+      "nota": "LN valor0 em três leituras; redutor6…31 mantém tabela anterior; motor0/3…7 default; temperaturas.md."
     },
     {
       "id": "sc-181",
@@ -2369,6 +2371,44 @@
       ],
       "confianca": "PROVADO (desmontagem)",
       "nota": "escrita na ECU não capturada"
+    },
+    {
+      "id": "sc-138",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 138 (0x008A)",
+      "nome": "PARAMETRI_TEMP",
+      "encoding": "5 bytes signed no DFM",
+      "forma": "vetor",
+      "tamanho": 5,
+      "escala": "tabela custom de temperatura; temperaturas.md",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "0x430DFC",
+      "observado_em": [
+        "DUMP DFM/RTTI/.text/.data; temperaturas.md",
+        "LN completo; fontes/temperaturas-reconstrucao.json"
+      ],
+      "confianca": "PROVADO (estrutura/caminho)",
+      "nota": "LN 12 5C 05 EC 1E; cache int32+0x2848; origem−20, passo5, count30, combinado4700 sem unidade fechada. DataLength ausente não presume default."
+    },
+    {
+      "id": "sc-139",
+      "tipo": "parametro",
+      "endereco_ou_offset": "SC 139 (0x008B)",
+      "nome": "ECU_TEMP",
+      "encoding": "U8 observado",
+      "forma": "vetor",
+      "tamanho": 30,
+      "escala": "tabela custom de temperatura; temperaturas.md",
+      "unidade": "",
+      "rw": "R",
+      "consumidor_no_progbase": "0x430DFC",
+      "observado_em": [
+        "DUMP DFM/RTTI/.text/.data; temperaturas.md",
+        "LN completo; fontes/temperaturas-reconstrucao.json"
+      ],
+      "confianca": "PROVADO (estrutura/caminho)",
+      "nota": "LN 30 nós231…8, cache int32+0x285C. Gate FLAG_CONF1[1]&04 desligado: recebimento não prova uso."
     }
   ]
 }
