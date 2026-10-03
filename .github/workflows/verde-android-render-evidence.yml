@@ -77,6 +77,9 @@ jobs:
           - scenario: refino-curva-pronta
             method: refinoCurvaPronta
             class: RefinoRenderTest
+          - scenario: refino-app-novo-ecu-pronta
+            method: refinoAppNovoEcuPronta
+            class: RefinoRenderTest
           - scenario: refino-verificando
             method: refinoVerificando
             class: RefinoRenderTest

@@ -10,6 +10,7 @@ import com.omegas.prohub.autocal.AutoCalAcquisition
 import com.omegas.prohub.autocal.AutoCalReadObservation
 import com.omegas.prohub.autocal.AutoCalSnapshotBuilder
 import com.omegas.prohub.autocal.AutoCalSnapshotSource
+import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.NativeAutoCalAcquisitionEpoch
 import com.omegas.prohub.autocal.StallWatch
@@ -331,6 +332,34 @@ class RefinoRenderTest {
             assertTrue("a proposta diz de onde vem: ${dom.getString("techText")}", dom.getString("techText").contains("sua condução"))
             assertTrue("nossos pontos aparecem no gráfico", dom.getInt("ourSquares") > 0)
             assertTrue("curva da ECU desenhada", dom.getInt("referenceLines") >= 1)
+        } finally { scenario.close() }
+    }
+
+    /**
+     * O caso do carro: app recém-instalado, a ECU já fez o AutoMatch (3 de 3) e já tem a curva de gasolina,
+     * e este app nunca mediu gasolina. O Refino lê a ECU e não pede gasolina nem espera AutoMatch.
+     */
+    @Test
+    fun refinoAppNovoEcuPronta() {
+        val scenario = launch()
+        try {
+            val service = service(scenario)
+            val root = corpus("ref_2026-10-01_1719")
+            feedLedger(service, root, onlyFuel = "GNV") // nenhuma gasolina medida por este app
+            val snap = publishSnapshot(service, root, 2183) // a ECU entrega a curva de gasolina madura
+            val ecuPoints = EcuPetrolReference.fromAcquisition(AutoCalAcquisition.fromSnapshot(snap))
+            check(ecuPoints.size >= 10) { "a ECU do corpus precisa ter a curva de gasolina madura (${ecuPoints.size} pontos)" }
+            service.equivalence.setEcuPetrolReference(ecuPoints)
+            observe(service, snap, count = 3)
+            openRefino(scenario)
+            val dom = refinoDom(scenario)
+            saveEvidence("refino-app-novo-ecu-pronta", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "só o GNV da sessão + curva de gasolina da ECU (snapshot 2183); AutoMatch 3 de 3"))
+            assertClean(dom)
+            val words = (dom.optString("headline") + " " + dom.optString("next"))
+            assertTrue("não espera AutoMatch que a ECU já fez: $words", !words.contains("está no automático"))
+            assertTrue("não pede gasolina que a ECU já tem: $words", !words.contains("na gasolina para criar"))
+            assertTrue("o detalhe diz que a gasolina é a da ECU: ${dom.getString("techText")}", dom.getString("techText").contains("curva de gasolina que a ECU já tem"))
+            assertTrue("a fase não é de espera: ${dom.optString("chip")}", dom.optString("chip") !in listOf("ECU no automático", "Sem ECU", "Lendo a ECU"))
         } finally { scenario.close() }
     }
 

@@ -90,6 +90,7 @@ run_case "dashboard-session-recovered" "sessionReconnectRecoversFreshTelemetry"
 run_case "refino-ecu-automatico" "refinoEcuNoAutomatico" RefinoRenderTest
 run_case "refino-coletando" "refinoColetando" RefinoRenderTest
 run_case "refino-curva-pronta" "refinoCurvaPronta" RefinoRenderTest
+run_case "refino-app-novo-ecu-pronta" "refinoAppNovoEcuPronta" RefinoRenderTest
 run_case "refino-verificando" "refinoVerificando" RefinoRenderTest
 run_case "refino-estavel" "refinoEstavel" RefinoRenderTest
 run_case "refino-restaurar-trecho" "refinoRestaurarTrecho" RefinoRenderTest
