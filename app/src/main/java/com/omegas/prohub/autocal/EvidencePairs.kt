@@ -8,16 +8,62 @@ import kotlin.math.abs
  * O livro ([EquivalenceLedger]) e o cérebro (`EquivalenceEngine`) usam estas mesmas funções: o veredito
  * "equivalente" e a proposta de K saem do mesmo conjunto de pares (casamento por RPM×MAP).
  *
- * Independência: leituras estáveis consecutivas se sobrepõem (janela de 3 quadros), então o número de
- * leituras NÃO é evidência. Evidência = "visitas": trechos de condução da mesma faixa separados por pelo
- * menos [VISIT_GAP_MS] (60 s). O peso de uma faixa conta por visita, nunca por quadro.
+ * Independência vem de ESTATÍSTICA, não de relógio: leituras estáveis consecutivas se sobrepõem (janela de 3
+ * quadros), então o número de leituras NÃO é o número de amostras independentes. O cérebro mede o n efetivo
+ * (correção de autocorrelação, [effectiveN]) e julga pelo intervalo de confiança do erro: pouco dado = intervalo
+ * largo = "ainda sem certeza", sem pedir tempo de condução. Aqui um "bloco" (episódio) é só a de-duplicação de
+ * janelas sobrepostas: pares da mesma faixa separados por menos de [VISIT_GAP_MS] são o mesmo bloco, e o peso de um
+ * bloco é limitado (nunca por quadro). Não existe mais portão de "visitas separadas por 60 s".
  *
  * Espelho Python: tools/equivalence_oracle (build_pairs, visit_ids) e tools/autocal_refine/blind_telemetry_test.py.
  */
 object EvidencePairs {
-    const val VISIT_GAP_MS = 60_000L
-    /** Visitas distintas que uma faixa (ou o entorno de um ponto) precisa ter para valer como evidência. */
-    const val MIN_VISITS = 3
+    /** Lacuna que separa dois blocos de leituras sobrepostas (≈ 10 quadros): de-duplicação, não exigência de tempo. */
+    const val VISIT_GAP_MS = 3_000L
+    /** Blocos mínimos por faixa: 1 (sem portão por contagem de trechos; a confiança vem do intervalo do n efetivo). */
+    const val MIN_VISITS = 1
+    /** Autocorrelação máxima aceita ao estimar o n efetivo (acima disso o n efetivo é ≈ 0 e nada é julgado). */
+    const val MAX_RHO = 0.95
+    /** Duas leituras estáveis a menos de 1 s partilham quadros da janela de 3 quadros (≈ 285 ms cada): são a mesma amostra. */
+    const val OVERLAP_MS = 1_000L
+
+    /**
+     * n efetivo de uma série de valores (ln da razão) em ordem de tempo: n·(1−ρ)/(1+ρ), com ρ a autocorrelação de lag 1
+     * limitada a [0, [MAX_RHO]]. Série sem variância ou com < 3 valores não prova independência: ρ = [MAX_RHO].
+     */
+    fun effectiveN(timesInOrder: List<Long>, valuesInTimeOrder: List<Double>): Double {
+        val n = valuesInTimeOrder.size
+        if (n == 0) return 0.0
+        // Janelas sobrepostas não são amostras distintas: o n efetivo nunca passa do número de leituras sem sobreposição.
+        var apart = 0
+        var lastKept = Long.MIN_VALUE
+        for (t in timesInOrder) if (lastKept == Long.MIN_VALUE || t - lastKept >= OVERLAP_MS) { apart++; lastKept = t }
+        return minOf(autocorrelationN(valuesInTimeOrder), apart.toDouble())
+    }
+
+    private fun autocorrelationN(valuesInTimeOrder: List<Double>): Double {
+        val n = valuesInTimeOrder.size
+        if (n < 3) return n * (1.0 - MAX_RHO) / (1.0 + MAX_RHO)
+        val mean = valuesInTimeOrder.sum() / n
+        var variance = 0.0
+        var cov = 0.0
+        for (i in 0 until n) {
+            val d = valuesInTimeOrder[i] - mean
+            variance += d * d
+            if (i > 0) cov += d * (valuesInTimeOrder[i - 1] - mean)
+        }
+        val rho = if (variance / n <= 1e-8) MAX_RHO else (cov / variance).coerceIn(0.0, MAX_RHO)
+        return n * (1.0 - rho) / (1.0 + rho)
+    }
+
+    private val T975 = doubleArrayOf(12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228,
+        2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110, 2.101, 2.093, 2.086, 2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042)
+
+    /** Quantil t bicaudal 95% com df = ⌊n efetivo⌋ − 1 (≥ 1); acima de 30 graus vale 1,96. */
+    fun tCritical(nEff: Double): Double {
+        val df = kotlin.math.floor(nEff).toInt() - 1
+        return if (df < 1) T975[0] else if (df > 30) 1.96 else T975[df - 1]
+    }
     /** Uma faixa grossa só vale com leituras em pelo menos este número de terços internos... */
     const val INTERIOR_SLICES = 3
     const val INTERIOR_MIN_SLICES = 2

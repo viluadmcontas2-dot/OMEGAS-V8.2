@@ -96,7 +96,7 @@ class EquivalenceEngineTest {
         assertEquals("Ajuste em 6,5–6,5 ms piorou a suavidade · Desfazer", contested.nextAction.text)
         val proving = EquivalenceEngine.evaluate(input(flat)) { ProofOutcome(mapOf(12 to PointState.EM_PROVA), 7) }
         assertEquals(NextActionKind.PROVING, proving.nextAction.kind)
-        assertEquals("Rodando para provar o ajuste · faltam ~7 min de condução nessa faixa", proving.nextAction.text)
+        assertEquals("Rodando para provar o ajuste", proving.nextAction.text)
         val operating = EquivalenceEngine.evaluate(input(gasWithRichPlateau(1.06), operation = "Gravando Curva K"))
         assertEquals(NextActionKind.OPERATION, operating.nextAction.kind)
         assertEquals("Gravando Curva K", operating.nextAction.text)

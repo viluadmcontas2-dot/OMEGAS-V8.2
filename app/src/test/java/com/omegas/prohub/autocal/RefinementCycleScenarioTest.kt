@@ -37,7 +37,7 @@ class RefinementCycleScenarioTest {
     private fun petrolBaseline() = (cells + cells2).forEach { (rpm, map, ms) -> drive("GASOLINA", rpm, map, ms) }
 
     private fun gas(ratio: Double, bands: List<Int> = cells.indices.toList()) =
-        // Passagens separadas por ≥ 60 s: cada faixa precisa de 3 visitas (episódios), não só de 8 pares.
+        // Passagens separadas (blocos de leituras): o peso é por bloco, não por quadro.
         bands.forEach { i ->
             repeat(3) {
                 val (rpm, map, ms) = cells[i]; drive("GNV", rpm, map, ms * ratio)
@@ -75,7 +75,8 @@ class RefinementCycleScenarioTest {
         writeCurve()
         val verifying = observe()
         assertEquals("VERIFICANDO", verifying.getString("phase"))
-        assertTrue(verifying.getString("headline").contains("0 de 15 min"))
+        assertFalse("sem minutos na frase do dono", verifying.getString("headline").contains(" min"))
+        assertEquals(15.0, pilot.json().getJSONObject("verification").getDouble("budgetMinutes"), 1e-9) // regra só em technical
         assertTrue("diz onde dirigir", verifying.getString("next").contains("ms"))
 
         gas(1.0)

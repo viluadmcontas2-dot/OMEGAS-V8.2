@@ -44,25 +44,26 @@ class NewEvidenceGatesTest {
     // ------------------------------------------------------------------ P2-1: episódios = visitas ≥ 60 s
 
     @Test
-    fun `visitas contam por lacuna de 60 s e nunca por quadro`() {
-        assertEquals(1, EvidencePairs.visitCount(List(100) { it * 300L }))            // 30 s de quadros seguidos
-        assertEquals(1, EvidencePairs.visitCount(listOf(0L, 5_000L, 10_000L)))        // lacuna de 5 s NÃO abre episódio
-        assertEquals(3, EvidencePairs.visitCount(listOf(0L, 90_000L, 180_000L)))
-        assertEquals(2, EvidencePairs.visitCount(listOf(0L, 59_999L, 119_999L + 1L)))
+    fun `blocos de leituras sobrepostas contam por lacuna curta e nunca por quadro`() {
+        assertEquals(1, EvidencePairs.visitCount(List(100) { it * 300L }))            // 30 s de quadros seguidos = um bloco
+        assertEquals(3, EvidencePairs.visitCount(listOf(0L, 5_000L, 10_000L)))        // lacuna de 5 s separa blocos (sem exigir minuto)
+        assertEquals(1, EvidencePairs.visitCount(listOf(0L, 2_999L, 5_998L)))
         assertEquals(0, EvidencePairs.visitCount(emptyList()))
     }
 
     @Test
-    fun `oito amostras e tres episodios em dez segundos nao fazem uma faixa valer`() {
-        val ledger = EquivalenceLedger(null)
-        var t = 0L
-        fun drive(fuel: String, ms: Double, n: Int) = repeat(n) { ledger.accept(EquivalenceLedger.Frame(t, fuel, 2000.0, 0.60, ms)); t += 280 }
-        drive("GASOLINA", 5.0, 20)
-        // três "trechos" de 6 quadros separados por 5 s (≈ 10 s de condução): antes eram 3 episódios.
-        repeat(3) { t += 5_000; drive("GNV", 5.5, 6) }
-        val band = ledger.index().getJSONArray("bands").getJSONObject(1)
-        assertEquals(1, band.getInt("episodes"))
-        assertTrue(ledger.drivingPairs().map { it.episode }.toSet().size == 1)
+    fun `n efetivo - leituras sobrepostas valem uma e independentes valem todas`() {
+        // 40 leituras a cada 285 ms com a mesma razão: janelas sobrepostas, ~1 amostra a cada 1 s.
+        val overlapped = EvidencePairs.effectiveN(List(40) { it * 285L }, List(40) { 0.01 })
+        assertTrue("sobrepostas: $overlapped", overlapped < 3.0)
+        // 40 leituras a cada 5 s com erro alternado: independentes, n efetivo = n.
+        val independent = EvidencePairs.effectiveN(List(40) { it * 5_000L }, List(40) { if (it % 2 == 0) 0.02 else -0.02 })
+        assertEquals(40.0, independent, 1e-9)
+        // série suave (autocorrelação alta) vale bem menos que o número de leituras
+        val smooth = EvidencePairs.effectiveN(List(40) { it * 5_000L }, List(40) { it * 0.001 })
+        assertTrue("suave: $smooth", smooth < 10.0)
+        assertTrue(EvidencePairs.tCritical(2.0) > EvidencePairs.tCritical(10.0))
+        assertEquals(1.96, EvidencePairs.tCritical(100.0), 1e-9)
     }
 
     @Test
@@ -88,14 +89,12 @@ class NewEvidenceGatesTest {
     }
 
     @Test
-    fun `um episodio desconhecido tira so o par e nao desliga o portao das faixas`() {
+    fun `um episodio desconhecido tira so o par`() {
         val pairs = pairsIn(1.1, 9, listOf(2, 3, 4))
         val episodes = pairs.indices.map { it % 3 }.toMutableList().also { it[0] = -1 }
         val r = refine(pairs, episodes)
         assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, r.mode)
         assertEquals(pairs.size - 1, r.telemetryPairsUsed)
-        // e o portão continua valendo: sem episódios distintos, nada.
-        assertEquals(AutoMatchRefinedEngine.Mode.POLISH, refine(pairs, List(pairs.size) { 0 }.toMutableList().also { it[0] = -1 }).mode)
     }
 
     @Test
@@ -260,11 +259,21 @@ class NewEvidenceGatesTest {
         )
 
     @Test
-    fun `duas visitas nunca julgam mesmo com muitas leituras e o indice some`() {
-        val gas = obs({ 1.0 }, 40).mapIndexed { i, o -> o.copy(t = (i % 2) * 70_000L + i) }
-        val r = evaluate(gas)
-        assertTrue(r.points.all { it.state == PointState.SEM_DADOS || it.state == PointState.APRENDENDO })
+    fun `leituras sobrepostas nunca julgam e o indice some - o relogio nao entra`() {
+        // leituras todas dentro de uma janela de 0,6 s: partilham quadros, n efetivo ≈ 1 → intervalo largo → ainda sem certeza.
+        val overlapped = obs({ 1.0 }, 40).mapIndexed { i, o -> o.copy(t = (i % 2) * 285L) }
+        val r = evaluate(overlapped)
+        assertTrue(r.points.filter { it.state != PointState.SEM_DADOS && it.state != PointState.APRENDENDO }.joinToString { "${it.index}:${it.state}:${it.samples}:${it.episodes}" },
+            r.points.all { it.state == PointState.SEM_DADOS || it.state == PointState.APRENDENDO })
         assertNull(r.index)
+    }
+
+    @Test
+    fun `poucos segundos de leituras independentes ja julgam sem pedir tempo`() {
+        // 40 leituras independentes (erro alternado ±1%) em 3 min, razão 1,0: julgadas pelo intervalo, sem portão de 60 s.
+        val gas = obs({ 1.0 }, 40).mapIndexed { i, o -> o.copy(t = i * 4_000L, petrolMs = o.petrolMs * (if (i % 2 == 0) 1.01 else 0.99)) }
+        val r = evaluate(gas)
+        assertTrue(r.points.any { it.state == PointState.EQUIVALENTE })
     }
 
     @Test
@@ -295,7 +304,7 @@ class NewEvidenceGatesTest {
         assertEquals(0.08, ratios.average(), 0.01)
         assertTrue("estados POBRE aparecem", r.points.any { it.state == PointState.POBRE })
         val mixtures = r.points.filter { it.state == PointState.POBRE || it.state == PointState.EQUIVALENTE || it.state == PointState.RICO }.map { it.mixture!! }
-        assertEquals(0.08, mixtures.average(), 0.01)
+        assertEquals(0.08, mixtures.average(), 0.015) // pontos julgados são os de menor ruído: viés pequeno para baixo
         // sem prior no GNV, a Referência não vira "fonte" das células de GNV com leitura
         assertTrue(r.ownGas.cells.filter { it.samples > 0 }.none { it.source == CellSource.REFERENCE })
     }
@@ -329,7 +338,7 @@ class NewEvidenceGatesTest {
     }
 
     @Test
-    fun `sessoes reais - o indice deixa de ser 100 por cento com cobertura de 1 a 5 pontos`() {
+    fun `sessoes reais - o indice vem do intervalo de confianca e nunca volta ao 100 por cento falso`() {
         for (name in listOf("automatch_2026-10-01_1301", "gnv_only_2026-09-30_0931", "ref_2026-10-01_1719")) {
             val ledger = EquivalenceReplaySupport.ledger(name)
             val seqK = when (name) { "ref_2026-10-01_1719" -> 2550; "automatch_2026-10-01_1301" -> 2262; else -> 2336 }
@@ -341,7 +350,12 @@ class NewEvidenceGatesTest {
                 EquivalenceInput(axis, k, EquivalenceReplaySupport.reference(name, refSeq), null, ledger.petrolObservations(),
                     ledger.gasObservations(), ExperienceMeter(null).reading(), usage.reading()),
             )
-            assertTrue("$name: fração julgada ${r.judgedUsage}", r.judgedUsage < 0.5 && r.index == null)
+            // Honestidade: o índice só é número quando o intervalo de confiança julgou ≥ 50% do uso; nunca o 100% falso.
+            assertTrue("$name: fração julgada ${r.judgedUsage}", (r.judgedUsage >= 0.5 && r.index != null) || (r.judgedUsage < 0.5 && r.index == null))
+            r.index?.let { assertTrue("$name: índice $it parece o 100% falso", it < 0.95) }
+            for (p in r.points.filter { it.state == PointState.EQUIVALENTE || it.state == PointState.POBRE || it.state == PointState.RICO }) {
+                assertTrue("$name ponto ${p.index}: julgado com poucas leituras", p.samples >= EquivalenceEngine.MIN_POINT_PAIRS && p.episodes >= EquivalenceEngine.MIN_POINT_EPISODES)
+            }
         }
     }
 }

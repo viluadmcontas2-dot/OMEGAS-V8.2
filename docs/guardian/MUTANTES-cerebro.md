@@ -33,3 +33,7 @@ Cada regra nova foi desfeita à mão (uma por vez) e a suíte precisa falhar. Ro
 
 Sobrevivente justificado (equivalente): remover `dispersion != null` de `PointEvidence.judgeable`. Com `pairs >= 3` a dispersão
 (precisa de ≥ 2 pares) é sempre conhecida, então a condição é redundante (defesa em profundidade, inalcançável).
+
+## fix-logic (2026-10-04): n efetivo/intervalo, ECU como verdade, engasgo local, betweenPoints, refinoState
+
+13 mutantes Kotlin rodados com `kotlinc` embutido; 12 mortos. Sobrevivente justificado: "sem limite 0,75..1,20 em StallLocalFix" e equivalente (o clamp em raw MIN/MAX_RAW_PROPOSAL logo depois impoe o mesmo intervalo). Mortos: sem autocorrelacao/de-duplicacao, t de Student->1,96, sem n efetivo minimo, passo 30%, sem trava da baixa, propoe com 1 engasgo, engasgo antigo apos gravacao, direcoes discordantes, direcao inventada, intervalo sempre coletado, texto do dono com regra interna, zona so por flag, "falta" apos AutoMatch entregue.

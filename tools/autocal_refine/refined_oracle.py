@@ -67,7 +67,7 @@ TELEMETRY_ONLY_BAND_PAIRS = 8
 TELEMETRY_ONLY_MIN_BANDS = 3
 # Cobertura por EPISÓDIO (trecho de condução separado por > 3 s): uma faixa só puxa proposta com pares
 # de pelo menos MIN_BAND_EPISODES episódios distintos (8 pares de um único trecho são um só acaso).
-MIN_BAND_EPISODES = 3        # episódio = visita à faixa separada por >= 60 s (EvidencePairs.VISIT_GAP_MS), não leitura estável
+MIN_BAND_EPISODES = 1        # sem portão por contagem de trechos; episódio = bloco de janelas sobrepostas (VISIT_GAP_MS = 3 s)
 EPISODE_PAIR_CAP = 4         # um (faixa, episódio) vale no máximo 4 pares
 TELEMETRY_BAND_WEIGHT_CAP = BAND_FULL_COUNT * TELEMETRY_WEIGHT   # teto de peso da telemetria por faixa do livro
 NATIVE_COVERED_GAIN = 0.5    # a telemetria não move ponto que a nativa madura já cobre

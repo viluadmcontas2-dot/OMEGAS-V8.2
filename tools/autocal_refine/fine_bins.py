@@ -28,7 +28,7 @@ FINE_EDGES[-1] = GRID_HI_MS
 #: Leituras recentes guardadas por bin (reservatório): memória limitada, estatística robusta.
 RESERVOIR = 32
 #: Episódios que uma faixa de 18 precisa ter (= AutoMatchRefinedEngine.MIN_BAND_EPISODES).
-MIN_BAND_EPISODES = 3
+MIN_BAND_EPISODES = 1
 #: Bin com menos pares que isto não é evidência (= AutoMatchRefinedEngine.BAND_MATURE_COUNT).
 BIN_MATURE_COUNT = 3
 CONF_EPISODES_FULL = 6.0

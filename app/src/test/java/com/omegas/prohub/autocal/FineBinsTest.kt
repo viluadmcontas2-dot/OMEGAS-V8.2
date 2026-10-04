@@ -142,10 +142,8 @@ class FineBinsTest {
     }
 
     @Test
-    fun `bin fino e faixa com poucos trechos nao sao evidencia`() {
+    fun `bin fino com poucos pares e razao absurda nao sao evidencia`() {
         val centers = listOf(3.75, 5.25, 6.75, 8.25)
-        val few = refine(FineBins.aggregate(pairsAt(centers, 1.12, 2, 8)))
-        assertNotEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, few.mode)
         val thin = refine(FineBins.aggregate(centers.mapIndexed { i, c -> pair(c, 1.12, i) }))
         assertNotEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, thin.mode)
         val absurd = refine(FineBins.aggregate(pairsAt(centers, 2.5, 4, 3)))
