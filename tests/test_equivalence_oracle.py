@@ -61,7 +61,7 @@ def cross_validate(ref_seq, block=40, min_test=3):
         test = [o for i, o in enumerate(petrol) if (i // block) % 2 != parity]
         own = oracle.own_curve(train, ref)
         by_cell = {}
-        for _rpm, m, ms in test:
+        for _rpm, m, ms, *_ in test:
             j = oracle.cell_of(m)
             if j is not None:
                 by_cell.setdefault(j, []).append(math.log(ms))
@@ -119,9 +119,11 @@ class EquivalenceOracle(unittest.TestCase):
         before = window_result(REFERENCE, 95, 2183, lambda t: t < write_at)
         after = window_result(REFERENCE, 95, 2550, lambda t: t >= write_at)
         print("INDEX REFERENCE before=%s cov=%d after=%s cov=%d" % (before["index"], before["coverage"], after["index"], after["coverage"]))
-        self.assertIsNotNone(before["index"])
-        self.assertGreaterEqual(before["coverage"], 2)
-        self.assertTrue(after["index"] is None or after["index"] < before["index"])
+        # Revisão adversarial: nesta sessão real os pontos julgados (>= 3 visitas independentes, dispersão conhecida) cobrem
+        # < 50% do uso, então o índice NÃO é número. Antes: 100% com coverage 1-5 (evidência de 10 s, tolerância de 20%).
+        self.assertLess(before["judgedUsage"], oracle.MIN_JUDGED_USAGE)
+        self.assertIsNone(before["index"])
+        self.assertTrue(after["index"] is None or 0.0 <= after["index"] <= 1.0)
 
     def test_automatch_window_is_too_short_to_claim_the_index_rose(self):
         data = fixture(AUTOMATCH)
@@ -159,7 +161,8 @@ class EquivalenceOracle(unittest.TestCase):
             for j in range(5, 45):
                 c = oracle.center(j)
                 for i in range(20):
-                    out.append((2000.0, c, 10.0 * c * factor(c) * (1.005 if i % 2 == 0 else 0.995)))
+                    # a leitura i de cada célula é uma visita própria (70 s de uma à outra)
+                    out.append((2000.0, c, 10.0 * c * factor(c) * (1.005 if i % 2 == 0 else 0.995), i * 70000 + j))
             return out
         petrol = obs(lambda c: 1.0)
         gas = obs(lambda c: 1.06 if 0.60 <= c <= 0.70 else 1.0)

@@ -28,8 +28,7 @@ class AutoMatchHysteresisTest {
         AutoMatchRefinedEngine.Input(axisRaw, flatK(), null, null, null, null, null, null, pairs, null, episodes, hold),
     )
 
-    private fun pairsIn(ratio: Double, perBand: Int, bands: List<Int>) =
-        bands.flatMap { b -> List(perBand) { centers[b] to centers[b] * ratio } }
+    private fun pairsIn(ratio: Double, perBand: Int, bands: List<Int>) = EvidenceTestSupport.pairsIn(ratio, perBand, bands)
 
     // ------------------------------------------------------------------ E2: histerese
 
@@ -74,10 +73,10 @@ class AutoMatchHysteresisTest {
     }
 
     @Test
-    fun `o livro numera os episodios pela lacuna de 3 s e o indice guia onde dirigir`() {
+    fun `o livro numera os episodios por visita de 60 s e o indice guia onde dirigir`() {
         val ledger = EquivalenceLedger(null)
         var t = drive(ledger, "GASOLINA", 5.0, 0, 20)
-        repeat(3) { t = drive(ledger, "GNV", 5.5, t + 5_000, 6) }
+        repeat(3) { t = drive(ledger, "GNV", 5.5, t + EvidenceTestSupport.VISIT_GAP, 6) }
         val pairs = ledger.drivingPairs()
         assertEquals(3, pairs.map { it.episode }.toSet().size)
         assertTrue(pairs.all { it.episode >= 0 && it.map > 0.59 && it.map < 0.61 })
@@ -88,7 +87,7 @@ class AutoMatchHysteresisTest {
         // Um único trecho longo tem pares de sobra, mas só 1 episódio: o índice diz onde dirigir.
         val single = EquivalenceLedger(null)
         var u = drive(single, "GASOLINA", 5.0, 0, 20)
-        drive(single, "GNV", 5.5, u + 5_000, 40)
+        drive(single, "GNV", 5.5, u + EvidenceTestSupport.VISIT_GAP, 40)
         val guidance = single.index().getString("coverageGuidance")
         assertTrue(guidance, guidance.contains("Falta dado na faixa 4,5–6,0 ms"))
         assertTrue(guidance, guidance.contains("0,60"))
@@ -102,7 +101,7 @@ class AutoMatchHysteresisTest {
             val file = java.io.File(dir, "ledger.json")
             val ledger = EquivalenceLedger(file)
             var t = drive(ledger, "GASOLINA", 5.0, 0, 20)
-            repeat(2) { t = drive(ledger, "GNV", 5.5, t + 5_000, 6) }
+            repeat(2) { t = drive(ledger, "GNV", 5.5, t + EvidenceTestSupport.VISIT_GAP, 6) }
             ledger.flush()
             val before = ledger.drivingPairs().map { it.episode }
             assertEquals(2, before.toSet().size)

@@ -1060,6 +1060,10 @@ class TelemetryForegroundService : Service() {
                 indexBefore = indexBefore ?: JSONObject(),
                 source = payload.optString("adjustmentId", "K_FACTOR"),
                 photoFile = payload.optString("photoFile", ""),
+                // Desfazer/Restaurar/Reset não é passada de ganho (o motivo vem do escritor da ECU, sem mudar comando algum).
+                restore = RefinementJournal.isUndoReason(
+                    payload.optJSONArray("confirmedEvents")?.optJSONObject(0)?.optString("reason").orEmpty(),
+                ),
             )
             // Cada ponto que o dono acabou de mudar entra em prova no cérebro único.
             equivalenceRuntime.onCurveWritten(beforeRaw, afterRaw, equivalencePhases)

@@ -2,6 +2,7 @@ package com.omegas.prohub.autocal
 
 import com.omegas.prohub.equivalence.EquivalencePoint
 import com.omegas.prohub.equivalence.PointState
+import com.omegas.prohub.equivalence.ProofOutcome
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -18,10 +19,12 @@ class EquivalencePhasesProofTest {
     private var now = 0L
     private fun phases() = EquivalencePhases(null) { now }
 
-    private fun point(index: Int, mixture: Double?, samples: Int, rough: Double? = null, tolerance: Double = 0.04) =
-        EquivalencePoint(
-            index, 6.0, 1.0, null, mixture, tolerance, rough, null, null, 0.1, samples, emptySet(), PointState.POBRE,
-        )
+    private fun point(
+        index: Int, mixture: Double?, samples: Int, rough: Double? = null, tolerance: Double = 0.04,
+        episodes: Int = 3, state: PointState = PointState.POBRE,
+    ) = EquivalencePoint(
+        index, 6.0, 1.0, null, mixture, tolerance, rough, null, null, 0.1, samples, emptySet(), state, episodes,
+    )
 
     @Test
     fun `ajuste gravado entra em prova e confirma com amostra nova dentro da tolerancia`() {
@@ -48,12 +51,52 @@ class EquivalencePhasesProofTest {
     }
 
     @Test
-    fun `mistura que nao fechou e nao melhorou sai da prova sem sobreposicao`() {
+    fun `mistura que nao fechou e nao melhorou fecha INCONCLUSIVO com motivo e nunca some em silencio`() {
         val p = phases()
         p.beginProof(listOf(12), listOf(point(12, 0.06, 20)))
         val outcome = p.judgePoints(listOf(point(12, 0.09, 8)), true)
-        assertNull(outcome.states[12])
+        assertEquals(PointState.INCONCLUSIVO, outcome.states[12])
+        assertEquals(ProofOutcome.REASON_NO_CONVERGENCE, outcome.reasons[12])
         assertEquals(0, p.openProofCount())
+        val json = p.json().getJSONArray("proofs").getJSONObject(0)
+        assertEquals("INCONCLUSIVO", json.getString("state"))
+        assertEquals("NAO_CONVERGIU", json.getString("reason"))
+    }
+
+    @Test
+    fun `a re-proposta nao entra em laco - duas tentativas e depois fica parada com motivo`() {
+        val p = phases()
+        fun attempt(): ProofOutcome {
+            p.beginProof(listOf(12), listOf(point(12, 0.09, 20)))
+            return p.judgePoints(listOf(point(12, 0.09, 8)), true)
+        }
+        assertEquals(ProofOutcome.REASON_NO_CONVERGENCE, attempt().reasons[12])
+        // depois de um tempo de condução o ponto volta a poder ser proposto (a prova fechada some)...
+        var guard = 0
+        while (guard++ < 200 && p.json().getJSONArray("proofs").length() > 0) {
+            now += 10_000
+            p.judgePoints(listOf(point(12, 0.09, 8)), true)
+        }
+        assertEquals(0, p.json().getJSONArray("proofs").length())
+        // ...mas a segunda tentativa que não fecha esgota: sem nova proposta ali, e o motivo fica registrado.
+        val second = attempt()
+        assertEquals(PointState.INCONCLUSIVO, second.states[12])
+        assertEquals(ProofOutcome.REASON_EXHAUSTED, second.reasons[12])
+        repeat(100) { now += 10_000; p.judgePoints(listOf(point(12, 0.09, 8)), true) }
+        assertEquals(1, p.json().getJSONArray("proofs").length())
+        assertEquals(PointState.INCONCLUSIVO, p.judgePoints(emptyList(), true).states[12])
+    }
+
+    @Test
+    fun `sem episodios independentes ou sem o ponto julgado a prova nao confirma`() {
+        val p = phases()
+        p.beginProof(listOf(12), listOf(point(12, 0.06, 20)))
+        // 20 leituras dentro da tolerância mas numa visita só (episodes = 1): continua em prova
+        assertEquals(PointState.EM_PROVA, p.judgePoints(listOf(point(12, 0.01, 20, episodes = 1)), true).states[12])
+        // o cérebro não julgou o ponto (APRENDENDO): continua em prova
+        assertEquals(PointState.EM_PROVA, p.judgePoints(listOf(point(12, 0.01, 20, state = PointState.APRENDENDO)), true).states[12])
+        assertEquals(PointState.CONFIRMADO, p.judgePoints(listOf(point(12, 0.01, 20, episodes = 3)), true).states[12])
+        assertEquals(1, p.json().getJSONArray("proofs").length())
     }
 
     @Test

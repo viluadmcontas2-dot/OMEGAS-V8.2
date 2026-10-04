@@ -2,9 +2,11 @@ package com.omegas.prohub.equivalence
 
 import com.omegas.prohub.autocal.AutoMatchRefinedEngine
 import com.omegas.prohub.autocal.EquivalenceLedger
+import com.omegas.prohub.autocal.EvidencePairs
 import org.json.JSONObject
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
@@ -38,16 +40,22 @@ data class EquivalenceInput(
 object EquivalenceEngine {
     const val CONFIDENCE_MAX = EquivalenceTolerances.MIN
     const val COLLECT_MIN_USAGE = 0.02
-    /** Evidência de um ponto = a célula do MAP equivalente e as vizinhas (a leitura do MAP já tremeria > 0,02 bar). */
-    const val POOL_CELLS = 1
-    /** Dispersão assumida quando nenhuma célula vizinha tem duas leituras: conservadora. */
-    const val DISPERSION_UNKNOWN = 0.10
+    /** Leituras (pares) mínimas ao redor de um ponto para julgá-lo (= faixa nativa madura). */
+    const val MIN_POINT_PAIRS = AutoMatchRefinedEngine.BAND_MATURE_COUNT
+    /** Visitas distintas (trechos separados por ≥ 60 s) mínimas ao redor de um ponto para julgá-lo. */
+    const val MIN_POINT_EPISODES = EvidencePairs.MIN_VISITS
     private const val Z95 = 1.96
     private val PT_BR: Locale = Locale.forLanguageTag("pt-BR")
 
     private fun f1(value: Double): String = String.format(PT_BR, "%.1f", value)
 
+    /**
+     * (PETR_INJ_TBP, MUL_ACT) do snapshot da ECU, ambos VALID com 30 valores. Snapshot incoerente no tempo
+     * (`temporalCoherent == false`, grupos lidos em instantes incompatíveis) não é base de nada: nulo, como em
+     * AutoMatchSnapshotAnalysis. `partial` é true em todo snapshot real e NÃO é critério.
+     */
     fun curveFromSnapshot(snapshot: JSONObject?): Pair<IntArray, IntArray>? {
+        if (snapshot != null && snapshot.has("temporalCoherent") && !snapshot.optBoolean("temporalCoherent", true)) return null
         val fields = snapshot?.optJSONArray("fields") ?: return null
         var axis: IntArray? = null
         var factors: IntArray? = null
@@ -66,23 +74,50 @@ object EquivalenceEngine {
         return if (a != null && k != null) a to k else null
     }
 
-    private fun span(cell: Int): IntRange = max(0, cell - POOL_CELLS)..min(OwnCurveFitter.GRID_CELLS - 1, cell + POOL_CELLS)
+    private fun median(values: List<Double>): Double = OwnCurveFitter.median(values)
 
-    private fun pooledSamples(curve: OwnCurve, cell: Int): Int = span(cell).sumOf { curve.cells[it].samples }
-
-    /** Dispersão combinada (variância ponderada por n−1) das células vizinhas; sem par de leituras = [DISPERSION_UNKNOWN]. */
-    private fun pooledDispersion(curve: OwnCurve, cell: Int): Double {
-        var num = 0.0
-        var den = 0
-        for (j in span(cell)) {
-            val c = curve.cells[j]
-            if (c.samples >= 2) {
-                num += (c.samples - 1) * c.dispersion * c.dispersion
-                den += c.samples - 1
-            }
-        }
-        return if (den > 0) sqrt(num / den) else DISPERSION_UNKNOWN
+    /** Evidência de um ponto: as leituras (pares GNV × gasolina por RPM×MAP, ou pela curva da ECU) ao redor dele. */
+    private class PointEvidence(
+        val pairs: Int,
+        val episodes: Int,
+        /** Mediana por visita e depois entre visitas (peso por episódio, não por quadro); nulo sem pares. */
+        val mixture: Double?,
+        /** Dispersão robusta (1,4826·MAD em ln); nula com menos de 2 pares: dispersão desconhecida não julga. */
+        val dispersion: Double?,
+        val ecuShare: Double,
+    ) {
+        val judgeable: Boolean
+            get() = mixture != null && dispersion != null && pairs >= MIN_POINT_PAIRS && episodes >= MIN_POINT_EPISODES &&
+                Z95 * dispersion / sqrt(episodes.toDouble()) <= CONFIDENCE_MAX
     }
+
+    /**
+     * Pares ao redor do nó [i] (entre os nós vizinhos, em ln ms). Mistura de cada par = o K que a condução pede sobre o
+     * K de agora no mesmo ms da gasolina: K(t_gnv)·t_gnv / (t_gas·K(t_gas)) − 1. É o mesmo conjunto de pares de onde
+     * sai a proposta de K: veredito e proposta não podem se contradizer.
+     */
+    private fun evidenceAt(i: Int, u: List<Double>, pairs: List<EquivalenceLedger.EvidencePair>, pairU: DoubleArray, pairLn: DoubleArray): PointEvidence {
+        val n = u.size
+        val lo = if (i > 0) u[i - 1] else u[0] - (u[1] - u[0])
+        val hi = if (i < n - 1) u[i + 1] else u[n - 1] + (u[n - 1] - u[n - 2])
+        val members = pairs.indices.filter { pairU[it] >= lo && pairU[it] <= hi }
+        if (members.isEmpty()) return PointEvidence(0, 0, null, null, 0.0)
+        val ids = visitIds(members.map { pairs[it].t })
+        val perVisit = HashMap<Int, MutableList<Double>>()
+        members.forEachIndexed { k, m -> perVisit.getOrPut(ids[k]) { ArrayList() } += pairLn[m] }
+        val center = median(perVisit.values.map { median(it) })
+        val dispersion = if (members.size >= 2) {
+            val all = members.map { pairLn[it] }
+            val mid = median(all)
+            1.4826 * median(all.map { abs(it - mid) })
+        } else null
+        return PointEvidence(
+            members.size, perVisit.size, exp(center) - 1.0, dispersion,
+            members.count { pairs[it].ecuRef }.toDouble() / members.size,
+        )
+    }
+
+    private fun visitIds(times: List<Long>): IntArray = EvidencePairs.visitIndexes(times)
 
     fun evaluate(
         input: EquivalenceInput,
@@ -90,7 +125,8 @@ object EquivalenceEngine {
     ): EquivalenceResult {
         val prior = input.reference ?: input.provisional
         val ownP = OwnCurveFitter.fit(input.petrolObs, Fuel.GASOLINA, prior)
-        val ownG = OwnCurveFitter.fit(input.gasObs, Fuel.GNV, prior)
+        // O GNV medido NÃO é puxado para a gasolina: sem prior (a Referência é de gasolina; encolher o GNV para ela esconderia o desvio).
+        val ownG = OwnCurveFitter.fit(input.gasObs, Fuel.GNV, null)
         val provisional = input.reference == null
         val n = AutoMatchRefinedEngine.POINT_COUNT
         val axis = input.axisRaw.map { it / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS }
@@ -107,6 +143,16 @@ object EquivalenceEngine {
         val u = axis.map { ln(it) }
         val x = k.map { ln(it) }
         val usage = input.usage.byPoint(axis, ownP)
+        // Fonte única: o mesmo casamento por RPM×MAP do livro (gasolina própria, ou a curva da ECU onde não há) para veredito e proposta.
+        val ecuRef = prior?.let { EvidencePairs.cleanReference(it.points.map { p -> p.mapBar to p.petrolMs }) } ?: emptyList()
+        val pairs = EvidencePairs.build(input.petrolObs, input.gasObs, ecuRef)
+            .filter { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS }
+        val pairU = DoubleArray(pairs.size) { ln(pairs[it].petrolRefMs) }
+        val pairLn = DoubleArray(pairs.size) {
+            val p = pairs[it]
+            ln(AutoMatchRefinedEngine.interp(p.gasPetrolMs, axis, k) * p.gasPetrolMs /
+                (p.petrolRefMs * AutoMatchRefinedEngine.interp(p.petrolRefMs, axis, k)))
+        }
         val maps = ArrayList<Double?>(n)
         val base = ArrayList<EquivalencePoint>(n)
         for (i in 0 until n) {
@@ -114,27 +160,24 @@ object EquivalenceEngine {
             val map = OwnCurveFitter.mapFor(ownP, tp)
             maps += map
             val cell = map?.let { OwnCurveFitter.cellOf(it) }
-            val tg = map?.let { ownG.at(it) }
-            val kTarget = tg?.let { AutoMatchRefinedEngine.interp(it, axis, k) * it / tp }
-            val mixture = tg?.let { AutoMatchRefinedEngine.interp(it, axis, k) * it / tp / k[i] - 1.0 }
-            val samples = if (cell != null) pooledSamples(ownG, cell) else 0
-            val dispersion = if (cell != null) max(pooledDispersion(ownP, cell), pooledDispersion(ownG, cell)) else 0.0
-            val tolerance = EquivalenceTolerances.tolerance(dispersion)
+            val evidence = evidenceAt(i, u, pairs, pairU, pairLn)
+            // Dispersão desconhecida (menos de 2 leituras) nunca vira tolerância larga: o ponto simplesmente não é julgado.
+            val tolerance = EquivalenceTolerances.tolerance(evidence.dispersion ?: 0.0)
+            val mapMixture = map?.let { m -> ownG.at(m)?.let { tg -> AutoMatchRefinedEngine.interp(tg, axis, k) * tg / tp / k[i] - 1.0 } }
+            val judged = evidence.judgeable
+            val mixture = if (judged) evidence.mixture else mapMixture
+            val kTarget = if (judged) k[i] * (1.0 + evidence.mixture!!) else mapMixture?.let { k[i] * (1.0 + it) }
             val state = when {
-                tp < AutoMatchRefinedEngine.TELEMETRY_MIN_MS || map == null -> PointState.SEM_DADOS
-                samples < AutoMatchRefinedEngine.BAND_MATURE_COUNT || Z95 * dispersion / sqrt(samples.toDouble()) > CONFIDENCE_MAX -> PointState.APRENDENDO
-                mixture == null -> PointState.MEDIDO
-                abs(mixture) <= tolerance -> PointState.EQUIVALENTE
+                tp < AutoMatchRefinedEngine.TELEMETRY_MIN_MS || evidence.pairs == 0 -> PointState.SEM_DADOS
+                !judged -> PointState.APRENDENDO
+                abs(mixture!!) <= tolerance -> PointState.EQUIVALENTE
                 mixture > tolerance -> PointState.POBRE
                 else -> PointState.RICO
             }
             val sources = LinkedHashSet<String>()
-            if (cell != null) {
-                val petrolCell = ownP.cells[cell]
-                if (samples > 0 || petrolCell.samples > 0) sources += "TELEMETRIA"
-                if (petrolCell.source != CellSource.OWN) {
-                    if (input.reference != null) sources += "ECU_REF" else if (input.provisional != null) sources += "AUTOCAL"
-                }
+            if (evidence.pairs > 0) sources += "TELEMETRIA"
+            if (cell != null && ownP.cells[cell].source != CellSource.OWN || evidence.ecuShare > 0.0) {
+                if (input.reference != null) sources += "ECU_REF" else if (input.provisional != null) sources += "AUTOCAL"
             }
             var slope: Double? = null
             if (i > 0) slope = abs((x[i] - x[i - 1]) / (u[i] - u[i - 1]))
@@ -146,46 +189,46 @@ object EquivalenceEngine {
                 index = i, axisMs = tp, kCurrent = k[i], kTarget = kTarget, mixture = mixture, tolerance = tolerance,
                 roughnessRatio = map?.let { input.experience.roughnessRatio(it) },
                 nearStallRatio = map?.let { input.experience.nearStallRatio(it) },
-                slope = slope, usage = usage[i], samples = samples, sources = sources, state = state,
+                slope = slope, usage = usage[i], samples = evidence.pairs, sources = sources, state = state,
+                episodes = evidence.episodes,
             )
         }
         val outcome = judge(base)
         val points = base.map { p -> outcome.states[p.index]?.let { p.copy(state = it) } ?: p }
-        val (index, coverage) = indexOf(points)
-        val proposal = proposalOf(input, ownP, ownG)
-        val action = nextAction(input, points, maps, proposal, outcome)
-        return EquivalenceResult(points, index, coverage, provisional, action, proposal, ownP, ownG)
+        val (index, coverage, judgedUsage) = indexOf(base)
+        val proposal = proposalOf(input, pairs)
+        val action = nextAction(input, points, maps, proposal, outcome, index)
+        return EquivalenceResult(points, index, coverage, provisional, action, proposal, ownP, ownG, judgedUsage)
     }
 
-    /** Índice = Σ uso·equivalente / Σ uso nos pontos com estado julgável (nem SEM_DADOS, APRENDENDO nem MEDIDO). */
-    private fun indexOf(points: List<EquivalencePoint>): Pair<Double?, Int> {
-        val counted = points.filter {
-            it.state != PointState.SEM_DADOS && it.state != PointState.APRENDENDO && it.state != PointState.MEDIDO && it.mixture != null
-        }
+    private fun isJudged(p: EquivalencePoint) =
+        p.state == PointState.EQUIVALENTE || p.state == PointState.POBRE || p.state == PointState.RICO
+
+    /**
+     * Índice = Σ uso·equivalente / Σ uso nos pontos julgados (o veredito base, antes da prova). Só é número quando os
+     * pontos julgados cobrem pelo menos [EquivalenceTolerances.MIN_JUDGED_USAGE] do uso: abaixo disso é nulo ("—"),
+     * nunca uma porcentagem tirada de um pedaço pequeno do uso. Devolve (índice, nº de pontos julgados, fração julgada).
+     */
+    private fun indexOf(base: List<EquivalencePoint>): Triple<Double?, Int, Double> {
+        val counted = base.filter { isJudged(it) && it.mixture != null }
+        val allUsage = base.sumOf { it.usage }
         val total = counted.sumOf { it.usage }
-        if (total <= 0.0) return null to counted.size
+        val share = if (allUsage > 0.0) total / allUsage else 0.0
+        if (total <= 0.0 || share < EquivalenceTolerances.MIN_JUDGED_USAGE) return Triple(null, counted.size, share)
         val equivalent = counted.filter { abs(it.mixture!!) <= it.tolerance }.sumOf { it.usage }
-        return equivalent / total to counted.size
+        return Triple(equivalent / total, counted.size, share)
     }
 
-    /** Um par (gasolina, GNV) por leitura GNV de condução, lidos nas Curvas Próprias. Sai só do motor refinado, com os portões dele. */
-    private fun proposalOf(input: EquivalenceInput, ownP: OwnCurve, ownG: OwnCurve): AutoMatchRefinedEngine.Result? {
+    /** Os pares de condução (os mesmos do veredito). Sai só do motor refinado, com os portões dele. */
+    private fun proposalOf(input: EquivalenceInput, pairs: List<EquivalenceLedger.EvidencePair>): AutoMatchRefinedEngine.Result? {
         return try {
-            val pairs = ArrayList<Pair<Double, Double>>()
-            val episodes = ArrayList<Int>()
-            for (o in input.gasObs) {
-                if (o.rpm < EquivalenceLedger.DRIVING_MIN_RPM) continue
-                val tp = ownP.at(o.map) ?: continue
-                val tg = ownG.at(o.map) ?: continue
-                if (tp >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS) { pairs += tp to tg; episodes += o.episode }
-            }
             AutoMatchRefinedEngine.refine(
                 AutoMatchRefinedEngine.Input(
                     axisRaw = input.axisRaw, mulActRaw = input.mulActRaw,
                     petrolTimeRaw = null, petrolMapRaw = null, petrolCounts = null,
                     gasTimeRaw = null, gasMapRaw = null, gasCounts = null,
-                    telemetryPairs = pairs, pointGainScale = input.pointGainScale,
-                    telemetryEpisodes = episodes, holdMinStepLog = input.holdMinStepLog,
+                    telemetryPairs = pairs.map { it.petrolRefMs to it.gasPetrolMs }, pointGainScale = input.pointGainScale,
+                    telemetryEpisodes = pairs.map { it.episode }, holdMinStepLog = input.holdMinStepLog,
                 ),
             )
         } catch (_: Exception) {
@@ -207,6 +250,7 @@ object EquivalenceEngine {
         maps: List<Double?>,
         proposal: AutoMatchRefinedEngine.Result?,
         outcome: ProofOutcome,
+        index: Double?,
     ): NextAction {
         input.operation?.let { return NextAction(NextActionKind.OPERATION, it, null, null, emptyList()) }
         if (input.reference == null && input.provisional != null) {
@@ -251,9 +295,7 @@ object EquivalenceEngine {
                 "${f1(candidates.minOf { it.axisMs })} e ${f1(candidates.maxOf { it.axisMs })} ms"
             return NextAction(NextActionKind.COLLECT, text, "refino", null, candidates.map { it.index })
         }
-        val judged = points.count {
-            it.state != PointState.SEM_DADOS && it.state != PointState.APRENDENDO && it.state != PointState.MEDIDO && it.mixture != null
-        }
+        val judged = points.count { it.state != PointState.SEM_DADOS && it.state != PointState.APRENDENDO && it.state != PointState.MEDIDO }
         if (judged == 0) {
             return NextAction(NextActionKind.COLLECT, "Rode no GNV para eu começar a medir", "refino", null, emptyList())
         }
@@ -263,6 +305,23 @@ object EquivalenceEngine {
                 NextActionKind.COLLECT, "Rode mais no GNV: ainda faltam leituras para propor o ajuste",
                 "refino", null, off.sortedByDescending { it.usage }.map { it.index },
             )
+        }
+        // Prova que fechou sem convergir: isso NÃO é "equivalente". Com tentativas sobrando volta a medir; esgotadas, sem proposta.
+        fun stillOff(p: EquivalencePoint): Boolean = p.state == PointState.INCONCLUSIVO && p.mixture != null && abs(p.mixture) > p.tolerance
+        val unconverged = points.filter { stillOff(it) && outcome.reasons[it.index] == ProofOutcome.REASON_NO_CONVERGENCE }
+        if (unconverged.isNotEmpty()) {
+            val text = "Ajuste em ${f1(unconverged.minOf { it.axisMs })}–${f1(unconverged.maxOf { it.axisMs })} ms ainda não fechou · " +
+                "rode mais antes de eu propor de novo"
+            return NextAction(NextActionKind.COLLECT, text, "refino", null, unconverged.map { it.index })
+        }
+        val exhausted = points.filter { stillOff(it) && outcome.reasons[it.index] == ProofOutcome.REASON_EXHAUSTED }
+        if (exhausted.isNotEmpty()) {
+            val text = "Ajuste em ${f1(exhausted.minOf { it.axisMs })}–${f1(exhausted.maxOf { it.axisMs })} ms não fechou depois de " +
+                "${ProofOutcome.MAX_ATTEMPTS} tentativas · sem nova proposta ali; revise a curva nessa faixa"
+            return NextAction(NextActionKind.NOTHING, text, "refino", null, exhausted.map { it.index })
+        }
+        if (index == null) {
+            return NextAction(NextActionKind.COLLECT, "Rode mais no GNV: ainda é pouco do seu uso medido para afirmar equivalência", "refino", null, emptyList())
         }
         return NextAction(NextActionKind.NOTHING, "Equivalente. Nada a fazer.", null, null, emptyList())
     }

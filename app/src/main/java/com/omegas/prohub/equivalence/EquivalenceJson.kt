@@ -7,6 +7,13 @@ import org.json.JSONObject
  * Forma do resultado do cérebro para a ponte e a sessão. Chaves planas que a UI já lê (`index` 0..1,
  * `coverage`, `provisional`, `nextAction`, `points`, `reference`) mais o detalhe técnico (Curvas Próprias,
  * proposta). `automatic` é sempre false: o cérebro só observa.
+ *
+ * CONTRATO DE FORMA (Kotlin serializa → JS lê; docs/ARCHITECTURE.md "Contrato do resultado do cérebro"):
+ *  - `index` é um NÚMERO ESCALAR 0..1 ou `null` (mostrar "—"); nunca um objeto, nunca 0 no lugar de desconhecido.
+ *    É `null` quando os pontos julgados cobrem menos de [EquivalenceTolerances.MIN_JUDGED_USAGE] do uso.
+ *  - `provisional` (boolean), `coverage` (inteiro) e `judgedUsage` (0..1) são irmãos planos de `index` no mesmo nível,
+ *    não filhos dele. As mesmas chaves existem quando `available` é false.
+ *  - Teste: BrainContractTest.
  */
 object EquivalenceJson {
     const val FORMAT = "omegas-equivalence-result-v1"
@@ -14,7 +21,7 @@ object EquivalenceJson {
 
     private fun num(value: Double?): Any = if (value == null || !value.isFinite()) JSONObject.NULL else value
 
-    private fun referenceJson(reference: Reference?, ecuDrift: Double?, previous: Reference?, canFreeze: Boolean): JSONObject {
+    private fun referenceJson(reference: Reference?, ecuDrift: Double?, previous: Reference?, canFreeze: Boolean, nowMs: Long): JSONObject {
         val points = JSONArray()
         reference?.points?.forEach { points.put(JSONObject().put("mapBar", it.mapBar).put("petrolMs", it.petrolMs).put("maturity", it.maturity)) }
         return JSONObject()
@@ -22,6 +29,10 @@ object EquivalenceJson {
             .put("canFreeze", canFreeze)
             .put("id", reference?.id ?: JSONObject.NULL)
             .put("frozenAt", reference?.frozenAt ?: JSONObject.NULL)
+            // Idade da Referência (nulo = "—", nunca 0) e se a ECU já reaprendeu a gasolina bem longe dela (deriva > alarme):
+            // só se registra; a decisão de congelar de novo é do dono (um toque).
+            .put("ageMs", if (reference == null || reference.frozenAt <= 0L) JSONObject.NULL else (nowMs - reference.frozenAt).coerceAtLeast(0L))
+            .put("stale", reference != null && ecuDrift != null && ecuDrift.isFinite() && kotlin.math.abs(ecuDrift) > EquivalenceTolerances.DIVERGENCE_ALARM)
             .put("ecuAcquisitionFingerprint", reference?.ecuAcquisitionFingerprint ?: JSONObject.NULL)
             .put("points", points)
             .put("ecuDrift", num(ecuDrift))
@@ -67,10 +78,13 @@ object EquivalenceJson {
         ecuDrift: Double?,
         previous: Reference?,
         canFreeze: Boolean = false,
+        nowMs: Long = System.currentTimeMillis(),
     ): JSONObject {
-        val ref = referenceJson(reference, ecuDrift, previous, canFreeze)
+        val ref = referenceJson(reference, ecuDrift, previous, canFreeze, nowMs)
         if (result == null) {
+            // Mesma forma do resultado disponível: `index` nulo ("—", nunca 0), `coverage` 0 e `provisional` irmãos planos.
             return JSONObject().put("ok", true).put("format", FORMAT).put("available", false)
+                .put("index", JSONObject.NULL).put("coverage", 0).put("judgedUsage", 0.0).put("provisional", reference == null)
                 .put("reason", REASON_CURVE_UNREAD).put("reference", ref).put("automatic", false)
         }
         val action = result.nextAction
@@ -80,6 +94,7 @@ object EquivalenceJson {
             .put("ok", true).put("format", FORMAT).put("available", true)
             .put("index", num(result.index))
             .put("coverage", result.coverage)
+            .put("judgedUsage", result.judgedUsage)
             .put("provisional", result.provisional)
             .put(
                 "nextAction",

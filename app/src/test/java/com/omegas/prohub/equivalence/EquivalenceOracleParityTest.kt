@@ -92,8 +92,10 @@ class EquivalenceOracleParityTest {
                 close("$name ponto $i tolerance", p.getDouble("tolerance"), q.tolerance, 1e-6)
                 close("$name ponto $i usage", p.getDouble("usage"), q.usage, 1e-9)
                 assertEquals("$name ponto $i samples", p.getInt("samples"), q.samples)
+                assertEquals("$name ponto $i episodes", p.getInt("episodes"), q.episodes)
             }
             close("$name index", optNumber(py, "index"), kt.index, 1e-9)
+            close("$name judgedUsage", py.getDouble("judgedUsage"), kt.judgedUsage, 1e-9)
             assertEquals("$name coverage", py.getInt("coverage"), kt.coverage)
             println("PARITY $name ref=$refSeq k=$kSeq index=${kt.index} coverage=${kt.coverage} OK")
         }

@@ -123,7 +123,8 @@ class EcuReferenceScenarioTest {
                 assertTrue("faixa ${a.getDouble("fromMs")}–${a.getDouble("toMs")} própria=%.3f ECU=%.3f".format(a.getDouble("ratio"), b.getDouble("ratio")), diff < 0.06)
             }
         }
-        assertTrue("pelo menos 3 faixas comparáveis (foram $compared)", compared >= 3)
+        // A janela estável recusa ms que pula > 10%: menos leituras por faixa, então menos faixas passam de 12 pares.
+        assertTrue("pelo menos 2 faixas comparáveis (foram $compared)", compared >= 2)
     }
 
     private fun monitor(count: Int?, max: Int? = 3) = JSONObject()
