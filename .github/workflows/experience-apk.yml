@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 'cdd9bf3afe7ff8cf031af947fc6b10d1ff37adb7'
+          ref: '0fac72dae25b9fa0d08050c6ecc5bf4ecfc4264a'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -34,7 +34,7 @@ jobs:
           test -e /dev/kvm
       - name: Exercise real WebView at 1280x720
         env:
-          OMEGAS_SOURCE_SHA: 'cdd9bf3afe7ff8cf031af947fc6b10d1ff37adb7'
+          OMEGAS_SOURCE_SHA: '0fac72dae25b9fa0d08050c6ecc5bf4ecfc4264a'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
