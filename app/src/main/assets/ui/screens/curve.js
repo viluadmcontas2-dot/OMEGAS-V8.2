@@ -590,8 +590,16 @@
       if (this.pointHost !== host) {
         this.pointHost = host;
         host.addEventListener('click', event => {
-          const point = event.target.closest('[data-curve-index]');
-          if (point) this.selectPoint(Number(point.dataset.curveIndex));
+          const hits = Array.from(host.querySelectorAll('.curve-point-hit'));
+          if (!hits.length) return;
+          // O ponto mais perto do toque (em x e y) ganha: com 30 pontos os círculos de 48 px se encostam.
+          let best = null; let bestD = Infinity;
+          hits.forEach(node => {
+            const box = node.getBoundingClientRect();
+            const d = Math.hypot(event.clientX - (box.left + box.width / 2), (event.clientY - (box.top + box.height / 2)) * 0.5);
+            if (d < bestD) { bestD = d; best = node; }
+          });
+          if (best && bestD <= 40) this.selectPoint(Number(best.dataset.curveIndex));
         });
         host.addEventListener('keydown', event => {
           const point = event.target.closest('[data-curve-index]');

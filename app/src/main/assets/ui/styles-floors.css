@@ -5,7 +5,7 @@ html body button:not(.map-k-cell):not(.map-axis-header),
 html body [role="tab"],
 html body summary,
 html body select,
-html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.input-lg) {
   min-height: var(--btn-h) !important;
   font-size: var(--btn-font) !important;
 }

@@ -114,7 +114,7 @@
       if (this.host) {
         // Trava de segurança (saída do modo de gravação não confirmada): um toque, a ECU confirma a saída.
         this.host.innerHTML = result && result.safetyLocked === true
-          ? '<div class="map-empty-state"><b>Mapa K bloqueado por segurança</b><span>A saída do modo de gravação não foi confirmada. Toque para a ECU confirmar a saída.</span><button id="mapReleaseButton" type="button" class="primary" style="min-height:76px;min-width:300px;font-size:24px">Liberar Mapa K</button></div>'
+          ? '<div class="map-empty-state"><b>Mapa K bloqueado por segurança</b><span>A ECU ainda não confirmou a saída da gravação. Toque em Liberar Mapa K.</span><button id="mapReleaseButton" type="button" class="primary btn-primary map-release">Liberar Mapa K</button></div>'
           : '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
         document.getElementById('mapReleaseButton')?.addEventListener('click', () => this.releaseInsertion());
       }

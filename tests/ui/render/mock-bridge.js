@@ -114,6 +114,7 @@
     return { ok: true, grid: { rows: 12, columns: 12, petrolBins: PB, rpmBins: RB }, cells, petrol: cells.map(x => ({ ...x, fuel: 'PETROL' })), cng: cells.map(x => ({ ...x, fuel: 'CNG', epoch: 1 })), comparisons: cells.map((x, i) => ({ ...x, errorPercent: ((i % 9) - 4) * 0.9 })), assistedCalibration: { comparisonCount: cells.length, uniqueVisitCount: 18, petrolCurve: [], cngCurve: [], kFactorSuggestions: [], reconciliation: { pending_cng_visits: 0 } }, current: { fuel: 'GNV', rpm: 2100, petrolMs: 4.2, mapBar: 0.56, cell: { row: 4, column: 3 } } }; };
 
   const native = {
+    previewKFactorPoint: (i, t) => { const p = curPts()[i]; const raw = Math.round(Number(t) * 16384); return J({ ok: true, index: Number(i), petrolMs: p.petrolMs, currentFactor: p.factor, targetFactor: Number(t), currentRaw: p.factorRaw, targetRaw: raw, deltaPercent: (Number(t) / p.factor - 1) * 100, changed: raw !== p.factorRaw }); },
     getReleaseIdentity: () => J({ product: 'OMEGAS', generation: 'V8', versionName: 'mock' }),
     getStatus: () => J(status()), getPresentSnapshot: () => J(present()),
     getPresentSnapshotIfChanged: last => { const p = present(); const seq = p.data && p.data.sequence != null ? p.data.sequence : p.revision; if (Number(last) === seq) { window.__ifc.same++; return J({ ok: true, changed: false, revision: p.revision, telemetryAgeMs: 60 }); } window.__ifc.changed++; return J(Object.assign({ changed: true }, p)); },
@@ -124,7 +125,7 @@
     listRecordedSessions: () => J([{ id: 'session_2026-10-01_13-01-22', reason: 'SINTÉTICO · uso na estrada', bytes: 3400000, durationMs: 1260000, active: false, cngTicks: 640, petrolTicks: 210, index: { start: 0.41, end: 0.78 }, blackouts: 1 }, { id: 'session_2026-09-30_09-31-05', reason: 'SINTÉTICO · manual', bytes: 2100000, durationMs: 900000, active: false, cngTicks: 120, petrolTicks: 300, indexStart: 0.2, indexEnd: 0.41 }, { id: 'session_2026-09-29_18-00-00', reason: 'SINTÉTICO · gravando', bytes: 800000, durationMs: 300000, active: true, cngTicks: 0, petrolTicks: 90 }]),
     getLogs: () => J([]), startKMapRead: () => J({ ok: true, started: true, state: 'READING' }),
     getKMapReadResult: () => J({ ok: true, state: 'COMPLETED', rows: mapRows, extraRow: Array(12).fill(0), axes: { petrolBins: PB, rpmBins: RB }, hash: 'synthetic', writableCells: 144, sessionConfirmed: true }),
-    previewKFactorPoint: () => J({ ok: false }), connectUsb: () => 'true', disconnectUsb: () => 'true', runEngineSelfTests: () => J({ ok: true }),
+    connectUsb: () => 'true', disconnectUsb: () => 'true', runEngineSelfTests: () => J({ ok: true }),
   };
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),

@@ -1,0 +1,119 @@
+/* OMEGAS · Agora, Mapa K e Curva K (refino white premium sobre as proporções da Platina original).
+   Só tokens; carrega depois de styles-floors.css. */
+
+/* ---------- Agora: 4 valores iguais, cabeçalho curto, faixa de situação embaixo ---------- */
+.screen-host .multimedia-now-screen { padding: var(--space-4) var(--space-5); }
+.now-dashboard-shell { grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--space-3); }
+.now-head small { display: block; color: var(--accent-strong); font-size: 16px; font-weight: 800; letter-spacing: .08em; }
+.now-head h2 { margin: 2px 0 0; font-size: 26px; line-height: 1.1; letter-spacing: -.01em; }
+.now-tile-grid { gap: var(--space-3); }
+.now-tile { padding: var(--space-3) var(--space-5); border-radius: var(--radius-l); box-shadow: var(--shadow-1); gap: var(--space-1); }
+.now-tile small { font-size: var(--text-critical); letter-spacing: .06em; color: var(--muted); }
+.now-tile b { font-size: clamp(64px, 11vh, 92px); letter-spacing: -.035em; gap: var(--space-3); }
+.now-tile[data-tile="fuel"] b { font-size: clamp(56px, 10vh, 84px); }
+.now-tile[data-tile="petrol"] small { color: var(--petrol); }
+.now-tile[data-tile="fuel"] b { color: var(--cng); }
+.now-tile b em { font-size: 28px; color: var(--muted); }
+.now-session-card { border-radius: var(--radius); box-shadow: var(--shadow-1); }
+.now-session-card[data-level="ok"] { background: var(--ok-soft); border-color: var(--line-soft); }
+.now-session-card[data-level="warning"] { background: var(--warn-soft); }
+.now-session-card[data-level="critical"] { background: var(--danger-soft); }
+.now-session-copy b { font-size: var(--text-critical); }
+.now-session-copy p { font-size: 18px; }
+
+/* ---------- Campo de valor branco (Mapa K e Curva K) ---------- */
+.value-field { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-4); background: var(--field-bg); border: 1px solid var(--field-border); border-radius: var(--radius); box-shadow: var(--shadow-1); min-height: 64px; }
+.value-field:focus-within { border-color: var(--accent); box-shadow: var(--focus-ring); }
+html body #mapAdjustmentValue, html body #curveTargetFactor {
+  flex: 1 1 auto; min-width: 0; width: 100%; height: 60px; min-height: 60px; padding: 0; border: 0; border-radius: 0; background-color: var(--field-bg); box-shadow: none;
+  font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -.01em;
+}
+html body #mapAdjustmentValue:focus, html body #curveTargetFactor:focus { box-shadow: none; }
+.value-field .map-adjust-unit { color: var(--muted); font-size: 20px; font-weight: 700; }
+
+/* ---------- Botões −/+ : brancos, pill suave, sinal em tinta forte ---------- */
+.step-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); }
+html body .step-row > button { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); color: var(--accent-strong); font-size: 20px; font-weight: 800; box-shadow: var(--shadow-1); padding: 0; min-width: 0; }
+html body .step-row > button:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-line); }
+
+/* ---------- Mapa K: grade inteira, rolagem vertical da rota, painel fixo ao lado ---------- */
+.screen.map-screen { padding: var(--space-3) var(--space-4); }
+.app-shell .map-screen .map-workspace { height: auto; min-height: 0; align-items: start; grid-template-columns: minmax(0, 1fr) 330px; gap: var(--space-3); }
+.map-screen .map-surface { overflow: visible; padding: var(--space-3); min-height: 0; border-radius: var(--radius-l); }
+.map-screen .map-grid-host { flex: 0 0 auto; }
+.map-head { display: flex; align-items: center; gap: var(--space-4); padding: 0 var(--space-1) var(--space-3); }
+.map-head-copy { flex: 1 1 auto; min-width: 0; }
+.map-head h2 { margin: 0; font-size: 26px; line-height: 1.1; }
+.map-head .source-status { margin: 2px 0 0; padding: 0; background: none; border: 0; min-height: 0; color: var(--muted); font-size: 18px; font-weight: 600; display: block; }
+.map-head .map-live-condition { min-width: 0; text-align: right; }
+.map-head .map-live-condition small { display: block; color: var(--dim); font-size: 16px; font-weight: 700; letter-spacing: .05em; }
+.map-head .map-live-condition b { display: block; margin: 0; font-size: var(--text-critical); color: var(--ok); }
+.map-screen .map-k-grid-with-axes { flex: 0 0 auto; grid-template-columns: 84px repeat(12, minmax(0, 1fr)); grid-template-rows: 44px repeat(12, 54px); gap: var(--space-1); }
+.map-screen .map-k-cell { border-radius: var(--radius-s); }
+.map-screen .map-k-cell b { font-size: 22px; font-weight: 700; color: var(--text); }
+.map-screen .map-ms-header b { font-size: 19px; color: var(--accent-strong); }
+.map-screen .map-rpm-header b { font-size: 17px; }
+.map-screen .map-editor-panel { position: sticky; top: 0; overflow: visible; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-l); }
+.map-screen .editor-heading h3 { font-size: 26px; }
+.map-screen .editor-heading small { font-size: 18px; }
+.map-pick { display: flex; gap: var(--space-1); }
+.map-pick button { min-width: 0; padding: 0 var(--space-3); color: var(--accent-strong); }
+.map-screen .map-safety-line { font-size: 16px; color: var(--dim); }
+.map-screen #mapReviewButton { width: 100%; font-size: 20px; }
+.map-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); min-height: 320px; text-align: center; padding: var(--space-5); background: var(--warn-soft); border: 1px solid var(--line-soft); border-radius: var(--radius-l); }
+.map-empty-state b { font-size: 26px; }
+.map-empty-state span { color: var(--muted); font-size: 20px; max-width: 520px; }
+.map-release { min-width: 280px; }
+
+/* ---------- Curva K: gráfico primeiro e grande; nada rola na horizontal ---------- */
+.screen.curve-screen { padding: var(--space-3) var(--space-4); gap: var(--space-2); }
+.curve-screen .page-intro.curve-head { display: flex; align-items: center; gap: var(--space-4); padding: 0; min-height: 0; }
+.curve-screen .curve-head .curve-title { flex: 1 1 auto; }
+.curve-screen .curve-head .curve-title h2 { font-size: 26px; }
+.curve-screen .curve-head .source-status { display: block; margin: 2px 0 0; padding: 0; background: none; border: 0; min-height: 0; color: var(--muted); font-size: 18px; font-weight: 600; }
+.curve-screen .route-actions-stack { display: flex; align-items: center; gap: var(--space-3); }
+.curve-screen .curve-view-stack { flex: 1 0 auto; min-height: 0; }
+.curve-screen .curve-view { height: auto; }
+.curve-screen .curve-workspace { height: auto; min-height: 0; align-items: stretch; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-3); }
+.curve-screen .curve-surface { min-height: calc(var(--chart-min-h) + 64px); border-radius: var(--radius-l); padding: var(--space-3); }
+.curve-screen .curve-chart { flex: 1 1 auto; min-height: var(--chart-min-h); }
+.curve-screen .curve-legend { font-size: 18px; }
+.curve-screen .curve-axis { font-size: 18px; text-align: center; color: var(--muted); }
+.curve-screen .curve-point { stroke-width: 2; }
+.curve-screen .curve-point.active { stroke: var(--accent-strong); }
+.curve-screen .curve-line.actual { stroke: var(--dim); stroke-dasharray: 5 5; fill: none; }
+.curve-screen .curve-line.proposal { stroke: var(--accent); stroke-width: 3; fill: none; }
+.curve-screen .curve-editor-panel { overflow: visible; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-l); }
+.curve-screen .curve-point-head h3 { font-size: 24px; }
+.curve-screen .curve-point-head small { font-size: 16px; }
+.curve-screen .curve-point-head .current-value { background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: var(--radius-s); text-align: center; }
+.curve-screen .normalized-preview { font-size: 18px; color: var(--muted); background: none; padding: 0; }
+.curve-screen .proposal-list { max-height: 150px; overflow-x: hidden; overflow-y: auto; }
+.curve-screen .curve-editor-panel > #curveReviewButton { position: static; width: 100%; font-size: 20px; }
+.curve-photos { margin-top: var(--space-2); border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); }
+.curve-photos > summary { display: flex; align-items: center; padding: 0 var(--space-4); border: 0; box-shadow: none; background: transparent; color: var(--muted); cursor: pointer; }
+.curve-photos .curve-backup-bar { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0 var(--space-4) var(--space-3); }
+.curve-photos .curve-backup-bar select { flex: 1 1 220px; min-width: 0; }
+.curve-photos .curve-backup-status { flex: 1 1 100%; color: var(--dim); font-size: 16px; }
+
+/* ---------- ajustes após primeira renderização ---------- */
+.map-screen .editor-heading { flex-direction: column; align-items: stretch; gap: var(--space-1); }
+.map-screen .editor-heading > div:first-child { display: flex; flex-direction: column-reverse; }
+.map-screen .editor-heading small { letter-spacing: 0; text-transform: none; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-screen .editor-heading h3 { white-space: nowrap; }
+.map-pick { justify-content: flex-start; margin-left: calc(var(--space-3) * -1); }
+.curve-screen .curve-view-stack { flex: 0 0 auto; }
+.curve-screen .curve-chart { min-height: max(var(--chart-min-h), 56vh); }
+.curve-legend .line.actual { background: var(--dim); }
+.curve-legend .line.proposal { background: var(--accent); height: 3px; }
+
+.map-screen .map-surface .map-k-grid-with-axes { grid-template-columns: 76px repeat(12, minmax(0, 1fr)); grid-template-rows: 44px repeat(12, 50px); gap: 3px; }
+.map-screen .map-surface .map-rpm-header b { font-size: 15px; letter-spacing: -.02em; }
+.map-screen .map-surface .map-k-cell b { font-size: 21px; }
+.map-screen .map-surface .map-axis-corner small, .map-screen .map-surface .map-axis-corner b { font-size: 14px; }
+.app-shell .map-screen .map-workspace { grid-template-columns: minmax(0, 1fr) 320px; }
+.curve-screen .route-actions-stack { flex-direction: row; flex-wrap: nowrap; }
+.curve-screen .curve-head { flex-wrap: nowrap; }
+.curve-screen .curve-point-head h3 { font-size: 22px; }
+.curve-screen .curve-workspace { grid-template-columns: minmax(0, 1fr) 320px; }
+.curve-screen .curve-chart { min-height: max(var(--chart-min-h), 50vh); }

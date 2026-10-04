@@ -50,6 +50,7 @@
       }
       this.root.innerHTML = `
         <div class="now-dashboard-shell">
+          <header class="now-head"><small>AGORA</small><h2>O que o motor está fazendo</h2></header>
           <section class="now-tile-grid" aria-label="Leitura principal">
             <article class="now-tile" data-tile="petrol"><small>INJEÇÃO</small><b><span id="dashHeroPetrol">—</span><em>ms</em></b></article>
             <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">—</span><em>rpm</em></b></article>
