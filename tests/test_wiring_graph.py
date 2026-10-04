@@ -118,7 +118,7 @@ class DefectsDocumented(unittest.TestCase):
         ids = set(__import__("re").findall(r"defect\('(DEFECT-\d+)'", registry))
         for text in list(ALLOW.get("defects", {}).values()) + list(ALLOW.get("consumer_defects", {}).values()):
             ids |= set(__import__("re").findall(r"DEFECT-\d+", text))
-        self.assertGreaterEqual(len(ids), 15)
+        self.assertGreaterEqual(len(ids), 8)
         missing = sorted(i for i in ids if f"| {i} |" not in doc)
         self.assertEqual(missing, [], "defeito sem linha em tests/wiring/DEFECTS.md: %s" % missing)
 

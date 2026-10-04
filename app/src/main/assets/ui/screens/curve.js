@@ -60,12 +60,20 @@
       // Digitou o K e saiu do campo (ou Enter): o ponto já fica preparado. Não existe um segundo botão "Preparar".
       const target = document.getElementById('curveTargetFactor');
       target?.addEventListener('change', () => this.prepareActivePoint());
+      // Enquanto digita, o botão principal já se oferece para gravar o K digitado (um toque prepara e grava).
+      target?.addEventListener('input', () => this.renderProposalList());
       target?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); this.prepareActivePoint(); } });
       document.querySelectorAll('[data-curve-view]').forEach(button => button.addEventListener('click', () => this.setView(button.dataset.curveView || 'editor')));
       document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeActive(Number(button.dataset.curveNudge) || 0)));
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
         this.cancelRestorePreview('Desfazer descartado · nada foi enviado à ECU');
-        this.proposals.clear(); this.renderChart(); this.renderProposalList();
+        this.proposals.clear();
+        // O campo K volta ao valor atual do ponto: "Limpar" nunca deixa um K digitado esperando para ser gravado.
+        const active = this.points().find(item => Number(item.index) === this.activeIndex);
+        const input = document.getElementById('curveTargetFactor');
+        if (input && active) input.value = kText(active.factor);
+        text('curveTargetNormalized', 'Prévia calculada pelo app');
+        this.renderChart(); this.renderProposalList();
       });
       document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
       document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
@@ -639,6 +647,14 @@
       host.innerHTML = `<div><span>Ponto ${Number(index) + 1} · ${fmt(current.petrolMs, 2)} ms</span><b>K atual</b><small>${D.kValue(current.factor)}</small></div><div><span>proposta</span><b>${D.kValue(target)}</b></div>`;
     }
 
+    /** K digitado, ainda não preparado, diferente do que a tela já mostra para o ponto ativo. */
+    typedPending() {
+      if (this.restoreContext || this.activeIndex === null || this.reading || this.writing) return false;
+      const typed = parseK(document.getElementById('curveTargetFactor')?.value);
+      const shown = finite(this.proposals.get(this.activeIndex)?.targetFactor ?? this.points().find(item => Number(item.index) === this.activeIndex)?.factor);
+      return typed !== null && shown !== null && Math.abs(typed - shown) >= 0.0005;
+    }
+
     renderProposalList() {
       const host = document.getElementById('curveProposalList');
       if (!host) return;
@@ -654,8 +670,9 @@
         // UM só botão primário: os botões − e + (e o campo K) já preparam o ponto; aqui só se grava.
         let label;
         let disabled;
+        const count = items.length + (this.typedPending() && !this.proposals.has(this.activeIndex) ? 1 : 0);
         if (this.restoreContext) { disabled = true; label = 'Desfazer pronto no botão acima'; }
-        else if (items.length) { disabled = false; label = `Gravar ${D.plural(items.length, 'ponto', 'pontos')} na ECU`; }
+        else if (count) { disabled = false; label = `Gravar ${D.plural(count, 'ponto', 'pontos')} na ECU`; }
         else { disabled = true; label = DISABLED_REASON; }
         review.disabled = disabled;
         if (review.textContent !== label) review.textContent = label;
@@ -667,9 +684,7 @@
       // Toque duplo com a ECU ocupada: a segunda chamada não envia a escrita de novo.
       if (this.writing || this.reading || this.backupTask) return;
       // K digitado e ainda não preparado (o dono não saiu do campo): um toque só prepara e grava.
-      const typed = parseK(document.getElementById('curveTargetFactor')?.value);
-      const shown = finite(this.proposals.get(this.activeIndex)?.targetFactor ?? this.points().find(item => Number(item.index) === this.activeIndex)?.factor);
-      if (!this.restoreContext && this.activeIndex !== null && typed !== null && shown !== null && Math.abs(typed - shown) >= 0.0005) this.prepareActivePoint();
+      if (this.typedPending()) this.prepareActivePoint();
       const points = [...this.proposals.values()].map(item => ({
         index: Number(item.index),
         currentRaw: Number(item.currentRaw),

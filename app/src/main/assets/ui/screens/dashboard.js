@@ -26,7 +26,7 @@
   /**
    * Agora é para dirigir: 4 valores de peso igual (injeção em ms, RPM, MAP e combustível) lidos de braço esticado.
    * Frescor numa regra só (LiveStore.read): até 1,5 s normal; de 1,5 a 3 s cinza + "atrasado"; acima de 3 s os números
-   * viram "—" e o cartão de baixo diz "Sem dados há N s · confira o cabo". Valor velho nunca finge ser de agora.
+   * viram "—" (o nível dos gases, level_raw, segue a mesma regra) e o cartão de baixo diz "Sem dados há N s · confira o cabo". Valor velho nunca finge ser de agora.
    */
   class DashboardScreen {
     constructor() {

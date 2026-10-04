@@ -182,11 +182,11 @@
 
       host.innerHTML = `
         <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
-          <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span>${serviceHealthy ? 'OK' : 'ATENÇÃO'}</span></header>
+          <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span class="health-badge" data-healthy="${serviceHealthy ? 'true' : 'false'}">${serviceHealthy ? 'Tudo certo' : 'Atenção'}</span></header>
           <div class="background-health-grid">
             <span>ECU <b>${appStatus.usbConnected ? 'conectada' : 'desconectada'}</b></span>
             <span>Leitura <b>${appStatus.engineRunning ? 'ativa' : 'parada'}</b></span>
-            <span>Telemetria <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
+            <span>Último dado <b>${appStatus.usbConnected === true ? rules().ageSinceMs(appStatus.directTelemetryAgeMs) : 'sem dados'}</b></span>
           </div>
           <div class="tool-power-rows">
             <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
@@ -197,8 +197,8 @@
         <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
           <summary>Retenção das sessões</summary>
           <div class="diagnostic-settings-grid">
-            <label><span>Telemetria salva</span><select data-session-telemetry>
-              ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
+            <label><span>Gravar a cada</span><select data-session-telemetry>
+              ${[...new Set([250, 500, 1000, 2000, 5000, ...(Number.isFinite(Number(settings.telemetryEveryMs)) && Number(settings.telemetryEveryMs) > 0 ? [Number(settings.telemetryEveryMs)] : [])])].sort((a, b) => a - b).map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
             </select></label>
             <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${settingNumber(settings.maxSessionMb || status.limitMb, 256)}"><small>MB</small></label>
             <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, settingNumber(settings.keepSessions, 20))}"></label>

@@ -48,7 +48,8 @@
       const shown = reading.level === 'fresh' || reading.level === 'late';
       const late = reading.level === 'late';
       const fuel = shown ? rules.fuelLabel(reading.fuel || status.fuelState) : '—';
-      this.fact('ecu', link.online ? 'ONLINE' : link.label.toUpperCase(), link.online ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
+      const ecuOnline = link.online && status.engineReady !== false;
+      this.fact('ecu', ecuOnline ? 'ONLINE' : link.online ? 'LENDO' : link.label.toUpperCase(), ecuOnline ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
       this.fact('fuel', fuel, late ? 'late' : fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
       this.fact('rpm', rules.rpm(reading.rpm), reading.rpm === null ? 'unknown' : late ? 'late' : 'measured');
       this.fact('petrol', rules.msUnit(reading.petrolMs), reading.petrolMs === null ? 'unknown' : late ? 'late' : 'measured');

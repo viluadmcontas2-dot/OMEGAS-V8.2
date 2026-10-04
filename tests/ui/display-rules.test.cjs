@@ -104,14 +104,14 @@ test('AutoCal: duração, regiões e zonas desconhecidas aparecem como "—" na 
   const ui = load('screens/autocal-cockpit.js');
   const unknown = ui.AutoCalUxModel.sessionNarrative({ recording: true });
   assert.match(unknown.detail, /^— min/);
-  assert.match(unknown.detail, /— regiões correlacionadas/);
+  assert.match(unknown.detail, /— regiões com ajuste confirmado/);
   assert.match(unknown.detail, /GNV —\/4/);
   const known = ui.AutoCalUxModel.sessionNarrative({
     recording: true, durationMs: 2_520_000,
     semanticSummary: { autocal: { gasZones: 0, correlatedRegions: [] } },
   });
   assert.match(known.detail, /42 min/);
-  assert.match(known.detail, /0 regiões correlacionadas/, 'zero medido continua zero');
+  assert.match(known.detail, /0 regiões com ajuste confirmado/, 'zero medido continua zero');
   assert.match(known.detail, /GNV 0\/4/);
 });
 

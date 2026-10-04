@@ -74,7 +74,12 @@ test('M6 selecionar 1, 16 e todas as células: contagem certa, Gravar liga/desli
   const app = mapApp();
   selectCells(app, [[0, 0]]);
   assert.match(selCount(app), /^1 selecionada$/);
+  // sem ajuste digitado nada mudaria: o botão diz isso (não "Gravar 1 célula" seguido de erro)
+  assert.equal(review(app).hasAttribute('disabled'), true);
+  assert.equal(review(app).textContent, 'Digite o ajuste para mudar o K');
+  setAdjust(app, 'delta', 5);
   assert.equal(review(app).hasAttribute('disabled'), false);
+  assert.equal(review(app).textContent, 'Gravar 1 célula');
   const sixteen = []; for (let r = 4; r < 8; r += 1) for (let c = 2; c < 6; c += 1) sixteen.push([r, c]);
   selectCells(app, sixteen.slice(0, 15));
   assert.match(selCount(app), /^16 selecionadas$/);
@@ -207,7 +212,7 @@ test('M6 Reler ECU depois de falha parcial atualiza a grade', () => {
   assert.ok(!hasClass(app, 'has-result'));
 });
 
-test('M6 toque duplo em Gravar (ECU ocupada): exatamente UMA escrita', todo('DEFECT-17'), () => {
+test('M6 toque duplo em Gravar (ECU ocupada): exatamente UMA escrita', () => {
   const app = mapApp({ opPolls: 8 });
   app.settle(12);
   selectCells(app, THREE); setAdjust(app, 'target', 150);

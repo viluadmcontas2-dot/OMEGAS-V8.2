@@ -53,3 +53,7 @@ Mutantes: 34, 32 mortos (94%). Sobreviventes equivalentes: `curve-listener-regis
 ## Final (2026-10-04)
 
 Decididos e corrigidos (allowlist sem `defects`/`consumer_defects` de 2,3,4,5,6,8): 2 = motivo humano de bloqueio em `DisplayRules.failureText`; 3 = linha discreta no AutoCal; 4 e 5 = Ferramentas > Detalhes técnicos; 6 = `typicalBands` deixou de ser emitido; 8 = `indexStart/indexEnd` emitidos pelo livro semântico da sessão.
+
+## Fix UI (2026-10-04)
+
+Corrigidos e removidos do registro de probes (viraram testes estritos de regressão em `tests/ui/fix-curve-usage.test.cjs` e `tests/ui/wiring-m5-curve.test.cjs`/`wiring-m6-map.test.cjs`, sem `todo`): 11 (lista e botão obsoletos depois de gravar), 12 (nudge/Preparar mortos sem curva lida; o botão "Preparar ponto" deixou de existir: os botões − e + e o campo K já preparam e há UM botão primário), 13 (curva antiga depois de falha: agora o desenho some, a fonte diz "ECU não confirmada" e os ajustes ficam desativados até reler), 17 (guarda de ocupado do Mapa K).

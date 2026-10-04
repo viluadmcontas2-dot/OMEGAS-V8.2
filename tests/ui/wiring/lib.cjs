@@ -16,9 +16,6 @@ const KNOWN_FUZZ = [
   ['DEFECT-21', /getSessionRecorderStatus\.settings\.(maxSessionMb|keepSessions|telemetryEveryMs)/],
 ];
 const KNOWN_FROZEN = [
-  ['DEFECT-11', /#curveReviewButton/],
-  ['DEFECT-12', /data-curve-nudge|#curvePreparePoint/],
-  ['DEFECT-13', /circle\[data-curve-index/],
 ];
 function errorsSince(app, from = 0) {
   return app.errors.slice(from).filter(e => !KNOWN_ERRORS.some(([id, rx]) => rx.test(e) && registry.active(id)));

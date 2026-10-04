@@ -42,6 +42,8 @@
     };
   }
 
+  const MAX_ROWS = 20;
+
   class SessionsScreen {
     constructor(store, api) {
       this.store = store;
@@ -59,12 +61,20 @@
       const status = state.sessionStatus || {};
       const listError = !Array.isArray(state.sessions) && state.sessionsError ? String(state.sessionsError) : '';
       const loading = !Array.isArray(state.sessions) && !listError;
-      const rows = (Array.isArray(state.sessions) ? state.sessions : []).slice(0, 20).map(sessionRow);
+      const all = Array.isArray(state.sessions) ? state.sessions : [];
+      const rows = all.slice(0, MAX_ROWS).map(sessionRow);
       const recording = status.recording === true;
-      const signature = JSON.stringify([recording, status.durationMs && Math.round(status.durationMs / 10000), loading, listError, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index])]);
+      // Enquanto grava, a duração nunca é "—": usa a da ponte; sem ela, a da sessão em andamento; sem ela, o tempo desde que a tela viu a gravação começar.
+      if (!recording) this.recordingSince = 0;
+      else if (!this.recordingSince) this.recordingSince = Date.now();
+      const activeRow = rows.find(row => row.active);
+      const recordingMs = !recording ? null : (finite(status.durationMs) ?? (activeRow ? activeRow.durationMs : null) ?? Math.max(0, Date.now() - this.recordingSince));
+      const signature = JSON.stringify([recording, recordingMs !== null && Math.round(recordingMs / 10000), finite(status.events), loading, listError, all.length, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index])]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       const R = rules();
+      const more = all.length - rows.length;
+      const durationShown = recording ? R.durationLabel(recordingMs) : R.durationLabel(status.durationMs);
       const list = rows.length ? rows.map(row => {
         const date = R.sessionDate(row.raw);
         const indexText = row.index ? `Índice ${percentText(row.index.start)} → ${percentText(row.index.end)}` : '';
@@ -89,9 +99,10 @@
       this.host.innerHTML = `
         <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
           <header><div><small>AGORA</small><h3>${recording ? 'Gravando esta sessão' : 'Começa sozinha ao conectar a ECU'}</h3></div><span>${recording ? 'GRAVANDO' : 'AUTOMÁTICA'}</span></header>
-          <div class="recorder-metrics"><span><b>${R.durationLabel(status.durationMs)}</b> duração</span><span><b>${R.megabytesLabel(finite(status.megabytes))}</b> usados</span><span><b>${R.count(status.events)}</b> eventos</span></div>
+          <div class="recorder-metrics"><span><b>${durationShown}</b> duração</span><span><b>${R.megabytesLabel(finite(status.megabytes))}</b> usados</span><span><b>${R.fmt(status.events, 0)}</b> eventos</span></div>
         </section>
-        <section class="recorded-session-list" aria-label="Sessões gravadas">${list}</section>`;
+        <section class="recorded-session-list" aria-label="Sessões gravadas">${list}</section>
+        ${more > 0 ? `<p class="empty-copy" data-sessions-truncated>Mostrando as ${R.fmt(rows.length, 0)} mais recentes de ${R.fmt(all.length, 0)}. As mais antigas continuam salvas em Download/Omegas.</p>` : ''}`;
     }
   }
 

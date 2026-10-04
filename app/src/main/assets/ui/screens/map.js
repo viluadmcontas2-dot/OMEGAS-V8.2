@@ -321,8 +321,14 @@
       text('mapSelectionCount', D().plural(count, 'selecionada', 'selecionadas'));
       const button = document.getElementById('mapReviewButton');
       if (button) {
-        button.disabled = count === 0;
-        button.textContent = count ? `Gravar ${D().plural(count, 'célula', 'células')}` : 'Selecione células';
+        // O botão conta as células que MUDAM de verdade (a prévia do Kotlin), não só as selecionadas: nunca "Gravar 144 células"
+        // junto com "a alteração não muda nenhuma célula".
+        let changed = 0;
+        if (count) { try { changed = this.editor.buildReview().count; } catch (_) { changed = 0; } }
+        button.disabled = changed === 0;
+        button.textContent = !count ? 'Selecione células'
+          : changed === 0 ? 'Digite o ajuste para mudar o K'
+            : `Gravar ${D().plural(changed, 'célula', 'células')}`;
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();

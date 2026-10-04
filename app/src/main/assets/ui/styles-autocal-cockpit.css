@@ -241,11 +241,11 @@
 /* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */
 .autocal-zone-meter { display: flex; align-items: center; gap: 8px; margin: 0; }
 .autocal-zone-meter > div { display: flex; align-items: center; gap: 5px; }
-.autocal-zone-fuel { color: var(--tone-90a2b4); font-size: 9px; font-weight: 800; letter-spacing: .06em; }
+.autocal-zone-fuel { color: var(--tone-90a2b4); font-size: var(--text-critical); font-weight: 800; letter-spacing: .06em; }
 .autocal-zone-cells { display: flex; gap: 3px; }
-.autocal-zone-cell { position: relative; display: grid; grid-template-rows: auto auto; place-items: center; min-width: 34px; min-height: 30px; padding: 3px 4px; border: 1px solid rgba(var(--rgb-255-255-255),.10); border-radius: 7px; background: var(--veil-025); }
-.autocal-zone-cell b { color: var(--tone-dbe5ef); font-size: 10px; line-height: 1; }
-.autocal-zone-cell small { margin-top: 2px; color: var(--tone-7f90a2); font-size: 7px; font-weight: 900; letter-spacing: .04em; line-height: 1; }
+.autocal-zone-cell { position: relative; display: grid; grid-template-rows: auto auto; place-items: center; min-width: 76px; min-height: 64px; padding: 4px 6px; border: 1px solid rgba(var(--rgb-255-255-255),.10); border-radius: 7px; background: var(--veil-025); }
+.autocal-zone-cell b { color: var(--tone-dbe5ef); font-size: var(--text-critical); line-height: 1; }
+.autocal-zone-cell small { margin-top: 2px; color: var(--tone-7f90a2); font-size: var(--text-critical); font-weight: 900; letter-spacing: .04em; line-height: 1; }
 .autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] { border-color: rgba(var(--rgb-120-183-255),.52); background: rgba(var(--rgb-120-183-255),.13); }
 .autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] small { color: var(--tone-8dc5ff); }
 .autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] { border-color: rgba(var(--rgb-93-211-158),.52); background: rgba(var(--rgb-93-211-158),.13); }
@@ -253,7 +253,7 @@
 .autocal-zone-cell[data-state="missing"] { border-color: rgba(var(--rgb-240-196-92),.42); border-style: dashed; background: rgba(var(--rgb-240-196-92),.06); }
 .autocal-zone-cell[data-state="missing"] small { color: var(--tone-f0c45c); }
 .autocal-zone-cell[data-current="true"] { outline: 2px solid var(--tone-19daf4); outline-offset: 1px; box-shadow: 0 0 0 3px rgba(var(--rgb-25-218-244),.10); }
-.autocal-zone-cell[data-current="true"]::after { content: 'AGORA'; position: absolute; top: -8px; right: -3px; padding: 1px 3px; border-radius: 4px; background: var(--tone-19daf4); color: var(--tone-061019); font-size: 6px; font-weight: 950; letter-spacing: .04em; }
+.autocal-zone-cell[data-current="true"]::after { content: 'AGORA'; position: absolute; top: -8px; right: -3px; padding: 1px 3px; border-radius: 4px; background: var(--tone-19daf4); color: var(--tone-061019); font-size: var(--text-critical); font-weight: 950; letter-spacing: .04em; }
 /* Preserve the 300px dominant plot while keeping AGORA visible at 1280x720. */
 .autocal-chart-inspector { position: static; width: auto; max-height: none; overflow: hidden; gap: 6px; padding: 3px 8px; line-height: 1.2; }
 .autocal-live-narrative { font-size: 13px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -340,14 +340,14 @@
 .autocal-session-actions button { min-height: 40px; padding: 0 10px; font-size: 11px; }
 .autocal-zone-card { display: grid; align-content: center; gap: 7px; padding: 10px 12px; }
 .autocal-secondary-stack .autocal-zone-meter { display: grid; gap: 7px; margin: 0; }
-.autocal-secondary-stack .autocal-zone-meter > div { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 8px; align-items: center; }
-.autocal-secondary-stack .autocal-zone-fuel { width: auto; font-size: 10px; }
+.autocal-secondary-stack .autocal-zone-meter > div { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 8px; align-items: center; }
+.autocal-secondary-stack .autocal-zone-fuel { width: auto; font-size: var(--text-critical); }
 .autocal-secondary-stack .autocal-zone-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.autocal-secondary-stack .autocal-zone-cell { min-width: 0; min-height: 34px; padding: 4px 5px; }
-.autocal-zone-card > #autocalZoneSummary { color: var(--tone-8fa3b6); font-size: 10px; }
+.autocal-secondary-stack .autocal-zone-cell { min-width: 0; min-height: 44px; padding: 4px 5px; }
+.autocal-zone-card > #autocalZoneSummary { color: var(--tone-8fa3b6); font-size: var(--text-critical); }
 .autocal-command-bar.autocal-secondary-card { display: grid; grid-template-columns: 1fr; gap: 7px; align-items: center; padding: 10px 12px; }
-.autocal-command-copy small { font-size: 9px; }
-.autocal-command-copy b { font-size: 13px; }
+.autocal-command-copy small { font-size: 18px; }
+.autocal-command-copy b { font-size: var(--text-critical); }
 .autocal-command-copy span { display: block; max-width: none; overflow: visible; font-size: 10px; text-overflow: clip; white-space: normal; }
 .autocal-technical-details.autocal-secondary-card { min-width: 0; }
 .autocal-technical-details > summary { min-height: 44px; padding: 0 12px; font-size: 11px; }
