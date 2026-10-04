@@ -148,6 +148,7 @@
     return { ok: true, grid: { rows: 12, columns: 12, petrolBins: PB, rpmBins: RB }, cells, petrol: cells.map(x => ({ ...x, fuel: 'PETROL' })), cng: cells.map(x => ({ ...x, fuel: 'CNG', epoch: 1 })), comparisons: cells.map((x, i) => ({ ...x, errorPercent: ((i % 9) - 4) * 0.9 })), assistedCalibration: { comparisonCount: cells.length, uniqueVisitCount: 18, petrolCurve: [], cngCurve: [], kFactorSuggestions: [], reconciliation: { pending_cng_visits: 0 } }, current: { fuel: 'GNV', rpm: 2100, petrolMs: 4.2, mapBar: 0.56, cell: { row: 4, column: 3 } } }; };
 
   const native = {
+    previewKFactorPoint: (i, t) => { const p = curPts()[i]; const raw = Math.round(Number(t) * 16384); return J({ ok: true, index: Number(i), petrolMs: p.petrolMs, currentFactor: p.factor, targetFactor: Number(t), currentRaw: p.factorRaw, targetRaw: raw, deltaPercent: (Number(t) / p.factor - 1) * 100, changed: raw !== p.factorRaw }); },
     getReleaseIdentity: () => J({ product: 'OMEGAS', generation: 'Platina', versionName: '8.2.0 (build 214)', engine: 'Motor V8' }),
     getStatus: () => J(status()), getPresentSnapshot: () => J(present()),
     getPresentSnapshotIfChanged: last => { const p = present(); const seq = p.data && p.data.sequence != null ? p.data.sequence : p.revision; if (Number(last) === seq) { window.__ifc.same++; return J({ ok: true, changed: false, revision: p.revision, telemetryAgeMs: 60 }); } window.__ifc.changed++; return J(Object.assign({ changed: true }, p)); },
@@ -164,7 +165,7 @@
     ]),
     getLogs: () => J([{ time: '08:12:41', level: 'INFO', category: 'USB', message: 'ECU conectada' }, { time: '08:12:44', level: 'INFO', category: 'SESSÃO', message: 'Gravação iniciada' }, { time: '08:19:03', level: 'WARN', category: 'ECU', message: 'Leitura lenta; tentando de novo' }]), startKMapRead: () => J({ ok: true, started: true, state: 'READING' }),
     getKMapReadResult: () => J({ ok: true, state: 'COMPLETED', rows: mapRows, extraRow: Array(12).fill(0), axes: { petrolBins: PB, rpmBins: RB }, hash: 'synthetic', writableCells: 144, sessionConfirmed: true }),
-    previewKFactorPoint: () => J({ ok: false }), connectUsb: () => 'true', disconnectUsb: () => 'true', runEngineSelfTests: () => J({ ok: true }),
+    connectUsb: () => 'true', disconnectUsb: () => 'true', runEngineSelfTests: () => J({ ok: true }),
   };
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),

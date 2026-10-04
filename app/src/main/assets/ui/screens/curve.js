@@ -51,7 +51,7 @@
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
       document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
-      document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.writeRestore());
+      document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.undoCurve());
       document.getElementById('curveBackupSelect')?.addEventListener('change', event => {
         const fileName = String(event.target?.value || '');
         this.cancelRestorePreview('');
@@ -175,11 +175,27 @@
     syncRestoreButton() {
       const restore = document.getElementById('curveBackupRestore');
       if (!restore) return;
+      const select = document.getElementById('curveBackupSelect');
+      const hasPhoto = Boolean(select && (select.value || /value="[^"]+"/.test(String(select.innerHTML || ''))));
       const ready = Boolean(this.restoreContext && this.proposals.size);
-      restore.hidden = !ready && this.backupTask !== 'restore-preview';
-      restore.disabled = !ready;
-      restore.textContent = ready ? `Desfazer · ${D.plural(this.proposals.size, 'ponto', 'pontos')}`
-        : this.backupTask === 'restore-preview' ? 'Conferindo a foto…' : 'Desfazer (voltar à foto)';
+      const busy = this.backupTask === 'restore-preview';
+      restore.hidden = !(hasPhoto || ready || busy);
+      restore.disabled = busy;
+      restore.textContent = busy ? 'Conferindo…' : ready ? `Desfazer · ${D.plural(this.proposals.size, 'ponto', 'pontos')}` : 'Desfazer';
+      if (ready && this.autoRestore) { this.autoRestore = false; this.writeRestore(); }
+    }
+
+    /** Um toque: usa por baixo a foto mais recente (guardada em silêncio) e grava de volta; o fim é o readback da ECU. */
+    undoCurve() {
+      if (this.reading || this.writing || this.backupTask) return;
+      if (this.restoreContext && this.proposals.size) { this.writeRestore(); return; }
+      const select = document.getElementById('curveBackupSelect');
+      const rows = (this.api.curveBackups() || []).filter(item => item && item.fileName);
+      if (!rows.length) { this.alert('Ainda não há o que desfazer.'); return; }
+      rows.sort((a, b) => (finite(b.createdAt) || 0) - (finite(a.createdAt) || 0));
+      if (select) select.value = rows[0].fileName;
+      this.autoRestore = true;
+      this.prepareRestore(rows[0].fileName);
     }
 
     saveBackup() {
@@ -590,8 +606,19 @@
       if (this.pointHost !== host) {
         this.pointHost = host;
         host.addEventListener('click', event => {
-          const point = event.target.closest('[data-curve-index]');
-          if (point) this.selectPoint(Number(point.dataset.curveIndex));
+          const direct = event.target.closest && event.target.closest('[data-curve-index]');
+          const hits = Array.from(host.querySelectorAll('.curve-point-hit'));
+          if (!hits.length) return;
+          const measurable = Number.isFinite(event.clientX) && Number.isFinite(event.clientY) && hits.some(node => node.getBoundingClientRect().width > 0);
+          if (!measurable) { if (direct) this.selectPoint(Number(direct.dataset.curveIndex)); return; }
+          // O ponto mais perto do toque (em x e y) ganha: com 30 pontos os círculos de 48 px se encostam.
+          let best = null; let bestD = Infinity;
+          hits.forEach(node => {
+            const box = node.getBoundingClientRect();
+            const d = Math.hypot(event.clientX - (box.left + box.width / 2), (event.clientY - (box.top + box.height / 2)) * 0.5);
+            if (d < bestD) { bestD = d; best = node; }
+          });
+          if (best && bestD <= 40) this.selectPoint(Number(best.dataset.curveIndex));
         });
         host.addEventListener('keydown', event => {
           const point = event.target.closest('[data-curve-index]');

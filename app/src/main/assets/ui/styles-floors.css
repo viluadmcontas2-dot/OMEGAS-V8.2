@@ -1,11 +1,11 @@
 /* Pisos de toque e de texto (spec §3.2): alvo >= 58 px (decisão do dono, 2026-10-04) e texto crítico >= 22 px (--touch-min, --text-critical em tokens.css).
    Única exceção: células e cabeçalhos da grade do Mapa K (>= 44 px, --touch-grid). Carrega por último e usa !important
    de propósito: nenhuma regra de tela pode baixar o piso. */
-html body button:not(.map-k-cell):not(.map-axis-header),
+html body button:not(.map-k-cell):not(.map-axis-header):not([data-route]),
 html body [role="tab"],
 html body summary,
 html body select,
-html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.input-lg) {
   min-height: var(--btn-h) !important;
   font-size: var(--btn-font) !important;
 }
@@ -23,10 +23,10 @@ html body .map-axis-header {
 }
 
 /* Trilho: 8 itens de 54 px cabem em 720 px. */
-.side-rail { padding: 10px 12px; }
-.brand-block { height: 48px; }
-.side-nav { gap: 2px; padding: 6px 0; }
-.side-nav button { grid-template-columns: 40px minmax(0, 1fr); padding: 0 10px; }
+.side-rail { padding: 8px 10px; }
+.brand-block { height: 40px; }
+.side-nav { gap: 2px; padding: 4px 0; }
+.side-nav button { grid-template-columns: minmax(0, 1fr); padding: 0 14px; }
 .side-nav button i,
 .side-nav button span { font-size: var(--text-critical) !important; }
 .side-nav button span { font-weight: 700; }

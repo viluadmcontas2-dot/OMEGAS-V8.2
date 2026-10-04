@@ -48,7 +48,7 @@ class T13EquivalencePhases(unittest.TestCase):
         self.assertIn('EquivalencePhases(File(paths.runtimeRoot, "refinement_autopilot.json")', svc)
         self.assertIn("lateinit var equivalencePhases: EquivalencePhases", svc)
         self.assertIn('.put("autopilot", service.equivalencePhases.json())', read(K / "autocal/AutoCalJavascriptBridge.kt"))
-        self.assertIn('.put("autopilot", phases.json())', read(K / "autocal/EquivalenceView.kt"))
+        self.assertIn('.put("autopilot", autopilot)', read(K / "autocal/EquivalenceView.kt"))
         for path in (ROOT / "app/src").rglob("*.kt"):
             self.assertNotIn("RefinementAutopilot", read(path), path)
             self.assertNotIn("refinementAutopilot", read(path), path)

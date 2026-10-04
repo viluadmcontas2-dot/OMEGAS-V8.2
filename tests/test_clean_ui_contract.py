@@ -38,7 +38,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('styles-calibration-obd.css', self.html)
         self.assertIn("refinementStyle.href = 'styles-refine.css'", self.app)
 
-    def test_seven_static_human_destinations_with_refino_below_autocal(self):
+    def test_eight_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
         expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']
         self.assertEqual(expected, routes)
@@ -64,7 +64,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('store.patch({ telemetry, tick })', self.app)
 
     def test_low_end_1280x720_design_budget(self):
-        self.assertIn('--rail-width:260px', (UI / 'tokens.css').read_text('utf-8'))
+        self.assertIn('--rail-width:200px', (UI / 'tokens.css').read_text('utf-8'))
         self.assertIn('grid-template-columns:var(--rail-width) minmax(0,1fr)', self.css)
         self.assertIn('contain:layout paint style', self.css)
         combined_css = self.css + self.obd_css + self.calibration_obd_css + self.refine_css

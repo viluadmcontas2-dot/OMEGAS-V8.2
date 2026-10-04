@@ -22,3 +22,6 @@ Classes: `.btn .btn-primary .btn-secondary .btn-ghost .btn-danger .btn-compact`,
 
 ## Processo
 Preview em screenshot (1280×720) por aba para aprovação do dono antes de mesclar (D7).
+
+## Tema
+Um só: **escuro premium** (dirige à noite) — fundo grafite/azul-noite, superfícies em camadas (`--surface/-2/-3`), texto claro, acentos semânticos com contraste AA, sem cinza chapado e sem controle nativo. Não há tema claro nem chave de tema; tudo via `var(--x)` de `tokens.css`. Trilho achatado, sem números nos itens.

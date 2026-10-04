@@ -1,4 +1,4 @@
-/* OMEGAS · white premium (F1 da reforma visual, decisão do dono 2026-10-04).
+/* OMEGAS · UI/UX premium escuro (F1 da reforma visual, decisão do dono 2026-10-04).
    Tudo via tokens. Carrega logo antes de styles-floors.css. Classes novas:
    .btn / .btn-primary / .btn-secondary / .btn-ghost / .btn-danger / .btn-compact, .field, .segmented, .toggle,
    .card, .chart-surface, .scroll-y.  Botões existentes (.primary .secondary ...) já herdam o visual. */
@@ -74,7 +74,7 @@ html body input[type="number"]::-webkit-inner-spin-button,
 html body input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 html body select {
   padding-right: 44px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3 6l5 5 5-5' fill='none' stroke='%234d5c70' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3 6l5 5 5-5' fill='none' stroke='%238c9bb0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 14px center; background-size: 16px;
 }
 html body select::-ms-expand { display: none; }
@@ -153,7 +153,7 @@ html body .refino-cockpit .autocal-primary-action[data-kind="restore"] { backgro
 
 /* ---- Trilho com 8 itens (08 Diagnóstico): achatado para caber em 720 px ---- */
 .side-nav { gap: 1px; padding: 4px 0; }
-html body .side-nav button { min-height: 54px !important; }
-.brand-block { height: 44px; }
+html body .side-nav button { min-height: var(--rail-item-h) !important; }
+.brand-block { height: 40px; }
 /* Nunca rolagem horizontal (DESIGN.md) */
 .screen.active { overflow-x: hidden; }
