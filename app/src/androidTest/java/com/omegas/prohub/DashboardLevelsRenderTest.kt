@@ -453,7 +453,11 @@ class DashboardLevelsRenderTest {
             val bridge = checkNotNull(getPrivateField(activity, "calibrationBridge")) {
                 "Calibration bridge unavailable"
             }
-            setPrivateField(bridge, "lastOperation", JSONObject(fixture.operation.toString()))
+            // The operation result is process-scoped; lastOperation is an accessor,
+            // not a backing field on the Activity-owned bridge instance.
+            val operationField = bridge.javaClass.getDeclaredField("sharedLastOperation")
+            operationField.isAccessible = true
+            operationField.set(null, JSONObject(fixture.operation.toString()))
             activity.refreshWebUi()
         }
         evalRaw(
