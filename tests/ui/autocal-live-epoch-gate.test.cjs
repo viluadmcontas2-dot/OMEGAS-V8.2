@@ -71,7 +71,7 @@ assert.match(host.innerHTML, /autocal-previous-gas-point/,
   'GNV_PREV permanece só como contexto, sem contador de aquisição atual');
 assert.doesNotMatch(host.innerHTML, /autocal-epoch-acquisition-line gas/);
 assert.match(labels.autocalChartInspector, /Comparação gasolina\/GNV suspensa/);
-assert.match(labels.autocalChartInspector, /Curva K: 30 fatores nativos/);
+assert.match(labels.autocalChartInspector, /Curva K: 30 pontos lidos/);
 
 for (const field of fake.snapshot.fields) {
   if (field.key.endsWith('_GAS')) field.status = 'VALID';

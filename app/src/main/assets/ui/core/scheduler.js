@@ -61,6 +61,8 @@
       return this.intervalMs;
     }
     start() {
+      // Voltar do segundo plano: stop() cancelou o quadro de animação; sem rearmar, os cursores AGORA congelam.
+      this.armFrame();
       if (this.timer) return;
       this.running = true;
       this.statusElapsedMs = 0;

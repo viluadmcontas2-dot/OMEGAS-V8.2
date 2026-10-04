@@ -35,6 +35,7 @@ function boot(options = {}) {
   const timers = new Map();
   let timerSeq = 0;
   const frames = [];
+  let frameSeq = 0;
   const storage = new Map(Object.entries(options.storage || {}));
   const winListeners = new Map();
 
@@ -67,8 +68,9 @@ function boot(options = {}) {
     clearTimeout(id) { timers.delete(id); },
     setInterval(fn, ms) { const id = ++timerSeq; const every = Math.max(1, Number(ms) || 1); timers.set(id, { fn, at: clock.now + every, every }); return id; },
     clearInterval(id) { timers.delete(id); },
-    requestAnimationFrame(fn) { frames.push(fn); return frames.length; },
-    cancelAnimationFrame() {},
+    // cancelAnimationFrame cancela de verdade (como o navegador): sem isso um quadro "cancelado" ainda rodava e se rearmava sozinho.
+    requestAnimationFrame(fn) { const id = ++frameSeq; frames.push({ id, fn }); return id; },
+    cancelAnimationFrame(id) { const i = frames.findIndex(f => f.id === id); if (i >= 0) frames.splice(i, 1); },
     Event: DomEvent, CustomEvent: DomEvent,
     addEventListener(type, fn, opts) {
       const list = winListeners.get(type) || []; list.push({ fn, once: !!(opts && opts.once) }); winListeners.set(type, list);
@@ -113,7 +115,7 @@ function boot(options = {}) {
 
   function runFrames(limit) {
     let n = 0;
-    while (frames.length && n < (limit || 50)) { const batch = frames.splice(0); batch.forEach(fn => { try { fn(clock.now); } catch (e) { errors.push('[raf] ' + ((e && e.stack) || e)); } }); n += 1; }
+    while (frames.length && n < (limit || 50)) { const batch = frames.splice(0); batch.forEach(({ fn }) => { try { fn(clock.now); } catch (e) { errors.push('[raf] ' + ((e && e.stack) || e)); } }); n += 1; }
   }
   function fireDueTimers(upTo) {
     for (;;) {

@@ -15,7 +15,7 @@ test('aprendizado rapido nao persegue pesos bilineares no DOM', () => {
   assert.doesNotMatch(appSource, /weightKey/);
   assert.doesNotMatch(appSource, /continuousWeights\.slice/);
   assert.match(appSource, /function renderLightLiveContext\(state, route\)/);
-  assert.match(appSource, /célula \$\{row \+ 1\}×\$\{column \+ 1\}/);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/screens/map.js'), 'utf8'), /célula \$\{context\.row \+ 1\}×\$\{context\.column \+ 1\}/);
 });
 
 test('ciclo rapido quantiza somente texto leve de rpm e petrol inj', () => {

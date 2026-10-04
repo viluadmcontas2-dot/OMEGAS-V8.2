@@ -73,9 +73,10 @@ class Block1SessionContract(unittest.TestCase):
         self.assertNotIn('MutationObserver', self.app + self.scheduler)
 
     def test_dashboard_makes_stale_expired_and_stuck_visible(self):
-        for marker in ('stale', 'expired', 'engineStuck', 'Telemetria atrasada', 'Telemetria expirada', 'Comunicação travada'):
+        # Frescor numa regra só (LiveStore.read): atrasado (cinza) e perdido ("Sem dados há N s"); travado continua à parte.
+        for marker in ('LiveStore.read', 'engineStuck', 'Dados atrasados', 'Sem dados há', 'Comunicação travada'):
             self.assertIn(marker, self.dashboard)
-        self.assertIn('Ajustes permanecem bloqueados até a condição normalizar', self.dashboard)
+        self.assertIn('Gravar fica bloqueado até os dados voltarem', self.dashboard)
 
     def test_multimedia_1280x720_is_the_explicit_primary_surface(self):
         self.assertIn('--rail-width:260px', (UI / 'tokens.css').read_text('utf-8'))

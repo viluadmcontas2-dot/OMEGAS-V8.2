@@ -57,7 +57,7 @@ test('FLUXO Refino: proposta → revisar → gravar → VERIFICANDO → veredito
   // 4. veredito: curva chegou na gasolina → estável
   app.world.equivalence = W.equivalenceFor('ESTAVEL', { latest: { status: 'VERIFICADO', photoFile: 'foto-1.json', beforeRaw: before, afterRaw: app.world.curve.slice(), bands: [{ verdict: 'CONFIRMADA', fromMs: 3, toMs: 4, ratioBefore: 1.06, ratioAfter: 1.0 }] } });
   app.settle(6);
-  assert.match(app.byId('refinoJournal').textContent, /chegou na gasolina/i);
+  assert.match(app.byId('refinoJournal').textContent, /GNV igual à gasolina/i);
   assert.equal(primary(app).hasAttribute('disabled'), true);
   assert.ok(app.$('[data-refino-undo]') && !app.$('[data-refino-undo]').closest('details'), 'Desfazer segue à vista');
   L.assertClean(app, 'FLUXO Refino');

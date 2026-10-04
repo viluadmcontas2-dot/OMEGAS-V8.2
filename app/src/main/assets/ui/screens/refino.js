@@ -20,7 +20,7 @@
     PROPOSTA_PRONTA: 'ready', VERIFICANDO: 'collecting', RESTAURAR_TRECHO: 'problem', ESTAVEL: 'ok',
   };
   const VERDICT = {
-    CONFIRMADA: 'Chegou na gasolina',
+    CONFIRMADA: 'GNV igual à gasolina',
     PASSOU: 'Passou do ponto · próxima mais suave',
     CURTA: 'Faltou · próxima mais firme',
     PIOROU: 'Piorou',
@@ -63,7 +63,7 @@
   }
   /** Resultado do experimento em linguagem simples (histórico). */
   const STATUS_WORDS = {
-    VERIFICADO: 'Chegou na gasolina',
+    VERIFICADO: 'GNV igual à gasolina',
     PIOROU_EM_PARTE: 'Piorou em parte',
     FALHA_PARCIAL: 'A gravação falhou no meio: a ECU pode ter sido alterada em parte',
     VERIFICANDO: 'Medindo…',
@@ -133,16 +133,31 @@
     return out;
   }
 
-  /** O Desfazer existe quando o diário guarda a foto de antes ou o antes/depois do último experimento. */
-  function undoSource(latest) {
+  /**
+   * O Desfazer existe quando o diário guarda a foto de antes ou o antes/depois do último experimento E ainda há o que
+   * desfazer: a ECU não mudou a curva por fora depois da foto (INTERROMPIDO) e o último registro não é, ele mesmo, um desfazer.
+   * `ageText` diz há quanto tempo é a foto ("foto de há 12 min"); sem hora conhecida, "—".
+   */
+  function undoSource(latest, now) {
     const photo = String(latest?.photoFile || '');
-    return { photoFile: photo, available: Boolean(photo) || undoPoints(latest).length > 0 };
+    const status = String(latest?.status || '');
+    const partial = status === 'FALHA_PARCIAL';
+    const changedByEcu = status === 'INTERROMPIDO';
+    const wasUndo = /desfazer|restaurar/i.test(String(latest?.source || ''));
+    const has = Boolean(photo) || undoPoints(latest).length > 0;
+    const available = has && (partial || (!changedByEcu && !wasUndo));
+    const at = finite(latest?.appliedAt);
+    return { photoFile: photo, available, ageText: at === null ? '—' : ageText(at, now === undefined ? Date.now() : now), changedByEcu };
   }
 
   const ROUTE_NAMES = { map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Refino', sessions: 'Sessões', tools: 'Ferramentas' };
-  /** Índice de equivalência: fração 0..1 (percentual = ×100). Sem número válido: null (nunca 0%). */
+  /**
+   * Índice de equivalência: o Kotlin manda `index` como NÚMERO escalar 0..1 (percentual = ×100), com `coverage` e
+   * `provisional` irmãos planos (EquivalenceJson.result). Sem número válido: null (nunca 0%).
+   */
   function indexPercent(eq) {
-    const value = finite(eq?.index?.value);
+    const raw = eq?.index;
+    const value = typeof raw === 'number' ? finite(raw) : null;
     return value === null ? null : Math.round(Math.max(0, Math.min(1, value)) * 100);
   }
   /**
@@ -164,7 +179,7 @@
     const act = kind === 'FREEZE_REFERENCE' ? 'freeze' : kind === 'APPLY' ? 'review' : kind === 'CONTESTED' ? 'undo' : '';
     const ACT_LABEL = { freeze: 'Salvar como referência', review: 'Gravar', undo: 'Desfazer a gravação' };
     return {
-      indexText: percent === null ? '— da condução já equivale à gasolina' : `${percent}% da condução já equivale à gasolina${eq.index.provisional === true ? ' · provisório' : ''}`,
+      indexText: percent === null ? '— da condução já equivale à gasolina' : `${percent}% da condução já equivale à gasolina${eq.provisional === true ? ' · provisório' : ''}`,
       nextText: act === 'freeze' ? FREEZE_TEXT : (text || WAITING_TEXT),
       whyText: act === 'freeze' ? FREEZE_WHY : '',
       hasAction: Boolean(text),
@@ -230,6 +245,9 @@
       this.unsubscribeRevisions = revisions ? revisions.subscribe(kind => { if (kind !== 'live') this.dataDirty = true; }) : () => {};
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
         if (this.store.get().route !== 'refino') return;
+        this.renderUndo();
+        const stallNow = document.getElementById('refinoStalls');
+        if (stallNow && !stallNow.hidden && stallNow.dataset.tone !== this.stallTone()) stallNow.dataset.tone = this.stallTone();
         if (this.dataGate.due(false)) { this.refresh(); this.dataGate.mark(); }
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
@@ -260,12 +278,12 @@
               <div class="autocal-title-line"><h3>Refino</h3><span id="refinoPhaseChip" class="autocal-fuel-chip" data-fuel-state="unknown">—</span></div>
             </div>
             <div class="autocal-focus-metrics" aria-live="polite">
-              <div class="autocal-focus-metric"><small>Erro GNV × gasolina</small><b><span id="refinoRatio">—</span></b></div>
+              <div class="autocal-focus-metric"><small>Diferença GNV × gasolina</small><b><span id="refinoRatio">—</span></b></div>
             </div>
             <div class="autocal-focus-actions"><button type="button" class="autocal-primary-action" data-refino-primary hidden></button></div>
           </header>
           <ol class="refino-steps" id="refinoSteps" aria-label="Fases do refino"></ol>
-          <div class="refino-eq" id="refinoEq" aria-label="Equivalência com a gasolina"><b id="refinoEqIndex">—</b><div class="refino-eq-text"><span id="refinoHeadline">Aguardando dados da ECU</span><small id="refinoEqWhy" hidden></small></div><div class="refino-eq-actions"><button type="button" class="secondary" id="refinoEqGo" data-refino-go hidden></button><button type="button" class="quiet-button" id="refinoEqUnfreeze" data-refino-unfreeze hidden>Desfazer</button></div></div>
+          <div class="refino-eq" id="refinoEq" aria-label="Equivalência com a gasolina"><b id="refinoEqIndex">—</b><div class="refino-eq-text"><span id="refinoHeadline">Aguardando dados da ECU</span><small id="refinoEqWhy" hidden></small></div><div class="refino-eq-actions"><button type="button" class="secondary" id="refinoEqGo" data-refino-go hidden></button><button type="button" class="quiet-button" id="refinoEqUnfreeze" data-refino-unfreeze hidden>Desfazer referência</button></div></div>
           <p class="refino-next" id="refinoNext" hidden></p>
           <div class="refino-actions-row">
             <div class="refino-stalls" id="refinoStalls" hidden></div>
@@ -363,6 +381,12 @@
       const action = primaryAction(this.eq, this.analysis);
       if (action.kind === 'review') this.openReview('apply');
       if (action.kind === 'restore') this.openReview('restore');
+    }
+
+    /** Há o que desfazer? Só com foto/antes-depois do último experimento E sem a ECU ter mudado a curva por fora (ver undoSource). */
+    undoAvailable() {
+      const partialNow = this.operation?.phase === 'failed' && this.operation.partial === true && Boolean(this.operation.photoFile);
+      return partialNow || undoSource(this.eq?.refinement?.latest).available;
     }
 
     /** Foto do último experimento do diário; durante uma falha parcial, a que o Kotlin acabou de informar. */
@@ -509,7 +533,7 @@
       // Assinatura barata (sem serializar pontos): só o que muda o texto, a ação ou o desenho.
       const chart = ns.CurveChart;
       const key = [phase, pilot.expiredFrom, eq.refinement?.latest?.photoFile, eq.refinement?.latest?.status, pilot.petrolValid, pilot.gasValid,
-        eq.ratio, eq.samples, eq.index?.value, eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, eq.stalls?.count, eq.gasEpochAt,
+        eq.ratio, eq.samples, eq.index, eq.provisional, eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, eq.stalls?.count, eq.stalls?.nearCount, this.stallTone(), eq.gasEpochAt,
         chart ? chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() }) : ''].join('|');
       if (!force && key === this.lastRenderKey) return;
       this.lastRenderKey = key;
@@ -564,10 +588,9 @@
         let title = '';
         if (real > 0) title = `O motor apagou ${fmt(real, 0)} ${plural(real)} no GNV${religou}.${near > 0 ? ` Quase apagou outras ${fmt(near, 0)}.` : ''}`;
         else if (near > 0) title = `O motor quase apagou ${fmt(near, 0)} ${plural(near)} no GNV.`;
-        // Âmbar: histórico. Vermelho só se o motor está apagado AGORA (ECU conectada, rotação ~0).
-        const live = this.store.get();
-        const rpmNow = finite(live?.telemetry?.live?.rpm ?? live?.status?.rpm);
-        stallNode.dataset.tone = live?.status?.usbConnected === true && rpmNow !== null && rpmNow < 300 ? 'now' : 'history';
+        // Âmbar: histórico. Vermelho só se o motor está apagado AGORA: ECU conectada, leitura FRESCA e rotação conhecida < 300.
+        // Sem leitura fresca o RPM é desconhecido (nunca 0 inventado): sem destaque de "agora".
+        stallNode.dataset.tone = this.stallTone();
         const where = region ? `Mais perto da faixa ${D.msBand(region.fromMs, region.toMs)} · ${D.barUnit(region.mapBar)} (desaceleração ou embreagem). ` : '';
         const guard = fmt(this.analysis?.guards?.lowGuardMs, 1);
         this.stallDetail = title ? `${where}${guard === '—' ? '' : `O Refino nunca deixa a mistura mais pobre abaixo de ${guard} ms; `}se continuar, deixe a mistura mais rica nessa região, na Curva K. Desligar o carro na lenta não conta.` : '';
@@ -624,7 +647,7 @@
       if (go) {
         const primaryNow = primaryAction(this.eq, this.analysis);
         // 'review' só aparece quando o botão principal realmente grava; 'undo' só quando há para onde voltar.
-        const actOk = strip.act === 'review' ? primaryNow.kind === 'review' : strip.act === 'undo' ? Boolean(this.undoFile()) || undoSource(this.eq?.refinement?.latest).available : Boolean(strip.act);
+        const actOk = strip.act === 'review' ? primaryNow.kind === 'review' : strip.act === 'undo' ? this.undoAvailable() : Boolean(strip.act);
         const frozenNow = strip.act === 'freeze' && frz && frz.phase === 'done';
         const showGo = op.phase === 'idle' && !frozenNow && (strip.act ? actOk : !!strip.route);
         go.hidden = !showGo;
@@ -641,14 +664,20 @@
       if (!host) return;
       const busy = this.operation.phase === 'reading' || this.operation.phase === 'writing';
       const latest = this.eq?.refinement?.latest;
-      const available = !busy && (Boolean(this.undoFile()) || undoSource(latest).available);
+      const available = !busy && this.undoAvailable();
       host.hidden = !available;
       if (!available) { if (host.innerHTML) host.innerHTML = ''; return; }
       // Em destaque só quando há a foto de antes; sem foto (só o antes/depois do diário) fica discreto.
       const prominent = Boolean(this.undoFile());
       const wanted = prominent ? 'secondary' : 'quiet-button';
-      const current = host.querySelector('[data-refino-undo]');
-      if (!current || !current.classList.contains(wanted)) host.innerHTML = `<button type="button" class="${wanted}" data-refino-undo>Desfazer a gravação</button>`;
+      const age = undoSource(latest).ageText;
+      const label = `Desfazer a gravação${age === '—' ? '' : ` · foto de ${age}`}`;
+      let current = host.querySelector('[data-refino-undo]');
+      if (!current || !current.classList.contains(wanted)) {
+        host.innerHTML = `<button type="button" class="${wanted}" data-refino-undo></button>`;
+        current = host.querySelector('[data-refino-undo]');
+      }
+      if (current.textContent !== label) current.textContent = label;
     }
 
     /** Tamanho do quadro do gráfico: faz parte da assinatura (outro tamanho = outro desenho). */
@@ -687,6 +716,14 @@
       const flags = { mode: 'between', proposal: !!(this.model && this.model.proposal.length), stall: !!(this.model && this.model.stalls.length) };
       const legendKey = `between|${flags.proposal}|${flags.stall}`;
       if (legend && this.legendKey !== legendKey) { this.legendKey = legendKey; legend.innerHTML = chart.legendHtml(flags); }
+    }
+
+    /** 'now' só com o motor apagado de verdade AGORA; RPM desconhecido ou velho nunca vira "apagado". */
+    stallTone() {
+      const state = this.store.get();
+      if (state?.status?.usbConnected !== true) return 'history';
+      const rpmNow = ns.LiveStore.read(state).rpm;
+      return rpmNow !== null && rpmNow < 300 ? 'now' : 'history';
     }
 
     /** Cursor AGORA: só calcula o alvo a partir da leitura viva única (LiveStore); quem move é o quadro de animação. */

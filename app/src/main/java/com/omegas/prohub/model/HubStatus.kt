@@ -38,5 +38,7 @@ data class HubStatus(
     val lanEnabled: Boolean = false,
     val lanAddress: String = "",
     val directTelemetryAgeMs: Long = -1,
+    /** O dono negou a permissão USB do Android para esta ECU (só leitura; a UI mostra "USB bloqueado" + botão que chama connectUsb). */
+    val usbPermissionDenied: Boolean = false,
 )
 

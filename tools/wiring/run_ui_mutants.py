@@ -34,6 +34,8 @@ ALL_NODE_TESTS = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "tests/ui").gl
 M1, M2, M3, M4, M5, M6, M7, M8 = (f"tests/ui/wiring-{n}.test.cjs" for n in (
     "m1-connection", "m2-fuel", "m3-autocal", "m4-refino", "m5-curve", "m6-map", "m7-sessions", "m8-tools"))
 FLOWS, CROSS = "tests/ui/wiring-flows.test.cjs", "tests/ui/wiring-cross.test.cjs"
+FIX_REFINO, FIX_AUTOCAL, FIX_CURVE = "tests/ui/fix-refino-usage.test.cjs", "tests/ui/fix-autocal-usage.test.cjs", "tests/ui/fix-curve-usage.test.cjs"
+FIX_MAP, FIX_TELEMETRY, FIX_SESSIONS = "tests/ui/fix-map-usage.test.cjs", "tests/ui/fix-telemetry-usage.test.cjs", "tests/ui/fix-sessions-tools-usage.test.cjs"
 
 
 def mutant(mid, klass, path, old, new, tests, kind="node", ci=False, note=""):
@@ -51,15 +53,15 @@ MUTANTS = [
     mutant("tools-battery-frozen", "botão congelado", f"{UI}/components/drawers.js",
            "        this.api.requestBatteryOptimizationExemption?.();\n", "", [M8], ci=True),
     mutant("agora-next-frozen", "botão congelado", f"{UI}/screens/dashboard.js",
-           'if (app && app.router) app.router.navigate("refino");', "", [FLOWS, M1]),
+           "if (app && app.router) app.router.navigate('refino');", "", [FLOWS, M1]),
     mutant("refino-confirm-frozen", "botão congelado", f"{UI}/screens/refino.js",
-           "      if (event.target.closest('[data-refino-confirm]')) this.commitReview();\n", "", [FLOWS, M4]),
+           "      if (event.target.closest('[data-refino-primary]')) this.primary();\n", "", [FLOWS, M4]),
     # ---- desconhecido vira 0
     mutant("rules-finite-zero", "desconhecido vira 0", f"{UI}/core/display-rules.js",
            "if (value === null || value === undefined || value === '' || typeof value === 'boolean') return null;",
            "if (value === null || value === undefined || value === '' || typeof value === 'boolean') return 0;", [M7, M4]),
-    mutant("dashboard-finite-zero", "desconhecido vira 0", f"{UI}/screens/dashboard.js",
-           'const finite = rules.finite;',
+    mutant("livestore-finite-zero", "desconhecido vira 0", f"{UI}/core/live-store.js",
+           'const { finite } = ns.DisplayRules;',
            'const finite = value => Number(value);', [M2, M1], ci=True),
     # ---- guarda de ocupado
     mutant("save-backup-no-guard", "guarda de ocupado removida", f"{UI}/screens/curve.js",
@@ -93,8 +95,8 @@ MUTANTS = [
            "if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GNV';", [M2]),
     mutant("failure-kind-swapped", "rótulos trocados", f"{UI}/core/display-rules.js",
            "if (kind === 'TRANSPORTE') return `Cabo/USB: ", "if (kind === 'TRANSPORTE') return `A ECU recusou: ", [M5, M6]),
-    mutant("stale-telemetry-never-flagged", "estado velho vira fresco", f"{UI}/screens/dashboard.js",
-           "const stale = connected && age !== null && age > 2500;", "const stale = false;", [M1]),
+    mutant("stale-telemetry-never-flagged", "estado velho vira fresco", f"{UI}/core/live-store.js",
+           "if (valid) level = !known ? 'fresh' : ageMs > STALE_MS ? 'lost' : ageMs > GREY_MS ? 'late' : 'fresh';", "if (valid) level = 'fresh';", [M1]),
     mutant("refino-allows-write-during-ecu-auto", "regra de fase", f"{UI}/screens/refino.js",
            "if (phase === 'SEM_ECU' || phase === 'LENDO_ECU' || phase === 'ECU_TRABALHANDO') {", "if (phase === 'SEM_ECU' || phase === 'LENDO_ECU') {", [M4]),
     mutant("refino-busy-button-enabled", "disabled removido em ocupado", f"{UI}/screens/refino.js",
@@ -115,6 +117,31 @@ MUTANTS = [
            "    toast.classList.add('show');\n", "", [M5]),
     mutant("scheduler-leaks-timer", "timer vazando", f"{UI}/core/scheduler.js",
            "      if (wasRunning) root.clearInterval(this.timer);\n", "", [CROSS]),
+    # ---- Fix UI (2026-10-04): cada conserto tem um mutante que o teste de uso precisa matar
+    mutant("scheduler-start-no-rearm", "cursor congela após segundo plano", f"{UI}/core/scheduler.js",
+           "      this.armFrame();\n      if (this.timer) return;", "      if (this.timer) return;", [FIX_REFINO], ci=True),
+    mutant("refino-index-read-as-object", "contrato do Kotlin lido errado", f"{UI}/screens/refino.js",
+           "    const value = typeof raw === 'number' ? finite(raw) : null;", "    const value = finite(eq?.index?.value);", [FIX_REFINO], ci=True),
+    mutant("refino-undo-after-ecu-changed", "Desfazer sem o que desfazer", f"{UI}/screens/refino.js",
+           "const available = has && (partial || (!changedByEcu && !wasUndo));", "const available = has;", [FIX_REFINO]),
+    mutant("autocal-toggle-reenabled-early", "botão reabilita antes da resposta", f"{UI}/screens/autocal-cockpit.js",
+           "      const waiting = this.operationalPending || Boolean(this.toggleWaiting);", "      const waiting = this.operationalPending;", [FIX_AUTOCAL], ci=True),
+    mutant("autocal-seconds-frozen", "texto 'há N s' congelado", f"{UI}/screens/autocal-cockpit.js",
+           "point.fuel, point.grey, point.grey ? Math.round(point.ageMs / 1000) : 0]", "point.fuel, point.grey]", [FIX_AUTOCAL]),
+    mutant("curve-pending-reset-survives", "reset sem toque novo", f"{UI}/screens/curve.js",
+           "      this.pendingReset = Boolean(context && context.resetNow === true);", "      if (context && context.resetNow === true) this.pendingReset = true;", [FIX_CURVE], ci=True),
+    mutant("curve-resume-reenters", "Desfazer morto depois do segundo plano", f"{UI}/screens/curve.js",
+           "      this.refreshBackups();\n      this.updateControls();\n      this.poll();", "      this.restoreContext = null;\n      this.refreshBackups();\n      this.updateControls();\n      this.poll();", [FIX_CURVE]),
+    mutant("curve-failure-keeps-old-chart", "curva antiga depois da falha", f"{UI}/screens/curve.js",
+           "            text('curveSourceStatus', 'ECU não confirmada');\n            this.renderChart();\n            this.renderProposalList();\n            this.updateControls();\n            this.refreshBackups();", "            this.refreshBackups();", [FIX_CURVE]),
+    mutant("map-title-singular-plural", "plural errado", f"{UI}/screens/map.js",
+           "D().plural(confirmed, 'célula', 'células'), { fem: true, many: confirmed !== 1 }", "`${confirmed} célula(s)`, { fem: true, many: confirmed !== 1 }", [FIX_MAP], ci=True),
+    mutant("strip-feeds-no-fallback", "faixa toda — fora do Agora", f"{UI}/components/vehicle-status-strip.js",
+           "ns.LiveStore.read(state, { fallback: true })", "ns.LiveStore.read(state)", [FIX_TELEMETRY]),
+    mutant("rail-online-without-data", "ECU online sem dado", f"{UI}/core/display-rules.js",
+           "if (reading && (reading.level === 'none' || reading.level === 'lost')) {", "if (false) {", [FIX_TELEMETRY], ci=True),
+    mutant("sessions-duration-dash-while-recording", "duração — gravando", f"{UI}/screens/sessions.js",
+           "const durationShown = recording ? R.durationLabel(recordingMs) : R.durationLabel(status.durationMs);", "const durationShown = R.durationLabel(status.durationMs);", [FIX_SESSIONS]),
     # ---- grafo produtor/consumidor (estático)
     mutant("kotlin-key-renamed", "chave JSON renomeada no Kotlin", f"{KT}/web/HubJavascriptBridge.kt",
            '.put("usbConnected", status.usbConnected)', '.put("usbConnectd", status.usbConnected)', ["tests/test_wiring_graph.py"], kind="graph", ci=True),

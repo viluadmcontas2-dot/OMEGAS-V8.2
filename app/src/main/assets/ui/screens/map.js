@@ -45,7 +45,16 @@
       document.getElementById('mapClearSelection')?.addEventListener('click', () => {
         this.editor.clearSelection(); this.review = null; this.renderEditor(); this.renderGrid();
       });
-      document.getElementById('mapAdjustmentMode')?.addEventListener('change', () => this.applyAdjustment());
+      document.getElementById('mapAdjustmentMode')?.addEventListener('change', () => { this.syncModeSwitch(); this.applyAdjustment(); });
+      // Seletor segmentado (Somar · Definir · %): um toque troca o modo; o <select> escondido segue sendo a fonte única do modo.
+      document.querySelectorAll('[data-map-mode]').forEach(button => button.addEventListener('click', () => {
+        const select = document.getElementById('mapAdjustmentMode');
+        if (!select || select.value === button.dataset.mapMode) return;
+        select.value = button.dataset.mapMode;
+        this.syncModeSwitch();
+        this.applyAdjustment();
+      }));
+      this.syncModeSwitch();
       document.getElementById('mapAdjustmentValue')?.addEventListener('input', () => this.applyAdjustment());
       document.querySelectorAll('[data-map-nudge]').forEach(button => button.addEventListener('click', () => {
         const input = document.getElementById('mapAdjustmentValue');
@@ -59,8 +68,32 @@
       document.getElementById('mapRereadButton')?.addEventListener('click', () => { this.dismissResult(); this.startRead(); });
     }
 
+    /** Destaca o modo escolhido e diz a unidade do número digitado ao lado (K, não "valor"). */
+    syncModeSwitch() {
+      const mode = document.getElementById('mapAdjustmentMode')?.value || 'percent';
+      document.querySelectorAll('[data-map-mode]').forEach(button => {
+        const on = button.dataset.mapMode === mode;
+        button.classList.toggle('active', on);
+        button.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+      const unit = { percent: '% sobre o K', delta: 'K a somar', target: 'K final' }[mode] || 'K';
+      text('mapAdjustmentUnit', unit);
+    }
+
+    /** O cabo/ECU voltou: lê de novo sozinho (ler é automático; só o toque do dono grava). */
+    onReconnect() {
+      if (this.reading || this.restorePhase || this.store.get().map?.state === 'writing') return;
+      if (this.store.get().route !== 'map') { this.rereadOnEnter = true; return; }
+      this.startRead(true);
+      text('mapSourceStatus', 'ECU voltou · relendo o Mapa K');
+    }
+
     onEnter(context) {
       this.pendingContext = context || null;
+      if (this.rereadOnEnter) {
+        this.rereadOnEnter = false;
+        if (!this.reading && this.store.get().map?.state !== 'writing') { this.startRead(true); return; }
+      }
       // O slot "última operação" é compartilhado com a Curva K/Refino: nunca herdar o estado de outra tela.
       if (this.store.get().map?.state !== 'writing') this.lastOperationState = '';
       if (!this.editor.hasMap() && !this.reading) {
@@ -288,8 +321,14 @@
       text('mapSelectionCount', D().plural(count, 'selecionada', 'selecionadas'));
       const button = document.getElementById('mapReviewButton');
       if (button) {
-        button.disabled = count === 0;
-        button.textContent = count ? `Gravar ${D().plural(count, 'célula', 'células')}` : 'Selecione células';
+        // O botão conta as células que MUDAM de verdade (a prévia do Kotlin), não só as selecionadas: nunca "Gravar 144 células"
+        // junto com "a alteração não muda nenhuma célula".
+        let changed = 0;
+        if (count) { try { changed = this.editor.buildReview().count; } catch (_) { changed = 0; } }
+        button.disabled = changed === 0;
+        button.textContent = !count ? 'Selecione células'
+          : changed === 0 ? 'Digite o ajuste para mudar o K'
+            : `Gravar ${D().plural(changed, 'célula', 'células')}`;
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();
@@ -298,13 +337,14 @@
       this.store.patch({ map: { ...this.store.get().map, selection: count, review: this.review } });
     }
 
+    /** Só a célula em que o motor está AGORA: RPM e injeção já estão na faixa de status do cabeçalho (sem duplicar). */
     renderLiveContext(context) {
       this.liveContext = context || null;
-      text('mapLiveLabel', context?.label || 'Aguardando condição válida');
-      const cell = context && Number.isInteger(context.row) && Number.isInteger(context.column)
-        ? `célula ${context.row + 1}×${context.column + 1}`
-        : 'célula —';
-      text('mapLiveCell', cell);
+      const known = context && Number.isInteger(context.row) && Number.isInteger(context.column);
+      text('mapLiveLabel', known ? `${context.row + 1}×${context.column + 1}` : '—');
+      text('mapLiveCell', known ? `célula ${context.row + 1}×${context.column + 1}` : 'célula —');
+      const node = document.getElementById('mapLiveLabel');
+      if (node) node.dataset.state = known ? (context.level === 'late' ? 'late' : 'fresh') : 'none';
     }
 
     writePrepared() {
@@ -415,10 +455,11 @@
       if (result) {
         result.dataset.level = 'critical';
         result.querySelector('b').textContent = partial ? 'ECU parcialmente alterada' : wording().failedTitle;
-        const why = failureText(operation, fallback || 'Releitura obrigatória.');
+        const why = failureText(operation, fallback || 'Leia a ECU de novo.').trim();
+        const whyEnded = /[.!?…]$/.test(why) ? why : `${why}.`;
         result.querySelector('span').textContent = partial
-          ? `${D().plural(done, 'célula', 'células')} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${why} Releia a ECU para ver o estado real.`
-          : why;
+          ? `${D().plural(done, 'célula', 'células')} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${whyEnded} Leia a ECU de novo para ver o estado real.`
+          : whyEnded;
       }
       const lastId = Array.isArray(operation.adjustmentIds) ? String(operation.adjustmentIds[operation.adjustmentIds.length - 1] || '') : String(operation.backupId || '');
       if (partial && lastId) this.undoId = lastId;
@@ -459,7 +500,8 @@
         const result = document.getElementById('mapOperationResult');
         if (result) {
           result.dataset.level = 'ok';
-          result.querySelector('b').textContent = wording().doneTitle(`${operation.confirmedCells || operation.totalCells} célula(s)`);
+          const confirmed = finite(operation.confirmedCells) ?? finite(operation.totalCells);
+          result.querySelector('b').textContent = wording().doneTitle(confirmed === null ? 'células' : D().plural(confirmed, 'célula', 'células'), { fem: true, many: confirmed !== 1 });
           result.querySelector('span').textContent = wording().doneDetail;
         }
         // O Desfazer desta escrita é a foto que o Kotlin guardou antes dela (o id da escrita).

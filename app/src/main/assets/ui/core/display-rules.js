@@ -64,6 +64,17 @@
     return `há ${Math.round(s / 3600)} h`;
   }
 
+  /** Idade em ms (frescor da leitura) na palavra do glossário: "agora" até 1,5 s, depois "há N s" / "há N min" / "há N h". Desconhecida: "—". */
+  function ageSinceMs(ms) {
+    const value = finite(ms);
+    if (value === null || value < 0) return DASH;
+    if (value < 1500) return 'agora';
+    const s = Math.round(value / 1000);
+    if (s < 90) return `há ${s} s`;
+    if (s < 5400) return `há ${Math.round(s / 60)} min`;
+    return `há ${Math.round(s / 3600)} h`;
+  }
+
   /** Contagem inteira ≥ 0. Desconhecido → "—". */
   function count(value) {
     const n = finite(value);
@@ -134,7 +145,8 @@
   const OPERATION_WORDING = {
     stages: ['Foto antes', 'Gravando', 'Conferindo na ECU'],
     writing: 'Gravando na ECU…',
-    doneTitle: what => `Gravado · ${what} conferido na ECU`,
+    // `opts.fem` = substantivo feminino (Curva K, células); `opts.many` = plural: "conferida", "conferidas".
+    doneTitle: (what, opts) => `Gravado · ${what} ${opts && opts.fem ? (opts.many ? 'conferidas' : 'conferida') : 'conferido'} na ECU`,
     doneDetail: 'A ECU confirmou. A tela foi relida.',
     failedTitle: 'Não foi gravado',
     failedDetail: 'O app não conseguiu confirmar na ECU. A curva anterior continua.',
@@ -208,16 +220,23 @@
   }
 
   /**
-   * Conexão com a ECU em quatro palavras que o motorista entende, cada uma com a próxima ação:
-   * online · Conectando… (permissão USB pendente) · Sem cabo · Serviço parado. Usa só o que o status já traz.
+   * Conexão com a ECU em palavras que o motorista entende, cada uma com a próxima ação:
+   * online · Sem dados da ECU (cabo ligado, nenhuma leitura fresca) · Conectando… (permissão USB pendente) ·
+   * USB bloqueado (o dono negou a permissão: toque para permitir) · Sem cabo · Serviço parado.
+   * "ECU online" só quando chega dado: `reading` (LiveStore.read) com leitura válida e fresca. Sem `reading` o chamador
+   * só sabe do cabo (usbConnected) e a palavra "online" vale só para isso.
    */
-  function connectionState(status) {
+  function connectionState(status, reading) {
     const s = status || {};
     if (s.usbConnected === true) {
       if (s.engineStuck === true) return { key: 'attention', label: 'ECU sem resposta', hint: 'Aguarde ou reconecte o cabo USB', online: true };
+      if (reading && (reading.level === 'none' || reading.level === 'lost')) {
+        return { key: 'nodata', label: 'Sem dados da ECU', hint: 'Confira o cabo e a chave; volta sozinho quando chegar dado', online: false, connected: true };
+      }
       return { key: 'online', label: 'ECU online', hint: '', online: true };
     }
     if (s.usbPermissionPending === true) return { key: 'connecting', label: 'Conectando…', hint: 'Toque em Permitir no aviso de USB do Android', online: false };
+    if (s.usbPermissionDenied === true) return { key: 'denied', label: 'USB bloqueado', hint: 'Toque para permitir o USB', online: false, action: 'connectUsb' };
     if (s.serviceRunning === false) return { key: 'stopped', label: 'Serviço parado', hint: 'Abra o OMEGAS de novo para iniciar o serviço', online: false };
     return { key: 'nocable', label: 'Sem cabo', hint: 'Conecte o cabo USB na ECU', online: false };
   }
@@ -280,7 +299,7 @@
 
   ns.DisplayRules = {
     setAttrIfChanged, removeAttrIfPresent, setDataIfChanged, setTextIfChanged,
-    DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, phaseLabel, PHASE_LABELS, connectionState, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
+    DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, ageSinceMs, phaseLabel, PHASE_LABELS, connectionState, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
     ageLabel, sessionDate, OPERATION_WORDING, failureKind, failureText, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };

@@ -124,6 +124,7 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("usbConnected", status.usbConnected)
             .put("usbDevice", status.usbDevice)
             .put("usbPermissionPending", status.usbPermissionPending)
+            .put("usbPermissionDenied", status.usbPermissionDenied)
             .put("baudRate", status.baudRate)
             .put("serialFormat", status.serialFormat)
             .put("ecuState", status.ecuState)

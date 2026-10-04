@@ -83,9 +83,6 @@
     const telemetry = state.telemetry || {};
     return telemetry.live || telemetry.data || telemetry;
   }
-  function curveEvidenceVisible() {
-    return document.querySelector('[data-screen="curve"] .evidence-disclosure')?.open === true;
-  }
   /** Depois de um quadro pintado, sem timer: dois requestAnimationFrame seguidos. */
   function afterPaint(task) {
     if (typeof root.requestAnimationFrame === 'function') {
@@ -125,28 +122,50 @@
     }
 
     const status = state.status || {};
-    const fuel = fuelLabel(liveFrom(state).fuel || liveFrom(state).state || status.fuelState);
-    const link = (root.OmegasUi || ui).DisplayRules.connectionState(status);
-    const globalSignature = `${link.key}:${fuel}`;
+    // Uma regra de frescor para todo número ao vivo (core/live-store.js). Em rota sem bombeador (Curva K, Sessões,
+    // Ferramentas) vale o status de 1 Hz: o trilho e a faixa nunca ficam "—" com a ECU enviando dados.
+    const reading = ui.LiveStore.read(state, { fallback: true });
+    const fuel = reading.level === 'fresh' || reading.level === 'late' ? fuelLabel(reading.fuel || status.fuelState) : '—';
+    const link = (root.OmegasUi || ui).DisplayRules.connectionState(status, reading);
+    const globalSignature = `${link.key}:${fuel}:${reading.level}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
       const ecu = byId('globalEcu');
       if (ecu) {
         ecu.dataset.online = link.online ? 'true' : 'false';
         ecu.dataset.link = link.key;
+        ecu.hidden = link.key === 'denied';
         setText('globalEcu', link.label);
         ecu.title = link.hint;
       }
+      const allow = byId('globalUsbAllow');
+      if (allow) allow.hidden = link.key !== 'denied';
       const fuelNode = byId('globalFuel');
       if (fuelNode) {
         fuelNode.dataset.fuel = fuel;
+        fuelNode.hidden = link.key === 'denied';
+        fuelNode.dataset.late = reading.level === 'late' ? 'true' : 'false';
         setText('globalFuel', fuel);
       }
     }
+    noteLinkTransition(link, reading);
 
     if (state.alert && state.alert !== previousAlert) {
       previousAlert = state.alert;
       showAlert(state.alert);
+    }
+  }
+
+  // Resgate pós-reconexão: quando os dados voltam (cabo/ECU), Mapa K e Curva K releem sozinhos.
+  // Ler é automático (regra 1); nada grava. Só a transição "sem dados → com dados" dispara, uma vez.
+  let linkWasOnline = null;
+  function noteLinkTransition(link, reading) {
+    const online = link.online === true && (reading.level === 'fresh' || reading.level === 'late');
+    const before = linkWasOnline;
+    linkWasOnline = online;
+    if (before === false && online) {
+      instances.map?.onReconnect?.();
+      instances.curve?.onReconnect?.();
     }
   }
 
@@ -165,7 +184,8 @@
     const source = telemetry || {};
     const live = source.live || source.data || source;
     const freshnessAge = finite(source.telemetryAgeMs ?? source.ageMs);
-    const freshnessBucket = freshnessAge === null || freshnessAge < 0 ? -1 : Math.min(20, Math.floor(freshnessAge / 500));
+    // Meio segundo até 10 s; depois de 1 em 1 s (o "Sem dados há N s" continua andando em vez de congelar em 10 s).
+    const freshnessBucket = freshnessAge === null || freshnessAge < 0 ? -1 : freshnessAge < 10000 ? Math.floor(freshnessAge / 500) : 20 + Math.min(3600, Math.floor(freshnessAge / 1000));
     const sourceSequence = Number.isFinite(Number(source.sequence)) ? Number(source.sequence) : -1;
     if (route === 'dashboard') {
       return [
@@ -193,18 +213,15 @@
   }
 
   function renderLightLiveContext(state, route) {
+    // Mesma regra de frescor do Agora: leitura velha (> 3 s) não aponta célula nenhuma ("—").
+    const reading = ui.LiveStore.read(state);
+    const shown = reading.level === 'fresh' || reading.level === 'late';
     const interpolation = state.telemetry?.interpolation || {};
-    const interpolationValid = interpolation.valid === true;
     const cell = interpolation.cell || {};
-    const rpm = finite(interpolation.rpm ?? liveFrom(state).rpm);
-    const petrolMs = finite(interpolation.petrolMs ?? liveFrom(state).petrol_ms ?? liveFrom(state).petrolMs);
+    const interpolationValid = shown && interpolation.valid === true;
     const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
     const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
-    const position = row !== null && column !== null ? ` · célula ${row + 1}×${column + 1}` : '';
-    const label = interpolationValid && rpm !== null && petrolMs !== null
-      ? `${Math.round(rpm).toLocaleString('pt-BR')} RPM · ${petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms${position}`
-      : 'Aguardando condição válida';
-    if (route === 'map') ensureScreen('map')?.renderLiveContext?.({ rpm, petrolMs, row, column, label });
+    if (route === 'map') ensureScreen('map')?.renderLiveContext?.({ row, column, level: reading.level });
   }
 
   /** Único pump de PresentSnapshot. Nenhum screen abre polling nativo próprio. */
@@ -283,7 +300,7 @@
     const state = store.get();
     const route = state.route;
     const curve = route === 'curve' ? ensureScreen('curve') : null;
-    const curveNeedsOverview = route === 'curve' && (curveEvidenceVisible() || curve?.needsOverview?.());
+    const curveNeedsOverview = route === 'curve' && curve?.needsOverview?.();
     const patch = {};
 
     if (route === 'tools') {
@@ -301,7 +318,6 @@
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
     if (curveNeedsOverview && curve) {
-      if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
       if (curve.needsOverview?.()) curve.renderOverview(updated);
     }
     if (route === 'sessions') ensureScreen('sessions')?.render(updated);
@@ -365,15 +381,18 @@
   function bindGlobalEvents() {
     routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
-    document.querySelector('[data-screen="curve"] .evidence-disclosure')?.addEventListener('toggle', event => {
-      if (event.currentTarget.open && store.get().route === 'curve') afterPaint(refreshContext);
+    // "Permitir USB": o dono negou a permissão do Android; um toque pede de novo (ação humana explícita).
+    document.addEventListener('click', event => {
+      if (event.target.closest && event.target.closest('[data-usb-allow]')) api.connectUsb();
     });
 
     document.addEventListener('visibilitychange', () => {
       const visible = !document.hidden;
       store.patch({ visible });
       if (visible) {
-        activateRoute(store.get().route, store.get().routeContext);
+        // Voltar do segundo plano não é "entrar na aba": a Curva K só retoma (mantém foto escolhida, prévia e Desfazer).
+        if (store.get().route === 'curve') { instances.curve?.onResume?.(); afterPaint(refreshContext); }
+        else activateRoute(store.get().route, store.get().routeContext);
         afterPaint(() => {
           refreshStatus();
           scheduler.start();

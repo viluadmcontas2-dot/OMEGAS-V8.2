@@ -246,7 +246,7 @@
     const o = opts || {};
     const width = Math.max(320, Math.round(o.width || 1000));
     const height = Math.max(160, Math.round(o.height || 400));
-    const padLeft = 64; const padRight = 16; const padTop = 14; const padBottom = 52;
+    const padLeft = 96; const padRight = 16; const padTop = 14; const padBottom = 52;
     const reference = model.reference || [];
     const domain = model.domain;
     if (!domain) return { empty: true };
@@ -264,7 +264,7 @@
 
     const xTicks = Array.from({ length: 6 }, (_, i) => xMin + i * (xMax - xMin) / 5);
     const yTicks = Array.from({ length: 5 }, (_, i) => yMin + i * (yMax - yMin) / 4);
-    const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${tick(v, 2)}</text>`).join('') +
+    const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${tick(v, 3)}</text>`).join('') +
       xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - padBottom + 20}" text-anchor="middle">${tick(v, 1)}</text>`).join('');
 
     const zoneMarkup = (model.zones || []).map(zone => {

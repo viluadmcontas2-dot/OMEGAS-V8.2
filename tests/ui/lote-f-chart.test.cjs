@@ -250,7 +250,7 @@ test('cursor único: LiveStore (cinza 1,5 s, some 3 s) e CSS transform, sem text
   assert.doesNotMatch(source, /textContent/, 'nenhum texto por quadro');
   assert.match(source, /style\.transform/);
   // Agora, AutoCal e Refino usam a mesma leitura
-  assert.match(read('screens/dashboard.js'), /LiveStore\.GREY_MS/);
+  assert.match(read('screens/dashboard.js'), /LiveStore\.read/);
   assert.match(read('screens/autocal-cockpit.js'), /ns\.LiveStore\.point/);
   assert.match(read('screens/refino.js'), /ns\.LiveStore\.point/);
 });

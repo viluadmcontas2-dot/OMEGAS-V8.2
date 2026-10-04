@@ -28,10 +28,10 @@ test('fast snapshot identity follows native sequence and freshness instead of fr
 });
 
 test('global fuel gives priority to live telemetry over the slower status snapshot', () => {
-  const match = app.match(/const fuel = fuelLabel\(([^;]+)\);/);
-  assert.ok(match, 'global fuel expression missing');
+  const match = app.match(/const fuel = reading\.level === 'fresh' \|\| reading\.level === 'late' \? fuelLabel\(([^;]+)\) : '—';/);
+  assert.ok(match, 'global fuel expression missing (só com leitura fresca ou atrasada; velha vira —)');
   const expression = match[1];
-  const live = expression.indexOf('liveFrom(state).fuel');
+  const live = expression.indexOf('reading.fuel');
   const status = expression.indexOf('status.fuelState');
   assert.ok(live >= 0, 'live fuel missing from global shell');
   assert.ok(status > live, `status fuel must be fallback after live fuel: ${expression}`);
@@ -40,12 +40,14 @@ test('global fuel gives priority to live telemetry over the slower status snapsh
 test('invalid interpolation cannot materialize a fake physical cell', () => {
   const light = between(app, 'function renderLightLiveContext', '/** Único pump de PresentSnapshot');
   assert.match(light, /interpolation\.valid\s*===\s*true/, 'learning/map live context must honor interpolation.valid');
-  assert.match(dashboard, /interpolation\.valid\s*===\s*true/, 'dashboard cell must honor interpolation.valid');
+  assert.doesNotMatch(dashboard, /dashCell/, 'o Agora não mostra célula (só ms, RPM, MAP e combustível)');
 });
 
 test('unavailable telemetry never turns HubStatus numeric defaults into fake measurements', () => {
-  assert.match(dashboard, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'dashboard must require valid telemetry before showing measurements');
-  assert.match(vehicle, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'vehicle strip must require valid telemetry before showing measurements');
+  const store = read('app/src/main/assets/ui/core/live-store.js');
+  assert.match(store, /valid\s*=\s*telemetry\.valid\s*===\s*true/, 'a leitura única exige telemetria válida antes de mostrar medição');
+  assert.match(dashboard, /LiveStore\.read\(state\)/, 'dashboard lê pela leitura única');
+  assert.match(vehicle, /LiveStore\.read\(state, \{ fallback: true \}\)/, 'faixa lê pela leitura única');
   assert.doesNotMatch(dashboard, /id=\\?"dashRpm\\?"[^>]*>0<\/b>/, 'dashboard initial state cannot claim 0 RPM before valid telemetry');
 });
 

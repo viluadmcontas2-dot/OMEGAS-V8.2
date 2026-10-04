@@ -194,7 +194,7 @@ test('M8 convite do balão (primeiro uso): aparece uma vez; Autorizar chama a po
 test('M8 idempotência: estado igual duas vezes não muda o DOM; A→B→A restaura; listeners estáveis', () => {
   const app = toolsApp({ openDetails: false });
   // a idade da telemetria anda com o relógio; o resto da tela tem de ficar idêntico
-  const snap = () => L.serialize(app.$(SCREEN)).replace(/Telemetria <b>[^<]*<\/b>/, 'Telemetria <b>#</b>');
+  const snap = () => L.serialize(app.$(SCREEN)).replace(/Último dado <b>[^<]*<\/b>/, 'Último dado <b>#</b>');
   const sched = app.win.OmegasApp.scheduler;
   sched.run();
   const dom = snap();

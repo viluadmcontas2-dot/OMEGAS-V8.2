@@ -312,7 +312,15 @@ test('M5 fuzz das respostas da Curva K (leitura, prévia, operação, backups): 
     methods: ['getLastOperation', 'previewKFactorPoint', 'listCurveBackups'],
     maxPathsPerMethod: 40,
     // cada tick: nova leitura + novo nudge, para o app consultar as três respostas durante a mutação
-    perTick: app => { app.byId('curveReadButton').click(); const n = app.$('[data-curve-nudge="0.01"]'); if (n) n.click(); app.byId('curveBackupSave').click(); },
+    perTick: app => {
+      // O ajuste vem ANTES da releitura: durante a leitura os botões ± ficam desativados (sem curva lida não há o que ajustar).
+      app.advance(700); // deixa a leitura anterior terminar
+      // Operação que a tela já desistiu de acompanhar (resposta mutada) não pode travar o mundo falso: a ECU libera o canal.
+      if (!app.win.OmegasApp.screens.curve.reading && !app.win.OmegasApp.screens.curve.backupTask) app.world.op = { idle: true };
+      const n = app.$('[data-curve-nudge="0.01"]'); if (n) n.click();
+      const k = app.byId('curveTargetFactor'); if (k && !k.hasAttribute('disabled')) k.dispatchEvent(new app.win.Event('change', { bubbles: true }));
+      app.byId('curveReadButton').click(); app.byId('curveBackupSave').click();
+    },
   });
   assert.ok(cases > 100, `casos ${cases}`);
   assert.ok(effective > cases * 0.2, `fuzz inócuo ${effective}/${cases}`);
