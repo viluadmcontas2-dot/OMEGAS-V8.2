@@ -84,6 +84,13 @@ TELEMETRY_RATIO_MIN = 0.6
 TELEMETRY_RATIO_MAX = 1.6
 LEDGER_BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]  # = EquivalenceLedger.BANDS
 
+# Lote H: evidência em bins finos (ver fine_bins.py). Só entra quando o chamador passa `fine_bins`.
+FINE_BINS_ENABLED = False    # produção: veja AutoMatchRefinedEngine.FINE_BINS_ENABLED (decidido pela validação cruzada)
+FINE_LAMBDA = 0.3            # rigidez do perfil ln(razão) sobre os 54 bins (escolhida por validação cruzada)
+FINE_WEIGHT_CAP = 6          # pares de um bin que contam para o peso (como BAND_FULL_COUNT)
+FINE_NODE_CAP = 8.0          # massa de evidência máxima de um nó (em "pares de bin")
+FINE_PRIOR = 1e-3            # âncora fraca do perfil (só para o sistema nunca ficar singular)
+
 NATIVE_MIN_RATIO = 0.75
 NATIVE_MAX_RATIO = 1.20
 
@@ -559,6 +566,109 @@ def telemetry_covers(pairs):
     return covered >= TELEMETRY_ONLY_MIN_BANDS
 
 
+# ------------------------------------------------------------ evidência fina (Lote H)
+
+def fine_gate(bins):
+    """Portões da evidência fina. Retorna (válidos, faixas_outlier, faixas_sem_trechos).
+
+    Bin com < BAND_MATURE_COUNT pares não é evidência. A faixa de 18 que o contém precisa de ≥ MIN_BAND_EPISODES
+    episódios (união dos bins; episódio desconhecido desliga o portão, como no caminho grosso) e razão agregada
+    GNV/gasolina plausível. Espelho de FineBins.gate."""
+    import fine_bins as fb
+    valid = [False] * fb.FINE_COUNT
+    outliers = 0
+    few_episodes = 0
+    for band in range(fb.BAND_COUNT):
+        s = fb.band_summary(bins, band)
+        members = range(band * fb.FINE_PER_BAND, (band + 1) * fb.FINE_PER_BAND)
+        mature = [i for i in members if bins[i]["n"] >= BAND_MATURE_COUNT]
+        if not mature:
+            continue
+        if s["episodes"] is not None and s["episodes"] < MIN_BAND_EPISODES:
+            few_episodes += 1
+            continue
+        if not (TELEMETRY_RATIO_MIN <= s["ratio"] <= TELEMETRY_RATIO_MAX):
+            outliers += 1
+            continue
+        for i in mature:
+            valid[i] = True
+    return valid, outliers, few_episodes
+
+
+def fine_profile(bins, valid, lam=None):
+    """Perfil robusto ln(razão) × ln(ms) nos 54 bins: Whittaker (2ª diferença) + Tukey sobre as medianas dos bins
+    válidos, peso min(n, FINE_WEIGHT_CAP). Sem âncora ao K: só suaviza a medição. Retorna (centros u, ajustado, tukey)."""
+    import fine_bins as fb
+    lam = FINE_LAMBDA if lam is None else lam
+    n = fb.FINE_COUNT
+    u = [0.5 * (math.log(b["fromMs"]) + math.log(b["toMs"])) for b in bins]
+    idx = [i for i in range(n) if valid[i]]
+    ys = [bins[i]["medianLn"] for i in idx]
+    ws = [float(min(bins[i]["n"], FINE_WEIGHT_CAP)) for i in idx]
+    anchor = sorted(ys)[len(ys) // 2] if ys else 0.0
+    d2 = second_difference_rows(u)
+    robust = [1.0] * len(idx)
+    x = [anchor] * n
+    for _ in range(IRLS_ITERATIONS):
+        m = [[0.0] * n for _ in range(n)]
+        v = [0.0] * n
+        for row in d2:
+            nz = [(j, c) for j, c in enumerate(row) if c]
+            for j, cj in nz:
+                for k, ck in nz:
+                    m[j][k] += lam * cj * ck
+        for j in range(n):
+            m[j][j] += FINE_PRIOR
+            v[j] += FINE_PRIOR * anchor
+        for pos, i in enumerate(idx):
+            w = ws[pos] * robust[pos]
+            m[i][i] += w
+            v[i] += w * ys[pos]
+        x = solve(m, v)
+        res = [ys[pos] - x[i] for pos, i in enumerate(idx)]
+        scale = max(sorted(abs(r) for r in res)[len(res) // 2] * 1.4826, 0.01) if res else 0.01
+        robust = [tukey(r / (TUKEY_C * scale)) for r in res]
+    tukey_all = [0.0] * n
+    for pos, i in enumerate(idx):
+        tukey_all[i] = robust[pos]
+    return u, x, tukey_all
+
+
+def fine_targets(bins, valid, axis_ms, k_old):
+    """Amostra o perfil fino nos nós do eixo K. Um nó tem alvo só se houver bin válido na sua célula (entre os
+    pontos médios, em ln ms, até os nós vizinhos); fora disso não há evidência inventada. O alvo é o mesmo da
+    equivalência por par: y = ln(K(tg)·tg/tp), com tp = ms do nó e tg = tp·razão(tp). Peso = 0,4·min(massa, cap)."""
+    u_axis = [math.log(t) for t in axis_ms]
+    u, fitted, tukey_w = fine_profile(bins, valid)
+    n = len(u_axis)
+    out = []
+    for j in range(n):
+        lo = 0.5 * (u_axis[j - 1] + u_axis[j]) if j > 0 else u_axis[j] - 0.5 * (u_axis[1] - u_axis[0])
+        hi = 0.5 * (u_axis[j] + u_axis[j + 1]) if j < n - 1 else u_axis[j] + 0.5 * (u_axis[j] - u_axis[j - 1])
+        members = [i for i in range(len(u)) if valid[i] and lo <= u[i] < hi]
+        if not members:
+            continue
+        mass = sum(min(bins[i]["n"], FINE_WEIGHT_CAP) * tukey_w[i] for i in members)
+        if mass <= 0.0:
+            continue
+        r = math.exp(interp(u_axis[j], u, fitted))
+        tp = axis_ms[j]
+        tg = tp * r
+        out.append({"map": None, "tp": tp, "tg": tg, "w": TELEMETRY_WEIGHT * min(mass, FINE_NODE_CAP), "ratio": r,
+                    "y": math.log(interp(tg, axis_ms, k_old) * r), "source": "TELEMETRIA_FINA", "node": j})
+    return out
+
+
+def fine_covers(bins, valid):
+    """Mesma cobertura mínima da condução, contada em pares dos bins válidos por faixa grossa do livro."""
+    covered = 0
+    for lo, hi in LEDGER_BANDS:
+        pairs = sum(b["n"] for b, ok in zip(bins, valid) if ok and lo <= math.sqrt(b["fromMs"] * b["toMs"]) < hi)
+        if pairs >= TELEMETRY_ONLY_BAND_PAIRS:
+            covered += 1
+    return covered >= TELEMETRY_ONLY_MIN_BANDS
+
+
 def proposal_box(x0, gain):
     """Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20]. Ponto que não alcança a faixa
     (K atual fora dela e fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0."""
@@ -581,7 +691,7 @@ def unavailable(reason, **extra):
     return out
 
 
-def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_episodes=None, hold_log=0.0):
+def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_episodes=None, hold_log=0.0, fine_bins=None):
     # Snapshot incoerente no tempo (grupos de leitura em instantes incompatíveis) não é base de proposta.
     # `partial` é true em todo snapshot real: NÃO é critério.
     if snapshot.get("temporalCoherent") is False:
@@ -615,18 +725,29 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
             targets = equivalence_targets(petrol, gas, axis_ms, k_old)
     mature = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)]
     native_equivalence = len(mature) >= MIN_COMMON_MATURE
-    raw_pairs = list(telemetry_pairs or [])
-    raw_eps = list(telemetry_episodes) if telemetry_episodes is not None and len(telemetry_episodes) == len(raw_pairs) else None
-    keep = [i for i, (tp, tg) in enumerate(raw_pairs) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
-    candidate = [raw_pairs[i] for i in keep]
-    usable, outlier_bands = plausible_pairs(candidate, [raw_eps[i] for i in keep] if raw_eps is not None else None)
-    # A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
-    telemetry_only = (not native_equivalence) and telemetry_covers(usable)
-    equivalence_available = native_equivalence or telemetry_only
-    if telemetry_only:
-        targets = []  # faixas nativas imaturas não entram: só a medição própria
-    if equivalence_available and usable:
-        targets = targets + telemetry_targets(usable, axis_ms, k_old)
+    if fine_bins is not None:
+        # Lote H: a evidência da condução vem dos bins finos (mediana robusta por bin, perfil suavizado).
+        valid, outlier_bands, _few = fine_gate(fine_bins)
+        usable = [None] * sum(b["n"] for b, ok in zip(fine_bins, valid) if ok)
+        telemetry_only = (not native_equivalence) and fine_covers(fine_bins, valid)
+        equivalence_available = native_equivalence or telemetry_only
+        if telemetry_only:
+            targets = []
+        if equivalence_available and usable:
+            targets = targets + fine_targets(fine_bins, valid, axis_ms, k_old)
+    else:
+        raw_pairs = list(telemetry_pairs or [])
+        raw_eps = list(telemetry_episodes) if telemetry_episodes is not None and len(telemetry_episodes) == len(raw_pairs) else None
+        keep = [i for i, (tp, tg) in enumerate(raw_pairs) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
+        candidate = [raw_pairs[i] for i in keep]
+        usable, outlier_bands = plausible_pairs(candidate, [raw_eps[i] for i in keep] if raw_eps is not None else None)
+        # A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
+        telemetry_only = (not native_equivalence) and telemetry_covers(usable)
+        equivalence_available = native_equivalence or telemetry_only
+        if telemetry_only:
+            targets = []  # faixas nativas imaturas não entram: só a medição própria
+        if equivalence_available and usable:
+            targets = targets + telemetry_targets(usable, axis_ms, k_old)
 
     observations = []
     if equivalence_available:

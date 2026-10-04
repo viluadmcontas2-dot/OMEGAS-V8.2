@@ -36,7 +36,7 @@ assert 'id="curveResetButton"' in index
 assert "resetCurve()" in api
 assert "fun startCurveReset()" in bridge
 assert "curveResetButton" in curve
-assert "Resetar a Curva K para 1.0" in curve
+assert "Resetar a Curva K para 1,000" in curve
 
 # Reset da Curva K: foto antes (leitura salva em disco) e só então zera; escrita comum não cria backup automático.
 assert "createBackup(adjustmentId" not in manager

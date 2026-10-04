@@ -2,23 +2,17 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
   // Mesma régua do Agora: cinza com 1,5 s sem quadro novo, some com 3 s (antes vivia 7,5 s com quadro velho).
-  const AUTO_CAL_LIVE_GREY_MS = 1500;
-  const AUTO_CAL_LIVE_STALE_MS = 3000;
+  const AUTO_CAL_LIVE_GREY_MS = ns.LiveStore.GREY_MS;
+  const AUTO_CAL_LIVE_STALE_MS = ns.LiveStore.STALE_MS;
   // Suavização do cursor: ~150 ms para chegar ao alvo (sem extrapolar o que o motor fará).
-  const AUTO_CAL_CURSOR_EASE_MS = 50;
   // Texto da narrativa: no máximo 2 Hz, ou na hora quando muda região/combustível/estado.
-  const AUTO_CAL_NARRATIVE_MS = 500;
+  const AUTO_CAL_NARRATIVE_MS = ns.LiveStore.NARRATIVE_MS;
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
   const AUTO_CAL_X_AXIS_LABEL = 'Petrol Inj. (ms)';
 
-  function finite(value) {
-    if (value === null || value === undefined || value === '') return null;
-    const number = Number(value);
-    return Number.isFinite(number) ? number : null;
-  }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
-  }
+  const D = ns.DisplayRules;
+  const finite = D.finite;
+  const escapeHtml = D.escapeHtml;
   function field(snapshot, key) {
     const fields = Array.isArray(snapshot?.fields) ? snapshot.fields : [];
     return fields.find(item => String(item?.key || '') === key && String(item?.status || '') === 'VALID') || null;
@@ -29,14 +23,14 @@
   }
   function actionLabel(action) {
     return ({
-      ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
-      DISABLE_AUTO_CAL: 'Desabilitar Auto Calibration',
+      ENABLE_AUTO_CAL: 'Iniciar a leitura da ECU',
+      DISABLE_AUTO_CAL: 'Pausar a leitura da ECU',
       FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
       FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
-      RESET_PETROL: 'Readquirir gasolina',
-      RESET_GAS: 'Readquirir GNV',
-      RESET_K_FACTOR: 'Resetar Curva K para 1.0',
-      RESET_ALL: 'Nova aquisição completa',
+      RESET_PETROL: 'Ler a gasolina de novo',
+      RESET_GAS: 'Ler o GNV de novo',
+      RESET_K_FACTOR: 'Resetar Curva K para 1,000',
+      RESET_ALL: 'Nova leitura completa',
     })[action] || action;
   }
 
@@ -107,7 +101,7 @@
         : acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED'
           ? 'AutoCal com erro de leitura'
           : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
-            ? 'Conectando à aquisição'
+            ? 'Conectando à leitura da ECU'
             : enabled === 1 && autoMatchQuotaReached
               ? 'AutoCal ativo · AutoMatch ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch)
               : enabled === 1 ? 'AutoCal adquirindo'
@@ -137,14 +131,14 @@
       if (evidenceState === 'FACTOR_CHANGE_CONFIRMED') {
         evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K mudou ' + (changedPoints === null ? '—' : changedPoints) + '/30';
         evidenceDetail = largestIndex === null || largestBefore === null || largestAfter === null
-          ? 'Mudança da Curva K confirmada por readback na mesma época nativa.'
+          ? 'Mudança da Curva K confirmada na ECU, na mesma época.'
           : 'Maior mudança observada: ponto ' + (Math.round(largestIndex) + 1) + ' · ' +
-            largestBefore.toFixed(4) + ' → ' + largestAfter.toFixed(4) + '.';
+            D.kValue(largestBefore) + ' → ' + D.kValue(largestAfter) + '.';
       } else if (evidenceState === 'NO_FACTOR_CHANGE_OBSERVED') {
         evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K sem mudança';
-        evidenceDetail = 'O contador avançou, mas os 30 fatores MUL_ACT permaneceram iguais neste bracket.';
+        evidenceDetail = 'O contador avançou, mas a Curva K não mudou.';
       } else if (evidenceState === 'INCONCLUSIVE') {
-        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · bracket incompleto';
+        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · sem par antes/depois';
         evidenceDetail = 'O contador avançou, mas não existe um par antes/depois da mesma época confiável: ' +
           String(evidence?.reason || 'evidência insuficiente') + '.';
       }
@@ -160,11 +154,11 @@
         nextAction = String(state.message || state.error || 'A projeção nativa do AutoCal está indisponível.') + ' · Nenhuma referência será escolhida pela interface.';
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado nativo.') + ' · Verifique a conexão; o monitor tentará novamente automaticamente.';
-      } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
-      else if (enabled === 1 && autoMatchQuotaReached) nextAction = 'A cota automática de AutoMatch foi atingida. A aquisição continua habilitada e pode preencher novas zonas; pause somente se quiser interromper a coleta.';
-      else if (enabled === 1 && gasMissingZones.length) nextAction = 'Aquisição habilitada. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
+      } else if (enabled === 0) nextAction = 'Inicie a leitura quando quiser continuar.';
+      else if (enabled === 1 && autoMatchQuotaReached) nextAction = 'A cota automática de AutoMatch foi atingida. A leitura continua ativa e pode preencher novas zonas; pause só se quiser interromper.';
+      else if (enabled === 1 && gasMissingZones.length) nextAction = 'Leitura ativa. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
       else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando: o próximo AutoMatch é decisão nativa da ECU.';
-      else if (enabled === 1) nextAction = 'Aquisição habilitada; aguardando a ECU publicar o mapa das quatro zonas.';
+      else if (enabled === 1) nextAction = 'Leitura ativa; aguardando a ECU publicar as quatro zonas.';
       return {
         title, progress, autoMatch, nextAction,
         autoMatchEvidenceState: evidenceState || 'WAITING',
@@ -223,17 +217,8 @@
       return { title, detail, next, level: warning ? 'warning' : 'ok', recording, minutes, regions, gasZones, dropped, documentsMirror, mirrorFailed };
     },
 
-    livePoint(telemetry = {}, projection = {}) {
-      const source = telemetry || {};
-      const ageMs = finite(source.telemetryAgeMs ?? source.ageMs);
-      if (source.valid !== true || ageMs === null || ageMs < 0 || ageMs > AUTO_CAL_LIVE_STALE_MS) return null;
-      const live = source.live || source.data || source;
-      const petrolMs = finite(live.petrol_ms ?? live.petrolMs);
-      const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
-      const rpm = finite(live.rpm);
-      if (petrolMs === null || mapBar === null) return null;
-      return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs, grey: ageMs > AUTO_CAL_LIVE_GREY_MS };
-    },
+    // Leitura viva única (core/live-store.js): cinza em 1,5 s, some em 3 s.
+    livePoint(telemetry = {}) { return ns.LiveStore.point(telemetry); },
 
     /**
      * Onde o MAP vivo cai nos 18 limiares da ECU. Cada faixa i é (THD[i], THD[i+1]] (confirmado em 740 de 740
@@ -665,6 +650,7 @@
       this.sessions = [];
       this.sessionDrawerOpen = false;
       this.chartScale = null;
+      this.cursor = new ns.LiveStore.EaseCursor(() => this.panel?.querySelector('.autocal-live-layer'));
       this.previousReferencePoints = [];
       this.comparisonPinned = false;
       this.currentReferencePoints = [];
@@ -677,8 +663,15 @@
       this.selectedBandIndex = null;
       this.inject();
       this.bind();
+      // Releitura por revisão: evidência, tabelas e sessão só quando andaram (ou o vigia vence);
+      // com operação ou releitura de ponto em curso, relê sempre (o progresso não tem revisão própria).
+      const revisions = ns.Revisions;
+      this.dataGate = revisions ? revisions.gate(revisions.SLOW_KINDS, revisions.WATCHDOG_MS) : { due: () => true, mark() {} };
+      this.dataDirty = false;
+      this.unsubscribeRevisions = revisions ? revisions.subscribe(kind => { if (kind !== 'live') this.dataDirty = true; }) : () => {};
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
-        if (this.store.get().route === 'autocal') this.refresh();
+        if (this.store.get().route !== 'autocal') return;
+        if (this.dataGate.due(this.refreshBusy())) { this.refresh(); this.dataGate.mark(); }
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
         if (this.store.get().route !== 'autocal') {
@@ -689,7 +682,8 @@
         if (!this.unsubscribeFrame && typeof this.scheduler.addFrameHook === 'function') {
           this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateCursor(timestamp));
         }
-        if (this.firstRefreshPending) { this.firstRefreshPending = false; this.refresh(); }
+        if (this.firstRefreshPending) { this.firstRefreshPending = false; this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
+        else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
         this.renderLiveCursor();
       });
       if (this.store.get().route === 'autocal') {
@@ -711,14 +705,14 @@
         const panel = document.createElement('div');
         panel.className = 'autocal-route-panel';
         panel.innerHTML = `
-          <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
+          <section class="autocal-cockpit" aria-label="AutoCal da ECU">
             <header class="autocal-focus-toolbar" aria-label="AutoCal · Gasolina e GNV">
               <div class="autocal-focus-title">
                 <div class="autocal-title-line">
                   <h3>AutoCal · Gasolina e GNV</h3>
                   <span id="autocalLiveFuel" class="autocal-fuel-chip" data-fuel-state="unknown">—</span>
                 </div>
-                <p>Aquisição e ajuste da malha de injeção</p>
+                <p>Leitura e ajuste da malha de injeção</p>
               </div>
 
               <div class="autocal-focus-metrics" aria-live="polite">
@@ -739,48 +733,43 @@
                   <b id="autocalLiveZone">—</b>
                 </div>
                 <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
-                <p id="autocalLiveNarrative" class="autocal-live-narrative" hidden>O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
+                <p id="autocalLiveNarrative" class="autocal-live-narrative" hidden>O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira ponto lido pela ECU.</p>
               </div>
 
               <div class="autocal-focus-actions">
-                <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
+                <span id="autocalNativeState" hidden>Leitura da ECU: aguardando</span>
                 <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Ler o GNV de novo</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Ler a gasolina de novo</button>
                 <details class="autocal-reset-menu">
                   <summary>Ações avançadas</summary>
                   <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
                     <section class="autocal-reset-group" data-reset-scope="advanced">
                       <small>CONTROLE MANUAL</small>
-                      <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1.0</button>
-                      <p>O AutoMatch nativo é automático e decidido pela ECU. Resetar Curva K coloca toda a curva em 1.0. Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0.</p>
+                      <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
+                      <p>O AutoMatch é automático e decidido pela ECU. Resetar Curva K coloca toda a curva em 1,000. Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU.</p>
                     </section>
                   </div>
                 </details>
               </div>
             </header>
 
-            <section class="autocal-reference-card" aria-label="CURVA DE AQUISIÇÃO · Gasolina × GNV">
-              <span class="autocal-plot-title">CURVA DE AQUISIÇÃO · Gasolina × GNV</span>
+            <section class="autocal-reference-card autocal-chart-card" aria-label="Leitura da ECU · Gasolina × GNV">
+              <div class="refino-chart-head">
+                <span class="autocal-plot-title">Leitura da ECU · Gasolina × GNV</span>
+                <span id="autocalReferenceCount" class="refino-counts">—</span>
+                <div class="autocal-chart-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
+              </div>
               <div class="autocal-chart-workspace">
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
-                <div class="autocal-chart-legend">
-                  <span class="petrol">Curva gasolina (ECU)</span>
-                  <span class="gas">Curva GNV (ECU)</span>
-                  <span class="acquired">Pontos da aquisição corrente</span>
-                  <span class="previous">GNV anterior (contexto)</span>
-                  <span class="current-band">Zona atual</span>
-                  <span class="live">AGORA</span>
-                  <span id="autocalReferenceCount">—</span>
-                </div>
+                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um marcador</b><span>As linhas mostram a referência da ECU; os pontos lidos podem ser lidos de novo, um a um.</span></aside>
                 <div id="autocalResetComparison" class="autocal-reset-comparison" hidden aria-live="polite"></div>
                 <button type="button" class="autocal-history-float" data-autocal-history disabled aria-label="Mostrar leitura anterior">Leitura anterior</button>
-                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Linhas mostram referência; bolinhas adquiridas podem ser readquiridas individualmente.</span></aside>
               </div>
             </section>
 
             <details class="autocal-secondary-details" open>
-              <summary>Contexto da aquisição</summary>
+              <summary>Contexto da leitura da ECU</summary>
               <div class="autocal-secondary-stack" role="region" aria-label="Informações secundárias do AutoCal">
               <header class="autocal-hero autocal-secondary-card" aria-live="polite">
                 <div class="autocal-human-copy">
@@ -896,6 +885,8 @@
             Number(acquiredPoint.dataset.autocalAcquiredIndex),
           );
         }
+        const ours = event.target.closest('[data-chart-our]');
+        if (ours) this.inspectOurBin(Number(String(ours.getAttribute('data-chart-our')).split(':')[1]));
         const point = event.target.closest('[data-autocal-ref-index]');
         if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
         const reacquire = event.target.closest('[data-autocal-reacquire-point]');
@@ -922,6 +913,13 @@
     enter() {
       this.active = true;
       this.refresh();
+      this.dataGate.mark();
+    }
+
+    /** Há operação na ECU ou releitura de ponto em andamento: o progresso não tem revisão, então relê sempre. */
+    refreshBusy() {
+      return this.operationalPending === true || this.actionState?.busy === true ||
+        (this.pendingPointReacquisitionKeys?.size || 0) > 0;
     }
 
     refresh() {
@@ -1040,11 +1038,11 @@
       const result = this.api.setAcquisitionEnabled?.(enable) || { ok: false, error: 'Ação operacional indisponível.' };
       if (result?.ok !== true) {
         this.operationalPending = false;
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível alterar a aquisição AutoCal.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível alterar a leitura do AutoCal.' } });
       } else {
         this.store.patch({ alert: { level: 'ok', message: enable
-          ? 'Início enviado. Confirmando ACK e leitura de volta da ECU…'
-          : 'Pausa enviada. Confirmando ACK e leitura de volta da ECU…' } });
+          ? 'Início enviado. Conferindo na ECU…'
+          : 'Pausa enviada. Conferindo na ECU…' } });
       }
       this.refresh();
     }
@@ -1058,7 +1056,7 @@
 
     prepare(action) {
       if (!action || !this.api?.available?.()) return;
-      // Resetar a Curva K tem UM caminho: o da aba Curva K (foto antes, zera, readback, Desfazer).
+      // Resetar a Curva K tem UM caminho: o da aba Curva K (foto antes, zera, conferência, Desfazer).
       if (action === 'RESET_K_FACTOR' && this.resetViaCurve()) return;
       const result = this.api.prepare(action);
       if (!result?.ok || !result?.prepared) {
@@ -1093,7 +1091,7 @@
       this.prepared = null;
       const review = document.getElementById('autocalReview');
       if (review) { review.hidden = true; review.innerHTML = ''; }
-      this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde ACK e readback.' } });
+      this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde a conferência.' } });
       this.refresh();
     }
 
@@ -1122,7 +1120,7 @@
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
       const autoMatchEvidence = document.getElementById('autocalAutoMatchEvidence');
       if (autoMatchEvidence) autoMatchEvidence.dataset.state = human.autoMatchEvidenceState;
-      this.text('autocalNativeState', 'Aquisição: ' + acquisitionLabel);
+      this.text('autocalNativeState', 'Leitura da ECU: ' + acquisitionLabel);
       this.text('autocalZoneSummary', human.gasZones === null ? 'Zonas GNV sem leitura' : human.gasZones + '/4 zonas GNV');
       this.text('autocalStateRaw', state.state || '—');
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
@@ -1142,8 +1140,8 @@
         toggle.textContent = this.operationalPending
           ? 'Confirmando ECU…'
           : action === 'DISABLE_AUTO_CAL'
-            ? 'Pausar aquisição'
-            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
+            ? 'Pausar leitura'
+            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar leitura' : 'Aguardando estado';
       }
 
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
@@ -1214,8 +1212,8 @@
         this.text('autocalLiveMap', '—');
         this.text('autocalLiveZone', '—');
         this.text('autocalLiveNarrative', stale
-          ? 'Leitura atrasada há ' + Math.round(ageMs / 1000) + ' s: o último frame passou da janela curta de telemetria. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
-          : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
+          ? 'Leitura atrasada há ' + Math.round(ageMs / 1000) + ' s: a última leitura passou da janela curta. AGORA foi ocultado até chegar uma leitura nova; a referência da ECU não foi alterada.'
+          : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira ponto lido pela ECU.');
         return;
       }
       const rpmLabel = live.rpm === null ? 'RPM —' : Math.round(live.rpm).toLocaleString('pt-BR') + ' RPM';
@@ -1225,16 +1223,16 @@
       const fuelChip = document.getElementById('autocalLiveFuel');
       if (fuelChip) fuelChip.dataset.fuelState = fuelState.kind;
       this.text('autocalLiveRpm', live.rpm === null ? '—' : Math.round(live.rpm).toLocaleString('pt-BR'));
-      this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      this.text('autocalLivePetrol', D.ms(live.petrolMs));
+      this.text('autocalLiveMap', D.bar(live.mapBar));
       const region = AutoCalUxModel.liveRegion(this.snapshot || {}, live);
       this.text('autocalLiveZone', region.kind === 'idle' ? 'Lenta' : region.zone === null ? '—' : 'Z' + region.zone);
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
-        ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
-        : enabled === 0 ? 'Aquisição pausada. O ponto AGORA é somente telemetria.' : 'Estado de aquisição ainda não confirmado.';
+        ? 'Leitura da ECU ativa. Se a condição estabilizar, a ECU pode fortalecer esta região.'
+        : enabled === 0 ? 'Leitura da ECU pausada. O ponto AGORA é só leitura ao vivo.' : 'Estado da leitura da ECU ainda não confirmado.';
       const delayCopy = live.grey ? ' Leitura atrasada há ' + Math.max(1, Math.round(live.ageMs / 1000)) + ' s: o cursor está em cinza.' : '';
-      this.text('autocalLiveNarrative', rpmLabel + ' · ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. ' + acquisitionCopy + delayCopy);
+      this.text('autocalLiveNarrative', rpmLabel + ' · ' + D.msUnit(live.petrolMs) + ' · ' + D.barUnit(live.mapBar) + '. ' + acquisitionCopy + delayCopy);
     }
 
     renderLiveCursor() {
@@ -1267,8 +1265,7 @@
       if (!live) {
         if (layer) layer.setAttribute('display', 'none');
         if (bandLayer) bandLayer.setAttribute('display', 'none');
-        this.cursorTarget = null;
-        this.cursorPos = null;
+        this.cursor.clear();
         return;
       }
       if (scale && bandLayer) {
@@ -1297,15 +1294,9 @@
       layer.removeAttribute('display');
       layer.setAttribute('data-out-of-range', projected.outOfRange ? 'true' : 'false');
       layer.setAttribute('data-stale', live.grey ? 'true' : 'false');
-      // O alvo muda a cada quadro novo; quem move o círculo é o quadro de animação (ease ~150 ms).
-      this.cursorTarget = { x: projected.x, y: projected.y, outOfRange: projected.outOfRange, scale };
-      if (!this.cursorPos || typeof this.scheduler?.addFrameHook !== 'function') {
-        this.cursorPos = { x: projected.x, y: projected.y };
-        this.paintCursor();
-      } else if (seen?.scale !== this.chartScale) {
-        // Gráfico redesenhado: os nós novos nascem no alvo; recoloca-os na posição suavizada.
-        this.paintCursor();
-      }
+      // O alvo muda a cada quadro novo; quem move o ponto é o quadro de animação (CSS transform, ease ~150 ms).
+      this.cursor.setTarget(projected.x, projected.y, scale, projected.outOfRange);
+      if (typeof this.scheduler?.addFrameHook !== 'function' || seen?.scale !== this.chartScale) this.cursor.paint();
       const label = this.panel?.querySelector('[data-autocal-live-label]');
       if (label) {
         const zone = region.zone;
@@ -1326,42 +1317,8 @@
       }
     }
 
-    /** Pinta o círculo e o rótulo na posição suavizada atual. */
-    paintCursor() {
-      const pos = this.cursorPos;
-      const target = this.cursorTarget;
-      if (!pos || !target) return;
-      this.panel?.querySelectorAll('[data-autocal-live-point]').forEach(node => {
-        node.setAttribute('cx', pos.x.toFixed(1));
-        node.setAttribute('cy', pos.y.toFixed(1));
-      });
-      const label = this.panel?.querySelector('[data-autocal-live-label]');
-      if (label) {
-        const anchor = AutoCalUxModel.liveLabelAnchor({ x: pos.x, y: pos.y, outOfRange: target.outOfRange }, target.scale);
-        label.setAttribute('x', anchor.x.toFixed(1));
-        label.setAttribute('text-anchor', anchor.textAnchor);
-        label.setAttribute('y', anchor.y.toFixed(1));
-      }
-    }
-
-    /** Quadro de animação (rAF do scheduler): aproxima o cursor do alvo; sem extrapolar, sem timer próprio. */
-    animateCursor(timestamp) {
-      const target = this.cursorTarget;
-      const pos = this.cursorPos;
-      if (!target || !pos) { this.cursorFrameAt = null; return; }
-      const dt = this.cursorFrameAt === null || this.cursorFrameAt === undefined ? 16 : Math.max(0, Math.min(100, timestamp - this.cursorFrameAt));
-      this.cursorFrameAt = timestamp;
-      const dx = target.x - pos.x;
-      const dy = target.y - pos.y;
-      if (Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05) {
-        if (dx !== 0 || dy !== 0) { pos.x = target.x; pos.y = target.y; this.paintCursor(); }
-        return;
-      }
-      const k = 1 - Math.exp(-dt / AUTO_CAL_CURSOR_EASE_MS);
-      pos.x += dx * k;
-      pos.y += dy * k;
-      this.paintCursor();
-    }
+    /** Quadro de animação (rAF do scheduler): o cursor compartilhado só move a camada com CSS transform. */
+    animateCursor(timestamp) { this.cursor.frame(timestamp); }
 
     renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');
@@ -1412,6 +1369,8 @@
     }
 
     renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host) {
+      ns.CurveChart?.release(host);
+      this.chartSignature = null;
       // ProgBase DUMP/TAutoCalUI separates PetrolCurve (native RV), PetrolPoint,
       // GasPoint, GasPointPrev and KLine. Do not collapse them into one reference.
       this.chartScale = null;
@@ -1426,7 +1385,7 @@
       const petrolRestart = epoch.petrolPending === true;
       const gasRestart = epoch.gasPending === true;
       const stage = restartBoth
-        ? 'Aguardando novas aquisições de gasolina e GNV'
+        ? 'Aguardando nova leitura de gasolina e GNV'
         : petrolRestart
           ? 'Gasolina reiniciada: a referência anterior não é a atual'
           : gasRestart
@@ -1489,7 +1448,7 @@
       const previousNarrative = previousGas.length
         ? 'Círculos esmaecidos = GNV anterior sem contador atual. ' : '';
       const quotaNarrative = automatch !== null && quota !== null && automatch >= quota
-        ? ' Cota AutoMatch atingida; a aquisição NÃO terminou.' : '';
+        ? ' Cota de AutoMatch atingida; a leitura NÃO terminou.' : '';
       this.text('autocalChartInspector',
         'Contador AutoMatch da ECU: ' + step + '.' + quotaNarrative + ' ' + stage + '. ' +
         sourceNarrative + previousNarrative +
@@ -1578,179 +1537,81 @@
           return;
         }
         this.chartRenderKey = null;
+        this.chartSignature = null;
+        ns.CurveChart?.release(host);
         this.renderResetComparison([]);
         this.chartScale = null;
         if (timingProblem) {
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
           const limitLabel = timingLimitMs === null ? 'limite nativo' : 'limite ' + Math.round(timingLimitMs) + ' ms';
-          this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' · fora da janela');
+          this.text('autocalReferenceCount', D.plural(points.length, 'ponto', 'pontos') + ' · fora da janela');
           host.innerHTML = '<div class="chart-empty"><b>REFERÊNCIA FORA DA JANELA</b><span>Os vetores físicos foram lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '. Aguarde a próxima atualização automática da ECU. O AGORA continua vivo sem virar referência.</span></div>';
           this.text('autocalChartInspector', 'Referência física temporalmente incoerente. Aguarde a próxima atualização automática da ECU; o cursor AGORA continua somente como telemetria.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
           host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
           this.text('autocalChartInspector', live
-            ? 'AGORA: ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. Referência nativa indisponível.'
+            ? 'AGORA: ' + D.msUnit(live.petrolMs) + ' · ' + D.barUnit(live.mapBar) + '. Referência da ECU indisponível.'
             : 'Aguardando Petrol Inj. e MAP nativos.');
         }
         this.renderLiveNarrative();
         return;
       }
 
-      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
+      this.text('autocalReferenceCount', D.plural(points.length, 'ponto lido', 'pontos lidos'));
 
-      const width = 1000;
-      const height = 400;
-      const padLeft = 64;
-      const padRight = 28;
-      const padTop = 22;
-      const padBottom = 48;
+      const chart = ns.CurveChart;
       const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
-      const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
-      const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
-      const chartRenderKey = JSON.stringify([
-        this.projection?.sessionId, points, acquiredPoints, history, zoneSurface, !!live,
-        this.previousReferencePoints, this.selectedReferenceIndex, this.selectedAcquiredPoint,
-      ]);
-      if (this.renderedChartHost === host && this.chartRenderKey === chartRenderKey) {
+      // Armazém único da evidência: busca eq/análise só quando a tabela da ECU muda ou no vigia de 5 s.
+      chart.updateEvidence(this.api, this.projection, Date.now(), false);
+      const width = Math.round(host.clientWidth) || 1000;
+      const height = Math.round(host.clientHeight) || 400;
+      const store = chart.evidence;
+      const signature = chart.evidenceSignature({
+        snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
+        extra: `${Math.round(width / 16)}x${Math.round(height / 16)}`,
+      });
+      const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.shared.node) !== false;
+      if (alreadyShown) {
         this.renderLiveCursor();
         return;
       }
-      const domain = AutoCalUxModel.referenceDomain(points, history, zoneSurface, acquiredPoints);
-      if (!domain) {
-        this.chartScale = null;
-        host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>';
+      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history };
+      chart.mount(host, signature, () => {
+        const model = chart.buildModel(input);
+        if (!model || !model.domain) {
+          return { html: '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>', scale: null, model: null };
+        }
+        return { ...chart.buildSvg(model, { width, height }), model };
+      }, 'ecu18');
+      const shown = chart.shared;
+      const model = shown.model;
+      this.chartScale = shown.scale;
+      if (!model || !shown.scale) {
+        this.renderedChartHost = null;
+        this.chartSignature = null;
         return;
       }
-      const { xMin, xMax, yMin, yMax } = domain;
-      const xFor = value => padLeft + ((value - xMin) / (xMax - xMin)) * (width - padLeft - padRight);
-      const yFor = value => height - padBottom - ((value - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
-      const scale = { xMin, xMax, yMin, yMax, xFor, yFor };
-      this.chartScale = scale;
-      const pathFor = (items, yKey, xKey = 'petrolMs') => items
-        .filter(point => {
-          const xValue = finite(point?.[xKey]);
-          const yValue = finite(point?.[yKey]);
-          return xValue !== null && yValue !== null && yValue >= yMin && yValue <= yMax;
-        })
-        .map((point, index) => (index ? 'L' : 'M') + ' ' + xFor(point[xKey]).toFixed(1) + ' ' + yFor(point[yKey]).toFixed(1))
-        .join(' ');
-
-      const xTicks = Array.from({ length: 6 }, (_, index) => xMin + index * (xMax - xMin) / 5);
-      const yTicks = Array.from({ length: 5 }, (_, index) => yMin + index * (yMax - yMin) / 4);
-      const grid = yTicks.map(value => {
-        const y = yFor(value);
-        return '<line class="autocal-grid-line" x1="' + padLeft + '" y1="' + y.toFixed(1) + '" x2="' + (width - padRight) + '" y2="' + y.toFixed(1) + '"></line>' +
-          '<text class="autocal-axis-tick-y" x="' + (padLeft - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + value.toFixed(2) + '</text>';
-      }).join('') + xTicks.map(value => {
-        const x = xFor(value);
-        return '<line class="autocal-grid-line vertical" x1="' + x.toFixed(1) + '" y1="' + padTop + '" x2="' + x.toFixed(1) + '" y2="' + (height - padBottom) + '"></line>' +
-          '<text class="autocal-axis-tick-x" x="' + x.toFixed(1) + '" y="' + (height - 23) + '" text-anchor="middle">' + value.toFixed(1) + '</text>';
-      }).join('');
-
-      const zoneMarkup = zoneSurface.map(zone => {
-        const lower = Math.max(zone.lower, yMin);
-        const upper = Math.min(zone.upper, yMax);
-        if (upper <= lower) return '';
-        const top = Math.min(yFor(lower), yFor(upper));
-        const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
-        const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
-        const caption = 'Z' + zone.zone + ' · Gasolina ' + label(zone.petrolState) + ' · GNV ' + label(zone.gasState);
-        return '<g class="autocal-zone-surface" data-autocal-zone-surface="' + zone.zone +
-          '" data-gas-state="' + zone.gasState + '" data-petrol-state="' + zone.petrolState + '" data-current="false" aria-label="' + caption + '">' +
-          '<rect class="autocal-zone-background" x="' + padLeft + '" y="' + top.toFixed(1) +
-          '" width="' + (width - padLeft - padRight) + '" height="' + zoneHeight.toFixed(1) + '"></rect>' +
-          '<rect class="autocal-zone-petrol-edge" x="' + (padLeft + 2) + '" y="' + top.toFixed(1) +
-          '" width="5" height="' + zoneHeight.toFixed(1) + '"></rect>' +
-          '<rect class="autocal-zone-gas-edge" x="' + (padLeft + 9) + '" y="' + top.toFixed(1) +
-          '" width="5" height="' + zoneHeight.toFixed(1) + '"></rect>' +
-          '<text class="autocal-zone-label" data-autocal-zone-label data-base-label="' + caption +
-          '" x="' + (width - padRight - 10) + '" y="' + (top + zoneHeight / 2 + 4).toFixed(1) +
-          '" text-anchor="end">' + caption + '</text></g>';
-      }).join('');
-
-      const previous = history.length
-        ? '<path class="autocal-reference-line previous petrol" d="' + pathFor(history, 'petrolMapBar') + '"></path>' +
-          '<path class="autocal-reference-line previous gas" d="' + pathFor(history, 'gasMapBar') + '"></path>'
-        : '';
-      const equivalent = points.filter(point => finite(point.gasEquivalentMs) !== null);
-      const equivalencePath = equivalent.length > 1
-        ? '<path class="autocal-equivalence-line" d="' + pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs') + '"></path>'
-        : '';
-
-      const pointMarkup = points.map(point => {
-        const x = xFor(point.petrolMs).toFixed(1);
-        const petrolVisible = point.petrolMapBar >= yMin && point.petrolMapBar <= yMax;
-        const gasVisible = point.gasMapBar >= yMin && point.gasMapBar <= yMax;
-        const petrolY = petrolVisible ? yFor(point.petrolMapBar).toFixed(1) : null;
-        const gasY = gasVisible ? yFor(point.gasMapBar).toFixed(1) : null;
-        const equivalentX = petrolVisible && finite(point.gasEquivalentMs) !== null ? xFor(point.gasEquivalentMs).toFixed(1) : null;
-        return (petrolVisible
-          ? '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + petrolY + '" r="22"></circle>' +
-            '<circle class="autocal-reference-point petrol" cx="' + x + '" cy="' + petrolY + '" r="6.5"></circle>'
-          : '') +
-          (gasVisible
-            ? '<circle class="autocal-reference-hit" data-autocal-ref-index="' + point.index + '" cx="' + x + '" cy="' + gasY + '" r="22"></circle>' +
-              '<circle class="autocal-reference-point gas" cx="' + x + '" cy="' + gasY + '" r="4.2"></circle>'
-            : '') +
-          (equivalentX === null ? '' : '<circle class="autocal-equivalence-point" cx="' + equivalentX + '" cy="' + petrolY + '" r="4"></circle>');
-      }).join('');
-
-      const acquiredMarkup = acquiredPoints.map(point => {
-        if (point.mapBar < yMin || point.mapBar > yMax || point.petrolMs < xMin || point.petrolMs > xMax) return '';
-        const x = xFor(point.petrolMs).toFixed(1);
-        const y = yFor(point.mapBar).toFixed(1);
-        const key = point.fuel + ':' + point.index;
-        const selected = this.selectedAcquiredPoint === key;
-        const batchSelected = this.selectedAcquiredPoints.has(key);
-        return '<circle class="autocal-acquired-hit' + (selected ? ' selected' : '') + (batchSelected ? ' batch-selected' : '') +
-          '" data-autocal-acquired-fuel="' + point.fuel +
-          '" data-autocal-acquired-index="' + point.index +
-          '" cx="' + x + '" cy="' + y + '" r="17"></circle>' +
-          '<circle class="autocal-acquired-point ' + (point.fuel === 'GAS' ? 'gas' : 'petrol') +
-          ' ' + (point.acquisitionState === 'ACQUIRED' ? 'acquired' : 'collecting') +
-          '" data-acquisition-state="' + point.acquisitionState +
-          '" data-acquisition-progress="' + (finite(point.progress) ?? 0).toFixed(3) +
-          '" cx="' + x + '" cy="' + y + '" r="' + (point.acquisitionState === 'ACQUIRED' ? '6.0' : '4.6') + '"></circle>';
-      }).join('');
-
-      const projectedLive = AutoCalUxModel.projectLive(live, scale);
-      const liveAnchor = projectedLive ? AutoCalUxModel.liveLabelAnchor(projectedLive, scale) : null;
-      const liveMarkup = live && projectedLive
-        ? '<g class="autocal-live-layer" data-out-of-range="' + (projectedLive.outOfRange ? 'true' : 'false') + '" aria-label="Posição atual do motor">' +
-            '<circle class="autocal-live-halo" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="13"></circle>' +
-            '<circle class="autocal-live-point" data-autocal-live-point cx="' + projectedLive.x.toFixed(1) + '" cy="' + projectedLive.y.toFixed(1) + '" r="6"></circle>' +
-            '<text class="autocal-live-label" data-autocal-live-label x="' + liveAnchor.x.toFixed(1) + '" y="' + liveAnchor.y.toFixed(1) + '" text-anchor="' + liveAnchor.textAnchor + '">' +
-              (projectedLive.outOfRange ? 'AGORA · fora da escala' : 'AGORA') + '</text>' +
-          '</g>'
-        : '';
-
-      host.innerHTML = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Referência AutoCal gasolina, GNV, equivalência nativa e posição AGORA por Petrol Inj. e MAP">' +
-        grid + zoneMarkup +
-        '<text class="autocal-axis-title x" x="' + ((padLeft + width - padRight) / 2).toFixed(1) + '" y="' + (height - 5) + '" text-anchor="middle">' + AUTO_CAL_X_AXIS_LABEL + '</text>' +
-        '<text class="autocal-axis-title y" x="14" y="' + (height / 2) + '" text-anchor="middle" transform="rotate(-90 14 ' + (height / 2) + ')">MAP (bar)</text>' +
-        '<g>' +
-        '<rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>' +
-        previous + equivalencePath +
-        '<path class="autocal-reference-line petrol" d="' + pathFor(points, 'petrolMapBar') + '"></path>' +
-        '<path class="autocal-reference-line gas" d="' + pathFor(points, 'gasMapBar') + '"></path>' +
-        pointMarkup + acquiredMarkup + liveMarkup +
-        '</g></svg>';
-
+      this.currentReferencePoints = model.reference;
+      this.currentAcquiredPoints = model.ecu;
+      const legend = document.getElementById('autocalLegend');
+      const legendKey = `${model.proposal.length > 0}|${model.stalls.length > 0}|${history.length > 0}`;
+      if (legend && this.legendKey !== legendKey) {
+        this.legendKey = legendKey;
+        legend.innerHTML = chart.legendHtml({ mode: 'ecu18', proposal: model.proposal.length > 0, stall: model.stalls.length > 0 }) + (history.length ? '<span class="previous" data-legend="previous">Leitura anterior</span>' : '');
+      }
+      chart.applySelection({ ref: this.selectedReferenceIndex, ecu: this.selectedAcquiredPoint, batch: this.selectedAcquiredPoints });
       if (this.selectedAcquiredPoint) {
         const [fuel, rawIndex] = this.selectedAcquiredPoint.split(':');
         this.inspectAcquiredPoint(fuel, Number(rawIndex));
-      } else {
-        const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : points[0].index;
+      } else if (model.reference.length) {
+        const selected = Number.isInteger(this.selectedReferenceIndex) ? this.selectedReferenceIndex : model.reference[0].index;
         this.inspectReferencePoint(selected);
       }
-      this.renderResetComparison(points);
+      this.renderResetComparison(model.reference);
       this.renderLiveCursor();
       this.renderedChartHost = host;
-      this.chartRenderKey = JSON.stringify([
-        this.projection?.sessionId, points, acquiredPoints, history, zoneSurface, !!live,
-        this.previousReferencePoints, this.selectedReferenceIndex, this.selectedAcquiredPoint,
-      ]);
+      this.chartSignature = signature;
     }
 
     renderHistoryControl() {
@@ -1771,9 +1632,9 @@
         host.innerHTML = '';
         return;
       }
-      const formatDelta = value => value === null ? '—' : (value > 0 ? '+' : '') + value.toFixed(3) + ' bar';
+      const formatDelta = value => value === null ? '—' : (value > 0 ? '+' : '') + D.barUnit(value);
       host.hidden = false;
-      host.innerHTML = '<div><small>ANTES × DEPOIS</small><b>' + comparison.count + ' pontos</b><span>Comparando a referência anterior com a nova leitura.</span></div>' +
+      host.innerHTML = '<div><small>ANTES × DEPOIS</small><b>' + D.plural(comparison.count, 'ponto', 'pontos') + '</b><span>Comparando a referência anterior com a nova leitura.</span></div>' +
         '<div><small>GASOLINA</small><b>' + formatDelta(comparison.mapDeltaAvgBar) + '</b><span>variação média de MAP</span></div>' +
         '<div><small>GNV</small><b>' + formatDelta(comparison.gasDeltaAvgBar) + '</b><span>variação média de MAP</span></div>';
     }
@@ -1799,12 +1660,12 @@
       const selectedCount = this.selectedAcquiredPoints.size;
       const batchActions = selectedCount > 0
         ? '<div class="autocal-point-batch" data-count="' + selectedCount + '">' +
-          '<span><b>' + selectedCount + '</b> selecionado' + (selectedCount === 1 ? '' : 's') + ' para readquirir</span>' +
-          '<button type="button" data-autocal-reacquire-selected>Readquirir selecionados</button>' +
+          '<span><b>' + selectedCount + '</b> ' + (selectedCount === 1 ? 'selecionado' : 'selecionados') + ' para ler de novo</span>' +
+          '<button type="button" data-autocal-reacquire-selected>Ler selecionados de novo</button>' +
           '<button type="button" class="secondary" data-autocal-clear-point-selection>Limpar</button></div>'
         : '';
       host.innerHTML = '<b>' + point.fuelLabel + ' · ponto ' + point.point + ' · Z' + point.zone + ' · ' + progressText + '</b>' +
-        '<span>' + point.petrolMs.toFixed(2) + ' ms · MAP ' + point.mapBar.toFixed(3) + ' bar · ' +
+        '<span>' + D.msUnit(point.petrolMs) + ' · ' + D.barUnit(point.mapBar) + ' · ' +
         Math.round(point.counter) + thresholdText + ' amostras</span>' +
         '<div class="autocal-point-actions">' +
         '<button type="button" class="secondary" data-autocal-toggle-point-selection ' +
@@ -1812,7 +1673,7 @@
         (inBatch ? 'Remover da seleção' : 'Selecionar junto') + '</button>' +
         '<button type="button" class="autocal-point-reacquire" data-autocal-reacquire-point ' +
         'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '">' +
-        'Readquirir este ponto</button></div>' + batchActions;
+        'Ler este ponto de novo</button></div>' + batchActions;
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => {
         const nodeKey = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
         node.classList.toggle('selected', nodeKey === this.selectedAcquiredPoint);
@@ -1834,7 +1695,7 @@
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível abrir a confirmação do ponto.' } });
         return;
       }
-      this.store.patch({ alert: { level: 'working', message: 'Readquisição enviada para a ECU. Aguarde ACK e readback deste ponto.' } });
+      this.store.patch({ alert: { level: 'working', message: 'Leitura nova enviada para a ECU. Aguarde a conferência deste ponto.' } });
       this.refresh();
     }
  
@@ -1876,11 +1737,21 @@
       this.store.patch({
         alert: {
           level: 'working',
-          message: count + ' ponto' + (count === 1 ? '' : 's') +
-            ' em readquisição. A seleção só será limpa após confirmação da ECU.',
+          message: D.plural(count, 'ponto', 'pontos') +
+            ' sendo lidos de novo. A seleção só é limpa depois que a ECU confirmar.',
         },
       });
       this.refresh();
+    }
+
+    /** Marcador "O que medimos": a mesma explicação do Refino (de quem é, quando, se conta para a curva). */
+    inspectOurBin(index) {
+      const host = document.getElementById('autocalChartInspector');
+      const bin = (ns.CurveChart?.shared.model?.ours || [])[index];
+      const explain = ns.RefinoModel?.explainPoint;
+      if (!host || !bin || !explain) return;
+      const explained = explain('our', bin, { now: Date.now() });
+      host.innerHTML = '<b>' + escapeHtml(explained.title) + '</b>' + explained.lines.map(line => '<span>' + escapeHtml(line) + '</span>').join('');
     }
 
     inspectReferencePoint(index) {
@@ -1890,19 +1761,24 @@
       this.selectedReferenceIndex = point.index;
       this.selectedAcquiredPoint = null;
       const mapDelta = point.gasMapBar - point.petrolMapBar;
-      host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + point.petrolMs.toFixed(2) + ' ms</b>' +
-        '<span>MAP gasolina ' + point.petrolMapBar.toFixed(3) + ' bar · MAP GNV ' + point.gasMapBar.toFixed(3) + ' bar' +
-        ' · ΔMAP ' + (mapDelta > 0 ? '+' : '') + mapDelta.toFixed(3) + ' bar' +
-        (finite(point.gasEquivalentMs) === null ? '' : ' · GNV equivalente ' + point.gasEquivalentMs.toFixed(2) + ' ms') + '</span>';
+      host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + D.msUnit(point.petrolMs) + '</b>' +
+        '<span>MAP gasolina ' + D.barUnit(point.petrolMapBar) + ' · MAP GNV ' + D.barUnit(point.gasMapBar) +
+        ' · ΔMAP ' + (mapDelta > 0 ? '+' : '') + D.barUnit(mapDelta) +
+        (finite(point.gasEquivalentMs) === null ? '' : ' · GNV equivalente ' + D.msUnit(point.gasEquivalentMs)) + '</span>';
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
       });
+      ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints });
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => node.classList.remove('selected'));
     }
 
     renderBands(snapshot) {
       const host = document.getElementById('autocalBands');
       if (!host) return;
+      // Evidência: só redesenha quando a tabela da ECU mudou (D2), não a cada leitura do relógio.
+      const bandsKey = (ns.CurveChart ? ns.CurveChart.tableSignature(snapshot) : '') + '|' + this.selectedBandIndex + '|' + host.childElementCount;
+      if (this.bandsKey === bandsKey) return;
+      this.bandsKey = bandsKey;
       const bands = AutoCalUxModel.bandStrip(snapshot, this.projection);
       host.innerHTML = bands.map(band => {
         const stateLabel = band.state === 'anchored' ? 'correlacionada'
@@ -1941,6 +1817,10 @@
     renderEvents(events) {
       const host = document.getElementById('autocalEvents');
       if (!host) return;
+      const last = events.length ? events[events.length - 1] : {};
+      const eventsKey = [events.length, last.counter, last.bandIndex, last.correlationState, last.rpm].join('|');
+      if (this.eventsKey === eventsKey) return;
+      this.eventsKey = eventsKey;
       if (!events.length) {
         host.innerHTML = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
         return;
@@ -1988,7 +1868,7 @@
       const prepared = this.prepared;
       if (!review || !prepared) return;
       review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Confirmar executa agora pelo OMEGAS, com ACK e readback. Backup não é requisito: salve manualmente apenas se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Executar agora</button></div></div>`;
+      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Confirmar executa agora pelo OMEGAS e confere na ECU. Salvar uma foto antes é opcional: só se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Executar agora</button></div></div>`;
     }
 
     renderUnavailable() {

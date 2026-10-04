@@ -17,6 +17,7 @@ const context = {
 };
 context.globalThis = context;
 vm.createContext(context);
+require('./_support.cjs').preload(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 const proto = context.OmegasUi.AutoCalCockpit.prototype;
 
@@ -86,7 +87,7 @@ assert.equal(fake.chartScale, null, 'aquisição parcial não deve reutilizar es
 fake.state = { maxAutomatch: 3 };
 fake.projection.liveAcquisitionEpoch.nativeAutoMatchCount = 3;
 proto.renderReferenceChart.call(fake, fake.snapshot);
-assert.match(labels.autocalChartInspector, /Cota AutoMatch atingida; a aquisição NÃO terminou/,
+assert.match(labels.autocalChartInspector, /Cota de AutoMatch atingida; a leitura NÃO terminou/,
   '3/3 não encerra a coleta viva de GNV');
 
 fake.projection.liveAcquisitionEpoch.petrolPending = true;

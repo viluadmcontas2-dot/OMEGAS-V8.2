@@ -7,10 +7,14 @@
     return;
   }
 
-  const refinementStyle = document.createElement('link');
-  refinementStyle.rel = 'stylesheet';
-  refinementStyle.href = 'styles-refine.css';
-  document.head.appendChild(refinementStyle);
+  // As folhas de estilo são estáticas no index.html (ordem fixa: o acabamento do Lote F vem por último).
+  if (!document.querySelector('link[data-refine-style]')) {
+    const refinementStyle = document.createElement('link');
+    refinementStyle.rel = 'stylesheet';
+    refinementStyle.href = 'styles-refine.css';
+    refinementStyle.dataset.refineStyle = 'true';
+    document.head.appendChild(refinementStyle);
+  }
 
   const api = new ui.NativeApi();
   const store = new ui.Store(ui.createInitialState());
@@ -45,7 +49,6 @@
   const startedAt = Date.now();
   let overlayPromptPending = true;
   let toastUntil = 0;
-  let previousEquivalenceSignature = '';
   let routeButtons = [];
   let screenNodes = [];
 
@@ -56,15 +59,12 @@
     const next = value == null ? '—' : String(value);
     if (node.textContent !== next) node.textContent = next;
   }
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  const { finite, escapeHtml } = ui.DisplayRules;
   function rounded(value, digits) {
     const number = finite(value);
     if (number === null) return '—';
     const factor = 10 ** digits;
     return String(Math.round(number * factor) / factor);
-  }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
   function fuelLabel(raw) {
     // Combustível desconhecido ("--" do Kotlin, vazio) mostra "—"; regra única em core/display-rules.js.
@@ -126,14 +126,16 @@
 
     const status = state.status || {};
     const fuel = fuelLabel(liveFrom(state).fuel || liveFrom(state).state || status.fuelState);
-    const globalSignature = `${status.usbConnected === true ? 1 : 0}:${fuel}`;
+    const link = (root.OmegasUi || ui).DisplayRules.connectionState(status);
+    const globalSignature = `${link.key}:${fuel}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
       const ecu = byId('globalEcu');
       if (ecu) {
-        const online = status.usbConnected === true;
-        ecu.dataset.online = online ? 'true' : 'false';
-        setText('globalEcu', online ? 'ECU online' : 'ECU offline');
+        ecu.dataset.online = link.online ? 'true' : 'false';
+        ecu.dataset.link = link.key;
+        setText('globalEcu', link.label);
+        ecu.title = link.hint;
       }
       const fuelNode = byId('globalFuel');
       if (fuelNode) {
@@ -210,6 +212,8 @@
     const route = store.get().route;
     if (isLiveRoute(route)) {
       const envelope = api.presentSnapshot(lastPresentSequence) || {};
+      // Revisões por tipo vêm em todo quadro (e por empurrão): evidência/tabelas/sessão só são relidas quando andam.
+      ui.Revisions?.noteAll(envelope.revisions || envelope.data?.revisions);
       let telemetry = envelope.data || {};
       if (envelope.changed === false && envelope.ok !== false) {
         // Nada novo no Kotlin: reaproveita o último quadro e atualiza só a idade.
@@ -268,15 +272,6 @@
     if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
   }
 
-  /** Cérebro de equivalência: null até o Kotlin expor `getEquivalence`; o Agora só mostra, nunca executa. */
-  function refreshEquivalence() {
-    const eq = api.equivalence ? api.equivalence() : null;
-    const signature = JSON.stringify(eq);
-    if (signature === previousEquivalenceSignature) return;
-    previousEquivalenceSignature = signature;
-    store.patch({ equivalence: eq });
-  }
-
   function toolsEditing() {
     const host = byId('toolDiagnosticsWorkspace');
     return !!host && !!document.activeElement && host.contains(document.activeElement) &&
@@ -288,10 +283,9 @@
     const state = store.get();
     const route = state.route;
     const curve = route === 'curve' ? ensureScreen('curve') : null;
-    const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
+    const curveNeedsOverview = route === 'curve' && (curveEvidenceVisible() || curve?.needsOverview?.());
     const patch = {};
 
-    if (route === 'dashboard') refreshEquivalence();
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
       patch.logs = api.logs() || [];
@@ -301,12 +295,14 @@
       // null = a lista ainda está sendo lida (a tela diz isso; não afirma "nenhuma sessão").
       const listed = api.sessions();
       patch.sessions = Array.isArray(listed) ? listed : null;
+      // Falha de leitura ≠ "ainda lendo": a tela diz o que houve e o que fazer.
+      patch.sessionsError = !Array.isArray(listed) && listed && listed.ok === false ? String(listed.error || 'sem detalhe') : '';
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if (curveNeedsLearning && curve) {
+    if (curveNeedsOverview && curve) {
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
-      if (curve.needsLearning?.()) curve.renderLearning(updated);
+      if (curve.needsOverview?.()) curve.renderOverview(updated);
     }
     if (route === 'sessions') ensureScreen('sessions')?.render(updated);
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
@@ -317,7 +313,6 @@
     scheduler.setCadenceMs(route === 'autocal' ? AUTOCAL_CADENCE_MS : 200);
     if (route === 'dashboard') {
       resetPresentCursor();
-      refreshEquivalence();
       ensureScreen('dashboard')?.render(store.get());
       afterPaint(refreshFast);
       return;

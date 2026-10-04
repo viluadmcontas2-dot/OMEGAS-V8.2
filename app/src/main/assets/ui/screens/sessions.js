@@ -2,14 +2,8 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function finite(value) {
-    if (value === null || value === undefined || value === '') return null;
-    return Number.isFinite(Number(value)) ? Number(value) : null;
-  }
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
-  }
   const rules = () => root.OmegasUi.DisplayRules;
+  const { finite, escapeHtml } = root.OmegasUi.DisplayRules;
 
   /** Índice de equivalência no início e no fim da sessão, se o dado existir (senão null: a tela não inventa). */
   function indexRange(item) {
@@ -23,8 +17,9 @@
     const summary = item && typeof item.semanticSummary === 'object' && item.semanticSummary ? item.semanticSummary : {};
     return finite(item?.blackouts ?? summary.blackouts ?? summary.stalls);
   }
+  /** O índice é fração 0..1 (percentual = ×100); sem dado: "—", nunca 0%. */
   function percentText(value) {
-    return value === null ? '—' : `${Math.round(value)}%`;
+    return value === null ? '—' : `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
   }
 
   /** Modelo puro de uma linha da lista (testável sem DOM). */
@@ -62,10 +57,11 @@
     render(state) {
       if (!this.host) return;
       const status = state.sessionStatus || {};
-      const loading = !Array.isArray(state.sessions);
+      const listError = !Array.isArray(state.sessions) && state.sessionsError ? String(state.sessionsError) : '';
+      const loading = !Array.isArray(state.sessions) && !listError;
       const rows = (Array.isArray(state.sessions) ? state.sessions : []).slice(0, 20).map(sessionRow);
       const recording = status.recording === true;
-      const signature = JSON.stringify([recording, status.durationMs && Math.round(status.durationMs / 10000), loading, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index])]);
+      const signature = JSON.stringify([recording, status.durationMs && Math.round(status.durationMs / 10000), loading, listError, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index])]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       const R = rules();
@@ -74,7 +70,7 @@
         const indexText = row.index ? `Índice ${percentText(row.index.start)} → ${percentText(row.index.end)}` : '';
         const facts = [
           row.durationMs === null ? '' : R.durationLabel(row.durationMs),
-          row.blackouts === null ? '' : `${row.blackouts} apagõ${row.blackouts === 1 ? 'o' : 'es'}`,
+          row.blackouts === null ? '' : `${row.blackouts} ${row.blackouts === 1 ? 'apagão' : 'apagões'}`,
           indexText,
           row.gnvPercent === null ? '' : `GNV ${row.gnvPercent}% · gasolina ${row.gasPercent}%`,
           row.active ? 'em andamento' : '',
@@ -85,7 +81,9 @@
           ${row.gnvPercent === null ? '' : `<div class="session-fuel-bar"><div class="fuel-segment cng" style="width:${row.gnvPercent}%"></div><div class="fuel-segment petrol" style="width:${row.gasPercent}%"></div></div>`}
           <button type="button" class="secondary" data-export-session="${escapeHtml(row.id)}">Exportar ZIP</button>
         </article>`;
-      }).join('') : (loading
+      }).join('') : (listError
+        ? `<p class="empty-copy" data-sessions-error>Não consegui ler as sessões salvas (${escapeHtml(listError)}). O app tenta de novo sozinho; se continuar, feche e abra o app.</p>`
+        : loading
         ? '<p class="empty-copy">Lendo as sessões salvas…</p>'
         : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>');
       this.host.innerHTML = `
@@ -98,5 +96,5 @@
   }
 
   ns.SessionsScreen = SessionsScreen;
-  ns.SessionsModel = { sessionRow, indexRange, blackoutCount };
+  ns.SessionsModel = { sessionRow, indexRange, blackoutCount, percentText };
 })(typeof window !== 'undefined' ? window : globalThis);

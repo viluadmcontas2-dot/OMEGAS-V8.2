@@ -39,7 +39,8 @@ class EquivalenceViewTest {
     fun `sem resultado do cerebro a visao e a de sempre e sem curva lida so a Referencia aparece`() {
         val plain = build()
         assertTrue(plain.isNull("equivalence"))
-        assertFalse(plain.has("index"))
+        for (key in listOf("index", "coverage", "provisional", "nextAction", "points")) assertFalse("vazou $key", plain.has(key))
+        assertTrue("o índice antigo fica só sob legacyIndex", plain.getJSONObject("legacyIndex").has("bands"))
         assertTrue(plain.has("autopilot"))
 
         val unread = JSONObject().put("ok", true).put("available", false).put("reason", "CURVA_K_NAO_LIDA")

@@ -88,13 +88,14 @@ class SessionResumoTest {
         assertTrue(md, md.contains("coletando os pontos do OMEGAS: Dirija para medir"))
         assertEquals("fase repetida não aparece duas vezes", 1, Regex("coletando os pontos").findAll(md).count())
         assertTrue(md, md.contains("Apagou: 1 (religou: 1). Quase apagou: 0."))
-        assertTrue(md, md.contains("APAGOU a 2,20 ms"))
+        assertTrue(md, md.contains("Apagou a 2,20 ms"))
         assertTrue(md, md.contains("24 km/h"))
         assertTrue(md, md.contains("depois: o motor religou em"))
         assertTrue(md, md.contains("Curva K: 30 pontos, ajuste KF-7"))
-        assertTrue(md, md.contains("piorou em parte (trecho a restaurar)"))
-        assertTrue(md, md.contains("razão GNV/gasolina 1,050 para 1,080"))
+        assertTrue(md, md.contains("piorou em parte em alguma faixa"))
+        assertTrue(md, md.contains("diferença do GNV para a gasolina: +5,0% para +8,0%"))
         assertTrue(md, md.contains("faixa 4,5 a 6,0 ms: piorou"))
+        assertFalse(md, md.contains("razão") || md.contains("ACK") || md.contains("readback") || md.contains("APAGOU"))
         assertFalse("faixa não alterada não entra", md.contains("6,0 a 7,5"))
         assertEquals("o mesmo veredito não entra duas vezes", 1, Regex("gravação das").findAll(md).count())
     }
@@ -123,7 +124,7 @@ class SessionResumoTest {
 
         fun body(md: String) = md.lines().filter { it.startsWith("- ") || it.startsWith("  - ") }
         assertEquals("reconstruído = o que a sessão viva contaria", body(live.markdown()), body(rebuilt))
-        assertTrue(body(rebuilt).any { it.contains("APAGOU") })
+        assertTrue(body(rebuilt).any { it.contains("Apagou") })
         assertTrue(body(rebuilt).any { it.contains("Curva K: 30 pontos") })
     }
 

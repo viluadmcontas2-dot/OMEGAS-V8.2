@@ -7,14 +7,14 @@ PLANNER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalRefre
 SERVICE = ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt"
 
 class AutoCalRealtimeContract(unittest.TestCase):
-    def test_acquisition_mirror_runs_at_one_hz_without_second_serial_authority(self):
+    def test_acquisition_mirror_runs_in_two_second_rounds_of_sliced_groups_without_second_serial_authority(self):
         monitor = MONITOR.read_text("utf-8")
         planner = PLANNER.read_text("utf-8")
         service = SERVICE.read_text("utf-8")
 
-        self.assertIn("ACQUISITION_INTERVAL_MS = 1_000L", planner)
+        self.assertIn("ACQUISITION_INTERVAL_MS = 2_000L", planner)
         self.assertIn(
-            "scheduleWithFixedDelay(::autoCalTick, 1_000L, 1_000L",
+            "scheduleWithFixedDelay(::autoCalTick, 1_000L, 100L",
             service,
         )
         self.assertIn('reason = "AutoCal aquisição operacional agrupada"', monitor)

@@ -124,15 +124,15 @@ class NativeAutoCalAcquisitionEpochTest {
         assertFalse(gate.view().comparisonAllowed)
     }
 
-    @Test fun legacyManualAutomatchReceiptStillRestartsOnlyGas() {
+    @Test fun unknownOrRemovedActionNamesNeverRestartAcquisition() {
         val gate = NativeAutoCalAcquisitionEpoch()
         gate.reset(9L); gate.nativeCounter(9L, 3)
         gate.acquisitionGroup(9L, 3, filled(), filled()); gate.referenceGroup(9L, 3)
         val baseline = gate.view()
-        assertTrue(gate.manualAction(9L, "MANUAL_AUTOMATCH"))
-        assertEquals(baseline.gasGeneration + 1, gate.view().gasGeneration)
+        // MANUAL_AUTOMATCH não existe mais como ação (nem no enum): o recibo não mexe em nada.
+        assertFalse(gate.manualAction(9L, "MANUAL_AUTOMATCH"))
+        assertEquals(baseline.gasGeneration, gate.view().gasGeneration)
         assertEquals(baseline.petrolGeneration, gate.view().petrolGeneration)
-        assertTrue(gate.view().gasPending)
-        assertFalse(gate.view().petrolPending)
+        assertFalse(gate.view().gasPending)
     }
 }

@@ -10,6 +10,7 @@ const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autoc
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
 context.globalThis = context;
 vm.createContext(context);
+require('./_support.cjs').preload(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 
 const model = context.OmegasUi?.AutoCalUxModel;
@@ -43,12 +44,12 @@ assert.match(human.progress, /Gasolina 4\/4 zonas/);
 assert.match(human.progress, /GNV 3\/4 zonas/);
 assert.match(human.autoMatch, /AutoMatch automático 3\/3 · limite atingido/);
 assert.match(human.nextAction, /cota automática de AutoMatch foi atingida/i);
-assert.match(human.nextAction, /aquisição continua habilitada/i);
+assert.match(human.nextAction, /leitura continua ativa/i);
 
 const pausedNativeSnapshot = { ...snapshot, autoCalEnabled: 0 };
 const paused = model.humanState(snapshot, { state: 'PAUSED', autoCalEnabled: 0, latestSnapshot: pausedNativeSnapshot });
 assert.equal(paused.title, 'AutoCal pausado');
-assert.match(paused.nextAction, /Inicie a aquisição/);
+assert.match(paused.nextAction, /Inicie a leitura/);
 
 const refs = model.referencePoints(snapshot);
 assert.equal(refs.length, 30);
@@ -242,7 +243,7 @@ assert.match(css, /\.autocal-zone-cell\s*\{/,
   'mapa de zonas precisa de tratamento visual próprio');
 assert.equal(source.includes('autocal-band-legend'), true, 'estados das 18 faixas precisam de legenda visível');
 assert.equal(source.includes('autocal-review-tech'), true, 'metadados técnicos da ação crítica devem ficar sob demanda');
-assert.match(source, /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
+assert.match(fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/components/curve-chart.js'), 'utf8'), /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
 assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
 assert.match(css, /\.autocal-inline-inspector\s*\{[^}]*font-size:\s*11px/s, 'inspector operacional não pode ficar microscópico');
 assert.match(css, /\.autocal-human-copy strong\s*\{[^}]*font-size:\s*13px/s, 'próxima ação precisa ser legível a distância');

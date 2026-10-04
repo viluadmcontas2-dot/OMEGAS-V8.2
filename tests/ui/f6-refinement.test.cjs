@@ -26,7 +26,8 @@ function loadInto(context, files) {
   vm.createContext(context);
   context.window = context;
   context.globalThis = context;
-  for (const file of files) vm.runInContext(read(file), context, { filename: file });
+  const PRE = ['core/display-rules.js', 'core/live-store.js', 'components/curve-chart.js'];
+  for (const file of [...PRE, ...files.filter(file => !PRE.includes(file))]) vm.runInContext(read(file), context, { filename: file });
   return context;
 }
 
@@ -56,7 +57,7 @@ test('Sugestões removida por inteiro (rota, botão, contador, render, CSS)', ()
 test('bugs de navegação do §3.1: rota learning, routeMeta.predictor e data-omegas-route', () => {
   const app = read('app.js');
   assert.doesNotMatch(read('screens/map.js'), /navigate\('learning'\)/);
-  assert.match(read('screens/map.js'), /router\?\.open\('curve', 'learning'\)/);
+  assert.doesNotMatch(read('screens/map.js'), /learning/, 'o Mapa K não volta mais para a Aprendizado global');
   assert.doesNotMatch(app, /predictor/i);
   assert.match(app, /document\.body\.dataset\.omegasRoute = state\.route/);
   const ctx = loadInto({ console, localStorage: { getItem() { return null; }, setItem() {} } }, ['core/store.js', 'core/router.js']);
@@ -76,10 +77,10 @@ test('Sessões: tela própria com duração, apagões, índice início → fim e
   const ctx = loadInto({ console }, ['core/display-rules.js', 'screens/sessions.js']);
   const row = ctx.OmegasUi.SessionsModel.sessionRow({
     id: 'session_2026-10-01_16-10-00', reason: 'USB', durationMs: 3600000, bytes: 1000, cngTicks: 30, petrolTicks: 10,
-    semanticSummary: { blackouts: 2, index: { start: 40, end: 71 } },
+    semanticSummary: { blackouts: 2, index: { start: 0.4, end: 0.71 } },
   });
   assert.equal(row.blackouts, 2);
-  assert.deepEqual({ ...row.index }, { start: 40, end: 71 });
+  assert.deepEqual({ ...row.index }, { start: 0.4, end: 0.71 });
   assert.equal(row.gnvPercent, 75);
   const bare = ctx.OmegasUi.SessionsModel.sessionRow({ id: 'x', durationMs: 5 });
   assert.equal(bare.blackouts, null, 'sem dado não vira 0');
@@ -98,81 +99,54 @@ const EQUIVALENCE_FIXTURE = {
   reference: { frozen: false, canFreeze: true },
 };
 
-test('NativeApi.equivalence(): null até o Kotlin expor getEquivalence; fixture válida passa', () => {
-  const absent = loadInto({ console, OmegasNative: {} }, ['core/native-api.js']);
-  assert.equal(new absent.OmegasUi.NativeApi().equivalence(), null);
-  const demo = loadInto({ console }, ['core/native-api.js']);
-  assert.equal(new demo.OmegasUi.NativeApi().equivalence(), null);
-
-  const nested = loadInto({ console, OmegasNative: { getEquivalence: () => JSON.stringify(EQUIVALENCE_FIXTURE) } }, ['core/native-api.js']);
-  const eq = new nested.OmegasUi.NativeApi().equivalence();
-  assert.equal(eq.index.value, 0.62);
-  assert.equal(eq.index.provisional, true);
-  assert.equal(eq.nextAction.route, 'refino');
-  assert.equal(eq.nextAction.subpage, 'pontos');
-  assert.deepEqual(Array.from(eq.nextAction.pointIndexes), [3, 4]);
-
-  const flat = loadInto({ console, OmegasNative: { getEquivalence: () => JSON.stringify({ ok: true, available: true, index: 0.5, coverage: 4, provisional: false, nextAction: { kind: 'WAIT', text: 'ok', route: null, subpage: null, pointIndexes: [] }, points: [], reference: null }) } }, ['core/native-api.js']);
-  const eqFlat = new flat.OmegasUi.NativeApi().equivalence();
-  assert.equal(eqFlat.index.value, 0.5);
-  assert.equal(eqFlat.index.coverage, 4);
-  assert.equal(eqFlat.nextAction.route, '');
-
-  const none = loadInto({ console, OmegasNative: { getEquivalence: () => JSON.stringify({ ok: true, available: false, reason: 'CURVA_K_NAO_LIDA' }) } }, ['core/native-api.js']);
-  assert.equal(new none.OmegasUi.NativeApi().equivalence(), null);
+test('a UI não deriva ação da fase: o cérebro (nextAction) é a única fonte', () => {
+  const api = read('core/native-api.js');
+  for (const dead of ['PHASE_NEXT_ACTION', 'nextActionFromPhase', 'normalizeEquivalence', 'equivalence()']) assert.ok(!api.includes(dead), dead);
+  assert.ok(!api.includes("generation: 'V7'"));
 });
 
-function fakeDashboardContext() {
-  const nodes = new Map();
-  const shell = { classes: new Set(), classList: { add(c) { shell.classes.add(c); }, remove(c) { shell.classes.delete(c); } } };
-  const node = id => {
-    if (!nodes.has(id)) nodes.set(id, { id, textContent: '', hidden: true, dataset: {}, parentElement: shell });
-    return nodes.get(id);
-  };
-  const document = {
-    getElementById: node,
-    querySelector: () => null,
-    createElement: () => ({ dataset: {} }),
-    head: { appendChild() {} },
-  };
-  const navigations = [];
-  const context = {
-    console, document,
-    OmegasApp: { router: { open(route, subpage) { navigations.push([route, subpage]); return true; } } },
-  };
-  loadInto(context, ['core/router.js']);
-  return { context, node, shell, navigations };
-}
-
-test('Agora sem cérebro: bloco oculto e layout atual intacto; com fixture: índice grande + UMA ação com UM botão', () => {
-  const { context, node, shell, navigations } = fakeDashboardContext();
-  vm.runInContext(read('screens/dashboard.js'), context, { filename: 'screens/dashboard.js' });
-  const screen = Object.create(context.OmegasUi.DashboardScreen.prototype);
-  screen.renderEquivalence(null);
-  assert.equal(node('dashEquivalence').hidden, true);
-  assert.equal(shell.classes.has('has-equivalence'), false);
-
-  node('dashEquivalence');
-  screen.renderEquivalence(EQUIVALENCE_FIXTURE);
-  assert.equal(node('dashEquivalence').hidden, false);
-  assert.equal(node('dashIndex').textContent, '62%');
-  assert.equal(node('dashIndexNote').hidden, false, 'provisório aparece');
-  assert.equal(node('dashNextText').textContent, 'Rode no GNV em plano para eu medir');
-  const button = node('dashNextButton');
-  assert.equal(button.hidden, false);
-  assert.equal(button.dataset.route, 'refino');
-  assert.equal(button.dataset.subpage, 'pontos');
-  assert.equal(button.textContent, 'Ir para Refino');
-  assert.equal(shell.classes.has('has-equivalence'), true);
-
-  // sem route válida: sem botão (não inventa destino)
-  screen.renderEquivalence({ ...EQUIVALENCE_FIXTURE, nextAction: { kind: 'WAIT', text: 'Tudo certo', route: '', subpage: '', pointIndexes: [] } });
-  assert.equal(button.hidden, true);
-  assert.equal(navigations.length, 0, 'renderizar nunca navega nem executa');
-
+test('Agora é para dirigir (D1): sem cartão de equivalência, só 4 valores grandes + faixa quieta', () => {
   const source = read('screens/dashboard.js');
-  assert.match(source, /app\.router\.open\(next\.dataset\.route/);
+  for (const dead of ['dashEquivalence', 'dashIndex', 'dashNextText', 'dashNextButton', 'renderEquivalence', 'Ir para Refino', 'PRÓXIMA AÇÃO', 'próxima ação']) {
+    assert.ok(!source.includes(dead), `Agora não tem mais ${dead}`);
+  }
+  for (const id of ['dashHeroPetrol', 'dashRpm', 'dashMap', 'dashFuel']) assert.ok(source.includes(`id="${id}"`), id);
+  assert.doesNotMatch(read('app.js'), /refreshEquivalence/, 'o Agora não consulta a equivalência');
   assert.doesNotMatch(source, /startCurve|writeCurve|writeMap|startKBatchWrite|api\.(?:write|start|reset)/, 'Agora nunca executa');
+});
+
+test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de um toque (índice é fração 0..1)', () => {
+  const ctx = loadInto({ console }, ['core/display-rules.js', 'core/autocal-api.js', 'screens/refino.js']);
+  const strip = ctx.OmegasUi.RefinoModel.equivalenceStrip;
+  const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
+  const empty = strip(null, routes);
+  assert.equal(empty.nextText, 'Aguardando dados da ECU', 'sem cérebro: aviso neutro, nunca ação derivada da fase');
+  assert.equal(empty.route, '');
+  assert.equal(empty.hasAction, false);
+  const eq = { ...EQUIVALENCE_FIXTURE, nextAction: { kind: 'COLLECT', text: 'Rode no GNV em plano para eu medir', route: 'curve', subpage: 'editor', pointIndexes: [3, 4] } };
+  const shown = strip(eq, routes);
+  assert.equal(shown.indexText, '62% da condução já equivale à gasolina · provisório');
+  assert.equal(shown.nextText, 'Rode no GNV em plano para eu medir');
+  assert.equal(shown.route, 'curve');
+  assert.equal(shown.subpage, 'editor');
+  assert.equal(shown.routeLabel, 'Ir para Curva K');
+  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, '1% da condução já equivale à gasolina', 'fração 0,01 = 1 %, nunca 0 %');
+  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, '100% da condução já equivale à gasolina');
+  assert.equal(strip({ ...eq, index: { value: null } }, routes).indexText, '— da condução já equivale à gasolina');
+  assert.equal(strip(EQUIVALENCE_FIXTURE, routes).route, '', 'aponta para o próprio Refino: sem botão');
+  assert.equal(strip({ ...eq, nextAction: { text: 'Tudo certo', route: '' } }, routes).route, '');
+  const source = read('screens/refino.js');
+  assert.match(source, /router\?\.open\(go\.dataset\.route/);
+  assert.match(source, /id="refinoEq"/);
+});
+
+test('Sessões: índice é fração 0..1 e aparece em % (0,01 = 1 %, nunca "0%")', () => {
+  const ctx = loadInto({ console }, ['core/display-rules.js', 'screens/sessions.js']);
+  const pt = ctx.OmegasUi.SessionsModel.percentText;
+  assert.equal(pt(0.01), '1%');
+  assert.equal(pt(0.41), '41%');
+  assert.equal(pt(1), '100%');
+  assert.equal(pt(null), '—');
 });
 
 // ---------------------------------------------------------------- 3. Detalhes técnicos
@@ -299,7 +273,7 @@ test('operação na ECU: mesma fala (etapa → resultado → Desfazer/Voltar) e 
     assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /window\.(?:confirm|alert|prompt)\(|(?<![\w.$])(?:confirm|prompt)\(/, path.relative(UI, file));
   }
   assert.doesNotMatch(html, /onclick=|confirm\(/);
-  assert.match(html, /<span>Foto antes<\/span><span>Escrita<\/span><span>ACK<\/span><span>Conferindo na ECU<\/span>/);
+  assert.match(html, /<span>Foto antes<\/span><span>Gravando<\/span><span>Conferindo na ECU<\/span>/);
   assert.match(html, /id="curveUndoButton"[^>]*>Desfazer</);
   assert.equal([...html.matchAll(/id="(?:map|curve)DismissResult"[^>]*>Voltar</g)].length, 2);
   for (const file of ['screens/map.js', 'screens/curve.js']) {

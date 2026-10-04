@@ -126,6 +126,7 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             service = (binder as TelemetryForegroundService.LocalBinder).service()
             bound = true
+            installRevisionPush(service)
             refreshWebUi()
             // App aberto: o balão flutuante não pode cobrir os botões do próprio OMEGAS.
             if (activityResumed) {
@@ -138,6 +139,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun onServiceDisconnected(name: ComponentName?) {
             bound = false
+            service?.setRevisionListener(null)
             service = null
             refreshWebUi()
         }
@@ -459,6 +461,28 @@ class MainActivity : AppCompatActivity() {
                 toast("Falha: ${error.message}", true)
             }
         }
+    }
+
+    /**
+     * Empurra `window.OmegasOnRevision(kind, revision)` (coalescido >= 100 ms por tipo). É só um acelerador:
+     * o poll de segurança da UI continua, e a função pode nem existir (checada no JS). Nada aqui toca a ECU.
+     */
+    private fun installRevisionPush(target: TelemetryForegroundService?) {
+        val coalescer = com.omegas.prohub.runtime.RevisionPushCoalescer(
+            clock = { android.os.SystemClock.elapsedRealtime() },
+            schedule = { delayMs, task ->
+                if (::webView.isInitialized) webView.postDelayed({ task() }, delayMs)
+            },
+            dispatch = { kind, revision ->
+                if (::webView.isInitialized) {
+                    webView.evaluateJavascript(
+                        "window.OmegasOnRevision&&window.OmegasOnRevision('${kind.wireName}',$revision)",
+                        null,
+                    )
+                }
+            },
+        )
+        target?.setRevisionListener { kind, revision -> coalescer.onRevision(kind, revision) }
     }
 
     fun refreshWebUi() = runOnUiThread {

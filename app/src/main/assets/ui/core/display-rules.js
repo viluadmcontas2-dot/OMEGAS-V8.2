@@ -22,6 +22,48 @@
     return n === null ? DASH : n.toLocaleString('pt-BR', { minimumFractionDigits: digits || 0, maximumFractionDigits: digits || 0 });
   }
 
+  function escapeHtml(value) {
+    return String(value === null || value === undefined ? '' : value).replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+  }
+  function clamp(value, minimum, maximum) { return Math.max(minimum, Math.min(maximum, value)); }
+  /** Número pt-BR com casas fixas; desconhecido → "—" (nunca 0). */
+  const fmt = number;
+
+  /** Formatos únicos por grandeza (pt-BR, "—" para desconhecido). */
+  const ms = value => number(value, 2);
+  const msUnit = value => finite(value) === null ? DASH : `${number(value, 2)} ms`;
+  const msBand = (from, to) => finite(from) === null || finite(to) === null ? DASH : `de ${number(from, 1)} a ${number(to, 1)} ms`;
+  const bar = value => number(value, 3);
+  const barUnit = value => finite(value) === null ? DASH : `${number(value, 3)} bar`;
+  const kValue = value => number(value, 3);
+  const rpm = value => finite(value) === null ? DASH : Math.round(finite(value)).toLocaleString('pt-BR');
+  /** Fração 0..1 → "62%" (0 casas). Nunca 0% por falta de dado. */
+  const percentFraction = value => finite(value) === null ? DASH : `${Math.round(clamp(finite(value), 0, 1) * 100)}%`;
+  /** Razão GNV÷gasolina → diferença assinada "+2,1%" (nunca 1,021). */
+  function gapPercent(ratioValue) {
+    const r = finite(ratioValue);
+    if (r === null) return DASH;
+    const p = (r - 1) * 100;
+    return `${p > 0 ? '+' : ''}${number(p, 1)}%`;
+  }
+  /** Plural em português: plural(1,'alteração','alterações') → "1 alteração". */
+  function plural(n, one, many) {
+    const v = finite(n);
+    if (v === null) return DASH;
+    return `${Math.round(v).toLocaleString('pt-BR')} ${Math.round(v) === 1 ? one : (many || one + 's')}`;
+  }
+  /** "agora", "há 12 s", "há 3 min", "há 2 h". Sem data conhecida: "—". */
+  function ageText(atMs, nowMs) {
+    const at = finite(atMs);
+    const now = finite(nowMs);
+    if (at === null || at <= 0 || now === null) return DASH;
+    const s = Math.max(0, Math.round((now - at) / 1000));
+    if (s < 5) return 'agora';
+    if (s < 90) return `há ${s} s`;
+    if (s < 5400) return `há ${Math.round(s / 60)} min`;
+    return `há ${Math.round(s / 3600)} h`;
+  }
+
   /** Contagem inteira ≥ 0. Desconhecido → "—". */
   function count(value) {
     const n = finite(value);
@@ -52,8 +94,8 @@
     if (value === null || value < 0) return DASH;
     const minutes = Math.floor(value / 60000);
     const seconds = Math.floor((value % 60000) / 1000);
-    if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-    return `${minutes}m ${seconds}s`;
+    if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}min`;
+    return minutes ? `${minutes} min` : `${seconds} s`;
   }
 
   function bytesLabel(bytes) {
@@ -90,12 +132,12 @@
    * "Gravado" só depois do readback (regra 3).
    */
   const OPERATION_WORDING = {
-    stages: ['Foto antes', 'Escrita', 'ACK', 'Conferindo na ECU'],
+    stages: ['Foto antes', 'Gravando', 'Conferindo na ECU'],
     writing: 'Gravando na ECU…',
     doneTitle: what => `Gravado · ${what} conferido na ECU`,
-    doneDetail: 'A ECU confirmou a gravação (ACK e readback). A tela será relida.',
+    doneDetail: 'A ECU confirmou. A tela foi relida.',
     failedTitle: 'Não foi gravado',
-    failedDetail: 'A ECU não confirmou toda a operação. Releitura obrigatória.',
+    failedDetail: 'O app não conseguiu confirmar na ECU. A curva anterior continua.',
     back: 'Voltar',
     undo: 'Desfazer',
   };
@@ -152,6 +194,32 @@
     return alreadyPrompted !== true && s.testHarness !== true && s.supported === true && s.permissionGranted !== true && s.requestedEnabled !== true;
   }
 
+  /**
+   * Conexão com a ECU em quatro palavras que o motorista entende, cada uma com a próxima ação:
+   * online · Conectando… (permissão USB pendente) · Sem cabo · Serviço parado. Usa só o que o status já traz.
+   */
+  function connectionState(status) {
+    const s = status || {};
+    if (s.usbConnected === true) {
+      if (s.engineStuck === true) return { key: 'attention', label: 'ECU sem resposta', hint: 'Aguarde ou reconecte o cabo USB', online: true };
+      return { key: 'online', label: 'ECU online', hint: '', online: true };
+    }
+    if (s.usbPermissionPending === true) return { key: 'connecting', label: 'Conectando…', hint: 'Toque em Permitir no aviso de USB do Android', online: false };
+    if (s.serviceRunning === false) return { key: 'stopped', label: 'Serviço parado', hint: 'Abra o OMEGAS de novo para iniciar o serviço', online: false };
+    return { key: 'nocable', label: 'Sem cabo', hint: 'Conecte o cabo USB na ECU', online: false };
+  }
+
+  /** Rótulos únicos das fases do Refino (Refino, Agora e qualquer outro lugar que fale da fase). */
+  const PHASE_LABELS = {
+    SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo o GNV',
+    PROPOSTA_PRONTA: 'Curva pronta', VERIFICANDO: 'Medindo', RESTAURAR_TRECHO: 'Piorou em um trecho', ESTAVEL: 'Estável', TENTATIVA_ENCERRADA: 'Pausado',
+  };
+  /** Prazo vencido com proposta pronta: a proposta continua válida, então a fase segue "Curva pronta". */
+  function phaseLabel(phase, expiredFrom) {
+    if (phase === 'TENTATIVA_ENCERRADA' && expiredFrom === 'PROPOSTA_PRONTA') return PHASE_LABELS.PROPOSTA_PRONTA;
+    return PHASE_LABELS[phase] || DASH;
+  }
+
   /** Explica por que os pontos do GNV recomeçaram (a causa vem do Kotlin, em código). */
   const GAS_RESET_REASON = {
     AUTOMATCH_NATIVO: 'a ECU trocou a curva no automático',
@@ -166,11 +234,11 @@
     if (!text) return '';
     const at = finite(atMs);
     const clock = at && at > 0 ? new Date(at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-    return `Nossos pontos de GNV recomeçaram${clock ? ' às ' + clock : ''} porque ${text} (o GNV medido com a curva antiga não vale para a nova).`;
+    return `Os pontos do OMEGAS no GNV recomeçaram${clock ? ' às ' + clock : ''} porque ${text} (o GNV medido com a curva antiga não vale para a nova).`;
   }
 
   ns.DisplayRules = {
-    DASH, finite, number, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
+    DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, phaseLabel, PHASE_LABELS, connectionState, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
     ageLabel, sessionDate, OPERATION_WORDING, failureKind, failureText, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };

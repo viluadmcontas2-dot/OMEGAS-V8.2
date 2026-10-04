@@ -15,6 +15,7 @@ function loadModel() {
   context.window = context;
   context.globalThis = context;
   vm.createContext(context);
+require('./_support.cjs').preload(context);
   const source = fs.readFileSync(
     path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'),
     'utf8',

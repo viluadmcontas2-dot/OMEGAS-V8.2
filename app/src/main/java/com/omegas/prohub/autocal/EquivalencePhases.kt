@@ -4,11 +4,13 @@ import com.omegas.prohub.equivalence.EquivalencePoint
 import com.omegas.prohub.equivalence.EquivalenceTolerances
 import com.omegas.prohub.equivalence.PointState
 import com.omegas.prohub.equivalence.ProofOutcome
+import com.omegas.prohub.util.Units
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.exp
 import kotlin.math.ln
 
 /**
@@ -517,7 +519,7 @@ class EquivalencePhases(
         "COLETANDO_NOSSOS" -> if (out.optString("petrolReference") == "ECU")
             "A ECU terminou e já tem a curva de gasolina. O OMEGAS só precisa medir o GNV rodando."
         else "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
-        "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina. Toque em Revisar e gravar."
+        "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina."
         "VERIFICANDO" -> "Curva nova gravada. O OMEGAS mede faixa por faixa se o GNV chegou na gasolina" +
             (verification?.let {
                 val budgetMin = Math.round(it.optDouble("budgetMinutes")).toInt()
@@ -525,27 +527,27 @@ class EquivalencePhases(
                 " (%d de %d min de condução)".format(minOf(Math.floor(it.optDouble("onlineMinutes")).toInt(), budgetMin), budgetMin)
             } ?: "") + "."
         "RESTAURAR_TRECHO" -> "Um trecho piorou com a curva nova. Restaure só esse trecho."
-        "ESTAVEL" -> "GNV equivalente à gasolina em $measured faixas (±3%). Pode desconectar."
+        "ESTAVEL" -> "GNV igual à gasolina em $measured faixas (±${Units.percentWhole((exp(TOLERANCE_LOG) - 1) * 100)}). Pode desconectar."
         else -> ""
     }
 
     private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = ""): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "TENTATIVA_ENCERRADA" -> if (expiredFrom == "PROPOSTA_PRONTA" || expiredFrom == "ECU_TRABALHANDO")
-            "Toque em Revisar e gravar, na aba Refino. A próxima leitura nova retoma o acompanhamento."
+            "Abra o Refino e toque em Revisar e gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
         else "A próxima leitura válida retoma o acompanhamento automaticamente."
         "LENDO_ECU" -> "Aguarde alguns segundos. A ECU guarda o AutoMatch e as curvas e entrega tudo ao conectar."
         "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
         "VERIFICANDO" -> {
             val waiting = verification?.optJSONArray("waitingBands")
             val wanted = (0 until (waiting?.length() ?: 0)).mapNotNull { waiting?.optJSONObject(it) }
-                .joinToString(", ") { "%.1f–%.1f ms".format(it.optDouble("fromMs"), it.optDouble("toMs")) }
+                .joinToString(", ") { "${Units.msBand(it.optDouble("fromMs"))}–${Units.msBand(it.optDouble("toMs"))} ms" }
             if (wanted.isNotEmpty()) "Rode no GNV passando por $wanted. Se não passar por lá, o OMEGAS fecha a verificação com o que mediu."
             else "Continue rodando: faltam poucas leituras para fechar o resultado."
         }
         "COLETANDO_NOSSOS" -> {
             val wanted = (0 until missing.length()).mapNotNull { missing.optJSONObject(it) }
-                .joinToString(", ") { "%.1f–%.1f ms".format(it.optDouble("fromMs"), it.optDouble("toMs")) }
+                .joinToString(", ") { "${Units.msBand(it.optDouble("fromMs"))}–${Units.msBand(it.optDouble("toMs"))} ms" }
             val reference = index.optString("petrolReference", "NENHUMA")
             when {
                 // Só pede gasolina quando nem o app nem a ECU têm referência de gasolina.
@@ -557,9 +559,9 @@ class EquivalencePhases(
                 else -> "Continue rodando no GNV."
             }
         }
-        "PROPOSTA_PRONTA" -> "Toque em Revisar e gravar, na aba Refino."
-        "RESTAURAR_TRECHO" -> "Toque em Restaurar trecho que piorou, na aba Refino."
-        "ESTAVEL" -> "Nenhuma ação. O OMEGAS continua medindo e avisa se algo mudar."
+        "PROPOSTA_PRONTA" -> "Abra o Refino e toque em Revisar e gravar. Nada é gravado sem o seu toque."
+        "RESTAURAR_TRECHO" -> "Abra o Refino e toque em Restaurar trecho. Nada é restaurado sem o seu toque."
+        "ESTAVEL" -> "Nada a fazer. O OMEGAS continua medindo e avisa se algo mudar."
         else -> ""
     }
 

@@ -28,11 +28,13 @@ def main():
     assert '"zoneAcquired", zoneFlag == 1' in ACQ
     assert '.put("draw", activityPresent)' in ACQ
 
-    # Threshold knowledge must not become a serial gate: the 1s operational
-    # mirror remains active whenever native acquisition itself is enabled.
-    assert "val acquisitionEnabled = thresholds.third == 1" in MONITOR
-    assert "!fullSnapshotAlreadyDue && acquisitionEnabled && refreshDue.acquisition" in MONITOR
-    assert "!fullSnapshotAlreadyDue && thresholdsReady && refreshDue.acquisition" not in MONITOR
+    # Threshold knowledge must not become a serial gate: the operational
+    # mirror (2 s rounds, sliced groups) remains active whenever native acquisition itself is enabled.
+    assert "acquisitionEnabled = synchronized(lock) { autoCalEnabled } == 1" in MONITOR
+    assert "thresholdsReady && refreshDue.acquisition" not in MONITOR
+    assert "thresholdsReady" not in (
+        MONITOR.split("val decision = stepper.decide(", 1)[1].split("when (decision.step)", 1)[0]
+    )
 
     print("PLATINUM_AUTOCAL_MATURITY_BOUNDARY=PASS")
 

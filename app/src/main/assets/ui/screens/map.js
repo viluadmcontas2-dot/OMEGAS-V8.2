@@ -5,11 +5,9 @@
   // Palavras únicas de toda escrita na ECU (core/display-rules.js).
   function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
   function failureText(operation, fallback) { return root.OmegasUi.DisplayRules.failureText(operation, fallback); }
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
-  function fmt(value, digits) {
-    const n = finite(value);
-    return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  }
+  const { finite, fmt } = root.OmegasUi.DisplayRules;
+  const D = () => root.OmegasUi.DisplayRules;
+  const signed = value => (value > 0 ? '+' : value < 0 ? '−' : '') + Math.abs(value);
   function text(id, value) { const node = document.getElementById(id); if (node) node.textContent = value == null ? '—' : String(value); }
 
   class MapScreen {
@@ -33,34 +31,13 @@
       this.restorePhase = '';
       this.pendingContext = null;
       this.liveContext = null;
-      this.ensureContextChrome();
       this.bind();
     }
 
     key(row, column) { return `${row}:${column}`; }
 
-    ensureContextChrome() {
-      const intro = this.root?.querySelector('.page-intro.action-intro');
-      const actions = intro?.querySelector('.inline-actions');
-      if (intro && !document.getElementById('mapLiveLabel')) {
-        const live = document.createElement('div');
-        live.className = 'map-live-condition';
-        live.innerHTML = '<small>AGORA</small><b id="mapLiveLabel">Aguardando condição válida</b><span id="mapLiveCell">célula —</span>';
-        intro.insertBefore(live, actions || null);
-      }
-      if (actions && !document.getElementById('mapBackToLearning')) {
-        const back = document.createElement('button');
-        back.id = 'mapBackToLearning';
-        back.type = 'button';
-        back.className = 'quiet-button';
-        back.textContent = 'Voltar à Curva K';
-        actions.prepend(back);
-      }
-    }
-
     bind() {
       document.getElementById('mapReadButton')?.addEventListener('click', () => this.startRead());
-      document.getElementById('mapBackToLearning')?.addEventListener('click', () => this.router?.open('curve', 'learning'));
       document.getElementById('mapSelectAll')?.addEventListener('click', () => {
         try { this.editor.selectAll(); this.review = null; this.renderEditor(); this.refreshSelectionPreview(); }
         catch (error) { this.alert(error.message); }
@@ -86,7 +63,6 @@
       this.pendingContext = context || null;
       // O slot "última operação" é compartilhado com a Curva K/Refino: nunca herdar o estado de outra tela.
       if (this.store.get().map?.state !== 'writing') this.lastOperationState = '';
-      this.root?.classList.toggle('from-learning', context?.origin === 'learning');
       if (!this.editor.hasMap() && !this.reading) {
         this.startRead(true);
         return;
@@ -140,7 +116,7 @@
               this.buildGrid();
               this.renderGrid();
               this.renderEditor();
-              text('mapSourceStatus', `ECU confirmada · ${result.writableCells || 144} células graváveis`);
+              text('mapSourceStatus', `ECU confirmada · ${result.writableCells || 144} células`);
               this.store.patch({ map: { ...this.store.get().map, state: 'ready', data: result, selection: 0, review: null } });
               this.applyContext(this.pendingContext || this.store.get().routeContext);
             } catch (error) {
@@ -165,7 +141,8 @@
 
       const corner = document.createElement('div');
       corner.className = 'map-axis-corner';
-      corner.innerHTML = '<small>INJEÇÃO</small><b>ms ↓ · RPM →</b>';
+      corner.title = 'Linha técnica 0C protegida: visível ao protocolo, fora da seleção em massa e da escrita manual.';
+      corner.innerHTML = '<small>ms ↓</small><b>RPM →</b>';
       table.appendChild(corner);
 
       for (let column = 0; column < 12; column += 1) {
@@ -202,10 +179,6 @@
         }
       }
       this.host.appendChild(table);
-      const technical = document.createElement('div');
-      technical.className = 'technical-row-note';
-      technical.innerHTML = '<b>Linha técnica 0C protegida</b><span>Visível ao protocolo, fora de qualquer seleção em massa e fora da escrita manual.</span>';
-      this.host.appendChild(technical);
 
       table.addEventListener('click', event => {
         const columnHeader = event.target.closest('[data-select-column]');
@@ -298,7 +271,7 @@
         const valueNode = cell.querySelector('b');
         const deltaNode = cell.querySelector('span');
         if (valueNode) valueNode.textContent = preview ? String(preview.target) : String(snapshot.rows[row][column]);
-        if (deltaNode) deltaNode.textContent = preview ? `${preview.current}→${preview.target}` : '';
+        if (deltaNode) deltaNode.textContent = preview ? signed(preview.target - preview.current) : '';
       });
       this.columnHeaders.forEach((header, column) => {
         const all = Array.from({ length: 12 }, (_, row) => this.editor.isSelected(row, column)).every(Boolean);
@@ -312,11 +285,11 @@
 
     renderEditor(activeRow, activeColumn) {
       const count = this.editor.selectionCount();
-      text('mapSelectionCount', `${count} selecionada${count === 1 ? '' : 's'}`);
+      text('mapSelectionCount', D().plural(count, 'selecionada', 'selecionadas'));
       const button = document.getElementById('mapReviewButton');
       if (button) {
         button.disabled = count === 0;
-        button.textContent = count ? `Gravar ${count} alteração${count === 1 ? '' : 'ões'} na ECU` : 'Selecione células';
+        button.textContent = count ? `Gravar ${D().plural(count, 'alteração', 'alterações')} na ECU` : 'Selecione células';
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();
@@ -335,6 +308,8 @@
     }
 
     writePrepared() {
+      // Toque duplo com a ECU ocupada: a segunda chamada não envia a escrita de novo.
+      if (this.store.get().map?.state === 'writing' || this.root?.classList.contains('is-writing')) return;
       try {
         if (this.editor.targetOverrides?.size !== this.editor.selectionCount()) this.applyAdjustment();
         this.review = this.editor.buildReview();
@@ -351,6 +326,7 @@
         return;
       }
       this.root?.classList.add('is-writing');
+      this.setStep(0);
       this.lastOperationState = '';
       this.undoId = '';
       this.restorePhase = '';
@@ -422,13 +398,17 @@
       this.restorePhase = 'writing';
       this.lastOperationState = '';
       text('mapOperationTitle', wording().writing);
-      text('mapOperationMessage', `0 de ${cells.length} células confirmadas`);
+      text('mapOperationMessage', `0 de ${D().plural(cells.length, 'célula', 'células')} confirmadas`);
+    }
+
+    setStep(index) {
+      document.querySelectorAll('#mapOperationSteps span').forEach((node, i) => { node.dataset.state = i < index ? 'done' : i === index ? 'active' : 'pending'; });
     }
 
     settleWriteFailure(operation, fallback) {
       this.root?.classList.remove('is-writing');
       this.root?.classList.add('has-result');
-      // Falha no meio do lote: células já receberam ACK, então a ECU pode estar parcialmente alterada.
+      // Falha no meio do lote: células já foram gravadas, então a ECU pode estar parcialmente alterada.
       const partial = operation.ecuPartiallyChanged === true || operation.partial === true;
       const done = Number(operation.confirmedCells) || 0;
       const result = document.getElementById('mapOperationResult');
@@ -437,7 +417,7 @@
         result.querySelector('b').textContent = partial ? 'ECU parcialmente alterada' : wording().failedTitle;
         const why = failureText(operation, fallback || 'Releitura obrigatória.');
         result.querySelector('span').textContent = partial
-          ? `${done} célula${done === 1 ? '' : 's'} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${why} Releia a ECU para ver o estado real.`
+          ? `${D().plural(done, 'célula', 'células')} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${why} Releia a ECU para ver o estado real.`
           : why;
       }
       const lastId = Array.isArray(operation.adjustmentIds) ? String(operation.adjustmentIds[operation.adjustmentIds.length - 1] || '') : String(operation.backupId || '');
@@ -458,10 +438,12 @@
       const progress = Math.max(0, Math.min(100, finite(operation.progress) || 0));
       const bar = document.getElementById('mapOperationProgress');
       if (bar) bar.style.width = `${progress}%`;
-      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
+      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${D().plural(operation.totalCells || this.review?.count || 0, 'célula', 'células')} confirmadas`);
 
       if (operation.busy) {
-        text('mapOperationTitle', operation.writerMessage || wording().stages.join(' · '));
+        // Etapa visível (Foto antes → Gravando → Conferindo na ECU); o texto é nosso, não o do escritor.
+        this.setStep(progress >= 90 ? 2 : progress > 0 ? 1 : 0);
+        text('mapOperationTitle', progress >= 90 ? wording().stages[2] + '…' : progress > 0 ? `${wording().writing.replace('…', '')} ${Math.round(progress)}%` : 'Foto antes · guardando o Mapa K atual');
         return;
       }
       if (this.restorePhase === 'preparing') {
@@ -494,28 +476,7 @@
 
     applyContext(context) {
       if (!context || !this.editor.hasMap()) return;
-      const suggestion = context.suggestion;
-      const changes = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges : [];
       try {
-        if (changes.length) {
-          this.editor.setTargetOverrides(changes);
-          const first = changes[0];
-          this.renderGrid();
-          this.renderEditor(Number(first.row), Number(first.column));
-          return;
-        }
-        if (suggestion) {
-          const row = Number(suggestion.row);
-          const column = Number(suggestion.column);
-          if (Number.isInteger(row) && Number.isInteger(column)) {
-            this.editor.selectOnly(row, column);
-            document.getElementById('mapAdjustmentMode').value = 'percent';
-            document.getElementById('mapAdjustmentValue').value = String(Number(suggestion.deltaPercent || 0));
-            this.applyAdjustment();
-            this.renderEditor(row, column);
-            return;
-          }
-        }
         const row = Number(context.cell?.row ?? context.row);
         const column = Number(context.cell?.column ?? context.column);
         if (Number.isInteger(row) && Number.isInteger(column)) {

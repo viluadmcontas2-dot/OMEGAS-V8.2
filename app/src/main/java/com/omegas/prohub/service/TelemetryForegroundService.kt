@@ -39,11 +39,13 @@ import com.omegas.prohub.network.LanPanelServer
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.storage.DataArchiveManager
+import com.omegas.prohub.runtime.RuntimeSnapshotBus
 import com.omegas.prohub.telemetry.ConsumptionTracker
 import com.omegas.prohub.telemetry.TelemetryStateStore
 import com.omegas.prohub.usb.UsbSerialManager
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
+import com.omegas.prohub.util.Units
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.Executors
@@ -73,6 +75,42 @@ class TelemetryForegroundService : Service() {
     private val scheduler = Executors.newSingleThreadScheduledExecutor { runnable ->
         Thread(runnable, "omegas-native-service").apply { isDaemon = true }
     }
+    /**
+     * Faixa única de análise (refino, diário, full_snapshot, overlay): thread própria, para o trabalho pesado
+     * do `healthTick` nunca atrasar o `autoCalTick` que divide o `scheduler` com ações de serviço.
+     */
+    private val analysisExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "omegas-native-analysis").apply { isDaemon = true }
+    }
+    private val analysisLane = AnalysisLane(analysisExecutor)
+
+    /**
+     * Revisões por tipo de dado (live/evidence/tables/session) que a UI consulta antes de reler qualquer coisa.
+     * `live` espelha a sequência do TelemetryStateStore; as demais só sobem quando o dado realmente mudou.
+     */
+    val revisions = RuntimeSnapshotBus()
+    @Volatile private var revisionListener: ((RuntimeSnapshotBus.Kind, Long) -> Unit)? = null
+
+    /** A Activity registra (e limpa com null) o empurrão `OmegasOnRevision`; o poll de segurança da UI continua. */
+    fun setRevisionListener(listener: ((RuntimeSnapshotBus.Kind, Long) -> Unit)?) {
+        revisionListener = listener
+    }
+
+    private fun publishRevision(kind: RuntimeSnapshotBus.Kind) {
+        val revision = revisions.bump(kind)
+        try { revisionListener?.invoke(kind, revision) } catch (_: Exception) {}
+    }
+
+    /** `{ok, revisions:{live,evidence,tables,session}}`; `live` = sequência atual da telemetria. */
+    fun revisionsObject(): JSONObject = revisions.revisionsJson(
+        liveRevision = if (::telemetryStore.isInitialized) telemetryStore.sequenceNow() else 0L,
+    ).also { root ->
+        if (::nativeAutoCal.isInitialized) {
+            root.getJSONObject("revisions").put("tables", maxOf(revisions.revision(RuntimeSnapshotBus.Kind.TABLES), nativeAutoCal.tablesRevision()))
+        }
+    }
+
+    fun revisionsJson(): String = revisionsObject().toString()
 
     lateinit var paths: AppPaths
         private set
@@ -258,6 +296,7 @@ class TelemetryForegroundService : Service() {
                 equivalence.resetGas("AUTOMATCH_NATIVO")
                 equivalenceRuntime.onGasReset("AUTOMATCH_NATIVO", equivalencePhases)
                 refinementJournal.interrupt("AUTOMATCH_NATIVO")
+                publishRevision(RuntimeSnapshotBus.Kind.EVIDENCE)
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
             onNativeAutoMatchObserved = { payload ->
@@ -267,8 +306,11 @@ class TelemetryForegroundService : Service() {
                     payload,
                     force = true,
                 )
+                publishRevision(RuntimeSnapshotBus.Kind.EVIDENCE)
             },
-            onStateChanged = { stateChanged() },
+            // Overlay/notificação nunca rodam na thread do autoCalTick: vão para a faixa de análise (coalescente).
+            onStateChanged = { analysisLane.submit { stateChanged() } },
+            onTablesChanged = { publishRevision(RuntimeSnapshotBus.Kind.TABLES) },
         )
         link = OmegasLinkManager(
             settings = settings,
@@ -309,7 +351,8 @@ class TelemetryForegroundService : Service() {
         if (settings.linkEnabled) link.start()
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
-        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 1_000L, 1_000L, TimeUnit.MILLISECONDS)
+        // Cadência curta (100 ms): cada tick lê no máximo UM grupo AutoCal (SlotArbiter) ou volta de imediato.
+        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 1_000L, 100L, TimeUnit.MILLISECONDS)
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
@@ -341,6 +384,7 @@ class TelemetryForegroundService : Service() {
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
         scheduler.shutdownNow()
+        analysisExecutor.shutdownNow()
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
         try { usb.disconnect() } catch (_: Exception) {}
@@ -721,7 +765,9 @@ class TelemetryForegroundService : Service() {
     }
 
     fun nativeAutoCalStatusJson(): String =
-        if (::nativeAutoCal.isInitialized) nativeAutoCal.statusJson().toString() else "{}"
+        if (::nativeAutoCal.isInitialized) {
+            nativeAutoCal.statusJson().put("analysisLane", analysisLane.json()).toString()
+        } else "{}"
 
     fun nativeAutoCalSnapshotJson(): String =
         if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson().toString() else "{}"
@@ -804,6 +850,7 @@ class TelemetryForegroundService : Service() {
             kWriter.beginUsbSession(sessionId)
             kFactor.beginUsbSession(sessionId)
             nativeAutoCal.beginUsbSession(sessionId)
+            publishRevision(RuntimeSnapshotBus.Kind.SESSION)
             if (!wasConnected) enginePausedByUser = false
             // A gravação é sempre automática ao conectar a ECU; não depende de preferência.
             if (!sessionRecorder.isRecording()) {
@@ -824,6 +871,7 @@ class TelemetryForegroundService : Service() {
             runtime.endUsbSession("USB_DISCONNECTED")
             nativeAutoCal.endUsbSession()
             telemetryStore.invalidate("USB_DISCONNECTED")
+            publishRevision(RuntimeSnapshotBus.Kind.SESSION)
             if (sessionRecorder.isRecording()) {
                 stopJournalSession("MP48 desconectado")
             }
@@ -1134,6 +1182,31 @@ class TelemetryForegroundService : Service() {
 
     private fun healthTick() {
         if (stopping) return
+        // O trabalho pesado (refino, diário, full_snapshot JSON, overlay) sai desta thread: o autoCalTick
+        // divide o `scheduler` com este tick e nunca pode esperar por ele.
+        analysisLane.submit(::analysisTick)
+        try {
+            handleUsbTransition()
+            if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
+                connectUsb()
+            }
+            if (usb.connected && settings.autoStartEngine && !enginePausedByUser &&
+                !runtime.running && !runtime.stuck && !kWriter.isBusy() && !kFactor.isBusy()
+            ) {
+                engineRestarts += 1
+                startEngine("recuperação automática do núcleo")
+            }
+            if (!usb.connected && runtime.running) runtime.stop(2)
+            renewWakeLockIfNeeded()
+        } catch (error: Exception) {
+            healthFailures += 1
+            log.add("WARN", "SERVICE", "Monitor nativo: ${error.message}")
+        }
+    }
+
+    /** Roda na faixa de análise (thread própria, coalescente). Só observa e grava; não toca a ECU. */
+    private fun analysisTick() {
+        if (stopping) return
         try {
             if (!refinementFrozenForRender) {
                 // O orçamento da verificação conta só condução: rpm ≥ 1000 numa faixa alterada (quadro fresco).
@@ -1151,17 +1224,6 @@ class TelemetryForegroundService : Service() {
                 recordVerdictIfClosed()
                 observeRefinement()
             }
-            handleUsbTransition()
-            if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
-                connectUsb()
-            }
-            if (usb.connected && settings.autoStartEngine && !enginePausedByUser &&
-                !runtime.running && !runtime.stuck && !kWriter.isBusy() && !kFactor.isBusy()
-            ) {
-                engineRestarts += 1
-                startEngine("recuperação automática do núcleo")
-            }
-            if (!usb.connected && runtime.running) runtime.stop(2)
             if (sessionRecorder.isRecording()) {
                 sessionRecorder.record(
                     "full_snapshot",
@@ -1169,12 +1231,11 @@ class TelemetryForegroundService : Service() {
                     try { JSONObject(fullEngineSnapshotJson()) } catch (_: Exception) { JSONObject() },
                 )
             }
-            renewWakeLockIfNeeded()
             updateOverlay()
             updateNotification()
         } catch (error: Exception) {
-            healthFailures += 1
-            log.add("WARN", "SERVICE", "Monitor nativo: ${error.message}")
+            synchronized(this) { healthFailures += 1 }
+            log.add("WARN", "SERVICE", "Análise nativa: ${error.message}")
         }
     }
 
@@ -1250,7 +1311,7 @@ class TelemetryForegroundService : Service() {
             try { equivalenceRuntime.onStall(event) } catch (_: Exception) {}
             sessionRecorder.record("engine_stall", "autocal", event, force = true)
             val verb = if (event.optString("kind") == StallWatch.KIND_NEAR) "Motor quase apagou" else "Motor apagou"
-            log.add("WARN", "REFINO", "$verb no GNV em %.2f ms · MAP %.2f bar".format(event.optDouble("petrolMs"), event.optDouble("mapBar")))
+            log.add("WARN", "REFINO", "$verb no GNV em ${Units.msUnit(event.optDouble("petrolMs"))} · MAP ${Units.mapUnit(event.optDouble("mapBar"))}")
         }
         recordStallAnnotations()
 

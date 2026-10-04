@@ -50,9 +50,13 @@ test('unavailable telemetry never turns HubStatus numeric defaults into fake mea
 });
 
 test('missing refino value stays unavailable instead of becoming numeric zero', () => {
-  const finiteFn = refino.match(/function finite\(value\)\s*\{[\s\S]*?\}/)?.[0] || '';
-  assert.match(finiteFn, /value\s*===\s*null|value\s*==\s*null/, 'Refino finite must explicitly reject null');
-  assert.match(finiteFn, /undefined|value\s*==\s*null/, 'Refino finite must explicitly reject undefined');
+  // Uma única definição de finite (core/display-rules.js) rejeita null, undefined, vazio e booleano; o Refino a usa.
+  const rules = read('app/src/main/assets/ui/core/display-rules.js');
+  const finiteFn = rules.match(/function finite\(value\)\s*\{[\s\S]*?\n  \}/)?.[0] || '';
+  assert.match(finiteFn, /value\s*===\s*null/, 'finite must explicitly reject null');
+  assert.match(finiteFn, /undefined/, 'finite must explicitly reject undefined');
+  assert.match(refino, /const finite = D\.finite/, 'Refino reuses the single finite');
+  assert.doesNotMatch(refino, /function finite\(/, 'Refino does not define its own finite');
 });
 
 console.log('TELEMETRY_TRUTH_CONTRACT=PASS');

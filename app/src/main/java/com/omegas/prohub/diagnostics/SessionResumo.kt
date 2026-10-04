@@ -1,5 +1,6 @@
 package com.omegas.prohub.diagnostics
 
+import com.omegas.prohub.util.Units
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
@@ -44,7 +45,7 @@ class SessionResumo(
             "COLETANDO_NOSSOS" to "coletando os pontos do OMEGAS",
             "PROPOSTA_PRONTA" to "curva pronta para revisar",
             "VERIFICANDO" to "verificando a última gravação",
-            "RESTAURAR_TRECHO" to "restaurar um trecho piorou",
+            "RESTAURAR_TRECHO" to "piorou em um trecho (restaurar só ele)",
             "ESTAVEL" to "curva estável",
         )
         private val AFTER_WORDS = mapOf(
@@ -52,13 +53,24 @@ class SessionResumo(
             "TELEMETRIA_PAROU" to "a telemetria parou (chave ou cabo)",
             "SEM_RELIGAR" to "o motor não religou",
         )
+        // Mesmas palavras do Refino na tela (refino.js STATUS_WORDS / VERDICT).
         private val VERDICT_WORDS = mapOf(
             "VERIFICADO" to "verificação concluída (resultado por faixa abaixo)",
-            "PIOROU_EM_PARTE" to "piorou em parte (trecho a restaurar)",
-            "SEM_BASE" to "sem medida anterior para comparar",
-            "INCONCLUSIVO" to "inconclusiva (pouca condução)",
-            "INTERROMPIDO" to "interrompida antes de concluir",
-            "VERIFICANDO" to "ainda verificando",
+            "PIOROU_EM_PARTE" to "piorou em parte em alguma faixa",
+            "FALHA_PARCIAL" to "a gravação falhou no meio: a ECU pode ter sido alterada em parte",
+            "SEM_BASE" to "sem medição anterior: a medição de agora virou a base",
+            "INCONCLUSIVO" to "poucas leituras: não deu para julgar",
+            "INTERROMPIDO" to "a ECU mudou a curva no meio (AutoMatch ou Mapa K)",
+            "VERIFICANDO" to "medindo",
+        )
+        private val BAND_WORDS = mapOf(
+            "CONFIRMADA" to "chegou na gasolina",
+            "PASSOU" to "passou do ponto",
+            "CURTA" to "faltou",
+            "PIOROU" to "piorou",
+            "COLETANDO" to "medindo",
+            "SEM_ANTES" to "sem medição anterior",
+            "SEM_DADOS" to "poucas leituras",
         )
 
         /**
@@ -124,7 +136,7 @@ class SessionResumo(
 
     private fun clock(ms: Long): String = SimpleDateFormat("HH:mm:ss", Locale.US).apply { timeZone = zone }.format(Date(ms))
     private fun day(ms: Long): String = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.US).apply { timeZone = zone }.format(Date(ms))
-    private fun num(value: Double, digits: Int) = String.format(Locale.forLanguageTag("pt-BR"), "%.${digits}f", value)
+    private fun num(value: Double, digits: Int) = String.format(Units.PT_BR, "%.${digits}f", value)
     private fun optDouble(data: JSONObject, key: String): Double? =
         if (data.has(key) && !data.isNull(key)) data.optDouble(key).takeIf { it.isFinite() } else null
 
@@ -177,7 +189,7 @@ class SessionResumo(
                     val band = array.optJSONObject(i) ?: continue
                     val verdict = band.optString("verdict")
                     if (verdict == "NAO_ALTERADA") continue
-                    bands += "${num(band.optDouble("fromMs"), 1)} a ${num(band.optDouble("toMs"), 1)} ms" to verdict
+                    bands += "${Units.msBand(band.optDouble("fromMs"))} a ${Units.msBand(band.optDouble("toMs"))} ms" to verdict
                 }
                 verdicts += Verdict(
                     atMs, id, data.optString("status"), data.optLong("appliedAt"),
@@ -218,28 +230,28 @@ class SessionResumo(
         out.appendLine("## Apagões do motor")
         out.appendLine("- Apagou: ${real.size} (religou: ${real.count { it.after == "RELIGOU" }}). Quase apagou: ${near.size}.")
         stalls.forEach { s ->
-            val kind = if (s.kind == "APAGOU") "APAGOU" else "quase apagou"
+            val kind = if (s.kind == "APAGOU") "Apagou" else "Quase apagou"
             val speed = s.speedKmh?.let { ", ${num(it, 0)} km/h" } ?: ""
             val after = s.after?.let { a ->
                 val seconds = s.restartedInS?.let { " em ${num(it, 1)} s" } ?: ""
                 "; depois: ${AFTER_WORDS[a] ?: a}$seconds"
             } ?: if (s.kind == "APAGOU") "; depois: sem anotação (a sessão acabou antes)" else ""
-            out.appendLine("- ${clock(s.atMs)} $kind a ${num(s.petrolMs, 2)} ms, MAP ${num(s.mapBar, 2)} bar, ${num(s.rpmBefore, 0)} rpm antes$speed$after")
+            out.appendLine("- ${clock(s.atMs)} $kind a ${Units.msUnit(s.petrolMs)}, MAP ${Units.mapUnit(s.mapBar)}, ${Units.rpm(s.rpmBefore)} rpm antes$speed$after")
         }
         out.appendLine()
 
         out.appendLine("## Gravações na ECU")
         if (writes.isEmpty()) out.appendLine("- Nenhuma gravação confirmada nesta sessão.")
-        writes.forEach { out.appendLine("- ${clock(it.atMs)} ${it.kind}: ${it.points} pontos, ajuste ${it.id.ifBlank { "sem id" }} (confirmado por ACK e readback)") }
+        writes.forEach { out.appendLine("- ${clock(it.atMs)} ${it.kind}: ${it.points} pontos, ajuste ${it.id.ifBlank { "sem id" }} (confirmado na ECU)") }
         out.appendLine()
 
         out.appendLine("## Veredictos do Refino")
         if (verdicts.isEmpty()) out.appendLine("- Nenhuma verificação terminou nesta sessão.")
         verdicts.forEach { v ->
             val ratio = if (v.ratioBefore != null && v.ratioAfter != null)
-                " (razão GNV/gasolina ${num(v.ratioBefore, 3)} para ${num(v.ratioAfter, 3)})" else ""
+                " (diferença do GNV para a gasolina: ${Units.gapFromRatio(v.ratioBefore)} para ${Units.gapFromRatio(v.ratioAfter)})" else ""
             out.appendLine("- ${clock(v.atMs)} gravação das ${clock(v.appliedAtMs)}: ${VERDICT_WORDS[v.status] ?: v.status}$ratio")
-            v.bands.forEach { (band, verdict) -> out.appendLine("  - faixa $band: ${verdict.lowercase().replace('_', ' ')}") }
+            v.bands.forEach { (band, verdict) -> out.appendLine("  - faixa $band: ${BAND_WORDS[verdict] ?: verdict.lowercase().replace('_', ' ')}") }
         }
         out.appendLine()
 

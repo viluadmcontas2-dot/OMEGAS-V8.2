@@ -85,6 +85,8 @@ class HubJavascriptBridge(activity: MainActivity) {
         root.put("ok", true)
             .put("telemetryAgeMs", root.optLong("ageMs", -1L))
             .put("interpolation", interpolation)
+            // Lote D: revisão por tipo (live/evidence/tables/session); só sobe quando o dado muda. Chave nova, aditiva.
+            .put("revisions", service.revisionsObject().getJSONObject("revisions"))
         uiSnapshots.publishPresent(root)
         uiSnapshots.presentJson().toString()
     } ?: unavailable()
@@ -92,6 +94,8 @@ class HubJavascriptBridge(activity: MainActivity) {
     /**
      * Igual a [getPresentSnapshot], mas a UI informa a última sequência que já pintou. Se nada mudou,
      * devolve só `{changed:false}` com a idade (sem montar nem serializar o quadro).
+     * Lote D (chave aditiva): ambas as formas trazem `revisions:{live,evidence,tables,session}`; a UI relê
+     * `getNativeMonitorSnapshot`/sessões só quando a revisão do tipo mudou.
      */
     @JavascriptInterface
     fun getPresentSnapshotIfChanged(lastSequence: Long): String {
@@ -99,7 +103,8 @@ class HubJavascriptBridge(activity: MainActivity) {
         val sequence = service.telemetryStore.sequenceNow()
         if (lastSequence >= 0L && sequence == lastSequence) {
             val age = service.telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it }
-            return "{\"ok\":true,\"changed\":false,\"sequence\":$sequence,\"telemetryAgeMs\":$age}"
+            val revisions = service.revisionsObject().getJSONObject("revisions")
+            return "{\"ok\":true,\"changed\":false,\"sequence\":$sequence,\"telemetryAgeMs\":$age,\"revisions\":$revisions}"
         }
         return getPresentSnapshot()
     }

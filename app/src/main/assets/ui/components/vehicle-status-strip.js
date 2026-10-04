@@ -2,12 +2,8 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function finite(value) {
-    // null/''/boolean não são medição: Number(null) seria 0 e viraria "0 ms" / "0 rpm".
-    if (value === null || value === undefined || value === '' || typeof value === 'boolean') return null;
-    const number = Number(value);
-    return Number.isFinite(number) ? number : null;
-  }
+  // null/''/boolean não são medição: Number(null) seria 0 e viraria "0 ms" / "0 rpm" (regra única em display-rules).
+  const finite = ns.DisplayRules.finite;
 
   function fuelLabel(raw) {
     const value = String(raw || '—').toUpperCase();
@@ -68,14 +64,15 @@
       const telemetryValid = telemetryRoot.valid === true;
       const live = telemetryRoot.live || telemetryRoot.data || telemetryRoot;
       const serviceRunning = status.serviceRunning === true;
-      const ecuOnline = status.usbConnected === true && status.engineReady !== false;
+      const link = ns.DisplayRules.connectionState(status);
+      const ecuOnline = link.online && status.engineReady !== false;
       const rpm = telemetryValid ? finite(live.rpm ?? status.rpm) : null;
       const petrol = telemetryValid ? finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs) : null;
       const age = finite(telemetryRoot.ageMs ?? telemetryRoot.telemetryAgeMs ?? status.directTelemetryAgeMs);
       const fuel = telemetryValid ? fuelLabel(live.fuel ?? live.state ?? status.fuelState) : "—";
 
       this.fact('service', serviceRunning ? 'ATIVO' : 'PARADO', serviceRunning ? 'online' : 'offline');
-      this.fact('ecu', ecuOnline ? 'ONLINE' : 'OFFLINE', ecuOnline ? 'online' : 'offline');
+      this.fact('ecu', ecuOnline ? 'ONLINE' : link.online ? 'LENDO' : link.label.toUpperCase(), ecuOnline ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
       this.fact('freshness', ageLabel(age), age !== null && age >= 0 ? 'measured' : 'unknown');
       this.fact('fuel', fuel, fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
       this.fact('rpm', rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR'), rpm === null ? 'unknown' : 'measured');

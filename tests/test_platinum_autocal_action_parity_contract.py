@@ -55,9 +55,9 @@ def test_finish_is_not_misrepresented_as_acquisition_stop():
     assert "PanelDbg oculto do ProgBase" in MANAGER
     assert 'data-autocal-action="FINISH_AUTOCAL"' not in COCKPIT
     assert 'data-autocal-action="FINISH_AUTOMATCH"' not in COCKPIT
-    assert "O AutoMatch nativo é automático e decidido pela ECU." in COCKPIT
-    assert "A aquisição continua habilitada e pode preencher novas zonas" in COCKPIT
-    assert "Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0." in COCKPIT
+    assert "O AutoMatch é automático e decidido pela ECU." in COCKPIT
+    assert "A leitura continua ativa e pode preencher novas zonas" in COCKPIT
+    assert "Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU." in COCKPIT
     assert "setEnabled(false)" in MANAGER
 
 

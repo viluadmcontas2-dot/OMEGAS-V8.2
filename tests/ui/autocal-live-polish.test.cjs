@@ -14,6 +14,7 @@ function loadModel() {
   const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
   context.globalThis = context;
   vm.createContext(context);
+require('./_support.cjs').preload(context);
   vm.runInContext(cockpit, context, { filename: 'autocal-cockpit.js' });
   return context.OmegasUi.AutoCalUxModel;
 }
@@ -27,15 +28,23 @@ test('B1: cursor cinza com 1,5 s e some com 3 s (mesma régua do Agora)', () => 
   assert.equal(at(1501).grey, true);
   assert.equal(at(3000).grey, true);
   assert.equal(at(3001), null);
-  assert.match(cockpit, /AUTO_CAL_LIVE_GREY_MS = 1500/);
-  assert.match(cockpit, /AUTO_CAL_LIVE_STALE_MS = 3000/);
+  // A régua é única (core/live-store.js) e o cockpit só a usa.
+  const store = read('app/src/main/assets/ui/core/live-store.js');
+  assert.match(store, /GREY_MS = 1500/);
+  assert.match(store, /STALE_MS = 3000/);
+  assert.match(cockpit, /AUTO_CAL_LIVE_GREY_MS = ns\.LiveStore\.GREY_MS/);
+  assert.match(cockpit, /AUTO_CAL_LIVE_STALE_MS = ns\.LiveStore\.STALE_MS/);
 });
 
 test('B2: cursor suave por rAF do scheduler, sem timer novo e sem extrapolar', () => {
   assert.match(cockpit, /addFrameHook/);
   assert.match(cockpit, /animateCursor\(timestamp\)/);
-  assert.match(cockpit, /AUTO_CAL_CURSOR_EASE_MS = 50/);
-  assert.match(cockpit, /AUTO_CAL_NARRATIVE_MS = 500/);
+  const store = read('app/src/main/assets/ui/core/live-store.js');
+  assert.match(store, /EASE_MS = 50/);
+  assert.match(store, /NARRATIVE_MS = 500/);
+  assert.match(store, /style\.transform/, 'o cursor anda só com CSS transform');
+  assert.doesNotMatch(store, /setAttribute\('c[xy]'/, 'sem mexer em cx/cy por quadro');
+  assert.match(cockpit, /AUTO_CAL_NARRATIVE_MS = ns\.LiveStore\.NARRATIVE_MS/);
   assert.doesNotMatch(cockpit, /setInterval|setTimeout/);
   const app = read('app/src/main/assets/ui/app.js');
   assert.match(app, /const AUTOCAL_CADENCE_MS = 50;/);

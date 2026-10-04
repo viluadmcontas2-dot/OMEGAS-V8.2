@@ -9,9 +9,8 @@ const read = relative => fs.readFileSync(path.join(ROOT, relative), 'utf8');
 const SOURCE = read('app/src/main/assets/ui/screens/refino.js');
 
 function model() {
-  const window = { setTimeout: () => 0 };
-  window.window = window;
-  vm.runInNewContext(SOURCE, { window, globalThis: window, console });
+  const window = require('./_support.cjs').freshContext({ console });
+  vm.runInContext(SOURCE, window);
   return window.OmegasUi.RefinoModel;
 }
 
@@ -73,9 +72,11 @@ test('Refino é um destino próprio logo abaixo do AutoCal e grava só com confe
   assert.match(SOURCE, /A Curva K da ECU mudou/);
   assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true/);
   assert.doesNotMatch(SOURCE, /setInterval/);
-  // Mesma linguagem visual do AutoCal da Platina: mesmo gráfico e mesmas classes.
-  assert.match(SOURCE, /autocal-reference-svg/);
-  assert.match(SOURCE, /AutoCalUxModel/);
+  // Mesma linguagem visual do AutoCal: o MESMO componente de gráfico (components/curve-chart.js), montado nos dois quadros.
+  const chart = read('app/src/main/assets/ui/components/curve-chart.js');
+  assert.match(chart, /autocal-reference-svg/);
+  assert.match(SOURCE, /chart\.mount\(host/);
+  assert.match(read('app/src/main/assets/ui/screens/autocal-cockpit.js'), /chart\.mount\(host/);
 });
 
 // ---------------------------------------------------------------- UX: o ponto tocado e o histórico
@@ -95,7 +96,7 @@ test('ponto nosso na marcha lenta: aparece, mas o inspector diz que NÃO conta p
   const now = 1_790_000_000_000;
   const idle = m.explainPoint('our', { fuel: 'GAS', mapBar: 0.54, tpetMs: 4.5, samples: 30, rpmMedian: 872, idleShare: 1, lastAtMs: now - 8_000 }, { now });
   assert.equal(idle.counts, false);
-  assert.match(idle.title, /Nosso ponto · GNV/);
+  assert.match(idle.title, /Medido pelo OMEGAS · GNV/);
   assert.match(idle.lines.join('\n'), /medido pelo OMEGAS na sua condução/);
   assert.match(idle.lines.join('\n'), /há 8 s/);
   assert.match(idle.lines.join('\n'), /NÃO conta[\s\S]*marcha lenta/);
@@ -114,8 +115,8 @@ test('ponto da ECU: de quem é, quando, e se foi descartado como anomalia', () =
   const point = { fuel: 'GAS', fuelLabel: 'GNV', index: 6, point: 7, mapBar: 0.5, petrolMs: 4.4, counter: 10, threshold: 10, acquisitionState: 'ACQUIRED' };
   const ok = m.explainPoint('ecu', point, { now, capturedAtMs: now - 3_000, rejected: [] });
   assert.equal(ok.counts, true);
-  assert.match(ok.lines.join('\n'), /medido pela ECU \(AutoCal nativo\)/);
-  assert.match(ok.lines.join('\n'), /faixa adquirida pela ECU/);
+  assert.match(ok.lines.join('\n'), /medido pela ECU \(AutoCal da ECU\)/);
+  assert.match(ok.lines.join('\n'), /faixa lida pela ECU/);
   const rejected = m.explainPoint('ecu', point, { now, capturedAtMs: now - 3_000, rejected: [{ fuel: 'GNV', band: 6 }] });
   assert.equal(rejected.counts, false);
   assert.match(rejected.lines.join('\n'), /NÃO conta[\s\S]*anomalia/);
@@ -123,7 +124,7 @@ test('ponto da ECU: de quem é, quando, e se foi descartado como anomalia', () =
   assert.equal(otherFuel.counts, true, 'a faixa 7 da gasolina descartada não descarta a do GNV');
   const collecting = m.explainPoint('ecu', { ...point, acquisitionState: 'COLLECTING', counter: 4 }, { now });
   assert.equal(collecting.counts, false);
-  assert.match(collecting.lines.join('\n'), /ainda coletando/);
+  assert.match(collecting.lines.join('\n'), /ainda lendo/);
   assert.match(collecting.lines.join('\n'), /\(4\/10\)/);
 });
 

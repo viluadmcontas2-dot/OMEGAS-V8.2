@@ -47,7 +47,8 @@ function loadInto(context, files) {
   vm.createContext(context);
   context.window = context;
   context.globalThis = context;
-  for (const file of files) vm.runInContext(read(file), context, { filename: file });
+  const PRE = ['core/display-rules.js', 'core/live-store.js', 'components/curve-chart.js'];
+  for (const file of [...PRE, ...files.filter(file => !PRE.includes(file))]) vm.runInContext(read(file), context, { filename: file });
   return context;
 }
 
@@ -332,37 +333,6 @@ test('app.js: pede o quadro com a última sequência, reaproveita o anterior qua
   assert.match(app, /const AUTOCAL_CADENCE_MS = 50;/);
   assert.match(app, /setCadenceMs\(route === 'autocal' \? AUTOCAL_CADENCE_MS : 200\)/);
   assert.doesNotMatch(app, /\? 50 : 200/);
-});
-
-test('equivalência: lê pela ponte AutoCal e, sem nextAction, deriva a ação da fase (botão leva ao Refino)', () => {
-  const body = { ok: true, available: true, autopilot: { phase: 'PROPOSTA_PRONTA' }, ratio: 1.02, refinement: {} };
-  const api = nativeApi({ OmegasNative: {}, OmegasAutoCal: { getEquivalence: () => JSON.stringify(body) } });
-  const eq = api.equivalence();
-  assert.ok(eq, 'a ponte AutoCal alimenta o cartão do Agora');
-  assert.equal(eq.index.value, null, 'sem índice do Kotlin, nenhum número inventado');
-  assert.equal(eq.nextAction.route, 'refino');
-  assert.match(eq.nextAction.text, /Revise e grave no Refino/);
-
-  const withAction = { ...body, nextAction: { kind: 'COLLECT', text: 'Rode no GNV', route: 'refino', subpage: '', pointIndexes: [] }, index: { value: 0.5, coverage: 4, provisional: true } };
-  const real = nativeApi({ OmegasNative: {}, OmegasAutoCal: { getEquivalence: () => JSON.stringify(withAction) } }).equivalence();
-  assert.equal(real.nextAction.text, 'Rode no GNV', 'o nextAction do Kotlin prevalece sobre o derivado');
-  assert.equal(real.index.value, 0.5);
-
-  assert.equal(nativeApi({ OmegasNative: {}, OmegasAutoCal: { getEquivalence: () => JSON.stringify({ ok: true, available: false }) } }).equivalence(), null);
-  assert.equal(nativeApi({ OmegasNative: {} }).equivalence(), null);
-});
-
-test('Agora mostra o cartão com "—" quando só há a ação do piloto', () => {
-  const { document, node } = fakeDom();
-  const dash = loadInto({ console, document, OmegasApp: { router: { open() {} } } }, ['core/router.js']);
-  vm.runInContext(read('screens/dashboard.js'), dash, { filename: 'screens/dashboard.js' });
-  const screen = Object.create(dash.OmegasUi.DashboardScreen.prototype);
-  const eq = { index: { value: null, coverage: null, provisional: false }, nextAction: { kind: 'REVIEW', text: 'A curva refinada está pronta.', route: 'refino', subpage: '', pointIndexes: [] } };
-  screen.renderEquivalence(eq);
-  assert.equal(node('dashEquivalence').hidden, false);
-  assert.equal(node('dashIndex').textContent, '—');
-  assert.equal(node('dashNextText').textContent, 'A curva refinada está pronta.');
-  assert.equal(node('dashNextButton').dataset.route, 'refino');
 });
 
 // ---------------------------------------------------------------- 5. CSS sem filtros caros

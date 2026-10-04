@@ -7,7 +7,7 @@
   // sem isso a bolinha AGORA do Refino ficava congelada no último valor da rota anterior).
   const LIVE_ROUTES = ['dashboard', 'map', 'autocal', 'refino'];
   // Subpáginas (tablist) por rota: o Agora leva o dono já posicionado, sem executar nada.
-  const SUBPAGES = { curve: ['learning', 'editor'] };
+  const SUBPAGES = { curve: ['overview', 'editor'] };
 
   function loadOptionalScript(src, onload) {
     if (typeof document === 'undefined') return;
@@ -60,5 +60,6 @@
   loadOptionalScript('components/vehicle-status-strip.js');
   loadOptionalScript('components/split-layout.js');
   loadOptionalScript('core/autocal-api.js', () =>
-    loadOptionalScript('screens/autocal-cockpit.js', () => loadOptionalScript('screens/refino.js')));
+    loadOptionalScript('components/curve-chart.js', () =>
+      loadOptionalScript('screens/autocal-cockpit.js', () => loadOptionalScript('screens/refino.js'))));
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,0 +1,413 @@
+/* OMEGAS · Lote F: acabamento visual medido em render real (1280×720). Carrega por último. Só tokens. */
+
+/* F3.1 · faixa de condição: altura pelo conteúdo, sem corte; o título da tela aparece uma vez (na própria tela). */
+.workspace { grid-template-rows: auto minmax(0, 1fr); }
+.workspace-head {
+  display: block;
+  position: relative;
+  padding: 4px 18px;
+  contain: none;
+}
+.workspace-head > div:first-child,
+.workspace-head > p {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.workspace-head .vehicle-status-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 0;
+  border-top: 0;
+}
+.workspace-head .vehicle-status-strip > div {
+  gap: 0;
+  padding: 1px 10px 2px;
+}
+.workspace-head .vehicle-status-strip small {
+  font-size: 16px;
+  line-height: 1.05;
+  letter-spacing: .04em;
+}
+.workspace-head .vehicle-status-strip b {
+  font-size: var(--text-critical);
+  line-height: 1.05;
+}
+
+/* No Agora os números grandes já são rpm, ms e combustível: a faixa fica só com serviço, ECU e frescor. */
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-vehicle-fact="fuel"],
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-vehicle-fact="rpm"],
+body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-vehicle-fact="petrol"] { display: none; }
+
+/* F1 · equivalência no Refino: faixa discreta, não maior que os cartões de status. */
+.refino-eq {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--touch-min);
+  margin: 0 0 8px;
+  padding: 4px var(--space-4);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.refino-eq[hidden] { display: none; }
+.refino-eq b { color: var(--text); font-size: var(--text-critical); line-height: 1.15; white-space: nowrap; }
+.refino-eq span { color: var(--muted); font-size: var(--text-critical); line-height: 1.15; }
+
+/* ---------------------------------------------------------------- Refino: tudo em 1280×720 sem rolagem vertical */
+.refino-route-screen .refino-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.refino-cockpit > * { order: 0 !important; flex: 0 0 auto; margin: 0; min-width: 0; }
+.refino-cockpit .autocal-focus-toolbar { min-height: 0; padding: 2px 4px; grid-template-columns: minmax(0, 1fr) auto auto; }
+.refino-cockpit .autocal-focus-title h3 { font-size: var(--text-critical); line-height: 1.1; margin: 0; }
+.refino-cockpit .autocal-fuel-chip { font-size: 16px; padding: 2px 10px; }
+.refino-cockpit .autocal-focus-metric { min-width: 0; min-height: 0; padding: 3px 10px; }
+.refino-cockpit .autocal-focus-metric small { font-size: 16px; line-height: 1.1; }
+.refino-cockpit .autocal-focus-metric b { font-size: var(--text-critical); line-height: 1.1; }
+.refino-cockpit .autocal-focus-actions .autocal-primary-action { min-width: 0; padding: 0 20px; font-size: var(--text-critical); }
+
+.refino-steps { margin: 0; gap: 0; }
+.refino-steps li { font-size: 16px; }
+.refino-steps li i { width: 24px; height: 24px; font-size: 16px; }
+
+.refino-eq span { font-size: var(--text-critical); }
+.refino-eq b { color: var(--text); }
+.refino-eq[data-has-action="false"] span { color: var(--dim); }
+
+.refino-next { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.25; }
+.refino-next[hidden] { display: none; }
+
+.refino-actions-row { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
+.refino-actions-row > * { flex: 0 1 auto; min-width: 0; }
+.refino-actions-row .refino-undo { flex: 0 0 auto; }
+/* Guardião: Desfazer do Refino com a mesma presença dos outros botões da linha (não parece desativado). */
+html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-height: var(--touch-min); padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: var(--text-critical); font-weight: 700; }
+.refino-actions-row .refino-undo button.quiet-button { background: transparent; color: var(--muted); font-weight: 600; }
+.refino-actions-row .refino-undo[hidden],
+.refino-actions-row .refino-stalls[hidden] { display: none; }
+.refino-actions-row .refino-stalls {
+  flex: 1 1 0;
+  display: grid;
+  align-content: center;
+  gap: 0;
+  margin: 0;
+  padding: 4px 10px;
+  border-color: var(--state-error);
+  background: var(--surface);
+}
+.refino-actions-row .refino-stalls b { color: var(--state-error); font-size: 16px; line-height: 1.2; }
+.refino-actions-row .refino-stalls span { color: var(--muted); font-size: 16px; line-height: 1.2; }
+.refino-actions-row details { position: relative; flex: 0 0 auto; margin: 0; }
+.refino-actions-row details > summary { min-height: var(--touch-min); display: flex; align-items: center; gap: 12px; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: var(--text-critical); list-style: none; }
+.refino-actions-row details > summary::-webkit-details-marker { display: none; }
+.refino-actions-row details > div {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 40;
+  width: min(620px, 80vw);
+  max-height: 420px;
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 16px;
+}
+.refino-actions-row details > div p, .refino-actions-row details > div dd, .refino-actions-row details > div dt, .refino-actions-row details > div li { font-size: 16px; }
+
+.refino-cockpit .refino-chart-card {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 0 6px;
+  overflow: hidden;
+}
+.refino-chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; padding: 6px 10px 4px; }
+.refino-cockpit .autocal-plot-title { position: static; font-size: 16px; font-weight: 800; letter-spacing: .02em; }
+.refino-cockpit .autocal-chart-legend { display: flex; flex-wrap: wrap; gap: 2px 16px; min-height: 0; margin: 0; padding: 0; border: 0; background: none; font-size: 16px; color: var(--muted); }
+.refino-cockpit .autocal-chart-workspace { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "chart inspector"; gap: 8px; padding: 0 8px; }
+.refino-cockpit .autocal-chart-host { grid-area: chart; height: 100% !important; min-height: 140px !important; }
+.refino-cockpit .autocal-chart-inspector { grid-area: inspector; max-height: none; overflow: auto; padding: 8px 10px; }
+.refino-cockpit .autocal-chart-inspector b { font-size: 16px; }
+.refino-cockpit .autocal-chart-inspector span { font-size: 16px; line-height: 1.3; }
+
+/* Legenda: quatro séries semânticas + Agora, cada uma com a sua marca (cores só por token). */
+.autocal-chart-legend [data-legend="petrol"]::before { background: var(--petrol); }
+.autocal-chart-legend [data-legend="gas"]::before { background: var(--cng); }
+.autocal-chart-legend [data-legend="ours"]::before { width: 9px; height: 9px; border-radius: 2px; background: var(--tone-ffb547); }
+.autocal-chart-legend [data-legend="proposal"]::before { width: 10px; height: 10px; border: 2px solid var(--accent); border-radius: 50%; background: transparent; }
+.autocal-chart-legend [data-legend="live"]::before { background: var(--tone-19daf4); }
+.autocal-chart-legend [data-legend="stall"]::before { content: '✕'; width: auto; height: auto; background: none; color: var(--danger); font-weight: 900; }
+
+/* Desenho do gráfico compartilhado */
+.chart-ours { stroke: var(--bg); stroke-width: 1; fill: var(--tone-ffb547); }
+.chart-whisker { stroke: var(--tone-ffb547); stroke-width: 1.5; stroke-opacity: .7; }
+.chart-proposal { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.curve-chart-shared, .curve-chart-shared svg { width: 100%; height: 100%; display: block; }
+.autocal-axis-tick-x, .autocal-axis-tick-y, .autocal-axis-title, .autocal-zone-label, .autocal-live-label { font-size: 16px; }
+.autocal-primary-action[data-kind="review"] { background: var(--accent); border-color: var(--accent); color: var(--text); }
+
+/* Revisão: o cartão cabe no conteúdo; a lista usa duas colunas e rola com dica visível. */
+.refino-cockpit .autocal-review-card { width: min(900px, 100%); }
+.refino-review-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; max-height: 300px; overflow-y: auto; }
+.refino-review-list > div { grid-template-columns: 90px minmax(0, 1fr); }
+.refino-cockpit .autocal-review-card p, .refino-cockpit .autocal-review-card dd, .refino-cockpit .autocal-review-card dt, .refino-cockpit .autocal-review-card span { font-size: 16px; }
+.refino-cockpit .autocal-review-card h3 { font-size: var(--text-critical); }
+.refino-warning { color: var(--state-warn); font-size: 16px; }
+
+/* Refino · ajustes de linha */
+.refino-cockpit .autocal-focus-toolbar { display: flex; align-items: center; gap: 12px; }
+.refino-cockpit .autocal-focus-title { flex: 1 1 auto; min-width: 0; }
+.refino-cockpit .autocal-title-line { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; white-space: nowrap; }
+.refino-cockpit .autocal-focus-metrics { flex: 0 0 auto; }
+.refino-cockpit .autocal-focus-actions { flex: 0 0 auto; }
+.refino-cockpit .autocal-focus-actions .autocal-primary-action { width: auto; }
+.refino-steps-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.refino-steps-row .refino-steps { flex: 0 1 auto; flex-wrap: nowrap; white-space: nowrap; }
+.refino-counts { display: flex; gap: 16px; margin: 0; color: var(--muted); font-size: 16px; white-space: nowrap; }
+.refino-counts b { color: var(--text); font-size: 16px; }
+.refino-actions-row .refino-stalls { flex: 1 1 0; }
+/* Aviso de segurança nunca é cortado: ocupa a linha inteira e quebra em quantas linhas precisar. */
+.refino-actions-row .refino-stalls b { display: block; overflow: visible; white-space: normal; }
+.refino-actions-row:not(:has(> :not([hidden]))) { display: none; }
+
+/* Refino · estrutura de altura e largura */
+.refino-route-screen #refinoScreenHost { height: 100%; min-height: 0; width: 100%; min-width: 0; display: flex; flex-direction: column; }
+.refino-route-screen .refino-cockpit { width: 100%; flex: 1 1 auto; }
+.refino-chart-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title counts" "legend legend"; gap: 2px 18px; }
+.refino-chart-head .autocal-plot-title { grid-area: title; }
+.refino-chart-head .refino-counts { grid-area: counts; justify-self: end; }
+.refino-chart-head .autocal-chart-legend { grid-area: legend; }
+.refino-actions-row .refino-stalls { flex: 1 1 100%; min-width: 200px; }
+.refino-actions-row details > summary { padding: 0 12px; }
+
+/* Gráfico: sem poluição. Os marcadores da curva da ECU só aparecem quando selecionados; o toque continua pela área invisível. */
+.curve-chart-shared .autocal-reference-point { fill: none; stroke: none; }
+.curve-chart-shared .autocal-reference-point.selected { stroke: var(--text); stroke-width: 2.5; }
+.curve-chart-shared .autocal-reference-hit { fill: transparent; stroke: none; }
+.refino-actions-row details { width: auto; }
+
+/* AutoCal: mesma estrutura de gráfico do Refino (título, contagem e legenda separados do desenho). */
+.autocal-route-panel .autocal-focus-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-height: 0; padding: 2px 4px; }
+.autocal-route-panel .autocal-focus-title { flex: 1 1 300px; min-width: 0; }
+.autocal-route-panel .autocal-focus-title h3 { font-size: var(--text-critical); line-height: 1.1; margin: 0; }
+.autocal-route-panel .autocal-focus-title p { display: none; }
+.autocal-route-panel .autocal-fuel-chip { font-size: 16px; padding: 2px 10px; }
+.autocal-route-panel .autocal-focus-metrics { flex: 0 1 auto; gap: 6px; }
+.autocal-route-panel .autocal-focus-metric, .autocal-route-panel .autocal-focus-zone { min-width: 0; min-height: 0; padding: 3px 10px; }
+.autocal-route-panel .autocal-focus-metric small, .autocal-route-panel .autocal-focus-zone small { font-size: 16px; line-height: 1.1; }
+.autocal-route-panel .autocal-focus-metric b, .autocal-route-panel .autocal-focus-zone b { font-size: var(--text-critical); line-height: 1.1; }
+.autocal-route-panel .autocal-focus-metric em { font-size: 16px; }
+.autocal-route-panel .autocal-focus-actions { flex: 1 1 100%; display: flex; gap: 8px; }
+.autocal-route-panel .autocal-focus-actions > *, .autocal-route-panel .autocal-focus-actions .autocal-reset-menu { flex: 1 1 0; min-width: 0; }
+.autocal-route-panel .autocal-focus-actions button, .autocal-route-panel .autocal-focus-actions summary { width: 100%; font-size: var(--text-critical) !important; padding: 0 8px; line-height: 1.1; }
+
+.autocal-route-panel .autocal-chart-card {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 190px);
+  min-height: 420px;
+  padding: 0 0 6px;
+  overflow: hidden;
+}
+.autocal-chart-card .autocal-plot-title { position: static; font-size: 16px; font-weight: 800; }
+.autocal-chart-card .autocal-chart-legend { display: flex; flex-wrap: wrap; gap: 2px 16px; min-height: 0; margin: 0; padding: 0; border: 0; background: none; font-size: 16px; color: var(--muted); }
+.autocal-chart-card .autocal-chart-workspace { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "chart inspector" "compare history"; gap: 8px; padding: 0 8px; }
+.autocal-chart-card .autocal-chart-host { grid-area: chart; height: 100% !important; min-height: 140px !important; }
+.autocal-chart-card .autocal-chart-inspector { grid-area: inspector; max-height: none; overflow: auto; padding: 8px 10px; }
+.autocal-chart-card .autocal-chart-inspector b, .autocal-chart-card .autocal-chart-inspector span { font-size: 16px; line-height: 1.3; }
+.autocal-chart-card .autocal-reset-comparison { grid-area: compare; }
+.autocal-chart-card .autocal-history-float { grid-area: history; position: static; width: 100%; }
+
+/* F3.11 · UM estilo de ação primária (accent); vermelho/âmbar só para perigo e atenção. */
+.primary,
+.autocal-primary-action:not(:disabled):not([data-kind="waiting"]):not([data-kind="stable"]):not([data-kind="restore"]),
+.refino-cockpit .autocal-primary-action[data-kind="review"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.autocal-reset-menu > summary { border-color: var(--line); background: var(--surface-2); color: var(--text); }
+.autocal-chart-card .autocal-chart-workspace { grid-template-rows: minmax(0, 1fr) auto auto; grid-template-areas: "chart inspector" "chart history" "chart compare"; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------------------------------------------------------------- Mapa K: a grade usa a altura toda; as ações ficam no painel */
+.map-screen { padding: 8px 12px; }
+.app-shell .map-screen .map-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 10px; height: 100%; min-height: 0; }
+.map-screen .map-surface { min-height: 0; display: flex; flex-direction: column; padding: 4px; overflow: hidden; }
+.map-screen .map-grid-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.map-screen .map-k-grid-with-axes { flex: 1 1 auto; min-height: 0; grid-template-columns: 86px repeat(12, minmax(0, 1fr)); grid-template-rows: 44px repeat(12, minmax(44px, 1fr)); gap: 2px; }
+.map-screen .map-axis-corner small, .map-screen .map-axis-corner b { font-size: 16px; line-height: 1.1; margin: 0; }
+.map-screen .map-axis-header { padding: 0 2px; }
+.map-screen .map-rpm-header b { font-size: 16px; }
+.map-screen .map-ms-header b { font-size: 18px; }
+.map-screen .map-k-cell b { font-size: 20px !important; line-height: 1; }
+.map-screen .map-k-cell span { font-size: 16px !important; line-height: 1 !important; }
+.map-screen .map-k-cell { padding: 0 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+.map-screen .map-editor-panel { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; overflow: hidden; }
+.map-screen .map-editor-panel > * { flex-shrink: 0; }
+.map-source-row { display: flex; align-items: center; gap: 8px; }
+.map-source-row .source-status { flex: 1 1 auto; min-width: 0; min-height: 0; padding: 4px 8px; font-size: 16px; line-height: 1.15; white-space: normal; }
+.map-source-row button { flex: 0 0 auto; }
+.map-screen .map-live-condition { min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-screen .map-live-condition small { display: inline; margin-right: 8px; font-size: 16px; }
+.map-screen .map-live-condition b { display: inline; font-size: 16px; font-weight: 700; }
+.map-screen .editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; }
+.map-screen .editor-heading small { display: block; font-size: 16px; color: var(--muted); }
+.map-screen .editor-heading h3 { margin: 0; font-size: var(--text-critical); }
+.map-screen .nudge-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.map-screen .nudge-row button { min-width: var(--touch-min); padding: 0; }
+.map-safety-line { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.2; }
+
+/* ---------------------------------------------------------------- Curva K: cabeçalho em duas linhas e o gráfico flexível */
+.curve-screen { padding: 8px 12px; gap: 6px; }
+.curve-screen .page-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "title switch actions" "backup backup backup"; align-items: center; gap: 4px 10px; min-height: 0; padding: 0; }
+.curve-screen .curve-title { grid-area: title; min-width: 0; }
+.curve-screen .curve-title h2 { margin: 0; font-size: var(--text-critical); line-height: 1.1; }
+.curve-screen .curve-title p { margin: 0; color: var(--muted); font-size: 16px; text-align: left; max-width: none; }
+.curve-screen .route-actions-stack { display: contents; }
+.curve-screen .view-switch { grid-area: switch; }
+.curve-screen .view-switch button { min-width: 0; padding: 0 14px; font-size: var(--text-critical); }
+.curve-screen .route-actions-stack > .inline-actions { grid-area: actions; }
+.curve-screen .inline-actions .source-status { display: none; }
+.curve-screen .curve-backup-bar { grid-area: backup; display: grid; grid-template-columns: auto auto minmax(120px, 1fr) minmax(190px, auto); grid-template-rows: auto auto; gap: 4px 8px; align-items: center; min-width: 0; }
+.curve-screen .curve-backup-bar button { padding: 0 12px; line-height: 1.1; }
+.curve-screen .curve-backup-bar select { min-width: 0; }
+.curve-screen .curve-backup-status { grid-column: 1 / -1; color: var(--muted); font-size: 16px; line-height: 1.2; min-height: 0; }
+
+.curve-screen .curve-view-stack { flex: 1 1 0; min-height: 0; }
+.curve-screen .curve-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 8px; height: 100%; min-height: 0; }
+.curve-screen .curve-surface { display: flex; flex-direction: column; padding: 6px; min-height: 0; position: relative; }
+.curve-screen .curve-legend { height: auto; min-height: 24px; font-size: 16px; gap: 14px; flex: 0 0 auto; }
+.curve-screen .curve-chart { flex: 1 1 0; min-height: 120px; }
+.curve-screen .curve-chart svg { display: block; }
+.curve-screen .curve-axis { padding: 0; font-size: 16px; flex: 0 0 auto; }
+.curve-screen .curve-point-label, .curve-screen .curve-tick-label { font-size: 16px; fill: var(--muted); }
+.curve-screen .curve-grid-line { stroke: var(--line-soft); stroke-width: 1; }
+.curve-screen .evidence-disclosure { flex: 0 0 auto; margin-top: 2px; }
+.curve-screen .evidence-disclosure summary { min-height: var(--touch-min); }
+.curve-screen .evidence-disclosure summary small, .curve-screen .evidence-disclosure summary em { font-size: 16px; }
+.curve-screen .evidence-disclosure summary b { font-size: var(--text-critical); }
+.curve-screen .evidence-disclosure .evidence-grid { position: absolute; left: 6px; right: 6px; bottom: calc(var(--touch-min) + 10px); z-index: 10; max-height: 220px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-s); font-size: 16px; }
+.curve-screen .evidence-disclosure:not([open]) .evidence-grid { display: none; }
+.curve-screen .evidence-grid > article, .curve-screen .evidence-grid > div, .curve-screen .evidence-grid p { font-size: 16px; }
+
+.curve-screen .curve-editor-panel { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; overflow-y: auto; }
+.curve-point-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.curve-point-head small { display: block; color: var(--muted); font-size: 16px; }
+.curve-point-head h3 { margin: 0; font-size: var(--text-critical); line-height: 1.1; }
+.curve-point-head .current-value { padding: 2px 8px; margin: 0; min-width: 90px; }
+.curve-point-head .current-value small { font-size: 16px; }
+.curve-point-head .current-value b { font-size: var(--text-critical); margin: 0; }
+.curve-screen .curve-editor-panel .field-label { margin: 0; gap: 0; }
+.curve-screen .curve-editor-panel .field-label > span { font-size: 16px; }
+.curve-screen .curve-nudge-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0; }
+.curve-screen .curve-nudge-row button { min-width: var(--touch-min); padding: 0; }
+.curve-screen .normalized-preview { margin: 0; font-size: 16px; padding: 2px 6px; }
+.curve-screen .proposal-list { flex: 1 1 auto; min-height: 48px; overflow-y: auto; font-size: 16px; }
+.curve-screen .proposal-list > div, .curve-screen .proposal-list p { font-size: 16px; }
+.curve-screen .editor-heading small, .curve-screen .editor-heading h3 { font-size: 16px; margin: 0; }
+.curve-screen .safety-copy { margin: 0; padding: 4px 8px; }
+.curve-screen .safety-copy span { font-size: 16px; line-height: 1.2; margin: 0; }
+.curve-screen .curve-editor-panel > #curveReviewButton { position: sticky; bottom: 0; flex: 0 0 auto; }
+
+.curve-screen .curve-overview-view.active { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 8px; height: 100%; }
+.curve-screen .curve-overview-surface .surface-heading { height: auto; }
+.curve-screen .curve-overview-surface small, .curve-screen .curve-overview-legend, .curve-screen .curve-overview-axis { font-size: 16px; }
+.curve-screen .curve-overview-surface h3 { font-size: var(--text-critical); margin: 0; }
+
+/* Operação: etapas visíveis, com a atual em destaque (a foto antes é um passo de verdade). */
+.operation-sequence { grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 16px; }
+.operation-sequence > span { padding: 6px 4px; border: 1px solid var(--line-soft); border-radius: var(--radius-s); color: var(--dim); }
+.operation-sequence > span[data-state="done"] { color: var(--ok); border-color: var(--ok); }
+.operation-sequence > span[data-state="active"] { color: var(--text); border-color: var(--accent); background: var(--accent-soft); font-weight: 800; }
+.operation-card p, .operation-result span, .operation-result b { font-size: var(--text-critical); }
+.operation-result span { font-size: 16px; }
+.operation-result[data-level="critical"] { border-left: 4px solid var(--state-error); padding-left: 10px; }
+.operation-result[data-level="critical"] span { color: var(--state-error); }
+.operation-result[data-level="ok"] b { color: var(--state-ok); }
+
+/* Camadas do gráfico compartilhado por modo: AutoCal ('ecu18') mostra as 18 faixas da ECU; Refino ('between') mostra as faixas entre elas. */
+.curve-chart-shared[data-mode="ecu18"] .layer-between,
+.curve-chart-shared[data-mode="ecu18"] .layer-ticks,
+.curve-chart-shared[data-mode="between"] .layer-ecu18,
+.curve-chart-shared[data-mode="between"] .layer-zones { display: none; }
+.chart-edge-tick { stroke: var(--muted); stroke-opacity: .55; stroke-width: 1.5; }
+.autocal-chart-legend [data-legend="ecuedges"]::before { width: 10px; height: 2px; background: var(--muted); }
+.autocal-live-layer { will-change: transform; }
+
+.curve-prepare-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.curve-screen .curve-editor-panel .proposal-list { flex: 1 1 auto; }
+
+/* ---------------------------------------------------------------- Pisos de texto (F3.9): corpo/microtexto >= 16 px; o que carrega valor ou ação >= 24 px */
+html body .curve-chart-shared text { font-size: 16px; }
+html body .curve-chart-shared text.autocal-zone-label { font-size: 16px; }
+html body .sr-only { font-size: 16px; }
+
+html body .utility-screen :is(small, span, p, dd, dt, li, label, em, i) { font-size: 16px; }
+html body .utility-screen :is(h2, h3) { font-size: var(--text-critical); line-height: 1.15; }
+html body .utility-screen :is(b, strong) { font-size: 16px; line-height: 1.2; }
+html body .utility-screen :is(.tool-actions b, .recorded-session-header b, .recorder-metrics b, .background-health-grid b, .tool-power-row b, .diagnostic-recorder-card b) { font-size: var(--text-critical); }
+html body .utility-screen .background-health-grid > span, html body .utility-screen .recorder-metrics > span { display: grid; align-content: start; gap: 0; }
+html body .utility-screen .page-intro p, html body .utility-screen .page-intro small { font-size: 16px; }
+html body .utility-screen .session-datetime, html body .utility-screen .recorded-session-meta span { font-size: 16px; }
+html body .utility-screen .tool-actions span { font-size: 16px; }
+html body .utility-screen .diagnostic-recorder-card header span { font-size: 16px; }
+
+/* Refino: diário, histórico e etapas */
+html body .refino-cockpit :is(small, span, dd, dt, li, p, h4, i) { font-size: 16px; }
+html body .refino-cockpit .refino-steps li { font-size: 16px; }
+html body .refino-cockpit .refino-steps li i { font-size: 16px; }
+html body .refino-cockpit .refino-eq span, html body .refino-cockpit .refino-eq b { font-size: var(--text-critical); }
+html body .refino-cockpit .refino-journal :is(span, small, b, p, h4, li) { font-size: 16px; }
+
+/* AutoCal: contexto da aquisição */
+html body .autocal-route-panel :is(small, span, p, dd, dt, li, em, i, h4) { font-size: 16px; }
+html body .autocal-route-panel .autocal-focus-metric b, html body .autocal-route-panel .autocal-focus-zone b { font-size: var(--text-critical); }
+html body .autocal-route-panel .autocal-reset-popover p { font-size: 16px; }
+
+/* Mapa K */
+html body .map-screen .map-live-condition, html body .map-screen .sr-only { font-size: 16px; }
+
+/* Alvos de toque: a caixa de marcar cobre o rótulo inteiro (>= 76 px); o desenho da chave é do próprio rótulo. */
+html body .diagnostic-settings-grid .check-setting { position: relative; min-height: var(--touch-min); }
+html body .diagnostic-settings-grid .check-setting input[type="checkbox"] {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; background: none;
+}
+html body .diagnostic-settings-grid .check-setting::after {
+  content: ""; order: 2; flex: 0 0 auto; width: 56px; height: 32px; border-radius: 999px; pointer-events: none;
+  background: radial-gradient(circle at 16px 16px, var(--tone-d9e2ec) 12px, transparent 13px), var(--tone-25313d);
+}
+html body .diagnostic-settings-grid .check-setting:has(input:checked)::after {
+  background: radial-gradient(circle at 40px 16px, var(--tone-ffffff) 12px, transparent 13px), var(--accent);
+}
+
+/* F3.5 · Conectando… (permissão USB) é diferente de Sem cabo: cor de atenção só para o que ainda pode resolver sozinho. */
+#globalEcu[data-link="connecting"] { color: var(--state-warn); }
+#globalEcu[data-link="nocable"], #globalEcu[data-link="stopped"] { color: var(--state-error); }
+.vehicle-status-strip [data-state="connecting"] b { color: var(--state-warn); }
+
+/* Cartão de operação: botões com respiro e resultado ocupando a linha toda. */
+.operation-card.compact-operation { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.operation-card.compact-operation > .operation-result { flex: 1 1 100%; }
+.operation-card.compact-operation > small, .operation-card.compact-operation > h3, .operation-card.compact-operation > p, .operation-card.compact-operation > .progress-track, .operation-card.compact-operation > .operation-sequence { flex: 1 1 100%; margin-top: 0; margin-bottom: 0; }
+
+.utility-screen .page-intro p:empty { display: none; }
+html body .utility-screen .background-health-grid { display: flex; flex-wrap: wrap; gap: 4px 32px; }

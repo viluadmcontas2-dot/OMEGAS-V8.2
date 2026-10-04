@@ -6,6 +6,7 @@ const source = fs.readFileSync('app/src/main/assets/ui/screens/autocal-cockpit.j
 const ctx = { console, setTimeout: () => 0, clearTimeout: () => {} };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
+require('./_support.cjs').preload(ctx);
 vm.runInContext(source, ctx);
 const { AutoCalUxModel: model, AutoCalCockpit: Cockpit } = ctx.OmegasUi;
 const snapshot = { available: true, snapshotHash: 'first', fields: [

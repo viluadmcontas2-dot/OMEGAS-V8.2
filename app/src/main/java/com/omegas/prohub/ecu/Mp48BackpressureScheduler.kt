@@ -48,6 +48,10 @@ class Mp48BackpressureScheduler(
 
     override fun currentSessionId(): Long = delegate.currentSessionId()
 
+    override fun liveFrameCount(): Long = delegate.liveFrameCount()
+
+    override fun liveFrameAgeMs(): Long = delegate.liveFrameAgeMs()
+
     override fun transaction(
         request: ByteArray,
         reason: String,

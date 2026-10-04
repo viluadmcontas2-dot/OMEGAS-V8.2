@@ -260,7 +260,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         synchronized(managerLock) {
             refinedMemo?.takeIf { it.first == key }?.second
                 ?: AutoMatchSnapshotAnalysis.analyzeRefined(
-                    snapshot, evidence.pairs, evidence.gainScale, evidence.episodes, AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG,
+                    snapshot, evidence.pairs, evidence.gainScale, evidence.episodes, AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG, evidence.fineBins,
                 )
                     .toString().also { refinedMemo = key to it }
         }
@@ -338,6 +338,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         val gainScale: DoubleArray?,
         val signature: String,
         val episodes: List<Int> = emptyList(),
+        /** Lote H: bins finos; só preenchido quando [AutoMatchRefinedEngine.FINE_BINS_ENABLED]. */
+        val fineBins: List<FineBins.Bin>? = null,
     )
 
     @Volatile private var refinedMemo: Pair<String, String>? = null
@@ -363,7 +365,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         val pairs = driving.map { it.petrolRefMs to it.gasPetrolMs }
         val episodes = driving.map { it.episode }
         val scale = axisMs?.let { service.refinementJournal.pointGainScale(it) }
-        return Evidence(pairs, scale, "${service.equivalence.revision()}|${service.equivalence.gasEpochToken()}|${scale?.joinToString(",") { "%.3f".format(it) }}", episodes)
+        val fineBins = if (AutoMatchRefinedEngine.FINE_BINS_ENABLED) service.equivalence.fineBins() else null
+        return Evidence(pairs, scale, "${service.equivalence.revision()}|${service.equivalence.gasEpochToken()}|${scale?.joinToString(",") { "%.3f".format(it) }}|${fineBins != null}", episodes, fineBins)
     }
 
     /** Snapshot mais recente entre o monitor nativo e a leitura manual. */
