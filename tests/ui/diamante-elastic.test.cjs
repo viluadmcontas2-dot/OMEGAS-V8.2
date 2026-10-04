@@ -108,3 +108,13 @@ test('Refino: contrato sem ação bloqueia proposta antiga; salvar referência m
  assert.equal(screen.actionModel().kind,'freeze');assert.match(screen.actionModel().label,/referência/);
  app.destroy();
 });
+
+test('Refino: reiniciar GNV não reapresenta a proposta guardada no cache da ponte',()=>{
+ const app=L.boot();app.go('refino');app.settle(3);const screen=app.win.OmegasApp.refino;
+ let eq={...screen.eq,gasObservations:30,autopilot:{phase:'PROPOSTA_PRONTA'},refinoState:{canAct:true,nextAction:'Gravar 1 ponto'},nextAction:{kind:'APPLY'}};
+ screen.api={...screen.api,resetGasEvidence:()=>({ok:true}),equivalenceFresh:()=>eq,equivalence:()=>eq};
+ screen.resetGasEvidence();assert.equal(screen.gasResetPending,true);assert.equal(screen.actionModel().kind,'none');
+ eq={...eq,gasObservations:0,refinoState:{canAct:false,nextAction:'Seguir dirigindo'},nextAction:{kind:'COLLECT'}};
+ screen.refresh(true);assert.equal(screen.gasResetPending,false);assert.equal(screen.actionModel().kind,'none');
+ app.destroy();
+});

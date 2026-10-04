@@ -253,6 +253,7 @@
       this.ticks = 0;
       this.operation = { phase: 'idle' };
       this.reviewPoints = null;
+      this.gasResetPending = false;
       // A foto de antes de cada gravação vive no diário (photoFile do ÚLTIMO experimento): o Desfazer restaura
       // exatamente a do último, mesmo que o anterior tenha sido gravado por outra aba.
       this.lastRenderKey = '';
@@ -322,6 +323,7 @@
       if (!this.api?.available?.()) { this.renderUnavailable(); return; }
       // O Kotlin já deixa o resultado pronto em segundo plano; "fresco" só depois de gravar/desfazer.
       this.eq = (fresh === true ? this.api.equivalenceFresh?.() : this.api.equivalence?.()) || null;
+      if (this.gasResetPending && this.eq?.gasObservations === 0 && this.eq?.refinoState?.canAct === false) this.gasResetPending = false;
       this.analysis = this.api.refinedAnalysis?.() || null;
       const projection = this.api.projection?.() || {};
       this.projection = projection.ok === true ? projection : {};
@@ -371,7 +373,7 @@
       const result = this.api.resetGasEvidence?.() || { ok: false, message: 'Reinício do aprendizado indisponível.' };
       this.gasRestartNotice = { phase: result.ok === true ? 'done' : 'failed',
         message: result.message || (result.ok === true ? 'Aprendizado GNV reiniciado. A gasolina continua como referência.' : 'Não foi possível reiniciar agora.'), at: Date.now() };
-      if (result.ok === true) { this.selected = {}; this.readout(''); ns.CurveChart?.reset(); }
+      if (result.ok === true) { this.gasResetPending = true; this.selected = {}; this.readout(''); ns.CurveChart?.reset(); }
       this.refresh(true, true);
     }
 
@@ -402,7 +404,7 @@
       const said = rs && typeof rs.nextAction === 'string' && rs.nextAction.trim() ? rs.nextAction.trim() : '';
       const frozenNow = this.freeze && this.freeze.phase === 'done' && Date.now() - this.freeze.at < 10000;
       // refinoState decide se existe ação; uma proposta antiga não transforma "seguir dirigindo" em gravação.
-      if (rs && rs.canAct !== true) return { kind: 'none', label: '' };
+      if (this.gasResetPending || (rs && rs.canAct !== true)) return { kind: 'none', label: '' };
       if (eq.nextAction?.kind === 'FREEZE_REFERENCE') return frozenNow ? { kind: 'none', label: '' } : { kind: 'freeze', label: said || 'Salvar a gasolina como referência' };
       const action = primaryAction(eq, this.analysis);
       if (action.kind === 'review') return { kind: 'review', label: said || 'Aplicar ajuste' };
@@ -574,7 +576,7 @@
       const rs = eq.refinoState && typeof eq.refinoState === 'object' ? eq.refinoState : null;
       const chart = ns.CurveChart;
       const key = [phase, pilot.expiredFrom, eq.refinement?.latest?.photoFile, eq.refinement?.latest?.status, pilot.petrolValid, pilot.gasValid,
-        eq.ratio, eq.index, eq.nextAction?.local ? readyPoints(eq, this.analysis).map(p => [p.index, p.currentRaw, p.targetRaw].join(':')).join(',') : '', eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, eq.stalls?.count, eq.stalls?.nearCount, this.stallTone(), eq.gasEpochAt,
+        eq.ratio, eq.index, eq.nextAction?.local ? readyPoints(eq, this.analysis).map(p => [p.index, p.currentRaw, p.targetRaw].join(':')).join(',') : '', eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, this.gasResetPending, eq.stalls?.count, eq.stalls?.nearCount, this.stallTone(), eq.gasEpochAt,
         rs ? [rs.phase, rs.whatNow, rs.nextAction, rs.canAct, rs.reason, [rs.counts?.intervalsTotal,rs.counts?.intervalsCollected,rs.counts?.pointsToWrite].join(':'),rs.whyNoProposal].join('~') : '', this.freeze ? this.freeze.phase + this.freeze.at : '', op.phase === 'idle' ? '' : Math.floor(Date.now() / 5000),
         chart ? chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() }) : ''].join('|');
       if (!force && key === this.lastRenderKey) return;
