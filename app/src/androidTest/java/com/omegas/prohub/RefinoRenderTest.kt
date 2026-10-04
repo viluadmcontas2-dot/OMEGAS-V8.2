@@ -651,7 +651,7 @@ class RefinoRenderTest {
             assertClean(dom)
             assertEquals("Verificando", dom.getString("chip"))
             assertTrue(dom.getString("headline"), dom.getString("headline").contains("confiro se o GNV chegou na gasolina"))
-            assertEquals("waiting", dom.getString("primaryKind"))
+            assertEquals("medição não oferece uma gravação nem um botão sem ação", "none", dom.getString("primaryKind"))
         } finally { scenario.close() }
     }
 

@@ -400,6 +400,9 @@
       const eq = this.eq || {};
       const rs = eq.refinoState && typeof eq.refinoState === 'object' ? eq.refinoState : null;
       const said = rs && typeof rs.nextAction === 'string' && rs.nextAction.trim() ? rs.nextAction.trim() : '';
+      // refinoState decide se existe ação; uma proposta antiga não transforma "seguir dirigindo" em gravação.
+      if (rs && rs.canAct !== true) return { kind: 'none', label: '' };
+      if (eq.nextAction?.kind === 'FREEZE_REFERENCE') return { kind: 'freeze', label: said || 'Salvar a gasolina como referência' };
       const action = primaryAction(eq, this.analysis);
       if (action.kind === 'review') return { kind: 'review', label: said || 'Aplicar ajuste' };
       if (action.kind === 'restore') return { kind: 'restore', label: said || 'Desfazer o trecho que piorou' };

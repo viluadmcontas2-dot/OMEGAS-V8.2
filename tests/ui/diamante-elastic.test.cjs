@@ -98,3 +98,13 @@ test('Refino: reiniciar evidência local preserva Desfazer da curva; mudança ex
  assert.equal(source(photo).available,true);assert.equal(source(photo).changedByEcu,false);
  assert.equal(source({...photo,interruptReason:'AUTOMATCH_NATIVO'}).available,false);
 });
+
+test('Refino: contrato sem ação bloqueia proposta antiga; salvar referência mantém sua intenção',()=>{
+ const app=L.boot();app.go('refino');app.settle(3);const screen=app.win.OmegasApp.refino;
+ screen.analysis={available:true,points:[{index:0,currentRaw:16384,calculatedRaw:17000,origin:'MEASURED'}]};
+ screen.eq={autopilot:{phase:'PROPOSTA_PRONTA'},nextAction:{kind:'APPLY'},refinoState:{canAct:false,nextAction:'Seguir dirigindo'}};
+ assert.equal(screen.actionModel().kind,'none');
+ screen.eq={...screen.eq,nextAction:{kind:'FREEZE_REFERENCE'},refinoState:{canAct:true,nextAction:'Salvar a gasolina da ECU como referência'}};
+ assert.equal(screen.actionModel().kind,'freeze');assert.match(screen.actionModel().label,/referência/);
+ app.destroy();
+});
