@@ -1,6 +1,7 @@
 package com.omegas.prohub.autocal
 
 import kotlin.math.abs
+import kotlin.math.ln
 
 /**
  * Fonte única dos pares (gasolina de referência, GNV) e das regras de independência da evidência.
@@ -18,6 +19,28 @@ import kotlin.math.abs
  * Espelho Python: tools/equivalence_oracle (ledger_obs, build_pairs com água, visit_ids) e tools/autocal_refine/blind_telemetry_test.py.
  */
 object EvidencePairs {
+    const val CONFIDENCE_MODEL = "overlap-lag1-mad-v1"
+
+    data class Confidence(val effectiveSamples: Double, val dispersionLog: Double?)
+
+    /** A confiança da faixa usa as mesmas leituras e regras estatísticas do cérebro; não altera a razão. */
+    fun confidence(pairs: List<EquivalenceLedger.EvidencePair>): Confidence {
+        if (pairs.isEmpty() || pairs.any {
+                it.t == Long.MIN_VALUE || !it.petrolRefMs.isFinite() || it.petrolRefMs <= 0.0 ||
+                    !it.gasPetrolMs.isFinite() || it.gasPetrolMs <= 0.0
+            }) return Confidence(0.0, null)
+        val ordered = pairs.sortedBy { it.t }
+        val errors = ordered.map { ln(it.gasPetrolMs / it.petrolRefMs) }
+        if (errors.any { !it.isFinite() }) return Confidence(0.0, null)
+        val sorted = errors.sorted()
+        val center = sorted[sorted.size / 2]
+        val dispersion = if (sorted.size >= 2) {
+            val deviations = sorted.map { abs(it - center) }.sorted()
+            1.4826 * deviations[deviations.size / 2]
+        } else null
+        return Confidence(effectiveN(ordered.map { it.t }, errors), dispersion)
+    }
+
     /** Lacuna que separa dois blocos de leituras sobrepostas (≈ 10 quadros): de-duplicação, não exigência de tempo. */
     const val VISIT_GAP_MS = 3_000L
     /** Blocos mínimos por faixa: 1 (sem portão por contagem de trechos; a confiança vem do intervalo do n efetivo). */
