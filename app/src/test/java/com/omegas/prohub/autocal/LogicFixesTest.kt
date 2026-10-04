@@ -382,7 +382,7 @@ class LogicFixesTest {
     }
 
     @Test
-    fun `piloto - falha de leitura do contador nao vira ECU no automatico, e na gasolina o proximo passo nao manda rodar no GNV`() {
+    fun `piloto - conclusao da ECU nao sobrevive sem contador, e na gasolina o proximo passo nao manda rodar no GNV`() {
         val ledger = EquivalenceLedger(null)
         val t0 = drive(ledger, "GASOLINA", 5.0, 0.6, 0, 30)
         drive(ledger, "GNV", 5.5, 0.6, t0 + EvidenceTestSupport.VISIT_GAP, 20)
@@ -391,9 +391,9 @@ class LogicFixesTest {
         val acquisition = JSONObject().put("points", JSONArray())
         val a = phases.observe(true, done, acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
         assertTrue(a.getString("phase"), a.getString("phase") != "ECU_TRABALHANDO"); assertTrue(a.getBoolean("ecuDone"))
-        // Tick seguinte: o monitor voltou sem o contador (probe falhou) mas a aquisição está lá: a conclusão continua.
+        // Tick seguinte sem o contador: a conclusão não sobrevive (falha fechada, como RefinementLifecycleRegressionTest exige).
         val b = phases.observe(true, JSONObject(), acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
-        assertTrue(b.getBoolean("ecuDone")); assertTrue(b.getString("phase"), b.getString("phase") != "ECU_TRABALHANDO")
+        assertFalse(b.getBoolean("ecuDone"))
         // Combustível de agora só muda as palavras: na gasolina não se manda "rodar no GNV".
         val petrol = phases.observe(true, done, acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0, fuel = "GASOLINA")
         if (petrol.getString("phase") == "COLETANDO_NOSSOS") {

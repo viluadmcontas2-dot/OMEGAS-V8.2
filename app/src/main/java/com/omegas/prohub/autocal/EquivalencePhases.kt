@@ -180,9 +180,7 @@ class EquivalencePhases(
             val fresh = if (!ecuOnline) null else when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
-                // Leitura do contador falhou neste tick (probe/backoff): a última conclusão continua; uma falha de leitura
-                // não transforma "terminou" em "no automático" nem zera o prazo da fase.
-                count == null -> ecuDoneLatch
+                // Contador ausente neste tick: a conclusão NÃO sobrevive (falha fechada; RefinementLifecycleRegressionTest).
                 else -> null
             }
             if (fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
