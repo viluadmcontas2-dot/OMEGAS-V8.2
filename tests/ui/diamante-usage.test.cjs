@@ -79,3 +79,10 @@ test('Diamante: Diagnóstico apresenta jerkPct como percentual e aceita o nome g
  assert.doesNotMatch(app.byId('diagnosticoHost').textContent,/7,6 solavancos|Gasolina é linear;/);
  app.destroy();
 });
+
+test('Diamante: ícones de navegação são SVG incorporado, sem máscaras externas incompatíveis com file:// no WebView',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const html=fs.readFileSync(path.join(__dirname,'../../app/src/main/assets/ui/index.html'),'utf8');
+ assert.equal((html.match(/<svg class="nav-icon"/g)||[]).length,8);
+ assert.doesNotMatch(html,/--nav-icon:url/);
+});

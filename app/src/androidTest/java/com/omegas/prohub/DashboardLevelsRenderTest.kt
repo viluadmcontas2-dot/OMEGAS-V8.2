@@ -684,6 +684,10 @@ class DashboardLevelsRenderTest {
             bodyHasUndefined: /\\bundefined\\b/i.test(body),
             learningLive: document.getElementById('learningLiveLabel')?.textContent ?? null,
             learningCoverage: document.getElementById('learningCoverageSummary')?.textContent ?? null,
+            headerRpm: document.querySelector('[data-vehicle-fact="rpm"] [data-reading-value]')?.textContent ?? null,
+            headerPetrol: document.querySelector('[data-vehicle-fact="petrol"] [data-reading-value]')?.textContent ?? null,
+            headerVisible: document.querySelector('.workspace-head')?.getBoundingClientRect().height > 0,
+            navSvgCount: document.querySelectorAll('.side-nav svg.nav-icon').length,
             mapLive: document.getElementById('mapLiveLabel')?.textContent ?? null,
             mapCell: document.getElementById('mapLiveCell')?.textContent ?? null,
             mapSource: document.getElementById('mapSourceStatus')?.textContent ?? null,
@@ -710,8 +714,10 @@ class DashboardLevelsRenderTest {
             val dom = globalRouteDom(scenario, "map")
             saveEvidence("map-fresh-context", dom, scenario)
             assertTrue("Map route must activate", dom.getBoolean("active"))
-            assertTrue("Map must receive live RPM through PresentSnapshot", dom.optString("mapLive").contains("869 RPM"))
-            assertTrue("Map must receive live Petrol Injection through PresentSnapshot", dom.optString("mapLive").contains("4,54 ms"))
+            assertEquals("Persistent header must receive live RPM through PresentSnapshot", "869", dom.optString("headerRpm"))
+            assertEquals("Persistent header must receive live Petrol Injection through PresentSnapshot", "4,54", dom.optString("headerPetrol"))
+            assertTrue("Persistent telemetry header must remain visible", dom.getBoolean("headerVisible"))
+            assertEquals("All eight navigation icons must be embedded SVG", 8, dom.getInt("navSvgCount"))
             assertTrue("Map live cell must stay explicit instead of fabricating undefined coordinates", !dom.optString("mapCell").contains("undefined", ignoreCase = true))
             assertEquals("Offline ECU read must settle as not confirmed", "Mapa não confirmado", dom.optString("mapSource"))
             assertTrue("Failed map read must clear the stale loading spinner", !dom.optString("mapGridText").contains("Lendo Mapa K da ECU"))

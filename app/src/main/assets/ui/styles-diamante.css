@@ -8,7 +8,7 @@ html body .side-nav button { display:flex; flex-direction:column; align-items:ce
 html body .side-nav button span { font-size:18px; font-weight:500; }
 html body .side-nav button.active { color:var(--accent); background:var(--accent-soft); }
 html body .side-nav button.active::before { top:auto; bottom:0; left:20%; width:60%; height:3px; border-radius:2px; }
-html body .side-nav button .nav-icon { display:block; width:24px; height:24px; background:currentColor; mask:var(--nav-icon) center/contain no-repeat; -webkit-mask:var(--nav-icon) center/contain no-repeat; }
+html body .side-nav button .nav-icon { display:block; width:24px; height:24px; fill:none; stroke:currentColor; flex-shrink:0; }
 html body .rail-status { display:none; }
 html body .workspace-head,html body .app-shell.autocal-focus .workspace-head { display:flex; align-items:center; gap:16px; padding:0 24px; background:var(--bg); border-bottom:1px solid var(--line-soft); }
 html body .workspace-head > div:not(.brand-block),html body .workspace-head > p { display:none; }
