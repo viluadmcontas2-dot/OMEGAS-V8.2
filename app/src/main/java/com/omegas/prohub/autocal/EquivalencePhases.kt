@@ -175,8 +175,10 @@ class EquivalencePhases(
             val truth = EcuAcquisitionTruth.fromAcquisition(liveAcquisition, count, max, enabled)
             val petrolZones = truth.optJSONObject("petrol")?.opt("zonesCovered") ?: JSONObject.NULL
             val gasZones = truth.optJSONObject("gas")?.opt("zonesCovered") ?: JSONObject.NULL
-            // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
-            val ecuRead = count != null || liveAcquisition != null
+            // A ECU entrega o contador continuamente: sem contador neste tick o app está lendo (ou a leitura falhou);
+            // aquisição sozinha não diz se a ECU está no automático. Falha de transporte ≠ estado da ECU.
+            val ecuRead = count != null
+            val readFailure = liveMonitor?.optString("readFailure")?.takeIf { liveMonitor.has("readFailure") && !liveMonitor.isNull("readFailure") && it.isNotBlank() }
             val fresh = if (!ecuOnline) null else when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
@@ -200,6 +202,7 @@ class EquivalencePhases(
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
                 .put("ecuRead", ecuRead)
+                .put("readFailure", readFailure ?: JSONObject.NULL)
                 .put("petrolReference", index.optString("petrolReference", "NENHUMA"))
                 .put("ecuPetrolPoints", index.optInt("ecuPetrolPoints", 0))
                 .put("ourPoints", index.optInt("samples", 0))
@@ -570,7 +573,8 @@ class EquivalencePhases(
         measuredOnEcuRef: Int = 0,
     ): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
-        "LENDO_ECU" -> "Lendo o estado da ECU: AutoMatch e curvas."
+        "LENDO_ECU" -> if (out.isNull("readFailure")) "Lendo o estado da ECU: AutoMatch e curvas."
+        else "A ECU não respondeu à leitura do AutoCal. O app tenta de novo sozinho; nada muda na ECU."
         "TENTATIVA_ENCERRADA" -> when {
             out.optString("reasonCode") == "ECU_READ_TIMEOUT" -> "A ECU não respondeu a tempo. O app continua tentando ler, sem gravar."
             expiredFrom == "PROPOSTA_PRONTA" -> "Proposta ainda válida, grave quando quiser. O acompanhamento automático pausou; nada mudou na ECU."

@@ -97,7 +97,8 @@ class RefinementLifecycleRegressionTest {
         val missing = JSONObject().put("autoCalEnabled", 1)
         val after = p.observe(true, missing, acquired, index(), noJournal, 0)
         assertFalse("contador anterior não autoriza outra observação", after.getBoolean("ecuDone"))
-        assertEquals("ECU_TRABALHANDO", after.getString("phase"))
+        // Sem contador o app está lendo (ou a leitura falhou): nunca afirma "a ECU está no automático" (decisão do dono, 2026-10-04).
+        assertEquals("LENDO_ECU", after.getString("phase"))
     }
 
     @Test fun reopeningAppCannotResetReadingDeadline() {

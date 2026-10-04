@@ -393,7 +393,15 @@ class LogicFixesTest {
         assertTrue(a.getString("phase"), a.getString("phase") != "ECU_TRABALHANDO"); assertTrue(a.getBoolean("ecuDone"))
         // Tick seguinte sem o contador: a conclusão não sobrevive (falha fechada, como RefinementLifecycleRegressionTest exige).
         val b = phases.observe(true, JSONObject(), acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
-        assertFalse(b.getBoolean("ecuDone"))
+        assertFalse(b.getBoolean("ecuDone")); assertEquals("LENDO_ECU", b.getString("phase"))
+        // Falha de leitura reportada pelo monitor: a frase diz que a leitura falhou, não que a ECU está no automático.
+        val failed = phases.observe(true, JSONObject().put("readFailure", "Status AutoCal indisponível"), acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
+        assertEquals("LENDO_ECU", failed.getString("phase")); assertTrue(failed.getString("headline").contains("não respondeu"))
+        val rsFailed = RefinoState.build(failed, brain(), ledger.betweenPointsJson(), null)
+        assertEquals("Leitura da ECU falhou", rsFailed.getString("phase")); assertFalse(rsFailed.getBoolean("canAct")); assertHuman(rsFailed)
+        // Buffers sem dado (leitura falhou) não viram "0 de 4 zonas".
+        val noData = JSONObject().put("points", JSONArray().put(JSONObject().put("fuel", "GASOLINA").put("zone", 0).put("state", "SEM_DADO")))
+        assertTrue(EcuAcquisitionTruth.fromAcquisition(noData, 1, 3).getJSONObject("petrol").isNull("zonesCovered"))
         // Combustível de agora só muda as palavras: na gasolina não se manda "rodar no GNV".
         val petrol = phases.observe(true, done, acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0, fuel = "GASOLINA")
         if (petrol.getString("phase") == "COLETANDO_NOSSOS") {

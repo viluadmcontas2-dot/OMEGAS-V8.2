@@ -646,7 +646,17 @@ class NativeAutoCalMonitor(
      * snapshot muda (evita copiar o snapshot inteiro a cada 3 s).
      */
     fun autoMatchProgressJson(): JSONObject = synchronized(lock) {
-        val count = state.optInt("autoMatchCount", -1).takeIf { state.has("autoMatchCount") && it >= 0 }
+        val read = state.optInt("autoMatchCount", -1).takeIf { state.has("autoMatchCount") && it >= 0 }
+        val now = clockMs()
+        val session = state.optLong("sessionId", 0L)
+        val stateName = state.optString("state")
+        if (read != null) { lastGoodCount = read; lastGoodCountAt = now; lastGoodCountSession = session }
+        else if (stateName == "DISCONNECTED" || stateName == "IDLE" || session != lastGoodCountSession) lastGoodCount = null
+        // A ECU entrega o contador continuamente: um probe que falhou é erro do app/transporte, não estado da ECU.
+        // Por um curto prazo a última leitura boa da mesma sessão continua valendo (marcada `countStale`); depois, nulo.
+        val probeFailed = stateName == "PROBE_FAILED"
+        val stale = read == null && probeFailed && lastGoodCount != null && now - lastGoodCountAt <= COUNT_GRACE_MS
+        val count = read ?: (if (stale) lastGoodCount else null)
         val snapshot = latestSnapshot
         val acquisition = if (snapshot.has("fields")) {
             acquisitionMemo?.takeIf { it.first === snapshot }?.second
@@ -654,10 +664,17 @@ class NativeAutoCalMonitor(
         } else null
         JSONObject()
             .put("autoMatchCount", count ?: JSONObject.NULL)
+            .put("countStale", stale)
+            .put("readFailure", if (probeFailed) state.optString("message").ifBlank { "Leitura do AutoCal falhou" } else JSONObject.NULL)
             .put("maxAutomatch", snapshot.opt("maxAutomatch") ?: JSONObject.NULL)
             .put("autoCalEnabled", snapshot.opt("autoCalEnabled") ?: JSONObject.NULL)
             .put("acquisition", acquisition ?: JSONObject.NULL)
     }
+
+    /** Última leitura boa do contador de AutoMatch (sob [lock]); sobrevive a um probe falho por [COUNT_GRACE_MS]. */
+    private var lastGoodCount: Int? = null
+    private var lastGoodCountAt = 0L
+    private var lastGoodCountSession = 0L
 
     fun latestSnapshotJson(): JSONObject = synchronized(lock) {
         JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", acquisitionEpochJson())
@@ -1469,6 +1486,8 @@ class NativeAutoCalMonitor(
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
         private const val SESSION_SETTLE_MS = 8_000L
+        /** Quanto tempo a última leitura boa do contador vale enquanto o probe falha (poucos ciclos); depois é desconhecido. */
+        const val COUNT_GRACE_MS = 30_000L
         /** ECU silenciosa: 2 timeouts de transporte seguidos abortam a varredura do snapshot completo. */
         private const val SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS = 2
         /** Época nativa mudou durante o snapshot completo: refaz logo (a ECU respondeu; não é falha de transporte). */

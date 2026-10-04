@@ -85,6 +85,8 @@ object EcuAcquisitionTruth {
         if (acquisition == null || points.isEmpty()) return Fuel(null, null, List(ZONES) { "DESCONHECIDA" }, null, null)
         val key = if (fuel == "GASOLINA") "petrol" else "gas"
         val zoneFlags = flags(acquisition, key, points)
+        // Todos os pontos SEM_DADO e sem flags = a leitura dos buffers falhou, não "a ECU tem 0 de 4": desconhecido, nunca 0.
+        if (zoneFlags == null && points.all { it.optString("state") == "SEM_DADO" }) return Fuel(null, null, List(ZONES) { "DESCONHECIDA" }, null, null)
         val basis = ArrayList<String>()
         val covered = ArrayList<Boolean>()
         for (zone in 0 until ZONES) {

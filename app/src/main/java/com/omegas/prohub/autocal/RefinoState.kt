@@ -67,8 +67,10 @@ object RefinoState {
                 whatNow = "Conecte o cabo e ligue o motor."; next = "Aguardar a ECU"
             }
             code == "LENDO_ECU" || !available -> {
-                phase = "Lendo a ECU"; label = phase
-                whatNow = "Estou lendo o AutoMatch e as curvas que a ECU guarda."
+                val failed = !autopilot.isNull("readFailure") && autopilot.optString("readFailure").isNotBlank()
+                phase = if (failed) "Leitura da ECU falhou" else "Lendo a ECU"; label = if (failed) "Leitura falhou" else "Lendo a ECU"
+                whatNow = if (failed) "A ECU não respondeu à leitura do AutoCal. Tento de novo sozinho; nada muda na ECU."
+                else "Estou lendo o AutoMatch e as curvas que a ECU guarda."
                 next = "Aguardar a leitura"
             }
             code == "RESTAURAR_TRECHO" || kind == "CONTESTED" -> {
