@@ -261,7 +261,7 @@ class LogicFixesTest {
     private val forbidden = listOf("minut", " min", "visita", "episód", "episod", "confiança", "confianca", "60 s", "trechos", "n efetivo")
 
     private fun assertHuman(s: JSONObject) {
-        for (key in listOf("phase", "whatNow", "nextAction")) {
+        for (key in listOf("phase", "label", "whatNow", "nextAction")) {
             val text = s.getString(key).lowercase()
             for (f in forbidden) assertFalse("$key cita regra interna '$f': $text", text.contains(f))
             assertFalse("$key com código cru: $text", Regex("[A-Z]{3,}_[A-Z_]+").containsMatchIn(s.getString(key)))
@@ -305,6 +305,80 @@ class LogicFixesTest {
         assertEquals("Estável", view(ledger, stable, phases).getJSONObject("refinoState").getString("phase"))
         val proving = brain().put("nextAction", JSONObject().put("kind", "PROVING").put("text", "Rodando para provar o ajuste").put("pointIndexes", JSONArray()))
         assertEquals("Verificando", view(ledger, proving, phases).getJSONObject("refinoState").getString("phase"))
+    }
+
+    @Test
+    fun `refinoState diz o combustivel de agora - na gasolina mede a referencia, nao o GNV`() {
+        val now = 10_000_000L
+        val ledger = EquivalenceLedger(null) { now }
+        val t0 = drive(ledger, "GASOLINA", 5.0, 0.6, now - 60_000L, 30)
+        drive(ledger, "GNV", 5.5, 0.6, t0 + EvidenceTestSupport.VISIT_GAP, 20)
+        val phases = EquivalencePhases(null) { 0L }
+        phases.observe(true, JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1), null, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
+        // Último quadro é GNV e é velho (mais de 5 s): o combustível vivo é desconhecido e o texto não afirma nenhum.
+        assertNull(ledger.liveFuel())
+        val unknown = view(ledger, brain(), phases).getJSONObject("refinoState")
+        assertEquals("Medindo", unknown.getString("label")); assertEquals("Seguir dirigindo", unknown.getString("nextAction"))
+        assertTrue(unknown.getJSONObject("technical").isNull("fuel")); assertHuman(unknown)
+        // Quadro recente de GASOLINA: "medindo a gasolina"; nunca "Medindo o GNV", nem "Seguir dirigindo no GNV".
+        ledger.accept(EquivalenceLedger.Frame(now - 1_000L, "GASOLINA", 2000.0, 0.6, 5.0))
+        assertEquals("GASOLINA", ledger.liveFuel())
+        val petrol = view(ledger, brain(), phases).getJSONObject("refinoState")
+        assertEquals("Medindo a gasolina", petrol.getString("label"))
+        assertEquals("Na gasolina: medindo a referência", petrol.getString("phase"))
+        assertFalse(petrol.getString("whatNow").contains("GNV entre")); assertEquals("Seguir dirigindo", petrol.getString("nextAction"))
+        assertEquals("GASOLINA", petrol.getJSONObject("technical").getString("fuel")); assertHuman(petrol)
+        for (key in listOf("phase", "label", "whatNow", "nextAction")) assertFalse(petrol.getString(key), petrol.getString(key).contains("Medindo o GNV"))
+        // Quadro recente de GNV: aí sim "Medindo o GNV".
+        ledger.accept(EquivalenceLedger.Frame(now - 500L, "GNV", 2000.0, 0.6, 5.5))
+        val gas = view(ledger, brain(), phases).getJSONObject("refinoState")
+        assertEquals("Medindo o GNV", gas.getString("label")); assertEquals("Seguir dirigindo no GNV", gas.getString("nextAction"))
+        assertTrue(gas.getString("phase").startsWith("Coletando entre as faixas da ECU: ")); assertHuman(gas)
+        // Verificando na gasolina: a frase diz que confere o GNV quando ele voltar.
+        val proving = brain().put("nextAction", JSONObject().put("kind", "PROVING").put("text", "Rodando para provar o ajuste").put("pointIndexes", JSONArray()))
+        ledger.accept(EquivalenceLedger.Frame(now - 200L, "GASOLINA", 2000.0, 0.6, 5.0))
+        val verifying = view(ledger, proving, phases).getJSONObject("refinoState")
+        assertEquals("Verificando", verifying.getString("phase")); assertEquals("Medindo", verifying.getString("label"))
+        assertTrue(verifying.getString("whatNow"), verifying.getString("whatNow").contains("na gasolina")); assertHuman(verifying)
+    }
+
+    @Test
+    fun `refinoState - proposta com a ECU no automatico nao promete botao; estavel e pausado idem`() {
+        val ledger = EquivalenceLedger(null)
+        val t0 = drive(ledger, "GASOLINA", 5.0, 0.6, 0, 30)
+        drive(ledger, "GNV", 5.5, 0.6, t0 + EvidenceTestSupport.VISIT_GAP, 20)
+        val apply = brain().put("nextAction", JSONObject().put("kind", "APPLY").put("text", "5 pontos pobres entre 4,0 e 8,0 ms (5–9%) · Aplicar ajuste").put("route", "refino")
+            .put("pointIndexes", JSONArray(listOf(4, 5, 6, 7, 8))))
+        // ECU no automático (contador abaixo do máximo, AutoCal ligado): a UI não grava, então canAct é false e a frase diz por quê.
+        val working = EquivalencePhases(null) { 0L }
+        working.observe(true, JSONObject().put("autoMatchCount", 1).put("maxAutomatch", 3).put("autoCalEnabled", 1), null, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
+        assertEquals("ECU_TRABALHANDO", working.json().getString("phase"))
+        val s = view(ledger, apply, working).getJSONObject("refinoState")
+        assertFalse(s.getBoolean("canAct")); assertEquals("A ECU está no automático", s.getString("phase")); assertEquals("ECU no automático", s.getString("label"))
+        assertTrue(s.getString("whatNow"), s.getString("whatNow").contains("5 pontos")); assertEquals("Aguardar a ECU", s.getString("nextAction"))
+        assertEquals(5, s.getJSONObject("counts").getInt("pointsToWrite")); assertEquals("APPLY", s.getJSONObject("technical").getString("nextActionKind")); assertHuman(s)
+        // Estável no piloto com APPLY do cérebro: sem botão (tabela da UI), frase honesta.
+        val stable = JSONObject().put("phase", "ESTAVEL").put("expiredFrom", JSONObject.NULL)
+        val st = RefinoState.build(stable, apply, ledger.betweenPointsJson(), null)
+        assertFalse(st.getBoolean("canAct")); assertEquals("Estável", st.getString("phase")); assertTrue(st.getString("whatNow").contains("5 pontos")); assertHuman(st)
+        // Pausado vindo de coleta: sem botão; vindo de proposta pronta: botão (a proposta continua válida).
+        val pausedCollect = JSONObject().put("phase", "TENTATIVA_ENCERRADA").put("expiredFrom", "COLETANDO_NOSSOS").put("headline", "x").put("next", "y")
+        val pc = RefinoState.build(pausedCollect, apply, ledger.betweenPointsJson(), null)
+        assertFalse(pc.getBoolean("canAct")); assertEquals("Pausado", pc.getString("phase")); assertTrue(pc.getString("whatNow").contains("5 pontos")); assertHuman(pc)
+        val pausedReady = JSONObject().put("phase", "TENTATIVA_ENCERRADA").put("expiredFrom", "PROPOSTA_PRONTA")
+        val pr = RefinoState.build(pausedReady, apply, ledger.betweenPointsJson(), null)
+        assertTrue(pr.getBoolean("canAct")); assertEquals("Pronto para gravar 5 pontos", pr.getString("phase")); assertEquals("Curva pronta", pr.getString("label"))
+        // Ajuste local de engasgo segue a própria regra: estável não o bloqueia.
+        val local = brain().put("nextAction", JSONObject().put("kind", "APPLY").put("local", true).put("text", "Corrigir engasgo").put("pointIndexes", JSONArray(listOf(4))))
+        val lc = RefinoState.build(stable, local, ledger.betweenPointsJson(), null)
+        assertTrue(lc.getBoolean("canAct")); assertEquals("Pronto para corrigir um engasgo", lc.getString("phase")); assertEquals("Ajuste pronto", lc.getString("label"))
+        // NOTHING com pontos (prova esgotada) não vira "Estável".
+        val exhausted = brain().put("index", 0.9).put("nextAction", JSONObject().put("kind", "NOTHING").put("text", "Ajuste em 4,0–6,0 ms não fechou · sem nova proposta ali; revise a curva nessa faixa").put("pointIndexes", JSONArray(listOf(3, 4))))
+        val ex = RefinoState.build(JSONObject().put("phase", "COLETANDO_NOSSOS"), exhausted, ledger.betweenPointsJson(), null)
+        assertEquals("Sem nova proposta nessa faixa", ex.getString("phase")); assertFalse(ex.getBoolean("canAct")); assertHuman(ex)
+        // Pausado sem proposta: rótulo "Pausado" com a frase do piloto.
+        val pausedNone = RefinoState.build(pausedCollect, brain(), ledger.betweenPointsJson(), null)
+        assertEquals("Pausado", pausedNone.getString("phase")); assertEquals("x", pausedNone.getString("whatNow")); assertEquals("y", pausedNone.getString("nextAction"))
     }
 
     @Test

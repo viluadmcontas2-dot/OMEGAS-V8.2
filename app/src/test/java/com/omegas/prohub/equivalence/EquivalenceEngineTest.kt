@@ -52,6 +52,15 @@ class EquivalenceEngineTest {
         assertTrue(12 in r.nextAction.pointIndexes)
         assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, r.proposal!!.mode)
         assertTrue(r.proposal!!.refinedRaw[12] > r.proposal!!.currentRaw[12])
+        // Fonte única do que a UI grava: a ação carrega a curva lida e a proposta do motor (com a trava da baixa), e
+        // `pointIndexes` são exatamente os pontos que mudam — os mesmos N de "Pronto para gravar N pontos".
+        val before = r.nextAction.currentRaw!!
+        val after = r.nextAction.refinedRaw!!
+        assertEquals(r.proposal!!.currentRaw, before)
+        assertEquals(EquivalenceEngine.guardedRefined(r.proposal!!), after)
+        assertEquals((0 until 30).filter { before[it] != after[it] }.toSet(), r.nextAction.pointIndexes.toSet())
+        assertTrue(r.nextAction.pointIndexes.isNotEmpty())
+        after.forEachIndexed { j, v -> if (r.proposal!!.axisMs[j] < com.omegas.prohub.autocal.AutoMatchSnapshotAnalysis.LOW_GUARD_MS) assertTrue(v >= before[j]) }
         r.proposal!!.refinedRaw.forEachIndexed { j, v ->
             assertTrue("ponto $j: $v fora do intervalo do AutoMatch", v == r.proposal!!.currentRaw[j] || v in 12288..19661)
         }

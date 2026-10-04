@@ -1,6 +1,7 @@
 package com.omegas.prohub.equivalence
 
 import com.omegas.prohub.autocal.AutoMatchRefinedEngine
+import com.omegas.prohub.autocal.AutoMatchSnapshotAnalysis
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.EvidencePairs
 import org.json.JSONObject
@@ -247,6 +248,16 @@ object EquivalenceEngine {
         }
     }
 
+    /**
+     * Proposta do motor com a trava da baixa (a mesma de AutoMatchSnapshotAnalysis.refinedJson): abaixo de
+     * [AutoMatchSnapshotAnalysis.LOW_GUARD_MS] de Petrol Inj. o refino nunca empobrece; só mantém ou enriquece.
+     */
+    fun guardedRefined(proposal: AutoMatchRefinedEngine.Result): List<Int> =
+        proposal.refinedRaw.mapIndexed { i, raw ->
+            val current = proposal.currentRaw[i]
+            if (proposal.axisMs[i] < AutoMatchSnapshotAnalysis.LOW_GUARD_MS && raw < current) current else raw
+        }
+
     private fun terrain(map: Double): String = when {
         map < 0.45 -> "em plano"
         map <= 0.75 -> "em subida leve"
@@ -275,9 +286,13 @@ object EquivalenceEngine {
         val poor = points.filter { it.state == PointState.POBRE }
         val rich = points.filter { it.state == PointState.RICO }
         val off = poor + rich
-        if (off.isNotEmpty() && proposal != null && proposal.mode == AutoMatchRefinedEngine.Mode.EQUIVALENCE &&
-            proposal.refinedRaw != proposal.currentRaw
-        ) {
+        // A gravação é a proposta do próprio motor (os mesmos pares do veredito), com a trava da baixa; só existe APPLY
+        // quando ela muda algum ponto de fato. Assim "Pronto para gravar N pontos" e o botão falam dos mesmos N pontos.
+        val guarded = proposal?.takeIf { it.mode == AutoMatchRefinedEngine.Mode.EQUIVALENCE }?.let { guardedRefined(it) }
+        val changed = guarded?.let { refined ->
+            points.indices.filter { proposal!!.origins[it] != AutoMatchRefinedEngine.Origin.HELD && refined[it] != proposal.currentRaw[it] }
+        }.orEmpty()
+        if (off.isNotEmpty() && proposal != null && guarded != null && changed.isNotEmpty()) {
             val head = when {
                 poor.isNotEmpty() && rich.isNotEmpty() ->
                     "${poor.size} ${plural(poor.size, "ponto pobre", "pontos pobres")} e ${rich.size} ${plural(rich.size, "rico", "ricos")}"
@@ -288,7 +303,10 @@ object EquivalenceEngine {
             val hi = (off.maxOf { abs(it.mixture!!) } * 100.0).roundToInt()
             val suffix = if (input.reference == null) " · sem referência da ECU" else ""
             val text = "$head entre ${f1(off.minOf { it.axisMs })} e ${f1(off.maxOf { it.axisMs })} ms ($lo–$hi%) · Aplicar ajuste$suffix"
-            return NextAction(NextActionKind.APPLY, text, "refino", null, off.sortedByDescending { it.usage }.map { it.index })
+            return NextAction(
+                NextActionKind.APPLY, text, "refino", null, changed.sortedByDescending { points[it].usage },
+                proposal.currentRaw, guarded,
+            )
         }
         if (points.any { it.state == PointState.EM_PROVA }) {
             // Sem minutos nem regras na frase do dono: o tempo restante fica em `technical` (outcome.remainingMinutes).

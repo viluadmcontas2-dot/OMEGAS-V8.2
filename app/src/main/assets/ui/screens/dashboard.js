@@ -95,7 +95,9 @@
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
         const pilot = result && result.autopilot || {};
-        text("dashRefino", rules.phaseLabel(pilot.phase, pilot.expiredFrom));
+        // O rótulo curto do Kotlin sabe o combustível de agora ("Medindo a gasolina" × "Medindo o GNV"); a fase do piloto é o reserva.
+        const label = result && result.refinoState && typeof result.refinoState.label === "string" ? result.refinoState.label.trim() : "";
+        text("dashRefino", label || rules.phaseLabel(pilot.phase, pilot.expiredFrom));
         const model = summary(result);
         text("dashEquivalence", model.percent === null ? "—" : model.percent + "%");
         text("dashEquivalenceNote", model.percent === null ? "Ainda sem base para comparar" : "da condução já equivale à gasolina" + (model.provisional ? " · provisório" : ""));

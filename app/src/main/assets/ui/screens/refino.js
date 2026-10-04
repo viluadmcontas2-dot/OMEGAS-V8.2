@@ -123,17 +123,31 @@
       .map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.calculatedRaw) }));
   }
 
-  /** Proposta local já calculada pelo Kotlin; a UI só transporta os valores autorizados. */
-  function readyPoints(eq, analysis) {
-    const action = eq?.nextAction;
-    if (action?.kind !== 'APPLY' || action.local !== true) return proposedPoints(analysis);
+  /**
+   * Pontos que o cérebro mandou gravar (APPLY com `currentRaw`/`refinedRaw`/`pointIndexes`, do próprio motor e dos mesmos
+   * pares do veredito; local ou da curva inteira). null = a ação não traz curva (ação de outro tipo ou ponte antiga).
+   */
+  function brainPoints(action) {
+    if (action?.kind !== 'APPLY') return null;
     const before = action.currentRaw, after = action.refinedRaw, indexes = action.pointIndexes;
     const raw = value => Number.isInteger(value) && value > 0 && value <= 65535;
     if (!Array.isArray(before) || !Array.isArray(after) || before.length !== 30 || after.length !== 30 ||
         !before.every(raw) || !after.every(raw) || !Array.isArray(indexes) || !indexes.length ||
-        !indexes.every(i => Number.isInteger(i) && i >= 0 && i < 30)) return [];
+        !indexes.every(i => Number.isInteger(i) && i >= 0 && i < 30)) return null;
     return [...new Set(indexes)].filter(i => before[i] !== after[i])
       .map(i => ({ index: i, currentRaw: before[i], targetRaw: after[i] }));
+  }
+
+  /**
+   * O que o botão grava: a proposta que o cérebro autorizou (fonte única: veredito e proposta dos mesmos pares). Sem
+   * curva na ação, a análise refinada do snapshot (ponte antiga); ação local sem curva válida não grava nada.
+   */
+  function readyPoints(eq, analysis) {
+    const action = eq?.nextAction;
+    const brain = brainPoints(action);
+    if (brain !== null) return brain;
+    if (action?.kind === 'APPLY' && action.local === true) return [];
+    return proposedPoints(analysis);
   }
 
   /** Desfazer a última gravação registrada no diário (antes ← depois). */
@@ -214,7 +228,8 @@
       if (blocked || eq?.refinoState?.canAct !== true || !proposal) return { kind: 'none', label: '' };
       return { kind: 'review', label: `Gravar ${D.plural(proposal, 'ponto', 'pontos')}` };
     }
-    const available = analysis?.available;
+    // A proposta do cérebro vale por si; a análise do snapshot só precisa estar disponível quando é ela a fonte.
+    const available = brainPoints(eq?.nextAction) !== null || analysis?.available;
     if (phase === 'TENTATIVA_ENCERRADA') {
       // O prazo da tentativa pausa o acompanhamento, não a proposta: ela continua válida e o botão continua.
       const from = eq?.autopilot?.expiredFrom;
@@ -576,8 +591,8 @@
       const rs = eq.refinoState && typeof eq.refinoState === 'object' ? eq.refinoState : null;
       const chart = ns.CurveChart;
       const key = [phase, pilot.expiredFrom, eq.refinement?.latest?.photoFile, eq.refinement?.latest?.status, pilot.petrolValid, pilot.gasValid,
-        eq.ratio, eq.index, eq.nextAction?.local ? readyPoints(eq, this.analysis).map(p => [p.index, p.currentRaw, p.targetRaw].join(':')).join(',') : '', eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, this.gasResetPending, eq.stalls?.count, eq.stalls?.nearCount, this.stallTone(), eq.gasEpochAt,
-        rs ? [rs.phase, rs.whatNow, rs.nextAction, rs.canAct, rs.reason, [rs.counts?.intervalsTotal,rs.counts?.intervalsCollected,rs.counts?.pointsToWrite].join(':'),rs.whyNoProposal].join('~') : '', this.freeze ? this.freeze.phase + this.freeze.at : '', op.phase === 'idle' ? '' : Math.floor(Date.now() / 5000),
+        eq.ratio, eq.index, brainPoints(eq.nextAction) ? readyPoints(eq, this.analysis).map(p => [p.index, p.currentRaw, p.targetRaw].join(':')).join(',') : '', eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, this.gasResetPending, eq.stalls?.count, eq.stalls?.nearCount, this.stallTone(), eq.gasEpochAt,
+        rs ? [rs.phase, rs.label, rs.whatNow, rs.nextAction, rs.canAct, rs.reason, [rs.counts?.intervalsTotal,rs.counts?.intervalsCollected,rs.counts?.pointsToWrite].join(':'),rs.whyNoProposal].join('~') : '', this.freeze ? this.freeze.phase + this.freeze.at : '', op.phase === 'idle' ? '' : Math.floor(Date.now() / 5000),
         chart ? chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() }) : ''].join('|');
       if (!force && key === this.lastRenderKey) return;
       this.lastRenderKey = key;
@@ -586,9 +601,11 @@
       if (chip) {
         const readyAfterExpiry = phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'PROPOSTA_PRONTA';
         chip.dataset.fuelState = (readyAfterExpiry ? 'ready' : PHASE_TONE[phase]) || 'unknown';
-        // A frase e o chip usam o mesmo contrato; um piloto antigo não mascara uma leitura pendente.
+        // A frase e o chip usam o mesmo contrato; um piloto antigo não mascara uma leitura pendente. O rótulo curto vem do
+        // Kotlin (`label`), que sabe em que combustível o motor está agora: na gasolina ele diz "Medindo a gasolina", nunca "o GNV".
         const human = rs?.phase;
-        chip.textContent = human ? (/^Coletando/.test(human) ? 'Medindo o GNV' : /^Pronto para gravar/.test(human) ? 'Curva pronta' : human) : D.phaseLabel(phase, pilot.expiredFrom);
+        const label = typeof rs?.label === 'string' && rs.label.trim() ? rs.label.trim() : '';
+        chip.textContent = label || (human ? (/^Coletando/.test(human) ? 'Medindo' : /^Pronto para gravar/.test(human) ? 'Curva pronta' : human) : D.phaseLabel(phase, pilot.expiredFrom));
       }
       const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
       setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));
@@ -798,7 +815,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { equivalenceStrip, indexPercent, WAITING_TEXT, proposedPoints, readyPoints, undoPoints, undoSource, primaryAction, explainPoint, ageText, safeMin, safeMax, STATUS_WORDS };
+  ns.RefinoModel = { equivalenceStrip, indexPercent, WAITING_TEXT, proposedPoints, brainPoints, readyPoints, undoPoints, undoSource, primaryAction, explainPoint, ageText, safeMin, safeMax, STATUS_WORDS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

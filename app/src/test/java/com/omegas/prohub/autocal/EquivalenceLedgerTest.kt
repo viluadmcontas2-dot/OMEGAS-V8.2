@@ -17,6 +17,24 @@ class EquivalenceLedgerTest {
     }
 
     @Test
+    fun `combustivel vivo e o do ultimo quadro recente - velho ou ausente e desconhecido`() {
+        var now = 1_000_000L
+        val ledger = EquivalenceLedger(null) { now }
+        assertNull(ledger.liveFuel())
+        ledger.accept(EquivalenceLedger.Frame(now - 1_000L, "GASOLINA", 2000.0, 0.6, 5.0))
+        assertEquals("GASOLINA", ledger.liveFuel())
+        // Quadro inválido para o livro (rpm 0) ainda diz o combustível; transição e motor desligado também.
+        ledger.accept(EquivalenceLedger.Frame(now - 900L, "TRANSICAO", 0.0, 0.0, 0.0))
+        assertEquals("TRANSICAO", ledger.liveFuel())
+        ledger.accept(EquivalenceLedger.Frame(now - 800L, "GNV", 2000.0, 0.6, 5.5))
+        assertEquals("GNV", ledger.liveFuel())
+        now += EquivalenceLedger.LIVE_FUEL_MAX_AGE_MS + 1_000L
+        assertNull(ledger.liveFuel())
+        ledger.accept(EquivalenceLedger.Frame(now, "", 2000.0, 0.6, 5.5))
+        assertNull(ledger.liveFuel())
+    }
+
+    @Test
     fun `leitura estavel exige tres quadros e o indice compara GNV com gasolina no mesmo ponto`() {
         val ledger = EquivalenceLedger(null)
         var t = drive(ledger, "GASOLINA", 2000.0, 0.60, 5.0, 0, 10)

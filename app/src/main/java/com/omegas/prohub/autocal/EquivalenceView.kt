@@ -46,7 +46,7 @@ object EquivalenceView {
             .put("stalls", stallsView)
             .put("betweenPoints", between)
             .put("fluidity", Fluidity.fromDense(ledger.denseBandsJson()))
-            .put("refinoState", RefinoState.build(autopilot, brain, between, stallsView))
+            .put("refinoState", RefinoState.build(autopilot, brain, between, stallsView, ledger.liveFuel()))
             .put("equivalence", brain ?: JSONObject.NULL)
         for (key in FLAT_KEYS) view.remove(key) // nunca vaza índice antigo para a chave do cérebro
         if (brain != null) {

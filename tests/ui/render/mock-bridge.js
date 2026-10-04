@@ -114,11 +114,11 @@
     return Array.from({ length: 17 }, (_, i) => { const lo = thd[i], hi = thd[i + 1], mid = (lo + hi) / 2; const gas = lane(d.gas, lo, hi), petrol = lane(d.petrol, lo, hi); return { index: i, centerMs: msAt(mid), centerMapBar: mid, gas, petrol, n: (gas ? gas.n : 0) + (petrol ? petrol.n : 0), visits: gas ? 3 : 0, state: gas ? 'coletado' : 'falta' }; });
   }
   const RS = {
-    COLETANDO_NOSSOS: { canAct: false, phase: 'Medindo o GNV', whatNow: 'Dirija normalmente: o app está medindo o GNV entre os pontos da ECU.', nextAction: '', reason: 'Ainda faltam medidas em alguns trechos.' },
-    PROPOSTA_PRONTA: { canAct: true, phase: 'Pronto para gravar 3 pontos', whatNow: 'Falta 1 ajuste para o GNV chegar perto da gasolina.', nextAction: 'Aplicar ajuste', reason: '' },
-    VERIFICANDO: { canAct: false, phase: 'Verificando', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
-    ESTAVEL: { canAct: false, phase: 'Estável', whatNow: 'GNV perto da gasolina em toda a curva. Pode desconectar.', nextAction: '', reason: '' },
-    SEM_ECU: { canAct: false, phase: 'Sem ECU', whatNow: 'Conecte a ECU para o Refino medir o GNV.', nextAction: '', reason: 'O cabo USB não está conectado.' },
+    COLETANDO_NOSSOS: { canAct: false, phase: 'Coletando entre as faixas da ECU: 12 de 17 intervalos', label: 'Medindo o GNV', whatNow: 'Dirija normalmente: o app está medindo o GNV entre os pontos da ECU.', nextAction: '', reason: 'Ainda faltam medidas em alguns trechos.' },
+    PROPOSTA_PRONTA: { canAct: true, phase: 'Pronto para gravar 3 pontos', label: 'Curva pronta', whatNow: 'Falta 1 ajuste para o GNV chegar perto da gasolina.', nextAction: 'Aplicar ajuste', reason: '' },
+    VERIFICANDO: { canAct: false, phase: 'Verificando', label: 'Medindo', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
+    ESTAVEL: { canAct: false, phase: 'Estável', label: 'Estável', whatNow: 'GNV perto da gasolina em toda a curva. Pode desconectar.', nextAction: '', reason: '' },
+    SEM_ECU: { canAct: false, phase: 'Sem ECU', label: 'Sem ECU', whatNow: 'Conecte a ECU para o Refino medir o GNV.', nextAction: '', reason: 'O cabo USB não está conectado.' },
   };
   const NEXT = { COLETANDO_NOSSOS: { kind: 'COLLECT', text: 'Dirija no GNV: faltam 6 faixas para medir.', route: 'refino', subpage: '', pointIndexes: [12, 13, 14] }, PROPOSTA_PRONTA: { kind: 'APPLY', text: 'A curva refinada está pronta. Revise e grave.', route: 'refino', subpage: '', pointIndexes: [3, 6, 9] } };
   const NOW = Date.now();

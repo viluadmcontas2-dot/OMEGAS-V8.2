@@ -37,6 +37,31 @@ test('revisão propõe só pontos medidos que mudam; mantidos nunca são gravado
   assert.equal(m.proposedPoints(held).length, 0);
 });
 
+test('o botão grava a proposta do cérebro quando a ação a traz (local ou curva inteira); sem ela, a análise do snapshot', () => {
+  const m = model();
+  const before = Array.from({ length: 30 }, () => 16384);
+  const after = before.map((v, i) => ([4, 9].includes(i) ? v + 300 : v));
+  const whole = { kind: 'APPLY', text: '2 pontos pobres · Aplicar ajuste', currentRaw: before, refinedRaw: after, pointIndexes: [4, 9, 11] };
+  // 11 está na lista mas não muda: não entra; a análise (que proporia 20 e 21) é ignorada.
+  const other = analysis([20, 21]);
+  const expected = [{ index: 4, currentRaw: 16384, targetRaw: 16684 }, { index: 9, currentRaw: 16384, targetRaw: 16684 }];
+  assert.equal(JSON.stringify(m.brainPoints(whole)), JSON.stringify(expected));
+  assert.equal(JSON.stringify(m.readyPoints({ nextAction: whole }, other)), JSON.stringify(expected));
+  // A proposta do cérebro vale mesmo com a análise do snapshot indisponível.
+  const eq = { autopilot: { phase: 'PROPOSTA_PRONTA' }, nextAction: whole, refinoState: { canAct: true } };
+  assert.equal(m.primaryAction(eq, { available: false }).kind, 'review');
+  assert.equal(m.primaryAction(eq, null).label, 'Gravar 2 pontos');
+  // Sem curva na ação (ponte antiga): a análise continua sendo a fonte.
+  assert.equal(m.brainPoints({ kind: 'APPLY', text: 'x', pointIndexes: [1] }), null);
+  assert.equal(m.readyPoints({ nextAction: { kind: 'APPLY', pointIndexes: [1] } }, other).length, 2);
+  // Ação local sem curva válida não grava nada; COLLECT nunca traz curva.
+  assert.equal(m.readyPoints({ nextAction: { kind: 'APPLY', local: true, pointIndexes: [1] } }, other).length, 0);
+  assert.equal(m.brainPoints({ kind: 'COLLECT', currentRaw: before, refinedRaw: after, pointIndexes: [4] }), null);
+  // Curva malformada (29 valores, raw zero) é recusada.
+  assert.equal(m.brainPoints({ ...whole, refinedRaw: after.slice(1) }), null);
+  assert.equal(m.brainPoints({ ...whole, currentRaw: before.map((v, i) => (i ? v : 0)) }), null);
+});
+
 test('desfazer usa antes/depois do diário', () => {
   const m = model();
   const before = Array(30).fill(16384);

@@ -100,7 +100,12 @@ object EquivalenceJson {
                 "nextAction",
                 JSONObject().put("kind", action.kind.name).put("text", action.text)
                     .put("route", action.route ?: JSONObject.NULL).put("subpage", action.subpage ?: JSONObject.NULL)
-                    .put("pointIndexes", JSONArray(action.pointIndexes)),
+                    .put("pointIndexes", JSONArray(action.pointIndexes))
+                    // APPLY carrega a curva lida e a proposta (30 raw cada): é isso que a UI grava, nada recalculado por fora.
+                    .also { o ->
+                        action.currentRaw?.let { o.put("currentRaw", JSONArray(it)) }
+                        action.refinedRaw?.let { o.put("refinedRaw", JSONArray(it)) }
+                    },
             )
             .put("points", points)
             .put("ownPetrol", curveJson(result.ownPetrol))
