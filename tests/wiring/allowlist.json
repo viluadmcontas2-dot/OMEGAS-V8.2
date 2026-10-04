@@ -153,7 +153,8 @@
     "betweenPoints": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir",
     "ecuTruth": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir",
     "fluidity": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir",
-    "refinoState": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir"
+    "refinoState": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir",
+    "ecuDoneReason": "lido pela aba Diagnóstico (o detalhe técnico saiu do Refino); o texto humano vem em refinoState.reason"
   },
   "defects": {
     "usbDevice": "DEFECT-1: getStatus.usbDevice nunca e lido; a tela nao diz qual cabo/dispositivo (M1)",
@@ -162,7 +163,9 @@
   "consumer_local": {
     "levelRaw": "alias camelCase lido depois de level_raw (o Kotlin emite level_raw)",
     "dos": "palavra de texto humano dentro de template literal, nao um campo",
-    "usable": "campo local do contexto do gráfico (ctx.usable, definido em JS); não vem do Kotlin"
+    "usable": "campo local do contexto do gráfico (ctx.usable, definido em JS); não vem do Kotlin",
+    "whatNow": "campo de refinoState (idem); ausente = fallback",
+    "refinoState": "contrato novo (frase de estado do Refino) emitido pelo agente de lógica em work/platina-fix-logic; ausente = a UI cai no texto do cérebro"
   },
   "consumer_defects": {},
   "methods_unused": {},

@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, '../..');
 const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
 
-assert.match(cockpit, /<details class="autocal-secondary-details" open>/,
+assert.match(cockpit, /<div class="ar-secondary autocal-secondary-stack"/,
   'multimedia cockpit must expose secondary context without an extra tap');
 assert.ok(cockpit.includes('autocalResetComparison'),
   'cockpit must reserve a native before/after comparison after acquisition or curve reset');
@@ -22,8 +22,9 @@ assert.ok(cockpit.includes('liveFuelState('),
 // Actual graph size and visible point context are verified by the rendered layout gate.
 assert.match(css, /\.autocal-reset-comparison[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/,
   'before/after comparison must be compact, glanceable and not a new heavy panel');
-for (const selector of ['.autocal-chart-legend', '.autocal-chart-inspector', '.autocal-reset-comparison']) {
-  const blocks = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+const arCss = require('fs').readFileSync(require('path').join(__dirname, '../../app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8');
+for (const selector of ['html body .ar-shell .ar-legend', 'html body .ar-shell .ar-readout']) {
+  const blocks = [...arCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
     .filter(match => match[1].split(',').map(item => item.trim()).includes(selector))
     .map(match => match[2]);
   assert.ok(blocks.length, selector + ' CSS block missing');

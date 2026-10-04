@@ -136,8 +136,8 @@ test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de 
   assert.equal(strip(EQUIVALENCE_FIXTURE, routes).route, '', 'aponta para o próprio Refino: sem botão');
   assert.equal(strip({ ...eq, nextAction: { text: 'Tudo certo', route: '' } }, routes).route, '');
   const source = read('screens/refino.js');
-  assert.match(source, /router\?\.open\(go\.dataset\.route/);
-  assert.match(source, /id="refinoEq"/);
+  assert.match(source, /router\?\.open\(action\.route/, 'a ação de rota abre a aba, num toque');
+  assert.doesNotMatch(source, /id="refinoEq"/, 'sem faixa horizontal larga de equivalência: uma frase e uma ação');
 });
 
 test('Sessões: índice é fração 0..1 e aparece em % (0,01 = 1 %, nunca "0%")', () => {
@@ -154,10 +154,9 @@ test('"Detalhes técnicos" é o único nome técnico e fica por último no bloco
   const sources = [html, ...jsFiles.map(file => fs.readFileSync(file, 'utf8'))].join('\n');
   assert.doesNotMatch(sources, /Evidência técnica|Detalhes técnicos da ação|Detalhe técnico<|Dados técnicos<|Diagnóstico técnico</);
   const summaries = [...sources.matchAll(/<summary>([^<]*técnic[^<]*)<\/summary>/g)].map(m => m[1]);
-  assert.ok(summaries.length >= 3);
+  assert.ok(summaries.length >= 1);
   for (const text of summaries) assert.match(text, /^Detalhes técnicos/);
-  const autocal = read('screens/autocal-cockpit.js');
-  assert.ok(autocal.indexOf('id="autocalTechnicalDetails"') > autocal.indexOf('id="autocalSessionDrawer"'), 'AutoCal: Detalhes técnicos depois do histórico');
+  assert.doesNotMatch(read('screens/autocal-cockpit.js') + read('screens/refino.js'), /id="autocalTechnicalDetails"|id="refinoTech"/, 'AutoCal e Refino: o técnico vai para a aba Diagnóstico');
   const drawers = read('components/drawers.js');
   assert.ok(drawers.lastIndexOf('Detalhes técnicos') > drawers.indexOf('diagnostic-settings'), 'Ferramentas: Detalhes técnicos por último');
 });

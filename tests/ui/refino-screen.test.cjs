@@ -139,8 +139,8 @@ test('histórico: todo estado de fechamento do diário tem palavras simples', ()
 test('a legenda fica ACIMA do gráfico, fora do bloco que rola junto', () => {
   const source = SOURCE;
   assert.ok(source.indexOf('id="refinoLegend"') > 0);
-  assert.ok(source.indexOf('id="refinoLegend"') < source.indexOf('class="autocal-chart-workspace"'), 'legenda antes do gráfico');
-  assert.equal([...source.matchAll(/class="autocal-chart-legend"/g)].length, 1, 'uma legenda só');
+  assert.ok(source.indexOf('id="refinoLegend"') < source.indexOf('id="refinoChart"'), 'legenda antes do gráfico');
+  assert.equal([...source.matchAll(/class="ar-legend"/g)].length, 1, 'uma legenda só');
 });
 
 test('LENDO_ECU não oferece ação nem afirma estado: a ECU ainda não entregou nada', () => {

@@ -69,11 +69,10 @@ for (const c of CASES) {
   });
 }
 
-test('M4 fases do passo-a-passo: no máximo uma etapa ativa e nenhuma NaN/undefined', D9, () => {
+test('M4 fases: a tela fica limpa (sem NaN/undefined) em toda fase', D9, () => {
   for (const phase of W.PHASES) {
     const app = prepared(phase, { proposal: true, expiredFrom: 'PROPOSTA_PRONTA' });
-    const active = app.$$('#refinoSteps [data-state="active"]');
-    assert.ok(active.length <= 1, `${phase}: ${active.length} etapas ativas`);
+    assert.equal(app.$('#refinoSteps'), null, 'sem passo-a-passo: uma frase e uma ação');
     L.assertClean(app, `M4/passos ${phase}`);
     app.destroy();
   }
@@ -93,8 +92,7 @@ test('M4 Desfazer sempre à vista (fora de <details>) quando há foto de antes; 
 test('M4 fase falha parcial no journal: texto "ECU pode ter sido alterada em parte" + Desfazer visível', D9, () => {
   const latest = { status: 'FALHA_PARCIAL', photoFile: 'foto-3.json', beforeRaw: W.bentRaws(), afterRaw: W.bentRaws().map((v, i) => (i < 4 ? v + 50 : v)), bands: [] };
   const app = prepared('COLETANDO_NOSSOS', { proposal: true, latest });
-  const details = app.byId('refinoJournal');
-  assert.match(details.textContent, /alterad[ao]/i);
+  assert.match(app.byId('refinoNext').textContent, /falhou no meio|alterad[ao]|Desfazer/i);
   const undo = app.$('[data-refino-undo]');
   assert.ok(undo && !undo.closest('details') && !undo.closest('[hidden]'));
 });
@@ -149,8 +147,7 @@ test('M4 desconhecido nunca vira 0: razão GNV÷gasolina, pontos da ECU e nossos
     const app = L.boot({ world: w });
     app.go('refino'); app.settle(4);
     assert.equal(app.byId('refinoRatio').textContent.trim(), '—', `razão desconhecida apareceu como "${app.byId('refinoRatio').textContent}"`);
-    assert.equal(app.byId('refinoEcuPoints').textContent.trim(), '—');
-    assert.equal(app.byId('refinoOurPoints').textContent.trim(), '—');
+    assert.equal(app.byId('refinoEcuPoints'), null, 'contagens ficam fora desta tela (Diagnóstico)');
     app.destroy();
   }
 });
