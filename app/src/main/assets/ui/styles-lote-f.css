@@ -60,6 +60,12 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .refino-eq[hidden] { display: none; }
 .refino-eq b { color: var(--text); font-size: var(--text-critical); line-height: 1.15; white-space: nowrap; }
 .refino-eq span { color: var(--muted); font-size: var(--text-critical); line-height: 1.15; }
+.refino-eq-text { display: grid; gap: 2px; min-width: 0; }
+.refino-eq-text small { color: var(--dim); font-size: 18px; line-height: 1.2; }
+.refino-eq-text small[hidden] { display: none; }
+.refino-eq-actions { display: flex; gap: var(--space-3, 12px); align-items: center; }
+.refino-eq-actions button { min-height: var(--touch-min); }
+.refino-eq-actions button[hidden] { display: none; }
 
 /* ---------------------------------------------------------------- Refino: tudo em 1280×720 sem rolagem vertical */
 .refino-route-screen .refino-cockpit {

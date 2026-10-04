@@ -46,8 +46,8 @@ class EquivalenceEngineTest {
         assertEquals(PointState.POBRE, r.points[12].state)
         assertEquals(0.062, r.points[12].mixture!!, 0.015)
         assertEquals(NextActionKind.APPLY, r.nextAction.kind)
-        assertEquals("curve", r.nextAction.route)
-        assertEquals("equivalencia", r.nextAction.subpage)
+        assertEquals("refino", r.nextAction.route)
+        assertEquals(null, r.nextAction.subpage)
         assertTrue(12 in r.nextAction.pointIndexes)
         assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, r.proposal!!.mode)
         assertTrue(r.proposal!!.refinedRaw[12] > r.proposal!!.currentRaw[12])
@@ -118,8 +118,8 @@ class EquivalenceEngineTest {
         val r = EquivalenceEngine.evaluate(input(gasWithRichPlateau(1.06), reference = null, provisional = reference))
         assertTrue(r.provisional)
         assertEquals(NextActionKind.FREEZE_REFERENCE, r.nextAction.kind)
-        assertEquals("autocal", r.nextAction.route)
-        assertEquals("referencia", r.nextAction.subpage)
+        assertEquals("refino", r.nextAction.route)
+        assertEquals(null, r.nextAction.subpage)
     }
 
     @Test

@@ -151,15 +151,25 @@
    * sem ação (a UI não deriva ação da fase).
    */
   const WAITING_TEXT = 'Aguardando dados da ECU';
+  const FREEZE_TEXT = 'Salvar a curva atual da ECU como referência';
+  const FREEZE_WHY = 'Serve de régua para comparar o GNV com a gasolina.';
   function equivalenceStrip(eq, routes) {
     const percent = indexPercent(eq);
     const action = eq?.nextAction || null;
     const text = action && action.text ? String(action.text) : '';
     const route = action && action.route && action.route !== 'refino' && (!routes || routes.includes(action.route)) ? String(action.route) : '';
+    // Ações que o próprio Refino executa (nunca navegam para um lugar sem o botão): congelar a Referência (um toque, não grava a ECU),
+    // revisar e gravar (APPLY → o botão principal do cabeçalho) e desfazer (CONTESTED → Desfazer a gravação).
+    const kind = action && action.kind ? String(action.kind) : '';
+    const act = kind === 'FREEZE_REFERENCE' ? 'freeze' : kind === 'APPLY' ? 'review' : kind === 'CONTESTED' ? 'undo' : '';
+    const ACT_LABEL = { freeze: 'Salvar como referência', review: 'Revisar e gravar', undo: 'Desfazer a gravação' };
     return {
       indexText: percent === null ? '— da condução já equivale à gasolina' : `${percent}% da condução já equivale à gasolina${eq.index.provisional === true ? ' · provisório' : ''}`,
-      nextText: text || WAITING_TEXT,
+      nextText: act === 'freeze' ? FREEZE_TEXT : (text || WAITING_TEXT),
+      whyText: act === 'freeze' ? FREEZE_WHY : '',
       hasAction: Boolean(text),
+      act,
+      actLabel: act ? ACT_LABEL[act] : '',
       route,
       subpage: route ? String(action.subpage || '') : '',
       routeLabel: route ? `Ir para ${ROUTE_NAMES[route] || route}` : '',
@@ -254,7 +264,7 @@
             <div class="autocal-focus-actions"><button type="button" class="autocal-primary-action" data-refino-primary hidden></button></div>
           </header>
           <ol class="refino-steps" id="refinoSteps" aria-label="Fases do refino"></ol>
-          <div class="refino-eq" id="refinoEq" aria-label="Equivalência com a gasolina"><b id="refinoEqIndex">—</b><span id="refinoHeadline">Aguardando dados da ECU</span><button type="button" class="secondary" id="refinoEqGo" data-refino-go hidden></button></div>
+          <div class="refino-eq" id="refinoEq" aria-label="Equivalência com a gasolina"><b id="refinoEqIndex">—</b><div class="refino-eq-text"><span id="refinoHeadline">Aguardando dados da ECU</span><small id="refinoEqWhy" hidden></small></div><div class="refino-eq-actions"><button type="button" class="secondary" id="refinoEqGo" data-refino-go hidden></button><button type="button" class="quiet-button" id="refinoEqUnfreeze" data-refino-unfreeze hidden>Desfazer</button></div></div>
           <p class="refino-next" id="refinoNext" hidden></p>
           <div class="refino-actions-row">
             <div class="refino-stalls" id="refinoStalls" hidden></div>
@@ -300,6 +310,8 @@
 
     onClick(event) {
       const go = event.target.closest('[data-refino-go]');
+      if (go && go.dataset.act) { this.stripAct(go.dataset.act); return; }
+      if (event.target.closest('[data-refino-unfreeze]')) { this.unfreezeReference(); return; }
       if (go) { if (go.dataset.route) this.app.router?.open(go.dataset.route, go.dataset.subpage || ''); return; }
       if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true, true); return; }
       if (event.target.closest('[data-refino-primary]')) this.primary();
@@ -321,6 +333,31 @@
       inspector.innerHTML = `<b>Ponto ${Number(point.index) + 1} da curva · ${D.msUnit(point.petrolMs)}</b>` +
         `<span>MAP gasolina ${D.barUnit(point.petrolMapBar)} · MAP GNV ${D.barUnit(point.gasMapBar)}` +
         `${finite(delta) === null ? '' : ` · diferença ${delta > 0 ? '+' : ''}${D.barUnit(delta)}`}</span>`;
+    }
+
+    /** Botão da faixa: cada ação leva a algo que o Refino de fato faz. Um toque, sem diálogo. */
+    stripAct(act) {
+      if (act === 'freeze') this.freezeReference();
+      else if (act === 'review') this.primary();
+      else if (act === 'undo') this.openUndo();
+    }
+
+    /** Congelar a Referência: não escreve na ECU. Um toque; o resultado fica à vista e o Desfazer volta à anterior. */
+    freezeReference() {
+      const result = this.api.freezeReference?.() || { ok: false };
+      this.freeze = result.ok === true
+        ? { phase: 'done', message: 'Referência congelada.', at: Date.now() }
+        : { phase: 'failed', message: String(result.message || 'Não consegui congelar agora. A ECU ainda não tem curva de gasolina madura; rode um pouco na gasolina e toque de novo.'), at: Date.now() };
+      this.refresh(true, true);
+    }
+
+    /** Desfazer do congelamento: volta à Referência anterior desta sessão (só existe quando havia uma). */
+    unfreezeReference() {
+      const result = this.api.restorePreviousReference?.() || { ok: false };
+      this.freeze = result.ok === true
+        ? { phase: 'undone', message: 'Referência anterior restaurada.', at: Date.now() }
+        : { phase: 'failed', message: String(result.message || 'Não há referência anterior nesta sessão.'), at: Date.now() };
+      this.refresh(true, true);
     }
 
     primary() {
@@ -569,17 +606,31 @@
       const strip = equivalenceStrip(this.eq, ns.ROUTES);
       const op = this.operation;
       // Uma fala só por tela: o texto do cérebro; durante/depois de uma gravação, o resultado dela.
-      const text = op.phase === 'done' ? 'Curva gravada e conferida pela ECU.' : op.phase === 'failed' ? op.message : strip.nextText;
+      // O resultado do congelamento fica 10 s à vista; o Desfazer dele fica na sessão enquanto houver referência anterior.
+      const fresh = this.freeze && Date.now() - this.freeze.at < 10000;
+      const canUnfreeze = Boolean(this.freeze && this.freeze.phase === 'done' && this.eq?.reference?.previousId);
+      const frz = fresh || canUnfreeze ? this.freeze : null;
+      let text = op.phase === 'done' ? 'Curva gravada e conferida pela ECU.' : op.phase === 'failed' ? op.message : strip.nextText;
+      if (op.phase === 'idle' && frz && frz.phase !== 'idle') text = frz.message;
       setText('refinoEqIndex', strip.indexText);
       setText('refinoHeadline', text);
+      const why = document.getElementById('refinoEqWhy');
+      if (why) { const w = op.phase === 'idle' && !(frz && frz.phase === 'done') ? strip.whyText : ''; why.hidden = !w; why.textContent = w; }
+      const unfreeze = document.getElementById('refinoEqUnfreeze');
+      if (unfreeze) unfreeze.hidden = !(op.phase === 'idle' && canUnfreeze);
       host.dataset.hasAction = strip.hasAction ? 'true' : 'false';
       const go = document.getElementById('refinoEqGo');
       if (go) {
-        const showGo = !!strip.route && op.phase === 'idle';
+        const primaryNow = primaryAction(this.eq, this.analysis);
+        // 'review' só aparece quando o botão principal realmente grava; 'undo' só quando há para onde voltar.
+        const actOk = strip.act === 'review' ? primaryNow.kind === 'review' : strip.act === 'undo' ? Boolean(this.undoFile()) || undoSource(this.eq?.refinement?.latest).available : Boolean(strip.act);
+        const frozenNow = strip.act === 'freeze' && frz && frz.phase === 'done';
+        const showGo = op.phase === 'idle' && !frozenNow && (strip.act ? actOk : !!strip.route);
         go.hidden = !showGo;
-        go.dataset.route = strip.route;
-        go.dataset.subpage = strip.subpage;
-        setText('refinoEqGo', strip.routeLabel);
+        go.dataset.act = strip.act && actOk ? strip.act : '';
+        go.dataset.route = strip.act ? '' : strip.route;
+        go.dataset.subpage = strip.act ? '' : strip.subpage;
+        setText('refinoEqGo', strip.act ? strip.actLabel : strip.routeLabel);
       }
     }
 

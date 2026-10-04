@@ -41,8 +41,8 @@ class EquivalenceRealSessionTest {
         )
         assertTrue(r.provisional)
         assertEquals(NextActionKind.FREEZE_REFERENCE, r.nextAction.kind)
-        assertEquals("autocal", r.nextAction.route)
-        assertEquals("referencia", r.nextAction.subpage)
+        assertEquals("refino", r.nextAction.route)
+        assertEquals(null, r.nextAction.subpage)
         assertTrue(r.ownPetrol.cells.filter { it.petrolMs != null }.all { it.source == CellSource.REFERENCE })
         r.points.forEach { p ->
             val known = p.axisMs >= 3.0 && OwnCurveFitter.mapFor(r.ownPetrol, p.axisMs) != null

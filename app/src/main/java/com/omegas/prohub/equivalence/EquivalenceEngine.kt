@@ -210,12 +210,12 @@ object EquivalenceEngine {
     ): NextAction {
         input.operation?.let { return NextAction(NextActionKind.OPERATION, it, null, null, emptyList()) }
         if (input.reference == null && input.provisional != null) {
-            return NextAction(NextActionKind.FREEZE_REFERENCE, "Congelar esta curva como referência", "autocal", "referencia", emptyList())
+            return NextAction(NextActionKind.FREEZE_REFERENCE, "Salvar a curva atual da ECU como referência", "refino", null, emptyList())
         }
         val contested = points.filter { it.state == PointState.CONTESTADO }
         if (contested.isNotEmpty()) {
             val text = "Ajuste em ${f1(contested.minOf { it.axisMs })}–${f1(contested.maxOf { it.axisMs })} ms piorou a suavidade · Desfazer"
-            return NextAction(NextActionKind.CONTESTED, text, "curve", "equivalencia", contested.map { it.index })
+            return NextAction(NextActionKind.CONTESTED, text, "refino", null, contested.map { it.index })
         }
         val poor = points.filter { it.state == PointState.POBRE }
         val rich = points.filter { it.state == PointState.RICO }
@@ -233,13 +233,13 @@ object EquivalenceEngine {
             val hi = (off.maxOf { abs(it.mixture!!) } * 100.0).roundToInt()
             val suffix = if (input.reference == null) " · sem referência da ECU" else ""
             val text = "$head entre ${f1(off.minOf { it.axisMs })} e ${f1(off.maxOf { it.axisMs })} ms ($lo–$hi%) · Aplicar ajuste$suffix"
-            return NextAction(NextActionKind.APPLY, text, "curve", "equivalencia", off.sortedByDescending { it.usage }.map { it.index })
+            return NextAction(NextActionKind.APPLY, text, "refino", null, off.sortedByDescending { it.usage }.map { it.index })
         }
         if (points.any { it.state == PointState.EM_PROVA }) {
             val remaining = outcome.remainingMinutes
             val text = if (remaining != null) "Rodando para provar o ajuste · faltam ~$remaining min de condução nessa faixa"
             else "Rodando para provar o ajuste"
-            return NextAction(NextActionKind.PROVING, text, "refino", "pontos", points.filter { it.state == PointState.EM_PROVA }.map { it.index })
+            return NextAction(NextActionKind.PROVING, text, "refino", null, points.filter { it.state == PointState.EM_PROVA }.map { it.index })
         }
         val candidates = points.filter {
             (it.state == PointState.SEM_DADOS || it.state == PointState.APRENDENDO) && it.usage >= COLLECT_MIN_USAGE && maps[it.index] != null
@@ -249,19 +249,19 @@ object EquivalenceEngine {
             val map = maps[top.index]!!
             val text = "Rode ${terrain(map)} (~${f1(map)} bar) para eu medir entre " +
                 "${f1(candidates.minOf { it.axisMs })} e ${f1(candidates.maxOf { it.axisMs })} ms"
-            return NextAction(NextActionKind.COLLECT, text, "refino", "pontos", candidates.map { it.index })
+            return NextAction(NextActionKind.COLLECT, text, "refino", null, candidates.map { it.index })
         }
         val judged = points.count {
             it.state != PointState.SEM_DADOS && it.state != PointState.APRENDENDO && it.state != PointState.MEDIDO && it.mixture != null
         }
         if (judged == 0) {
-            return NextAction(NextActionKind.COLLECT, "Rode no GNV para eu começar a medir", "refino", "pontos", emptyList())
+            return NextAction(NextActionKind.COLLECT, "Rode no GNV para eu começar a medir", "refino", null, emptyList())
         }
         if (off.isNotEmpty()) {
             // Há pontos fora, mas o motor refinado não tem evidência para propor: pede mais leitura em vez de dizer "nada a fazer".
             return NextAction(
                 NextActionKind.COLLECT, "Rode mais no GNV: ainda faltam leituras para propor o ajuste",
-                "refino", "pontos", off.sortedByDescending { it.usage }.map { it.index },
+                "refino", null, off.sortedByDescending { it.usage }.map { it.index },
             )
         }
         return NextAction(NextActionKind.NOTHING, "Equivalente. Nada a fazer.", null, null, emptyList())
