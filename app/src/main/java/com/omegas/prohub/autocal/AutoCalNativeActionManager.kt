@@ -261,14 +261,20 @@ class AutoCalNativeActionManager(
             preparation = null
             current
         }
-        update("QUEUED", "Ação confirmada; enviando para a ECU", 0, prepared)
+        // Trava e `busy` já foram adquiridos: nada entre aqui e a entrega ao executor pode vazá-los.
+        var submitted = false
         try {
+            update("QUEUED", "Ação confirmada; enviando para a ECU", 0, prepared)
             executor.execute { executePrepared(prepared) }
+            submitted = true
         } catch (_: java.util.concurrent.RejectedExecutionException) {
-            guard.release(SerialWriteGuard.OWNER_AUTOCAL)
-            busy.set(false)
-            synchronized(lock) { status.put("busy", false) }
             return failure("O executor do AutoCal foi encerrado; reabra o aplicativo")
+        } finally {
+            if (!submitted) {
+                guard.release(SerialWriteGuard.OWNER_AUTOCAL)
+                busy.set(false)
+                synchronized(lock) { status.put("busy", false) }
+            }
         }
         return JSONObject()
             .put("ok", true)

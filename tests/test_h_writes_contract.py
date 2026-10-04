@@ -37,7 +37,8 @@ class WriteSafety(unittest.TestCase):
         self.assertLess(photo, first_ack, "a foto sai ANTES do primeiro ACK")
         # foto = disco da curva já lida (nenhum comando novo) e validada por hash
         helper = body(KFACTOR, "private fun writeManualPhoto", "fun listBackups")
-        self.assertIn('"MANUAL-$createdAt-', helper)
+        self.assertIn('"$namePrefix-$createdAt-', helper)
+        self.assertIn('val namePrefix = if (preWrite) "PREWRITE" else "MANUAL"', helper)
         self.assertIn("loadBackup(fileName)", helper)
         self.assertIn("Hash do backup salvo divergiu", helper)
         self.assertNotIn("transaction(", helper)
