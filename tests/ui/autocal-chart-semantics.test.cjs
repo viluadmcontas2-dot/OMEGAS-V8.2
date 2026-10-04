@@ -15,7 +15,7 @@ require('./_support.cjs').preload(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 const model = context.OmegasUi.AutoCalUxModel;
 
-assert.match(chartSource, /Petrol Inj\. \(ms\)/);
+assert.match(chartSource, /Injeção \(ms\)/);
 assert.match(chartSource, /MAP \(bar\)/);
 assert.match(chartSource, /autocal-axis-tick-x/);
 assert.match(chartSource, /autocal-axis-tick-y/);

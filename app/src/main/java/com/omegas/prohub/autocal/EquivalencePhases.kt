@@ -534,7 +534,7 @@ class EquivalencePhases(
     private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = ""): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "TENTATIVA_ENCERRADA" -> if (expiredFrom == "PROPOSTA_PRONTA" || expiredFrom == "ECU_TRABALHANDO")
-            "Abra o Refino e toque em Revisar e gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
+            "Abra o Refino e toque em Gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
         else "A próxima leitura válida retoma o acompanhamento automaticamente."
         "LENDO_ECU" -> "Aguarde alguns segundos. A ECU guarda o AutoMatch e as curvas e entrega tudo ao conectar."
         "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
@@ -559,7 +559,7 @@ class EquivalencePhases(
                 else -> "Continue rodando no GNV."
             }
         }
-        "PROPOSTA_PRONTA" -> "Abra o Refino e toque em Revisar e gravar. Nada é gravado sem o seu toque."
+        "PROPOSTA_PRONTA" -> "Abra o Refino e toque em Gravar. Nada é gravado sem o seu toque."
         "RESTAURAR_TRECHO" -> "Abra o Refino e toque em Restaurar trecho. Nada é restaurado sem o seu toque."
         "ESTAVEL" -> "Nada a fazer. O OMEGAS continua medindo e avisa se algo mudar."
         else -> ""

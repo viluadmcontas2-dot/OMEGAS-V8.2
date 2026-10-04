@@ -73,7 +73,7 @@ assert.equal(cockpit.includes('>Ajustar</button>'), false,
   'controle visual não pode parecer ajuste da ECU');
 assert.equal(cockpit.includes('data-autocal-chart-action'), false,
   'zoom/pan desacoplado dos eixos físicos não pode voltar');
-assert.match(cockpit, /Petrol Inj\. \(ms\)/,
+assert.match(cockpit, /Injeção \(ms\)/,
   'eixo X deve declarar a unidade física');
 assert.match(cockpit, /MAP \(bar\)/,
   'eixo Y deve declarar a unidade física');
@@ -104,7 +104,7 @@ assert.match(
 );
 assert.match(fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/components/curve-chart.js'), 'utf8'), /<g class="autocal-live-layer"/, 'camada AGORA existe no gráfico compartilhado');
 assert.match(cockpit, /const live = AutoCalUxModel\.livePoint\(this\.store\.get\(\)\.telemetry \|\| \{\}\)/, 'camada AGORA precisa depender da telemetria viva');
-assert.match(cockpit, /if \(!live\) \{\s*if \(layer\) layer\.setAttribute\('display', 'none'\);/s,
+assert.match(cockpit, /if \(!live\) \{\s*D\.setAttrIfChanged\(layer, 'display', 'none'\);/s,
   'telemetria inválida precisa esconder cursor AGORA antigo');
 assert.match(cockpit, /state === 'CANCEL_REQUESTED'/, 'cancelamento intermediário precisa de estado humano explícito');
 assert.match(cockpit, /const nativeSnapshot = state\.latestSnapshot\?\.fields \? state\.latestSnapshot : \{\};/,

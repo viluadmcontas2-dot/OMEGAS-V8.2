@@ -11,7 +11,7 @@ for (const s of SESSIONS) {
   for (const f of realFrames(s)) (byFuel[f.fuel] = byFuel[f.fuel] || []).push(f);
 }
 // Rótulo esperado no trilho (contrato de produto: o dono lê isto no carro).
-const LABEL = { GASOLINA: ['GASOLINA'], GNV: ['GNV'], CUTOFF: ['CUTOFF'], DESCONHECIDO: ['—', 'DESCONHECIDO'], TRANSICAO: ['TRANSIÇÃO', 'TRANSICAO'], DESLIGADO: ['DESLIGADO'] };
+const LABEL = { GASOLINA: ['GASOLINA'], GNV: ['GNV'], CUTOFF: ['CORTE'], DESCONHECIDO: ['—', 'DESCONHECIDO'], TRANSICAO: ['TRANSIÇÃO', 'TRANSICAO'], DESLIGADO: ['DESLIGADO'] };
 const ptBR = (n, d) => Number(n).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 function withFrame(frame, extra) {
@@ -39,7 +39,7 @@ for (const fuel of Object.keys(LABEL)) {
       const map = app.byId('dashMap');
       if (map && frame.load_bar != null) assert.equal(map.textContent, ptBR(frame.load_bar, 3), 'MAP do quadro (3 casas, GLOSSARIO)');
       const petrol = app.byId('dashHeroPetrol');
-      if (petrol && frame.petrol_ms != null) assert.equal(petrol.textContent, ptBR(frame.petrol_ms, 2), 'Petrol Inj. do quadro');
+      if (petrol && frame.petrol_ms != null) assert.equal(petrol.textContent, fuel === 'CUTOFF' ? '—' : ptBR(frame.petrol_ms, 2), 'Injeção do quadro (em corte mostra —)');
       app.destroy();
     }
   });

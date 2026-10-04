@@ -331,8 +331,8 @@
     const equivalent = reference.filter(p => finite(p.gasEquivalentMs) !== null);
     const equivalencePath = equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
 
-    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="Curva de aquisição: Petrol Inj. por MAP, gasolina e GNV, pontos da ECU, o que medimos, proposta e posição Agora">${grid}<g class="layer-zones">${zoneMarkup}</g>${tickMarkup}` +
-      `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Petrol Inj. (ms)</text>` +
+    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="Curva de aquisição: Injeção por MAP, gasolina e GNV, pontos da ECU, o que medimos, proposta e posição Agora">${grid}<g class="layer-zones">${zoneMarkup}</g>${tickMarkup}` +
+      `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${previous}${equivalencePath}` +
       `${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +

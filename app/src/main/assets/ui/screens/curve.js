@@ -565,7 +565,7 @@
       host.querySelectorAll('[data-overview-index]').forEach(node => node.addEventListener('click', () => this.selectPoint(Number(node.dataset.overviewIndex))));
 
       const proposed = points.filter(item => item.proposedFactor !== null).length;
-      summaryHost.innerHTML = `<div class="editor-heading"><div><small>30 PONTOS FÍSICOS</small><h3>Curva K atual × proposta</h3></div></div><div class="curve-overview-grid"><div><small>PONTOS LIDOS</small><b>${points.filter(item => item.factor !== null).length}/30</b></div><div><small>PROPOSTOS</small><b>${proposed}</b></div></div><div id="curveOverviewPointContext" class="curve-overview-list"></div><p class="empty-copy">O eixo X é Petrol Inj. dos 30 pontos. O erro por ponto volta com a Equivalência. A UI só desenha alvos K exatos vindos do Kotlin.</p>`;
+      summaryHost.innerHTML = `<div class="editor-heading"><div><small>30 PONTOS FÍSICOS</small><h3>Curva K atual × proposta</h3></div></div><div class="curve-overview-grid"><div><small>PONTOS LIDOS</small><b>${points.filter(item => item.factor !== null).length}/30</b></div><div><small>PROPOSTOS</small><b>${proposed}</b></div></div><div id="curveOverviewPointContext" class="curve-overview-list"></div>`;
       this.renderOverviewPointContext(state, this.activeIndex ?? 0);
     }
 

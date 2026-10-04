@@ -10,7 +10,7 @@ const dashboard = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screen
 const autocal = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 
 test('LEVELS RAW belongs to Dashboard/AGORA and is absent from AutoCal', () => {
-  assert.match(dashboard, /LEVELS RAW/);
+  assert.match(dashboard, /NÍVEIS/);
   assert.match(dashboard, /dashLevelsRaw/);
   assert.match(dashboard, /level_raw/);
   assert.doesNotMatch(autocal, /LEVELS RAW/);

@@ -29,7 +29,6 @@ object EquivalenceView {
         val view = JSONObject(legacy.toString())
             .put("legacyIndex", legacy)
             .put("denseBands", ledger.denseBandsJson())
-            .put("typicalBands", ledger.typicalBandsJson())
             .put("refinement", journal.json())
             .put("restorePoints", journal.restorePoints())
             .put("autopilot", phases.json())

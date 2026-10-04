@@ -29,13 +29,13 @@ function analysis(changed) {
 
 // ---------------------------------------------------------------- Lote A: becos sem saída
 
-test('A1/A2: o prazo vencido não apaga a proposta: o botão "Revisar e gravar" continua', () => {
+test('A1/A2: o prazo vencido não apaga a proposta: o botão "Gravar N pontos" continua', () => {
   const m = model();
   const ready = analysis([4, 5]);
   for (const expiredFrom of ['PROPOSTA_PRONTA', 'ECU_TRABALHANDO']) {
     const action = m.primaryAction({ autopilot: { phase: 'TENTATIVA_ENCERRADA', expiredFrom } }, ready);
     assert.equal(action.kind, 'review', expiredFrom);
-    assert.match(action.label, /Revisar e gravar 2 pontos/);
+    assert.match(action.label, /Gravar 2 pontos/);
   }
   // Sem proposta, ou o prazo de leitura da ECU: nenhuma ação.
   assert.equal(m.primaryAction({ autopilot: { phase: 'TENTATIVA_ENCERRADA', expiredFrom: 'PROPOSTA_PRONTA' } }, analysis([])).kind, 'none');
@@ -87,5 +87,5 @@ test('A8: nenhum texto manda "sem sua confirmação" nem para "AutoCal → Refin
   const kotlin = read('app/src/main/java/com/omegas/prohub/autocal/EquivalencePhases.kt');
   assert.doesNotMatch(kotlin, /sem sua confirmação/);
   assert.doesNotMatch(kotlin, /AutoCal → Refinar curva/);
-  assert.match(kotlin, /Abra o Refino e toque em Revisar e gravar/);
+  assert.match(kotlin, /Abra o Refino e toque em Gravar/);
 });

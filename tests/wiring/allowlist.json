@@ -109,7 +109,6 @@
   "origins": "contagens e evidencia do cerebro (EquivalenceJson): persistencia/diagnostico; a tela usa points/index/coverage",
   "ownGas": "contagens e evidencia do cerebro (EquivalenceJson): persistencia/diagnostico; a tela usa points/index/coverage",
   "ownPetrol": "contagens e evidencia do cerebro (EquivalenceJson): persistencia/diagnostico; a tela usa points/index/coverage",
-  "previousId": "contagens e evidencia do cerebro (EquivalenceJson): persistencia/diagnostico; a tela usa points/index/coverage",
   "proposal": "contagens e evidencia do cerebro (EquivalenceJson): persistencia/diagnostico; a tela usa points/index/coverage",
   "refinedRaw": "contagens e evidencia do cerebro (EquivalenceJson): persistencia/diagnostico; a tela usa points/index/coverage",
   "roughnessRatio": "contagens e evidencia do cerebro (EquivalenceJson): persistencia/diagnostico; a tela usa points/index/coverage",
@@ -142,33 +141,20 @@
   "coverage": "chave plana de compatibilidade; a cobertura aparece pelo guia de cobertura em palavras (coverageGuidance)",
   "headline": "texto do cérebro duplicado em nextAction.text, que é o que a tela mostra (uma fala só)",
   "pointIndexes": "índices dos pontos da ação; a tela leva à aba pela rota e ainda não destaca os pontos (decisão de produto pendente)",
-  "frozen": "Referência congelada: a tela não oferece congelar (sem botão); fica no diagnóstico até o dono decidir",
-  "frozenAt": "Referência congelada: a tela não oferece congelar (sem botão); fica no diagnóstico até o dono decidir",
-  "canFreeze": "Referência congelável: a tela não oferece congelar (sem botão); fica no diagnóstico até o dono decidir"
+  "frozen": "Referência congelada: o Refino só usa previousId (Desfazer do congelamento); o resto fica no diagnóstico/exportação",
+  "frozenAt": "Referência congelada: o Refino só usa previousId (Desfazer do congelamento); o resto fica no diagnóstico/exportação",
+  "canFreeze": "Referência congelada: o Refino só usa previousId (Desfazer do congelamento); o resto fica no diagnóstico/exportação"
  },
  "defects": {
   "usbDevice": "DEFECT-1: getStatus.usbDevice nunca e lido; a tela nao diz qual cabo/dispositivo (M1)",
-  "ecuState": "DEFECT-1: getStatus.ecuState nunca e lido; so usbConnected decide \"ECU online\" (M1)",
-  "safetyBlocked": "DEFECT-2: escrita bloqueada por seguranca (safetyBlocked) nao e lida; a UI so mostra error (M5/M6)",
-  "writerState": "DEFECT-2: writerState da escrita nunca e lido (M5/M6)",
-  "relearnSuggested": "DEFECT-3: Kotlin sugere reaprender (relearnSuggested) e a UI nunca mostra (M4)",
-  "ecuDrift": "DEFECT-3: ecuDrift (a ECU mexeu na curva) nunca e lido (M4)",
-  "permissionRequired": "DEFECT-4: resposta de requestOverlayPermission (permissionRequired/launched) ignorada; botao sem feedback (M8)",
-  "launched": "DEFECT-4: idem launched (M8)",
-  "canDisconnect": "DEFECT-5: autopilot.canDisconnect nunca e lido; \"pode desconectar\" vem de texto fixo (M4)",
-  "timeoutReason": "DEFECT-5: autopilot.timeoutReason nunca e lido; motivo do prazo nao aparece (M4)",
-  "watchdogExpired": "DEFECT-5: autopilot.watchdogExpired nunca e lido (M4)",
-  "typicalBands": "DEFECT-6: EquivalenceView.typicalBands nunca e lido (M4)"
+  "ecuState": "DEFECT-1: getStatus.ecuState nunca e lido; so usbConnected decide \"ECU online\" (M1)"
  },
  "consumer_local": {
   "levelRaw": "alias camelCase lido depois de level_raw (o Kotlin emite level_raw)",
   "dos": "palavra de texto humano dentro de template literal, nao um campo",
   "usable": "campo local do contexto do gráfico (ctx.usable, definido em JS); não vem do Kotlin"
  },
- "consumer_defects": {
-  "indexStart": "DEFECT-8: sessions.js le item/summary.indexStart sem produtor Kotlin; faixa do indice na sessao fica \"-\"",
-  "indexEnd": "DEFECT-8: sessions.js le item/summary.indexEnd sem produtor Kotlin"
- },
+ "consumer_defects": {},
  "methods_unused": {},
  "methods_missing_ok": {
   "OmegasNative.getEquivalence": "fallback protegido por typeof em native-api.js; a leitura real vai por OmegasAutoCal.getEquivalence"

@@ -24,20 +24,19 @@ function refinoApp({ phase = 'PROPOSTA_PRONTA', proposal = true, opPolls, outcom
 }
 const primary = app => app.$('[data-refino-primary]');
 const headline = app => app.byId('refinoHeadline').textContent;
-const reviewOpen = app => { const r = app.byId('refinoReview'); return !!r && !r.hasAttribute('hidden'); };
 
 test('FLUXO Refino: proposta → revisar → gravar → VERIFICANDO → veredito (ordem das chamadas e curva final da ECU)', D9, () => {
   const app = refinoApp({ phase: 'PROPOSTA_PRONTA', proposal: true });
   const before = app.world.curve.slice();
   const mark = app.world.mark();
-  // 1. revisar: nada vai à ECU
+  // 1. antes do toque: o botão diz quantos pontos e o resumo está em linha; nada vai à ECU
   assert.equal(primary(app).hasAttribute('disabled'), false);
+  assert.match(primary(app).textContent, /Gravar 3 pontos/);
+  assert.match(app.byId('refinoNext').textContent, /3 pontos · mudança média/);
+  assert.equal(app.byId('refinoReview'), null, 'não há modal de revisão');
+  assert.deepEqual(L.actionCalls(app, mark), [], 'nada foi enviado antes do toque');
+  // 2. UM toque: lê a curva, confere, grava
   primary(app).click(); app.flush();
-  assert.ok(reviewOpen(app), 'a revisão abre antes de qualquer escrita');
-  assert.match(app.byId('refinoReview').textContent, /3 pontos da Curva K/);
-  assert.deepEqual(L.actionCalls(app, mark), [], 'revisar não chama a ponte de escrita nem de leitura');
-  // 2. confirmar: lê a curva, confere, grava
-  app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
   assert.deepEqual(L.actionCalls(app, mark), ['startCurveRead'], 'primeiro lê a curva da ECU (conferência), ainda sem gravar');
   assert.equal(app.world.callsOf('startCurveBatchWrite').length, 0);
   app.advance(400); app.advance(400); app.flush();
@@ -64,12 +63,11 @@ test('FLUXO Refino: proposta → revisar → gravar → VERIFICANDO → veredito
   L.assertClean(app, 'FLUXO Refino');
 });
 
-test('FLUXO Refino: a curva da ECU mudou entre a revisão e a confirmação → NADA é gravado e o dono é avisado', D9, () => {
+test('FLUXO Refino: a curva da ECU mudou entre a proposta e o toque → NADA é gravado e o dono é avisado', D9, () => {
   const app = refinoApp();
-  primary(app).click(); app.flush();
-  // a ECU roda o automático e mexe na curva depois da revisão
+  // a ECU roda o automático e mexe na curva depois de a tela calcular a proposta e antes do toque
   app.world.curve = app.world.curve.map((v, i) => (i === 9 ? v + 77 : v));
-  app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
+  primary(app).click(); app.flush();
   for (let i = 0; i < 5; i += 1) app.advance(400);
   assert.equal(app.world.callsOf('startCurveBatchWrite').length, 0, 'gravou com a curva desatualizada');
   assert.match(headline(app), /Curva K da ECU mudou/i);
@@ -80,7 +78,6 @@ test('FLUXO Refino: falha de cabo na gravação → "Nada foi gravado" e a curva
   const app = refinoApp({ outcome: { curveWrite: 'transport' } });
   const before = app.world.curve.slice();
   primary(app).click(); app.flush();
-  app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
   for (let i = 0; i < 8; i += 1) app.advance(400);
   assert.match(headline(app), /Cabo\/USB/);
   assert.match(app.byId('refinoNext').textContent, /Nada foi gravado/);
@@ -91,20 +88,18 @@ test('FLUXO Refino: falha PARCIAL → "pode ter sido alterada em parte" + Desfaz
   const app = refinoApp({ outcome: { curveWrite: 'partial' } });
   const before = app.world.curve.slice();
   primary(app).click(); app.flush();
-  app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
   for (let i = 0; i < 8; i += 1) app.advance(400);
   assert.match(headline(app), /pode ter sido alterada em parte/i);
   assert.match(app.byId('refinoNext').textContent, /Desfazer para voltar à foto/);
   const undo = app.$('[data-refino-undo]');
   assert.ok(undo && !undo.closest('details') && !undo.closest('[hidden]'), 'Desfazer precisa estar visível fora do <details>');
   assert.notDeepEqual(app.world.curve, before, 'controle: a ECU foi alterada em parte');
-  // Desfazer: prepara a restauração da foto e grava de volta depois da revisão
+  // Desfazer: um toque prepara a restauração da foto e grava de volta, sem diálogo
   app.world.outcome.curveWrite = 'ok';
   undo.click(); app.flush();
   for (let i = 0; i < 5; i += 1) app.advance(400);
   assert.equal(app.world.callsOf('startCurveRestorePrepare').length, 1);
-  assert.ok(reviewOpen(app), 'o Desfazer abre a revisão antes de gravar de volta');
-  app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
+  assert.equal(app.byId('refinoReview'), null, 'sem modal de confirmação no Desfazer');
   for (let i = 0; i < 10; i += 1) app.advance(400);
   assert.equal(app.world.callsOf('startCurveRestoreWrite').length, 1);
   assert.deepEqual(app.world.curve, before, 'a ECU volta à curva de antes');
@@ -114,20 +109,15 @@ test('FLUXO Refino: RESTAURAR_TRECHO → botão restaura só o trecho que piorou
   const app = refinoApp({ phase: 'RESTAURAR_TRECHO', proposal: false });
   assert.equal(primary(app).hasAttribute('disabled'), false);
   assert.match(primary(app).textContent, /Desfazer o trecho que piorou/);
+  const mark = app.world.mark();
   primary(app).click(); app.flush();
-  assert.ok(reviewOpen(app));
-  assert.match(app.byId('refinoReview').textContent, /1 ponto da Curva K/);
-  assert.equal(app.world.callsOf('startCurveBatchWrite').length, 0);
+  assert.deepEqual(L.actionCalls(app, mark), ['startCurveRead'], 'um toque já inicia a restauração do trecho (sem modal)');
 });
 
-test('FLUXO Refino: toque duplo em "Revisar" e em "Confirmar": UMA leitura/escrita', D9, () => {
+test('FLUXO Refino: toque duplo em "Gravar": UMA leitura/escrita', D9, () => {
   const app = refinoApp({ opPolls: 8 });
   const mark = app.world.mark();
   primary(app).click(); primary(app).click(); app.flush();
-  app.byId('refinoReview').querySelector('[data-refino-confirm]').click();
-  const confirm = app.byId('refinoReview').querySelector('[data-refino-confirm]');
-  if (confirm) confirm.click();
-  app.flush();
   assert.equal(app.world.since(mark).filter(c => c.method === 'startCurveRead').length, 1, 'confirmar duas vezes leu duas vezes');
   for (let i = 0; i < 6; i += 1) app.advance(400);
   assert.ok(app.world.since(mark).filter(c => WRITE.includes(c.method)).length <= 1);
@@ -158,7 +148,6 @@ test('FLUXO AutoCal→Refino→Agora: a próxima ação do Agora leva à aba cer
 test('FLUXO Refino: enquanto lê/grava na ECU o botão principal fica DESATIVADO e diz o que está fazendo', D9, () => {
   const app = refinoApp({ opPolls: 8 });
   primary(app).click(); app.flush();
-  app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
   assert.equal(primary(app).hasAttribute('disabled'), true, 'botão ativo durante a leitura de conferência');
   assert.match(primary(app).textContent, /Lendo a curva|Conferindo/i);
   for (let i = 0; i < 40 && !/Gravando/.test(primary(app).textContent); i += 1) app.advance(400);

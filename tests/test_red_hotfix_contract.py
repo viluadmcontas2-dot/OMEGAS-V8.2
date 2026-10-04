@@ -66,7 +66,7 @@ class RedHotfixContractTest(unittest.TestCase):
     def test_dashboard_promotes_petrol_injection_without_new_polling(self):
         dashboard = read("app/src/main/assets/ui/screens/dashboard.js")
         app = read("app/src/main/assets/ui/app.js")
-        self.assertIn('PETROL INJECTION', dashboard)
+        self.assertIn('INJEÇÃO', dashboard)
         self.assertIn('id="dashHeroPetrol"', dashboard)
         self.assertLess(
             dashboard.index('id="dashHeroPetrol"'),

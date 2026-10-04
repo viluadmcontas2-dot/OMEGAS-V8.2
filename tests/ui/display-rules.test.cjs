@@ -41,7 +41,7 @@ test('combustível: o "--" padrão do Kotlin e o vazio são "—"; os estados re
   assert.equal(rules.fuelLabel('petrol'), 'GASOLINA');
   assert.equal(rules.fuelLabel('GNV'), 'GNV');
   assert.equal(rules.fuelLabel('CNG'), 'GNV');
-  assert.equal(rules.fuelLabel('CUTOFF'), 'CUTOFF');
+  assert.equal(rules.fuelLabel('CUTOFF'), 'CORTE');
   assert.equal(rules.fuelLabel('TRANSICAO'), 'TRANSIÇÃO');
   assert.equal(rules.fuelLabel('DESLIGADO'), 'DESLIGADO');
 });
@@ -184,7 +184,7 @@ test('plural em português: alteração/alterações, célula/células, ponto/po
   assert.doesNotMatch(rules.plural(12, 'alteração', 'alterações'), /ãoões/);
   const map = fs.readFileSync(UI('screens/map.js'), 'utf8');
   assert.doesNotMatch(map, /'ões'/, 'nada de "alteraçãoões"');
-  assert.match(map, /plural\(count, 'alteração', 'alterações'\)/);
+  assert.match(map, /plural\(count, 'célula', 'células'\)/);
 });
 
 test('conexão: Conectando… (permissão USB) é diferente de Sem cabo, cada um com a próxima ação', () => {

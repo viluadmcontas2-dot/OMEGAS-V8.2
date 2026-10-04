@@ -162,7 +162,7 @@
     // revisar e gravar (APPLY → o botão principal do cabeçalho) e desfazer (CONTESTED → Desfazer a gravação).
     const kind = action && action.kind ? String(action.kind) : '';
     const act = kind === 'FREEZE_REFERENCE' ? 'freeze' : kind === 'APPLY' ? 'review' : kind === 'CONTESTED' ? 'undo' : '';
-    const ACT_LABEL = { freeze: 'Salvar como referência', review: 'Revisar e gravar', undo: 'Desfazer a gravação' };
+    const ACT_LABEL = { freeze: 'Salvar como referência', review: 'Gravar', undo: 'Desfazer a gravação' };
     return {
       indexText: percent === null ? '— da condução já equivale à gasolina' : `${percent}% da condução já equivale à gasolina${eq.index.provisional === true ? ' · provisório' : ''}`,
       nextText: act === 'freeze' ? FREEZE_TEXT : (text || WAITING_TEXT),
@@ -184,7 +184,7 @@
       // O prazo da tentativa pausa o acompanhamento, não a proposta: ela continua válida e o botão continua.
       const from = eq?.autopilot?.expiredFrom;
       if ((from === 'PROPOSTA_PRONTA' || from === 'ECU_TRABALHANDO') && proposal && analysis?.available) {
-        return { kind: 'review', label: `Revisar e gravar ${D.plural(proposal, 'ponto', 'pontos')}`, expired: true };
+        return { kind: 'review', label: `Gravar ${D.plural(proposal, 'ponto', 'pontos')}`, expired: true };
       }
       return { kind: 'none', label: '' };
     }
@@ -200,7 +200,7 @@
     }
     if (phase === 'VERIFICANDO') return { kind: 'waiting', label: 'Medindo a última gravação…' };
     if (proposal && analysis?.available) {
-      return { kind: 'review', label: `Revisar e gravar ${D.plural(proposal, 'ponto', 'pontos')}` };
+      return { kind: 'review', label: `Gravar ${D.plural(proposal, 'ponto', 'pontos')}` };
     }
     return { kind: 'none', label: '' };
   }
@@ -234,18 +234,19 @@
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
         this.tickJob();
-        if (this.store.get().route !== 'refino') return;
+        if (this.store.get().route !== 'refino') { this.releaseFrame(); return; }
+        this.ensureFrame();
         if (this.enterRefreshPending) { this.enterRefreshPending = false; this.refresh(true); this.dataGate.mark(); this.dataDirty = false; }
         else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
       });
-      // O cursor AGORA anda no quadro de animação (rAF do scheduler), sem redesenhar o gráfico.
-      this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateLive(timestamp));
+      // O cursor AGORA anda no quadro de animação (rAF do scheduler), sem redesenhar o gráfico; só enquanto a aba está aberta.
+      this.unsubscribeFrame = null;
       // Ao entrar na aba, desenha na hora (sem esperar o próximo tick).
       let lastRoute = null;
       this.store.subscribe(state => {
         if (state.route === lastRoute) return;
         lastRoute = state.route;
-        if (state.route === 'refino') this.enterRefreshPending = true;
+        if (state.route === 'refino') { this.enterRefreshPending = true; this.ensureFrame(); } else this.releaseFrame();
       }, true);
     }
 
@@ -259,7 +260,7 @@
               <div class="autocal-title-line"><h3>Refino</h3><span id="refinoPhaseChip" class="autocal-fuel-chip" data-fuel-state="unknown">—</span></div>
             </div>
             <div class="autocal-focus-metrics" aria-live="polite">
-              <div class="autocal-focus-metric"><small>Diferença média</small><b><span id="refinoRatio">—</span></b></div>
+              <div class="autocal-focus-metric"><small>Erro GNV × gasolina</small><b><span id="refinoRatio">—</span></b></div>
             </div>
             <div class="autocal-focus-actions"><button type="button" class="autocal-primary-action" data-refino-primary hidden></button></div>
           </header>
@@ -289,7 +290,6 @@
               <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um marcador</b><span>Quanto maior e mais forte, mais leituras. Eu digo de quem é, quando foi medido e se conta para a curva.</span></aside>
             </div>
           </section>
-          <div id="refinoReview" class="autocal-review" hidden></div>
         </section>`;
       host.addEventListener('click', event => this.onClick(event));
     }
@@ -315,8 +315,6 @@
       if (go) { if (go.dataset.route) this.app.router?.open(go.dataset.route, go.dataset.subpage || ''); return; }
       if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true, true); return; }
       if (event.target.closest('[data-refino-primary]')) this.primary();
-      if (event.target.closest('[data-refino-cancel]')) this.closeReview();
-      if (event.target.closest('[data-refino-confirm]')) this.commitReview();
       if (event.target.closest('[data-refino-undo]')) this.openUndo();
       const dot = event.target.closest('[data-refino-dot]');
       if (dot) { this.inspect(dot.dataset.refinoDot); return; }
@@ -361,6 +359,7 @@
     }
 
     primary() {
+      if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       const action = primaryAction(this.eq, this.analysis);
       if (action.kind === 'review') this.openReview('apply');
       if (action.kind === 'restore') this.openReview('restore');
@@ -379,10 +378,7 @@
       if (kind === 'apply') { points = proposedPoints(this.analysis); title = 'Gravar curva refinada'; reason = 'Refino OMEGAS: curva refinada confirmada'; }
       if (kind === 'restore') { points = (this.eq?.restorePoints || []).map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.targetRaw) })); title = 'Restaurar trecho que piorou'; reason = 'Refino OMEGAS: restaurar trecho que piorou'; }
       if (kind === 'undo') { points = undoPoints(this.eq?.refinement?.latest); title = 'Desfazer última gravação'; reason = 'Refino OMEGAS: desfazer última gravação'; }
-      const pilot = this.eq?.autopilot || {};
-      // Prazo vencido no automático da ECU continua pedindo o aviso de revisão (a ECU ainda pode sobrescrever).
-      const phase = pilot.phase === 'TENTATIVA_ENCERRADA' ? pilot.expiredFrom : pilot.phase;
-      this.showReview(points, title, reason, '', kind === 'apply' ? phase : '');
+      this.showReview(points, title, reason, '');
     }
 
     /**
@@ -406,35 +402,23 @@
       });
     }
 
-    showReview(points, title, reason, restoreFile, phase) {
+    /** Um toque grava: sem diálogo de confirmação (a proteção é a foto antes + Desfazer depois). */
+    showReview(points, title, reason, restoreFile) {
       if (!points.length) return;
-      this.reviewPoints = { points, reason, restoreFile: restoreFile || '' };
-      const byIndex = new Map((this.analysis?.points || []).map(p => [Number(p.index), p]));
-      const rows = points.map(p => {
-        const ref = byIndex.get(p.index) || {};
-        const before = p.currentRaw / 16384;
-        const after = p.targetRaw / 16384;
-        return `<div><dt>${fmt(ref.referenceTimeMs, 1)} ms</dt><dd><b>${D.kValue(before)} → ${D.kValue(after)}</b> · ${pct(after / before)}${ref.origin ? ' · ' + escapeHtml(ORIGIN[ref.origin] || ref.origin) : ''}</dd></div>`;
-      }).join('');
-      const early = phase === 'ECU_TRABALHANDO'
-        ? '<p class="refino-warning">A ECU ainda está no automático e pode sobrescrever esta curva. O ideal é gravar quando ela terminar; o app avisa.</p>' : '';
-      const review = document.getElementById('refinoReview');
-      if (!review) return;
-      review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(title)} · ${D.plural(points.length, 'ponto', 'pontos')} da Curva K</h3></div><button type="button" data-refino-cancel class="icon-close" aria-label="Fechar revisão">×</button></header>${early}<dl class="refino-review-list">${rows}</dl><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Gravar é um toque: o app guarda a foto antes, grava e confere na ECU. Desfazer volta à foto.</span></div><div class="operation-actions"><button type="button" data-refino-cancel class="secondary">Cancelar</button><button type="button" data-refino-confirm class="primary">Gravar na ECU</button></div></div>`;
+      this.runWrite(points, reason, restoreFile || '');
     }
 
-    closeReview() {
-      this.reviewPoints = null;
-      const review = document.getElementById('refinoReview');
-      if (review) { review.hidden = true; review.innerHTML = ''; }
-    }
-
-    commitReview() {
-      const pending = this.reviewPoints;
-      this.closeReview();
-      if (!pending?.points?.length) return;
-      this.runWrite(pending.points, pending.reason, pending.restoreFile || '');
+    /** Resumo em uma linha, mostrado ANTES do toque: "10 pontos · mudança média +4,2% · maior +9% em 3,4–4,2 ms". */
+    changeSummary(points) {
+      const byIndex = new Map((Array.isArray(this.analysis?.points) ? this.analysis.points : []).map(p => [Number(p.index), p]));
+      const rows = points.map(p => ({ change: p.targetRaw / p.currentRaw - 1, ms: finite(byIndex.get(p.index)?.referenceTimeMs) })).filter(r => Number.isFinite(r.change));
+      if (!rows.length) return '';
+      const signed = value => `${value >= 0 ? '+' : '−'}${fmt(Math.abs(value) * 100, 1)}%`;
+      const mean = rows.reduce((sum, r) => sum + r.change, 0) / rows.length;
+      const peak = rows.reduce((best, r) => (Math.abs(r.change) > Math.abs(best.change) ? r : best), rows[0]);
+      const near = rows.filter(r => r.ms !== null && Math.abs(r.change) >= Math.abs(peak.change) * 0.8).map(r => r.ms);
+      const where = near.length ? ` em ${fmt(Math.min(...near), 1)}–${fmt(Math.max(...near), 1)} ms` : '';
+      return `${D.plural(rows.length, 'ponto', 'pontos')} · mudança média ${signed(mean)} · maior ${signed(peak.change).replace(/\.0%$/, '%')}${where}`;
     }
 
     /** Lê a Curva K nesta conexão, confere com o snapshot e só então grava (ACK + readback no Kotlin). */
@@ -542,8 +526,20 @@
             ? 'Parte dos pontos pode ter sido gravada. Toque em Desfazer para voltar à foto de antes, ou em Entendi para seguir.'
             : 'Nada foi gravado: a ECU manteve a curva anterior. Toque em Entendi e tente de novo quando a ECU estabilizar.')
           : '';
+      let summaryLine = next;
+      if (op.phase === 'idle') {
+        const act = primaryAction(eq, this.analysis);
+        const warnPhase = pilot.phase === 'TENTATIVA_ENCERRADA' ? pilot.expiredFrom : pilot.phase;
+        if (act.kind === 'review') {
+          summaryLine = this.changeSummary(proposedPoints(this.analysis));
+          if (warnPhase === 'ECU_TRABALHANDO') summaryLine += ' · A ECU ainda estava no automático e pode sobrescrever esta curva.';
+        }
+        else if (act.kind === 'waiting' && (pilot.phase === 'ECU_TRABALHANDO' || pilot.phase === 'LENDO_ECU' || pilot.phase === 'SEM_ECU') && proposedPoints(this.analysis).length) {
+          summaryLine = 'A ECU ainda está no automático e pode sobrescrever esta curva. O botão libera quando ela terminar.';
+        }
+      }
       const resetText = op.phase === 'idle' ? D.gasResetNote(eq.gasEpochReason, eq.gasEpochAt) || '' : '';
-      const nextLine = [next, resetText].filter(Boolean).join(' ');
+      const nextLine = [summaryLine, resetText].filter(Boolean).join(' ');
       const nextNode = document.getElementById('refinoNext');
       if (nextNode) { nextNode.hidden = !nextLine; setText('refinoNext', nextLine); }
       // Histórico continua no gráfico/diário; o destaque atual exige uma fase com fonte conhecida.
@@ -563,10 +559,15 @@
         const near = finite(stalls.nearCount) ?? 0;
         stallNode.hidden = !(real > 0 || near > 0);
         const plural = n => (n === 1 ? 'vez' : 'vezes');
-        const parts = [];
-        if (real > 0) parts.push(`apagou ${fmt(real, 0)} ${plural(real)}${finite(stalls.restartedCount) ? ` (religou ${fmt(stalls.restartedCount, 0)})` : ''}`);
-        if (near > 0) parts.push(`quase apagou ${fmt(near, 0)} ${plural(near)}`);
-        const title = parts.length ? `Motor ${parts.join(' e ')} no GNV` : '';
+        const restarted = finite(stalls.restartedCount) ?? 0;
+        const religou = restarted > 0 ? (restarted >= real ? ' (religou)' : ` (religou ${fmt(restarted, 0)})`) : '';
+        let title = '';
+        if (real > 0) title = `O motor apagou ${fmt(real, 0)} ${plural(real)} no GNV${religou}.${near > 0 ? ` Quase apagou outras ${fmt(near, 0)}.` : ''}`;
+        else if (near > 0) title = `O motor quase apagou ${fmt(near, 0)} ${plural(near)} no GNV.`;
+        // Âmbar: histórico. Vermelho só se o motor está apagado AGORA (ECU conectada, rotação ~0).
+        const live = this.store.get();
+        const rpmNow = finite(live?.telemetry?.live?.rpm ?? live?.status?.rpm);
+        stallNode.dataset.tone = live?.status?.usbConnected === true && rpmNow !== null && rpmNow < 300 ? 'now' : 'history';
         const where = region ? `Mais perto da faixa ${D.msBand(region.fromMs, region.toMs)} · ${D.barUnit(region.mapBar)} (desaceleração ou embreagem). ` : '';
         const guard = fmt(this.analysis?.guards?.lowGuardMs, 1);
         this.stallDetail = title ? `${where}${guard === '—' ? '' : `O Refino nunca deixa a mistura mais pobre abaixo de ${guard} ms; `}se continuar, deixe a mistura mais rica nessa região, na Curva K. Desligar o carro na lenta não conta.` : '';
@@ -630,7 +631,7 @@
         go.dataset.act = strip.act && actOk ? strip.act : '';
         go.dataset.route = strip.act ? '' : strip.route;
         go.dataset.subpage = strip.act ? '' : strip.subpage;
-        setText('refinoEqGo', strip.act ? strip.actLabel : strip.routeLabel);
+        setText('refinoEqGo', strip.act === 'review' ? primaryNow.label : strip.act ? strip.actLabel : strip.routeLabel);
       }
     }
 
@@ -703,6 +704,14 @@
       const label = layer.querySelector('[data-autocal-live-label]');
       const text = projected.outOfRange ? 'Agora · fora da escala' : 'Agora';
       if (label && label.textContent !== text) label.textContent = text;
+    }
+
+    ensureFrame() {
+      if (!this.unsubscribeFrame && typeof this.scheduler.addFrameHook === 'function') this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateLive(timestamp));
+    }
+
+    releaseFrame() {
+      if (this.unsubscribeFrame) { this.unsubscribeFrame(); this.unsubscribeFrame = null; this.cursor.frameAt = null; }
     }
 
     /** Quadro de animação (rAF do scheduler): só na aba Refino; o alvo só é recalculado quando chega leitura nova. */

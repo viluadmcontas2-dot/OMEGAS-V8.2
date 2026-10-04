@@ -49,8 +49,9 @@
         this.api.requestBatteryOptimizationExemption?.();
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-request]')) {
-        this.api.requestOverlayPermissionAndEnable?.();
+        this.overlayReply = this.api.requestOverlayPermissionAndEnable?.() || null;
         this.toolsSignature = '';
+        this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-enable]')) {
         this.api.setTelemetryOverlayEnabled?.(true);
         this.toolsSignature = '';
@@ -152,11 +153,14 @@
 
       const battery = this.api.batteryOptimizationStatus?.() || {};
       const overlay = this.api.overlayStatus?.() || {};
+      const pilotReply = ns.AutoCalApi?.refinementPhase?.() || {};
+      const pilot = pilotReply.autopilot || {};
+      const reply = this.overlayReply || {};
       // Só redesenha quando algo visível mudou: redesenho a cada tick fechava seletores,
       // resetava a rolagem e engolia toques (a aba parecia travada).
       const signature = JSON.stringify([
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
-        Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
+        Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay, pilot, this.overlayReply,
         settings,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
@@ -208,6 +212,11 @@
 
         <details class="tool-logs live-log-console" ${logsOpenBeforeRender ? 'open' : ''}>
           <summary>Detalhes técnicos (${logs.length} eventos do sistema)</summary>
+          <dl class="tool-tech-rows" id="toolTechRows">
+            <div><dt>Pode desconectar (Refino)</dt><dd>${pilot.canDisconnect === true ? 'sim' : pilot.canDisconnect === false ? 'ainda não' : '—'}</dd></div>
+            <div><dt>Prazo da tentativa</dt><dd>${pilot.watchdogExpired === true ? 'vencido' : pilot.watchdogExpired === false ? 'dentro do prazo' : '—'}${pilot.timeoutReason ? ' · ' + escapeHtml(String(pilot.timeoutReason)) : ''}</dd></div>
+            <div><dt>Último pedido do balão</dt><dd>${this.overlayReply ? (reply.permissionRequired === true ? 'precisa de autorização' : reply.launched === true ? 'tela de autorização aberta' : reply.ok === false ? 'não foi possível abrir a autorização' : 'enviado') : '—'}</dd></div>
+          </dl>
           <div class="recorder-actions">
             <button type="button" class="secondary" data-tool-export-logs>Exportar logs</button>
             <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>

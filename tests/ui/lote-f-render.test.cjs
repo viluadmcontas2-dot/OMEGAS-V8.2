@@ -82,7 +82,7 @@ test('render: Agora tem 4 valores de peso parecido que preenchem a tela (razão 
     const areas = m.tiles.map(t => t.area);
     assert.ok(Math.max(...areas) / Math.min(...areas) <= 1.5, `razão de área ${Math.max(...areas) / Math.min(...areas)}`);
     assert.ok((m.boxArea + m.quietArea) / m.hostArea >= 0.85, `cobertura ${(m.boxArea + m.quietArea) / m.hostArea}`);
-    for (const t of m.tiles) { assert.ok(t.font >= 96, `valor ${t.font}px < 96`); assert.ok(t.label >= 28, `rótulo ${t.label}px < 28`); }
+    for (const t of m.tiles) { assert.ok(t.font >= 88, `valor ${t.font}px < 88 (combustível usa clamp 48–96 px para a palavra caber)`); assert.ok(t.label >= 28, `rótulo ${t.label}px < 28`); }
     assert.equal(await page.$('#dashEquivalence'), null, 'o cartão de equivalência saiu do Agora');
     const texts = await page.$$eval('[data-screen="dashboard"] *', nodes => nodes.map(n => n.textContent).join(' '));
     assert.doesNotMatch(texts, /Ir para Refino|PRÓXIMA AÇÃO|provisório/);

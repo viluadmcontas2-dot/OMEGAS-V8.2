@@ -49,3 +49,7 @@ Ordem = impacto para o dono (maior primeiro).
 Corrigidos no app (probes não reproduzem mais; testes de uso estritos, 0 `todo`): 1, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 e os mortos de 7 (leituras de sugestão removidas).
 Abertos de propósito (mudam o que o dono vê; decisão de produto), seguem em `allowlist.json` e o teste de grafo exige que continuem violando: 2 (`safetyBlocked`/`writerState`), 3 (`relearnSuggested`/`ecuDrift`), 4 (resposta do pedido de overlay), 5 (`canDisconnect`/`timeoutReason`/`watchdogExpired`), 6 (`typicalBands`), 8 (`indexStart`/`indexEnd`).
 Mutantes: 34, 32 mortos (94%). Sobreviventes equivalentes: `curve-listener-registered-twice` (a guarda de ocupado de `writePrepared` absorve o ouvinte duplicado) e `curve-learning-chart-empty-array` (sem fatores nada é desenhado).
+
+## Final (2026-10-04)
+
+Decididos e corrigidos (allowlist sem `defects`/`consumer_defects` de 2,3,4,5,6,8): 2 = motivo humano de bloqueio em `DisplayRules.failureText`; 3 = linha discreta no AutoCal; 4 e 5 = Ferramentas > Detalhes técnicos; 6 = `typicalBands` deixou de ser emitido; 8 = `indexStart/indexEnd` emitidos pelo livro semântico da sessão.

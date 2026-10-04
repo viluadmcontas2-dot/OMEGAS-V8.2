@@ -8,7 +8,7 @@
   // Texto da narrativa: no máximo 2 Hz, ou na hora quando muda região/combustível/estado.
   const AUTO_CAL_NARRATIVE_MS = ns.LiveStore.NARRATIVE_MS;
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
-  const AUTO_CAL_X_AXIS_LABEL = 'Petrol Inj. (ms)';
+  const AUTO_CAL_X_AXIS_LABEL = 'Injeção (ms)';
 
   const D = ns.DisplayRules;
   const finite = D.finite;
@@ -27,8 +27,8 @@
       DISABLE_AUTO_CAL: 'Pausar a leitura da ECU',
       FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
       FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
-      RESET_PETROL: 'Ler a gasolina de novo',
-      RESET_GAS: 'Ler o GNV de novo',
+      RESET_PETROL: 'Reler gasolina',
+      RESET_GAS: 'Reler GNV',
       RESET_K_FACTOR: 'Resetar Curva K para 1,000',
       RESET_ALL: 'Nova leitura completa',
     })[action] || action;
@@ -258,7 +258,7 @@
       const raw = String(value || '').trim().toUpperCase();
       if (!raw || raw === '—' || raw === '--') return { kind: 'unknown', label: '—', active: false };
       if (raw.includes('TRANS') || raw.includes('COMUT')) return { kind: 'transition', label: 'Transição', active: false };
-      if (raw.includes('CUTOFF')) return { kind: 'cutoff', label: 'Cutoff', active: false };
+      if (raw.includes('CUTOFF')) return { kind: 'cutoff', label: 'Corte', active: false };
       if (raw.includes('DESLIG') || raw.includes('SEM_MOTOR') || raw.includes('ENGINE_OFF')) {
         return { kind: 'off', label: 'Desligado', active: false };
       }
@@ -721,7 +721,7 @@
                   <b><span id="autocalLiveMap">—</span><em>bar</em></b>
                 </div>
                 <div class="autocal-focus-metric">
-                  <small>Petrol Inj.</small>
+                  <small>Injeção</small>
                   <b><span id="autocalLivePetrol">—</span><em>ms</em></b>
                 </div>
                 <div class="autocal-focus-metric">
@@ -738,12 +738,12 @@
 
               <div class="autocal-focus-actions">
                 <span id="autocalNativeState" hidden>Leitura da ECU: aguardando</span>
-                <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Ler o GNV de novo</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Ler a gasolina de novo</button>
+                <button type="button" data-autocal-toggle class="autocal-primary-action" data-loading="true" disabled>Lendo estado…</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
                 <details class="autocal-reset-menu">
-                  <summary>Ações avançadas</summary>
-                  <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
+                  <summary>Mais opções</summary>
+                  <div class="autocal-reset-popover" aria-label="Mais opções do AutoCal">
                     <section class="autocal-reset-group" data-reset-scope="advanced">
                       <small>CONTROLE MANUAL</small>
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
@@ -777,6 +777,7 @@
                   <h3 id="autocalHumanTitle">Aguardando AutoCal</h3>
                   <p id="autocalHumanProgress">Gasolina —/4 zonas · GNV —/4 zonas</p>
                   <strong id="autocalHumanAction">A leitura nativa é automática; aguardando o próximo estado confirmado.</strong>
+                  <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência · ver Detalhes técnicos</small>
                 </div>
               </header>
 
@@ -826,6 +827,7 @@
                   <div><small>SNAPSHOT</small><b id="autocalSnapshotHash">—</b></div>
                   <div><small>FONTE DA REFERÊNCIA</small><b id="autocalReferenceSource">—</b></div>
                   <div><small>EVENTOS DESTA LEITURA</small><b id="autocalMaturityRaw">—</b></div>
+                  <div><small>DESVIO DA ECU × REFERÊNCIA</small><b id="autocalDriftRaw">—</b></div>
                 </div>
                 <section class="autocal-bands-card autocal-bands-technical">
                   <div class="autocal-section-head compact"><div><small>18 REGIÕES · DETALHE TÉCNICO</small><h4>Atividade nativa por região</h4></div></div>
@@ -1116,6 +1118,7 @@
       this.text('autocalHumanProgress', human.progress);
       this.text('autocalHumanAction', human.nextAction);
       this.text('autocalHumanAutoMatch', human.autoMatch);
+      this.renderRelearn();
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
       const autoMatchEvidence = document.getElementById('autocalAutoMatchEvidence');
@@ -1141,7 +1144,8 @@
           ? 'Confirmando ECU…'
           : action === 'DISABLE_AUTO_CAL'
             ? 'Pausar leitura'
-            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar leitura' : 'Aguardando estado';
+            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar leitura' : 'Lendo estado…';
+        toggle.dataset.loading = action || this.operationalPending ? 'false' : 'true';
       }
 
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
@@ -1197,6 +1201,19 @@
       }).join('');
     }
 
+    /** Uma linha discreta, só quando o cérebro diz que a ECU reaprendeu (ecuDrift/relearnSuggested); senão nada. */
+    renderRelearn() {
+      const eq = ns.CurveChart?.evidence?.eq || null;
+      const reference = eq?.reference || {};
+      const drift = finite(reference.ecuDrift);
+      const cells = [].concat(eq?.ownPetrol?.cells || [], eq?.ownGas?.cells || []);
+      // 0,08 = EquivalenceTolerances.DIVERGENCE_ALARM (Kotlin); a flag por célula vale sozinha.
+      const relearned = cells.some(cell => cell && cell.relearnSuggested === true) || (drift !== null && Math.abs(drift) > 0.08);
+      const note = document.getElementById('autocalRelearnNote');
+      if (note) note.hidden = !relearned;
+      this.text('autocalDriftRaw', drift === null ? '—' : (drift * 100).toFixed(1).replace('.', ',') + ' %');
+    }
+
     renderLiveNarrative() {
       const telemetry = this.store.get().telemetry || {};
       const live = AutoCalUxModel.livePoint(telemetry, this.projection);
@@ -1213,7 +1230,7 @@
         this.text('autocalLiveZone', '—');
         this.text('autocalLiveNarrative', stale
           ? 'Leitura atrasada há ' + Math.round(ageMs / 1000) + ' s: a última leitura passou da janela curta. AGORA foi ocultado até chegar uma leitura nova; a referência da ECU não foi alterada.'
-          : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira ponto lido pela ECU.');
+          : 'O cursor AGORA aparece quando RPM, Injeção e MAP chegam válidos. Ele nunca vira ponto lido pela ECU.');
         return;
       }
       const rpmLabel = live.rpm === null ? 'RPM —' : Math.round(live.rpm).toLocaleString('pt-BR') + ' RPM';
@@ -1263,8 +1280,8 @@
       const layer = this.panel?.querySelector('.autocal-live-layer');
       const bandLayer = this.panel?.querySelector('[data-autocal-current-band]');
       if (!live) {
-        if (layer) layer.setAttribute('display', 'none');
-        if (bandLayer) bandLayer.setAttribute('display', 'none');
+        D.setAttrIfChanged(layer, 'display', 'none');
+        D.setAttrIfChanged(bandLayer, 'display', 'none');
         this.cursor.clear();
         return;
       }
@@ -1277,23 +1294,23 @@
           const x2 = scale.xFor(scale.xMax);
           const y1 = scale.yFor(lower);
           const y2 = scale.yFor(upper);
-          bandLayer.removeAttribute('display');
-          bandLayer.setAttribute('data-band-index', String(band.index));
-          bandLayer.setAttribute('x', Math.min(x1, x2).toFixed(1));
-          bandLayer.setAttribute('width', Math.abs(x2 - x1).toFixed(1));
-          bandLayer.setAttribute('y', Math.min(y1, y2).toFixed(1));
-          bandLayer.setAttribute('height', Math.max(1, Math.abs(y2 - y1)).toFixed(1));
+          D.removeAttrIfPresent(bandLayer, 'display');
+          D.setAttrIfChanged(bandLayer, 'data-band-index', String(band.index));
+          D.setAttrIfChanged(bandLayer, 'x', Math.min(x1, x2).toFixed(1));
+          D.setAttrIfChanged(bandLayer, 'width', Math.abs(x2 - x1).toFixed(1));
+          D.setAttrIfChanged(bandLayer, 'y', Math.min(y1, y2).toFixed(1));
+          D.setAttrIfChanged(bandLayer, 'height', Math.max(1, Math.abs(y2 - y1)).toFixed(1));
         } else {
-          bandLayer.setAttribute('display', 'none');
-          bandLayer.removeAttribute('data-band-index');
+          D.setAttrIfChanged(bandLayer, 'display', 'none');
+          D.removeAttrIfPresent(bandLayer, 'data-band-index');
         }
       }
       if (!scale || !layer) return;
       const projected = AutoCalUxModel.projectLive(live, scale);
       if (!projected) return;
-      layer.removeAttribute('display');
-      layer.setAttribute('data-out-of-range', projected.outOfRange ? 'true' : 'false');
-      layer.setAttribute('data-stale', live.grey ? 'true' : 'false');
+      D.removeAttrIfPresent(layer, 'display');
+      D.setAttrIfChanged(layer, 'data-out-of-range', projected.outOfRange ? 'true' : 'false');
+      D.setAttrIfChanged(layer, 'data-stale', live.grey ? 'true' : 'false');
       // O alvo muda a cada quadro novo; quem move o ponto é o quadro de animação (CSS transform, ease ~150 ms).
       this.cursor.setTarget(projected.x, projected.y, scale, projected.outOfRange);
       if (typeof this.scheduler?.addFrameHook !== 'function' || seen?.scale !== this.chartScale) this.cursor.paint();
@@ -1358,13 +1375,13 @@
       this.panel?.querySelectorAll('.autocal-zone-cell').forEach(node => {
         const rawIndex = node.dataset.autocalZonePetrol ?? node.dataset.autocalZoneGas;
         const zone = Number(rawIndex) + 1;
-        node.dataset.current = currentZone !== null && zone === currentZone ? 'true' : 'false';
+        D.setDataIfChanged(node, 'current', currentZone !== null && zone === currentZone ? 'true' : 'false');
       });
       this.panel?.querySelectorAll('[data-autocal-zone-surface]').forEach(node => {
         const current = currentZone !== null && Number(node.dataset.autocalZoneSurface) === currentZone;
-        node.dataset.current = current ? 'true' : 'false';
+        D.setDataIfChanged(node, 'current', current ? 'true' : 'false');
         const label = node.querySelector('[data-autocal-zone-label]');
-        if (label) label.textContent = label.dataset.baseLabel + (current ? ' · AGORA' : '');
+        if (label) D.setTextIfChanged(label, label.dataset.baseLabel);
       });
     }
 
@@ -1552,7 +1569,7 @@
           host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
           this.text('autocalChartInspector', live
             ? 'AGORA: ' + D.msUnit(live.petrolMs) + ' · ' + D.barUnit(live.mapBar) + '. Referência da ECU indisponível.'
-            : 'Aguardando Petrol Inj. e MAP nativos.');
+            : 'Aguardando Injeção e MAP nativos.');
         }
         this.renderLiveNarrative();
         return;
@@ -1763,7 +1780,7 @@
       const mapDelta = point.gasMapBar - point.petrolMapBar;
       host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + D.msUnit(point.petrolMs) + '</b>' +
         '<span>MAP gasolina ' + D.barUnit(point.petrolMapBar) + ' · MAP GNV ' + D.barUnit(point.gasMapBar) +
-        ' · ΔMAP ' + (mapDelta > 0 ? '+' : '') + D.barUnit(mapDelta) +
+        ' · diferença de MAP ' + (mapDelta > 0 ? '+' : '') + D.barUnit(mapDelta) +
         (finite(point.gasEquivalentMs) === null ? '' : ' · GNV equivalente ' + D.msUnit(point.gasEquivalentMs)) + '</span>';
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));

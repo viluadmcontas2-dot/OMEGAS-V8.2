@@ -111,10 +111,12 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
   gap: 0;
   margin: 0;
   padding: 4px 10px;
-  border-color: var(--state-error);
+  border-color: var(--state-warn);
   background: var(--surface);
 }
-.refino-actions-row .refino-stalls b { color: var(--state-error); font-size: 16px; line-height: 1.2; }
+.refino-actions-row .refino-stalls[data-tone="now"] { border-color: var(--state-error); }
+.refino-actions-row .refino-stalls[data-tone="now"] b { color: var(--state-error); }
+.refino-actions-row .refino-stalls b { color: var(--state-warn); font-size: 16px; line-height: 1.2; }
 .refino-actions-row .refino-stalls span { color: var(--muted); font-size: 16px; line-height: 1.2; }
 .refino-actions-row details { position: relative; flex: 0 0 auto; margin: 0; }
 .refino-actions-row details > summary { min-height: var(--touch-min); display: flex; align-items: center; gap: 12px; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: var(--text-critical); list-style: none; }
@@ -145,7 +147,7 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 }
 .refino-chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; padding: 6px 10px 4px; }
 .refino-cockpit .autocal-plot-title { position: static; font-size: 16px; font-weight: 800; letter-spacing: .02em; }
-.refino-cockpit .autocal-chart-legend { display: flex; flex-wrap: wrap; gap: 2px 16px; min-height: 0; margin: 0; padding: 0; border: 0; background: none; font-size: 16px; color: var(--muted); }
+.refino-cockpit .autocal-chart-legend { display: flex; flex-wrap: wrap; gap: 2px 16px; min-height: 0; margin: 0; padding: 0; border: 0; background: none; font-size: 20px; color: var(--muted); }
 .refino-cockpit .autocal-chart-workspace { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "chart inspector"; gap: 8px; padding: 0 8px; }
 .refino-cockpit .autocal-chart-host { grid-area: chart; height: 100% !important; min-height: 140px !important; }
 .refino-cockpit .autocal-chart-inspector { grid-area: inspector; max-height: none; overflow: auto; padding: 8px 10px; }
@@ -165,16 +167,13 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 .chart-whisker { stroke: var(--tone-ffb547); stroke-width: 1.5; stroke-opacity: .7; }
 .chart-proposal { fill: none; stroke: var(--accent); stroke-width: 2.5; }
 .curve-chart-shared, .curve-chart-shared svg { width: 100%; height: 100%; display: block; }
-.autocal-axis-tick-x, .autocal-axis-tick-y, .autocal-axis-title, .autocal-zone-label, .autocal-live-label { font-size: 16px; }
+.autocal-axis-tick-x, .autocal-axis-tick-y, .autocal-axis-title, .autocal-zone-label, .autocal-live-label { font-size: 22px; }
 .autocal-primary-action[data-kind="review"] { background: var(--accent); border-color: var(--accent); color: var(--text); }
 
 /* Revisão: o cartão cabe no conteúdo; a lista usa duas colunas e rola com dica visível. */
 .refino-cockpit .autocal-review-card { width: min(900px, 100%); }
-.refino-review-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; max-height: 300px; overflow-y: auto; }
-.refino-review-list > div { grid-template-columns: 90px minmax(0, 1fr); }
 .refino-cockpit .autocal-review-card p, .refino-cockpit .autocal-review-card dd, .refino-cockpit .autocal-review-card dt, .refino-cockpit .autocal-review-card span { font-size: 16px; }
 .refino-cockpit .autocal-review-card h3 { font-size: var(--text-critical); }
-.refino-warning { color: var(--state-warn); font-size: 16px; }
 
 /* Refino · ajustes de linha */
 .refino-cockpit .autocal-focus-toolbar { display: flex; align-items: center; gap: 12px; }
@@ -364,7 +363,7 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 
 /* ---------------------------------------------------------------- Pisos de texto (F3.9): corpo/microtexto >= 16 px; o que carrega valor ou ação >= 24 px */
 html body .curve-chart-shared text { font-size: 16px; }
-html body .curve-chart-shared text.autocal-zone-label { font-size: 16px; }
+html body .curve-chart-shared text.autocal-zone-label { font-size: 22px; }
 html body .sr-only { font-size: 16px; }
 
 html body .utility-screen :is(small, span, p, dd, dt, li, label, em, i) { font-size: 16px; }
@@ -417,3 +416,19 @@ html body .diagnostic-settings-grid .check-setting:has(input:checked)::after {
 
 .utility-screen .page-intro p:empty { display: none; }
 html body .utility-screen .background-health-grid { display: flex; flex-wrap: wrap; gap: 4px 32px; }
+
+/* Agora: a faixa de cabeçalho some (o cartão de saúde e a barra lateral já dizem "ECU online" uma vez só). */
+body[data-omegas-route="dashboard"] .workspace-head { display: block; height: 0; min-height: 0; margin: 0; padding: 0; border: 0; overflow: hidden; visibility: hidden; }
+
+/* Mapa K: o botão de gravar nunca fica cortado nem em duas linhas. */
+#mapReviewButton { min-height: 76px; white-space: nowrap; }
+/* AutoCal: estado ainda não lido = spinner, não botão morto. */
+.autocal-primary-action[data-loading="true"]::before {
+  content: ""; display: inline-block; width: 18px; height: 18px; margin-right: 10px; vertical-align: -3px;
+  border: 3px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: omegas-spin .9s linear infinite;
+}
+@keyframes omegas-spin { to { transform: rotate(360deg); } }
+
+/* "ECU online" aparece uma vez só (barra lateral): a faixa do cabeçalho não repete. */
+.workspace-head .vehicle-status-strip [data-vehicle-fact="ecu"] { display: none; }
+.workspace-head .vehicle-status-strip { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }

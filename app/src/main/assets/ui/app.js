@@ -437,7 +437,7 @@
       box.innerHTML = `<div class="overlay-prompt-card">
         <small>TELEMETRIA FLUTUANTE</small>
         <h3>Ver a telemetria por cima de outros apps?</h3>
-        <p>Um balão com combustível, RPM, Petrol Inj., MAP e gás aparece quando você usa o mapa ou a música, e nunca cobre o OMEGAS. Só mostra números: não mexe na ECU.</p>
+        <p>Um balão com combustível, RPM, Injeção, MAP e gás aparece quando você usa o mapa ou a música, e nunca cobre o OMEGAS. Só mostra números: não mexe na ECU.</p>
         <p>Ao tocar em <b>Autorizar agora</b>, o Android abre a tela certa: marque o OMEGAS e volte.</p>
         <div class="overlay-prompt-actions">
           <button type="button" class="primary" data-overlay-prompt="yes">Autorizar agora</button>

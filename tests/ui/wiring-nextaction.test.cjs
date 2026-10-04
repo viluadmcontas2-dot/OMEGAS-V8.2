@@ -71,15 +71,15 @@ test('FREEZE_REFERENCE: Desfazer só com referência anterior (senão falharia);
   assert.equal(c.byId('refinoEqUnfreeze').hasAttribute('hidden'), true, 'primeira referência: sem anterior, não oferece um Desfazer que falharia');
 });
 
-test('APPLY: o botão da faixa abre a revisão (Revisar e gravar) sem enviar nada à ECU', () => {
+test('APPLY: o botão da faixa grava em UM toque (sem modal): lê, confere e grava', () => {
   const a = app('APPLY');
   assert.ok(shown(go(a)), 'botão presente');
-  assert.equal(go(a).textContent.trim(), 'Revisar e gravar');
+  assert.match(go(a).textContent.trim(), /^Gravar \d+ pontos?$/);
+  assert.equal(a.byId('refinoReview'), null, 'não existe modal de revisão');
+  assert.match(a.byId('refinoNext').textContent, /pontos? · mudança média .* · maior /, 'resumo em linha antes do toque');
   const mark = a.world.mark();
   go(a).click(); a.flush();
-  const review = a.byId('refinoReview');
-  assert.ok(review && !review.hasAttribute('hidden'), 'a revisão abriu');
-  assert.deepEqual(L.actionCalls(a, mark), [], 'revisar não envia nada');
+  assert.deepEqual(L.actionCalls(a, mark), ['startCurveRead'], 'um toque já inicia a leitura de conferência/gravação')
 });
 
 test('APPLY sem proposta liberada (ECU no automático): sem botão morto na faixa', () => {

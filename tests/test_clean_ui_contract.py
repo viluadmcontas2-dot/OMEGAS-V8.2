@@ -85,12 +85,12 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot(lastPresentSequence)", self.app)
 
     def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
-        self.assertIn('PETROL INJECTION', self.dashboard)
+        self.assertIn('INJEÇÃO', self.dashboard)
         self.assertIn('dashHeroPetrol', self.dashboard)
         self.assertIn('now-dashboard-shell', self.dashboard)
         for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashRefino', 'dashCell'):
             self.assertIn(marker, self.dashboard)
-        self.assertIn('LEVELS RAW', self.dashboard)
+        self.assertIn('NÍVEIS', self.dashboard)
         self.assertIn('level_raw', self.dashboard)
         self.assertNotIn('level_percentage', self.dashboard)
         self.assertNotIn('dashHeroRpm', self.dashboard)
@@ -137,7 +137,8 @@ class CleanUiContract(unittest.TestCase):
     def test_refino_never_writes_without_review_and_readback(self):
         self.assertNotIn('writeMap(', self.refino_screen)
         self.assertNotIn('startKBatchWrite(', self.refino_screen)
-        self.assertIn("data-refino-confirm", self.refino_screen)
+        self.assertNotIn("data-refino-confirm", self.refino_screen)  # um toque grava, sem modal; a leitura de conferência vem antes
+        self.assertIn("startCurveRead", self.refino_screen)
         self.assertIn("state === 'BATCH_CONFIRMED' && done.readbackValid === true", self.refino_screen)
         self.assertIn('A Curva K da ECU mudou', self.refino_screen)
 

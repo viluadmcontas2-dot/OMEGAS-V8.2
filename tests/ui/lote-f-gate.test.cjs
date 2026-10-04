@@ -114,5 +114,5 @@ test('pisos de texto e toque do Lote F: 16 px para microtexto, 24 px para valore
 test('uma ação primária só: botão primário usa o accent; vermelho/âmbar só em perigo e atenção', () => {
   const lote = read('styles-lote-f.css');
   assert.match(lote, /\.primary,[\s\S]*?\.autocal-primary-action[\s\S]*?background:\s*var\(--accent\)/);
-  assert.match(read('screens/refino.js'), /class="primary">Gravar na ECU/, 'a revisão do Refino usa o estilo primário, não o vermelho de perigo');
+  assert.doesNotMatch(read('screens/refino.js'), /class="primary">Gravar na ECU|data-refino-confirm/, 'o Refino grava em um toque, sem modal de revisão');
 });

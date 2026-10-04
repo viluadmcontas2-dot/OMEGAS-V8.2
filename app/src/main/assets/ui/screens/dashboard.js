@@ -10,6 +10,8 @@
       if (!node) return;
       const next = value == null ? "\u2014" : String(value);
       if (node.textContent !== next) node.textContent = next;
+      const empty = next === "\u2014" ? "true" : "false";
+      if (node.dataset.empty !== empty) node.dataset.empty = empty;
     }
     function live(state) {
       const telemetry = state.telemetry || {};
@@ -44,7 +46,7 @@
           });
         }
         // Agora e para dirigir (D1): 4 valores de peso igual, lidos a bra\xe7o esticado; o resto \xe9 uma faixa fina embaixo.
-        this.root.innerHTML = '\n        <div class="now-dashboard-shell">\n          <section class="now-tile-grid" aria-label="Leitura principal">\n            <article class="now-tile" data-tile="petrol"><small>PETROL INJECTION</small><b><span id="dashHeroPetrol">\u2014</span><em>ms</em></b></article>\n            <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">\u2014</span><em>rpm</em></b></article>\n            <article class="now-tile" data-tile="map"><small>MAP</small><b><span id="dashMap">\u2014</span><em>bar</em></b></article>\n            <article class="now-tile" data-tile="fuel"><small>COMBUST\xcdVEL</small><b><span id="dashFuel">\u2014</span></b></article>\n          </section>\n\n          <section class="now-quiet-row" aria-label="Condi\xe7\xe3o e apoio">\n            <div id="dashHealth" class="now-session-card" data-level="offline">\n              <span class="state-indicator"></span>\n              <div class="now-session-copy"><b>Sem cabo</b><p data-health-detail>Conecte o cabo USB na ECU</p></div>\n            </div>\n            <article class="now-quiet-tile"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b></article>\n            <article class="now-quiet-tile"><small>C\xc9LULA</small><b id="dashCell">\u2014</b></article>\n            <article class="now-quiet-tile now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b></article>\n          </section>\n        </div>';
+        this.root.innerHTML = '\n        <div class="now-dashboard-shell">\n          <section class="now-tile-grid" aria-label="Leitura principal">\n            <article class="now-tile" data-tile="petrol"><small>INJEÇÃO</small><b><span id="dashHeroPetrol">\u2014</span><em>ms</em></b></article>\n            <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">\u2014</span><em>rpm</em></b></article>\n            <article class="now-tile" data-tile="map"><small>MAP</small><b><span id="dashMap">\u2014</span><em>bar</em></b></article>\n            <article class="now-tile" data-tile="fuel"><small>COMBUST\xcdVEL</small><b><span id="dashFuel">\u2014</span></b><span class="now-tile-sub" id="dashFuelSub" hidden></span></article>\n          </section>\n\n          <section class="now-quiet-row" aria-label="Condi\xe7\xe3o e apoio">\n            <div id="dashHealth" class="now-session-card" data-level="offline">\n              <span class="state-indicator"></span>\n              <div class="now-session-copy"><b>Sem cabo</b><p data-health-detail>Conecte o cabo USB na ECU</p></div>\n            </div>\n            <article class="now-quiet-tile" id="dashLevelsTile" hidden><small>NÍVEIS</small><b id="dashLevelsRaw">\u2014</b></article>\n            <article class="now-quiet-tile"><small>C\xc9LULA</small><b id="dashCell">\u2014</b></article>\n            <article class="now-quiet-tile now-refino-card" id="dashRefinoTile" hidden role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b></article>\n          </section>\n        </div>';
       }
       /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
       renderRefino() {
@@ -54,7 +56,10 @@
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const eq = api && typeof api.refinementPhase === "function" ? api.refinementPhase() : null;
         const pilot = eq && eq.autopilot || {};
-        text("dashRefino", rules.phaseLabel(pilot.phase, pilot.expiredFrom));
+        const refinoLabel = pilot.phase ? rules.phaseLabel(pilot.phase, pilot.expiredFrom) : "\u2014";
+        text("dashRefino", refinoLabel);
+        const refinoTile = document.getElementById("dashRefinoTile");
+        if (refinoTile) refinoTile.hidden = !refinoLabel || refinoLabel === "\u2014";
       }
       render(state) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
@@ -79,10 +84,15 @@
         const stuck = status.engineStuck === true;
         const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
         const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
-        text("dashHeroPetrol", rules.ms(petrol));
+        const cutoff = fuel === "CORTE";
+        text("dashHeroPetrol", cutoff ? "\u2014" : rules.ms(petrol));
         text("dashRpm", rules.rpm(rpm));
         text("dashMap", rules.bar(map));
         text("dashFuel", fuel);
+        const fuelSub = document.getElementById("dashFuelSub");
+        if (fuelSub) { fuelSub.hidden = !cutoff; fuelSub.textContent = cutoff ? "Desacelerando" : ""; }
+        const levelsTile = document.getElementById("dashLevelsTile");
+        if (levelsTile) levelsTile.hidden = levelsRaw === null;
         text("dashLevelsRaw", levelsRaw === null ? "\u2014" : Math.round(levelsRaw).toLocaleString("pt-BR"));
         this.renderRefino();
         text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");

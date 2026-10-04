@@ -207,7 +207,7 @@ assert.equal(typeof model.updateChartView, 'undefined', 'gráfico físico não p
 assert.equal(source.includes('data-autocal-chart-action="zoom-in"'), false);
 assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), false);
 assert.equal(source.includes('data-autocal-chart-action="fit"'), false);
-assert.equal(source.includes('Petrol Inj. (ms)'), true, 'eixo X precisa manter unidade física');
+assert.equal(source.includes('Injeção (ms)'), true, 'eixo X precisa manter unidade física');
 assert.equal(source.includes('MAP (bar)'), true, 'eixo Y precisa manter unidade física');
 assert.equal(source.includes('data-autocal-history'), true, 'comparação com leitura anterior deve permanecer disponível');
 assert.equal(source.includes('data-autocal-toggle'), true);

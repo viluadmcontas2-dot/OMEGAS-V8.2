@@ -281,7 +281,7 @@ test('operação na ECU: mesma fala (etapa → resultado → Desfazer/Voltar) e 
     assert.match(source, /wording\(\)\.doneTitle/);
     assert.match(source, /wording\(\)\.failedTitle/);
   }
-  assert.match(read('screens/refino.js'), /commitReview\(\)/);
+  assert.doesNotMatch(read('screens/refino.js'), /commitReview|data-refino-confirm|REVISÃO ANTES DA ECU/, 'Refino grava em um toque, sem modal');
 });
 
 test('reset da Curva K salva a foto antes e só zera depois dela', () => {

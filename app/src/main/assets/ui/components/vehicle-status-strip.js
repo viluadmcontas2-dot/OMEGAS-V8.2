@@ -9,7 +9,7 @@
     const value = String(raw || '—').toUpperCase();
     if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
     if (value.includes('CNG') || value.includes('GNV') || value === 'GAS') return 'GNV';
-    if (value.includes('CUTOFF')) return 'CUTOFF';
+    if (value.includes('CUTOFF')) return 'CORTE';
     if (value.includes('TRANS')) return 'TRANSIÇÃO';
     if (value.includes('OFF') || value.includes('DESLIG')) return 'DESLIGADO';
     return value || '—';
@@ -52,7 +52,7 @@
         <div data-vehicle-fact="freshness"><small>FRESCOR</small><b>—</b></div>
         <div data-vehicle-fact="fuel"><small>COMBUSTÍVEL</small><b>—</b></div>
         <div data-vehicle-fact="rpm"><small>RPM</small><b>—</b></div>
-        <div data-vehicle-fact="petrol"><small>PETROL INJ.</small><b>—</b></div>`;
+        <div data-vehicle-fact="petrol"><small>INJEÇÃO</small><b>—</b></div>`;
       header.appendChild(strip);
       return strip;
     }
@@ -82,7 +82,7 @@
     fact(key, value, state) {
       const node = this.node?.querySelector(`[data-vehicle-fact="${key}"]`);
       if (!node) return;
-      node.dataset.state = state || 'neutral';
+      ns.DisplayRules.setDataIfChanged(node, 'state', state || 'neutral');
       const target = node.querySelector('b');
       if (target && target.textContent !== String(value)) target.textContent = String(value);
     }

@@ -83,7 +83,7 @@
     if (!value || value === '--' || value === '—' || value === 'NULL' || value === 'UNDEFINED') return DASH;
     if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
     if (value.includes('CNG') || value.includes('GNV') || value.includes('GAS')) return 'GNV';
-    if (value.includes('CUTOFF')) return 'CUTOFF';
+    if (value.includes('CUTOFF')) return 'CORTE';
     if (value.includes('TRANS')) return 'TRANSIÇÃO';
     if (value.includes('OFF') || value.includes('DESLIG')) return 'DESLIGADO';
     return value;
@@ -151,9 +151,22 @@
     const kind = String(raw || '').toUpperCase();
     return kind === 'TRANSPORTE' || kind === 'ECU' ? kind : 'APP';
   }
+  /** Motivo da política de segurança (Kotlin: CalibrationWriteSafetyPolicy) em palavras simples + próxima ação. */
+  function safetyReason(raw) {
+    const text = String(raw || '');
+    if (/Telemetria não está atual/i.test(text)) return 'a telemetria está velha. Aguarde alguns segundos e toque de novo.';
+    if (/Conecte a ECU/i.test(text)) return 'a ECU não está conectada. Conecte o cabo e toque de novo.';
+    if (/Permissão USB/i.test(text)) return 'falta autorizar o USB no Android. Toque em Permitir.';
+    if (/Comunicação com a ECU/i.test(text)) return 'a comunicação com a ECU não está estável. Aguarde e toque de novo.';
+    if (/Serviço Android/i.test(text)) return 'o serviço do app não está rodando. Reabra o app.';
+    return text || 'a segurança não liberou a gravação agora.';
+  }
   function failureText(operation, fallback) {
     const op = operation || {};
     const failure = op.failure || {};
+    if (op.safetyBlocked === true || failure.safetyBlocked === true || String(op.writerState || '').startsWith('SAFETY_LOCKED')) {
+      return `Gravação bloqueada: ${safetyReason(op.error || failure.error || op.message)}`;
+    }
     const message = String(op.error || failure.error || failure.message || op.message || op.writerMessage || fallback || '').trim();
     const kind = failureKind(op);
     if (kind === 'TRANSPORTE') return `Cabo/USB: ${message || 'a comunicação com a ECU falhou'}`;
@@ -183,7 +196,7 @@
   function overlayState(status) {
     const s = status || {};
     if (s.supported === false) return { key: 'unsupported', title: 'Indisponível neste Android', help: 'Este Android não permite balão sobre outros apps.' };
-    if (s.permissionGranted !== true) return { key: 'needs-permission', title: 'Precisa de autorização', help: 'O balão mostra combustível, RPM, Petrol Inj., MAP e gás por cima de outros apps (mapa, música). Toque em Autorizar: o Android abre a tela certa, marque o OMEGAS e volte.' };
+    if (s.permissionGranted !== true) return { key: 'needs-permission', title: 'Precisa de autorização', help: 'O balão mostra combustível, RPM, Injeção, MAP e gás por cima de outros apps (mapa, música). Toque em Autorizar: o Android abre a tela certa, marque o OMEGAS e volte.' };
     if (s.requestedEnabled === true) return { key: 'on', title: 'Ligada', help: 'Aparece quando você sai do OMEGAS e nunca cobre o app. Arraste para mover e toque no Ω para abrir ou fechar.' };
     return { key: 'off', title: 'Desligada', help: 'Autorizada. Toque em Ativar para mostrar o balão quando você sair do OMEGAS.' };
   }
@@ -237,7 +250,36 @@
     return `Os pontos do OMEGAS no GNV recomeçaram${clock ? ' às ' + clock : ''} porque ${text} (o GNV medido com a curva antiga não vale para a nova).`;
   }
 
+  /** Escritas no DOM só quando o valor muda (mesmo valor = zero mutação, zero recálculo de estilo). */
+  function setAttrIfChanged(node, name, value) {
+    if (!node) return false;
+    const next = String(value);
+    if (node.getAttribute(name) === next) return false;
+    node.setAttribute(name, next);
+    return true;
+  }
+  function removeAttrIfPresent(node, name) {
+    if (!node || !node.hasAttribute(name)) return false;
+    node.removeAttribute(name);
+    return true;
+  }
+  function setDataIfChanged(node, key, value) {
+    if (!node) return false;
+    const next = String(value);
+    if (node.dataset[key] === next) return false;
+    node.dataset[key] = next;
+    return true;
+  }
+  function setTextIfChanged(node, value) {
+    if (!node) return false;
+    const next = String(value);
+    if (node.textContent === next) return false;
+    node.textContent = next;
+    return true;
+  }
+
   ns.DisplayRules = {
+    setAttrIfChanged, removeAttrIfPresent, setDataIfChanged, setTextIfChanged,
     DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, phaseLabel, PHASE_LABELS, connectionState, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
     ageLabel, sessionDate, OPERATION_WORDING, failureKind, failureText, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,

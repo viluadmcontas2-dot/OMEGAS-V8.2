@@ -1,7 +1,7 @@
 'use strict';
 // M4 · Refino: toda fase do piloto × com/sem proposta × proposta vencida.
 // Regras de PRODUTO (independentes do código): nada grava sozinho; enquanto a ECU faz o automático ou
-// o app mede a última gravação não se oferece gravar; "Revisar e gravar" só existe com proposta;
+// o app mede a última gravação não se oferece gravar; "Gravar N pontos" só existe com proposta;
 // só há UMA ação principal; o Desfazer fica visível FORA do <details>.
 const test = require('node:test');
 const L = require('./wiring/lib.cjs');
@@ -61,10 +61,9 @@ for (const c of CASES) {
     assert.ok(live.length <= 1);
     if (want === 'enabled') {
       btn.click(); app.flush();
-      const review = app.byId('refinoReview');
-      assert.ok(review && !review.hasAttribute('hidden'), 'tocar em Revisar não abriu a revisão antes da ECU');
-      assert.ok(review.querySelector('[data-refino-confirm]'), 'a revisão precisa do botão de confirmar');
-      assert.equal(app.world.calls.filter(x => WRITE_CALLS.includes(x.method)).length, 0, 'abrir a revisão já gravou');
+      assert.equal(app.byId('refinoReview'), null, 'não existe modal de revisão: um toque grava');
+      assert.ok(app.world.calls.some(x => x.method === 'startCurveRead'), 'o toque inicia a leitura de conferência da ECU');
+      assert.equal(btn.hasAttribute('disabled'), true, 'durante a leitura/gravação o botão fica bloqueado');
     }
     app.destroy();
   });

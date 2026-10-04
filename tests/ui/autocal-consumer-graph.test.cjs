@@ -37,7 +37,7 @@ for (const [selector, hook, handler] of controls) {
 
 assert.equal(cockpit.includes('data-autocal-chart-action'), false, 'zoom/pan genérico não pode voltar com eixos físicos fixos');
 assert.equal(cockpit.includes('updateChartView'), false, 'transformação visual desacoplada dos eixos não pode voltar');
-assert.ok(cockpit.includes('Petrol Inj. (ms)'), 'eixo X físico precisa permanecer explícito');
+assert.ok(cockpit.includes('Injeção (ms)'), 'eixo X físico precisa permanecer explícito');
 assert.ok(cockpit.includes('MAP (bar)'), 'eixo Y físico precisa permanecer explícito');
 assert.ok(cockpit.includes('data-autocal-history'), 'histórico de leitura continua sendo o controle gráfico permitido');
 

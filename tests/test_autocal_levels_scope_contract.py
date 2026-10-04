@@ -14,7 +14,7 @@ assert "autocalLiveLevel" not in cockpit
 assert "LEVELS RAW" not in cockpit
 assert "level_raw" not in cockpit
 
-assert "LEVELS RAW" in dashboard
+assert "NÍVEIS" in dashboard
 assert "dashLevelsRaw" in dashboard
 assert "level_raw" in dashboard
 

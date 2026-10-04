@@ -162,7 +162,7 @@
         rowHeader.className = 'map-axis-header map-ms-header';
         rowHeader.dataset.selectRow = String(row);
         rowHeader.innerHTML = `<b>${fmt(snapshot.axes.petrolBins[row], 1)} ms</b>`;
-        rowHeader.title = 'Selecionar ou desmarcar toda esta faixa de Petrol Inj.';
+        rowHeader.title = 'Selecionar ou desmarcar toda esta faixa de injeção';
         this.rowHeaders.push(rowHeader);
         table.appendChild(rowHeader);
         for (let column = 0; column < 12; column += 1) {
@@ -289,7 +289,7 @@
       const button = document.getElementById('mapReviewButton');
       if (button) {
         button.disabled = count === 0;
-        button.textContent = count ? `Gravar ${D().plural(count, 'alteração', 'alterações')} na ECU` : 'Selecione células';
+        button.textContent = count ? `Gravar ${D().plural(count, 'célula', 'células')}` : 'Selecione células';
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();

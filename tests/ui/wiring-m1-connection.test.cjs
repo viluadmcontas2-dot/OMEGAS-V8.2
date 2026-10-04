@@ -122,7 +122,7 @@ for (const name of STATES) {
       allow: (desc, el, app) => (el.attrs.get('data-route') === app.route() && /\bactive\b/.test(el.attrs.get('class') || '') ? 'aba já ativa: tocar de novo não muda nada' : ''),
     });
     assert.deepEqual(r.failures, [], `${name}: ${r.exercised}/${r.total} elementos`);
-    assert.ok(r.total >= 8, 'o trilho (7 abas) tem que ser enxergado');
+    assert.ok(r.total >= 7, 'o trilho (7 abas) tem que ser enxergado');
   });
 }
 
