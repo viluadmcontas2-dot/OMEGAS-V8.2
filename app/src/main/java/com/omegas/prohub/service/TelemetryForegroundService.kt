@@ -82,23 +82,33 @@ class TelemetryForegroundService : Service() {
     private val analysisExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-native-analysis").apply { isDaemon = true }
     }
-    private val analysisLane = AnalysisLane(analysisExecutor)
+    private val analysisLane = AnalysisLane(
+        analysisExecutor,
+        onHang = { ms -> log.add("WARN", "SERVICE", "Faixa de análise travada há ${ms / 1_000L} s; a próxima rodada entra na fila") },
+    )
+    /**
+     * Thread própria do `autoCalTick`: o snapshot completo dorme no árbitro por segundos e um grupo bloqueia até 4 s;
+     * no `scheduler` isso atrasava reconexão, wake lock e botões. O monitor só usa seus locks/atômicos próprios.
+     */
+    private val autoCalExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread(runnable, "omegas-autocal-tick").apply { isDaemon = true }
+    }
 
     /**
      * Revisões por tipo de dado (live/evidence/tables/session) que a UI consulta antes de reler qualquer coisa.
      * `live` espelha a sequência do TelemetryStateStore; as demais só sobem quando o dado realmente mudou.
      */
     val revisions = RuntimeSnapshotBus()
-    @Volatile private var revisionListener: ((RuntimeSnapshotBus.Kind, Long) -> Unit)? = null
+    private val revisionSlot = com.omegas.prohub.runtime.RevisionListenerSlot()
 
     /** A Activity registra (e limpa com null) o empurrão `OmegasOnRevision`; o poll de segurança da UI continua. */
     fun setRevisionListener(listener: ((RuntimeSnapshotBus.Kind, Long) -> Unit)?) {
-        revisionListener = listener
+        revisionSlot.set(listener)
     }
 
     private fun publishRevision(kind: RuntimeSnapshotBus.Kind) {
         val revision = revisions.bump(kind)
-        try { revisionListener?.invoke(kind, revision) } catch (_: Exception) {}
+        revisionSlot.publish(kind, revision)
     }
 
     /** `{ok, revisions:{live,evidence,tables,session}}`; `live` = sequência atual da telemetria. */
@@ -260,6 +270,8 @@ class TelemetryForegroundService : Service() {
                         "resetGas" to { equivalence.resetGas("MAPA_K_GRAVADO") },
                         "cerebro" to { equivalenceRuntime.onGasReset("MAPA_K_GRAVADO", equivalencePhases) },
                         "journal" to { refinementJournal.interrupt("MAPA_K_GRAVADO") },
+                        // Leituras do round feitas antes desta gravação não valem depois dela.
+                        "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },
                     ),
                     record = { sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true) },
                     warn = { log.add("WARN", "EVIDENCIA", it) },
@@ -281,21 +293,30 @@ class TelemetryForegroundService : Service() {
         )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = runtime.serialScheduler(),
-            calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
+            // Escritores K e ações AutoCal (a trava serial é compartilhada): nenhuma leitura de round durante uma escrita.
+            calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() || SerialWriteGuard.shared.isHeld() },
             onFreshSnapshot = { snapshot ->
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
             },
             onNativeCalibrationObserved = { payload ->
-                sessionRecorder.record(
-                    "autocal_native_calibration_epoch",
-                    "autocal",
-                    payload,
-                    force = true,
+                // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida. Invalida PRIMEIRO;
+                // gravar a sessão (pode falhar por disco cheio) só depois.
+                EvidenceInvalidation.run(
+                    invalidate = listOf(
+                        "resetGas" to { equivalence.resetGas("AUTOMATCH_NATIVO") },
+                        "cerebro" to { equivalenceRuntime.onGasReset("AUTOMATCH_NATIVO", equivalencePhases) },
+                        "journal" to { refinementJournal.interrupt("AUTOMATCH_NATIVO") },
+                    ),
+                    record = {
+                        sessionRecorder.record(
+                            "autocal_native_calibration_epoch",
+                            "autocal",
+                            payload,
+                            force = true,
+                        )
+                    },
+                    warn = { log.add("WARN", "EVIDENCIA", it) },
                 )
-                // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
-                equivalence.resetGas("AUTOMATCH_NATIVO")
-                equivalenceRuntime.onGasReset("AUTOMATCH_NATIVO", equivalencePhases)
-                refinementJournal.interrupt("AUTOMATCH_NATIVO")
                 publishRevision(RuntimeSnapshotBus.Kind.EVIDENCE)
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
@@ -352,7 +373,7 @@ class TelemetryForegroundService : Service() {
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
         // Cadência curta (100 ms): cada tick lê no máximo UM grupo AutoCal (SlotArbiter) ou volta de imediato.
-        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 1_000L, 100L, TimeUnit.MILLISECONDS)
+        autoCalTask = autoCalExecutor.scheduleWithFixedDelay(::autoCalTick, 1_000L, 100L, TimeUnit.MILLISECONDS)
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
@@ -381,9 +402,12 @@ class TelemetryForegroundService : Service() {
         journalTransitionsObserved = false
         try { equivalence.flush() } catch (_: Exception) {}
         try { equivalenceRuntime.flush() } catch (_: Exception) {}
+        try { refinementJournal.flush() } catch (_: Exception) {}
+        try { equivalencePhases.flush() } catch (_: Exception) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
         scheduler.shutdownNow()
+        autoCalExecutor.shutdownNow()
         analysisExecutor.shutdownNow()
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
@@ -439,12 +463,20 @@ class TelemetryForegroundService : Service() {
             storagePath = paths.externalRoot.absolutePath,
             workspaceConfigured = false,
             gpsEnabled = gps.running,
-            gpsSpeedKmh = gps.json().optDouble("speedKmh", 0.0),
-            gpsAccuracyM = gps.json().optDouble("accuracyM", 0.0),
+            gpsSpeedKmh = gpsValueOrNull("speedKmh"),
+            gpsAccuracyM = gpsValueOrNull("accuracyM"),
             lanEnabled = lanServer.running,
             lanAddress = if (lanServer.running) lanServer.address() else "",
             directTelemetryAgeMs = telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it },
         )
+    }
+
+    /** Valor do GPS só se ele está ligado e a chave existe com número finito; senão desconhecido (nulo), nunca 0. */
+    private fun gpsValueOrNull(key: String): Double? {
+        if (!gps.running) return null
+        val json = gps.json()
+        if (!json.has(key) || json.isNull(key)) return null
+        return json.optDouble(key, Double.NaN).takeIf { it.isFinite() }
     }
 
     fun restartEngine(): Boolean {
@@ -903,6 +935,7 @@ class TelemetryForegroundService : Service() {
                 "adoptCurve" to {
                     rawNow?.let { raw -> equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) })) }
                 },
+                "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },
             ),
             record = { sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true) },
             warn = { log.add("WARN", "EVIDENCIA", it) },
@@ -944,6 +977,7 @@ class TelemetryForegroundService : Service() {
             invalidate = listOf(
                 "resetGas" to { equivalence.resetGas("CURVA_K_FALHA_PARCIAL") },
                 "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_FALHA_PARCIAL", equivalencePhases) },
+                "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },
                 "journal" to {
                     refinementJournal.recordFailedWrite(
                         photoFile = payload.optString("photoFile", ""),
@@ -1184,7 +1218,7 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         // O trabalho pesado (refino, diário, full_snapshot JSON, overlay) sai desta thread: o autoCalTick
         // divide o `scheduler` com este tick e nunca pode esperar por ele.
-        analysisLane.submit(::analysisTick)
+        analysisLane.submit(rerunKey = "analysisTick", task = ::analysisTick)
         try {
             handleUsbTransition()
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
@@ -1207,8 +1241,12 @@ class TelemetryForegroundService : Service() {
     /** Roda na faixa de análise (thread própria, coalescente). Só observa e grava; não toca a ECU. */
     private fun analysisTick() {
         if (stopping) return
-        try {
-            if (!refinementFrozenForRender) {
+        // Cada passo no próprio try/catch: uma exceção no diário não pode pular o stallWatch, o veredito,
+        // o full_snapshot, o overlay nem a notificação.
+        val steps = ArrayList<Pair<String, () -> Unit>>()
+        fun step(name: String, block: () -> Unit) { steps += name to block }
+        if (!refinementFrozenForRender) {
+            step("diario") {
                 // O orçamento da verificação conta só condução: rpm ≥ 1000 numa faixa alterada (quadro fresco).
                 val frameFresh = System.currentTimeMillis() - lastDriveFrameAt < 3_500L
                 if (refinementJournal.evaluate(
@@ -1217,25 +1255,28 @@ class TelemetryForegroundService : Service() {
                         petrolMs = if (frameFresh) lastDrivePetrolMs else null,
                     )
                 ) stateChanged()
-                // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
-                stallWatch.tick(System.currentTimeMillis())
-                recordStallAnnotations()
-                recordJournalDecision()
-                recordVerdictIfClosed()
-                observeRefinement()
             }
-            if (sessionRecorder.isRecording()) {
+            // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
+            step("stallWatch") { stallWatch.tick(System.currentTimeMillis()) }
+            step("stallNotas") { recordStallAnnotations() }
+            step("decisaoDiario") { recordJournalDecision() }
+            step("veredito") { recordVerdictIfClosed() }
+            step("refino") { observeRefinement() }
+        }
+        step("full_snapshot") {
+            if (sessionRecorder.shouldRecordFullSnapshot()) {
                 sessionRecorder.record(
                     "full_snapshot",
                     "native",
                     try { JSONObject(fullEngineSnapshotJson()) } catch (_: Exception) { JSONObject() },
                 )
             }
-            updateOverlay()
-            updateNotification()
-        } catch (error: Exception) {
+        }
+        step("overlay") { updateOverlay() }
+        step("notificacao") { updateNotification() }
+        GuardedSteps.run(steps) { message ->
             synchronized(this) { healthFailures += 1 }
-            log.add("WARN", "SERVICE", "Análise nativa: ${error.message}")
+            log.add("WARN", "SERVICE", "Análise nativa: $message")
         }
     }
 
@@ -1253,14 +1294,17 @@ class TelemetryForegroundService : Service() {
     }
 
     @Volatile private var lastDriveRpm = 0.0
-    @Volatile private var lastDrivePetrolMs = 0.0
+    /** Nulo = quadro sem leitura de tempo de injeção (desconhecido, nunca 0 ms medido). */
+    @Volatile private var lastDrivePetrolMs: Double? = null
     @Volatile private var lastDriveFrameAt = 0L
 
     private fun consumeEngineEvent(root: JSONObject) {
         val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
         val live = root.optJSONObject("live") ?: root.optJSONObject("data") ?: JSONObject()
         lastDriveRpm = live.optDouble("rpm", 0.0)
-        lastDrivePetrolMs = live.optDouble("petrol_ms", 0.0)
+        lastDrivePetrolMs = if (live.has("petrol_ms") && !live.isNull("petrol_ms")) {
+            live.optDouble("petrol_ms", Double.NaN).takeIf { it.isFinite() }
+        } else null
         lastDriveFrameAt = System.currentTimeMillis()
         val cngActive = live.optString("fuel").uppercase() == "GNV"
         if (cngActive) {
@@ -1423,12 +1467,13 @@ class TelemetryForegroundService : Service() {
 
     private fun updateNotification() {
         val now = System.currentTimeMillis()
-        if (now - lastNotificationAt < 900L) return
-        // Só reposta quando título/texto/ações mudaram: montar e postar a mesma notificação a cada
-        // segundo gasta CPU e bateria sem mostrar nada de novo.
+        // Primeiro o tempo (>= 1 s desde a última avaliação, mudou ou não), depois o conteúdo: montar status()
+        // a cada quadro só para descobrir que nada mudou gastava CPU.
+        if (now - lastNotificationAt < 1_000L) return
+        lastNotificationAt = now
+        // Só reposta quando título/texto/ações mudaram.
         val content = notifications.content(status())
         if (content == lastNotificationContent) return
-        lastNotificationAt = now
         try {
             NotificationManagerCompat.from(this)
                 .notify(NotificationController.NOTIFICATION_ID, notifications.build(content))

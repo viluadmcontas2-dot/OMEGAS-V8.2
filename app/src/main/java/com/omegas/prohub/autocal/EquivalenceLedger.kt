@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.JsonFiles
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -492,21 +493,29 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     // ------------------------------------------------------------ persistência
 
+    /** Um só escritor por vez: o payload é montado E gravado sob `saveLock`, então o disco nunca volta atrás. */
+    private val saveLock = Any()
+    private var buildSeq = 0L
+    private var writtenSeq = 0L
+
     private fun maybeSave(force: Boolean = false) {
         val target = file ?: return
-        val now = clock()
-        val payload = synchronized(lock) {
-            if (!dirty || (!force && now - lastSaveAt < SAVE_INTERVAL_MS)) return
-            lastSaveAt = now
-            dirty = false
-            toJsonText()
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload)
-            if (!tmp.renameTo(target)) { target.writeText(payload); tmp.delete() }
-        } catch (_: Exception) {
-            synchronized(lock) { dirty = true }
+        synchronized(saveLock) {
+            val now = clock()
+            val payload = synchronized(lock) {
+                if (!dirty || (!force && now - lastSaveAt < SAVE_INTERVAL_MS)) return
+                lastSaveAt = now
+                dirty = false
+                toJsonText()
+            }
+            val seq = ++buildSeq
+            if (seq <= writtenSeq) return
+            try {
+                JsonFiles.writeAtomic(target, payload)
+                writtenSeq = seq
+            } catch (_: Exception) {
+                synchronized(lock) { dirty = true }
+            }
         }
     }
 
@@ -576,10 +585,9 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     }
 
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val source = file ?: return
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
+            val root = JsonFiles.readJsonWithBak(source) { it.optString("format") == FORMAT } ?: return
             // Lê os dois formatos: plano (vetores paralelos t/rpm/map/ms) e o antigo (um array [t,rpm,map,ms] por leitura).
             fun lane(name: String, into: CellLane) {
                 val flat = root.optJSONObject(name)
@@ -590,13 +598,18 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     val ms = flat.optJSONArray("ms") ?: return
                     val n = minOf(t.length(), rpm.length(), map.length(), ms.length())
                     val ep = flat.optJSONArray("ep")?.takeIf { it.length() >= n }
-                    for (i in 0 until n) into.add(Obs(t.optLong(i), rpm.optDouble(i), map.optDouble(i), ms.optDouble(i), ep?.optInt(i, -1) ?: -1))
+                    for (i in 0 until n) {
+                        if (t.isNull(i) || rpm.isNull(i) || map.isNull(i) || ms.isNull(i)) continue
+                        val o = Obs(t.optLong(i), rpm.optDouble(i), map.optDouble(i), ms.optDouble(i), ep?.optInt(i, -1) ?: -1)
+                        if (o.rpm.isFinite() && o.map.isFinite() && o.petrolMs.isFinite()) into.add(o)
+                    }
                     return
                 }
                 val array = root.optJSONArray(name) ?: return
                 for (i in 0 until array.length()) {
                     val row = array.optJSONArray(i) ?: continue
-                    into.add(Obs(row.optLong(0), row.optDouble(1), row.optDouble(2), row.optDouble(3)))
+                    val o = Obs(row.optLong(0), row.optDouble(1), row.optDouble(2), row.optDouble(3))
+                    if (o.rpm.isFinite() && o.map.isFinite() && o.petrolMs.isFinite()) into.add(o)
                 }
             }
             lane("petrol", petrol)

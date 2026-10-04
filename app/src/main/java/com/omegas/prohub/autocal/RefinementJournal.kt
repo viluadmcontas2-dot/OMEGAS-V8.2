@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.JsonFiles
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -357,29 +358,39 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("automatic", false)
     }
 
+    /** Um só escritor por vez; o payload é montado e gravado sob `saveLock` (o disco nunca volta atrás). */
+    private val saveLock = Any()
+    private var buildSeq = 0L
+    private var writtenSeq = 0L
+
+    /** Grava já (fim do serviço): o Desfazer depende de `photoFile`. */
+    fun flush() = save()
+
     private fun save() {
         val target = file ?: return
-        val payload = synchronized(lock) {
-            lastSaveAt = clock()
-            JSONObject().put("format", FORMAT)
-                .put("bandScale", JSONArray(bandScale.toList()))
-                .put("pointPasses", JSONArray(pointPasses.toList()))
-                .put("experimentSequence", experimentSequence)
-                .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
-        } catch (_: Exception) {
+        synchronized(saveLock) {
+            val payload = synchronized(lock) {
+                lastSaveAt = clock()
+                JSONObject().put("format", FORMAT)
+                    .put("bandScale", JSONArray(bandScale.toList()))
+                    .put("pointPasses", JSONArray(pointPasses.toList()))
+                    .put("experimentSequence", experimentSequence)
+                    .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
+            }
+            val seq = ++buildSeq
+            if (seq <= writtenSeq) return
+            try {
+                JsonFiles.writeAtomic(target, payload.toString())
+                writtenSeq = seq
+            } catch (_: Exception) {
+            }
         }
     }
 
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val source = file ?: return
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
+            val root = JsonFiles.readJsonWithBak(source) { it.optString("format") == FORMAT } ?: return
             root.optJSONArray("bandScale")?.let { a ->
                 for (i in 0 until min(a.length(), bandScale.size)) bandScale[i] = a.optDouble(i, 1.0).coerceIn(MIN_SCALE, MAX_SCALE)
             }

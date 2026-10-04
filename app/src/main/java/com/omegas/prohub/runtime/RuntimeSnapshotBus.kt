@@ -115,3 +115,21 @@ class RevisionPushCoalescer(
         const val MIN_INTERVAL_MS = 100L
     }
 }
+
+/**
+ * Onde a Activity registra o empurrão de revisão. A Activity limpa (null) no onDestroy: o serviço não segura
+ * a Activity/WebView velha. Exceção do ouvinte nunca sobe ao serviço.
+ */
+class RevisionListenerSlot {
+    @Volatile private var listener: ((RuntimeSnapshotBus.Kind, Long) -> Unit)? = null
+
+    fun set(value: ((RuntimeSnapshotBus.Kind, Long) -> Unit)?) {
+        listener = value
+    }
+
+    fun isSet(): Boolean = listener != null
+
+    fun publish(kind: RuntimeSnapshotBus.Kind, revision: Long) {
+        try { listener?.invoke(kind, revision) } catch (_: Throwable) {}
+    }
+}

@@ -66,6 +66,8 @@ class NativeAutoCalMonitor(
         val read: GroupRead,
         val beforeEpoch: AutoCalProtocol.NativeStatus,
         val sessionId: Long,
+        /** [WriteFence] amostrada quando a leitura do grupo começou. */
+        val writeGeneration: Long = 0L,
     )
 
     private data class ProbeObservation(
@@ -84,11 +86,12 @@ class NativeAutoCalMonitor(
         liveFrames = { serial.liveFrameCount() },
     )
     private val duty = AcquisitionDuty(clockMs)
+    private val probeBackoff = ProbeBackoff()
     private val stepper = SliceStepper(refreshPlanner, arbiter, duty)
-    private var pendingGroup: PendingGroup? = null
-    private var roundPetrolCounters: IntArray? = null
+    private val scratch = RoundScratch<PendingGroup, GroupRead>()
+    /** Sobe a cada gravação K / ação AutoCal confirmada: leitura que atravessou uma escrita é descartada. */
+    private val writeFence = WriteFence()
     /** Grupos de referência (G5, G7, G8) já confirmados, retidos até o round fechar: a curva entra atômica ou não entra. */
-    private val referenceHold = ArrayList<GroupRead>(3)
     private var lastProbeAtElapsedMs = 0L
     /** Revisão das tabelas: só sobe quando uma resposta difere da guardada (hash de status+payload por campo). */
     @Volatile private var tablesRevisionValue = 0L
@@ -180,10 +183,11 @@ class NativeAutoCalMonitor(
 
     /** Sob [lock]: zera o round em voo, o árbitro e a instrumentação (sessão USB nova/encerrada). */
     private fun resetRoundState() {
-        pendingGroup = null
-        roundPetrolCounters = null
-        referenceHold.clear()
+        scratch.pending = null
+        scratch.petrolCounters = null
+        scratch.hold.clear()
         lastProbeAtElapsedMs = 0L
+        probeBackoff.reset()
         arbiter.reset()
         duty.reset()
     }
@@ -198,7 +202,20 @@ class NativeAutoCalMonitor(
         }
     }
 
+    /**
+     * Uma gravação K / ação AutoCal foi confirmada: tudo que o round tinha lido ANTES dela deixa de valer
+     * (grupo pendente, G5/G7 retidos, contadores de gasolina, round do planejador). A referência é relida já.
+     * Só zera estado de leitura; não envia nada à ECU.
+     */
+    fun invalidateRound() {
+        writeFence.bump()
+        synchronized(lock) { scratch.invalidate() }
+        refreshPlanner.abandonRound()
+        refreshPlanner.requestReferenceNow()
+    }
+
     fun onManualActionConfirmed(receipt: JSONObject) {
+        invalidateRound()
         synchronized(lock) {
             val receiptSessionId = receipt.optLong("sessionId", sessionId)
             if (receiptSessionId == sessionId) {
@@ -273,7 +290,7 @@ class NativeAutoCalMonitor(
         }
 
         // Decisão pura (SliceStepper): confirmar o grupo anterior, ler UM grupo (SlotArbiter), ou só o probe.
-        val pending = synchronized(lock) { pendingGroup }
+        val pending = synchronized(lock) { scratch.pending }
         val snapshotWanted = synchronized(lock) { snapshotDue() }
         val nowMs = clockMs()
         val (knownProbe, probeAt) = synchronized(lock) { lastProbe to lastProbeAtElapsedMs }
@@ -284,6 +301,7 @@ class NativeAutoCalMonitor(
             // Pausa (AutoCal desabilitado) fecha só a aquisição; a referência segue (MUL_ACT/Curva K).
             acquisitionEnabled = synchronized(lock) { autoCalEnabled } == 1,
             probeAgeMs = if (knownProbe != null && probeAt > 0L) nowMs - probeAt else -1L,
+            probeBackoffUntilMs = probeBackoff.untilMs,
         )
         when (decision.step) {
             SliceStepper.Step.CONFIRM_PROBE -> {
@@ -304,7 +322,13 @@ class NativeAutoCalMonitor(
         }
 
         // 3) Probe (status leve 48 0B): contador AutoMatch/flag; muda → snapshot completo.
-        val probe = probe(currentSession) ?: return
+        val probe = probe(currentSession)
+        if (probe == null) {
+            // A ECU não respondeu ao status leve: recua (2 s → 30 s) em vez de repetir a cada 100 ms.
+            probeBackoff.onFailure(clockMs())
+            return
+        }
+        probeBackoff.onSuccess()
         val observed = observeProbe(currentSession, probe)
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
@@ -388,6 +412,7 @@ class NativeAutoCalMonitor(
         beforeEpoch: AutoCalProtocol.NativeStatus,
     ) {
         val startedAt = clockMs()
+        val generation = writeFence.current()
         var read: GroupRead? = null
         var error = ""
         try {
@@ -410,14 +435,14 @@ class NativeAutoCalMonitor(
             failGroup(group)
             return
         }
-        synchronized(lock) { pendingGroup = PendingGroup(groupRead, beforeEpoch, currentSession) }
+        synchronized(lock) { scratch.pending = PendingGroup(groupRead, beforeEpoch, currentSession, generation) }
     }
 
     /** Grupo falhou/descartado: recuo do tipo (B4) e, se era referência, a retenção do round morre junto. */
     private fun failGroup(group: NativeAutoCalRefreshPlanner.Group) {
         refreshPlanner.groupFailed(group, clockMs())
         if (group.family == NativeAutoCalRefreshPlanner.Family.REFERENCE) {
-            synchronized(lock) { referenceHold.clear() }
+            synchronized(lock) { scratch.hold.clear() }
         }
     }
 
@@ -426,7 +451,7 @@ class NativeAutoCalMonitor(
      * (o mesmo `MAX_AUTOMATCH_GROUP_SKEW_MS` do snapshot). Só então mescla (MUL_ACT estável incluído).
      */
     private fun commitReferenceRound(currentSession: Long, probe: AutoCalProtocol.NativeStatus): Boolean {
-        val held = synchronized(lock) { referenceHold.toList().also { referenceHold.clear() } }
+        val held = synchronized(lock) { scratch.hold.toList().also { scratch.hold.clear() } }
         val complete = NativeAutoCalRefreshPlanner.Group.values()
             .filter { it.family == NativeAutoCalRefreshPlanner.Family.REFERENCE }
             .all { wanted -> held.any { it.group == wanted } }
@@ -463,15 +488,21 @@ class NativeAutoCalMonitor(
     /** Probe de confirmação: mesma época antes/depois aceita o grupo; qualquer divergência o DESCARTA. */
     private fun confirmPendingGroup(currentSession: Long, pending: PendingGroup) {
         val group = pending.read.group
+        if (writeFence.changedSince(pending.writeGeneration)) {
+            // Uma gravação K / ação AutoCal confirmou depois da leitura: o grupo é velho. Descarta, sem falha de ECU.
+            synchronized(lock) { scratch.invalidate() }
+            refreshPlanner.abandonRound()
+            return
+        }
         if (pending.sessionId != currentSession ||
             clockMs() - pending.read.observedAtElapsedMs > PENDING_GROUP_MAX_AGE_MS
         ) {
-            synchronized(lock) { pendingGroup = null }
+            synchronized(lock) { scratch.pending = null }
             refreshPlanner.abandonRound() // sessão trocou ou o dado envelheceu: não é falha da ECU
             return
         }
         val probe = probe(currentSession)
-        synchronized(lock) { pendingGroup = null }
+        synchronized(lock) { scratch.pending = null }
         if (probe == null) {
             failGroup(group)
             return
@@ -490,6 +521,11 @@ class NativeAutoCalMonitor(
             // Época diferente: este grupo nunca é misturado ao snapshot; recua como falha do tipo.
             failGroup(group)
             onStateChanged()
+            return
+        }
+        if (writeFence.changedSince(pending.writeGeneration)) {
+            synchronized(lock) { scratch.invalidate() }
+            refreshPlanner.abandonRound()
             return
         }
         commitGroup(currentSession, pending.read, probe, observed.counterEvent != null)
@@ -513,7 +549,7 @@ class NativeAutoCalMonitor(
             )
             when (group) {
                 NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS -> synchronized(lock) {
-                    roundPetrolCounters = vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR)
+                    scratch.petrolCounters = vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR)
                 }
                 NativeAutoCalRefreshPlanner.Group.G4_GAS -> {
                     val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
@@ -521,7 +557,7 @@ class NativeAutoCalMonitor(
                         acquisitionEpoch.acquisitionGroup(
                             currentSession,
                             probe.autoMatchCount,
-                            roundPetrolCounters,
+                            scratch.petrolCounters,
                             vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS),
                         )
                     }
@@ -540,8 +576,8 @@ class NativeAutoCalMonitor(
         } else {
             // Referência: retém G5/G7/G8 (todos sob a mesma época, cada um confirmado) e publica o round inteiro de uma vez.
             synchronized(lock) {
-                if (group == NativeAutoCalRefreshPlanner.Group.G5_MUL_ACT) referenceHold.clear()
-                referenceHold += read
+                if (group == NativeAutoCalRefreshPlanner.Group.G5_MUL_ACT) scratch.hold.clear()
+                scratch.hold += read
             }
             if (group == NativeAutoCalRefreshPlanner.Group.G8_GAS_RV) {
                 roundRejected = !commitReferenceRound(currentSession, probe)
@@ -557,15 +593,15 @@ class NativeAutoCalMonitor(
             }
             refreshPlanner.abandonRound()
             synchronized(lock) {
-                roundPetrolCounters = null
-                referenceHold.clear()
+                scratch.petrolCounters = null
+                scratch.hold.clear()
             }
         } else if (!roundRejected) {
             refreshPlanner.groupDone(group) // (round rejeitado já recuou via groupFailed: não zerar o recuo)
         }
         val roundClosed = !refreshPlanner.roundInProgress()
         if (roundClosed) {
-            synchronized(lock) { roundPetrolCounters = null }
+            synchronized(lock) { scratch.petrolCounters = null }
             duty.roundCompleted(clockMs())
         }
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
@@ -756,7 +792,7 @@ class NativeAutoCalMonitor(
         telemetryAfter = true,
         waitTimeoutMs = GROUP_WAIT_MS,
     ) { unit ->
-        readGroupFields(unit, group, expectedSessionId, label = "AutoCal aquisição", timeoutMs = 900, idPrefix = "AUTOCAL-ACQ")
+        readGroupFields(unit, group, expectedSessionId, label = "AutoCal aquisição", timeoutMs = 300, idPrefix = "AUTOCAL-ACQ")
     }
 
     private fun refreshReferenceGroup(
@@ -769,7 +805,7 @@ class NativeAutoCalMonitor(
         telemetryAfter = true,
         waitTimeoutMs = GROUP_WAIT_MS,
     ) { unit ->
-        readGroupFields(unit, group, expectedSessionId, label = "AutoCal referência", timeoutMs = 1_200, idPrefix = "AUTOCAL-REF")
+        readGroupFields(unit, group, expectedSessionId, label = "AutoCal referência", timeoutMs = 350, idPrefix = "AUTOCAL-REF")
     }
 
     /** As leituras do grupo (mesmos comandos de sempre, mesma ordem) dentro da unidade; sem probe aqui. */
@@ -988,6 +1024,7 @@ class NativeAutoCalMonitor(
         autoMatchCounterEvent: NativeAutoMatchCounterTracker.Event?,
     ) {
         val reason = synchronized(lock) { snapshotReason }
+        val writeGenerationAtStart = writeFence.current()
         val started = System.currentTimeMillis()
         val observations = ArrayList<AutoCalReadObservation>()
         var consecutiveTimeouts = 0
@@ -1006,7 +1043,7 @@ class NativeAutoCalMonitor(
                 val reply = serial.transaction(
                     request = AutoCalProtocol.read(field),
                     reason = "AutoCal snapshot ${field.key}",
-                    timeoutMs = 1_200,
+                    timeoutMs = 350,
                     purgeBefore = false,
                     expectedSessionId = expectedSessionId,
                     workClass = Mp48WorkClass.READ_ONLY,
@@ -1036,6 +1073,18 @@ class NativeAutoCalMonitor(
             // ECU muda: não monta snapshot parcial nem repete a varredura inteira a cada segundo.
             carryEvidence(autoMatchCounterEvent, countIncreased)
             backOffSnapshot()
+            onStateChanged()
+            return
+        }
+        if (writeFence.changedSince(writeGenerationAtStart)) {
+            // Uma gravação K / ação AutoCal confirmou no meio da varredura: as fatias são de antes e de depois.
+            // Descarta o snapshot inteiro; refaz no próximo round com o recuo de sempre.
+            carryEvidence(autoMatchCounterEvent, countIncreased)
+            backOffSnapshot()
+            synchronized(lock) {
+                snapshotRequested = true
+                snapshotReason = "WRITE_DURING_SNAPSHOT"
+            }
             onStateChanged()
             return
         }
@@ -1254,9 +1303,9 @@ class NativeAutoCalMonitor(
                 tablesChangedByFullSnapshot = true
             }
             latestSnapshot = decorated
-            roundPetrolCounters = null
-            referenceHold.clear()
-            pendingGroup = null
+            scratch.petrolCounters = null
+            scratch.hold.clear()
+            scratch.pending = null
             refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
             if (stableAfter != null) lastStableMulAct = stableAfter
@@ -1433,6 +1482,6 @@ class NativeAutoCalMonitor(
         private const val GROUP_WAIT_MS = 4_000L
         /** Snapshot completo fatiado: de quantas em quantas leituras o árbitro é consultado. */
         private const val SNAPSHOT_SLICE_READS = 3
-        private const val SNAPSHOT_SLICE_MAX_WAIT_MS = 600L
+        private const val SNAPSHOT_SLICE_MAX_WAIT_MS = 1_200L
     }
 }

@@ -195,6 +195,11 @@ class ResponseDrivenEcuEngine(
                 // precisam terminar em ACK/readback ou falha real da sessão.
                 future.get()
             }
+        } catch (e: java.util.concurrent.TimeoutException) {
+            // Leitura que estourou a espera do chamador: a unidade ainda na fila não deve rodar depois (o slot
+            // do árbitro já acabou). Só marca; nada do que a unidade faz muda.
+            future.cancel(false)
+            throw e
         } catch (e: java.util.concurrent.ExecutionException) {
             val cause = e.cause
             if (cause is RuntimeException) throw cause
@@ -221,7 +226,7 @@ class ResponseDrivenEcuEngine(
                 expectedSessionId = expectedSessionId,
                 workClass = workClass,
                 telemetryAfter = telemetryAfter,
-                executeBlock = { unit -> future.complete(block(unit)) },
+                executeBlock = { unit -> if (!future.isDone) future.complete(block(unit)) },
                 failureBlock = future::completeExceptionally,
             ),
         )

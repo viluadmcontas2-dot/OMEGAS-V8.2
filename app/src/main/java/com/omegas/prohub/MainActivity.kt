@@ -212,15 +212,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Abre a rota pedida pelo Intent (aviso do refino → aba Refino). Só rotas simples. */
-    private fun openRouteFromIntent(intent: Intent?) {
+    /**
+     * Abre a rota pedida pelo Intent (aviso do refino → aba Refino). Só rotas simples. A rota só sai do Intent
+     * quando a UI confirmou que navegou; se o OmegasApp ainda não existe, tenta de novo (até 10 × 300 ms) e,
+     * se mesmo assim não montou, a rota continua no Intent.
+     */
+    private fun openRouteFromIntent(intent: Intent?, attempt: Int = 0) {
         val route = intent?.getStringExtra(com.omegas.prohub.service.NotificationController.EXTRA_ROUTE) ?: return
-        if (!route.matches(Regex("[a-z]{2,24}")) || !::webView.isInitialized) return
-        intent.removeExtra(com.omegas.prohub.service.NotificationController.EXTRA_ROUTE)
-        webView.evaluateJavascript("window.OmegasApp&&OmegasApp.router&&OmegasApp.router.navigate('$route')", null)
+        if (!route.matches(Regex("[a-z]{2,24}")) || !::webView.isInitialized || isDestroyed) return
+        webView.evaluateJavascript(
+            "(window.OmegasApp&&OmegasApp.router&&OmegasApp.router.navigate)?(OmegasApp.router.navigate('$route'),'ok'):'wait'",
+        ) { result ->
+            if (result != null && result.contains("ok")) {
+                intent.removeExtra(com.omegas.prohub.service.NotificationController.EXTRA_ROUTE)
+            } else if (attempt < ROUTE_RETRY_MAX && !isDestroyed && ::webView.isInitialized) {
+                webView.postDelayed({ openRouteFromIntent(intent, attempt + 1) }, ROUTE_RETRY_MS)
+            }
+        }
     }
 
     override fun onDestroy() {
+        // O serviço sobrevive à Activity: sem isto ele segura a Activity/WebView velha e empurra JS num WebView morto.
+        try { service?.setRevisionListener(null) } catch (_: Exception) {}
         if (bound) {
             try { unbindService(connection) } catch (_: Exception) {}
             bound = false
@@ -471,14 +484,25 @@ class MainActivity : AppCompatActivity() {
         val coalescer = com.omegas.prohub.runtime.RevisionPushCoalescer(
             clock = { android.os.SystemClock.elapsedRealtime() },
             schedule = { delayMs, task ->
-                if (::webView.isInitialized) webView.postDelayed({ task() }, delayMs)
+                if (!isDestroyed && ::webView.isInitialized) {
+                    try { webView.postDelayed({ task() }, delayMs) } catch (_: Exception) {}
+                }
             },
             dispatch = { kind, revision ->
-                if (::webView.isInitialized) {
-                    webView.evaluateJavascript(
-                        "window.OmegasOnRevision&&window.OmegasOnRevision('${kind.wireName}',$revision)",
-                        null,
-                    )
+                // O WebView só aceita JS na thread de interface; Activity destruída não recebe nada.
+                if (!isDestroyed && ::webView.isInitialized) {
+                    try {
+                        webView.post {
+                            if (!isDestroyed) {
+                                try {
+                                    webView.evaluateJavascript(
+                                        "window.OmegasOnRevision&&window.OmegasOnRevision('${kind.wireName}',$revision)",
+                                        null,
+                                    )
+                                } catch (_: Exception) {}
+                            }
+                        }
+                    } catch (_: Exception) {}
                 }
             },
         )
@@ -522,3 +546,5 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+private const val ROUTE_RETRY_MAX = 10
+private const val ROUTE_RETRY_MS = 300L
