@@ -224,15 +224,16 @@ class LogicFixesTest {
         val gaps = (0 until a.length()).map { a.getJSONObject(it) }.filter { it.getString("kind") == "gap" }
         assertEquals(17, gaps.size)
         assertTrue(a.length() <= 2 * EcuAcquisitionTruth.BANDS)
+        assertTrue(gaps.all { it.has("centerMapBar") && it.getJSONObject("gas").has("n") && it.getJSONObject("petrol").has("ms") && it.has("n") })
         assertTrue(gaps.zipWithNext().all { (x, y) -> x.getDouble("centerMs") < y.getDouble("centerMs") })
         val withData = gaps.filter { it.getInt("samples") > 0 }
         assertTrue(withData.isNotEmpty())
         for (g in withData) {
-            assertEquals("COLETADO", g.getString("state"))
+            assertEquals("coletado", g.getString("state"))
             assertTrue(g.getDouble("gnvMs") > 0 && g.getDouble("petrolMs") > 0)
             assertEquals(0.60, g.getDouble("mapBar"), 0.01)
         }
-        assertTrue(gaps.filter { it.getInt("samples") == 0 }.all { it.getString("state") == "FALTA" && it.isNull("gnvMs") && it.isNull("diffPct") })
+        assertTrue(gaps.filter { it.getInt("samples") == 0 }.all { it.getString("state") == "falta" && it.isNull("gnvMs") && it.isNull("diffPct") })
         // cache: mesma revisão = mesmo conteúdo; nova leitura muda
         assertEquals(a.toString(), ledger.betweenPointsJson().toString())
         drive(ledger, "GNV", 5.5, 0.60, t + EvidenceTestSupport.VISIT_GAP, 20)
@@ -249,9 +250,9 @@ class LogicFixesTest {
             assertTrue("$name: ${b.length()}", b.length() in 17..36)
             for (i in 0 until b.length()) {
                 val o = b.getJSONObject(i)
-                if (o.getString("state") == "COLETADO") assertTrue(o.getInt("samples") >= AutoMatchRefinedEngine.BAND_MATURE_COUNT)
+                if (o.getString("state") == "coletado") assertTrue(o.getInt("samples") >= AutoMatchRefinedEngine.BAND_MATURE_COUNT)
             }
-            if (name == RealSessionReplaySupport.GNV_ONLY) assertTrue((0 until b.length()).any { b.getJSONObject(it).getString("state") == "COLETADO" })
+            if (name == RealSessionReplaySupport.GNV_ONLY) assertTrue((0 until b.length()).any { b.getJSONObject(it).getString("state") == "coletado" })
         }
     }
 
@@ -289,7 +290,7 @@ class LogicFixesTest {
         val c = collecting.getJSONObject("counts")
         assertEquals(17, c.getInt("intervalsTotal"))
         assertEquals(17, c.getInt("intervalsCollected") + c.getInt("intervalsMissing"))
-        assertFalse(collecting.isNull("whyNoProposal"))
+        assertFalse(collecting.isNull("whyNoProposal")); assertEquals(collecting.getString("whyNoProposal"), collecting.getString("reason"))
         assertTrue(collecting.getString("phase").contains("de 17 intervalos"))
         // pronto para gravar: APPLY do cérebro com 5 pontos
         val apply = brain().put("nextAction", JSONObject().put("kind", "APPLY").put("text", "5 pontos pobres entre 4,0 e 8,0 ms (5–9%) · Aplicar ajuste").put("route", "refino")
@@ -337,6 +338,8 @@ class LogicFixesTest {
         assertEquals("SOLAVANCOS", f.getJSONObject("gas").getString("verdict"))
         assertTrue(f.getJSONObject("gas").getDouble("jerkPct") > f.getJSONObject("petrol").getDouble("jerkPct"))
         assertTrue(f.getJSONObject("gas").getDouble("deviationPct") > f.getJSONObject("petrol").getDouble("deviationPct"))
+        assertTrue(f.getJSONObject("gnv").getDouble("index") < f.getJSONObject("gasolina").getDouble("index"))
+        assertEquals(f.getJSONObject("gas").getDouble("jerkPct"), f.getJSONObject("gnv").getDouble("jerks"), 0.0)
         assertEquals("LINEAR", Fluidity.fromDense(dense(linear, linear)).getJSONObject("gas").getString("verdict"))
         val none = Fluidity.fromDense(dense(listOf(3.0, 4.0), emptyList()))
         assertEquals("SEM_DADOS", none.getJSONObject("gas").getString("verdict"))

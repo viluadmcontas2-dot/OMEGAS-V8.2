@@ -61,6 +61,9 @@ object Fluidity {
         val gasVerdict = verdict(gas, petrol)
         fun lane(l: Lane, v: String, label: String) = JSONObject()
             .put("samples", l.n).put("bins", l.bins)
+            // `index` 0..1 = linearidade (1 = reta; 0 = solavancos ≥ 2× o limite); `jerks` = jerkPct (nomes que a aba Diagnóstico lê).
+            .put("index", l.jerk?.let { Math.round((1.0 - minOf(1.0, it / (2.0 * JERK_LIMIT_PCT))) * 100.0) / 100.0 } ?: JSONObject.NULL)
+            .put("jerks", r1(l.jerk))
             .put("deviationPct", r1(l.deviation)).put("jerkPct", r1(l.jerk)).put("msPerBar", r1(l.slope))
             .put("verdict", v)
             .put("text", when (v) {
@@ -74,7 +77,11 @@ object Fluidity {
             gasVerdict == "LINEAR" && petrolVerdict == "LINEAR" -> "Gasolina e GNV respondem de forma linear."
             else -> "Ainda coletando para comparar a fluidez da gasolina e do GNV."
         }
-        return JSONObject().put("petrol", lane(petrol, petrolVerdict, "Gasolina")).put("gas", lane(gas, gasVerdict, "GNV"))
+        val petrolJson = lane(petrol, petrolVerdict, "Gasolina")
+        val gasJson = lane(gas, gasVerdict, "GNV")
+        // `gasolina`/`gnv` são apelidos de `petrol`/`gas` (a UI de Diagnóstico lê os nomes em português).
+        return JSONObject().put("petrol", petrolJson).put("gas", gasJson)
+            .put("gasolina", JSONObject(petrolJson.toString())).put("gnv", JSONObject(gasJson.toString()))
             .put("summary", summary)
             .put("criteria", JSONObject().put("minBins", MIN_BINS).put("jerkLimitPct", JERK_LIMIT_PCT).put("relativeLimit", RELATIVE_LIMIT))
     }

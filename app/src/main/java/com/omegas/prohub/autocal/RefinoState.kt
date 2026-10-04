@@ -25,7 +25,7 @@ object RefinoState {
         val truth = autopilot.optJSONObject("ecuTruth")
         val gaps = (0 until between.length()).mapNotNull { between.optJSONObject(it) }.filter { it.optString("kind") == "gap" }
         val total = gaps.size
-        val collected = gaps.count { it.optString("state") == "COLETADO" }
+        val collected = gaps.count { it.optString("state") == "coletado" }
         val missing = total - collected
         val available = equivalence?.optBoolean("available", false) == true
         val action = equivalence?.optJSONObject("nextAction")
@@ -101,6 +101,7 @@ object RefinoState {
             .put("phase", phase).put("whatNow", whatNow).put("nextAction", next).put("canAct", canAct)
             .put("counts", counts)
             .put("whyNoProposal", why ?: JSONObject.NULL)
+            .put("reason", why ?: JSONObject.NULL)
             .put("ecuSummary", truth?.optString("summary") ?: JSONObject.NULL)
             .put("technical", JSONObject()
                 .put("phase", code).put("reasonCode", autopilot.opt("reasonCode") ?: JSONObject.NULL)

@@ -359,8 +359,13 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                 .put("gnvMs", gnvMs ?: JSONObject.NULL)
                 .put("diffPct", if (petrolMs != null && gnvMs != null && petrolMs > 0.0) Math.round((gnvMs / petrolMs - 1.0) * 1000.0) / 10.0 else JSONObject.NULL)
                 .put("samples", inside.size)
+                .put("n", inside.size)
                 .put("visits", visits ?: JSONObject.NULL)
-                .put("state", if (collected) "COLETADO" else "FALTA"))
+                // nomes que a UI de Refino lê: centerMapBar, gas/petrol {ms,mapBar,n}, state em minúsculas
+                .put("centerMapBar", mapBar ?: JSONObject.NULL)
+                .put("gas", JSONObject().put("ms", gnvMs ?: JSONObject.NULL).put("mapBar", mapBar ?: JSONObject.NULL).put("n", inside.size))
+                .put("petrol", JSONObject().put("ms", petrolMs ?: JSONObject.NULL).put("mapBar", mapBar ?: JSONObject.NULL).put("n", inside.size))
+                .put("state", if (collected) "coletado" else "falta"))
         }
         synchronized(lock) { cachedBetween = revision to JSONArray(out.toString()) }
         return out
