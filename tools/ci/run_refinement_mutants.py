@@ -43,7 +43,7 @@ MUTANTS = [
     ("restart-resets-deadline", PILOT, 'lastDurationAt = root.optLong("durationAt").takeIf { it >= 0L }',
      'lastDurationAt = null', "reopeningAppCannotResetReadingDeadline"),
     ("silence-means-native-done", PILOT, 'else -> null\n            }\n            if (fresh != ecuDoneLatch)',
-     'petrolZones >= 4 && gasZones >= 4 && quietMs >= QUIET_MS -> "AQUISICAO_COMPLETA"\n                else -> null\n            }\n            if (fresh != ecuDoneLatch)',
+     'truth.optBoolean("allZonesCovered") && quietMs >= QUIET_MS -> "AQUISICAO_COMPLETA"\n                else -> null\n            }\n            if (fresh != ecuDoneLatch)',
      "acquisitionSilenceNeverConfirmsNativeCompletion"),
     ("sticky-native-latch", PILOT, 'if (fresh != ecuDoneLatch)', 'if (fresh != null && fresh != ecuDoneLatch)',
      "nativeCompletionCannotOutliveMissingCounter"),
