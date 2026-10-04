@@ -162,7 +162,15 @@ class RefinoRenderTest {
             observations += AutoCalReadObservation(descriptor, Mp48Protocol.STATUS_ACK, payloadFor(descriptor, IntArray(raw.length()) { raw.getInt(it) }), now)
             expected += descriptor
         }
+        // O fixture reduzido omite MAX_AUTOMATCH, embora o grupo de coerência o exija.
+        // O máximo 3 já é parâmetro explícito destes cenários; completar o monitor não inventa medidas.
+        if (expected.none { it.identity == AutoCalProtocol.MAX_AUTOMATCH.identity }) {
+            expected += AutoCalProtocol.MAX_AUTOMATCH
+            observations += AutoCalReadObservation(AutoCalProtocol.MAX_AUTOMATCH, Mp48Protocol.STATUS_ACK,
+                payloadFor(AutoCalProtocol.MAX_AUTOMATCH, intArrayOf(3)), now)
+        }
         val snapshot = AutoCalSnapshotBuilder.build(observations, expected, "AUTOCAL-$sessionId-REFINO", AutoCalSnapshotSource.REPLAY, now, now)
+        check(snapshot.temporalCoherent) { "Replay decodificado deve manter grupos coerentes" }
         val decorated = snapshot.toJson()
             .put("available", true)
             .put("nativeAutoCal", true)
@@ -292,6 +300,7 @@ class RefinoRenderTest {
         .put("corpus", corpus)
         .put("note", note)
         .put("physicalValidationClaimed", false)
+        .put("monitorMaxAutomatch", "SYNTHETIC_SCENARIO_VALUE_3; campo omitido do fixture reduzido")
 
     // ------------------------------------------------------------------ cenários (uma fase do piloto por print)
 
