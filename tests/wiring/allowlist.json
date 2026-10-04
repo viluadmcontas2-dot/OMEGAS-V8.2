@@ -1,6 +1,10 @@
 {
  "_about": "Allowlist do grafo produtor<->consumidor. producer_internal: chave emitida pelo Kotlin e nunca lida pela UI, com o MOTIVO. defects: o mesmo, mas e defeito real conhecido (DEFECT-n em tests/wiring/DEFECTS.md); o teste exige que continue violando e falha quando for corrigido (remova a entrada).",
  "producer_internal": {
+  "attempts": "persistencia do arquivo de fases (tentativas de prova por ponto, limita a re-proposta em laco); nao vai a tela",
+  "closedOnlineMs": "persistencia do arquivo de fases (relogio do recuo de uma prova fechada sem convergir); nao vai a tela",
+  "judgedUsage": "fracao 0..1 do uso julgada que decide se `index` e numero (novo; o JS corrigido por outro agente passa a ler; contrato em BrainContractTest e docs/ARCHITECTURE.md)",
+  "stale": "Referencia cuja gasolina a ECU reaprendeu >8% longe (registro de idade/deriva; a UI ainda nao a mostra; decidir congelar de novo e do dono)",
   "appVersion": "identidade de build/ambiente; so aparece no export/diagnostico, nao na tela",
   "applicationId": "identidade de build/ambiente; so aparece no export/diagnostico, nao na tela",
   "channel": "identidade de build/ambiente; so aparece no export/diagnostico, nao na tela",

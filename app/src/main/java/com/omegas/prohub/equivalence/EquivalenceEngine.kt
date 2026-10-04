@@ -306,8 +306,15 @@ object EquivalenceEngine {
                 "refino", null, off.sortedByDescending { it.usage }.map { it.index },
             )
         }
-        // Prova que fechou sem convergir e esgotou as tentativas: não há proposta nova, e isso NÃO é "equivalente".
-        val exhausted = points.filter { it.state == PointState.INCONCLUSIVO && outcome.reasons[it.index] == ProofOutcome.REASON_EXHAUSTED }
+        // Prova que fechou sem convergir: isso NÃO é "equivalente". Com tentativas sobrando volta a medir; esgotadas, sem proposta.
+        fun stillOff(p: EquivalencePoint): Boolean = p.state == PointState.INCONCLUSIVO && p.mixture != null && abs(p.mixture) > p.tolerance
+        val unconverged = points.filter { stillOff(it) && outcome.reasons[it.index] == ProofOutcome.REASON_NO_CONVERGENCE }
+        if (unconverged.isNotEmpty()) {
+            val text = "Ajuste em ${f1(unconverged.minOf { it.axisMs })}–${f1(unconverged.maxOf { it.axisMs })} ms ainda não fechou · " +
+                "rode mais antes de eu propor de novo"
+            return NextAction(NextActionKind.COLLECT, text, "refino", null, unconverged.map { it.index })
+        }
+        val exhausted = points.filter { stillOff(it) && outcome.reasons[it.index] == ProofOutcome.REASON_EXHAUSTED }
         if (exhausted.isNotEmpty()) {
             val text = "Ajuste em ${f1(exhausted.minOf { it.axisMs })}–${f1(exhausted.maxOf { it.axisMs })} ms não fechou depois de " +
                 "${ProofOutcome.MAX_ATTEMPTS} tentativas · sem nova proposta ali; revise a curva nessa faixa"

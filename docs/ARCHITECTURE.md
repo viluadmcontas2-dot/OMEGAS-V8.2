@@ -49,3 +49,22 @@ Leitor: só a ponte `Omegas`. `RuntimeSnapshotBus`, memos do AutoCal e os JSON d
 ## Intents (lista fechada, spec §2.2 + R1 do índice)
 
 `CURVE_WRITE` · `CURVE_RESET` · `CURVE_RESTORE` · `CURVE_BACKUP_SAVE` · `MAP_WRITE` · `REFERENCE_FREEZE` · `AUTOCAL_RELEARN` (sem Desfazer) · `AUTOCAL_PAUSE` · `AUTOCAL_RESUME` · `AUTOCAL_RESET_GAS` · `AUTOCAL_RESET_PETROL` · `SESSION_EXPORT` · `OVERLAY_TOGGLE` · `SETTINGS_SET` · `UNDO`.
+
+## Evidência do cérebro e contrato do resultado (revisão adversarial)
+
+**Regras (o "% equivalente" só sobe com evidência):**
+
+- Fonte única: veredito e proposta de K saem dos mesmos pares (gasolina de referência × GNV), casados por RPM±150 / MAP±0,02 (ou pela curva de gasolina da ECU onde o app não mediu gasolina). `EvidencePairs` é usado pelo livro (`EquivalenceLedger`) e pelo cérebro (`EquivalenceEngine`).
+- Independência: leituras estáveis consecutivas se sobrepõem, então quadro não é evidência. Episódio = **visita à faixa**: pares da mesma faixa separados por ≥ 60 s. Peso por episódio (um episódio de uma faixa vale ≤ 4 pares) e teto de peso da telemetria por faixa.
+- Um ponto só é julgado (EQUIVALENTE/POBRE/RICO) com ≥ 3 leituras em ≥ 3 visitas, dispersão conhecida e meia-largura `1,96·disp/√visitas ≤ 4%`. Senão é APRENDENDO (nunca "tolerância larga").
+- Tolerância `clamp(2·dispersão, 4%, 5%)`; a frase do ESTAVEL diz ±4% (±5% onde a gasolina é a curva da ECU).
+- O GNV medido não é puxado para a gasolina (a Referência é prior só da gasolina).
+- `index` só é número quando os pontos julgados cobrem ≥ 50% do uso da condução (`judgedUsage`); senão é `null` ("—").
+- A telemetria não move ponto que a evidência nativa madura já cobre; nó cujo erro de evidência cabe em ±4% (e cujo K é coerente) não se move; proposta que piora o critério do próprio motor nunca é emitida.
+- Faixa grossa só vale com leituras espalhadas por dentro dela (≥ 2 de 3 terços, ≥ 2 pares cada).
+- Prova por ponto: só julga se o ponto foi julgado com episódios independentes; fechada sem convergir vira INCONCLUSIVO com motivo (`NAO_CONVERGIU`, depois de 2 tentativas `TENTATIVAS_ESGOTADAS`), nunca some em silêncio nem propõe em laço.
+- Diário: exige episódios e cobertura interna; o ganho aprendido decai a cada experimento; "curta" que não melhorou não firma ganho; Desfazer/Restaurar/Reset não contam como passada de ganho nem ensinam.
+- Alinhamento à Curva K da ECU roda no tique do serviço (não depende da tela); impressão digital desconhecida com GNV guardado = falha fechada; snapshot com `temporalCoherent == false` não é curva do cérebro.
+
+**Contrato de forma do resultado (`EquivalenceJson.result`, teste `BrainContractTest`):** `index` é número escalar 0..1 **ou `null`** (mostrar "—"; nunca objeto, nunca 0 no lugar de desconhecido). `provisional` (boolean), `coverage` (inteiro) e `judgedUsage` (0..1) são **irmãos planos** de `index` no mesmo nível, não filhos dele. As mesmas chaves existem quando `available` é false (`index: null`, `coverage: 0`). `reference.ageMs` (nulo = "—") e `reference.stale` (deriva da ECU > 8%) registram idade e deriva da Referência; a decisão de congelar de novo é do dono.
+

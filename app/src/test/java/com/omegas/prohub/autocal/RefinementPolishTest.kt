@@ -137,14 +137,14 @@ class RefinementPolishTest {
     }
 
     @Test
-    fun `histerese de faixa entra em 3 por cento e so sai abaixo de 2 por cento`() {
+    fun `histerese de faixa entra em 4 por cento e so sai abaixo de 3 por cento`() {
         fun one(ratio: Double) = index(Triple(ratio, 20, null), Triple(1.0, 20, null), Triple(1.0, 20, null), Triple(null, 0, null), Triple(null, 0, null))
         val fresh = EquivalencePhases(null) { now }
-        assertEquals("2,5% sozinho está dentro", "ESTAVEL", fresh.observe(true, monitor(3), null, one(1.025), noJournal, 0).getString("phase"))
+        assertEquals("3,5% sozinho está dentro", "ESTAVEL", fresh.observe(true, monitor(3), null, one(1.035), noJournal, 0).getString("phase"))
         val p = EquivalencePhases(null) { now }
         assertEquals("PROPOSTA_PRONTA", p.observe(true, monitor(3), null, one(1.08), noJournal, 0).getString("phase"))
-        assertEquals("2,5% depois de fora continua fora", "PROPOSTA_PRONTA", p.observe(true, monitor(3), null, one(1.025), noJournal, 0).getString("phase"))
-        assertEquals("1,5% volta para dentro", "ESTAVEL", p.observe(true, monitor(3), null, one(1.015), noJournal, 0).getString("phase"))
+        assertEquals("3,5% depois de fora continua fora", "PROPOSTA_PRONTA", p.observe(true, monitor(3), null, one(1.035), noJournal, 0).getString("phase"))
+        assertEquals("2,5% volta para dentro", "ESTAVEL", p.observe(true, monitor(3), null, one(1.025), noJournal, 0).getString("phase"))
     }
 
     @Test

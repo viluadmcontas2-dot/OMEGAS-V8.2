@@ -58,7 +58,7 @@ Cada um dos **30 pontos da Curva K** vira um objeto `EquivalencePoint`. O eixo d
 SEM_DADOS → APRENDENDO → MEDIDO → { EQUIVALENTE | POBRE n% | RICO n% } → EM_PROVA → CONFIRMADO | CONTESTADO | INCONCLUSIVO
 ```
 
-Tolerâncias (herdadas do Refino v2, um lugar só, `EquivalenceTolerances`): `EQUIVALENTE` = |desvio| ≤ `tol`, com `tol = max(4%, 2 × dispersão da célula)` (§1.6b); `POBRE/RICO` leve = até 8%; acima disso, desvio grande (vermelho). "Piorou" exige piora > 4% **e** erro > 5%, como hoje.
+Tolerâncias (herdadas do Refino v2, um lugar só, `EquivalenceTolerances`): `EQUIVALENTE` = |desvio| ≤ `tol`, com `tol = clamp(2 × dispersão, 4%, 5%)` (§1.6b; revisão adversarial: o critério nunca passa de ±5%, dispersão alta tira o ponto do julgamento em vez de alargar a tolerância); `POBRE/RICO` leve = até 8%; acima disso, desvio grande (vermelho). "Piorou" exige piora > 4% **e** erro > 5%, como hoje.
 
 - `MEDIDO` exige amostra mínima e intervalo de confiança abaixo do limiar (valores herdados de `BAND_MATURE_COUNT`, `TELEMETRY_MIN_MS`, tolerâncias do Refino v2).
 - `EM_PROVA` começa quando o dono grava um ajuste que toca esse ponto; termina quando há amostra nova suficiente **ou** o timebox do Refino v2 expira (vira `INCONCLUSIVO`, visível).
@@ -123,7 +123,7 @@ Curva Própria T(MAP) = ajuste isotônico robusto das leituras estáveis
 - **Mistura (§1.1)** usa `T_p` da Curva Própria de gasolina e `T_g` da Curva Própria de GNV, avaliadas no MAP de cada ponto da Curva K. A Referência entra só como prior.
 - **A Curva Própria de gasolina persiste sempre.** Gasolina não depende da Curva K nem da Referência: é conhecimento do app. Mudar a Curva K descarta só a Curva Própria de GNV (como o `EquivalenceLedger` já faz). **Trocar a Referência não apaga nada:** só troca o prior, a curva é reajustada, e os pontos `EM_PROVA` recomeçam a prova.
 - **Sem Referência congelada**, o app aprende do zero com prior fraco. Ele **pode** propor ajuste de K quando a Curva Própria estiver madura na faixa, marcado como "sem referência da ECU"; a próxima ação continua sugerindo congelar, porque a âncora encurta o caminho.
-- **Tolerância deixa de ser número fixo:** `tol = max(4%, 2 × dispersão da célula)`. Célula bem medida é cobrada com rigor; célula rala ganha folga, e a folga aparece na UI como barra de confiança.
+- **Tolerância deixa de ser número fixo:** `tol = clamp(2 × dispersão, 4%, 5%)`. Célula bem medida é cobrada com rigor; dispersão alta ou desconhecida NÃO ganha folga: o ponto fica APRENDENDO (não julgado) até haver ≥ 3 leituras em ≥ 3 visitas separadas por ≥ 60 s.
 - **Na tela Curva**, duas linhas de gasolina: Referência (tracejada) e Própria (sólida), com sombreado onde divergem. O dono vê o app ficando mais esperto que a ECU, sessão a sessão.
 
 **Gate (CI):** nas sessões reais, a Curva Própria madura prevê a gasolina de uma faixa escondida (validação cruzada) com erro menor que a Referência sozinha. Se não prevê, o aprendizado próprio não está agregando e o PR não passa.

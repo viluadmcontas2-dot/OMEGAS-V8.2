@@ -118,7 +118,7 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
     /** JSON do último resultado (a ponte só lê; o cálculo já aconteceu no tique do serviço). */
     fun json(acquisition: JSONObject?): JSONObject = EquivalenceJson.result(
         last, references.current(), references.ecuDrift(acquisition), references.previous(),
-        ReferenceStore.pointsFrom(acquisition).isNotEmpty(),
+        ReferenceStore.pointsFrom(acquisition).isNotEmpty(), clock(),
     )
 
     fun flush() {
