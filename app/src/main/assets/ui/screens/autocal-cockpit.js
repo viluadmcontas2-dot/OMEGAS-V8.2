@@ -713,12 +713,13 @@
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
             <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <h2 class="instrument-title">AutoCal</h2><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
+              <h2 class="instrument-title">AutoCal</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
               <div class="ar-tile"><small>MAP</small><b><span id="autocalLiveMap">—</span><em>bar</em></b></div>
               <div class="ar-tile"><small>Injeção</small><b><span id="autocalLivePetrol">—</span><em>ms</em></b></div>
               <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
               <div class="ar-tile ar-zone"><small>Zona</small><b id="autocalLiveZone">—</b></div>
               <div class="ar-tile ar-automatch" id="autocalAutoMatchTile" data-state="unknown"><small>AutoMatch</small><b id="autocalAutoMatchCount">—</b></div>
+              <div class="autocal-reading-controls"><button type="button" class="ar-ghost" data-autocal-history hidden aria-label="Mostrar leitura anterior">Leitura anterior</button><button type="button" data-autocal-toggle class="btn-primary btn-compact" data-loading="true" disabled>Lendo estado…</button></div>
               <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
               <p id="autocalLiveNarrative" class="ar-sr" hidden></p>
               <span id="autocalNativeState" hidden>Leitura da ECU: aguardando</span>
@@ -727,7 +728,6 @@
             <section class="ar-chart-card" aria-label="Leitura da ECU · Gasolina × GNV">
               <div class="ar-legend-row">
                 <div class="ar-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
-                <button type="button" class="ar-ghost" data-autocal-history hidden aria-label="Mostrar leitura anterior">Leitura anterior</button>
                 <span id="autocalReferenceCount" class="ar-sr" hidden>—</span>
               </div>
               <div id="autocalReferenceChart" class="ar-chart-host"><div class="chart-empty">Aguardando as curvas da ECU.</div></div>
@@ -735,25 +735,8 @@
             </section>
 
             <div class="ar-act">
-              <p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p>
               <div class="ar-buttons">
-                <button type="button" data-autocal-toggle class="btn-primary btn-compact" data-loading="true" disabled>Lendo estado…</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
-                <details class="autocal-reset-menu ar-more">
-                  <summary>Mais opções</summary>
-                  <div class="autocal-reset-popover" aria-label="Mais opções do AutoCal">
-                    <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
-                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU.</p>
-                    </section>
-                  </div>
-                </details>
-              </div>
-              <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
-            </div>
-
-            <details class="instrument-details"><summary>Zonas e histórico</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
+                <details class="instrument-details"><summary>Zonas e histórico</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
               <section class="ar-card autocal-zone-card" aria-label="Cobertura das zonas">
                 <h4>Zonas aprendidas pela ECU</h4>
                 <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
@@ -786,7 +769,24 @@
               </section>
             </div>
 
-            </details><div id="autocalReview" class="autocal-review" hidden></div>
+            </details>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
+                <details class="autocal-reset-menu ar-more">
+                  <summary>Mais opções</summary>
+                  <div class="autocal-reset-popover" aria-label="Mais opções do AutoCal">
+                    ${ns.CurveChart.viewControls()}
+                    <section class="autocal-reset-group" data-reset-scope="advanced">
+                      <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
+                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU.</p>
+                    </section>
+                  </div>
+                </details>
+              </div>
+              <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
+            </div>
+
+<div id="autocalReview" class="autocal-review" hidden></div>
           </section>`;
         stack.appendChild(panel);
         this.panel = panel;
@@ -796,6 +796,7 @@
     }
 
     bind() {
+      ns.CurveChart.bindView(this.panel, this, () => this.renderReferenceChart(this.snapshot || {}));
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
         if (action) this.runOperational(action);
@@ -1121,7 +1122,7 @@
       if (human.enabled === 1) {
         if (human.gasMissingZones.length) return { level: 'neutral', text: 'Aprendendo: dirija normal no GNV. Falta ' + zones(human.gasMissingZones) + '.' };
         if (human.petrolMissingZones.length) return { level: 'neutral', text: 'GNV completo. Falta a gasolina em ' + zones(human.petrolMissingZones) + '.' };
-        if (human.gasZones === 4 && human.petrolZones === 4) return { level: 'ok', text: 'Aprendizado completo: gasolina e GNV nas 4 zonas.' };
+        if (human.gasZones === 4 && human.petrolZones === 4) return { level: 'ok', text: 'Gasolina e GNV aprendidos.' };
         return { level: 'neutral', text: 'Leitura ativa. Aguardando a ECU publicar as zonas.' };
       }
       return { level: 'neutral', text: 'Lendo o estado da ECU…' };
@@ -1556,14 +1557,14 @@
       const store = chart.evidence;
       const signature = chart.evidenceSignature({
         snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
-        extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}`,
+        extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}`,
       });
       const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.shared.node) !== false;
       if (alreadyShown) {
         this.renderLiveCursor();
         return;
       }
-      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history, mode: 'ecu18' };
+      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history, mode: 'ecu18', view: this.chartView };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain) {

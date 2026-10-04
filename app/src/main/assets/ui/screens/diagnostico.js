@@ -176,9 +176,10 @@
         </section>
         <section class="dg-state" data-kind="${st.kind}"><p>${escapeHtml(st.text)}</p>${act}</section>
         ${fluidityCard(fluidityOf(eq))}
+        <div class="dg-stack">
         ${this.journal(eq)}
         ${this.undo(eq)}
-        ${this.tech(eq, list)}`;
+        ${this.tech(eq, list)}</div>`;
       }
       [...this.host.querySelectorAll('details')].forEach((d, i) => { if (open[i]) d.open = true; });
     }

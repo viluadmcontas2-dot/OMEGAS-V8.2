@@ -290,20 +290,52 @@
   }
 
   // ------------------------------------------------------------------ escala
-  function focusDomain(reference, ecu, ours) {
-    const measuredXs = [...ecu.map(p => p.petrolMs), ...ours.map(p => p.tpetMs)].filter(v => v > 0);
-    const xs = [...reference.map(p => p.petrolMs), ...measuredXs].filter(v => Number.isFinite(v) && v > 0);
-    if (!xs.length) return null;
-    const xMin = 0;
-    const xMax = Math.max(22, Math.ceil(Math.max(...xs)));
-    const ys = [
-      ...reference.filter(p => p.petrolMs <= xMax).flatMap(p => [p.petrolMapBar, p.gasMapBar]),
-      ...ecu.map(p => p.mapBar), ...ours.map(p => p.mapBar),
-    ].filter(v => Number.isFinite(v) && v > 0);
-    if (!ys.length) return null;
-    const yMin = Math.max(0, Math.floor(Math.min(...ys) * 20) / 20 - 0.05);
-    const yMaxRaw = Math.ceil(Math.max(...ys) * 20) / 20 + 0.05;
-    return { xMin, xMax, yMin, yMax: yMaxRaw > yMin + 0.1 ? yMaxRaw : yMin + 0.1 };
+  function focusDomain(reference, ecu, ours, options) {
+    const o = options || {};
+    // Somente coordenadas que podem ser desenhadas. Eixos vazios da ECU não esticam a escala.
+    const points = [
+      ...(reference || []).flatMap(p => [
+        { x: p.petrolMs, y: p.petrolMapBar },
+        { x: p.petrolMs, y: p.gasMapBar },
+        ...(o.equivalent ? [{ x: p.gasEquivalentMs, y: p.petrolMapBar }] : []),
+      ]),
+      ...(ecu || []).map(p => ({ x: p.petrolMs, y: p.mapBar })),
+      ...(ours || []).map(p => ({ x: p.tpetMs ?? p.petrolMs, y: p.mapBar })),
+    ].filter(p => Number.isFinite(p.x) && p.x > 0 && Number.isFinite(p.y) && p.y > 0);
+    if (!points.length) return null;
+    const maxX = Math.max(...points.map(p => p.x));
+    const margin = Math.max(0.25, maxX * 0.04);
+    const xMax = Math.max(o.fullRange ? 22 : 1, Math.ceil((maxX + margin) * 2) / 2);
+    const ys = points.map(p => p.y);
+    const yMargin = Math.max(0.025, (Math.max(...ys) - Math.min(...ys)) * 0.06);
+    const yMin = o.fullRange ? 0 : Math.max(0, Math.floor((Math.min(...ys) - yMargin) * 20) / 20);
+    const yMax = Math.max(yMin + 0.1, o.fullRange ? 1.15 : 0, Math.ceil((Math.max(...ys) + yMargin) * 20) / 20);
+    return { xMin: 0, xMax, yMin, yMax };
+  }
+
+  function viewKey(view) {
+    const v = view || {};
+    return `${v.petrol !== false}|${v.gas !== false}|${v.fullRange === true}`;
+  }
+  function viewControls() {
+    return '<fieldset class="chart-view-controls"><legend>Exibir no gráfico</legend>' +
+      '<label><input type="checkbox" data-chart-view="petrol" checked>Gasolina</label>' +
+      '<label><input type="checkbox" data-chart-view="gas" checked>GNV</label>' +
+      '<label><input type="checkbox" data-chart-view="fullRange">Faixa inteira</label></fieldset>';
+  }
+  function bindView(host, owner, redraw) {
+    if (!host) return;
+    owner.chartView = owner.chartView || { petrol: true, gas: true, fullRange: false };
+    host.addEventListener('change', event => {
+      const input = event.target.closest('[data-chart-view]');
+      if (!input) return;
+      // Sempre fica pelo menos um combustível visível.
+      const key = input.dataset.chartView;
+      if ((key === 'petrol' || key === 'gas') && !input.checked &&
+          owner.chartView[key === 'petrol' ? 'gas' : 'petrol'] === false) { input.checked = true; return; }
+      owner.chartView[key] = input.checked;
+      redraw();
+    });
   }
 
   // ------------------------------------------------------------------ desenho
@@ -333,7 +365,7 @@
     const hasPetrol = reference.some(p => finite(p.petrolMapBar) > 0);
     const hasGas = reference.some(p => finite(p.gasMapBar) > 0);
 
-    const step = xMax <= 24 ? 4 : Math.ceil(xMax / 6 / 2) * 2;
+    const step = xMax <= 6 ? 1 : xMax <= 14 ? 2 : xMax <= 24 ? 4 : Math.ceil(xMax / 6 / 2) * 2;
     const xTicks = Array.from({ length: Math.ceil(xMax / step) }, (_, i) => i * step);
     if (xMax - xTicks[xTicks.length - 1] < step / 2) xTicks.pop();
     xTicks.push(xMax);
@@ -499,17 +531,29 @@
     const c = ctx || {};
     const projection = c.projection || {};
     const snapshot = c.snapshot || projection.snapshot || {};
-    const reference = UX.referencePoints(snapshot, projection.analysis || {});
-    const ecu = [...UX.acquiredPoints(snapshot, 'petrol'), ...UX.acquiredPoints(snapshot, 'gas')];
+    const visible = c.view || {};
+    const project = p => ({ ...p, petrolMapBar: visible.petrol === false ? null : p.petrolMapBar, gasMapBar: visible.gas === false ? null : p.gasMapBar, gasEquivalentMs: visible.gas === false ? null : p.gasEquivalentMs });
+    const reference = UX.referencePoints(snapshot, projection.analysis || {}).map(project);
+    const history = (c.history || []).map(project);
+    const ecu = [...(visible.petrol === false ? [] : UX.acquiredPoints(snapshot, 'petrol')), ...(visible.gas === false ? [] : UX.acquiredPoints(snapshot, 'gas'))];
     const eq = c.eq || {};
     const dense = eq.denseBands || {};
     const items = [
       ...(Array.isArray(dense.petrol) ? dense.petrol : []).map(p => ({ ...p, fuel: 'PETROL' })),
       ...(Array.isArray(dense.gas) ? dense.gas : []).map(p => ({ ...p, fuel: 'GAS' })),
-    ].filter(p => finite(p.tpetMs) !== null && finite(p.mapBar) !== null);
+    ].filter(p => finite(p.tpetMs) !== null && finite(p.mapBar) !== null && (p.fuel === 'GAS' ? visible.gas !== false : visible.petrol !== false));
     const human = UX.humanState(snapshot, deriveState(projection), projection);
     // AutoCal não desenha pontos nossos: a escala vem só da ECU e das curvas.
-    const domain = focusDomain(reference, ecu, c.mode === 'between' ? items : []);
+    const given = normalizeBetween(eq.betweenPoints || (c.analysis && c.analysis.betweenPoints)).map(b => ({
+      ...b, gas: visible.gas === false ? null : b.gas, petrol: visible.petrol === false ? null : b.petrol,
+    }));
+    const intervalPoints = given.flatMap(b => [
+      ...[b.gas, b.petrol].filter(Boolean).map(p => ({ tpetMs: p.ms, mapBar: p.mapBar })),
+      ...(b.state === 'missing' ? [{ tpetMs: b.centerMs, mapBar: b.centerMapBar }] : []),
+    ]);
+    const stalls = Array.isArray(eq.stalls && eq.stalls.events) ? eq.stalls.events : [];
+    const relevant = c.mode === 'between' ? [...items, ...intervalPoints, ...stalls.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar }))] : [];
+    const domain = focusDomain([...reference, ...history], ecu, relevant, { fullRange: visible.fullRange, equivalent: c.mode === 'between' && visible.gas !== false });
     const thresholds = (() => {
       const f = (Array.isArray(snapshot.fields) ? snapshot.fields : []).find(x => x && x.key === 'MNFLD_PRESS_THD' && x.status === 'VALID');
       return f && Array.isArray(f.physicalValues) ? f.physicalValues : null;
@@ -519,13 +563,11 @@
     // Refino: um item por intervalo ENTRE bandas da ECU. Se o Kotlin já entrega `betweenPoints`, ele manda;
     // sem ele, deriva dos marcadores agregados (só desenho).
     const between = domain ? aggregateEvidence(items, { ...domain, thresholds, fullSamples: 60, kind: 'between' }) : empty;
-    const given = normalizeBetween(eq.betweenPoints || (c.analysis && c.analysis.betweenPoints));
     const betweenPoints = given.length ? given : betweenFromMarkers(between.markers.filter(m => m.kind === 'gap'));
     const edges = thresholds ? thresholds.map(Number).filter(Number.isFinite) : [];
     const refined = c.analysis && Array.isArray(c.analysis.points) ? c.analysis.points : [];
     const proposal = refined.filter(p => p && p.origin !== 'HELD' && finite(p.calculatedRaw) !== null && Number(p.calculatedRaw) !== Number(p.currentRaw)).map(p => Number(p.index));
-    const stalls = Array.isArray(eq.stalls && eq.stalls.events) ? eq.stalls.events : [];
-    return { reference, history: c.history || [], zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenPoints, betweenGiven: given.length > 0, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
+    return { reference, history, zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenPoints, betweenGiven: given.length > 0, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
   }
 
   /**
@@ -555,6 +597,6 @@
   ns.CurveChart = {
     LEGEND, STALL_LEGEND, BETWEEN_LEGEND, normalizeBetween, betweenFromMarkers, describeBetween, ECU_BAND_COUNT, TABLE_KEYS, bandSlots,
     evidenceSignature, tableSignature, aggregateEvidence, curveAt, focusDomain, buildSvg, legendHtml,
-    mount, release, reset, applySelection, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
+    viewKey, viewControls, bindView, mount, release, reset, applySelection, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

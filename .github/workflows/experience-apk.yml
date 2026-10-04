@@ -3,16 +3,16 @@ name: Omegas Experience authorized APK
 on:
   pull_request:
     branches: [ OmegasDiamante ]
-    paths: [ '.github/workflows/experience-apk.yml' ]
 permissions:
   contents: read
 jobs:
   approved-apk:
-    if: ${{ github.head_ref == 'work/platina-diamante-ui' && github.event.pull_request.head.sha == 'eb3e0fd7de619947bafa7593d7e59d3ad1b05598' }}
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    needs: [multimedia-render, elastic-browser]
     uses: ./.github/workflows/verde-apk-now.yml
     with:
       build_apk: true
-      source_sha: 'b8b7ff1286b76a731273cba3e6a661a6326aecd2'
+      source_sha: ${{ github.event.pull_request.head.sha }}
   multimedia-render:
     if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: '0fac72dae25b9fa0d08050c6ecc5bf4ecfc4264a'
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -34,7 +34,7 @@ jobs:
           test -e /dev/kvm
       - name: Exercise real WebView at 1280x720
         env:
-          OMEGAS_SOURCE_SHA: '0fac72dae25b9fa0d08050c6ecc5bf4ecfc4264a'
+          OMEGAS_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -47,9 +47,13 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
           disable-animations: true
           script: |
+            test "$(git rev-parse HEAD)" = "$OMEGAS_SOURCE_SHA"
             bash tools/ci/run_android_render_evidence.sh autocal-visible-actions autocalVisibleReacquireActionsForMultimedia DashboardLevelsRenderTest
             bash tools/ci/run_android_render_evidence.sh map-fresh-context mapFreshMp48ContextRender DashboardLevelsRenderTest
             bash tools/ci/run_android_render_evidence.sh curve-original-lognovo curveOriginalLognovoRendersThirtyDecodedPoints DashboardLevelsRenderTest
+            bash tools/ci/run_android_render_evidence.sh refino-coletando refinoColetando RefinoRenderTest
+            bash tools/ci/run_android_render_evidence.sh refino-pronto refinoCurvaPronta RefinoRenderTest
+            bash tools/ci/run_android_render_evidence.sh refino-verificando refinoVerificando RefinoRenderTest
             bash tools/ci/run_android_render_evidence.sh refino-latencia-da-ponte refinoLatenciaDaPonte RefinoRenderTest
       - uses: actions/upload-artifact@v4
         if: always()
@@ -57,3 +61,35 @@ jobs:
           name: experience-1280x720-render-evidence
           path: rendered-evidence
           if-no-files-found: warn
+
+  elastic-browser:
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OMEGAS_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+      NODE_PATH: ${{ runner.temp }}/omegas-ui/node_modules
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/omegas-browsers
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove exact source
+        run: test "$(git rev-parse HEAD)" = "$OMEGAS_SOURCE_SHA"
+      - name: Chromium for remote UI evidence
+        run: |
+          npm install --prefix "$RUNNER_TEMP/omegas-ui" playwright
+          "$RUNNER_TEMP/omegas-ui/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Eight tabs, real fixtures and usable Android area
+        run: |
+          node --test tests/ui/diamante-elastic.test.cjs tests/ui/diamante-usage.test.cjs tests/ui/diamante-layout.test.cjs
+          node tests/ui/render/elastic-evidence.cjs rendered-evidence/elastic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diamante-elastic-browser-${{ github.event.pull_request.head.sha }}
+          path: rendered-evidence/elastic
+          if-no-files-found: error

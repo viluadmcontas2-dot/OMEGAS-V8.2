@@ -98,7 +98,7 @@ test('render: Refino na anatomia única — intenção primeiro e gráfico ≥ 5
       const intersects = (a, b) => !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
       return {
         legendPlot: intersects(legend, plot), plotSentence: intersects(plot, sentence), sentencePrimary: intersects(sentence, primary),
-        order: [status.t, sentence.t, plot.t].every((v, i, l) => i === 0 || v > l[i - 1]),
+        order: sentence.t >= status.t && sentence.b <= status.b && plot.t > status.b,
         plotH: plot.h, view: window.innerHeight, primaryBottom: primary.b,
         shared: window.OmegasUi.CurveChart.shared.renders, mode: window.OmegasUi.CurveChart.shared.mode,
         legendText: document.getElementById('refinoLegend').textContent,
@@ -110,7 +110,7 @@ test('render: Refino na anatomia única — intenção primeiro e gráfico ≥ 5
     assert.equal(m.legendPlot, false, 'legenda e desenho sobrepostos');
     assert.equal(m.plotSentence, false);
     assert.equal(m.sentencePrimary, false);
-    assert.equal(m.order, true, 'estado → intenção → gráfico');
+    assert.equal(m.order, true, 'intenção integrada ao cabeçalho → gráfico');
     assert.ok(m.plotH >= m.view * 0.5, `gráfico ocupa ${m.plotH}px de ${m.view}px (≥ 50%)`);
     assert.ok(m.primaryBottom <= m.view, 'a ação primária cabe na primeira tela, sem rolar');
     assert.equal(m.hScroll, false, 'nunca rolagem horizontal');

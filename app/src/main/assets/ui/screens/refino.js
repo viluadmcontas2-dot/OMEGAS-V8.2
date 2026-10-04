@@ -293,10 +293,10 @@
       if (!host || host.querySelector('.autocal-cockpit')) return;
       host.innerHTML = `
         <section class="autocal-cockpit refino-cockpit ar-shell ar-refino" aria-label="Refino OMEGAS">
-          <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Refino</h2>
+          <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Refino</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
             <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
-            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p></div></details></div>
+            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}</div></details></div>
             <div class="refino-stalls ar-stall" id="refinoStalls" hidden></div>
           </header>
           <section class="ar-chart-card" aria-label="Curva de aquisição · Gasolina × GNV">
@@ -305,7 +305,6 @@
             <div class="ar-readout" id="refinoInspector" data-empty="true"><span>Toque num ponto do gráfico.</span></div>
           </section>
           <div class="ar-act">
-            <p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <p id="refinoNext" class="ar-reason" hidden></p>
             <div class="ar-buttons">
               <button type="button" class="btn-primary" data-refino-primary hidden></button>
@@ -315,6 +314,7 @@
           </div>
         </section>`;
       host.addEventListener('click', event => this.onClick(event));
+      ns.CurveChart.bindView(host, this, () => this.renderChart());
     }
 
     refresh(force, fresh) {
@@ -668,7 +668,7 @@
       const host = document.getElementById('refinoChart');
       const w = host?.clientWidth || 0;
       const h = host?.clientHeight || 0;
-      return `between|${Math.round(w / 16)}x${Math.round(h / 16)}`;
+      return `between|${Math.round(w / 16)}x${Math.round(h / 16)}|${ns.CurveChart.viewKey(this.chartView)}`;
     }
 
     /**
@@ -683,7 +683,7 @@
       const width = Math.round(host.clientWidth) || 1000;
       const height = Math.round(host.clientHeight) || 400;
       const signature = chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() });
-      const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between' };
+      const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between', view: this.chartView };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain || (!model.reference.length && !model.ecu.length && !model.betweenPoints.length)) {
