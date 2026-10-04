@@ -242,6 +242,7 @@ class RefinoRenderTest {
           const body = screen ? screen.innerText : '';
           return {
             active: !!screen && screen.classList.contains('active'),
+            canonical: JSON.parse(OmegasAutoCal.getEquivalence()),
             chip: q('#refinoPhaseChip')?.textContent ?? null,
             headline: q('#refinoHeadline')?.textContent ?? null,
             headlineVisible: (() => {
@@ -608,14 +609,18 @@ class RefinoRenderTest {
             prepareCurvaPronta(service)
             openRefino(scenario)
             val dom = refinoDom(scenario)
-            saveEvidence("refino-curva-pronta", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "snapshot 962 (ECU sem faixas maduras) + pares reais de condução"))
+            saveEvidence("refino-corpus-proposta-bloqueada", dom, scenario,
+                provenance("REAL_REPLAY", "ref_2026-10-01_1719",
+                    "o corpus permite cálculo legado, mas o cérebro atual ainda pede coleta; a UI não oferece gravação"))
             assertClean(dom)
-            assertEquals("Curva pronta", dom.getString("chip"))
-            assertEquals("review", dom.getString("primaryKind"))
-            assertTrue(dom.getString("primaryText"), Regex("Gravar \\d+ ponto").containsMatchIn(dom.getString("primaryText")))
-            assertTrue("a proposta diz de onde vem: ${dom.getString("techText")}", dom.getString("techText").contains("Curva K"))
-            assertTrue("nossos pontos aparecem no gráfico", dom.getInt("ourSquares") > 0)
+            assertEquals("Medindo o GNV", dom.getString("chip"))
+            assertEquals("COLLECT", dom.getJSONObject("canonical").getJSONObject("nextAction").getString("kind"))
+            assertTrue("contrato impede gravar com evidência ainda insuficiente",
+                !dom.getJSONObject("canonical").getJSONObject("refinoState").getBoolean("canAct"))
+            assertEquals("none", dom.getString("primaryKind"))
+            assertTrue("ação de gravação não pode vazar de uma proposta antiga", dom.getBoolean("primaryHidden"))
             assertTrue("curva da ECU desenhada", dom.getInt("referenceLines") >= 1)
+            assertTrue("gráfico disponível durante coleta", dom.getBoolean("svg"))
         } finally { scenario.close() }
     }
 

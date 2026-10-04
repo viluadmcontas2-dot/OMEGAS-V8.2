@@ -15,7 +15,7 @@ async function audit(page,route,height,name){
    plot:plot?rect(plot):null,domain:window.OmegasUi.CurveChart.shared.scale?{xMax:window.OmegasUi.CurveChart.shared.scale.xMax,yMin:window.OmegasUi.CurveChart.shared.scale.yMin,yMax:window.OmegasUi.CurveChart.shared.scale.yMax}:null,
    overflow:screen.scrollWidth>screen.clientWidth+1,
    important:[...critical].filter(visible).map(e=>({id:e.id||e.dataset.autocalAction||e.textContent.trim(),...rect(e)})),
-   bad:/\\bNaN\\b|\\bundefined\\b|\\[object Object\\]/.test(screen.innerText)};
+   bad:/\bNaN\b|\bundefined\b|\[object Object\]/.test(screen.innerText)};
  });
  metrics.push({name,route,...m});fs.writeFileSync(path.join(out,'metrics.json'),JSON.stringify({source:process.env.OMEGAS_SOURCE_SHA,metrics},null,2));await page.screenshot({path:path.join(out,name+'.png')});
  console.log(name+' '+JSON.stringify(m));
@@ -49,7 +49,17 @@ async function audit(page,route,height,name){
  ];
  for(const [name,route,scn] of states){
   const {browser,page,errors}=await open(pw.chromium,name==='refino-sem-ecu'?'disconnected':'connected',{viewport:{width:1280,height:672},scn});
-  try{await go(page,route);await page.waitForTimeout(2500);await audit(page,route,672,name);assert.deepEqual(errors,[]);}
+  try{
+   await go(page,route);await page.waitForTimeout(2500);
+   if(name==='refino-proposta'){
+    const action=page.locator('[data-refino-primary]');
+    assert.equal(await action.isVisible(),true,'proposta precisa oferecer sua ação');
+    assert.equal(await action.getAttribute('data-kind'),'review');
+    assert.match(await action.textContent(),/Aplicar ajuste/);
+   }
+   if(['refino-verificando','refino-estavel','refino-sem-ecu'].includes(name)) assert.equal(await page.locator('[data-refino-primary]').isVisible(),false,'sem ação de gravação neste estado');
+   await audit(page,route,672,name);assert.deepEqual(errors,[]);
+  }
   finally{await browser.close();}
  }
  for(const route of ['autocal','refino']){

@@ -594,7 +594,7 @@
       setText('refinoDetailReason', rs?.whyNoProposal || rs?.reason || '');
       const proposals = document.getElementById('refinoProposals');
       if (proposals) {
-        const points = readyPoints(eq, this.analysis);
+        const points = this.actionModel().kind === 'review' ? readyPoints(eq, this.analysis) : [];
         proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'ponto', 'pontos')} da Curva K · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>Ponto ${p.index + 1}</dt><dd>${D.kValue(p.currentRaw / 16384)} → ${D.kValue(p.targetRaw / 16384)}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
       }
       const resetGas = document.querySelector('[data-refino-reset-gas]');
