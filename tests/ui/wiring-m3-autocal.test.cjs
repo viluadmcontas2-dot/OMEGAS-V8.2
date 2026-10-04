@@ -63,8 +63,8 @@ for (const name of STATES) {
     L.assertClean(app, `M3/${name}`);
     const text = app.$(SCREEN).textContent.replace(/\s+/g, ' ');
     assert.ok(text.length > 100, 'a aba AutoCal desenhou algo');
-    const title = app.byId('autocalHumanTitle');
-    assert.ok(title && title.textContent.trim() && title.textContent.trim() !== '—', `título humano do AutoCal vazio em "${name}"`);
+    const title = app.byId('autocalHumanAction');
+    assert.ok(title && title.textContent.trim() && title.textContent.trim() !== '—', `frase de estado do AutoCal vazia em "${name}"`);
     app.destroy();
   });
 }
@@ -72,9 +72,9 @@ for (const name of STATES) {
 test('M3 pausado × monitorando: o app diz o estado certo e o botão faz a AÇÃO OPOSTA na ponte', () => {
   const on = prepared('monitorando');
   const off = prepared('pausado');
-  assert.notEqual(on.byId('autocalHumanTitle').textContent, off.byId('autocalHumanTitle').textContent, 'pausado e adquirindo têm o mesmo título');
-  assert.match(off.byId('autocalHumanTitle').textContent, /paus/i);
-  assert.doesNotMatch(on.byId('autocalHumanTitle').textContent, /paus/i);
+  assert.notEqual(on.byId('autocalHumanAction').textContent, off.byId('autocalHumanAction').textContent, 'pausado e adquirindo têm o mesmo título');
+  assert.match(off.byId('autocalHumanAction').textContent, /paus/i);
+  assert.doesNotMatch(on.byId('autocalHumanAction').textContent, /paus/i);
   for (const [app, expected] of [[on, false], [off, true]]) {
     const toggle = app.$('[data-autocal-toggle]');
     assert.ok(toggle, 'botão de alternar aquisição ausente');
@@ -117,7 +117,7 @@ test('M3 projeção não confiável (ok:false): estado "sem estado confiável", 
   const app = L.boot({ world: w });
   app.go('autocal'); app.settle(4);
   L.assertClean(app, 'M3/não confiável');
-  assert.match(app.byId('autocalHumanTitle').textContent, /sem estado|indispon|erro|aguard/i);
+  assert.match(app.byId('autocalHumanAction').textContent, /sem leitura|indispon|erro|aguard|lendo/i);
 });
 
 test('M3 idempotência: a mesma projeção duas vezes não redesenha o gráfico nem muda o DOM', () => {

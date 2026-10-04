@@ -62,7 +62,7 @@ test('A3/A4: Desfazer sai do <details>, vem do diário e falha parcial não diz 
   assert.equal(m.undoSource({ photoFile: 'foto_B.json' }).photoFile, 'foto_B.json');
   assert.equal(m.undoSource({ status: 'FALHA_PARCIAL', photoFile: 'foto.json' }).available, true);
   assert.equal(m.undoSource({ status: 'FALHA_PARCIAL' }).available, false);
-  assert.ok(SOURCE.indexOf('id="refinoUndo"') > 0 && SOURCE.indexOf('id="refinoUndo"') < SOURCE.indexOf('id="refinoResultDetails"'), 'Desfazer antes do <details>');
+  assert.ok(SOURCE.indexOf('id="refinoUndo"') > 0 && !/<details[^>]*>[^]*id="refinoUndo"/.test(SOURCE.slice(SOURCE.indexOf('<details') < 0 ? 0 : SOURCE.indexOf('<details'), SOURCE.indexOf('id="refinoUndo"') + 20)), 'Desfazer fora de qualquer <details>');
   assert.doesNotMatch(SOURCE, /lastPhotoFile/, 'a foto vem do ÚLTIMO experimento do diário, não de memória da tela');
   assert.match(SOURCE, /op\.partial/);
   assert.doesNotMatch(SOURCE, /Nada foi dado como gravado/);
@@ -78,8 +78,8 @@ test('A5: mínimo e máximo nunca devolvem infinito para lista vazia', () => {
 
 test('A6: pontos da ECU e marcadores do OMEGAS têm alvo de toque (círculo invisível de 44 px no desenho compartilhado)', () => {
   const chart = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/components/curve-chart.js'), 'utf8');
-  const hits = [...chart.matchAll(/class="autocal-acquired-hit[^"]*"[^>]*data-refino-dot="(ecu|our\$\{tag\}):/g)].map(m => m[1].startsWith('our') ? 'our' : m[1]);
-  assert.deepEqual(hits.sort(), ['ecu', 'our']);
+  assert.match(chart, /class="autocal-acquired-hit[^"]*"[^>]*data-refino-dot="ecu:/, 'pontos da ECU');
+  assert.match(chart, /data-refino-dot="ourb:\$\{i\}"/, 'bolinhas do OMEGAS');
   assert.match(chart, /r="22"/);
 });
 

@@ -181,17 +181,23 @@ test('F4b (Refino): UM marcador por intervalo ENTRE limiares consecutivos da ECU
   const below = chart.aggregateEvidence([{ fuel: 'GAS', mapBar: 0.5, tpetMs: 1, samples: 5 }], { thresholds: thd, yMin: 0, yMax: 40, kind: 'between' });
   assert.equal(below.markers.length, 1);
   assert.equal(below.markers[0].kind, 'below', 'a ponta aberta ganha marcador só quando carrega evidência');
-  // Refino não repete as 18 faixas da ECU como marcadores: só marquinhas fracas no eixo
-  const model = { reference: [], history: [], zones: [], ecu: [], ours: [], between: result.markers, edges: thd, domain: { xMin: 0, xMax: 12, yMin: 0, yMax: 40 }, proposal: [], stalls: [] };
-  const svg = chart.buildSvg(model, { width: 800, height: 400 }).svg;
-  assert.match(svg, /class="layer-ticks"/);
-  assert.equal((svg.match(/class="chart-edge-tick"/g) || []).length, 18, 'as 18 faixas da ECU viram só marquinhas no eixo');
+  // Refino: nossos pontos são BOLINHAS (mesmo tamanho das da ECU), uma por combustível medido em cada intervalo.
+  const betweenPoints = chart.normalizeBetween([
+    { index: 0, centerMs: 3, centerMapBar: 2, state: 'coletado', gas: { ms: 3, mapBar: 2, n: 20 }, petrol: { ms: 2.9, mapBar: 2, n: 8 } },
+    { index: 1, centerMs: 5, centerMapBar: 4, state: 'falta' },
+  ]);
+  const model = { reference: [], history: [], zones: [], ecu: [], ours: [], between: result.markers, betweenPoints, edges: thd, domain: { xMin: 0, xMax: 12, yMin: 0, yMax: 40 }, proposal: [], stalls: [] };
+  const svg = chart.buildSvg(model, { width: 800, height: 400, mode: 'between' }).svg;
   assert.match(svg, /class="layer-between"/);
-  assert.match(chart.legendHtml({ mode: 'between' }), /Faixas da ECU/);
-  assert.doesNotMatch(chart.legendHtml({ mode: 'ecu18' }), /Faixas da ECU/);
+  assert.equal((svg.match(/class="chart-between (gas|petrol) collected"/g) || []).length, 2, 'uma bolinha por combustível medido');
+  assert.equal((svg.match(/class="chart-between missing"/g) || []).length, 1, 'intervalo sem medida: anel tracejado no centro');
+  assert.doesNotMatch(svg, /<rect class="chart-ours/, 'nada de triângulos/losangos: só bolinhas');
+  assert.doesNotMatch(chart.buildSvg(model, { width: 800, height: 400, mode: 'ecu18' }).svg, /chart-between/, 'AutoCal não mostra pontos nossos');
+  assert.match(chart.legendHtml({ mode: 'between' }), /Pontos da ECU/);
+  assert.doesNotMatch(chart.legendHtml({ mode: 'ecu18' }), /Pontos da ECU|Pontos do OMEGAS/);
 });
 
-test('F4b: lê betweenBands/fineBins do Kotlin quando existem (sem mudar a UI depois)', () => {
+test('F4b: lê betweenPoints do Kotlin quando existe e trata a AUSÊNCIA sem quebrar; fineBins entram na faixa', () => {
   const { chart } = load();
   const thd = Array.from({ length: 18 }, (_, i) => 0.2 + i * 0.05);
   const fine = [{ fuel: 'GAS', tpetMs: 4, mapBar: 0.31, samples: 6 }, { fuel: 'GAS', tpetMs: 4.2, mapBar: 0.33, samples: 14 }];
@@ -201,19 +207,26 @@ test('F4b: lê betweenBands/fineBins do Kotlin quando existem (sem mudar a UI de
   assert.equal(folded.markers[0].samples, 20);
   const model = chart.buildModel({
     snapshot: snapshot(), projection: { snapshot: snapshot() },
-    eq: { betweenBands: [{ fromMs: 3, toMs: 5, ratio: 1.02, samples: 30, episodes: 3, confidence: 0.8, fineBins: [] }] },
+    mode: 'between',
+    eq: { betweenPoints: [{ index: 3, centerMs: 4, centerMapBar: 0.4, state: 'coletado', gas: { ms: 4, mapBar: 0.4, n: 9 }, visits: 3 }, { index: 4, state: 'falta', centerMs: 5, centerMapBar: 0.5 }] },
   });
   assert.ok(model, 'modelo montado');
-  assert.equal(model.between.length, 1, 'betweenBands do Kotlin manda');
-  assert.equal(model.betweenBands[0].ratio, 1.02);
+  assert.equal(model.betweenPoints.length, 2, 'betweenPoints do Kotlin manda');
+  assert.equal(model.betweenGiven, true);
+  assert.equal(model.betweenPoints[1].state, 'missing');
+  const absent = chart.buildModel({ snapshot: snapshot(), projection: { snapshot: snapshot() }, mode: 'between', eq: {} });
+  assert.equal(absent.betweenGiven, false, 'contrato ausente: o desenho deriva dos marcadores, sem exceção');
+  assert.equal(chart.normalizeBetween(null).length, 0, 'ausência = lista vazia');
+  assert.equal(chart.normalizeBetween(Array.from({ length: 50 }, (_, i) => ({ index: i }))).length, 36, 'no máximo 36 intervalos');
 });
 
 test('F4: legenda em português com as cinco séries humanas, fora do desenho', () => {
   const { chart } = load();
   const html = chart.legendHtml({ mode: 'ecu18' });
-  for (const label of ['Curva da gasolina', 'Curva do GNV hoje', 'O que medimos', 'Proposta', 'Agora']) assert.match(html, new RegExp(label));
-  assert.equal(chart.LEGEND.length, 5, 'no máximo 4 séries + Agora');
-  assert.match(chart.legendHtml({ stall: true }), /Motor apagou/);
+  for (const label of ['Curva da gasolina', 'Curva do GNV hoje', 'Agora']) assert.match(html, new RegExp(label));
+  assert.doesNotMatch(html, /O que medimos/, 'AutoCal só mostra o que é do AutoCal');
+  assert.match(chart.legendHtml({ mode: 'between', proposal: true }), /Proposta/);
+  assert.equal(chart.LEGEND.length, 4, 'no máximo 3 séries + Agora');
   assert.doesNotMatch(chart.buildSvg({ reference: [], history: [], zones: [], ecu: [], ours: [], between: [], domain: { xMin: 0, xMax: 4, yMin: 0, yMax: 1 }, proposal: [], stalls: [] }, {}).svg, /Curva da gasolina/, 'a legenda não vai dentro do SVG');
 });
 

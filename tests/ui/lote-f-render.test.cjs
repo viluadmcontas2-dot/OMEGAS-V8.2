@@ -89,38 +89,42 @@ test('render: Agora tem 4 valores de peso parecido que preenchem a tela (razão 
   } finally { await browser.close(); }
 });
 
-test('render: Refino sem rolagem; título, legenda e desenho não se sobrepõem; faixa de equivalência pequena', { skip }, async () => {
+test('render: Refino na anatomia única — gráfico primeiro e ≥ 50% da altura, legenda/gráfico/frase sem sobreposição, uma ação', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected', { scn: { phase: 'PROPOSTA_PRONTA' } });
   try {
     await page.waitForTimeout(1500);
     await go(page, 'refino');
     await page.waitForTimeout(3500);
     const m = await page.evaluate(() => {
-      const R = e => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, h: b.height }; };
-      const title = R(document.querySelector('.refino-chart-head .autocal-plot-title'));
+      const R = e => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, h: b.height, w: b.width }; };
+      const status = R(document.querySelector('.refino-cockpit .ar-status'));
       const legend = R(document.getElementById('refinoLegend'));
       const plot = R(document.querySelector('#refinoChart svg'));
-      const strip = R(document.getElementById('refinoEq'));
-      const metric = R(document.querySelector('.refino-cockpit .autocal-focus-metric'));
-      const cockpit = document.querySelector('.refino-cockpit');
+      const sentence = R(document.getElementById('refinoHeadline'));
+      const primary = R(document.querySelector('[data-refino-primary]'));
       const intersects = (a, b) => !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
       return {
-        titleLegend: intersects(title, legend), titlePlot: intersects(title, plot), legendPlot: intersects(legend, plot),
-        scrolls: cockpit.scrollHeight > cockpit.clientHeight + 1, stripH: strip.h, metricH: metric.h,
+        legendPlot: intersects(legend, plot), plotSentence: intersects(plot, sentence), sentencePrimary: intersects(sentence, primary),
+        order: [status.t, plot.t, sentence.t].every((v, i, l) => i === 0 || v > l[i - 1]),
+        plotH: plot.h, view: window.innerHeight, primaryBottom: primary.b,
         shared: window.OmegasUi.CurveChart.shared.renders, mode: window.OmegasUi.CurveChart.shared.mode,
         legendText: document.getElementById('refinoLegend').textContent,
-        headline: document.getElementById('refinoHeadline').textContent, strip: document.getElementById('refinoEq').textContent,
+        oldCards: document.querySelectorAll('#refinoEq, #refinoSteps, #refinoJournal, #refinoTech, [data-refino-dismiss]').length,
+        ours: document.querySelectorAll('#refinoChart .chart-between').length, triangles: document.querySelectorAll('#refinoChart .chart-ours').length,
+        hScroll: document.querySelector('[data-screen="refino"]').scrollWidth > document.querySelector('[data-screen="refino"]').clientWidth + 1,
       };
     });
-    assert.equal(m.titleLegend, false, 'título e legenda sobrepostos');
-    assert.equal(m.titlePlot, false);
-    assert.equal(m.legendPlot, false);
-    assert.equal(m.scrolls, false, 'Refino rola na vertical');
+    assert.equal(m.legendPlot, false, 'legenda e desenho sobrepostos');
+    assert.equal(m.plotSentence, false);
+    assert.equal(m.sentencePrimary, false);
+    assert.equal(m.order, true, 'faixa de status → gráfico → frase');
+    assert.ok(m.plotH >= m.view * 0.5, `gráfico ocupa ${m.plotH}px de ${m.view}px (≥ 50%)`);
+    assert.ok(m.primaryBottom <= m.view, 'a ação primária cabe na primeira tela, sem rolar');
+    assert.equal(m.hScroll, false, 'nunca rolagem horizontal');
     assert.equal(m.mode, 'between');
-    for (const label of ['Curva da gasolina', 'Curva do GNV hoje', 'O que medimos', 'Proposta', 'Agora', 'Faixas da ECU']) assert.ok(m.legendText.includes(label), label);
-    assert.ok(m.stripH <= 100, `faixa de equivalência discreta (${m.stripH}px)`);
-    // Uma fala só: o texto do cérebro aparece uma vez dentro da faixa
-    assert.ok(m.strip.includes(m.headline));
+    for (const label of ['Curva da gasolina', 'Curva do GNV hoje', 'Agora', 'Pontos da ECU', 'Pontos do OMEGAS']) assert.ok(m.legendText.includes(label), label);
+    assert.equal(m.oldCards, 0, 'sem faixa de %, passos, último resultado, detalhes técnicos nem Entendi');
+    assert.ok(m.ours > 0, 'nossos pontos aparecem como bolinhas'); assert.equal(m.triangles, 0);
     // O gráfico não é redesenhado a cada leitura: depois de assentar, o contador de desenhos não anda em 4 s.
     const before = await page.evaluate(() => window.OmegasUi.CurveChart.shared.renders);
     await page.waitForTimeout(4000);

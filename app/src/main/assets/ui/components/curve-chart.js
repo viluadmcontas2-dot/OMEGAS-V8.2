@@ -15,11 +15,16 @@
   const LEGEND = [
     { key: 'petrol', label: 'Curva da gasolina' },
     { key: 'gas', label: 'Curva do GNV hoje' },
-    { key: 'ours', label: 'O que medimos' },
     { key: 'proposal', label: 'Proposta' },
     { key: 'live', label: 'Agora' },
   ];
   const STALL_LEGEND = { key: 'stall', label: 'Motor apagou' };
+  // Refino: as bolinhas da ECU e as nossas (entre elas) têm o mesmo tamanho e as cores de cada combustível.
+  const BETWEEN_LEGEND = [
+    { key: 'ecudot', label: 'Pontos da ECU' },
+    { key: 'ourdot', label: 'Pontos do OMEGAS' },
+    { key: 'ourmissing', label: 'Falta medir' },
+  ];
 
   // ------------------------------------------------------------------ assinatura barata (sem serializar pontos)
   function mixNumber(hash, value) {
@@ -84,6 +89,14 @@
     h = mixNumber(h, Number(eq.gasEpochAt));
     h = listSignature(h, ctx.analysis && ctx.analysis.points, ['calculatedRaw', 'currentRaw']);
     h = listSignature(h, eq.points, ['axisMs']);
+    if (Array.isArray(eq.betweenPoints)) {
+      h = mixNumber(h, eq.betweenPoints.length);
+      for (const b of eq.betweenPoints) {
+        const g = (b && b.gas) || {}; const pt = (b && b.petrol) || {};
+        for (const v of [b && b.index, b && b.centerMs, b && b.centerMapBar, b && b.n, b && b.visits, g.ms, g.mapBar, g.n, pt.ms, pt.mapBar, pt.n]) h = mixNumber(h, Number(v));
+        h = mixString(h, b && b.state);
+      }
+    }
     h = mixString(h, ctx.extra);
     return h.toString(36);
   }
@@ -219,6 +232,63 @@
     return { markers, bands, total: list.length, kept: markers.length };
   }
 
+
+  // ------------------------------------------------------------------ pontos ENTRE as faixas da ECU (contrato betweenPoints[])
+  /**
+   * Um item por intervalo entre bandas adjacentes da ECU (≤ 36). Aceita nomes alternativos e AUSÊNCIA (null → lista vazia).
+   * Saída: { index, state:'collected'|'missing', centerMs, centerMapBar, gas:{ms,mapBar,n}|null, petrol:{...}|null, n, visits }.
+   */
+  function normalizeBetween(list) {
+    if (!Array.isArray(list)) return [];
+    const pick = (o, keys) => { for (const k of keys) { const v = finite(o && o[k]); if (v !== null) return v; } return null; };
+    const side = (b, name) => {
+      const o = b[name] && typeof b[name] === 'object' ? b[name] : null;
+      if (!o) return null;
+      const ms = pick(o, ['ms']);
+      const map = pick(o, ['mapBar']);
+      if (ms === null || map === null || !(ms > 0)) return null;
+      return { ms, mapBar: map, n: pick(o, ['n']) ?? 0 };
+    };
+    return list.filter(b => b && typeof b === 'object').slice(0, 36).map((b, i) => {
+      const gas = side(b, 'gas');
+      const petrol = side(b, 'petrol');
+      const state = String(b.state || '').toLowerCase();
+      const collected = state ? /colet|collected|ok/.test(state) : Boolean(gas || petrol);
+      return {
+        index: pick(b, ['index']) ?? i,
+        state: collected ? 'collected' : 'missing',
+        centerMs: pick(b, ['centerMs']),
+        centerMapBar: pick(b, ['centerMapBar']),
+        gas, petrol,
+        n: pick(b, ['n']) ?? ((gas ? gas.n : 0) + (petrol ? petrol.n : 0)),
+        visits: pick(b, ['visits']) ?? 0,
+      };
+    });
+  }
+  /** Sem betweenPoints do Kotlin: deriva dos marcadores agregados por intervalo (denseBands), só para desenhar. */
+  function betweenFromMarkers(markers) {
+    const bySlot = new Map();
+    for (const m of markers || []) {
+      if (!bySlot.has(m.slot)) bySlot.set(m.slot, { index: m.slot, state: 'collected', centerMs: m.tpetMs, centerMapBar: m.mapBar, gas: null, petrol: null, n: 0, visits: m.episodes || 0, derived: true });
+      const b = bySlot.get(m.slot);
+      b[m.fuel === 'GAS' ? 'gas' : 'petrol'] = { ms: m.tpetMs, mapBar: m.mapBar, n: m.samples };
+      b.n += m.samples;
+    }
+    return [...bySlot.values()];
+  }
+  /** Ponto da ECU em frase curta, sem códigos. */
+  function describeBetween(b) {
+    const parts = [];
+    const fuels = [b.gas ? ['GNV', b.gas] : null, b.petrol ? ['Gasolina', b.petrol] : null].filter(Boolean);
+    const first = fuels[0];
+    parts.push(first ? first[0] : 'Falta medir');
+    parts.push(`entre os pontos ${Number(b.index) + 1} e ${Number(b.index) + 2} da ECU`);
+    const ms = first ? first[1].ms : b.centerMs;
+    if (finite(ms) !== null) parts.push(`${number(ms, 2)} ms`);
+    parts.push(first ? 'já medido' : 'ainda sem medida');
+    return parts.join(' · ');
+  }
+
   // ------------------------------------------------------------------ escala
   function focusDomain(reference, ecu, ours) {
     const measuredXs = [...ecu.map(p => p.petrolMs), ...ours.map(p => p.tpetMs)].filter(v => v > 0);
@@ -246,7 +316,8 @@
     const o = opts || {};
     const width = Math.max(320, Math.round(o.width || 1000));
     const height = Math.max(160, Math.round(o.height || 400));
-    const padLeft = 96; const padRight = 16; const padTop = 14; const padBottom = 52;
+    const between = o.mode === 'between';
+    const padLeft = 88; const padRight = 14; const padTop = 12; const padBottom = 48;
     const reference = model.reference || [];
     const domain = model.domain;
     if (!domain) return { empty: true };
@@ -267,7 +338,7 @@
     const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${tick(v, 3)}</text>`).join('') +
       xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - padBottom + 20}" text-anchor="middle">${tick(v, 1)}</text>`).join('');
 
-    const zoneMarkup = (model.zones || []).map(zone => {
+    const zoneMarkup = between ? '' : (model.zones || []).map(zone => {
       const lower = Math.max(zone.lower, yMin);
       const upper = Math.min(zone.upper, yMax);
       if (upper <= lower) return '';
@@ -282,7 +353,7 @@
         (zoneHeight >= 24 ? `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="Z${zone.zone}" x="${width - padRight - 10}" y="${(top + zoneHeight / 2 + 5).toFixed(1)}" text-anchor="end">Z${zone.zone}</text>` : '') + '</g>';
     }).join('');
 
-    const history = model.history || [];
+    const history = between ? [] : (model.history || []);
     const previous = history.length
       ? `<path class="autocal-reference-line previous petrol" d="${pathFor(history, 'petrolMapBar')}"></path><path class="autocal-reference-line previous gas" d="${pathFor(history, 'gasMapBar')}"></path>` : '';
     const refMarkup = reference.map(p => {
@@ -300,38 +371,43 @@
       const progress = finite(p.progress);
       const done = p.acquisitionState === 'ACQUIRED';
       return `<circle class="autocal-acquired-hit${sel.ecu === key ? ' selected' : ''}${sel.batch && sel.batch.has(key) ? ' batch-selected' : ''}" data-autocal-acquired-fuel="${p.fuel}" data-autocal-acquired-index="${p.index}" data-refino-dot="ecu:${i}" cx="${x}" cy="${y}" r="22"></circle>` +
-        `<circle class="autocal-acquired-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'} ${done ? 'acquired' : 'collecting'}" data-acquisition-state="${p.acquisitionState}" data-acquisition-progress="${(progress ?? 0).toFixed(3)}" cx="${x}" cy="${y}" r="${done ? '6.0' : '4.6'}"${done || progress === null ? '' : ` fill-opacity="${(0.35 + 0.65 * progress).toFixed(2)}"`}></circle>`;
+        `<circle class="autocal-acquired-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'} ${done ? 'acquired' : 'collecting'}" data-acquisition-state="${p.acquisitionState}" data-acquisition-progress="${(progress ?? 0).toFixed(3)}" cx="${x}" cy="${y}" r="6"${done || progress === null ? '' : ` fill-opacity="${(0.35 + 0.65 * progress).toFixed(2)}"`}></circle>`;
     }).join('');
 
-    const markersFor = (list, tag) => (list || []).map((b, i) => {
-      if (b.mapBar < yMin || b.mapBar > yMax || b.tpetMs > xMax) return '';
-      const x = xFor(b.tpetMs); const y = yFor(b.mapBar);
-      const r = 3.5 + 5 * Math.sqrt(b.confidence);
-      const whisker = b.whisker > 0 ? `<line class="chart-whisker" x1="${x.toFixed(1)}" y1="${yFor(Math.min(yMax, b.mapBar + b.whisker)).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yFor(Math.max(yMin, b.mapBar - b.whisker)).toFixed(1)}"></line>` : '';
-      const shape = b.fuel === 'GAS'
-        ? `<rect class="chart-ours gas" x="${(x - r).toFixed(1)}" y="${(y - r).toFixed(1)}" width="${(2 * r).toFixed(1)}" height="${(2 * r).toFixed(1)}" rx="2" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" fill-opacity="${(0.35 + 0.65 * b.confidence).toFixed(2)}"></rect>`
-        : `<rect class="chart-ours petrol" x="${(x - r).toFixed(1)}" y="${(y - r).toFixed(1)}" width="${(2 * r).toFixed(1)}" height="${(2 * r).toFixed(1)}" rx="2" fill-opacity="${(0.35 + 0.65 * b.confidence).toFixed(2)}"></rect>`;
-      return `<circle class="autocal-acquired-hit" data-chart-our="${tag}:${i}" data-refino-dot="our${tag}:${i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22"></circle>${whisker}${shape}`;
-    }).join('');
-    const oursMarkup = `<g class="layer-ecu18">${markersFor(model.ours, 'e')}</g><g class="layer-between">${markersFor(model.between, 'b')}</g>`;
-    // Limiares da ECU: só marquinhas fracas no eixo (Refino); as faixas completas ficam no AutoCal.
-    const tickMarkup = `<g class="layer-ticks">${(model.edges || []).filter(v => v >= yMin && v <= yMax).map(v => `<line class="chart-edge-tick" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${padLeft + 12}" y2="${yFor(v).toFixed(1)}"></line>`).join('')}</g>`;
+    // Refino: pontos do OMEGAS são BOLINHAS do tamanho das da ECU, entre elas. AutoCal não mostra pontos do OMEGAS.
+    const dot = (cls, x, y, extra) => `<circle class="chart-between ${cls}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"${extra || ''}></circle>`;
+    const oursMarkup = between ? `<g class="layer-between">${(model.betweenPoints || []).map((b, i) => {
+      const token = `data-chart-our="b:${i}" data-refino-dot="ourb:${i}"`;
+      const shapes = [];
+      const place = (side, cls) => {
+        if (!side || side.mapBar < yMin || side.mapBar > yMax || side.ms > xMax) return;
+        const x = xFor(side.ms); const y = yFor(side.mapBar);
+        shapes.push(`<circle class="autocal-acquired-hit${o.selected && o.selected.our === `b:${i}` ? ' selected' : ''}" ${token} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22"></circle>` + dot(`${cls} collected`, x, y));
+      };
+      place(b.gas, 'gas'); place(b.petrol, 'petrol');
+      if (!shapes.length && b.state === 'missing' && finite(b.centerMs) !== null && finite(b.centerMapBar) !== null && inY(b.centerMapBar) && b.centerMs <= xMax) {
+        const x = xFor(b.centerMs); const y = yFor(b.centerMapBar);
+        shapes.push(`<circle class="autocal-acquired-hit" ${token} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22"></circle>` + dot('missing', x, y));
+      }
+      return shapes.join('');
+    }).join('')}</g>` : '';
+    const tickMarkup = '';
 
-    const proposalMarkup = (model.proposal || []).map(index => {
+    const proposalMarkup = true ? '' : (model.proposal || []).map(index => {
       const p = reference.find(r => r.index === index);
       if (!p || !inY(p.gasMapBar) || p.petrolMs > xMax) return '';
       return `<circle class="chart-proposal" cx="${xFor(p.petrolMs).toFixed(1)}" cy="${yFor(p.gasMapBar).toFixed(1)}" r="11"></circle>`;
     }).join('');
 
-    const stallMarkup = (model.stalls || []).filter(e => finite(e.petrolMs) !== null && finite(e.mapBar) !== null && e.petrolMs <= xMax && inY(e.mapBar))
+    const stallMarkup = !between ? '' : (model.stalls || []).filter(e => finite(e.petrolMs) !== null && finite(e.mapBar) !== null && e.petrolMs <= xMax && inY(e.mapBar))
       .map(e => { const x = xFor(e.petrolMs); const y = yFor(e.mapBar); return `<path class="refino-stall-mark" d="M${(x - 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x + 6).toFixed(1)} ${(y + 6).toFixed(1)} M${(x + 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x - 6).toFixed(1)} ${(y + 6).toFixed(1)}"></path>`; }).join('');
 
     const live = '<g class="autocal-live-layer" data-refino-live data-chart-live display="none" aria-label="Posição atual do motor"><circle class="autocal-live-halo" data-autocal-live-point r="13" cx="0" cy="0"></circle><circle class="autocal-live-point" data-autocal-live-point r="6" cx="0" cy="0"></circle><text class="autocal-live-label" data-autocal-live-label text-anchor="start" x="0" y="0">AGORA</text></g>';
 
     const equivalent = reference.filter(p => finite(p.gasEquivalentMs) !== null);
-    const equivalencePath = equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
+    const equivalencePath = between && equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
 
-    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="Curva de aquisição: Injeção por MAP, gasolina e GNV, pontos da ECU, o que medimos, proposta e posição Agora">${grid}<g class="layer-zones">${zoneMarkup}</g>${tickMarkup}` +
+    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>${tickMarkup}` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${previous}${equivalencePath}` +
@@ -342,8 +418,9 @@
 
   function legendHtml(flags) {
     const f = flags || {};
-    const extra = f.mode === 'between' ? [{ key: 'ecuedges', label: 'Faixas da ECU' }] : [];
-    const items = LEGEND.filter(item => item.key !== 'proposal' || f.proposal !== false).concat(extra, f.stall ? [STALL_LEGEND] : []);
+    const base = LEGEND.filter(item => item.key !== 'proposal' || f.proposal === true);
+    const extra = f.mode === 'between' ? BETWEEN_LEGEND.filter(item => item.key !== 'ourmissing' || f.missing !== false) : [];
+    const items = base.concat(extra, []);
     return items.map(item => `<span class="${item.key}" data-legend="${item.key}">${esc(item.label)}</span>`).join('');
   }
 
@@ -394,6 +471,9 @@
     node.querySelectorAll('.autocal-reference-point[data-ref-marker]').forEach(marker => {
       marker.classList.toggle('selected', Number(marker.getAttribute('data-ref-marker')) === sel.ref);
     });
+    node.querySelectorAll('.autocal-acquired-hit[data-chart-our]').forEach(hit => {
+      hit.classList.toggle('selected', sel.our === hit.getAttribute('data-chart-our'));
+    });
     node.querySelectorAll('.autocal-acquired-hit[data-autocal-acquired-fuel]').forEach(hit => {
       const key = `${hit.getAttribute('data-autocal-acquired-fuel')}:${hit.getAttribute('data-autocal-acquired-index')}`;
       hit.classList.toggle('selected', sel.ecu === key);
@@ -425,32 +505,24 @@
       ...(Array.isArray(dense.gas) ? dense.gas : []).map(p => ({ ...p, fuel: 'GAS' })),
     ].filter(p => finite(p.tpetMs) !== null && finite(p.mapBar) !== null);
     const human = UX.humanState(snapshot, deriveState(projection), projection);
-    const domain = focusDomain(reference, ecu, items);
+    // AutoCal não desenha pontos nossos: a escala vem só da ECU e das curvas.
+    const domain = focusDomain(reference, ecu, c.mode === 'between' ? items : []);
     const thresholds = (() => {
       const f = (Array.isArray(snapshot.fields) ? snapshot.fields : []).find(x => x && x.key === 'MNFLD_PRESS_THD' && x.status === 'VALID');
       return f && Array.isArray(f.physicalValues) ? f.physicalValues : null;
     })();
     const empty = { markers: [], bands: [], total: items.length, kept: 0 };
     const evidence = domain ? aggregateEvidence(items, { ...domain, thresholds, fullSamples: 60, kind: 'ecu18' }) : empty;
-    // Refino: um marcador por intervalo ENTRE limiares consecutivos da ECU. Se o Kotlin já entrega `betweenBands`, ele manda.
-    let between = domain ? aggregateEvidence(items, { ...domain, thresholds, fullSamples: 60, kind: 'between' }) : empty;
-    const fromKotlin = Array.isArray(eq.betweenBands) && eq.betweenBands.length ? eq.betweenBands : null;
-    if (fromKotlin && domain) {
-      const markers = fromKotlin.map((b, i) => {
-        const xMs = (Number(b.fromMs) + Number(b.toMs)) / 2;
-        const bins = Array.isArray(b.fineBins) ? b.fineBins : [];
-        const y = finite(b.mapBar) ?? (bins.length ? bins.reduce((a, f) => a + f.mapBar, 0) / bins.length : curveAt(reference, 'gasMapBar', xMs));
-        return { fuel: 'GAS', slot: i, kind: 'gap', tpetMs: xMs, mapBar: y, samples: finite(b.samples) ?? 0, episodes: finite(b.episodes) ?? 0, count: bins.length, rpmMedian: 0, idleShare: 0, lastAtMs: 0, confidence: finite(b.confidence) ?? 0.3, whisker: 0, fineBins: bins, ratio: finite(b.ratio) };
-      }).filter(m => finite(m.tpetMs) !== null && finite(m.mapBar) !== null);
-      between = { markers, bands: fromKotlin, total: fromKotlin.length, kept: markers.length };
-    }
-    // Refino: UM marcador por intervalo, só com a evidência do GNV (a gasolina é a curva de referência, não pontos).
-    if (between.markers.some(m => m.fuel !== 'GAS')) between = { ...between, markers: between.markers.filter(m => m.fuel === 'GAS') };
+    // Refino: um item por intervalo ENTRE bandas da ECU. Se o Kotlin já entrega `betweenPoints`, ele manda;
+    // sem ele, deriva dos marcadores agregados (só desenho).
+    const between = domain ? aggregateEvidence(items, { ...domain, thresholds, fullSamples: 60, kind: 'between' }) : empty;
+    const given = normalizeBetween(eq.betweenPoints || (c.analysis && c.analysis.betweenPoints));
+    const betweenPoints = given.length ? given : betweenFromMarkers(between.markers.filter(m => m.kind === 'gap'));
     const edges = thresholds ? thresholds.map(Number).filter(Number.isFinite) : [];
     const refined = c.analysis && Array.isArray(c.analysis.points) ? c.analysis.points : [];
     const proposal = refined.filter(p => p && p.origin !== 'HELD' && finite(p.calculatedRaw) !== null && Number(p.calculatedRaw) !== Number(p.currentRaw)).map(p => Number(p.index));
     const stalls = Array.isArray(eq.stalls && eq.stalls.events) ? eq.stalls.events : [];
-    return { reference, history: c.history || [], zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
+    return { reference, history: c.history || [], zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenPoints, betweenGiven: given.length > 0, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
   }
 
   /**
@@ -478,7 +550,7 @@
   }
 
   ns.CurveChart = {
-    LEGEND, STALL_LEGEND, ECU_BAND_COUNT, TABLE_KEYS, bandSlots,
+    LEGEND, STALL_LEGEND, BETWEEN_LEGEND, normalizeBetween, betweenFromMarkers, describeBetween, ECU_BAND_COUNT, TABLE_KEYS, bandSlots,
     evidenceSignature, tableSignature, aggregateEvidence, curveAt, focusDomain, buildSvg, legendHtml,
     mount, release, reset, applySelection, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
   };

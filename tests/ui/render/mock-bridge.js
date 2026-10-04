@@ -10,6 +10,14 @@
   const SC = { PETR_INJ_TBP: 512, MNFLD_PRESS_THD: 1024, PETR_INJ_TBUF: 512, PETR_INJ_TBUF_GAS: 512, PETR_INJ_TBUF_GAS_PREV: 512, MNFLD_PRESS_BUF: 1024, MNFLD_PRESS_BUF_GAS: 1024, MNFLD_PRESS_BUF_GAS_PREV: 1024, PETR_MNFLD_PRESS_RV: 1024, GAS_MNFLD_PRESS_RV: 1024, MUL_ACT: 16384 };
   snap.available = true;
   snap.fields.forEach(f => { f.physicalValues = SC[f.key] ? f.rawValues.map(v => v / SC[f.key]) : f.rawValues.slice(); });
+  // Cenários de preview (window.__SCN): zonesGas/zonesPetrol [0|1 x4], autoMatch, maxAutoMatch, noUndo, noBetween, noRefinoState, noStalls, paused.
+  const setScalar = (key, v) => { const f = snap.fields.find(x => x.key === key); if (f) { f.rawValues = [v]; f.physicalValues = [v]; f.status = 'VALID'; } else snap.fields.push({ key, status: 'VALID', rawValues: [v], physicalValues: [v], capturedAtMs: Date.now() }); };
+  setScalar('AUTO_CAL_ENABLE', S.paused ? 0 : 1);
+  setScalar('MAX_AUTOMATCH', S.maxAutoMatch != null ? S.maxAutoMatch : 3);
+  if (S.autoMatch != null) setScalar('NUM_AUTOMATCH_EXECUTED', S.autoMatch);
+  const setVec = (key, v) => { const f = snap.fields.find(x => x.key === key); if (f) { f.rawValues = v.slice(); f.physicalValues = v.slice(); } };
+  if (S.zonesGas) setVec('ACQUIRED_ZONES_GAS', S.zonesGas);
+  if (S.zonesPetrol) setVec('ACQUIRED_ZONES_PETROL', S.zonesPetrol);
   const field = k => snap.fields.find(f => f.key === k);
   const axis = field('PETR_INJ_TBP').rawValues.map(v => v / 512);
   const mul = field('MUL_ACT').rawValues;
@@ -97,12 +105,27 @@
     const lane = b => Object.entries(b).filter(([, v]) => v.length >= 5).map(([k, v]) => ({ mapBar: (+k + 0.5) * 0.025, tpetMs: med(v.map(x => x.petrol_ms)), samples: v.length, lastAtMs: Date.now() - 30000, rpmMedian: med(v.map(x => x.rpm)), idleShare: 0 }));
     return { petrol: lane(bins.GASOLINA), gas: lane(bins.GNV), binBar: 0.025, minSamples: 5 };
   }
+  // betweenPoints (SINTÉTICO a partir da telemetria REAL): um item por intervalo entre bandas adjacentes da ECU (17).
+  function betweenPoints() {
+    const thd = field('MNFLD_PRESS_THD').physicalValues, d = dense();
+    const rvMap = field('PETR_MNFLD_PRESS_RV').physicalValues;
+    const msAt = bar => { for (let i = 1; i < rvMap.length; i++) { if (rvMap[i - 1] <= bar && bar <= rvMap[i]) { const t = (bar - rvMap[i - 1]) / ((rvMap[i] - rvMap[i - 1]) || 1); return axis[i - 1] + t * (axis[i] - axis[i - 1]); } } return axis[Math.min(axis.length - 1, 10)]; };
+    const lane = (list, lo, hi) => { const m = list.filter(x => x.mapBar > lo && x.mapBar <= hi); const n = m.reduce((a, x) => a + x.samples, 0); return n >= 5 ? { ms: m.reduce((a, x) => a + x.tpetMs * x.samples, 0) / n, mapBar: m.reduce((a, x) => a + x.mapBar * x.samples, 0) / n, n } : null; };
+    return Array.from({ length: 17 }, (_, i) => { const lo = thd[i], hi = thd[i + 1], mid = (lo + hi) / 2; const gas = lane(d.gas, lo, hi), petrol = lane(d.petrol, lo, hi); return { index: i, centerMs: msAt(mid), centerMapBar: mid, gas, petrol, n: (gas ? gas.n : 0) + (petrol ? petrol.n : 0), visits: gas ? 3 : 0, state: gas ? 'coletado' : 'falta' }; });
+  }
+  const RS = {
+    COLETANDO_NOSSOS: { phase: 'Medindo o GNV', whatNow: 'Dirija normalmente: o app está medindo o GNV entre os pontos da ECU.', nextAction: '', reason: 'Ainda faltam medidas em alguns trechos.' },
+    PROPOSTA_PRONTA: { phase: 'Ajuste pronto', whatNow: 'Falta 1 ajuste para o GNV chegar perto da gasolina.', nextAction: 'Aplicar ajuste', reason: '' },
+    VERIFICANDO: { phase: 'Conferindo', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
+    ESTAVEL: { phase: 'Estável', whatNow: 'GNV perto da gasolina em toda a curva. Pode desconectar.', nextAction: '', reason: '' },
+    SEM_ECU: { phase: 'Sem ECU', whatNow: 'Conecte a ECU para o Refino medir o GNV.', nextAction: '', reason: 'O cabo USB não está conectado.' },
+  };
   const NEXT = { COLETANDO_NOSSOS: { kind: 'COLLECT', text: 'Dirija no GNV: faltam 6 faixas para medir (SINTÉTICO).', route: 'refino', subpage: '', pointIndexes: [12, 13, 14] }, PROPOSTA_PRONTA: { kind: 'REVIEW', text: 'A curva refinada está pronta. Revise e grave (SINTÉTICO).', route: 'refino', subpage: '', pointIndexes: [3, 6, 9] } };
-  const eq = () => ({ ok: true, index: 0.74, coverage: 0.62, provisional: true, nextAction: NEXT[S.phase] || NEXT.COLETANDO_NOSSOS, points: Array.from({ length: 30 }, (_, i) => ({ index: i, axisMs: axis[i], state: i < 18 ? 'OK' : 'FALTA', mixture: 1.0 + (i % 5) * 0.01 })), reference: { frozen: false, canFreeze: true }, ratio: 1.034, samples: 637, petrolObservations: 240, gasObservations: 397, gasEpochReason: '', gasEpochAt: 0, petrolReference: 'MISTA', ecuPetrolPoints: 14,
+  const eq = () => ({ ok: true, ...(S.noBetween ? {} : { betweenPoints: betweenPoints() }), ...(S.noRefinoState ? {} : { refinoState: Object.assign({ technical: {} }, RS[S.phase] || RS.COLETANDO_NOSSOS, { counts: { intervalosColetados: 12, intervalosFaltando: 5, automatchLidosDaEcu: 1 } }) }), index: 0.74, coverage: 0.62, provisional: true, nextAction: NEXT[S.phase] || NEXT.COLETANDO_NOSSOS, points: Array.from({ length: 30 }, (_, i) => ({ index: i, axisMs: axis[i], state: i < 18 ? 'OK' : 'FALTA', mixture: 1.0 + (i % 5) * 0.01 })), reference: { frozen: false, canFreeze: true }, ratio: 1.034, samples: 637, petrolObservations: 240, gasObservations: 397, gasEpochReason: '', gasEpochAt: 0, petrolReference: 'MISTA', ecuPetrolPoints: 14,
     bands: [], denseBands: dense(), restorePoints: [],
-    refinement: { ok: true, count: 1, automatic: false, latest: { status: 'VERIFICANDO', bands: [{ fromMs: 2, toMs: 3, ratioBefore: 1.06, ratioAfter: 1.02, verdict: 'CONFIRMADA' }, { fromMs: 3, toMs: 4, ratioBefore: 1.05, ratioAfter: 1.01, verdict: 'PASSOU' }, { fromMs: 4, toMs: 6, ratioBefore: 1.07, ratioAfter: null, verdict: 'COLETANDO' }], beforeRaw: mul, afterRaw: mul.map((v, i) => i % 3 ? v : v + 120) }, history: [{ id: 'x', appliedAt: Date.now() - 3600e3, status: 'VERIFICADO', ratioBefore: 1.06, ratioAfter: 1.02 }] },
+    refinement: { ok: true, count: 1, automatic: false, latest: S.noUndo ? { status: 'SEM_BASE', bands: [] } : { status: 'VERIFICANDO', photoFile: 'curve_foto.json', bands: [{ fromMs: 2, toMs: 3, ratioBefore: 1.06, ratioAfter: 1.02, verdict: 'CONFIRMADA' }, { fromMs: 3, toMs: 4, ratioBefore: 1.05, ratioAfter: 1.01, verdict: 'PASSOU' }, { fromMs: 4, toMs: 6, ratioBefore: 1.07, ratioAfter: null, verdict: 'COLETANDO' }], beforeRaw: mul, afterRaw: mul.map((v, i) => i % 3 ? v : v + 120) }, history: [{ id: 'x', appliedAt: Date.now() - 3600e3, status: 'VERIFICADO', ratioBefore: 1.06, ratioAfter: 1.02 }] },
     autopilot: { phase: S.phase, headline: 'Coletando os nossos pontos no GNV', next: 'Dirija normalmente: o app compara GNV com gasolina por faixa.', petrolValid: 14, gasValid: 11, autoMatchCount: 1, maxAutomatch: 3, ecuDoneReason: null, canDisconnect: false },
-    stalls: { count: 1, nearCount: 2, restartedCount: 1, regions: [{ fromMs: 2.1, toMs: 2.8, mapBar: 0.32 }], events: [{ petrolMs: 2.4, mapBar: 0.31 }] } });
+    stalls: S.noStalls ? { count: 0, nearCount: 0 } : { count: 1, nearCount: 2, restartedCount: 1, regions: [{ fromMs: 2.1, toMs: 2.8, mapBar: 0.32 }], events: [{ petrolMs: 2.4, mapBar: 0.31 }] } });
   const refined = () => ({ ok: true, available: true, refinementMode: 'ECU_E_CONDUCAO', evidenceSource: 'ECU_E_CONDUCAO', matureCommonPoints: 9, minimumMatureCommonPoints: 6, telemetryTargets: 5, rejectedBands: [{ fuel: 'GNV', band: 1, timeMs: 1.2, mapBar: 0.3 }], guards: { lowGuardMs: 2.0, maximumStepPercent: 4 }, elasticityLimit: 1.5,
     points: mul.map((v, i) => ({ index: i, referenceTimeMs: axis[i], currentRaw: v, calculatedRaw: (S.phase === 'PROPOSTA_PRONTA' && i % 3 === 0) ? v + 120 : v, origin: i % 3 ? 'HELD' : 'MEASURED' })) });
 

@@ -31,8 +31,8 @@ test('FLUXO Refino: proposta → revisar → gravar → VERIFICANDO → veredito
   const mark = app.world.mark();
   // 1. antes do toque: o botão diz quantos pontos e o resumo está em linha; nada vai à ECU
   assert.equal(primary(app).hasAttribute('disabled'), false);
-  assert.match(primary(app).textContent, /Gravar 3 pontos/);
-  assert.match(app.byId('refinoNext').textContent, /3 pontos · mudança média/);
+  assert.match(primary(app).textContent, /Aplicar ajuste/, 'botão = verbo do efeito, sem contagens');
+  assert.doesNotMatch(app.byId('refinoHeadline').textContent + (app.byId('refinoNext').textContent || ''), /mudança média|\d+ pontos/, 'sem regras internas ao leigo');
   assert.equal(app.byId('refinoReview'), null, 'não há modal de revisão');
   assert.deepEqual(L.actionCalls(app, mark), [], 'nada foi enviado antes do toque');
   // 2. UM toque: lê a curva, confere, grava
@@ -45,11 +45,11 @@ test('FLUXO Refino: proposta → revisar → gravar → VERIFICANDO → veredito
   assert.deepEqual(sent.map(p => p.index), [8, 9, 10], 'só os pontos MEDIDOS que mudam são gravados (mantidos nunca)');
   assert.ok(sent.every(p => p.currentRaw === before[p.index] && p.targetRaw === before[p.index] + 300));
   for (let i = 0; i < 6; i += 1) app.advance(400);
-  assert.match(headline(app), /gravada e conferida pela ECU/i);
-  assert.equal(primary(app).textContent.trim(), 'Entendi');
+  assert.match(headline(app), /Gravado e conferido na ECU/i);
+  assert.notEqual(primary(app).textContent.trim(), 'Entendi', 'sem botão Entendi');
+  assert.ok(app.$('[data-refino-undo]'), 'o Desfazer fica ao lado do feito');
   assert.deepEqual(app.world.curve.map((v, i) => v - before[i]).filter(Boolean), [300, 300, 300], 'a ECU recebeu exatamente a proposta');
   // 3. o piloto passa a VERIFICANDO: botão bloqueado, nada de gravar de novo
-  primary(app).click(); app.flush();
   app.world.equivalence = W.equivalenceFor('VERIFICANDO');
   app.world.refined = W.refinedAnalysis(true, app.world.curve);
   app.settle(6);
@@ -57,8 +57,7 @@ test('FLUXO Refino: proposta → revisar → gravar → VERIFICANDO → veredito
   // 4. veredito: curva chegou na gasolina → estável
   app.world.equivalence = W.equivalenceFor('ESTAVEL', { latest: { status: 'VERIFICADO', photoFile: 'foto-1.json', beforeRaw: before, afterRaw: app.world.curve.slice(), bands: [{ verdict: 'CONFIRMADA', fromMs: 3, toMs: 4, ratioBefore: 1.06, ratioAfter: 1.0 }] } });
   app.settle(6);
-  assert.match(app.byId('refinoJournal').textContent, /GNV igual à gasolina/i);
-  assert.equal(primary(app).hasAttribute('disabled'), true);
+  assert.equal(primary(app).hasAttribute('hidden'), true, 'estável: nada a gravar, sem botão morto');
   assert.ok(app.$('[data-refino-undo]') && !app.$('[data-refino-undo]').closest('details'), 'Desfazer segue à vista');
   L.assertClean(app, 'FLUXO Refino');
 });
@@ -71,7 +70,7 @@ test('FLUXO Refino: a curva da ECU mudou entre a proposta e o toque → NADA é 
   for (let i = 0; i < 5; i += 1) app.advance(400);
   assert.equal(app.world.callsOf('startCurveBatchWrite').length, 0, 'gravou com a curva desatualizada');
   assert.match(headline(app), /Curva K da ECU mudou/i);
-  assert.equal(primary(app).textContent.trim(), 'Entendi');
+  assert.notEqual(primary(app).textContent.trim(), 'Entendi');
 });
 
 test('FLUXO Refino: falha de cabo na gravação → "Nada foi gravado" e a curva da ECU fica intacta', D9, () => {

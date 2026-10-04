@@ -7,7 +7,7 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '../..');
 const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
-const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
+const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8');
 
 assert.ok(cockpit.includes('Downloads/Omegas'), 'a sessão deve comunicar o destino persistente ao motorista');
 assert.ok(cockpit.includes('documentsMirror'), 'a UI deve consumir o estado real do espelho em Documentos');
@@ -16,20 +16,17 @@ assert.ok(cockpit.includes('Salvo em Downloads/Omegas') || cockpit.includes('Sal
 
 // The graph is the primary driving surface. Secondary information is already
 // available below it in the same vertical flow; no nested horizontal rail.
-assert.match(css, /\.autocal-focus-metric b[\s\S]*font-size:\s*21px/);
-assert.match(css, /\.autocal-focus-zone b[\s\S]*font-size:\s*18px/);
+assert.match(css, /\.ar-tile b\s*\{[^}]*font-size:\s*24px/);
+assert.match(css, /\.ar-tile\.ar-zone b/);
 // Actual graph size and visible point context are verified by the rendered layout gate.
 
+const P = 'html body .ar-shell ';
 const primaryTiny = [
-  ['.autocal-human-copy p', 11],
-  ['.autocal-human-copy strong', 11],
-  ['.autocal-chart-legend', 12],
-  ['.autocal-band-legend', 11],
-  ['.autocal-command-copy b', 13],
-  ['.autocal-command-copy span', 10],
-  ['.autocal-live-narrative', 13],
-  ['.autocal-session-copy b', 14],
-  ['.autocal-session-copy span', 11],
+  [P + '.ar-sentence', 24],
+  [P + '.ar-readout', 22],
+  [P + '.ar-legend', 18],
+  [P + '.ar-card .autocal-session-copy span', 20],
+  [P + '.ar-tile small', 16],
 ];
 function cssDeclarationsFor(selector) {
   const blocks = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];

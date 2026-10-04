@@ -42,13 +42,14 @@ function app(kind, { phase = 'PROPOSTA_PRONTA', previousId = null, photo = true 
   a.settle(4);
   return a;
 }
-const go = a => a.byId('refinoEqGo');
+const go = a => a.$('[data-refino-primary]');
+const undoBtn = a => a.$('[data-refino-undo]');
 const shown = el => !!el && !el.hasAttribute('hidden');
 
 test('FREEZE_REFERENCE: um toque congela (sem diálogo), mostra o resultado, e a ECU não recebe escrita', () => {
   const a = app('FREEZE_REFERENCE');
   assert.equal(a.byId('refinoHeadline').textContent, 'Salvar a curva atual da ECU como referência');
-  assert.match(a.byId('refinoEqWhy').textContent, /régua para comparar o GNV com a gasolina/);
+  assert.match(a.byId('refinoNext').textContent, /régua para comparar o GNV com a gasolina/);
   assert.ok(shown(go(a)), 'o botão existe e não está escondido');
   assert.equal(go(a).hasAttribute('disabled'), false, 'o botão não está congelado');
   const mark = a.world.mark();
@@ -74,9 +75,9 @@ test('FREEZE_REFERENCE: Desfazer só com referência anterior (senão falharia);
 test('APPLY: o botão da faixa grava em UM toque (sem modal): lê, confere e grava', () => {
   const a = app('APPLY');
   assert.ok(shown(go(a)), 'botão presente');
-  assert.match(go(a).textContent.trim(), /^Gravar \d+ pontos?$/);
+  assert.equal(go(a).textContent.trim(), 'Aplicar ajuste', 'botão = verbo do efeito');
   assert.equal(a.byId('refinoReview'), null, 'não existe modal de revisão');
-  assert.match(a.byId('refinoNext').textContent, /pontos? · mudança média .* · maior /, 'resumo em linha antes do toque');
+  assert.doesNotMatch(a.byId('refinoNext').textContent, /mudança média|\d+ pontos/, 'sem regras internas');
   const mark = a.world.mark();
   go(a).click(); a.flush();
   assert.deepEqual(L.actionCalls(a, mark), ['startCurveRead'], 'um toque já inicia a leitura de conferência/gravação')
@@ -89,13 +90,13 @@ test('APPLY sem proposta liberada (ECU no automático): sem botão morto na faix
 
 test('CONTESTED: o botão da faixa abre o Desfazer da gravação (há foto); sem foto, não há botão morto', () => {
   const a = app('CONTESTED', { phase: 'VERIFICANDO' });
-  assert.ok(shown(go(a)));
-  assert.equal(go(a).textContent.trim(), 'Desfazer a gravação');
+  assert.ok(undoBtn(a) && !undoBtn(a).closest('[hidden]'), 'Desfazer discreto à vista');
+  assert.equal(undoBtn(a).textContent.trim(), 'Desfazer');
   const mark = a.world.mark();
-  go(a).click(); a.flush();
+  undoBtn(a).click(); a.flush();
   assert.ok(a.world.since(mark).some(c => c.method === 'startCurveRestorePrepare'), 'leva ao fluxo de Desfazer');
   const b = app('CONTESTED', { phase: 'VERIFICANDO', photo: false });
-  assert.equal(go(b).hasAttribute('hidden'), true);
+  assert.ok(!undoBtn(b) || undoBtn(b).closest('[hidden]'), 'sem foto, sem botão morto');
 });
 
 for (const kind of ['OPERATION', 'PROVING', 'COLLECT', 'NOTHING']) {

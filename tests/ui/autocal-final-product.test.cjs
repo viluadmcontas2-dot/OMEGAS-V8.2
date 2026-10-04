@@ -43,7 +43,7 @@ assert.match(cockpit, /route === ['"]autocal['"]/,
   'cockpit deve acompanhar a rota AutoCal');
 assert.equal(cockpit.includes('data-autocal-read'), false,
   'cockpit operacional não deve expor consulta manual da ECU');
-assert.match(cockpit, /autocal-secondary-details/,
+assert.match(cockpit, /ar-secondary/,
   'informações secundárias devem ficar recolhidas fora da superfície principal');
 assert.match(cockpit, /this\.api\.projection/,
   'cockpit deve consumir a projeção Kotlin unificada');
