@@ -1,0 +1,16 @@
+# One-off owner authorization: 2026-10-04, APK delivery to Drive.
+# Calls the existing gated workflow; never builds other branches or mutable source.
+name: Omegas Experience authorized APK
+on:
+  pull_request:
+    branches: [ OmegasDiamante ]
+    paths: [ '.github/workflows/experience-apk.yml' ]
+permissions:
+  contents: read
+jobs:
+  approved-apk:
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    uses: ./.github/workflows/verde-apk-now.yml
+    with:
+      build_apk: true
+      source_sha: '963980452de4d5a81491da5a9553713fe09b4333'
