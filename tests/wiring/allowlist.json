@@ -165,7 +165,8 @@
     "dos": "palavra de texto humano dentro de template literal, nao um campo",
     "usable": "campo local do contexto do gráfico (ctx.usable, definido em JS); não vem do Kotlin",
     "whatNow": "campo de refinoState (idem); ausente = fallback",
-    "refinoState": "contrato novo (frase de estado do Refino) emitido pelo agente de lógica em work/platina-fix-logic; ausente = a UI cai no texto do cérebro"
+    "refinoState": "contrato novo (frase de estado do Refino) emitido pelo agente de lógica em work/platina-fix-logic; ausente = a UI cai no texto do cérebro",
+    "fluidity": "contrato novo (work/platina-fix-logic): equivalence().fluidity {gasolina,gnv}; o Diagnóstico trata a ausência com texto de espera (UI C)"
   },
   "consumer_defects": {},
   "methods_unused": {},

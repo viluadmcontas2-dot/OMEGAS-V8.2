@@ -99,6 +99,7 @@
     if (route === 'map' && ui.MapScreen) instances.map = new ui.MapScreen(store, api, router);
     if (route === 'curve' && ui.CurveScreen) instances.curve = new ui.CurveScreen(store, api);
     if (route === 'sessions' && ui.SessionsScreen) instances.sessions = new ui.SessionsScreen(store, api);
+    if (route === 'diagnostico' && ui.DiagnosticoScreen) instances.diagnostico = new ui.DiagnosticoScreen({ store, api, router });
     return instances[route] || null;
   }
 
@@ -322,6 +323,7 @@
       if (curve.needsOverview?.()) curve.renderOverview(updated);
     }
     if (route === 'sessions') ensureScreen('sessions')?.render(updated);
+    if (route === 'diagnostico') ensureScreen('diagnostico')?.refresh(false);
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
   }
 
@@ -367,6 +369,11 @@
     if (route === 'tools') {
       if (!toolsEditing()) utilities?.render(store.get());
       afterPaint(refreshContext);
+      return;
+    }
+    if (route === 'diagnostico') {
+      ensureScreen('diagnostico')?.render();
+      afterPaint(() => ensureScreen('diagnostico')?.refresh(true));
     }
   }
 
