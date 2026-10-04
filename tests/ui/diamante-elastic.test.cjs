@@ -90,3 +90,11 @@ test('Refino: reinício local de GNV é explícito, não escreve a ECU e respeit
  screen.operation={phase:'writing'};screen.resetGasEvidence();assert.equal(resets,1);
  L.assertClean(app,'reset local');app.destroy();
 });
+
+test('Refino: reiniciar evidência local preserva Desfazer da curva; mudança externa continua bloqueada',()=>{
+ const ctx=freshContext({console});vm.runInContext(fs.readFileSync(path.join(UI,'screens/refino.js'),'utf8'),ctx);
+ const source=ctx.OmegasUi.RefinoModel.undoSource;
+ const photo={status:'INTERROMPIDO',photoFile:'antes.json',interruptReason:'REINICIO_GNV_PELO_DONO'};
+ assert.equal(source(photo).available,true);assert.equal(source(photo).changedByEcu,false);
+ assert.equal(source({...photo,interruptReason:'AUTOMATCH_NATIVO'}).available,false);
+});

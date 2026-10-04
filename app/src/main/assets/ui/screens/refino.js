@@ -155,7 +155,7 @@
     const photo = String(latest?.photoFile || '');
     const status = String(latest?.status || '');
     const partial = status === 'FALHA_PARCIAL';
-    const changedByEcu = status === 'INTERROMPIDO';
+    const changedByEcu = status === 'INTERROMPIDO' && latest?.interruptReason !== 'REINICIO_GNV_PELO_DONO';
     const wasUndo = /desfazer|restaurar/i.test(String(latest?.source || ''));
     const has = Boolean(photo) || undoPoints(latest).length > 0;
     const available = has && (partial || (!changedByEcu && !wasUndo));
@@ -641,7 +641,7 @@
         if (phase === 'ESTAVEL') level = 'ok';
         if (phase === 'TENTATIVA_ENCERRADA' || phase === 'RESTAURAR_TRECHO') level = 'warn';
         const closing = this.eq?.refinement?.latest?.status;
-        if (closing === 'FALHA_PARCIAL' || closing === 'INTERROMPIDO') { reason = JOURNAL_NOTE[closing]; level = 'warn'; }
+        if (closing === 'FALHA_PARCIAL' || closing === 'INTERROMPIDO') { reason = closing === 'INTERROMPIDO' && this.eq?.refinement?.latest?.interruptReason === 'REINICIO_GNV_PELO_DONO' ? 'A verificação foi interrompida pelo reinício das medições do GNV. A curva e a foto anterior continuam disponíveis.' : JOURNAL_NOTE[closing]; level = 'warn'; }
         else if (action.kind === 'freeze') reason = strip.whyText;
         else if (action.kind === 'none') reason = (rs && (rs.nextAction || rs.reason)) || '';
         else if (action.kind === 'review' && (pilot.phase === 'TENTATIVA_ENCERRADA' ? pilot.expiredFrom : pilot.phase) === 'ECU_TRABALHANDO') reason = 'A ECU ainda está no automático e pode sobrescrever este ajuste.';
