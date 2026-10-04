@@ -87,6 +87,22 @@ async function audit(page,route,height,name){
    assert.equal(await page.evaluate(()=>window.OmegasUi.CurveChart.shared.renders),before,'não repinta por relógio');
   }finally{await browser.close();}
  }
+ for(const route of ['autocal','refino']){
+  const {browser,page}=await open(pw.chromium,'connected',{viewport:{width:1280,height:648},scn:{noStalls:true}});
+  try{
+   await go(page,route);await page.waitForTimeout(1800);
+   const summary=route==='autocal'?'.ar-buttons .instrument-details summary':'.refino-details summary';
+   await page.locator(summary).click();
+   const bounds=await page.evaluate(()=>{
+    const pop=document.querySelector('.screen.active details[open] > .ar-secondary,.screen.active details[open] > .instrument-detail-content').getBoundingClientRect();
+    const top=document.querySelector('.workspace-head').getBoundingClientRect().bottom;
+    const bottom=document.querySelector('.side-nav').getBoundingClientRect().top;
+    return {top,bottom,y:pop.y,b:pop.bottom};
+   });
+   assert.ok(bounds.y>=bounds.top-1&&bounds.b<=bounds.bottom+1,route+': opções na área útil '+JSON.stringify(bounds));
+   await page.screenshot({path:path.join(out,'648-'+route+'-detalhes.png')});
+  }finally{await browser.close();}
+ }
  const {browser,page}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672}});
  try{
   await go(page,'map');await page.waitForTimeout(3000);
