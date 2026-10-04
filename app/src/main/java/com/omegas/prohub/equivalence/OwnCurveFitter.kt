@@ -48,7 +48,12 @@ object OwnCurveFitter {
         return AutoMatchRefinedEngine.interp(mapBar, maps, fit)
     }
 
-    private fun median(values: List<Double>): Double = values.sorted()[values.size / 2]
+    /** Mediana verdadeira (média dos dois do meio com n par): a do índice n/2 enviesa para cima em amostras pequenas. */
+    internal fun median(values: List<Double>): Double {
+        val s = values.sorted()
+        val n = s.size
+        return if (n % 2 == 1) s[n / 2] else (s[n / 2 - 1] + s[n / 2]) / 2.0
+    }
 
     fun fit(observations: List<EquivalenceLedger.Obs>, fuel: Fuel, prior: Reference?): OwnCurve {
         val lns = Array(GRID_CELLS) { ArrayList<Double>() }

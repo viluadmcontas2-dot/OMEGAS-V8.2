@@ -44,11 +44,8 @@ class EquivalenceRealSessionTest {
         assertEquals("refino", r.nextAction.route)
         assertEquals(null, r.nextAction.subpage)
         assertTrue(r.ownPetrol.cells.filter { it.petrolMs != null }.all { it.source == CellSource.REFERENCE })
-        r.points.forEach { p ->
-            val known = p.axisMs >= 3.0 && OwnCurveFitter.mapFor(r.ownPetrol, p.axisMs) != null
-            assertEquals("ponto ${p.index}", if (known) PointState.APRENDENDO else PointState.SEM_DADOS, p.state)
-        }
-        assertTrue(r.points.count { it.state == PointState.APRENDENDO } >= 13)
+        // Sem nenhuma leitura de GNV não há evidência em ponto nenhum: SEM_DADOS (a Referência sozinha não julga o GNV).
+        assertTrue(r.points.all { it.state == PointState.SEM_DADOS })
         assertNull(r.index)
         assertEquals(0, r.coverage)
     }
@@ -62,9 +59,11 @@ class EquivalenceRealSessionTest {
         val before = evaluate(REFERENCE, 95, 2183) { it.fuel != "GNV" || it.t < writeAt }
         val after = evaluate(REFERENCE, 95, 2550) { it.fuel != "GNV" || it.t >= writeAt }
         println("INDEX_REFERENCE before=${before.index} cov=${before.coverage} after=${after.index} cov=${after.coverage}")
-        assertNotNull(before.index)
-        assertTrue(before.coverage >= 2)
-        assertTrue(after.index == null || after.index!! < before.index!!)
+        // Achado da revisão adversarial: nesta sessão real os pontos julgados (≥ 3 visitas independentes, dispersão conhecida)
+        // cobrem bem menos da metade do uso, então o índice NÃO é um número ("—"). Antes saía 100% com coverage 1–5.
+        assertTrue("fração julgada ${before.judgedUsage}", before.judgedUsage < EquivalenceTolerances.MIN_JUDGED_USAGE)
+        assertNull(before.index)
+        assertTrue(after.index == null || after.index!! <= 1.0)
     }
 
     @Test

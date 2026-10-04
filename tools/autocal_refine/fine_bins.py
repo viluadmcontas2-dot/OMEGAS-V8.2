@@ -270,5 +270,7 @@ def ledger_pairs(telemetry, gas_from=None, until_ms=None, ecu_ref=None):
             if tp is None:
                 continue
         if g["rpm"] >= DRIVING_MIN_RPM and tp >= TELEMETRY_MIN_MS:
-            out.append((tp, g["t"], g["episode"], ecu, g["rpm"], g["map"]))
-    return out
+            out.append((tp, g["t"], g["at"], ecu, g["rpm"], g["map"]))
+    # episódio = visita à faixa (lacuna >= 60 s entre pares da mesma faixa), como EvidencePairs.withVisitIds
+    ids = blind.visit_ids([(o[0], o[2]) for o in out])
+    return [(o[0], o[1], i, o[3], o[4], o[5]) for o, i in zip(out, ids)]

@@ -19,21 +19,19 @@ class EcuReferenceCycleTest {
     private val journal = RefinementJournal(null) { now }
     private val pilot = EquivalencePhases(null) { now }
 
-    private val cells = listOf(
-        Triple(2_000.0, 0.40, 3.6), Triple(2_200.0, 0.50, 5.0), Triple(2_500.0, 0.60, 6.5),
-        Triple(2_800.0, 0.70, 8.0), Triple(3_200.0, 0.85, 10.0),
-    )
+    /** Duas células por faixa (noutro terço dela): sem cobertura interna a faixa não vale. */
+    private val cells = EvidenceTestSupport.CELLS_A + EvidenceTestSupport.CELLS_B
     /** A curva de gasolina da ECU passa exatamente pelas células de condução. */
-    private val ecuCurve = listOf(0.30 to 2.5, 0.40 to 3.6, 0.50 to 5.0, 0.60 to 6.5, 0.70 to 8.0, 0.85 to 10.0, 0.95 to 11.5)
+    private val ecuCurve = EvidenceTestSupport.ECU_CURVE
     private val axisRaw = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
     private val emptyAcquisition = JSONObject().put("points", JSONArray())
     private var t = 0L
 
-    // Três passagens por célula, separadas por lacuna > 3 s: cada faixa precisa de 3 episódios (E3), não só de 8 pares.
+    // Três passagens por célula, separadas por ≥ 60 s: cada faixa precisa de 3 visitas (episódios), não só de 8 pares.
     private fun gas(ratio: Double) = cells.forEach { (rpm, map, ms) ->
         repeat(3) {
             repeat(10) { ledger.accept(EquivalenceLedger.Frame(t, "GNV", rpm, map, ms * ratio)); t += 280 }
-            t += 5_000
+            t += EvidenceTestSupport.VISIT_GAP
         }
     }
 

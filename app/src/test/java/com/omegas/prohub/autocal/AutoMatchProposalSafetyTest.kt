@@ -24,11 +24,8 @@ class AutoMatchProposalSafetyTest {
             AutoMatchRefinedEngine.Input(axisRaw, k, null, null, null, null, null, null, pairs),
         )
 
-    /** n pares idênticos (gasolina de referência, GNV) por faixa de Petrol Inj. do livro. */
-    private fun pairsIn(ratio: Double, perBand: Int, bands: List<Int>): List<Pair<Double, Double>> {
-        val centers = listOf(3.75, 5.25, 6.75, 8.25, 10.5)
-        return bands.flatMap { b -> List(perBand) { centers[b] to centers[b] * ratio } }
-    }
+    /** n pares (gasolina de referência, GNV) por faixa do livro, espalhados por DENTRO dela (cobertura interna). */
+    private fun pairsIn(ratio: Double, perBand: Int, bands: List<Int>) = EvidenceTestSupport.pairsIn(ratio, perBand, bands)
 
     private fun assertNoProposal(r: AutoMatchRefinedEngine.Result) {
         assertEquals(AutoMatchRefinedEngine.Mode.POLISH, r.mode)

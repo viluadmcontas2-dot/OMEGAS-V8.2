@@ -8,7 +8,9 @@ class EquivalenceTypesTest {
     @Test
     fun `tolerancia e o maior entre 4 por cento e duas dispersoes`() {
         assertEquals(0.04, EquivalenceTolerances.tolerance(0.01), 1e-12)
-        assertEquals(0.06, EquivalenceTolerances.tolerance(0.03), 1e-12)
+        assertEquals(0.05, EquivalenceTolerances.tolerance(0.03), 1e-12) // teto de ±5%
+        assertEquals(0.05, EquivalenceTolerances.tolerance(0.50), 1e-12)
+        assertEquals(0.04, EquivalenceTolerances.tolerance(0.0), 1e-12)
         assertEquals(0.02, EquivalenceTolerances.CELL_BAR, 0.0)
         assertEquals(10, EquivalenceTolerances.USAGE_SESSIONS)
     }

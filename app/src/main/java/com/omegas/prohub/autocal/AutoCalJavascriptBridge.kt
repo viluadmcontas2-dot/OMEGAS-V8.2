@@ -359,7 +359,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                 "PETR_INJ_TBP" -> axisMs = (0 until 30).map { raw.optInt(it) / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS }
             }
         }
-        mulAct?.let { raw -> service.equivalence.alignCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) })) }
+        mulAct?.let { raw -> service.equivalenceRuntime.alignCurve(service.equivalence, service.equivalencePhases, IntArray(30) { raw.optInt(it) }) }
         // Só condução: a marcha lenta (~870 rpm) tem estratégia própria da ECU e criava degrau em ~4,5 ms.
         val driving = service.equivalence.drivingPairs()
         val pairs = driving.map { it.petrolRefMs to it.gasPetrolMs }

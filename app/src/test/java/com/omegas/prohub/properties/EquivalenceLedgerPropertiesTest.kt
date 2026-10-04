@@ -172,7 +172,7 @@ class EquivalenceLedgerPropertiesTest {
             val map = 0.30 + 0.02 * (i % 30)
             petrol.put(JSONArray().put(t).put(2000.0 + i % 3).put(map).put(5.0))
             gas.put(JSONArray().put(t + 40_000L).put(2001.0 + i % 3).put(map).put(5.5))
-            t += if (i % 20 == 19) 9_000L else 300L
+            t += if (i % 20 == 19) 90_000L else 300L
         }
         file.writeText(JSONObject().put("format", EquivalenceLedger.FORMAT).put("petrol", petrol).put("gas", gas)
             .put("curveFingerprint", "antigo").toString())
