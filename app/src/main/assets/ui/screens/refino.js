@@ -323,7 +323,7 @@
       if (!this.api?.available?.()) { this.renderUnavailable(); return; }
       // O Kotlin já deixa o resultado pronto em segundo plano; "fresco" só depois de gravar/desfazer.
       this.eq = (fresh === true ? this.api.equivalenceFresh?.() : this.api.equivalence?.()) || null;
-      if (this.gasResetPending && this.eq?.gasObservations === 0 && this.eq?.refinoState?.canAct === false) this.gasResetPending = false;
+      if (this.gasResetPending && (this.eq?.gasObservations === 0 || this.eq?.gasEpochReason === 'REINICIO_GNV_PELO_DONO') && this.eq?.refinoState?.canAct === false) this.gasResetPending = false;
       this.analysis = this.api.refinedAnalysis?.() || null;
       const projection = this.api.projection?.() || {};
       this.projection = projection.ok === true ? projection : {};

@@ -114,7 +114,7 @@ test('Refino: reiniciar GNV não reapresenta a proposta guardada no cache da pon
  let eq={...screen.eq,gasObservations:30,autopilot:{phase:'PROPOSTA_PRONTA'},refinoState:{canAct:true,nextAction:'Gravar 1 ponto'},nextAction:{kind:'APPLY'}};
  screen.api={...screen.api,resetGasEvidence:()=>({ok:true}),equivalenceFresh:()=>eq,equivalence:()=>eq};
  screen.resetGasEvidence();assert.equal(screen.gasResetPending,true);assert.equal(screen.actionModel().kind,'none');
- eq={...eq,gasObservations:0,refinoState:{canAct:false,nextAction:'Seguir dirigindo'},nextAction:{kind:'COLLECT'}};
+ eq={...eq,gasObservations:2,gasEpochReason:'REINICIO_GNV_PELO_DONO',refinoState:{canAct:false,nextAction:'Seguir dirigindo'},nextAction:{kind:'COLLECT'}};
  screen.refresh(true);assert.equal(screen.gasResetPending,false);assert.equal(screen.actionModel().kind,'none');
  app.destroy();
 });
