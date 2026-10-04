@@ -401,6 +401,7 @@ class LogicFixesTest {
         assertEquals("Leitura da ECU falhou", rsFailed.getString("phase")); assertFalse(rsFailed.getBoolean("canAct")); assertHuman(rsFailed)
         // Buffers sem dado (leitura falhou) não viram "0 de 4 zonas".
         val noData = JSONObject().put("points", JSONArray().put(JSONObject().put("fuel", "GASOLINA").put("zone", 0).put("state", "SEM_DADO")))
+            .put("zoneFlags", JSONObject().put("petrol", JSONObject.NULL).put("gas", JSONObject.NULL))
         assertTrue(EcuAcquisitionTruth.fromAcquisition(noData, 1, 3).getJSONObject("petrol").isNull("zonesCovered"))
         // Combustível de agora só muda as palavras: na gasolina não se manda "rodar no GNV".
         val petrol = phases.observe(true, done, acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0, fuel = "GASOLINA")
