@@ -292,10 +292,10 @@
   // ------------------------------------------------------------------ escala
   function focusDomain(reference, ecu, ours) {
     const measuredXs = [...ecu.map(p => p.petrolMs), ...ours.map(p => p.tpetMs)].filter(v => v > 0);
-    const xs = measuredXs.length ? measuredXs : reference.map(p => p.petrolMs).filter(v => v > 0);
+    const xs = [...reference.map(p => p.petrolMs), ...measuredXs].filter(v => Number.isFinite(v) && v > 0);
     if (!xs.length) return null;
     const xMin = 0;
-    const xMax = Math.max(4, Math.ceil(Math.max(...xs) * 1.25));
+    const xMax = Math.max(22, Math.ceil(Math.max(...xs)));
     const ys = [
       ...reference.filter(p => p.petrolMs <= xMax).flatMap(p => [p.petrolMapBar, p.gasMapBar]),
       ...ecu.map(p => p.mapBar), ...ours.map(p => p.mapBar),
@@ -317,7 +317,7 @@
     const width = Math.max(320, Math.round(o.width || 1000));
     const height = Math.max(160, Math.round(o.height || 400));
     const between = o.mode === 'between';
-    const padLeft = 88; const padRight = 14; const padTop = 12; const padBottom = 48;
+    const padLeft = 88; const padRight = 32; const padTop = 12; const padBottom = 48;
     const reference = model.reference || [];
     const domain = model.domain;
     if (!domain) return { empty: true };
@@ -333,7 +333,10 @@
     const hasPetrol = reference.some(p => finite(p.petrolMapBar) > 0);
     const hasGas = reference.some(p => finite(p.gasMapBar) > 0);
 
-    const xTicks = Array.from({ length: 6 }, (_, i) => xMin + i * (xMax - xMin) / 5);
+    const step = xMax <= 24 ? 4 : Math.ceil(xMax / 6 / 2) * 2;
+    const xTicks = Array.from({ length: Math.ceil(xMax / step) }, (_, i) => i * step);
+    if (xMax - xTicks[xTicks.length - 1] < step / 2) xTicks.pop();
+    xTicks.push(xMax);
     const yTicks = Array.from({ length: 5 }, (_, i) => yMin + i * (yMax - yMin) / 4);
     const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${tick(v, 3)}</text>`).join('') +
       xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - padBottom + 20}" text-anchor="middle">${tick(v, 1)}</text>`).join('');
@@ -408,10 +411,10 @@
     const equivalencePath = between && equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
 
     const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>${tickMarkup}` +
-      `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção (ms)</text>` +
+      `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${previous}${equivalencePath}` +
-      `${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
+      `${hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
       `${refMarkup}${oursMarkup}${ecuMarkup}${proposalMarkup}${stallMarkup}${live}</g></svg>`;
     return { svg, scale };
   }

@@ -14,8 +14,8 @@ assert "autocalLiveLevel" not in cockpit
 assert "LEVELS RAW" not in cockpit
 assert "level_raw" not in cockpit
 
-assert "NÍVEIS" in dashboard
+assert "Nível da ECU" in dashboard
 assert "dashLevelsRaw" in dashboard
-assert "level_raw" in dashboard
+assert "reading.levelRaw" in dashboard
 
 print("AUTOCAL_LEVELS_ARCHITECTURE_SCOPE=PASS")

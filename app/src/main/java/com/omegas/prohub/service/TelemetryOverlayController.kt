@@ -143,8 +143,8 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                 val panel = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
                     setPadding(dp(14 * k), dp(10 * k), dp(14 * k), dp(12 * k))
-                    background = rounded(0xF2090E18L.toInt(), 18f * k, 0x884F8EF7.toInt())
-                    elevation = dp(10).toFloat()
+                    background = rounded(0xF212181EL.toInt(), 10f * k, 0xFF34424F.toInt())
+                    elevation = dp(4).toFloat()
                     minimumWidth = dp(150 * k)
                 }
                 // Cabeçalho: Ω (toque abre/fecha), combustível e ponto de frescor da telemetria.
@@ -156,7 +156,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                     text = "Ω"
                     textSize = 24f * k
                     typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(Color.WHITE)
+                    setTextColor(0xFF24D8CE.toInt())
                     gravity = Gravity.CENTER
                     minWidth = dp(48)
                     minHeight = dp(48)
@@ -169,12 +169,12 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                     typeface = Typeface.DEFAULT_BOLD
                     setTextColor(Color.WHITE)
                     setPadding(dp(10 * k), dp(3 * k), dp(10 * k), dp(3 * k))
-                    background = rounded(0xFF3A4458.toInt(), 10f * k, 0x00000000)
+                    background = rounded(0xFF293641.toInt(), 10f * k, 0x00000000)
                 }
                 val dot = TextView(context).apply {
                     text = "●"
                     textSize = 14f * k
-                    setTextColor(0xFF59627A.toInt())
+                    setTextColor(0xFFA0AFBE.toInt())
                     setPadding(dp(10 * k), 0, 0, 0)
                     contentDescription = "Frescor da telemetria"
                 }
@@ -187,10 +187,10 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                     visibility = if (expanded) View.VISIBLE else View.GONE
                 }
                 val row1 = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
-                val petrolBlock = metricBlock("PETROL INJ.", 26f * k, 11f * k)
+                val petrolBlock = metricBlock("INJ. GASOLINA", 26f * k, 11f * k)
                 row1.addView(petrolBlock.first, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                 val mapBlock = metricBlock("MAP", 20f * k, 11f * k)
-                val gasBlockPair = metricBlock("GÁS", 20f * k, 11f * k)
+                val gasBlockPair = metricBlock("INJ. GNV", 20f * k, 11f * k)
                 val row2 = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
                 row2.addView(mapBlock.first, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
                 row2.addView(gasBlockPair.first, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -301,11 +301,12 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         gasBlock?.alpha = if (onGas) 1f else 0.45f
         val label = if (live) snapshot.fuel ?: "—" else "SEM DADO"
         fuelChip?.text = label
+        fuelChip?.setTextColor(if (label == "GNV") 0xFF24D8CE.toInt() else 0xFFF2F6FC.toInt())
         fuelChip?.background = rounded(
-            when (label) { "GNV" -> 0xFF168A6B.toInt(); "GASOLINA" -> 0xFFB7791F.toInt(); else -> 0xFF3A4458.toInt() },
+            when (label) { "GNV" -> 0xFF163C3D.toInt(); "GASOLINA" -> 0xFF293641.toInt(); else -> 0xFF293641.toInt() },
             10f * scale(), 0x00000000,
         )
-        liveDot?.setTextColor(if (live) 0xFF3DDC97.toInt() else 0xFF59627A.toInt())
+        liveDot?.setTextColor(if (live) 0xFF39D9A0.toInt() else 0xFFA0AFBE.toInt())
     }
 
     @Suppress("DEPRECATION")
@@ -324,7 +325,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         val caption = TextView(context).apply {
             text = label
             textSize = labelSp
-            setTextColor(0xFF93A0B8.toInt())
+            setTextColor(0xFFA7B4C3.toInt())
             letterSpacing = 0.06f
         }
         val block = LinearLayout(context).apply {

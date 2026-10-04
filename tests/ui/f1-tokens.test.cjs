@@ -15,7 +15,8 @@ test('tokens: escala de toque 58/52, fonte de botão >= 18, texto crítico >= 22
   assert.ok(Number(tokens.match(/--btn-font:\s*(\d+)px/)[1]) >= 18);
   assert.ok(Number(tokens.match(/--text-critical:\s*(\d+)px/)[1]) >= 22);
   assert.match(tokens, /color-scheme:\s*dark/);
-  assert.match(tokens, /--bg:\s*#0[0-9a-f]{5}/i);
+  const bg = tokens.match(/--bg:\s*#([0-9a-f]{6})/i)[1];
+  assert.ok([0,2,4].every(i=>parseInt(bg.slice(i,i+2),16)<48), "superfície escura");
   for (const t of ['--space-1', '--space-6', '--radius-s', '--radius-l', '--shadow-1', '--shadow-2', '--shadow-3', '--chart-min-h', '--field-border']) assert.ok(tokens.includes(t + ':'), t);
   assert.match(tokens, /--radius:\s*14px/);
 });

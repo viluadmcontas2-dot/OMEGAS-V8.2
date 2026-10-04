@@ -139,6 +139,7 @@
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
       if (this.preserveSessionSettingsInteraction(host)) return;
+      const healthOpenBeforeRender = host.querySelector('.ts-health-inspect')?.open === true;
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
@@ -201,7 +202,7 @@
         <div class="ts-grid">
         <section class="ts-card ts-wide" data-healthy="${serviceHealthy ? 'true' : 'false'}" aria-label="Saúde do sistema">
           <header class="ts-head"><div><small>SAÚDE DO SISTEMA</small><h3>${serviceHealthy ? 'Tudo funcionando' : appStatus.serviceRunning ? 'A comunicação com a ECU pede atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div>${chip(serviceHealthy ? 'ok' : 'warn', serviceHealthy ? 'Tudo certo' : 'Atenção')}</header>
-          <div class="ts-tiles">${tiles.map(([label, value, tone, hint]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span>${hint}</span></div>`).join('')}</div>
+          <details class="ts-health-inspect" ${healthOpenBeforeRender ? 'open' : ''}><summary>Ver conexões</summary><div class="ts-tiles">${tiles.map(([label, value, tone, hint]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span>${hint}</span></div>`).join('')}</div></details>
           <div class="ts-row" data-state="${batteryFree ? 'ok' : 'warn'}"><div><small>SEGUNDO PLANO</small><b>${batteryFree ? 'O Android não pausa o app' : 'O Android pode pausar o app'}</b><span>${batteryFree ? 'Sessões longas com a tela apagada seguem gravando.' : 'Permita para gravar sessões longas com a tela apagada.'}</span></div>${batteryAction}</div>
         </section>
 

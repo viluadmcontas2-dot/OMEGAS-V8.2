@@ -29,8 +29,8 @@ assert "AutoCalProtocol.MUL_ACT" not in section
 assert '.put("level_raw", levelRaw)' in protocol
 assert "level_percentage" not in protocol
 assert "levelPercentage" not in scale
-assert "NÍVEIS" in dashboard
+assert "Nível da ECU" in dashboard
 assert 'id="dashLevelsRaw"' in dashboard
-assert "level_raw" in dashboard
+assert "reading.levelRaw" in dashboard
 
 print("LEVELS_AND_AUTOCAL_OPERATIONAL_REFRESH_CONTRACT=PASS")

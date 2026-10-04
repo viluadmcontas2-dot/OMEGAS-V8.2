@@ -19,24 +19,22 @@
   <link rel="stylesheet" href="styles-lote-f.css">
   <link rel="stylesheet" href="styles-tela-agora-mapa-curva.css">
   <link rel="stylesheet" href="styles-autocal-refino.css">
+  <link rel="stylesheet" href="styles-diamante.css">
 </head>
 <body>
   <div id="app" class="app-shell" aria-label="OMEGAS V8">
     <aside class="side-rail" aria-label="Navegação principal">
-      <div class="brand-block">
-        <div class="brand-mark" aria-hidden="true">Ω</div>
-        <div><b>OMEGAS</b><span id="buildIdentity">V8</span></div>
-      </div>
+
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
-        <button type="button" data-route="dashboard" class="active"><span>Agora</span></button>
-        <button type="button" data-route="map"><span>Mapa K</span></button>
-        <button type="button" data-route="curve"><span>Curva K</span></button>
-        <button type="button" data-route="autocal"><span>AutoCal</span></button>
-        <button type="button" data-route="refino"><span>Refino</span></button>
-        <button type="button" data-route="sessions"><span>Sessões</span></button>
-        <button type="button" data-route="tools"><span>Ferramentas</span></button>
-        <button type="button" data-route="diagnostico"><span>Diagnóstico</span></button>
+        <button type="button" data-route="dashboard" class="active"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/home.svg)"></i><span>Agora</span></button>
+        <button type="button" data-route="map"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/table.svg)"></i><span>Mapa K</span></button>
+        <button type="button" data-route="curve"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/chart-line.svg)"></i><span>Curva K</span></button>
+        <button type="button" data-route="autocal"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/adjustments.svg)"></i><span>AutoCal</span></button>
+        <button type="button" data-route="refino"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/focus-2.svg)"></i><span>Refino</span></button>
+        <button type="button" data-route="sessions"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/history.svg)"></i><span>Sessões</span></button>
+        <button type="button" data-route="tools"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/tool.svg)"></i><span>Ferramentas</span></button>
+        <button type="button" data-route="diagnostico"><i class="nav-icon" aria-hidden="true" style="--nav-icon:url(icons/activity.svg)"></i><span>Diagnóstico</span></button>
       </nav>
 
       <div class="rail-status">
@@ -48,6 +46,10 @@
 
     <section class="workspace">
       <header class="workspace-head">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">Ω</div>
+        <div><b>OMEGAS</b><span id="buildIdentity">V8</span></div>
+      </div>
         <div><small id="routeEyebrow">AGORA</small><h1 id="routeTitle">Agora</h1></div>
         <p>Leitura e ajuste manual assistido da MP48.</p>
       </header>
@@ -146,15 +148,15 @@
         </section>
 
         <section id="sessionsScreen" class="screen utility-screen sessions-screen" data-screen="sessions" aria-labelledby="sessionsTitle">
-          <div class="page-intro"><div><small>SESSÕES</small><h2 id="sessionsTitle">O que aconteceu em cada condução</h2></div></div>
+          <div class="page-intro"><div><small>SESSÕES</small><h2 id="sessionsTitle">Sessões</h2><p class="route-subtitle">O que aconteceu em cada condução</p></div></div>
           <div id="sessionsHost" class="sessions-host"><p class="empty-copy">Lendo as sessões salvas…</p></div>
         </section>
 
         <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
-          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Saúde, backup e ajustes do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
+          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Ferramentas</h2><p class="route-subtitle">Saúde, backup e ajustes do app</p></div><p id="toolEnvironment">Detectando ambiente…</p></div>
         </section>
         <section id="diagnosticoScreen" class="screen utility-screen diagnostico-screen" data-screen="diagnostico" aria-labelledby="diagnosticoTitle">
-          <div class="page-intro"><div><small>DIAGNÓSTICO</small><h2 id="diagnosticoTitle">Engasgos e fluidez do GNV</h2></div></div>
+          <div class="page-intro"><div><small>DIAGNÓSTICO</small><h2 id="diagnosticoTitle">Diagnóstico</h2><p class="route-subtitle">Engasgos e fluidez do GNV</p></div></div>
           <div id="diagnosticoHost" class="diagnostico-host"></div>
         </section>
       </main>

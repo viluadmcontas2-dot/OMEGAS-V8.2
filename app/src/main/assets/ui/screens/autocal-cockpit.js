@@ -713,7 +713,7 @@
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
             <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
+              <h2 class="instrument-title">AutoCal</h2><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
               <div class="ar-tile"><small>MAP</small><b><span id="autocalLiveMap">—</span><em>bar</em></b></div>
               <div class="ar-tile"><small>Injeção</small><b><span id="autocalLivePetrol">—</span><em>ms</em></b></div>
               <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
@@ -753,7 +753,7 @@
               <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
             </div>
 
-            <div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
+            <details class="instrument-details"><summary>Zonas e histórico</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
               <section class="ar-card autocal-zone-card" aria-label="Cobertura das zonas">
                 <h4>Zonas aprendidas pela ECU</h4>
                 <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
@@ -786,7 +786,7 @@
               </section>
             </div>
 
-            <div id="autocalReview" class="autocal-review" hidden></div>
+            </details><div id="autocalReview" class="autocal-review" hidden></div>
           </section>`;
         stack.appendChild(panel);
         this.panel = panel;

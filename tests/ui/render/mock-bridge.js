@@ -57,7 +57,7 @@
       interpolation: { valid: f.petrol_ms > 0, educationalOnly: true, method: 'BILINEAR_RPM_X_PETROL_MS', rpm: f.rpm, petrolMs: f.petrol_ms, mapBar: f.load_bar, cell: { row: c.rw, column: c.col, continuousWeights: [{ row: c.rw, column: c.col, weight: 0.6 }, { row: c.rw, column: c.col + 1, weight: 0.4 }] } } } };
   }
   const status = () => MODE === 'connected'
-    ? { serviceRunning: true, engineRunning: true, engineReady: true, engineStuck: false, usbConnected: true, usbPermissionPending: false, fuelState: 'GNV', rpm: frames[idx].rpm, directTelemetryAgeMs: 60, wakeLockHeld: true }
+    ? { serviceRunning: true, engineRunning: true, engineReady: true, engineStuck: false, usbConnected: true, usbPermissionPending: false, fuelState: frames[idx].fuel, rpm: frames[idx].rpm, petrolMs: frames[idx].petrol_ms, gasMs: frames[idx].gas_ms_diagnostic, mapBar: frames[idx].load_bar, directTelemetryAgeMs: 60, wakeLockHeld: true }
     : MODE === 'connecting'
       ? { serviceRunning: true, engineRunning: false, engineReady: false, engineStuck: false, usbConnected: false, usbPermissionPending: true, fuelState: '--' }
       : { serviceRunning: true, engineRunning: false, engineReady: false, engineStuck: false, usbConnected: false, usbPermissionPending: false, fuelState: '--' };
@@ -120,7 +120,7 @@
     ESTAVEL: { phase: 'Estável', whatNow: 'GNV perto da gasolina em toda a curva. Pode desconectar.', nextAction: '', reason: '' },
     SEM_ECU: { phase: 'Sem ECU', whatNow: 'Conecte a ECU para o Refino medir o GNV.', nextAction: '', reason: 'O cabo USB não está conectado.' },
   };
-  const NEXT = { COLETANDO_NOSSOS: { kind: 'COLLECT', text: 'Dirija no GNV: faltam 6 faixas para medir (SINTÉTICO).', route: 'refino', subpage: '', pointIndexes: [12, 13, 14] }, PROPOSTA_PRONTA: { kind: 'REVIEW', text: 'A curva refinada está pronta. Revise e grave (SINTÉTICO).', route: 'refino', subpage: '', pointIndexes: [3, 6, 9] } };
+  const NEXT = { COLETANDO_NOSSOS: { kind: 'COLLECT', text: 'Dirija no GNV: faltam 6 faixas para medir.', route: 'refino', subpage: '', pointIndexes: [12, 13, 14] }, PROPOSTA_PRONTA: { kind: 'REVIEW', text: 'A curva refinada está pronta. Revise e grave.', route: 'refino', subpage: '', pointIndexes: [3, 6, 9] } };
   const NOW = Date.now();
   function stallsBlock() {
     if (S.stalls === 'absent' || S.stalls === 'nodata') return undefined;
@@ -132,7 +132,7 @@
         { mapBar: 0.46, rpm: 1680, ms: 3.8, count: 1, firstAt: NOW - 40 * 60e3, lastAt: NOW - 40 * 60e3, curvePoints: [7] },
       ] };
   }
-  const eq = () => S.stalls === 'nodata' ? { ok: false } : ({ ok: true, ...(S.noBetween ? {} : { betweenPoints: betweenPoints() }), ...(S.noRefinoState ? {} : { refinoState: Object.assign({ technical: {} }, RS[S.phase] || RS.COLETANDO_NOSSOS, { counts: { intervalosColetados: 12, intervalosFaltando: 5, automatchLidosDaEcu: 1 } }) }), index: 0.74, coverage: 0.62, provisional: true, nextAction: NEXT[S.phase] || NEXT.COLETANDO_NOSSOS, points: Array.from({ length: 30 }, (_, i) => ({ index: i, axisMs: axis[i], state: i < 18 ? 'OK' : 'FALTA', mixture: 1.0 + (i % 5) * 0.01 })), reference: { frozen: false, canFreeze: true }, ratio: 1.034, samples: 637, petrolObservations: 240, gasObservations: 397, gasEpochReason: '', gasEpochAt: 0, petrolReference: 'MISTA', ecuPetrolPoints: 14,
+  const eq = () => S.stalls === 'nodata' ? { ok: false } : ({ ok: true, ...(S.noBetween ? {} : { betweenPoints: betweenPoints() }), ...(S.noRefinoState ? {} : { refinoState: Object.assign({ technical: {} }, RS[S.phase] || RS.COLETANDO_NOSSOS, { counts: { intervalsTotal: 17, intervalsCollected: 12, intervalsMissing: 5, ecuAutoMatchCount: 1, ecuAutoMatchMax: 3, pointsToWrite: 3 } }) }), index: 0.74, coverage: 0.62, provisional: true, nextAction: NEXT[S.phase] || NEXT.COLETANDO_NOSSOS, points: Array.from({ length: 30 }, (_, i) => ({ index: i, axisMs: axis[i], state: i < 18 ? 'EQUIVALENTE' : 'SEM_DADOS', mixture: 1.0 + (i % 5) * 0.01 })), reference: { frozen: false, canFreeze: true }, ratio: 1.034, samples: 637, petrolObservations: 240, gasObservations: 397, gasEpochReason: '', gasEpochAt: 0, petrolReference: 'MISTA', ecuPetrolPoints: 14,
     bands: [], denseBands: dense(), restorePoints: [],
     refinement: { ok: true, count: 1, automatic: false, latest: S.noUndo ? { status: 'SEM_BASE', bands: [] } : { status: 'VERIFICANDO', photoFile: 'curve_foto.json', bands: [{ fromMs: 2, toMs: 3, ratioBefore: 1.06, ratioAfter: 1.02, verdict: 'CONFIRMADA' }, { fromMs: 3, toMs: 4, ratioBefore: 1.05, ratioAfter: 1.01, verdict: 'PASSOU' }, { fromMs: 4, toMs: 6, ratioBefore: 1.07, ratioAfter: null, verdict: 'COLETANDO' }], beforeRaw: mul, afterRaw: mul.map((v, i) => i % 3 ? v : v + 120) }, history: [{ id: 'x', appliedAt: Date.now() - 3600e3, status: 'VERIFICADO', ratioBefore: 1.06, ratioAfter: 1.02 }] },
     autopilot: { phase: S.phase, headline: 'Coletando os nossos pontos no GNV', next: 'Dirija normalmente: o app compara GNV com gasolina por faixa.', petrolValid: 14, gasValid: 11, autoMatchCount: 1, maxAutomatch: 3, ecuDoneReason: null, canDisconnect: false },
@@ -170,7 +170,7 @@
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),
     getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J({}),
-    getRefinedAnalysis: () => J(refined()), getEquivalence: () => J(eq()), getEquivalenceFresh: () => J(eq()), getRefinementPhase: () => J({ ok: true, phase: 'COLETANDO_NOSSOS' }),
+    getRefinedAnalysis: () => J(refined()), getEquivalence: () => J(eq()), getEquivalenceFresh: () => J(eq()), getRefinementPhase: () => J({ ok: true, autopilot: eq().autopilot }), getEquivalenceResult: () => J({ ...eq(), available: true }),
   };
   const power = { getBatteryOptimizationStatus: () => J({ supported: true, ignoringOptimizations: true }), getOverlayStatus: () => J({ ok: true, supported: true, permissionGranted: true, requestedEnabled: false, visible: false }) };
   window.OmegasNative = native; window.OmegasAutoCal = autocal; window.OmegasPower = power; window.OmegasCalibration = calibration;

@@ -32,8 +32,8 @@ function loadInto(context, files) {
 }
 
 // ---------------------------------------------------------------- 1. navegação
-test('trilho: 7 abas numeradas, Sugestões saiu e Sessões entrou', () => {
-  const buttons = [...html.matchAll(/<button type="button" data-route="([^"]+)"[^>]*><span>([^<]+)<\/span>/g)]
+test('navegação: oito abas com ícones, incluindo Diagnóstico', () => {
+  const buttons = [...html.matchAll(/<button type="button" data-route="([^"]+)"[^>]*>[\s\S]*?<span>([^<]+)<\/span>/g)]
     .map(m => [m[1], m[2]]);
   assert.deepEqual(buttons, [
     ['dashboard', 'Agora'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['autocal', 'AutoCal'],
@@ -104,13 +104,14 @@ test('a UI não deriva ação da fase: o cérebro (nextAction) é a única fonte
   assert.ok(!api.includes("generation: 'V7'"));
 });
 
-test('Agora é para dirigir (D1): sem cartão de equivalência, só 4 valores grandes + faixa quieta', () => {
-  const source = read('screens/dashboard.js');
-  for (const dead of ['dashEquivalence', 'dashIndex', 'dashNextText', 'dashNextButton', 'renderEquivalence', 'Ir para Refino', 'PRÓXIMA AÇÃO', 'próxima ação']) {
-    assert.ok(!source.includes(dead), `Agora não tem mais ${dead}`);
+test('Agora Diamante: intenção do cérebro e telemetria persistente sem redundância', () => {
+  const source = read('screens/dashboard.js'), strip=read('components/vehicle-status-strip.js');
+  for (const id of ['dashHeroPetrol', 'dashRpm', 'dashMap', 'dashFuel']) {
+    assert.ok(strip.includes(`id="${id}"`),id+' no topo');
+    assert.ok(!source.includes(`id="${id}"`),id+' não duplicado');
   }
-  for (const id of ['dashHeroPetrol', 'dashRpm', 'dashMap', 'dashFuel']) assert.ok(source.includes(`id="${id}"`), id);
-  assert.doesNotMatch(read('app.js'), /refreshEquivalence/, 'o Agora não consulta a equivalência');
+  assert.ok(source.includes('api.equivalence()'));
+  assert.ok(source.includes('dashNext'));
   assert.doesNotMatch(source, /startCurve|writeCurve|writeMap|startKBatchWrite|api\.(?:write|start|reset)/, 'Agora nunca executa');
 });
 

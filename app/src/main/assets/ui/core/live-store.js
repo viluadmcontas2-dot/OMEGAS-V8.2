@@ -44,7 +44,8 @@
     if (!valid && options && options.fallback === true && status.usbConnected === true) {
       const statusAge = finite(status.directTelemetryAgeMs);
       if (statusAge !== null && statusAge >= 0 && finite(status.rpm) !== null) {
-        live = { rpm: status.rpm, petrol_ms: status.petrolMs, load_bar: status.mapBar, fuel: status.fuelState };
+        // O status nativo representa gás sem leitura com 0; o pacote ao vivo usa null.
+        live = { rpm: status.rpm, petrol_ms: status.petrolMs, gas_ms_diagnostic: finite(status.gasMs) > 0 ? status.gasMs : null, load_bar: status.mapBar, fuel: status.fuelState };
         valid = true;
         ageMs = statusAge;
       }
@@ -64,6 +65,7 @@
       ageUnknown: valid && !known,
       rpm: show ? finite(live.rpm) : null,
       petrolMs: show ? finite(live.petrol_ms ?? live.petrolMs) : null,
+      gasMs: show ? finite(live.gas_ms_diagnostic ?? live.gas_ms ?? live.gasMs) : null,
       mapBar: show ? finite(live.load_bar ?? live.map_bar ?? live.mapBar) : null,
       fuel: show ? String(live.fuel || live.state || '') : '',
       levelRaw: show ? finite(live.level_raw ?? live.levelRaw) : null,

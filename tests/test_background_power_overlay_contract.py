@@ -39,7 +39,7 @@ assert "data-tool-overlay-disable" in tools
 
 # O flutuante (pedido do proprietário: maior e mais completo) mostra combustível, RPM, Petrol Inj.,
 # MAP e gás, com tamanho escolhido em Ferramentas, e não possui writers. Telemetria velha vira "—".
-for marker in ["RPM", "PETROL INJ.", "MAP", "GÁS", "SEM DADO", "telemetry_overlay_scale"]:
+for marker in ["RPM", "INJ. GASOLINA", "MAP", "INJ. GNV", "SEM DADO", "telemetry_overlay_scale"]:
     assert marker in overlay
 assert "data-tool-overlay-scale" in tools
 for forbidden in [

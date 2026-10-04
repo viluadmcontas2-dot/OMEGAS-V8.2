@@ -62,7 +62,11 @@ test('A3/A4: Desfazer sai do <details>, vem do diário e falha parcial não diz 
   assert.equal(m.undoSource({ photoFile: 'foto_B.json' }).photoFile, 'foto_B.json');
   assert.equal(m.undoSource({ status: 'FALHA_PARCIAL', photoFile: 'foto.json' }).available, true);
   assert.equal(m.undoSource({ status: 'FALHA_PARCIAL' }).available, false);
-  assert.ok(SOURCE.indexOf('id="refinoUndo"') > 0 && !/<details[^>]*>[^]*id="refinoUndo"/.test(SOURCE.slice(SOURCE.indexOf('<details') < 0 ? 0 : SOURCE.indexOf('<details'), SOURCE.indexOf('id="refinoUndo"') + 20)), 'Desfazer fora de qualquer <details>');
+  const L = require('./wiring/lib.cjs');
+  const app = L.boot(); app.go('refino'); app.settle(3);
+  assert.ok(app.byId('refinoUndo'));
+  assert.equal(app.byId('refinoUndo').closest('details'), null, 'Desfazer fora de qualquer details');
+  app.destroy();
   assert.doesNotMatch(SOURCE, /lastPhotoFile/, 'a foto vem do ÚLTIMO experimento do diário, não de memória da tela');
   assert.match(SOURCE, /op\.partial/);
   assert.doesNotMatch(SOURCE, /Nada foi dado como gravado/);

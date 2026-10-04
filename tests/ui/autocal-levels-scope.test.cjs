@@ -10,7 +10,7 @@ const dashboard = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screen
 const autocal = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 
 test('LEVELS RAW belongs to Dashboard/AGORA and is absent from AutoCal', () => {
-  assert.match(dashboard, /NÍVEIS/);
+  assert.match(dashboard, /Nível da ECU/);
   assert.match(dashboard, /dashLevelsRaw/);
   assert.match(fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/core/live-store.js'), 'utf8'), /level_raw/, 'o Agora lê o nível pela leitura única (LiveStore.read)');
   assert.match(dashboard, /reading\.levelRaw/);

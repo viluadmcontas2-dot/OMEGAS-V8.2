@@ -46,7 +46,7 @@ async function audit(page, route) {
   }, route);
 }
 
-test('render: 7 abas sem corte lateral, alvos >= 58 px (AutoCal 52) (grade do Mapa K >= 44), texto >= 16 px e cabeçalho inteiro', { skip }, async () => {
+test('render: 8 abas sem corte lateral, alvos >= 58 px (AutoCal 52) (grade do Mapa K >= 44), texto >= 16 px e cabeçalho inteiro', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected');
   try {
     await page.waitForTimeout(1500);
@@ -67,29 +67,22 @@ test('render: 7 abas sem corte lateral, alvos >= 58 px (AutoCal 52) (grade do Ma
   } finally { await browser.close(); }
 });
 
-test('render: Agora tem 4 valores de peso parecido que preenchem a tela (razão de área <= 1,5; cobertura >= 85%)', { skip }, async () => {
-  const { browser, page } = await open(pw.chromium, 'connected');
+test('render: Agora apresenta resultado e intenção, com dados vivos únicos no cabeçalho', { skip }, async () => {
+  const { browser,page }=await open(pw.chromium,'connected');
   try {
     await page.waitForTimeout(2500);
-    const m = await page.evaluate(() => {
-      const tiles = [...document.querySelectorAll('.now-tile')].map(e => { const b = e.getBoundingClientRect(); return { area: b.width * b.height, left: b.left, top: b.top, right: b.right, bottom: b.bottom, font: parseFloat(getComputedStyle(e.querySelector('b')).fontSize), label: parseFloat(getComputedStyle(e.querySelector('small')).fontSize) }; });
-      const host = document.querySelector('.screen-host').getBoundingClientRect();
-      const box = { l: Math.min(...tiles.map(t => t.left)), t: Math.min(...tiles.map(t => t.top)), r: Math.max(...tiles.map(t => t.right)), b: Math.max(...tiles.map(t => t.bottom)) };
-      const quiet = document.querySelector('.now-quiet-row').getBoundingClientRect();
-      return { tiles, hostArea: host.width * host.height, boxArea: (box.r - box.l) * (box.b - box.t), quietArea: quiet.width * quiet.height };
+    const m=await page.evaluate(()=>{
+      const sc=document.querySelector('[data-screen="dashboard"]'), header=document.querySelector('.workspace-head');
+      const rect=e=>{const b=e.getBoundingClientRect();return {h:b.height,b:b.bottom,w:b.width};};
+      return {duplicates:sc.querySelectorAll('.now-tile').length,facts:header.querySelectorAll('[data-vehicle-fact]').length,
+       overview:rect(sc.querySelector('.now-overview')),next:rect(sc.querySelector('[data-dash-refino]')),eq:!!sc.querySelector('#dashEquivalence')};
     });
-    assert.equal(m.tiles.length, 4);
-    const areas = m.tiles.map(t => t.area);
-    assert.ok(Math.max(...areas) / Math.min(...areas) <= 1.5, `razão de área ${Math.max(...areas) / Math.min(...areas)}`);
-    assert.ok((m.boxArea + m.quietArea) / m.hostArea >= 0.78, `cobertura ${(m.boxArea + m.quietArea) / m.hostArea}`);
-    for (const t of m.tiles) { assert.ok(t.font >= 56, `valor ${t.font}px < 56 (combustível usa clamp 48–96 px para a palavra caber)`); assert.ok(t.label >= 22, `rótulo ${t.label}px < 22`); }
-    assert.equal(await page.$('#dashEquivalence'), null, 'o cartão de equivalência saiu do Agora');
-    const texts = await page.$$eval('[data-screen="dashboard"] *', nodes => nodes.map(n => n.textContent).join(' '));
-    assert.doesNotMatch(texts, /Ir para Refino|PRÓXIMA AÇÃO|provisório/);
-  } finally { await browser.close(); }
+    assert.equal(m.duplicates,0); assert.equal(m.facts,7); assert.ok(m.eq);
+    assert.ok(m.overview.h>=240); assert.ok(m.next.h>=58&&m.next.b<=644);
+  } finally {await browser.close();}
 });
 
-test('render: Refino na anatomia única — gráfico primeiro e ≥ 50% da altura, legenda/gráfico/frase sem sobreposição, uma ação', { skip }, async () => {
+test('render: Refino na anatomia única — intenção primeiro e gráfico ≥ 50% da altura, legenda/gráfico/frase sem sobreposição, uma ação', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected', { scn: { phase: 'PROPOSTA_PRONTA' } });
   try {
     await page.waitForTimeout(1500);
@@ -105,7 +98,7 @@ test('render: Refino na anatomia única — gráfico primeiro e ≥ 50% da altur
       const intersects = (a, b) => !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
       return {
         legendPlot: intersects(legend, plot), plotSentence: intersects(plot, sentence), sentencePrimary: intersects(sentence, primary),
-        order: [status.t, plot.t, sentence.t].every((v, i, l) => i === 0 || v > l[i - 1]),
+        order: [status.t, sentence.t, plot.t].every((v, i, l) => i === 0 || v > l[i - 1]),
         plotH: plot.h, view: window.innerHeight, primaryBottom: primary.b,
         shared: window.OmegasUi.CurveChart.shared.renders, mode: window.OmegasUi.CurveChart.shared.mode,
         legendText: document.getElementById('refinoLegend').textContent,
@@ -117,7 +110,7 @@ test('render: Refino na anatomia única — gráfico primeiro e ≥ 50% da altur
     assert.equal(m.legendPlot, false, 'legenda e desenho sobrepostos');
     assert.equal(m.plotSentence, false);
     assert.equal(m.sentencePrimary, false);
-    assert.equal(m.order, true, 'faixa de status → gráfico → frase');
+    assert.equal(m.order, true, 'estado → intenção → gráfico');
     assert.ok(m.plotH >= m.view * 0.5, `gráfico ocupa ${m.plotH}px de ${m.view}px (≥ 50%)`);
     assert.ok(m.primaryBottom <= m.view, 'a ação primária cabe na primeira tela, sem rolar');
     assert.equal(m.hScroll, false, 'nunca rolagem horizontal');

@@ -31,10 +31,12 @@
       strip.setAttribute('aria-label', 'Estado atual do veículo e da ECU');
       strip.innerHTML = `
         <div data-vehicle-fact="ecu"><small>ECU</small><b>—</b></div>
-        <div data-vehicle-fact="fuel"><small>COMBUSTÍVEL</small><b>—</b></div>
-        <div data-vehicle-fact="rpm"><small>RPM</small><b>—</b></div>
-        <div data-vehicle-fact="petrol"><small>INJEÇÃO</small><b>—</b></div>
-        <div data-vehicle-fact="age"><small>ÚLTIMO DADO</small><b>—</b></div>`;
+        <div data-vehicle-fact="fuel"><small>COMBUSTÍVEL</small><b><span id="dashFuel" data-reading-value>—</span></b></div>
+        <div data-vehicle-fact="rpm"><small>RPM</small><b><span id="dashRpm" data-reading-value>—</span></b></div>
+        <div data-vehicle-fact="petrol"><small>Inj. gasolina</small><b><span id="dashHeroPetrol" data-reading-value>—</span><em>ms</em></b></div>
+        <div data-vehicle-fact="gas"><small>Inj. GNV</small><b><span id="dashGas" data-reading-value>—</span><em>ms</em></b></div>
+        <div data-vehicle-fact="map"><small>MAP</small><b><span id="dashMap" data-reading-value>—</span><em>bar</em></b></div>
+        <div data-vehicle-fact="age"><small>Leitura</small><b>—</b></div>`;
       header.appendChild(strip);
       return strip;
     }
@@ -47,12 +49,15 @@
       const link = rules.connectionState(status, reading);
       const shown = reading.level === 'fresh' || reading.level === 'late';
       const late = reading.level === 'late';
+      rules.setDataIfChanged(this.node, 'stale', reading.grey ? 'true' : 'false');
       const fuel = shown ? rules.fuelLabel(reading.fuel || status.fuelState) : '—';
       const ecuOnline = link.online && status.engineReady !== false;
-      this.fact('ecu', ecuOnline ? 'ONLINE' : link.online ? 'LENDO' : link.label.toUpperCase(), ecuOnline ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
+      this.fact('ecu', ecuOnline ? 'Conectada' : link.online ? 'LENDO' : link.label.toUpperCase(), ecuOnline ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
       this.fact('fuel', fuel, late ? 'late' : fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
       this.fact('rpm', rules.rpm(reading.rpm), reading.rpm === null ? 'unknown' : late ? 'late' : 'measured');
-      this.fact('petrol', rules.msUnit(reading.petrolMs), reading.petrolMs === null ? 'unknown' : late ? 'late' : 'measured');
+      this.fact('petrol', fuel === 'CORTE' ? '—' : rules.ms(reading.petrolMs), fuel === 'CORTE' || reading.petrolMs === null ? 'unknown' : late ? 'late' : 'measured');
+      this.fact('gas', rules.ms(reading.gasMs), reading.gasMs === null ? 'unknown' : late ? 'late' : 'measured');
+      this.fact('map', rules.bar(reading.mapBar), reading.mapBar === null ? 'unknown' : late ? 'late' : 'measured');
       // Idade na palavra do glossário ("agora", "há 2 s"); atrasado também aqui, não só no Agora.
       const age = reading.ageMs === null ? '—' : rules.ageSinceMs(reading.ageMs);
       this.fact('age', late ? `${age} · atrasado` : reading.level === 'lost' ? `${age} · sem dados` : age, reading.ageMs === null ? 'unknown' : reading.level === 'fresh' ? 'measured' : 'late');
@@ -62,8 +67,11 @@
       const node = this.node?.querySelector(`[data-vehicle-fact="${key}"]`);
       if (!node) return;
       ns.DisplayRules.setDataIfChanged(node, 'state', state || 'neutral');
-      const target = node.querySelector('b');
+      const target = node.querySelector('[data-reading-value]') || node.querySelector('b');
       if (target && target.textContent !== String(value)) target.textContent = String(value);
+      const unit = node.querySelector('em');
+      const unitText = value === '—' ? '' : key === 'map' ? 'bar' : 'ms';
+      if (unit && unit.textContent !== unitText) unit.textContent = unitText;
     }
   }
 
