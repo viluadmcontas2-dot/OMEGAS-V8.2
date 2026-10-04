@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   approved-apk:
-    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' && github.event.pull_request.head.sha == 'eb3e0fd7de619947bafa7593d7e59d3ad1b05598' }}
     uses: ./.github/workflows/verde-apk-now.yml
     with:
       build_apk: true
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 'b8b7ff1286b76a731273cba3e6a661a6326aecd2'
+          ref: 'cdd9bf3afe7ff8cf031af947fc6b10d1ff37adb7'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -34,7 +34,7 @@ jobs:
           test -e /dev/kvm
       - name: Exercise real WebView at 1280x720
         env:
-          OMEGAS_SOURCE_SHA: 'b8b7ff1286b76a731273cba3e6a661a6326aecd2'
+          OMEGAS_SOURCE_SHA: 'cdd9bf3afe7ff8cf031af947fc6b10d1ff37adb7'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
