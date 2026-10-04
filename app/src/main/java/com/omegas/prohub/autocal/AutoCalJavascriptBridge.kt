@@ -325,10 +325,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
     /** Toque explícito: reinicia apenas a evidência local do GNV, nunca envia comando à ECU. */
     @JavascriptInterface
-    fun resetGasLearning(): String = try {
+    fun resetGasEvidence(): String = try {
         noLocalControlFailure() ?: run {
             val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
-            service.resetGasLearning().also { invalidateAnalysis() }
+            service.resetGasEvidence().also { invalidateAnalysis() }
         }
     } catch (error: Exception) {
         localFailure(error.message ?: "Não foi possível reiniciar o aprendizado do GNV")

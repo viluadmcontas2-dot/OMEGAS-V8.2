@@ -91,7 +91,7 @@ async function audit(page,route,height,name){
  try{
   await go(page,'map');await page.waitForTimeout(3000);
   await page.locator('.screen.active .map-k-cell[data-row="2"][data-column="3"]').click();
-  await page.locator('#mapAdjustmentMode').selectOption('target');
+  await page.locator('.screen.active [data-map-mode="target"]').click();
   await page.locator('#mapAdjustmentValue').fill('150');
   await page.waitForTimeout(200);
   assert.equal(await page.locator('#mapReviewButton').isEnabled(),true);

@@ -1313,7 +1313,7 @@ class TelemetryForegroundService : Service() {
     }
 
     /** Reinício manual da evidência LOCAL: mesma invalidação usada quando a curva muda. */
-    fun resetGasLearning(): String {
+    fun resetGasEvidence(): String {
         if (!usb.connected || kWriter.isBusy() || kFactor.isBusy() || SerialWriteGuard.shared.isHeld()) {
             return JSONObject().put("ok", false).put("message", "Conecte a ECU e aguarde o fim da operação atual.").toString()
         }

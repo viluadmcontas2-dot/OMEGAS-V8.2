@@ -84,9 +84,9 @@ test('Refino: a régua completa não espreme aquisição curta; faixa inteira co
 test('Refino: reinício local de GNV é explícito, não escreve a ECU e respeita operação em curso',()=>{
  const app=L.boot();app.go('refino');app.settle(4);
  const screen=app.win.OmegasApp.refino;let resets=0;
- screen.api={...screen.api,resetGasLearning:()=>{resets++;return {ok:true};}};
- const before=app.world.mark();screen.resetGasLearning();assert.equal(resets,1);
+ screen.api={...screen.api,resetGasEvidence:()=>{resets++;return {ok:true};}};
+ const before=app.world.mark();screen.resetGasEvidence();assert.equal(resets,1);
  assert.equal(L.actionCalls(app,before).length,0,'nenhum escritor nativo acionado');
- screen.operation={phase:'writing'};screen.resetGasLearning();assert.equal(resets,1);
+ screen.operation={phase:'writing'};screen.resetGasEvidence();assert.equal(resets,1);
  L.assertClean(app,'reset local');app.destroy();
 });

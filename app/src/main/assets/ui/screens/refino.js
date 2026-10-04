@@ -296,7 +296,7 @@
           <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Refino</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
             <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
-            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-learning-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p><button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar aprendizado GNV</button><button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU · pausa e releitura</button></section></div></details></div>
+            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-evidence-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p><button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar aprendizado GNV</button><button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU · pausa e releitura</button></section></div></details></div>
             <div class="refino-stalls ar-stall" id="refinoStalls" hidden></div>
           </header>
           <section class="ar-chart-card" aria-label="Curva de aquisição · Gasolina × GNV">
@@ -332,7 +332,7 @@
     }
 
     onClick(event) {
-      if (event.target.closest('[data-refino-reset-gas]')) { this.resetGasLearning(); return; }
+      if (event.target.closest('[data-refino-reset-gas]')) { this.resetGasEvidence(); return; }
       if (event.target.closest('[data-refino-acquisition]')) { this.app.router?.open('autocal'); return; }
       if (event.target.closest('[data-refino-unfreeze]')) { this.unfreezeReference(); return; }
       if (event.target.closest('[data-refino-primary]')) { this.primary(); return; }
@@ -366,10 +366,10 @@
     }
 
     /** Congelar a Referência: não escreve na ECU. Um toque; o resultado fica à vista e o Desfazer volta à anterior. */
-    resetGasLearning() {
+    resetGasEvidence() {
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
-      const result = this.api.resetGasLearning?.() || { ok: false, message: 'Reinício do aprendizado indisponível.' };
-      this.learningReset = { phase: result.ok === true ? 'done' : 'failed',
+      const result = this.api.resetGasEvidence?.() || { ok: false, message: 'Reinício do aprendizado indisponível.' };
+      this.gasRestartNotice = { phase: result.ok === true ? 'done' : 'failed',
         message: result.message || (result.ok === true ? 'Aprendizado GNV reiniciado. A gasolina continua como referência.' : 'Não foi possível reiniciar agora.'), at: Date.now() };
       if (result.ok === true) { this.selected = {}; this.readout(''); ns.CurveChart?.reset(); }
       this.refresh(true, true);
@@ -633,7 +633,7 @@
       }
       else if (op.phase === 'reading') text = 'Lendo a curva da ECU…';
       else if (op.phase === 'writing') text = 'Gravando na ECU…';
-      else if (this.learningReset && Date.now() - this.learningReset.at < 10000) { text = this.learningReset.message; level = this.learningReset.phase === 'failed' ? 'warn' : 'ok'; }
+      else if (this.gasRestartNotice && Date.now() - this.gasRestartNotice.at < 10000) { text = this.gasRestartNotice.message; level = this.gasRestartNotice.phase === 'failed' ? 'warn' : 'ok'; }
       else if (frz) { text = frz.message; level = frz.phase === 'failed' ? 'warn' : 'ok'; }
       else {
         const strip = equivalenceStrip(this.eq, ns.ROUTES);

@@ -170,7 +170,7 @@
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),
     getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J({}),
-    resetGasLearning: () => { S.gasReset = true; S.phase = 'COLETANDO_NOSSOS'; return J({ ok: true, message: 'Aprendizado GNV reiniciado. A gasolina continua como referência.' }); },
+    resetGasEvidence: () => { S.gasReset = true; S.phase = 'COLETANDO_NOSSOS'; return J({ ok: true, message: 'Aprendizado GNV reiniciado. A gasolina continua como referência.' }); },
     getRefinedAnalysis: () => J(refined()), getEquivalence: () => J(eq()), getEquivalenceFresh: () => J(eq()), getRefinementPhase: () => J({ ok: true, autopilot: eq().autopilot }), getEquivalenceResult: () => J({ ...eq(), available: true }),
   };
   const power = { getBatteryOptimizationStatus: () => J({ supported: true, ignoringOptimizations: true }), getOverlayStatus: () => J({ ok: true, supported: true, permissionGranted: true, requestedEnabled: false, visible: false }) };
