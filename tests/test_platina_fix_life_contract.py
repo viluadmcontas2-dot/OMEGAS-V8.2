@@ -49,6 +49,7 @@ class MapKRelease(unittest.TestCase):
         self.assertIn("min-height:76px", map_js)
         # "liberado" só depois de `recovered` (ACK da ECU)
         self.assertRegex(map_js, r"operation\.recovered === true")
+        self.assertNotIn("setTimeout", map_js)
 
     def test_release_is_gated_like_any_write_and_unlocks_only_after_ack(self):
         service = body(SERVICE, "fun recoverKInsertionState", "fun kWriteStatusJson")

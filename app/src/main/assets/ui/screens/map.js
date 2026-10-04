@@ -30,6 +30,7 @@
       this.undoId = '';
       this.restorePhase = '';
       this.releasing = false;
+      this.releaseTicks = 0;
       this.pendingContext = null;
       this.liveContext = null;
       this.bind();
@@ -92,6 +93,7 @@
     /**
      * Um toque do dono em "Liberar Mapa K": o Kotlin manda a saída do modo de gravação pela fila normal e só
      * `recovered === true` (ACK da ECU) vira "Mapa K liberado". Falha de cabo ≠ recusa da ECU (failureKind).
+     * O acompanhamento roda no poll do scheduler (nenhum timer de tela).
      */
     releaseInsertion() {
       if (this.releasing) return;
@@ -101,22 +103,24 @@
         return;
       }
       this.releasing = true;
+      this.releaseTicks = 0;
       const button = document.getElementById('mapReleaseButton');
       if (button) { button.disabled = true; button.textContent = 'Liberando…'; }
-      let attempts = 0;
-      const tick = () => {
-        const operation = this.api.mapWriteOperation();
-        if (operation && operation.busy && attempts < 150) { attempts += 1; setTimeout(tick, 400); return; }
-        this.releasing = false;
-        if (operation && operation.ok === true && operation.recovered === true) {
-          if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. Toque em Reler ECU para ler o mapa desta sessão.</span></div>';
-          text('mapSourceStatus', 'Mapa K liberado · releia a ECU');
-        } else {
-          this.alert(failureText(operation, 'A ECU não confirmou a saída. O Mapa K continua bloqueado.'));
-          if (button) { button.disabled = false; button.textContent = 'Liberar Mapa K'; }
-        }
-      };
-      setTimeout(tick, 400);
+    }
+
+    pollRelease() {
+      if (!this.releasing) return;
+      const operation = this.api.mapWriteOperation();
+      if (operation && operation.busy && this.releaseTicks < 600) { this.releaseTicks += 1; return; }
+      this.releasing = false;
+      if (operation && operation.ok === true && operation.recovered === true) {
+        if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. Toque em Reler ECU para ler o mapa desta sessão.</span></div>';
+        text('mapSourceStatus', 'Mapa K liberado · releia a ECU');
+      } else {
+        this.alert(failureText(operation, 'A ECU não confirmou a saída. O Mapa K continua bloqueado.'));
+        const button = document.getElementById('mapReleaseButton');
+        if (button) { button.disabled = false; button.textContent = 'Liberar Mapa K'; }
+      }
     }
 
     startRead(automatic) {
@@ -161,6 +165,7 @@
         }
       }
       this.pollWrite();
+      this.pollRelease();
     }
 
     buildGrid() {
