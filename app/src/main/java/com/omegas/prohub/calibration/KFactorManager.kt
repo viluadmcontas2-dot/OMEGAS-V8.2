@@ -33,6 +33,8 @@ class KFactorManager(
     private val log: RingLog,
     private val onBusyChanged: (Boolean) -> Unit,
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
+    /** Falha com a ECU possivelmente alterada (escrita começou): só observação, nunca comando. */
+    private val onFailedBatch: (JSONObject) -> Unit = {},
     private val publishManualBackup: (File) -> JSONObject = {
         JSONObject().put("ok", true).put("published", false)
     },
@@ -603,6 +605,16 @@ class KFactorManager(
                     .put("photoFile", photoFile)
                     .put("failureKind", FailureKind.of(error)),
             )
+            if (writeStarted) {
+                try {
+                    onFailedBatch(
+                        JSONObject().put("adjustmentId", adjustmentId).put("photoFile", photoFile)
+                            .put("partial", confirmed.length() > 0).put("mutationMayHaveStarted", true),
+                    )
+                } catch (notify: Throwable) {
+                    try { log.add("WARN", "K-FACTOR", "Falha registrada; notificação falhou: ${notify.message}") } catch (_: Throwable) {}
+                }
+            }
             try {
                 val stale = loadCache().put("sessionConfirmed", false)
                 atomicWrite(cacheFile, stale.toString(2))

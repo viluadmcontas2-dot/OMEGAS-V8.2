@@ -41,7 +41,8 @@ class RefinementCycleScenarioTest {
     private fun petrolBaseline() = cells.forEach { (rpm, map, ms) -> drive("GASOLINA", rpm, map, ms) }
 
     private fun gas(ratio: Double, bands: List<Int> = cells.indices.toList()) =
-        bands.forEach { i -> val (rpm, map, ms) = cells[i]; drive("GNV", rpm, map, ms * ratio) }
+        // Três passagens separadas por lacuna > 3 s: cada faixa precisa de 3 episódios (E3), não só de 8 pares.
+        bands.forEach { i -> val (rpm, map, ms) = cells[i]; repeat(3) { drive("GNV", rpm, map, ms * ratio) } }
 
     private fun monitor(count: Int, max: Int = 3, enabled: Int = 1) = JSONObject()
         .put("autoMatchCount", count).put("maxAutomatch", max).put("autoCalEnabled", enabled)

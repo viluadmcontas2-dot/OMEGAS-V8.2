@@ -214,7 +214,7 @@ class KWriteManager(
                 .put("extraRow", extraRow)
                 .put("allRows", allRows)
             atomicWrite(cacheFile, cache.toString(2))
-            try { onConfirmedWrite() } catch (_: Exception) {}
+            try { onConfirmedWrite() } catch (error: Exception) { log.add("WARN", "K-WRITE", "Gravação confirmada; notificação falhou: ${error.message}") }
             val details = JSONObject()
                 .put("hash", hash)
                 .put("updatedAt", now)
@@ -629,7 +629,7 @@ class KWriteManager(
                 .put("readbackValid", true)
                 .put("backupId", adjustmentId)
                 .put("confirmedAt", now)
-            try { onConfirmedWrite() } catch (_: Exception) {}
+            try { onConfirmedWrite() } catch (error: Exception) { log.add("WARN", "K-WRITE", "Gravação confirmada; notificação falhou: ${error.message}") }
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-BATCH", "Lote confirmado; notificação falhou: ${error.message}")
             }

@@ -1,7 +1,13 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const AUTO_CAL_LIVE_STALE_MS = 7500;
+  // Mesma régua do Agora: cinza com 1,5 s sem quadro novo, some com 3 s (antes vivia 7,5 s com quadro velho).
+  const AUTO_CAL_LIVE_GREY_MS = 1500;
+  const AUTO_CAL_LIVE_STALE_MS = 3000;
+  // Suavização do cursor: ~150 ms para chegar ao alvo (sem extrapolar o que o motor fará).
+  const AUTO_CAL_CURSOR_EASE_MS = 50;
+  // Texto da narrativa: no máximo 2 Hz, ou na hora quando muda região/combustível/estado.
+  const AUTO_CAL_NARRATIVE_MS = 500;
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
   const AUTO_CAL_X_AXIS_LABEL = 'Petrol Inj. (ms)';
 
@@ -226,7 +232,41 @@
       const mapBar = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
       const rpm = finite(live.rpm);
       if (petrolMs === null || mapBar === null) return null;
-      return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs };
+      return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs, grey: ageMs > AUTO_CAL_LIVE_GREY_MS };
+    },
+
+    /**
+     * Onde o MAP vivo cai nos 18 limiares da ECU. Cada faixa i é (THD[i], THD[i+1]] (confirmado em 740 de 740
+     * leituras reais); abaixo de THD[0] é lenta/desaceleração e acima de THD[17] é a faixa 18. Nunca devolve
+     * "indisponível" quando a ECU deu os limiares.
+     */
+    liveRegion(snapshot = {}, live = {}) {
+      const band = this.currentBand(snapshot, live);
+      if (band) return { kind: 'band', index: band.index, zone: zoneForBand(band.index) + 1 };
+      const thresholds = physicalVector(snapshot, 'MNFLD_PRESS_THD');
+      const mapBar = finite(live?.mapBar ?? live?.load_bar ?? live?.map_bar);
+      const values = thresholds.map(Number);
+      const valid = mapBar !== null && values.length >= 2 && thresholds.every(value => finite(value) !== null) &&
+        values.every((value, index) => index === 0 || value > values[index - 1]);
+      if (!valid) return { kind: 'unknown', index: null, zone: null };
+      if (mapBar <= values[0]) return { kind: 'idle', index: null, zone: null, edge: values[0] };
+      const last = values.length - 1;
+      return { kind: 'above', index: last, zone: zoneForBand(last) + 1, edge: values[last] };
+    },
+
+    /** Texto honesto sobre a idade e a completude da leitura da ECU (nada de "—" mudo). */
+    readingNote(snapshot = {}, nowMs = Date.now()) {
+      const parts = [];
+      const at = finite(snapshot?.capturedAtMs);
+      if (at !== null && at > 0) {
+        const seconds = Math.round((nowMs - at) / 1000);
+        if (seconds >= 6) parts.push('leitura atrasada há ' + (seconds < 90 ? seconds + ' s' : Math.round(seconds / 60) + ' min'));
+      }
+      const fields = Array.isArray(snapshot?.fields) ? snapshot.fields : [];
+      const missing = fields.filter(item => item && String(item.status || '') !== 'VALID').length;
+      if (missing > 0) parts.push(missing + (missing === 1 ? ' campo sem leitura (aparece como —)' : ' campos sem leitura (aparecem como —)'));
+      else if (snapshot?.partial === true && fields.length > 0) parts.push('leitura parcial');
+      return parts.join(' · ');
     },
 
     liveFuelState(value) {
@@ -267,8 +307,7 @@
     },
 
     currentZone(snapshot = {}, live = {}) {
-      const band = this.currentBand(snapshot, live);
-      return band ? zoneForBand(band.index) + 1 : null;
+      return this.liveRegion(snapshot, live).zone;
     },
 
     zoneSurface(snapshot = {}, human = {}) {
@@ -369,8 +408,10 @@
         return values.filter(value => value !== null);
       });
       if (!xValues.length) return null;
-      let xMin = Math.min(...xValues);
-      let xMax = Math.max(...xValues);
+      // Lista já filtrada por finite() e não vazia; o reduce evita ±Infinity/NaN mesmo se isso mudar.
+      let xMin = xValues.reduce((best, value) => (value < best ? value : best), xValues[0]);
+      let xMax = xValues.reduce((best, value) => (value > best ? value : best), xValues[0]);
+      if (!Number.isFinite(xMin) || !Number.isFinite(xMax)) return null;
       if (xMax - xMin < 0.01) {
         const pad = Math.max(0.25, Math.abs(xMin) * 0.08);
         xMin -= pad; xMax += pad;
@@ -640,7 +681,14 @@
         if (this.store.get().route === 'autocal') this.refresh();
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
-        if (this.store.get().route !== 'autocal') return;
+        if (this.store.get().route !== 'autocal') {
+          // Fora da aba não há quadro de animação rodando.
+          if (this.unsubscribeFrame) { this.unsubscribeFrame(); this.unsubscribeFrame = null; this.cursorFrameAt = null; }
+          return;
+        }
+        if (!this.unsubscribeFrame && typeof this.scheduler.addFrameHook === 'function') {
+          this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateCursor(timestamp));
+        }
         if (this.firstRefreshPending) { this.firstRefreshPending = false; this.refresh(); }
         this.renderLiveCursor();
       });
@@ -1079,7 +1127,8 @@
       this.text('autocalStateRaw', state.state || '—');
       this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
       this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
-      this.text('autocalReferenceSource', AutoCalUxModel.referenceSourceLabel(this.projection));
+      const readingNote = AutoCalUxModel.readingNote(snapshot, Date.now());
+      this.text('autocalReferenceSource', AutoCalUxModel.referenceSourceLabel(this.projection) + (readingNote ? ' · ' + readingNote : ''));
       this.text('autocalMaturityRaw', events.length);
       this.renderZoneMeter(human);
       this.renderSessionState();
@@ -1156,7 +1205,7 @@
       if (!live) {
         const ageMs = finite(telemetry.telemetryAgeMs ?? telemetry.ageMs);
         const stale = telemetry.valid === true && ageMs !== null && ageMs > AUTO_CAL_LIVE_STALE_MS;
-        this.text('autocalLiveTitle', stale ? 'Telemetria com atraso' : 'Aguardando telemetria válida');
+        this.text('autocalLiveTitle', stale ? 'Telemetria com atraso · há ' + Math.round(ageMs / 1000) + ' s' : 'Aguardando telemetria válida');
         this.text('autocalLiveFuel', '—');
         const fuelChip = document.getElementById('autocalLiveFuel');
         if (fuelChip) fuelChip.dataset.fuelState = 'unknown';
@@ -1165,7 +1214,7 @@
         this.text('autocalLiveMap', '—');
         this.text('autocalLiveZone', '—');
         this.text('autocalLiveNarrative', stale
-          ? 'O último frame passou da janela curta de telemetria. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
+          ? 'Leitura atrasada há ' + Math.round(ageMs / 1000) + ' s: o último frame passou da janela curta de telemetria. AGORA foi ocultado até chegar uma leitura nova; a referência nativa não foi alterada.'
           : 'O cursor AGORA aparece quando RPM, Petrol Inj. e MAP chegam válidos. Ele nunca vira evidência adquirida.');
         return;
       }
@@ -1178,13 +1227,14 @@
       this.text('autocalLiveRpm', live.rpm === null ? '—' : Math.round(live.rpm).toLocaleString('pt-BR'));
       this.text('autocalLivePetrol', live.petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       this.text('autocalLiveMap', live.mapBar.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      const liveZone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
-      this.text('autocalLiveZone', liveZone === null ? '—' : 'Z' + liveZone);
+      const region = AutoCalUxModel.liveRegion(this.snapshot || {}, live);
+      this.text('autocalLiveZone', region.kind === 'idle' ? 'Lenta' : region.zone === null ? '—' : 'Z' + region.zone);
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
         ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
         : enabled === 0 ? 'Aquisição pausada. O ponto AGORA é somente telemetria.' : 'Estado de aquisição ainda não confirmado.';
-      this.text('autocalLiveNarrative', rpmLabel + ' · ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. ' + acquisitionCopy);
+      const delayCopy = live.grey ? ' Leitura atrasada há ' + Math.max(1, Math.round(live.ageMs / 1000)) + ' s: o cursor está em cinza.' : '';
+      this.text('autocalLiveNarrative', rpmLabel + ' · ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. ' + acquisitionCopy + delayCopy);
     }
 
     renderLiveCursor() {
@@ -1192,15 +1242,24 @@
       // ou estado novos) não há nada a repintar.
       const telemetry = this.store.get().telemetry || {};
       const point = AutoCalUxModel.livePoint(telemetry, this.projection);
+      const ageNow = finite(telemetry.telemetryAgeMs ?? telemetry.ageMs);
       const key = point
-        ? [point.sequence, point.petrolMs, point.mapBar, point.rpm, point.fuel].join('|')
-        : ['none', telemetry.valid === true, finite(telemetry.telemetryAgeMs ?? telemetry.ageMs) > AUTO_CAL_LIVE_STALE_MS].join('|');
+        ? [point.sequence, point.petrolMs, point.mapBar, point.rpm, point.fuel, point.grey].join('|')
+        : ['none', telemetry.valid === true, ageNow > AUTO_CAL_LIVE_STALE_MS, ageNow > AUTO_CAL_LIVE_STALE_MS ? Math.round(ageNow / 1000) : 0].join('|');
       const seen = this.cursorSeen;
       if (seen && seen.key === key && seen.snapshot === this.snapshot && seen.state === this.state &&
           seen.projection === this.projection && seen.scale === this.chartScale) return;
       this.cursorSeen = { key, snapshot: this.snapshot, state: this.state, projection: this.projection, scale: this.chartScale };
-      this.renderLiveNarrative();
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
+      // Texto da narrativa: ≤ 2 Hz, ou na hora quando muda região, combustível ou estado (válido/cinza/atrasado).
+      const region = live ? AutoCalUxModel.liveRegion(this.snapshot || {}, live) : null;
+      const narrativeKey = live ? ['live', region.kind, region.index, AutoCalUxModel.liveFuelState(live.fuel).kind, live.grey].join('|') : key;
+      const nowMs = Date.now();
+      if (narrativeKey !== this.narrativeKey || nowMs - (this.narrativeAt || 0) >= AUTO_CAL_NARRATIVE_MS || seen?.snapshot !== this.snapshot || seen?.state !== this.state) {
+        this.narrativeKey = narrativeKey;
+        this.narrativeAt = nowMs;
+        this.renderLiveNarrative();
+      }
       this.renderZoneCursor(live);
       const scale = this.chartScale;
       const layer = this.panel?.querySelector('.autocal-live-layer');
@@ -1208,6 +1267,8 @@
       if (!live) {
         if (layer) layer.setAttribute('display', 'none');
         if (bandLayer) bandLayer.setAttribute('display', 'none');
+        this.cursorTarget = null;
+        this.cursorPos = null;
         return;
       }
       if (scale && bandLayer) {
@@ -1235,27 +1296,71 @@
       if (!projected) return;
       layer.removeAttribute('display');
       layer.setAttribute('data-out-of-range', projected.outOfRange ? 'true' : 'false');
-      this.panel?.querySelectorAll('[data-autocal-live-point]').forEach(node => {
-        node.setAttribute('cx', projected.x.toFixed(1));
-        node.setAttribute('cy', projected.y.toFixed(1));
-      });
+      layer.setAttribute('data-stale', live.grey ? 'true' : 'false');
+      // O alvo muda a cada quadro novo; quem move o círculo é o quadro de animação (ease ~150 ms).
+      this.cursorTarget = { x: projected.x, y: projected.y, outOfRange: projected.outOfRange, scale };
+      if (!this.cursorPos || typeof this.scheduler?.addFrameHook !== 'function') {
+        this.cursorPos = { x: projected.x, y: projected.y };
+        this.paintCursor();
+      } else if (seen?.scale !== this.chartScale) {
+        // Gráfico redesenhado: os nós novos nascem no alvo; recoloca-os na posição suavizada.
+        this.paintCursor();
+      }
       const label = this.panel?.querySelector('[data-autocal-live-label]');
       if (label) {
-        const anchor = AutoCalUxModel.liveLabelAnchor(projected, scale);
-        label.setAttribute('x', anchor.x.toFixed(1));
-        label.setAttribute('text-anchor', anchor.textAnchor);
-        label.setAttribute('y', anchor.y.toFixed(1));
-        const zone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
+        const zone = region.zone;
         const human = AutoCalUxModel.humanState(this.snapshot || {}, this.state || {}, this.projection);
         const fuelState = AutoCalUxModel.liveFuelState(live.fuel);
         const flags = fuelState.kind === 'gas' ? human.gasZoneFlags : fuelState.kind === 'petrol' ? human.petrolZoneFlags : null;
         const fuel = fuelState.active ? fuelState.label : '';
         const state = zone !== null && Array.isArray(flags) && flags.length === 4
           ? flags[zone - 1] === true ? 'OK' : 'FALTA' : '—';
-        label.textContent = projected.outOfRange ? 'AGORA · fora da escala'
-          : zone === null ? 'AGORA · zona indisponível'
-            : 'AGORA · Z' + zone + (fuel ? ' · ' + fuel + ' ' + state : fuelState.kind === 'unknown' ? '' : ' · ' + fuelState.label);
+        const edge = region.edge === undefined ? '' : region.edge.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const text = projected.outOfRange ? 'AGORA · fora da escala'
+          : region.kind === 'idle' ? 'AGORA · lenta/desaceleração (≤ ' + edge + ' bar)'
+            : region.kind === 'unknown' ? 'AGORA · sem limiares da ECU'
+              : (region.kind === 'above' ? 'AGORA · Z' + zone + ' · faixa ' + (region.index + 1) + ' (> ' + edge + ' bar)' : 'AGORA · Z' + zone) +
+                (fuel ? ' · ' + fuel + ' ' + state : fuelState.kind === 'unknown' ? '' : ' · ' + fuelState.label);
+        const shown = live.grey ? text + ' · atrasado' : text;
+        if (label.textContent !== shown) label.textContent = shown;
       }
+    }
+
+    /** Pinta o círculo e o rótulo na posição suavizada atual. */
+    paintCursor() {
+      const pos = this.cursorPos;
+      const target = this.cursorTarget;
+      if (!pos || !target) return;
+      this.panel?.querySelectorAll('[data-autocal-live-point]').forEach(node => {
+        node.setAttribute('cx', pos.x.toFixed(1));
+        node.setAttribute('cy', pos.y.toFixed(1));
+      });
+      const label = this.panel?.querySelector('[data-autocal-live-label]');
+      if (label) {
+        const anchor = AutoCalUxModel.liveLabelAnchor({ x: pos.x, y: pos.y, outOfRange: target.outOfRange }, target.scale);
+        label.setAttribute('x', anchor.x.toFixed(1));
+        label.setAttribute('text-anchor', anchor.textAnchor);
+        label.setAttribute('y', anchor.y.toFixed(1));
+      }
+    }
+
+    /** Quadro de animação (rAF do scheduler): aproxima o cursor do alvo; sem extrapolar, sem timer próprio. */
+    animateCursor(timestamp) {
+      const target = this.cursorTarget;
+      const pos = this.cursorPos;
+      if (!target || !pos) { this.cursorFrameAt = null; return; }
+      const dt = this.cursorFrameAt === null || this.cursorFrameAt === undefined ? 16 : Math.max(0, Math.min(100, timestamp - this.cursorFrameAt));
+      this.cursorFrameAt = timestamp;
+      const dx = target.x - pos.x;
+      const dy = target.y - pos.y;
+      if (Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05) {
+        if (dx !== 0 || dy !== 0) { pos.x = target.x; pos.y = target.y; this.paintCursor(); }
+        return;
+      }
+      const k = 1 - Math.exp(-dt / AUTO_CAL_CURSOR_EASE_MS);
+      pos.x += dx * k;
+      pos.y += dy * k;
+      this.paintCursor();
     }
 
     renderZoneMeter(human) {

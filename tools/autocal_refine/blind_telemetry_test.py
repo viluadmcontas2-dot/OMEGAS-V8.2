@@ -40,6 +40,7 @@ def stable_frames(telemetry, fuel, until_ms=None):
             "rpm": sum(f["rpm"] for f in (prev, cur, nxt)) / 3,
             "map": sum(f["load_bar"] for f in (prev, cur, nxt)) / 3,
             "t": sum(f["petrol_ms"] for f in (prev, cur, nxt)) / 3,
+            "at": cur["t"],
         })
     return out
 
@@ -62,16 +63,32 @@ def cap_cells(obs, cell_cap=CELL_CAP):
     return [o for _, o in sorted((item for q in cells.values() for item in q), key=lambda x: x[0])]
 
 
-def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
-    """Pares (t_gasolina mediano no mesmo RPM×MAP, t_no_GNV) de leituras estáveis."""
-    petrol = cap_cells(stable_frames(telemetry, "GASOLINA"))
-    gas = cap_cells(stable_frames(telemetry, "GNV", until_ms))
-    out = []
+EPISODE_GAP_MS = 3000
+
+
+def tag_episodes(obs, gap_ms=EPISODE_GAP_MS):
+    """Episódio = trecho de leituras estáveis seguidas; lacuna > gap_ms abre o próximo (espelho do EquivalenceLedger)."""
+    episode, last = -1, None
+    for o in obs:
+        if last is None or o["at"] - last > gap_ms:
+            episode += 1
+        o["episode"] = episode
+        last = o["at"]
+    return obs
+
+
+def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL, with_episodes=False, petrol_until=False):
+    """Pares (t_gasolina mediano no mesmo RPM×MAP, t_no_GNV) de leituras estáveis.
+    Com with_episodes devolve também o id de episódio de cada par (paralelo)."""
+    petrol = cap_cells(stable_frames(telemetry, "GASOLINA", until_ms if petrol_until else None))
+    gas = cap_cells(tag_episodes(stable_frames(telemetry, "GNV", until_ms)))
+    out, episodes = [], []
     for g in gas:
         matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol)
         if len(matches) >= 2:
             out.append((matches[len(matches) // 2], g["t"]))
-    return out
+            episodes.append(g["episode"])
+    return (out, episodes) if with_episodes else out
 
 
 def blind_targets(fixture, sequence):

@@ -84,6 +84,16 @@ object AutoMatchRefinedEngine {
      */
     const val TELEMETRY_ONLY_BAND_PAIRS = 8
     const val TELEMETRY_ONLY_MIN_BANDS = 3
+    /** Uma faixa só puxa proposta com pares de ao menos este número de episódios (trechos separados por > 3 s). */
+    const val MIN_BAND_EPISODES = 3
+    /**
+     * Histerese de proposta: ponto com evidência cujo passo proposto fica abaixo disto é MANTIDO (ruído).
+     * O motor só aplica quando [Input.holdMinStepLog] pede; a produção passa esta constante.
+     */
+    val HOLD_MIN_STEP_LOG = ln(1.035)
+    /** Ganho decrescente por ponto já alterado: 1ª passada 1,0 · 2ª 0,7 · 3ª em diante 0,5 (independe do veredito). */
+    val PASS_GAIN = doubleArrayOf(1.0, 0.7, 0.5)
+    fun passGain(passes: Int): Double = PASS_GAIN[passes.coerceIn(0, PASS_GAIN.size - 1)]
     /** Razão mediana GNV/gasolina de uma faixa fora disto é erro de medida: a faixa inteira é descartada. */
     const val TELEMETRY_RATIO_MIN = 0.6
     const val TELEMETRY_RATIO_MAX = 1.6
@@ -101,6 +111,10 @@ object AutoMatchRefinedEngine {
         val telemetryPairs: List<kotlin.Pair<Double, Double>> = emptyList(),
         /** Ganho aprendido por ponto (RefinementJournal): <1 suaviza, >1 firma a correção. */
         val pointGainScale: DoubleArray? = null,
+        /** Episódio de cada par de [telemetryPairs] (paralelo); vazio ou com id < 0 = desconhecido, sem portão. */
+        val telemetryEpisodes: List<Int> = emptyList(),
+        /** 0 = sem histerese. */
+        val holdMinStepLog: Double = 0.0,
     )
 
     enum class Mode { EQUIVALENCE, POLISH, UNAVAILABLE }
@@ -209,8 +223,13 @@ object AutoMatchRefinedEngine {
         val matureWeight = BAND_MATURE_COUNT.toDouble() / BAND_FULL_COUNT
         val mature = targets.count { it.weight >= matureWeight }
         val nativeEquivalence = mature >= MIN_COMMON_MATURE
-        val candidates = input.telemetryPairs.filter { (tp, tg) -> tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last() }
-        val (usablePairs, outlierBands) = plausiblePairs(candidates)
+        val episodesKnown = input.telemetryEpisodes.size == input.telemetryPairs.size
+        val keptPairs = input.telemetryPairs.indices.filter { i ->
+            val (tp, tg) = input.telemetryPairs[i]
+            tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last()
+        }
+        val candidates = keptPairs.map { input.telemetryPairs[it] }
+        val (usablePairs, outlierBands) = plausiblePairs(candidates, if (episodesKnown) keptPairs.map { input.telemetryEpisodes[it] } else null)
         // A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
         val telemetryOnly = !nativeEquivalence && telemetryCovers(usablePairs)
         val equivalence = nativeEquivalence || telemetryOnly
@@ -238,7 +257,7 @@ object AutoMatchRefinedEngine {
         val lnHi = ln(MAX_FACTOR)
         val outOfRange = x0.count { it < lnLo - 1e-12 || it > lnHi + 1e-12 }
         var eEff = E_MAX
-        val box: List<Pair<Double, Double>>
+        var box: List<Pair<Double, Double>> = emptyList()
         val final: List<Double>
         if (equivalence) {
             val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
@@ -246,9 +265,16 @@ object AutoMatchRefinedEngine {
             targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
             val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
-            box = proposalBox(x0, gain)
-            eEff = effectiveElasticity(box, u)
-            final = enforceCoherence(scaled, box, u, eEff)
+            val initialBox = proposalBox(x0, gain)
+            eEff = effectiveElasticity(initialBox, u)
+            val enforced = enforceCoherence(scaled, initialBox, u, eEff)
+            // Histerese: ponto cujo passo proposto é ruído fica exatamente como está, desde que a curva continue
+            // coerente com os vizinhos (senão o ponto volta a se mover). Espelho de refined_oracle.hold_small_steps.
+            val (finalBox, finalCurve) = if (input.holdMinStepLog > 0.0)
+                holdSmallSteps(scaled, initialBox, x0, enforced, u, eEff, input.holdMinStepLog)
+            else initialBox to enforced
+            box = finalBox
+            final = finalCurve
         } else {
             // Sem evidência suficiente NÃO existe proposta: a curva fica exatamente como está.
             box = proposalBox(x0, gain)
@@ -320,12 +346,24 @@ object AutoMatchRefinedEngine {
      * Descarta a faixa inteira cuja razão mediana GNV/gasolina é implausível ([TELEMETRY_RATIO_MIN]..[TELEMETRY_RATIO_MAX])
      * e a faixa fina (< [BAND_MATURE_COUNT] pares). Retorna (pares válidos, nº de faixas outlier).
      */
-    internal fun plausiblePairs(pairs: List<kotlin.Pair<Double, Double>>): kotlin.Pair<List<kotlin.Pair<Double, Double>>, Int> {
+    internal fun plausiblePairs(
+        pairs: List<kotlin.Pair<Double, Double>>,
+        episodes: List<Int>? = null,
+    ): kotlin.Pair<List<kotlin.Pair<Double, Double>>, Int> {
+        val known = episodes != null && episodes.size == pairs.size && episodes.all { it >= 0 }
         val groups = sortedMapOf<Int, MutableList<kotlin.Pair<Double, Double>>>()
-        pairs.forEach { pair -> ledgerBand(pair.first)?.let { groups.getOrPut(it) { ArrayList() }.add(pair) } }
+        val groupEpisodes = HashMap<Int, MutableSet<Int>>()
+        pairs.forEachIndexed { i, pair ->
+            ledgerBand(pair.first)?.let { band ->
+                groups.getOrPut(band) { ArrayList() }.add(pair)
+                if (known) groupEpisodes.getOrPut(band) { HashSet() }.add(episodes!![i])
+            }
+        }
         val kept = ArrayList<kotlin.Pair<Double, Double>>()
         var outliers = 0
-        groups.values.forEach { group ->
+        groups.entries.forEach { (band, group) ->
+            // Poucos episódios: oito pares de um só trecho são um acaso, não cobertura.
+            if (known && (groupEpisodes[band]?.size ?: 0) < MIN_BAND_EPISODES) return@forEach
             val ratios = group.map { (tp, tg) -> tg / tp }.sorted()
             val median = ratios[ratios.size / 2]
             if (median < TELEMETRY_RATIO_MIN || median > TELEMETRY_RATIO_MAX) {
@@ -351,6 +389,43 @@ object AutoMatchRefinedEngine {
             if (lo > hi + 1e-12 || (outside && gain[j] <= 0.0)) { lo = x; hi = x }
             lo to hi
         }
+    }
+
+    /**
+     * Histerese da proposta: fixa em x0 os pontos cujo passo |final - x0| < [holdLog] e reprojeta. Se a curva
+     * deixar de ser coerente (|Δ ln K/Δ ln t| > e entre vizinhos) ou a projeção ceder, os pontos presos ao lado do
+     * degrau voltam a se mover. Devolve (caixa, curva); sem nada a prender, devolve as recebidas.
+     */
+    internal fun holdSmallSteps(
+        fitted: List<Double>,
+        box: List<kotlin.Pair<Double, Double>>,
+        x0: List<Double>,
+        final: List<Double>,
+        u: List<Double>,
+        e: Double,
+        holdLog: Double,
+    ): kotlin.Pair<List<kotlin.Pair<Double, Double>>, List<Double>> {
+        val n = x0.size
+        val held = (0 until n).filter { j ->
+            box[j].first < box[j].second && x0[j] >= box[j].first - 1e-12 && x0[j] <= box[j].second + 1e-12 &&
+                abs(final[j] - x0[j]) < holdLog
+        }.toMutableSet()
+        while (held.isNotEmpty()) {
+            val trial = box.mapIndexed { j, b -> if (j in held) (x0[j] to x0[j]) else b }
+            val z = enforceCoherence(fitted, trial, u, e)
+            val bad = (0 until n - 1).filter { j -> abs(z[j + 1] - z[j]) > e * (u[j + 1] - u[j]) + 1e-6 }
+            val moved = held.filter { j -> abs(z[j] - x0[j]) > 1e-6 }
+            if (bad.isEmpty() && moved.isEmpty()) return trial to z
+            val drop = HashSet<Int>()
+            bad.forEach { j ->
+                if (j in held) drop += j
+                if (j + 1 in held) drop += j + 1
+            }
+            drop += moved
+            if (drop.isEmpty()) break
+            held -= drop
+        }
+        return box to final
     }
 
     /** Alvos que julgam o erro: faixas nativas maduras; na condução-só, todos os pares da medição. */

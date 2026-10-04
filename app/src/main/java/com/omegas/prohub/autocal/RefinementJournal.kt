@@ -38,9 +38,14 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val MIN_SCALE = 0.4
         const val MAX_SCALE = 1.3
         const val MAX_EXPERIMENTS = 40
+        const val POINT_COUNT = 30
+        /** Abaixo disso o motor tem estratégia própria (lenta): não conta como condução da verificação. */
+        const val DRIVING_MIN_RPM = EquivalenceLedger.DRIVING_MIN_RPM
+        /** Estado de um experimento cuja gravação falhou com a ECU possivelmente alterada (só a foto permite voltar). */
+        const val STATUS_FAILED_PARTIAL = "FALHA_PARCIAL"
         val BANDS = EquivalenceLedger.BANDS
         /**
-         * Tempo de ECU online (condução) depois da gravação. Passado isso a verificação fecha com o
+         * Tempo de CONDUÇÃO (rpm ≥ 1000 numa faixa alterada) depois da gravação. Passado isso a verificação fecha com o
          * que já deu para julgar: faixa que o motorista não visita não pode segurar o refino para sempre.
          */
         const val VERIFY_PARTIAL_ONLINE_MS = 15 * 60_000L
@@ -55,6 +60,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     private val lock = Any()
     private val experiments = ArrayList<JSONObject>()
     private val bandScale = DoubleArray(BANDS.size) { 1.0 }
+    /** Quantas vezes cada ponto da Curva K já foi alterado por gravação confirmada (ganho decrescente, E1). */
+    private val pointPasses = IntArray(POINT_COUNT)
     private var experimentSequence = 0L
     private var lastEvaluateAt = 0L
     private var lastSaveAt = 0L
@@ -73,8 +80,19 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     }
 
     /** Registra uma gravação de Curva K confirmada (antes/depois + índice medido com a curva antiga). */
-    fun recordCurveWrite(beforeRaw: IntArray, afterRaw: IntArray, axisRaw: IntArray, indexBefore: JSONObject, source: String) {
+    fun recordCurveWrite(
+        beforeRaw: IntArray,
+        afterRaw: IntArray,
+        axisRaw: IntArray,
+        indexBefore: JSONObject,
+        source: String,
+        /** Foto da curva tirada ANTES desta gravação: o Desfazer restaura exatamente ela. */
+        photoFile: String = "",
+    ) {
         synchronized(lock) {
+            for (i in 0 until min(POINT_COUNT, min(beforeRaw.size, afterRaw.size))) {
+                if (beforeRaw[i] != afterRaw[i]) pointPasses[i] += 1
+            }
             experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }?.let {
                 it.put("status", "INTERROMPIDO").put("reasonCode", "SUPERSEDED_BY_CONFIRMED_WRITE")
                     .put("failureDomain", "FUNCTIONAL").put("closedAt", clock())
@@ -89,8 +107,36 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 .put("beforeRaw", JSONArray(beforeRaw.toList()))
                 .put("afterRaw", JSONArray(afterRaw.toList()))
                 .put("indexBefore", indexBefore)
+                .put("photoFile", photoFile)
                 .put("onlineMs", 0L)
                 .put("status", "VERIFICANDO").put("reasonCode", "MANUAL_WRITE_CONFIRMED").put("failureDomain", "NONE")
+            while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
+            publishDecision(experiments.last())
+        }
+        save()
+    }
+
+    /**
+     * A gravação falhou com a ECU possivelmente alterada (falha parcial): registra o experimento só com a foto,
+     * para o Desfazer aparecer. Não há antes/depois conhecido: o único caminho de volta é a foto.
+     */
+    fun recordFailedWrite(photoFile: String, source: String, partial: Boolean) {
+        synchronized(lock) {
+            experiments.lastOrNull()?.takeIf { it.optString("status") == STATUS_VERIFYING }?.let {
+                it.put("status", "INTERROMPIDO").put("reasonCode", "SUPERSEDED_BY_FAILED_WRITE")
+                    .put("failureDomain", "FUNCTIONAL").put("closedAt", clock())
+                publishDecision(it)
+            }
+            experimentSequence += 1L
+            experiments += JSONObject()
+                .put("id", "EXP-${clock()}-$experimentSequence")
+                .put("appliedAt", clock())
+                .put("closedAt", clock())
+                .put("source", source)
+                .put("photoFile", photoFile)
+                .put("partial", partial)
+                .put("onlineMs", 0L)
+                .put("status", STATUS_FAILED_PARTIAL).put("reasonCode", "WRITE_FAILED_ECU_MAY_HAVE_CHANGED").put("failureDomain", "FUNCTIONAL")
             while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
             publishDecision(experiments.last())
         }
@@ -119,14 +165,17 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
      *  - passou [VERIFY_PARTIAL_ONLINE_MS] de condução: fecha com o que foi julgado (faixas sem dado
      *    ficam SEM_DADOS); sem nenhuma julgada em [VERIFY_GIVE_UP_ONLINE_MS] → INCONCLUSIVO.
      */
-    fun evaluate(indexNow: JSONObject, ecuOnline: Boolean = true): Boolean {
+    fun evaluate(indexNow: JSONObject, ecuOnline: Boolean = true, rpm: Double? = null, petrolMs: Double? = null): Boolean {
         var needsSave = false
         val changed = synchronized(lock) {
             val now = clock()
             val dt = if (lastEvaluateAt == 0L) 0L else (now - lastEvaluateAt).coerceIn(0L, MAX_TICK_MS)
             lastEvaluateAt = now
             val exp = experiments.lastOrNull()?.takeIf { it.optString("status") == STATUS_VERIFYING } ?: return false
-            if (ecuOnline) exp.put("onlineMs", exp.optLong("onlineMs", 0L) + dt)
+            // O orçamento conta CONDUÇÃO, não tempo conectado: rpm ≥ 1000 numa faixa que a gravação alterou.
+            // Sem leitura de rpm (chamador antigo/teste) cai no tempo online.
+            val driving = rpm == null || (rpm >= DRIVING_MIN_RPM && petrolMs != null && bandVisited(exp, petrolMs))
+            if (ecuOnline && driving) exp.put("onlineMs", exp.optLong("onlineMs", 0L) + dt)
             val onlineMs = exp.optLong("onlineMs", 0L)
             val before = exp.optJSONObject("indexBefore")?.optJSONArray("bands") ?: JSONArray()
             val after = indexNow.optJSONArray("bands") ?: JSONArray()
@@ -227,6 +276,12 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         return changed
     }
 
+    /** O ponto de operação atual (Petrol Inj. em ms) está numa faixa que este experimento alterou? */
+    private fun bandVisited(exp: JSONObject, petrolMs: Double): Boolean {
+        val band = BANDS.firstOrNull { petrolMs >= it.first && petrolMs < it.second } ?: return false
+        return bandTouched(exp, band)
+    }
+
     private fun bandTouched(exp: JSONObject, band: kotlin.Pair<Double, Double>): Boolean {
         val axis = exp.optJSONArray("axisRaw") ?: return true
         val before = exp.optJSONArray("beforeRaw") ?: return true
@@ -255,7 +310,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     fun pointGainScale(axisMs: List<Double>): DoubleArray = synchronized(lock) {
         DoubleArray(axisMs.size) { j ->
             val band = BANDS.indexOfFirst { axisMs[j] >= it.first && axisMs[j] < it.second }
-            if (band < 0) 1.0 else bandScale[band]
+            val learned = if (band < 0) 1.0 else bandScale[band]
+            // Ganho decrescente por ponto, independente do veredito: 1,0 → 0,7 → 0,5 a cada gravação que o altera.
+            learned * AutoMatchRefinedEngine.passGain(if (j < POINT_COUNT) pointPasses[j] else 0)
         }
     }
 
@@ -285,6 +342,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("ok", true)
             .put("format", FORMAT)
             .put("bandScale", JSONArray(bandScale.toList()))
+            .put("pointPasses", JSONArray(pointPasses.toList()))
             .put("bands", JSONArray(BANDS.map { JSONObject().put("fromMs", it.first).put("toMs", it.second) }))
             .put("verifyBudgetMs", VERIFY_PARTIAL_ONLINE_MS)
             .put("giveUpBudgetMs", VERIFY_GIVE_UP_ONLINE_MS)
@@ -305,6 +363,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             lastSaveAt = clock()
             JSONObject().put("format", FORMAT)
                 .put("bandScale", JSONArray(bandScale.toList()))
+                .put("pointPasses", JSONArray(pointPasses.toList()))
                 .put("experimentSequence", experimentSequence)
                 .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
         }
@@ -323,6 +382,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             if (root.optString("format") != FORMAT) return
             root.optJSONArray("bandScale")?.let { a ->
                 for (i in 0 until min(a.length(), bandScale.size)) bandScale[i] = a.optDouble(i, 1.0).coerceIn(MIN_SCALE, MAX_SCALE)
+            }
+            root.optJSONArray("pointPasses")?.let { a ->
+                for (i in 0 until min(a.length(), POINT_COUNT)) pointPasses[i] = a.optInt(i, 0).coerceIn(0, 1000)
             }
             root.optJSONArray("experiments")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(experiments::add) }
             val loadedSequence = experiments.mapNotNull {

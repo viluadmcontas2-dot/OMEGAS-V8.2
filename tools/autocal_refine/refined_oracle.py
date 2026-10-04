@@ -65,6 +65,19 @@ TELEMETRY_MIN_MS = 3.0       # abaixo disso a telemetria é dominada por transie
 # pelo menos TELEMETRY_ONLY_MIN_BANDS faixas de Petrol Inj. com TELEMETRY_ONLY_BAND_PAIRS pares cada.
 TELEMETRY_ONLY_BAND_PAIRS = 8
 TELEMETRY_ONLY_MIN_BANDS = 3
+# Cobertura por EPISÓDIO (trecho de condução separado por > 3 s): uma faixa só puxa proposta com pares
+# de pelo menos MIN_BAND_EPISODES episódios distintos (8 pares de um único trecho são um só acaso).
+MIN_BAND_EPISODES = 3
+# Histerese de proposta: ponto cujo passo proposto fica abaixo disto é MANTIDO (evita o vai-e-vem de ruído).
+# O motor só aplica quando o chamador pede (hold_log); a ponte de produção passa HOLD_MIN_STEP_LOG.
+HOLD_MIN_STEP_LOG = math.log(1.035)
+# Ganho decrescente por ponto, independente do veredito: 1ª passada 1,0 · 2ª 0,7 · 3ª em diante 0,5.
+PASS_GAIN = (1.0, 0.7, 0.5)
+
+
+def pass_gain(passes):
+    """Ganho do ponto que já foi alterado [passes] vezes (0 = nunca)."""
+    return PASS_GAIN[min(max(int(passes), 0), len(PASS_GAIN) - 1)]
 # Plausibilidade: a razão mediana GNV/gasolina de uma faixa fora disto não é equivalência, é erro de
 # medida (outra curva, outro combustível, transiente): a faixa inteira é descartada como outlier.
 TELEMETRY_RATIO_MIN = 0.6
@@ -394,6 +407,27 @@ def enforce_coherence(z, box, u, e):
     return z
 
 
+def hold_small_steps(fitted, box, x0, final, u, e, hold_log):
+    """Histerese da proposta: fixa em x0 os pontos cujo passo |final - x0| < hold_log e reprojeta. Se a curva
+    deixar de ser coerente (|Δ ln K/Δ ln t| > e entre vizinhos), os pontos presos ao lado do degrau voltam a se mover.
+    Devolve (caixa, curva); sem nada a prender, devolve a caixa e a curva recebidas."""
+    n = len(x0)
+    held = {j for j in range(n)
+            if box[j][0] < box[j][1] and box[j][0] - 1e-12 <= x0[j] <= box[j][1] + 1e-12 and abs(final[j] - x0[j]) < hold_log}
+    while held:
+        trial = [(x0[j], x0[j]) if j in held else box[j] for j in range(n)]
+        z = enforce_coherence(fitted, trial, u, e)
+        bad = [j for j in range(n - 1) if abs(z[j + 1] - z[j]) > e * (u[j + 1] - u[j]) + 1e-6]
+        moved = {j for j in held if abs(z[j] - x0[j]) > 1e-6}   # a projeção cedeu: o ponto não ficou preso
+        if not bad and not moved:
+            return trial, z
+        drop = {k for j in bad for k in (j, j + 1) if k in held} | moved
+        if not drop:
+            break
+        held -= drop
+    return box, final
+
+
 # --------------------------------------------------------------- métricas
 
 def metrics(factors, axis_ms, lo=2, hi=22):
@@ -491,16 +525,22 @@ def ledger_band(tp):
     return len(LEDGER_BANDS) if tp >= LEDGER_BANDS[-1][1] else None
 
 
-def plausible_pairs(pairs):
-    """Descarta faixa inteira cuja razão mediana GNV/gasolina é implausível e faixa fina (< 3 pares).
+def plausible_pairs(pairs, episodes=None):
+    """Descarta faixa inteira cuja razão mediana GNV/gasolina é implausível, faixa fina (< 3 pares) e,
+    quando os episódios são conhecidos, faixa com menos de MIN_BAND_EPISODES episódios distintos.
 
+    [episodes] é paralelo a [pairs] (id < 0 = desconhecido; qualquer desconhecido desliga o portão).
     Retorna (pares_validos, faixas_outlier). Espelho de AutoMatchRefinedEngine.plausiblePairs."""
+    known = episodes is not None and len(episodes) == len(pairs) and all(e >= 0 for e in episodes)
     groups = {}
-    for tp, tg in pairs:
-        groups.setdefault(ledger_band(tp), []).append((tp, tg))
+    for i, (tp, tg) in enumerate(pairs):
+        groups.setdefault(ledger_band(tp), []).append((tp, tg, episodes[i] if known else -1))
     kept, outliers = [], 0
     for band in sorted(g for g in groups if g is not None):
-        group = groups[band]
+        full = groups[band]
+        group = [(tp, tg) for tp, tg, _ in full]
+        if known and len({e for _, _, e in full}) < MIN_BAND_EPISODES:
+            continue
         ratios = sorted(tg / tp for tp, tg in group)
         median = ratios[len(ratios) // 2]
         if not (TELEMETRY_RATIO_MIN <= median <= TELEMETRY_RATIO_MAX):
@@ -541,7 +581,7 @@ def unavailable(reason, **extra):
     return out
 
 
-def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
+def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_episodes=None, hold_log=0.0):
     # Snapshot incoerente no tempo (grupos de leitura em instantes incompatíveis) não é base de proposta.
     # `partial` é true em todo snapshot real: NÃO é critério.
     if snapshot.get("temporalCoherent") is False:
@@ -575,8 +615,11 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
             targets = equivalence_targets(petrol, gas, axis_ms, k_old)
     mature = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)]
     native_equivalence = len(mature) >= MIN_COMMON_MATURE
-    candidate = [(tp, tg) for tp, tg in (telemetry_pairs or []) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
-    usable, outlier_bands = plausible_pairs(candidate)
+    raw_pairs = list(telemetry_pairs or [])
+    raw_eps = list(telemetry_episodes) if telemetry_episodes is not None and len(telemetry_episodes) == len(raw_pairs) else None
+    keep = [i for i, (tp, tg) in enumerate(raw_pairs) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
+    candidate = [raw_pairs[i] for i in keep]
+    usable, outlier_bands = plausible_pairs(candidate, [raw_eps[i] for i in keep] if raw_eps is not None else None)
     # A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
     telemetry_only = (not native_equivalence) and telemetry_covers(usable)
     equivalence_available = native_equivalence or telemetry_only
@@ -614,6 +657,10 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None):
         box = proposal_box(x0, gain)
         e_eff = effective_elasticity(box, u)
         final = enforce_coherence(fitted, box, u, e_eff)
+        # Histerese: ponto cujo passo proposto fica abaixo do limiar é ruído; fica exatamente como está,
+        # desde que a curva continue coerente com os vizinhos (senão o ponto volta a se mover).
+        if hold_log:
+            box, final = hold_small_steps(fitted, box, x0, final, u, e_eff, hold_log)
     else:
         # Sem evidência suficiente NÃO existe proposta: a curva fica exatamente como está.
         box = proposal_box(x0, gain)

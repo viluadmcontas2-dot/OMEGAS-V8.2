@@ -160,6 +160,8 @@ object AutoMatchSnapshotAnalysis {
         snapshot: JSONObject,
         telemetryPairs: List<Pair<Double, Double>> = emptyList(),
         pointGainScale: DoubleArray? = null,
+        telemetryEpisodes: List<Int> = emptyList(),
+        holdMinStepLog: Double = 0.0,
     ): JSONObject {
         val fields = fieldsByKey(snapshot.optJSONArray("fields") ?: JSONArray())
         fun valid(field: AutoCalProtocol.Field, elements: Int): IntArray? {
@@ -206,6 +208,8 @@ object AutoMatchSnapshotAnalysis {
                     gasCounts = band(AutoCalProtocol.NUM_BUF_UPD_GAS),
                     telemetryPairs = telemetryPairs,
                     pointGainScale = pointGainScale,
+                    telemetryEpisodes = telemetryEpisodes,
+                    holdMinStepLog = holdMinStepLog,
                 ),
             )
             if (!result.available) {

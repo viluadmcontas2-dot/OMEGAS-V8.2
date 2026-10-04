@@ -51,6 +51,13 @@ class EquivalencePhases(
         const val PARTIAL_MIN_ZONES = 3
         /** ±3%: abaixo disso GNV e gasolina já pedem o mesmo (ruído de medição ~2%). */
         val TOLERANCE_LOG = ln(1.03)
+        /** Histerese: a faixa entra em "fora" além de ±3% (±6% na referência da ECU) e só sai abaixo de ±2% (±4%). */
+        val TOLERANCE_LEAVE_LOG = ln(1.02)
+        val TOLERANCE_LEAVE_LOG_ECU_REF = ln(1.04)
+        /** O aviso só rearma depois de tanto tempo fora das fases de aviso (flapping não repete notificação). */
+        const val ALERT_REARM_MS = 5 * 60_000L
+        /** Faixa só conta como medida com pares de pelo menos este número de episódios (quando o livro informa). */
+        const val MIN_BAND_EPISODES = EquivalenceLedger.MIN_BAND_EPISODES
         const val MIN_BAND_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
         const val MIN_STABLE_BANDS = 3
         private const val MAX_TICK_MS = 10_000L
@@ -82,6 +89,11 @@ class EquivalencePhases(
     private var timeoutReason = ""
     private var phase = "SEM_ECU"
     private var alertedPhase = ""
+    /** Fase observada neste tick, antes do prazo da tentativa (é ela que decide o aviso). */
+    private var observedPhase = ""
+    private var nonAlertSince = 0L
+    /** Faixas (pelo início, em ms) atualmente "fora": a histerese de ±3%/±2% precisa lembrar. */
+    private val offLatch = HashSet<Double>()
     /** Conclusão nativa da observação atual; ausente/ambígua não autoriza o refino. */
     private var ecuDoneLatch: String? = null
     private var dirty = false
@@ -179,13 +191,21 @@ class EquivalencePhases(
             for (i in 0 until bands.length()) {
                 val b = bands.optJSONObject(i) ?: continue
                 val r = b.optDouble("ratio", Double.NaN)
+                val episodes = if (b.has("episodes") && !b.isNull("episodes")) b.optInt("episodes") else null
                 val label = JSONObject().put("fromMs", b.optDouble("fromMs")).put("toMs", b.optDouble("toMs"))
                     .put("samples", b.optInt("samples")).put("ratio", if (r.isFinite()) r else JSONObject.NULL)
-                if (b.optInt("samples") >= MIN_BAND_SAMPLES && r.isFinite() && r > 0) {
+                    .put("episodes", episodes ?: JSONObject.NULL)
+                val bandKey = b.optDouble("fromMs")
+                if (b.optInt("samples") >= MIN_BAND_SAMPLES && r.isFinite() && r > 0 && (episodes == null || episodes >= MIN_BAND_EPISODES)) {
                     measured += label
-                    val tolerance = if (b.optDouble("ecuShare", 0.0) >= 0.5) TOLERANCE_LOG_ECU_REF else TOLERANCE_LOG
-                    if (abs(ln(r)) > tolerance) off.put(label)
-                } else missing.put(label)
+                    val ecuRef = b.optDouble("ecuShare", 0.0) >= 0.5
+                    val enter = if (ecuRef) TOLERANCE_LOG_ECU_REF else TOLERANCE_LOG
+                    val leave = if (ecuRef) TOLERANCE_LEAVE_LOG_ECU_REF else TOLERANCE_LEAVE_LOG
+                    val deviation = abs(ln(r))
+                    // Histerese: quem já está fora só volta abaixo de ±2%; quem está dentro só sai além de ±3%.
+                    val isOff = if (bandKey in offLatch) deviation >= leave else deviation > enter
+                    if (isOff) { offLatch.add(bandKey); off.put(label) } else offLatch.remove(bandKey)
+                } else { offLatch.remove(bandKey); missing.put(label) }
             }
             out.put("bandsMeasured", measured.size).put("bandsOff", off).put("bandsMissing", missing)
 
@@ -229,6 +249,7 @@ class EquivalencePhases(
                 }
                 lastSaveAt = Long.MIN_VALUE / 2
             }
+            observedPhase = candidate
             val next = if (expiredEvidence != null) "TENTATIVA_ENCERRADA" else candidate
             val reason = if (expiredEvidence != null) timeoutReason else when (candidate) {
                 "SEM_ECU" -> "ECU_OFFLINE"
@@ -248,6 +269,8 @@ class EquivalencePhases(
             if (next != phase) { phase = next; dirty = true; lastSaveAt = Long.MIN_VALUE / 2 }
             out.put("reasonCode", reason).put("failureDomain", domain)
                 .put("watchdogExpired", expiredEvidence != null)
+                // De que fase a tentativa expirou: a proposta pronta continua válida e o botão continua.
+                .put("expiredFrom", if (expiredEvidence != null) candidate else JSONObject.NULL)
                 .put("diagnostic", JSONObject()
                     .put("observedPhase", candidate).put("elapsedMs", phaseElapsedMs)
                     .put("budgetMs", budget ?: JSONObject.NULL)
@@ -258,8 +281,8 @@ class EquivalencePhases(
                     .put("journalStatus", latestStatus))
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL")
-                .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification))
-                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification))
+                .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification, if (expiredEvidence != null) candidate else ""))
+                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else ""))
             if (latest != null) out.put("journalStatus", latestStatus)
             last = out
             out
@@ -284,11 +307,19 @@ class EquivalencePhases(
 
     /** Fase atual quer avisar e ainda não avisou? Marca como avisada. */
     fun takeAlert(): JSONObject? = synchronized(lock) {
-        if (phase !in ALERT_PHASES || alertedPhase == phase) {
-            if (phase !in ALERT_PHASES && alertedPhase.isNotEmpty() && phase != "SEM_ECU" && ecuDoneLatch != null) { alertedPhase = ""; dirty = true }
+        // O aviso segue a fase OBSERVADA: o prazo da tentativa (TENTATIVA_ENCERRADA) não rearma nem repete o aviso.
+        val watched = observedPhase.ifEmpty { phase }
+        if (watched in ALERT_PHASES) nonAlertSince = 0L
+        if (watched !in ALERT_PHASES || alertedPhase == watched) {
+            if (watched !in ALERT_PHASES && alertedPhase.isNotEmpty() && phase != "SEM_ECU" && ecuDoneLatch != null) {
+                // Debounce: só rearma depois de um tempo fora das fases de aviso (a ECU/faixa oscilando não repete).
+                val now = clock()
+                if (nonAlertSince == 0L) nonAlertSince = now
+                else if (now - nonAlertSince >= ALERT_REARM_MS) { alertedPhase = ""; nonAlertSince = 0L; dirty = true }
+            }
             return null
         }
-        alertedPhase = phase
+        alertedPhase = watched
         dirty = true
         lastSaveAt = Long.MIN_VALUE / 2
         JSONObject(last.toString())
@@ -471,29 +502,38 @@ class EquivalencePhases(
         return JSONObject().put("onlineMinutes", online / 60_000.0).put("budgetMinutes", budget / 60_000.0).put("waitingBands", waiting)
     }
 
-    private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?): String = when (phase) {
+    private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?, expiredFrom: String): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
         "LENDO_ECU" -> "Lendo o estado da ECU: AutoMatch e curvas."
-        "TENTATIVA_ENCERRADA" -> if (out.optString("reasonCode") == "ECU_READ_TIMEOUT")
-            "A ECU não respondeu a tempo. O app continua tentando ler, sem gravar."
-        else "Não houve dados suficientes para concluir esta etapa. Nada foi gravado automaticamente."
+        "TENTATIVA_ENCERRADA" -> when {
+            out.optString("reasonCode") == "ECU_READ_TIMEOUT" -> "A ECU não respondeu a tempo. O app continua tentando ler, sem gravar."
+            expiredFrom == "PROPOSTA_PRONTA" -> "Proposta ainda válida, grave quando quiser. O acompanhamento automático pausou; nada mudou na ECU."
+            expiredFrom == "ECU_TRABALHANDO" -> "A ECU não terminou o automático no prazo. Se quiser, revise e grave agora; a ECU ainda pode sobrescrever."
+            else -> "Não houve dados suficientes para concluir esta etapa. Nada foi gravado automaticamente."
+        }
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
             (if (count != null) " ${count}" + (if (max != null) " de $max" else "") else "") +
             ". O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
         "COLETANDO_NOSSOS" -> if (out.optString("petrolReference") == "ECU")
             "A ECU terminou e já tem a curva de gasolina. O OMEGAS só precisa medir o GNV rodando."
         else "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
-        "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina. Revise e grave."
+        "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina. Toque em Revisar e gravar."
         "VERIFICANDO" -> "Curva nova gravada. O OMEGAS mede faixa por faixa se o GNV chegou na gasolina" +
-            (verification?.let { " (%d de %d min de condução)".format(Math.floor(it.optDouble("onlineMinutes")).toInt(), Math.round(it.optDouble("budgetMinutes")).toInt()) } ?: "") + "."
+            (verification?.let {
+                val budgetMin = Math.round(it.optDouble("budgetMinutes")).toInt()
+                // Nunca "20 de 15": passado o orçamento, mostra o teto (a verificação fecha com o que mediu).
+                " (%d de %d min de condução)".format(minOf(Math.floor(it.optDouble("onlineMinutes")).toInt(), budgetMin), budgetMin)
+            } ?: "") + "."
         "RESTAURAR_TRECHO" -> "Um trecho piorou com a curva nova. Restaure só esse trecho."
         "ESTAVEL" -> "GNV equivalente à gasolina em $measured faixas (±3%). Pode desconectar."
         else -> ""
     }
 
-    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?): String = when (phase) {
+    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = ""): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
-        "TENTATIVA_ENCERRADA" -> "A próxima leitura válida retoma o acompanhamento automaticamente."
+        "TENTATIVA_ENCERRADA" -> if (expiredFrom == "PROPOSTA_PRONTA" || expiredFrom == "ECU_TRABALHANDO")
+            "Toque em Revisar e gravar, na aba Refino. A próxima leitura nova retoma o acompanhamento."
+        else "A próxima leitura válida retoma o acompanhamento automaticamente."
         "LENDO_ECU" -> "Aguarde alguns segundos. A ECU guarda o AutoMatch e as curvas e entrega tudo ao conectar."
         "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
         "VERIFICANDO" -> {
@@ -511,12 +551,14 @@ class EquivalencePhases(
                 // Só pede gasolina quando nem o app nem a ECU têm referência de gasolina.
                 reference == "NENHUMA" && index.optInt("petrolObservations") < 40 ->
                     "A ECU ainda não tem curva de gasolina madura. Rode alguns minutos na gasolina para criar a referência."
+                // Guia do livro: a faixa com mais evidência que ainda falta, com o MAP em que dirigir.
+                !index.isNull("coverageGuidance") && index.optString("coverageGuidance").isNotBlank() -> index.optString("coverageGuidance")
                 wanted.isNotEmpty() -> "Rode no GNV passando por cargas de injeção $wanted."
                 else -> "Continue rodando no GNV."
             }
         }
-        "PROPOSTA_PRONTA" -> "Abra AutoCal → Refinar curva. Nada é gravado sem sua confirmação."
-        "RESTAURAR_TRECHO" -> "Abra AutoCal → Restaurar trecho que piorou."
+        "PROPOSTA_PRONTA" -> "Toque em Revisar e gravar, na aba Refino."
+        "RESTAURAR_TRECHO" -> "Toque em Restaurar trecho que piorou, na aba Refino."
         "ESTAVEL" -> "Nenhuma ação. O OMEGAS continua medindo e avisa se algo mudar."
         else -> ""
     }

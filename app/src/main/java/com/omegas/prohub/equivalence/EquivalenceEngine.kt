@@ -25,6 +25,8 @@ data class EquivalenceInput(
     /** Texto da operação em andamento (a fila de operações preenche; F4 sempre nulo). */
     val operation: String? = null,
     val pointGainScale: DoubleArray? = null,
+    /** Histerese da proposta (0 = sem); a produção passa [AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG]. */
+    val holdMinStepLog: Double = 0.0,
 )
 
 /**
@@ -170,11 +172,12 @@ object EquivalenceEngine {
     private fun proposalOf(input: EquivalenceInput, ownP: OwnCurve, ownG: OwnCurve): AutoMatchRefinedEngine.Result? {
         return try {
             val pairs = ArrayList<Pair<Double, Double>>()
+            val episodes = ArrayList<Int>()
             for (o in input.gasObs) {
                 if (o.rpm < EquivalenceLedger.DRIVING_MIN_RPM) continue
                 val tp = ownP.at(o.map) ?: continue
                 val tg = ownG.at(o.map) ?: continue
-                if (tp >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS) pairs += tp to tg
+                if (tp >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS) { pairs += tp to tg; episodes += o.episode }
             }
             AutoMatchRefinedEngine.refine(
                 AutoMatchRefinedEngine.Input(
@@ -182,6 +185,7 @@ object EquivalenceEngine {
                     petrolTimeRaw = null, petrolMapRaw = null, petrolCounts = null,
                     gasTimeRaw = null, gasMapRaw = null, gasCounts = null,
                     telemetryPairs = pairs, pointGainScale = input.pointGainScale,
+                    telemetryEpisodes = episodes, holdMinStepLog = input.holdMinStepLog,
                 ),
             )
         } catch (_: Exception) {
