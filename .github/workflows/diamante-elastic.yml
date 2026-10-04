@@ -1,0 +1,18 @@
+name: Diamante elastic UI evidence
+on:
+  pull_request:
+    branches: [OmegasDiamante]
+permissions:
+  contents: read
+jobs:
+  regression:
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/ui/diamante-elastic.test.cjs
