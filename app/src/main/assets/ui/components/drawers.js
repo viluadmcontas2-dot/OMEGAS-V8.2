@@ -234,7 +234,7 @@
         </section>
 
         <details class="ts-card tool-logs live-log-console ts-wide" ${logsOpenBeforeRender ? 'open' : ''}>
-          <summary><span><small>DETALHES TÉCNICOS</small><b>Registro do sistema (${logs.length} eventos)</b></span><em>Abrir</em></summary>
+          <summary><span><b>Detalhes técnicos: registro do sistema (${logs.length} eventos)</b></span><em>Abrir</em></summary>
           <div class="ts-actions">
             <button type="button" class="secondary" data-tool-export-logs>Exportar registro</button>
             <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>

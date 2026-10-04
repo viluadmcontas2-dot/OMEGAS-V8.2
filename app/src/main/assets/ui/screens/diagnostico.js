@@ -212,7 +212,7 @@
         ['Pontos da curva por região', regions.length ? regions.map((r, i) => `#${i + 1}: ${r.curvePoints.length ? r.curvePoints.join(', ') : '—'}`).join(' · ') : '—'],
         ['Proposta de ajuste local', regions.some(r => r.proposal) ? regions.filter(r => r.proposal).map(r => JSON.stringify(r.proposal)).join(' · ') : 'nenhuma'],
       ];
-      return `<details class="dg-card dg-tech"><summary><span><small>DETALHES TÉCNICOS</small><b>Tudo que saiu do Refino</b></span><em>Abrir</em></summary><dl class="dg-kv">${rows.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(String(v))}</dd></div>`).join('')}</dl></details>`;
+      return `<details class="dg-card dg-tech"><summary><span><b>Detalhes técnicos: tudo que saiu do Refino</b></span><em>Abrir</em></summary><dl class="dg-kv">${rows.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(String(v))}</dd></div>`).join('')}</dl></details>`;
     }
   }
 

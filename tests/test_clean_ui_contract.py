@@ -40,11 +40,11 @@ class CleanUiContract(unittest.TestCase):
 
     def test_seven_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']
+        expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
@@ -167,7 +167,7 @@ class CleanUiContract(unittest.TestCase):
     def test_sessions_route_replaces_suggestions(self):
         self.assertNotIn('data-screen="suggestions"', self.html)
         self.assertIn('data-screen="sessions"', self.html)
-        self.assertIn('Exportar nunca altera nada.', self.html)
+        self.assertNotIn('Exportar ZIP', self.html)  # as sessões se exportam sozinhas para Download/Omegas
 
     def test_map_and_curve_share_router_state(self):
         self.assertIn("route === 'map'", self.app)

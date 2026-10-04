@@ -72,7 +72,7 @@ test('bugs de navegação do §3.1: rota learning, routeMeta.predictor e data-om
   assert.equal(store.get().routeContext, null);
 });
 
-test('Sessões: tela própria com duração, apagões, índice início → fim e Exportar ZIP', () => {
+test('Sessões: tela própria com duração, apagões, índice início → fim, sem Exportar ZIP', () => {
   assert.match(html, /<script src="screens\/sessions\.js" defer>/);
   const ctx = loadInto({ console }, ['core/display-rules.js', 'screens/sessions.js']);
   const row = ctx.OmegasUi.SessionsModel.sessionRow({
@@ -86,8 +86,7 @@ test('Sessões: tela própria com duração, apagões, índice início → fim e
   assert.equal(bare.blackouts, null, 'sem dado não vira 0');
   assert.equal(bare.index, null);
   const source = read('screens/sessions.js');
-  assert.match(source, /Exportar ZIP/);
-  assert.match(source, /api\.exportSession\(/);
+  assert.doesNotMatch(source, /Exportar ZIP|api\.exportSession\(/, 'as sessões já se exportam sozinhas para Download/Omegas');
   assert.doesNotMatch(read('components/drawers.js'), /data-export-session|recorded-session-item/, 'a lista saiu de Ferramentas');
 });
 

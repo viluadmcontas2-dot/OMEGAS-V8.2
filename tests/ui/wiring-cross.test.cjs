@@ -9,7 +9,7 @@ const W = require('./wiring/world.cjs');
 const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
 const AGE = /\d+([.,]\d+)? ?(ms|s|min|h)\b/g;
 // A idade anda com o relógio: "agora" / "há N s" também são idade (palavras do glossário).
-const norm = html => html.replace(/(Último dado <b>)[^<]*(<\/b>)/g, '$1#$2').replace(AGE, '#').replace(/class="([^"]*)"/g, (m, c) => `class="${c.split(/\s+/).sort().join(' ')}"`);
+const norm = html => html.replace(/(Último dado <b>)[^<]*(<\/b>)/g, '$1#$2').replace(/(Último dado )[^<]*(<\/span>)/g, '$1#$2').replace(AGE, '#').replace(/class="([^"]*)"/g, (m, c) => `class="${c.split(/\s+/).sort().join(' ')}"`);
 
 function replay(name, from, count) {
   const frames = W.realFrames(name).slice(from, from + count);

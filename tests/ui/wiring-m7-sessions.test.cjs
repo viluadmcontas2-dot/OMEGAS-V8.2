@@ -23,7 +23,7 @@ function sessionsApp({ sessions, status, setup } = {}) {
   app.settle(6);
   return app;
 }
-const items = app => app.$$('.recorded-session-item');
+const items = app => app.$$('.ss-item');
 
 test('M7 vazia: diz que não há sessão e que ela começa sozinha; sem exceção', () => {
   const app = sessionsApp({ sessions: [] });
@@ -39,12 +39,13 @@ test('M7 lista: uma linha por sessão com data, duração, apagões e % GNV — 
   L.assertClean(app, 'M7/lista');
   assert.equal(items(app).length, 3);
   const first = items(app)[0].textContent;
-  assert.match(first, /30m 0s|0h 30m|30 ?min/i, `duração 1800000 ms: ${first}`);
-  assert.match(first, /GNV 60%/);
-  assert.match(first, /gasolina 40%/);
+  assert.match(first, /30 min/i, `duração 1800000 ms: ${first}`);
+  assert.match(first, /60% no GNV/);
+  assert.match(first, /Download\/Omegas/, 'cada sessão diz onde está a pasta');
+  assert.match(first, /Fechada/);
   assert.match(items(app)[1].textContent, /1 apag[aã]o\b/);
   assert.match(items(app)[2].textContent, /2 apag[oõ]es/);
-  assert.match(items(app)[0].textContent, /0 apag[oõ]es/, 'zero apagões medido é 0, não "—"');
+  assert.match(items(app)[0].textContent, /sem apag[oõ]es/, 'zero apagões medido é dito, não "—"');
   list.forEach((s, i) => assert.equal(items(app)[i].dataset.sessionId, s.id));
 });
 
@@ -53,22 +54,17 @@ test('M7 mais de 20 sessões: só as 20 mais recentes na tela', () => {
   assert.equal(items(app).length, 20);
 });
 
-test('M7 exportar: tocar em "Exportar ZIP" chama exportSession UMA vez com o id daquela sessão', () => {
-  const list = [0, 1, 2].map(n => ITEM(n));
-  const app = sessionsApp({ sessions: list });
-  const buttons = app.$$('[data-export-session]');
-  assert.equal(buttons.length, 3);
-  const mark = app.world.mark();
-  buttons[1].click(); app.flush();
-  const calls = app.world.since(mark).filter(c => c.method === 'exportSession');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].args[0], list[1].id);
+test('M7 sem botão Exportar ZIP: as sessões já se exportam sozinhas e a tela diz onde ficam', () => {
+  const app = sessionsApp({ sessions: [0, 1, 2].map(n => ITEM(n)) });
+  assert.equal(app.$$('[data-export-session]').length, 0);
+  assert.doesNotMatch(app.$(SCREEN).textContent, /Exportar ZIP/);
+  assert.match(app.$(SCREEN).textContent, /salva sozinha em Download\/Omegas/);
 });
 
 test('M7 gravando: a sessão ativa aparece "em andamento" e o cartão diz que está gravando', () => {
   const app = sessionsApp({ sessions: [ITEM(0, { active: true, stoppedAt: 0 })], status: { recording: true, events: 1234, megabytes: 3.2, durationMs: 90000 } });
-  assert.match(app.$(SCREEN).textContent, /Gravando esta sess/i);
-  assert.match(items(app)[0].textContent, /em andamento/);
+  assert.match(app.$(SCREEN).textContent, /est[aá] sendo gravada/i);
+  assert.match(items(app)[0].textContent, /Gravando/);
   L.assertClean(app, 'M7/gravando');
 });
 
@@ -76,7 +72,7 @@ test('M7 desconhecido nunca vira 0: duração/tamanho/ticks ausentes mostram —
   const app = sessionsApp({ sessions: [{ id: 'session_2026-10-02_10-00-00', reason: 'Conexão USB', durationMs: null, bytes: null, cngTicks: 0, petrolTicks: 0 }], status: { durationMs: null, megabytes: null, events: null } });
   const txt = app.$(SCREEN).textContent;
   assert.doesNotMatch(txt, /\b0m 0s\b/, 'duração desconhecida virou 0m 0s');
-  assert.doesNotMatch(txt, /GNV 0%|gasolina 0%|gasolina 100%/, 'sem ticks não há percentual');
+  assert.doesNotMatch(txt, /0% no GNV|só na gasolina/, 'sem ticks não há percentual');
   assert.equal(app.$$('.session-fuel-bar').length, 0);
   L.assertClean(app, 'M7/desconhecidos');
 });
@@ -106,7 +102,6 @@ for (const name of ['vazia', 'lista', 'gravando']) {
     const make = () => sessionsApp(name === 'vazia' ? { sessions: [] } : name === 'lista' ? { sessions: [0, 1, 2].map(n => ITEM(n)) } : { sessions: [ITEM(0, { active: true })], status: { recording: true } });
     const r = L.sweep({ prepare: make, within: SCREEN });
     assert.deepEqual(r.failures, [], `${r.exercised}/${r.total}`);
-    if (name === 'lista') assert.ok(r.total >= 3);
   });
 }
 
@@ -125,7 +120,7 @@ test('M7 fuzz das respostas de sessões: nunca exceção/NaN, recupera', () => {
 test('M7 texto vindo do Kotlin é mostrado como TEXTO: marcação HTML no motivo da sessão não vira elemento', () => {
   const evil = '<img src=x><b>negrito</b> & aspas';
   const app = sessionsApp({ sessions: [{ id: 'session_2026-10-02_10-00-00', reason: evil, durationMs: 1000, bytes: 1, cngTicks: 1, petrolTicks: 1, semanticSummary: { blackouts: 0 } }] });
-  const item = app.$('.recorded-session-item');
+  const item = app.$('.ss-item');
   assert.ok(item.querySelector('img') === null, 'HTML injetado virou elemento');
   assert.equal(item.querySelectorAll('b').length, 1, 'só o título da sessão pode ser <b>');
   assert.match(item.textContent, /<img src=x><b>negrito<\/b>/);

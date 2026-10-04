@@ -24,8 +24,7 @@ test('aviso: ≥ 22 px e nunca sobre um botão principal em nenhuma aba', { skip
       autocal: ['[data-autocal-toggle]', '[data-autocal-action="RESET_GAS"]', '[data-autocal-action="RESET_PETROL"]'],
       refino: ['[data-refino-primary]', '#refinoEqGo'],
       dashboard: ['[data-usb-allow]'],
-      tools: ['#toolExportData'],
-      sessions: ['[data-export-session]'],
+      // Ferramentas e Sessões não têm botão principal fixo (lista e blocos rolam); o aviso é passageiro.
     };
     for (const [route, selectors] of Object.entries(primaries)) {
       await go(page, route);
