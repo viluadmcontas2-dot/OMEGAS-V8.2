@@ -94,7 +94,7 @@ test('FLUXO Refino: falha PARCIAL → "pode ter sido alterada em parte" + Desfaz
   app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
   for (let i = 0; i < 8; i += 1) app.advance(400);
   assert.match(headline(app), /pode ter sido alterada em parte/i);
-  assert.match(app.byId('refinoNext').textContent, /Desfazer última gravação/);
+  assert.match(app.byId('refinoNext').textContent, /Desfazer para voltar à foto/);
   const undo = app.$('[data-refino-undo]');
   assert.ok(undo && !undo.closest('details') && !undo.closest('[hidden]'), 'Desfazer precisa estar visível fora do <details>');
   assert.notDeepEqual(app.world.curve, before, 'controle: a ECU foi alterada em parte');
@@ -113,7 +113,7 @@ test('FLUXO Refino: falha PARCIAL → "pode ter sido alterada em parte" + Desfaz
 test('FLUXO Refino: RESTAURAR_TRECHO → botão restaura só o trecho que piorou (pontos do Kotlin)', D9, () => {
   const app = refinoApp({ phase: 'RESTAURAR_TRECHO', proposal: false });
   assert.equal(primary(app).hasAttribute('disabled'), false);
-  assert.match(primary(app).textContent, /Restaurar trecho/);
+  assert.match(primary(app).textContent, /Desfazer o trecho que piorou/);
   primary(app).click(); app.flush();
   assert.ok(reviewOpen(app));
   assert.match(app.byId('refinoReview').textContent, /1 ponto da Curva K/);

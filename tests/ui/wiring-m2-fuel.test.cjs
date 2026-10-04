@@ -37,7 +37,7 @@ for (const fuel of Object.keys(LABEL)) {
       assert.ok(rpm, '#dashRpm ausente: o Agora perdeu o RPM (ou o id mudou)');
       if (frame.rpm > 0) assert.equal(rpm.textContent, ptBR(Math.round(frame.rpm), 0), `RPM do quadro ${frame.rpm}`);
       const map = app.byId('dashMap');
-      if (map && frame.load_bar != null) assert.equal(map.textContent, ptBR(frame.load_bar, 2), 'MAP do quadro');
+      if (map && frame.load_bar != null) assert.equal(map.textContent, ptBR(frame.load_bar, 3), 'MAP do quadro (3 casas, GLOSSARIO)');
       const petrol = app.byId('dashHeroPetrol');
       if (petrol && frame.petrol_ms != null) assert.equal(petrol.textContent, ptBR(frame.petrol_ms, 2), 'Petrol Inj. do quadro');
       app.destroy();

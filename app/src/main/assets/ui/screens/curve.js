@@ -515,11 +515,18 @@
         const label = index % 5 === 0 || index === points.length - 1 ? `<text class="curve-point-label" x="${x}" y="${height - 8}" text-anchor="middle">${fmt(point.petrolMs, 1)}</text>` : '';
         return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="24" tabindex="0" role="button" aria-label="Ponto ${Number(point.index) + 1}, ${D.msUnit(point.petrolMs)}"></circle><circle class="curve-point ${selected ? 'active' : ''} ${proposed ? 'proposed' : ''}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
       }).join('')}</svg>`;
-      host.querySelectorAll('[data-curve-index]').forEach(point => {
-        const select = () => this.selectPoint(Number(point.dataset.curveIndex));
-        point.addEventListener('click', select);
-        point.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(); } });
-      });
+      // Um só ouvinte no quadro (delegação): o desenho é refeito sem empilhar ouvinte nos 30 pontos a cada vez.
+      if (this.pointHost !== host) {
+        this.pointHost = host;
+        host.addEventListener('click', event => {
+          const point = event.target.closest('[data-curve-index]');
+          if (point) this.selectPoint(Number(point.dataset.curveIndex));
+        });
+        host.addEventListener('keydown', event => {
+          const point = event.target.closest('[data-curve-index]');
+          if (point && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); this.selectPoint(Number(point.dataset.curveIndex)); }
+        });
+      }
     }
 
     renderOverview(state) {

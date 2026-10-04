@@ -173,13 +173,31 @@ class World {
     this.telemetry = { sequence: this.telemetry.sequence + 1, updatedAt: this.clock.now, valid: true, live: { ...liveFromFrame(frame), ...(extra || {}) } };
     this.status = { ...this.status, fuelState: frame.fuel, rpm: frame.rpm, petrolMs: frame.petrol_ms, gasMs: frame.gas_ms_diagnostic, mapBar: frame.load_bar };
   }
+  /**
+   * Revisões por tipo como o Kotlin as publica (RuntimeSnapshotBus): só sobem quando o dado muda de verdade.
+   * Aqui "mudou" = outra referência de objeto (os testes atribuem objetos novos) ou outro conteúdo da curva.
+   */
+  revisions() {
+    const sig = {
+      evidence: [this.equivalence, this.refined],
+      tables: [this.projection, this.curve.join(','), this.photos.length, this.map],
+      session: [this.sessions, this.sessionStatus, this.logs],
+    };
+    this._rev = this._rev || { evidence: 1, tables: 1, session: 1 };
+    this._sig = this._sig || {};
+    for (const kind of Object.keys(sig)) {
+      const before = this._sig[kind];
+      if (!before || before.some((v, i) => v !== sig[kind][i])) { if (before) this._rev[kind] += 1; this._sig[kind] = sig[kind]; }
+    }
+    return { live: this.telemetry.sequence, evidence: this._rev.evidence, tables: this._rev.tables, session: this._rev.session };
+  }
   ageMs() { return this.telemetry.updatedAt ? Math.max(0, this.clock.now - this.telemetry.updatedAt) : -1; }
   presentEnvelope() {
     const t = this.telemetry;
     const age = this.ageMs();
     const live = t.live;
     const data = {
-      sequence: t.sequence, updatedAt: t.updatedAt, ageMs: age, valid: t.valid, sessionId: 1, live, runtime: {}, ok: true, telemetryAgeMs: age,
+      sequence: t.sequence, updatedAt: t.updatedAt, ageMs: age, valid: t.valid, sessionId: 1, live, runtime: {}, ok: true, telemetryAgeMs: age, revisions: this.revisions(),
       interpolation: { valid: t.valid, educationalOnly: true, method: 'BILINEAR', rpm: live.rpm, petrolMs: live.petrol_ms, mapBar: live.load_bar, cell: { row: 3, column: 2, continuousWeights: [{ row: 3, column: 2, weight: 1 }] } },
     };
     return { ok: true, revision: t.sequence, data };
@@ -290,7 +308,7 @@ class World {
       getReleaseIdentity: () => w.releaseIdentity,
       getStatus: () => ({ ...w.status, directTelemetryAgeMs: w.status.usbConnected ? w.ageMs() : -1 }),
       getPresentSnapshot: () => w.presentEnvelope(),
-      getPresentSnapshotIfChanged: last => (Number(last) === w.telemetry.sequence ? { ok: true, changed: false, sequence: w.telemetry.sequence, telemetryAgeMs: w.ageMs() } : w.presentEnvelope()),
+      getPresentSnapshotIfChanged: last => (Number(last) === w.telemetry.sequence ? { ok: true, changed: false, sequence: w.telemetry.sequence, telemetryAgeMs: w.ageMs(), revisions: w.revisions() } : w.presentEnvelope()),
       getLiveTelemetry: () => w.presentEnvelope().data,
       getFullEngineSnapshot: () => w.presentEnvelope().data,
       connectUsb: () => true,

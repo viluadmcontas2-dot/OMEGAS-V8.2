@@ -95,13 +95,13 @@ test('M6 selecionar 1, 16 e todas as células: contagem certa, Gravar liga/desli
   assert.match(selCount(app), /^12 /);
 });
 
-test('M6 prévia Kotlin: percentual/somar/definir mostram atual→alvo nas células selecionadas e nada é gravado', () => {
+test('M6 prévia Kotlin: percentual/somar/definir mostram o alvo e a diferença (+7) nas células selecionadas e nada é gravado', () => {
   const app = mapApp();
   selectCells(app, [[2, 3]]);
   const before = app.world.map.rows[2][3];
   setAdjust(app, 'delta', 7);
   assert.equal(cell(app, 2, 3).querySelector('b').textContent, String(before + 7));
-  assert.match(cell(app, 2, 3).querySelector('span').textContent, new RegExp(`${before}→${before + 7}`));
+  assert.match(cell(app, 2, 3).querySelector('span').textContent, /\+7/);
   setAdjust(app, 'percent', 10);
   assert.equal(cell(app, 2, 3).querySelector('b').textContent, String(Math.round(before * 1.1)));
   setAdjust(app, 'target', 130);

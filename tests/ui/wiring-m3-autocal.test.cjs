@@ -133,7 +133,7 @@ test('M3 idempotência: a mesma projeção duas vezes não redesenha o gráfico 
 
 for (const name of STATES) {
   test(`M3 ${name}: nenhum elemento tocável da aba AutoCal está congelado`, () => {
-    const r = L.sweep({ prepare: () => prepared(name), within: SCREEN, allow: () => '' });
+    const r = L.sweep({ prepare: () => prepared(name), within: SCREEN, allow: desc => (/data-autocal-ref-index=0\b/.test(desc) ? 'o ponto 1 já vem inspecionado (tocar de novo não muda nada: idempotente)' : '') });
     assert.deepEqual(r.failures, [], `${r.exercised}/${r.total} elementos`);
     assert.ok(r.total >= 4);
   });

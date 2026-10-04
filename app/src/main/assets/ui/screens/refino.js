@@ -307,7 +307,20 @@
       if (event.target.closest('[data-refino-confirm]')) this.commitReview();
       if (event.target.closest('[data-refino-undo]')) this.openUndo();
       const dot = event.target.closest('[data-refino-dot]');
-      if (dot) this.inspect(dot.dataset.refinoDot);
+      if (dot) { this.inspect(dot.dataset.refinoDot); return; }
+      // Ponto da curva de referência (área de toque do gráfico compartilhado): diz o que é, em vez de ficar mudo.
+      const reference = event.target.closest('[data-autocal-ref-index]');
+      if (reference) this.inspectReference(Number(reference.dataset.autocalRefIndex));
+    }
+
+    inspectReference(index) {
+      const inspector = document.getElementById('refinoInspector');
+      const point = ((this.model || {}).reference || []).find(item => Number(item.index) === Number(index));
+      if (!inspector || !point) return;
+      const delta = point.gasMapBar - point.petrolMapBar;
+      inspector.innerHTML = `<b>Ponto ${Number(point.index) + 1} da curva · ${D.msUnit(point.petrolMs)}</b>` +
+        `<span>MAP gasolina ${D.barUnit(point.petrolMapBar)} · MAP GNV ${D.barUnit(point.gasMapBar)}` +
+        `${finite(delta) === null ? '' : ` · diferença ${delta > 0 ? '+' : ''}${D.barUnit(delta)}`}</span>`;
     }
 
     primary() {

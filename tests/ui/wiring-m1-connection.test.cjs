@@ -54,7 +54,7 @@ for (const name of STATES) {
     assert.ok(ecu, 'o trilho tem o indicador de ECU (#globalEcu)');
     const online = name === 'conectado' || name === 'telemetria velha' || name === 'ECU muda';
     assert.equal(ecu.dataset.online, online ? 'true' : 'false', `#globalEcu data-online em "${name}"`);
-    assert.match(ecu.textContent, online ? /online/i : /offline/i);
+    assert.match(ecu.textContent, online ? /online/i : name === 'conectando' ? /conectando/i : /sem cabo/i, 'Conectando e Sem cabo têm palavras diferentes');
   });
 }
 
