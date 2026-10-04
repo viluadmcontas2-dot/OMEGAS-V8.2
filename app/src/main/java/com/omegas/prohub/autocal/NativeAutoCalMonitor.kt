@@ -86,6 +86,7 @@ class NativeAutoCalMonitor(
         liveFrames = { serial.liveFrameCount() },
     )
     private val duty = AcquisitionDuty(clockMs)
+    private val probeBackoff = ProbeBackoff()
     private val stepper = SliceStepper(refreshPlanner, arbiter, duty)
     private val scratch = RoundScratch<PendingGroup, GroupRead>()
     /** Sobe a cada gravação K / ação AutoCal confirmada: leitura que atravessou uma escrita é descartada. */
@@ -186,6 +187,7 @@ class NativeAutoCalMonitor(
         scratch.petrolCounters = null
         scratch.hold.clear()
         lastProbeAtElapsedMs = 0L
+        probeBackoff.reset()
         arbiter.reset()
         duty.reset()
     }
@@ -299,6 +301,7 @@ class NativeAutoCalMonitor(
             // Pausa (AutoCal desabilitado) fecha só a aquisição; a referência segue (MUL_ACT/Curva K).
             acquisitionEnabled = synchronized(lock) { autoCalEnabled } == 1,
             probeAgeMs = if (knownProbe != null && probeAt > 0L) nowMs - probeAt else -1L,
+            probeBackoffUntilMs = probeBackoff.untilMs,
         )
         when (decision.step) {
             SliceStepper.Step.CONFIRM_PROBE -> {
@@ -319,7 +322,13 @@ class NativeAutoCalMonitor(
         }
 
         // 3) Probe (status leve 48 0B): contador AutoMatch/flag; muda → snapshot completo.
-        val probe = probe(currentSession) ?: return
+        val probe = probe(currentSession)
+        if (probe == null) {
+            // A ECU não respondeu ao status leve: recua (2 s → 30 s) em vez de repetir a cada 100 ms.
+            probeBackoff.onFailure(clockMs())
+            return
+        }
+        probeBackoff.onSuccess()
         val observed = observeProbe(currentSession, probe)
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
@@ -783,7 +792,7 @@ class NativeAutoCalMonitor(
         telemetryAfter = true,
         waitTimeoutMs = GROUP_WAIT_MS,
     ) { unit ->
-        readGroupFields(unit, group, expectedSessionId, label = "AutoCal aquisição", timeoutMs = 900, idPrefix = "AUTOCAL-ACQ")
+        readGroupFields(unit, group, expectedSessionId, label = "AutoCal aquisição", timeoutMs = 300, idPrefix = "AUTOCAL-ACQ")
     }
 
     private fun refreshReferenceGroup(
@@ -796,7 +805,7 @@ class NativeAutoCalMonitor(
         telemetryAfter = true,
         waitTimeoutMs = GROUP_WAIT_MS,
     ) { unit ->
-        readGroupFields(unit, group, expectedSessionId, label = "AutoCal referência", timeoutMs = 1_200, idPrefix = "AUTOCAL-REF")
+        readGroupFields(unit, group, expectedSessionId, label = "AutoCal referência", timeoutMs = 350, idPrefix = "AUTOCAL-REF")
     }
 
     /** As leituras do grupo (mesmos comandos de sempre, mesma ordem) dentro da unidade; sem probe aqui. */
@@ -1034,7 +1043,7 @@ class NativeAutoCalMonitor(
                 val reply = serial.transaction(
                     request = AutoCalProtocol.read(field),
                     reason = "AutoCal snapshot ${field.key}",
-                    timeoutMs = 1_200,
+                    timeoutMs = 350,
                     purgeBefore = false,
                     expectedSessionId = expectedSessionId,
                     workClass = Mp48WorkClass.READ_ONLY,
@@ -1473,6 +1482,6 @@ class NativeAutoCalMonitor(
         private const val GROUP_WAIT_MS = 4_000L
         /** Snapshot completo fatiado: de quantas em quantas leituras o árbitro é consultado. */
         private const val SNAPSHOT_SLICE_READS = 3
-        private const val SNAPSHOT_SLICE_MAX_WAIT_MS = 600L
+        private const val SNAPSHOT_SLICE_MAX_WAIT_MS = 1_200L
     }
 }

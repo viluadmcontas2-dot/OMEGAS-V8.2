@@ -82,4 +82,36 @@ class AnalysisRobustnessTest {
             executor.shutdownNow()
         }
     }
+
+    @Test
+    fun `rodada travada por mais de 30 s avisa e deixa uma so entrar atras sem rodar duas juntas`() {
+        val executor = named("test-analysis-hang")
+        try {
+            var now = 0L
+            val hangWarnings = AtomicInteger()
+            val lane = AnalysisLane(executor, clock = { now }, onHang = { hangWarnings.incrementAndGet() })
+            val release = CountDownLatch(1)
+            val started = CountDownLatch(1)
+            val concurrent = AtomicInteger()
+            val maxConcurrent = AtomicInteger()
+            val secondDone = CountDownLatch(1)
+            assertTrue(lane.submit { started.countDown(); concurrent.incrementAndGet(); release.await(); concurrent.decrementAndGet() })
+            assertTrue(started.await(2, TimeUnit.SECONDS))
+            now = 10_000L
+            assertFalse("ainda não é travamento", lane.submit { })
+            now = 31_000L
+            val accepted = lane.submit {
+                maxConcurrent.set(maxOf(maxConcurrent.get(), concurrent.incrementAndGet()))
+                concurrent.decrementAndGet(); secondDone.countDown()
+            }
+            assertTrue("passou de 30 s: a próxima rodada entra", accepted)
+            assertFalse("só UMA entra atrás da travada", lane.submit { })
+            assertEquals(1, hangWarnings.get())
+            release.countDown()
+            assertTrue(secondDone.await(2, TimeUnit.SECONDS))
+            assertEquals("a rodada nova viu só a si mesma rodando", 1, maxConcurrent.get())
+        } finally {
+            executor.shutdownNow()
+        }
+    }
 }

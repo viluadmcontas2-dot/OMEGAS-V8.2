@@ -172,6 +172,13 @@ class SessionRecorder(
         }
     }
 
+    /** Verdadeiro se um `full_snapshot` não forçado entraria agora: quem monta o JSON pesado pergunta antes. */
+    fun shouldRecordFullSnapshot(): Boolean {
+        if (!recording) return false
+        val every = settings.sessionFullSnapshotEveryMs
+        return every > 0L && System.currentTimeMillis() - lastSnapshotAt >= every
+    }
+
     fun record(type: String, source: String, data: JSONObject, force: Boolean = false) {
         if (!recording) return
 

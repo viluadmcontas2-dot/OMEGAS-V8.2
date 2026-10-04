@@ -35,6 +35,20 @@ class SliceStepper(
         snapshotWanted: Boolean,
         acquisitionEnabled: Boolean,
         probeAgeMs: Long,
+        probeBackoffUntilMs: Long = 0L,
+    ): Decision {
+        val decision = decideUnguarded(nowMs, hasPending, snapshotWanted, acquisitionEnabled, probeAgeMs)
+        // Probe recuando (a ECU não responde a ele): nenhum probe novo até o fim do recuo; o vivo não é esfomeado.
+        if (decision.step == Step.PROBE && nowMs < probeBackoffUntilMs) return Decision(Step.IDLE)
+        return decision
+    }
+
+    private fun decideUnguarded(
+        nowMs: Long,
+        hasPending: Boolean,
+        snapshotWanted: Boolean,
+        acquisitionEnabled: Boolean,
+        probeAgeMs: Long,
     ): Decision {
         if (hasPending) return Decision(Step.CONFIRM_PROBE)
         if (!snapshotWanted) {

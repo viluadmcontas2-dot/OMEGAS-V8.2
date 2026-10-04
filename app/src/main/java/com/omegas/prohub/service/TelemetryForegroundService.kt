@@ -82,7 +82,17 @@ class TelemetryForegroundService : Service() {
     private val analysisExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-native-analysis").apply { isDaemon = true }
     }
-    private val analysisLane = AnalysisLane(analysisExecutor)
+    private val analysisLane = AnalysisLane(
+        analysisExecutor,
+        onHang = { ms -> log.add("WARN", "SERVICE", "Faixa de análise travada há ${ms / 1_000L} s; a próxima rodada entra na fila") },
+    )
+    /**
+     * Thread própria do `autoCalTick`: o snapshot completo dorme no árbitro por segundos e um grupo bloqueia até 4 s;
+     * no `scheduler` isso atrasava reconexão, wake lock e botões. O monitor só usa seus locks/atômicos próprios.
+     */
+    private val autoCalExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread(runnable, "omegas-autocal-tick").apply { isDaemon = true }
+    }
 
     /**
      * Revisões por tipo de dado (live/evidence/tables/session) que a UI consulta antes de reler qualquer coisa.
@@ -363,7 +373,7 @@ class TelemetryForegroundService : Service() {
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
         // Cadência curta (100 ms): cada tick lê no máximo UM grupo AutoCal (SlotArbiter) ou volta de imediato.
-        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 1_000L, 100L, TimeUnit.MILLISECONDS)
+        autoCalTask = autoCalExecutor.scheduleWithFixedDelay(::autoCalTick, 1_000L, 100L, TimeUnit.MILLISECONDS)
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
@@ -397,6 +407,7 @@ class TelemetryForegroundService : Service() {
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
         scheduler.shutdownNow()
+        autoCalExecutor.shutdownNow()
         analysisExecutor.shutdownNow()
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
@@ -1253,7 +1264,7 @@ class TelemetryForegroundService : Service() {
             step("refino") { observeRefinement() }
         }
         step("full_snapshot") {
-            if (sessionRecorder.isRecording()) {
+            if (sessionRecorder.shouldRecordFullSnapshot()) {
                 sessionRecorder.record(
                     "full_snapshot",
                     "native",
@@ -1456,12 +1467,13 @@ class TelemetryForegroundService : Service() {
 
     private fun updateNotification() {
         val now = System.currentTimeMillis()
-        if (now - lastNotificationAt < 900L) return
-        // Só reposta quando título/texto/ações mudaram: montar e postar a mesma notificação a cada
-        // segundo gasta CPU e bateria sem mostrar nada de novo.
+        // Primeiro o tempo (>= 1 s desde a última avaliação, mudou ou não), depois o conteúdo: montar status()
+        // a cada quadro só para descobrir que nada mudou gastava CPU.
+        if (now - lastNotificationAt < 1_000L) return
+        lastNotificationAt = now
+        // Só reposta quando título/texto/ações mudaram.
         val content = notifications.content(status())
         if (content == lastNotificationContent) return
-        lastNotificationAt = now
         try {
             NotificationManagerCompat.from(this)
                 .notify(NotificationController.NOTIFICATION_ID, notifications.build(content))
