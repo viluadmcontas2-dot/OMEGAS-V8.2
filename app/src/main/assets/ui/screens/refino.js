@@ -369,7 +369,7 @@
     resetGasLearning() {
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       const result = this.api.resetGasLearning?.() || { ok: false, message: 'Reinício do aprendizado indisponível.' };
-      this.freeze = { phase: result.ok === true ? 'done' : 'failed',
+      this.learningReset = { phase: result.ok === true ? 'done' : 'failed',
         message: result.message || (result.ok === true ? 'Aprendizado GNV reiniciado. A gasolina continua como referência.' : 'Não foi possível reiniciar agora.'), at: Date.now() };
       if (result.ok === true) { this.selected = {}; this.readout(''); ns.CurveChart?.reset(); }
       this.refresh(true, true);
@@ -633,6 +633,7 @@
       }
       else if (op.phase === 'reading') text = 'Lendo a curva da ECU…';
       else if (op.phase === 'writing') text = 'Gravando na ECU…';
+      else if (this.learningReset && Date.now() - this.learningReset.at < 10000) { text = this.learningReset.message; level = this.learningReset.phase === 'failed' ? 'warn' : 'ok'; }
       else if (frz) { text = frz.message; level = frz.phase === 'failed' ? 'warn' : 'ok'; }
       else {
         const strip = equivalenceStrip(this.eq, ns.ROUTES);

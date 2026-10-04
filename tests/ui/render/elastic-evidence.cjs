@@ -77,8 +77,8 @@ async function audit(page,route,height,name){
  const {browser,page}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672}});
  try{
   await go(page,'map');await page.waitForTimeout(3000);
-  await page.locator('.map-k-cell[data-row="2"][data-column="3"]').click();
-  await page.locator('[data-map-mode="target"]').click();
+  await page.locator('.screen.active .map-k-cell[data-row="2"][data-column="3"]').click();
+  await page.locator('#mapAdjustmentMode').selectOption('target');
   await page.locator('#mapAdjustmentValue').fill('150');
   await page.waitForTimeout(200);
   assert.equal(await page.locator('#mapReviewButton').isEnabled(),true);

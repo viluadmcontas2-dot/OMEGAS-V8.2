@@ -553,7 +553,7 @@
       ...(b.state === 'missing' ? [{ tpetMs: b.centerMs, mapBar: b.centerMapBar }] : []),
     ]);
     const stalls = Array.isArray(eq.stalls && eq.stalls.events) ? eq.stalls.events : [];
-    const relevant = c.mode === 'between' ? [...items, ...intervalPoints, ...stalls.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar }))] : [];
+    const relevant = c.mode === 'between' ? [...(given.length ? [] : items), ...intervalPoints, ...stalls.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar }))] : [];
     // A tabela completa é uma régua, não aquisição. Vista normal acompanha a faixa
     // adquirida; Faixa inteira mantém toda a régua. Nenhum ponto adquirido é descartado.
     const anchors = [...ecu.map(p => ({ x: p.petrolMs, y: p.mapBar })),
